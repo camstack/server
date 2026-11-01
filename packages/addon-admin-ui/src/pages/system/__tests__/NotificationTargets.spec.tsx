@@ -105,6 +105,18 @@ vi.mock('@camstack/ui-library', async () => {
           probeTargetConfig: { mutate: vi.fn().mockResolvedValue({ ok: true, resolvedUrl: '' }) },
           testTarget: { mutate: vi.fn().mockResolvedValue({ success: true }) },
         },
+        addons: {
+          list: {
+            query: vi
+              .fn()
+              .mockResolvedValue([
+                {
+                  manifest: { id: 'notifiers', name: 'Push Notifiers', packageDisplayName: 'Core' },
+                },
+                { manifest: { id: 'homeassistant', name: 'Home Assistant Bridge' } },
+              ]),
+          },
+        },
         userManagement: {
           listUsers: { query: vi.fn().mockResolvedValue([]) },
         },
@@ -239,8 +251,11 @@ describe('NotificationTargets page', () => {
 
     await waitFor(() => expect(screen.getByText('Choose a notification kind')).toBeTruthy())
     // Both addon groups present as headers, both kinds rendered.
-    expect(screen.getByText('notifiers')).toBeTruthy()
-    expect(screen.getByText('homeassistant')).toBeTruthy()
+    // Group headers carry the addon's friendly name, never the raw id.
+    await waitFor(() => expect(screen.getByText('Push Notifiers')).toBeTruthy())
+    expect(screen.getByText('Home Assistant Bridge')).toBeTruthy()
+    expect(screen.queryByText('notifiers')).toBeNull()
+    expect(screen.queryByText('homeassistant')).toBeNull()
     expect(screen.getByText('ntfy')).toBeTruthy()
     expect(screen.getByText('Home Assistant')).toBeTruthy()
   })

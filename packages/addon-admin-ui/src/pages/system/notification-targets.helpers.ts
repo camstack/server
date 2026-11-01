@@ -40,6 +40,30 @@ export function groupKindsByAddon<K extends TargetKind>(kinds: readonly K[]): Ki
   }))
 }
 
+/** Manifest slice the addon list exposes; enough to name an addon. */
+export interface AddonNameSource {
+  readonly manifest?: {
+    readonly id?: string
+    readonly name?: string
+    readonly packageDisplayName?: string
+  }
+}
+
+/**
+ * addonId → friendly name (`manifest.name`, then `packageDisplayName`) from the
+ * registry's addon list. An id with no entry is simply absent: callers fall
+ * back to the id itself.
+ */
+export function addonDisplayNameMap(list: readonly AddonNameSource[]): ReadonlyMap<string, string> {
+  const out = new Map<string, string>()
+  for (const entry of list) {
+    const id = entry.manifest?.id
+    if (!id) continue
+    out.set(id, entry.manifest?.name ?? entry.manifest?.packageDisplayName ?? id)
+  }
+  return out
+}
+
 /**
  * Collect the keys of every `type:'password'` field in a kind's
  * `configSchema`, recursing into `group` / `sub-tabs` containers. These are

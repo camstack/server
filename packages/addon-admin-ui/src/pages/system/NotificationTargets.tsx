@@ -63,6 +63,7 @@ import {
   collectSecretKeys,
   duplicateTargetName,
   editedDestinationKeys,
+  addonDisplayNameMap,
   groupKindsByAddon,
   isSecretRestoreRefusal,
   liveFormValues,
@@ -80,6 +81,7 @@ import i18n from '../../i18n/index'
 
 const TARGETS_QUERY_KEY = ['notificationOutput', 'listTargets'] as const
 const KINDS_QUERY_KEY = ['notificationOutput', 'listTargetKinds'] as const
+const ADDONS_QUERY_KEY = ['addons', 'list'] as const
 const USERS_QUERY_KEY = ['userManagement', 'listUsers'] as const
 
 /** The user fields the Owner column and picker need. */
@@ -293,6 +295,12 @@ export function NotificationTargetsPage({
     },
   })
 
+  const addonsQuery = useQuery({
+    queryKey: ADDONS_QUERY_KEY,
+    queryFn: () => system.trpcClient.addons.list.query(undefined),
+  })
+  const addonNames = useMemo(() => addonDisplayNameMap(addonsQuery.data ?? []), [addonsQuery.data])
+
   const kinds = useMemo(() => kindsQuery.data ?? [], [kindsQuery.data])
   const kindByKey = useMemo(() => {
     const m = new Map<string, TargetKindWithIcon>()
@@ -474,7 +482,12 @@ export function NotificationTargetsPage({
       )}
 
       {editor.mode === 'pick-kind' && (
-        <KindPicker kinds={kinds} onCancel={closeEditor} onPick={openCreate} />
+        <KindPicker
+          kinds={kinds}
+          addonNames={addonNames}
+          onCancel={closeEditor}
+          onPick={openCreate}
+        />
       )}
 
       {editor.mode === 'form' && (
@@ -511,10 +524,12 @@ export function NotificationTargetsPage({
 
 function KindPicker({
   kinds,
+  addonNames,
   onPick,
   onCancel,
 }: {
   readonly kinds: readonly TargetKindWithIcon[]
+  readonly addonNames: ReadonlyMap<string, string>
   readonly onPick: (kind: TargetKindWithIcon) => void
   readonly onCancel: () => void
 }) {
@@ -539,7 +554,7 @@ function KindPicker({
         {groups.map((group) => (
           <div key={group.addonId}>
             <div className="text-[10px] font-semibold uppercase tracking-wider text-foreground-subtle mb-1.5">
-              {group.addonId}
+              {addonNames.get(group.addonId) ?? group.addonId}
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
               {group.kinds.map((kind) => (
