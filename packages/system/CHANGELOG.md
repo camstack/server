@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The crash breaker retries a runner it parked as failed once when the package version it hosts changes (one retry per new version)
 - A washer or dryer helper with a power plug is restartable through the power-source link of its composed device
 
+### Fixed
+
+- Releasing a device from an integration now removes its child devices too; before, the parents went and their children stayed behind pointing at a deleted device.
+
 ## [1.2.537] - 2026-11-01
 
 ### Changed

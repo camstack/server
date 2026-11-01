@@ -304,7 +304,7 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
     expect(registerCall).toBeDefined()
   })
 
-  it('remove() drops the device from the registry and calls deviceManager.removeDevice', async () => {
+  it('remove() drops the device from the registry and asks the hub for the cascading deviceManager.remove', async () => {
     const deviceApi = createBrokerDeviceManagerApi({
       api,
       addonId: 'provider-rtsp',
@@ -322,7 +322,7 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
     await deviceApi.remove(device.id)
 
     expect(findByStableId(registry, 'provider-rtsp', 'cam-3')).toBeNull()
-    expect(calls).toEqual([{ method: 'removeDevice', input: { deviceId: device.id } }])
+    expect(calls).toEqual([{ method: 'remove', input: { deviceId: device.id } }])
   })
 
   /**

@@ -1008,6 +1008,65 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
     }
   }
 
+  /**
+   * The in-memory half of a teardown, children first. `runLifecycle` is false
+   * when the hub already ran each device's `removeDevice()` through its
+   * `device-ops` provider (the cascading remove): only the local registry,
+   * native caps and rebuild factories are left to drop, never a second
+   * lifecycle call.
+   */
+  const teardownLocal = async (deviceId: number, runLifecycle: boolean): Promise<void> => {
+    const device = registry.getById(deviceId)
+    // Always cancel any pending probe-retry — even on the
+    // "already decommissioned" idempotent path, a leftover timer
+    // from a prior register cycle would fire against a removed
+    // device's runtimeState.
+    cancelProbeRetry(deviceId)
+    if (!device) {
+      // Idempotent — already decommissioned (or never registered in
+      // this worker). Caller may invoke decommission as part of a
+      // bulk shutdown loop where some entries already exited.
+      return
+    }
+    const children = registry.getChildren(deviceId)
+    for (const child of children) {
+      await teardownLocal(child.id, runLifecycle)
+    }
+    const capsToUnregister = opts.capabilityRegistry
+      ? [...opts.capabilityRegistry.getNativeCapsForDevice(deviceId)]
+      : [...getWorkerNativeCapsForDevice(deviceId)]
+    opts.capabilityRegistry?.unregisterAllNativeForDevice(deviceId)
+    if (!opts.capabilityRegistry) clearWorkerNativeCapsForDevice(deviceId)
+    for (const capName of capsToUnregister) {
+      eventBus.emit({
+        id: randomUUID(),
+        timestamp: new Date(),
+        source: { type: 'device', id: deviceId },
+        category: EventCategory.DeviceBindingsChanged,
+        data: { deviceId, capName, reason: 'native-unregistered', addonId, nodeId },
+      })
+      emitReadiness(eventBus, {
+        capName,
+        scope: { type: 'device', deviceId },
+        state: 'down',
+        generation: nativeCapReadinessGeneration,
+        sourceNodeId: nodeId,
+      })
+    }
+    if (runLifecycle) {
+      await device.removeDevice().catch((err: unknown) => {
+        opts.logger.warn('removeDevice() lifecycle threw during decommission', {
+          tags: { deviceId, addonId },
+          meta: { error: err instanceof Error ? err.message : String(err) },
+        })
+      })
+    }
+    // A rebuild keeps its factory (decommission is followed by register); a
+    // removal ends it.
+    if (!runLifecycle) deviceRebuildFactories.delete(deviceId)
+    registry.remove(deviceId)
+  }
+
   const deviceApi: DeviceManagerApi = {
     allocateDeviceId: async (stableId: string): Promise<number> => {
       const result = (await callDeviceManager(api, 'allocateDeviceId', { addonId, stableId })) as {
@@ -1667,56 +1726,11 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
     /**
      * In-memory teardown — fires `removeDevice()` lifecycle, drops
      * native caps, removes from registry. Cascades through children.
-     * Does NOT touch persisted state. Used both by `remove()` (which
-     * follows up with the device-manager call) and by addon shutdown
+     * Does NOT touch persisted state. Used by `remove()` (after the hub
+     * cascade) and by addon shutdown
      * paths that want the next boot to rehydrate the same devices.
      */
-    decommission: async (deviceId: number): Promise<void> => {
-      const device = registry.getById(deviceId)
-      // Always cancel any pending probe-retry — even on the
-      // "already decommissioned" idempotent path, a leftover timer
-      // from a prior register cycle would fire against a removed
-      // device's runtimeState.
-      cancelProbeRetry(deviceId)
-      if (!device) {
-        // Idempotent — already decommissioned (or never registered in
-        // this worker). Caller may invoke decommission as part of a
-        // bulk shutdown loop where some entries already exited.
-        return
-      }
-      const children = registry.getChildren(deviceId)
-      for (const child of children) {
-        await deviceApi.decommission(child.id)
-      }
-      const capsToUnregister = opts.capabilityRegistry
-        ? [...opts.capabilityRegistry.getNativeCapsForDevice(deviceId)]
-        : [...getWorkerNativeCapsForDevice(deviceId)]
-      opts.capabilityRegistry?.unregisterAllNativeForDevice(deviceId)
-      if (!opts.capabilityRegistry) clearWorkerNativeCapsForDevice(deviceId)
-      for (const capName of capsToUnregister) {
-        eventBus.emit({
-          id: randomUUID(),
-          timestamp: new Date(),
-          source: { type: 'device', id: deviceId },
-          category: EventCategory.DeviceBindingsChanged,
-          data: { deviceId, capName, reason: 'native-unregistered', addonId, nodeId },
-        })
-        emitReadiness(eventBus, {
-          capName,
-          scope: { type: 'device', deviceId },
-          state: 'down',
-          generation: nativeCapReadinessGeneration,
-          sourceNodeId: nodeId,
-        })
-      }
-      await device.removeDevice().catch((err: unknown) => {
-        opts.logger.warn('removeDevice() lifecycle threw during decommission', {
-          tags: { deviceId, addonId },
-          meta: { error: err instanceof Error ? err.message : String(err) },
-        })
-      })
-      registry.remove(deviceId)
-    },
+    decommission: (deviceId: number): Promise<void> => teardownLocal(deviceId, true),
 
     applyDerivedSpec: async (
       deviceId: number,
@@ -1772,18 +1786,17 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
       await deviceApi.register(construct())
     },
 
+    /**
+     * Remove a device AND its whole subtree, once. The hub's public `remove`
+     * is the one cascade (children, live teardown through each device's
+     * `device-ops`, rows, tombstones, removal hooks, events); this worker then
+     * drops what only it holds — the registry entries and native caps — without
+     * a second `removeDevice()` lifecycle. A persisted-only orphan is the same
+     * call: the hub clears its rows and there is nothing local to drop.
+     */
     remove: async (deviceId: number): Promise<void> => {
-      deviceRebuildFactories.delete(deviceId)
-      const device = registry.getById(deviceId)
-      if (!device) {
-        // Allow remove on persisted-only orphans (no live IDevice in
-        // this worker registry) — the device-manager call below still
-        // cleans up the index/meta/config rows.
-        await callDeviceManager(api, 'removeDevice', { deviceId })
-        return
-      }
-      await deviceApi.decommission(deviceId)
-      await callDeviceManager(api, 'removeDevice', { deviceId })
+      await callDeviceManager(api, 'remove', { deviceId })
+      await teardownLocal(deviceId, false)
     },
 
     getAll: async (): Promise<ReadonlyArray<IDevice>> => {
