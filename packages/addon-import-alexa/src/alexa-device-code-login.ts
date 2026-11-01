@@ -49,7 +49,10 @@ export interface DeviceCodeHttpResponse {
 export type DeviceCodeHttp = (req: DeviceCodeHttpRequest) => Promise<DeviceCodeHttpResponse>
 
 /** The registration object alexa-cookie2 hands back; the whole object is kept as `cookieData`. */
-const RefreshedSchema = z.looseObject({ localCookie: z.string().min(1), csrf: z.string().min(1) })
+const RefreshedSchema = z.looseObject({
+  localCookie: z.string().min(1).meta({ secret: true }),
+  csrf: z.string().min(1),
+})
 export type DeviceCodeRefreshInput = Parameters<typeof alexaCookie.refreshAlexaCookie>[0]
 export type DeviceCodeRefresh = (input: DeviceCodeRefreshInput) => Promise<unknown>
 
@@ -63,7 +66,7 @@ const RegisterSuccessSchema = z.object({
   response: z.object({
     success: z.object({
       tokens: z.object({
-        bearer: z.object({ refresh_token: z.string().min(1) }),
+        bearer: z.object({ refresh_token: z.string().min(1).meta({ secret: true }) }),
         website_cookies: z.array(z.object({ Name: z.string(), Value: z.string() })).default([]),
         mac_dms: z.unknown().optional(),
       }),
