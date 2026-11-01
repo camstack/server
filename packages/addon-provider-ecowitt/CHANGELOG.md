@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Ecowitt is now an integration with a Gateway device, like the other account integrations; the old Hub device is migrated automatically and every container and sensor keeps its id and history
+- Ecowitt hub migration no longer stops at one bad hub, resumes cleanly after an interrupted run, and a failed or locked settings read can no longer remove an integration's devices
 
 ## [0.2.151] - 2026-10-30
 

@@ -17,6 +17,8 @@ import {
   type SavedDevice,
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
+import { gatewayKeyOf } from '../config.js'
+import { gatewayDeviceNativeId } from '../ecowitt-discovery.js'
 import { ADDON_MIGRATIONS } from '../migrations/index.js'
 import type { EcowittMigrationPorts } from '../migrations/ports.js'
 
@@ -117,6 +119,10 @@ interface Faults {
   keychainThrows?: boolean
   /** A container the restore fails to un-parent. */
   stuckContainerId?: number
+  /** A restore that reports back without un-parenting anything. */
+  restoreIsNoop?: boolean
+  /** The Gateway creation dies after the containers were restored. */
+  createGatewayThrows?: boolean
 }
 
 function world(rows: readonly SavedDevice[]): World {
@@ -173,23 +179,21 @@ function portsFor(w: World, faults: Faults = {}): EcowittMigrationPorts {
     childIdsOf: async (parent) =>
       [...w.rows.values()].filter((r) => r.parentDeviceId === parent).map((r) => r.id),
     createGateway: async ({ integrationId, name }) => {
-      const existing = [...w.rows.values()].find(
-        (r) => r.type === DeviceType.Gateway && r.config['integrationId'] === integrationId,
-      )
+      if (faults.createGatewayThrows === true) throw new Error('gateway creation failed')
+      const integration = w.integrations.find((i) => i.id === integrationId)
+      if (integration === undefined) throw new Error(`no integration ${integrationId}`)
+      // Identity is the stableId, as in the kernel: one Gateway row per gateway key.
+      const stableId = gatewayDeviceNativeId(gatewayKeyOf(integration))
+      const existing = [...w.rows.values()].find((r) => r.stableId === stableId)
       if (existing !== undefined) return { deviceId: existing.id }
       const id = w.nextId++
-      w.rows.set(
-        id,
-        row(id, `${HUB_STABLE}:device`, DeviceType.Gateway, null, name, {
-          integrationId,
-        }),
-      )
+      w.rows.set(id, row(id, stableId, DeviceType.Gateway, null, name, { integrationId }))
       return { deviceId: id }
     },
     removeDevice: async (id) => removeWithDescendants(id),
     restoreRows: async (restored) => {
       for (const r of restored) {
-        if (r.id === faults.stuckContainerId) continue
+        if (faults.restoreIsNoop === true || r.id === faults.stuckContainerId) continue
         const stored = w.rows.get(r.id)
         if (stored !== undefined) w.rows.set(r.id, { ...stored, parentDeviceId: null })
       }
@@ -352,5 +356,115 @@ describe('Ecowitt hub -> integration + Gateway', () => {
     expect(w.rows.has(12)).toBe(true)
     expect(w.rows.has(22)).toBe(true)
     expect(w.rows.has(23)).toBe(true)
+  })
+
+  it('resumes when the containers are already un-parented and only some sensors are stamped', async () => {
+    const before = fixture()
+    const w = world(before)
+    // The first run stamped sensor 21 and un-parented both containers, then died.
+    await portsFor(w).createIntegration({
+      addonId: 'provider-ecowitt',
+      name: 'Weather station',
+      info: {},
+      originStableId: HUB_STABLE,
+      settings: {},
+      secretKeys: [],
+    })
+    for (const id of [11, 12]) {
+      const r = w.rows.get(id)
+      if (r !== undefined) w.rows.set(id, { ...r, parentDeviceId: null })
+    }
+    const s21 = w.rows.get(21)
+    if (s21 !== undefined)
+      w.rows.set(21, { ...s21, config: { ...s21.config, integrationId: 'int-1' } })
+    w.stamps.set(21, 'int-1')
+
+    const { report } = await run(w)
+    expect(report.applied).toEqual([MIGRATION_ID])
+    // Every sensor is stamped, not just the one the dead run reached.
+    for (const id of [21, 22, 23]) {
+      expect(w.stamps.get(id), `sensor ${id} stamped`).toBe('int-1')
+      expect(w.rows.get(id)?.config['integrationId']).toBe('int-1')
+    }
+    expect(w.rows.get(22)?.config['operatorNote']).toBe('mast on the north roof')
+    expect(w.tombstones).toEqual([10])
+    expect(w.integrations).toHaveLength(1)
+  })
+
+  it('a failure between the container restore and the tombstone keeps the hub; the retry finishes', async () => {
+    const w = world(fixture())
+    const first = await run(w, { createGatewayThrows: true })
+    expect(first.report.failed).toEqual([MIGRATION_ID])
+    expect(w.tombstones).toEqual([])
+    expect(w.rows.has(10)).toBe(true)
+    expect(w.rows.get(11)?.parentDeviceId).toBeNull()
+    expect(w.rows.get(12)?.parentDeviceId).toBeNull()
+
+    const second = await run(w)
+    expect(second.report.applied).toEqual([MIGRATION_ID])
+    expect(w.tombstones).toEqual([10])
+    for (const id of [11, 12, 21, 22, 23]) expect(w.rows.has(id)).toBe(true)
+    expect(w.integrations).toHaveLength(1)
+  })
+
+  it('a restore that reports back without un-parenting never lets the hub be tombstoned', async () => {
+    const w = world(fixture())
+    const { report } = await run(w, { restoreIsNoop: true })
+    expect(report.failed).toEqual([MIGRATION_ID])
+    expect(w.tombstones).toEqual([])
+    for (const id of [10, 11, 12, 21, 22, 23]) expect(w.rows.has(id)).toBe(true)
+  })
+
+  it('a bad hub never stops a healthy one: B is migrated, the ledger fails naming A', async () => {
+    const hubA = fixture({ $secret: 'locked-ref', v: 1 })
+    const hubB: SavedDevice[] = [
+      row(30, 'ecowitt:10-0-0-2', DeviceType.Hub, null, 'Second station', {
+        system: 'ecowitt-gateway',
+        connection: { transport: 'listener', listenPort: 8123 },
+      }),
+      row(31, 'ecowitt:10-0-0-2:gateway', DeviceType.Container, 30, 'Gateway group 2', {
+        gatewayId: 'ecowitt:10-0-0-2',
+        deviceGroup: 'gateway',
+        system: 'ecowitt',
+        sensors: [],
+      }),
+      row(41, 'ecowitt:10-0-0-2:gateway:t', DeviceType.Sensor, 31, 'Temp 2', {
+        sensorId: 't',
+        gatewayId: 'ecowitt:10-0-0-2',
+        quantity: 'temperature',
+        system: 'ecowitt',
+      }),
+    ]
+    const w = world([...hubA, ...hubB])
+    const { report, ledger } = await run(w)
+
+    expect(report.failed).toEqual([MIGRATION_ID])
+    expect(w.tombstones).toEqual([30])
+    expect(w.rows.get(31)?.parentDeviceId).toBeNull()
+    expect(w.rows.get(41)?.config['integrationId']).toBe('int-1')
+    expect(w.rows.has(10)).toBe(true)
+    const failure = ledger.results[0]
+    expect(failure?.kind).toBe('failed')
+    expect(JSON.stringify(failure)).toContain('hub 10')
+    expect(JSON.stringify(failure)).not.toContain('hub 30:')
+  })
+
+  it('a hub with no connection and no children is retired; one with children is kept', async () => {
+    const empty = world([row(50, 'ecowitt:empty', DeviceType.Hub, null, 'Empty shell', {})])
+    const done = await run(empty)
+    expect(done.report.applied).toEqual([MIGRATION_ID])
+    expect(empty.tombstones).toEqual([50])
+    expect(empty.integrations).toHaveLength(0)
+
+    const hub = row(60, 'ecowitt:noconn', DeviceType.Hub, null, 'No connection', {})
+    const child = row(61, 'ecowitt:noconn:gateway', DeviceType.Container, 60, 'Group', {
+      gatewayId: 'ecowitt:noconn',
+      system: 'ecowitt',
+    })
+    const kept = world([hub, child])
+    const failed = await run(kept)
+    expect(failed.report.failed).toEqual([MIGRATION_ID])
+    expect(kept.tombstones).toEqual([])
+    expect(kept.rows.has(61)).toBe(true)
   })
 })

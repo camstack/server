@@ -61,3 +61,22 @@ export async function cascadeRemoveDevicesForIntegration(input: {
   }
   return removed
 }
+
+export interface GatewayRowRef {
+  readonly id: number
+  readonly stableId: string
+}
+
+/**
+ * The id of the Gateway device already holding `stableId`: a live device first, else a row that
+ * is persisted but not restored yet (a resumed migration). `null` when there is none.
+ */
+export async function findExistingGateway(input: {
+  readonly stableId: string
+  readonly live: () => Promise<readonly GatewayRowRef[]>
+  readonly saved: readonly GatewayRowRef[]
+}): Promise<number | null> {
+  const liveHit = (await input.live()).find((d) => d.stableId === input.stableId)
+  if (liveHit !== undefined) return liveHit.id
+  return input.saved.find((d) => d.stableId === input.stableId)?.id ?? null
+}

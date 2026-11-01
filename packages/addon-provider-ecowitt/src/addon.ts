@@ -21,12 +21,7 @@ import {
   type DeviceSummary,
   userError,
 } from '@camstack/types'
-import {
-  buildConnectionFormSchema,
-  connectionFromSettings,
-  ECOWITT_SYSTEM,
-  gatewayKeyOf,
-} from './config.js'
+import { buildConnectionFormSchema, ECOWITT_SYSTEM, gatewayKeyOf } from './config.js'
 import { EcowittContainerDevice } from './devices/ecowitt-container-device.js'
 import {
   ECOWITT_GATEWAY_DEVICE_KIND,
@@ -38,6 +33,7 @@ import { gatewayDeviceNativeId } from './ecowitt-discovery.js'
 import { ecowittFacades } from './ecowitt-gateway.js'
 import {
   cascadeRemoveDevicesForIntegration,
+  findExistingGateway,
   setGatewayDevicesOnline,
 } from './ecowitt-integration-devices.js'
 import {
@@ -48,6 +44,8 @@ import {
 } from './ecowitt-lan-discovery.js'
 import type { EcowittDeviceGroup } from './ecowitt-mapping.js'
 import { bucketSensorsByGroup, configDeviceGroup, sensorsEqual } from './ecowitt-sensor-groups.js'
+import { EcowittReconciler, type IntegrationLifecycleKind } from './ecowitt-reconciler.js'
+import { restoreAfterMigration } from './migrations/restore-after-migration.js'
 import { ADDON_MIGRATIONS, type EcowittMigrationPorts } from './migrations/index.js'
 
 /**
@@ -109,6 +107,9 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
     await super.onShutdown()
   }
 
+  /** The rows persisted at boot: a Gateway saved but not restored yet is found here. */
+  private savedRows: readonly SavedDevice[] = []
+
   private requireClients(): EcowittClientRegistry {
     if (!this.clients) throw new Error('Ecowitt provider not initialised')
     return this.clients
@@ -124,17 +125,22 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
   protected override async onRestoreDevices(
     savedDevices: readonly SavedDevice[],
   ): Promise<DeviceRestoreReport | void> {
-    const restoredByMigration = new Set<number>()
-    const ports = this.buildMigrationPorts(savedDevices, async (rows) => {
-      await this.reconcileIntegrations()
-      await super.onRestoreDevices(rows)
-      for (const row of rows) restoredByMigration.add(row.id)
+    this.savedRows = savedDevices
+    const migrationId = ADDON_MIGRATIONS[0]?.meta.id ?? ''
+    return restoreAfterMigration({
+      saved: savedDevices,
+      migrationId,
+      logger: this.ctx.logger,
+      runMigration: (restoreRows) => {
+        const ports = this.buildMigrationPorts(savedDevices, restoreRows)
+        return this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, ports))
+      },
+      restoreRows: async (rows) => {
+        await this.reconciler().reconcile()
+        await super.onRestoreDevices(rows)
+      },
+      restoreRest: (rows) => super.onRestoreDevices(rows),
     })
-    await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, ports))
-    const rows = savedDevices.filter(
-      (row) => row.type !== DeviceType.Hub && !restoredByMigration.has(row.id),
-    )
-    return super.onRestoreDevices(rows)
   }
 
   private buildMigrationPorts(
@@ -200,78 +206,45 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
     })
   }
 
-  /**
-   * Rebuild the clients from the live integration list: upsert one per enabled integration
-   * with a usable connection, drop the ones that vanished and cascade-remove their devices.
-   * Idempotent; runs at boot, after the migration created an integration, and on every
-   * integration lifecycle event.
-   */
-  private async reconcileIntegrations(): Promise<void> {
+  private reconciler(): EcowittReconciler {
     const reg = this.requireClients()
-    try {
-      const all = await this.ctx.api.integrations.list.query()
-      const mine = all.filter((i) => i.addonId === this.ctx.id && i.enabled)
-      const surviving = new Set<string>()
-      for (const integration of mine) {
-        try {
-          const settings = await this.ctx.api.integrations.getSettings.query({
-            id: integration.id,
-          })
-          const read = connectionFromSettings(settings)
-          if (read === null) {
-            this.ctx.logger.warn('Ecowitt integration has no usable connection — skipping', {
-              meta: { integrationId: integration.id },
-            })
-            continue
-          }
-          if (read.passwordLocked && read.connection.transport === 'local') {
-            this.ctx.logger.warn(
-              'Ecowitt integration password is stored but unreadable now — not dialled with an empty one',
-              { meta: { integrationId: integration.id } },
-            )
-            continue
-          }
-          await reg.upsert(
-            integration.id,
-            gatewayKeyOf(integration),
-            integration.name,
-            read.connection,
-          )
-          surviving.add(integration.id)
-        } catch (err) {
-          this.ctx.logger.warn('Ecowitt reconcile failed for integration', {
-            meta: { integrationId: integration.id, error: errMsg(err) },
-          })
-        }
-      }
-      const vanished = reg.list().filter((id) => !surviving.has(id))
-      await reg.retain(surviving)
-      for (const integrationId of vanished) {
-        await this.cascadeRemoveDevicesForIntegration(integrationId)
-      }
-    } catch (err) {
-      this.ctx.logger.warn('Ecowitt integration reconcile failed', {
-        meta: { error: errMsg(err) },
-      })
-    }
+    return new EcowittReconciler({
+      addonId: this.ctx.id,
+      logger: this.ctx.logger,
+      clients: reg,
+      listIntegrations: () => this.ctx.api.integrations.list.query(),
+      getSettings: (id) => this.ctx.api.integrations.getSettings.query({ id }),
+      removeDevices: (integrationId) => this.cascadeRemoveDevicesForIntegration(integrationId),
+    })
   }
 
+  private async reconcileIntegrations(): Promise<void> {
+    await this.reconciler().reconcile()
+  }
+
+  /** Lifecycle events: only an explicit Deleted/Disabled naming an integration removes devices. */
   private subscribeIntegrationLifecycle(): void {
-    const handler = (event: SystemEvent): void => {
-      const addonId = event.data['addonId']
-      if (typeof addonId === 'string' && addonId !== this.ctx.id) return
-      void this.reconcileIntegrations()
-    }
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationEnabled }, handler)
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDisabled }, handler)
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, handler)
+    const on =
+      (kind: IntegrationLifecycleKind) =>
+      (event: SystemEvent): void => {
+        const addonId = event.data['addonId']
+        if (typeof addonId === 'string' && addonId !== this.ctx.id) return
+        const integrationId = event.data['integrationId']
+        void this.reconciler().onLifecycle(
+          kind,
+          typeof integrationId === 'string' ? integrationId : null,
+        )
+      }
+    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationEnabled }, on('enabled'))
+    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDisabled }, on('disabled'))
+    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, on('deleted'))
   }
 
-  private async cascadeRemoveDevicesForIntegration(integrationId: string): Promise<void> {
+  private async cascadeRemoveDevicesForIntegration(integrationId: string): Promise<number> {
     const reg = this.ctx.kernel.deviceRegistry
     const devices = this.ctx.kernel.devices
-    if (!reg || !devices) return
-    await cascadeRemoveDevicesForIntegration({
+    if (!reg || !devices) return 0
+    return cascadeRemoveDevicesForIntegration({
       reg,
       devices,
       addonId: this.addonId,
@@ -341,8 +314,12 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
     const devices = this.ctx.kernel.devices
     if (!devices) throw new Error('ecowitt adopt: kernel.devices unavailable')
     const stableId = gatewayDeviceNativeId(gatewayKey)
-    const existing = (await devices.getAll()).find((d) => d.stableId === stableId)
-    if (existing) return { deviceId: existing.id }
+    const existing = await findExistingGateway({
+      stableId,
+      live: () => devices.getAll(),
+      saved: this.savedRows,
+    })
+    if (existing !== null) return { deviceId: existing }
     const config = {
       kind: ECOWITT_GATEWAY_DEVICE_KIND,
       integrationId,
