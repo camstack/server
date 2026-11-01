@@ -37,7 +37,7 @@ export function MobileDrawer({
       {/* Backdrop */}
       <div
         className={cn(
-          'fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition-opacity duration-200',
+          'fixed inset-0 z-40 bg-black/50 transition-opacity duration-200',
           open ? 'opacity-100' : 'pointer-events-none opacity-0',
         )}
         onClick={onClose}

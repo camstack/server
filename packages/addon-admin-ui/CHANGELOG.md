@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The add-integration broker step and every broker picker now pre-select the first broker of the kind.
+- Installed on an iPhone home screen, the admin UI top bar now sits on one solid band under the status bar instead of a translucent, blurred one
 
 ## [1.2.543] - 2026-11-01
 

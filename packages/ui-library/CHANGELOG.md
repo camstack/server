@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The mobile navigation drawer no longer blurs the screen behind it, so the status bar stays sharp while it is open
+
 ## [1.2.365] - 2026-11-01
 
 ### Changed

@@ -545,113 +545,115 @@ export function AppLayout() {
     // indicator on top of the viewport — `viewport-fit=cover` in
     // index.html opts us into the full screen but then the app paints
     // under those system surfaces and the header content gets clipped.
-    // Padding the OUTERMOST background container by `env(safe-area-inset-*)`
-    // pushes the inner flex column into the visible safe area while the
-    // app's own background fills the status-bar gap, so the system bar
-    // sits cleanly over our paint instead of over the controls.
-    <div className="flex h-dvh overflow-hidden bg-background text-foreground pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
-      {/* Desktop sidebar — collapses to icons-only when `compact` */}
-      {!isMobile && (
-        <aside
-          className={`flex flex-col border-r border-border bg-surface/80 backdrop-blur-sm shrink-0 transition-[width] duration-150 ease-out ${
-            compact ? 'w-12' : 'w-48'
-          }`}
-        >
-          {sidebarContent}
-        </aside>
-      )}
+    // The top inset is its own SOLID strip in the chrome token (`bg-surface`,
+    // the same as the mobile top bar and the sidebar), so the status bar sits
+    // over one opaque band — never over a translucent / blurred surface. The
+    // bottom inset is the shell's padding (`bg-background` fills it).
+    <div className="flex h-dvh flex-col overflow-hidden bg-background text-foreground pb-[env(safe-area-inset-bottom)]">
+      <div aria-hidden="true" className="h-[env(safe-area-inset-top)] shrink-0 bg-surface" />
+      <div className="flex min-h-0 flex-1">
+        {/* Desktop sidebar — collapses to icons-only when `compact` */}
+        {!isMobile && (
+          <aside
+            className={`flex flex-col border-r border-border bg-surface shrink-0 transition-[width] duration-150 ease-out ${
+              compact ? 'w-12' : 'w-48'
+            }`}
+          >
+            {sidebarContent}
+          </aside>
+        )}
 
-      {/* Mobile drawer */}
-      {isMobile && (
-        <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} width="w-64">
-          {sidebarContent}
-        </MobileDrawer>
-      )}
+        {/* Mobile drawer */}
+        {isMobile && (
+          <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} width="w-64">
+            {sidebarContent}
+          </MobileDrawer>
+        )}
 
-      <div className="flex flex-1 flex-col min-w-0">
-        {/* Connection status banner — severity mirrors the verified
+        <div className="flex flex-1 flex-col min-w-0">
+          {/* Connection status banner — severity mirrors the verified
             condition: danger (red) only when the hub itself failed the
             hub-only probe or the session expired; warning (amber) when
             the hub is alive but the live socket dropped (typically a
             degraded cluster node slowing the hub). */}
-        {connectionBanner !== null && (
-          <div
-            className={`flex items-center justify-center gap-2 px-3 py-2 text-[12px] font-medium shrink-0 ${
-              connectionBanner.severity === 'danger'
-                ? 'bg-danger/90 text-white'
-                : 'bg-warning/15 text-warning border-b border-warning/30'
-            }`}
-          >
-            {connectionBanner.severity === 'danger' ? (
-              <WifiOff className="h-3.5 w-3.5" />
-            ) : (
-              <Activity className="h-3.5 w-3.5" />
-            )}
-            <span>
-              {t(connectionBanner.i18nKey, {
-                defaultValue: connectionBanner.message,
-                ...connectionBanner.i18nParams,
-              })}
-            </span>
-            {connectionBanner.action === 'sign-in' && (
-              <Button
-                variant="unstyled"
-                onClick={() => logout()}
-                className="ml-2 rounded border border-white/40 px-2 py-0.5 text-[11px] font-semibold hover:bg-white/10"
-              >
-                {t('connection.signIn', 'Sign in')}
-              </Button>
-            )}
-            {connectionBanner.showSpinner && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-          </div>
-        )}
+          {connectionBanner !== null && (
+            <div
+              className={`flex items-center justify-center gap-2 px-3 py-2 text-[12px] font-medium shrink-0 ${
+                connectionBanner.severity === 'danger'
+                  ? 'bg-danger/90 text-white'
+                  : 'bg-warning/15 text-warning border-b border-warning/30'
+              }`}
+            >
+              {connectionBanner.severity === 'danger' ? (
+                <WifiOff className="h-3.5 w-3.5" />
+              ) : (
+                <Activity className="h-3.5 w-3.5" />
+              )}
+              <span>
+                {t(connectionBanner.i18nKey, {
+                  defaultValue: connectionBanner.message,
+                  ...connectionBanner.i18nParams,
+                })}
+              </span>
+              {connectionBanner.action === 'sign-in' && (
+                <Button
+                  variant="unstyled"
+                  onClick={() => logout()}
+                  className="ml-2 rounded border border-white/40 px-2 py-0.5 text-[11px] font-semibold hover:bg-white/10"
+                >
+                  {t('connection.signIn', 'Sign in')}
+                </Button>
+              )}
+              {connectionBanner.showSpinner && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+            </div>
+          )}
 
-        {/* Post-login passkey adoption nudge — renders only for users
+          {/* Post-login passkey adoption nudge — renders only for users
             with ZERO enrolled passkeys (and an installed user-passkeys
             provider); dismissal persists ~30 days per user. */}
-        <PasskeyEnrollmentPrompt />
-        <ServerNamePrompt />
-        <CriticalAlertsOnLoadPanel />
+          <PasskeyEnrollmentPrompt />
+          <ServerNamePrompt />
+          <CriticalAlertsOnLoadPanel />
 
-        {/* Mobile top bar */}
-        {isMobile && (
-          <header className="flex items-center h-12 border-b border-border px-3 shrink-0 bg-surface/80 backdrop-blur-sm">
-            <Button
-              variant="unstyled"
-              onClick={() => setDrawerOpen(true)}
-              className="p-1.5 -ml-1.5 rounded-md hover:bg-surface-hover text-foreground-muted transition-colors"
-              aria-label={t('layouts.appLayout.openMenu', 'Open menu')}
+          {/* Mobile top bar */}
+          {isMobile && (
+            <header className="flex items-center h-12 border-b border-border px-3 shrink-0 bg-surface">
+              <Button
+                variant="unstyled"
+                onClick={() => setDrawerOpen(true)}
+                className="p-1.5 -ml-1.5 rounded-md hover:bg-surface-hover text-foreground-muted transition-colors"
+                aria-label={t('layouts.appLayout.openMenu', 'Open menu')}
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+              <div className="flex-1 flex justify-center">
+                <img
+                  src={
+                    theme?.resolvedMode === 'light'
+                      ? hubPath('/brand/logo-horizontal-light.svg')
+                      : hubPath('/brand/logo-horizontal-dark.svg')
+                  }
+                  alt={t('layouts.appLayout.camstack', 'CamStack')}
+                  className="h-7"
+                />
+              </div>
+              <AlertBell />
+            </header>
+          )}
+
+          <DisplayPaletteGate>
+            <DisplayPaletteNotice />
+            <main
+              className={`relative flex-1 min-h-0 overscroll-contain bg-background ${
+                ownsScroll ? 'overflow-hidden' : 'overflow-auto'
+              }`}
             >
-              <Menu className="h-5 w-5" />
-            </Button>
-            <div className="flex-1 flex justify-center">
-              <img
-                src={
-                  theme?.resolvedMode === 'light'
-                    ? hubPath('/brand/logo-horizontal-light.svg')
-                    : hubPath('/brand/logo-horizontal-dark.svg')
-                }
-                alt={t('layouts.appLayout.camstack', 'CamStack')}
-                className="h-7"
-              />
-            </div>
-            <AlertBell />
-          </header>
-        )}
-
-        <DisplayPaletteGate>
-          <DisplayPaletteNotice />
-          <main
-            className={`relative flex-1 min-h-0 overscroll-contain bg-background ${
-              ownsScroll ? 'overflow-hidden' : 'overflow-auto'
-            }`}
-          >
-            {/* No dim/blur overlay while disconnected — the top banner
+              {/* No dim/blur overlay while disconnected — the top banner
               already signals the state, and a blocking overlay would
               trap the operator on whatever page they were on. The hub
               reboots often in dev (tsx-watch); navigation must stay
               usable so cached pages can still be inspected. */}
-            {/* The page chunk suspends HERE, inside the chrome.
+              {/* The page chunk suspends HERE, inside the chrome.
               
               The app's only Suspense boundary used to sit above <Routes>, so a
               lazy page that had never been opened suspended the whole tree:
@@ -663,15 +665,16 @@ export function AppLayout() {
               The outer boundary stays for the chrome-less routes (login,
               showroom, the embed player); this one owns everything that has a
               sidebar. */}
-            <ShellContentBoundary resetKey={location.pathname}>
-              <Suspense fallback={<PageContentFallback />}>
-                {/* Keep visited `/addon/*` mounted (hidden) so local draft state
+              <ShellContentBoundary resetKey={location.pathname}>
+                <Suspense fallback={<PageContentFallback />}>
+                  {/* Keep visited `/addon/*` mounted (hidden) so local draft state
                   survives tab switches; see KeepAliveOutlet. */}
-                <KeepAliveOutlet />
-              </Suspense>
-            </ShellContentBoundary>
-          </main>
-        </DisplayPaletteGate>
+                  <KeepAliveOutlet />
+                </Suspense>
+              </ShellContentBoundary>
+            </main>
+          </DisplayPaletteGate>
+        </div>
       </div>
     </div>
   )

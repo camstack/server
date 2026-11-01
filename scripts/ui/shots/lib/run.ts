@@ -117,6 +117,40 @@ async function shoot(
     await page
       .waitForSelector('main', { timeout: firstLoad ? FIRST_LOAD_TIMEOUT_MS : LOAD_TIMEOUT_MS })
       .catch(() => pageErrors.push('no <main> rendered'))
+    // UI_SHOTS_SAFE_AREA="<top>,<bottom>" (px): Chromium has no iOS insets, so
+    // rewrite every `env(safe-area-inset-top|bottom)` in the loaded CSSOM to a
+    // fixed length and the shell lays out as an installed iPhone PWA would.
+    const simulatedInsets = process.env['UI_SHOTS_SAFE_AREA']
+    if (simulatedInsets) {
+      await page.evaluate((spec) => {
+        const [top = '0', bottom = '0'] = spec.split(',')
+        const swap = (text: string) =>
+          text
+            .split('env(safe-area-inset-top)')
+            .join(`${top}px`)
+            .split('env(safe-area-inset-bottom)')
+            .join(`${bottom}px`)
+        const walk = (rules: CSSRuleList, owner: CSSStyleSheet | CSSGroupingRule) => {
+          for (let i = rules.length - 1; i >= 0; i--) {
+            const rule = rules[i]
+            if (!rule) continue
+            if ('cssRules' in rule && (rule as CSSGroupingRule).cssRules.length > 0) {
+              walk((rule as CSSGroupingRule).cssRules, rule as CSSGroupingRule)
+            } else if (rule.cssText.includes('env(safe-area-inset-')) {
+              owner.deleteRule(i)
+              owner.insertRule(swap(rule.cssText), i)
+            }
+          }
+        }
+        for (const sheet of Array.from(document.styleSheets)) {
+          try {
+            walk(sheet.cssRules, sheet)
+          } catch {
+            /* cross-origin sheet */
+          }
+        }
+      }, simulatedInsets)
+    }
     await page.waitForTimeout(args.wait)
     for (const step of args.steps) await runStep(page, step)
     const image = imageName(route, viewport, theme)
