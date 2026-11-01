@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.724] - 2026-11-01
+
 ### Changed
 
 - Pin werift to 0.22.9 in the server closure so a newer peer range cannot hoist a version the shipped patch does not apply to (fixes refused server updates)

@@ -1,6 +1,6 @@
 {
   "name": "@camstack/server",
-  "version": "1.2.723",
+  "version": "1.2.724",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -65,18 +65,7 @@
       "@camstack/addon-agent-ui"
     ],
     "requires": {
-      "addons": {
-        "@camstack/addon-admin-ui": ">=1.2.544",
-        "@camstack/addon-agent-ui": ">=1.2.308",
-        "@camstack/addon-benchmark": ">=1.2.306",
-        "@camstack/addon-import-alexa": ">=0.2.175",
-        "@camstack/addon-model-studio": ">=1.1.337",
-        "@camstack/addon-osd-manager": ">=0.1.310",
-        "@camstack/addon-post-analysis": ">=1.2.658",
-        "@camstack/addon-provider-homematic": ">=1.2.176",
-        "@camstack/addon-provider-velux": ">=0.2.154",
-        "@camstack/addon-training": ">=0.1.123"
-      },
+      "addons": {},
       "wrapper": {
         "desktop": ">=0.0.1",
         "image": ">=0.0.1"
