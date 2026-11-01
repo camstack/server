@@ -253,15 +253,7 @@
   "ir-transmitter.offline": "The transmitter {name} is not reachable",
   "ir-transmitter.too-long": "The command has {count} pulses but the transmitter accepts at most {max}",
   "reolink.nvr-needs-integration": "This is an NVR / Home Hub. Add it as its own Reolink integration; its channels are then adopted as cameras.",
-  "global": {
-    "s_system-config-auth": {
-      "corsOriginsWarning": {
-        "label": "Browser origins and plain http"
-      },
-      "corsOrigins": {
-        "label": "Allowed browser origins",
-        "description": "Extra origins (scheme://host[:port], no path) of web pages allowed to call this hub from a browser, e.g. https://viewer.example or http://localhost:8081. Applies to the next request, no restart."
-      }
-    }
-  }
+  "global.s_system-config-auth.corsOriginsWarning.label": "Browser origins and plain http",
+  "global.s_system-config-auth.corsOrigins.label": "Allowed browser origins",
+  "global.s_system-config-auth.corsOrigins.description": "Extra origins (scheme://host[:port], no path) of web pages allowed to call this hub from a browser, e.g. https://viewer.example or http://localhost:8081. Applies to the next request, no restart."
 }
