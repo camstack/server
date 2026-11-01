@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A per-call reasoning effort beats the profile's on the openai-compatible wire
+
 ## [0.4.175] - 2026-11-01
 
 ### Changed

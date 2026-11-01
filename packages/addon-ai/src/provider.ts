@@ -118,6 +118,7 @@ function withProfileDefaults(
   const topP = input.topP ?? profile.topP
   const topK = input.topK ?? profile.topK
   const maxTokens = input.maxTokens ?? profile.maxTokens
+  const reasoningEffort = input.reasoningEffort ?? profile.reasoningEffort
   return {
     ...input,
     ...(system !== undefined ? { system } : {}),
@@ -125,6 +126,7 @@ function withProfileDefaults(
     ...(topP !== undefined ? { topP } : {}),
     ...(topK !== undefined ? { topK } : {}),
     ...(maxTokens !== undefined ? { maxTokens } : {}),
+    ...(reasoningEffort !== undefined ? { reasoningEffort } : {}),
   }
 }
 
@@ -297,6 +299,9 @@ export function createLlmProvider(deps: LlmProviderDeps): ILlmProvider {
           ...(input.temperature !== undefined ? { temperature: input.temperature } : {}),
           ...(input.topP !== undefined ? { topP: input.topP } : {}),
           ...(input.topK !== undefined ? { topK: input.topK } : {}),
+          ...(input.reasoningEffort !== undefined
+            ? { reasoningEffort: input.reasoningEffort }
+            : {}),
           retry: resolveRetryPolicy(input.consumer, profile.retry, input.retry),
           signal: controller.signal,
         },

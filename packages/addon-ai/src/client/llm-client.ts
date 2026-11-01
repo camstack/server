@@ -90,6 +90,8 @@ const SUPPORTED_KINDS: ReadonlySet<LlmProfile['kind']> = new Set<LlmProfile['kin
   'google',
 ])
 
+type LlmReasoningEffort = NonNullable<LlmProfile['reasoningEffort']>
+
 export interface LlmCallRequest {
   readonly profile: LlmProfile
   readonly system?: string
@@ -100,6 +102,7 @@ export interface LlmCallRequest {
   readonly temperature?: number
   readonly topP?: number
   readonly topK?: number
+  readonly reasoningEffort?: LlmReasoningEffort
   readonly retry?: LlmRetryPolicy
   /** Mandatory. See property 2 in the header. */
   readonly signal: AbortSignal
@@ -288,8 +291,9 @@ function providerOptionsKeyOf(kind: string): string {
  */
 function reasoningOptionsFor(
   profile: LlmProfile,
+  callEffort: LlmReasoningEffort | undefined,
 ): { providerOptions: Record<string, Record<string, string>> } | Record<string, never> {
-  const effort = profile.reasoningEffort
+  const effort = callEffort ?? profile.reasoningEffort
   if (effort === undefined) return {}
   if (descriptorOf(profile.kind)?.profileFields.includes('reasoningEffort') !== true) return {}
   return {
@@ -311,7 +315,7 @@ export function callSettingsFor(request: LlmCallRequest): CallSettings {
     ...(topP !== undefined ? { topP } : {}),
     ...(topK !== undefined ? { topK } : {}),
     ...(maxOutputTokens !== undefined ? { maxOutputTokens } : {}),
-    ...reasoningOptionsFor(profile),
+    ...reasoningOptionsFor(profile, request.reasoningEffort),
     // The library counts RETRIES; we configure ATTEMPTS. `enabled: false` and
     // `maxAttempts: 1` both mean "call once".
     maxRetries: retry.enabled ? Math.max(0, retry.maxAttempts - 1) : 0,

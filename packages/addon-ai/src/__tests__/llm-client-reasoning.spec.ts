@@ -15,7 +15,10 @@ const CHAT_OK = {
   usage: { prompt_tokens: 1, completion_tokens: 1 },
 }
 
-async function bodyFor(profile: ReturnType<typeof makeProfile>): Promise<Record<string, unknown>> {
+async function bodyFor(
+  profile: ReturnType<typeof makeProfile>,
+  call: { readonly reasoningEffort?: 'off' | 'low' | 'medium' | 'high' } = {},
+): Promise<Record<string, unknown>> {
   const bodies: Record<string, unknown>[] = []
   const fetchImpl = (async (_input: string | URL | Request, init?: RequestInit) => {
     bodies.push(JSON.parse(String(init?.body ?? '{}')))
@@ -25,7 +28,10 @@ async function bodyFor(profile: ReturnType<typeof makeProfile>): Promise<Record<
     })
   }) as typeof fetch
   const client = createLlmClient({ fetchImpl })
-  await client.generate({ profile, prompt: 'q', signal: new AbortController().signal }, 5_000)
+  await client.generate(
+    { profile, prompt: 'q', ...call, signal: new AbortController().signal },
+    5_000,
+  )
   return bodies[0] ?? {}
 }
 
@@ -44,6 +50,24 @@ describe('reasoningEffort on the wire', () => {
 
   it('a kind whose descriptor does not offer the field never sends it', async () => {
     const body = await bodyFor(makeProfile({ kind: 'openai', apiKey: 'k', reasoningEffort: 'off' }))
+    expect('reasoning_effort' in body).toBe(false)
+  })
+})
+
+describe('a per-call reasoningEffort', () => {
+  it('beats the profile', async () => {
+    const body = await bodyFor(makeProfile({ reasoningEffort: 'high' }), { reasoningEffort: 'off' })
+    expect(body.reasoning_effort).toBe('none')
+  })
+
+  it('applies when the profile says nothing', async () => {
+    expect((await bodyFor(makeProfile(), { reasoningEffort: 'low' })).reasoning_effort).toBe('low')
+  })
+
+  it('is not sent to a kind that does not offer it', async () => {
+    const body = await bodyFor(makeProfile({ kind: 'openai', apiKey: 'k' }), {
+      reasoningEffort: 'off',
+    })
     expect('reasoning_effort' in body).toBe(false)
   })
 })

@@ -336,6 +336,7 @@ export function createLlmRuntimeProvider(deps: LlmRuntimeProviderDeps): ILlmRunt
         ...(input.temperature !== undefined ? { temperature: input.temperature } : {}),
         ...(input.topP !== undefined ? { topP: input.topP } : {}),
         ...(input.topK !== undefined ? { topK: input.topK } : {}),
+        ...(input.reasoningEffort !== undefined ? { reasoningEffort: input.reasoningEffort } : {}),
         signal,
       },
       timeoutMs,

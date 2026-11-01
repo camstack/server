@@ -3035,7 +3035,7 @@
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | generate | `llm.generate` | mutation | protected | `LlmGenerateBaseInputSchema` | `LlmGenerateResultSchema` |
-| generateVision | `llm.generateVision` | mutation | protected | `{ addonId?: string; profileId?: string; consumer: string; system?: string; prompt: string; jsonSchema?: Record<string, unknown>; maxTokens?: number; temperature?: number; topP?: number; topK?: number; timeoutMs?: number; retry?: LlmRetryPolicySchema; requestId?: string; images: LlmImageSchema[] }` | `LlmGenerateResultSchema` |
+| generateVision | `llm.generateVision` | mutation | protected | `{ addonId?: string; profileId?: string; consumer: string; system?: string; prompt: string; jsonSchema?: Record<string, unknown>; maxTokens?: number; temperature?: number; topP?: number; topK?: number; reasoningEffort?: "off" \| "low" \| "medium" \| "high"; timeoutMs?: number; retry?: LlmRetryPolicySchema; requestId?: string; images: LlmImageSchema[] }` | `LlmGenerateResultSchema` |
 | cancel | `llm.cancel` | mutation | protected | `{ addonId?: string; requestId: string }` | `void` |
 | listProfileKinds | `llm.listProfileKinds` | query | protected | `{}` | `LlmProfileKindDescriptorSchema[]` |
 | listProfiles | `llm.listProfiles` | query | protected | `{}` | `LlmProfileSchema[]` |

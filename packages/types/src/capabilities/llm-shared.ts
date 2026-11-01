@@ -125,6 +125,9 @@ export const LlmGenerateBaseInputSchema = z.object({
   topP: z.number().min(0).max(1).optional(),
   /** Per-call override of the profile default (top-k sampling). */
   topK: z.number().int().positive().optional(),
+  /** Per-call override of `profile.reasoningEffort`. Sent only to a kind whose
+   *  descriptor offers the field; a kind that does not never sends it. */
+  reasoningEffort: z.enum(['off', 'low', 'medium', 'high']).optional(),
   /** Per-call override of `profile.timeoutMs` — the total generation bound. */
   timeoutMs: z.number().int().positive().optional(),
   /** Per-call override; beats both the consumer table and the profile. */

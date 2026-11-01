@@ -2983,6 +2983,7 @@ Enum: `"timeout" \| "rate-limited" \| "auth" \| "refusal" \| "bad-request" \| "u
 - `temperature?`: `number`
 - `topP?`: `number`
 - `topK?`: `number`
+- `reasoningEffort?`: `"off" \| "low" \| "medium" \| "high"`
 - `timeoutMs?`: `number`
 - `retry?`: `LlmRetryPolicySchema`
 - `requestId?`: `string`
@@ -3125,6 +3126,7 @@ Enum: `"guardrail" \| "model"`
 - `temperature?`: `number`
 - `topP?`: `number`
 - `topK?`: `number`
+- `reasoningEffort?`: `"off" \| "low" \| "medium" \| "high"`
 - `timeoutMs?`: `number`
 - `retry?`: `LlmRetryPolicySchema`
 - `requestId?`: `string`
@@ -3146,6 +3148,7 @@ Enum: `"guardrail" \| "model"`
 - `temperature?`: `number`
 - `topP?`: `number`
 - `topK?`: `number`
+- `reasoningEffort?`: `"off" \| "low" \| "medium" \| "high"`
 - `timeoutMs?`: `number`
 - `retry?`: `LlmRetryPolicySchema`
 - `requestId?`: `string`
