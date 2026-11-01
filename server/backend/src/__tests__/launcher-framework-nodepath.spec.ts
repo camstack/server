@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import * as path from 'node:path'
-import { frameworkNodePaths, isActiveFrameworkRoot } from '../framework-nodepath.js'
+import {
+  composeNodePath,
+  frameworkNodePaths,
+  isActiveFrameworkRoot,
+} from '../framework-nodepath.js'
 
 describe('frameworkNodePaths', () => {
   it('returns the framework node_modules when set and present', () => {
@@ -35,5 +39,28 @@ describe('isActiveFrameworkRoot', () => {
 
   it('is false when the active root is unset', () => {
     expect(isActiveFrameworkRoot(undefined, () => true)).toBe(false)
+  })
+})
+
+describe('composeNodePath', () => {
+  it('puts the active closure ahead of an inherited image entry', () => {
+    const out = composeNodePath(
+      '/data/framework/node_modules',
+      ['/data/server-root/current/node_modules', '/srv/nm'],
+      ':',
+    )
+    expect(out.split(':')).toEqual([
+      '/data/server-root/current/node_modules',
+      '/srv/nm',
+      '/data/framework/node_modules',
+    ])
+  })
+
+  it('keeps one copy of an entry already inherited', () => {
+    expect(composeNodePath('/a:/b', ['/b', '/c'], ':')).toBe('/b:/c:/a')
+  })
+
+  it('is the preferred list when nothing is inherited', () => {
+    expect(composeNodePath(undefined, ['/c'], ':')).toBe('/c')
   })
 })

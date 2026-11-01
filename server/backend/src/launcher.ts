@@ -28,7 +28,7 @@ import { selectHubBootstrapPackages } from './bootstrap-packages.js'
 import { formatFirstBootPlan, planFirstBootAddons } from './first-boot-addon-plan.js'
 import { planAddonRealignment } from './core/addon/addon-realign-plan.js'
 import { resolveClosureNodeModules } from './closure-node-modules.js'
-import { frameworkNodePaths, isActiveFrameworkRoot } from './framework-nodepath.js'
+import { composeNodePath, frameworkNodePaths, isActiveFrameworkRoot } from './framework-nodepath.js'
 import {
   formatInventoryReport,
   formatShadowingNotes,
@@ -542,9 +542,7 @@ async function launch(): Promise<void> {
   }
   if (extraNodePaths.length > 0) {
     const sep = process.platform === 'win32' ? ';' : ':'
-    process.env['NODE_PATH'] = process.env['NODE_PATH']
-      ? `${process.env['NODE_PATH']}${sep}${extraNodePaths.join(sep)}`
-      : extraNodePaths.join(sep)
+    process.env['NODE_PATH'] = composeNodePath(process.env['NODE_PATH'], extraNodePaths, sep)
     // Re-init Node's module path cache so the change takes effect for
     // subsequent require()/import() calls. Without this the resolver
     // already cached the empty list at startup.

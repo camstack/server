@@ -31,3 +31,19 @@ export function isActiveFrameworkRoot(
     path.join(activeRoot, 'node_modules', '@camstack', 'server', 'system', 'package.json'),
   )
 }
+
+/**
+ * NODE_PATH with the active closure's paths FIRST. CJS tries NODE_PATH entries
+ * in order, so an inherited entry (an image's `/data/framework/node_modules`)
+ * placed ahead would serve its stale `@camstack/types` to every hub-loaded
+ * addon — benchmark failed on .50 with `customAction is not a function`.
+ * Duplicates keep their first position.
+ */
+export function composeNodePath(
+  inherited: string | undefined,
+  preferred: readonly string[],
+  sep: string,
+): string {
+  const inheritedEntries = (inherited ?? '').split(sep).filter((p) => p.length > 0)
+  return [...new Set([...preferred, ...inheritedEntries])].join(sep)
+}
