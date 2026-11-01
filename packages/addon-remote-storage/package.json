@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-remote-storage",
-  "version": "1.2.143",
+  "version": "1.2.144",
   "description": "Remote storage providers (SFTP, S3, WebDAV, SMB) — unifies remote backends behind the storage-provider cap",
   "keywords": [
     "camstack",
@@ -134,7 +134,7 @@
       "samba-client"
     ],
     "requires": {
-      "server": ">=1.2.718"
+      "server": ">=1.2.719"
     }
   },
   "files": [

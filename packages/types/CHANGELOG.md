@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.463] - 2026-11-01
+
 ### Changed
 
 - Packages can declare the minimum versions they need (camstack.requires), with typed unmet-requirement reasons

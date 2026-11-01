@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.309] - 2026-11-01
+
 ### Changed
 
 - Declares the minimum CamStack server it needs; the Addons page shows a held update as requires server >= X

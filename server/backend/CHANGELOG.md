@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.719] - 2026-11-01
+
 ### Changed
 
 - The server now carries the framework (@camstack/server/system) and refuses an update whose declared minimum is not met

@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-terminal",
-  "version": "0.1.157",
+  "version": "0.1.158",
   "description": "Interactive terminal sessions (pty + xterm) as a CamStack addon",
   "keywords": [
     "camstack",
@@ -57,7 +57,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.718"
+      "server": ">=1.2.719"
     }
   },
   "files": [

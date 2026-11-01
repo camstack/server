@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-provider-bosch",
-  "version": "0.1.34",
+  "version": "0.1.35",
   "description": "Bosch smart-home device-provider addons for CamStack — SHC, Home Connect, and HomeCom cloud integrations (scaffold)",
   "keywords": [
     "camstack",
@@ -129,7 +129,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.718"
+      "server": ">=1.2.719"
     }
   },
   "files": [

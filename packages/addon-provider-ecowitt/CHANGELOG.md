@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.153] - 2026-11-01
+
 ### Changed
 
 - Built against the server that now carries the framework itself; requires a matching @camstack/server.

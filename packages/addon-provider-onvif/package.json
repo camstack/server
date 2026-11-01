@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-provider-onvif",
-  "version": "1.2.151",
+  "version": "1.2.152",
   "description": "ONVIF camera device provider addon for CamStack",
   "keywords": [
     "camstack",
@@ -55,7 +55,7 @@
       "onvif"
     ],
     "requires": {
-      "server": ">=1.2.718"
+      "server": ">=1.2.719"
     }
   },
   "files": [

@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-matter-broker",
-  "version": "0.2.152",
+  "version": "0.2.153",
   "description": "Matter broker addon for CamStack — owns a Matter fabric (commissioning + the long-lived controller) via the matter.js controller and brokers commissioned Matter nodes into CamStack",
   "keywords": [
     "camstack",
@@ -61,7 +61,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.718"
+      "server": ">=1.2.719"
     }
   },
   "files": [
