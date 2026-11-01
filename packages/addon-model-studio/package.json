@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-model-studio",
-  "version": "1.1.338",
+  "version": "1.1.339",
   "description": "Custom detection model registry, conversion & distribution for CamStack",
   "keywords": [
     "camstack",
@@ -77,7 +77,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.728"
+      "server": ">=1.2.729"
     }
   },
   "files": [

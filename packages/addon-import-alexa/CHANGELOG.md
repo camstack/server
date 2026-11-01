@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.176] - 2026-11-01
+
 ### Changed
 
 - Alexa announcements and speech work again, and a failed state poll no longer turns a signed-in broker to error (states are polled in chunks of 50)

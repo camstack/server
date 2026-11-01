@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.662] - 2026-11-01
+
 ### Changed
 
 - An appliance that finishes its cycle now notifies by default as "<Device> ha terminato dopo N minuti", and the text can carry the energy used

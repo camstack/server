@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.155] - 2026-11-01
+
 ### Changed
 
 - The Velux connection test opens a single connection to the gateway and allows its slow TLS handshake, and names whether the handshake or the password answer ran out.
