@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Alexa cookie login: the login proxy no longer forwards Amazon's upgrade-insecure-requests directive, which stopped the page from completing over http
+
 ## [0.2.174] - 2026-11-01
 
 ### Changed

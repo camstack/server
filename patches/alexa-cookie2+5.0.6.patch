@@ -1,0 +1,37 @@
+diff --git a/node_modules/alexa-cookie2/lib/proxy.js b/node_modules/alexa-cookie2/lib/proxy.js
+index 8d459a1..b5699f3 100644
+--- a/node_modules/alexa-cookie2/lib/proxy.js
++++ b/node_modules/alexa-cookie2/lib/proxy.js
+@@ -423,6 +423,7 @@ function initAmazonProxy(_options, callbackCookie, callbackListening) {
+     }
+ 
+     function onProxyRes(proxyRes, req, res) {
++        stripUpgradeInsecureRequestsHeaders(proxyRes);
+         const url = req.originalUrl || req.url;
+         if (url.endsWith('.ico') || url.endsWith('.js') || url.endsWith('.ttf') || url.endsWith('.svg') || url.endsWith('.png') || url.endsWith('.appcache')) return;
+         if (url.startsWith('/ap/uedata')) return;
+@@ -545,4 +546,24 @@ function initAmazonProxy(_options, callbackCookie, callbackListening) {
+ 
+ }
+ 
++// camstack patch: Amazon's login pages carry `upgrade-insecure-requests` in their
++// Content-Security-Policy. The login proxy is served over plain http, so the browser
++// upgrades every sub-resource and form request to https://<proxy>:<port>, where nothing
++// answers TLS, and the page never completes. Only that one directive is removed; every
++// other directive is kept, and a header left empty is dropped.
++function stripUpgradeInsecureRequestsHeaders(proxyRes) {
++    const headers = proxyRes && proxyRes.headers;
++    if (!headers) return;
++    for (const name of ['content-security-policy', 'content-security-policy-report-only']) {
++        if (headers[name] === undefined) continue;
++        const values = Array.isArray(headers[name]) ? headers[name] : [headers[name]];
++        const kept = values
++            .map((v) => String(v).split(';').map((d) => d.trim()).filter((d) => d && !/^upgrade-insecure-requests$/i.test(d)).join('; '))
++            .filter((v) => v);
++        if (kept.length) headers[name] = kept.length === 1 ? kept[0] : kept;
++        else delete headers[name];
++    }
++}
++
+ module.exports.initAmazonProxy = initAmazonProxy;
++module.exports.stripUpgradeInsecureRequestsHeaders = stripUpgradeInsecureRequestsHeaders;
