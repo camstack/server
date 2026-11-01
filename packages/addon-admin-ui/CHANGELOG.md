@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.546] - 2026-11-01
+
 ### Changed
 
 - Customize offers replacing a device's native running state with an assigned source

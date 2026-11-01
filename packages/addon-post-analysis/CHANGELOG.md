@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.659] - 2026-11-01
+
 ### Changed
 
 - Notification rules fire once per appliance start/finish (running-state flip), not on every status refresh
