@@ -10,11 +10,15 @@ let frameworkDir: string
 beforeAll(() => {
   // Build a fake framework dir with a resolvable @camstack/server/system package.
   frameworkDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fw-'))
-  const pkgDir = path.join(frameworkDir, 'node_modules', '@camstack', 'system')
+  const pkgDir = path.join(frameworkDir, 'node_modules', '@camstack', 'server')
   fs.mkdirSync(pkgDir, { recursive: true })
   fs.writeFileSync(
     path.join(pkgDir, 'package.json'),
-    JSON.stringify({ name: '@camstack/server/system', version: '1.0.0', exports: './index.js' }),
+    JSON.stringify({
+      name: '@camstack/server',
+      version: '1.0.0',
+      exports: { './system': './index.js' },
+    }),
   )
   fs.writeFileSync(path.join(pkgDir, 'index.js'), 'export const ok = true\n')
   initialize({ frameworkDir })

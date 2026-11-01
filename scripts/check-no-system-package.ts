@@ -26,6 +26,13 @@ const ROOT = path.resolve(import.meta.dirname, '..')
 
 /** Not preceded by a path/name character and not followed by `-` or a word character. */
 const OLD_NAME = /(?<![\w/-])@camstack\/system(?![\w-])/
+/**
+ * The same name spelled as path segments (`path.join(root, '@camstack', 'system')`).
+ * A rename of the specifier misses it, and the launcher's framework check
+ * then never matched a folded closure: the hub's CJS addon loads lost the
+ * framework from NODE_PATH.
+ */
+const OLD_NAME_SEGMENTS = /['"]@camstack['"]\s*,\s*['"]system['"]/
 
 export const ALLOWED: readonly RegExp[] = [
   /^docs\/decisions\//,
@@ -40,7 +47,8 @@ export const ALLOWED: readonly RegExp[] = [
   /^server\/backend\/src\/legacy-package-names\.ts$/,
   /^packages\/system\/src\/kernel\/(__tests__\/)?addon-residue(\.spec)?\.ts$/,
   /^packages\/system\/src\/kernel\/__tests__\/addon-manifest\.spec\.ts$/,
-  /^server\/backend\/src\/__tests__\/(addon-upload|package-inventory|single-copy-cleanup)\.spec\.ts$/,
+  /^server\/backend\/src\/__tests__\/(addon-upload|package-inventory|single-copy-cleanup|launcher-framework-nodepath)\.spec\.ts$/,
+  /^server\/backend\/src\/agent\/__tests__\/addon-scan\.spec\.ts$/,
   /^packages\/node-root\/src\/__tests__\/starter-core\.spec\.ts$/,
   /^scripts\/check-npm-orphan-packages\.ts$/,
   /^scripts\/check-no-system-package\.ts$/,
@@ -59,7 +67,9 @@ export function findSystemPackageReferences(
   for (const f of files) {
     if (ALLOWED.some((re) => re.test(f.rel))) continue
     f.content.split('\n').forEach((text, i) => {
-      if (OLD_NAME.test(text)) findings.push({ file: f.rel, line: i + 1 })
+      if (OLD_NAME.test(text) || OLD_NAME_SEGMENTS.test(text)) {
+        findings.push({ file: f.rel, line: i + 1 })
+      }
     })
   }
   return findings

@@ -14,3 +14,20 @@ export function frameworkNodePaths(
   const nm = path.join(frameworkDir, 'node_modules')
   return exists(nm) ? [nm] : []
 }
+
+/**
+ * Whether the starter's active single copy carries the framework, i.e. its
+ * `@camstack/server` ships `./system` (D989). The launcher points
+ * CAMSTACK_FRAMEWORK_DIR (and so NODE_PATH and the runners' resolver) at the
+ * active root only when this holds; a check on the retired standalone
+ * package left the hub's CJS addon loads with no framework on their path.
+ */
+export function isActiveFrameworkRoot(
+  activeRoot: string | undefined,
+  exists: (p: string) => boolean,
+): boolean {
+  if (!activeRoot) return false
+  return exists(
+    path.join(activeRoot, 'node_modules', '@camstack', 'server', 'system', 'package.json'),
+  )
+}

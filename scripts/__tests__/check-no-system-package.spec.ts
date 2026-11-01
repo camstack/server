@@ -20,8 +20,15 @@ describe('check-no-system-package', () => {
     ).toEqual([{ file: 'vite.config.ts', line: 2 }])
   })
 
+  it('flags the name spelled as path segments', () => {
+    const src = `fs.existsSync(path.join(root, 'node_modules', '@camstack', 'system'))\n`
+    expect(findSystemPackageReferences(f('server/backend/src/launcher.ts', src))).toEqual([
+      { file: 'server/backend/src/launcher.ts', line: 1 },
+    ])
+  })
+
   it('accepts the folded path and neighbouring names', () => {
-    const src = `import a from '@camstack/server/system'\nimport b from '@camstack/system-utils'\n`
+    const src = `import a from '@camstack/server/system'\nimport b from '@camstack/system-utils'\njoin(r, '@camstack', 'server', 'system')\n`
     expect(findSystemPackageReferences(f('a.ts', src))).toEqual([])
   })
 

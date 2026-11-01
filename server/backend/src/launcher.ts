@@ -28,7 +28,7 @@ import { selectHubBootstrapPackages } from './bootstrap-packages.js'
 import { formatFirstBootPlan, planFirstBootAddons } from './first-boot-addon-plan.js'
 import { planAddonRealignment } from './core/addon/addon-realign-plan.js'
 import { resolveClosureNodeModules } from './closure-node-modules.js'
-import { frameworkNodePaths } from './framework-nodepath.js'
+import { frameworkNodePaths, isActiveFrameworkRoot } from './framework-nodepath.js'
 import {
   formatInventoryReport,
   formatShadowingNotes,
@@ -232,7 +232,7 @@ async function launch(): Promise<void> {
   // and the NODE_PATH extension below reads CAMSTACK_FRAMEWORK_DIR. No-op in
   // baked mode (activeRoot unset → keep the image's /data/framework).
   const activeRoot = process.env['CAMSTACK_SERVER_ACTIVE_ROOT']
-  if (activeRoot && fs.existsSync(path.join(activeRoot, 'node_modules', '@camstack', 'system'))) {
+  if (activeRoot && isActiveFrameworkRoot(activeRoot, fs.existsSync)) {
     process.env['CAMSTACK_FRAMEWORK_DIR'] = activeRoot
     console.log(`[launcher] Single-copy framework dir → ${activeRoot}`)
   }
