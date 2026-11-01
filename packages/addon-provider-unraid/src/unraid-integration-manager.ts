@@ -10,19 +10,11 @@ import type {
 export type UnraidInstanceStatus = 'connected' | 'disconnected' | 'connecting' | 'error'
 
 /**
- * Default client factory — INTENTIONALLY unimplemented. The real
- * `@apocaliss92/node-unraid` library EXISTS and is ready, but is not wired here
- * yet (see `plan-unraid.md`). Wiring it is the single remaining code step:
- * replace this factory with one that builds a real {@link UnraidClientLike} over
- * the published client. Until then the addon installs and type-checks, but a
- * created instance stays offline and logs this error.
+ * Test-only default: production passes `makeLiveUnraidClient` from the addon, so a
+ * manager built without a factory fails loudly instead of silently polling nothing.
  */
 export const defaultUnraidClientFactory: UnraidClientFactory = () => {
-  throw new Error(
-    'unraid: @apocaliss92/node-unraid is not wired yet — install & wire it ' +
-      '(implement UnraidClientLike over UnraidClient, see plan-unraid.md) and ' +
-      'pass a makeClient factory.',
-  )
+  throw new Error('unraid: no client factory supplied to the integration manager')
 }
 
 /** Constructor options for {@link UnraidIntegrationManager}. */
@@ -35,7 +27,7 @@ export interface UnraidIntegrationManagerOptions {
   readonly onDisconnected: (instanceId: string) => void
   /** Fired after every poll cycle so the addon fans the fresh snapshot out. */
   readonly onPolled: (instanceId: string) => void
-  /** Factory seam — defaults to the "not wired" factory above. */
+  /** Factory seam — the addon passes the live `node-unraid` factory; specs inject their own. */
   readonly makeClient?: UnraidClientFactory
 }
 

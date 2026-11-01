@@ -5,8 +5,7 @@ export default buildLibPreset({
     index: 'src/index.ts',
     addon: 'src/addon.ts',
   },
-  // Ships self-contained (only @camstack/kernel + node builtins stay
-  // external). The source builds against a LOCAL client contract, not the real
-  // `@apocaliss92/node-unraid` — once that lib is wired it bundles inline here too.
+  // Ships self-contained (only @camstack/kernel + node builtins stay external):
+  // `node-unraid` is a devDependency that bundles inline.
   externals: 'self-contained',
 })

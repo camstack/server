@@ -18,6 +18,7 @@ import { UnraidEntityDevice } from './devices/unraid-entity-device.js'
 import { UnraidGatewayDevice } from './devices/unraid-gateway-device.js'
 import { UnraidInstanceDevice } from './devices/unraid-instance-device.js'
 import { buildUnraidAdoptionProvider } from './unraid-adoption-provider.js'
+import { makeLiveUnraidClient } from './unraid-client-live.js'
 import { UnraidClientRegistry } from './unraid-client-registry.js'
 import { buildUnraidDeviceAdopter } from './unraid-device-adopter.js'
 import { unraidStableId } from './unraid-discovery.js'
@@ -35,11 +36,8 @@ import { unraidInstances } from './unraid-node-resolver.js'
  * WebGUI) and its single instance {@link DeviceType.Container}, as siblings; the
  * Container fans array / disk / docker / notification entities out as accessory children.
  *
- * NOTE: the real `@apocaliss92/node-unraid` library EXISTS and is ready, but is
- * not wired here yet (see `plan-unraid.md`) — the integration manager's default
- * factory throws until it is installed + wired, so an integration installs
- * cleanly but stays offline. Everything else (config, discovery flow, entity
- * fan-out, cap surface) is complete and type-checked.
+ * The server is reached through `node-unraid` ({@link makeLiveUnraidClient}), polled on
+ * the integration's `pollIntervalMs`; a failed connect keeps the devices offline.
  *
  * `instanceMode: multiple` — many servers may be added. Network auto-discovery
  * is not implemented; the server is added by host.
@@ -67,6 +65,7 @@ export class UnraidProviderAddon extends BaseDeviceProvider {
   protected override async onInitialize(): Promise<ProviderRegistration[]> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
     this.clients = new UnraidClientRegistry(this.ctx.logger, {
+      makeClient: makeLiveUnraidClient,
       onConnected: (integrationId) => this.setIntegrationDevicesOnline(integrationId, true),
       onDisconnected: (integrationId) => this.setIntegrationDevicesOnline(integrationId, false),
       onPolled: (integrationId) => this.handlePolled(integrationId),
