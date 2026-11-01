@@ -114,6 +114,12 @@ import {
   readPackageManifestAddons,
   registerGroupRunnerProviders,
 } from './agent-group-runner.js'
+import { gateStaleCandidates, readPackageRequires } from './stale-addon-gate.js'
+import {
+  readRunningServerAddonMinimums,
+  readRunningServerVersion,
+} from '../core/addon/addon-requirements.js'
+import { readInstalledAddonVersions } from '../core/addon/installed-addon-versions.js'
 import type { HubConnectionState } from './agent-http.js'
 import { startAgentHttpServer } from './agent-http.js'
 import { createAgentNodeCertificates } from './agent-node-certificates.js'
@@ -1545,6 +1551,27 @@ async function bootCoreAddons(
 // Phase 1.5: Load cluster-capable addon packages
 // ---------------------------------------------------------------------------
 
+/**
+ * Hold back the candidates whose package is stale for THIS server (#346) and name
+ * each one. They stay unspawned; the hub's registration reconcile delivers the
+ * right version and the deploy's reload spawns it.
+ */
+function spawnableCandidates(
+  candidates: readonly GroupCandidate[],
+  addonsDir: string,
+  log: (line: string) => void,
+): readonly GroupCandidate[] {
+  if (candidates.length === 0) return candidates
+  const { ready, deferred } = gateStaleCandidates(candidates, {
+    serverVersion: readRunningServerVersion(),
+    serverRequiresAddons: readRunningServerAddonMinimums(),
+    installedVersions: readInstalledAddonVersions(addonsDir),
+    requiresOfDir: readPackageRequires,
+  })
+  for (const d of deferred) log(`[Agent] ${d.reason}`)
+  return ready
+}
+
 async function loadClusterCapableAddons(
   broker: ServiceBroker,
   config: { dataDir: string; addonsDir: string },
@@ -1598,9 +1625,12 @@ async function loadClusterCapableAddons(
     }
   }
 
-  if (allGroupCandidates.length > 0) {
+  const spawnableGroupCandidates = spawnableCandidates(allGroupCandidates, config.addonsDir, (l) =>
+    console.warn(l),
+  )
+  if (spawnableGroupCandidates.length > 0) {
     const grouped = new Map<string, GroupCandidate[]>()
-    for (const c of allGroupCandidates) {
+    for (const c of spawnableGroupCandidates) {
       const arr = grouped.get(c.groupId) ?? []
       arr.push(c)
       grouped.set(c.groupId, arr)
@@ -1725,7 +1755,7 @@ async function loadDeployedAddons(
     return
   }
   const grouped = new Map<string, GroupCandidate[]>()
-  for (const c of groupCandidates) {
+  for (const c of spawnableCandidates(groupCandidates, addonsDir, (l) => console.warn(l))) {
     const arr = grouped.get(c.groupId) ?? []
     arr.push(c)
     grouped.set(c.groupId, arr)

@@ -59,3 +59,19 @@ export function unmetAddonRequirements(
     wrapper: null,
   })
 }
+
+/** What the running `@camstack/server` requires of addon packages; empty when it declares none or cannot be read. */
+export function readRunningServerAddonMinimums(): Readonly<Record<string, string>> {
+  const dir = resolveHubClosurePackageDir('@camstack/server')
+  if (dir === null) return {}
+  try {
+    const raw: unknown = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf-8'))
+    if (typeof raw !== 'object' || raw === null) return {}
+    const camstack: unknown = Reflect.get(raw, 'camstack')
+    if (typeof camstack !== 'object' || camstack === null) return {}
+    const parsed = PackageRequiresSchema.safeParse(Reflect.get(camstack, 'requires'))
+    return parsed.success ? (parsed.data.addons ?? {}) : {}
+  } catch {
+    return {}
+  }
+}

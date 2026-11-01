@@ -778,11 +778,24 @@ function createAgentService(deps: AgentServiceDeps): ServiceSchema {
        * surface a per-agent diff in the upload response.
        */
       reload: {
-        handler: async (): Promise<{ success: boolean; loaded: readonly string[] }> => {
+        handler: async (ctx: Context): Promise<{ success: boolean; loaded: readonly string[] }> => {
           if (!deps.reloadDeployedAddons) {
             return { success: false, loaded: [] }
           }
           const loaded = await deps.reloadDeployedAddons()
+          // A runner the crash breaker parked `failed` is retried once when this
+          // delivery changed its package version (#346). Bounded in the kernel.
+          await asBrokerLike(ctx.broker)
+            .call(
+              '$process.retryFailedOnVersionChange',
+              {},
+              { nodeID: ctx.broker.nodeID, timeout: AGENT_PROCESS_RESTART_TIMEOUT_MS },
+            )
+            .catch((err: unknown) => {
+              deploySwapLogger.warn(
+                `failed-runner retry after reload did not run: ${err instanceof Error ? err.message : String(err)}`,
+              )
+            })
           // The reload just changed this node's capability set. Re-run the
           // atomic registerNode so the hub's routing authority learns it now,
           // instead of at the next restart / reconnect. Unconditional: an

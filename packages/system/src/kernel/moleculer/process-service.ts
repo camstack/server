@@ -13,6 +13,7 @@ import { getPidStats as readPidStats } from '../../process/resource-monitor.js'
 import { RUNNER_RSS_BUDGET_ENV } from '../heap-watch.js'
 import { CrashSupervisor } from './crash-supervisor.js'
 import { getBrokerEventBus } from './event-bus.js'
+import { FailedRunnerRetryLedger, readRunnerPackageVersions } from './failed-runner-retry.js'
 import {
   invalidateHeapProfiles,
   isHeavyRunner,
@@ -250,6 +251,8 @@ function createProcessService(
     maxCrashes: MAX_CRASHES_IN_WINDOW,
     maxBackoffMs: MAX_BACKOFF_MS,
   })
+  // One retry per new package version for a runner the breaker parked (#346).
+  const failedRetryLedger = new FailedRunnerRetryLedger()
   // Captured on service `started()` — needed by the crash-respawn path to
   // evict the dead child from the Moleculer registry before the respawn
   // announces with the same nodeId. Without this the bridge short-circuits
@@ -605,6 +608,10 @@ function createProcessService(
         // terminal state to the admin UI (ForksTab / AddonCard read
         // `process.state` straight off those actions).
         entry.state = 'failed'
+        failedRetryLedger.recordTrip(
+          runnerId,
+          readRunnerPackageVersions(entry.runnerAddons.map((a) => a.addonDir)),
+        )
         emitStateChange(entry)
         capturedBroker?.logger.error(
           `[${runnerId}] Crash circuit-breaker tripped — ${decision.crashesInWindow} crashes in ${CRASH_WINDOW_MS}ms. Not respawning.`,
@@ -762,6 +769,7 @@ function createProcessService(
             // The runner is gone; its children are not necessarily (D668).
             await reapRunnerGroup(target)
             processes.delete(name)
+            failedRetryLedger.forget(name)
             // Intentional stop — clear crash history so a future
             // `spawnRunner` with the same id starts a fresh streak
             // rather than inheriting a stale (possibly tripped) count.
@@ -852,6 +860,33 @@ function createProcessService(
             restarted.restartCount = prevRestartCount + 1
             return { success: true, pid: restarted.pid }
           })
+        },
+      },
+
+      /**
+       * Restart every runner the breaker parked `failed` whose package changed
+       * version since it tripped (#346) — once per new version, never a loop.
+       * Called by the agent after a reconcile delivered bytes.
+       */
+      retryFailedOnVersionChange: {
+        async handler(ctx: Context<Record<string, never>>) {
+          const retried: string[] = []
+          for (const entry of [...processes.values()]) {
+            if (entry.state !== 'failed') continue
+            const decision = failedRetryLedger.decide(
+              entry.name,
+              readRunnerPackageVersions(entry.runnerAddons.map((a) => a.addonDir)),
+            )
+            if (!decision.retry) continue
+            capturedBroker?.logger.warn(
+              `[${entry.name}] package version changed since the crash breaker tripped — retrying once ` +
+                `(${JSON.stringify(decision.from)} -> ${JSON.stringify(decision.to)})`,
+              { tags: { runnerId: entry.name } },
+            )
+            await ctx.call('$process.restart', { name: entry.name })
+            retried.push(entry.name)
+          }
+          return { retried }
         },
       },
 
