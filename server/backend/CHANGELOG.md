@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.723] - 2026-11-01
+
 ### Changed
 
 - A browser viewer on an allowed origin can sign in again: the hub accepts the language header in cross-origin requests.

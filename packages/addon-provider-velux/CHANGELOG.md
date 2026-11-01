@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.154] - 2026-11-01
+
 ### Changed
 
 - The gateway connection test now names the step that timed out (TCP, secure login, version, close) within 17 s and frees the session, instead of hanging until the wizard gives up; an empty gateway scan is logged.
