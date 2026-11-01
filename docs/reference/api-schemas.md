@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1024 shared schemas.**
+**1026 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -2344,6 +2344,15 @@ Enum: `"ok" \| "missing" \| "foreign" \| "unavailable"`
 
 Enum: `"speed" \| "oscillating" \| "direction" \| "preset"`
 
+### `FanCaptureGroupSchema`
+
+Enum: `"fan" \| "oscillation" \| "angles"`
+
+### `FanCaptureItemSchema`
+
+- `group`: `FanCaptureGroupSchema`
+- `label`: `string`
+
 ### `FanCaptureOmissionSchema`
 
 - `what`: `string`
@@ -2371,6 +2380,7 @@ Enum: `"forward" \| "reverse"`
 ### `FanPresetCaptureResultSchema`
 
 - `steps`: `({ kind: "wait"; seconds: number } \| { kind: "cap"; actionId?: string; target?: { kind: "devices"; ids: number[] } \| { kind: "domain"; deviceType?: "camera" \| "hub" \| "light" \| "siren" \| "switch" \| "sensor" \| "thermostat" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "pet-fountain" \| "dishwasher" \| "washer" \| "dryer" \| "gateway"; roomId?: string } \| { kind: "var"; name: string }; deviceId?: number \| number[] \| { $var: string }; cap: string; method: string; args?: Record<string, unknown>; argUnits?: Record<string, string> })[]`
+- `items`: `FanCaptureItemSchema[]`
 - `omitted`: `FanCaptureOmissionSchema[]`
 
 ### `FanPresetSchema`

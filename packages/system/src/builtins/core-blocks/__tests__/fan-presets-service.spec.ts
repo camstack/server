@@ -56,6 +56,9 @@ interface WorldOptions {
   readonly switches?: Readonly<Record<number, SwitchStatus | null>>
   readonly initial?: readonly FanPreset[]
   readonly fanParent?: number | null
+  /** Facts for the container siblings; any id not listed is a switch named `dev <id>`. */
+  readonly siblings?: Readonly<Record<number, { name: string; type: DeviceType }>>
+  readonly children?: readonly number[]
 }
 
 function world(options: WorldOptions = {}) {
@@ -78,8 +81,13 @@ function world(options: WorldOptions = {}) {
               type: DeviceType.Fan,
               parentDeviceId: options.fanParent ?? CONTAINER,
             }
-          : { name: `dev ${id}`, type: DeviceType.Switch, parentDeviceId: CONTAINER },
-      childrenOf: async (parent) => (parent === CONTAINER ? [FAN, LIGHT, SPEED] : [FAN]),
+          : {
+              name: options.siblings?.[id]?.name ?? `dev ${id}`,
+              type: options.siblings?.[id]?.type ?? DeviceType.Switch,
+              parentDeviceId: CONTAINER,
+            },
+      childrenOf: async (parent) =>
+        parent === CONTAINER ? [FAN, ...(options.children ?? [LIGHT, SPEED])] : [FAN],
     },
     readings: {
       fan: async () => (options.fan === undefined ? fanStatus() : options.fan),
@@ -231,12 +239,12 @@ describe('FanPresetsService.capturePreset', () => {
     expect(
       result.steps.map((s) => (s.kind === 'cap' ? [s.cap, s.method, s.args] : s.kind)),
     ).toEqual([
-      ['fan-control', 'setPercentage', { speed: 40 }],
       ['fan-control', 'setOscillating', { oscillating: false }],
-      ['fan-control', 'setDirection', { direction: 'reverse' }],
-      ['fan-control', 'setPreset', { preset: 'eco' }],
       ['control', 'setValue', { control: { kind: 'numeric', value: 7 } }],
       ['switch', 'setState', { on: false }],
+      ['fan-control', 'setDirection', { direction: 'reverse' }],
+      ['fan-control', 'setPreset', { preset: 'eco' }],
+      ['fan-control', 'setPercentage', { speed: 40 }],
     ])
   })
 
@@ -260,10 +268,94 @@ describe('FanPresetsService.capturePreset', () => {
   })
 
   it('names every fan field when the fan reading itself is unavailable', async () => {
-    const w = world({ fan: null })
+    const w = world({ fan: null, children: [] })
     const result = await w.service.capturePreset({ deviceId: FAN, fields: ['speed'], steps: [] })
     expect(result.steps).toEqual([])
     expect(result.omitted).toEqual([{ what: 'speed', reason: expect.any(String) }])
+  })
+
+  describe('without explicit steps: every settable sibling', () => {
+    const H_ANGLE = 201
+    const H_LEFT = 202
+    const H_SWITCH = 203
+    const V_SWITCH = 204
+    const V_TOP = 205
+    const PRESET_3D = 206
+    const PLAIN_SENSOR = 207
+    const num = (value: number): ControlStatus => ({
+      kind: 'numeric',
+      value,
+      options: [],
+      lastChangedAt: 1,
+    })
+    const dreo = {
+      children: [H_ANGLE, H_LEFT, H_SWITCH, V_SWITCH, V_TOP, PRESET_3D, PLAIN_SENSOR],
+      siblings: {
+        [H_ANGLE]: { name: 'Angolo orizzontale', type: DeviceType.Control },
+        [H_LEFT]: { name: 'Angolo oscillazione orizzontale sinistra', type: DeviceType.Control },
+        [H_SWITCH]: { name: 'Oscillazione orizzontale', type: DeviceType.Switch },
+        [V_SWITCH]: { name: 'Oscillazione verticale', type: DeviceType.Switch },
+        [V_TOP]: { name: 'Angolo oscillazione verticale alto', type: DeviceType.Control },
+        [PRESET_3D]: { name: 'Preset angolo 3D', type: DeviceType.Control },
+        [PLAIN_SENSOR]: { name: 'Temperature', type: DeviceType.Sensor },
+      },
+      controls: {
+        [H_ANGLE]: num(90),
+        [H_LEFT]: num(30),
+        [V_TOP]: num(60),
+        [PRESET_3D]: num(2),
+      },
+      switches: {
+        [H_SWITCH]: { on: true, lastChangedAt: 1 },
+        [V_SWITCH]: { on: false, lastChangedAt: 1 },
+      },
+    } as const
+
+    it('proposes bounds, oscillation, fixed angles, fan fields, speed last', async () => {
+      const w = world({ ...dreo, fan: fanStatus({ speed: 40, oscillating: null }) })
+      const result = await w.service.capturePreset({ deviceId: FAN, steps: [] })
+      expect(result.items.map((i) => [i.group, i.label])).toEqual([
+        ['angles', 'Angolo oscillazione orizzontale sinistra'],
+        ['angles', 'Angolo oscillazione verticale alto'],
+        ['oscillation', 'Oscillazione orizzontale'],
+        ['oscillation', 'Oscillazione verticale'],
+        ['angles', 'Angolo orizzontale'],
+        ['angles', 'Preset angolo 3D'],
+        ['fan', 'direction'],
+        ['fan', 'speed'],
+      ])
+      expect(result.steps).toHaveLength(result.items.length)
+      expect(result.steps[0]).toMatchObject({
+        cap: 'control',
+        target: { ids: [H_LEFT] },
+        args: { control: { kind: 'numeric', value: 30 } },
+      })
+      expect(result.steps[2]).toMatchObject({
+        cap: 'switch',
+        target: { ids: [H_SWITCH] },
+        args: { on: true },
+      })
+      expect(result.omitted.map((o) => o.what)).toEqual(['oscillating', 'preset'])
+    })
+
+    it('omits and names an unreadable sibling, and skips devices that are neither switch nor control', async () => {
+      const w = world({
+        ...dreo,
+        controls: { [H_ANGLE]: num(90) },
+        fan: fanStatus({ speed: 40 }),
+      })
+      const result = await w.service.capturePreset({ deviceId: FAN, steps: [] })
+      expect(result.omitted.map((o) => o.what).sort()).toEqual(
+        [
+          'Angolo oscillazione orizzontale sinistra',
+          'Angolo oscillazione verticale alto',
+          'Preset angolo 3D',
+          'preset',
+        ].sort(),
+      )
+      expect(JSON.stringify(result.steps)).not.toContain(String(PLAIN_SENSOR))
+      expect(result.items.map((i) => i.label)).not.toContain('Temperature')
+    })
   })
 })
 

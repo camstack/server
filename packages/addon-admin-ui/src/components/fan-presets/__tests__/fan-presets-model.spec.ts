@@ -1,11 +1,13 @@
 import type { ActionStep, FanPreset } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import {
+  captureSections,
   checkPresetDraft,
   newPresetId,
   omissionText,
   removePreset,
   siblingIds,
+  tickedSteps,
   upsertPreset,
 } from '../fan-presets-model'
 
@@ -88,5 +90,29 @@ describe('omissionText', () => {
     expect(omissionText({ what: 'speed', reason: 'the fan reports no speed' })).toBe(
       'speed: the fan reports no speed',
     )
+  })
+})
+
+describe('capture review', () => {
+  const result = {
+    steps: [STEP, STEP, STEP],
+    items: [
+      { group: 'angles' as const, label: 'a' },
+      { group: 'fan' as const, label: 'b' },
+      { group: 'angles' as const, label: 'c' },
+    ],
+    omitted: [],
+  }
+
+  it('groups rows fan / oscillation / angles, keeping the proposed order inside a group', () => {
+    expect(captureSections(result).map((s) => [s.group, s.rows.map((r) => r.index)])).toEqual([
+      ['fan', [1]],
+      ['angles', [0, 2]],
+    ])
+  })
+
+  it('returns the ticked steps in proposed order', () => {
+    expect(tickedSteps(result, new Set([2, 0]))).toHaveLength(2)
+    expect(tickedSteps(result, new Set())).toEqual([])
   })
 })

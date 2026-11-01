@@ -84,9 +84,23 @@ export const FanCaptureOmissionSchema = z.object({
 })
 export type FanCaptureOmission = z.infer<typeof FanCaptureOmissionSchema>
 
+/** Where a proposed step belongs in the review list. */
+export const FAN_CAPTURE_GROUPS = ['fan', 'oscillation', 'angles'] as const
+export const FanCaptureGroupSchema = z.enum(FAN_CAPTURE_GROUPS)
+export type FanCaptureGroup = z.infer<typeof FanCaptureGroupSchema>
+
+export const FanCaptureItemSchema = z.object({
+  group: FanCaptureGroupSchema,
+  /** What the step sets, in the operator's words (a device name, a fan field). */
+  label: z.string(),
+})
+export type FanCaptureItem = z.infer<typeof FanCaptureItemSchema>
+
 export const FanPresetCaptureResultSchema = z.object({
   /** The steps filled from the device's current values; NOT saved. */
   steps: z.array(ActionStepSchema),
+  /** One entry per step, same order: its review group and label. */
+  items: z.array(FanCaptureItemSchema),
   omitted: z.array(FanCaptureOmissionSchema),
 })
 export type FanPresetCaptureResult = z.infer<typeof FanPresetCaptureResultSchema>
@@ -129,8 +143,11 @@ export const fanPresetsCapability = {
     /**
      * Fills steps from the CURRENT values: the fan's own fields named in
      * `fields` (all when absent) and the sibling `steps` already composed
-     * (a control value, a switch state). A reading that is unknown is left out
-     * and named in `omitted`, never captured as 0. Nothing is saved.
+     * (a control value, a switch state). With no `steps` it proposes EVERY
+     * switch and control in the fan's container, ordered angle bounds,
+     * oscillation, fixed angles, fan fields, speed last. A reading that is
+     * unknown is left out and named in `omitted`, never captured as 0. Nothing
+     * is saved.
      */
     capturePreset: method(
       deviceInput.extend({

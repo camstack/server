@@ -2738,7 +2738,7 @@
 
 ### `fan-presets` → `fanPresets.*`
 
-- **Source:** `packages/types/src/capabilities/fan-presets.cap.ts:113`
+- **Source:** `packages/types/src/capabilities/fan-presets.cap.ts:127`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IFanPresetsProvider`

@@ -8,11 +8,14 @@
 import {
   type ActionStep,
   type AutomationAction,
+  type FanCaptureGroup,
   type FanCaptureOmission,
   type FanPreset,
+  type FanPresetCaptureResult,
 } from '@camstack/types'
 import {
   Button,
+  Checkbox,
   Dialog,
   DialogBody,
   DialogContent,
@@ -29,7 +32,13 @@ import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ActionList } from '../../pages/build/automation/ActionList'
 import type { AutomationDevice } from '../../pages/build/automation/automation-data'
-import { checkPresetDraft, omissionText, type PresetCheck } from './fan-presets-model'
+import {
+  captureSections,
+  checkPresetDraft,
+  omissionText,
+  type PresetCheck,
+  tickedSteps,
+} from './fan-presets-model'
 
 export interface FanPresetDialogProps {
   readonly fanId: number
@@ -46,6 +55,20 @@ export interface FanPresetDialogProps {
 
 function isActionStep(action: AutomationAction): action is ActionStep {
   return action.kind === 'cap' || action.kind === 'wait'
+}
+
+function useGroupText(): (group: FanCaptureGroup) => string {
+  const { t } = useTranslation()
+  return (group) => {
+    switch (group) {
+      case 'fan':
+        return t('fanPresets.capture.group.fan', 'Fan')
+      case 'oscillation':
+        return t('fanPresets.capture.group.oscillation', 'Oscillation')
+      case 'angles':
+        return t('fanPresets.capture.group.angles', 'Angles')
+    }
+  }
 }
 
 function useProblemText(): (check: PresetCheck) => string | null {
@@ -76,9 +99,13 @@ export function FanPresetDialog({
   const { t } = useTranslation()
   const problemText = useProblemText()
   const [draft, setDraft] = useState<FanPreset>(initial)
+  const groupText = useGroupText()
   const [omitted, setOmitted] = useState<readonly FanCaptureOmission[]>([])
+  // The hub's proposal under review, and which of its steps are ticked.
+  const [proposal, setProposal] = useState<FanPresetCaptureResult | null>(null)
+  const [ticked, setTicked] = useState<ReadonlySet<number>>(new Set())
   const capture = useFanPresetsCapturePreset(
-    { deviceId: fanId, steps: draft.steps },
+    { deviceId: fanId, steps: [] },
     { enabled: false, gcTime: 0, retry: false },
   )
   const check = checkPresetDraft(others, draft)
@@ -87,9 +114,25 @@ export function FanPresetDialog({
   const useCurrent = (): void => {
     void capture.refetch().then((result) => {
       if (result.data === undefined) return
-      setDraft((d) => ({ ...d, steps: result.data.steps }))
+      setProposal(result.data)
+      setTicked(new Set(result.data.steps.keys()))
       setOmitted(result.data.omitted)
     })
+  }
+
+  const toggle = (index: number, on: boolean): void => {
+    setTicked((current) => {
+      const next = new Set(current)
+      if (on) next.add(index)
+      else next.delete(index)
+      return next
+    })
+  }
+
+  const applyTicked = (): void => {
+    if (proposal === null) return
+    setDraft((d) => ({ ...d, steps: [...tickedSteps(proposal, ticked)] }))
+    setProposal(null)
   }
 
   return (
@@ -155,6 +198,52 @@ export function FanPresetDialog({
                     <li key={`${o.what}:${o.reason}`}>{omissionText(o)}</li>
                   ))}
                 </ul>
+              </div>
+            )}
+            {proposal !== null && (
+              <div
+                className="space-y-2 rounded border border-border p-3"
+                data-testid="fan-preset-capture"
+              >
+                <p className="text-xs text-foreground-muted">
+                  {t(
+                    'fanPresets.capture.hint',
+                    'Tick what this preset should set. Unticked values are left as they are.',
+                  )}
+                </p>
+                {captureSections(proposal).map((section) => (
+                  <div key={section.group} className="space-y-1">
+                    <p className="text-xs font-medium text-foreground">
+                      {groupText(section.group)}
+                    </p>
+                    {section.rows.map((row) => (
+                      <label
+                        key={row.index}
+                        className="flex cursor-pointer items-center gap-2 text-sm"
+                      >
+                        <Checkbox
+                          checked={ticked.has(row.index)}
+                          aria-label={row.item.label}
+                          onChange={(event) => toggle(row.index, event.target.checked)}
+                        />
+                        <span>{row.item.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                ))}
+                <div className="flex justify-end gap-2">
+                  <Button size="sm" variant="ghost" onClick={() => setProposal(null)}>
+                    {t('common.cancel', 'Cancel')}
+                  </Button>
+                  <Button
+                    size="sm"
+                    disabled={ticked.size === 0}
+                    onClick={applyTicked}
+                    data-testid="fan-preset-capture-apply"
+                  >
+                    {t('fanPresets.capture.apply', 'Use selected')}
+                  </Button>
+                </div>
               </div>
             )}
             <ActionList

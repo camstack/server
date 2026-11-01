@@ -3,7 +3,14 @@
  * target, the list edits, and the same checks the hub applies on save (so a
  * refusal is rarely the first the operator hears of a problem).
  */
-import type { FanCaptureOmission, FanPreset } from '@camstack/types'
+import type {
+  ActionStep,
+  FanCaptureGroup,
+  FanCaptureItem,
+  FanCaptureOmission,
+  FanPreset,
+  FanPresetCaptureResult,
+} from '@camstack/types'
 
 export interface FleetRef {
   readonly id: number
@@ -67,4 +74,36 @@ export function checkPresetDraft(others: readonly FanPreset[], draft: FanPreset)
 
 export function omissionText(omission: FanCaptureOmission): string {
   return `${omission.what}: ${omission.reason}`
+}
+
+/** The review list shows the groups in this order; an empty group is not shown. */
+export const CAPTURE_GROUP_ORDER: readonly FanCaptureGroup[] = ['fan', 'oscillation', 'angles']
+
+export interface CaptureRow {
+  /** Index into the result's `steps`, which is what is ticked. */
+  readonly index: number
+  readonly item: FanCaptureItem
+}
+
+export interface CaptureSection {
+  readonly group: FanCaptureGroup
+  readonly rows: readonly CaptureRow[]
+}
+
+/** The captured steps as review sections; rows keep the order the hub proposed. */
+export function captureSections(result: FanPresetCaptureResult): readonly CaptureSection[] {
+  return CAPTURE_GROUP_ORDER.map((group) => ({
+    group,
+    rows: result.items.flatMap((item, index): CaptureRow[] =>
+      item.group === group ? [{ index, item }] : [],
+    ),
+  })).filter((section) => section.rows.length > 0)
+}
+
+/** The ticked steps, in the order the hub proposed them (the order they must run in). */
+export function tickedSteps(
+  result: FanPresetCaptureResult,
+  ticked: ReadonlySet<number>,
+): readonly ActionStep[] {
+  return result.steps.filter((_step, index) => ticked.has(index))
 }

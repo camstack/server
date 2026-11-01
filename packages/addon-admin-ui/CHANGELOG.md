@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - System → Secrets labels the external master key as the mounted key file (/run/secrets)
 - Washer and dryer device pages show the appliance card instead of the generic hero
 - A fan's Customize tab has a Presets editor: name a preset, pick its steps on the fan and the devices beside it, or fill it from their current values.
+- Fan presets: Use current values now proposes every switch and control beside the fan (oscillation, angle limits, fixed angles) as a ticked checklist, in the order a fan wants to be driven.
 
 ## [1.2.548] - 2026-11-01
 

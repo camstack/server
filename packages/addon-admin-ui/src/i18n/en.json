@@ -11379,6 +11379,15 @@
       "delete": "Delete {{name}}",
       "deleteTitle": "Delete this preset?",
       "deleteMessage": "{{name}} will be deleted, and Alexa, HomeKit and Home Assistant stop offering it."
+    },
+    "capture": {
+      "group": {
+        "fan": "Fan",
+        "oscillation": "Oscillation",
+        "angles": "Angles"
+      },
+      "hint": "Tick what this preset should set. Unticked values are left as they are.",
+      "apply": "Use selected"
     }
   }
 }

@@ -2023,11 +2023,16 @@ export {
 } from './brightness.cap.js'
 export {
   FAN_CAPTURE_FIELDS,
+  FAN_CAPTURE_GROUPS,
   FAN_PRESETS_MAX,
   FAN_PRESETS_REFUSALS,
   FAN_PRESET_STEPS_MAX,
   type FanCaptureField,
   FanCaptureFieldSchema,
+  type FanCaptureGroup,
+  FanCaptureGroupSchema,
+  type FanCaptureItem,
+  FanCaptureItemSchema,
   type FanCaptureOmission,
   FanCaptureOmissionSchema,
   type FanPreset,

@@ -21,6 +21,7 @@ import {
   type CapCall,
   type ControlStatus,
   type FanCaptureField,
+  type FanCaptureItem,
   type FanCaptureOmission,
   type FanControlStatus,
   FAN_CAPTURE_FIELDS,
@@ -94,6 +95,43 @@ function fanTarget(deviceId: number): NormalizedCapStep['target'] {
 
 function fanStep(deviceId: number, method: string, args: Record<string, unknown>): ActionStep {
   return { kind: 'cap', target: fanTarget(deviceId), cap: 'fan-control', method, args }
+}
+
+/**
+ * A proposed step and where it sorts. The order is the order a fan wants to be
+ * driven in: the sweep limits first, so that turning oscillation on sweeps
+ * inside them; then the oscillation switches; then fixed angles; then the
+ * fan's own settings, speed last so the fan only spins up once it is aimed.
+ */
+interface Proposal {
+  readonly step: ActionStep
+  readonly rank: number
+  readonly item: FanCaptureItem
+}
+
+const RANK_BOUND = 0
+const RANK_SWITCH = 1
+const RANK_OSCILLATING = 1
+const RANK_ANGLE = 2
+const RANK_GIVEN = 3
+const FAN_FIELD_RANK: Readonly<Record<FanCaptureField, number>> = {
+  oscillating: RANK_OSCILLATING,
+  direction: 4,
+  preset: 5,
+  speed: 6,
+}
+
+/** A control that sets one end of the sweep (left/right, top/bottom), by its name. */
+const ANGLE_BOUND_NAME =
+  /oscillazione.*(sinistra|destra|alto|basso)|oscillation.*(left|right|top|bottom|upper|lower)/i
+
+function orderProposals(
+  proposals: readonly Proposal[],
+  omitted: FanCaptureOmission[],
+): CaptureResult {
+  const sorted = [...proposals].sort((a, b) => a.rank - b.rank)
+  const items: FanCaptureItem[] = sorted.map((p) => p.item)
+  return { steps: sorted.map((p) => p.step), items, omitted }
 }
 
 export class FanPresetsService implements IFanPresetsProvider {
@@ -219,7 +257,6 @@ export class FanPresetsService implements IFanPresetsProvider {
   async capturePreset(input: CaptureInput): Promise<CaptureResult> {
     const { deviceId } = input
     const fields: readonly FanCaptureField[] = input.fields ?? FAN_CAPTURE_FIELDS
-    const steps: ActionStep[] = []
     const omitted: FanCaptureOmission[] = []
     const omit = (what: string, reason: string): void => {
       omitted.push({ what, reason })
@@ -229,6 +266,20 @@ export class FanPresetsService implements IFanPresetsProvider {
       })
     }
 
+    const fanSteps = await this.captureFanFields(deviceId, fields, omit)
+    const proposals =
+      input.steps.length === 0
+        ? await this.captureSiblings(deviceId, omit)
+        : await this.captureGiven(deviceId, input.steps, omit)
+    return orderProposals([...proposals, ...fanSteps], omitted)
+  }
+
+  private async captureFanFields(
+    deviceId: number,
+    fields: readonly FanCaptureField[],
+    omit: (what: string, reason: string) => void,
+  ): Promise<Proposal[]> {
+    const out: Proposal[] = []
     const fan = await this.deps.readings.fan(deviceId)
     for (const field of FAN_CAPTURE_FIELDS) {
       if (!fields.includes(field)) continue
@@ -238,12 +289,26 @@ export class FanPresetsService implements IFanPresetsProvider {
       }
       const captured = this.fanFieldStep(deviceId, field, fan)
       if (captured === null) omit(field, `${field} is unknown on this fan`)
-      else steps.push(captured)
+      else
+        out.push({
+          step: captured,
+          rank: FAN_FIELD_RANK[field],
+          item: { group: field === 'oscillating' ? 'oscillation' : 'fan', label: field },
+        })
     }
+    return out
+  }
 
-    for (const [index, step] of input.steps.entries()) {
+  /** The steps the caller composed, each refreshed with its current value. */
+  private async captureGiven(
+    deviceId: number,
+    steps: readonly ActionStep[],
+    omit: (what: string, reason: string) => void,
+  ): Promise<Proposal[]> {
+    const out: Proposal[] = []
+    for (const [index, step] of steps.entries()) {
       if (step.kind === 'wait') {
-        steps.push(step)
+        out.push({ step, rank: RANK_GIVEN, item: { group: 'fan', label: 'wait' } })
         continue
       }
       const target = normalizeCapStep(step).target
@@ -255,9 +320,65 @@ export class FanPresetsService implements IFanPresetsProvider {
       if (targetId === undefined || targetId === deviceId) continue
       const captured = await this.siblingStep(step, targetId)
       if (captured.step === null) omit(`step ${index}`, captured.reason)
-      else steps.push(captured.step)
+      else
+        out.push({
+          step: captured.step,
+          rank: RANK_GIVEN,
+          item: { group: step.cap === 'switch' ? 'oscillation' : 'angles', label: `step ${index}` },
+        })
     }
-    return { steps, omitted }
+    return out
+  }
+
+  /** Every switch and control in the fan's container, read as they are now. */
+  private async captureSiblings(
+    deviceId: number,
+    omit: (what: string, reason: string) => void,
+  ): Promise<Proposal[]> {
+    const out: Proposal[] = []
+    const facts = await this.deps.devices.describe(deviceId)
+    const siblings = await this.siblingsOf(deviceId, facts)
+    for (const id of siblings) {
+      if (id === deviceId) continue
+      const sibling = await this.deps.devices.describe(id)
+      if (sibling === null) continue
+      if (sibling.type === DeviceType.Switch) {
+        const status = await this.deps.readings.switchState(id)
+        if (status === null) {
+          omit(sibling.name, `switch ${id} reports no state`)
+          continue
+        }
+        out.push({
+          step: {
+            kind: 'cap',
+            target: fanTarget(id),
+            cap: 'switch',
+            method: 'setState',
+            args: { on: status.on },
+          },
+          rank: RANK_SWITCH,
+          item: { group: 'oscillation', label: sibling.name },
+        })
+      } else if (sibling.type === DeviceType.Control) {
+        const status = await this.deps.readings.control(id)
+        if (status === null) {
+          omit(sibling.name, `control ${id} reports no value`)
+          continue
+        }
+        out.push({
+          step: {
+            kind: 'cap',
+            target: fanTarget(id),
+            cap: 'control',
+            method: 'setValue',
+            args: { control: { kind: status.kind, value: status.value } },
+          },
+          rank: ANGLE_BOUND_NAME.test(sibling.name) ? RANK_BOUND : RANK_ANGLE,
+          item: { group: 'angles', label: sibling.name },
+        })
+      }
+    }
+    return out
   }
 
   // ── internals ───────────────────────────────────────────────────────────

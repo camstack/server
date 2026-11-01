@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Keychain key source kinds config-file / previous-config-file are now mounted-file / previous-mounted-file
 - Added the device-runs capability: a durable record of each washer, dryer and dishwasher cycle.
 - Washer and dryer resolve to the new appliance control kind
+- fan-presets: capturePreset without steps proposes every sibling switch and control, ordered, with a review group per step.
 
 ## [1.2.468] - 2026-11-01
 

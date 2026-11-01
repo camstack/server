@@ -11401,6 +11401,15 @@
       "delete": "Elimina {{name}}",
       "deleteTitle": "Eliminare questo preset?",
       "deleteMessage": "{{name}} verrà eliminato e Alexa, HomeKit e Home Assistant smetteranno di offrirlo."
+    },
+    "capture": {
+      "group": {
+        "fan": "Ventilatore",
+        "oscillation": "Oscillazione",
+        "angles": "Angoli"
+      },
+      "hint": "Seleziona cosa deve impostare questo preset. I valori non selezionati restano come sono.",
+      "apply": "Usa selezionati"
     }
   }
 }
