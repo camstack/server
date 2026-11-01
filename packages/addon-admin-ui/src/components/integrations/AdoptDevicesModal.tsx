@@ -450,7 +450,10 @@ export function AdoptDevicesModal({ addonId, integrationId, onClose }: AdoptDevi
                   // entity count rides next to the chevron.
                   key: 'name',
                   header: t('integrations.adoptColName', { defaultValue: 'Name' }),
-                  headerClassName: 'w-[55%]',
+                  // `max-w-0` lets the cell shrink to its column so a long name
+                  // truncates instead of pushing the selection column off-screen.
+                  headerClassName: 'w-full sm:w-[55%]',
+                  cellClassName: 'max-w-0',
                   cell: (c) => (
                     <CandidateNameCell
                       candidate={c}
@@ -461,6 +464,7 @@ export function AdoptDevicesModal({ addonId, integrationId, onClose }: AdoptDevi
                       expanded={expanded.has(c.childNativeId)}
                       onToggleExpand={() => toggleExpand(c.childNativeId)}
                       adoptedLabel={t('integrations.adoptAlready', { defaultValue: 'Adopted' })}
+                      typeLabel={deviceTypeMetaOf(c.type, uiText).label}
                     />
                   ),
                 },
@@ -486,7 +490,7 @@ export function AdoptDevicesModal({ addonId, integrationId, onClose }: AdoptDevi
                   // right-aligned actions cell (`justify-end`).
                   key: 'select',
                   header: '',
-                  headerClassName: 'w-[15%] text-right',
+                  headerClassName: 'w-10 sm:w-[15%] text-right',
                   cellClassName: 'text-right',
                   cell: (c) => (
                     <div className="flex items-center justify-end">
@@ -633,6 +637,8 @@ interface CandidateNameCellProps {
   expanded: boolean
   onToggleExpand: () => void
   adoptedLabel: string
+  // Device-type label, shown under the name on a phone (the Type column is hidden there).
+  typeLabel: string
 }
 
 /**
@@ -649,6 +655,7 @@ function CandidateNameCell({
   expanded,
   onToggleExpand,
   adoptedLabel,
+  typeLabel,
 }: CandidateNameCellProps) {
   const { t } = useTranslation()
   const count = (candidate.children ?? []).length
@@ -680,10 +687,16 @@ function CandidateNameCell({
           —
         </span>
       )}
-      <span className="truncate text-xs font-medium text-foreground">{candidate.name}</span>
-      {distinguisher.length > 0 && (
-        <span className="truncate text-[10px] text-foreground-subtle">{distinguisher}</span>
-      )}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className="truncate text-xs font-medium text-foreground">{candidate.name}</span>
+          {distinguisher.length > 0 && (
+            <span className="truncate text-[10px] text-foreground-subtle">{distinguisher}</span>
+          )}
+        </div>
+        {/* The Type column is hidden on a phone: its label rides under the name. */}
+        <div className="truncate text-[10px] text-foreground-subtle sm:hidden">{typeLabel}</div>
+      </div>
       {candidate.alreadyAdopted && (
         <span className="rounded-full bg-success/10 px-2 py-0.5 text-[9px] font-medium text-success shrink-0">
           {adoptedLabel}

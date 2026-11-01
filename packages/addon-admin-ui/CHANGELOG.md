@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The add-integration broker step and every broker picker now pre-select the first broker of the kind.
 - Installed on an iPhone home screen, the admin UI top bar now sits on one solid band under the status bar instead of a translucent, blurred one
+- The notifier creation dialog names each provider group by its friendly name instead of its id.
+- The Adopt devices dialog shows each device's type under its name on a phone and keeps the selection column in view when a name is long.
 
 ## [1.2.543] - 2026-11-01
 
