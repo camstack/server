@@ -3,7 +3,8 @@
  * now declared by their schemas, and `collectZodSecretPaths` (what a runner
  * reports at `registerDevice`) finds them where they actually sit.
  */
-import { collectZodSecretPaths } from '@camstack/types'
+import { collectSecretConfigKeys, collectZodSecretPaths } from '@camstack/types'
+import type { ConfigUISchema } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import type { z } from 'zod'
 import { amcrestCameraSchema } from '../../packages/addon-provider-amcrest/src/schema.ts'
@@ -14,18 +15,16 @@ import { rademacherConnectionSchema } from '../../packages/addon-provider-radema
 import { reolinkHubConnectionSchema } from '../../packages/addon-provider-reolink/src/hub-connection.ts'
 import { reolinkCameraSchema } from '../../packages/addon-provider-reolink/src/schema.ts'
 import { tuyaDeviceConfigSchema } from '../../packages/addon-provider-tuya/src/devices/tuya-base-device.ts'
-import { unifiControllerSchema } from '../../packages/addon-provider-unifi/src/config.ts'
-import { unraidHubSchema } from '../../packages/addon-provider-unraid/src/config.ts'
+import { buildConnectionFormSchema as unifiConnectionForm } from '../../packages/addon-provider-unifi/src/config.ts'
+import { buildConnectionFormSchema as unraidConnectionForm } from '../../packages/addon-provider-unraid/src/config.ts'
 import { veluxConnectionSchema } from '../../packages/addon-provider-velux/src/config.ts'
 import { vesyncAccountSchema } from '../../packages/addon-provider-vesync/src/config.ts'
 
 const cases: ReadonlyArray<readonly [string, z.ZodType, readonly string[]]> = [
-  ['unifi controller', unifiControllerSchema, ['connection.apiKey', 'connection.password']],
   ['vesync account', vesyncAccountSchema, ['connection.password']],
   ['velux integration', veluxConnectionSchema, ['password']],
   ['rademacher integration', rademacherConnectionSchema, ['password']],
   ['ecowitt gateway (union transport)', ecowittGatewaySchema, ['connection.password']],
-  ['unraid hub', unraidHubSchema, ['connection.apiKey']],
   ['tuya device', tuyaDeviceConfigSchema, ['localKey']],
   ['dreame child', dreameChildSchema, ['navigationAccessCode']],
   ['reolink camera', reolinkCameraSchema, ['password']],
@@ -38,5 +37,23 @@ describe('declared device-config secrets', () => {
   it.each(cases)('%s declares its credentials', (_name, schema, expected) => {
     const paths = collectZodSecretPaths(schema)
     for (const p of expected) expect(paths).toContain(p)
+  })
+})
+
+/**
+ * An integration with no Hub device keeps its credentials on the integration's
+ * own settings form (`globalSettingsSchema`); a `password` field there is what
+ * puts the value in the keychain.
+ */
+const integrationForms: ReadonlyArray<readonly [string, () => ConfigUISchema, readonly string[]]> =
+  [
+    ['unifi controller', unifiConnectionForm, ['apiKey', 'password']],
+    ['unraid hub', unraidConnectionForm, ['apiKey']],
+  ]
+
+describe('declared integration-form secrets', () => {
+  it.each(integrationForms)('%s declares its credentials', (_name, buildForm, expected) => {
+    const keys = collectSecretConfigKeys(buildForm())
+    for (const key of expected) expect(keys).toContain(key)
   })
 })
