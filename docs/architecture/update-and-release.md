@@ -30,7 +30,7 @@ hours. This page exists because it has cost them.
 | **Framework** (`types`, `sdk`, `ui-library`, and the private `server-framework` shipped as `@camstack/server/system`) | inside the `@camstack/server` tarball and dependency closure | a root-package install runs |
 | **Addons** | `<dataDir>/addons/` | `camstack deploy`, or the Admin UI Addons page |
 
-**One published framework package ([D988](../decisions/adr-0988-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md)).**
+**One published framework package ([D989](../decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md)).**
 The old system package is no longer published; its dist is built into
 `server/backend/system/` by `scripts/sync-system-into-server.mjs` and travels in
 the `@camstack/server` tarball. Each addon declares `camstack.requires.server`, the

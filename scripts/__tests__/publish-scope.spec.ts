@@ -67,7 +67,7 @@ describe('resolvePublishSet', () => {
     // no `../types/src` anywhere), so the fleet refused the ninth switch id
     // with an eight-id enum while the types package beside it had nine (D545).
     const set = resolvePublishSet(['packages/types/src/interfaces/camera-switches.ts'], ROOT)
-    // The framework is private and published only inside the server (D988).
+    // The framework is private and published only inside the server (D989).
     expect(set).toContain('server/backend')
     expect(set).not.toContain('packages/system')
     expect([...(bundledSources(ROOT).get('packages/system') ?? [])]).toContain('packages/types')
@@ -108,7 +108,7 @@ describe('orderForPublish', () => {
 describe('staleRegistryPins', () => {
   it('never calls the folded framework a stale registry pin — it ships inside the server', () => {
     // The 2026-09-19 closure had `system` pinned from npm next to a newer
-    // `types`. The framework is no registry package any more (D988), so that
+    // `types`. The framework is no registry package any more (D989), so that
     // closure cannot be built: types in the set, the framework travels along.
     expect(staleRegistryPins(['packages/types'], ROOT)).not.toContainEqual({
       pinned: 'packages/system',

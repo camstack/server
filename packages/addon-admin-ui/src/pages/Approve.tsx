@@ -1,5 +1,5 @@
 /**
- * `/approve` — where an operator approves a terminal sign-in (D988). The code
+ * `/approve` — where an operator approves a terminal sign-in (D989). The code
  * is typed here; nothing in the URL pre-fills it. An approval ends on the
  * existing completion page (`/sso-complete`, action `cli-login`).
  */

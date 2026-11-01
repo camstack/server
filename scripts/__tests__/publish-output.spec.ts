@@ -90,7 +90,7 @@ describe('finalizePublishSet', () => {
     expect(final.dropped).toContain('packages/addon-benchmark')
   })
 
-  it('a types change publishes types and the server, and never the folded framework (D988)', () => {
+  it('a types change publishes types and the server, and never the folded framework (D989)', () => {
     const part = partitionPublishSet(
       directOwners(['packages/types/src/capabilities/ptz.cap.ts'], ROOT),
       ROOT,

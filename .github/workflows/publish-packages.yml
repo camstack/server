@@ -315,7 +315,7 @@ jobs:
             cd "$GITHUB_WORKSPACE"
           done
 
-      # ── Stamp the minimum versions (D988) ─────────────────────────
+      # ── Stamp the minimum versions (D989) ─────────────────────────
       # Every published addon declares the server it was cut against; the
       # server declares the addons published beside it and the wrapper
       # minimums. Runs AFTER the bump so it reads the versions that ship, and

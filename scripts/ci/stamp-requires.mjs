@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * stamp-requires — writes the minimum versions a release needs (D988) into the
+ * stamp-requires — writes the minimum versions a release needs (D989) into the
  * package.json files being published, right after "Bump package versions".
  *
  *   node scripts/ci/stamp-requires.mjs <comma-separated package dirs>

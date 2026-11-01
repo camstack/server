@@ -8,7 +8,7 @@ const addon = (camstack: Record<string, unknown>): PackageFacts => ({
   camstack,
 })
 
-describe('check-requires-declared (D988)', () => {
+describe('check-requires-declared (D989)', () => {
   it('refuses a published addon with no declaration', () => {
     expect(missingDeclarations([addon({ addons: [] })])).toEqual([
       'packages/addon-x (@camstack/addon-x) declares no camstack.requires.server',

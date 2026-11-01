@@ -404,7 +404,7 @@ export interface ClusterAddonStatus {
   nodes: readonly ClusterNodeStatus[]
 }
 
-/** The update a node cannot take yet, and the server version it waits for (D988). */
+/** The update a node cannot take yet, and the server version it waits for (D989). */
 export interface BlockedUpdate {
   readonly latestVersion: string
   readonly requiredServer: string
@@ -419,7 +419,7 @@ interface AddonCardProps {
   /** Latest available version from npm (if update available) */
   availableUpdate?: string
   /**
-   * A newer version exists but needs a newer server than this node runs (D988):
+   * A newer version exists but needs a newer server than this node runs (D989):
    * no Update button, the card says what it waits for.
    */
   readonly blockedUpdate?: BlockedUpdate

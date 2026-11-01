@@ -446,7 +446,7 @@ const ServerUpdateActionResultSchema = z.object({
   blockers: z.array(UpdateBlockerSchema).optional(),
   /**
    * The minimums the target server declares and this node does not meet
-   * (D988), present when the update was refused with
+   * (D989), present when the update was refused with
    * `reason: 'requirements-unmet'`. Each names the versions on both sides.
    */
   unmet: z.array(UnmetRequirementSchema).optional(),

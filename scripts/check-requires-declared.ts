@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 /**
  * Every package a node installs separately from the server declares the
- * server it needs (D988).
+ * server it needs (D989).
  *
  *  - a published ADDON package (`camstack.addons`, not private) carries
  *    `camstack.requires.server`;
@@ -82,7 +82,7 @@ function main(): void {
     )
     return
   }
-  console.error('check-requires-declared: FAILED (D988)')
+  console.error('check-requires-declared: FAILED (D989)')
   for (const p of problems) console.error(`  ${p}`)
   console.error(
     '  Declare camstack.requires.server in the package.json (addons are re-stamped at publish).',

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment -- mock factories cross typed boundaries */
 import { describe, it, expect, beforeEach } from 'vitest'
-import { staticJwtSigningKey } from '@camstack/system'
+import { staticJwtSigningKey } from '@camstack/server/system'
 import { createAuthRouter } from '../auth.router.js'
 import { AuthService } from '../../../core/auth/auth.service.js'
 import { CliApprovalService } from '../../../core/auth/cli-approval.service.js'

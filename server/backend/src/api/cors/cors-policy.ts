@@ -37,7 +37,7 @@ import {
   OPAQUE_ORIGIN,
   type ParsedOriginList,
   readOriginSetting,
-} from '@camstack/system'
+} from '@camstack/server/system'
 
 export { normalizeOrigin, OPAQUE_ORIGIN, type ParsedOriginList }
 

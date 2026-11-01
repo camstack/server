@@ -1,5 +1,5 @@
 /**
- * What an addon version declares it needs (`camstack.requires`, D988), judged
+ * What an addon version declares it needs (`camstack.requires`, D989), judged
  * against what this node runs. The declaration is read from the registry's
  * version document of the TARGET; an unreadable or absent block is "declares
  * nothing", an unreadable running server is "unknown", which never passes.

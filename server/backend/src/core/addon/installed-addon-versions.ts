@@ -1,6 +1,6 @@
 /**
  * `package name -> version` of every addon package installed under an addons
- * dir (D988) — the input to "which addons does the staged server want updated
+ * dir (D989) — the input to "which addons does the staged server want updated
  * with it". Read from the package.json on disk, scoped (`@camstack/<name>`) or
  * flat (`<name>`); a package whose version cannot be read is `null`, never
  * absent and never `'0.0.0'`.

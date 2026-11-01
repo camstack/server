@@ -4,7 +4,7 @@
 
 # Decisions
 
-950 architecture decision records. One file per decision, never
+951 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -965,6 +965,7 @@ that rots.
 | D985 | [A hub is its own integration instance](adr-0985-a-hub-is-its-own-integration-instance.md) | ✅ accepted | 2026-10-31 |
 | D987 | [A migration runs at boot under its owner — one ledger per database file, one transaction per migration, a verified snapshot first](adr-0987-a-migration-runs-at-boot-under-its-owner.md) | ✅ accepted (supersedes D853) | 2026-10-31 |
 | D988 | [A terminal with no TTY signs in by an approval the operator gives in the admin UI](adr-0988-a-terminal-signs-in-by-browser-approval.md) | ✅ accepted | 2026-11-01 |
+| D989 | [One published framework package, and every delivery declares the server it needs](adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md) | ✅ accepted (supersedes the system/server package split (D15 amended)) | 2026-11-01 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

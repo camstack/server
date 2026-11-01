@@ -56,7 +56,7 @@ export const HOST_EXTERNAL_SPECIFIERS: readonly string[] = [
 ]
 
 /**
- * The oldest `@camstack/server` this starter can host (D988) — the first one
+ * The oldest `@camstack/server` this starter can host (D989) — the first one
  * that ships its kernel as `@camstack/server/system`, because the host-external
  * list above resolves that specifier and an older server imports another.
  * Declared as `camstack.requires.server` in this package's `package.json`; a

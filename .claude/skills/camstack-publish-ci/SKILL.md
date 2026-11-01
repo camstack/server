@@ -112,7 +112,7 @@ keeps the pin it already has. `dry_run=true` prints one line per package
 
 **A capability or framework change** (`*.cap.ts`, `packages/system`) selects
 `@camstack/server`: the framework is the private `@camstack/server-framework`
-workspace, built into the server tarball as `@camstack/server/system` (D988). There
+workspace, built into the server tarball as `@camstack/server/system` (D989). There
 is no separate system publish and no `force_packages` for it; `force_packages=@camstack/server`
 still publishes the server even when the built output matches. After the bump the
 workflow stamps `camstack.requires` (`scripts/ci/stamp-requires.mjs`).

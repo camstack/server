@@ -159,7 +159,7 @@ describe('AddonCard version selector (update available)', () => {
   })
 })
 
-describe('AddonCard held update (D988)', () => {
+describe('AddonCard held update (D989)', () => {
   it('names the server version a held update waits for and offers no Update button', () => {
     render(
       <AddonCard

@@ -21,7 +21,7 @@ export type AddonVersionReason =
 
 export type AddonVersionMove =
   | { readonly move: false }
-  /** A move that would happen but for a requirement the target declares and the install does not meet (D988). */
+  /** A move that would happen but for a requirement the target declares and the install does not meet (D989). */
   | { readonly move: false; readonly blockedBy: readonly UnmetRequirement[] }
   | {
       readonly move: true

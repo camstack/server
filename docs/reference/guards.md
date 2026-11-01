@@ -162,7 +162,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-records-no-unindexed-where.ts` | A `where` on a record kind names a DECLARED index field - and nothing reaches the `records` table around the engine (D881, D447). |
 | `scripts/check-registered-caps-declared.ts` | Registration guard — a capability an addon REGISTERS at runtime must also be DECLARED in a manifest of the same package. |
 | `scripts/check-replay-isolation.ts` | Replay isolation guard — a replay run is a dry-run, and the ONLY thing that makes that true is that nothing under a `replay/` directory can reach a production writer. |
-| `scripts/check-requires-declared.ts` | Every package a node installs separately from the server declares the server it needs (D988). |
+| `scripts/check-requires-declared.ts` | Every package a node installs separately from the server declares the server it needs (D989). |
 | `scripts/check-reserved-collection-sources.ts` | A RESERVED collection source id is spelled by its OWNER and by nobody else (D625). |
 | `scripts/check-retention-settings-consumed.ts` | Retention-settings guard — **an operator-visible retention value has exactly one consumer, and a retired one does not come back.** ## The failure this catches D61 collapsed retention into one age sweep over tracks. It did not touch the s… |
 | `scripts/check-runner-barrel-free.ts` | Runner-footprint guard (D28) — fail the build if the addon-runner's transitive SOURCE closure imports a runtime VALUE from the `@camstack/types` root barrel. |

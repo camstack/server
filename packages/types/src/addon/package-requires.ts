@@ -1,5 +1,5 @@
 /**
- * What a published package needs from the rest of the install (D988).
+ * What a published package needs from the rest of the install (D989).
  *
  * One published framework package (`@camstack/server`) carries the kernel, the
  * builtins and the capability contracts, so "which addon runs on which

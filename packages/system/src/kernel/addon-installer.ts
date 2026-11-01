@@ -402,7 +402,7 @@ export class AddonInstaller {
     // manual `camstack deploy core`), so a fresh deployment could never boot.
     // The install loop already special-cases '@camstack/server/system' (a failed core
     // install is fatal), confirming it is meant to be in this list.
-    // The framework is no dependency of the server (it IS the server, D988), so
+    // The framework is no dependency of the server (it IS the server, D989), so
     // the closure-provided package is appended by name; the seeding loop skips
     // it while the running closure resolves it.
     return Object.freeze([

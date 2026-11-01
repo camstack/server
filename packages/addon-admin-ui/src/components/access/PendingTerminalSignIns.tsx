@@ -1,5 +1,5 @@
 /**
- * Terminal sign-ins waiting for an approval (D988), as the admin sees them
+ * Terminal sign-ins waiting for an approval (D989), as the admin sees them
  * under Login sessions. A list carries no code, so it can only DENY ("not me");
  * approving takes the code typed at `/approve`.
  */

@@ -131,7 +131,7 @@ const PackageUpdateSchema = z.object({
   category: z.enum(['addon', 'core']),
   requiresRestart: z.boolean(),
   isSystem: z.boolean(),
-  /** Held: what the newer version needs and this node does not meet (D988). */
+  /** Held: what the newer version needs and this node does not meet (D989). */
   blockedBy: z.array(UnmetRequirementSchema).readonly().optional(),
 })
 

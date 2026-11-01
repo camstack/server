@@ -17,7 +17,7 @@ const pkg = JSON.parse(readFileSync(join(PKG_DIR, 'package.json'), 'utf8')) as {
 
 describe('@camstack/server/system builtin icons', () => {
   it('ships assets/ in the server tarball', () => {
-    // This package is private (D988): its dist and assets travel inside the
+    // This package is private (D989): its dist and assets travel inside the
     // `@camstack/server` tarball, copied by `scripts/sync-system-into-server.mjs`.
     const server = JSON.parse(
       readFileSync(join(PKG_DIR, '..', '..', 'server', 'backend', 'package.json'), 'utf8'),

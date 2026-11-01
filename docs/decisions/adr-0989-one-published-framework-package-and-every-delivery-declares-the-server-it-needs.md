@@ -1,5 +1,5 @@
 ---
-id: D988
+id: D989
 title: One published framework package, and every delivery declares the server it needs
 status: accepted
 date: 2026-11-01

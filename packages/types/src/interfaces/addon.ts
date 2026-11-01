@@ -1484,7 +1484,7 @@ export interface AddonPackageManifest {
    */
   readonly nativeDependencies?: Readonly<Record<string, string>>
   /**
-   * What this package needs from the rest of the install (D988): the oldest
+   * What this package needs from the rest of the install (D989): the oldest
    * server (addons), the oldest addons and shell (the server). Stamped by the
    * publish workflow, never typed by hand — see `PackageRequiresSchema`.
    */

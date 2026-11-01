@@ -40,7 +40,7 @@ function registryRequiring(server: string, latest = '1.3.0'): typeof fetch {
     )) as typeof fetch
 }
 
-describe('addon requirements (D988)', () => {
+describe('addon requirements (D989)', () => {
   afterEach(() => {
     vi.restoreAllMocks()
     emit.mockClear()

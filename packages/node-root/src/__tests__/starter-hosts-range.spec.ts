@@ -1,5 +1,5 @@
 /**
- * D988: the starter declares which servers it can host
+ * D989: the starter declares which servers it can host
  * (`camstack.requires.server`). A staged server outside that range is refused
  * at the swap and `current` stays — the previous server keeps running.
  */

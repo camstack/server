@@ -3,7 +3,7 @@ import { splitByNodeRequirements } from '../delivery-requirements.js'
 
 const requiresServer = (range: string) => async () => ({ server: range })
 
-describe('splitByNodeRequirements (D988)', () => {
+describe('splitByNodeRequirements (D989)', () => {
   const target = { name: '@camstack/addon-x', version: '1.3.0' }
 
   it('holds a delivery whose version needs a newer server than the node runs', async () => {

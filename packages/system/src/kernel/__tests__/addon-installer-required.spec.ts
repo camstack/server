@@ -54,7 +54,7 @@ function listWorkspacePackages(): Array<{
 }> {
   const packagesDir = path.join(repoRoot(), 'packages')
   const out: Array<{ name: string; dir: string; keywords: readonly string[] }> = []
-  // The framework is part of `@camstack/server` since D988, so the server's own
+  // The framework is part of `@camstack/server` since D989, so the server's own
   // directory is the workspace home of that bootstrap entry.
   const candidates = fs.readdirSync(packagesDir).map((entry) => path.join(packagesDir, entry))
   const frameworkDir = path.join(packagesDir, 'system')

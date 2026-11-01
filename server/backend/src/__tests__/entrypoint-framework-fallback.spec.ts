@@ -133,7 +133,7 @@ describe('entrypoint framework fallback', () => {
         JSON.stringify({ name: `@camstack/${name}`, version }),
       )
     }
-    // The server carries the kernel and builtins itself, as `@camstack/server/system` (D988).
+    // The server carries the kernel and builtins itself, as `@camstack/server/system` (D989).
     const folded = path.join(seed, 'node_modules', '@camstack', 'server', 'system')
     fs.mkdirSync(folded, { recursive: true })
     fs.writeFileSync(

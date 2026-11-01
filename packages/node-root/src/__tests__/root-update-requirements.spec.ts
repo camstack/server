@@ -1,5 +1,5 @@
 /**
- * D988: a server declares the shell and the addons it needs; `applyServerUpdate`
+ * D989: a server declares the shell and the addons it needs; `applyServerUpdate`
  * reads the declaration from the STAGED closure and refuses before it arms a
  * swap the node cannot live with.
  */
@@ -95,7 +95,7 @@ function make(
   })
 }
 
-describe('applyServerUpdate reads the staged closure requirements (D988)', () => {
+describe('applyServerUpdate reads the staged closure requirements (D989)', () => {
   it('refuses a server that needs a newer shell, names both versions and arms nothing', async () => {
     const svc = make(stageWith('1.2.700', { wrapper: { image: '>=1.2.650' } }))
     const res = await svc.applyServerUpdate({ version: '1.2.700' })

@@ -1,5 +1,5 @@
 /**
- * Availability publishing: the framework is part of `@camstack/server` (D988), so
+ * Availability publishing: the framework is part of `@camstack/server` (D989), so
  * `listFrameworkPackages` has no row and publishes nothing — the server-update
  * path announces it. The fallible-read rule is pinned here: a registry lookup
  * that FAILS must log and publish nothing, never look like "no updates". The
@@ -94,7 +94,7 @@ function availabilityEvents(events: readonly SystemEvent[]): readonly SystemEven
   return events.filter((event) => event.category === 'update.available')
 }
 
-describe('listFrameworkPackages after the fold (D988)', () => {
+describe('listFrameworkPackages after the fold (D989)', () => {
   it('has no row of its own: the framework ships inside @camstack/server, whose update the server path announces', async () => {
     const { service, emitted } = buildService()
     const rows = await service.listFrameworkPackages()

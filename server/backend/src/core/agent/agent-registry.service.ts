@@ -401,7 +401,7 @@ export class AgentRegistryService {
 
   /** Reads the dry-run switch per round, so flipping the setting needs no restart. */
   private convergenceDryRun: () => boolean = () => true
-  /** How a delivery's `camstack.requires` is read (D988); unwired, every delivery passes. */
+  /** How a delivery's `camstack.requires` is read (D989); unwired, every delivery passes. */
   private deliveryRequiresOf: RequiresOf | null = null
   /** The server version each node last reported on `$agent.status`; `null` = reported none. */
   private readonly nodeServerVersions = new Map<string, string | null>()
@@ -495,7 +495,7 @@ export class AgentRegistryService {
     this.trackedVersionCache.clear()
   }
 
-  /** Wire how the requirements of a version to deliver are read (D988). */
+  /** Wire how the requirements of a version to deliver are read (D989). */
   setDeliveryRequirements(requiresOf: RequiresOf | null): void {
     this.deliveryRequiresOf = requiresOf
   }
@@ -1420,7 +1420,7 @@ export class AgentRegistryService {
     }
     if (planned.targets.length === 0 && planned.retired.length === 0) return
 
-    // GATE 2b (D988) — a version needing a newer server than this node runs is
+    // GATE 2b (D989) — a version needing a newer server than this node runs is
     // held, naming both versions; the node keeps what it has.
     const requiresOf = this.deliveryRequiresOf
     if (requiresOf !== null && planned.targets.length > 0) {

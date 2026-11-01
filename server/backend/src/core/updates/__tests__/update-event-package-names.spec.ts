@@ -14,7 +14,7 @@ describe('NC_UPDATE_EVENT_PACKAGE_NAMES — one entry per update-event producer'
   })
 
   it('is exactly [root package, wrapper literal]', () => {
-    // The framework ships inside the root package (D988): `listFrameworkPackages`
+    // The framework ships inside the root package (D989): `listFrameworkPackages`
     // has no row of its own, and `@camstack/types` / `@camstack/sdk` are never
     // announced, so none of them is offered.
     expect(NC_UPDATE_EVENT_PACKAGE_NAMES).toEqual([HUB_ROOT_SPEC.packageName, WRAPPER_PACKAGE_NAME])

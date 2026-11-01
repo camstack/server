@@ -44,7 +44,7 @@ describe('decideAddonVersionMove', () => {
   })
 })
 
-describe('decideAddonVersionMove with unmet requirements (D988)', () => {
+describe('decideAddonVersionMove with unmet requirements (D989)', () => {
   const unmet = [{ kind: 'server-too-old', required: '1.3.0', running: '1.2.0' }] as const
 
   it('holds a move whose target needs a newer server and names why', () => {

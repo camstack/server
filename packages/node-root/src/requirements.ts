@@ -1,5 +1,5 @@
 /**
- * Package requirements (D988) for the zero-dep starter layer.
+ * Package requirements (D989) for the zero-dep starter layer.
  *
  * The declaration format and its authoritative checker live in
  * `@camstack/types` (`PackageRequiresSchema`, `unmetRequirements`). The starter

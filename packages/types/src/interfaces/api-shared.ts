@@ -116,7 +116,7 @@ export interface PackageUpdate {
   readonly latestVersion: string
   readonly category: 'addon' | 'core'
   readonly requiresRestart: boolean
-  /** Set when the newer version is held: what it needs and this node does not meet (D988). */
+  /** Set when the newer version is held: what it needs and this node does not meet (D989). */
   readonly blockedBy?: readonly UnmetRequirement[]
 }
 
@@ -125,7 +125,7 @@ export interface UpdateResult {
   readonly version: string
   readonly requiresRestart: boolean
   readonly error?: string
-  /** Why an update was refused for its declared requirements (D988). */
+  /** Why an update was refused for its declared requirements (D989). */
   readonly unmet?: readonly UnmetRequirement[]
 }
 

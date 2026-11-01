@@ -4,7 +4,7 @@
  *
  * The kernel and the builtins are a private workspace (`@camstack/server-framework`)
  * whose built output ships INSIDE the `@camstack/server` tarball, imported as
- * `@camstack/server/system` (D988). One published framework package means one version to
+ * `@camstack/server/system` (D989). One published framework package means one version to
  * keep in step, and no `force_packages=@camstack/system` on a capability change.
  *
  * A source or config file that still names `@camstack/system` imports a package

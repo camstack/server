@@ -411,7 +411,7 @@ function createAgentService(deps: AgentServiceDeps): ServiceSchema {
           const decodeDetection = buildDecodeDetectionSlice()
           return {
             nodeId: broker.nodeID,
-            // The server this node runs (D988): the hub holds an addon delivery
+            // The server this node runs (D989): the hub holds an addon delivery
             // that needs a newer one. `null` when the closure cannot be read.
             serverVersion: readRunningServerVersion(),
             name: persistedAgentName(deps.configPath, deps.agentName),

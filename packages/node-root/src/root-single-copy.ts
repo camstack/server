@@ -342,7 +342,7 @@ export function applyPendingRootSwap(
   const staging = marker.stagingPath
   const dest = currentDir(rootDir)
 
-  // D988: this starter declares the oldest server it can host. A staged server
+  // D989: this starter declares the oldest server it can host. A staged server
   // below it is refused the same way an invalid one is — staging and marker
   // discarded, `current` untouched, the previous server keeps running.
   if (hostsServerMin !== undefined && compareSemver(marker.version, hostsServerMin) < 0) {

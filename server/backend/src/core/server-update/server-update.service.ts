@@ -78,7 +78,7 @@ export interface ServerUpdateServiceOptions {
   readonly updateAvailabilityStore?: IUpdateAvailabilityStore
   /** Pre-flight (D877): addons the target version would refuse to start on this node's data. */
   readonly updatePreflight?: (targetVersion: string) => Promise<readonly UpdateBlocker[]>
-  /** Installed addon versions (D988), so an accepted update can name the addons to update with it. */
+  /** Installed addon versions (D989), so an accepted update can name the addons to update with it. */
   readonly installedAddonVersions?: () => Readonly<Record<string, string | null>>
   /** The runner boot check (D877), served on the status. */
   readonly runnerBootCheck?: () => RunnerBootCheck | undefined

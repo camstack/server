@@ -223,7 +223,7 @@ export interface RootUpdateServiceOptions {
    * The addon packages installed on this node, `package name → version`
    * (`null` for one whose version cannot be read). Injected - node-root cannot
    * scan the addons dir. Used to name the addons a staged server's declared
-   * minimums (D988) want updated WITH it; absent means "none known", never
+   * minimums (D989) want updated WITH it; absent means "none known", never
    * "all fine".
    */
   readonly installedAddonVersions?: () => Readonly<Record<string, string | null>>
@@ -891,7 +891,7 @@ export class RootUpdateService {
       this.inFlight = 'idle'
     }
 
-    // D988: the staged server declares the shell and the addons it needs. A
+    // D989: the staged server declares the shell and the addons it needs. A
     // shell below the minimum is refused HERE, before a swap is armed — the
     // staged copy is discarded and `current` stays as it is.
     const requires = readClosureRequires(stagingPath, this.spec)

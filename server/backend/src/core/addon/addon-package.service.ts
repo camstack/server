@@ -233,7 +233,7 @@ export type RegistryLookup =
   | {
       readonly ok: true
       readonly latestVersion: string | null
-      /** `camstack.requires` the latest version declares (D988); absent when it declares none. */
+      /** `camstack.requires` the latest version declares (D989); absent when it declares none. */
       readonly requires?: PackageRequires
     }
   | { readonly ok: false; readonly error: string }
@@ -380,7 +380,7 @@ export class AddonPackageService {
      * (manual-boot) — unit tests leave it out and get the RAM-only emitter.
      */
     updateAvailabilityStore?: IUpdateAvailabilityStore,
-    /** The server version this process runs (D988); tests inject one, production reads the closure. */
+    /** The server version this process runs (D989); tests inject one, production reads the closure. */
     private readonly readServerVersion: () => string | null = readRunningServerVersion,
   ) {
     this.logger = this.loggingService.createLogger('AddonPackageService')
@@ -1325,7 +1325,7 @@ export class AddonPackageService {
       let updatedVersion: string
 
       if (category === 'addon') {
-        // D988: a version that needs a newer server (or addon) than this node
+        // D989: a version that needs a newer server (or addon) than this node
         // runs is refused BEFORE it is installed, naming both versions.
         const unmet = this.unmetFor(await this.fetchRequires(name, version ?? 'latest'))
         if (unmet.length > 0) {
@@ -2423,7 +2423,7 @@ export class AddonPackageService {
     return this.fetchRequires(name, version)
   }
 
-  /** What a target's `camstack.requires` asks that this node does not meet (D988). */
+  /** What a target's `camstack.requires` asks that this node does not meet (D989). */
   private unmetFor(requires: PackageRequires | undefined): readonly UnmetRequirement[] {
     return unmetAddonRequirements(requires, {
       serverVersion: this.readServerVersion(),

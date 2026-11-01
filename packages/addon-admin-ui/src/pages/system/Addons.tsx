@@ -317,7 +317,7 @@ function InstalledTab({
   const { data: updates } = useAddonsListUpdates({ nodeId: selectedNode.id })
 
   // Map packageName → latestVersion for quick lookup
-  // A held update (D988: it needs a newer server than this node runs) is not an
+  // A held update (D989: it needs a newer server than this node runs) is not an
   // offer: no Update button, no "Update all", only the card's note.
   const updateMap = useMemo(() => {
     const map = new Map<string, string>()

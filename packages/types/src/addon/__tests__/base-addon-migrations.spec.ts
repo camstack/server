@@ -2,7 +2,7 @@
  * `BaseAddon.runMigrations` (D987 M3): the addon offers its bound catalogue to the hub's
  * `migrations` capability through `ctx.api`, runs what it is told to run, and refuses to
  * serve when a `block-owner` migration did not apply. The engine itself is proven on real
- * SQLite in `@camstack/system`; this pins the addon side of the seam.
+ * SQLite in `@camstack/server/system`; this pins the addon side of the seam.
  */
 import { createTRPCClient, TRPCClientError, type TRPCLink } from '@trpc/client'
 import { observable } from '@trpc/server/observable'

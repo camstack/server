@@ -19,7 +19,7 @@ const server: Entry = {
 }
 const wrapperMinimums = { desktop: '>=0.1.6', image: '>=1.2.700' }
 
-describe('stamp-requires (D988)', () => {
+describe('stamp-requires (D989)', () => {
   it('stamps every addon in the set with the server it was cut against', () => {
     const stamps = computeStamps({
       packages: [addon('addon-a', '1.0.5'), addon('addon-b', '2.0.1')],

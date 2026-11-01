@@ -246,7 +246,7 @@ function serverPackageDir(packages) {
 
 /** Names `@camstack/server` pins. Empty when the workspace has no server. */
 /**
- * The framework that is published INSIDE the server tarball (D988): private,
+ * The framework that is published INSIDE the server tarball (D989): private,
  * never a registry package, never a pin. A change to it reaches a node only
  * through a new server, so for the cascade it is a closure member like `types`.
  */

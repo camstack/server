@@ -1,5 +1,5 @@
 /**
- * Approve a terminal sign-in (D988): the operator types the short code a
+ * Approve a terminal sign-in (D989): the operator types the short code a
  * terminal printed, sees who asked (address, client, how long ago) and
  * approves or denies. The code is never taken from the URL, so a link cannot
  * pre-fill it: only someone reading it off their own terminal can approve.
