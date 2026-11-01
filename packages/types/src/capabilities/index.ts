@@ -449,6 +449,25 @@ export {
   deviceRunsCapability,
 } from './device-runs.cap.js'
 export {
+  type ITimedRunProvider,
+  TIMED_RUN_DEVICE_TYPES,
+  TIMED_RUN_LIMITS,
+  type TimedRunActuator,
+  TimedRunActuatorSchema,
+  type TimedRunLimit,
+  type TimedRunRefusal,
+  TimedRunRefusalSchema,
+  type TimedRunResult,
+  TimedRunResultSchema,
+  type TimedRunStatus,
+  TimedRunStatusSchema,
+  type TimedRunUnit,
+  TimedRunUnitSchema,
+  timedRunCapability,
+  timedRunLimitOf,
+  timedRunSeconds,
+} from './timed-run.cap.js'
+export {
   type DeviceCaStatus,
   DeviceCaStatusSchema,
   type DeviceCertificateSettings,
@@ -3358,6 +3377,7 @@ import type { recordsCapability } from './records.cap.js'
 import type { recordEntriesCapability } from './record-entries.cap.js'
 import type { deviceHistoryCapability } from './device-history.cap.js'
 import type { deviceRunsCapability } from './device-runs.cap.js'
+import type { timedRunCapability } from './timed-run.cap.js'
 import type { keychainCapability } from './keychain.cap.js'
 import type { keychainAdminCapability } from './keychain-admin.cap.js'
 import type { deviceCredentialsCapability } from './device-credentials.cap.js'
@@ -3519,6 +3539,7 @@ type AnyCapability =
   | typeof recordEntriesCapability
   | typeof deviceHistoryCapability
   | typeof deviceRunsCapability
+  | typeof timedRunCapability
   | typeof keychainCapability
   | typeof keychainAdminCapability
   | typeof deviceCredentialsCapability

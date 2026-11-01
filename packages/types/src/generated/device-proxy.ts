@@ -96,6 +96,7 @@ import type { streamSignalsCapability } from '../capabilities/stream-signals.cap
 import type { switchCapability } from '../capabilities/switch.cap.js'
 import type { tamperCapability } from '../capabilities/tamper.cap.js'
 import type { temperatureSensorCapability } from '../capabilities/temperature-sensor.cap.js'
+import type { timedRunCapability } from '../capabilities/timed-run.cap.js'
 import type { updateCapability } from '../capabilities/update.cap.js'
 import type { vacuumControlCapability } from '../capabilities/vacuum-control.cap.js'
 import type { valveCapability } from '../capabilities/valve.cap.js'
@@ -202,6 +203,7 @@ export interface DeviceProxyState {
   readonly switch: SliceHandle<InferRuntimeState<typeof switchCapability>>
   readonly tamper: SliceHandle<InferRuntimeState<typeof tamperCapability>>
   readonly temperatureSensor: SliceHandle<InferRuntimeState<typeof temperatureSensorCapability>>
+  readonly timedRun: SliceHandle<InferRuntimeState<typeof timedRunCapability>>
   readonly update: SliceHandle<InferRuntimeState<typeof updateCapability>>
   readonly vacuumControl: SliceHandle<InferRuntimeState<typeof vacuumControlCapability>>
   readonly valve: SliceHandle<InferRuntimeState<typeof valveCapability>>
@@ -319,6 +321,7 @@ export interface DeviceProxy {
   readonly switch?: InferDeviceProxyCap<typeof switchCapability>
   readonly tamper?: InferDeviceProxyCap<typeof tamperCapability>
   readonly temperatureSensor?: InferDeviceProxyCap<typeof temperatureSensorCapability>
+  readonly timedRun?: InferDeviceProxyCap<typeof timedRunCapability>
   readonly update?: InferDeviceProxyCap<typeof updateCapability>
   readonly vacuumControl?: InferDeviceProxyCap<typeof vacuumControlCapability>
   readonly valve?: InferDeviceProxyCap<typeof valveCapability>
@@ -1067,6 +1070,12 @@ export function createDeviceProxy(
     getStatus: (input?: unknown) => dispatch('temperature-sensor', 'temperatureSensor', 'getStatus', 'query', input),
   }
 
+  const timedRunInterface = {
+    runFor: (input?: unknown) => dispatch('timed-run', 'timedRun', 'runFor', 'mutation', input),
+    cancel: (input?: unknown) => dispatch('timed-run', 'timedRun', 'cancel', 'mutation', input),
+    getStatus: (input?: unknown) => dispatch('timed-run', 'timedRun', 'getStatus', 'query', input),
+  }
+
   const updateInterface = {
     installUpdate: (input?: unknown) => dispatch('update', 'update', 'installUpdate', 'mutation', input),
     getStatus: (input?: unknown) => dispatch('update', 'update', 'getStatus', 'query', input),
@@ -1414,6 +1423,7 @@ export function createDeviceProxy(
       switch: createSliceHandle<InferRuntimeState<typeof switchCapability>>(stateSource, binding.deviceId, 'switch'),
       tamper: createSliceHandle<InferRuntimeState<typeof tamperCapability>>(stateSource, binding.deviceId, 'tamper'),
       temperatureSensor: createSliceHandle<InferRuntimeState<typeof temperatureSensorCapability>>(stateSource, binding.deviceId, 'temperature-sensor'),
+      timedRun: createSliceHandle<InferRuntimeState<typeof timedRunCapability>>(stateSource, binding.deviceId, 'timed-run'),
       update: createSliceHandle<InferRuntimeState<typeof updateCapability>>(stateSource, binding.deviceId, 'update'),
       vacuumControl: createSliceHandle<InferRuntimeState<typeof vacuumControlCapability>>(stateSource, binding.deviceId, 'vacuum-control'),
       valve: createSliceHandle<InferRuntimeState<typeof valveCapability>>(stateSource, binding.deviceId, 'valve'),
@@ -1512,6 +1522,7 @@ export function createDeviceProxy(
     ...(bound('switch') ? { switch: switchInterface } : {}),
     ...(bound('tamper') ? { tamper: tamperInterface } : {}),
     ...(bound('temperature-sensor') ? { temperatureSensor: temperatureSensorInterface } : {}),
+    ...(bound('timed-run') ? { timedRun: timedRunInterface } : {}),
     ...(bound('update') ? { update: updateInterface } : {}),
     ...(bound('vacuum-control') ? { vacuumControl: vacuumControlInterface } : {}),
     ...(bound('valve') ? { valve: valveInterface } : {}),

@@ -2316,6 +2316,14 @@ export interface UnexportedCap {
 
 export const CAPS_NOT_EXPORTED: readonly UnexportedCap[] = [
   {
+    cap: 'timed-run',
+    reason:
+      'A hub-side timer for a device that has none: a "run for N minutes" command and ' +
+      'the deadline of the pending switch-off. The switch or pump it drives is already ' +
+      'exported through `switch`, and the deadline is a countdown, not a value an ' +
+      'entity can hold.',
+  },
+  {
     cap: 'device-runs',
     reason:
       'A ledger of past runs (a document per cycle, read by list and by id), with no ' +

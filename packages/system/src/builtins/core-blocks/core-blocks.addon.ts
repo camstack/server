@@ -29,6 +29,7 @@ import {
   coreBlockComposition,
   coreBlocksCapability,
   powerSourceCapability,
+  timedRunCapability,
   actionsCapability,
   schedulersCapability,
   hydrateSchema,
@@ -45,6 +46,8 @@ import {
   EventCategory,
 } from '@camstack/types'
 import { parseDeviceStateChanged } from '../shared/device-state-changed.js'
+import { armTimedRuns, buildTimedRunService } from './timed-run/timed-run-wiring.js'
+import type { TimedRunService } from './timed-run/timed-run-service.js'
 import {
   type BlockProcessHost,
   type BlockRunnerSnapshot,
@@ -117,6 +120,8 @@ export class CoreBlocksAddon extends BaseAddon {
   private schedulers: SchedulersRuntime | null = null
   /** The power-source provider; its pending switch-on timers are cancelled on shutdown. */
   private powerSource: PowerSourceService | null = null
+  /** The timed-run provider (D993); its deadline timer is cancelled on shutdown. */
+  private timedRun: TimedRunService | null = null
   private disposed = false
   /** Seeds the lock door gate from the hub mirror; run at startup and when a composition changes. */
   private seedLockDoorGate: () => void = () => undefined
@@ -172,6 +177,20 @@ export class CoreBlocksAddon extends BaseAddon {
     this.remoteRuntime = this.buildRemote(records)
     this.fanPresets = this.buildFanPresets()
     this.installDeviceCallRedirect()
+    const timedRun = buildTimedRunService({
+      records,
+      api: () => this.ctx.api,
+      logger: this.ctx.logger.child('timed-run'),
+    })
+    this.timedRun = timedRun
+    this.subscribe({ category: EventCategory.DeviceStateChanged }, (event) => {
+      const data = parseDeviceStateChanged(event.data)
+      if (data !== null) void timedRun.onDeviceState(data)
+    })
+    // ARMED, never awaited: the device registry answers only after boot.
+    void armTimedRuns(timedRun, this.ctx.logger.child('timed-run'), {
+      isDisposed: () => this.disposed,
+    })
 
     // esbuild is imported lazily and ONCE: it is a real dependency, and a
     // failure to load it must degrade the compile gate rather than the node.
@@ -208,6 +227,7 @@ export class CoreBlocksAddon extends BaseAddon {
       { capability: actionsCapability, provider: this.requireActions().service },
       { capability: schedulersCapability, provider: schedulers.service },
       { capability: powerSourceCapability, provider: this.buildPowerSource() },
+      { capability: timedRunCapability, provider: timedRun },
       // The built-in palette needs no store: it is served even when the remote is not.
       { capability: remoteLayoutComponentsCapability, provider: new RemoteComponentsService() },
       ...this.remoteRegistrations(),
@@ -384,6 +404,8 @@ export class CoreBlocksAddon extends BaseAddon {
     this.fanPresets = null
     this.powerSource?.stop()
     this.powerSource = null
+    this.timedRun?.stop()
+    this.timedRun = null
     this.supervisor?.stop()
     this.supervisor = null
     this.store = null

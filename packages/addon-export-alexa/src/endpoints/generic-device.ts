@@ -39,6 +39,7 @@ export const GENERIC_ENDPOINT_SUFFIX = 'dev'
 export const GENERIC_DEVICE_TYPES: readonly string[] = [
   'light',
   'switch',
+  'heater',
   'siren',
   'sensor',
   'lock',

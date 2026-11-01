@@ -166,7 +166,7 @@ function airflowPeriodSec(fanMode: string): number {
 }
 
 // Scoped keyframes — transform/opacity only (compositor-cheap).
-const KEYFRAMES = `
+export const KEYFRAMES = `
 @keyframes acv-fall { 0%{transform:translateY(-1.75rem);opacity:0} 18%{opacity:.7} 82%{opacity:.7} 100%{transform:translateY(7.5rem);opacity:0} }
 @keyframes acv-rise { 0%{transform:translateY(7.5rem);opacity:0} 18%{opacity:.7} 82%{opacity:.7} 100%{transform:translateY(-1.75rem);opacity:0} }
 @keyframes acv-sway { 0%,100%{transform:translateX(-9%)} 50%{transform:translateX(9%)} }
@@ -769,7 +769,7 @@ interface AirflowVizProps {
  * vent; every active mode renders drifting particles that FALL (cool/dry/auto)
  * or RISE (heat), with a horizontal sweep overlaid when a swing axis is active.
  */
-function AirflowViz({
+export function AirflowViz({
   mode,
   accent,
   periodSec,

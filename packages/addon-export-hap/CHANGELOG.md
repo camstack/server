@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A heater is exported to HomeKit as a switch.
+
 ## [1.2.188] - 2026-11-01
 
 ### Changed

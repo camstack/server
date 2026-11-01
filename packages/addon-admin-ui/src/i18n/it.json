@@ -8836,7 +8836,8 @@
         "washer": "Lavatrice",
         "dryer": "Asciugatrice",
         "petFountain": "Fontana per animali",
-        "gateway": "Gateway"
+        "gateway": "Gateway",
+        "heater": "Stufa"
       },
       "role": {
         "siren": "Sirena",
@@ -9253,6 +9254,24 @@
       "forMinutes": "da {{count}} min",
       "forHours": "da {{count}} h",
       "powerUnknown": "Potenza sconosciuta"
+    },
+    "heater": {
+      "heating": "In riscaldamento",
+      "off": "Spenta",
+      "power": "Stufa",
+      "quickRun": "Accendi per {{minutes}} min"
+    },
+    "timedRun": {
+      "cancel": "Annulla il timer",
+      "commandFailed": "Il dispositivo non si è acceso.",
+      "duration": "Accendi per",
+      "minutes": "min",
+      "seconds": "s",
+      "overMax": "Supera il tempo massimo consentito per questo dispositivo.",
+      "range": "Inserisci da 1 a {{max}} {{unit}}",
+      "remaining": "{{time}} rimasti",
+      "run": "Avvia",
+      "unsupported": "Questo dispositivo non supporta il timer."
     }
   },
   "helpers": {

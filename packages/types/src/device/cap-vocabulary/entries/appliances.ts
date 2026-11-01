@@ -18,6 +18,7 @@ type ApplianceCap =
   | 'consumables'
   | 'running-state'
   | 'device-runs'
+  | 'timed-run'
   | 'navigation'
   | 'script-runner'
   | 'automation-control'
@@ -1405,6 +1406,59 @@ export const APPLIANCE_CAP_VOCABULARY: CapVocabularySlice<ApplianceCap> = {
           'the durable record of a run that the running-state finish flip already announces',
       },
     },
+  },
+
+  'timed-run': {
+    scope: 'device',
+    noun: t('Timed run', 'Esecuzione a tempo'),
+    actions: [
+      {
+        id: 'timedRun.runForMinutes',
+        method: 'runFor',
+        label: t('Run for minutes', 'Accendi per alcuni minuti'),
+        phrase: t(
+          'Run {device} for {duration} minutes, then switch it off',
+          'Tieni acceso {device} per {duration} minuti, poi spegnilo',
+        ),
+        icon: 'timer',
+        args: { unit: 'min' },
+        openArgs: [
+          {
+            key: 'duration',
+            label: t('Minutes', 'Minuti'),
+            offer: { kind: 'number', min: 1, step: 1, unit: 'min' },
+          },
+        ],
+      },
+      {
+        id: 'timedRun.runForSeconds',
+        method: 'runFor',
+        label: t('Run for seconds', 'Accendi per alcuni secondi'),
+        phrase: t(
+          'Run {device} for {duration} seconds, then switch it off',
+          'Tieni acceso {device} per {duration} secondi, poi spegnilo',
+        ),
+        icon: 'timer',
+        args: { unit: 's' },
+        openArgs: [
+          {
+            key: 'duration',
+            label: t('Seconds', 'Secondi'),
+            offer: { kind: 'number', min: 1, step: 1, unit: 's' },
+          },
+        ],
+      },
+      {
+        id: 'timedRun.cancel',
+        method: 'cancel',
+        label: t('Cancel the timer', 'Annulla il timer'),
+        phrase: t(
+          'Cancel the pending switch-off of {device}',
+          'Annulla lo spegnimento programmato di {device}',
+        ),
+        icon: 'timer-off',
+      },
+    ],
   },
 
   update: {

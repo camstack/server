@@ -103,6 +103,10 @@ export enum DeviceType {
   /** Washing machine. A plug-built one is running while its power stays
    *  above a threshold. No program cap — that surface is the dishwasher's. */
   Washer = 'washer',
+  /** A dumb plug-in stove or heater: a switch (and, with a meter, a power
+   *  reading) that only runs while the plug is on. Built from a smart plug;
+   *  the `timed-run` cap switches it off again after a chosen time. */
+  Heater = 'heater',
   /** Tumble dryer. Same plug-built running surface as {@link Washer}. */
   Dryer = 'dryer',
   /** The physical bridge box of a vendor ecosystem (Velux KLF-200, and later

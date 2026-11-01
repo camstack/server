@@ -112,7 +112,38 @@ export const TemplateRowBodySchema: z.ZodType<TemplateRowBody> = z.object({
   updatedAt: z.number(),
 })
 
+/**
+ * A pending timed run (D993): the device is on and the hub owes it an off at
+ * `activeUntil`. One row per device, written BEFORE the device is switched on,
+ * so a crash can only ever cost a harmless extra off at boot. Row id = the
+ * deviceId.
+ */
+export type TimedRunRowBody = {
+  readonly activeUntil: number
+  readonly requestedBy: string | null
+  readonly requestedAt: number
+  readonly actuator: 'switch' | 'pet-fountain'
+}
+export const TimedRunRowBodySchema: z.ZodType<TimedRunRowBody> = z.object({
+  activeUntil: z.number(),
+  requestedBy: z.string().nullable(),
+  requestedAt: z.number(),
+  actuator: z.enum(['switch', 'pet-fountain']),
+})
+
 const _coreBlocksRecordKinds = defineRecordKinds({
+  'timed-runs': {
+    schema: TimedRunRowBodySchema,
+    class: 'config',
+    writeTrigger:
+      'timed-run.runFor arms a deadline; cancel, a manual off or the deadline removes it',
+    device: 'required',
+    at: 'none',
+    deviceRemoval: 'delete',
+    retention: {
+      none: 'the row goes with its deadline, a manual off, or its device (device removal)',
+    },
+  },
   blocks: {
     schema: CoreBlockRowBodySchema,
     class: 'config',
@@ -191,6 +222,7 @@ const _coreBlocksRecordKinds = defineRecordKinds({
 }) satisfies IsolatedRecordKinds
 
 export type CoreBlocksRecordKindsMap = {
+  readonly 'timed-runs': DefinedRecordKind<z.ZodType<TimedRunRowBody>>
   readonly blocks: DefinedRecordKind<z.ZodType<CoreBlockRowBody>>
   readonly runs: DefinedRecordKind<z.ZodType<RunsRowBody>>
   readonly actions: DefinedRecordKind<z.ZodType<ActionRowBody>>
@@ -217,3 +249,6 @@ export const coreBlocksActionsRecordKind: DefinedRecordKind<z.ZodType<ActionRowB
 
 export const coreBlocksActionLinksRecordKind: DefinedRecordKind<z.ZodType<ActionLinksRowBody>> =
   _coreBlocksRecordKinds['action-links']
+
+export const coreBlocksTimedRunsRecordKind: DefinedRecordKind<z.ZodType<TimedRunRowBody>> =
+  _coreBlocksRecordKinds['timed-runs']

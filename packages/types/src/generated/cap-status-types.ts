@@ -77,6 +77,7 @@ import type { StreamParamsStatusSchema } from '../capabilities/stream-params.cap
 import type { SwitchStatusSchema } from '../capabilities/switch.cap.js'
 import type { TamperStatusSchema } from '../capabilities/tamper.cap.js'
 import type { TemperatureSensorStatusSchema } from '../capabilities/temperature-sensor.cap.js'
+import type { TimedRunStatusSchema } from '../capabilities/timed-run.cap.js'
 import type { UpdateStatusSchema } from '../capabilities/update.cap.js'
 import type { VacuumControlStatusSchema } from '../capabilities/vacuum-control.cap.js'
 import type { ValveStatusSchema } from '../capabilities/valve.cap.js'
@@ -164,6 +165,7 @@ export type CapStatusTypeMap = {
   readonly 'switch': z.infer<typeof SwitchStatusSchema>
   readonly 'tamper': z.infer<typeof TamperStatusSchema>
   readonly 'temperature-sensor': z.infer<typeof TemperatureSensorStatusSchema>
+  readonly 'timed-run': z.infer<typeof TimedRunStatusSchema>
   readonly 'update': z.infer<typeof UpdateStatusSchema>
   readonly 'vacuum-control': z.infer<typeof VacuumControlStatusSchema>
   readonly 'valve': z.infer<typeof ValveStatusSchema>
@@ -255,6 +257,7 @@ export const CAP_NAMES_WITH_STATUS = [
   'switch',
   'tamper',
   'temperature-sensor',
+  'timed-run',
   'update',
   'vacuum-control',
   'valve',

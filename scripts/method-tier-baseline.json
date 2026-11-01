@@ -1244,6 +1244,8 @@
   "terminalSession.setInstanceEnabled": "admin",
   "terminalSession.updateInstance": "admin",
   "terminalSession.writeInput": "admin",
+  "timedRun.cancel": "protected",
+  "timedRun.runFor": "protected",
   "toast.onToast": "protected",
   "training.canaryResult": "admin",
   "training.cancelJob": "admin",

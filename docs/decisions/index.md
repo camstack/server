@@ -4,7 +4,7 @@
 
 # Decisions
 
-955 architecture decision records. One file per decision, never
+956 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -970,6 +970,7 @@ that rots.
 | D990 | [A native running can be replaced by the assigned source, through the D984 door](adr-0990-a-native-running-can-be-replaced-by-the-assigned-source.md) | ✅ accepted | 2026-11-01 |
 | D991 | [The external keychain key is a fixed mounted path](adr-0991-the-external-keychain-key-is-a-fixed-mounted-path.md) | ✅ accepted | 2026-11-01 |
 | D992 | [A device run is recorded by device-history, not by pipeline-analytics](adr-0992-device-runs-are-recorded-by-device-history.md) | ✅ accepted | 2026-11-01 |
+| D993 | [A timed run is a durable deadline row with one timer, owned by core-blocks](adr-0993-a-timed-run-is-a-durable-deadline-owned-by-core-blocks.md) | ✅ accepted | 2026-11-01 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

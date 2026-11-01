@@ -454,6 +454,8 @@ export function draftFromHelper(spec: HelperSpec, name: string, room: string): H
       source: copyMember(spec.source),
     }
   }
+  // A heater is built from the plug wizard, not edited as a draft here (yet).
+  if (spec.kind === 'heater') return null
   const template = groupTemplate(spec.templateId)
   if (template === null || !template.aggregates.includes(spec.aggregate)) return null
   if (template.family === 'actuator' && spec.active === undefined) return null

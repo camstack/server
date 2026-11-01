@@ -48,6 +48,14 @@ export {
   sourcePickForAppliance,
 } from './appliance.js'
 export {
+  HEATER_DEVICE_TYPE,
+  HEATER_START_DWELL_MS,
+  HEATER_STOP_DWELL_MS,
+  HEATER_TEMPLATE_ID,
+  HEATER_THRESHOLD_WATTS,
+  sourcePickForHeaterPlug,
+} from './heater.js'
+export {
   type GroupTemplate,
   type HelperAccept,
   type HelperCompanion,
@@ -142,6 +150,7 @@ export {
   BINARY_AGGREGATES,
   GROUP_TEMPLATE_IDS,
   ApplianceHelperSpecSchema,
+  HeaterHelperSpecSchema,
   ARITHMETIC_OPS,
   ArithmeticHelperSpecSchema,
   DERIVATIVE_UNITS,
@@ -164,6 +173,7 @@ export {
   type AggregateReducer,
   type BinaryAggregate,
   type ApplianceHelperSpec,
+  type HeaterHelperSpec,
   type ArithmeticHelperSpec,
   type ArithmeticOp,
   type DerivativeHelperSpec,

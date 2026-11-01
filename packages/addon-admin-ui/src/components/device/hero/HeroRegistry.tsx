@@ -67,6 +67,7 @@ const HERO_REGISTRY: Readonly<Partial<Record<DeviceType, HeroComponent>>> = {
   // HumidifierHeroCard / WaterHeaterHeroCard (climate-family hero graphics).
   [DeviceType.Humidifier]: ControlHero,
   [DeviceType.WaterHeater]: ControlHero,
+  [DeviceType.Heater]: ControlHero,
   // Container renders AS its primary child (same hero + discreet picker);
   // other children remain as detail tabs. See ContainerHero.
   [DeviceType.Container]: ContainerHero,

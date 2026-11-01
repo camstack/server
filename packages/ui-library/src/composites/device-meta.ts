@@ -260,6 +260,11 @@ export const DEVICE_TYPE_META: Record<DeviceType, DeviceMetaEntry> = {
     labelKey: 'uiLibrary.deviceMeta.type.petFountain',
     labelFallback: 'Pet fountain',
   },
+  [DeviceType.Heater]: {
+    icon: Flame,
+    labelKey: 'uiLibrary.deviceMeta.type.heater',
+    labelFallback: 'Heater',
+  },
   [DeviceType.Dishwasher]: {
     icon: Waves,
     labelKey: 'uiLibrary.deviceMeta.type.dishwasher',

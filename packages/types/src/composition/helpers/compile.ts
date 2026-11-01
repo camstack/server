@@ -17,6 +17,7 @@ import type { CompositionProblem } from '../composition-report.js'
 import { problem } from '../plan-result.js'
 import { reducerForActive } from './actuator.js'
 import { applianceDeviceType } from './appliance.js'
+import { HEATER_DEVICE_TYPE } from './heater.js'
 import { type GroupTemplate, groupTemplate } from './catalog.js'
 import { derivativeDraft, integralDraft, statisticDraft } from './compile-history.js'
 import { arithmeticDraft, expressionDraft, thresholdDraft } from './compile-math.js'
@@ -24,6 +25,7 @@ import { DEFAULT_HISTORY_RETENTION, type HistoryRetention } from './history-wind
 import {
   type ApplianceHelperSpec,
   type GroupHelperSpec,
+  type HeaterHelperSpec,
   type HelperMember,
   type HelperSpec,
 } from './spec.js'
@@ -304,6 +306,113 @@ function compileAppliance(spec: ApplianceHelperSpec): HelperCompileResult {
   })
 }
 
+function compileHeater(spec: HeaterHelperSpec): HelperCompileResult {
+  if (spec.plug.cap !== 'switch' || spec.plug.fieldPath !== 'on') {
+    return {
+      ok: false,
+      problems: [
+        problem(
+          'member-constraint',
+          'helper.plug',
+          'the plug of a heater helper is a switch, read at switch.on',
+        ),
+      ],
+    }
+  }
+  const meter = spec.meter
+  if (meter !== undefined && (meter.cap !== 'power-meter' || meter.fieldPath !== 'power')) {
+    return {
+      ok: false,
+      problems: [
+        problem(
+          'member-constraint',
+          'helper.meter',
+          'the meter of a heater helper reads power-meter.power',
+        ),
+      ],
+    }
+  }
+  const threshold = unsignedToken(spec.thresholdWatts)
+  const start = unsignedToken(spec.startDwellMs)
+  const stop = unsignedToken(spec.stopDwellMs)
+  if (threshold === null || spec.thresholdWatts <= 0 || start === null || stop === null) {
+    return {
+      ok: false,
+      problems: [
+        problem(
+          'kind-mismatch',
+          'helper.thresholdWatts',
+          'the threshold is positive watts; the dwells are a non-negative number of milliseconds',
+        ),
+      ],
+    }
+  }
+  const plugRead = {
+    kind: 'from' as const,
+    source: spec.plug.source,
+    cap: spec.plug.cap,
+    fieldPath: spec.plug.fieldPath,
+  }
+  const clock = expressionSource('now')
+  const meterRead =
+    meter === undefined
+      ? undefined
+      : {
+          kind: 'from' as const,
+          source: meter.source,
+          cap: meter.cap,
+          fieldPath: meter.fieldPath,
+        }
+  const dwell = dwellExpr('gte', threshold, start, stop)
+  const running =
+    meterRead === undefined
+      ? expressionSource('x', { x: plugRead })
+      : expressionSource(dwell, { x: meterRead })
+  const since =
+    meterRead === undefined
+      ? expressionSource('latchedAt(x)', { x: plugRead })
+      : expressionSource(`latchedAt(${dwell})`, { x: meterRead })
+  return parseDraft({
+    target: { kind: 'new', type: HEATER_DEVICE_TYPE },
+    helper: spec,
+    features: [
+      {
+        kind: 'fields',
+        cap: 'switch',
+        fields: { on: plugRead, lastChangedAt: clock },
+        commands: {
+          setState: {
+            kind: 'forward',
+            source: spec.plug.source,
+            cap: 'switch',
+            method: 'setState',
+          },
+        },
+      },
+      {
+        kind: 'fields',
+        cap: 'running-state',
+        fields: {
+          running,
+          source: expressionSource('"assigned"'),
+          phase: expressionSource('null'),
+          lastFetchedAt: clock,
+          since,
+        },
+      },
+      ...(meterRead === undefined
+        ? []
+        : [
+            {
+              kind: 'fields' as const,
+              cap: 'power-meter',
+              fields: { power: meterRead, lastFetchedAt: clock },
+            },
+          ]),
+    ],
+  })
+}
+
 /** Compile a helper template to a new-device composition. Refusals are named. */
 export function compileHelper(
   spec: HelperSpec,
@@ -314,6 +423,8 @@ export function compileHelper(
       return compileGroup(spec)
     case 'appliance':
       return compileAppliance(spec)
+    case 'heater':
+      return compileHeater(spec)
     case 'statistic': {
       const built = statisticDraft(spec, retention)
       if (built.problems.length > 0) return { ok: false, problems: built.problems }
@@ -390,6 +501,7 @@ export function sameHelperBody(stored: Composition, compiled: Composition): bool
 
 export function templateDeviceType(spec: HelperSpec): DeviceType | null {
   if (spec.kind === 'appliance') return applianceDeviceType(spec.appliance)
+  if (spec.kind === 'heater') return HEATER_DEVICE_TYPE
   if (spec.kind !== 'group') return null
   return groupTemplate(spec.templateId)?.memberDeviceType ?? null
 }

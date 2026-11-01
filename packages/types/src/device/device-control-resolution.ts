@@ -63,6 +63,7 @@ export type DeviceControlKind =
   | 'image'
   | 'pet-feeder'
   | 'pet-fountain'
+  | 'heater'
   | 'dishwasher'
   | 'appliance'
   | 'script'
@@ -108,6 +109,7 @@ export const DEVICE_TYPE_CONTROL_KIND: Record<DeviceType, DeviceControlKind> = {
   [DeviceType.Image]: 'image',
   [DeviceType.PetFeeder]: 'pet-feeder',
   [DeviceType.PetFountain]: 'pet-fountain',
+  [DeviceType.Heater]: 'heater',
   [DeviceType.Dishwasher]: 'dishwasher',
   // No program surface: the card reads the running state and the power meter
   // (running / idle, live watts); the row shows the running badge.

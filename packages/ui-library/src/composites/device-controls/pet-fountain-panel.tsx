@@ -17,13 +17,14 @@
  */
 import { AlertTriangle, Droplet, Droplets, Eraser, Pause, Play, Timer } from 'lucide-react'
 import type { ReactNode } from 'react'
-import type { PetFountainStatus } from '@camstack/types'
+import { DeviceType, TIMED_RUN_LIMITS, type PetFountainStatus } from '@camstack/types'
 import { useUiText } from '../../contexts/ui-text'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { useOptimisticSlice } from '../../hooks/use-optimistic-slice'
 import { cn } from '../../lib/cn'
 import { Button } from '../../primitives/button'
 import { Switch } from '../../primitives/switch'
+import { TimedRunControl } from './timed-run-control'
 import type { ControlPanelProps } from './types'
 
 // Scoped keyframes — transform/opacity only. Played only while the pump runs.
@@ -37,6 +38,7 @@ const KEYFRAMES = `
   .pfn-ripple, .pfn-bubble { animation: none !important; opacity: 0; }
 }
 `
+const PUMP_LIMIT = TIMED_RUN_LIMITS[DeviceType.PetFountain]
 
 const LITRES_TO_ML = 1000
 const SECONDS_PER_MINUTE = 60
@@ -208,6 +210,10 @@ export function PetFountainPanel({
           )}
         </div>
       </Section>
+
+      {PUMP_LIMIT !== undefined && (
+        <TimedRunControl trpc={trpc} deviceId={deviceId} limit={PUMP_LIMIT} />
+      )}
 
       <Button
         variant="outline"

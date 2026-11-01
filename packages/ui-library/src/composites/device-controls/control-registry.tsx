@@ -30,6 +30,7 @@ import { WeatherInlineControl, WeatherHeroCard } from './weather-control'
 import { ImageInlineControl, ImageHeroCard } from './image-control'
 import { PetFeederInlineControl, PetFeederHeroCard } from './pet-feeder-panel'
 import { PetFountainInlineControl, PetFountainHeroCard } from './pet-fountain-panel'
+import { HeaterInlineControl, HeaterHeroCard } from './heater-control'
 import { DishwasherInlineControl, DishwasherHeroCard } from './dishwasher-control'
 import { ApplianceInlineControl, ApplianceHeroCard } from './appliance-control'
 import {
@@ -196,6 +197,11 @@ const PET_FOUNTAIN_CONTROL: DeviceTypeControl = {
   HeroCard: PetFountainHeroCard,
 }
 
+const HEATER_CONTROL: DeviceTypeControl = {
+  InlineControl: HeaterInlineControl,
+  HeroCard: HeaterHeroCard,
+}
+
 const DISHWASHER_CONTROL: DeviceTypeControl = {
   InlineControl: DishwasherInlineControl,
   HeroCard: DishwasherHeroCard,
@@ -241,6 +247,7 @@ const CONTROL_KIND_COMPONENTS: Record<DeviceControlKind, DeviceTypeControl> = {
   image: IMAGE_CONTROL,
   'pet-feeder': PET_FEEDER_CONTROL,
   'pet-fountain': PET_FOUNTAIN_CONTROL,
+  heater: HEATER_CONTROL,
   dishwasher: DISHWASHER_CONTROL,
   appliance: APPLIANCE_CONTROL,
   script: SCRIPT_CONTROL,
@@ -337,6 +344,7 @@ export const CONTROL_FILLS: Record<DeviceType, boolean> = {
   [DeviceType.PetFeeder]: false,
   // Pet fountain inline = tank level + a pump toggle (natural width).
   [DeviceType.PetFountain]: false,
+  [DeviceType.Heater]: false,
   [DeviceType.Dishwasher]: false,
   [DeviceType.Washer]: false,
   [DeviceType.Dryer]: false,

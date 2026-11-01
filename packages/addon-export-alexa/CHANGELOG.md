@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A fan is exported to Alexa as its own device: power, speed, oscillation and presets, including the presets you author in Customize.
+- A heater is exported to Alexa as a switch.
 
 ## [1.2.177] - 2026-11-01
 

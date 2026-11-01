@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added the device-runs capability: a durable record of each washer, dryer and dishwasher cycle.
 - Washer and dryer resolve to the new appliance control kind
 - fan-presets: capturePreset without steps proposes every sibling switch and control, ordered, with a review group per step.
+- A plug-in heater is a new device type, and a new timed-run capability turns a heater or a pet fountain pump on for a set time and then off again.
 
 ## [1.2.468] - 2026-11-01
 

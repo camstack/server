@@ -52,6 +52,7 @@ const RUNNING_CUSTOMIZE_DEVICE_TYPES = [
   DeviceType.Climate,
   DeviceType.Thermostat,
   DeviceType.PetFeeder,
+  DeviceType.Heater,
 ] as const
 
 /** Generic Customize target for the running boolean (D936). */

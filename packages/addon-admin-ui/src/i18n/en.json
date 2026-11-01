@@ -8814,7 +8814,8 @@
         "washer": "Washing machine",
         "dryer": "Dryer",
         "petFountain": "Pet fountain",
-        "gateway": "Gateway"
+        "gateway": "Gateway",
+        "heater": "Heater"
       },
       "role": {
         "siren": "Siren",
@@ -9231,6 +9232,24 @@
       "forMinutes": "for {{count}} min",
       "forHours": "for {{count}} h",
       "powerUnknown": "Power unknown"
+    },
+    "heater": {
+      "heating": "Heating",
+      "off": "Off",
+      "power": "Heater",
+      "quickRun": "Run {{minutes}} min"
+    },
+    "timedRun": {
+      "cancel": "Cancel the timer",
+      "commandFailed": "The device did not turn on.",
+      "duration": "Run for",
+      "minutes": "min",
+      "seconds": "s",
+      "overMax": "That is longer than this device may run.",
+      "range": "Enter 1 to {{max}} {{unit}}",
+      "remaining": "{{time}} left",
+      "run": "Run",
+      "unsupported": "This device cannot run on a timer."
     }
   },
   "helpers": {

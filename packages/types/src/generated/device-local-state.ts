@@ -72,6 +72,7 @@ import { streamSignalsCapability } from '../capabilities/stream-signals.cap.js'
 import { switchCapability } from '../capabilities/switch.cap.js'
 import { tamperCapability } from '../capabilities/tamper.cap.js'
 import { temperatureSensorCapability } from '../capabilities/temperature-sensor.cap.js'
+import { timedRunCapability } from '../capabilities/timed-run.cap.js'
 import { updateCapability } from '../capabilities/update.cap.js'
 import { vacuumControlCapability } from '../capabilities/vacuum-control.cap.js'
 import { valveCapability } from '../capabilities/valve.cap.js'
@@ -163,6 +164,7 @@ export interface DeviceLocalState {
   switch: InferRuntimeState<typeof switchCapability>
   tamper: InferRuntimeState<typeof tamperCapability>
   temperatureSensor: InferRuntimeState<typeof temperatureSensorCapability>
+  timedRun: InferRuntimeState<typeof timedRunCapability>
   update: InferRuntimeState<typeof updateCapability>
   vacuumControl: InferRuntimeState<typeof vacuumControlCapability>
   valve: InferRuntimeState<typeof valveCapability>
@@ -250,6 +252,7 @@ export const DEVICE_LOCAL_STATE_CAPS: Record<keyof DeviceLocalState, CapabilityD
   switch: switchCapability,
   tamper: tamperCapability,
   temperatureSensor: temperatureSensorCapability,
+  timedRun: timedRunCapability,
   update: updateCapability,
   vacuumControl: vacuumControlCapability,
   valve: valveCapability,
@@ -344,6 +347,7 @@ export interface CapNameToRuntimeStateMap {
   'switch': InferRuntimeState<typeof switchCapability>
   'tamper': InferRuntimeState<typeof tamperCapability>
   'temperature-sensor': InferRuntimeState<typeof temperatureSensorCapability>
+  'timed-run': InferRuntimeState<typeof timedRunCapability>
   'update': InferRuntimeState<typeof updateCapability>
   'vacuum-control': InferRuntimeState<typeof vacuumControlCapability>
   'valve': InferRuntimeState<typeof valveCapability>

@@ -4,6 +4,7 @@
  */
 import { z } from 'zod'
 import { APPLIANCE_KINDS, APPLIANCE_TEMPLATE_ID } from './appliance.js'
+import { HEATER_TEMPLATE_ID } from './heater.js'
 import { STATISTIC_STATS } from './history-math.js'
 import {
   RESET_PERIODS,
@@ -122,6 +123,28 @@ export const ApplianceHelperSpecSchema: z.ZodObject<{
   offSeconds: z.number().optional(),
 })
 export type ApplianceHelperSpec = z.infer<typeof ApplianceHelperSpecSchema>
+
+/** A dumb heater built from a plug: the plug is the actuator, a meter is optional. */
+export const HeaterHelperSpecSchema: z.ZodObject<{
+  kind: z.ZodLiteral<'heater'>
+  templateId: z.ZodLiteral<typeof HEATER_TEMPLATE_ID>
+  plug: typeof HelperMemberSchema
+  meter: z.ZodOptional<typeof HelperMemberSchema>
+  thresholdWatts: z.ZodNumber
+  startDwellMs: z.ZodNumber
+  stopDwellMs: z.ZodNumber
+}> = z.object({
+  kind: z.literal('heater'),
+  templateId: z.literal(HEATER_TEMPLATE_ID),
+  /** The plug, read and commanded at `switch.on`. */
+  plug: HelperMemberSchema,
+  /** The plug's power reading, when it has one: running is then the draw, not the switch. */
+  meter: HelperMemberSchema.optional(),
+  thresholdWatts: z.number().positive(),
+  startDwellMs: z.number().int().nonnegative(),
+  stopDwellMs: z.number().int().nonnegative(),
+})
+export type HeaterHelperSpec = z.infer<typeof HeaterHelperSpecSchema>
 
 export type StatisticStat = (typeof STATISTIC_STATS)[number]
 
@@ -250,6 +273,7 @@ export const DerivativeHelperSpecSchema: z.ZodType<DerivativeHelperSpec> = deriv
 export type HelperSpec =
   | GroupHelperSpec
   | ApplianceHelperSpec
+  | HeaterHelperSpec
   | StatisticHelperSpec
   | IntegralHelperSpec
   | ThresholdHelperSpec
@@ -260,6 +284,7 @@ export type HelperSpec =
 export const HelperSpecSchema: z.ZodType<HelperSpec> = z.discriminatedUnion('kind', [
   GroupHelperSpecSchema,
   ApplianceHelperSpecSchema,
+  HeaterHelperSpecSchema,
   statisticHelperObject,
   integralHelperObject,
   thresholdHelperObject,
@@ -282,6 +307,8 @@ export function helperMembers(spec: HelperSpec): readonly HelperMember[] {
       return spec.members
     case 'appliance':
       return [spec.member]
+    case 'heater':
+      return spec.meter === undefined ? [spec.plug] : [spec.plug, spec.meter]
     case 'statistic':
     case 'integral':
     case 'threshold':

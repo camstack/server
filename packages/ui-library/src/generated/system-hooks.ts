@@ -3641,6 +3641,15 @@ export const useTerminalSessionWriteInput: typeof trpc.terminalSession.writeInpu
 /** Generated alias around `trpc.terminalSession.close.useMutation`. */
 export const useTerminalSessionClose: typeof trpc.terminalSession.close.useMutation = /*#__PURE__*/ alias(() => trpc.terminalSession.close.useMutation)
 
+/** Generated alias around `trpc.timedRun.runFor.useMutation`. */
+export const useTimedRunRunFor: typeof trpc.timedRun.runFor.useMutation = /*#__PURE__*/ alias(() => trpc.timedRun.runFor.useMutation)
+
+/** Generated alias around `trpc.timedRun.cancel.useMutation`. */
+export const useTimedRunCancel: typeof trpc.timedRun.cancel.useMutation = /*#__PURE__*/ alias(() => trpc.timedRun.cancel.useMutation)
+
+/** Generated alias around `trpc.timedRun.getStatus.useQuery`. */
+export const useTimedRunGetStatus: typeof trpc.timedRun.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.timedRun.getStatus.useQuery)
+
 /** Generated alias around `trpc.toast.onToast.useSubscription`. */
 export const useToastOnToast: typeof trpc.toast.onToast.useSubscription = /*#__PURE__*/ alias(() => trpc.toast.onToast.useSubscription)
 
