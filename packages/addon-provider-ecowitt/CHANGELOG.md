@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.154] - 2026-11-01
+
 ### Changed
 
 - Ecowitt: weather-station and CH1 sensors are no longer duplicated under the gateway container; existing duplicates are removed on the next reading

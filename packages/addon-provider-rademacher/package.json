@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-provider-rademacher",
-  "version": "0.2.155",
+  "version": "0.2.156",
   "description": "Rademacher HomePilot device-provider addon for CamStack — wraps the @apocaliss92/noderademacher local-hub client (roller shutters over the cover cap)",
   "keywords": [
     "camstack",
@@ -63,7 +63,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.719"
+      "server": ">=1.2.722"
     }
   },
   "files": [

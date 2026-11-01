@@ -1,6 +1,6 @@
 {
   "name": "@camstack/server",
-  "version": "1.2.721",
+  "version": "1.2.722",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -65,7 +65,20 @@
       "@camstack/addon-agent-ui"
     ],
     "requires": {
-      "addons": {},
+      "addons": {
+        "@camstack/addon-admin-ui": ">=1.2.543",
+        "@camstack/addon-pipeline-orchestrator": ">=1.2.649",
+        "@camstack/addon-provider-dreame": ">=0.2.163",
+        "@camstack/addon-provider-dreo": ">=0.2.153",
+        "@camstack/addon-provider-ecowitt": ">=0.2.154",
+        "@camstack/addon-provider-enpal": ">=0.1.7",
+        "@camstack/addon-provider-homematic": ">=1.2.175",
+        "@camstack/addon-provider-petkit": ">=0.2.158",
+        "@camstack/addon-provider-rademacher": ">=0.2.156",
+        "@camstack/addon-provider-unifi": ">=0.2.153",
+        "@camstack/addon-provider-unraid": ">=0.2.154",
+        "@camstack/addon-provider-velux": ">=0.2.153"
+      },
       "wrapper": {
         "desktop": ">=0.0.1",
         "image": ">=0.0.1"
