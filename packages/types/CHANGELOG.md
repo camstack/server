@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- AI calls can override the profile's reasoning effort per call
+- Model features carry a reasoning flag (null when the endpoint does not say)
+- Stationary-present conditions accept a minimum count; the trigger variables of a condition are listed from one place
+- New do-not-disturb capability: a read and write Do Not Disturb switch for speakers
+
 ## [1.2.470] - 2026-11-01
 
 ### Changed
@@ -14,9 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fan-presets: capturePreset without steps proposes every sibling switch and control, ordered, with a review group per step.
 - A plug-in heater is a new device type, and a new timed-run capability turns a heater or a pet fountain pump on for a set time and then off again.
 - Entity drafting: schemas, vocabulary slice, prompt, validator and comparator for describing an automation, action, scheduler or composition in words.
-- AI calls can override the profile's reasoning effort per call
-- Model features carry a reasoning flag (null when the endpoint does not say)
-- Stationary-present conditions accept a minimum count; the trigger variables of a condition are listed from one place
 
 ## [1.2.469] - 2026-11-01
 
@@ -28,10 +32,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Keychain key source kinds config-file / previous-config-file are now mounted-file / previous-mounted-file
 - Added the device-runs capability: a durable record of each washer, dryer and dishwasher cycle.
 - Washer and dryer resolve to the new appliance control kind
-- fan-presets: capturePreset without steps proposes every sibling switch and control, ordered, with a review group per step.
-- A plug-in heater is a new device type, and a new timed-run capability turns a heater or a pet fountain pump on for a set time and then off again.
-- Entity drafting: schemas, vocabulary slice, prompt, validator and comparator for describing an automation, action, scheduler or composition in words.
-- New do-not-disturb capability: a read and write Do Not Disturb switch for speakers
 
 ## [1.2.468] - 2026-11-01
 

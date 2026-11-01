@@ -7,12 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Serves the new do-not-disturb capability for Echo devices.
+- AI generate calls accept a per-call reasoning effort
+
 ## [1.2.730] - 2026-11-01
 
 ### Added
 
 - Serves the new fan-presets and timed-run capabilities (fan speed presets, heater and pump timed runs).
-- AI generate calls accept a per-call reasoning effort
 
 ### Changed
 

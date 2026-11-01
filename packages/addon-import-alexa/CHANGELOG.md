@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- An Amazon Echo can be adopted as a media player: play, pause, next, previous and volume, with its state read every 30 seconds, plus a Do Not Disturb switch
+
 ## [0.2.177] - 2026-11-01
 
 ### Changed
 
 - An Echo now speaks notifications at its current volume: the per-target volume setting is gone, and stored targets are cleaned of it on the next start
-- An Amazon Echo can be adopted as a media player: play, pause, next, previous and volume, with its state read every 30 seconds, plus a Do Not Disturb switch
 
 ## [0.2.176] - 2026-11-01
 
