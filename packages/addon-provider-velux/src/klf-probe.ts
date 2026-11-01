@@ -3,9 +3,6 @@ import { errMsg } from '@camstack/types'
 import { Connection, Gateway } from 'klf-200-api'
 import { loginFailure } from './klf-gateway-client.js'
 
-/** The gateway's TLS API port. */
-const KLF_PORT = 51200
-
 /** The step of a probe that ran out of time. */
 export type KlfProbePhase = 'tls' | 'password' | 'version' | 'logout'
 
