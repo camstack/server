@@ -102,6 +102,22 @@ function Outcome({ outcome }: { readonly outcome: OauthLandingOutcome }): JSX.El
       </>
     )
   }
+  if (outcome.action === 'cli-login') {
+    return (
+      <>
+        <CheckCircle2 className="mx-auto h-8 w-8 text-success" aria-hidden />
+        <h1 data-testid="oauth-landing-title" className="text-sm font-semibold text-foreground">
+          {t('oauthLanding.cliLoginTitle', 'Terminal signed in')}
+        </h1>
+        <p className="text-xs text-foreground-muted">
+          {t(
+            'oauthLanding.cliLoginBody',
+            'Go back to your terminal: it finishes the sign-in by itself.',
+          )}
+        </p>
+      </>
+    )
+  }
   const disconnected = outcome.action === 'disconnect'
   return (
     <>

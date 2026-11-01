@@ -76,6 +76,7 @@ const METHOD_LABEL_KEY: Readonly<Record<string, string>> = {
   passkey: 'helpers.sessionClient.method.passkey',
   sso: 'helpers.sessionClient.method.sso',
   handoff: 'helpers.sessionClient.method.handoff',
+  'cli-approval': 'helpers.sessionClient.method.cliApproval',
   exchange: 'helpers.sessionClient.method.exchange',
 }
 

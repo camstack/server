@@ -43,6 +43,7 @@ import { stripLegacyAdminPrefix } from './lib/legacy-admin-path'
 import { routerBasename } from './lib/mount'
 import { SECRETS_LEGACY_PATH, SYSTEM_LEGACY_ROUTES, SYSTEM_PAGE_PATH } from './lib/system-page-url'
 import { AccessDeniedPage } from './pages/AccessDenied'
+import { ApprovePage } from './pages/Approve'
 import { ChangePasswordPage } from './pages/ChangePassword'
 // Critical first-paint pages — kept eager so they render without a Suspense flash
 import { LoginPage } from './pages/Login'
@@ -378,6 +379,14 @@ export function App() {
                                 element={
                                   <ProtectedRoute>
                                     <ChangePasswordPage />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/approve"
+                                element={
+                                  <ProtectedRoute>
+                                    <ApprovePage />
                                   </ProtectedRoute>
                                 }
                               />

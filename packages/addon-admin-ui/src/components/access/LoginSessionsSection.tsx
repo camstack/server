@@ -11,6 +11,7 @@ import { useMemo, useState, type ReactNode } from 'react'
 import { describeClient, describeMethod } from '../auth/session-client'
 import { AccessSection, useUserNames, pickNotice } from './AccessSection'
 import { CredentialTable } from './CredentialTable'
+import { PendingTerminalSignIns } from './PendingTerminalSignIns'
 import { loginSessionRow, type CredentialRow, type LoginSessionSource } from './credential-row'
 import { useBulkRevoke } from './use-bulk-revoke'
 import { useTranslation } from 'react-i18next'
@@ -73,6 +74,7 @@ export function LoginSessionsSection(): ReactNode {
         'Every browser and app signed in to this hub, for every user. Signing one out ends it at once; it has to sign in again. Your own current session is marked and never included in a bulk sign-out.',
       )}
     >
+      <PendingTerminalSignIns />
       <CredentialTable
         rows={rows}
         label={t('common.sessionsLabel')}

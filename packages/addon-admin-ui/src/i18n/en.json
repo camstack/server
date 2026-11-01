@@ -6287,7 +6287,9 @@
       "unavailable": "The hub is still starting this integration. Wait a moment and try again.",
       "unknown": "Something went wrong. Try again in a moment.",
       "no_authorization_code": "The provider finished the sign-in without granting CamStack access. Start the sign-in again from the beginning."
-    }
+    },
+    "cliLoginTitle": "Terminal signed in",
+    "cliLoginBody": "Go back to your terminal: it finishes the sign-in by itself."
   },
   "admin": {
     "system": {
@@ -9808,7 +9810,8 @@
         "passkey": "Passkey",
         "sso": "Single sign-on",
         "handoff": "App hand-off",
-        "exchange": "Session exchange"
+        "exchange": "Session exchange",
+        "cliApproval": "Terminal approval"
       }
     },
     "relativeTime": {
@@ -11245,5 +11248,33 @@
       "off": "Power switch off",
       "withName": "{{state}} · {{name}}"
     }
+  },
+  "cliLogin": {
+    "reauthAction": "Approving a terminal sign-in",
+    "unknownCode": "No pending sign-in with that code. Check the terminal.",
+    "failed": "That did not work. Try again.",
+    "title": "Approve a terminal sign-in",
+    "intro": "Type the code your terminal shows. Only approve a sign-in you started yourself.",
+    "codeLabel": "Sign-in code",
+    "continue": "Continue",
+    "client": "Name it gave itself (unverified)",
+    "address": "Terminal address",
+    "requested": "Requested",
+    "unknownValue": "Unknown",
+    "ageNow": "just now",
+    "ageSeconds": "{{count}} s ago",
+    "ageMinutes": "{{count}} min ago",
+    "deny": "Deny",
+    "approve": "Approve",
+    "brand": "CamStack",
+    "deniedBody": "The sign-in was denied. The terminal stays signed out.",
+    "back": "Back to CamStack",
+    "pendingTitle": "Pending terminal sign-ins",
+    "notMe": "Not me",
+    "pendingHint": "To approve one, open the approval page and type the code the terminal shows.",
+    "yourAddress": "Your address",
+    "program": "Program (seen by the hub)",
+    "mismatch": "This request comes from a different address than the one you are using now. Approve it only if you started it from another machine of yours.",
+    "grant": "Approving signs this terminal in as you, with all of your rights, until the session expires or you end it under Tokens & sessions."
   }
 }

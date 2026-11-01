@@ -389,6 +389,17 @@ export default defineFixtures({
       { kind: 'redirect', id: 'auth-oidc', label: 'Authentik', startUrl: '#', stage: 'primary' },
     ],
     'auth.listSessions': SESSIONS,
+    // Ages are relative to the real clock: the card words them as "N s ago".
+    'auth.cliLoginPending': () => [
+      {
+        requestId: 'r-1',
+        ip: '203.0.113.24',
+        client: 'camstack-cli/1.2.220 (darwin)',
+        userAgent: 'camstack-cli (node)',
+        createdAt: Date.now() - 40_000,
+        expiresAt: Date.now() + 260_000,
+      },
+    ],
     'auth.listOwnSessions': OWN_SESSIONS,
     'auth.listOwnDeviceCredentials': [],
     'localNetwork.getConnectionEndpoints': {

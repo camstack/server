@@ -25,6 +25,14 @@ const revokeMutate = vi.fn()
 const bulkMutate = vi.fn()
 let promptAnswer: string | null = null
 let sessions: Session[] = []
+const denyMutate = vi.fn()
+let pendingTerminals: {
+  requestId: string
+  ip: string | null
+  client: string | null
+  createdAt: number
+  expiresAt: number
+}[] = []
 
 vi.mock('@camstack/ui-library', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@camstack/ui-library')>()),
@@ -37,8 +45,12 @@ vi.mock('@camstack/ui-library', async (importOriginal) => ({
     ],
   }),
   trpc: {
-    useUtils: () => ({ auth: { listSessions: { invalidate: vi.fn() } } }),
+    useUtils: () => ({
+      auth: { listSessions: { invalidate: vi.fn() }, cliLoginPending: { invalidate: vi.fn() } },
+    }),
     auth: {
+      cliLoginPending: { useQuery: () => ({ data: pendingTerminals }) },
+      cliLoginDeny: { useMutation: () => ({ mutate: denyMutate, isPending: false }) },
       listSessions: {
         useQuery: () => ({ data: sessions, isLoading: false, isError: false }),
       },
@@ -81,6 +93,8 @@ function session(over: Partial<Session> & { id: string }): Session {
 }
 
 beforeEach(() => {
+  pendingTerminals = []
+  denyMutate.mockClear()
   Object.defineProperty(window, 'matchMedia', {
     writable: true,
     value: (query: string) => ({
@@ -139,5 +153,30 @@ describe('LoginSessionsSection', () => {
     render(<LoginSessionsSection />)
     fireEvent.click(screen.getByRole('button', { name: /sign out/i }))
     await waitFor(() => expect(revokeMutate).toHaveBeenCalledWith({ id: 'a' }))
+  })
+
+  it('lists pending terminal sign-ins without a code and denies by request id', () => {
+    sessions = []
+    pendingTerminals = [
+      {
+        requestId: 'r-1',
+        ip: '203.0.113.7',
+        client: 'camstack-cli/1.2',
+        createdAt: NOW - 20_000,
+        expiresAt: NOW + 280_000,
+      },
+    ]
+    render(<LoginSessionsSection />)
+    const card = screen.getByTestId('pending-terminal-signins')
+    expect(card.textContent).toContain('Pending terminal sign-ins')
+    expect(card.textContent).toContain('203.0.113.7')
+    fireEvent.click(within(card).getByRole('button', { name: 'Not me' }))
+    expect(denyMutate).toHaveBeenCalledWith({ requestId: 'r-1' })
+  })
+
+  it('shows no card when nothing is pending', () => {
+    sessions = []
+    render(<LoginSessionsSection />)
+    expect(screen.queryByTestId('pending-terminal-signins')).toBeNull()
   })
 })

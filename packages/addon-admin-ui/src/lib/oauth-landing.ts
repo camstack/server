@@ -21,6 +21,7 @@ const PLAIN_ID = /^[A-Za-z0-9._-]{1,64}$/
 
 /** The admin page the outcome belongs to (relative to the admin-ui mount). */
 export function oauthReturnPath(outcome: OauthLandingOutcome): string {
+  if (outcome.action === 'cli-login') return integrationHubHref('access')
   const addon =
     outcome.addonId !== undefined && PLAIN_ID.test(outcome.addonId) ? outcome.addonId : null
   const integration =

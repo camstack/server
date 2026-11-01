@@ -6362,7 +6362,9 @@
       "unavailable": "L’hub sta ancora avviando questa integrazione. Attendi un momento e riprova.",
       "unknown": "Qualcosa è andato storto. Riprova tra un momento.",
       "no_authorization_code": "Il provider ha concluso l'accesso senza concedere l'autorizzazione a CamStack. Riavvia l'accesso dall'inizio."
-    }
+    },
+    "cliLoginTitle": "Terminale connesso",
+    "cliLoginBody": "Torna al terminale: completa l'accesso da solo."
   },
   "admin": {
     "system": {
@@ -9830,7 +9832,8 @@
         "passkey": "Passkey",
         "sso": "Single sign-on",
         "handoff": "Passaggio dall'app",
-        "exchange": "Scambio di sessione"
+        "exchange": "Scambio di sessione",
+        "cliApproval": "Approvazione da terminale"
       }
     },
     "relativeTime": {
@@ -11267,5 +11270,33 @@
       "off": "Presa spenta",
       "withName": "{{state}} · {{name}}"
     }
+  },
+  "cliLogin": {
+    "reauthAction": "Approvare l'accesso di un terminale",
+    "unknownCode": "Nessun accesso in attesa con questo codice. Controlla il terminale.",
+    "failed": "Non è andata a buon fine. Riprova.",
+    "title": "Approva l'accesso di un terminale",
+    "intro": "Scrivi il codice mostrato dal terminale. Approva solo un accesso che hai avviato tu.",
+    "codeLabel": "Codice di accesso",
+    "continue": "Continua",
+    "client": "Nome che si è dato (non verificato)",
+    "address": "Indirizzo del terminale",
+    "requested": "Richiesto",
+    "unknownValue": "Sconosciuto",
+    "ageNow": "adesso",
+    "ageSeconds": "{{count}} s fa",
+    "ageMinutes": "{{count}} min fa",
+    "deny": "Nega",
+    "approve": "Approva",
+    "brand": "CamStack",
+    "deniedBody": "L'accesso è stato negato. Il terminale resta disconnesso.",
+    "back": "Torna a CamStack",
+    "pendingTitle": "Accessi da terminale in attesa",
+    "notMe": "Non sono io",
+    "pendingHint": "Per approvarne uno, apri la pagina di approvazione e scrivi il codice mostrato dal terminale.",
+    "yourAddress": "Il tuo indirizzo",
+    "program": "Programma (visto dall'hub)",
+    "mismatch": "Questa richiesta arriva da un indirizzo diverso da quello che stai usando ora. Approvala solo se l'hai avviata da un'altra tua macchina.",
+    "grant": "Approvando, questo terminale accede come te, con tutti i tuoi diritti, finché la sessione scade o la termini in Token e sessioni."
   }
 }

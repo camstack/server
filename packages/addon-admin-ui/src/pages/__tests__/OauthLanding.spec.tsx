@@ -42,6 +42,22 @@ describe('OauthLandingPage', () => {
     expect(screen.getByTestId('oauth-landing-title').textContent).toBe('Signed out')
   })
 
+  it('a terminal sign-in says to go back to the terminal and returns to the sessions list', () => {
+    const onContinue = vi.fn()
+    render(
+      <OauthLandingPage
+        outcome={{ status: 'success', action: 'cli-login' }}
+        closable={false}
+        onContinue={onContinue}
+      />,
+    )
+    expect(screen.getByTestId('oauth-landing-title').textContent).toBe('Terminal signed in')
+    act(() => {
+      vi.advanceTimersByTime(OAUTH_RETURN_DELAY_MS)
+    })
+    expect(onContinue).toHaveBeenCalledWith('/system/identity?tab=access')
+  })
+
   it('a failure names the reason in words and does NOT return on its own', () => {
     const onContinue = vi.fn()
     render(
