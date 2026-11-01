@@ -36,6 +36,7 @@ describe('one bootstrap loader', () => {
         'auth: { jwtSecret: s }',
         'tls: { enabled: false }',
         'bootstrap: { settingsStoreAddon: "@x/y", forceDisable: ["@a/b"], installSource: local }',
+        'keychain: { masterKeyFile: /x/key }',
         'server: { port: 5151 }',
         '',
       ].join('\n'),
@@ -49,7 +50,7 @@ describe('one bootstrap loader', () => {
     )
     expect(installSourceWarns).toHaveLength(1)
     expect('installSource' in config.bootstrap).toBe(false)
-    expect(Object.keys(config).sort()).toEqual(['bootstrap', 'keychain', 'server'])
+    expect(Object.keys(config).sort()).toEqual(['bootstrap', 'server'])
     expect(config.server.port).toBe(5151)
     expect(config.bootstrap).toEqual({})
     for (const dead of ['mode', 'hub.url', 'agent.name', 'tls.enabled', 'auth.jwtSecret']) {

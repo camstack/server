@@ -74,8 +74,8 @@ own secrets), D798 (an addon reads its own settings resolved).
   from your config.
 - The hub's own secrets live in the keychain under owner `system`; an agent's
   identity is its mesh certificate and key in its own `agent.json` (0600). The keychain master key
-  comes from `keychain.keyFile` in `config.yaml`, the desktop app's OS
-  keychain, or the default key file — never an env var (D788).
+  comes from the file `/run/secrets/camstack-master-key`, the desktop app's OS
+  keychain, or the default key file — never an env var or config (D788, D991).
 - **A child process that needs a credential gets an owner-only FILE**: a fresh
   `0700` temp dir, the value written with `mode: 0o600`, the PATH passed on
   argv (`--auth-key=file:<path>`, `--token-file <path>`), the dir removed when

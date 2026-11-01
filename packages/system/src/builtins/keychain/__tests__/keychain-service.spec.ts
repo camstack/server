@@ -3,11 +3,8 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DEFAULT_BACKUP_LOCATIONS } from '../../system-backup/system-backup.service.js'
-import {
-  buildKeySourceCandidates,
-  defaultKeyFilePath,
-  type KeychainKeyConfig,
-} from '../key-sources.js'
+import { buildKeySourceCandidates, defaultKeyFilePath } from '../key-sources.js'
+import { mountKey } from './mounted-key.js'
 import { encodeKeyMaterial, generateKey } from '../keychain-crypto.js'
 import { KeychainLockedError, KeychainService } from '../keychain-service.js'
 import { KEYCHAIN_SECRETS_COLLECTION, KeychainRepository } from '../keychain-store.js'
@@ -34,16 +31,14 @@ interface Harness {
 }
 
 let dataDir: string
+let secretsDir: string
 let door: MemoryDoor
 
-function boot(
-  config: KeychainKeyConfig = {},
-  runnerIdOf: (id: string) => string = (id) => id,
-): Harness {
+function boot(runnerIdOf: (id: string) => string = (id) => id): Harness {
   const events: Array<Record<string, unknown>> = []
   const service = new KeychainService({
     repo: new KeychainRepository(door),
-    candidates: async () => buildKeySourceCandidates({ config, dataDir }),
+    candidates: () => buildKeySourceCandidates({ dataDir, secretsDir }),
     dataDir,
     events: { emit: (payload) => events.push({ ...payload }) },
     logger: { info: () => undefined, warn: () => undefined, error: () => undefined },
@@ -55,6 +50,7 @@ function boot(
 
 beforeEach(async () => {
   dataDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'keychain-spec-'))
+  secretsDir = path.join(dataDir, 'run-secrets')
   door = new MemoryDoor()
 })
 
@@ -167,16 +163,26 @@ describe('first boot and unlock', () => {
     await expect(fsp.access(defaultKeyFilePath(dataDir))).rejects.toThrow()
   })
 
-  it('a configured key file that does not exist yet is the operator’s to create', async () => {
-    const h = boot({ keyFile: path.join(dataDir, 'outside', 'keychain.key') })
-    expect(await h.service.init()).toEqual({ state: 'locked', reason: 'key-missing' })
+  it('no mounted key file: the default file is the primary source and the key loads from it', async () => {
+    const h = boot()
+    expect(await h.service.init()).toEqual({ state: 'ready' })
+    expect((await h.service.status()).keySource?.kind).toBe('default-file')
+    await fsp.access(defaultKeyFilePath(dataDir))
+  })
+
+  it('a mounted key file is the primary source and the key loads from it; the default file is never created', async () => {
+    const file = await mountKey(secretsDir, generateKey())
+    const h = boot()
+    expect(await h.service.init()).toEqual({ state: 'ready' })
+    const status = await h.service.status()
+    expect(status.keySource?.kind).toBe('mounted-file')
+    expect(status.keySource?.path).toBe(file)
     await expect(fsp.access(defaultKeyFilePath(dataDir))).rejects.toThrow()
   })
 
-  it('an unreadable configured key file is named, not folded into wrong-key', async () => {
-    const keyFile = path.join(dataDir, 'k.key')
-    await fsp.writeFile(keyFile, 'not a key')
-    const h = boot({ keyFile })
+  it('an unreadable mounted key file is named, not folded into wrong-key', async () => {
+    await mountKey(secretsDir, 'not a key')
+    const h = boot()
     expect(await h.service.init()).toEqual({ state: 'locked', reason: 'key-file-unreadable' })
   })
 
@@ -203,7 +209,7 @@ describe('the owner rule', () => {
   })
 
   it('a grouped runner’s stamp (its group id) owns the refs of the addons it hosts', async () => {
-    const h = boot({}, (id) => (id === 'auth-oidc' ? 'auth' : id))
+    const h = boot((id) => (id === 'auth-oidc' ? 'auth' : id))
     await h.service.init()
     await h.service.put('auth', OTHER, 'client-secret-value')
     expect((await h.service.resolve('auth', [OTHER]))[OTHER]).toMatchObject({ kind: 'value' })
@@ -322,22 +328,23 @@ describe('master-key rotation and recovery', () => {
   })
 
   it('moving to an external key file: unlock via previousKeyFile, then rotate onto the configured one', async () => {
-    const oldFile = path.join(dataDir, 'old.key')
-    const newFile = path.join(dataDir, 'new.key')
     const oldKey = generateKey()
-    await fsp.writeFile(oldFile, encodeKeyMaterial(oldKey))
-    const a = boot({ keyFile: oldFile })
+    await mountKey(secretsDir, oldKey)
+    const a = boot()
     await a.service.init()
     await a.service.put('cloudflare-tunnel', REF, 'token-value-aaaa')
 
-    await fsp.writeFile(newFile, encodeKeyMaterial(generateKey()))
-    const b = boot({ keyFile: newFile, previousKeyFile: oldFile })
+    // The operator swaps the mounted file: the old key moves to `.previous`.
+    const oldFile = await mountKey(secretsDir, oldKey, 'previous')
+    await mountKey(secretsDir, generateKey())
+    const b = boot()
     expect(await b.service.init()).toEqual({ state: 'ready' })
+    expect((await b.service.status()).keySource?.kind).toBe('previous-mounted-file')
     expect((await b.service.status()).rotationPending).toBe(true)
     await b.service.rotateMasterKey('admin-1')
 
     await fsp.rm(oldFile)
-    const c = boot({ keyFile: newFile })
+    const c = boot()
     expect(await c.service.init()).toEqual({ state: 'ready' })
     expect((await c.service.status()).rotationPending).toBe(false)
     expect((await c.service.resolve('cloudflare-tunnel', [REF]))[REF]).toMatchObject({
@@ -352,9 +359,8 @@ describe('master-key rotation and recovery', () => {
     const recovery = await h.service.downloadRecoveryKey('admin-1')
     expect((await h.service.status()).recoveryKeyDownloadedAt).not.toBeNull()
     await fsp.rm(defaultKeyFilePath(dataDir))
-    const recoveredFile = path.join(dataDir, 'recovered.key')
-    await fsp.writeFile(recoveredFile, recovery.key)
-    const restored = boot({ keyFile: recoveredFile })
+    await mountKey(secretsDir, recovery.key)
+    const restored = boot()
     expect(await restored.service.init()).toEqual({ state: 'ready' })
   })
 
@@ -467,7 +473,10 @@ describe('system-held secrets (D797)', () => {
   })
 
   it('setSystemSecret refuses while the keychain is locked', async () => {
-    const h = boot({ keyFile: path.join(dataDir, 'missing.key') })
+    await mountKey(secretsDir, generateKey())
+    await boot().service.init()
+    await fsp.rm(path.join(secretsDir, 'camstack-master-key'))
+    const h = boot()
     await h.service.init()
     await expect(
       h.service.setSystemSecret('u-op', 'jwt-signing-key', 'x-value-123'),
@@ -506,5 +515,46 @@ describe('system-held secrets (D797)', () => {
     expect(await h.service.resolve('stream-broker', [ref])).toEqual({
       [ref]: { kind: 'value', value: '{"a":"b"}', version: 1 },
     })
+  })
+})
+
+describe('mounted key file appears after a default-file boot', () => {
+  it('unlocks via the default file, flags rotation, and rotating re-wraps under the mounted key without writing to the secrets dir', async () => {
+    const first = boot()
+    await first.service.init()
+    await first.service.put('cloudflare-tunnel', REF, 'token-value-aaaa')
+
+    const mountedFile = await mountKey(secretsDir, generateKey())
+    const mountedBefore = await fsp.readFile(mountedFile, 'utf8')
+    const entriesBefore = await fsp.readdir(secretsDir)
+
+    const b = boot()
+    expect(await b.service.init()).toEqual({ state: 'ready' })
+    const pending = await b.service.status()
+    expect(pending.keySource?.kind).toBe('default-file')
+    expect(pending.rotationPending).toBe(true)
+
+    await b.service.rotateMasterKey('admin-1')
+    expect(await fsp.readdir(secretsDir)).toEqual(entriesBefore)
+    expect(await fsp.readFile(mountedFile, 'utf8')).toBe(mountedBefore)
+
+    await fsp.rm(defaultKeyFilePath(dataDir))
+    const c = boot()
+    expect(await c.service.init()).toEqual({ state: 'ready' })
+    const after = await c.service.status()
+    expect(after.keySource?.kind).toBe('mounted-file')
+    expect(after.rotationPending).toBe(false)
+    expect((await c.service.resolve('cloudflare-tunnel', [REF]))[REF]).toMatchObject({
+      value: 'token-value-aaaa',
+    })
+  })
+
+  it('rotating while the mounted key is already in use refuses and names the fixed paths', async () => {
+    await mountKey(secretsDir, generateKey())
+    const h = boot()
+    await h.service.init()
+    await expect(h.service.rotateMasterKey('admin-1')).rejects.toThrow(
+      /\/run\/secrets\/camstack-master-key\.previous/,
+    )
   })
 })

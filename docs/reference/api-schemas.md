@@ -2703,7 +2703,7 @@ Enum: `"put" \| "delete" \| "reveal" \| "rotate-master-key" \| "purge-retired-ke
 
 ### `KeychainKeySourceKindSchema`
 
-Enum: `"config-file" \| "previous-config-file" \| "platform" \| "default-file"`
+Enum: `"mounted-file" \| "previous-mounted-file" \| "platform" \| "default-file"`
 
 ### `KeychainKeySourceSchema`
 

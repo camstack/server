@@ -2936,7 +2936,7 @@
 
 ### `keychain-admin` → `keychainAdmin.*`
 
-- **Source:** `packages/types/src/capabilities/keychain-admin.cap.ts:156`
+- **Source:** `packages/types/src/capabilities/keychain-admin.cap.ts:157`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IKeychainAdminProvider`

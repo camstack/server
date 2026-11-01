@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- camstack-secrets skill: the external keychain master key is the fixed mounted path /run/secrets/camstack-master-key, not a config.yaml key
+
 ## [0.1.43] - 2026-11-01
 
 ### Changed

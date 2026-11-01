@@ -13,7 +13,7 @@ const DEFAULT_SOURCE = {
   sharesBackupWithDatabase: true,
 }
 const CONFIG_SOURCE = {
-  kind: 'config-file' as const,
+  kind: 'mounted-file' as const,
   path: '/etc/camstack/master.key',
   sharesBackupWithDatabase: false,
 }

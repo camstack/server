@@ -187,7 +187,7 @@
         "name": "Keychain",
         "icon": "assets/keychain/icon.svg",
         "color": "#0d9488",
-        "description": "Hub-only store of every secret value. Settings blobs hold a marker; the value lives here, AES-256-GCM under a data key wrapped by a master key whose location is configuration (config.yaml `keychain.keyFile`, the desktop OS keychain, else the data-dir default). Registers `keychain` (internal, owner-checked against the transport-stamped caller) and `keychain-admin` (System → Secrets). Boots in the infrastructure pass, right after the settings door.",
+        "description": "Hub-only store of every secret value. Settings blobs hold a marker; the value lives here, AES-256-GCM under a data key wrapped by a master key whose location is a fixed path (the mounted file `/run/secrets/camstack-master-key`, the desktop OS keychain, else the data-dir default). Registers `keychain` (internal, owner-checked against the transport-stamped caller) and `keychain-admin` (System → Secrets). Boots in the infrastructure pass, right after the settings door.",
         "entry": "./dist/builtins/keychain/index.js",
         "protected": true,
         "capabilities": [

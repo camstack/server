@@ -4,7 +4,7 @@
 
 # Decisions
 
-953 architecture decision records. One file per decision, never
+954 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -968,6 +968,7 @@ that rots.
 | D988 | [A terminal with no TTY signs in by an approval the operator gives in the admin UI](adr-0988-a-terminal-signs-in-by-browser-approval.md) | ✅ accepted | 2026-11-01 |
 | D989 | [One published framework package, and every delivery declares the server it needs](adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md) | ✅ accepted (supersedes the system/server package split (D15 amended)) | 2026-11-01 |
 | D990 | [A native running can be replaced by the assigned source, through the D984 door](adr-0990-a-native-running-can-be-replaced-by-the-assigned-source.md) | ✅ accepted | 2026-11-01 |
+| D991 | [The external keychain key is a fixed mounted path](adr-0991-the-external-keychain-key-is-a-fixed-mounted-path.md) | ✅ accepted | 2026-11-01 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

@@ -26,6 +26,8 @@ is itself backed up. D783 already bans secrets from the environment.
 
 ## Decision
 
+> Amended by [D991](adr-0991-the-external-keychain-key-is-a-fixed-mounted-path.md): the external key is a fixed mounted path, no longer `keychain.keyFile` / `previousKeyFile`.
+
 The KEK is loaded, in this order of primacy, from:
 
 1. `keychain.keyFile` in `config.yaml` — a file of 32 random bytes (base64 or

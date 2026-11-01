@@ -36,7 +36,13 @@ import {
   RECORD_SECRET_COLLECTION_PREFIX,
   type SystemHeldSecretName,
 } from '@camstack/types'
-import { defaultKeyFilePath, type KeySourceCandidate, writeDefaultKeyFile } from './key-sources.js'
+import {
+  defaultKeyFilePath,
+  type KeySourceCandidate,
+  MOUNTED_KEY_FILE_PATH,
+  PREVIOUS_MOUNTED_KEY_FILE_PATH,
+  writeDefaultKeyFile,
+} from './key-sources.js'
 import {
   constantTimeEquals,
   decryptValue,
@@ -689,8 +695,9 @@ export class KeychainService {
       await writeDefaultKeyFile(this.deps.dataDir, newKek, { replace: true, nowMs: this.now() })
     } else {
       throw new Error(
-        `keychain: the ${primary.source.kind} key is already in use. Put the new key at its ` +
-          'source, set the old one as keychain.previousKeyFile, restart, then rotate.',
+        `keychain: the ${primary.source.kind} key is already in use. To move to a new external ` +
+          `source: put the new key at ${MOUNTED_KEY_FILE_PATH}, the old one at ` +
+          `${PREVIOUS_MOUNTED_KEY_FILE_PATH}, restart, then rotate.`,
       )
     }
     const fingerprint = kekFingerprint(newKek)
@@ -828,8 +835,8 @@ export class KeychainService {
     const where = primary.source.path ?? primary.source.kind
     throw new KeychainResetRefusedError(
       loaded.kind === 'absent'
-        ? `the configured master key ${where} does not exist — put a new 32-byte key there (or remove keychain.keyFile to use the default file) first`
-        : `the configured master key ${where} cannot be read (${loaded.error})`,
+        ? `the mounted master key ${where} does not exist — put a new 32-byte key there (or unmount it to use the default file) first`
+        : `the mounted master key ${where} cannot be read (${loaded.error})`,
     )
   }
 

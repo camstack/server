@@ -54,6 +54,15 @@ function warnRetiredYamlKeys(raw: Record<string, unknown>): void {
         'a workspace build reaches a node through `camstack deploy`. Remove the key.',
     )
   }
+  const keychain = raw['keychain']
+  if (isRecord(keychain) && ('keyFile' in keychain || 'previousKeyFile' in keychain)) {
+    console.warn(
+      '[Phase1] WARN keychain.keyFile / keychain.previousKeyFile ignored — the external ' +
+        'master key is a fixed mounted path: mount the file at /run/secrets/camstack-master-key ' +
+        '(the key being rotated away from at /run/secrets/camstack-master-key.previous). ' +
+        'Remove the keys.',
+    )
+  }
 }
 
 /**

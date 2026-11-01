@@ -172,8 +172,8 @@ describe('SecretsPage — notices', () => {
   it('a healthy keychain renders no notice region at all', () => {
     status = {
       ...status,
-      keySource: { ...SOURCE, kind: 'config-file', sharesBackupWithDatabase: false },
-      configuredSource: { ...SOURCE, kind: 'config-file', sharesBackupWithDatabase: false },
+      keySource: { ...SOURCE, kind: 'mounted-file', sharesBackupWithDatabase: false },
+      configuredSource: { ...SOURCE, kind: 'mounted-file', sharesBackupWithDatabase: false },
       recoveryKeyDownloadedAt: 5,
     }
     report = { reset: null, pendingReentry: [] }

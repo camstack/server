@@ -11,18 +11,19 @@ import { KeychainSecretMetaSchema, KeychainStateSchema } from './keychain.cap.js
  * key itself, so the operator can keep a copy off the hub). Nothing else
  * returns a value.
  *
- * The master key's LOCATION is configuration, never an env var (D788):
- * `keychain.keyFile` in `config.yaml`, the OS keychain on a desktop hub, else
+ * The master key's LOCATION is a fixed path, never an env var (D788, D991):
+ * `/run/secrets/camstack-master-key` when that file exists, the OS keychain on
+ * a desktop hub, else
  * `<dataDir>/.keychain/master.key` — which sits beside the database in every
  * whole-volume backup, and the status says so.
  */
 
 /** Where the master key in use came from. */
 export const KeychainKeySourceKindSchema = z.enum([
-  /** `keychain.keyFile` in config.yaml. */
-  'config-file',
-  /** `keychain.previousKeyFile` — kept only until a rotation moves off it. */
-  'previous-config-file',
+  /** `/run/secrets/camstack-master-key` — mounted by the operator, read-only for CamStack. */
+  'mounted-file',
+  /** `/run/secrets/camstack-master-key.previous` — unlock-only, until a rotation moves off it. */
+  'previous-mounted-file',
   /** The desktop app's OS keychain (Electron `safeStorage`). */
   'platform',
   /** `<dataDir>/.keychain/master.key`. */
@@ -216,8 +217,8 @@ export const keychainAdminCapability = {
      * under the primary. Otherwise, with the default file as primary: generate
      * a new master key, write it there, re-wrap. A file or OS-keychain primary
      * that is already in use cannot be replaced from here — put the new key at
-     * the source, keep the old one as `keychain.previousKeyFile`, restart, and
-     * rotate. No value is re-encrypted either way; the previous wrap is kept
+     * the source, keep the old one at
+     * `/run/secrets/camstack-master-key.previous`, restart, and rotate. No value is re-encrypted either way; the previous wrap is kept
      * (retired) until purged.
      */
     rotateMasterKey: method(

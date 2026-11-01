@@ -1,21 +1,23 @@
 /**
- * Where the master key comes from (D788). Configuration only — NO env var
- * carries a key or a key path:
+ * Where the master key comes from (D788, amended by D991). FIXED paths only —
+ * no config key, NO env var carries a key or a key path:
  *
- *  1. `keychain.keyFile` in `config.yaml` — a file outside the data volume
- *     (a read-only bind mount, a Docker secret). Recommended: a whole-volume
- *     backup then holds the ciphertext but not the key.
+ *  1. `/run/secrets/camstack-master-key` — primary when the file EXISTS at boot
+ *     (the Docker / Compose secrets convention; Unraid and Proxmox bind-mount a
+ *     file there). A file outside the data volume: a whole-volume backup then
+ *     holds the ciphertext but not the key. CamStack only READS it — it is
+ *     never written and never created.
  *  2. The desktop app's OS keychain (`safeStorage`), handed to the hub over an
- *     inherited pipe. Primary on a desktop hub with no key file configured.
+ *     inherited pipe. Primary on a desktop hub with no mounted key file.
  *  3. `<dataDir>/.keychain/master.key` (0600, directory 0700), generated on
  *     first boot. The fallback: it protects CamStack's own backups and stray
  *     database copies (it is NOT in `DEFAULT_BACKUP_LOCATIONS`), but a tar of
  *     the whole data directory carries key and database together, and the
  *     Secrets page says so.
  *
- * `keychain.previousKeyFile` is consulted only to UNLOCK — so a move from one
- * key to another is a restart plus `rotateMasterKey`, with no window where
- * neither key works.
+ * `/run/secrets/camstack-master-key.previous` is consulted only to UNLOCK — so a
+ * move from one external key to another is a restart plus `rotateMasterKey`,
+ * with no window where neither key works.
  */
 import { promises as fsp } from 'node:fs'
 import * as path from 'node:path'
@@ -28,11 +30,15 @@ import {
 import { decodeKeyMaterial, encodeKeyMaterial } from './keychain-crypto.js'
 import { getPlatformKeychainKey } from './platform-key-source.js'
 
-/** The `keychain` section of `config.yaml`. */
-export interface KeychainKeyConfig {
-  readonly keyFile?: string | undefined
-  readonly previousKeyFile?: string | undefined
-}
+/** The directory the mounted key files live in (injectable for specs, never an env var). */
+export const DEFAULT_SECRETS_DIR = '/run/secrets'
+/** The mounted primary key file, under the secrets directory. */
+export const MOUNTED_KEY_FILE_NAME = 'camstack-master-key'
+/** The mounted unlock-only key file, under the secrets directory. */
+export const PREVIOUS_MOUNTED_KEY_FILE_NAME = 'camstack-master-key.previous'
+/** Absolute form of both, for messages. */
+export const MOUNTED_KEY_FILE_PATH: string = `${DEFAULT_SECRETS_DIR}/${MOUNTED_KEY_FILE_NAME}`
+export const PREVIOUS_MOUNTED_KEY_FILE_PATH: string = `${DEFAULT_SECRETS_DIR}/${PREVIOUS_MOUNTED_KEY_FILE_NAME}`
 
 export type KeyLoadResult =
   | { readonly kind: 'loaded'; readonly key: Buffer }
@@ -75,37 +81,51 @@ function fileSource(
 }
 
 export interface KeySourceOptions {
-  readonly config: KeychainKeyConfig
   readonly dataDir: string
+  /** Where the mounted key files live. Defaults to {@link DEFAULT_SECRETS_DIR}. */
+  readonly secretsDir?: string | undefined
+}
+
+async function fileExists(file: string): Promise<boolean> {
+  try {
+    await fsp.access(file)
+    return true
+  } catch {
+    return false
+  }
 }
 
 /** Every candidate, primary first. */
-export function buildKeySourceCandidates(opts: KeySourceOptions): readonly KeySourceCandidate[] {
+export async function buildKeySourceCandidates(
+  opts: KeySourceOptions,
+): Promise<readonly KeySourceCandidate[]> {
   const out: KeySourceCandidate[] = []
+  const secretsDir = opts.secretsDir ?? DEFAULT_SECRETS_DIR
+  const mountedFile = path.join(secretsDir, MOUNTED_KEY_FILE_NAME)
+  const previousFile = path.join(secretsDir, PREVIOUS_MOUNTED_KEY_FILE_NAME)
   const defaultFile = defaultKeyFilePath(opts.dataDir)
   const platform = getPlatformKeychainKey()
-  const keyFile = opts.config.keyFile?.trim()
-  const previousKeyFile = opts.config.previousKeyFile?.trim()
+  const hasMounted = await fileExists(mountedFile)
+  const hasPrevious = await fileExists(previousFile)
 
-  const primaryKind: KeychainKeySourceKind =
-    keyFile !== undefined && keyFile.length > 0
-      ? 'config-file'
-      : platform !== null
-        ? 'platform'
-        : 'default-file'
+  const primaryKind: KeychainKeySourceKind = hasMounted
+    ? 'mounted-file'
+    : platform !== null
+      ? 'platform'
+      : 'default-file'
 
-  if (keyFile !== undefined && keyFile.length > 0) {
+  if (hasMounted) {
     out.push({
-      source: fileSource('config-file', keyFile, false),
+      source: fileSource('mounted-file', mountedFile, false),
       primary: true,
-      load: () => loadKeyFile(keyFile),
+      load: () => loadKeyFile(mountedFile),
     })
   }
-  if (previousKeyFile !== undefined && previousKeyFile.length > 0) {
+  if (hasPrevious) {
     out.push({
-      source: fileSource('previous-config-file', previousKeyFile, false),
+      source: fileSource('previous-mounted-file', previousFile, false),
       primary: false,
-      load: () => loadKeyFile(previousKeyFile),
+      load: () => loadKeyFile(previousFile),
     })
   }
   if (platform !== null) {

@@ -32,7 +32,8 @@ async function boot(): Promise<Harness> {
   const events: Array<Record<string, unknown>> = []
   const service = new KeychainService({
     repo: new KeychainRepository(door),
-    candidates: async () => buildKeySourceCandidates({ config: {}, dataDir }),
+    candidates: () =>
+      buildKeySourceCandidates({ dataDir, secretsDir: path.join(dataDir, 'run-secrets') }),
     dataDir,
     events: { emit: (payload) => events.push({ ...payload }) },
     logger: { info: () => undefined, warn: () => undefined, error: () => undefined },

@@ -15,22 +15,15 @@ export type BootstrapAddonsConfig = {
   requiredAddons?: string[]
 }
 
-/** Bootstrap `keychain` section — see {@link keychainSchema}. */
-export type BootstrapKeychainConfig = {
-  keyFile?: string
-  previousKeyFile?: string
-}
-
 /**
  * Bootstrap config — loaded from config.yaml (plus the three env overrides) ONLY
  * at startup, by `loadBootstrapConfig`, the one loader. A key not named here is
  * not read: an older yaml that still carries `mode`, `hub`, `agent`, `auth`,
- * `tls` or `bootstrap.settingsStoreAddon` / `forceDisable` / `installSource` boots with them ignored.
+ * `tls`, `keychain.keyFile` / `previousKeyFile` or `bootstrap.settingsStoreAddon` / `forceDisable` / `installSource` boots with them ignored.
  */
 export type BootstrapConfig = {
   server: BootstrapServerConfig
   bootstrap: BootstrapAddonsConfig
-  keychain: BootstrapKeychainConfig
 }
 
 // Sub-schemas extracted so we can derive defaults for Zod 4 compat.
@@ -58,28 +51,10 @@ const bootstrapAddonsSchema: z.ZodType<BootstrapAddonsConfig> = z.object({
   requiredAddons: z.array(z.string()).optional(),
 })
 
-/**
- * Where the keychain's master key lives (D788). config.yaml ONLY: no env var
- * maps here, and the settings store may not answer it
- * (`BOOTSTRAP_OWNED_SECTIONS`). Absent → the desktop OS keychain when the hub
- * runs inside the desktop app, else `<dataDir>/.keychain/master.key`.
- */
-const keychainSchema: z.ZodType<BootstrapKeychainConfig> = z.object({
-  /** A file holding 32 random bytes, base64 (or hex). Keep it OFF the data volume. */
-  keyFile: z.string().min(1).optional(),
-  /**
-   * The key being rotated away from — consulted only to UNLOCK, so a move to a
-   * new key file is: new file, old one here, restart, rotate, remove this.
-   */
-  previousKeyFile: z.string().min(1).optional(),
-})
-
 const bootstrapSchemaDefinition: z.ZodType<BootstrapConfig> = z.object({
   server: serverSchema.default(serverSchema.parse({})),
   /** The required-addon override (read by the launcher). */
   bootstrap: bootstrapAddonsSchema.default(bootstrapAddonsSchema.parse({})),
-  /** Keychain master-key location (config.yaml only). */
-  keychain: keychainSchema.default({}),
 })
 
 export const bootstrapSchema: z.ZodType<BootstrapConfig> = bootstrapSchemaDefinition

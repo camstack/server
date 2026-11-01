@@ -15,8 +15,8 @@ import { Truncated } from './Truncated'
 import { useTranslation } from 'react-i18next'
 
 const SOURCE_LABEL: Record<KeychainKeySource['kind'], string> = {
-  'config-file': 'Key file (config.yaml)',
-  'previous-config-file': 'Previous key file',
+  'mounted-file': 'Mounted key file (/run/secrets)',
+  'previous-mounted-file': 'Previous mounted key file',
   platform: 'OS keychain',
   'default-file': 'Default key file (data volume)',
 }

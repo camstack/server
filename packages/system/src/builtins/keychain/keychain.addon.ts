@@ -32,7 +32,7 @@ import {
   keychainCapability,
   type ProviderRegistration,
 } from '@camstack/types'
-import { buildKeySourceCandidates, type KeychainKeyConfig } from './key-sources.js'
+import { buildKeySourceCandidates } from './key-sources.js'
 import { applyKeychainResetTrigger } from './keychain-reset-trigger.js'
 import { type KeychainLogger, KeychainService } from './keychain-service.js'
 import { keychainRecordKinds } from './record-kinds.js'
@@ -46,18 +46,6 @@ export function callerOf(input: unknown): string | null {
   if (input === null || typeof input !== 'object') return null
   const raw: unknown = Reflect.get(input, 'callerAddonId')
   return typeof raw === 'string' && raw.length > 0 ? raw : null
-}
-
-function readKeyConfig(section: Record<string, unknown>): KeychainKeyConfig {
-  const keyFile = section['keyFile']
-  const previousKeyFile = section['previousKeyFile']
-  return {
-    keyFile: typeof keyFile === 'string' && keyFile.length > 0 ? keyFile : undefined,
-    previousKeyFile:
-      typeof previousKeyFile === 'string' && previousKeyFile.length > 0
-        ? previousKeyFile
-        : undefined,
-  }
 }
 
 export class KeychainAddon extends BaseAddon {
@@ -93,11 +81,7 @@ export class KeychainAddon extends BaseAddon {
         door,
         records !== undefined ? KeychainRepository.recordStoresOf(records) : undefined,
       ),
-      candidates: async () => {
-        // `keychain` is a bootstrap-owned section: config.yaml only (D788).
-        const section = (await ctx.settings?.getSection('keychain')) ?? {}
-        return buildKeySourceCandidates({ config: readKeyConfig(section), dataDir })
-      },
+      candidates: () => buildKeySourceCandidates({ dataDir }),
       dataDir,
       events: {
         emit: (payload) => {

@@ -12,11 +12,8 @@ import * as path from 'node:path'
 import { buildSecretRef, KEYCHAIN_RESET_TRIGGER_ACTOR } from '@camstack/types'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { JWT_SIGNING_KEY_REF } from '../../../auth/jwt-signing-key.js'
-import {
-  buildKeySourceCandidates,
-  defaultKeyFilePath,
-  type KeychainKeyConfig,
-} from '../key-sources.js'
+import { buildKeySourceCandidates, defaultKeyFilePath } from '../key-sources.js'
+import { mountKey } from './mounted-key.js'
 import { encodeKeyMaterial, generateKey } from '../keychain-crypto.js'
 import { applyKeychainResetTrigger, keychainResetTriggerPath } from '../keychain-reset-trigger.js'
 import { KeychainService } from '../keychain-service.js'
@@ -41,6 +38,7 @@ interface Logged {
 }
 
 let dataDir: string
+let secretsDir: string
 let door: MemoryDoor
 let logged: Logged[]
 let events: Array<Record<string, unknown>>
@@ -54,10 +52,10 @@ const logger = {
     logged.push({ level: 'error', message, meta }),
 }
 
-function boot(config: KeychainKeyConfig = {}): KeychainService {
+function boot(): KeychainService {
   return new KeychainService({
     repo: new KeychainRepository(door),
-    candidates: async () => buildKeySourceCandidates({ config, dataDir }),
+    candidates: () => buildKeySourceCandidates({ dataDir, secretsDir }),
     dataDir,
     events: { emit: (payload) => events.push({ ...payload }) },
     logger,
@@ -95,6 +93,7 @@ async function exists(file: string): Promise<boolean> {
 
 beforeEach(async () => {
   dataDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'keychain-reset-'))
+  secretsDir = path.join(dataDir, 'run-secrets')
   door = new MemoryDoor()
   logged = []
   events = []
@@ -211,36 +210,32 @@ describe('RESET_KEYCHAIN trigger file', () => {
     expect((await h.status()).lastReset).toBeNull()
   })
 
-  it('a configured key file that is missing refuses the reset BEFORE archiving anything, and removes the file', async () => {
-    const keyFile = path.join(dataDir, 'outside', 'keychain.key')
-    await fsp.mkdir(path.dirname(keyFile), { recursive: true })
-    await fsp.writeFile(keyFile, encodeKeyMaterial(generateKey()))
-    const first = boot({ keyFile })
+  it('a mounted key file that cannot be read refuses the reset BEFORE archiving anything, and removes the file', async () => {
+    const keyFile = await mountKey(secretsDir, generateKey())
+    const first = boot()
     await first.init()
     await first.put('cloudflare-tunnel', REF, 'token-value-aaaa')
-    await fsp.rm(keyFile)
-    const locked = boot({ keyFile })
-    expect(await locked.init()).toEqual({ state: 'locked', reason: 'key-missing' })
+    await fsp.writeFile(keyFile, 'not a key')
+    const locked = boot()
+    expect(await locked.init()).toEqual({ state: 'locked', reason: 'key-file-unreadable' })
     const file = await armTrigger()
 
     const outcome = await applyKeychainResetTrigger({ service: locked, dataDir, logger })
 
     expect(outcome.kind).toBe('refused')
     expect(await exists(file)).toBe(false)
-    expect(locked.getState()).toEqual({ state: 'locked', reason: 'key-missing' })
+    expect(locked.getState()).toEqual({ state: 'locked', reason: 'key-file-unreadable' })
     expect((await locked.status()).secretCount).toBe(1)
     expect(logged.some((l) => l.level === 'error' && l.message.includes(keyFile))).toBe(true)
   })
 
-  it('a configured key file with a NEW key: the reset starts over under it', async () => {
-    const keyFile = path.join(dataDir, 'outside', 'keychain.key')
-    await fsp.mkdir(path.dirname(keyFile), { recursive: true })
-    await fsp.writeFile(keyFile, encodeKeyMaterial(generateKey()))
-    const first = boot({ keyFile })
+  it('a mounted key file with a NEW key: the reset starts over under it', async () => {
+    await mountKey(secretsDir, generateKey())
+    const first = boot()
     await first.init()
     await first.put('cloudflare-tunnel', REF, 'token-value-aaaa')
-    await fsp.writeFile(keyFile, encodeKeyMaterial(generateKey()))
-    const locked = boot({ keyFile })
+    await mountKey(secretsDir, generateKey())
+    const locked = boot()
     expect(await locked.init()).toEqual({ state: 'locked', reason: 'wrong-key' })
     await armTrigger()
 
@@ -248,7 +243,7 @@ describe('RESET_KEYCHAIN trigger file', () => {
       'reset',
     )
     expect(locked.getState()).toEqual({ state: 'ready' })
-    expect((await locked.status()).keySource?.kind).toBe('config-file')
+    expect((await locked.status()).keySource?.kind).toBe('mounted-file')
   })
 
   it('no environment variable arms it — only the file does', async () => {

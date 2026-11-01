@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Notification templates: the {{camera}} variable is now {{device}} (the camera for a track, the appliance or sensor for a device event); the system text for an agent that went offline during an update declares {{graceMin}}
 - New admin-only read userManagement.getAdminBootstrapStatus: whether an admin account still has the first-boot password, as one boolean
 - Removed the addons.installFromWorkspace, isWorkspaceAvailable and listWorkspacePackages methods; a workspace build reaches a node through camstack deploy.
+- Keychain key source kinds config-file / previous-config-file are now mounted-file / previous-mounted-file
 
 ## [1.2.467] - 2026-11-01
 

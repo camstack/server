@@ -84,7 +84,7 @@ export class JwtSigningKeyKeeper {
     this.deps.logger.error(
       'Sessions are UNAVAILABLE: the session signing key cannot be read from the keychain. ' +
         'No one can sign in and no session token verifies until the keychain unlocks ' +
-        '(Data → Secrets; or fix keychain.keyFile in config.yaml and restart). ' +
+        '(Data → Secrets; or fix the mounted key at /run/secrets/camstack-master-key and restart). ' +
         'No fallback key is used.',
       { meta: { reason: next.reason, ref: JWT_SIGNING_KEY_REF } },
     )

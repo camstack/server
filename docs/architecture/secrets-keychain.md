@@ -86,8 +86,13 @@ keychain stores strings. Hidden state an addon writes itself is declared in
   ciphertext copied onto another ref does not decrypt. Rotating the KEK
   re-wraps one row.
 - **Master key** ([D788](../decisions/adr-0788-the-keychain-master-key-location-is-configuration-never-an-environment-variable.md)):
-  `keychain.keyFile` in `config.yaml` → the desktop app's OS keychain →
-  `<dataDir>/.keychain/master.key`. No env var. The default file is not in
+  the file `/run/secrets/camstack-master-key` when it exists (mounted by the
+  operator, read-only for CamStack; `.previous` beside it unlocks only) → the
+  desktop app's OS keychain → `<dataDir>/.keychain/master.key`. Fixed paths
+  ([D991](../decisions/adr-0991-the-external-keychain-key-is-a-fixed-mounted-path.md)),
+  no config key, no env var. Rotating from Data → Secrets: default file →
+  generates a new key; mounted file → re-wraps when a new mounted key is
+  pending, else refuses naming the two paths. The default file is not in
   CamStack's backups, but it IS in a whole-volume tar next to the database —
   the Secrets page says so.
 - **Locked is never empty.** `key-missing`, `wrong-key`,
@@ -107,7 +112,7 @@ unlock (`keychain-reset-trigger.ts`):
 | locked: `wrong-key` / `key-missing` / `key-file-unreadable` | reset (actor `trigger-file`), file deleted, an error-level banner names the fields to re-enter |
 | unlocked | ignored, file deleted, warning — a working store is never reset |
 | locked: `store-unavailable` | left armed for a boot that can reach the store |
-| a configured `keychain.keyFile` that is missing / unreadable | refused BEFORE anything is archived, file deleted |
+| a mounted key file that is unreadable | refused BEFORE anything is archived, file deleted |
 
 Nothing in the environment arms it, and its content is not read. A reset (this
 file's, or the Secrets page's own) archives every value into

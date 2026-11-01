@@ -24,7 +24,8 @@ let door: MemoryDoor
 async function boot(): Promise<KeychainService> {
   const service = new KeychainService({
     repo: new KeychainRepository(door),
-    candidates: async () => buildKeySourceCandidates({ config: {}, dataDir }),
+    candidates: () =>
+      buildKeySourceCandidates({ dataDir, secretsDir: path.join(dataDir, 'run-secrets') }),
     dataDir,
     events: { emit: () => undefined },
     logger: { info: () => undefined, warn: () => undefined, error: () => undefined },

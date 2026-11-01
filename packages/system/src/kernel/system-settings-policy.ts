@@ -19,14 +19,7 @@
  */
 
 /** Top-level sections whose authority is env + config.yaml (`bootstrapSchema`). */
-const BOOTSTRAP_OWNED_SECTIONS: ReadonlySet<string> = new Set([
-  'server',
-  'auth',
-  'bootstrap',
-  // The keychain's master-key location (D788): a stored row must never be
-  // able to point the hub at a different key.
-  'keychain',
-])
+const BOOTSTRAP_OWNED_SECTIONS: ReadonlySet<string> = new Set(['server', 'auth', 'bootstrap'])
 
 /** The only keys under a bootstrap-owned section the store may answer. */
 export const STORE_READABLE_BOOTSTRAP_KEYS: ReadonlySet<string> = new Set([

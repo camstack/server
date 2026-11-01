@@ -44,7 +44,7 @@ export class JwtSigningKeyUnavailableError extends Error {
   constructor(readonly reason: string) {
     super(
       `sessions are unavailable: the session signing key could not be read from the keychain (${reason}). ` +
-        'Unlock the keychain (Data → Secrets, or fix keychain.keyFile and restart).',
+        'Unlock the keychain (Data → Secrets, or fix the mounted key at /run/secrets/camstack-master-key and restart).',
     )
     this.name = 'JwtSigningKeyUnavailableError'
   }
