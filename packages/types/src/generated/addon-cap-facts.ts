@@ -84,6 +84,7 @@ export const CAP_NAMES: readonly string[] = Object.freeze([
   "device-ops",
   "device-provider",
   "device-removal-hook",
+  "device-runs",
   "device-state",
   "device-status",
   "dishwasher",

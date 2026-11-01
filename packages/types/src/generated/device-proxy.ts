@@ -37,6 +37,7 @@ import type { deviceAdminLinkCapability } from '../capabilities/device-admin-lin
 import type { deviceDiscoveryCapability } from '../capabilities/device-discovery.cap.js'
 import type { deviceExtensionCapability } from '../capabilities/device-extension.cap.js'
 import type { deviceOpsCapability } from '../capabilities/device-ops.cap.js'
+import type { deviceRunsCapability } from '../capabilities/device-runs.cap.js'
 import type { deviceStatusCapability } from '../capabilities/device-status.cap.js'
 import type { dishwasherCapability } from '../capabilities/dishwasher.cap.js'
 import type { doorbellCapability } from '../capabilities/doorbell.cap.js'
@@ -259,6 +260,7 @@ export interface DeviceProxy {
   readonly deviceDiscovery?: InferDeviceProxyCap<typeof deviceDiscoveryCapability>
   readonly deviceExtension?: InferDeviceProxyCap<typeof deviceExtensionCapability>
   readonly deviceOps?: InferDeviceProxyCap<typeof deviceOpsCapability>
+  readonly deviceRuns?: InferDeviceProxyCap<typeof deviceRunsCapability>
   readonly deviceStatus?: InferDeviceProxyCap<typeof deviceStatusCapability>
   readonly dishwasher?: InferDeviceProxyCap<typeof dishwasherCapability>
   readonly doorbell?: InferDeviceProxyCap<typeof doorbellCapability>
@@ -596,6 +598,12 @@ export function createDeviceProxy(
     removeDevice: (input?: unknown) => dispatch('device-ops', 'deviceOps', 'removeDevice', 'mutation', input),
     getSettingsSchema: (input?: unknown) => dispatch('device-ops', 'deviceOps', 'getSettingsSchema', 'query', input),
     getRawState: (input?: unknown) => dispatch('device-ops', 'deviceOps', 'getRawState', 'query', input),
+  }
+
+  const deviceRunsInterface = {
+    listRuns: (input?: unknown) => dispatch('device-runs', 'deviceRuns', 'listRuns', 'query', input),
+    getRun: (input?: unknown) => dispatch('device-runs', 'deviceRuns', 'getRun', 'query', input),
+    getCurrentRun: (input?: unknown) => dispatch('device-runs', 'deviceRuns', 'getCurrentRun', 'query', input),
   }
 
   const deviceStatusInterface = {
@@ -1445,6 +1453,7 @@ export function createDeviceProxy(
     ...(bound('device-discovery') ? { deviceDiscovery: deviceDiscoveryInterface } : {}),
     ...(bound('device-extension') ? { deviceExtension: deviceExtensionInterface } : {}),
     ...(bound('device-ops') ? { deviceOps: deviceOpsInterface } : {}),
+    ...(bound('device-runs') ? { deviceRuns: deviceRunsInterface } : {}),
     ...(bound('device-status') ? { deviceStatus: deviceStatusInterface } : {}),
     ...(bound('dishwasher') ? { dishwasher: dishwasherInterface } : {}),
     ...(bound('doorbell') ? { doorbell: doorbellInterface } : {}),

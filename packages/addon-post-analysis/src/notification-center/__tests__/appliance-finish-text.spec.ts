@@ -6,7 +6,6 @@
 import { describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import {
-  ApplianceCycleStarts,
   applianceCycleOf,
   type NcApplianceCycleFacts,
   type NcResolveApplianceCycleFacts,
@@ -146,7 +145,7 @@ describe('appliance finish text', () => {
   })
 })
 
-describe('applianceCycleOf / ApplianceCycleStarts', () => {
+describe('applianceCycleOf', () => {
   it('marks only the finish of an appliance cycle, on the sensor itself', () => {
     const base = { deviceId: 3, sourceDeviceId: 9, sensorKind: 'appliance-cycle' }
     expect(applianceCycleOf({ ...base, sensorRaised: false })).toEqual({
@@ -154,19 +153,5 @@ describe('applianceCycleOf / ApplianceCycleStarts', () => {
     })
     expect(applianceCycleOf({ ...base, sensorRaised: true })).toEqual({})
     expect(applianceCycleOf({ ...base, sensorKind: 'flood', sensorRaised: false })).toEqual({})
-  })
-
-  it('derives the duration from the remembered start flip', async () => {
-    const starts = new ApplianceCycleStarts()
-    starts.noteRunning(9, true, FINISHED_AT - 52 * 60_000)
-    starts.noteRunning(9, false, FINISHED_AT)
-    expect(await starts.resolve({ deviceId: 9, finishedAtMs: FINISHED_AT })).toEqual({
-      durationMs: 52 * 60_000,
-      energyKwh: null,
-    })
-    expect(await starts.resolve({ deviceId: 10, finishedAtMs: FINISHED_AT })).toEqual({
-      durationMs: null,
-      energyKwh: null,
-    })
   })
 })

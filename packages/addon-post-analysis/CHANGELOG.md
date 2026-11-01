@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - An appliance that finishes its cycle now notifies by default as "<Device> ha terminato dopo N minuti", and the text can carry the energy used
+- The appliance finish notification reads the recorded run, so duration and energy survive a restart.
 
 ## [1.2.661] - 2026-11-01
 

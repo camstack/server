@@ -1018,7 +1018,7 @@ import { createNativeFrameTransport } from './runtime/native-frame-transport.js'
 import { NodeLivenessMirror } from './runtime/node-liveness.js'
 import { createParkedFrameClient, type ParkedFrameClient } from './runtime/parked-frame-client.js'
 import { createAnalyticsWidgetsProvider } from './runtime/widget-manifest.js'
-import { ApplianceCycleStarts } from '../notification-center/appliance-cycle.js'
+import { applianceCycleFactsFromRuns } from '../notification-center/appliance-cycle-runs.js'
 import type { BindingsChangedData, SensorStateChangedData } from './runtime/wire-subscriptions.js'
 import { wireSubscriptions } from './runtime/wire-subscriptions.js'
 import { type AudioMarkerConfig, AudioMarkerProjector } from './services/audio-marker-projector.js'
@@ -2455,8 +2455,6 @@ export default class PipelineAnalyticsAddon
    * unhandled rejection with no device on it.
    */
   private readonly sensorHandlersInFlight = new Set<Promise<void>>()
-  /** Start flips of running appliances — the finished-cycle duration (`appliance-cycle.ts`). */
-  private readonly applianceCycleStarts = new ApplianceCycleStarts()
   /**
    * Per-device delivery-lag windows, folded at `handleInferenceResult` entry.
    * The instrument that tells a late DELIVERY (starved) apart from a slow
@@ -4282,7 +4280,13 @@ export default class PipelineAnalyticsAddon
       buildSummaryPorts: (api, stores) => this.buildSummaryPorts(api, stores),
       wireAlarmPanel: (center) => this.wireAlarmPanel(center),
       serveNcActionPlane: (center) => this.serveNcActionPlane(center),
-      resolveApplianceCycleFacts: (query) => this.applianceCycleStarts.resolve(query),
+      resolveApplianceCycleFacts: applianceCycleFactsFromRuns({
+        newestRun: async (deviceId) => {
+          const page = await this.ctx.api.deviceRuns.listRuns.query({ deviceId, limit: 1 })
+          return page.runs[0] ?? null
+        },
+        sleep: (ms) => new Promise<void>((resolve) => setTimeout(resolve, ms)),
+      }),
     })
     return this.notificationCenterBootInstance
   }
@@ -11233,7 +11237,6 @@ export default class PipelineAnalyticsAddon
     const cache = this.linkedCamerasCache
     if (store === null || cache === null) return
     if (!this.sensorSliceCarriedATransition(data)) return
-    this.noteApplianceCycleFlip(data, timestamp)
     // Every camera a notification about this change shows (ADR 0632) —
     // resolved and photographed NOW, before the rows and markers below are
     // awaited: the capture runs while they do, and the shelf's owners exist
@@ -11471,13 +11474,6 @@ export default class PipelineAnalyticsAddon
    * The drops are SUMMARISED, never logged one by one: this path carries every
    * camera's native `motion` slice at motion rate.
    */
-  /** Remember when an appliance's cycle started, for the finished-cycle text. */
-  private noteApplianceCycleFlip(data: SensorStateChangedData, timestamp: number): void {
-    if (EVENT_KIND_BY_CAP[data.capName]?.kind !== 'appliance-cycle') return
-    const running = sensorRaisedOf('appliance-cycle', sensorSliceRecord(data.slice))
-    this.applianceCycleStarts.noteRunning(data.deviceId, running ?? null, timestamp)
-  }
-
   private sensorSliceCarriedATransition(data: {
     deviceId: number
     capName: string

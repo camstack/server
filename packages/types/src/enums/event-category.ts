@@ -509,6 +509,10 @@ export enum EventCategory {
   RunningStarted = 'running.started',
   /** Mirrors `runningStateCapability.events.onFinished`. */
   RunningFinished = 'running.finished',
+  /** Mirrors `deviceRunsCapability.events.onRunOpened` - a durable run record opened. */
+  DeviceRunOpened = 'device-run.opened',
+  /** Mirrors `deviceRunsCapability.events.onRunClosed` - a durable run record closed. */
+  DeviceRunClosed = 'device-run.closed',
   /**
    * Cap event fired by every device that registers the `event-emitter`
    * capability. Mirrors `eventEmitterCapability.events.onEvent`. Carries

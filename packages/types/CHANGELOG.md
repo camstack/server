@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A finished appliance cycle can name its duration and energy in a notification (new {{duration}} and {{energy}} variables)
 - Removed the addons.installFromWorkspace, isWorkspaceAvailable and listWorkspacePackages methods; a workspace build reaches a node through camstack deploy.
 - Keychain key source kinds config-file / previous-config-file are now mounted-file / previous-mounted-file
+- Added the device-runs capability: a durable record of each washer, dryer and dishwasher cycle.
 
 ## [1.2.468] - 2026-11-01
 

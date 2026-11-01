@@ -26,18 +26,23 @@ import {
   type DeviceType,
   deviceHistoryCapability,
   deviceRemovalHookCapability,
+  deviceRunsCapability,
   EventCategory,
   emitReadiness,
   HISTORY_CATALOG,
   HISTORY_ITEM_CATALOG,
   type IDeviceHistoryProvider,
+  type IDeviceRunsProvider,
   isReadingQuantity,
   type IDeviceRemovalHookProvider,
   type ProviderRegistration,
 } from '@camstack/types'
+import { randomUUID } from 'node:crypto'
 import type { SnapshotMap } from './capture/capture-engine.js'
 import { DEFAULT_RETENTION, type RetentionPolicy } from './retention/retention.js'
 import { HistoryRuntime } from './runtime/history-runtime.js'
+import { DeviceRunsService } from './runs/device-runs-service.js'
+import { energyKwhFromHistory } from './runs/energy-from-history.js'
 import { UNRAID_ADDON_ID, type LegacyScale, unraidInformationScale } from './store/series-scale.js'
 
 export interface DeviceHistoryConfig extends Record<string, unknown> {
@@ -74,6 +79,8 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
   private runtime: HistoryRuntime | null = null
   private unsubscribe: (() => void) | null = null
   private removalHook: IDeviceRemovalHookProvider | null = null
+  private runsProvider: IDeviceRunsProvider | null = null
+  private runs: DeviceRunsService | null = null
 
   /** This instance's readiness generation (the base class keeps its own private). */
   private readonly readinessGeneration: string = `device-history-${Date.now().toString(36)}`
@@ -93,7 +100,11 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
     if (ctx === null) return
     const raw = ctx.kernel?.localNodeId ?? 'hub'
     const nodeId = raw.includes('/') ? (raw.split('/')[0] ?? raw) : raw
-    for (const capName of [deviceHistoryCapability.name, deviceRemovalHookCapability.name]) {
+    for (const capName of [
+      deviceHistoryCapability.name,
+      deviceRunsCapability.name,
+      deviceRemovalHookCapability.name,
+    ]) {
       try {
         emitReadiness(ctx.eventBus, {
           capName,
@@ -141,6 +152,13 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
     return this.runtime
   }
 
+  private requireRuns(): IDeviceRunsProvider {
+    if (this.runsProvider === null) {
+      throw new Error('device-runs is starting — the run ledger is not open yet')
+    }
+    return this.runsProvider
+  }
+
   protected async onInitialize(): Promise<ProviderRegistration[]> {
     const provider: IDeviceHistoryProvider = {
       listSeries: async (input) =>
@@ -172,6 +190,11 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
         results: await this.requireRuntime().deleteOrphans(input.seriesIds),
       }),
     }
+    const runsFacade: IDeviceRunsProvider = {
+      listRuns: async (input) => this.requireRuns().listRuns(input),
+      getRun: async (input) => this.requireRuns().getRun(input),
+      getCurrentRun: async (input) => this.requireRuns().getCurrentRun(input),
+    }
     this.emitStoreReadiness('starting')
     this.ctx.logger.info(
       'Initialized — device-history provider registered (store opens on hub link)',
@@ -179,24 +202,32 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
     const removalHook: IDeviceRemovalHookProvider = {
       onDeviceRemoved: async (input) => {
         const { series } = await this.requireRuntime().removeDevice(input.deviceId)
-        if (series > 0) {
+        const deviceRuns = (await this.runs?.removeDevice(input.deviceId)) ?? 0
+        if (series > 0 || deviceRuns > 0) {
           this.ctx.logger.info('device-history: removed the history of a deleted device', {
             tags: { deviceId: input.deviceId },
-            meta: { counts: { series }, deletedAt: input.deletedAt },
+            meta: { counts: { series, deviceRuns }, deletedAt: input.deletedAt },
           })
         }
-        return { counts: { series } }
+        return { counts: { series, deviceRuns } }
       },
-      listDeviceData: async () =>
-        [...this.requireRuntime().seriesByDevice()].map(([deviceId, count]) => ({
+      listDeviceData: async () => [
+        ...[...this.requireRuntime().seriesByDevice()].map(([deviceId, count]) => ({
           store: 'series',
           deviceId,
           count,
         })),
+        ...((await this.runs?.countByDevice()) ?? []).map(({ deviceId, count }) => ({
+          store: 'runs',
+          deviceId,
+          count,
+        })),
+      ],
     }
     this.removalHook = removalHook
     return [
       { capability: deviceHistoryCapability, provider },
+      { capability: deviceRunsCapability, provider: runsFacade },
       { capability: deviceRemovalHookCapability, provider: removalHook },
     ]
   }
@@ -230,6 +261,10 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
       clock: () => Date.now(),
     })
     await runtime.prepare()
+    const runs = this.openRuns(runtime)
+    const runsOpened = await runs.open()
+    this.runsProvider = runsOpened.provider
+    this.runs = runs
     this.unsubscribe = this.ctx.eventBus.subscribe(
       { category: EventCategory.DeviceStateChanged },
       (event) => {
@@ -239,12 +274,14 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
         if (typeof deviceId !== 'number' || typeof capName !== 'string' || !isRecord(slice)) return
         const at = event.timestamp instanceof Date ? event.timestamp.getTime() : Date.now()
         runtime.capture.handleState(deviceId, capName, slice, at)
+        runs.handleState(deviceId, capName, slice, at)
       },
     )
     this.ctx.addDisposer(async () => this.stopRuntime())
     this.runtime = runtime
     await runtime.finishBoot()
     runtime.startTimers()
+    runs.startTimer()
     // Catch up on deletions missed while this addon was down (D865) — from
     // device-manager's tombstones, never from a device being absent.
     const removalHook = this.removalHook
@@ -263,9 +300,38 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
     })
   }
 
+  private openRuns(runtime: HistoryRuntime): DeviceRunsService {
+    const { ctx } = this
+    const records = ctx.records
+    if (records === undefined) {
+      throw new Error('device-history needs ctx.records on the hub for the run ledger')
+    }
+    return new DeviceRunsService({
+      records,
+      readSnapshots: async (): Promise<SnapshotMap> =>
+        ctx.api.deviceState.getAllSnapshots.query({}),
+      readCapSlice: (deviceId, capName) =>
+        ctx.api.deviceState.getCapSlice.query({ deviceId, capName }),
+      deviceTypeOf: (deviceId) => runtime.directory.ensure(deviceId),
+      energyFromHistory: (deviceId, from, to) =>
+        energyKwhFromHistory((query) => runtime.query.query(query), deviceId, from, to),
+      emit: (category, run) =>
+        ctx.eventBus.emit({
+          id: randomUUID(),
+          timestamp: new Date(),
+          source: { type: 'device', id: run.deviceId },
+          category,
+          data: run,
+        }),
+      logger: ctx.logger,
+      clock: () => Date.now(),
+    })
+  }
+
   private async stopRuntime(): Promise<void> {
     this.unsubscribe?.()
     this.unsubscribe = null
+    await this.runs?.stop()
     await this.runtime?.stop()
   }
 
@@ -273,6 +339,8 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
     this.emitStoreReadiness('down')
     await this.stopRuntime()
     this.runtime = null
+    this.runs = null
+    this.runsProvider = null
   }
 
   protected globalSettingsSchema(): ConfigUISchema {

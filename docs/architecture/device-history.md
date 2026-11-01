@@ -333,6 +333,28 @@ happened.
   schedule. It uses the tier whose retention is strictly longer than the
   window, and it does not fill a gap with zero.
 
+## Device runs (D992)
+
+The builtin also provides `device-runs`: one document per appliance cycle
+(Washer, Dryer, Dishwasher), in the `device-runs` record kind (events DB, ledger,
+id `${deviceId}:${startedAt}`, 500 rows per device, deleted with the device by the
+removal hook). The core (`DeviceRunSchema`) is generic; the appliance facts sit in
+a `detail` branch so a mower or vacuum adds a branch, not a kind.
+
+- **Recorder** (`runs/run-recorder.ts`): opens on `running` false to true and closes
+  on true to false, from `DeviceStateChanged`. Flips that arrive before the first
+  answered load are buffered and replayed. A 60 s tick flushes peak/mean power and
+  phases into the open row and retries a failed load.
+- **Restart**: the open row is written through, with the start counter and the
+  weight of the mean, so a run outlives a runner restart. Only the first reconcile
+  reads rows; it keeps a row whose device still runs, closes `unknown` at the
+  slice `since` one whose device stopped, and opens late (source `reconcile`) a
+  running device with no row.
+- **Energy**: meter counter at the end minus at the start; if the counter reset or
+  was unknown, the stored history (5-minute buckets, runs of 10 min or more);
+  otherwise `null`.
+- **Events**: `DeviceRunOpened` / `DeviceRunClosed`.
+
 ## Traps
 
 - A system-scope method that names a device must keep the id TOP-LEVEL or the

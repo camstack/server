@@ -2316,6 +2316,13 @@ export interface UnexportedCap {
 
 export const CAPS_NOT_EXPORTED: readonly UnexportedCap[] = [
   {
+    cap: 'device-runs',
+    reason:
+      'A ledger of past runs (a document per cycle, read by list and by id), with no ' +
+      'single live value to publish; the running boolean the appliance already ' +
+      'exports through `running-state` is its live face.',
+  },
+  {
     cap: 'power-source',
     reason:
       'A manual admin recovery action (cut the power of a device that hangs) on a ' +

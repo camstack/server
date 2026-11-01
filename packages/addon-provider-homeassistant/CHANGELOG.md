@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Classified the device-runs capability as not exported.
+
 ## [1.2.644] - 2026-11-01
 
 ### Changed

@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1007 shared schemas.**
+**1016 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -195,6 +195,19 @@ Enum: `"motion" \| "audio-dbfs" \| "battery" \| "occupancy"`
 ### `AppleFmUnavailableReasonSchema`
 
 Enum: `"deviceNotEligible" \| "appleIntelligenceNotEnabled" \| "modelNotReady" \| "osTooOld" \| "helperMissing" \| "helperCrashed"`
+
+### `ApplianceRunDetailSchema`
+
+- `kind`: `"appliance"`
+- `energyKwh`: `number \| null`
+- `energyMethod`: `DeviceRunEnergyMethodSchema \| null`
+- `peakW`: `number \| null`
+- `avgW`: `number \| null`
+- `program`: `string \| null`
+- `remainingAtStartSec`: `number \| null`
+- `finalPhase`: `string \| null`
+- `energyStartKwh`: `number \| null`
+- `powerObservedMs`: `number`
 
 ### `ArchiveEntrySchema`
 
@@ -1664,6 +1677,51 @@ Enum: `"raw" \| "5m" \| "1h" \| "1d"`
 ### `DeviceRemovedResultSchema`
 
 - `counts`: `Record<string, number>`
+
+### `DeviceRunDetailSchema`
+
+- `ApplianceRunDetailSchema`
+
+### `DeviceRunEnergyMethodSchema`
+
+Enum: `"counter-delta" \| "history-integral"`
+
+### `DeviceRunKindSchema`
+
+Enum: `"appliance" \| "mower" \| "vacuum"`
+
+### `DeviceRunOutcomeSchema`
+
+Enum: `"completed" \| "aborted" \| "error" \| "unknown"`
+
+### `DeviceRunPhaseSchema`
+
+- `phase`: `string`
+- `at`: `number`
+
+### `DeviceRunSchema`
+
+- `runId`: `string`
+- `deviceId`: `number`
+- `kind`: `DeviceRunKindSchema`
+- `state`: `DeviceRunStateSchema`
+- `startedAt`: `number`
+- `endedAt`: `number \| null`
+- `durationMs`: `number \| null`
+- `outcome`: `DeviceRunOutcomeSchema \| null`
+- `startSource`: `DeviceRunSourceSchema`
+- `endSource`: `DeviceRunSourceSchema \| null`
+- `runningSource`: `"native" \| "assigned" \| null`
+- `phases`: `DeviceRunPhaseSchema[]`
+- `detail`: `DeviceRunDetailSchema`
+
+### `DeviceRunSourceSchema`
+
+Enum: `"running-state" \| "activity" \| "reconcile"`
+
+### `DeviceRunStateSchema`
+
+Enum: `"open" \| "closed"`
 
 ### `DeviceStatusSchema`
 

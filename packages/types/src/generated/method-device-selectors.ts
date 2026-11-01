@@ -6,7 +6,7 @@
  * system-scope cap that takes a deviceId was previously never device-filtered
  * — see the generator header).
  *
- * Coverage: 572 methods carry a device reference, of which
+ * Coverage: 575 methods carry a device reference, of which
  * 184 are on SYSTEM-scope caps.
  *
  * Top-level fields, number arrays, and one-level arrays of objects carrying
@@ -187,6 +187,9 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'deviceOps.runAction': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceOps.setConfig': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceRemovalHook.onDeviceRemoved': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'deviceRuns.getCurrentRun': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'deviceRuns.getRun': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'deviceRuns.listRuns': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceState.claimFields': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceState.getCapSlice': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceState.getNativeCapSlice': [{ name: "deviceId", form: "single", optional: false }] as const,

@@ -17,6 +17,7 @@ type ApplianceCap =
   | 'media-player'
   | 'consumables'
   | 'running-state'
+  | 'device-runs'
   | 'navigation'
   | 'script-runner'
   | 'automation-control'
@@ -1387,6 +1388,21 @@ export const APPLIANCE_CAP_VOCABULARY: CapVocabularySlice<ApplianceCap> = {
             },
           },
         },
+      },
+    },
+  },
+
+  'device-runs': {
+    scope: 'device',
+    noun: t('Runs', 'Esecuzioni'),
+    events: {
+      onRunOpened: {
+        notOperatorFacing:
+          'the durable record of a run that the running-state start flip already announces',
+      },
+      onRunClosed: {
+        notOperatorFacing:
+          'the durable record of a run that the running-state finish flip already announces',
       },
     },
   },

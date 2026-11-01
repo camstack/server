@@ -8,8 +8,9 @@
  * — got "device-history is starting — the history store is not open yet",
  * because the store only opens in `onHubReachable`.
  */
-import type { AddonContext, SystemEvent } from '@camstack/types'
+import { createRecordsAccess, type AddonContext, type SystemEvent } from '@camstack/types'
 import { afterEach, describe, expect, it } from 'vitest'
+import { makeRecordsWorld } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { DeviceHistoryAddon } from '../device-history.addon.js'
 import { openRealDoor, type RealDoor, silentLogger } from './support/real-door.js'
 
@@ -46,8 +47,16 @@ afterEach(async () => {
   rd = null
 })
 
-function fakeContext(door: RealDoor['door'], events: SystemEvent[]): AddonContext {
+async function fakeContext(door: RealDoor['door'], events: SystemEvent[]): Promise<AddonContext> {
+  const world = makeRecordsWorld()
+  await world.provider.init()
+  const records = createRecordsAccess({
+    owner: 'device-history',
+    transport: world.transportFor('device-history'),
+    secrets: null,
+  })
   const ctx = {
+    records,
     id: 'device-history',
     logger: silentLogger(),
     kernel: { localNodeId: 'hub/device-history' },
@@ -82,11 +91,12 @@ describe('device-history readiness', () => {
     rd = await openRealDoor()
     const events: SystemEvent[] = []
     const addon = new DeviceHistoryAddon()
-    const init = await addon.initialize(fakeContext(rd.door, events))
+    const init = await addon.initialize(await fakeContext(rd.door, events))
     addon.postBrokerStart()
 
     expect(readiness(events, 'device-history')).not.toContain('ready')
     expect(readiness(events, 'device-removal-hook')).not.toContain('ready')
+    expect(readiness(events, 'device-runs')).not.toContain('ready')
 
     const providers = init !== undefined && 'providers' in init ? (init.providers ?? []) : []
     const history = providers.find((p) => p.capability.name === 'device-history')?.provider
@@ -102,10 +112,16 @@ describe('device-history readiness', () => {
         },
       ])
     await expect(declare()).rejects.toThrow(/starting/)
+    const runs = providers.find((p) => p.capability.name === 'device-runs')?.provider
+    const currentRun = (): Promise<unknown> =>
+      Reflect.apply(Reflect.get(runs ?? {}, 'getCurrentRun'), runs, [{ deviceId: 7 }])
+    await expect(currentRun()).rejects.toThrow(/starting/)
 
     await addon.onHubReachable()
     expect(readiness(events, 'device-history')).toEqual(['starting', 'ready'])
     expect(readiness(events, 'device-removal-hook')).toEqual(['starting', 'ready'])
+    expect(readiness(events, 'device-runs')).toEqual(['starting', 'ready'])
+    await expect(currentRun()).resolves.toBeNull()
     await expect(declare()).resolves.toEqual({ key: 'addon:metrics-native/level' })
 
     await addon.shutdown()

@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1465 method paths across 196 capabilities.
+ * Coverage: 1468 method paths across 197 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -442,6 +442,9 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'deviceProvider.testCreationField': { capName: "device-provider", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceRemovalHook.listDeviceData': { capName: "device-removal-hook", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'deviceRemovalHook.onDeviceRemoved': { capName: "device-removal-hook", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'deviceRuns.getCurrentRun': { capName: "device-runs", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
+  'deviceRuns.getRun': { capName: "device-runs", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
+  'deviceRuns.listRuns': { capName: "device-runs", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'deviceState.claimFields': { capName: "device-state", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceState.getAllSnapshots': { capName: "device-state", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'deviceState.getCapSlice': { capName: "device-state", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
@@ -1552,6 +1555,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "device-ops",
   "device-provider",
   "device-removal-hook",
+  "device-runs",
   "device-state",
   "device-status",
   "dishwasher",
@@ -1720,6 +1724,7 @@ export const DEVICE_CAP_NAMES: readonly string[] = [
   "device-discovery",
   "device-extension",
   "device-ops",
+  "device-runs",
   "device-status",
   "dishwasher",
   "doorbell",

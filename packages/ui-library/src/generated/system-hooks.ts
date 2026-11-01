@@ -1169,6 +1169,15 @@ export const useDeviceProviderCreateDevice: typeof trpc.deviceProvider.createDev
 /** Generated alias around `trpc.deviceProvider.testCreationField.useMutation`. */
 export const useDeviceProviderTestCreationField: typeof trpc.deviceProvider.testCreationField.useMutation = /*#__PURE__*/ alias(() => trpc.deviceProvider.testCreationField.useMutation)
 
+/** Generated alias around `trpc.deviceRuns.listRuns.useQuery`. */
+export const useDeviceRunsListRuns: typeof trpc.deviceRuns.listRuns.useQuery = /*#__PURE__*/ alias(() => trpc.deviceRuns.listRuns.useQuery)
+
+/** Generated alias around `trpc.deviceRuns.getRun.useQuery`. */
+export const useDeviceRunsGetRun: typeof trpc.deviceRuns.getRun.useQuery = /*#__PURE__*/ alias(() => trpc.deviceRuns.getRun.useQuery)
+
+/** Generated alias around `trpc.deviceRuns.getCurrentRun.useQuery`. */
+export const useDeviceRunsGetCurrentRun: typeof trpc.deviceRuns.getCurrentRun.useQuery = /*#__PURE__*/ alias(() => trpc.deviceRuns.getCurrentRun.useQuery)
+
 /** Generated alias around `trpc.deviceState.getSnapshot.useQuery`. */
 export const useDeviceStateGetSnapshot: typeof trpc.deviceState.getSnapshot.useQuery = /*#__PURE__*/ alias(() => trpc.deviceState.getSnapshot.useQuery)
 

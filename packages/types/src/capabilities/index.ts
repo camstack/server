@@ -426,6 +426,29 @@ export {
   deviceHistoryCapability,
 } from './device-history.cap.js'
 export {
+  type ApplianceRunDetail,
+  ApplianceRunDetailSchema,
+  DEVICE_RUNS_MAX_PAGE,
+  type DeviceRun,
+  type DeviceRunDetail,
+  DeviceRunDetailSchema,
+  type DeviceRunEnergyMethod,
+  DeviceRunEnergyMethodSchema,
+  type DeviceRunKind,
+  DeviceRunKindSchema,
+  type DeviceRunOutcome,
+  DeviceRunOutcomeSchema,
+  type DeviceRunPhase,
+  DeviceRunPhaseSchema,
+  DeviceRunSchema,
+  type DeviceRunSource,
+  DeviceRunSourceSchema,
+  type DeviceRunState,
+  DeviceRunStateSchema,
+  type IDeviceRunsProvider,
+  deviceRunsCapability,
+} from './device-runs.cap.js'
+export {
   type DeviceCaStatus,
   DeviceCaStatusSchema,
   type DeviceCertificateSettings,
@@ -3304,6 +3327,7 @@ import type { storageAdminCapability } from './storage-admin.cap.js'
 import type { recordsCapability } from './records.cap.js'
 import type { recordEntriesCapability } from './record-entries.cap.js'
 import type { deviceHistoryCapability } from './device-history.cap.js'
+import type { deviceRunsCapability } from './device-runs.cap.js'
 import type { keychainCapability } from './keychain.cap.js'
 import type { keychainAdminCapability } from './keychain-admin.cap.js'
 import type { deviceCredentialsCapability } from './device-credentials.cap.js'
@@ -3464,6 +3488,7 @@ type AnyCapability =
   | typeof recordsCapability
   | typeof recordEntriesCapability
   | typeof deviceHistoryCapability
+  | typeof deviceRunsCapability
   | typeof keychainCapability
   | typeof keychainAdminCapability
   | typeof deviceCredentialsCapability

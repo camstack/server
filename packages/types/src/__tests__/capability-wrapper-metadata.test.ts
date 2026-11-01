@@ -24,6 +24,7 @@ const WRAPPER_CAPS: Readonly<Record<string, boolean>> = {
   snapshot: true,
   'camera-pipeline-config': true,
   videoclips: true,
+  'device-runs': true,
   // `recording` joined the wrappers on 2026-09-24 (D625) with the same
   // policy and for the same reason as `videoclips`: recorded coverage is a
   // property of every camera, the sources are listed beside each other, and

@@ -2,8 +2,8 @@
  * What a FINISHED appliance cycle says about itself — the duration and the
  * energy of the run — and the one port the dispatcher reads them through.
  *
- * The facts come from {@link NcResolveApplianceCycleFacts}: ONE named function,
- * so the day a durable run record exists it is the only thing that changes.
+ * The facts come from {@link NcResolveApplianceCycleFacts}: ONE named function.
+ * In production it reads the durable run record (`appliance-cycle-runs.ts`).
  * Both facts are `null` when unknown (D393): a part that cannot be measured is
  * omitted from the sentence, never printed as `0`, and a failed read never
  * blocks the notification (D49).
@@ -119,34 +119,5 @@ export function applianceCycleOf(subject: {
     applianceCycle: {
       deviceId: subject.linkedSensorId ?? subject.sourceDeviceId ?? subject.deviceId,
     },
-  }
-}
-
-/**
- * The start flips of running appliances, kept in memory as the stream shows
- * them. Minimal on purpose: a cycle that started before this process booted has
- * no start here, and its duration is simply omitted. Energy is not measured
- * here (`null`) — the durable run record owns it.
- */
-export class ApplianceCycleStarts {
-  private readonly cycles = new Map<number, { readonly startMs: number; ended: boolean }>()
-
-  noteRunning(deviceId: number, running: boolean | null, atMs: number): void {
-    const held = this.cycles.get(deviceId)
-    if (running === true) {
-      if (held === undefined || held.ended) {
-        this.cycles.set(deviceId, { startMs: atMs, ended: false })
-      }
-    } else if (running === false && held !== undefined) {
-      // Kept (not deleted): every target of the finish row reads the same start.
-      held.ended = true
-    }
-  }
-
-  readonly resolve: NcResolveApplianceCycleFacts = async ({ deviceId, finishedAtMs }) => {
-    const held = this.cycles.get(deviceId)
-    const durationMs =
-      held !== undefined && finishedAtMs > held.startMs ? finishedAtMs - held.startMs : null
-    return { durationMs, energyKwh: null }
   }
 }

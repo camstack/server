@@ -1233,9 +1233,11 @@ rules; a part whose fact is unknown (no recorded start, no power meter, a failed
 read) is empty and its fragment vanishes, so the sentence never dangles. The
 row freezes `subject.applianceCycle` at intake, and the dispatcher reads the
 facts through ONE port (`resolveApplianceCycleFacts`,
-`notification-center/appliance-cycle.ts`). Today's implementation knows the
-start flip from the sensor stream (duration only; energy is `null`); a durable
-run record replaces it behind the same port. The default title is
+`notification-center/appliance-cycle.ts`). The implementation reads the newest
+`device-runs` record (D992) through `ctx.api`
+(`notification-center/appliance-cycle-runs.ts`): a closed run gives duration and
+energy; a run still open waits a bounded 3 s for its close, then falls back to
+the open run's start (energy unknown). The default title is
 sentence-cased; a rule's own template is rendered as written. `eventKind` and `db`
 are implemented and declared. `{{time}}` renders hours and minutes in the
 notification's OWN language via `ncClockText`
