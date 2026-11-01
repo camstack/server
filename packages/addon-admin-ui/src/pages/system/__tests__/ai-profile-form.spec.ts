@@ -176,6 +176,17 @@ describe('reasoningEffort in the editor', () => {
     expect(without?.sections[0]?.fields.map((f) => f.key)).not.toContain('reasoningEffort')
   })
 
+  it('is hidden when the selected model declares it cannot reason, shown when it can or is unknown', () => {
+    const keys = (reasoning: boolean | null | undefined): readonly string[] =>
+      generationSchema(['temperature', 'reasoningEffort'], reasoning)?.sections[0]?.fields.map(
+        (f) => f.key,
+      ) ?? []
+    expect(keys(false)).not.toContain('reasoningEffort')
+    expect(keys(true)).toContain('reasoningEffort')
+    expect(keys(null)).toContain('reasoningEffort')
+    expect(keys(undefined)).toContain('reasoningEffort')
+  })
+
   it('shows the stored value, or Default when unset', () => {
     expect(commonValuesOf({ ...EXISTING, reasoningEffort: 'high' }).reasoningEffort).toBe('high')
     expect(commonValuesOf(EXISTING).reasoningEffort).toBe('default')

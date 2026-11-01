@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fan presets: Use current values now proposes every switch and control beside the fan (oscillation, angle limits, fixed angles) as a ticked checklist, in the order a fan wants to be driven.
 - The heater device page uses the new heater card and shows the timed run.
 - An addon page that needs a newer UI library than this admin UI provides now shows a clear message instead of failing to render.
+- The AI profile editor hides the reasoning switch for a model that declares it cannot reason
 
 ## [1.2.549] - 2026-11-01
 

@@ -215,8 +215,14 @@ function fieldsOf(
 }
 
 /** ④ Generation — the sampling fields the kind offers; `null` = none. */
-export function generationSchema(offered: readonly LlmProfileField[]): ConfigUISchema | null {
-  const fields = fieldsOf(offered, GENERATION_FIELDS)
+export function generationSchema(
+  offered: readonly LlmProfileField[],
+  modelReasoning: boolean | null | undefined = null,
+): ConfigUISchema | null {
+  // A model that DECLARES it cannot reason has no use for the switch; unknown
+  // (null / undefined) is not "no", so the field stays.
+  const shown = modelReasoning === false ? offered.filter((f) => f !== 'reasoningEffort') : offered
+  const fields = fieldsOf(shown, GENERATION_FIELDS)
   if (fields.length === 0) return null
   return {
     sections: [{ id: 'generation', title: i18n.t('helpers.aiProfileForm.generation'), fields }],

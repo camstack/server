@@ -231,7 +231,7 @@ export function ProfileEditorDialog({
   const selected = choices.find((m) => m.id === model.id)
   const features = effectiveFeatures(kind, selected)
 
-  const generation = generationSchema(kind.profileFields)
+  const generation = generationSchema(kind.profileFields, features.reasoning)
   const advancedCommon = advancedCommonSchema(kind.profileFields)
   const missing = missingRequired(kind.connectionSchema, providerConfig)
   // A widget's own required keys: what it must have written before a save.
