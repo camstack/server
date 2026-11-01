@@ -18,6 +18,8 @@ applies-to:
   - packages/system/src/builtins/local-auth/*.ts
   - packages/system/src/auth/external-identity-manager.ts
   - packages/addon-auth/src/**/*.ts
+  - server/backend/src/core/auth/cli-approval.service.ts
+  - packages/cli/src/commands/login-approval.ts
   - packages/addon-admin-ui/src/pages/system/Authentication.tsx
   - packages/addon-admin-ui/src/pages/system/OidcSettingsConnections.tsx
   - packages/addon-admin-ui/src/lib/sso-popup.ts
@@ -177,6 +179,32 @@ verify of a session-grade token; an open WebSocket re-checks it on every call
   `'new-session'` (native sign-in, browser handoff) opens a separate one.
 - Refresh tokens are opaque: a signing-key rotation no longer ends refreshing
   sessions. Ending sessions is revocation.
+
+## A terminal signs in by approval (D988)
+
+A shell with no TTY (an assistant's, a service) cannot prompt, and a password
+typed into it is refused. `camstack login <host>` there (or `--browser`) runs a
+device flow: `auth.cliLoginBegin` returns an 8-character code and a `cda_`
+device secret; the CLI prints the URL (`/approve`) and the code on separate
+lines, opens the browser only with `--open`, and polls `auth.cliLoginPoll`
+(ceremony limiter, 30/min) with the secret, which never leaves its memory.
+
+The operator opens `/approve` in the admin UI, types the code (no `?code=`
+prefill), sees the requester's address, client and age, and approves; approval
+needs a fresh authentication (D813). The poll then mints one refreshable session
+through `createSessionMinter` with method `cli-approval`, and the entry is gone.
+`CliApprovalService` keeps secrets and codes hashed, single use, five minutes,
+bounded (200 pending, 5 per address). "Pending terminal sign-ins" on the
+sessions page lists open requests, without codes, with a "Not me" button.
+The approval page shows the terminal's address next to the approver's own (a
+mismatch is flagged), the User-Agent the hub saw, and the self-reported name
+marked unverified. The session stays refreshable like every CLI session. When
+the table is full the oldest request of the busiest address is evicted; approve,
+deny and the mint log `requestId`, address and client, never the code or secret.
+
+The assistant tools `setup_login` / `setup_login_wait` wrap the same flow and
+return only the URL, the code and a status. `camstack mcp update` and
+`rollback` switch the installer's managed layout and never touch `~/.camstack`.
 
 ## Device certificates (D855)
 

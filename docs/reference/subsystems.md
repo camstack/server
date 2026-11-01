@@ -40,8 +40,8 @@ commits. A generated page may not.
 | Zones and zone rules | 5 | `architecture/data-planes.md` _(covers)_, `architecture/detection-execution.md` _(covers)_, `design/2026-08-13-durable-value-tracking-and-runtime-state.md`, +2 more, 4 ADRs | 2026-10-24 | ⚠️ |
 | Storage, retention and backup | 130 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0328-the-live-sqlite-file-is-the-bind-the-container-has-open.md`, `design/2026-08-03-db-remediation-plan.md` _(covers)_, +60 more, 11 ADRs | 2026-10-22 | ⚠️ |
 | Secrets and the keychain | 30 | `architecture/secrets-keychain.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0787-a-secret-field-stores-a-keychain-marker-and-the-value-lives-in-the-keychain.md`, +21 more, 5 ADRs | 2026-10-27 | ✅ |
-| Auth, scopes and method tiers | 98 | `architecture/authentication.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0777-an-auth-providers-only-enable-is-its-capability-toggle-on-identity-authentication.md`, +29 more, 3 ADRs | 2026-10-21 | ⚠️ |
-| The hub API surface | 164 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/authentication.md`, `decisions/adr-0892-one-token-format-permissions-are-scopes-and-one-verifier-and-one-matcher-decide-every-request.md`, +105 more, 18 ADRs | 2026-10-27 | ⚠️ |
+| Auth, scopes and method tiers | 98 | `architecture/authentication.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0777-an-auth-providers-only-enable-is-its-capability-toggle-on-identity-authentication.md`, +30 more, 3 ADRs | 2026-10-21 | ⚠️ |
+| The hub API surface | 164 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/authentication.md`, `decisions/adr-0892-one-token-format-permissions-are-scopes-and-one-verifier-and-one-matcher-decide-every-request.md`, +106 more, 18 ADRs | 2026-10-27 | ⚠️ |
 | Shared types, schemas and enums | 101 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0972-a-number-tied-to-a-quantity-is-entered-in-a-unit-the-person-picks.md`, `architecture/windows-agent.md`, +34 more, 5 ADRs | 2026-10-26 | ⚠️ |
 | Update, release, OTA and agent delivery | 69 | `architecture/update-and-release.md`, `architecture/overview.md`, `decisions/adr-0175-an-update-notification-is-polled-on-its-own-clock-and-remembered-across-restarts.md`, +33 more, 10 ADRs | 2026-10-27 | ✅ |
 | Ecosystem exports — HomeKit, Home Assistant, Alexa, Google Home, Matter, MQTT | 302 | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/ecosystem-export-plan.md` _(covers)_, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +50 more, 20 ADRs | 2026-10-26 | ⚠️ |
@@ -50,10 +50,10 @@ commits. A generated page may not.
 | Alerts, liveness and system health | 55 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0850-numeric-history-has-one-mechanism-device-history.md`, `architecture/load-ledger.md` _(covers)_, +42 more | 2026-10-13 | ⚠️ |
 | Logging and log shipping | 35 | `architecture/logging.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `design/2026-10-04-logs-history-beyond-the-ring.md` _(covers)_, +8 more, 1 ADR | 2026-10-21 | ⚠️ |
 | LLM runtimes and AI actions | 50 | `addons/addon-ai.md` _(covers)_, `design/2026-08-28-tts-stt-capabilities.md` _(covers)_, `decisions/adr-0639-apple-foundation-models-runs-as-a-supervised-child-behind-llm-runtime.md`, +8 more, 1 ADR | 2026-10-18 | ⚠️ |
-| Admin UI and the shared component library | 1367 | `architecture/ui.md`, `ui/conventions.md`, `decisions/adr-0946-one-device-name.md`, +156 more, 15 ADRs | 2026-10-27 | ✅ |
+| Admin UI and the shared component library | 1367 | `architecture/ui.md`, `ui/conventions.md`, `decisions/adr-0946-one-device-name.md`, +157 more, 15 ADRs | 2026-10-27 | ✅ |
 | Device-facing surfaces — snapshots, OSD, terminal, camera grids, autotrack | 111 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0519-a-composite-camera-is-one-child-on-demand-with-normalized-geometry.md`, `architecture/osd-manager.md`, +17 more, 7 ADRs | 2026-10-04 | ⚠️ |
 | Cloud training | 159 | `architecture/cloud-training.md`, `decisions/adr-0790-a-machine-proposed-retrain-box-is-a-draft-until-the-operator-confirms-it.md`, `decisions/adr-0849-retrain-annotations-keep-their-origin.md`, +15 more, 2 ADRs | 2026-10-14 | ✅ |
-| Benchmarks, model studio and developer tooling | 712 | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, +164 more, 14 ADRs | 2026-10-27 | ⚠️ |
+| Benchmarks, model studio and developer tooling | 712 | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, +165 more, 14 ADRs | 2026-10-27 | ⚠️ |
 
 ## What each subsystem is, and what is uncovered inside it
 
@@ -333,8 +333,8 @@ Everything that measures or builds CamStack rather than running it — the bench
 
 - **Owner doc**: `docs/reference/guards.md`
 - **Code**: `packages/addon-benchmark/**`, `packages/addon-model-studio/**`, `packages/cli/**`, `packages/sdk/**`, `packages/desktop/**`, `packages/nx-plugin/**`, `scripts/**`, `e2e/**`, `packages/addon-pipeline/scripts/**`
-- **Files**: 712 (403 claimed by some document)
-- **Uncovered**: `scripts` (160), `scripts/ui/shots/fixtures` (64), `packages/cli/src/commands` (14), `scripts/lib` (14), `e2e/fixtures` (9), `scripts/ui/shots/harness/stubs` (8), +17 more directories
+- **Files**: 712 (404 claimed by some document)
+- **Uncovered**: `scripts` (160), `scripts/ui/shots/fixtures` (64), `scripts/lib` (14), `packages/cli/src/commands` (13), `e2e/fixtures` (9), `scripts/ui/shots/harness/stubs` (8), +17 more directories
 
 ## Claimed by no subsystem
 
