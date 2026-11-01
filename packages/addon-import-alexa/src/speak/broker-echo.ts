@@ -141,7 +141,7 @@ export class BrokerEcho {
     try {
       this.currentDevices = [...parseDevices(await this.deps.worker.request({ op: 'devices' }))]
     } catch (err: unknown) {
-      this.deps.logger.warn('alexa speak: device refresh failed', {
+      this.deps.logger.warn('alexa speak: step 3 of 3, device list failed after a good sign-in', {
         tags: { brokerId: this.deps.brokerId },
         meta: { error: err instanceof Error ? err.message : String(err) },
       })

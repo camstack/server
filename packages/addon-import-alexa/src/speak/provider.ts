@@ -410,6 +410,16 @@ export function createAlexaNotificationProvider(ports: AlexaSpeakPorts): AlexaNo
       return found
     },
     async discoverTargets(input) {
+      // The cap has no field to say "not ready", so an empty list would read as "no Echo":
+      // say which accounts are the reason, on the record.
+      for (const broker of ports.brokers()) {
+        if (!broker.ready) {
+          ports.logger.warn(
+            `alexa echo discovery: no Echo listed for '${broker.name}', the Amazon account is not signed in for this broker`,
+            { tags: { brokerId: broker.id } },
+          )
+        }
+      }
       // The form names an account: every Echo of it, labelled to tell two apart.
       const named = readString(input.config ?? {}, 'brokerId')
       if (named.length > 0) {

@@ -19,7 +19,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from alexa_gateway import AlexaPyGateway, bare_domain, normalize_device, session_output
 
 
-def install_fake_alexapy(exchange_ok: bool = True, stored_cookies: dict | None = None):
+def install_fake_alexapy(
+    exchange_ok: bool = True, stored_cookies: dict | None = None, file_readback: bool = True
+):
     """Put a fake `alexapy` (and `alexapy.alexalogin`) in sys.modules; return the call log."""
     calls: dict = {"exchange_app_names": [], "logins": [], "saved": 0}
     module = types.ModuleType("alexapy.alexalogin")
@@ -34,10 +36,13 @@ def install_fake_alexapy(exchange_ok: bool = True, stored_cookies: dict | None =
             calls["jar_path"] = outputpath(".storage/alexa_media.x.pickle")
             self.status = {"login_successful": True}
             self.refresh_token = (oauth or {}).get("refresh_token")
+            self._session = types.SimpleNamespace(cookie_jar=[])
 
         async def exchange_token_for_cookies(self):
             calls["exchange_app_names"].append(module.APP_NAME)
             calls["exchanged_token"] = self.refresh_token
+            if exchange_ok:
+                self._session.cookie_jar.append(types.SimpleNamespace(key="session-id", value="1"))
             return exchange_ok
 
         async def save_cookiefile(self):
@@ -45,7 +50,9 @@ def install_fake_alexapy(exchange_ok: bool = True, stored_cookies: dict | None =
             Path(calls["jar_path"]).write_bytes(b"jar")
 
         async def load_cookie(self):
-            return {"session-id": "1"} if (exchange_ok or stored_cookies) else {}
+            if stored_cookies:
+                return stored_cookies
+            return {"session-id": "1"} if (exchange_ok and file_readback) else {}
 
         async def login(self, cookies=None, data=None):
             calls["logins"].append(cookies)
@@ -66,6 +73,10 @@ def remove_fake_alexapy() -> None:
 
 def run(coro):
     return asyncio.run(coro)
+
+
+async def _accept_without_cookies(self):
+    return True
 
 
 class GatewayTests(unittest.TestCase):
@@ -112,6 +123,27 @@ class GatewayTests(unittest.TestCase):
         self.assertNotIn("bad", result["error"])
         self.assertEqual(calls["logins"], [])
         self.assertEqual(module.APP_NAME, "Alexa Media Player")
+
+    def test_cookies_from_the_exchange_are_used_when_the_file_reads_back_empty(self) -> None:
+        calls, _ = install_fake_alexapy(file_readback=False)
+        with tempfile.TemporaryDirectory() as directory:
+            result = run(
+                AlexaPyGateway().login_broker("alexa_002", "t", "", "amazon.com", "NA", str(Path(directory) / "s"))
+            )
+        self.assertEqual(result, {"status": "ok"})
+        self.assertEqual(calls["logins"], [{"session-id": "1"}])
+
+    def test_an_exchange_that_yields_no_cookies_names_its_step(self) -> None:
+        calls, _ = install_fake_alexapy(file_readback=False)
+        sys.modules["alexapy"].AlexaLogin.exchange_token_for_cookies = _accept_without_cookies
+        with tempfile.TemporaryDirectory() as directory:
+            result = run(
+                AlexaPyGateway().login_broker("alexa_002", "t", "", "amazon.com", "NA", str(Path(directory) / "s"))
+            )
+        self.assertEqual(result["status"], "failed")
+        self.assertIn("cookies", result["error"])
+        self.assertIn("exchange was accepted", result["error"])
+        self.assertEqual(calls["logins"], [])
 
     def test_with_no_token_only_the_stored_jar_is_tried(self) -> None:
         calls, _ = install_fake_alexapy(stored_cookies={"session-id": "1"})

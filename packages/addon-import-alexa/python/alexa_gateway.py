@@ -119,14 +119,32 @@ class AlexaPyGateway:
             bare_domain(domain), label, "", session_output(session_path), False, oauth=oauth
         )
         self._login = login
+        cookies: dict = {}
         if refresh_token != "":
             exchanged = await _exchange_refresh_token(login, device_app_name)
             if not exchanged:
-                return {"status": "failed", "error": "Amazon did not accept the broker's token"}
+                return {
+                    "status": "failed",
+                    "error": "step 1 of 3, token exchange: Amazon refused the broker's token",
+                }
             await login.save_cookiefile()
-        cookies = await login.load_cookie()
-        if not cookies:
-            return {"status": "failed", "error": "no Amazon session to start from"}
+            # The exchange put its cookies in the live session; use them as they are. Reading
+            # them back through the cookie file filters them by host and can come back empty.
+            cookies = _session_cookies(login)
+            if not cookies:
+                cookies = await login.load_cookie() or {}
+            if not cookies:
+                return {
+                    "status": "failed",
+                    "error": "step 2 of 3, cookies: the token exchange was accepted but returned no cookies",
+                }
+        else:
+            cookies = await login.load_cookie() or {}
+            if not cookies:
+                return {
+                    "status": "failed",
+                    "error": "step 2 of 3, cookies: no stored Amazon session and no broker token to start from",
+                }
         await login.login(cookies=cookies)
         await self._persist_session()
         return self._status_result()
@@ -211,6 +229,22 @@ def _import_alexapy():
     from alexapy import AlexaAPI, AlexaLogin
 
     return AlexaLogin, AlexaAPI
+
+
+def _session_cookies(login) -> dict:
+    """Every cookie the login's live session holds, by name. Values only leave this process
+    inside the library; nothing here logs them."""
+    session = getattr(login, "_session", None)
+    jar = getattr(session, "cookie_jar", None)
+    found: dict = {}
+    if jar is None:
+        return found
+    for morsel in jar:
+        name = getattr(morsel, "key", None)
+        value = getattr(morsel, "value", None)
+        if isinstance(name, str) and isinstance(value, str) and name != "":
+            found[name] = value.strip('"')
+    return found
 
 
 async def _exchange_refresh_token(login, device_app_name: str) -> bool:

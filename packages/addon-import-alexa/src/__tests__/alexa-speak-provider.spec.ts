@@ -130,6 +130,25 @@ describe('alexa notification provider', () => {
     expect(found.every((row) => row.config['brokerId'] === 'b1')).toBe(true)
   })
 
+  it('discovery names, per broker, why an account lists no Echo', async () => {
+    const warnings: Array<{ message: string; tags: unknown }> = []
+    const spy = logger()
+    spy.warn = (message, arg) => warnings.push({ message, tags: arg?.tags })
+    const provider = createAlexaNotificationProvider({
+      ...ports(),
+      logger: spy,
+      brokers: () => [
+        broker('alexa_002', 'Office', [], false),
+        broker('alexa_001', 'Home', [echo()]),
+      ],
+    })
+    const found = await provider.discoverTargets({ kind: ALEXA_SPEAK_KIND })
+    expect(found).toHaveLength(1)
+    expect(warnings).toHaveLength(1)
+    expect(warnings[0]?.message).toContain('not signed in')
+    expect(warnings[0]?.tags).toEqual({ brokerId: 'alexa_002' })
+  })
+
   it('discovery skips an Echo that already has a target', async () => {
     const provider = createAlexaNotificationProvider({
       ...ports(),
