@@ -418,7 +418,7 @@ describe('setup_add_node', () => {
 })
 
 describe('registration through MCP', () => {
-  it('the setup toolset serves the five tools', async () => {
+  it('the setup toolset serves the six tools', async () => {
     const server = createPublicServer({
       toolsets: ['setup'],
       context: {
@@ -439,9 +439,10 @@ describe('registration through MCP', () => {
     await client.connect(b)
     expect((await client.listTools()).tools.map((t) => t.name).toSorted()).toEqual([
       'setup_about',
-      'setup_add_node',
+      'setup_wizard',
       'setup_connect',
       'setup_discover_hubs',
+      'setup_wizard',
       'setup_install_guide',
     ])
     const res = await client.callTool({
