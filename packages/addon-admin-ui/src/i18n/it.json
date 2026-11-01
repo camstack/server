@@ -397,7 +397,9 @@
       "addValue": "Aggiungi valore…",
       "anyPhase": "— qualsiasi fase —",
       "authoredElsewhereAndPreservedThis": "Creata altrove e conservata — questo editor admin non può ancora modificarla.",
-      "notEditableHereYetThis": "Non ancora modificabile qui — questa condizione non ha un editor admin."
+      "notEditableHereYetThis": "Non ancora modificabile qui — questa condizione non ha un editor admin.",
+      "transitionMeaning": "{{kind}}: inizia = {{starts}} · finisce = {{finishes}}",
+      "transitionInfo": "Cosa significano inizia e finisce"
     },
     "notificationRuleLastRun": {
       "lastRunLoading": "Caricamento ultima esecuzione",
@@ -9311,9 +9313,9 @@
       "phaseDelivered": "Consegnato",
       "phasePickedUp": "Ritirato",
       "phaseBoth": "Entrambi",
-      "stBoth": "Quando scatta e quando rientra",
-      "stRaised": "Solo quando scatta",
-      "stCleared": "Solo quando rientra",
+      "stBoth": "Quando inizia e quando finisce",
+      "stRaised": "Solo quando inizia",
+      "stCleared": "Solo quando finisce",
       "crossEnter": "In ingresso",
       "crossExit": "In uscita",
       "crossAny": "In ingresso o in uscita",

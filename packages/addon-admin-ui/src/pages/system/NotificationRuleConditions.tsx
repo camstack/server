@@ -61,13 +61,16 @@ import type {
 } from '@camstack/types'
 import {
   conditionVisibleForKind,
+  eventKindLabel,
   NC_SENSOR_TRANSITION_NEVER_FIRES_WARNING,
   pickerForCondition,
   ruleKindOf,
+  sensorTransitionMeaning,
   sensorTransitionNeverFires,
   systemFamilyOfKind,
 } from '@camstack/types'
-import { Select } from '@camstack/ui-library'
+import { Select, Tooltip, TooltipContent, TooltipTrigger } from '@camstack/ui-library'
+import { Info } from 'lucide-react'
 import type { TFunction } from 'i18next'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -327,6 +330,57 @@ export function RuleConditionsEditor({
   )
 }
 
+/**
+ * The info tooltip beside "Notify when": one line per sensor kind the rule
+ * watches, saying what "starts" and "finishes" mean for it. The choices stay
+ * generic; the sentence is the catalog's (`NC_SENSOR_TRANSITION_MEANINGS`).
+ */
+function SensorTransitionInfo({ kinds }: { readonly kinds: readonly string[] }) {
+  const { t, i18n } = useTranslation()
+  const locale = i18n.language.startsWith('it') ? 'it' : 'en'
+  const lines = kinds.flatMap((kind) => {
+    const meaning = sensorTransitionMeaning(kind)
+    if (meaning === undefined) return []
+    return [
+      {
+        kind,
+        text: t(
+          'system.notificationRuleConditions.transitionMeaning',
+          '{{kind}}: starts = {{starts}} · finishes = {{finishes}}',
+          {
+            kind: eventKindLabel(kind, locale),
+            starts: meaning.starts[locale],
+            finishes: meaning.finishes[locale],
+            interpolation: { escapeValue: false },
+          },
+        ),
+      },
+    ]
+  })
+  if (lines.length === 0) return null
+  return (
+    <Tooltip className="inline-block">
+      <TooltipTrigger tabIndex={0}>
+        <Info
+          className="h-4 w-4 cursor-help text-foreground-subtle"
+          aria-label={t(
+            'system.notificationRuleConditions.transitionInfo',
+            'What start and finish mean',
+          )}
+          data-testid="nc-sensor-transition-info"
+        />
+      </TooltipTrigger>
+      <TooltipContent className="left-auto right-0 translate-x-0">
+        <ul className="w-60 space-y-1 whitespace-normal text-left text-[11px]">
+          {lines.map((line) => (
+            <li key={line.kind}>{line.text}</li>
+          ))}
+        </ul>
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
 /** The class scope's catalog rows (D641): wire ids unchanged, ONE field here. */
 const CLASS_SCOPE_IDS: ReadonlySet<string> = new Set(['classes', 'classesExclude'])
 /** The zone scope's rows (D690): `zones` + `zonesExclude`, ONE field. */
@@ -569,7 +623,10 @@ function ConditionWidget({
         <Select
           value={conditions[key] ?? ''}
           options={[
-            { value: '', label: t('system.notificationRuleConditions.anyPhase', '— any phase —') },
+            {
+              value: '',
+              label: t('system.notificationRuleConditions.anyPhase', '— any phase —'),
+            },
             ...descriptorOptions(descriptor, NC_PACKAGE_PHASE_OPTIONS).map((o) => ({
               value: o.value,
               label: o.label,
@@ -594,14 +651,17 @@ function ConditionWidget({
       })
       return (
         <>
-          <Select
-            value={conditions[key] ?? ''}
-            options={descriptorOptions(descriptor, NC_SENSOR_TRANSITION_OPTIONS).map((o) => ({
-              value: o.value,
-              label: o.label,
-            }))}
-            onChange={(e) => onFieldChange(key, parseSensorTransition(e.target.value))}
-          />
+          <div className="flex items-center gap-2">
+            <Select
+              value={conditions[key] ?? ''}
+              options={descriptorOptions(descriptor, NC_SENSOR_TRANSITION_OPTIONS).map((o) => ({
+                value: o.value,
+                label: o.label,
+              }))}
+              onChange={(e) => onFieldChange(key, parseSensorTransition(e.target.value))}
+            />
+            <SensorTransitionInfo kinds={conditions.sensorKinds ?? []} />
+          </div>
           {neverFires && (
             <p
               className="mt-1 text-[11px] text-warning"

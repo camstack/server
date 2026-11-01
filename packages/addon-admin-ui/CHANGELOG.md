@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Notify when on a sensor rule now reads starts/finishes, with an info tooltip saying what they mean for the selected sensor kinds
+
 ## [1.2.546] - 2026-11-01
 
 ### Changed

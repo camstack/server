@@ -2345,17 +2345,17 @@ export const NC_CONDITION_CATALOG: readonly NcConditionDescriptor[] = [
     options: [
       {
         value: '',
-        label: 'It triggers and when it clears',
-        hint: 'Every change: water detected, and back to dry.',
+        label: 'When it starts and when it finishes',
+        hint: 'Every change: the alert itself, and the return to normal.',
       },
       {
         value: 'raised',
-        label: 'Only when it triggers',
+        label: 'Only when it starts',
         hint: 'Water detected, smoke, a contact opening — never the return to normal.',
       },
       {
         value: 'cleared',
-        label: 'Only when it clears',
+        label: 'Only when it finishes',
         hint: 'Back to dry, smoke gone, a contact closing — never the alert itself.',
       },
     ],

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Notify when choices read When it starts and when it finishes, and a catalog says what start and finish mean for each sensor kind
+
 ## [1.2.466] - 2026-11-01
 
 ### Changed

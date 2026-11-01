@@ -397,7 +397,9 @@
       "addValue": "Add value…",
       "anyPhase": "— any phase —",
       "authoredElsewhereAndPreservedThis": "Authored elsewhere and preserved — this admin editor cannot change it yet.",
-      "notEditableHereYetThis": "Not editable here yet — this condition has no admin editor."
+      "notEditableHereYetThis": "Not editable here yet — this condition has no admin editor.",
+      "transitionMeaning": "{{kind}}: starts = {{starts}} · finishes = {{finishes}}",
+      "transitionInfo": "What start and finish mean"
     },
     "notificationRuleLastRun": {
       "lastRunLoading": "Last run loading",
@@ -9289,9 +9291,9 @@
       "phaseDelivered": "Delivered",
       "phasePickedUp": "Picked up",
       "phaseBoth": "Both",
-      "stBoth": "It triggers and when it clears",
-      "stRaised": "Only when it triggers",
-      "stCleared": "Only when it clears",
+      "stBoth": "When it starts and when it finishes",
+      "stRaised": "Only when it starts",
+      "stCleared": "Only when it finishes",
       "crossEnter": "Entering",
       "crossExit": "Leaving",
       "crossAny": "Entering or leaving",

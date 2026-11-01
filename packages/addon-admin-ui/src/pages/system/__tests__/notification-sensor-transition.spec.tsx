@@ -18,7 +18,9 @@ vi.mock('@camstack/ui-library', async () => {
     useSystem: () => ({
       trpcClient: {
         zones: { listZones: { query: () => Promise.resolve([]) } },
-        pipelineAnalytics: { listEventKinds: { query: () => Promise.resolve([]) } },
+        pipelineAnalytics: {
+          listEventKinds: { query: () => Promise.resolve([]) },
+        },
       },
     }),
     useFaceGalleryListIdentities: () => ({ data: [], isLoading: false }),
@@ -58,7 +60,11 @@ describe('buildConditions — sensorTransition is pruned where it cannot mean an
   it('drops it off a device-event rule', () => {
     expect(
       buildConditions(
-        { classes: ['person'], sensorKinds: ['flood'], sensorTransition: 'raised' },
+        {
+          classes: ['person'],
+          sensorKinds: ['flood'],
+          sensorTransition: 'raised',
+        },
         'immediate',
         CATALOG,
       ),
@@ -84,7 +90,9 @@ function renderEditor(
   actions?: import('@camstack/types').NcRuleActions,
 ): { readonly changes: NcConditions[] } {
   const changes: NcConditions[] = []
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
   render(
     <QueryClientProvider client={queryClient}>
       <RuleConditionsEditor
@@ -119,21 +127,26 @@ describe('RuleConditionsEditor — Notify when', () => {
     renderEditor({ sensorKinds: ['flood'] })
     const select = screen.getByRole('combobox')
     expect(Array.from(select.querySelectorAll('option')).map((o) => o.textContent)).toEqual([
-      'It triggers and when it clears',
-      'Only when it triggers',
-      'Only when it clears',
+      'When it starts and when it finishes',
+      'Only when it starts',
+      'Only when it finishes',
     ])
     expect(select instanceof HTMLSelectElement && select.value === '').toBe(true)
   })
 
   it('authors the raise, and returns to ABSENT for both', () => {
     const { changes } = renderEditor({ sensorKinds: ['flood'] })
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'raised' } })
+    fireEvent.change(screen.getByRole('combobox'), {
+      target: { value: 'raised' },
+    })
     expect(changes).toEqual([{ sensorKinds: ['flood'], sensorTransition: 'raised' }])
   })
 
   it('returns to absent rather than writing a third value', () => {
-    const { changes } = renderEditor({ sensorKinds: ['flood'], sensorTransition: 'raised' })
+    const { changes } = renderEditor({
+      sensorKinds: ['flood'],
+      sensorTransition: 'raised',
+    })
     fireEvent.change(screen.getByRole('combobox'), { target: { value: '' } })
     expect(changes).toEqual([{ sensorKinds: ['flood'] }])
   })
@@ -149,6 +162,30 @@ describe('RuleConditionsEditor — Notify when', () => {
   })
 })
 
+describe('RuleConditionsEditor — Notify when, what start and finish mean', () => {
+  beforeEach(() => {
+    localStorage.clear()
+  })
+
+  it('says what start and finish mean for the one selected kind', () => {
+    renderEditor({ sensorKinds: ['flood'] })
+    const tip = screen.getByRole('tooltip').textContent ?? ''
+    expect(tip).toContain('Water leak: starts = water detected · finishes = dry again')
+    expect(tip).not.toContain('Smoke')
+  })
+
+  it('has one line per selected kind, and only for those', () => {
+    renderEditor({ sensorKinds: ['appliance-cycle', 'smoke'] })
+    const lines = Array.from(screen.getByRole('tooltip').querySelectorAll('li')).map(
+      (li) => li.textContent,
+    )
+    expect(lines).toEqual([
+      'Appliance cycle: starts = the cycle started · finishes = the cycle finished',
+      'Smoke: starts = smoke detected · finishes = smoke gone',
+    ])
+  })
+})
+
 describe('RuleConditionsEditor — an alarm rule that asks for the clear (D640 × D630)', () => {
   beforeEach(() => {
     localStorage.clear()
@@ -157,7 +194,11 @@ describe('RuleConditionsEditor — an alarm rule that asks for the clear (D640 �
   const ARMED = { deviceId: 900, states: ['armed_away'] }
 
   it('warns that a contact alarm rule set to "only when it clears" can never fire', () => {
-    renderEditor({ sensorKinds: ['contact'], sensorTransition: 'cleared', deviceState: ARMED })
+    renderEditor({
+      sensorKinds: ['contact'],
+      sensorTransition: 'cleared',
+      deviceState: ARMED,
+    })
     expect(screen.getByTestId('nc-sensor-transition-never-fires').textContent).toMatch(
       /never fire/i,
     )
@@ -170,7 +211,12 @@ describe('RuleConditionsEditor — an alarm rule that asks for the clear (D640 �
         onTrigger: [
           {
             kind: 'do',
-            action: { kind: 'cap', cap: 'alarm-panel', method: 'trigger', deviceId: 900 },
+            action: {
+              kind: 'cap',
+              cap: 'alarm-panel',
+              method: 'trigger',
+              deviceId: 900,
+            },
           },
         ],
       },
@@ -179,7 +225,11 @@ describe('RuleConditionsEditor — an alarm rule that asks for the clear (D640 �
   })
 
   it('says nothing for the raise, or for a rule that is not the alarm', () => {
-    renderEditor({ sensorKinds: ['contact'], sensorTransition: 'raised', deviceState: ARMED })
+    renderEditor({
+      sensorKinds: ['contact'],
+      sensorTransition: 'raised',
+      deviceState: ARMED,
+    })
     expect(screen.queryByTestId('nc-sensor-transition-never-fires')).toBeNull()
   })
 

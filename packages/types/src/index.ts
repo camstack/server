@@ -1772,6 +1772,13 @@ export {
   sensorTransitionOffered,
 } from './notification/sensor-raised.js'
 export {
+  NC_SENSOR_TRANSITION_MEANINGS,
+  sensorTransitionMeaning,
+  type NcSensorTransitionLocale,
+  type NcSensorTransitionMeaning,
+  type NcSensorTransitionPhrase,
+} from './notification/sensor-transition-meanings.js'
+export {
   alertEpisodeId,
   alertEpisodeKind,
   alertEpisodePayload,
