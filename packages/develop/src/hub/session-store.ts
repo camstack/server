@@ -5,6 +5,7 @@
  * SAME code. The cache holds the login JWT and its refresh token from `camstack login`,
  * never a password.
  */
+import * as crypto from 'node:crypto'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
@@ -163,7 +164,17 @@ export function loadSession(
 export function saveSession(session: SessionFile, dir: string = defaultSessionDir()): string {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true, mode: 0o700 })
   const file = sessionFileForServer(session.server, dir)
-  fs.writeFileSync(file, JSON.stringify(session, null, 2), { mode: 0o600 })
+  // Write beside the target at 0600, then rename over it: `writeFileSync`'s mode does not
+  // apply to a file that already exists, so a loose pre-existing file would stay loose.
+  const temp = `${file}.${crypto.randomBytes(6).toString('hex')}.tmp`
+  try {
+    fs.writeFileSync(temp, JSON.stringify(session, null, 2), { mode: 0o600 })
+    fs.chmodSync(temp, 0o600)
+    fs.renameSync(temp, file)
+  } catch (err) {
+    fs.rmSync(temp, { force: true })
+    throw err
+  }
   return file
 }
 

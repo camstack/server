@@ -89,6 +89,7 @@ export type { SessionFile } from './hub/session-store.js'
 export {
   adminCredentialHint,
   adminRejectedHint,
+  BROWSER_LOGIN_HINT,
   REPO_LOCAL_LOGIN,
   sessionLoginCommand,
 } from './hub/login-hints.js'

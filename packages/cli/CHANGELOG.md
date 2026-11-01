@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - MCP: new read-only setup_wizard tool lists what a fresh hub still lacks (admin 2FA, remote access, backups, cameras, notifiers, alert rules, calibration) and the tool to run next
+- Sign in without a TTY by approving in the admin UI (camstack login <host> --browser), assistant tools setup_login/setup_login_wait, Node 24 check, and camstack mcp update/rollback
+- mcp update installs without running scripts and checks the registry integrity; rollback checks its target and runs the doctor
 
 ## [1.2.216] - 2026-10-31
 

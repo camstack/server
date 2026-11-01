@@ -34,12 +34,19 @@ export function sessionLoginCommand(
   return onPath('camstack', env['PATH']) ? 'camstack login' : REPO_LOCAL_LOGIN
 }
 
+/**
+ * The sign-in that needs no password typed in a terminal: the CLI prints a
+ * short code, the operator approves it in the admin UI at `/approve`.
+ */
+export const BROWSER_LOGIN_HINT =
+  'No keyboard? `camstack login <host> --browser` prints a code to approve in the admin UI; `--token-file <path>` is the headless fallback.'
+
 /** The hub answered 401/403 to an admin-tier credential. */
 export function adminRejectedHint(command: string = sessionLoginCommand()): string {
-  return `the hub rejected this credential (revoked or expired). Run \`${command}\` in a terminal with an admin account.`
+  return `the hub rejected this credential (revoked or expired). Run \`${command}\` in a terminal with an admin account. ${BROWSER_LOGIN_HINT}`
 }
 
 /** Why admin-tier ops are blocked locally. */
 export function adminCredentialHint(command: string = sessionLoginCommand()): string {
-  return `this credential is not admin-scoped. Run \`${command}\` with an admin account (the MCP never handles a password).`
+  return `this credential is not admin-scoped. Run \`${command}\` with an admin account (the MCP never handles a password). ${BROWSER_LOGIN_HINT}`
 }

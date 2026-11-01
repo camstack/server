@@ -10,7 +10,9 @@ import { DEFAULT_TOOLSETS, parseToolsets, TOOLSET_NAMES } from '../mcp/toolsets.
 export function mcpHelp(): string {
   return [
     'Usage: camstack mcp [options]',
-    '       camstack mcp doctor',
+    '       camstack mcp doctor [--json]',
+    '       camstack mcp update <version> | --latest',
+    '       camstack mcp rollback',
     '',
     'Runs the CamStack MCP server on stdio. Register it with your assistant:',
     '  claude mcp add camstack -- camstack mcp',
@@ -25,6 +27,9 @@ export function mcpHelp(): string {
     'the session or token file, the token scope (admin or not) and the CLI version, each',
     'ok / fail / unknown with a fix hint. It never prints a token.',
     'No TTY (CI, a service): `camstack login <host> --token-file <path>` with a chmod 600 file.',
+    'Update: `camstack mcp update <version>|--latest` (installer layout only) stages the version, runs',
+    '`mcp doctor --json` on it, then switches the active one atomically; `camstack mcp rollback` undoes it.',
+    'Your login sessions in ~/.camstack are never touched. Other installs get instructions.',
     'MCP clients such as OpenCode keep the old process: restart them after `camstack mcp` updates.',
     '',
     "Auth is the CLI's own: run `camstack login <host>` once in a terminal.",
@@ -37,6 +42,10 @@ export async function runMcp(args: readonly string[], cliVersion: string): Promi
   if (args[0] === 'doctor') {
     const { runDoctorCommand } = await import('../mcp/doctor-command.js')
     process.exitCode = await runDoctorCommand(args.slice(1), cliVersion)
+    return
+  }
+  if (args[0] === 'update' || args[0] === 'rollback') {
+    process.exitCode = await runUpdateCommand(args)
     return
   }
   const parsed = parseArgs({
@@ -63,4 +72,23 @@ export async function runMcp(args: readonly string[], cliVersion: string): Promi
     ...(parsed.values.server ? { server: parsed.values.server } : {}),
     ...(parsed.values['token-file'] ? { tokenFile: parsed.values['token-file'] } : {}),
   })
+}
+
+async function runUpdateCommand(args: readonly string[]): Promise<number> {
+  const { homedir } = await import('node:os')
+  const { realpathSync } = await import('node:fs')
+  const { runMcpRollback, runMcpUpdate } = await import('./mcp-update.js')
+  const { runCommand } = await import('../mcp/ops-update-cli.js')
+  const { latestOnNpm } = await import('../mcp/setup-tools.js')
+  const entry = process.argv[1] ?? ''
+  const deps = {
+    entryPath: entry === '' ? entry : realpathSync(entry),
+    env: process.env,
+    home: homedir(),
+    run: runCommand,
+    latestVersion: async () =>
+      (await latestOnNpm('camstack', (url, init) => fetch(url, init))).latest,
+    print: (line: string) => console.log(line),
+  }
+  return args[0] === 'rollback' ? runMcpRollback(deps) : runMcpUpdate(args.slice(1), deps)
 }

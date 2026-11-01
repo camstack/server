@@ -9,6 +9,7 @@ import type { FetchFn, McpContext, ToolTextResult } from './context.js'
 import { addNodeTool, connectTool, discoverHubsTool, type SetupDeps } from './setup-hubs.js'
 import { installGuide } from './setup-install.js'
 import { setupWizard } from './setup-wizard.js'
+import { loginTool, loginWaitTool } from './setup-login.js'
 import {
   AcceleratorSchema,
   HOST_KINDS,
@@ -115,5 +116,17 @@ export function registerSetupTools(server: McpServer, ctx: McpContext, deps: Set
     'Read-only first-run checklist for a hub, to call after setup_connect: eight steps (admin account and 2FA, hub address and remote access, backups, cameras and agents, notification targets, admin alert rules, detection rules per camera, calibration and updates), each done, missing, unknown or suggested, with the existing tool or UI page that comes next. An unreadable part is unknown with its reason, never missing. Needs a login session; an admin session judges every step.',
     {},
     async (): Promise<ToolTextResult> => text(await setupWizard(ctx)),
+  )
+  server.tool(
+    'setup_login',
+    'Sign this machine in to a hub by BROWSER APPROVAL, with no password: returns {url, code, expiresAt}. Show the operator the url and the code SEPARATELY; they open the url where they are already signed in, type the code and approve. Then call setup_login_wait. The session is never in a tool result.',
+    { server: z.string().min(1) },
+    async ({ server: address }): Promise<ToolTextResult> => text(await loginTool(address)),
+  )
+  server.tool(
+    'setup_login_wait',
+    'Wait up to 60 s for the operator to approve the sign-in started by setup_login. Returns only a status: approved, pending (call again), denied, or expired.',
+    { server: z.string().min(1) },
+    async ({ server: address }): Promise<ToolTextResult> => text(await loginWaitTool(address)),
   )
 }

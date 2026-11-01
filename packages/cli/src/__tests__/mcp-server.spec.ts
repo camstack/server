@@ -159,6 +159,8 @@ describe('camstack mcp — toolset selection', () => {
       'setup_discover_hubs',
       'setup_install_guide',
       'setup_wizard',
+      'setup_login',
+      'setup_login_wait',
       'support_benchmark_run',
       'support_benchmark_status',
       'support_diagnose_accelerator',

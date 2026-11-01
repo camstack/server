@@ -16,14 +16,18 @@ async function probeHub(server: string): Promise<HubProbe> {
   }
 }
 
-/** `camstack mcp doctor [-s <host>] [--token-file <p>]`; the exit code is 1 on a failing check. */
+/** `camstack mcp doctor [-s <host>] [--token-file <p>] [--json]`; the exit code is 1 on a failing check. */
 export async function runDoctorCommand(
   args: readonly string[],
   cliVersion: string,
 ): Promise<number> {
   const parsed = parseArgs({
     args: [...args],
-    options: { server: { type: 'string', short: 's' }, 'token-file': { type: 'string' } },
+    options: {
+      server: { type: 'string', short: 's' },
+      'token-file': { type: 'string' },
+      json: { type: 'boolean' },
+    },
     allowPositionals: false,
     strict: true,
   })
@@ -41,6 +45,8 @@ export async function runDoctorCommand(
     probeHub,
     fetch: (url, init) => fetch(url, init),
   })
-  process.stdout.write(`${formatDoctor(checks)}\n`)
+  process.stdout.write(
+    parsed.values.json === true ? `${JSON.stringify(checks)}\n` : `${formatDoctor(checks)}\n`,
+  )
   return doctorExitCode(checks)
 }

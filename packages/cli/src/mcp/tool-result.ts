@@ -18,6 +18,8 @@ const FAILURE_STATUSES: ReadonlySet<string> = new Set([
   'unsupported',
   'unavailable',
   'not-exposed',
+  'expired',
+  'denied',
 ])
 
 export function isFailureResult(value: unknown): boolean {

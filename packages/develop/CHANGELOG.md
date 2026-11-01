@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The login hints now name the browser approval for a terminal with no TTY
+- A saved sign-in session file is written atomically and always ends up 0600, even over a loose existing file
+
 ## [0.1.41] - 2026-10-30
 
 ### Changed
