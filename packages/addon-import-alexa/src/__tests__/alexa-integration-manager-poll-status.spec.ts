@@ -52,23 +52,17 @@ async function build(pollImpl: () => Promise<readonly AlexaStateValue[]>) {
 }
 
 describe('AlexaIntegrationManager poll failure status', () => {
-  it('moves to error after N consecutive failures, logs the transition once, recovers on success', async () => {
+  it('a non-auth poll failure keeps the signed-in broker connected and surfaces the reason', async () => {
     let fail = true
     const { manager, info } = await build(async () => {
-      if (fail) throw new AlexaHttpError('no body', 502)
+      if (fail) throw new AlexaHttpError('no body', 400)
       return []
     })
-    await manager.start() // start() polls once: failure 1
+    await manager.start()
+    for (let i = 0; i < POLL_FAILURES_BEFORE_ERROR + 2; i++) await manager.poll()
     expect(manager.getInfo().status).toBe('connected')
-    for (let i = 1; i < POLL_FAILURES_BEFORE_ERROR - 1; i++) await manager.poll()
-    expect(manager.getInfo().status).toBe('connected')
-    await manager.poll()
-    expect(manager.getInfo().status).toBe('error')
     expect(manager.getInfo().error).toContain('no body')
-    await manager.poll()
-    await manager.poll()
-    const transitions = info.mock.calls.filter((c) => String(c[0]).includes('status changed'))
-    expect(transitions).toHaveLength(1)
+    expect(info.mock.calls.filter((c) => String(c[0]).includes('status changed'))).toHaveLength(0)
 
     fail = false
     await manager.poll()

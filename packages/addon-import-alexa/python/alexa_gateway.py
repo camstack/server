@@ -69,6 +69,9 @@ def normalize_device(raw: dict) -> dict | None:
     return result
 
 
+# The skill alexapy itself names for an AlexaAnnouncement node.
+ANNOUNCEMENT_SKILL_ID = "amzn1.ask.1p.routines.messaging"
+
 class AlexaPyGateway:
     """Holds one AlexaLogin for the life of the process (one process per broker)."""
 
@@ -177,13 +180,28 @@ class AlexaPyGateway:
     async def speak(self, sequence: dict, customer_id: str) -> None:
         login = self._require_login()
         _AlexaLogin, AlexaAPI = _import_alexapy()
-        await AlexaAPI.send_sequence(login, sequence, customer_id, None)
+        # alexapy 1.29.20: send_sequence/send_announcement are INSTANCE methods that read the
+        # device behind the API object (type, serial, locale). Our payloads already carry the
+        # target, so run the prebuilt node through run_behavior, which needs only the login.
+        # queue_delay=0 posts at once instead of batching with other queued nodes.
+        await AlexaAPI(None, login).run_behavior(sequence["startNode"], queue_delay=0)
         self._touch_success()
 
     async def announce(self, announcement: dict, customer_id: str) -> None:
         login = self._require_login()
         _AlexaLogin, AlexaAPI = _import_alexapy()
-        await AlexaAPI.send_announcement(login, announcement, customer_id, None)
+        node = {
+            "@type": "com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode",
+            "type": "AlexaAnnouncement",
+            "operationPayload": {
+                "expireAfter": announcement["expireAfter"],
+                "content": announcement["content"],
+                "target": announcement["target"],
+                "customerId": customer_id,
+                "skillId": ANNOUNCEMENT_SKILL_ID,
+            },
+        }
+        await AlexaAPI(None, login).run_behavior(node, queue_delay=0)
         self._touch_success()
 
     async def session_status(self) -> dict:

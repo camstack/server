@@ -52,6 +52,13 @@ const MAX_ATTEMPTS = 4
 const QUERY_TIMEOUT_MS = 30_000
 
 /**
+ * Appliance ids per state query. One call with a whole account (236 ids on a real hub) was
+ * answered with an empty body (HTTP 400) every poll; a bounded request keeps a single
+ * oversized or poisoned id from failing the state of every other appliance.
+ */
+export const POLL_CHUNK_SIZE = 50
+
+/**
  * Persisted session blob — alexa-remote2's `cookieData` registration object.
  * Typed `string | object` because the lib accepts either form back as the
  * `cookie` init field (the shipped types mistype `cookieData` as `string`).
@@ -188,10 +195,40 @@ export class AlexaRemoteClient implements AlexaClient {
   async pollStates(applianceIds: readonly string[]): Promise<readonly AlexaStateValue[]> {
     if (applianceIds.length === 0) return []
     const remote = this.#requireRemote()
-    const body = await this.#withBackoff('querySmarthomeDevices', () =>
-      this.#querySmarthomeDevices(remote, applianceIds),
-    )
-    return decodeSmarthomeStates(body)
+    const values: AlexaStateValue[] = []
+    let failedChunks = 0
+    let lastError: unknown = null
+    let chunks = 0
+    for (let start = 0; start < applianceIds.length; start += POLL_CHUNK_SIZE) {
+      const chunk = applianceIds.slice(start, start + POLL_CHUNK_SIZE)
+      chunks += 1
+      try {
+        const body = await this.#withBackoff('querySmarthomeDevices', () =>
+          this.#querySmarthomeDevices(remote, chunk),
+        )
+        values.push(...decodeSmarthomeStates(body))
+      } catch (err: unknown) {
+        // A dead session fails every chunk the same way: surface it at once.
+        if (err instanceof AlexaAuthError) throw err
+        failedChunks += 1
+        lastError = err
+        this.#logger?.warn('AlexaRemoteClient: state query chunk failed', {
+          meta: {
+            brokerId: this.#options.brokerId,
+            chunkSize: chunk.length,
+            firstId: chunk[0],
+            error: errMsg(err),
+          },
+        })
+      }
+    }
+    // Only when nothing answered is the poll itself a failure; otherwise apply what arrived.
+    if (failedChunks === chunks) {
+      throw lastError instanceof Error
+        ? lastError
+        : new Error('AlexaRemoteClient: state poll failed')
+    }
+    return values
   }
 
   async sendCommand(command: AlexaCommand): Promise<void> {

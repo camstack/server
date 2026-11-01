@@ -12,7 +12,7 @@ import { AlexaHttpError } from './alexa-remote-client.js'
 import { alexaAccounts } from './alexa-gateway.js'
 import { connectionToCredentials, type AlexaConnection } from './config.js'
 
-/** Consecutive failed polls before the broker stops reporting 'connected'. */
+/** Consecutive auth-failed polls before the broker stops reporting 'connected'. */
 export const POLL_FAILURES_BEFORE_ERROR = 3
 
 /** Status of a single Alexa account connection. */
@@ -212,8 +212,14 @@ export class AlexaIntegrationManager {
         tags: { brokerId: this.#id },
         meta: { error: errMsg(err), consecutiveFailures: this.#pollFailures, httpStatus },
       })
-      if (this.#pollFailures >= POLL_FAILURES_BEFORE_ERROR && this.#status !== 'disconnected') {
-        this.#transition(err instanceof AlexaAuthError ? 'auth-failed' : 'error')
+      // Only a dead session changes the broker's status. A failed state query on a valid
+      // session stays 'connected' and is surfaced through `error` (the UI reads it).
+      if (
+        err instanceof AlexaAuthError &&
+        this.#pollFailures >= POLL_FAILURES_BEFORE_ERROR &&
+        this.#status !== 'disconnected'
+      ) {
+        this.#transition('auth-failed')
       }
     }
   }
