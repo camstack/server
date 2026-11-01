@@ -8,7 +8,9 @@
  *   npx tsx scripts/eval/entity-draft/run.mts --hub --profile <profileId> [--server <host>]
  *
  * Options: --kinds automation,action  --limit N (per kind)  --repairs 2
- *          --max-tokens 1200  --timeout-ms 180000  --api-key <key>  --out <dir>
+ *          --max-tokens 2048  --timeout-ms 180000  --api-key <key>  --out <dir>
+ *          --response-format schema|prompt (default schema; LM Studio puts schema-constrained output in the reasoning channel, use prompt)
+ *          --thinking off|on (default off; openai backend)  --suffix <text> (appended to the file names)
  * Writes <out>/<model>.json and <model>.md (default: test-output/entity-draft).
  */
 import { parseArgs } from 'node:util'
@@ -25,6 +27,8 @@ import {
   openAiBackend,
   renderMarkdown,
   runEval,
+  type ResponseFormatMode,
+  type ThinkingMode,
   writeReport,
 } from './lib.mts'
 
@@ -43,6 +47,9 @@ const { values } = parseArgs({
     'max-tokens': { type: 'string' },
     'timeout-ms': { type: 'string' },
     out: { type: 'string' },
+    thinking: { type: 'string' },
+    suffix: { type: 'string' },
+    'response-format': { type: 'string' },
   },
 })
 
@@ -63,6 +70,18 @@ function numberOption(raw: string | undefined, fallback: number): number {
 
 const maxTokens = numberOption(values['max-tokens'], DEFAULT_MAX_TOKENS)
 const timeoutMs = numberOption(values['timeout-ms'], 180_000)
+const thinking: ThinkingMode =
+  values.thinking === undefined || values.thinking === 'off'
+    ? 'off'
+    : values.thinking === 'on'
+      ? 'on'
+      : fail(`--thinking is off or on, not ${values.thinking}`)
+const responseFormat: ResponseFormatMode =
+  values['response-format'] === undefined || values['response-format'] === 'schema'
+    ? 'schema'
+    : values['response-format'] === 'prompt'
+      ? 'prompt'
+      : fail(`--response-format is schema or prompt, not ${values['response-format']}`)
 const repairs = numberOption(values.repairs, DEFAULT_REPAIRS)
 
 function chooseBackend(): Backend {
@@ -76,6 +95,8 @@ function chooseBackend(): Backend {
       model,
       maxTokens,
       timeoutMs,
+      thinking,
+      responseFormat,
       ...(apiKey === undefined ? {} : { apiKey }),
     })
   }
@@ -106,6 +127,6 @@ const report = await runEval(backend, loadSite(), cases, {
     console.error(`${mark} ${r.id} score=${r.score} rounds=${r.repairRounds} ${r.latencyMs}ms`)
   },
 })
-const files = await writeReport(report, values.out ?? DEFAULT_OUT_DIR)
+const files = await writeReport(report, values.out ?? DEFAULT_OUT_DIR, values.suffix)
 process.stdout.write(renderMarkdown(report))
 console.error(`wrote ${files.join(', ')}`)

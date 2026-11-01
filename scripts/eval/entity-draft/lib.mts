@@ -35,7 +35,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url))
 const REPO_ROOT = path.resolve(HERE, '..', '..', '..')
 export const MATCH_THRESHOLD = 0.9
 export const DEFAULT_REPAIRS = 2
-export const DEFAULT_MAX_TOKENS = 1200
+export const DEFAULT_MAX_TOKENS = 2048
 const HUB_SCRIPT = path.join(REPO_ROOT, 'scripts', 'hub', 'hub.mjs')
 
 // ── fixtures ───────────────────────────────────────────────────────────────
@@ -47,10 +47,16 @@ const CaseSchema = z.object({
   entity: z.unknown(),
   mustHave: z.array(z.string()).default([]),
 })
-export type EvalCase = z.infer<typeof CaseSchema> & { readonly kind: DraftKind }
+export type EvalCase = z.infer<typeof CaseSchema> & {
+  readonly kind: DraftKind
+}
 
 const FewShotFileSchema = z.array(
-  z.object({ kind: z.enum(DRAFT_KINDS), description: z.string(), entity: z.unknown() }),
+  z.object({
+    kind: z.enum(DRAFT_KINDS),
+    description: z.string(),
+    entity: z.unknown(),
+  }),
 )
 
 function readJson(file: string): unknown {
@@ -88,18 +94,42 @@ export interface GenerateResponse {
   readonly inputTokens: number
   readonly outputTokens: number
   readonly latencyMs: number
+  /** Why the server stopped (`stop`, `length`, …); absent when the backend does not say. */
+  readonly finishReason?: string
+  /** The reply carried reasoning but no content: it is an empty reply, never parsed. */
+  readonly reasoningOnly?: boolean
 }
 export interface Backend {
   readonly id: string
+  /** How the backend was driven (thinking, token budget), printed in the report header. */
+  readonly settings?: string
   generate(request: GenerateRequest, evalCase: EvalCase): Promise<GenerateResponse>
 }
 
 const OpenAiReplySchema = z.object({
-  choices: z.array(z.object({ message: z.object({ content: z.string().nullable() }) })).min(1),
+  choices: z
+    .array(
+      z.object({
+        message: z.object({
+          content: z.string().nullish(),
+          reasoning_content: z.string().nullish(),
+          reasoning: z.string().nullish(),
+        }),
+        finish_reason: z.string().nullish(),
+      }),
+    )
+    .min(1),
   usage: z
-    .object({ prompt_tokens: z.number().optional(), completion_tokens: z.number().optional() })
+    .object({
+      prompt_tokens: z.number().optional(),
+      completion_tokens: z.number().optional(),
+    })
     .optional(),
 })
+
+export type ThinkingMode = 'on' | 'off'
+/** `schema` sends response_format json_schema; `prompt` leaves the shape to the prompt (some servers put constrained output in the reasoning channel). */
+export type ResponseFormatMode = 'schema' | 'prompt'
 
 export interface OpenAiOptions {
   readonly url: string
@@ -107,6 +137,27 @@ export interface OpenAiOptions {
   readonly apiKey?: string
   readonly maxTokens: number
   readonly timeoutMs: number
+  /** `off` (the default) asks the server not to think; `on` leaves the model's own behaviour. */
+  readonly thinking?: ThinkingMode
+  readonly responseFormat?: ResponseFormatMode
+  /** Injected in the spec. */
+  readonly fetchImpl?: typeof fetch
+}
+
+/** One chat-completions body as a response. Reasoning is never promoted to content. */
+export function parseOpenAiBody(raw: unknown, latencyMs: number): GenerateResponse {
+  const body = OpenAiReplySchema.parse(raw)
+  const choice = body.choices[0]
+  const text = choice?.message.content ?? ''
+  const reasoning = choice?.message.reasoning_content ?? choice?.message.reasoning ?? ''
+  return {
+    text,
+    inputTokens: body.usage?.prompt_tokens ?? 0,
+    outputTokens: body.usage?.completion_tokens ?? 0,
+    latencyMs,
+    ...(choice?.finish_reason ? { finishReason: choice.finish_reason } : {}),
+    reasoningOnly: text.trim() === '' && reasoning.trim() !== '',
+  }
 }
 
 function chatUrl(url: string): string {
@@ -117,11 +168,16 @@ function chatUrl(url: string): string {
 
 /** An OpenAI-compatible server (LM Studio, llama-server, vLLM): json_schema response_format, temperature 0. */
 export function openAiBackend(options: OpenAiOptions): Backend {
+  const thinking = options.thinking ?? 'off'
+  const responseFormat = options.responseFormat ?? 'schema'
+  const doFetch = options.fetchImpl ?? fetch
   return {
     id: options.model,
+    settings: `thinking ${thinking}, max tokens ${options.maxTokens}, response format ${responseFormat}`,
     async generate(request) {
       const started = Date.now()
-      const response = await fetch(chatUrl(options.url), {
+      const system = thinking === 'off' ? `${request.system}\n\n/no_think` : request.system
+      const response = await doFetch(chatUrl(options.url), {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
@@ -131,27 +187,26 @@ export function openAiBackend(options: OpenAiOptions): Backend {
           model: options.model,
           temperature: 0,
           max_tokens: options.maxTokens,
+          ...(thinking === 'off' ? { chat_template_kwargs: { enable_thinking: false } } : {}),
           messages: [
-            { role: 'system', content: request.system },
+            { role: 'system', content: system },
             { role: 'user', content: request.prompt },
           ],
-          response_format: {
-            type: 'json_schema',
-            json_schema: { name: 'entity_draft', schema: request.schema },
-          },
+          ...(responseFormat === 'schema'
+            ? {
+                response_format: {
+                  type: 'json_schema',
+                  json_schema: { name: 'entity_draft', schema: request.schema },
+                },
+              }
+            : {}),
         }),
         signal: AbortSignal.timeout(options.timeoutMs),
       })
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${(await response.text()).slice(0, 300)}`)
       }
-      const body = OpenAiReplySchema.parse(await response.json())
-      return {
-        text: body.choices[0]?.message.content ?? '',
-        inputTokens: body.usage?.prompt_tokens ?? 0,
-        outputTokens: body.usage?.completion_tokens ?? 0,
-        latencyMs: Date.now() - started,
-      }
+      return parseOpenAiBody(await response.json(), Date.now() - started)
     },
   }
 }
@@ -246,6 +301,19 @@ export interface CaseResult {
   readonly error?: string
   readonly issues: readonly string[]
   readonly reply: string
+  /** `finish_reason` of the last reply, when the backend reports it. */
+  readonly finishReason?: string
+  /** The last reply was empty (reasoning only, or nothing at all): a harness fault, not a model answer. */
+  readonly emptyReply: boolean
+}
+
+/** The issue an empty reply is reported as; a reply with only reasoning is named as such. */
+export function emptyReplyIssue(response: GenerateResponse): string | undefined {
+  if (response.text.trim() !== '') return undefined
+  const reason = `finish_reason=${response.finishReason ?? 'unknown'}`
+  return response.reasoningOnly === true
+    ? `(root): reply had only reasoning, ${reason}`
+    : `(root): empty reply, ${reason}`
 }
 
 /** The first JSON object in a reply, tolerating code fences and prose around it. */
@@ -285,18 +353,21 @@ export async function runCase(
   let rounds = 0
   let issues: readonly string[] = []
   let reply = ''
+  let finishReason: string | undefined
+  let emptyReply = false
   let draft: unknown
   try {
     for (let round = 0; round <= options.repairs; round += 1) {
-      const response = await backend.generate(
-        { system: prompt.system, prompt: current, schema },
-        evalCase,
-      )
+      const response = await backend.generate({ system: prompt.system, prompt: current, schema }, evalCase)
       latencyMs += response.latencyMs
       inputTokens += response.inputTokens
       outputTokens += response.outputTokens
       reply = response.text
-      const parsed = parseReply(response.text)
+      finishReason = response.finishReason
+      const emptyIssue = emptyReplyIssue(response)
+      emptyReply = emptyIssue !== undefined
+      const parsed =
+        emptyIssue === undefined ? parseReply(response.text) : ({ ok: false, issue: emptyIssue } as const)
       const verdict = parsed.ok
         ? validateDraft(evalCase.kind, parsed.value, site)
         : ({ ok: false, issues: [parsed.issue] } as const)
@@ -337,6 +408,8 @@ export async function runCase(
     outputTokens,
     issues,
     reply,
+    emptyReply,
+    ...(finishReason === undefined ? {} : { finishReason }),
   }
 }
 
@@ -359,6 +432,7 @@ function failed(
     error,
     issues: [error],
     reply: '',
+    emptyReply: false,
   }
 }
 
@@ -399,6 +473,7 @@ export function metricsOf(results: readonly CaseResult[]): Metrics {
 
 export interface Report {
   readonly model: string
+  readonly settings?: string
   readonly dryRun: boolean
   readonly overall: Metrics
   readonly byKind: Readonly<Record<string, Metrics>>
@@ -410,7 +485,10 @@ export async function runEval(
   backend: Backend,
   site: DraftSite,
   cases: readonly EvalCase[],
-  options: RunOptions & { readonly dryRun?: boolean; readonly onCase?: (r: CaseResult) => void },
+  options: RunOptions & {
+    readonly dryRun?: boolean
+    readonly onCase?: (r: CaseResult) => void
+  },
 ): Promise<Report> {
   const results: CaseResult[] = []
   for (const evalCase of cases) {
@@ -424,6 +502,7 @@ export async function runEval(
     )
   return {
     model: backend.id,
+    ...(backend.settings === undefined ? {} : { settings: backend.settings }),
     dryRun: options.dryRun === true,
     overall: metricsOf(results),
     byKind: group((r) => r.kind),
@@ -439,6 +518,7 @@ export function renderMarkdown(report: Report): string {
     `| ${label} | ${m.cases} | ${pct(m.validFirstTry)} | ${pct(m.validAfterRetry)} | ${pct(m.semanticMatch)} | ${m.latencyP50Ms} | ${m.latencyP95Ms} | ${m.inputTokens} / ${m.outputTokens} |`
   const lines = [
     `# Entity draft benchmark — ${report.model}${report.dryRun ? ' (dry run)' : ''}`,
+    ...(report.settings === undefined ? [] : ['', `Settings: ${report.settings}`]),
     '',
     '| set | cases | valid 1st try | valid after retry | semantic match | p50 ms | p95 ms | tokens in / out |',
     '| --- | --- | --- | --- | --- | --- | --- | --- |',
@@ -446,6 +526,20 @@ export function renderMarkdown(report: Report): string {
     ...Object.entries(report.byLang).map(([k, m]) => row(`lang ${k}`, m)),
     row('**all**', report.overall),
   ]
+  const empties = report.results.filter((r) => r.emptyReply)
+  if (empties.length > 0) {
+    const reasons = new Map<string, number>()
+    for (const r of empties) {
+      const why = r.issues.find((i) => i.includes('reply')) ?? 'empty reply'
+      reasons.set(why, (reasons.get(why) ?? 0) + 1)
+    }
+    lines.push(
+      '',
+      `## Empty replies: ${empties.length} of ${report.results.length} cases ended on one — a harness fault, not a model answer`,
+      '',
+      ...[...reasons].map(([why, n]) => `- ${n}x ${why}`),
+    )
+  }
   const misses = report.results.filter((r) => !r.matched)
   if (misses.length > 0) {
     lines.push('', '## Misses', '')
@@ -457,9 +551,9 @@ export function renderMarkdown(report: Report): string {
   return `${lines.join('\n')}\n`
 }
 
-export async function writeReport(report: Report, outDir: string): Promise<readonly string[]> {
+export async function writeReport(report: Report, outDir: string, suffix = ''): Promise<readonly string[]> {
   await mkdir(outDir, { recursive: true })
-  const stem = path.join(outDir, report.model.replace(/[^A-Za-z0-9._-]+/g, '_'))
+  const stem = path.join(outDir, `${report.model.replace(/[^A-Za-z0-9._-]+/g, '_')}${suffix}`)
   await writeFile(`${stem}.json`, `${JSON.stringify(report, null, 2)}\n`)
   await writeFile(`${stem}.md`, renderMarkdown(report))
   return [`${stem}.json`, `${stem}.md`]
