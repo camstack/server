@@ -24,7 +24,7 @@ export interface VeluxConnectionTestDeps {
 }
 
 /** Under `CONNECTION_TEST_TIMEOUT_MS`, so the reason reaches the operator first. */
-const DEFAULT_TEST_DEADLINE_MS = CONNECTION_TEST_TIMEOUT_MS - 2_000
+export const DEFAULT_TEST_DEADLINE_MS = CONNECTION_TEST_TIMEOUT_MS - 2_000
 
 /** The whole test outlived its ceiling; no step of the probe answered in time. */
 class KlfTestDeadlineError extends Error {

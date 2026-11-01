@@ -1,6 +1,15 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { KlfProbeTimeoutError, probeKlfGateway } from '../klf-probe.js'
-import { buildVeluxConnectionTestProvider } from '../velux-connection-test.js'
+import {
+  DEFAULT_KLF_PROBE_TIMEOUTS_MS,
+  KlfProbeTimeoutError,
+  klfProbeWorstCaseMs,
+  probeKlfGateway,
+  type KlfProbeTimeoutsMs,
+} from '../klf-probe.js'
+import {
+  DEFAULT_TEST_DEADLINE_MS,
+  buildVeluxConnectionTestProvider,
+} from '../velux-connection-test.js'
 import { FakeKlfGateway, type FakeNode } from './fake-klf-gateway.js'
 import { RecordingLogger } from './recording-logger.js'
 
@@ -26,12 +35,35 @@ async function startGateway(): Promise<{ certPem: string }> {
   return gateway.start()
 }
 
+/** Trusts the scripted certificate and sends an SNI name, so the fake can slow the handshake. */
+const TRUST = (certPem: string) => ({
+  ca: [certPem],
+  servername: 'klf200.test',
+  checkServerIdentity: () => undefined,
+})
+
+/** Probes with the given per-step bounds against the scripted gateway; resolves to the failure or null. */
+async function probeFailure(
+  certPem: string,
+  timeoutsMs: Partial<KlfProbeTimeoutsMs>,
+): Promise<unknown> {
+  return probeKlfGateway({
+    host: '127.0.0.1',
+    password: PASSWORD,
+    tls: TRUST(certPem),
+    timeoutsMs,
+  }).then(
+    () => null,
+    (err: unknown) => err,
+  )
+}
+
 /** A probe that trusts the scripted gateway's certificate. */
 function trustingProbe(certPem: string) {
   return (input: { host: string; password: string }) =>
     probeKlfGateway({
       ...input,
-      tls: { ca: [certPem], checkServerIdentity: () => undefined },
+      tls: TRUST(certPem),
     })
 }
 
@@ -91,22 +123,14 @@ describe('Velux connection test', () => {
     if (result.outcome === 'inconclusive') expect(result.error).toMatch(/secure connection/i)
   })
 
-  it('names the login phase when the gateway holds the session but never answers the password', async () => {
+  it('names the password step when the gateway holds the session but never answers the password', async () => {
     const { certPem } = await startGateway()
     gateway?.mute()
     const started = Date.now()
-    const failure = await probeKlfGateway({
-      host: '127.0.0.1',
-      password: PASSWORD,
-      tls: { ca: [certPem], checkServerIdentity: () => undefined },
-      timeoutsMs: { login: 300, logout: 300 },
-    }).then(
-      () => null,
-      (err: unknown) => err,
-    )
+    const failure = await probeFailure(certPem, { password: 300, logout: 300 })
     expect(failure).toBeInstanceOf(KlfProbeTimeoutError)
     if (failure instanceof KlfProbeTimeoutError) {
-      expect(failure.phase).toBe('login')
+      expect(failure.phase).toBe('password')
       expect(failure.message).toMatch(/password/i)
     }
     expect(Date.now() - started).toBeLessThan(3000)
@@ -116,6 +140,39 @@ describe('Velux connection test', () => {
       await new Promise((r) => setTimeout(r, 25))
     }
     expect(gateway?.openConnections).toBe(0)
+  })
+
+  it('names the password step for a slow password answer, not the handshake', async () => {
+    const { certPem } = await startGateway()
+    gateway?.slowPassword(900)
+    const failure = await probeFailure(certPem, { tls: 2000, password: 300, logout: 300 })
+    expect(failure).toBeInstanceOf(KlfProbeTimeoutError)
+    if (failure instanceof KlfProbeTimeoutError) expect(failure.phase).toBe('password')
+  })
+
+  it('names the TLS step when the handshake outlasts its bound', async () => {
+    const { certPem } = await startGateway()
+    gateway?.slowHandshake(1500)
+    const failure = await probeFailure(certPem, { tls: 400, password: 3000, logout: 300 })
+    expect(failure).toBeInstanceOf(KlfProbeTimeoutError)
+    if (failure instanceof KlfProbeTimeoutError) {
+      expect(failure.phase).toBe('tls')
+      expect(failure.message).toMatch(/TLS handshake/)
+    }
+  })
+
+  it('accepts a handshake slower than the password bound, as long as it fits the TLS bound', async () => {
+    const { certPem } = await startGateway()
+    gateway?.slowHandshake(700)
+    const failure = await probeFailure(certPem, { tls: 3000, password: 300, logout: 300 })
+    expect(failure).toBeNull()
+  })
+
+  it('defaults: the slow real-gateway handshake (4.2 s measured) fits with margin, and the worst case fits the deadline', () => {
+    expect(DEFAULT_KLF_PROBE_TIMEOUTS_MS.tls).toBeGreaterThanOrEqual(2 * 4_249)
+    expect(klfProbeWorstCaseMs(DEFAULT_KLF_PROBE_TIMEOUTS_MS)).toBeLessThanOrEqual(
+      DEFAULT_TEST_DEADLINE_MS,
+    )
   })
 
   it('answers inconclusive with the reason when a probe never finishes, and frees the queue', async () => {

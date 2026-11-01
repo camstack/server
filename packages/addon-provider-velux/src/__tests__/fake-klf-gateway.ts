@@ -2,7 +2,12 @@ import { execFileSync } from 'node:child_process'
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { createServer, type TLSSocket, type Server as TlsServer } from 'node:tls'
+import {
+  createSecureContext,
+  createServer,
+  type TLSSocket,
+  type Server as TlsServer,
+} from 'node:tls'
 
 /**
  * A scripted KLF-200 gateway: a TLS server on the real port 51200 that speaks the
@@ -188,8 +193,20 @@ export class FakeKlfGateway {
       { stdio: 'ignore' },
     )
     const certPem = readFileSync(certPath, 'utf8')
-    this.#server = createServer({ key: readFileSync(keyPath, 'utf8'), cert: certPem }, (socket) =>
-      this.#serve(socket),
+    const key = readFileSync(keyPath, 'utf8')
+    const context = createSecureContext({ key, cert: certPem })
+    // The SNI callback runs mid-handshake, so delaying it is a slow handshake (a client
+    // must send a servername for it to run).
+    this.#server = createServer(
+      {
+        key,
+        cert: certPem,
+        SNICallback: (_name, done) => {
+          if (this.#handshakeDelayMs === 0) done(null, context)
+          else setTimeout(() => done(null, context), this.#handshakeDelayMs)
+        },
+      },
+      (socket) => this.#serve(socket),
     )
     await new Promise<void>((resolve, reject) => {
       const server = this.#server
@@ -238,6 +255,18 @@ export class FakeKlfGateway {
   }
 
   #muted = false
+  #handshakeDelayMs = 0
+  #passwordDelayMs = 0
+
+  /** Every TLS handshake takes this much longer (a weak CPU doing DHE). */
+  slowHandshake(ms: number): void {
+    this.#handshakeDelayMs = ms
+  }
+
+  /** The password answer takes this much longer. */
+  slowPassword(ms: number): void {
+    this.#passwordDelayMs = ms
+  }
 
   #serve(socket: TLSSocket): void {
     this.accepted += 1
@@ -258,7 +287,9 @@ export class FakeKlfGateway {
     switch (frame.command) {
       case CMD.PASSWORD_ENTER_REQ: {
         const given = frame.data.toString('utf8').split('\0', 1)[0]
-        send(CMD.PASSWORD_ENTER_CFM, Buffer.from([given === this.password ? 0 : 1]))
+        const cfm = Buffer.from([given === this.password ? 0 : 1])
+        if (this.#passwordDelayMs === 0) send(CMD.PASSWORD_ENTER_CFM, cfm)
+        else setTimeout(() => send(CMD.PASSWORD_ENTER_CFM, cfm), this.#passwordDelayMs)
         return
       }
       case CMD.GET_VERSION_REQ:

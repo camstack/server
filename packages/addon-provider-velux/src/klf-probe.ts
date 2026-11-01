@@ -8,14 +8,16 @@ import { loginFailure } from './klf-gateway-client.js'
 const KLF_PORT = 51200
 
 /** The step of a probe that ran out of time. */
-export type KlfProbePhase = 'tcp' | 'login' | 'version' | 'logout'
+export type KlfProbePhase = 'tcp' | 'tls' | 'password' | 'version' | 'logout'
 
 /** Milliseconds each step of a probe may take. */
 export interface KlfProbeTimeoutsMs {
   /** Opening the TCP connection to the gateway port. */
   readonly tcp: number
-  /** The TLS handshake, and again the password answer (each gets this long). */
-  readonly login: number
+  /** The TLS handshake. */
+  readonly tls: number
+  /** The password answer, counted from the moment the handshake finished. */
+  readonly password: number
   /** The firmware version answer. */
   readonly version: number
   /** Closing the session. */
@@ -23,20 +25,30 @@ export interface KlfProbeTimeoutsMs {
 }
 
 /**
- * Defaults add up, worst case, to 3 + 2 x 5 + 2 + 2 = 17 s, under the
- * `CONNECTION_TEST_TIMEOUT_MS` ceiling of the wizard, so a stuck gateway is named
- * here instead of the wizard giving up unnamed.
+ * Defaults add up, worst case, to 2 + 10 + 3 + 1.5 + 1.5 = 18 s, which is the
+ * wizard's `CONNECTION_TEST_TIMEOUT_MS` ceiling (20 s) minus the 2 s margin of
+ * `DEFAULT_TEST_DEADLINE_MS`, so a stuck gateway is named here instead of the
+ * wizard giving up unnamed. The handshake gets 10 s because a real KLF-200 was
+ * measured at 4.2 s for ONE handshake (TLSv1.2, DHE-RSA-AES256-SHA256 on a weak
+ * CPU): a 5 s bound left no margin.
  */
 export const DEFAULT_KLF_PROBE_TIMEOUTS_MS: KlfProbeTimeoutsMs = {
-  tcp: 3_000,
-  login: 5_000,
-  version: 2_000,
-  logout: 2_000,
+  tcp: 2_000,
+  tls: 10_000,
+  password: 3_000,
+  version: 1_500,
+  logout: 1_500,
+}
+
+/** Worst-case total of a probe's steps. */
+export function klfProbeWorstCaseMs(limits: KlfProbeTimeoutsMs): number {
+  return limits.tcp + limits.tls + limits.password + limits.version + limits.logout
 }
 
 const PHASE_TEXT: Record<KlfProbePhase, string> = {
   tcp: 'did not accept a TCP connection on port 51200',
-  login: 'did not complete the secure login (TLS handshake or password answer)',
+  tls: 'did not complete the TLS handshake',
+  password: 'did not answer the password',
   version: 'did not answer the version request',
   logout: 'did not close the session',
 }
@@ -79,6 +91,55 @@ async function withDeadline<T>(work: Promise<T>, ms: number, onTimeout: () => Er
   }
 }
 
+/** How often the login watcher checks whether the handshake has finished. */
+const PHASE_POLL_MS = 20
+
+/**
+ * The library's `loginAsync` runs the TLS handshake and the password answer as one
+ * call. `KLF200SocketProtocol` appears when the handshake is done and the password
+ * is on its way, so watching it splits the call into two bounded, named steps.
+ */
+async function loginInPhases(
+  connection: Connection,
+  host: string,
+  password: string,
+  limits: KlfProbeTimeoutsMs,
+): Promise<void> {
+  let handshakeDone = false
+  let passwordTimer: NodeJS.Timeout | undefined
+  let tlsTimer: NodeJS.Timeout | undefined
+  let poll: NodeJS.Timeout | undefined
+  const tlsError = (): KlfProbeTimeoutError => new KlfProbeTimeoutError('tls', host, limits.tls)
+  const passwordError = (): KlfProbeTimeoutError =>
+    new KlfProbeTimeoutError('password', host, limits.password)
+  const bounds = new Promise<never>((_resolve, reject) => {
+    tlsTimer = setTimeout(() => reject(tlsError()), limits.tls)
+    poll = setInterval(() => {
+      if (handshakeDone || connection.KLF200SocketProtocol === undefined) return
+      handshakeDone = true
+      clearTimeout(tlsTimer)
+      clearInterval(poll)
+      passwordTimer = setTimeout(() => reject(passwordError()), limits.password)
+    }, PHASE_POLL_MS)
+  })
+  // The library's own bound is the loosest of ours; ours always fires first.
+  const libraryS = (limits.tls + limits.password) / 1000
+  try {
+    await Promise.race([connection.loginAsync(password, libraryS), bounds])
+  } catch (err) {
+    if (err instanceof KlfProbeTimeoutError) throw err
+    if (/^timeout$/i.test(errMsg(err)) || (err instanceof Error && err.name === 'TimeoutError')) {
+      throw handshakeDone ? passwordError() : tlsError()
+    }
+    throw err
+  } finally {
+    clearTimeout(tlsTimer)
+    clearTimeout(passwordTimer)
+    clearInterval(poll)
+    bounds.catch(() => undefined)
+  }
+}
+
 /** A bare TCP connect to the gateway port: tells "nothing listens" from "TLS is stuck". */
 function tcpReachable(host: string, ms: number): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -117,20 +178,11 @@ export async function probeKlfGateway(options: KlfProbeOptions): Promise<KlfProb
     options.tls === undefined
       ? new Connection(options.host)
       : new Connection(options.host, options.tls)
-  const loginError = (): KlfProbeTimeoutError =>
-    new KlfProbeTimeoutError('login', options.host, limits.login)
   try {
     try {
-      await withDeadline(
-        connection.loginAsync(options.password, limits.login / 1000),
-        limits.login * 2 + 500,
-        loginError,
-      )
+      await loginInPhases(connection, options.host, options.password, limits)
     } catch (err) {
       if (err instanceof KlfProbeTimeoutError) throw err
-      if (/^timeout$/i.test(errMsg(err)) || (err instanceof Error && err.name === 'TimeoutError')) {
-        throw loginError()
-      }
       throw loginFailure(err)
     }
     try {
