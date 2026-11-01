@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.550] - 2026-11-01
+
 ### Changed
 
 - A fan's Customize tab has a Presets editor: name a preset, pick its steps on the fan and the devices beside it, or fill it from their current values.

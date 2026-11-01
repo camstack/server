@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.470] - 2026-11-01
+
 ### Changed
 
 - fan-presets: capturePreset without steps proposes every sibling switch and control, ordered, with a review group per step.

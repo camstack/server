@@ -7,13 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-
-- The API gains the timed-run methods (run for, cancel, status).
+## [1.2.730] - 2026-11-01
 
 ### Added
 
 - Serves the new fan-presets and timed-run capabilities (fan speed presets, heater and pump timed runs).
+
+### Changed
+
+- The API gains the timed-run methods (run for, cancel, status).
 
 ## [1.2.729] - 2026-11-01
 

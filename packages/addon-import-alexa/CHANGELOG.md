@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.177] - 2026-11-01
+
 ### Changed
 
 - An Echo now speaks notifications at its current volume: the per-target volume setting is gone, and stored targets are cleaned of it on the next start
