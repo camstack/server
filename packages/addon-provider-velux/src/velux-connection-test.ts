@@ -1,10 +1,11 @@
 import {
+  CONNECTION_TEST_TIMEOUT_MS,
   errMsg,
   type ConnectionTestOutcome,
   type IConnectionTestProvider,
   type IScopedLogger,
 } from '@camstack/types'
-import { type KlfProbeResult, probeKlfGateway } from './klf-probe.js'
+import { KlfProbeTimeoutError, type KlfProbeResult, probeKlfGateway } from './klf-probe.js'
 import { VeluxLoginRefusedError } from './velux-client-contract.js'
 
 /** Sessions the KLF-200 accepts at once, per its API specification. */
@@ -18,6 +19,19 @@ export interface VeluxConnectionTestDeps {
   readonly probe?: (input: { host: string; password: string }) => Promise<KlfProbeResult>
   /** How many sessions this addon already holds on `host`. Defaults to none. */
   readonly liveSessions?: (host: string) => number
+  /** Hard ceiling on one test; defaults to just under the wizard's own. */
+  readonly deadlineMs?: number
+}
+
+/** Under `CONNECTION_TEST_TIMEOUT_MS`, so the reason reaches the operator first. */
+const DEFAULT_TEST_DEADLINE_MS = CONNECTION_TEST_TIMEOUT_MS - 2_000
+
+/** The whole test outlived its ceiling; no step of the probe answered in time. */
+class KlfTestDeadlineError extends Error {
+  constructor(host: string, limitMs: number) {
+    super(`The gateway ${host} did not answer within ${Math.round(limitMs / 1000)}s (timed out)`)
+    this.name = 'KlfTestDeadlineError'
+  }
 }
 
 /** Why a probe failed, as far as the error text and code tell. */
@@ -42,6 +56,9 @@ const TLS_TEXT = /cert|tls|ssl|self[- ]signed|handshake|authoriz|verify|fingerpr
  */
 export function classifyProbeFailure(err: unknown): { kind: ProbeFailureKind; text: string } {
   if (err instanceof VeluxLoginRefusedError) return { kind: 'wrong-password', text: err.message }
+  if (err instanceof KlfProbeTimeoutError || err instanceof KlfTestDeadlineError) {
+    return { kind: 'unreachable', text: err.message }
+  }
   const text = typeof err === 'string' ? err : errMsg(err)
   const code = typeof err === 'object' && err !== null ? Reflect.get(err, 'code') : undefined
   if (typeof code === 'string' && UNREACHABLE_CODES.has(code)) return { kind: 'unreachable', text }
@@ -54,7 +71,12 @@ export function classifyProbeFailure(err: unknown): { kind: ProbeFailureKind; te
 export function buildVeluxConnectionTestProvider(
   deps: VeluxConnectionTestDeps,
 ): IConnectionTestProvider {
-  const { logger, probe = probeKlfGateway, liveSessions = () => 0 } = deps
+  const {
+    logger,
+    probe = probeKlfGateway,
+    liveSessions = () => 0,
+    deadlineMs = DEFAULT_TEST_DEADLINE_MS,
+  } = deps
   /** The tail of the test queue per host: a second test waits for the first to log out. */
   const queues = new Map<string, Promise<unknown>>()
 
@@ -70,7 +92,13 @@ export function buildVeluxConnectionTestProvider(
     }
     const startedAt = Date.now()
     try {
-      const result = await probe({ host, password })
+      let timer: NodeJS.Timeout | undefined
+      const result = await Promise.race([
+        probe({ host, password }),
+        new Promise<never>((_resolve, reject) => {
+          timer = setTimeout(() => reject(new KlfTestDeadlineError(host, deadlineMs)), deadlineMs)
+        }),
+      ]).finally(() => clearTimeout(timer))
       return {
         outcome: 'validated',
         latencyMs: Date.now() - startedAt,

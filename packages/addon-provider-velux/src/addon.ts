@@ -103,8 +103,13 @@ export class VeluxProviderAddon extends BaseDeviceProvider {
       customActions: veluxActions,
       actionHandlers: {
         discoverGateway: async () => {
+          const startedAt = Date.now()
           const { candidates } = await this.ctx.api.deviceManager.discoverProvider.mutate({
             addonId: this.ctx.id,
+          })
+          // An empty scan is a result, not silence: the mDNS browse completed and heard no KLF-200.
+          this.ctx.logger.info('Velux gateway scan finished', {
+            meta: { found: candidates.length, ms: Date.now() - startedAt },
           })
           const hosts = candidates.map((candidate) => ({
             host: String(candidate.prefilledConfig['host'] ?? ''),

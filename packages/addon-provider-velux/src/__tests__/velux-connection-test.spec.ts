@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { probeKlfGateway } from '../klf-probe.js'
+import { KlfProbeTimeoutError, probeKlfGateway } from '../klf-probe.js'
 import { buildVeluxConnectionTestProvider } from '../velux-connection-test.js'
 import { FakeKlfGateway, type FakeNode } from './fake-klf-gateway.js'
 import { RecordingLogger } from './recording-logger.js'
@@ -89,6 +89,57 @@ describe('Velux connection test', () => {
     })
     expect(result.outcome).toBe('inconclusive')
     if (result.outcome === 'inconclusive') expect(result.error).toMatch(/secure connection/i)
+  })
+
+  it('names the login phase when the gateway holds the session but never answers the password', async () => {
+    const { certPem } = await startGateway()
+    gateway?.mute()
+    const started = Date.now()
+    const failure = await probeKlfGateway({
+      host: '127.0.0.1',
+      password: PASSWORD,
+      tls: { ca: [certPem], checkServerIdentity: () => undefined },
+      timeoutsMs: { login: 300, logout: 300 },
+    }).then(
+      () => null,
+      (err: unknown) => err,
+    )
+    expect(failure).toBeInstanceOf(KlfProbeTimeoutError)
+    if (failure instanceof KlfProbeTimeoutError) {
+      expect(failure.phase).toBe('login')
+      expect(failure.message).toMatch(/password/i)
+    }
+    expect(Date.now() - started).toBeLessThan(3000)
+    // The wedged session is not left open: the gateway allows only two.
+    const end = Date.now() + 2000
+    while ((gateway?.openConnections ?? 0) > 0 && Date.now() < end) {
+      await new Promise((r) => setTimeout(r, 25))
+    }
+    expect(gateway?.openConnections).toBe(0)
+  })
+
+  it('answers inconclusive with the reason when a probe never finishes, and frees the queue', async () => {
+    const logger = new RecordingLogger()
+    let calls = 0
+    const provider = buildVeluxConnectionTestProvider({
+      logger,
+      deadlineMs: 80,
+      probe: () => {
+        calls += 1
+        return new Promise(() => undefined)
+      },
+    })
+    const first = await provider.testSettings({
+      settings: { host: '10.0.0.7', password: PASSWORD },
+    })
+    expect(first.outcome).toBe('inconclusive')
+    if (first.outcome === 'inconclusive') expect(first.error).toMatch(/did not answer within/i)
+    expect(
+      logger.lines.some((l) => l.level === 'warn' && /timed out/i.test(JSON.stringify(l.extras))),
+    ).toBe(true)
+    // The next test for the same host runs; it is not stuck behind the hung one.
+    await provider.testSettings({ settings: { host: '10.0.0.7', password: PASSWORD } })
+    expect(calls).toBe(2)
   })
 
   it('asks for a host and a password before touching the network', async () => {

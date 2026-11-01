@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - An integration deleted while its provider was down now has its orphan devices removed after two concordant reads of the integration list
+- The gateway connection test now names the step that timed out (TCP, secure login, version, close) within 17 s and frees the session, instead of hanging until the wizard gives up; an empty gateway scan is logged.
 
 ## [0.2.152] - 2026-11-01
 
