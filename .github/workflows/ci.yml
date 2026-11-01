@@ -73,12 +73,12 @@ jobs:
   # same file `npm run verify:push` runs, which executes every shard in turn).
   #
   # Concurrency: hosted `ubuntu-latest` runners, so the cap is the account's
-  # concurrent-job limit, not a self-hosted label. 8 jobs per run (7 shards +
-  # `static`); a burst of pushes is still cancelled by the concurrency group.
+  # concurrent-job limit, not a self-hosted label. 20 jobs per run (18 shards +
+  # `typecheck`, `guards`); a burst of pushes is still cancelled by the concurrency group.
   # Each job pays install + the Nx-cache build read on its own VM, which is the
   # price of parallelism: wall clock is that setup plus the slowest shard.
   #
-  # `static` carries what is not a per-project test: the typecheck, the repo
+  # `typecheck` and `guards` carry what is not a per-project test: the typecheck; the footprint guard, the repo
   # scripts and the python pool, once per run instead of once per shard.
   #
   # The required-check names changed with this: `tests (<shard>)`.
@@ -111,7 +111,8 @@ jobs:
           - light-a
           - light-b
           - light-c
-          - static
+          - typecheck
+          - guards
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -137,7 +138,7 @@ jobs:
       # `NX_MAX_CACHE_SIZE` bounds the directory; the exact cache key is not
       # rewritten until the lockfile or nx.json changes.
       #
-      # Restored by every job, SAVED by `static` alone (the same split as
+      # Restored by every job, SAVED by `typecheck` alone (the same split as
       # node_modules below). With the combined action all 20 jobs tarred the
       # directory in their post step (~25 s each, on the job's wall clock) to
       # race for one key that one of them wins.
@@ -174,7 +175,7 @@ jobs:
       # cache keyed on the lockfile, the patches and the Node major, which makes a hit ~15 s
       # and skips `npm ci`; `patch-package` (postinstall) acts inside
       # node_modules, so its result is cached with it. The exact key is saved by
-      # the `static` job only, once per lockfile, so 17 jobs never upload the
+      # the `typecheck` job only, once per lockfile, so 17 jobs never upload the
       # same 600 MB in parallel; a job that misses simply installs.
       - name: Restore node_modules
         id: node-modules
@@ -192,7 +193,7 @@ jobs:
         run: scripts/ci/mem-step.sh install 8000 -- npm ci
 
       - name: Save node_modules
-        if: steps.node-modules.outputs.cache-hit != 'true' && matrix.shard == 'static'
+        if: steps.node-modules.outputs.cache-hit != 'true' && matrix.shard == 'typecheck'
         uses: actions/cache/save@v4
         with:
           path: |
@@ -215,7 +216,7 @@ jobs:
       # cache read, on a cold one it is the one full build this job pays.
       # Tests resolve `@camstack/types` (and sdk /
       # ui-library / system) through `dist/`, so it cannot be skipped — see the
-      # 2026-07-31 note on the `static` job's build step.
+      # 2026-07-31 note on the `typecheck` job's build step.
       #
       # Three tasks at once, each with a 4 GB heap, fit in the 16 GB hosted
       # runner. An 8 GB heap per task does not. The largest single program
@@ -241,9 +242,9 @@ jobs:
       # planning#319): the full affected build cost 80-130 s in EVERY job although a
       # shard needs the dist of its own project and its dependencies (`test`
       # dependsOn `^build`). `nx run-many -t build --projects=<shard>` builds
-      # exactly those. `static` keeps the full affected build: the typecheck and
+      # exactly those. `typecheck` and `guards` keep the full affected build: the typecheck and
       # the footprint guard read every package's dist.
-      - name: Build packages (static builds affected or all, a test shard its own projects)
+      - name: Build packages (typecheck and guards build affected or all, a test shard its own projects)
         run: |
           if [ -f "$RUNNER_TEMP/scope.env" ]; then
             # shellcheck disable=SC1091
@@ -251,7 +252,7 @@ jobs:
           else
             TC_DIRS=ALL
           fi
-          if [ "${{ matrix.shard }}" != "static" ]; then
+          if [ "${{ matrix.shard }}" != "typecheck" ] && [ "${{ matrix.shard }}" != "guards" ]; then
             if [ -f "$RUNNER_TEMP/changed-files.txt" ]; then
               SCOPE_ARGS="--files-from $RUNNER_TEMP/changed-files.txt"
             else
@@ -278,14 +279,14 @@ jobs:
       # addon-runner or addon-utils, and no ALL_CAPABILITY_DEFINITIONS in addon
       # server code. Pure source scan, ~1 s; names file:line and the /addon fix.
       - name: Runner and addon sources are barrel-free (D28)
-        if: matrix.shard == 'static'
+        if: matrix.shard == 'guards'
         run: npx tsx scripts/check-runner-barrel-free.ts
 
       # D28: the BUILT addon-runner AND addon-utils must not carry the
       # @camstack/types schema barrel (~90-115 MB of heap in every runner). Reads
       # packages/system/dist, so it runs right after the build; ~2 s.
       - name: Runner dist is barrel-free (D28)
-        if: matrix.shard == 'static'
+        if: matrix.shard == 'guards'
         run: npx tsx scripts/check-runner-dist-barrel-free.ts
 
       # D28: no BUILT addon may name ALL_CAPABILITY_DEFINITIONS or grow the
@@ -298,28 +299,20 @@ jobs:
       # output can change (verify:push does the same): the addons whose own
       # sources moved (`--addons`), or every addon when `packages/types/src`
       # moved (all of them bundle it). The nightly / manual run checks all.
-      # (the header above is the footprint guard's; it now runs inside the
-      # typecheck step, because a background process cannot outlive its step)
+      # (planning#319: the footprint guard and the typecheck were one step of
+      # one `static` job, the critical path of the run — build 100 s + footprint
+      # 60 s + typecheck 187 s. They are now two jobs, `guards` and `typecheck`,
+      # which only read dist and run side by side.)
       #
       # D3 (docs/design/2026-10-09-ts7-transition-plan.md): typecheck is out of
       # the three UI `build` gates and runs once here on TypeScript 7 (c1,
       # sequential). Peak ≈ admin-ui spec (~3 GB). Local `npm run typecheck`
       # stays tsc 6 until the Checks parity flip.
       #
-      # The footprint guard runs CONCURRENTLY with it (planning#319): `static` was
-      # the critical path of the run (build + footprint 60 s + typecheck 240 s) and
-      # both only read dist. 8 GB + 2 GB heaps fit the 16 GB hosted runner. Both
-      # exit codes are joined: either one red fails the step.
-      - name: Addon dist footprint (D28) and Typecheck (TypeScript 7)
-        if: matrix.shard == 'static'
-        # A push typechecks the packages it affects (`typecheck-tsgo.ts <dir>…`,
-        # the grade against scripts/ci-baseline.json is unchanged and applies to
-        # those packages); types / system affect everything, which is the full
-        # sweep. The nightly / manual run is always the full sweep (237 s).
+      - name: Addon dist footprint (D28)
+        if: matrix.shard == 'guards'
         run: |
-          ARGS=""
           FOOTPRINT_CMD="npx tsx scripts/check-addon-dist-footprint.ts"
-          TC_RUN=1
           if [ -f "$RUNNER_TEMP/scope.env" ]; then
             . "$RUNNER_TEMP/scope.env"
             if [ "$FOOTPRINT_ALL" = "1" ]; then
@@ -329,27 +322,34 @@ jobs:
             else
               FOOTPRINT_CMD="echo no addon source and no packages/types/src change - footprint unchanged"
             fi
+          fi
+          NODE_OPTIONS="--max-old-space-size=2048" bash -c "$FOOTPRINT_CMD"
+
+      # TSGO_JOBS=3: the projects overlap (tsgo is native, one checker each, the
+      # largest program ~3 GB; 3 fit the 16 GB / 4 vCPU hosted runner). Serial
+      # the sweep was 187-240 s and `static` was the run's critical path.
+      - name: Typecheck (TypeScript 7)
+        if: matrix.shard == 'typecheck'
+        # A push typechecks the packages it affects (`typecheck-tsgo.ts <dir>…`,
+        # the grade against scripts/ci-baseline.json is unchanged and applies to
+        # those packages); types / system affect everything, which is the full
+        # sweep. The nightly / manual run is always the full sweep.
+        run: |
+          ARGS=""
+          if [ -f "$RUNNER_TEMP/scope.env" ]; then
+            . "$RUNNER_TEMP/scope.env"
             if [ -z "$TC_DIRS" ]; then
               echo "no project affected — nothing to typecheck"
-              TC_RUN=0
+              exit 0
             elif [ "$TC_DIRS" != "ALL" ]; then
               ARGS="$TC_DIRS"
             fi
           fi
-          NODE_OPTIONS="--max-old-space-size=2048" bash -c "$FOOTPRINT_CMD" > "$RUNNER_TEMP/footprint.log" 2>&1 &
-          fp_pid=$!
-          rc=0
-          if [ "$TC_RUN" = "1" ]; then
-            # shellcheck disable=SC2086
-            NODE_OPTIONS="--max-old-space-size=8192" scripts/ci/mem-step.sh typecheck-tsgo 12000 -- npx tsx scripts/typecheck-tsgo.ts $ARGS || rc=$?
-          fi
-          fprc=0
-          wait "$fp_pid" || fprc=$?
-          echo "::group::Addon dist footprint (D28) output"
-          cat "$RUNNER_TEMP/footprint.log"
-          echo "::endgroup::"
-          [ "$rc" -eq 0 ] || exit "$rc"
-          exit "$fprc"
+          # shellcheck disable=SC2086
+          scripts/ci/mem-step.sh typecheck-tsgo 12000 -- npx tsx scripts/typecheck-tsgo.ts $ARGS
+        env:
+          NODE_OPTIONS: "--max-old-space-size=8192"
+          TSGO_JOBS: "3"
 
       # The suites that spawn ffmpeg get the binary the PRODUCT runs: the pinned
       # jellyfin-ffmpeg build of `ffmpeg-artifacts.ts`, downloaded by the same
@@ -367,14 +367,14 @@ jobs:
       # outlive the job. After the build: the script imports
       # `@camstack/types/node` from dist.
       - name: Restore the pinned ffmpeg
-        if: matrix.shard != 'static'
+        if: matrix.shard != 'typecheck' && matrix.shard != 'guards'
         uses: actions/cache@v4
         with:
           path: .camstack-ffmpeg
           key: ffmpeg-${{ runner.os }}-${{ hashFiles('packages/types/src/deps/ffmpeg-artifacts.ts') }}
 
       - name: Provision the pinned ffmpeg (the binary the product runs)
-        if: matrix.shard != 'static'
+        if: matrix.shard != 'typecheck' && matrix.shard != 'guards'
         run: npx tsx scripts/ci-provision-ffmpeg.ts "${{ github.workspace }}/.camstack-ffmpeg"
         env:
           NODE_OPTIONS: "--max-old-space-size=2048"
@@ -388,7 +388,7 @@ jobs:
       # (scripts/ci/test-affected.sh). Overlapping heavies flaked pipeline
       # timing tests (38132637960 SIGTERM grace; 38133811367 preroll settle).
       - name: Test affected packages (push/PR)
-        if: matrix.shard != 'static' && (github.event_name == 'push' || github.event_name == 'pull_request')
+        if: matrix.shard != 'typecheck' && matrix.shard != 'guards' && (github.event_name == 'push' || github.event_name == 'pull_request')
         run: |
           # The change set was written by `Compute the change set` (base = the
           # last commit main was verified at; see scripts/ci/changed-files.sh).
@@ -443,7 +443,7 @@ jobs:
         timeout-minutes: 60
 
       - name: Test all packages (nightly / manual)
-        if: matrix.shard != 'static' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+        if: matrix.shard != 'typecheck' && matrix.shard != 'guards' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         run: scripts/ci/mem-step.sh test-all 12000 -- scripts/ci/test-affected.sh --shard "${{ matrix.shard }}" --all
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
@@ -462,7 +462,7 @@ jobs:
       # ~35 s, so a push runs it only when `scripts/` moved (what verify:push
       # does); the nightly / manual run always does.
       - name: Test repo scripts
-        if: matrix.shard == 'static'
+        if: matrix.shard == 'guards'
         run: |
           if [ -f "$RUNNER_TEMP/scope.env" ]; then
             . "$RUNNER_TEMP/scope.env"
@@ -478,14 +478,14 @@ jobs:
       # dynamic-batch graph from hanging an NPU-pinned node forever — is
       # defended by those tests and by nothing else.
       - name: Test the inference pool (python)
-        if: matrix.shard == 'static'
+        if: matrix.shard == 'guards'
         run: ./scripts/test-python-pool.sh
 
       # `.nx` is saved when the key misses. An exact hit is not rewritten, so
       # unchanged packages stay warm and a changed package rebuilds until the
       # lockfile or nx.json changes the key. Only this job saves it.
       - name: Save the Nx cache
-        if: success() && matrix.shard == 'static' && steps.nx-cache.outputs.cache-hit != 'true'
+        if: success() && matrix.shard == 'typecheck' && steps.nx-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
           path: |

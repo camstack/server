@@ -19,7 +19,7 @@
  *
  * Usage: tsx scripts/typecheck-tsgo.ts [--parity] [project-dir-basename …]
  */
-import { spawnSync } from 'node:child_process'
+import { spawn, spawnSync } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
@@ -55,16 +55,20 @@ function assertTs7(bin: string): string | null {
   return null
 }
 
-function runShell(
-  command: string,
-  cwd: string,
-): { readonly status: number; readonly output: string } {
-  const result = spawnSync('bash', ['-c', command], {
-    cwd,
-    encoding: 'utf8',
-    maxBuffer: 1 << 28,
+interface ShellResult {
+  readonly status: number
+  readonly output: string
+}
+
+function runShell(command: string, cwd: string): Promise<ShellResult> {
+  return new Promise((resolve) => {
+    const child = spawn('bash', ['-c', command], { cwd, stdio: ['ignore', 'pipe', 'pipe'] })
+    const chunks: Buffer[] = []
+    child.stdout.on('data', (c: Buffer) => chunks.push(c))
+    child.stderr.on('data', (c: Buffer) => chunks.push(c))
+    child.on('error', (err) => resolve({ status: 1, output: String(err) }))
+    child.on('close', (code) => resolve({ status: code ?? 1, output: Buffer.concat(chunks).toString('utf8') }))
   })
-  return { status: result.status ?? 1, output: `${result.stdout}${result.stderr}` }
 }
 
 function parseArgs(argv: readonly string[]): {
@@ -80,7 +84,7 @@ function parseArgs(argv: readonly string[]): {
   return { parity, only }
 }
 
-function main(): number {
+async function main(): Promise<number> {
   const tsgoBin = resolveTsgoBinary(ROOT)
   if (tsgoBin === null) {
     console.error(
@@ -102,11 +106,23 @@ function main(): number {
   const started = Date.now()
   const tsgoPrefix = `${tsgoBin} --checkers ${CHECKERS}`
 
-  for (const project of projects) {
+  // Projects are independent processes reading each other's dist, never
+  // writing it, so they can overlap. TSGO_JOBS bounds the pool (default 1, the
+  // memory floor of a laptop; CI sets 3 on a 4 vCPU / 16 GB runner).
+  const jobs = Math.max(1, Number.parseInt(process.env.TSGO_JOBS ?? '1', 10) || 1)
+  let next = 0
+  const worker = async (): Promise<void> => {
+    for (;;) {
+      const project = projects[next++]
+      if (project === undefined) return
+      await checkProject(project)
+    }
+  }
+  const checkProject = async (project: (typeof projects)[number]): Promise<void> => {
     const command = toTsgoCommand(project.script, tsgoPrefix)
-    if (command === null) continue
+    if (command === null) return
     const t0 = Date.now()
-    const tsgo = runShell(command, project.dir)
+    const tsgo = await runShell(command, project.dir)
     const split = splitTypecheckSection(tsgo.output)
     const seconds = ((Date.now() - t0) / 1000).toFixed(1)
 
@@ -115,14 +131,14 @@ function main(): number {
         `${project.name}: tsgo exited ${tsgo.status} with no readable diagnostic\n${tsgo.output.slice(-1000)}`,
       )
       console.log(`✗ ${project.name} (${seconds}s) — no readable diagnostic`)
-      continue
+      return
     }
 
     const worse = split === null ? [] : gradeAgainstBaseline(project.name, split, baseline)
     failures.push(...worse)
 
     if (parity) {
-      const tsc = runShell(project.script, project.dir)
+      const tsc = await runShell(project.script, project.dir)
       const diff = diffErrorSets(normalizeErrorSet(tsc.output), normalizeErrorSet(tsgo.output))
       if (diff.onlyInLeft.length > 0 || diff.onlyInRight.length > 0) {
         const lines = [
@@ -132,7 +148,7 @@ function main(): number {
         ]
         failures.push(lines.join('\n'))
         console.log(`✗ ${project.name} (${seconds}s) — parity mismatch`)
-        continue
+        return
       }
     }
 
@@ -142,6 +158,7 @@ function main(): number {
       `${worse.length > 0 ? '✗' : '✓'} ${project.name} (${seconds}s, ${total} pinned-or-new error(s)${parity ? ', parity ok' : ''})`,
     )
   }
+  await Promise.all(Array.from({ length: Math.min(jobs, projects.length) }, worker))
 
   const elapsed = ((Date.now() - started) / 1000).toFixed(0)
   if (failures.length > 0) {
@@ -157,4 +174,4 @@ function main(): number {
   return 0
 }
 
-process.exit(main())
+void main().then((code) => process.exit(code))

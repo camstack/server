@@ -130,7 +130,7 @@ const LIGHT_PINS = {
   '@camstack/addon-model-studio': 2,
   '@camstack/addon-provider-reolink': 0,
   '@camstack/addon-export-hap': 1,
-  '@camstack/addon-ai': 2,
+  '@camstack/addon-ai': 1,
   '@camstack/addon-provider-velux': 1,
   '@camstack/addon-provider-bosch': 1,
   '@camstack/addon-provider-dreame': 0,
