@@ -41,7 +41,6 @@ export type AuthConfigReader = {
    * Every consumer here must handle the absent case explicitly.
    */
   get<T>(path: string): T | undefined
-  update(section: string, data: Record<string, unknown>): void
 }
 
 export class AuthManager {

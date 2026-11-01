@@ -66,6 +66,8 @@ export {
   writeTlsMode,
   readTlsMode,
   readExtraSans,
+  readTlsEnabled,
+  writeTlsEnabled,
   writeExtraSans,
 } from './tls-status.js'
 export {

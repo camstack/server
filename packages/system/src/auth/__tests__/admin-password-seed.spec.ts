@@ -82,11 +82,7 @@ function logger(): IScopedLogger & { warn: ReturnType<typeof vi.fn> } {
 
 /** One hub boot. Nothing about the admin is configurable any more. */
 function bootUsers(rows: Map<string, Row>): UserManager {
-  const auth = new AuthManager(
-    { get: () => undefined, update: () => undefined },
-    undefined,
-    staticJwtSigningKey('secret'),
-  )
+  const auth = new AuthManager({ get: () => undefined }, undefined, staticJwtSigningKey('secret'))
   return new UserManager({ getStore: () => storeOver(rows) }, auth)
 }
 

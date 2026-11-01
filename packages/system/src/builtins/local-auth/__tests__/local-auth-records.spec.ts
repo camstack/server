@@ -13,7 +13,6 @@ import type { SettingsStoreClient } from '@camstack/types'
 function authManager(): AuthManager {
   return new AuthManager({
     get: () => undefined,
-    update: () => {},
   })
 }
 

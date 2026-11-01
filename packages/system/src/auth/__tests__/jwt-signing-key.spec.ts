@@ -1,7 +1,7 @@
 import type { KeychainResolveResult, SecretsAccess } from '@camstack/types'
 import * as jwt from 'jsonwebtoken'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { type AuthConfigReader, AuthManager } from '../auth-manager.js'
+import { AuthManager } from '../auth-manager.js'
 import {
   clearProcessJwtSigningKey,
   getProcessJwtSigningKeyState,
@@ -124,13 +124,5 @@ describe('AuthManager over a signing key source', () => {
     setProcessJwtSigningKey({ state: 'ready', key: 'late-key' })
     const token = auth.signToken(payload)
     expect(() => jwt.verify(token, 'late-key')).not.toThrow()
-  })
-
-  it('never writes a generated secret into config', () => {
-    const update = vi.fn()
-    const reader: AuthConfigReader = { get: () => undefined, update }
-    const manager = new AuthManager(reader)
-    expect(manager).toBeInstanceOf(AuthManager)
-    expect(update).not.toHaveBeenCalled()
   })
 })

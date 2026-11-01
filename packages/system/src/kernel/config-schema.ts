@@ -10,29 +10,10 @@ export type BootstrapServerConfig = {
   dataPath: string
 }
 
-/** Bootstrap `hub` section — see {@link hubSchema}. */
-export type BootstrapHubConfig = {
-  url: string
-  token: string
-}
-
-/** Bootstrap `agent` section — see {@link agentSchema}. */
-export type BootstrapAgentConfig = {
-  name: string
-  statusPort: number
-}
-
-/** Bootstrap `tls` section — see {@link tlsSchema}. */
-export type BootstrapTlsConfig = {
-  enabled: boolean
-}
-
 /** Bootstrap `bootstrap` section — see {@link bootstrapAddonsSchema}. */
 export type BootstrapAddonsConfig = {
-  settingsStoreAddon: string
   installSource?: 'npm' | 'local' | 'symlink'
   requiredAddons?: string[]
-  forceDisable: string[]
 }
 
 /** Bootstrap `keychain` section — see {@link keychainSchema}. */
@@ -41,14 +22,14 @@ export type BootstrapKeychainConfig = {
   previousKeyFile?: string
 }
 
-/** Bootstrap config -- loaded from config.yaml ONLY at startup. */
+/**
+ * Bootstrap config — loaded from config.yaml (plus the three env overrides) ONLY
+ * at startup, by `loadBootstrapConfig`, the one loader. A key not named here is
+ * not read: an older yaml that still carries `mode`, `hub`, `agent`, `auth`,
+ * `tls` or `bootstrap.settingsStoreAddon` / `forceDisable` boots with them ignored.
+ */
 export type BootstrapConfig = {
-  mode: 'hub' | 'agent'
   server: BootstrapServerConfig
-  auth: Record<string, never>
-  hub: BootstrapHubConfig
-  agent: BootstrapAgentConfig
-  tls: BootstrapTlsConfig
   bootstrap: BootstrapAddonsConfig
   keychain: BootstrapKeychainConfig
 }
@@ -62,59 +43,10 @@ const serverSchema: z.ZodType<BootstrapServerConfig> = z.object({
 })
 
 /**
- * The bootstrap `auth` section holds NO credential (D797): the session signing
- * key lives in the keychain, and a fresh hub seeds `admin` / `changeme`
- * (`FIRST_BOOT_ADMIN_*`). The retired keys `jwtSecret`, `adminUsername` and
- * `adminPassword` are stripped when a legacy config.yaml still carries them —
- * the boot warns so the operator removes them (the one-off ops script imports
- * a `jwtSecret` into the keychain first).
- */
-const authSchema: z.ZodType<Record<string, never>> = z.object({})
-
-/** `auth.*` keys a pre-D797 config.yaml may still carry; ignored, and warned about. */
-export const RETIRED_AUTH_CONFIG_KEYS = ['jwtSecret', 'adminUsername', 'adminPassword'] as const
-
-const hubSchema: z.ZodType<BootstrapHubConfig> = z.object({
-  url: z.string().default('ws://localhost:4443/agent'),
-  token: z.string().default(''),
-})
-
-const agentSchema: z.ZodType<BootstrapAgentConfig> = z.object({
-  name: z.string().default(''),
-  /** Port for the agent status page (minimal HTML) */
-  statusPort: z.number().default(4444),
-})
-
-const tlsSchema: z.ZodType<BootstrapTlsConfig> = z.object({
-  /**
-   * Enable HTTPS (default: true). The certificate itself is never configured
-   * here: the admin UI (Network → Local access) generates or uploads it
-   * (D726), and boot serves whatever `tls/mode` says.
-   */
-  enabled: z.boolean().default(true),
-})
-
-/**
  * Bootstrap-time addon configuration — read PURELY from YAML, before the
- * kernel can talk to the settings-store. This breaks the chicken-and-egg
- * where the settings store itself is implemented by an addon: the kernel
- * needs to know WHICH addon to load first to provide the store, and that
- * decision can't itself live in the store.
- *
- * Backward-compatible: every field is optional + defaults reproduce the
- * current hard-coded behavior. Existing config.yaml files keep working.
+ * kernel can talk to the settings-store. Every field is optional.
  */
 const bootstrapAddonsSchema: z.ZodType<BootstrapAddonsConfig> = z.object({
-  /**
-   * Addon implementing the `settings-store` capability. Loaded FIRST,
-   * before any other addon is enabled — every other addon's enable
-   * state, settings, and ordering lives in the store it provides.
-   *
-   * Default: '@camstack/addon-sqlite-storage' (the workspace's
-   * default SQLite-backed store). Future alternatives could swap this
-   * for postgres/redis without touching kernel code.
-   */
-  settingsStoreAddon: z.string().default('@camstack/addon-sqlite-storage'),
   /**
    * How the launcher provisions REQUIRED_PACKAGES into `data/addons/`
    * on startup.
@@ -147,12 +79,6 @@ const bootstrapAddonsSchema: z.ZodType<BootstrapAddonsConfig> = z.object({
    * Leave undefined to use the kernel-shipped defaults.
    */
   requiredAddons: z.array(z.string()).optional(),
-  /**
-   * Disable list applied AFTER the settings-store reports the enabled
-   * set. Operator escape hatch — boot without a known-broken addon
-   * without having to mutate the store.
-   */
-  forceDisable: z.array(z.string()).default([]),
 })
 
 /**
@@ -172,21 +98,8 @@ const keychainSchema: z.ZodType<BootstrapKeychainConfig> = z.object({
 })
 
 const bootstrapSchemaDefinition: z.ZodType<BootstrapConfig> = z.object({
-  /** Server mode: 'hub' (full server) or 'agent' (worker node) */
-  mode: z.enum(['hub', 'agent']).default('hub'),
   server: serverSchema.default(serverSchema.parse({})),
-  auth: authSchema.default(authSchema.parse({})),
-  /** Hub connection config — only used when mode='agent' */
-  hub: hubSchema.default(hubSchema.parse({})),
-  /** Agent-specific config — only used when mode='agent' */
-  agent: agentSchema.default(agentSchema.parse({})),
-  /** TLS configuration */
-  tls: tlsSchema.default(tlsSchema.parse({})),
-  /**
-   * Addon bootstrap directives — minimum addon set needed before the
-   * kernel can reach the settings-store. See bootstrapAddonsSchema.
-   * Spec: docs/superpowers/specs/2026-05-15-yaml-bootstrap-expansion.md
-   */
+  /** Install source and the required-addon override (read by the launcher). */
   bootstrap: bootstrapAddonsSchema.default(bootstrapAddonsSchema.parse({})),
   /** Keychain master-key location (config.yaml only). */
   keychain: keychainSchema.default({}),
@@ -201,92 +114,3 @@ export const bootstrapSchema: z.ZodType<BootstrapConfig> = bootstrapSchemaDefini
 export { RUNTIME_DEFAULTS } from '@camstack/types'
 
 export type ServerMode = 'hub' | 'agent'
-
-export type AppConfig = BootstrapConfig & {
-  features: {
-    streaming: boolean
-    notifications: boolean
-    objectDetection: boolean
-    remoteAccess: boolean
-    agentCluster: boolean
-    smartHome: boolean
-    recordings: boolean
-    backup: boolean
-    repl: boolean
-  }
-  storage: {
-    provider: string
-    locations: Record<string, string>
-  }
-  logging: {
-    level: string
-    retentionDays: number
-  }
-  eventBus: {
-    /** System-EVENT ring size. Separate from the log buffer below. */
-    ringBufferSize: number
-    /**
-     * Per-addon log ring-buffer capacity, in entries. Default 5000.
-     *
-     * A HARD bound on EACH addon's bucket, not the total — the buffer is
-     * partitioned by `addonId` (`PartitionedLogBuffer`), so a chatty addon evicts
-     * only its own lines and a quiet one keeps its sparse history. Worst-case
-     * memory is therefore `this × number of addons that have logged`, which is
-     * why the total below exists.
-     *
-     * Hub-only: the agent constructs its `LogManager` with a hardcoded 5000.
-     */
-    perAddonLogBufferSize?: number
-    /**
-     * Ceiling on retained entries across every addon bucket.
-     *
-     * UNSET (the normal case) takes `DEFAULT_MAX_TOTAL_LOG_ENTRIES` — the buffer is
-     * bounded in aggregate out of the box. It has to be: `perAddonLogBufferSize ×
-     * addons` grows with the roster, and hub-main ingests from every local runner
-     * AND every agent, so the measured ~60-bucket hub retained ~300k entries
-     * (~92MB at ~306 B/entry) with no aggregate bound at all.
-     *
-     * Set a number to tune it. Set an explicit `null` to opt out entirely — the
-     * per-addon rings then become the only bound again.
-     *
-     * It is met by discarding entries at or below `logBufferPruneLevel` FIRST, so a
-     * live addon's `warn`/`error` are never traded for lines about frame timings.
-     * Only when that cannot reach the target are whole least-recently-WRITTEN
-     * buckets dropped — a bound that pruning alone cannot hold is not a bound, and
-     * the bucket nobody has written to is the cheapest thing in the buffer to lose.
-     */
-    maxTotalLogBufferSize?: number | null
-    /**
-     * Highest severity the total-cap sweep may discard. Default `debug`.
-     *
-     * `debug` reclaims nearly all the space on any busy buffer while leaving
-     * `info`/`warn`/`error` untouched. Raise it to `info` only if debug alone is
-     * not enough; `warn` and `error` are then still safe. Setting it to `error`
-     * means "evict anything", which defeats the point.
-     */
-    logBufferPruneLevel?: 'debug' | 'info' | 'warn' | 'error'
-    /**
-     * Entries the hub keeps in memory once `winston-logging` holds the history
-     * (D898). Default 2000; the files serve everything older.
-     */
-    logTailSize?: number
-  }
-  retention: {
-    detectionEventsDays: number
-    audioLevelsDays: number
-  }
-  providers: Array<{
-    id: string
-    type: string
-    name: string
-    url?: string
-    username?: string
-    password?: string
-    mqtt?: {
-      brokerUrl: string
-      username?: string
-      password?: string
-      topicPrefix: string
-    }
-  }>
-}

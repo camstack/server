@@ -48,8 +48,6 @@ export function createAuthConfigReader(resolved: ResolvedAuthConfig): AuthConfig
           return undefined
       }
     },
-    // Nothing is written back: the reader persists no value of its own.
-    update(): void {},
   }
 }
 

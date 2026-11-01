@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The migration engine runs addon-owned catalogues and applies plan edits inside the per-migration transaction
 - The hub's extra browser origins are now the Allowed browser origins setting under System > Settings > Authentication, applied on the next request without a restart; server.corsOrigins in config.yaml and CAMSTACK_CORS_ORIGINS are no longer read and are named in the boot log
 - Login sessions record the new cli-approval sign-in method.
+- HTTPS on or off is now the Serve HTTPS setting in Network > Local access (on by default, applies after a restart); CAMSTACK_TLS_ENABLED and the config.yaml keys mode, hub, agent, auth, tls and bootstrap.settingsStoreAddon/forceDisable are no longer read
 
 ## [1.2.536] - 2026-10-31
 

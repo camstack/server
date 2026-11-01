@@ -63,6 +63,7 @@ import {
   storeUploadedCertificate,
   useStoredUploadedCertificate,
   writeExtraSans,
+  writeTlsEnabled,
 } from '../../tls/index.js'
 import {
   type AddressBookState,
@@ -175,6 +176,12 @@ interface LocalNetworkConfig {
   readonly httpEnabled: boolean
   /** Dedicated HTTP port. Must not equal the HTTPS listen port. */
   readonly httpPort: number
+  /**
+   * Serve the hub over HTTPS. Default true. The listener is built before the
+   * settings database opens, so each apply mirrors this to the `tls/enabled`
+   * marker the boot reads; a change takes effect at the next restart.
+   */
+  readonly tlsEnabled: boolean
   /** Operator-declared DNS name advertised instead of the raw LAN IP. Empty = none. */
   readonly localHostname: string
   /**
@@ -228,6 +235,7 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
       customAddresses: [],
       httpEnabled: true,
       httpPort: DEFAULT_LAN_HTTP_PORT,
+      tlsEnabled: true,
       localHostname: '',
       internalUrl: '',
       publicEndpointUrl: '',
@@ -711,6 +719,17 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
             }),
             this.field({
               type: 'boolean',
+              key: 'tlsEnabled',
+              label: 'Serve HTTPS',
+              labelKey: 'server:globalSettings.s_local-access.tlsEnabled.label',
+              description:
+                'On by default. Turn off only behind a reverse proxy that terminates TLS for you: browsers refuse passkeys, the camera and the microphone over plain HTTP. Applies after the hub restarts.',
+              descriptionKey: 'server:globalSettings.s_local-access.tlsEnabled.description',
+              style: 'switch',
+              default: true,
+            }),
+            this.field({
+              type: 'boolean',
               key: 'mdnsAdvertise',
               label: 'Announce this hub on the LAN (mDNS)',
               labelKey: 'server:globalSettings.s_local-access.mdnsAdvertise.label',
@@ -923,6 +942,8 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
     if (this.config.httpEnabled !== false && httpPort === httpsPort) {
       throw new Error(`HTTP port ${httpPort} cannot equal the HTTPS listen port`)
     }
+    // The boot reads this marker, not the settings database (not open yet then).
+    writeTlsEnabled(this.tlsDataDir(), this.config.tlsEnabled !== false)
     await applyLanHttp({
       enabled: this.config.httpEnabled !== false,
       port: httpPort,

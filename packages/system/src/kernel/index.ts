@@ -102,6 +102,7 @@ export { createDoorSettingsView } from './settings-door-view.js'
 
 // Config
 export { ConfigManager } from './config-manager.js'
+export { loadBootstrapConfig } from './bootstrap-config.js'
 export type {
   ISettingsStore,
   KernelAddonSettingsView,
@@ -111,7 +112,7 @@ export { SettingsReadUnavailableError, isSettingsReadUnavailable } from './setti
 export type { SettingsReadRefusal } from './settings-read-error.js'
 export { storeMayAnswer, STORE_READABLE_BOOTSTRAP_KEYS } from './system-settings-policy.js'
 export { bootstrapSchema, RUNTIME_DEFAULTS, DEFAULT_DATA_PATH } from './config-schema.js'
-export type { BootstrapConfig, AppConfig, ServerMode } from './config-schema.js'
+export type { BootstrapConfig } from './config-schema.js'
 
 export type { AddonSettingsView } from './config-manager.js'
 

@@ -151,8 +151,8 @@ describe('readAddonGlobalStrict — the three-way read behind addonSettingsRaw.g
 describe('system-settings readers on an isolated engine', () => {
   it('get() REFUSES a key the store may hold but cannot be read synchronously', async () => {
     const { cm, door } = await doorOnly()
-    await door.set({ collection: 'system-settings', key: 'eventBus.ringBufferSize', value: 5 })
-    expectRefusal(() => cm.get('eventBus.ringBufferSize'), 'door-only')
+    await door.set({ collection: 'system-settings', key: 'eventBus.logTailSize', value: 5 })
+    expectRefusal(() => cm.get('eventBus.logTailSize'), 'door-only')
   })
 
   it('get() still answers bootstrap keys, which never come from the store', async () => {

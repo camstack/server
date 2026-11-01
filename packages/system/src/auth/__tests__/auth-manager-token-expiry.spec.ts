@@ -45,9 +45,6 @@ function makeAuth(
       const value = store[path]
       return value === undefined ? undefined : (value as T)
     },
-    update(section: string, data: Record<string, unknown>): void {
-      for (const [k, v] of Object.entries(data)) store[`${section}.${k}`] = v
-    },
   }
   return { auth: new AuthManager(config, makeLogger(warns), staticJwtSigningKey(SECRET)), store }
 }

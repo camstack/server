@@ -58,6 +58,23 @@ export function writeTlsMode(dataDir: string, mode: TlsMode): void {
   writeFileSync(join(tlsDir(dataDir), 'mode'), `${mode}\n`, 'utf-8')
 }
 
+/**
+ * Does the listener serve HTTPS? The `tlsEnabled` setting of the `local-network`
+ * addon (Network → Local access) is mirrored here on every settings apply, because
+ * the listener is built before the settings database opens. Absent — first boot,
+ * or a lost marker — means HTTPS: only an explicit `false` turns it off.
+ */
+export function readTlsEnabled(dataDir: string): boolean {
+  const marker = join(tlsDir(dataDir), 'enabled')
+  if (!existsSync(marker)) return true
+  return readFileSync(marker, 'utf-8').trim() !== 'false'
+}
+
+export function writeTlsEnabled(dataDir: string, enabled: boolean): void {
+  mkdirSync(tlsDir(dataDir), { recursive: true })
+  writeFileSync(join(tlsDir(dataDir), 'enabled'), `${enabled ? 'true' : 'false'}\n`, 'utf-8')
+}
+
 export function readExtraSans(dataDir: string): readonly string[] {
   const path = join(tlsDir(dataDir), 'extra-sans.json')
   if (!existsSync(path)) return []

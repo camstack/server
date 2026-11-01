@@ -1,6 +1,6 @@
 import type { AddonStoreRead, FeatureManifest, ISettingsStoreProvider } from '@camstack/types'
 import { asJsonObject } from '@camstack/types/addon'
-import { type AppConfig, type BootstrapConfig, RUNTIME_DEFAULTS } from './config-schema.js'
+import { type BootstrapConfig, RUNTIME_DEFAULTS } from './config-schema.js'
 import type {
   ISettingsStore,
   KernelAddonSettingsView,
@@ -14,11 +14,7 @@ export type {
   SettingsViewBackend,
 } from './settings-view-types.js'
 
-import {
-  buildRawAppConfig,
-  loadBootstrapConfig,
-  writeBootstrapSection,
-} from './bootstrap-config.js'
+import { loadBootstrapConfig } from './bootstrap-config.js'
 import { createDoorSettingsView, loadSystemSettingsPrefix } from './settings-door-view.js'
 import { SettingsReadUnavailableError } from './settings-read-error.js'
 import { createStoreSettingsView } from './store-settings-view.js'
@@ -54,14 +50,13 @@ export class ConfigManager {
   // through `server/backend` construction — out of scope for the D8
   // log-forwarding work, which only affects `packages/kernel/src`.
 
-  // Non-readonly so update() can sync the in-memory view after a write.
-  private bootstrapConfig: BootstrapConfig
+  private readonly bootstrapConfig: BootstrapConfig
   private settingsStore: ISettingsStore | null = null
   private settingsDoor: ISettingsStoreProvider | null = null
   /** Boot-time mirror of the preloaded `system-settings` keys (door mode, D675). */
   private readonly systemMirror = new SystemSettingsMirror()
 
-  constructor(private readonly configPath: string) {
+  constructor(configPath: string) {
     this.bootstrapConfig = loadBootstrapConfig(configPath)
   }
 
@@ -507,6 +502,7 @@ export class ConfigManager {
    * Features — the sync store when wired, else RUNTIME_DEFAULTS DELIBERATELY
    * (not `get()`, which refuses in door mode, D675): nothing writes
    * `features.*` beyond sqlite-settings' first-boot seed of these defaults.
+   * Still read: `FeatureManager` serves them as `system.info` / `system.featureFlags`.
    */
   get features(): FeatureManifest {
     const g = (key: keyof FeatureManifest): boolean => {
@@ -525,19 +521,6 @@ export class ConfigManager {
       backup: g('backup'),
       repl: g('repl'),
     }
-  }
-
-  /** Bootstrap config + runtime defaults, for backward compat. */
-  get raw(): AppConfig {
-    return buildRawAppConfig(this.bootstrapConfig)
-  }
-
-  /**
-   * Atomically update one top-level bootstrap section (server, auth, mode) of
-   * config.yaml and sync in-memory. Runtime settings use setSection().
-   */
-  update(section: string, data: Record<string, unknown>): void {
-    this.bootstrapConfig = writeBootstrapSection(this.configPath, section, data)
   }
 
   private getFromBootstrap(configPath: string): unknown {

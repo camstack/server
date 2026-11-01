@@ -14,25 +14,17 @@ import { bootstrapSchema } from '../config-schema.js'
 describe('bootstrapSchema — bootstrap.* defaults', () => {
   it('defaults the entire bootstrap section when YAML omits it', () => {
     const parsed = bootstrapSchema.parse({})
-    expect(parsed.bootstrap.settingsStoreAddon).toBe('@camstack/addon-sqlite-storage')
-    expect(parsed.bootstrap.requiredAddons).toBeUndefined()
-    expect(parsed.bootstrap.forceDisable).toEqual([])
+    expect(parsed.bootstrap).toEqual({})
   })
 
   it('preserves explicit values over defaults', () => {
     const parsed = bootstrapSchema.parse({
-      bootstrap: {
-        settingsStoreAddon: '@camstack/addon-postgres-storage',
-        requiredAddons: ['@camstack/server', '@camstack/addon-pipeline'],
-        forceDisable: ['@camstack/addon-broken'],
-      },
+      bootstrap: { requiredAddons: ['@camstack/server', '@camstack/addon-pipeline'] },
     })
-    expect(parsed.bootstrap.settingsStoreAddon).toBe('@camstack/addon-postgres-storage')
     expect(parsed.bootstrap.requiredAddons).toEqual([
       '@camstack/server',
       '@camstack/addon-pipeline',
     ])
-    expect(parsed.bootstrap.forceDisable).toEqual(['@camstack/addon-broken'])
   })
 
   it('accepts an empty requiredAddons array (operator wants zero auto-installs)', () => {
@@ -41,18 +33,37 @@ describe('bootstrapSchema — bootstrap.* defaults', () => {
     })
     expect(parsed.bootstrap.requiredAddons).toEqual([])
   })
+})
 
-  it('keeps backward compatibility with pre-bootstrap-section config.yaml', () => {
-    // A config.yaml that pre-dates the bootstrap section should still parse.
+describe('bootstrapSchema — dead yaml keys are ignored (#342)', () => {
+  it('strips mode, hub, agent, auth, tls and the retired bootstrap keys instead of reading them', () => {
     const parsed = bootstrapSchema.parse({
-      mode: 'hub',
-      server: { port: 4443, host: '0.0.0.0', dataPath: 'camstack-data' },
-      auth: { adminUsername: 'admin', adminPassword: 'changeme', jwtSecret: null },
+      mode: 'agent',
+      hub: { url: 'ws://elsewhere:1/agent', token: 'x' },
+      agent: { name: 'edge', statusPort: 9999 },
+      auth: { adminUsername: 'admin', adminPassword: 'changeme', jwtSecret: 'abc' },
+      tls: { enabled: false },
+      server: { port: 5555 },
+      bootstrap: {
+        settingsStoreAddon: '@camstack/addon-postgres-storage',
+        forceDisable: ['@camstack/addon-broken'],
+        installSource: 'local',
+      },
     })
-    expect(parsed.bootstrap).toBeDefined()
-    expect(parsed.bootstrap.settingsStoreAddon).toBe('@camstack/addon-sqlite-storage')
-    // The retired credentials are stripped, never carried (D797).
-    expect(parsed.auth).toEqual({})
+    expect(Object.keys(parsed).sort()).toEqual(['bootstrap', 'keychain', 'server'])
+    expect(parsed.server.port).toBe(5555)
+    expect(parsed.bootstrap).toEqual({ installSource: 'local' })
+  })
+
+  it('names exactly the surviving bootstrap keys', () => {
+    const parsed = bootstrapSchema.parse({
+      server: {},
+      bootstrap: { installSource: 'npm', requiredAddons: [] },
+      keychain: { keyFile: '/k', previousKeyFile: '/p' },
+    })
+    expect(Object.keys(parsed.server).sort()).toEqual(['dataPath', 'host', 'port'])
+    expect(Object.keys(parsed.bootstrap).sort()).toEqual(['installSource', 'requiredAddons'])
+    expect(Object.keys(parsed.keychain).sort()).toEqual(['keyFile', 'previousKeyFile'])
   })
 })
 

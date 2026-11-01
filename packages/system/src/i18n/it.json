@@ -255,5 +255,7 @@
   "reolink.nvr-needs-integration": "Questo è un NVR / Home Hub. Aggiungilo come integrazione Reolink a sé: i suoi canali vengono poi adottati come telecamere.",
   "global.s_system-config-auth.corsOriginsWarning.label": "Origini browser e http in chiaro",
   "global.s_system-config-auth.corsOrigins.label": "Origini browser consentite",
-  "global.s_system-config-auth.corsOrigins.description": "Origini extra (schema://host[:porta], senza percorso) delle pagine web autorizzate a chiamare questo hub da un browser, ad es. https://viewer.example o http://localhost:8081. Vale dalla richiesta successiva, senza riavvio."
+  "global.s_system-config-auth.corsOrigins.description": "Origini extra (schema://host[:porta], senza percorso) delle pagine web autorizzate a chiamare questo hub da un browser, ad es. https://viewer.example o http://localhost:8081. Vale dalla richiesta successiva, senza riavvio.",
+  "globalSettings.s_local-access.tlsEnabled.label": "Servi in HTTPS",
+  "globalSettings.s_local-access.tlsEnabled.description": "Attivo per impostazione predefinita. Disattivalo solo dietro un reverse proxy che termina il TLS: i browser rifiutano passkey, fotocamera e microfono su HTTP semplice. Si applica al riavvio dell'hub."
 }

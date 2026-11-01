@@ -20,12 +20,8 @@
 
 /** Top-level sections whose authority is env + config.yaml (`bootstrapSchema`). */
 const BOOTSTRAP_OWNED_SECTIONS: ReadonlySet<string> = new Set([
-  'mode',
   'server',
   'auth',
-  'hub',
-  'agent',
-  'tls',
   'bootstrap',
   // The keychain's master-key location (D788): a stored row must never be
   // able to point the hub at a different key.

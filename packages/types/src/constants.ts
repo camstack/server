@@ -23,19 +23,9 @@ export const DEFAULT_TOKEN_EXPIRY = '30d'
 
 /**
  * Shape of {@link RUNTIME_DEFAULTS}. Every key/value is typed explicitly so
- * consumers (ConfigManager.raw, feature accessors, settings-store seeder)
- * can read fields without `as` casts.
- *
- * Iteration via `Object.entries` still yields `[string, RuntimeDefaultsShape[keyof RuntimeDefaultsShape]]`
- * which is assignable to `[string, unknown]` — no change for consumers that
- * only need the iteration behaviour.
+ * consumers (ConfigManager, the settings-store seeder) can read fields without
+ * `as` casts.
  */
-export interface RuntimeDefaultsProvider {
-  id: string
-  type: string
-  name: string
-}
-
 export interface RuntimeDefaultsShape {
   /** Index signature for dynamic string-path lookups (e.g. ConfigManager.get).
    *  Explicit keys below override this with their precise types. */
@@ -49,27 +39,18 @@ export interface RuntimeDefaultsShape {
   'features.recordings': boolean
   'features.backup': boolean
   'features.repl': boolean
-  'retention.detectionEventsDays': number
-  'retention.audioLevelsDays': number
-  'logging.level': string
-  'logging.retentionDays': number
-  'eventBus.ringBufferSize': number
-  'storage.provider': string
-  'storage.locations': Record<string, string>
-  providers: RuntimeDefaultsProvider[]
-  'ffmpeg.hwAccel': string
-  'ffmpeg.threadCount': number
   'auth.tokenExpiry': string
 }
 
 /**
- * Runtime defaults -- used by ConfigManager.get() for backward compatibility
- * until Plan B wires all runtime settings to the system_settings SQL table.
- *
- * Moved from @camstack/server/system/config-schema to @camstack/types so that
- * @camstack/server/system can reference it without a cross-package kernel import.
+ * Runtime defaults — what `ConfigManager.get()` answers for a key nothing has
+ * stored, and what the settings store seeds on first boot. Only keys somebody
+ * READS are here: `features.*` (served as `system.info`) and `auth.tokenExpiry`. The flat `retention.*`, `logging.*`, `storage.*`,
+ * `ffmpeg.*`, `providers` and `eventBus.ringBufferSize` defaults had no reader
+ * and were deleted (#342).
  */
 export const RUNTIME_DEFAULTS: RuntimeDefaultsShape = {
+  // Still read: `ConfigManager.features` → `FeatureManager` → `system.info` / `system.featureFlags`.
   'features.streaming': true,
   'features.notifications': true,
   'features.objectDetection': false,
@@ -79,31 +60,6 @@ export const RUNTIME_DEFAULTS: RuntimeDefaultsShape = {
   'features.recordings': true,
   'features.backup': true,
   'features.repl': true,
-  'retention.detectionEventsDays': 30,
-  'retention.audioLevelsDays': 7,
-  'logging.level': 'info',
-  'logging.retentionDays': 30,
-  'eventBus.ringBufferSize': 10000,
-  'storage.provider': 'sqlite-storage',
-  'storage.locations': {
-    data: 'camstack-data/data',
-    media: 'camstack-data/media',
-    recordings: 'camstack-data/recordings',
-    cache: '/tmp/camstack-cache',
-    logs: 'camstack-data/logs',
-    models: 'camstack-data/models',
-  },
-  providers: [],
-  // Streaming ports are addon-specific (restreamer owns its defaults)
-  // FFmpeg
-  // No `ffmpeg.binaryPath`: the binary is the node's pinned build (D540),
-  // resolved by `ensureFfmpeg`, never a runtime default naming PATH.
-  'ffmpeg.hwAccel': 'auto',
-  'ffmpeg.threadCount': 0,
-  // Detection / motion / audio settings are owned by their respective addons
-  // (pipeline-orchestrator, motion-wasm, audio-analyzer/classifier, detection-pipeline
-  // step schemas). No detection defaults at this level.
-  // Backup retention is addon-specific (local-backup owns its default)
   // Auth (runtime) — see DEFAULT_TOKEN_EXPIRY: one default, not three.
   'auth.tokenExpiry': DEFAULT_TOKEN_EXPIRY,
 }
