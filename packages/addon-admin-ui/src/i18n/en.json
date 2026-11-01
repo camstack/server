@@ -9223,6 +9223,14 @@
       "decrease": "Decrease {{label}}",
       "increase": "Increase {{label}}",
       "minutes": "{{count}} min"
+    },
+    "appliance": {
+      "running": "Running",
+      "idle": "Idle",
+      "unknown": "Unknown",
+      "forMinutes": "for {{count}} min",
+      "forHours": "for {{count}} h",
+      "powerUnknown": "Power unknown"
     }
   },
   "helpers": {

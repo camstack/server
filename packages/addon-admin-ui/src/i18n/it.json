@@ -9245,6 +9245,14 @@
       "decrease": "Diminuisci: {{label}}",
       "increase": "Aumenta: {{label}}",
       "minutes": "{{count}} min"
+    },
+    "appliance": {
+      "running": "In corso",
+      "idle": "Inattivo",
+      "unknown": "Sconosciuto",
+      "forMinutes": "da {{count}} min",
+      "forHours": "da {{count}} h",
+      "powerUnknown": "Potenza sconosciuta"
     }
   },
   "helpers": {

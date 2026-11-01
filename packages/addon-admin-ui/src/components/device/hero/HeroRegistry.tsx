@@ -117,6 +117,10 @@ const HERO_REGISTRY: Readonly<Partial<Record<DeviceType, HeroComponent>>> = {
   // Dishwasher: ControlHero renders the registry-backed DishwasherHeroCard
   // (program state + start/stop/pause).
   [DeviceType.Dishwasher]: ControlHero,
+  // Washer / dryer: ControlHero renders the registry-backed ApplianceHeroCard
+  // (running state, dwell, live power; the drum turns only while running).
+  [DeviceType.Washer]: ControlHero,
+  [DeviceType.Dryer]: ControlHero,
 }
 
 /**

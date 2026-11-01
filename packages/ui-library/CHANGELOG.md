@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Mobile drawer: the closed drawer no longer leaves a full-screen backdrop layer over the top bar (it blurred and dimmed the header on an installed iPhone app).
 - Removed the generated hooks for the workspace-install methods of the addons capability.
+- Washers and dryers get an appliance card (running state, dwell, live power); the pet fountain shows a ripple while the pump runs
 
 ## [1.2.367] - 2026-11-01
 

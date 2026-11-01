@@ -13,6 +13,14 @@ describe('DEVICE_TYPE_CONTROL', () => {
     }
   })
 
+  it('washer and dryer resolve to the appliance card, not the placeholder', () => {
+    const dummy = DEVICE_TYPE_CONTROL[DeviceType.Camera]
+    for (const t of [DeviceType.Washer, DeviceType.Dryer]) {
+      expect(DEVICE_TYPE_CONTROL[t].HeroCard).not.toBe(dummy.HeroCard)
+      expect(DEVICE_TYPE_CONTROL[t].HeroCard.name).toBe('ApplianceHeroCard')
+    }
+  })
+
   it('cover maps to a real non-dummy entry (distinct from others)', () => {
     const cover = DEVICE_TYPE_CONTROL[DeviceType.Cover]
     expect(cover).toBeDefined()

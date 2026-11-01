@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed the blurred, dimmed mobile top bar on the installed iPhone app.
 - System → Secrets labels the external master key as the mounted key file (/run/secrets)
+- Washer and dryer device pages show the appliance card instead of the generic hero
 
 ## [1.2.548] - 2026-11-01
 

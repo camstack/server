@@ -26,6 +26,18 @@ import { Button } from '../../primitives/button'
 import { Switch } from '../../primitives/switch'
 import type { ControlPanelProps } from './types'
 
+// Scoped keyframes — transform/opacity only. Played only while the pump runs.
+const KEYFRAMES = `
+@keyframes pfn-ripple { 0% { transform: scale(.45); opacity: .7 } 100% { transform: scale(1.15); opacity: 0 } }
+@keyframes pfn-rise { 0% { transform: translateY(0); opacity: 0 } 20% { opacity: .8 } 100% { transform: translateY(-16px); opacity: 0 } }
+.pfn-ripple, .pfn-bubble { transform-box: fill-box; transform-origin: center; }
+.pfn-ripple { animation: pfn-ripple 2.4s ease-out infinite; }
+.pfn-bubble { animation: pfn-rise 2.2s ease-in infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .pfn-ripple, .pfn-bubble { animation: none !important; opacity: 0; }
+}
+`
+
 const LITRES_TO_ML = 1000
 const SECONDS_PER_MINUTE = 60
 const MAX_PUMP_MINUTES = 240
@@ -104,7 +116,12 @@ export function PetFountainPanel({
   return (
     <div className="flex flex-col items-stretch gap-3 rounded-lg border border-border bg-surface p-4">
       <div className="flex items-center gap-4 rounded-lg border border-border-subtle bg-background-elevated p-3">
-        <TankGauge level={level} empty={display.empty === true} />
+        <style>{KEYFRAMES}</style>
+        <TankGauge
+          level={level}
+          empty={display.empty === true}
+          pumping={display.pumpRunning === true}
+        />
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <div className="flex items-baseline gap-2">
             <span
@@ -211,9 +228,12 @@ export function PetFountainPanel({
 function TankGauge({
   level,
   empty,
+  pumping,
 }: {
   readonly level: number | null
   readonly empty: boolean
+  /** Pump running (true only — false and unknown stay still). */
+  readonly pumping: boolean
 }): ReactNode {
   const t = useUiText()
   const fraction = Math.min(1, Math.max(0, (level ?? 0) / 100))
@@ -247,6 +267,41 @@ function TankGauge({
           className={empty ? 'fill-danger' : 'fill-info'}
           opacity={0.75}
         />
+        {pumping && level !== null && !empty && (
+          <g data-testid="fountain-ripple">
+            <ellipse
+              cx="36"
+              cy={top}
+              rx="14"
+              ry="3.5"
+              fill="none"
+              strokeWidth="1.5"
+              className="pfn-ripple stroke-info"
+            />
+            <ellipse
+              cx="36"
+              cy={top}
+              rx="14"
+              ry="3.5"
+              fill="none"
+              strokeWidth="1.5"
+              className="pfn-ripple stroke-info [animation-delay:1.2s]"
+            />
+            <circle cx="28" cy="54" r="1.8" className="pfn-bubble fill-info" />
+            <circle
+              cx="38"
+              cy="56"
+              r="1.4"
+              className="pfn-bubble fill-info [animation-delay:0.8s]"
+            />
+            <circle
+              cx="45"
+              cy="54"
+              r="1.6"
+              className="pfn-bubble fill-info [animation-delay:1.5s]"
+            />
+          </g>
+        )}
       </g>
       <rect
         x="18"

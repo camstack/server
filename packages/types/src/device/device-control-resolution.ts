@@ -64,6 +64,7 @@ export type DeviceControlKind =
   | 'pet-feeder'
   | 'pet-fountain'
   | 'dishwasher'
+  | 'appliance'
   | 'script'
   | 'automation'
   | 'dummy'
@@ -108,10 +109,10 @@ export const DEVICE_TYPE_CONTROL_KIND: Record<DeviceType, DeviceControlKind> = {
   [DeviceType.PetFeeder]: 'pet-feeder',
   [DeviceType.PetFountain]: 'pet-fountain',
   [DeviceType.Dishwasher]: 'dishwasher',
-  // No program surface. The list row stays a placeholder; power and running
-  // are readings on the device, not an inline control.
-  [DeviceType.Washer]: 'dummy',
-  [DeviceType.Dryer]: 'dummy',
+  // No program surface: the card reads the running state and the power meter
+  // (running / idle, live watts); the row shows the running badge.
+  [DeviceType.Washer]: 'appliance',
+  [DeviceType.Dryer]: 'appliance',
   // The bridge box has no inline control: its facts and actions live on its page.
   [DeviceType.Gateway]: 'dummy',
 }

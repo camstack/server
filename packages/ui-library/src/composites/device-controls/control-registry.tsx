@@ -31,6 +31,7 @@ import { ImageInlineControl, ImageHeroCard } from './image-control'
 import { PetFeederInlineControl, PetFeederHeroCard } from './pet-feeder-panel'
 import { PetFountainInlineControl, PetFountainHeroCard } from './pet-fountain-panel'
 import { DishwasherInlineControl, DishwasherHeroCard } from './dishwasher-control'
+import { ApplianceInlineControl, ApplianceHeroCard } from './appliance-control'
 import {
   SwitchInlineControl,
   SwitchHeroCard,
@@ -200,6 +201,11 @@ const DISHWASHER_CONTROL: DeviceTypeControl = {
   HeroCard: DishwasherHeroCard,
 }
 
+const APPLIANCE_CONTROL: DeviceTypeControl = {
+  InlineControl: ApplianceInlineControl,
+  HeroCard: ApplianceHeroCard,
+}
+
 const BUTTON_CONTROL: DeviceTypeControl = {
   InlineControl: ButtonControl,
   HeroCard: ButtonHeroCard,
@@ -236,6 +242,7 @@ const CONTROL_KIND_COMPONENTS: Record<DeviceControlKind, DeviceTypeControl> = {
   'pet-feeder': PET_FEEDER_CONTROL,
   'pet-fountain': PET_FOUNTAIN_CONTROL,
   dishwasher: DISHWASHER_CONTROL,
+  appliance: APPLIANCE_CONTROL,
   script: SCRIPT_CONTROL,
   automation: AUTOMATION_CONTROL,
   dummy: DUMMY_CONTROL,

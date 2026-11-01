@@ -55,6 +55,13 @@ describe('every type with a real hero card gets it', () => {
     expect(resolveHero(DeviceType.Dishwasher)).toBe(ControlHero)
   })
 
+  it('routes Washer and Dryer to ControlHero', () => {
+    expect(resolveHero(DeviceType.Washer)).toBe(ControlHero)
+    expect(resolveHero(DeviceType.Dryer)).toBe(ControlHero)
+    expect(resolveDeviceControlKind(DeviceType.Washer)).toBe('appliance')
+    expect(resolveDeviceControlKind(DeviceType.Dryer)).toBe('appliance')
+  })
+
   it('routes Script and Automation to a real hero', () => {
     // Same shape as the alarm: both carried a cap with real runtime state
     // (`script-runner`, `automation-control`) while rendering "Controls coming

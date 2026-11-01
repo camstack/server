@@ -15,6 +15,8 @@
  * binding, as on a hub whose provider has not registered the cap); 5064 is
  * the same feeder WITH the binding, so its Consumables section shows. Data
  * is invented.
+ * 505 "Washing machine" (running, 412 W) and 506 "Tumble dryer" (nothing reported)
+ * are the appliance hero.
  * 5065 "Water fountain" is a pet fountain built from loose entities, with its
  * filter as a consumable.
  */
@@ -52,6 +54,9 @@ const DEVICES: Readonly<Record<number, ReturnType<typeof appliance>>> = {
   5064: appliance(5064, 'Pet feeder (consumables)', 'pet-feeder', 'provider-petkit'),
   // A fountain BUILT from loose entities (a composed device of type pet-fountain).
   5065: appliance(5065, 'Water fountain', 'pet-fountain', 'composer'),
+  // Washer: running with a live power reading; dryer: nothing reported yet.
+  505: appliance(505, 'Washing machine', 'washer', 'provider-homeassistant'),
+  506: appliance(506, 'Tumble dryer', 'dryer', 'provider-homeassistant'),
   521: {
     ...appliance(521, 'Living room AC', 'climate', 'provider-homeassistant'),
     location: 'Living room',
@@ -127,6 +132,16 @@ const BINDINGS: Readonly<Record<number, readonly ReturnType<typeof entry>[]>> = 
     entry('device-status', 'composer'),
     entry('pet-fountain', 'composer'),
     entry('consumables', 'composer'),
+  ],
+  505: [
+    entry('device-status', 'provider-homeassistant'),
+    entry('running-state', 'provider-homeassistant'),
+    entry('power-meter', 'provider-homeassistant'),
+  ],
+  506: [
+    entry('device-status', 'provider-homeassistant'),
+    entry('running-state', 'provider-homeassistant'),
+    entry('power-meter', 'provider-homeassistant'),
   ],
   521: [
     entry('device-status', 'provider-homeassistant'),
@@ -434,6 +449,24 @@ const SLICES: Readonly<Record<string, unknown>> = {
     lastFetchedAt: null,
   },
   '512/battery': { level: 82, lastFetchedAt: NOW },
+  '505/device-status': { online: true, lastChangedAt: NOW },
+  '505/running-state': {
+    running: true,
+    since: NOW - 35 * 60_000,
+    source: 'native',
+    phase: 'Rinse',
+    lastFetchedAt: NOW,
+  },
+  '505/power-meter': { power: 412, lastFetchedAt: NOW },
+  '506/device-status': { online: true, lastChangedAt: NOW },
+  '506/running-state': {
+    running: null,
+    since: null,
+    source: 'native',
+    phase: null,
+    lastFetchedAt: null,
+  },
+  '506/power-meter': { lastFetchedAt: NOW },
 }
 
 const WIREABLE: Readonly<Record<number, unknown>> = {
@@ -610,6 +643,16 @@ export default defineFixtures({
               ? [{ cap: 'battery' }]
               : [],
     }),
+    'powerSource.getStatus': {
+      linked: false,
+      switchDeviceId: null,
+      switchName: null,
+      switchOn: null,
+      switchOnline: null,
+      restartInProgress: false,
+      offSeconds: 0,
+    },
+    'preferences.get': { rows: [] },
     'deviceExtension.listSlots': [],
     'deviceExtension.listCandidates': { candidates: [] },
     'capabilities.getCapability': {
