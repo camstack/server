@@ -286,6 +286,7 @@ describe('customize declaration guard', () => {
       'battery',
       'consumables',
       'doorbell',
+      'fan-presets',
       'lock-control',
       'motion',
       'power-meter',
@@ -324,6 +325,7 @@ describe('customize declaration guard', () => {
       DeviceType.Climate,
       DeviceType.Thermostat,
       DeviceType.PetFeeder,
+      DeviceType.Heater,
     ])
     expect(runningTypes).not.toContain(DeviceType.Camera)
   })
