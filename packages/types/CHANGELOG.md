@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Power and energy can now be added to a device that has no native power meter (the optional reading is simply left out while its source is unavailable)
 - A finished appliance cycle can name its duration and energy in a notification (new {{duration}} and {{energy}} variables)
+- Removed the addons.installFromWorkspace, isWorkspaceAvailable and listWorkspacePackages methods; a workspace build reaches a node through camstack deploy.
+- Keychain key source kinds config-file / previous-config-file are now mounted-file / previous-mounted-file
 
 ## [1.2.468] - 2026-11-01
 
@@ -19,8 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The migrations ledger rows carry their catalogued meta (description, body kind, store, dependsOn) as an optional field
 - Notification templates: the {{camera}} variable is now {{device}} (the camera for a track, the appliance or sensor for a device event); the system text for an agent that went offline during an update declares {{graceMin}}
 - New admin-only read userManagement.getAdminBootstrapStatus: whether an admin account still has the first-boot password, as one boolean
-- Removed the addons.installFromWorkspace, isWorkspaceAvailable and listWorkspacePackages methods; a workspace build reaches a node through camstack deploy.
-- Keychain key source kinds config-file / previous-config-file are now mounted-file / previous-mounted-file
 
 ## [1.2.467] - 2026-11-01
 

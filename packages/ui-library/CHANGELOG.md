@@ -10,13 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Mobile drawer: the closed drawer no longer leaves a full-screen backdrop layer over the top bar (it blurred and dimmed the header on an installed iPhone app).
+- Removed the generated hooks for the workspace-install methods of the addons capability.
 
 ## [1.2.367] - 2026-11-01
 
 ### Changed
 
 - Generated hooks include userManagement.getAdminBootstrapStatus
-- Removed the generated hooks for the workspace-install methods of the addons capability.
 
 ## [1.2.366] - 2026-11-01
 

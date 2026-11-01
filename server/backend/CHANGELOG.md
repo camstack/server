@@ -10,14 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - config.yaml bootstrap.requiredAddons is ignored (with a warning); the first-boot addon set always comes from the server package
+- Addons now always install from npm: the bootstrap.installSource key and the CAMSTACK_INSTALL_SOURCE variable are gone (a config.yaml still carrying the key boots with one warning); a workspace build reaches a node through camstack deploy.
+- The external keychain master key is read from the fixed path /run/secrets/camstack-master-key (and .previous to rotate) — keychain.keyFile and keychain.previousKeyFile in config.yaml are retired and only log a warning
 
 ## [1.2.728] - 2026-11-01
 
 ### Changed
 
 - The hub serves userManagement.getAdminBootstrapStatus (admin-only: is the first-boot admin password still in use)
-- Addons now always install from npm: the bootstrap.installSource key and the CAMSTACK_INSTALL_SOURCE variable are gone (a config.yaml still carrying the key boots with one warning); a workspace build reaches a node through camstack deploy.
-- The external keychain master key is read from the fixed path /run/secrets/camstack-master-key (and .previous to rotate) — keychain.keyFile and keychain.previousKeyFile in config.yaml are retired and only log a warning
 
 ## [1.2.727] - 2026-11-01
 

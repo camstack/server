@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Fixed the blurred, dimmed mobile top bar on the installed iPhone app.
+- System → Secrets labels the external master key as the mounted key file (/run/secrets)
 
 ## [1.2.548] - 2026-11-01
 
@@ -17,7 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - System → Data has a read-only Migrations tab: every migration with its status, owner, level, body kind and a detail with all its metadata, error and dependencies
 - Notification template editor: the timelapse caption offers {{device}} instead of {{camera}}
-- System → Secrets labels the external master key as the mounted key file (/run/secrets)
 
 ## [1.2.547] - 2026-11-01
 
