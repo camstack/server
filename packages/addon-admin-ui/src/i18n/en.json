@@ -6264,7 +6264,8 @@
   "ssoComplete": {
     "nothingToFinishHereGo": "Nothing to finish here — go to sign-in",
     "closeThisWindow": "Close this window",
-    "finishingSignIn": "Finishing sign-in…"
+    "finishingSignIn": "Finishing sign-in…",
+    "backToSignIn": "Back to sign-in"
   },
   "oauthLanding": {
     "brand": "CamStack",

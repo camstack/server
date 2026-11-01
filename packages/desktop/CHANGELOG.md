@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The app publishes its version and update state to its node and installs a downloaded update when the hub asks.
 - macOS: the desktop app now re-asks the native updater when a downloaded update was never staged, and logs why an install request or a quit install did nothing
 - The desktop shell force-kills a node that outlives an update restart, recording the last child output and a stack sample.
+- The desktop app can use the Mac's Touch ID passkeys on a signed build, asks which passkey when several are saved, and keeps single sign-in popups inside the app while opening other links in your browser
 
 ### Fixed
 

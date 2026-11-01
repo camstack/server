@@ -133,3 +133,17 @@ describe('needsOriginHint', () => {
     expect(needsOriginHint(['totp'], emptySelection)).toBe(false)
   })
 })
+
+describe('platform authenticator availability', () => {
+  it('hides the passkey arm when the UV check resolved false', () => {
+    expect(isPasskeyMethodUsable(passkeyArm, () => 'example.com', false)).toBe(false)
+    const selection = selectSecondFactorMethods([passkeyArm, widgetArm], () => 'example.com', false)
+    expect(selection.passkeyMethods).toEqual([])
+    expect(selection.widgetMethods).toEqual([widgetArm])
+  })
+
+  it('keeps it when true, and when the answer is not known yet', () => {
+    expect(isPasskeyMethodUsable(passkeyArm, () => 'example.com', true)).toBe(true)
+    expect(isPasskeyMethodUsable(passkeyArm, () => 'example.com', null)).toBe(true)
+  })
+})

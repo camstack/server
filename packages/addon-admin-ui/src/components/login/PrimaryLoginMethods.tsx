@@ -1,6 +1,7 @@
 import { ShieldCheck, Loader2, AlertCircle } from 'lucide-react'
 import { resolveDisplayIcon, useIconGlyphsVersion, useRemoteComponent } from '@camstack/ui-library'
 import { isPasskeyMethodUsable } from './second-factor-selection'
+import { usePlatformAuthenticator } from './use-platform-authenticator'
 import { PasskeyLoginButton, type PasskeySecondFactorOutcome } from './PasskeyLoginButton'
 import { useTranslation } from 'react-i18next'
 
@@ -120,7 +121,10 @@ export function PrimaryLoginMethods({
 }: PrimaryLoginMethodsProps) {
   const { t } = useTranslation()
   useIconGlyphsVersion()
-  const visibleMethods = methods.filter((m) => m.kind !== 'passkey' || isPasskeyMethodUsable(m))
+  const platformAuthenticator = usePlatformAuthenticator()
+  const visibleMethods = methods.filter(
+    (m) => m.kind !== 'passkey' || isPasskeyMethodUsable(m, undefined, platformAuthenticator),
+  )
   if (visibleMethods.length === 0) return null
   return (
     <div className="mt-6 space-y-3">

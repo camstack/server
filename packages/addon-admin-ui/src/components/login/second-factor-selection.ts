@@ -26,6 +26,13 @@ import type { LoginMethod, PasskeyLoginMethod, WidgetLoginMethod } from './Prima
  */
 export type HostnameGetter = () => string
 
+/**
+ * What `PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()`
+ * answered: `true` / `false`, or `null` while it is pending or the API is
+ * absent — never read as "no authenticator". Only `false` hides the arm.
+ */
+export type PlatformAuthenticatorAvailability = boolean | null
+
 const defaultHostnameGetter: HostnameGetter = () => window.location.hostname
 
 /**
@@ -37,7 +44,9 @@ const defaultHostnameGetter: HostnameGetter = () => window.location.hostname
 export function isPasskeyMethodUsable(
   method: PasskeyLoginMethod,
   getHostname: HostnameGetter = defaultHostnameGetter,
+  platformAuthenticator: PlatformAuthenticatorAvailability = null,
 ): boolean {
+  if (platformAuthenticator === false) return false
   return browserSupportsWebAuthn() && passkeyUsableOnOrigin(getHostname(), method.rpId)
 }
 
@@ -62,11 +71,14 @@ export interface SecondFactorMethodSelection {
 export function selectSecondFactorMethods(
   methods: readonly LoginMethod[],
   getHostname: HostnameGetter = defaultHostnameGetter,
+  platformAuthenticator: PlatformAuthenticatorAvailability = null,
 ): SecondFactorMethodSelection {
   const passkeyArms = methods.filter(
     (m): m is PasskeyLoginMethod => m.kind === 'passkey' && m.stage === 'second-factor',
   )
-  const passkeyMethods = passkeyArms.filter((m) => isPasskeyMethodUsable(m, getHostname))
+  const passkeyMethods = passkeyArms.filter((m) =>
+    isPasskeyMethodUsable(m, getHostname, platformAuthenticator),
+  )
   const widgetMethods =
     passkeyMethods.length > 0
       ? []

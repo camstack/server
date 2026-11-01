@@ -467,6 +467,19 @@ blocked popup or the native-app handoff sheet runs the full-page flow too.
 `returnBase`, `claimed`, `advertised`) — the line that says why a flow left
 the origin it started at.
 
+**Inside the desktop viewer window** the sign-in page runs at the hub origin in
+the app's own window, so two shell rules apply
+(`packages/desktop/src/role/window-open-policy.ts`, `webauthn.ts`). The SSO
+popup is opened as a child window of the SAME session partition, without the
+preload bridge, and stays there through the IdP hop so the callback can return
+to its opener; any other http(s) link opens in the system browser. Platform
+passkeys (Touch ID) work only after the shell calls `app.configureWebAuthn`,
+which needs the signing team id stamped into the build; until then
+`isUserVerifyingPlatformAuthenticatorAvailable()` is false, and the sign-in page
+(inside the shell only) hides the passkey option instead of showing a button
+that cannot finish. A hub reached by IP address cannot use passkeys at all
+(the relying-party id must be a domain), so address the hub by hostname.
+
 ## The bridge is single-use and browser-bound (D810)
 
 `/start` sets `camstack_sso_state` (random, HttpOnly, Lax, path `/`, 10 min,

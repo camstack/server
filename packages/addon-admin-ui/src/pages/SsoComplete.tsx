@@ -75,7 +75,13 @@ export function mountSsoComplete(root: Root): void {
   const completion = parsePopupCompletion(window.location.hash)
   window.history.replaceState(null, '', window.location.pathname)
   const render = (result: PopupResult | null): void =>
-    root.render(<SsoCompletePage completion={completion} result={result} />)
+    root.render(
+      <SsoCompletePage
+        completion={completion}
+        result={result}
+        hasOpener={window.opener !== null}
+      />,
+    )
   render(null)
   if (completion === null) return
   const channel = openSsoChannel()
@@ -102,9 +108,12 @@ export function mountSsoComplete(root: Root): void {
 export function SsoCompletePage({
   completion,
   result,
+  hasOpener = true,
 }: {
   completion: SsoPopupCompletion | null
   result: PopupResult | null
+  /** `false` when nothing opened this window: a closed window then has no one to return to. */
+  hasOpener?: boolean
 }) {
   const { t } = useTranslation()
   return (
@@ -130,6 +139,11 @@ export function SsoCompletePage({
             >
               {t('ssoComplete.closeThisWindow', 'Close this window')}
             </Button>
+            {!hasOpener && (
+              <a className="text-primary underline" href={hubPath('/login')}>
+                {t('ssoComplete.backToSignIn', 'Back to sign-in')}
+              </a>
+            )}
           </>
         ) : (
           <span className="flex items-center gap-3">

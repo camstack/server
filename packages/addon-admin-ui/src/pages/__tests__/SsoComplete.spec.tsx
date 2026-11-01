@@ -41,4 +41,26 @@ describe('SsoCompletePage (D794 amendment)', () => {
     expect(close).toHaveBeenCalled()
     close.mockRestore()
   })
+
+  it('with no opener a finished window still links back to sign-in', () => {
+    render(
+      <SsoCompletePage
+        completion={LINKED}
+        result={{ kind: 'done', message: 'Done — you can close this window.' }}
+        hasOpener={false}
+      />,
+    )
+    const link = screen.getByText('Back to sign-in').closest('a')
+    expect(link?.getAttribute('href')).toMatch(/\/login$/)
+  })
+
+  it('with an opener there is no extra link', () => {
+    render(
+      <SsoCompletePage
+        completion={LINKED}
+        result={{ kind: 'done', message: 'Done — you can close this window.' }}
+      />,
+    )
+    expect(screen.queryByText('Back to sign-in')).toBeNull()
+  })
 })

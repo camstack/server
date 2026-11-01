@@ -6339,7 +6339,8 @@
   "ssoComplete": {
     "nothingToFinishHereGo": "Nulla da completare qui — vai all'accesso",
     "closeThisWindow": "Chiudi questa finestra",
-    "finishingSignIn": "Completamento dell'accesso…"
+    "finishingSignIn": "Completamento dell'accesso…",
+    "backToSignIn": "Torna all'accesso"
   },
   "oauthLanding": {
     "brand": "CamStack",

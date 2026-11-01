@@ -12,6 +12,7 @@ import {
   PrimaryLoginMethods,
   type RedirectLoginMethod,
 } from '../components/login/PrimaryLoginMethods'
+import { usePlatformAuthenticator } from '../components/login/use-platform-authenticator'
 import {
   needsOriginHint,
   selectSecondFactorMethods,
@@ -158,7 +159,12 @@ export function LoginPage() {
   // covers both an addon-auth predating the declarative-login rollout
   // (no `passkey` arm at all) AND a passkey-enrolled user whose gate
   // fails (e.g. a raw-IP origin) — see `second-factor-selection.ts`.
-  const secondFactorSelection = selectSecondFactorMethods(loginMethods)
+  const platformAuthenticator = usePlatformAuthenticator()
+  const secondFactorSelection = selectSecondFactorMethods(
+    loginMethods,
+    undefined,
+    platformAuthenticator,
+  )
 
   // `/api/auth/sso/finish` returns here with a fragment when it did NOT mint
   // a session (D782): a linked-OIDC sign-in that still owes an
