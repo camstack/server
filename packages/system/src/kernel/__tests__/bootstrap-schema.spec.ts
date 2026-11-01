@@ -75,22 +75,9 @@ describe('bootstrapSchema — bootstrap.installSource', () => {
   })
 })
 
-describe('bootstrapSchema — server.corsOrigins (D707)', () => {
-  it('defaults to an empty list', () => {
-    expect(bootstrapSchema.parse({}).server.corsOrigins).toEqual([])
-  })
-
-  it('takes a YAML list as is', () => {
-    const parsed = bootstrapSchema.parse({
-      server: { corsOrigins: ['https://a.example', 'http://localhost:8081'] },
-    })
-    expect(parsed.server.corsOrigins).toEqual(['https://a.example', 'http://localhost:8081'])
-  })
-
-  it('splits the comma-separated env string (CAMSTACK_CORS_ORIGINS)', () => {
-    const parsed = bootstrapSchema.parse({
-      server: { corsOrigins: ' https://a.example, ,http://localhost:8081 ' },
-    })
-    expect(parsed.server.corsOrigins).toEqual(['https://a.example', 'http://localhost:8081'])
+describe('bootstrapSchema — retired server.corsOrigins (D707)', () => {
+  it('no longer carries the key: a stale yaml value is stripped', () => {
+    const parsed = bootstrapSchema.parse({ server: { corsOrigins: ['https://a.example'] } })
+    expect(parsed.server).not.toHaveProperty('corsOrigins')
   })
 })

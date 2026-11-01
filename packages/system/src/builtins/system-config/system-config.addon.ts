@@ -10,6 +10,7 @@ import {
 } from '@camstack/types'
 import os from 'node:os'
 import { parseCidrList, readCidrSetting } from '../../auth/cidr.js'
+import { InvalidCorsOriginError, parseOriginList, readOriginSetting } from '../../auth/origin.js'
 import {
   AGENT_HTTPS_NAMES_COLLECTION,
   AGENT_HTTPS_NAMES_COLUMNS,
@@ -57,7 +58,7 @@ import { systemConfigRecordKinds } from './record-kinds.js'
  *   - server     (port, host, dataPath — READ-ONLY, loaded from config.yaml at bootstrap;
  *                 name = the hub's human name, `server.name`, editable — D861)
  *   - auth       (tokenExpiry = session lifetime, accessTokenExpiry, trustedProxies,
- *                 trustedNetworks)
+ *                 trustedNetworks, corsOrigins)
  *   - cluster    (no operator field remains: the cluster secret and the mesh auth
  *                 mode were removed by D857 — a node's identity is its mesh
  *                 certificate, and agents are paired, not given a secret)
@@ -114,6 +115,7 @@ const KEY_TO_SECTION: Readonly<Record<string, string>> = {
   accessTokenExpiry: 'auth',
   trustedProxies: 'auth',
   trustedNetworks: 'auth',
+  corsOrigins: 'auth',
 }
 
 /**
@@ -128,6 +130,13 @@ const RETIRED_CLUSTER_KEYS: ReadonlySet<string> = new Set(['clusterSecret', 'mes
  * than the operator wrote, guessing would trust more.
  */
 const CIDR_LIST_KEYS: ReadonlySet<string> = new Set(['trustedProxies', 'trustedNetworks'])
+
+/**
+ * `auth.corsOrigins` — extra browser origins that may read hub responses
+ * (D707). A save with an entry that is not an http(s) origin is refused whole
+ * with a typed {@link InvalidCorsOriginError}.
+ */
+const CORS_ORIGIN_KEY = 'corsOrigins'
 
 /** The section id of the cluster form — System → Cluster renders only this one. */
 export const SYSTEM_CONFIG_CLUSTER_SECTION_ID = 'system-config-cluster'
@@ -525,6 +534,31 @@ export class SystemConfigAddon extends BaseAddon {
               descriptionKey: 'server:global.s_system-config-auth.trustedNetworks.description',
               creatable: true,
             },
+            {
+              type: 'info',
+              key: 'corsOriginsWarning',
+              label: 'Browser origins and plain http',
+              labelKey: 'server:global.s_system-config-auth.corsOriginsWarning.label',
+              variant: 'warning',
+              content:
+                "A page served from a listed origin may read this hub's responses with the " +
+                'bearer token of whoever is signed in there. An http:// origin other than ' +
+                'localhost or 127.0.0.1 sends that token in clear over the network — prefer ' +
+                "https://. The hub's own address, the hosted viewer and the native app need " +
+                'no entry.',
+            },
+            {
+              type: 'tags',
+              key: 'corsOrigins',
+              label: 'Allowed browser origins',
+              labelKey: 'server:global.s_system-config-auth.corsOrigins.label',
+              description:
+                'Extra origins (scheme://host[:port], no path) of web pages allowed to call this ' +
+                'hub from a browser, e.g. https://viewer.example or http://localhost:8081. ' +
+                'Applies to the next request, no restart.',
+              descriptionKey: 'server:global.s_system-config-auth.corsOrigins.description',
+              creatable: true,
+            },
           ],
         },
         {
@@ -666,6 +700,10 @@ export class SystemConfigAddon extends BaseAddon {
         if (invalid.length > 0) {
           throw new Error(`Not a network address or CIDR range: ${invalid.join(', ')}`)
         }
+      }
+      if (key === CORS_ORIGIN_KEY) {
+        const { rejected } = parseOriginList(readOriginSetting(value))
+        if (rejected.length > 0) throw new InvalidCorsOriginError(rejected)
       }
       let bucket = perSection.get(section)
       if (!bucket) {

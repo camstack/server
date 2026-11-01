@@ -1,6 +1,7 @@
 import type { AddonContext } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
-import { storeMayAnswer } from '../../../kernel/system-settings-policy.js'
+import { InvalidCorsOriginError } from '../../../auth/origin.js'
+import { isPreloadedSystemKey, storeMayAnswer } from '../../../kernel/system-settings-policy.js'
 import { SystemConfigAddon } from '../system-config.addon.js'
 
 /**
@@ -97,6 +98,44 @@ describe('System → Authentication: trusted networks (opt-in second-factor skip
     await expect(addon.updateGlobalSettings({ trustedNetworks: ['home'] })).rejects.toThrow(/home/)
     await addon.updateGlobalSettings({ trustedNetworks: ['192.168.1.0/24'] })
     expect(storeMayAnswer('auth.trustedNetworks')).toBe(true)
+    await addon.shutdown()
+  })
+})
+
+describe('System → Authentication: allowed browser origins (D707)', () => {
+  it('saves normalised-valid origins into the auth section, the store may answer and preloads it', async () => {
+    const { addon, sections } = await started()
+    await addon.updateGlobalSettings({
+      corsOrigins: ['https://viewer.example', 'http://localhost:8081'],
+    })
+    expect(sections.get('auth')).toEqual({
+      corsOrigins: ['https://viewer.example', 'http://localhost:8081'],
+    })
+    expect(storeMayAnswer('auth.corsOrigins')).toBe(true)
+    expect(isPreloadedSystemKey('auth.corsOrigins')).toBe(true)
+    expect(JSON.stringify(await addon.getGlobalSettings())).toContain('"key":"corsOrigins"')
+    await addon.shutdown()
+  })
+
+  it('refuses a save with an entry that is not an origin, with a typed error, writing nothing', async () => {
+    const { addon, sections } = await started()
+    const err = await addon
+      .updateGlobalSettings({
+        corsOrigins: ['https://ok.example', 'https://x.example/path', 'ftp://h'],
+      })
+      .catch((e: unknown) => e)
+    expect(err).toBeInstanceOf(InvalidCorsOriginError)
+    expect(err instanceof InvalidCorsOriginError && err.invalid).toEqual([
+      'https://x.example/path',
+      'ftp://h',
+    ])
+    expect(sections.get('auth')).toBeUndefined()
+    await addon.shutdown()
+  })
+
+  it('warns on the form about plain-http origins', async () => {
+    const { addon } = await started()
+    expect(JSON.stringify(await addon.getGlobalSettings())).toMatch(/http:\/\/ origin other than/)
     await addon.shutdown()
   })
 })

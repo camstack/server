@@ -33,7 +33,6 @@ const ENV_VAR_MAP: Record<string, string> = {
   CAMSTACK_PORT: 'server.port',
   CAMSTACK_HOST: 'server.host',
   CAMSTACK_DATA: 'server.dataPath',
-  CAMSTACK_CORS_ORIGINS: 'server.corsOrigins',
 }
 
 /** config.yaml, env overrides applied, parsed. */

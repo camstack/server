@@ -17,9 +17,10 @@
  *  - {@link OPAQUE_ORIGIN} (`null`): the native app's OTA-bundled embed is a
  *    `file://` page inside a WKWebView, whose origin is opaque. Removing it
  *    breaks live view on iOS;
- *  - the operator's extras (`server.corsOrigins` in config.yaml /
- *    `CAMSTACK_CORS_ORIGINS`). The hub's own public address needs no entry:
- *    a browser on it is the `own-host` case above.
+ *  - the operator's extras (`auth.corsOrigins`, System → Authentication,
+ *    read live from the settings store). The built-ins above are a floor that
+ *    holds before the store is open. The hub's own public address needs no
+ *    entry: a browser on it is the `own-host` case above.
  *
  * The answer to an allowed origin REFLECTS it exactly — never `*` — and never
  * carries `Access-Control-Allow-Credentials`. The cross-origin viewer
@@ -31,15 +32,17 @@
  *
  * Pure: no Fastify, no I/O — `register-cors-policy.ts` is the glue.
  */
+import {
+  normalizeOrigin,
+  OPAQUE_ORIGIN,
+  type ParsedOriginList,
+  readOriginSetting,
+} from '@camstack/system'
+
+export { normalizeOrigin, OPAQUE_ORIGIN, type ParsedOriginList }
 
 /** The hosted viewer PWA (operator decision 2026-10-06). */
 export const VIEWER_PWA_ORIGIN = 'https://camstack.zentik.app'
-
-/**
- * The serialisation of an opaque origin. The native app's OTA embed
- * (`assets/embed/camstack-embed.html`, loaded from `file://`) sends it.
- */
-export const OPAQUE_ORIGIN = 'null'
 
 /** Every method a hub route answers. */
 export const CORS_ALLOWED_METHODS = 'GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS'
@@ -81,42 +84,12 @@ export type CorsVerdict =
   | { readonly kind: 'allowed'; readonly origin: string; readonly reason: CorsAllowReason }
   | { readonly kind: 'denied'; readonly origin: string }
 
-/** The operator's configured list, split into what is usable and what is not. */
-export interface ParsedOriginList {
-  readonly origins: readonly string[]
-  readonly rejected: readonly string[]
-}
-
-/**
- * The canonical serialisation of an origin (`scheme://host[:port]`, lower
- * case, default port dropped), or `null` when `raw` is not an http(s) origin.
- * `null` (the opaque origin) is accepted verbatim.
- */
-export function normalizeOrigin(raw: string): string | null {
-  const trimmed = raw.trim()
-  if (trimmed === OPAQUE_ORIGIN) return OPAQUE_ORIGIN
-  let url: URL
-  try {
-    url = new URL(trimmed)
-  } catch {
-    return null
-  }
-  if (url.protocol !== 'https:' && url.protocol !== 'http:') return null
-  // An origin has no path, query, fragment or credentials. Accept a bare
-  // trailing slash (a common paste), refuse anything that names more.
-  if (url.username !== '' || url.password !== '') return null
-  if ((url.pathname !== '/' && url.pathname !== '') || url.search !== '' || url.hash !== '') {
-    return null
-  }
-  return url.origin
-}
-
-/** Read the configured value (array from YAML, already split from env). */
+/** Read the stored `auth.corsOrigins` value (a list, or one comma/space separated string). */
 export function parseConfiguredOrigins(value: unknown): ParsedOriginList {
-  if (!Array.isArray(value)) return { origins: [], rejected: [] }
+  const entries: readonly unknown[] = Array.isArray(value) ? value : readOriginSetting(value)
   const origins: string[] = []
   const rejected: string[] = []
-  for (const entry of value) {
+  for (const entry of entries) {
     if (typeof entry !== 'string') {
       rejected.push(String(entry))
       continue

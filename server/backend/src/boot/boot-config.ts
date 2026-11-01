@@ -75,6 +75,29 @@ const RETIRED_SECRET_ENV = [
 const RETIRED_AUTH_KEYS = ['jwtSecret', 'adminUsername', 'adminPassword'] as const
 
 /**
+ * The extra browser origins moved to the `auth.corsOrigins` setting (D707):
+ * edited in System → Authentication, read live. These two former sources are
+ * ignored, and named at boot so a stale value is told, never silently
+ * honoured.
+ */
+const RETIRED_CORS_ENV = 'CAMSTACK_CORS_ORIGINS'
+const RETIRED_CORS_YAML_KEY = 'server.corsOrigins'
+
+/** The retired CORS sources still present (names only, never the values). */
+export function retiredCorsSources(
+  env: Readonly<Record<string, string | undefined>>,
+  raw: Readonly<Record<string, unknown>>,
+): readonly string[] {
+  const fromEnv = (env[RETIRED_CORS_ENV] ?? '') !== '' ? [RETIRED_CORS_ENV] : []
+  const server = asJsonObject(raw['server']) ?? {}
+  const fromYaml =
+    server['corsOrigins'] !== undefined && server['corsOrigins'] !== null
+      ? [RETIRED_CORS_YAML_KEY]
+      : []
+  return [...fromEnv, ...fromYaml]
+}
+
+/**
  * Env variables that once set the node's certificate. Ignored since D726:
  * the admin UI (Network → Local access) is the one way to set it. Still
  * named here so a node that has them set is told, not silently re-keyed.
@@ -219,6 +242,15 @@ export function loadBootstrapConfig(configPath: string): BootstrapConfig {
         'config.yaml any more (D797). The session signing key lives in the ' +
         'keychain; a fresh hub seeds admin / changeme. ' +
         'Remove these entries — after importing their values with scripts/ops/keychain-migrate-hub.mjs.',
+    )
+  }
+
+  const retiredCors = retiredCorsSources(process.env, raw)
+  if (retiredCors.length > 0) {
+    console.warn(
+      `[Phase1] WARN ${retiredCors.join(', ')} ignored — the allowed browser origins are set ` +
+        'only in the admin UI (System → Authentication → Allowed browser origins, D707). ' +
+        'Re-enter them there and remove the entry.',
     )
   }
 

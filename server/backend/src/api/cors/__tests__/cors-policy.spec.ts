@@ -209,6 +209,47 @@ describe('registerCorsPolicy — HTTP', () => {
   })
 })
 
+describe('registerCorsPolicy — the auth.corsOrigins setting (D707)', () => {
+  const EXTRA = 'https://viewer.example'
+  const ask = (app: FastifyInstance, origin: string) =>
+    app.inject({ method: 'GET', url: '/trpc/health', headers: { host: HUB_HOST, origin } })
+
+  it('a store-written origin is allowed on the next request, and removing it denies', async () => {
+    const store = new Map<string, unknown>()
+    const app = await makeApp(makePolicy(() => store.get('auth.corsOrigins')).policy)
+    expect((await ask(app, EXTRA)).headers['access-control-allow-origin']).toBeUndefined()
+    store.set('auth.corsOrigins', [EXTRA])
+    expect((await ask(app, EXTRA)).headers['access-control-allow-origin']).toBe(EXTRA)
+    store.delete('auth.corsOrigins')
+    expect((await ask(app, EXTRA)).headers['access-control-allow-origin']).toBeUndefined()
+  })
+
+  it('the built-ins work with an empty store, and with a store that cannot answer yet', async () => {
+    for (const read of [
+      () => undefined,
+      () => {
+        throw new Error('settings store is not open')
+      },
+    ]) {
+      const app = await makeApp(makePolicy(read).policy)
+      expect((await ask(app, VIEWER_PWA_ORIGIN)).headers['access-control-allow-origin']).toBe(
+        VIEWER_PWA_ORIGIN,
+      )
+      expect((await ask(app, OPAQUE_ORIGIN)).headers['access-control-allow-origin']).toBe(
+        OPAQUE_ORIGIN,
+      )
+      expect((await ask(app, EXTRA)).headers['access-control-allow-origin']).toBeUndefined()
+    }
+  })
+
+  it('reads a comma-separated stored string, and names a refused entry under auth.corsOrigins', async () => {
+    const { policy, warns } = makePolicy(() => `${EXTRA}, not-an-origin`)
+    const app = await makeApp(policy)
+    expect((await ask(app, EXTRA)).headers['access-control-allow-origin']).toBe(EXTRA)
+    expect(warns.some((w) => w.meta?.['setting'] === 'auth.corsOrigins')).toBe(true)
+  })
+})
+
 describe('registerCorsPolicy — hijacked byte-range media', () => {
   it('a 206 through the data-plane proxy carries the exact origin and exposes Content-Range', async () => {
     const upstream = createServer((req, res) => {

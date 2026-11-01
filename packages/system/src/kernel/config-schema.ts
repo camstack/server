@@ -8,7 +8,6 @@ export type BootstrapServerConfig = {
   port: number
   host: string
   dataPath: string
-  corsOrigins: string[]
 }
 
 /** Bootstrap `hub` section — see {@link hubSchema}. */
@@ -56,36 +55,10 @@ export type BootstrapConfig = {
 
 // Sub-schemas extracted so we can derive defaults for Zod 4 compat.
 // In Zod 4, `.default({})` no longer recurses into field defaults.
-/**
- * A list of browser origins from config.yaml (a YAML list) or from the
- * `CAMSTACK_CORS_ORIGINS` env var (one comma-separated string — env carries
- * only strings). Validation of each entry is the CORS policy's job
- * (`server/backend/src/api/cors/cors-policy.ts`), which logs what it rejects;
- * the schema only fixes the SHAPE so a typo cannot stop the hub from booting.
- */
-const originListSchema: z.ZodType<string[]> = z.preprocess(
-  (value) =>
-    typeof value === 'string'
-      ? value
-          .split(',')
-          .map((entry) => entry.trim())
-          .filter((entry) => entry.length > 0)
-      : value,
-  z.array(z.string()),
-)
-
 const serverSchema: z.ZodType<BootstrapServerConfig> = z.object({
   port: z.number().default(4443),
   host: z.string().default('0.0.0.0'),
   dataPath: z.string().default(DEFAULT_DATA_PATH),
-  /**
-   * EXTRA browser origins allowed to call this hub cross-origin (D707), on
-   * top of the built-ins: the hub's own origin, the hosted viewer PWA and the
-   * native app's opaque `null` origin. Bootstrap-owned on purpose — widening
-   * who may read hub responses in a browser is a security decision, and the
-   * policy is live from the first request, before the settings store exists.
-   */
-  corsOrigins: originListSchema.default([]),
 })
 
 /**

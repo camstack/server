@@ -34,9 +34,11 @@ export interface CorsPolicyLogger {
 
 export interface CorsPolicyDeps {
   /**
-   * The operator's extra origins — `ConfigService.get('server.corsOrigins')`.
-   * Read per request and memoised by reference, so a `ConfigManager.update`
-   * applies without a restart and an unchanged list costs one comparison.
+   * The operator's extra origins — `ConfigService.get('auth.corsOrigins')`,
+   * the System → Authentication setting. Read per request and memoised by
+   * reference, so an edit applies to the next request with no restart and an
+   * unchanged list costs one comparison. A read the store cannot answer yet
+   * (it opens after the listener) is an EMPTY list: the built-ins still hold.
    */
   readonly configuredOrigins: () => unknown
   readonly logger: CorsPolicyLogger
@@ -67,13 +69,18 @@ export function createCorsPolicy(deps: CorsPolicyDeps): CorsPolicy {
   const loggedDenials = new Set<string>()
 
   const currentList = (): ReadonlySet<string> => {
-    const configured = deps.configuredOrigins()
+    let configured: unknown
+    try {
+      configured = deps.configuredOrigins()
+    } catch {
+      configured = undefined
+    }
     if (configured === lastConfigured) return listed
     lastConfigured = configured
     const parsed = parseConfiguredOrigins(configured)
     if (parsed.rejected.length > 0) {
       deps.logger.warn('cors: ignored configured origins that are not http(s) origins', {
-        meta: { rejected: parsed.rejected, setting: 'server.corsOrigins' },
+        meta: { rejected: parsed.rejected, setting: 'auth.corsOrigins' },
       })
     }
     listed = new Set([...builtIns, ...parsed.origins])
@@ -96,7 +103,7 @@ export function createCorsPolicy(deps: CorsPolicyDeps): CorsPolicy {
           meta: {
             origin: verdict.origin,
             host: headerValue(headers.host) ?? null,
-            hint: 'add it to server.corsOrigins (config.yaml) or CAMSTACK_CORS_ORIGINS',
+            hint: 'add it under System → Authentication → Allowed browser origins',
           },
         })
       }

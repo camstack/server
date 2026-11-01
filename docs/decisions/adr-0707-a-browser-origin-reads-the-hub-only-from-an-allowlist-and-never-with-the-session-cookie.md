@@ -9,6 +9,9 @@ applies-to:
   - server/backend/src/api/cors/register-cors-policy.ts
   - packages/system/src/http/reverse-proxy.ts
   - packages/system/src/kernel/config-schema.ts
+  - packages/system/src/auth/origin.ts
+  - packages/system/src/builtins/system-config/system-config.addon.ts
+  - server/backend/src/boot/boot-config.ts
 ---
 
 ## Context
@@ -52,8 +55,8 @@ allowlist contains:
 - `VIEWER_PWA_ORIGIN` (`https://camstack.zentik.app`);
 - `OPAQUE_ORIGIN` (`null`), for the native embed;
 - the hub's public URL, when it is set (`CAMSTACK_PUBLIC_ORIGIN` at the time of this record; folded into `CAMSTACK_HUB_PUBLIC_URL` on 2026-10-06, see `docs/architecture/deploying.md`);
-- the operator's extras in `server.corsOrigins`, set in config.yaml or through
-  `CAMSTACK_CORS_ORIGINS` as a comma-separated list.
+- the operator's extras: the `auth.corsOrigins` setting, edited in System →
+  Settings → Authentication and read live (see the amendment below).
 
 A denied origin gets no CORS header at all, and each denied origin is logged
 once. The hub never sends `Access-Control-Allow-Credentials`. Cross-origin
@@ -72,9 +75,10 @@ and D675 keeps that class out of the store's reach.
 
 ## Consequences
 
-- A new web host for the viewer needs a config entry and a restart. A dev
-  server is a new web host too: Expo web on `http://localhost:8081` must be
-  added to `CAMSTACK_CORS_ORIGINS`. The refusal is logged with that hint.
+- A new web host for the viewer needs an entry under Allowed browser origins
+  (no restart, see the amendment). A dev server is a new web host too: Expo web
+  on `http://localhost:8081` must be added there. The refusal is logged with
+  that hint.
 - `null` stays allowed. Any sandboxed iframe can claim the opaque origin, so for
   unauthenticated responses this entry is no stronger than the old `*`. It is
   the price of the native embed. Authenticated responses still need a bearer
@@ -115,3 +119,32 @@ below. Removing the WebSocket refusal fails the WebSocket test.
 hits the credential limiter. `reverse-proxy.spec.ts` pins the rule that the
 edge owns CORS. No guard script stops a new route from setting its own
 `Access-Control-Allow-Origin`; that is caught by review only.
+
+## Amendment — 2026-11-01: the extras are a setting, never config.yaml
+
+The operator's extra origins moved from `server.corsOrigins` (config.yaml) and
+`CAMSTACK_CORS_ORIGINS` to the `auth.corsOrigins` setting, beside
+`auth.trustedProxies` and `auth.trustedNetworks`: the same store, preloaded at
+boot, edited under System → Settings → Authentication, read on every request
+(`configuredOrigins()` is memoised by reference), so an edit applies to the next
+request with no restart. A dev viewer on `http://localhost:8099` no longer needs
+a yaml edit and a reboot.
+
+- The built-ins (the hub's own origin, the viewer PWA, `null`) are a floor in
+  code. They hold before the store is open, and a read the store cannot answer
+  is an empty list, never a refusal of the built-ins.
+- A save with an entry that is not an http(s) origin (a path, another scheme)
+  is refused whole with `InvalidCorsOriginError`, using the same
+  `normalizeOrigin` the policy reads with (`packages/system/src/auth/origin.ts`).
+  The form warns that a plain `http://` origin other than localhost or
+  127.0.0.1 sends the bearer token in clear.
+- The old sources are retired, not migrated: `server.corsOrigins` and
+  `CAMSTACK_CORS_ORIGINS` are ignored, and `boot-config.ts` names them in a
+  boot warning (as it does for the retired secret sources, D797), never their
+  values. `corsOrigins` is gone from the bootstrap schema. The production hub set
+  neither, so nothing is seeded.
+
+`cors-policy.spec.ts` proves that a store-written origin is allowed on the next
+request, that removing it denies, and that the built-ins serve with an empty or
+unanswerable store; `boot-config-retired-secrets.spec.ts` proves a yaml value is
+ignored and named; `system-config-auth-settings.spec.ts` proves the typed refusal.

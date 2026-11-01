@@ -456,14 +456,14 @@ async function bootstrap() {
   const fastify = app.getHttpAdapter().getInstance()
   // Which browser origins may read hub responses, and open the /trpc socket
   // (D707): the hub's own, the hosted viewer PWA, the native embed's opaque
-  // `null`, and the operator's `server.corsOrigins`. First hook on the
+  // `null`, and the operator's `auth.corsOrigins` setting (read live). First hook on the
   // instance so every route — and every OPTIONS — is judged.
   if (publicUrlWarning !== undefined) {
     app.get(LoggingService).createLogger('public-url').warn(publicUrlWarning)
   }
   const corsConfig = app.get(ConfigService)
   const corsPolicy = createCorsPolicy({
-    configuredOrigins: () => corsConfig.get('server.corsOrigins'),
+    configuredOrigins: () => corsConfig.get('auth.corsOrigins'),
     logger: app.get(LoggingService).createLogger('cors'),
   })
   registerCorsPolicy(fastify, corsPolicy)

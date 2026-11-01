@@ -188,7 +188,7 @@ either again. When the hub cannot name an address an agent can reach, an agent
 delivery fails with that reason — it never hands out `127.0.0.1`, which names
 the agent itself.
 
-## Optional settings for TLS, port and origins
+## Optional settings for TLS and port
 
 All optional, all `advanced` in the Unraid template:
 
@@ -196,7 +196,6 @@ All optional, all `advanced` in the Unraid template:
 | --- | --- | --- |
 | `CAMSTACK_TLS_ENABLED` | `true` | Any value other than `true` serves plain HTTP — for a reverse proxy that terminates TLS. |
 | `CAMSTACK_PORT` | `4443` | The hub's HTTPS port. With bridge networking change the published mapping instead. |
-| `CAMSTACK_CORS_ORIGINS` | blank | Extra browser origins, comma-separated (below). |
 
 The image's healthcheck follows `CAMSTACK_PORT` and `CAMSTACK_TLS_ENABLED`, so a
 hub moved off 4443 or onto plain HTTP does not report itself unhealthy.
@@ -236,16 +235,11 @@ socket, only when its origin is on an allowlist
 Some origins are allowed already: the hub's own (whatever address the browser
 used — the request's `Host`), the hosted viewer at
 `https://camstack.zentik.app` and the native app's embed (`null`). To add another, for example a self-hosted viewer or
-Expo web on `http://localhost:8081`, use one of these and then restart:
-
-```yaml
-# config.yaml
-server:
-  corsOrigins:
-    - http://localhost:8081
-```
-
-or `CAMSTACK_CORS_ORIGINS=http://localhost:8081,https://viewer.example`.
+Expo web on `http://localhost:8081`, add it under System → Settings →
+Authentication → Allowed browser origins. It applies to the next request, with
+no restart. There is no environment variable and no `config.yaml` key for it:
+the retired `server.corsOrigins` and `CAMSTACK_CORS_ORIGINS` are ignored and
+named in the boot log.
 
 The hub logs a refused origin once, in the `cors` scope, with this hint.
 Cross-origin callers authenticate with a bearer token. The session cookie

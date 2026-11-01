@@ -83,6 +83,15 @@ export { AuthAuditLog } from './auth/auth-audit-log.js'
 export type { AuthAuditAction, AuthAuditEvent, AuthAuditRecord } from './auth/auth-audit-log.js'
 export type { CidrMatcher, ParsedCidr, ParsedCidrList } from './auth/cidr.js'
 export { createCidrMatcher, normalizeIp, parseCidrList, readCidrSetting } from './auth/cidr.js'
+export type { ParsedOriginList } from './auth/origin.js'
+export {
+  InvalidCorsOriginError,
+  isInsecureOrigin,
+  normalizeOrigin,
+  OPAQUE_ORIGIN,
+  parseOriginList,
+  readOriginSetting,
+} from './auth/origin.js'
 export type {
   AuthAuditInternal,
   DeviceCredentialsInternal,

@@ -2,7 +2,7 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { loadBootstrapConfig, retiredSecretSources } from '../boot-config'
+import { loadBootstrapConfig, retiredCorsSources, retiredSecretSources } from '../boot-config'
 
 /**
  * D797: no secret reaches the hub through env or config.yaml. The retired
@@ -67,5 +67,44 @@ describe('boot config — retired secret sources (D797)', () => {
     const written = fs.readFileSync(configPath, 'utf-8')
     expect(written).not.toContain('jwtSecret')
     expect(written).not.toContain('adminPassword')
+  })
+})
+
+describe('boot config — retired CORS sources (D707)', () => {
+  let dir: string
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'boot-config-cors-'))
+  })
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true })
+    vi.unstubAllEnvs()
+    vi.restoreAllMocks()
+  })
+
+  it('names the env variable and the yaml key, never a value', () => {
+    expect(
+      retiredCorsSources(
+        { CAMSTACK_CORS_ORIGINS: 'https://a.example' },
+        { server: { corsOrigins: ['x'] } },
+      ),
+    ).toEqual(['CAMSTACK_CORS_ORIGINS', 'server.corsOrigins'])
+    expect(retiredCorsSources({ CAMSTACK_CORS_ORIGINS: '' }, { server: {} })).toEqual([])
+  })
+
+  it('ignores a yaml corsOrigins and an env value, and logs the names', () => {
+    vi.stubEnv('CAMSTACK_CORS_ORIGINS', 'https://env-origin.example')
+    const configPath = path.join(dir, 'config.yaml')
+    fs.writeFileSync(configPath, 'server:\n  corsOrigins:\n    - https://yaml-origin.example\n')
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    vi.spyOn(console, 'log').mockImplementation(() => undefined)
+
+    const config = loadBootstrapConfig(configPath)
+
+    expect(config.server).not.toHaveProperty('corsOrigins')
+    const warned = warn.mock.calls.map((c) => c.map(String).join(' ')).join('\n')
+    expect(warned).toContain('server.corsOrigins')
+    expect(warned).toContain('CAMSTACK_CORS_ORIGINS')
+    expect(warned).not.toContain('yaml-origin.example')
+    expect(warned).not.toContain('env-origin.example')
   })
 })

@@ -41,6 +41,8 @@ export const STORE_READABLE_BOOTSTRAP_KEYS: ReadonlySet<string> = new Set([
   'auth.trustedProxies',
   // Opt-in: networks a DIRECT login may skip its second factor from.
   'auth.trustedNetworks',
+  // Extra browser origins that may read hub responses (D707): read live per request.
+  'auth.corsOrigins',
   // The hub's human name (D861): a plain display string the System -> Settings
   // form edits; nothing security-relevant hangs on it.
   'server.name',
@@ -75,6 +77,7 @@ export const PRELOADED_SYSTEM_KEYS: readonly string[] = [
   'auth.accessTokenExpiry',
   'auth.trustedProxies',
   'auth.trustedNetworks',
+  'auth.corsOrigins',
   'addons.convergence.dryRun',
 ]
 
