@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- config.yaml bootstrap.requiredAddons is ignored (with a warning); the first-boot addon set always comes from the server package
+
 ## [1.2.728] - 2026-11-01
 
 ### Changed

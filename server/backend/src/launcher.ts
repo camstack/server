@@ -19,9 +19,6 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-// Type-only import — erased at runtime, does NOT load @camstack/server/system module.
-import type { bootstrapSchema as BootstrapSchemaType } from '@camstack/server/system'
-import * as yaml from 'js-yaml'
 import { formatAddonRootReport, inventoryAddonRoots } from './addon-root-inventory.js'
 import type { ServerBootstrapManifest } from './bootstrap-packages.js'
 import { selectHubBootstrapPackages } from './bootstrap-packages.js'
@@ -41,36 +38,6 @@ import { applyPendingPreMigrationRestore } from './pre-migration-restore.js'
 
 /** Resolve the data directory from env or default */
 const DATA_DIR = process.env['CAMSTACK_DATA'] ?? 'camstack-data'
-
-/**
- * Locate + parse `config.yaml` relative to the data dir. Returns the
- * raw object on success, `null` when missing or unparseable. The
- * launcher uses this BEFORE @camstack/server/system is imported so it must stay
- * free of core deps — just js-yaml + the kernel's bootstrapSchema for
- * shape validation by the call site.
- */
-function readConfigYaml(dataDir: string): unknown {
-  // CONFIG_PATH (when set) is the authoritative location and must win — it
-  // is what main.ts reads/writes. Without this the launcher would miss the
-  // `bootstrap.*` section of a relocated config.yaml (e.g. a separate
-  // /config mount) and silently fall back to defaults.
-  const candidates = [
-    ...(process.env.CONFIG_PATH ? [path.resolve(process.env.CONFIG_PATH)] : []),
-    path.resolve(dataDir, '..', 'config.yaml'),
-    path.resolve(dataDir, 'config.yaml'),
-    path.resolve(process.cwd(), 'config.yaml'),
-  ]
-  const found = candidates.find((p) => fs.existsSync(p))
-  if (!found) return null
-  try {
-    return yaml.load(fs.readFileSync(found, 'utf-8')) ?? {}
-  } catch (err) {
-    console.warn(
-      `[launcher] Could not parse ${found}: ${err instanceof Error ? err.message : String(err)}`,
-    )
-    return null
-  }
-}
 
 /**
  * Derive the bootstrap package list from THIS server's own package.json — the
@@ -144,38 +111,6 @@ function readInstalledAddonVersions(
   return out
 }
 
-/**
- * Read `bootstrap.requiredAddons` from `<dataDir>/config.yaml` if present.
- * Returns the parsed array, an empty array when explicitly set to `[]`,
- * or `null` when the field is absent (caller should fall back to the
- * kernel's REQUIRED_PACKAGES constant).
- *
- * Inline YAML parse rather than going through ConfigManager: the
- * launcher runs before @camstack/server/system is imported and must stay free of
- * core dependencies. Just yaml.load + bootstrapSchema (kernel) for
- * shape validation.
- *
- * `bootstrapSchema` is passed in (not imported at module top) so this
- * helper can be called after the dynamic @camstack/server/system import in launch().
- */
-function readBootstrapRequiredAddons(
-  dataDir: string,
-  bootstrapSchema: typeof BootstrapSchemaType,
-): readonly string[] | null {
-  const raw = readConfigYaml(dataDir)
-  if (raw === null) return null
-
-  const validation = bootstrapSchema.safeParse(raw)
-  if (!validation.success) {
-    console.warn(
-      `[launcher] config.yaml failed bootstrapSchema validation: ${validation.error.message}`,
-    )
-    return null
-  }
-
-  return validation.data.bootstrap.requiredAddons ?? null
-}
-
 async function launch(): Promise<void> {
   const dataDir = DATA_DIR
 
@@ -219,9 +154,7 @@ async function launch(): Promise<void> {
   // @camstack/server/system is imported DYNAMICALLY here — AFTER the active framework
   // dir + NODE_PATH are resolved above — so the correct framework copy is what
   // gets loaded. Never import it at module top.
-  const { AddonInstaller, bootstrapSchema, quarantineAddonResidue } = await import(
-    '@camstack/server/system'
-  )
+  const { AddonInstaller, quarantineAddonResidue } = await import('@camstack/server/system')
 
   // Residue quarantine — FIRST thing that touches the addon root, before the
   // bootstrap seed writes into it and long before any loader scans it.
@@ -264,11 +197,8 @@ async function launch(): Promise<void> {
     ...(bundledAddonsDir ? { bundledAddonsDir } : {}),
   })
 
-  // bootstrap.requiredAddons from config.yaml — if set, REPLACES the
-  // kernel's hard-coded REQUIRED_PACKAGES. The kernel never reaches into
-  // SQL before this list is installed; everything here must be a known
-  // package name that can be resolved from the workspace, the bundle, or
-  // npm. Default (undefined) → derive from THIS server's own package.json.
+  // The first-boot addon set always comes from the package; no config key
+  // overrides it.
   //
   // We derive the list here rather than relying on
   // `AddonInstaller.REQUIRED_PACKAGES` (which uses
@@ -282,12 +212,10 @@ async function launch(): Promise<void> {
   // The server's own package.json is always readable next to this launcher.
   // Role-aware default bootstrap set: the hub installs every addon-* dep of
   // its own package.json; the agent installs ONLY the agent bootstrap subset
-  // (AGENT_PACKAGES, derived from `camstack.agentBootstrapAddons`). A
-  // config.yaml `bootstrap.requiredAddons` override still wins for both roles.
+  // (AGENT_PACKAGES, derived from `camstack.agentBootstrapAddons`).
   const roleDefaultBootstrap =
     role === 'agent' ? AddonInstaller.AGENT_PACKAGES : deriveBootstrapFromSelf()
-  const bootstrapRequired =
-    readBootstrapRequiredAddons(dataDir, bootstrapSchema) ?? roleDefaultBootstrap
+  const bootstrapRequired = roleDefaultBootstrap
   console.log(`[launcher] bootstrap (${role}): ${bootstrapRequired.length} required package(s)`)
 
   // THE FIRST-BOOT ADDON PLAN — reported every boot (D45 task 32).

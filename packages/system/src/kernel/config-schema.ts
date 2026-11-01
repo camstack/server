@@ -11,15 +11,13 @@ export type BootstrapServerConfig = {
 }
 
 /** Bootstrap `bootstrap` section — see {@link bootstrapAddonsSchema}. */
-export type BootstrapAddonsConfig = {
-  requiredAddons?: string[]
-}
+export type BootstrapAddonsConfig = Record<never, never>
 
 /**
  * Bootstrap config — loaded from config.yaml (plus the three env overrides) ONLY
  * at startup, by `loadBootstrapConfig`, the one loader. A key not named here is
  * not read: an older yaml that still carries `mode`, `hub`, `agent`, `auth`,
- * `tls`, `keychain.keyFile` / `previousKeyFile` or `bootstrap.settingsStoreAddon` / `forceDisable` / `installSource` boots with them ignored.
+ * `tls`, `keychain.keyFile` / `previousKeyFile` or `bootstrap.settingsStoreAddon` / `forceDisable` / `installSource` / `requiredAddons` boots with them ignored.
  */
 export type BootstrapConfig = {
   server: BootstrapServerConfig
@@ -35,21 +33,11 @@ const serverSchema: z.ZodType<BootstrapServerConfig> = z.object({
 })
 
 /**
- * Bootstrap-time addon configuration — read PURELY from YAML, before the
- * kernel can talk to the settings-store. Every field is optional.
+ * Bootstrap-time addon configuration. Nothing is read from it: the first-boot
+ * addon set always comes from the package (the server's own addon-* deps on a
+ * hub, `camstack.agentBootstrapAddons` on an agent). A retired key is stripped.
  */
-const bootstrapAddonsSchema: z.ZodType<BootstrapAddonsConfig> = z.object({
-  /**
-   * Override the kernel's hard-coded `AddonInstaller.REQUIRED_PACKAGES`.
-   * Passing an array here REPLACES the default list entirely — useful
-   * for stripped-down deployments (only the bundle of addons the
-   * operator actually wants) and for forcing a different storage
-   * backend at first boot.
-   *
-   * Leave undefined to use the kernel-shipped defaults.
-   */
-  requiredAddons: z.array(z.string()).optional(),
-})
+const bootstrapAddonsSchema: z.ZodType<BootstrapAddonsConfig> = z.object({})
 
 const bootstrapSchemaDefinition: z.ZodType<BootstrapConfig> = z.object({
   server: serverSchema.default(serverSchema.parse({})),

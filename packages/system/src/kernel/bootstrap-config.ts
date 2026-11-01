@@ -54,6 +54,12 @@ function warnRetiredYamlKeys(raw: Record<string, unknown>): void {
         'a workspace build reaches a node through `camstack deploy`. Remove the key.',
     )
   }
+  if (isRecord(section) && 'requiredAddons' in section) {
+    console.warn(
+      '[Phase1] WARN bootstrap.requiredAddons ignored — the first-boot addon set always comes ' +
+        'from the server package. Remove the key.',
+    )
+  }
   const keychain = raw['keychain']
   if (isRecord(keychain) && ('keyFile' in keychain || 'previousKeyFile' in keychain)) {
     console.warn(

@@ -35,7 +35,7 @@ describe('one bootstrap loader', () => {
         'agent: { name: edge, statusPort: 9999 }',
         'auth: { jwtSecret: s }',
         'tls: { enabled: false }',
-        'bootstrap: { settingsStoreAddon: "@x/y", forceDisable: ["@a/b"], installSource: local }',
+        'bootstrap: { settingsStoreAddon: "@x/y", forceDisable: ["@a/b"], installSource: local, requiredAddons: ["@x/y"] }',
         'keychain: { masterKeyFile: /x/key }',
         'server: { port: 5151 }',
         '',
@@ -49,6 +49,11 @@ describe('one bootstrap loader', () => {
       String(c[0]).includes('bootstrap.installSource'),
     )
     expect(installSourceWarns).toHaveLength(1)
+    const requiredAddonsWarns = warn.mock.calls.filter((c) =>
+      String(c[0]).includes('bootstrap.requiredAddons'),
+    )
+    expect(requiredAddonsWarns).toHaveLength(1)
+    expect('requiredAddons' in config.bootstrap).toBe(false)
     expect('installSource' in config.bootstrap).toBe(false)
     expect(Object.keys(config).sort()).toEqual(['bootstrap', 'server'])
     expect(config.server.port).toBe(5151)
@@ -57,6 +62,12 @@ describe('one bootstrap loader', () => {
       expect(manager.getBootstrap(dead)).toBeUndefined()
     }
     expect(manager.getBootstrap<number>('server.port')).toBe(5151)
+  })
+
+  it('the launcher no longer reads bootstrap.requiredAddons: its set is the role default', () => {
+    const launcher = fs.readFileSync(path.resolve(__dirname, '../../launcher.ts'), 'utf-8')
+    expect(launcher).not.toMatch(/requiredAddons|readBootstrapRequiredAddons|bootstrapSchema/)
+    expect(launcher).toMatch(/AddonInstaller\.AGENT_PACKAGES : deriveBootstrapFromSelf\(\)/)
   })
 
   it('an env override reaches both views', () => {
@@ -85,12 +96,7 @@ describe('one bootstrap loader', () => {
       }
     }
     for (const root of roots) walk(root)
-    // The kernel loader, and the launcher, which reads only `bootstrap.*` (a dedicated
-    // pre-kernel path search) — both through the one `bootstrapSchema`.
-    expect(loaders.sort()).toEqual([
-      'packages/system/src/kernel/bootstrap-config.ts',
-      'server/backend/src/launcher.ts',
-    ])
+    expect(loaders.sort()).toEqual(['packages/system/src/kernel/bootstrap-config.ts'])
     const env: string[] = []
     const walkEnv = (d: string): void => {
       for (const entry of fs.readdirSync(d, { withFileTypes: true })) {

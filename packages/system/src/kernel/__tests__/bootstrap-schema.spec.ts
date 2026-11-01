@@ -20,23 +20,6 @@ describe('bootstrapSchema — bootstrap.* defaults', () => {
     const parsed = bootstrapSchema.parse({})
     expect(parsed.bootstrap).toEqual({})
   })
-
-  it('preserves explicit values over defaults', () => {
-    const parsed = bootstrapSchema.parse({
-      bootstrap: { requiredAddons: ['@camstack/server', '@camstack/addon-pipeline'] },
-    })
-    expect(parsed.bootstrap.requiredAddons).toEqual([
-      '@camstack/server',
-      '@camstack/addon-pipeline',
-    ])
-  })
-
-  it('accepts an empty requiredAddons array (operator wants zero auto-installs)', () => {
-    const parsed = bootstrapSchema.parse({
-      bootstrap: { requiredAddons: [] },
-    })
-    expect(parsed.bootstrap.requiredAddons).toEqual([])
-  })
 })
 
 describe('bootstrapSchema — dead yaml keys are ignored (#342)', () => {
@@ -52,6 +35,7 @@ describe('bootstrapSchema — dead yaml keys are ignored (#342)', () => {
         settingsStoreAddon: '@camstack/addon-postgres-storage',
         forceDisable: ['@camstack/addon-broken'],
         installSource: 'local',
+        requiredAddons: ['@x/y'],
       },
     })
     expect(Object.keys(parsed).sort()).toEqual(['bootstrap', 'server'])
@@ -62,10 +46,10 @@ describe('bootstrapSchema — dead yaml keys are ignored (#342)', () => {
   it('names exactly the surviving bootstrap keys', () => {
     const parsed = bootstrapSchema.parse({
       server: {},
-      bootstrap: { requiredAddons: [] },
+      bootstrap: {},
     })
     expect(Object.keys(parsed.server).sort()).toEqual(['dataPath', 'host', 'port'])
-    expect(Object.keys(parsed.bootstrap).sort()).toEqual(['requiredAddons'])
+    expect(Object.keys(parsed.bootstrap)).toEqual([])
   })
 })
 
@@ -75,6 +59,16 @@ describe('bootstrapSchema — retired bootstrap.installSource', () => {
       const parsed = bootstrapSchema.parse({ bootstrap: { installSource: value } })
       expect(parsed.bootstrap).toEqual({})
       expect('installSource' in parsed.bootstrap).toBe(false)
+    }
+  })
+})
+
+describe('bootstrapSchema — retired bootstrap.requiredAddons', () => {
+  it('strips the key, empty array included: a yaml that still carries it parses without it', () => {
+    for (const value of [[], ['@x/y']]) {
+      const parsed = bootstrapSchema.parse({ bootstrap: { requiredAddons: value } })
+      expect(parsed.bootstrap).toEqual({})
+      expect('requiredAddons' in parsed.bootstrap).toBe(false)
     }
   })
 })
