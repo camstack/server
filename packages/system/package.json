@@ -588,6 +588,10 @@
   "nx": {
     "targets": {
       "build": {
+        "outputs": [
+          "{projectRoot}/dist",
+          "{workspaceRoot}/server/backend/system"
+        ],
         "parallelism": false
       }
     }
