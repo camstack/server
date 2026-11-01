@@ -10,6 +10,7 @@ import {
 } from '../ecowitt-mapping.js'
 import {
   buildEcowittGatewayCandidates,
+  gatewayDeviceNativeId,
   groupNativeId,
   type EcowittDiscoverableSensor,
 } from '../ecowitt-discovery.js'
@@ -216,7 +217,13 @@ describe('deviceGroupForSensor (1→3 split)', () => {
   })
 })
 
-describe('buildEcowittGatewayCandidates (3 group containers)', () => {
+const GATEWAY = {
+  online: true,
+  hasAdminLink: true,
+  adoptedDeviceId: null,
+} as const
+
+describe('buildEcowittGatewayCandidates (Gateway + 3 group containers)', () => {
   const SENSORS: readonly EcowittDiscoverableSensor[] = [
     // weather-station: a WS90 wind reading
     {
@@ -267,27 +274,48 @@ describe('buildEcowittGatewayCandidates (3 group containers)', () => {
     },
   ]
 
-  it('returns exactly three Container candidates, one per device group', () => {
+  it('offers the Gateway first as a sibling of three Container candidates, one per device group', () => {
     const candidates = buildEcowittGatewayCandidates({
       gatewayId: 'ecowitt_001',
       gatewayName: 'Garden GW2000',
+      gateway: GATEWAY,
       sensors: SENSORS,
       adoptedDeviceIdByGroup: {},
     })
-    expect(candidates).toHaveLength(3)
-    expect(candidates.map((c) => c.childNativeId)).toEqual(
+    expect(candidates).toHaveLength(4)
+    const [gateway, ...containers] = candidates
+    expect(gateway?.type).toBe(DeviceType.Gateway)
+    expect(gateway?.childNativeId).toBe(gatewayDeviceNativeId('ecowitt_001'))
+    expect(gateway?.children).toBeUndefined()
+    expect(gateway?.capabilities).toEqual(['device-admin-link'])
+    expect(containers.map((c) => c.childNativeId)).toEqual(
       ECOWITT_DEVICE_GROUPS.map((g) => groupNativeId('ecowitt_001', g)),
     )
-    for (const c of candidates) {
+    for (const c of containers) {
       expect(c.type).toBe(DeviceType.Container)
       expect(c.status).toBe('online')
     }
+  })
+
+  it('reports the Gateway offline, without a link in listener transport, and adopted by id', () => {
+    const [gateway] = buildEcowittGatewayCandidates({
+      gatewayId: 'g',
+      gatewayName: 'GW',
+      gateway: { online: false, hasAdminLink: false, adoptedDeviceId: 7 },
+      sensors: [],
+      adoptedDeviceIdByGroup: {},
+    })
+    expect(gateway?.status).toBe('offline')
+    expect(gateway?.capabilities).toEqual([])
+    expect(gateway?.alreadyAdopted).toBe(true)
+    expect(gateway?.adoptedDeviceId).toBe(7)
   })
 
   it('routes each sensor into the right group container', () => {
     const candidates = buildEcowittGatewayCandidates({
       gatewayId: 'ecowitt_001',
       gatewayName: 'GW',
+      gateway: GATEWAY,
       sensors: SENSORS,
       adoptedDeviceIdByGroup: {},
     })
@@ -310,6 +338,7 @@ describe('buildEcowittGatewayCandidates (3 group containers)', () => {
     const candidates = buildEcowittGatewayCandidates({
       gatewayId: 'b',
       gatewayName: 'GW',
+      gateway: GATEWAY,
       sensors: SENSORS,
       adoptedDeviceIdByGroup: {},
     })
@@ -331,6 +360,7 @@ describe('buildEcowittGatewayCandidates (3 group containers)', () => {
     const candidates = buildEcowittGatewayCandidates({
       gatewayId: 'b',
       gatewayName: 'GW',
+      gateway: GATEWAY,
       sensors: [],
       adoptedDeviceIdByGroup: { gateway: 42, 'weather-station': null },
     })
@@ -347,11 +377,13 @@ describe('buildEcowittGatewayCandidates (3 group containers)', () => {
     const candidates = buildEcowittGatewayCandidates({
       gatewayId: 'b',
       gatewayName: 'GW',
+      gateway: GATEWAY,
       sensors: [],
       adoptedDeviceIdByGroup: {},
     })
-    expect(candidates).toHaveLength(3)
-    for (const c of candidates) expect(c.children).toEqual([])
+    const containers = candidates.filter((c) => c.type === DeviceType.Container)
+    expect(containers).toHaveLength(3)
+    for (const c of containers) expect(c.children).toEqual([])
   })
 })
 
@@ -366,7 +398,10 @@ describe('settingsToEcowittConfig', () => {
     }
   })
   it('parses a listener transport', () => {
-    const cfg = settingsToEcowittConfig({ transport: 'listener', listenPort: 5000 })
+    const cfg = settingsToEcowittConfig({
+      transport: 'listener',
+      listenPort: 5000,
+    })
     expect(cfg.transport).toBe('listener')
     if (cfg.transport === 'listener') {
       expect(cfg.listenPort).toBe(5000)

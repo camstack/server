@@ -1,5 +1,5 @@
 import type { Sensor } from '@apocaliss92/nodewitt'
-import { DeviceType, type DiscoveredChildDevice } from '@camstack/types'
+import { DeviceType, deviceAdminLinkCapability, type DiscoveredChildDevice } from '@camstack/types'
 import {
   capForQuantity,
   deviceGroupForSensor,
@@ -20,7 +20,7 @@ export type EcowittDiscoverableSensor = Pick<
 
 /**
  * The native id a group Container candidate is keyed on: `<gatewayId>:<group>`.
- * `gatewayId` is the gateway Hub's stableId, which ALREADY carries the `ecowitt:`
+ * `gatewayId` is the integration's gateway key, which ALREADY carries the `ecowitt:`
  * prefix (see `addon.ts` generateStableId) — so this must NOT re-add it, else the
  * id double-prefixes to `ecowitt:ecowitt:<gw>:<group>`. One physical gateway
  * yields THREE candidates (one per {@link EcowittDeviceGroup}).
@@ -29,9 +29,21 @@ export function groupNativeId(gatewayId: string, group: EcowittDeviceGroup): str
   return `${gatewayId}:${group}`
 }
 
+/** The native id of the gateway device itself, one per integration. */
+export function gatewayDeviceNativeId(gatewayId: string): string {
+  return `${gatewayId}:device`
+}
+
 export interface BuildEcowittCandidateInput {
-  /** The gateway Hub device's stableId (= gateway identity). */
+  /** The integration's gateway key (the stableId of the Hub it replaced, or one derived). */
   readonly gatewayId: string
+  /** The gateway device ({@link DeviceType.Gateway}): offered first, offline while unreachable. */
+  readonly gateway: {
+    readonly online: boolean
+    /** Only the local transport has a page to link to. */
+    readonly hasAdminLink: boolean
+    readonly adoptedDeviceId: number | null
+  }
   /** Operator-overridable / derived gateway label. */
   readonly gatewayName: string
   /** Current sensors on the gateway. */
@@ -86,7 +98,17 @@ export function buildEcowittGatewayCandidates(
     byGroup.get(group)?.push(sensorChild(sensor))
   }
 
-  return ECOWITT_DEVICE_GROUPS.map((group) => {
+  const gatewayCandidate: DiscoveredChildDevice = {
+    childNativeId: gatewayDeviceNativeId(input.gatewayId),
+    name: input.gatewayName,
+    type: DeviceType.Gateway,
+    status: input.gateway.online ? 'online' : 'offline',
+    metadata: { serialNumber: input.gatewayId },
+    alreadyAdopted: input.gateway.adoptedDeviceId !== null,
+    adoptedDeviceId: input.gateway.adoptedDeviceId,
+    capabilities: input.gateway.hasAdminLink ? [deviceAdminLinkCapability.name] : [],
+  }
+  const groups = ECOWITT_DEVICE_GROUPS.map((group) => {
     const adoptedDeviceId = input.adoptedDeviceIdByGroup[group] ?? null
     const children = byGroup.get(group) ?? []
     return {
@@ -104,4 +126,6 @@ export function buildEcowittGatewayCandidates(
       children,
     } satisfies DiscoveredChildDevice
   })
+  // The gateway is a sibling of the group Containers, never their parent.
+  return [gatewayCandidate, ...groups]
 }

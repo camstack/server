@@ -1,7 +1,9 @@
 export { EcowittProviderAddon } from './addon.js'
 export {
   ecowittConfigSchema,
-  ecowittGatewaySchema,
+  connectionFromSettings,
+  gatewayKeyOf,
+  ECOWITT_SYSTEM,
   buildConnectionFormSchema,
   settingsToEcowittConfig,
 } from './config.js'
@@ -9,7 +11,7 @@ export type {
   EcowittConfig,
   EcowittLocalConfig,
   EcowittListenerConfig,
-  EcowittGatewayConfig,
+  EcowittConnectionRead,
 } from './config.js'
 export {
   capForQuantity,
@@ -19,5 +21,13 @@ export {
   deviceGroupLabel,
   ECOWITT_DEVICE_GROUPS,
 } from './ecowitt-mapping.js'
-export type { EcowittSensorCap, EcowittDeviceGroup } from './ecowitt-mapping.js'
-export { buildEcowittGatewayCandidates, groupNativeId } from './ecowitt-discovery.js'
+export type {
+  EcowittSensorCap,
+  EcowittDeviceGroup,
+} from './ecowitt-mapping.js'
+export {
+  buildEcowittGatewayCandidates,
+  gatewayDeviceNativeId,
+  groupNativeId,
+} from './ecowitt-discovery.js'
+export { ADDON_MIGRATIONS } from './migrations/index.js'

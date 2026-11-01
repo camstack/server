@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest'
 import type { z } from 'zod'
 import { amcrestCameraSchema } from '../../packages/addon-provider-amcrest/src/schema.ts'
 import { dreameChildSchema } from '../../packages/addon-provider-dreame/src/devices/dreame-child-device.ts'
-import { ecowittGatewaySchema } from '../../packages/addon-provider-ecowitt/src/config.ts'
+import { buildConnectionFormSchema as ecowittConnectionForm } from '../../packages/addon-provider-ecowitt/src/config.ts'
 import { hikvisionCameraSchema } from '../../packages/addon-provider-hikvision/src/schema.ts'
 import { rademacherConnectionSchema } from '../../packages/addon-provider-rademacher/src/config.ts'
 import { reolinkHubConnectionSchema } from '../../packages/addon-provider-reolink/src/hub-connection.ts'
@@ -24,7 +24,6 @@ const cases: ReadonlyArray<readonly [string, z.ZodType, readonly string[]]> = [
   ['vesync account', vesyncAccountSchema, ['connection.password']],
   ['velux integration', veluxConnectionSchema, ['password']],
   ['rademacher integration', rademacherConnectionSchema, ['password']],
-  ['ecowitt gateway (union transport)', ecowittGatewaySchema, ['connection.password']],
   ['tuya device', tuyaDeviceConfigSchema, ['localKey']],
   ['dreame child', dreameChildSchema, ['navigationAccessCode']],
   ['reolink camera', reolinkCameraSchema, ['password']],
@@ -49,6 +48,7 @@ const integrationForms: ReadonlyArray<readonly [string, () => ConfigUISchema, re
   [
     ['unifi controller', unifiConnectionForm, ['apiKey', 'password']],
     ['unraid hub', unraidConnectionForm, ['apiKey']],
+    ['ecowitt integration', ecowittConnectionForm, ['password']],
   ]
 
 describe('declared integration-form secrets', () => {

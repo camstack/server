@@ -29,12 +29,12 @@ import {
 /**
  * Persisted config every Ecowitt sensor child carries. `sensorId` resolves the
  * live reading from the gateway's client; `gatewayId` selects the gateway (its
- * Hub stableId); `quantity` is the Ecowitt physical quantity that drives the cap
+ * gateway key); `quantity` is the Ecowitt physical quantity that drives the cap
  * selection; `system`/`integrationId` are provenance.
  */
 export const ecowittSensorSchema = z.object({
   sensorId: z.string().min(1).describe('Ecowitt sensor stable id'),
-  gatewayId: z.string().min(1).describe('Parent gateway Hub stableId'),
+  gatewayId: z.string().min(1).describe('Gateway key of the owning integration'),
   quantity: z.string().min(1).describe('Ecowitt physical quantity'),
   system: z.literal('ecowitt').optional(),
   integrationId: z.string().optional(),

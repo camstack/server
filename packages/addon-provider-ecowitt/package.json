@@ -39,18 +39,21 @@
         "category": "providers",
         "name": "Ecowitt",
         "version": "0.1.0",
-        "description": "Adopt Ecowitt weather-station gateways and their sensors over the local network (poll or push)",
+        "description": "Add an Ecowitt weather-station gateway as an integration (local poll or push) and adopt its Gateway device, group containers and sensors",
         "entry": "./dist/addon.js",
         "icon": "assets/icon.svg",
         "color": "#2e8b57",
         "instanceMode": "multiple",
-        "mode": "standalone",
+        "mode": "account",
         "execution": {
           "placement": "hub-only"
         },
         "capabilities": [
           {
             "name": "device-provider"
+          },
+          {
+            "name": "device-adoption"
           }
         ]
       }

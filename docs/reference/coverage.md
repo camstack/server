@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**227 units · 7669 source files · 214 units claimed by at least one document (7628 files).**
+**227 units · 7676 source files · 214 units claimed by at least one document (7635 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -89,6 +89,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/types/src/automation` | 19 | `automations` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0954-actions-are-declared-list-entries-not-devices-one-actions-surface-over-action-source-providers.md`, `decisions/adr-0972-a-number-tied-to-a-quantity-is-entered-in-a-unit-the-person-picks.md`, +5 more | — |
 | `packages/ui-library/src/lib` | 19 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md`, +5 more, 2 ADRs | 2026-10-26 |
 | `server/backend` | 19 | `api-surface` | `decisions/adr-0693-a-live-database-is-backed-up-by-its-owner-never-copied-as-files.md`, `design/2026-08-13-single-copy-addons-first-boot-install.md`, `architecture/overview.md`, +20 more, 6 ADRs | 2026-10-27 |
+| `packages/addon-provider-ecowitt` | 18 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/addon-provider-tuya` | 18 | `device-providers` | `architecture/device-model.md` _(covers)_, 1 ADR | 2026-10-26 |
 | `packages/addon-provider-unifi` | 18 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/addon-provider-unraid` | 18 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
@@ -119,7 +120,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/types/src/records` | 12 | — | `architecture/records.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0881-records-are-the-third-storage-api-and-a-secret-field-is-a-feature-of-the-kind.md`, +1 more | 2026-10-22 |
 | `packages/addon-pipeline-orchestrator/src/camera-sensors` | 11 | `pipeline-orchestration` | `architecture/detection-execution.md` _(covers)_, `decisions/adr-0673-a-camera-sensor-has-a-mode-and-one-bridge-emits-the-cameras-effective-onboard-motion.md`, `decisions/adr-0696-a-cameras-motion-slice-means-motion-and-only-the-orchestrator-writes-it.md`, +1 more, 1 ADR | 2026-10-24 |
 | `packages/addon-pipeline-orchestrator/src/widgets` | 11 | `pipeline-orchestration` | `decisions/adr-0931-a-packages-rule-can-open-a-candidate-from-a-scene-difference-and-confirm-it-with-the-llm.md`, 1 ADR | — |
-| `packages/addon-provider-ecowitt` | 11 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/addon-provider-gree` | 11 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/addon-provider-vesync` | 11 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/types` | 11 | `capabilities`, `decode-and-data-planes`, `shared-types`, `transport` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/cloud-training.md`, `decisions/adr-0267-the-token-lifetime-has-one-default-and-is-validated-where-it-is-signed.md`, +2 more, 1 ADR | 2026-10-14 |

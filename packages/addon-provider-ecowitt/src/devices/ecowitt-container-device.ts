@@ -34,7 +34,7 @@ export type EcowittSensorEntry = z.infer<typeof ecowittSensorEntrySchema>
  * on every `snapshot` push). `system`/`integrationId`/`name` are provenance.
  */
 export const ecowittContainerSchema = z.object({
-  gatewayId: z.string().min(1).describe('Parent gateway Hub stableId'),
+  gatewayId: z.string().min(1).describe('Gateway key of the owning integration'),
   // The logical device this Container represents within the gateway split. One
   // physical gateway fans out into up to THREE Containers (gateway /
   // weather-station / temp-sensor-ch1); each Container holds only the sensors

@@ -46,17 +46,24 @@ describe('Ecowitt LAN discovery', () => {
     })
   })
 
-  it('turns a reply into a candidate keyed on the responder address', () => {
+  it('offers a reply as a Gateway to set up as an integration, keyed on the responder address', () => {
     const gateways = ecowittGatewaysFromHits([udpHit('192.0.2.7', GW), udpHit('192.0.2.7', GW)])
     expect(gateways).toHaveLength(1)
     expect(ecowittCandidates(gateways)).toEqual([
       {
         stableId: 'ecowitt:192-0-2-7',
-        type: DeviceType.Hub,
+        type: DeviceType.Gateway,
         suggestedName: 'GW1100A',
-        prefilledConfig: { name: 'GW1100A', connection: { transport: 'local', host: '192.0.2.7' } },
+        prefilledConfig: { transport: 'local', host: '192.0.2.7' },
+        setupIntegration: true,
       },
     ])
+  })
+
+  it('does not offer a gateway an integration already names', () => {
+    const gateways = ecowittGatewaysFromHits([udpHit('192.0.2.7', GW)])
+    expect(ecowittCandidates(gateways, new Set(['ecowitt:192-0-2-7']))).toEqual([])
+    expect(ecowittCandidates(gateways, new Set(['ecowitt:192-0-2-8']))).toHaveLength(1)
   })
 
   it('rejects a datagram that is not a gateway reply', () => {

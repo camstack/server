@@ -1,6 +1,4 @@
 {
-  "connection.s_identity.title": "Gateway",
-  "connection.s_identity.name.label": "Nome",
   "connection.s_transport.title": "Trasporto",
   "connection.s_transport.description": "Il polling locale si connette al gateway (consigliato). Il listener push richiede che l'upload \"Customized\" del gateway punti a questo hub.",
   "connection.s_transport.transport.label": "Trasporto",

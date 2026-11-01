@@ -1,6 +1,4 @@
 {
-  "connection.s_identity.title": "Gateway",
-  "connection.s_identity.name.label": "Name",
   "connection.s_transport.title": "Transport",
   "connection.s_transport.description": "Local poll connects out to the gateway (recommended). Push listener needs the gateway \"Customized\" upload pointed at this hub.",
   "connection.s_transport.transport.label": "Transport",

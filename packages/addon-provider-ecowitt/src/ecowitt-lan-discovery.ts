@@ -36,9 +36,11 @@ function checksumHolds(buf: Buffer): boolean {
 }
 
 /** Read one `CMD_BROADCAST` reply; null when it is not a gateway's answer. */
-export function parseEcowittReply(
-  payloadHex: string,
-): { readonly mac: string; readonly module: string; readonly model?: string } | null {
+export function parseEcowittReply(payloadHex: string): {
+  readonly mac: string
+  readonly module: string
+  readonly model?: string
+} | null {
   const buf = Buffer.from(payloadHex, 'hex')
   if (buf.length < MIN_REPLY_LENGTH) return null
   if (buf[0] !== 0xff || buf[1] !== 0xff || buf[2] !== CMD_BROADCAST) return null
@@ -50,7 +52,11 @@ export function parseEcowittReply(
   const ssid = buf.subarray(SSID_START, ssidEnd).toString('ascii').trim()
   const module = ssid.includes(' ') ? ssid.slice(0, ssid.indexOf(' ')) : ssid
   const wifiAt = module.indexOf('-WIFI')
-  return { mac, module, ...(wifiAt > 0 ? { model: module.slice(0, wifiAt) } : {}) }
+  return {
+    mac,
+    module,
+    ...(wifiAt > 0 ? { model: module.slice(0, wifiAt) } : {}),
+  }
 }
 
 /** Gateways among the engine's UDP replies, one per MAC. */
@@ -72,21 +78,32 @@ export function ecowittGatewaysFromHits(
   return [...byMac.values()]
 }
 
+/** The gateway key a scan hit gets: what the migration of a Hub at that host kept as its key. */
+export function ecowittScanKey(host: string): string {
+  return `ecowitt:${slugifyHost(host)}`
+}
+
+/**
+ * A gateway is offered as an INTEGRATION to set up (a {@link DeviceType.Gateway} candidate marked
+ * `setupIntegration`), never as a device to add. `known` holds the keys of integrations that
+ * already exist; their gateways are not offered again.
+ */
 export function ecowittCandidates(
   gateways: readonly EcowittDiscoveredGateway[],
+  known: ReadonlySet<string> = new Set(),
 ): readonly DiscoveryCandidate[] {
-  return gateways.map((g) => {
+  return gateways.flatMap((g): DiscoveryCandidate[] => {
+    const stableId = ecowittScanKey(g.ip)
+    if (known.has(stableId)) return []
     const displayName = g.model ?? g.name
-    return {
-      // Match generateStableId (local transport → `ecowitt:<slug(host)>`) so a re-scan of an
-      // already-added gateway is detected as adopted and re-adding reuses its persisted row.
-      stableId: `ecowitt:${slugifyHost(g.ip)}`,
-      type: DeviceType.Hub,
-      suggestedName: displayName,
-      prefilledConfig: {
-        name: displayName,
-        connection: { transport: 'local', host: g.ip },
+    return [
+      {
+        stableId,
+        type: DeviceType.Gateway,
+        suggestedName: displayName,
+        prefilledConfig: { transport: 'local', host: g.ip },
+        setupIntegration: true,
       },
-    }
+    ]
   })
 }

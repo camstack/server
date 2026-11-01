@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { ConfigUISchema } from '@camstack/types'
+import { isSecretMarkerLike, type ConfigUISchema } from '@camstack/types'
 
 /**
  * Operator-supplied Ecowitt gateway settings for ONE broker (= one station).
@@ -12,6 +12,12 @@ import type { ConfigUISchema } from '@camstack/types'
  *
  * Local-poll is the recommended default — it has no inbound-IP constraint.
  */
+
+/** A password the keychain could not serve reads as a marker object, not a string. */
+function markerToEmpty(value: unknown): unknown {
+  if (isSecretMarkerLike(value)) return ''
+  return value === null || value === undefined ? '' : value
+}
 
 const baseFields = {
   /** Human-overridable station identity used to scope the adopted gateway. */
@@ -31,8 +37,7 @@ export const ecowittLocalConfigSchema = z.object({
     )
     .describe('Gateway HTTP port'),
   password: z
-    .string()
-    .default('')
+    .preprocess(markerToEmpty, z.string().default(''))
     .describe('Gateway password (optional — newer firmware)')
     .meta({ secret: true }),
   pollIntervalMs: z
@@ -94,50 +99,60 @@ export function settingsToEcowittConfig(settings: unknown): EcowittConfig {
 }
 
 // ---------------------------------------------------------------------------
-// Gateway Hub persisted config (standalone mode)
+// Integration settings
 // ---------------------------------------------------------------------------
 
+/** The device-registry `system` tag every Ecowitt device carries. */
+export const ECOWITT_SYSTEM = 'ecowitt'
+
+/** A connection read from an integration's settings, plus whether its password is stored but unreadable. */
+export interface EcowittConnectionRead {
+  readonly connection: EcowittConfig
+  readonly passwordLocked: boolean
+}
+
 /**
- * Persisted config for an Ecowitt gateway {@link import('@camstack/types').DeviceType.Hub}
- * device. The operator-supplied CONNECTION lives directly on the device (Reolink
- * pattern) — there is no broker registry. The gateway owns its own live nodewitt
- * client keyed on its own `stableId`; group Container children reference it via
- * their `gatewayId` config field.
+ * Parse an integration's settings into a connection, or null while they are unusable (no host for
+ * the local transport). `passwordLocked` reports a stored password the keychain cannot serve now:
+ * the caller must not dial with an empty one.
  */
-export const ecowittGatewaySchema = z.object({
-  /** The transport + endpoint the gateway's live client dials / binds. */
-  connection: ecowittConfigSchema,
-  /** Provenance marker used to scope offline / cascade helpers. */
-  system: z.literal('ecowitt-gateway').optional(),
-})
+export function connectionFromSettings(settings: unknown): EcowittConnectionRead | null {
+  const raw = toRecord(settings)
+  try {
+    return {
+      connection: settingsToEcowittConfig(raw),
+      passwordLocked: isSecretMarkerLike(raw['password']),
+    }
+  } catch {
+    return null
+  }
+}
 
-export type EcowittGatewayConfig = z.infer<typeof ecowittGatewaySchema>
+/** True when two connections would dial the gateway the same way. */
+export function sameConnection(a: EcowittConfig, b: EcowittConfig): boolean {
+  return JSON.stringify(a) === JSON.stringify(b)
+}
 
 /**
- * Hand-written connection form for the gateway device-creation UI (standalone
- * mode — Reolink pattern). The connection lives on the gateway DEVICE config,
- * not in a broker registry. A `name` field is included so the operator names
- * the gateway Hub at creation time (mirrors the Reolink creation form).
+ * The key the live client, the group Containers and their sensors share (their `gatewayId`):
+ * the stableId of the Hub device an integration replaced (its `originStableId`), else one derived
+ * from the integration id. It never changes once children carry it.
+ */
+export function gatewayKeyOf(integration: {
+  readonly id: string
+  readonly originStableId?: string | undefined
+}): string {
+  const origin = integration.originStableId?.trim() ?? ''
+  return origin.length > 0 ? origin : `ecowitt:${slugifyHost(integration.id)}`
+}
+
+/**
+ * The integration's settings form (`globalSettingsSchema`): the connection lives on the
+ * INTEGRATION, which carries the name. The `password` field is what puts the value in the keychain.
  */
 export function buildConnectionFormSchema(): ConfigUISchema {
   return {
     sections: [
-      {
-        id: 'identity',
-        title: 'Gateway',
-        titleKey: 'provider-ecowitt:connection.s_identity.title',
-        columns: 1,
-        fields: [
-          {
-            type: 'text',
-            key: 'name',
-            label: 'Name',
-            labelKey: 'provider-ecowitt:connection.s_identity.name.label',
-            required: true,
-            placeholder: 'Weather station',
-          },
-        ],
-      },
       {
         id: 'transport',
         title: 'Transport',
