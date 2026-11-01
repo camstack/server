@@ -9,6 +9,8 @@ import type { IScopedLogger } from '@camstack/types'
 import { WORKER_CRASH_WINDOW_MS, WORKER_MAX_CRASHES } from './constants.js'
 import { scrubSecrets } from './secret-file.js'
 import {
+  RATE_LIMITED_CODE,
+  RateLimitedError,
   type WorkerLine,
   WorkerLineSchema,
   type WorkerRequest,
@@ -222,7 +224,9 @@ export function startAlexaWorker(deps: AlexaWorkerDeps): AlexaWorker {
     const current = pending
     pending = null
     if (message.ok) current.resolve(message.result)
-    else current.reject(new Error(scrub(message.error)))
+    else if (message.code === RATE_LIMITED_CODE) {
+      current.reject(new RateLimitedError(scrub(message.error)))
+    } else current.reject(new Error(scrub(message.error)))
     pump()
   }
 

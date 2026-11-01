@@ -6,7 +6,7 @@
  * system-scope cap that takes a deviceId was previously never device-filtered
  * — see the generator header).
  *
- * Coverage: 582 methods carry a device reference, of which
+ * Coverage: 584 methods carry a device reference, of which
  * 188 are on SYSTEM-scope caps.
  *
  * Top-level fields, number arrays, and one-level arrays of objects carrying
@@ -213,6 +213,8 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'dishwasher.setVarioSpeedPlus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'dishwasher.start': [{ name: "deviceId", form: "single", optional: false }] as const,
   'dishwasher.stop': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'doNotDisturb.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'doNotDisturb.setEnabled': [{ name: "deviceId", form: "single", optional: false }] as const,
   'doorbell.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'enumSensor.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'eventEmitter.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,

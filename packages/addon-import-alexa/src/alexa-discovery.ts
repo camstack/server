@@ -1,4 +1,5 @@
-import type { DiscoveredChildDevice } from '@camstack/types'
+import { DeviceType, type DiscoveredChildDevice } from '@camstack/types'
+import type { EchoDevice } from './speak/worker-protocol.js'
 import type { AlexaAppliance } from './alexa-client.js'
 import { mapAlexaCapabilitiesToCamStack } from './alexa-domain-mapping.js'
 
@@ -37,4 +38,45 @@ export function buildAlexaApplianceCandidate(input: {
 /** True when an appliance maps to at least one cap (worth surfacing/adopting). */
 export function mappableAppliance(appliance: AlexaAppliance): boolean {
   return mapAlexaCapabilitiesToCamStack(appliance.interfaces).capabilities.length > 0
+}
+
+/** `echo:<serial>`: how an Echo is named among an account's adoption candidates. */
+export const ECHO_NATIVE_ID_PREFIX = 'echo:'
+
+export function echoNativeId(serial: string): string {
+  return `${ECHO_NATIVE_ID_PREFIX}${serial}`
+}
+
+/** The serial an Echo candidate id names, or null when the id is not an Echo's. */
+export function echoSerialOf(childNativeId: string): string | null {
+  if (!childNativeId.startsWith(ECHO_NATIVE_ID_PREFIX)) return null
+  const serial = childNativeId.slice(ECHO_NATIVE_ID_PREFIX.length)
+  return serial === '' ? null : serial
+}
+
+/** An Echo the adoption list offers: a media player, a flat sibling under the Alexa integration. */
+export function isAdoptableEcho(device: EchoDevice): boolean {
+  // A multi-room group is not a speaker: it has no player of its own.
+  return device.kind === 'device'
+}
+
+export function buildAlexaEchoCandidate(input: {
+  readonly device: EchoDevice
+  /** Adopted CamStack device id for this Echo, or null when not adopted. */
+  readonly adoptedDeviceId: number | null
+}): DiscoveredChildDevice {
+  const { device, adoptedDeviceId } = input
+  return {
+    childNativeId: echoNativeId(device.id),
+    name: device.name.length > 0 ? device.name : device.id,
+    type: DeviceType.MediaPlayer,
+    status: device.online ? 'online' : 'offline',
+    metadata: {
+      manufacturer: 'Amazon',
+      ...(device.room !== undefined ? { externalLocation: device.room } : {}),
+    },
+    alreadyAdopted: adoptedDeviceId !== null,
+    adoptedDeviceId,
+    capabilities: ['media-player', 'do-not-disturb'],
+  }
 }

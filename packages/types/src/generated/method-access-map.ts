@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1475 method paths across 199 capabilities.
+ * Coverage: 1477 method paths across 200 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -473,6 +473,8 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'displayPalette.getPalette': { capName: "display-palette", capScope: "system", addonId: null, access: "view", role: "viewer" } as const,
   'displayPalette.listPresets': { capName: "display-palette", capScope: "system", addonId: null, access: "view", role: "viewer" } as const,
   'displayPalette.setPalette': { capName: "display-palette", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'doNotDisturb.getStatus': { capName: "do-not-disturb", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
+  'doNotDisturb.setEnabled': { capName: "do-not-disturb", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'doorbell.getStatus': { capName: "doorbell", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'embeddingEncoder.encode': { capName: "embedding-encoder", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'embeddingEncoder.encodeText': { capName: "embedding-encoder", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
@@ -1567,6 +1569,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "device-status",
   "dishwasher",
   "display-palette",
+  "do-not-disturb",
   "doorbell",
   "embedding-encoder",
   "enum-sensor",
@@ -1736,6 +1739,7 @@ export const DEVICE_CAP_NAMES: readonly string[] = [
   "device-runs",
   "device-status",
   "dishwasher",
+  "do-not-disturb",
   "doorbell",
   "enum-sensor",
   "event-emitter",

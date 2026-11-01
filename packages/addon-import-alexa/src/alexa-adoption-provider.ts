@@ -6,12 +6,21 @@ import type {
   DiscoveredChildDevice,
 } from '@camstack/types'
 import type { AlexaAppliance } from './alexa-client.js'
-import { buildAlexaApplianceCandidate, mappableAppliance } from './alexa-discovery.js'
+import {
+  buildAlexaApplianceCandidate,
+  buildAlexaEchoCandidate,
+  echoSerialOf,
+  isAdoptableEcho,
+  mappableAppliance,
+} from './alexa-discovery.js'
+import type { EchoDevice } from './speak/worker-protocol.js'
 
 /** Narrow registry surface consumed by the adoption provider. */
 export interface AlexaAdoptionRegistry {
   /** The live appliance inventory for a broker (or [] when unknown). */
   getAppliancesForBroker(id: string): readonly AlexaAppliance[]
+  /** The Echoes the account's Python session lists (or [] when it has none yet). */
+  getEchoesForBroker(id: string): readonly EchoDevice[]
   list(): readonly { readonly id: string; readonly name: string }[]
   has(id: string): boolean
 }
@@ -20,11 +29,20 @@ export interface AlexaAdoptionProviderDeps {
   readonly registry: AlexaAdoptionRegistry
   readonly getBrokerIdForIntegration: (integrationId: string) => Promise<string>
   readonly listAdoptedAlexa: () => Promise<
-    ReadonlyArray<{ readonly id: number; readonly config: Record<string, unknown> }>
+    ReadonlyArray<{
+      readonly id: number
+      readonly config: Record<string, unknown>
+    }>
   >
   readonly adoptAppliance: (input: {
     readonly brokerId: string
     readonly appliance: AlexaAppliance
+    readonly integrationId: string
+    readonly name: string
+  }) => Promise<{ readonly deviceId: number }>
+  readonly adoptEcho: (input: {
+    readonly brokerId: string
+    readonly echo: EchoDevice
     readonly integrationId: string
     readonly name: string
   }) => Promise<{ readonly deviceId: number }>
@@ -54,6 +72,24 @@ async function adoptedApplianceId(
   return null
 }
 
+/** Resolve the adopted CamStack device id for a (broker, Echo serial), or null. */
+async function adoptedEchoId(
+  brokerId: string,
+  serial: string,
+  listAdoptedAlexa: AlexaAdoptionProviderDeps['listAdoptedAlexa'],
+): Promise<number | null> {
+  for (const d of await listAdoptedAlexa()) {
+    if (
+      d.config['system'] === 'alexa' &&
+      d.config['brokerId'] === brokerId &&
+      d.config['serial'] === serial
+    ) {
+      return d.id
+    }
+  }
+  return null
+}
+
 /**
  * Construct the `device-adoption` cap provider for the Alexa import addon. Pure
  * builder. One broker = one Amazon account; each mappable appliance is a flat
@@ -68,6 +104,7 @@ export function buildAlexaAdoptionProvider(
     getBrokerIdForIntegration,
     listAdoptedAlexa,
     adoptAppliance,
+    adoptEcho,
     removeDevice,
     findDeviceConfig,
     logger,
@@ -83,6 +120,10 @@ export function buildAlexaAdoptionProvider(
         listAdoptedAlexa,
       )
       out.push(buildAlexaApplianceCandidate({ appliance, adoptedDeviceId }))
+    }
+    for (const device of registry.getEchoesForBroker(brokerId).filter(isAdoptableEcho)) {
+      const adoptedDeviceId = await adoptedEchoId(brokerId, device.id, listAdoptedAlexa)
+      out.push(buildAlexaEchoCandidate({ device, adoptedDeviceId }))
     }
     return out
   }
@@ -155,7 +196,39 @@ export function buildAlexaAdoptionProvider(
       }[] = []
       let failures = 0
 
+      const echoes = registry.getEchoesForBroker(brokerId)
       for (const nativeId of childNativeIds) {
+        const echoSerial = echoSerialOf(nativeId)
+        if (echoSerial !== null) {
+          const echo = echoes.find((device) => device.id === echoSerial && isAdoptableEcho(device))
+          if (echo === undefined) {
+            logger.warn('alexa adopt: Echo not found in the account — skipping', {
+              meta: { nativeId, brokerId },
+            })
+            failures++
+            continue
+          }
+          try {
+            const name = perCandidate?.[nativeId]?.name ?? echo.name
+            const { deviceId } = await adoptEcho({
+              brokerId,
+              echo,
+              integrationId,
+              name,
+            })
+            adopted.push({
+              childNativeId: nativeId,
+              parentDeviceId: deviceId,
+              accessoryDeviceIds: [],
+            })
+          } catch (err: unknown) {
+            logger.warn('alexa adopt: failed to adopt Echo', {
+              meta: { brokerId, serial: echoSerial, error: errMsg(err) },
+            })
+            failures++
+          }
+          continue
+        }
         const appliance = appliances.find((a) => a.applianceId === nativeId)
         if (appliance === undefined) {
           logger.warn('alexa adopt: appliance not found in inventory — skipping', {

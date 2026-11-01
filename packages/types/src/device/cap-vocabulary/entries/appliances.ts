@@ -19,6 +19,7 @@ type ApplianceCap =
   | 'running-state'
   | 'device-runs'
   | 'timed-run'
+  | 'do-not-disturb'
   | 'navigation'
   | 'script-runner'
   | 'automation-control'
@@ -1457,6 +1458,45 @@ export const APPLIANCE_CAP_VOCABULARY: CapVocabularySlice<ApplianceCap> = {
           'Annulla lo spegnimento programmato di {device}',
         ),
         icon: 'timer-off',
+      },
+    ],
+  },
+
+  'do-not-disturb': {
+    scope: 'device',
+    noun: t('Do not disturb', 'Non disturbare'),
+    actions: [
+      {
+        id: 'dnd.on',
+        method: 'setEnabled',
+        label: t('Do not disturb on', 'Attiva Non disturbare'),
+        phrase: t('Turn on Do not disturb on {device}', 'Attiva Non disturbare su {device}'),
+        icon: 'bell-off',
+        args: { enabled: true },
+      },
+      {
+        id: 'dnd.off',
+        method: 'setEnabled',
+        label: t('Do not disturb off', 'Disattiva Non disturbare'),
+        phrase: t('Turn off Do not disturb on {device}', 'Disattiva Non disturbare su {device}'),
+        icon: 'bell',
+        args: { enabled: false },
+      },
+    ],
+    state: [
+      {
+        kind: 'boolean',
+        field: 'enabled',
+        label: t('Do not disturb', 'Non disturbare'),
+        whenTrue: t(
+          'When Do not disturb turns on on {device}',
+          'Quando {device} attiva Non disturbare',
+        ),
+        whenFalse: t(
+          'When Do not disturb turns off on {device}',
+          'Quando {device} disattiva Non disturbare',
+        ),
+        icon: 'bell-off',
       },
     ],
   },

@@ -28,3 +28,13 @@ export type AlexaRegion = (typeof ALEXA_REGIONS)[number]
 
 export const SPEAK_MODES = ['speak', 'announce'] as const
 export type SpeakMode = (typeof SPEAK_MODES)[number]
+
+/** How often an adopted Echo's player state is read (a push channel is a later phase). */
+export const ECHO_POLL_MS = 30_000
+
+/** One more read after a command, once Amazon has had time to apply it. */
+export const ECHO_REREAD_MS = 1_500
+
+/** After a 429 the account is left alone for this long, doubling up to the cap. */
+export const ECHO_RATE_BACKOFF_BASE_MS = 30_000
+export const ECHO_RATE_BACKOFF_MAX_MS = 5 * 60_000

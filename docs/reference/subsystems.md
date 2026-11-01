@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 7757 source files · 1236 file(s) in no subsystem.**
+**31 subsystems · 7762 source files · 1236 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -25,7 +25,7 @@ commits. A generated page may not.
 | --- | --- | --- | --- | --- |
 | Kernel, addon lifecycle and boot | 107 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `architecture/overview.md` _(covers)_, +82 more, 13 ADRs | 2026-10-27 | ✅ |
 | Transport and cross-node routing | 105 | `architecture/transport.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/overview.md` _(covers)_, +56 more, 12 ADRs | 2026-10-22 | ✅ |
-| Capability system and codegen | 326 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/capabilities.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +237 more, 51 ADRs | 2026-10-26 | ✅ |
+| Capability system and codegen | 327 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/capabilities.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +237 more, 51 ADRs | 2026-10-26 | ✅ |
 | Device model and the provider contract | 110 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/device-model.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +59 more, 6 ADRs | 2026-10-26 | ✅ |
 | Device providers (per vendor) | 746 | `architecture/device-model.md` _(covers)_, `addons/addon-provider-reolink.md` _(covers)_, `addons/addon-provider-homeassistant.md` _(covers)_, +83 more, 14 ADRs | 2026-10-26 | ✅ |
 | Decode and the data planes | 81 | `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-28-faces-plates-frame-locality.md` _(covers)_, `design/2026-08-29-media-plane-memory-comparison.md` _(covers)_, +28 more, 7 ADRs | 2026-10-13 | ⚠️ |
@@ -44,7 +44,7 @@ commits. A generated page may not.
 | The hub API surface | 167 | `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/authentication.md`, +107 more, 18 ADRs | 2026-10-27 | ⚠️ |
 | Shared types, schemas and enums | 102 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0972-a-number-tied-to-a-quantity-is-entered-in-a-unit-the-person-picks.md`, `architecture/windows-agent.md`, +34 more, 5 ADRs | 2026-10-26 | ⚠️ |
 | Update, release, OTA and agent delivery | 70 | `architecture/update-and-release.md`, `decisions/adr-0175-an-update-notification-is-polled-on-its-own-clock-and-remembered-across-restarts.md`, `decisions/adr-0857-an-agents-identity-is-its-mesh-certificate-there-is-no-cluster-secret-and-a-pairing-is-confirmed-on-both-screens.md`, +34 more, 10 ADRs | 2026-10-27 | ✅ |
-| Ecosystem exports — HomeKit, Home Assistant, Alexa, Google Home, Matter, MQTT | 308 | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/ecosystem-export-plan.md` _(covers)_, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +50 more, 20 ADRs | 2026-10-26 | ⚠️ |
+| Ecosystem exports — HomeKit, Home Assistant, Alexa, Google Home, Matter, MQTT | 312 | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/ecosystem-export-plan.md` _(covers)_, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +50 more, 20 ADRs | 2026-10-26 | ⚠️ |
 | Remote access and networking | 56 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0227-the-hub-reissues-its-certificate-only-when-it-cannot-do-its-job.md`, +18 more | 2026-10-21 | ⚠️ |
 | Automations, blocks and declared devices | 183 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +36 more, 1 ADR | 2026-10-26 | ⚠️ |
 | Alerts, liveness and system health | 55 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0850-numeric-history-has-one-mechanism-device-history.md`, +43 more | 2026-10-13 | ⚠️ |
@@ -81,7 +81,7 @@ Declares what a node can do — every `*.cap.ts`, the routers generated from the
 
 - **Owner doc**: `docs/architecture/capabilities.md`
 - **Code**: `packages/types/src/capabilities/**`, `packages/types/src/generated/**`, `packages/types/src/interfaces/**`, `packages/types/src/cap-call-context.ts`, `packages/system/src/kernel/capability-registry.ts`, `packages/system/src/kernel/capability-handle.ts`, `packages/system/src/kernel/cap-router-builder.ts`, `packages/system/src/kernel/infra-capabilities.ts`, `server/backend/src/core/capability/**`
-- **Files**: 326 (325 claimed by some document)
+- **Files**: 327 (326 claimed by some document)
 - **Uncovered**: `server/backend/src/core/capability` (1)
 
 ### ✅ Device model and the provider contract
@@ -252,7 +252,7 @@ Publishes CamStack's devices into somebody else's ecosystem, and imports theirs.
 
 - **Owner doc**: — none
 - **Code**: `packages/addon-export-hap/**`, `packages/addon-export-alexa/**`, `packages/addon-export-google/**`, `packages/addon-import-alexa/**`, `packages/addon-matter-broker/**`, `packages/addon-mqtt-broker/**`, `packages/addon-provider-homeassistant/src/ha-export/**`
-- **Files**: 308 (308 claimed by some document)
+- **Files**: 312 (312 claimed by some document)
 - **Uncovered**: —
 
 ### ⚠️ Remote access and networking

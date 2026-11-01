@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The timed-run capability is listed as not exported to Home Assistant.
+- The new do-not-disturb capability is recorded as not exported to Home Assistant
 
 ## [1.2.645] - 2026-11-01
 

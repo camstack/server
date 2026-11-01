@@ -413,6 +413,7 @@
   "displayPalette.getPalette": "protected",
   "displayPalette.listPresets": "protected",
   "displayPalette.setPalette": "admin",
+  "doNotDisturb.setEnabled": "protected",
   "embeddingEncoder.encode": "admin",
   "embeddingEncoder.encodeText": "admin",
   "embeddingEncoder.getInfo": "admin",

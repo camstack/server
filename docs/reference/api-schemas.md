@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1030 shared schemas.**
+**1031 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -1880,6 +1880,11 @@ Enum: `"idle" \| "running" \| "paused" \| "finished" \| "error" \| "unavailable"
 - `startedAtMs`: `number \| null`
 - `finishedAtMs`: `number \| null`
 - `error`: `string \| null`
+
+### `DoNotDisturbStatusSchema`
+
+- `enabled`: `boolean \| null`
+- `lastChangedAt`: `number`
 
 ### `DoorbellPressEventSchema`
 

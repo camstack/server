@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**199 capabilities · 1475 methods.**
+**200 capabilities · 1477 methods.**
 
 ## Method index
 
@@ -464,6 +464,8 @@
 | `displayPalette.getPalette` | query | protected | display-palette |
 | `displayPalette.listPresets` | query | protected | display-palette |
 | `displayPalette.setPalette` | mutation | admin | display-palette |
+| `doNotDisturb.getStatus` | query | protected | do-not-disturb (auto) |
+| `doNotDisturb.setEnabled` | mutation | protected | do-not-disturb |
 | `doorbell.getStatus` | query | protected | doorbell (auto) |
 | `embeddingEncoder.encode` | query | admin | embedding-encoder |
 | `embeddingEncoder.encodeText` | query | admin | embedding-encoder |
@@ -2633,6 +2635,19 @@
 | getPalette | `displayPalette.getPalette` | query | protected | `void` | `{ status: "ready"; presetId: "camstack" \| "high-contrast" \| "okabe-ito"; customized: boolean; source: "stored" \| "unconfigured"; swatches: Record<string, { form: "solid"; hex: string } \| { form: "gradient"; hex: string; alphas: number[] }>; fallbacks: string[] } \| { status: "unknown"; reason: string }` |
 | listPresets | `displayPalette.listPresets` | query | protected | `void` | `({ id: string; name: string; swatches: Record<string, { form: "solid"; hex: string } \| { form: "gradient"; hex: string; alphas: number[] }>; fallbacks: string[] })[]` |
 | setPalette | `displayPalette.setPalette` | mutation | admin | `{ presetId: string } \| { presetId: string; overrides: Record<string, { form: "solid"; hex: string } \| { form: "gradient"; hex: string; alphas: number[] }> }` | `{ status: "ready"; presetId: "camstack" \| "high-contrast" \| "okabe-ito"; customized: boolean; source: "stored" \| "unconfigured"; swatches: Record<string, { form: "solid"; hex: string } \| { form: "gradient"; hex: string; alphas: number[] }>; fallbacks: string[] }` |
+
+### `do-not-disturb` → `doNotDisturb.*`
+
+- **Source:** `packages/types/src/capabilities/do-not-disturb.cap.ts:22`
+- **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `media-player`
+- **Archetypes:** status(push) · runtimeState
+- **Provider interface:** `IDoNotDisturbProvider`
+- **runtimeState:** `DoNotDisturbStatusSchema`
+
+| Method | tRPC path | Kind | Auth | Input | Output |
+|---|---|---|---|---|---|
+| getStatus _(auto)_ | `doNotDisturb.getStatus` | query | protected | `{ deviceId: number }` | `DoNotDisturbStatusSchema` |
+| setEnabled | `doNotDisturb.setEnabled` | mutation | protected | `{ deviceId: number; enabled: boolean }` | `void` |
 
 ### `doorbell` → `doorbell.*`
 

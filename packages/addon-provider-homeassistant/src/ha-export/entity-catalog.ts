@@ -2316,6 +2316,13 @@ export interface UnexportedCap {
 
 export const CAPS_NOT_EXPORTED: readonly UnexportedCap[] = [
   {
+    cap: 'do-not-disturb',
+    reason:
+      'A vendor switch of a speaker, provided so far only by an imported Echo: its ' +
+      'media player is the entity a home-automation front end needs, and no entity ' +
+      'kind has been chosen for the Do Not Disturb switch yet.',
+  },
+  {
     cap: 'timed-run',
     reason:
       'A hub-side timer for a device that has none: a "run for N minutes" command and ' +

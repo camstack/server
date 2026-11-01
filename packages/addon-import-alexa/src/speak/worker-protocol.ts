@@ -42,10 +42,26 @@ const WorkerErrSchema = z.object({
   id: z.string(),
   ok: z.literal(false),
   error: z.string(),
+  /** A typed reason the worker names; `rate-limited` is Amazon's 429. */
+  code: z.string().optional(),
 })
 
 export const WorkerLineSchema = z.union([WorkerOkSchema, WorkerErrSchema])
 export type WorkerLine = z.infer<typeof WorkerLineSchema>
+
+export const RATE_LIMITED_CODE = 'rate-limited'
+
+/** Amazon answered 429. Never an empty answer: the caller backs off and keeps what it had. */
+export class RateLimitedError extends Error {
+  readonly code = RATE_LIMITED_CODE
+  constructor(message: string) {
+    super(message)
+    this.name = 'RateLimitedError'
+  }
+}
+
+export const NP_COMMANDS = ['play', 'pause', 'next', 'previous'] as const
+export type NpCommand = (typeof NP_COMMANDS)[number]
 
 export type WorkerRequest =
   | {
@@ -69,6 +85,27 @@ export type WorkerRequest =
       readonly text: string
     }
   | { readonly op: 'session_status' }
+  | {
+      readonly op: 'player_state'
+      readonly serial: string
+      readonly deviceType: string
+    }
+  | {
+      readonly op: 'np_command'
+      readonly serial: string
+      readonly command: NpCommand
+    }
+  | {
+      readonly op: 'set_volume'
+      readonly serial: string
+      readonly level: number
+    }
+  | { readonly op: 'dnd_state' }
+  | {
+      readonly op: 'set_dnd'
+      readonly serial: string
+      readonly enabled: boolean
+    }
 
 export function requestLine(id: string, request: WorkerRequest): string {
   return `${JSON.stringify({ id, ...request })}\n`
@@ -104,6 +141,49 @@ export function parseSessionStatus(result: unknown): SessionStatus {
   const parsed = SessionStatusSchema.safeParse(result)
   if (!parsed.success) throw new Error('worker returned an unexpected session status')
   return parsed.data
+}
+
+/**
+ * The raw `playerInfo` of `/api/np/player`. Amazon omits what it does not know,
+ * so every field is nullable; the mapping to the media-player cap turns a missing
+ * value into null, never into 0 (D393).
+ */
+export const PlayerInfoSchema = z.object({
+  state: z.string().nullish(),
+  volume: z.object({ volume: z.number().nullish(), muted: z.boolean().nullish() }).nullish(),
+  infoText: z
+    .object({
+      title: z.string().nullish(),
+      subText1: z.string().nullish(),
+      subText2: z.string().nullish(),
+    })
+    .nullish(),
+  mainArt: z.object({ url: z.string().nullish() }).nullish(),
+  progress: z
+    .object({
+      mediaLength: z.number().nullish(),
+      mediaProgress: z.number().nullish(),
+    })
+    .nullish(),
+  transport: z.object({ shuffle: z.string().nullish(), repeat: z.string().nullish() }).nullish(),
+})
+export type PlayerInfo = z.infer<typeof PlayerInfoSchema>
+
+export function parsePlayerState(result: unknown): PlayerInfo {
+  const parsed = z.object({ playerInfo: PlayerInfoSchema.nullish() }).safeParse(result)
+  if (!parsed.success) throw new Error('worker returned an unexpected player state')
+  return parsed.data.playerInfo ?? {}
+}
+
+export const DndEntrySchema = z.object({
+  serial: z.string().min(1),
+  enabled: z.boolean(),
+})
+
+export function parseDndState(result: unknown): ReadonlyMap<string, boolean> {
+  const parsed = z.object({ devices: z.array(DndEntrySchema) }).safeParse(result)
+  if (!parsed.success) throw new Error('worker returned an unexpected Do Not Disturb list')
+  return new Map(parsed.data.devices.map((entry) => [entry.serial, entry.enabled]))
 }
 
 export function isSpeakOp(mode: (typeof SPEAK_MODES)[number]): 'speak' | 'announce' {

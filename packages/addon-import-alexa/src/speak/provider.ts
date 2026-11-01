@@ -59,6 +59,8 @@ export interface SpeakBrokerView {
   readonly name: string
   readonly ready: boolean
   readonly devices: readonly EchoDevice[]
+  /** Ms epoch until which Amazon asked this account to pause (429); absent when it is free. */
+  readonly rateLimitedUntil?: number | null
 }
 
 export interface AlexaSpeakPorts {

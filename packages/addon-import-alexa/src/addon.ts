@@ -41,6 +41,8 @@ import { alexaAccounts, alexaCommands } from './alexa-gateway.js'
 import type { AlexaAppliance, AlexaStateValue } from './alexa-client.js'
 import { mapAlexaCapabilitiesToCamStack } from './alexa-domain-mapping.js'
 import { AlexaDevice } from './devices/alexa-device.js'
+import { AlexaEchoDevice } from './devices/alexa-echo-device.js'
+import { alexaEchoSessions } from './alexa-echo-sessions.js'
 import { alexaRecordKinds } from './broker-record-kinds.js'
 import { AlexaBrokerStore } from './alexa-broker-store.js'
 import { readEchoTargets, type AlexaBrokerEntry } from './config.js'
@@ -92,8 +94,11 @@ const ALEXA_DEVICE_TYPES: readonly DeviceType[] = [
 export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
   protected readonly addonId = 'import-alexa'
   protected readonly providerName = 'Alexa'
-  protected readonly deviceClasses: Partial<Record<DeviceType, DeviceConstructor<IDevice>>> =
-    Object.fromEntries(ALEXA_DEVICE_TYPES.map((t) => [t, AlexaDevice]))
+  protected readonly deviceClasses: Partial<Record<DeviceType, DeviceConstructor<IDevice>>> = {
+    ...Object.fromEntries(ALEXA_DEVICE_TYPES.map((t) => [t, AlexaDevice])),
+    // An Echo is the one media player this addon imports.
+    [DeviceType.MediaPlayer]: AlexaEchoDevice,
+  }
 
   private registry: AlexaBrokerRegistry | null = null
   private proxyLogin: AlexaProxyLoginManager | null = null
@@ -211,6 +216,7 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
       ensurePython: () => this.ctx.deps.ensurePython(),
     })
     this.speak = speak
+    alexaEchoSessions.setResolver((brokerId) => speak.echoFor(brokerId))
     // Not awaited: initialize() is on the capability-graph critical path.
     void speak.start().catch((err: unknown) => {
       this.ctx.logger.warn('alexa speak: worker did not start', {
@@ -326,6 +332,7 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
   protected override async onShutdown(): Promise<void> {
     this.speak?.stop()
     this.speak = null
+    alexaEchoSessions.clear()
     alexaCommands.clear()
     try {
       await this.proxyLogin?.dispose()
@@ -351,6 +358,8 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
   /** One broker = one account; the appliance id distinguishes devices within it. */
   protected override generateStableId(_type: DeviceType, config?: Record<string, unknown>): string {
     const brokerId = String(config?.['brokerId'] ?? 'unknown')
+    const serial = config?.['serial']
+    if (typeof serial === 'string') return `alexa:${brokerId}:echo:${serial}`
     const applianceId = String(config?.['applianceId'] ?? 'unknown')
     return `alexa:${brokerId}:${applianceId}`
   }
@@ -557,6 +566,7 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
             .list()
             .map((b) => ({ id: b.id, name: b.name })),
         has: (id) => this.requireRegistry().get(id) !== null,
+        getEchoesForBroker: (id) => this.speak?.echoFor(id)?.devices ?? [],
       },
       logger: this.ctx.logger,
       getBrokerIdForIntegration: async (id) => {
@@ -597,6 +607,26 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
           name,
           integrationId,
         })
+        return { deviceId: device.id }
+      },
+      adoptEcho: async ({ brokerId, echo, integrationId, name }) => {
+        const devices = this.ctx.kernel.devices
+        if (!devices) throw new Error('alexa adopt: kernel.devices unavailable')
+        const config = {
+          brokerId,
+          serial: echo.id,
+          deviceType: echo.deviceType,
+          system: 'alexa',
+          integrationId,
+          name,
+        }
+        const device = await devices.create(
+          this.generateStableId(DeviceType.MediaPlayer, config),
+          AlexaEchoDevice,
+          config,
+          null,
+          { type: DeviceType.MediaPlayer, name, integrationId },
+        )
         return { deviceId: device.id }
       },
       removeDevice: async (id) => {

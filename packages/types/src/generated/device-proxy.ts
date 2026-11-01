@@ -40,6 +40,7 @@ import type { deviceOpsCapability } from '../capabilities/device-ops.cap.js'
 import type { deviceRunsCapability } from '../capabilities/device-runs.cap.js'
 import type { deviceStatusCapability } from '../capabilities/device-status.cap.js'
 import type { dishwasherCapability } from '../capabilities/dishwasher.cap.js'
+import type { doNotDisturbCapability } from '../capabilities/do-not-disturb.cap.js'
 import type { doorbellCapability } from '../capabilities/doorbell.cap.js'
 import type { enumSensorCapability } from '../capabilities/enum-sensor.cap.js'
 import type { eventEmitterCapability } from '../capabilities/event-emitter.cap.js'
@@ -155,6 +156,7 @@ export interface DeviceProxyState {
   readonly deviceDiscovery: SliceHandle<InferRuntimeState<typeof deviceDiscoveryCapability>>
   readonly deviceStatus: SliceHandle<InferRuntimeState<typeof deviceStatusCapability>>
   readonly dishwasher: SliceHandle<InferRuntimeState<typeof dishwasherCapability>>
+  readonly doNotDisturb: SliceHandle<InferRuntimeState<typeof doNotDisturbCapability>>
   readonly doorbell: SliceHandle<InferRuntimeState<typeof doorbellCapability>>
   readonly enumSensor: SliceHandle<InferRuntimeState<typeof enumSensorCapability>>
   readonly eventEmitter: SliceHandle<InferRuntimeState<typeof eventEmitterCapability>>
@@ -265,6 +267,7 @@ export interface DeviceProxy {
   readonly deviceRuns?: InferDeviceProxyCap<typeof deviceRunsCapability>
   readonly deviceStatus?: InferDeviceProxyCap<typeof deviceStatusCapability>
   readonly dishwasher?: InferDeviceProxyCap<typeof dishwasherCapability>
+  readonly doNotDisturb?: InferDeviceProxyCap<typeof doNotDisturbCapability>
   readonly doorbell?: InferDeviceProxyCap<typeof doorbellCapability>
   readonly enumSensor?: InferDeviceProxyCap<typeof enumSensorCapability>
   readonly eventEmitter?: InferDeviceProxyCap<typeof eventEmitterCapability>
@@ -629,6 +632,11 @@ export function createDeviceProxy(
     setOption: (input?: unknown) => dispatch('dishwasher', 'dishwasher', 'setOption', 'mutation', input),
     getOptions: (input?: unknown) => dispatch('dishwasher', 'dishwasher', 'getOptions', 'query', input),
     getStatus: (input?: unknown) => dispatch('dishwasher', 'dishwasher', 'getStatus', 'query', input),
+  }
+
+  const doNotDisturbInterface = {
+    setEnabled: (input?: unknown) => dispatch('do-not-disturb', 'doNotDisturb', 'setEnabled', 'mutation', input),
+    getStatus: (input?: unknown) => dispatch('do-not-disturb', 'doNotDisturb', 'getStatus', 'query', input),
   }
 
   const doorbellInterface = {
@@ -1375,6 +1383,7 @@ export function createDeviceProxy(
       deviceDiscovery: createSliceHandle<InferRuntimeState<typeof deviceDiscoveryCapability>>(stateSource, binding.deviceId, 'device-discovery'),
       deviceStatus: createSliceHandle<InferRuntimeState<typeof deviceStatusCapability>>(stateSource, binding.deviceId, 'device-status'),
       dishwasher: createSliceHandle<InferRuntimeState<typeof dishwasherCapability>>(stateSource, binding.deviceId, 'dishwasher'),
+      doNotDisturb: createSliceHandle<InferRuntimeState<typeof doNotDisturbCapability>>(stateSource, binding.deviceId, 'do-not-disturb'),
       doorbell: createSliceHandle<InferRuntimeState<typeof doorbellCapability>>(stateSource, binding.deviceId, 'doorbell'),
       enumSensor: createSliceHandle<InferRuntimeState<typeof enumSensorCapability>>(stateSource, binding.deviceId, 'enum-sensor'),
       eventEmitter: createSliceHandle<InferRuntimeState<typeof eventEmitterCapability>>(stateSource, binding.deviceId, 'event-emitter'),
@@ -1466,6 +1475,7 @@ export function createDeviceProxy(
     ...(bound('device-runs') ? { deviceRuns: deviceRunsInterface } : {}),
     ...(bound('device-status') ? { deviceStatus: deviceStatusInterface } : {}),
     ...(bound('dishwasher') ? { dishwasher: dishwasherInterface } : {}),
+    ...(bound('do-not-disturb') ? { doNotDisturb: doNotDisturbInterface } : {}),
     ...(bound('doorbell') ? { doorbell: doorbellInterface } : {}),
     ...(bound('enum-sensor') ? { enumSensor: enumSensorInterface } : {}),
     ...(bound('event-emitter') ? { eventEmitter: eventEmitterInterface } : {}),

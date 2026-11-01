@@ -17,7 +17,7 @@ export interface RuntimeStatePolicy {
 
 /**
  * Per-cap runtime-state policy, projected from every `*.cap.ts` that declares
- * `runtimeState`. 79 caps: 39 `restored`, 40 `session`.
+ * `runtimeState`. 80 caps: 39 `restored`, 41 `session`.
  *
  * A cap absent from this map has no runtime-state slice at all. A cap PRESENT
  * with `durability: 'session'` has one and has decided not to keep it.
@@ -44,6 +44,7 @@ export const RUNTIME_STATE_POLICY: Readonly<Record<string, RuntimeStatePolicy>> 
   'device-discovery': { durability: 'session', volatileFields: [] },
   'device-status': { durability: 'restored', volatileFields: ['lastChangedAt'] },
   'dishwasher': { durability: 'session', volatileFields: [] },
+  'do-not-disturb': { durability: 'session', volatileFields: [] },
   'doorbell': { durability: 'restored', volatileFields: [] },
   'enum-sensor': { durability: 'restored', volatileFields: ['lastFetchedAt'] },
   'event-emitter': { durability: 'session', volatileFields: [] },

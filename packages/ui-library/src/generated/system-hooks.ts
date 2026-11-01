@@ -1262,6 +1262,12 @@ export const useDisplayPaletteListPresets: typeof trpc.displayPalette.listPreset
 /** Generated alias around `trpc.displayPalette.setPalette.useMutation`. */
 export const useDisplayPaletteSetPalette: typeof trpc.displayPalette.setPalette.useMutation = /*#__PURE__*/ alias(() => trpc.displayPalette.setPalette.useMutation)
 
+/** Generated alias around `trpc.doNotDisturb.setEnabled.useMutation`. */
+export const useDoNotDisturbSetEnabled: typeof trpc.doNotDisturb.setEnabled.useMutation = /*#__PURE__*/ alias(() => trpc.doNotDisturb.setEnabled.useMutation)
+
+/** Generated alias around `trpc.doNotDisturb.getStatus.useQuery`. */
+export const useDoNotDisturbGetStatus: typeof trpc.doNotDisturb.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.doNotDisturb.getStatus.useQuery)
+
 /** Generated alias around `trpc.doorbell.getStatus.useQuery`. */
 export const useDoorbellGetStatus: typeof trpc.doorbell.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.doorbell.getStatus.useQuery)
 

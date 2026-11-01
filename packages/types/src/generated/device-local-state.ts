@@ -24,6 +24,7 @@ import { dayNightCapability } from '../capabilities/day-night.cap.js'
 import { deviceDiscoveryCapability } from '../capabilities/device-discovery.cap.js'
 import { deviceStatusCapability } from '../capabilities/device-status.cap.js'
 import { dishwasherCapability } from '../capabilities/dishwasher.cap.js'
+import { doNotDisturbCapability } from '../capabilities/do-not-disturb.cap.js'
 import { doorbellCapability } from '../capabilities/doorbell.cap.js'
 import { enumSensorCapability } from '../capabilities/enum-sensor.cap.js'
 import { eventEmitterCapability } from '../capabilities/event-emitter.cap.js'
@@ -116,6 +117,7 @@ export interface DeviceLocalState {
   deviceDiscovery: InferRuntimeState<typeof deviceDiscoveryCapability>
   deviceStatus: InferRuntimeState<typeof deviceStatusCapability>
   dishwasher: InferRuntimeState<typeof dishwasherCapability>
+  doNotDisturb: InferRuntimeState<typeof doNotDisturbCapability>
   doorbell: InferRuntimeState<typeof doorbellCapability>
   enumSensor: InferRuntimeState<typeof enumSensorCapability>
   eventEmitter: InferRuntimeState<typeof eventEmitterCapability>
@@ -204,6 +206,7 @@ export const DEVICE_LOCAL_STATE_CAPS: Record<keyof DeviceLocalState, CapabilityD
   deviceDiscovery: deviceDiscoveryCapability,
   deviceStatus: deviceStatusCapability,
   dishwasher: dishwasherCapability,
+  doNotDisturb: doNotDisturbCapability,
   doorbell: doorbellCapability,
   enumSensor: enumSensorCapability,
   eventEmitter: eventEmitterCapability,
@@ -299,6 +302,7 @@ export interface CapNameToRuntimeStateMap {
   'device-discovery': InferRuntimeState<typeof deviceDiscoveryCapability>
   'device-status': InferRuntimeState<typeof deviceStatusCapability>
   'dishwasher': InferRuntimeState<typeof dishwasherCapability>
+  'do-not-disturb': InferRuntimeState<typeof doNotDisturbCapability>
   'doorbell': InferRuntimeState<typeof doorbellCapability>
   'enum-sensor': InferRuntimeState<typeof enumSensorCapability>
   'event-emitter': InferRuntimeState<typeof eventEmitterCapability>

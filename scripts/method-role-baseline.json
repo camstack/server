@@ -450,6 +450,8 @@
   "displayPalette.getPalette": "viewer",
   "displayPalette.listPresets": "viewer",
   "displayPalette.setPalette": "admin",
+  "doNotDisturb.getStatus": "viewer",
+  "doNotDisturb.setEnabled": "viewer",
   "doorbell.getStatus": "viewer",
   "embeddingEncoder.encode": "admin",
   "embeddingEncoder.encodeText": "admin",

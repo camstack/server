@@ -27,6 +27,7 @@ import type { DeviceDiscoveryStatusSchema } from '../capabilities/device-discove
 import type { DeviceExportStatusSchema } from '../capabilities/device-export.cap.js'
 import type { deviceStatusCapability } from '../capabilities/device-status.cap.js'
 import type { DishwasherStatusSchema } from '../capabilities/dishwasher.cap.js'
+import type { DoNotDisturbStatusSchema } from '../capabilities/do-not-disturb.cap.js'
 import type { DoorbellStatusSchema } from '../capabilities/doorbell.cap.js'
 import type { EnumSensorStatusSchema } from '../capabilities/enum-sensor.cap.js'
 import type { EventEmitterStatusSchema } from '../capabilities/event-emitter.cap.js'
@@ -115,6 +116,7 @@ export type CapStatusTypeMap = {
   readonly 'device-export': z.infer<typeof DeviceExportStatusSchema>
   readonly 'device-status': z.infer<(typeof deviceStatusCapability)['status']['schema']>
   readonly 'dishwasher': z.infer<typeof DishwasherStatusSchema>
+  readonly 'do-not-disturb': z.infer<typeof DoNotDisturbStatusSchema>
   readonly 'doorbell': z.infer<typeof DoorbellStatusSchema>
   readonly 'enum-sensor': z.infer<typeof EnumSensorStatusSchema>
   readonly 'event-emitter': z.infer<typeof EventEmitterStatusSchema>
@@ -207,6 +209,7 @@ export const CAP_NAMES_WITH_STATUS = [
   'device-export',
   'device-status',
   'dishwasher',
+  'do-not-disturb',
   'doorbell',
   'enum-sensor',
   'event-emitter',

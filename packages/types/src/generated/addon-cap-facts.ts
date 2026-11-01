@@ -5,7 +5,7 @@
  * `ALL_CAPABILITY_DEFINITIONS` (the whole Zod schema graph, ~+100 MB heap per
  * runner). See docs/decisions/adr-0028.md.
  *
- * Coverage: 1 advance-derived caps, 80 caps with 376 state leaves.
+ * Coverage: 1 advance-derived caps, 81 caps with 377 state leaves.
  */
 
 /** A bindable scalar in a capability's runtime state. */
@@ -89,6 +89,7 @@ export const CAP_NAMES: readonly string[] = Object.freeze([
   "device-status",
   "dishwasher",
   "display-palette",
+  "do-not-disturb",
   "doorbell",
   "embedding-encoder",
   "enum-sensor",
@@ -250,6 +251,7 @@ export const CAP_STATE_LEAVES: Readonly<Record<string, readonly CapStateLeaf[]>>
   "device-export": [{"path":"linkState","valueType":"enum","enumValues":["unlinked","linked","error"]}, {"path":"exposedDeviceCount","valueType":"number"}, {"path":"error","valueType":"string"}, {"path":"setup.qr","valueType":"string"}, {"path":"setup.note","valueType":"string"}],
   "device-status": [{"path":"online","valueType":"boolean"}],
   "dishwasher": [{"path":"availability","valueType":"enum","enumValues":["available","offline","description-missing"]}, {"path":"state","valueType":"enum","enumValues":["idle","running","paused","finished","error","unavailable"]}, {"path":"operationState","valueType":"enum","enumValues":["Inactive","Ready","DelayedStart","Run","Pause","ActionRequired","Finished","Error","Aborting"]}, {"path":"program","valueType":"string"}, {"path":"selectedProgram","valueType":"string"}, {"path":"remaining","valueType":"number"}, {"path":"delayedStart","valueType":"number"}, {"path":"progress","valueType":"number"}, {"path":"doorOpen","valueType":"boolean"}, {"path":"doorLocked","valueType":"boolean"}, {"path":"remoteStartAllowed","valueType":"boolean"}, {"path":"remoteControlActive","valueType":"boolean"}, {"path":"localControlActive","valueType":"boolean"}, {"path":"powerOn","valueType":"boolean"}, {"path":"powerState","valueType":"string"}, {"path":"filterCleaningDue","valueType":"boolean"}, {"path":"machineCareDue","valueType":"boolean"}, {"path":"machineCareRemainingRuns","valueType":"number"}, {"path":"halfLoad","valueType":"boolean"}, {"path":"hygienePlus","valueType":"boolean"}, {"path":"extraDry","valueType":"boolean"}, {"path":"intensiveZone","valueType":"boolean"}, {"path":"varioSpeedPlus","valueType":"boolean"}, {"path":"childLock","valueType":"boolean"}, {"path":"errorCode","valueType":"number"}, {"path":"errorLabel","valueType":"string"}],
+  "do-not-disturb": [{"path":"enabled","valueType":"boolean"}],
   "doorbell": [{"path":"lastPressedAt","valueType":"number"}, {"path":"pressCountSinceStart","valueType":"number"}],
   "enum-sensor": [{"path":"value","valueType":"string"}, {"path":"timestamp","valueType":"boolean"}],
   "event-emitter": [{"path":"lastEvent.deviceId","valueType":"number"}, {"path":"lastEvent.eventType","valueType":"string"}, {"path":"lastEvent.timestamp","valueType":"number"}, {"path":"lastEvent.seq","valueType":"number"}, {"path":"eventCountSinceStart","valueType":"number"}],

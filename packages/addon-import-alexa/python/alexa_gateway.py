@@ -5,12 +5,35 @@ Never log the refresh token, the cookie blob, or the session file contents.
 
 from __future__ import annotations
 
+import asyncio
 import time
 from pathlib import Path
+from types import SimpleNamespace
 
-from alexa_sequences import EchoTarget
+from alexa_sequences import EchoTarget, build_volume_node
 
 REGIONS = ("NA", "EU", "FE")
+REGION_LOCALE = {"NA": "en-US", "EU": "en-GB", "FE": "ja-JP"}
+
+# The `/api/np/command` bodies. Only these four are offered.
+NP_COMMANDS = {
+    "play": "PlayCommand",
+    "pause": "PauseCommand",
+    "next": "NextCommand",
+    "previous": "PreviousCommand",
+}
+RATE_LIMITED = "rate-limited"
+
+
+class RateLimitedError(Exception):
+    """Amazon answered 429. It is a refusal to retry later, never an empty answer."""
+
+    code = RATE_LIMITED
+
+
+def is_rate_limited(err: BaseException) -> bool:
+    """alexapy raises AlexapyTooManyRequestsError; matched by name so this module needs no import of it."""
+    return any(kind.__name__ == "AlexapyTooManyRequestsError" for kind in type(err).__mro__)
 
 
 def classify_login(status: dict) -> str:
@@ -83,6 +106,21 @@ class AlexaPyGateway:
         self._last_success_at: float | None = None
         self._session_path = ""
         self._region = "EU"
+        self._serial_locks: dict[str, asyncio.Lock] = {}
+
+    def _lock(self, serial: str) -> asyncio.Lock:
+        """One request at a time per Echo: Amazon throttles an account that hammers one device."""
+        lock = self._serial_locks.get(serial)
+        if lock is None:
+            lock = asyncio.Lock()
+            self._serial_locks[serial] = lock
+        return lock
+
+    def _api_for(self, serial: str, device_type: str):
+        login = self._require_login()
+        _AlexaLogin, AlexaAPI = _import_alexapy()
+        shim = SimpleNamespace(device_serial_number=serial, _device_type=device_type, _locale=None)
+        return AlexaAPI(shim, login)
 
     @property
     def region(self) -> str:
@@ -203,6 +241,90 @@ class AlexaPyGateway:
         }
         await AlexaAPI(None, login).run_behavior(node, queue_delay=0)
         self._touch_success()
+
+    async def player_state(self, serial: str, device_type: str) -> dict:
+        """The raw `playerInfo` of one Echo. A missing body is an error, not an idle player."""
+        async with self._lock(serial):
+            try:
+                body = await self._api_for(serial, device_type).get_state()
+            except Exception as err:  # noqa: BLE001 — typed below
+                if is_rate_limited(err):
+                    raise RateLimitedError("amazon rate limit (429) on the player state") from err
+                raise
+        if not isinstance(body, dict):
+            raise RuntimeError("amazon returned no player state")
+        info = body.get("playerInfo")
+        self._touch_success()
+        return {"playerInfo": info if isinstance(info, dict) else {}}
+
+    async def np_command(self, serial: str, command: str) -> None:
+        body = NP_COMMANDS.get(command)
+        if body is None:
+            raise ValueError(f"unknown media command {command!r}")
+        device_type = self._device_type_of(serial)
+        async with self._lock(serial):
+            try:
+                await self._api_for(serial, device_type).set_media({"type": body})
+            except Exception as err:  # noqa: BLE001 — typed below
+                if is_rate_limited(err):
+                    raise RateLimitedError("amazon rate limit (429) on a media command") from err
+                raise
+        self._touch_success()
+
+    async def set_volume(self, serial: str, level: int) -> None:
+        target = self.target_for(serial)
+        if target is None:
+            raise ValueError("unknown echo")
+        node = build_volume_node(target, max(0, min(100, int(level))), REGION_LOCALE.get(self._region, "en-GB"))
+        login = self._require_login()
+        _AlexaLogin, AlexaAPI = _import_alexapy()
+        async with self._lock(serial):
+            try:
+                await AlexaAPI(None, login).run_behavior(node, queue_delay=0)
+            except Exception as err:  # noqa: BLE001 — typed below
+                if is_rate_limited(err):
+                    raise RateLimitedError("amazon rate limit (429) on the volume") from err
+                raise
+        self._touch_success()
+
+    async def dnd_state(self) -> dict:
+        """Do Not Disturb of every device, in one call."""
+        login = self._require_login()
+        _AlexaLogin, AlexaAPI = _import_alexapy()
+        try:
+            body = await AlexaAPI.get_dnd_state(login)
+        except Exception as err:  # noqa: BLE001 — typed below
+            if is_rate_limited(err):
+                raise RateLimitedError("amazon rate limit (429) on Do Not Disturb") from err
+            raise
+        if not isinstance(body, dict):
+            raise RuntimeError("amazon returned no Do Not Disturb list")
+        rows = body.get("doNotDisturbDeviceStatusList")
+        devices = []
+        for row in rows if isinstance(rows, list) else []:
+            serial = row.get("deviceSerialNumber") if isinstance(row, dict) else None
+            enabled = row.get("enabled") if isinstance(row, dict) else None
+            if isinstance(serial, str) and serial != "" and isinstance(enabled, bool):
+                devices.append({"serial": serial, "enabled": enabled})
+        self._touch_success()
+        return {"devices": devices}
+
+    async def set_dnd(self, serial: str, enabled: bool) -> None:
+        device_type = self._device_type_of(serial)
+        async with self._lock(serial):
+            try:
+                await self._api_for(serial, device_type).set_dnd_state(enabled)
+            except Exception as err:  # noqa: BLE001 — typed below
+                if is_rate_limited(err):
+                    raise RateLimitedError("amazon rate limit (429) on Do Not Disturb") from err
+                raise
+        self._touch_success()
+
+    def _device_type_of(self, serial: str) -> str:
+        target = self.target_for(serial)
+        if target is None:
+            raise ValueError("unknown echo")
+        return target["deviceType"]
 
     async def session_status(self) -> dict:
         age = 0

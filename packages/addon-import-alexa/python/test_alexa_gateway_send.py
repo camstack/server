@@ -60,7 +60,7 @@ class SendTests(unittest.TestCase):
 
     def test_speak_posts_the_sequence_start_node_immediately(self):
         posted: list = []
-        sequence = build_speak_sequence(TARGET, "hello", 30, "it-IT")
+        sequence = build_speak_sequence(TARGET, "hello", "it-IT")
         asyncio.run(self._gateway(posted).speak(sequence, "A1CUST"))
         self.assertEqual(posted, [(sequence["startNode"], 0)])
 

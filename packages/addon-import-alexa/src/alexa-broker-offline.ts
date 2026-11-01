@@ -19,6 +19,8 @@ export function setBrokerDevicesOnline(
   for (const dev of devices) {
     if (dev.config.get('system') !== 'alexa') continue
     if (dev.config.get('brokerId') !== brokerId) continue
+    // An Echo's reachability is what Amazon says of that Echo, read by its own poll.
+    if (typeof dev.config.get('serial') === 'string') continue
     if (dev.online === online) continue
     dev.markOnline(online)
     count += 1

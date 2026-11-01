@@ -57,3 +57,18 @@ def build_announcement(target: EchoTarget, text: str, locale: str) -> dict:
             ],
         },
     }
+
+
+def build_volume_node(target: EchoTarget, level: int, locale: str) -> dict:
+    """The behaviour node that sets an Echo's volume. `level` is a whole percent, 0 to 100."""
+    return {
+        "@type": "com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode",
+        "type": "Alexa.DeviceControls.Volume",
+        "operationPayload": {
+            "deviceType": target["deviceType"],
+            "deviceSerialNumber": target["id"],
+            "locale": locale,
+            "customerId": target["customerId"],
+            "value": level,
+        },
+    }

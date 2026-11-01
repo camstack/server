@@ -122,6 +122,11 @@ export class AlexaSpeakController {
     return this.queue
   }
 
+  /** The live session of one account, for the Echo devices that poll it. */
+  echoFor(brokerId: string): BrokerEcho | null {
+    return this.echoes.get(brokerId) ?? null
+  }
+
   private brokerViews(): readonly SpeakBrokerView[] {
     return this.host.listBrokers().map((ref) => {
       const echo = this.echoes.get(ref.id)
@@ -130,6 +135,7 @@ export class AlexaSpeakController {
         name: ref.name,
         ready: echo?.state === 'ready',
         devices: echo?.devices ?? [],
+        rateLimitedUntil: echo?.rateLimitedUntil ?? null,
       }
     })
   }
@@ -182,6 +188,7 @@ export class AlexaSpeakController {
           readSeed: () => this.host.readSeed(ref.id),
           sessions: this.host.sessions,
           logger: this.host.logger,
+          now: this.now,
         }),
       )
     }

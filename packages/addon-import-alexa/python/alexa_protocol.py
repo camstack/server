@@ -36,6 +36,16 @@ class Gateway(Protocol):
 
     async def session_status(self) -> dict: ...
 
+    async def player_state(self, serial: str, device_type: str) -> dict: ...
+
+    async def np_command(self, serial: str, command: str) -> None: ...
+
+    async def set_volume(self, serial: str, level: int) -> None: ...
+
+    async def dnd_state(self) -> dict: ...
+
+    async def set_dnd(self, serial: str, enabled: bool) -> None: ...
+
     def target_for(self, serial: str) -> EchoTarget | None: ...
 
 
@@ -44,6 +54,13 @@ def _read_secret(path: str) -> str:
     if path == "":
         return ""
     return Path(path).read_text(encoding="utf-8").strip()
+
+
+def _serial(message: dict) -> str:
+    serial = message.get("serial")
+    if not isinstance(serial, str) or serial == "":
+        raise ValueError("serial required")
+    return serial
 
 
 class Session:
@@ -58,7 +75,11 @@ class Session:
         try:
             result = await self._dispatch(op, message)
         except Exception as err:  # noqa: BLE001 — the line must answer; the message is the error
-            return {"id": request_id, "ok": False, "error": str(err)}
+            failure: dict = {"id": request_id, "ok": False, "error": str(err)}
+            code = getattr(err, "code", None)
+            if isinstance(code, str):
+                failure["code"] = code
+            return failure
         return {"id": request_id, "ok": True, "result": result}
 
     async def _dispatch(self, op: object, message: dict) -> dict:
@@ -80,6 +101,27 @@ class Session:
             return await self._utter("announce", message)
         if op == "session_status":
             return await self._gateway.session_status()
+        if op == "player_state":
+            return await self._gateway.player_state(
+                _serial(message), str(message.get("deviceType", ""))
+            )
+        if op == "np_command":
+            await self._gateway.np_command(_serial(message), str(message.get("command", "")))
+            return {}
+        if op == "set_volume":
+            level = message.get("level")
+            if isinstance(level, bool) or not isinstance(level, (int, float)):
+                raise ValueError("level required")
+            await self._gateway.set_volume(_serial(message), int(level))
+            return {}
+        if op == "dnd_state":
+            return await self._gateway.dnd_state()
+        if op == "set_dnd":
+            enabled = message.get("enabled")
+            if not isinstance(enabled, bool):
+                raise ValueError("enabled required")
+            await self._gateway.set_dnd(_serial(message), enabled)
+            return {}
         raise ValueError(f"unknown op {op!r}")
 
     async def _utter(self, op: str, message: dict) -> dict:

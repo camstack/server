@@ -8,13 +8,19 @@ import { type BrokerSeed, regionOfDomain } from './broker-seed.js'
 import type { SpeakSessionStore } from './session-store.js'
 import { scrubSecrets, withSpeakSecretFiles } from './secret-file.js'
 import type { AlexaWorker } from './worker-client.js'
+import { ECHO_RATE_BACKOFF_BASE_MS, ECHO_RATE_BACKOFF_MAX_MS } from './constants.js'
 import {
   type EchoDevice,
+  type NpCommand,
+  type PlayerInfo,
+  RateLimitedError,
   type SessionStatus,
   type TargetDelivery,
   parseDeliveries,
   parseDevices,
+  parseDndState,
   parseLoginResult,
+  parsePlayerState,
   parseSessionStatus,
 } from './worker-protocol.js'
 
@@ -32,12 +38,15 @@ export interface BrokerEchoDeps {
   readonly readSeed: () => Promise<BrokerSeed | null>
   readonly sessions: SpeakSessionStore
   readonly logger: IScopedLogger
+  readonly now?: () => number
 }
 
 export class BrokerEcho {
   private currentState: BrokerEchoState = 'starting'
   private currentError: string | null = null
   private currentDevices: readonly EchoDevice[] = []
+  private backoffMs = 0
+  private limitedUntil = 0
 
   constructor(private readonly deps: BrokerEchoDeps) {}
 
@@ -59,6 +68,15 @@ export class BrokerEcho {
 
   get devices(): readonly EchoDevice[] {
     return this.currentDevices
+  }
+
+  /** Ms epoch until which Amazon asked us to wait (429), or null when the account is free. */
+  get rateLimitedUntil(): number | null {
+    return this.limitedUntil > this.nowMs() ? this.limitedUntil : null
+  }
+
+  private nowMs(): number {
+    return (this.deps.now ?? Date.now)()
   }
 
   stop(): void {
@@ -157,6 +175,73 @@ export class BrokerEcho {
       throw new Error(this.notReadyReason())
     }
     return parseDeliveries(await this.deps.worker.request({ op, targets, text }))
+  }
+
+  /**
+   * Run one worker call. A 429 starts (or doubles) the account's back-off and is
+   * rethrown as is; any answer ends it. Rate limiting is a status, not a failure.
+   */
+  private async limited<T>(call: () => Promise<T>): Promise<T> {
+    try {
+      const result = await call()
+      this.backoffMs = 0
+      this.limitedUntil = 0
+      return result
+    } catch (err: unknown) {
+      if (err instanceof RateLimitedError) {
+        this.backoffMs =
+          this.backoffMs === 0
+            ? ECHO_RATE_BACKOFF_BASE_MS
+            : Math.min(this.backoffMs * 2, ECHO_RATE_BACKOFF_MAX_MS)
+        this.limitedUntil = this.nowMs() + this.backoffMs
+        this.deps.logger.info('alexa echo: amazon asked for a pause (429)', {
+          tags: { brokerId: this.deps.brokerId },
+          meta: { backoffMs: this.backoffMs },
+        })
+      }
+      throw err
+    }
+  }
+
+  /** The raw player state of one Echo. Throws on any failure, a 429 included: never an empty answer. */
+  async playerState(serial: string, deviceType: string): Promise<PlayerInfo> {
+    await this.requireReady()
+    return this.limited(async () =>
+      parsePlayerState(
+        await this.deps.worker.request({
+          op: 'player_state',
+          serial,
+          deviceType,
+        }),
+      ),
+    )
+  }
+
+  async npCommand(serial: string, command: NpCommand): Promise<void> {
+    await this.requireReady()
+    await this.limited(() => this.deps.worker.request({ op: 'np_command', serial, command }))
+  }
+
+  async setVolume(serial: string, level: number): Promise<void> {
+    await this.requireReady()
+    await this.limited(() => this.deps.worker.request({ op: 'set_volume', serial, level }))
+  }
+
+  /** Do Not Disturb of every device of the account, by serial, in one call. */
+  async dndState(): Promise<ReadonlyMap<string, boolean>> {
+    await this.requireReady()
+    return this.limited(async () =>
+      parseDndState(await this.deps.worker.request({ op: 'dnd_state' })),
+    )
+  }
+
+  async setDnd(serial: string, enabled: boolean): Promise<void> {
+    await this.requireReady()
+    await this.limited(() => this.deps.worker.request({ op: 'set_dnd', serial, enabled }))
+  }
+
+  private async requireReady(): Promise<void> {
+    if (!(await this.ensureReady())) throw new Error(this.notReadyReason())
   }
 
   async session(): Promise<SessionStatus> {
