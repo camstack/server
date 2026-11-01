@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.720] - 2026-11-01
+
 ### Changed
 
 - Addons loaded in the hub process resolve the framework again after a server update (1.2.719 left four addons failing with Cannot find module).
