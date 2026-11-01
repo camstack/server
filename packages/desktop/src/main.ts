@@ -96,6 +96,7 @@ import {
   createDialogChooser,
   parseTeamIdFromInfoPlist,
   touchIdConfigFor,
+  PROVISIONING_PROFILE_FILE,
 } from './role/webauthn'
 import { parseRoleSetting } from './role-setting'
 import type { HubMode } from './setup/render-setup-html'
@@ -1129,9 +1130,14 @@ function installWebAuthn(): void {
   } catch {
     infoPlist = ''
   }
-  const touchID = touchIdConfigFor(parseTeamIdFromInfoPlist(infoPlist))
+  const hasProfile = fs.existsSync(
+    path.join(path.dirname(process.execPath), '..', PROVISIONING_PROFILE_FILE),
+  )
+  const touchID = touchIdConfigFor(parseTeamIdFromInfoPlist(infoPlist), hasProfile)
   if (touchID === null) {
-    console.warn('[webauthn] no signing team id in this build — platform passkeys stay off')
+    console.warn(
+      '[webauthn] no signing team id or provisioning profile in this build — platform passkeys stay off',
+    )
     return
   }
   app.configureWebAuthn({ touchID })

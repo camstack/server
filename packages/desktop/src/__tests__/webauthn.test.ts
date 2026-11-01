@@ -87,8 +87,9 @@ describe('team id', () => {
     expect(parseTeamIdFromInfoPlist('<dict/>')).toBeNull()
   })
   it('builds the access group only with a team id', () => {
-    expect(touchIdConfigFor(null)).toBeNull()
-    expect(touchIdConfigFor('ABCDE12345')?.keychainAccessGroup).toBe(
+    expect(touchIdConfigFor(null, true)).toBeNull()
+    expect(touchIdConfigFor('ABCDE12345', false)).toBeNull()
+    expect(touchIdConfigFor('ABCDE12345', true)?.keychainAccessGroup).toBe(
       'ABCDE12345.com.camstack.app.webauthn',
     )
   })
