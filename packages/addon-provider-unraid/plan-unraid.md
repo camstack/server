@@ -10,12 +10,13 @@ An Unraid server (reference HA instance: **"agent-a", ~216 entities**) exposes a
 GraphQL API. CamStack adopts ONE **instance Container** per server; the array,
 per-disk, per-docker-container and notification entities materialise as its
 accessory children. `instanceMode: multiple` — many servers may be added; the
-connection lives on the instance Hub device (standalone mode, the Reolink /
-Velux / Ecowitt pattern).
+connection (host, port, HTTPS flag and the ADMIN API key, a keychain secret) lives on the
+INTEGRATION (`mode: account`).
 
-Topology: **Hub** (connection) → adopts ONE **Container** (the instance) →
-`getAccessoryChildren()` fans out one generic **entity child** per descriptor.
-The `entities[]` identity list is derived by the Hub from each live snapshot and
+Topology: the integration owns the connection; adopting it yields two top-level siblings, a
+**Gateway** (the server, with a link to its WebGUI) and ONE **Container** (the instance).
+The Container's `getAccessoryChildren()` fans out one generic **entity child** per descriptor.
+The `entities[]` identity list is derived by the addon from each live snapshot and
 re-persisted onto the Container via `applyDerivedSpec` (additive reconcile), so
 new containers/disks appear and removed ones prune without re-adoption.
 
@@ -122,9 +123,9 @@ Three caveats / steps to go live:
 1. On the Unraid server, create an ADMIN-role API key:
    `unraid-api apikey --create` (name it, grant the array/docker/notifications
    read + control resources).
-2. Deploy the addon; create an instance Hub device with the server host, port
+2. Deploy the addon; add an Unraid integration with the server host, port
    (443 https / 80 plain), HTTPS flag, and the API key.
-3. Verify the Hub connects + polls; adopt the single instance Container.
+3. Verify the integration connects + polls; adopt the Gateway and the single instance Container.
 4. Verify the entity children materialise: array metrics + binaries + buttons,
    per-docker switch/cpu/mem/restart, per-disk usage/health, and the
    notifications event emitter. Confirm switches drive real container start/stop

@@ -20,12 +20,13 @@ absent) is **262 entities** across two families:
 
 ## The "switch as container" model (USER DIRECTIVE)
 
-The controller is the **Hub**; **each infra device is a `Container`** that
+The controller is a **Gateway**; **each infra device is a `Container`** that
 EXPOSES its features as typed accessory children. Concretely:
 
-- **controller** → `DeviceType.Hub` (`UnifiControllerDevice`), holds the
-  connection (host / port / apiKey-or-username+password / site / poll interval);
-  registers `device-discovery`.
+- **integration** → holds the connection (host / port / apiKey-or-username+password,
+  keychain secrets / site / poll interval); `mode: account`, `device-adoption`.
+- **controller** → `DeviceType.Gateway` (`UnifiGatewayDevice`), with a link to the
+  controller UI; a top-level sibling of everything below.
 - adopting an **infra device** → spawns a `DeviceType.Container`
   (`UnifiInfraDevice`) whose `getAccessoryChildren()` fans out — driven by a
   persisted `features[]` descriptor list on the Container config (mirrors
@@ -37,7 +38,7 @@ EXPOSES its features as typed accessory children. Concretely:
     (`button` cap),
   - **cpu / temp / clients / state / uptime Sensor** children (typed sensor caps).
 - adopting a **network client** → spawns a `DeviceType.Presence` device
-  (`presence` cap), a direct child of the controller Hub.
+  (`presence` cap), a top-level sibling of the Gateway.
 
 A **single generic child class** (`UnifiFeatureDevice`) services all four child
 kinds via a discriminated config `kind` (`switch` | `button` | `sensor` |
@@ -48,7 +49,7 @@ fan-out compact and compiling while honouring the container model.
 
 | Source | CamStack DeviceType | Cap | Notes |
 |---|---|---|---|
-| UniFi controller | `Hub` (`UnifiControllerDevice`) | `device-discovery` | connection lives on the device (standalone mode); enumerates infra + client candidates |
+| UniFi controller | `Gateway` (`UnifiGatewayDevice`) | `device-admin-link` | connection lives on the integration (`mode: account`); the adoption provider offers the Gateway, infra and client candidates |
 | infra device (switch/AP/gateway) | `Container` (`UnifiInfraDevice`) | — (fans out children) | `features[]` descriptor list → accessory children; `DeviceFeature.Resyncable` |
 | per-port PoE | `Switch` (`UnifiFeatureDevice` kind `switch`, `poe`) | `switch` | `setState` → `setPortPoe(deviceId, portIdx, on)` |
 | device LED | `Switch` (kind `switch`, `led`) | `switch` | `setState` → `setLed(deviceId, on)` |

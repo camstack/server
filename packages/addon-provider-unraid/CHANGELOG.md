@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Unraid is now added as an integration: the server host and API key are the integration's settings, and the server appears as a Gateway next to its instance device instead of a Hub.
+
 ## [0.2.151] - 2026-10-28
 
 ### Changed
