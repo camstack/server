@@ -64,31 +64,11 @@ describe('ConfigService', () => {
     })
 
     const service = await createService(configPath)
-    const raw = service.raw
 
-    expect(raw.server.port).toBe(5000)
-    expect(raw.server.host).toBe('127.0.0.1')
-    // A legacy credential in config.yaml is stripped, never served (D797).
-    expect(raw.auth).toEqual({})
-  })
-
-  it('returns runtime defaults for optional sections via raw', async () => {
-    const configPath = createConfigFile({
-      server: { port: 4443 },
-      auth: { adminPassword: 'secret123' },
-    })
-
-    const service = await createService(configPath)
-    const raw = service.raw
-
-    expect(raw.features.streaming).toBe(true)
-    expect(raw.features.objectDetection).toBe(false)
-    expect(raw.storage.provider).toBe('sqlite-storage')
-    expect(raw.logging.level).toBe('info')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access --
-    expect((raw.logging as any).retentionDays).toBe(30)
-    expect(raw.eventBus.ringBufferSize).toBe(10000)
-    // addons.enabled removed — installed = active
+    expect(service.getBootstrap<number>('server.port')).toBe(5000)
+    expect(service.getBootstrap<string>('server.host')).toBe('127.0.0.1')
+    // A legacy `auth` section in config.yaml is a dead key: never read, never served.
+    expect(service.getBootstrap('auth')).toBeUndefined()
   })
 
   it('throws on invalid config (port as string)', async () => {
@@ -112,7 +92,7 @@ describe('ConfigService', () => {
     expect(service.get<string>('auth.adminPassword')).toBeUndefined()
   })
 
-  it('dot-path access returns runtime defaults for non-bootstrap keys', async () => {
+  it('dot-path access returns runtime defaults for the keys that are read', async () => {
     const configPath = createConfigFile({
       server: { port: 4443 },
       auth: { adminPassword: 'secret123' },
@@ -120,9 +100,12 @@ describe('ConfigService', () => {
 
     const service = await createService(configPath)
 
-    expect(service.get<string>('logging.level')).toBe('info')
-    expect(service.get<number>('retention.detectionEventsDays')).toBe(30)
     expect(service.get<boolean>('features.objectDetection')).toBe(false)
+    expect(service.get<string>('auth.tokenExpiry')).toBe('30d')
+    // Defaults nothing read were deleted (#342).
+    for (const dead of ['logging.level', 'retention.detectionEventsDays', 'storage.provider']) {
+      expect(service.get(dead)).toBeUndefined()
+    }
     // addons.enabled removed — installed = active
   })
 
@@ -130,11 +113,9 @@ describe('ConfigService', () => {
     const configPath = path.join(tmpDir, 'nonexistent.yaml')
 
     const service = await createService(configPath)
-    const raw = service.raw
 
-    expect(raw.server.port).toBe(4443)
-    expect(raw.server.host).toBe('0.0.0.0')
-    expect(raw.auth).toEqual({})
+    expect(service.getBootstrap<number>('server.port')).toBe(4443)
+    expect(service.getBootstrap<string>('server.host')).toBe('0.0.0.0')
   })
 
   it('returns features via features getter with runtime defaults', async () => {

@@ -140,9 +140,8 @@ class ServiceContainer {
 
 export async function bootManual(opts: BootOptions): Promise<BootedApp> {
   const { infra, fastifyOpts } = opts
-  void infra // infraContext is consumed by main.ts directly (locationManager, etc.)
-
-  const configPath = process.env.CONFIG_PATH ?? 'camstack-data/config.yaml'
+  // The same config.yaml main.ts loaded — one path, not a second default.
+  const configPath = infra.configPath
 
   // ---- Layer 0: services with no service deps -----------------------------
   const configService = new ConfigService(configPath)

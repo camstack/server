@@ -226,10 +226,11 @@ describe('entrypoint ownership repair', () => {
     expect(source).toContain('HEALTHCHECK --interval=30s --timeout=25s')
   })
 
-  it('probes plain HTTP when the operator turned TLS off', () => {
+  it('probes plain HTTP when the operator turned TLS off in the UI, with no env switch', () => {
     const source = fs.readFileSync(DOCKERFILE, 'utf-8')
 
-    expect(source).toContain('[ "$CAMSTACK_TLS_ENABLED" != "true" ]')
+    expect(source).not.toContain('CAMSTACK_TLS_ENABLED')
+    expect(source).toContain('/health" -o /dev/null && exit 0')
     expect(source).toContain(
       'curl -fsS --max-time 20 "http://localhost:${CAMSTACK_PORT:-4443}/health"',
     )

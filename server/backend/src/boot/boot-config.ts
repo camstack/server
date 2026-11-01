@@ -4,14 +4,15 @@
  * Extracted from main.ts — pure extraction, no behavior change.
  */
 
-import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import type { EnsureTlsResult } from '@camstack/server/system'
-import { asJsonObject, shortHostname } from '@camstack/types'
-import * as yaml from 'js-yaml'
+import {
+  loadBootstrapConfig as loadKernelBootstrapConfig,
+  readTlsEnabled,
+} from '@camstack/server/system'
+import { shortHostname } from '@camstack/types'
 import type { BootstrapConfig } from '../core/config/config.schema'
-import { bootstrapSchema } from '../core/config/config.schema'
 import { StorageLocationManager } from '../core/storage/storage-location-manager'
 
 // ---------------------------------------------------------------------------
@@ -21,6 +22,8 @@ import { StorageLocationManager } from '../core/storage/storage-location-manager
 export type { BootstrapConfig }
 
 export interface InfraContext {
+  /** The config.yaml this boot read — `ConfigService` loads the same file. */
+  readonly configPath: string
   readonly bootstrapConfig: BootstrapConfig
   readonly dataPath: string
   readonly locationManager: StorageLocationManager
@@ -38,23 +41,6 @@ export interface InfraContext {
 // Constants
 // ---------------------------------------------------------------------------
 
-const CONFIG_DEFAULTS: Record<string, unknown> = {
-  server: { port: 4443, host: '0.0.0.0', dataPath: 'camstack-data' },
-}
-
-/**
- * Bootstrap env overrides. No SECRET is among them (D783, D797): the session
- * signing key lives in the keychain, the first-boot admin is fixed
- * (`admin` / `changeme`), and there is no cluster secret at all (D857 — a
- * node's identity is its mesh certificate).
- */
-const ENV_VAR_MAP: Record<string, string> = {
-  CAMSTACK_PORT: 'server.port',
-  CAMSTACK_HOST: 'server.host',
-  CAMSTACK_DATA: 'server.dataPath',
-  CAMSTACK_TLS_ENABLED: 'tls.enabled',
-}
-
 /**
  * Env variables that once carried a secret into the hub. Ignored since D797
  * (`CAMSTACK_CLUSTER_SECRET`: the secret itself was removed by D857) —
@@ -71,31 +57,19 @@ const RETIRED_SECRET_ENV = [
   'HUGGING_FACE_HUB_TOKEN',
 ] as const
 
-/** `config.yaml` `auth.*` keys that once held a credential — ignored too (D797). */
-const RETIRED_AUTH_KEYS = ['jwtSecret', 'adminUsername', 'adminPassword'] as const
-
 /**
  * The extra browser origins moved to the `auth.corsOrigins` setting (D707):
- * edited in System → Authentication, read live. These two former sources are
- * ignored, and named at boot so a stale value is told, never silently
- * honoured.
+ * edited in Identity → Authentication, read live. The former env source is
+ * ignored, and named at boot so a stale value is told, never silently honoured.
  */
 const RETIRED_CORS_ENV = 'CAMSTACK_CORS_ORIGINS'
-const RETIRED_CORS_YAML_KEY = 'server.corsOrigins'
 
-/** The retired CORS sources still present (names only, never the values). */
-export function retiredCorsSources(
-  env: Readonly<Record<string, string | undefined>>,
-  raw: Readonly<Record<string, unknown>>,
-): readonly string[] {
-  const fromEnv = (env[RETIRED_CORS_ENV] ?? '') !== '' ? [RETIRED_CORS_ENV] : []
-  const server = asJsonObject(raw['server']) ?? {}
-  const fromYaml =
-    server['corsOrigins'] !== undefined && server['corsOrigins'] !== null
-      ? [RETIRED_CORS_YAML_KEY]
-      : []
-  return [...fromEnv, ...fromYaml]
-}
+/**
+ * HTTPS on or off is the `tlsEnabled` setting in Network → Local access, read
+ * at boot from the `tls/enabled` marker the setting writes. The old variable
+ * is ignored, and named at boot.
+ */
+const RETIRED_TLS_ENABLED_ENV = 'CAMSTACK_TLS_ENABLED'
 
 /**
  * Env variables that once set the node's certificate. Ignored since D726:
@@ -104,62 +78,47 @@ export function retiredCorsSources(
  */
 const IGNORED_TLS_CERT_ENV = ['CAMSTACK_TLS_CERT', 'CAMSTACK_TLS_KEY'] as const
 
-/** The `config.yaml` keys those variables were mapped onto — ignored too. */
-const IGNORED_TLS_CERT_KEYS = ['certPath', 'keyPath'] as const
-
 // ---------------------------------------------------------------------------
-// Helpers
+// Retired env sources
 // ---------------------------------------------------------------------------
 
-function setNested(
-  obj: Record<string, unknown>,
-  p: string,
-  value: unknown,
-): Record<string, unknown> {
-  const [head, ...rest] = p.split('.')
-  if (!head) return obj
-  if (rest.length === 0) return { ...obj, [head]: value }
-  const child = asJsonObject(obj[head]) ?? {}
-  return { ...obj, [head]: setNested(child, rest.join('.'), value) }
+/** Names of the env variables in `names` that are set to a non-blank value. */
+function setEnvNames(
+  env: Readonly<Record<string, string | undefined>>,
+  names: readonly string[],
+): readonly string[] {
+  return names.filter((name) => {
+    const value = env[name]
+    return value !== undefined && value !== ''
+  })
 }
 
-/**
- * Every env variable and `config.yaml` key that would once have set the
- * certificate and is now ignored (D726). Blank env values count as unset,
- * exactly as the override loop treats them.
- */
+/** The retired CORS variable, when set (name only, never the value). */
+export function retiredCorsSources(
+  env: Readonly<Record<string, string | undefined>>,
+): readonly string[] {
+  return setEnvNames(env, [RETIRED_CORS_ENV])
+}
+
+/** The retired HTTPS toggle variable, when set (name only). */
+export function retiredTlsEnabledSources(
+  env: Readonly<Record<string, string | undefined>>,
+): readonly string[] {
+  return setEnvNames(env, [RETIRED_TLS_ENABLED_ENV])
+}
+
+/** Every env variable that would once have set the certificate and is now ignored (D726). */
 export function ignoredTlsCertSources(
   env: Readonly<Record<string, string | undefined>>,
-  raw: Readonly<Record<string, unknown>>,
 ): readonly string[] {
-  const fromEnv = IGNORED_TLS_CERT_ENV.filter((name) => {
-    const value = env[name]
-    return value !== undefined && value !== ''
-  })
-  const tls = asJsonObject(raw['tls']) ?? {}
-  const fromYaml = IGNORED_TLS_CERT_KEYS.filter((key) => tls[key] !== undefined).map(
-    (key) => `tls.${key}`,
-  )
-  return [...fromEnv, ...fromYaml]
+  return setEnvNames(env, IGNORED_TLS_CERT_ENV)
 }
 
-/**
- * Every retired secret source still present: env variables set (non-blank) and
- * `config.yaml` `auth.*` keys. Names only — a value is never read into a log.
- */
+/** Every retired secret variable set. Names only — a value is never read into a log. */
 export function retiredSecretSources(
   env: Readonly<Record<string, string | undefined>>,
-  raw: Readonly<Record<string, unknown>>,
 ): readonly string[] {
-  const fromEnv = RETIRED_SECRET_ENV.filter((name) => {
-    const value = env[name]
-    return value !== undefined && value !== ''
-  })
-  const auth = asJsonObject(raw['auth']) ?? {}
-  const fromYaml = RETIRED_AUTH_KEYS.filter(
-    (key) => auth[key] !== undefined && auth[key] !== null,
-  ).map((key) => `auth.${key}`)
-  return [...fromEnv, ...fromYaml]
+  return setEnvNames(env, RETIRED_SECRET_ENV)
 }
 
 // ---------------------------------------------------------------------------
@@ -167,75 +126,15 @@ export function retiredSecretSources(
 // ---------------------------------------------------------------------------
 
 /**
- * Load bootstrap config from a YAML file, apply env-var overrides, and
- * validate via the bootstrap Zod schema.
+ * The kernel's bootstrap loader (config.yaml + `CAMSTACK_PORT` / `HOST` /
+ * `DATA`) — the ONE loader — plus a boot warning for every retired env
+ * variable still set, so a container template that carries one is told.
  */
 export function loadBootstrapConfig(configPath: string): BootstrapConfig {
-  // Only bootstrap sections live in config.yaml.
-  // All runtime settings are stored in the SQL system_settings table.
+  const config = loadKernelBootstrapConfig(configPath)
+  const env = process.env
 
-  let raw: Record<string, unknown>
-
-  if (fs.existsSync(configPath)) {
-    const content = fs.readFileSync(configPath, 'utf-8')
-    raw = asJsonObject(yaml.load(content)) ?? {}
-    // Merge in any missing bootstrap sections (server, auth only)
-    let updated = false
-    for (const [key, defaults] of Object.entries(CONFIG_DEFAULTS)) {
-      if (!(key in raw)) {
-        raw[key] = defaults
-        updated = true
-      }
-    }
-    if (updated) {
-      try {
-        const tmpPath = `${configPath}.tmp`
-        fs.writeFileSync(
-          tmpPath,
-          yaml.dump(raw, { lineWidth: 120, indent: 2, quotingType: '"' }),
-          'utf-8',
-        )
-        fs.renameSync(tmpPath, configPath)
-        console.log(`[Phase1] Updated config.yaml with missing bootstrap defaults`)
-      } catch (err) {
-        console.warn(`[Phase1] Could not update config.yaml:`, err)
-      }
-    }
-    console.log(`[Phase1] Loaded bootstrap config from: ${configPath}`)
-  } else {
-    console.log(`[Phase1] Config file not found at: ${configPath} — writing defaults`)
-    const defaults = { ...CONFIG_DEFAULTS }
-    try {
-      fs.mkdirSync(path.dirname(configPath), { recursive: true })
-      const tmpPath = `${configPath}.tmp`
-      fs.writeFileSync(
-        tmpPath,
-        yaml.dump(defaults, { lineWidth: 120, indent: 2, quotingType: '"' }),
-        'utf-8',
-      )
-      fs.renameSync(tmpPath, configPath)
-      console.log(`[Phase1] Default config.yaml written to: ${configPath}`)
-    } catch (err) {
-      console.warn(`[Phase1] Could not write default config.yaml:`, err)
-    }
-    raw = defaults
-  }
-
-  // Apply env var overrides for bootstrap keys
-  for (const [envKey, configPath_] of Object.entries(ENV_VAR_MAP)) {
-    const envValue = process.env[envKey]
-    if (envValue === undefined || envValue === '') continue
-    const coerced: unknown =
-      configPath_ === 'server.port'
-        ? Number(envValue)
-        : configPath_ === 'tls.enabled'
-          ? envValue === 'true'
-          : envValue
-    raw = setNested(raw, configPath_, coerced)
-    console.log(`[Phase1] Env override: ${envKey} → ${configPath_}`)
-  }
-
-  const retired = retiredSecretSources(process.env, raw)
+  const retired = retiredSecretSources(env)
   if (retired.length > 0) {
     console.warn(
       `[Phase1] WARN ${retired.join(', ')} ignored — no secret is read from the environment or ` +
@@ -245,16 +144,24 @@ export function loadBootstrapConfig(configPath: string): BootstrapConfig {
     )
   }
 
-  const retiredCors = retiredCorsSources(process.env, raw)
+  const retiredCors = retiredCorsSources(env)
   if (retiredCors.length > 0) {
     console.warn(
       `[Phase1] WARN ${retiredCors.join(', ')} ignored — the allowed browser origins are set ` +
-        'only in the admin UI (System → Authentication → Allowed browser origins, D707). ' +
+        'only in the admin UI (Identity → Authentication → Allowed browser origins, D707). ' +
         'Re-enter them there and remove the entry.',
     )
   }
 
-  const ignored = ignoredTlsCertSources(process.env, raw)
+  const retiredTls = retiredTlsEnabledSources(env)
+  if (retiredTls.length > 0) {
+    console.warn(
+      `[Phase1] WARN ${retiredTls.join(', ')} ignored — HTTPS on or off is the "Serve HTTPS" ` +
+        'setting in Network → Local access (applies after a restart). Remove the entry.',
+    )
+  }
+
+  const ignored = ignoredTlsCertSources(env)
   if (ignored.length > 0) {
     console.warn(
       `[Phase1] WARN ${ignored.join(', ')} ignored — the certificate is set only in the admin UI. ` +
@@ -262,7 +169,7 @@ export function loadBootstrapConfig(configPath: string): BootstrapConfig {
     )
   }
 
-  return bootstrapSchema.parse(raw)
+  return config
 }
 
 // ---------------------------------------------------------------------------
@@ -274,7 +181,7 @@ export function loadBootstrapConfig(configPath: string): BootstrapConfig {
  * Returns the full InfraContext needed by subsequent boot phases.
  */
 export async function setupInfra(
-  _configPath: string,
+  configPath: string,
   bootstrapConfig: BootstrapConfig,
 ): Promise<InfraContext> {
   // No secret is generated here: the session signing key is the keychain's
@@ -301,7 +208,11 @@ export async function setupInfra(
   let tlsOptions: { key: Buffer; cert: Buffer } | undefined
   let tlsCert: EnsureTlsResult | undefined
 
-  if (config.tls.enabled) {
+  // HTTPS is on unless the operator turned it off in Network → Local access: that
+  // setting writes the `tls/enabled` marker, and a node with none (first boot) serves HTTPS.
+  const tlsEnabled = readTlsEnabled(dataPath)
+  console.log(`[Phase2c] HTTPS ${tlsEnabled ? 'on' : 'off (Network → Local access)'}`)
+  if (tlsEnabled) {
     // Use require() instead of import() — the ESM build of @camstack/server/system has
     // broken chunks with require("fs") when leaked .js files exist in core/src/.
     // CJS build works correctly and tsx supports require().
@@ -338,6 +249,7 @@ export async function setupInfra(
   }
 
   return {
+    configPath,
     bootstrapConfig: config,
     dataPath,
     locationManager,

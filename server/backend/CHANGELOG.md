@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A terminal (camstack login, the MCP setup tool) signs in by browser approval: begin and poll are public, approval needs a fresh sign-in.
 - Terminal sign-in approval: audit lines, soft global cap and the requester's User-Agent and address shown to the approver
 - The server now carries the framework (@camstack/server/system) and refuses an update whose declared minimum is not met
+- HTTPS on or off is now the Serve HTTPS setting in Network > Local access (on by default); CAMSTACK_TLS_ENABLED is ignored and named in the boot log, the image healthcheck probes HTTPS then HTTP, and the hub reads one config.yaml through one loader
 
 ## [1.2.717] - 2026-10-31
 

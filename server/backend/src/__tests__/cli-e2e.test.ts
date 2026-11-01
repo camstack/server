@@ -72,7 +72,7 @@ describe('CLI E2E', () => {
       const port = randomPort()
       const proc = fork(CLI_PATH, ['serve', '--port', String(port), '--data', TEST_DATA_DIR], {
         stdio: 'pipe',
-        env: { ...process.env, CAMSTACK_TLS_ENABLED: 'true' },
+        env: process.env,
       })
       processes.push(proc)
 
