@@ -43,8 +43,8 @@ const COLD_PRESENCE: PresenceStatus = {
  *                  power-cycle (`powerCyclePort`); a CHILD of an infra Container.
  *   - `sensor`   → a typed sensor cap chosen from `metric` (numeric / temperature
  *                  / enum); a CHILD of an infra Container.
- *   - `presence` → `presence` cap — a network client tracker; a direct CHILD of
- *                  the controller Hub.
+ *   - `presence` → `presence` cap — a network client tracker; a top-level device,
+ *                  a sibling of the controller's Gateway.
  *
  * The slice is fed from the live controller snapshot on each poll tick (and
  * seeded cold on activate). Commands are driven through the live client resolved
@@ -54,7 +54,7 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
   readonly features: readonly DeviceFeature[] = []
 
   private readonly kind: UnifiFeatureKind
-  private readonly controllerId: string
+  private readonly integrationId: string
   private readonly infraNativeId: string | undefined
   private readonly switchFeature: UnifiSwitchFeature | undefined
   private readonly buttonAction: UnifiButtonAction | undefined
@@ -68,12 +68,9 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
     const cfg = unifiFeatureSchema.parse(ctx.persistedConfig ?? {})
     super(ctx, unifiFeatureSchema, { type: ctx.deviceMeta.type })
     this.kind = cfg.kind
-    this.controllerId = cfg.controllerId
+    this.integrationId = cfg.integrationId
     this.infraNativeId = cfg.infraNativeId
-    registerUnifiAdminLink(ctx, this.id, {
-      kind: 'controller',
-      controllerId: this.controllerId,
-    })
+    registerUnifiAdminLink(ctx, this.id, { integrationId: this.integrationId })
     this.switchFeature = cfg.switchFeature
     this.buttonAction = cfg.buttonAction
     this.portIdx = cfg.portIdx
@@ -109,15 +106,15 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
 
   /** A stable per-device identity fragment for `sourceInfo`. */
   private identityKey(): string {
-    if (this.kind === 'presence') return `${this.controllerId}:${this.mac ?? 'unknown'}`
-    return `${this.controllerId}:${this.infraNativeId ?? 'unknown'}:${this.kind}:${this.portIdx ?? this.metric ?? this.switchFeature ?? this.buttonAction ?? ''}`
+    if (this.kind === 'presence') return `${this.integrationId}:${this.mac ?? 'unknown'}`
+    return `${this.integrationId}:${this.infraNativeId ?? 'unknown'}:${this.kind}:${this.portIdx ?? this.metric ?? this.switchFeature ?? this.buttonAction ?? ''}`
   }
 
   private resolveClient(): UnifiControllerClient {
-    const client = unifiControllers.getManager(this.controllerId)?.client ?? null
+    const client = unifiControllers.getManager(this.integrationId)?.client ?? null
     if (client === null) {
       throw new Error(
-        `UniFi ${this.kind} ${this.id}: controller ${this.controllerId} client is not available`,
+        `UniFi ${this.kind} ${this.id}: controller ${this.integrationId} client is not available`,
       )
     }
     return client
@@ -149,7 +146,7 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
         })
       }
     }
-    this.snapshotUnsub = unifiControllers.onSnapshot(this.controllerId, onSnapshot)
+    this.snapshotUnsub = unifiControllers.onSnapshot(this.integrationId, onSnapshot)
   }
 
   /** Recompute + write this device's cap slice (and online) from the live snapshot. */
@@ -168,7 +165,7 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
 
   private recomputeSwitch(): void {
     const infra = this.infraNativeId
-      ? unifiControllers.getInfra(this.controllerId, this.infraNativeId)
+      ? unifiControllers.getInfra(this.integrationId, this.infraNativeId)
       : null
     if (infra === null) return
     if (this.online !== infra.online) this.markOnline(infra.online)
@@ -181,7 +178,7 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
 
   private recomputeButtonOnline(): void {
     const infra = this.infraNativeId
-      ? unifiControllers.getInfra(this.controllerId, this.infraNativeId)
+      ? unifiControllers.getInfra(this.integrationId, this.infraNativeId)
       : null
     if (infra === null) return
     if (this.online !== infra.online) this.markOnline(infra.online)
@@ -189,7 +186,7 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
 
   private recomputeSensor(): void {
     const infra = this.infraNativeId
-      ? unifiControllers.getInfra(this.controllerId, this.infraNativeId)
+      ? unifiControllers.getInfra(this.integrationId, this.infraNativeId)
       : null
     if (infra === null || this.metric === undefined) return
     if (this.online !== infra.online) this.markOnline(infra.online)
@@ -232,7 +229,7 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
   }
 
   private recomputePresence(): void {
-    const client = this.mac ? unifiControllers.getClient(this.controllerId, this.mac) : null
+    const client = this.mac ? unifiControllers.getClient(this.integrationId, this.mac) : null
     if (client === null) return
     if (this.online !== client.online) this.markOnline(client.online)
     const status: PresenceStatus = {

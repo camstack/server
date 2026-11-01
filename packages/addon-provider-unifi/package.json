@@ -39,18 +39,21 @@
         "category": "providers",
         "name": "UniFi Network",
         "version": "0.1.0",
-        "description": "Adopt a UniFi Network controller over the local network: infra devices (switches / APs / gateways) as containers exposing per-port PoE, restart, LED and CPU/temp/clients sensors, plus network clients as presence. Cameras are not in scope.",
+        "description": "Add a UniFi Network controller as an integration (the connection and credentials are its settings); it adopts the controller as a Gateway, infra devices (switches / APs / gateways) as containers exposing per-port PoE, restart, LED and CPU/temp/clients sensors, plus network clients as presence. Cameras are not in scope.",
         "entry": "./dist/addon.js",
         "icon": "assets/icon.svg",
         "color": "#0559c9",
         "instanceMode": "multiple",
-        "mode": "standalone",
+        "mode": "account",
         "execution": {
           "placement": "hub-only"
         },
         "capabilities": [
           {
             "name": "device-provider"
+          },
+          {
+            "name": "device-adoption"
           }
         ]
       }
@@ -66,7 +69,7 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite build --watch",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
     "test": "vitest run",
     "publish:npm": "npm publish --access public"
   },

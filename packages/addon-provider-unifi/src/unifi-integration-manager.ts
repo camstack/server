@@ -31,11 +31,11 @@ export interface UnifiIntegrationManagerOptions {
   readonly name: string
   readonly connection: UnifiConnectionConfig
   readonly logger: IScopedLogger
-  readonly onConnected: (controllerId: string) => void
-  readonly onDisconnected: (controllerId: string) => void
+  readonly onConnected: (integrationId: string) => void
+  readonly onDisconnected: (integrationId: string) => void
   /** Fired after every poll cycle so the controller device fans the fresh
    *  snapshot out to its infra + client children. */
-  readonly onPolled: (controllerId: string) => void
+  readonly onPolled: (integrationId: string) => void
   /** Factory seam — defaults to the "not wired" factory above. */
   readonly makeClient?: UnifiControllerClientFactory
 }
@@ -49,11 +49,12 @@ export interface UnifiIntegrationManagerOptions {
  */
 export class UnifiIntegrationManager {
   readonly #id: string
+  readonly #name: string
   #connection: UnifiConnectionConfig
   readonly #logger: IScopedLogger
-  readonly #onConnected: (controllerId: string) => void
-  readonly #onDisconnected: (controllerId: string) => void
-  readonly #onPolled: (controllerId: string) => void
+  readonly #onConnected: (integrationId: string) => void
+  readonly #onDisconnected: (integrationId: string) => void
+  readonly #onPolled: (integrationId: string) => void
   readonly #makeClient: UnifiControllerClientFactory
 
   #client: UnifiControllerClient | null = null
@@ -65,6 +66,7 @@ export class UnifiIntegrationManager {
 
   constructor(options: UnifiIntegrationManagerOptions) {
     this.#id = options.id
+    this.#name = options.name
     this.#connection = options.connection
     this.#logger = options.logger
     this.#onConnected = options.onConnected
@@ -73,9 +75,14 @@ export class UnifiIntegrationManager {
     this.#makeClient = options.makeClient ?? defaultUnifiClientFactory
   }
 
-  /** The controller id (= Hub device stableId). */
+  /** The controller id (= the integration id). */
   get id(): string {
     return this.#id
+  }
+
+  /** The integration's display name. */
+  get name(): string {
+    return this.#name
   }
 
   /** Current connection status. */
@@ -126,7 +133,7 @@ export class UnifiIntegrationManager {
   async start(): Promise<void> {
     if (this.#client !== null) {
       this.#logger.warn('UnifiIntegrationManager: start() called while running — stop first', {
-        tags: { controllerId: this.#id },
+        tags: { integrationId: this.#id },
       })
       return
     }
@@ -152,7 +159,7 @@ export class UnifiIntegrationManager {
     this.#onPolled(this.#id)
     this.#startPollLoop()
     this.#logger.info('UnifiIntegrationManager: started', {
-      tags: { controllerId: this.#id },
+      tags: { integrationId: this.#id },
       meta: { infraCount: this.#infra.size, clientCount: this.#clients.size },
     })
   }
@@ -173,7 +180,7 @@ export class UnifiIntegrationManager {
         await client.disconnect()
       } catch (err) {
         this.#logger.warn('UnifiIntegrationManager: disconnect failed', {
-          tags: { controllerId: this.#id },
+          tags: { integrationId: this.#id },
           meta: { error: errMsg(err) },
         })
       }
@@ -199,7 +206,7 @@ export class UnifiIntegrationManager {
     } catch (err) {
       this.#error = errMsg(err)
       this.#logger.debug('UnifiIntegrationManager: poll failed', {
-        tags: { controllerId: this.#id },
+        tags: { integrationId: this.#id },
         meta: { error: this.#error },
       })
     }
@@ -211,7 +218,7 @@ export class UnifiIntegrationManager {
     this.#pollTimer = setInterval(() => {
       void this.poll().catch((err) => {
         this.#logger.warn('UnifiIntegrationManager: poll cycle failed', {
-          tags: { controllerId: this.#id },
+          tags: { integrationId: this.#id },
           meta: { error: errMsg(err) },
         })
       })

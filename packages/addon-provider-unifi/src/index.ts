@@ -1,7 +1,6 @@
 export { UnifiProviderAddon } from './addon.js'
 export {
   unifiConnectionSchema,
-  unifiControllerSchema,
   unifiInfraSchema,
   unifiFeatureSchema,
   unifiFeatureDescriptorSchema,
@@ -9,13 +8,15 @@ export {
   UnifiSwitchFeatureSchema,
   UnifiButtonActionSchema,
   UnifiSensorMetricSchema,
-  buildControllerFormSchema,
+  buildConnectionFormSchema,
+  connectionFromSettings,
+  sameConnection,
   settingsToConnection,
-  slugifyHost,
+  UNIFI_SYSTEM,
 } from './config.js'
 export type {
   UnifiConnectionConfig,
-  UnifiControllerConfig,
+  UnifiConnectionRead,
   UnifiInfraConfig,
   UnifiFeatureConfig,
   UnifiFeatureDescriptor,
@@ -37,6 +38,8 @@ export {
   infraNativeId,
   clientNativeId,
   parseNativeId,
+  unifiStableId,
+  UNIFI_GATEWAY_ID,
 } from './unifi-discovery.js'
 export type { ParsedNativeId } from './unifi-discovery.js'
 export { buildInfraFeatures, featuresEqual, capForMetric } from './unifi-mapping.js'
@@ -45,6 +48,10 @@ export {
   defaultUnifiClientFactory,
 } from './unifi-integration-manager.js'
 export { UnifiControllerResolver, unifiControllers } from './unifi-node-resolver.js'
-export { UnifiControllerDevice } from './devices/unifi-controller-device.js'
+export { UnifiGatewayDevice, unifiGatewaySchema } from './devices/unifi-gateway-device.js'
+export { UnifiClientRegistry } from './unifi-client-registry.js'
+export { buildUnifiAdoptionProvider } from './unifi-adoption-provider.js'
+export { buildUnifiDeviceAdopter } from './unifi-device-adopter.js'
+export { reconcileInfraFeatures } from './unifi-feature-reconcile.js'
 export { UnifiInfraDevice } from './devices/unifi-infra-device.js'
 export { UnifiFeatureDevice } from './devices/unifi-feature-device.js'

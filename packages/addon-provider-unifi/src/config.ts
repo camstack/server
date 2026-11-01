@@ -1,11 +1,19 @@
 import { z } from 'zod'
-import type { ConfigUISchema } from '@camstack/types'
+import { isSecretMarkerLike, type ConfigUISchema } from '@camstack/types'
+
+/** The device-registry `system` tag every UniFi device carries. */
+export const UNIFI_SYSTEM = 'unifi'
+
+/** A secret the keychain could not serve reads as a marker object, not a string. */
+function markerToEmpty(value: unknown): unknown {
+  if (isSecretMarkerLike(value)) return ''
+  return value === null || value === undefined ? '' : value
+}
 
 /**
  * Operator-supplied connection to ONE UniFi Network controller on the local
- * network. The addon runs in `standalone` mode (the Reolink / Ecowitt / Velux
- * pattern): the CONNECTION lives on the controller DEVICE config, not a broker
- * registry. The controller is POLLED — `pollIntervalMs` drives the infra + client
+ * network. The addon runs in `account` mode: the CONNECTION lives on the INTEGRATION's
+ * settings, not on a device. The controller is POLLED — `pollIntervalMs` drives the infra + client
  * refresh cadence. Auth is either an API key (preferred, UniFi OS ≥ 4) OR a
  * username + password local admin.
  */
@@ -18,14 +26,12 @@ export const unifiConnectionSchema = z.object({
     )
     .describe('Controller HTTPS port (443 on UniFi OS, 8443 on legacy)'),
   apiKey: z
-    .string()
-    .default('')
+    .preprocess(markerToEmpty, z.string().default(''))
     .describe('UniFi OS API key (preferred). Leave blank to use username + password.')
     .meta({ secret: true }),
   username: z.string().default('').describe('Local admin username (when no API key)'),
   password: z
-    .string()
-    .default('')
+    .preprocess(markerToEmpty, z.string().default(''))
     .describe('Local admin password (when no API key)')
     .meta({ secret: true }),
   site: z.string().default('default').describe('Controller site name'),
@@ -38,20 +44,6 @@ export const unifiConnectionSchema = z.object({
 })
 
 export type UnifiConnectionConfig = z.infer<typeof unifiConnectionSchema>
-
-/**
- * Persisted config for a UniFi controller {@link import('@camstack/types').DeviceType.Hub}
- * device. The controller owns exactly one live client keyed on its own
- * `stableId`; adopted infra Containers + client Presence devices reference it via
- * their `controllerId` config field.
- */
-export const unifiControllerSchema = z.object({
-  connection: unifiConnectionSchema,
-  /** Provenance marker used to scope offline / cascade helpers. */
-  system: z.literal('unifi-controller').optional(),
-})
-
-export type UnifiControllerConfig = z.infer<typeof unifiControllerSchema>
 
 // ── Feature discriminants (shared by descriptor + child config) ───────────────
 
@@ -79,7 +71,7 @@ export type UnifiSensorMetric = z.infer<typeof UnifiSensorMetricSchema>
 
 /**
  * One feature descriptor persisted on an infra Container's `features[]`. It is
- * `controllerId` / `infraNativeId` free (those live on the Container) — those are
+ * `integrationId` / `infraNativeId` free (those live on the Container) — those are
  * folded back in when the accessory child is spawned. Mirrors ecowitt's
  * `sensors[]` entry.
  */
@@ -100,12 +92,12 @@ export type UnifiFeatureDescriptor = z.infer<typeof unifiFeatureDescriptorSchema
 /**
  * Persisted config for one infra {@link import('@camstack/types').DeviceType.Container}
  * device (USER DIRECTIVE: each infra switch / AP / gateway is a Container that
- * exposes its features). `controllerId` selects the parent controller's live
+ * exposes its features). `integrationId` selects the parent controller's live
  * client; `infraNativeId` is the controller device id; `features[]` is the
  * additively-reconciled descriptor list that fans out as accessory children.
  */
 export const unifiInfraSchema = z.object({
-  controllerId: z.string().min(1).describe('Parent controller Hub stableId'),
+  integrationId: z.string().min(1).describe('Owning integration'),
   infraNativeId: z.string().min(1).describe('Controller-stable infra device id'),
   model: z.string().optional(),
   features: z.array(unifiFeatureDescriptorSchema).default([]),
@@ -124,12 +116,12 @@ export type UnifiInfraConfig = z.infer<typeof unifiInfraSchema>
  *   - `sensor`   → a typed sensor cap chosen from `metric`
  *   - `presence` → `presence` cap (a network client tracker)
  *
- * `controllerId` resolves the live client. `infraNativeId` selects the owning
+ * `integrationId` resolves the live client. `infraNativeId` selects the owning
  * infra device (switch/button/sensor); `mac` selects the client (presence).
  */
 export const unifiFeatureSchema = z.object({
   kind: UnifiFeatureKindSchema,
-  controllerId: z.string().min(1).describe('Parent controller Hub stableId'),
+  integrationId: z.string().min(1).describe('Owning integration'),
   /** Owning infra device id — set for switch / button / sensor children. */
   infraNativeId: z.string().optional(),
   /** Switch discriminant (`poe` / `led`). */
@@ -164,42 +156,35 @@ export function settingsToConnection(settings: unknown): UnifiConnectionConfig {
   return unifiConnectionSchema.parse(toRecord(settings))
 }
 
-/**
- * Slugify a host into a readable, stable row-key fragment. Exported so the
- * discovery candidate's `stableId` matches exactly what `generateStableId`
- * derives on adopt.
- */
-export function slugifyHost(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
+/** A connection plus whether a credential is stored but unreadable right now. */
+export interface UnifiConnectionRead {
+  readonly connection: UnifiConnectionConfig
+  readonly credentialsLocked: boolean
+}
+
+/** Parse an integration's settings into a connection, or null while its host is missing. */
+export function connectionFromSettings(settings: unknown): UnifiConnectionRead | null {
+  const raw = toRecord(settings)
+  const parsed = unifiConnectionSchema.safeParse(raw)
+  if (!parsed.success) return null
+  return {
+    connection: parsed.data,
+    credentialsLocked: isSecretMarkerLike(raw['apiKey']) || isSecretMarkerLike(raw['password']),
+  }
+}
+
+/** True when two connections would poll the controller the same way. */
+export function sameConnection(a: UnifiConnectionConfig, b: UnifiConnectionConfig): boolean {
+  return JSON.stringify(a) === JSON.stringify(b)
 }
 
 /**
- * Hand-written connection form for the controller device-creation UI (standalone
- * mode — Reolink / Velux pattern). The connection lives on the controller DEVICE
- * config, not in a broker registry.
+ * The integration's settings form (`globalSettingsSchema`); the integration carries the
+ * name. The credentials are `password` fields, keychain secrets.
  */
-export function buildControllerFormSchema(): ConfigUISchema {
+export function buildConnectionFormSchema(): ConfigUISchema {
   return {
     sections: [
-      {
-        id: 'identity',
-        title: 'Controller',
-        titleKey: 'provider-unifi:controller.s_identity.title',
-        columns: 1,
-        fields: [
-          {
-            type: 'text',
-            key: 'name',
-            label: 'Name',
-            labelKey: 'provider-unifi:controller.s_identity.name.label',
-            required: true,
-            placeholder: 'UniFi Network',
-          },
-        ],
-      },
       {
         id: 'connection',
         title: 'Connection',

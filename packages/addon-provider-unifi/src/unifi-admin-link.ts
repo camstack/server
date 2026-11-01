@@ -3,7 +3,7 @@
  *
  * A UniFi access point or switch has no management page of its own — it is
  * adopted by, and configured from, the controller. So every device this addon
- * owns (the controller Hub, an infra Container, a port/feature child) resolves
+ * owns (the controller Gateway, an infra Container, a port/feature child) resolves
  * to the CONTROLLER's UI, `target: 'integration'`, labelled as such so an
  * operator knows before clicking that he is not landing on the AP.
  *
@@ -40,12 +40,10 @@ export interface UnifiControllerEndpoint {
   readonly port: number
 }
 
-/** How this device reaches the controller endpoint. */
-export type UnifiAdminLinkSource =
-  /** The Hub, which holds the connection and whose operator edits it. */
-  | { readonly kind: 'own'; readonly read: () => UnifiControllerEndpoint }
-  /** Everything else, resolved through the live manager. */
-  | { readonly kind: 'controller'; readonly controllerId: string }
+/** Every device resolves the endpoint through its integration's live manager. */
+export interface UnifiAdminLinkSource {
+  readonly integrationId: string
+}
 
 export function registerUnifiAdminLink(
   ctx: DeviceContext,
@@ -60,20 +58,15 @@ export function registerUnifiAdminLink(
         )
       }
 
-      let endpoint: UnifiControllerEndpoint
-      if (source.kind === 'own') {
-        endpoint = source.read()
-      } else {
-        const manager = unifiControllers.getManager(source.controllerId)
-        if (manager === null) {
-          ctx.logger.debug('unifi admin link unavailable: no live manager', {
-            tags: { deviceId },
-            meta: { controllerId: source.controllerId },
-          })
-          return null
-        }
-        endpoint = manager.getConnection()
+      const manager = unifiControllers.getManager(source.integrationId)
+      if (manager === null) {
+        ctx.logger.debug('unifi admin link unavailable: no live manager', {
+          tags: { deviceId },
+          meta: { integrationId: source.integrationId },
+        })
+        return null
       }
+      const endpoint: UnifiControllerEndpoint = manager.getConnection()
 
       const built = buildDeviceAdminUrl({
         host: endpoint.host,

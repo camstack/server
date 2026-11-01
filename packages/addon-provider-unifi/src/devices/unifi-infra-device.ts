@@ -21,11 +21,11 @@ import { UnifiFeatureDevice } from './unifi-feature-device.js'
 /**
  * One UniFi infra device (UDM/USX-Max gateway, U6-Pro AP, USW Lite-8-PoE /
  * Flex-Mini switch, …) as a CamStack {@link DeviceType.Container} (USER
- * DIRECTIVE: the controller is the Hub, each infra device is a Container that
- * EXPOSES its features). A CHILD of the controller Hub (standalone mode). Owns no
+ * DIRECTIVE: each infra device is a Container that EXPOSES its features). A
+ * top-level SIBLING of the controller's Gateway; its integration owns the connection. Owns no
  * caps itself — it declares `getAccessoryChildren()` so the kernel auto-spawns
  * one {@link UnifiFeatureDevice} per descriptor in the LIVE `features[]` config
- * and reconciles additions/removals when the controller re-persists the list via
+ * and reconciles additions/removals when the addon re-persists the list via
  * `applyDerivedSpec`. Mirrors `EcowittContainerDevice`.
  *
  * The fan-out per infra device:
@@ -36,21 +36,18 @@ import { UnifiFeatureDevice } from './unifi-feature-device.js'
 export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
   readonly features: readonly DeviceFeature[] = [DeviceFeature.Resyncable]
 
-  private readonly controllerId: string
+  private readonly integrationId: string
   private readonly infraNativeId: string
 
   constructor(ctx: DeviceContext) {
     const cfg = unifiInfraSchema.parse(ctx.persistedConfig ?? {})
     super(ctx, unifiInfraSchema, { type: DeviceType.Container })
-    this.controllerId = cfg.controllerId
+    this.integrationId = cfg.integrationId
     this.infraNativeId = cfg.infraNativeId
-    registerUnifiAdminLink(ctx, this.id, {
-      kind: 'controller',
-      controllerId: this.controllerId,
-    })
-    this.online = unifiControllers.getInfra(this.controllerId, this.infraNativeId)?.online ?? false
+    registerUnifiAdminLink(ctx, this.id, { integrationId: this.integrationId })
+    this.online = unifiControllers.getInfra(this.integrationId, this.infraNativeId)?.online ?? false
     void this.updateSourceInfo({
-      id: `${this.controllerId}:${this.infraNativeId}`,
+      id: `${this.integrationId}:${this.infraNativeId}`,
       system: 'unifi',
     })
   }
@@ -64,11 +61,12 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
         type: deviceTypeForDescriptor(descriptor),
         name: featureLabel(descriptor),
         linkDeviceId: this.id,
+        integrationId: this.integrationId,
         ...(role !== undefined ? { role } : {}),
       }
       const config: Record<string, unknown> = {
         kind: descriptor.kind,
-        controllerId: this.controllerId,
+        integrationId: this.integrationId,
         infraNativeId: this.infraNativeId,
         capabilities: [capForDescriptor(descriptor)],
         system: 'unifi',

@@ -1,6 +1,4 @@
 {
-  "controller.s_identity.title": "Controller",
-  "controller.s_identity.name.label": "Nome",
   "controller.s_connection.title": "Connessione",
   "controller.s_connection.description": "Autenticati con una API key UniFi OS (consigliata) o con utente e password di un admin locale.",
   "controller.s_connection.host.label": "Host / IP del controller",
