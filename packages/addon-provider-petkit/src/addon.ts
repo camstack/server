@@ -15,6 +15,7 @@ import {
   type ProviderRegistration,
   type SystemEvent,
 } from '@camstack/types'
+import { PetkitReconciler, type IntegrationLifecycleKind } from './petkit-reconciler.js'
 import {
   buildConnectionFormSchema,
   connectionFromSettings,
@@ -50,6 +51,7 @@ export class PetkitProviderAddon extends BaseDeviceProvider {
     [DeviceType.PetFeeder]: PetkitFeederDevice,
   }
 
+  private integrationReconciler: PetkitReconciler | null = null
   private clients: PetkitClientRegistry | null = null
 
   constructor() {
@@ -65,7 +67,9 @@ export class PetkitProviderAddon extends BaseDeviceProvider {
     })
     this.clients = new PetkitClientRegistry(this.ctx.logger)
     this.clients.setOnConnected((integrationId) => {
-      this.ctx.logger.info('PetKit: integration connected', { meta: { integrationId } })
+      this.ctx.logger.info('PetKit: integration connected', {
+        meta: { integrationId },
+      })
       this.setIntegrationDevicesOnline(integrationId, true)
     })
     this.clients.setOnDisconnected((integrationId) => {
@@ -81,8 +85,14 @@ export class PetkitProviderAddon extends BaseDeviceProvider {
 
     return [
       ...regs,
-      { capability: deviceAdoptionCapability, provider: this.buildAdoptionProvider() },
-      { capability: connectionTestCapability, provider: this.buildConnectionTestProvider() },
+      {
+        capability: deviceAdoptionCapability,
+        provider: this.buildAdoptionProvider(),
+      },
+      {
+        capability: connectionTestCapability,
+        provider: this.buildConnectionTestProvider(),
+      },
     ]
   }
 
@@ -103,9 +113,12 @@ export class PetkitProviderAddon extends BaseDeviceProvider {
     try {
       await this.clients?.shutdown()
     } catch (err) {
-      this.ctx.logger.warn('PetKit: provider shutdown error', { meta: { error: errMsg(err) } })
+      this.ctx.logger.warn('PetKit: provider shutdown error', {
+        meta: { error: errMsg(err) },
+      })
     }
     this.clients = null
+    this.integrationReconciler = null
     petkitSession.unbind()
     await super.onShutdown()
   }
@@ -127,71 +140,77 @@ export class PetkitProviderAddon extends BaseDeviceProvider {
 
   // ── Per-integration credential reconcile (mirrors Dreame) ────────────────
 
-  private async reconcileIntegrations(): Promise<void> {
-    const reg = this.requireClients()
-    try {
-      const all = await this.ctx.api.integrations.list.query()
-      const mine = all.filter((i) => i.addonId === this.ctx.id && i.enabled)
-      const surviving = new Set<string>()
-      for (const integration of mine) {
-        try {
-          const settings = await this.ctx.api.integrations.getSettings.query({ id: integration.id })
-          const connection = connectionFromSettings(settings)
-          if (!connection) {
-            this.ctx.logger.warn('PetKit integration has no complete credentials — skipping', {
-              meta: { integrationId: integration.id },
-            })
-            continue
-          }
-          await reg.upsert(integration.id, integration.name, connection)
-          surviving.add(integration.id)
-        } catch (err) {
-          this.ctx.logger.warn('PetKit reconcile: failed to read integration settings', {
-            meta: { integrationId: integration.id, error: errMsg(err) },
-          })
-        }
-      }
-      const vanished = reg.list().filter((id) => !surviving.has(id))
-      await reg.retain(surviving)
-      for (const integrationId of vanished) {
-        await petkitSession.forget(integrationId)
-        await this.cascadeRemoveDevicesForIntegration(integrationId)
-      }
-    } catch (err) {
-      this.ctx.logger.warn('PetKit integration reconcile failed', {
-        meta: { error: errMsg(err) },
-      })
-    }
+  private reconciler(): PetkitReconciler {
+    this.integrationReconciler ??= new PetkitReconciler({
+      addonId: this.ctx.id,
+      logger: this.ctx.logger,
+      clients: {
+        list: () => this.requireClients().list(),
+        remove: async (id) => {
+          await this.requireClients().remove(id)
+          await petkitSession.forget(id)
+        },
+      },
+      listIntegrations: () => this.ctx.api.integrations.list.query(),
+      applySettings: async (integration) => {
+        const connection = connectionFromSettings(
+          await this.ctx.api.integrations.getSettings.query({
+            id: integration.id,
+          }),
+        )
+        if (!connection) return false
+        await this.requireClients().upsert(integration.id, integration.name, connection)
+        return true
+      },
+      removeDevices: (integrationId) => this.cascadeRemoveDevicesForIntegration(integrationId),
+    })
+    return this.integrationReconciler
   }
 
+  /** Upsert one client per enabled integration; never removes a device (D49). */
+  private async reconcileIntegrations(): Promise<void> {
+    await this.reconciler().reconcile()
+  }
+
+  /** Lifecycle events: only an explicit Deleted/Disabled naming an integration removes devices. */
   private subscribeIntegrationLifecycle(): void {
-    const handler = (event: SystemEvent): void => {
-      const addonId = event.data['addonId']
-      if (typeof addonId === 'string' && addonId !== this.ctx.id) return
-      void this.reconcileIntegrations()
-    }
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationEnabled }, handler)
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDisabled }, handler)
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, handler)
+    const on =
+      (kind: IntegrationLifecycleKind) =>
+      (event: SystemEvent): void => {
+        const addonId = event.data['addonId']
+        if (typeof addonId === 'string' && addonId !== this.ctx.id) return
+        const integrationId = event.data['integrationId']
+        void this.reconciler().onLifecycle(
+          kind,
+          typeof integrationId === 'string' ? integrationId : null,
+        )
+      }
+    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationEnabled }, on('enabled'))
+    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDisabled }, on('disabled'))
+    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, on('deleted'))
   }
 
   /** Remove every adopted PetKit device belonging to a vanished integration. */
-  private async cascadeRemoveDevicesForIntegration(integrationId: string): Promise<void> {
+  private async cascadeRemoveDevicesForIntegration(integrationId: string): Promise<number> {
     const reg = this.ctx.kernel.deviceRegistry
     const devices = this.ctx.kernel.devices
-    if (!reg || !devices) return
+    if (!reg || !devices) return 0
+    let removed = 0
     for (const d of reg.getAllForAddon(this.addonId)) {
       const config = await devices.loadConfig(d.id).catch((): Record<string, unknown> => ({}))
       if (config['system'] === 'petkit' && config['integrationId'] === integrationId) {
         try {
           await devices.remove(d.id)
+          removed += 1
         } catch (err) {
           this.ctx.logger.warn('PetKit cascade remove failed', {
-            meta: { deviceId: d.id, integrationId, error: errMsg(err) },
+            tags: { deviceId: d.id },
+            meta: { integrationId, error: errMsg(err) },
           })
         }
       }
     }
+    return removed
   }
 
   // ── device-adoption cap provider ─────────────────────────────────────────
