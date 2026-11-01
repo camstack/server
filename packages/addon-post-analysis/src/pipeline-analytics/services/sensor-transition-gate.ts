@@ -178,6 +178,19 @@ const WORD_LEVEL_FIELD: Readonly<Record<string, string>> = {
   'lock-control': 'state',
 }
 
+/**
+ * Caps that carry a boolean level but are NOT source caps (`SOURCE_CAP_ACTIVE_FIELD`
+ * would also make the device a recorder trigger): cap → boolean field. An
+ * appliance cycle (`running-state`) flips `running`; its slice also carries
+ * `lastFetchedAt`, which moves on every provider refresh, so only the FLIP —
+ * either way — is an edge. The first sighting is a start only when the slice's
+ * `since` clears the freshness floor, else it seeds (a machine that has been
+ * running for an hour at boot did not just start).
+ */
+const BOOLEAN_LEVEL_FIELD: Readonly<Record<string, string>> = {
+  'running-state': 'running',
+}
+
 /** The word a word-level cap rests in — its `false`, for the first-sighting rule. */
 const WORD_LEVEL_INACTIVE: Readonly<Record<string, string>> = {
   cover: 'closed',
@@ -289,6 +302,8 @@ export class SensorTransitionGate {
     if (slice['lastChangedAt'] === 0) return this.drop(deviceId, capName, 'cold-slice')
     const wordField = WORD_LEVEL_FIELD[capName]
     if (wordField !== undefined) return this.observeWord(deviceId, capName, slice, wordField)
+    const levelField = BOOLEAN_LEVEL_FIELD[capName]
+    if (levelField !== undefined) return this.observeLevel(deviceId, capName, slice, levelField)
     const advanceField = ADVANCE_FIELD[capName]
     if (advanceField !== undefined) {
       return this.observeAdvance(deviceId, capName, slice[advanceField])
@@ -335,6 +350,34 @@ export class SensorTransitionGate {
     )
     this.drops.clear()
     return out
+  }
+
+  /**
+   * A boolean level outside the source-cap table: a transition is the boolean
+   * changing. Memory is written only when the slice CARRIED a boolean.
+   */
+  private observeLevel(
+    deviceId: number,
+    capName: string,
+    slice: Readonly<Record<string, unknown>>,
+    field: string,
+  ): SensorTransitionVerdict {
+    const raw = slice[field]
+    if (typeof raw !== 'boolean') return this.drop(deviceId, capName, 'non-boolean-value')
+    const key = `${deviceId}:${capName}`
+    const prior = this.lastValues.get(key)
+    this.lastValues.set(key, raw)
+    if (prior === undefined) {
+      if (!raw) return this.drop(deviceId, capName, 'baseline-seeded-inactive')
+      const since = slice['since']
+      const floor = Math.max(this.startedAtMs, this.now() - this.freshnessMs)
+      const fresh = typeof since === 'number' && Number.isFinite(since) && since >= floor
+      return fresh
+        ? { changed: true }
+        : this.drop(deviceId, capName, 'baseline-seeded-stale-active')
+    }
+    if (prior === raw) return this.drop(deviceId, capName, 'no-change')
+    return { changed: true }
   }
 
   /**

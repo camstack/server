@@ -28,10 +28,22 @@
 import { EVENT_KIND_BY_CAP } from '../capabilities/sensor-event-kinds.js'
 import { SOURCE_CAP_ACTIVE_FIELD } from '../catalogs/sensor-active-state.js'
 
+/**
+ * Control caps that still have a raise and a clear an operator names: an
+ * appliance cycle raises when it STARTS and clears when it FINISHES. Kept out
+ * of `SOURCE_CAP_ACTIVE_FIELD` on purpose — that table also makes a device a
+ * camera-sensor / recorder-trigger source, and a dishwasher is neither.
+ */
+const CYCLE_RAISED_FIELD_BY_CAP: Readonly<Record<string, string>> = {
+  'running-state': 'running',
+}
+
 /** Event kind → the boolean field of its cap slice that means "raised". */
 export const NC_SENSOR_RAISED_FIELD_BY_KIND: Readonly<Record<string, string>> = Object.freeze(
   Object.fromEntries(
     Object.entries(EVENT_KIND_BY_CAP).flatMap(([capName, descriptor]) => {
+      const cycleField = CYCLE_RAISED_FIELD_BY_CAP[capName]
+      if (cycleField !== undefined) return [[descriptor.kind, cycleField]]
       const field = SOURCE_CAP_ACTIVE_FIELD[capName]
       if (field === undefined || descriptor.category !== 'sensor') return []
       return [[descriptor.kind, field]]
@@ -77,4 +89,4 @@ export function sensorTransitionOffered(sensorKinds: readonly string[] | undefin
 
 /** What an editor tells the operator when it is about to prune the choice. */
 export const NC_SENSOR_TRANSITION_UNSUPPORTED_REASON =
-  'Only a sensor that raises and clears (water, smoke, gas, CO, vibration, tamper, motion, contact) can fire on one edge. Pick only such sensor kinds, or the rule fires on every change.'
+  'Only a sensor that raises and clears (water, smoke, gas, CO, vibration, tamper, motion, contact) or an appliance cycle (started / finished) can fire on one edge. Pick only such sensor kinds, or the rule fires on every change.'

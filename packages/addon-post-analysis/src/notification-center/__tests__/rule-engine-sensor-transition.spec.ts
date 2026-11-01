@@ -79,3 +79,41 @@ describe('sensorTransition (D640)', () => {
     expect(judge(rule({ sensorTransition: 'raised' }), WET).matchedOn).toContain('sensorTransition')
   })
 })
+
+describe('appliance cycle — "the dishwasher has finished"', () => {
+  const DISHWASHER = 9001
+  const cycle = (running: boolean | null): SensorEvent => ({
+    id: '9',
+    deviceId: DISHWASHER,
+    sourceDeviceId: DISHWASHER,
+    kind: 'appliance-cycle',
+    value: {
+      running,
+      phase: running === false ? 'Finished' : 'Run',
+      since: 1000,
+    },
+    timestamp: 1000,
+  })
+  const finished = rule({
+    devices: [DISHWASHER],
+    sensorKinds: ['appliance-cycle'],
+    sensorTransition: 'cleared',
+  })
+
+  it('fires on the finish and refuses the start', () => {
+    expect(judge(finished, cycle(false)).matched).toBe(true)
+    const start = judge(finished, cycle(true))
+    expect(start.matched).toBe(false)
+    expect(start.failedCondition).toBe('sensorTransition')
+  })
+
+  it('a started rule is the mirror', () => {
+    const started = rule({
+      devices: [DISHWASHER],
+      sensorKinds: ['appliance-cycle'],
+      sensorTransition: 'raised',
+    })
+    expect(judge(started, cycle(true)).matched).toBe(true)
+    expect(judge(started, cycle(false)).failedCondition).toBe('sensorTransition')
+  })
+})

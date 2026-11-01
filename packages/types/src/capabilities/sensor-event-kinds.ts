@@ -78,6 +78,7 @@ const CAP_TO_KIND: Readonly<Record<string, string>> = {
   switch: 'switch',
   button: 'button',
   doorbell: 'doorbell',
+  'running-state': 'appliance-cycle',
 }
 
 function buildDescriptor(capName: string, kind: string): SensorEventKindDescriptor {

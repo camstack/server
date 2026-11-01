@@ -63,23 +63,33 @@ describe('a contact that did not move produces neither a row nor a track', () =>
     emitSlice(bus, 'contact', { entryOpen: false, lastChangedAt: 0 })
     await flush()
     // 2. The real state seconds later — hours-old transition, door still shut.
-    emitSlice(bus, 'contact', { entryOpen: false, lastChangedAt: now - 3_600_000 })
+    emitSlice(bus, 'contact', {
+      entryOpen: false,
+      lastChangedAt: now - 3_600_000,
+    })
     await flush()
     // 3. `unavailable → off`: fresh `lastChangedAt`, `entryOpen` unmoved.
     emitSlice(bus, 'contact', { entryOpen: false, lastChangedAt: now })
     await flush()
 
     expect(await addon.getSensorEvents({ deviceId: CAMERA_ID })).toEqual([])
-    const quiet: readonly Track[] = await addon.listTracks({ deviceId: CAMERA_ID })
+    const quiet: readonly Track[] = await addon.listTracks({
+      deviceId: CAMERA_ID,
+    })
     expect(quiet.filter((t) => t.className === 'contact')).toEqual([])
 
     // 4. The door actually opens, then actually closes. BOTH are events.
     emitSlice(bus, 'contact', { entryOpen: true, lastChangedAt: now + 1_000 })
     await flush()
-    emitSlice(bus, 'contact', { entryOpen: false, lastChangedAt: now + 12_000 })
+    emitSlice(bus, 'contact', {
+      entryOpen: false,
+      lastChangedAt: now + 12_000,
+    })
     await flush()
 
-    const rows: readonly SensorEvent[] = await addon.getSensorEvents({ deviceId: CAMERA_ID })
+    const rows: readonly SensorEvent[] = await addon.getSensorEvents({
+      deviceId: CAMERA_ID,
+    })
     expect(rows).toHaveLength(2)
     expect(rows.map((r) => r.value?.['entryOpen'])).toEqual([false, true])
     expect(rows.every((r) => r.sourceDeviceId === SENSOR_ID)).toBe(true)
@@ -126,7 +136,12 @@ describe('a sensor linked to no camera still reaches the notification rules', ()
 
     const now = Date.now()
     const emit = (entryOpen: boolean, lastChangedAt: number): void =>
-      bus.bus.emit(makeDeviceStateChangedEvent(UNLINKED, 'contact', { entryOpen, lastChangedAt }))
+      bus.bus.emit(
+        makeDeviceStateChangedEvent(UNLINKED, 'contact', {
+          entryOpen,
+          lastChangedAt,
+        }),
+      )
     // The shut baseline, then the door actually opening.
     emit(false, now - 60_000)
     await flush()
@@ -166,7 +181,12 @@ describe('a sensor linked to no camera still reaches the notification rules', ()
 
     const now = Date.now()
     const emit = (entryOpen: boolean, lastChangedAt: number): void =>
-      bus.bus.emit(makeDeviceStateChangedEvent(OPTED_OUT, 'contact', { entryOpen, lastChangedAt }))
+      bus.bus.emit(
+        makeDeviceStateChangedEvent(OPTED_OUT, 'contact', {
+          entryOpen,
+          lastChangedAt,
+        }),
+      )
     emit(false, now - 60_000)
     await flush()
     emit(true, now)
@@ -175,7 +195,11 @@ describe('a sensor linked to no camera still reaches the notification rules', ()
     expect(unownedDoor).not.toHaveBeenCalled()
     expect(handed).toHaveBeenCalledTimes(1)
     expect(handed.mock.calls[0]?.[0]).toMatchObject({
-      event: { deviceId: CAMERA_ID, sourceDeviceId: OPTED_OUT, kind: 'contact' },
+      event: {
+        deviceId: CAMERA_ID,
+        sourceDeviceId: OPTED_OUT,
+        kind: 'contact',
+      },
       linkedCameraIds: [CAMERA_ID],
       rowCameraIds: [],
     })
@@ -199,7 +223,12 @@ describe('a notification-centre hand-off that throws is a tagged warn', () => {
   })
 
   function emitContact(bus: FakeEventBus, deviceId: number, entryOpen: boolean, at: number): void {
-    bus.bus.emit(makeDeviceStateChangedEvent(deviceId, 'contact', { entryOpen, lastChangedAt: at }))
+    bus.bus.emit(
+      makeDeviceStateChangedEvent(deviceId, 'contact', {
+        entryOpen,
+        lastChangedAt: at,
+      }),
+    )
   }
 
   it('persisted rows: the throw is logged against the camera', async () => {
@@ -279,7 +308,10 @@ describe('a marker materialize that rejects is a warn on its camera', () => {
     const rec = makeLogRecorder()
     booted = await boot(rec.logger)
     const now = Date.now()
-    emitSlice(booted.bus, 'contact', { entryOpen: false, lastChangedAt: now - 60_000 })
+    emitSlice(booted.bus, 'contact', {
+      entryOpen: false,
+      lastChangedAt: now - 60_000,
+    })
     await flush()
     emitSlice(booted.bus, 'contact', { entryOpen: true, lastChangedAt: now })
     await flush()
@@ -341,7 +373,10 @@ describe('shutdown drains an in-flight sensor handler', () => {
       },
     })
     const now = Date.now()
-    emitSlice(bus, 'contact', { entryOpen: false, lastChangedAt: now - 60_000 })
+    emitSlice(bus, 'contact', {
+      entryOpen: false,
+      lastChangedAt: now - 60_000,
+    })
     await flush()
     // The door opens: the row lands, and the marker's snapshot is now HELD.
     emitSlice(bus, 'contact', { entryOpen: true, lastChangedAt: now })
@@ -381,7 +416,10 @@ describe('shutdown drains an in-flight sensor handler', () => {
       },
     })
     const now = Date.now()
-    emitSlice(bus, 'contact', { entryOpen: false, lastChangedAt: now - 60_000 })
+    emitSlice(bus, 'contact', {
+      entryOpen: false,
+      lastChangedAt: now - 60_000,
+    })
     await flush()
     emitSlice(bus, 'contact', { entryOpen: true, lastChangedAt: now })
     await flush()
@@ -424,8 +462,14 @@ describe('two state changes of one press name the SAME marker', () => {
     // Two slices whose stamp ADVANCES, 7 ms apart: both are presses to the
     // transition gate, and the second projection is debounced into the first
     // one's window — it must still name that window's marker.
-    emitSlice(booted.bus, 'doorbell', { lastPressedAt: now, pressCountSinceStart: 1 })
-    emitSlice(booted.bus, 'doorbell', { lastPressedAt: now + 7, pressCountSinceStart: 2 })
+    emitSlice(booted.bus, 'doorbell', {
+      lastPressedAt: now,
+      pressCountSinceStart: 1,
+    })
+    emitSlice(booted.bus, 'doorbell', {
+      lastPressedAt: now + 7,
+      pressCountSinceStart: 2,
+    })
     await flush()
 
     await vi.waitFor(() => expect(persisted).toHaveBeenCalledTimes(2))
@@ -448,8 +492,14 @@ describe('two state changes of one press name the SAME marker', () => {
     // The 2026-09-29 shape: one press reached post-analysis twice, the second
     // carrying an older stamp. The doorbell is gated on `lastPressedAt`
     // strictly advancing, so only the first is a press — and it keeps its marker.
-    emitSlice(booted.bus, 'doorbell', { lastPressedAt: now, pressCountSinceStart: 1 })
-    emitSlice(booted.bus, 'doorbell', { lastPressedAt: now - 7, pressCountSinceStart: 0 })
+    emitSlice(booted.bus, 'doorbell', {
+      lastPressedAt: now,
+      pressCountSinceStart: 1,
+    })
+    emitSlice(booted.bus, 'doorbell', {
+      lastPressedAt: now - 7,
+      pressCountSinceStart: 0,
+    })
     await flush()
 
     await vi.waitFor(() => expect(persisted).toHaveBeenCalledTimes(1))
@@ -492,6 +542,56 @@ describe('a camera-resolved marker that did not materialize is a warn (review L3
     expect(line?.extras?.meta).toMatchObject({
       sourceDeviceId: SENSOR_ID,
       reason: 'not-materialized',
+    })
+  })
+})
+
+/**
+ * An appliance cycle (`running-state`) reaches the notification rules as ONE
+ * event per flip. The slice also carries `lastFetchedAt`, which moves on every
+ * provider refresh, so the mirror emits on a refresh that moved nothing — the
+ * rule "the dishwasher has finished" must not fire for it.
+ */
+describe('an appliance cycle reaches the notification rules once per flip', () => {
+  let booted: Booted | undefined
+
+  afterEach(async () => {
+    vi.restoreAllMocks()
+    if (booted) await booted.addon.shutdown()
+    booted = undefined
+  })
+
+  it('true→false is one hand-off with kind appliance-cycle; a refresh at false is none', async () => {
+    const DISHWASHER = 4417
+    const handed = vi
+      .spyOn(NotificationCenter.prototype, 'onUnownedSensorEvent')
+      .mockImplementation(() => undefined)
+    booted = await boot()
+    const { bus } = booted
+    const now = Date.now()
+    const emit = (running: boolean, since: number, fetchedAt: number): void =>
+      bus.bus.emit(
+        makeDeviceStateChangedEvent(DISHWASHER, 'running-state', {
+          running,
+          since,
+          source: 'native',
+          phase: running ? 'Run' : 'Finished',
+          lastFetchedAt: fetchedAt,
+        }),
+      )
+    emit(true, now + 1_000, now + 1_000)
+    await flush()
+    expect(handed).toHaveBeenCalledTimes(1) // the start
+    emit(false, now + 60_000, now + 60_000)
+    await flush()
+    expect(handed).toHaveBeenCalledTimes(2) // the finish
+    emit(false, now + 60_000, now + 90_000) // a refresh: running unchanged
+    await flush()
+    expect(handed).toHaveBeenCalledTimes(2)
+    expect(handed.mock.calls[1]?.[0]).toMatchObject({
+      deviceId: DISHWASHER,
+      kind: 'appliance-cycle',
+      value: { running: false, phase: 'Finished' },
     })
   })
 })

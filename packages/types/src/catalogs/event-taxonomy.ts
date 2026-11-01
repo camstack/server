@@ -169,6 +169,8 @@ sub('switch', 'control', 'control', 'switch', 'Switch')
 sub('siren', 'control', 'control', 'siren', 'Siren')
 sub('button', 'control', 'control', 'button', 'Button')
 sub('doorbell', 'control', 'control', 'doorbell', 'Doorbell')
+// An appliance cycle (`running-state`): raised = it started, cleared = it finished.
+sub('appliance-cycle', 'control', 'control', 'switch', 'Appliance cycle')
 
 // Audio subs — derived from the audio classifier macro vocabulary. Namespaced
 // (`audio-<id>`) so ids never collide with detection subs (dog/cat/bird/…).

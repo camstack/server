@@ -77,6 +77,7 @@ export const EVENT_KIND_LABEL_KEYS = [
   'siren',
   'button',
   'doorbell',
+  'appliance-cycle',
   // audio subs (`audio-<id>` — AUDIO_MACRO_LABELS)
   'audio-speech',
   'audio-scream',
@@ -154,6 +155,7 @@ export const EVENT_KIND_LABELS: Readonly<Record<EventKindLabelKey, EventKindLabe
   siren: { en: 'Siren', it: 'Sirena' },
   button: { en: 'Button', it: 'Pulsante' },
   doorbell: { en: 'Doorbell', it: 'Campanello' },
+  'appliance-cycle': { en: 'Appliance cycle', it: 'Ciclo elettrodomestico' },
   // EN matches AUDIO_MACRO_LABELS.name (and therefore EVENT_TAXONOMY.label).
   'audio-speech': { en: 'Speech', it: 'Voce' },
   'audio-scream': { en: 'Scream / Shout', it: 'Urlo' },

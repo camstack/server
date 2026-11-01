@@ -4341,6 +4341,20 @@ The linked-camera capture gate (`deviceEventRuleMayFireOnKind`) asks the same
 edge predicate as the evaluation: a raise-only rule takes no mosaic of a
 back-to-dry edge, and an edge the slice cannot name still captures.
 
+**An appliance finishing is a sensor-style event — kind `appliance-cycle`.**
+A device with the `running-state` cap (a native dishwasher from its program state,
+a washer or dryer composed from plug power) maps to the taxonomy kind
+`appliance-cycle` (`CAP_TO_KIND`, `sensor-event-kinds.ts`), so a `device-event` rule
+`{ devices: [id], sensorKinds: ['appliance-cycle'], sensorTransition: 'cleared' }`
+fires when it FINISHES and `'raised'` when it STARTS (the raise is the `running`
+boolean, `sensorRaisedOf`; kept beside, not in, `SOURCE_CAP_ACTIVE_FIELD`, which would
+make the appliance a recorder trigger). The slice carries `lastFetchedAt`, which moves
+on every provider refresh, so `SensorTransitionGate` passes only a FLIP of `running`
+(`BOOLEAN_LEVEL_FIELD`); a first sighting seeds unless it is a fresh start. The sensor
+rule's device picker asks `ruleDeviceCompatCapQueries`, which now chunks at the wire
+method's 16-name limit (`EVENTFUL_CAP_NAMES` has 17). Not exposed: the cycle `phase` as
+a template variable.
+
 **Every device-scoped rule may exclude devices — `devicesExclude`**
 ([D641](../decisions/adr-0641-a-rule-can-exclude-devices.md), 2026-09-26).
 "Every camera except the garage" is `conditions.devicesExclude: [<garage>]`,

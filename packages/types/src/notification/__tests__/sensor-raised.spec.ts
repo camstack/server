@@ -9,6 +9,7 @@ import {
   NC_CONDITION_CATALOG,
   NcConditionsSchema,
 } from '../../capabilities/notification-rules.cap.js'
+import { RunningStateStatusSchema } from '../../capabilities/running-state.cap.js'
 import { SmokeStatusSchema } from '../../capabilities/smoke.cap.js'
 import { TamperStatusSchema } from '../../capabilities/tamper.cap.js'
 import { VibrationStatusSchema } from '../../capabilities/vibration.cap.js'
@@ -20,7 +21,7 @@ import {
 } from '../sensor-raised.js'
 
 describe('the raised-field table (D640)', () => {
-  it('is exactly the eight boolean sensor kinds, each naming its cap field', () => {
+  it('is exactly the eight boolean sensor kinds plus the appliance cycle, each naming its cap field', () => {
     expect(NC_SENSOR_RAISED_FIELD_BY_KIND).toEqual({
       contact: 'entryOpen',
       'motion-sensor': 'detected',
@@ -30,6 +31,7 @@ describe('the raised-field table (D640)', () => {
       'carbon-monoxide': 'detected',
       vibration: 'detected',
       tamper: 'tampered',
+      'appliance-cycle': 'running',
     })
     expect([...NC_SENSOR_TRANSITION_KINDS].sort()).toEqual(
       Object.keys(NC_SENSOR_RAISED_FIELD_BY_KIND).sort(),
@@ -48,6 +50,7 @@ describe('the raised-field table (D640)', () => {
       'carbon-monoxide': CarbonMonoxideStatusSchema,
       vibration: VibrationStatusSchema,
       tamper: TamperStatusSchema,
+      'appliance-cycle': RunningStateStatusSchema,
     } as const
     for (const [kind, field] of Object.entries(NC_SENSOR_RAISED_FIELD_BY_KIND)) {
       const schema = Object.entries(slices).find(([k]) => k === kind)?.[1]
@@ -118,5 +121,14 @@ describe('the condition on the cap', () => {
     expect(d?.group).toBe('device')
     expect(d?.valueType).toBe('sensorTransition')
     expect(d?.options?.map((o) => o.value)).toEqual(['', 'raised', 'cleared'])
+  })
+})
+
+describe('appliance cycle (running-state)', () => {
+  it('kind appliance-cycle: running=true is the raise (started), false the clear (finished)', () => {
+    expect(sensorRaisedOf('appliance-cycle', { running: true })).toBe(true)
+    expect(sensorRaisedOf('appliance-cycle', { running: false })).toBe(false)
+    expect(sensorRaisedOf('appliance-cycle', { running: null })).toBeUndefined()
+    expect(sensorTransitionOffered(['appliance-cycle'])).toBe(true)
   })
 })

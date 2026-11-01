@@ -411,7 +411,8 @@ export interface NcRuleSectionSubject {
  *    picker authors.
  *
  * Callers resolve the ids via `deviceManager.listDeviceIdsByCaps` (max 16
- * names — `EVENTFUL_CAP_NAMES` is exactly 16) and must treat an unanswered
+ * names per call — `EVENTFUL_CAP_NAMES` is longer than that, so ask through
+ * {@link ruleDeviceCompatCapQueries}, which chunks it) and must treat an unanswered
  * read as "unknown", never as "no devices" (D315): this function only names
  * WHICH caps to ask for, not what to show while the answer is pending.
  */
@@ -439,6 +440,14 @@ export function ruleDeviceCompatCapNames(kind: NcRuleKind): readonly string[] | 
  */
 export const NC_CAMERA_SCOPE_CAP_NAME = 'camera-streams'
 
+const MAX_CAPS_PER_QUERY = 16
+
+function chunk<T>(items: readonly T[], size: number): readonly (readonly T[])[] {
+  const out: T[][] = []
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size))
+  return out
+}
+
 /**
  * Every capability QUERY whose union is the set of devices a rule of this kind
  * may be SCOPED to (`conditions.devices`) — what the save-time guard and the
@@ -446,7 +455,7 @@ export const NC_CAMERA_SCOPE_CAP_NAME = 'camera-streams'
  * entry. `null` exactly where {@link ruleDeviceCompatCapNames} is `null`.
  *
  * Several queries rather than one list because `listDeviceIdsByCaps` takes at
- * most 16 names and `EVENTFUL_CAP_NAMES` is already exactly 16.
+ * most 16 names and `EVENTFUL_CAP_NAMES` is longer than that (chunked here).
  *
  * A `sensor` rule's set is the eventful devices PLUS every camera (fix round
  * 1, 2026-10-01): the engine matches a sensor rule scoped to a CAMERA — a
@@ -459,7 +468,8 @@ export function ruleDeviceCompatCapQueries(
 ): readonly (readonly string[])[] | null {
   const primary = ruleDeviceCompatCapNames(kind)
   if (primary === null) return null
-  return kind === 'sensor' ? [primary, [NC_CAMERA_SCOPE_CAP_NAME]] : [primary]
+  const chunks = chunk(primary, MAX_CAPS_PER_QUERY)
+  return kind === 'sensor' ? [...chunks, [NC_CAMERA_SCOPE_CAP_NAME]] : chunks
 }
 
 /**
@@ -847,7 +857,9 @@ export function ruleSeedForSection(section: NcRuleSectionKey): NcRuleSeed {
     case 'device-events':
       return {
         delivery: NC_SYSTEM_DELIVERY,
-        conditions: { systemEvent: { kinds: ['device-offline', 'device-online'] } },
+        conditions: {
+          systemEvent: { kinds: ['device-offline', 'device-online'] },
+        },
       }
     case 'system':
       return {
@@ -862,7 +874,10 @@ export function ruleSeedForSection(section: NcRuleSectionKey): NcRuleSeed {
     case 'audio':
       return { delivery: 'immediate', conditions: { audio: NC_AUDIO_SEED } }
     case 'occupancy':
-      return { delivery: 'device-event', conditions: { occupancy: NC_OCCUPANCY_DEFAULTS } }
+      return {
+        delivery: 'device-event',
+        conditions: { occupancy: NC_OCCUPANCY_DEFAULTS },
+      }
     case 'sensor':
       return { delivery: 'device-event', conditions: {} }
     default:
@@ -954,7 +969,10 @@ export function ruleEditorSectionsForKind(kind: NcRuleKind): readonly NcRuleEdit
   const sections: NcRuleEditorSection[] = []
   for (const key of NC_RULE_EDITOR_SECTION_ORDER) {
     if (key === 'devices' && isSystemRuleKind(kind)) continue
-    sections.push({ key, label: key === 'conditions' ? spec.label : EDITOR_SECTION_LABELS[key] })
+    sections.push({
+      key,
+      label: key === 'conditions' ? spec.label : EDITOR_SECTION_LABELS[key],
+    })
   }
   return sections
 }

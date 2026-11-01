@@ -53,6 +53,7 @@ export const CAMSTACK_HEX = {
   siren: '#ac5d7f',
   button: '#b276cd',
   doorbell: '#0087ab',
+  'appliance-cycle': '#2a8c8c',
 } as const
 
 export const CAMSTACK_FALLBACK = [
@@ -120,6 +121,7 @@ export const HIGH_CONTRAST_HEX = {
   siren: '#cd67b3',
   button: '#c9746a',
   doorbell: '#338eeb',
+  'appliance-cycle': '#00848a',
 } as const
 
 export const HIGH_CONTRAST_FALLBACK = [
@@ -187,6 +189,7 @@ export const OKABE_ITO_HEX = {
   siren: '#348e08',
   button: '#d27303',
   doorbell: '#55770f',
+  'appliance-cycle': '#00737d',
 } as const
 
 export const OKABE_ITO_FALLBACK = [

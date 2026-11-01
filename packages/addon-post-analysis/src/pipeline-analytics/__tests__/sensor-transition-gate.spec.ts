@@ -36,7 +36,10 @@ const KNOWN_BUT_OLD = 1
 
 /** A gate whose clock and start floor are fixed, so no test reads Date.now(). */
 function gate(nowMs = STARTED_AT + 60_000): SensorTransitionGate {
-  return new SensorTransitionGate({ startedAtMs: STARTED_AT, now: () => nowMs })
+  return new SensorTransitionGate({
+    startedAtMs: STARTED_AT,
+    now: () => nowMs,
+  })
 }
 
 describe('SensorTransitionGate', () => {
@@ -44,11 +47,17 @@ describe('SensorTransitionGate', () => {
     const g = gate()
     // The steady state the mirror already holds.
     expect(
-      g.observe(SENSOR, 'contact', { entryOpen: false, lastChangedAt: STARTED_AT - 3_600_000 }),
+      g.observe(SENSOR, 'contact', {
+        entryOpen: false,
+        lastChangedAt: STARTED_AT - 3_600_000,
+      }),
     ).toEqual({ changed: false, reason: 'baseline-seeded-inactive' })
     // `unavailable → off`: the provider re-writes with a FRESH lastChangedAt.
     expect(
-      g.observe(SENSOR, 'contact', { entryOpen: false, lastChangedAt: STARTED_AT + 59_000 }),
+      g.observe(SENSOR, 'contact', {
+        entryOpen: false,
+        lastChangedAt: STARTED_AT + 59_000,
+      }),
     ).toEqual({ changed: false, reason: 'no-change' })
   })
 
@@ -62,18 +71,30 @@ describe('SensorTransitionGate', () => {
     // The real state, hours old — the FIRST sighting, since the placeholder
     // remembered nothing.
     expect(
-      g.observe(SENSOR, 'contact', { entryOpen: false, lastChangedAt: STARTED_AT - 24_000_000 }),
+      g.observe(SENSOR, 'contact', {
+        entryOpen: false,
+        lastChangedAt: STARTED_AT - 24_000_000,
+      }),
     ).toEqual({ changed: false, reason: 'baseline-seeded-inactive' })
   })
 
   it('passes BOTH edges of a real open/close cycle', () => {
     const g = gate()
-    g.observe(SENSOR, 'contact', { entryOpen: false, lastChangedAt: STARTED_AT - 3_600_000 })
+    g.observe(SENSOR, 'contact', {
+      entryOpen: false,
+      lastChangedAt: STARTED_AT - 3_600_000,
+    })
     expect(
-      g.observe(SENSOR, 'contact', { entryOpen: true, lastChangedAt: STARTED_AT + 60_000 }),
+      g.observe(SENSOR, 'contact', {
+        entryOpen: true,
+        lastChangedAt: STARTED_AT + 60_000,
+      }),
     ).toEqual({ changed: true })
     expect(
-      g.observe(SENSOR, 'contact', { entryOpen: false, lastChangedAt: STARTED_AT + 72_000 }),
+      g.observe(SENSOR, 'contact', {
+        entryOpen: false,
+        lastChangedAt: STARTED_AT + 72_000,
+      }),
     ).toEqual({ changed: true })
   })
 
@@ -87,7 +108,9 @@ describe('SensorTransitionGate', () => {
       })
     }
     expect(g.observe(700, 'button', {})).toEqual({ changed: true })
-    expect(g.observe(702, 'presence', { state: 'home' })).toEqual({ changed: true })
+    expect(g.observe(702, 'presence', { state: 'home' })).toEqual({
+      changed: true,
+    })
   })
 
   // C1 (alarm Phase 2 review): a placeholder `closed` remembered as a baseline
@@ -100,13 +123,19 @@ describe('SensorTransitionGate', () => {
       reason: 'cold-slice',
     })
     expect(
-      g.observe(SENSOR, 'contact', { entryOpen: true, lastChangedAt: STARTED_AT - 3_600_000 }),
+      g.observe(SENSOR, 'contact', {
+        entryOpen: true,
+        lastChangedAt: STARTED_AT - 3_600_000,
+      }),
     ).toEqual({ changed: false, reason: 'baseline-seeded-stale-active' })
   })
 
   it('a placeholder is dropped for a pass-through cap too, and counted', () => {
     let now = STARTED_AT + 60_000
-    const g = new SensorTransitionGate({ startedAtMs: STARTED_AT, now: () => now })
+    const g = new SensorTransitionGate({
+      startedAtMs: STARTED_AT,
+      now: () => now,
+    })
     expect(g.observe(SENSOR, 'presence', { state: 'home', lastChangedAt: 0 })).toEqual({
       changed: false,
       reason: 'cold-slice',
@@ -121,26 +150,43 @@ describe('SensorTransitionGate', () => {
     // Hydration of a door that has been open for hours — errs towards silence
     // and says so, rather than inventing an opening at restart time.
     expect(
-      gate().observe(SENSOR, 'contact', { entryOpen: true, lastChangedAt: STARTED_AT - 3_600_000 }),
+      gate().observe(SENSOR, 'contact', {
+        entryOpen: true,
+        lastChangedAt: STARTED_AT - 3_600_000,
+      }),
     ).toEqual({ changed: false, reason: 'baseline-seeded-stale-active' })
     // A door that opened WHILE we were watching, seconds ago, is a real rise
     // even though it is the first slice this process ever saw.
     expect(
-      gate().observe(SENSOR, 'contact', { entryOpen: true, lastChangedAt: STARTED_AT + 50_000 }),
+      gate().observe(SENSOR, 'contact', {
+        entryOpen: true,
+        lastChangedAt: STARTED_AT + 50_000,
+      }),
     ).toEqual({ changed: true })
   })
 
   it('keeps the per-(device, cap) memories apart', () => {
     const g = gate()
-    g.observe(SENSOR, 'contact', { entryOpen: false, lastChangedAt: STARTED_AT })
+    g.observe(SENSOR, 'contact', {
+      entryOpen: false,
+      lastChangedAt: STARTED_AT,
+    })
     // A DIFFERENT sensor's first `false` is its own baseline, not 4131's.
-    expect(g.observe(9999, 'contact', { entryOpen: false, lastChangedAt: STARTED_AT })).toEqual({
+    expect(
+      g.observe(9999, 'contact', {
+        entryOpen: false,
+        lastChangedAt: STARTED_AT,
+      }),
+    ).toEqual({
       changed: false,
       reason: 'baseline-seeded-inactive',
     })
     // A different cap on the SAME device likewise.
     expect(
-      g.observe(SENSOR, 'tamper', { tampered: true, lastChangedAt: STARTED_AT + 59_000 }),
+      g.observe(SENSOR, 'tamper', {
+        tampered: true,
+        lastChangedAt: STARTED_AT + 59_000,
+      }),
     ).toEqual({ changed: true })
   })
 
@@ -151,7 +197,12 @@ describe('SensorTransitionGate', () => {
       reason: 'non-boolean-value',
     })
     // The memory is untouched, so the next real slice is still a first sighting.
-    expect(g.observe(SENSOR, 'contact', { entryOpen: false, lastChangedAt: STARTED_AT })).toEqual({
+    expect(
+      g.observe(SENSOR, 'contact', {
+        entryOpen: false,
+        lastChangedAt: STARTED_AT,
+      }),
+    ).toEqual({
       changed: false,
       reason: 'baseline-seeded-inactive',
     })
@@ -177,7 +228,12 @@ describe('SensorTransitionGate — the drop summary', () => {
     now += 200_000
     const flushed = g.takeDropSummary(now)
     expect(flushed).toEqual([
-      { deviceId: 101, capName: 'motion', reason: 'baseline-seeded-inactive', count: 1 },
+      {
+        deviceId: 101,
+        capName: 'motion',
+        reason: 'baseline-seeded-inactive',
+        count: 1,
+      },
       { deviceId: 101, capName: 'motion', reason: 'no-change', count: 499 },
     ])
     // Draining resets the window and the counters.
@@ -207,8 +263,12 @@ describe('SensorTransitionGate — a cover transitions on its state word', () =>
       changed: false,
       reason: 'baseline-seeded-inactive',
     })
-    expect(g.observe(COVER, 'cover', slice('opening', 5))).toEqual({ changed: true })
-    expect(g.observe(COVER, 'cover', slice('open', 100))).toEqual({ changed: true })
+    expect(g.observe(COVER, 'cover', slice('opening', 5))).toEqual({
+      changed: true,
+    })
+    expect(g.observe(COVER, 'cover', slice('open', 100))).toEqual({
+      changed: true,
+    })
   })
 
   it('a position-only update is no event', () => {
@@ -227,7 +287,10 @@ describe('SensorTransitionGate — a cover transitions on its state word', () =>
 
   it('a same-state republish is no event, and is counted in the drop summary', () => {
     let now = STARTED_AT + 60_000
-    const g = new SensorTransitionGate({ startedAtMs: STARTED_AT, now: () => now })
+    const g = new SensorTransitionGate({
+      startedAtMs: STARTED_AT,
+      now: () => now,
+    })
     g.observe(COVER, 'cover', slice('open', 100))
     expect(g.observe(COVER, 'cover', slice('open', 100))).toEqual({
       changed: false,
@@ -235,7 +298,12 @@ describe('SensorTransitionGate — a cover transitions on its state word', () =>
     })
     now += 700_000
     expect(g.takeDropSummary(now)).toEqual([
-      { deviceId: COVER, capName: 'cover', reason: 'baseline-seeded-stale-active', count: 1 },
+      {
+        deviceId: COVER,
+        capName: 'cover',
+        reason: 'baseline-seeded-stale-active',
+        count: 1,
+      },
       { deviceId: COVER, capName: 'cover', reason: 'no-change', count: 1 },
     ])
   })
@@ -246,7 +314,10 @@ describe('SensorTransitionGate — a cover transitions on its state word', () =>
   // and dropping it would lose the whole opening.
   it('a fresh first-sighting `open` after the gate started is an event', () => {
     const now = STARTED_AT + 60_000
-    const g = new SensorTransitionGate({ startedAtMs: STARTED_AT, now: () => now })
+    const g = new SensorTransitionGate({
+      startedAtMs: STARTED_AT,
+      now: () => now,
+    })
     expect(
       g.observe(COVER, 'cover', {
         state: 'open',
@@ -271,7 +342,10 @@ describe('SensorTransitionGate — a cover transitions on its state word', () =>
 
   it('a first-sighting `closed` is seeded and dropped, however fresh', () => {
     const now = STARTED_AT + 60_000
-    const g = new SensorTransitionGate({ startedAtMs: STARTED_AT, now: () => now })
+    const g = new SensorTransitionGate({
+      startedAtMs: STARTED_AT,
+      now: () => now,
+    })
     expect(
       g.observe(COVER, 'cover', {
         state: 'closed',
@@ -309,7 +383,9 @@ describe('SensorTransitionGate — a cover transitions on its state word', () =>
       changed: false,
       reason: 'non-word-value',
     })
-    expect(g.observe(COVER, 'cover', slice('opening', 10))).toEqual({ changed: true })
+    expect(g.observe(COVER, 'cover', slice('opening', 10))).toEqual({
+      changed: true,
+    })
   })
 })
 
@@ -378,5 +454,71 @@ describe('SensorTransitionGate — a lock transitions on its state word', () => 
     expect(g.observe(LOCK, 'lock-control', lock('locked', STARTED_AT + 50_000))).toEqual({
       changed: true,
     })
+  })
+})
+
+/**
+ * An appliance cycle (`running-state`, D-appliance-cycle): the level is the
+ * `running` boolean. The slice also carries `lastFetchedAt`, which ticks on
+ * every provider refresh, so the kernel mirror emits on a refresh that moved
+ * nothing — only the FLIP is a cycle edge.
+ */
+describe('SensorTransitionGate — running-state', () => {
+  const DISHWASHER = 9001
+  const slice = (running: boolean | null, since: number | null, fetchedAt: number) => ({
+    running,
+    since,
+    source: 'native',
+    phase: running === false ? 'Finished' : 'Run',
+    lastFetchedAt: fetchedAt,
+  })
+
+  it('a flip true→false is one transition; a refresh that leaves it false is none', () => {
+    const g = gate()
+    g.observe(DISHWASHER, 'running-state', slice(true, STARTED_AT + 1_000, STARTED_AT + 1_000))
+    expect(
+      g.observe(DISHWASHER, 'running-state', slice(false, STARTED_AT + 5_000, STARTED_AT + 5_000)),
+    ).toEqual({ changed: true })
+    expect(
+      g.observe(DISHWASHER, 'running-state', slice(false, STARTED_AT + 5_000, STARTED_AT + 9_000)),
+    ).toEqual({ changed: false, reason: 'no-change' })
+  })
+
+  it('a refresh that leaves it running is none either, and the start is a transition', () => {
+    const g = gate()
+    g.observe(DISHWASHER, 'running-state', slice(false, STARTED_AT - 5_000, STARTED_AT + 1_000))
+    expect(
+      g.observe(DISHWASHER, 'running-state', slice(true, STARTED_AT + 2_000, STARTED_AT + 2_000)),
+    ).toEqual({ changed: true })
+    expect(
+      g.observe(DISHWASHER, 'running-state', slice(true, STARTED_AT + 2_000, STARTED_AT + 8_000)),
+    ).toEqual({ changed: false, reason: 'no-change' })
+  })
+
+  it('an unknown reading (running null) is dropped and remembers nothing', () => {
+    const g = gate()
+    g.observe(DISHWASHER, 'running-state', slice(true, STARTED_AT + 1_000, STARTED_AT + 1_000))
+    expect(g.observe(DISHWASHER, 'running-state', slice(null, null, STARTED_AT + 2_000))).toEqual({
+      changed: false,
+      reason: 'non-boolean-value',
+    })
+    // The recovery to the SAME value is not a flip.
+    expect(
+      g.observe(DISHWASHER, 'running-state', slice(true, STARTED_AT + 1_000, STARTED_AT + 3_000)),
+    ).toEqual({ changed: false, reason: 'no-change' })
+  })
+
+  it('a first sighting seeds: a long-running machine at boot is not a start', () => {
+    const g = gate()
+    expect(
+      g.observe(DISHWASHER, 'running-state', slice(true, STARTED_AT - 3_600_000, STARTED_AT)),
+    ).toEqual({ changed: false, reason: 'baseline-seeded-stale-active' })
+    expect(
+      g.observe(
+        DISHWASHER,
+        'running-state',
+        slice(false, STARTED_AT + 10_000, STARTED_AT + 10_000),
+      ),
+    ).toEqual({ changed: true })
   })
 })

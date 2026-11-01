@@ -226,7 +226,9 @@ describe('ruleKindOf', () => {
     expect(
       ruleKindOf({
         delivery: 'device-event',
-        conditions: conditions({ occupancy: { op: '>=', count: 1, sustainSeconds: 15 } }),
+        conditions: conditions({
+          occupancy: { op: '>=', count: 1, sustainSeconds: 15 },
+        }),
       }),
     ).toBe('occupancy')
     expect(
@@ -246,7 +248,9 @@ describe('ruleKindOf', () => {
     expect(
       ruleKindOf({
         delivery: 'immediate',
-        conditions: conditions({ occupancy: { op: '>=', count: 1, sustainSeconds: 15 } }),
+        conditions: conditions({
+          occupancy: { op: '>=', count: 1, sustainSeconds: 15 },
+        }),
       }),
     ).toBe('detection')
   })
@@ -267,18 +271,27 @@ describe('ruleKindOf', () => {
    * explicitly rather than by accident of where the value came from.
    */
   it('accepts a conditions LITERAL carrying keys it does not read', () => {
-    expect(ruleKindOf({ delivery: 'immediate', conditions: { classes: ['person'] } })).toBe(
-      'detection',
-    )
+    expect(
+      ruleKindOf({
+        delivery: 'immediate',
+        conditions: { classes: ['person'] },
+      }),
+    ).toBe('detection')
     expect(
       ruleMatchesSection(
-        { delivery: 'system-event', conditions: { systemEvent: { kinds: ['node-offline'] } } },
+        {
+          delivery: 'system-event',
+          conditions: { systemEvent: { kinds: ['node-offline'] } },
+        },
         'system',
       ),
     ).toBe(true)
-    expect(ruleSectionOf({ delivery: 'immediate', conditions: { classes: ['person'] } })).toBe(
-      'detection',
-    )
+    expect(
+      ruleSectionOf({
+        delivery: 'immediate',
+        conditions: { classes: ['person'] },
+      }),
+    ).toBe('detection')
   })
 })
 
@@ -363,11 +376,15 @@ describe('the section model', () => {
       { delivery: 'system-event', conditions: {} },
       {
         delivery: 'immediate',
-        conditions: conditions({ audio: { hitPercent: 60, samplingSeconds: 10 } }),
+        conditions: conditions({
+          audio: { hitPercent: 60, samplingSeconds: 10 },
+        }),
       },
       {
         delivery: 'device-event',
-        conditions: conditions({ occupancy: { op: '>=', count: 1, sustainSeconds: 15 } }),
+        conditions: conditions({
+          occupancy: { op: '>=', count: 1, sustainSeconds: 15 },
+        }),
       },
       // A trigger this build has never heard of still lands somewhere.
       { delivery: 'something-new', conditions: {} },
@@ -410,7 +427,10 @@ describe('the seeds a "New rule" opens on', () => {
   })
 
   it('the DEFAULT section seeds an immediate rule on the PIPELINE source (R5, D690)', () => {
-    const seeded = { delivery: 'immediate', conditions: { source: 'pipeline' } }
+    const seeded = {
+      delivery: 'immediate',
+      conditions: { source: 'pipeline' },
+    }
     expect(ruleSeedForSection('all')).toEqual(seeded)
     expect(ruleSeedForSection('detection')).toEqual(seeded)
     expect(defaultDeliveryForSection('all')).toBe('immediate')
@@ -451,7 +471,10 @@ describe('the seeds a "New rule" opens on', () => {
     // an occupancy condition on it would make `ruleKindOf` read 'occupancy'
     // instead, the same trap `ruleMatchesSection`'s `sensor` branch guards
     // against on a STORED rule.
-    expect(ruleSeedForSection('sensor')).toEqual({ delivery: 'device-event', conditions: {} })
+    expect(ruleSeedForSection('sensor')).toEqual({
+      delivery: 'device-event',
+      conditions: {},
+    })
   })
 })
 
@@ -639,20 +662,22 @@ describe('ruleDeviceCompatCapNames', () => {
     }
   })
 
-  it('a cap-names answer never exceeds the cap the wire method takes (max 16)', () => {
+  it('no QUERY exceeds the cap the wire method takes (max 16), and together they cover every name', () => {
     for (const kind of NC_RULE_KIND_SPECS.map((s) => s.kind)) {
-      const names = ruleDeviceCompatCapNames(kind)
-      if (names !== null) expect(names.length).toBeLessThanOrEqual(16)
+      const queries = ruleDeviceCompatCapQueries(kind)
+      if (queries === null) continue
+      for (const q of queries) expect(q.length).toBeLessThanOrEqual(16)
+      const names = ruleDeviceCompatCapNames(kind) ?? []
+      expect(queries.flat()).toEqual(expect.arrayContaining([...names]))
     }
   })
 })
 
 describe('ruleDeviceCompatCapQueries — the set a rule may be SCOPED to', () => {
   it('a sensor rule may also scope a CAMERA (D630 §6) — the eventful caps plus the camera cap', () => {
-    expect(ruleDeviceCompatCapQueries('sensor')).toEqual([
-      EVENTFUL_CAP_NAMES,
-      [NC_CAMERA_SCOPE_CAP_NAME],
-    ])
+    const queries = ruleDeviceCompatCapQueries('sensor') ?? []
+    expect(queries.slice(0, -1).flat()).toEqual([...EVENTFUL_CAP_NAMES])
+    expect(queries[queries.length - 1]).toEqual([NC_CAMERA_SCOPE_CAP_NAME])
     expect(NC_CAMERA_SCOPE_CAP_NAME).toBe('camera-streams')
   })
 

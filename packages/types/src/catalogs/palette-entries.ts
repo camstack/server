@@ -57,6 +57,7 @@ export const PALETTE_ENTRY_IDS = [
   'siren',
   'button',
   'doorbell',
+  'appliance-cycle',
 ] as const
 
 export type PaletteEntryId = (typeof PALETTE_ENTRY_IDS)[number]
