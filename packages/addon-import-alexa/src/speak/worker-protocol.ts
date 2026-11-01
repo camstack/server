@@ -67,7 +67,6 @@ export type WorkerRequest =
       readonly op: 'speak' | 'announce'
       readonly targets: readonly string[]
       readonly text: string
-      readonly volume: number
     }
   | { readonly op: 'session_status' }
 

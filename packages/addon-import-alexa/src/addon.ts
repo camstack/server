@@ -4,6 +4,7 @@ import {
   brokerCapability,
   buildAddonRouteProvider,
   createEvent,
+  defineAddonMigrations,
   deviceAdoptionCapability,
   DeviceType,
   errMsg,
@@ -42,9 +43,10 @@ import { mapAlexaCapabilitiesToCamStack } from './alexa-domain-mapping.js'
 import { AlexaDevice } from './devices/alexa-device.js'
 import { alexaRecordKinds } from './broker-record-kinds.js'
 import { AlexaBrokerStore } from './alexa-broker-store.js'
-import type { AlexaBrokerEntry } from './config.js'
+import { readEchoTargets, type AlexaBrokerEntry } from './config.js'
 import { readBrokerSeed } from './speak/broker-seed.js'
 import { AlexaSpeakController } from './speak/controller.js'
+import { ADDON_MIGRATIONS } from './migrations/index.js'
 import { speakIconRoutes } from './speak/icon-routes.js'
 import { RecordsSpeakSessionStore } from './speak/session-store.js'
 
@@ -177,6 +179,17 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
       }),
       ...speakIconRoutes(),
     ]
+
+    await this.runMigrations(
+      defineAddonMigrations(ADDON_MIGRATIONS, {
+        readRows: () => (Array.isArray(this.config.echoTargets) ? this.config.echoTargets : []),
+        writeRows: async (rows) => {
+          await this.updateGlobalSettings({
+            echoTargets: [...readEchoTargets({ echoTargets: rows })],
+          })
+        },
+      }),
+    )
 
     const speak = new AlexaSpeakController({
       logger: this.ctx.logger.child('speak'),

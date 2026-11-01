@@ -29,27 +29,12 @@ def _speak_node(target: EchoTarget, text: str, locale: str) -> dict:
     }
 
 
-def _volume_node(target: EchoTarget, volume: int, nxt: dict) -> dict:
-    return {
-        "@type": "com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode",
-        "type": "Alexa.DeviceControls.Volume",
-        "operationPayload": {
-            "deviceType": target["deviceType"],
-            "deviceSerialNumber": target["id"],
-            "customerId": target["customerId"],
-            "value": volume,
-        },
-        "next": nxt,
-    }
-
-
-def build_speak_sequence(target: EchoTarget, text: str, volume: int, locale: str) -> dict:
-    """Volume, then speech. Speak honours Do Not Disturb on the device."""
+def build_speak_sequence(target: EchoTarget, text: str, locale: str) -> dict:
+    """Speech at the Echo's current volume. Speak honours Do Not Disturb on the device."""
     speak = _speak_node(target, text, locale)
-    start = _volume_node(target, volume, speak) if volume >= 0 else speak
     return {
         "@type": "com.amazon.alexa.behaviors.model.Sequence",
-        "startNode": start,
+        "startNode": speak,
     }
 
 

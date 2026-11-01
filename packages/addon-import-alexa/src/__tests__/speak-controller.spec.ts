@@ -216,22 +216,19 @@ describe('speak is bound to a broker', () => {
 })
 
 describe('stored Echo targets', () => {
-  it('are served as targets of the Alexa kind, every field but the retired mode kept', async () => {
-    const h = harness({
-      brokers: ONE,
-      echoTargets: [
-        {
-          id: 't-kitchen',
-          name: 'Kitchen',
-          enabled: false,
-          brokerId: 'alexa_001',
-          echoId: 'echo-k',
-          mode: 'announce',
-          volume: 63,
-          respectDnd: false,
-        },
-      ],
-    })
+  it('are served as targets of the Alexa kind, every field but the retired mode and volume kept', async () => {
+    // The row as an older version stored it: still carries a mode and a volume.
+    const stored = {
+      id: 't-kitchen',
+      name: 'Kitchen',
+      enabled: false,
+      brokerId: 'alexa_001',
+      echoId: 'echo-k',
+      mode: 'announce',
+      volume: 63,
+      respectDnd: false,
+    }
+    const h = harness({ brokers: ONE, echoTargets: [stored] })
     const [row] = await h.controller.provider.listTargets({})
     expect(row).toMatchObject({
       id: 't-kitchen',
@@ -239,10 +236,11 @@ describe('stored Echo targets', () => {
       config: {
         brokerId: 'alexa_001',
         echoId: 'echo-k',
-        volume: 63,
         respectDnd: false,
       },
     })
+    // A volume stored by an older version is not served: nothing sets a volume any more.
+    expect(row?.config).not.toHaveProperty('volume')
     // A mode stored by an older version is not served: it no longer decides anything.
     expect(row?.config).not.toHaveProperty('mode')
   })

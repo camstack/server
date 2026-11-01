@@ -94,8 +94,6 @@ export const alexaEchoTargetSchema = z.object({
   /** The broker (Amazon account) the Echo belongs to; '' until one is chosen. */
   brokerId: z.string().default(''),
   echoId: z.string(),
-  mode: z.enum(['speak', 'announce']),
-  volume: z.number(),
   respectDnd: z.boolean(),
 })
 export type AlexaEchoTarget = z.infer<typeof alexaEchoTargetSchema>

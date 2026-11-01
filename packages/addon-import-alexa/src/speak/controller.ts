@@ -56,7 +56,6 @@ function targetsFrom(rows: readonly AlexaEchoTarget[]): readonly Target[] {
     config: {
       ...(row.brokerId.length > 0 ? { brokerId: row.brokerId } : {}),
       echoId: row.echoId,
-      volume: row.volume,
       respectDnd: row.respectDnd,
     },
   }))
@@ -69,8 +68,6 @@ function rowsFrom(targets: readonly Target[]): readonly AlexaEchoTarget[] {
     enabled: target.enabled,
     brokerId: typeof target.config['brokerId'] === 'string' ? target.config['brokerId'] : '',
     echoId: typeof target.config['echoId'] === 'string' ? target.config['echoId'] : '',
-    mode: 'speak',
-    volume: typeof target.config['volume'] === 'number' ? target.config['volume'] : 40,
     respectDnd: target.config['respectDnd'] !== false,
   }))
 }
@@ -96,8 +93,7 @@ export class AlexaSpeakController {
         this.rows = rowsFrom(targets)
         void this.persist()
       },
-      speak: (command) =>
-        this.utter(command.brokerId, command.mode, command.targets, command.text, command.volume),
+      speak: (command) => this.utter(command.brokerId, command.mode, command.targets, command.text),
     })
   }
 
@@ -212,10 +208,9 @@ export class AlexaSpeakController {
     mode: SpeakMode,
     targets: readonly string[],
     text: string,
-    volume: number,
   ): Promise<readonly TargetDelivery[]> {
     const echo = this.echoes.get(brokerId)
     if (echo === undefined) throw new Error('no Echo session for this Amazon account')
-    return echo.utter(mode === 'announce' ? 'announce' : 'speak', targets, text, volume)
+    return echo.utter(mode === 'announce' ? 'announce' : 'speak', targets, text)
   }
 }

@@ -89,9 +89,6 @@ class Session:
         text = message.get("text")
         if not isinstance(text, str) or text == "":
             raise ValueError("text required")
-        volume = message.get("volume")
-        if not isinstance(volume, int):
-            volume = 40
         locale = REGION_LOCALE.get(self._gateway.region, "en-GB")
         outcomes: list[dict] = []
         for serial in targets:
@@ -104,7 +101,7 @@ class Session:
                 continue
             try:
                 if op == "speak":
-                    sequence = build_speak_sequence(target, text, volume, locale)
+                    sequence = build_speak_sequence(target, text, locale)
                     await self._gateway.speak(sequence, target["customerId"])
                 else:
                     announcement = build_announcement(target, text, locale)

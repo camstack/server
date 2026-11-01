@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Alexa announcements and speech work again, and a failed state poll no longer turns a signed-in broker to error (states are polled in chunks of 50)
+- An Echo now speaks notifications at its current volume: the per-target volume setting is gone, and stored targets are cleaned of it on the next start
 
 ## [0.2.175] - 2026-11-01
 

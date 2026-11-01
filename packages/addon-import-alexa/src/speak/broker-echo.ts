@@ -152,12 +152,11 @@ export class BrokerEcho {
     op: 'speak' | 'announce',
     targets: readonly string[],
     text: string,
-    volume: number,
   ): Promise<readonly TargetDelivery[]> {
     if (!(await this.ensureReady())) {
       throw new Error(this.notReadyReason())
     }
-    return parseDeliveries(await this.deps.worker.request({ op, targets, text, volume }))
+    return parseDeliveries(await this.deps.worker.request({ op, targets, text }))
   }
 
   async session(): Promise<SessionStatus> {

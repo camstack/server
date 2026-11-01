@@ -136,19 +136,20 @@ class ProtocolTests(unittest.TestCase):
         session = Session(gateway)
         spoken = run(
             session,
-            {"id": "4", "op": "speak", "targets": ["echo-1"], "text": "Person at the door", "volume": 30},
+            {"id": "4", "op": "speak", "targets": ["echo-1"], "text": "Person at the door"},
         )
         self.assertTrue(spoken["result"]["outcomes"][0]["ok"])
         sequence = gateway.spoken[0]["sequence"]
-        self.assertEqual(sequence["startNode"]["type"], "Alexa.DeviceControls.Volume")
-        self.assertEqual(sequence["startNode"]["next"]["type"], "Alexa.Speak")
+        # No volume node: the Echo speaks at its current volume.
+        self.assertEqual(sequence["startNode"]["type"], "Alexa.Speak")
+        self.assertNotIn("next", sequence["startNode"])
         self.assertEqual(
-            sequence["startNode"]["next"]["operationPayload"]["textToSpeak"],
+            sequence["startNode"]["operationPayload"]["textToSpeak"],
             "Person at the door",
         )
         announced = run(
             session,
-            {"id": "5", "op": "announce", "targets": ["echo-1"], "text": "Hello", "volume": 30},
+            {"id": "5", "op": "announce", "targets": ["echo-1"], "text": "Hello"},
         )
         self.assertTrue(announced["result"]["outcomes"][0]["ok"])
         self.assertEqual(gateway.announced[0]["content"][0]["speak"]["value"], "Hello")
@@ -167,7 +168,7 @@ class ProtocolTests(unittest.TestCase):
 
     def test_sequence_helpers_do_not_embed_markup(self) -> None:
         target = {"id": "echo-1", "deviceType": "T", "customerId": "c"}
-        sequence = build_speak_sequence(target, "plain", 10, "en-GB")
+        sequence = build_speak_sequence(target, "plain", "en-GB")
         self.assertNotIn("<", json.dumps(sequence))
         announcement = build_announcement(target, "plain", "en-GB")
         self.assertEqual(announcement["content"][0]["speak"]["type"], "text")
