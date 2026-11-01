@@ -82,7 +82,10 @@
         "icon": "assets/ingress-icon.svg",
         "color": "#242424"
       }
-    ]
+    ],
+    "requires": {
+      "server": ">=1.2.718"
+    }
   },
   "files": [
     "dist",

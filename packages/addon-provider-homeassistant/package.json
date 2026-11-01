@@ -125,6 +125,9 @@
     "bundle": {
       "displayName": "Home Assistant",
       "description": "Device provider (import) + native entity export (push). Two addons, one bundle, separate processes."
+    },
+    "requires": {
+      "server": ">=1.2.718"
     }
   },
   "files": [

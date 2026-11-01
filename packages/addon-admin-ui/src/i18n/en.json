@@ -5237,7 +5237,9 @@
       "components": "Components ({{count}})",
       "forked": "forked",
       "inProcess": "in-process",
-      "outdated": "outdated"
+      "outdated": "outdated",
+      "requiresServer": "requires server ≥ {{version}}",
+      "updateHeldTitle": "{{latest}} is held until the server is {{required}} or newer"
     },
     "addonRow": {
       "systemPackage": "System package",

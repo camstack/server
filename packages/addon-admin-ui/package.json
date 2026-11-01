@@ -48,7 +48,10 @@
         ],
         "protected": true
       }
-    ]
+    ],
+    "requires": {
+      "server": ">=1.2.718"
+    }
   },
   "scripts": {
     "dev": "vite --port 3001",

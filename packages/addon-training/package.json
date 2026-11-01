@@ -83,7 +83,10 @@
         "icon": "assets/training-modal/icon.svg",
         "color": "#16a34a"
       }
-    ]
+    ],
+    "requires": {
+      "server": ">=1.2.718"
+    }
   },
   "files": [
     "dist",

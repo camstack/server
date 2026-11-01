@@ -10,6 +10,7 @@ vi.mock('@camstack/ui-library', async () => {
   const actual =
     await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
   return {
+    Badge: actual.Badge,
     Button: actual.Button,
     Input: actual.Input,
     Select: actual.Select,

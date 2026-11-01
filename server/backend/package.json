@@ -63,7 +63,14 @@
     ],
     "agentOnlyBootstrapAddons": [
       "@camstack/addon-agent-ui"
-    ]
+    ],
+    "requires": {
+      "addons": {},
+      "wrapper": {
+        "desktop": ">=0.0.1",
+        "image": ">=0.0.1"
+      }
+    }
   },
   "dependencies": {
     "@camstack/addon-admin-ui": "*",

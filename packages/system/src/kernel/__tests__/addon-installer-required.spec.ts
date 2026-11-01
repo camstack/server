@@ -54,8 +54,19 @@ function listWorkspacePackages(): Array<{
 }> {
   const packagesDir = path.join(repoRoot(), 'packages')
   const out: Array<{ name: string; dir: string; keywords: readonly string[] }> = []
-  for (const entry of fs.readdirSync(packagesDir)) {
-    const dir = path.join(packagesDir, entry)
+  // The framework is part of `@camstack/server` since D988, so the server's own
+  // directory is the workspace home of that bootstrap entry.
+  const candidates = fs.readdirSync(packagesDir).map((entry) => path.join(packagesDir, entry))
+  const frameworkDir = path.join(packagesDir, 'system')
+  const serverPkg = readJson<PackageJson>(
+    path.join(repoRoot(), 'server', 'backend', 'package.json'),
+  )
+  if (serverPkg.name) {
+    // `@camstack/server` is where the framework ships; its builtin addon entries
+    // (the `protected: true` ones) are declared in the framework's own manifest.
+    out.push({ name: serverPkg.name, dir: frameworkDir, keywords: serverPkg.keywords ?? [] })
+  }
+  for (const dir of candidates) {
     const pkgJsonPath = path.join(dir, 'package.json')
     if (!fs.existsSync(pkgJsonPath)) continue
     const pkg = readJson<PackageJson>(pkgJsonPath)

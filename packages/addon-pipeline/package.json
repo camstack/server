@@ -294,7 +294,10 @@
     ],
     "runtimeDependencies": [
       "werift"
-    ]
+    ],
+    "requires": {
+      "server": ">=1.2.718"
+    }
   },
   "scripts": {
     "build": "vite build && vite build --config vite.widgets.stream-broker.config.ts",

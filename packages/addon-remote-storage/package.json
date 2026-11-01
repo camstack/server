@@ -132,7 +132,10 @@
       "@aws-sdk/lib-storage",
       "webdav",
       "samba-client"
-    ]
+    ],
+    "requires": {
+      "server": ">=1.2.718"
+    }
   },
   "files": [
     "dist",

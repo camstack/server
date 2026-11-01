@@ -1,6 +1,7 @@
 import type { BulkUpdateItem } from '@camstack/types'
 import { addonProcessProblem } from '../../lib/addon-process-problem.js'
 import {
+  Badge,
   Button,
   DeviceExportPanel,
   Dialog,
@@ -403,6 +404,12 @@ export interface ClusterAddonStatus {
   nodes: readonly ClusterNodeStatus[]
 }
 
+/** The update a node cannot take yet, and the server version it waits for (D988). */
+export interface BlockedUpdate {
+  readonly latestVersion: string
+  readonly requiredServer: string
+}
+
 interface AddonCardProps {
   addon: AddonListItem
   /** Cluster deployment status for this addon (multi-node) */
@@ -411,6 +418,11 @@ interface AddonCardProps {
   hideVersion?: boolean
   /** Latest available version from npm (if update available) */
   availableUpdate?: string
+  /**
+   * A newer version exists but needs a newer server than this node runs (D988):
+   * no Update button, the card says what it waits for.
+   */
+  readonly blockedUpdate?: BlockedUpdate
   /** Callback when user clicks the update button — receives the SELECTED version */
   onUpdate?: (version: string) => void
   /** Whether an update is in progress for this addon */
@@ -442,6 +454,7 @@ export function AddonCard({
   clusterStatus,
   hideVersion,
   availableUpdate,
+  blockedUpdate,
   onUpdate,
   isUpdating,
   jobProgress,
@@ -679,6 +692,21 @@ export function AddonCard({
               </span>
             )}
             {bulkItem != null && <AddonRowBadge item={bulkItem} />}
+            {blockedUpdate !== undefined && (
+              <Badge
+                variant="warning"
+                title={t('addons.addonCard.updateHeldTitle', {
+                  defaultValue: '{{latest}} is held until the server is {{required}} or newer',
+                  latest: blockedUpdate.latestVersion,
+                  required: blockedUpdate.requiredServer,
+                })}
+              >
+                {t('addons.addonCard.requiresServer', {
+                  defaultValue: 'requires server ≥ {{version}}',
+                  version: blockedUpdate.requiredServer,
+                })}
+              </Badge>
+            )}
             {/* F4: live per-addon lifecycle-job progress — keyed per job on
                 the page, so concurrent updates render independently. */}
             {jobProgress != null && <AddonsJobProgress progress={jobProgress} />}

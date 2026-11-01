@@ -55,7 +55,10 @@
         "icon": "assets/icon.svg",
         "color": "#6b7280"
       }
-    ]
+    ],
+    "requires": {
+      "server": ">=1.2.718"
+    }
   },
   "dependencies": {},
   "peerDependencies": {

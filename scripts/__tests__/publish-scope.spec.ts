@@ -60,14 +60,16 @@ describe('resolvePublishSet', () => {
     expect(bundles.get('packages/addon-provider-rtsp')).toBeUndefined()
   })
 
-  it('republishes @camstack/server/system with a types change — it INLINES the cap definitions', () => {
+  it('republishes the server with a types change — the framework inside it INLINES the cap definitions', () => {
     // 2026-09-19: `event-saving` reached types@1.2.229…231 across five runs and
     // system stayed at 1.2.273 from the evening before. The hub builds every
     // cap router from the copy system inlines (`bundleTypesMainEntry: true`,
     // no `../types/src` anywhere), so the fleet refused the ninth switch id
     // with an eight-id enum while the types package beside it had nine (D545).
     const set = resolvePublishSet(['packages/types/src/interfaces/camera-switches.ts'], ROOT)
-    expect(set).toContain('packages/system')
+    // The framework is private and published only inside the server (D988).
+    expect(set).toContain('server/backend')
+    expect(set).not.toContain('packages/system')
     expect([...(bundledSources(ROOT).get('packages/system') ?? [])]).toContain('packages/types')
   })
 
@@ -104,10 +106,11 @@ describe('orderForPublish', () => {
 })
 
 describe('staleRegistryPins', () => {
-  it('refuses a closure that pins system from npm while publishing types', () => {
-    // The 2026-09-19 closure, stated as a question: types in the set, system
-    // not — the pinned system carries the previous types.
-    expect(staleRegistryPins(['packages/types'], ROOT)).toContainEqual({
+  it('never calls the folded framework a stale registry pin — it ships inside the server', () => {
+    // The 2026-09-19 closure had `system` pinned from npm next to a newer
+    // `types`. The framework is no registry package any more (D988), so that
+    // closure cannot be built: types in the set, the framework travels along.
+    expect(staleRegistryPins(['packages/types'], ROOT)).not.toContainEqual({
       pinned: 'packages/system',
       publishes: 'packages/types',
     })

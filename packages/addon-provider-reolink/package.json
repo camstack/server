@@ -87,7 +87,10 @@
     "runtimeDependencies": [
       "@apocaliss92/nodelink-js",
       "werift"
-    ]
+    ],
+    "requires": {
+      "server": ">=1.2.718"
+    }
   },
   "files": [
     "dist",

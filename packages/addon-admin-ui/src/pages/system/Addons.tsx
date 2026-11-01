@@ -32,7 +32,7 @@ import {
   parseAddonKindFilter,
 } from '../../lib/addon-kind-filter'
 import { AdminPage } from '../../components/AdminPage'
-import type { AddonListItem, BundleGroup } from '../../components/addons/AddonCard'
+import type { AddonListItem, BlockedUpdate, BundleGroup } from '../../components/addons/AddonCard'
 import { AddonCard } from '../../components/addons/AddonCard'
 import {
   isTaskProgressActive,
@@ -317,10 +317,22 @@ function InstalledTab({
   const { data: updates } = useAddonsListUpdates({ nodeId: selectedNode.id })
 
   // Map packageName → latestVersion for quick lookup
+  // A held update (D988: it needs a newer server than this node runs) is not an
+  // offer: no Update button, no "Update all", only the card's note.
   const updateMap = useMemo(() => {
     const map = new Map<string, string>()
     for (const u of updates ?? []) {
-      map.set(u.name, u.latestVersion)
+      if (u.blockedBy === undefined) map.set(u.name, u.latestVersion)
+    }
+    return map
+  }, [updates])
+  const blockedMap = useMemo(() => {
+    const map = new Map<string, BlockedUpdate>()
+    for (const u of updates ?? []) {
+      const server = u.blockedBy?.find((b) => b.kind === 'server-too-old')
+      if (server !== undefined) {
+        map.set(u.name, { latestVersion: u.latestVersion, requiredServer: server.required })
+      }
     }
     return map
   }, [updates])
@@ -328,7 +340,7 @@ function InstalledTab({
   // Real-addon updates only — framework/system packages are managed from the
   // Server-management surface (phase 4), so they never count toward "Update all".
   const nonSystemUpdateCount = useMemo(
-    () => (updates ?? []).filter((u) => !u.isSystem).length,
+    () => (updates ?? []).filter((u) => !u.isSystem && u.blockedBy === undefined).length,
     [updates],
   )
 
@@ -469,7 +481,7 @@ function InstalledTab({
     // Framework/system packages are excluded — they are managed from the
     // Server-management surface, not the Addons page (phase 4). Only real
     // addon updates are batched here.
-    const pending = (updates ?? []).filter((u) => !u.isSystem)
+    const pending = (updates ?? []).filter((u) => !u.isSystem && u.blockedBy === undefined)
     if (pending.length === 0) return
     if (!selectedNode.isHub) {
       // The lifecycle job engine is HUB-LOCAL — it ignores `nodeIds`. Sending
@@ -1081,6 +1093,7 @@ function InstalledTab({
           sortedGrouped.map((item) => {
             const pkgName = isBundled(item) ? item.bundle.packageName : item.manifest.packageName
             const update = updateMap.get(pkgName)
+            const blocked = blockedMap.get(pkgName)
             const representative = isBundled(item) ? item.representative : item
             // `version` is the SELECTED version from the card's version
             // selector (defaults to the latest available).
@@ -1103,6 +1116,7 @@ function InstalledTab({
                 clusterStatus={clusterStatus?.[representative.manifest.id]}
                 bundle={isBundled(item) ? item.bundle : undefined}
                 availableUpdate={update}
+                {...(blocked !== undefined ? { blockedUpdate: blocked } : {})}
                 isUpdating={updatingPackages.has(pkgName) || jobActive}
                 jobProgress={jobProgress}
                 onUpdate={onUpdate}

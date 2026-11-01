@@ -32,7 +32,7 @@ import {
 } from '../single-copy-cleanup.js'
 
 const ACTIVE_ROOT = '/data/server-root/current'
-const CLOSURE_SYSTEM = `${ACTIVE_ROOT}/node_modules/@camstack/system/package.json`
+const CLOSURE_SYSTEM = `${ACTIVE_ROOT}/node_modules/@camstack/server/package.json`
 
 const LEGACY_FRAMEWORK: CleanupCandidate = {
   kind: 'legacy-framework-tree',
@@ -42,7 +42,7 @@ const LEGACY_FRAMEWORK: CleanupCandidate = {
 }
 const ADDON_ROOT_SYSTEM: CleanupCandidate = {
   kind: 'addon-root-closure-copy',
-  path: '/data/addons/@camstack/system',
+  path: '/data/addons/@camstack/server',
   pkg: '@camstack/server',
   version: '1.2.78',
 }
@@ -65,7 +65,7 @@ describe('planSingleCopyCleanup — the happy path', () => {
     expect(plan.blocked).toBe(false)
     expect(plan.remove.map((c) => c.path)).toEqual([
       '/data/framework',
-      '/data/addons/@camstack/system',
+      '/data/addons/@camstack/server',
     ])
     expect(plan.keep).toEqual([])
   })
@@ -97,11 +97,11 @@ describe('planSingleCopyCleanup — the gates', () => {
     expect(plan.remove).toEqual([])
   })
 
-  it('refuses when the process resolved @camstack/system OUTSIDE the active closure', () => {
+  it('refuses when the process resolved @camstack/server OUTSIDE the active closure', () => {
     // The launcher logs this path every boot precisely because it is not
     // deducible: a copy under /data/addons or /data/framework can win.
     const plan = planSingleCopyCleanup(
-      healthyInput({ closureResolvedFrom: '/data/addons/@camstack/system/package.json' }),
+      healthyInput({ closureResolvedFrom: '/data/addons/@camstack/server/package.json' }),
     )
 
     expect(plan.blocked).toBe(true)
@@ -120,7 +120,7 @@ describe('planSingleCopyCleanup — per-candidate refusals', () => {
   it('never removes a path inside the active closure, healthy or not', () => {
     const inside: CleanupCandidate = {
       kind: 'addon-root-closure-copy',
-      path: `${ACTIVE_ROOT}/node_modules/@camstack/system`,
+      path: `${ACTIVE_ROOT}/node_modules/@camstack/server`,
       pkg: '@camstack/server',
       version: '1.2.84',
     }
@@ -150,7 +150,7 @@ describe('planSingleCopyCleanup — per-candidate refusals', () => {
       }),
     )
 
-    expect(plan.remove.map((c) => c.path)).toEqual(['/data/addons/@camstack/system'])
+    expect(plan.remove.map((c) => c.path)).toEqual(['/data/addons/@camstack/server'])
     expect(plan.keep.map((k) => k.candidate.path)).toEqual(['/data/framework'])
     expect(plan.keep[0]?.reason).toContain('NODE_PATH')
   })
@@ -180,9 +180,9 @@ describe('executeSingleCopyCleanup', () => {
 
     const result = await executeSingleCopyCleanup(plan, fs, () => {})
 
-    expect(order[0]).toBe('rename /data/addons/@camstack/system')
-    expect(order[1]).toMatch(/^remove \/data\/addons\/@camstack\/system\.removing-/)
-    expect(result.removed).toEqual(['/data/addons/@camstack/system'])
+    expect(order[0]).toBe('rename /data/addons/@camstack/server')
+    expect(order[1]).toMatch(/^remove \/data\/addons\/@camstack\/server\.removing-/)
+    expect(result.removed).toEqual(['/data/addons/@camstack/server'])
     expect(result.failed).toEqual([])
   })
 
@@ -198,7 +198,7 @@ describe('executeSingleCopyCleanup', () => {
 
     const result = await executeSingleCopyCleanup(plan, fs, () => {})
 
-    expect(result.removed).toEqual(['/data/addons/@camstack/system'])
+    expect(result.removed).toEqual(['/data/addons/@camstack/server'])
     expect(result.failed).toEqual([])
   })
 
@@ -213,7 +213,7 @@ describe('executeSingleCopyCleanup', () => {
     const result = await executeSingleCopyCleanup(plan, fs, () => {})
 
     expect(result.removed).toEqual([])
-    expect(result.failed).toEqual(['/data/addons/@camstack/system'])
+    expect(result.failed).toEqual(['/data/addons/@camstack/server'])
   })
 
   it('REFUSES a blocked plan — the second gate, in case a caller builds one by hand', async () => {
@@ -248,7 +248,7 @@ describe('executeSingleCopyCleanup', () => {
 
     await executeSingleCopyCleanup(plan, fakeFs(), (line) => lines.push(line))
 
-    expect(lines.join('\n')).toContain('/data/addons/@camstack/system')
+    expect(lines.join('\n')).toContain('/data/addons/@camstack/server')
     expect(lines.join('\n')).toContain('1.2.78')
   })
 })
@@ -261,7 +261,7 @@ describe('formatCleanupPlan', () => {
 
     expect(text).toContain('blocked')
     expect(text).toContain('/data/framework')
-    expect(text).toContain('/data/addons/@camstack/system')
+    expect(text).toContain('/data/addons/@camstack/server')
   })
 
   it('names each copy it will remove, with its version and why it is redundant', () => {
@@ -298,6 +298,8 @@ describe('discoverRedundantCopies', () => {
 
     expect(found.map((c) => c.path)).toEqual([
       '/data/framework',
+      '/data/addons/@camstack/server',
+      // The pre-fold name: residue by definition, a candidate whatever the closure provides.
       '/data/addons/@camstack/system',
       '/data/addons/@camstack/types',
       '/data/addons/@camstack/sdk',
@@ -305,6 +307,7 @@ describe('discoverRedundantCopies', () => {
     ])
     expect(found[0]?.kind).toBe('legacy-framework-tree')
     expect(found[1]?.pkg).toBe('@camstack/server')
+    expect(found[2]?.pkg).toBe('@camstack/system')
   })
 
   it('never proposes a copy of a package the closure does NOT provide', () => {
@@ -315,7 +318,8 @@ describe('discoverRedundantCopies', () => {
       { dataDir: '/data', addonRoot: '/data/addons', closureProvides: () => false },
       FS_ALL,
     )
-    expect(found.map((c) => c.path)).toEqual(['/data/framework'])
+    // Only the pre-fold residue is proposed: no closure provides it, so it is never needed.
+    expect(found.map((c) => c.path)).toEqual(['/data/framework', '/data/addons/@camstack/system'])
   })
 
   it('finds nothing on a node that is already converged', () => {
@@ -338,7 +342,7 @@ describe('discoverRedundantCopies', () => {
     expect(found).toEqual([
       {
         kind: 'addon-root-closure-copy',
-        path: '/data/addons/@camstack/system',
+        path: '/data/addons/@camstack/server',
         pkg: '@camstack/server',
         version: null,
       },

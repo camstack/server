@@ -245,12 +245,20 @@ function serverPackageDir(packages) {
 }
 
 /** Names `@camstack/server` pins. Empty when the workspace has no server. */
-function serverClosureNames(packages) {
+/**
+ * The framework that is published INSIDE the server tarball (D988): private,
+ * never a registry package, never a pin. A change to it reaches a node only
+ * through a new server, so for the cascade it is a closure member like `types`.
+ */
+export const FOLDED_FRAMEWORK_NAME = '@camstack/server-framework'
+
+function serverClosureNames(packages, { includeFolded = true } = {}) {
   const server = [...packages].find(([, pj]) => pj.name === '@camstack/server')
   if (server === undefined) return new Set()
-  return new Set(
-    Object.keys(server[1].dependencies ?? {}).filter((name) => name.startsWith('@camstack/')),
-  )
+  return new Set([
+    ...Object.keys(server[1].dependencies ?? {}).filter((name) => name.startsWith('@camstack/')),
+    ...(includeFolded ? [FOLDED_FRAMEWORK_NAME] : []),
+  ])
 }
 
 /**
@@ -286,11 +294,7 @@ export function applyCascades(dirs, root = process.cwd()) {
   // Closure → server.
   const serverDir = [...packages].find(([, pj]) => pj.name === '@camstack/server')?.[0]
   if (serverDir !== undefined) {
-    const closure = new Set(
-      Object.keys(packages.get(serverDir).dependencies ?? {}).filter((name) =>
-        name.startsWith('@camstack/'),
-      ),
-    )
+    const closure = serverClosureNames(packages)
     if ([...selected].some((dir) => closure.has(packages.get(dir).name))) selected.add(serverDir)
   }
 
@@ -343,7 +347,9 @@ export function staleRegistryPins(publishDirs, root = process.cwd(), options = {
   const verified = new Set(options.verifiedUnchanged ?? [])
   const serverEntry = [...packages].find(([, pj]) => pj.name === '@camstack/server')
   if (serverEntry === undefined) return []
-  const closureNames = serverClosureNames(packages)
+  // The folded framework ships inside the server tarball itself: it is never a
+  // registry pin, so it can never be a stale one.
+  const closureNames = serverClosureNames(packages, { includeFolded: false })
   const bundles = bundledSources(root, packages)
   const stale = []
   for (const [dir, pj] of packages) {

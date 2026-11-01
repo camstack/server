@@ -181,5 +181,10 @@
         "parallelism": false
       }
     }
+  },
+  "camstack": {
+    "requires": {
+      "server": ">=1.2.718"
+    }
   }
 }

@@ -326,6 +326,7 @@ jobs:
             scripts/check-addon-calls-super.ts \
             scripts/check-no-system-package.ts \
             scripts/check-host-externals-identical.ts \
+            scripts/check-requires-declared.ts \
             scripts/check-no-token-file-lookup.ts \
             scripts/check-no-legacy-token-prefix.ts \
             scripts/check-slab-writes-held.ts \

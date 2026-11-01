@@ -26,6 +26,7 @@ vi.mock('@camstack/ui-library', async () => {
   const actual =
     await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
   return {
+    Badge: actual.Badge,
     Button: actual.Button,
     Input: actual.Input,
     Select: actual.Select,
@@ -155,5 +156,19 @@ describe('AddonCard version selector (update available)', () => {
     renderCard({})
     expect(screen.queryByRole('button', { name: /^update$/i })).toBeNull()
     expect(screen.queryByRole('button', { name: /select version to install/i })).toBeNull()
+  })
+})
+
+describe('AddonCard held update (D988)', () => {
+  it('names the server version a held update waits for and offers no Update button', () => {
+    render(
+      <AddonCard
+        addon={addon()}
+        blockedUpdate={{ latestVersion: '2.0.0', requiredServer: '1.3.0' }}
+        onUpdate={vi.fn()}
+      />,
+    )
+    expect(screen.getByText(/requires server ≥ 1\.3\.0/i)).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /^update$/i })).toBeNull()
   })
 })

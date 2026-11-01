@@ -82,7 +82,10 @@
     "runtimeDependencies": [
       "onvif",
       "werift"
-    ]
+    ],
+    "requires": {
+      "server": ">=1.2.718"
+    }
   },
   "files": [
     "dist",

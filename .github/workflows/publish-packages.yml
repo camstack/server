@@ -315,6 +315,15 @@ jobs:
             cd "$GITHUB_WORKSPACE"
           done
 
+      # ── Stamp the minimum versions (D988) ─────────────────────────
+      # Every published addon declares the server it was cut against; the
+      # server declares the addons published beside it and the wrapper
+      # minimums. Runs AFTER the bump so it reads the versions that ship, and
+      # before the build so the stamp is inside the tarball.
+      - name: Stamp minimum versions (camstack.requires)
+        if: steps.detect.outputs.packages != '' && github.event.inputs.dry_run != 'true'
+        run: node scripts/ci/stamp-requires.mjs "${{ steps.detect.outputs.packages }}"
+
       # ── Embedded viewer gate (only when the orchestrator publishes) ──
       # The viewer web dist is built LOCALLY (`cd camstack && npm run
       # build:orchestrator`) and COMMITTED under the orchestrator's

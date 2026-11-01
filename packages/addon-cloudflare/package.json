@@ -79,7 +79,10 @@
         "icon": "assets/icon.svg",
         "color": "#F38020"
       }
-    ]
+    ],
+    "requires": {
+      "server": ">=1.2.718"
+    }
   },
   "files": [
     "dist",

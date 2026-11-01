@@ -64,7 +64,10 @@
         "icon": "assets/icon.svg",
         "color": "#f59e0b"
       }
-    ]
+    ],
+    "requires": {
+      "server": ">=1.2.718"
+    }
   },
   "files": [
     "dist",

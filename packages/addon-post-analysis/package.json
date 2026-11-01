@@ -136,7 +136,10 @@
         ],
         "color": "#9333ea"
       }
-    ]
+    ],
+    "requires": {
+      "server": ">=1.2.718"
+    }
   },
   "scripts": {
     "build": "vite build && vite build --config vite.widgets.pipeline-analytics.config.ts",

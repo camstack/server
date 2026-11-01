@@ -5312,7 +5312,9 @@
       "components": "Componenti ({{count}})",
       "forked": "fork",
       "inProcess": "in-process",
-      "outdated": "non aggiornato"
+      "outdated": "non aggiornato",
+      "requiresServer": "richiede server ≥ {{version}}",
+      "updateHeldTitle": "{{latest}} è in attesa: serve un server {{required}} o più recente"
     },
     "addonRow": {
       "systemPackage": "Pacchetto di sistema",
