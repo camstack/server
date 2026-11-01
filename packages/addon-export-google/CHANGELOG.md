@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Google Home can run your actions as scenes: expose an action and say 'activate <name>'; only admins can run them
+
 ## [0.1.120] - 2026-11-01
 
 ### Changed

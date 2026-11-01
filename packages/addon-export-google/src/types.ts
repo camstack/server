@@ -17,6 +17,8 @@
 import { ExportSetupSchema } from '@camstack/types'
 import type { z } from 'zod'
 
+import type { ActionSceneEntry } from './action-scenes.js'
+
 export interface ExposedDeviceEntry {
   readonly deviceId: number
   readonly exposedAt: number
@@ -62,6 +64,8 @@ export interface GoogleExportSettings {
   readonly detectedPublicHubUrl: string
   /** Operator-curated device list. Hidden state, written via `device-export`. */
   readonly exposed: readonly ExposedDeviceEntry[]
+  /** Operator-curated action list, exported as scenes (D968). Hidden state. */
+  readonly exposedActions: readonly ActionSceneEntry[]
   /** Accounts that completed linking. Hidden state. */
   readonly linkedAccounts: readonly LinkedAccount[]
 }
@@ -70,6 +74,7 @@ export const DEFAULT_SETTINGS: GoogleExportSettings = {
   publicHubUrl: '',
   detectedPublicHubUrl: '',
   exposed: [],
+  exposedActions: [],
   linkedAccounts: [],
 }
 

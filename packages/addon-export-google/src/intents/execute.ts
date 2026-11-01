@@ -11,6 +11,8 @@
  */
 import type { IScopedLogger } from '@camstack/types'
 
+import type { ActionSceneExports } from '../action-scenes.js'
+import { parseActionSceneId } from '../action-scenes.js'
 import type { DeviceGateway } from '../device-gateway.js'
 import type {
   ExecuteCommandResult,
@@ -24,6 +26,8 @@ export interface ExecuteDeps {
   readonly gateway: DeviceGateway
   readonly logger: IScopedLogger
   readonly isExposed: (deviceId: number) => boolean
+  /** Exported actions, fired as scenes (D968). */
+  readonly actions?: ActionSceneExports
 }
 
 interface ExecutionRequest {
@@ -35,6 +39,7 @@ interface ExecutionRequest {
 export async function handleExecute(
   input: ExecuteInput,
   deps: ExecuteDeps,
+  userId = '',
 ): Promise<ExecuteResponsePayload> {
   const requests: ExecutionRequest[] = []
   for (const group of input.payload.commands) {
@@ -54,13 +59,31 @@ export async function handleExecute(
   // reach the provider in order; a lane pool would race them.
   const commands: ExecuteCommandResult[] = []
   for (const request of requests) {
-    commands.push(await executeOne(request, deps))
+    commands.push(
+      parseActionSceneId(request.rawId) !== null
+        ? await executeScene(request, deps, userId)
+        : await executeOne(request, deps),
+    )
   }
   return { commands }
 }
 
 function failure(rawId: string, errorCode: GoogleErrorCode): ExecuteCommandResult {
   return { ids: [rawId], status: 'ERROR', errorCode }
+}
+
+async function executeScene(
+  request: ExecutionRequest,
+  deps: ExecuteDeps,
+  userId: string,
+): Promise<ExecuteCommandResult> {
+  if (deps.actions === undefined) {
+    deps.logger.warn('google execute: refused — action scenes are not available', {
+      meta: { requestedId: request.rawId, command: request.command },
+    })
+    return failure(request.rawId, 'deviceNotFound')
+  }
+  return deps.actions.executeScene(request.rawId, request.command, request.params, userId)
 }
 
 async function executeOne(
@@ -85,7 +108,10 @@ async function executeOne(
   const facts = await deps.gateway.loadFacts(deviceId).catch((err: unknown) => {
     deps.logger.warn('google execute: registry read failed', {
       tags: { deviceId },
-      meta: { command: request.command, error: err instanceof Error ? err.message : String(err) },
+      meta: {
+        command: request.command,
+        error: err instanceof Error ? err.message : String(err),
+      },
     })
     return null
   })

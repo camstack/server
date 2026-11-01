@@ -85,6 +85,7 @@ export type GoogleDeviceType =
   | 'action.devices.types.SWITCH'
   | 'action.devices.types.LOCK'
   | 'action.devices.types.SHUTTER'
+  | 'action.devices.types.SCENE'
 
 /** Every trait this addon can emit. Closed for the same reason. */
 export type GoogleTraitName =
@@ -92,6 +93,7 @@ export type GoogleTraitName =
   | 'action.devices.traits.Brightness'
   | 'action.devices.traits.LockUnlock'
   | 'action.devices.traits.OpenClose'
+  | 'action.devices.traits.Scene'
 
 export interface SyncDeviceName {
   readonly name: string
@@ -181,5 +183,8 @@ export type GoogleErrorCode =
   | 'functionNotSupported'
   | 'notSupported'
   | 'valueOutOfRange'
+  | 'inProgress'
+  | 'deviceNotReady'
+  | 'hardError'
   | 'authFailure'
   | 'protocolError'

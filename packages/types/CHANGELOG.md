@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Entity drafting: schemas, vocabulary slice, prompt, validator and comparator for describing an automation, action, scheduler or composition in words.
 - AI calls can override the profile's reasoning effort per call
 - Model features carry a reasoning flag (null when the endpoint does not say)
+- Stationary-present conditions accept a minimum count; the trigger variables of a condition are listed from one place
 
 ## [1.2.469] - 2026-11-01
 

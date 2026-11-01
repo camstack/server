@@ -91,13 +91,13 @@ export async function handleFulfillment(
     }
     case 'action.devices.QUERY': {
       if (!allows(caller, 'view')) return authFailure(requestId, 'QUERY', deps, caller)
-      return ok(requestId, await handleQuery(input, deps.query))
+      return ok(requestId, await handleQuery(input, deps.query, caller.userId))
     }
     case 'action.devices.EXECUTE': {
       // `create`, not `view` — actuating is a write, and a read-only link must
       // not be able to unlock a door.
       if (!allows(caller, 'create')) return authFailure(requestId, 'EXECUTE', deps, caller)
-      return ok(requestId, await handleExecute(input, deps.execute))
+      return ok(requestId, await handleExecute(input, deps.execute, caller.userId))
     }
     case 'action.devices.DISCONNECT': {
       deps.logger.info('google fulfillment: account unlinked by Google', {

@@ -12,6 +12,7 @@
  */
 import type { IScopedLogger } from '@camstack/types'
 
+import type { ActionSceneExports } from '../action-scenes.js'
 import type { DeviceGateway } from '../device-gateway.js'
 import { buildSyncDevice } from '../google-home/device-model.js'
 import type { SyncDevice, SyncResponsePayload } from '../google-home/protocol.js'
@@ -27,6 +28,8 @@ export interface SyncDeps {
   readonly logger: IScopedLogger
   /** Operator-curated exposed device ids, read from the addon's own store. */
   readonly listExposed: () => readonly number[]
+  /** Exported actions, answered as scenes (D968). Absent = none exported. */
+  readonly actions?: ActionSceneExports
 }
 
 export async function handleSync(
@@ -60,9 +63,11 @@ export async function handleSync(
     return device
   })
 
-  const devices: readonly SyncDevice[] = built.filter(
-    (device): device is SyncDevice => device !== null,
-  )
+  const scenes = (await deps.actions?.syncDevicesFor(agentUserId)) ?? []
+  const devices: readonly SyncDevice[] = [
+    ...built.filter((device): device is SyncDevice => device !== null),
+    ...scenes,
+  ]
 
   deps.logger.info('google sync: answered', {
     meta: { exposed: exposed.length, returned: devices.length, agentUserId },

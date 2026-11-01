@@ -20,6 +20,7 @@ import {
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DraftNumberInput } from './DraftNumberInput'
+import { type DynamicChoices, isDynamicOffer } from './dynamic-offer'
 import { FixedSelect } from './FixedSelect'
 import {
   type ArgIssue,
@@ -42,13 +43,15 @@ export interface ArgFieldProps {
   readonly variables: readonly ScopeVariable[]
   readonly value: StepArgValue
   readonly onChange: (next: StepArgValue) => void
+  /** What the device answered for a `dynamic` offer; absent or not ready leaves free text. */
+  readonly choices?: DynamicChoices
 }
 
 function fixedText(value: StepArgValue): string {
   return value.kind === 'fixed' ? String(value.value) : ''
 }
 
-export function ArgField({ arg, locale, variables, value, onChange }: ArgFieldProps) {
+export function ArgField({ arg, locale, variables, value, onChange, choices }: ArgFieldProps) {
   const { t } = useTranslation()
   const [menuOpen, setMenuOpen] = useState(false)
   const label = arg.label[locale]
@@ -64,6 +67,7 @@ export function ArgField({ arg, locale, variables, value, onChange }: ArgFieldPr
         value={value}
         onChange={onChange}
         onBrace={() => setMenuOpen(true)}
+        choices={choices}
       />
     )
 
@@ -100,12 +104,39 @@ interface FixedInputProps {
   readonly value: Extract<StepArgValue, { kind: 'fixed' }>
   readonly onChange: (next: StepArgValue) => void
   readonly onBrace: () => void
+  readonly choices: DynamicChoices | undefined
 }
 
-function FixedInput({ arg, locale, value, onChange, onBrace }: FixedInputProps) {
+function FixedInput({ arg, locale, value, onChange, onBrace, choices }: FixedInputProps) {
   const { t } = useTranslation()
   const offer = arg.offer
   const label = arg.label[locale]
+  if (isDynamicOffer(offer) && choices?.state === 'ready') {
+    const known = choices.choices.some((c) => c.value === value.value)
+    return (
+      <FixedSelect
+        widthClass="w-48"
+        aria-label={label}
+        data-testid={`dynamic-${arg.key}`}
+        value={String(value.value)}
+        onChange={(e) => {
+          const picked = choices.choices.find((c) => String(c.value) === e.target.value)
+          if (picked !== undefined) onChange({ kind: 'fixed', value: picked.value })
+        }}
+        options={[
+          ...(known
+            ? []
+            : [
+                {
+                  value: String(value.value),
+                  label: value.value === '' ? t('flow.arg.choose', 'Choose…') : String(value.value),
+                },
+              ]),
+          ...choices.choices.map((c) => ({ value: String(c.value), label: c.label })),
+        ]}
+      />
+    )
+  }
   if (offer.kind === 'enum') {
     return (
       <FixedSelect

@@ -27,6 +27,7 @@
 import type { AutomationAction, AutomationRecipe } from './recipe.js'
 import { DEFAULT_TRACE_KEEP, normalizeCapStep, validateRecipeBounds } from './recipe.js'
 import type { TimeSpec, WeekdayKey } from '../time/time-spec.js'
+import { triggerLeafVariables } from './trigger-variables.js'
 import { type AutomationEventLeaf, forEachLeaf, hasEventLeaves, isEventLeaf } from './when.js'
 
 export interface GenerateAutomationBlockInput {
@@ -76,6 +77,17 @@ function j(value: unknown): string {
 }
 
 /** Legacy cron: armed to the next minute boundary, re-armed from the wall clock. */
+/**
+ * `deviceId: decision.vars.deviceId, …` for one event kind — the names come from
+ * the one trigger-variable list the editor also reads, so the run's bag holds
+ * exactly what the editor offers and nothing a trigger happens to carry beyond it.
+ */
+function varsPick(kind: string): string {
+  return triggerLeafVariables(kind)
+    .map((v) => `${v.name}: decision.vars.${v.name}`)
+    .join(', ')
+}
+
 function emitCronSchedule(cron: string, path: string): string {
   return `  // event leaf ${path}: schedule — armed to the next minute boundary and
   // RE-ARMED from the wall clock every tick, so it cannot drift the way a
@@ -233,7 +245,7 @@ function emitLeaf(trigger: AutomationEventLeaf, path: string): string {
             })
           }
           void run(
-            { kind: 'detection', leaf: ${at}, at: Date.now(), ...decision.vars },
+            { kind: 'detection', leaf: ${at}, at: Date.now(), ${varsPick('detection')} },
             decision.reason,
             decision.kind === 'fire',
           )
@@ -260,7 +272,7 @@ function emitLeaf(trigger: AutomationEventLeaf, path: string): string {
             })
           }
           void run(
-            { kind: 'stationary', leaf: ${at}, at: Date.now(), ...decision.vars },
+            { kind: 'stationary', leaf: ${at}, at: Date.now(), ${varsPick('stationary')} },
             decision.reason,
             decision.kind === 'fire',
           )

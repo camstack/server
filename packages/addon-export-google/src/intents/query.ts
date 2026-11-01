@@ -13,6 +13,8 @@
  */
 import type { IScopedLogger } from '@camstack/types'
 
+import type { ActionSceneExports } from '../action-scenes.js'
+import { parseActionSceneId } from '../action-scenes.js'
 import type { DeviceGateway } from '../device-gateway.js'
 import type { QueryDeviceState, QueryInput, QueryResponsePayload } from '../google-home/protocol.js'
 import { traitsForCaps } from '../google-home/trait-catalog.js'
@@ -24,6 +26,8 @@ export interface QueryDeps {
   readonly gateway: DeviceGateway
   readonly logger: IScopedLogger
   readonly isExposed: (deviceId: number) => boolean
+  /** Exported actions, answered as scenes (D968). */
+  readonly actions?: ActionSceneExports
 }
 
 const NOT_FOUND: QueryDeviceState = {
@@ -37,17 +41,30 @@ const OFFLINE: QueryDeviceState = { online: false, status: 'OFFLINE' }
 export async function handleQuery(
   input: QueryInput,
   deps: QueryDeps,
+  userId = '',
 ): Promise<QueryResponsePayload> {
   const requested = input.payload.devices.map((device) => device.id)
 
   const answers = await mapWithConcurrency(requested, QUERY_READ_CONCURRENCY, async (rawId) => {
-    const state = await queryOne(rawId, deps)
+    const state =
+      parseActionSceneId(rawId) !== null
+        ? await queryScene(rawId, deps, userId)
+        : await queryOne(rawId, deps)
     return [rawId, state] as const
   })
 
   const devices: Record<string, QueryDeviceState> = {}
   for (const [id, state] of answers) devices[id] = state
   return { devices }
+}
+
+async function queryScene(
+  rawId: string,
+  deps: QueryDeps,
+  userId: string,
+): Promise<QueryDeviceState> {
+  if (deps.actions === undefined) return NOT_FOUND
+  return deps.actions.queryScene(rawId, userId)
 }
 
 async function queryOne(rawId: string, deps: QueryDeps): Promise<QueryDeviceState> {
@@ -89,7 +106,10 @@ async function queryOne(rawId: string, deps: QueryDeps): Promise<QueryDeviceStat
     const raw = await deps.gateway.readStatus(descriptor.reads, deviceId).catch((err: unknown) => {
       deps.logger.warn('google query: capability status read failed', {
         tags: { deviceId },
-        meta: { cap: descriptor.capName, error: err instanceof Error ? err.message : String(err) },
+        meta: {
+          cap: descriptor.capName,
+          error: err instanceof Error ? err.message : String(err),
+        },
       })
       return null
     })

@@ -683,6 +683,7 @@ export type {
   TraceNodeOutcome,
   TraceValue,
   TrackLifecycleInput,
+  TriggerVariable,
 } from './automation/index.js'
 export {
   ActionStepSchema,
@@ -754,6 +755,8 @@ export {
   skipSignature,
   TraceNodeOutcomeSchema,
   TraceValueSchema,
+  triggerLeafVariables,
+  triggerVariablesOf,
   validateRecipeBounds,
 } from './automation/index.js'
 export {

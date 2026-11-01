@@ -8,8 +8,9 @@ import {
   type AutomationWhen,
   DeviceType,
 } from '@camstack/types'
-import { fireEvent, render, screen, within } from '@testing-library/react'
-import { useState } from 'react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { fireEvent, render as plainRender, screen, within } from '@testing-library/react'
+import { type ReactElement, useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('../FieldPicker', async () => {
@@ -29,6 +30,13 @@ vi.mock('@camstack/ui-library', async () => {
     await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
   return {
     ...actual,
+    useSystem: () => ({
+      trpcClient: {
+        notificationRules: {
+          getConditionCatalog: { query: () => Promise.reject(new Error('no taxonomy')) },
+        },
+      },
+    }),
     useDeviceManagerGetDevice: () => ({ data: undefined }),
     useZonesListZones: () => ({ data: [] }),
     useFaceGalleryListIdentities: () => ({ data: [{ id: 'id-anna', name: 'Anna' }] }),
@@ -41,6 +49,16 @@ import { EMPTY_RECIPE } from '../recipe-parts'
 import type { AutomationRunTrace } from '@camstack/types'
 import { whenRunView } from '../../flow/trace-view'
 import { WhenTree } from '../WhenTree'
+
+function render(ui: ReactElement) {
+  return plainRender(
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
+      {ui}
+    </QueryClientProvider>,
+  )
+}
 
 const DEVICES: readonly AutomationDevice[] = [
   { id: 101, name: 'Kitchen', stableId: 'cam-101', type: DeviceType.Camera },

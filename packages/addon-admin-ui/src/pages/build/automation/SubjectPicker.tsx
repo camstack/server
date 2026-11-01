@@ -12,7 +12,12 @@
  * never rewrites it into something the operator did not choose.
  */
 
-import { DETECTION_LABEL_SOURCES, type DetectionSubject, subClassesOf } from '@camstack/types'
+import {
+  DETECTION_LABEL_SOURCES,
+  type DetectionSubject,
+  pickerForRuleClasses,
+  subClassesOf,
+} from '@camstack/types'
 import {
   Button,
   Input,
@@ -20,7 +25,9 @@ import {
   type SelectOption,
   useFaceGalleryListIdentities,
   usePlateGalleryListPlates,
+  useSystem,
 } from '@camstack/ui-library'
+import { useQuery } from '@tanstack/react-query'
 import { Plus, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
@@ -83,11 +90,44 @@ function withSubClass(macro: Labelled, className: string): DetectionSubject {
   }
 }
 
-/** Sub-classes the taxonomy files under a macro, without the macro's own name. */
-function subClassOptions(macro: Labelled, stored: string | undefined): readonly SelectOption[] {
-  const names = subClassesOf(macro).filter((name) => name !== macro)
-  const all = stored !== undefined && !names.includes(stored) ? [...names, stored] : names
-  return all.map((name) => ({ value: name, label: name }))
+const TAXONOMY_QUERY_KEY = ['automation', 'class-taxonomy'] as const
+
+/** The served class taxonomy, or undefined while unanswered or when the hub serves none. */
+function useServedSubClasses() {
+  const system = useSystem()
+  const query = useQuery({
+    queryKey: TAXONOMY_QUERY_KEY,
+    retry: false,
+    staleTime: Infinity,
+    queryFn: () => system.trpcClient.notificationRules.getConditionCatalog.query({}),
+  })
+  return pickerForRuleClasses(query.data?.taxonomy)
+}
+
+type ServedSubClasses = ReturnType<typeof pickerForRuleClasses>
+
+/**
+ * Sub-classes under a macro, labelled as the taxonomy labels them. The served
+ * taxonomy wins; the static COCO map is the fallback when none is served. The
+ * macro's own row is dropped, and a stored value the list lacks stays visible.
+ */
+function subClassOptions(
+  macro: Labelled,
+  stored: string | undefined,
+  served: ServedSubClasses,
+): readonly SelectOption[] {
+  const group = served?.groups.find((g) => g.key === macro)
+  const options: SelectOption[] =
+    group === undefined
+      ? subClassesOf(macro)
+          .filter((name) => name !== macro)
+          .map((name) => ({ value: name, label: name }))
+      : group.options
+          .filter((o) => o.value !== macro)
+          .map((o) => ({ value: o.value, label: o.label }))
+  return stored !== undefined && !options.some((o) => o.value === stored)
+    ? [...options, { value: stored, label: stored }]
+    : options
 }
 
 interface LabelSelectProps {
@@ -98,7 +138,8 @@ interface LabelSelectProps {
 function SubClassSelect({ subject, onChange }: LabelSelectProps) {
   const { t } = useTranslation()
   const stored = subject.label?.kind === 'sub-class' ? subject.label.className : undefined
-  const options = subClassOptions(subject.macro, stored)
+  const served = useServedSubClasses()
+  const options = subClassOptions(subject.macro, stored, served)
   if (options.length === 0) return null
   return (
     <Select
@@ -153,6 +194,7 @@ function VehicleLabelSelect({ onChange, subject }: LabelSelectProps) {
   const plates = usePlateGalleryListPlates({ includeCrops: false, limit: PLATE_LIST_LIMIT })
   const label = subject.macro === 'vehicle' ? subject.label : undefined
   const storedPlate = label?.kind === 'plate' ? label.text : undefined
+  const served = useServedSubClasses()
   const storedClass = label?.kind === 'sub-class' ? label.className : undefined
   const texts = [...new Set((plates.data ?? []).map((p) => p.text))]
   if (storedPlate !== undefined && !texts.includes(storedPlate)) texts.push(storedPlate)
@@ -169,7 +211,7 @@ function VehicleLabelSelect({ onChange, subject }: LabelSelectProps) {
       value={value}
       options={[
         { value: '', label: t('automation.whenTree.anyLabel', 'Any') },
-        ...subClassOptions('vehicle', storedClass).map((o) => ({
+        ...subClassOptions('vehicle', storedClass, served).map((o) => ({
           value: `${CLASS_PREFIX}${o.value}`,
           label: o.label,
         })),

@@ -162,7 +162,7 @@ const DeviceIsLeafSchema = z.object({
 
 /**
  * True when the camera currently has a PARKED object matching `subjects` in at
- * least one of `zones`. Reads the zone-analytics snapshot through the same
+ * least one of `zones` (`minCount` of them, default one). Reads the zone-analytics snapshot through the same
  * mirror as every other state leaf, so a dropped event never decides it (D49).
  */
 const StationaryPresentLeafSchema = z.object({
@@ -170,6 +170,8 @@ const StationaryPresentLeafSchema = z.object({
   deviceId: z.number().int().nonnegative(),
   subjects: z.array(StationarySubjectSchema).min(1).optional(),
   zones: z.array(z.string().min(1)).min(1).optional(),
+  /** How many matching parked objects must be there; absent means one. */
+  minCount: z.number().int().positive().optional(),
 })
 
 /**

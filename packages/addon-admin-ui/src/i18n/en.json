@@ -10679,7 +10679,12 @@
       "readOnly": "This action is declared by {{addon}}. Edit it there; you can run it from here.",
       "runNeedsDefaults": "Give each required variable a default to run it from here.",
       "runNow": "Run now",
-      "steps": "Steps"
+      "steps": "Steps",
+      "runDialog": {
+        "title": "Run {{name}}",
+        "description": "Give the variables this run should use.",
+        "choose": "Choose…"
+      }
     },
     "list": {
       "couldNotRead": "Could not read the actions",
@@ -10730,7 +10735,8 @@
       "atLeast": "at least {{min}} {{unit}}",
       "atMost": "at most {{max}} {{unit}}",
       "range": "{{min}} to {{max}} {{unit}}",
-      "useVariable": "Use a variable for {{label}}"
+      "useVariable": "Use a variable for {{label}}",
+      "choose": "Choose…"
     },
     "command": {
       "advanced": "Advanced",
@@ -10785,7 +10791,9 @@
       "entryId": "the stopped object",
       "phase": "appeared or departed",
       "score": "how sure the detector was",
-      "trackId": "the track"
+      "trackId": "the track",
+      "label": "the label it matched (a name, a plate), empty when none",
+      "zones": "the zones it is in"
     },
     "class": {
       "animal": "Animal",
@@ -10831,7 +10839,10 @@
       "pickCamera": "Pick a camera",
       "wholeScene": "None picked: the whole scene counts.",
       "zones": "Zones",
-      "zonesPicked": "Only these zones count."
+      "zonesPicked": "Only these zones count.",
+      "minCount": "At least",
+      "minCountAria": "Minimum parked objects",
+      "minCountUnit": "parked objects"
     },
     "triggerGroup": {
       "device": "Devices",

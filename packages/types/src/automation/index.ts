@@ -43,6 +43,8 @@ export type {
   StationaryVars,
 } from './stationary-trigger.js'
 export { evaluateStationaryTrigger } from './stationary-trigger.js'
+export type { TriggerVariable } from './trigger-variables.js'
+export { triggerLeafVariables, triggerVariablesOf } from './trigger-variables.js'
 export type { CooldownInput, CooldownVerdict, RunGateAdmission } from './run-gate.js'
 export { RunGate } from './run-gate.js'
 export type {

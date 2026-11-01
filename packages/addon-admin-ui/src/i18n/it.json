@@ -10701,7 +10701,12 @@
       "readOnly": "Questa azione è dichiarata da {{addon}}. Modificala lì; da qui puoi eseguirla.",
       "runNeedsDefaults": "Dai un valore predefinito a ogni variabile obbligatoria per eseguirla da qui.",
       "runNow": "Esegui ora",
-      "steps": "Passi"
+      "steps": "Passi",
+      "runDialog": {
+        "title": "Esegui {{name}}",
+        "description": "Indica le variabili da usare in questa esecuzione.",
+        "choose": "Scegli…"
+      }
     },
     "list": {
       "couldNotRead": "Impossibile leggere le azioni",
@@ -10752,7 +10757,8 @@
       "atLeast": "almeno {{min}} {{unit}}",
       "atMost": "al massimo {{max}} {{unit}}",
       "range": "da {{min}} a {{max}} {{unit}}",
-      "useVariable": "Usa una variabile per {{label}}"
+      "useVariable": "Usa una variabile per {{label}}",
+      "choose": "Scegli…"
     },
     "command": {
       "advanced": "Avanzate",
@@ -10807,7 +10813,9 @@
       "entryId": "l'oggetto fermo",
       "phase": "comparso o partito",
       "score": "quanto era sicuro il rilevatore",
-      "trackId": "la traccia"
+      "trackId": "la traccia",
+      "label": "l'etichetta trovata (un nome, una targa), vuota se manca",
+      "zones": "le zone in cui si trova"
     },
     "class": {
       "animal": "Animale",
@@ -10853,7 +10861,10 @@
       "pickCamera": "Scegli una telecamera",
       "wholeScene": "Nessuna scelta: conta tutta la scena.",
       "zones": "Zone",
-      "zonesPicked": "Contano solo queste zone."
+      "zonesPicked": "Contano solo queste zone.",
+      "minCount": "Almeno",
+      "minCountAria": "Oggetti parcheggiati minimi",
+      "minCountUnit": "oggetti parcheggiati"
     },
     "triggerGroup": {
       "device": "Dispositivi",

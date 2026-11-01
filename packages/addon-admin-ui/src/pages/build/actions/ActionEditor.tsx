@@ -41,6 +41,8 @@ import {
   draftOf,
   renameVariable,
 } from './action-draft'
+import { needsRunInput } from './run-variables'
+import { RunVariablesDialog } from './RunVariablesDialog'
 import { VariablesSection } from './VariablesSection'
 
 const POLL_MS = 5_000
@@ -99,6 +101,7 @@ export function ActionEditor({ entry, onClose, onSaved }: ActionEditorProps) {
   const problemText = useProblemText()
   const [draft, setDraft] = useState<ActionDraft>(() => draftOf(entry))
   const [runId, setRunId] = useState<string | null>(null)
+  const [askVariables, setAskVariables] = useState(false)
   const readOnly = entry !== null && entry.readOnly
 
   const refresh = (): void => {
@@ -134,9 +137,7 @@ export function ActionEditor({ entry, onClose, onSaved }: ActionEditorProps) {
   const scope = useMemo(() => actionScopeVariables(draft.variables, t), [draft.variables, t])
   const saving = create.isPending || update.isPending
   const saveError = create.error ?? update.error ?? remove.error ?? run.error
-  const needsInput = (entry?.variables ?? []).some(
-    (v) => v.required === true && v.default === undefined,
-  )
+  const needsInput = needsRunInput(entry?.variables ?? [])
 
   const save = (): void => {
     if (!check.ok) return
@@ -219,16 +220,10 @@ export function ActionEditor({ entry, onClose, onSaved }: ActionEditorProps) {
           {entry !== null && (
             <Button
               variant="outline"
-              disabled={run.isPending || needsInput}
-              title={
-                needsInput
-                  ? t(
-                      'actions.editor.runNeedsDefaults',
-                      'Give each required variable a default to run it from here.',
-                    )
-                  : undefined
+              disabled={run.isPending}
+              onClick={() =>
+                needsInput ? setAskVariables(true) : run.mutate({ actionId: entry.id })
               }
-              onClick={() => run.mutate({ actionId: entry.id })}
             >
               <Play className="h-4 w-4" /> {t('actions.editor.runNow', 'Run now')}
             </Button>
@@ -267,6 +262,18 @@ export function ActionEditor({ entry, onClose, onSaved }: ActionEditorProps) {
           onSelect={setRunId}
         />
       </div>
+      {askVariables && entry !== null && (
+        <RunVariablesDialog
+          actionName={entry.name}
+          variables={entry.variables ?? []}
+          running={run.isPending}
+          onCancel={() => setAskVariables(false)}
+          onRun={(variables) => {
+            run.mutate({ actionId: entry.id, variables })
+            setAskVariables(false)
+          }}
+        />
+      )}
     </div>
   )
 }

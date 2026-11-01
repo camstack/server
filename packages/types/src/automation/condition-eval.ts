@@ -327,6 +327,7 @@ function judgeStationaryPresent(
     return { pass: false, why: `no parked objects on device ${cond.deviceId}` }
   }
   const zones = reader.read(cond.deviceId, ZONE_ANALYTICS_CAP, 'zones')
+  const matching: ParkedObjectRow[] = []
   for (const obj of parked) {
     if (
       cond.subjects !== undefined &&
@@ -338,7 +339,24 @@ function judgeStationaryPresent(
       const inZones = zonesOfParked(zones, obj.id)
       if (!cond.zones.some((z) => inZones.includes(z))) continue
     }
-    return { pass: true, why: `parked ${obj.className} (${obj.id}) on device ${cond.deviceId}` }
+    matching.push(obj)
+  }
+  const needed = cond.minCount ?? 1
+  const first = matching[0]
+  if (first !== undefined && matching.length >= needed) {
+    return {
+      pass: true,
+      why:
+        needed === 1
+          ? `parked ${first.className} (${first.id}) on device ${cond.deviceId}`
+          : `${matching.length} parked matching on device ${cond.deviceId} (need ${needed})`,
+    }
+  }
+  if (matching.length > 0) {
+    return {
+      pass: false,
+      why: `only ${matching.length} of ${needed} needed parked objects match on device ${cond.deviceId}`,
+    }
   }
   return {
     pass: false,

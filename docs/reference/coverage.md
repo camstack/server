@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**228 units · 7763 source files · 214 units claimed by at least one document (7720 files).**
+**228 units · 7765 source files · 214 units claimed by at least one document (7722 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -63,9 +63,9 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-osd-manager` | 31 | `device-surfaces` | `architecture/osd-manager.md`, `design/2026-08-30-fleet-multiplier-round-trip-audit.md` _(covers)_, 1 ADR | 2026-10-04 |
 | `packages/types/src/pipeline` | 31 | `pipeline-orchestration` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/inference-devices.md`, `decisions/adr-0755-shares-and-auto-tune-are-sized-by-capacity-never-by-load.md`, +27 more, 2 ADRs | 2026-10-24 |
 | `packages/addon-provider-homeassistant/src/devices` | 30 | `device-providers` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0475-a-motion-episode-belongs-to-its-source-and-the-pipeline-never-overwrites-a-sensor.md`, +1 more | 2026-10-26 |
+| `packages/types/src/automation` | 30 | `automations` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0954-actions-are-declared-list-entries-not-devices-one-actions-surface-over-action-source-providers.md`, `decisions/adr-0972-a-number-tied-to-a-quantity-is-entered-in-a-unit-the-person-picks.md`, +5 more | — |
 | `packages/ui-library/src/primitives` | 30 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md`, +3 more | 2026-10-26 |
 | `packages/addon-provider-bosch/src/shc` | 29 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0932-a-bosch-sign-in-is-one-field-and-homecom-is-not-a-home-connect-login.md` | 2026-10-26 |
-| `packages/types/src/automation` | 29 | `automations` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0954-actions-are-declared-list-entries-not-devices-one-actions-surface-over-action-source-providers.md`, `decisions/adr-0972-a-number-tied-to-a-quantity-is-entered-in-a-unit-the-person-picks.md`, +5 more | — |
 | `packages/addon-provider-esphome` | 28 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0952-esphome-speaks-its-native-api-from-node-through-esphome-client-one-broker-per-board.md`, `decisions/adr-0978-esphome-is-one-integration-holding-several-boards-each-secret-keyed-by-board-id.md` | 2026-10-26 |
 | `packages/addon-export-alexa/src/handlers` | 26 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +11 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-provider-homeassistant/src/ha-export` | 26 | `device-providers`, `ecosystem-exports` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, +6 more, 9 ADRs | 2026-10-26 |
@@ -92,11 +92,11 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-post-analysis/src/shared` | 19 | `post-analysis`, `recognition` | `decisions/adr-0867-the-capture-paths-materialise-no-media-copies-in-the-js-process.md`, `architecture/notifications.md`, `decisions/adr-0209-a-hosted-model-artifact-is-not-verified-until-its-embedding-space-is.md`, +3 more, 1 ADR | 2026-10-07 |
 | `packages/cli/src/commands` | 19 | `tooling` | `decisions/adr-0838-clients-find-a-hub-over-mdns-of-its-https-endpoint-mesh-discovery-stays-retired.md`, `decisions/adr-0988-a-terminal-signs-in-by-browser-approval.md`, `architecture/authentication.md`, +3 more | 2026-10-21 |
 | `packages/ui-library/src/lib` | 19 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md`, +5 more, 2 ADRs | 2026-10-26 |
+| `packages/addon-export-google` | 18 | `ecosystem-exports` | `addons/addon-export-google.md` _(covers)_, `design/2026-08-28-google-home-camera-streaming.md` _(covers)_, `decisions/adr-0269-a-google-export-that-holds-no-google-credential.md`, +2 more | 2026-08-28 |
 | `packages/addon-provider-tuya` | 18 | `device-providers` | `architecture/device-model.md` _(covers)_, 1 ADR | 2026-10-26 |
 | `packages/system/src/auth` | 18 | `auth` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `architecture/authentication.md`, +17 more | 2026-10-21 |
 | `packages/types/src/generated` | 18 | `capabilities` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0648-a-device-extension-is-a-slot-declared-by-the-cap-that-owns-the-function-and-served-over-its-existing-store.md`, `decisions/adr-0936-a-customize-declaration-is-the-override-contract.md`, +1 more, 2 ADRs | — |
 | `packages/addon-admin-ui/src/hooks` | 17 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `ui/admin-patterns.md` _(covers)_, +7 more | 2026-10-27 |
-| `packages/addon-export-google` | 17 | `ecosystem-exports` | `addons/addon-export-google.md` _(covers)_, `design/2026-08-28-google-home-camera-streaming.md` _(covers)_, `decisions/adr-0269-a-google-export-that-holds-no-google-credential.md`, +2 more | 2026-08-28 |
 | `packages/addon-provider-mqtt-ha` | 17 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0831-mqtt-ha-discovery-import-is-its-own-provider.md` | 2026-10-26 |
 | `packages/addon-provider-wyze` | 17 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/addon-terminal` | 17 | `device-surfaces` | `architecture/terminal.md` _(covers)_, `design/2026-07-26-terminal-session-design.md`, `decisions/adr-0321-a-polled-fleet-read-joins-the-shared-slim-key-and-a-config-bearing-read-can-never-be-slim.md`, 2 ADRs | 2026-10-03 |

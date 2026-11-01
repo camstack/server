@@ -185,6 +185,11 @@ export function StationaryPresentFields({ leaf, devices, onChange }: StationaryP
     const { zones: _dropped, ...rest } = leaf
     onChange({ ...rest, deviceId })
   }
+  const setMinCount = (count: number | null): void => {
+    const { minCount: _dropped, ...rest } = leaf
+    // One is the default, so it is stored as the key's absence.
+    onChange(count === null || count <= 1 ? rest : { ...rest, minCount: Math.floor(count) })
+  }
   return (
     <div className="space-y-3" data-testid="stationary-present-fields">
       <div className="space-y-1">
@@ -208,6 +213,17 @@ export function StationaryPresentFields({ leaf, devices, onChange }: StationaryP
         verb={t('automation.whenTree.isParked', 'is parked')}
         onChange={setSubjects}
       />
+      <div className="flex items-center gap-2">
+        <FieldLabel>{t('flow.scene.minCount', 'At least')}</FieldLabel>
+        <DraftNumberInput
+          aria-label={t('flow.scene.minCountAria', 'Minimum parked objects')}
+          data-testid="stationary-present-min-count"
+          className="w-20"
+          value={leaf.minCount ?? 1}
+          onValue={setMinCount}
+        />
+        <FieldLabel>{t('flow.scene.minCountUnit', 'parked objects')}</FieldLabel>
+      </div>
       <ZonePicker
         devices={devices}
         deviceIds={leaf.deviceId > 0 ? [leaf.deviceId] : []}

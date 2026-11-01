@@ -26,8 +26,9 @@ import {
 } from '../../../components/device-do-action/DeviceDoActionFields'
 import { useDeviceBoundCaps } from '../../../components/device-do-action/use-device-bound-caps'
 import type { AutomationDevice } from '../automation/automation-data'
-import { ArgField, type ScopeVariable } from './ArgField'
+import type { ScopeVariable } from './ArgField'
 import { BuildDevicePicker } from './BuildDevicePicker'
+import { DynamicArgField } from './DynamicArgField'
 import {
   buildCapStep,
   type CapStep,
@@ -158,6 +159,7 @@ export function CommandStep({
       {match !== null && (
         <Sentence
           action={match.action}
+          deviceId={deviceId}
           values={match.values}
           deviceName={device?.name ?? ''}
           locale={locale}
@@ -171,6 +173,7 @@ export function CommandStep({
 
 interface SentenceProps {
   readonly action: ResolvedVocabAction
+  readonly deviceId: number
   readonly values: Readonly<Record<string, StepArgValue>>
   readonly deviceName: string
   readonly locale: 'en' | 'it'
@@ -179,7 +182,15 @@ interface SentenceProps {
 }
 
 /** The command phrase, each open arg an inline field. */
-function Sentence({ action, values, deviceName, locale, variables, onChange }: SentenceProps) {
+function Sentence({
+  action,
+  deviceId,
+  values,
+  deviceName,
+  locale,
+  variables,
+  onChange,
+}: SentenceProps) {
   const parts: ReactNode[] = []
   splitPhrase(action.phrase[locale]).forEach((token, i) => {
     if (token.kind === 'text') {
@@ -198,8 +209,10 @@ function Sentence({ action, values, deviceName, locale, variables, onChange }: S
     const current = values[token.key]
     if (arg === undefined || current === undefined) return
     parts.push(
-      <ArgField
+      <DynamicArgField
         key={token.key}
+        deviceId={deviceId}
+        cap={action.cap}
         arg={arg}
         locale={locale}
         variables={variables}

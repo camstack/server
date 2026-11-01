@@ -50,6 +50,7 @@ import {
   oauthIntegrationCapability,
 } from '@camstack/types'
 
+import { ActionSceneExports } from './action-scenes.js'
 import { exportGoogleActions } from './custom-actions.js'
 import { createApiDeviceGateway, type DeviceGateway } from './device-gateway.js'
 import type { VerifiedGoogleCaller } from './fulfillment-router.js'
@@ -93,7 +94,10 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
   }
 
   protected async onInitialize(): Promise<AddonInitResult<typeof exportGoogleActions>> {
-    const gateway = createApiDeviceGateway({ api: this.ctx.api, logger: this.ctx.logger })
+    const gateway = createApiDeviceGateway({
+      api: this.ctx.api,
+      logger: this.ctx.logger,
+    })
     this.gateway = gateway
 
     // Detached on purpose. This makes a cross-addon `ctx.api` call
@@ -107,6 +111,25 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
       })
     })
 
+    const actionScenes = new ActionSceneExports(
+      {
+        api: this.ctx.api,
+        logger: this.ctx.logger,
+        isAdminUser: async (userId) => {
+          const users = await this.ctx.api.userManagement.listUsers.query()
+          return users.some((u) => u.id === userId && u.isAdmin)
+        },
+        persist: (entries) => this.updateGlobalSettings({ exposedActions: [...entries] }),
+      },
+      this.config.exposedActions ?? [],
+    )
+    // The operator may have deleted an action while this addon was down.
+    void actionScenes.reconcile().catch((err: unknown) => {
+      this.ctx.logger.warn('export-google: action scene reconcile at boot failed', {
+        meta: { error: errMsg(err) },
+      })
+    })
+
     const deviceExportProvider: IDeviceExportProvider = {
       getStatus: async () => ({
         linkState: this.config.linkedAccounts.length > 0 ? 'linked' : 'unlinked',
@@ -115,9 +138,34 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
       }),
       listSupportedDeviceKinds: async () => [...SUPPORTED_DEVICE_KINDS],
       listExposedDevices: async () =>
-        this.config.exposed.map((entry) => ({ deviceId: String(entry.deviceId) })),
+        this.config.exposed.map((entry) => ({
+          deviceId: String(entry.deviceId),
+        })),
       exposeDevice: async ({ deviceId }) => this.exposeDevice(deviceId),
       unexposeDevice: async ({ deviceId }) => this.unexposeDevice(deviceId),
+      listSupportedEntityKinds: async () => ['device', 'action'],
+      listExposedEntities: async () => {
+        await actionScenes.reconcile()
+        return [
+          ...this.config.exposed.map((entry) => ({
+            entity: {
+              kind: 'device' as const,
+              deviceId: String(entry.deviceId),
+            },
+          })),
+          ...actionScenes.list(),
+        ]
+      },
+      exposeEntity: async ({ entity }) => {
+        if (entity.kind === 'device') return this.exposeDevice(entity.deviceId)
+        if (entity.kind === 'action') return actionScenes.expose(entity.actionId)
+        throw new Error('export-google: a notification target cannot be exported to Google Home')
+      },
+      unexposeEntity: async ({ entity }) => {
+        if (entity.kind === 'device') return this.unexposeDevice(entity.deviceId)
+        if (entity.kind === 'action') return actionScenes.unexpose(entity.actionId)
+        throw new Error('export-google: a notification target cannot be exported to Google Home')
+      },
       // `device-export` types deviceId as a string; our entries key on numbers.
       getDeviceSettingsContribution: (input) =>
         this.buildDeviceSettingsContribution(Number(input.deviceId)),
@@ -138,16 +186,19 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
           // round-trip for a value we already hold. Every OTHER reader of a
           // `device-export` exposed list pins by addonId.
           listExposed: () => this.config.exposed.map((entry) => entry.deviceId),
+          actions: actionScenes,
         },
         query: {
           gateway,
           logger: this.ctx.logger,
           isExposed: (deviceId) => this.isExposed(deviceId),
+          actions: actionScenes,
         },
         execute: {
           gateway,
           logger: this.ctx.logger,
           isExposed: (deviceId) => this.isExposed(deviceId),
+          actions: actionScenes,
         },
         recordLink: (caller) => this.recordLink(caller),
         removeLink: (userId) => this.removeLink(userId),
@@ -195,7 +246,10 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
       providers: [
         { capability: deviceExportCapability, provider: deviceExportProvider },
         { capability: addonRoutesCapability, provider: routeProvider },
-        { capability: oauthIntegrationCapability, provider: oauthIntegrationProvider },
+        {
+          capability: oauthIntegrationCapability,
+          provider: oauthIntegrationProvider,
+        },
       ],
       customActions: exportGoogleActions,
       actionHandlers: {
@@ -224,7 +278,10 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
     return {
       listEndpoints: async () => {
         const entries = await this.ctx.api.networkAccess.listEndpoints.query({})
-        return entries.map((entry) => ({ url: entry.url, protocol: entry.protocol }))
+        return entries.map((entry) => ({
+          url: entry.url,
+          protocol: entry.protocol,
+        }))
       },
       getStatus: async () => {
         const status = await this.ctx.api.networkAccess.getStatus.query({})
@@ -233,7 +290,10 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
           endpoint:
             status.endpoint === null
               ? null
-              : { url: status.endpoint.url, protocol: status.endpoint.protocol },
+              : {
+                  url: status.endpoint.url,
+                  protocol: status.endpoint.protocol,
+                },
         }
       },
     }
@@ -338,7 +398,11 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
     if (this.config.linkedAccounts.some((account) => account.userId === caller.userId)) return
     const next: LinkedAccount[] = [
       ...this.config.linkedAccounts,
-      { userId: caller.userId, username: caller.username, linkedAt: Date.now() },
+      {
+        userId: caller.userId,
+        username: caller.username,
+        linkedAt: Date.now(),
+      },
     ]
     await this.updateGlobalSettings({ linkedAccounts: next })
     this.ctx.logger.info('export-google: recorded linked account', {
