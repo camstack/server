@@ -443,9 +443,9 @@ describe('registration through MCP', () => {
       'setup_connect',
       'setup_discover_hubs',
       'setup_install_guide',
-      'setup_wizard',
       'setup_login',
       'setup_login_wait',
+      'setup_wizard',
     ])
     const res = await client.callTool({
       name: 'setup_install_guide',
