@@ -44,8 +44,8 @@ const MQTT_HA_DEVICE_TYPES: readonly DeviceType[] = [
 
 /**
  * MQTT Home Assistant discovery IMPORT addon. Subscribes to
- * `homeassistant/+/+/config` on a broker from the `mqtt-broker` cap and adopts
- * one device per physical device (zigbee2mqtt included) via `device-adoption`.
+ * `homeassistant/<component>/[<node_id>/]<object_id>/config` on a broker from the
+ * `mqtt-broker` cap and adopts one device per physical device (zigbee2mqtt included) via `device-adoption`.
  */
 export class MqttHaProviderAddon extends BaseDeviceProvider<MqttHaProviderConfig> {
   protected readonly addonId = 'provider-mqtt-ha'

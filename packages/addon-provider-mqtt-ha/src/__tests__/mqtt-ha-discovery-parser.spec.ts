@@ -15,10 +15,42 @@ describe('parseDiscoveryConfigTopic', () => {
     })
   })
 
+  it('accepts the node_id form zigbee2mqtt publishes and carries nodeId', () => {
+    expect(
+      parseDiscoveryConfigTopic('homeassistant/sensor/0x54ef44100119f325/power/config'),
+    ).toEqual({
+      discoveryPrefix: 'homeassistant',
+      component: 'sensor',
+      nodeId: '0x54ef44100119f325',
+      objectId: 'power',
+    })
+  })
+
+  it('keeps the same entity key for a 3-level topic and a distinct one per node_id', () => {
+    const payload = JSON.stringify({
+      name: 'Power',
+      state_topic: 'z2m/p/power',
+    })
+    const key = (nodeId?: string) => {
+      const e = parseDiscoveryConfigPayload({
+        brokerId: 'b',
+        component: 'sensor',
+        objectId: 'power',
+        ...(nodeId === undefined ? {} : { nodeId }),
+        payload,
+      })
+      return e === null || e === 'remove' ? null : e.entityKey
+    }
+    expect(key()).toBe('sensor/power')
+    expect(key('0xaaa')).toBe('sensor/0xaaa/power')
+    expect(key('0xbbb')).toBe('sensor/0xbbb/power')
+  })
+
   it('rejects non-config topics', () => {
     expect(parseDiscoveryConfigTopic('homeassistant/switch/plug_1/state')).toBeNull()
     expect(parseDiscoveryConfigTopic('zigbee2mqtt/switch/plug/config')).toBeNull()
-    expect(parseDiscoveryConfigTopic('homeassistant/switch/plug/extra/config')).toBeNull()
+    expect(parseDiscoveryConfigTopic('homeassistant/switch/a/b/state')).toBeNull()
+    expect(parseDiscoveryConfigTopic('homeassistant/switch/a/b/c/config')).toBeNull()
   })
 })
 

@@ -17,7 +17,7 @@ export function isSupportedMqttHaComponent(value: string): value is MqttHaCompon
 }
 
 /**
- * Parse `homeassistant/{component}/{object_id}/config`.
+ * Parse `homeassistant/{component}/[{node_id}/]{object_id}/config`.
  * Returns null when the topic is not a discovery config topic.
  */
 export function parseDiscoveryConfigTopic(
@@ -25,15 +25,17 @@ export function parseDiscoveryConfigTopic(
   discoveryPrefix: string = DEFAULT_DISCOVERY_PREFIX,
 ): ParsedDiscoveryTopic | null {
   const parts = topic.split('/').filter((p) => p.length > 0)
-  if (parts.length !== 4) return null
+  if (parts.length !== 4 && parts.length !== 5) return null
   if (parts[0] !== discoveryPrefix) return null
-  if (parts[3] !== 'config') return null
+  if (parts[parts.length - 1] !== 'config') return null
   const component = parts[1]
-  const objectId = parts[2]
+  const nodeId = parts.length === 5 ? parts[2] : undefined
+  const objectId = parts[parts.length - 2]
   if (component === undefined || objectId === undefined) return null
   return {
     discoveryPrefix: parts[0],
     component,
+    ...(nodeId === undefined ? {} : { nodeId }),
     objectId,
   }
 }
@@ -51,9 +53,11 @@ function readStringField(raw: Record<string, unknown>, key: string): string | nu
 export function buildMqttHaEntityKey(input: {
   readonly uniqueId: string | null
   readonly component: string
+  readonly nodeId?: string
   readonly objectId: string
 }): string {
   if (input.uniqueId !== null) return input.uniqueId
+  if (input.nodeId !== undefined) return `${input.component}/${input.nodeId}/${input.objectId}`
   return `${input.component}/${input.objectId}`
 }
 
@@ -70,6 +74,7 @@ export function buildMqttHaDeviceStableId(brokerId: string, deviceKey: string): 
 export interface ParseDiscoveryPayloadInput {
   readonly brokerId: string
   readonly component: string
+  readonly nodeId?: string
   readonly objectId: string
   readonly payload: string
   readonly now?: number
@@ -250,8 +255,14 @@ export function parseDiscoveryConfigPayload(
 
   return {
     brokerId: input.brokerId,
-    entityKey: buildMqttHaEntityKey({ uniqueId, component, objectId: input.objectId }),
+    entityKey: buildMqttHaEntityKey({
+      uniqueId,
+      component,
+      ...(input.nodeId === undefined ? {} : { nodeId: input.nodeId }),
+      objectId: input.objectId,
+    }),
     component,
+    ...(input.nodeId === undefined ? {} : { nodeId: input.nodeId }),
     objectId: input.objectId,
     name,
     stateTopic,

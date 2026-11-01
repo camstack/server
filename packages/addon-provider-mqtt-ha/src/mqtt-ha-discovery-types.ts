@@ -71,9 +71,11 @@ export type MqttHaClimateSpec = z.infer<typeof climateSchema>
  * works after a restart before any discovery message has been replayed.
  */
 export const mqttHaEntitySchema = z.object({
-  /** Opaque entity id (`unique_id`, else `component/object_id`). */
+  /** Opaque entity id (`unique_id`, else `component/[node_id/]object_id`). */
   entityKey: z.string().min(1),
   component: z.enum(MQTT_HA_COMPONENTS),
+  /** The `<node_id>` topic level of the 4-level form (zigbee2mqtt, ESPHome); absent in the 3-level form. */
+  nodeId: z.string().optional(),
   objectId: z.string(),
   name: z.string(),
   stateTopic: z.string().min(1),
@@ -108,5 +110,6 @@ export interface MqttHaDiscoveredEntity extends MqttHaEntity {
 export interface ParsedDiscoveryTopic {
   readonly discoveryPrefix: string
   readonly component: string
+  readonly nodeId?: string
   readonly objectId: string
 }

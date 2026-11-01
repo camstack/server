@@ -43,12 +43,18 @@ export class MqttHaDiscoveryStore {
   findByComponentObject(
     brokerId: string,
     component: string,
+    nodeId: string | undefined,
     objectId: string,
   ): MqttHaDiscoveredEntity | null {
     const bucket = this.byBroker.get(brokerId)
     if (bucket === undefined) return null
     for (const entity of bucket.values()) {
-      if (entity.component === component && entity.objectId === objectId) return entity
+      if (
+        entity.component === component &&
+        entity.nodeId === nodeId &&
+        entity.objectId === objectId
+      )
+        return entity
     }
     return null
   }

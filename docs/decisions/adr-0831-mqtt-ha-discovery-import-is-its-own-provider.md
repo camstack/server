@@ -12,7 +12,7 @@ applies-to:
 ## Context
 
 Operators run Mosquitto (or CamStack's embedded aedes) with devices that publish
-Home Assistant MQTT discovery (`homeassistant/<component>/<object_id>/config`)
+Home Assistant MQTT discovery (`homeassistant/<component>/[<node_id>/]<object_id>/config`)
 and state topics — Zigbee2MQTT, ESPHome, and similar. CamStack already imports
 HA entities over the Home Assistant **WebSocket** (`provider-homeassistant`) and
 registers MQTT **brokers** (`mqtt-broker`) without pub/sub proxying. Putting the

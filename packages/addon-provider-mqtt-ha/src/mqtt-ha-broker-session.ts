@@ -9,7 +9,8 @@ import type { MqttHaStateGateway } from './mqtt-ha-state-gateway.js'
 import { entityTopics } from './mqtt-ha-entity-codec.js'
 import type { MqttHaDiscoveredEntity } from './mqtt-ha-discovery-types.js'
 
-const DISCOVERY_SUBSCRIBE = 'homeassistant/+/+/config'
+/** Both discovery forms: `<component>/<object_id>` and `<component>/<node_id>/<object_id>`. */
+const DISCOVERY_SUBSCRIBE: string[] = ['homeassistant/+/+/config', 'homeassistant/+/+/+/config']
 
 export interface BrokerConnectionDetails {
   readonly url: string
@@ -125,7 +126,7 @@ export class MqttHaBrokerSession {
   private handleMessage(topic: string, payload: string): void {
     const discovery = parseDiscoveryConfigTopic(topic)
     if (discovery !== null) {
-      this.handleDiscoveryConfig(discovery.component, discovery.objectId, payload)
+      this.handleDiscoveryConfig(discovery.component, discovery.nodeId, discovery.objectId, payload)
       return
     }
     const entityKeys = this.topicEntities.get(topic)
@@ -136,10 +137,16 @@ export class MqttHaBrokerSession {
     }
   }
 
-  private handleDiscoveryConfig(component: string, objectId: string, payload: string): void {
+  private handleDiscoveryConfig(
+    component: string,
+    nodeId: string | undefined,
+    objectId: string,
+    payload: string,
+  ): void {
     const parsed = parseDiscoveryConfigPayload({
       brokerId: this.deps.brokerId,
       component,
+      ...(nodeId === undefined ? {} : { nodeId }),
       objectId,
       payload,
     })
@@ -147,6 +154,7 @@ export class MqttHaBrokerSession {
       const existing = this.deps.store.findByComponentObject(
         this.deps.brokerId,
         component,
+        nodeId,
         objectId,
       )
       if (existing !== null) {
