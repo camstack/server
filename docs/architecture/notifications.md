@@ -1219,7 +1219,24 @@ empty on a manual trigger.
 New in this pass: `sounds`/`hitPercent`/`db` for `sound` rules, `eventType`
 for `sensor` rules, `exportId` for `export-completed`, and the alarm's coverage
 params (`rules`, `names`, `skippedNames`, `bypassedNames`, `devices`,
-`seconds`) the arm/arming/refusal bodies already froze. `eventKind` and `db`
+`seconds`) the arm/arming/refusal bodies already froze.
+
+**A finished appliance cycle** (sensor kind `appliance-cycle`, transition
+`cleared`) has its own default sentence in the text catalog:
+`appliance.finished.title` ("{{device}} ha terminato") and
+`appliance.finished.body`, whose parts are separate keys —
+`appliance.finished.duration` (" dopo {{duration}}") and
+`appliance.finished.energy` (" e ha consumato {{energy}}"). The scalars
+`{{duration}}` ("52 minuti", "1 h 12 min") and `{{energy}}` ("0,84 kWh") and the
+fragments `{{afterDuration}}` / `{{usedEnergy}}` are declared for `sensor`
+rules; a part whose fact is unknown (no recorded start, no power meter, a failed
+read) is empty and its fragment vanishes, so the sentence never dangles. The
+row freezes `subject.applianceCycle` at intake, and the dispatcher reads the
+facts through ONE port (`resolveApplianceCycleFacts`,
+`notification-center/appliance-cycle.ts`). Today's implementation knows the
+start flip from the sensor stream (duration only; energy is `null`); a durable
+run record replaces it behind the same port. The default title is
+sentence-cased; a rule's own template is rendered as written. `eventKind` and `db`
 are implemented and declared. `{{time}}` renders hours and minutes in the
 notification's OWN language via `ncClockText`
 (`packages/addon-post-analysis/src/notification-center/clock-text.ts`,

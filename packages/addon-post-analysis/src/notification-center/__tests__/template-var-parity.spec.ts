@@ -31,6 +31,7 @@ import {
   type SystemEvent,
 } from '@camstack/types'
 import { NcTextCatalog } from '../text-catalog.js'
+import type { NcApplianceCycleFacts } from '../appliance-cycle.js'
 import { NC_STATE_SUMMARY_SECTION_IDS } from '../state-summary/state-model.js'
 import { type NcStateSummary, stateSummaryText } from '../state-summary/state-summary.js'
 import {
@@ -273,15 +274,36 @@ const getZoneNames = async (): Promise<readonly { id: string; name: string }[]> 
 async function producedVars(
   entry: NcOutboxEntry,
   zoneLabels: readonly string[],
+  cycle?: NcApplianceCycleFacts,
 ): Promise<Readonly<Record<string, string>>> {
   const deviceName = await notificationDeviceName(entry, getDeviceName)
-  return buildTemplateVars(texts, entry, deviceName, zoneLabels, 'UTC')
+  return buildTemplateVars(texts, entry, deviceName, zoneLabels, 'UTC', cycle)
+}
+
+/** A finished appliance cycle — the row that fills `{{duration}}` / `{{energy}}`. */
+function applianceFinishEntry(): NcOutboxEntry {
+  const press = doorbellPressEntry()
+  return {
+    ...press,
+    payload: {
+      ...press.payload,
+      subject: {
+        deviceId: 593,
+        className: 'appliance-cycle',
+        zones: [],
+        timestamp: 1_753_000_300_000,
+        applianceCycle: { deviceId: 593 },
+      },
+    },
+  }
 }
 
 describe('rule producer ↔ catalog', () => {
   const cases: readonly {
     readonly ctx: NcTemplateVarContext
     readonly entry: () => NcOutboxEntry
+    /** A second sample of the same kind that fills what the first cannot. */
+    readonly also?: () => NcOutboxEntry
   }[] = [
     {
       ctx: { family: 'rule', field: 'body', kind: 'detection' },
@@ -289,9 +311,13 @@ describe('rule producer ↔ catalog', () => {
     },
     { ctx: { family: 'rule', field: 'body', kind: 'occupancy' }, entry: () => occupancyEntry() },
     { ctx: { family: 'rule', field: 'body', kind: 'sound' }, entry: () => levelSoundEntry() },
-    { ctx: { family: 'rule', field: 'body', kind: 'sensor' }, entry: () => doorbellPressEntry() },
+    {
+      ctx: { family: 'rule', field: 'body', kind: 'sensor' },
+      entry: () => doorbellPressEntry(),
+      also: () => applianceFinishEntry(),
+    },
   ]
-  for (const { ctx, entry } of cases) {
+  for (const { ctx, entry, also } of cases) {
     it(`${ctx.kind}: declared ⇔ supplied`, async () => {
       // Real admin zones only ever reach `buildTemplateVars` on a DETECTION
       // row: `subjectFromSensorEvent` / `subjectFromAudioWindow` /
@@ -301,7 +327,14 @@ describe('rule producer ↔ catalog', () => {
       // non-empty list for every kind would manufacture a `zones`/`inZones`
       // ghost that no real row can produce.
       const zoneLabels = ctx.kind === 'detection' ? ['Gate'] : []
-      const vars = await producedVars(entry(), zoneLabels)
+      const alsoVars =
+        also === undefined
+          ? {}
+          : await producedVars(also(), zoneLabels, { durationMs: 52 * 60_000, energyKwh: 0.84 })
+      const vars = {
+        ...(await producedVars(entry(), zoneLabels)),
+        ...Object.fromEntries(Object.entries(alsoVars).filter(([, value]) => value !== '')),
+      }
       // The rule producer emits every key on every row (empty where it has
       // nothing), so only the NON-EMPTY keys must be declared for this kind.
       const nonEmpty = Object.fromEntries(Object.entries(vars).filter(([, value]) => value !== ''))

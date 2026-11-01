@@ -7,6 +7,17 @@
   "detection.subject.identity": "{{label}}",
   "detection.subject.plate": "{{classNoun}} {{label}}",
   "detection.inZones": " in {{zones}}",
+  "appliance.finished.title": "{{device}} ha terminato",
+  "appliance.finished.body": "{{device}} ha terminato{{afterDuration}}{{usedEnergy}}",
+  "appliance.finished.duration": " dopo {{duration}}",
+  "appliance.finished.energy": " e ha consumato {{energy}}",
+  "appliance.duration.minutes": {
+    "one": "{{minutes}} minuto",
+    "other": "{{minutes}} minuti"
+  },
+  "appliance.duration.hours": "{{hours}} h",
+  "appliance.duration.hoursMinutes": "{{hours}} h {{minutes}} min",
+  "appliance.energy.value": "{{value}} kWh",
   "class.person": {
     "one": "persona",
     "other": "persone"

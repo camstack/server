@@ -5,6 +5,7 @@
  * changed. Every dependency is read through the deps object.
  */
 
+import type { NcResolveApplianceCycleFacts } from '../../notification-center/appliance-cycle.js'
 import type { AddonContext } from '@camstack/types'
 import { NcArtifactPlane } from '../../notification-center/artifact-plane.js'
 import type { ArtifactEndpoint } from '../../notification-center/artifact-url.js'
@@ -59,6 +60,8 @@ export interface BuildNotificationCenterDeps {
   ) => NcTimelapseRenderPorts
   readonly buildSummaryPorts: (api: AnalyticsApi, stores: AnalyticsStores) => NcSummaryPorts
   readonly wireAlarmPanel: (center: NotificationCenter) => void
+  /** The finished-cycle facts of an appliance — see `appliance-cycle.ts`. */
+  readonly resolveApplianceCycleFacts: NcResolveApplianceCycleFacts
   readonly serveNcActionPlane: (center: NotificationCenter) => Promise<void>
 }
 

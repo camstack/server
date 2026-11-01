@@ -112,6 +112,13 @@ import {
   type MosaicRenderResult,
   renderMosaic,
 } from './summary/mosaic-renderer.js'
+import {
+  NC_EMPTY_CYCLE_VARS,
+  NC_UNKNOWN_CYCLE_FACTS,
+  ncApplianceCycleVars,
+  type NcApplianceCycleFacts,
+  type NcResolveApplianceCycleFacts,
+} from './appliance-cycle.js'
 import { NcTextCatalog } from './text-catalog.js'
 import {
   ncDetectionSummary,
@@ -651,6 +658,12 @@ export interface NcDispatcherDeps {
     timestamp: number,
     toleranceMs: number,
   ) => Promise<readonly NcTrackAtInstant[]>
+  /**
+   * The duration and energy of a FINISHED appliance cycle, for
+   * `{{duration}}` / `{{energy}}`. Absent, rejecting or answering `null`
+   * omits that part of the sentence; the notification always goes out.
+   */
+  readonly resolveApplianceCycleFacts?: NcResolveApplianceCycleFacts
   /** Device display name for templating; null when unknown. */
   readonly getDeviceName: (deviceId: number) => Promise<string | null>
   /**
@@ -1974,6 +1987,36 @@ export class NcDispatcher {
   }
 
   /**
+   * The facts of a finished appliance cycle; unknown on every other row and on
+   * any failure (a part that cannot be read is omitted, never a blocked send).
+   */
+  private async applianceCycleFacts(entry: NcOutboxEntry): Promise<NcApplianceCycleFacts> {
+    const subject = entry.payload.subject
+    const resolve = this.deps.resolveApplianceCycleFacts
+    const deviceId = subject.applianceCycle?.deviceId
+    if (resolve === undefined || deviceId === undefined) return NC_UNKNOWN_CYCLE_FACTS
+    try {
+      const facts = await resolve({ deviceId, finishedAtMs: subject.timestamp })
+      if (facts.durationMs === null || facts.energyKwh === null) {
+        this.deps.logger.debug('appliance cycle part omitted — unknown', {
+          tags: { deviceId },
+          meta: {
+            duration: facts.durationMs === null ? 'unknown' : 'known',
+            energy: facts.energyKwh === null ? 'unknown' : 'known',
+          },
+        })
+      }
+      return facts
+    } catch (err) {
+      this.deps.logger.debug('appliance cycle facts failed — parts omitted', {
+        tags: { deviceId },
+        meta: { error: err instanceof Error ? err.message : String(err) },
+      })
+      return NC_UNKNOWN_CYCLE_FACTS
+    }
+  }
+
+  /**
    * Builds the notification AND returns the artefact ids its media resolve
    * indexed — see {@link withArtifactUrls}. A tuple rather than a field on
    * `NcNotificationInput`: the ids are internal (outbox provenance), never
@@ -1997,7 +2040,8 @@ export class NcDispatcher {
         : alarmSource?.zones !== undefined && alarmSource.zones.length > 0
           ? await resolveZoneLabels(this.deps.getZoneNames, alarmSource.deviceId, alarmSource.zones)
           : []
-    const vars = buildTemplateVars(this.texts, entry, deviceName, zoneLabels)
+    const cycleFacts = await this.applianceCycleFacts(entry)
+    const vars = buildTemplateVars(this.texts, entry, deviceName, zoneLabels, undefined, cycleFacts)
     this.warnDeprecatedVars(entry)
     // The count a system sentence pluralises on, frozen at intake — "3 cameras
     // armed" is one row's fact, and re-counting anything at delivery would let
@@ -3520,6 +3564,7 @@ export function buildTemplateVars(
   deviceName: string,
   zoneLabels: readonly string[],
   timeZone?: string,
+  cycle?: NcApplianceCycleFacts,
 ): Readonly<Record<string, string>> {
   const subject = entry.payload.subject
   const occupancy = subject.occupancy
@@ -3617,6 +3662,9 @@ export function buildTemplateVars(
     db: subject.audio?.peakDbfs !== undefined ? `${Math.round(subject.audio.peakDbfs)}` : '',
     // DEVICE-EVENT — the device's own token for what happened.
     eventType: subject.eventType ?? '',
+    // A FINISHED appliance cycle: duration / energy and their sentence
+    // fragments; empty on every other row, per the missing-var rule.
+    ...(cycle !== undefined ? ncApplianceCycleVars(texts, cycle) : NC_EMPTY_CYCLE_VARS),
     rule: entry.payload.ruleName,
     // The CONFIRMED observed count at the edge vs the rule's configured
     // capacity — two different numbers. Empty on every non-occupancy row.
@@ -3684,6 +3732,7 @@ function bodyKeyFor(entry: NcOutboxEntry): string {
   // default, which would deliver the rule's name in place of the event.
   if (subject.systemEvent !== undefined) return subject.systemEvent.bodyKey ?? ''
   if (subject.occupancy !== undefined) return 'occupancy.body'
+  if (subject.applianceCycle !== undefined) return 'appliance.finished.body'
   // A parcel has two halves and they are not the same news. Without this the
   // pick-up rendered word-for-word as the delivery, so the operator read one
   // parcel notified twice. A row with no phase is PRE-CATALOG — it keeps the
@@ -3747,19 +3796,26 @@ export function renderRowTitle(
   const systemEvent = entry.payload.subject.systemEvent
   const intrusion = entry.payload.alarmIntrusion
   const count = systemEvent?.textCount
-  return renderRowText(texts, {
+  const rendered = renderRowText(texts, {
     template: intrusion !== undefined ? undefined : entry.payload.template?.title,
     key: titleKeyFor(entry),
     vars: intrusion !== undefined ? { ...vars, locations: intrusion.locations.join(', ') } : vars,
     ...(count !== undefined ? { count } : {}),
     frozen: systemEvent?.title ?? entry.payload.ruleName,
   })
+  // The default sentence opens with the device name, lowercase in the vars:
+  // capitalise the first letter only, and only for the catalog's own title.
+  return titleKeyFor(entry) === 'appliance.finished.title' &&
+    entry.payload.template?.title === undefined
+    ? ncSentenceCaseBody(rendered)
+    : rendered
 }
 
 /** The default TITLE key — same shape, same pre-catalog reasoning. */
 function titleKeyFor(entry: NcOutboxEntry): string {
   const systemEvent = entry.payload.subject.systemEvent
   if (systemEvent !== undefined) return systemEvent.titleKey ?? ''
+  if (entry.payload.subject.applianceCycle !== undefined) return 'appliance.finished.title'
   // D706: an alarm rule's push during the entry delay or after the trigger.
   if (entry.payload.alarmIntrusion !== undefined) return 'alarm.intrusion.title'
   // The rule's own name titles a detection, and for a parcel that name is

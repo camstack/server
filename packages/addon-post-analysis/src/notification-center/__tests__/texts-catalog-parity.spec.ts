@@ -34,7 +34,14 @@ const IT = flatten(it_)
  * both languages, and the singular `camera` is the loanword the plural
  * (`camere`) is built on.
  */
-const LOANWORD_ALLOW_LIST: readonly string[] = ['detection.inZones', 'summary.body.cameras.one']
+const LOANWORD_ALLOW_LIST: readonly string[] = [
+  'detection.inZones',
+  'summary.body.cameras.one',
+  // Unit symbols (h, min, kWh) are international, not words.
+  'appliance.duration.hours',
+  'appliance.duration.hoursMinutes',
+  'appliance.energy.value',
+]
 
 /** The keys that once shipped untranslated; each must now differ. */
 const FORMERLY_ENGLISH: readonly string[] = [

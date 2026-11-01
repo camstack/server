@@ -743,6 +743,7 @@ export class BuildNotificationCenter extends BuildNotificationCenterBase {
           )
         },
         getDeviceName,
+        resolveApplianceCycleFacts: this.deps.resolveApplianceCycleFacts,
         // WHERE each camera is (operator-authored `DeviceInfo.location`) — the
         // AI passes' per-still location label, digest and ordinary rules
         // alike. Same TTL device-facts cache as the names, never a second one.

@@ -462,6 +462,48 @@ export const NC_TEMPLATE_VARS: readonly NcTemplateVarDescriptor[] = [
     fields: [...RULE_TEXT],
     kinds: ['sensor'],
   },
+  {
+    name: 'duration',
+    label: 'Cycle duration',
+    description:
+      'How long a finished appliance cycle ran, e.g. "52 minutes" or "1 h 12 min"; empty when the start is unknown.',
+    example: '52 minuti',
+    group: 'sensor',
+    families: ['rule'],
+    fields: [...RULE_TEXT],
+    kinds: ['sensor'],
+  },
+  {
+    name: 'energy',
+    label: 'Cycle energy',
+    description:
+      'Energy an appliance used over its finished cycle, e.g. "0.84 kWh"; empty without a power meter.',
+    example: '0,84 kWh',
+    group: 'sensor',
+    families: ['rule'],
+    fields: [...RULE_TEXT],
+    kinds: ['sensor'],
+  },
+  {
+    name: 'afterDuration',
+    label: '"after <duration>" fragment',
+    description: 'Leading space included; empty when the cycle duration is unknown.',
+    example: ' dopo 52 minuti',
+    group: 'sensor',
+    families: ['rule'],
+    fields: [...RULE_TEXT],
+    kinds: ['sensor'],
+  },
+  {
+    name: 'usedEnergy',
+    label: '"used <energy>" fragment',
+    description: 'Leading space included; empty when the energy is unknown.',
+    example: ' e ha consumato 0,84 kWh',
+    group: 'sensor',
+    families: ['rule'],
+    fields: [...RULE_TEXT],
+    kinds: ['sensor'],
+  },
   // ── AI ─────────────────────────────────────────────────────────────────
   {
     name: 'ai',

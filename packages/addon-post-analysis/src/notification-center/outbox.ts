@@ -568,6 +568,10 @@ export interface NcOutboxPayload {
     /** DEVICE-EVENT rows only: the device's raw event token (`press`, `open`),
      *  for `{{eventType}}`. Absent when the device sends none. */
     readonly eventType?: string
+    /** A FINISHED appliance cycle only: the appliance (the sensor, never the
+     *  camera linked to it) whose duration and energy the default sentence
+     *  reads. Absent on every other row. */
+    readonly applianceCycle?: { readonly deviceId: number }
     /** Infrastructure/liveness/update event normalized at intake. */
     readonly systemEvent?: {
       readonly kind: NcSystemEventKind

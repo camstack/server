@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Power and energy can now be added to a device that has no native power meter (the optional reading is simply left out while its source is unavailable)
+- A finished appliance cycle can name its duration and energy in a notification (new {{duration}} and {{energy}} variables)
 
 ## [1.2.468] - 2026-11-01
 

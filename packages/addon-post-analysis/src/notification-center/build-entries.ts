@@ -3,6 +3,7 @@
  * The class method forwards private state through {@link BuildEntriesHost}.
  */
 
+import { applianceCycleOf } from './appliance-cycle.js'
 import { alarmIncidentGroup } from './alarm/alarm-incident-group.js'
 import { ruleCropZoneIds } from './close-grouped-pass.js'
 import { frozenConfirmPolicy } from './confirm-policy.js'
@@ -345,6 +346,7 @@ export function buildEntries(
             : {}),
           // DEVICE-EVENT — the device's own token, for `{{eventType}}`.
           ...(subject.eventType !== undefined ? { eventType: subject.eventType } : {}),
+          ...applianceCycleOf(subject),
           ...(subject.systemEvent !== undefined ? { systemEvent: subject.systemEvent } : {}),
         },
       }
