@@ -493,6 +493,9 @@
             "name": "fan-presets"
           },
           {
+            "name": "timed-run"
+          },
+          {
             "name": "action-source"
           }
         ]
