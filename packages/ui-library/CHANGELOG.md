@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Mobile drawer: the closed drawer no longer leaves a full-screen backdrop layer over the top bar (it blurred and dimmed the header on an installed iPhone app).
+
 ## [1.2.367] - 2026-11-01
 
 ### Changed

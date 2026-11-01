@@ -34,15 +34,17 @@ export function MobileDrawer({
 
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className={cn(
-          'fixed inset-0 z-40 bg-black/50 transition-opacity duration-200',
-          open ? 'opacity-100' : 'pointer-events-none opacity-0',
-        )}
-        onClick={onClose}
-        aria-hidden="true"
-      />
+      {/* Backdrop — mounted only while open. A closed `opacity-0` layer that
+          spans the viewport is still a composited layer above the page chrome:
+          on iOS WebKit (installed PWA) it dimmed and blurred the mobile top
+          bar, which is not part of the scrolling content. */}
+      {open && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 animate-in fade-in duration-200"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
 
       {/* Drawer panel — `fixed inset-y-0` pins it to the viewport edges
           (ignoring any parent padding), so the safe-area inset must be
@@ -57,7 +59,7 @@ export function MobileDrawer({
         className={cn(
           'fixed inset-y-0 left-0 z-50 flex flex-col bg-surface border-r border-border shadow-2xl transition-transform duration-200 ease-out pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]',
           width,
-          open ? 'translate-x-0' : '-translate-x-full',
+          open ? 'translate-x-0' : '-translate-x-full shadow-none',
           className,
         )}
       >
