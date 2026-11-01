@@ -168,8 +168,28 @@ describe('Velux connection test', () => {
     expect(failure).toBeNull()
   })
 
+  it('opens exactly one connection to the gateway', async () => {
+    const { certPem } = await startGateway()
+    expect(await probeFailure(certPem, {})).toBeNull()
+    expect(gateway?.tcpConnections).toBe(1)
+  })
+
+  it('is validated by a gateway that stalls a connection arriving soon after a close', async () => {
+    const { certPem } = await startGateway()
+    gateway?.stallAfterClose(1500)
+    expect(await probeFailure(certPem, { tls: 600 })).toBeNull()
+  })
+
+  it('keeps the connect error code, so a refused connection reads as unreachable', async () => {
+    const failure = await probeKlfGateway({ host: '127.0.0.1', password: PASSWORD }).catch(
+      (e: unknown) => e,
+    )
+    expect(Reflect.get(Object(failure), 'code')).toBe('ECONNREFUSED')
+  })
+
   it('defaults: the slow real-gateway handshake (4.2 s measured) fits with margin, and the worst case fits the deadline', () => {
     expect(DEFAULT_KLF_PROBE_TIMEOUTS_MS.tls).toBeGreaterThanOrEqual(2 * 4_249)
+    expect(Object.keys(DEFAULT_KLF_PROBE_TIMEOUTS_MS)).not.toContain('tcp')
     expect(klfProbeWorstCaseMs(DEFAULT_KLF_PROBE_TIMEOUTS_MS)).toBeLessThanOrEqual(
       DEFAULT_TEST_DEADLINE_MS,
     )

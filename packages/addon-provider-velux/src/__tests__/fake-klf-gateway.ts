@@ -153,6 +153,8 @@ export class FakeKlfGateway {
   firmware: readonly [number, number, number, number, number, number] = [0, 2, 0, 0, 71, 0]
   /** Every connection ever accepted (open or since closed). */
   accepted = 0
+  /** Every TCP connection the port took, including ones that never finished a handshake. */
+  tcpConnections = 0
   /** Refuse logins with this password check. */
   readonly password: string
   #server: TlsServer | null = null
@@ -202,8 +204,11 @@ export class FakeKlfGateway {
         key,
         cert: certPem,
         SNICallback: (_name, done) => {
-          if (this.#handshakeDelayMs === 0) done(null, context)
-          else setTimeout(() => done(null, context), this.#handshakeDelayMs)
+          const sinceClose = Date.now() - this.#lastCloseAt
+          const stall = sinceClose < this.#stallAfterCloseMs ? this.#stallAfterCloseMs : 0
+          const delay = Math.max(this.#handshakeDelayMs, stall)
+          if (delay === 0) done(null, context)
+          else setTimeout(() => done(null, context), delay)
         },
       },
       (socket) => this.#serve(socket),
@@ -212,6 +217,9 @@ export class FakeKlfGateway {
       const server = this.#server
       if (server === null) return reject(new Error('server not created'))
       server.once('error', reject)
+      server.on('connection', () => {
+        this.tcpConnections += 1
+      })
       server.listen(51200, '127.0.0.1', () => resolve())
     })
     return { certPem }
@@ -256,6 +264,17 @@ export class FakeKlfGateway {
 
   #muted = false
   #handshakeDelayMs = 0
+  #stallAfterCloseMs = 0
+  #lastCloseAt = 0
+
+  /**
+   * A handshake that starts within this long after any connection closed takes that
+   * long (the gateway frees a closed slot slowly).
+   */
+  stallAfterClose(ms: number): void {
+    this.#stallAfterCloseMs = ms
+  }
+
   #passwordDelayMs = 0
 
   /** Every TLS handshake takes this much longer (a weak CPU doing DHE). */
@@ -271,7 +290,10 @@ export class FakeKlfGateway {
   #serve(socket: TLSSocket): void {
     this.accepted += 1
     this.#sockets.add(socket)
-    socket.on('close', () => this.#sockets.delete(socket))
+    socket.on('close', () => {
+      this.#sockets.delete(socket)
+      this.#lastCloseAt = Date.now()
+    })
     socket.on('error', () => undefined)
     const state = { pending: [] as number[] }
     socket.on('data', (chunk: Buffer) => {

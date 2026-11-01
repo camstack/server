@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- The Velux connection test allows the slow TLS handshake of the KLF-200 and names whether the handshake or the password answer ran out.
+- The Velux connection test opens a single connection to the gateway and allows its slow TLS handshake, and names whether the handshake or the password answer ran out.
 
 ## [0.2.154] - 2026-11-01
 

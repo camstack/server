@@ -1,4 +1,3 @@
-import { connect as tcpConnect } from 'node:net'
 import type { ConnectionOptions } from 'node:tls'
 import { errMsg } from '@camstack/types'
 import { Connection, Gateway } from 'klf-200-api'
@@ -8,13 +7,11 @@ import { loginFailure } from './klf-gateway-client.js'
 const KLF_PORT = 51200
 
 /** The step of a probe that ran out of time. */
-export type KlfProbePhase = 'tcp' | 'tls' | 'password' | 'version' | 'logout'
+export type KlfProbePhase = 'tls' | 'password' | 'version' | 'logout'
 
 /** Milliseconds each step of a probe may take. */
 export interface KlfProbeTimeoutsMs {
-  /** Opening the TCP connection to the gateway port. */
-  readonly tcp: number
-  /** The TLS handshake. */
+  /** Opening the connection AND the TLS handshake. */
   readonly tls: number
   /** The password answer, counted from the moment the handshake finished. */
   readonly password: number
@@ -25,16 +22,18 @@ export interface KlfProbeTimeoutsMs {
 }
 
 /**
- * Defaults add up, worst case, to 2 + 10 + 3 + 1.5 + 1.5 = 18 s, which is the
+ * Defaults add up, worst case, to 12 + 3 + 1.5 + 1.5 = 18 s, which is the
  * wizard's `CONNECTION_TEST_TIMEOUT_MS` ceiling (20 s) minus the 2 s margin of
  * `DEFAULT_TEST_DEADLINE_MS`, so a stuck gateway is named here instead of the
- * wizard giving up unnamed. The handshake gets 10 s because a real KLF-200 was
- * measured at 4.2 s for ONE handshake (TLSv1.2, DHE-RSA-AES256-SHA256 on a weak
- * CPU): a 5 s bound left no margin.
+ * wizard giving up unnamed. The handshake gets 12 s because a real KLF-200 needs
+ * about 4.2 s for ONE handshake (TLSv1.2, DHE-RSA-AES256-SHA256 on a weak CPU).
+ *
+ * A probe opens exactly ONE connection: the gateway frees a closed slot very
+ * slowly (measured 2026-11-01: a bare TCP connect and close before the TLS connect
+ * left the real session without a handshake for 20 s), so no pre-check connects first.
  */
 export const DEFAULT_KLF_PROBE_TIMEOUTS_MS: KlfProbeTimeoutsMs = {
-  tcp: 2_000,
-  tls: 10_000,
+  tls: 12_000,
   password: 3_000,
   version: 1_500,
   logout: 1_500,
@@ -42,12 +41,11 @@ export const DEFAULT_KLF_PROBE_TIMEOUTS_MS: KlfProbeTimeoutsMs = {
 
 /** Worst-case total of a probe's steps. */
 export function klfProbeWorstCaseMs(limits: KlfProbeTimeoutsMs): number {
-  return limits.tcp + limits.tls + limits.password + limits.version + limits.logout
+  return limits.tls + limits.password + limits.version + limits.logout
 }
 
 const PHASE_TEXT: Record<KlfProbePhase, string> = {
-  tcp: 'did not accept a TCP connection on port 51200',
-  tls: 'did not complete the TLS handshake',
+  tls: 'did not accept a connection or complete the TLS handshake on port 51200',
   password: 'did not answer the password',
   version: 'did not answer the version request',
   logout: 'did not close the session',
@@ -140,25 +138,6 @@ async function loginInPhases(
   }
 }
 
-/** A bare TCP connect to the gateway port: tells "nothing listens" from "TLS is stuck". */
-function tcpReachable(host: string, ms: number): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const socket = tcpConnect({ host, port: KLF_PORT })
-    socket.setTimeout(ms, () => {
-      socket.destroy()
-      reject(new KlfProbeTimeoutError('tcp', host, ms))
-    })
-    socket.once('connect', () => {
-      socket.destroy()
-      resolve()
-    })
-    socket.once('error', (err) => {
-      socket.destroy()
-      reject(err)
-    })
-  })
-}
-
 /** What a successful probe learned about the gateway. */
 export interface KlfProbeResult {
   /** Firmware version, or null when the gateway logged us in but did not answer GW_GET_VERSION. */
@@ -173,7 +152,6 @@ export interface KlfProbeResult {
  */
 export async function probeKlfGateway(options: KlfProbeOptions): Promise<KlfProbeResult> {
   const limits = { ...DEFAULT_KLF_PROBE_TIMEOUTS_MS, ...options.timeoutsMs }
-  await tcpReachable(options.host, limits.tcp)
   const connection =
     options.tls === undefined
       ? new Connection(options.host)
@@ -183,6 +161,8 @@ export async function probeKlfGateway(options: KlfProbeOptions): Promise<KlfProb
       await loginInPhases(connection, options.host, options.password, limits)
     } catch (err) {
       if (err instanceof KlfProbeTimeoutError) throw err
+      // A connect error keeps its Node `code` (ECONNREFUSED, EHOSTUNREACH ...) so it classifies as unreachable.
+      if (err instanceof Error && typeof Reflect.get(err, 'code') === 'string') throw err
       throw loginFailure(err)
     }
     try {
