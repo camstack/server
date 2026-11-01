@@ -39,6 +39,7 @@ import {
 } from '../state-summary/state-summary-delivery.js'
 import { ncClockText } from '../clock-text.js'
 import { withNodeLivenessFacts } from '../node-liveness-text.js'
+import { withPlannedUpdateWording } from '../system-events.js'
 import {
   buildTemplateVars,
   NC_DEVICELESS_CAMERA_NAME,
@@ -530,6 +531,18 @@ const SYSTEM_SAMPLES: readonly SystemSample[] = [
             timing: { since: 3_600_000, previousSince: 0 },
             nodeName: 'Mac mini',
           })
+    },
+  },
+  {
+    // What the node hold-off hands the rule engine for an offline of a node
+    // that announced an update and did not come back: `{{graceMin}}`.
+    name: 'agent.offline (during a planned update)',
+    build: () => {
+      const incoming = fromBus('agent.offline', { agentId: 'agent-a' })
+      const system = incoming?.subject.systemEvent
+      return incoming === null || system === undefined
+        ? null
+        : withPlannedUpdateWording(incoming, system, 10)
     },
   },
   {

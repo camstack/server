@@ -338,7 +338,7 @@ function armNodeLiveness(
   holdoff.arm(subject, incoming)
 }
 
-function withPlannedUpdateWording(
+export function withPlannedUpdateWording(
   incoming: NcIncomingEvent,
   system: NcSystemEventSubject,
   graceMin: number,
