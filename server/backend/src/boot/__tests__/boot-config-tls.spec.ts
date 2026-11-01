@@ -83,6 +83,12 @@ describe('setupInfra — HTTPS is the stored setting, with a floor of on', () =>
   beforeEach(() => {
     dir = fs.mkdtempSync(path.join(os.tmpdir(), 'boot-config-tls-infra-'))
     configPath = path.join(dir, 'config.yaml')
+    // The bootstrap loader lets CAMSTACK_DATA/PORT/HOST override config.yaml, and a
+    // developer shell or an nx-loaded .env sets them: pin them so the data path is
+    // this spec's temp dir whatever the host environment says.
+    vi.stubEnv('CAMSTACK_DATA', dir)
+    vi.stubEnv('CAMSTACK_PORT', '')
+    vi.stubEnv('CAMSTACK_HOST', '')
     vi.spyOn(console, 'log').mockImplementation(() => undefined)
     vi.spyOn(console, 'warn').mockImplementation(() => undefined)
   })
