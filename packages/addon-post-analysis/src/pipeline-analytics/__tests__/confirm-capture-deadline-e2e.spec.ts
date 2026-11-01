@@ -27,7 +27,7 @@
  * i.e. the round trips that did run were asking for frames released seconds
  * earlier. On camera 108, whose lane never saturates, `timeout` was 2 of 81.
  */
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type {
   FrameHandle,
   FrameResult,
@@ -126,10 +126,17 @@ function emitInference(bus: IEventBus, timestamp: number, subjects: number): voi
   )
 }
 
+/**
+ * Virtual time: the gate's deadline, the runner's latency and the scheduler's
+ * `Date.now` clock all run on the fake clock, so the ordering the spec depends
+ * on (deadline < runner latency) cannot be reordered by a loaded host.
+ */
+/** Virtual time between two frames. */
+const FRAME_STEP_MS = 20
+
 async function flush(stepMs: number): Promise<void> {
   for (let i = 0; i < 6; i += 1) {
-    await new Promise<void>((resolve) => setTimeout(resolve, stepMs))
-    await new Promise<void>((resolve) => setImmediate(resolve))
+    await vi.advanceTimersByTimeAsync(stepMs)
   }
 }
 
@@ -151,11 +158,11 @@ async function driveStarvedCamera(subjects: number): Promise<Booted> {
   )
   for (let frame = 0; frame < 4; frame += 1) {
     emitInference(booted.bus.bus, 1_000 + frame * 200, subjects)
-    await flush(20)
+    await flush(FRAME_STEP_MS)
   }
   // Long enough that anything still queued WOULD have run.
-  await new Promise<void>((resolve) => setTimeout(resolve, RUNNER_LATENCY_MS * 4))
-  await flush(20)
+  await vi.advanceTimersByTimeAsync(RUNNER_LATENCY_MS * 4)
+  await flush(FRAME_STEP_MS)
   return booted
 }
 
@@ -175,10 +182,15 @@ function gateAttempts(booted: Booted): number {
 describe('the confirmation gate’s crop carries the gate’s deadline', () => {
   let booted: Booted | undefined
 
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
+  })
+
   afterEach(async () => {
     await flush(1)
     if (booted) await booted.addon.shutdown()
     booted = undefined
+    vi.useRealTimers()
   })
 
   it('a confirmation the gate has ALREADY abandoned never reaches the runner', async () => {

@@ -138,7 +138,10 @@ export interface CaptureRequestInput<T> {
   readonly priority?: number
   /** Dedupe key: joins an identical queued/running request (same promise). */
   readonly coalesceKey?: string
-  /** Queued longer than this → resolve `null` without exec (dropped stale). */
+  /** Queued for this long → resolve `null` without exec (dropped stale). The
+   *  bound is INCLUSIVE: a caller that abandons its wait after exactly this
+   *  long (the confirmation gate's timer) must find the request already dead,
+   *  not alive by one millisecond at the head of the lane. */
   readonly staleAfterMs?: number
   /** Extra keys held active (for `isKeyActive`) while queued/running, WITHOUT
    *  dedupe — the batch dispatch publishes per-track coverage through these. */
@@ -541,7 +544,7 @@ export class CaptureScheduler {
     for (let i = lane.queue.length - 1; i >= 0; i -= 1) {
       const entry = lane.queue[i]
       if (entry === undefined) continue
-      if (entry.staleAfterMs === undefined || nowMs - entry.enqueuedAt <= entry.staleAfterMs) {
+      if (entry.staleAfterMs === undefined || nowMs - entry.enqueuedAt < entry.staleAfterMs) {
         continue
       }
       lane.queue.splice(i, 1)
@@ -635,7 +638,7 @@ export class CaptureScheduler {
     while (lane.inFlight < this.budget && lane.queue.length > 0) {
       const entry = lane.queue.shift()
       if (entry === undefined) return
-      if (entry.staleAfterMs !== undefined && this.now() - entry.enqueuedAt > entry.staleAfterMs) {
+      if (entry.staleAfterMs !== undefined && this.now() - entry.enqueuedAt >= entry.staleAfterMs) {
         this.bump(deviceId, 'droppedStale')
         this.noteDropped(deviceId, entry, 'stale')
         entry.drop()

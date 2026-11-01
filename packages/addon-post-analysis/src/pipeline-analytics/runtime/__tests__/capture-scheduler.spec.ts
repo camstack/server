@@ -488,6 +488,28 @@ describe('CaptureScheduler', () => {
       expect(scheduler.counters(1)?.droppedStale).toBe(1)
     })
 
+    it('a queued request is dead AT its staleAfterMs, not one tick after (the abandoning caller waits exactly that long)', async () => {
+      const harness = makeScheduler({ maxInFlightPerDevice: 1 })
+      const { scheduler } = harness
+      const gate = deferred<void>()
+      void scheduler.request({ deviceId: 1, kind: 'other', exec: () => gate.promise })
+      let ran = false
+      const atDeadline = scheduler.request({
+        deviceId: 1,
+        kind: 'snapshot',
+        staleAfterMs: 100,
+        exec: async () => {
+          ran = true
+          return 'late'
+        },
+      })
+      harness.clock = 100
+      gate.resolve()
+      await flushMicrotasks()
+      expect(await atDeadline).toBeNull()
+      expect(ran).toBe(false)
+    })
+
     it('a fresh queued request still execs (staleness checked at dequeue)', async () => {
       const harness = makeScheduler({ maxInFlightPerDevice: 1 })
       const { scheduler } = harness
