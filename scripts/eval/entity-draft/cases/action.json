@@ -1,0 +1,364 @@
+[
+ {
+  "id": "act-01",
+  "lang": "it",
+  "description": "Buonanotte: spegni la luce del salone e della cucina e chiudi la tapparella del salone",
+  "entity": {
+   "name": "Buonanotte",
+   "steps": [
+    {
+     "kind": "cap",
+     "actionId": "switch.off",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       1,
+       7
+      ]
+     }
+    },
+    {
+     "kind": "cap",
+     "actionId": "cover.close",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       3
+      ]
+     }
+    }
+   ]
+  },
+  "mustHave": [
+   "cover.close"
+  ]
+ },
+ {
+  "id": "act-02",
+  "lang": "en",
+  "description": "Movie mode: dim the living room light to 20%, close the living room blind and play the TV",
+  "entity": {
+   "name": "Movie mode",
+   "steps": [
+    {
+     "kind": "cap",
+     "actionId": "brightness.set",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       1
+      ]
+     },
+     "args": {
+      "level": 20
+     }
+    },
+    {
+     "kind": "cap",
+     "actionId": "cover.close",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       3
+      ]
+     }
+    },
+    {
+     "kind": "cap",
+     "actionId": "media.play",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       28
+      ]
+     }
+    }
+   ]
+  },
+  "mustHave": [
+   "\"level\":20",
+   "media.play"
+  ]
+ },
+ {
+  "id": "act-03",
+  "lang": "it",
+  "description": "Esco di casa: spegni tutte le luci e chiudi tutte le tapparelle",
+  "entity": {
+   "name": "Esco di casa",
+   "steps": [
+    {
+     "kind": "cap",
+     "actionId": "switch.off",
+     "target": {
+      "kind": "domain",
+      "deviceType": "light"
+     }
+    },
+    {
+     "kind": "cap",
+     "actionId": "cover.close",
+     "target": {
+      "kind": "domain",
+      "deviceType": "cover"
+     }
+    }
+   ]
+  },
+  "mustHave": [
+   "\"domain\""
+  ]
+ },
+ {
+  "id": "act-04",
+  "lang": "en",
+  "description": "Open the garage door, wait 90 seconds, then close it",
+  "entity": {
+   "name": "Garage cycle",
+   "steps": [
+    {
+     "kind": "cap",
+     "actionId": "cover.open",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       23
+      ]
+     }
+    },
+    {
+     "kind": "wait",
+     "seconds": 90
+    },
+    {
+     "kind": "cap",
+     "actionId": "cover.close",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       23
+      ]
+     }
+    }
+   ]
+  },
+  "mustHave": [
+   "\"seconds\":90"
+  ]
+ },
+ {
+  "id": "act-05",
+  "lang": "it",
+  "description": "Sveglia: apri la tapparella della camera da letto al 50% e accendi la luce della camera al massimo",
+  "entity": {
+   "name": "Sveglia",
+   "steps": [
+    {
+     "kind": "cap",
+     "actionId": "cover.position",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       11
+      ]
+     },
+     "args": {
+      "position": 50
+     }
+    },
+    {
+     "kind": "cap",
+     "actionId": "brightness.full",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       10
+      ]
+     }
+    }
+   ]
+  },
+  "mustHave": [
+   "\"position\":50",
+   "brightness.full"
+  ]
+ },
+ {
+  "id": "act-06",
+  "lang": "en",
+  "description": "Bathroom exhaust: turn on the bathroom fan, wait 5 minutes, turn it off",
+  "entity": {
+   "name": "Bathroom exhaust",
+   "steps": [
+    {
+     "kind": "cap",
+     "actionId": "switch.on",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       14
+      ]
+     }
+    },
+    {
+     "kind": "wait",
+     "seconds": 300
+    },
+    {
+     "kind": "cap",
+     "actionId": "switch.off",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       14
+      ]
+     }
+    }
+   ]
+  },
+  "mustHave": [
+   "\"seconds\":300"
+  ]
+ },
+ {
+  "id": "act-07",
+  "lang": "it",
+  "description": "Cena: luce della cucina al 60% e luce del salone al 30%",
+  "entity": {
+   "name": "Cena",
+   "steps": [
+    {
+     "kind": "cap",
+     "actionId": "brightness.set",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       7
+      ]
+     },
+     "args": {
+      "level": 60
+     }
+    },
+    {
+     "kind": "cap",
+     "actionId": "brightness.set",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       1
+      ]
+     },
+     "args": {
+      "level": 30
+     }
+    }
+   ]
+  },
+  "mustHave": [
+   "\"level\":60",
+   "\"level\":30"
+  ]
+ },
+ {
+  "id": "act-08",
+  "lang": "en",
+  "description": "Panic: sound the siren and turn on every light",
+  "entity": {
+   "name": "Panic",
+   "steps": [
+    {
+     "kind": "cap",
+     "actionId": "switch.on",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       26
+      ]
+     }
+    },
+    {
+     "kind": "cap",
+     "actionId": "switch.on",
+     "target": {
+      "kind": "domain",
+      "deviceType": "light"
+     }
+    }
+   ]
+  },
+  "mustHave": [
+   "switch.on"
+  ]
+ },
+ {
+  "id": "act-09",
+  "lang": "it",
+  "description": "Riscalda il salone: termostato in riscaldamento a 21 gradi",
+  "entity": {
+   "name": "Riscalda il salone",
+   "steps": [
+    {
+     "kind": "cap",
+     "actionId": "climate.heat",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       4
+      ]
+     }
+    },
+    {
+     "kind": "cap",
+     "actionId": "climate.target",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       4
+      ]
+     },
+     "args": {
+      "target": 21
+     }
+    }
+   ]
+  },
+  "mustHave": [
+   "climate.heat",
+   "\"target\":21"
+  ]
+ },
+ {
+  "id": "act-10",
+  "lang": "en",
+  "description": "Close up the veranda: lower the veranda blind and turn off the veranda light",
+  "entity": {
+   "name": "Close veranda",
+   "steps": [
+    {
+     "kind": "cap",
+     "actionId": "cover.close",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       18
+      ]
+     }
+    },
+    {
+     "kind": "cap",
+     "actionId": "switch.off",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       17
+      ]
+     }
+    }
+   ]
+  },
+  "mustHave": [
+   "cover.close"
+  ]
+ }
+]

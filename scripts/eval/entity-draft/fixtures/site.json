@@ -1,0 +1,351 @@
+{
+ "timeZone": "Europe/Rome",
+ "location": {
+  "latitude": 45.07,
+  "longitude": 7.69
+ },
+ "rooms": [
+  "Salone",
+  "Cucina",
+  "Camera da letto",
+  "Bagno",
+  "Veranda",
+  "Garage"
+ ],
+ "devices": [
+  {
+   "id": 1,
+   "name": "Luce Salone",
+   "type": "light",
+   "room": "Salone",
+   "addonId": "provider-demo",
+   "stableId": "demo:001",
+   "caps": [
+    "switch",
+    "brightness"
+   ]
+  },
+  {
+   "id": 2,
+   "name": "Lampada Divano",
+   "type": "light",
+   "room": "Salone",
+   "addonId": "provider-demo",
+   "stableId": "demo:002",
+   "caps": [
+    "switch",
+    "brightness"
+   ]
+  },
+  {
+   "id": 3,
+   "name": "Tapparella Salone",
+   "type": "cover",
+   "room": "Salone",
+   "addonId": "provider-demo",
+   "stableId": "demo:003",
+   "caps": [
+    "cover"
+   ]
+  },
+  {
+   "id": 4,
+   "name": "Termostato Salone",
+   "type": "climate",
+   "room": "Salone",
+   "addonId": "provider-demo",
+   "stableId": "demo:004",
+   "caps": [
+    "climate-control"
+   ]
+  },
+  {
+   "id": 5,
+   "name": "Movimento Salone",
+   "type": "sensor",
+   "room": "Salone",
+   "addonId": "provider-demo",
+   "stableId": "demo:005",
+   "caps": [
+    "motion"
+   ]
+  },
+  {
+   "id": 6,
+   "name": "Temperatura Salone",
+   "type": "sensor",
+   "room": "Salone",
+   "addonId": "provider-demo",
+   "stableId": "demo:006",
+   "caps": [
+    "temperature-sensor",
+    "humidity-sensor"
+   ]
+  },
+  {
+   "id": 7,
+   "name": "Luce Cucina",
+   "type": "light",
+   "room": "Cucina",
+   "addonId": "provider-demo",
+   "stableId": "demo:007",
+   "caps": [
+    "switch",
+    "brightness"
+   ]
+  },
+  {
+   "id": 8,
+   "name": "Fumo Cucina",
+   "type": "sensor",
+   "room": "Cucina",
+   "addonId": "provider-demo",
+   "stableId": "demo:008",
+   "caps": [
+    "smoke"
+   ]
+  },
+  {
+   "id": 9,
+   "name": "Presa Lavastoviglie",
+   "type": "switch",
+   "room": "Cucina",
+   "addonId": "provider-demo",
+   "stableId": "demo:009",
+   "caps": [
+    "switch",
+    "power-meter"
+   ]
+  },
+  {
+   "id": 10,
+   "name": "Luce Camera",
+   "type": "light",
+   "room": "Camera da letto",
+   "addonId": "provider-demo",
+   "stableId": "demo:010",
+   "caps": [
+    "switch",
+    "brightness"
+   ]
+  },
+  {
+   "id": 11,
+   "name": "Tapparella Camera",
+   "type": "cover",
+   "room": "Camera da letto",
+   "addonId": "provider-demo",
+   "stableId": "demo:011",
+   "caps": [
+    "cover"
+   ]
+  },
+  {
+   "id": 12,
+   "name": "Finestra Camera",
+   "type": "sensor",
+   "room": "Camera da letto",
+   "addonId": "provider-demo",
+   "stableId": "demo:012",
+   "caps": [
+    "contact"
+   ]
+  },
+  {
+   "id": 13,
+   "name": "Luce Bagno",
+   "type": "light",
+   "room": "Bagno",
+   "addonId": "provider-demo",
+   "stableId": "demo:013",
+   "caps": [
+    "switch"
+   ]
+  },
+  {
+   "id": 14,
+   "name": "Ventola Bagno",
+   "type": "fan",
+   "room": "Bagno",
+   "addonId": "provider-demo",
+   "stableId": "demo:014",
+   "caps": [
+    "switch"
+   ]
+  },
+  {
+   "id": 15,
+   "name": "Umidita Bagno",
+   "type": "sensor",
+   "room": "Bagno",
+   "addonId": "provider-demo",
+   "stableId": "demo:015",
+   "caps": [
+    "humidity-sensor",
+    "temperature-sensor"
+   ]
+  },
+  {
+   "id": 16,
+   "name": "Allagamento Bagno",
+   "type": "sensor",
+   "room": "Bagno",
+   "addonId": "provider-demo",
+   "stableId": "demo:016",
+   "caps": [
+    "flood"
+   ]
+  },
+  {
+   "id": 17,
+   "name": "Luce Veranda",
+   "type": "light",
+   "room": "Veranda",
+   "addonId": "provider-demo",
+   "stableId": "demo:017",
+   "caps": [
+    "switch",
+    "brightness"
+   ]
+  },
+  {
+   "id": 18,
+   "name": "Tapparella Veranda",
+   "type": "cover",
+   "room": "Veranda",
+   "addonId": "provider-demo",
+   "stableId": "demo:018",
+   "caps": [
+    "cover"
+   ]
+  },
+  {
+   "id": 19,
+   "name": "Temperatura Veranda",
+   "type": "sensor",
+   "room": "Veranda",
+   "addonId": "provider-demo",
+   "stableId": "demo:019",
+   "caps": [
+    "temperature-sensor"
+   ]
+  },
+  {
+   "id": 20,
+   "name": "Telecamera Veranda",
+   "type": "camera",
+   "room": "Veranda",
+   "addonId": "provider-demo",
+   "stableId": "demo:020",
+   "caps": [
+    "motion"
+   ],
+   "zones": [
+    "Ingresso",
+    "Giardino"
+   ]
+  },
+  {
+   "id": 21,
+   "name": "Campanello Ingresso",
+   "type": "sensor",
+   "room": "Veranda",
+   "addonId": "provider-demo",
+   "stableId": "demo:021",
+   "caps": [
+    "doorbell"
+   ]
+  },
+  {
+   "id": 22,
+   "name": "Telecamera Garage",
+   "type": "camera",
+   "room": "Garage",
+   "addonId": "provider-demo",
+   "stableId": "demo:022",
+   "caps": [
+    "motion"
+   ],
+   "zones": [
+    "Box",
+    "Vialetto"
+   ]
+  },
+  {
+   "id": 23,
+   "name": "Portone Garage",
+   "type": "cover",
+   "room": "Garage",
+   "addonId": "provider-demo",
+   "stableId": "demo:023",
+   "caps": [
+    "cover"
+   ]
+  },
+  {
+   "id": 24,
+   "name": "Contatore Energia",
+   "type": "sensor",
+   "room": "Garage",
+   "addonId": "provider-demo",
+   "stableId": "demo:024",
+   "caps": [
+    "power-meter"
+   ]
+  },
+  {
+   "id": 25,
+   "name": "Serratura Ingresso",
+   "type": "lock",
+   "room": "Salone",
+   "addonId": "provider-demo",
+   "stableId": "demo:025",
+   "caps": [
+    "lock-control"
+   ]
+  },
+  {
+   "id": 26,
+   "name": "Sirena Casa",
+   "type": "siren",
+   "room": "Salone",
+   "addonId": "provider-demo",
+   "stableId": "demo:026",
+   "caps": [
+    "switch"
+   ]
+  },
+  {
+   "id": 27,
+   "name": "Allarme Casa",
+   "type": "generic",
+   "room": "Salone",
+   "addonId": "provider-demo",
+   "stableId": "demo:027",
+   "caps": [
+    "alarm-panel"
+   ]
+  },
+  {
+   "id": 28,
+   "name": "TV Salone",
+   "type": "media-player",
+   "room": "Salone",
+   "addonId": "provider-demo",
+   "stableId": "demo:028",
+   "caps": [
+    "media-player"
+   ]
+  }
+ ],
+ "actions": [
+  {
+   "id": "internal:6f1c2a10-0000-4000-8000-000000000001",
+   "name": "Buonanotte"
+  },
+  {
+   "id": "internal:6f1c2a10-0000-4000-8000-000000000002",
+   "name": "Modalita cinema"
+  }
+ ]
+}

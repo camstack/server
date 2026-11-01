@@ -1,0 +1,643 @@
+[
+ {
+  "id": "comp-01",
+  "lang": "en",
+  "description": "Average temperature of the living room, veranda and bathroom sensors, as one sensor",
+  "entity": {
+   "target": {
+    "kind": "new",
+    "type": "sensor"
+   },
+   "features": [
+    {
+     "kind": "fields",
+     "cap": "temperature-sensor",
+     "fields": {
+      "temperature": {
+       "kind": "expression",
+       "expr": "round(avg(a, b, c), 1)",
+       "bindings": {
+        "a": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:006"
+         },
+         "cap": "temperature-sensor",
+         "fieldPath": "temperature"
+        },
+        "b": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:019"
+         },
+         "cap": "temperature-sensor",
+         "fieldPath": "temperature"
+        },
+        "c": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:015"
+         },
+         "cap": "temperature-sensor",
+         "fieldPath": "temperature"
+        }
+       }
+      },
+      "lastFetchedAt": {
+       "kind": "expression",
+       "expr": "max(a, b, c)",
+       "bindings": {
+        "a": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:006"
+         },
+         "cap": "temperature-sensor",
+         "fieldPath": "lastFetchedAt"
+        },
+        "b": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:019"
+         },
+         "cap": "temperature-sensor",
+         "fieldPath": "lastFetchedAt"
+        },
+        "c": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:015"
+         },
+         "cap": "temperature-sensor",
+         "fieldPath": "lastFetchedAt"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  "mustHave": [
+   "avg"
+  ]
+ },
+ {
+  "id": "comp-02",
+  "lang": "it",
+  "description": "Un sensore con la temperatura massima tra salone e veranda",
+  "entity": {
+   "target": {
+    "kind": "new",
+    "type": "sensor"
+   },
+   "features": [
+    {
+     "kind": "fields",
+     "cap": "temperature-sensor",
+     "fields": {
+      "temperature": {
+       "kind": "expression",
+       "expr": "max(a, b)",
+       "bindings": {
+        "a": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:006"
+         },
+         "cap": "temperature-sensor",
+         "fieldPath": "temperature"
+        },
+        "b": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:019"
+         },
+         "cap": "temperature-sensor",
+         "fieldPath": "temperature"
+        }
+       }
+      },
+      "lastFetchedAt": {
+       "kind": "expression",
+       "expr": "max(a, b)",
+       "bindings": {
+        "a": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:006"
+         },
+         "cap": "temperature-sensor",
+         "fieldPath": "lastFetchedAt"
+        },
+        "b": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:019"
+         },
+         "cap": "temperature-sensor",
+         "fieldPath": "lastFetchedAt"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  "mustHave": [
+   "max(a, b)"
+  ]
+ },
+ {
+  "id": "comp-03",
+  "lang": "en",
+  "description": "House humidity: the average of the living room and bathroom humidity",
+  "entity": {
+   "target": {
+    "kind": "new",
+    "type": "sensor"
+   },
+   "features": [
+    {
+     "kind": "fields",
+     "cap": "humidity-sensor",
+     "fields": {
+      "humidity": {
+       "kind": "expression",
+       "expr": "round(avg(a, b), 1)",
+       "bindings": {
+        "a": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:006"
+         },
+         "cap": "humidity-sensor",
+         "fieldPath": "humidity"
+        },
+        "b": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:015"
+         },
+         "cap": "humidity-sensor",
+         "fieldPath": "humidity"
+        }
+       }
+      },
+      "lastFetchedAt": {
+       "kind": "expression",
+       "expr": "max(a, b)",
+       "bindings": {
+        "a": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:006"
+         },
+         "cap": "humidity-sensor",
+         "fieldPath": "lastFetchedAt"
+        },
+        "b": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:015"
+         },
+         "cap": "humidity-sensor",
+         "fieldPath": "lastFetchedAt"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  "mustHave": [
+   "avg"
+  ]
+ },
+ {
+  "id": "comp-04",
+  "lang": "it",
+  "description": "Presenza salone: acceso quando c'è movimento nel salone",
+  "entity": {
+   "target": {
+    "kind": "new",
+    "type": "sensor"
+   },
+   "features": [
+    {
+     "kind": "fields",
+     "cap": "binary",
+     "fields": {
+      "on": {
+       "kind": "expression",
+       "expr": "any(a)",
+       "bindings": {
+        "a": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:005"
+         },
+         "cap": "motion",
+         "fieldPath": "detected"
+        }
+       }
+      },
+      "lastChangedAt": {
+       "kind": "expression",
+       "expr": "now",
+       "bindings": {}
+      }
+     }
+    }
+   ]
+  },
+  "mustHave": [
+   "any(a)"
+  ]
+ },
+ {
+  "id": "comp-05",
+  "lang": "en",
+  "description": "One sensor that is on when either the veranda or the garage camera sees motion",
+  "entity": {
+   "target": {
+    "kind": "new",
+    "type": "sensor"
+   },
+   "features": [
+    {
+     "kind": "fields",
+     "cap": "binary",
+     "fields": {
+      "on": {
+       "kind": "expression",
+       "expr": "any(a, b)",
+       "bindings": {
+        "a": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:020"
+         },
+         "cap": "motion",
+         "fieldPath": "detected"
+        },
+        "b": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:022"
+         },
+         "cap": "motion",
+         "fieldPath": "detected"
+        }
+       }
+      },
+      "lastChangedAt": {
+       "kind": "expression",
+       "expr": "now",
+       "bindings": {}
+      }
+     }
+    }
+   ]
+  },
+  "mustHave": [
+   "any(a, b)"
+  ]
+ },
+ {
+  "id": "comp-06",
+  "lang": "it",
+  "description": "Finestra camera aperta come sensore binario",
+  "entity": {
+   "target": {
+    "kind": "new",
+    "type": "sensor"
+   },
+   "features": [
+    {
+     "kind": "fields",
+     "cap": "binary",
+     "fields": {
+      "on": {
+       "kind": "expression",
+       "expr": "any(a)",
+       "bindings": {
+        "a": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:012"
+         },
+         "cap": "contact",
+         "fieldPath": "entryOpen"
+        }
+       }
+      },
+      "lastChangedAt": {
+       "kind": "expression",
+       "expr": "now",
+       "bindings": {}
+      }
+     }
+    }
+   ]
+  },
+  "mustHave": [
+   "entryOpen"
+  ]
+ },
+ {
+  "id": "comp-07",
+  "lang": "en",
+  "description": "Lowest temperature among the living room, bathroom and veranda sensors",
+  "entity": {
+   "target": {
+    "kind": "new",
+    "type": "sensor"
+   },
+   "features": [
+    {
+     "kind": "fields",
+     "cap": "temperature-sensor",
+     "fields": {
+      "temperature": {
+       "kind": "aggregate",
+       "reducer": "min",
+       "reads": [
+        {
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:006"
+         },
+         "cap": "temperature-sensor",
+         "fieldPath": "temperature"
+        },
+        {
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:015"
+         },
+         "cap": "temperature-sensor",
+         "fieldPath": "temperature"
+        },
+        {
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:019"
+         },
+         "cap": "temperature-sensor",
+         "fieldPath": "temperature"
+        }
+       ],
+       "publish": "value",
+       "empty": "null"
+      },
+      "lastFetchedAt": {
+       "kind": "expression",
+       "expr": "max(a, b, c)",
+       "bindings": {
+        "a": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:006"
+         },
+         "cap": "temperature-sensor",
+         "fieldPath": "lastFetchedAt"
+        },
+        "b": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:015"
+         },
+         "cap": "temperature-sensor",
+         "fieldPath": "lastFetchedAt"
+        },
+        "c": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:019"
+         },
+         "cap": "temperature-sensor",
+         "fieldPath": "lastFetchedAt"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  "mustHave": [
+   "\"min\""
+  ]
+ },
+ {
+  "id": "comp-08",
+  "lang": "it",
+  "description": "Temperatura media tra salone e bagno, arrotondata a un decimale",
+  "entity": {
+   "target": {
+    "kind": "new",
+    "type": "sensor"
+   },
+   "features": [
+    {
+     "kind": "fields",
+     "cap": "temperature-sensor",
+     "fields": {
+      "temperature": {
+       "kind": "expression",
+       "expr": "round(avg(a, b), 1)",
+       "bindings": {
+        "a": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:006"
+         },
+         "cap": "temperature-sensor",
+         "fieldPath": "temperature"
+        },
+        "b": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:015"
+         },
+         "cap": "temperature-sensor",
+         "fieldPath": "temperature"
+        }
+       }
+      },
+      "lastFetchedAt": {
+       "kind": "expression",
+       "expr": "max(a, b)",
+       "bindings": {
+        "a": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:006"
+         },
+         "cap": "temperature-sensor",
+         "fieldPath": "lastFetchedAt"
+        },
+        "b": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:015"
+         },
+         "cap": "temperature-sensor",
+         "fieldPath": "lastFetchedAt"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  "mustHave": [
+   "round"
+  ]
+ },
+ {
+  "id": "comp-09",
+  "lang": "en",
+  "description": "Alert sensor: on when the bathroom leak sensor or the kitchen smoke detector triggers",
+  "entity": {
+   "target": {
+    "kind": "new",
+    "type": "sensor"
+   },
+   "features": [
+    {
+     "kind": "fields",
+     "cap": "binary",
+     "fields": {
+      "on": {
+       "kind": "expression",
+       "expr": "any(a, b)",
+       "bindings": {
+        "a": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:016"
+         },
+         "cap": "flood",
+         "fieldPath": "flooded"
+        },
+        "b": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:008"
+         },
+         "cap": "smoke",
+         "fieldPath": "detected"
+        }
+       }
+      },
+      "lastChangedAt": {
+       "kind": "expression",
+       "expr": "now",
+       "bindings": {}
+      }
+     }
+    }
+   ]
+  },
+  "mustHave": [
+   "any(a, b)"
+  ]
+ },
+ {
+  "id": "comp-10",
+  "lang": "it",
+  "description": "Umidità massima della casa tra bagno e salone",
+  "entity": {
+   "target": {
+    "kind": "new",
+    "type": "sensor"
+   },
+   "features": [
+    {
+     "kind": "fields",
+     "cap": "humidity-sensor",
+     "fields": {
+      "humidity": {
+       "kind": "aggregate",
+       "reducer": "max",
+       "reads": [
+        {
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:015"
+         },
+         "cap": "humidity-sensor",
+         "fieldPath": "humidity"
+        },
+        {
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:006"
+         },
+         "cap": "humidity-sensor",
+         "fieldPath": "humidity"
+        }
+       ],
+       "publish": "value",
+       "empty": "null"
+      },
+      "lastFetchedAt": {
+       "kind": "expression",
+       "expr": "max(a, b)",
+       "bindings": {
+        "a": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:015"
+         },
+         "cap": "humidity-sensor",
+         "fieldPath": "lastFetchedAt"
+        },
+        "b": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:006"
+         },
+         "cap": "humidity-sensor",
+         "fieldPath": "lastFetchedAt"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  "mustHave": [
+   "\"max\""
+  ]
+ }
+]

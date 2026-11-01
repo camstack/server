@@ -1,0 +1,363 @@
+[
+ {
+  "id": "auto-01",
+  "lang": "it",
+  "description": "Quando suona il campanello accendi la luce della veranda",
+  "entity": {
+   "when": {
+    "kind": "device-event",
+    "category": "doorbell.onPressed",
+    "deviceId": 21
+   },
+   "actions": [
+    {
+     "kind": "cap",
+     "actionId": "switch.on",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       17
+      ]
+     }
+    }
+   ]
+  },
+  "mustHave": [
+   "\"doorbell.onPressed\"",
+   "switch.on"
+  ]
+ },
+ {
+  "id": "auto-02",
+  "lang": "en",
+  "description": "When the kitchen smoke detector detects smoke, sound the siren and turn on the living room light",
+  "entity": {
+   "when": {
+    "kind": "device-becomes",
+    "deviceId": 8,
+    "cap": "smoke",
+    "fieldPath": "detected",
+    "becomes": true
+   },
+   "actions": [
+    {
+     "kind": "cap",
+     "actionId": "switch.on",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       26
+      ]
+     }
+    },
+    {
+     "kind": "cap",
+     "actionId": "switch.on",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       1
+      ]
+     }
+    }
+   ]
+  },
+  "mustHave": [
+   "\"deviceId\":8",
+   "\"smoke\""
+  ]
+ },
+ {
+  "id": "auto-03",
+  "lang": "it",
+  "description": "Alle 22:30 chiudi tutte le tapparelle",
+  "entity": {
+   "when": {
+    "kind": "schedule",
+    "at": {
+     "kind": "clock",
+     "hh": 22,
+     "mm": 30
+    }
+   },
+   "actions": [
+    {
+     "kind": "cap",
+     "actionId": "cover.close",
+     "target": {
+      "kind": "domain",
+      "deviceType": "cover"
+     }
+    }
+   ]
+  },
+  "mustHave": [
+   "\"hh\":22",
+   "cover.close"
+  ]
+ },
+ {
+  "id": "auto-04",
+  "lang": "en",
+  "description": "If a person is detected in the garden zone of the veranda camera, turn on the veranda light",
+  "entity": {
+   "when": {
+    "kind": "detection",
+    "subjects": [
+     {
+      "macro": "person"
+     }
+    ],
+    "deviceIds": [
+     20
+    ],
+    "zones": [
+     "Giardino"
+    ]
+   },
+   "actions": [
+    {
+     "kind": "cap",
+     "actionId": "switch.on",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       17
+      ]
+     }
+    }
+   ]
+  },
+  "mustHave": [
+   "\"person\"",
+   "Giardino"
+  ]
+ },
+ {
+  "id": "auto-05",
+  "lang": "it",
+  "description": "Quando la finestra della camera da letto si apre e il termostato è in riscaldamento, spegni il termostato",
+  "entity": {
+   "when": {
+    "kind": "all",
+    "children": [
+     {
+      "kind": "device-becomes",
+      "deviceId": 12,
+      "cap": "contact",
+      "fieldPath": "entryOpen",
+      "becomes": true
+     },
+     {
+      "kind": "device-is",
+      "deviceId": 4,
+      "cap": "climate-control",
+      "fieldPath": "mode",
+      "operator": "eq",
+      "value": "heat"
+     }
+    ]
+   },
+   "actions": [
+    {
+     "kind": "cap",
+     "actionId": "climate.off",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       4
+      ]
+     }
+    }
+   ]
+  },
+  "mustHave": [
+   "climate.off",
+   "\"heat\""
+  ]
+ },
+ {
+  "id": "auto-06",
+  "lang": "en",
+  "description": "At sunset turn on the veranda light at 40% brightness",
+  "entity": {
+   "when": {
+    "kind": "schedule",
+    "at": {
+     "kind": "sun",
+     "event": "sunset",
+     "offsetMin": 0
+    }
+   },
+   "actions": [
+    {
+     "kind": "cap",
+     "actionId": "brightness.set",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       17
+      ]
+     },
+     "args": {
+      "level": 40
+     }
+    }
+   ]
+  },
+  "mustHave": [
+   "\"sunset\"",
+   "\"level\":40"
+  ]
+ },
+ {
+  "id": "auto-07",
+  "lang": "it",
+  "description": "Quando l'umidità del bagno supera il 70% accendi la ventola",
+  "entity": {
+   "when": {
+    "kind": "device-is",
+    "deviceId": 15,
+    "cap": "humidity-sensor",
+    "fieldPath": "humidity",
+    "operator": "gt",
+    "value": 70
+   },
+   "actions": [
+    {
+     "kind": "cap",
+     "actionId": "switch.on",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       14
+      ]
+     }
+    }
+   ]
+  },
+  "mustHave": [
+   "\"humidity\"",
+   "\"gt\""
+  ]
+ },
+ {
+  "id": "auto-08",
+  "lang": "en",
+  "description": "When the garage camera sees a vehicle, open the garage door, wait 60 seconds, then close it",
+  "entity": {
+   "when": {
+    "kind": "detection",
+    "subjects": [
+     {
+      "macro": "vehicle"
+     }
+    ],
+    "deviceIds": [
+     22
+    ]
+   },
+   "actions": [
+    {
+     "kind": "cap",
+     "actionId": "cover.open",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       23
+      ]
+     }
+    },
+    {
+     "kind": "wait",
+     "seconds": 60
+    },
+    {
+     "kind": "cap",
+     "actionId": "cover.close",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       23
+      ]
+     }
+    }
+   ]
+  },
+  "mustHave": [
+   "\"vehicle\"",
+   "\"seconds\":60"
+  ]
+ },
+ {
+  "id": "auto-09",
+  "lang": "it",
+  "description": "Ogni 15 minuti, se in salone non c'è movimento, spegni la lampada del divano",
+  "entity": {
+   "when": {
+    "kind": "all",
+    "children": [
+     {
+      "kind": "interval",
+      "minutes": 15
+     },
+     {
+      "kind": "not",
+      "child": {
+       "kind": "device-is",
+       "deviceId": 5,
+       "cap": "motion",
+       "fieldPath": "detected",
+       "operator": "eq",
+       "value": true
+      }
+     }
+    ]
+   },
+   "actions": [
+    {
+     "kind": "cap",
+     "actionId": "switch.off",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       2
+      ]
+     }
+    }
+   ]
+  },
+  "mustHave": [
+   "\"minutes\":15",
+   "\"not\""
+  ]
+ },
+ {
+  "id": "auto-10",
+  "lang": "en",
+  "description": "When the alarm panel is triggered, turn on every light",
+  "entity": {
+   "when": {
+    "kind": "device-becomes",
+    "deviceId": 27,
+    "cap": "alarm-panel",
+    "fieldPath": "state",
+    "becomes": "triggered"
+   },
+   "actions": [
+    {
+     "kind": "cap",
+     "actionId": "switch.on",
+     "target": {
+      "kind": "domain",
+      "deviceType": "light"
+     }
+    }
+   ]
+  },
+  "mustHave": [
+   "\"triggered\"",
+   "\"domain\""
+  ]
+ }
+]

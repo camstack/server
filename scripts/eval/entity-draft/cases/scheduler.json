@@ -1,0 +1,711 @@
+[
+ {
+  "id": "sch-01",
+  "lang": "it",
+  "description": "Luce del salone accesa dal tramonto fino alle 23:00 ogni giorno, poi spenta",
+  "entity": {
+   "name": "Luce salone",
+   "priority": 0,
+   "profiles": [
+    {
+     "id": "p1",
+     "name": "Ogni giorno",
+     "days": [
+      "mon",
+      "tue",
+      "wed",
+      "thu",
+      "fri",
+      "sat",
+      "sun"
+     ],
+     "points": [
+      {
+       "id": "a",
+       "at": {
+        "kind": "sun",
+        "event": "sunset",
+        "offsetMin": 0
+       },
+       "mode": "hold",
+       "steps": [
+        {
+         "kind": "cap",
+         "actionId": "switch.on",
+         "target": {
+          "kind": "devices",
+          "ids": [
+           1
+          ]
+         }
+        }
+       ]
+      },
+      {
+       "id": "b",
+       "at": {
+        "kind": "clock",
+        "hh": 23,
+        "mm": 0
+       },
+       "mode": "edge",
+       "steps": [
+        {
+         "kind": "cap",
+         "actionId": "switch.off",
+         "target": {
+          "kind": "devices",
+          "ids": [
+           1
+          ]
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  "mustHave": [
+   "\"hold\"",
+   "\"sunset\""
+  ]
+ },
+ {
+  "id": "sch-02",
+  "lang": "en",
+  "description": "Weekdays at 6:45 open the bedroom blind; weekends at 9:00",
+  "entity": {
+   "name": "Bedroom blind",
+   "priority": 0,
+   "profiles": [
+    {
+     "id": "wd",
+     "name": "Weekdays",
+     "days": [
+      "mon",
+      "tue",
+      "wed",
+      "thu",
+      "fri"
+     ],
+     "points": [
+      {
+       "id": "a",
+       "at": {
+        "kind": "clock",
+        "hh": 6,
+        "mm": 45
+       },
+       "mode": "edge",
+       "steps": [
+        {
+         "kind": "cap",
+         "actionId": "cover.open",
+         "target": {
+          "kind": "devices",
+          "ids": [
+           11
+          ]
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "we",
+     "name": "Weekend",
+     "days": [
+      "sat",
+      "sun"
+     ],
+     "points": [
+      {
+       "id": "a",
+       "at": {
+        "kind": "clock",
+        "hh": 9,
+        "mm": 0
+       },
+       "mode": "edge",
+       "steps": [
+        {
+         "kind": "cap",
+         "actionId": "cover.open",
+         "target": {
+          "kind": "devices",
+          "ids": [
+           11
+          ]
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  "mustHave": [
+   "\"hh\":6",
+   "\"hh\":9"
+  ]
+ },
+ {
+  "id": "sch-03",
+  "lang": "it",
+  "description": "Termostato salone: dalle 6:30 a 21 gradi, alle 22:00 spento",
+  "entity": {
+   "name": "Termostato",
+   "priority": 0,
+   "profiles": [
+    {
+     "id": "p1",
+     "name": "Ogni giorno",
+     "days": [
+      "mon",
+      "tue",
+      "wed",
+      "thu",
+      "fri",
+      "sat",
+      "sun"
+     ],
+     "points": [
+      {
+       "id": "a",
+       "at": {
+        "kind": "clock",
+        "hh": 6,
+        "mm": 30
+       },
+       "mode": "hold",
+       "steps": [
+        {
+         "kind": "cap",
+         "actionId": "climate.target",
+         "target": {
+          "kind": "devices",
+          "ids": [
+           4
+          ]
+         },
+         "args": {
+          "target": 21
+         }
+        }
+       ]
+      },
+      {
+       "id": "b",
+       "at": {
+        "kind": "clock",
+        "hh": 22,
+        "mm": 0
+       },
+       "mode": "edge",
+       "steps": [
+        {
+         "kind": "cap",
+         "actionId": "climate.off",
+         "target": {
+          "kind": "devices",
+          "ids": [
+           4
+          ]
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  "mustHave": [
+   "\"target\":21",
+   "climate.off"
+  ]
+ },
+ {
+  "id": "sch-04",
+  "lang": "en",
+  "description": "Every day at 23:30 close all covers and turn off all lights",
+  "entity": {
+   "name": "Night routine",
+   "priority": 0,
+   "profiles": [
+    {
+     "id": "p1",
+     "name": "Daily",
+     "days": [
+      "mon",
+      "tue",
+      "wed",
+      "thu",
+      "fri",
+      "sat",
+      "sun"
+     ],
+     "points": [
+      {
+       "id": "a",
+       "at": {
+        "kind": "clock",
+        "hh": 23,
+        "mm": 30
+       },
+       "mode": "edge",
+       "steps": [
+        {
+         "kind": "cap",
+         "actionId": "cover.close",
+         "target": {
+          "kind": "domain",
+          "deviceType": "cover"
+         }
+        },
+        {
+         "kind": "cap",
+         "actionId": "switch.off",
+         "target": {
+          "kind": "domain",
+          "deviceType": "light"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  "mustHave": [
+   "\"hh\":23",
+   "\"mm\":30"
+  ]
+ },
+ {
+  "id": "sch-05",
+  "lang": "it",
+  "description": "Lunedì, mercoledì e venerdì alle 18:00 accendi la lampada del divano al 50%",
+  "entity": {
+   "name": "Lampada divano",
+   "priority": 0,
+   "profiles": [
+    {
+     "id": "p1",
+     "name": "Lun Mer Ven",
+     "days": [
+      "mon",
+      "wed",
+      "fri"
+     ],
+     "points": [
+      {
+       "id": "a",
+       "at": {
+        "kind": "clock",
+        "hh": 18,
+        "mm": 0
+       },
+       "mode": "edge",
+       "steps": [
+        {
+         "kind": "cap",
+         "actionId": "brightness.set",
+         "target": {
+          "kind": "devices",
+          "ids": [
+           2
+          ]
+         },
+         "args": {
+          "level": 50
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  "mustHave": [
+   "\"wed\"",
+   "\"level\":50"
+  ]
+ },
+ {
+  "id": "sch-06",
+  "lang": "en",
+  "description": "Keep the garage door closed from 22:00 until 6:00",
+  "entity": {
+   "name": "Garage closed",
+   "priority": 0,
+   "profiles": [
+    {
+     "id": "p1",
+     "name": "Daily",
+     "days": [
+      "mon",
+      "tue",
+      "wed",
+      "thu",
+      "fri",
+      "sat",
+      "sun"
+     ],
+     "points": [
+      {
+       "id": "a",
+       "at": {
+        "kind": "clock",
+        "hh": 22,
+        "mm": 0
+       },
+       "mode": "hold",
+       "steps": [
+        {
+         "kind": "cap",
+         "actionId": "cover.close",
+         "target": {
+          "kind": "devices",
+          "ids": [
+           23
+          ]
+         }
+        }
+       ]
+      },
+      {
+       "id": "b",
+       "at": {
+        "kind": "clock",
+        "hh": 6,
+        "mm": 0
+       },
+       "mode": "release",
+       "steps": []
+      }
+     ]
+    }
+   ]
+  },
+  "mustHave": [
+   "\"hold\"",
+   "\"release\""
+  ]
+ },
+ {
+  "id": "sch-07",
+  "lang": "it",
+  "description": "Luce veranda accesa da 30 minuti dopo il tramonto a 30 minuti prima dell'alba",
+  "entity": {
+   "name": "Luce veranda",
+   "priority": 0,
+   "profiles": [
+    {
+     "id": "p1",
+     "name": "Ogni giorno",
+     "days": [
+      "mon",
+      "tue",
+      "wed",
+      "thu",
+      "fri",
+      "sat",
+      "sun"
+     ],
+     "points": [
+      {
+       "id": "a",
+       "at": {
+        "kind": "sun",
+        "event": "sunset",
+        "offsetMin": 30
+       },
+       "mode": "hold",
+       "steps": [
+        {
+         "kind": "cap",
+         "actionId": "switch.on",
+         "target": {
+          "kind": "devices",
+          "ids": [
+           17
+          ]
+         }
+        }
+       ]
+      },
+      {
+       "id": "b",
+       "at": {
+        "kind": "sun",
+        "event": "sunrise",
+        "offsetMin": -30
+       },
+       "mode": "release",
+       "steps": []
+      }
+     ]
+    }
+   ]
+  },
+  "mustHave": [
+   "\"offsetMin\":30",
+   "\"offsetMin\":-30"
+  ]
+ },
+ {
+  "id": "sch-08",
+  "lang": "en",
+  "description": "On weekdays turn the bathroom fan on at 7:00 and off at 7:30",
+  "entity": {
+   "name": "Bathroom fan",
+   "priority": 0,
+   "profiles": [
+    {
+     "id": "p1",
+     "name": "Weekdays",
+     "days": [
+      "mon",
+      "tue",
+      "wed",
+      "thu",
+      "fri"
+     ],
+     "points": [
+      {
+       "id": "a",
+       "at": {
+        "kind": "clock",
+        "hh": 7,
+        "mm": 0
+       },
+       "mode": "edge",
+       "steps": [
+        {
+         "kind": "cap",
+         "actionId": "switch.on",
+         "target": {
+          "kind": "devices",
+          "ids": [
+           14
+          ]
+         }
+        }
+       ]
+      },
+      {
+       "id": "b",
+       "at": {
+        "kind": "clock",
+        "hh": 7,
+        "mm": 30
+       },
+       "mode": "edge",
+       "steps": [
+        {
+         "kind": "cap",
+         "actionId": "switch.off",
+         "target": {
+          "kind": "devices",
+          "ids": [
+           14
+          ]
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  "mustHave": [
+   "\"mm\":30"
+  ]
+ },
+ {
+  "id": "sch-09",
+  "lang": "it",
+  "description": "Ogni giorno alle 14:00 chiudi la tapparella del salone, ma solo se in salone non c'è movimento",
+  "entity": {
+   "name": "Tapparella salone",
+   "priority": 0,
+   "profiles": [
+    {
+     "id": "p1",
+     "name": "Ogni giorno",
+     "days": [
+      "mon",
+      "tue",
+      "wed",
+      "thu",
+      "fri",
+      "sat",
+      "sun"
+     ],
+     "points": [
+      {
+       "id": "a",
+       "at": {
+        "kind": "clock",
+        "hh": 14,
+        "mm": 0
+       },
+       "mode": "edge",
+       "steps": [
+        {
+         "kind": "cap",
+         "actionId": "cover.close",
+         "target": {
+          "kind": "devices",
+          "ids": [
+           3
+          ]
+         }
+        }
+       ],
+       "conditions": {
+        "kind": "not",
+        "child": {
+         "kind": "device-is",
+         "deviceId": 5,
+         "cap": "motion",
+         "fieldPath": "detected",
+         "operator": "eq",
+         "value": true
+        }
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "mustHave": [
+   "\"not\"",
+   "\"hh\":14"
+  ]
+ },
+ {
+  "id": "sch-10",
+  "lang": "en",
+  "description": "Weekends: living room light on at 8:00 and off at 23:00. Weekdays: on at 18:00 and off at 23:00",
+  "entity": {
+   "name": "Living room light",
+   "priority": 0,
+   "profiles": [
+    {
+     "id": "we",
+     "name": "Weekend",
+     "days": [
+      "sat",
+      "sun"
+     ],
+     "points": [
+      {
+       "id": "a",
+       "at": {
+        "kind": "clock",
+        "hh": 8,
+        "mm": 0
+       },
+       "mode": "edge",
+       "steps": [
+        {
+         "kind": "cap",
+         "actionId": "switch.on",
+         "target": {
+          "kind": "devices",
+          "ids": [
+           1
+          ]
+         }
+        }
+       ]
+      },
+      {
+       "id": "b",
+       "at": {
+        "kind": "clock",
+        "hh": 23,
+        "mm": 0
+       },
+       "mode": "edge",
+       "steps": [
+        {
+         "kind": "cap",
+         "actionId": "switch.off",
+         "target": {
+          "kind": "devices",
+          "ids": [
+           1
+          ]
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "wd",
+     "name": "Weekdays",
+     "days": [
+      "mon",
+      "tue",
+      "wed",
+      "thu",
+      "fri"
+     ],
+     "points": [
+      {
+       "id": "a",
+       "at": {
+        "kind": "clock",
+        "hh": 18,
+        "mm": 0
+       },
+       "mode": "edge",
+       "steps": [
+        {
+         "kind": "cap",
+         "actionId": "switch.on",
+         "target": {
+          "kind": "devices",
+          "ids": [
+           1
+          ]
+         }
+        }
+       ]
+      },
+      {
+       "id": "b",
+       "at": {
+        "kind": "clock",
+        "hh": 23,
+        "mm": 0
+       },
+       "mode": "edge",
+       "steps": [
+        {
+         "kind": "cap",
+         "actionId": "switch.off",
+         "target": {
+          "kind": "devices",
+          "ids": [
+           1
+          ]
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  "mustHave": [
+   "\"hh\":8",
+   "\"hh\":18"
+  ]
+ }
+]

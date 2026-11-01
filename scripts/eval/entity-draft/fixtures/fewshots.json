@@ -1,0 +1,553 @@
+[
+ {
+  "kind": "automation",
+  "description": "Quando il sensore di movimento in salone rileva movimento, accendi la lampada del divano",
+  "entity": {
+   "when": {
+    "kind": "device-becomes",
+    "deviceId": 5,
+    "cap": "motion",
+    "fieldPath": "detected",
+    "becomes": true
+   },
+   "actions": [
+    {
+     "kind": "cap",
+     "actionId": "switch.on",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       2
+      ]
+     }
+    }
+   ]
+  }
+ },
+ {
+  "kind": "automation",
+  "description": "At 7:00 on weekdays open the bedroom blind",
+  "entity": {
+   "when": {
+    "kind": "schedule",
+    "at": {
+     "kind": "clock",
+     "hh": 7,
+     "mm": 0
+    },
+    "days": [
+     "mon",
+     "tue",
+     "wed",
+     "thu",
+     "fri"
+    ]
+   },
+   "actions": [
+    {
+     "kind": "cap",
+     "actionId": "cover.open",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       11
+      ]
+     }
+    }
+   ]
+  }
+ },
+ {
+  "kind": "automation",
+  "description": "When a person is seen by the garage camera in the Vialetto zone, turn on the veranda light",
+  "entity": {
+   "when": {
+    "kind": "detection",
+    "subjects": [
+     {
+      "macro": "person"
+     }
+    ],
+    "deviceIds": [
+     22
+    ],
+    "zones": [
+     "Vialetto"
+    ]
+   },
+   "actions": [
+    {
+     "kind": "cap",
+     "actionId": "switch.on",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       17
+      ]
+     }
+    },
+    {
+     "kind": "wait",
+     "seconds": 120
+    },
+    {
+     "kind": "cap",
+     "actionId": "switch.off",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       17
+      ]
+     }
+    }
+   ]
+  }
+ },
+ {
+  "kind": "action",
+  "description": "Leggere: luce del salone al 70% e tapparella del salone chiusa",
+  "entity": {
+   "name": "Leggere",
+   "steps": [
+    {
+     "kind": "cap",
+     "actionId": "brightness.set",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       1
+      ]
+     },
+     "args": {
+      "level": 70
+     }
+    },
+    {
+     "kind": "cap",
+     "actionId": "cover.close",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       3
+      ]
+     }
+    }
+   ]
+  }
+ },
+ {
+  "kind": "action",
+  "description": "Turn off the kitchen light, wait 10 seconds, turn off the dishwasher plug",
+  "entity": {
+   "name": "Kitchen off",
+   "steps": [
+    {
+     "kind": "cap",
+     "actionId": "switch.off",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       7
+      ]
+     }
+    },
+    {
+     "kind": "wait",
+     "seconds": 10
+    },
+    {
+     "kind": "cap",
+     "actionId": "switch.off",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       9
+      ]
+     }
+    }
+   ]
+  }
+ },
+ {
+  "kind": "action",
+  "description": "Apri tutte le tapparelle della veranda e della camera",
+  "entity": {
+   "name": "Apri tapparelle",
+   "steps": [
+    {
+     "kind": "cap",
+     "actionId": "cover.open",
+     "target": {
+      "kind": "devices",
+      "ids": [
+       18,
+       11
+      ]
+     }
+    }
+   ]
+  }
+ },
+ {
+  "kind": "scheduler",
+  "description": "Ogni giorno alle 8:00 apri la tapparella del salone",
+  "entity": {
+   "name": "Tapparella mattina",
+   "priority": 0,
+   "profiles": [
+    {
+     "id": "p1",
+     "name": "Ogni giorno",
+     "days": [
+      "mon",
+      "tue",
+      "wed",
+      "thu",
+      "fri",
+      "sat",
+      "sun"
+     ],
+     "points": [
+      {
+       "id": "a",
+       "at": {
+        "kind": "clock",
+        "hh": 8,
+        "mm": 0
+       },
+       "mode": "edge",
+       "steps": [
+        {
+         "kind": "cap",
+         "actionId": "cover.open",
+         "target": {
+          "kind": "devices",
+          "ids": [
+           3
+          ]
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "kind": "scheduler",
+  "description": "Keep the bedroom light on from 21:00 and off at 22:30 on weekdays",
+  "entity": {
+   "name": "Bedroom evening",
+   "priority": 0,
+   "profiles": [
+    {
+     "id": "p1",
+     "name": "Weekdays",
+     "days": [
+      "mon",
+      "tue",
+      "wed",
+      "thu",
+      "fri"
+     ],
+     "points": [
+      {
+       "id": "a",
+       "at": {
+        "kind": "clock",
+        "hh": 21,
+        "mm": 0
+       },
+       "mode": "hold",
+       "steps": [
+        {
+         "kind": "cap",
+         "actionId": "switch.on",
+         "target": {
+          "kind": "devices",
+          "ids": [
+           10
+          ]
+         }
+        }
+       ]
+      },
+      {
+       "id": "b",
+       "at": {
+        "kind": "clock",
+        "hh": 22,
+        "mm": 30
+       },
+       "mode": "release",
+       "steps": []
+      },
+      {
+       "id": "c",
+       "at": {
+        "kind": "clock",
+        "hh": 22,
+        "mm": 30
+       },
+       "mode": "edge",
+       "steps": [
+        {
+         "kind": "cap",
+         "actionId": "switch.off",
+         "target": {
+          "kind": "devices",
+          "ids": [
+           10
+          ]
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "kind": "scheduler",
+  "description": "Sabato e domenica alle 10:00 e alle 20:00 il termostato in riscaldamento",
+  "entity": {
+   "name": "Weekend heating",
+   "priority": 0,
+   "profiles": [
+    {
+     "id": "p1",
+     "name": "Weekend",
+     "days": [
+      "sat",
+      "sun"
+     ],
+     "points": [
+      {
+       "id": "a",
+       "at": {
+        "kind": "clock",
+        "hh": 10,
+        "mm": 0
+       },
+       "mode": "edge",
+       "steps": [
+        {
+         "kind": "cap",
+         "actionId": "climate.heat",
+         "target": {
+          "kind": "devices",
+          "ids": [
+           4
+          ]
+         }
+        }
+       ]
+      },
+      {
+       "id": "b",
+       "at": {
+        "kind": "clock",
+        "hh": 20,
+        "mm": 0
+       },
+       "mode": "edge",
+       "steps": [
+        {
+         "kind": "cap",
+         "actionId": "climate.heat",
+         "target": {
+          "kind": "devices",
+          "ids": [
+           4
+          ]
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "kind": "composition",
+  "description": "Temperatura media della camera da letto e del bagno",
+  "entity": {
+   "target": {
+    "kind": "new",
+    "type": "sensor"
+   },
+   "features": [
+    {
+     "kind": "fields",
+     "cap": "temperature-sensor",
+     "fields": {
+      "temperature": {
+       "kind": "expression",
+       "expr": "avg(a, b)",
+       "bindings": {
+        "a": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:015"
+         },
+         "cap": "temperature-sensor",
+         "fieldPath": "temperature"
+        },
+        "b": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:019"
+         },
+         "cap": "temperature-sensor",
+         "fieldPath": "temperature"
+        }
+       }
+      },
+      "lastFetchedAt": {
+       "kind": "expression",
+       "expr": "max(a, b)",
+       "bindings": {
+        "a": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:015"
+         },
+         "cap": "temperature-sensor",
+         "fieldPath": "lastFetchedAt"
+        },
+        "b": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:019"
+         },
+         "cap": "temperature-sensor",
+         "fieldPath": "lastFetchedAt"
+        }
+       }
+      }
+     }
+    }
+   ]
+  }
+ },
+ {
+  "kind": "composition",
+  "description": "A sensor that is on when the living room or the kitchen has motion or smoke",
+  "entity": {
+   "target": {
+    "kind": "new",
+    "type": "sensor"
+   },
+   "features": [
+    {
+     "kind": "fields",
+     "cap": "binary",
+     "fields": {
+      "on": {
+       "kind": "expression",
+       "expr": "any(a, b)",
+       "bindings": {
+        "a": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:005"
+         },
+         "cap": "motion",
+         "fieldPath": "detected"
+        },
+        "b": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:008"
+         },
+         "cap": "smoke",
+         "fieldPath": "detected"
+        }
+       }
+      },
+      "lastChangedAt": {
+       "kind": "expression",
+       "expr": "now",
+       "bindings": {}
+      }
+     }
+    }
+   ]
+  }
+ },
+ {
+  "kind": "composition",
+  "description": "Massima umidità tra salone e bagno",
+  "entity": {
+   "target": {
+    "kind": "new",
+    "type": "sensor"
+   },
+   "features": [
+    {
+     "kind": "fields",
+     "cap": "humidity-sensor",
+     "fields": {
+      "humidity": {
+       "kind": "expression",
+       "expr": "max(a, b)",
+       "bindings": {
+        "a": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:006"
+         },
+         "cap": "humidity-sensor",
+         "fieldPath": "humidity"
+        },
+        "b": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:015"
+         },
+         "cap": "humidity-sensor",
+         "fieldPath": "humidity"
+        }
+       }
+      },
+      "lastFetchedAt": {
+       "kind": "expression",
+       "expr": "max(a, b)",
+       "bindings": {
+        "a": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:006"
+         },
+         "cap": "humidity-sensor",
+         "fieldPath": "lastFetchedAt"
+        },
+        "b": {
+         "kind": "from",
+         "source": {
+          "addonId": "provider-demo",
+          "stableId": "demo:015"
+         },
+         "cap": "humidity-sensor",
+         "fieldPath": "lastFetchedAt"
+        }
+       }
+      }
+     }
+    }
+   ]
+  }
+ }
+]
