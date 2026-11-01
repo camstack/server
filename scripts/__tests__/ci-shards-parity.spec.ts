@@ -24,8 +24,8 @@ function scriptShards(): string[] {
 }
 
 describe('CI test shards', () => {
-  it('ci.yml runs exactly the shards test-affected.sh knows (plus static)', () => {
-    expect([...scriptShards(), 'static'].sort()).toEqual(matrixShards().sort())
+  it('ci.yml runs exactly the shards test-affected.sh knows (plus typecheck and guards)', () => {
+    expect([...scriptShards(), 'typecheck', 'guards'].sort()).toEqual(matrixShards().sort())
   })
 
   it('the light lane is spread over three shards, so no one job carries the slow addons', () => {

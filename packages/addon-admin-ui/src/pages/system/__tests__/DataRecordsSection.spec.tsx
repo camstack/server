@@ -72,7 +72,7 @@ describe('DataPage Secrets tab', () => {
     )
     expect(screen.getByText('secrets-content')).toBeTruthy()
     const names = screen.getAllByRole('tab').map((n) => n.textContent)
-    expect(names).toEqual(['Storage', 'Records', 'Backup', 'Secrets'])
+    expect(names).toEqual(['Storage', 'Records', 'Backup', 'Secrets', 'Migrations'])
   })
 
   it("switching away clears secretsView but leaves Records' own view alone", () => {
