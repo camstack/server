@@ -164,7 +164,14 @@ export async function runAddonMigrations(
     log.error('the migration engine refused or could not take this addon catalogue — none ran', {
       meta: { error: errMsg(err) },
     })
-    return NOT_RUN
+    // Not evaluated is not applied: a catalogue the engine never judged blocks its owner
+    // exactly as a failed migration does.
+    return {
+      ...NOT_RUN,
+      blockOwner: migrations
+        .filter((m) => m.meta.onFailure === 'block-owner')
+        .map((m) => m.meta.id),
+    }
   }
   const applied: string[] = []
   const failed: string[] = []

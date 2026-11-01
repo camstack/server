@@ -21,7 +21,10 @@
  * An edit with a `precondition` carries `preconditionOf(<what the plan read>)`. The
  * apply step reads the same thing again inside the transaction and refuses a
  * mismatch, so a plan computed from a value that changed since is never applied on top
- * of it. A table or column that does not exist is an error, never created.
+ * of it. An edit of a row or key that EXISTS at apply time must carry one (an insert
+ * of a new key or row need not): a plan that rewrites a value it never read is the
+ * blind write the precondition exists to refuse. A table or column that does not exist
+ * is an error, never created.
  */
 import type Database from 'better-sqlite3'
 import { type MigrationEdit, type MigrationPlan, preconditionOf } from '@camstack/types'
@@ -80,6 +83,11 @@ function readKeys(
   return out
 }
 
+function keysExist(db: Database.Database, scope: string, keys: readonly string[]): boolean {
+  const select = db.prepare<[string], { id: string }>(`SELECT id FROM ${table(scope)} WHERE id = ?`)
+  return keys.some((key) => select.get(key) !== undefined)
+}
+
 function whereOf(key: Readonly<Record<string, unknown>>): {
   readonly clause: string
   readonly params: SqlValue[]
@@ -106,8 +114,15 @@ function readRow(
   return row ?? null
 }
 
-function checkPrecondition(edit: MigrationEdit, read: unknown): void {
-  if (edit.precondition === undefined) return
+function checkPrecondition(edit: MigrationEdit, read: unknown, existed: boolean): void {
+  if (edit.precondition === undefined) {
+    if (existed) {
+      throw new MigrationEditError(
+        `${edit.op} edits a value that already exists without a precondition: carry preconditionOf(<what the plan read>)`,
+      )
+    }
+    return
+  }
   if (preconditionOf(read) !== edit.precondition) {
     throw new MigrationEditError(
       `precondition failed for ${edit.op}: the value changed since the plan read it`,
@@ -119,7 +134,7 @@ function applyOne(db: Database.Database, edit: MigrationEdit): void {
   switch (edit.op) {
     case 'setKeys': {
       const keys = Object.keys(edit.values)
-      checkPrecondition(edit, readKeys(db, edit.scope, keys))
+      checkPrecondition(edit, readKeys(db, edit.scope, keys), keysExist(db, edit.scope, keys))
       const upsert = db.prepare(
         `INSERT INTO ${table(edit.scope)} (id, data) VALUES (?, ?) ` +
           'ON CONFLICT(id) DO UPDATE SET data = excluded.data',
@@ -128,14 +143,18 @@ function applyOne(db: Database.Database, edit: MigrationEdit): void {
       return
     }
     case 'deleteKeys': {
-      checkPrecondition(edit, readKeys(db, edit.scope, edit.keys))
+      checkPrecondition(
+        edit,
+        readKeys(db, edit.scope, edit.keys),
+        keysExist(db, edit.scope, edit.keys),
+      )
       const remove = db.prepare(`DELETE FROM ${table(edit.scope)} WHERE id = ?`)
       for (const key of edit.keys) remove.run(key)
       return
     }
     case 'putRow': {
       const existing = readRow(db, edit.table, edit.key)
-      checkPrecondition(edit, existing)
+      checkPrecondition(edit, existing, existing !== null)
       const { clause, params } = whereOf(edit.key)
       if (existing !== null) {
         const names = Object.keys(edit.row)
@@ -153,7 +172,8 @@ function applyOne(db: Database.Database, edit: MigrationEdit): void {
       return
     }
     case 'deleteRow': {
-      checkPrecondition(edit, readRow(db, edit.table, edit.key))
+      const existing = readRow(db, edit.table, edit.key)
+      checkPrecondition(edit, existing, existing !== null)
       const { clause, params } = whereOf(edit.key)
       db.prepare(`DELETE FROM ${table(edit.table)} WHERE ${clause}`).run(...params)
       return

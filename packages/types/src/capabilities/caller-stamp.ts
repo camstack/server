@@ -21,6 +21,9 @@ export const CALLER_STAMPED_CAPABILITIES: readonly string[] = [
   // `reportAutomationRun` / `getAutomationRunState` are refused unless the stamp is
   // `core-block-<blockId>`: a block writes only its own row of the `runs` ledger.
   'core-blocks',
+  // `declareOwner` / `startMigration` / `finishMigration` are refused unless the stamp IS the
+  // migration's owner: an addon drives only its own catalogue.
+  'migrations',
 ]
 
 /** A copy of `input` without the caller stamp. Anything that is not a plain object passes through. */

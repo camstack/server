@@ -51,6 +51,9 @@ function meta(
   }
 }
 
+const SENSOR_7 = { id: 7, name: 'garden', integration_id: null, mark: 'keep-me' }
+const SENSOR_8 = { id: 8, name: 'roof', integration_id: null, mark: 'keep-me-too' }
+
 let h: Harness
 beforeEach(() => {
   h = makeHarness()
@@ -140,7 +143,22 @@ const sensorMarks = (): Record<number, string> =>
     query<{ id: number; mark: string }>('SELECT id, mark FROM sensors').map((r) => [r.id, r.mark]),
   )
 
-const hostOf = (provider: MigrationsProvider): AddonMigrationHost => provider
+/**
+ * The host as the transport presents an addon to the provider: the caller's addon id is
+ * stamped into the input (`callerAddonId`), never supplied by the caller.
+ */
+function hostOf(
+  provider: MigrationsProvider,
+  caller: string | null = 'ecowitt',
+): AddonMigrationHost {
+  const stamp = <T extends object>(input: T): T =>
+    caller === null ? input : Object.assign({}, input, { callerAddonId: caller })
+  return {
+    declareOwner: (input) => provider.declareOwner(stamp(input)),
+    startMigration: (input) => provider.startMigration(stamp(input)),
+    finishMigration: (input) => provider.finishMigration(stamp(input)),
+  }
+}
 
 /** A hub plan migration: reads the host, returns edits. */
 function hubPlan(
@@ -177,8 +195,19 @@ describe('plan body (hub-owned)', () => {
       hubPlan('rename-host', 1, (read) => ({
         edits: [
           { op: 'setKeys', scope: SETTINGS, values: { address: JSON.parse(read.host ?? 'null') } },
-          { op: 'deleteKeys', scope: SETTINGS, keys: ['host'] },
-          { op: 'putRow', table: 'sensors', key: { id: 7 }, row: { integration_id: 'int-1' } },
+          {
+            op: 'deleteKeys',
+            scope: SETTINGS,
+            keys: ['host'],
+            precondition: preconditionOf({ host: '10.0.0.2' }),
+          },
+          {
+            op: 'putRow',
+            table: 'sensors',
+            key: { id: 7 },
+            row: { integration_id: 'int-1' },
+            precondition: preconditionOf(SENSOR_7),
+          },
         ],
       })),
     ])
@@ -287,8 +316,20 @@ describe('addon-owned catalogue', () => {
     const report = await run(provider, [
       planEntry('restamp', 1, {
         edits: [
-          { op: 'putRow', table: 'sensors', key: { id: 7 }, row: { integration_id: 'int-1' } },
-          { op: 'putRow', table: 'sensors', key: { id: 8 }, row: { integration_id: 'int-1' } },
+          {
+            op: 'putRow',
+            table: 'sensors',
+            key: { id: 7 },
+            row: { integration_id: 'int-1' },
+            precondition: preconditionOf(SENSOR_7),
+          },
+          {
+            op: 'putRow',
+            table: 'sensors',
+            key: { id: 8 },
+            row: { integration_id: 'int-1' },
+            precondition: preconditionOf(SENSOR_8),
+          },
         ],
       }),
     ])
@@ -347,19 +388,23 @@ describe('addon-owned catalogue', () => {
 
   it('refuses a catalogue whole: foreign owner, hub-only body, a cycle — nothing is written', async () => {
     const { provider, file, engine } = await boot()
-    await expect(engine.declareOwner(OWNER, [meta('someone-else', 'x', 1)])).rejects.toThrow(
+    await expect(engine.declareOwner(OWNER, [meta('someone-else', 'x', 1)], OWNER)).rejects.toThrow(
       /owned by "someone-else"/,
     )
     await expect(
-      engine.declareOwner(OWNER, [meta(OWNER, 'sql', 1, { bodyKind: 'sql' })]),
+      engine.declareOwner(OWNER, [meta(OWNER, 'sql', 1, { bodyKind: 'sql' })], OWNER),
     ).rejects.toThrow(/hub-only body/)
     await expect(
-      engine.declareOwner(OWNER, [
-        meta(OWNER, 'a', 1, { dependsOn: [`${OWNER}/2026-11-01-b`] }),
-        meta(OWNER, 'b', 2, { dependsOn: [`${OWNER}/2026-11-01-a`] }),
-      ]),
+      engine.declareOwner(
+        OWNER,
+        [
+          meta(OWNER, 'a', 1, { dependsOn: [`${OWNER}/2026-11-01-b`] }),
+          meta(OWNER, 'b', 2, { dependsOn: [`${OWNER}/2026-11-01-a`] }),
+        ],
+        OWNER,
+      ),
     ).rejects.toThrow(/cycle/)
-    await expect(engine.declareOwner('hub', [])).rejects.toThrow(/ships with the hub/)
+    await expect(engine.declareOwner('hub', [], 'hub')).rejects.toThrow(/ships with the hub/)
     expect(statuses()).toEqual({})
     expect(await provider.listPending({})).toEqual({ pending: [] })
     await file.stop()
@@ -466,7 +511,7 @@ describe('procedure body', () => {
     expect(ledger.find((e) => e.id === P2)?.reason).toBe(`dependency-failed:${P1}`)
     // Another owner whose migration dependsOn the failed one is blocked across owners.
     const crossReport = await runAddonMigrations(
-      hostOf(provider),
+      hostOf(provider, 'other-addon'),
       defineAddonMigrations([other], { world }),
       recordingLogger(h.lines, 'Addon'),
     )
@@ -547,5 +592,216 @@ describe('procedure body', () => {
         {},
       ),
     ).toThrow(/declares "procedure"/)
+  })
+})
+
+describe('review fixes: owner identity, finish re-checks, declare failure, preconditions, atomicity', () => {
+  const OWNER = 'ecowitt'
+  const A = `${OWNER}/2026-11-01-a`
+  const B = `${OWNER}/2026-11-01-b`
+  const plan = (
+    slug: string,
+    seq: number,
+    edits: MigrationPlan['edits'],
+    extra: Partial<MigrationMeta> = {},
+  ) =>
+    ({
+      meta: meta(OWNER, slug, seq, extra),
+      plan: async () => ({ edits }),
+    }) satisfies AddonMigration<Record<string, never>>
+  const touch7: MigrationPlan['edits'] = [
+    {
+      op: 'putRow',
+      table: 'sensors',
+      key: { id: 7 },
+      row: { integration_id: 'x' },
+      precondition: preconditionOf(SENSOR_7),
+    },
+  ]
+  const planResult = { kind: 'plan', plan: { edits: touch7 } } as const
+
+  describe('owner identity', () => {
+    it('refuses a declare whose stamped caller is not the owner, and one with no stamp', async () => {
+      const { provider, file } = await boot()
+      await expect(
+        hostOf(provider, 'intruder').declareOwner({ owner: OWNER, metas: [meta(OWNER, 'a', 1)] }),
+      ).rejects.toThrow(/caller "intruder" is not the owner "ecowitt"/)
+      await expect(
+        hostOf(provider, null).declareOwner({ owner: OWNER, metas: [meta(OWNER, 'a', 1)] }),
+      ).rejects.toThrow(/no caller identity/)
+      expect(statuses()).toEqual({})
+      await file.stop()
+    }, 60_000)
+
+    it('refuses start and finish from another addon, and changes no data', async () => {
+      const { provider, file } = await boot()
+      await hostOf(provider).declareOwner({ owner: OWNER, metas: [meta(OWNER, 'a', 1)] })
+      await expect(hostOf(provider, 'intruder').startMigration({ id: A })).rejects.toThrow(
+        /caller "intruder" is not the owner "ecowitt"/,
+      )
+      await hostOf(provider).startMigration({ id: A })
+      await expect(
+        hostOf(provider, 'intruder').finishMigration({ id: A, result: planResult }),
+      ).rejects.toThrow(/not the owner/)
+      expect(statuses()).toEqual({})
+      expect(sensorMarks()).toEqual({ 7: 'keep-me', 8: 'keep-me-too' })
+      expect(query('SELECT integration_id FROM sensors WHERE id = 7')).toEqual([
+        { integration_id: null },
+      ])
+      await file.stop()
+    }, 60_000)
+  })
+
+  describe('finish re-checks the ledger and the gates', () => {
+    it('refuses a finish for a migration whose start never ran', async () => {
+      const { provider, file } = await boot()
+      await hostOf(provider).declareOwner({ owner: OWNER, metas: [meta(OWNER, 'a', 1)] })
+      await expect(hostOf(provider).finishMigration({ id: A, result: planResult })).rejects.toThrow(
+        /was not started/,
+      )
+      expect(statuses()).toEqual({})
+      expect(query('SELECT integration_id FROM sensors WHERE id = 7')).toEqual([
+        { integration_id: null },
+      ])
+      await file.stop()
+    }, 60_000)
+
+    it('never lets a failed or a second result overwrite an applied row', async () => {
+      const { provider, file } = await boot()
+      const host = hostOf(provider)
+      await host.declareOwner({ owner: OWNER, metas: [meta(OWNER, 'a', 1)] })
+      await host.startMigration({ id: A })
+      await host.finishMigration({ id: A, result: planResult })
+      expect(statuses()).toEqual({ [A]: 'applied' })
+      await expect(
+        host.finishMigration({ id: A, result: { kind: 'failed', error: 'late' } }),
+      ).rejects.toThrow(/already applied/)
+      await expect(host.finishMigration({ id: A, result: planResult })).rejects.toThrow(
+        /already applied/,
+      )
+      expect(statuses()).toEqual({ [A]: 'applied' })
+      await file.stop()
+    }, 60_000)
+
+    it('refuses a finish once the pre-migration snapshot was refused', async () => {
+      const { provider, file } = await boot([], { statfsBavail: 0 })
+      const host = hostOf(provider)
+      await host.declareOwner({ owner: OWNER, metas: [meta(OWNER, 'a', 1)] })
+      await host.startMigration({ id: A })
+      await expect(host.finishMigration({ id: A, result: planResult })).rejects.toThrow(
+        /was not started/,
+      )
+      expect(statuses()).toEqual({ [A]: 'blocked' })
+      expect(query('SELECT integration_id FROM sensors WHERE id = 7')).toEqual([
+        { integration_id: null },
+      ])
+      await file.stop()
+    }, 60_000)
+
+    it('refuses a finish whose predecessor stopped being applied since start', async () => {
+      const { provider, file, engine } = await boot()
+      const host = hostOf(provider)
+      await host.declareOwner({ owner: OWNER, metas: [meta(OWNER, 'a', 1), meta(OWNER, 'b', 2)] })
+      await host.startMigration({ id: A })
+      await host.finishMigration({ id: A, result: { kind: 'plan', plan: { edits: [] } } })
+      await host.startMigration({ id: B })
+      await engine.markFailed(A, 'operator marked it')
+      await expect(
+        host.finishMigration({ id: B, result: { kind: 'plan', plan: { edits: [] } } }),
+      ).rejects.toThrow(/predecessor|blocked/)
+      expect(statuses()[B]).not.toBe('applied')
+      await file.stop()
+    }, 60_000)
+  })
+
+  describe('a declare that fails', () => {
+    const failing: AddonMigrationHost = {
+      declareOwner: () => Promise.reject(new Error('engine unreachable')),
+      startMigration: () => Promise.reject(new Error('unreachable')),
+      finishMigration: () => Promise.reject(new Error('unreachable')),
+    }
+
+    it('reports the owner block-owner migrations as blocking, tolerate ones not', async () => {
+      const report = await runAddonMigrations(
+        failing,
+        defineAddonMigrations(
+          [
+            plan('a', 1, [], { onFailure: 'block-owner' }),
+            plan('b', 2, [], { onFailure: 'tolerate' }),
+          ],
+          {},
+        ),
+        recordingLogger(h.lines, 'Addon'),
+      )
+      expect(report.declared).toBe(false)
+      expect(report.blockOwner).toEqual([A])
+    })
+
+    it('does not refuse the whole catalogue for a dependency on an owner that has not declared yet', async () => {
+      const { provider, file } = await boot()
+      const FOREIGN = 'unifi/2026-11-01-x'
+      const host = hostOf(provider)
+      const out = await host.declareOwner({
+        owner: OWNER,
+        metas: [
+          meta(OWNER, 'a', 1, { dependsOn: [FOREIGN] }),
+          meta(OWNER, 'z', 2, { dependsOn: [] }),
+        ],
+      })
+      expect(out.steps.map((s) => s.id)).toEqual([A, `${OWNER}/2026-11-01-z`])
+      const gate = await host.startMigration({ id: A })
+      expect(gate).toMatchObject({
+        proceed: false,
+        state: 'blocked',
+        reason: `dependency-pending:${FOREIGN}`,
+      })
+      expect(statuses()).toEqual({ [A]: 'blocked' })
+      await file.stop()
+    }, 60_000)
+  })
+
+  describe('preconditions on existing rows', () => {
+    it('refuses a hub plan that edits an existing row or key without a precondition', async () => {
+      const { engine, file } = await boot([
+        hubPlan('blind', 1, () => ({
+          edits: [{ op: 'putRow', table: 'sensors', key: { id: 7 }, row: { integration_id: 'x' } }],
+        })),
+      ])
+      expect(statuses()).toEqual({ 'hub/2026-11-01-blind': 'failed' })
+      expect((await engine.listLedger())[0]?.error).toMatch(/precondition/)
+      expect(query('SELECT integration_id FROM sensors WHERE id = 7')).toEqual([
+        { integration_id: null },
+      ])
+      await file.stop()
+    }, 60_000)
+
+    it('refuses an addon setKeys on an existing key without one, and accepts a new key without one', async () => {
+      const { provider, file } = await boot()
+      const host = hostOf(provider)
+      await host.declareOwner({ owner: OWNER, metas: [meta(OWNER, 'a', 1), meta(OWNER, 'b', 2)] })
+      await host.startMigration({ id: A })
+      const refused = await host.finishMigration({
+        id: A,
+        result: {
+          kind: 'plan',
+          plan: { edits: [{ op: 'setKeys', scope: SETTINGS, values: { host: 'x' } }] },
+        },
+      })
+      expect(refused.status).toBe('failed')
+      expect(refused.error).toMatch(/precondition/)
+      expect(kv().host).toBe('"10.0.0.2"')
+      await file.stop()
+    }, 60_000)
+  })
+
+  describe('declare atomicity', () => {
+    it('registers the owner only after the ledger read succeeded', async () => {
+      const { provider, file, engine } = await boot()
+      await file.stop()
+      await expect(
+        hostOf(provider).declareOwner({ owner: OWNER, metas: [meta(OWNER, 'a', 1)] }),
+      ).rejects.toThrow()
+      await expect(engine.startMigration(A, OWNER)).rejects.toThrow(/was not declared/)
+    }, 60_000)
   })
 })

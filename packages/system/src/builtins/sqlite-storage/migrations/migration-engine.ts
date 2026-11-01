@@ -85,6 +85,8 @@ export class MigrationEngine {
   private readonly addonMetas = new Map<string, readonly MigrationMeta[]>()
   /** Files whose pre-migration snapshot was refused: nothing runs on them, owner or hub. */
   private readonly snapshotRefused = new Map<DataStoreDatabase, string>()
+  /** Ids whose `startMigration` said proceed and whose `finishMigration` has not landed yet. */
+  private readonly started = new Set<string>()
   /** One pass at a time: a retry must not interleave with a boot pass. */
   private tail: Promise<unknown> = Promise.resolve()
 
@@ -421,6 +423,22 @@ export class MigrationEngine {
     return undefined
   }
 
+  /** An addon drives only its own catalogue: the transport-stamped caller must be the owner. */
+  private assertOwnerCaller(owner: string, caller: string | null): void {
+    if (caller === null || caller.length === 0) {
+      throw new MigrationOwnerRefusal(
+        'no-caller-identity',
+        `migrations for "${owner}" refused: no caller identity — an owner is bound to the authenticated addon`,
+      )
+    }
+    if (caller !== owner) {
+      throw new MigrationOwnerRefusal(
+        'caller-not-owner',
+        `migrations for "${owner}" refused: caller "${caller}" is not the owner "${owner}"`,
+      )
+    }
+  }
+
   /** Why an owner's catalogue is refused whole, or `null` when it can be taken. */
   private refusalOfCatalogue(owner: string, metas: readonly MigrationMeta[]): string | null {
     if (owner === HUB_OWNER)
@@ -441,7 +459,16 @@ export class MigrationEngine {
       ...[...this.addonMetas.entries()].filter(([other]) => other !== owner).flatMap(([, m]) => m),
       ...metas,
     ]
-    const issues = catalogueIssues(merged)
+    // A dependency on ANOTHER owner's id that has not been declared yet is not a defect of
+    // this catalogue: its step is blocked (`dependency-pending`) until that owner has run.
+    const issues = catalogueIssues(merged).filter(
+      (issue) =>
+        !(
+          issue.code === 'unknown-dependency' &&
+          issue.ids[1] !== undefined &&
+          !issue.ids[1].startsWith(`${owner}/`)
+        ),
+    )
     return issues.length === 0 ? null : issues.map((issue) => issue.message).join('; ')
   }
 
@@ -455,12 +482,18 @@ export class MigrationEngine {
   declareOwner(
     owner: string,
     offered: readonly MigrationMeta[],
+    caller: string | null,
   ): Promise<{
     readonly bootId: string
     readonly snapshot: 'none' | 'written' | 'refused'
     readonly steps: readonly MigrationOwnerStep[]
   }> {
-    const run = this.tail.catch(() => undefined).then(() => this.declare(owner, offered))
+    const run = this.tail
+      .catch(() => undefined)
+      .then(() => {
+        this.assertOwnerCaller(owner, caller)
+        return this.declare(owner, offered)
+      })
     this.tail = run
     return run
   }
@@ -475,16 +508,19 @@ export class MigrationEngine {
       })
       throw new Error(`migration catalogue of "${owner}" refused: ${refusal}`)
     }
-    this.addonMetas.set(owner, metas)
     const ordered = orderMigrations(metas)
     const rows = new Map((await this.listLedger()).map((entry) => [entry.id, entry]))
     const steps: MigrationOwnerStep[] = []
     const firstRunnable = new Map<DataStoreDatabase, string>()
     const log = this.options.logger.withTags({ owner })
+    const holds = new Map<DataStoreDatabase, { held: readonly string[]; unreadable: boolean }>()
+    for (const file of new Set(ordered.map(ledgerFileOf))) {
+      holds.set(file, await this.heldIds(this.accessOf(file), log))
+    }
     for (const meta of ordered) {
       const file = ledgerFileOf(meta)
       const state = rows.get(meta.id)?.status ?? 'pending'
-      const { held, unreadable } = await this.heldIds(this.accessOf(file), log)
+      const { held, unreadable } = holds.get(file) ?? { held: [], unreadable: false }
       if (state === 'applied') {
         steps.push({ id: meta.id, action: 'skip', state })
       } else if (unreadable || held.includes(meta.id)) {
@@ -515,6 +551,8 @@ export class MigrationEngine {
       if (outcome === 'refused') snapshot = 'refused'
       else if (snapshot === 'none') snapshot = 'written'
     }
+    // Registered only now: a declare that failed above leaves the engine as it found it.
+    this.addonMetas.set(owner, metas)
     return { bootId: this.bootId, snapshot, steps }
   }
 
@@ -568,20 +606,25 @@ export class MigrationEngine {
   }
 
   /** The gate before an owner migration runs: the ledger decides, and a refusal is on the record. */
-  startMigration(id: string): Promise<{
+  startMigration(
+    id: string,
+    caller: string | null,
+  ): Promise<{
     readonly proceed: boolean
     readonly state: PassStatus
     readonly reason: string | null
   }> {
-    const run = this.tail.catch(() => undefined).then(() => this.start(id))
+    const run = this.tail.catch(() => undefined).then(() => this.start(id, caller))
     this.tail = run
     return run
   }
 
-  private async start(id: string) {
+  private async start(id: string, caller: string | null) {
     const meta = this.addonMetaOf(id)
     if (meta === undefined)
       throw new Error(`migration ${id} was not declared by any owner this boot`)
+    this.assertOwnerCaller(meta.owner, caller)
+    this.started.delete(id)
     const ledger = new Map<string, PassStatus>(
       (await this.listLedger()).map((entry) => [entry.id, entry.status]),
     )
@@ -600,6 +643,7 @@ export class MigrationEngine {
       await this.writeLedgerRow(meta, 'blocked', reason, null, null)
       return { proceed: false, state: 'blocked' as const, reason }
     }
+    this.started.add(id)
     return { proceed: true, state: own, reason: null }
   }
 
@@ -616,20 +660,50 @@ export class MigrationEngine {
   finishMigration(
     id: string,
     result: MigrationOwnerResult,
+    caller: string | null,
   ): Promise<{
     readonly status: MigrationStatus
     readonly error: string | null
     readonly rowsChanged: number
   }> {
-    const run = this.tail.catch(() => undefined).then(() => this.finish(id, result))
+    const run = this.tail.catch(() => undefined).then(() => this.finish(id, result, caller))
     this.tail = run
     return run
   }
 
-  private async finish(id: string, result: MigrationOwnerResult) {
+  /** The gates `start` applied, read again: the ledger may have moved since the owner began. */
+  private async assertFinishable(id: string, meta: MigrationMeta): Promise<void> {
+    const ledger = new Map<string, PassStatus>(
+      (await this.listLedger()).map((entry) => [entry.id, entry.status]),
+    )
+    const own = ledger.get(id) ?? 'pending'
+    if (own === 'applied') throw new Error(`migration ${id} is already applied — nothing recorded`)
+    if (own === 'held') throw new Error(`migration ${id} is held by a restore — nothing recorded`)
+    if (!this.started.has(id)) {
+      throw new Error(
+        `migration ${id} was not started — call startMigration first, nothing recorded`,
+      )
+    }
+    const refused = this.snapshotRefused.get(ledgerFileOf(meta))
+    if (refused !== undefined) {
+      throw new Error(`migration ${id}: the pre-migration snapshot was refused — nothing recorded`)
+    }
+    const unmet = this.predecessorsOf(meta)
+      .map((dep): [string, PassStatus] => [dep, ledger.get(dep) ?? 'pending'])
+      .find(([, status]) => status !== 'applied')
+    if (unmet !== undefined) {
+      throw new Error(
+        `migration ${id}: predecessor ${unmet[0]} is ${unmet[1]}, not applied — nothing recorded`,
+      )
+    }
+  }
+
+  private async finish(id: string, result: MigrationOwnerResult, caller: string | null) {
     const meta = this.addonMetaOf(id)
     if (meta === undefined)
       throw new Error(`migration ${id} was not declared by any owner this boot`)
+    this.assertOwnerCaller(meta.owner, caller)
+    await this.assertFinishable(id, meta)
     const log = this.options.logger.withTags({ owner: meta.owner })
     const settled = async () => {
       if (result.kind === 'failed') {
@@ -658,6 +732,7 @@ export class MigrationEngine {
       return { status: 'applied' as const, error: null, rowsChanged: 0 }
     }
     const outcome = await settled()
+    this.started.delete(id)
     this.logOutcome(
       {
         id,
@@ -671,6 +746,17 @@ export class MigrationEngine {
     )
     this.options.announce?.(outcome.status === 'failed' ? 'failed' : 'applied', [id])
     return outcome
+  }
+}
+
+/** A call an addon is not entitled to make: its reason is typed, its message names it. */
+export class MigrationOwnerRefusal extends Error {
+  constructor(
+    readonly reason: 'no-caller-identity' | 'caller-not-owner',
+    message: string,
+  ) {
+    super(message)
+    this.name = 'MigrationOwnerRefusal'
   }
 }
 

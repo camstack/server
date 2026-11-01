@@ -15,6 +15,15 @@ import type {
 } from '@camstack/types'
 import type { MigrationEngine } from './migration-engine.js'
 
+/**
+ * The addon the transport stamped on the call (`callerAddonId`, never in an input
+ * schema, stripped from an HTTP/WS request); `null` for an unstamped call.
+ */
+function callerOf(input: object): string | null {
+  const raw: unknown = Reflect.get(input, 'callerAddonId')
+  return typeof raw === 'string' && raw.length > 0 ? raw : null
+}
+
 export class MigrationsProvider implements IMigrationsProvider {
   constructor(private readonly engine: MigrationEngine) {}
 
@@ -44,7 +53,7 @@ export class MigrationsProvider implements IMigrationsProvider {
     steps: MigrationOwnerStep[]
   }> {
     return this.engine
-      .declareOwner(input.owner, input.metas)
+      .declareOwner(input.owner, input.metas, callerOf(input))
       .then((out) => ({ ...out, steps: [...out.steps] }))
   }
 
@@ -53,7 +62,7 @@ export class MigrationsProvider implements IMigrationsProvider {
     state: MigrationStatus | 'pending'
     reason: string | null
   }> {
-    return this.engine.startMigration(input.id)
+    return this.engine.startMigration(input.id, callerOf(input))
   }
 
   finishMigration(input: { id: string; result: MigrationOwnerResult }): Promise<{
@@ -61,7 +70,7 @@ export class MigrationsProvider implements IMigrationsProvider {
     error: string | null
     rowsChanged: number
   }> {
-    return this.engine.finishMigration(input.id, input.result)
+    return this.engine.finishMigration(input.id, input.result, callerOf(input))
   }
 
   async restorePreMigration(input: {

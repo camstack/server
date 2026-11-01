@@ -107,6 +107,16 @@ pre-migration snapshot, same rollback; the engine orders steps across owners by
   start; `tolerate` never throws. The hub always finishes booting.
 - A failed procedure marks same-owner and cross-owner dependents `blocked`.
 
+Review amendments: the owner is the transport-stamped caller (`migrations` is a
+caller-stamped capability), so an addon drives only its own catalogue and an
+unstamped or HTTP call is refused (`no-caller-identity`, `caller-not-owner`).
+`finishMigration` re-reads the ledger and the gates `start` applied and refuses an
+`applied`, `held`, snapshot-refused, not-started or predecessor-unmet id, so a late
+`failed` can never overwrite `applied`. A declare the engine could not take counts as
+`block-owner` for that owner's `block-owner` migrations. A plan edit of a row or key
+that already exists must carry a `precondition`. A dependency on an owner that has not
+declared yet blocks that step only (`dependency-pending`).
+
 Known limits: a dependency on another addon's migration that has not run yet is
 `blocked(dependency-pending)` until the next boot or a retry; `retry` of an
 addon-owned id clears its rows and the owner reruns at its next boot (the engine

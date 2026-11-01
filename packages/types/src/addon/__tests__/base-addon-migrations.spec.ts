@@ -4,7 +4,7 @@
  * serve when a `block-owner` migration did not apply. The engine itself is proven on real
  * SQLite in `@camstack/system`; this pins the addon side of the seam.
  */
-import { createTRPCClient, type TRPCLink } from '@trpc/client'
+import { createTRPCClient, TRPCClientError, type TRPCLink } from '@trpc/client'
 import { observable } from '@trpc/server/observable'
 import { describe, expect, it } from 'vitest'
 import type { AppRouter } from '../../generated/addon-api.js'
@@ -28,11 +28,18 @@ const meta = (slug: string, onFailure: MigrationMeta['onFailure']): MigrationMet
 })
 
 /** A hub that says "run it" and records the outcome the addon reports. */
-function scriptedHub(calls: string[], finishStatus: 'applied' | 'failed'): TRPCLink<AppRouter> {
+function scriptedHub(
+  calls: string[],
+  finishStatus: 'applied' | 'failed' | 'refused',
+): TRPCLink<AppRouter> {
   return () =>
     ({ op }) =>
       observable((observer) => {
         calls.push(op.path)
+        if (finishStatus === 'refused') {
+          observer.error(TRPCClientError.from(new Error('declare refused')))
+          return
+        }
         const answer =
           op.path === 'migrations.declareOwner'
             ? {
@@ -80,7 +87,10 @@ class Probe extends BaseAddon {
   }
 }
 
-async function probeWith(finishStatus: 'applied' | 'failed', calls: string[]): Promise<Probe> {
+async function probeWith(
+  finishStatus: 'applied' | 'failed' | 'refused',
+  calls: string[],
+): Promise<Probe> {
   const addon = new Probe({})
   await addon.initialize(
     fakeAddonContext({
@@ -123,6 +133,14 @@ describe('BaseAddon.runMigrations', () => {
     const report = await addon.migrate([entry('one', 'tolerate')])
     expect(report.failed).toEqual(['probe/2026-11-01-one'])
     expect(report.blockOwner).toEqual([])
+  })
+
+  it('throws when the engine refuses the catalogue and a block-owner migration was not evaluated', async () => {
+    const addon = await probeWith('refused', [])
+    await expect(addon.migrate([entry('one', 'block-owner')])).rejects.toThrow(/one/)
+    await expect(addon.migrate([entry('one', 'tolerate')])).resolves.toMatchObject({
+      declared: false,
+    })
   })
 
   it('an addon with no catalogue never calls the engine', async () => {
