@@ -4,7 +4,7 @@
 
 # Decisions
 
-951 architecture decision records. One file per decision, never
+952 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -963,6 +963,7 @@ that rots.
 | D983 | [An action is one shape everywhere — a vocabulary action on a target — and a scheduler is a timeline of edge and hold points](adr-0983-an-action-is-one-shape-everywhere-a-schedule-is-a-timeline-of-edge-and-hold-points.md) | 💭 proposed | 2026-10-31 |
 | D984 | [A cap may declare a native field overridable by a named Customize extension](adr-0984-a-cap-may-declare-a-native-field-overridable-by-a-named-customize-extension.md) | ✅ accepted | 2026-10-31 |
 | D985 | [A hub is its own integration instance](adr-0985-a-hub-is-its-own-integration-instance.md) | ✅ accepted | 2026-10-31 |
+| D986 | [Addon-level settings are retired — every value lives in the scope its owner cap declares (integration, cluster, node, fleet default, device), in the existing settings tables](adr-0986-addon-level-settings-are-retired-every-value-lives-in-its-owner-scope.md) | 💭 proposed (supersedes D268 (already superseded), the integrationSettingSections forwarding of D269) | 2026-10-31 |
 | D987 | [A migration runs at boot under its owner — one ledger per database file, one transaction per migration, a verified snapshot first](adr-0987-a-migration-runs-at-boot-under-its-owner.md) | ✅ accepted (supersedes D853) | 2026-10-31 |
 | D988 | [A terminal with no TTY signs in by an approval the operator gives in the admin UI](adr-0988-a-terminal-signs-in-by-browser-approval.md) | ✅ accepted | 2026-11-01 |
 | D989 | [One published framework package, and every delivery declares the server it needs](adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md) | ✅ accepted (supersedes the system/server package split (D15 amended)) | 2026-11-01 |

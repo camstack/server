@@ -32,7 +32,7 @@ hours. This page exists because it has cost them.
 
 **One published framework package ([D989](../decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md)).**
 The old system package is no longer published; its dist is built into
-`server/backend/system/` by `scripts/sync-system-into-server.mjs` and travels in
+`server/backend/system/` by `scripts/sync-system-into-server.mjs` <!-- drift-ok: build output directory, created by the sync script, not tracked --> and travels in
 the `@camstack/server` tarball. Each addon declares `camstack.requires.server`, the
 server declares `requires.addons` / `requires.wrapper`, wrappers declare
 `requires.server`; the publish workflow stamps them after the version bump
