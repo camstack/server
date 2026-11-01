@@ -1176,9 +1176,13 @@ describe('the Devices tab is narrowed to what the rule KIND can use (operator ru
     fireEvent.click(await screen.findByRole('tab', { name: 'Devices' }))
     fireEvent.click(await screen.findByRole('radio', { name: 'Only these' }))
 
-    await waitFor(() => expect(mockListDeviceIdsByCaps).toHaveBeenCalledTimes(2))
+    // The sensor/control caps go in chunks of at most 16 (the read's limit), plus the camera query.
+    await waitFor(() => expect(mockListDeviceIdsByCaps).toHaveBeenCalledTimes(3))
     const asked = mockListDeviceIdsByCaps.mock.calls.map((call) => call[0].capNames)
-    const sensorQuery = asked.find((caps) => caps.includes('contact'))
+    for (const caps of asked) expect(caps.length).toBeLessThanOrEqual(16)
+    const sensorQuery = asked.filter((caps) => !caps.includes('camera-streams')).flat()
+    expect(sensorQuery).toContain('contact')
+    expect(sensorQuery).toContain('running-state')
     expect(sensorQuery).toContain('doorbell')
     expect(sensorQuery).not.toContain('detection-pipeline')
     expect(asked).toContainEqual(['camera-streams'])
