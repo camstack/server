@@ -439,11 +439,11 @@ describe('registration through MCP', () => {
     await client.connect(b)
     expect((await client.listTools()).tools.map((t) => t.name).toSorted()).toEqual([
       'setup_about',
-      'setup_wizard',
+      'setup_add_node',
       'setup_connect',
       'setup_discover_hubs',
-      'setup_wizard',
       'setup_install_guide',
+      'setup_wizard',
     ])
     const res = await client.callTool({
       name: 'setup_install_guide',
