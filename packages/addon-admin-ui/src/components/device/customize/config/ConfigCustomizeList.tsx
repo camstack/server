@@ -6,6 +6,7 @@
  */
 import { CAP_CUSTOMIZE_CATALOG, type DeviceInfo } from '@camstack/types'
 import type { ComponentType, ReactNode } from 'react'
+import { FanPresetsExtensionCard } from '../../../fan-presets/FanPresetsExtensionCard'
 import { RemoteExtensionCard } from '../../../remote/RemoteExtensionCard'
 
 export interface ConfigCardProps {
@@ -14,6 +15,7 @@ export interface ConfigCardProps {
 
 const CONFIG_CARDS: Readonly<Record<string, ComponentType<ConfigCardProps>>> = {
   remote: RemoteExtensionCard,
+  'fan-presets': FanPresetsExtensionCard,
 }
 
 /** The capabilities whose `config` target the catalog offers on this device type. */

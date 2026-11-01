@@ -7,6 +7,10 @@ describe('configCardCaps', () => {
     expect(configCardCaps(DeviceType.MediaPlayer)).toContain('remote')
   })
 
+  it('offers the fan presets on a fan, from the catalog', () => {
+    expect(configCardCaps(DeviceType.Fan)).toContain('fan-presets')
+  })
+
   it('offers nothing on a device type no config target names', () => {
     expect(configCardCaps(DeviceType.Camera)).toEqual([])
   })

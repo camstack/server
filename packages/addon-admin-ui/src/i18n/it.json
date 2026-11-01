@@ -11374,5 +11374,33 @@
       "progress": "Avanzamento",
       "close": "Chiudi"
     }
+  },
+  "fanPresets": {
+    "problem": {
+      "name": "Dai un nome al preset.",
+      "noSteps": "Aggiungi almeno un passo, oppure usa i valori attuali.",
+      "duplicate": "Un altro preset ha già questo nome."
+    },
+    "dialog": {
+      "title": "Preset del ventilatore",
+      "name": "Nome",
+      "namePlaceholder": "Notte, Boost, Fuori casa…",
+      "stepsHint": "I passi vengono eseguiti in ordine, su questo ventilatore e sui dispositivi accanto.",
+      "useCurrent": "Usa i valori attuali",
+      "captureFailed": "Non è stato possibile leggere i valori attuali.",
+      "omitted": "Questi valori non sono stati letti, quindi sono stati esclusi:"
+    },
+    "card": {
+      "title": "Preset",
+      "add": "Aggiungi preset",
+      "unreadable": "Non è stato possibile leggere i preset.",
+      "loading": "Caricamento dei preset…",
+      "none": "Nessun preset. Un preset imposta il ventilatore, e la luce o l'interruttore accanto, in un colpo solo.",
+      "steps": "Passi: {{count}}",
+      "edit": "Modifica {{name}}",
+      "delete": "Elimina {{name}}",
+      "deleteTitle": "Eliminare questo preset?",
+      "deleteMessage": "{{name}} verrà eliminato e Alexa, HomeKit e Home Assistant smetteranno di offrirlo."
+    }
   }
 }

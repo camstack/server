@@ -11352,5 +11352,33 @@
       "progress": "Progress",
       "close": "Close"
     }
+  },
+  "fanPresets": {
+    "problem": {
+      "name": "Give the preset a name.",
+      "noSteps": "Add at least one step, or use the current values.",
+      "duplicate": "Another preset already has this name."
+    },
+    "dialog": {
+      "title": "Fan preset",
+      "name": "Name",
+      "namePlaceholder": "Night, Boost, Away…",
+      "stepsHint": "Steps run in order, on this fan and the devices beside it.",
+      "useCurrent": "Use current values",
+      "captureFailed": "The current values could not be read.",
+      "omitted": "These values could not be read, so they were left out:"
+    },
+    "card": {
+      "title": "Presets",
+      "add": "Add preset",
+      "unreadable": "The presets could not be read.",
+      "loading": "Loading presets…",
+      "none": "No presets yet. A preset sets the fan, and the lamp or switch beside it, in one go.",
+      "steps": "Steps: {{count}}",
+      "edit": "Edit {{name}}",
+      "delete": "Delete {{name}}",
+      "deleteTitle": "Delete this preset?",
+      "deleteMessage": "{{name}} will be deleted, and Alexa, HomeKit and Home Assistant stop offering it."
+    }
   }
 }
