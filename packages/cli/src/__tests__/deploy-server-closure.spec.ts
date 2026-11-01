@@ -73,18 +73,15 @@ const FIXTURE: readonly FixturePkg[] = [
     name: '@camstack/server',
     version: '1.2.3',
     dependencies: {
-      '@camstack/server': '*',
+      '@camstack/sdk': '*',
       '@camstack/shm-ring': '*',
       fastify: '^5.0.0',
     },
     devDependencies: { '@camstack/node-root': '*' },
   },
-  {
-    relDir: 'packages/system',
-    name: '@camstack/server',
-    dependencies: { '@camstack/sdk': '*' },
-    peerDependencies: { '@camstack/types': '*' },
-  },
+  // The framework ships inside the server tarball (D989): a private workspace
+  // the server reaches by no dependency field, so it is never packed on its own.
+  { relDir: 'packages/system', name: '@camstack/server-framework' },
   { relDir: 'packages/sdk', name: '@camstack/sdk', peerDependencies: { '@camstack/types': '*' } },
   {
     relDir: 'packages/shm-ring',
@@ -108,9 +105,9 @@ describe('discoverServerClosure', () => {
       '@camstack/sdk',
       '@camstack/server',
       '@camstack/shm-ring',
-      '@camstack/server',
       '@camstack/types',
     ])
+    expect(packNames).not.toContain('@camstack/server-framework')
     // Unreachable workspace packages and non-workspace deps never appear.
     expect(packNames).not.toContain('@camstack/addon-unrelated')
     expect(packNames).not.toContain('fastify')
@@ -148,7 +145,7 @@ describe('computeDevVersion', () => {
 })
 
 describe('withDevVersionPackageJson — temp-copy rewrite', () => {
-  const INTRA = new Set(['@camstack/types', '@camstack/server'])
+  const INTRA = new Set(['@camstack/types', '@camstack/sdk'])
 
   it('rewrites version + intra-set dep ranges during fn, restores bytes after', () => {
     writeFixtureWorkspace(FIXTURE)
@@ -171,7 +168,7 @@ describe('withDevVersionPackageJson — temp-copy rewrite', () => {
     const rewritten = seen!
     expect(rewritten.version).toBe('1.2.3-dev.42')
     // Intra-set dep ranges pinned to the dev version…
-    expect(rewritten.dependencies?.['@camstack/server']).toBe('1.2.3-dev.42')
+    expect(rewritten.dependencies?.['@camstack/sdk']).toBe('1.2.3-dev.42')
     // …non-set deps untouched (workspace member not in the set + external).
     expect(rewritten.dependencies?.['@camstack/shm-ring']).toBe('*')
     expect(rewritten.dependencies?.['fastify']).toBe('^5.0.0')
@@ -182,7 +179,7 @@ describe('withDevVersionPackageJson — temp-copy rewrite', () => {
 
   it('restores the original bytes even when fn throws', () => {
     writeFixtureWorkspace(FIXTURE)
-    const pkgDir = path.join(tmp, 'packages/system')
+    const pkgDir = path.join(tmp, 'packages/sdk')
     const pkgJsonPath = path.join(pkgDir, 'package.json')
     const originalBytes = fs.readFileSync(pkgJsonPath)
 
