@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**227 units · 7689 source files · 214 units claimed by at least one document (7648 files).**
+**227 units · 7690 source files · 214 units claimed by at least one document (7649 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -88,11 +88,11 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-auth` | 19 | `auth` | `decisions/adr-0777-an-auth-providers-only-enable-is-its-capability-toggle-on-identity-authentication.md`, `decisions/adr-0780-an-icon-setting-is-a-display-icon-vocabulary-key-chosen-with-the-shared-picker.md`, `architecture/authentication.md`, +7 more | 2026-10-21 |
 | `packages/addon-post-analysis/src/shared` | 19 | `post-analysis`, `recognition` | `decisions/adr-0867-the-capture-paths-materialise-no-media-copies-in-the-js-process.md`, `architecture/notifications.md`, `decisions/adr-0209-a-hosted-model-artifact-is-not-verified-until-its-embedding-space-is.md`, +3 more, 1 ADR | 2026-10-07 |
 | `packages/addon-provider-unifi` | 19 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
+| `packages/addon-provider-unraid` | 19 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/cli/src/commands` | 19 | `tooling` | `decisions/adr-0838-clients-find-a-hub-over-mdns-of-its-https-endpoint-mesh-discovery-stays-retired.md`, `decisions/adr-0988-a-terminal-signs-in-by-browser-approval.md`, `architecture/authentication.md`, +3 more | 2026-10-21 |
 | `packages/types/src/automation` | 19 | `automations` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0954-actions-are-declared-list-entries-not-devices-one-actions-surface-over-action-source-providers.md`, `decisions/adr-0972-a-number-tied-to-a-quantity-is-entered-in-a-unit-the-person-picks.md`, +5 more | — |
 | `packages/ui-library/src/lib` | 19 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md`, +5 more, 2 ADRs | 2026-10-26 |
 | `packages/addon-provider-tuya` | 18 | `device-providers` | `architecture/device-model.md` _(covers)_, 1 ADR | 2026-10-26 |
-| `packages/addon-provider-unraid` | 18 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/system/src/auth` | 18 | `auth` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `architecture/authentication.md`, +17 more | 2026-10-21 |
 | `packages/types/src/generated` | 18 | `capabilities` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0648-a-device-extension-is-a-slot-declared-by-the-cap-that-owns-the-function-and-served-over-its-existing-store.md`, `decisions/adr-0936-a-customize-declaration-is-the-override-contract.md`, +1 more, 2 ADRs | — |
 | `packages/addon-admin-ui/src/hooks` | 17 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `ui/admin-patterns.md` _(covers)_, +7 more | 2026-10-27 |
