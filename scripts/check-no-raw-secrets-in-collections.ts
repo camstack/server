@@ -82,6 +82,14 @@ export const ALLOWLIST: ReadonlyMap<string, string> = new Map<string, string>([
     'packages/types/src/schemas/auth-records.ts',
   ].map((f): [string, string] => [`${f}#passwordHash`, 'bcrypt hash of a user password; one-way']),
   [
+    'packages/addon-post-analysis/src/pipeline-analytics/pipeline/package/package-scene-fetch.ts#pin',
+    'a node pin (which node serves a by-handle fetch), not a PIN code',
+  ],
+  [
+    'packages/system/src/auth/user-manager.ts#defaultPasswordInUse',
+    'a boolean reporting whether the seeded admin still uses the default password; no credential value',
+  ],
+  [
     'packages/system/src/auth/device-credential-manager.ts#credentialId',
     'id of a device credential row (public); the private key never leaves the device',
   ],
