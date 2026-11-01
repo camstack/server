@@ -44,7 +44,7 @@ export interface OauthLandingOutcome {
   /** Why it failed; an error without one reads as `unknown`. */
   readonly reason?: OauthLandingReason
   /** What the flow did; absent means a sign-in (connect). */
-  readonly action?: 'connect' | 'disconnect'
+  readonly action?: 'connect' | 'disconnect' | 'cli-login'
 }
 
 /**
@@ -58,7 +58,9 @@ export function oauthLandingUrl(origin: string | null, outcome: OauthLandingOutc
   if (outcome.brokerId !== undefined) params.set('broker', outcome.brokerId)
   if (outcome.integration !== undefined) params.set('integration', outcome.integration)
   if (outcome.status === 'error') params.set('reason', outcome.reason ?? 'unknown')
-  if (outcome.action === 'disconnect') params.set('action', 'disconnect')
+  if (outcome.action === 'disconnect' || outcome.action === 'cli-login') {
+    params.set('action', outcome.action)
+  }
   const base = origin === null ? '' : origin.replace(/\/+$/, '')
   return `${base}${OAUTH_LANDING_PATH}#${params.toString()}`
 }
@@ -83,5 +85,6 @@ export function parseOauthLandingFragment(hash: string): OauthLandingOutcome | n
       ? { reason: isOauthLandingReason(reasonRaw) ? reasonRaw : 'unknown' }
       : {}),
     ...(params.get('action') === 'disconnect' ? { action: 'disconnect' as const } : {}),
+    ...(params.get('action') === 'cli-login' ? { action: 'cli-login' as const } : {}),
   }
 }

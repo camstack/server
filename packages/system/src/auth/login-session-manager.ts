@@ -91,6 +91,7 @@ export type LoginSessionMethod =
   | 'passkey'
   | 'sso'
   | 'handoff'
+  | 'cli-approval'
   | 'exchange'
   | 'device-certificate'
 
@@ -99,6 +100,7 @@ const METHODS: readonly LoginSessionMethod[] = [
   'passkey',
   'sso',
   'handoff',
+  'cli-approval',
   'exchange',
   'device-certificate',
 ]

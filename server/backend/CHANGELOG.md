@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Migration capability gains the owner-driven declare, start and finish calls for addon catalogues
 - Allowed browser origins (CORS) are read live from the new auth.corsOrigins setting; config.yaml server.corsOrigins and CAMSTACK_CORS_ORIGINS are ignored with a boot warning
+- A terminal (camstack login, the MCP setup tool) signs in by browser approval: begin and poll are public, approval needs a fresh sign-in.
+- Terminal sign-in approval: audit lines, soft global cap and the requester's User-Agent and address shown to the approver
 
 ## [1.2.717] - 2026-10-31
 

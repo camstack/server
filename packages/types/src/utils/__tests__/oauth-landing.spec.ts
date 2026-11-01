@@ -61,6 +61,14 @@ describe('a sign-out landing', () => {
   })
 })
 
+describe('a terminal sign-in landing', () => {
+  it('round-trips the cli-login action and carries no code', () => {
+    const url = oauthLandingUrl(null, { status: 'success', action: 'cli-login' })
+    expect(url).toBe('/sso-complete#return=oauth&status=success&action=cli-login')
+    expect(parseOauthLandingFragment(url.slice(url.indexOf('#')))?.action).toBe('cli-login')
+  })
+})
+
 describe('parseOauthLandingFragment', () => {
   it('ignores anything that is not an oauth landing', () => {
     expect(parseOauthLandingFragment('#return=login&token=x')).toBeNull()

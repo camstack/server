@@ -67,6 +67,8 @@ import {
 } from '../../auth/session-mint.js'
 import type { AuthService } from '../../core/auth/auth.service.js'
 import { HandoffCodeService } from '../../core/auth/handoff-code.service.js'
+import { CliApprovalService } from '../../core/auth/cli-approval.service.js'
+import { createCliLoginProcedures } from './auth-cli-login.procedures.js'
 import type { MoleculerService } from '../../core/moleculer/moleculer.service.js'
 import type { TrpcRequest } from '../trpc/trpc.context.js'
 import {
@@ -130,6 +132,8 @@ export interface AuthRouterOptions {
   readonly resolveOrigin?: (req: TrpcRequest | undefined) => Promise<string | null>
   /** The one token store (D892). Absent: every mint, list and revoke refuses. */
   readonly credentialTokens?: CredentialTokenService | null
+  /** Pending terminal sign-ins (D988). Override in specs for a controllable clock. */
+  readonly cliApprovals?: CliApprovalService
 }
 
 /** A step-up's sign-in may be at most this old (D855). */
@@ -203,7 +207,7 @@ export const BROWSER_HANDOFF_PATH = '/api/auth/browser-handoff'
  * `requiresTotp` is retained (`= secondFactors.includes('totp')`) for
  * backward compatibility with older SDK builds that branch on it.
  */
-const LoginResultSchema = z.object({
+export const LoginResultSchema = z.object({
   token: z.string(),
   user: z.object({
     id: z.string(),
@@ -382,6 +386,7 @@ export function createAuthRouter(
   /** Challenge-minting begin-legs — looser, they verify nothing. */
   const ceremonyProcedure = makeRateLimitedProcedure(limiters.ceremony, network)
   const credentialTokens = options.credentialTokens ?? null
+  const cliApprovals = new CliApprovalService()
 
   /**
    * THE session mint (`auth/session-mint.ts`, D712) — the single shared tail
@@ -1386,6 +1391,26 @@ export function createAuthRouter(
       }),
 
     ...createSessionProcedures({ registry, minter, credentialProcedure }),
+    ...createCliLoginProcedures({
+      cliApprovals: options.cliApprovals ?? cliApprovals,
+      beginProcedure: credentialProcedure,
+      pollProcedure: ceremonyProcedure,
+      selfLimiter: SELF_CODE_LIMITER,
+      ...(options.logger !== undefined ? { logger: options.logger } : {}),
+      requesterOf: (req, label) => {
+        const ip = network.clientAddress(req).ip
+        const userAgent = clientLabel(req)
+        return {
+          ...(ip !== null ? { ip } : {}),
+          ...(label !== undefined ? { client: label } : {}),
+          ...(userAgent !== undefined ? { userAgent } : {}),
+        }
+      },
+      mintSession: mintSessionOrUnauthorized,
+      assertFreshAuthentication,
+      assertRealUserSession,
+      loginResultSchema: LoginResultSchema,
+    }),
     ...createDeviceCertProcedures({
       registry,
       minter,

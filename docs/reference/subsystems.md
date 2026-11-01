@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 7657 source files · 1228 file(s) in no subsystem.**
+**31 subsystems · 7659 source files · 1228 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -40,8 +40,8 @@ commits. A generated page may not.
 | Zones and zone rules | 5 | `architecture/data-planes.md` _(covers)_, `architecture/detection-execution.md` _(covers)_, `design/2026-08-13-durable-value-tracking-and-runtime-state.md`, +2 more, 4 ADRs | 2026-10-24 | ⚠️ |
 | Storage, retention and backup | 130 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0328-the-live-sqlite-file-is-the-bind-the-container-has-open.md`, `design/2026-08-03-db-remediation-plan.md` _(covers)_, +60 more, 11 ADRs | 2026-10-22 | ⚠️ |
 | Secrets and the keychain | 30 | `architecture/secrets-keychain.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0787-a-secret-field-stores-a-keychain-marker-and-the-value-lives-in-the-keychain.md`, +21 more, 5 ADRs | 2026-10-27 | ✅ |
-| Auth, scopes and method tiers | 97 | `architecture/authentication.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0777-an-auth-providers-only-enable-is-its-capability-toggle-on-identity-authentication.md`, +29 more, 3 ADRs | 2026-10-21 | ⚠️ |
-| The hub API surface | 163 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/authentication.md`, `decisions/adr-0892-one-token-format-permissions-are-scopes-and-one-verifier-and-one-matcher-decide-every-request.md`, +105 more, 18 ADRs | 2026-10-27 | ⚠️ |
+| Auth, scopes and method tiers | 98 | `architecture/authentication.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0777-an-auth-providers-only-enable-is-its-capability-toggle-on-identity-authentication.md`, +29 more, 3 ADRs | 2026-10-21 | ⚠️ |
+| The hub API surface | 164 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/authentication.md`, `decisions/adr-0892-one-token-format-permissions-are-scopes-and-one-verifier-and-one-matcher-decide-every-request.md`, +105 more, 18 ADRs | 2026-10-27 | ⚠️ |
 | Shared types, schemas and enums | 101 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0972-a-number-tied-to-a-quantity-is-entered-in-a-unit-the-person-picks.md`, `architecture/windows-agent.md`, +34 more, 5 ADRs | 2026-10-26 | ⚠️ |
 | Update, release, OTA and agent delivery | 69 | `architecture/update-and-release.md`, `architecture/overview.md`, `decisions/adr-0175-an-update-notification-is-polled-on-its-own-clock-and-remembered-across-restarts.md`, +33 more, 10 ADRs | 2026-10-27 | ✅ |
 | Ecosystem exports — HomeKit, Home Assistant, Alexa, Google Home, Matter, MQTT | 302 | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/ecosystem-export-plan.md` _(covers)_, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +50 more, 20 ADRs | 2026-10-26 | ⚠️ |
@@ -216,7 +216,7 @@ Who may call what — the auth providers, the scope presets and the method acces
 
 - **Owner doc**: — none
 - **Code**: `packages/addon-auth/**`, `packages/system/src/auth/**`, `packages/system/src/builtins/local-auth/**`, `packages/types/src/auth/**`, `server/backend/src/auth/**`, `server/backend/src/core/auth/**`
-- **Files**: 97 (96 claimed by some document)
+- **Files**: 98 (97 claimed by some document)
 - **Uncovered**: `server/backend/src/core/auth` (1)
 
 ### ⚠️ The hub API surface
@@ -225,7 +225,7 @@ The Fastify + tRPC server itself: routers, HTTP routes, the event bus wiring and
 
 - **Owner doc**: — none
 - **Code**: `server/backend/src/api/**`, `server/backend/src/core/app-links/**`, `server/backend/src/core/addon/**`, `server/backend/src/core/addon-bridge/**`, `server/backend/src/core/addon-pages/**`, `server/backend/src/core/addon-widgets/**`, `server/backend/src/core/config/**`, `server/backend/src/core/events/**`, `server/backend/src/core/feature/**`, `server/backend/src/core/lifecycle/**`, `server/backend/src/core/repl/**`, `server/backend/src/core/*.ts`, `server/backend/src/*.ts`, `server/backend/src/server-root/**`, `packages/system/src/http/**`, `packages/system/src/events/**`, `packages/system/src/repl/**`, `packages/system/src/download/**`
-- **Files**: 163 (102 claimed by some document)
+- **Files**: 164 (103 claimed by some document)
 - **Uncovered**: `server/backend/src/core/addon` (13), `server/backend/src/api/core` (10), `server/backend/src/api/trpc` (9), `server/backend/src` (7), `server/backend/src/api` (6), `server/backend/src/api/static` (2), +12 more directories
 
 ### ⚠️ Shared types, schemas and enums

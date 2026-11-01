@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Addons can declare migrations (plan and procedure bodies) that run under the shared ledger, snapshot and rollback
+- A terminal sign-in approval lands on the existing completion page (new cli-login outcome).
 
 ## [1.2.461] - 2026-10-31
 
