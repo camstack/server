@@ -7,5 +7,6 @@
   "controller.s_connection.username.label": "Username",
   "controller.s_connection.password.label": "Password",
   "controller.s_connection.site.label": "Site",
+  "controller.s_connection.allowSelfSigned.label": "Accept self-signed certificate",
   "controller.s_connection.pollIntervalMs.label": "Poll interval (ms)"
 }

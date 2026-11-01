@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The UniFi integration shows the Ubiquiti brand icon.
+- Connect a UniFi OS console through its API key (Network Integration API): infrastructure devices and client presence are read, restart and port power-cycle work; PoE toggle and LED are not offered by that API. New option to accept the console's self-signed certificate.
 
 ## [0.2.153] - 2026-11-01
 

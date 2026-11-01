@@ -18,6 +18,7 @@ import { UnifiFeatureDevice } from './devices/unifi-feature-device.js'
 import { UnifiGatewayDevice } from './devices/unifi-gateway-device.js'
 import { UnifiInfraDevice } from './devices/unifi-infra-device.js'
 import { buildUnifiAdoptionProvider } from './unifi-adoption-provider.js'
+import { liveUnifiClientFactory } from './unifi-client-live.js'
 import { UnifiClientRegistry } from './unifi-client-registry.js'
 import { buildUnifiDeviceAdopter } from './unifi-device-adopter.js'
 import { unifiStableId } from './unifi-discovery.js'
@@ -69,6 +70,7 @@ export class UnifiProviderAddon extends BaseDeviceProvider {
       onConnected: (integrationId) => this.setIntegrationDevicesOnline(integrationId, true),
       onDisconnected: (integrationId) => this.setIntegrationDevicesOnline(integrationId, false),
       onPolled: (integrationId) => this.handlePolled(integrationId),
+      makeClient: liveUnifiClientFactory,
     })
     await this.reconcileIntegrations()
     this.subscribeIntegrationLifecycle()

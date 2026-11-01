@@ -113,4 +113,5 @@ export type UnifiControllerClientFactory = (input: {
   readonly username: string
   readonly password: string
   readonly site: string
+  readonly allowSelfSigned: boolean
 }) => UnifiControllerClient

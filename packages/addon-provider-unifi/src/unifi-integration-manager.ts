@@ -147,6 +147,7 @@ export class UnifiIntegrationManager {
       username: this.#connection.username,
       password: this.#connection.password,
       site: this.#connection.site,
+      allowSelfSigned: this.#connection.allowSelfSigned,
     })
     this.#client = client
 

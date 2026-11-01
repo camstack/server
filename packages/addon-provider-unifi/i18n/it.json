@@ -7,5 +7,6 @@
   "controller.s_connection.username.label": "Nome utente",
   "controller.s_connection.password.label": "Password",
   "controller.s_connection.site.label": "Sito",
+  "controller.s_connection.allowSelfSigned.label": "Accetta il certificato autofirmato",
   "controller.s_connection.pollIntervalMs.label": "Intervallo di lettura (ms)"
 }

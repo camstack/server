@@ -35,6 +35,9 @@ export const unifiConnectionSchema = z.object({
     .describe('Local admin password (when no API key)')
     .meta({ secret: true }),
   site: z.string().default('default').describe('Controller site name'),
+  allowSelfSigned: z
+    .preprocess((v) => (v === '' || v === null ? undefined : v), z.boolean().default(false))
+    .describe('Accept the console self-signed certificate'),
   pollIntervalMs: z
     .preprocess(
       (v) => (v === '' || v === null ? undefined : v),
@@ -238,6 +241,13 @@ export function buildConnectionFormSchema(): ConfigUISchema {
             label: 'Site',
             labelKey: 'provider-unifi:controller.s_connection.site.label',
             placeholder: 'default',
+          },
+          {
+            type: 'boolean',
+            key: 'allowSelfSigned',
+            label: 'Accept self-signed certificate',
+            labelKey: 'provider-unifi:controller.s_connection.allowSelfSigned.label',
+            default: false,
           },
           {
             type: 'number',
