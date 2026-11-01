@@ -7,6 +7,7 @@
  * Discovery, ReportState, ChangeReport, the reconcile and the directive router
  * all iterate the one registry in `index.ts`; none of them names a cap.
  */
+import type { AddonApi } from '@camstack/types'
 import type { DirectiveRouterDeps, VerifiedDirectiveIdentity } from '../../directive-router.js'
 import type { DirectiveHeader } from '../../handlers/types.js'
 import type { AlexaCapability, AlexaDisplayCategory } from '../types.js'
@@ -86,6 +87,15 @@ export interface GenericAdapter {
   readonly stateCaps: readonly string[]
   /** Caps whose slice discovery must read to decide the shape. */
   readonly discoveryReads: readonly string[]
+  /**
+   * Facts discovery reads that are not a cap slice (the operator's own fan
+   * presets), keyed like a slice and handed to `describe` in `slices`. A read
+   * that fails is simply absent.
+   */
+  readonly discoveryExtras?: (
+    api: AddonApi,
+    deviceId: number,
+  ) => Promise<Readonly<Record<string, unknown>>>
   /** What the device becomes through this adapter, or null (not applicable). */
   readonly describe: (device: AdapterDevice) => AdapterDescription | null
   /** The Alexa properties one state cap's slice sets ([] = unusable slice). */

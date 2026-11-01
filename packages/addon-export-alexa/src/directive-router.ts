@@ -47,6 +47,7 @@ import { type DiscoveryContext, handleDiscovery } from './handlers/discovery.js'
 import { errorEnvelope } from './handlers/error-envelope.js'
 import { handleLock, type LockControllerContext } from './handlers/lock-controller.js'
 import type { ClimateControllerContext } from './handlers/climate-controller.js'
+import type { FanControllerContext } from './handlers/fan-controller.js'
 import type { CoverControllerContext } from './handlers/cover-controller.js'
 import { handlePower, type PowerControllerContext } from './handlers/power-controller.js'
 import { handlePtzDirection, type PtzDirectionContext } from './handlers/ptz-direction.js'
@@ -152,6 +153,8 @@ export interface DirectiveRouterDeps {
   readonly coverController: CoverControllerContext
   /** D874: `Alexa.ThermostatController` and friends on a thermostat / AC. */
   readonly climateController: ClimateControllerContext
+  /** `Alexa.RangeController` / `ToggleController` / `ModeController` on a fan. */
+  readonly fanController: FanControllerContext
   /** R2 (D773): `Alexa.SmartVision.SnapshotProvider/GetSnapshot`. */
   readonly snapshotProvider: SnapshotProviderContext
   /** R4 (D779): `SetObjectDetectionClasses` and `Alexa.DataController`. */
@@ -223,7 +226,10 @@ export function withErrorEndpoint(body: unknown, endpoint: unknown): unknown {
   if (endpointId === null || typeof body !== 'object' || body === null) return body
   const event = (body as { event?: unknown }).event
   if (typeof event !== 'object' || event === null) return body
-  const ev = event as { header?: { name?: unknown; namespace?: unknown }; endpoint?: unknown }
+  const ev = event as {
+    header?: { name?: unknown; namespace?: unknown }
+    endpoint?: unknown
+  }
   if (ev.header?.namespace !== 'Alexa' || ev.header?.name !== 'ErrorResponse') return body
   if (ev.endpoint !== undefined) return body
   return { ...body, event: { ...ev, endpoint: { endpointId } } }
@@ -255,7 +261,10 @@ export async function dispatchDirective(
 ): Promise<DirectiveResult> {
   const result = await dispatchParsedDirective(rawBody, deps, callerIdentity)
   const endpoint = (rawBody as { directive?: { endpoint?: unknown } } | null)?.directive?.endpoint
-  return { status: result.status, body: withErrorEndpoint(result.body, endpoint) }
+  return {
+    status: result.status,
+    body: withErrorEndpoint(result.body, endpoint),
+  }
 }
 
 async function dispatchParsedDirective(
@@ -484,7 +493,9 @@ async function dispatchParsedDirective(
         payload,
         deps.rtcSession,
         callerIdentity,
-        { mayTalk: await mayControlEndpoint(endpoint?.endpointId, principal, deps.access) },
+        {
+          mayTalk: await mayControlEndpoint(endpoint?.endpointId, principal, deps.access),
+        },
       )
       return { status: 200, body }
     }
@@ -528,7 +539,10 @@ async function dispatchParsedDirective(
             ),
           }
         }
-        return { status: 200, body: await adapterDirective.handle(directiveContext) }
+        return {
+          status: 200,
+          body: await adapterDirective.handle(directiveContext),
+        }
       }
     }
     if (key === 'Alexa.ModeController/SetMode') {

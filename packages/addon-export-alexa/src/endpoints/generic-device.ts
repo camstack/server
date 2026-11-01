@@ -16,6 +16,7 @@
  *   | `switch` (+brightness)| `Alexa.PowerController` (+`Alexa.BrightnessController`) | LIGHT / SWITCH |
  *   | `cover` (blind kinds) | `Alexa.RangeController` / `Alexa.ModeController` | INTERIOR_BLIND / EXTERIOR_BLIND |
  *   | `climate-control`     | `Alexa.ThermostatController` + `Alexa.TemperatureSensor` (+ power, mode, fan) | THERMOSTAT / AIR_CONDITIONER |
+ *   | `fan-control` (+switch)| `Alexa.PowerController` + `Alexa.RangeController` speed + `Alexa.ToggleController` oscillation + `Alexa.ModeController` presets | FAN |
  *
  * NOT exported, because Alexa has no interface for them and a sensor that
  * "detects motion" when the bathroom floods is a claim, not a mapping:
@@ -45,6 +46,7 @@ export const GENERIC_DEVICE_TYPES: readonly string[] = [
   'thermostat',
   'climate',
   'cover',
+  'fan',
   'generic',
 ]
 

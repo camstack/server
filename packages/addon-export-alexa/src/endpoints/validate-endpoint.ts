@@ -85,6 +85,7 @@ const DISPLAY_CATEGORIES = new Set([
   'EXTERIOR_BLIND',
   'THERMOSTAT',
   'AIR_CONDITIONER',
+  'FAN',
   'DOOR',
   'GATE',
   'GARAGE_DOOR',

@@ -25,7 +25,7 @@ import {
   type ChildAccessoryKind,
   type SmartVisionClass,
 } from '../endpoints/builder.js'
-import { discoveryReadCaps } from '../endpoints/adapters/index.js'
+import { discoveryExtrasFor, discoveryReadCaps } from '../endpoints/adapters/index.js'
 import { GENERIC_DEVICE_TYPES, planGenericEndpoint } from '../endpoints/generic-device.js'
 import type { AlexaEndpoint } from '../endpoints/types.js'
 import type { ExposedDeviceEntry } from '../types.js'
@@ -415,7 +415,11 @@ async function buildAlarmPanelEndpointFor(
 
   deps.logger.info('alexa discovery: built alarm panel endpoint', {
     tags: { deviceId: info.id },
-    meta: { name: info.name, availableModes: [...availableModes], requiresCode },
+    meta: {
+      name: info.name,
+      availableModes: [...availableModes],
+      requiresCode,
+    },
   })
 
   return buildAlarmPanelEndpoint({
@@ -461,21 +465,36 @@ async function readDiscoverySlices(
   const reads = await Promise.all(
     discoveryReadCaps(info.capNames).map(async (capName): Promise<[string, unknown] | null> => {
       try {
-        return [capName, await api.deviceState.getCapSlice.query({ deviceId: info.id, capName })]
+        return [
+          capName,
+          await api.deviceState.getCapSlice.query({
+            deviceId: info.id,
+            capName,
+          }),
+        ]
       } catch (err: unknown) {
         logger.debug('alexa discovery: a shape-deciding slice could not be read', {
           tags: { deviceId: info.id },
-          meta: { capName, error: err instanceof Error ? err.message : String(err) },
+          meta: {
+            capName,
+            error: err instanceof Error ? err.message : String(err),
+          },
         })
         return null
       }
     }),
   )
-  return Object.fromEntries(reads.filter((r): r is [string, unknown] => r !== null))
+  const extras = await discoveryExtrasFor(api, info.id, info.capNames)
+  return {
+    ...extras,
+    ...Object.fromEntries(reads.filter((r): r is [string, unknown] => r !== null)),
+  }
 }
 
 async function loadBoundDeviceInfo(device: DeviceLike, api: AddonApi): Promise<BoundDeviceInfo> {
-  const bindings = await api.deviceManager.getBindings.query({ deviceId: device.id })
+  const bindings = await api.deviceManager.getBindings.query({
+    deviceId: device.id,
+  })
   const capNames: readonly string[] = (bindings.entries as readonly BindingEntry[]).map(
     (e) => e.capName,
   )

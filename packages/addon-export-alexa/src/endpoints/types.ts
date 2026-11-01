@@ -22,6 +22,7 @@ export type AlexaDisplayCategory =
   | 'EXTERIOR_BLIND'
   | 'THERMOSTAT'
   | 'AIR_CONDITIONER'
+  | 'FAN'
   | 'SCENE_TRIGGER'
   | 'OTHER'
 
@@ -61,7 +62,10 @@ export interface AlexaModeResource {
 export interface AlexaActionMapping {
   readonly '@type': 'ActionsToDirective'
   readonly actions: readonly string[]
-  readonly directive: { readonly name: string; readonly payload: Readonly<Record<string, unknown>> }
+  readonly directive: {
+    readonly name: string
+    readonly payload: Readonly<Record<string, unknown>>
+  }
 }
 
 /** One `semantics.stateMappings` entry (Closed / Open). */
@@ -74,7 +78,10 @@ export type AlexaStateMapping =
   | {
       readonly '@type': 'StatesToRange'
       readonly states: readonly string[]
-      readonly range: { readonly minimumValue: number; readonly maximumValue: number }
+      readonly range: {
+        readonly minimumValue: number
+        readonly maximumValue: number
+      }
     }
 
 export interface AlexaSemantics {

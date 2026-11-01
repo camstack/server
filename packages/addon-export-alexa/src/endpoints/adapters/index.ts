@@ -4,11 +4,12 @@
  * Adding a cap to Alexa is adding its adapter here — in order: the first
  * adapter with a category decides the endpoint's display category.
  */
-import { applianceExport } from '@camstack/types'
+import { applianceExport, type AddonApi } from '@camstack/types'
 import type { AlexaCapability, AlexaDisplayCategory } from '../types.js'
 import { climateAdapter } from './climate.js'
 import { contactAdapter } from './contact.js'
 import { coverAdapter } from './cover.js'
+import { fanAdapter } from './fan.js'
 import { humidityAdapter } from './humidity.js'
 import { lockAdapter } from './lock.js'
 import { motionAdapter } from './motion.js'
@@ -44,6 +45,8 @@ export const GENERIC_ADAPTERS: readonly GenericAdapter[] = [
   climateAdapter,
   temperatureAdapter,
   humidityAdapter,
+  // Before switch: a fan that also binds `switch` is a FAN, not a SWITCH.
+  fanAdapter,
   switchAdapter,
   coverAdapter,
 ]
@@ -75,6 +78,21 @@ export function discoveryReadCaps(capNames: readonly string[]): readonly string[
       GENERIC_ADAPTERS.filter((a) => capNames.includes(a.cap)).flatMap((a) => a.discoveryReads),
     ),
   ]
+}
+
+/** What the bound adapters read beyond a cap slice (the fan's custom presets):
+ *  merged into the discovery slices, a failed read leaving its key out. */
+export async function discoveryExtrasFor(
+  api: AddonApi,
+  deviceId: number,
+  capNames: readonly string[],
+): Promise<Readonly<Record<string, unknown>>> {
+  const parts = await Promise.all(
+    GENERIC_ADAPTERS.filter((a) => capNames.includes(a.cap)).map((a) =>
+      a.discoveryExtras === undefined ? {} : a.discoveryExtras(api, deviceId),
+    ),
+  )
+  return Object.assign({}, ...parts)
 }
 
 /** Every directive an adapter declares for `Namespace/Name`, in registry order. */

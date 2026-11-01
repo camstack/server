@@ -28,7 +28,10 @@ function identity(scopes: readonly TokenScope[]): VerifiedDirectiveIdentity {
   return { userId: 'user-1', username: 'tester', scopes }
 }
 
-function makeDeps(): { deps: DirectiveRouterDeps; closeSession: ReturnType<typeof vi.fn> } {
+function makeDeps(): {
+  deps: DirectiveRouterDeps
+  closeSession: ReturnType<typeof vi.fn>
+} {
   const closeSession = vi.fn().mockResolvedValue(undefined)
   const ctx = {
     api: { webrtcSession: { closeSession: { mutate: closeSession } } },
@@ -63,6 +66,7 @@ function makeDeps(): { deps: DirectiveRouterDeps; closeSession: ReturnType<typeo
       lockController: base,
       coverController: { ...base, sendAsyncResponse: async () => true },
       climateController: { ...base },
+      fanController: { ...base },
       access: allowAllAccess(),
       afterDiscovery: () => {},
     },
@@ -101,7 +105,9 @@ describe('RTCSessionController session events', () => {
   it('answers SessionConnected with the matching SessionConnected event', async () => {
     const { deps } = makeDeps()
     const res = await dispatchDirective(
-      directive('Alexa.RTCSessionController', 'SessionConnected', '101', { sessionId: 's-1' }),
+      directive('Alexa.RTCSessionController', 'SessionConnected', '101', {
+        sessionId: 's-1',
+      }),
       deps,
       identity(VIEW_ONLY),
     )
@@ -117,7 +123,9 @@ describe('RTCSessionController session events', () => {
   it('answers SessionDisconnected with the matching SessionDisconnected event', async () => {
     const { deps, closeSession } = makeDeps()
     const res = await dispatchDirective(
-      directive('Alexa.RTCSessionController', 'SessionDisconnected', '101', { sessionId: 's-1' }),
+      directive('Alexa.RTCSessionController', 'SessionDisconnected', '101', {
+        sessionId: 's-1',
+      }),
       deps,
       identity(VIEW_ONLY),
     )
@@ -127,7 +135,10 @@ describe('RTCSessionController session events', () => {
     expect(body.event.header.correlationToken).toBe('corr-1')
     expect(body.event.endpoint?.endpointId).toBe('101')
     expect(body.event.payload).toEqual({ sessionId: 's-1' })
-    expect(closeSession).toHaveBeenCalledWith({ deviceId: 101, sessionId: 's-1' })
+    expect(closeSession).toHaveBeenCalledWith({
+      deviceId: 101,
+      sessionId: 's-1',
+    })
   })
 })
 

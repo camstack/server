@@ -123,8 +123,13 @@ function makeMinimalDeps(opts: StubDepsOptions = {}): DirectiveRouterDeps {
     snapshotProvider: snapshotsOff().provider,
     vision: visionOff(),
     lockController: { ctx: stubCtx, logger: stubLoggerRef },
-    coverController: { ctx: stubCtx, logger: stubLoggerRef, sendAsyncResponse: async () => true },
+    coverController: {
+      ctx: stubCtx,
+      logger: stubLoggerRef,
+      sendAsyncResponse: async () => true,
+    },
     climateController: { ctx: stubCtx, logger: stubLoggerRef },
+    fanController: { ctx: stubCtx, logger: stubLoggerRef },
     access: allowAllAccess(),
     afterDiscovery: () => {},
   }

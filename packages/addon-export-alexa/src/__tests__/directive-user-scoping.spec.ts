@@ -157,6 +157,7 @@ function makeDeps(
     lockController: { ctx, logger },
     coverController: { ctx, logger, sendAsyncResponse: async () => true },
     climateController: { ctx, logger },
+    fanController: { ctx, logger },
     access: { gate, isExposed: (id) => exposed.includes(id) },
     afterDiscovery: opts.afterDiscovery ?? (() => {}),
   }
@@ -195,8 +196,11 @@ function turnOn(endpointId: string): unknown {
 }
 
 function eventOf(body: unknown): { name?: string; type?: string } {
-  const event = (body as { event?: { header?: { name?: string }; payload?: { type?: string } } })
-    .event
+  const event = (
+    body as {
+      event?: { header?: { name?: string }; payload?: { type?: string } }
+    }
+  ).event
   return { name: event?.header?.name, type: event?.payload?.type }
 }
 
@@ -208,7 +212,10 @@ describe('directive router — the link reaches only what its user may', () => {
 
   it('viewer link: a camera outside the grant does not exist for it', async () => {
     const r = await dispatchDirective(reportState('20'), makeDeps(), identity('viewer'))
-    expect(eventOf(r.body)).toEqual({ name: 'ErrorResponse', type: 'NO_SUCH_ENDPOINT' })
+    expect(eventOf(r.body)).toEqual({
+      name: 'ErrorResponse',
+      type: 'NO_SUCH_ENDPOINT',
+    })
   })
 
   it('viewer link: a camera inside the grant answers', async () => {
@@ -218,18 +225,27 @@ describe('directive router — the link reaches only what its user may', () => {
 
   it('viewer link: a control directive on a viewable device is refused before the handler', async () => {
     const r = await dispatchDirective(turnOn('10__privacy'), makeDeps(), identity('viewer'))
-    expect(eventOf(r.body)).toEqual({ name: 'ErrorResponse', type: 'INVALID_DIRECTIVE' })
+    expect(eventOf(r.body)).toEqual({
+      name: 'ErrorResponse',
+      type: 'INVALID_DIRECTIVE',
+    })
   })
 
   it('even an admin cannot reach a device that was never exposed', async () => {
     const r = await dispatchDirective(turnOn('99'), makeDeps(), identity('admin'))
-    expect(eventOf(r.body)).toEqual({ name: 'ErrorResponse', type: 'NO_SUCH_ENDPOINT' })
+    expect(eventOf(r.body)).toEqual({
+      name: 'ErrorResponse',
+      type: 'NO_SUCH_ENDPOINT',
+    })
   })
 
   it('a forged accessory id naming an unrelated device is refused, even for an admin', async () => {
     // 99 is a switch that belongs to nobody; before S1 `10__99` actuated it.
     const r = await dispatchDirective(turnOn('10__99'), makeDeps(), identity('admin'))
-    expect(eventOf(r.body)).toEqual({ name: 'ErrorResponse', type: 'NO_SUCH_ENDPOINT' })
+    expect(eventOf(r.body)).toEqual({
+      name: 'ErrorResponse',
+      type: 'NO_SUCH_ENDPOINT',
+    })
   })
 
   it('a link whose user was deleted is told its credential is no longer valid', async () => {
@@ -247,7 +263,10 @@ describe('directive router — the link reaches only what its user may', () => {
       },
     })
     const r = await dispatchDirective(reportState('10'), deps, identity('admin'))
-    expect(eventOf(r.body)).toEqual({ name: 'ErrorResponse', type: 'INTERNAL_ERROR' })
+    expect(eventOf(r.body)).toEqual({
+      name: 'ErrorResponse',
+      type: 'INTERNAL_ERROR',
+    })
   })
 
   it('SessionDisconnected is never refused — it only tears down what exists', async () => {
@@ -261,7 +280,10 @@ describe('directive router — the link reaches only what its user may', () => {
             correlationToken: 'c3',
             payloadVersion: '3',
           },
-          endpoint: { endpointId: '20', scope: { type: 'BearerToken', token: 't' } },
+          endpoint: {
+            endpointId: '20',
+            scope: { type: 'BearerToken', token: 't' },
+          },
           payload: { sessionId: 's1' },
         },
       },
@@ -269,7 +291,9 @@ describe('directive router — the link reaches only what its user may', () => {
         ...makeDeps(),
         rtcSession: {
           ctx: {
-            api: { webrtcSession: { closeSession: { mutate: async () => ({}) } } },
+            api: {
+              webrtcSession: { closeSession: { mutate: async () => ({}) } },
+            },
           } as unknown as AddonContext,
           logger,
           listExposed: () => [],
@@ -337,7 +361,11 @@ describe('an offline device (R3)', () => {
     const base = makeDeps()
     const ctx = {
       api: {
-        deviceStatus: { getStatus: { query: async () => ({ online: false, lastChangedAt: 1 }) } },
+        deviceStatus: {
+          getStatus: {
+            query: async () => ({ online: false, lastChangedAt: 1 }),
+          },
+        },
       },
     } as unknown as AddonContext
     return { ...base, reportState: { ctx, logger } }
@@ -345,14 +373,19 @@ describe('an offline device (R3)', () => {
 
   it('refuses a control directive with ENDPOINT_UNREACHABLE before any handler runs', async () => {
     const r = await dispatchDirective(turnOn('10__privacy'), offlineDeps(), identity('admin'))
-    expect(eventOf(r.body)).toEqual({ name: 'ErrorResponse', type: 'ENDPOINT_UNREACHABLE' })
+    expect(eventOf(r.body)).toEqual({
+      name: 'ErrorResponse',
+      type: 'ENDPOINT_UNREACHABLE',
+    })
   })
 
   it('still answers ReportState — with connectivity UNREACHABLE', async () => {
     const r = await dispatchDirective(reportState('10'), offlineDeps(), identity('admin'))
     expect(eventOf(r.body).name).toBe('StateReport')
     const props = (
-      r.body as { context: { properties: Array<{ namespace: string; value: unknown }> } }
+      r.body as {
+        context: { properties: Array<{ namespace: string; value: unknown }> }
+      }
     ).context.properties
     expect(props.find((p) => p.namespace === 'Alexa.EndpointHealth')?.value).toEqual({
       value: 'UNREACHABLE',
@@ -375,7 +408,10 @@ describe('R4 (D779): the object-detection directives go through the gate', () =>
         endpoint: { endpointId, scope: { type: 'BearerToken', token: 't' } },
         payload: {
           queryType: 'QUERY_BY_TIMESTAMP_RANGE',
-          query: { fromTime: '2026-10-08T00:00:00Z', toTime: '2026-10-08T23:59:59Z' },
+          query: {
+            fromTime: '2026-10-08T00:00:00Z',
+            toTime: '2026-10-08T23:59:59Z',
+          },
           maxResults: 10,
         },
       },
@@ -411,7 +447,10 @@ describe('R4 (D779): the object-detection directives go through the gate', () =>
 
   it('viewer link: history of a camera outside the grant does not exist for it', async () => {
     const r = await dispatchDirective(reportData('20'), makeDeps(), identity('viewer'))
-    expect(eventOf(r.body)).toEqual({ name: 'ErrorResponse', type: 'NO_SUCH_ENDPOINT' })
+    expect(eventOf(r.body)).toEqual({
+      name: 'ErrorResponse',
+      type: 'NO_SUCH_ENDPOINT',
+    })
   })
 
   it('SetObjectDetectionClasses needs only view (it changes what Alexa is told, nothing in CamStack)', async () => {

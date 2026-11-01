@@ -80,7 +80,12 @@ function setup() {
     logger,
   })
   const deps: DirectiveRouterDeps = {
-    discovery: { ctx, logger, listExposed: async () => [], buildEndpoints: async () => [] },
+    discovery: {
+      ctx,
+      logger,
+      listExposed: async () => [],
+      buildEndpoints: async () => [],
+    },
     cameraStream: { ctx, logger, listExposed: () => [] },
     rtcSession: { ctx, logger, listExposed: () => [] },
     ptzPreset: { ctx, logger },
@@ -94,6 +99,7 @@ function setup() {
     lockController: { ctx, logger },
     coverController: { ctx, logger, sendAsyncResponse: async () => true },
     climateController: { ctx, logger },
+    fanController: { ctx, logger },
     access: { gate, isExposed: () => false },
     afterDiscovery: () => {},
     actionScenes: { exports, api, logger },

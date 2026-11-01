@@ -656,6 +656,10 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
           ctx: this.ctx,
           logger: this.ctx.logger,
         },
+        fanController: {
+          ctx: this.ctx,
+          logger: this.ctx.logger,
+        },
         coverController: {
           ctx: this.ctx,
           logger: this.ctx.logger,
@@ -671,7 +675,11 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
         },
         vision: this.vision.context(),
         access: this.endpointAccess,
-        actionScenes: { exports: actionScenes, api: this.ctx.api, logger: this.ctx.logger },
+        actionScenes: {
+          exports: actionScenes,
+          api: this.ctx.api,
+          logger: this.ctx.logger,
+        },
         afterDiscovery: (userId, endpoints) =>
           this.requireGateway().scheduleInitialConnectivity(userId, endpoints),
       },
