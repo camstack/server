@@ -103,7 +103,7 @@ describe('BrokerStep', () => {
           name: /use this broker/i,
         }) as HTMLButtonElement
       ).disabled,
-    ).toBe(true)
+    ).toBe(false) // the only broker of the kind is pre-selected
 
     fireEvent.click(screen.getByText('Home'))
     fireEvent.click(screen.getByRole('button', { name: /use this broker/i }))

@@ -7,7 +7,7 @@
  * It is the one broker-selection control: the integration wizard's broker step
  * and the Matter dialog both mount it. `kind` is data; the component names none.
  */
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Loader2, Plus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Badge, Button, ErrorBox, useBrokerList } from '@camstack/ui-library'
@@ -39,6 +39,14 @@ export function BrokerPicker({ kind, value, onChange }: BrokerPickerProps) {
   const listQuery = useBrokerList({ kind })
   // Re-filter client side so a stale or unfiltered cache never leaks a foreign kind.
   const brokers = asBrokerList(listQuery.data).filter((b) => b.kind === kind)
+
+  // Nothing chosen yet: pre-select the first broker of the kind, but only once
+  // the list ANSWERED — still loading or failed must never read as "no broker".
+  const firstId = brokers[0]?.id ?? null
+  const answered = !listQuery.isLoading && !listQuery.isError && listQuery.data !== undefined
+  useEffect(() => {
+    if (answered && value === null && firstId !== null) onChange(firstId)
+  }, [answered, value, firstId, onChange])
 
   return (
     <div className="space-y-2">
