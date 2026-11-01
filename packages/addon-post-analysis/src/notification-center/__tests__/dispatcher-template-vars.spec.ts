@@ -90,7 +90,7 @@ describe('buildTemplateVars — the new variables', () => {
     expect(vars['classLabel']).toBe('animale')
     expect(vars['label']).toBe('cat')
     expect(vars['subject']).toBe('gatto')
-    expect(vars['camera']).toBe('garden')
+    expect(vars['device']).toBe('garden')
   })
 
   it('time is HH:MM in the catalog language, not the server locale', () => {

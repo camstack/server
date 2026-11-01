@@ -235,7 +235,7 @@ describe('nc rule actions — getTemplateCatalog / previewTemplate', () => {
       handlers['nc.previewTemplate'](
         {
           context: { family: 'rule', field: 'title', kind: 'detection' },
-          template: { title: '{{camera}}' },
+          template: { title: '{{device}}' },
         },
         undefined,
       ),
@@ -252,7 +252,7 @@ describe('nc rule actions — getTemplateCatalog / previewTemplate', () => {
     const out = await handlers['nc.previewTemplate'](
       {
         context: { family: 'rule', field: 'title', kind: 'occupancy' },
-        template: { title: '{{camera}}: {{op}}' },
+        template: { title: '{{device}}: {{op}}' },
       },
       undefined,
     )

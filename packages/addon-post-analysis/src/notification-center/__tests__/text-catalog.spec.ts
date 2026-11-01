@@ -16,7 +16,7 @@ describe('NcTextCatalog — shipped bundles', () => {
   it('defaults to English and reads the shipped file', () => {
     const texts = new NcTextCatalog()
     expect(texts.language).toBe('en')
-    expect(texts.raw('detection.body')).toBe('{{subject}} on {{camera}}{{inZones}}')
+    expect(texts.raw('detection.body')).toBe('{{subject}} on {{device}}{{inZones}}')
   })
 
   it('ships exactly the two languages, both non-empty', () => {
@@ -28,7 +28,7 @@ describe('NcTextCatalog — shipped bundles', () => {
 
   it('serves the Italian file when the hub language is it', () => {
     const texts = new NcTextCatalog({ language: 'it' })
-    expect(texts.raw('detection.body')).toBe('{{subject}} su {{camera}}{{inZones}}')
+    expect(texts.raw('detection.body')).toBe('{{subject}} su {{device}}{{inZones}}')
   })
 })
 
@@ -96,8 +96,8 @@ describe('NcTextCatalog — resolution order', () => {
     expect(
       texts.text({
         key: 'detection.body',
-        template: 'mio testo {{camera}}',
-        vars: { camera: 'Gate' },
+        template: 'mio testo {{device}}',
+        vars: { device: 'Gate' },
       }),
     ).toBe('mio testo Gate')
   })
@@ -131,7 +131,7 @@ describe('NcTextCatalog — resolution order', () => {
 describe('NcTextCatalog — rendering', () => {
   it('renders a missing var EMPTY, never the braces', () => {
     const texts = new NcTextCatalog()
-    expect(texts.text({ key: 'detection.body', vars: { camera: 'Gate' } })).toBe(' on Gate')
+    expect(texts.text({ key: 'detection.body', vars: { device: 'Gate' } })).toBe(' on Gate')
   })
 
   it('does NOT re-render an injected value — the depth bound', () => {
@@ -142,9 +142,9 @@ describe('NcTextCatalog — rendering', () => {
     expect(
       texts.text({
         key: 'detection.body',
-        vars: { subject: '{{camera}}', camera: 'Gate', inZones: '' },
+        vars: { subject: '{{device}}', device: 'Gate', inZones: '' },
       }),
-    ).toBe('{{camera}} on Gate')
+    ).toBe('{{device}} on Gate')
   })
 
   it('applies a new snapshot in place', () => {

@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**227 units · 7709 source files · 214 units claimed by at least one document (7668 files).**
+**228 units · 7711 source files · 214 units claimed by at least one document (7668 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -194,6 +194,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-pipeline-orchestrator/src/camera-status` | 2 | `pipeline-orchestration` | `decisions/adr-0758-a-camera-status-block-carries-only-counters-something-feeds.md`, `decisions/adr-0322-a-poll-asks-each-question-once-and-a-batch-answers-for-every-id.md`, 1 ADR | — |
 | `packages/addon-pipeline-orchestrator/src/durable` | 2 | `pipeline-orchestration` | `design/2026-08-13-durable-value-tracking-and-runtime-state.md`, `design/durable-store-convergence.md`, 2 ADRs | 2026-10-03 |
 | `packages/addon-pipeline-orchestrator/src/load-balancing` | 2 | — | `architecture/inference-devices.md`, `decisions/adr-0750-shares-are-automatic-by-default-held-by-placement-and-respected-by-failover.md`, `decisions/adr-0755-shares-and-auto-tune-are-sized-by-capacity-never-by-load.md`, +1 more, 1 ADR | 2026-10-23 |
+| `packages/addon-post-analysis/src/migrations` | 2 | — | — | — |
 | `packages/addon-smtp-nodemailer` | 2 | `notification-center` | — | — |
 | `packages/addon-static-turn` | 2 | `stream-broker` | — | — |
 | `packages/cli/src/discovery` | 2 | `tooling` | `decisions/adr-0838-clients-find-a-hub-over-mdns-of-its-https-endpoint-mesh-discovery-stays-retired.md` | — |

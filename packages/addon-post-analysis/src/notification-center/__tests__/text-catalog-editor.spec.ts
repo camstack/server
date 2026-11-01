@@ -96,30 +96,30 @@ describe('NcTextCatalogEditor', () => {
 
   describe('setOverrides', () => {
     it('round-trips through the durable store', async () => {
-      await ctx.editor.setOverrides('it', { 'detection.body': 'ciao {{camera}}' })
+      await ctx.editor.setOverrides('it', { 'detection.body': 'ciao {{device}}' })
       const reread = new NcTextCatalogStore({
         kind: ctx.world.records.kind(ncRecordKinds.texts),
         logger: makeSilentLogger(),
       })
       await expect(reread.load()).resolves.toMatchObject({
-        overrides: { it: { 'detection.body': 'ciao {{camera}}' } },
+        overrides: { it: { 'detection.body': 'ciao {{device}}' } },
       })
     })
 
     it('the returned view reports the override as the winning layer', async () => {
-      const v = await ctx.editor.setOverrides('en', { 'detection.body': 'hello {{camera}}' })
+      const v = await ctx.editor.setOverrides('en', { 'detection.body': 'hello {{device}}' })
       const row = v.entries.find((e) => e.key === 'detection.body')
-      expect(row?.override).toBe('hello {{camera}}')
+      expect(row?.override).toBe('hello {{device}}')
       expect(row?.source).toBe('override')
-      expect(row?.effective).toBe('hello {{camera}}')
+      expect(row?.effective).toBe('hello {{device}}')
       // The shipped text stays beside it, so the row can be reset.
-      expect(row?.shipped).not.toBe('hello {{camera}}')
+      expect(row?.shipped).not.toBe('hello {{device}}')
     })
 
     it('the live catalog speaks the override IMMEDIATELY', async () => {
-      const before = ctx.catalog.text({ key: 'detection.body', vars: { camera: 'Gate' } })
-      await ctx.editor.setOverrides('en', { 'detection.body': 'hello {{camera}}' })
-      const after = ctx.catalog.text({ key: 'detection.body', vars: { camera: 'Gate' } })
+      const before = ctx.catalog.text({ key: 'detection.body', vars: { device: 'Gate' } })
+      await ctx.editor.setOverrides('en', { 'detection.body': 'hello {{device}}' })
+      const after = ctx.catalog.text({ key: 'detection.body', vars: { device: 'Gate' } })
       expect(after).toBe('hello Gate')
       expect(after).not.toBe(before)
     })
@@ -137,7 +137,7 @@ describe('NcTextCatalogEditor', () => {
       const row = v.entries.find((e) => e.key === 'detection.body')
       expect(row?.override).toBeNull()
       expect(row?.source).toBe('shipped')
-      expect(ctx.catalog.text({ key: 'detection.body', vars: { camera: 'Gate' } })).toContain(
+      expect(ctx.catalog.text({ key: 'detection.body', vars: { device: 'Gate' } })).toContain(
         'Gate',
       )
     })

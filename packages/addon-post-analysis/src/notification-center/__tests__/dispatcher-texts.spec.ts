@@ -142,7 +142,7 @@ describe('detection defaults', () => {
   it('a hub OVERRIDE beats the shipped file', async () => {
     const texts = new NcTextCatalog({
       language: 'it',
-      overrides: { it: { 'detection.body': '{{subject}} @ {{camera}}' } },
+      overrides: { it: { 'detection.body': '{{subject}} @ {{device}}' } },
     })
     const sent = await deliver(texts, makeEntry())
     expect(sent.notification.body).toBe('Persona @ front door')
@@ -153,7 +153,7 @@ describe('rule templates', () => {
   it('a rule template still wins over the catalog', async () => {
     const sent = await deliver(
       italian(),
-      makeEntry({ template: { title: 'Mio titolo', body: 'Guarda {{camera}}' } }),
+      makeEntry({ template: { title: 'Mio titolo', body: 'Guarda {{device}}' } }),
     )
     expect(sent.notification.title).toBe('Mio titolo')
     expect(sent.notification.body).toBe('Guarda front door')
@@ -163,7 +163,7 @@ describe('rule templates', () => {
     const sent = await deliver(
       italian(),
       makeEntry({
-        template: { body: 'Rilevato {{subject}}{{inZones}} — {{camera}}' },
+        template: { body: 'Rilevato {{subject}}{{inZones}} — {{device}}' },
         subject: { deviceId: 104, className: 'vehicle', zones: ['z1'], timestamp: 1 },
       }),
     )

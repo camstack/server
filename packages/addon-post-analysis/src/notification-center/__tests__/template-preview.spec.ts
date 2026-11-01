@@ -31,7 +31,7 @@ describe('previewTemplate', () => {
   it('names the variables this context cannot fill, and renders them empty', () => {
     const out = previewTemplate(it_, {
       context: { family: 'rule', field: 'title', kind: 'detection' },
-      template: { title: '{{camera}} {{capacity}} {{tiles}}' },
+      template: { title: '{{device}} {{capacity}} {{tiles}}' },
     })
     expect(out.unknown).toEqual(['capacity', 'tiles'])
     expect(out.title).toBe('Front door  ')

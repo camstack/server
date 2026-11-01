@@ -45,7 +45,7 @@
  * as plain strings. {@link renderTemplate} never re-scans a replacement, so
  * there is exactly one level of composition and it cannot grow: a fragment that
  * names another composite renders it empty, and a value that happens to look
- * like `{{camera}}` is printed, not substituted.
+ * like `{{device}}` is printed, not substituted.
  */
 
 import { z } from 'zod'

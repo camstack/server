@@ -796,7 +796,9 @@ const DEFAULT_ASSIST_MIN_SCORE = 0.3
  */
 const RETRAIN_EXPORT_MAX = 20_000
 
-import { AnalyticsLtsSeriesSchema } from '@camstack/types'
+import { AnalyticsLtsSeriesSchema, defineAddonMigrations } from '@camstack/types'
+import { ncRecordKinds } from '../notification-center/record-kinds.js'
+import { ADDON_MIGRATIONS, type NcTemplateMigrationPorts } from '../migrations/index.js'
 import { BUILTIN_CLIP_MODELS } from '../shared/clip/clip-model-registry.js'
 import { encodeClipQuery, pinClipRebuild, resolveClipSearchPlan } from './clip-space-plan.js'
 import {
@@ -3323,6 +3325,11 @@ export default class PipelineAnalyticsAddon
     // Declare typed collections up-front so the first insert doesn't race
     // with a CREATE TABLE. Idempotent.
     await step('declareCollections', () => this.declareCollections(api))
+    // The stored notification templates reach their new shape BEFORE the centre
+    // loads them (buildNotificationCenter below). Hub only, like the declaration.
+    if (this.localOwnNodeId() === 'hub') {
+      await step('migrations', () => this.runTemplateMigrations())
+    }
     // The alarm panel: a fixed integration and one device, both get-or-create.
     // ARMED, never awaited — see `armAlarmPanelDeclaration`. Best-effort was
     // always the intent; awaiting it made "best-effort" cost 61 s of the
@@ -3901,6 +3908,17 @@ export default class PipelineAnalyticsAddon
       },
     })
     return this.collectionsBootInstance
+  }
+
+  /** The addon's migration catalogue (D987), bound to the notification kinds. */
+  private async runTemplateMigrations(): Promise<void> {
+    const records = this.requireRecords()
+    const ports: NcTemplateMigrationPorts = {
+      rules: records.kind(ncRecordKinds['rules']),
+      timelapseRules: records.kind(ncRecordKinds['timelapse-rules']),
+      texts: records.kind(ncRecordKinds.texts),
+    }
+    await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, ports))
   }
 
   /** `declare-collections.ts` — declareCollections. */

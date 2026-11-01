@@ -93,7 +93,7 @@ export function buildSnoozeDigest(
         key: 'snooze.digest.line',
         vars: {
           rule: r.ruleName,
-          camera: deviceNames.get(r.deviceId) ?? `camera ${r.deviceId}`,
+          device: deviceNames.get(r.deviceId) ?? `camera ${r.deviceId}`,
           count: `${r.count}`,
         },
       }),

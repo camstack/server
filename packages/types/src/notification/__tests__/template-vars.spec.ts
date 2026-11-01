@@ -122,7 +122,7 @@ describe('the SERVED template catalog holds back kinds the viewer cannot parse',
         systemEventKinds: ['device-consumable-low'],
       }),
     )
-    expect(offered).toEqual(expect.arrayContaining(['deviceName', 'deviceId', 'camera', 'item']))
+    expect(offered).toEqual(expect.arrayContaining(['deviceName', 'deviceId', 'device', 'item']))
     expect(offered).not.toContain('tank')
   })
 })
@@ -131,13 +131,13 @@ describe('templateVarsFor', () => {
   it('occupancy rules get count/capacity/op/scope, detection rules do not get capacity', () => {
     const occ = names(templateVarsFor({ family: 'rule', field: 'body', kind: 'occupancy' }))
     expect(occ).toEqual(
-      expect.arrayContaining(['capacity', 'count', 'op', 'scope', 'camera', 'rule', 'time']),
+      expect.arrayContaining(['capacity', 'count', 'op', 'scope', 'device', 'rule', 'time']),
     )
     const det = names(templateVarsFor({ family: 'rule', field: 'body', kind: 'detection' }))
     expect(det).not.toContain('capacity')
     expect(det).toEqual(
       expect.arrayContaining([
-        'camera',
+        'device',
         'class',
         'classLabel',
         'label',
@@ -148,7 +148,7 @@ describe('templateVarsFor', () => {
     )
   })
 
-  it('offers {{camera}} on a system rule only for the kinds that carry a device', () => {
+  it('offers {{device}} on a system rule only for the kinds that carry a device', () => {
     const on = (kind: NcSystemEventKind): string[] =>
       names(
         templateVarsFor({
@@ -159,12 +159,12 @@ describe('templateVarsFor', () => {
         }),
       )
     // A node row renders the filler 'system' (dispatcher.ts `notificationDeviceName`).
-    expect(on('node-offline')).not.toContain('camera')
-    expect(on('device-offline')).toContain('camera')
-    expect(on('export-completed')).toContain('camera')
+    expect(on('node-offline')).not.toContain('device')
+    expect(on('device-offline')).toContain('device')
+    expect(on('export-completed')).toContain('device')
     // Every non-system kind keeps it.
     expect(names(templateVarsFor({ family: 'rule', field: 'body', kind: 'sensor' }))).toContain(
-      'camera',
+      'device',
     )
   })
 
@@ -294,14 +294,14 @@ describe('templateVarsFor', () => {
     expect(addon).toContain('count')
   })
 
-  it('summary and timelapse captions carry only rule/from/to (+camera for timelapse)', () => {
+  it('summary and timelapse captions carry only rule/from/to (+device for timelapse)', () => {
     expect(names(templateVarsFor({ family: 'summary', field: 'captionText' }))).toEqual([
       'from',
       'rule',
       'to',
     ])
     expect(names(templateVarsFor({ family: 'timelapse', field: 'previewText' }))).toEqual([
-      'camera',
+      'device',
       'from',
       'rule',
       'to',
@@ -356,7 +356,7 @@ describe('the STATE SUMMARY vocabulary (D647)', () => {
       ]),
     )
     // Per-event facts belong to one device — a summary row has none.
-    for (const perEvent of ['deviceName', 'battery', 'camera', 'eventKind', 'summaryNodes']) {
+    for (const perEvent of ['deviceName', 'battery', 'device', 'eventKind', 'summaryNodes']) {
       expect(offered).not.toContain(perEvent)
     }
   })

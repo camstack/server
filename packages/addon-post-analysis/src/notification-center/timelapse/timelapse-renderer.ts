@@ -243,7 +243,7 @@ export interface TimelapseRenderRequest {
   /**
    * Caption for the notification's preview frame, ALREADY rendered.
    *
-   * Resolved by the scheduler and not here, because `{{camera}}` needs the
+   * Resolved by the scheduler and not here, because `{{device}}` needs the
    * display name — the one thing this module deliberately does not know. Absent
    * ⇒ no preview is produced at all (an older wiring, or a caller that does not
    * want one); an EMPTY string ⇒ a preview with no caption.

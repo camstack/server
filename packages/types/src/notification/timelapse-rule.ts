@@ -211,7 +211,7 @@ export type TimelapseRuleInput = z.infer<typeof TimelapseRuleInputSchema>
  * before this field existed still reads "Timelapse Camera front door" and
  * not the literal braces.
  */
-export const DEFAULT_TIMELAPSE_PREVIEW_TEXT = 'Timelapse {{camera}}'
+export const DEFAULT_TIMELAPSE_PREVIEW_TEXT = 'Timelapse {{device}}'
 
 /**
  * Partial patch for an update — any subset of the INPUT fields, with NO

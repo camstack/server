@@ -31,13 +31,13 @@ import {
 
 const BUNDLES: Readonly<Record<'en' | 'it', NcTextBundle>> = {
   en: {
-    'detection.body': '{{subject}} on {{camera}}{{inZones}}',
+    'detection.body': '{{subject}} on {{device}}{{inZones}}',
     'detection.inZones': ' in {{zones}}',
     'class.person': { one: 'person', other: 'people' },
     'system.only.en': 'English only',
   },
   it: {
-    'detection.body': '{{subject}} su {{camera}}{{inZones}}',
+    'detection.body': '{{subject}} su {{device}}{{inZones}}',
     'detection.inZones': ' in {{zones}}',
     'class.person': { one: 'persona', other: 'persone' },
   },
@@ -91,7 +91,7 @@ describe('buildNcTextCatalogView', () => {
 
   it("a key the language ships reads from that language's file", () => {
     const e = entry('it', 'detection.body')
-    expect(e.shipped).toBe('{{subject}} su {{camera}}{{inZones}}')
+    expect(e.shipped).toBe('{{subject}} su {{device}}{{inZones}}')
     expect(e.shippedLanguage).toBe('it')
     expect(e.source).toBe('shipped')
     expect(e.override).toBeNull()
@@ -111,7 +111,7 @@ describe('buildNcTextCatalogView', () => {
     expect(e.override).toBe('ciao')
     expect(e.source).toBe('override')
     // The reset target — without it the row has nothing to go back to.
-    expect(e.shipped).toBe('{{subject}} su {{camera}}{{inZones}}')
+    expect(e.shipped).toBe('{{subject}} su {{device}}{{inZones}}')
   })
 
   it("another language's override never leaks into this one", () => {
@@ -132,7 +132,7 @@ describe('buildNcTextCatalogView', () => {
 
   it('placeholders come from the SHIPPED text, not from the override', () => {
     const e = entry('it', 'detection.body', { it: { 'detection.body': 'niente' } })
-    expect(e.placeholders).toEqual(['subject', 'camera', 'inZones'])
+    expect(e.placeholders).toEqual(['subject', 'device', 'inZones'])
   })
 
   it('a plural key advertises the union of its variants placeholders', () => {

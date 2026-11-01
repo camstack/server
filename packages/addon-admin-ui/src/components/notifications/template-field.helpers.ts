@@ -107,7 +107,7 @@ export function unknownPlaceholders(
  * (~757-763). Kept in sync by the exhaustive parity spec, not by hand.
  */
 const CAPTION_VARS: Readonly<Record<'previewText' | 'captionText', readonly string[]>> = {
-  previewText: ['camera', 'rule', 'from', 'to'],
+  previewText: ['device', 'rule', 'from', 'to'],
   captionText: ['rule', 'from', 'to'],
 }
 

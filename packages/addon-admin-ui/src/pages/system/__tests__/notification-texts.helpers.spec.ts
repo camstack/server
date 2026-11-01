@@ -28,10 +28,10 @@ import {
 function entry(over: Partial<TextEntry> = {}): TextEntry {
   return {
     key: 'detection.body',
-    shipped: '{{subject}} on {{camera}}',
+    shipped: '{{subject}} on {{device}}',
     shippedLanguage: 'en',
     override: null,
-    effective: '{{subject}} on {{camera}}',
+    effective: '{{subject}} on {{device}}',
     source: 'shipped',
     placeholders: ['subject', 'camera'],
     pluralCategories: [],
@@ -91,7 +91,7 @@ describe('parseTextCatalog', () => {
 
 describe('draftValue', () => {
   it('shows the shipped text when nothing is overridden or typed', () => {
-    expect(draftValue(entry(), new Map())).toBe('{{subject}} on {{camera}}')
+    expect(draftValue(entry(), new Map())).toBe('{{subject}} on {{device}}')
   })
 
   it('shows the stored override over the shipped text', () => {
@@ -135,7 +135,7 @@ describe('buildOverridePatch', () => {
   it('typing the shipped text back in RESETS — it is not stored as an override', () => {
     const withOverride = [entry({ override: 'mine', source: 'override' })]
     expect(
-      buildOverridePatch(withOverride, new Map([['detection.body', '{{subject}} on {{camera}}']])),
+      buildOverridePatch(withOverride, new Map([['detection.body', '{{subject}} on {{device}}']])),
     ).toEqual({ 'detection.body': null })
   })
 
@@ -164,7 +164,7 @@ describe('buildOverridePatch', () => {
   it('counts exactly what it would send', () => {
     const drafts = new Map([
       ['detection.title', 'Alert'],
-      ['detection.body', '{{subject}} on {{camera}}'],
+      ['detection.body', '{{subject}} on {{device}}'],
     ])
     expect(countPendingEdits(rows, drafts)).toBe(1)
   })
@@ -172,9 +172,9 @@ describe('buildOverridePatch', () => {
 
 describe('filterTextEntries', () => {
   const rows = [
-    entry({ key: 'detection.body', shipped: '{{subject}} on {{camera}}' }),
+    entry({ key: 'detection.body', shipped: '{{subject}} on {{device}}' }),
     entry({ key: 'class.person', shipped: 'people' }),
-    entry({ key: 'system.camera.offline', shipped: '{{camera}} went offline', override: 'giù' }),
+    entry({ key: 'system.camera.offline', shipped: '{{device}} went offline', override: 'giù' }),
   ]
 
   it('an empty query keeps everything', () => {

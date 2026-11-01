@@ -149,7 +149,7 @@ export function timelapseTemplateVars(
 ): Readonly<Record<string, string>> {
   const deviceName = input.deviceName ?? `camera ${input.deviceId}`
   return {
-    camera: deviceName,
+    device: deviceName,
     rule: input.ruleName,
     from: clockOf(input.window.startMs),
     to: clockOf(input.window.endMs),
@@ -226,7 +226,7 @@ function paramsFor(
 export function timelapsePreviewText(input: TimelapsePreviewTextInput): string {
   const deviceName = input.deviceName ?? `camera ${input.deviceId}`
   const vars: Record<string, string> = {
-    camera: deviceName,
+    device: deviceName,
     ...(input.ruleName !== undefined ? { rule: input.ruleName } : {}),
     ...(input.window !== undefined
       ? { from: clockOf(input.window.startMs), to: clockOf(input.window.endMs) }

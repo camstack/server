@@ -1243,7 +1243,7 @@ Parity is enforced, not assumed, in both directions:
   declared that isn't supplied. System rows are built by the REAL intake
   (37 samples through `incomingFromSystemEvent`, the battery/consumable band
   builders and `incomingFromAlarmTransition` with the real arm bodies), and
-  every one of the 26 authorable system kinds must have a sample; `{{camera}}`
+  every one of the 26 authorable system kinds must have a sample; `{{device}}`
   is fed the name `notificationDeviceName` derives. Two named carve-outs:
   `{{subject}}` on a system row (the dedup slot) and `{{deviceName}}` on
   `export-completed` (the in-flight-row rescue's id).
@@ -4511,3 +4511,16 @@ button that calls `addons.custom` with those fields, shows the pending and
 failure state in place, and refreshes the alerts on success. The producer
 decides what the action does and closes or fails its own alert; the UI knows no
 addon and no alert kind. An action has `href` or `invoke`, not both.
+
+## `{{device}}`, formerly `{{camera}}` (2026-11-01)
+
+A rule on an appliance or a sensor names that device, not a camera, so the
+template variable is `{{device}}` — the camera for a track, the appliance or
+sensor for a device event. Stored templates are rewritten by the
+`pipeline-analytics/2026-11-01-template-camera-to-device` migration
+(`src/migrations/`, D987): a `procedure` over the three record kinds that carry a
+template (`rules`, `timelapse-rules`, `texts` overrides), idempotent, `tolerate`.
+`{{camera}}` stays a render-time alias of `{{device}}`
+(`NC_DEPRECATED_TEMPLATE_VARS`, `render-template.ts`) for a template an older
+client still writes: it renders, the catalog never offers it, and the dispatcher
+logs the rule once (`tags: { ruleId }`).

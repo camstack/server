@@ -133,15 +133,15 @@ describe('nc.* text catalog actions', () => {
     it('overrides a key, reports the winning layer, and the next read agrees', async () => {
       const written = await ctx.handlers['nc.setTextOverrides']({
         language: 'en',
-        overrides: { 'detection.body': 'hello {{camera}}' },
+        overrides: { 'detection.body': 'hello {{device}}' },
       })
       expect(written.entries.find((e) => e.key === 'detection.body')).toMatchObject({
-        override: 'hello {{camera}}',
+        override: 'hello {{device}}',
         source: 'override',
       })
       const reread = await ctx.handlers['nc.getTexts']({})
       expect(reread.entries.find((e) => e.key === 'detection.body')?.override).toBe(
-        'hello {{camera}}',
+        'hello {{device}}',
       )
     })
 

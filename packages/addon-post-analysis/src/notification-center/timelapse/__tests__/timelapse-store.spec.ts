@@ -218,7 +218,7 @@ describe('TimelapseStore', () => {
     // `NcRuleStore.update` (Plan A).
     const FULL = {
       template: { title: 'Notte', body: '{{detectionSummary}}' },
-      previewText: 'Notte {{camera}}',
+      previewText: 'Notte {{device}}',
       reportClasses: ['person'],
       denseCadenceSec: 0.5,
       minDwellSec: 1,
@@ -274,7 +274,7 @@ describe('TimelapseStore', () => {
       await expect(
         store.update(created.id, { template: { title: 'x' } }, ['template']),
       ).rejects.toThrow(/both sets and clears 'template'/)
-      expect(store.get(created.id)?.previewText).toBe('Notte {{camera}}')
+      expect(store.get(created.id)?.previewText).toBe('Notte {{device}}')
       expect(store.get(created.id)?.template).toEqual(FULL.template)
     })
 
@@ -287,7 +287,7 @@ describe('TimelapseStore', () => {
     it('an empty clear list is the plain merge', async () => {
       const created = await store.create(makeInput(FULL), 'u')
       const renamed = await store.update(created.id, { name: 'renamed' }, [])
-      expect(renamed.previewText).toBe('Notte {{camera}}')
+      expect(renamed.previewText).toBe('Notte {{device}}')
       expect(renamed.denseCadenceSec).toBe(0.5)
     })
   })

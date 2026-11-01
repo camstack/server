@@ -93,7 +93,7 @@ import {
   recordedCutKey,
 } from './recorded-cut-memo.js'
 import type { NcRecordedGifRequest, NcRecordedGifResult } from './recorded-gif.js'
-import { renderTemplate, templatePlaceholders } from './render-template.js'
+import { deprecatedPlaceholders, renderTemplate, templatePlaceholders } from './render-template.js'
 import { NC_RULE_AI_TRACK_FRAMES, pickTrackNarrationFrames, ruleAiWordCap } from './rule-ai.js'
 import type {
   NcRuleAiFrame,
@@ -1949,6 +1949,30 @@ export class NcDispatcher {
     return renderRowText(this.texts, input)
   }
 
+  /** Rules already warned about a deprecated variable in this process — once each. */
+  private readonly deprecatedVarWarned = new Set<string>()
+
+  /**
+   * A rule template written by an older client may still say `{{camera}}`. It
+   * renders (the alias), and the rule is named once so the operator can edit it.
+   */
+  private warnDeprecatedVars(entry: NcOutboxEntry): void {
+    if (this.deprecatedVarWarned.has(entry.ruleId)) return
+    const template = entry.payload.template
+    const used = [
+      ...new Set([
+        ...deprecatedPlaceholders(template?.title),
+        ...deprecatedPlaceholders(template?.body),
+      ]),
+    ]
+    if (used.length === 0) return
+    this.deprecatedVarWarned.add(entry.ruleId)
+    this.deps.logger.warn(
+      'rule template uses a renamed variable — it still renders, edit it to the new name',
+      { tags: { ruleId: entry.ruleId }, meta: { variables: used, replacement: 'device' } },
+    )
+  }
+
   /**
    * Builds the notification AND returns the artefact ids its media resolve
    * indexed — see {@link withArtifactUrls}. A tuple rather than a field on
@@ -1974,6 +1998,7 @@ export class NcDispatcher {
           ? await resolveZoneLabels(this.deps.getZoneNames, alarmSource.deviceId, alarmSource.zones)
           : []
     const vars = buildTemplateVars(this.texts, entry, deviceName, zoneLabels)
+    this.warnDeprecatedVars(entry)
     // The count a system sentence pluralises on, frozen at intake — "3 cameras
     // armed" is one row's fact, and re-counting anything at delivery would let
     // a row held overnight report this morning's number.
@@ -3427,16 +3452,16 @@ function percentOf(confidence: number | undefined): string {
   return confidence !== undefined ? `${Math.round(confidence * 100)}%` : ''
 }
 
-/** What `{{camera}}` renders on a system row that names no device. */
+/** What `{{device}}` renders on a system row that names no device. */
 export const NC_DEVICELESS_CAMERA_NAME = 'system'
 
 /**
- * The name `{{camera}}` renders for a row — the ONE derivation, shared by the
+ * The name `{{device}}` renders for a row — the ONE derivation, shared by the
  * dispatcher and the template-variable parity spec.
  *
  * A system row that names no device (a node, a backup, an update) renders the
  * filler {@link NC_DEVICELESS_CAMERA_NAME}: there is no camera to name, which
- * is why the catalog offers `{{camera}}` on a system rule only for the kinds
+ * is why the catalog offers `{{device}}` on a system rule only for the kinds
  * that carry a device (template-vars.ts). Everything else asks the directory,
  * and falls back to `camera <id>` when it cannot answer.
  */
@@ -3517,7 +3542,7 @@ export function buildTemplateVars(
   const cameraName = deviceName.toLocaleLowerCase(locale)
   const zonesLower = zoneLabels.map((z) => z.toLocaleLowerCase(locale))
   return {
-    camera: cameraName,
+    device: cameraName,
     // `subject.className` is a REQUIRED field even on a plain system event,
     // where the enqueue path fills it with the literal filler `'event'`
     // (index.ts) — never a real detected class. `{{class}}` must stay empty
@@ -3564,7 +3589,7 @@ export function buildTemplateVars(
             ...(subject.labelKind !== undefined ? { labelKind: subject.labelKind } : {}),
           })),
     // `{{detectionSummary}}` — the class composition of a group, so an operator
-    // can word their own template as "3 persone su {{camera}}" if they prefer
+    // can word their own template as "3 persone su {{device}}" if they prefer
     // the count to the names. Empty on every ungrouped row, like every other
     // variable that has nothing to say.
     detectionSummary:
@@ -3577,7 +3602,7 @@ export function buildTemplateVars(
     // renders empty there, per the missing-var rule). GATED on occupancy being
     // present — `deviceName` is always truthy, so an unconditional fallback
     // would put the camera name behind `{{scope}}` on every OTHER kind too,
-    // duplicating `{{camera}}` under a name the catalog reserves for occupancy.
+    // duplicating `{{device}}` under a name the catalog reserves for occupancy.
     scope: occupancy !== undefined ? (occupancy.zone?.toLocaleLowerCase(locale) ?? cameraName) : '',
     // OCCUPANCY: the admin `zones` array is deliberately EMPTY on an occupancy
     // subject (zone scoping lives inside the condition), so the zone name comes

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A capture request now expires exactly at its deadline instead of one millisecond after, so an abandoned confirmation crop no longer holds the head of the lane and sheds key frames.
+- Notification templates: {{camera}} is now {{device}}. Your saved rules, timelapse captions and text overrides are rewritten once at the first start; {{camera}} keeps rendering in a template an older app still writes
 
 ## [1.2.660] - 2026-11-01
 

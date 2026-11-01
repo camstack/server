@@ -237,8 +237,10 @@ const STATE_SUMMARY_VARS: readonly NcTemplateVarDescriptor[] = [
 export const NC_TEMPLATE_VARS: readonly NcTemplateVarDescriptor[] = [
   // ── Ordinary rules: subject ────────────────────────────────────────────
   {
-    name: 'camera',
-    label: 'Camera',
+    name: 'device',
+    label: 'Device',
+    description:
+      'The device the event is about: the camera for a track, the appliance or sensor for a device event.',
     example: 'Front door',
     group: 'subject',
     families: ['rule', 'timelapse'],
@@ -610,6 +612,19 @@ export const NC_TEMPLATE_VARS: readonly NcTemplateVarDescriptor[] = [
     fields: [...RULE_TEXT],
     kinds: ['system'],
     systemEventKinds: ['node-online', 'node-offline'],
+  },
+  {
+    // Offline only, and only on the wording for an agent that went down while a
+    // planned update was running (system-events.ts `withPlannedUpdateWording`):
+    // the grace the update was given, in minutes. Blank on every other row.
+    name: 'graceMin',
+    label: 'Update grace (minutes)',
+    example: '10',
+    group: 'system',
+    families: ['rule'],
+    fields: [...RULE_TEXT],
+    kinds: ['system'],
+    systemEventKinds: ['node-offline'],
   },
   {
     // Recovery only: how long the node was offline ("44 min"). Blank when the
@@ -1251,7 +1266,7 @@ export function templateVarDeliveryApplies(
  *  `summaryCaptionText`). Declared here rather than as `fields` on every
  *  descriptor so the whole rule stays in one line of code. */
 const CAPTION_VARS: Readonly<Record<'previewText' | 'captionText', readonly string[]>> = {
-  previewText: ['camera', 'rule', 'from', 'to'],
+  previewText: ['device', 'rule', 'from', 'to'],
   captionText: ['rule', 'from', 'to'],
 }
 

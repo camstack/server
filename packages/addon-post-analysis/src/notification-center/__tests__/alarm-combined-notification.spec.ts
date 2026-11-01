@@ -259,7 +259,7 @@ describe('the combined delivery', () => {
   })
 
   it('lets the rule’s own template win over the shipped title', async () => {
-    const sent = await deliver(rowFor(fireRef(), { title: 'INTRUSIONE {{camera}}' }))
+    const sent = await deliver(rowFor(fireRef(), { title: 'INTRUSIONE {{device}}' }))
     expect(sent.notification.title).toBe('INTRUSIONE front door')
     expect(sent.notification.body).toBe('Intrusion: Front door')
   })

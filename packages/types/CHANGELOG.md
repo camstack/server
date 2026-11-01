@@ -7,12 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The migrations ledger rows carry their catalogued meta (description, body kind, store, dependsOn) as an optional field
+- Notification templates: the {{camera}} variable is now {{device}} (the camera for a track, the appliance or sensor for a device event); the system text for an agent that went offline during an update declares {{graceMin}}
+
 ## [1.2.467] - 2026-11-01
 
 ### Changed
 
 - The Notify when choices read When it starts and when it finishes, and a catalog says what start and finish mean for each sensor kind
-- The migrations ledger rows carry their catalogued meta (description, body kind, store, dependsOn) as an optional field
 
 ## [1.2.466] - 2026-11-01
 

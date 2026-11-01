@@ -212,7 +212,7 @@ describe('buildTimelapseOutboxInputs', () => {
       makeInput({
         detections: countDetections({ tracks: NIGHT }),
         template: {
-          title: '{{camera}}: {{detections}}',
+          title: '{{device}}: {{detections}}',
           body: '{{detectionSummary}} · p={{count_person}} v={{count_vehicle}}',
         },
       }),
@@ -231,13 +231,13 @@ describe('buildTimelapseOutboxInputs', () => {
 
   it('honours an operator template over the derived text', () => {
     const [row] = buildTimelapseOutboxInputs(
-      makeInput({ template: { title: 'TL {{camera}}', body: 'copertura {{coverage}}' } }),
+      makeInput({ template: { title: 'TL {{device}}', body: 'copertura {{coverage}}' } }),
     )
     expect(row?.payload.template?.title).toBe('TL Camera retro')
     expect(row?.payload.template?.body).toBe('copertura 100')
   })
 
-  it('defaults the preview caption to the camera name and renders {{camera}}', () => {
+  it('defaults the preview caption to the camera name and renders {{device}}', () => {
     expect(timelapsePreviewText({ deviceId: 1441, deviceName: 'Camera retro' })).toBe(
       'Timelapse Camera retro',
     )
@@ -245,7 +245,7 @@ describe('buildTimelapseOutboxInputs', () => {
 
   it('honours an operator caption, including the empty one', () => {
     expect(
-      timelapsePreviewText({ deviceId: 1441, deviceName: 'retro', text: '{{camera}} — notte' }),
+      timelapsePreviewText({ deviceId: 1441, deviceName: 'retro', text: '{{device}} — notte' }),
     ).toBe('retro — notte')
     expect(timelapsePreviewText({ deviceId: 1441, deviceName: 'retro', text: '' })).toBe('')
   })
@@ -358,7 +358,7 @@ describe('the derived body, per language', () => {
       bodyOf({
         texts: new NcTextCatalog({
           language: 'it',
-          overrides: { it: { 'timelapse.body.window': '{{camera}} · {{from}}-{{to}}' } },
+          overrides: { it: { 'timelapse.body.window': '{{device}} · {{from}}-{{to}}' } },
         }),
       }),
     ).toContain(`Camera retro · ${WINDOW_FROM}-${WINDOW_TO}`)

@@ -119,7 +119,7 @@ describe('NcRuleStore', () => {
 
   it('update with clear removes a stored optional field', async () => {
     const created = await store.create(
-      makeInput({ template: { title: 'T {{camera}}', body: 'B' } }),
+      makeInput({ template: { title: 'T {{device}}', body: 'B' } }),
       'admin',
     )
     const updated = await store.update(created.id, { name: 'renamed' }, ['template'])

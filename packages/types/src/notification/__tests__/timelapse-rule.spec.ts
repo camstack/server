@@ -71,9 +71,9 @@ describe('TimelapseRuleInputSchema', () => {
 
   it('accepts an optional template with title/body', () => {
     const parsed = TimelapseRuleInputSchema.parse(
-      minimalInput({ template: { title: 'Daily {{camera}}', body: 'timelapse ready' } }),
+      minimalInput({ template: { title: 'Daily {{device}}', body: 'timelapse ready' } }),
     )
-    expect(parsed.template?.title).toBe('Daily {{camera}}')
+    expect(parsed.template?.title).toBe('Daily {{device}}')
     expect(parsed.template?.body).toBe('timelapse ready')
   })
 

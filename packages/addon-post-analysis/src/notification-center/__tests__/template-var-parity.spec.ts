@@ -16,7 +16,7 @@
  * `incomingFromConsumableBand`, `incomingFromAlarmTransition` fed by the real
  * `buildArm*Announcement` bodies), one per branch that changes the frozen
  * params, and every authorable `NcSystemEventKind` must have one — bar the
- * named `KINDS_AWAITING_PRODUCER`, each owed by a later task. `{{camera}}`
+ * named `KINDS_AWAITING_PRODUCER`, each owed by a later task. `{{device}}`
  * is fed the name the dispatcher itself derives (`notificationDeviceName`).
  */
 import { describe, expect, it } from 'vitest'
@@ -240,7 +240,7 @@ function doorbellPressEntry(): NcOutboxEntry {
 /**
  * The directory the samples' devices resolve through — for the intake's
  * `lookup` (the frozen `deviceName` param) and for the dispatcher's
- * `getDeviceName` (`{{camera}}`), the same two reads production makes.
+ * `getDeviceName` (`{{device}}`), the same two reads production makes.
  */
 const DIRECTORY: ReadonlyMap<number, string> = new Map([
   [104, 'Cancello'],
@@ -1145,7 +1145,7 @@ async function systemZoneLabels(entry: NcOutboxEntry): Promise<readonly string[]
  *  - `deviceName` on `export-completed`: the intake freezes no name for an
  *    export (only `deviceId`), so the value is the dispatcher's IN-FLIGHT ROW
  *    RESCUE — the id as a string, meant for rows enqueued before the catalog
- *    named devices. `{{camera}}` is the export's name.
+ *    named devices. `{{device}}` is the export's name.
  *
  *  - `subject`: on a system row it is the event's DEDUP SLOT key
  *    (`battery:102`, `node:hub`, `alarm:700`), never a composed sentence — see
@@ -1153,13 +1153,13 @@ async function systemZoneLabels(entry: NcOutboxEntry): Promise<readonly string[]
  *    exception, the combined alarm row, composes a real sentence, but a rule
  *    watching `alarm-triggered` cannot tell which it will get.
  *  - `camera` ONLY when it carries the device-less filler
- *    ({@link NC_DEVICELESS_CAMERA_NAME}) — the catalog narrows `{{camera}}` to
+ *    ({@link NC_DEVICELESS_CAMERA_NAME}) — the catalog narrows `{{device}}` to
  *    the device-carrying kinds for exactly this reason.
  */
 function offeredOnSystemRow(kind: NcSystemEventKind, name: string, value: string): boolean {
   if (name === 'subject') return false
   if (name === 'deviceName' && kind === 'export-completed') return false
-  if (name === 'camera' && value === NC_DEVICELESS_CAMERA_NAME) return false
+  if (name === 'device' && value === NC_DEVICELESS_CAMERA_NAME) return false
   return true
 }
 

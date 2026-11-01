@@ -58,10 +58,10 @@ const CATALOG = {
   entries: [
     {
       key: 'detection.body',
-      shipped: '{{subject}} on {{camera}}',
+      shipped: '{{subject}} on {{device}}',
       shippedLanguage: 'en',
       override: null,
-      effective: '{{subject}} on {{camera}}',
+      effective: '{{subject}} on {{device}}',
       source: 'shipped',
       placeholders: ['subject', 'camera'],
       pluralCategories: [],

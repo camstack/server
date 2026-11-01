@@ -383,7 +383,7 @@ export class TimelapseScheduler {
     })
     try {
       // The display name is resolved BEFORE the render, not after: the preview
-      // caption is `{{camera}}` and the renderer is the thing that burns it in.
+      // caption is `{{device}}` and the renderer is the thing that burns it in.
       // Resolving it afterwards would mean either a second render or a caption
       // that says `camera 101`.
       const deviceName = await this.resolveDeviceName(deviceId)

@@ -148,10 +148,10 @@ describe('nc.upsertTimelapseRule', () => {
     // must survive the upsert action unchanged, including being SET on a rule
     // that never had one (every rule created before the field existed).
     const created = await ctx.handlers['nc.upsertTimelapseRule'](
-      { rule: input({ deviceIds: [101], previewText: '{{camera}} — notte' }) },
+      { rule: input({ deviceIds: [101], previewText: '{{device}} — notte' }) },
       USER,
     )
-    expect(created.rule.previewText).toBe('{{camera}} — notte')
+    expect(created.rule.previewText).toBe('{{device}} — notte')
 
     const bare = await ctx.handlers['nc.upsertTimelapseRule'](
       { rule: input({ deviceIds: [101], name: 'Senza caption' }) },
@@ -159,16 +159,16 @@ describe('nc.upsertTimelapseRule', () => {
     )
     expect(bare.rule.previewText).toBeUndefined()
     const patched = await ctx.handlers['nc.upsertTimelapseRule'](
-      { ruleId: bare.rule.id, patch: { previewText: 'Timelapse {{camera}}' } },
+      { ruleId: bare.rule.id, patch: { previewText: 'Timelapse {{device}}' } },
       USER,
     )
-    expect(patched.rule.previewText).toBe('Timelapse {{camera}}')
+    expect(patched.rule.previewText).toBe('Timelapse {{device}}')
     // A patch that does not mention it leaves it alone.
     const renamed = await ctx.handlers['nc.upsertTimelapseRule'](
       { ruleId: bare.rule.id, patch: { name: 'Rinominata' } },
       USER,
     )
-    expect(renamed.rule.previewText).toBe('Timelapse {{camera}}')
+    expect(renamed.rule.previewText).toBe('Timelapse {{device}}')
   })
 
   describe('clear — removing an optional field on edit', () => {

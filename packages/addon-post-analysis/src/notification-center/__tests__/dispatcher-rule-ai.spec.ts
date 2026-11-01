@@ -150,7 +150,7 @@ describe('NcDispatcher — the AI narration pass', () => {
     await h.dispatcher.deliver(
       makeEntry({
         ai: { shape: 'detection-immediate' },
-        template: { body: '[{{ai}}] on {{camera}}' },
+        template: { body: '[{{ai}}] on {{device}}' },
       }),
     )
     expect(h.sends[0]?.notification.body).toBe('[A white van is parked in the bay.] on parking')

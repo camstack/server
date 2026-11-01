@@ -22,10 +22,28 @@
  * The ONE placeholder grammar. `renderTemplate` substitutes what it matches and
  * {@link templatePlaceholders} lists it; a second regex here would be a legend
  * that disagrees with the renderer about what a variable is, which is the
- * failure mode where an editor advertises `{{ camera }}` as unsupported and the
+ * failure mode where an editor advertises `{{ device }}` as unsupported and the
  * notification prints the camera anyway.
  */
 const PLACEHOLDER_PATTERN = /\{\{\s*(\w+)\s*\}\}/g
+
+/**
+ * Names that were renamed and still resolve at render time, mapped to the name
+ * that replaced them. `{{camera}}` became `{{device}}` (a rule on an appliance
+ * names that device, not a camera); a template written by an older client still
+ * prints the right name. An alias is NOT declared in the catalog and no picker
+ * offers it: the stored rules are rewritten by the `pipeline-analytics` template
+ * migration, and this table only covers a client that has not updated yet.
+ */
+export const NC_DEPRECATED_TEMPLATE_VARS: Readonly<Record<string, string>> = {
+  camera: 'device',
+}
+
+/** The deprecated names a template still uses, in order of first appearance. */
+export function deprecatedPlaceholders(template: string | undefined): readonly string[] {
+  if (template === undefined) return []
+  return templatePlaceholders(template).filter((name) => name in NC_DEPRECATED_TEMPLATE_VARS)
+}
 
 /**
  * The variable names a template names, de-duplicated, in order of first
@@ -57,5 +75,10 @@ export function renderTemplate(
   vars: Readonly<Record<string, string>>,
 ): string | null {
   if (template === undefined || template.trim().length === 0) return null
-  return template.replace(PLACEHOLDER_PATTERN, (_m, name: string) => vars[name] ?? '')
+  return template.replace(PLACEHOLDER_PATTERN, (_m, name: string) => {
+    const current = vars[name]
+    if (current !== undefined) return current
+    const renamed = NC_DEPRECATED_TEMPLATE_VARS[name]
+    return (renamed !== undefined ? vars[renamed] : undefined) ?? ''
+  })
 }

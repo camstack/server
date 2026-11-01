@@ -158,15 +158,15 @@ describe('the depth bound', () => {
 
   it('a class noun cannot reach the scalar vocabulary either', () => {
     const texts = new NcTextCatalog({
-      overrides: { en: { 'class.person': 'person on {{camera}}' } },
+      overrides: { en: { 'class.person': 'person on {{device}}' } },
     })
     expect(ncClassNoun(texts, 'person', 1)).toBe('person on ')
   })
 
   it('a composite whose value LOOKS like a placeholder survives verbatim', () => {
     const texts = new NcTextCatalog({ overrides: { en: { 'class.other': '{{name}}' } } })
-    // `{{camera}}` is the class NAME here — it resolves through `{{name}}` once
+    // `{{device}}` is the class NAME here — it resolves through `{{name}}` once
     // and is then a plain string forever.
-    expect(ncClassNoun(texts, '{{camera}}', 1)).toBe('{{camera}}')
+    expect(ncClassNoun(texts, '{{device}}', 1)).toBe('{{device}}')
   })
 })

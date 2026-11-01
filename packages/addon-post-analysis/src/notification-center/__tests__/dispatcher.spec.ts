@@ -375,7 +375,7 @@ describe('NcDispatcher notification composition', () => {
       makeEntry({
         media: 'none',
         template: {
-          title: '{{class}} @ {{camera}}',
+          title: '{{class}} @ {{device}}',
           body: '{{label}} in {{zone}} ({{confidence}}) {{unknownVar}}',
         },
       }),

@@ -467,7 +467,7 @@ describe('TimelapseScheduler eligibility floor (a rule never predates itself)', 
 })
 
 describe('TimelapseScheduler preview caption', () => {
-  it('resolves {{camera}} against the DISPLAY name and hands it to the render', async () => {
+  it('resolves {{device}} against the DISPLAY name and hands it to the render', async () => {
     const h = await makeHarness({ getDeviceName: async () => 'Camera front door' })
     await seed(h)
     h.setNow(at(1, 6, 10))
@@ -479,7 +479,7 @@ describe('TimelapseScheduler preview caption', () => {
 
   it('uses the rule’s own caption when it has one', async () => {
     const h = await makeHarness({ getDeviceName: async () => 'front door' })
-    await seed(h, { previewText: '{{camera}} {{from}}→{{to}}' })
+    await seed(h, { previewText: '{{device}} {{from}}→{{to}}' })
     h.setNow(at(1, 6, 10))
     await h.scheduler.tick()
     expect(h.render).toHaveBeenCalledWith(
