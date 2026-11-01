@@ -938,7 +938,7 @@ reaches a screen only through the Debug tab's `debug.analyze` custom action.
 **The Debug tab's two `addons.custom` actions are its defining property, and
 adding to them is not a release train.** `debug.listTracks` / `debug.analyze`
 ship with one `camstack deploy` of `pipeline-analytics`; a cap method would need
-codegen, a `@camstack/system` publish and a release. Everything the 2026-08-28
+codegen, a `@camstack/server/system` publish and a release. Everything the 2026-08-28
 rework added — the subject fields the shared card needs, the tile provenance,
 the miss reason — went onto those two actions, and the bulk actions write the
 `setTrackFlags` cap method that already existed. A change to this tab that seems

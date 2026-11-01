@@ -36,7 +36,7 @@ history and its dashboard placement, with nothing in any log.
 
 **The claim that used to justify (1) and (4) — "numeric ids are reallocated by a
 re-sync" — is false.** `allocateNextDeviceId`
-(`@camstack/system`, `builtins/device-manager/device-meta-store.ts`) is a
+(`@camstack/server/system`, `builtins/device-manager/device-meta-store.ts`) is a
 monotonic counter: `nextDeviceId ?? 1`, then `current + 1`. A freed id is never
 re-issued, so the worst case after a re-adoption is an ORPHANED entity, never a
 mis-addressed one — the same worst case a changed `stableId` already had. Do not

@@ -94,7 +94,7 @@ that owns the addon ([D444](../decisions/adr-0444-hub-main-measures-its-own-epis
 with nothing left to purge and re-import, `require-cache.ts` and the guard that
 watched it are deleted (D284 superseded). <!-- drift-ok: naming a file whose deletion is the point -->
 
-### `@camstack/system` builtins, and the ones that are not in hub-main
+### `@camstack/server/system` builtins, and the ones that are not in hub-main
 
 Builtins are the exception to "one addon, one process": they load in the hub
 ROOT process. The reason is narrow — storage, settings, logging and
@@ -272,7 +272,7 @@ a pure function) and never keeps an addon on its own say:
 | Hub packages | every package the hub installs whose addons are all `any-node` (a package with a `hub-only` addon is never wanted; one whose addons are ALL `hub-only` is a leftover), at the hub's version |
 | Agent-tracked packages | `@camstack/addon-agent-ui`, which the hub never loads: the hub follows the registry's `latest` for it, so `addons.updatePackage` for it fans out to every online agent |
 | Tombstones | a package removed on purpose from a node (a hub uninstall for it, an operator undeploy) stays off it; an explicit delivery to that node lifts it |
-| Never managed | `@camstack/system` |
+| Never managed | `@camstack/server/system` |
 
 The diff against the node's reported roster is **install** (missing), **update**
 (behind, or AHEAD of the hub: D942) and **remove** (tombstoned, or a hub-only
@@ -292,7 +292,7 @@ nothing.
 
 Registration also still runs the decl-level stale sweep ([D24](../decisions/adr-0024.md)):
 an addon on the node that the hub does not install, or installs as `hub-only`, is
-undeployed. Bootstrap infrastructure (`@camstack/system`,
+undeployed. Bootstrap infrastructure (`@camstack/server/system`,
 `@camstack/addon-agent-ui`) never is. The agent has no local uninstall path:
 `$agent.undeploy` is called only by the hub (an operator uninstall, the sweep, or
 a convergence removal).

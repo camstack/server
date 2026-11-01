@@ -9,6 +9,7 @@ import type { ElementStatus } from './lifecycle.js'
 import type { CameraPhase } from './stream-broker.js'
 import type { PipelinePhaseMode } from '../device/device-profile.js'
 import type { AddonPageDeclaration } from './addon.js'
+import type { UnmetRequirement } from '../addon/package-requires.js'
 
 // ---------------------------------------------------------------------------
 // From @camstack/server/system — backup
@@ -115,6 +116,8 @@ export interface PackageUpdate {
   readonly latestVersion: string
   readonly category: 'addon' | 'core'
   readonly requiresRestart: boolean
+  /** Set when the newer version is held: what it needs and this node does not meet (D988). */
+  readonly blockedBy?: readonly UnmetRequirement[]
 }
 
 export interface UpdateResult {
@@ -122,6 +125,8 @@ export interface UpdateResult {
   readonly version: string
   readonly requiresRestart: boolean
   readonly error?: string
+  /** Why an update was refused for its declared requirements (D988). */
+  readonly unmet?: readonly UnmetRequirement[]
 }
 
 // ---------------------------------------------------------------------------

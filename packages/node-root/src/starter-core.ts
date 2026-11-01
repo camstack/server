@@ -55,6 +55,16 @@ export const HOST_EXTERNAL_SPECIFIERS: readonly string[] = [
   'ssh2',
 ]
 
+/**
+ * The oldest `@camstack/server` this starter can host (D988) — the first one
+ * that ships its kernel as `@camstack/server/system`, because the host-external
+ * list above resolves that specifier and an older server imports another.
+ * Declared as `camstack.requires.server` in this package's `package.json`; a
+ * spec keeps the two equal. Raise it by hand when a server needs a newer
+ * starter than the one baked into an image.
+ */
+export const STARTER_HOSTS_SERVER_MIN = '1.2.718'
+
 export function isHostExternal(specifier: string): boolean {
   return HOST_EXTERNAL_SPECIFIERS.some(
     (name) => specifier === name || specifier.startsWith(`${name}/`),
@@ -181,7 +191,14 @@ export function runNodeStarter(options: NodeStarterOptions): void {
   const rootDir = serverRootDir(options.dataDir)
 
   // ── 2. Apply a staged swap, then migrate the legacy layout (idempotent) ──
-  const swap = applyPendingRootSwap(rootDir, options.spec, nodeMajor, now, (m) => console.log(m))
+  const swap = applyPendingRootSwap(
+    rootDir,
+    options.spec,
+    nodeMajor,
+    now,
+    (m) => console.log(m),
+    STARTER_HOSTS_SERVER_MIN,
+  )
   if (swap.applied) console.log(`[starter] applied staged update → ${swap.version ?? '?'}`)
   else if (swap.reason !== 'no pending swap')
     console.warn(`[starter] staged update NOT applied: ${swap.reason}`)

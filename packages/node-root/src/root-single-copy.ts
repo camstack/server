@@ -334,12 +334,26 @@ export function applyPendingRootSwap(
   nodeMajor: number,
   now: () => number,
   log: LogFn,
+  hostsServerMin?: string,
 ): ApplyRootSwapResult {
   const marker = readPendingRootSwap(rootDir)
   if (marker === null) return { applied: false, version: null, reason: 'no pending swap' }
 
   const staging = marker.stagingPath
   const dest = currentDir(rootDir)
+
+  // D988: this starter declares the oldest server it can host. A staged server
+  // below it is refused the same way an invalid one is — staging and marker
+  // discarded, `current` untouched, the previous server keeps running.
+  if (hostsServerMin !== undefined && compareSemver(marker.version, hostsServerMin) < 0) {
+    const reason =
+      `staged server ${marker.version} is below the ${hostsServerMin} this starter hosts — ` +
+      'update the app or the container image, then retry'
+    log(`[single-copy] staged swap ${marker.version} refused — ${reason}`)
+    rmrf(staging)
+    clearPendingRootSwap(rootDir)
+    return { applied: false, version: null, reason }
+  }
 
   const invalid = validateClosureDir(staging, nodeMajor, spec, marker.version)
   if (invalid !== null) {

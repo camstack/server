@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { RequiredAddonUpdateSchema, UnmetRequirementSchema } from '../addon/package-requires.js'
 
 /**
  * server-management — per-NODE singleton capability for a node's ROOT
@@ -443,6 +444,17 @@ const ServerUpdateActionResultSchema = z.object({
    * (`reason: 'addon-would-refuse'`). Optional for version skew.
    */
   blockers: z.array(UpdateBlockerSchema).optional(),
+  /**
+   * The minimums the target server declares and this node does not meet
+   * (D988), present when the update was refused with
+   * `reason: 'requirements-unmet'`. Each names the versions on both sides.
+   */
+  unmet: z.array(UnmetRequirementSchema).optional(),
+  /**
+   * The addons this node has below the minimum the staged server declares —
+   * the ones to update WITH the server. Present on an accepted update.
+   */
+  requiredAddonUpdates: z.array(RequiredAddonUpdateSchema).optional(),
 })
 
 const LaunchOverridesSchema = z.object({

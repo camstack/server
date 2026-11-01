@@ -8,6 +8,7 @@ import type { AddonPeerBytes } from './addon-peer-bytes.js'
 import type { SecretsAccess } from '../keychain/secrets-access.js'
 import type { RecordsAccess } from '../records/records-access.js'
 import type { IntegrationInstanceRef } from '../addon/integration-instance-ref.js'
+import type { PackageRequires } from '../addon/package-requires.js'
 import type { CapabilityDeclaration } from './capability.js'
 import type { ConfigUISchemaWithValues, FieldProbeResult } from './config-ui.js'
 import type { IEventBus, ReadinessScope } from './event-bus.js'
@@ -1482,6 +1483,12 @@ export interface AddonPackageManifest {
    * only when no prebuild exists for the host triple.
    */
   readonly nativeDependencies?: Readonly<Record<string, string>>
+  /**
+   * What this package needs from the rest of the install (D988): the oldest
+   * server (addons), the oldest addons and shell (the server). Stamped by the
+   * publish workflow, never typed by hand — see `PackageRequiresSchema`.
+   */
+  readonly requires?: PackageRequires
 }
 
 export interface AddonBundleManifest {

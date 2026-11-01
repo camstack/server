@@ -42,7 +42,7 @@ npm run build                                 # everything (nx run-many)
 ```
 
 - **The backend typecheck is not verification.** `npm run typecheck -w
-  server/backend` resolves `@camstack/types` / `@camstack/system` from their
+  server/backend` resolves `@camstack/types` / `@camstack/server/system` from their
   BUILT `dist/`, so a signature you changed in source is invisible to it until
   you rebuild them. After touching `types` or `system`: build them first, then
   typecheck or build the consumers. tsup/vite builds do not type-check either —
@@ -109,7 +109,7 @@ tool, `hub.mjs` included, uses that session and refreshes it) + POST. Reuse an u
 1. Push first (`git log --oneline origin/main..HEAD` must be empty) — the
    workflow builds `origin/main`, not your tree.
 2. `Publish Packages` with `include_dependents=false`; a cap change adds
-   `force_packages=@camstack/system,@camstack/server` (nx-affected misses
+   `force_packages=@camstack/server/system,@camstack/server` (nx-affected misses
    `system` for a `types` edit). Details and the lockfile preflight:
    `camstack-publish-ci`.
 3. **Registry lag is not failure.** Right after a publish `npm view <pkg>
@@ -158,7 +158,7 @@ was the habit. Both roles now load builtins from the closure
 (`server/backend/src/core/addon/addon-registry.service.ts`,
 `server/backend/src/agent/main.ts`) and skip that copy, so one apply is enough.
 If a builtin still behaves like the old code: look for a stale
-`@camstack/system` under the node's addons dir (the hub's hot-load rescan
+`@camstack/server/system` under the node's addons dir (the hub's hot-load rescan
 still reads it; an agent falls back to it, and logs so, when its closure
 cannot resolve the package), remove it, then one `restartServer` — and prove
 it with §4, not with a version number.

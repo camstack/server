@@ -1,4 +1,9 @@
-import { userError } from '@camstack/types'
+import {
+  describeUnmet,
+  userError,
+  type PackageRequires,
+  type UnmetRequirement,
+} from '@camstack/types'
 import { execFile } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
 import * as fs from 'node:fs'
@@ -48,6 +53,11 @@ import {
 import { readPackedChangelog } from './read-packed-file.js'
 import { AddonRegistryService } from './addon-registry.service'
 import { computeDistBuildId, resolveHubClosurePackageDir } from './package-dir-utils.js'
+import {
+  readRunningServerVersion,
+  requiresOfVersionDoc,
+  unmetAddonRequirements,
+} from './addon-requirements.js'
 
 const execFileAsync = promisify(execFile)
 
@@ -220,7 +230,12 @@ export interface NpmReachabilityObserver {
 }
 
 export type RegistryLookup =
-  | { readonly ok: true; readonly latestVersion: string | null }
+  | {
+      readonly ok: true
+      readonly latestVersion: string | null
+      /** `camstack.requires` the latest version declares (D988); absent when it declares none. */
+      readonly requires?: PackageRequires
+    }
   | { readonly ok: false; readonly error: string }
 
 type AddonLoader = import('@camstack/server/system').AddonLoader
@@ -365,6 +380,8 @@ export class AddonPackageService {
      * (manual-boot) — unit tests leave it out and get the RAM-only emitter.
      */
     updateAvailabilityStore?: IUpdateAvailabilityStore,
+    /** The server version this process runs (D988); tests inject one, production reads the closure. */
+    private readonly readServerVersion: () => string | null = readRunningServerVersion,
   ) {
     this.logger = this.loggingService.createLogger('AddonPackageService')
     this.updateAvailability = new UpdateAvailabilityEmitter(
@@ -878,11 +895,25 @@ export class AddonPackageService {
           })
           return
         }
+        // An agent's roster is judged by its own node when it applies the update;
+        // only the hub's own sweep knows the server it would run against.
         const decision = decideAddonVersionMove(
           version,
           lookup.latestVersion,
           ADDON_VERSION_REASON_REGISTRY_LATEST,
+          nodeId === undefined ? this.unmetFor(lookup.requires) : [],
         )
+        if ('blockedBy' in decision) {
+          updates.push({
+            name,
+            currentVersion: version,
+            latestVersion: lookup.latestVersion ?? version,
+            category: this.categorize(name),
+            requiresRestart: false,
+            blockedBy: decision.blockedBy,
+          })
+          return
+        }
         if (!decision.move) return
         const category = this.categorize(name)
         updates.push({
@@ -1294,6 +1325,22 @@ export class AddonPackageService {
       let updatedVersion: string
 
       if (category === 'addon') {
+        // D988: a version that needs a newer server (or addon) than this node
+        // runs is refused BEFORE it is installed, naming both versions.
+        const unmet = this.unmetFor(await this.fetchRequires(name, version ?? 'latest'))
+        if (unmet.length > 0) {
+          const reason = unmet.map(describeUnmet).join('; ')
+          this.logger.warn('Addon update refused: requirements unmet', {
+            meta: { name, version, unmet: unmet.map(describeUnmet) },
+          })
+          return {
+            success: false,
+            version: '',
+            requiresRestart: false,
+            error: `Refused: ${name}${version ? `@${version}` : ''} needs more than this node runs — ${reason}`,
+            unmet,
+          }
+        }
         // Reuse the long-lived installer the registry already configured
         // (correct addonsDir + installSource + workspaceDir) — building a
         // fresh one with `new AI({ addonsDir })` would lose installSource
@@ -1890,7 +1937,23 @@ export class AddonPackageService {
           pkg.version,
           targetVersion ?? null,
           ADDON_VERSION_REASON_REGISTRY_LATEST,
+          this.unmetFor(
+            requiresOfVersionDoc(asRecord(asRecord(data['versions'])[targetVersion ?? ''])),
+          ),
         )
+        if ('blockedBy' in followed) {
+          this.logger.info(
+            'Auto-update holds an addon whose target needs more than this node runs',
+            {
+              meta: {
+                name: pkg.name,
+                to: targetVersion,
+                unmet: followed.blockedBy.map(describeUnmet),
+              },
+            },
+          )
+          continue
+        }
         if (!followed.move) continue
 
         this.logger.info('Moving addon to registry latest', {
@@ -2095,7 +2158,19 @@ export class AddonPackageService {
           version,
           lookup.latestVersion,
           ADDON_VERSION_REASON_REGISTRY_LATEST,
+          this.unmetFor(lookup.requires),
         )
+        if ('blockedBy' in decision) {
+          updates.push({
+            name,
+            currentVersion: version,
+            latestVersion: lookup.latestVersion ?? version,
+            category: this.categorize(name),
+            requiresRestart: false,
+            blockedBy: decision.blockedBy,
+          })
+          continue
+        }
         if (!decision.move) continue
         updates.push({
           name,
@@ -2175,7 +2250,12 @@ export class AddonPackageService {
       }
       const data = await fetchJsonObject(response)
       const version = asString(data['version'])
-      return { ok: true, latestVersion: version || null }
+      const requires = requiresOfVersionDoc(data)
+      return {
+        ok: true,
+        latestVersion: version || null,
+        ...(requires !== undefined ? { requires } : {}),
+      }
     } catch (error: unknown) {
       return { ok: false, error: errMsg(error) }
     }
@@ -2199,13 +2279,16 @@ export class AddonPackageService {
     // like any other, and a list whose lines cannot be attributed is what made
     // three announcements look like one.
     const scope = nodeId ?? this.resolveNodeId()
-    const candidates: UpdateAvailablePayload[] = updates.map((update) => ({
-      target: 'addon',
-      packageName: update.name,
-      currentVersion: update.currentVersion,
-      latestVersion: update.latestVersion,
-      nodeId: scope,
-    }))
+    // A held update is not an announcement: nothing can be done about it yet.
+    const candidates: UpdateAvailablePayload[] = updates
+      .filter((update) => update.blockedBy === undefined)
+      .map((update) => ({
+        target: 'addon',
+        packageName: update.name,
+        currentVersion: update.currentVersion,
+        latestVersion: update.latestVersion,
+        nodeId: scope,
+      }))
     if (failures > 0) {
       this.logger.warn('Addon update check incomplete — availability published as partial', {
         tags: { nodeId: scope },
@@ -2320,6 +2403,52 @@ export class AddonPackageService {
         meta: { name, error: errMsg(error) },
       })
       this.addonRegistry.refreshPackageVersion(name, version)
+    }
+  }
+
+  /**
+   * The `camstack.requires` of `name@version` as the HUB would deliver it: the
+   * installed copy when it is that version, the registry's document otherwise.
+   * `undefined` is "declares nothing, or could not be read".
+   */
+  async resolveTargetRequires(name: string, version: string): Promise<PackageRequires | undefined> {
+    if (this.getInstalledPackageVersion(name) === version) {
+      try {
+        const manifest = readJsonObject(path.join(this.resolveAddonsDir(), name, 'package.json'))
+        if (manifest) return requiresOfVersionDoc(manifest)
+      } catch {
+        // fall through to the registry
+      }
+    }
+    return this.fetchRequires(name, version)
+  }
+
+  /** What a target's `camstack.requires` asks that this node does not meet (D988). */
+  private unmetFor(requires: PackageRequires | undefined): readonly UnmetRequirement[] {
+    return unmetAddonRequirements(requires, {
+      serverVersion: this.readServerVersion(),
+      addonsDir: () => this.resolveAddonsDir(),
+    })
+  }
+
+  /**
+   * The `camstack.requires` of one registry version. An unreadable answer is
+   * "declares nothing": the install that follows asks the same registry and
+   * fails on its own if it is really down.
+   */
+  private async fetchRequires(name: string, spec: string): Promise<PackageRequires | undefined> {
+    try {
+      const url = `${this.resolveRegistryBase()}/${name.replace('/', '%2F')}/${encodeURIComponent(spec)}`
+      const response = await fetch(url, {
+        signal: AbortSignal.timeout(AddonPackageService.REGISTRY_TIMEOUT_MS),
+      })
+      if (!response.ok) return undefined
+      return requiresOfVersionDoc(await fetchJsonObject(response))
+    } catch (error: unknown) {
+      this.logger.warn('Could not read the requirements of the target version', {
+        meta: { name, spec, error: errMsg(error) },
+      })
+      return undefined
     }
   }
 

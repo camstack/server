@@ -33,6 +33,7 @@ import { applyModelDistribution, type ModelDistributionSeam } from './apply-mode
 import { applyStageDevUploads, type StageDevUploadsSeam } from './apply-stage-dev-uploads.js'
 import { unpackDevUploadVersionBundle } from '../api/dev-uploads-bundle.js'
 import { fetchBundleFromHub } from './fetch-bundle-from-hub.js'
+import { readRunningServerVersion } from '../core/addon/addon-requirements.js'
 
 /**
  * Console-backed scoped logger for the deploy swap (the only consumer in this
@@ -410,6 +411,9 @@ function createAgentService(deps: AgentServiceDeps): ServiceSchema {
           const decodeDetection = buildDecodeDetectionSlice()
           return {
             nodeId: broker.nodeID,
+            // The server this node runs (D988): the hub holds an addon delivery
+            // that needs a newer one. `null` when the closure cannot be read.
+            serverVersion: readRunningServerVersion(),
             name: persistedAgentName(deps.configPath, deps.agentName),
             platform: os.platform(),
             arch: os.arch(),

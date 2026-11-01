@@ -62,6 +62,13 @@ import {
   sweepTransientRootDirs,
   writePendingRootSwap,
 } from './root-single-copy.js'
+import {
+  addonsBelowMinimum,
+  describeUnmetRequirement,
+  readClosureRequires,
+  runningWrapperOf,
+  unmetWrapperRequirements,
+} from './requirements.js'
 import { detectWorkspaceRoot } from './workspace-detect.js'
 import {
   detectWrapperIdentity,
@@ -213,6 +220,14 @@ export interface RootUpdateServiceOptions {
    */
   readonly updatePreflight?: (targetVersion: string) => Promise<readonly UpdateBlocker[]>
   /**
+   * The addon packages installed on this node, `package name → version`
+   * (`null` for one whose version cannot be read). Injected - node-root cannot
+   * scan the addons dir. Used to name the addons a staged server's declared
+   * minimums (D988) want updated WITH it; absent means "none known", never
+   * "all fine".
+   */
+  readonly installedAddonVersions?: () => Readonly<Record<string, string | null>>
+  /**
    * The node's runner boot check (D877), served on `getServerPackageStatus`.
    * `undefined` until the one-shot check has run.
    */
@@ -244,6 +259,7 @@ export type UpdateRefusalReason =
   | 'already-running'
   | 'dev-uploads-missing'
   | 'addon-would-refuse'
+  | 'requirements-unmet'
 
 /** Why a plain (version-preserving) restart was dropped. */
 export type RestartRefusalReason = 'operation-in-flight' | 'already-staged'
@@ -370,6 +386,7 @@ export class RootUpdateService {
   private readonly updatePreflightFn:
     | ((targetVersion: string) => Promise<readonly UpdateBlocker[]>)
     | null
+  private readonly installedAddonVersionsFn: (() => Readonly<Record<string, string | null>>) | null
   private readonly runnerBootCheckFn: () => RunnerBootCheck | undefined
   private readonly execNpm: NpmExecFn
   private readonly ensureNativePrebuildsFn: (closureDir: string) => Promise<void>
@@ -406,6 +423,7 @@ export class RootUpdateService {
     this.restartServerFn = options.restartServer
     this.dataDir = path.resolve(options.dataDir)
     this.updatePreflightFn = options.updatePreflight ?? null
+    this.installedAddonVersionsFn = options.installedAddonVersions ?? null
     this.runnerBootCheckFn = options.runnerBootCheck ?? (() => undefined)
     this.execNpm =
       options.execNpm ??
@@ -873,6 +891,26 @@ export class RootUpdateService {
       this.inFlight = 'idle'
     }
 
+    // D988: the staged server declares the shell and the addons it needs. A
+    // shell below the minimum is refused HERE, before a swap is armed — the
+    // staged copy is discarded and `current` stays as it is.
+    const requires = readClosureRequires(stagingPath, this.spec)
+    const unmet = unmetWrapperRequirements(requires, runningWrapperOf(this.wrapperIdentity()))
+    if (unmet.length > 0) {
+      fs.rmSync(stagingPath, { recursive: true, force: true })
+      const refused = this.refuseUpdate(
+        'requirements-unmet',
+        target,
+        `Refused: ${this.spec.packageName}@${target} ${unmet.map(describeUnmetRequirement).join('; ')}. ` +
+          'Update the app or the container image first, then retry.',
+      )
+      return { ...refused, unmet: [...unmet] }
+    }
+    const requiredAddonUpdates = addonsBelowMinimum(
+      requires,
+      this.installedAddonVersionsFn === null ? {} : this.installedAddonVersionsFn(),
+    )
+
     // Arm the swap-on-restart + schedule the graceful restart.
     writePendingRootSwap(this.rootDir(), {
       schemaVersion: 1,
@@ -899,6 +937,9 @@ export class RootUpdateService {
       outcome: 'staged',
       reason: null,
       error: null,
+      ...(requiredAddonUpdates.length > 0
+        ? { requiredAddonUpdates: [...requiredAddonUpdates] }
+        : {}),
     }
   }
 

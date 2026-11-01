@@ -107,7 +107,7 @@ answers `'none'`, which is a claim, not an absence.
   test fake that pre-seeds `value` will keep the suite green while it does. Remove
   your fix and confirm the test fails.
 - **Verify the deployed version, not the bundle hash.** A framework fix in
-  `@camstack/system` is not live until a `@camstack/server` carrying it is
+  `@camstack/server/system` is not live until a `@camstack/server` carrying it is
   installed ([D16](../../docs/decisions/adr-0016.md)).
 - Providers are trampolines over `runtimeState`. No `private cachedX` fields, no
   cold-start fallbacks persisted into the config blob. See

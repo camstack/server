@@ -166,7 +166,25 @@ describe('runNodeStarter (single-copy model)', () => {
   })
 
   it('applies a staged pending swap at boot, then boots the swapped copy', () => {
-    scaffoldCurrent(HUB_ROOT_SPEC, '1.1.50')
+    scaffoldCurrent(HUB_ROOT_SPEC, '1.2.720')
+    const staging = stagingDirPath(serverRootDir(dataDir), '1.2.730', 42, NOW)
+    scaffoldClosureAt(staging, HUB_ROOT_SPEC, '1.2.730')
+    scaffoldNatives(staging)
+    writePendingRootSwap(serverRootDir(dataDir), {
+      schemaVersion: 1,
+      version: '1.2.730',
+      stagingPath: staging,
+      requestedAtMs: NOW,
+    })
+    const r = run()
+    const cDir = currentDir(serverRootDir(dataDir))
+    expect(r.loaded).toEqual([rootEntryPath(cDir, HUB_ROOT_SPEC)])
+    expect(r.env[ENV_NAMES.activeVersion]).toBe('1.2.730')
+    expect(fs.existsSync(staging)).toBe(false)
+  })
+
+  it('keeps the previous server when the staged one is below the range the starter hosts', () => {
+    scaffoldCurrent(HUB_ROOT_SPEC, '1.2.720')
     const staging = stagingDirPath(serverRootDir(dataDir), '1.1.60', 42, NOW)
     scaffoldClosureAt(staging, HUB_ROOT_SPEC, '1.1.60')
     scaffoldNatives(staging)
@@ -177,9 +195,7 @@ describe('runNodeStarter (single-copy model)', () => {
       requestedAtMs: NOW,
     })
     const r = run()
-    const cDir = currentDir(serverRootDir(dataDir))
-    expect(r.loaded).toEqual([rootEntryPath(cDir, HUB_ROOT_SPEC)])
-    expect(r.env[ENV_NAMES.activeVersion]).toBe('1.1.60')
+    expect(r.env[ENV_NAMES.activeVersion]).toBe('1.2.720')
     expect(fs.existsSync(staging)).toBe(false)
   })
 
@@ -203,10 +219,10 @@ describe('runNodeStarter (single-copy model)', () => {
 describe('isHostExternal', () => {
   it('matches exact and subpath specifiers only', () => {
     expect(isHostExternal('@camstack/server/system')).toBe(true)
-    expect(isHostExternal('@camstack/system/dist/addon-runner.js')).toBe(true)
+    expect(isHostExternal('@camstack/server/system/dist/addon-runner.js')).toBe(true)
     expect(isHostExternal('zod')).toBe(true)
     expect(isHostExternal('zod-to-json-schema')).toBe(false)
-    expect(isHostExternal('@camstack/systemx')).toBe(false)
+    expect(isHostExternal('@camstack/server/systemx')).toBe(false)
     expect(isHostExternal('fastify')).toBe(false)
   })
 })

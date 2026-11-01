@@ -23,6 +23,7 @@
 import { randomUUID } from 'node:crypto'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
+import { readInstalledAddonVersions } from '../core/addon/installed-addon-versions.js'
 import type { RegisteredAddonManifest } from '@camstack/server/system'
 import { readPendingRestart, writePendingRestart } from '@camstack/server/system'
 import type {
@@ -318,6 +319,8 @@ export class AgentUpdateService extends RootUpdateService {
       ...(options.runnerBootCheck !== undefined
         ? { runnerBootCheck: options.runnerBootCheck }
         : {}),
+      installedAddonVersions: () =>
+        readInstalledAddonVersions(path.join(options.dataDir, 'addons')),
     })
     this.nodeId = nodeId
     this.restartAnnouncer = restartAnnouncer

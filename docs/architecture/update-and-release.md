@@ -60,10 +60,10 @@ package is absent. So the topology is a property of `<dataDir>`, and every
 | `camstack deploy` / Admin UI upload | one package | operator gesture |
 | `propagateToAgents` / `deployToAgent` | one package, via `deliverAddonToAgent` | a hub install fans out |
 | the addon back-fill | packages the node's declared roster is missing, and packages whose live version differs from the hub's installed version (either direction, D942). The agent does not read npm | a node registers, hub boots, or `clusterNodes.repairNodeAddons` |
-| `ensureRequiredPackages` (bootstrap) | the bootstrap set: missing packages at registry `latest`, and an npm-source copy whose version differs from `latest` (either direction, D942). A workspace/bundled seed and a closure-provided `@camstack/system` are left alone. An unreadable registry changes nothing | every boot |
+| `ensureRequiredPackages` (bootstrap) | the bootstrap set: missing packages at registry `latest`, and an npm-source copy whose version differs from `latest` (either direction, D942). A workspace/bundled seed and a closure-provided `@camstack/server/system` are left alone. An unreadable registry changes nothing | every boot |
 | ~~the image seed~~ | **gone** ([D129](../decisions/adr-0129.md), 2026-08-13) — the image carries no addon tree, so `ensureRequiredPackages` fetches a missing bootstrap addon from npm at `latest` | — |
 
-**Nothing writes `@camstack/system` into an addon root any more.** Since
+**Nothing writes `@camstack/server/system` into an addon root any more.** Since
 [D107](../decisions/adr-0107.md) an agent loads the builtins from the closure it
 is running, exactly as the hub has since 2026-07-18. The retired
 `seedBuiltinsFromClosure` wrote that copy **only when absent** — it guaranteed one
@@ -82,7 +82,7 @@ pin and no adopt-by-semver).
 **The SYSTEM fallback stays — served out of the ONE baked tree.**
 `/opt/camstack-hub` is what a node boots from when its closure is broken, and the
 entrypoint re-creates `<dataDir>/framework` on exactly ONE
-condition — no `@camstack/system` under `server-root/current` — printing
+condition — no `@camstack/server/system` under `server-root/current` — printing
 `FALLBACK` when it does. It used to re-create the tree whenever the tree itself
 was missing, which is why the 509 MB purged on 2026-08-12 was back after the
 next restart. In steady state a node holds ONE copy and the post-boot sweep
@@ -114,7 +114,7 @@ more changes than before, which is the conservative direction.
 
 **What may NEVER write it**
 
-- `@camstack/system`, `types`, `sdk`, `ui-library`. They are
+- `@camstack/server/system`, `types`, `sdk`, `ui-library`. They are
   host-provided ([D15](../decisions/adr-0015.md)) and belong in the closure. A
   copy under `addons/` WINS over the closure and never updates —
   `shouldSkipClosureProvidedSeed` refuses to seed one, and
@@ -128,13 +128,13 @@ more changes than before, which is the conservative direction.
 - Anything at all, by hand. **A rename is an install, not an archive**
   ([D90](../decisions/adr-0090.md)). Three consumers key on the `package.json`
   inside a directory and ignore the directory's name: the loader (its skip list
-  is keyed on the PACKAGE name, so `@camstack/system.bak-pre-unshadow` was not
+  is keyed on the PACKAGE name, so `@camstack/server/system.bak-pre-unshadow` was not
   skipped), the agent's `resolveAddonPackageDirs`, and
   `AddonManifest.reconcileFromDisk`. On 2026-08-07 the `agent-a` agent's
   main process held five live mappings of `better_sqlite3.node` out of a
   17-day-old copy; on 2026-08-08 the Mac agent had **no**
   `addons/@camstack/system` directory at all and still reported
-  `@camstack/system 1.2.3` — read out of `system.bak-pre-1272-…` while running a
+  `@camstack/server/system 1.2.3` — read out of `system.bak-pre-1272-…` while running a
   1.2.61 closure.
 
   Two gates now close this, and neither deletes anything: `reconcileFromDisk`
@@ -158,7 +158,7 @@ refuse a boot**, and `scripts/check-inventory-never-fatal.ts` keeps it that way
 
 | Guard | Answers |
 | --- | --- |
-| `package-inventory.ts` ([D45](../decisions/adr-0045.md)) | how many copies of `@camstack/system` / `types` / `sdk` exist under the roots THIS node resolves through |
+| `package-inventory.ts` ([D45](../decisions/adr-0045.md)) | how many copies of `@camstack/server/system` / `types` / `sdk` exist under the roots THIS node resolves through |
 | `addon-root-inventory.ts` | whether a whole RIVAL data root exists on this machine — a retired Electron app id, the pre-Electron `~/camstack-agent-data` |
 
 The second exists because the first structurally cannot see it: its roots are
@@ -229,16 +229,16 @@ existing method needs only the providing addon redeployed.
 
 **Builtins load from the closure, on both roles.** The hub
 (`server/backend/src/core/addon/addon-registry.service.ts`, `bootstrap`:
-`resolveHubClosurePackageDir('@camstack/system')`, then
-`loadFromDirectory(addonsDir, ['@camstack/system'])`) and the agent
+`resolveHubClosurePackageDir('@camstack/server/system')`, then
+`loadFromDirectory(addonsDir, ['@camstack/server/system'])`) and the agent
 (`bootCoreAddons` in `server/backend/src/agent/main.ts` →
 `planAgentAddonScan` in `server/backend/src/agent/addon-scan.ts`) both load the
-`@camstack/system` builtins from the running closure and SKIP any
+`@camstack/server/system` builtins from the running closure and SKIP any
 `<addonsDir>/@camstack/system` copy. Forked runners resolve `@camstack/*`
 through the closure too (`registerFrameworkResolver` with
 `CAMSTACK_FRAMEWORK_DIR`, set by the launcher to the active root). So
 `applyServerUpdate`'s own restart refreshes the builtins; no second restart is
-needed, and `updatePackage({name:'@camstack/system', nodeId})` is no longer how
+needed, and `updatePackage({name:'@camstack/server/system', nodeId})` is no longer how
 an agent's builtins are refreshed.
 
 This replaced the model [D87](../decisions/adr-0087.md) describes, in which an
@@ -248,7 +248,7 @@ because "Update all" on an agent had been silently updating the hub instead
 ([D106](../decisions/adr-0106.md)) — the drift that motivated loading from the
 closure. Two residues remain:
 
-- **The agent fallback.** When the closure cannot resolve `@camstack/system`,
+- **The agent fallback.** When the closure cannot resolve `@camstack/server/system`,
   the agent logs `not resolvable from the running closure — falling back to
   the addon-root copy` and loads whatever copy is on disk. That line in an
   agent's boot log means its builtins may be stale.
@@ -257,7 +257,7 @@ closure. Two residues remain:
   and refreshes the metadata of already-registered entries from it — so a
   leftover `<addonsDir>/@camstack/system` is still worth removing.
 
-Read the `[launcher] resolved @camstack/system@… from <path>` line for what it
+Read the `[launcher] resolved @camstack/server/system@… from <path>` line for what it
 says and no more: which copy the LAUNCHER resolves for its own imports.
 
 ## What ships in an addon — and why `addons/` has no `node_modules`
@@ -781,7 +781,7 @@ The converse trap (2026-09-19): `/proc/<pid>/cmdline` of hub-main names that
 seed path on EVERY boot, and the seed's `package.json` next to it carries the
 image version — that is not what the process loaded. What it loaded is the
 starter's `booting @camstack/server@X from /data/server-root/current` line, the
-launcher's `resolved @camstack/system@… from …` line, and `bootMode` /
+launcher's `resolved @camstack/server/system@… from …` line, and `bootMode` /
 `activeVersion` / `runningVersion` on `getServerPackageStatus`. Reading the
 version off the cmdline path diagnosed a running hub as a version behind.
 
@@ -905,7 +905,7 @@ camstack deploy packages/<pkg> --server https://camstack.<local-user>.top -n <no
 ## Release order for a camera's motion path (D673, D696)
 
 A camera's motion runs through these pieces:
-- the server (framework, and `camera-grid` inside `@camstack/system`);
+- the server (framework, and `camera-grid` inside `@camstack/server/system`);
 - the orchestrator (the camera-sensors bridge, and the ONLY writer of a
   camera's `motion` slice);
 - the camera providers (the raw `ProviderMotion` push, and no longer any write
@@ -981,7 +981,7 @@ no-op when the server step re-aligned it.
      entry without the field is an old runner).
 
   **Stop rule:** either read short, and the providers do not ship.
-- **`camera-grid` stays deferred and unsplit.** It is in `@camstack/system`, so
+- **`camera-grid` stays deferred and unsplit.** It is in `@camstack/server/system`, so
   it moves with the server; the orchestrator moves at the same boot only when
   the re-alignment re-aligns it, so the server cannot assume an orchestrator
   at the floor. `camera-grid` keeps emitting `MotionOnMotionChanged`
@@ -1197,7 +1197,7 @@ none of them back, see above):
 ## The trap worth naming
 
 A framework fix is **not** live until a `@camstack/server` version containing it is
-installed. A published `@camstack/system@1.2.13` sitting in the registry while the
+installed. A published `@camstack/server/system@1.2.13` sitting in the registry while the
 running `@camstack/server@1.2.10` pins `system@1.2.9` means the fix is not
 deployed — even though the package exists and the bundle hash changed.
 
@@ -1263,7 +1263,7 @@ reachable as `npm run publish`) is a local escape hatch, not the route.
   change to `types` / `ui-library` republishes just that library, not its
   ~40 dependents.
 - **The closure cascade: anything `@camstack/server` depends on drags
-  `@camstack/server` with it.** Narrow from 2026-08-15 (`@camstack/system`
+  `@camstack/server` with it.** Narrow from 2026-08-15 (`@camstack/server/system`
   only), generalised on 2026-09-17. `@camstack/server` is the single root package
   a node installs and the ONLY one published with exact pins
   (`pin-root-deps.mjs`), so a change to a closure member reaches a node through a
@@ -1485,7 +1485,7 @@ retired:
 
 | Case | Example | Verdict |
 | --- | --- | --- |
-| Package gone, its addon ids **absorbed** by another package | `@camstack/core` → all 18 ids now declared by `@camstack/system` | retirable — the ids MOVED |
+| Package gone, its addon ids **absorbed** by another package | `@camstack/core` → all 18 ids now declared by `@camstack/server/system` | retirable — the ids MOVED |
 | Package gone, its addon ids **deleted** | `@camstack/addon-analytics` — id `analytics` exists nowhere | retirable — say so, it is a removal not a move |
 | Package alive, an addon id it used to declare gone | any bundle that dropped an entry | NOT a package question |
 | Package gone, ids gone, **but a copy is still deployed** | `advanced-notifier` | do **not** unpublish — see below |

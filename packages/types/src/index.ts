@@ -24,6 +24,24 @@ export {
 export type { CapabilitiesAccess } from './addon/base-addon.js'
 export { BaseAddon, classifyStoreError, normalizeAddonInitResult } from './addon/base-addon.js'
 export { normalizeNodeId } from './addon/per-node-store.js'
+export {
+  compareVersions,
+  describeUnmet,
+  MinVersionSchema,
+  minimumOf,
+  PackageRequiresSchema,
+  RequiredAddonUpdateSchema,
+  UnmetRequirementSchema,
+  unmetRequirements,
+} from './addon/package-requires.js'
+export type {
+  PackageRequires,
+  RequiredAddonUpdate,
+  RunningVersions,
+  RunningWrapper,
+  UnmetRequirement,
+  WrapperRequirementKind,
+} from './addon/package-requires.js'
 export { IntegrationInstanceRefSchema } from './addon/integration-instance-ref.js'
 export type { IntegrationInstanceRef } from './addon/integration-instance-ref.js'
 export type {
@@ -425,7 +443,7 @@ export * from './types/tracked.js'
 // addon's `getGlobalSettings()` method.
 
 // The one bearer-principal / scope derivation, shared by the kernel,
-// server/backend AND addons (which may not import @camstack/system).
+// server/backend AND addons (which may not import @camstack/server/system).
 export {
   type BearerPayloadShape,
   type BearerPrincipal,

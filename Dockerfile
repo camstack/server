@@ -46,7 +46,7 @@ RUN mkdir -p /opt/camstack-hub && cd /opt/camstack-hub && \
 #    2026-08-25; the path is in git history and in
 #    `docs/design/2026-08-13-single-copy-addons-first-boot-install.md` §4.4,
 #    which had already filed it as a candidate and left it "for now"): a SECOND
-#    npm install of the same `@camstack/{system,types,sdk}` plus the hoisted
+#    npm install of the same `@camstack/{server,types,sdk}` plus the hoisted
 #    natives, existing only to be copied into `$FRAMEWORK_DIR` on the fallback
 #    boot. Measured on the live image 2026-08-25 it was 510 MB beside a 930 MB
 #    `/opt/camstack-hub` — and it was the THIRD copy of every framework package,
@@ -56,7 +56,7 @@ RUN mkdir -p /opt/camstack-hub && cd /opt/camstack-hub && \
 #    Redundant by inspection: `/opt/camstack-hub/node_modules` already hoists
 #    `better-sqlite3`, `node-av`, `sharp` and `zod` at its root — the exact
 #    reason the second tree was built that way — and already holds
-#    `@camstack/sdk`, `system` and `types` as dependencies of `@camstack/server`.
+#    `@camstack/sdk` and `types` as dependencies of `@camstack/server`, which carries the kernel and builtins itself as `server/system`.
 #    The fallback now takes the framework subset from that one tree; see the
 #    entrypoint.
 #
@@ -303,7 +303,7 @@ if [ "$NEED_FRAMEWORK" = 1 ]; then
   # Seeded from the ONE baked tree: everything third-party comes over as-is (the
   # natives and `zod` are already hoisted at its root — that hoisting is the
   # whole reason a second tree used to exist), then the `@camstack` scope is
-  # narrowed to the three framework packages.
+  # narrowed to the three framework packages (server carries the kernel and builtins as server/system).
   #
   # The scope is REPLACED, not merged: copying `@camstack` wholesale would put
   # `@camstack/server` and every baked addon into the framework dir — a fresh
@@ -311,7 +311,7 @@ if [ "$NEED_FRAMEWORK" = 1 ]; then
   cp -a /opt/camstack-hub/node_modules/. "$FRAMEWORK_DIR/node_modules/"
   rm -rf "$FRAMEWORK_DIR/node_modules/@camstack"
   mkdir -p "$FRAMEWORK_DIR/node_modules/@camstack"
-  for pkg in system types sdk; do
+  for pkg in server types sdk; do
     src="/opt/camstack-hub/node_modules/@camstack/$pkg"
     # A missing framework package is fatal for this boot and must say so: the
     # node would otherwise start and then fail resolution with an error that

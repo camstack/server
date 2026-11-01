@@ -359,6 +359,9 @@ export async function bootManual(opts: BootOptions): Promise<BootedApp> {
   agentRegistryService.setTrackedVersionResolver((name) =>
     addonPackageService.resolveRegistryVersion(name),
   )
+  agentRegistryService.setDeliveryRequirements((name, version) =>
+    addonPackageService.resolveTargetRequires(name, version),
+  )
   agentRegistryService.setConvergenceDryRun(
     () => configService.get<boolean>(ADDON_CONVERGENCE_DRY_RUN_KEY) !== false,
   )

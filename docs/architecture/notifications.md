@@ -1270,7 +1270,7 @@ draft does not belong in a GET URL; it sends nothing.
 `@camstack/types`, so the addon never lacks a schema it was built with and the
 `nc.*` mirrors work on the addon deploy alone. The coupling is the hub's
 cap-router INPUT validation, which uses the copy of `@camstack/types` that
-`@camstack/system` inlines (`bundleTypesMainEntry`): install the
+`@camstack/server/system` inlines (`bundleTypesMainEntry`): install the
 `@camstack/server` release that carries the new shapes before a caller sends
 them through `notificationRules.*` — the same coupling as D628.
 

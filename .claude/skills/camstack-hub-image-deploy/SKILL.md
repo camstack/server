@@ -146,7 +146,7 @@ node scripts/hub/hub.mjs POST <cap>.<newMethod> '{…}'                         
    restore = move it back and restart. Or know the last good version and
    re-apply it.
 3. **One copy of the framework.** Both roles load builtins from the closure
-   and skip any `@camstack/system` under the node's addons dir — but the hub's
+   and skip any `@camstack/server/system` under the node's addons dir — but the hub's
    hot-load rescan (`loadNewAddons`) still reads a stale copy there, and an
    agent falls back to it when the closure cannot resolve the package
    (`docs/architecture/update-and-release.md` §"Deploying a framework change
@@ -175,8 +175,8 @@ node scripts/hub/hub.mjs POST <cap>.<newMethod> '{…}'                         
 | --- | --- |
 | Addon `src` (provider logic, settings schema) | `camstack deploy <addon>` |
 | An additive OUTPUT field on an existing cap method | `camstack deploy <addon>` (output passes through structurally) |
-| A new INPUT field, a new method, a new cap | publish (`force_packages=@camstack/system,@camstack/server`) → `applyServerUpdate`, then deploy the addon |
-| `server/backend`, `@camstack/system`, `@camstack/sdk` | publish → `applyServerUpdate` |
+| A new INPUT field, a new method, a new cap | publish (`force_packages=@camstack/server/system,@camstack/server`) → `applyServerUpdate`, then deploy the addon |
+| `server/backend`, `@camstack/server/system`, `@camstack/sdk` | publish → `applyServerUpdate` |
 | Manifest `placement` / `execution.group` | publish → `applyServerUpdate` |
 | The starter, the entrypoint (heap flags, env, user), `Dockerfile` | a new image AND a container recreate |
 | The baked native set, a fresh host | a new image |
@@ -229,7 +229,7 @@ path:      <A release X.Y.Z | B deploy-server <dev version> | image <tag>>
 dev-uploads: <hub only | propagate --all | propagate -n …>
 backup:    <current.bak-… | known-good version X.Y.Z>
 applied:   <nodeId → runningVersion, restartRequired, for EVERY enumerated node>
-framework: <stale addons-dir @camstack/system: absent | removed>
+framework: <stale addons-dir @camstack/server/system: absent | removed>
 addons:    <camstack deploy … per node, or none>
 verified:  <the new method / behaviour, observed on the node>
 ```

@@ -56,6 +56,8 @@ const RETIRED: Readonly<Record<string, string>> = {
   '@camstack/agent': 'merged into @camstack/server — CAMSTACK_ROLE=agent (2026-07-21); unpublished',
   '@camstack/core':
     'merged into @camstack/system — all 18 addon ids still declared there; unpublished',
+  '@camstack/system':
+    'folded into @camstack/server — shipped as @camstack/server/system (private workspace @camstack/server-framework); unpublished',
   '@camstack/kernel': 'merged into @camstack/system — declared no addons of its own; unpublished',
   '@camstack/addon-analytics':
     "addon id 'analytics' deleted; superseded by pipeline-analytics; unpublished",

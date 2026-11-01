@@ -22,7 +22,7 @@ the settings door with `database: 'history'`, so its work is served by the
 (D851, [storage-files.md](storage-files.md)).
 
 **Install state.** It ships as a protected system builtin inside
-`@camstack/system` (same closure as the hub kernel — no separate addon deploy).
+`@camstack/server/system` (same closure as the hub kernel — no separate addon deploy).
 A hub without the builtin enabled has no `history.db` (the file is created by
 the first declaration that names it) and no behaviour change.
 

@@ -91,7 +91,7 @@ supplies the tRPC primitives and provider resolution to `buildCapRouters` in
 per live cap def. The codegen'd `server/backend/src/api/trpc/generated-cap-routers.ts`
 and `generated-cap-mounts.ts` are the AppRouter **TYPE** source of record only;
 their value is never called. That is why a capability change ships through
-`@camstack/types` + `@camstack/system` with no `@camstack/server` rebuild. Do not
+`@camstack/types` + `@camstack/server/system` with no `@camstack/server` rebuild. Do not
 add a capability to the first track.
 
 There is a second reason not to. A hand-written core router has no entry in
@@ -123,7 +123,7 @@ inside an admin-only one, fails the build until the classification is updated.
    not scope/mode-derivable (`server-provided`, `hub-only`, `skip`); a
    `server-provided` capability also needs a factory in `buildServerProviders`.
 6. **Ship it**: a new or changed capability is a framework change. The hub reads
-   `ALL_CAPABILITY_DEFINITIONS` from **`@camstack/system`**, not `@camstack/types`
+   `ALL_CAPABILITY_DEFINITIONS` from **`@camstack/server/system`**, not `@camstack/types`
    (see the import comment in `server/backend/src/main.ts`), so the carrier in a
    workspace checkout is `camstack deploy packages/system`. On a deployed hub the
    framework upload is refused: it ships as a published `@camstack/server` closure

@@ -9,6 +9,6 @@ The canonical PUBLIC text of this skill is `packages/develop/skills/camstack-cap
 
 ## Repo notes
 
-- The shipping chain after a cap change (publish `@camstack/system` + `@camstack/server`, `applyServerUpdate`, restarts) is `camstack-server-change`; CI mechanics are `camstack-publish-ci`.
+- The shipping chain after a cap change (publish `@camstack/server/system` + `@camstack/server`, `applyServerUpdate`, restarts) is `camstack-server-change`; CI mechanics are `camstack-publish-ci`.
 - The pre-commit hook runs `check-method-tiers` and `check-export-coverage` when a `*.cap.ts` is staged.
 - Router specs live in `server/backend/src/__tests__/cap-routers/`; the inventory regenerates into `docs/reference/capabilities.md` and `docs/reference/api.md`.

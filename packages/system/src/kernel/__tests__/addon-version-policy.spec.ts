@@ -44,6 +44,35 @@ describe('decideAddonVersionMove', () => {
   })
 })
 
+describe('decideAddonVersionMove with unmet requirements (D988)', () => {
+  const unmet = [{ kind: 'server-too-old', required: '1.3.0', running: '1.2.0' }] as const
+
+  it('holds a move whose target needs a newer server and names why', () => {
+    expect(
+      decideAddonVersionMove('1.2.6', '1.2.7', ADDON_VERSION_REASON_REGISTRY_LATEST, unmet),
+    ).toEqual({ move: false, blockedBy: unmet })
+  })
+
+  it('holds a first install the same way', () => {
+    expect(decideAddonVersionMove(null, '1.2.7', ADDON_VERSION_REASON_HUB, unmet)).toEqual({
+      move: false,
+      blockedBy: unmet,
+    })
+  })
+
+  it('has nothing to hold when there is no move', () => {
+    expect(
+      decideAddonVersionMove('1.2.7', '1.2.7', ADDON_VERSION_REASON_REGISTRY_LATEST, unmet),
+    ).toEqual({ move: false })
+  })
+
+  it('moves when nothing is unmet', () => {
+    expect(
+      decideAddonVersionMove('1.2.6', '1.2.7', ADDON_VERSION_REASON_REGISTRY_LATEST, []),
+    ).toMatchObject({ move: true, to: '1.2.7' })
+  })
+})
+
 const tmpDirs: string[] = []
 afterEach(() => {
   for (const dir of tmpDirs.splice(0)) fs.rmSync(dir, { recursive: true, force: true })

@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { lifecycleJobSchema } from '../lifecycle/job.js'
+import { UnmetRequirementSchema } from '../addon/package-requires.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
 
 /**
@@ -130,6 +131,8 @@ const PackageUpdateSchema = z.object({
   category: z.enum(['addon', 'core']),
   requiresRestart: z.boolean(),
   isSystem: z.boolean(),
+  /** Held: what the newer version needs and this node does not meet (D988). */
+  blockedBy: z.array(UnmetRequirementSchema).readonly().optional(),
 })
 
 const PackageVersionInfoSchema = z.object({

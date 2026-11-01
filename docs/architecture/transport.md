@@ -659,7 +659,7 @@ cross-node mesh, never UDS.
 It now holds pending chunks in a list and concatenates once per completed
 packet — 0.15 ms for that same 4 MiB / 64 KiB case, and FLAT across chunk
 sizes. The fix lives in `patches/moleculer+0.15.0.patch` because `moleculer` is
-**bundled** into `@camstack/system/dist/index.js` at build time, so the patch
+**bundled** into `@camstack/server/system/dist/index.js` at build time, so the patch
 ships inside the published closure; it is not a runtime dependency on the hub
 and there is no `patches/` directory there. A new transporter was rejected —
 there are exactly two transports and a 25-line accumulator is not a reason to
@@ -668,7 +668,7 @@ add a third.
 Two things about that sentence cost a session
 ([D478](../decisions/adr-0478-a-patch-reaches-production-only-if-it-is-bundled-or-applied-in-the-closure.md)).
 It is TRUE — re-verified 2026-09-12 in the published
-`@camstack/system@1.2.224` tarball and in the live closure on hub and agent —
+`@camstack/server/system@1.2.224` tarball and in the live closure on hub and agent —
 but the closure also carries an unpatched `node_modules/moleculer`, which one
 file requires for `Errors` alone and which frames nothing, so grepping THAT
 copy reads as a missing patch. And the marker has to be

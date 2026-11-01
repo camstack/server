@@ -190,7 +190,7 @@ dataset repo `camstack/camstack-bench-clips` and its sha256 pinned in
 ## Operator deploy
 
 The cap methods are a framework change: publish `@camstack/types`,
-`@camstack/system` (force), the pipeline addon and the orchestrator, then
+`@camstack/server/system` (force), the pipeline addon and the orchestrator, then
 `camstack deploy packages/addon-benchmark`.
 
 ## Offline detector evaluation (`scripts/eval/`)

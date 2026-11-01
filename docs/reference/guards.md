@@ -4,12 +4,12 @@
 
 # Guards
 
-204 repository guards: 199 in `scripts/`,
+206 repository guards: 201 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (195)
+## Enforced by CI checks (197)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -87,6 +87,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-global-schema-declared.ts` | An addon that SERVES a global form with a secret field DECLARES that form through `globalSettingsSchema()` (D787). |
 | `scripts/check-heavy-specs.ts` | Heavy-spec guard — a `*.heavy.spec.*` file is out of every automatic lane and IN the on-demand Checks workflow, never in neither. |
 | `scripts/check-history-single-mechanism.ts` | D850 P4 — numeric history has one mechanism (device-history). |
+| `scripts/check-host-externals-identical.ts` | The three host-external lists name the same specifiers. |
 | `scripts/check-host-widget-resolves.ts` | Host-widget guard — every `host/…` widget a capability DECLARES must exist in `HOST_WIDGETS`. |
 | `scripts/check-hub-paths-through-mount.ts` | Hub-path guard — every URL the web UI composes toward the hub goes through the mount resolver. |
 | `scripts/check-hub-settings-ready-before-forks.ts` | Forked addons may `resolveConfig()` only after the isolated sqlite engine is in the parent's collection AND the in-process settings-store door has booted. The sequence lives in `runHubAddonBoot` — this guard fails if the hub registry sto… |
@@ -136,6 +137,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-no-retired-fanout-heap-env.ts` | No runtime code reads the retired heap-snapshot or event-fanout mode envs. |
 | `scripts/check-no-service-account-keys.ts` | Credential guard — no Google service-account key, and no private key of any kind, may be committed to this repository. |
 | `scripts/check-no-state-unit-sibling.ts` | D944 §4 — device state has no root `unit` / `precision` / `*Unit` sibling, and every device-native numeric reading names a quantity (or is listed in the debt file until it is classified). |
+| `scripts/check-no-system-package.ts` | `@camstack/system` is not a package any more. |
 | `scripts/check-no-third-party-products.ts` | Third-party product names — name the mechanism. |
 | `scripts/check-no-token-file-lookup.ts` | No tool looks for a specific token file: the `camstack login` session is the credential. |
 | `scripts/check-notification-tap-targets.ts` | A notification's tap URL lands on a page that PARSES it. |

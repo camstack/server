@@ -39,6 +39,7 @@ import {
   type HubPackageFact,
 } from './agent-desired-set'
 import { AgentDeliveryLedger } from './agent-delivery-ledger'
+import { splitByNodeRequirements, type RequiresOf } from './delivery-requirements'
 import { agentOfflineData, nodeDisplayName } from './agent-liveness-event'
 import { ClusterNodeHistoryMirror } from './cluster-node-history-mirror'
 import type {
@@ -400,6 +401,10 @@ export class AgentRegistryService {
 
   /** Reads the dry-run switch per round, so flipping the setting needs no restart. */
   private convergenceDryRun: () => boolean = () => true
+  /** How a delivery's `camstack.requires` is read (D988); unwired, every delivery passes. */
+  private deliveryRequiresOf: RequiresOf | null = null
+  /** The server version each node last reported on `$agent.status`; `null` = reported none. */
+  private readonly nodeServerVersions = new Map<string, string | null>()
 
   private convergenceTimer: ReturnType<typeof setInterval> | null = null
   private convergenceRunning = false
@@ -488,6 +493,11 @@ export class AgentRegistryService {
   setTrackedVersionResolver(resolver: TrackedVersionResolver | null): void {
     this.trackedVersionResolver = resolver
     this.trackedVersionCache.clear()
+  }
+
+  /** Wire how the requirements of a version to deliver are read (D988). */
+  setDeliveryRequirements(requiresOf: RequiresOf | null): void {
+    this.deliveryRequiresOf = requiresOf
   }
 
   /** Wire the dry-run switch; unwired it is ON (D982: the first live run only logs). */
@@ -1050,6 +1060,7 @@ export class AgentRegistryService {
         },
       )
       const agentAddons = this.extractAgentAddons(statusRaw)
+      this.nodeServerVersions.set(agentId, extractAgentServerVersion(statusRaw))
       // `null` = the node answered with no parseable `addons` array. That is a
       // broken status, NOT an empty node: acting on it would undeploy nothing
       // (fine) but would back-fill the node's ENTIRE roster (not fine). Fail
@@ -1397,7 +1408,7 @@ export class AgentRegistryService {
     trigger: BackfillTrigger,
     seam: BackfillSeam,
   ): Promise<void> {
-    const planned = {
+    let planned: BackfillPlan = {
       targets: [...plan.install, ...plan.update].map((t) => ({
         name: t.name,
         version: t.version,
@@ -1408,6 +1419,30 @@ export class AgentRegistryService {
       liveCount: live.length,
     }
     if (planned.targets.length === 0 && planned.retired.length === 0) return
+
+    // GATE 2b (D988) — a version needing a newer server than this node runs is
+    // held, naming both versions; the node keeps what it has.
+    const requiresOf = this.deliveryRequiresOf
+    if (requiresOf !== null && planned.targets.length > 0) {
+      const split = await splitByNodeRequirements(
+        planned.targets,
+        this.nodeServerVersions.get(agentId) ?? null,
+        requiresOf,
+      )
+      for (const held of split.held) {
+        this.logger?.warn(
+          'convergence: delivery held, the node server is older than the addon needs',
+          {
+            tags: { nodeId: agentId },
+            meta: { package: held.target.name, version: held.target.version, reason: held.reason },
+          },
+        )
+      }
+      if (split.held.length > 0) {
+        planned = { ...planned, targets: split.deliver }
+        if (planned.targets.length === 0 && planned.retired.length === 0) return
+      }
+    }
 
     // GATE 3 — the confirmation read (D49). A delivery overwrites whatever is
     // on the node, so the destroying direction needs a SECOND read to agree.
@@ -1862,4 +1897,11 @@ export class AgentRegistryService {
       data: { cameraId, role, agentId: promoted.agentId },
     })
   }
+}
+
+/** The `@camstack/server` version a node reported on `$agent.status`; `null` when it reported none. */
+function extractAgentServerVersion(statusRaw: unknown): string | null {
+  if (statusRaw === null || typeof statusRaw !== 'object') return null
+  const version = (statusRaw as { serverVersion?: unknown }).serverVersion
+  return typeof version === 'string' && version.length > 0 ? version : null
 }

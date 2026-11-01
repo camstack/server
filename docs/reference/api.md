@@ -1609,7 +1609,7 @@
 
 ### `addons` → `addons.*`
 
-- **Source:** `packages/types/src/capabilities/addons.cap.ts:362`
+- **Source:** `packages/types/src/capabilities/addons.cap.ts:365`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `server-provided` · nodeIdMode: `data`
 - **Archetypes:** —
 - **Provider interface:** `IAddonsProvider`
@@ -4283,7 +4283,7 @@
 
 ### `server-management` → `serverManagement.*`
 
-- **Source:** `packages/types/src/capabilities/server-management.cap.ts:458`
+- **Source:** `packages/types/src/capabilities/server-management.cap.ts:470`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `server-provided`
 - **Archetypes:** —
 - **Provider interface:** `IServerManagementProvider`

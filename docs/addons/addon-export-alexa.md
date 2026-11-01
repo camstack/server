@@ -241,7 +241,7 @@ is `auth: 'admin'` (the framework default is any authenticated user).
   and drops the event when the endpoint never declared the interface. Check
   `exportedSignatures` before believing a "posted" log line.
 - Shipping: this package goes live with `camstack deploy packages/addon-export-alexa`.
-  Anything in `server/backend`, `@camstack/types` or `@camstack/system` needs a
+  Anything in `server/backend`, `@camstack/types` or `@camstack/server/system` needs a
   publish train + `applyServerUpdate`. Talk-back also needs the stream broker
   (`camstack deploy packages/addon-pipeline`) and the `webrtc-session` cap field
   on the hub (publish train).

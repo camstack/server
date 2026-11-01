@@ -31,20 +31,6 @@
     "@camstack/addon-provider-reolink": ["@apocaliss92/nodelink-js"],
     "@camstack/addon-smtp-nodemailer": ["nodemailer", "zod"],
     "@camstack/addon-terminal": ["@xterm/addon-serialize", "@xterm/headless"],
-    "@camstack/sdk": ["superjson"],
-    "@camstack/system": [
-      "@camstack/sdk",
-      "@msgpack/msgpack",
-      "bcryptjs",
-      "croner",
-      "js-yaml",
-      "jsonwebtoken",
-      "moleculer",
-      "otplib",
-      "sqlite-vec",
-      "superjson",
-      "systeminformation",
-      "tar"
-    ]
+    "@camstack/sdk": ["superjson"]
   }
 }

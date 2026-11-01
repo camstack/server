@@ -63,7 +63,7 @@ node scripts/hub/hub.mjs POST serverManagement.applyServerUpdate '{"version":"X.
 
 - Push first — CI builds `origin/main`, not the dirty tree.
 - `include_dependents=false`; cap edits force
-  `@camstack/system,@camstack/server`.
+  `@camstack/server/system,@camstack/server`.
 - Registry lag is not failure — wait for the tarball URL, never re-publish
   because `npm view` is stale (`camstack-publish-ci`).
 - After publish: `git pull` before any `camstack deploy` of an addon (deploy

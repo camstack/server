@@ -16,6 +16,11 @@
   "files": [
     "dist"
   ],
+  "camstack": {
+    "requires": {
+      "server": ">=1.2.718"
+    }
+  },
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit -p tsconfig.spec.json",

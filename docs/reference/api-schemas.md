@@ -4755,6 +4755,7 @@ Enum: `"number" \| "boolean" \| "string" \| "enum"`
 - `category`: `"addon" \| "core"`
 - `requiresRestart`: `boolean`
 - `isSystem`: `boolean`
+- `blockedBy?`: `({ kind: "server-too-old"; required: string; running: string \| null } \| { kind: "addon-too-old"; packageName: string; required: string; running: string \| null } \| { kind: "wrapper-too-old"; wrapper: "desktop" \| "image"; required: string; running: string \| null })[]`
 
 ### `PackageVersionInfoSchema`
 
@@ -6258,6 +6259,8 @@ Enum: `"workspace" \| "baked" \| "data-root"`
 - `reason?`: `string \| null`
 - `error?`: `string \| null`
 - `blockers?`: `UpdateBlockerSchema[]`
+- `unmet?`: `({ kind: "server-too-old"; required: string; running: string \| null } \| { kind: "addon-too-old"; packageName: string; required: string; running: string \| null } \| { kind: "wrapper-too-old"; wrapper: "desktop" \| "image"; required: string; running: string \| null })[]`
+- `requiredAddonUpdates?`: `({ packageName: string; required: string; installed: string \| null })[]`
 
 ### `ServerUpdateCheckResultSchema`
 

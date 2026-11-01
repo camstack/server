@@ -16,6 +16,7 @@
  * Spec: docs/superpowers/specs/2026-07-18-single-framework-copy-collapse-design.md
  */
 import * as path from 'node:path'
+import { readInstalledAddonVersions } from '../addon/installed-addon-versions.js'
 import type {
   IEventBus,
   IScopedLogger,
@@ -77,6 +78,8 @@ export interface ServerUpdateServiceOptions {
   readonly updateAvailabilityStore?: IUpdateAvailabilityStore
   /** Pre-flight (D877): addons the target version would refuse to start on this node's data. */
   readonly updatePreflight?: (targetVersion: string) => Promise<readonly UpdateBlocker[]>
+  /** Installed addon versions (D988), so an accepted update can name the addons to update with it. */
+  readonly installedAddonVersions?: () => Readonly<Record<string, string | null>>
   /** The runner boot check (D877), served on the status. */
   readonly runnerBootCheck?: () => RunnerBootCheck | undefined
   /** Container probes (test override) — see `RootUpdateServiceOptions.readWrapperProbes`. */
@@ -163,6 +166,9 @@ export class ServerUpdateService extends RootUpdateService {
       ...(options.runnerBootCheck !== undefined
         ? { runnerBootCheck: options.runnerBootCheck }
         : {}),
+      installedAddonVersions:
+        options.installedAddonVersions ??
+        (() => readInstalledAddonVersions(path.join(dataDir, 'addons'))),
     })
     this.updateAvailability =
       options.eventBus !== undefined
