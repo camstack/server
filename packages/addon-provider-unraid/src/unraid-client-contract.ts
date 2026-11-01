@@ -87,16 +87,16 @@ export interface UnraidContainerInfo {
   readonly name: string
   /** `true` when the container state is `RUNNING`. */
   readonly running: boolean
-  /** Live CPU usage percent (from the `dockerContainerStats` subscription). */
-  readonly cpuPercent: number
-  /** Live memory usage percent. */
-  readonly memPercent: number
+  /** Live CPU usage percent (from the `dockerContainerStats` subscription); null when the sample failed. */
+  readonly cpuPercent: number | null
+  /** Live memory usage percent; null when the sample failed. */
+  readonly memPercent: number | null
 }
 
 /** Live host CPU reading — composed from the real `systemMetricsCpu` + info. */
 export interface UnraidCpuInfo {
-  /** Total CPU utilisation percent (`systemMetricsCpu.percentTotal`). */
-  readonly percent: number
+  /** Total CPU utilisation percent (`systemMetricsCpu.percentTotal`); null when the sample failed. */
+  readonly percent: number | null
   /** CPU package temperature in Celsius, or null when the host exposes none. */
   readonly tempC: number | null
   /** CPU package power draw in watts, or null when the host exposes none. */
@@ -194,6 +194,8 @@ export interface UnraidClientFactoryInput {
   readonly port: number
   readonly https: boolean
   readonly apiKey: string
+  /** Accept a self-signed certificate on the https/wss connection. */
+  readonly allowSelfSigned: boolean
 }
 
 /** Factory seam: build a live {@link UnraidClientLike} for a connection. */

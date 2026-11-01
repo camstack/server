@@ -28,6 +28,9 @@ export const unraidConnectionSchema = z.object({
   https: z
     .preprocess((v) => (v === '' || v === null ? undefined : v), z.boolean().default(true))
     .describe('Use https/wss for the WebGUI'),
+  allowSelfSigned: z
+    .preprocess((v) => (v === '' || v === null ? undefined : v), z.boolean().default(false))
+    .describe('Accept a self-signed certificate (https only)'),
   apiKey: z
     .preprocess(markerToEmpty, z.string().default(''))
     .describe('ADMIN-role API key (`unraid-api apikey --create`)')
@@ -113,6 +116,13 @@ export function buildConnectionFormSchema(): ConfigUISchema {
             label: 'Use HTTPS',
             labelKey: 'provider-unraid:connection.s_connection.https.label',
             default: true,
+          },
+          {
+            type: 'boolean',
+            key: 'allowSelfSigned',
+            label: 'Allow self-signed certificate',
+            labelKey: 'provider-unraid:connection.s_connection.allowSelfSigned.label',
+            default: false,
           },
           {
             type: 'password',

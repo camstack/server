@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The Unraid integration shows the Unraid brand icon.
 - Unraid integrations now connect to the Unraid API with the configured API key and report the array, disks, docker containers, CPU and active notifications
+- Unraid integrations now connect to the Unraid API with the configured API key and report the array, disks, docker containers, CPU and active notifications (an option accepts a self-signed certificate; a failed CPU or container-stats sample reads as unknown, not 0)
 
 ## [0.2.154] - 2026-11-01
 

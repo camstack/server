@@ -1,3 +1,5 @@
+import { Agent } from 'undici'
+import WebSocket from 'ws'
 import {
   UnraidApiError,
   UnraidAuthError,
@@ -9,6 +11,7 @@ import {
   type DockerContainerStats,
   type CpuMetrics,
   type Notification,
+  type WebSocketImpl,
 } from 'node-unraid'
 import type {
   UnraidArrayDiskInfo,
@@ -206,7 +209,7 @@ export function createLiveUnraidClient(api: UnraidApiSource): UnraidClientLike {
       list: () =>
         guard(async (): Promise<readonly UnraidContainerInfo[]> => {
           const containers = await api.docker.list()
-          // Stats exist only as a subscription; a missing sample reads as 0 load.
+          // Stats exist only as a subscription; a missing sample is unknown (null), never 0.
           const stats = await (async () =>
             sampleContainerStats(api.docker.stats$(), containers.length))().catch(
             () => new Map<string, DockerContainerStats>(),
@@ -215,8 +218,8 @@ export function createLiveUnraidClient(api: UnraidApiSource): UnraidClientLike {
             id: c.id,
             name: (c.names[0] ?? c.id).replace(/^\//, ''),
             running: c.state === 'RUNNING',
-            cpuPercent: stats.get(c.id)?.cpuPercent ?? 0,
-            memPercent: stats.get(c.id)?.memPercent ?? 0,
+            cpuPercent: stats.get(c.id)?.cpuPercent ?? null,
+            memPercent: stats.get(c.id)?.memPercent ?? null,
           }))
         }),
       start: (id) => guard(async () => void (await api.docker.start(id))),
@@ -227,7 +230,7 @@ export function createLiveUnraidClient(api: UnraidApiSource): UnraidClientLike {
         guard(async (): Promise<UnraidCpuInfo> => {
           const sample = await (async () => sampleFirst(api.system.cpu$()))().catch(() => null)
           // The API exposes no CPU temperature or power draw.
-          return { percent: sample?.percentTotal ?? 0, tempC: null, powerW: null }
+          return { percent: sample?.percentTotal ?? null, tempC: null, powerW: null }
         }),
     },
     notifications: {
@@ -238,12 +241,40 @@ export function createLiveUnraidClient(api: UnraidApiSource): UnraidClientLike {
 }
 
 /** Production factory: a real `node-unraid` client, authenticated with the integration's API key. */
-export const makeLiveUnraidClient: UnraidClientFactory = (input: UnraidClientFactoryInput) =>
-  createLiveUnraidClient(
+export const makeLiveUnraidClient: UnraidClientFactory = (input: UnraidClientFactoryInput) => {
+  const base = {
+    host: input.host,
+    port: input.port,
+    https: input.https,
+    apiKey: input.apiKey,
+  }
+  if (!input.allowSelfSigned) return createLiveUnraidClient(new UnraidClient(base))
+  // Opt-in, per integration: a self-signed certificate on both the HTTP and the WS transport.
+  const dispatcher = new Agent({ connect: { rejectUnauthorized: false } })
+  return createLiveUnraidClient(
     new UnraidClient({
-      host: input.host,
-      port: input.port,
-      https: input.https,
-      apiKey: input.apiKey,
+      ...base,
+      fetch: (url, init) => fetch(url, withDispatcher(init, dispatcher)),
+      webSocketImpl: selfSignedWebSocketImpl(),
     }),
   )
+}
+
+/**
+ * TYPE BOUNDARY (the only casts in this file): the repo's `undici` and the `undici-types`
+ * behind the global `fetch` / DOM `WebSocket` declare structurally incompatible twins of
+ * the same classes, although at runtime they are the same objects. These two helpers
+ * narrow that gap in one place.
+ */
+function withDispatcher(init: RequestInit | undefined, dispatcher: Agent): RequestInit {
+  return { ...init, dispatcher } as unknown as RequestInit
+}
+
+function selfSignedWebSocketImpl(): WebSocketImpl {
+  class SelfSignedWebSocket extends WebSocket {
+    constructor(address: string | URL, protocols?: string | string[]) {
+      super(address, protocols, { rejectUnauthorized: false })
+    }
+  }
+  return SelfSignedWebSocket as unknown as WebSocketImpl
+}

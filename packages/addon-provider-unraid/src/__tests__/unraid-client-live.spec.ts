@@ -1,4 +1,6 @@
 import { UnraidApiError, UnraidAuthError, UnraidTransportError } from 'node-unraid'
+import { buildEntityDescriptors } from '../unraid-mapping.js'
+import { settingsToConnection } from '../config.js'
 import { describe, expect, it, vi } from 'vitest'
 import {
   createLiveUnraidClient,
@@ -139,7 +141,7 @@ describe('createLiveUnraidClient', () => {
     const list = await createLiveUnraidClient(fakeApi()).docker.list()
     expect(list).toEqual([
       { id: 'c1', name: 'plex', running: true, cpuPercent: 12, memPercent: 7 },
-      { id: 'c2', name: 'sonarr', running: false, cpuPercent: 0, memPercent: 0 },
+      { id: 'c2', name: 'sonarr', running: false, cpuPercent: null, memPercent: null },
     ])
   })
 
@@ -197,5 +199,48 @@ describe('createLiveUnraidClient', () => {
     const failure = await client.connect().catch((e: unknown) => e)
     expect(failure).toBeInstanceOf(UnraidClientError)
     expect(failure).toMatchObject({ kind })
+  })
+
+  it('reports a failed cpu sample as null, never 0', async () => {
+    const api = fakeApi()
+    const client = createLiveUnraidClient({
+      ...api,
+      system: {
+        ...api.system,
+        cpu$: () => {
+          throw new Error('ws down')
+        },
+      },
+    })
+    expect((await client.system.cpu()).percent).toBeNull()
+  })
+
+  it('publishes null readings as an unknown numeric value, not 0', async () => {
+    const api = fakeApi()
+    const client = createLiveUnraidClient({
+      ...api,
+      system: { ...api.system, cpu$: () => once() },
+      docker: { ...api.docker, stats$: () => once() },
+    })
+    const array = await client.array.get()
+    const descriptors = buildEntityDescriptors({
+      array,
+      cpu: await client.system.cpu(),
+      disks: array.disks,
+      dockers: await client.docker.list(),
+      notifications: await client.notifications.active(),
+    })
+    const values = descriptors
+      .filter((d) => d.key === 'cpu_usage' || d.key.endsWith('_cpu') || d.key.endsWith('_memory'))
+      .map((d) => d.numeric?.value)
+    expect(values.length).toBe(5)
+    expect(values.every((v) => v === null)).toBe(true)
+  })
+})
+
+describe('allowSelfSigned', () => {
+  it('defaults to false and can be enabled', () => {
+    expect(settingsToConnection({ host: 'h' }).allowSelfSigned).toBe(false)
+    expect(settingsToConnection({ host: 'h', allowSelfSigned: true }).allowSelfSigned).toBe(true)
   })
 })

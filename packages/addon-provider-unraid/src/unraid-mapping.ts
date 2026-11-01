@@ -69,7 +69,8 @@ export type UnraidEntityIdentity = z.infer<typeof UnraidEntityIdentitySchema>
 
 /** A live numeric reading carried on a `numeric` descriptor. */
 export interface UnraidNumericValue {
-  readonly value: number
+  /** `null` is an unknown reading (a failed sample), never 0. */
+  readonly value: number | null
   /** Quantity the value is already stored in (base unit). */
   readonly quantity: ReadingQuantity
 }
@@ -115,8 +116,8 @@ export function slugifyKey(value: string): string {
 }
 
 /** Clamp a raw percentage into 0..100 (defensive — a hung feed can overshoot). */
-function pct(value: number): number {
-  if (!Number.isFinite(value)) return 0
+function pct(value: number | null): number | null {
+  if (value === null || !Number.isFinite(value)) return null
   return Math.max(0, Math.min(100, value))
 }
 

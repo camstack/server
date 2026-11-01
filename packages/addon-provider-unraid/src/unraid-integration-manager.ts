@@ -120,6 +120,7 @@ export class UnraidIntegrationManager {
       port: this.#connection.port,
       https: this.#connection.https,
       apiKey: this.#connection.apiKey,
+      allowSelfSigned: this.#connection.allowSelfSigned,
     })
     this.#client = client
 

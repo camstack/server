@@ -4,6 +4,7 @@
   "connection.s_connection.host.label": "Host / IP",
   "connection.s_connection.port.label": "Port",
   "connection.s_connection.https.label": "Use HTTPS",
+  "connection.s_connection.allowSelfSigned.label": "Allow self-signed certificate",
   "connection.s_connection.apiKey.label": "API key",
   "connection.s_connection.pollIntervalMs.label": "Poll interval (ms)"
 }
