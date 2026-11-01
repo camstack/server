@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Notify when on a sensor rule now reads starts/finishes, with an info tooltip saying what they mean for the selected sensor kinds
+- System → Data has a read-only Migrations tab: every migration with its status, owner, level, body kind and a detail with all its metadata, error and dependencies
 
 ## [1.2.546] - 2026-11-01
 

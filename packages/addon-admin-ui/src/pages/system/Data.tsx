@@ -1,5 +1,5 @@
 /**
- * Data — Storage, Records, Backup and Secrets under one SectionedPage (OSD template).
+ * Data — Storage, Records, Backup, Secrets and Migrations under one SectionedPage (OSD template).
  */
 import { Database } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -11,6 +11,7 @@ import { StoragePage } from './Storage'
 import { BackupPage } from './Backup'
 import { SecretsPage } from './Secrets'
 import { DataRecordsSection } from './DataRecordsSection'
+import { MigrationsSection } from '../../components/system/migrations/MigrationsSection'
 
 /** Tabs that were merged into Records: `null` = the kinds view, else the `view` value. */
 const LEGACY_TABS: Readonly<Record<string, string | null>> = {
@@ -62,6 +63,12 @@ export function DataPage() {
           label: t('systemPage.data.secrets', 'Secrets'),
           content: <SecretsPage />,
           ownedParams: ['secretsView'],
+        },
+        {
+          id: 'migrations',
+          label: t('systemPage.data.migrations', 'Migrations'),
+          content: <MigrationsSection />,
+          ownedParams: ['migration'],
         },
       ]}
     />

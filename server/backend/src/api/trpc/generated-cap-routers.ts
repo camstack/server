@@ -9748,7 +9748,11 @@ export function createCapRouter_migrations(
       .input(migrationsCapability.methods.listLedger.input.loose())
       .output(migrationsCapability.methods.listLedger.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
         const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listLedger(methodInput as any)
@@ -9757,7 +9761,11 @@ export function createCapRouter_migrations(
       .input(migrationsCapability.methods.listPending.input.loose())
       .output(migrationsCapability.methods.listPending.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
         const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listPending(methodInput as any)
@@ -9766,7 +9774,11 @@ export function createCapRouter_migrations(
       .input(migrationsCapability.methods.dryRun.input.loose())
       .output(migrationsCapability.methods.dryRun.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
         const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.dryRun(methodInput as any)
@@ -9775,7 +9787,11 @@ export function createCapRouter_migrations(
       .input(migrationsCapability.methods.markFailed.input.loose())
       .output(migrationsCapability.methods.markFailed.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
         const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.markFailed(methodInput as any)
@@ -9784,7 +9800,11 @@ export function createCapRouter_migrations(
       .input(migrationsCapability.methods.retry.input.loose())
       .output(migrationsCapability.methods.retry.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
         const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.retry(methodInput as any)
@@ -9793,7 +9813,11 @@ export function createCapRouter_migrations(
       .input(migrationsCapability.methods.restorePreMigration.input.loose())
       .output(migrationsCapability.methods.restorePreMigration.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
         const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.restorePreMigration(methodInput as any)
@@ -9802,7 +9826,11 @@ export function createCapRouter_migrations(
       .input(migrationsCapability.methods.declareOwner.input.loose())
       .output(migrationsCapability.methods.declareOwner.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
         const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.declareOwner(methodInput as any)
@@ -9811,7 +9839,11 @@ export function createCapRouter_migrations(
       .input(migrationsCapability.methods.startMigration.input.loose())
       .output(migrationsCapability.methods.startMigration.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
         const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.startMigration(methodInput as any)
@@ -9820,7 +9852,11 @@ export function createCapRouter_migrations(
       .input(migrationsCapability.methods.finishMigration.input.loose())
       .output(migrationsCapability.methods.finishMigration.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
         const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.finishMigration(methodInput as any)

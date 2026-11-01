@@ -239,7 +239,12 @@ export class MigrationEngine {
       const access = this.files.get(databaseId)
       if (access !== undefined) entries.push(...(await access.call('ledger', {})))
     }
-    return entries.map((entry) => this.judgeAddonRow(entry))
+    const metas = new Map(this.allMetas().map((meta) => [meta.id, meta]))
+    return entries.map((entry) => {
+      const judged = this.judgeAddonRow(entry)
+      const meta = metas.get(judged.id)
+      return meta === undefined ? judged : { ...judged, meta }
+    })
   }
 
   /** An applied row of a DECLARED owner whose id that owner no longer lists: a newer database. */

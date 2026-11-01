@@ -327,6 +327,12 @@ export const MigrationLedgerEntrySchema = z.object({
   reason: z.string().nullable(),
   nodeId: z.string().nullable(),
   bootId: z.string().nullable(),
+  /**
+   * The catalogued meta of this id (description, body kind, store, `dependsOn`…),
+   * joined by the engine from the catalogues it knows this boot. Absent when no
+   * catalogue lists the id (a newer database).
+   */
+  meta: MigrationMetaSchema.optional(),
 })
 export type MigrationLedgerEntry = z.infer<typeof MigrationLedgerEntrySchema>
 

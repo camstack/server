@@ -6551,7 +6551,8 @@
       "viewKinds": "Tipi di record",
       "viewDeletedDevices": "Dispositivi eliminati",
       "recordsUnifiedIntro": "Ogni tipo di record dichiarato su questo hub. I tipi voce si possono aggiungere, modificare ed eliminare; gli altri sono in sola lettura. I campi segreti sono oscurati.",
-      "secrets": "Segreti"
+      "secrets": "Segreti",
+      "migrations": "Migrazioni"
     },
     "notifications": {
       "settings": "Impostazioni",
@@ -11304,5 +11305,66 @@
     "program": "Programma (visto dall'hub)",
     "mismatch": "Questa richiesta arriva da un indirizzo diverso da quello che stai usando ora. Approvala solo se l'hai avviata da un'altra tua macchina.",
     "grant": "Approvando, questo terminale accede come te, con tutti i tuoi diritti, finché la sessione scade o la termini in Token e sessioni."
+  },
+  "migrations": {
+    "status": {
+      "applied": "Applicata",
+      "failed": "Fallita",
+      "blocked": "Bloccata",
+      "held": "Trattenuta",
+      "running": "In esecuzione",
+      "pending": "In attesa",
+      "skippedNewer": "Database più recente"
+    },
+    "col": {
+      "id": "Migrazione",
+      "owner": "Proprietario",
+      "status": "Stato",
+      "level": "Livello",
+      "body": "Corpo",
+      "applied": "Applicata il"
+    },
+    "label": "migrazioni",
+    "searchPlaceholder": "Cerca migrazioni",
+    "searchLabel": "Cerca migrazioni",
+    "facetsLabel": "Filtra migrazioni",
+    "clearFilters": "Rimuovi filtri",
+    "pagesLabel": "Pagine delle migrazioni",
+    "previousPage": "Precedente",
+    "nextPage": "Successiva",
+    "range": "{{from}}–{{to}} di {{total}}",
+    "noMatch": "Nessuna delle {{label}} corrisponde ai filtri.",
+    "empty": "Nessuna migrazione.",
+    "emptyBody": "Il registro e i cataloghi sono entrambi vuoti.",
+    "loading": "Caricamento delle migrazioni…",
+    "unknownTitle": "Impossibile controllare il registro delle migrazioni",
+    "unknownBody": "L'hub non ha risposto. Riprova tra un attimo.",
+    "absentTitle": "Nessun registro delle migrazioni su questo hub",
+    "absentBody": "Nulla su questo hub fornisce la capacità delle migrazioni.",
+    "loadFailed": "Impossibile caricare le migrazioni",
+    "intro": "Ogni migrazione dei dati che questo hub conosce: cosa è stato eseguito, cosa è in attesa e cosa è fallito. Sola lettura.",
+    "detail": {
+      "dryRun": "Esegui una prova",
+      "dryRunHint": "Esegue la migrazione in una transazione e la annulla. Non viene scritto nulla.",
+      "dryRunFailed": "La prova non è riuscita",
+      "dryRunOk": "Cambierebbe {{count}} righe",
+      "dryRunThrows": "Fallirebbe",
+      "noMeta": "Nessun catalogo su questo hub elenca questa migrazione.",
+      "error": "Errore",
+      "reason": "Motivo",
+      "store": "Archivio",
+      "scope": "Ambito",
+      "onFailure": "In caso di errore",
+      "seq": "Posizione nel proprietario",
+      "fixtureMark": "Marcatore di test",
+      "dependsOn": "Dipende da",
+      "attempts": "Tentativi",
+      "codeVersion": "Versione del codice",
+      "node": "Nodo",
+      "boot": "Avvio (prefisso id snapshot)",
+      "planSummary": "Righe modificate",
+      "progress": "Avanzamento",
+      "close": "Chiudi"
+    }
   }
 }

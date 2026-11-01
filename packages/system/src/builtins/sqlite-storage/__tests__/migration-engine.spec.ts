@@ -178,6 +178,8 @@ describe('migration engine over real SQLite', () => {
     expect(hasTable('c_never')).toBe(false)
     const ledger = await engine.listLedger()
     expect(ledger.find((e) => e.id === B)?.error).toMatch(/boom in b/)
+    expect(ledger.find((e) => e.id === B)?.meta?.description).toBe(`test migration ${B}`)
+    expect(ledger.find((e) => e.id === B)?.meta?.dependsOn).toEqual(expect.any(Array))
     expect(ledger.find((e) => e.id === C)?.reason).toMatch(/dependency-failed/)
     const failed = h.lines.find((l) => l.message === 'migration failed')
     expect(failed?.level).toBe('error')

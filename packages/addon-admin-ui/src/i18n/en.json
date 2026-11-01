@@ -6476,7 +6476,8 @@
       "viewKinds": "Record kinds",
       "viewDeletedDevices": "Deleted devices",
       "recordsUnifiedIntro": "Every declared record kind on this hub. Entry kinds can be added, edited and deleted; the rest are read-only. Secret fields are redacted.",
-      "secrets": "Secrets"
+      "secrets": "Secrets",
+      "migrations": "Migrations"
     },
     "notifications": {
       "settings": "Settings",
@@ -11282,5 +11283,66 @@
     "program": "Program (seen by the hub)",
     "mismatch": "This request comes from a different address than the one you are using now. Approve it only if you started it from another machine of yours.",
     "grant": "Approving signs this terminal in as you, with all of your rights, until the session expires or you end it under Tokens & sessions."
+  },
+  "migrations": {
+    "status": {
+      "applied": "Applied",
+      "failed": "Failed",
+      "blocked": "Blocked",
+      "held": "Held",
+      "running": "Running",
+      "pending": "Pending",
+      "skippedNewer": "Newer database"
+    },
+    "col": {
+      "id": "Migration",
+      "owner": "Owner",
+      "status": "Status",
+      "level": "Level",
+      "body": "Body",
+      "applied": "Applied"
+    },
+    "label": "migrations",
+    "searchPlaceholder": "Search migrations",
+    "searchLabel": "Search migrations",
+    "facetsLabel": "Filter migrations",
+    "clearFilters": "Clear filters",
+    "pagesLabel": "Migration pages",
+    "previousPage": "Previous",
+    "nextPage": "Next",
+    "range": "{{from}}–{{to}} of {{total}}",
+    "noMatch": "No {{label}} match the filters.",
+    "empty": "No migrations.",
+    "emptyBody": "The ledger and the catalogues are both empty.",
+    "loading": "Loading migrations…",
+    "unknownTitle": "Could not check the migration ledger",
+    "unknownBody": "The hub did not answer. Try again in a moment.",
+    "absentTitle": "No migration ledger on this hub",
+    "absentBody": "Nothing on this hub provides the migrations capability.",
+    "loadFailed": "Could not load the migrations",
+    "intro": "Every data migration this hub knows: what ran, what is waiting and what failed. Read-only.",
+    "detail": {
+      "dryRun": "Run a dry run",
+      "dryRunHint": "Runs the migration in a transaction and rolls it back. Nothing is written.",
+      "dryRunFailed": "The dry run could not run",
+      "dryRunOk": "Would change {{count}} rows",
+      "dryRunThrows": "It would fail",
+      "noMeta": "No catalogue on this hub lists this migration.",
+      "error": "Error",
+      "reason": "Reason",
+      "store": "Store",
+      "scope": "Scope",
+      "onFailure": "On failure",
+      "seq": "Sequence in owner",
+      "fixtureMark": "Fixture mark",
+      "dependsOn": "Depends on",
+      "attempts": "Attempts",
+      "codeVersion": "Code version",
+      "node": "Node",
+      "boot": "Boot (snapshot id prefix)",
+      "planSummary": "Rows changed",
+      "progress": "Progress",
+      "close": "Close"
+    }
   }
 }
