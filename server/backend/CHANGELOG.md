@@ -7,13 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Addons loaded in the hub process resolve the framework again after a server update (1.2.719 left four addons failing with Cannot find module).
+
 ## [1.2.719] - 2026-11-01
 
 ### Changed
 
 - The server now carries the framework (@camstack/server/system) and refuses an update whose declared minimum is not met
 - HTTPS on or off is now the Serve HTTPS setting in Network > Local access (on by default); CAMSTACK_TLS_ENABLED is ignored and named in the boot log, the image healthcheck probes HTTPS then HTTP, and the hub reads one config.yaml through one loader
-- Addons loaded in the hub process resolve the framework again after a server update (1.2.719 left four addons failing with Cannot find module).
 
 ## [1.2.718] - 2026-11-01
 
