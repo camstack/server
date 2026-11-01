@@ -435,16 +435,6 @@ export class AddonPackageService {
     return result
   }
 
-  /** Install an addon from the local workspace (dev mode) */
-  async installFromWorkspace(name: string): Promise<{ name: string; version: string }> {
-    this.requireInstaller()
-    const result = await this.installer!.install(name)
-    this.logger.info('Installed from workspace', {
-      meta: { name: result.name, version: result.version },
-    })
-    return result
-  }
-
   /** Install an addon from an uploaded tgz file */
   async installFromUpload(tgzPath: string): Promise<{ name: string; version: string }> {
     this.requireInstaller()
@@ -611,57 +601,6 @@ export class AddonPackageService {
   }
 
   /**
-   * Full install-from-workspace orchestration:
-   * 1. Workspace install
-   * 2. Reload packages
-   * 3. Load new addons into registry
-   * 4. Broadcast toast notification
-   */
-  async installFromWorkspaceAndLoad(
-    packageName: string,
-  ): Promise<{ success: true; loaded: string[]; failed: string[] }> {
-    this.logger.info('Installing from workspace...', { meta: { packageName } })
-
-    try {
-      const result = await this.installFromWorkspace(packageName)
-      this.logger.info('Workspace install complete', {
-        meta: { name: result.name, version: result.version },
-      })
-    } catch (err) {
-      const msg = errMsg(err)
-      this.logger.error('Workspace install failed', { meta: { error: msg } })
-      this.toastService.broadcast({ title: 'Install Failed', message: msg, severity: 'warning' })
-      throw new Error(`Workspace install failed: ${msg}`, { cause: err })
-    }
-
-    try {
-      await this.reloadPackages()
-    } catch (err) {
-      this.logger.warn('Non-fatal: failed to reload packages after workspace install', {
-        meta: { error: errMsg(err) },
-      })
-    }
-
-    let loaded: string[] = []
-    let failed: string[] = []
-    try {
-      const result = await this.addonRegistry.loadNewAddons()
-      loaded = result.loaded
-      failed = result.failed
-    } catch (err) {
-      this.logger.warn('Failed to load new addons after install', { meta: { error: errMsg(err) } })
-      failed.push(packageName)
-    }
-
-    this.toastService.broadcast({
-      title: 'Addon Installed from Workspace',
-      message: `${packageName} installed${loaded.length ? ` — addons: ${loaded.join(', ')}` : ''}`,
-      severity: failed.length ? 'warning' : 'info',
-    })
-    return { success: true, loaded, failed }
-  }
-
-  /**
    * Full uninstall orchestration:
    * 1. Emit uninstall lifecycle event
    * 2. Uninstall package
@@ -707,20 +646,6 @@ export class AddonPackageService {
       severity: 'info',
     })
     return { success: true }
-  }
-
-  // =========================================================================
-  // Workspace
-  // =========================================================================
-
-  /** Always false: addons install from npm; a workspace build arrives through `camstack deploy`. */
-  isWorkspaceAvailable(): boolean {
-    return false
-  }
-
-  /** Always empty — see {@link isWorkspaceAvailable}. */
-  listWorkspacePackages(): Array<{ name: string; version: string; installed: boolean }> {
-    return []
   }
 
   // =========================================================================

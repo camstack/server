@@ -32,7 +32,6 @@ export {
   ensureDir,
   stripCamstackDeps,
   copyExtraFileDirs,
-  ensureLibraryBuilt,
   installPackageFromNpm,
   isSourceNewer,
 } from './fs-utils.js'

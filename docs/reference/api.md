@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**196 capabilities · 1468 methods.**
+**196 capabilities · 1465 methods.**
 
 ## Method index
 
@@ -47,9 +47,6 @@
 | `addons.getLogs` | query | protected | addons |
 | `addons.listPackages` | query | protected | addons |
 | `addons.installPackage` | mutation | admin | addons |
-| `addons.installFromWorkspace` | mutation | admin | addons |
-| `addons.isWorkspaceAvailable` | query | protected | addons |
-| `addons.listWorkspacePackages` | query | protected | addons |
 | `addons.uninstallPackage` | mutation | admin | addons |
 | `addons.listInstallations` | query | admin | addons |
 | `addons.reloadPackages` | mutation | admin | addons |
@@ -1621,9 +1618,6 @@
 | getLogs | `addons.getLogs` | query | protected | `{ addonId: string; limit?: number = 100; level?: "debug" \| "info" \| "warn" \| "error" }` | `unknown[]` |
 | listPackages | `addons.listPackages` | query | protected | `void` | `InstalledPackageSchema[]` |
 | installPackage | `addons.installPackage` | mutation | admin | `{ packageName: string; version?: string }` | `unknown` |
-| installFromWorkspace | `addons.installFromWorkspace` | mutation | admin | `{ packageName: string }` | `unknown` |
-| isWorkspaceAvailable | `addons.isWorkspaceAvailable` | query | protected | `void` | `boolean` |
-| listWorkspacePackages | `addons.listWorkspacePackages` | query | protected | `void` | `unknown[]` |
 | uninstallPackage | `addons.uninstallPackage` | mutation | admin | `{ packageName: string; nodeId?: string; everywhere?: boolean }` | `UninstallPackageResultSchema` |
 | listInstallations | `addons.listInstallations` | query | admin | `{ packageName?: string }` | `PackageInstallationsSchema` |
 | reloadPackages | `addons.reloadPackages` | mutation | admin | `void` | `unknown` |

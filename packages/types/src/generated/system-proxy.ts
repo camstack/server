@@ -79,7 +79,7 @@ export interface SystemProxy {
   readonly actions: Pick<InferProvider<typeof actionsCapability>, 'list' | 'stop' | 'getTraces' | 'create' | 'update' | 'delete' | 'setLinks'>
   readonly actionSource: Pick<InferProvider<typeof actionSourceCapability>, 'listActions' | 'runAction' | 'stopAction'>
   readonly addonPages: Pick<InferProvider<typeof addonPagesCapability>, 'listPages'>
-  readonly addons: Pick<InferProvider<typeof addonsCapability>, 'list' | 'getLogs' | 'listPackages' | 'installPackage' | 'installFromWorkspace' | 'isWorkspaceAvailable' | 'listWorkspacePackages' | 'uninstallPackage' | 'listInstallations' | 'reloadPackages' | 'searchAvailable' | 'listUpdates' | 'updatePackage' | 'rollbackPackage' | 'forceRefresh' | 'restartServer' | 'getLastRestart' | 'listFrameworkPackages' | 'listCapabilityProviders' | 'setCapabilityProviderEnabled' | 'getVersions' | 'getPackageDocs' | 'restartAddon' | 'retryLoad' | 'getAutoUpdateSettings' | 'setAutoUpdateSettings' | 'getAddonAutoUpdate' | 'setAddonAutoUpdate' | 'applyAutoUpdateToAll' | 'custom' | 'startJob' | 'getJob' | 'listJobs' | 'cancelJob' | 'onAddonLogs'>
+  readonly addons: Pick<InferProvider<typeof addonsCapability>, 'list' | 'getLogs' | 'listPackages' | 'installPackage' | 'uninstallPackage' | 'listInstallations' | 'reloadPackages' | 'searchAvailable' | 'listUpdates' | 'updatePackage' | 'rollbackPackage' | 'forceRefresh' | 'restartServer' | 'getLastRestart' | 'listFrameworkPackages' | 'listCapabilityProviders' | 'setCapabilityProviderEnabled' | 'getVersions' | 'getPackageDocs' | 'restartAddon' | 'retryLoad' | 'getAutoUpdateSettings' | 'setAutoUpdateSettings' | 'getAddonAutoUpdate' | 'setAddonAutoUpdate' | 'applyAutoUpdateToAll' | 'custom' | 'startJob' | 'getJob' | 'listJobs' | 'cancelJob' | 'onAddonLogs'>
   readonly addonSettings: Pick<InferProvider<typeof addonSettingsCapability>, 'getGlobalSettings' | 'updateGlobalSettings' | 'getIntegrationSettings' | 'getIntegrationFormSchema' | 'getDeclaredSettingsKeys' | 'unsetStoredSettingsKeys'>
   readonly addonWidgets: Pick<InferProvider<typeof addonWidgetsCapability>, 'listWidgets'>
   readonly alerts: Pick<InferProvider<typeof alertsCapability>, 'emit' | 'update' | 'list' | 'getUnreadCount' | 'markRead' | 'markAllRead' | 'dismiss'>
@@ -180,9 +180,6 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     getLogs: (input?: unknown) => dispatch('addons', 'getLogs', 'query', input),
     listPackages: (input?: unknown) => dispatch('addons', 'listPackages', 'query', input),
     installPackage: (input?: unknown) => dispatch('addons', 'installPackage', 'mutation', input),
-    installFromWorkspace: (input?: unknown) => dispatch('addons', 'installFromWorkspace', 'mutation', input),
-    isWorkspaceAvailable: (input?: unknown) => dispatch('addons', 'isWorkspaceAvailable', 'query', input),
-    listWorkspacePackages: (input?: unknown) => dispatch('addons', 'listWorkspacePackages', 'query', input),
     uninstallPackage: (input?: unknown) => dispatch('addons', 'uninstallPackage', 'mutation', input),
     listInstallations: (input?: unknown) => dispatch('addons', 'listInstallations', 'query', input),
     reloadPackages: (input?: unknown) => dispatch('addons', 'reloadPackages', 'mutation', input),

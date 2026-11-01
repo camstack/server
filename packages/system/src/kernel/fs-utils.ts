@@ -189,28 +189,6 @@ export function isSourceNewer(packageDir: string): boolean {
 }
 
 /**
- * Ensure a library dependency (not an addon) has a dist/ directory.
- * Does NOT rebuild — in dev mode, `npm run build` should be run separately.
- * Only checks that dist/ exists and has an index file.
- */
-export function ensureLibraryBuilt(packageName: string, packagesDir: string): void {
-  const dirName = packageName.replace('@camstack/', '')
-  const sourceDir = path.join(packagesDir, dirName)
-  if (!fs.existsSync(sourceDir)) return
-
-  const distDir = path.join(sourceDir, 'dist')
-  const hasIndex =
-    fs.existsSync(path.join(distDir, 'index.js')) || fs.existsSync(path.join(distDir, 'index.mjs'))
-  if (hasIndex) return
-
-  // Deliberate, documented residual: this is a stateless boot-time
-  // filesystem check that runs before `LogManager` / the Moleculer broker
-  // exist, so there is no `IScopedLogger` or `$hub.log` transport to route
-  // through. Threading a logger through is out of scope for D8.
-  console.warn(`[ensureLibraryBuilt] ${packageName} has no dist/ — run 'npm run build' first`)
-}
-
-/**
  * Install a single npm package into a target directory (package.json + dist/).
  * No validation on camstack.addons -- works for any @camstack/* package.
  *

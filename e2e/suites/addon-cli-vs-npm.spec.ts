@@ -23,7 +23,8 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { mkdtempSync, rmSync, existsSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { spawnHub, type SpawnedHub } from '../fixtures/electron.ts'
 import {
   loginAsAdmin,
@@ -35,6 +36,10 @@ import {
 import { spawnVerdaccio, publishFixture, type SpawnedVerdaccio } from '../fixtures/verdaccio.ts'
 import { buildSyntheticAddon, type SyntheticAddon } from '../fixtures/synthetic-addon.ts'
 import { packAddon, uploadTarball } from '../fixtures/addon-upload.ts'
+
+// Repo `packages/` dir — the hub seeds its required packages from here as a
+// bundled closure instead of pulling them from npm (same as addon-update-on-agent).
+const REPO_PACKAGES_DIR = resolve(fileURLToPath(import.meta.url), '..', '..', '..', 'packages')
 
 const E2E_LIVE = process.env['CAMSTACK_E2E_LIVE'] === '1'
 const desc = E2E_LIVE ? describe : describe.skip
@@ -74,6 +79,7 @@ beforeAll(async () => {
   hubRef = await spawnHub({
     port: HUB_PORT,
     env: {
+      CAMSTACK_BUNDLED_ADDONS_DIR: REPO_PACKAGES_DIR,
       CAMSTACK_NPM_REGISTRY: registryRef.url,
       CAMSTACK_HUB_TCP_PORT: '6011',
       // REQUIRED_PACKAGES aren't on the verdaccio fixture (only the

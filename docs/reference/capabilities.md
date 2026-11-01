@@ -136,7 +136,7 @@ Singleton or collection providers, addressed without a device.
 | `addon-settings` | 8 | — | — | — | — | — |
 | `addon-widgets` | 1 | — | — | — | — | `addon-widgets-aggregator` |
 | `addon-widgets-source` | 1 | — | — | — | ✓ | `auth-webauthn` `stream-broker` `pipeline-orchestrator` `pipeline-analytics` |
-| `addons` | 35 | — | — | — | — | — |
+| `addons` | 32 | — | — | — | — | — |
 | `admin-ui` | 2 | — | — | — | ✓ | `admin-ui` `agent-ui` |
 | `alerts` | 7 | — | — | — | — | `alert-center` |
 | `audio-analyzer` | 7 | — | — | — | — | `audio-analyzer` |

@@ -400,13 +400,6 @@ export const addonsCapability = {
       InstallPackageResultSchema,
       { kind: 'mutation', auth: 'admin' },
     ),
-    installFromWorkspace: method(
-      z.object({ packageName: z.string() }),
-      InstallPackageResultSchema,
-      { kind: 'mutation', auth: 'admin' },
-    ),
-    isWorkspaceAvailable: method(z.void(), z.boolean()),
-    listWorkspacePackages: method(z.void(), z.array(z.unknown()).readonly()),
     /**
      * Uninstall a package. `nodeId` omitted (or `'hub'`) uninstalls on the hub
      * — the original behaviour, which still THROWS on failure. An agent

@@ -812,8 +812,7 @@ export class AddonInstaller {
    *
    * Always npm. The legacy "auto-use workspace symlink in dev" branch
    * was removed; local development pushes via `camstack deploy` (CLI
-   * tarball upload). Operators wanting to install from workspace use
-   * `installFromWorkspace` (explicit `'local'` codepath) instead.
+   * tarball upload).
    */
   async install(packageName: string, version?: string): Promise<{ name: string; version: string }> {
     return this.installFromNpm(packageName, version)

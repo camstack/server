@@ -745,30 +745,6 @@ export function createCapRouter_addons(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.installPackage(input as any)
       }),
-    installFromWorkspace: adminProcedure
-      .input(addonsCapability.methods.installFromWorkspace.input.loose())
-      .output(addonsCapability.methods.installFromWorkspace.output)
-      .mutation(async ({ input, ctx }) => {
-        const p = requireCapProvider('addons', () => getProvider(ctx))
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.installFromWorkspace(input as any)
-      }),
-    isWorkspaceAvailable: protectedProcedure
-      .input(z.object({ nodeId: z.string().optional() }).optional())
-      .output(addonsCapability.methods.isWorkspaceAvailable.output)
-      .query(async ({ input, ctx }) => {
-        void input
-        const p = requireCapProvider('addons', () => getProvider(ctx))
-        return p.isWorkspaceAvailable()
-      }),
-    listWorkspacePackages: protectedProcedure
-      .input(z.object({ nodeId: z.string().optional() }).optional())
-      .output(addonsCapability.methods.listWorkspacePackages.output)
-      .query(async ({ input, ctx }) => {
-        void input
-        const p = requireCapProvider('addons', () => getProvider(ctx))
-        return p.listWorkspacePackages()
-      }),
     uninstallPackage: adminProcedure
       .input(addonsCapability.methods.uninstallPackage.input.loose())
       .output(addonsCapability.methods.uninstallPackage.output)

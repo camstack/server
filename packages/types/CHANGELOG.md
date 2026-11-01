@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The migrations ledger rows carry their catalogued meta (description, body kind, store, dependsOn) as an optional field
 - Notification templates: the {{camera}} variable is now {{device}} (the camera for a track, the appliance or sensor for a device event); the system text for an agent that went offline during an update declares {{graceMin}}
 - New admin-only read userManagement.getAdminBootstrapStatus: whether an admin account still has the first-boot password, as one boolean
+- Removed the addons.installFromWorkspace, isWorkspaceAvailable and listWorkspacePackages methods; a workspace build reaches a node through camstack deploy.
 
 ## [1.2.467] - 2026-11-01
 

@@ -86,15 +86,6 @@ export const useAddonsListPackages: typeof trpc.addons.listPackages.useQuery = /
 /** Generated alias around `trpc.addons.installPackage.useMutation`. */
 export const useAddonsInstallPackage: typeof trpc.addons.installPackage.useMutation = /*#__PURE__*/ alias(() => trpc.addons.installPackage.useMutation)
 
-/** Generated alias around `trpc.addons.installFromWorkspace.useMutation`. */
-export const useAddonsInstallFromWorkspace: typeof trpc.addons.installFromWorkspace.useMutation = /*#__PURE__*/ alias(() => trpc.addons.installFromWorkspace.useMutation)
-
-/** Generated alias around `trpc.addons.isWorkspaceAvailable.useQuery`. */
-export const useAddonsIsWorkspaceAvailable: typeof trpc.addons.isWorkspaceAvailable.useQuery = /*#__PURE__*/ alias(() => trpc.addons.isWorkspaceAvailable.useQuery)
-
-/** Generated alias around `trpc.addons.listWorkspacePackages.useQuery`. */
-export const useAddonsListWorkspacePackages: typeof trpc.addons.listWorkspacePackages.useQuery = /*#__PURE__*/ alias(() => trpc.addons.listWorkspacePackages.useQuery)
-
 /** Generated alias around `trpc.addons.uninstallPackage.useMutation`. */
 export const useAddonsUninstallPackage: typeof trpc.addons.uninstallPackage.useMutation = /*#__PURE__*/ alias(() => trpc.addons.uninstallPackage.useMutation)
 

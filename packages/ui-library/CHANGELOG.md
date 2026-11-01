@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Generated hooks include userManagement.getAdminBootstrapStatus
+- Removed the generated hooks for the workspace-install methods of the addons capability.
 
 ## [1.2.366] - 2026-11-01
 

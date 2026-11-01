@@ -40,6 +40,9 @@ import {
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
+// Repo `packages/` dir — the hub seeds its required packages from here as a
+// bundled closure instead of pulling them from npm (same as addon-update-on-agent).
+const REPO_PACKAGES_DIR = path.resolve(__dirname, '..', '..', 'packages')
 const FIXTURE_PACKAGE_DIR = path.resolve(__dirname, '..', 'fixtures', 'broken-addon')
 const FIXTURE_PACKAGE_NAME = '@camstack/addon-broken-fixture'
 const FIXTURE_ADDON_ID = 'broken-addon'
@@ -69,8 +72,7 @@ beforeAll(async () => {
   hub = await spawnHub({
     port: 4545,
     dataDir: dataDir.path,
-    // Don't auto-install bundled addons — keep the boot lean so the failure
-    // log is easy to read.
+    env: { CAMSTACK_BUNDLED_ADDONS_DIR: REPO_PACKAGES_DIR },
   })
   client = await loginAsAdmin(hub.port)
 }, 120_000)

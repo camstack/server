@@ -2008,13 +2008,6 @@ export function buildAddonsProvider(
       requestHubChangeConvergence()
       return result
     },
-    installFromWorkspace: async (input) => {
-      const result = await ps.installFromWorkspaceAndLoad(input.packageName)
-      requestHubChangeConvergence()
-      return result
-    },
-    isWorkspaceAvailable: async () => ps.isWorkspaceAvailable(),
-    listWorkspacePackages: async () => ps.listWorkspacePackages(),
     uninstallPackage: async (input) => {
       try {
         const result = await uninstallPackage(uninstallSeam, input)

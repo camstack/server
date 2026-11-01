@@ -23,11 +23,16 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { mkdtempSync, rmSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { spawnHub, type SpawnedHub } from '../fixtures/electron.ts'
 import { loginAsAdmin, type AuthorizedClient } from '../fixtures/api-client.ts'
 import { buildSyntheticAddon, type SyntheticAddon } from '../fixtures/synthetic-addon.ts'
 import { packAddon, uploadTarball } from '../fixtures/addon-upload.ts'
+
+// Repo `packages/` dir — the hub seeds its required packages from here as a
+// bundled closure instead of pulling them from npm (same as addon-update-on-agent).
+const REPO_PACKAGES_DIR = resolve(fileURLToPath(import.meta.url), '..', '..', '..', 'packages')
 
 const E2E_LIVE = process.env['CAMSTACK_E2E_LIVE'] === '1'
 const desc = E2E_LIVE ? describe : describe.skip
@@ -47,6 +52,7 @@ beforeAll(async () => {
     port: HUB_PORT,
     bootTimeoutMs: 180_000,
     env: {
+      CAMSTACK_BUNDLED_ADDONS_DIR: REPO_PACKAGES_DIR,
       CAMSTACK_SKIP_ADMIN_UI_WAIT: '1',
       CAMSTACK_HUB_TCP_PORT: '6031',
     },

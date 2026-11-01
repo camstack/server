@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1468 method paths across 196 capabilities.
+ * Coverage: 1465 method paths across 196 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -53,9 +53,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'addons.getLogs': { capName: "addons", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'addons.getPackageDocs': { capName: "addons", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'addons.getVersions': { capName: "addons", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
-  'addons.installFromWorkspace': { capName: "addons", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'addons.installPackage': { capName: "addons", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
-  'addons.isWorkspaceAvailable': { capName: "addons", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'addons.list': { capName: "addons", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'addons.listCapabilityProviders': { capName: "addons", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'addons.listFrameworkPackages': { capName: "addons", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
@@ -63,7 +61,6 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'addons.listJobs': { capName: "addons", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'addons.listPackages': { capName: "addons", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'addons.listUpdates': { capName: "addons", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
-  'addons.listWorkspacePackages': { capName: "addons", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'addons.onAddonLogs': { capName: "addons", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'addons.reloadPackages': { capName: "addons", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'addons.restartAddon': { capName: "addons", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
