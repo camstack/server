@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.482] - 2026-11-02
+
 ### Changed
 
 - An addon blocked by its migrations now throws a typed AddonMigrationsBlockedError naming the migration ids.
