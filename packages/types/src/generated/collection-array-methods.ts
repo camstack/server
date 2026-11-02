@@ -8,7 +8,7 @@
  * barrel (`ALL_CAPABILITY_DEFINITIONS`), which would cost ~144MB RSS per
  * forked runner. See docs/decisions/adr-0028.md.
  *
- * Coverage: 29 collection caps, 51 array methods.
+ * Coverage: 30 collection caps, 52 array methods.
  */
 export const COLLECTION_ARRAY_METHODS: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
@@ -25,6 +25,7 @@ export const COLLECTION_ARRAY_METHODS: Readonly<Record<string, readonly string[]
   "device-provider": ["classifyDiscoveryHits", "discoverDevices", "getDevices", "getDiscoveryModes"],
   "device-removal-hook": ["listDeviceData"],
   "failure-contribution": ["list"],
+  "integration-instances": ["listInstances"],
   "llm": ["getDefaults", "getUsage", "listModelCatalog", "listNodeModels", "listProfileKinds", "listProfiles", "listRuntimeNodes"],
   "load-contribution": ["list"],
   "log-channels": ["list"],
@@ -57,11 +58,12 @@ export function isCollectionArrayMethodName(capName: string, method: string): bo
  * Per capability, the methods declared `optionalMethod` — the ones whose
  * ABSENCE on a provider is a fact about that provider, not a bug.
  *
- * Coverage: 3 caps, 11 methods.
+ * Coverage: 4 caps, 12 methods.
  */
 export const PROVIDER_OPTIONAL_METHODS: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
   "device-export": ["exposeEntity", "listExposedEntities", "listSupportedEntityKinds", "unexposeEntity"],
+  "integration-instances": ["testInstance"],
   "log-destination": ["cancelRead", "describeRead", "read"],
   "videoclips": ["dialClipStream", "getPlaybackOptions", "offerClipBytes", "readClipBytes"],
 } as const)

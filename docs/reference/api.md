@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**200 capabilities · 1482 methods.**
+**201 capabilities · 1490 methods.**
 
 ## Method index
 
@@ -522,6 +522,14 @@
 | `imageSettings.getStatus` | query | protected | image-settings (auto) |
 | `imageSettings.getOptions` | query | protected | image-settings |
 | `imageSettings.setSettings` | mutation | admin | image-settings |
+| `integrationInstances.describe` | query | admin | integration-instances |
+| `integrationInstances.instanceFormSchema` | query | admin | integration-instances |
+| `integrationInstances.listInstances` | query | admin | integration-instances |
+| `integrationInstances.getInstance` | query | admin | integration-instances |
+| `integrationInstances.createInstance` | mutation | admin | integration-instances |
+| `integrationInstances.updateInstance` | mutation | admin | integration-instances |
+| `integrationInstances.deleteInstance` | mutation | admin | integration-instances |
+| `integrationInstances.testInstance` | mutation | admin | integration-instances |
 | `integrations.list` | query | protected | integrations |
 | `integrations.get` | query | protected | integrations |
 | `integrations.getByAddonId` | query | protected | integrations |
@@ -2927,6 +2935,24 @@
 | getStatus _(auto)_ | `imageSettings.getStatus` | query | protected | `{ deviceId: number }` | `ImageSettingsStatusSchema` |
 | getOptions | `imageSettings.getOptions` | query | protected | `{ deviceId: number }` | `ImageSettingsOptionsSchema` |
 | setSettings | `imageSettings.setSettings` | mutation | admin | `{ deviceId: number; settings: ImageSettingsPatchSchema }` | `void` |
+
+### `integration-instances` → `integrationInstances.*`
+
+- **Source:** `packages/types/src/capabilities/integration-instances.cap.ts:73`
+- **Meta:** scope: `system` · mode: `collection` · mount: `skip`
+- **Archetypes:** internal
+- **Provider interface:** `IIntegrationInstancesProvider`
+
+| Method | tRPC path | Kind | Auth | Input | Output |
+|---|---|---|---|---|---|
+| describe | `integrationInstances.describe` | query | admin | `void` | `IntegrationInstanceDescriptionSchema` |
+| instanceFormSchema | `integrationInstances.instanceFormSchema` | query | admin | `{ id: string \| null }` | `<custom>` |
+| listInstances | `integrationInstances.listInstances` | query | admin | `void` | `IntegrationInstanceSchema[]` |
+| getInstance | `integrationInstances.getInstance` | query | admin | `{ id: string }` | `IntegrationInstanceSchema \| null` |
+| createInstance | `integrationInstances.createInstance` | mutation | admin | `{ id: string; name: string }` | `{ id: string }` |
+| updateInstance | `integrationInstances.updateInstance` | mutation | admin | `IntegrationInstancePatchSchema` | `{ ok: true }` |
+| deleteInstance | `integrationInstances.deleteInstance` | mutation | admin | `{ id: string }` | `{ ok: true }` |
+| testInstance | `integrationInstances.testInstance` | mutation | admin | `{ id: string \| null; values: Record<string, unknown> }` | `TestConnectionResultSchema` |
 
 ### `integrations` → `integrations.*`
 

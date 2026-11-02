@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1482 method paths across 200 capabilities.
+ * Coverage: 1490 method paths across 201 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -531,6 +531,14 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'imageSettings.getOptions': { capName: "image-settings", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'imageSettings.getStatus': { capName: "image-settings", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'imageSettings.setSettings': { capName: "image-settings", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
+  'integrationInstances.createInstance': { capName: "integration-instances", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'integrationInstances.deleteInstance': { capName: "integration-instances", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
+  'integrationInstances.describe': { capName: "integration-instances", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'integrationInstances.getInstance': { capName: "integration-instances", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'integrationInstances.instanceFormSchema': { capName: "integration-instances", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'integrationInstances.listInstances': { capName: "integration-instances", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'integrationInstances.testInstance': { capName: "integration-instances", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'integrationInstances.updateInstance': { capName: "integration-instances", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'integrations.create': { capName: "integrations", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'integrations.delete': { capName: "integrations", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'integrations.get': { capName: "integrations", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
@@ -1595,6 +1603,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "humidity-sensor",
   "image",
   "image-settings",
+  "integration-instances",
   "integrations",
   "intercom",
   "ir-transmitter",
@@ -1856,6 +1865,7 @@ export const SYSTEM_CAP_NAMES: readonly string[] = [
   "failure-contribution",
   "fan-presets",
   "filesystem-browse",
+  "integration-instances",
   "integrations",
   "keychain",
   "keychain-admin",

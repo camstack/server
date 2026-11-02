@@ -78,6 +78,7 @@ export const SYSTEM_CAP_VOCABULARY: CapVocabularySlice<SystemVocabCapName> = {
   'load-contribution': system(INTERNAL),
   'local-network': system(NETWORK),
   'log-channels': system(INTERNAL),
+  'integration-instances': system(INTERNAL),
   'log-destination': system(INTERNAL),
   'login-method': system(IDENTITY),
   'mesh-network': system(NETWORK),

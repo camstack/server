@@ -1232,6 +1232,20 @@ export {
   oauthIntegrationCapability,
 } from './oauth-integration.cap.js'
 export {
+  type IIntegrationInstancesProvider,
+  type IntegrationInstance,
+  type IntegrationInstanceDescription,
+  IntegrationInstanceDescriptionSchema,
+  IntegrationInstanceIdSchema,
+  type IntegrationInstanceMode,
+  IntegrationInstanceModeSchema,
+  type IntegrationInstancePatch,
+  IntegrationInstancePatchSchema,
+  IntegrationInstanceSchema,
+  IntegrationInstanceStatusSchema,
+  integrationInstancesCapability,
+} from './integration-instances.cap.js'
+export {
   type IOidcConnectionsProvider,
   type OidcConnection,
   OidcConnectionSchema,
@@ -3470,6 +3484,7 @@ import type { notificationRulesCapability } from './notification-rules.cap.js'
 import type { notifierCapability } from './notifier.cap.js'
 import type { numericSensorCapability } from './numeric-sensor.cap.js'
 import type { oauthIntegrationCapability } from './oauth-integration.cap.js'
+import type { integrationInstancesCapability } from './integration-instances.cap.js'
 import type { oidcConnectionsCapability } from './oidc-connections.cap.js'
 import type { osdCapability } from './osd.cap.js'
 import type { osdManagerCapability } from './osd-manager.cap.js'
@@ -3700,6 +3715,7 @@ type AnyCapability =
   | typeof nodesCapability
   | typeof serverManagementCapability
   | typeof integrationsCapability
+  | typeof integrationInstancesCapability
   | typeof addonsCapability
   | typeof oauthIntegrationCapability
   | typeof oidcConnectionsCapability

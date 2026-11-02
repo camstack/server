@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1033 shared schemas.**
+**1038 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -2753,6 +2753,35 @@ Enum: `"not-electron" \| "no-app-state" \| "app-state-stale" \| "not-downloaded"
 - `version`: `string`
 - `dir`: `string`
 - `installSource?`: `string`
+
+### `IntegrationInstanceDescriptionSchema`
+
+- `instanceMode`: `IntegrationInstanceModeSchema`
+- `kind`: `string`
+- `canTest`: `boolean`
+
+### `IntegrationInstanceModeSchema`
+
+Enum: `"single" \| "multiple"`
+
+### `IntegrationInstancePatchSchema`
+
+- `id`: `string`
+- `name?`: `string`
+- `values`: `Record<string, unknown>`
+
+### `IntegrationInstanceSchema`
+
+- `id`: `string`
+- `name`: `string`
+- `configured`: `boolean`
+- `formValues`: `Record<string, unknown>`
+- `status?`: `IntegrationInstanceStatusSchema`
+
+### `IntegrationInstanceStatusSchema`
+
+- `state`: `"ok" \| "off" \| "error" \| "unknown"`
+- `detail?`: `string`
 
 ### `IntegrationLiteSchema`
 

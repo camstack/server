@@ -110,6 +110,7 @@ export const CAP_NAMES: readonly string[] = Object.freeze([
   "humidity-sensor",
   "image",
   "image-settings",
+  "integration-instances",
   "integrations",
   "intercom",
   "ir-transmitter",
