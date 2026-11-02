@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Tailscale client and funnel settings are now per node; existing values are copied to the hub's own settings on first boot
+
 ## [1.2.148] - 2026-11-01
 
 ### Changed

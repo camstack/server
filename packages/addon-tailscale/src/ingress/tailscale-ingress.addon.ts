@@ -22,6 +22,8 @@
  */
 import {
   BaseAddon,
+  type ConfigUISchema,
+  defineAddonMigrations,
   EventCategory,
   networkAccessCapability,
   type InferProvider,
@@ -31,6 +33,8 @@ import {
 type NetworkAccessProvider = InferProvider<typeof networkAccessCapability>
 import { randomUUID } from 'node:crypto'
 
+import { ADDON_MIGRATIONS } from './migrations/index.js'
+import { readRawKeys } from '../settings-per-node.js'
 import { TailscaleCli, TailscaleCliError, type UpstreamScheme } from './tailscale-cli.js'
 
 // ── Settings shape (#176) ───────────────────────────────────────────
@@ -106,6 +110,7 @@ export class TailscaleIngressAddon extends BaseAddon<TailscaleIngressConfig> {
   }
 
   protected async onInitialize(): Promise<ProviderRegistration[]> {
+    await this.migrateSettings()
     // Late-construct so the CLI gets the scoped logger; the field was
     // declared with `!:` because TS can't see this assignment.
     this.cli = new TailscaleCli(this.ctx.logger.child('tailscale-cli'))
@@ -335,7 +340,12 @@ export class TailscaleIngressAddon extends BaseAddon<TailscaleIngressConfig> {
 
   private async getStatus(): Promise<{
     connected: boolean
-    endpoint: { url: string; hostname: string; port: number; protocol: 'http' | 'https' } | null
+    endpoint: {
+      url: string
+      hostname: string
+      port: number
+      protocol: 'http' | 'https'
+    } | null
     error?: string
   }> {
     try {
@@ -393,7 +403,11 @@ export class TailscaleIngressAddon extends BaseAddon<TailscaleIngressConfig> {
     }
     this.ctx.logger.info(`applyRule: ${rule.mode}`, {
       meta: { ...opts, mode: rule.mode },
-      tags: { topic: 'tailscale-ingress', phase: 'apply-rule', verb: rule.mode },
+      tags: {
+        topic: 'tailscale-ingress',
+        phase: 'apply-rule',
+        verb: rule.mode,
+      },
     })
     if (rule.mode === 'funnel') {
       await this.cli.funnel(opts)
@@ -401,7 +415,11 @@ export class TailscaleIngressAddon extends BaseAddon<TailscaleIngressConfig> {
       await this.cli.serve(opts)
     }
     this.ctx.logger.info(`applyRule: ${rule.mode} done`, {
-      tags: { topic: 'tailscale-ingress', phase: 'apply-rule-done', verb: rule.mode },
+      tags: {
+        topic: 'tailscale-ingress',
+        phase: 'apply-rule-done',
+        verb: rule.mode,
+      },
     })
   }
 
@@ -481,7 +499,10 @@ export class TailscaleIngressAddon extends BaseAddon<TailscaleIngressConfig> {
     const cliLogger = this.ctx.logger.child('tailscale-cli')
     if (status.daemonSocket) {
       this.ctx.logger.info('start: routing CLI to onboard daemon', {
-        meta: { daemonSocket: status.daemonSocket, daemonCliPath: status.daemonCliPath },
+        meta: {
+          daemonSocket: status.daemonSocket,
+          daemonCliPath: status.daemonCliPath,
+        },
         tags: { topic: 'tailscale-ingress', phase: 'daemon-route' },
       })
       this.cli = new TailscaleCli({
@@ -511,7 +532,32 @@ export class TailscaleIngressAddon extends BaseAddon<TailscaleIngressConfig> {
     return await api.meshNetwork.getStatus.query(filter)
   }
 
-  protected globalSettingsSchema() {
+  /**
+   * The bare rows of an older version become the hub's node rows (D986, D987). The config was
+   * resolved before this ran, from node rows that did not exist yet, so it is resolved again
+   * once the copy landed.
+   */
+  private async migrateSettings(): Promise<void> {
+    const report = await this.runMigrations(
+      defineAddonMigrations(ADDON_MIGRATIONS, {
+        readStored: (keys) =>
+          readRawKeys((key) => this.readStoredGlobalKey(key), 'tailscale-ingress', keys),
+      }),
+    )
+    if (report.applied.length > 0) await this.resolveConfig()
+  }
+
+  /** Every field of this form is a fact of ONE host (D986): rows `<key>@<nodeId>`, nothing cluster-wide. */
+  protected async nodeSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    return cap === 'network-access' ? this.nodeSchema() : null
+  }
+
+  /** The form the settings API still asks `globalSettingsSchema` for: the same node schema. */
+  protected globalSettingsSchema(): ConfigUISchema {
+    return this.nodeSchema()
+  }
+
+  private nodeSchema(): ConfigUISchema {
     return this.schema({
       sections: [
         {
@@ -524,6 +570,7 @@ export class TailscaleIngressAddon extends BaseAddon<TailscaleIngressConfig> {
           columns: 1,
           fields: [
             this.field({
+              perNode: true,
               type: 'select',
               key: 'mode',
               label: 'Mode',
@@ -546,6 +593,7 @@ export class TailscaleIngressAddon extends BaseAddon<TailscaleIngressConfig> {
               ],
             }),
             this.field({
+              perNode: true,
               type: 'number',
               key: 'sourcePort',
               label: 'Source port',
@@ -558,6 +606,7 @@ export class TailscaleIngressAddon extends BaseAddon<TailscaleIngressConfig> {
               max: 65535,
             }),
             this.field({
+              perNode: true,
               type: 'text',
               key: 'targetPath',
               label: 'Target path (optional)',
@@ -568,6 +617,7 @@ export class TailscaleIngressAddon extends BaseAddon<TailscaleIngressConfig> {
               placeholder: '/',
             }),
             this.field({
+              perNode: true,
               type: 'select',
               key: 'upstreamScheme',
               label: 'Upstream scheme',

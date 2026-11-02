@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**231 units · 7852 source files · 218 units claimed by at least one document (7808 files).**
+**231 units · 7857 source files · 218 units claimed by at least one document (7813 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -113,6 +113,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/types/src/catalogs` | 14 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0939-the-display-palette-is-one-hub-capability.md`, `decisions/adr-0715-a-root-detector-that-declares-a-step-fills-it-and-tier-1-has-one-writer-per-effect.md`, +7 more, 1 ADR | — |
 | `packages/addon-google-services` | 13 | — | `addons/addon-google-services.md` _(covers)_, `decisions/adr-0885-a-critical-alert-is-a-severity-on-the-alert-centre.md` | — |
 | `packages/addon-model-studio` | 13 | `tooling` | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, `decisions/adr-0661-model-licences-live-in-the-catalog-and-every-licence-surface-is-generated-from-them.md`, +1 more | — |
+| `packages/addon-tailscale` | 13 | `remote-access` | `decisions/adr-0783-secrets-are-declared-by-schema-type-and-never-travel-on-argv-env-or-logs.md` | — |
 | `packages/mcp-develop` | 13 | — | `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `decisions/adr-0849-retrain-annotations-keep-their-origin.md` | — |
 | `packages/types/src/records` | 13 | — | `architecture/records.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0881-records-are-the-third-storage-api-and-a-secret-field-is-a-feature-of-the-kind.md`, +1 more | 2026-10-22 |
 | `packages/ui-library/src/contexts` | 13 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +3 more | 2026-11-02 |
@@ -139,7 +140,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/system/src/logging` | 9 | `logging`, `secrets` | `architecture/logging.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +9 more | 2026-10-21 |
 | `packages/types/src/units` | 9 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0972-a-number-tied-to-a-quantity-is-entered-in-a-unit-the-person-picks.md` | — |
 | `packages/ui-library/src/theme` | 9 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md`, +2 more | 2026-11-02 |
-| `packages/addon-tailscale` | 8 | `remote-access` | `decisions/adr-0783-secrets-are-declared-by-schema-type-and-never-travel-on-argv-env-or-logs.md` | — |
 | `packages/types/src/auth` | 8 | `auth` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0801-a-native-account-link-returns-to-the-app-and-is-claimed-with-the-apps-own-session.md`, `decisions/adr-0810-an-sso-login-bridge-is-single-use-and-bound-to-the-browser-that-started-the-sign-in.md`, +5 more, 1 ADR | — |
 | `packages/addon-model-studio/src/plugin-catalog` | 7 | `tooling` | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_ | — |
 | `packages/addon-model-studio/src/plus-catalog` | 7 | `tooling` | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, `decisions/adr-0214-step-settings-are-model-scoped.md`, +1 more | — |

@@ -38,11 +38,14 @@ import type {
 import {
   BaseAddon,
   BOOT_RECOVERY_BACKOFF_MS,
+  defineAddonMigrations,
   EventCategory,
   meshNetworkCapability,
   networkAccessCapability,
 } from '@camstack/types'
 
+import { readRawKeys } from '../settings-per-node.js'
+import { ADDON_MIGRATIONS } from './migrations/index.js'
 import { TailscaleCli, TailscaleCliError, type TailscaleStatusJson } from './tailscale-cli.js'
 import { TailscaledDaemon } from './tailscaled-daemon.js'
 
@@ -169,6 +172,7 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
   }
 
   protected async onInitialize(): Promise<ProviderRegistration[]> {
+    await this.migrateSettings()
     const cliLogger = this.ctx.logger.child('tailscale-cli')
 
     // Fresh init — clear degraded-state markers from a prior run.
@@ -204,7 +208,10 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
           binPath: handle.cliPath,
           socketPath: handle.socketPath,
         })
-        this.onboardHandle = { socketPath: handle.socketPath, cliPath: handle.cliPath }
+        this.onboardHandle = {
+          socketPath: handle.socketPath,
+          cliPath: handle.cliPath,
+        }
         this.ctx.logger.info('onboard tailscaled started', {
           meta: { socketPath: handle.socketPath },
         })
@@ -557,7 +564,10 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
       return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback
     } catch (err) {
       this.ctx.logger.debug('tailscale: could not read server.port — using fallback', {
-        meta: { error: err instanceof Error ? err.message : String(err), fallback },
+        meta: {
+          error: err instanceof Error ? err.message : String(err),
+          fallback,
+        },
         tags: { topic: 'tailscale', phase: 'port-fallback' },
       })
       return fallback
@@ -944,8 +954,36 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
     }, delay)
   }
 
+  /**
+   * The bare rows of an older version become the hub's node rows (D986, D987). The config was
+   * resolved before this ran, from node rows that did not exist yet, so it is resolved again
+   * once the copy landed.
+   */
+  private async migrateSettings(): Promise<void> {
+    const report = await this.runMigrations(
+      defineAddonMigrations(ADDON_MIGRATIONS, {
+        readStored: (keys) =>
+          readRawKeys((key) => this.readStoredGlobalKey(key), 'tailscale-client', keys),
+      }),
+    )
+    if (report.applied.length > 0) await this.resolveConfig()
+  }
+
+  /**
+   * Every field of this form is a fact of ONE host (D986): the client flags, the daemon source
+   * and the pre-auth key. They persist as `<key>@<nodeId>` rows; nothing is cluster-wide.
+   */
+  protected async nodeSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    return cap === 'mesh-network' ? this.nodeSchema() : null
+  }
+
+  /** The form the settings API still asks `globalSettingsSchema` for: the same node schema. */
   protected globalSettingsSchema(cap?: string): ConfigUISchema | null {
     if (cap === 'network-access') return null
+    return this.nodeSchema()
+  }
+
+  private nodeSchema(): ConfigUISchema {
     return this.schema({
       // Tab strip mirrors the canonical Tailscale CLI taxonomy:
       //   • General   — identity (hostname) + connect hints
@@ -982,6 +1020,7 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
               variant: 'info' as const,
             },
             this.field({
+              perNode: true,
               type: 'select',
               key: 'clientMode',
               label: 'Tailscale daemon',
@@ -1014,6 +1053,7 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
               ],
             }),
             this.field({
+              perNode: true,
               type: 'text',
               key: 'hostname',
               label: 'Device Hostname',
@@ -1036,6 +1076,7 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
           descriptionKey: 'tailscale:globalSettings.s_routes.description',
           fields: [
             this.field({
+              perNode: true,
               type: 'boolean',
               key: 'acceptRoutes',
               label: 'Accept routes from peers',
@@ -1046,6 +1087,7 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
               default: false,
             }),
             this.field({
+              perNode: true,
               type: 'text',
               key: 'advertisedRoutes',
               label: 'Advertise subnet routes',
@@ -1056,6 +1098,7 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
               placeholder: '192.168.10.0/24',
             }),
             this.field({
+              perNode: true,
               type: 'text',
               key: 'advertisedTags',
               label: 'Advertise ACL tags',
@@ -1078,6 +1121,7 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
           descriptionKey: 'tailscale:globalSettings.s_dns-exit.description',
           fields: [
             this.field({
+              perNode: true,
               type: 'boolean',
               key: 'acceptDns',
               label: 'Accept tailnet DNS',
@@ -1088,6 +1132,7 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
               default: true,
             }),
             this.field({
+              perNode: true,
               type: 'text',
               key: 'exitNodeId',
               label: 'Exit node (peer id)',
@@ -1109,6 +1154,7 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
           descriptionKey: 'tailscale:globalSettings.s_access.description',
           fields: [
             this.field({
+              perNode: true,
               type: 'boolean',
               key: 'shieldsUp',
               label: 'Shields up',
@@ -1119,6 +1165,7 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
               default: false,
             }),
             this.field({
+              perNode: true,
               type: 'boolean',
               key: 'ssh',
               label: 'Enable Tailscale SSH',
@@ -1143,6 +1190,7 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
           descriptionKey: 'tailscale:globalSettings.s_auth-advanced.description',
           fields: [
             this.field({
+              perNode: true,
               type: 'password',
               key: 'authKey',
               label: 'Pre-auth key',
