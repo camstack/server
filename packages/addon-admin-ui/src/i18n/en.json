@@ -1258,9 +1258,7 @@
       "connections_one": "{{count}} connection",
       "connections_other": "{{count}} connections",
       "connectionsConnected_one": "{{count}} connection · {{connected}} connected",
-      "connectionsConnected_other": "{{count}} connections · {{connected}} connected",
-      "connectionLivesOnIntegrations": "The relays (host, credentials, From address) are set up on the Integrations page, one entry per relay.",
-      "openIntegration": "Open the integration"
+      "connectionsConnected_other": "{{count}} connections · {{connected}} connected"
     },
     "ai": "AI",
     "calendars": "Calendars",

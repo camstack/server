@@ -147,8 +147,8 @@ describe('smtp-nodemailer migrations on real SQLite', () => {
       warn: (message) => {
         warnings.push(message)
       },
-      ensureIntegration: async () => 'int_0007',
-      findIntegration: async () => 'int_0007',
+      ensureRelayId: async () => 'relay-0007',
+      findRelayId: async () => 'relay-0007',
       putRecord: async (id, body) => {
         await handle.put({ id, data: body }, { ifRev: 0 })
         return 'created'
@@ -172,7 +172,7 @@ describe('smtp-nodemailer migrations on real SQLite', () => {
     })
     expect(report.failed ?? []).toEqual([])
     // The record holds the relay, the odd stored values clamped / coerced, the password kept.
-    const row = await handle.getResolved('int_0007')
+    const row = await handle.getResolved('relay-0007')
     expect(row?.data).toMatchObject({
       host: 'smtp.example.com',
       port: 65535,

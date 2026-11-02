@@ -32,12 +32,12 @@ const body = (name: string, host: string) => ({
   fromName: '',
 })
 
-async function boot() {
+async function boot(seed = true) {
   const world = makeInMemoryRecords('smtp-nodemailer')
   await world.records.declare({ relays: smtpRelaysKind })
   const handle = world.records.kind(smtpRelaysKind)
-  await handle.put({ id: 'int_0001', data: body('a', 'smtp.a.test') }, { ifRev: 0 })
-  await handle.put({ id: 'int_0002', data: body('b', 'smtp.b.test') }, { ifRev: 0 })
+  if (seed) await handle.put({ id: 'int_0001', data: body('a', 'smtp.a.test') }, { ifRev: 0 })
+  if (seed) await handle.put({ id: 'int_0002', data: body('b', 'smtp.b.test') }, { ifRev: 0 })
   const ctx = {
     id: 'smtp-nodemailer',
     logger: logger(),
@@ -50,7 +50,6 @@ async function boot() {
     eventBus: { emit: vi.fn(), subscribe: vi.fn(() => () => undefined) },
     kernel: { localNodeId: 'hub' },
     api: {
-      integrations: { getByAddonId: { query: vi.fn(async () => null) } },
       migrations: {
         declareOwner: { mutate: vi.fn(async () => ({ bootId: 'b', snapshot: 'none', steps: [] })) },
         startMigration: { mutate: vi.fn() },
@@ -102,7 +101,7 @@ describe('SmtpNodemailerAddon — relays are integration instances (D996)', () =
     expect(byHost).toEqual({ 'smtp.a.test': 1, 'smtp.b.test': 1 })
   })
 
-  it('a relay created on the Integrations page serves at once, a deleted one stops', async () => {
+  it('a relay created through the cap serves at once, a deleted one stops', async () => {
     const w = await boot()
     addons.push(w.addon)
     await w.instances.createInstance({ id: 'int_0003', name: 'c' })
@@ -141,5 +140,45 @@ describe('SmtpNodemailerAddon — relays are integration instances (D996)', () =
       user: 'u',
       pass: 'pw-SECRET',
     })
+  })
+
+  it('the settings page reads and writes the default relay, layout unchanged', async () => {
+    const w = await boot()
+    addons.push(w.addon)
+    await w.addon.updateGlobalSettingsAsOperator({ username: 'u', password: 'pw-PAGE', port: 465 })
+    const form = await w.addon.getGlobalSettings()
+    const fields = form?.sections.flatMap((section) => section.fields) ?? []
+    const valueOf = (key: string): unknown => {
+      const field = fields.find((candidate) => 'key' in candidate && candidate.key === key)
+      return field !== undefined && 'value' in field ? field.value : undefined
+    }
+    expect(fields.map((field) => ('key' in field ? field.key : ''))).toEqual([
+      'host',
+      'port',
+      'secure',
+      'username',
+      'password',
+      'fromAddress',
+      'fromName',
+    ])
+    expect(valueOf('host')).toBe('smtp.a.test')
+    expect(valueOf('port')).toBe(465)
+    expect(JSON.stringify(form)).not.toContain('pw-PAGE')
+    // The second relay is untouched.
+    expect((await w.instances.getInstance({ id: 'int_0002' }))?.formValues).toMatchObject({
+      host: 'smtp.b.test',
+    })
+  })
+
+  it('the first save of the settings page creates the relay and serves it', async () => {
+    const w = await boot(false)
+    addons.push(w.addon)
+    expect(await w.instances.listInstances()).toEqual([])
+    await w.addon.updateGlobalSettings({ host: 'smtp.new.test', fromAddress: 'n@example.com' })
+    const listed = await w.instances.listInstances()
+    expect(listed).toHaveLength(1)
+    expect(listed[0]?.id).toMatch(/^relay-[0-9a-f]{8}$/)
+    await w.smtp.sendEmail({ to: 'ops@example.com', subject: 's', text: 't' })
+    expect(w.built.find((t) => t.options.host === 'smtp.new.test')?.sent).toHaveLength(1)
   })
 })

@@ -96,7 +96,7 @@ export function buildEmailDescriptor(providers: readonly SmtpProviderOption[] = 
               label: 'Relay (optional)',
               labelKey: 'notifiers:emailDescriptor.s_email.smtpInstanceId.label',
               description:
-                'Pin this target to one relay of the provider (its integration id, e.g. int_0003, shown on Integrations). Leave empty to use the first configured relay.',
+                'Pin this target to one relay of the provider (its relay id, e.g. relay-1a2b3c4d). Leave empty to use the first configured relay.',
               descriptionKey: 'notifiers:emailDescriptor.s_email.smtpInstanceId.description',
             },
             {

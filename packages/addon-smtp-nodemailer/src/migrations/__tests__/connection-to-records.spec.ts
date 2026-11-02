@@ -35,10 +35,9 @@ async function world(initial: Record<string, unknown>, readFails = false) {
       return Object.fromEntries(store)
     },
     readRawStored: async () => Object.fromEntries(store),
-    ensureIntegration: async () => {
-      writes.push('integration')
-      created.push('int_0007')
-      return 'int_0007'
+    ensureRelayId: async () => {
+      created.push('relay-0007')
+      return 'relay-0007'
     },
     putRecord: async (id, body) => {
       if ((await handle.get(id)) !== null) return 'exists'
@@ -49,7 +48,7 @@ async function world(initial: Record<string, unknown>, readFails = false) {
     warn: (message) => {
       warnings.push(message)
     },
-    findIntegration: async () => (created.length > 0 ? 'int_0007' : null),
+    findRelayId: async () => (created.length > 0 ? 'relay-0007' : null),
     readRecord: async (id) => {
       const row = await handle.getResolved(id)
       return row === null
@@ -86,7 +85,7 @@ describe('smtp-nodemailer/2026-11-02-connection-to-records', () => {
     const w = await world(OLD)
     const result = await w.run(CONNECTION_TO_RECORDS_ID)
     expect(result).toMatchObject({ kind: 'procedure', result: { outcome: 'done' } })
-    const row = await w.handle.getResolved('int_0007')
+    const row = await w.handle.getResolved('relay-0007')
     expect(row?.data).toMatchObject({
       host: 'smtp.example.com',
       port: 465,
@@ -113,7 +112,7 @@ describe('smtp-nodemailer/2026-11-02-connection-to-records', () => {
       const w = await world({ host: 'h', port: stored, secure: 'maybe', username: 7 })
       const result = await w.run(CONNECTION_TO_RECORDS_ID)
       expect(result).toMatchObject({ result: { outcome: 'done' } })
-      const row = await w.handle.getResolved('int_0007')
+      const row = await w.handle.getResolved('relay-0007')
       expect(row?.data).toMatchObject({ port: expected, secure: false, username: '' })
     }
     const w = await world({ host: 'h', port: 70000 })
@@ -142,7 +141,7 @@ describe('smtp-nodemailer/2026-11-02-connection-to-records', () => {
     await w.run(CONNECTION_TO_RECORDS_ID)
     // The record exists but lost its password; a re-run must not clear the legacy copy.
     w.store.set('password', 'pw-secret')
-    await w.handle.patch('int_0007', { password: null })
+    await w.handle.patch('relay-0007', { password: null })
     w.writes.length = 0
     const again = await w.run(CONNECTION_TO_RECORDS_ID)
     expect(again).toMatchObject({ result: { outcome: 'already-done' } })
@@ -180,10 +179,10 @@ describe('smtp-nodemailer/2026-11-02-connection-to-records', () => {
     // No record yet: the legacy keys must stay.
     expect(await w.run(DROP_MOVED_SETTINGS_ID)).toMatchObject({
       kind: 'failed',
-      error: expect.stringContaining('no integration row') as string,
+      error: expect.stringContaining('no relay record') as string,
     })
     await w.run(CONNECTION_TO_RECORDS_ID)
-    await w.handle.patch('int_0007', { host: '' })
+    await w.handle.patch('relay-0007', { host: '' })
     expect(await w.run(DROP_MOVED_SETTINGS_ID)).toMatchObject({
       kind: 'failed',
       error: expect.stringContaining('holds no host') as string,

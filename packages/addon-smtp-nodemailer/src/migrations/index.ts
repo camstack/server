@@ -35,7 +35,7 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<SmtpCataloguePorts>[] = [
       onFailure: 'block-owner',
       bodyKind: 'procedure',
       description:
-        'Move the SMTP relay (host, port, TLS, credentials, From) from the addon settings into a relays record under an integrations row',
+        'Move the SMTP relay (host, port, TLS, credentials, From) from the addon settings into a relays record',
       fixtureMark: FIXTURE_MARK,
     },
     procedure: moveConnectionToRecord,

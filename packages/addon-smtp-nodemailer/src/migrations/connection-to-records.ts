@@ -1,8 +1,8 @@
 /**
- * The SMTP relay moves from the addon's settings into a `relays` record (D985, D996): an
- * integration row in the registry, a record under that id, and the password re-bound to the
- * record's keychain slot. The old keys are deleted by the second migration of the catalogue
- * (`planDropMovedSettings`), only after this one succeeded and the record is confirmed.
+ * The SMTP relay moves from the addon's settings into a `relays` record (D985, D996): a
+ * record under an id the addon mints (relays are not integration-registry rows), the password
+ * re-bound to the record's keychain slot. The old keys are deleted by the second migration of the
+ * catalogue (`planDropMovedSettings`), only after this one succeeded and the record is confirmed.
  *
  * Idempotent and ordered so a crash is safe: nothing is written before the old settings are read
  * in full (a password that cannot be resolved aborts the pass); an existing record is never
@@ -45,8 +45,8 @@ export interface SmtpRecordState {
 export interface SmtpMigrationPorts extends SmtpMigrationLog {
   /** The stored settings, secrets resolved. Throws when a secret cannot be resolved. */
   readStored(): Promise<Readonly<Record<string, unknown>>>
-  /** The id of the `integrations` row for this addon, created when absent. */
-  ensureIntegration(name: string): Promise<string>
+  /** The id of the addon's first relay record, minted (no record written) when there is none. */
+  ensureRelayId(): Promise<string>
   /** Put the record under `id` with `ifRev: 0`; `exists` when a record is already there. */
   putRecord(id: string, body: SmtpRelayBody): Promise<'created' | 'exists'>
   /** The record under `id`, secret resolved; null when absent. Throws when it cannot be read. */
@@ -112,7 +112,7 @@ export async function moveConnectionToRecord(
   const hasPassword = text(stored, 'password', '').length > 0
   if (host.length === 0 && !hasPassword)
     return { outcome: 'already-done', summary: { moved: false } }
-  const id = await ports.ensureIntegration(RELAY_NAME)
+  const id = await ports.ensureRelayId()
   const put = await ports.putRecord(id, bodyFrom(stored, ports))
   if (hasPassword) {
     // The old password is the only copy until the record verifiably holds one: an existing
@@ -125,13 +125,13 @@ export async function moveConnectionToRecord(
       )
   }
   return put === 'created'
-    ? { outcome: 'done', summary: { moved: true, integrationId: id } }
-    : { outcome: 'already-done', summary: { moved: false, integrationId: id } }
+    ? { outcome: 'done', summary: { moved: true, relayId: id } }
+    : { outcome: 'already-done', summary: { moved: false, relayId: id } }
 }
 
 export interface DropMovedSettingsPorts extends SmtpMigrationLog {
-  /** The id of the `integrations` row for this addon; null when it has none. */
-  findIntegration(): Promise<string | null>
+  /** The id of the addon's first relay record; null when it has none. */
+  findRelayId(): Promise<string | null>
   /** The record under `id`, secret resolved; null when absent. Throws when it cannot be read. */
   readRecord(id: string): Promise<SmtpRecordState | null>
   /** The addon's stored settings as written (markers unresolved), unparsed. */
@@ -177,8 +177,8 @@ async function confirmRecordHoldsLegacy(
     ports.warn(`SMTP migration: the legacy keys are kept: ${reason}`)
     throw new Error(`the legacy SMTP keys are not deleted: ${reason}`)
   }
-  const id = await ports.findIntegration()
-  if (id === null) return refuse('no integration row exists')
+  const id = await ports.findRelayId()
+  if (id === null) return refuse('no relay record exists')
   const record = await ports.readRecord(id)
   if (record === null) return refuse('the relays record does not exist')
   if (legacyHost.length > 0 && record.host.length === 0) return refuse('the record holds no host')

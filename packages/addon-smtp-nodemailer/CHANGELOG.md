@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- SMTP relays are integration instances: add several relays on the Integrations page, each with its own credentials; your current relay is moved there on first start.
+- SMTP relays are stored as records, each with its own keychain password and an id a notification can pin; the Email settings page is unchanged and edits your default relay, and your current relay is moved there on first start.
 
 ## [1.2.144] - 2026-11-01
 

@@ -1,20 +1,24 @@
 /**
  * SMTP Email addon — wraps `nodemailer` and registers a `smtp-provider` cap collection entry.
  *
- * Every relay is an integration instance (D985, D996): one `relays` record per relay, keyed by
- * the `integrations` registry id and listed on the Integrations page. The addon keeps NO relay
- * setting of its own; the old global settings were moved into a record by the migrations of
- * `./migrations`. A caller of `sendEmail` / `verify` / `getStatus` may name a relay with
- * `instanceId`; without one the first configured relay answers, so every caller written before
- * relays existed keeps working.
+ * Every relay is a `relays` record (D985, D996), reachable through the `integration-instances`
+ * cap (CRUD + test). Relays are NOT integration-registry rows and are not listed on the
+ * Integrations page: they are edited on the page that always showed the SMTP settings
+ * (Connectivity → Email). That page reads and writes the addon's global settings, so the addon
+ * projects them onto its DEFAULT relay (the first configured one, created on first save). The
+ * old settings were moved into a record by the migrations of `./migrations`.
+ * A caller of `sendEmail` / `verify` / `getStatus` may name a relay with `instanceId`; without
+ * one the first configured relay answers, so every caller written before relays existed keeps
+ * working.
  *
- * Transporters are rebuilt lazily whenever a relay's record changes; failures are surfaced via
- * each relay's in-memory `lastError` / `lastVerifiedAt` instead of throwing on boot — operators
- * see the error in the Integrations status badge.
+ * Transporters are rebuilt whenever a relay's record changes; failures are surfaced via each
+ * relay's in-memory `lastError` / `lastVerifiedAt` instead of throwing on boot.
  */
+import { randomUUID } from 'node:crypto'
 import {
   BaseAddon,
   type ConfigUISchema,
+  type ConfigUISchemaWithValues,
   type IntegrationTestConnectionResult,
   type ISmtpProvider,
   type ProviderRegistration,
@@ -22,6 +26,7 @@ import {
   RecordIntegrationInstances,
   RevConflictError,
   defineAddonMigrations,
+  hydrateSchema,
   integrationInstancesCapability,
   isSecretFieldView,
   isSecretMarker,
@@ -57,6 +62,25 @@ function scrub(message: string, secret: string): string {
   return secret.length > 0 ? message.split(secret).join('***') : message
 }
 
+/** Relays are not registry rows: the addon mints their ids. */
+function mintRelayId(): string {
+  return `relay-${randomUUID().slice(0, 8)}`
+}
+
+/** The keys the settings page edits: the relay's connection fields. */
+const RELAY_FORM_KEYS: ReadonlySet<string> = new Set([
+  'host',
+  'port',
+  'secure',
+  'username',
+  'password',
+  'fromAddress',
+  'fromName',
+])
+
+const DEFAULT_RELAY_NAME = 'Email (SMTP)'
+const RELAY_LIST_MAX = 200
+
 function hasText(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0
 }
@@ -91,7 +115,7 @@ export class SmtpNodemailerAddon extends BaseAddon<SmtpAddonConfig> {
       },
       test: (input) => this.probe(input.id, input.values),
     })
-    // The addon moves the old settings first, then offers the relays to the Integrations page.
+    // The addon moves the old settings first, then serves the relays.
     await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, this.migrationPorts()))
     await this.refreshAll()
 
@@ -181,29 +205,13 @@ export class SmtpNodemailerAddon extends BaseAddon<SmtpAddonConfig> {
       warn: (message: string) => {
         this.ctx.logger.warn(message)
       },
-      findIntegration: async () => {
-        const existing = await this.ctx.api.integrations.getByAddonId.query({
-          addonId: this.ctx.id,
-        })
-        return existing?.id ?? null
-      },
+      findRelayId: async () => (await this.firstRelayId()) ?? null,
       readRecord: async (id: string): Promise<SmtpRecordState | null> => {
         const row = await handle.getResolved(id)
         if (row === null) return null
         return { host: row.data.host, hasPassword: (row.data.password ?? '').length > 0 }
       },
-      ensureIntegration: async (name: string) => {
-        const existing = await this.ctx.api.integrations.getByAddonId.query({
-          addonId: this.ctx.id,
-        })
-        if (existing !== null && existing !== undefined) return existing.id
-        const created = await this.ctx.api.integrations.create.mutate({
-          addonId: this.ctx.id,
-          name,
-          skipRestart: true,
-        })
-        return created.id
-      },
+      ensureRelayId: async () => (await this.firstRelayId()) ?? mintRelayId(),
       putRecord: async (id: string, body: SmtpRelayBody): Promise<'created' | 'exists'> => {
         if ((await handle.get(id)) !== null) return 'exists'
         try {
@@ -218,6 +226,55 @@ export class SmtpNodemailerAddon extends BaseAddon<SmtpAddonConfig> {
         await this.clearSecrets(['password'])
       },
     }
+  }
+
+  /** The id of the default relay: the first configured one, else the first; undefined when none. */
+  private async firstRelayId(): Promise<string | undefined> {
+    const records = this.ctx.records
+    if (records === undefined) return undefined
+    const page = await records.kind(smtpRelaysKind).query({ limit: RELAY_LIST_MAX })
+    const rows = page.records
+    return (rows.find((row) => row.data.host.length > 0) ?? rows[0])?.id
+  }
+
+  // ── The settings page (Connectivity → Email): the default relay ───────
+
+  protected globalSettingsSchema(): ConfigUISchema {
+    return this.relayForm()
+  }
+
+  override async getGlobalSettings(): Promise<ConfigUISchemaWithValues | null> {
+    const schema = this.relayForm()
+    if (this.instances === null) return hydrateSchema(schema, {}, { inlineSecretsAsViews: true })
+    const id = await this.firstRelayId()
+    const row = id === undefined ? null : await this.instances.readResolved(id)
+    // A locked keychain serves the row without its password: the form shows it unset, and an
+    // untouched save sends the view back, which keeps the stored one.
+    return hydrateSchema(schema, row?.body ?? {}, { inlineSecretsAsViews: true })
+  }
+
+  override async updateGlobalSettingsAsOperator(patch: Record<string, unknown>): Promise<void> {
+    await this.writeDefaultRelay(patch)
+  }
+
+  override async updateGlobalSettings(patch: Partial<SmtpAddonConfig>): Promise<void> {
+    await this.writeDefaultRelay(patch)
+  }
+
+  /** Write the form's values onto the default relay, creating it on the first save. */
+  private async writeDefaultRelay(patch: Readonly<Record<string, unknown>>): Promise<void> {
+    if (this.instances === null) throw new Error('smtp-nodemailer is not initialised')
+    const values = Object.fromEntries(
+      Object.entries(patch).filter(([key]) => RELAY_FORM_KEYS.has(key)),
+    )
+    const existing = await this.firstRelayId()
+    if (existing !== undefined) {
+      await this.instances.updateInstance({ id: existing, values })
+      return
+    }
+    const id = mintRelayId()
+    await this.instances.createInstance({ id, name: DEFAULT_RELAY_NAME })
+    await this.instances.updateInstance({ id, values })
   }
 
   /** Probe a relay (EHLO + AUTH) with the form's values, falling back to the stored ones. */
@@ -282,7 +339,7 @@ export class SmtpNodemailerAddon extends BaseAddon<SmtpAddonConfig> {
           id: 'smtp-relay',
           title: 'SMTP Relay',
           description:
-            'Outbound SMTP relay used by notifications and alerts. Use Test connection to verify it; the Integrations status badge shows the last result.',
+            'Outbound SMTP relay used by notifications and alerts. Tested with the per-cap `verify()` button.',
           columns: 2,
           fields: [
             {

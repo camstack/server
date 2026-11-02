@@ -26,7 +26,6 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Badge,
-  Button,
   DeviceExportPanel,
   DeviceExportSetup,
   useAddonsList,
@@ -62,14 +61,10 @@ import {
   type ConnectivityRow,
 } from './connectivity-model'
 import { WasteSettingsSources } from './WasteSettingsSources'
-import { integrationDetailUrl } from '../../lib/integration-instance-selection'
 import i18n from '../../i18n/index'
 import type { TFunction } from 'i18next'
 
 const POLL_INTERVAL_MS = 10_000
-
-/** Addons whose connections are integration instances: their settings live on the Integrations page. */
-const CONNECTION_ADDONS: ReadonlySet<string> = new Set(['smtp-nodemailer'])
 
 interface KindDescriptor {
   readonly sectionId: ConnectivitySectionId
@@ -175,21 +170,6 @@ function buildGroup(
             settingsContent={
               row.addonId === 'waste-collections' ? (
                 <WasteSettingsSources addonId={row.addonId} capName={capName} />
-              ) : CONNECTION_ADDONS.has(row.addonId) ? (
-                <div className="flex flex-col items-start gap-2">
-                  <p className="text-xs text-foreground-muted">
-                    {t(
-                      'system.connectivity.connectionLivesOnIntegrations',
-                      'The relays (host, credentials, From address) are set up on the Integrations page, one entry per relay.',
-                    )}
-                  </p>
-                  <Button
-                    variant="secondary"
-                    onClick={() => navigate(integrationDetailUrl(row.addonId))}
-                  >
-                    {t('system.connectivity.openIntegration', 'Open the integration')}
-                  </Button>
-                </div>
               ) : undefined
             }
           />
