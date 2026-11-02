@@ -1,5 +1,5 @@
 ---
-id: D994
+id: D995
 title: A debug watch is a hub-held window pushed as interest, never a stored value
 status: accepted
 date: 2026-11-02

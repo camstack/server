@@ -971,8 +971,8 @@ that rots.
 | D991 | [The external keychain key is a fixed mounted path](adr-0991-the-external-keychain-key-is-a-fixed-mounted-path.md) | ✅ accepted | 2026-11-01 |
 | D992 | [A device run is recorded by device-history, not by pipeline-analytics](adr-0992-device-runs-are-recorded-by-device-history.md) | ✅ accepted | 2026-11-01 |
 | D993 | [A timed run is a durable deadline row with one timer, owned by core-blocks](adr-0993-a-timed-run-is-a-durable-deadline-owned-by-core-blocks.md) | ✅ accepted | 2026-11-01 |
-| D994 | [A debug watch is a hub-held window pushed as interest, never a stored value](adr-0994-a-debug-watch-is-a-hub-held-window-never-a-stored-value.md) | ✅ accepted | 2026-11-02 |
 | D994 | [Passive discovery and a 30-minute sweep feed one persisted proposal stream](adr-0994-passive-discovery-feeds-one-persisted-proposal-stream.md) | ✅ accepted | 2026-11-02 |
+| D995 | [A debug watch is a hub-held window pushed as interest, never a stored value](adr-0995-a-debug-watch-is-a-hub-held-window-never-a-stored-value.md) | ✅ accepted | 2026-11-02 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next
