@@ -6,7 +6,7 @@
  */
 import { fileURLToPath } from 'node:url'
 import Database from 'better-sqlite3'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import {
   INTEGRATION_ADDON_ID_BARE_MIGRATION,
   INTEGRATION_ADDON_ID_BARE_MIGRATION_ID,

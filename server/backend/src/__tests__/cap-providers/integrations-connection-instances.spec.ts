@@ -1,6 +1,21 @@
-import type { Integration, IntegrationTestConnectionResult } from '@camstack/types'
+import type {
+  AddonDeclaration,
+  Integration,
+  IntegrationTestConnectionResult,
+} from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 import { buildIntegrationsProvider } from '../../api/core/cap-providers'
+
+/** The slice of a listed addon the integrations provider reads. */
+interface ListedAddon {
+  readonly manifest: {
+    readonly id: string
+    readonly name: string
+    readonly description: string
+    readonly integrationRole?: AddonDeclaration['integrationRole']
+    readonly capabilities: readonly { readonly name: string }[]
+  }
+}
 
 /**
  * An addon that registers `integration-instances` keeps its connection as typed
@@ -74,7 +89,7 @@ function harness(opts: { instanceMode?: 'single' | 'multiple'; withProvider?: bo
     getIntegrationRegistry: vi.fn(() => registry),
     restartAddon,
     runnerIdFor: vi.fn(() => 'runner'),
-    listAddons: vi.fn(() => [
+    listAddons: vi.fn((): readonly ListedAddon[] => [
       {
         manifest: {
           id: ADDON_ID,
