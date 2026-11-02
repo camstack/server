@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.558] - 2026-11-02
+
 ### Changed
 
 - Export tables: new strings for the Integration filter and the bulk selection bar (English and Italian)

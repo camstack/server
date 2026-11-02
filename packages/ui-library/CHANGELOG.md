@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.373] - 2026-11-02
+
 ### Changed
 
 - Device export table: selectors on the left with the search on the right, searchable Role and Integration filters showing display names, a bulk bar with select all / none, and a multi export that now lands every selected device

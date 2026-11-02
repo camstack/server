@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.156] - 2026-11-02
+
 ### Changed
 
 - The Velux gateway session switches the house status monitor off before every close, serialises its requests, waits 30 s before reconnecting, and restarts a wedged gateway through its linked power source after 10 minutes unreachable (at most every 30 minutes).
