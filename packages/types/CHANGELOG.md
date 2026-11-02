@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix: the integration instances routes answer again; a public capability can no longer be left without a server route.
 - A cover can declare cover-stoppable; a cover group offers stop only when every member has it.
+- power-source: a device's own provider may call forceRestart as a bounded self-recovery (comment only).
+- A notification rule's media policy gains wakeSleepingCamera, letting a sensor rule opt out of waking a sleeping battery camera for its linked still
+- The snapshot capability documents force as a demand with a named principal, including a notification rule that allowed the wake
 
 ## [1.2.477] - 2026-11-02
 
@@ -18,9 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The integration-instances capability is public and admin-gated, so a function page can edit a service connection
 - smtp-provider sendEmail, verify and getStatus take an optional instanceId that picks one relay of a multi-relay provider
-- power-source: a device's own provider may call forceRestart as a bounded self-recovery (comment only).
-- A notification rule's media policy gains wakeSleepingCamera, letting a sensor rule opt out of waking a sleeping battery camera for its linked still
-- The snapshot capability documents force as a demand with a named principal, including a notification rule that allowed the wake
 
 ## [1.2.476] - 2026-11-02
 
