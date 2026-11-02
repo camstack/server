@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - New template variable {{changes}} for the combined alarm body: the sensors of the incident and what each did
 
+### Changed
+
+- The IR codec encodes a Samsung frame (data and bit count) into the pulse train a transmitter sends
+
 ## [1.2.483] - 2026-11-02
 
 ### Changed
