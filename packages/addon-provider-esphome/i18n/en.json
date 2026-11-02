@@ -24,6 +24,10 @@
       "id": {
         "label": "Board id",
         "description": "Leave empty: it is generated when the board is saved."
+      },
+      "importKeys": {
+        "label": "Import encryption keys",
+        "description": "Read each board's key from the ESPHome Builder add-on in Home Assistant, using the Home Assistant token already configured. Needs an administrator token. Boards that cannot be read are listed with the reason."
       }
     }
   }

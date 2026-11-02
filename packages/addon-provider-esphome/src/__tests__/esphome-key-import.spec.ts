@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import type { EspBrokerEntry } from '../config.js'
 import {
   importBoardKeys,
+  summarizeImport,
   type KeyImportBoards,
   type KeySourceClient,
 } from '../esphome-key-import.js'
@@ -149,5 +150,19 @@ describe('importBoardKeys', () => {
     })
     await done
     expect(JSON.stringify(lines)).not.toContain('SECRET-KEY-VALUE')
+  })
+})
+
+describe('summarizeImport', () => {
+  it('lists every board with its outcome and reason, and says when there is nothing to import', () => {
+    const text = summarizeImport([
+      { boardId: 'b1', name: 'kitchen', outcome: 'imported' },
+      { boardId: 'b2', name: 'attic', outcome: 'unchanged' },
+      { boardId: 'b3', name: '', outcome: 'not-imported', reason: 'not-admin' },
+    ])
+    expect(text).toBe(
+      '1 imported, 1 unchanged, 1 not imported. kitchen: imported; attic: unchanged; b3: not imported (not-admin)',
+    )
+    expect(summarizeImport([])).toBe('No boards to import.')
   })
 })

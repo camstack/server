@@ -48,7 +48,7 @@ export const espServiceActions = defineCustomActions({
    */
   importBoardKeys: customAction(
     z.object({ integrationId: z.string().min(1).optional() }),
-    z.object({ results: z.array(KeyImportResultSchema).readonly() }),
+    z.object({ results: z.array(KeyImportResultSchema).readonly(), summary: z.string() }),
     { kind: 'mutation', auth: 'admin' },
   ),
   listServices: customAction(

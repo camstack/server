@@ -24,6 +24,10 @@
       "id": {
         "label": "ID scheda",
         "description": "Lascia vuoto: viene generato al salvataggio della scheda."
+      },
+      "importKeys": {
+        "label": "Importa le chiavi di cifratura",
+        "description": "Legge la chiave di ogni scheda dall'add-on ESPHome Builder in Home Assistant, usando il token di Home Assistant già configurato. Serve un token amministratore. Le schede non leggibili sono elencate con il motivo."
       }
     }
   }

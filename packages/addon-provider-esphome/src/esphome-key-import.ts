@@ -166,3 +166,17 @@ async function importOne(
     ? refuse(firstFailure.reason, firstFailure.sourceId)
     : refuse('no-match')
 }
+
+/** One line per run for the admin form: counts, then each board with its outcome and reason. */
+export function summarizeImport(results: readonly BoardKeyImportResult[]): string {
+  if (results.length === 0) return 'No boards to import.'
+  const count = (outcome: BoardKeyImportResult['outcome']): number =>
+    results.filter((r) => r.outcome === outcome).length
+  const head = `${count('imported')} imported, ${count('unchanged')} unchanged, ${count('not-imported')} not imported`
+  const rows = results.map((r) => {
+    const label = r.name.length > 0 ? r.name : r.boardId
+    const verdict = r.outcome === 'not-imported' ? 'not imported' : r.outcome
+    return r.reason === undefined ? `${label}: ${verdict}` : `${label}: ${verdict} (${r.reason})`
+  })
+  return `${head}. ${rows.join('; ')}`
+}

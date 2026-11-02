@@ -34,7 +34,7 @@ import { EspContainerDevice } from './devices/esp-container-device.js'
 import { EspServiceRunner } from './esphome-services.js'
 import { espIrOverrides, loadIrOverrides } from './esphome-ir-overrides.js'
 import { espServiceActions } from './custom-actions.js'
-import { importBoardKeys } from './esphome-key-import.js'
+import { importBoardKeys, summarizeImport } from './esphome-key-import.js'
 import type { EspServiceArgValue, EspServiceInfo } from './esphome-link.js'
 
 export { espServiceActions as customActions } from './custom-actions.js'
@@ -121,8 +121,8 @@ export class ESPHomeProviderAddon extends BaseDeviceProvider<EspAddonConfig> {
       ],
       customActions: espServiceActions,
       actionHandlers: {
-        importBoardKeys: async (input) => ({
-          results: await importBoardKeys({
+        importBoardKeys: async (input) => {
+          const results = await importBoardKeys({
             boards: this.requireBoards(),
             keySources: {
               listSources: () => this.ctx.api.boardKeySource.listSources.query(),
@@ -131,8 +131,9 @@ export class ESPHomeProviderAddon extends BaseDeviceProvider<EspAddonConfig> {
             },
             logger: this.ctx.logger.child('key-import'),
             ...(input.integrationId !== undefined ? { integrationId: input.integrationId } : {}),
-          }),
-        }),
+          })
+          return { results, summary: summarizeImport(results) }
+        },
         listServices: async (input) => this.listServices(input.brokerId),
         executeService: async (input) => {
           await this.executeService(input.brokerId, input.name, input.args)
