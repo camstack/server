@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.560] - 2026-11-02
+
 ### Changed
 
 - A notification target is no longer named after an optional discovered picker such as the email relay.

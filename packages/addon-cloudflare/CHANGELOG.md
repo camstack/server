@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.152] - 2026-11-02
+
 ### Changed
 
 - Cloudflare TURN is configured as an account row on the TURN Servers page, with a Test button; the existing credentials move over on first start

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.652] - 2026-11-02
+
 ### Changed
 
 - Home Assistant can hand an ESPHome board's encryption key from its ESPHome Builder add-on to CamStack, over the existing access token (administrator only).

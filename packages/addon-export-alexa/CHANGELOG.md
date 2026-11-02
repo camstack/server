@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.179] - 2026-11-02
+
 ### Changed
 
 - The hub's public address for Alexa is now the Network page's Public endpoint (the External address picker is gone); re-link the Alexa skill once so issued tokens carry it

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.220] - 2026-11-02
+
 ### Changed
 
 - Battery-camera motion push (HaCfg webhook) is now received on the addon's own HTTP endpoint at the hub's internal address (System → Network) instead of a separate port 9081; cameras already using it are re-pointed automatically the next time they connect, and the old webhook settings are removed

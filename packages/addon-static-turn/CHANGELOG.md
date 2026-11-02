@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.143] - 2026-11-02
+
 ### Changed
 
 - TURN servers are now records on the TURN Servers page: add several servers, each with its own switch; the existing server moves over on first start

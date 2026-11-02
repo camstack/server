@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.9] - 2026-11-02
+
 ### Changed
 
 - ESPHome: an Import keys action reads each board's API encryption key from the ESPHome Builder through Home Assistant and reports every board it could not read, with the reason.
