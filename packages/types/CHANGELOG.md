@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The debug emitter is exported from the light addon entry, so addon runners stay small
+- Scoped addon settings: a capability provider can declare cluster, node and fleet-default schemas, and a device's settings resolve as device, fleet default, schema default with the source per field
 
 ## [1.2.472] - 2026-11-02
 

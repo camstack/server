@@ -1,7 +1,9 @@
 ---
 title: The engine's database files — owned files, serving threads, placement
-last-verified: 2026-10-22
+last-verified: 2026-11-02
 applies-to:
+  - packages/system/src/kernel/addon-settings-store.ts
+  - packages/system/src/kernel/device-settings-resolver.ts
   - packages/system/src/builtins/sqlite-storage/owned-sqlite-file.ts
   - packages/system/src/builtins/sqlite-storage/placement-router.ts
   - packages/system/src/builtins/sqlite-storage/file-host-worker.ts
@@ -210,7 +212,8 @@ Runbook:
   only). Event ledgers declare `database: 'events'`; the operator hubs were split
   offline (P7/P8, D853) and the split tools are gone (D900) — a hub on the old
   layout refuses mismatched placement with `CollectionPlacementError`.
-- There is no migration code anywhere (D853).
+- Migrations run at boot through the engine of D987 (`migrations/`); the hub catalogue is
+  `packages/system/src/migrations/hub/index.ts`. Before it, the layout changes of D853 had no migration code.
 
 ## A deleted device's data (D865)
 
@@ -232,6 +235,38 @@ migration that moved and dropped them was deleted on 2026-10-22.
 `storageAdmin.listTables` lists tables (rows, bytes, owner) without creating any, and a
 read of an unwritten scoped table answers absent. Modules:
 `kernel/device-settings-store.ts`, `addon-settings-store.ts`, `sections-store.ts`.
+
+## Scoped addon settings (D986)
+
+An addon has no addon-level settings: every setting is declared by a capability the addon
+provides, in one scope, through a hook of `BaseAddon` (`clusterSettingsSchema(cap)`,
+`nodeSettingsSchema(cap)`, `deviceDefaultsSchema(cap)`; the host asks
+`getScopedSettingsSchema(scope, cap)`), beside `integrationSettingsSchema(instance)` (D985).
+The rows are the existing ones:
+
+| Scope | Table | Row id | Row data |
+| --- | --- | --- | --- |
+| cluster | `addon-settings` | `<addonId>.<field>` | `{ addonId, key, value }` |
+| fleet default | `addon-settings` | `<addonId>.<field>` | unchanged |
+| node | `addon-settings` | `<addonId>.<field>@<nodeId>` | `{ addonId, key, value, nodeId }` |
+| device override | `addon-device-settings` | `<addonId>:<deviceId>.<field>` | unchanged |
+
+`nodeId` is the only addition and is a JSON field, so there is no DDL and no id rewrite. The
+kernel store (`kernel/addon-settings-store.ts`) stamps it on every write (`merge`, `mergeNode`,
+and the backend's `setAllAddon`), reads one scope by primary-key prefix range (`readUnscoped`,
+`readNode`), and `clearNodeSettings` is the node twin of `clearDeviceSettings`: forgetting a node
+(`forgetClusterNode`) runs ONE `deleteWhere({ where: { nodeId } })` over every addon's rows, wired
+in `manual-boot.ts` through `clearForgottenNodeSettings`, so no addon needs a handler. The hub
+migration `hub/2026-11-02-addon-settings-node-id` stamped `nodeId` on the rows written before.
+The cluster, fleet-default and node schemas of one addon declare disjoint keys, and a key never
+contains `@` (`scripts/check-scoped-settings-declared.ts`).
+
+A device resolves a field as device row, then fleet-default row, then schema default. ONE kernel
+resolver (`kernel/device-settings-resolver.ts`, `resolveDeviceSettings` in `@camstack/types`)
+serves hub-main's view and the runner's (`readResolvedDeviceStore(deviceId, schemaDefaults)`),
+and answers per field the value and its source (`device`, `fleet-default`, `schema-default`).
+`readDeviceStore` keeps returning the raw overrides. Reset is deleting the device row. A store
+that did not answer throws; it never resolves to the schema default.
 
 ## What the census found, and where each table stands (D871)
 

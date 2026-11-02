@@ -4,12 +4,12 @@
 
 # Guards
 
-208 repository guards: 203 in `scripts/`,
+209 repository guards: 204 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (199)
+## Enforced by CI checks (200)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -175,6 +175,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-safe-area-overlays.ts` | Safe-area guard — a viewport-anchored `fixed` overlay never uses a bare edge offset. |
 | `scripts/check-schema-type-twins.ts` | Twin guard — a hand-written `X` that shares its name with an exported Zod `XSchema` must be DERIVED from the schema (`z.infer`) or PINNED to it (`satisfies` both ways). A third, free-standing declaration is a twin, and a twin is a shape … |
 | `scripts/check-scope-preset-promises.ts` | A scope preset that NAMES a capability must be able to reach it. |
+| `scripts/check-scoped-settings-declared.ts` | Scoped settings are declared by a capability the addon provides, in ONE scope (D986). |
 | `scripts/check-seal-authority.ts` | Seal-authority guard — a seal is a CLAIM OF COMPLETENESS, and only a party that could KNOW the hour is complete may write one (D521). |
 | `scripts/check-secret-fields-declared.ts` | Every credential-named config field is DECLARED secret by its schema (D783). |
 | `scripts/check-secret-files-owner-only.ts` | A secret-bearing file is restricted to its owner through ONE helper. |

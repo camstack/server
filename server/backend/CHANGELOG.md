@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Forgetting a cluster node now also removes the settings rows stored for that node
+
 ## [1.2.733] - 2026-11-02
 
 ### Changed
