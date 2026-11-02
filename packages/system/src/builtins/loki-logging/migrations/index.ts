@@ -81,3 +81,12 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<LokiCataloguePorts>[] = [
     procedure: moveRegistryToggleToRecord,
   },
 ]
+
+/**
+ * What can be decided while the addon initialises. The registry-toggle migration reads the hub's
+ * registry, which holds this provider only AFTER registration, so it is run from `postBrokerStart`
+ * (the full {@link ADDON_MIGRATIONS}) and never offered here: a pass that cannot decide is a
+ * guaranteed failure and a critical alert for nothing.
+ */
+export const INITIALIZE_MIGRATIONS: readonly AddonMigration<LokiCataloguePorts>[] =
+  ADDON_MIGRATIONS.filter((m) => m.meta.id !== REGISTRY_TOGGLE_TO_RECORD_ID)

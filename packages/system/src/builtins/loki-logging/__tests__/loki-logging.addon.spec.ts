@@ -5,12 +5,9 @@ import { LokiLoggingAddon } from '../loki-logging.addon.js'
 import { RETIREMENT_MARKER_KEY } from '../retire-enabled-flag.js'
 
 /**
- * Loki has ONE enable: the per-destination `log-destination` capability toggle
- * (D777). A stored `enabled: false` from before that is carried over to the
- * toggle ONCE. The toggle refuses a provider that is not registered yet, and
- * the provider is registered only AFTER `onInitialize` returns — so a carry-over
- * attempted inside `onInitialize` can never succeed, and it used to leave Loki
- * shipping for an operator who had switched it off.
+ * Loki has ONE enable: the per-destination toggle (D777). The legacy `enabled`
+ * key has gated nothing since then, so its retirement strips the key and sets
+ * the marker WITHOUT switching anything.
  */
 
 function makeLogger(): IScopedLogger {
@@ -82,7 +79,7 @@ describe('LokiLoggingAddon — one enable (D777)', () => {
     vi.useRealTimers()
   })
 
-  it('stored enabled:false → disabled at the log-destination toggle once the provider is registered', async () => {
+  it('stored enabled:false → disables nothing (it gated nothing since D777): key stripped, marker set', async () => {
     const { addon, setCapabilityProviderEnabled, getStore } = await boot({
       enabled: false,
       url: 'http://loki:3100',
@@ -90,11 +87,7 @@ describe('LokiLoggingAddon — one enable (D777)', () => {
     addons.push(addon)
     await vi.advanceTimersByTimeAsync(1_000)
     await vi.waitFor(() => expect(getStore()[RETIREMENT_MARKER_KEY]).toBe(true))
-    expect(setCapabilityProviderEnabled).toHaveBeenLastCalledWith({
-      capName: 'log-destination',
-      addonId: 'loki-logging',
-      enabled: false,
-    })
+    expect(setCapabilityProviderEnabled).not.toHaveBeenCalled()
     expect('enabled' in getStore()).toBe(false)
   })
 

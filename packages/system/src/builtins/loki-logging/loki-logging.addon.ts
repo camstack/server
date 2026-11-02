@@ -32,6 +32,8 @@ import {
   REDACTED_SECRET,
   RecordIntegrationInstances,
   RevConflictError,
+  bareAddonId,
+  isSameAddonId,
 } from '@camstack/types'
 import { LokiDestination, type LokiConfig } from './loki-destination.js'
 import {
@@ -45,7 +47,7 @@ import {
   type LokiDestinationBody,
   lokiDestinationsKind,
 } from './loki-record-kinds.js'
-import { ADDON_MIGRATIONS } from './migrations/index.js'
+import { ADDON_MIGRATIONS, INITIALIZE_MIGRATIONS } from './migrations/index.js'
 import {
   RETIRED_ENABLED_KEY,
   RETIREMENT_MARKER_KEY,
@@ -142,7 +144,9 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
       if (hub) {
         // The hub owns the integration row and the record: it moves the old settings
         // first, then offers the connection to the Integrations page (D985).
-        await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, this.migrationPorts()))
+        await this.runMigrations(
+          defineAddonMigrations(INITIALIZE_MIGRATIONS, this.migrationPorts()),
+        )
         registrations.push({
           capability: integrationInstancesCapability,
           provider: this.instances.toProvider(),
@@ -272,7 +276,7 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
         const providers = await this.ctx.api.addons.listCapabilityProviders.query({
           capName: logDestinationCapability.name,
         })
-        const own = providers.find((p) => p.addonId === this.ctx.id)
+        const own = providers.find((p) => isSameAddonId(p.addonId, this.ctx.id))
         if (own === undefined) return 'unregistered'
         return own.isActive ? 'active' : 'inactive'
       },
@@ -286,7 +290,7 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
       enableRegistry: async () => {
         await this.ctx.api.addons.setCapabilityProviderEnabled.mutate({
           capName: logDestinationCapability.name,
-          addonId: this.ctx.id,
+          addonId: bareAddonId(this.ctx.id),
           enabled: true,
         })
       },
@@ -346,21 +350,6 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
     try {
       outcome = await retireEnabledFlag({
         readStoredKey: (key) => this.readStoredGlobalKey(key),
-        disableAtCapability: async () => {
-          // The switch is the record's own (D996): switch it off there when a record exists.
-          const instances = this.instances
-          const [first] = instances === null ? [] : await instances.listResolved()
-          if (first !== undefined && this.ctx.records !== undefined) {
-            await this.ctx.records.kind(lokiDestinationsKind).patch(first.id, { enabled: false })
-            await this.refreshFromRecord()
-            return
-          }
-          await this.ctx.api.addons.setCapabilityProviderEnabled.mutate({
-            capName: logDestinationCapability.name,
-            addonId: this.ctx.id,
-            enabled: false,
-          })
-        },
         commit: async () => {
           // `undefined` strips the key: every settings view rewrites the
           // merged blob, and an undefined value is not persisted.
@@ -374,10 +363,10 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
     } catch (err: unknown) {
       outcome = { kind: 'deferred', reason: err instanceof Error ? err.message : String(err) }
     }
-    if (outcome.kind === 'retired' && outcome.capDisabled) {
+    if (outcome.kind === 'retired' && outcome.strippedValue !== null) {
       this.ctx.logger.info(
-        'Loki logging: the retired `enabled: false` setting was carried over to the ' +
-          'per-destination toggle — re-enable it there if you want Loki shipping again.',
+        `Loki logging: the retired \`enabled: ${String(outcome.strippedValue)}\` setting was removed; ` +
+          'it has not gated shipping since D777, so nothing was switched. The per-destination toggle is the only enable.',
       )
     }
     if (outcome.kind !== 'deferred') return
