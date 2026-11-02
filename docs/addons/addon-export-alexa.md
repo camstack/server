@@ -94,7 +94,7 @@ shows under it; an action with nothing to do throws a sentence saying why.
 | Replace the broker credential (e.g. a settings backup leaked) | Troubleshooting → **Rotate credential** (`rotateBrokerCredential`) | New per-link credential at the broker; the old one dies immediately. Re-linking also issues a fresh one. |
 | Re-send the device list, and clear devices you stopped exposing | Troubleshooting → **Re-sync now** (`resyncDiscovery` → `SyncEngine.resync`) | Forced `AddOrUpdateReport` of every exposed device per linked account, then a `DeleteReport` for every device still in `exportedEndpoints` but no longer in `exposed` (an unexpose whose delete failed — `removeDevice` keeps those ids). An id is forgotten only when every account accepted the delete. Nothing an exposed device fails to build is deleted (D49/D767). Needs a linked account with a push grant. Safe to repeat. |
 | Remove a ghost device this hub no longer tracks | Troubleshooting → **Remove ids…** (`removeAlexaEndpoints`) | Asks for the ids in a dialog (`prompt` on the button; never a saved field), sends a `DeleteReport` per linked account and fails unless every account accepted it; only then are the ids dropped from `exportedEndpoints`. Destructive: Alexa routines using those endpoints lose them. |
-| Re-point the hub's public URL | Connection → **External address** | The picker reads `listExternalAddresses` live each time the page opens; a saved choice that is no longer detected stays listed and selected. Boot fills an EMPTY value with the first address; a tunnel connecting keeps the current choice while it is still detected. The Lambda routes on the `hubUrl` claim baked into each token, so **already-issued tokens keep the old URL** — a moved hub needs a re-link. |
+| Re-point the hub's public URL | Network page → **Public endpoint** role | There is no setting here: every use reads the `publicEndpoint` role of `local-network`. A role that resolves to nothing is reported as `no-public-endpoint` (setup block, snapshots, directive refusals). The Lambda routes on the `hubUrl` claim baked into each token; a directive whose token claim no longer equals the role is refused and logged as `routing-claim-stale`, and there is no transition — a moved hub needs ONE re-link. The retired `publicHubUrl` setting is deleted by the `drop-public-hub-url` migration. |
 
 **Not on the Lambda.** The Lambda is skill-side code that receives directives; it
 cannot unlink itself or initiate a re-link. Account linking belongs to Amazon's
@@ -113,7 +113,7 @@ roles — and checks it before sending the browser on (https, not a local addres
 same page with a reason code (`not_https`, `local_address`, `unreachable`,
 `tls_error`, `not_camstack`, `integration_missing`, `hub_starting`). The hub shows
 the value to type as **Hub address to enter in the Alexa app** (the setup block,
-`setup-block.ts`: the External address pick, else the palette's public endpoint).
+`setup-block.ts`: the palette's `publicEndpoint` role).
 
 The hub then runs consent (`/api/oauth2/authorize`). A request the hub refuses —
 unknown or not-yet-registered integration, a redirect target the descriptor does

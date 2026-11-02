@@ -4,8 +4,7 @@
  * The settings page drives these through
  * `api.addons.custom.{query,mutate}({ addonId, action, input })`: every action
  * button there is an `addon-action-button`, which shows the result (or the
- * error) under the button, and the external-address picker is an
- * `addon-action-select` over `listExternalAddresses`.
+ * error) under the button.
  *
  * Every action is `auth: 'admin'` (S2). The framework default is `protected` —
  * any authenticated user — and at that level a viewer could rotate the token
@@ -21,18 +20,6 @@ import { z } from 'zod'
 const NoInput = z.object({}).optional()
 
 export const exportAlexaActions = defineCustomActions({
-  /**
-   * The external addresses the connected `network-access` providers report
-   * now, read live for the "External address" picker, plus the saved choice
-   * when it is not among them (so it is never silently dropped from view).
-   */
-  listExternalAddresses: customAction(
-    NoInput,
-    z.object({
-      addresses: z.array(z.object({ value: z.string(), label: z.string() })).readonly(),
-    }),
-    { auth: 'admin' },
-  ),
   // Rotate the ingress token (the shared secret a CUSTOM skill's Lambda
   // presents on its hub calls). Returns the fresh value so the form can show
   // it once.

@@ -21,7 +21,10 @@ import type { LinkedAccount, LwaTokenEntry } from './types.js'
 const ADDON_ID = 'export-alexa'
 
 /** The rows that exist only for a custom skill. */
-const CUSTOM_SKILL_ONLY: ConfigCondition = { field: 'skillMode', equals: 'custom' }
+const CUSTOM_SKILL_ONLY: ConfigCondition = {
+  field: 'skillMode',
+  equals: 'custom',
+}
 
 export interface AlexaSettingsPageInput {
   readonly linkedAccounts: readonly LinkedAccount[]
@@ -32,7 +35,6 @@ export interface AlexaSettingsPageInput {
     readonly skillMode: string
     readonly region: string
     readonly expectedAudience: string
-    readonly publicHubUrl: string
     readonly detectionSensors: boolean
     readonly objectDetection: boolean
     readonly snapshots: boolean
@@ -44,7 +46,7 @@ const CONNECTION_DESCRIPTION = [
   'Public skill (default): enable the "CamStack" skill in the Alexa app and link your account. No Amazon developer setup is needed.',
   "Custom skill: enter your skill id and deploy the skill Lambda from this addon's lambda-template in your own AWS account.",
   "Either way the skill's Lambda keeps the Amazon credentials (in a custom skill, in your SSM Parameter Store); this hub holds none. It receives short-lived event tokens from the Lambda's token broker with a credential unique to this link.",
-  'This hub must be reachable from the internet over HTTPS (Cloudflare Tunnel, Tailscale Funnel, …). The external address below is the one the skill calls back on.',
+  'This hub must be reachable from the internet over HTTPS (Cloudflare Tunnel, Tailscale Funnel, …). The skill calls back on the hub\'s "Public endpoint" address, set on the Network page.',
 ].join('\n')
 
 function connectionSection(input: AlexaSettingsPageInput): ConfigSection {
@@ -87,19 +89,6 @@ function connectionSection(input: AlexaSettingsPageInput): ConfigSection {
         "Your skill's id, format amzn1.ask.skill.xxxx, from the Alexa developer console. Directives for any other skill are refused.",
       default: defaults.expectedAudience,
       showWhen: CUSTOM_SKILL_ONLY,
-    },
-    {
-      type: 'addon-action-select',
-      key: 'publicHubUrl',
-      label: 'External address',
-      description:
-        'The HTTPS address the skill reaches this hub on, read live from the connected remote-access providers each time this page opens. Defaults to the first one detected; a saved choice that is no longer detected stays selected until you change it.',
-      addonId: ADDON_ID,
-      action: 'listExternalAddresses',
-      mapOption: { value: 'value', label: 'label' },
-      emptyResultsMessage:
-        'No external HTTPS address detected. Set up remote access (Cloudflare Tunnel, Tailscale Funnel, …), then reopen this page.',
-      default: defaults.publicHubUrl,
     },
   ]
   return {

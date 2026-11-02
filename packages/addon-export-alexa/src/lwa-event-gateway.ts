@@ -38,6 +38,7 @@ import {
   normaliseBrokerUrl,
 } from './broker-client.js'
 import { readConnectivity } from './connectivity.js'
+import type { PublicEndpointReader } from './public-endpoint.js'
 import { signatureEntries } from './endpoint-signature.js'
 import type { AlexaEndpoint } from './endpoints/types.js'
 import { type AsyncResponseInput, buildAsyncResponsePayload } from './handlers/deferred-response.js'
@@ -113,8 +114,8 @@ export interface LwaEventGatewayDeps {
    * grant; a broker grant carries its own `brokerUrl`.
    */
   readonly getAdvertisedBrokerUrl: () => string | null
-  /** This hub's public URL — informational, sent along with a migration. */
-  readonly getPublicHubUrl?: () => string
+  /** This hub's `publicEndpoint` role — informational, sent along with a migration when it resolves. */
+  readonly getPublicEndpoint?: PublicEndpointReader
   /** Injectable for tests; defaults to the global `fetch`. */
   readonly fetchImpl?: FetchLike
   /** Region the operator selected for the skill (default NA). */
@@ -557,10 +558,10 @@ export class LwaEventGateway {
   async postObjectDetection(opts: {
     readonly deviceId: number
     readonly detection: VisionDetectionLike
-    readonly imagesFor?: (userId: string) => {
+    readonly imagesFor?: (userId: string) => Promise<{
       readonly frameImageUri?: string
       readonly croppedImageUri?: string
-    }
+    }>
   }): Promise<void> {
     const endpointId = String(opts.deviceId)
     const signature = this.deps.getExportedSignature(opts.deviceId)
@@ -588,7 +589,7 @@ export class LwaEventGateway {
     const d = opts.detection
     for (const account of linked) {
       if (!this.mayPush(account.userId, opts.deviceId, 'object detection')) continue
-      const images = opts.imagesFor?.(account.userId) ?? {}
+      const images = (await opts.imagesFor?.(account.userId)) ?? {}
       if (!this.smartVisionSampled.has(endpointId)) {
         this.smartVisionSampled.add(endpointId)
         this.deps.logger.info('alexa lwa-gateway: ObjectDetection body sample (redacted)', {
@@ -1061,9 +1062,10 @@ export class LwaEventGateway {
     const retryAt = this.migrationRetryAt.get(userId) ?? 0
     if (Date.now() < retryAt) return null
     try {
+      const endpoint = this.deps.getPublicEndpoint ? await this.deps.getPublicEndpoint() : null
       const migrated = await migrateLegacyGrant(this.fetchImpl, brokerUrl, {
         refreshToken: entry.refreshToken,
-        ...(this.deps.getPublicHubUrl ? { hubUrl: this.deps.getPublicHubUrl() } : {}),
+        ...(endpoint?.ok ? { hubUrl: endpoint.origin } : {}),
       })
       await this.deps.upsertToken({
         userId,

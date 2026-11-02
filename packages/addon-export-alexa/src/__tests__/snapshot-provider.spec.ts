@@ -17,6 +17,7 @@ import {
 } from '../snapshots/snapshot-image.js'
 import { handleSnapshotFetch, type SnapshotRouteDeps } from '../snapshots/snapshot-route.js'
 import { SNAPSHOT_URL_TTL_MS, SnapshotStore } from '../snapshots/snapshot-store.js'
+import { NO_PUBLIC_ENDPOINT_REASON, type PublicEndpointResult } from '../public-endpoint.js'
 import { quietLogger } from './helpers/fake-device-api.js'
 
 const HEADER = {
@@ -29,7 +30,14 @@ const HEADER = {
 const CALLER = { userId: 'alice', username: 'alice', scopes: [] }
 
 async function jpeg(width: number, height: number): Promise<Buffer> {
-  return sharp({ create: { width, height, channels: 3, background: { r: 90, g: 120, b: 60 } } })
+  return sharp({
+    create: {
+      width,
+      height,
+      channels: 3,
+      background: { r: 90, g: 120, b: 60 },
+    },
+  })
     .jpeg()
     .toBuffer()
 }
@@ -56,7 +64,13 @@ interface Captured {
 }
 
 function captureReply(): { reply: AddonHttpReply; out: Captured } {
-  const out: Captured = { status: 200, headers: {}, type: null, body: undefined, redirected: false }
+  const out: Captured = {
+    status: 200,
+    headers: {},
+    type: null,
+    body: undefined,
+    redirected: false,
+  }
   const reply: AddonHttpReply = {
     status(code) {
       out.status = code
@@ -110,7 +124,7 @@ describe('toAlexaJpeg', () => {
 
 describe('GetSnapshot → Snapshot event', () => {
   function deps(
-    opts: { bytes?: Buffer | null; enabled?: boolean; hub?: string; now?: number } = {},
+    opts: { bytes?: Buffer | null; enabled?: boolean; hub?: string | null; now?: number } = {},
   ) {
     const store = new SnapshotStore(
       () => 'k',
@@ -123,8 +137,15 @@ describe('GetSnapshot → Snapshot event', () => {
         logger: quietLogger,
         store,
         enabled: () => opts.enabled ?? true,
-        publicHubUrl: () => opts.hub ?? 'https://hub.example/',
-        encode: async () => ({ bytes: Buffer.from('jpeg'), width: 640, height: 480 }),
+        publicEndpoint: async (): Promise<PublicEndpointResult> =>
+          opts.hub === null
+            ? { ok: false, reason: NO_PUBLIC_ENDPOINT_REASON }
+            : { ok: true, origin: opts.hub ?? 'https://hub.example' },
+        encode: async () => ({
+          bytes: Buffer.from('jpeg'),
+          width: 640,
+          height: 480,
+        }),
         now: () => opts.now ?? 1_000_000,
       },
     }
@@ -133,7 +154,10 @@ describe('GetSnapshot → Snapshot event', () => {
   it('answers a Snapshot (1.1) with an HTTPS, ten-minute, ACCESS_TOKEN URI', async () => {
     const { d } = deps()
     const res = (await handleGetSnapshot(HEADER, { endpointId: '101' }, d, CALLER)) as {
-      event: { header: Record<string, string>; payload: { value: Record<string, string> } }
+      event: {
+        header: Record<string, string>
+        payload: { value: Record<string, string> }
+      }
     }
     expect(res.event.header).toMatchObject({
       namespace: 'Alexa.SmartVision.SnapshotProvider',
@@ -155,6 +179,15 @@ describe('GetSnapshot → Snapshot event', () => {
       event: { payload: { type: string } }
     }
     expect(res.event.payload.type).toBe('INTERNAL_ERROR')
+  })
+
+  it('names the unresolved publicEndpoint role when the Network page has none', async () => {
+    const { d } = deps({ hub: null })
+    const res = (await handleGetSnapshot(HEADER, { endpointId: '101' }, d, CALLER)) as {
+      event: { payload: { type: string; message: string } }
+    }
+    expect(res.event.payload.type).toBe('INTERNAL_ERROR')
+    expect(res.event.payload.message).toContain('no-public-endpoint')
   })
 
   it('is DISABLED_BY_USER when the integration switch is off', async () => {
@@ -284,7 +317,7 @@ describe('wiring', () => {
       getSettings: () => ({}) as never,
       directiveDeps: {} as never,
       lwaTokensCallbackDeps: {} as never,
-      redetectPublicHubUrl: async () => ({ publicHubUrl: '' }),
+      publicEndpoint: async () => ({ ok: true, origin: 'https://hub.example' }),
       snapshotRoute: snapshotsOff().route,
     })
     const route = routes.find((r) => r.path === '/snapshot/:file')
@@ -320,7 +353,11 @@ describe('lazy images (object detection)', () => {
       mayView: async () => true,
       logger: quietLogger,
     }
-    return { url: `https://hub.example${m.path}`, routeDeps, loads: () => loads }
+    return {
+      url: `https://hub.example${m.path}`,
+      routeDeps,
+      loads: () => loads,
+    }
   }
 
   it('reads the pixels on the first authorised fetch, once', async () => {

@@ -46,7 +46,7 @@ describe('the status setup block', () => {
     const { buildAlexaSetupBlock } = await import('../setup-block.js')
     const token = 'Zx9-very-secret-ingress-token-value-0042'
     const block = buildAlexaSetupBlock({
-      publicHubUrl: 'https://hub.example',
+      publicEndpoint: { ok: true, origin: 'https://hub.example' },
       ingressToken: token,
       skillMode: 'custom',
     })
@@ -60,7 +60,7 @@ describe('the status setup block, by skill mode', () => {
     const { buildAlexaSetupBlock } = await import('../setup-block.js')
     const labels = (skillMode: 'public' | 'custom') =>
       buildAlexaSetupBlock({
-        publicHubUrl: 'https://hub.example',
+        publicEndpoint: { ok: true, origin: 'https://hub.example' },
         ingressToken: 't0k3n',
         skillMode,
       }).fields?.map((f) => f.label) ?? []
@@ -73,11 +73,11 @@ describe('the status setup block, by skill mode', () => {
 })
 
 describe('the status setup block — the address the operator types into the Alexa linking page', () => {
-  it('shows the hub public address (palette / external-address pick) as its own row, once linked or not', async () => {
+  it('shows the hub public address (the publicEndpoint role) as its own row, once linked or not', async () => {
     const { buildAlexaSetupBlock } = await import('../setup-block.js')
     const rows =
       buildAlexaSetupBlock({
-        publicHubUrl: 'https://hub.example/',
+        publicEndpoint: { ok: true, origin: 'https://hub.example' },
         ingressToken: 't',
         skillMode: 'public',
       }).fields ?? []
@@ -88,10 +88,16 @@ describe('the status setup block — the address the operator types into the Ale
 
   it('shows no such row when the hub has no public address yet', async () => {
     const { buildAlexaSetupBlock } = await import('../setup-block.js')
-    const rows =
-      buildAlexaSetupBlock({ publicHubUrl: '', ingressToken: 't', skillMode: 'public' }).fields ??
-      []
-    expect(rows.some((r) => /address/i.test(r.label))).toBe(false)
+    const { NO_PUBLIC_ENDPOINT_REASON } = await import('../public-endpoint.js')
+    const block = buildAlexaSetupBlock({
+      publicEndpoint: { ok: false, reason: NO_PUBLIC_ENDPOINT_REASON },
+      ingressToken: 't',
+      skillMode: 'public',
+    })
+    expect((block.fields ?? []).some((r) => /address/i.test(r.label))).toBe(false)
+    // The typed reason is reported, and it names the Network page rather than the retired form field.
+    expect(block.note).toContain('no-public-endpoint')
+    expect(block.note).toContain('Network page')
   })
 })
 
@@ -101,9 +107,11 @@ describe('effectiveAlexaSettings', () => {
     const { ExportAlexaAddon } = await import('../export-alexa.addon.js')
     const base = (new ExportAlexaAddon() as unknown as { _config: Record<string, unknown> })._config
     const make = (skillMode: 'public' | 'custom') =>
-      effectiveAlexaSettings({ ...base, skillMode, enforceIngressToken: true } as Parameters<
-        typeof effectiveAlexaSettings
-      >[0])
+      effectiveAlexaSettings({
+        ...base,
+        skillMode,
+        enforceIngressToken: true,
+      } as Parameters<typeof effectiveAlexaSettings>[0])
     expect(make('public').enforceIngressToken).toBe(false)
     expect(make('custom').enforceIngressToken).toBe(true)
   })

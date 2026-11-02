@@ -58,13 +58,13 @@ const ALEXA_REDIRECT_PREFIXES = [
  * through the same descriptor field.
  */
 export function buildAlexaOauthIntegration(
-  /** The operator-selected external-access endpoint, when one is configured.
-   *  Baked into issued codes/tokens as the `hubUrl` claim so the cloud Lambda
-   *  routes the token exchange and directives back to a reachable public URL
-   *  instead of the hub-global `publicHubUrl()` fallback — which is localhost
-   *  in dev, and was the cause of "linking fails after consent". Home Assistant
-   *  sets no `hubUrl`: it redirects to itself on the LAN. */
-  publicHubUrl: string | undefined,
+  /** The hub's `publicEndpoint` role origin (local-network palette), when it
+   *  resolves. Baked into issued codes/tokens as the `hubUrl` claim so the cloud
+   *  Lambda routes the token exchange and directives back to a reachable public
+   *  URL instead of the hub-global fallback — which is localhost in dev, and was
+   *  the cause of "linking fails after consent". Home Assistant sets no
+   *  `hubUrl`: it redirects to itself on the LAN. */
+  publicOrigin: string | undefined,
 ): OauthIntegrationDescriptor {
   return {
     integrationId: 'export-alexa',
@@ -98,6 +98,6 @@ export function buildAlexaOauthIntegration(
      * "Unlink Amazon account" button does; see `unlinkAlexaAccounts`.
      */
     refreshTokenTtlSec: 'never',
-    ...(publicHubUrl ? { hubUrl: publicHubUrl } : {}),
+    ...(publicOrigin ? { hubUrl: publicOrigin } : {}),
   }
 }

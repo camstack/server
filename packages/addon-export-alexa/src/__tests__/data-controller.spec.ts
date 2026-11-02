@@ -44,7 +44,9 @@ function context(
   const minted: string[] = []
   const ctx: VisionContext = {
     ctx: {
-      api: { deviceStatus: { getStatus: { query: async () => ({ online: true }) } } },
+      api: {
+        deviceStatus: { getStatus: { query: async () => ({ online: true }) } },
+      },
     } as never,
     logger: quietLogger,
     vision,
@@ -56,7 +58,7 @@ function context(
         .toSorted((a, b) => b.lastSeen - a.lastSeen || (a.trackId < b.trackId ? 1 : -1))
         .slice(0, q.limit),
     getTrack: async (_d, id) => tracks.find((t) => t.trackId === id) ?? null,
-    imagesFor: (userId, _d, trackId) => {
+    imagesFor: async (userId, _d, trackId) => {
       minted.push(`${userId}:${trackId}`)
       return {
         frameImageUri: `https://hub/f/${trackId}?n=${minted.length}`,
@@ -104,7 +106,10 @@ async function report(ctx: VisionContext, payload: unknown): Promise<Report> {
 
 const RANGE = {
   queryType: 'QUERY_BY_TIMESTAMP_RANGE',
-  query: { fromTime: new Date(T0).toISOString(), toTime: new Date(T0 + 3_600_000).toISOString() },
+  query: {
+    fromTime: new Date(T0).toISOString(),
+    toTime: new Date(T0 + 3_600_000).toISOString(),
+  },
 }
 
 describe('ReportData by time range', () => {
@@ -119,7 +124,10 @@ describe('ReportData by time range', () => {
       payloadVersion: '1.0',
     })
     expect(r.event.endpoint.endpointId).toBe(String(CAM))
-    expect(r.event.payload.dataSchema).toEqual({ type: 'JSON', schema: 'SmartVisionData' })
+    expect(r.event.payload.dataSchema).toEqual({
+      type: 'JSON',
+      schema: 'SmartVisionData',
+    })
     expect(r.event.payload.data).toHaveLength(10)
     const first = r.event.payload.data[0]!
     expect(first).toMatchObject({
@@ -265,7 +273,9 @@ describe('SetObjectDetectionClasses', () => {
       ctx,
     )) as {
       event: { header: Record<string, unknown> }
-      context: { properties: Array<{ namespace: string; name: string; value: unknown }> }
+      context: {
+        properties: Array<{ namespace: string; name: string; value: unknown }>
+      }
     }
     expect(res.event.header).toMatchObject({
       namespace: 'Alexa',

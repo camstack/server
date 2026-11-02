@@ -30,6 +30,8 @@ import {
   type LwaTokensCallbackDeps,
 } from './handlers/lwa-tokens-callback.js'
 import { readIngressHeader, verifyIngressToken } from './ingress-token.js'
+import type { PublicEndpointReader } from './public-endpoint.js'
+import { judgeRoutingClaim, readRoutingClaim } from './routing-claim.js'
 import { handleSnapshotFetch, type SnapshotRouteDeps } from './snapshots/snapshot-route.js'
 import type { AddonContext, IScopedLogger } from '@camstack/types'
 import type { AlexaSettings } from './export-alexa.addon.js'
@@ -49,12 +51,8 @@ export interface HttpRouteDeps {
   readonly getSettings: () => AlexaSettings
   readonly directiveDeps: DirectiveRouterDeps
   readonly lwaTokensCallbackDeps: LwaTokensCallbackDeps
-  /**
-   * Wizard-button callback — re-runs the public-hub-URL detection
-   * against the live `network-access` providers. Bypasses the admin
-   * needing to restart the addon to pick up a new ingress provider.
-   */
-  readonly redetectPublicHubUrl: () => Promise<{ publicHubUrl: string }>
+  /** The hub's `publicEndpoint` role, read on every use. A directive token's routing claim is judged against it. */
+  readonly publicEndpoint: PublicEndpointReader
   /**
    * The skill Lambda advertised its token broker (`x-camstack-broker`) on a
    * directive whose bearer verified. Called with the raw header value; the
@@ -108,16 +106,6 @@ export function buildRoutes(deps: HttpRouteDeps): readonly IAddonHttpRoute[] {
       access: 'public',
       description: 'Alexa SnapshotProvider image (signed, 10 min, account-link token required)',
       handler: (req, reply) => handleSnapshotFetch(req, reply, deps.snapshotRoute),
-    },
-    {
-      method: 'POST',
-      path: '/admin/redetect-hub-url',
-      access: 'admin',
-      description: 'Wizard hook — re-runs publicHubUrl auto-detection',
-      handler: async (_req, reply) => {
-        const result = await deps.redetectPublicHubUrl()
-        reply.code(200).send(result)
-      },
     },
   ]
 }
@@ -282,6 +270,36 @@ async function handleDirective(
     return
   }
   const verified = verifiedParse.data
+
+  // The token verified, so its `hubUrl` claim is ours. The skill Lambda routes on it: a claim
+  // that no longer names the hub's `publicEndpoint` role is refused with a logged reason
+  // (planning#378, option B - no transition; the operator re-links once).
+  const verdict = judgeRoutingClaim(readRoutingClaim(bearer), await deps.publicEndpoint())
+  if (verdict.kind === 'stale' || verdict.kind === 'no-endpoint') {
+    deps.logger.warn(
+      verdict.kind === 'stale'
+        ? 'alexa directive: refused — routing-claim-stale: the token was issued for another hub address; re-link the Alexa skill'
+        : `alexa directive: refused — ${verdict.reason.code}: the token carries a routing claim but the hub has no public endpoint to compare it with`,
+      {
+        meta: {
+          userId: verified.userId,
+          claim: verdict.claim,
+          ...(verdict.kind === 'stale' ? { current: verdict.current } : {}),
+        },
+      },
+    )
+    reply
+      .code(200)
+      .send(
+        preParseErrorEnvelope(
+          'INVALID_AUTHORIZATION_CREDENTIAL',
+          verdict.kind === 'stale'
+            ? 'token was issued for another hub address; re-link the Alexa skill'
+            : `hub has no public endpoint (${verdict.reason.code}); set it on the Network page`,
+        ),
+      )
+    return
+  }
 
   try {
     assertDeviceScope(verified.scopes)

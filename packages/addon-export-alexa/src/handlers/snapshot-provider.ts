@@ -15,6 +15,7 @@
 import type { AddonContext, IScopedLogger } from '@camstack/types'
 import { z } from 'zod'
 import type { VerifiedDirectiveIdentity } from '../directive-router.js'
+import type { PublicEndpointReader } from '../public-endpoint.js'
 import { type AlexaJpeg, toAlexaJpeg } from '../snapshots/snapshot-image.js'
 import type { SnapshotStore } from '../snapshots/snapshot-store.js'
 import { parseCameraEndpointId } from './endpoint-id.js'
@@ -24,7 +25,10 @@ import type { DirectiveHeader } from './types.js'
 /** Leaves the rest of Amazon's 8 s for the re-encode and the Lambda hop. */
 export const SNAPSHOT_READ_TIMEOUT_MS = 5_000
 
-const SnapshotImageSchema = z.object({ base64: z.string().min(1), contentType: z.string() })
+const SnapshotImageSchema = z.object({
+  base64: z.string().min(1),
+  contentType: z.string(),
+})
 
 export interface SnapshotProviderContext {
   readonly ctx: AddonContext
@@ -33,7 +37,8 @@ export interface SnapshotProviderContext {
   /** The integration switch (default on). */
   readonly enabled: () => boolean
   /** The hub's public HTTPS origin, the one the Lambda already reaches. */
-  readonly publicHubUrl: () => string
+  /** The hub's `publicEndpoint` role, read on every use. */
+  readonly publicEndpoint: PublicEndpointReader
   /** Injectable for tests; production re-encodes with sharp. */
   readonly encode?: (bytes: Buffer) => Promise<AlexaJpeg>
   readonly now?: () => number
@@ -87,13 +92,20 @@ export async function handleGetSnapshot(
     return errorEnvelope(header, 'INVALID_DIRECTIVE', 'snapshots are served for camera endpoints')
   }
   const deviceId = parsed.deviceId
-  const base = deps.publicHubUrl().replace(/\/+$/, '')
-  if (!base.startsWith('https://')) {
-    deps.logger.warn('alexa snapshot: no public HTTPS address — Alexa cannot fetch an image', {
-      tags: { deviceId },
-    })
-    return errorEnvelope(header, 'INTERNAL_ERROR', 'the hub has no public HTTPS address')
+  const publicOrigin = await deps.publicEndpoint()
+  if (!publicOrigin.ok || !publicOrigin.origin.startsWith('https://')) {
+    const reason = publicOrigin.ok ? 'public-publicOrigin-not-https' : publicOrigin.reason.code
+    deps.logger.warn(
+      `alexa snapshot: no public HTTPS address (${reason}) — Alexa cannot fetch an image`,
+      { tags: { deviceId } },
+    )
+    return errorEnvelope(
+      header,
+      'INTERNAL_ERROR',
+      `the hub has no public HTTPS address (${reason}); set the Public publicOrigin on the Network page`,
+    )
   }
+  const base = publicOrigin.origin
   const started = deps.now?.() ?? Date.now()
   const frame = await readFrame(deps.ctx, deviceId).catch((err: unknown) => {
     deps.logger.warn('alexa snapshot: snapshot read failed', {

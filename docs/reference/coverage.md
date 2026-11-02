@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**230 units · 7822 source files · 217 units claimed by at least one document (7781 files).**
+**231 units · 7826 source files · 218 units claimed by at least one document (7785 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -77,13 +77,13 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-export-alexa/src/endpoints` | 23 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +11 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-provider-enpal` | 23 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/types/src/notification` | 23 | `notification-center` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `design/2026-08-19-viewer-notification-rule-parity.md` _(covers)_, `architecture/notifications.md`, +23 more, 3 ADRs | 2026-10-07 |
+| `packages/addon-export-alexa` | 22 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +13 more, 3 ADRs | 2026-08-26 |
 | `packages/addon-provider-bosch/src/homecom` | 22 | `device-providers` | `addons/addon-provider-bosch-homecom.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0932-a-bosch-sign-in-is-one-field-and-homecom-is-not-a-home-connect-login.md`, +1 more | 2026-10-26 |
 | `packages/addon-model-studio/src/components` | 21 | `tooling` | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_ | — |
 | `packages/addon-provider-dreo` | 21 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0953-a-cloud-session-that-ends-raises-one-standard-alert-per-integration-and-clears-itself.md`, 1 ADR | 2026-10-26 |
 | `packages/addon-provider-ecowitt` | 21 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/types/src/utils` | 21 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0177-a-python-pool-is-bounded-by-its-own-watchdog-not-the-kernel.md`, `decisions/adr-0646-a-benchmark-names-a-pool-and-never-swaps-an-engine-a-replay-runs-the-cameras-root-step-pinned.md`, +2 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-benchmark` | 20 | `tooling` | `architecture/benchmark.md`, `decisions/adr-0646-a-benchmark-names-a-pool-and-never-swaps-an-engine-a-replay-runs-the-cameras-root-step-pinned.md`, `decisions/adr-0792-the-benchmark-page-is-node-benchmark-image-and-audio-and-the-session-replay-is-deleted.md`, +2 more | 2026-10-23 |
-| `packages/addon-export-alexa` | 20 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +13 more, 3 ADRs | 2026-08-26 |
 | `packages/addon-export-hap/src/hksv` | 20 | `ecosystem-exports` | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md`, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +9 more, 2 ADRs | 2026-09-29 |
 | `packages/addon-provider-unifi` | 20 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/addon-provider-unraid` | 20 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
@@ -192,6 +192,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/ui-library/src/icons` | 3 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +2 more | 2026-11-02 |
 | `packages/addon-admin-ui/src/contexts` | 2 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `ui/admin-patterns.md` _(covers)_, +2 more | 2026-11-02 |
 | `packages/addon-admin-ui/src/server` | 2 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `ui/admin-patterns.md` _(covers)_, +1 more | 2026-11-02 |
+| `packages/addon-export-alexa/src/migrations` | 2 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +1 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-model-studio/src/bundle` | 2 | `cloud-training`, `tooling` | `architecture/cloud-training.md`, `decisions/adr-0806-a-model-that-arrives-as-files-is-imported-as-one-verified-bundle-over-peer-bytes.md`, `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, +1 more | 2026-10-14 |
 | `packages/addon-pipeline-orchestrator/src/auto-tune` | 2 | `pipeline-orchestration` | `architecture/inference-devices.md`, `decisions/adr-0745-best-settings-picks-one-detector-family-from-static-hardware-and-applies-only-the-confirmed-plan.md`, `decisions/adr-0755-shares-and-auto-tune-are-sized-by-capacity-never-by-load.md`, +1 more, 1 ADR | 2026-10-23 |
 | `packages/addon-pipeline-orchestrator/src/camera-status` | 2 | `pipeline-orchestration` | `decisions/adr-0758-a-camera-status-block-carries-only-counters-something-feeds.md`, `decisions/adr-0322-a-poll-asks-each-question-once-and-a-batch-answers-for-every-id.md`, 1 ADR | — |

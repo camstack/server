@@ -53,6 +53,7 @@ import {
   type ConfigUISchema,
   type ConfigUISchemaWithValues,
   DeviceType,
+  defineAddonMigrations,
   deviceExportCapability,
   EventCategory,
   ExportSetupSchema,
@@ -60,7 +61,6 @@ import {
   type IAddonRouteProvider,
   type IDeviceExportProvider,
   type IOauthIntegrationProvider,
-  NetworkAccessStatusSchema,
   oauthIntegrationCapability,
 } from '@camstack/types'
 import { z } from 'zod'
@@ -121,7 +121,9 @@ import {
   objectDetectionField,
   objectDetectionKey,
 } from './vision/vision-runtime.js'
+import { ADDON_MIGRATIONS } from './migrations/index.js'
 import { buildAlexaOauthIntegration } from './oauth-integration.js'
+import { createPublicEndpointReader, type PublicEndpointReader } from './public-endpoint.js'
 import { buildAlexaSetupBlock } from './setup-block.js'
 import { SnapshotStore } from './snapshots/snapshot-store.js'
 import { StateChangeReporter } from './state-reports/state-change-reporter.js'
@@ -246,20 +248,6 @@ export interface AlexaSettings {
    */
   readonly exportedSignatures: Readonly<Record<number, string>>
   /**
-   * Public HTTPS URL of this hub. Baked into every Alexa-bound JWT
-   * as the `hubUrl` claim so the camstack-hosted Alexa Lambda can
-   * route requests back to this hub (Option-2 architecture: one
-   * Lambda + one published skill serves many hubs, routing is in
-   * the JWT).
-   *
-   * Defaults on first boot to the first HTTPS endpoint from the
-   * `network-access` cap's `listEndpoints` aggregate. The operator picks
-   * which connected external-access endpoint to use via the "External
-   * address" picker in settings, whose options are read live
-   * (`listExternalAddresses`).
-   */
-  readonly publicHubUrl: string
-  /**
    * Shared ingress token the user-owned Lambda presents (header
    * `X-CamStack-Ingress`) on its server-to-server hub calls. Generated on
    * first boot; rotated via the "Regenerate token" action. Defense-in-depth
@@ -327,7 +315,6 @@ const DEFAULT_CONFIG: AlexaSettings = {
   tokens: [],
   exportedEndpoints: {},
   exportedSignatures: {},
-  publicHubUrl: '',
   ingressToken: '',
   enforceIngressToken: false,
   accountVisibility: {},
@@ -435,7 +422,22 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     super({ ...DEFAULT_CONFIG })
   }
 
+  /**
+   * The hub's public origin: the `publicEndpoint` role of `local-network`, read on every use
+   * through `ctx.api` (planning#378). No setting holds it and nothing ranks the palette here.
+   */
+  private readonly publicEndpoint: PublicEndpointReader = createPublicEndpointReader(() =>
+    this.ctx.api.localNetwork.getAddresses.query(),
+  )
+
   protected async onInitialize(): Promise<AddonInitResult<ExportAlexaActions>> {
+    // The retired `publicHubUrl` setting is deleted through the migration engine.
+    await this.runMigrations(
+      defineAddonMigrations(ADDON_MIGRATIONS, {
+        readStored: async () => this.resolveGlobalStore(),
+      }),
+    )
+
     // Ensure an ingress token exists on first boot (shown in settings; the
     // operator pastes it into the Lambda's HUB_INGRESS_TOKEN env). Enforcement
     // is opt-in (`enforceIngressToken`) so this never breaks an existing link.
@@ -470,19 +472,6 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     // Event Gateway has an audience without the operator re-linking).
     await this.backfillLinkedAccounts()
 
-    // Public-hub-URL auto-detect makes a cross-addon `ctx.api` call
-    // (`networkAccess.listEndpoints`). Awaiting it inline blocked
-    // `onInitialize` from returning during hub boot — so `device-export`
-    // / `addon-routes` (and the addon's `settings` Moleculer service)
-    // never registered, and the addon sat in "Still waiting for
-    // capability" forever. It is best-effort and the providers read
-    // `config.publicHubUrl` lazily, so detach it.
-    void this.autoDetectPublicHubUrl().catch((err: unknown) => {
-      this.ctx.logger.warn('export-alexa: public hub URL auto-detect failed', {
-        meta: { error: errMsg(err) },
-      })
-    })
-
     this.accessGateRef = createHubAccessGate(this.ctx)
     this.detectionClassSource = new DetectionClassSource({
       readEventKinds: (deviceId) =>
@@ -508,7 +497,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       isExposed: (deviceId) => this.config.exposed.some((e) => e.deviceId === deviceId),
       knownClasses: (deviceId) => this.config.detectionClasses[deviceId]?.classes ?? [],
       namespace: () => this.config.visionNamespace,
-      publicHubUrl: () => this.config.publicHubUrl,
+      publicEndpoint: this.publicEndpoint,
       store: this.snapshotStore,
       post: (opts) => this.requireGateway().postObjectDetection(opts),
     })
@@ -551,7 +540,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       getStatus: async () => ({
         linkState: this.config.linkedAccounts.length > 0 ? 'linked' : 'unlinked',
         exposedDeviceCount: this.config.exposed.length,
-        setup: this.buildSetupBlock(),
+        setup: await this.buildSetupBlock(),
       }),
       listSupportedDeviceKinds: async () => [...SUPPORTED_KINDS],
       listExposedDevices: async () =>
@@ -671,7 +660,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
           logger: this.ctx.logger,
           store: this.snapshotStore,
           enabled: () => this.config.snapshots,
-          publicHubUrl: () => this.config.publicHubUrl,
+          publicEndpoint: this.publicEndpoint,
         },
         vision: this.vision.context(),
         access: this.endpointAccess,
@@ -689,7 +678,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
         upsertToken: (input) => this.upsertToken(input),
         recordLinkedAccount: (input) => this.recordLinkedAccount(input),
       },
-      redetectPublicHubUrl: () => this.redetectPublicHubUrl(),
+      publicEndpoint: this.publicEndpoint,
       onBrokerAdvertised: (raw) => this.rememberAdvertisedBroker(raw),
       snapshotRoute: {
         store: this.snapshotStore,
@@ -710,7 +699,17 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     // it must never sit behind an await, and this addon must not register it
     // behind one either: a provider goes live only when `onInitialize` returns.
     const oauthIntegrationProvider: IOauthIntegrationProvider = {
-      getDescriptor: async () => buildAlexaOauthIntegration(this.config.publicHubUrl),
+      getDescriptor: async () => {
+        const endpoint = await this.publicEndpoint()
+        if (!endpoint.ok) {
+          // No origin to bake: the link would carry the hub-global fallback, and the
+          // directive route then refuses it by name. Say so at the moment it is issued.
+          this.ctx.logger.warn(
+            `export-alexa: linking without a routing claim — ${endpoint.reason.code}: ${endpoint.reason.message}`,
+          )
+        }
+        return buildAlexaOauthIntegration(endpoint.ok ? endpoint.origin : undefined)
+      },
     }
 
     // Spin up the Event Gateway worker. Subscribes to doorbell events
@@ -733,7 +732,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       upsertToken: (input) => this.upsertToken(input),
       removeLinkedAccount: (userId) => this.removeLinkedAccount(userId),
       getAdvertisedBrokerUrl: () => this.config.advertisedBrokerUrl || null,
-      getPublicHubUrl: () => this.config.publicHubUrl,
+      getPublicEndpoint: this.publicEndpoint,
       getRegion: () => this.config.region,
       getExportedSignature: (deviceId) => this.config.exportedSignatures[deviceId] ?? null,
       accountMaySee: (userId, deviceId) => this.visibility.allows(userId, deviceId),
@@ -873,35 +872,6 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     )
     this.ctx.addDisposer(async () => offRemoved())
 
-    // Re-run public-hub-URL detection when a remote-access tunnel connects.
-    // Closes the boot race: the addon's detached `autoDetectPublicHubUrl()`
-    // above runs at boot, but a `network-access` provider (Cloudflare Tunnel /
-    // Tailscale Funnel) often connects AFTER the addon — detection then saw no
-    // connected HTTPS endpoint and `publicHubUrl` stayed empty, leaving the
-    // Alexa Lambda with no hub URL to route to. Every tunnel provider emits
-    // `NetworkTunnelStarted` (with the public `url`) the moment it connects, so
-    // we re-detect on that signal. `redetectPublicHubUrl` keeps the operator's
-    // current selection when it's still present, so this never clobbers a
-    // manual pick — it just fills an empty value once the tunnel is up.
-    const offTunnelStarted = this.ctx.eventBus.subscribe(
-      { category: EventCategory.NetworkTunnelStarted },
-      () => {
-        void this.redetectPublicHubUrl()
-          .then(({ publicHubUrl }) => {
-            this.ctx.logger.info('export-alexa: re-detected public hub URL after tunnel connect', {
-              meta: { publicHubUrl },
-            })
-          })
-          .catch((err: unknown) => {
-            this.ctx.logger.warn(
-              'export-alexa: public hub URL re-detect after tunnel connect failed',
-              { meta: { error: errMsg(err) } },
-            )
-          })
-      },
-    )
-    this.ctx.addDisposer(async () => offTunnelStarted())
-
     // Reclaim an egress whose session died without a `SessionDisconnected`.
     // See `egress-handle-reaper.ts` for the twenty minutes of transcoding that
     // absence cost on 2026-09-13.
@@ -932,7 +902,6 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       ],
       customActions: exportAlexaActions,
       actionHandlers: {
-        listExternalAddresses: async () => this.listExternalAddresses(),
         regenerateIngressToken: async () => this.regenerateIngressToken(),
         revealIngressToken: async () => {
           this.ctx.logger.info('export-alexa: an administrator revealed the ingress token')
@@ -1583,111 +1552,6 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
   // ── Public hub URL auto-detect ──────────────────────────────────
 
   /**
-   * Resolve the hub's public HTTPS URL by querying the `network-access`
-   * collection cap's `listEndpoints` aggregate.
-   *
-   * `network-access` is a proper codegen'd collection capability
-   * (`scope: 'system'`) so it IS reachable cross-process via `ctx.api` —
-   * unlike the `addons` core cap, which is a hub-side core tRPC router
-   * NOT advertised as a Moleculer service: a forked addon (export-alexa
-   * runs forked) calling `ctx.api.addons.*` would hang forever.
-   *
-   * `listEndpoints` with no `addonId` aggregates active ingress endpoints
-   * across every connected `network-access` provider. We take the first
-   * HTTPS entry. `listEndpoints` is optional on a provider (the cap doc
-   * says single-endpoint providers may omit it), so we fall back to the
-   * aggregate `getStatus` when `listEndpoints` yields nothing. Returns an
-   * empty string when none is available — the caller persists it as-is;
-   * the addon degrades gracefully (no public URL → directive endpoints
-   * unset) but never hangs.
-   */
-  private async resolveEndpoints(): Promise<string[]> {
-    const fromList = await this.detectAllFromListEndpoints()
-    if (fromList.length > 0) return fromList
-    const single = await this.detectFromGetStatus()
-    if (single.length > 0) return [single]
-    this.ctx.logger.warn(
-      'export-alexa: no connected HTTPS remote-access endpoint — Alexa Lambda has no hub URL to route to. Set up Cloudflare Tunnel / Tailscale Funnel; the External address picker on the Alexa page lists it once connected.',
-    )
-    return []
-  }
-
-  /** Aggregate `listEndpoints` → every HTTPS entry's url, de-duplicated. */
-  private async detectAllFromListEndpoints(): Promise<string[]> {
-    try {
-      const endpoints = await this.ctx.api.networkAccess.listEndpoints.query({})
-      const urls = endpoints
-        .filter((e) => e.protocol === 'https' && e.url.length > 0)
-        .map((e) => this.normaliseHubUrl(e.url))
-      return [...new Set(urls)]
-    } catch (err) {
-      this.ctx.logger.debug('export-alexa: networkAccess.listEndpoints failed', {
-        meta: { error: errMsg(err) },
-      })
-      return []
-    }
-  }
-
-  /** Aggregate `getStatus` → connected HTTPS endpoint's url. '' on failure. */
-  private async detectFromGetStatus(): Promise<string> {
-    try {
-      // `networkAccess.getStatus`'s codegen'd wire output is `unknown`
-      // (collection cap, loose object output) — safeParse narrows it to a
-      // typed `NetworkAccessStatus` without a cast.
-      const raw = await this.ctx.api.networkAccess.getStatus.query({})
-      const parsed = NetworkAccessStatusSchema.safeParse(raw)
-      const status = parsed.success ? parsed.data : null
-      const endpoint = status?.endpoint
-      if (
-        !status?.connected ||
-        !endpoint ||
-        endpoint.protocol !== 'https' ||
-        endpoint.url.length === 0
-      ) {
-        return ''
-      }
-      return this.normaliseHubUrl(endpoint.url)
-    } catch (err) {
-      this.ctx.logger.debug('export-alexa: networkAccess.getStatus failed', {
-        meta: { error: errMsg(err) },
-      })
-      return ''
-    }
-  }
-
-  /**
-   * Boot-time best-effort: default the external address to the first
-   * detected endpoint when the operator hasn't chosen one. The picker reads
-   * its options live, so nothing is cached here.
-   */
-  private async autoDetectPublicHubUrl(): Promise<void> {
-    if (this.config.publicHubUrl) return
-    const endpoints = await this.resolveEndpoints()
-    const defaulted = endpoints[0]
-    if (defaulted) {
-      await this.updateGlobalSettings({ publicHubUrl: defaulted })
-      this.ctx.logger.info('export-alexa: defaulted public hub URL to first external address', {
-        meta: { url: defaulted },
-      })
-    }
-  }
-
-  /**
-   * Re-scan the connected `network-access` providers and keep the
-   * operator's current selection when it's still present (otherwise default
-   * to the first). Runs when a tunnel connects and behind the
-   * `/admin/redetect-hub-url` route. Returns the URL we landed on (empty
-   * string when nothing is connected).
-   */
-  async redetectPublicHubUrl(): Promise<{ publicHubUrl: string }> {
-    const endpoints = await this.resolveEndpoints()
-    const keep = this.config.publicHubUrl.length > 0 && endpoints.includes(this.config.publicHubUrl)
-    const publicHubUrl = keep ? this.config.publicHubUrl : (endpoints[0] ?? '')
-    if (publicHubUrl !== this.config.publicHubUrl) await this.updateGlobalSettings({ publicHubUrl })
-    return { publicHubUrl }
-  }
-
-  /**
    * Rotate the ingress token, invalidating the old value. The operator must
    * paste the new token into their Lambda's HUB_INGRESS_TOKEN env afterwards.
    * Backs the "Regenerate token" settings button.
@@ -1699,10 +1563,6 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     return { ingressToken }
   }
 
-  private normaliseHubUrl(raw: string): string {
-    return raw.replace(/\/+$/, '')
-  }
-
   // ── Export setup block ──────────────────────────────────────────
 
   /**
@@ -1712,31 +1572,13 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
    * from the public hub URL, and the linked-account count. Each row
    * gets a copy button in the panel; the secret rows are masked.
    */
-  private buildSetupBlock(): ExportSetup {
+  private async buildSetupBlock(): Promise<ExportSetup> {
+    const publicEndpoint = await this.publicEndpoint()
     return buildAlexaSetupBlock({
-      publicHubUrl: this.config.publicHubUrl,
+      publicEndpoint,
       ingressToken: this.config.ingressToken,
       skillMode: this.config.skillMode,
     })
-  }
-
-  /**
-   * The "External address" picker's options, read live: every HTTPS endpoint
-   * the connected remote-access providers report now, plus the saved choice
-   * when it is not among them, so a manual pick is never dropped from view.
-   */
-  private async listExternalAddresses(): Promise<{
-    addresses: readonly { value: string; label: string }[]
-  }> {
-    const detected = await this.resolveEndpoints()
-    const current = this.config.publicHubUrl
-    const addresses = detected.map((url) => ({ value: url, label: url }))
-    return {
-      addresses:
-        current.length > 0 && !detected.includes(current)
-          ? [...addresses, { value: current, label: `${current} (not detected now)` }]
-          : addresses,
-    }
   }
 
   // ── Settings UI ─────────────────────────────────────────────────

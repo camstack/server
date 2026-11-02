@@ -143,7 +143,12 @@ function gatewayHarness(opts: {
     accountMaySee: () => true,
     ...(opts.fetchImpl ? { fetchImpl: opts.fetchImpl } : {}),
   }
-  return { gateway: new LwaEventGateway(deps), upserts, removed, tokens: () => tokens }
+  return {
+    gateway: new LwaEventGateway(deps),
+    upserts,
+    removed,
+    tokens: () => tokens,
+  }
 }
 
 const brokerGrant = (over: Partial<LwaTokenEntry> = {}): LwaTokenEntry => ({
@@ -175,10 +180,15 @@ describe('gateway renewal through the broker', () => {
       vi.fn(async (_url: string, init: RequestInit) => {
         const auth = (init.headers as Record<string, string>).Authorization ?? ''
         sent.push(auth)
-        return new Response('', { status: auth === 'Bearer AT-old' ? 401 : 202 })
+        return new Response('', {
+          status: auth === 'Bearer AT-old' ? 401 : 202,
+        })
       }),
     )
-    const h = gatewayHarness({ tokens: [brokerGrant()], fetchImpl: brokerFetch })
+    const h = gatewayHarness({
+      tokens: [brokerGrant()],
+      fetchImpl: brokerFetch,
+    })
     const ok = await h.gateway.postReport('u1', (t) => ({ token: t }), 'x')
     expect(ok).toBe(true)
     expect(sent).toEqual(['Bearer AT-old', 'Bearer AT-new'])
@@ -248,7 +258,11 @@ describe('legacy (pre-D753) grant migration', () => {
         expiresAt: Date.now() + 3_600_000,
       }),
     )
-    const h = gatewayHarness({ tokens: [legacy], advertised: BROKER, fetchImpl })
+    const h = gatewayHarness({
+      tokens: [legacy],
+      advertised: BROKER,
+      fetchImpl,
+    })
     h.gateway.start()
     await vi.advanceTimersByTimeAsync(60_000)
     h.gateway.stop()
@@ -296,7 +310,11 @@ function callbackDeps(verified: unknown) {
   const deps: LwaTokensCallbackDeps = {
     ctx: {
       api: {
-        userManagement: { oauthVerifyAccessToken: { query: vi.fn().mockResolvedValue(verified) } },
+        userManagement: {
+          oauthVerifyAccessToken: {
+            query: vi.fn().mockResolvedValue(verified),
+          },
+        },
       },
     } as unknown as AddonContext,
     logger: noopLogger,
@@ -320,13 +338,22 @@ describe('POST /oauth/broker-link', () => {
     const c = callbackDeps(VERIFIED)
     const r = reply()
     await handleBrokerLinkCallback(
-      { body, headers: { authorization: 'Bearer grantee' } } as unknown as AddonHttpRequest,
+      {
+        body,
+        headers: { authorization: 'Bearer grantee' },
+      } as unknown as AddonHttpRequest,
       r as unknown as AddonHttpReply,
       c.deps,
     )
     expect(r.status).toBe(200)
     expect(c.upserts).toEqual([
-      { userId: 'u1', accessToken: 'AT', expiresAt: 5, brokerUrl: BROKER, brokerCredential: CRED },
+      {
+        userId: 'u1',
+        accessToken: 'AT',
+        expiresAt: 5,
+        brokerUrl: BROKER,
+        brokerCredential: CRED,
+      },
     ])
     expect(c.linked).toEqual(['u1'])
   })
@@ -350,7 +377,10 @@ describe('POST /oauth/broker-link', () => {
     const c = callbackDeps(null)
     const r = reply()
     await handleBrokerLinkCallback(
-      { body, headers: { authorization: 'Bearer forged' } } as unknown as AddonHttpRequest,
+      {
+        body,
+        headers: { authorization: 'Bearer forged' },
+      } as unknown as AddonHttpRequest,
       r as unknown as AddonHttpReply,
       c.deps,
     )
@@ -368,11 +398,15 @@ describe('broker advertisement', () => {
       ctx: c.deps.ctx,
       logger: noopLogger,
       getSettings: () =>
-        ({ enforceIngressToken: false, ingressToken: '', expectedAudience: 'skill' }) as never,
+        ({
+          enforceIngressToken: false,
+          ingressToken: '',
+          expectedAudience: 'skill',
+        }) as never,
       directiveDeps: {} as HttpRouteDeps['directiveDeps'],
       snapshotRoute: snapshotsOff().route,
       lwaTokensCallbackDeps: c.deps,
-      redetectPublicHubUrl: async () => ({ publicHubUrl: '' }),
+      publicEndpoint: async () => ({ ok: true, origin: 'https://hub.example' }),
       onBrokerAdvertised,
     }
   }
@@ -395,7 +429,10 @@ describe('broker advertisement', () => {
     expect(seen).toEqual([])
     await postDirective(
       routeDeps(
-        { ...VERIFIED, scopes: [{ type: 'category', target: 'device', access: ['view'] }] },
+        {
+          ...VERIFIED,
+          scopes: [{ type: 'category', target: 'device', access: ['view'] }],
+        },
         (u) => seen.push(u),
       ),
     )

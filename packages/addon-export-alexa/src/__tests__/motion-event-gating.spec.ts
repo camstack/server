@@ -77,13 +77,24 @@ function makeHarness(signature: string | null, maySee: boolean = true): Harness 
   return {
     gateway,
     emitMotion: async (detected: boolean) => {
-      motionHandler?.({ data: { deviceId: DEVICE_ID, detected, timestamp: Date.now() } })
+      motionHandler?.({
+        data: { deviceId: DEVICE_ID, detected, timestamp: Date.now() },
+      })
       // The subscription callback is fire-and-forget; let its promise chain run.
       await vi.advanceTimersByTimeAsync(0)
     },
     labels: () =>
-      (globalThis.fetch as unknown as { mock: { calls: [string, { body: string }][] } }).mock.calls
-        .map(([, init]) => JSON.parse(init.body) as { event: { header: { namespace: string } } })
+      (
+        globalThis.fetch as unknown as {
+          mock: { calls: [string, { body: string }][] }
+        }
+      ).mock.calls
+        .map(
+          ([, init]) =>
+            JSON.parse(init.body) as {
+              event: { header: { namespace: string } }
+            },
+        )
         .map((body) => body.event.header.namespace),
   }
 }
@@ -92,7 +103,14 @@ beforeEach(() => {
   vi.useFakeTimers().setSystemTime(1_700_000_000_000)
   vi.stubGlobal(
     'fetch',
-    vi.fn(async () => ({ ok: true, status: 202, text: async () => '' }) as unknown as Response),
+    vi.fn(
+      async () =>
+        ({
+          ok: true,
+          status: 202,
+          text: async () => '',
+        }) as unknown as Response,
+    ),
   )
 })
 afterEach(() => {
@@ -119,14 +137,20 @@ describe('ObjectDetection (D779)', () => {
 
   it('does NOT post when the endpoint Alexa knows does not declare the interface', async () => {
     const h = makeHarness('104|CAMERA|Alexa,Alexa.CameraStreamController,Alexa.MotionSensor')
-    await h.gateway.postObjectDetection({ deviceId: DEVICE_ID, detection: DETECTION })
+    await h.gateway.postObjectDetection({
+      deviceId: DEVICE_ID,
+      detection: DETECTION,
+    })
     expect(h.labels()).toEqual([])
   })
 
   it('does NOT post when the endpoint shape is unknown', async () => {
     // A null signature is the absence of evidence, not evidence of presence.
     const h = makeHarness(null)
-    await h.gateway.postObjectDetection({ deviceId: DEVICE_ID, detection: DETECTION })
+    await h.gateway.postObjectDetection({
+      deviceId: DEVICE_ID,
+      detection: DETECTION,
+    })
     expect(h.labels()).toEqual([])
   })
 
@@ -134,7 +158,10 @@ describe('ObjectDetection (D779)', () => {
     const h = makeHarness(
       '104|CAMERA|Alexa,Alexa.MotionSensor;104__x|CAMERA|Alexa,Alexa.SmartVision.ObjectDetectionSensor',
     )
-    await h.gateway.postObjectDetection({ deviceId: DEVICE_ID, detection: DETECTION })
+    await h.gateway.postObjectDetection({
+      deviceId: DEVICE_ID,
+      detection: DETECTION,
+    })
     expect(h.labels()).toEqual([])
   })
 
@@ -145,14 +172,17 @@ describe('ObjectDetection (D779)', () => {
     await h.gateway.postObjectDetection({
       deviceId: DEVICE_ID,
       detection: DETECTION,
-      imagesFor: (userId) => ({
+      imagesFor: async (userId) => ({
         frameImageUri: `https://hub/f?u=${userId}`,
         croppedImageUri: `https://hub/c?u=${userId}`,
       }),
     })
     const body = JSON.parse(
-      (globalThis.fetch as unknown as { mock: { calls: [string, { body: string }][] } }).mock
-        .calls[0]![1].body,
+      (
+        globalThis.fetch as unknown as {
+          mock: { calls: [string, { body: string }][] }
+        }
+      ).mock.calls[0]![1].body,
     )
     expect(body.event.header).toMatchObject({
       namespace: 'Alexa.SmartVision.ObjectDetectionSensor',
@@ -175,7 +205,10 @@ describe('ObjectDetection (D779)', () => {
 
   it('reaches no account whose hub user may not view the camera', async () => {
     const h = makeHarness('104|CAMERA|Alexa,Alexa.SmartVision.ObjectDetectionSensor', false)
-    await h.gateway.postObjectDetection({ deviceId: DEVICE_ID, detection: DETECTION })
+    await h.gateway.postObjectDetection({
+      deviceId: DEVICE_ID,
+      detection: DETECTION,
+    })
     expect(h.labels()).toEqual([])
   })
 })
@@ -200,7 +233,9 @@ describe('the falling edge is held', () => {
     await vi.advanceTimersByTimeAsync(30_000)
 
     const bodies = (
-      globalThis.fetch as unknown as { mock: { calls: [string, { body: string }][] } }
+      globalThis.fetch as unknown as {
+        mock: { calls: [string, { body: string }][] }
+      }
     ).mock.calls.map(([, init]) => JSON.parse(init.body))
     expect(bodies).toHaveLength(2)
     expect(bodies[1].event.payload.change.properties[0].value).toBe('NOT_DETECTED')

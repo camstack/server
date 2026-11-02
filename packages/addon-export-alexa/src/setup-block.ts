@@ -10,11 +10,13 @@
 import type { ExportSetupSchema } from '@camstack/types'
 import type { z } from 'zod'
 import { maskSecretTail } from './ingress-token.js'
+import type { PublicEndpointResult } from './public-endpoint.js'
 
 type ExportSetup = z.infer<typeof ExportSetupSchema>
 
 export interface SetupBlockInput {
-  readonly publicHubUrl: string
+  /** The hub's `publicEndpoint` role as read for this status call; a refusal is reported in the note. */
+  readonly publicEndpoint: PublicEndpointResult
   readonly ingressToken: string
   /** The ingress token row is a custom-skill concern: the public skill's
    *  shared Lambda cannot send a per-hub token. */
@@ -22,14 +24,19 @@ export interface SetupBlockInput {
 }
 
 export function buildAlexaSetupBlock(input: SetupBlockInput): ExportSetup {
-  const base = input.publicHubUrl.replace(/\/+$/, '')
+  const base = input.publicEndpoint.ok ? input.publicEndpoint.origin : ''
   const fields: ExportSetup['fields'] = [
     // What the operator types on the skill's account-linking page ("Hub address"):
     // the same public address the directive endpoint is built on. Shown, not
     // asked for again, so linking and re-linking to another hub need no guessing.
     ...(base ? [{ label: 'Hub address to enter in the Alexa app', value: base }] : []),
     ...(base
-      ? [{ label: 'Directive endpoint', value: `${base}/addon/export-alexa/directive` }]
+      ? [
+          {
+            label: 'Directive endpoint',
+            value: `${base}/addon/export-alexa/directive`,
+          },
+        ]
       : []),
     ...(input.ingressToken && input.skillMode === 'custom'
       ? [
@@ -45,6 +52,11 @@ export function buildAlexaSetupBlock(input: SetupBlockInput): ExportSetup {
     fields,
     note: base
       ? "Account linking is handled by the core OAuth server. Use the hub's /api/oauth2/authorize endpoint with integration=export-alexa."
-      : 'Set the public hub URL on the settings form first — the directive endpoint URL is derived from it.',
+      : refusalNote(input.publicEndpoint),
   }
+}
+
+function refusalNote(endpoint: PublicEndpointResult): string {
+  if (endpoint.ok) return ''
+  return `Refused (${endpoint.reason.code}): ${endpoint.reason.message}`
 }

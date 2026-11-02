@@ -79,7 +79,7 @@ describe('Alexa settings page layout', () => {
   it('places each row in its section', () => {
     const schema = schemaFor('public')
     const [connection, features, account, trouble] = schema.sections
-    expect(keysOf(connection)).toEqual(['skillMode', 'region', 'expectedAudience', 'publicHubUrl'])
+    expect(keysOf(connection)).toEqual(['skillMode', 'region', 'expectedAudience'])
     expect(keysOf(features)).toEqual(['detectionSensors', 'objectDetection', 'snapshots'])
     expect(keysOf(account)).toEqual(['__alexa-link-status', '__unlink-alexa-accounts'])
     expect(keysOf(trouble)).toEqual([
@@ -89,10 +89,9 @@ describe('Alexa settings page layout', () => {
     ])
   })
 
-  it('the external address is picked from a live list, with no refresh button', () => {
-    const picker = field(schemaFor('public'), 'publicHubUrl')
-    expect(picker?.type).toBe('addon-action-select')
-    expect(picker && 'action' in picker ? picker.action : null).toBe('listExternalAddresses')
+  it('holds no external-address picker: the public origin is the Network page role', () => {
+    expect(field(schemaFor('public'), 'publicHubUrl')).toBeUndefined()
+    expect(field(schemaFor('custom'), 'publicHubUrl')).toBeUndefined()
   })
 
   it('every action is an addon-action-button that says what happened', () => {
@@ -101,7 +100,10 @@ describe('Alexa settings page layout', () => {
       expect(fields.filter((f) => f.type === 'button')).toEqual([])
       for (const f of fields) {
         if (f.type !== 'addon-action-button') continue
-        expect({ key: f.key, successMessage: f.successMessage ?? null }).not.toEqual({
+        expect({
+          key: f.key,
+          successMessage: f.successMessage ?? null,
+        }).not.toEqual({
           key: f.key,
           successMessage: null,
         })

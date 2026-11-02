@@ -24,6 +24,7 @@ import type {
 import { errMsg } from '@camstack/types'
 import { z } from 'zod'
 import type { SmartVisionClass } from '../endpoints/builder.js'
+import type { PublicEndpointReader } from '../public-endpoint.js'
 import type { VisionContext, VisionImageUris, VisionTrack } from '../handlers/data-controller.js'
 import type { DetectionSensorClass } from '../handlers/endpoint-id.js'
 import type { VisionDetectionLike } from '../lwa-event-gateway.js'
@@ -74,7 +75,7 @@ export interface PostObjectDetection {
   (opts: {
     readonly deviceId: number
     readonly detection: VisionDetectionLike
-    readonly imagesFor?: (userId: string) => VisionImageUris
+    readonly imagesFor?: (userId: string) => Promise<VisionImageUris>
   }): Promise<void>
 }
 
@@ -89,7 +90,8 @@ export interface VisionRuntimeDeps {
   /** The camera's last persisted detection classes (no read). */
   readonly knownClasses: (deviceId: number) => readonly DetectionSensorClass[]
   readonly namespace: () => string
-  readonly publicHubUrl: () => string
+  /** The hub's `publicEndpoint` role, read on every use. */
+  readonly publicEndpoint: PublicEndpointReader
   readonly store: SnapshotStore
   readonly post: PostObjectDetection
   readonly encode?: (bytes: Buffer) => Promise<AlexaJpeg>
@@ -221,10 +223,22 @@ export class AlexaVisionRuntime {
   }
 
   /** Fresh, per-user, ten-minute image URIs for one event — or none. */
-  imagesFor(userId: string, deviceId: number, trackId: string, at: number): VisionImageUris {
+  async imagesFor(
+    userId: string,
+    deviceId: number,
+    trackId: string,
+    at: number,
+  ): Promise<VisionImageUris> {
     if (!this.deps.snapshotsOn()) return {}
-    const base = this.deps.publicHubUrl().replace(/\/+$/, '')
-    if (!base.startsWith('https://')) return {}
+    const endpoint = await this.deps.publicEndpoint()
+    if (!endpoint.ok || !endpoint.origin.startsWith('https://')) {
+      this.deps.logger.debug(
+        `alexa vision: no image URIs — ${endpoint.ok ? 'public-endpoint-not-https' : endpoint.reason.code}`,
+        { tags: { deviceId } },
+      )
+      return {}
+    }
+    const base = endpoint.origin
     const frame = this.deps.store.mintLazy({
       deviceId,
       userId,
@@ -237,7 +251,10 @@ export class AlexaVisionRuntime {
       capturedAt: at,
       load: () => this.loadImage(deviceId, trackId, CROP_KINDS, null),
     })
-    return { frameImageUri: `${base}${frame.path}`, croppedImageUri: `${base}${crop.path}` }
+    return {
+      frameImageUri: `${base}${frame.path}`,
+      croppedImageUri: `${base}${crop.path}`,
+    }
   }
 
   /** The directive handlers' view (`handlers/data-controller.ts`). */

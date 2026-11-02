@@ -8,6 +8,7 @@ import { AlexaAccessGate } from '../../access/access-gate.js'
 import type { EndpointAccessDeps } from '../../access/endpoint-access.js'
 import type { VisionContext } from '../../handlers/data-controller.js'
 import type { SnapshotProviderContext } from '../../handlers/snapshot-provider.js'
+import { NO_PUBLIC_ENDPOINT_REASON } from '../../public-endpoint.js'
 import { VisionStateStore } from '../../vision/vision-state.js'
 import type { SnapshotRouteDeps } from '../../snapshots/snapshot-route.js'
 import { SnapshotStore } from '../../snapshots/snapshot-store.js'
@@ -54,7 +55,10 @@ export function snapshotsOff(): {
       logger: quiet,
       store,
       enabled: () => false,
-      publicHubUrl: () => '',
+      publicEndpoint: async () => ({
+        ok: false,
+        reason: NO_PUBLIC_ENDPOINT_REASON,
+      }),
     },
     route: {
       store,
@@ -71,15 +75,20 @@ export function snapshotsOff(): {
 export function visionOff(over: Partial<VisionContext> = {}): VisionContext {
   return {
     ctx: {
-      api: { deviceStatus: { getStatus: { query: async () => ({ online: true }) } } },
+      api: {
+        deviceStatus: { getStatus: { query: async () => ({ online: true }) } },
+      },
     } as unknown as VisionContext['ctx'],
     logger: quiet,
-    vision: new VisionStateStore({ read: async () => ({}), write: async () => {} }),
+    vision: new VisionStateStore({
+      read: async () => ({}),
+      write: async () => {},
+    }),
     declaredClasses: async () => [],
     namespace: () => '6f1c2a54-1d0e-4c8b-9a52-0c3f7d2e9b11',
     listTracks: async () => [],
     getTrack: async () => null,
-    imagesFor: () => ({}),
+    imagesFor: async () => ({}),
     ...over,
   }
 }

@@ -69,7 +69,11 @@ export interface VisionContext {
    *  (`lastSeen` DESC, `trackId` DESC). */
   readonly listTracks: (
     deviceId: number,
-    query: { readonly since: number; readonly until: number; readonly limit: number },
+    query: {
+      readonly since: number
+      readonly until: number
+      readonly limit: number
+    },
   ) => Promise<readonly VisionTrack[]>
   readonly getTrack: (deviceId: number, trackId: string) => Promise<VisionTrack | null>
   /** Fresh image URIs for one event (detected at `at`), minted for this user
@@ -80,7 +84,7 @@ export interface VisionContext {
     deviceId: number,
     trackId: string,
     at: number,
-  ) => VisionImageUris
+  ) => Promise<VisionImageUris>
 }
 
 const QuerySchema = z.object({
@@ -96,7 +100,10 @@ const ReportDataPayloadSchema = z.object({
   nextToken: z.string().optional(),
 })
 
-const DeleteDataPayloadSchema = ReportDataPayloadSchema.omit({ maxResults: true, nextToken: true })
+const DeleteDataPayloadSchema = ReportDataPayloadSchema.omit({
+  maxResults: true,
+  nextToken: true,
+})
 
 const SetClassesPayloadSchema = z.object({
   objectDetectionClasses: z.array(z.object({ imageNetClass: z.string() })),
@@ -161,17 +168,17 @@ function entryOf(ctx: VisionContext, p: Prepared, track: VisionTrack): VisionInd
   return { e, t: track.trackId, c: cls, at: track.firstSeen }
 }
 
-function dataItem(
+async function dataItem(
   ctx: VisionContext,
   p: Prepared,
   entry: VisionIndexEntry,
   userId: string,
-): Record<string, string> {
+): Promise<Record<string, string>> {
   return {
     eventIdentifier: entry.e,
     imageNetClass: entry.c,
     objectIdentifier: objectIdentifierFor(ctx.namespace(), p.deviceId, entry.t),
-    ...ctx.imagesFor(userId, p.deviceId, entry.t, entry.at),
+    ...(await ctx.imagesFor(userId, p.deviceId, entry.t, entry.at)),
   }
 }
 
@@ -299,7 +306,7 @@ export async function handleReportData(
   return dataControllerEvent(header, endpoint.endpointId, 'DataReport', {
     ...(next !== null ? { paginationContext: { nextToken: encodeCursor(next) } } : {}),
     dataSchema: { type: 'JSON', schema: 'SmartVisionData' },
-    data: entries.map((e) => dataItem(ctx, p, e, caller.userId)),
+    data: await Promise.all(entries.map((e) => dataItem(ctx, p, e, caller.userId))),
   })
 }
 
@@ -342,7 +349,11 @@ export async function handleDeleteData(
   await ctx.vision.hide(deviceId, ids)
   ctx.logger.info('alexa data controller: events hidden from Alexa (CamStack keeps them)', {
     tags: { deviceId },
-    meta: { userId: caller.userId, queryType: payload.queryType, hidden: ids.length },
+    meta: {
+      userId: caller.userId,
+      queryType: payload.queryType,
+      hidden: ids.length,
+    },
   })
   return dataControllerEvent(header, endpoint.endpointId, 'DataDeleted', {
     queryType: payload.queryType,
