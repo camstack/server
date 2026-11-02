@@ -11553,7 +11553,7 @@ export default class PipelineAnalyticsAddon
     if (verdict.changed) {
       const entries = Object.entries(slice)
       const field = (key: string): unknown => entries.find(([k]) => k === key)?.[1]
-      this.ctx.logger.debug('sensor slice passed the transition gate', {
+      this.ctx.logger.info('sensor slice passed the transition gate', {
         tags: { deviceId: data.deviceId },
         meta: {
           capName: data.capName,
