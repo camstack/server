@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- A Home Assistant restart no longer parks the link for 10 minutes: a 404 must persist for a minute before the component counts as missing, and a suspended link is now logged and reported on every reconcile
 - Home Assistant export: a cover offers position and tilt only when the device declares them, shows unavailable while its provider is offline, and a refused command now answers 422 with the reason
 - A cover exports the stop control to Home Assistant only when the device declares cover-stoppable, and a Home Assistant cover with the STOP bit declares it.
 

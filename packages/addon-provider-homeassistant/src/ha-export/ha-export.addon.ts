@@ -104,6 +104,7 @@ import {
 import { footageForNode, shouldReadPackageStatus } from './node-reads.js'
 import { HOME_ASSISTANT_OAUTH_INTEGRATION } from './oauth-integration.js'
 import { PushClient } from './push-client.js'
+import { summariseLinkGaps } from './link-gaps.js'
 import { postToHomeAssistant, PUSH_PATH } from './push-failure.js'
 import { ReachabilityReconciler } from './reachability-reconcile.js'
 import { shouldSkipAnnounce, structureFingerprint } from './reconcile-fingerprint.js'
@@ -1353,14 +1354,30 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
       // A link parked on a missing component is neither a gap to resync nor
       // news: it was logged when it parked, and the link coming back
       // re-announces by itself (`onLinkRestored`).
-      const failing = [...this.links.values()].filter(
-        (link) => !link.client.healthy && !link.client.suspended,
+      const gaps = summariseLinkGaps(
+        [...this.links.entries()].map(([brokerId, link]) => ({
+          brokerId,
+          healthy: link.client.healthy,
+          suspended: link.client.suspended,
+          recheckAt: link.client.recheckAt,
+        })),
       )
-      const anyLive = [...this.links.values()].some((link) => !link.client.suspended)
-      if (failing.length > 0 || (!delivered && anyLive)) {
+      if (gaps.failing.length > 0 || (!delivered && gaps.anyLive)) {
         this.resync.markGap('push-not-delivered')
         this.lastStructureFingerprint = undefined
         this.ctx.logger.warn('ha-export: a push was not delivered, the next pass is a full resync')
+      }
+      if (gaps.suspended.length > 0) {
+        // Nothing reaches a parked link, so entities there stay unavailable:
+        // say so on every pass instead of excluding it from the check.
+        this.ctx.logger.warn('ha-export: push links suspended, Home Assistant receives nothing', {
+          meta: {
+            suspended: gaps.suspended.map((s) => ({
+              brokerId: s.brokerId,
+              recheckAt: new Date(s.recheckAt).toISOString(),
+            })),
+          },
+        })
       }
 
       this.ctx.logger.info('ha-export: reconciled', {
@@ -1371,6 +1388,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
           devices: exported.size,
           entities: entityCount,
           unclassifiedCaps: this.unclassified.length,
+          suspendedLinks: gaps.suspended.length,
           durationMs: Date.now() - startedAt,
         },
       })

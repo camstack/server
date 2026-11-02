@@ -79,6 +79,14 @@ export interface PushClientOptions {
  */
 export const COMPONENT_RECHECK_MS = 10 * 60_000
 
+/**
+ * How long 404s must persist, unbroken, before the component counts as
+ * missing. Home Assistant answers HTTP before the integration has registered
+ * its push view, so a restart produces a 404 window that heals itself; only a
+ * 404 that outlives it is a component that is not installed.
+ */
+export const COMPONENT_MISSING_WINDOW_MS = 60_000
+
 /** Rate limit for the "HA is not answering" warning. */
 const DROP_LOG_INTERVAL_MS = 30_000
 
@@ -99,6 +107,10 @@ export class PushClient {
   private disposed = false
   private lastFailure: PushFailure | null = null
   private suspendedUntil = 0
+  /** When the current unbroken streak of 404s began; 0 when there is none. */
+  private first404At = 0
+  /** A suspension was entered and not yet logged as left. */
+  private suspensionLogged = false
 
   constructor(options: PushClientOptions) {
     this.transport = options.transport
@@ -122,9 +134,24 @@ export class PushClient {
     return this.suspendedUntil > Date.now()
   }
 
+  /** Epoch ms of the next probe while suspended; 0 otherwise. */
+  get recheckAt(): number {
+    return this.suspended ? this.suspendedUntil : 0
+  }
+
   /** Probe again at once — the operator changed something. */
   resetBackoff(): void {
     this.suspendedUntil = 0
+    this.first404At = 0
+    this.logSuspensionEnded('reset by a settings change')
+  }
+
+  private logSuspensionEnded(why: string): void {
+    if (!this.suspensionLogged) return
+    this.suspensionLogged = false
+    this.logger.info(`ha-export: push link no longer suspended (${why}), probing again`, {
+      meta: { brokerId: this.brokerId },
+    })
   }
 
   /** Messages discarded because HA did not answer. Never silent. */
@@ -209,8 +236,13 @@ export class PushClient {
       this.dropped += message.type === 'batch' ? message.items.length : 1
       return false
     }
+    if (this.suspendedUntil !== 0 && !this.suspended) {
+      this.suspendedUntil = 0
+      this.logSuspensionEnded('recheck time reached')
+    }
     try {
       await this.transport(message)
+      this.first404At = 0
       this.onReachable()
       return true
     } catch (err) {
@@ -235,6 +267,7 @@ export class PushClient {
     this.available = true
     this.lastFailure = null
     this.suspendedUntil = 0
+    this.logSuspensionEnded('Home Assistant answered')
     /**
      * The link came back. Drop the dedup cache so the reconcile that
      * follows re-pushes every value: HA may have restarted and lost its
@@ -271,11 +304,42 @@ export class PushClient {
    */
   private onUnreachable(message: PushMessage, err: unknown): void {
     this.available = false
-    const failure = describePushFailure(err)
-    this.lastFailure = failure
-    if (failure.permanent) this.suspendedUntil = Date.now() + COMPONENT_RECHECK_MS
-    this.dropped += message.type === 'batch' ? message.items.length : 1
     const now = Date.now()
+    const described = describePushFailure(err)
+    let failure = described
+    if (described.kind === 'component-missing') {
+      if (this.first404At === 0) this.first404At = now
+      if (now - this.first404At < COMPONENT_MISSING_WINDOW_MS) {
+        // Home Assistant may still be booting: treat as transient and retry
+        // on the normal schedule until the 404 has persisted.
+        failure = {
+          kind: 'other',
+          permanent: false,
+          text: 'HTTP 404 — Home Assistant has not registered the CamStack endpoint (yet); retrying',
+        }
+      }
+    } else {
+      this.first404At = 0
+    }
+    this.lastFailure = failure
+    this.dropped += message.type === 'batch' ? message.items.length : 1
+    if (failure.permanent) {
+      this.suspendedUntil = now + COMPONENT_RECHECK_MS
+      this.suspensionLogged = true
+      // Outside the drop rate limit: entering suspension is the one line that
+      // explains every silent drop that follows.
+      this.logger.warn(
+        `ha-export: push link SUSPENDED (${failure.text}); next probe at ${new Date(this.suspendedUntil).toISOString()}`,
+        {
+          meta: {
+            brokerId: this.brokerId,
+            failureKind: failure.kind,
+            recheckAt: this.suspendedUntil,
+            recheckInMs: COMPONENT_RECHECK_MS,
+          },
+        },
+      )
+    }
     if (now - this.droppedLoggedAt < DROP_LOG_INTERVAL_MS) return
     this.droppedLoggedAt = now
     this.logger.warn(

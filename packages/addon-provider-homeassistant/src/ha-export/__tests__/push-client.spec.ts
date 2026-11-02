@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   BATCH_FLUSH_MS,
+  COMPONENT_MISSING_WINDOW_MS,
   COMPONENT_RECHECK_MS,
   HEARTBEAT_INTERVAL_MS,
   IMAGE_SIGNAL_PREFIX,
@@ -258,7 +259,10 @@ describe('PushClient', () => {
       })
       client.publishState('t', 'v')
       await client.flush()
-      const call = warn.mock.calls[0]
+      vi.advanceTimersByTime(COMPONENT_MISSING_WINDOW_MS + 1)
+      client.publishState('t2', 'v')
+      await client.flush()
+      const call = warn.mock.calls.find((c) => String(c[0]).includes('messages dropped'))
       expect(call).toBeDefined()
       const [text, opts] = call ?? []
       expect(text).toContain('HTTP 404')
@@ -280,17 +284,83 @@ describe('PushClient', () => {
       })
       await client.publishEntityChange('d', CMPS, DEV)
       expect(calls).toBe(1)
+      vi.advanceTimersByTime(COMPONENT_MISSING_WINDOW_MS + 1)
+      await client.publishEntityChange('d', CMPS, DEV)
+      expect(calls).toBe(2)
       await client.publishEntityChange('d', CMPS, DEV)
       await client.publishEntityChange('d', CMPS, DEV)
-      expect(calls).toBe(1)
+      expect(calls).toBe(2)
       expect(client.suspended).toBe(true)
       client.resetBackoff()
       await client.publishEntityChange('d', CMPS, DEV)
-      expect(calls).toBe(2)
+      expect(calls).toBe(3)
       vi.advanceTimersByTime(COMPONENT_RECHECK_MS + 1)
       await client.publishEntityChange('d', CMPS, DEV)
-      expect(calls).toBe(3)
+      expect(calls).toBe(4)
       vi.useRealTimers()
+    })
+
+    describe('404 during a Home Assistant boot', () => {
+      function bootClient(answer: () => void) {
+        const warn = vi.fn()
+        const info = vi.fn()
+        const sent: PushMessage[] = []
+        const client = new PushClient({
+          transport: async (m: PushMessage) => {
+            answer()
+            sent.push(m)
+          },
+          logger: { debug: vi.fn(), info, warn },
+          brokerId: 'b1',
+        })
+        return { client, warn, info, sent }
+      }
+
+      it('a single 404 followed by success never suspends', async () => {
+        let status = 404
+        const { client, sent } = bootClient(() => {
+          if (status === 404) throw new PushHttpError(404, '')
+        })
+        await client.publishEntityChange('d', CMPS, DEV)
+        expect(client.suspended).toBe(false)
+        expect(client.failure?.permanent).toBe(false)
+        vi.advanceTimersByTime(5_000)
+        status = 200
+        expect(await client.publishEntityChange('d', CMPS, DEV)).toBe(true)
+        expect(sent).toHaveLength(1)
+        expect(client.healthy).toBe(true)
+      })
+
+      it('a non-404 failure resets the streak', async () => {
+        let err: Error = new PushHttpError(404, '')
+        const { client } = bootClient(() => {
+          throw err
+        })
+        await client.publishEntityChange('d', CMPS, DEV)
+        vi.advanceTimersByTime(COMPONENT_MISSING_WINDOW_MS - 1_000)
+        err = new PushHttpError(503, '')
+        await client.publishEntityChange('d', CMPS, DEV)
+        vi.advanceTimersByTime(5_000)
+        err = new PushHttpError(404, '')
+        await client.publishEntityChange('d', CMPS, DEV)
+        expect(client.suspended).toBe(false)
+      })
+
+      it('404s persisting past the window suspend, and the transition is logged outside the drop rate limit', async () => {
+        const { client, warn, info } = bootClient(() => {
+          throw new PushHttpError(404, '')
+        })
+        await client.publishEntityChange('d', CMPS, DEV)
+        expect(client.suspended).toBe(false)
+        vi.advanceTimersByTime(COMPONENT_MISSING_WINDOW_MS + 1)
+        await client.publishEntityChange('d', CMPS, DEV)
+        expect(client.suspended).toBe(true)
+        const suspendedLine = warn.mock.calls.find((c) => String(c[0]).includes('SUSPENDED'))
+        expect(suspendedLine).toBeDefined()
+        expect(suspendedLine?.[1]?.meta.recheckAt).toBe(Date.now() + COMPONENT_RECHECK_MS)
+        client.resetBackoff()
+        expect(info.mock.calls.some((c) => String(c[0]).includes('no longer suspended'))).toBe(true)
+      })
     })
 
     it('a 413 batch is split in halves until it lands; nothing is dropped', async () => {
