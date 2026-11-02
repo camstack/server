@@ -22,6 +22,7 @@ async function world(initial: Record<string, unknown>, readFails = false) {
   const handle = records.records.kind(lokiDestinationsKind)
   const writes: string[] = []
   const created: string[] = []
+  const warnings: string[] = []
   const ports: LokiCataloguePorts = {
     readStored: async () => {
       if (readFails) throw new Error('keychain locked')
@@ -40,6 +41,16 @@ async function world(initial: Record<string, unknown>, readFails = false) {
       await handle.put({ id, data: body }, { ifRev: 0 })
       return 'created'
     },
+    warn: (message) => {
+      warnings.push(message)
+    },
+    findIntegration: async () => (created.length > 0 ? 'int_0007' : null),
+    readRecord: async (id) => {
+      const row = await handle.getResolved(id)
+      return row === null
+        ? null
+        : { url: row.data.url, hasPassword: (row.data.password ?? '').length > 0 }
+    },
     clearOldPassword: async () => {
       writes.push('clear-password')
       store.delete('password')
@@ -51,7 +62,7 @@ async function world(initial: Record<string, unknown>, readFails = false) {
     if (entry === undefined) throw new Error(`no ${id}`)
     return entry.execute()
   }
-  return { store, handle, writes, created, run }
+  return { store, handle, writes, created, warnings, run }
 }
 
 const OLD = {
@@ -125,5 +136,60 @@ describe('loki-logging/2026-11-02-connection-to-records', () => {
     expect(result.kind).toBe('failed')
     expect(w.writes).toEqual([])
     expect(w.store.get('password')).toBe('pw-secret')
+  })
+
+  it('clamps an out-of-range legacy number to the kind bounds instead of blocking the owner', async () => {
+    const w = await world({ ...OLD, batchIntervalMs: 50, batchSize: 100_000, timeoutMs: 999_999 })
+    const result = await w.run(CONNECTION_TO_RECORDS_ID)
+    expect(result).toMatchObject({ kind: 'procedure', result: { outcome: 'done' } })
+    const row = await w.handle.get('int_0007')
+    expect(row?.data).toMatchObject({ batchIntervalMs: 250, batchSize: 5000, timeoutMs: 60000 })
+    expect(w.warnings.join('\n')).toContain('batchSize')
+    expect(w.warnings.join('\n')).not.toContain('pw-secret')
+  })
+
+  it('keeps the legacy password when an existing record holds none', async () => {
+    const w = await world(OLD)
+    await w.handle.put(
+      {
+        id: 'int_0007',
+        data: {
+          name: 'Loki',
+          url: 'http://other',
+          level: 'info',
+          job: 'camstack',
+          extraLabels: '',
+          tenantId: '',
+          username: '',
+          batchIntervalMs: 5000,
+          batchSize: 200,
+          timeoutMs: 10000,
+        },
+      },
+      { ifRev: 0 },
+    )
+    const result = await w.run(CONNECTION_TO_RECORDS_ID)
+    expect(result).toMatchObject({ kind: 'procedure', result: { outcome: 'already-done' } })
+    expect(w.store.get('password')).toBe('pw-secret')
+    expect(w.warnings.length).toBeGreaterThan(0)
+  })
+
+  it('the second migration refuses, keys untouched, when the record is not there', async () => {
+    const w = await world(OLD)
+    // The first migration never ran: no integration row, no record.
+    const result = await w.run('loki-logging/2026-11-02-drop-moved-settings')
+    expect(result.kind).toBe('failed')
+    expect(w.store.get('url')).toBe('http://loki:3100')
+    expect(w.warnings.join('\n')).toContain('legacy keys are kept')
+  })
+
+  it('the second migration refuses while a legacy password has no copy in the record', async () => {
+    const w = await world(OLD)
+    await w.run(CONNECTION_TO_RECORDS_ID)
+    // Put the legacy password back and strip the record's: the only copy is the legacy one.
+    w.store.set('password', 'pw-secret')
+    await w.handle.patch('int_0007', { password: null })
+    const result = await w.run('loki-logging/2026-11-02-drop-moved-settings')
+    expect(result.kind).toBe('failed')
   })
 })

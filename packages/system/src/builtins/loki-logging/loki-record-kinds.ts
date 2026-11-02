@@ -5,10 +5,39 @@
  *
  * The kind name is `destinations` (kind names are lower-case-dashed); the owner is `loki-logging`.
  */
-import { defineEntryKind } from '@camstack/types'
+import { type DefinedRecordKind, defineEntryKind } from '@camstack/types'
 import { z } from 'zod'
 
-export const LokiDestinationBodySchema = z.object({
+export interface LokiBound {
+  readonly min: number
+  readonly max: number
+}
+
+/** The inclusive bounds of the numeric fields: the schema and the settings migration read ONE copy. */
+export const LOKI_BOUNDS: Readonly<
+  Record<'batchIntervalMs' | 'batchSize' | 'timeoutMs', LokiBound>
+> = {
+  batchIntervalMs: { min: 250, max: 60_000 },
+  batchSize: { min: 1, max: 5_000 },
+  timeoutMs: { min: 1_000, max: 60_000 },
+}
+
+export type LokiDestinationBody = {
+  readonly name: string
+  readonly url: string
+  readonly level: 'debug' | 'info' | 'warn' | 'error'
+  readonly job: string
+  readonly extraLabels: string
+  readonly tenantId: string
+  readonly username: string
+  readonly password?: string | undefined
+  readonly batchIntervalMs: number
+  readonly batchSize: number
+  readonly timeoutMs: number
+}
+
+/** The schema is checked against the interface by its annotation: a drifted field fails the typecheck. */
+export const LokiDestinationBodySchema: z.ZodType<LokiDestinationBody> = z.object({
   name: z.string().min(1),
   url: z.string(),
   level: z.enum(['debug', 'info', 'warn', 'error']),
@@ -17,20 +46,23 @@ export const LokiDestinationBodySchema = z.object({
   tenantId: z.string(),
   username: z.string(),
   password: z.string().optional().meta({ secret: true }),
-  batchIntervalMs: z.number().int().min(250).max(60_000),
-  batchSize: z.number().int().min(1).max(5_000),
-  timeoutMs: z.number().int().min(1_000).max(60_000),
+  batchIntervalMs: z
+    .number()
+    .int()
+    .min(LOKI_BOUNDS.batchIntervalMs.min)
+    .max(LOKI_BOUNDS.batchIntervalMs.max),
+  batchSize: z.number().int().min(LOKI_BOUNDS.batchSize.min).max(LOKI_BOUNDS.batchSize.max),
+  timeoutMs: z.number().int().min(LOKI_BOUNDS.timeoutMs.min).max(LOKI_BOUNDS.timeoutMs.max),
 })
-
-export type LokiDestinationBody = z.infer<typeof LokiDestinationBodySchema>
 
 export const LOKI_DESTINATIONS_KIND_NAME = 'destinations'
 
-export const lokiDestinationsKind = defineEntryKind(LOKI_DESTINATIONS_KIND_NAME, {
-  title: 'Loki destinations',
-  nameField: 'name',
-  schema: LokiDestinationBodySchema,
-})
+export const lokiDestinationsKind: DefinedRecordKind<z.ZodType<LokiDestinationBody>> =
+  defineEntryKind(LOKI_DESTINATIONS_KIND_NAME, {
+    title: 'Loki destinations',
+    nameField: 'name',
+    schema: LokiDestinationBodySchema,
+  })
 
 export const LOKI_DEFAULT_BODY: Omit<LokiDestinationBody, 'name'> = {
   url: '',

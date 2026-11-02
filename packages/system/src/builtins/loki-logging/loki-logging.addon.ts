@@ -23,14 +23,18 @@ import type {
 } from '@camstack/types'
 import {
   BaseAddon,
+  type ResolvedInstance,
   defineAddonMigrations,
   integrationInstancesCapability,
   logDestinationCapability,
+  isSecretFieldView,
   isSecretMarker,
+  REDACTED_SECRET,
   RecordIntegrationInstances,
   RevConflictError,
 } from '@camstack/types'
 import { LokiDestination, type LokiConfig } from './loki-destination.js'
+import { type LokiCataloguePorts, type LokiRecordState } from './migrations/index.js'
 import {
   LOKI_DEFAULT_BODY,
   type LokiDestinationBody,
@@ -57,6 +61,35 @@ type LokiAddonConfig = Readonly<Record<string, unknown>>
 /** An agent re-reads the record on this period; the hub applies a change at once (`onChanged`). */
 const AGENT_REFRESH_MS = 30_000
 
+/** The headers the destination itself sends: tenant and basic auth. */
+function probeHeaders(auth: {
+  readonly username: string
+  readonly tenantId: string
+  readonly password: string
+}): Record<string, string> {
+  const headers: Record<string, string> = {}
+  if (auth.tenantId.trim().length > 0) headers['X-Scope-OrgID'] = auth.tenantId.trim()
+  if (auth.username.length > 0) {
+    const token = Buffer.from(`${auth.username}:${auth.password}`).toString('base64')
+    headers['authorization'] = `Basic ${token}`
+  }
+  return headers
+}
+
+/** A failure message with the userinfo of any URL in it (and the typed URL's own) removed. */
+export function stripUserinfo(message: string, typedUrl: string): string {
+  let out = message.replace(/([a-z][a-z0-9+.-]*:\/\/)[^\s/@]*@/gi, '$1')
+  try {
+    const parsed = new URL(typedUrl)
+    for (const secret of [parsed.username, parsed.password]) {
+      if (secret.length > 0) out = out.split(decodeURIComponent(secret)).join('***')
+    }
+  } catch {
+    // an unparseable URL carries no userinfo to strip
+  }
+  return out
+}
+
 /** Where the connection probe asks: Loki answers `ready` once its ring is up. */
 const READY_PATH = '/ready'
 
@@ -67,6 +100,8 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
   private refreshTimer: ReturnType<typeof setInterval> | null = null
   private retirementTimer: ReturnType<typeof setTimeout> | null = null
   private shuttingDown = false
+  private declared = false
+  private secretsWarned = false
 
   constructor() {
     super({})
@@ -84,7 +119,11 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
     ]
     const records = this.ctx.records
     if (records !== undefined) {
-      await records.declare({ destinations: lokiDestinationsKind })
+      const hub = this.isHub()
+      // An agent boots while the hub may be unreachable: a refused declare must not fail the
+      // boot, the poll below declares again and recovers. The hub owns the data, so it fails loud.
+      if (hub) await this.ensureDeclared()
+      else await this.ensureDeclaredQuietly()
       this.instances = new RecordIntegrationInstances(records, lokiDestinationsKind, {
         description: { instanceMode: 'single', kind: 'destination', canTest: true },
         formSchema: () => this.connectionForm(),
@@ -95,7 +134,7 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
         },
         test: (input) => this.probe(input.id, input.values),
       })
-      if (this.isHub()) {
+      if (hub) {
         // The hub owns the integration row and the record: it moves the old settings
         // first, then offers the connection to the Integrations page (D985).
         await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, this.migrationPorts()))
@@ -126,12 +165,30 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
     return registrations
   }
 
+  private async ensureDeclared(): Promise<void> {
+    const records = this.ctx.records
+    if (records === undefined || this.declared) return
+    await records.declare({ destinations: lokiDestinationsKind })
+    this.declared = true
+  }
+
+  private async ensureDeclaredQuietly(): Promise<void> {
+    try {
+      await this.ensureDeclared()
+    } catch (err: unknown) {
+      this.ctx.logger.warn('Loki logging: the connection kind could not be declared yet', {
+        meta: { error: err instanceof Error ? err.message : String(err) },
+      })
+    }
+  }
+
   /** Re-read the connection record and apply it to the live destination. */
   private async refreshFromRecord(): Promise<void> {
     if (this.instances === null || this.shuttingDown) return
+    let first: ResolvedInstance<LokiDestinationBody> | undefined
     try {
-      const [first] = await this.instances.listResolved()
-      this.current = first?.body ?? null
+      if (!this.declared) await this.ensureDeclared()
+      ;[first] = await this.instances.listResolved()
     } catch (err: unknown) {
       // A failed read changes nothing: the destination keeps the config it has.
       this.ctx.logger.warn('Loki logging: the connection record could not be read', {
@@ -139,11 +196,24 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
       })
       return
     }
+    if (first?.secrets === 'unavailable') {
+      // A locked keychain is a failed read of the password: keep the destination as it is
+      // rather than reconfigure it with an empty one (D49). Warned once per lock.
+      if (!this.secretsWarned) {
+        this.secretsWarned = true
+        this.ctx.logger.warn(
+          'Loki logging: the keychain is locked; the destination keeps its previous configuration',
+        )
+      }
+      return
+    }
+    this.secretsWarned = false
+    this.current = first?.body ?? null
     await this.destination?.reconfigure(this.destinationConfig())
   }
 
   /** The ports of the connection migrations: the old settings in, the record out. */
-  private migrationPorts() {
+  private migrationPorts(): LokiCataloguePorts {
     const records = this.ctx.records
     const instances = this.instances
     if (records === undefined || instances === null) throw new Error('records are not available')
@@ -157,6 +227,20 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
         return stored
       },
       readRawStored: async () => this.resolveGlobalStore(),
+      warn: (message: string) => {
+        this.ctx.logger.warn(message)
+      },
+      findIntegration: async () => {
+        const existing = await this.ctx.api.integrations.getByAddonId.query({
+          addonId: this.ctx.id,
+        })
+        return existing?.id ?? null
+      },
+      readRecord: async (id: string): Promise<LokiRecordState | null> => {
+        const row = await handle.getResolved(id)
+        if (row === null) return null
+        return { url: row.data.url, hasPassword: (row.data.password ?? '').length > 0 }
+      },
       ensureIntegration: async (name: string) => {
         const existing = await this.ctx.api.integrations.getByAddonId.query({
           addonId: this.ctx.id,
@@ -190,14 +274,30 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
     id: string | null,
     values: Readonly<Record<string, unknown>>,
   ): Promise<IntegrationTestConnectionResult> {
-    const typed = values['url']
     const stored =
       id !== null && this.instances !== null ? await this.instances.getResolved(id) : null
-    const url = typeof typed === 'string' && typed.length > 0 ? typed : (stored?.url ?? '')
+    const typed = (key: 'url' | 'username' | 'tenantId'): string => {
+      const value = values[key]
+      return typeof value === 'string' && value.length > 0 ? value : (stored?.[key] ?? '')
+    }
+    const url = typed('url')
     if (url.length === 0) return { success: false, status: 'rejected', error: 'No Loki URL set' }
+    // A password typed in the form is used; a redaction token or a secret view means "the stored one".
+    const password = values['password']
+    const fresh =
+      typeof password === 'string' &&
+      password.length > 0 &&
+      password !== REDACTED_SECRET &&
+      !isSecretFieldView(password)
+    const headers = probeHeaders({
+      username: typed('username'),
+      tenantId: typed('tenantId'),
+      password: fresh ? password : (stored?.password ?? ''),
+    })
     const started = Date.now()
     try {
       const res = await fetch(new URL(READY_PATH, url), {
+        headers,
         signal: AbortSignal.timeout(stored?.timeoutMs ?? LOKI_DEFAULT_BODY.timeoutMs),
       })
       return res.ok
@@ -207,7 +307,7 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
       return {
         success: false,
         status: 'inconclusive',
-        error: err instanceof Error ? err.message : String(err),
+        error: stripUserinfo(err instanceof Error ? err.message : String(err), url),
       }
     }
   }

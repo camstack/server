@@ -6,7 +6,12 @@ import {
   planDropMovedSettings,
 } from './connection-to-records.js'
 
-export type { DropMovedSettingsPorts, LokiMigrationPorts } from './connection-to-records.js'
+export type {
+  DropMovedSettingsPorts,
+  LokiMigrationLog,
+  LokiMigrationPorts,
+  LokiRecordState,
+} from './connection-to-records.js'
 
 /** Both bodies read through ONE port object, so the addon binds the catalogue once. */
 export type LokiCataloguePorts = LokiMigrationPorts & DropMovedSettingsPorts
