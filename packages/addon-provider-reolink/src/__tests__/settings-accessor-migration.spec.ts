@@ -134,7 +134,7 @@ describe('ReolinkProviderAddon — settings accessor migration', () => {
   })
 
   it('getGlobalSettings hydrates the seeded store values (equivalence)', async () => {
-    const { ctx } = makeCtx({ baichuanWebhookEnabled: false, baichuanWebhookPort: 9555 })
+    const { ctx } = makeCtx({ clipCatalogRefreshMinutes: 17 })
     addon = new ReolinkProviderAddon()
     await addon.initialize(ctx)
 
@@ -146,20 +146,18 @@ describe('ReolinkProviderAddon — settings accessor migration', () => {
     // leaning on a narrower override signature.
     expect(hydrated, 'getGlobalSettings returned null').not.toBeNull()
     const fields = collectFields(hydrated?.sections ?? [])
-    const enabled = fields.find((f) => f.key === 'baichuanWebhookEnabled')
-    const port = fields.find((f) => f.key === 'baichuanWebhookPort')
-    expect(enabled?.value).toBe(false)
-    expect(port?.value).toBe(9555)
+    const minutes = fields.find((f) => f.key === 'clipCatalogRefreshMinutes')
+    expect(minutes?.value).toBe(17)
   })
 
   it('updateGlobalSettings persists bare keys AND emits AddonUpdated (base settings API)', async () => {
-    const { ctx, store, captured } = makeCtx({ baichuanWebhookEnabled: false })
+    const { ctx, store, captured } = makeCtx({})
     addon = new ReolinkProviderAddon()
     await addon.initialize(ctx)
 
-    await addon.updateGlobalSettings({ baichuanWebhookPort: 9666 })
+    await addon.updateGlobalSettings({ clipCatalogRefreshMinutes: 33 })
 
-    expect(store['baichuanWebhookPort']).toBe(9666)
+    expect(store['clipCatalogRefreshMinutes']).toBe(33)
     expect(Object.keys(store).some((k) => k.includes('@'))).toBe(false)
     const updated = captured.filter((e) => e.category === EventCategory.AddonUpdated)
     expect(updated.length).toBeGreaterThan(0)

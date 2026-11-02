@@ -1,4 +1,5 @@
 import type { AddonMigration } from '@camstack/types'
+import { planDropWebhookIntakeSettings } from './drop-webhook-intake-settings.js'
 import { type EmailPushMigrationPorts, moveEmailPushToMailbox } from './email-push-to-mailbox.js'
 
 export {
@@ -8,6 +9,8 @@ export {
   PendingMailboxSchema,
 } from './email-push-to-mailbox.js'
 
+export const DROP_WEBHOOK_INTAKE_SETTINGS_ID =
+  'provider-reolink/2026-11-02-drop-webhook-intake-settings'
 export const EMAIL_PUSH_TO_MAILBOX_ID = 'provider-reolink/2026-11-02-email-push-to-mailbox'
 
 /** The `provider-reolink` catalogue (D987): offered to the engine when the addon initialises. */
@@ -28,5 +31,22 @@ export const REOLINK_MIGRATIONS: readonly AddonMigration<EmailPushMigrationPorts
       fixtureMark: 'a setting key the migration does not know',
     },
     procedure: moveEmailPushToMailbox,
+  },
+  {
+    meta: {
+      id: DROP_WEBHOOK_INTAKE_SETTINGS_ID,
+      owner: 'provider-reolink',
+      level: 'addon-state',
+      seq: 2,
+      dependsOn: [],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'tolerate',
+      bodyKind: 'plan',
+      description:
+        'Delete the retired baichuanWebhookEnabled, baichuanWebhookPort and baichuanWebhookBindHost settings; the webhook is served on the addon data plane',
+      fixtureMark: 'a setting key the migration does not know',
+    },
+    plan: planDropWebhookIntakeSettings,
   },
 ]

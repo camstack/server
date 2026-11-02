@@ -18,12 +18,12 @@ import type {
   FieldProbeResult,
   IDevice,
   IDeviceAdoptionProvider,
+  IntegrationInstanceRef,
   IScopedLogger,
   LogChannelsProviderHandle,
   ProviderRegistration,
   SavedDevice,
   SystemEvent,
-  IntegrationInstanceRef,
 } from '@camstack/types'
 import {
   BaseDeviceProvider,
@@ -33,13 +33,13 @@ import {
   defineAddonMigrations,
   deviceAdoptionCapability,
   deviceRemovalHookCapability,
-  errMsg,
   EventCategory,
+  errMsg,
   failureContributionCapability,
   isSecretMarker,
-  type SmtpInboundSettings,
   logChannelsCapability,
   memoizePinnedFfmpeg,
+  type SmtpInboundSettings,
   userError,
   videoclipsCapability,
   withClipEventLabels,
@@ -64,14 +64,15 @@ import { REOLINK_ADDON_ID, ReolinkCamera, reolinkCameraSchema } from './reolink-
 import './log-channels.js'
 import { AutodetectCache } from './autodetect-cache.js'
 import {
-  BAICHUAN_WEBHOOK_SECTION_IDS,
-  buildBaichuanWebhookSettingsSchema,
-} from './baichuan-webhook-schema.js'
-import { ReolinkBaichuanWebhookServer } from './baichuan-webhook-server.js'
+  BAICHUAN_WEBHOOK_PREFIX,
+  type BaichuanWebhookManagerSetupParams,
+  buildBaichuanWebhookUrl,
+  resolveWebhookEndpoint,
+} from './baichuan-webhook-shared.js'
 import { buildCreationFormSchema, buildDiscoveryParamsFormSchema } from './creation-schema.js'
 import { createBrokerPort, EmailPushBridge } from './email-push-bridge.js'
 import { createEmailPushRemovalHook } from './email-push-removal-hook.js'
-import { listLanHosts } from './email-push-shared.js'
+import { buildHubInstanceSchema, isHubIntegration } from './hub-connection.js'
 import {
   type EmailPushMigrationPorts,
   type LegacyMailboxSettings,
@@ -79,18 +80,13 @@ import {
   PendingMailboxSchema,
   REOLINK_MIGRATIONS,
 } from './migrations/index.js'
+import { buildReolinkAdoptionProvider } from './reolink-adoption-provider.js'
 import {
   mapReolinkDiscoveryToCandidates,
   type OnboardedReolinkDevice,
   slugifyReolinkHost,
 } from './reolink-discovery-map.js'
-import {
-  REOLINK_DISCOVERY_MODES,
-  scanReolinkSubnets,
-  subnetsFromParams,
-} from './reolink-subnet-scan.js'
-import { buildHubInstanceSchema, isHubIntegration } from './hub-connection.js'
-import { buildReolinkAdoptionProvider } from './reolink-adoption-provider.js'
+import { ReolinkGatewayDevice } from './reolink-gateway-device.js'
 import { createReolinkHubManager, type ReolinkHubManager } from './reolink-hub-manager.js'
 import {
   type HubMigrationPorts,
@@ -98,8 +94,13 @@ import {
   planHubMigration,
   retireMigratedHubs,
 } from './reolink-hub-migration.js'
-import { ReolinkGatewayDevice } from './reolink-gateway-device.js'
 import { hubGatewayNativeId, reolinkHubSessions } from './reolink-hub-session.js'
+import {
+  REOLINK_DISCOVERY_MODES,
+  scanReolinkSubnets,
+  subnetsFromParams,
+} from './reolink-subnet-scan.js'
+import { createWebhookHandler } from './webhook-plane.js'
 
 /**
  * Adapt a camstack scoped logger to the lib's `Logger` shape (just
@@ -356,7 +357,6 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
    * simple event. Built in `onInitialize`, once the addon context exists.
    */
   private emailBridge: EmailPushBridge | undefined
-  private baichuanWebhookServer: ReolinkBaichuanWebhookServer | undefined
 
   /** The `log-channels` provider for this process. Stopped on shutdown so a
    *  diagnostic timer is never the reason a runner refuses to exit. */
@@ -398,7 +398,6 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
   private listReolinkCameras(): readonly ReolinkCamera[] {
     const all = this.ctx.kernel.deviceRegistry?.getAll() ?? []
     const emailBridge = this.emailBridge
-    const webhookServer = this.baichuanWebhookServer
     const cameras: ReolinkCamera[] = []
     for (const d of all) {
       if (d instanceof ReolinkCamera) {
@@ -409,9 +408,7 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
         if (emailBridge) {
           d.setEmailPushParamsResolver(() => emailBridge.buildCameraSetupParams(d))
         }
-        if (webhookServer) {
-          d.setBaichuanWebhookParamsResolver(() => webhookServer.buildCameraSetupParams(d))
-        }
+        d.setBaichuanWebhookParamsResolver(() => this.buildWebhookParams(d))
         cameras.push(d)
       }
     }
@@ -509,16 +506,46 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     return password.length > 0 ? { ...raw, emailPushAuthPassword: password } : raw
   }
 
-  /** Lazily build the HaCfg webhook intake, wiring its provider deps. */
-  private ensureBaichuanWebhookServer(): ReolinkBaichuanWebhookServer {
-    if (!this.baichuanWebhookServer) {
-      this.baichuanWebhookServer = new ReolinkBaichuanWebhookServer({
-        logger: this.ctx.logger.child('baichuan-webhook'),
-        listCameras: () => this.listReolinkCameras(),
-        readStore: async () => await this.resolveGlobalStore(),
-      })
+  /**
+   * What a battery camera needs to arm its HaCfg webhook: the data-plane URL on the hub's
+   * plain-HTTP LAN listener. The host is the `internal` role of the palette, read on every use
+   * (D729). `null` for a camera that cannot do it; throws the reason when the hub has no address.
+   */
+  private async buildWebhookParams(
+    cam: ReolinkCamera,
+  ): Promise<BaichuanWebhookManagerSetupParams | null> {
+    if (!cam.isEmailPushEligible) return null
+    const book = await this.ctx.api.localNetwork.getAddresses.query()
+    const endpoint = resolveWebhookEndpoint(book)
+    return {
+      url: buildBaichuanWebhookUrl({ ...endpoint, stableId: cam.stableId }),
+      verifyCert: false,
     }
-    return this.baichuanWebhookServer
+  }
+
+  /**
+   * Serve the camera's HaCfg push on the addon's HTTP data plane. Public: the firmware cannot sign
+   * in, so the handler is the gate. Like the clip planes it is served from `onInitialize` (the hub
+   * pulls planes during registration) and a host without the facility only loses this intake.
+   */
+  private async serveWebhookPlane(): Promise<void> {
+    try {
+      await this.ctx.dataPlane?.serve({
+        prefix: BAICHUAN_WEBHOOK_PREFIX,
+        access: 'public',
+        handler: createWebhookHandler({
+          logger: this.ctx.logger.child('baichuan-webhook'),
+          listCameras: () => this.listReolinkCameras(),
+        }),
+      })
+    } catch (err: unknown) {
+      this.ctx.logger.warn(
+        'baichuan-webhook: data plane failed to serve — battery push will not arrive',
+        {
+          meta: { error: err instanceof Error ? err.message : String(err) },
+        },
+      )
+    }
   }
 
   /**
@@ -600,14 +627,9 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     await this.clipService?.disposeClipStreamDial().catch(() => {
       /* best-effort */
     })
-    // Stop the SMTP intake first — its bus subscription routes into
-    // camera instances that may be torn down on shutdown. We do NOT call
-    // `super.onShutdown()`: the Reolink provider intentionally keeps its
+    // We do NOT call `super.onShutdown()`: the Reolink provider intentionally keeps its
     // device decommission flow lightweight (autodetect-cache dispose
     // only), matching the pre-existing override.
-    await this.baichuanWebhookServer?.stop().catch(() => {
-      /* best-effort */
-    })
     await this.hubManager?.shutdown().catch((err: unknown) => {
       this.ctx.logger.warn('Reolink NVR sessions did not close cleanly', {
         meta: { error: errMsg(err) },
@@ -823,40 +845,21 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
   }
 
   /**
-   * Settings changed → rebind the SMTP / HaCfg intakes so port/domain/auth
-   * edits apply without a full addon restart. Best-effort: a bind failure is
-   * logged inside the server and leaves it stopped until the next edit.
+   * Settings changed → refresh the mirror the clip refresh timer reads.
    */
   protected override async onConfigChanged(): Promise<void> {
     await this.refreshClipRefreshGlobalStore()
-    await this.baichuanWebhookServer?.restart().catch((err: unknown) => {
-      this.ctx.logger.warn('baichuan-webhook: restart after settings change failed', {
-        meta: { error: err instanceof Error ? err.message : String(err) },
-      })
-    })
   }
 
   // ── Email-push addon settings ────────────────────────────────────────
 
   /**
-   * The addon's global settings schema.
-   *
-   * This used to override `getGlobalSettings()` wholesale, on the belief that a
-   * dynamic `recommendedHost` could not come from a static schema declaration.
-   * It can: `listLanHosts()` is synchronous, so the schema builder runs here
-   * and `BaseAddon.getGlobalSettings` does the identical
-   * `resolveGlobalStore` + `hydrateSchema` the override did by hand.
-   *
-   * Declaring the SCHEMA rather than overriding the GETTER is what lets core
-   * serve `getIntegrationSettings()` — it selects the declared sections out of
-   * this schema, so an addon that hides its schema behind a getter has nothing
-   * for core to select from.
+   * The addon's global settings schema: the clip-catalog refresh default. (The battery push has
+   * no addon-level setting: the mailbox is a broker and the webhook is a plane of the data plane.)
    */
   protected override globalSettingsSchema(): ConfigUISchema {
-    const recommendedHost = listLanHosts()[0] ?? '127.0.0.1'
     return {
       sections: [
-        ...buildBaichuanWebhookSettingsSchema(recommendedHost).sections,
         // The clip-catalog refresh DEFAULT. Per-camera overrides live on the
         // device under the same key and resolve through
         // `resolveClipCatalogRefreshMinutes` — reset == unset == this value.
@@ -894,14 +897,6 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
       })
       return null
     }
-  }
-
-  /**
-   * The HaCfg webhook section IS this integration's configuration — one intake serving
-   * every Reolink camera. See `baichuan-webhook-schema.ts`. (The camera mailbox is a broker.)
-   */
-  protected override integrationSettingSections(): readonly string[] {
-    return [...BAICHUAN_WEBHOOK_SECTION_IDS]
   }
 
   // `updateGlobalSettings` intentionally NOT overridden: the base
@@ -1031,6 +1026,7 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     // planes during the node-registration handshake — serving later misses
     // the pull and the route never registers (the recorder learned this).
     await this.serveClipPlanes(this.clipService)
+    await this.serveWebhookPlane()
 
     // Battery-cam motion intake: the camera mailbox (D999). The migration only keeps the old
     // settings aside (no mail addon needed, it never blocks this addon); the bridge creates the
@@ -1038,14 +1034,6 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     // the eligible cameras.
     await this.runMigrations(defineAddonMigrations(REOLINK_MIGRATIONS, this.migrationPorts()))
     this.wireEmailBridge()
-
-    void this.ensureBaichuanWebhookServer()
-      .start()
-      .catch((err: unknown) => {
-        this.ctx.logger.warn('baichuan-webhook: HTTP intake failed to start at init', {
-          meta: { error: err instanceof Error ? err.message : String(err) },
-        })
-      })
 
     // Wire the per-camera Auto-configure resolvers (SMTP + HaCfg) into each
     // ReolinkCamera. We must cover EVERY way a camera becomes live in this
@@ -1070,8 +1058,7 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
         const emailBridge = this.ensureEmailBridge()
         dev.setEmailPushParamsResolver(() => emailBridge.buildCameraSetupParams(dev))
         void emailBridge.sync()
-        const webhookServer = this.ensureBaichuanWebhookServer()
-        dev.setBaichuanWebhookParamsResolver(() => webhookServer.buildCameraSetupParams(dev))
+        dev.setBaichuanWebhookParamsResolver(() => this.buildWebhookParams(dev))
         // Same fan-out, same reason: a redeploy re-registers and the wake-side
         // clip refresh would otherwise be wired only on a cold hub start.
         this.wireClipCatalogRefreshers()
@@ -1130,6 +1117,7 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
   private migrationPorts(): EmailPushMigrationPorts {
     return {
       readStored: () => this.readLegacyEmailPush(),
+      readStoredRaw: () => this.resolveGlobalStore(),
       stashPending: (settings) => this.stashPendingMailbox(settings),
       warn: (message) => {
         this.ctx.logger.warn(message)
@@ -1690,10 +1678,7 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
           // self-heals via `listReolinkCameras`).
           const emailBridge = this.ensureEmailBridge()
           device.setEmailPushParamsResolver(() => emailBridge.buildCameraSetupParams(device))
-          const webhookServer = this.ensureBaichuanWebhookServer()
-          device.setBaichuanWebhookParamsResolver(() =>
-            webhookServer.buildCameraSetupParams(device),
-          )
+          device.setBaichuanWebhookParamsResolver(() => this.buildWebhookParams(device))
         }
         // Seed the orchestrator's per-device settings with
         // `motionSources: ['onboard']`. Best-effort.

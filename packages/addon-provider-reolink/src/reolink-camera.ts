@@ -82,7 +82,10 @@ import {
   TIMEZONES,
   userError,
 } from '@camstack/types'
-import type { BaichuanWebhookParamsResolver } from './baichuan-webhook-shared.js'
+import {
+  BAICHUAN_WEBHOOK_URL_GENERATION,
+  type BaichuanWebhookParamsResolver,
+} from './baichuan-webhook-shared.js'
 import { deriveChargingSource, reportsPowerSource } from './battery-charging.js'
 import {
   BATTERY_REFRESH_TICK_MS,
@@ -90,11 +93,6 @@ import {
   type BatteryRefreshOutcome,
   resolveBatteryRefreshIntervalMs,
 } from './battery-hourly-refresh.js'
-import {
-  type HubChildHandle,
-  type HubSessionHandle,
-  reolinkHubSessions,
-} from './reolink-hub-session.js'
 import { buildBatteryRefreshDeviceSection } from './battery-refresh-settings.js'
 import { refreshSnapshotCacheOnce } from './battery-snapshot-refresh.js'
 import { resolveCameraUid } from './clips/clip-addressing.js'
@@ -125,9 +123,15 @@ import {
   type ReolinkRecordLimitsLike,
   type ReolinkRecordScheduleLike,
 } from './recording-onboard-mapping.js'
+import {
+  type HubChildHandle,
+  type HubSessionHandle,
+  reolinkHubSessions,
+} from './reolink-hub-session.js'
 import { decideSleepCommit, type SleepCommitSource } from './sleep-state-decision.js'
 import { buildSnapshotFreshnessSection, stampSnapshotFreshness } from './snapshot-freshness.js'
 import { decideSnapshotCameraAccess } from './snapshot-wake-gate.js'
+import { repointWebhookOnce } from './webhook-generation.js'
 
 /**
  * The `<Compression>` stream blocks that can carry an audio flag, in the
@@ -2336,7 +2340,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     const params = await this.baichuanWebhookParamsResolver()
     if (!params) {
       throw new Error(
-        'Enable the HaCfg Webhook Server in the Reolink addon settings, and ensure this host has a reachable LAN address.',
+        'The HaCfg webhook cannot be armed for this camera (it is not a standalone battery camera).',
       )
     }
 
@@ -2365,10 +2369,48 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     } catch {
       /* best-effort — same as reolink_aio after SET */
     }
+    await this.config.setAll({ webhookUrlGeneration: BAICHUAN_WEBHOOK_URL_GENERATION })
     this.ctx.logger.info('baichuan-webhook: camera auto-configure applied', {
       tags: { deviceId: this.id },
       meta: { url: params.url },
     })
+  }
+
+  /**
+   * Move this battery camera's HaCfg webhook to the addon's data-plane URL, once, on the first
+   * Baichuan contact after the upgrade (the camera is awake: this costs no wake). Only a camera
+   * that is armed is touched; a failure is logged and retried at the next contact.
+   */
+  private async repointWebhookOnFirstContact(api: ReolinkBaichuanApi): Promise<void> {
+    const resolver = this.baichuanWebhookParamsResolver
+    if (!this.isBattery || !this.isEmailPushEligible || resolver === undefined) return
+    try {
+      const outcome = await repointWebhookOnce({
+        readGeneration: () => this.config.get('webhookUrlGeneration'),
+        writeGeneration: async (generation) => {
+          await this.config.setAll({ webhookUrlGeneration: generation })
+        },
+        readCameraHaCfg: async () => await api.getHaCfg(),
+        targetUrl: async () => {
+          const params = await resolver()
+          if (params === null) throw new Error('this camera has no webhook URL')
+          return params.url
+        },
+        arm: async (url) => {
+          await api.setupBaichuanWebhookToManager({ url, verifyCert: false })
+        },
+      })
+      if (outcome === 'repointed') {
+        this.ctx.logger.info('baichuan-webhook: camera moved to the data-plane URL', {
+          tags: { deviceId: this.id },
+        })
+      }
+    } catch (err) {
+      this.ctx.logger.warn('baichuan-webhook: re-point failed — retried at the next contact', {
+        tags: { deviceId: this.id },
+        meta: { error: err instanceof Error ? err.message : String(err) },
+      })
+    }
   }
 
   /**
@@ -11241,6 +11283,8 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         // Post-login — awake by construction, no wake cost.
         void this.refreshBatteryFromApi('demand')
       }
+
+      if (this.isBattery) void this.repointWebhookOnFirstContact(api)
 
       // Slice 10: arm reliability watchdogs (ping + event freshness).
       this.startWatchdogs()

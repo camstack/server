@@ -1,5 +1,3 @@
-import os from 'node:os'
-
 /**
  * Leaf constants + helpers shared by the email-push server, its settings
  * schema, and the per-camera Auto-configure flow. Kept dependency-free
@@ -100,31 +98,3 @@ export const DEFAULT_EMAIL_PUSH_DOMAIN = 'camstack.local'
 /** Reolink snapshots fit comfortably; 25 MB covers video attachments
  *  too without letting a runaway upload exhaust memory. */
 export const DEFAULT_EMAIL_PUSH_MAX_MESSAGE_BYTES = 25 * 1024 * 1024
-
-/**
- * Enumerate candidate camera-facing LAN addresses, best first (private
- * RFC-1918 ranges ranked ahead of public). Link-local and internal
- * interfaces are excluded — a camera can't reach 127.0.0.1.
- */
-export function listLanHosts(): readonly string[] {
-  const ifaces = os.networkInterfaces()
-  const candidates: { addr: string; rank: number }[] = []
-  for (const list of Object.values(ifaces)) {
-    if (!list) continue
-    for (const addr of list) {
-      if (addr.family !== 'IPv4') continue
-      if (addr.internal) continue
-      if (addr.address.startsWith('169.254.')) continue
-      const rank = addr.address.startsWith('192.168.')
-        ? 0
-        : addr.address.startsWith('10.')
-          ? 1
-          : /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(addr.address)
-            ? 2
-            : 3
-      candidates.push({ addr: addr.address, rank })
-    }
-  }
-  candidates.sort((a, b) => a.rank - b.rank)
-  return candidates.map((c) => c.addr)
-}

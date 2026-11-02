@@ -1,9 +1,6 @@
 import { shouldAcceptSleepPushSource } from '@apocaliss92/nodelink-js'
 import { describe, expect, it } from 'vitest'
-import {
-  buildBaichuanWebhookUrl,
-  resolveBatterySleepPushMethod,
-} from '../baichuan-webhook-shared.js'
+import { resolveBatterySleepPushMethod } from '../baichuan-webhook-shared.js'
 
 describe('resolveBatterySleepPushMethod', () => {
   it('auto prefers webhook when supported', () => {
@@ -18,18 +15,6 @@ describe('resolveBatterySleepPushMethod', () => {
   it('honours an explicit preference', () => {
     expect(resolveBatterySleepPushMethod('email', true)).toBe('email')
     expect(resolveBatterySleepPushMethod('webhook', false)).toBe('webhook')
-  })
-})
-
-describe('buildBaichuanWebhookUrl', () => {
-  it('builds a plain HTTP LAN URL with encoded camera id', () => {
-    expect(
-      buildBaichuanWebhookUrl({
-        host: '192.168.10.9',
-        port: 9081,
-        cameraId: 'cam/abc',
-      }),
-    ).toBe('http://192.168.10.9:9081/webhook/cam%2Fabc')
   })
 })
 

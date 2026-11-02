@@ -594,6 +594,12 @@ export const reolinkCameraSchema = z.object({
    */
   batterySleepPushMethod: z.enum(['auto', 'webhook', 'email']).optional(),
   /**
+   * The URL generation this battery camera's HaCfg webhook points at (absent = the retired private
+   * :9081 listener). Written once the camera has been moved to the addon's data-plane URL, so the
+   * move happens on the first Baichuan contact after the upgrade and never again.
+   */
+  webhookUrlGeneration: z.number().int().optional(),
+  /**
    * On-camera motion detection master switch + sensitivity.
    * Pushed via `setMotionAlarm` (cmdId=47). The Reolink mobile
    * app + camera web UI use 1..50 (1 = least sensitive,

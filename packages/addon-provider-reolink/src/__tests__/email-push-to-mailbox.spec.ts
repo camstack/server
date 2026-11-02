@@ -5,16 +5,16 @@
  */
 import {
   type AddonMigrationHost,
+  defineAddonMigrations,
   type IScopedLogger,
   type MigrationOwnerResult,
-  defineAddonMigrations,
   runAddonMigrations,
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import {
   EMAIL_PUSH_TO_MAILBOX_ID,
-  REOLINK_MIGRATIONS,
   type EmailPushMigrationPorts,
+  REOLINK_MIGRATIONS,
 } from '../migrations/index.js'
 
 /** A key the migration does not know: it must survive untouched. */
@@ -31,6 +31,7 @@ function world(
       if (options.readFails === true) throw new Error('keychain locked')
       return stored
     },
+    readStoredRaw: async () => stored,
     stashPending: async (settings) => {
       if (options.stashFails !== undefined) throw new Error(options.stashFails)
       pending.push({ ...settings })
@@ -165,7 +166,7 @@ describe('email push -> mailbox migration', () => {
   it('the catalogue names no mail provider: the ports are local only', async () => {
     const w = world(OLD)
     const report = await w.runAsOwner()
-    expect(report.applied).toEqual([EMAIL_PUSH_TO_MAILBOX_ID])
+    expect(report.applied).toContain(EMAIL_PUSH_TO_MAILBOX_ID)
     expect(w.pending).toHaveLength(1)
   })
 })

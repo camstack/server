@@ -33,7 +33,7 @@ describe('email-push resolver wiring', () => {
       /setEmailPushParamsResolver\(\s*\(\)\s*=>\s*emailBridge\.buildCameraSetupParams/,
     )
     expect(addonSrc).toMatch(
-      /setBaichuanWebhookParamsResolver\(\s*\(\)\s*=>\s*webhookServer\.buildCameraSetupParams/,
+      /setBaichuanWebhookParamsResolver\(\s*\(\)\s*=>\s*this\.buildWebhookParams/,
     )
   })
 })

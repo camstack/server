@@ -37,6 +37,8 @@ export type PendingMailbox = z.infer<typeof PendingMailboxSchema>
 export interface EmailPushMigrationPorts {
   /** The stored settings, the password resolved. Throws when a secret cannot be resolved. */
   readStored(): Promise<Readonly<Record<string, unknown>>>
+  /** The stored settings as written, no secret resolved: for a migration that moves no credential. */
+  readStoredRaw(): Promise<Readonly<Record<string, unknown>>>
   /** Keep these settings until the mailbox provider can create the mailbox. Local only. */
   stashPending(settings: LegacyMailboxSettings): Promise<void>
   warn(message: string): void
