@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.484] - 2026-11-02
+
 ### Added
 
 - New template variable {{changes}} for the combined alarm body: the sensors of the incident and what each did
