@@ -25,13 +25,15 @@ import {
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { Copy, LayoutTemplate, Pencil, Plus, Trash2 } from 'lucide-react'
-import { type ReactNode, useMemo, useState } from 'react'
+import { type ReactNode, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useSearchParams } from 'react-router-dom'
 import { AdminPage } from '../../components/AdminPage'
 import {
   TemplateEditorDialog,
   type TemplateDraft,
 } from '../../components/remote/TemplateEditorDialog'
+import { TEMPLATE_EDIT_PARAM } from '../../components/remote/EditTemplateButton'
 import { templateKindView } from '../../components/remote/template-kinds'
 
 const FIRST_KIND: TemplateKind = TEMPLATE_KINDS[0]
@@ -47,6 +49,30 @@ export function TemplatesPage(): ReactNode {
   const alert = useAlert()
   const [draft, setDraft] = useState<TemplateDraft | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [params, setParams] = useSearchParams()
+  const editId = params.get(TEMPLATE_EDIT_PARAM)
+
+  // `?edit=<id>` opens the editor on that template once the list answered; the
+  // param is replaced away so closing the editor does not reopen it.
+  useEffect(() => {
+    if (editId === null || list.data === undefined) return
+    const row = list.data.find((r) => r.id === editId)
+    if (row !== undefined)
+      setDraft({
+        id: row.id,
+        kind: row.kind,
+        name: row.name,
+        payload: row.payload,
+      })
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        next.delete(TEMPLATE_EDIT_PARAM)
+        return next
+      },
+      { replace: true },
+    )
+  }, [editId, list.data, setParams])
 
   const refresh = (): void => void queryClient.invalidateQueries({ queryKey: [['template']] })
 
@@ -55,8 +81,16 @@ export function TemplatesPage(): ReactNode {
     try {
       const result =
         next.id === null
-          ? await create.mutateAsync({ kind: next.kind, name: next.name, payload: next.payload })
-          : await update.mutateAsync({ id: next.id, name: next.name, payload: next.payload })
+          ? await create.mutateAsync({
+              kind: next.kind,
+              name: next.name,
+              payload: next.payload,
+            })
+          : await update.mutateAsync({
+              id: next.id,
+              name: next.name,
+              payload: next.payload,
+            })
       if (result.status === 'refused') {
         setError(result.detail)
         return
@@ -163,7 +197,12 @@ export function TemplatesPage(): ReactNode {
                 icon: Pencil,
                 onClick: () => {
                   setError(null)
-                  setDraft({ id: r.id, kind: r.kind, name: r.name, payload: r.payload })
+                  setDraft({
+                    id: r.id,
+                    kind: r.kind,
+                    name: r.name,
+                    payload: r.payload,
+                  })
                 },
               },
               {
@@ -240,7 +279,12 @@ export function TemplatesPage(): ReactNode {
           defaultSort={{ columnKey: 'name', dir: 'asc' }}
           onRowClick={(r) => {
             setError(null)
-            setDraft({ id: r.id, kind: r.kind, name: r.name, payload: r.payload })
+            setDraft({
+              id: r.id,
+              kind: r.kind,
+              name: r.name,
+              payload: r.payload,
+            })
           }}
         />
       )}

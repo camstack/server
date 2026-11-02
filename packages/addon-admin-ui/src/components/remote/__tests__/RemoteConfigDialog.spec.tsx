@@ -1,6 +1,7 @@
 import { type DeviceInfo, EMPTY_REMOTE_CONFIG, type RemoteConfig } from '@camstack/types'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import '../../../i18n'
 
@@ -32,7 +33,11 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@camstack/ui-library')>()
   return {
     ...actual,
-    useRemoteGetConfig: () => ({ data: storedConfig, status: 'success', refetch: vi.fn() }),
+    useRemoteGetConfig: () => ({
+      data: storedConfig,
+      status: 'success',
+      refetch: vi.fn(),
+    }),
     useRemoteListCommands: () => ({
       data: {
         layoutTemplateId: null,
@@ -50,7 +55,13 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
 vi.mock('../../../pages/build/automation/automation-data', () => ({
   useAutomationDevices: () => [
     { id: TV, name: 'Living room TV', stableId: 'tv', type: 'mediaPlayer' },
-    { id: BOARD, name: 'IR blaster', stableId: 'ir', type: 'switch' },
+    {
+      id: BOARD,
+      name: 'send_raw_command',
+      stableId: 'ir',
+      type: 'switch',
+      parentName: 'Kitchen board',
+    },
   ],
 }))
 
@@ -69,7 +80,11 @@ vi.mock('../../../pages/build/flow/CommandStep', () => ({
 
 import { RemoteConfigDialog } from '../RemoteConfigDialog'
 
-const DEVICE = { id: TV, name: 'Living room TV', type: 'mediaPlayer' } as unknown as DeviceInfo
+const DEVICE = {
+  id: TV,
+  name: 'Living room TV',
+  type: 'mediaPlayer',
+} as unknown as DeviceInfo
 
 const TRAIN = '[9000,-4500,560,-560,560,-1690]'
 const TRAIN_OFF = '[9000,-4500,560,-1690,560,-560]'
@@ -84,9 +99,11 @@ const SMARTIR = JSON.stringify({
 
 function renderDialog(): void {
   render(
-    <QueryClientProvider client={new QueryClient()}>
-      <RemoteConfigDialog device={DEVICE} open onClose={vi.fn()} />
-    </QueryClientProvider>,
+    <MemoryRouter>
+      <QueryClientProvider client={new QueryClient()}>
+        <RemoteConfigDialog device={DEVICE} open onClose={vi.fn()} />
+      </QueryClientProvider>
+    </MemoryRouter>,
   )
 }
 
@@ -124,15 +141,21 @@ describe('RemoteConfigDialog', () => {
 
   it('refuses a SmartIR import until a default transmitter is picked', () => {
     renderDialog()
-    fireEvent.change(screen.getByTestId('smartir-text'), { target: { value: SMARTIR } })
+    fireEvent.change(screen.getByTestId('smartir-text'), {
+      target: { value: SMARTIR },
+    })
     fireEvent.click(screen.getByTestId('smartir-read'))
     expect(screen.getByTestId('smartir-refused').textContent).toMatch(/default transmitter/i)
   })
 
   it('imports a SmartIR file through the default transmitter and saves only the bindings', async () => {
     renderDialog()
-    fireEvent.change(screen.getByTestId('remote-transmitter'), { target: { value: String(BOARD) } })
-    fireEvent.change(screen.getByTestId('smartir-text'), { target: { value: SMARTIR } })
+    fireEvent.change(screen.getByTestId('remote-transmitter'), {
+      target: { value: String(BOARD) },
+    })
+    fireEvent.change(screen.getByTestId('smartir-text'), {
+      target: { value: SMARTIR },
+    })
     fireEvent.click(screen.getByTestId('smartir-read'))
     expect(screen.getByTestId('smartir-summary').textContent).toMatch(/fills 3 commands/)
     fireEvent.click(screen.getByTestId('smartir-apply'))
@@ -159,8 +182,22 @@ describe('RemoteConfigDialog', () => {
     storedConfig = {
       ...storedConfig,
       bindings: {
-        power: { action: { kind: 'cap', deviceId: TV, cap: 'switch', method: 'turnOn' } },
-        mute: { action: { kind: 'cap', deviceId: TV, cap: 'switch', method: 'turnOff' } },
+        power: {
+          action: {
+            kind: 'cap',
+            deviceId: TV,
+            cap: 'switch',
+            method: 'turnOn',
+          },
+        },
+        mute: {
+          action: {
+            kind: 'cap',
+            deviceId: TV,
+            cap: 'switch',
+            method: 'turnOff',
+          },
+        },
       },
     }
     savedCommands = ['power']
@@ -168,6 +205,59 @@ describe('RemoteConfigDialog', () => {
     expect((screen.getByTestId('test-mute') as HTMLButtonElement).disabled).toBe(true)
     fireEvent.click(screen.getByTestId('test-power'))
     await waitFor(() => expect(screen.getByTestId('result-power').textContent).toMatch(/Sent/))
+    expect(sendCommand).toHaveBeenCalledWith({
+      deviceId: TV,
+      role: 'power',
+      repeat: 1,
+    })
+  })
+
+  it('names an infrared target by device and parent board, with a summary of the code', () => {
+    storedConfig = {
+      ...storedConfig,
+      bindings: {
+        power: {
+          action: {
+            kind: 'cap',
+            deviceId: BOARD,
+            cap: 'ir-transmitter',
+            method: 'send',
+            args: { timings: [9000, -4500, 560, -560, 560, -1690] },
+          },
+        },
+      },
+    }
+    renderDialog()
+    const select = screen.getByTestId('transmitter-power') as HTMLSelectElement
+    expect(select.textContent).toContain('send_raw_command · Kitchen board')
+    expect(screen.getByTestId('summary-power').textContent).toBe('ir-transmitter.send · 6 timings')
+  })
+
+  it('selecting a button shows its binding and sends nothing until Test is clicked', async () => {
+    storedConfig = {
+      ...storedConfig,
+      bindings: {
+        power: {
+          action: { kind: 'cap', deviceId: TV, cap: 'switch', method: 'turnOn' },
+        },
+      },
+    }
+    savedCommands = ['power']
+    renderDialog()
+    expect(screen.queryByTestId('binding-panel')).toBeNull()
+    fireEvent.click(screen.getByTestId('remote-grid-button-a'))
+    const panel = screen.getByTestId('binding-panel')
+    expect(panel.textContent).toContain('switch.turnOn')
+    expect(panel.textContent).toContain('Living room TV')
+    expect(sendCommand).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByTestId('panel-test'))
+    await waitFor(() => expect(screen.getByTestId('panel-result').textContent).toMatch(/Sent/))
+    expect(sendCommand).toHaveBeenCalledTimes(1)
     expect(sendCommand).toHaveBeenCalledWith({ deviceId: TV, role: 'power', repeat: 1 })
+  })
+
+  it('offers a shortcut to the layout template editor', () => {
+    renderDialog()
+    expect(screen.getByTestId('remote-edit-template')).toBeTruthy()
   })
 })

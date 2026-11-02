@@ -66,6 +66,55 @@ function NowPlaying({ title, subtitle }: NowPlayingProps): ReactNode {
   )
 }
 
+// ── State line ────────────────────────────────────────────────────────────────
+
+const STATE_LABEL: Readonly<Record<MediaPlayerState, string>> = {
+  off: 'Off',
+  on: 'On',
+  idle: 'Idle',
+  playing: 'Playing',
+  paused: 'Paused',
+  buffering: 'Buffering',
+  standby: 'Standby',
+}
+
+interface StateLineProps {
+  readonly state: MediaPlayerState
+  /** The state is the driver's own bookkeeping (infrared), not a reading. */
+  readonly assumed: boolean
+  /** The active source; empty when the device has no source surface. */
+  readonly source: string
+}
+
+function StateLine({ state, assumed, source }: StateLineProps): ReactNode {
+  const t = useUiText()
+  return (
+    <div
+      className="flex flex-wrap items-center justify-center gap-2 text-xs text-foreground-muted"
+      data-testid="media-state"
+    >
+      {STATE_LABEL[state] !== undefined && (
+        <span className="font-medium text-foreground">
+          {t(`uiLibrary.mediaPlayerHero.state.${state}`, STATE_LABEL[state])}
+        </span>
+      )}
+      {assumed && (
+        <span
+          className="rounded border border-border px-1.5 py-0.5 text-[11px] text-foreground-subtle"
+          title={t(
+            'uiLibrary.mediaPlayerHero.assumedHint',
+            'No feedback from the device: this is what was last sent.',
+          )}
+          data-testid="media-assumed"
+        >
+          {t('uiLibrary.mediaPlayerHero.assumed', 'assumed')}
+        </span>
+      )}
+      {source !== '' && <span data-testid="media-source">{source}</span>}
+    </div>
+  )
+}
+
 // ── Transport button ──────────────────────────────────────────────────────────
 
 interface TransportButtonProps {
@@ -152,8 +201,10 @@ export function MediaPlayerHeroCard({
     display.duration > 0
   const supportsNext = features?.includes(DeviceFeature.MediaPlayerNext) ?? false
   const supportsPrevious = features?.includes(DeviceFeature.MediaPlayerPrevious) ?? false
+  // A volume the device never reported is not 0: without a reading the slider is not drawn.
+  const volumeLevel = display.volumeLevel
   const supportsVolume =
-    (features?.includes(DeviceFeature.MediaPlayerVolume) ?? false) && display.volumeLevel !== null
+    (features?.includes(DeviceFeature.MediaPlayerVolume) ?? false) && volumeLevel !== null
 
   const handleToggle = (): void => {
     if (busy) return
@@ -166,14 +217,19 @@ export function MediaPlayerHeroCard({
     }
   }
 
+  const title = display.currentMedia?.title ?? null
   const subtitle = display.currentMedia?.artist ?? display.currentMedia?.album ?? null
+  const hasNowPlaying = title !== null || subtitle !== null
+  const isAssumed = display.stateSource === 'assumed'
+  // A slice written by an older driver may omit the field.
+  const source = typeof display.source === 'string' ? display.source.trim() : ''
   const seekFraction = progressFraction(display.position, display.duration)
-  const volumeLevel = display.volumeLevel ?? 0
 
   return (
     <div className="flex flex-col items-stretch gap-4 rounded-lg border border-border bg-surface p-6">
       {/* ── Now playing ─────────────────────────────────────────────────────── */}
-      <NowPlaying title={display.currentMedia?.title ?? null} subtitle={subtitle} />
+      <StateLine state={display.state} assumed={isAssumed} source={source} />
+      {hasNowPlaying && <NowPlaying title={title} subtitle={subtitle} />}
 
       {/* ── Seek track (only when seekable + duration known) ────────────────── */}
       {supportsSeek && (
@@ -246,7 +302,7 @@ export function MediaPlayerHeroCard({
       </div>
 
       {/* ── Volume track + mute (only when a volume surface exists) ──────────── */}
-      {supportsVolume && (
+      {supportsVolume && volumeLevel !== null && (
         <div data-testid="media-volume" className="flex items-center gap-2">
           <button
             type="button"

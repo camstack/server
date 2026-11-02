@@ -127,7 +127,15 @@ const keypadExtra = (
   col: number,
   role: string,
   label: string,
-): ComponentButtonSpec => ({ idSuffix, row: 3, col, rowSpan: 1, colSpan: 1, role, label })
+): ComponentButtonSpec => ({
+  idSuffix,
+  row: 3,
+  col,
+  rowSpan: 1,
+  colSpan: 1,
+  role,
+  label,
+})
 
 const SAMSUNG_CLASSIC = compose(
   23,
@@ -138,7 +146,9 @@ const SAMSUNG_CLASSIC = compose(
     key('settings', custom('settings'), 9, THIRD, THIRD, { label: 'Settings' }),
     key('home', 'home', 10, THIRD, THIRD),
     key('guide', 'guide', 12, 0, THIRD),
-    key('e_manual', custom('e_manual'), 12, THIRD, THIRD, { label: 'e-Manual' }),
+    key('e_manual', custom('e_manual'), 12, THIRD, THIRD, {
+      label: 'e-Manual',
+    }),
     key('info', 'info', 12, 2 * THIRD, THIRD),
     key('back', 'back', 17, 0, THIRD),
     key('exit', 'exit', 17, 2 * THIRD, THIRD),
@@ -148,7 +158,9 @@ const SAMSUNG_CLASSIC = compose(
     key('color_d', custom('color_d'), 19, 3 * QUARTER, QUARTER, { label: 'D' }),
     key('pic_size', custom('pic_size'), 20, 0, THIRD, { label: 'P.SIZE' }),
     key('picture', custom('picture'), 20, THIRD, THIRD, { label: 'Picture' }),
-    key('ad_subt', custom('ad_subt'), 20, 2 * THIRD, THIRD, { label: 'AD/SUBT' }),
+    key('ad_subt', custom('ad_subt'), 20, 2 * THIRD, THIRD, {
+      label: 'AD/SUBT',
+    }),
   ],
   [
     { id: 'core:power', row: 0, col: 0, options: { scale: { cols: 2 } } },
@@ -167,13 +179,23 @@ const SAMSUNG_CLASSIC = compose(
     },
     divider(6, 'Volume and channels'),
     { id: 'core:rocker-volume-v', row: 7, col: 0, options: TALL_ROCKER },
-    { id: 'core:rocker-channel-v', row: 7, col: 2 * THIRD, options: TALL_ROCKER },
+    {
+      id: 'core:rocker-channel-v',
+      row: 7,
+      col: 2 * THIRD,
+      options: TALL_ROCKER,
+    },
     divider(11, 'Menus'),
     divider(13, 'Navigation'),
     { id: 'core:dpad', row: 14, col: 0, options: FULL_WIDTH_3 },
     divider(18, 'Colour and picture'),
     divider(21, 'Playback'),
-    { id: 'core:media-transport', row: 22, col: 1, options: { scale: { cols: 2 } } },
+    {
+      id: 'core:media-transport',
+      row: 22,
+      col: 1,
+      options: { scale: { cols: 2 } },
+    },
   ],
 )
 
@@ -215,12 +237,22 @@ const HISENSE_VIDAA = compose(
         ),
       },
     },
-    { id: 'core:colour-keys', row: 3, col: 0, options: { scale: { cols: QUARTER } } },
+    {
+      id: 'core:colour-keys',
+      row: 3,
+      col: 0,
+      options: { scale: { cols: QUARTER } },
+    },
     divider(5, 'Navigation'),
     { id: 'core:dpad', row: 7, col: 0, options: FULL_WIDTH_3 },
     divider(11, 'Volume and channels'),
     { id: 'core:rocker-volume-v', row: 12, col: 0, options: FULL_WIDTH_3 },
-    { id: 'core:rocker-channel-v', row: 12, col: 2 * THIRD, options: FULL_WIDTH_3 },
+    {
+      id: 'core:rocker-channel-v',
+      row: 12,
+      col: 2 * THIRD,
+      options: FULL_WIDTH_3,
+    },
     divider(15, 'Numbers'),
     { id: 'core:keypad', row: 16, col: 0, options: FULL_WIDTH_3 },
   ],
@@ -287,9 +319,109 @@ const APPLE_TV = buildLayout(COLUMNS, 7, [
   key('mute', 'mute', 6, THIRD, THIRD),
 ])
 
+/** Digits 1-9 in three rows of three, from `row`. */
+function digitRows(row: number): ButtonSpec[] {
+  return thirds(row, ['digit_1', 'digit_2', 'digit_3']).concat(
+    thirds(row + 1, ['digit_4', 'digit_5', 'digit_6']),
+    thirds(row + 2, ['digit_7', 'digit_8', 'digit_9']),
+  )
+}
+
+/** Four colour keys on one row, each named by its letter. */
+function colourRow(row: number): ButtonSpec[] {
+  return ['a', 'b', 'c', 'd'].map((letter, i) =>
+    key(`color_${letter}`, custom(`color_${letter}`), row, i * QUARTER, QUARTER, {
+      label: letter.toUpperCase(),
+    }),
+  )
+}
+
+/**
+ * The BN59-01315 remote of the Samsung UE55NU7179 (and its siblings): every
+ * physical key, in the order the plastic lays them out. Netflix, Prime Video
+ * and Samsung TV Plus are fixed keys, so they are `custom:` roles.
+ */
+const SAMSUNG_BN59_01315 = buildLayout(COLUMNS, 18, [
+  key('power', 'power', 0, 0, THIRD),
+  key('input', 'input', 0, 2 * THIRD, THIRD),
+  ...digitRows(1),
+  key('ttx_mix', custom('ttx_mix'), 4, 0, THIRD, { label: 'TTX/MIX' }),
+  key('digit_0', 'digit_0', 4, THIRD, THIRD),
+  key('pre_ch', custom('pre_ch'), 4, 2 * THIRD, THIRD, { label: 'PRE-CH' }),
+  key('vol_up', 'volume_up', 5, 0, THIRD),
+  key('mute', 'mute', 5, THIRD, THIRD, { rowSpan: 2 }),
+  key('ch_up', 'channel_up', 5, 2 * THIRD, THIRD),
+  key('vol_down', 'volume_down', 6, 0, THIRD),
+  key('ch_down', 'channel_down', 6, 2 * THIRD, THIRD),
+  key('ch_list', custom('ch_list'), 7, THIRD, THIRD, { label: 'CH LIST' }),
+  key('settings', custom('settings'), 8, 0, THIRD, { label: 'Settings' }),
+  key('home', 'home', 8, THIRD, THIRD),
+  key('guide', 'guide', 8, 2 * THIRD, THIRD),
+  ...dpad(9),
+  key('back', 'back', 12, 0, THIRD),
+  key('info', 'info', 12, THIRD, THIRD),
+  key('exit', 'exit', 12, 2 * THIRD, THIRD),
+  ...thirds(13, ['rewind', 'play', 'fast_forward']),
+  key('pause', 'pause', 14, 0, 6),
+  key('stop', 'stop', 14, 6, 6),
+  ...colourRow(15),
+  key('ad_subt', custom('ad_subt'), 16, 0, 12, { label: 'AD/SUBT' }),
+  key('app_netflix', custom('netflix'), 17, 0, THIRD, {
+    icon: appIconKey('netflix'),
+  }),
+  key('app_prime', custom('prime_video'), 17, THIRD, THIRD, {
+    icon: appIconKey('primevideo'),
+  }),
+  key('samsung_tv_plus', custom('samsung_tv_plus'), 17, 2 * THIRD, THIRD, {
+    label: 'TV Plus',
+  }),
+])
+
+/**
+ * The ERF3 remote of a Hisense VIDAA television: every physical key. The
+ * Netflix and YouTube keys are `custom:` roles wearing their app icons.
+ */
+const HISENSE_ERF3_VIDAA = buildLayout(COLUMNS, 18, [
+  key('power', 'power', 0, 0, THIRD),
+  key('input', 'input', 0, 2 * THIRD, THIRD),
+  key('app_youtube', custom('youtube'), 1, 0, 6, {
+    icon: appIconKey('youtube'),
+  }),
+  key('app_netflix', custom('netflix'), 1, 6, 6, {
+    icon: appIconKey('netflix'),
+  }),
+  ...thirds(2, ['menu', 'home', 'exit']),
+  key('settings', custom('settings'), 3, 0, THIRD, { label: 'Settings' }),
+  key('guide', 'guide', 3, THIRD, THIRD),
+  key('info', 'info', 3, 2 * THIRD, THIRD),
+  ...dpad(4),
+  key('back', 'back', 7, 0, THIRD),
+  key('ch_list', custom('ch_list'), 7, THIRD, THIRD, { label: 'CH.LIST' }),
+  key('media', custom('media'), 7, 2 * THIRD, THIRD, { label: 'Media' }),
+  key('vol_up', 'volume_up', 8, 0, THIRD),
+  key('mute', 'mute', 8, THIRD, THIRD, { rowSpan: 2 }),
+  key('ch_up', 'channel_up', 8, 2 * THIRD, THIRD),
+  key('vol_down', 'volume_down', 9, 0, THIRD),
+  key('ch_down', 'channel_down', 9, 2 * THIRD, THIRD),
+  ...digitRows(10),
+  key('sleep', custom('sleep'), 13, 0, THIRD, { label: 'Sleep' }),
+  key('digit_0', 'digit_0', 13, THIRD, THIRD),
+  key('subtitle', custom('subtitle'), 13, 2 * THIRD, THIRD, {
+    label: 'Subtitle',
+  }),
+  key('txt', custom('txt'), 14, 0, 6, { label: 'Text' }),
+  key('rec', custom('rec'), 14, 6, 6, { label: 'Rec' }),
+  ...thirds(15, ['rewind', 'play', 'fast_forward']),
+  key('pause', 'pause', 16, 0, 6),
+  key('stop', 'stop', 16, 6, 6),
+  ...colourRow(17),
+])
+
 export const REMOTE_LAYOUT_PRESETS: readonly RemoteLayoutPreset[] = [
   { id: 'samsung-classic', layout: SAMSUNG_CLASSIC },
   { id: 'hisense-vidaa', layout: HISENSE_VIDAA },
+  { id: 'samsung-bn59-01315', layout: SAMSUNG_BN59_01315 },
+  { id: 'hisense-erf3-vidaa', layout: HISENSE_ERF3_VIDAA },
   { id: 'samsung-smart', layout: SAMSUNG_SMART },
   { id: 'lg-magic', layout: LG_MAGIC },
   { id: 'google-tv', layout: GOOGLE_TV },

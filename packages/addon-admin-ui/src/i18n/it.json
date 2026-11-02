@@ -7578,7 +7578,18 @@
       "next": "Successivo",
       "unmute": "Riattiva audio",
       "mute": "Disattiva audio",
-      "volume": "Volume"
+      "volume": "Volume",
+      "assumed": "presunto",
+      "assumedHint": "Nessun riscontro dal dispositivo: è l'ultimo comando inviato.",
+      "state": {
+        "off": "Spento",
+        "on": "Acceso",
+        "idle": "Inattivo",
+        "playing": "In riproduzione",
+        "paused": "In pausa",
+        "buffering": "Caricamento",
+        "standby": "Standby"
+      }
     },
     "acPanel": {
       "modeCool": "Raffredda",
@@ -11138,7 +11149,8 @@
       "test": "Prova",
       "clear": "Rimuovi",
       "saveToTest": "Salva prima: Prova invia il comando salvato",
-      "transmitterFor": "Trasmettitore per {{name}}"
+      "transmitterFor": "Trasmettitore per {{name}}",
+      "summary": "{{call}} · {{count}} impulsi"
     },
     "test": {
       "sent": "Inviato ({{count}}).",
@@ -11188,6 +11200,22 @@
     "history": {
       "undo": "Annulla",
       "redo": "Ripeti"
+    },
+    "panel": {
+      "title": "Comando di {{name}}",
+      "target": "Destinazione",
+      "command": "Comando",
+      "code": "Codice",
+      "timings": "{{count}} impulsi",
+      "timingsCarrier": "{{count}} impulsi a {{khz}} kHz",
+      "repeat": "Ripetizione",
+      "repeatValue": "Una volta per pressione; chi lo invia può ripeterlo"
+    },
+    "editTemplate": "Modifica layout",
+    "hero": {
+      "open": "Telecomando",
+      "title": "Telecomando di {{name}}",
+      "noLayout": "Questo telecomando non ha ancora un layout: scegli un modello in Personalizza."
     }
   },
   "commands": {

@@ -11,6 +11,7 @@ import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AutomationDevice } from '../../pages/build/automation/automation-data'
 import { CommandStep } from '../../pages/build/flow/CommandStep'
+import { deviceLabel, summarizeBinding } from './binding-summary'
 import { humanRole } from './layout-model'
 import {
   type BindableRole,
@@ -50,6 +51,7 @@ export function BindingRow({
   const name = role.name ?? t(`remote.role.${role.role}`, humanRole(role.role))
   const irTransmitter = binding === undefined ? null : transmitterOf(binding)
   const complete = binding !== undefined && isCompleteAction(binding.action)
+  const summary = binding === undefined ? null : summarizeBinding(binding.action)
   const open = editing || (binding !== undefined && irTransmitter === null)
   return (
     <li
@@ -105,11 +107,24 @@ export function BindingRow({
           )}
         </div>
       </div>
+      {summary !== null && complete && (
+        <p className="text-xs text-foreground-muted" data-testid={`summary-${role.role}`}>
+          {summary.timings === null
+            ? summary.call
+            : t('remote.bindings.summary', {
+                call: summary.call,
+                count: summary.timings,
+              })}
+        </p>
+      )}
       {irTransmitter !== null && binding !== undefined && (
         <Select
           aria-label={t('remote.bindings.transmitterFor', { name })}
           value={String(irTransmitter)}
-          options={transmitters.map((d) => ({ value: String(d.id), label: d.name }))}
+          options={transmitters.map((d) => ({
+            value: String(d.id),
+            label: deviceLabel(d),
+          }))}
           onChange={(e) => onBind(withTransmitter(binding, Number(e.target.value)).action)}
           data-testid={`transmitter-${role.role}`}
         />

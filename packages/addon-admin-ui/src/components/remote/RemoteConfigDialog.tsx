@@ -32,8 +32,11 @@ import type { TFunction } from 'i18next'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAutomationDevices } from '../../pages/build/automation/automation-data'
+import { BindingPanel } from './BindingPanel'
 import { BindingRow } from './BindingRow'
-import { layoutOf } from './layout-model'
+import { deviceLabel } from './binding-summary'
+import { EditTemplateButton } from './EditTemplateButton'
+import { humanRole, layoutOf } from './layout-model'
 import {
   applyDraft,
   bindableRoles,
@@ -95,7 +98,9 @@ function describeResult(result: RemoteSendResult, t: TFunction): string {
     case 'skipped':
       return t('remote.test.skipped')
     case 'refused':
-      return t(`remote.test.refused.${result.reason}`, { detail: result.detail ?? '' })
+      return t(`remote.test.refused.${result.reason}`, {
+        detail: result.detail ?? '',
+      })
   }
 }
 
@@ -104,11 +109,14 @@ function DialogForm({ device, initial, onClose }: FormProps): ReactNode {
   const queryClient = useQueryClient()
   const [config, setConfig] = useState<RemoteConfig>(initial)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [selectedKey, setSelectedKey] = useState<string | null>(null)
   const [results, setResults] = useState<Readonly<Record<string, string>>>({})
   const templates = useTemplateList({ kind: 'remote' })
   const commands = useRemoteListCommands({ deviceId: device.id })
   const devices = useAutomationDevices()
-  const transmitterIds = useDeviceManagerListDeviceIdsByCaps({ capNames: [IR_CAP] })
+  const transmitterIds = useDeviceManagerListDeviceIdsByCaps({
+    capNames: [IR_CAP],
+  })
   const save = useRemoteSetConfig()
   const send = useRemoteSendCommand()
 
@@ -123,6 +131,14 @@ function DialogForm({ device, initial, onClose }: FormProps): ReactNode {
     () => new Set((commands.data?.commands ?? []).map((c) => c.role)),
     [commands.data],
   )
+  const selectedButton = layout?.buttons.find((b) => b.id === selectedKey)
+  const selectedRole = selectedButton?.role ?? null
+  const selectedName =
+    selectedButton === undefined
+      ? ''
+      : (selectedButton.label ??
+        roles.find((r) => r.role === selectedButton.role)?.name ??
+        t(`remote.role.${selectedButton.role}`, humanRole(selectedButton.role)))
   const check = checkForSave(config)
   const bound = useMemo(() => new Set(Object.keys(config.bindings)), [config.bindings])
 
@@ -130,7 +146,10 @@ function DialogForm({ device, initial, onClose }: FormProps): ReactNode {
     if (check.config === null) return
     setSaveError(null)
     try {
-      const result = await save.mutateAsync({ deviceId: device.id, config: check.config })
+      const result = await save.mutateAsync({
+        deviceId: device.id,
+        config: check.config,
+      })
       if (result.status === 'refused') {
         setSaveError(result.detail)
         return
@@ -144,7 +163,11 @@ function DialogForm({ device, initial, onClose }: FormProps): ReactNode {
 
   const doTest = async (role: string): Promise<void> => {
     try {
-      const result = await send.mutateAsync({ deviceId: device.id, role, repeat: 1 })
+      const result = await send.mutateAsync({
+        deviceId: device.id,
+        role,
+        repeat: 1,
+      })
       setResults((prev) => ({ ...prev, [role]: describeResult(result, t) }))
     } catch (err: unknown) {
       setResults((prev) => ({
@@ -166,7 +189,10 @@ function DialogForm({ device, initial, onClose }: FormProps): ReactNode {
               value={config.layoutTemplateId ?? ''}
               options={[
                 { value: '', label: t('remote.dialog.noTemplate') },
-                ...(templates.data ?? []).map((r) => ({ value: r.id, label: r.name })),
+                ...(templates.data ?? []).map((r) => ({
+                  value: r.id,
+                  label: r.name,
+                })),
               ]}
               onChange={(e) =>
                 setConfig((prev) => ({
@@ -184,7 +210,10 @@ function DialogForm({ device, initial, onClose }: FormProps): ReactNode {
               }
               options={[
                 { value: '', label: t('remote.dialog.noTransmitter') },
-                ...transmitters.map((d) => ({ value: String(d.id), label: d.name })),
+                ...transmitters.map((d) => ({
+                  value: String(d.id),
+                  label: deviceLabel(d),
+                })),
               ]}
               onChange={(e) =>
                 setConfig((prev) => ({
@@ -205,7 +234,9 @@ function DialogForm({ device, initial, onClose }: FormProps): ReactNode {
               onChange={(e) =>
                 setConfig((prev) => ({
                   ...prev,
-                  power: { mode: e.target.value === 'discrete' ? 'discrete' : 'toggle' },
+                  power: {
+                    mode: e.target.value === 'discrete' ? 'discrete' : 'toggle',
+                  },
                 }))
               }
               data-testid="remote-power"
@@ -216,8 +247,31 @@ function DialogForm({ device, initial, onClose }: FormProps): ReactNode {
           <p className="text-xs text-foreground-muted">{t('remote.dialog.noTemplatesHint')}</p>
         )}
         {layout !== null && (
-          <div className="mx-auto w-full max-w-xs" data-testid="remote-preview">
-            <RemoteGrid grid={layout} label={t('remote.dialog.preview')} boundRoles={bound} />
+          <div className="grid gap-3 sm:grid-cols-[minmax(0,20rem)_1fr]">
+            <div className="mx-auto w-full max-w-xs" data-testid="remote-preview">
+              <RemoteGrid
+                grid={layout}
+                label={t('remote.dialog.preview')}
+                boundRoles={bound}
+                selectedId={selectedKey}
+                onSelect={setSelectedKey}
+              />
+            </div>
+            {selectedRole !== null && (
+              <BindingPanel
+                name={selectedName}
+                binding={config.bindings[selectedRole]}
+                devices={devices}
+                testable={savedRoles.has(selectedRole)}
+                testResult={results[selectedRole] ?? null}
+                onTest={() => void doTest(selectedRole)}
+              />
+            )}
+          </div>
+        )}
+        {config.layoutTemplateId !== null && (
+          <div className="flex justify-end">
+            <EditTemplateButton templateId={config.layoutTemplateId} />
           </div>
         )}
         <section className="space-y-2">

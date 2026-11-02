@@ -7556,7 +7556,18 @@
       "next": "Next",
       "unmute": "Unmute",
       "mute": "Mute",
-      "volume": "Volume"
+      "volume": "Volume",
+      "assumed": "assumed",
+      "assumedHint": "No feedback from the device: this is what was last sent.",
+      "state": {
+        "off": "Off",
+        "on": "On",
+        "idle": "Idle",
+        "playing": "Playing",
+        "paused": "Paused",
+        "buffering": "Buffering",
+        "standby": "Standby"
+      }
     },
     "acPanel": {
       "modeCool": "Cool",
@@ -11116,7 +11127,8 @@
       "test": "Test",
       "clear": "Clear",
       "saveToTest": "Save first: Test sends the saved command",
-      "transmitterFor": "Transmitter for {{name}}"
+      "transmitterFor": "Transmitter for {{name}}",
+      "summary": "{{call}} · {{count}} timings"
     },
     "test": {
       "sent": "Sent ({{count}}).",
@@ -11166,6 +11178,22 @@
     "history": {
       "undo": "Undo",
       "redo": "Redo"
+    },
+    "panel": {
+      "title": "Command of {{name}}",
+      "target": "Target",
+      "command": "Command",
+      "code": "Code",
+      "timings": "{{count}} timings",
+      "timingsCarrier": "{{count}} timings at {{khz}} kHz",
+      "repeat": "Repeat",
+      "repeatValue": "Once per press; a caller can repeat it"
+    },
+    "editTemplate": "Edit layout",
+    "hero": {
+      "open": "Remote",
+      "title": "Remote of {{name}}",
+      "noLayout": "This remote has no layout yet: pick a template in Customize."
     }
   },
   "commands": {

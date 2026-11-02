@@ -36,7 +36,12 @@ const device = (id: number, name: string, type: string, location: string) => ({
 })
 
 const TV = device(TV_ID, 'Living room TV', 'media-player', 'Living room')
-const BOARD = device(BOARD_ID, 'Living room IR blaster', 'generic', 'Living room')
+const PARENT_ID = 903
+const PARENT = device(PARENT_ID, 'Living room IR board', 'generic', 'Living room')
+const BOARD = {
+  ...device(BOARD_ID, 'send_raw_command', 'generic', 'Living room'),
+  parentDeviceId: PARENT_ID,
+}
 
 const delegate = (path: string, input: unknown): unknown => {
   const h = customizeArea.handlers[path]
@@ -149,6 +154,23 @@ const irBinding = (note: string) => ({
   },
 })
 
+/** An infrared TV: the driver only tracks what it sent, so everything else is unknown. */
+const TV_MEDIA_PLAYER = {
+  state: 'standby',
+  stateSource: 'assumed',
+  assumedFields: ['state'],
+  volumeLevel: null,
+  isMuted: null,
+  source: '',
+  availableSources: [],
+  currentMedia: null,
+  position: null,
+  duration: null,
+  shuffle: null,
+  repeat: null,
+  lastChangedAt: 1,
+}
+
 const REMOTE_CONFIG = {
   layoutTemplateId: 'tpl-tv',
   defaultTransmitterId: BOARD_ID,
@@ -186,6 +208,31 @@ export default defineFixtures({
       i.id === 'tpl-tv'
         ? { status: 'in-use', devices: [{ deviceId: TV_ID, name: TV.name }] }
         : { status: 'deleted' },
+    'capabilities.getCapability': {
+      name: 'remote',
+      mode: 'singleton',
+      providers: ['remote'],
+      activeProvider: 'remote',
+      disabledProviders: [],
+    },
+    'powerSource.getStatus': {
+      linked: false,
+      switchDeviceId: null,
+      switchName: null,
+      switchOn: null,
+      switchOnline: null,
+      restartInProgress: false,
+      offSeconds: 0,
+    },
+    'deviceState.getSnapshot': (i: { deviceId?: number }) =>
+      i.deviceId === TV_ID
+        ? { 'media-player': TV_MEDIA_PLAYER }
+        : delegate('deviceState.getSnapshot', i),
+    'deviceState.getCapSlice': (i: { deviceId?: number; capName?: string }) =>
+      i.deviceId === TV_ID && i.capName === 'media-player'
+        ? TV_MEDIA_PLAYER
+        : delegate('deviceState.getCapSlice', i),
+    'mediaPlayer.getStatus': TV_MEDIA_PLAYER,
     'remote.getConfig': REMOTE_CONFIG,
     'mut:remote.setConfig': { status: 'saved' },
     'remote.listCommands': {
@@ -209,6 +256,7 @@ export default defineFixtures({
     'deviceManager.listAll': [
       TV,
       BOARD,
+      PARENT,
       ...((customizeArea.handlers['deviceManager.listAll'] as unknown[]) ?? []),
     ],
     'deviceManager.getBindings': (i: { deviceId: number }) =>

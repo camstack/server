@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Generated hooks include the media-player power and step methods
+- Media-player hero shows only what the device reports: no fake 0% volume, no empty now-playing, and an assumed state is marked as assumed
 
 ## [1.2.375] - 2026-11-02
 

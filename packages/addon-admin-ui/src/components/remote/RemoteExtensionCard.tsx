@@ -9,6 +9,7 @@ import { Gamepad2 } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CustomizeCard } from '../device/customize/CustomizeCard'
+import { EditTemplateButton } from './EditTemplateButton'
 import { RemoteConfigDialog } from './RemoteConfigDialog'
 
 export interface RemoteExtensionCardProps {
@@ -33,9 +34,22 @@ export function RemoteExtensionCard({ device }: RemoteExtensionCardProps): React
       icon={Gamepad2}
       testId="customize-remote"
       actions={
-        <Button size="sm" variant="outline" onClick={() => setOpen(true)} data-testid="remote-open">
-          {t('remote.card.configure')}
-        </Button>
+        <>
+          {stored?.layoutTemplateId != null && (
+            <EditTemplateButton
+              templateId={stored.layoutTemplateId}
+              testId="remote-card-edit-template"
+            />
+          )}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setOpen(true)}
+            data-testid="remote-open"
+          >
+            {t('remote.card.configure')}
+          </Button>
+        </>
       }
     >
       {config.status === 'error' ? (

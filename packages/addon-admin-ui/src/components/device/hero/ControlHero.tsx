@@ -6,8 +6,10 @@ import {
   useDeviceStateSlice,
   useSystem,
 } from '@camstack/ui-library'
+import { DeviceType } from '@camstack/types'
 import { type ReactElement, useState } from 'react'
 import type { HeroProps } from './HeroRegistry'
+import { RemoteHeroButton } from '../../remote/RemoteHeroButton'
 import { MotionTriggerToggle } from './MotionTriggerToggle'
 
 /**
@@ -31,7 +33,12 @@ import { MotionTriggerToggle } from './MotionTriggerToggle'
  * from the device-status slice here so it appears exactly once per device,
  * never duplicated per cap/control.
  */
-export function ControlHero({ deviceId, deviceType, features }: HeroProps): ReactElement {
+export function ControlHero({
+  deviceId,
+  deviceName,
+  deviceType,
+  features,
+}: HeroProps): ReactElement {
   const system = useSystem()
   const control = resolveDeviceControl(deviceType)
   const HeroCard = control?.HeroCard ?? DummyHeroCard
@@ -52,6 +59,12 @@ export function ControlHero({ deviceId, deviceType, features }: HeroProps): Reac
         </div>
       ) : null}
       <HeroCard trpc={system.trpcClient} deviceId={deviceId} features={features} />
+      {/* A media player with a saved remote (an infrared TV) gets the Remote
+          button even when it has no media-player binding: the HeroCard above is
+          then empty, and the remote is the whole control surface. */}
+      {deviceType === DeviceType.MediaPlayer ? (
+        <RemoteHeroButton deviceId={deviceId} deviceName={deviceName} />
+      ) : null}
       {/* Motion-activation ("Trigger on motion"): self-gating — renders null
           unless the device exposes the `motion-trigger` cap (floodlights +
           sirens). The dedicated SwitchHero/LightHero carried this control

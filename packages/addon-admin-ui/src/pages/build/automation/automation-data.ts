@@ -32,6 +32,8 @@ export interface AutomationDevice {
   readonly stableId: string
   readonly type?: string
   readonly location?: string | null
+  /** The device's parent (a board, a hub), by name, when it has one. */
+  readonly parentName?: string | null
 }
 
 /** Catalogs change when a device is added, not while a form is open. */
@@ -50,8 +52,9 @@ const CATALOG_STALE_MS = 60_000
  */
 export function useAutomationDevices(): readonly AutomationDevice[] {
   const fleet = useDeviceManagerListAll({ projection: 'slim' })
-  return useMemo(
-    (): readonly AutomationDevice[] =>
+  return useMemo((): readonly AutomationDevice[] => {
+    const names = new Map((fleet.data ?? []).map((d) => [d.id, d.name]))
+    return (
       (fleet.data ?? [])
         // Containers are parent grouping nodes — never automation targets.
         .filter((d) => isDoPickerDeviceType(String(d.type)))
@@ -61,10 +64,11 @@ export function useAutomationDevices(): readonly AutomationDevice[] {
           stableId: d.stableId,
           type: String(d.type),
           location: d.location ?? null,
+          parentName: d.parentDeviceId === null ? null : (names.get(d.parentDeviceId) ?? null),
         }))
-        .toSorted((a, b) => a.name.localeCompare(b.name)),
-    [fleet.data],
-  )
+        .toSorted((a, b) => a.name.localeCompare(b.name))
+    )
+  }, [fleet.data])
 }
 
 /** Bound caps for one device — shared hook with NC Sequences / Do. */
