@@ -9,8 +9,10 @@
  * declared. It is idempotent: a second run finds no group-owned kind. When the addon already owns
  * a kind of the same name, two catalogues exist for one kind: when only one side holds rows the
  * empty declaration is discarded and the other is kept under the addon id; both empty keeps the
- * addon-owned one; rows on BOTH sides write NOTHING and fail naming each side's row count and
- * newest updatedAt, because choosing which rows survive is an operator decision. A row holding a keychain marker minted under the group is refused too:
+ * addon-owned one; rows on BOTH sides: the side with the NEWER newest updatedAt is the live one and
+ * is kept under the addon id, the other is renamed `<kind>~superseded-<owner>` under the addon id
+ * (never deleted, its rows stay recoverable); an EQUAL newest updatedAt writes NOTHING and fails
+ * naming each side's row count and newest updatedAt. A row holding a keychain marker minted under the group is refused too:
  * the keychain lives outside this database, so its ref cannot be moved from here.
  */
 import type { MigrationMeta } from '@camstack/types'
@@ -100,13 +102,15 @@ function loadOf(db: MigrationDatabase, kindId: number): KindLoad {
   }
 }
 
+const SUPERSEDED_INFIX = '~superseded-'
+
 function describeSide(owner: string, load: KindLoad): string {
   return `${owner}: ${load.rows} row(s), newest updatedAt ${load.newestUpdatedAt ?? 'none'}`
 }
 
 /**
  * Decides one move WITHOUT writing: returns the writes to apply, or throws when both owners hold
- * rows of the kind. Exactly one side with rows wins (the empty declaration is discarded), both
+ * rows of the kind with the same newest updatedAt. Exactly one side with rows wins (the empty declaration is discarded), both
  * empty keeps the addon-owned one.
  */
 function planMove(db: MigrationDatabase, m: GroupKind & { readonly kindId: number }): () => void {
@@ -122,9 +126,26 @@ function planMove(db: MigrationDatabase, m: GroupKind & { readonly kindId: numbe
     db.prepare('DELETE FROM _record_kinds WHERE kind_id = ?').run(kindId)
   }
   if (group.rows > 0 && addon.rows > 0) {
-    throw new Error(
-      `record kind "${m.kind}" exists under both owners with rows on both, nothing was re-owned: ${describeSide(m.group, group)}; ${describeSide(m.addonId, addon)}. Remove the side to discard, then retry.`,
-    )
+    const groupNewest = group.newestUpdatedAt ?? 0
+    const addonNewest = addon.newestUpdatedAt ?? 0
+    if (groupNewest === addonNewest) {
+      throw new Error(
+        `record kind "${m.kind}" exists under both owners with rows on both and the same newest updatedAt, nothing was re-owned: ${describeSide(m.group, group)}; ${describeSide(m.addonId, addon)}. Remove the side to discard, then retry.`,
+      )
+    }
+    // The newer side is the live one. The loser is never deleted: its kind row is renamed under the
+    // addon id, so its rows stay on disk, unreachable by the live kind, recoverable by hand.
+    const loserOwner = groupNewest > addonNewest ? m.addonId : m.group
+    const loserKindId = groupNewest > addonNewest ? addonKindId : m.kindId
+    const supersededKind = `${m.kind}${SUPERSEDED_INFIX}${loserOwner}`
+    return () => {
+      db.prepare('UPDATE _record_kinds SET owner = ?, kind = ? WHERE kind_id = ?').run(
+        m.addonId,
+        supersededKind,
+        loserKindId,
+      )
+      if (groupNewest > addonNewest) reown()
+    }
   }
   if (group.rows > 0) {
     return () => {

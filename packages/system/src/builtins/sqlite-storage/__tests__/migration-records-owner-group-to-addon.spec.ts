@@ -33,6 +33,7 @@ interface Seed {
   readonly kind: string
   readonly id: string
   readonly data: Record<string, unknown>
+  readonly updatedAt?: number
 }
 
 function seedDb(rows: readonly Seed[]): void {
@@ -40,7 +41,7 @@ function seedDb(rows: readonly Seed[]): void {
   ensureRecordsSchema(db)
   const declaration = integrationRegistryRecordKinds.integrations.declaration
   const insert = db.prepare(
-    'INSERT INTO records(kind_id, id, rev, updated_at, data) VALUES (?, ?, 3, 100, jsonb(?))',
+    'INSERT INTO records(kind_id, id, rev, updated_at, data) VALUES (?, ?, 3, ?, jsonb(?))',
   )
   const declared = new Map<string, number>()
   for (const r of rows) {
@@ -48,7 +49,7 @@ function seedDb(rows: readonly Seed[]): void {
     const kindId =
       declared.get(key) ?? declareKind(db, r.owner, r.kind, declaration, undefined).row.kindId
     declared.set(key, kindId)
-    insert.run(kindId, r.id, JSON.stringify(r.data))
+    insert.run(kindId, r.id, r.updatedAt ?? 100, JSON.stringify(r.data))
   }
   db.close()
 }
@@ -239,7 +240,68 @@ describe('hub migration: records are owned by the addon id, not the runner group
     expect(ledger()?.status).toBe('applied')
   }, 60_000)
 
-  it('a kind under both owners with rows on both sides fails naming counts and newest updatedAt, writes nothing', async () => {
+  it('rows on both sides: the NEWER group side wins, the addon leftover is kept under a superseded kind', async () => {
+    h = makeHarness()
+    seedDb([
+      {
+        owner: 'integrations',
+        kind: 'waste-source',
+        id: 'live',
+        data: { mark: 'G' },
+        updatedAt: 2000,
+      },
+      {
+        owner: 'waste-collections',
+        kind: 'waste-source',
+        id: 'old',
+        data: { mark: 'A' },
+        updatedAt: 1000,
+      },
+    ])
+    await runPass(ONE, 'boot-1')
+    const after = stored()
+    expect(after['waste-collections/waste-source/live']).toEqual({ mark: 'G', rev: 3 })
+    expect(after['waste-collections/waste-source~superseded-waste-collections/old']).toEqual({
+      mark: 'A',
+      rev: 3,
+    })
+    expect(Object.keys(after)).toHaveLength(2)
+    expect(kindOwners('waste-source')).toEqual(['waste-collections'])
+    expect(ledger()?.status).toBe('applied')
+    await runPass(ONE, 'boot-2')
+    expect(stored()).toEqual(after)
+  }, 60_000)
+
+  it('rows on both sides: the NEWER addon side wins, the group leftover is kept under a superseded kind', async () => {
+    h = makeHarness()
+    seedDb([
+      {
+        owner: 'integrations',
+        kind: 'waste-source',
+        id: 'old',
+        data: { mark: 'G' },
+        updatedAt: 1000,
+      },
+      {
+        owner: 'waste-collections',
+        kind: 'waste-source',
+        id: 'live',
+        data: { mark: 'A' },
+        updatedAt: 2000,
+      },
+    ])
+    await runPass(ONE, 'boot-1')
+    const after = stored()
+    expect(after['waste-collections/waste-source/live']).toEqual({ mark: 'A', rev: 3 })
+    expect(after['waste-collections/waste-source~superseded-integrations/old']).toEqual({
+      mark: 'G',
+      rev: 3,
+    })
+    expect(Object.keys(after)).toHaveLength(2)
+    expect(ledger()?.status).toBe('applied')
+  }, 60_000)
+
+  it('a kind under both owners with rows on both sides and EQUAL newest updatedAt fails naming counts, writes nothing', async () => {
     h = makeHarness()
     seedDb([
       { owner: 'net-access', kind: 'servers', id: 'a', data: { mark: 'G1' } },
