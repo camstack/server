@@ -7755,6 +7755,7 @@
       "typeNotifier": "Notifier",
       "noRole": "No role",
       "filterIntegration": "Integration",
+      "filterType": "Type",
       "filterNoOption": "No match.",
       "noneSelected": "None selected",
       "bulkBar": "Bulk export"

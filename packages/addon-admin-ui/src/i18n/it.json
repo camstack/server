@@ -7777,6 +7777,7 @@
       "typeNotifier": "Notificatore",
       "noRole": "Nessun ruolo",
       "filterIntegration": "Integrazione",
+      "filterType": "Tipo",
       "filterNoOption": "Nessun risultato.",
       "noneSelected": "Nessuno selezionato",
       "bulkBar": "Esportazione multipla"
