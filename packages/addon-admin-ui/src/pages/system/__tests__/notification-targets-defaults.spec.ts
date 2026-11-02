@@ -39,6 +39,30 @@ describe('targetFormDefaultKeys', () => {
     expect(keys.brokerKind).toBe('ha')
     expect(keys.deviceField?.key).toBe('service')
   })
+  it('does not name a target after an optional picker (the email relay)', () => {
+    const keys = targetFormDefaultKeys({
+      sections: [
+        {
+          id: 'c',
+          title: 'C',
+          fields: [
+            {
+              type: 'select',
+              key: 'smtpInstanceId',
+              label: 'Relay',
+              options: [],
+              discoverOptions: {
+                kind: 'email',
+                dependsOn: ['smtpAddonId'],
+                noneLabel: 'Default relay',
+              },
+            },
+          ],
+        },
+      ],
+    })
+    expect(keys.deviceField).toBeNull()
+  })
   it('is empty for a kind without them', () => {
     const keys = targetFormDefaultKeys({
       sections: [{ id: 'c', title: 'C', fields: [{ type: 'text', key: 'url', label: 'URL' }] }],

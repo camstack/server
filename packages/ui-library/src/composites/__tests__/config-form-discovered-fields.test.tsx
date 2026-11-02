@@ -28,6 +28,7 @@ interface Candidate {
 const asked: DiscoverInput[] = []
 let candidates: readonly Candidate[] = []
 let failure: Error | null = null
+let loading = false
 
 vi.mock('../../generated/system-hooks', () => ({
   useBrokerList: () => ({
@@ -44,6 +45,8 @@ vi.mock('../../generated/system-hooks', () => ({
     if (options.enabled) asked.push(input)
     if (!options.enabled)
       return { data: undefined, isLoading: false, isFetching: false, isError: false, error: null }
+    if (loading)
+      return { data: undefined, isLoading: true, isFetching: true, isError: false, error: null }
     if (failure !== null)
       return { data: undefined, isLoading: false, isFetching: false, isError: true, error: failure }
     return { data: candidates, isLoading: false, isFetching: false, isError: false, error: null }
@@ -170,5 +173,82 @@ describe('select with discoverOptions', () => {
       { timeout: 3000 },
     )
     expect(screen.getByRole('textbox')).toBeInTheDocument()
+  })
+})
+
+const relayField: ConfigField = {
+  type: 'select',
+  key: 'smtpInstanceId',
+  label: 'Relay',
+  options: [],
+  discoverOptions: {
+    kind: 'email',
+    dependsOn: ['smtpAddonId'],
+    noneLabel: 'Default relay',
+    missingLabel: 'missing relay',
+  },
+}
+
+function RelayForm({ initial = {} }: { readonly initial?: Record<string, unknown> }) {
+  const [values, setValues] = useState<Record<string, unknown>>(initial)
+  return (
+    <>
+      <FormField
+        field={relayField}
+        values={values}
+        onChange={(key, value) => setValues((prev) => ({ ...prev, [key]: value }))}
+      />
+      <output data-testid="values">{JSON.stringify(values)}</output>
+    </>
+  )
+}
+
+describe('optional discovered picker (noneLabel)', () => {
+  beforeEach(() => {
+    asked.length = 0
+    failure = null
+    loading = false
+    candidates = [
+      { kind: 'email', suggestedName: 'Office relay', config: { smtpInstanceId: 'relay-1' } },
+      { kind: 'email', suggestedName: 'Backup relay', config: { smtpInstanceId: 'relay-2' } },
+    ]
+  })
+
+  it('offers the default relay as the empty choice and the relays by name', async () => {
+    render(<RelayForm initial={{ smtpAddonId: 'smtp', smtpInstanceId: 'relay-1' }} />)
+    await waitFor(() => expect(screen.getAllByRole('combobox')).toHaveLength(1), { timeout: 3000 })
+    expect(screen.queryByRole('textbox')).toBeNull()
+    fireEvent.focus(screen.getByRole('combobox'))
+    fireEvent.mouseDown(screen.getByRole('combobox'))
+    expect(screen.getByTestId('config-select-smtpInstanceId-option-relay-2')).toHaveTextContent(
+      'Backup relay',
+    )
+    fireEvent.click(screen.getByTestId('config-select-smtpInstanceId-option-'))
+    expect(screen.getByTestId('values').textContent).toContain('"smtpInstanceId":""')
+  })
+
+  it('names a relay the answered list no longer holds, never as the default', async () => {
+    render(<RelayForm initial={{ smtpAddonId: 'smtp', smtpInstanceId: 'relay-gone' }} />)
+    await waitFor(
+      () => expect(screen.getByRole('combobox')).toHaveDisplayValue('missing relay relay-gone'),
+      { timeout: 3000 },
+    )
+  })
+
+  it('does not call a relay missing while the list has not answered', () => {
+    loading = true
+    render(<RelayForm initial={{ smtpAddonId: 'smtp', smtpInstanceId: 'relay-1' }} />)
+    expect(screen.getByRole('combobox')).toHaveDisplayValue('relay-1')
+    expect(screen.queryByRole('textbox')).toBeNull()
+    expect(screen.getByTestId('config-select-smtpInstanceId-status')).toHaveTextContent('Loading')
+  })
+
+  it('stays a picker with only the default when the provider holds no relay', async () => {
+    candidates = []
+    render(<RelayForm initial={{ smtpAddonId: 'smtp' }} />)
+    await waitFor(() => expect(asked).toHaveLength(1), { timeout: 3000 })
+    expect(screen.getByRole('combobox')).toHaveAttribute('placeholder', 'Default relay')
+    expect(screen.queryByTestId('config-select-smtpInstanceId-status')).toBeNull()
+    expect(screen.queryByRole('textbox')).toBeNull()
   })
 })

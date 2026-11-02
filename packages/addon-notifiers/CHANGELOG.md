@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- An email target's relay is now a picker of the chosen provider's relays by name, with 'Default relay' as the empty choice; a relay that no longer exists shows as 'missing relay <id>'.
+
 ## [1.2.627] - 2026-11-02
 
 ### Changed

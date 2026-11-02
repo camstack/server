@@ -2672,6 +2672,14 @@ first configured relay, so every target written before relays existed keeps work
 unknown relay id is refused by name; it is never answered by another relay. A provider with one
 fixed relay (the Google Gmail API) ignores `instanceId`.
 
+The relay is a picker, not free text: `smtpInstanceId` is a `select` with
+`discoverOptions: { kind: 'email', dependsOn: ['smtpAddonId'] }`, and the email adapter's
+`discover` answers the relays of the chosen provider from its `integration-instances` records
+(a provider that holds none answers an empty list). `noneLabel` makes the empty value an
+explicit choice ("Default relay") and keeps the control a picker while the list loads or fails;
+`missingLabel` names a stored id the ANSWERED list no longer holds ("missing relay relay-x"),
+so a gone relay never reads as the default. An unanswered list shows the stored id as it is.
+
 ## The media policy
 
 One rule states what a notification carries. All of it is optional; the defaults

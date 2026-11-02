@@ -370,6 +370,9 @@ export function targetFormDefaultKeys(schema: ConfigUISchema): TargetFormDefault
       } else if (
         field.type === 'select' &&
         field.discoverOptions !== undefined &&
+        // An optional picker (a relay, default = none) is not the destination
+        // the target is named after.
+        field.discoverOptions.noneLabel === undefined &&
         deviceField === null
       ) {
         deviceField = field

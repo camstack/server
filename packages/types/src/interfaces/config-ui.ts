@@ -557,6 +557,18 @@ export interface ConfigDiscoverOptions {
   readonly kind: string
   /** Form keys that must all be non-empty before the first fetch; sent as `config`. */
   readonly dependsOn: readonly string[]
+  /**
+   * Makes the select an OPTIONAL picker: the empty value is offered as this
+   * choice (e.g. "Default relay") and the control stays a picker while the list
+   * loads or fails — never a free-text input.
+   */
+  readonly noneLabel?: string
+  /**
+   * Prefix for a stored value the ANSWERED list no longer offers ("missing relay
+   * <id>"), so a gone entry never reads as the empty choice. Without it the raw
+   * value is shown.
+   */
+  readonly missingLabel?: string
 }
 
 export interface ConfigMultiSelectField extends ConfigFieldBase {

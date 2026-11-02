@@ -167,3 +167,48 @@ describe('email notifier adapter', () => {
     expect(field.description).toMatch(/No Email provider installed/)
   })
 })
+
+describe('email notifier relay picker', () => {
+  it('the relay field is a select discovered from the chosen provider, with a default-relay choice', () => {
+    const fields = buildEmailDescriptor().configSchema.sections.flatMap((s) => s.fields)
+    const relay = fields.find((f) => 'key' in f && f.key === 'smtpInstanceId')
+    expect(relay).toMatchObject({
+      type: 'select',
+      discoverOptions: {
+        kind: 'email',
+        dependsOn: ['smtpAddonId'],
+        noneLabel: 'Default relay',
+        missingLabel: 'missing relay',
+      },
+    })
+  })
+
+  it('discover lists the relays of the chosen provider by name', async () => {
+    const listRelays = vi.fn(async (_addonId: string) => [
+      { id: 'relay-1a2b3c4d', name: 'Office relay' },
+      { id: 'relay-5e6f7a8b', name: 'Backup relay' },
+    ])
+    const adapter = createEmailAdapter({ sendEmail: vi.fn(), listRelays })
+    const found = await adapter.discover?.({ smtpAddonId: 'smtp-nodemailer' })
+    expect(listRelays).toHaveBeenCalledWith('smtp-nodemailer')
+    expect(found).toEqual([
+      {
+        kind: 'email',
+        suggestedName: 'Office relay',
+        config: { smtpInstanceId: 'relay-1a2b3c4d' },
+      },
+      {
+        kind: 'email',
+        suggestedName: 'Backup relay',
+        config: { smtpInstanceId: 'relay-5e6f7a8b' },
+      },
+    ])
+  })
+
+  it('discover without a provider answers nothing and asks nobody', async () => {
+    const listRelays = vi.fn(async () => [])
+    const adapter = createEmailAdapter({ sendEmail: vi.fn(), listRelays })
+    expect(await adapter.discover?.({})).toEqual([])
+    expect(listRelays).not.toHaveBeenCalled()
+  })
+})

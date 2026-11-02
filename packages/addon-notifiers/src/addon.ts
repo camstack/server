@@ -100,6 +100,16 @@ export class NotifiersAddon extends BaseAddon<NotifiersConfig> {
               return { messageId: result.messageId }
             },
             listProviders,
+            listRelays: async (addonId) => {
+              // A provider that holds no records is not an `integration-instances`
+              // provider: it has no relays, which is an answer, not a failure.
+              const holders = await api.addons.listCapabilityProviders.query({
+                capName: 'integration-instances',
+              })
+              if (!holders.some((holder) => holder.addonId === addonId)) return []
+              const instances = await api.integrationInstances.listInstances.query({ addonId })
+              return instances.map((instance) => ({ id: instance.id, name: instance.name }))
+            },
             resolveDefaultAddonId: async () => {
               const providers = await listProviders()
               return providers.find((p) => p.ready === true)?.value ?? providers[0]?.value

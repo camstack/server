@@ -3,7 +3,13 @@ import { userError } from '@camstack/types'
  * Email notifier — delivers through a ready `smtp-provider` (Google Gmail API
  * or nodemailer SMTP). Not HTTP: the provider calls {@link sendDirect}.
  */
-import type { ConfigOption, PreparedNotification, SendResult, TargetKind } from '@camstack/types'
+import type {
+  ConfigOption,
+  DiscoveredTarget,
+  PreparedNotification,
+  SendResult,
+  TargetKind,
+} from '@camstack/types'
 import type { DirectNotifierAdapter, TargetConfig } from './adapter.js'
 
 export const EMAIL_KIND = 'email'
@@ -28,6 +34,12 @@ export interface SmtpProviderOption {
   readonly ready?: boolean
 }
 
+/** One relay (integration instance) a provider holds. */
+export interface SmtpRelayOption {
+  readonly id: string
+  readonly name: string
+}
+
 export interface EmailSmtpClient {
   sendEmail(input: EmailSendInput): Promise<{ readonly messageId: string }>
   /**
@@ -36,6 +48,11 @@ export interface EmailSmtpClient {
    * will Verify). Absent → empty catalog + install/verify prompt.
    */
   listProviders?(): Promise<readonly SmtpProviderOption[]>
+  /**
+   * The relays one provider holds (its `integration-instances` records); empty
+   * for a provider that holds none. Rejects when the provider cannot answer.
+   */
+  listRelays?(addonId: string): Promise<readonly SmtpRelayOption[]>
   /**
    * When the target omits `smtpAddonId`, pick the first ready provider's
    * addonId (or undefined → collection default routing).
@@ -91,13 +108,20 @@ export function buildEmailDescriptor(providers: readonly SmtpProviderOption[] = 
               options,
             },
             {
-              type: 'text',
+              type: 'select',
               key: 'smtpInstanceId',
               label: 'Relay (optional)',
               labelKey: 'notifiers:emailDescriptor.s_email.smtpInstanceId.label',
               description:
-                'Pin this target to one relay of the provider (its relay id, e.g. relay-1a2b3c4d). Leave empty to use the first configured relay.',
+                'Pin this target to one relay of the provider. Leave on the default relay to use the first configured one.',
               descriptionKey: 'notifiers:emailDescriptor.s_email.smtpInstanceId.description',
+              options: [],
+              discoverOptions: {
+                kind: EMAIL_KIND,
+                dependsOn: ['smtpAddonId'],
+                noneLabel: 'Default relay',
+                missingLabel: 'missing relay',
+              },
             },
             {
               type: 'text',
@@ -174,6 +198,18 @@ export function createEmailAdapter(smtp: EmailSmtpClient): DirectNotifierAdapter
       return buildEmailDescriptor(providers)
     },
     destinationKeys: ['to', 'smtpAddonId', 'smtpInstanceId'],
+    async discover(config): Promise<readonly DiscoveredTarget[]> {
+      const addonId = config['smtpAddonId']
+      if (typeof addonId !== 'string' || addonId.trim() === '' || smtp.listRelays === undefined) {
+        return []
+      }
+      const relays = await smtp.listRelays(addonId.trim())
+      return relays.map((relay) => ({
+        kind: EMAIL_KIND,
+        suggestedName: relay.name.length > 0 ? relay.name : relay.id,
+        config: { smtpInstanceId: relay.id },
+      }))
+    },
     async sendDirect(config, prepared): Promise<SendResult> {
       try {
         const to = requireTo(config)

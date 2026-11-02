@@ -115,6 +115,52 @@ export function ConfigDiscoveredSelectControl({
 
   const current = value === undefined || value === null ? '' : String(value)
   const disabledNow = disabled || field.disabled
+  const noneLabel = field.discoverOptions?.noneLabel
+  const answered =
+    ready &&
+    settled &&
+    !query.isLoading &&
+    !query.isFetching &&
+    !query.isError &&
+    query.data !== undefined
+
+  // An optional picker (a relay: empty = the default) never turns into free
+  // text. Its list is a fact only once the query ANSWERED: until then a stored
+  // value is shown as it is, and only an answered list can call it missing.
+  if (noneLabel !== undefined) {
+    const known = current === '' || found.some((option) => option.value === current)
+    const missingLabel = field.discoverOptions?.missingLabel
+    const staleLabel =
+      answered && missingLabel !== undefined ? `${missingLabel} ${current}` : current
+    return (
+      <div className="space-y-1">
+        <OptionSelect
+          mode="single"
+          singleDisplay="field"
+          searchable
+          disabled={disabledNow}
+          value={current}
+          onChange={onChange}
+          placeholder={noneLabel}
+          options={[
+            { value: '', label: noneLabel },
+            ...(known ? [] : [{ value: current, label: staleLabel }]),
+            ...found,
+          ]}
+          testId={controlId}
+          optionTestIdPrefix={`${controlId}-option`}
+        />
+        {answered ? null : (
+          <p
+            data-testid={`${controlId}-status`}
+            className={`text-[11px] ${query.isError ? 'text-danger' : 'text-foreground-subtle'}`}
+          >
+            {discoveryStatus(t, ready, settled, query)}
+          </p>
+        )}
+      </div>
+    )
+  }
 
   if (found.length > 0) {
     const known = found.some((option) => option.value === current)
@@ -138,28 +184,7 @@ export function ConfigDiscoveredSelectControl({
     )
   }
 
-  let status: string
-  if (!ready) {
-    status = t(
-      'uiLibrary.configFormField.discoverNotReady',
-      'Fill in the fields above to load the list, or type the value.',
-    )
-  } else if (!settled || query.isLoading || query.isFetching) {
-    status = t('uiLibrary.configFormField.loadingOptions', 'Loading options…')
-  } else if (query.isError) {
-    status = t(
-      'uiLibrary.configFormField.discoverFailed',
-      'Could not load the list: {{message}}. Type the value instead.',
-      {
-        message: query.error instanceof Error ? query.error.message : String(query.error),
-      },
-    )
-  } else {
-    status = t(
-      'uiLibrary.configFormField.discoverEmpty',
-      'Nothing was found. Type the value instead.',
-    )
-  }
+  const status = discoveryStatus(t, ready, settled, query)
 
   return (
     <div className="space-y-1">
@@ -178,4 +203,34 @@ export function ConfigDiscoveredSelectControl({
       </p>
     </div>
   )
+}
+
+type UiText = ReturnType<typeof useUiText>
+
+/** The one line that says why the list is not (yet) offered. */
+function discoveryStatus(
+  t: UiText,
+  ready: boolean,
+  settled: boolean,
+  query: DiscoveredOptionsState['query'],
+): string {
+  if (!ready) {
+    return t(
+      'uiLibrary.configFormField.discoverNotReady',
+      'Fill in the fields above to load the list, or type the value.',
+    )
+  }
+  if (!settled || query.isLoading || query.isFetching) {
+    return t('uiLibrary.configFormField.loadingOptions', 'Loading options…')
+  }
+  if (query.isError) {
+    return t(
+      'uiLibrary.configFormField.discoverFailed',
+      'Could not load the list: {{message}}. Type the value instead.',
+      {
+        message: query.error instanceof Error ? query.error.message : String(query.error),
+      },
+    )
+  }
+  return t('uiLibrary.configFormField.discoverEmpty', 'Nothing was found. Type the value instead.')
 }

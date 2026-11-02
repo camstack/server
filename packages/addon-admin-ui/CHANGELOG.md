@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Export tables: new strings for the Integration filter and the bulk selection bar (English and Italian)
 - A sensor notification rule can opt out of waking a sleeping battery camera for its linked picture
 - Logs → Destinations and Connectivity → Email are one list of instances: add through a provider picker, edit, test and delete a relay or destination in a dialog.
+- A notification target is no longer named after an optional discovered picker such as the email relay.
 
 ## [1.2.557] - 2026-11-02
 

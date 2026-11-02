@@ -7,6 +7,7 @@
  */
 import { alexaTargetKind } from '../../../../packages/addon-import-alexa/src/speak/provider'
 import { ALEXA_ICON_SVG } from '../../../../packages/addon-import-alexa/src/speak/icon-routes'
+import { buildEmailDescriptor } from '../../../../packages/addon-notifiers/src/adapters/email'
 import { defineFixtures } from './_define'
 
 /** Invented Echo devices. Not a real account. */
@@ -72,12 +73,29 @@ const webhookKind = {
   caps: alexaKind.caps,
 }
 
+/** The Email kind as the hub serves it: one provider, whose relays are discovered. */
+const emailKind = buildEmailDescriptor([
+  { value: 'provider-smtp', label: 'Email (SMTP) — smtp.example.com', ready: true },
+])
+
+/** An Email target pinned to a relay the provider no longer holds. */
+const EMAIL_TARGET = {
+  id: 'email-alerts',
+  addonId: 'notifiers',
+  kind: 'email',
+  name: 'Alerts',
+  enabled: true,
+  config: { to: 'ops@example.com', smtpAddonId: 'provider-smtp', smtpInstanceId: 'relay-gone' },
+}
+
 export default defineFixtures({
   area: 'notification-targets',
   description: 'Targets page with an Alexa kind: the Echo picker form and Find devices',
   handlers: {
-    'notificationOutput.listTargetKinds': [alexaKind, webhookKind],
+    'notificationOutput.listTargetKinds': [alexaKind, webhookKind, emailKind],
+    'notificationOutput.getTarget': EMAIL_TARGET,
     'notificationOutput.listTargets': [
+      EMAIL_TARGET,
       {
         id: 'alexa-echo-1',
         addonId: 'import-alexa',
@@ -95,18 +113,30 @@ export default defineFixtures({
     ],
     // The provider already skips configured Echoes; the dialog skips them again
     // (a provider that does not), so the fixture answers with all three.
-    'notificationOutput.discoverTargets': SAMPLE_ECHOES.map((device) => ({
-      kind: 'alexa-echo',
-      suggestedName: device.name,
-      config: {
-        brokerId: 'alexa_001',
-        echoId: device.id,
-        mode: 'speak',
-        volume: 40,
-        respectDnd: true,
-        family: device.family,
+    'notificationOutput.discoverTargets': [
+      {
+        kind: 'email',
+        suggestedName: 'Office relay',
+        config: { smtpInstanceId: 'relay-1a2b3c4d' },
       },
-    })),
+      {
+        kind: 'email',
+        suggestedName: 'Backup relay',
+        config: { smtpInstanceId: 'relay-5e6f7a8b' },
+      },
+      ...SAMPLE_ECHOES.map((device) => ({
+        kind: 'alexa-echo',
+        suggestedName: device.name,
+        config: {
+          brokerId: 'alexa_001',
+          echoId: device.id,
+          mode: 'speak',
+          volume: 40,
+          respectDnd: true,
+          family: device.family,
+        },
+      })),
+    ],
     'broker.list': [
       {
         id: 'alexa_001',
