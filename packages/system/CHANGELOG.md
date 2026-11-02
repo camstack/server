@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A migration converts stored pet-fountain core blocks to the split pump-cycle composition
 - An addon blocked by its own migrations no longer takes the other addons of its runner down; it is logged as blocked and skipped, and a runner where nothing could start is parked as refused instead of crash-looping.
 - An addon in a shared runner group (such as Cloudflare TURN in net-access) can save a secret field of its records, on the hub and on an agent: a record kind and its secret refs are always owned by the addon id, the hub or agent verifies which addon a grouped runner acts for, and a migration re-owns kinds an earlier build declared under the group id
+- The records-owner migration no longer stops on a kind declared under both the group and the addon: when only one side holds rows the empty one is discarded, both empty keeps the addon's, and rows on both sides fail naming each side's row count and newest update
 
 ### Fixed
 
