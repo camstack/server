@@ -221,6 +221,19 @@ describe('nc rule actions — getTemplateCatalog / previewTemplate', () => {
     expect(res.vars.length).toBeGreaterThan(0)
   })
 
+  it('nc.getTemplateCatalog serves the appliance-cycle default text, with its placeholders', async () => {
+    const handlers = makeNcActionHandlers({
+      ...(await baseDeps()),
+      previewTexts: new NcTextCatalog({ language: 'it' }),
+    })
+    const res = await handlers['nc.getTemplateCatalog']({}, U1)
+    const cycle = res.defaults.find((d) => d.id === 'appliance-cycle')
+    expect(cycle?.kind).toBe('sensor')
+    expect(cycle?.body).toContain('{{afterDuration}}')
+    expect(cycle?.body).toContain('{{usedEnergy}}')
+    expect(cycle?.title).toContain('{{device}}')
+  })
+
   it('previewTemplate is a mutation (a long draft does not fit a GET URL), with view access', () => {
     expect(ncActions['nc.previewTemplate'].kind).toBe('mutation')
     expect(ncActions['nc.previewTemplate'].auth).toBe('protected')

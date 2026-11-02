@@ -31,6 +31,7 @@ import { guardPatchSensorTransition, guardRuleSensorTransition } from './sensor-
 import { NcSequenceStore } from './sequence-store.js'
 import { NcSnoozeStore } from './snooze-store.js'
 import { NcStateSummaryService } from './state-summary/state-summary-service.js'
+import { servedTemplateDefaults } from './template-defaults.js'
 import { previewTemplate } from './template-preview.js'
 import { NcTextCatalog } from './text-catalog.js'
 import type {
@@ -345,7 +346,10 @@ export function buildProvider(host: RulesProviderHost): INotificationRulesProvid
       taxonomy: NC_TAXONOMY,
     }),
     // The SERVED catalog (D642): kinds the installed viewers cannot parse are held back.
-    getTemplateCatalog: async () => ({ vars: servedTemplateVars() }),
+    getTemplateCatalog: async () => ({
+      vars: servedTemplateVars(),
+      defaults: servedTemplateDefaults(host.texts),
+    }),
     previewTemplate: async (input) => previewTemplate(host.texts, input),
     getHistory: async ({ filter }) => {
       const entries = await host.outbox.queryHistory({

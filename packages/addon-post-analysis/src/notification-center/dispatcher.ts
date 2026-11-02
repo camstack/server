@@ -1006,6 +1006,9 @@ export interface NcTargetCatalogSnapshot {
   readonly targets: readonly NcTargetRef[]
 }
 
+/** The variables that carry a finished cycle's run summary. */
+const CYCLE_SUMMARY_VARS = ['duration', 'energy', 'afterDuration', 'usedEnergy'] as const
+
 export class NcDispatcher {
   private targetCache: ReadonlyMap<string, NcTargetRef> | null = null
   private targetCacheAt = 0
@@ -1978,6 +1981,7 @@ export class NcDispatcher {
 
   /** Rules already warned about a deprecated variable in this process — once each. */
   private readonly deprecatedVarWarned = new Set<string>()
+  private readonly cycleSummaryWarned = new Set<string>()
 
   /**
    * A rule template written by an older client may still say `{{camera}}`. It
@@ -1997,6 +2001,31 @@ export class NcDispatcher {
     this.deps.logger.warn(
       'rule template uses a renamed variable — it still renders, edit it to the new name',
       { tags: { ruleId: entry.ruleId }, meta: { variables: used, replacement: 'device' } },
+    )
+  }
+
+  /**
+   * A FINISHED-cycle row whose own template places none of the four cycle
+   * variables delivers no run summary (D391: accepted, produced less). Said
+   * once per rule; the operator's text is never touched.
+   */
+  private warnCycleSummaryDropped(entry: NcOutboxEntry): void {
+    const deviceId = entry.payload.subject.applianceCycle?.deviceId
+    const template = entry.payload.template
+    if (deviceId === undefined || template === undefined) return
+    if (this.cycleSummaryWarned.has(entry.ruleId)) return
+    const used = new Set([
+      ...templatePlaceholders(template.title ?? ''),
+      ...templatePlaceholders(template.body ?? ''),
+    ])
+    if (CYCLE_SUMMARY_VARS.some((name) => used.has(name))) return
+    this.cycleSummaryWarned.add(entry.ruleId)
+    this.deps.logger.warn(
+      'appliance cycle finished but the rule template places no run summary — the message carries no duration or energy',
+      {
+        tags: { deviceId, ruleId: entry.ruleId },
+        meta: { placeholders: [...CYCLE_SUMMARY_VARS] },
+      },
     )
   }
 
@@ -2057,6 +2086,7 @@ export class NcDispatcher {
     const cycleFacts = await this.applianceCycleFacts(entry)
     const vars = buildTemplateVars(this.texts, entry, deviceName, zoneLabels, undefined, cycleFacts)
     this.warnDeprecatedVars(entry)
+    this.warnCycleSummaryDropped(entry)
     // The count a system sentence pluralises on, frozen at intake — "3 cameras
     // armed" is one row's fact, and re-counting anything at delivery would let
     // a row held overnight report this morning's number.

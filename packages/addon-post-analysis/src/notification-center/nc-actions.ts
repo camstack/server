@@ -67,6 +67,7 @@ import {
   NcTaxonomySchema,
   NcTemplatePreviewInputSchema,
   NcTemplatePreviewSchema,
+  NcTemplateDefaultSchema,
   NcTemplateVarDescriptorSchema,
   isSystemEventSummaryRule,
   type RecordingConfig,
@@ -112,6 +113,7 @@ import {
   NcStateSummaryTestSchema,
 } from './state-summary/state-summary-test.js'
 import type { SummaryRunResult } from './summary/summary-producer.js'
+import { servedTemplateDefaults } from './template-defaults.js'
 import { previewTemplate } from './template-preview.js'
 import {
   assertSummaryBudget,
@@ -257,7 +259,10 @@ export const ncActions = defineCustomActions({
   ),
   'nc.getTemplateCatalog': customAction(
     z.object({}),
-    z.object({ vars: z.array(NcTemplateVarDescriptorSchema) }),
+    z.object({
+      vars: z.array(NcTemplateVarDescriptorSchema),
+      defaults: z.array(NcTemplateDefaultSchema),
+    }),
   ),
   // A mutation only for transport (a long draft does not fit a GET URL); it sends nothing.
   'nc.previewTemplate': customAction(NcTemplatePreviewInputSchema, NcTemplatePreviewSchema, {
@@ -1455,7 +1460,10 @@ export function makeNcActionHandlers(deps: NcActionDeps): NcActionHandlers {
     }),
 
     // The SERVED catalog (D642): kinds the installed viewers cannot parse are held back.
-    'nc.getTemplateCatalog': async () => ({ vars: servedTemplateVars() }),
+    'nc.getTemplateCatalog': async () => ({
+      vars: servedTemplateVars(),
+      defaults: deps.previewTexts === undefined ? [] : servedTemplateDefaults(deps.previewTexts),
+    }),
 
     'nc.previewTemplate': async (input) => {
       const texts = deps.previewTexts

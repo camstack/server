@@ -1208,6 +1208,8 @@ export {
   NcSystemEventDeliverySchema,
   type NcSystemEventKind,
   NcSystemEventKindSchema,
+  type NcTemplateDefault,
+  NcTemplateDefaultSchema,
   type NcTemplateFamily,
   NcTemplateFamilySchema,
   type NcTemplateField,

@@ -1844,6 +1844,23 @@ export const NcTemplateVarKindSchema = z.enum([
 ])
 export type NcTemplateVarKind = z.infer<typeof NcTemplateVarKindSchema>
 
+/**
+ * The default title/body a rule of one SITUATION is delivered with when the
+ * operator wrote no template — served so an editor can pre-fill it (and the
+ * operator can rebuild it from placeholders) instead of starting from a blank
+ * box that, once saved, silently replaces it. `id` names the situation inside
+ * a rule `kind`: `appliance-cycle` is a `sensor` rule whose device is an
+ * appliance finishing a cycle. Texts are raw templates (`{{var}}` intact), in
+ * the hub's current language and with its overrides applied.
+ */
+export const NcTemplateDefaultSchema = z.object({
+  id: z.enum(['appliance-cycle']),
+  kind: NcRuleKindSchema,
+  title: z.string(),
+  body: z.string(),
+})
+export type NcTemplateDefault = z.infer<typeof NcTemplateDefaultSchema>
+
 /** Which producer renders a template: an ordinary rule, a timelapse, a digest. */
 export const NcTemplateFamilySchema = z.enum(['rule', 'timelapse', 'summary'])
 export type NcTemplateFamily = z.infer<typeof NcTemplateFamilySchema>
@@ -3418,7 +3435,11 @@ export const notificationRulesCapability = {
     /** The declared `{{var}}` vocabulary; editors filter it with `templateVarsFor`. */
     getTemplateCatalog: method(
       z.object({}),
-      z.object({ vars: z.array(NcTemplateVarDescriptorSchema) }),
+      z.object({
+        vars: z.array(NcTemplateVarDescriptorSchema),
+        /** Per-situation default texts; absent on a hub that predates them. */
+        defaults: z.array(NcTemplateDefaultSchema),
+      }),
     ),
     /**
      * Render a template with example values, through the hub's text catalog.

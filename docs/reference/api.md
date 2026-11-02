@@ -3576,7 +3576,7 @@
 
 ### `notification-rules` → `notificationRules.*`
 
-- **Source:** `packages/types/src/capabilities/notification-rules.cap.ts:3262`
+- **Source:** `packages/types/src/capabilities/notification-rules.cap.ts:3279`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `INotificationRulesProvider`
@@ -3600,7 +3600,7 @@
 | testRule | `notificationRules.testRule` | mutation | admin | `{ rule: NcRuleInputSchema; lookbackMinutes?: number = 60 }` | `{ results: NcTestResultSchema[] }` |
 | previewStateSummary | `notificationRules.previewStateSummary` | mutation | admin | `{ rule: NcRuleInputSchema }` | `NcStateSummaryPreviewSchema` |
 | getConditionCatalog | `notificationRules.getConditionCatalog` | query | protected | `{}` | `{ catalog: NcConditionDescriptorSchema[]; taxonomy?: { videoClasses: ({ kind: string; label: string; parentKind: string \| null })[]; audioKinds: ({ kind: string; label: string; parentKind: string \| null })[]; labels: ({ kind: string; label: string; parentKind: string \| null })[] } }` |
-| getTemplateCatalog | `notificationRules.getTemplateCatalog` | query | protected | `{}` | `{ vars: NcTemplateVarDescriptorSchema[] }` |
+| getTemplateCatalog | `notificationRules.getTemplateCatalog` | query | protected | `{}` | `{ vars: NcTemplateVarDescriptorSchema[]; defaults: NcTemplateDefaultSchema[] }` |
 | previewTemplate | `notificationRules.previewTemplate` | mutation | protected | `NcTemplatePreviewInputSchema` | `NcTemplatePreviewSchema` |
 | getHistory | `notificationRules.getHistory` | query | admin | `{ filter?: NcHistoryFilterSchema = {"limit":100} }` | `{ entries: NcHistoryEntrySchema[] }` |
 | getRuleLastRuns | `notificationRules.getRuleLastRuns` | query | admin | `{}` | `NcRuleLastRunsSchema` |

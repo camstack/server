@@ -3,8 +3,12 @@
  * from the text catalog, duration and energy as separate, omit-when-unknown
  * parts read through ONE port (`NcResolveApplianceCycleFacts`).
  */
-import { describe, expect, it } from 'vitest'
-import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
+import type { IScopedLogger } from '@camstack/types'
+import { describe, expect, it, vi } from 'vitest'
+import {
+  makeSilentLogger,
+  mergeSilentLogger,
+} from '../../pipeline-analytics/__tests__/test-helpers.js'
 import {
   applianceCycleOf,
   type NcApplianceCycleFacts,
@@ -50,10 +54,12 @@ async function render(
   texts: NcTextCatalog,
   resolve: NcResolveApplianceCycleFacts | undefined,
   entry: NcOutboxEntry = finishEntry(),
+  logger: IScopedLogger = makeSilentLogger(),
+  deliveries = 1,
 ): Promise<{ title: string; body: string }> {
   const sends: NcSendInput[] = []
   const dispatcher = new NcDispatcher({
-    logger: makeSilentLogger(),
+    logger,
     texts,
     listTargets: async () => [
       { id: 't', addonId: 'notifiers', name: 'Phone', kind: 'pushover', enabled: true },
@@ -67,7 +73,7 @@ async function render(
     getZoneNames: async () => [],
     ...(resolve !== undefined ? { resolveApplianceCycleFacts: resolve } : {}),
   })
-  await dispatcher.deliver(entry)
+  for (let i = 0; i < deliveries; i += 1) await dispatcher.deliver(entry)
   const sent = sends[0]
   if (sent === undefined) throw new Error('nothing was sent')
   return { title: sent.notification.title ?? '', body: sent.notification.body }
@@ -153,5 +159,40 @@ describe('applianceCycleOf', () => {
     })
     expect(applianceCycleOf({ ...base, sensorRaised: true })).toEqual({})
     expect(applianceCycleOf({ ...base, sensorKind: 'flood', sensorRaised: false })).toEqual({})
+  })
+
+  describe('a custom template that drops the run summary is never silent (D391)', () => {
+    const spied = (): { logger: IScopedLogger; warn: ReturnType<typeof vi.fn> } => {
+      const warn = vi.fn()
+      return { logger: mergeSilentLogger({ warn }), warn }
+    }
+    const summaryFacts = facts({ durationMs: 52 * 60_000, energyKwh: 0.84 })
+
+    it('warns once per rule, tagged with the appliance, when no cycle placeholder is used', async () => {
+      const { logger, warn } = spied()
+      const entry = finishEntry({ body: '{{device}}: ha terminato' })
+      const out = await render(it_(), summaryFacts, entry, logger, 2)
+      expect(out.body).toBe('Lavatrice: ha terminato') // never auto-appended
+      const cycleWarns = warn.mock.calls.filter(([m]) => String(m).includes('run summary'))
+      expect(cycleWarns).toHaveLength(1)
+      expect(cycleWarns[0]?.[1]).toMatchObject({ tags: { deviceId: 7 } })
+    })
+
+    it('stays quiet when the template places any of the four placeholders', async () => {
+      const { logger, warn } = spied()
+      await render(
+        it_(),
+        summaryFacts,
+        finishEntry({ body: '{{device}} ok{{afterDuration}}' }),
+        logger,
+      )
+      expect(warn.mock.calls.filter(([m]) => String(m).includes('run summary'))).toHaveLength(0)
+    })
+
+    it('stays quiet for the catalog default (no custom template)', async () => {
+      const { logger, warn } = spied()
+      await render(it_(), summaryFacts, finishEntry(), logger)
+      expect(warn.mock.calls.filter(([m]) => String(m).includes('run summary'))).toHaveLength(0)
+    })
   })
 })
