@@ -315,10 +315,18 @@ level, and every linked camera is photographed at the trigger via the snapshot
 capability (`getSnapshot` — not a detection-event frame). The tracked-events
 opt-in still governs timeline rows and markers only ([D700](../decisions/adr-0700-a-linked-camera-snapshot-does-not-need-a-tracked-row.md));
 a single untracked link uses the same linked-stills shelf as a multi-camera set
-(plain still). Cameras that are offline, asleep, waking, disabled or unreachable
-are left out before any dial; a tile captured more than 10 s before the event is
-dropped as `stale`. Every exclusion is logged per camera, with its reason.
-`getSnapshot` is never called with `force`.
+(plain still). Cameras that are offline, disabled or unreachable are left out
+before any dial; a tile captured more than 10 s before the event is dropped as
+`stale`. A SLEEPING battery camera is woken, once, unless the rule opted out
+(`media.wakeSleepingCamera`, [D998](../decisions/adr-0998-a-notification-that-needs-a-sleeping-battery-camera-wakes-it-once-by-the-rules-leave-and-waits-bounded.md)):
+the shelf makes one forced `getSnapshot` under a 15 s bound, at most once per
+camera per 60 s, and a `waking` camera is re-polled without force. The
+dispatcher holds the row for that wake (up to 15 s, instead of the 3 s still
+wait) — nothing is attached after the push. Every exclusion and every wake is
+logged per camera, with its reason (`wake-skipped:policy`,
+`wake-skipped:recent-wake`, `wake-skipped:unreachable`, `wake-timeout`,
+`wake-refused`). `force` is never set for an awake, unreachable, disabled or
+offline camera, nor for the still shelf of a sound or an occupancy edge.
 
 - **Which rules fire is exactly what the per-camera rows fired.** A rule scoped
   to devices matches the SENSOR or a camera that took a timeline row for the
@@ -356,6 +364,11 @@ stills ship without it (`no still of the primary camera could be resolved`).
 Zero surviving tiles ⇒ text-only; one ⇒ that camera's plain still. The default is
 applied in the addon (`media.linkedCameras ?? 'mosaic'`), never as a Zod
 `.default()`, so absence stays absence through a partial patch.
+
+`media.wakeSleepingCamera` is the sensor-rule-only opt-out of the wake above:
+absent means on, an explicit `false` leaves a sleeping camera out of the picture
+(`wake-skipped:policy`). A set wakes when ANY rule that could fire on the event
+did not opt out.
 
 **Both editors author it, and only for a sensor rule.** The admin rule editor
 (`mediaLinkedCameras`, Notification tab) and the viewer's Notification section
@@ -2658,6 +2671,7 @@ are what a phone notification should be.
 | Field | Meaning |
 | --- | --- |
 | `image` | the picture ([D897](../decisions/adr-0897-a-notification-picture-is-one-mode-rendered-once-from-the-clean-frame.md)): `scene-boxes` · `crop` · `clean` · `none`; absent = the kind's default (a crop for a detection, the clean scene for a sensor or a sound) |
+| `wakeSleepingCamera` | sensor rules only: may the rule wake a sleeping battery camera for its linked still ([D998](../decisions/adr-0998-a-notification-that-needs-a-sleeping-battery-camera-wakes-it-once-by-the-rules-leave-and-waits-bounded.md)); absent = yes, `false` opts out |
 | `showTriggerZone` | outline the zone that FIRED the rule on a scene picture; refused on a rule whose trigger is not a zone |
 | `showSubjectPath` | draw the subject's path on the picture, every mode a crop included ([D903](../decisions/adr-0903-the-subject-path-is-one-geometry-in-camstack-types.md)); refused on a rule whose subject is not a tracked object (a sound); dropped with `image: 'none'`; absent = off |
 | `gif` / `clip` | also attach a GIF / MP4 around the event |

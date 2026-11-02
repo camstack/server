@@ -18,7 +18,9 @@ by waking. Any gate that runs *after* `ensureApi()` gates nothing.
 
 So the question at every call site is not "is this read expensive?" but **"who is
 waiting for this answer?"** — and that is only knowable at the layer where the
-intent arrives. Only the snapshot wrapper sees `force`.
+intent arrives. Only the snapshot wrapper sees `force`. A sensor notification
+whose rule allowed it is one such intent (D998): one forced snapshot per
+sleeping linked camera, bounded to 15 s, at most once a minute.
 
 ## The pieces, and why each exists
 

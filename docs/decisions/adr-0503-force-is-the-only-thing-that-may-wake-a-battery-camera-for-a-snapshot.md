@@ -83,3 +83,7 @@ that the cap mount forwards `force`, that the gate is consulted before
 cooldown helper reappears in that method. The wiring assertions are structural
 (source text): constructing a real `ReolinkCamera` needs the whole
 `DeviceContext` mocked, and the invariant is an ordering one.
+
+## Amended by D998
+
+A notification rule that left a sleeping linked camera's wake allowed is a named principal for `force` too (D998); every caller without one keeps the rule above.
