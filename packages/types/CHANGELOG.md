@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Every integration instance carries its own on/off switch: IntegrationInstance.enabled and the integrationInstances.setInstanceEnabled method
+- A discovered select field can declare noneLabel and missingLabel to be an optional picker.
+- Adds the smtp-inbound broker schemas (settings, config, filter, message).
+
 ## [1.2.478] - 2026-11-02
 
 ### Changed
@@ -16,9 +22,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - power-source: a device's own provider may call forceRestart as a bounded self-recovery (comment only).
 - A notification rule's media policy gains wakeSleepingCamera, letting a sensor rule opt out of waking a sleeping battery camera for its linked still
 - The snapshot capability documents force as a demand with a named principal, including a notification rule that allowed the wake
-- A discovered select field can declare noneLabel and missingLabel to be an optional picker.
-- Adds the smtp-inbound broker schemas (settings, config, filter, message).
-- Every integration instance carries its own on/off switch: IntegrationInstance.enabled and the integrationInstances.setInstanceEnabled method
 
 ## [1.2.477] - 2026-11-02
 
