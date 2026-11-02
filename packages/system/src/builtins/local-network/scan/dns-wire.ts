@@ -134,29 +134,84 @@ export function buildPtrQuery(
   return Buffer.concat([header, ...questions])
 }
 
-/** The services advertised on one mDNS message; a malformed packet yields none. */
-export function parseMdnsMessage(buf: Buffer): readonly MdnsService[] {
-  if (buf.length < 12) return []
+export type RecordQuestionType = 'SRV' | 'TXT' | 'A'
+
+const QUESTION_TYPE_CODE: Readonly<Record<RecordQuestionType, number>> = { SRV, TXT, A }
+
+export interface RecordQuestion {
+  /** Full DNS name, e.g. `VELUX_KLF_LAN_C527._http._tcp.local` or `velux.local`. */
+  readonly name: string
+  readonly type: RecordQuestionType
+}
+
+/** A QM (or QU when `unicastResponse`) question per record, for the follow-up that resolves an instance. */
+export function buildRecordQuery(
+  questions: readonly RecordQuestion[],
+  options: { readonly unicastResponse?: boolean } = {},
+): Buffer {
+  const questionClass = options.unicastResponse === true ? MDNS_QU_CLASS : MDNS_QM_CLASS
+  const header = Buffer.alloc(12)
+  header.writeUInt16BE(questions.length, 4)
+  const encoded = questions.map((q) => {
+    const labels = q.name.split('.').filter((part) => part.length > 0)
+    const parts = labels.map((l) => {
+      const bytes = Buffer.from(l)
+      return Buffer.concat([Buffer.from([bytes.length]), bytes])
+    })
+    const tail = Buffer.alloc(4)
+    tail.writeUInt16BE(QUESTION_TYPE_CODE[q.type], 0)
+    tail.writeUInt16BE(questionClass, 2)
+    return Buffer.concat([...parts, Buffer.from([0]), tail])
+  })
+  return Buffer.concat([header, ...encoded])
+}
+
+export interface MdnsRecords {
+  readonly ptrs: { readonly serviceType: string; readonly instance: string }[]
+  /** Keyed by lower-cased instance name. */
+  readonly srv: Map<string, { readonly target: string; readonly port: number }>
+  readonly txt: Map<string, Record<string, string>>
+  /** Keyed by lower-cased host name. */
+  readonly addresses: Map<string, string>
+}
+
+export function emptyMdnsRecords(): MdnsRecords {
+  return { ptrs: [], srv: new Map(), txt: new Map(), addresses: new Map() }
+}
+
+/** Fold the records of one message into `into`: an answer may arrive in any packet (a reflector forwards them). */
+export function mergeMdnsRecords(into: MdnsRecords, from: MdnsRecords): void {
+  for (const ptr of from.ptrs) {
+    if (!into.ptrs.some((p) => p.instance === ptr.instance && p.serviceType === ptr.serviceType)) {
+      into.ptrs.push(ptr)
+    }
+  }
+  for (const [k, v] of from.srv) into.srv.set(k, v)
+  for (const [k, v] of from.txt) into.txt.set(k, v)
+  for (const [k, v] of from.addresses) into.addresses.set(k, v)
+}
+
+/** Every PTR/SRV/TXT/A record of one mDNS message; a malformed packet yields none. */
+export function parseMdnsRecords(buf: Buffer): MdnsRecords {
+  const out = emptyMdnsRecords()
+  if (buf.length < 12) return out
   const counts = [4, 6, 8, 10].map((o) => buf.readUInt16BE(o))
   const [questions = 0, answers = 0, authorities = 0, extra = 0] = counts
   let pos = 12
   for (let i = 0; i < questions; i++) {
     const name = readName(buf, pos)
-    if (name === null) return []
+    if (name === null) return out
     pos = name.end + 4
-    if (pos > buf.length) return []
+    if (pos > buf.length) return out
   }
   const records: DnsRecord[] = []
   for (const count of [answers, authorities, extra]) {
     const read = readRecords(buf, pos, count)
-    if (read === null) return []
+    if (read === null) return out
     records.push(...read.records)
     pos = read.next
   }
-  const ptrs: { readonly serviceType: string; readonly instance: string }[] = []
-  const srv = new Map<string, { readonly target: string; readonly port: number }>()
-  const txt = new Map<string, Record<string, string>>()
-  const addresses = new Map<string, string>()
+  const { ptrs, srv, txt, addresses } = out
   for (const rec of records) {
     const key = rec.name.toLowerCase()
     if (rec.type === PTR) {
@@ -179,6 +234,12 @@ export function parseMdnsMessage(buf: Buffer): readonly MdnsService[] {
       )
     }
   }
+  return out
+}
+
+/** The services advertised on one mDNS message; a malformed packet yields none. */
+export function parseMdnsMessage(buf: Buffer): readonly MdnsService[] {
+  const { ptrs, srv, txt, addresses } = parseMdnsRecords(buf)
   const out: MdnsService[] = []
   for (const { serviceType, instance } of ptrs) {
     const service = srv.get(instance.toLowerCase())

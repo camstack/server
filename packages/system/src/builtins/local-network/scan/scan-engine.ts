@@ -26,10 +26,15 @@ import {
 } from '@camstack/types'
 import {
   buildPtrQuery,
+  buildRecordQuery,
+  emptyMdnsRecords,
   MDNS_GROUP,
   MDNS_PORT,
+  type MdnsRecords,
+  mergeMdnsRecords,
   normalizeServiceType,
-  parseMdnsMessage,
+  parseMdnsRecords,
+  type RecordQuestion,
 } from './dns-wire.js'
 import { type HttpProbeRequest, MAX_HIT_BODY_BYTES, type ScanIo, type UdpReply } from './scan-io.js'
 import {
@@ -45,6 +50,8 @@ export const SCAN_REQUEST_TIMEOUT_MS = 1_200
 /** Wi-Fi boards drop or late-answer one multicast query: send it three times, listen to the end. */
 const MULTICAST_RESEND_AT_MS: readonly number[] = [1_200, 2_500]
 const MULTICAST_LISTEN_MS = 4_500
+/** One follow-up question on a link (SRV+TXT, then A): sent once, listened to briefly. */
+const FOLLOW_UP_LISTEN_MS = 1_500
 /** Unicast DNS-SD probes to extra subnets get one retry. */
 const UNICAST_RESEND_AT_MS: readonly number[] = [900]
 const UNICAST_LISTEN_MS = 2_000
@@ -78,6 +85,8 @@ interface Collector {
   readonly hits: { providerId: string; hit: DiscoveryHit }[]
   readonly errors: { providerId?: string; mode?: string; message: string }[]
   readonly stats: Map<string, { probed: number; hits: number; timeouts: number }>
+  /** mDNS instances named by a PTR that never resolved to a host and port. */
+  mdnsUnresolved: number
 }
 
 function bucket(c: Collector, kind: ModeKind): { probed: number; hits: number; timeouts: number } {
@@ -181,17 +190,22 @@ function instanceLabel(instance: string): string {
  * query alone never found it. A bind or membership failure is a named skip and the
  * link falls back to the QU query, which still finds same-link devices.
  */
+interface MdnsTiming {
+  readonly resendAtMs: readonly number[]
+  readonly listenMs: number
+}
+
 async function exchangeOnLink(
   deps: ScanEngineDeps,
   link: LocalInterface,
   groupQuery: Buffer,
   fallbackQuery: Buffer,
+  timing: MdnsTiming = { resendAtMs: MULTICAST_RESEND_AT_MS, listenMs: MULTICAST_LISTEN_MS },
 ): Promise<readonly UdpReply[]> {
   const request = {
     targets: [{ host: MDNS_GROUP, port: MDNS_PORT }],
     localAddress: link.address,
-    resendAtMs: MULTICAST_RESEND_AT_MS,
-    listenMs: MULTICAST_LISTEN_MS,
+    ...timing,
   }
   try {
     return await deps.io.udpExchange({
@@ -239,30 +253,108 @@ async function runMdns(
       })),
     )
   }
-  for (const reply of dedupeReplies(replies)) {
-    for (const service of parseMdnsMessage(reply.data)) {
-      for (const entry of entries) {
-        if (normalizeServiceType(entry.mode.serviceType) !== service.serviceType) continue
-        const label = instanceLabel(service.instance)
-        if (
-          entry.mode.instancePattern !== undefined &&
-          !matches(entry.mode.instancePattern, label)
-        ) {
-          continue
-        }
-        const host = service.address ?? reply.host
-        emit(c, entry, {
-          host,
-          port: service.port,
-          mdns: {
-            instance: label,
-            host: service.host,
-            port: service.port,
-            txt: service.txt,
-          },
-        })
-      }
+  const records = emptyMdnsRecords()
+  for (const reply of dedupeReplies(replies))
+    mergeMdnsRecords(records, parseMdnsRecords(reply.data))
+  const wanted = wantedInstances(entries, records)
+  await followUp(deps, links, records, wanted, 'srv', c)
+  await followUp(deps, links, records, wanted, 'a', c)
+  const unresolved = new Map<string, string>()
+  for (const { ptr, label, entry } of wanted) {
+    const service = records.srv.get(ptr.instance.toLowerCase())
+    if (service === undefined) {
+      unresolved.set(ptr.instance, 'srv-unresolved')
+      continue
     }
+    const host = records.addresses.get(service.target.toLowerCase())
+    if (host === undefined) {
+      unresolved.set(ptr.instance, 'a-unresolved')
+      continue
+    }
+    emit(c, entry, {
+      host,
+      port: service.port,
+      mdns: {
+        instance: label,
+        host: service.target,
+        port: service.port,
+        txt: records.txt.get(ptr.instance.toLowerCase()) ?? {},
+      },
+    })
+  }
+  for (const [instance, reason] of unresolved) {
+    c.mdnsUnresolved += 1
+    deps.logger.info('local-network: mdns instance not resolved, left out of the hits', {
+      meta: { instance: instanceLabel(instance), reason },
+    })
+  }
+}
+
+interface WantedInstance {
+  readonly ptr: MdnsRecords['ptrs'][number]
+  readonly label: string
+  readonly entry: Entry<Extract<DiscoveryMode, { kind: 'mdns' }>>
+}
+
+/** The PTR answers some request asked for: its type and its instance pattern both match. */
+function wantedInstances(
+  entries: readonly Entry<Extract<DiscoveryMode, { kind: 'mdns' }>>[],
+  records: MdnsRecords,
+): readonly WantedInstance[] {
+  const out: WantedInstance[] = []
+  for (const ptr of records.ptrs) {
+    for (const entry of entries) {
+      if (normalizeServiceType(entry.mode.serviceType) !== normalizeServiceType(ptr.serviceType)) {
+        continue
+      }
+      const label = instanceLabel(ptr.instance)
+      if (entry.mode.instancePattern !== undefined && !matches(entry.mode.instancePattern, label)) {
+        continue
+      }
+      out.push({ ptr, label, entry })
+    }
+  }
+  return out
+}
+
+/**
+ * One follow-up question per link for what the PTR answer left out: SRV+TXT of the
+ * instances without an SRV, or the A record of the SRV targets without an address.
+ * The answers are folded in whichever packet carries them.
+ */
+async function followUp(
+  deps: ScanEngineDeps,
+  links: readonly LocalInterface[],
+  records: MdnsRecords,
+  wanted: readonly WantedInstance[],
+  stage: 'srv' | 'a',
+  c: Collector,
+): Promise<void> {
+  const questions = new Map<string, RecordQuestion>()
+  for (const { ptr } of wanted) {
+    const service = records.srv.get(ptr.instance.toLowerCase())
+    if (stage === 'srv' && service === undefined) {
+      questions.set(`SRV ${ptr.instance}`, { name: ptr.instance, type: 'SRV' })
+      questions.set(`TXT ${ptr.instance}`, { name: ptr.instance, type: 'TXT' })
+    } else if (
+      stage === 'a' &&
+      service !== undefined &&
+      !records.addresses.has(service.target.toLowerCase())
+    ) {
+      questions.set(`A ${service.target}`, { name: service.target, type: 'A' })
+    }
+  }
+  if (questions.size === 0) return
+  const list = [...questions.values()]
+  const groupQuery = buildRecordQuery(list)
+  const fallbackQuery = buildRecordQuery(list, { unicastResponse: true })
+  for (const link of links) {
+    bucket(c, 'mdns').probed += 1
+    const replies = await exchangeOnLink(deps, link, groupQuery, fallbackQuery, {
+      resendAtMs: [],
+      listenMs: FOLLOW_UP_LISTEN_MS,
+    })
+    for (const reply of replies) mergeMdnsRecords(records, parseMdnsRecords(reply.data))
   }
 }
 
@@ -573,7 +665,7 @@ export async function runScan(deps: ScanEngineDeps, input: ScanInput): Promise<S
     saved: deps.savedSubnets(),
     perCall: input.subnets ?? [],
   })
-  const c: Collector = { hits: [], errors: [], stats: new Map() }
+  const c: Collector = { hits: [], errors: [], stats: new Map(), mdnsUnresolved: 0 }
   await Promise.all([
     guarded(c, 'mdns', () => runMdns(deps, entriesOf(input.requests, 'mdns'), subnets, c)),
     guarded(c, 'ws-discovery', () =>
@@ -601,6 +693,7 @@ export async function runScan(deps: ScanEngineDeps, input: ScanInput): Promise<S
       hostsProbed: stats.hostsProbed,
       hits: stats.hits,
       timeouts: stats.timeouts,
+      mdnsUnresolved: c.mdnsUnresolved,
       errors: c.errors.length,
       byMode,
       hitsBySubnet: hitsBySubnet(subnets, c.hits),
