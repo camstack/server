@@ -39,7 +39,24 @@ The per-destination on/off switch of a log destination
 D985 and D986 are narrowed: a connection is a record, not an addon-level setting. Loki is the
 pilot; its settings schema is gone and a hub-only migration moves the old values (the
 procedure `loki-logging/2026-11-02-connection-to-records`, then a `deleteKeys` plan). Agents
-have no provider and re-read the record on a short period. Wave b moves the mail relays.
+have no provider and re-read the record on a short period. Wave b moves the mail relays (below).
+
+### Wave b - the SMTP relays (`smtp-nodemailer`)
+
+`smtp-nodemailer` is the first MULTI-instance connection: record kind `relays`, one row per
+relay (host, port, secure, username, password as a keychain secret, From address and name), the
+integration id as the relay id, `describe().instanceMode = 'multiple'`. The addon drops its
+`globalSettingsSchema`. `smtp-provider` `sendEmail`, `verify` and `getStatus` gain an optional
+`instanceId` (additive; `verify` and `getStatus` take an object input now, `{}` for none): absent
+means the first configured relay, an unknown id is an error, a provider with one fixed relay
+ignores it. The notifier email adapter forwards an optional per-target `smtpInstanceId`.
+Two migrations, same shape as Loki's: a `procedure` that creates the integration row and the
+record (an existing record is never overwritten, the only password copy is cleared once the
+record holds it, a stored odd port or TLS flag is clamped or coerced to the kind schema so it
+never blocks the owner), then a `deleteKeys` plan on the canonical `addon-settings` table that
+runs only once the record is confirmed to hold the host and the password. The addon is an npm
+addon, hub-only, one forked process; it reads its settings from the same canonical table as a
+builtin, through the settings-store door.
 
 ## Enforcement
 

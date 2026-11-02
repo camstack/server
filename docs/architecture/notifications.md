@@ -2640,6 +2640,16 @@ Send failures are returned and logged through `stripUrls` (`provider.ts`): a
 transport error names the url it dialled, and for Telegram (token in the path)
 or Discord (the URL is the secret) that url is the credential.
 
+### An email target picks a provider and, optionally, one relay ([D996](../decisions/adr-0996-connection-holding-addons-are-integration-instances.md))
+
+The email target's `smtpAddonId` picks the `smtp-provider` (the collection pin). A provider that
+holds several relays (`smtp-nodemailer`: one `relays` record per relay, each an integration
+instance) is narrowed by the optional `smtpInstanceId`, the relay's integration id (`int_NNNN`),
+which the adapter sends as `instanceId` on `sendEmail`. A target with no pin gets the provider's
+first configured relay, so every target written before relays existed keeps working unchanged. An
+unknown relay id is refused by name; it is never answered by another relay. A provider with one
+fixed relay (the Google Gmail API) ignores `instanceId`.
+
 ## The media policy
 
 One rule states what a notification carries. All of it is optional; the defaults
