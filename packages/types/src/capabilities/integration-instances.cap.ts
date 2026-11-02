@@ -55,6 +55,11 @@ export const IntegrationInstanceSchema = z.object({
   name: z.string(),
   /** The addon's own rule (an URL is present, a client id is present...). */
   configured: z.boolean(),
+  /**
+   * The instance's own on/off switch (D996): always present, derived from the record body
+   * (`enabled !== false`, so a row written before the field existed is on).
+   */
+  enabled: z.boolean(),
   /** Values for the instance form; a secret is a `SecretFieldView`, never text. */
   formValues: z.record(z.string(), z.unknown()),
   status: IntegrationInstanceStatusSchema.optional(),
@@ -99,6 +104,15 @@ export const integrationInstancesCapability = {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /**
+     * Switch ONE instance on or off. A row control, not a form field: `updateInstance.values` is the
+     * form patch (D62, D996). An off instance keeps its record and secrets and does no work.
+     */
+    setInstanceEnabled: method(
+      z.object({ id: IntegrationInstanceIdSchema, enabled: z.boolean() }),
+      z.object({ ok: z.literal(true) }),
+      { kind: 'mutation', auth: 'admin' },
+    ),
     /** Delete the record and its keychain refs together. */
     deleteInstance: method(
       z.object({ id: IntegrationInstanceIdSchema }),

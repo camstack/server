@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**201 capabilities · 1490 methods.**
+**201 capabilities · 1491 methods.**
 
 ## Method index
 
@@ -528,6 +528,7 @@
 | `integrationInstances.getInstance` | query | admin | integration-instances |
 | `integrationInstances.createInstance` | mutation | admin | integration-instances |
 | `integrationInstances.updateInstance` | mutation | admin | integration-instances |
+| `integrationInstances.setInstanceEnabled` | mutation | admin | integration-instances |
 | `integrationInstances.deleteInstance` | mutation | admin | integration-instances |
 | `integrationInstances.testInstance` | mutation | admin | integration-instances |
 | `integrations.list` | query | protected | integrations |
@@ -2938,7 +2939,7 @@
 
 ### `integration-instances` → `integrationInstances.*`
 
-- **Source:** `packages/types/src/capabilities/integration-instances.cap.ts:72`
+- **Source:** `packages/types/src/capabilities/integration-instances.cap.ts:77`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection`
 - **Archetypes:** —
 - **Provider interface:** `IIntegrationInstancesProvider`
@@ -2951,6 +2952,7 @@
 | getInstance | `integrationInstances.getInstance` | query | admin | `{ id: string }` | `IntegrationInstanceSchema \| null` |
 | createInstance | `integrationInstances.createInstance` | mutation | admin | `{ id: string; name: string }` | `{ id: string }` |
 | updateInstance | `integrationInstances.updateInstance` | mutation | admin | `IntegrationInstancePatchSchema` | `{ ok: true }` |
+| setInstanceEnabled | `integrationInstances.setInstanceEnabled` | mutation | admin | `{ id: string; enabled: boolean }` | `{ ok: true }` |
 | deleteInstance | `integrationInstances.deleteInstance` | mutation | admin | `{ id: string }` | `{ ok: true }` |
 | testInstance | `integrationInstances.testInstance` | mutation | admin | `{ id: string \| null; values: Record<string, unknown> }` | `TestConnectionResultSchema` |
 

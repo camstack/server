@@ -103,7 +103,7 @@ export interface SystemProxy {
   readonly displayPalette: Pick<InferProvider<typeof displayPaletteCapability>, 'getPalette' | 'listPresets' | 'setPalette'>
   readonly faceGallery: Pick<InferProvider<typeof faceGalleryCapability>, 'listIdentities' | 'createIdentity' | 'renameIdentity' | 'deleteIdentity' | 'listIdentitySamples' | 'auditIdentitySamples' | 'removeSample' | 'getFaceMedia' | 'assignFace' | 'unassignFace' | 'deleteFace' | 'assignFaces' | 'unassignFaces' | 'suggestFaceClusters'>
   readonly fanPresets: Pick<InferProvider<typeof fanPresetsCapability>, 'getPresets' | 'setPresets' | 'applyPreset' | 'capturePreset'>
-  readonly integrationInstances: Pick<InferProvider<typeof integrationInstancesCapability>, 'describe' | 'instanceFormSchema' | 'listInstances' | 'getInstance' | 'createInstance' | 'updateInstance' | 'deleteInstance' | 'testInstance'>
+  readonly integrationInstances: Pick<InferProvider<typeof integrationInstancesCapability>, 'describe' | 'instanceFormSchema' | 'listInstances' | 'getInstance' | 'createInstance' | 'updateInstance' | 'setInstanceEnabled' | 'deleteInstance' | 'testInstance'>
   readonly integrations: Pick<InferProvider<typeof integrationsCapability>, 'list' | 'get' | 'getByAddonId' | 'create' | 'update' | 'delete' | 'getSettings' | 'setSettings' | 'getAvailableTypes' | 'testConnection'>
   readonly keychainAdmin: Pick<InferProvider<typeof keychainAdminCapability>, 'status' | 'listSecrets' | 'listAudit' | 'reveal' | 'setSystemSecret' | 'importSecret' | 'deleteOrphans' | 'rotateMasterKey' | 'purgeRetiredKeys' | 'downloadRecoveryKey' | 'resetKeychain' | 'resetReport' | 'acknowledgeReset'>
   readonly llm: Pick<InferProvider<typeof llmCapability>, 'generate' | 'generateVision' | 'cancel' | 'listProfileKinds' | 'listProfiles' | 'upsertProfile' | 'migrateRawSecrets' | 'deleteProfile' | 'testProfile' | 'listModels' | 'getDefaults' | 'setDefault' | 'getUsage' | 'listModelCatalog' | 'listRuntimeNodes' | 'listNodeModels' | 'resolveModelRef' | 'installModel' | 'deleteModel' | 'getRuntimeStatus' | 'startRuntime' | 'stopRuntime'>
@@ -510,6 +510,7 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     getInstance: (input?: unknown) => dispatch('integrationInstances', 'getInstance', 'query', input),
     createInstance: (input?: unknown) => dispatch('integrationInstances', 'createInstance', 'mutation', input),
     updateInstance: (input?: unknown) => dispatch('integrationInstances', 'updateInstance', 'mutation', input),
+    setInstanceEnabled: (input?: unknown) => dispatch('integrationInstances', 'setInstanceEnabled', 'mutation', input),
     deleteInstance: (input?: unknown) => dispatch('integrationInstances', 'deleteInstance', 'mutation', input),
     testInstance: (input?: unknown) => dispatch('integrationInstances', 'testInstance', 'mutation', input),
   }

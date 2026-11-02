@@ -28,7 +28,10 @@ import { secretViewsOf } from '../records/secret-views.js'
 /** The most instances one addon lists (an integrations page, not a table). */
 const INSTANCES_LIST_MAX = 1000
 
-export interface RecordIntegrationInstancesHooks<TBody extends Record<string, unknown>> {
+/** What every instance body carries: an absent `enabled` means on (no data migration). */
+export type InstanceBody = Record<string, unknown> & { readonly enabled?: boolean | undefined }
+
+export interface RecordIntegrationInstancesHooks<TBody extends InstanceBody> {
   readonly description: {
     readonly instanceMode: 'single' | 'multiple'
     readonly kind: string
@@ -57,13 +60,15 @@ function topLevelSecretKeys(paths: readonly string[]): ReadonlySet<string> {
 /** Whether an instance's secret fields were read (`resolved`) or the keychain refused (`unavailable`). */
 export type ResolvedSecretsState = 'resolved' | 'unavailable'
 
-export interface ResolvedInstance<TBody extends Record<string, unknown>> {
+export interface ResolvedInstance<TBody extends InstanceBody> {
   readonly id: string
   readonly body: TBody
+  /** The instance's own switch; an absent value in the body reads as on. */
+  readonly enabled: boolean
   readonly secrets: ResolvedSecretsState
 }
 
-export class RecordIntegrationInstances<TBody extends Record<string, unknown>> {
+export class RecordIntegrationInstances<TBody extends InstanceBody> {
   private readonly handle: RecordKindHandle<TBody>
   private readonly secretKeys: ReadonlySet<string>
   private readonly nameField: string
@@ -86,7 +91,9 @@ export class RecordIntegrationInstances<TBody extends Record<string, unknown>> {
   async readResolved(id: string): Promise<ResolvedInstance<TBody> | null> {
     try {
       const record = await this.handle.getResolved(id)
-      return record === null ? null : { id, body: record.data, secrets: 'resolved' }
+      return record === null
+        ? null
+        : { id, body: record.data, enabled: record.data.enabled !== false, secrets: 'resolved' }
     } catch (err: unknown) {
       if (!(err instanceof RecordSecretUnavailableError)) throw err
       const stored = await this.handle.get(id)
@@ -96,7 +103,12 @@ export class RecordIntegrationInstances<TBody extends Record<string, unknown>> {
         Object.entries(stored.data).filter(([key]) => !this.secretKeys.has(key)),
       )
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- documented type boundary: the stored body minus its secret keys, which the kind schema marks optional
-      return { id, body: open as TBody, secrets: 'unavailable' }
+      return {
+        id,
+        body: open as TBody,
+        enabled: stored.data.enabled !== false,
+        secrets: 'unavailable',
+      }
     }
   }
 
@@ -129,6 +141,7 @@ export class RecordIntegrationInstances<TBody extends Record<string, unknown>> {
       id: record.id,
       name: typeof rawName === 'string' ? rawName : record.id,
       configured: this.hooks.configured(record.data),
+      enabled: record.data.enabled !== false,
       formValues: shown,
     }
   }
@@ -183,6 +196,16 @@ export class RecordIntegrationInstances<TBody extends Record<string, unknown>> {
     return { ok: true as const }
   }
 
+  /** The switch lives in the record body; the addon is told so it applies it (D996). */
+  setInstanceEnabled: IIntegrationInstancesProvider['setInstanceEnabled'] = async ({
+    id,
+    enabled,
+  }) => {
+    await this.handle.patch(id, { enabled })
+    await this.hooks.onChanged?.(id)
+    return { ok: true as const }
+  }
+
   /** The row and its keychain refs go together (the records door). */
   deleteInstance: IIntegrationInstancesProvider['deleteInstance'] = async ({ id }) => {
     await this.handle.delete(id)
@@ -210,6 +233,7 @@ export class RecordIntegrationInstances<TBody extends Record<string, unknown>> {
       getInstance: this.getInstance,
       createInstance: this.createInstance,
       updateInstance: this.updateInstance,
+      setInstanceEnabled: this.setInstanceEnabled,
       deleteInstance: this.deleteInstance,
       testInstance: this.testInstance,
     }

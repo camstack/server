@@ -12,6 +12,7 @@ const BodySchema = z.object({
   url: z.string(),
   username: z.string(),
   password: z.string().optional().meta({ secret: true }),
+  enabled: z.boolean().optional(),
 })
 type Body = z.infer<typeof BodySchema>
 
@@ -147,5 +148,38 @@ describe('RecordIntegrationInstances', () => {
     expect(read?.secrets).toBe('unavailable')
     const [listed] = await instances.listResolved()
     expect(listed?.secrets).toBe('unavailable')
+  })
+
+  it('a new instance is enabled', async () => {
+    const { instances } = await setup()
+    await instances.createInstance({ id: 'int_1', name: 'A' })
+    expect((await instances.getInstance({ id: 'int_1' }))?.enabled).toBe(true)
+  })
+
+  it('setInstanceEnabled(false) is reported off in list and get, and tells the addon', async () => {
+    const { instances, changed } = await setup()
+    await instances.createInstance({ id: 'int_1', name: 'A' })
+    await instances.createInstance({ id: 'int_2', name: 'B' })
+    changed.length = 0
+    await expect(instances.setInstanceEnabled({ id: 'int_1', enabled: false })).resolves.toEqual({
+      ok: true,
+    })
+    expect((await instances.getInstance({ id: 'int_1' }))?.enabled).toBe(false)
+    const listed = await instances.listInstances()
+    expect(listed.find((i) => i.id === 'int_1')?.enabled).toBe(false)
+    expect(listed.find((i) => i.id === 'int_2')?.enabled).toBe(true)
+    expect(changed).toEqual(['int_1'])
+    expect((await instances.readResolved('int_1'))?.enabled).toBe(false)
+    await instances.setInstanceEnabled({ id: 'int_1', enabled: true })
+    expect((await instances.getInstance({ id: 'int_1' }))?.enabled).toBe(true)
+  })
+
+  it('a row written without the field reads as enabled', async () => {
+    const { world, instances } = await setup()
+    await world.records
+      .kind(kind)
+      .put({ id: 'int_9', data: { name: 'Old', url: '', username: '' } })
+    expect((await instances.getInstance({ id: 'int_9' }))?.enabled).toBe(true)
+    expect((await instances.readResolved('int_9'))?.enabled).toBe(true)
   })
 })

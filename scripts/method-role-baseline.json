@@ -514,6 +514,7 @@
   "integrationInstances.getInstance": "admin",
   "integrationInstances.instanceFormSchema": "admin",
   "integrationInstances.listInstances": "admin",
+  "integrationInstances.setInstanceEnabled": "admin",
   "integrationInstances.testInstance": "admin",
   "integrationInstances.updateInstance": "admin",
   "integrations.create": "admin",

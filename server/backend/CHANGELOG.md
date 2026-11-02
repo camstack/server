@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Rebuilt against updated dependencies.
+### Changed
+
+- The integration-instances capability gains setInstanceEnabled and an enabled field in every instance view
 
 ## [1.2.739] - 2026-11-02
 

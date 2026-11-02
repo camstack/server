@@ -8134,6 +8134,23 @@ export function createCapRouter_integrationInstances(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.updateInstance(methodInput as any)
       }),
+    setInstanceEnabled: adminProcedure
+      .input(integrationInstancesCapability.methods.setInstanceEnabled.input.loose())
+      .output(integrationInstancesCapability.methods.setInstanceEnabled.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, addonId, ...methodInput } = input as {
+          nodeId?: string
+          addonId?: string
+        } & Record<string, unknown>
+        const p = resolveProvider(
+          'integration-instances',
+          nodeId,
+          () => getProvider(ctx, addonId),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.setInstanceEnabled(methodInput as any)
+      }),
     deleteInstance: adminProcedure
       .input(integrationInstancesCapability.methods.deleteInstance.input.loose())
       .output(integrationInstancesCapability.methods.deleteInstance.output)

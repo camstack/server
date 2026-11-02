@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The snapshot capability documents force as a demand with a named principal, including a notification rule that allowed the wake
 - A discovered select field can declare noneLabel and missingLabel to be an optional picker.
 - Adds the smtp-inbound broker schemas (settings, config, filter, message).
+- Every integration instance carries its own on/off switch: IntegrationInstance.enabled and the integrationInstances.setInstanceEnabled method
 
 ## [1.2.477] - 2026-11-02
 

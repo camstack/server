@@ -1430,6 +1430,9 @@ export const useIntegrationInstancesCreateInstance: typeof trpc.integrationInsta
 /** Generated alias around `trpc.integrationInstances.updateInstance.useMutation`. */
 export const useIntegrationInstancesUpdateInstance: typeof trpc.integrationInstances.updateInstance.useMutation = /*#__PURE__*/ alias(() => trpc.integrationInstances.updateInstance.useMutation)
 
+/** Generated alias around `trpc.integrationInstances.setInstanceEnabled.useMutation`. */
+export const useIntegrationInstancesSetInstanceEnabled: typeof trpc.integrationInstances.setInstanceEnabled.useMutation = /*#__PURE__*/ alias(() => trpc.integrationInstances.setInstanceEnabled.useMutation)
+
 /** Generated alias around `trpc.integrationInstances.deleteInstance.useMutation`. */
 export const useIntegrationInstancesDeleteInstance: typeof trpc.integrationInstances.deleteInstance.useMutation = /*#__PURE__*/ alias(() => trpc.integrationInstances.deleteInstance.useMutation)
 

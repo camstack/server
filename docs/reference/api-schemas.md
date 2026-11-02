@@ -2775,6 +2775,7 @@ Enum: `"single" \| "multiple"`
 - `id`: `string`
 - `name`: `string`
 - `configured`: `boolean`
+- `enabled`: `boolean`
 - `formValues`: `Record<string, unknown>`
 - `status?`: `IntegrationInstanceStatusSchema`
 
