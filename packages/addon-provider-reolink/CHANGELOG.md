@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Battery-camera motion push (HaCfg webhook) is now received on the addon's own HTTP endpoint at the hub's internal address (System → Network) instead of a separate port 9081; cameras already using it are re-pointed automatically the next time they connect, and the old webhook settings are removed
+
 ## [1.2.219] - 2026-11-02
 
 ### Changed
 
 - Battery cameras now mail motion to the camera mailbox of the Email (SMTP) addon instead of a server inside Reolink; your cameras keep their port, address and credentials, and the mailbox appears under Brokers; Reolink starts and runs its cameras even when the Email (SMTP) addon is not installed, and creates the mailbox with your old credentials as soon as it is available
-- Battery-camera motion push (HaCfg webhook) is now received on the addon's own HTTP endpoint at the hub's internal address (System → Network) instead of a separate port 9081; cameras already using it are re-pointed automatically the next time they connect, and the old webhook settings are removed
 
 ## [1.2.218] - 2026-11-02
 

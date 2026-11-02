@@ -7,13 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.2.479] - 2026-11-02
-
 ### Changed
 
 - Every integration instance carries its own on/off switch: IntegrationInstance.enabled and the integrationInstances.setInstanceEnabled method
 - A discovered select field can declare noneLabel and missingLabel to be an optional picker.
 - Adds the smtp-inbound broker schemas (settings, config, filter, message).
+- Addon declarations can state integrationRole (devices, services or both) so a dual entry is listed on Integrations
+- New board-key-source capability: where a device board's API encryption key can be read from.
+- The pet fountain's pump on/off cycle moved to its own optional pump-cycle capability; maintenance cadences are consumables
+
+## [1.2.479] - 2026-11-02
 
 ## [1.2.478] - 2026-11-02
 
@@ -27,9 +30,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A discovered select field can declare noneLabel and missingLabel to be an optional picker.
 - Adds the smtp-inbound broker schemas (settings, config, filter, message).
 - Every integration instance carries its own on/off switch: IntegrationInstance.enabled and the integrationInstances.setInstanceEnabled method
-- Addon declarations can state integrationRole (devices, services or both) so a dual entry is listed on Integrations
-- New board-key-source capability: where a device board's API encryption key can be read from.
-- The pet fountain's pump on/off cycle moved to its own optional pump-cycle capability; maintenance cadences are consumables
 
 ## [1.2.477] - 2026-11-02
 

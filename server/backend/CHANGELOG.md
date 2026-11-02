@@ -7,19 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Integrations page lists an addon by its declared integrationRole; a dual entry (devices and service instances) is no longer hidden
+- Generated capability routers include the pump-cycle capability
+
 ## [1.2.741] - 2026-11-02
 
 ### Changed
 
 - The integration-instances capability gains setInstanceEnabled and an enabled field in every instance view
-- Integrations page lists an addon by its declared integrationRole; a dual entry (devices and service instances) is no longer hidden
 
 ## [1.2.740] - 2026-11-02
 
 ### Changed
 
 - Rebuilt against updated dependencies.
-- Generated capability routers include the pump-cycle capability
 
 ## [1.2.739] - 2026-11-02
 

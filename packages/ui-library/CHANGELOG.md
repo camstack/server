@@ -7,20 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Regenerated capability hooks for the new board-key-source capability.
+- The pet fountain panel shows the pump cycle section only when the device has the pump-cycle capability
+
 ## [1.2.374] - 2026-11-02
 
 ### Changed
 
 - A select that discovers its options can be an optional picker ('Default' choice, 'missing' label for a gone value); the device export table's Type filter is searchable like Role and Integration.
 - A searchable select no longer throws after it closes on a page that was just left.
-- Regenerated capability hooks for the new board-key-source capability.
 
 ## [1.2.373] - 2026-11-02
 
 ### Changed
 
 - Device export table: selectors on the left with the search on the right, searchable Role and Integration filters showing display names, a bulk bar with select all / none, and a multi export that now lands every selected device
-- The pet fountain panel shows the pump cycle section only when the device has the pump-cycle capability
 
 ## [1.2.372] - 2026-11-02
 
