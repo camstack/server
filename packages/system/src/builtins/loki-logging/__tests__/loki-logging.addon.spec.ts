@@ -123,14 +123,13 @@ describe('LokiLoggingAddon — one enable (D777)', () => {
     expect(setCapabilityProviderEnabled).not.toHaveBeenCalled()
   })
 
-  it('declares no `enabled` field in its settings schema', async () => {
+  it('declares no connection setting (D985): the connection form belongs to the record', async () => {
     const { addon } = await boot({ [RETIREMENT_MARKER_KEY]: true })
     addons.push(addon)
     const schema = await addon.getGlobalSettings()
     const keys = (schema?.sections ?? []).flatMap((s) =>
       s.fields.map((f) => ('key' in f ? f.key : null)),
     )
-    expect(keys).not.toContain('enabled')
-    expect(keys).toContain('url')
+    expect(keys).toEqual([])
   })
 })

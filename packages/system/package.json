@@ -115,6 +115,9 @@
         "capabilities": [
           {
             "name": "log-destination"
+          },
+          {
+            "name": "integration-instances"
           }
         ]
       },

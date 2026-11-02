@@ -16,9 +16,27 @@
  *
  * Why Loki's push API rather than Promtail: see the docblock in `loki-payload.ts`.
  */
-import type { ConfigUISchema, LogLevel, ProviderRegistration } from '@camstack/types'
-import { BaseAddon, logDestinationCapability } from '@camstack/types'
+import type {
+  ConfigUISchema,
+  IntegrationTestConnectionResult,
+  ProviderRegistration,
+} from '@camstack/types'
+import {
+  BaseAddon,
+  defineAddonMigrations,
+  integrationInstancesCapability,
+  logDestinationCapability,
+  isSecretMarker,
+  RecordIntegrationInstances,
+  RevConflictError,
+} from '@camstack/types'
 import { LokiDestination, type LokiConfig } from './loki-destination.js'
+import {
+  LOKI_DEFAULT_BODY,
+  type LokiDestinationBody,
+  lokiDestinationsKind,
+} from './loki-record-kinds.js'
+import { ADDON_MIGRATIONS } from './migrations/index.js'
 import {
   RETIRED_ENABLED_KEY,
   RETIREMENT_MARKER_KEY,
@@ -30,60 +48,168 @@ import {
  *  provider registration reaches the hub. After the last, the next boot retries. */
 const RETIREMENT_RETRY_DELAYS_MS: readonly number[] = [1_000, 2_000, 5_000, 10_000, 30_000, 60_000]
 
-interface LokiAddonConfig {
-  // No `enabled` here (D777): the per-destination capability toggle is the
-  // only enable. The retired flag is carried over once by `retire-enabled-flag.ts`.
-  readonly url: string
-  readonly job: string
-  readonly level: LogLevel
-  readonly batchIntervalMs: number
-  readonly batchSize: number
-  readonly extraLabels: string
-  readonly tenantId: string
-  readonly username: string
-  readonly password: string
-  readonly timeoutMs: number
-}
+/**
+ * The addon keeps NO connection setting of its own (D985): the connection is a `destinations`
+ * record. What remains in the settings store is the D777 retirement marker only.
+ */
+type LokiAddonConfig = Readonly<Record<string, unknown>>
 
-const DEFAULTS: LokiAddonConfig = {
-  url: '',
-  job: 'camstack',
-  level: 'info',
-  batchIntervalMs: 5_000,
-  batchSize: 200,
-  extraLabels: '',
-  tenantId: '',
-  username: '',
-  password: '',
-  timeoutMs: 10_000,
-}
+/** An agent re-reads the record on this period; the hub applies a change at once (`onChanged`). */
+const AGENT_REFRESH_MS = 30_000
+
+/** Where the connection probe asks: Loki answers `ready` once its ring is up. */
+const READY_PATH = '/ready'
 
 export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
   private destination: LokiDestination | null = null
+  private instances: RecordIntegrationInstances<LokiDestinationBody> | null = null
+  private current: LokiDestinationBody | null = null
+  private refreshTimer: ReturnType<typeof setInterval> | null = null
   private retirementTimer: ReturnType<typeof setTimeout> | null = null
   private shuttingDown = false
 
   constructor() {
-    super({ ...DEFAULTS })
+    super({})
+  }
+
+  private isHub(): boolean {
+    return (this.ctx.kernel.localNodeId ?? 'hub') === 'hub'
   }
 
   protected async onInitialize(): Promise<ProviderRegistration[]> {
     this.destination = new LokiDestination()
+    this.shuttingDown = false
+    const registrations: ProviderRegistration[] = [
+      { capability: logDestinationCapability, provider: this.destination },
+    ]
+    const records = this.ctx.records
+    if (records !== undefined) {
+      await records.declare({ destinations: lokiDestinationsKind })
+      this.instances = new RecordIntegrationInstances(records, lokiDestinationsKind, {
+        description: { instanceMode: 'single', kind: 'destination', canTest: true },
+        formSchema: () => this.connectionForm(),
+        initialBody: (name) => ({ ...LOKI_DEFAULT_BODY, name }),
+        configured: (body) => body.url.length > 0,
+        onChanged: async () => {
+          await this.refreshFromRecord()
+        },
+        test: (input) => this.probe(input.id, input.values),
+      })
+      if (this.isHub()) {
+        // The hub owns the integration row and the record: it moves the old settings
+        // first, then offers the connection to the Integrations page (D985).
+        await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, this.migrationPorts()))
+        registrations.push({
+          capability: integrationInstancesCapability,
+          provider: this.instances.toProvider(),
+        })
+      } else {
+        this.refreshTimer = setInterval(() => void this.refreshFromRecord(), AGENT_REFRESH_MS)
+        this.refreshTimer.unref?.()
+      }
+      await this.refreshFromRecord()
+    }
     await this.destination.initialize(this.destinationConfig())
     // Logged once, at boot, by the ADDON — not by the destination, which must
     // never log (it would feed itself). Safe here because it happens before the
     // destination is registered and cannot recurse.
+    const url = this.current?.url ?? ''
     this.ctx.logger.info(
-      this.config.url.length > 0
-        ? `Loki logging initialized → ${this.config.url}`
+      url.length > 0
+        ? `Loki logging initialized → ${url}`
         : 'Loki logging registered but inactive (no URL set)',
     )
-    this.shuttingDown = false
     // Not awaited: the capability toggle refuses a provider that is not
     // registered yet, and the one returned below is registered only after this
     // method returns — so the carry-over retries in the background.
     void this.attemptEnabledFlagRetirement(0)
-    return [{ capability: logDestinationCapability, provider: this.destination }]
+    return registrations
+  }
+
+  /** Re-read the connection record and apply it to the live destination. */
+  private async refreshFromRecord(): Promise<void> {
+    if (this.instances === null || this.shuttingDown) return
+    try {
+      const [first] = await this.instances.listResolved()
+      this.current = first?.body ?? null
+    } catch (err: unknown) {
+      // A failed read changes nothing: the destination keeps the config it has.
+      this.ctx.logger.warn('Loki logging: the connection record could not be read', {
+        meta: { error: err instanceof Error ? err.message : String(err) },
+      })
+      return
+    }
+    await this.destination?.reconfigure(this.destinationConfig())
+  }
+
+  /** The ports of the connection migrations: the old settings in, the record out. */
+  private migrationPorts() {
+    const records = this.ctx.records
+    const instances = this.instances
+    if (records === undefined || instances === null) throw new Error('records are not available')
+    const handle = records.kind(lokiDestinationsKind)
+    return {
+      readStored: async (): Promise<Readonly<Record<string, unknown>>> => {
+        const stored = await this.resolveGlobalStore()
+        // A password that is still a marker was not resolved: abort before anything is written.
+        const password = stored['password']
+        if (isSecretMarker(password)) throw new Error('the old Loki password could not be resolved')
+        return stored
+      },
+      readRawStored: async () => this.resolveGlobalStore(),
+      ensureIntegration: async (name: string) => {
+        const existing = await this.ctx.api.integrations.getByAddonId.query({
+          addonId: this.ctx.id,
+        })
+        if (existing !== null && existing !== undefined) return existing.id
+        const created = await this.ctx.api.integrations.create.mutate({
+          addonId: this.ctx.id,
+          name,
+          skipRestart: true,
+        })
+        return created.id
+      },
+      putRecord: async (id: string, body: LokiDestinationBody): Promise<'created' | 'exists'> => {
+        if ((await handle.get(id)) !== null) return 'exists'
+        try {
+          await handle.put({ id, data: body }, { ifRev: 0 })
+        } catch (err: unknown) {
+          if (err instanceof RevConflictError) return 'exists'
+          throw err
+        }
+        return 'created'
+      },
+      clearOldPassword: async () => {
+        await this.clearSecrets(['password'])
+      },
+    }
+  }
+
+  /** Probe a Loki instance (`/ready`) with the form's values, falling back to the stored ones. */
+  private async probe(
+    id: string | null,
+    values: Readonly<Record<string, unknown>>,
+  ): Promise<IntegrationTestConnectionResult> {
+    const typed = values['url']
+    const stored =
+      id !== null && this.instances !== null ? await this.instances.getResolved(id) : null
+    const url = typeof typed === 'string' && typed.length > 0 ? typed : (stored?.url ?? '')
+    if (url.length === 0) return { success: false, status: 'rejected', error: 'No Loki URL set' }
+    const started = Date.now()
+    try {
+      const res = await fetch(new URL(READY_PATH, url), {
+        signal: AbortSignal.timeout(stored?.timeoutMs ?? LOKI_DEFAULT_BODY.timeoutMs),
+      })
+      return res.ok
+        ? { success: true, status: 'validated', latencyMs: Date.now() - started }
+        : { success: false, status: 'rejected', error: `Loki answered HTTP ${res.status}` }
+    } catch (err: unknown) {
+      return {
+        success: false,
+        status: 'inconclusive',
+        error: err instanceof Error ? err.message : String(err),
+      }
+    }
   }
 
   /** One attempt of the D777 carry-over; reschedules itself while deferred. */
@@ -107,7 +233,7 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
             [RETIRED_ENABLED_KEY]: undefined,
             [RETIREMENT_MARKER_KEY]: true,
           }
-          await this.updateGlobalSettings(patch as Partial<LokiAddonConfig>)
+          await this.updateGlobalSettings(patch)
         },
       })
     } catch (err: unknown) {
@@ -141,6 +267,8 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
     this.shuttingDown = true
     if (this.retirementTimer !== null) clearTimeout(this.retirementTimer)
     this.retirementTimer = null
+    if (this.refreshTimer !== null) clearInterval(this.refreshTimer)
+    this.refreshTimer = null
     await this.destination?.shutdown()
     this.destination = null
   }
@@ -153,12 +281,9 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
    * pushing. Without this the destination keeps its boot-time config forever.
    */
   protected async onConfigChanged(): Promise<void> {
-    await this.destination?.reconfigure(this.destinationConfig())
-    this.ctx.logger.info(
-      this.config.url.length > 0
-        ? `Loki logging reconfigured → ${this.config.url}`
-        : 'Loki logging now inactive (no URL)',
-    )
+    // The settings store holds no connection any more: a settings write (the D777
+    // marker, the migration's key removal) never changes the destination.
+    await this.refreshFromRecord()
   }
 
   /**
@@ -177,7 +302,21 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
     // now only "is a URL set". Whether it is used at all is the orchestrator's
     // per-destination toggle, enforced in the LogManager fan-out — one truth,
     // not two (2026-07-30).
-    return { ...this.config, enabled: true, node: this.ctx.kernel.localNodeId ?? 'hub' }
+    const body = this.current ?? { ...LOKI_DEFAULT_BODY, name: '' }
+    return {
+      enabled: true,
+      url: body.url,
+      job: body.job,
+      node: this.ctx.kernel.localNodeId ?? 'hub',
+      level: body.level,
+      batchIntervalMs: body.batchIntervalMs,
+      batchSize: body.batchSize,
+      extraLabels: body.extraLabels,
+      tenantId: body.tenantId,
+      username: body.username,
+      password: body.password ?? '',
+      timeoutMs: body.timeoutMs,
+    }
   }
 
   getDestination(): LokiDestination {
@@ -185,7 +324,7 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
     return this.destination
   }
 
-  protected globalSettingsSchema(): ConfigUISchema {
+  private connectionForm(): ConfigUISchema {
     return this.schema({
       sections: [
         {
