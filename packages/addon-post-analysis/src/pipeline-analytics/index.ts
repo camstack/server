@@ -897,7 +897,7 @@ import {
   type PackageOptionRule,
 } from './pipeline/package/package-zone-activity.js'
 import {
-  PACKAGE_LOOK_FRAME_MAX_AGE_MS,
+  PACKAGE_NATIVE_HANDLE_MAX_AGE_MS,
   promoteWithStill,
 } from './pipeline/package/package-still-capture.js'
 import { PackageDropDetector } from './pipeline/package-drop-detector.js'
@@ -10267,13 +10267,19 @@ export default class PipelineAnalyticsAddon
       void promoteWithStill({
         entry,
         handle:
-          lookFrame !== undefined && input.timestamp - lookFrame.at <= PACKAGE_LOOK_FRAME_MAX_AGE_MS
+          lookFrame !== undefined &&
+          input.timestamp - lookFrame.at <= PACKAGE_NATIVE_HANDLE_MAX_AGE_MS
             ? lookFrame.handle
             : null,
         timestamp: lookFrame?.at ?? input.timestamp,
         query: (request) => this.queryPackageSceneCrop(request),
         writer: this.mediaStore,
         logger: this.ctx.logger,
+        live: async () => {
+          // The parcel is at rest: a frame taken now shows it where it was seen.
+          const snap = await this.ctx.api.snapshot.getSnapshot.query({ deviceId: input.deviceId })
+          return snap === null ? null : Uint8Array.from(Buffer.from(snap.base64, 'base64'))
+        },
         detector: this.packageDropDetector,
       }).catch((err: unknown) => {
         this.ctx.logger.warn('package promotion failed', {

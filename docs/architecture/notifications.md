@@ -501,6 +501,15 @@ timestamp is still the CONCLUSION instant, so `narrowToTriggerInstant` may repor
 the collector's frame as out of band and ship it with a logged offset — that is
 the residual, and D404 names it.
 
+### A parcel's own still — taken from a frame that exists now ([D1000](../decisions/adr-1000-a-parcel-still-is-taken-from-a-frame-that-still-exists.md), 2026-11-02)
+
+A package promoted from a raw look owns no track media, so `package-still-capture.ts`
+stores the picture BEFORE `delivered` is emitted. The look frame's native handle
+is only good while the runner's lease lives (about 1 s), so the ladder is: the
+handle if fresh, then a live `snapshot.getSnapshot` retried under a 6 s bound.
+`package still stored` (with its `source`) is logged next to every
+`package still NOT stored` and its reason.
+
 ### Audio rules — TWO EXCLUSIVE MODES (D157, 2026-08-14)
 
 There are two audio paths, and telling them apart is the whole point.

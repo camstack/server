@@ -41,6 +41,7 @@ interface Run {
   readonly order: string[]
   readonly writes: Parameters<PackageStillWriter['putReplacing']>[0][]
   readonly warns: { message: string; meta: unknown }[]
+  readonly infos: { message: string; meta: unknown; tags: unknown }[]
   readonly detector: PackageDropDetector
   readonly logger: ReturnType<typeof createNoopLogger>
 }
@@ -50,9 +51,13 @@ function makeRun(): Run {
   const order: string[] = []
   const writes: Run['writes'] = []
   const warns: Run['warns'] = []
+  const infos: Run['infos'] = []
   const base = createNoopLogger()
   const logger = {
     ...base,
+    info: (message: string, extras?: { meta?: unknown; tags?: unknown }) => {
+      infos.push({ message, meta: extras?.meta, tags: extras?.tags })
+    },
     warn: (message: string, extras?: { meta?: unknown }) => {
       warns.push({ message, meta: extras?.meta })
     },
@@ -88,7 +93,7 @@ function makeRun(): Run {
     resolveSettings: async () => ({ ...PACKAGE_DROP_DEFAULTS, packageDropEnabled: true }),
     resolveZoneMembershipMinOverlap: async () => 0,
   })
-  return { rows, order, writes, warns, detector, logger }
+  return { rows, order, writes, warns, infos, detector, logger }
 }
 
 const query = async () => ({
@@ -115,6 +120,7 @@ describe('promoteWithStill', () => {
       query,
       writer,
       logger: run.logger,
+      live: null,
       detector: run.detector,
     })
     expect(run.order).toEqual(['media', 'insert', 'delivered'])
@@ -141,6 +147,7 @@ describe('promoteWithStill', () => {
         },
       },
       logger: run.logger,
+      live: null,
       detector: run.detector,
     })
     expect(run.rows).toHaveLength(1)
@@ -157,6 +164,7 @@ describe('promoteWithStill', () => {
       query,
       writer: { putReplacing: async () => 1 },
       logger: run.logger,
+      live: null,
       detector: run.detector,
     })
     expect(run.warns[0]?.meta).toMatchObject({ reason: 'no-frame-handle' })
@@ -172,6 +180,7 @@ describe('promoteWithStill', () => {
       query: async () => ({ ...(await query()), tier: 'ram-fullframe' as const }),
       writer: { putReplacing: async () => 1 },
       logger: run.logger,
+      live: null,
       detector: run.detector,
     })
     expect(run.warns[0]?.meta).toMatchObject({ reason: 'preview-only' })
@@ -193,9 +202,125 @@ describe('promoteWithStill', () => {
         },
       },
       logger: run.logger,
+      live: null,
       detector: run.detector,
     })
     expect(wrote).toBe(false)
     expect(run.rows[0]?.mediaId).toBe(5)
+  })
+
+  const JPEG = Uint8Array.from([0xff, 0xd8, 9, 9])
+  const instantPause = async () => undefined
+  const writerOf = (run: Run): PackageStillWriter => ({
+    putReplacing: async (input) => {
+      run.writes.push(input)
+      return 88
+    },
+  })
+
+  it('a released handle falls back to the live source and the row names a mediaId', async () => {
+    const run = makeRun()
+    await promoteWithStill({
+      entry: ENTRY,
+      handle: HANDLE,
+      timestamp: 30_000,
+      query: async () => null,
+      live: async () => JPEG,
+      pause: instantPause,
+      writer: writerOf(run),
+      logger: run.logger,
+      detector: run.detector,
+    })
+    expect(run.warns).toHaveLength(0)
+    expect(run.writes[0]).toMatchObject({ ownerId: 'uuid-entry', kind: 'keyFrame' })
+    expect(run.rows[0]).toMatchObject({ trackId: 'uuid-entry', mediaId: 88 })
+  })
+
+  it('every stored still is logged with its source and the device tag', async () => {
+    const run = makeRun()
+    await promoteWithStill({
+      entry: ENTRY,
+      handle: null,
+      timestamp: 30_000,
+      query,
+      live: async () => JPEG,
+      pause: instantPause,
+      writer: writerOf(run),
+      logger: run.logger,
+      detector: run.detector,
+    })
+    expect(run.infos.find((i) => i.message === 'package still stored')).toMatchObject({
+      tags: { deviceId: 615 },
+      meta: { entryId: 'uuid-entry', mediaId: 88, source: 'live' },
+    })
+  })
+
+  it('a live read that fails is retried until it lands', async () => {
+    const run = makeRun()
+    let calls = 0
+    await promoteWithStill({
+      entry: ENTRY,
+      handle: null,
+      timestamp: 30_000,
+      query,
+      live: async () => (++calls < 3 ? null : JPEG),
+      pause: instantPause,
+      writer: writerOf(run),
+      logger: run.logger,
+      detector: run.detector,
+    })
+    expect(calls).toBe(3)
+    expect(run.rows[0]?.mediaId).toBe(88)
+  })
+
+  it('an attempt that cannot land within the bound is logged with its reason', async () => {
+    const run = makeRun()
+    let calls = 0
+    await promoteWithStill({
+      entry: ENTRY,
+      handle: HANDLE,
+      timestamp: 30_000,
+      query: async () => null,
+      live: async () => {
+        calls += 1
+        return null
+      },
+      pause: instantPause,
+      writer: writerOf(run),
+      logger: run.logger,
+      detector: run.detector,
+    })
+    expect(calls).toBe(3)
+    expect(run.warns[0]?.meta).toMatchObject({
+      reason: 'live-unavailable',
+      nativeMiss: 'native-miss',
+      liveAttempts: 3,
+    })
+    expect(run.rows).toHaveLength(1)
+    expect(run.rows[0]?.mediaId).toBeUndefined()
+  })
+
+  it('the bound ends the retries when the clock has run out', async () => {
+    const run = makeRun()
+    let t = 0
+    let calls = 0
+    await promoteWithStill({
+      entry: ENTRY,
+      handle: null,
+      timestamp: 30_000,
+      query,
+      now: () => t,
+      live: async () => {
+        calls += 1
+        t += 10_000
+        return null
+      },
+      pause: instantPause,
+      writer: writerOf(run),
+      logger: run.logger,
+      detector: run.detector,
+    })
+    expect(calls).toBe(1)
+    expect(run.warns[0]?.meta).toMatchObject({ reason: 'bound-exhausted' })
   })
 })

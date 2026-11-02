@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A sensor or alarm notification now wakes a sleeping battery camera once, waits up to 15 s for its still, and a rule can opt out
+- A package notification's still is now taken from a live camera frame when the look frame's handle has expired, so parcel notifications on cameras like 615 carry their picture again.
 
 ## [1.2.662] - 2026-11-01
 
