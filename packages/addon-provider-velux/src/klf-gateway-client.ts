@@ -171,8 +171,8 @@ export class KlfGatewayClient implements VeluxGatewayClient {
   }
 
   async disconnect(): Promise<void> {
-    this.#closing = true
     this.#stopTimers()
+    this.#closing = true
     for (const cleanup of this.#cleanups.splice(0)) cleanup()
     const connection = this.#connection ?? this.#opening
     this.#connection = null
@@ -365,8 +365,8 @@ export class KlfGatewayClient implements VeluxGatewayClient {
 
   #sessionEnded(reason: string): void {
     if (this.#closing) return
-    this.#closing = true
     this.#stopTimers()
+    this.#closing = true
     for (const cleanup of this.#cleanups.splice(0)) cleanup()
     const connection = this.#connection
     this.#connection = null

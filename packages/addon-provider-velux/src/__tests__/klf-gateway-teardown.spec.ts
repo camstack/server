@@ -27,6 +27,7 @@ async function setup(
     makeConnection?: (tls: { ca: string[]; checkServerIdentity: () => undefined }) => Connection
     statsIntervalMs?: number
     teardownDrainMs?: number
+    rainRefreshMs?: number
   } = {},
 ): Promise<KlfGatewayClient> {
   gateway = new FakeKlfGateway(PASSWORD, nodes)
@@ -38,7 +39,7 @@ async function setup(
     password: PASSWORD,
     logger,
     tls,
-    rainRefreshMs: 600_000,
+    rainRefreshMs: extra.rainRefreshMs ?? 600_000,
     ...(extra.teardownDrainMs === undefined ? {} : { teardownDrainMs: extra.teardownDrainMs }),
     ...(extra.statsIntervalMs === undefined ? {} : { statsIntervalMs: extra.statsIntervalMs }),
     ...(extra.makeConnection === undefined
@@ -158,7 +159,11 @@ describe('KlfGatewayClient session discipline', () => {
     const c = await setup([windowNode(0), windowNode(1)])
     await c.connect()
     gateway.slowReplies(300)
-    const first = c.readVersion()
+    // Handled at once: a rejection with no handler yet is an unhandled rejection.
+    const first = c.readVersion().then(
+      () => 'ok',
+      () => 'rejected',
+    )
     const stale = c.open(1).then(
       () => 'ran',
       () => 'rejected',
@@ -180,4 +185,23 @@ describe('KlfGatewayClient session discipline', () => {
     expect(logger.lines.some((l) => l.message.includes('still in flight at teardown'))).toBe(true)
     expect(gateway.log).toContain('HOUSE_STATUS_MONITOR_DISABLE_REQ')
   }, 15_000)
+
+  it('raises no unhandled rejection when teardown meets a due rain read and queued requests', async () => {
+    const unhandled: unknown[] = []
+    const onUnhandled = (reason: unknown): void => {
+      unhandled.push(reason)
+    }
+    process.on('unhandledRejection', onUnhandled)
+    try {
+      const c = await setup([windowNode(0), windowNode(1), windowNode(2)], { rainRefreshMs: 40 })
+      await c.connect()
+      gateway.slowReplies(120)
+      await new Promise((r) => setTimeout(r, 90))
+      await c.disconnect()
+      await new Promise((r) => setTimeout(r, 400))
+      expect(unhandled).toEqual([])
+    } finally {
+      process.off('unhandledRejection', onUnhandled)
+    }
+  })
 })
