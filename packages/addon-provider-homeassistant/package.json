@@ -56,6 +56,9 @@
             "name": "broker"
           },
           {
+            "name": "board-key-source"
+          },
+          {
             "name": "device-adoption"
           },
           {

@@ -19,7 +19,9 @@ import {
   type IDeviceAdoptionProvider,
   type INotificationOutputProvider,
   notificationOutputCapability,
+  boardKeySourceCapability,
   calendarSourceCapability,
+  type IBoardKeySourceProvider,
   type ProviderRegistration,
   type SavedDevice,
   publicEndpointReaderFrom,
@@ -65,6 +67,7 @@ import {
 } from './ha-notification-output.js'
 import { HaBrokerStore } from './ha-broker-store.js'
 import { haAllRecordKinds } from './record-kinds.js'
+import { createHaBoardKeyProvider, HaBoardKeySource } from './ha-board-key-source.js'
 import { createHaCalendarSource, listHaCalendarCatalog } from './ha-calendar-source.js'
 import { reconcileBroker } from './ha-reconcile-broker.js'
 import { computeBrokerCleanup, linkBrokersToIntegrations } from './ha-reconciler.js'
@@ -245,6 +248,10 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
       // `homeassistant` kind descriptor.
       { capability: addonRoutesCapability, provider: createHaIconRouteProvider() },
       {
+        capability: boardKeySourceCapability,
+        provider: this.buildBoardKeyProvider(),
+      },
+      {
         capability: calendarSourceCapability,
         provider: createHaCalendarSource({
           brokers: this.requireRegistry(),
@@ -253,6 +260,26 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
         }),
       },
     ]
+  }
+
+  /** `board-key-source`: reads an ESPHome board's key from the builder beside HA, over each broker's own token. */
+  private buildBoardKeyProvider(): IBoardKeySourceProvider {
+    const registry = this.requireRegistry()
+    const source = new HaBoardKeySource({
+      brokers: {
+        list: () =>
+          registry.listManagers().map(({ brokerId, manager }) => ({
+            id: brokerId,
+            name: manager.getInfo().name,
+            baseUrl: manager.getBaseUrl(),
+            send: (message) => manager.sendMessage(message),
+          })),
+      },
+      http: (url, init) =>
+        fetch(url, { headers: init.headers, signal: AbortSignal.timeout(15_000) }),
+      logger: this.ctx.logger.child('board-key-source'),
+    })
+    return createHaBoardKeyProvider(source)
   }
 
   // ── notification-output cap provider (T13) ───────────────────────────

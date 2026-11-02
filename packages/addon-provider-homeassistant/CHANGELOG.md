@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Home Assistant export: a cover offers position and tilt only when the device declares them, shows unavailable while its provider is offline, and a refused command now answers 422 with the reason
 - A cover exports the stop control to Home Assistant only when the device declares cover-stoppable, and a Home Assistant cover with the STOP bit declares it.
+- Home Assistant can hand an ESPHome board's encryption key from its ESPHome Builder add-on to CamStack, over the existing access token (administrator only).
 
 ## [1.2.649] - 2026-11-02
 

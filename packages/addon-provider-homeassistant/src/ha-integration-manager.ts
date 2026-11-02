@@ -318,6 +318,11 @@ export class HaIntegrationManager {
     this.setStatus('disconnected')
   }
 
+  /** The address HA answers on; `null` for a supervisor-token broker, which has none of its own. */
+  getBaseUrl(): string | null {
+    return this.opts.auth.kind === 'long-lived' ? this.opts.auth.baseUrl : null
+  }
+
   getInfo(): HaBrokerInfo {
     return {
       id: this.opts.id,
