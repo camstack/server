@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - An alarm triggered by a sensor now names the location and what changed: "Intrusione: Lavanderia — Serratura lavanderia aperta", one entry per device
+- A sensor slice that passes the transition gate is now logged at debug with its device, state word and change time, so an unexplained alarm names its slice
 
 ## [1.2.665] - 2026-11-02
 

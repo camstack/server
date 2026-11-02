@@ -11548,6 +11548,21 @@ export default class PipelineAnalyticsAddon
     }
     const verdict = this.sensorTransitions.observe(data.deviceId, data.capName, { ...slice })
     this.flushSensorTransitionDrops()
+    // A slice that PASSES is the one that can reach a rule: say which, so the next
+    // unexplained match names its slice (planning#396). Debug — it is per transition.
+    if (verdict.changed) {
+      const entries = Object.entries(slice)
+      const field = (key: string): unknown => entries.find(([k]) => k === key)?.[1]
+      this.ctx.logger.debug('sensor slice passed the transition gate', {
+        tags: { deviceId: data.deviceId },
+        meta: {
+          capName: data.capName,
+          state: field('state') ?? field('entryOpen') ?? field('active') ?? null,
+          lastChangedAt: field('lastChangedAt') ?? null,
+          verdict: 'changed',
+        },
+      })
+    }
     return verdict.changed
   }
 
