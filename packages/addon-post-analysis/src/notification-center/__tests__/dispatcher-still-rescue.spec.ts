@@ -23,7 +23,12 @@
 import type { IScopedLogger, MediaFile } from '@camstack/types'
 import { makeTestMediaFile } from '../../__tests__/support/media-file.js'
 import { describe, expect, it } from 'vitest'
-import { NcDispatcher, type NcSendInput, type NcTargetRef } from '../dispatcher.js'
+import {
+  NC_LINKED_WAKE_WAIT_MS,
+  NcDispatcher,
+  type NcSendInput,
+  type NcTargetRef,
+} from '../dispatcher.js'
 import type { NcOutboxEntry, NcOutboxPayload } from '../outbox.js'
 
 const T0 = 1_753_000_000_000
@@ -280,6 +285,55 @@ describe('NcDispatcher — bounded still wait when no footage is requested', () 
     const h = makeHarness({ now: () => T0 + 600_000 })
     await h.dispatcher.deliver(makeEntry({}))
     expect(h.slept).toHaveLength(0)
+  })
+})
+
+// ── D998. A linked owner whose camera is being woken ───────────────────────
+
+describe('NcDispatcher — waits for a sensor still while its camera is being woken (D998)', () => {
+  const linked = (): NcOutboxEntry =>
+    makeEntry({
+      subject: {
+        deviceId: 101,
+        trackId: 'nc-mosaic:set-1',
+        className: 'sensor',
+        zones: [],
+        timestamp: T0,
+      },
+    })
+
+  it('a linked owner with a deadline polls until that deadline, 15 s at most', async () => {
+    const h = makeHarness({ stillDeadline: () => T0 + 12_000 })
+    await h.dispatcher.deliver(linked())
+    expect(h.slept).toHaveLength(24)
+    const capped = makeHarness({ stillDeadline: () => T0 + 600_000 })
+    await capped.dispatcher.deliver(linked())
+    expect(capped.slept).toHaveLength(NC_LINKED_WAKE_WAIT_MS / 500)
+  })
+
+  it('a linked owner with no wake in flight keeps the 3 s wait', async () => {
+    const h = makeHarness({ stillDeadline: () => undefined })
+    await h.dispatcher.deliver(linked())
+    expect(h.slept).toHaveLength(6)
+  })
+
+  it('the still that lands during the wake wait ships', async () => {
+    let polls = 0
+    const h = makeHarness({
+      stillDeadline: () => T0 + 15_000,
+      getMediaForOwner: async () => (++polls > 20 ? [mediaFile('keyFrame')] : []),
+    })
+    await h.dispatcher.deliver(linked())
+    expect((h.sends[0]?.notification.attachments ?? []).map((a) => a.name)).toEqual([
+      'keyFrame.jpg',
+    ])
+  })
+
+  it('the text-only line carries waitedMs', async () => {
+    const h = makeHarness({ stillDeadline: () => T0 + 15_000 })
+    await h.dispatcher.deliver(linked())
+    const line = h.lines.find((l) => l.message.startsWith('no still could be resolved'))
+    expect(line?.meta['waitedMs']).toBe(15_000)
   })
 })
 

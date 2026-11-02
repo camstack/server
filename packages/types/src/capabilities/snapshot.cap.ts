@@ -81,10 +81,12 @@ export const snapshotCapability = {
          * even when the cache is well within the device's
          * `snapshotMaxAgeS` window.
          *
-         * **`force` is an OPERATOR signal, not a freshness preference.** On a
+         * **`force` is a demand with a named principal, not a freshness
+         * preference** — an operator button, the scheduled refresh (D847), or a
+         * notification rule that left the camera's wake allowed (D998). On a
          * battery camera it is the one thing that walks past the wrapper's
-         * sleep gate and wakes the camera, so a background caller — a poller,
-         * an event handler, a thumbnail — must NEVER set it. Every such caller
+         * sleep gate and wakes the camera, so a poller, a thumbnail or a
+         * prestream must NEVER set it. Every such caller
          * gets the cached frame, which on a sleeping battery camera is the
          * correct answer: stale but honest beats woken.
          */

@@ -126,6 +126,7 @@ export interface NotificationCenterDeps {
    */
   readonly getSnapshot?: (
     deviceId: number,
+    opts?: { readonly force?: boolean },
   ) => Promise<{ readonly base64: string; readonly contentType: string } | null>
   /**
    * D691 — ask the orchestrator for ONE occupancy burst at the end of a

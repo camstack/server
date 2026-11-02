@@ -4,6 +4,7 @@ import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { NC_STILL_WAIT_MS } from '../dispatcher.js'
 import {
+  NC_LINKED_WAKE_CAPTURE_TIMEOUT_MS,
   NcLinkedStillShelf,
   type NcLinkedStillShelfDeps,
   SENSOR_LINKED_READ_BUDGET_MS,
@@ -37,7 +38,9 @@ interface SnapshotBytes {
 let grey: Buffer
 
 beforeAll(async () => {
-  grey = await sharp({ create: { width: 64, height: 36, channels: 3, background: '#808080' } })
+  grey = await sharp({
+    create: { width: 64, height: 36, channels: 3, background: '#808080' },
+  })
     .jpeg()
     .toBuffer()
 })
@@ -75,7 +78,12 @@ function metaLogger(lines: MetaLine[]): IScopedLogger {
   const at =
     (level: MetaLine['level']) =>
     (msg: string, extras?: LogExtras): void => {
-      lines.push({ level, msg, deviceId: extras?.tags?.deviceId, meta: extras?.meta })
+      lines.push({
+        level,
+        msg,
+        deviceId: extras?.tags?.deviceId,
+        meta: extras?.meta,
+      })
     }
   const logger: IScopedLogger = {
     debug: at('debug'),
@@ -117,7 +125,9 @@ async function widthOf(base64: string): Promise<number | undefined> {
 
 describe('NcLinkedStillShelf', () => {
   it('mints every owner id synchronously, before any capture lands', () => {
-    const shelf = shelfWith({ getSnapshot: () => new Promise(() => undefined) })
+    const shelf = shelfWith({
+      getSnapshot: () => new Promise(() => undefined),
+    })
     const set = shelf.captureSet(3243, [101, 102], 1_000)
     expect(set.mosaicOwnerId.startsWith('nc-mosaic:')).toBe(true)
     expect(set.cameraOwnerIds).toHaveLength(2)
@@ -159,7 +169,9 @@ describe('NcLinkedStillShelf', () => {
     // Controller ruling (fix round 2): the state read runs IN PARALLEL with the
     // capture, so 102 IS dialled; what matters is that its bytes never ship.
     const shelf = shelfWith({
-      getSnapshotState: async (id) => ({ reason: id === 102 ? 'sleeping' : null }),
+      getSnapshotState: async (id) => ({
+        reason: id === 102 ? 'sleeping' : null,
+      }),
       getSnapshot: async () => jpeg(),
     })
     // Capture ONCE: a captureSet inside the poll would start a new set every 5 ms.
@@ -216,7 +228,10 @@ describe('NcLinkedStillShelf', () => {
 
   it('zero tiles leaves the mosaic owner empty forever (text-only), and logs it on the sensor', async () => {
     const lines: LoggedLine[] = []
-    const shelf = shelfWith({ getSnapshot: async () => null, logger: spyLogger(lines) })
+    const shelf = shelfWith({
+      getSnapshot: async () => null,
+      logger: spyLogger(lines),
+    })
     const set = shelf.captureSet(3243, [101, 102], 1_000)
     await until(() =>
       lines.find((l) => l.msg.startsWith('sensor notification has no linked picture')),
@@ -228,9 +243,180 @@ describe('NcLinkedStillShelf', () => {
     })
   })
 
-  it('never sets force (the snapshot dep takes only a device id)', () => {
-    // Compile-time: NcLinkedStillShelfDeps.getSnapshot is (deviceId) => …; nothing to pass force through.
-    expect(shelfWith({}).captureSet(1, [2, 3], 0).cameraIds).toEqual([2, 3])
+  it('force is used only for a sleeping camera whose set allows a wake — never an awake, unreachable, disabled or offline one', async () => {
+    const calls: Array<[number, boolean]> = []
+    const shelf = shelfWith({
+      isOnline: (id) => id !== 105,
+      getSnapshotState: async (id) => ({
+        reason:
+          id === 102 ? 'sleeping' : id === 103 ? 'unreachable' : id === 104 ? 'disabled' : null,
+      }),
+      getSnapshot: async (id, opts) => {
+        calls.push([id, opts?.force === true])
+        return jpeg()
+      },
+    })
+    const set = shelf.captureSet(3243, [101, 102, 103, 104, 105], 1_000, {
+      wakeSleeping: true,
+    })
+    await until(() => shelf.get(set.mosaicOwnerId))
+    expect(calls.filter(([, forced]) => forced)).toEqual([[102, true]])
+    expect(calls.map(([id]) => id).includes(105)).toBe(false)
+  })
+})
+
+describe('NcLinkedStillShelf — waking a sleeping battery camera (D998)', () => {
+  const sleepingState = async (): Promise<{ reason: 'sleeping' }> => ({
+    reason: 'sleeping',
+  })
+
+  it('a sleeping camera is woken once under the wake bound, logged, and its still ships', async () => {
+    const lines: MetaLine[] = []
+    const shelf = shelfWith({
+      getSnapshotState: sleepingState,
+      getSnapshot: async () => jpeg(),
+      logger: metaLogger(lines),
+    })
+    const set = shelf.captureSet(3243, [101], 1_000, {
+      wakeSleeping: true,
+      ruleIds: ['r1'],
+    })
+    const mosaic = await until(() => shelf.get(set.mosaicOwnerId))
+    expect(await widthOf(mosaic[0]!.base64)).toBe(64)
+    const line = lines.find(
+      (l) => l.msg === 'linked battery camera woken for the sensor notification',
+    )
+    expect(line?.level).toBe('info')
+    expect(line?.deviceId).toBe(101)
+    expect(line?.meta).toMatchObject({
+      sensorId: 3243,
+      ruleIds: ['r1'],
+      boundMs: NC_LINKED_WAKE_CAPTURE_TIMEOUT_MS,
+    })
+  })
+
+  it('not allowed: excluded as wake-skipped:policy and never forced', async () => {
+    const lines: MetaLine[] = []
+    const forced: number[] = []
+    const shelf = shelfWith({
+      getSnapshotState: sleepingState,
+      getSnapshot: async (id, opts) => {
+        if (opts?.force === true) forced.push(id)
+        return jpeg()
+      },
+      logger: metaLogger(lines),
+    })
+    const set = shelf.captureSet(3243, [101], 1_000, { wakeSleeping: false })
+    await until(() => lines.find((l) => l.msg.startsWith('sensor notification has no linked')))
+    expect(forced).toEqual([])
+    expect(shelf.get(set.mosaicOwnerId)).toEqual([])
+    expect(
+      lines.find((l) => l.deviceId === 101 && l.meta?.['outcome'] === 'excluded')?.meta,
+    ).toMatchObject({
+      reason: 'wake-skipped:policy',
+    })
+  })
+
+  it('a second set within the gap does not wake again: wake-skipped:recent-wake', async () => {
+    const lines: MetaLine[] = []
+    let t = 1_000
+    const forced: number[] = []
+    const shelf = shelfWith({
+      now: () => t,
+      getSnapshotState: sleepingState,
+      getSnapshot: async (id, opts) => {
+        if (opts?.force === true) forced.push(id)
+        return jpeg()
+      },
+      logger: metaLogger(lines),
+    })
+    const first = shelf.captureSet(3243, [101], t, { wakeSleeping: true })
+    await until(() => shelf.get(first.mosaicOwnerId))
+    t += 30_000
+    const second = shelf.captureSet(3243, [101], t, { wakeSleeping: true })
+    await until(() => lines.find((l) => l.meta?.['reason'] === 'wake-skipped:recent-wake'))
+    expect(forced).toEqual([101])
+    expect(shelf.get(second.mosaicOwnerId)).toEqual([])
+    t += 31_000
+    const third = shelf.captureSet(3243, [101], t, { wakeSleeping: true })
+    await until(() => shelf.get(third.mosaicOwnerId))
+    expect(forced).toEqual([101, 101])
+  })
+
+  it('a forced capture that never answers is wake-timeout at the bound', async () => {
+    vi.useFakeTimers()
+    try {
+      const lines: MetaLine[] = []
+      const shelf = shelfWith({
+        getSnapshotState: sleepingState,
+        getSnapshot: (_id, opts) => (opts?.force === true ? never() : Promise.resolve(null)),
+        logger: metaLogger(lines),
+      })
+      shelf.captureSet(3243, [101], 1_000, { wakeSleeping: true })
+      await vi.advanceTimersByTimeAsync(NC_LINKED_WAKE_CAPTURE_TIMEOUT_MS - 1_000)
+      expect(lines.find((l) => l.meta?.['outcome'] === 'wake-timeout')).toBeUndefined()
+      await vi.advanceTimersByTimeAsync(2_000)
+      expect(
+        lines.find((l) => l.deviceId === 101 && l.meta?.['outcome'] === 'wake-timeout'),
+      ).toBeDefined()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('a refused wake (nothing back) is wake-refused', async () => {
+    const lines: MetaLine[] = []
+    const shelf = shelfWith({
+      getSnapshotState: sleepingState,
+      getSnapshot: async () => null,
+      logger: metaLogger(lines),
+    })
+    shelf.captureSet(3243, [101], 1_000, { wakeSleeping: true })
+    await until(() => lines.find((l) => l.meta?.['outcome'] === 'wake-refused'))
+  })
+
+  it('a waking camera is never forced; it is re-polled until the wrapper lets it through', async () => {
+    let reads = 0
+    const forced: number[] = []
+    const shelf = shelfWith({
+      getSnapshotState: async () => ({ reason: ++reads < 2 ? 'waking' : null }),
+      getSnapshot: async (id, opts) => {
+        if (opts?.force === true) forced.push(id)
+        return jpeg()
+      },
+    })
+    const set = shelf.captureSet(3243, [101], 1_000, { wakeSleeping: true })
+    await until(() => shelf.get(set.mosaicOwnerId), 4_000)
+    expect(forced).toEqual([])
+    expect(reads).toBeGreaterThanOrEqual(2)
+  }, 8_000)
+
+  it('pendingUntil is set only while a wake is in flight', async () => {
+    let release: (() => void) | undefined
+    const gate = new Promise<void>((r) => {
+      release = r
+    })
+    const shelf = shelfWith({
+      getSnapshotState: sleepingState,
+      getSnapshot: async (_id, opts) => {
+        if (opts?.force === true) await gate
+        return jpeg()
+      },
+    })
+    const awake = shelfWith({ getSnapshot: async () => jpeg() })
+    const awakeSet = awake.captureSet(3243, [101], 1_000, {
+      wakeSleeping: true,
+    })
+    expect(awake.pendingUntil(awakeSet.mosaicOwnerId)).toBeUndefined()
+    const set = shelf.captureSet(3243, [101], 1_000, { wakeSleeping: true })
+    await until(() => shelf.pendingUntil(set.mosaicOwnerId) ?? false)
+    expect(shelf.pendingUntil(set.cameraOwnerIds[0]!)).toBe(
+      1_000 + NC_LINKED_WAKE_CAPTURE_TIMEOUT_MS + 1_000,
+    )
+    expect(shelf.pendingUntil('nc-linked:unknown')).toBeUndefined()
+    release?.()
+    await until(() => shelf.get(set.mosaicOwnerId))
+    expect(shelf.pendingUntil(set.mosaicOwnerId)).toBeUndefined()
   })
 })
 
@@ -303,17 +489,21 @@ describe('NcLinkedStillShelf — bounded reads and undecodable bytes (fix round 
     const lines: MetaLine[] = []
     const shelf = shelfWith({
       isOnline: (id) => id !== 616,
-      getSnapshotState: async (id) => ({ reason: id === 102 ? 'sleeping' : null }),
+      getSnapshotState: async (id) => ({
+        reason: id === 102 ? 'sleeping' : null,
+      }),
       logger: metaLogger(lines),
     })
-    const set = shelf.captureSet(3243, [101, 616, 102], 1_000)
+    const set = shelf.captureSet(3243, [101, 616, 102], 1_000, {
+      wakeSleeping: false,
+    })
     await until(() => shelf.get(set.mosaicOwnerId))
     const excluded = lines.filter(
       (l) => l.msg === 'linked camera excluded from the sensor notification',
     )
     expect(excluded.map((l) => [l.deviceId, l.meta?.['reason']])).toEqual([
       [616, 'offline'],
-      [102, 'sleeping'],
+      [102, 'wake-skipped:policy'],
     ])
   })
 
@@ -322,7 +512,10 @@ describe('NcLinkedStillShelf — bounded reads and undecodable bytes (fix round 
     const shelf = shelfWith({
       getSnapshot: async (id) =>
         id === 102
-          ? { base64: Buffer.from('not a jpeg').toString('base64'), contentType: 'image/jpeg' }
+          ? {
+              base64: Buffer.from('not a jpeg').toString('base64'),
+              contentType: 'image/jpeg',
+            }
           : jpeg(),
       logger: metaLogger(lines),
     })
@@ -334,7 +527,10 @@ describe('NcLinkedStillShelf — bounded reads and undecodable bytes (fix round 
       expect.objectContaining({
         level: 'warn',
         deviceId: 102,
-        meta: expect.objectContaining({ outcome: 'error', reason: 'undecodable' }),
+        meta: expect.objectContaining({
+          outcome: 'error',
+          reason: 'undecodable',
+        }),
       }),
     )
   })
@@ -422,7 +618,10 @@ describe('NcLinkedStillShelf — state read in parallel with the capture (fix ro
 
   it('a state read that answers NOTHING keeps the tile and says stateUnknown: empty', async () => {
     const lines: MetaLine[] = []
-    const shelf = shelfWith({ getSnapshotState: async () => undefined, logger: metaLogger(lines) })
+    const shelf = shelfWith({
+      getSnapshotState: async () => undefined,
+      logger: metaLogger(lines),
+    })
     const set = shelf.captureSet(3243, [101], 1_000)
     await until(() => shelf.get(set.mosaicOwnerId))
     const line = lines.find((l) => l.deviceId === 101 && l.meta?.['outcome'] === 'landed')

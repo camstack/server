@@ -23,3 +23,14 @@ describe('media.linkedCameras', () => {
     expect(() => NcMediaPolicySchema.parse({ attach: 'best', linkedCameras: 'grid' })).toThrow()
   })
 })
+
+describe('media.wakeSleepingCamera', () => {
+  it('parses a boolean and stays ABSENT when not sent', () => {
+    expect(
+      NcMediaPolicySchema.parse({ attach: 'best', wakeSleepingCamera: false }).wakeSleepingCamera,
+    ).toBe(false)
+    expect(NcMediaPolicySchema.parse({ attach: 'best' }).wakeSleepingCamera).toBeUndefined()
+    const patch = NcRulePatchSchema.parse({ media: { attach: 'best' } })
+    expect(patch.media?.wakeSleepingCamera).toBeUndefined()
+  })
+})

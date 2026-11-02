@@ -43,6 +43,8 @@ interface Harness {
   readonly log: LogRecorder
   /** Every camera the centre asked the snapshot cap for. */
   readonly snapshotCalls: number[]
+  /** The cameras the centre asked the snapshot cap for WITH `force` (a wake). */
+  readonly forcedCalls: number[]
 }
 
 function sensorRule(overrides: Record<string, unknown> = {}): NcRuleInput {
@@ -69,14 +71,23 @@ function sensorEvent(): SensorEvent {
   }
 }
 
-function makeHarness(options: { readonly snapshotWired?: boolean } = {}): Harness {
+function makeHarness(
+  options: { readonly snapshotWired?: boolean; readonly sleeping?: boolean } = {},
+): Harness {
   const store = makeFakeSettingsStore()
   const world = makeNcRecords()
   const sends: NcSendInput[] = []
   const log = makeLogRecorder()
   const snapshotCalls: number[] = []
+  const forcedCalls: number[] = []
   const targets: NcTargetRef[] = [
-    { id: 'zentik', addonId: 'notifiers', name: 'Zentik', kind: 'zentik', enabled: true },
+    {
+      id: 'zentik',
+      addonId: 'notifiers',
+      name: 'Zentik',
+      kind: 'zentik',
+      enabled: true,
+    },
   ]
   const center = new NotificationCenter({
     deviceSettings: makeFakeDeviceSettings(),
@@ -89,8 +100,14 @@ function makeHarness(options: { readonly snapshotWired?: boolean } = {}): Harnes
     ...(options.snapshotWired === false
       ? {}
       : {
-          getSnapshot: async (deviceId: number) => {
+          ...(options.sleeping === true
+            ? {
+                getSnapshotState: async () => ({ reason: 'sleeping' as const }),
+              }
+            : {}),
+          getSnapshot: async (deviceId: number, opts?: { readonly force?: boolean }) => {
             snapshotCalls.push(deviceId)
+            if (opts?.force === true) forcedCalls.push(deviceId)
             return { base64: TINY_JPEG_B64, contentType: 'image/jpeg' }
           },
         }),
@@ -110,12 +127,15 @@ function makeHarness(options: { readonly snapshotWired?: boolean } = {}): Harnes
     drainIntervalMs: 5,
     ruleReloadIntervalMs: 3_600_000,
   })
-  return { center, store, world, sends, log, snapshotCalls }
+  return { center, store, world, sends, log, snapshotCalls, forcedCalls }
 }
 
 async function boot(
   rule: NcRuleInput = sensorRule(),
-  options: { readonly snapshotWired?: boolean } = {},
+  options: {
+    readonly snapshotWired?: boolean
+    readonly sleeping?: boolean
+  } = {},
 ): Promise<Harness> {
   const h = makeHarness(options)
   await h.center.start({ evaluation: true })
@@ -135,13 +155,49 @@ function linkedRequest(
 
 /** The shelf's own (owner, camera) pairs — what the model is handed. */
 function tilesOf(stills: NcLinkedStills | undefined): readonly unknown[] | undefined {
-  return stills?.cameraOwnerIds.map((ownerId, i) => ({ ownerId, cameraId: stills.cameraIds[i] }))
+  return stills?.cameraOwnerIds.map((ownerId, i) => ({
+    ownerId,
+    cameraId: stills.cameraIds[i],
+  }))
 }
 
 async function outboxPayloads(h: Harness): Promise<readonly unknown[]> {
   const rows = [...ncTable(h.world, 'outbox').values()]
   return rows.map((r) => r['payload'])
 }
+
+describe('the wake flag follows the rules that could fire (D998)', () => {
+  let h: Harness
+  afterEach(async () => {
+    await h.center.stop()
+  })
+
+  it('a rule that never chose wakes the sleeping linked camera, with force', async () => {
+    h = await boot(sensorRule(), { sleeping: true })
+    h.center.beginLinkedStills(linkedRequest([101], NOW, []))
+    await vi.waitFor(() => expect(h.forcedCalls).toEqual([101]))
+  })
+
+  it('wakeSleepingCamera:false on the only rule that fires → no force', async () => {
+    h = await boot(sensorRule({ media: { attach: 'best', wakeSleepingCamera: false } }), {
+      sleeping: true,
+    })
+    h.center.beginLinkedStills(linkedRequest([101], NOW, []))
+    await new Promise((r) => setTimeout(r, 150))
+    expect(h.forcedCalls).toEqual([])
+  })
+
+  it('one opted-out rule does not veto another rule that did not opt out', async () => {
+    h = await boot(sensorRule({ media: { attach: 'best', wakeSleepingCamera: false } }), {
+      sleeping: true,
+    })
+    await h.center
+      .buildProvider()
+      .createRule({ rule: sensorRule({ name: 'second' }), caller: CALLER })
+    h.center.beginLinkedStills(linkedRequest([101], NOW, []))
+    await vi.waitFor(() => expect(h.forcedCalls).toEqual([101]))
+  })
+})
 
 describe('one sensor-level evaluation carries the linked stills', () => {
   let h: Harness
@@ -217,7 +273,11 @@ describe('one sensor-level evaluation carries the linked stills', () => {
       const stills = h.center.beginLinkedStills(linkedRequest(TWO, NOW, []))
       expect(stills).toBeUndefined()
       expect(h.snapshotCalls).toEqual([])
-      h.center.onSensorEvent({ event: sensorEvent(), linkedCameraIds: TWO, rowCameraIds: [] })
+      h.center.onSensorEvent({
+        event: sensorEvent(),
+        linkedCameraIds: TWO,
+        rowCameraIds: [],
+      })
 
       // Give the evaluation every chance to enqueue.
       await new Promise((r) => setTimeout(r, 100))
@@ -258,18 +318,28 @@ describe('one sensor-level evaluation carries the linked stills', () => {
 
     it('a raise-only flood rule never photographs the back-to-dry edge (D640)', async () => {
       h = await boot(
-        sensorRule({ conditions: { sensorKinds: ['flood'], sensorTransition: 'raised' } }),
+        sensorRule({
+          conditions: { sensorKinds: ['flood'], sensorTransition: 'raised' },
+        }),
       )
-      const dry = { ...linkedRequest(LINKED, NOW, [], 'flood'), sensorRaised: false }
+      const dry = {
+        ...linkedRequest(LINKED, NOW, [], 'flood'),
+        sensorRaised: false,
+      }
       expect(h.center.beginLinkedStills(dry)).toBeUndefined()
       expect(h.snapshotCalls).toEqual([])
     })
 
     it('the same rule photographs water detected, and an edge it cannot read', async () => {
       h = await boot(
-        sensorRule({ conditions: { sensorKinds: ['flood'], sensorTransition: 'raised' } }),
+        sensorRule({
+          conditions: { sensorKinds: ['flood'], sensorTransition: 'raised' },
+        }),
       )
-      const wet = { ...linkedRequest(LINKED, NOW, [], 'flood'), sensorRaised: true }
+      const wet = {
+        ...linkedRequest(LINKED, NOW, [], 'flood'),
+        sensorRaised: true,
+      }
       expect(h.center.beginLinkedStills(wet)).toBeDefined()
       // Unknown is capture: the evaluation lets an unreadable edge through, so
       // the picture must exist for it.
@@ -352,7 +422,11 @@ describe('one sensor-level evaluation carries the linked stills', () => {
   it('a linked set with no snapshot cap ships text-only and says so ON THE SENSOR', async () => {
     h = await boot(sensorRule(), { snapshotWired: false })
     expect(h.center.beginLinkedStills(linkedRequest(LINKED, NOW, []))).toBeUndefined()
-    h.center.onSensorEvent({ event: sensorEvent(), linkedCameraIds: LINKED, rowCameraIds: [] })
+    h.center.onSensorEvent({
+      event: sensorEvent(),
+      linkedCameraIds: LINKED,
+      rowCameraIds: [],
+    })
 
     await vi.waitFor(async () => expect(await outboxPayloads(h)).toHaveLength(1))
     const line = h.log.entries.find((l) => l.message.includes('no linked-camera pictures'))
@@ -362,8 +436,14 @@ describe('one sensor-level evaluation carries the linked stills', () => {
   })
 
   it("…and with a STORED attach:'none' it still says so — the gate reads the EFFECTIVE policy", async () => {
-    h = await boot(sensorRule({ media: { attach: 'none' } }), { snapshotWired: false })
-    h.center.onSensorEvent({ event: sensorEvent(), linkedCameraIds: LINKED, rowCameraIds: [] })
+    h = await boot(sensorRule({ media: { attach: 'none' } }), {
+      snapshotWired: false,
+    })
+    h.center.onSensorEvent({
+      event: sensorEvent(),
+      linkedCameraIds: LINKED,
+      rowCameraIds: [],
+    })
 
     await vi.waitFor(async () => expect(await outboxPayloads(h)).toHaveLength(1))
     const line = h.log.entries.find((l) => l.message.includes('no linked-camera pictures'))
@@ -373,7 +453,11 @@ describe('one sensor-level evaluation carries the linked stills', () => {
   it('a rule-device cooldown is keyed by the PRIMARY camera', async () => {
     h = await boot()
     const fire = (cameras: readonly number[]): void =>
-      h.center.onSensorEvent({ event: sensorEvent(), linkedCameraIds: cameras, rowCameraIds: [] })
+      h.center.onSensorEvent({
+        event: sensorEvent(),
+        linkedCameraIds: cameras,
+        rowCameraIds: [],
+      })
 
     fire([101, 102])
     fire([102, 101]) // another primary: its own window
@@ -411,7 +495,10 @@ describe('one sensor-level evaluation carries the linked stills', () => {
       await vi.waitFor(() => expect([...h.snapshotCalls].sort()).toEqual([102, 620]))
       const line = h.log.entries.find((l) => l.message.includes('linked camera muted'))
       expect(line?.extras?.tags).toEqual({ deviceId: 101 })
-      expect(line?.extras?.meta).toMatchObject({ sensorId: SENSOR, reason: 'muted' })
+      expect(line?.extras?.meta).toMatchObject({
+        sensorId: SENSOR,
+        reason: 'muted',
+      })
     })
 
     it("a muted primary's MARKER is not the picture of the next camera", async () => {
@@ -452,7 +539,11 @@ describe('one sensor-level evaluation carries the linked stills', () => {
       h = await boot()
       await mute(SENSOR)
       expect(h.center.beginLinkedStills(linkedRequest(LINKED, NOW, []))).toBeUndefined()
-      h.center.onSensorEvent({ event: sensorEvent(), linkedCameraIds: LINKED, rowCameraIds: [] })
+      h.center.onSensorEvent({
+        event: sensorEvent(),
+        linkedCameraIds: LINKED,
+        rowCameraIds: [],
+      })
 
       await vi.waitFor(() =>
         expect(h.log.entries.some((l) => l.message.includes('muted for this sensor'))).toBe(true),
@@ -572,7 +663,9 @@ describe('one sensor-level evaluation carries the linked stills', () => {
         ...(stills !== undefined ? { linkedStills: stills } : {}),
       })
 
-      await vi.waitFor(() => expect(h.sends).toHaveLength(1), { timeout: 5_000 })
+      await vi.waitFor(() => expect(h.sends).toHaveLength(1), {
+        timeout: 5_000,
+      })
       const attachments = h.sends[0]?.notification.attachments ?? []
       expect(attachments.map((a) => a.mediaType)).toEqual(['image'])
       const [payload] = await outboxPayloads(h)
@@ -603,7 +696,11 @@ describe('one sensor-level evaluation carries the linked stills', () => {
     it('a PRIMARY camera that did not opt in: its camera-scoped rule does NOT fire', async () => {
       h = await boot(sensorRule({ conditions: { devices: [101] } }))
       expect(h.center.beginLinkedStills(linkedRequest(TWO, NOW, [102]))).toBeUndefined()
-      h.center.onSensorEvent({ event: sensorEvent(), linkedCameraIds: TWO, rowCameraIds: [102] })
+      h.center.onSensorEvent({
+        event: sensorEvent(),
+        linkedCameraIds: TWO,
+        rowCameraIds: [102],
+      })
 
       await new Promise((r) => setTimeout(r, 100))
       expect(await outboxPayloads(h)).toEqual([])
@@ -631,7 +728,11 @@ describe('one sensor-level evaluation carries the linked stills', () => {
       h = await boot(sensorRule({ conditions: { devices: [102] } }))
       await h.center.buildProvider().setDeviceMuted({ deviceId: 102, muted: true })
       expect(h.center.beginLinkedStills(linkedRequest(TWO, NOW, [102]))).toBeUndefined()
-      h.center.onSensorEvent({ event: sensorEvent(), linkedCameraIds: TWO, rowCameraIds: [102] })
+      h.center.onSensorEvent({
+        event: sensorEvent(),
+        linkedCameraIds: TWO,
+        rowCameraIds: [102],
+      })
 
       await new Promise((r) => setTimeout(r, 100))
       expect(await outboxPayloads(h)).toEqual([])
@@ -647,7 +748,11 @@ describe('the sensor-level intake line', () => {
       mutedRowCameraIds: [],
     }).log()
     expect(ctx.tags).toEqual({ deviceId: SENSOR })
-    expect(ctx.meta).toMatchObject({ primaryCameraId: PRIMARY, linkedCameras: 3, mutedCameras: 0 })
+    expect(ctx.meta).toMatchObject({
+      primaryCameraId: PRIMARY,
+      linkedCameras: 3,
+      mutedCameras: 0,
+    })
   })
 
   it('counts the muted cameras too', () => {
@@ -657,7 +762,11 @@ describe('the sensor-level intake line', () => {
       { linkedCameraIds: [101, 620], rowCameraIds: [], mutedRowCameraIds: [] },
       [102],
     ).log()
-    expect(ctx.meta).toMatchObject({ primaryCameraId: PRIMARY, linkedCameras: 3, mutedCameras: 1 })
+    expect(ctx.meta).toMatchObject({
+      primaryCameraId: PRIMARY,
+      linkedCameras: 3,
+      mutedCameras: 1,
+    })
   })
 
   it('every camera muted: no primary camera is claimed — the sensor is its own device', () => {

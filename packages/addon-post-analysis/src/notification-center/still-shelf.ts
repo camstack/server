@@ -166,10 +166,10 @@ interface HeldCapture {
 
 export interface NcStillShelfDeps {
   /**
-   * The snapshot cap, WITHOUT `force`. `snapshot.cap.ts` defines `force` as the
-   * operator's refresh button — a background caller that sets it walks past the
-   * sleep gate and wakes a battery camera per event. Nobody pressed anything
-   * here: a sound did, or a parking space emptied.
+   * The snapshot cap, WITHOUT `force`. `force` needs a named principal (an
+   * operator button, the D847 refresh, or a sensor rule that allowed a wake —
+   * D998, in `linked-stills.ts`); a sound or a freed space has none, so it
+   * never walks past the sleep gate.
    */
   readonly getSnapshot: (
     deviceId: number,

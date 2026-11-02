@@ -10,6 +10,9 @@
  * one composition are decisions about the set, and none of them belongs in a
  * shelf that photographs one camera for an absence.
  *
+ * A SLEEPING battery camera is woken by one forced capture when the rule leaves
+ * it allowed (D998) — bounded, once per gap per camera, never by a poll.
+ *
  * Two reads can only ever ADD a camera back, never take one away on their own
  * failure (D49): a wrapper-state read (run in parallel with the capture) that
  * misses or throws keeps the tile, and a freshness read that misses or throws
@@ -35,6 +38,16 @@ const NC_LINKED_CAMERA_PREFIX = 'nc-linked:'
 export function isLinkedStillId(id: string): boolean {
   return id.startsWith(NC_LINKED_MOSAIC_PREFIX) || id.startsWith(NC_LINKED_CAMERA_PREFIX)
 }
+
+/**
+ * D998 — the one forced capture that wakes a sleeping battery camera for a
+ * sensor notification: the bound it may take, the pause between re-polls of a
+ * camera another wake already started, and the gap per camera before it is
+ * woken again (a flapping contact must not drain a battery).
+ */
+export const NC_LINKED_WAKE_CAPTURE_TIMEOUT_MS = 15_000
+const NC_LINKED_WAKE_POLL_MS = 1_000
+export const NC_LINKED_WAKE_MIN_GAP_MS = 60_000
 
 /** Per camera — the marker's own bound (`SENSOR_MARKER_SNAPSHOT_TIMEOUT_MS`). */
 const SENSOR_LINKED_CAPTURE_TIMEOUT_MS = 2_500
@@ -68,10 +81,33 @@ const SENSOR_LINKED_MAX_FRAME_AGE_MS = 10_000
 /** Hard bound on sets held at once, on top of the TTL. */
 const MAX_SETS = 32
 
-export type NcLinkedExclusionReason = 'offline' | 'disabled' | 'sleeping' | 'unreachable' | 'waking'
+export type NcLinkedExclusionReason =
+  | 'offline'
+  | 'disabled'
+  | 'sleeping'
+  | 'unreachable'
+  | 'waking'
+  | 'wake-skipped:policy'
+  | 'wake-skipped:recent-wake'
+  | 'wake-skipped:unreachable'
 /** Why a wrapper-state read said nothing: too slow, threw, or answered empty. */
 export type NcLinkedStateUnknown = 'timeout' | 'error' | 'empty'
-export type NcLinkedTileOutcome = 'landed' | 'excluded' | 'timeout' | 'empty' | 'error' | 'stale'
+export type NcLinkedTileOutcome =
+  | 'landed'
+  | 'excluded'
+  | 'timeout'
+  | 'empty'
+  | 'error'
+  | 'stale'
+  | 'wake-timeout'
+  | 'wake-refused'
+
+/** What a set may do about a sleeping camera (D998). Absent = no wake. */
+export interface NcLinkedCaptureOptions {
+  readonly wakeSleeping: boolean
+  /** The rules that wanted the picture, named on the wake line. */
+  readonly ruleIds?: readonly string[]
+}
 
 export interface NcLinkedStills {
   readonly sensorId: number
@@ -94,8 +130,15 @@ export interface NcLinkedSnapshotState {
 }
 
 export interface NcLinkedStillShelfDeps {
-  /** Never `force` — a forced capture wakes a battery camera. */
-  readonly getSnapshot: (deviceId: number) => Promise<NcLinkedSnapshot | null>
+  /**
+   * `force` is a demand with a named principal: here, only a rule that left
+   * the camera's wake allowed (D998), and only for a camera the wrapper
+   * called `sleeping`. Never for a poll.
+   */
+  readonly getSnapshot: (
+    deviceId: number,
+    opts?: { readonly force?: boolean },
+  ) => Promise<NcLinkedSnapshot | null>
   /** Capture-free wrapper state; null reason = capturable. Throws/undefined when unknown. */
   readonly getSnapshotState?: (deviceId: number) => Promise<NcLinkedSnapshotState | undefined>
   /** Cache-only: when each camera's cached frame was captured (null = none). */
@@ -130,7 +173,17 @@ interface TileResult {
   readonly reason?: string
   /** Why the wrapper-state read gave no answer; the tile was kept anyway (D49). */
   readonly stateUnknown?: NcLinkedStateUnknown
+  /** This camera was woken by a forced capture. */
+  readonly woken?: true
   readonly tookMs: number
+}
+
+/** What one set's capture of one camera knows about its own set. */
+interface SetContext {
+  readonly setId: string
+  readonly sensorId: number
+  readonly startedAt: number
+  readonly options: NcLinkedCaptureOptions
 }
 
 /** What the wrapper said: a reason to exclude, or nothing — and whether it said at all. */
@@ -141,7 +194,7 @@ interface WrapperVerdict {
 
 /** One capture's result before the wrapper's verdict is applied. */
 interface CaptureResult {
-  readonly outcome: 'landed' | 'timeout' | 'empty' | 'error'
+  readonly outcome: 'landed' | 'timeout' | 'empty' | 'error' | 'wake-timeout' | 'wake-refused'
   readonly jpeg?: Buffer
   readonly reason?: string
 }
@@ -173,13 +226,21 @@ export class NcLinkedStillShelf {
   private readonly deps: NcLinkedStillShelfDeps
   private readonly sets = new Map<string, HeldSet>()
   private readonly owners = new Map<string, OwnerRef>()
+  /** setId → when its in-flight wake gives up (the dispatcher waits that long). */
+  private readonly pendingWakes = new Map<string, number>()
+  private readonly lastWakeAt = new Map<number, number>()
 
   constructor(deps: NcLinkedStillShelfDeps) {
     this.deps = deps
   }
 
   /** SYNCHRONOUS: the evaluation that follows names these owners. */
-  captureSet(sensorId: number, cameraIds: readonly number[], atMs: number): NcLinkedStills {
+  captureSet(
+    sensorId: number,
+    cameraIds: readonly number[],
+    atMs: number,
+    options: NcLinkedCaptureOptions = { wakeSleeping: false },
+  ): NcLinkedStills {
     const now = this.deps.now()
     this.prune(now)
     const setId = randomUUID()
@@ -201,13 +262,23 @@ export class NcLinkedStillShelf {
       const cameraId = cameraIds[i]
       if (cameraId !== undefined) this.owners.set(ownerId, { setId, camera: cameraId })
     })
-    this.run(setId, stills, atMs, now).catch((err: unknown) => {
+    this.run(setId, stills, atMs, now, options).catch((err: unknown) => {
       this.deps.logger.warn('sensor notification pictures failed — it ships text-only', {
         tags: { deviceId: sensorId },
         meta: { error: String(err) },
       })
     })
     return stills
+  }
+
+  /**
+   * While a wake of one of this owner's cameras is in flight: the instant it
+   * gives up (its bound plus one poll). `undefined` otherwise — the dispatcher
+   * then keeps its ordinary still-wait.
+   */
+  pendingUntil(ownerId: string): number | undefined {
+    const ref = this.owners.get(ownerId)
+    return ref === undefined ? undefined : this.pendingWakes.get(ref.setId)
   }
 
   /** `undefined` = not an owner this shelf minted (or pruned); `[]` = nothing (yet). */
@@ -235,6 +306,7 @@ export class NcLinkedStillShelf {
   clear(): void {
     this.sets.clear()
     this.owners.clear()
+    this.pendingWakes.clear()
   }
 
   private async run(
@@ -242,13 +314,26 @@ export class NcLinkedStillShelf {
     stills: NcLinkedStills,
     atMs: number,
     startedAt: number,
+    options: NcLinkedCaptureOptions,
   ): Promise<void> {
-    const results = await Promise.all(stills.cameraIds.map((id) => this.captureOne(id, startedAt)))
+    const ctx: SetContext = {
+      setId,
+      sensorId: stills.sensorId,
+      startedAt,
+      options,
+    }
+    let results: readonly TileResult[]
+    try {
+      results = await Promise.all(stills.cameraIds.map((id) => this.captureOne(id, ctx)))
+    } finally {
+      this.pendingWakes.delete(setId)
+    }
     const judged = await this.judgeFreshness(stills.sensorId, results, atMs)
     for (const r of judged) this.logTile(stills.sensorId, r)
     const landed = judged.filter(isLandedTile)
     const composed = await this.compose(stills.sensorId, landed, atMs)
     const undrawable = landed.length - composed.drawn
+    const woken = judged.filter((r) => r.woken === true).map((r) => r.cameraId)
     this.deps.logger.info(
       composed.mosaic.length === 0
         ? 'sensor notification has no linked picture — it ships text-only'
@@ -259,6 +344,7 @@ export class NcLinkedStillShelf {
           cameras: stills.cameraIds.length,
           landed: composed.drawn,
           ...(undrawable > 0 ? { undrawable } : {}),
+          ...(woken.length > 0 ? { woken, waitedMs: this.deps.now() - startedAt } : {}),
           dropped: Object.fromEntries(
             judged
               .filter((r) => r.outcome !== 'landed')
@@ -278,25 +364,37 @@ export class NcLinkedStillShelf {
     })
   }
 
-  private async captureOne(cameraId: number, startedAt: number): Promise<TileResult> {
-    const took = (): number => this.deps.now() - startedAt
+  private async captureOne(cameraId: number, ctx: SetContext): Promise<TileResult> {
+    const took = (): number => this.deps.now() - ctx.startedAt
     if (this.deps.isOnline(cameraId) === false) {
-      return { cameraId, outcome: 'excluded', reason: 'offline', tookMs: took() }
+      return {
+        cameraId,
+        outcome: 'excluded',
+        reason: 'offline',
+        tookMs: took(),
+      }
     }
     // In parallel: the state read costs no time of its own, and its answer is
     // applied to whatever the capture brought back.
     const [verdict, capture] = await Promise.all([
       this.wrapperVerdict(cameraId),
-      this.captureStill(cameraId),
+      this.captureStill(cameraId, false, SENSOR_LINKED_CAPTURE_TIMEOUT_MS),
     ])
+    const excluded = (reason: NcLinkedExclusionReason): TileResult => ({
+      cameraId,
+      outcome: 'excluded',
+      reason,
+      tookMs: took(),
+    })
+    if (verdict.reason === 'sleeping') return this.wakeOne(cameraId, ctx)
+    if (verdict.reason === 'waking' && ctx.options.wakeSleeping)
+      return this.awaitWaking(cameraId, ctx)
+    if (verdict.reason === 'unreachable' && ctx.options.wakeSleeping) {
+      return excluded('wake-skipped:unreachable')
+    }
     if (verdict.reason !== null) {
       // The bytes, if any, are the wrapper's state card — never a photograph.
-      return {
-        cameraId,
-        outcome: 'excluded',
-        reason: verdict.reason,
-        tookMs: took(),
-      }
+      return excluded(verdict.reason)
     }
     return {
       cameraId,
@@ -306,11 +404,90 @@ export class NcLinkedStillShelf {
     }
   }
 
-  private async captureStill(cameraId: number): Promise<CaptureResult> {
+  /** D998: one forced capture, by the rule's leave, at most once per gap per camera. */
+  private async wakeOne(cameraId: number, ctx: SetContext): Promise<TileResult> {
+    const took = (): number => this.deps.now() - ctx.startedAt
+    const skipped = (reason: NcLinkedExclusionReason): TileResult => ({
+      cameraId,
+      outcome: 'excluded',
+      reason,
+      tookMs: took(),
+    })
+    if (!ctx.options.wakeSleeping) return skipped('wake-skipped:policy')
+    const last = this.lastWakeAt.get(cameraId)
+    if (last !== undefined && ctx.startedAt - last < NC_LINKED_WAKE_MIN_GAP_MS) {
+      return skipped('wake-skipped:recent-wake')
+    }
+    this.lastWakeAt.set(cameraId, ctx.startedAt)
+    this.markPending(ctx)
+    this.deps.logger.info('linked battery camera woken for the sensor notification', {
+      tags: { deviceId: cameraId },
+      meta: {
+        sensorId: ctx.sensorId,
+        ruleIds: ctx.options.ruleIds ?? [],
+        boundMs: NC_LINKED_WAKE_CAPTURE_TIMEOUT_MS,
+      },
+    })
+    const capture = await this.captureStill(cameraId, true, NC_LINKED_WAKE_CAPTURE_TIMEOUT_MS)
+    return {
+      cameraId,
+      ...this.asWakeResult(capture),
+      woken: true,
+      tookMs: took(),
+    }
+  }
+
+  /** A camera another wake already started: never forced, re-polled within the bound. */
+  private async awaitWaking(cameraId: number, ctx: SetContext): Promise<TileResult> {
+    const took = (): number => this.deps.now() - ctx.startedAt
+    this.markPending(ctx)
+    const polls = Math.floor(NC_LINKED_WAKE_CAPTURE_TIMEOUT_MS / NC_LINKED_WAKE_POLL_MS)
+    for (let i = 0; i < polls; i++) {
+      await new Promise<void>((resolve) => setTimeout(resolve, NC_LINKED_WAKE_POLL_MS))
+      const verdict = await this.wrapperVerdict(cameraId)
+      if (verdict.reason === 'waking') continue
+      if (verdict.reason !== null) {
+        return {
+          cameraId,
+          outcome: 'excluded',
+          reason: verdict.reason,
+          tookMs: took(),
+        }
+      }
+      const capture = await this.captureStill(cameraId, false, SENSOR_LINKED_CAPTURE_TIMEOUT_MS)
+      return {
+        cameraId,
+        ...this.asWakeResult(capture),
+        woken: true,
+        tookMs: took(),
+      }
+    }
+    return { cameraId, outcome: 'wake-timeout', woken: true, tookMs: took() }
+  }
+
+  private markPending(ctx: SetContext): void {
+    const until = ctx.startedAt + NC_LINKED_WAKE_CAPTURE_TIMEOUT_MS + NC_LINKED_WAKE_POLL_MS
+    this.pendingWakes.set(ctx.setId, Math.max(this.pendingWakes.get(ctx.setId) ?? 0, until))
+  }
+
+  /** A wake that brought nothing back names itself, not the generic `empty`. */
+  private asWakeResult(capture: CaptureResult): CaptureResult {
+    if (capture.outcome === 'timeout') return { ...capture, outcome: 'wake-timeout' }
+    const refused =
+      capture.outcome === 'empty' ||
+      (capture.outcome === 'error' && capture.reason !== 'undecodable')
+    return refused ? { ...capture, outcome: 'wake-refused' } : capture
+  }
+
+  private async captureStill(
+    cameraId: number,
+    force: boolean,
+    timeoutMs: number,
+  ): Promise<CaptureResult> {
     try {
       const shot = await withTimeout(
-        this.deps.getSnapshot(cameraId),
-        SENSOR_LINKED_CAPTURE_TIMEOUT_MS,
+        force ? this.deps.getSnapshot(cameraId, { force: true }) : this.deps.getSnapshot(cameraId),
+        timeoutMs,
         'snapshot cap',
       )
       if (shot === null || shot.base64.length === 0) return { outcome: 'empty' }
@@ -363,7 +540,10 @@ export class NcLinkedStillShelf {
         ? { reason: null, unknown: 'empty' }
         : { reason: state.reason, unknown: null }
     } catch (err: unknown) {
-      return { reason: null, unknown: err instanceof LinkedReadTimeout ? 'timeout' : 'error' }
+      return {
+        reason: null,
+        unknown: err instanceof LinkedReadTimeout ? 'timeout' : 'error',
+      }
     }
   }
 
@@ -413,7 +593,11 @@ export class NcLinkedStillShelf {
     if (first === undefined) return { mosaic: [], servable: [], drawn: 0 }
     // One tile ships as the plain still — a mosaic of one is a picture with a border.
     if (landed.length === 1) {
-      return { mosaic: stillShelfMedia(first.jpeg, atMs), servable: landed, drawn: 1 }
+      return {
+        mosaic: stillShelfMedia(first.jpeg, atMs),
+        servable: landed,
+        drawn: 1,
+      }
     }
     try {
       const { jpeg, droppedTiles } = await renderMosaic(
@@ -438,9 +622,17 @@ export class NcLinkedStillShelf {
       // own still rather than nothing, and let each camera keep its own.
       this.deps.logger.warn('sensor mosaic could not be composed — shipping the first camera', {
         tags: { deviceId: sensorId },
-        meta: { error: String(err), offered: landed.length, shipped: first.cameraId },
+        meta: {
+          error: String(err),
+          offered: landed.length,
+          shipped: first.cameraId,
+        },
       })
-      return { mosaic: stillShelfMedia(first.jpeg, atMs), servable: landed, drawn: 1 }
+      return {
+        mosaic: stillShelfMedia(first.jpeg, atMs),
+        servable: landed,
+        drawn: 1,
+      }
     }
   }
 

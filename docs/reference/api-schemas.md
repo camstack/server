@@ -4217,6 +4217,7 @@ Enum: `"scene-boxes" \| "crop" \| "clean" \| "none"`
 - `clipSpeed?`: `number`
 - `profile?`: `CamProfileSchema`
 - `linkedCameras?`: `NcLinkedCameraModeSchema`
+- `wakeSleepingCamera?`: `boolean`
 
 ### `NcOccupancyConditionSchema`
 

@@ -222,6 +222,7 @@ function makeHarness(
   opts: {
     readonly targets?: readonly NcTargetRef[]
     readonly renderMosaic?: NcDispatcherDeps['renderMosaic']
+    readonly stillDeadline?: NcDispatcherDeps['stillDeadline']
     readonly zonePolygons?: ReadonlyArray<ReadonlyArray<{ x: number; y: number }>>
   } = {},
 ): Harness {
@@ -252,6 +253,7 @@ function makeHarness(
       return store.object?.(id, scope) ?? []
     },
     getDeviceName: async () => 'Front door',
+    ...(opts.stillDeadline !== undefined ? { stillDeadline: opts.stillDeadline } : {}),
     ...(opts.zonePolygons !== undefined
       ? { getZonePolygons: async () => opts.zonePolygons ?? [] }
       : {}),
@@ -524,6 +526,28 @@ describe('the grouped mosaic at send (§6.2)', () => {
         (l) => l.message === 'no still could be resolved — this notification ships text-only',
       ),
     ).toBe(true)
+  })
+
+  it('7c. D998: a grouped alarm row on a linked owner waits for the camera being woken', async () => {
+    const members = [member(1), member(2)]
+    const h = makeHarness(
+      { track: new Map() },
+      { stillDeadline: () => CLOSED_AT + 2 * SEC + 12_000 },
+    )
+    await deliver(
+      h,
+      makeEntry({
+        group: groupV2(members),
+        subject: {
+          deviceId: DEVICE,
+          trackId: 'nc-mosaic:set-1',
+          className: 'sensor',
+          zones: [],
+          timestamp: CLOSED_AT,
+        },
+      }),
+    )
+    expect(h.sleeps.filter((ms) => ms === NC_STILL_WAIT_INTERVAL_MS)).toHaveLength(24)
   })
 
   it('7b. a still that lands mid-wait stops the poll for that member, and the wait ends', async () => {

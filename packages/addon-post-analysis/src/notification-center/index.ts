@@ -1193,6 +1193,9 @@ export class NotificationCenter implements NcEventConsumer {
       // picture is a photograph held in RAM rather than a row in the media store
       // (`still-shelf.ts`). Two RAM substrates, ONE contract — the dispatcher
       // has a branch for neither, and none per trigger.
+      // D998: how long a sensor row waits for a linked battery camera being woken.
+      stillDeadline: (ownerId) =>
+        isLinkedStillId(ownerId) ? this.linkedStills?.pendingUntil(ownerId) : undefined,
       getMediaForOwner: async (ownerKind, ownerId, eventScope) => {
         const held = isSyntheticId(ownerId) ? this.syntheticMedia.get(ownerId) : undefined
         if (held !== undefined) return held.files

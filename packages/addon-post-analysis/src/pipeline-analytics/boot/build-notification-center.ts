@@ -143,7 +143,13 @@ export class BuildNotificationCenter extends BuildNotificationCenterBase {
       // the bytes on its own still shelf (`still-shelf.ts`). Deliberately
       // WITHOUT `force`: the cap defines that as the operator's refresh button,
       // and nobody pressed anything here — a sound happened, or a space freed.
-      getSnapshot: (deviceId: number) => api.snapshot.getSnapshot.query({ deviceId }),
+      // `force` is passed ONLY by the linked-stills shelf, for a camera a rule
+      // opted in to waking (D998); the still shelf and the synthetic path
+      // never set it.
+      getSnapshot: (deviceId: number, opts?: { readonly force?: boolean }) =>
+        api.snapshot.getSnapshot.query(
+          opts?.force === true ? { deviceId, force: true } : { deviceId },
+        ),
       // D691: the early look at a pending flip's sustain end (dialled by the
       // orchestrator — an addon-to-addon call, no hub router involved), and a
       // DEPARTURE's frame at the moment it happened: the clip ring first, the

@@ -683,6 +683,12 @@ export interface NcDispatcherDeps {
    */
   readonly sleep?: (ms: number) => Promise<void>
   /**
+   * D998: the instant a wake of this linked-shelf owner's camera gives up, or
+   * `undefined` when none is in flight (`NcLinkedStillShelf.pendingUntil`).
+   * Asked on EVERY poll, because the wake is decided after the row is queued.
+   */
+  readonly stillDeadline?: (ownerId: string) => number | undefined
+  /**
    * The mosaic renderer for a grouped row (D692 §6.2). Injected so a test can make the
    * composition fail; production uses `renderMosaic` (`summary/mosaic-renderer.ts`).
    */
@@ -919,6 +925,14 @@ export { NC_RECORDER_BUSY_MS } from './recorded-cut-memo.js'
  */
 export const NC_STILL_WAIT_MS = 3_000
 export const NC_STILL_WAIT_INTERVAL_MS = 500
+
+/**
+ * D998 — the longest a sensor notification holds for a linked battery camera
+ * that is being woken (`stillDeadline`). A `sent` row is final, so the picture
+ * cannot follow the push: it is waited for here, bounded, or never attached.
+ * Owners with no wake in flight keep {@link NC_STILL_WAIT_MS}.
+ */
+export const NC_LINKED_WAKE_WAIT_MS = 15_000
 
 /**
  * How far a still's OWN instant may sit from the trigger and still count as
@@ -2383,12 +2397,15 @@ export class NcDispatcher {
       groupView !== undefined && groupTiles !== null
         ? await this.groupedMosaic(entry, groupView, groupTiles)
         : null
-    const still =
-      mosaic !== null
-        ? mosaic.attachment
-        : firstLook !== null || entry.payload.media === 'none'
-          ? firstLook
-          : await this.waitForStill(entry)
+    let waitedMs = 0
+    let still: NcResolvedAttachment | null
+    if (mosaic !== null) still = mosaic.attachment
+    else if (firstLook !== null || entry.payload.media === 'none') still = firstLook
+    else {
+      const waited = await this.waitForStill(entry)
+      still = waited.still
+      waitedMs = waited.waitedMs
+    }
     // EVERY row of a group of two or more carries its tile set — empty when the rule ships no
     // media or nothing landed — so the gate and the analyst can never fall back to whatever
     // else ships (D692 §6.2 item 9).
@@ -2438,6 +2455,7 @@ export class NcDispatcher {
           recordKind: entry.recordKind,
           recordId: entry.recordId,
           policy: entry.payload.media,
+          waitedMs,
           ...(entry.payload.mediaImage !== undefined ? { image: entry.payload.mediaImage } : {}),
           // A mosaic row owns one track per member: name them all (owners below is the
           // primary's alone).
@@ -2478,7 +2496,18 @@ export class NcDispatcher {
     const subject = entry.payload.subject
     const out: NcResolvedImage[] = []
     for (const { ownerId, cameraId } of subject.extraStills ?? []) {
-      const file = await this.linkedStillFile(entry, ownerId, cameraId)
+      let file = await this.linkedStillFile(entry, ownerId, cameraId)
+      // D998: a camera being woken lands its picture late; wait for it, bounded.
+      for (
+        let polls = 0;
+        file === undefined && polls < NC_LINKED_WAKE_WAIT_MS / NC_STILL_WAIT_INTERVAL_MS;
+        polls += 1
+      ) {
+        const deadline = this.deps.stillDeadline?.(ownerId)
+        if (deadline === undefined || this.now() >= deadline) break
+        await this.sleep(NC_STILL_WAIT_INTERVAL_MS)
+        file = await this.linkedStillFile(entry, ownerId, cameraId)
+      }
       const bytes = file === undefined ? null : decodeStillBytes(file.base64)
       if (file === undefined || bytes === null) {
         this.deps.logger.info('linked camera picture missing at send — skipped', {
@@ -3029,7 +3058,9 @@ export class NcDispatcher {
    * Bounded and then abandoned — a text-only notification about a person at the
    * door beats a punctual one nobody received.
    */
-  private async waitForStill(entry: NcOutboxEntry): Promise<NcResolvedAttachment | null> {
+  private async waitForStill(
+    entry: NcOutboxEntry,
+  ): Promise<{ readonly still: NcResolvedAttachment | null; readonly waitedMs: number }> {
     const subject = entry.payload.subject
     // An aged row does not POLL — its media either exists already or never
     // will — but it still resolves. Returning null here would have been a
@@ -3037,16 +3068,20 @@ export class NcDispatcher {
     // instant only: a retried row whose only frame is from later would ship
     // text-only, where before it shipped that frame.
     if (this.now() - subject.timestamp > NC_STILL_WAIT_MAX_AGE_MS) {
-      return this.resolveAttachment(entry, 'any')
+      return { still: await this.resolveAttachment(entry, 'any'), waitedMs: 0 }
     }
     // Nothing to wait FOR: the payload froze no media owner for this record, so
     // there is no row that could land. (The distinction the text-only line
     // already draws — an empty `owners` list is a different failure from an
     // owner that never got its picture.)
-    if (subject.eventId === undefined && subject.trackId === undefined) return null
-    const attempts = Math.floor(NC_STILL_WAIT_MS / NC_STILL_WAIT_INTERVAL_MS)
-    for (let i = 0; i < attempts; i += 1) {
+    if (subject.eventId === undefined && subject.trackId === undefined) {
+      return { still: null, waitedMs: 0 }
+    }
+    const startedAt = this.now()
+    let waitedMs = 0
+    for (let i = 0; waitedMs < this.stillWaitBoundMs(entry, startedAt); i += 1) {
       await this.sleep(NC_STILL_WAIT_INTERVAL_MS)
+      waitedMs += NC_STILL_WAIT_INTERVAL_MS
       const still = await this.resolveAttachment(entry, 'trigger-only')
       if (still !== null) {
         this.deps.logger.info('the still landed during the bounded wait', {
@@ -3058,14 +3093,34 @@ export class NcDispatcher {
             kind: still.name,
           },
         })
-        return still
+        return { still, waitedMs }
       }
     }
     // The give-up pass: the bound is spent, so a frame from later is better
     // than no frame at all. `narrowToTriggerInstant` reports the age it settled
     // for — this is the one branch that ships a picture of a different moment,
     // and it is never silent.
-    return this.resolveAttachment(entry, 'any')
+    return { still: await this.resolveAttachment(entry, 'any'), waitedMs }
+  }
+
+  /**
+   * How long this row's still poll may run: {@link NC_STILL_WAIT_MS}, or — while
+   * the shelf says a linked camera of this row is being woken — until that
+   * wake gives up, at most {@link NC_LINKED_WAKE_WAIT_MS} (D998).
+   */
+  private stillWaitBoundMs(entry: NcOutboxEntry, startedAt: number): number {
+    const subject = entry.payload.subject
+    const owners = [
+      ...(subject.trackId !== undefined ? [subject.trackId] : []),
+      ...(subject.extraStills ?? []).map((extra) => extra.ownerId),
+    ]
+    let deadline: number | undefined
+    for (const ownerId of owners) {
+      const until = this.deps.stillDeadline?.(ownerId)
+      if (until !== undefined && (deadline === undefined || until > deadline)) deadline = until
+    }
+    if (deadline === undefined) return NC_STILL_WAIT_MS
+    return Math.max(NC_STILL_WAIT_MS, Math.min(NC_LINKED_WAKE_WAIT_MS, deadline - startedAt))
   }
 
   /**
@@ -3233,8 +3288,12 @@ export class NcDispatcher {
         return ts !== undefined && this.now() - ts <= NC_STILL_WAIT_MAX_AGE_MS
       })
     await look('trigger-only', pollable())
-    const attempts = Math.floor(NC_STILL_WAIT_MS / NC_STILL_WAIT_INTERVAL_MS)
-    for (let i = 0; i < attempts && pollable().length > 0; i += 1) {
+    const startedAt = this.now()
+    for (
+      let waited = 0;
+      waited < this.stillWaitBoundMs(entry, startedAt) && pollable().length > 0;
+      waited += NC_STILL_WAIT_INTERVAL_MS
+    ) {
       await this.sleep(NC_STILL_WAIT_INTERVAL_MS)
       await look('trigger-only', pollable())
     }

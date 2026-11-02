@@ -344,7 +344,7 @@ export function beginLinkedStills(
   // which rules fire (ADR 0632 widens media only), so its rule cannot ask
   // for a capture here.
   const involved = [sensorId, ...rowShown]
-  const wanted = host.rules.listEnabled('device-event').some((rule) => {
+  const wanting = host.rules.listEnabled('device-event').filter((rule) => {
     // The EFFECTIVE policy: a sensor rule always attaches one snapshot,
     // whatever it stored (operator ruling 2026-10-01).
     if (ruleShipsNoStill(rule)) return false
@@ -368,11 +368,19 @@ export function beginLinkedStills(
       devices === undefined || devices.length === 0 || devices.some((id) => involved.includes(id))
     )
   })
-  if (!wanted) return undefined
+  if (wanting.length === 0) return undefined
+  // D998: a camera asleep is woken once for this event unless EVERY rule that
+  // could use the picture opted out. Absent means yes.
+  const wakeSleeping = wanting.some((rule) => rule.media?.wakeSleepingCamera !== false)
   for (const cameraId of cameraIds) {
     if (!shown.includes(cameraId)) host.reportLinkedCameraMuted(cameraId, sensorId)
   }
-  return shown.length > 0 ? shelf.captureSet(sensorId, shown, atMs) : undefined
+  return shown.length > 0
+    ? shelf.captureSet(sensorId, shown, atMs, {
+        wakeSleeping,
+        ruleIds: wanting.map((rule) => rule.id),
+      })
+    : undefined
 }
 /**
  * A muted camera left out of a linked set — one INFO line per camera per

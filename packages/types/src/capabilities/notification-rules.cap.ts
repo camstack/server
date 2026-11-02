@@ -1364,6 +1364,13 @@ export const NcMediaPolicySchema = z.object({
   profile: CamProfileSchema.optional(),
   /** See {@link NcLinkedCameraModeSchema}. */
   linkedCameras: NcLinkedCameraModeSchema.optional(),
+  /**
+   * Sensor rules only: may this rule wake a SLEEPING battery camera to take
+   * the linked still it attaches (D998)? Absent means yes, an explicit `false`
+   * opts out. Deliberately not a Zod default: a rule that never chose keeps
+   * following the hub's. One bounded wake per event; nothing is attached later.
+   */
+  wakeSleepingCamera: z.boolean().optional(),
 })
 export type NcMediaPolicy = z.infer<typeof NcMediaPolicySchema>
 
