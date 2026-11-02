@@ -85,6 +85,11 @@ const applyAll = vi.hoisted(() => ({
   calls: [] as unknown[],
 }))
 
+// The launch-settings card has its own spec; here it would only need more mocks.
+vi.mock('../../../components/cluster/tabs/NodeLaunchSettingsCard', () => ({
+  NodeLaunchSettingsCard: () => null,
+}))
+
 vi.mock('@camstack/ui-library', () => ({
   useLiveEvent: () => {},
   AddonGlobalSettingsForm: () => null,
