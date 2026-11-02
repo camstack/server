@@ -14,7 +14,7 @@ The single root package every node boots. Hub vs agent is `CAMSTACK_ROLE`, not a
 
 | Package | Directory | Version | Reaches a node via | What it is |
 | --- | --- | --- | --- | --- |
-| `@camstack/server` | `server/backend` | 1.2.736 | the update itself | — |
+| `@camstack/server` | `server/backend` | 1.2.737 | the update itself | — |
 
 ## Framework (4)
 
