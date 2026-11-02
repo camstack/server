@@ -35,11 +35,21 @@ export const INTEGRATION_PARAM = 'integration'
 export const SECTION_PARAM = 'section'
 
 /**
+ * The params of the provider-instances panel's dialogs (`useItemFormUrl`, default `editKey`
+ * `instance`): the open record or fixed row, and the provider picker of a new one.
+ */
+export const PROVIDER_INSTANCES_PARAMS: readonly string[] = ['instance', 'instance-new']
+
+/**
  * The params an integration page owns. An `AdminTabs` strip hosting one drops
  * them when the operator leaves the tab, so returning opens the page on its own
  * default rather than on another tab's stale selection.
  */
-export const INTEGRATION_HUB_OWNED_PARAMS: readonly string[] = [INTEGRATION_PARAM, SECTION_PARAM]
+export const INTEGRATION_HUB_OWNED_PARAMS: readonly string[] = [
+  INTEGRATION_PARAM,
+  SECTION_PARAM,
+  ...PROVIDER_INSTANCES_PARAMS,
+]
 
 /** Where each integration page lives. `tab` = the `AdminTabs` id hosting it. */
 export const INTEGRATION_HUB_PAGES = {

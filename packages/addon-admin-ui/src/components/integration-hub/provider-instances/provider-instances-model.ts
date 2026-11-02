@@ -156,3 +156,43 @@ export function randomHex8(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(4))
   return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')
 }
+
+/** What an open dialog names: a record, a record about to be created, or a fixed row's settings. */
+export type EditRef =
+  | { readonly kind: 'instance'; readonly addonId: string; readonly id: string }
+  | { readonly kind: 'create'; readonly addonId: string }
+  | { readonly kind: 'fixed'; readonly addonId: string }
+
+const CREATE_MARK = '+'
+
+/**
+ * The one URL value of an open dialog. `addonId:id` is a record, `addonId:+` a new one and a bare
+ * `addonId` a fixed row. An id is only unique inside its provider, so the addon travels with it.
+ */
+export function formatEditRef(addonId: string, id?: string | null): string {
+  if (id === undefined) return addonId
+  return `${addonId}:${id === null ? CREATE_MARK : id}`
+}
+
+export function parseEditRef(raw: string): EditRef {
+  const at = raw.indexOf(':')
+  if (at < 0) return { kind: 'fixed', addonId: raw }
+  const addonId = raw.slice(0, at)
+  const rest = raw.slice(at + 1)
+  return rest === CREATE_MARK
+    ? { kind: 'create', addonId }
+    : { kind: 'instance', addonId, id: rest }
+}
+
+export interface PinningTarget {
+  readonly name: string
+  readonly config: Readonly<Record<string, unknown>>
+}
+
+/** Names of the notification targets that pin one relay (`smtpInstanceId`), for the delete warning. */
+export function targetsPinning(
+  targets: readonly PinningTarget[],
+  instanceId: string,
+): readonly string[] {
+  return targets.filter((t) => t.config['smtpInstanceId'] === instanceId).map((t) => t.name)
+}

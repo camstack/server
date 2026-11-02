@@ -10,6 +10,7 @@
  * the underlying panel already accepts an array.
  */
 import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from '@camstack/ui-library'
+import type { SettingsFieldScope } from '../../lib/settings-field-scope'
 import { NodeAddonsSettingsPanel } from './NodeAddonsSettingsPanel'
 
 interface AddonSettingsModalProps {
@@ -19,6 +20,8 @@ interface AddonSettingsModalProps {
   readonly title?: string
   /** Optional subtitle below the title. */
   readonly subtitle?: string
+  /** Narrow the form to the fields of one scope (`cluster`, `perNode`). */
+  readonly fieldScope?: SettingsFieldScope
   readonly onClose: () => void
 }
 
@@ -26,6 +29,7 @@ export function AddonSettingsModal({
   addonId,
   title = 'Settings',
   subtitle,
+  fieldScope,
   onClose,
 }: AddonSettingsModalProps) {
   return (
@@ -36,7 +40,12 @@ export function AddonSettingsModal({
           {subtitle && <p className="text-xs text-foreground-subtle">{subtitle}</p>}
         </DialogHeader>
         <DialogBody>
-          <NodeAddonsSettingsPanel nodeId={null} addonIds={[addonId]} level="global" />
+          <NodeAddonsSettingsPanel
+            nodeId={null}
+            addonIds={[addonId]}
+            level="global"
+            {...(fieldScope !== undefined ? { fieldScope } : {})}
+          />
         </DialogBody>
       </DialogContent>
     </Dialog>

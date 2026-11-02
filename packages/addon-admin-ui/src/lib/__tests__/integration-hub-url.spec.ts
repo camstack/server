@@ -12,6 +12,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  INTEGRATION_HUB_OWNED_PARAMS,
   INTEGRATION_HUB_PAGES,
   INTEGRATION_PARAM,
   SECTION_PARAM,
@@ -168,5 +169,13 @@ describe('integrationHubHref — the one builder for a link into an integration'
 describe('addonCatalogHref', () => {
   it('links the Addons catalog filtered to a capability', () => {
     expect(addonCatalogHref('device-export')).toBe('/system/addons?capability=device-export')
+  })
+})
+
+describe('INTEGRATION_HUB_OWNED_PARAMS', () => {
+  it('includes the provider-instances dialogs, so leaving a tab drops an open one', () => {
+    expect(INTEGRATION_HUB_OWNED_PARAMS).toEqual(
+      expect.arrayContaining(['integration', 'section', 'instance', 'instance-new']),
+    )
   })
 })

@@ -9,20 +9,45 @@
  */
 import {
   Badge,
+  Button,
   DataTable,
   EmptyState,
   ErrorBox,
+  IconButton,
   SectionCard,
   Switch,
   useAddonsSetCapabilityProviderEnabled,
+  useConfirm,
+  useItemFormUrl,
+  useSystem,
   type DataColumn,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
-import { Loader2, type LucideIcon } from 'lucide-react'
-import { useMemo, type ReactElement } from 'react'
+import { Loader2, Pencil, Play, Plus, Trash2, type LucideIcon } from 'lucide-react'
+import { useCallback, useMemo, useState, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { InstanceRow, PanelRow } from './provider-instances-model'
-import { useProviderInstancesData } from './use-provider-instances-data'
+import { AddonSettingsModal } from '../../settings/AddonSettingsModal'
+import {
+  TestVerdictBanner,
+  toTestVerdict,
+  type TestVerdict,
+} from '../../integrations/connection-test-verdict'
+import { pushToast } from '../../ui/toast-bus'
+import { InstanceFormDialog } from './InstanceFormDialog'
+import { ProviderPickerDialog } from './ProviderPickerDialog'
+import {
+  creatableProviders,
+  formatEditRef,
+  parseEditRef,
+  targetsPinning,
+  type InstanceRow,
+  type PanelRow,
+} from './provider-instances-model'
+import {
+  HOLDER_QUERY_KEY,
+  useProviderInstancesData,
+  type ProviderInstancesData,
+} from './use-provider-instances-data'
 
 export interface ProviderInstancesPanelProps {
   /** The function capability whose providers are listed (`log-destination`, `smtp-provider`). */
@@ -101,9 +126,90 @@ export function ProviderInstancesPanel({
   subtitle,
   emptyTitle,
   emptyDescription,
+  addLabel,
+  editKey = 'instance',
 }: ProviderInstancesPanelProps): ReactElement {
   const { t } = useTranslation()
+  const system = useSystem()
+  const queryClient = useQueryClient()
+  const confirm = useConfirm()
   const data = useProviderInstancesData(functionCap)
+  const form = useItemFormUrl({ editKey, newKey: `${editKey}-new` })
+  const [testing, setTesting] = useState<string | null>(null)
+  const [lastTest, setLastTest] = useState<{
+    readonly name: string
+    readonly verdict: TestVerdict
+  } | null>(null)
+
+  const creatable = useMemo(() => creatableProviders(data.holders), [data.holders])
+  const nameOf = useCallback(
+    (addonId: string): string => data.displayNames.get(addonId) ?? addonId,
+    [data.displayNames],
+  )
+
+  const runTest = useCallback(
+    async (row: InstanceRow): Promise<void> => {
+      setTesting(row.key)
+      setLastTest(null)
+      try {
+        const result = await system.trpcClient.integrationInstances.testInstance.mutate({
+          addonId: row.addonId,
+          id: row.id,
+          values: {},
+        })
+        setLastTest({ name: row.name, verdict: toTestVerdict(result) })
+      } catch (err: unknown) {
+        // A transport failure of the CALL is not a verdict on the credentials.
+        const message = err instanceof Error ? err.message : String(err)
+        setLastTest({ name: row.name, verdict: { status: 'inconclusive', error: message } })
+      } finally {
+        setTesting(null)
+      }
+    },
+    [system],
+  )
+
+  const runDelete = useCallback(
+    async (row: InstanceRow): Promise<void> => {
+      // A failed look-up only drops the warning below; the delete itself still asks.
+      const pinning = await system.trpcClient.notificationOutput.listTargets
+        .query({})
+        .then((targets) => targetsPinning(targets, row.id))
+        .catch((): readonly string[] => [])
+      const pinned =
+        pinning.length > 0
+          ? ` ${t(
+              'providerInstances.deletePinned',
+              'These notification targets use it and will stop delivering: {{names}}.',
+              { names: pinning.join(', ') },
+            )}`
+          : ''
+      const ok = await confirm({
+        title: t('providerInstances.deleteTitle', 'Delete {{name}}?', { name: row.name }),
+        message: `${t(
+          'providerInstances.deleteMessage',
+          'The record and its stored credentials are removed.',
+        )}${pinned}`,
+        confirmLabel: t('common.delete', 'Delete'),
+        variant: 'danger',
+      })
+      if (!ok) return
+      try {
+        await system.trpcClient.integrationInstances.deleteInstance.mutate({
+          addonId: row.addonId,
+          id: row.id,
+        })
+        await queryClient.invalidateQueries({ queryKey: [HOLDER_QUERY_KEY] })
+      } catch (err: unknown) {
+        pushToast({
+          title: t('providerInstances.deleteFailed', 'Could not delete'),
+          message: `${row.name}: ${err instanceof Error ? err.message : String(err)}`,
+          severity: 'critical',
+        })
+      }
+    },
+    [confirm, queryClient, system, t],
+  )
 
   const columns = useMemo<readonly DataColumn<PanelRow>[]>(
     () => [
@@ -152,8 +258,47 @@ export function ProviderInstancesPanel({
         render: (row) =>
           row.kind === 'fixed' ? <EnableCell row={row} functionCap={functionCap} /> : null,
       },
+      {
+        key: 'actions',
+        align: 'right',
+        notSortableReason: t('providerInstances.actionsNotSortable', 'Row actions are not values.'),
+        render: (row) => (
+          <span className="inline-flex items-center gap-1">
+            {row.kind === 'instance' && row.canTest && (
+              <IconButton
+                icon={testing === row.key ? Loader2 : Play}
+                variant="ghost"
+                size="sm"
+                aria-label={t('providerInstances.testRow', 'Test {{name}}', { name: row.name })}
+                disabled={testing !== null}
+                onClick={() => void runTest(row)}
+              />
+            )}
+            <IconButton
+              icon={Pencil}
+              variant="ghost"
+              size="sm"
+              aria-label={t('providerInstances.editRow', 'Edit {{name}}', { name: row.name })}
+              onClick={() =>
+                form.openEdit(
+                  formatEditRef(row.addonId, row.kind === 'instance' ? row.id : undefined),
+                )
+              }
+            />
+            {row.kind === 'instance' && (
+              <IconButton
+                icon={Trash2}
+                variant="ghost"
+                size="sm"
+                aria-label={t('providerInstances.deleteRow', 'Delete {{name}}', { name: row.name })}
+                onClick={() => void runDelete(row)}
+              />
+            )}
+          </span>
+        ),
+      },
     ],
-    [functionCap, t],
+    [form, functionCap, runDelete, runTest, t, testing],
   )
 
   let body: ReactElement
@@ -182,10 +327,94 @@ export function ProviderInstancesPanel({
     )
   }
 
+  const onAdd = (): void => {
+    const only = creatable.length === 1 ? creatable[0] : undefined
+    if (only !== undefined) form.openEdit(formatEditRef(only.addonId, null))
+    else form.openNew()
+  }
+
   return (
-    <SectionCard headingId={`provider-instances-${functionCap}`} title={title} icon={icon}>
+    <SectionCard
+      headingId={`provider-instances-${functionCap}`}
+      title={title}
+      icon={icon}
+      actions={
+        data.state === 'ready' && creatable.length > 0 ? (
+          <Button size="sm" variant="outline" onClick={onAdd}>
+            <Plus className="h-3.5 w-3.5" />
+            {addLabel}
+          </Button>
+        ) : undefined
+      }
+    >
       <p className="px-3 pt-2 text-xs text-foreground-muted">{subtitle}</p>
       {body}
+      {lastTest !== null && (
+        <div className="space-y-1 p-3">
+          <p className="text-[11px] font-medium text-foreground">{lastTest.name}</p>
+          <TestVerdictBanner verdict={lastTest.verdict} />
+        </div>
+      )}
+      {data.state === 'ready' && form.state.mode === 'new' && (
+        <ProviderPickerDialog
+          title={addLabel}
+          providers={creatable.map((h) => ({
+            addonId: h.addonId,
+            name: nameOf(h.addonId),
+            description: data.descriptions.get(h.addonId) ?? '',
+          }))}
+          onPick={(addonId) => form.openEdit(formatEditRef(addonId, null))}
+          onCancel={form.close}
+        />
+      )}
+      {data.state === 'ready' && form.state.mode === 'edit' && (
+        <EditDialog
+          key={form.state.id}
+          refValue={form.state.id}
+          data={data}
+          nameOf={nameOf}
+          onClose={form.close}
+        />
+      )}
     </SectionCard>
+  )
+}
+
+function EditDialog({
+  refValue,
+  data,
+  nameOf,
+  onClose,
+}: {
+  readonly refValue: string
+  readonly data: ProviderInstancesData
+  readonly nameOf: (addonId: string) => string
+  readonly onClose: () => void
+}): ReactElement | null {
+  const ref = parseEditRef(refValue)
+  if (ref.kind === 'fixed') {
+    return (
+      <AddonSettingsModal
+        addonId={ref.addonId}
+        title={nameOf(ref.addonId)}
+        fieldScope="cluster"
+        onClose={onClose}
+      />
+    )
+  }
+  const holder = data.holders.find((h) => h.addonId === ref.addonId)
+  if (holder === undefined) return null
+  const instance =
+    ref.kind === 'instance' ? (holder.instances.find((i) => i.id === ref.id) ?? null) : null
+  // A link to a record that no longer exists opens nothing.
+  if (ref.kind === 'instance' && instance === null) return null
+  return (
+    <InstanceFormDialog
+      addonId={ref.addonId}
+      providerName={nameOf(ref.addonId)}
+      description={holder.description}
+      instance={instance}
+      onClose={onClose}
+    />
   )
 }

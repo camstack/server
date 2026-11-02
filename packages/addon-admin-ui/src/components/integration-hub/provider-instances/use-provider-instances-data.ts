@@ -28,6 +28,7 @@ export interface ProviderInstancesData {
   readonly rows: readonly PanelRow[]
   readonly holders: readonly HolderData[]
   readonly displayNames: ReadonlyMap<string, string>
+  readonly descriptions: ReadonlyMap<string, string>
   readonly refetch: () => void
 }
 
@@ -118,6 +119,7 @@ export function useProviderInstancesData(functionCap: string): ProviderInstances
     rows,
     holders,
     displayNames,
+    descriptions,
     refetch,
   }
 }

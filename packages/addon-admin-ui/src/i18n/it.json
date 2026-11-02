@@ -11505,6 +11505,21 @@
     "onNotSortable": "Un interruttore non è un valore da ordinare.",
     "enable": "Attiva {{name}}",
     "loadFailed": "Impossibile caricare l'elenco",
-    "loading": "Caricamento…"
+    "loading": "Caricamento…",
+    "pickProvider": "Scegli a quale provider appartiene il nuovo.",
+    "saved": "Salvato",
+    "createTitle": "Aggiungi {{provider}}",
+    "editTitle": "Modifica {{name}}",
+    "test": "Prova la connessione",
+    "create": "Crea",
+    "saveChanges": "Salva le modifiche",
+    "deleteTitle": "Eliminare {{name}}?",
+    "deleteMessage": "Il record e le credenziali salvate vengono rimossi.",
+    "deletePinned": "Queste destinazioni di notifica lo usano e non consegneranno più: {{names}}.",
+    "deleteFailed": "Impossibile eliminare",
+    "testRow": "Prova {{name}}",
+    "editRow": "Modifica {{name}}",
+    "deleteRow": "Elimina {{name}}",
+    "actionsNotSortable": "Le azioni di riga non sono valori."
   }
 }

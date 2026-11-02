@@ -11483,6 +11483,21 @@
     "onNotSortable": "A switch is not a value to order by.",
     "enable": "Enable {{name}}",
     "loadFailed": "Could not load the list",
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "pickProvider": "Choose which provider the new one belongs to.",
+    "saved": "Saved",
+    "createTitle": "Add {{provider}}",
+    "editTitle": "Edit {{name}}",
+    "test": "Test connection",
+    "create": "Create",
+    "saveChanges": "Save changes",
+    "deleteTitle": "Delete {{name}}?",
+    "deleteMessage": "The record and its stored credentials are removed.",
+    "deletePinned": "These notification targets use it and will stop delivering: {{names}}.",
+    "deleteFailed": "Could not delete",
+    "testRow": "Test {{name}}",
+    "editRow": "Edit {{name}}",
+    "deleteRow": "Delete {{name}}",
+    "actionsNotSortable": "Row actions are not values."
   }
 }

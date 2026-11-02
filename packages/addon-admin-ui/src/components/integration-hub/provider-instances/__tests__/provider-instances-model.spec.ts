@@ -8,7 +8,10 @@ import {
   creatableProviders,
   deriveState,
   diffInstanceValues,
+  formatEditRef,
   mintInstanceId,
+  parseEditRef,
+  targetsPinning,
   type HolderData,
 } from '../provider-instances-model'
 
@@ -152,5 +155,38 @@ describe('mintInstanceId', () => {
   })
   it('multiple mode mints an opaque inst- id', () => {
     expect(mintInstanceId('multiple', 'smtp-nodemailer', () => 'deadbeef')).toBe('inst-deadbeef')
+  })
+})
+
+describe('edit refs', () => {
+  it('round-trips an instance, a create and a fixed row', () => {
+    for (const [addonId, id] of [
+      ['smtp-nodemailer', 'inst-aaaaaaaa'],
+      ['smtp-nodemailer', null],
+      ['winston-logging', undefined],
+    ] as const) {
+      const ref = formatEditRef(addonId, id)
+      expect(parseEditRef(ref)).toEqual(
+        id === undefined
+          ? { kind: 'fixed', addonId }
+          : id === null
+            ? { kind: 'create', addonId }
+            : { kind: 'instance', addonId, id },
+      )
+    }
+  })
+  it('keeps a colon inside an instance id', () => {
+    expect(parseEditRef('a:b:c')).toEqual({ kind: 'instance', addonId: 'a', id: 'b:c' })
+  })
+})
+
+describe('targetsPinning', () => {
+  it('names the targets that pin the instance and no others', () => {
+    const targets = [
+      { name: 'Mail ops', config: { smtpInstanceId: 'inst-aaaaaaaa' } },
+      { name: 'Mail default', config: {} },
+      { name: 'Mail other', config: { smtpInstanceId: 'relay-default' } },
+    ]
+    expect(targetsPinning(targets, 'inst-aaaaaaaa')).toEqual(['Mail ops'])
   })
 })
