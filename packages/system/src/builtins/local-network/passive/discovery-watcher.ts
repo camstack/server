@@ -11,9 +11,9 @@
 import { errMsg, type DiscoveryObservation, type IScopedLogger } from '@camstack/types'
 import { observationKey, parseMdnsPacket, parseSsdpPacket } from './passive-packets.js'
 
-export const SWEEP_INTERVAL_MS = 30 * 60 * 1000
+export const SWEEP_INTERVAL_MS: number = 30 * 60 * 1000
 /** A sighting already reported within this window is not reported again. */
-export const SEEN_WINDOW_MS = 10 * 60 * 1000
+export const SEEN_WINDOW_MS: number = 10 * 60 * 1000
 export const FLUSH_INTERVAL_MS = 5_000
 /** More distinct sightings than this between two flushes are dropped, and said so. */
 export const MAX_PENDING = 512
