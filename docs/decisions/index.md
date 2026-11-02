@@ -4,7 +4,7 @@
 
 # Decisions
 
-962 architecture decision records. One file per decision, never
+963 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -976,6 +976,7 @@ that rots.
 | D996 | [Connection-holding addons are integration instances, a system collection cap over typed record kinds](adr-0996-connection-holding-addons-are-integration-instances.md) | 💭 proposed | 2026-11-02 |
 | D997 | [A device's own provider may call power-source forceRestart for its own device, as a bounded self-recovery](adr-0997-a-device-provider-may-restart-its-own-device-through-power-source-as-bounded-self-recovery.md) | 💭 proposed | 2026-11-02 |
 | D998 | [A notification that needs a sleeping battery camera wakes it once, by the rule's leave, and waits bounded](adr-0998-a-notification-that-needs-a-sleeping-battery-camera-wakes-it-once-by-the-rules-leave-and-waits-bounded.md) | 💭 proposed | 2026-11-02 |
+| D999 | [Inbound camera alarms ride existing planes — SMTP is a broker kind, HTTP is the addon data plane](adr-0999-inbound-camera-alarms-ride-existing-planes-smtp-is-a-broker-kind-http-is-the-addon-data-plane.md) | ✅ accepted (supersedes D986 §6 (inbound receivers as a hub builtin)) | 2026-11-02 |
 | D1000 | [A parcel still is taken from a frame that still exists](adr-1000-a-parcel-still-is-taken-from-a-frame-that-still-exists.md) | 💭 proposed | 2026-11-02 |
 
 Conventions, and why the numbering looks the way it does:

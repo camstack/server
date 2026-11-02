@@ -3,6 +3,7 @@
 // `addon-pipeline-orchestrator` (the window accumulator) bundle it into their
 // own dist, so the lever ships with `camstack deploy` (D455).
 export * from './audio/audio-chunk-format.js'
+export * from './brokers/smtp-inbound.js'
 export type {
   EventOwnerType,
   MediaOwnerKey,
