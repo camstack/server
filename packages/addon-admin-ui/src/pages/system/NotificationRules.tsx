@@ -1835,6 +1835,28 @@ function RuleFormDialog({
                     'When the sensor is linked to several cameras, all of them are photographed the moment it fires. Cameras that are offline or asleep are left out.',
                   )}
                 </p>
+                <label className="mt-2 flex items-start gap-2 text-xs text-foreground cursor-pointer">
+                  <Checkbox
+                    checked={form.mediaWakeSleepingCamera !== false}
+                    onChange={(e) =>
+                      patch({ mediaWakeSleepingCamera: e.target.checked ? undefined : false })
+                    }
+                    className="accent-primary mt-0.5"
+                    data-testid="rule-media-wake-sleeping-camera"
+                  />
+                  <span>
+                    {t(
+                      'system.notificationRules.wakeSleepingCamera',
+                      'Wake a sleeping battery camera for the picture',
+                    )}
+                    <span className="block text-[10px] text-foreground-subtle">
+                      {t(
+                        'system.notificationRules.wakeSleepingCameraHelp',
+                        'Costs battery and waits up to 15 s before the notification is sent.',
+                      )}
+                    </span>
+                  </span>
+                </label>
               </div>
             )}
           </div>

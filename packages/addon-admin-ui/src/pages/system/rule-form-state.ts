@@ -98,6 +98,11 @@ export interface NcRuleFormState {
    * image per camera. undefined = absent = the hub's default, a mosaic.
    */
   readonly mediaLinkedCameras: NcMediaPolicy['linkedCameras']
+  /**
+   * Sensor rules only (D998): wake a sleeping battery camera for the linked
+   * still. undefined = absent = on; only an explicit `false` is ever stored.
+   */
+  readonly mediaWakeSleepingCamera: NcMediaPolicy['wakeSleepingCamera']
   readonly templateTitle: string
   readonly templateBody: string
   /**
@@ -392,6 +397,7 @@ export function emptyRuleForm(
     mediaProfile: undefined,
     mediaClipSpeed: undefined,
     mediaLinkedCameras: undefined,
+    mediaWakeSleepingCamera: undefined,
     templateTitle: '',
     templateBody: '',
     ...splitRuleScopes(conditions),
@@ -438,6 +444,7 @@ export function ruleToForm(rule: NcRule): NcRuleFormState {
     mediaProfile: rule.media.profile,
     mediaClipSpeed: rule.media.clipSpeed,
     mediaLinkedCameras: rule.media.linkedCameras,
+    mediaWakeSleepingCamera: rule.media.wakeSleepingCamera,
     templateTitle: rule.template?.title ?? '',
     templateBody: rule.template?.body ?? '',
     ...splitRuleScopes(rule.conditions),

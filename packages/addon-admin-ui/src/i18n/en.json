@@ -511,7 +511,9 @@
       "deliveryOptions": {
         "title": "Delivery options",
         "useDefault": "Use the target setting"
-      }
+      },
+      "wakeSleepingCamera": "Wake a sleeping battery camera for the picture",
+      "wakeSleepingCameraHelp": "Costs battery and waits up to 15 s before the notification is sent."
     },
     "notificationSequences": {
       "name": "Name",

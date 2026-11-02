@@ -93,6 +93,7 @@ export const NC_RULE_TABS: readonly NcRuleTab[] = [
       'mediaProfile',
       'mediaClipSpeed',
       'mediaLinkedCameras',
+      'mediaWakeSleepingCamera',
       'templateTitle',
       'templateBody',
     ],

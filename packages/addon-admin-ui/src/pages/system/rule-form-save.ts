@@ -342,6 +342,12 @@ export function buildRuleInput(
           form.mediaLinkedCameras !== undefined
             ? { linkedCameras: form.mediaLinkedCameras }
             : {}),
+          // D998: sensor rules only; only an opt-out is stored, on is absent.
+          ...(kind === 'sensor' &&
+          form.mediaImage !== 'none' &&
+          form.mediaWakeSleepingCamera === false
+            ? { wakeSleepingCamera: false }
+            : {}),
           // The clip window only while footage is cut, as the viewer writes it:
           // a roll with no gif or clip is a knob nothing reads.
           ...((form.mediaGif || form.mediaClip) && preserve?.media?.clipPreRollSec !== undefined

@@ -1311,3 +1311,33 @@ describe('D637 — family sections in the admin list', () => {
     }
   })
 })
+
+describe('the wake-a-sleeping-camera choice (D998)', () => {
+  const sensor = {
+    ...emptyRuleForm('device-event', { sensorKinds: ['doorbell'] }),
+    name: 'x',
+    targetIds: ['t1'],
+  }
+
+  it('saves an explicit false when switched off', () => {
+    const input = buildRuleInput({ ...sensor, mediaWakeSleepingCamera: false })
+    expect(input.media.wakeSleepingCamera).toBe(false)
+  })
+
+  it('omits the field when on, so the default stays the rule', () => {
+    const input = buildRuleInput(sensor)
+    expect('wakeSleepingCamera' in input.media).toBe(false)
+  })
+
+  it('omits the field on a kind that is not a sensor', () => {
+    const immediate = { ...emptyRuleForm('immediate'), name: 'x', targetIds: ['t1'] }
+    const input = buildRuleInput({ ...immediate, mediaWakeSleepingCamera: false })
+    expect('wakeSleepingCamera' in input.media).toBe(false)
+  })
+
+  it('round-trips an opted-out rule and leaves an absent one absent', () => {
+    const off = sampleRule({ media: { attach: 'keyFrame', wakeSleepingCamera: false } })
+    expect(ruleToForm(off).mediaWakeSleepingCamera).toBe(false)
+    expect(ruleToForm(sampleRule()).mediaWakeSleepingCamera).toBeUndefined()
+  })
+})
