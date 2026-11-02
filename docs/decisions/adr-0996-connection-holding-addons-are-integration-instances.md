@@ -8,6 +8,8 @@ applies-to:
   - packages/types/src/capabilities/integration-instances.cap.ts
   - packages/types/src/addon/record-integration-instances.ts
   - packages/system/src/builtins/loki-logging/**
+  - packages/addon-smtp-nodemailer/src/relay-pool.ts
+  - packages/addon-smtp-nodemailer/src/relay-record-kinds.ts
   - server/backend/src/api/core/cap-providers.ts
 ---
 
@@ -32,7 +34,7 @@ typed record kind (kind names are lower-case-dashed, so Loki's is `destinations`
 of the provider alone: with one, the integrations cap reads and writes the record; without
 one, the legacy `integration-settings` path runs. **Operator decision (2026-11-02): a service instance is configured from its function page.** The Integrations page lists only integrations that bring devices: `integrations.list` omits every addon whose manifest declares `integration-instances` (generic, no per-addon list), and `getAvailableTypes` offers none, so the add wizard never shows one. The stored row (for Loki `int_0038`) and the record and its keychain secret are kept; `get` and `getByAddonId` still resolve it, which the migration relies on. Loki is a row of the Logging page's destinations list, edited through the cap in a dialog; with no record yet the provider picker creates it, under the addon id. There is no `connection` kind in the UI.
 The per-destination on/off switch of a log destination
-(D777) is unchanged and is not wired to the integration's `enabled`.
+(D777) is superseded for instances by the amendment below.
 
 ## Consequences
 
@@ -70,9 +72,26 @@ the providers able to take another record. A `single` provider is offered while 
 names its record after the addon; a `multiple` provider gets an opaque `inst-<8 hex>` id minted by the
 UI. Ids are opaque: an `inst-` id and a migrated `relay-` id coexist in one list.
 
+**Amendment (operator, 2026-11-02): every instance carries its own switch.** `enabled` lives on the
+record body (absent means on, so no data migration) and is switched by the required method
+`setInstanceEnabled({ id, enabled })`, a row control and not a field of `updateInstance.values`
+(D62: the form patch is not the switch). `IntegrationInstance.enabled` is always present in the view.
+`RecordIntegrationInstances` implements it and tells the addon through `onChanged`; each kind adds
+`enabled: z.boolean().optional()`. D777's registry toggle remains only for providers that hold no
+instance. Loki reads the flag in `destinationConfig()`, so a record that is off stops the timer,
+the write, the flush and `read()` on the hub at once and on agents within the 30 s refresh. A
+disabled-at-registry Loki is carried over by the procedure
+`loki-logging/2026-11-02-registry-toggle-to-record` (record off, registry back on; idempotent; a
+failed read writes nothing; run again after the provider registers, since it is not listed while the
+addon initialises). A relay that is off is skipped by the default pick; a caller pinned to it gets
+`smtp.relay-disabled` and no other relay answers; `verify` and `testInstance` still probe it;
+`status()` is `ready: false` without an error. Restart is a row action (`addons.restartAddon`, per
+addon and hub-only, a grouped addon restarts its whole group) and the activity of the providers in
+the list sits under it.
+
 ## Enforcement
 
-Specs: the helper (instance isolation, secret keep and clear), the hub aggregation (connection
+Specs: the helper (instance isolation, secret keep and clear, `enabled` default and `setInstanceEnabled`), the relay pool (default pick, pinned refusal, toggle survives an unchanged-body apply), the hub aggregation (connection
 kind, no write to `integration-settings`) and the Loki migration (moves, secret resolves,
 idempotent, a failed read writes nothing). `check-migrations-well-formed` and
 `check-runner-barrel-free` guard the catalogue and the helper's imports.
