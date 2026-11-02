@@ -24,6 +24,8 @@ export type SmtpRelayBody = {
   readonly fromAddress: string
   /** Optional display name prefixing the `From` address. */
   readonly fromName: string
+  /** The instance's own switch (D996). Absent means on, so no data migration was needed. */
+  readonly enabled?: boolean | undefined
 }
 
 /** The schema is checked against the interface by its annotation: a drifted field fails the typecheck. */
@@ -36,6 +38,7 @@ export const SmtpRelayBodySchema: z.ZodType<SmtpRelayBody> = z.object({
   password: z.string().optional().meta({ secret: true }),
   fromAddress: z.string(),
   fromName: z.string(),
+  enabled: z.boolean().optional(),
 })
 
 export const RELAYS_KIND_NAME = 'relays'

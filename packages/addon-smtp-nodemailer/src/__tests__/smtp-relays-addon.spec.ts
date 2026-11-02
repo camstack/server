@@ -181,4 +181,25 @@ describe('SmtpNodemailerAddon — relays are integration instances (D996)', () =
     await w.smtp.sendEmail({ to: 'ops@example.com', subject: 's', text: 't' })
     expect(w.built.find((t) => t.options.host === 'smtp.new.test')?.sent).toHaveLength(1)
   })
+
+  it('setInstanceEnabled(false) is reported off, skips the default pick and refuses a pinned send', async () => {
+    const w = await boot()
+    addons.push(w.addon)
+    const mail = { to: 'ops@example.com', subject: 's', text: 't' }
+    await w.instances.setInstanceEnabled({ id: 'int_0001', enabled: false })
+    expect((await w.instances.getInstance({ id: 'int_0001' }))?.enabled).toBe(false)
+    await w.smtp.sendEmail(mail)
+    expect(w.built.filter((t) => t.sent.length > 0).map((t) => t.options.host)).toEqual([
+      'smtp.b.test',
+    ])
+    await expect(w.smtp.sendEmail({ ...mail, instanceId: 'int_0001' })).rejects.toMatchObject({
+      i18nCode: 'smtp.relay-disabled',
+    })
+    await w.instances.setInstanceEnabled({ id: 'int_0001', enabled: true })
+    await w.smtp.sendEmail({ ...mail, instanceId: 'int_0001' })
+    const sentByA = w.built
+      .filter((t) => t.options.host === 'smtp.a.test')
+      .reduce((n, t) => n + t.sent.length, 0)
+    expect(sentByA).toBe(1)
+  })
 })

@@ -8,6 +8,7 @@
  */
 import nodemailer from 'nodemailer'
 import type SMTPTransport from 'nodemailer/lib/smtp-transport/index.js'
+import { userError } from '@camstack/types'
 import type { SmtpRelayBody } from './relay-record-kinds.js'
 
 /** The part of a nodemailer transporter the pool uses; tests supply a fake of exactly this. */
@@ -74,6 +75,11 @@ export function buildTransportOptions(body: Readonly<SmtpRelayBody>): SMTPTransp
   return options
 }
 
+/** An absent `enabled` means on (D996). */
+function isOn(body: Readonly<SmtpRelayBody>): boolean {
+  return body.enabled !== false
+}
+
 function coerceAddress(entry: string | { readonly address: string }): string {
   return typeof entry === 'string' ? entry : entry.address
 }
@@ -86,7 +92,8 @@ function sameBody(a: SmtpRelayBody, b: SmtpRelayBody): boolean {
     a.username === b.username &&
     (a.password ?? '') === (b.password ?? '') &&
     a.fromAddress === b.fromAddress &&
-    a.fromName === b.fromName
+    a.fromName === b.fromName &&
+    isOn(a) === isOn(b)
   )
 }
 
@@ -145,14 +152,20 @@ export class RelayPool {
     }
   }
 
-  /** The named relay; with no name, the first configured one (else the first). */
+  /**
+   * The named relay (on or off: a pinned caller is answered by that relay or refused, never by
+   * another); with no name, the first configured relay that is on (else the first that is on).
+   */
   private pick(instanceId: string | undefined): RelayState | undefined {
     if (instanceId !== undefined) return this.relays.get(instanceId)
-    const all = [...this.relays.values()]
-    return all.find((r) => r.body.host !== '') ?? all[0]
+    const on = [...this.relays.values()].filter((r) => isOn(r.body))
+    return on.find((r) => r.body.host !== '') ?? on[0]
   }
 
   private unknown(instanceId: string | undefined): string {
+    if (instanceId === undefined && this.relays.size > 0) {
+      return 'smtp-nodemailer: every relay is switched off — switch one on under Integrations'
+    }
     return instanceId === undefined
       ? 'smtp-nodemailer: no relay configured — add one under Integrations'
       : `smtp-nodemailer: unknown relay "${instanceId}"`
@@ -164,6 +177,17 @@ export class RelayPool {
   ): Promise<{ messageId: string; accepted: string[]; rejected: string[] }> {
     const relay = this.pick(instanceId)
     if (relay === undefined) throw new Error(this.unknown(instanceId))
+    if (!isOn(relay.body)) {
+      this.log.warn('smtp send refused: the relay is switched off', {
+        meta: { integrationId: relay.id, relay: relay.body.name },
+        tags: { topic: 'smtp', phase: 'relay-disabled' },
+      })
+      throw userError(
+        'smtp.relay-disabled',
+        { id: relay.id, name: relay.body.name },
+        `smtp-nodemailer: relay "${relay.body.name}" is switched off`,
+      )
+    }
     if (relay.transporter === null) {
       throw new Error('smtp-nodemailer: transporter not configured — set host/port on the relay')
     }
@@ -247,7 +271,11 @@ export class RelayPool {
   }
 
   private statusOf(relay: RelayState): RelayStatus {
-    const status: RelayStatus = { ready: relay.lastVerifyOk, host: relay.body.host }
+    // A relay that is off is not ready, and that is not an error (D62: off must not look broken).
+    const status: RelayStatus = {
+      ready: isOn(relay.body) && relay.lastVerifyOk,
+      host: relay.body.host,
+    }
     if (relay.lastError) status.error = relay.lastError
     if (relay.lastVerifiedAt !== undefined) status.lastVerifiedAt = relay.lastVerifiedAt
     return status

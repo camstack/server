@@ -1,3 +1,4 @@
+import { userError } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 import { buildEmailDescriptor, createEmailAdapter, type EmailSendInput } from '../adapters/email.js'
 import { createNotificationOutputProvider } from '../provider.js'
@@ -58,6 +59,38 @@ describe('email notifier adapter', () => {
     }
     expect(sendEmail.mock.calls[0]?.[0]).toMatchObject({ instanceId: 'int_0003' })
     expect(sendEmail.mock.calls[1]?.[0]).not.toHaveProperty('instanceId')
+  })
+
+  it('a target pinned to a relay that is switched off fails with the relay message and no other relay answers', async () => {
+    const message = 'smtp-nodemailer: relay "a" is switched off'
+    const sendEmail = vi.fn(async (input: EmailSendInput) => {
+      if (input.instanceId === 'int_0003')
+        throw userError('smtp.relay-disabled', { id: 'int_0003', name: 'a' }, message)
+      return { messageId: 'other-relay' }
+    })
+    const adapter = createEmailAdapter({ sendEmail })
+    const store = TargetStore.of((await makeNotifiersRecords()).records)
+    const provider = createNotificationOutputProvider({ store, adapters: [adapter] })
+    await provider.upsertTarget({
+      target: {
+        id: 'pinned',
+        addonId: 'notifiers',
+        name: 'pinned',
+        kind: 'email',
+        enabled: true,
+        config: {
+          to: 'ops@example.com',
+          smtpAddonId: 'smtp-nodemailer',
+          smtpInstanceId: 'int_0003',
+        },
+      },
+    })
+    const result = await provider.testTarget({
+      targetId: 'pinned',
+      sample: { body: 'Hello', title: 'CamStack', format: 'text', priority: 3 },
+    })
+    expect(result).toMatchObject({ success: false, error: message })
+    expect(sendEmail).toHaveBeenCalledOnce()
   })
 
   it('fails clearly when smtp client refuses', async () => {
