@@ -3,6 +3,7 @@ import {
   buttonCapability,
   controlCapability,
   coverCapability,
+  DeviceFeature,
   switchCapability,
   type BrightnessStatus,
   type ControlStatus,
@@ -20,7 +21,12 @@ import {
   decodeText,
 } from '../esphome-decode.js'
 import type { EspState } from '../esphome-link.js'
-import { EspChildDevice, stampOnChange, type EspStateOrigin } from './esp-child-device.js'
+import {
+  EspChildDevice,
+  stampOnChange,
+  type EspChildConfig,
+  type EspStateOrigin,
+} from './esp-child-device.js'
 
 const COLD_SWITCH: SwitchStatus = { on: false, lastChangedAt: 0 }
 const COLD_BRIGHTNESS: BrightnessStatus = { level: 0, lastChangedAt: 0 }
@@ -42,6 +48,13 @@ export class EspActuatorDevice extends EspChildDevice {
     super(ctx)
     this.registerCaps()
     this.attach()
+  }
+
+  /** A cover's `stop` is a real board command unless the entity said it has none. */
+  protected override declaredFeatures(child: EspChildConfig): readonly DeviceFeature[] {
+    return child.kind === 'cover' && child.supportsStop !== false
+      ? [DeviceFeature.CoverStoppable]
+      : []
   }
 
   private get entityId(): string {

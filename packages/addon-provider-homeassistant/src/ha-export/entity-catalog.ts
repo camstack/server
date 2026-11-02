@@ -919,6 +919,8 @@ export interface CapCommandEntity {
   /** Absent means enabled. See the note on {@link buildDerivedPlan}. */
   readonly enabledByDefault?: boolean
   readonly entityCategory?: 'config' | 'diagnostic'
+  /** The `DeviceFeature` a device must declare for this command to exist. */
+  readonly requiresFeature?: string
 }
 
 export interface CapEntityMapping extends CapEntityDescriptor {
@@ -1205,7 +1207,12 @@ export const CAP_ENTITY_MAP: Readonly<Record<string, CapEntityMapping>> = {
     commands: {
       open: { label: 'Open', icon: 'mdi:arrow-up-box' },
       close: { label: 'Close', icon: 'mdi:arrow-down-box' },
-      stop: { label: 'Stop', icon: 'mdi:stop', enabledByDefault: false },
+      stop: {
+        label: 'Stop',
+        icon: 'mdi:stop',
+        enabledByDefault: false,
+        requiresFeature: 'cover-stoppable',
+      },
     },
   },
   /**
@@ -2217,6 +2224,7 @@ function capEntitySpecs(capName: string, features: readonly string[] = []): read
       ...(ref.descriptor.writable === true ? { writable: true } : {}),
     }))
   for (const ref of capCommandEntities(capName)) {
+    if (!declared(ref.command.requiresFeature)) continue
     specs.push({
       entity: ref.entity,
       platform: 'button',

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Homematic covers declare cover-stoppable so their stop control stays exported.
+
 ## [1.2.180] - 2026-11-02
 
 ### Changed

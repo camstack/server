@@ -174,7 +174,7 @@ export const NATIVE_CAP_PLATFORMS: Readonly<Record<string, NativePlatformMapping
       tilt: { from: 'tilt', min: 0, max: 100, step: 1, requiresFeature: 'cover-tilt' },
       open: { from: 'open', commandOnly: true },
       close: { from: 'close', commandOnly: true },
-      stop: { from: 'stop', commandOnly: true },
+      stop: { from: 'stop', commandOnly: true, requiresFeature: 'cover-stoppable' },
     },
   },
   /** `ValveStatusSchema` — the cover lifecycle without tilt. */

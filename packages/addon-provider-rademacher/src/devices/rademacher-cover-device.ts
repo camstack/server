@@ -54,7 +54,8 @@ export class RademacherCoverDevice extends BaseDevice<typeof rademacherCoverSche
     this.invertPosition = cfg.invertPosition
     this.supportsTilt = cfg.supportsTilt
 
-    const features: DeviceFeature[] = []
+    // `stop` drives the shutter's real STOP command on every probed device.
+    const features: DeviceFeature[] = [DeviceFeature.CoverStoppable]
     if (cfg.supportsPosition) features.push(DeviceFeature.CoverPositionable)
     if (cfg.supportsTilt) features.push(DeviceFeature.CoverTilt)
     this.features = features

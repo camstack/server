@@ -33,7 +33,10 @@ const COLD_START: CoverStatus = {
  * from {@link veluxGateways}.
  */
 export class VeluxCoverDevice extends BaseDevice<typeof veluxCoverSchema> {
-  readonly features: readonly DeviceFeature[] = [DeviceFeature.CoverPositionable]
+  readonly features: readonly DeviceFeature[] = [
+    DeviceFeature.CoverPositionable,
+    DeviceFeature.CoverStoppable,
+  ]
 
   private readonly nodeId: number
   private readonly serial: string

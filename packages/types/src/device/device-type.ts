@@ -190,6 +190,9 @@ export enum DeviceFeature {
   CoverPositionable = 'cover-positionable',
   /** Cover exposes slat-tilt control. Gates the tilt slider UI. */
   CoverTilt = 'cover-tilt',
+  /** Cover has a real stop: `stop` halts the travel in place. Gates the stop
+   *  control in exporters; a provider whose `stop` is a no-op never declares it. */
+  CoverStoppable = 'cover-stoppable',
   /** Valve exposes intermediate position control (0..100). Gates the
    *  position slider / drag surface UI. */
   ValvePositionable = 'valve-positionable',

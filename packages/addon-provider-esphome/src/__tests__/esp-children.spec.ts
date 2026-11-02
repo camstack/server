@@ -116,3 +116,21 @@ describe('EspActuatorDevice', () => {
     expect(dev.runtimeState.getCapState<SwitchStatus>('switch')?.on).toBe(true)
   })
 })
+
+describe('EspActuatorDevice cover features', () => {
+  const cover = (extra: Record<string, unknown>): EspActuatorDevice =>
+    new EspActuatorDevice(
+      makeCtx(
+        { brokerId: BROKER, kind: 'cover', entityId: 'cover-shutter', ...extra },
+        { type: DeviceType.Cover },
+      ).ctx,
+    )
+
+  it('a cover that can stop declares cover-stoppable', () => {
+    expect(cover({ supportsStop: true }).features).toContain('cover-stoppable')
+  })
+
+  it('a cover whose entity has no stop does not', () => {
+    expect(cover({ supportsStop: false }).features).not.toContain('cover-stoppable')
+  })
+})

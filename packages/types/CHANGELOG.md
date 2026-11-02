@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Fix: the integration instances routes answer again; a public capability can no longer be left without a server route.
+- A cover can declare cover-stoppable; a cover group offers stop only when every member has it.
 
 ## [1.2.477] - 2026-11-02
 

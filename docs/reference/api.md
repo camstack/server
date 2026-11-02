@@ -2179,7 +2179,7 @@
 
 ### `cover` → `cover.*`
 
-- **Source:** `packages/types/src/capabilities/cover.cap.ts:45`
+- **Source:** `packages/types/src/capabilities/cover.cap.ts:46`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `cover`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `ICoverProvider`

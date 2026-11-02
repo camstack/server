@@ -154,9 +154,15 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
     void this.updateSourceInfo({ id: `${this.nodeId}:${this.endpointId}`, system: 'matter' })
   }
 
-  /** PIN-required locks advertise the feature the lock UI already understands. */
+  /**
+   * PIN-required locks advertise the feature the lock UI already understands; a
+   * cover advertises `cover-stoppable` (WindowCovering `stopMotion` is mandatory).
+   */
   override get features(): readonly DeviceFeature[] {
-    return this.pinRequired ? [DeviceFeature.LockPinRequired] : []
+    return [
+      ...(this.pinRequired ? [DeviceFeature.LockPinRequired] : []),
+      ...(this.caps.includes('cover') ? [DeviceFeature.CoverStoppable] : []),
+    ]
   }
 
   override async onActivate(): Promise<void> {

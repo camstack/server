@@ -193,6 +193,19 @@ describe('mapHaEntityToCamStack — domain mapping table', () => {
       expect(roleOf(null)).toBeNull()
     })
 
+    it('STOP (8) → CoverStoppable; a cover without the STOP bit does not declare it', () => {
+      const featuresOf = (sf: number) =>
+        mapHaEntityToCamStack({
+          domain: 'cover',
+          deviceClass: 'blind',
+          attributes: { supported_features: sf },
+        })?.features
+      expect(featuresOf(8 | 4)).toEqual(
+        expect.arrayContaining([DeviceFeature.CoverPositionable, DeviceFeature.CoverStoppable]),
+      )
+      expect(featuresOf(4)).not.toContain(DeviceFeature.CoverStoppable)
+    })
+
     it('positionable + tilt (4 | 128 = 132) → both flags', () => {
       const m = mapHaEntityToCamStack({
         domain: 'cover',

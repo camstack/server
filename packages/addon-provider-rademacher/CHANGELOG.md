@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Rademacher covers declare cover-stoppable so their stop control stays exported.
+
 ## [0.2.156] - 2026-11-01
 
 ### Changed

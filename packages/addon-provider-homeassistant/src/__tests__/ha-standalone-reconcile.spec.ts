@@ -74,6 +74,28 @@ function switchDevice(id = 501): IDevice {
 
 // ── diffStandaloneEntity (pure) ──────────────────────────────────────────────
 
+describe('diffStandaloneEntity: a persisted cover gains cover-stoppable', () => {
+  const before: StandaloneEntitySpec = {
+    type: DeviceType.Cover,
+    capabilities: ['cover'],
+    features: ['cover-positionable'],
+  }
+  const after: StandaloneEntitySpec = {
+    ...before,
+    features: ['cover-positionable', 'cover-stoppable'],
+  }
+
+  it('flags the drift and carries the new features', () => {
+    const diff = diffStandaloneEntity(before, after)
+    expect(diff.changed).toBe(true)
+    expect(diff.config).toMatchObject({ features: ['cover-positionable', 'cover-stoppable'] })
+  })
+
+  it('is idempotent once migrated', () => {
+    expect(diffStandaloneEntity(after, after)).toEqual({ changed: false })
+  })
+})
+
 describe('diffStandaloneEntity', () => {
   const sw: StandaloneEntitySpec = { type: DeviceType.Switch, capabilities: ['switch'] }
   const light: StandaloneEntitySpec = {

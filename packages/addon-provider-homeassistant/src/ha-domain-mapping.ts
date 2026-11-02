@@ -271,8 +271,10 @@ function mapCover(
   const sf = readNumericAttr(attributes, 'supported_features')
   // HA cover supported_features bitmask (subset):
   //  - SET_POSITION = 4
+  //  - STOP = 8
   //  - SET_TILT_POSITION = 128
   if (sf !== null && (sf & 4) !== 0) features.push(DeviceFeature.CoverPositionable)
+  if (sf !== null && (sf & 8) !== 0) features.push(DeviceFeature.CoverStoppable)
   if (sf !== null && (sf & 128) !== 0) features.push(DeviceFeature.CoverTilt)
 
   // Role = the KIND of cover, from HA `device_class`; the cap surface itself is

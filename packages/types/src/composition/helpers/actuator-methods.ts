@@ -57,7 +57,7 @@ export const ACTUATOR_METHODS: Readonly<Record<ActuatorTemplateId, readonly Actu
     cover: [
       row('cover', 'open'),
       row('cover', 'close'),
-      row('cover', 'stop'),
+      row('cover', 'stop', DeviceFeature.CoverStoppable),
       row('cover', 'setPosition', DeviceFeature.CoverPositionable),
       row('cover', 'setTiltPosition', DeviceFeature.CoverTilt),
     ],

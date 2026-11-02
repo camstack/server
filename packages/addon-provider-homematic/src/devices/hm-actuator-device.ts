@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import {
   climateControlCapability,
+  DeviceFeature,
   coverCapability,
   lockControlCapability,
   switchCapability,
@@ -34,6 +35,10 @@ export type HmActuatorConfig = z.infer<typeof hmActuatorSchema>
  * existing pure decoders (`decodeCover` / `decodeLock` / `decodeClimate`).
  */
 export class HmActuatorDevice extends HmChildDevice<typeof hmActuatorSchema> {
+  /** A cover's `stop` drives the channel's real STOP (`coverStop`). */
+  override readonly features: readonly DeviceFeature[] =
+    this.config.values.kind === 'cover' ? [DeviceFeature.CoverStoppable] : []
+
   private readonly kind: HmActuatorConfig['kind']
   /** The actuator cap name actually registered (drives decode routing). */
   private registeredCap: string | null = null

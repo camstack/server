@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- ESPHome covers that can stop declare cover-stoppable so their stop control stays exported.
+
 ## [0.1.7] - 2026-11-01
 
 ### Changed

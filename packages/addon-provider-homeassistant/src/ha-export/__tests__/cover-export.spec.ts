@@ -4,7 +4,7 @@
  * An offline device is announced unavailable, and a refused command carries
  * the provider's own reason into the 422 body.
  *
- * Disarm: drop the `requiresFeature` filters (native and degraded) — the
+ * Disarm: drop the `requiresFeature` filters (native, degraded and the stop command) — the
  * feature specs fail; drop `availability_topic` — the availability spec fails;
  * make `commandNotAppliedBody` return only `{ error }` — the 422 spec fails.
  */
@@ -44,7 +44,7 @@ describe('a cover exports only what it declares', () => {
     const controls = native(plan).controls ?? {}
     expect(Object.keys(controls)).toContain('position')
     expect(Object.keys(controls)).not.toContain('tilt')
-    expect(Object.keys(controls)).toEqual(expect.arrayContaining(['open', 'close', 'stop']))
+    expect(Object.keys(controls)).toEqual(expect.arrayContaining(['open', 'close']))
     expect(Object.keys(plan.cmps)).not.toContain('number-cover-tilt')
   })
 
@@ -67,6 +67,31 @@ describe('a cover exports only what it declares', () => {
     expect(Object.keys(buildDerivedPlan(cover([]), LEGACY).cmps)).not.toContain(
       'number-cover-position',
     )
+  })
+})
+
+describe('a cover has a stop only when it declares cover-stoppable', () => {
+  it('native: cover-positionable alone has no stop, open and close stay', () => {
+    const plan = buildDerivedPlan(cover(['cover-positionable']), NATIVE)
+    const keys = Object.keys(native(plan).controls ?? {})
+    expect(keys).not.toContain('stop')
+    expect(keys).toEqual(expect.arrayContaining(['open', 'close']))
+  })
+
+  it('native: cover-stoppable gives stop', () => {
+    const plan = buildDerivedPlan(cover(['cover-positionable', 'cover-stoppable']), NATIVE)
+    expect(Object.keys(native(plan).controls ?? {})).toContain('stop')
+  })
+
+  it('degraded: no stop button without cover-stoppable, open and close stay', () => {
+    const keys = Object.keys(buildDerivedPlan(cover(['cover-positionable']), LEGACY).cmps)
+    expect(keys).not.toContain('button-cover-stop')
+    expect(keys).toEqual(expect.arrayContaining(['button-cover-open', 'button-cover-close']))
+  })
+
+  it('degraded: cover-stoppable gives the stop button', () => {
+    const keys = Object.keys(buildDerivedPlan(cover(['cover-stoppable']), LEGACY).cmps)
+    expect(keys).toContain('button-cover-stop')
   })
 })
 

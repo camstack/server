@@ -42,6 +42,34 @@ function haDevice(entities: HaDiscoveredEntity[]): HaDiscoveredDevice {
   }
 }
 
+describe('a persisted cover gains cover-stoppable on reconcile', () => {
+  const persisted: HaContainerEntityConfig = {
+    entityId: 'cover.blind',
+    deviceType: DeviceType.Cover,
+    capabilities: ['cover'],
+    features: ['cover-positionable'],
+  }
+  const fresh: HaContainerEntityConfig = {
+    ...persisted,
+    features: ['cover-positionable', 'cover-stoppable'],
+  }
+
+  it('the stored features differ, so the child is rebuilt with the new feature', () => {
+    const plan = diffContainerEntities([persisted], [fresh])
+    expect(plan.changedChildren).toHaveLength(1)
+    expect(plan.changedChildren[0]?.config['features']).toEqual([
+      'cover-positionable',
+      'cover-stoppable',
+    ])
+  })
+
+  it('is idempotent: reconciling the migrated entity again changes nothing', () => {
+    const plan = diffContainerEntities([fresh], [fresh])
+    expect(plan.changedChildren).toEqual([])
+    expect(plan.entitiesChanged).toBe(false)
+  })
+})
+
 describe('buildContainerEntities', () => {
   it('maps mapped entities to the Container config shape and skips unmapped ones', () => {
     const dev = haDevice([

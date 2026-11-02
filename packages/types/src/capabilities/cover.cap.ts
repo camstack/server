@@ -23,6 +23,7 @@ import { readingMeta } from '../units/quantity.js'
  * Sub-surface gating paired with `DeviceFeature` flags:
  *   - `CoverPositionable` — intermediate `position` slider
  *   - `CoverTilt` — slat-tilt slider
+ *   - `CoverStoppable` — the `stop` control (a no-op `stop` never declares it)
  */
 
 export const CoverStateSchema = z.enum(['open', 'opening', 'closing', 'closed', 'stopped'])

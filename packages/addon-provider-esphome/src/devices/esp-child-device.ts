@@ -62,7 +62,7 @@ export type EspStateOrigin = 'live' | 'seed'
  * and the container flips `online`, so an unreachable board never reads as 0.
  */
 export abstract class EspChildDevice extends BaseDevice<typeof espChildSchema> {
-  readonly features: readonly DeviceFeature[] = []
+  readonly features: readonly DeviceFeature[]
 
   protected readonly brokerId: string
   protected readonly child: EspChildConfig
@@ -73,6 +73,12 @@ export abstract class EspChildDevice extends BaseDevice<typeof espChildSchema> {
     super(ctx, espChildSchema, { type: ctx.deviceMeta.type })
     this.brokerId = parsed.brokerId
     this.child = parsed
+    this.features = this.declaredFeatures(parsed)
+  }
+
+  /** The features this child declares, from its own persisted config; none by default. */
+  protected declaredFeatures(_child: EspChildConfig): readonly DeviceFeature[] {
+    return []
   }
 
   /** Entity ids whose state this child decodes. */

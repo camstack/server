@@ -246,12 +246,14 @@ describe('the method table', () => {
   const names = (rows: ReturnType<typeof sharedActuatorMethods>) =>
     rows.map((row) => `${row.cap}.${row.method}`)
 
-  it('a cover shares position and tilt only when every member can', () => {
+  it('a cover shares stop, position and tilt only when every member can', () => {
+    const stop = DeviceFeature.CoverStoppable
     const both = {
       caps: ['cover'],
-      features: [DeviceFeature.CoverPositionable, DeviceFeature.CoverTilt],
+      features: [DeviceFeature.CoverPositionable, DeviceFeature.CoverTilt, stop],
     }
-    const positionOnly = { caps: ['cover'], features: [DeviceFeature.CoverPositionable] }
+    const positionOnly = { caps: ['cover'], features: [DeviceFeature.CoverPositionable, stop] }
+    const noStop = { caps: ['cover'], features: [DeviceFeature.CoverPositionable] }
     expect(names(sharedActuatorMethods('cover', [both, both]))).toEqual([
       'cover.open',
       'cover.close',
@@ -265,9 +267,14 @@ describe('the method table', () => {
       'cover.stop',
       'cover.setPosition',
     ])
+    expect(names(sharedActuatorMethods('cover', [both, noStop]))).toEqual([
+      'cover.open',
+      'cover.close',
+      'cover.setPosition',
+    ])
     expect(
       names(sharedActuatorMethods('cover', [both, { caps: ['cover'], features: [] }])),
-    ).toEqual(['cover.open', 'cover.close', 'cover.stop'])
+    ).toEqual(['cover.open', 'cover.close'])
   })
 
   it('a fan keeps on/off always and the rest by the features every fan has', () => {
