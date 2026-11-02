@@ -15,7 +15,9 @@ export interface MigrationAlertPlan {
 }
 
 function faulted(entry: MigrationLedgerEntry): 'critical' | 'warning' | null {
-  if (entry.status === 'failed') return 'critical'
+  // A migration declared `tolerate` says the system works without it: it is worth a look, not a page.
+  if (entry.status === 'failed')
+    return entry.meta?.onFailure === 'tolerate' ? 'warning' : 'critical'
   if (entry.status === 'blocked' && entry.reason === 'snapshot-refused') return 'critical'
   if (entry.status === 'skipped-newer') return 'warning'
   return null
@@ -47,9 +49,12 @@ export function planMigrationAlerts(
       id,
       category: EventCategory.MigrationFailed,
       severity,
-      title: severity === 'critical' ? 'Migration failed' : 'Database is newer than this version',
+      title:
+        entry.status === 'skipped-newer'
+          ? 'Database is newer than this version'
+          : 'Migration failed',
       message: messageOf(entry),
-      ...(severity === 'critical'
+      ...(entry.status !== 'skipped-newer'
         ? {
             action: {
               label: 'Retry',

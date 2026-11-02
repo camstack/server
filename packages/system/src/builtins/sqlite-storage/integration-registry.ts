@@ -8,7 +8,7 @@ import type {
   RecordKindHandle,
   RecordsAccess,
 } from '@camstack/types'
-import { parseJsonObject } from '@camstack/types'
+import { bareAddonId, parseJsonObject } from '@camstack/types'
 import { readAllRows } from '../../records/read-all-rows.js'
 import {
   INTEGRATIONS_LEGACY,
@@ -217,7 +217,9 @@ export class IntegrationRegistry implements IIntegrationRegistry {
 
   // --- Integrations ---
 
-  async createIntegration(input: CreateIntegrationInput): Promise<Integration> {
+  async createIntegration(rawInput: CreateIntegrationInput): Promise<Integration> {
+    // ONE canonical spelling on disk: the bare manifest id (a hub-main `ctx.id` is `addon:<id>`).
+    const input: CreateIntegrationInput = { ...rawInput, addonId: bareAddonId(rawInput.addonId) }
     const id = nextIntegrationId()
     const now = Math.floor(Date.now() / 1000)
     const enabled = input.enabled !== false
@@ -281,7 +283,8 @@ export class IntegrationRegistry implements IIntegrationRegistry {
     return rows[0] ? this.mapIntegration(rows[0].data) : null
   }
 
-  async getIntegrationByAddonId(addonId: string): Promise<Integration | null> {
+  async getIntegrationByAddonId(rawAddonId: string): Promise<Integration | null> {
+    const addonId = bareAddonId(rawAddonId)
     const kind = this.recordStores?.integrations
     if (kind !== undefined) {
       const page = await kind.query({ where: { addonId }, limit: 1 })

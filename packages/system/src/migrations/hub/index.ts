@@ -8,5 +8,9 @@
  */
 import type { HubMigration } from '../../builtins/sqlite-storage/migrations/migration-types.js'
 import { ADDON_SETTINGS_NODE_ID_MIGRATION } from './2026-11-02-addon-settings-node-id.js'
+import { INTEGRATION_ADDON_ID_BARE_MIGRATION } from './2026-11-02-integration-addon-id-bare.js'
 
-export const HUB_MIGRATIONS: readonly HubMigration[] = [ADDON_SETTINGS_NODE_ID_MIGRATION]
+export const HUB_MIGRATIONS: readonly HubMigration[] = [
+  ADDON_SETTINGS_NODE_ID_MIGRATION,
+  INTEGRATION_ADDON_ID_BARE_MIGRATION,
+]

@@ -1,4 +1,4 @@
-import type { Alert, MigrationLedgerEntry } from '@camstack/types'
+import type { Alert, MigrationLedgerEntry, MigrationMeta } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { MIGRATION_ALERT_PREFIX, planMigrationAlerts } from '../migration-alerts.js'
 
@@ -25,7 +25,37 @@ function entry(id: string, patch: Partial<MigrationLedgerEntry>): MigrationLedge
 
 const NOW = 1_000
 
+function metaOf(id: string, onFailure: MigrationMeta['onFailure']): MigrationMeta {
+  return {
+    id,
+    owner: 'hub',
+    level: 'hub-store',
+    seq: 1,
+    dependsOn: [],
+    store: 'settings',
+    scope: 'cluster',
+    onFailure,
+    bodyKind: 'sql',
+    description: 'x',
+    fixtureMark: 'x',
+  }
+}
+
 describe('planMigrationAlerts', () => {
+  it('a failed migration that TOLERATES failure raises a warning, a block-owner one stays critical', () => {
+    const plan = planMigrationAlerts(
+      [
+        entry('hub/t', { status: 'failed', error: 'x', meta: metaOf('hub/t', 'tolerate') }),
+        entry('hub/b', { status: 'failed', error: 'x', meta: metaOf('hub/b', 'block-owner') }),
+      ],
+      [],
+      NOW,
+    )
+    const severity = (id: string) => plan.raise.find((a) => a.id.endsWith(id))?.severity
+    expect(severity('hub/t')).toBe('warning')
+    expect(severity('hub/b')).toBe('critical')
+  })
+
   it('raises a critical alert with a retry action for a failed migration', () => {
     const plan = planMigrationAlerts(
       [entry('hub/2026-10-31-a', { status: 'failed', error: 'boom' })],

@@ -145,7 +145,7 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
         // The hub owns the integration row and the record: it moves the old settings
         // first, then offers the connection to the Integrations page (D985).
         await this.runMigrations(
-          defineAddonMigrations(INITIALIZE_MIGRATIONS, this.migrationPorts()),
+          defineAddonMigrations(await this.initializeCatalogue(), this.migrationPorts()),
         )
         registrations.push({
           capability: integrationInstancesCapability,
@@ -219,6 +219,24 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
     this.secretsWarned = false
     this.current = first?.body ?? null
     await this.destination?.reconfigure(this.destinationConfig())
+  }
+
+  /**
+   * The catalogue to offer while initialising. Seq 3 cannot decide before registration, so it is
+   * left out (`INITIALIZE_MIGRATIONS`) — unless the ledger already holds it APPLIED: then the full
+   * catalogue is offered and the engine skips it, whereas a subset would make it log the id as a
+   * database newer than this code on every boot. A ledger that cannot be read offers the subset.
+   */
+  private async initializeCatalogue(): Promise<typeof ADDON_MIGRATIONS> {
+    try {
+      const { entries } = await this.ctx.api.migrations.listLedger.query({})
+      const done = entries.some(
+        (e) => e.id === REGISTRY_TOGGLE_TO_RECORD_ID && e.status === 'applied',
+      )
+      return done ? ADDON_MIGRATIONS : INITIALIZE_MIGRATIONS
+    } catch {
+      return INITIALIZE_MIGRATIONS
+    }
   }
 
   /** The ports of the connection migrations: the old settings in, the record out. */

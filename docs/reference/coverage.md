@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**231 units · 7832 source files · 218 units claimed by at least one document (7788 files).**
+**231 units · 7833 source files · 218 units claimed by at least one document (7789 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -179,6 +179,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/cli/src/http` | 3 | `tooling` | — | — |
 | `packages/system` | 3 | `kernel` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0417-a-diagnostic-more-than-one-bundle-needs-lives-in-system.md` | — |
 | `packages/system/src/download` | 3 | `api-surface` | `decisions/adr-0744-every-mirror-artefact-carries-a-generated-revision-and-a-copy-is-proven-current-by-hashing-it.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +3 more | 2026-10-01 |
+| `packages/system/src/migrations` | 3 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md` | — |
 | `packages/system/src/pipeline` | 3 | `pipeline-orchestration` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md` | — |
 | `packages/system/src/storage` | 3 | `storage` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md` | — |
 | `packages/types/src/device-extension` | 3 | `device-model` | `architecture/device-model.md`, `decisions/adr-0648-a-device-extension-is-a-slot-declared-by-the-cap-that-owns-the-function-and-served-over-its-existing-store.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | 2026-10-26 |
@@ -203,7 +204,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/cli/src/discovery` | 2 | `tooling` | `decisions/adr-0838-clients-find-a-hub-over-mdns-of-its-https-endpoint-mesh-discovery-stays-retired.md` | — |
 | `packages/system/src/events` | 2 | `api-surface` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md` | — |
 | `packages/system/src/i18n` | 2 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0863-settings-texts-and-user-facing-errors-are-translated-by-the-hub-from-catalogs-the-english-text-always-travels-beside-the-key.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md` | — |
-| `packages/system/src/migrations` | 2 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md` | — |
 | `packages/system/src/notification` | 2 | `notification-center` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md` | — |
 | `packages/system/src/process` | 2 | `kernel` | `decisions/adr-0452-a-process-tables-cost-is-the-forking-caller-not-the-scan-and-a-wal-checkpoint-runs-off-the-writers-thread.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md` | 2026-09-29 |
 | `packages/system/src/repl` | 2 | `api-surface` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md` | — |

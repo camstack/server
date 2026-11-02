@@ -34,6 +34,7 @@ import type {
 } from '@camstack/types'
 import {
   BaseAddon,
+  bareAddonId,
   cameraGridLayoutCapability,
   DeclaredDevices,
   DeviceType,
@@ -188,7 +189,7 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
       this.activity = new GridActivityForwarder({
         eventBus: this.ctx.eventBus,
         logger: this.ctx.logger.child('activity'),
-        addonId: this.ctx.id,
+        addonId: bareAddonId(this.ctx.id),
         gridsForSource: (sourceDeviceId) => this.gridsForSource(sourceDeviceId),
         now: () => Date.now(),
       })
@@ -324,7 +325,7 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
 
     const declared = new DeclaredDevices({
       logger: this.ctx.logger.child('declaration'),
-      addonId: this.ctx.id,
+      addonId: bareAddonId(this.ctx.id),
       devices: this.ctx.kernel.devices,
       localNodeId: this.ctx.kernel.localNodeId,
       getIntegration: async (addonId) => {
@@ -343,7 +344,9 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
       listOwnDevices: async () => {
         // `{ addonId }` takes device-manager's INDEXED branch — this addon's
         // handful of rows, never the fleet.
-        const rows = await this.ctx.api.deviceManager.listAll.query({ addonId: this.ctx.id })
+        const rows = await this.ctx.api.deviceManager.listAll.query({
+          addonId: bareAddonId(this.ctx.id),
+        })
         return gridCameraReconciliationIndex(
           rows,
           this.integrationId,

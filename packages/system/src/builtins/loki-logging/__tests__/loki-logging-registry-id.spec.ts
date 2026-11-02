@@ -4,7 +4,9 @@ import { makeInMemoryRecords } from '@camstack/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { LokiLoggingAddon } from '../loki-logging.addon.js'
 import { lokiDestinationsKind } from '../loki-record-kinds.js'
-import { REGISTRY_TOGGLE_TO_RECORD_ID } from '../migrations/index.js'
+import { IntegrationRegistry } from '../../sqlite-storage/integration-registry.js'
+import { SqliteSettingsBackend } from '../../sqlite-storage/sqlite-settings-backend.js'
+import { CONNECTION_TO_RECORDS_ID, REGISTRY_TOGGLE_TO_RECORD_ID } from '../migrations/index.js'
 import { RETIREMENT_MARKER_KEY } from '../retire-enabled-flag.js'
 
 /**
@@ -29,6 +31,10 @@ function logger(): IScopedLogger & { info: ReturnType<typeof vi.fn> } {
 interface Options {
   readonly registry: 'active' | 'inactive' | 'unregistered'
   readonly stored?: Record<string, unknown>
+  /** The real integration store behind `ctx.api.integrations`; the connection migration then runs. */
+  readonly integrations?: IntegrationRegistry
+  /** The registry-toggle migration is already applied in the ledger. */
+  readonly toggleApplied?: boolean
 }
 
 async function boot(options: Options) {
@@ -95,9 +101,29 @@ async function boot(options: Options) {
         },
       },
       integrations: {
-        getByAddonId: { query: vi.fn(async () => ({ id: 'int_0001' })) },
+        getByAddonId: {
+          query: vi.fn(async (input: { addonId: string }) =>
+            options.integrations === undefined
+              ? { id: 'int_0001' }
+              : options.integrations.getIntegrationByAddonId(input.addonId),
+          ),
+        },
+        create: {
+          mutate: vi.fn(async (input: { addonId: string; name: string }) => {
+            if (options.integrations === undefined) throw new Error('not wired')
+            return options.integrations.createIntegration(input)
+          }),
+        },
       },
       migrations: {
+        listLedger: {
+          query: vi.fn(async () => ({
+            entries:
+              options.toggleApplied === true
+                ? [{ id: REGISTRY_TOGGLE_TO_RECORD_ID, status: 'applied' }]
+                : [],
+          })),
+        },
         declareOwner: {
           mutate: vi.fn(async (input: { metas: readonly MigrationMeta[] }) => {
             offered.push(input.metas.map((m) => m.id))
@@ -107,7 +133,11 @@ async function boot(options: Options) {
               // seq 1 and 2 are already applied; only the registry toggle is pending.
               steps: input.metas.map((m) => ({
                 id: m.id,
-                action: m.id === REGISTRY_TOGGLE_TO_RECORD_ID ? 'run' : 'skip',
+                action:
+                  m.id === REGISTRY_TOGGLE_TO_RECORD_ID ||
+                  (options.integrations !== undefined && m.id === CONNECTION_TO_RECORDS_ID)
+                    ? 'run'
+                    : 'skip',
                 state: 'pending',
               })),
             }
@@ -144,6 +174,16 @@ describe('LokiLoggingAddon — the registry id is the bare manifest id', () => {
     expect(w.offered).toHaveLength(1)
     expect(w.offered[0]).not.toContain(REGISTRY_TOGGLE_TO_RECORD_ID)
     expect(w.finished.find((f) => f.id === REGISTRY_TOGGLE_TO_RECORD_ID)).toBeUndefined()
+  })
+
+  it('offers the full catalogue once the toggle migration is applied, so the engine never sees a "newer" id', async () => {
+    const w = await boot({
+      registry: 'active',
+      stored: { [RETIREMENT_MARKER_KEY]: true },
+      toggleApplied: true,
+    })
+    addons.push(w.addon)
+    expect(w.offered[0]).toContain(REGISTRY_TOGGLE_TO_RECORD_ID)
   })
 
   it('an ACTIVE provider seen under the bare id after registration is already-done, not a failure', async () => {
@@ -189,5 +229,31 @@ describe('LokiLoggingAddon — the retired enabled flag disables nothing (D777)'
     expect((await w.handle.get('int_0001'))?.data.enabled).toBeUndefined()
     expect(w.enabledCalls).toEqual([])
     expect(w.log.info).toHaveBeenCalledWith(expect.stringContaining('enabled: false'))
+  })
+})
+
+describe('LokiLoggingAddon — a hub-resident ctx.id finds its integration row', () => {
+  const addons: LokiLoggingAddon[] = []
+  afterEach(async () => {
+    for (const a of addons.splice(0)) await a.shutdown()
+  })
+
+  it('addon:loki-logging reuses the existing row and creates no duplicate', async () => {
+    const backend = new SqliteSettingsBackend(':memory:')
+    await backend.initialize()
+    const integrations = new IntegrationRegistry(backend)
+    await integrations.initialize()
+    const existing = await integrations.createIntegration({ addonId: BARE_ID, name: 'Loki' })
+    const w = await boot({
+      registry: 'active',
+      stored: { [RETIREMENT_MARKER_KEY]: true, url: 'http://loki:3100' },
+      integrations,
+    })
+    addons.push(w.addon)
+    await vi.waitFor(() =>
+      expect(w.finished).toContainEqual({ id: CONNECTION_TO_RECORDS_ID, kind: 'procedure' }),
+    )
+    const rows = (await integrations.listIntegrations()).filter((i) => i.addonId === BARE_ID)
+    expect(rows.map((r) => r.id)).toEqual([existing.id])
   })
 })

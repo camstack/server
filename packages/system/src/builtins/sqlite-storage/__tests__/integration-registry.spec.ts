@@ -134,4 +134,12 @@ describe('IntegrationRegistry over the collection surface', () => {
     expect(listed?.originStableId).toBe('mac-aabbccddeeff')
     expect(listed?.info).not.toHaveProperty('originStableId')
   })
+
+  it('keys a row by the BARE addon id: a prefixed hub-main ctx.id is canonicalised on write and lookup', async () => {
+    const created = await registry.createIntegration({ addonId: 'addon:x', name: 'X' })
+    expect(created.addonId).toBe('x')
+    expect((await registry.getIntegration(created.id))?.addonId).toBe('x')
+    expect((await registry.getIntegrationByAddonId('addon:x'))?.id).toBe(created.id)
+    expect((await registry.getIntegrationByAddonId('x'))?.id).toBe(created.id)
+  })
 })
