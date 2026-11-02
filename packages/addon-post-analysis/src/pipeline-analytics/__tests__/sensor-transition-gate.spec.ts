@@ -429,7 +429,7 @@ describe('SensorTransitionGate — a lock transitions on its state word', () => 
     })
   })
 
-  it('a stale active word seen first never becomes the baseline the rest word "changes" from (planning#396)', () => {
+  it('the real rest word arriving after a stale active word is unknown → real, no event (planning#396)', () => {
     const g = gate()
     expect(g.observe(LOCK, 'lock-control', lock('unlocked', STARTED_AT - 3_600_000))).toEqual({
       changed: false,
