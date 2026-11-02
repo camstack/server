@@ -128,9 +128,26 @@ class SmtpServerListener implements MailListener {
       },
       onData: (stream, session, callback) => {
         const chunks: Buffer[] = []
-        stream.on('data', (chunk: Buffer) => chunks.push(chunk))
+        let received = 0
+        stream.on('data', (chunk: Buffer) => {
+          // Past the limit nothing more is kept: the peer is answered 552 at the end.
+          received += chunk.length
+          if (received <= spec.maxMessageBytes) chunks.push(chunk)
+        })
         stream.on('error', (err: Error) => callback(err))
         stream.on('end', () => {
+          if (stream.sizeExceeded || received > spec.maxMessageBytes) {
+            deps.log(
+              'warn',
+              `message from ${session.remoteAddress} exceeds ${spec.maxMessageBytes} bytes (552)`,
+            )
+            callback(
+              Object.assign(new Error('Message size exceeds the limit'), {
+                responseCode: 552,
+              }),
+            )
+            return
+          }
           const rcpts = (session.envelope.rcptTo ?? []).map((r) => r.address)
           const local = rcpts.flatMap((r) => {
             const l = this.allowedLocal(r)

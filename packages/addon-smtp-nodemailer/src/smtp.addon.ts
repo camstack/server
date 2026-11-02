@@ -101,6 +101,7 @@ export class SmtpNodemailerAddon extends BaseAddon<SmtpAddonConfig> {
   private instances: RecordIntegrationInstances<SmtpRelayBody> | null = null
   private secretsWarned = false
   private inbound: SmtpInboundBroker | null = null
+  private secretsUnsub: (() => void) | null = null
 
   /**
    * `factory` is the transporter seam: the loader passes nothing, a spec passes a fake.
@@ -146,6 +147,17 @@ export class SmtpNodemailerAddon extends BaseAddon<SmtpAddonConfig> {
     this.inbound = inbound
     // One smtp-server per mailbox record; with no record nothing is bound (D999).
     await inbound.start()
+    // A keychain that unlocks later re-applies a mailbox whose password could not be read.
+    this.secretsUnsub?.()
+    this.secretsUnsub =
+      this.ctx.secrets?.onChange(() => {
+        void inbound.retryUnavailable().catch((err: unknown) => {
+          this.ctx.logger.warn('smtp-inbound: re-applying the mailboxes failed', {
+            meta: { error: errMsg(err) },
+            tags: { topic: 'smtp-inbound' },
+          })
+        })
+      }) ?? null
     return [
       { capability: smtpProviderCapability, provider },
       {
@@ -156,7 +168,15 @@ export class SmtpNodemailerAddon extends BaseAddon<SmtpAddonConfig> {
     ]
   }
 
+  /** The addon is reachable now: only from here may the mailbox statuses reach a consumer. */
+  override postBrokerStart(): void {
+    super.postBrokerStart()
+    this.inbound?.announce()
+  }
+
   protected async onShutdown(): Promise<void> {
+    this.secretsUnsub?.()
+    this.secretsUnsub = null
     this.pool.closeAll()
     await this.inbound?.stop()
   }

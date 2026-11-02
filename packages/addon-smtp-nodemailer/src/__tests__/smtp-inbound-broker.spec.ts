@@ -2,6 +2,7 @@ import { createServer } from 'node:net'
 import {
   SMTP_INBOUND_DEFAULT_ID,
   SMTP_RECIPIENT_CLAIMED,
+  RecordSecretUnavailableError,
   makeInMemoryRecords,
   smtpSinceKey,
   SmtpInboundSinceSchema,
@@ -54,20 +55,33 @@ interface Emitted {
   readonly payload: unknown
 }
 
-async function build(opts: { factory: ListenerFactory; host?: string | null; now?: () => number }) {
+type Handle = ConstructorParameters<typeof SmtpInboundBroker>[0]['handle']
+
+async function build(opts: {
+  factory: ListenerFactory
+  host?: string | null
+  now?: () => number
+  /** A spec that watches the announce itself starts quiet. */
+  quiet?: boolean
+  rebindDelayMs?: number
+  wrapHandle?: (inner: Handle) => Handle
+}) {
   const world = makeInMemoryRecords('smtp-nodemailer')
   await world.records.declare({ mailboxes: mailboxesKind })
   const messages: Emitted[] = []
   const statuses: { brokerId: string; status: string; error?: string }[] = []
   const broker = new SmtpInboundBroker({
     addonId: 'smtp-nodemailer',
-    handle: world.records.kind(mailboxesKind),
+    handle:
+      opts.wrapHandle?.(world.records.kind(mailboxesKind)) ?? world.records.kind(mailboxesKind),
     factory: opts.factory,
     readInternalHost: async () => (opts.host === undefined ? '192.0.2.10' : opts.host),
     emitMessage: (m) => messages.push(m),
     emitStatus: (s) => statuses.push(s),
     log: vi.fn(),
+    ...(opts.rebindDelayMs === undefined ? {} : { rebindDelayMs: opts.rebindDelayMs }),
   })
+  if (opts.quiet !== true) broker.announce()
   return { broker, provider: broker.provider(), messages, statuses, world }
 }
 
@@ -262,6 +276,78 @@ describe('smtp-inbound broker', () => {
     expect(statuses.at(-1)?.status).toBe('error')
   })
 
+  it('records the status but emits nothing before announce(): the addon is not reachable yet', async () => {
+    const { factory } = fakeListeners()
+    const { broker, provider, statuses } = await build({
+      factory,
+      quiet: true,
+    })
+    await add(provider)
+    expect(statuses).toEqual([])
+    broker.announce()
+    expect(statuses).toEqual([{ brokerId: SMTP_INBOUND_DEFAULT_ID, status: 'connected' }])
+  })
+
+  it('a failed bind is retried, bounded, and the mailbox ends connected', async () => {
+    let attempts = 0
+    const factory: ListenerFactory = () => ({
+      start: async () => {
+        attempts += 1
+        if (attempts < 3) throw new Error('listen EADDRINUSE')
+      },
+      stop: async () => undefined,
+    })
+    const { provider } = await build({ factory, rebindDelayMs: 5 })
+    await add(provider)
+    await vi.waitFor(async () =>
+      expect((await provider.get({ id: SMTP_INBOUND_DEFAULT_ID }))?.status).toBe('connected'),
+    )
+    expect(attempts).toBe(3)
+  })
+
+  it('a bind that never succeeds stops retrying', async () => {
+    let attempts = 0
+    const factory: ListenerFactory = () => ({
+      start: async () => {
+        attempts += 1
+        throw new Error('listen EADDRINUSE')
+      },
+      stop: async () => undefined,
+    })
+    const { provider } = await build({ factory, rebindDelayMs: 1 })
+    await add(provider)
+    await new Promise((r) => setTimeout(r, 120))
+    const settled = attempts
+    expect(settled).toBe(7)
+    await new Promise((r) => setTimeout(r, 30))
+    expect(attempts).toBe(settled)
+  })
+
+  it('a mailbox whose password could not be read at start is applied when the keychain unlocks', async () => {
+    let locked = true
+    const { factory, made } = fakeListeners()
+    const { broker, provider } = await build({
+      factory,
+      wrapHandle: (inner) => ({
+        get: (id) => inner.get(id),
+        put: (r, o) => inner.put(r, o),
+        delete: (id) => inner.delete(id),
+        query: (q) => inner.query(q),
+        getResolved: async (id) => {
+          if (locked) throw new RecordSecretUnavailableError(id)
+          return inner.getResolved(id)
+        },
+      }),
+    })
+    await add(provider).catch(() => undefined)
+    await broker.start()
+    expect(made).toHaveLength(0)
+    locked = false
+    await broker.retryUnavailable()
+    expect(made).toHaveLength(1)
+    expect(made[0]?.started).toBe(true)
+  })
+
   it('an unknown broker id answers null / throws, never another mailbox', async () => {
     const { provider } = await build({ factory: fakeListeners().factory })
     expect(await provider.get({ id: 'nope' })).toBeNull()
@@ -333,6 +419,44 @@ describe('smtp-inbound over a real SMTP session', () => {
     })
     expect(messages).toHaveLength(1)
     expect(messages[0]?.key).toBe('cam-A')
+  })
+
+  it('answers 552 for a message over the size limit, and keeps serving', async () => {
+    const port = await freePort()
+    const ctx = await build({ factory: smtpServerFactory })
+    brokers.push(ctx.broker)
+    await ctx.provider.add({
+      kind: 'smtp-inbound',
+      name: 'm',
+      id: SMTP_INBOUND_DEFAULT_ID,
+      settings: {
+        port,
+        bindHost: '127.0.0.1',
+        username: 'u',
+        password: 'p',
+        maxMessageBytes: 2000,
+      },
+    })
+    await ctx.provider.subscribe({
+      brokerId: SMTP_INBOUND_DEFAULT_ID,
+      filter: { recipients: ['cam-A'], subscriberId: 'one' },
+    })
+    const client = createTransport({
+      host: '127.0.0.1',
+      port,
+      secure: false,
+      auth: { user: 'u', pass: 'p' },
+      ignoreTLS: true,
+    })
+    await expect(
+      client.sendMail({
+        from: 'cam@x.test',
+        to: 'cam-A@camstack.local',
+        subject: 'big',
+        text: 'x'.repeat(50_000),
+      }),
+    ).rejects.toMatchObject({ responseCode: 552 })
+    expect(ctx.messages).toHaveLength(0)
   })
 
   it('refuses a wrong password', async () => {

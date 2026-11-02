@@ -53,7 +53,13 @@ export interface InboundBrokerDeps {
   readonly emitMessage: (emission: MessageEmission) => void
   readonly emitStatus: (emission: StatusEmission) => void
   readonly log: (level: 'info' | 'warn' | 'error' | 'debug', message: string) => void
+  /** Pause before a failed bind is tried again; a spec shortens it. */
+  readonly rebindDelayMs?: number
 }
+
+/** A listener that could not bind (a port still held by the previous owner) is retried this often. */
+const REBIND_DELAY_MS = 5_000
+const MAX_REBIND_ATTEMPTS = 6
 
 export const NO_INTERNAL_HOST_REASON =
   'The hub has no internal address. Flag one as "Internal" under System → Network; cameras need it to reach this mailbox.'
@@ -122,6 +128,11 @@ export class SmtpInboundBroker {
   private readonly runtimes = new Map<string, Runtime>()
   /** Serialises record -> listener reconciliation per mailbox. */
   private readonly chains = new Map<string, Promise<void>>()
+  /** Nothing is emitted before the addon is reachable: a consumer's first call would fail. */
+  private announced = false
+  private readonly lastStatus = new Map<string, StatusEmission>()
+  private readonly rebindTimers = new Map<string, NodeJS.Timeout>()
+  private readonly rebindAttempts = new Map<string, number>()
 
   constructor(private readonly deps: InboundBrokerDeps) {}
 
@@ -131,7 +142,31 @@ export class SmtpInboundBroker {
     for (const row of page.records) await this.reconcile(row.id)
   }
 
+  /**
+   * The addon is registered and reachable: tell every consumer the state of every mailbox.
+   * Until now the statuses were only recorded (`start()` runs inside `onInitialize`, before the
+   * capability exists, so an event emitted then would be answered by a failing subscribe).
+   */
+  announce(): void {
+    this.announced = true
+    for (const status of this.lastStatus.values()) this.deps.emitStatus(status)
+  }
+
+  /**
+   * Re-apply every mailbox that is not serving (a keychain that unlocked since): a locked read
+   * leaves the record unbound and nothing else would look at it again.
+   */
+  async retryUnavailable(): Promise<void> {
+    const page = await this.deps.handle.query({ limit: PAGE })
+    for (const row of page.records) {
+      const runtime = this.runtimes.get(row.id)
+      if (runtime === undefined || runtime.status !== 'connected') await this.reconcile(row.id)
+    }
+  }
+
   async stop(): Promise<void> {
+    for (const timer of this.rebindTimers.values()) clearTimeout(timer)
+    this.rebindTimers.clear()
     await Promise.all([...this.runtimes.keys()].map((id) => this.unbind(id)))
   }
 
@@ -200,6 +235,7 @@ export class SmtpInboundBroker {
     this.runtimes.set(id, runtime)
     try {
       await listener.start()
+      this.rebindAttempts.delete(id)
       this.setStatus(id, runtime, 'connected', null)
       this.deps.log('info', `smtp-inbound ${id}: listening on ${spec.bindHost}:${spec.port}`)
     } catch (err: unknown) {
@@ -208,10 +244,42 @@ export class SmtpInboundBroker {
         'error',
         `smtp-inbound ${id}: could not listen on ${spec.bindHost}:${spec.port}: ${errMsg(err)}`,
       )
+      this.scheduleRebind(id)
     }
   }
 
+  /** A bounded retry of a failed bind; each attempt is logged, the last one says it is the last. */
+  private scheduleRebind(id: string): void {
+    const attempt = (this.rebindAttempts.get(id) ?? 0) + 1
+    if (attempt > MAX_REBIND_ATTEMPTS) {
+      this.deps.log(
+        'error',
+        `smtp-inbound ${id}: giving up binding after ${MAX_REBIND_ATTEMPTS} attempts; save the mailbox again to retry`,
+      )
+      this.rebindAttempts.delete(id)
+      return
+    }
+    this.rebindAttempts.set(id, attempt)
+    if (this.rebindTimers.has(id)) return
+    const timer = setTimeout(() => {
+      this.rebindTimers.delete(id)
+      this.deps.log(
+        'info',
+        `smtp-inbound ${id}: binding again (attempt ${attempt}/${MAX_REBIND_ATTEMPTS})`,
+      )
+      void this.reconcile(id).catch((err: unknown) => {
+        this.deps.log('warn', `smtp-inbound ${id}: rebind failed: ${errMsg(err)}`)
+      })
+    }, this.deps.rebindDelayMs ?? REBIND_DELAY_MS)
+    timer.unref()
+    this.rebindTimers.set(id, timer)
+  }
+
   private async unbind(id: string): Promise<void> {
+    const timer = this.rebindTimers.get(id)
+    if (timer !== undefined) clearTimeout(timer)
+    this.rebindTimers.delete(id)
+    this.rebindAttempts.delete(id)
     const runtime = this.runtimes.get(id)
     this.runtimes.delete(id)
     if (runtime !== undefined) await runtime.stop()
@@ -228,11 +296,13 @@ export class SmtpInboundBroker {
       runtime.error = error
       runtime.checkedAt = Date.now()
     }
-    this.deps.emitStatus({
+    const emission: StatusEmission = {
       brokerId: id,
       status,
       ...(error === null ? {} : { error }),
-    })
+    }
+    this.lastStatus.set(id, emission)
+    if (this.announced) this.deps.emitStatus(emission)
   }
 
   // ── mail ──────────────────────────────────────────────────────────────────

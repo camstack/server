@@ -102,6 +102,9 @@ describe('smtp-nodemailer as the smtp-inbound broker provider', () => {
   it('binds the mailbox record at boot and announces it on the bus', async () => {
     const { bound, emitted, addon } = await boot(true)
     expect(bound).toEqual([2525])
+    // Not during onInitialize: the capability is not registered yet, a consumer's subscribe would fail.
+    expect(JSON.stringify(emitted)).not.toContain('broker.status-changed')
+    addon.postBrokerStart()
     expect(JSON.stringify(emitted)).toContain('broker.status-changed')
     await addon.shutdown()
   })

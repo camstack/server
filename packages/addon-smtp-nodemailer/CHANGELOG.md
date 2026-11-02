@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Email (SMTP) can now receive mail too: a new inbound mailbox broker kind (smtp-inbound) that cameras send alarm mail to, with the camera-facing address taken from the Network page's Internal address.
+- Email (SMTP) can now receive mail too: a new inbound mailbox broker kind (smtp-inbound) that cameras send alarm mail to, with the camera-facing address taken from the Network page's Internal address; a mailbox whose port is busy at start is retried, one whose keychain was locked is applied when it unlocks, and an oversized message is refused with 552.
 
 ## [1.2.145] - 2026-11-02
 
