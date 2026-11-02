@@ -14,7 +14,7 @@ import {
   ConsoleDestination,
   setHuggingFaceReachabilityObserver,
 } from '@camstack/server/system'
-import type { ILocalNetworkProvider } from '@camstack/types'
+import type { ILocalNetworkProvider, ISettingsStoreProvider } from '@camstack/types'
 import { EventCategory, memoizePinnedFfmpeg, ServerPackageStatusSchema } from '@camstack/types'
 import type { FastifyInstance } from 'fastify'
 import Fastify from 'fastify'
@@ -38,6 +38,7 @@ import {
 import { ClusterNodeHistoryStore } from './core/agent/cluster-node-history-store'
 import { createForgottenNodeRevoker } from './core/agent/forgotten-node-revoker'
 import {
+  clearForgottenNodeSettings,
   clearSingletonNodeOverrides,
   NodeRemovalDispatcher,
   NodeTombstoneStore,
@@ -264,6 +265,16 @@ export async function bootManual(opts: BootOptions): Promise<BootedApp> {
         tags: { nodeId },
         meta: { overrides },
       })
+    }
+    const settingsStore = addonRegistryService
+      .getCapabilityRegistry()
+      .getSingleton<ISettingsStoreProvider>('settings-store')
+    if (settingsStore === null || settingsStore === undefined) {
+      nodeRemovalLogger.warn('settings store not registered: the forgotten node keeps its rows', {
+        tags: { nodeId },
+      })
+    } else {
+      await clearForgottenNodeSettings(nodeId, settingsStore, nodeRemovalLogger)
     }
     await nodeRemovalDispatcher.nodeForgotten(nodeId, removedAt)
   })

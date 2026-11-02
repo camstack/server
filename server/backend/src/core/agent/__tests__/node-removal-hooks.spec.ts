@@ -7,6 +7,7 @@ import { describe, expect, it, vi } from 'vitest'
 import type { IScopedLogger, NodeRemovedInput, RecordKindHandle } from '@camstack/types'
 import type { ClusterNodeTombstoneBody } from '@camstack/server/system'
 import {
+  clearForgottenNodeSettings,
   clearSingletonNodeOverrides,
   NodeRemovalDispatcher,
   NodeTombstoneStore,
@@ -162,5 +163,25 @@ describe('clearSingletonNodeOverrides', () => {
       }),
     ).rejects.toThrow('door closed')
     expect(clear).not.toHaveBeenCalled()
+  })
+})
+
+describe('clearForgottenNodeSettings', () => {
+  it('runs ONE central deleteWhere on addon-settings matched on the node id', async () => {
+    const deleteWhere = vi.fn(async () => ({ deleted: 3 }))
+    const out = await clearForgottenNodeSettings('agent-1', { deleteWhere }, logger)
+    expect(out).toBe(3)
+    expect(deleteWhere).toHaveBeenCalledTimes(1)
+    expect(deleteWhere).toHaveBeenCalledWith({
+      collection: 'addon-settings',
+      filter: { where: { nodeId: 'agent-1' } },
+    })
+  })
+
+  it('a failed delete is reported as null and never throws into the forget', async () => {
+    const deleteWhere = vi.fn(async () => {
+      throw new Error('store down')
+    })
+    await expect(clearForgottenNodeSettings('agent-1', { deleteWhere }, logger)).resolves.toBeNull()
   })
 })

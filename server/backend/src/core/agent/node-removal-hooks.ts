@@ -16,6 +16,7 @@
  */
 import type { CapabilityRegistry } from '@camstack/server/system'
 import {
+  clearNodeSettings,
   ClusterNodeTombstoneBodySchema,
   readAllRows,
   type ClusterNodeTombstoneBody,
@@ -23,6 +24,7 @@ import {
 import { errMsg } from '@camstack/types'
 import type {
   INodeRemovalHookProvider,
+  ISettingsStoreProvider,
   IScopedLogger,
   NodeRemovedInput,
   NodeRemovedResult,
@@ -261,4 +263,32 @@ export async function clearSingletonNodeOverrides(
     cleared += 1
   }
   return cleared
+}
+
+/**
+ * A forgotten node leaves no `addon-settings` row behind (D986): the rows of EVERY addon that
+ * carry its `nodeId` go in ONE central delete, the node twin of `clearDeviceSettings` (D865), so
+ * no addon needs a handler for its node-scoped settings. A failed delete is logged and returns
+ * `null` - it never turns a forget that happened into an error, and the rows stay (visible on the
+ * next forget of the same id), never half-removed.
+ */
+export async function clearForgottenNodeSettings(
+  nodeId: string,
+  door: Pick<ISettingsStoreProvider, 'deleteWhere'>,
+  logger: Pick<IScopedLogger, 'info' | 'warn'>,
+): Promise<number | null> {
+  try {
+    const deleted = await clearNodeSettings(door, nodeId)
+    logger.info('cleared the settings rows of a forgotten node', {
+      tags: { nodeId },
+      meta: { deleted },
+    })
+    return deleted
+  } catch (err: unknown) {
+    logger.warn('could not clear the settings rows of a forgotten node', {
+      tags: { nodeId },
+      meta: { error: errMsg(err) },
+    })
+    return null
+  }
 }
