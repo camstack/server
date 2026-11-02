@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.178] - 2026-11-02
+
 ### Changed
 
 - An Amazon Echo can be adopted as a media player: play, pause, next, previous and volume, with its state read every 30 seconds, plus a Do Not Disturb switch

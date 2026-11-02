@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.471] - 2026-11-02
+
 ### Changed
 
 - AI calls can override the profile's reasoning effort per call

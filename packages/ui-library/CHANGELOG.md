@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.370] - 2026-11-02
+
 ### Changed
 
 - Exports uiLibraryVersion so the admin UI can tell which library a page was built against.

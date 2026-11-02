@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.647] - 2026-11-02
+
 ### Changed
 
 - The new do-not-disturb capability is recorded as not exported to Home Assistant

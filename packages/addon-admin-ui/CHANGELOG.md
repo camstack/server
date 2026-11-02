@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.551] - 2026-11-02
+
 ### Changed
 
 - An addon page that needs a newer UI library than this admin UI provides now shows a clear message instead of failing to render.
