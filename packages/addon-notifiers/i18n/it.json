@@ -121,5 +121,13 @@
   "config.s_whatsapp.apiTokenInstance.label": "Token API (apiTokenInstance)",
   "config.s_whatsapp.chatId.label": "ID chat / numero di telefono",
   "config.s_whatsapp.chatId.description": "Destinatario in formato internazionale senza \"+\", oppure un ID WhatsApp completo (…@c.us / …@g.us). L'istanza deve essere autorizzata nella console Green API.",
-  "config.s_whatsapp.acknowledgeToS.label": "Ho capito il rischio di blocco e accetto la violazione dei Termini di servizio di WhatsApp"
+  "config.s_whatsapp.acknowledgeToS.label": "Ho capito il rischio di blocco e accetto la violazione dei Termini di servizio di WhatsApp",
+  "emailDescriptor": {
+    "s_email": {
+      "smtpInstanceId": {
+        "label": "Relay (facoltativo)",
+        "description": "Vincola questo target a un relay del provider (il suo id di integrazione, es. int_0003, mostrato in Integrazioni). Lascia vuoto per usare il primo relay configurato."
+      }
+    }
+  }
 }

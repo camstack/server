@@ -38,6 +38,28 @@ describe('email notifier adapter', () => {
     })
   })
 
+  it('forwards a pinned relay as instanceId and omits it when the target pins none', async () => {
+    const sendEmail = vi.fn(async (_input: EmailSendInput) => ({ messageId: 'm-1' }))
+    const adapter = createEmailAdapter({ sendEmail })
+    const store = TargetStore.of((await makeNotifiersRecords()).records)
+    const provider = createNotificationOutputProvider({ store, adapters: [adapter] })
+    const sample = { body: 'Hello', title: 'CamStack', format: 'text', priority: 3 } as const
+    for (const [id, config] of [
+      [
+        'pinned',
+        { to: 'ops@example.com', smtpAddonId: 'smtp-nodemailer', smtpInstanceId: ' int_0003 ' },
+      ],
+      ['unpinned', { to: 'ops@example.com', smtpAddonId: 'smtp-nodemailer' }],
+    ] as const) {
+      await provider.upsertTarget({
+        target: { id, addonId: 'notifiers', name: id, kind: 'email', enabled: true, config },
+      })
+      await provider.testTarget({ targetId: id, sample })
+    }
+    expect(sendEmail.mock.calls[0]?.[0]).toMatchObject({ instanceId: 'int_0003' })
+    expect(sendEmail.mock.calls[1]?.[0]).not.toHaveProperty('instanceId')
+  })
+
   it('fails clearly when smtp client refuses', async () => {
     const adapter = createEmailAdapter({
       async sendEmail() {

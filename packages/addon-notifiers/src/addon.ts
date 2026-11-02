@@ -95,6 +95,7 @@ export class NotifiersAddon extends BaseAddon<NotifiersConfig> {
                 ...(input.html !== undefined ? { html: input.html } : {}),
                 ...(input.from !== undefined ? { from: input.from } : {}),
                 ...(input.addonId !== undefined ? { addonId: input.addonId } : {}),
+                ...(input.instanceId !== undefined ? { instanceId: input.instanceId } : {}),
               })
               return { messageId: result.messageId }
             },

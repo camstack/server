@@ -121,5 +121,13 @@
   "config.s_whatsapp.apiTokenInstance.label": "API Token (apiTokenInstance)",
   "config.s_whatsapp.chatId.label": "Chat ID / phone number",
   "config.s_whatsapp.chatId.description": "Recipient in international format without \"+\", or a full WhatsApp id (…@c.us / …@g.us). Instance must be authorized in the Green API console.",
-  "config.s_whatsapp.acknowledgeToS.label": "I understand the ban risk and accept the WhatsApp Terms-of-Service violation"
+  "config.s_whatsapp.acknowledgeToS.label": "I understand the ban risk and accept the WhatsApp Terms-of-Service violation",
+  "emailDescriptor": {
+    "s_email": {
+      "smtpInstanceId": {
+        "label": "Relay (optional)",
+        "description": "Pin this target to one relay of the provider (its integration id, e.g. int_0003, shown on Integrations). Leave empty to use the first configured relay."
+      }
+    }
+  }
 }

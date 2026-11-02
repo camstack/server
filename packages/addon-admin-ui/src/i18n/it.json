@@ -1258,7 +1258,9 @@
       "connections_one": "{{count}} connessione",
       "connections_other": "{{count}} connessioni",
       "connectionsConnected_one": "{{count}} connessione · {{connected}} connessa",
-      "connectionsConnected_other": "{{count}} connessioni · {{connected}} connesse"
+      "connectionsConnected_other": "{{count}} connessioni · {{connected}} connesse",
+      "connectionLivesOnIntegrations": "I relay (host, credenziali, indirizzo mittente) si configurano nella pagina Integrazioni, una voce per ogni relay.",
+      "openIntegration": "Apri l'integrazione"
     },
     "ai": "IA",
     "calendars": "Calendari",

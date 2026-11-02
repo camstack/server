@@ -15,6 +15,8 @@ export interface EmailSendInput {
   readonly html?: string
   readonly from?: string
   readonly addonId?: string
+  /** One relay of a multi-relay provider (its integration id); absent = the provider's default relay. */
+  readonly instanceId?: string
 }
 
 /** One smtp-provider entry the operator can pick as the mail relay. */
@@ -90,6 +92,15 @@ export function buildEmailDescriptor(providers: readonly SmtpProviderOption[] = 
             },
             {
               type: 'text',
+              key: 'smtpInstanceId',
+              label: 'Relay (optional)',
+              labelKey: 'notifiers:emailDescriptor.s_email.smtpInstanceId.label',
+              description:
+                'Pin this target to one relay of the provider (its integration id, e.g. int_0003, shown on Integrations). Leave empty to use the first configured relay.',
+              descriptionKey: 'notifiers:emailDescriptor.s_email.smtpInstanceId.description',
+            },
+            {
+              type: 'text',
               key: 'from',
               label: 'From (optional)',
               labelKey: 'notifiers:emailDescriptor.s_email.from.label',
@@ -162,7 +173,7 @@ export function createEmailAdapter(smtp: EmailSmtpClient): DirectNotifierAdapter
       const providers = (await smtp.listProviders?.()) ?? []
       return buildEmailDescriptor(providers)
     },
-    destinationKeys: ['to', 'smtpAddonId'],
+    destinationKeys: ['to', 'smtpAddonId', 'smtpInstanceId'],
     async sendDirect(config, prepared): Promise<SendResult> {
       try {
         const to = requireTo(config)
@@ -177,6 +188,10 @@ export function createEmailAdapter(smtp: EmailSmtpClient): DirectNotifierAdapter
             'email: pick an Email provider (Connectivity → Email) — none ready or none selected',
           )
         }
+        const instanceId =
+          typeof config['smtpInstanceId'] === 'string' && config['smtpInstanceId'].trim() !== ''
+            ? config['smtpInstanceId'].trim()
+            : undefined
         const subject =
           prepared.title?.trim() && prepared.title.trim().length > 0
             ? prepared.title.trim()
@@ -191,6 +206,7 @@ export function createEmailAdapter(smtp: EmailSmtpClient): DirectNotifierAdapter
           text: bodies.text,
           ...(bodies.html !== undefined ? { html: bodies.html } : {}),
           addonId,
+          ...(instanceId !== undefined ? { instanceId } : {}),
           ...(from !== undefined ? { from } : {}),
         })
         return { success: true }
