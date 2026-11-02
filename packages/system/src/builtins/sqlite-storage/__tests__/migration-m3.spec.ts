@@ -4,7 +4,9 @@
  * records) and the `procedure` body (idempotent, the ledger records the outcome).
  * Every assertion reads the database file itself.
  */
-import { existsSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
   type AddonMigration,
@@ -18,6 +20,7 @@ import {
 } from '@camstack/types'
 import Database from 'better-sqlite3'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { runnerResolverFor } from '../migrations/installed-runner-resolver.js'
 import { MigrationEngine } from '../migrations/migration-engine.js'
 import type { HubMigration } from '../migrations/migration-types.js'
 import { MigrationsProvider } from '../migrations/migrations-provider.js'
@@ -647,6 +650,45 @@ describe('review fixes: owner identity, finish re-checks, declare failure, preco
         hostOf(provider, 'ml').declareOwner({ owner: OWNER, metas: [meta(OWNER, 'b', 2)] }),
       ).rejects.toThrow(/caller "ml" is not the owner "ecowitt"/)
       await file.stop()
+    }, 60_000)
+
+    it('in the forked engine runner (no kernel resolver) the hosting runner is read from the installed manifests', async () => {
+      const addonsDir = mkdtempSync(path.join(tmpdir(), 'installed-addons-'))
+      try {
+        const writeManifest = (dir: string, addons: readonly object[]): void => {
+          mkdirSync(path.join(addonsDir, dir), { recursive: true })
+          writeFileSync(
+            path.join(addonsDir, dir, 'package.json'),
+            JSON.stringify({ camstack: { addons } }),
+          )
+        }
+        writeManifest('@camstack/provider-ha', [
+          { id: OWNER, execution: { placement: 'hub-only', group: 'integrations' } },
+          { id: 'ungrouped', execution: { placement: 'hub-only' } },
+        ])
+        const { provider, file } = await boot([], {
+          runnerIdOf: runnerResolverFor(undefined, addonsDir),
+        })
+        const declared = await hostOf(provider, 'integrations').declareOwner({
+          owner: OWNER,
+          metas: [meta(OWNER, 'a', 1)],
+        })
+        expect(declared.steps.map((step) => step.id)).toEqual([A])
+        for (const foreign of ['ml', 'ungrouped', 'integrations-x']) {
+          await expect(
+            hostOf(provider, foreign).declareOwner({ owner: OWNER, metas: [meta(OWNER, 'b', 2)] }),
+          ).rejects.toThrow(/is not the owner/)
+        }
+        await expect(
+          hostOf(provider, 'integrations').declareOwner({
+            owner: 'stranger',
+            metas: [meta('stranger', 'c', 3)],
+          }),
+        ).rejects.toThrow(/caller "integrations" is not the owner "stranger"/)
+        await file.stop()
+      } finally {
+        rmSync(addonsDir, { recursive: true, force: true })
+      }
     }, 60_000)
 
     it('refuses start and finish from another addon, and changes no data', async () => {

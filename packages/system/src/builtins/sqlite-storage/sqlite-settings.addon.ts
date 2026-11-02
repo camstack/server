@@ -30,6 +30,7 @@ import {
   openOwnedSqliteFile,
 } from './owned-sqlite-file.js'
 import { DatabaseSnapshotProvider } from './database-snapshot-provider.js'
+import { runnerResolverFor } from './migrations/installed-runner-resolver.js'
 import { MigrationEngine, type MigrationFileAccess } from './migrations/migration-engine.js'
 import {
   migrationActions,
@@ -149,7 +150,11 @@ export class SqliteSettingsAddon extends BaseAddon {
       snapshotterFor: (livePath) =>
         new SqliteSnapshotter({ livePath, logger: this.ctx.logger.child('PreMigrationSnapshot') }),
       announce: (kind, ids) => this.announceMigrations(kind, ids),
-      runnerIdOf: this.ctx.kernel?.runnerIdForAddon ?? ((addonId: string) => addonId),
+      // Forked here, so no kernel resolver: read the hosting runner from the installed manifests.
+      runnerIdOf: runnerResolverFor(
+        this.ctx.kernel?.runnerIdForAddon,
+        path.join(this.ctx.nodeDataDir ?? path.resolve(dir, '..', '..'), 'addons'),
+      ),
       scheduleRestore: (request) =>
         scheduleMigrationRestore(path.resolve(dir, '..', '..'), request),
     })
