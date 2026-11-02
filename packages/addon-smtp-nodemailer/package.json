@@ -36,7 +36,7 @@
         "id": "smtp-nodemailer",
         "category": "messaging",
         "name": "Email (SMTP)",
-        "description": "Outbound SMTP relay backed by `nodemailer`. Exposes `smtp-provider.sendEmail` + `verify` to consumers (notifications, alerts).",
+        "description": "Outbound SMTP relay backed by `nodemailer`. Every relay is an integration instance; `smtp-provider.sendEmail` + `verify` serve consumers (notifications, alerts), optionally pinned to one relay.",
         "entry": "./dist/smtp.addon.js",
         "execution": {
           "placement": "hub-only"
@@ -44,6 +44,9 @@
         "capabilities": [
           {
             "name": "smtp-provider"
+          },
+          {
+            "name": "integration-instances"
           }
         ]
       }
@@ -59,7 +62,8 @@
   ],
   "scripts": {
     "build": "vite build",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
+    "test": "vitest run"
   },
   "peerDependencies": {
     "@camstack/types": "*"
@@ -72,6 +76,7 @@
     "@camstack/types": "*",
     "@types/nodemailer": "^8.0.1",
     "typescript": "~6.0.3",
-    "vite": "^8.0.11"
+    "vite": "^8.0.11",
+    "vitest": "^4.0.0"
   }
 }

@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**228 units · 7794 source files · 214 units claimed by at least one document (7751 files).**
+**228 units · 7798 source files · 214 units claimed by at least one document (7751 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -149,6 +149,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-post-analysis` | 6 | `post-analysis` | — | — |
 | `packages/addon-provider-onvif` | 6 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0522-home-is-a-stored-choice-not-a-vendor-convention.md`, `decisions/adr-0677-the-runtime-state-row-writer-never-writes-a-row-this-process-has-not-read.md` _(covers)_ | 2026-10-26 |
 | `packages/addon-provider-reolink/src/accessories` | 6 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_ | 2026-10-26 |
+| `packages/addon-smtp-nodemailer` | 6 | `notification-center` | — | — |
 | `packages/system/src/http` | 6 | `api-surface` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0707-a-browser-origin-reads-the-hub-only-from-an-allowlist-and-never-with-the-session-cookie.md`, +1 more | 2026-08-29 |
 | `packages/types/src/ir` | 6 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0963-infrared-control-is-two-caps-a-transport-on-the-board-and-a-remote-on-the-appliance-and-its-state-is-assumed-never-reported.md` | — |
 | `packages/types/src/keychain` | 6 | `secrets` | `architecture/secrets-keychain.md` _(covers)_, `decisions/adr-0787-a-secret-field-stores-a-keychain-marker-and-the-value-lives-in-the-keychain.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, +1 more | 2026-10-18 |
@@ -196,7 +197,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-pipeline-orchestrator/src/durable` | 2 | `pipeline-orchestration` | `design/2026-08-13-durable-value-tracking-and-runtime-state.md`, `design/durable-store-convergence.md`, 2 ADRs | 2026-10-03 |
 | `packages/addon-pipeline-orchestrator/src/load-balancing` | 2 | — | `architecture/inference-devices.md`, `decisions/adr-0750-shares-are-automatic-by-default-held-by-placement-and-respected-by-failover.md`, `decisions/adr-0755-shares-and-auto-tune-are-sized-by-capacity-never-by-load.md`, +1 more, 1 ADR | 2026-10-23 |
 | `packages/addon-post-analysis/src/migrations` | 2 | — | — | — |
-| `packages/addon-smtp-nodemailer` | 2 | `notification-center` | — | — |
 | `packages/addon-static-turn` | 2 | `stream-broker` | — | — |
 | `packages/cli/src/discovery` | 2 | `tooling` | `decisions/adr-0838-clients-find-a-hub-over-mdns-of-its-https-endpoint-mesh-discovery-stays-retired.md` | — |
 | `packages/system/src/events` | 2 | `api-surface` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md` | — |

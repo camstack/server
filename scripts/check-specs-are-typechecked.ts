@@ -63,6 +63,8 @@ export const SPEC_CONFIG_OVERRIDES: Readonly<Record<string, Readonly<Record<stri
   '@camstack/server-framework': { rootDir: '.' },
   '@camstack/types': { rootDir: '.' },
   '@camstack/addon-pipeline': { rootDir: '../..' },
+  // The SMTP migration spec mounts the hub's real SQLite migration engine from the sibling package.
+  '@camstack/addon-smtp-nodemailer': { rootDir: '../..' },
   '@camstack/desktop': { allowJs: true },
 }
 

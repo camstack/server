@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- SMTP relays are integration instances: add several relays on the Integrations page, each with its own credentials; your current relay is moved there on first start.
+
 ## [1.2.144] - 2026-11-01
 
 ### Changed
