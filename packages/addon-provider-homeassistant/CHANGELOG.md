@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The retired media base URL setting is now removed from the settings table where it is actually stored
+
 ## [1.2.648] - 2026-11-02
 
 ### Changed

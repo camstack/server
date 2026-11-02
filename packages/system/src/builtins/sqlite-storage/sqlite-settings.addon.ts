@@ -149,6 +149,7 @@ export class SqliteSettingsAddon extends BaseAddon {
       snapshotterFor: (livePath) =>
         new SqliteSnapshotter({ livePath, logger: this.ctx.logger.child('PreMigrationSnapshot') }),
       announce: (kind, ids) => this.announceMigrations(kind, ids),
+      runnerIdOf: this.ctx.kernel?.runnerIdForAddon ?? ((addonId: string) => addonId),
       scheduleRestore: (request) =>
         scheduleMigrationRestore(path.resolve(dir, '..', '..'), request),
     })

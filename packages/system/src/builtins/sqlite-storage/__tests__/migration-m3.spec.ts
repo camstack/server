@@ -78,12 +78,13 @@ interface Booted {
 
 async function boot(
   catalogue: readonly HubMigration[] = [],
-  options: { statfsBavail?: number } = {},
+  options: { statfsBavail?: number; runnerIdOf?: (addonId: string) => string } = {},
 ): Promise<Booted> {
   const engine = new MigrationEngine({
     logger: recordingLogger(h.lines, 'Migrations'),
     catalogue,
     codeVersion: '1.0.0',
+    ...(options.runnerIdOf === undefined ? {} : { runnerIdOf: options.runnerIdOf }),
     snapshotterFor: (livePath) =>
       new SqliteSnapshotter({
         livePath,
@@ -630,6 +631,21 @@ describe('review fixes: owner identity, finish re-checks, declare failure, preco
         hostOf(provider, null).declareOwner({ owner: OWNER, metas: [meta(OWNER, 'a', 1)] }),
       ).rejects.toThrow(/no caller identity/)
       expect(statuses()).toEqual({})
+      await file.stop()
+    }, 60_000)
+
+    it('takes a declare stamped with the RUNNER that hosts the owner (a grouped addon), and still refuses another runner', async () => {
+      const { provider, file } = await boot([], {
+        runnerIdOf: (addonId) => (addonId === OWNER ? 'integrations' : addonId),
+      })
+      const declared = await hostOf(provider, 'integrations').declareOwner({
+        owner: OWNER,
+        metas: [meta(OWNER, 'a', 1)],
+      })
+      expect(declared.steps.map((step) => step.id)).toEqual([A])
+      await expect(
+        hostOf(provider, 'ml').declareOwner({ owner: OWNER, metas: [meta(OWNER, 'b', 2)] }),
+      ).rejects.toThrow(/caller "ml" is not the owner "ecowitt"/)
       await file.stop()
     }, 60_000)
 

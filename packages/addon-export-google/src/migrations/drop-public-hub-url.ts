@@ -7,8 +7,15 @@
  */
 import { type MigrationPlan, preconditionOf } from '@camstack/types'
 
-/** The settings scope of this addon (`<addonId>:addon-settings`). */
-export const GOOGLE_SETTINGS_SCOPE = 'export-google:addon-settings'
+/** The addon id, the prefix of its rows in the canonical settings table. */
+export const GOOGLE_ADDON_ID = 'export-google'
+
+/**
+ * Where the addon's global settings live: the canonical `addon-settings` table, one row per
+ * key, id `<addonId>.<key>`, data `{ addonId, key, value }` (never a per-addon scoped table,
+ * which exists only when something lazily declared it).
+ */
+export const ADDON_SETTINGS_TABLE = 'addon-settings'
 
 export const RETIRED_PUBLIC_URL_KEYS: readonly string[] = ['publicHubUrl', 'detectedPublicHubUrl']
 
@@ -21,13 +28,22 @@ export async function planDropPublicHubUrl(ports: DropPublicHubUrlPorts): Promis
   const stored = await ports.readStored()
   const present = RETIRED_PUBLIC_URL_KEYS.filter((key) => key in stored)
   if (present.length === 0) return { edits: [] }
+  const rowId = (key: string): string => `${GOOGLE_ADDON_ID}.${key}`
   return {
     edits: [
       {
         op: 'deleteKeys',
-        scope: GOOGLE_SETTINGS_SCOPE,
-        keys: [...present],
-        precondition: preconditionOf(Object.fromEntries(present.map((key) => [key, stored[key]]))),
+        scope: ADDON_SETTINGS_TABLE,
+        keys: present.map(rowId),
+        // The precondition is the rows as the settings writer stores them: `{ addonId, key, value }`.
+        precondition: preconditionOf(
+          Object.fromEntries(
+            present.map((key) => [
+              rowId(key),
+              { addonId: GOOGLE_ADDON_ID, key, value: stored[key] },
+            ]),
+          ),
+        ),
       },
     ],
   }

@@ -72,6 +72,13 @@ export interface MigrationEngineOptions {
   /** Writes the pending-restore marker the launcher promotes at the next start. */
   readonly scheduleRestore?: (request: PreMigrationRestoreRequest) => Promise<void>
   readonly bootId?: string
+  /**
+   * The runner (child) id an addon runs in — its group when it declares one. A
+   * grouped runner's cap calls are stamped with the RUNNER id (the identity the
+   * transport knows), so an owner reaches the engine as its group. Omitted →
+   * identity (addonId === runner id), as for an ungrouped addon.
+   */
+  readonly runnerIdOf?: (addonId: string) => string
 }
 
 /** The order the files are opened in at boot, and so the order a retry re-runs them. */
@@ -428,7 +435,7 @@ export class MigrationEngine {
     return undefined
   }
 
-  /** An addon drives only its own catalogue: the transport-stamped caller must be the owner. */
+  /** An addon drives only its own catalogue: the transport-stamped caller must be the owner, or the runner that hosts it (the keychain's rule, D787). */
   private assertOwnerCaller(owner: string, caller: string | null): void {
     if (caller === null || caller.length === 0) {
       throw new MigrationOwnerRefusal(
@@ -436,7 +443,7 @@ export class MigrationEngine {
         `migrations for "${owner}" refused: no caller identity — an owner is bound to the authenticated addon`,
       )
     }
-    if (caller !== owner) {
+    if (caller !== owner && (this.options.runnerIdOf?.(owner) ?? owner) !== caller) {
       throw new MigrationOwnerRefusal(
         'caller-not-owner',
         `migrations for "${owner}" refused: caller "${caller}" is not the owner "${owner}"`,

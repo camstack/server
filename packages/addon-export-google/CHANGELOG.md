@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The retired public hub URL settings are now removed from the settings table where they are actually stored
+
 ## [0.1.122] - 2026-11-02
 
 ### Changed
