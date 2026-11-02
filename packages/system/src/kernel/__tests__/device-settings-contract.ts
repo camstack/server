@@ -11,7 +11,7 @@
 import { promises as fs } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import type { ISettingsStoreProvider } from '@camstack/types'
+import type { ISettingsStoreProvider, ResolvedSettings } from '@camstack/types'
 import { expect } from 'vitest'
 import { SqliteSettingsBackend } from '../../builtins/sqlite-storage/sqlite-settings-backend.js'
 import { createDataStoreDispatch } from '../../builtins/storage-orchestrator/data-store-dispatch.js'
@@ -33,6 +33,10 @@ export interface DeviceView {
   getSection(section: string): Promise<Record<string, unknown>>
   setSection(section: string, patch: Record<string, unknown>): Promise<void>
   readDeviceStore(deviceId: number): Promise<Record<string, unknown>>
+  readResolvedDeviceStore(
+    deviceId: number,
+    schemaDefaults: Readonly<Record<string, unknown>>,
+  ): Promise<ResolvedSettings>
   readDeviceStoreBatch(
     deviceIds: readonly number[],
   ): Promise<ReadonlyMap<number, Record<string, unknown>>>

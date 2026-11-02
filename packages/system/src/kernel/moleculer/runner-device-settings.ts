@@ -8,6 +8,8 @@
  * process asks. Before D870 the runner kept its own `<addonId>:addon-devices`
  * blob per device; a hub-side write to the rows was invisible to it.
  */
+import type { ResolvedSettings } from '@camstack/types/addon'
+import { createDeviceSettingsResolver } from '../device-settings-resolver.js'
 import {
   type DeviceSettingsDoor,
   type DeviceSettingsStore,
@@ -34,6 +36,10 @@ export function doorOverClient(client: RunnerSettingsClient): DeviceSettingsDoor
 /** The per-device methods of a runner's `ctx.settings`. */
 export interface RunnerDeviceSettingsView {
   readDeviceStore(deviceId: number): Promise<Record<string, unknown>>
+  readResolvedDeviceStore(
+    deviceId: number,
+    schemaDefaults: Readonly<Record<string, unknown>>,
+  ): Promise<ResolvedSettings>
   readDeviceStoreBatch: DeviceSettingsStore['readBatch']
   listDeviceStoreIds: DeviceSettingsStore['listIds']
   writeDeviceStore(deviceId: number, patch: Record<string, unknown>): Promise<void>
@@ -55,15 +61,20 @@ export function createRunnerDeviceSettings(
     }
     return {
       readDeviceStore: async () => refuse(),
+      readResolvedDeviceStore: async () => refuse(),
       readDeviceStoreBatch: async () => refuse(),
       listDeviceStoreIds: async () => refuse(),
       writeDeviceStore: async () => refuse(),
       clearDeviceStore: async () => refuse(),
     }
   }
-  const store = createDeviceSettingsStore(doorOverClient(client), addonId)
+  const door = doorOverClient(client)
+  const store = createDeviceSettingsStore(door, addonId)
+  const resolver = createDeviceSettingsResolver(door, addonId)
   return {
     readDeviceStore: (deviceId) => readDeviceOrThrow(store, deviceId),
+    readResolvedDeviceStore: (deviceId, schemaDefaults) =>
+      resolver.resolve(deviceId, schemaDefaults),
     readDeviceStoreBatch: (ids) => store.readBatch(ids),
     listDeviceStoreIds: () => store.listIds(),
     writeDeviceStore: (deviceId, patch) => store.merge(deviceId, patch),

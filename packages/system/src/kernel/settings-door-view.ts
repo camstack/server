@@ -14,6 +14,7 @@
  */
 import type { ISettingsStoreProvider, StoredKeyRead } from '@camstack/types'
 import { createAddonSettingsStore } from './addon-settings-store.js'
+import { createDeviceSettingsResolver } from './device-settings-resolver.js'
 import { createDeviceSettingsStore, readDeviceOrThrow } from './device-settings-store.js'
 import { loadPrefixed } from './prefix-walk.js'
 import type { SettingsViewBackend } from './settings-view-types.js'
@@ -67,13 +68,19 @@ export interface DoorSectionAccess {
   setSection(section: string, patch: Record<string, unknown>): void | Promise<void>
 }
 
+/** The door-backed view always resolves fleet defaults (D986); the sync-store one need not. */
+export type DoorSettingsView = SettingsViewBackend & {
+  readonly readResolvedDeviceStore: NonNullable<SettingsViewBackend['readResolvedDeviceStore']>
+}
+
 export function createDoorSettingsView(
   addonId: string,
   door: ISettingsStoreProvider,
   sections: DoorSectionAccess,
-): SettingsViewBackend {
+): DoorSettingsView {
   const addonStore = createAddonSettingsStore(door, addonId)
   const deviceStore = createDeviceSettingsStore(door, addonId)
+  const resolver = createDeviceSettingsResolver(door, addonId)
   return {
     async readAddonStore(): Promise<Record<string, unknown>> {
       const read = await addonStore.read()
@@ -99,6 +106,8 @@ export function createDoorSettingsView(
     async readDeviceStore(deviceId: number): Promise<Record<string, unknown>> {
       return readDeviceOrThrow(deviceStore, deviceId)
     },
+    readResolvedDeviceStore: (deviceId, schemaDefaults) =>
+      resolver.resolve(deviceId, schemaDefaults),
     readDeviceStoreBatch: (deviceIds) => deviceStore.readBatch(deviceIds),
     listDeviceStoreIds: () => deviceStore.listIds(),
     writeDeviceStore: (deviceId, patch) => deviceStore.merge(deviceId, patch),

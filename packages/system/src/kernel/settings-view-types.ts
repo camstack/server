@@ -3,7 +3,7 @@
  * of `config-manager.ts` (D675) so that file stays one class; every name is
  * re-exported from there, so importers are unchanged.
  */
-import type { AddonStoreRead, StoredKeyRead } from '@camstack/types'
+import type { AddonStoreRead, ResolvedSettings, StoredKeyRead } from '@camstack/types'
 
 export interface AddonSettingsView {
   readAddonStore(): Promise<Record<string, unknown>>
@@ -13,6 +13,15 @@ export interface AddonSettingsView {
   readAddonStoreKeyResult?(key: string): Promise<StoredKeyRead>
   writeAddonStore(patch: Record<string, unknown>): Promise<void>
   readDeviceStore(deviceId: number): Promise<Record<string, unknown>>
+  /**
+   * The device's effective settings, per field value AND source: device row, then the fleet-default
+   * row, then the schema default (D986). `readDeviceStore` stays the raw overrides. Throws when a
+   * store could not be read.
+   */
+  readResolvedDeviceStore?(
+    deviceId: number,
+    schemaDefaults: Readonly<Record<string, unknown>>,
+  ): Promise<ResolvedSettings>
   /** See `IAddonContext['settings'].readDeviceStoreBatch`. */
   readDeviceStoreBatch(
     deviceIds: readonly number[],

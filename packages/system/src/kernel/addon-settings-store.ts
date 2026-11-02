@@ -81,6 +81,26 @@ export async function clearNodeSettings(
   return deleted
 }
 
+/**
+ * The cluster and fleet-default rows of one addon (no node suffix), through the `query` slice
+ * alone, so a runner's client door serves it as hub-main's door does. Three-way like every read
+ * here; the device resolver's fleet-default layer (D986).
+ */
+export async function readUnscopedAddonSettings(
+  door: Pick<ISettingsStoreProvider, 'query'>,
+  addonId: string,
+): Promise<AddonSettingsRead> {
+  try {
+    const all = await loadPrefixed(door, ADDON_SETTINGS_COLLECTION, `${addonId}.`)
+    const value = Object.fromEntries(
+      Object.entries(all).filter(([key]) => nodeIdOfScopedKey(key) === null),
+    )
+    return Object.keys(value).length === 0 ? { kind: 'absent' } : { kind: 'present', value }
+  } catch (err: unknown) {
+    return { kind: 'unreadable', error: err instanceof Error ? err.message : String(err) }
+  }
+}
+
 export function createAddonSettingsStore(
   door: AddonSettingsDoor,
   addonId: string,
@@ -147,14 +167,7 @@ export function createAddonSettingsStore(
       })
     },
 
-    async readUnscoped() {
-      const all = await store.read()
-      if (all.kind !== 'present') return all
-      const value = Object.fromEntries(
-        Object.entries(all.value).filter(([key]) => nodeIdOfScopedKey(key) === null),
-      )
-      return Object.keys(value).length === 0 ? { kind: 'absent' } : { kind: 'present', value }
-    },
+    readUnscoped: () => readUnscopedAddonSettings(door, addonId),
 
     async readNode(nodeId) {
       const all = await store.read()
