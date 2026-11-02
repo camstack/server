@@ -46,10 +46,10 @@ export function UnitsSection(): ReactElement {
 
   return (
     <SectionCard
-      headingId="my-access-units"
+      headingId="settings-units"
       title={t('systemPage.myAccess.units.title', 'Units')}
       icon={Ruler}
-      testId="my-access-units"
+      testId="settings-units"
     >
       <div className="space-y-2 p-3">
         <p className="text-xs text-foreground-subtle">

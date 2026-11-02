@@ -95,8 +95,8 @@ function EditorBody({ draft, saving, error, onSave, onClose }: BodyProps): React
   const undo = (): void => dispatch({ type: 'undo' })
   const redo = (): void => dispatch({ type: 'redo' })
   // Left to the field while one has focus (`allowInInput` off), so typing keeps its own undo.
-  useHotkey('mod+z', undo, { allowInInput: false })
-  useHotkey('mod+shift+z', redo, { allowInInput: false })
+  useHotkey('mod+z', undo, { allowInInput: false, label: 'Undo' })
+  useHotkey('mod+shift+z', redo, { allowInInput: false, label: 'Redo' })
   const view = templateKindView(kind)
   const presets = view.presets(t)
   const clean = savablePayload(kind, payload)

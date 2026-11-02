@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Exports uiLibraryVersion so the admin UI can tell which library a page was built against.
+- A registered keyboard shortcut can carry a label, and useRegisteredHotkeys lists the shortcuts currently registered.
 
 ## [1.2.369] - 2026-11-01
 

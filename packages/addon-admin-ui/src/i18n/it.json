@@ -104,7 +104,9 @@
       "sectionInstall": "Aggiungi provider",
       "totpNote": "TOTP / 2FA è in autoservizio: ogni utente si registra dalla propria pagina del profilo — <access>Il mio accesso</access> → Accesso e sicurezza → “Autenticazione a due fattori” → Abilita 2FA. Gli admin possono solo rimuovere la registrazione attiva di un utente (dispositivo perso) dalla pagina <users>Utenti</users> tramite Azioni → “Rimuovi 2FA”.",
       "policyTitle": "Criteri di accesso",
-      "policyUnavailable": "Non disponibile: l'addon che gestisce queste impostazioni non ha risposto."
+      "policyUnavailable": "Non disponibile: l'addon che gestisce queste impostazioni non ha risposto.",
+      "passkeyRpTitle": "Relying party delle passkey",
+      "passkeyRpUnavailable": "Non disponibile — l'addon che possiede queste impostazioni non ha risposto."
     },
     "backup": {
       "restartServerNow": "Riavviare il server ora?",
@@ -6655,6 +6657,15 @@
     },
     "meshNetworks": {
       "loadingPeers": "Caricamento dei peer…"
+    },
+    "settings": {
+      "perUser": "Le tue impostazioni",
+      "hotkeys": {
+        "title": "Scorciatoie da tastiera",
+        "description": "Le scorciatoie attive in questa pagina. Non si possono modificare.",
+        "empty": "Nessuna scorciatoia attiva in questa pagina.",
+        "unnamed": "Scorciatoia"
+      }
     }
   },
   "certificates": {

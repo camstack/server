@@ -6,6 +6,7 @@ import {
   useEffect,
   useMemo,
   useRef,
+  useSyncExternalStore,
 } from 'react'
 import {
   type HotkeyCombo,
@@ -26,11 +27,21 @@ export interface UseHotkeyOptions {
   readonly preventDefault?: boolean
   /** Fire while typing in a field. Default: only combos that carry `mod`. */
   readonly allowInInput?: boolean
+  /** What the binding does, in the operator's words; shown by the read-only hotkey list. */
+  readonly label?: string
+}
+
+/** One binding as the registry exposes it for display. */
+export interface RegisteredHotkey {
+  readonly combo: HotkeyCombo
+  readonly scope: string
+  readonly label: string | null
 }
 
 interface Binding {
   readonly id: number
   readonly combo: HotkeyCombo
+  readonly label: string | null
   readonly scope: string
   readonly handlerRef: { current: HotkeyHandler }
   readonly preventDefault: boolean
@@ -54,7 +65,11 @@ export const FALLBACK_SCOPE = 'fallback'
 interface Registry {
   addBinding: (binding: Binding) => () => void
   addScope: (scope: ScopeEntry) => () => void
+  subscribe: (listener: () => void) => () => void
+  snapshot: () => readonly RegisteredHotkey[]
 }
+
+const NO_HOTKEYS: readonly RegisteredHotkey[] = []
 
 const RegistryContext = createContext<Registry | null>(null)
 const ScopeContext = createContext<string>(PAGE_SCOPE)
@@ -104,18 +119,34 @@ export function HotkeyProvider({ children, platform }: HotkeyProviderProps): JSX
   const stateRef = useRef<RegistryState>({ bindings: [], scopes: [] })
   const effectivePlatform = platform ?? detectPlatform()
 
-  const registry = useMemo<Registry>(
-    () => ({
+  const listenersRef = useRef<ReadonlySet<() => void>>(new Set())
+  const listRef = useRef<readonly RegisteredHotkey[]>(NO_HOTKEYS)
+
+  const registry = useMemo<Registry>(() => {
+    const publish = (): void => {
+      listRef.current = distinctHotkeys(stateRef.current.bindings)
+      for (const listener of listenersRef.current) listener()
+    }
+    return {
+      subscribe: (listener) => {
+        listenersRef.current = new Set([...listenersRef.current, listener])
+        return () => {
+          listenersRef.current = new Set([...listenersRef.current].filter((l) => l !== listener))
+        }
+      },
+      snapshot: () => listRef.current,
       addBinding: (binding) => {
         stateRef.current = {
           ...stateRef.current,
           bindings: [...stateRef.current.bindings, binding],
         }
+        publish()
         return () => {
           stateRef.current = {
             ...stateRef.current,
             bindings: stateRef.current.bindings.filter((b) => b.id !== binding.id),
           }
+          publish()
         }
       },
       addScope: (scope) => {
@@ -130,9 +161,8 @@ export function HotkeyProvider({ children, platform }: HotkeyProviderProps): JSX
           }
         }
       },
-    }),
-    [],
-  )
+    }
+  }, [])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent): void =>
@@ -145,6 +175,33 @@ export function HotkeyProvider({ children, platform }: HotkeyProviderProps): JSX
 }
 
 let nextBindingId = 0
+
+function distinctHotkeys(bindings: readonly Binding[]): readonly RegisteredHotkey[] {
+  const seen = new Map<string, RegisteredHotkey>()
+  for (const b of bindings) {
+    const key = `${b.scope}|${b.combo}`
+    const prev = seen.get(key)
+    if (!prev || (prev.label === null && b.label !== null)) {
+      seen.set(key, { combo: b.combo, scope: b.scope, label: b.label })
+    }
+  }
+  return [...seen.values()]
+}
+
+/**
+ * The bindings registered below the `HotkeyProvider` right now (read-only; there
+ * is no rebinding). Empty without a provider.
+ */
+export function useRegisteredHotkeys(): readonly RegisteredHotkey[] {
+  const registry = useContext(RegistryContext)
+  return useSyncExternalStore(
+    registry ? registry.subscribe : noSubscribe,
+    registry ? registry.snapshot : emptySnapshot,
+  )
+}
+
+const noSubscribe = (): (() => void) => () => undefined
+const emptySnapshot = (): readonly RegisteredHotkey[] => NO_HOTKEYS
 
 /**
  * Bind a combo for the life of the component. Without a `HotkeyProvider` above
@@ -171,12 +228,13 @@ export function useHotkey(
     return registry.addBinding({
       id: nextBindingId,
       combo,
+      label: options.label ?? null,
       scope,
       handlerRef,
       preventDefault,
       allowInInput,
     })
-  }, [registry, enabled, combo, scope, preventDefault, allowInInput])
+  }, [registry, enabled, combo, scope, preventDefault, allowInInput, options.label])
 }
 
 export interface HotkeyScopeProps {

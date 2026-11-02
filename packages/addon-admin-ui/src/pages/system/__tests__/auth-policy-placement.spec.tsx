@@ -40,7 +40,14 @@ vi.mock('@camstack/ui-library', async () => {
   }
 })
 
-import { AuthenticationPolicyCard } from '../Authentication'
+vi.mock('../../../components/settings/UnitsSection', () => ({
+  UnitsSection: () => <div data-testid="units" />,
+}))
+vi.mock('../../../components/settings/HotkeysCard', () => ({
+  HotkeysCard: () => <div data-testid="hotkeys" />,
+}))
+
+import { AuthenticationPolicyCard, PasskeyRelyingPartyCard } from '../Authentication'
 import { SettingsPage } from '../Settings'
 
 afterEach(cleanup)
@@ -65,5 +72,28 @@ describe('system-config auth section placement', () => {
     )
     const panel = screen.getByTestId('panel')
     expect(panel.dataset.omit?.split(',')).toContain('system-config-auth')
+  })
+
+  it('Identity -> Authentication draws the webauthn section of auth-webauthn', () => {
+    render(
+      <MemoryRouter>
+        <PasskeyRelyingPartyCard />
+      </MemoryRouter>,
+    )
+    const panel = screen.getByTestId('panel')
+    expect(panel.dataset.addons).toBe('auth-webauthn')
+    expect(panel.dataset.sections).toBe('webauthn')
+  })
+
+  it('System -> Settings omits webauthn and shows Units and Hotkeys', () => {
+    render(
+      <MemoryRouter>
+        <SettingsPage />
+      </MemoryRouter>,
+    )
+    const panel = screen.getByTestId('panel')
+    expect(panel.dataset.omit?.split(',')).toContain('webauthn')
+    expect(screen.getByTestId('units')).toBeTruthy()
+    expect(screen.getByTestId('hotkeys')).toBeTruthy()
   })
 })

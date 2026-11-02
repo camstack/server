@@ -85,6 +85,12 @@ describe('My access sections', () => {
     expect(bodies()).toEqual(['my tokens'])
   })
 
+  it('has no Preferences section and sends the old deep link to System settings', () => {
+    renderAt('/system/my-access?tab=preferences')
+    expect(screen.queryByRole('tab', { name: 'Preferences' })).toBeNull()
+    expect(screen.getByTestId('where').textContent).toBe('/system/settings')
+  })
+
   it('a linked-account return opens Sign-in & security and keeps the outcome', () => {
     renderAt('/system/my-access?linkError=conflict')
     expect(screen.getByTestId('where').textContent).toBe(

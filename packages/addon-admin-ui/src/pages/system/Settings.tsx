@@ -12,6 +12,9 @@
  * on the hub automatically surfaces its `getGlobalSettings()` here
  * without touching this file.
  *
+ * The last group is per-user, not per-hub: Units (an account preference) and
+ * a read-only list of the active keyboard shortcuts.
+ *
  * `SiteLocationCard` sits ABOVE that panel and is the one hand-written
  * section here: the site coordinates are a fact of the installation, not
  * of any addon, so they are not an addon setting to aggregate. It renders
@@ -22,9 +25,11 @@
 import { useClusterNodes } from '@camstack/ui-library'
 import { Settings as SettingsIcon } from 'lucide-react'
 import { AdminPage } from '../../components/AdminPage'
-import { AUTH_POLICY_SECTION_ID } from './Authentication'
+import { AUTH_POLICY_SECTION_ID, WEBAUTHN_SECTION_ID } from './Authentication'
 import { NodeAddonsSettingsPanel } from '../../components/settings/NodeAddonsSettingsPanel'
+import { HotkeysCard } from '../../components/settings/HotkeysCard'
 import { SiteLocationCard } from '../../components/settings/SiteLocationCard'
+import { UnitsSection } from '../../components/settings/UnitsSection'
 import { useTranslation } from 'react-i18next'
 
 export function SettingsPage() {
@@ -62,9 +67,19 @@ export function SettingsPage() {
           nodeId={hub.id}
           addonIds={addonIds}
           level="global"
-          omitSectionIds={[AUTH_POLICY_SECTION_ID]}
+          omitSectionIds={[AUTH_POLICY_SECTION_ID, WEBAUTHN_SECTION_ID]}
         />
       )}
+      <section aria-labelledby="settings-per-user" className="mt-3 sm:mt-4 space-y-3 sm:space-y-4">
+        <h2
+          id="settings-per-user"
+          className="text-xs font-semibold uppercase tracking-wide text-foreground-subtle"
+        >
+          {t('systemPage.settings.perUser', 'Your settings')}
+        </h2>
+        <UnitsSection />
+        <HotkeysCard />
+      </section>
     </AdminPage>
   )
 }

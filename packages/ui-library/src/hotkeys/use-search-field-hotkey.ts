@@ -30,6 +30,6 @@ export function useSearchFieldHotkey(
     el.select()
     return true
   }
-  useHotkey('mod+f', focusField, { enabled, scope })
-  useHotkey('mod+k', focusField, { enabled, scope })
+  useHotkey('mod+f', focusField, { enabled, scope, label: 'Focus the search field' })
+  useHotkey('mod+k', focusField, { enabled, scope, label: 'Focus the search field' })
 }

@@ -28,7 +28,6 @@ import {
   PasskeySection,
   TotpSection,
 } from '../../components/users/OwnSignInSections'
-import { UnitsSection } from '../../components/users/UnitsSection'
 import { TokensSection } from '../../components/access/TokensSection'
 import { MySessionsSection } from '../../components/auth/MySessionsSection'
 import { MyDevicesSection } from '../../components/certificates/MyDevicesSection'
@@ -39,7 +38,6 @@ export const MY_ACCESS_SECTIONS = {
   signIn: 'sign-in',
   sessions: 'sessions',
   tokens: 'tokens',
-  preferences: 'preferences',
 } as const
 
 /** The params a linked-account popup returns with (read by `LinkedSignInsSection`). */
@@ -65,6 +63,11 @@ export function MyAccessPage(): ReactElement {
         </div>
       </AdminPage>
     )
+  }
+
+  // Preferences moved to System → Settings (units live there now).
+  if (searchParams.get('tab') === 'preferences') {
+    return <Navigate to="/system/settings" replace />
   }
 
   const returnsFromLink = LINK_OUTCOME_PARAMS.some((p) => searchParams.has(p))
@@ -123,11 +126,6 @@ export function MyAccessPage(): ReactElement {
           id: MY_ACCESS_SECTIONS.tokens,
           label: t('systemPage.myAccess.sections.tokens', 'Tokens'),
           content: <TokensSection ownOnly />,
-        },
-        {
-          id: MY_ACCESS_SECTIONS.preferences,
-          label: t('systemPage.myAccess.sections.preferences', 'Preferences'),
-          content: <UnitsSection />,
         },
       ]}
     />

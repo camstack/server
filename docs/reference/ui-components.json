@@ -13012,6 +13012,13 @@
       "summary": "RecordedPlayback — shared context wiring the hero player's `camstack-control` RTCDataChannel to the Recording timeline (R9)."
     },
     {
+      "name": "useRegisteredHotkeys",
+      "kind": "hook",
+      "area": "hotkeys",
+      "file": "packages/ui-library/src/hotkeys/hotkey-provider.tsx",
+      "summary": "The bindings registered below the `HotkeyProvider` right now (read-only; there is no rebinding). Empty without a provider."
+    },
+    {
       "name": "useRemoteComponent",
       "kind": "hook",
       "area": "contexts",

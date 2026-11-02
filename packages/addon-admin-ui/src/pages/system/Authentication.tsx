@@ -272,6 +272,7 @@ export function AuthenticationPage() {
         emptyDescription={t(AUTH_SECTION.emptyDescriptionKey)}
       />
       <AuthenticationPolicyCard />
+      <PasskeyRelyingPartyCard />
     </div>
   )
 }
@@ -301,6 +302,38 @@ export function AuthenticationPolicyCard(): React.ReactElement {
           hideSectionChrome
           emptyMessage={t(
             'system.authentication.policyUnavailable',
+            'Not available — the addon that owns these settings did not answer.',
+          )}
+        />
+      </div>
+    </SectionCard>
+  )
+}
+
+/**
+ * The passkey relying-party identity (product name, RP ID, origin, challenge
+ * lifetime): the `auth-webauthn` addon's `webauthn` section, same store. Drawn
+ * only here — System → Settings omits it.
+ */
+export const WEBAUTHN_SECTION_ID = 'webauthn'
+
+export function PasskeyRelyingPartyCard(): React.ReactElement {
+  const { t } = useTranslation()
+  return (
+    <SectionCard
+      headingId="authentication-passkey-rp"
+      title={t('system.authentication.passkeyRpTitle', 'Passkey relying party')}
+      icon={Smartphone}
+    >
+      <div className={SECTION_BODY}>
+        <NodeAddonsSettingsPanel
+          nodeId="hub"
+          addonIds={['auth-webauthn']}
+          level="global"
+          sectionIds={[WEBAUTHN_SECTION_ID]}
+          hideSectionChrome
+          emptyMessage={t(
+            'system.authentication.passkeyRpUnavailable',
             'Not available — the addon that owns these settings did not answer.',
           )}
         />

@@ -91,6 +91,39 @@ const AUTH_SECTION = {
   ],
 }
 
+/** The `auth-webauthn` addon's relying-party section (Identity -> Authentication). */
+const WEBAUTHN_SECTION = {
+  id: 'webauthn',
+  title: 'WebAuthn / Passkey Settings',
+  description:
+    "Configure the relying-party (RP) identity baked into every enrolled passkey. RP ID MUST match the hub's public domain (or a parent of it) \u2014 changing it invalidates existing passkeys.",
+  columns: 1,
+  fields: [
+    {
+      type: 'text',
+      key: 'rpName',
+      label: 'Product name',
+      description: 'Shown in the OS authenticator UI (e.g. "CamStack"). Cosmetic only.',
+      value: 'CamStack',
+    },
+    {
+      type: 'text',
+      key: 'rpID',
+      label: 'RP ID',
+      description:
+        'Hub domain (NO scheme, NO port). Empty = derive from the hub address in Network.',
+      value: 'hub.example.com',
+    },
+    {
+      type: 'number',
+      key: 'challengeTtlSec',
+      label: 'Challenge TTL (seconds)',
+      description: 'How long an in-flight challenge stays valid. Default 300.',
+      value: 300,
+    },
+  ],
+}
+
 const CORS_KEYS = new Set(['corsOriginsWarning', 'corsOrigins'])
 
 export function authSettingsHandlers(withCors: boolean) {
@@ -121,7 +154,10 @@ export function authSettingsHandlers(withCors: boolean) {
     lastSeen: '2026-01-01T12:00:00.000Z',
     localIps: ['192.0.2.2'],
     // The Settings page lists the hub's addons: only `system-config` matters here.
-    addons: [{ id: 'system-config', capabilities: [] }],
+    addons: [
+      { id: 'system-config', capabilities: [] },
+      { id: 'auth-webauthn', capabilities: [] },
+    ],
     processes: [],
     categories: [],
     rootPackage: { name: '@camstack/server', version: '1.2.500' },
@@ -129,7 +165,10 @@ export function authSettingsHandlers(withCors: boolean) {
 
   return {
     'nodes.topology': [hub],
-    'addonSettings.getGlobalSettings': (input: { addonId?: string }) =>
-      input.addonId === 'system-config' ? { sections: [section] } : null,
+    'addonSettings.getGlobalSettings': (input: { addonId?: string }) => {
+      if (input.addonId === 'system-config') return { sections: [section] }
+      if (input.addonId === 'auth-webauthn') return { sections: [WEBAUTHN_SECTION] }
+      return null
+    },
   }
 }
