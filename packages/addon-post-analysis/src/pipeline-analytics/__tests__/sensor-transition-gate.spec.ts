@@ -552,3 +552,44 @@ describe('SensorTransitionGate — running-state', () => {
     ).toEqual({ changed: true })
   })
 })
+
+describe('SensorTransitionGate — enum-sensor (planning#396)', () => {
+  const ENUM = 5116
+  const enumSlice = (value: unknown): Record<string, unknown> => ({
+    value,
+    lastFetchedAt: STARTED_AT + 5_000,
+  })
+
+  it('never passes a slice with a null or missing value, and remembers nothing from it', () => {
+    const g = gate()
+    expect(g.observe(ENUM, 'enum-sensor', enumSlice(null))).toEqual({
+      changed: false,
+      reason: 'non-word-value',
+    })
+    expect(g.observe(ENUM, 'enum-sensor', { lastFetchedAt: 1 })).toEqual({
+      changed: false,
+      reason: 'non-word-value',
+    })
+    // The first real word is still a first sighting, not a change from a null.
+    expect(g.observe(ENUM, 'enum-sensor', enumSlice('idle'))).toEqual({
+      changed: false,
+      reason: 'baseline-seeded-inactive',
+    })
+  })
+
+  it('a repeated value never passes, even as lastFetchedAt ticks', () => {
+    const g = gate()
+    g.observe(ENUM, 'enum-sensor', enumSlice('idle'))
+    expect(g.observe(ENUM, 'enum-sensor', enumSlice('idle'))).toEqual({
+      changed: false,
+      reason: 'no-change',
+    })
+  })
+
+  it('the first sighting is a baseline, and a real A to B passes', () => {
+    const g = gate()
+    expect(g.observe(ENUM, 'enum-sensor', enumSlice('heating')).changed).toBe(false)
+    expect(g.observe(ENUM, 'enum-sensor', enumSlice('idle'))).toEqual({ changed: true })
+    expect(g.observe(ENUM, 'enum-sensor', enumSlice('heating'))).toEqual({ changed: true })
+  })
+})

@@ -11557,7 +11557,7 @@ export default class PipelineAnalyticsAddon
         tags: { deviceId: data.deviceId },
         meta: {
           capName: data.capName,
-          state: field('state') ?? field('entryOpen') ?? field('active') ?? null,
+          state: field('state') ?? field('value') ?? field('entryOpen') ?? field('active') ?? null,
           lastChangedAt: field('lastChangedAt') ?? null,
           verdict: 'changed',
         },

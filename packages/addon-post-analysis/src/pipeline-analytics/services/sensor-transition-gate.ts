@@ -52,8 +52,8 @@
  * ## Caps with no boolean level pass through untouched
  *
  * `EVENT_KIND_BY_CAP` covers sixteen caps; `SOURCE_CAP_ACTIVE_FIELD` covers the
- * ten that have a boolean whose edge means something. `button`, `presence`,
- * `enum-sensor` and `event-emitter` are NOT levels — their ARRIVAL is the
+ * ten that have a boolean whose edge means something. `button`, `presence`
+ * and `event-emitter` are NOT levels (`enum-sensor` is a stampless word level, see `UNSTAMPED_WORD_FIELD`) — their ARRIVAL is the
  * event, and three presses in a row are three markers. Gating them would
  * re-ship the failure of 2026-08-08, when camera 101's press produced a row, a
  * ring, a matched rule and no marker. (`doorbell` is not a level either, but
@@ -191,6 +191,18 @@ const BOOLEAN_LEVEL_FIELD: Readonly<Record<string, string>> = {
   'running-state': 'running',
 }
 
+/**
+ * Caps whose level is a WORD with NO change stamp: cap → field. `enum-sensor`
+ * carries `{ value, lastFetchedAt }`, and `lastFetchedAt` moves on every
+ * provider refresh, so it says nothing about when the word changed. Gated by
+ * the word alone: the first sighting seeds, only a different word passes, and
+ * a null / missing value is dropped and never remembered (planning#396: such
+ * slices passed as `changed` many times a minute and could match an NC rule).
+ */
+const UNSTAMPED_WORD_FIELD: Readonly<Record<string, string>> = {
+  'enum-sensor': 'value',
+}
+
 /** The word a word-level cap rests in — its `false`, for the first-sighting rule. */
 const WORD_LEVEL_INACTIVE: Readonly<Record<string, string>> = {
   cover: 'closed',
@@ -300,6 +312,10 @@ export class SensorTransitionGate {
     slice: Readonly<Record<string, unknown>>,
   ): SensorTransitionVerdict {
     if (slice['lastChangedAt'] === 0) return this.drop(deviceId, capName, 'cold-slice')
+    const unstampedField = UNSTAMPED_WORD_FIELD[capName]
+    if (unstampedField !== undefined) {
+      return this.observeUnstampedWord(deviceId, capName, slice, unstampedField)
+    }
     const wordField = WORD_LEVEL_FIELD[capName]
     if (wordField !== undefined) return this.observeWord(deviceId, capName, slice, wordField)
     const levelField = BOOLEAN_LEVEL_FIELD[capName]
@@ -411,6 +427,25 @@ export class SensorTransitionGate {
     // stamped after the gate began watching (planning#396).
     if (stamp < this.startedAtMs)
       return this.drop(deviceId, capName, 'baseline-seeded-stale-active')
+    return { changed: true }
+  }
+
+  /** A word-level cap with no change stamp: only a DIFFERENT word is a transition. */
+  private observeUnstampedWord(
+    deviceId: number,
+    capName: string,
+    slice: Readonly<Record<string, unknown>>,
+    field: string,
+  ): SensorTransitionVerdict {
+    const raw = slice[field]
+    if (typeof raw !== 'string' || raw.length === 0) {
+      return this.drop(deviceId, capName, 'non-word-value')
+    }
+    const key = `${deviceId}:${capName}`
+    const prior = this.lastWords.get(key)
+    this.lastWords.set(key, raw)
+    if (prior === undefined) return this.drop(deviceId, capName, 'baseline-seeded-inactive')
+    if (prior === raw) return this.drop(deviceId, capName, 'no-change')
     return { changed: true }
   }
 
