@@ -1,6 +1,7 @@
 import type { ZodType } from 'zod'
 import type { IntegrationInstanceRef } from './integration-instance-ref.js'
 import { EventCategory } from '../enums/event-category.js'
+import { AddonMigrationsBlockedError } from './migrations-blocked-error.js'
 import type {
   AddonContext,
   AddonInitResult,
@@ -306,9 +307,7 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
       this.ctx.logger,
     )
     if (report.blockOwner.length > 0) {
-      throw new Error(
-        `migration(s) ${report.blockOwner.join(', ')} did not apply and block this addon — fix or retry them (migrations.retry), then restart it`,
-      )
+      throw new AddonMigrationsBlockedError(report.blockOwner)
     }
     return report
   }

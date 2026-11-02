@@ -44,6 +44,7 @@
  * every loaded addon before closing the UDS channel.
  */
 import { findAddonRefusal } from '../addon-refused-error.js'
+import { allBlockedRefusal, runAddonInits } from './runner-init-loop.js'
 import {
   formatRunnerRefusalLine,
   refusalReportOf,
@@ -494,7 +495,9 @@ async function main(): Promise<void> {
     console.error(`[addon-runner] "${nodeId}" UDS connect failed — exiting: ${errMsg(err)}`)
     process.exit(1)
   }
-  runnerLog.info('UDS child transport connected', { meta: { childId: runnerId } })
+  runnerLog.info('UDS child transport connected', {
+    meta: { childId: runnerId },
+  })
 
   // Storage-provider diagnostics — deferred until the UDS logger is live so
   // the line lands in the hub LogManager (the pre-connect buffer would have
@@ -551,8 +554,12 @@ async function main(): Promise<void> {
   // caps) rather than a singleton-only set followed by a late device-cap
   // refresh. See the `Promise.allSettled` barrier before `refreshChildCaps`.
   const deviceRestorePromises: Array<Promise<void>> = []
-  for (const { spec, declaration, AddonClass } of loadedModules) {
-    try {
+  const initOne = async ({
+    spec,
+    declaration,
+    AddonClass,
+  }: (typeof loadedModules)[number]): Promise<void> => {
+    {
       const addon = new AddonClass()
       const context = await createUdsAddonContext(udsChildClient, nodeId, declaration, dataDir, {
         ...(storageProvider ? { storageProvider } : {}),
@@ -695,25 +702,50 @@ async function main(): Promise<void> {
         addon,
         initResult: initResult ?? null,
       })
-    } catch (err) {
+    }
+  }
+  const initOutcome = await runAddonInits(loadedModules, {
+    init: initOne,
+    blocked: (addonId, migrationIds) => {
+      // Skipped, not fatal: the siblings of this runner keep running and the ledger holds the
+      // reason (`failed` / `blocked` rows). Retry: `migrations.retry`, then restart the addon.
+      runnerLog.error(
+        `"${addonId}" is blocked by its migrations and was not started: ${migrationIds.join(', ')}`,
+        { tags: { addonId }, meta: { migrationIds: [...migrationIds] } },
+      )
+    },
+    fatal: (entry, err) => {
       // Raw console: an init failure is fatal and `process.exit(1)` fires
       // synchronously — an async UDS log would never flush. The supervisor
       // restarts the runner on the non-zero exit.
-      console.error(`[addon-runner] Init failed for "${spec.addonId}": ${errMsg(err)}`)
+      console.error(`[addon-runner] Init failed for "${entry.spec.addonId}": ${errMsg(err)}`)
       // A typed refusal (D877) is not a crash: say so to the parent, in a form
       // that survives the exit (sync write), and leave with the refusal code so
       // the breaker does not count it.
       const refusal = findAddonRefusal(err)
       if (refusal !== null) {
         try {
-          fs.writeSync(1, formatRunnerRefusalLine(nodeId, refusalReportOf(spec.addonId, refusal)))
+          fs.writeSync(
+            1,
+            formatRunnerRefusalLine(nodeId, refusalReportOf(entry.spec.addonId, refusal)),
+          )
         } catch {
           // The exit code below still classifies this exit as a refusal.
         }
         process.exit(RUNNER_REFUSED_EXIT_CODE)
       }
       process.exit(1)
+    },
+  })
+  const allBlocked = initOutcome.initialised === 0 ? allBlockedRefusal(initOutcome.blocked) : null
+  if (allBlocked !== null) {
+    console.error(`[addon-runner] ${allBlocked.reason}`)
+    try {
+      fs.writeSync(1, formatRunnerRefusalLine(nodeId, allBlocked))
+    } catch {
+      // The exit code below still classifies this exit as a refusal.
     }
+    process.exit(RUNNER_REFUSED_EXIT_CODE)
   }
 
   // ── Device-restore barrier ─────────────────────────────────────────

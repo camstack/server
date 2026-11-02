@@ -23,6 +23,10 @@ export {
   parseMediaOwnerKey,
 } from './media/media-owner-key.js'
 export type { CapabilitiesAccess } from './addon/base-addon.js'
+export {
+  AddonMigrationsBlockedError,
+  findMigrationsBlocked,
+} from './addon/migrations-blocked-error.js'
 export { BaseAddon, classifyStoreError, normalizeAddonInitResult } from './addon/base-addon.js'
 export { normalizeNodeId } from './addon/per-node-store.js'
 export {
