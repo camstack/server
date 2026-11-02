@@ -18,6 +18,7 @@ import type { ConfigField, ConfigUISchema, ConfigUISchemaWithValues } from '../.
 import { pushToast } from '../ui/toast-bus'
 import { BrokerStep } from './BrokerStep'
 import { ProviderConfigForm } from './ProviderConfigForm'
+import type { IntegrationKind } from './ProviderPicker'
 
 type GlobalSettingsTrpc = ComponentProps<typeof AddonGlobalSettingsForm>['trpc']
 
@@ -31,7 +32,7 @@ interface IntegrationConfigModalProps {
    * Cap kind from available-types. Kept for callers; the editor shape is
    * driven by wizard `mode`, not by this.
    */
-  readonly kind: 'device-adoption' | 'device-provider'
+  readonly kind: IntegrationKind
   /** Locked wizard mode — same source as IntegrationDetail / create wizard. */
   readonly mode: IntegrationWizardMode
   /** Broker kind for a `broker` integration (e.g. `home-assistant`). */
@@ -100,18 +101,19 @@ export function IntegrationConfigModal({
   integrationId,
   addonId,
   name,
-  kind: _kind,
+  kind,
   mode,
   brokerKind,
   canTest = false,
   trpc,
   onClose,
 }: IntegrationConfigModalProps) {
-  void _kind
   const { t } = useTranslation()
   const queryClient = useQueryClient()
 
-  const needsIntegrationSettings = mode === 'account' || mode === 'broker'
+  // A connection keeps its whole configuration in the instance, whatever its mode.
+  const accountStyle = kind === 'connection' || mode === 'account'
+  const needsIntegrationSettings = accountStyle || mode === 'broker'
 
   const { data: settings, isLoading: settingsLoading } = useIntegrationsGetSettings(
     { id: integrationId },
@@ -125,7 +127,7 @@ export function IntegrationConfigModal({
   const { data: schemaWithValues, isLoading: schemaLoading } =
     useAddonSettingsGetIntegrationFormSchema(
       { addonId, nodeId: 'hub', instance: { integrationId, mode } },
-      { enabled: mode === 'account' },
+      { enabled: accountStyle },
     )
   const configSchema = useMemo<ConfigUISchema | null>(
     () =>
@@ -213,7 +215,7 @@ export function IntegrationConfigModal({
                 })}
               </p>
             )
-          ) : mode === 'account' ? (
+          ) : accountStyle ? (
             settingsLoading || schemaLoading ? (
               <div className="flex items-center gap-2 text-[11px] text-foreground-subtle">
                 <Loader2 className="h-3 w-3 animate-spin" />

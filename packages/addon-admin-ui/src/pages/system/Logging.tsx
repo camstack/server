@@ -5,7 +5,7 @@
  * An `<IntegrationHub>`, the same base Remote Access uses, so the pills,
  * Enable/Disable, Restart, the schema settings and the activity stream all come
  * for free. Each destination's own configuration — Winston's level and
- * retention, Loki's URL and labels — is its `globalSettingsSchema()`, rendered
+ * retention — is its `globalSettingsSchema()`, rendered
  * by the base's Settings section. Nothing about a destination is hard-coded here.
  *
  * ## Why no `logging` orchestrator capability
@@ -40,15 +40,20 @@
  */
 import { useMemo, type ReactElement } from 'react'
 import { FileText, ScrollText } from 'lucide-react'
-import { useAddonsList, useAddonsListCapabilityProviders } from '@camstack/ui-library'
+import { Button, useAddonsList, useAddonsListCapabilityProviders } from '@camstack/ui-library'
+import { useNavigate } from 'react-router-dom'
 import { AddonIntegrationBody } from '../../components/integration-hub/AddonIntegrationBody'
 import { IntegrationHub } from '../../components/integration-hub/IntegrationHub'
 import { providerPillState, type IntegrationGroup } from '../../components/integration-hub/types'
 import { buildAddonDisplayNameMap } from '../../lib/addon-display-names'
+import { integrationDetailUrl } from '../../lib/integration-instance-selection'
 import { useTranslation } from 'react-i18next'
 
 const POLL_INTERVAL_MS = 5_000
 const CAPABILITY = 'log-destination'
+
+/** Destinations whose connection is an integration instance: their settings live on its page. */
+const CONNECTION_DESTINATIONS: ReadonlySet<string> = new Set(['loki-logging'])
 
 /**
  * What each builtin destination does, in one line. Keyed by addon id and used only
@@ -71,6 +76,7 @@ interface LogDestinationRow {
 
 export function LoggingPage(): ReactElement {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const providersQuery = useAddonsListCapabilityProviders(
     { capName: 'log-destination' },
     { refetchInterval: POLL_INTERVAL_MS },
@@ -121,6 +127,26 @@ export function LoggingPage(): ReactElement {
             displayName={d.displayName}
             capName={CAPABILITY}
             isActive={d.isActive}
+            {...(CONNECTION_DESTINATIONS.has(d.addonId)
+              ? {
+                  settingsContent: (
+                    <div className="flex flex-col items-start gap-2">
+                      <p className="text-xs text-foreground-muted">
+                        {t(
+                          'system.logging.connectionLivesOnIntegrations',
+                          'The connection (URL, credentials, labels) is set up on the Integrations page.',
+                        )}
+                      </p>
+                      <Button
+                        variant="secondary"
+                        onClick={() => navigate(integrationDetailUrl(d.addonId))}
+                      >
+                        {t('system.logging.openIntegration', 'Open the integration')}
+                      </Button>
+                    </div>
+                  ),
+                }
+              : {})}
             badges={
               d.caption.length > 0 ? (
                 <span className="text-[11px] text-foreground-subtle">{d.caption}</span>
