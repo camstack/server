@@ -191,7 +191,9 @@
       "destinations": "Destinazioni",
       "everyRegisteredLogDestinationEntries": "Ogni destinazione di log registrata. Le voci vengono inviate a tutte le destinazioni abilitate contemporaneamente — abilitarne una non ne disabilita un'altra.",
       "noLogDestinationsRegistered": "Nessuna destinazione di log registrata",
-      "thisShouldNotHappenThe": "Non dovrebbe succedere — le destinazioni console e file a rotazione sono integrate. Se l'elenco è vuoto, il nodo è ancora in avvio."
+      "thisShouldNotHappenThe": "Non dovrebbe succedere — le destinazioni console e file a rotazione sono integrate. Se l'elenco è vuoto, il nodo è ancora in avvio.",
+      "connectionLivesOnIntegrations": "La connessione (URL, credenziali, etichette) si configura nella pagina Integrazioni.",
+      "openIntegration": "Apri l'integrazione"
     },
     "meshNetworks": {
       "meshNetworks": "Reti mesh",
@@ -1763,7 +1765,8 @@
       "title": "Nuovi dispositivi trovati",
       "dismiss": "Ignora",
       "adopt": "Adotta"
-    }
+    },
+    "connection": "Connessione"
   },
   "serverManagement": {
     "title": "Gestione server",
