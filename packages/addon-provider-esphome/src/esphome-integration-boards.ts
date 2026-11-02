@@ -206,6 +206,31 @@ export class EspIntegrationBoards {
     })
   }
 
+  /**
+   * Replace the encryption key of an existing board. The caller passes a key it
+   * actually READ: a failed read never reaches here, so an existing key is only
+   * ever replaced by a value, never cleared (D49). Only that board reconnects.
+   */
+  setBoardKey(
+    integrationId: string,
+    boardId: string,
+    key: string,
+  ): Promise<'set' | 'unchanged' | 'missing'> {
+    return this.enqueue(async () => {
+      const settings = await this.requireOwnSettings(integrationId)
+      const rows = rowsOf(settings)
+      const target = rows.find((r) => r['id'] === boardId)
+      if (target === undefined) return 'missing'
+      if (target['encryptionKey'] === key) return 'unchanged'
+      await this.saveRows(
+        integrationId,
+        rows.map((r) => (r['id'] === boardId ? { ...r, encryptionKey: key } : r)),
+      )
+      await this.reconcileNow()
+      return 'set'
+    })
+  }
+
   /** Remove a board from its integration: only that board disconnects, its devices go. */
   removeBoard(integrationId: string, boardId: string): Promise<void> {
     return this.enqueue(async () => {

@@ -399,3 +399,32 @@ describe('adding and removing a board through the integration', () => {
     expect(w.sessions.connections.has('b2')).toBe(true)
   })
 })
+
+describe('setting the key of an existing board', () => {
+  it('saves the key, restarts only that board session and keeps the other rows', async () => {
+    const w = world()
+    w.api.integrations.push(integration('int_1'))
+    w.api.settings.set('int_1', {
+      boards: [row('b1', 'a.local', 'OLD'), row('b2', 'b.local', 'K2')],
+    })
+    await w.boards.reconcile()
+    w.sessions.calls.length = 0
+
+    expect(await w.boards.setBoardKey('int_1', 'b1', 'NEW-KEY')).toBe('set')
+
+    expect(w.sessions.calls).toEqual([{ op: 'update', id: 'b1' }])
+    expect(w.api.sets[0]?.secretKeys).toEqual(expect.arrayContaining([...BOARD_SECRET_PATHS]))
+    expect(w.sessions.connections.get('b1')?.noisePsk).toBe('NEW-KEY')
+    expect(w.sessions.connections.get('b2')?.noisePsk).toBe('K2')
+  })
+
+  it('writes nothing when the key is already the stored one, or the board is gone', async () => {
+    const w = world()
+    w.api.integrations.push(integration('int_1'))
+    w.api.settings.set('int_1', { boards: [row('b1', 'a.local', 'SAME')] })
+    await w.boards.reconcile()
+    expect(await w.boards.setBoardKey('int_1', 'b1', 'SAME')).toBe('unchanged')
+    expect(await w.boards.setBoardKey('int_1', 'nope', 'X')).toBe('missing')
+    expect(w.api.sets).toHaveLength(0)
+  })
+})
