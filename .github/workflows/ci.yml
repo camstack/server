@@ -275,19 +275,12 @@ jobs:
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
 
-      # D28 (source): no bare '@camstack/types' VALUE import reachable from the
-      # addon-runner or addon-utils, and no ALL_CAPABILITY_DEFINITIONS in addon
-      # server code. Pure source scan, ~1 s; names file:line and the /addon fix.
-      - name: Runner and addon sources are barrel-free (D28)
+      # D28 barrel guards (source scan + built runner/addon-utils dist). The list
+      # lives in scripts/ci/run-barrel-guards.sh, which verify:push calls too.
+      # The dist half reads packages/system/dist, so this runs after the build.
+      - name: Runner and addon barrel guards (D28)
         if: matrix.shard == 'guards'
-        run: npx tsx scripts/check-runner-barrel-free.ts
-
-      # D28: the BUILT addon-runner AND addon-utils must not carry the
-      # @camstack/types schema barrel (~90-115 MB of heap in every runner). Reads
-      # packages/system/dist, so it runs right after the build; ~2 s.
-      - name: Runner dist is barrel-free (D28)
-        if: matrix.shard == 'guards'
-        run: npx tsx scripts/check-runner-dist-barrel-free.ts
+        run: scripts/ci/run-barrel-guards.sh all
 
       # D28: no BUILT addon may name ALL_CAPABILITY_DEFINITIONS or grow the
       # runner's heap by more than 60 MB (scripts/addon-dist-footprint-budgets.json

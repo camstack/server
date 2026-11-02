@@ -255,8 +255,9 @@ The index is `../planning/sessions/sessions.md`; do not append to it.
   CI gates for what you are about to push (merge-base with `origin/main`,
   working tree included): the TypeScript 7 typecheck graded against the pins
   (`scripts/typecheck-tsgo.ts`), the affected tests in CI's lanes and
-  workers (`scripts/ci/test-affected.sh`), and `test:scripts` when
-  `scripts/` moved. A local `tsc`, `nx affected -t typecheck` or one green
+  workers (`scripts/ci/test-affected.sh`), `test:scripts` when
+  `scripts/` moved, the addon footprint guard, and the D28 barrel guards
+  (`scripts/ci/run-barrel-guards.sh`, the list CI's guards lane calls too). A local `tsc`, `nx affected -t typecheck` or one green
   spec is NOT the CI gate — that gap turned 9 of 13 red runs of 2026-10-12/13
   into "pinned-or-new error(s)" nobody had seen. RED means you do not push.
 - **Viewer (`camstack/` submodule) — same rule, before every commit and

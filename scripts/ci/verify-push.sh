@@ -14,6 +14,9 @@
 #        only when packages/addon-*/ or packages/types/src/ changed: the touched
 #        addons (--addons), or every addon when types/src moved (all bundle it).
 #        It reads the dists the build step above just produced.
+#   5. "Runner and addon barrel guards (D28)" -> scripts/ci/run-barrel-guards.sh
+#        the same script CI calls; source scan on any affected change, plus the
+#        built-dist half when packages/types or packages/system changed.
 #
 # Changed set = committed diff from the merge-base with origin/main PLUS the
 # working tree (staged, unstaged, untracked), minus package-lock.json (as CI).
@@ -78,6 +81,7 @@ TC_RESULT="skipped"
 TEST_RESULT="skipped"
 SCRIPTS_RESULT="skipped"
 FOOTPRINT_RESULT="skipped"
+GUARDS_RESULT="skipped"
 RC=0
 
 # Affected nx projects -> package directory basenames (what typecheck-tsgo takes)
@@ -141,6 +145,22 @@ if [[ -n "$TC_DIRS" ]]; then
   fi
 fi
 
+# D28 barrel guards (CI: "Runner and addon barrel guards"; the list is
+# scripts/ci/run-barrel-guards.sh, shared with ci.yml). The source scan (~1 s)
+# runs on any affected change; the dist half reads packages/system/dist, which
+# the build above refreshed only when types or system moved (TC_DIRS=ALL), so
+# it runs then.
+if [[ -n "$TC_DIRS" ]]; then
+  if [[ "$TC_DIRS" == "ALL" ]]; then GUARD_MODE=all; else GUARD_MODE=source; fi
+  echo "verify:push: barrel guards ($GUARD_MODE)"
+  if scripts/ci/run-barrel-guards.sh "$GUARD_MODE"; then
+    GUARDS_RESULT="ok"
+  else
+    GUARDS_RESULT="RED"
+    RC=1
+  fi
+fi
+
 # Do not `grep -q` this list under `pipefail`: on a long CHANGED set grep
 # exits at the first hit and the writer dies with SIGPIPE (141), so the
 # branch is skipped and the gate prints `scripts: skipped`.
@@ -155,5 +175,5 @@ if [[ ",${CHANGED}," == *",scripts/"* ]]; then
 fi
 
 if [[ $RC -eq 0 ]]; then VERDICT=GREEN; else VERDICT=RED; fi
-echo "verify:push $VERDICT — typecheck: $TC_RESULT, tests: $TEST_RESULT, scripts: $SCRIPTS_RESULT, footprint: $FOOTPRINT_RESULT"
+echo "verify:push $VERDICT — typecheck: $TC_RESULT, tests: $TEST_RESULT, scripts: $SCRIPTS_RESULT, footprint: $FOOTPRINT_RESULT, guards: $GUARDS_RESULT"
 exit $RC
