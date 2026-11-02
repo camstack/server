@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Node page has a launch settings card for the heap ceiling and the hub RSS budget (takes effect on restart)
 - System → Settings now holds your units and a read-only list of keyboard shortcuts (moved out of My access → Preferences, whose old link redirects there); the passkey relying-party settings moved to Identity → Authentication.
 - The Integrations page shows a banner when new devices were found on the network, with Adopt and Dismiss
+- Logs has a Watch tab: switch a debug channel on for chosen cameras for 10 minutes (renewed while the page is open, 60 minutes at most) and read it live.
 
 ## [1.2.550] - 2026-11-01
 

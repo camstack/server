@@ -75,6 +75,7 @@ import type {
   RecordsTransport,
   SecretsAccess,
 } from '@camstack/types'
+import { createDebugEmitter } from '@camstack/types'
 import {
   ALL_CAPABILITY_DEFINITIONS,
   createDeviceProxy,
@@ -3611,6 +3612,7 @@ export class AddonRegistryService {
       id: `addon:${addonId}`,
       logger,
       eventBus: this.eventBusService,
+      debug: createDebugEmitter(logger),
       // No store data (D675). An in-process addon reads its persisted settings
       // through `ctx.settings`; `addonConfig` used to be filled from the sync
       // `getAddonConfig`, which has no backend on an isolated engine and handed

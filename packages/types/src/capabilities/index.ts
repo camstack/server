@@ -3146,6 +3146,8 @@ export {
   RequestCensusSnapshotSchema,
   type RequestCensusStatus,
   RequestCensusStatusSchema,
+  type DebugWatchInput,
+  type DebugWatchResult,
   type SetLoggingSettingsInput,
   SetLoggingSettingsInputSchema,
   type SetSiteLocationInput,

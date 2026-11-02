@@ -1316,6 +1316,7 @@
   "streamSignals.listSignals": "viewer",
   "switch.getStatus": "viewer",
   "switch.setState": "viewer",
+  "system.debugWatch": "admin",
   "system.detectSiteLocation": "admin",
   "system.featureFlags": "admin",
   "system.forceRetentionCleanup": "admin",

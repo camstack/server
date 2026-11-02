@@ -91,7 +91,7 @@ export function LogLevelsPage(): ReactElement {
   const busy = write.isPending || settings.isFetching
 
   /** The roster comes from the ADDONS, never from a list in this file. */
-  const channelOptions = state?.channels ?? []
+  const channelOptions = (state?.channels ?? []).filter((c) => c.kind !== 'debug')
 
   /**
    * Address the layer the ROW speaks for, never the layer the page is

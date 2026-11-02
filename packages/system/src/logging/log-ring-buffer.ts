@@ -1,5 +1,5 @@
 import type { LogLevel, LogEntry, LogFilter, LogTags } from '@camstack/types'
-import { logLevelAtMost } from '@camstack/types'
+import { getDebugInterest, isDebugChannelName, logLevelAtMost } from '@camstack/types'
 
 export type { LogLevel, LogEntry, LogFilter }
 
@@ -64,6 +64,18 @@ export function matchesLogTags(
   return true
 }
 
+/**
+ * A `debug.<channel>` line enters the ring only while somebody is watching
+ * that device — a disabled channel never costs ring space. Every other line
+ * is admitted unchanged.
+ */
+function admitsDebugLine(entry: LogEntry): boolean {
+  const channel = entry.tags?.logChannel
+  if (channel === undefined || !isDebugChannelName(channel)) return true
+  const deviceId = entry.tags?.deviceId
+  return typeof deviceId === 'number' && getDebugInterest().wants(channel, deviceId)
+}
+
 export class LogRingBuffer {
   private readonly buffer: Array<LogEntry | undefined>
   private head = 0
@@ -74,6 +86,7 @@ export class LogRingBuffer {
   }
 
   push(entry: LogEntry): void {
+    if (!admitsDebugLine(entry)) return
     this.buffer[this.head] = entry
     this.head = (this.head + 1) % this.capacity
     if (this.count < this.capacity) {

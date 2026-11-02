@@ -64,3 +64,17 @@ export const CH_HANDSHAKE = declareLogChannel({
   defaultLevel: 'info',
   perDevice: true,
 })
+
+/**
+ * A live DEBUG watch over this camera's event subscription: the socket state at
+ * every (re)subscribe, with the reason. Emitted through `ctx.debug`, so it costs
+ * nothing until an operator watches the camera from Logs → Watch.
+ */
+export const CH_DEBUG_EVENTS = declareLogChannel({
+  name: 'debug.reolink-events',
+  description:
+    'The camera event subscription: socket and login state at each (re)subscribe, with the reason.',
+  defaultLevel: 'info',
+  perDevice: true,
+  kind: 'debug',
+})

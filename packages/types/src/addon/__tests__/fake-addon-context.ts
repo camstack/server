@@ -93,6 +93,7 @@ export function fakeAddonContext(options: FakeAddonContextOptions = {}): AddonCo
   return {
     id: options.id ?? 'test-addon',
     logger: fakeLogger(),
+    debug: () => undefined,
     eventBus: {
       emit: () => undefined,
       subscribe: () => () => undefined,

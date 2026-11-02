@@ -1952,6 +1952,19 @@
       "channelsSubtitle": "Declared by the addons that own them — this list is not maintained by hand. Arming a channel opens a window with a deadline; it closes by itself.",
       "noChannels": "No addon on this cluster declares a log channel, or none could be reached right now.",
       "notPerCamera": "not filterable per camera"
+    },
+    "watch": {
+      "title": "Watch",
+      "subtitle": "Switch a debug channel on for chosen devices and read it live. A watch lasts 10 minutes, is renewed while this page stays open, and ends by itself after 60 minutes at most.",
+      "setup": "Channels and devices",
+      "noChannels": "No addon on this cluster offers a debug channel, or none could be reached right now.",
+      "devices": "Devices",
+      "start": "Start watching",
+      "stop": "Stop",
+      "lapsed": "Already ended, not renewed: {{names}}. Start again to continue.",
+      "live": "Live",
+      "endsIn": "ends in {{left}}",
+      "capIn": "hard stop in {{left}}"
     }
   },
   "clusterLoad": {
@@ -6321,7 +6334,8 @@
         "viewer": "Viewer",
         "destinations": "Destinations",
         "levels": "Levels",
-        "diagnostics": "Diagnostics"
+        "diagnostics": "Diagnostics",
+        "watch": "Watch"
       },
       "secrets": {
         "revealRefused": "Reveal refused",

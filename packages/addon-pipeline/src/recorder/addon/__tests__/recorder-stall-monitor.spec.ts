@@ -64,6 +64,7 @@ function makeCtx(localNodeId: string): Harness {
       child: () => ctx.logger,
       withTags: () => ctx.logger,
     } as AddonContext['logger'],
+    debug: () => undefined,
     eventBus,
     dataDir: '/tmp/recorder-stall-test',
     nodeDataDir: '/tmp',

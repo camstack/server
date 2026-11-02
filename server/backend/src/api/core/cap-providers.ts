@@ -200,6 +200,7 @@ export function buildSystemProvider(
       loggingSettings.get(input.scopeNodeId, input.scopeComponent),
     setLoggingSettings: async (input) =>
       loggingSettings.set(input.patch, input.scopeNodeId, input.scopeComponent),
+    debugWatch: async (input) => loggingSettings.debugWatch(input),
   }
 }
 

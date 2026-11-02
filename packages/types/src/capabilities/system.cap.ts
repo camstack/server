@@ -573,6 +573,38 @@ const LoggingSettingsStateSchema = z.object({
   persisted: z.boolean(),
 })
 
+/**
+ * Debug WATCH — a short, per-device window over `debug.<channel>` lines.
+ *
+ * `start` opens (or re-arms) a 10 minute window; `rearm` extends a LIVE one
+ * and never revives a lapsed one; `stop` closes it; `list` only reads. No
+ * chain of re-arms outlives 60 minutes from the first start. The hub holds the
+ * watches in memory and pushes the interest to every node, so a watch lapses
+ * by itself and survives nothing — a restart is a stop.
+ */
+const DebugWatchInputSchema = z.object({
+  action: z.enum(['list', 'start', 'rearm', 'stop']),
+  /** Full channel names, `debug.<channel>`, each declared with `kind: 'debug'`. */
+  channels: z.array(z.string().min(1)).readonly().default([]),
+  /** Numeric device ids. Required (non-empty) for `start`. */
+  deviceIds: z.array(z.number().int()).readonly().default([]),
+})
+
+const DebugWatchStateSchema = z.object({
+  channel: z.string(),
+  deviceIds: z.array(z.number().int()).readonly(),
+  startedAtMs: z.number(),
+  untilMs: z.number(),
+  capAtMs: z.number(),
+})
+
+const DebugWatchResultSchema = z.object({
+  nowMs: z.number(),
+  watches: z.array(DebugWatchStateSchema).readonly(),
+  /** Channels a `rearm` found already lapsed: nothing was revived. */
+  lapsed: z.array(z.string()).readonly(),
+})
+
 export const systemCapability = {
   name: 'system',
   scope: 'system',
@@ -703,6 +735,15 @@ export const systemCapability = {
       kind: 'mutation',
       auth: 'admin',
     }),
+
+    /**
+     * Start, re-arm, stop or list the live debug watches. See
+     * {@link DebugWatchInputSchema}.
+     */
+    debugWatch: method(DebugWatchInputSchema, DebugWatchResultSchema, {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
   },
   /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */
   mount: { kind: 'server-provided' },
@@ -730,6 +771,8 @@ export type LogChannelWindowPatch = z.infer<typeof LogChannelWindowPatchSchema>
 export type LogChannelWindowState = z.infer<typeof LogChannelWindowStateSchema>
 export type LoggingSettingsPatch = z.infer<typeof LoggingSettingsPatchSchema>
 export type LoggingSettingsState = z.infer<typeof LoggingSettingsStateSchema>
+export type DebugWatchInput = z.infer<typeof DebugWatchInputSchema>
+export type DebugWatchResult = z.infer<typeof DebugWatchResultSchema>
 export type SetLoggingSettingsInput = z.infer<typeof SetLoggingSettingsInputSchema>
 
 export type SiteLocation = z.infer<typeof SiteLocationSchema>

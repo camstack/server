@@ -44,6 +44,7 @@ function makeCtx(store: Record<string, unknown>, localNodeId: string): AddonCont
       child: () => ctx.logger,
       withTags: () => ctx.logger,
     } as AddonContext['logger'],
+    debug: () => undefined,
     eventBus,
     dataDir: '/tmp/recorder-test',
     nodeDataDir: '/tmp',

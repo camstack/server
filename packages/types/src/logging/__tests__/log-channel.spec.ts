@@ -27,6 +27,7 @@ const PER_DEVICE: LogChannelDescriptor = {
   description: 'x',
   defaultLevel: 'info',
   perDevice: true,
+  kind: 'diagnostic',
 }
 
 const CLUSTER_WIDE: LogChannelDescriptor = {
@@ -34,6 +35,7 @@ const CLUSTER_WIDE: LogChannelDescriptor = {
   description: 'y',
   defaultLevel: 'info',
   perDevice: false,
+  kind: 'diagnostic',
 }
 
 interface Line {

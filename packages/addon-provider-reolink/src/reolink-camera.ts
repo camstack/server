@@ -314,6 +314,7 @@ function coerceNumber(value: unknown): number | null {
 
 import type { PtzGuardStatus } from '@apocaliss92/nodelink-js'
 import type { PtzHomePreset } from '@camstack/types'
+import { createDebugEmitter, type DebugEmitter } from '@camstack/types'
 import { isRecoverableBaichuanError } from './error-classifier.js'
 import {
   intercomFailureReport,
@@ -8578,6 +8579,8 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    *      Lib starts/refreshes its own subscribe + 5min watchdog.
    *
    */
+  private debugEmit: DebugEmitter | null = null
+
   private async resubscribeSimpleEvents(api: ReolinkBaichuanApi, reason: string): Promise<void> {
     try {
       await api.offSimpleEvent(this.handleSimpleEventBound)
@@ -8586,6 +8589,16 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       // returns false but doesn't throw. Any other error here
       // shouldn't block the re-subscribe.
     }
+    // Built on first use; the thunk runs only while an operator watches this camera.
+    this.debugEmit ??= createDebugEmitter(this.ctx.logger)
+    this.debugEmit('reolink-events', this.id, () => ({
+      message: 'reolink event subscribe attempt',
+      meta: {
+        reason,
+        connected: api.client.isSocketConnected(),
+        loggedIn: api.client.loggedIn,
+      },
+    }))
     if (!api.client.isSocketConnected() || !api.client.loggedIn) {
       this.ctx.logger.debug('Reolink simpleEvent subscribe skipped — socket not ready', {
         meta: { reason, connected: api.client.isSocketConnected(), loggedIn: api.client.loggedIn },

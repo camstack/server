@@ -67,7 +67,7 @@ export function LogDiagnosticsPage(): ReactElement {
   }
 
   const windows = settings.data?.activeWindows ?? []
-  const channels = settings.data?.channels ?? []
+  const channels = (settings.data?.channels ?? []).filter((c) => c.kind !== 'debug')
   const activeChannels = settings.data?.activeChannels ?? []
 
   /**

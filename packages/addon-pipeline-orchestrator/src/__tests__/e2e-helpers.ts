@@ -1385,6 +1385,7 @@ export function makeFakeContext(opts: FakeContextOptions = {}): {
   const ctx: AddonContext = {
     id: opts.addonId ?? 'pipeline-orchestrator',
     logger: opts.logger ?? makeSilentLogger(),
+    debug: () => undefined,
     eventBus: bus,
     addonConfig: opts.addonConfig ?? {},
     // The kinds are declared by the addon itself, in `onInitialize`.

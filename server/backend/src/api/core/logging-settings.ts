@@ -62,6 +62,10 @@
 
 import {
   errMsg,
+  DebugWatchTable,
+  getDebugInterest,
+  type DebugWatchInput,
+  type DebugWatchResult,
   type DiagnosticWindow,
   type IScopedLogger,
   type ILogChannelsProvider,
@@ -231,6 +235,9 @@ export function buildLogChannelPlane(
  * for the same reason: a diagnostic you can leave on becomes a tax nobody
  * remembers enabling.
  */
+/** How often the hub sweeps lapsed debug watches. */
+const WATCH_SWEEP_MS = 5_000
+
 export const MAX_CHANNEL_WINDOW_MS = 30 * 60_000
 
 export interface LoggingSettingsServiceDeps {
@@ -253,6 +260,10 @@ export class LoggingSettingsService {
   private readonly logger: IScopedLogger | undefined
   private readonly now: () => number
   private readonly channels: LogChannelPlane
+  /** The live debug watches. Memory only: a restart is a stop. */
+  private readonly watches = new DebugWatchTable()
+  private watchTimer: ReturnType<typeof setInterval> | null = null
+  private lastRecord: LoggingSettingsRecord = {}
 
   constructor(deps: LoggingSettingsServiceDeps) {
     this.store = deps.store
@@ -350,6 +361,69 @@ export class LoggingSettingsService {
   }
 
   /**
+   * Start, re-arm, stop or list debug watches, then push the interest to every
+   * node. A refusal (an undeclared channel, no device) changes nothing.
+   */
+  async debugWatch(input: DebugWatchInput): Promise<DebugWatchResult> {
+    const nowMs = this.now()
+    const lapsed: string[] = []
+    if (input.action === 'start') {
+      if (input.deviceIds.length === 0) {
+        throw new Error('debug watch refused: name at least one device')
+      }
+      const declared = await this.channels.declarations()
+      const debugNames = new Set(declared.filter((d) => d.kind === 'debug').map((d) => d.name))
+      const unknown = input.channels.filter((name) => !debugNames.has(name))
+      if (unknown.length > 0) {
+        throw new Error(`debug watch refused: not a declared debug channel: ${unknown.join(', ')}`)
+      }
+      for (const channel of input.channels) this.watches.start(channel, input.deviceIds, nowMs)
+    } else if (input.action === 'rearm') {
+      for (const channel of input.channels) {
+        if (this.watches.rearm(channel, nowMs) === 'lapsed') lapsed.push(channel)
+      }
+    } else if (input.action === 'stop') {
+      for (const channel of input.channels) this.watches.stop(channel)
+    }
+    if (input.action !== 'list') {
+      // The push is the FULL set, so it carries the document's windows too: read
+      // them, and on a failed read fall back to the last value that was read (D49).
+      await this.pushChannels((await this.read()) ?? this.lastRecord)
+      this.logger?.info('debug watch changed', {
+        meta: {
+          action: input.action,
+          channels: input.channels,
+          deviceIds: input.deviceIds,
+          lapsed,
+        },
+      })
+    }
+    this.ensureWatchTimer()
+    return { nowMs, watches: this.watches.states(nowMs), lapsed }
+  }
+
+  /** Close lapsed watches here and push, so every node drops them even if its own timer is late. */
+  private ensureWatchTimer(): void {
+    const live = this.watches.states(this.now()).length > 0
+    if (!live) {
+      if (this.watchTimer !== null) clearInterval(this.watchTimer)
+      this.watchTimer = null
+      return
+    }
+    if (this.watchTimer !== null) return
+    this.watchTimer = setInterval(() => {
+      const closed = this.watches.expire(this.now())
+      getDebugInterest().tick(this.now())
+      if (closed.length > 0) {
+        this.logger?.info('debug watch lapsed', { meta: { channels: closed } })
+        void this.pushChannels(this.lastRecord)
+      }
+      this.ensureWatchTimer()
+    }, WATCH_SWEEP_MS)
+    this.watchTimer.unref()
+  }
+
+  /**
    * Re-establish the mirror and re-arm any diagnostic window that outlived the
    * last shutdown. Called once at boot, before the socket opens.
    *
@@ -396,8 +470,14 @@ export class LoggingSettingsService {
    * into a failed write for the whole cluster.
    */
   private async pushChannels(record: LoggingSettingsRecord): Promise<void> {
+    this.lastRecord = record
+    const nowMs = this.now()
+    // The document's windows and the debug watches travel as ONE full set: an
+    // apply that left the watches out would disarm them.
+    const windows = [...liveChannelWindows(record, nowMs), ...this.watches.windows(nowMs)]
+    getDebugInterest().apply(windows, nowMs)
     try {
-      await this.channels.apply(liveChannelWindows(record, this.now()))
+      await this.channels.apply(windows)
     } catch (err: unknown) {
       this.logger?.warn('log channel windows written but NOT pushed to every gate', {
         meta: { error: errMsg(err) },
@@ -662,6 +742,13 @@ export function validateChannelPatch(
         `"${patch.channel}" is not declared by any addon on this cluster` +
           (known.length > 0 ? ` (declared: ${known})` : ''),
       )
+      continue
+    }
+    if (descriptor.kind === 'debug' && patch.armMs > 0) {
+      // A debug channel is watched, never armed: the watch carries the 10
+      // minute window and the 60 minute cap, and an armed window would carry
+      // neither.
+      reasons.push(`"${patch.channel}" is a debug channel — watch it from Logs → Watch`)
       continue
     }
     const ids = patch.deviceIds

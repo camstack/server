@@ -3315,7 +3315,7 @@ Enum: `"cluster" \| "node" \| "component"`
 - `effective`: `LoggingEffectiveSchema`
 - `explicit`: `LoggingExplicitSchema`
 - `activeWindows`: `DiagnosticWindowSchema[]`
-- `channels`: `({ name: string; description: string; defaultLevel: "info" \| "warn" \| "error"; perDevice: boolean })[]`
+- `channels`: `({ name: string; description: string; defaultLevel: "info" \| "warn" \| "error"; perDevice: boolean; kind?: "diagnostic" \| "debug" = "diagnostic" })[]`
 - `activeChannels`: `LogChannelWindowStateSchema[]`
 - `opsLogRetentionDays`: `number`
 - `persisted`: `boolean`

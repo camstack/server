@@ -23,6 +23,7 @@
 
 import type { IScopedLogger } from '../interfaces/logging.js'
 import type { LogChannelWindow } from './log-channel.js'
+import { getDebugInterest } from './debug-watch.js'
 import { getLogChannelRegistry } from './log-channel.singleton.js'
 
 /**
@@ -53,6 +54,7 @@ interface LogChannelDescriptorOut {
   readonly description: string
   readonly defaultLevel: 'info' | 'warn' | 'error'
   readonly perDevice: boolean
+  readonly kind: 'diagnostic' | 'debug'
 }
 
 export interface LogChannelsProviderOptions {
@@ -77,6 +79,8 @@ export function createLogChannelsProvider(
 
   const timer = setInterval(() => {
     const closed = registry.tick(now())
+    // The debug mirror ticks on this same timer, never from a log path.
+    getDebugInterest().tick(now())
     for (const name of closed) {
       logger.info('log channel window closed', {
         tags: { logChannel: name },
@@ -91,6 +95,9 @@ export function createLogChannelsProvider(
     list: () => registry.list(),
     apply: (input) => {
       const unknown = registry.apply(input.windows, now())
+      // The mirror a `ctx.debug` call and the log ring read. Full set, so a
+      // lapsed or stopped watch drops here too.
+      getDebugInterest().apply(input.windows, now())
       const armed = registry.armed()
       logger.info('log channels applied', {
         meta: {

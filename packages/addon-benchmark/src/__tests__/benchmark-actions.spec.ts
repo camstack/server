@@ -130,6 +130,7 @@ function makeFakeContext(opts: FakeContextOpts = {}): FakeContext {
       child: () => ctx.logger,
       withTags: () => ctx.logger,
     } as AddonContext['logger'],
+    debug: () => undefined,
     eventBus,
     dataDir: '/tmp/benchmark-test',
     nodeDataDir: '/tmp',

@@ -13,7 +13,7 @@
 
 import {
   LogChannelRegistry,
-  type LogChannelDescriptor,
+  type LogChannelDescriptorInput,
   type LogChannelGate,
 } from './log-channel.js'
 
@@ -40,7 +40,7 @@ export function getLogChannelRegistry(): LogChannelRegistry {
  * times (`audioThresholdDbfs`, the HA entities with no source, the second
  * per-camera switch that wrote a store nobody read).
  */
-export function declareLogChannel(descriptor: LogChannelDescriptor): LogChannelGate {
+export function declareLogChannel(descriptor: LogChannelDescriptorInput): LogChannelGate {
   return getLogChannelRegistry().declare(descriptor)
 }
 

@@ -17,6 +17,7 @@ import type {
   ReadinessScope,
   StorageLocationDeclaration,
 } from '@camstack/types'
+import { createDebugEmitter } from '@camstack/types'
 import {
   createDeviceProxy,
   addonSliceHandleApi,
@@ -731,6 +732,7 @@ async function buildAddonContext(
     id: addonId,
     logger: scopedLogger,
     eventBus: scopedEventBus,
+    debug: createDebugEmitter(scopedLogger),
     addonConfig: options?.addonConfig ?? {},
     dataDir: addonDataDir,
     nodeDataDir,

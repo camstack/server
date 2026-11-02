@@ -42,6 +42,7 @@ const WEBRTC: LogChannelDescriptor = {
   description: 'x',
   defaultLevel: 'info',
   perDevice: true,
+  kind: 'diagnostic',
 }
 
 const RTP: LogChannelDescriptor = {
@@ -49,6 +50,7 @@ const RTP: LogChannelDescriptor = {
   description: 'y',
   defaultLevel: 'info',
   perDevice: false,
+  kind: 'diagnostic',
 }
 
 const NOW = 1_000_000

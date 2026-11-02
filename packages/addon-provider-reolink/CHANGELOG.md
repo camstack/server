@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- New debug channel debug.reolink-events: event subscription state per camera, readable from Logs > Watch.
+
 ## [1.2.217] - 2026-11-01
 
 ### Changed

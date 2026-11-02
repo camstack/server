@@ -6,8 +6,8 @@
  * system-scope cap that takes a deviceId was previously never device-filtered
  * — see the generator header).
  *
- * Coverage: 584 methods carry a device reference, of which
- * 188 are on SYSTEM-scope caps.
+ * Coverage: 585 methods carry a device reference, of which
+ * 189 are on SYSTEM-scope caps.
  *
  * Top-level fields, number arrays, and one-level arrays of objects carrying
  * a numeric device field (targets[].deviceId) are all mapped; the matcher
@@ -561,6 +561,7 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'streamParams.setProfile': [{ name: "deviceId", form: "single", optional: false }] as const,
   'switch.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'switch.setState': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'system.debugWatch': [{ name: "deviceIds", form: "array", optional: true }] as const,
   'tamper.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'temperatureSensor.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'timedRun.cancel': [{ name: "deviceId", form: "single", optional: false }] as const,
@@ -807,4 +808,5 @@ export const SYSTEM_SCOPE_DEVICE_METHODS: readonly string[] = [
   "streamBroker.retractCameraStream",
   "streamBroker.setDeviceAudioMute",
   "streamBroker.unassignProfile",
+  "system.debugWatch",
 ] as const

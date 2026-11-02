@@ -3596,6 +3596,9 @@ export const useSystemGetLoggingSettings: typeof trpc.system.getLoggingSettings.
 /** Generated alias around `trpc.system.setLoggingSettings.useMutation`. */
 export const useSystemSetLoggingSettings: typeof trpc.system.setLoggingSettings.useMutation = /*#__PURE__*/ alias(() => trpc.system.setLoggingSettings.useMutation)
 
+/** Generated alias around `trpc.system.debugWatch.useMutation`. */
+export const useSystemDebugWatch: typeof trpc.system.debugWatch.useMutation = /*#__PURE__*/ alias(() => trpc.system.debugWatch.useMutation)
+
 /** Generated alias around `trpc.tamper.getStatus.useQuery`. */
 export const useTamperGetStatus: typeof trpc.tamper.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.tamper.getStatus.useQuery)
 

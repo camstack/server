@@ -85,6 +85,7 @@ export function makeAddonContext(options: AddonContextStubOptions): AddonContext
   return {
     id: options.id,
     logger: options.logger,
+    debug: () => undefined,
     eventBus: options.eventBus ?? SILENT_BUS,
     addonConfig: {},
     dataDir: '/tmp/camstack-extension-test',

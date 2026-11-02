@@ -63,39 +63,58 @@ export const LogChannelLevelSchema = z.enum(['info', 'warn', 'error'])
  * What an addon declares about one channel. No value, no state — a
  * declaration is inert.
  */
-export const LogChannelDescriptorSchema = z.object({
-  /**
-   * Dotted `area.thing`, unique across the workspace. `area` is conventionally
-   * the addon's short name so an operator reading a channel list can tell who
-   * owns it without a second lookup.
-   */
-  name: z
-    .string()
-    .min(3)
-    .regex(/^[a-z0-9-]+(\.[a-z0-9-]+)+$/, 'a channel name is dotted lower-kebab, e.g. area.thing'),
-  /** One sentence: what the operator will SEE after arming it. */
-  description: z.string().min(1),
-  /** The level its lines are emitted at. Never below `info`. */
-  defaultLevel: LogChannelLevelSchema,
-  /**
-   * Whether this channel can be narrowed to a camera.
-   *
-   * `true` is a PROMISE with two halves, and both must hold: the gate is
-   * consulted with the numeric device id, AND every line the channel admits
-   * carries `tags: { deviceId }` with that same numeric id. The second half is
-   * what makes `| json | deviceId="102"` work in Loki — `loki-payload.ts`
-   * keeps `deviceId` out of the stream labels for cardinality, so the tag in
-   * the body is the only way to filter.
-   *
-   * A channel whose lines carry the device only in `meta` (or not at all) is
-   * declared `false`. Declaring it `true` anyway would be a lie the UI repeats:
-   * the operator narrows to one camera, sees nothing, and concludes the code
-   * path was never taken.
-   */
-  perDevice: z.boolean(),
-})
+export const LogChannelDescriptorSchema = z
+  .object({
+    /**
+     * Dotted `area.thing`, unique across the workspace. `area` is conventionally
+     * the addon's short name so an operator reading a channel list can tell who
+     * owns it without a second lookup.
+     */
+    name: z
+      .string()
+      .min(3)
+      .regex(
+        /^[a-z0-9-]+(\.[a-z0-9-]+)+$/,
+        'a channel name is dotted lower-kebab, e.g. area.thing',
+      ),
+    /** One sentence: what the operator will SEE after arming it. */
+    description: z.string().min(1),
+    /** The level its lines are emitted at. Never below `info`. */
+    defaultLevel: LogChannelLevelSchema,
+    /**
+     * Whether this channel can be narrowed to a camera.
+     *
+     * `true` is a PROMISE with two halves, and both must hold: the gate is
+     * consulted with the numeric device id, AND every line the channel admits
+     * carries `tags: { deviceId }` with that same numeric id. The second half is
+     * what makes `| json | deviceId="102"` work in Loki — `loki-payload.ts`
+     * keeps `deviceId` out of the stream labels for cardinality, so the tag in
+     * the body is the only way to filter.
+     *
+     * A channel whose lines carry the device only in `meta` (or not at all) is
+     * declared `false`. Declaring it `true` anyway would be a lie the UI repeats:
+     * the operator narrows to one camera, sees nothing, and concludes the code
+     * path was never taken.
+     */
+    perDevice: z.boolean(),
+    /**
+     * What the channel is FOR, so the UI can list the channels an addon offers.
+     *
+     * - `diagnostic` (the default): a per-component diagnostic armed from the
+     *   Levels page, emitted at its declared level.
+     * - `debug`: a `debug.<channel>` dump watched live for a short window
+     *   (`ctx.debug`). Always per-device, and its lines are denied by the log
+     *   ring unless somebody is watching that device.
+     */
+    kind: z.enum(['diagnostic', 'debug']).default('diagnostic'),
+  })
+  .refine((d) => d.kind !== 'debug' || (d.name.startsWith('debug.') && d.perDevice), {
+    message: 'a debug channel is named debug.<channel> and is per-device',
+  })
 
 export type LogChannelDescriptor = z.infer<typeof LogChannelDescriptorSchema>
+/** What an addon writes: `kind` defaults to `diagnostic`. */
+export type LogChannelDescriptorInput = z.input<typeof LogChannelDescriptorSchema>
 
 /**
  * An armed window over one channel, as the document hands it to a mirror.
@@ -215,7 +234,7 @@ export class LogChannelRegistry {
    * error, not a merge: the operator would arm one and the other would stay
    * dark, which is the dead-knob shape (D62) with an extra step.
    */
-  declare(descriptor: LogChannelDescriptor): LogChannelGate {
+  declare(descriptor: LogChannelDescriptorInput): LogChannelGate {
     const parsed = LogChannelDescriptorSchema.parse(descriptor)
     const existing = this.gates.get(parsed.name)
     if (existing !== undefined) {

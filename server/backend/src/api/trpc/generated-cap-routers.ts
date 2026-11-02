@@ -19069,6 +19069,15 @@ export function createCapRouter_system(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setLoggingSettings(methodInput as any)
       }),
+    debugWatch: adminProcedure
+      .input(systemCapability.methods.debugWatch.input.loose())
+      .output(systemCapability.methods.debugWatch.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('system', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.debugWatch(methodInput as any)
+      }),
   })
 }
 

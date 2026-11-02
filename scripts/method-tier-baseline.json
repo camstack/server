@@ -1215,6 +1215,7 @@
   "streamParams.setProfile": "admin",
   "streamSignals.listSignals": "protected",
   "switch.setState": "protected",
+  "system.debugWatch": "admin",
   "system.detectSiteLocation": "admin",
   "system.featureFlags": "protected",
   "system.forceRetentionCleanup": "admin",

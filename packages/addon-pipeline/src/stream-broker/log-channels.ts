@@ -79,6 +79,20 @@ export const CH_RTP = declareLogChannel({
 })
 
 /**
+ * A live DEBUG watch over the broker's RTP fan-out for one camera: who attached
+ * or detached and how many subscribers remain. Emitted through `ctx.debug`, so
+ * it costs nothing until an operator watches the camera from Logs → Watch.
+ */
+export const CH_DEBUG_RTP_SUBSCRIBERS = declareLogChannel({
+  name: 'debug.stream-broker-rtp',
+  description:
+    'RTP video subscribers attaching to and detaching from this camera, with their kind and count.',
+  defaultLevel: 'info',
+  perDevice: true,
+  kind: 'debug',
+})
+
+/**
  * Every channel this addon declares, as a VALUE.
  *
  * `addon.ts` used to reach the declarations through a bare
@@ -96,4 +110,4 @@ export const CH_RTP = declareLogChannel({
  * side-effect import need not. `scripts/check-log-channel-single-declaration.ts`
  * is the part that actually holds, because it reads the artefact.
  */
-export const STREAM_BROKER_LOG_CHANNELS = [CH_WEBRTC, CH_RTP] as const
+export const STREAM_BROKER_LOG_CHANNELS = [CH_WEBRTC, CH_RTP, CH_DEBUG_RTP_SUBSCRIBERS] as const

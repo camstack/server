@@ -1,5 +1,5 @@
 /**
- * `/system/logs` — Viewer / Destinations / Levels / Diagnostics.
+ * `/system/logs` — Viewer / Destinations / Levels / Watch / Diagnostics.
  *
  * Shell is library `SectionedPage` (OSD template).
  */
@@ -14,6 +14,7 @@ import { navChromeForPath } from '../../lib/nav-items'
 import { LoggingPage } from './Logging'
 import { LogDiagnosticsPage } from './LogDiagnostics'
 import { LogLevelsPage } from './LogLevels'
+import { LogWatchPage } from './LogWatch'
 
 function LogViewerTab() {
   return (
@@ -50,6 +51,11 @@ export function LogsPage() {
           id: 'levels',
           label: t('admin.system.logs.levels', 'Levels'),
           content: <LogLevelsPage />,
+        },
+        {
+          id: 'watch',
+          label: t('admin.system.logs.watch', 'Watch'),
+          content: <LogWatchPage />,
         },
         {
           id: 'diagnostics',

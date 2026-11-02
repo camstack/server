@@ -14,6 +14,7 @@ import type { ConfigUISchemaWithValues, FieldProbeResult } from './config-ui.js'
 import type { IEventBus, ReadinessScope } from './event-bus.js'
 import type { ICapabilityRegistry } from './kernel-abstractions.js'
 import type { IScopedLogger } from './logging.js'
+import type { DebugEmitter } from '../logging/debug-watch.js'
 import type { ICapabilityHandle } from './readiness.js'
 import type { StorageLocationDeclaration } from './storage-location-declaration.js'
 /** Sub-process info (inlined from deleted worker-protocol.ts) */
@@ -495,6 +496,14 @@ export interface AddonContext<TConfig = Record<string, unknown>> {
   readonly logger: IScopedLogger
   /** System event bus */
   readonly eventBus: IEventBus
+  /**
+   * Emit a `debug.<channel>` line about one device. The thunk runs ONLY while
+   * an operator watches that (channel, device) pair — otherwise this is one
+   * boolean read, and the line never reaches the log ring. The line carries
+   * `tags: { deviceId }`. Declare the channel (`kind: 'debug'`) so the Watch
+   * page lists it.
+   */
+  readonly debug: DebugEmitter
   /** Bootstrap configuration from server settings (read-only) */
   readonly addonConfig: Readonly<TConfig>
   /**

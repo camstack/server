@@ -132,7 +132,7 @@ export interface SystemProxy {
   readonly storage: Pick<InferProvider<typeof storageCapability>, 'resolve' | 'write' | 'read' | 'exists' | 'list' | 'delete' | 'getAvailableSpace' | 'beginUpload' | 'writeChunk' | 'finalizeUpload' | 'abortUpload' | 'beginDownload' | 'readChunk' | 'endDownload' | 'listLocations' | 'listLocationDeclarations' | 'upsertLocation' | 'deleteLocation' | 'listDrainProgress' | 'testLocation' | 'listProviders' | 'testConfig'>
   readonly storageMigration: Pick<InferProvider<typeof storageMigrationCapability>, 'plan' | 'start' | 'status' | 'cancel' | 'movers' | 'moverClearance' | 'residue' | 'drain' | 'cleanupStart' | 'cleanupStatus' | 'cleanupCancel' | 'history'>
   readonly streamBroker: Pick<InferProvider<typeof streamBrokerCapability>, 'fetchEventMedia' | 'listAllCameraStreams' | 'listAllProfileSlots' | 'getBrokerStats' | 'probeStream' | 'listClients' | 'getLiveViewerCounts' | 'killClient' | 'getStreamUrl' | 'getStreamWithCodec' | 'releaseStreamWithCodec' | 'acquireEgressTranscode' | 'releaseEgressTranscode' | 'subscribeAudioChunks' | 'pullAudioChunks' | 'unsubscribeAudioChunks' | 'setPreBufferDuration' | 'getPreBufferInfo' | 'getRtspPort' | 'getAllRtspEntries' | 'getRtspEntry' | 'regenerateRtspToken' | 'setRtspEnabled' | 'isRtspEnabled'>
-  readonly system: Pick<InferProvider<typeof systemCapability>, 'info' | 'health' | 'featureFlags' | 'networkAddresses' | 'getRetentionConfig' | 'setRetentionConfig' | 'forceRetentionCleanup' | 'getSiteLocation' | 'setSiteLocation' | 'detectSiteLocation' | 'getRequestCensus' | 'getLoadContributions' | 'getFailureContributions' | 'getLoggingSettings' | 'setLoggingSettings'>
+  readonly system: Pick<InferProvider<typeof systemCapability>, 'info' | 'health' | 'featureFlags' | 'networkAddresses' | 'getRetentionConfig' | 'setRetentionConfig' | 'forceRetentionCleanup' | 'getSiteLocation' | 'setSiteLocation' | 'detectSiteLocation' | 'getRequestCensus' | 'getLoadContributions' | 'getFailureContributions' | 'getLoggingSettings' | 'setLoggingSettings' | 'debugWatch'>
   readonly template: Pick<InferProvider<typeof templateCapability>, 'list' | 'get' | 'create' | 'update' | 'delete'>
   readonly terminalSession: Pick<InferProvider<typeof terminalSessionCapability>, 'listProfiles' | 'listInstances' | 'createInstance' | 'updateInstance' | 'deleteInstance' | 'setInstanceEnabled' | 'listLegacyCameras' | 'adoptLegacyMonitor' | 'listSessions' | 'openSession' | 'resize' | 'pullOutput' | 'writeInput' | 'close'>
   readonly toast: Pick<InferProvider<typeof toastCapability>, 'onToast'>
@@ -1003,6 +1003,7 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     getFailureContributions: (input?: unknown) => dispatch('system', 'getFailureContributions', 'query', input),
     getLoggingSettings: (input?: unknown) => dispatch('system', 'getLoggingSettings', 'query', input),
     setLoggingSettings: (input?: unknown) => dispatch('system', 'setLoggingSettings', 'mutation', input),
+    debugWatch: (input?: unknown) => dispatch('system', 'debugWatch', 'mutation', input),
   }
 
   const templateInterface = {

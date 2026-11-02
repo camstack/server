@@ -219,7 +219,7 @@ Singleton or collection providers, addressed without a device.
 | `storage-occupancy` | 1 | — | — | — | ✓ | `recorder` `pipeline-analytics` |
 | `storage-provider` | 16 | — | — | — | ✓ | `sftp-storage` `s3-storage` `webdav-storage` `smb-storage` `filesystem-storage` |
 | `stream-broker` | 38 | — | — | — | — | `stream-broker` |
-| `system` | 15 | — | — | — | — | — |
+| `system` | 16 | — | — | — | — | — |
 | `template` | 5 | — | — | — | — | `core-blocks` |
 | `terminal-session` | 14 | — | — | — | — | `terminal` |
 | `toast` | 1 | — | — | — | — | — |

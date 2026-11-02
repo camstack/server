@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**200 capabilities · 1481 methods.**
+**200 capabilities · 1482 methods.**
 
 ## Method index
 
@@ -1345,6 +1345,7 @@
 | `system.getFailureContributions` | query | admin | system |
 | `system.getLoggingSettings` | query | admin | system |
 | `system.setLoggingSettings` | mutation | admin | system |
+| `system.debugWatch` | mutation | admin | system |
 | `tamper.getStatus` | query | protected | tamper (auto) |
 | `temperatureSensor.getStatus` | query | protected | temperature-sensor (auto) |
 | `template.list` | query | protected | template |
@@ -3155,7 +3156,7 @@
 
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
-| list | `logChannels.list` | query | admin | `void` | `({ name: string; description: string; defaultLevel: "info" \| "warn" \| "error"; perDevice: boolean })[]` |
+| list | `logChannels.list` | query | admin | `void` | `({ name: string; description: string; defaultLevel: "info" \| "warn" \| "error"; perDevice: boolean; kind?: "diagnostic" \| "debug" = "diagnostic" })[]` |
 | apply | `logChannels.apply` | mutation | admin | `{ windows: ({ channel: string; armedUntilMs: number; deviceIds: number[] \| null })[] }` | `LogChannelApplyResultSchema` |
 
 ### `log-destination` → `logDestination.*`
@@ -4660,7 +4661,7 @@
 
 ### `system` → `system.*`
 
-- **Source:** `packages/types/src/capabilities/system.cap.ts:576`
+- **Source:** `packages/types/src/capabilities/system.cap.ts:608`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `server-provided`
 - **Archetypes:** —
 - **Provider interface:** `ISystemProvider`
@@ -4682,6 +4683,7 @@
 | getFailureContributions | `system.getFailureContributions` | query | admin | `void` | `ReportedFailureContributionSchema[]` |
 | getLoggingSettings | `system.getLoggingSettings` | query | admin | `GetLoggingSettingsInputSchema` | `LoggingSettingsStateSchema` |
 | setLoggingSettings | `system.setLoggingSettings` | mutation | admin | `SetLoggingSettingsInputSchema` | `LoggingSettingsStateSchema` |
+| debugWatch | `system.debugWatch` | mutation | admin | `{ action: "list" \| "start" \| "rearm" \| "stop"; channels?: string[] = []; deviceIds?: number[] = [] }` | `{ nowMs: number; watches: ({ channel: string; deviceIds: number[]; startedAtMs: number; untilMs: number; capAtMs: number })[]; lapsed: string[] }` |
 
 ### `tamper` → `tamper.*`
 

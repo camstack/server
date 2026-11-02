@@ -324,8 +324,27 @@ export type { Timezone, TimezoneDstRule, Weekday } from './interfaces/timezones.
 export { findTimezone, TIMEZONES } from './interfaces/timezones.js'
 export type {
   LogChannelDescriptor,
+  LogChannelDescriptorInput,
   LogChannelWindow,
 } from './logging/log-channel.js'
+export type {
+  DebugEmitter,
+  DebugLine,
+  DebugRearmOutcome,
+  DebugWatchState,
+} from './logging/debug-watch.js'
+export {
+  __resetDebugInterestForTests,
+  createDebugEmitter,
+  DEBUG_CHANNEL_PREFIX,
+  DEBUG_WATCH_HARD_CAP_MS,
+  DEBUG_WATCH_REARM_EVERY_MS,
+  DEBUG_WATCH_WINDOW_MS,
+  DebugInterest,
+  DebugWatchTable,
+  getDebugInterest,
+  isDebugChannelName,
+} from './logging/debug-watch.js'
 export {
   LogChannelDescriptorSchema,
   LogChannelGate,

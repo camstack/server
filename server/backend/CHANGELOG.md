@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - AI generate calls accept a per-call reasoning effort
 - Heap ceiling and the hub RSS budget are now set per node under Cluster > node > General; CAMSTACK_HUB_HEAP_MB, CAMSTACK_AGENT_HEAP_MB and the retired secret and CORS variables are ignored, and only the heap ones are named in the boot log
 - New devices on the network are proposed on the Integrations page without a manual scan, and dismissed proposals stay dismissed across restarts
+- The hub holds debug watches and pushes the interest to every node; a debug channel cannot be armed from the Levels page.
 
 ## [1.2.730] - 2026-11-01
 

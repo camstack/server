@@ -24,7 +24,13 @@ const UNKNOWN_ATTRIBUTION: BrokerConsumerAttribution = { kind: 'unknown' }
 
 import { absorbSignal, holdIsLive, NO_HOLD, type WakeHold } from './wake-hold.js'
 import type { AudioSubscribeOptions, SubscribeAudioChunksResult } from '@camstack/types'
-import { errMsg, G711_SCALE_CORRECTION_DB, maskUrlCredentials } from '@camstack/types'
+import {
+  createDebugEmitter,
+  errMsg,
+  G711_SCALE_CORRECTION_DB,
+  maskUrlCredentials,
+  type DebugEmitter,
+} from '@camstack/types'
 import {
   type ChildCostClaimHandle,
   type ChildCostRegistry,
@@ -165,6 +171,7 @@ export class StreamBroker implements IStreamBroker {
   private detectedCodec: string | undefined
   private readonly audioCodecApi: AudioCodecCapApi | null
   private readonly logger: IScopedLogger | undefined
+  private readonly debugEmit: DebugEmitter | null
   private readonly startedAt: number = Date.now()
 
   /**
@@ -703,11 +710,25 @@ export class StreamBroker implements IStreamBroker {
    * (`isClampedByBytes`).
    */
   static readonly CLIP_RING_MAX_BYTES = 16 * 1024 * 1024
+  /**
+   * `debug.stream-broker-rtp` watch line: the thunk (and its meta object) is
+   * built only while an operator watches this camera.
+   */
+  private debugRtpSubscribers(message: string, subscriberId: string, kind: string): void {
+    const deviceId = this.numericDeviceId
+    if (this.debugEmit === null || deviceId === undefined) return
+    this.debugEmit('stream-broker-rtp', deviceId, () => ({
+      message,
+      meta: { subscriberId, kind, total: this.rtpVideoCallbacks.size },
+    }))
+  }
+
   constructor(deviceId: string, logger?: IScopedLogger, audioCodecApi?: AudioCodecCapApi | null) {
     this.deviceId = deviceId
     this.numericDeviceId = deviceIdFromBrokerId(deviceId)
     this.audioCodecApi = audioCodecApi ?? null
     this.logger = logger
+    this.debugEmit = logger === undefined ? null : createDebugEmitter(logger)
     this.pipeServer = new StreamPipeServer(logger?.child('pipe-server'))
     this.rtspRestreamer = new RtspRestreamer(deviceId)
     if (logger) this.rtspRestreamer.setLogger(logger.child('rtsp'))
@@ -2329,6 +2350,7 @@ export class StreamBroker implements IStreamBroker {
         },
       })
     }
+    this.debugRtpSubscribers('rtp video subscriber attached', entry.id, attribution.kind)
     this.checkDemand()
     return () => {
       this.rtpVideoCallbacks.delete(callback)
@@ -2344,6 +2366,7 @@ export class StreamBroker implements IStreamBroker {
           meta: { total: this.rtpVideoCallbacks.size, subscriberId: entry.id },
         })
       }
+      this.debugRtpSubscribers('rtp video subscriber detached', entry.id, attribution.kind)
       this.checkDemand()
     }
   }

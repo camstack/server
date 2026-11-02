@@ -2027,6 +2027,19 @@
       "channelsSubtitle": "Dichiarati dagli addon che li possiedono — questo elenco non è mantenuto a mano. Armare un canale apre una finestra con una scadenza; si chiude da sola.",
       "noChannels": "Nessun addon di questo cluster dichiara un canale di log, oppure nessuno è raggiungibile ora.",
       "notPerCamera": "non filtrabile per telecamera"
+    },
+    "watch": {
+      "title": "Osserva",
+      "subtitle": "Attiva un canale di debug per i dispositivi scelti e leggilo dal vivo. Una osservazione dura 10 minuti, si rinnova finché questa pagina resta aperta e termina da sola dopo al massimo 60 minuti.",
+      "setup": "Canali e dispositivi",
+      "noChannels": "Nessun addon del cluster offre un canale di debug, oppure nessuno è raggiungibile ora.",
+      "devices": "Dispositivi",
+      "start": "Avvia osservazione",
+      "stop": "Ferma",
+      "lapsed": "Già terminata, non rinnovata: {{names}}. Riavvia per continuare.",
+      "live": "In diretta",
+      "endsIn": "termina tra {{left}}",
+      "capIn": "stop definitivo tra {{left}}"
     }
   },
   "clusterLoad": {
@@ -6396,7 +6409,8 @@
         "viewer": "Visualizzatore",
         "destinations": "Destinazioni",
         "levels": "Livelli",
-        "diagnostics": "Diagnostica"
+        "diagnostics": "Diagnostica",
+        "watch": "Osserva"
       },
       "secrets": {
         "revealRefused": "Rivelazione rifiutata",
