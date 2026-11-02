@@ -80,6 +80,9 @@
           },
           {
             "name": "device-adoption"
+          },
+          {
+            "name": "device-removal-hook"
           }
         ]
       }
@@ -107,7 +110,7 @@
     "publish:npm": "npm publish --access public"
   },
   "dependencies": {
-    "@apocaliss92/nodelink-js": "^0.12.0"
+    "@apocaliss92/nodelink-js": "^0.12.4"
   },
   "peerDependencies": {
     "@camstack/types": "*",

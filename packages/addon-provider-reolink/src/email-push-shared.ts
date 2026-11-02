@@ -3,7 +3,7 @@ import os from 'node:os'
 /**
  * Leaf constants + helpers shared by the email-push server, its settings
  * schema, and the per-camera Auto-configure flow. Kept dependency-free
- * (no addon imports) so both `email-push-server.ts` and `reolink-camera.ts`
+ * (no addon imports) so both `email-push-bridge.ts` and `reolink-camera.ts`
  * can import it without forming an import cycle.
  */
 

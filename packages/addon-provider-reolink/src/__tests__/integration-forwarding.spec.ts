@@ -19,15 +19,11 @@ import {
   BAICHUAN_WEBHOOK_SECTION_IDS,
   buildBaichuanWebhookSettingsSchema,
 } from '../baichuan-webhook-schema.js'
-import { buildEmailPushSettingsSchema, EMAIL_PUSH_SECTION_IDS } from '../email-push-schema.js'
 
-const INTEGRATION_SECTION_IDS = [...EMAIL_PUSH_SECTION_IDS, ...BAICHUAN_WEBHOOK_SECTION_IDS]
+const INTEGRATION_SECTION_IDS = [...BAICHUAN_WEBHOOK_SECTION_IDS]
 
 const schema = {
-  sections: [
-    ...buildEmailPushSettingsSchema('192.168.10.9').sections,
-    ...buildBaichuanWebhookSettingsSchema('192.168.10.9').sections,
-  ],
+  sections: [...buildBaichuanWebhookSettingsSchema('192.168.10.9').sections],
 }
 
 function keysOf(fields: readonly ConfigField[]): string[] {
@@ -40,7 +36,7 @@ function declared(): readonly ConfigSection[] {
 
 const here = dirname(fileURLToPath(import.meta.url))
 const addonSource = readFileSync(resolve(here, '../addon.ts'), 'utf8')
-const schemaSource = readFileSync(resolve(here, '../email-push-schema.ts'), 'utf8')
+const schemaSource = readFileSync(resolve(here, '../baichuan-webhook-schema.ts'), 'utf8')
 
 describe('the declaration', () => {
   it('names ids that exist in the schema', () => {
@@ -52,7 +48,7 @@ describe('the declaration', () => {
     // The whole mechanism hangs off this one override. Without it core answers
     // `null` and the integration page shows nothing — silently.
     expect(addonSource).toMatch(
-      /protected override integrationSettingSections\(\): readonly string\[\] \{\s*return \[\.\.\.EMAIL_PUSH_SECTION_IDS, \.\.\.BAICHUAN_WEBHOOK_SECTION_IDS\]/,
+      /protected override integrationSettingSections\(\): readonly string\[\] \{\s*return \[\.\.\.BAICHUAN_WEBHOOK_SECTION_IDS\]/,
     )
   })
 
@@ -66,23 +62,12 @@ describe('the declaration', () => {
 })
 
 describe('what Reolink declares as its integration settings', () => {
-  it('is email-push + HaCfg webhook sections', () => {
-    expect(declared().map((s) => s.id)).toEqual([
-      'email-push',
-      'email-push-auth',
-      'baichuan-webhook',
-    ])
+  it('is the HaCfg webhook section (the camera mailbox is a broker, not a setting)', () => {
+    expect(declared().map((s) => s.id)).toEqual(['baichuan-webhook'])
   })
 
-  it('is the SMTP keys plus HaCfg webhook keys', () => {
+  it('is the HaCfg webhook keys', () => {
     expect(declared().flatMap((section) => keysOf(section.fields))).toEqual([
-      'emailPushEnabled',
-      'emailPushRecommendedHost',
-      'emailPushPort',
-      'emailPushDomain',
-      'emailPushRequireAuth',
-      'emailPushAuthUsername',
-      'emailPushAuthPassword',
       'baichuanWebhookEnabled',
       'baichuanWebhookRecommendedHost',
       'baichuanWebhookPort',

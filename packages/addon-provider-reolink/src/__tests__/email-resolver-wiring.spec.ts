@@ -30,7 +30,7 @@ describe('email-push resolver wiring', () => {
 
   it('the wiring handler injects email + HaCfg webhook resolvers', () => {
     expect(addonSrc).toMatch(
-      /setEmailPushParamsResolver\(\s*\(\)\s*=>\s*emailServer\.buildCameraSetupParams/,
+      /setEmailPushParamsResolver\(\s*\(\)\s*=>\s*emailBridge\.buildCameraSetupParams/,
     )
     expect(addonSrc).toMatch(
       /setBaichuanWebhookParamsResolver\(\s*\(\)\s*=>\s*webhookServer\.buildCameraSetupParams/,

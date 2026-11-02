@@ -1078,7 +1078,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    * `true` iff this camera can run its own email/SMTP push path. Hub
    * children are excluded: they share the parent's TCP socket and have
    * no independent email config, so the NVR/Hub handles email centrally.
-   * Consumed by the provider-level SMTP intake (`email-push-server.ts`)
+   * Consumed by the camera mailbox bridge (`email-push-bridge.ts`)
    * to decide which cameras accept inbound mail + can be auto-configured.
    */
   get isEmailPushEligible(): boolean {
@@ -2248,18 +2248,16 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       throw userError(
         'reolink.email-push-not-wired',
         undefined,
-        'Email Push Server is not wired — restart the Reolink addon',
+        'The camera mailbox is not wired — restart the Reolink addon',
       )
     }
     const params = await this.emailPushParamsResolver()
     if (!params) {
       this.ctx.logger.warn(
-        'email-push: no manager params — enable the server + reachable LAN host',
+        'email-push: no manager params — this camera cannot use the camera mailbox',
         { tags: { deviceId: this.id } },
       )
-      throw new Error(
-        'Enable the Email Push Server in the Reolink addon settings, and ensure this host has a reachable LAN address.',
-      )
+      throw new Error('This camera cannot use the camera mailbox.')
     }
 
     const triggers = this.config.get('emailPushTriggers') ?? ['MD', 'people', 'vehicle']

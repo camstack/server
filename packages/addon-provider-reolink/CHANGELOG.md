@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Battery cameras now mail motion to the camera mailbox of the Email (SMTP) addon instead of a server inside Reolink; your cameras keep their port, address and credentials, and the mailbox appears under Brokers
+
 ## [1.2.218] - 2026-11-02
 
 ### Changed

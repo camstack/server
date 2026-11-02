@@ -17,7 +17,7 @@
 
 import type { AddonContext, IEventBus, IScopedLogger, SystemEvent } from '@camstack/types'
 import { EventCategory } from '@camstack/types'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ReolinkProviderAddon } from '../addon.js'
 
 function makeSilentLogger(): IScopedLogger {
@@ -37,6 +37,10 @@ interface FakeHarness {
   readonly ctx: AddonContext
   readonly store: Record<string, unknown>
   readonly captured: SystemEvent[]
+  readonly broker: {
+    list: { query: ReturnType<typeof vi.fn> }
+    add: { mutate: ReturnType<typeof vi.fn> }
+  }
 }
 
 function makeCtx(seed: Record<string, unknown> = {}): FakeHarness {
@@ -54,13 +58,24 @@ function makeCtx(seed: Record<string, unknown> = {}): FakeHarness {
     },
   } as unknown as IEventBus
 
+  const broker = {
+    list: { query: vi.fn(async () => []) },
+    add: { mutate: vi.fn() },
+  }
   const ctx = {
     id: 'provider-reolink',
     logger: makeSilentLogger(),
     eventBus: bus,
     addonConfig: {},
     kernel: { localNodeId: 'hub' },
-    api: undefined,
+    api: {
+      migrations: {
+        declareOwner: { mutate: vi.fn(async () => ({ bootId: 'b', snapshot: 'none', steps: [] })) },
+        startMigration: { mutate: vi.fn() },
+        finishMigration: { mutate: vi.fn() },
+      },
+      broker,
+    },
     dataDir: '/tmp/fake',
     nodeDataDir: '/tmp',
     settings: {
@@ -79,15 +94,7 @@ function makeCtx(seed: Record<string, unknown> = {}): FakeHarness {
     },
   } as unknown as AddonContext
 
-  return { ctx, store, captured }
-}
-
-async function waitFor(cond: () => boolean, timeoutMs = 3000): Promise<void> {
-  const start = Date.now()
-  while (!cond()) {
-    if (Date.now() - start > timeoutMs) throw new Error('waitFor: condition not met in time')
-    await new Promise((r) => setTimeout(r, 20))
-  }
+  return { ctx, store, captured, broker }
 }
 
 interface FieldWithValue {
@@ -117,27 +124,17 @@ describe('ReolinkProviderAddon — settings accessor migration', () => {
     addon = null
   })
 
-  it('bootstraps SMTP AUTH credentials under the SAME store keys as strings (equivalence)', async () => {
-    // emailPushEnabled:false keeps the SMTP listener off (no real bind) —
-    // `start()` still resolves settings, which bootstraps + persists creds.
-    const { ctx, store } = makeCtx({ emailPushEnabled: false })
+  it('a bare boot never creates the camera mailbox (it is created on first need)', async () => {
+    const { ctx, broker } = makeCtx({})
     addon = new ReolinkProviderAddon()
     await addon.initialize(ctx)
-
-    await waitFor(
-      () =>
-        typeof store['emailPushAuthUsername'] === 'string' &&
-        (store['emailPushAuthUsername'] as string).length > 0 &&
-        typeof store['emailPushAuthPassword'] === 'string' &&
-        (store['emailPushAuthPassword'] as string).length > 0,
-    )
-    // Only the two credential keys were bootstrapped — no shape change.
-    expect(typeof store['emailPushAuthUsername']).toBe('string')
-    expect(typeof store['emailPushAuthPassword']).toBe('string')
+    await new Promise((r) => setTimeout(r, 50))
+    expect(broker.list.query).not.toHaveBeenCalled()
+    expect(broker.add.mutate).not.toHaveBeenCalled()
   })
 
   it('getGlobalSettings hydrates the seeded store values (equivalence)', async () => {
-    const { ctx } = makeCtx({ emailPushEnabled: false, emailPushDomain: 'cams.example' })
+    const { ctx } = makeCtx({ baichuanWebhookEnabled: false, baichuanWebhookPort: 9555 })
     addon = new ReolinkProviderAddon()
     await addon.initialize(ctx)
 
@@ -149,20 +146,20 @@ describe('ReolinkProviderAddon — settings accessor migration', () => {
     // leaning on a narrower override signature.
     expect(hydrated, 'getGlobalSettings returned null').not.toBeNull()
     const fields = collectFields(hydrated?.sections ?? [])
-    const enabled = fields.find((f) => f.key === 'emailPushEnabled')
-    const domain = fields.find((f) => f.key === 'emailPushDomain')
+    const enabled = fields.find((f) => f.key === 'baichuanWebhookEnabled')
+    const port = fields.find((f) => f.key === 'baichuanWebhookPort')
     expect(enabled?.value).toBe(false)
-    expect(domain?.value).toBe('cams.example')
+    expect(port?.value).toBe(9555)
   })
 
   it('updateGlobalSettings persists bare keys AND emits AddonUpdated (base settings API)', async () => {
-    const { ctx, store, captured } = makeCtx({ emailPushEnabled: false })
+    const { ctx, store, captured } = makeCtx({ baichuanWebhookEnabled: false })
     addon = new ReolinkProviderAddon()
     await addon.initialize(ctx)
 
-    await addon.updateGlobalSettings({ emailPushDomain: 'cams.local' })
+    await addon.updateGlobalSettings({ baichuanWebhookPort: 9666 })
 
-    expect(store['emailPushDomain']).toBe('cams.local')
+    expect(store['baichuanWebhookPort']).toBe(9666)
     expect(Object.keys(store).some((k) => k.includes('@'))).toBe(false)
     const updated = captured.filter((e) => e.category === EventCategory.AddonUpdated)
     expect(updated.length).toBeGreaterThan(0)
