@@ -17,7 +17,7 @@ import type {
   ReadinessScope,
   StorageLocationDeclaration,
 } from '@camstack/types'
-import { createDebugEmitter } from '@camstack/types'
+import { createDebugEmitter } from '@camstack/types/addon'
 import {
   createDeviceProxy,
   addonSliceHandleApi,

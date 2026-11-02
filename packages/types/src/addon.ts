@@ -131,3 +131,5 @@ export * from './keychain/index.js'
 // D881 - `ctx.records`: the facade, the kind declarations and the named failures. Light on
 // purpose: zod schemas of a few fields, no capability schema graph (D28).
 export * from './records/index.js'
+// D995 - `ctx.debug`: the emitter and its interest, type-only imports, so the runner closure stays small.
+export { createDebugEmitter } from './logging/debug-watch.js'

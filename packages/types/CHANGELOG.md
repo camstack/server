@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Addons can emit device debug lines with ctx.debug, evaluated only while an operator watches that device; log channels carry a kind and system.debugWatch starts, renews and stops a watch.
 
+### Fixed
+
+- The debug emitter is exported from the light addon entry, so addon runners stay small
+
 ## [1.2.471] - 2026-11-02
 
 ### Changed
