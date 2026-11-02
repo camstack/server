@@ -3,7 +3,7 @@
  *
  * Exists only when a Loki `log-destination` provider is configured (operator
  * decision 4); the hub is asked, nothing is assumed. The Loki URL is read from
- * that provider's settings. Credentials are NOT: an authenticated Loki keeps
+ * the provider's integration-instances record (the Logging page). Credentials are NOT: an authenticated Loki keeps
  * them in the keychain (D783), no tool reads them, and the request is refused
  * rather than sent unauthenticated. TLS verification is the platform's.
  *
@@ -19,17 +19,9 @@ import { parseWire } from './wire.js'
 export const LOKI_PROVIDER_ID = 'loki-logging'
 const MAX_RESPONSE_CHARS = 5_000_000
 
-const SettingsSchema = z
-  .looseObject({
-    sections: z.array(
-      z.looseObject({
-        fields: z
-          .array(z.looseObject({ key: z.string(), value: z.unknown().optional() }))
-          .optional(),
-      }),
-    ),
-  })
-  .nullable()
+const InstancesSchema = z.array(
+  z.looseObject({ id: z.string(), formValues: z.record(z.string(), z.unknown()) }),
+)
 
 export interface LokiTarget {
   readonly baseUrl: string
@@ -39,14 +31,6 @@ export interface LokiTarget {
 export type LokiTargetResult =
   | { readonly ok: true; readonly target: LokiTarget }
   | { readonly ok: false; readonly reason: string }
-
-function fieldValue(settings: z.infer<typeof SettingsSchema>, key: string): unknown {
-  for (const section of settings?.sections ?? []) {
-    const hit = section.fields?.find((f) => f.key === key)
-    if (hit) return hit.value
-  }
-  return undefined
-}
 
 const isSet = (v: unknown): boolean =>
   v !== undefined &&
@@ -63,22 +47,31 @@ export async function resolveLokiTarget(hub: OpsHub): Promise<LokiTargetResult> 
       reason: `no Loki log-destination provider is configured on this hub (providers: ${providers.map((p) => p.addonId).join(', ') || 'none'}). Use hub_logs with one of those instead.`,
     }
   }
-  const raw = await hub.query('addonSettings.getGlobalSettings', { addonId: LOKI_PROVIDER_ID })
-  const settings = parseWire(SettingsSchema, raw, 'addonSettings.getGlobalSettings')
-  const url = fieldValue(settings, 'url')
+  // The connection is the integration-instances record the Logging page edits (D985);
+  // the retired addon settings are inert. A password arrives only as a SecretFieldView.
+  const raw = await hub.query('integrationInstances.listInstances', { addonId: LOKI_PROVIDER_ID })
+  const instances = parseWire(InstancesSchema, raw, 'integrationInstances.listInstances')
+  const form = instances[0]?.formValues
+  if (!form) {
+    return {
+      ok: false,
+      reason: `no Loki connection exists: the ${LOKI_PROVIDER_ID} provider has no instance. Create one on the Logging page.`,
+    }
+  }
+  const url = form['url']
   if (typeof url !== 'string' || url.trim() === '') {
     return {
       ok: false,
-      reason: `the ${LOKI_PROVIDER_ID} provider is registered but has no URL (it is inert).`,
+      reason: `the Loki connection has no URL (it is inert). Set it on the Logging page.`,
     }
   }
-  if (isSet(fieldValue(settings, 'username')) || isSet(fieldValue(settings, 'password'))) {
+  if (isSet(form['username']) || isSet(form['password'])) {
     return {
       ok: false,
-      reason: `this Loki requires credentials; they live in the keychain and tools never read them (D783). Query it from Grafana, or use hub_logs.`,
+      reason: `this Loki requires credentials; they live in the keychain and tools never read them (D783). Query it from Grafana, or use hub_logs; the connection is on the Logging page.`,
     }
   }
-  const tenant = fieldValue(settings, 'tenantId')
+  const tenant = form['tenantId']
   return {
     ok: true,
     target: {

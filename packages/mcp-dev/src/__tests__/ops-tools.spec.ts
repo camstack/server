@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import type { OpsHub } from '../ops/hub.js'
 import { hubLogs, selectLogSource } from '../ops/logs.js'
 import { lokiQuery, type FetchLike } from '../ops/loki.js'
@@ -90,10 +90,18 @@ describe('hub_logs', () => {
   })
 })
 
-describe('loki_query — only where a Loki provider is configured', () => {
-  const lokiSettings = (fields: Record<string, unknown>) => ({
-    sections: [{ fields: Object.entries(fields).map(([key, value]) => ({ key, value })) }],
+describe('loki_query — the connection is the integration-instances record', () => {
+  const instance = (formValues: Record<string, unknown>) => ({
+    id: 'loki-logging',
+    name: 'Loki',
+    configured: true,
+    formValues,
   })
+  const withInstances = (instances: unknown[]) =>
+    fakeHub({
+      'addons.listCapabilityProviders': [{ addonId: 'loki-logging' }],
+      'integrationInstances.listInstances': instances,
+    })
   const okFetch: FetchLike & { urls: string[] } = Object.assign(
     async (url: string) => {
       okFetch.urls.push(url)
@@ -109,6 +117,10 @@ describe('loki_query — only where a Loki provider is configured', () => {
     { urls: [] as string[] },
   )
 
+  beforeEach(() => {
+    okFetch.urls.length = 0
+  })
+
   it('says so when the hub has no Loki provider (no Grafana assumed)', async () => {
     const hub = fakeHub({ 'addons.listCapabilityProviders': [{ addonId: 'winston-logging' }] })
     const out = await lokiQuery(hub, { logql: '{job="camstack"}' }, okFetch)
@@ -116,33 +128,43 @@ describe('loki_query — only where a Loki provider is configured', () => {
     expect(okFetch.urls).toHaveLength(0)
   })
 
-  it('treats an empty URL as inert', async () => {
-    const hub = fakeHub({
-      'addons.listCapabilityProviders': [{ addonId: 'loki-logging' }],
-      'addonSettings.getGlobalSettings': lokiSettings({ url: '' }),
-    })
-    expect(JSON.stringify(await lokiQuery(hub, { logql: '{}' }, okFetch))).toMatch(/inert/)
-  })
-
-  it('refuses an authenticated Loki rather than reading keychain credentials', async () => {
-    const hub = fakeHub({
-      'addons.listCapabilityProviders': [{ addonId: 'loki-logging' }],
-      'addonSettings.getGlobalSettings': lokiSettings({
-        url: 'https://loki.example.test',
-        username: 'ops',
-        password: { $secret: 'secret://loki-logging/global/password', v: 1, set: true },
-      }),
-    })
-    const out = JSON.stringify(await lokiQuery(hub, { logql: '{}' }, okFetch))
-    expect(out).toMatch(/credentials/)
+  it('fails naming the Logging page when no Loki instance exists', async () => {
+    const out = JSON.stringify(await lokiQuery(withInstances([]), { logql: '{}' }, okFetch))
+    expect(out).toMatch(/no Loki connection/)
+    expect(out).toMatch(/Logging page/)
     expect(okFetch.urls).toHaveLength(0)
   })
 
-  it('queries the configured URL for an unauthenticated Loki', async () => {
-    const hub = fakeHub({
-      'addons.listCapabilityProviders': [{ addonId: 'loki-logging' }],
-      'addonSettings.getGlobalSettings': lokiSettings({ url: 'https://loki.example.test/' }),
+  it('treats an instance with an empty URL as not configured', async () => {
+    const hub = withInstances([instance({ url: '' })])
+    expect(JSON.stringify(await lokiQuery(hub, { logql: '{}' }, okFetch))).toMatch(/no URL/)
+  })
+
+  it('asks the loki-logging provider for its instances', async () => {
+    const hub = withInstances([instance({ url: 'https://loki.example.test' })])
+    await lokiQuery(hub, { logql: '{}' }, okFetch)
+    expect(hub.calls.find((c) => c.path === 'integrationInstances.listInstances')?.input).toEqual({
+      addonId: 'loki-logging',
     })
+  })
+
+  it('refuses an authenticated Loki and names the Logging page, never printing the secret', async () => {
+    const hub = withInstances([
+      instance({
+        url: 'https://loki.example.test',
+        username: 'ops',
+        password: { $secret: 'secret://loki-logging/x/password', v: 1, set: true },
+      }),
+    ])
+    const out = JSON.stringify(await lokiQuery(hub, { logql: '{}' }, okFetch))
+    expect(out).toMatch(/credentials/)
+    expect(out).toMatch(/Logging page/)
+    expect(out).not.toContain('secret://')
+    expect(okFetch.urls).toHaveLength(0)
+  })
+
+  it('queries the instance URL, with its tenant, for an unauthenticated Loki', async () => {
+    const hub = withInstances([instance({ url: 'https://loki.example.test/', tenantId: 't1' })])
     const out = JSON.stringify(await lokiQuery(hub, { logql: '{job="camstack"}' }, okFetch))
     expect(okFetch.urls[0]).toMatch(/^https:\/\/loki\.example\.test\/loki\/api\/v1\/query_range\?/)
     expect(out).toContain('a line')
