@@ -36,7 +36,7 @@ this column exists to stop.
 | `calendars` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `calendars` |
 | `camera-grid` | `@camstack/server-framework` | system | own runner | `any-node` | — | unique | `camera-grid-layout` `motion` |
 | `cloudflare-tunnel` | `@camstack/addon-cloudflare` | networking | own runner | `hub-only` | `net-access` | — | `network-access` |
-| `cloudflare-turn` | `@camstack/addon-cloudflare` | networking | own runner | `hub-only` | `net-access` | — | `turn-provider` |
+| `cloudflare-turn` | `@camstack/addon-cloudflare` | networking | own runner | `hub-only` | `net-access` | — | `integration-instances` `turn-provider` |
 | `composer` | `@camstack/server-framework` | system | own runner | `hub-only` | `composer` | — | `composer` |
 | `console-logging` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `log-destination` |
 | `core-blocks` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `action-source` `actions` `core-blocks` `fan-presets` `power-source` `remote` `remote-layout-components` `schedulers` `template` `timed-run` |
@@ -100,7 +100,7 @@ this column exists to stop.
 | `smtp-nodemailer` | `@camstack/addon-smtp-nodemailer` | messaging | own runner | `hub-only` | — | — | `broker` `integration-instances` `smtp-provider` |
 | `snapshot` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `snapshot` |
 | `sqlite-settings` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `data-store-provider` `database-snapshot` `migrations` `records` `storage-admin` `vector-store` |
-| `static-turn` | `@camstack/addon-static-turn` | networking | own runner | `hub-only` | `net-access` | — | `turn-provider` |
+| `static-turn` | `@camstack/addon-static-turn` | networking | own runner | `hub-only` | `net-access` | — | `integration-instances` `turn-provider` |
 | `storage-orchestrator` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `settings-store` `storage` `storage-migration` |
 | `stream-broker` | `@camstack/addon-pipeline` | pipeline | own runner | `any-node` | — | — | `addon-widgets-source` `camera-streams` `device-removal-hook` `load-contribution` `log-channels` `stream-broker` `webrtc-session` |
 | `system-config` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | — |

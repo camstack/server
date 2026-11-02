@@ -74,6 +74,9 @@
         "capabilities": [
           {
             "name": "turn-provider"
+          },
+          {
+            "name": "integration-instances"
           }
         ],
         "icon": "assets/icon.svg",

@@ -37,6 +37,35 @@ const SMTP_FORM = {
   ],
 }
 
+const STATIC_TURN_FORM = {
+  sections: [
+    {
+      id: 'turn',
+      title: 'TURN / STUN server',
+      columns: 2,
+      fields: [
+        { type: 'text', key: 'urls', label: 'TURN / STUN URLs', default: '' },
+        { type: 'text', key: 'username', label: 'Username', default: '' },
+        { type: 'password', key: 'credential', label: 'Credential / password' },
+      ],
+    },
+  ],
+}
+
+const CLOUDFLARE_TURN_FORM = {
+  sections: [
+    {
+      id: 'credentials',
+      title: 'Cloudflare Credentials',
+      columns: 2,
+      fields: [
+        { type: 'text', key: 'keyId', label: 'TURN Key ID', default: '' },
+        { type: 'password', key: 'apiToken', label: 'API Token' },
+      ],
+    },
+  ],
+}
+
 const SET = { $secret: 'ref', v: 1, set: true }
 
 const INSTANCES: Readonly<Record<string, readonly unknown[]>> = {
@@ -50,6 +79,32 @@ const INSTANCES: Readonly<Record<string, readonly unknown[]>> = {
         job: 'camstack',
         password: SET,
       },
+    },
+  ],
+  'static-turn': [
+    {
+      id: 'turn-0a1b2c3d',
+      name: 'Home coturn',
+      configured: true,
+      formValues: {
+        urls: 'turn:turn.example.com:3478?transport=udp, stun:turn.example.com:3478',
+        username: 'camstack',
+        credential: SET,
+      },
+    },
+    {
+      id: 'inst-5d2e9b10',
+      name: 'Office coturn',
+      configured: false,
+      formValues: { urls: '', username: '' },
+    },
+  ],
+  'cloudflare-turn': [
+    {
+      id: 'cloudflare-turn',
+      name: 'Cloudflare TURN',
+      configured: true,
+      formValues: { keyId: 'a1b2c3d4e5f6', apiToken: SET },
     },
   ],
   'smtp-nodemailer': [
@@ -83,14 +138,27 @@ const INSTANCES: Readonly<Record<string, readonly unknown[]>> = {
 
 export default defineFixtures({
   area: 'provider-instances',
-  description: 'integration-instances records for Loki (Logs) and the SMTP relays (Email)',
+  description:
+    'integration-instances records for Loki (Logs), the SMTP relays (Email) and the TURN servers (Network)',
   handlers: {
-    'integrationInstances.describe': (i: { addonId: string }) =>
-      i.addonId === 'loki-logging'
-        ? { instanceMode: 'single', kind: 'destination', canTest: true }
-        : { instanceMode: 'multiple', kind: 'relay', canTest: true },
-    'integrationInstances.instanceFormSchema': (i: { addonId: string }) =>
-      i.addonId === 'loki-logging' ? LOKI_FORM : SMTP_FORM,
+    'integrationInstances.describe': (i: { addonId: string }) => {
+      if (i.addonId === 'loki-logging') {
+        return { instanceMode: 'single', kind: 'destination', canTest: true }
+      }
+      if (i.addonId === 'cloudflare-turn') {
+        return { instanceMode: 'single', kind: 'accounts', canTest: true }
+      }
+      if (i.addonId === 'static-turn') {
+        return { instanceMode: 'multiple', kind: 'servers', canTest: false }
+      }
+      return { instanceMode: 'multiple', kind: 'relay', canTest: true }
+    },
+    'integrationInstances.instanceFormSchema': (i: { addonId: string }) => {
+      if (i.addonId === 'loki-logging') return LOKI_FORM
+      if (i.addonId === 'cloudflare-turn') return CLOUDFLARE_TURN_FORM
+      if (i.addonId === 'static-turn') return STATIC_TURN_FORM
+      return SMTP_FORM
+    },
     'integrationInstances.listInstances': (i: { addonId: string }) => INSTANCES[i.addonId] ?? [],
     'notificationOutput.listTargets': [
       { name: 'Mail ops', config: { smtpInstanceId: 'inst-3f9a1c2e' } },

@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 7826 source files · 1239 file(s) in no subsystem.**
+**31 subsystems · 7832 source files · 1239 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -35,7 +35,7 @@ commits. A generated page may not.
 | Face, plate and embedding recognition | 50 | `architecture/post-analysis.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-25-viewer-track-query-plan.md` _(covers)_, +26 more, 4 ADRs | 2026-10-04 | ⚠️ |
 | Notification Center — rules, outbox, occupancy, timelapse | 279 | `architecture/notifications.md`, `decisions/adr-0701-an-alarm-rule-gated-on-armed-auto-triggers-the-panel-and-post-siren-policy-lives-per-mode.md`, `design/2026-08-03-storage-table-map.md` _(covers)_, +92 more, 27 ADRs | 2026-10-07 | ✅ |
 | Recorder, scrub and recorded playback | 140 | `decisions/adr-0228-recording-write-stays-in-recorder-scrub-stays-on-the-live-webrtc-session.md`, `design/2026-08-25-reference-scrub-teardown-and-plan.md` _(covers)_, `design/2026-08-25-scrub-advanced-analysis.md` _(covers)_, +93 more, 19 ADRs | 2026-11-02 | ⚠️ |
-| Stream broker, WebRTC and live delivery | 167 | `architecture/data-planes.md`, `design/2026-08-29-media-plane-memory-comparison.md` _(covers)_, `decisions/adr-0228-recording-write-stays-in-recorder-scrub-stays-on-the-live-webrtc-session.md`, +42 more, 16 ADRs | 2026-10-08 | ✅ |
+| Stream broker, WebRTC and live delivery | 170 | `architecture/data-planes.md`, `design/2026-08-29-media-plane-memory-comparison.md` _(covers)_, `decisions/adr-0228-recording-write-stays-in-recorder-scrub-stays-on-the-live-webrtc-session.md`, +42 more, 16 ADRs | 2026-10-08 | ✅ |
 | Audio analysis and audio delivery | 17 | `decisions/adr-0660-an-audio-window-waits-for-the-classifier-it-is-never-dropped-for-contention.md`, `decisions/adr-0450-the-audio-plane-carries-the-source-rate-and-the-one-consumer-that-needs-more-resamples-next-to-itself.md`, `decisions/adr-0455-the-audio-plane-carries-the-source-bytes-and-only-to-a-consumer-that-declared-it-reads-them.md`, +9 more | 2026-10-08 | ⚠️ |
 | Zones and zone rules | 5 | `architecture/data-planes.md` _(covers)_, `architecture/detection-execution.md` _(covers)_, `design/2026-08-13-durable-value-tracking-and-runtime-state.md`, +2 more, 4 ADRs | 2026-10-24 | ⚠️ |
 | Storage, retention and backup | 131 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0328-the-live-sqlite-file-is-the-bind-the-container-has-open.md`, +62 more, 11 ADRs | 2026-11-02 | ⚠️ |
@@ -45,7 +45,7 @@ commits. A generated page may not.
 | Shared types, schemas and enums | 102 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0972-a-number-tied-to-a-quantity-is-entered-in-a-unit-the-person-picks.md`, `architecture/windows-agent.md`, +34 more, 5 ADRs | 2026-11-02 | ⚠️ |
 | Update, release, OTA and agent delivery | 70 | `architecture/update-and-release.md`, `decisions/adr-0175-an-update-notification-is-polled-on-its-own-clock-and-remembered-across-restarts.md`, `decisions/adr-0857-an-agents-identity-is-its-mesh-certificate-there-is-no-cluster-secret-and-a-pairing-is-confirmed-on-both-screens.md`, +34 more, 10 ADRs | 2026-10-27 | ✅ |
 | Ecosystem exports — HomeKit, Home Assistant, Alexa, Google Home, Matter, MQTT | 321 | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/ecosystem-export-plan.md` _(covers)_, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +50 more, 20 ADRs | 2026-10-26 | ⚠️ |
-| Remote access and networking | 59 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0226-the-hub-declares-the-port-it-listens-on.md`, +19 more | 2026-10-21 | ⚠️ |
+| Remote access and networking | 62 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0226-the-hub-declares-the-port-it-listens-on.md`, +19 more | 2026-10-21 | ⚠️ |
 | Automations, blocks and declared devices | 184 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +36 more, 1 ADR | 2026-10-26 | ⚠️ |
 | Alerts, liveness and system health | 55 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0850-numeric-history-has-one-mechanism-device-history.md`, +43 more | 2026-10-13 | ⚠️ |
 | Logging and log shipping | 40 | `architecture/logging.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +11 more, 1 ADR | 2026-10-21 | ⚠️ |
@@ -171,8 +171,8 @@ Serves live media to every consumer — WebRTC, RTSP, RTMP and the frame transpo
 
 - **Owner doc**: `docs/architecture/data-planes.md`
 - **Code**: `packages/addon-pipeline/src/stream-broker/*.ts`, `packages/addon-pipeline/src/stream-broker/webrtc/**`, `packages/addon-pipeline/src/stream-broker/rtsp/**`, `packages/addon-pipeline/src/stream-broker/rtmp/**`, `packages/types/src/camera/**`, `packages/addon-pipeline/src/stream-broker/frame-transport/**`, `packages/addon-pipeline/src/stream-broker/derived/**`, `packages/addon-pipeline/src/stream-broker/stream-broker/**`, `packages/addon-pipeline/src/stream-broker/widgets/**`, `packages/addon-static-turn/**`, `packages/werift-turn-fix/**`, `server/backend/src/core/streaming/**`
-- **Files**: 167 (160 claimed by some document)
-- **Uncovered**: `server/backend/src/core/streaming` (3), `packages/addon-static-turn/src` (2), `packages/werift-turn-fix/src` (2)
+- **Files**: 170 (160 claimed by some document)
+- **Uncovered**: `packages/addon-static-turn/src` (3), `server/backend/src/core/streaming` (3), `packages/addon-static-turn/src/migrations` (2), `packages/werift-turn-fix/src` (2)
 
 ### ⚠️ Audio analysis and audio delivery
 
@@ -261,8 +261,8 @@ How the hub is reachable from outside the LAN — tunnels, TLS and local network
 
 - **Owner doc**: — none
 - **Code**: `packages/addon-cloudflare/**`, `packages/addon-tailscale/**`, `packages/system/src/builtins/remote-access-orchestrator/**`, `packages/system/src/builtins/local-network/**`, `packages/system/src/builtins/hub-forwarder/**`, `packages/system/src/network/**`, `packages/system/src/tls/**`, `server/backend/src/core/network/**`
-- **Files**: 59 (46 claimed by some document)
-- **Uncovered**: `packages/addon-cloudflare/src/turn` (4), `packages/addon-cloudflare/src/tunnel` (3), `packages/addon-tailscale/src/client` (3), `packages/addon-tailscale/src/ingress` (2), `server/backend/src/core/network` (1)
+- **Files**: 62 (46 claimed by some document)
+- **Uncovered**: `packages/addon-cloudflare/src/turn` (5), `packages/addon-cloudflare/src/tunnel` (3), `packages/addon-tailscale/src/client` (3), `packages/addon-cloudflare/src/turn/migrations` (2), `packages/addon-tailscale/src/ingress` (2), `server/backend/src/core/network` (1)
 
 ### ⚠️ Automations, blocks and declared devices
 
