@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.648] - 2026-11-02
+
 ### Changed
 
 - Home Assistant export: the Hub URL setting is gone; each Home Assistant instance now chooses whether its image links use the Internal address or the Public endpoint of the Network page.

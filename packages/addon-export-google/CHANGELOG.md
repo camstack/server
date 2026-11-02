@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.122] - 2026-11-02
+
 ### Changed
 
 - The Google export no longer has a Public hub URL setting or a Detect external address button: the console URLs follow the Public endpoint address of the Network page, and say so when none is set.
