@@ -104,7 +104,6 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
   private current: LokiDestinationBody | null = null
   private refreshTimer: ReturnType<typeof setInterval> | null = null
   private retirementTimer: ReturnType<typeof setTimeout> | null = null
-  private toggleMigrationTimer: ReturnType<typeof setTimeout> | null = null
   private shuttingDown = false
   private declared = false
   private secretsWarned = false
@@ -168,7 +167,6 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
     // registered yet, and the one returned below is registered only after this
     // method returns — so the carry-over retries in the background.
     void this.attemptEnabledFlagRetirement(0)
-    if (this.isHub() && this.instances !== null) void this.attemptRegistryToggleMigration(0)
     return registrations
   }
 
@@ -401,45 +399,38 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
   }
 
   /**
-   * The registry-toggle migration needs the provider to be registered, which happens only after
-   * `onInitialize` returns: the pass inside it fails (tolerated) and this runs the catalogue
-   * again until the migration lands, bounded by the same delays as the D777 carry-over.
+   * Registration is done: the hub calls this after the providers are registered, so
+   * `listCapabilityProviders` now sees Loki. The registry-toggle migration cannot decide before
+   * that (the pass inside `onInitialize` fails, tolerated), so it runs ONCE here, hub-only. A
+   * failure is logged and writes nothing; the `tolerate` ledger row keeps it for the next boot.
    */
-  private async attemptRegistryToggleMigration(attempt: number): Promise<void> {
-    if (this.shuttingDown) return
-    let landed = false
+  override postBrokerStart(): void {
+    super.postBrokerStart()
+    if (!this.isHub() || this.instances === null || this.shuttingDown) return
+    void this.runRegistryToggleMigration()
+  }
+
+  private async runRegistryToggleMigration(): Promise<void> {
     try {
       const report = await this.runMigrations(
         defineAddonMigrations(ADDON_MIGRATIONS, this.migrationPorts()),
       )
-      landed = !report.failed.includes(REGISTRY_TOGGLE_TO_RECORD_ID)
+      if (report.failed.includes(REGISTRY_TOGGLE_TO_RECORD_ID)) {
+        this.ctx.logger.warn('Loki logging: the registry-toggle migration is kept for next boot')
+        return
+      }
+      await this.refreshFromRecord()
     } catch (err: unknown) {
-      this.ctx.logger.debug('Loki logging: the registry-toggle migration could not run yet', {
-        meta: { error: err instanceof Error ? err.message : String(err), attempt },
+      this.ctx.logger.warn('Loki logging: the registry-toggle migration could not run', {
+        meta: { error: err instanceof Error ? err.message : String(err) },
       })
     }
-    if (landed) {
-      await this.refreshFromRecord()
-      return
-    }
-    const delay = RETIREMENT_RETRY_DELAYS_MS[attempt]
-    if (delay === undefined) {
-      this.ctx.logger.warn('Loki logging: the registry-toggle migration is deferred to next boot')
-      return
-    }
-    this.toggleMigrationTimer = setTimeout(() => {
-      this.toggleMigrationTimer = null
-      void this.attemptRegistryToggleMigration(attempt + 1)
-    }, delay)
-    this.toggleMigrationTimer.unref?.()
   }
 
   protected async onShutdown(): Promise<void> {
     this.shuttingDown = true
     if (this.retirementTimer !== null) clearTimeout(this.retirementTimer)
     this.retirementTimer = null
-    if (this.toggleMigrationTimer !== null) clearTimeout(this.toggleMigrationTimer)
-    this.toggleMigrationTimer = null
     if (this.refreshTimer !== null) clearInterval(this.refreshTimer)
     this.refreshTimer = null
     await this.destination?.shutdown()

@@ -2,6 +2,7 @@
 import type { AddonContext, IScopedLogger } from '@camstack/types'
 import { integrationInstancesCapability, makeInMemoryRecords } from '@camstack/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { REGISTRY_TOGGLE_TO_RECORD_ID } from '../migrations/index.js'
 import { LokiLoggingAddon } from '../loki-logging.addon.js'
 import { lokiDestinationsKind } from '../loki-record-kinds.js'
 
@@ -46,6 +47,13 @@ async function boot(localNodeId: string, seed?: { url: string; enabled?: boolean
     )
   }
   const store: Record<string, unknown> = {}
+  const declareOwner = {
+    mutate: vi.fn(async () => ({
+      bootId: 'b',
+      snapshot: 'none',
+      steps: [{ id: REGISTRY_TOGGLE_TO_RECORD_ID, action: 'run' }],
+    })),
+  }
   const ctx = {
     id: 'loki-logging',
     logger: logger(),
@@ -64,16 +72,20 @@ async function boot(localNodeId: string, seed?: { url: string; enabled?: boolean
     api: {
       addons: { setCapabilityProviderEnabled: { mutate: vi.fn(async () => ({ success: true })) } },
       migrations: {
-        declareOwner: { mutate: vi.fn(async () => ({ bootId: 'b', snapshot: 'none', steps: [] })) },
-        startMigration: { mutate: vi.fn() },
-        finishMigration: { mutate: vi.fn() },
+        declareOwner,
+        startMigration: {
+          mutate: vi.fn(async () => ({ proceed: true, state: 'pending', reason: null })),
+        },
+        finishMigration: {
+          mutate: vi.fn(async () => ({ status: 'failed', error: 'not registered yet' })),
+        },
       },
     },
   } as unknown as AddonContext
   const addon = new LokiLoggingAddon()
   const result = await addon.initialize(ctx)
   const registrations = result && 'providers' in result && result.providers ? result.providers : []
-  return { addon, registrations, world }
+  return { addon, registrations, world, declareOwner }
 }
 
 describe('LokiLoggingAddon — connection record (D985)', () => {
@@ -136,5 +148,31 @@ describe('LokiLoggingAddon — connection record (D985)', () => {
     expect(addon.getDestination().getStatus()).toMatchObject({ enabled: false, configured: false })
     await provider.setInstanceEnabled({ id: 'int_0001', enabled: true })
     expect(addon.getDestination().getStatus()).toMatchObject({ enabled: true, configured: true })
+  })
+
+  it('the registry-toggle migration runs once from postBrokerStart, on the hub only, with no timer', async () => {
+    vi.useFakeTimers()
+    try {
+      const hub = await boot('hub', { url: 'http://loki:3100' })
+      addons.push(hub.addon)
+      const afterInit = hub.declareOwner.mutate.mock.calls.length
+      const timersAfterInit = vi.getTimerCount()
+      hub.addon.postBrokerStart()
+      await vi.advanceTimersByTimeAsync(0)
+      expect(hub.declareOwner.mutate.mock.calls.length).toBe(afterInit + 1)
+      // A failed migration is kept for next boot: nothing is scheduled to wait for registration.
+      await vi.advanceTimersByTimeAsync(120_000)
+      expect(hub.declareOwner.mutate.mock.calls.length).toBe(afterInit + 1)
+      expect(vi.getTimerCount()).toBeLessThanOrEqual(timersAfterInit)
+
+      const agent = await boot('agent-1', { url: 'http://loki:3100' })
+      addons.push(agent.addon)
+      const agentCalls = agent.declareOwner.mutate.mock.calls.length
+      agent.addon.postBrokerStart()
+      await vi.advanceTimersByTimeAsync(0)
+      expect(agent.declareOwner.mutate.mock.calls.length).toBe(agentCalls)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })
