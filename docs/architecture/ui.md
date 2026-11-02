@@ -469,7 +469,7 @@ grew a tab labelled "integration". `tab` means "how to group this visually" and
 may not also mean "where this lives"; it remains available to group sections
 *within* the integration page.
 
-**A connection that holds no devices** (Loki) is not an addon-level setting at all
+**A connection that holds no devices** (Loki, the SMTP relays, the TURN servers) is not an addon-level setting at all
 ([D996](../decisions/adr-0996-connection-holding-addons-are-integration-instances.md)): the
 addon provides `integration-instances`, the hub omits it from `integrations.list` and the add
 wizard, and its function page lists the records through one `ProviderInstancesPanel`
@@ -479,7 +479,13 @@ Connectivity → Email over `smtp-provider`. A row per record with its own switc
 a fixed row with the registry switch for a provider that holds none, a Restart action on every row
 (the whole runner group restarts, and the confirm says so), a provider picker to add, the provider's
 own `instanceFormSchema` to edit, and the provider's Logs / Events (`IntegrationActivity`) under the
-list. The Integrations page lists only integrations that bring devices.
+list. The Integrations page lists only integrations that bring devices: `integrations.list` keeps an
+addon entry by its resolved role (`resolveIntegrationRole` in `server/backend/src/api/core/integration-role.ts`).
+A manifest declares `integrationRole` (`devices`, `services` or `both`); absent, an entry declaring
+`integration-instances` is `services` and anything else is `devices`. A dual entry declares `both`, is listed
+on Integrations for its devices, and keeps its service instances on the function page. Loki, the SMTP relays
+and the TURN servers (static and Cloudflare) therefore have no Integrations row; the TURN Servers page holds
+their records.
 
 ### Derived vs hand-written — pick by what owns the values
 
