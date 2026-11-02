@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Sign-in mode selector is back on the Alexa broker dialog: Device code (default) or Guided login (proxy); switching never touches a stored session
+
 ## [0.2.178] - 2026-11-02
 
 ### Changed
