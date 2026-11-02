@@ -191,7 +191,8 @@
       "destinations": "Destinations",
       "everyRegisteredLogDestinationEntries": "Every registered log destination. Entries are fanned to all enabled destinations at once — enabling one does not disable another.",
       "noLogDestinationsRegistered": "No log destinations registered",
-      "thisShouldNotHappenThe": "This should not happen — the console and rotated-file destinations are builtins. If the list is empty, the node is still booting."
+      "thisShouldNotHappenThe": "This should not happen — the console and rotated-file destinations are builtins. If the list is empty, the node is still booting.",
+      "addDestination": "Add destination"
     },
     "meshNetworks": {
       "meshNetworks": "Mesh networks",
@@ -11470,5 +11471,18 @@
       "hint": "Tick what this preset should set. Unticked values are left as they are.",
       "apply": "Use selected"
     }
+  },
+  "providerInstances": {
+    "configured": "Configured",
+    "notConfigured": "Not configured",
+    "colName": "Name",
+    "colProvider": "Provider",
+    "colState": "State",
+    "colOn": "On",
+    "stateNotSortable": "A row carries a badge, not a value to order by.",
+    "onNotSortable": "A switch is not a value to order by.",
+    "enable": "Enable {{name}}",
+    "loadFailed": "Could not load the list",
+    "loading": "Loading…"
   }
 }

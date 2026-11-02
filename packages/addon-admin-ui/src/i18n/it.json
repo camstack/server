@@ -191,7 +191,8 @@
       "destinations": "Destinazioni",
       "everyRegisteredLogDestinationEntries": "Ogni destinazione di log registrata. Le voci vengono inviate a tutte le destinazioni abilitate contemporaneamente — abilitarne una non ne disabilita un'altra.",
       "noLogDestinationsRegistered": "Nessuna destinazione di log registrata",
-      "thisShouldNotHappenThe": "Non dovrebbe succedere — le destinazioni console e file a rotazione sono integrate. Se l'elenco è vuoto, il nodo è ancora in avvio."
+      "thisShouldNotHappenThe": "Non dovrebbe succedere — le destinazioni console e file a rotazione sono integrate. Se l'elenco è vuoto, il nodo è ancora in avvio.",
+      "addDestination": "Aggiungi destinazione"
     },
     "meshNetworks": {
       "meshNetworks": "Reti mesh",
@@ -11492,5 +11493,18 @@
       "hint": "Seleziona cosa deve impostare questo preset. I valori non selezionati restano come sono.",
       "apply": "Usa selezionati"
     }
+  },
+  "providerInstances": {
+    "configured": "Configurato",
+    "notConfigured": "Non configurato",
+    "colName": "Nome",
+    "colProvider": "Provider",
+    "colState": "Stato",
+    "colOn": "Attivo",
+    "stateNotSortable": "Una riga mostra un badge, non un valore da ordinare.",
+    "onNotSortable": "Un interruttore non è un valore da ordinare.",
+    "enable": "Attiva {{name}}",
+    "loadFailed": "Impossibile caricare l'elenco",
+    "loading": "Caricamento…"
   }
 }

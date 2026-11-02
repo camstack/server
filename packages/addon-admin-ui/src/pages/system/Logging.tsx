@@ -1,14 +1,12 @@
 /**
- * Logging destinations page — every registered `log-destination` provider,
- * one at a time (Logs → Destinations).
+ * Logging destinations page — every registered `log-destination` provider in
+ * one list (Logs → Destinations).
  *
- * An `<IntegrationHub>`, the same base Remote Access uses, so the pills,
- * Enable/Disable, Restart, the schema settings and the activity stream all come
- * for free. Each destination's own configuration — Winston's level and
- * retention — is its `globalSettingsSchema()`, rendered
- * by the base's Settings section. A destination that holds a connection as an
- * `integration-instances` record (Loki's URL, credentials and labels) renders that record's
- * form there instead. Nothing about a destination is hard-coded here.
+ * A `<ProviderInstancesPanel>`: a destination that holds its connection as an
+ * `integration-instances` record (Loki's URL, credentials and labels) is a row per record,
+ * created from a provider picker; a destination with nothing to configure (Winston, Console,
+ * the hub forwarder) is a fixed row with its registry switch. Nothing about a destination is
+ * hard-coded here.
  *
  * ## Why no `logging` orchestrator capability
  *
@@ -40,134 +38,28 @@
  * badges below report configuration state separately rather than collapsing both
  * into one "on" indicator.
  */
-import { useMemo, type ReactElement } from 'react'
-import { FileText, ScrollText } from 'lucide-react'
-import { useAddonsList, useAddonsListCapabilityProviders } from '@camstack/ui-library'
-import { AddonIntegrationBody } from '../../components/integration-hub/AddonIntegrationBody'
-import { ConnectionInstanceForm } from '../../components/integration-hub/ConnectionInstanceForm'
-import { IntegrationHub } from '../../components/integration-hub/IntegrationHub'
-import { providerPillState, type IntegrationGroup } from '../../components/integration-hub/types'
-import { buildAddonDisplayNameMap } from '../../lib/addon-display-names'
+import { ScrollText } from 'lucide-react'
+import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
-
-const POLL_INTERVAL_MS = 5_000
-const CAPABILITY = 'log-destination'
-
-/**
- * What each builtin destination does, in one line. Keyed by addon id and used only
- * as a fallback caption — an installed addon's own manifest `description` wins, so
- * a third-party log destination is described by its author rather than by this map.
- */
-const KNOWN_DESTINATIONS: Readonly<Record<string, string>> = {
-  'winston-logging': 'Rotated log files on this node’s disk.',
-  'console-logging': 'stdout / stderr of the node process.',
-  'loki-logging': 'Pushes to a Grafana Loki instance. Off until enabled with a URL.',
-  'hub-forwarder': 'Agent-only — forwards this node’s entries to the hub.',
-}
-
-interface LogDestinationRow {
-  readonly addonId: string
-  readonly displayName: string
-  readonly isActive: boolean
-  readonly caption: string
-}
+import { ProviderInstancesPanel } from '../../components/integration-hub/provider-instances/ProviderInstancesPanel'
 
 export function LoggingPage(): ReactElement {
   const { t } = useTranslation()
-  const providersQuery = useAddonsListCapabilityProviders(
-    { capName: 'log-destination' },
-    { refetchInterval: POLL_INTERVAL_MS },
-  )
-  // A destination that keeps its connection as an `integration-instances` record is edited here,
-  // through that cap, not through a settings schema of the addon.
-  const instancesQuery = useAddonsListCapabilityProviders(
-    { capName: 'integration-instances' },
-    { refetchInterval: POLL_INTERVAL_MS },
-  )
-  const instanceAddons = useMemo<ReadonlySet<string>>(
-    () => new Set((instancesQuery.data ?? []).map((p) => p.addonId)),
-    [instancesQuery.data],
-  )
-  const addonsQuery = useAddonsList(undefined, { refetchInterval: POLL_INTERVAL_MS })
-
-  const displayNames = useMemo(
-    () => buildAddonDisplayNameMap(addonsQuery.data ?? []),
-    [addonsQuery.data],
-  )
-
-  /** addonId → manifest description, so an addon describes itself. */
-  const descriptions = useMemo(() => {
-    const map = new Map<string, string>()
-    for (const addon of addonsQuery.data ?? []) {
-      const description = (addon as { description?: unknown }).description
-      const id = (addon as { id?: unknown }).id
-      if (typeof id === 'string' && typeof description === 'string' && description.length > 0) {
-        map.set(id, description)
-      }
-    }
-    return map
-  }, [addonsQuery.data])
-
-  const destinations = useMemo<readonly LogDestinationRow[]>(
-    () =>
-      (providersQuery.data ?? []).map((p) => ({
-        addonId: p.addonId,
-        displayName: displayNames.get(p.addonId) ?? p.addonId,
-        isActive: p.isActive,
-        caption: descriptions.get(p.addonId) ?? KNOWN_DESTINATIONS[p.addonId] ?? '',
-      })),
-    [providersQuery.data, displayNames, descriptions],
-  )
-
-  const groups: readonly IntegrationGroup[] = [
-    {
-      id: CAPABILITY,
-      label: t('system.logging.logDestinations', 'Log destinations'),
-      entries: destinations.map((d) => ({
-        id: d.addonId,
-        name: d.displayName,
-        fallbackIcon: FileText,
-        ...providerPillState(d.isActive),
-        render: () => (
-          <AddonIntegrationBody
-            addonId={d.addonId}
-            displayName={d.displayName}
-            capName={CAPABILITY}
-            isActive={d.isActive}
-            {...(instanceAddons.has(d.addonId)
-              ? {
-                  settingsContent: (
-                    <ConnectionInstanceForm addonId={d.addonId} displayName={d.displayName} />
-                  ),
-                }
-              : {})}
-            badges={
-              d.caption.length > 0 ? (
-                <span className="text-[11px] text-foreground-subtle">{d.caption}</span>
-              ) : null
-            }
-          />
-        ),
-      })),
-    },
-  ]
-
   return (
-    <IntegrationHub
-      embedded
+    <ProviderInstancesPanel
+      functionCap="log-destination"
       icon={ScrollText}
       title={t('system.logging.destinations', 'Destinations')}
       subtitle={t(
         'system.logging.everyRegisteredLogDestinationEntries',
         'Every registered log destination. Entries are fanned to all enabled destinations at once — enabling one does not disable another.',
       )}
-      groups={groups}
-      isLoading={providersQuery.isLoading || instancesQuery.isLoading}
       emptyTitle={t('system.logging.noLogDestinationsRegistered', 'No log destinations registered')}
       emptyDescription={t(
         'system.logging.thisShouldNotHappenThe',
         'This should not happen — the console and rotated-file destinations are builtins. If the list is empty, the node is still booting.',
       )}
+      addLabel={t('system.logging.addDestination', 'Add destination')}
     />
   )
 }
