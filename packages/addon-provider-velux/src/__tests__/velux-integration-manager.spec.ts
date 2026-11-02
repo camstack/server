@@ -10,6 +10,7 @@ import {
   RECONNECT_BASE_MS,
   RECONNECT_MAX_MS,
   reconnectDelayMs,
+  SESSION_ENDED_MIN_RETRY_MS,
   VeluxIntegrationManager,
 } from '../velux-integration-manager.js'
 import { RecordingLogger } from './recording-logger.js'
@@ -179,7 +180,10 @@ describe('VeluxIntegrationManager', () => {
     expect(JSON.stringify(line?.extras)).toContain('idle timeout')
     expect(line?.tags['integrationId']).toBe('int-7f3a')
 
-    await vi.advanceTimersByTimeAsync(RECONNECT_BASE_MS)
+    // The gateway frees a closed session slowly: no reconnect inside the minimum wait.
+    await vi.advanceTimersByTimeAsync(SESSION_ENDED_MIN_RETRY_MS - 1)
+    expect(r.makeClient).toHaveBeenCalledTimes(1)
+    await vi.advanceTimersByTimeAsync(1)
     expect(r.makeClient).toHaveBeenCalledTimes(2)
     expect(r.manager.status).toBe('connected')
     expect(r.manager.getNode(3)?.online).toBe(true)

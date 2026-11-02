@@ -1,6 +1,13 @@
 import { errMsg, type IScopedLogger } from '@camstack/types'
 import type { VeluxConnectionConfig } from './config.js'
 import { KlfGatewayClient } from './klf-gateway-client.js'
+import {
+  type PowerCycleStore,
+  type PowerSourcePort,
+  type VeluxRecoveryRecord,
+  VeluxPowerRecovery,
+} from './velux-power-recovery.js'
+import { classifyProbeFailure } from './velux-connection-test.js'
 import type { VeluxGatewayStatus, VeluxNodeSource } from './velux-node-resolver.js'
 import {
   type VeluxGatewayClient,
@@ -30,6 +37,13 @@ export function reconnectDelayMs(attempt: number, passwordRefused: boolean): num
   return Math.min(RECONNECT_MAX_MS, RECONNECT_BASE_MS * 2 ** attempt)
 }
 
+/**
+ * The first reconnect after an ESTABLISHED session ended waits at least this
+ * long. The gateway frees a closed session slowly, and a reconnect inside that
+ * window is what leaves it refusing the next TLS handshake.
+ */
+export const SESSION_ENDED_MIN_RETRY_MS = 30_000
+
 /** The production factory: a real KLF-200 session over the `klf-200-api` library. */
 export const defaultVeluxClientFactory: VeluxGatewayClientFactory = (input) =>
   new KlfGatewayClient({
@@ -49,6 +63,9 @@ export interface VeluxIntegrationManagerOptions {
   /** Fired when the node set changed (a push, a (re)connect, or a drop) so the
    *  devices of this gateway re-read their node. */
   readonly onNodesChanged: (integrationId: string) => void
+  /** The gateway device's `power-source` link: restarts a wedged gateway. */
+  readonly powerSource?: PowerSourcePort
+  readonly powerCycleStore?: PowerCycleStore
   /** Factory seam — defaults to the real KLF-200 client. */
   readonly makeClient?: VeluxGatewayClientFactory
 }
@@ -82,6 +99,10 @@ export class VeluxIntegrationManager implements VeluxNodeSource {
   #retryTimer: ReturnType<typeof setTimeout> | null = null
   /** Bumped by every start/stop so a connect that finishes late can tell it was superseded. */
   #generation = 0
+  readonly #recovery: VeluxPowerRecovery
+  /** When the gateway first became unreachable in the current run of failures; null while reachable. */
+  #unreachableSince: number | null = null
+  #lastRecovery: VeluxRecoveryRecord | null = null
 
   constructor(options: VeluxIntegrationManagerOptions) {
     this.#id = options.id
@@ -91,6 +112,17 @@ export class VeluxIntegrationManager implements VeluxNodeSource {
     this.#onDisconnected = options.onDisconnected
     this.#onNodesChanged = options.onNodesChanged
     this.#makeClient = options.makeClient ?? defaultVeluxClientFactory
+    this.#recovery = new VeluxPowerRecovery({
+      integrationId: options.id,
+      logger: this.#logger,
+      ...(options.powerSource === undefined ? {} : { powerSource: options.powerSource }),
+      ...(options.powerCycleStore === undefined ? {} : { store: options.powerCycleStore }),
+    })
+  }
+
+  /** What the last power-cycle recovery did, or null if none ran since this manager started. */
+  get lastRecovery(): VeluxRecoveryRecord | null {
+    return this.#lastRecovery
   }
 
   /** The integration id this session belongs to. */
@@ -212,6 +244,7 @@ export class VeluxIntegrationManager implements VeluxNodeSource {
     this.#status = 'connected'
     this.#error = null
     this.#attempt = 0
+    this.#unreachableSince = null
     this.#onConnected(this.#id)
     this.#onNodesChanged(this.#id)
     await this.#readFirmware(client, generation)
@@ -248,6 +281,41 @@ export class VeluxIntegrationManager implements VeluxNodeSource {
       },
     })
     this.#scheduleRetry(delay)
+    this.#trackUnreachable(err, refused)
+    void this.#maybeRecover()
+  }
+
+  /** A run of failures that say "cannot reach it" (refused, timeout, TLS); a wrong password is not one. */
+  #trackUnreachable(err: unknown, refused: boolean): void {
+    if (refused) {
+      this.#unreachableSince = null
+      return
+    }
+    const kind = classifyProbeFailure(err).kind
+    if ((kind === 'unreachable' || kind === 'tls') && this.#unreachableSince === null) {
+      this.#unreachableSince = Date.now()
+    }
+  }
+
+  /** Power-cycle the gateway when it has been unreachable long enough and a switch is set. */
+  async #maybeRecover(): Promise<void> {
+    const since = this.#unreachableSince
+    if (since === null || !this.#wanted) return
+    const generation = this.#generation
+    const result = await this.#recovery.maybeRecover({
+      unreachableForMs: Date.now() - since,
+      hasLiveSession: this.#status === 'connected',
+      onCycleStart: () => this.#cancelRetry(),
+    })
+    if (result.kind !== 'done') return
+    this.#lastRecovery = result.record
+    if (generation !== this.#generation || !this.#wanted) return
+    this.#attempt = 0
+    this.#unreachableSince = null
+    this.#logger.info('velux: reconnecting after the power cycle', {
+      meta: { outcome: result.record.outcome },
+    })
+    await this.#connect()
   }
 
   /** The gateway ended an ESTABLISHED session. */
@@ -264,7 +332,7 @@ export class VeluxIntegrationManager implements VeluxNodeSource {
     )
     this.#onNodesChanged(this.#id)
     this.#onDisconnected(this.#id)
-    const delay = reconnectDelayMs(this.#attempt, false)
+    const delay = Math.max(SESSION_ENDED_MIN_RETRY_MS, reconnectDelayMs(this.#attempt, false))
     this.#attempt += 1
     this.#scheduleRetry(delay)
   }

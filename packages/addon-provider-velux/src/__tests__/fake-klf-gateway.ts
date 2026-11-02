@@ -32,6 +32,8 @@ export const CMD = {
   NODE_STATE_POSITION_CHANGED_NTF: 0x0211,
   HOUSE_STATUS_MONITOR_ENABLE_REQ: 0x0240,
   HOUSE_STATUS_MONITOR_ENABLE_CFM: 0x0241,
+  HOUSE_STATUS_MONITOR_DISABLE_REQ: 0x0242,
+  HOUSE_STATUS_MONITOR_DISABLE_CFM: 0x0243,
   COMMAND_SEND_REQ: 0x0300,
   COMMAND_SEND_CFM: 0x0301,
   SESSION_FINISHED_NTF: 0x0304,
@@ -70,6 +72,11 @@ export interface ReceivedFrame {
 export interface ReceivedMove {
   readonly nodeIds: readonly number[]
   readonly mainValueRaw: number
+}
+
+function commandName(command: number): string {
+  for (const [name, value] of Object.entries(CMD)) if (value === command) return name
+  return `0x${command.toString(16)}`
 }
 
 function slipEncode(command: number, data: Buffer): Buffer {
@@ -151,6 +158,18 @@ export class FakeKlfGateway {
   reboots = 0
   /** Software version GW_GET_VERSION answers: [command, main, sub, branch, build, micro]. */
   firmware: readonly [number, number, number, number, number, number] = [0, 2, 0, 0, 71, 0]
+  /**
+   * What the gateway saw, in order: the name of each request it received and
+   * `CLOSE` each time a socket went away.
+   */
+  readonly log: string[] = []
+  /** Sockets that closed while the house status monitor was still on (the lockout trigger). */
+  closedWithMonitorOn = 0
+  /** Requests the gateway has taken and not yet answered, now and at the peak. */
+  inFlight = 0
+  peakInFlight = 0
+  #monitorOn = new Set<TLSSocket>()
+  #replyDelayMs = 0
   /** Every connection ever accepted (open or since closed). */
   accepted = 0
   /** Every TCP connection the port took, including ones that never finished a handshake. */
@@ -257,6 +276,11 @@ export class FakeKlfGateway {
     for (const socket of this.#sockets) socket.destroy()
   }
 
+  /** A version, command or limitation request is answered this late (requests overlap if the client does not serialise). */
+  slowReplies(ms: number): void {
+    this.#replyDelayMs = ms
+  }
+
   /** Stop answering without closing (a wedged gateway). */
   mute(): void {
     this.#muted = true
@@ -291,6 +315,8 @@ export class FakeKlfGateway {
     this.accepted += 1
     this.#sockets.add(socket)
     socket.on('close', () => {
+      this.log.push('CLOSE')
+      if (this.#monitorOn.delete(socket)) this.closedWithMonitorOn += 1
       this.#sockets.delete(socket)
       this.#lastCloseAt = Date.now()
     })
@@ -301,7 +327,21 @@ export class FakeKlfGateway {
     })
   }
 
-  #answer(socket: TLSSocket, frame: ReceivedFrame): void {
+  #answer(socket: TLSSocket, frame: ReceivedFrame, deferred = false): void {
+    if (!deferred) this.log.push(commandName(frame.command))
+    const tracked =
+      frame.command === CMD.GET_VERSION_REQ ||
+      frame.command === CMD.COMMAND_SEND_REQ ||
+      frame.command === CMD.GET_LIMITATION_STATUS_REQ
+    if (tracked && !deferred && !this.#muted) {
+      this.inFlight += 1
+      this.peakInFlight = Math.max(this.peakInFlight, this.inFlight)
+      setTimeout(() => {
+        this.#answer(socket, frame, true)
+        this.inFlight -= 1
+      }, this.#replyDelayMs)
+      return
+    }
     if (this.#muted) return
     const send = (command: number, data: Buffer): void => {
       socket.write(slipEncode(command, data))
@@ -325,7 +365,12 @@ export class FakeKlfGateway {
         this.stateRequests.push(Date.now())
         send(CMD.GET_STATE_CFM, Buffer.from([2, 0, 0, 0, 0, 0]))
         return
+      case CMD.HOUSE_STATUS_MONITOR_DISABLE_REQ:
+        this.#monitorOn.delete(socket)
+        send(CMD.HOUSE_STATUS_MONITOR_DISABLE_CFM, Buffer.alloc(0))
+        return
       case CMD.HOUSE_STATUS_MONITOR_ENABLE_REQ:
+        this.#monitorOn.add(socket)
         send(CMD.HOUSE_STATUS_MONITOR_ENABLE_CFM, Buffer.alloc(0))
         return
       case CMD.GET_ALL_NODES_INFORMATION_REQ:
@@ -355,17 +400,19 @@ export class FakeKlfGateway {
         const cfm = Buffer.alloc(3)
         cfm.writeUInt16BE(sessionId, 0)
         cfm.writeUInt8(1, 2)
-        send(CMD.GET_LIMITATION_STATUS_CFM, cfm)
-        const ntf = Buffer.alloc(10)
-        ntf.writeUInt16BE(sessionId, 0)
-        ntf.writeUInt8(nodeId, 2)
-        ntf.writeUInt8(0, 3)
-        ntf.writeUInt16BE(min, 4)
-        ntf.writeUInt16BE(0xc800, 6)
-        send(CMD.LIMITATION_STATUS_NTF, ntf)
-        const fin = Buffer.alloc(2)
-        fin.writeUInt16BE(sessionId, 0)
-        send(CMD.SESSION_FINISHED_NTF, fin)
+        {
+          send(CMD.GET_LIMITATION_STATUS_CFM, cfm)
+          const ntf = Buffer.alloc(10)
+          ntf.writeUInt16BE(sessionId, 0)
+          ntf.writeUInt8(nodeId, 2)
+          ntf.writeUInt8(0, 3)
+          ntf.writeUInt16BE(min, 4)
+          ntf.writeUInt16BE(0xc800, 6)
+          send(CMD.LIMITATION_STATUS_NTF, ntf)
+          const fin = Buffer.alloc(2)
+          fin.writeUInt16BE(sessionId, 0)
+          send(CMD.SESSION_FINISHED_NTF, fin)
+        }
         return
       }
       default:

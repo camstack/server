@@ -87,6 +87,25 @@ describe('Velux connection test', () => {
     expect(gateway?.openConnections).toBe(0)
   })
 
+  it('answers from the live session and opens no second one', async () => {
+    let probed = 0
+    const provider = buildVeluxConnectionTestProvider({
+      logger: new RecordingLogger(),
+      liveSession: (host) =>
+        host === '10.0.0.5' ? { password: PASSWORD, firmware: '0.2.0.0.71.0' } : null,
+      probe: async () => {
+        probed += 1
+        return { firmware: null }
+      },
+    })
+    const ok = await provider.testSettings({ settings: { host: '10.0.0.5', password: PASSWORD } })
+    expect(ok.outcome).toBe('validated')
+    if (ok.outcome === 'validated') expect(ok.detail).toContain('0.2.0.0.71.0')
+    const wrong = await provider.testSettings({ settings: { host: '10.0.0.5', password: 'nope' } })
+    expect(wrong.outcome).toBe('rejected')
+    expect(probed).toBe(0)
+  })
+
   it('rejects a wrong password, and only that', async () => {
     const { certPem } = await startGateway()
     const provider = buildVeluxConnectionTestProvider({

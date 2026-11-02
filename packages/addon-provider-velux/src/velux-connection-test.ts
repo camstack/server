@@ -19,6 +19,14 @@ export interface VeluxConnectionTestDeps {
   readonly probe?: (input: { host: string; password: string }) => Promise<KlfProbeResult>
   /** How many sessions this addon already holds on `host`. Defaults to none. */
   readonly liveSessions?: (host: string) => number
+  /**
+   * The session this addon already holds on `host`. A test then answers from it:
+   * a second login on a gateway that accepts very few sessions is what the
+   * gateway answers with a refused handshake.
+   */
+  readonly liveSession?: (
+    host: string,
+  ) => { readonly password: string; readonly firmware: string | null } | null
   /** Hard ceiling on one test; defaults to just under the wizard's own. */
   readonly deadlineMs?: number
 }
@@ -75,12 +83,30 @@ export function buildVeluxConnectionTestProvider(
     logger,
     probe = probeKlfGateway,
     liveSessions = () => 0,
+    liveSession = () => null,
     deadlineMs = DEFAULT_TEST_DEADLINE_MS,
   } = deps
   /** The tail of the test queue per host: a second test waits for the first to log out. */
   const queues = new Map<string, Promise<unknown>>()
 
   async function run(host: string, password: string): Promise<ConnectionTestOutcome> {
+    const live = liveSession(host)
+    if (live !== null) {
+      // The gateway has one password and this session logged in with the saved one.
+      if (live.password !== password) {
+        return {
+          outcome: 'rejected',
+          error:
+            'The gateway refused the password. Use the password printed on the back of the unit.',
+        }
+      }
+      logger.info('Velux connection test answered from the live session', { meta: { host } })
+      return {
+        outcome: 'validated',
+        latencyMs: 0,
+        ...(live.firmware === null ? {} : { detail: `Firmware ${live.firmware}` }),
+      }
+    }
     if (liveSessions(host) >= KLF_MAX_SESSIONS) {
       logger.warn('Velux connection test skipped: the gateway sessions are in use', {
         meta: { host, live: liveSessions(host) },
