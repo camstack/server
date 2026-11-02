@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Releasing a device from an integration now removes its child devices too; before, the parents went and their children stayed behind pointing at a deleted device.
 - Addon runners no longer load the full schema bundle for the debug watch
+- The network scan now finds mDNS devices on another VLAN: it joins the mDNS group on each link and asks as multicast, so an answer reflected by the router is heard.
 
 ## [1.2.537] - 2026-11-01
 

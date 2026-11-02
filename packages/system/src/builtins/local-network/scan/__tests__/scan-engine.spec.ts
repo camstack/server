@@ -54,7 +54,9 @@ class FakeIo implements ScanIo {
   readonly udp: UdpExchangeRequest[] = []
   readonly http: HttpProbeRequest[] = []
   udpReplies: (req: UdpExchangeRequest) => UdpReply[] = () => []
-  httpAnswer: (req: HttpProbeRequest) => HttpProbeOutcome = () => ({ kind: 'unreachable' })
+  httpAnswer: (req: HttpProbeRequest) => HttpProbeOutcome = () => ({
+    kind: 'unreachable',
+  })
   async udpExchange(req: UdpExchangeRequest): Promise<readonly UdpReply[]> {
     this.udp.push(req)
     return this.udpReplies(req)
@@ -100,7 +102,10 @@ describe('subnet resolution', () => {
   })
 
   it('narrows a wide own link to a /24 and ignores docker links', () => {
-    const docker = { ...link('172.17.0.1', '255.255.0.0'), kind: 'docker' as const }
+    const docker = {
+      ...link('172.17.0.1', '255.255.0.0'),
+      kind: 'docker' as const,
+    }
     const r = resolveScanSubnets({
       interfaces: [link('10.0.3.4', '255.255.0.0'), docker],
       saved: [],
@@ -127,7 +132,11 @@ describe('subnet resolution', () => {
       /more than 4096/,
     )
     expect(() =>
-      resolveScanSubnets({ interfaces: [], saved: many.slice(0, 4), perCall: [] }),
+      resolveScanSubnets({
+        interfaces: [],
+        saved: many.slice(0, 4),
+        perCall: [],
+      }),
     ).not.toThrow()
   })
 
@@ -179,13 +188,21 @@ describe('scan engine batching', () => {
     const io = new FakeIo()
     io.httpAnswer = (req) =>
       req.host === '192.168.10.30'
-        ? { kind: 'response', status: 200, headers: { server: 'x' }, bodyText: 'ok' }
+        ? {
+            kind: 'response',
+            status: 200,
+            headers: { server: 'x' },
+            bodyText: 'ok',
+          }
         : { kind: 'timeout' }
     const log = logger()
     const result = await runScan(deps(io, log), {
       requests: [
         { providerId: 'one', modes: [probeA] },
-        { providerId: 'two', modes: [{ kind: 'mdns', serviceType: '_x._tcp' }, probeA] },
+        {
+          providerId: 'two',
+          modes: [{ kind: 'mdns', serviceType: '_x._tcp' }, probeA],
+        },
       ],
     })
     expect(io.http).toHaveLength(253)
@@ -197,13 +214,22 @@ describe('scan engine batching', () => {
     expect(result.stats.hostsProbed).toBe(253)
     expect(log.info).toHaveBeenCalledTimes(1)
     const summary = log.info.mock.calls[0]
-    expect(summary?.[1]).toMatchObject({ meta: { hits: 2, timeouts: 252, hostsProbed: 253 } })
+    expect(summary?.[1]).toMatchObject({
+      meta: { hits: 2, timeouts: 252, hostsProbed: 253 },
+    })
   })
 
   it('honours acceptStatus', async () => {
     const io = new FakeIo()
-    io.httpAnswer = () => ({ kind: 'response', status: 404, headers: {}, bodyText: '' })
-    const result = await runScan(deps(io), { requests: [{ providerId: 'two', modes: [probeB] }] })
+    io.httpAnswer = () => ({
+      kind: 'response',
+      status: 404,
+      headers: {},
+      bodyText: '',
+    })
+    const result = await runScan(deps(io), {
+      requests: [{ providerId: 'two', modes: [probeB] }],
+    })
     expect(result.hits).toHaveLength(0)
   })
 
@@ -221,20 +247,41 @@ describe('scan engine batching', () => {
         : []
     const result = await runScan(deps(io), {
       requests: [
-        { providerId: 'esphome', modes: [{ kind: 'mdns', serviceType: '_esphomelib._tcp' }] },
+        {
+          providerId: 'esphome',
+          modes: [{ kind: 'mdns', serviceType: '_esphomelib._tcp' }],
+        },
         {
           providerId: 'velux',
-          modes: [{ kind: 'mdns', serviceType: '_http._tcp', instancePattern: '^VELUX_KLF' }],
+          modes: [
+            {
+              kind: 'mdns',
+              serviceType: '_http._tcp',
+              instancePattern: '^VELUX_KLF',
+            },
+          ],
         },
-        { providerId: 'other', modes: [{ kind: 'mdns', serviceType: '_esphomelib._tcp.local' }] },
+        {
+          providerId: 'other',
+          modes: [{ kind: 'mdns', serviceType: '_esphomelib._tcp.local' }],
+        },
       ],
     })
     expect(io.udp).toHaveLength(1)
     const packet = io.udp[0]?.payload
-    expect(packet?.equals(buildPtrQuery(['_esphomelib._tcp', '_http._tcp']))).toBe(true)
+    expect(
+      packet?.equals(
+        buildPtrQuery(['_esphomelib._tcp', '_http._tcp'], {
+          unicastResponse: false,
+        }),
+      ),
+    ).toBe(true)
     expect(packet?.readUInt16BE(4)).toBe(2)
     expect(result.hits.map((h) => h.providerId).sort()).toEqual(['esphome', 'other'])
-    expect(result.hits[0]?.hit.mdns).toMatchObject({ instance: 'board1', port: 6053 })
+    expect(result.hits[0]?.hit.mdns).toMatchObject({
+      instance: 'board1',
+      port: 6053,
+    })
     expect(result.hits[0]?.hit.host).toBe('192.168.10.50')
   })
 
@@ -253,7 +300,10 @@ describe('scan engine batching', () => {
         : []
     const result = await runScan(deps(io), {
       requests: [
-        { providerId: 'esphome', modes: [{ kind: 'mdns', serviceType: '_esphomelib._tcp' }] },
+        {
+          providerId: 'esphome',
+          modes: [{ kind: 'mdns', serviceType: '_esphomelib._tcp' }],
+        },
       ],
     })
     expect(io.udp[0]?.resendAtMs).toEqual([1_200, 2_500])
@@ -261,11 +311,82 @@ describe('scan engine batching', () => {
     expect(result.hits).toHaveLength(1)
   })
 
+  describe('multicast group listen (a device on a routed VLAN)', () => {
+    const mdnsRequest = {
+      requests: [
+        {
+          providerId: 'velux',
+          modes: [{ kind: 'mdns' as const, serviceType: '_http._tcp' }],
+        },
+      ],
+    }
+    const reflected = {
+      host: '192.168.20.65',
+      port: 5353,
+      data: ptrAnswer('_http._tcp', 'VELUX_KLF_1', 80, '192.168.20.65'),
+    }
+
+    it('hears a reflected answer from a host outside the link, asked as QM on the group', async () => {
+      const io = new FakeIo()
+      // Only a socket that joined the group hears the router-reflected answer.
+      io.udpReplies = (req) => (req.joinGroup === '224.0.0.251' ? [reflected] : [])
+      const log = logger()
+      const result = await runScan(
+        { ...deps(io), savedSubnets: () => ['192.168.20.0/24'], logger: log },
+        mdnsRequest,
+      )
+      const joined = io.udp.find((u) => u.joinGroup !== undefined)
+      expect(joined?.bindPort).toBe(5353)
+      expect(joined?.localAddress).toBe('192.168.10.9')
+      // QM: the unicast-response bit (0x8000) is clear in the question class.
+      const payload = joined?.payload
+      expect(payload?.readUInt16BE(payload.length - 2)).toBe(1)
+      expect(result.hits.map((h) => h.hit.host)).toEqual(['192.168.20.65'])
+      const finished = log.info.mock.calls.find((c) => c[0] === 'local-network: scan finished')
+      expect(finished?.[1]?.meta?.['hitsBySubnet']).toMatchObject({
+        '192.168.20.0/24': 1,
+      })
+    })
+
+    it('names the skip when the group cannot be joined and still runs the unicast queries', async () => {
+      const io = new FakeIo()
+      const original = io.udpExchange.bind(io)
+      io.udpExchange = async (req) => {
+        if (req.joinGroup !== undefined) throw new Error('EADDRINUSE')
+        return original(req)
+      }
+      const warn = vi.fn()
+      const log = logger()
+      log.warn = warn
+      await runScan(
+        { ...deps(io), savedSubnets: () => ['192.168.20.0/24'], logger: log },
+        mdnsRequest,
+      )
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining('mdns group listen skipped'),
+        expect.objectContaining({
+          meta: expect.objectContaining({ link: '192.168.10.9' }),
+        }),
+      )
+      expect(io.udp.some((u) => u.targets.length === 254)).toBe(true)
+      expect(
+        io.udp.some((u) => u.joinGroup === undefined && u.targets[0]?.host === '224.0.0.251'),
+      ).toBe(true)
+    })
+  })
+
   it('asks every host of an extra subnet directly, since multicast does not cross', async () => {
     const io = new FakeIo()
     const result = await runScan(
       { ...deps(io), savedSubnets: () => ['192.168.20.0/24'] },
-      { requests: [{ providerId: 'a', modes: [{ kind: 'mdns', serviceType: '_x._tcp' }] }] },
+      {
+        requests: [
+          {
+            providerId: 'a',
+            modes: [{ kind: 'mdns', serviceType: '_x._tcp' }],
+          },
+        ],
+      },
     )
     const unicast = io.udp.filter((u) => u.targets[0]?.host !== '224.0.0.251')
     expect(unicast).toHaveLength(1)
@@ -280,7 +401,10 @@ describe('scan engine batching', () => {
       { ...deps(io), savedSubnets: () => ['192.168.20.0/24'] },
       {
         requests: [
-          { providerId: 'a', modes: [{ kind: 'udp-broadcast', port: 9000, payloadHex: 'abcd' }] },
+          {
+            providerId: 'a',
+            modes: [{ kind: 'udp-broadcast', port: 9000, payloadHex: 'abcd' }],
+          },
         ],
       },
     )
@@ -301,7 +425,12 @@ describe('scan engine batching', () => {
         ? { kind: 'response', status: 200, headers: {}, bodyText: '' }
         : { kind: 'unreachable' }
     const result = await runScan(deps(io), {
-      requests: [{ providerId: 'a', modes: [{ kind: 'ssdp', searchTarget: 'ssdp:all' }, probeA] }],
+      requests: [
+        {
+          providerId: 'a',
+          modes: [{ kind: 'ssdp', searchTarget: 'ssdp:all' }, probeA],
+        },
+      ],
     })
     expect(result.errors).toEqual([{ mode: 'ssdp', message: 'socket closed' }])
     expect(result.hits).toHaveLength(1)

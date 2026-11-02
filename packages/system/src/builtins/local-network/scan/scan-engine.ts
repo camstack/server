@@ -14,14 +14,15 @@
  * Bounded: 64 requests in flight, 1.2 s per request, 4096 hosts per scan.
  * The sockets are injected ({@link ScanIo}), so this is unit-testable.
  */
-import type {
-  DiscoveryHit,
-  DiscoveryMode,
-  IScopedLogger,
-  LocalInterface,
-  ScanNetworkResult,
-  ScanRequest,
-  ScanStats,
+import {
+  type DiscoveryHit,
+  type DiscoveryMode,
+  errMsg,
+  type IScopedLogger,
+  type LocalInterface,
+  type ScanNetworkResult,
+  type ScanRequest,
+  type ScanStats,
 } from '@camstack/types'
 import {
   buildPtrQuery,
@@ -88,7 +89,10 @@ function bucket(c: Collector, kind: ModeKind): { probed: number; hits: number; t
 }
 
 function emit(c: Collector, entry: Entry, hit: Omit<DiscoveryHit, 'modeIndex'>): void {
-  c.hits.push({ providerId: entry.providerId, hit: { ...hit, modeIndex: entry.modeIndex } })
+  c.hits.push({
+    providerId: entry.providerId,
+    hit: { ...hit, modeIndex: entry.modeIndex },
+  })
   bucket(c, entry.mode.kind).hits += 1
 }
 
@@ -170,6 +174,43 @@ function instanceLabel(instance: string): string {
 
 // ── mDNS ────────────────────────────────────────────────────────────────────
 
+/**
+ * One link: join 5353 on the group and ask QM, so the answer a router reflects from
+ * another VLAN (it arrives as multicast) is heard. A device on another VLAN ignores
+ * an off-link unicast-response query (RFC 6762 §11), so the old ephemeral-port QU
+ * query alone never found it. A bind or membership failure is a named skip and the
+ * link falls back to the QU query, which still finds same-link devices.
+ */
+async function exchangeOnLink(
+  deps: ScanEngineDeps,
+  link: LocalInterface,
+  groupQuery: Buffer,
+  fallbackQuery: Buffer,
+): Promise<readonly UdpReply[]> {
+  const request = {
+    targets: [{ host: MDNS_GROUP, port: MDNS_PORT }],
+    localAddress: link.address,
+    resendAtMs: MULTICAST_RESEND_AT_MS,
+    listenMs: MULTICAST_LISTEN_MS,
+  }
+  try {
+    return await deps.io.udpExchange({
+      ...request,
+      payload: groupQuery,
+      bindPort: MDNS_PORT,
+      joinGroup: MDNS_GROUP,
+    })
+  } catch (err) {
+    deps.logger.warn(
+      'local-network: mdns group listen skipped on link, using unicast-response query',
+      {
+        meta: { link: link.address, interface: link.name, error: errMsg(err) },
+      },
+    )
+    return deps.io.udpExchange({ ...request, payload: fallbackQuery })
+  }
+}
+
 async function runMdns(
   deps: ScanEngineDeps,
   entries: readonly Entry<Extract<DiscoveryMode, { kind: 'mdns' }>>[],
@@ -179,19 +220,12 @@ async function runMdns(
   if (entries.length === 0) return
   const types = [...new Set(entries.map((e) => normalizeServiceType(e.mode.serviceType)))]
   const query = buildPtrQuery(types)
+  const groupQuery = buildPtrQuery(types, { unicastResponse: false })
   const replies: UdpReply[] = []
   const links = hubLinks(deps.interfaces())
   for (const link of links) {
     bucket(c, 'mdns').probed += 1
-    replies.push(
-      ...(await deps.io.udpExchange({
-        payload: query,
-        targets: [{ host: MDNS_GROUP, port: MDNS_PORT }],
-        localAddress: link.address,
-        resendAtMs: MULTICAST_RESEND_AT_MS,
-        listenMs: MULTICAST_LISTEN_MS,
-      })),
-    )
+    replies.push(...(await exchangeOnLink(deps, link, groupQuery, query)))
   }
   const extraHosts = extraHostsOf(subnets)
   if (extraHosts.length > 0) {
@@ -220,7 +254,12 @@ async function runMdns(
         emit(c, entry, {
           host,
           port: service.port,
-          mdns: { instance: label, host: service.host, port: service.port, txt: service.txt },
+          mdns: {
+            instance: label,
+            host: service.host,
+            port: service.port,
+            txt: service.txt,
+          },
         })
       }
     }
@@ -380,7 +419,11 @@ async function runSsdp(
         emit(c, entry, {
           host: reply.host,
           port: reply.port,
-          http: { status: parsed.status, headers: parsed.headers, bodyText: '' },
+          http: {
+            status: parsed.status,
+            headers: parsed.headers,
+            bodyText: '',
+          },
         })
       }
     }
@@ -415,8 +458,14 @@ async function runUdpBroadcast(
         host: broadcastOf(s),
       }))
     const sends = [
-      ...ownBroadcasts.map((b) => ({ localAddress: b.link?.address, host: b.host })),
-      ...subnets.extra.map((s) => ({ localAddress: undefined, host: broadcastOf(s) })),
+      ...ownBroadcasts.map((b) => ({
+        localAddress: b.link?.address,
+        host: b.host,
+      })),
+      ...subnets.extra.map((s) => ({
+        localAddress: undefined,
+        host: broadcastOf(s),
+      })),
     ]
     for (const send of sends) {
       bucket(c, 'udp-broadcast').probed += 1
@@ -509,7 +558,10 @@ async function guarded(c: Collector, kind: ModeKind, work: () => Promise<void>):
   try {
     await work()
   } catch (err) {
-    c.errors.push({ mode: kind, message: err instanceof Error ? err.message : String(err) })
+    c.errors.push({
+      mode: kind,
+      message: err instanceof Error ? err.message : String(err),
+    })
   }
 }
 

@@ -16,9 +16,17 @@ function udpExchange(request: UdpExchangeRequest): Promise<readonly UdpReply[]> 
     const socket = createSocket({ type: 'udp4', reuseAddr: true })
     const replies: UdpReply[] = []
     let settled = false
+    let joined = false
     const finish = (error: Error | null): void => {
       if (settled) return
       settled = true
+      if (joined && request.joinGroup !== undefined) {
+        try {
+          socket.dropMembership(request.joinGroup, request.localAddress)
+        } catch {
+          // the socket is closing anyway
+        }
+      }
       try {
         socket.close()
       } catch {
@@ -31,8 +39,15 @@ function udpExchange(request: UdpExchangeRequest): Promise<readonly UdpReply[]> 
     socket.on('message', (data, rinfo) => {
       replies.push({ host: rinfo.address, port: rinfo.port, data })
     })
-    socket.bind(request.bindPort ?? 0, request.localAddress ?? undefined, () => {
+    // A group member binds the wildcard address: a socket bound to one unicast
+    // address is not handed datagrams addressed to the group.
+    const bindAddress = request.joinGroup === undefined ? request.localAddress : undefined
+    socket.bind(request.bindPort ?? 0, bindAddress, () => {
       try {
+        if (request.joinGroup !== undefined) {
+          socket.addMembership(request.joinGroup, request.localAddress)
+          joined = true
+        }
         if (request.broadcast === true) socket.setBroadcast(true)
         if (request.localAddress !== undefined) socket.setMulticastInterface(request.localAddress)
       } catch (err) {

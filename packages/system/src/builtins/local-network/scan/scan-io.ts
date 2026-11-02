@@ -17,6 +17,12 @@ export interface UdpExchangeRequest {
   /** Fixed source port: devices that answer to a port other than the sender's. */
   readonly bindPort?: number
   readonly broadcast?: boolean
+  /**
+   * Join this multicast group on `localAddress` and listen on the bound port, so an
+   * answer sent to the group (a router-reflected one) is heard. Rejects when the
+   * bind or the membership fails; the membership is dropped when the window ends.
+   */
+  readonly joinGroup?: string
   /** Offsets (ms after the first burst) at which the same burst is sent again. */
   readonly resendAtMs?: readonly number[]
   /** How long to keep listening after the first burst. */

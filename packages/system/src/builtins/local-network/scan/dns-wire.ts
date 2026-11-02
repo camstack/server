@@ -5,6 +5,8 @@
 
 /** Top bit of the question class: ask for a unicast reply (RFC 6762). */
 const MDNS_QU_CLASS = 0x8001
+/** Plain IN class: the responder may answer on the group (QM), which a group member hears. */
+const MDNS_QM_CLASS = 0x0001
 const A = 1
 const PTR = 12
 const TXT = 16
@@ -107,8 +109,17 @@ function parseTxt(buf: Buffer, offset: number, length: number): Record<string, s
   return out
 }
 
-/** One PTR question per service type, all with the unicast-reply bit. */
-export function buildPtrQuery(serviceTypes: readonly string[]): Buffer {
+export interface PtrQueryOptions {
+  /** Unicast-reply bit (QU). Default true; a group member asks QM so a reflected answer reaches it. */
+  readonly unicastResponse?: boolean
+}
+
+/** One PTR question per service type, with the unicast-reply bit unless `unicastResponse` is false. */
+export function buildPtrQuery(
+  serviceTypes: readonly string[],
+  options: PtrQueryOptions = {},
+): Buffer {
+  const questionClass = options.unicastResponse === false ? MDNS_QM_CLASS : MDNS_QU_CLASS
   const header = Buffer.alloc(12)
   header.writeUInt16BE(serviceTypes.length, 4)
   const questions = serviceTypes.map((type) => {
@@ -117,7 +128,7 @@ export function buildPtrQuery(serviceTypes: readonly string[]): Buffer {
     const encoded = labels.map((l) => Buffer.concat([Buffer.from([l.length]), Buffer.from(l)]))
     const tail = Buffer.alloc(4)
     tail.writeUInt16BE(PTR, 0)
-    tail.writeUInt16BE(MDNS_QU_CLASS, 2)
+    tail.writeUInt16BE(questionClass, 2)
     return Buffer.concat([...encoded, Buffer.from([0]), tail])
   })
   return Buffer.concat([header, ...questions])
@@ -154,7 +165,10 @@ export function parseMdnsMessage(buf: Buffer): readonly MdnsService[] {
     } else if (rec.type === SRV && rec.dataLength >= SRV_FIXED) {
       const target = readName(buf, rec.dataOffset + SRV_FIXED)
       if (target !== null) {
-        srv.set(key, { target: target.name, port: buf.readUInt16BE(rec.dataOffset + 4) })
+        srv.set(key, {
+          target: target.name,
+          port: buf.readUInt16BE(rec.dataOffset + 4),
+        })
       }
     } else if (rec.type === TXT) {
       txt.set(key, parseTxt(buf, rec.dataOffset, rec.dataLength))
