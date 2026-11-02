@@ -520,12 +520,22 @@ describe('actuator groups of every type', () => {
       ]),
     ).toEqual({ kind: 'pending' })
     const view = sharedMethodsView('cover', [
-      { kind: 'ready', caps: ['cover'], features: ['cover-positionable', 'cover-tilt'] },
-      { kind: 'ready', caps: ['cover'], features: ['cover-positionable'] },
+      {
+        kind: 'ready',
+        caps: ['cover'],
+        features: ['cover-positionable', 'cover-tilt', 'cover-stoppable'],
+      },
+      { kind: 'ready', caps: ['cover'], features: ['cover-positionable', 'cover-stoppable'] },
     ])
     expect(view).toMatchObject({ kind: 'ready' })
     if (view.kind !== 'ready') return
     expect(view.methods).toEqual(['cover.open', 'cover.close', 'cover.stop', 'cover.setPosition'])
+    const noStop = sharedMethodsView('cover', [
+      { kind: 'ready', caps: ['cover'], features: ['cover-stoppable'] },
+      { kind: 'ready', caps: ['cover'], features: [] },
+    ])
+    if (noStop.kind !== 'ready') throw new Error('expected ready')
+    expect(noStop.methods).toEqual(['cover.open', 'cover.close'])
     expect(sharedMethodsView('cover', [{ kind: 'error' }])).toEqual({ kind: 'unavailable' })
   })
 
