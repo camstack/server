@@ -12,3 +12,4 @@ export {
   type InMemorySeedRow,
   type InMemoryStoredRow,
 } from './in-memory-records.js'
+export * from './secret-views.js'

@@ -15,11 +15,8 @@ import {
   type EntryKindInfo,
   type EntryView,
   InvalidRecordError,
-  mapSecretLeaves,
-  recordSecretRef,
-  REDACTED_SECRET,
   type RecordsAccess,
-  type SecretFieldView,
+  secretViewsOf,
   type StorageKind,
   UnknownRecordKindError,
 } from '@camstack/types'
@@ -38,34 +35,6 @@ export interface EntriesServiceDeps {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
-/**
- * A stored secret, as an entries read shows it: a VIEW naming the row's own
- * keychain ref (`set: true`), never the value and no longer the bare redaction
- * token. The form hands it to the secret field, which reveals the value by
- * ref through the audited `keychain-admin.reveal`; sent back untouched it
- * keeps the stored secret (the records door reads a view as KEEP).
- */
-function secretViewsOf(
-  owner: string,
-  kind: string,
-  id: string,
-  info: StorageKind,
-  data: Record<string, unknown>,
-): Record<string, unknown> {
-  const decl = info.declaration
-  if (decl.secretPaths.length === 0) return data
-  const shown = mapSecretLeaves(data, decl.secretPaths, decl.secretArrayKeys, (leaf) => {
-    if (leaf.value !== REDACTED_SECRET) return leaf.value
-    const view: SecretFieldView = {
-      $secret: recordSecretRef(owner, kind, id, leaf.concrete),
-      v: 1,
-      set: true,
-    }
-    return view
-  })
-  return isRecord(shown) ? shown : data
 }
 
 export class EntriesService {
@@ -129,7 +98,7 @@ export class EntriesService {
           name: typeof name === 'string' ? name : row.id,
           rev: row.rev,
           updatedAt: row.updatedAt,
-          data: secretViewsOf(input.owner, input.kind, row.id, info, row.data),
+          data: secretViewsOf(input.owner, input.kind, row.id, info.declaration, row.data),
         })
       }
       cursor = page.nextCursor ?? undefined
