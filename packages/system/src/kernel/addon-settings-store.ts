@@ -10,6 +10,7 @@
  * `transact`, a merge never reads, errors propagate.
  */
 import type { ISettingsStoreProvider } from '@camstack/types'
+import { nodeIdOfScopedKey } from '@camstack/types/addon'
 import { prefixRange } from '../builtins/sqlite-storage/prefix-range.js'
 import { loadPrefixed, unwrapStoredValue } from './prefix-walk.js'
 
@@ -38,6 +39,46 @@ export interface AddonSettingsStore {
   readKey(key: string): Promise<AddonSettingKeyRead>
   /** Set the fields of `patch`; a field whose value is `undefined` is removed. ONE transaction, no read. */
   merge(patch: Readonly<Record<string, unknown>>): Promise<void>
+  /**
+   * The cluster and fleet-default rows: every field with NO node suffix (D986). A node row
+   * (`<field>@<nodeId>`) is never part of it.
+   */
+  readUnscoped(): Promise<AddonSettingsRead>
+  /**
+   * ONE node's rows, keyed by the BARE field. A primary-key range read over the addon's prefix,
+   * filtered on the `@<nodeId>` suffix, so another node's value never leaks in.
+   */
+  readNode(nodeId: string): Promise<AddonSettingsRead>
+  /** {@link merge} for one node: bare fields in, `<field>@<nodeId>` rows out, each carrying `nodeId`. */
+  mergeNode(nodeId: string, patch: Readonly<Record<string, unknown>>): Promise<void>
+}
+
+/** Row data of a field: `nodeId` only on a node row (the key says which node). */
+function rowData(
+  addonId: string,
+  key: string,
+  value: unknown,
+): { addonId: string; key: string; value: unknown; nodeId?: string } {
+  const nodeId = nodeIdOfScopedKey(key)
+  return nodeId === null ? { addonId, key, value } : { addonId, key, value, nodeId }
+}
+
+/**
+ * The central delete of a forgotten node (D986, the node twin of `clearDeviceSettings`): every
+ * `addon-settings` row of EVERY addon that carries this node id, in one statement. Matched on
+ * the `nodeId` each node row carries. A cluster row, a fleet-default row and a device row have
+ * none, so nothing else goes. Returns how many rows went.
+ */
+export async function clearNodeSettings(
+  door: Pick<ISettingsStoreProvider, 'deleteWhere'>,
+  nodeId: string,
+): Promise<number> {
+  if (nodeId === '') throw new Error('node settings: an empty node id names every node')
+  const { deleted } = await door.deleteWhere({
+    collection: ADDON_SETTINGS_COLLECTION,
+    filter: { where: { nodeId } },
+  })
+  return deleted
 }
 
 export function createAddonSettingsStore(
@@ -46,7 +87,7 @@ export function createAddonSettingsStore(
 ): AddonSettingsStore {
   const prefix = `${addonId}.`
   const message = (err: unknown): string => (err instanceof Error ? err.message : String(err))
-  return {
+  const store: AddonSettingsStore = {
     async read() {
       try {
         const value = await loadPrefixed(door, ADDON_SETTINGS_COLLECTION, prefix)
@@ -75,7 +116,7 @@ export function createAddonSettingsStore(
       const removed: string[] = []
       for (const [key, value] of Object.entries(patch)) {
         if (value === undefined) removed.push(`${prefix}${key}`)
-        else records.push({ id: `${prefix}${key}`, data: { addonId, key, value } })
+        else records.push({ id: `${prefix}${key}`, data: rowData(addonId, key, value) })
       }
       if (records.length === 0 && removed.length === 0) return
       if (prefixRange(prefix) === null) {
@@ -105,5 +146,36 @@ export function createAddonSettingsStore(
         ],
       })
     },
+
+    async readUnscoped() {
+      const all = await store.read()
+      if (all.kind !== 'present') return all
+      const value = Object.fromEntries(
+        Object.entries(all.value).filter(([key]) => nodeIdOfScopedKey(key) === null),
+      )
+      return Object.keys(value).length === 0 ? { kind: 'absent' } : { kind: 'present', value }
+    },
+
+    async readNode(nodeId) {
+      const all = await store.read()
+      if (all.kind !== 'present') return all
+      const value: Record<string, unknown> = {}
+      for (const [key, field] of Object.entries(all.value)) {
+        if (nodeIdOfScopedKey(key) !== nodeId) continue
+        value[key.slice(0, key.indexOf('@'))] = field
+      }
+      return Object.keys(value).length === 0 ? { kind: 'absent' } : { kind: 'present', value }
+    },
+
+    async mergeNode(nodeId, patch) {
+      if (nodeId === '') throw new Error('node settings: an empty node id names every node')
+      const scoped: Record<string, unknown> = {}
+      for (const [key, value] of Object.entries(patch)) {
+        if (key.includes('@')) throw new Error(`node settings: "${key}" is already scoped`)
+        scoped[`${key}@${nodeId}`] = value
+      }
+      return store.merge(scoped)
+    },
   }
+  return store
 }

@@ -25,7 +25,7 @@ import type {
   TableSchema,
 } from '@camstack/types'
 import { CompositeKeyError } from './placement-errors.js'
-import { asJsonObject, parseJsonUnknown } from '@camstack/types'
+import { asJsonObject, nodeIdOfScopedKey, parseJsonUnknown } from '@camstack/types'
 import Database from 'better-sqlite3'
 import { ANALYZE_DELAY_MS, runAnalyzeIfMissing } from './analyze-stats.js'
 import {
@@ -1615,7 +1615,14 @@ export class SqliteSettingsBackend implements ISettingsBackend {
         // serializes as `{addonId, key}` when value is undefined, which
         // round-trips as a corrupted "wrapper without value" row.
         if (value === undefined) continue
-        insertStmt.run(`${addonId}.${key}`, JSON.stringify({ addonId, key, value }))
+        // A node row (`<field>@<nodeId>`) carries its `nodeId` (D986), so forgetting a node is one delete.
+        const nodeId = nodeIdOfScopedKey(key)
+        insertStmt.run(
+          `${addonId}.${key}`,
+          JSON.stringify(
+            nodeId === null ? { addonId, key, value } : { addonId, key, value, nodeId },
+          ),
+        )
       }
     })()
   }
