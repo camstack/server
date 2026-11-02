@@ -44,10 +44,23 @@ D986 §6 is withdrawn.
 
 ## Consequences
 
-- The mailbox password is a secret record field in the keychain, and the
-  Reolink addon keeps no copy. Cameras already configured keep working: the
-  port, domain, username and password are carried over by the Reolink owner
-  migration `email-push-to-mailbox` (D987).
+- The mailbox password is a secret record field in the keychain. Cameras
+  already configured keep working: the Reolink migration `email-push-to-mailbox`
+  (D987) is PURE LOCAL and `tolerate` — it keeps port, domain, bind host,
+  username and password (the latter in the keychain) as a pending mailbox, and
+  the bridge creates the mailbox with them the first time the broker is
+  reachable, then drops the pending copy. Reolink boots and runs its cameras
+  with no mailbox provider installed, or one that registers later (the bridge
+  reacts to the provider's readiness event, it never waits on a timer), and a
+  credential is never minted in place of an unreadable one. A mailbox that
+  already exists is never replaced by the pending settings.
+- A mailbox status is announced only once the addon is registered
+  (`postBrokerStart`), a failed bind is retried a bounded number of times, a
+  mailbox whose keychain was locked at start is applied again when it unlocks,
+  and a message over the size limit is answered 552.
+- A consumer's first subscription adopts the mailbox's retained seq as its
+  baseline: what the ring held before it is old news and is not replayed as a
+  live alarm; only a gap after the baseline is replayed.
 - The :2525 listener moves from the Reolink process to the `smtp-nodemailer`
   process. The container contract (D717) is unchanged: same port, same
   container.
@@ -62,4 +75,6 @@ D986 §6 is withdrawn.
 Specs in `smtp-nodemailer` (no record means no listener, unknown RCPT gets
 550, claimed recipient gives the typed error, ring replay, host `null` with a
 reason without an `internal` role) and in `provider-reolink` (the migration
-preserves the credentials and never reads a locked secret as empty).
+preserves the credentials, never reads a locked secret as empty and cannot block
+the addon; the bridge creates the mailbox with the pending settings when the
+provider appears, and does not replay retained messages at its first subscribe).

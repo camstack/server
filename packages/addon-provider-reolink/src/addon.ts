@@ -37,6 +37,7 @@ import {
   EventCategory,
   failureContributionCapability,
   isSecretMarker,
+  type SmtpInboundSettings,
   logChannelsCapability,
   memoizePinnedFfmpeg,
   userError,
@@ -68,10 +69,16 @@ import {
 } from './baichuan-webhook-schema.js'
 import { ReolinkBaichuanWebhookServer } from './baichuan-webhook-server.js'
 import { buildCreationFormSchema, buildDiscoveryParamsFormSchema } from './creation-schema.js'
-import { addMailboxWithSettings, createBrokerPort, EmailPushBridge } from './email-push-bridge.js'
+import { createBrokerPort, EmailPushBridge } from './email-push-bridge.js'
 import { createEmailPushRemovalHook } from './email-push-removal-hook.js'
 import { listLanHosts } from './email-push-shared.js'
-import { type EmailPushMigrationPorts, REOLINK_MIGRATIONS } from './migrations/index.js'
+import {
+  type EmailPushMigrationPorts,
+  type LegacyMailboxSettings,
+  type PendingMailbox,
+  PendingMailboxSchema,
+  REOLINK_MIGRATIONS,
+} from './migrations/index.js'
 import {
   mapReolinkDiscoveryToCandidates,
   type OnboardedReolinkDevice,
@@ -326,7 +333,7 @@ async function enrichHostIdentifiersFromLiveApi(
 
 export class ReolinkProviderAddon extends BaseDeviceProvider {
   /** The email-push SMTP password is hidden state — kept in the keychain (D787). */
-  protected override readonly secretStatePaths = ['emailPushAuthPassword']
+  protected override readonly secretStatePaths = ['emailPushAuthPassword', 'mailboxPendingPassword']
   protected readonly addonId = REOLINK_ADDON_ID
   protected readonly providerName = 'Reolink'
   protected readonly deviceClasses: Partial<Record<DeviceType, DeviceConstructor<IDevice>>> = {
@@ -424,12 +431,66 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     return this._emailPushAuthPasswordState
   }
 
+  /**
+   * The mailbox the old intake described, waiting for a provider to create it: the migration
+   * writes it (no network), the bridge reads it when it creates the mailbox and clears it after.
+   * The password is a keychain secret of its own (`mailboxPendingPassword`).
+   */
+  private _mailboxPendingState: DurableState<PendingMailbox | null> | null = null
+  private _mailboxPendingPasswordState: DurableState<string> | null = null
+
+  private get mailboxPendingState(): DurableState<PendingMailbox | null> {
+    this._mailboxPendingState ??= this.state<PendingMailbox | null>(
+      'mailboxPending',
+      PendingMailboxSchema.nullable(),
+      null,
+    )
+    return this._mailboxPendingState
+  }
+
+  private get mailboxPendingPasswordState(): DurableState<string> {
+    this._mailboxPendingPasswordState ??= this.state<string>(
+      'mailboxPendingPassword',
+      z.string(),
+      '',
+    )
+    return this._mailboxPendingPasswordState
+  }
+
+  private async stashPendingMailbox(settings: LegacyMailboxSettings): Promise<void> {
+    const { password, ...rest } = settings
+    await this.mailboxPendingPasswordState.set(password)
+    await this.mailboxPendingState.set(rest)
+  }
+
+  /** The pending settings, or null; throws when the stored password cannot be resolved. */
+  private async readPendingMailbox(): Promise<Partial<SmtpInboundSettings> | null> {
+    const pending = await this.mailboxPendingState.get()
+    if (pending === null) return null
+    const password = await this.mailboxPendingPasswordState.get()
+    const raw = (await this.resolveGlobalStore())['mailboxPendingPassword']
+    if (password.length === 0 && raw !== undefined && raw !== '' && isSecretMarker(raw)) {
+      throw new Error('the pending camera mailbox password could not be resolved')
+    }
+    return { ...pending, password }
+  }
+
+  private async clearPendingMailbox(): Promise<void> {
+    if ((await this.mailboxPendingState.get()) === null) return
+    await this.mailboxPendingState.set(null)
+    await this.mailboxPendingPasswordState.set('')
+  }
+
   /** The camera mailbox bridge, built once. */
   private ensureEmailBridge(): EmailPushBridge {
     this.emailBridge ??= new EmailPushBridge({
       port: createBrokerPort(this.ctx.api),
       listCameras: () => this.listReolinkCameras(),
       logger: this.ctx.logger.child('email-push'),
+      pending: {
+        read: () => this.readPendingMailbox(),
+        clear: () => this.clearPendingMailbox(),
+      },
     })
     return this.emailBridge
   }
@@ -816,7 +877,9 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     try {
       const [integration, settings] = await Promise.all([
         this.ctx.api.integrations.get.query({ id: instance.integrationId }),
-        this.ctx.api.integrations.getSettings.query({ id: instance.integrationId }),
+        this.ctx.api.integrations.getSettings.query({
+          id: instance.integrationId,
+        }),
       ])
       return isHubIntegration({
         originStableId: integration.originStableId,
@@ -857,7 +920,10 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     // into this process's gates. Without the second half a declared channel
     // would be a knob with nothing behind it (D62).
     this.logChannels = createLogChannelsProvider(this.ctx.logger.child('log-channels'))
-    regs.push({ capability: logChannelsCapability, provider: this.logChannels })
+    regs.push({
+      capability: logChannelsCapability,
+      provider: this.logChannels,
+    })
 
     // This addon's own talk-back LOSSES, per camera, with their denominator.
     // The rate-mismatch drop shipped with one warn and no counter, so "how
@@ -966,9 +1032,10 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     // the pull and the route never registers (the recorder learned this).
     await this.serveClipPlanes(this.clipService)
 
-    // Battery-cam motion intake: the camera mailbox (D999). The old settings move into the
-    // mailbox first (a failed run is retried at the next boot, the old intake is gone), then
-    // the bridge listens for what the mailbox receives and declares the eligible cameras.
+    // Battery-cam motion intake: the camera mailbox (D999). The migration only keeps the old
+    // settings aside (no mail addon needed, it never blocks this addon); the bridge creates the
+    // mailbox with them when a provider is reachable, listens for what it receives and declares
+    // the eligible cameras.
     await this.runMigrations(defineAddonMigrations(REOLINK_MIGRATIONS, this.migrationPorts()))
     this.wireEmailBridge()
 
@@ -1051,7 +1118,9 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     })
     regs.push({
       capability: deviceRemovalHookCapability,
-      provider: createEmailPushRemovalHook({ resync: () => this.ensureEmailBridge().sync() }),
+      provider: createEmailPushRemovalHook({
+        resync: () => this.ensureEmailBridge().sync(),
+      }),
     })
 
     return regs
@@ -1061,7 +1130,7 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
   private migrationPorts(): EmailPushMigrationPorts {
     return {
       readStored: () => this.readLegacyEmailPush(),
-      addMailbox: (settings) => addMailboxWithSettings(this.ctx.api, settings),
+      stashPending: (settings) => this.stashPendingMailbox(settings),
       warn: (message) => {
         this.ctx.logger.warn(message)
       },
@@ -1076,6 +1145,11 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     })
     this.subscribe({ category: EventCategory.BrokerStatusChanged }, (e) => {
       void bridge.onStatusChanged(e.data)
+    })
+    // A mailbox provider that registers after this addon (unordered boot, a late install) is
+    // reacted to, never waited for: the cameras run without it until then.
+    this.subscribe({ category: EventCategory.SystemReadyState }, (e) => {
+      void bridge.onProviderReady(e.data)
     })
     void bridge.sync()
   }
@@ -1368,7 +1442,10 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
       ...(username ? { username } : {}),
       ...(password ? { password } : {}),
       ...(timeoutMs !== undefined
-        ? { udpBroadcastTimeoutMs: timeoutMs, onvifDiscoveryTimeoutMs: timeoutMs }
+        ? {
+            udpBroadcastTimeoutMs: timeoutMs,
+            onvifDiscoveryTimeoutMs: timeoutMs,
+          }
         : {}),
     }
     const devices = await scanReolinkSubnets({
@@ -1628,7 +1705,9 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
           .catch((err: unknown) => {
             ctx.logger.debug('applyDeviceSettingsPatch motionSources seed failed', {
               tags: { deviceId: device.id },
-              meta: { error: err instanceof Error ? err.message : String(err) },
+              meta: {
+                error: err instanceof Error ? err.message : String(err),
+              },
             })
           })
       },
@@ -1657,7 +1736,10 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
   ): Promise<void> {
     if (detection.type !== 'camera' && detection.type !== 'battery-cam') return
     try {
-      const summary = await detection.api.getNvrChannelsSummary({ source: 'cgi', timeoutMs: 4000 })
+      const summary = await detection.api.getNvrChannelsSummary({
+        source: 'cgi',
+        timeoutMs: 4000,
+      })
       if (summary.channels.length > 1) {
         this.ctx.logger.info('autodetect: CGI override → NVR (multi-channel)', {
           tags: { host: hostLabel },
@@ -1674,7 +1756,10 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     } catch (err) {
       this.ctx.logger.debug('autodetect CGI sanity-check failed (keeping lib type)', {
         tags: { host: hostLabel },
-        meta: { libType: detection.type, error: err instanceof Error ? err.message : String(err) },
+        meta: {
+          libType: detection.type,
+          error: err instanceof Error ? err.message : String(err),
+        },
       })
     }
   }
@@ -1691,14 +1776,22 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
       return { status: 'ok', labels: ['no probe available'] }
     }
 
-    const form = input.formValues ?? { host: typeof input.value === 'string' ? input.value : '' }
+    const form = input.formValues ?? {
+      host: typeof input.value === 'string' ? input.value : '',
+    }
     const inputs = buildAutodetectInputs(form)
 
     if (!inputs.password) {
-      return { status: 'error', error: 'Enter a password before running the test' }
+      return {
+        status: 'error',
+        error: 'Enter a password before running the test',
+      }
     }
     if (!inputs.host && !inputs.uid) {
-      return { status: 'error', error: 'Provide a host or a UID before running the test' }
+      return {
+        status: 'error',
+        error: 'Provide a host or a UID before running the test',
+      }
     }
 
     // The Add-Device modal generates a `_probeRequestId` per dialog

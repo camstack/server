@@ -1,7 +1,12 @@
 import type { AddonMigration } from '@camstack/types'
 import { type EmailPushMigrationPorts, moveEmailPushToMailbox } from './email-push-to-mailbox.js'
 
-export type { EmailPushMigrationPorts, LegacyMailboxSettings } from './email-push-to-mailbox.js'
+export {
+  type EmailPushMigrationPorts,
+  type LegacyMailboxSettings,
+  type PendingMailbox,
+  PendingMailboxSchema,
+} from './email-push-to-mailbox.js'
 
 export const EMAIL_PUSH_TO_MAILBOX_ID = 'provider-reolink/2026-11-02-email-push-to-mailbox'
 
@@ -16,10 +21,10 @@ export const REOLINK_MIGRATIONS: readonly AddonMigration<EmailPushMigrationPorts
       dependsOn: [],
       store: 'settings',
       scope: 'cluster',
-      onFailure: 'block-owner',
+      onFailure: 'tolerate',
       bodyKind: 'procedure',
       description:
-        'Create the camera mailbox of the smtp-inbound broker from the SMTP intake settings, keeping port, domain and credentials so no camera is reconfigured',
+        'Keep the SMTP intake settings (port, domain, credentials) as the pending camera mailbox, created by the bridge when the smtp-inbound broker is reachable, so no camera is reconfigured',
       fixtureMark: 'a setting key the migration does not know',
     },
     procedure: moveEmailPushToMailbox,

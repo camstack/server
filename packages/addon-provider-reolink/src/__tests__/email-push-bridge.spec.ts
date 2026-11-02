@@ -2,6 +2,7 @@ import {
   SMTP_INBOUND_DEFAULT_ID,
   SMTP_RECIPIENT_CLAIMED,
   type SmtpInboundMessage,
+  type SmtpInboundSettings,
 } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
@@ -52,7 +53,7 @@ function msg(seq: number, subject: string, text = ''): SmtpInboundMessage {
 
 interface FakeBroker {
   readonly port: BrokerPort
-  readonly adds: string[]
+  readonly adds: { id: string; settings: unknown }[]
   readonly subscribes: { id: string; recipients: readonly string[] }[]
   readonly unsubscribes: string[]
   readonly stateKeys: string[]
@@ -62,6 +63,12 @@ interface FakeBroker {
   host: string | null
   claimedError: boolean
   addFailsWithInUse: boolean
+  /** No mailbox provider is registered: every call fails the way an unrouted cap call does. */
+  providerMissing: boolean
+  /** The next subscribe fails (the provider is not registered yet). */
+  subscribeFailures: number
+  /** Runs when the broker accepted a subscription: mail that lands after it. */
+  onSubscribed: () => void
 }
 
 function fakeBroker(): FakeBroker {
@@ -76,10 +83,17 @@ function fakeBroker(): FakeBroker {
     host: '192.0.2.10',
     claimedError: false,
     addFailsWithInUse: false,
+    providerMissing: false,
+    subscribeFailures: 0,
+    onSubscribed: () => undefined,
     port: {
-      list: async () => (state.exists ? [{ id: SMTP_INBOUND_DEFAULT_ID }] : []),
-      add: async ({ id }) => {
-        state.adds.push(id)
+      list: async () => {
+        if (state.providerMissing) throw new Error('no provider for capability broker')
+        return state.exists ? [{ id: SMTP_INBOUND_DEFAULT_ID }] : []
+      },
+      add: async ({ id, settings }) => {
+        if (state.providerMissing) throw new Error('no provider for capability broker')
+        state.adds.push({ id, settings })
         if (state.addFailsWithInUse) {
           state.exists = true
           throw new Error(`broker id '${id}' is already in use`)
@@ -99,7 +113,12 @@ function fakeBroker(): FakeBroker {
       }),
       subscribe: async (id, recipients) => {
         if (state.claimedError) throw new Error(`${SMTP_RECIPIENT_CLAIMED}: x`)
+        if (state.subscribeFailures > 0) {
+          state.subscribeFailures -= 1
+          throw new Error('no provider for capability broker')
+        }
         state.subscribes.push({ id, recipients })
+        state.onSubscribed()
         return { subscriptionId: `sub-${REOLINK_SUBSCRIBER_ID}` }
       },
       unsubscribe: async (_id, subscriptionId) => {
@@ -119,7 +138,13 @@ function fakeBroker(): FakeBroker {
   return state
 }
 
-function build(cameras: BridgeCamera[], broker: FakeBroker) {
+interface FakePending {
+  settings: Partial<SmtpInboundSettings> | null
+  readFails: boolean
+  cleared: number
+}
+
+function build(cameras: BridgeCamera[], broker: FakeBroker, pending?: FakePending) {
   const logger = {
     debug: vi.fn(),
     info: vi.fn(),
@@ -128,7 +153,25 @@ function build(cameras: BridgeCamera[], broker: FakeBroker) {
     child: vi.fn().mockReturnThis(),
     withTags: vi.fn().mockReturnThis(),
   }
-  const bridge = new EmailPushBridge({ port: broker.port, listCameras: () => cameras, logger })
+  const bridge = new EmailPushBridge({
+    port: broker.port,
+    listCameras: () => cameras,
+    logger,
+    ...(pending === undefined
+      ? {}
+      : {
+          pending: {
+            read: async () => {
+              if (pending.readFails) throw new Error('keychain locked')
+              return pending.settings
+            },
+            clear: async () => {
+              pending.cleared += 1
+              pending.settings = null
+            },
+          },
+        }),
+  })
   return { bridge, logger }
 }
 
@@ -155,7 +198,7 @@ describe('the email-push bridge: the mailbox', () => {
       broker,
     )
     await bridge.sync()
-    expect(broker.adds).toEqual([SMTP_INBOUND_DEFAULT_ID])
+    expect(broker.adds.map((a) => a.id)).toEqual([SMTP_INBOUND_DEFAULT_ID])
     expect(broker.subscribes).toEqual([
       { id: SMTP_INBOUND_DEFAULT_ID, recipients: ['cam-A', 'cam-B'] },
     ])
@@ -199,7 +242,7 @@ describe('the email-push bridge: the mailbox', () => {
     broker.claimedError = true
     const { bridge, logger } = build([camera(1, 'A', [])], broker)
     await expect(bridge.sync()).resolves.toBeUndefined()
-    expect(logger.error).toHaveBeenCalled()
+    expect(logger.warn).toHaveBeenCalled()
   })
 })
 
@@ -241,7 +284,10 @@ describe('the email-push bridge: messages', () => {
 
   it('a gap in seq replays the missing messages from the ring, in order, once', async () => {
     const { bridge, events, broker } = await live()
-    broker.ring = [1, 2, 3, 4].map((n) => ({ key: 'cam-A', message: msg(n, `Motion ${n}`) }))
+    broker.ring = [1, 2, 3, 4].map((n) => ({
+      key: 'cam-A',
+      message: msg(n, `Motion ${n}`),
+    }))
     broker.lastSeq = 4
     await bridge.onMessage(data(SMTP_INBOUND_DEFAULT_ID, msg(1, 'Motion 1')))
     // seq 2 and 3 were lost; 4 arrives.
@@ -255,16 +301,32 @@ describe('the email-push bridge: messages', () => {
 
   it('a broker that came back connected is resubscribed and reconciled, and a restarted seq is not lost', async () => {
     const { bridge, events, broker } = await live()
-    broker.ring = [1, 2, 3].map((n) => ({ key: 'cam-A', message: msg(n, `Motion ${n}`) }))
+    broker.ring = [1, 2, 3].map((n) => ({
+      key: 'cam-A',
+      message: msg(n, `Motion ${n}`),
+    }))
     broker.lastSeq = 3
     await bridge.onMessage(data(SMTP_INBOUND_DEFAULT_ID, msg(1, 'Motion 1')))
     await bridge.onMessage(data(SMTP_INBOUND_DEFAULT_ID, msg(2, 'Motion 2')))
     await bridge.onMessage(data(SMTP_INBOUND_DEFAULT_ID, msg(3, 'Motion 3')))
     const subscribesBefore = broker.subscribes.length
-    // smtp-nodemailer restarted: its ring is empty, then one new mail arrives with seq 1.
-    broker.ring = [{ key: 'cam-A', message: { ...msg(1, 'Motion fresh'), receivedAt: 9000 } }]
-    broker.lastSeq = 1
-    await bridge.onStatusChanged({ brokerId: SMTP_INBOUND_DEFAULT_ID, status: 'connected' })
+    // smtp-nodemailer restarted: its ring is empty, then one new mail arrives with seq 1
+    // right after the resubscribe.
+    broker.ring = []
+    broker.lastSeq = 0
+    broker.onSubscribed = () => {
+      broker.ring = [
+        {
+          key: 'cam-A',
+          message: { ...msg(1, 'Motion fresh'), receivedAt: 9000 },
+        },
+      ]
+      broker.lastSeq = 1
+    }
+    await bridge.onStatusChanged({
+      brokerId: SMTP_INBOUND_DEFAULT_ID,
+      status: 'connected',
+    })
     expect(broker.subscribes.length).toBe(subscribesBefore + 1)
     expect(events.at(-1)?.timestamp).toBe(9000)
     expect(events).toHaveLength(4)
@@ -275,6 +337,150 @@ describe('the email-push bridge: messages', () => {
     await bridge.onMessage(data(SMTP_INBOUND_DEFAULT_ID, msg(1, 'Motion'), 'cam-ZZ'))
     expect(events).toEqual([])
     expect(logger.warn).toHaveBeenCalled()
+  })
+})
+
+describe('the email-push bridge: no mailbox provider, and a provider that comes late', () => {
+  const READY = { capName: 'broker', state: 'ready' }
+
+  it('without a provider sync neither throws nor retries on a timer, and says so once', async () => {
+    const broker = fakeBroker()
+    broker.providerMissing = true
+    const { bridge, logger } = build([camera(1, 'A', [])], broker)
+    await expect(bridge.sync()).resolves.toBeUndefined()
+    await expect(bridge.sync()).resolves.toBeUndefined()
+    expect(broker.adds).toEqual([])
+    expect(logger.warn).toHaveBeenCalledTimes(1)
+    expect(logger.error).not.toHaveBeenCalled()
+  })
+
+  it('when the provider registers, the mailbox is created with the pending legacy settings and subscribed', async () => {
+    const broker = fakeBroker()
+    broker.providerMissing = true
+    const pending: FakePending = {
+      settings: {
+        port: 2626,
+        domain: 'cams.home',
+        username: 'camstack-ab12cd34',
+        password: 'pw-secret',
+      },
+      readFails: false,
+      cleared: 0,
+    }
+    const { bridge } = build([camera(1, 'A', [])], broker, pending)
+    await bridge.sync()
+    expect(broker.adds).toEqual([])
+    broker.providerMissing = false
+    await bridge.onProviderReady(READY)
+    expect(broker.adds).toEqual([
+      {
+        id: SMTP_INBOUND_DEFAULT_ID,
+        settings: {
+          port: 2626,
+          domain: 'cams.home',
+          username: 'camstack-ab12cd34',
+          password: 'pw-secret',
+        },
+      },
+    ])
+    expect(broker.subscribes).toEqual([{ id: SMTP_INBOUND_DEFAULT_ID, recipients: ['cam-A'] }])
+    expect(pending.cleared).toBe(1)
+  })
+
+  it('a readiness event for another capability does nothing', async () => {
+    const broker = fakeBroker()
+    const { bridge } = build([camera(1, 'A', [])], broker)
+    await bridge.onProviderReady({ capName: 'storage', state: 'ready' })
+    await bridge.onProviderReady({ capName: 'broker', state: 'down' })
+    expect(broker.subscribes).toEqual([])
+  })
+
+  it('a pending password that cannot be read creates no mailbox (a credential is never minted)', async () => {
+    const broker = fakeBroker()
+    const pending: FakePending = {
+      settings: { port: 2525, password: 'x' },
+      readFails: true,
+      cleared: 0,
+    }
+    const { bridge, logger } = build([camera(1, 'A', [])], broker, pending)
+    await bridge.sync()
+    expect(broker.adds).toEqual([])
+    expect(logger.warn).toHaveBeenCalled()
+  })
+
+  it('a mailbox that already exists is never replaced by the pending settings', async () => {
+    const broker = fakeBroker()
+    broker.exists = true
+    const pending: FakePending = {
+      settings: { port: 9999 },
+      readFails: false,
+      cleared: 0,
+    }
+    const { bridge } = build([camera(1, 'A', [])], broker, pending)
+    await bridge.sync()
+    expect(broker.adds).toEqual([])
+    expect(pending.cleared).toBe(1)
+  })
+
+  it('a subscribe that failed leaves nothing declared: the next sync subscribes again', async () => {
+    const broker = fakeBroker()
+    const { bridge } = build([camera(1, 'A', [])], broker)
+    await bridge.sync()
+    expect(broker.subscribes).toHaveLength(1)
+    // The mailbox announced itself before its provider could answer: the forced sync fails.
+    broker.subscribeFailures = 1
+    await bridge.sync({ force: true })
+    expect(broker.subscribes).toHaveLength(1)
+    await bridge.sync()
+    expect(broker.subscribes).toHaveLength(2)
+  })
+})
+
+describe('the email-push bridge: what the mailbox retains is not replayed as news', () => {
+  it('a restart of this addon does not re-fire the retained messages, and the next live one is processed', async () => {
+    const broker = fakeBroker()
+    broker.exists = true
+    broker.ring = [1, 2, 3].map((n) => ({
+      key: 'cam-A',
+      message: msg(n, `Motion ${n}`),
+    }))
+    broker.lastSeq = 3
+    const events: Event[] = []
+    const { bridge } = build([camera(7, 'A', events)], broker)
+    await bridge.sync()
+    expect(events).toEqual([])
+    broker.ring.push({ key: 'cam-A', message: msg(4, 'Person Detected') })
+    broker.lastSeq = 4
+    await bridge.onMessage(data(SMTP_INBOUND_DEFAULT_ID, msg(4, 'Person Detected')))
+    expect(events.map((e) => e.timestamp)).toEqual([1004])
+  })
+
+  it('mail that lands between the baseline and the subscription is a real gap and is replayed', async () => {
+    const broker = fakeBroker()
+    broker.exists = true
+    broker.ring = [1, 2].map((n) => ({
+      key: 'cam-A',
+      message: msg(n, `Motion ${n}`),
+    }))
+    broker.lastSeq = 2
+    broker.onSubscribed = () => {
+      broker.ring.push({ key: 'cam-A', message: msg(3, 'Motion 3') })
+      broker.lastSeq = 3
+    }
+    const events: Event[] = []
+    const { bridge } = build([camera(7, 'A', events)], broker)
+    await bridge.sync()
+    expect(events.map((e) => e.timestamp)).toEqual([1003])
+  })
+
+  it('a message that arrives before the mailbox is known is logged, not dropped silently', async () => {
+    const broker = fakeBroker()
+    const { bridge, logger } = build([camera(7, 'A', [])], broker)
+    await bridge.onMessage(data(SMTP_INBOUND_DEFAULT_ID, msg(1, 'Motion')))
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining('before the mailbox was known'),
+      expect.anything(),
+    )
   })
 })
 

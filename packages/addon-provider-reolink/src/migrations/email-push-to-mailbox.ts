@@ -1,29 +1,44 @@
 /**
  * The camera-mail intake moves from this addon's own SMTP server to a mailbox of the
  * `smtp-inbound` broker (D999). The cameras already know the port, the domain, the username and
- * the password, so the mailbox is created carrying exactly those: no camera is reconfigured.
+ * the password, so the mailbox must be created carrying exactly those: no camera is reconfigured.
  *
- * Idempotent: an existing mailbox is `already-done`, never replaced. Nothing is created from a
- * password that cannot be read (a locked keychain would otherwise mint a new one and break every
- * camera): `readStored` throws, the run fails, and the next boot retries. The legacy keys stay one
- * release, so a restore of an older snapshot still finds them.
+ * This migration is PURE LOCAL. The mail addon may not be installed, or may register after this
+ * addon, so nothing here calls it: the legacy settings (the password resolved through the
+ * keychain) are copied into a pending-mailbox state, and the bridge creates the mailbox with
+ * them the first time the broker is reachable. A password that cannot be read (a locked keychain)
+ * fails the run and writes nothing, so a credential is never minted in its place; the migration
+ * is `tolerate`, so the addon and its cameras keep running while the next boot retries. The
+ * legacy keys stay one release, so a restore of an older snapshot still finds them.
  */
 import type { MigrationProcedureResult } from '@camstack/types'
+import { z } from 'zod'
 
-/** What the broker is asked to create: the settings of `SmtpInboundSettingsSchema` the cameras know. */
+/** What the mailbox is created with: the settings of `SmtpInboundSettingsSchema` the cameras know. */
 export interface LegacyMailboxSettings {
   readonly port: number
+  readonly bindHost?: string
   readonly domain: string
   readonly requireAuth: boolean
   readonly username: string
   readonly password: string
 }
 
+/** The pending mailbox as kept in the addon store: everything but the password (a keychain secret). */
+export const PendingMailboxSchema = z.object({
+  port: z.number().int(),
+  bindHost: z.string().optional(),
+  domain: z.string(),
+  requireAuth: z.boolean(),
+  username: z.string(),
+})
+export type PendingMailbox = z.infer<typeof PendingMailboxSchema>
+
 export interface EmailPushMigrationPorts {
   /** The stored settings, the password resolved. Throws when a secret cannot be resolved. */
   readStored(): Promise<Readonly<Record<string, unknown>>>
-  /** Create the default mailbox with these settings; `exists` when it is already there. */
-  addMailbox(settings: LegacyMailboxSettings): Promise<'created' | 'exists'>
+  /** Keep these settings until the mailbox provider can create the mailbox. Local only. */
+  stashPending(settings: LegacyMailboxSettings): Promise<void>
   warn(message: string): void
 }
 
@@ -34,6 +49,7 @@ const LEGACY_KEYS = [
   'emailPushRequireAuth',
   'emailPushAuthUsername',
   'emailPushAuthPassword',
+  'emailPushBindHost',
 ] as const
 
 const DEFAULT_PORT = 2525
@@ -62,14 +78,22 @@ export async function moveEmailPushToMailbox(
   if (!LEGACY_KEYS.some((key) => stored[key] !== undefined)) {
     return { outcome: 'already-done', summary: { moved: false } }
   }
-  const placed = await ports.addMailbox({
+  if (stored['emailPushEnabled'] === false) {
+    // The operator had the intake off: no camera mails here, so nothing is carried and nothing is
+    // created until a camera needs it.
+    return {
+      outcome: 'already-done',
+      summary: { moved: false, disabled: true },
+    }
+  }
+  const bindHost = text(stored, 'emailPushBindHost')
+  await ports.stashPending({
     port: portOf(stored, ports),
+    ...(bindHost === null ? {} : { bindHost }),
     domain: text(stored, 'emailPushDomain') ?? DEFAULT_DOMAIN,
     requireAuth: stored['emailPushRequireAuth'] !== false,
     username: text(stored, 'emailPushAuthUsername') ?? '',
     password: text(stored, 'emailPushAuthPassword') ?? '',
   })
-  return placed === 'created'
-    ? { outcome: 'done', summary: { moved: true } }
-    : { outcome: 'already-done', summary: { moved: false } }
+  return { outcome: 'done', summary: { moved: true } }
 }
