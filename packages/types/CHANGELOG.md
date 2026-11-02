@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Fix: the integration instances routes answer again; a public capability can no longer be left without a server route.
+
 ## [1.2.477] - 2026-11-02
 
 ### Changed

@@ -114,7 +114,6 @@ export const integrationInstancesCapability = {
       { kind: 'mutation', auth: 'admin' },
     ),
   },
-  mount: { kind: 'skip' },
 } as const satisfies CapabilityDefinition
 
 export type IIntegrationInstancesProvider = InferProvider<typeof integrationInstancesCapability>
