@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.653] - 2026-11-02
+
 ### Changed
 
 - An occupancy re-check burst that returns no result no longer counts as empty, so the re-check cadence is not disarmed by a silent burst

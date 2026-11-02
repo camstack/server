@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.665] - 2026-11-02
+
 ### Changed
 
 - A finished-cycle notification whose custom template drops the run summary is now logged once per rule; the cycle default text is served to editors

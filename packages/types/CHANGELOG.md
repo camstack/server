@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.481] - 2026-11-02
+
 ### Changed
 
 - Notification rules: the template catalog now serves the default text of an appliance cycle finish, so editors can pre-fill and rebuild it
