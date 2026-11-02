@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Integrations page lists connection-only addons (a Loki connection) as integrations backed by a record
+
 ## [1.2.735] - 2026-11-02
 
 ### Changed

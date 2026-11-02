@@ -4,7 +4,7 @@
 
 # Decisions
 
-958 architecture decision records. One file per decision, never
+959 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -973,6 +973,7 @@ that rots.
 | D993 | [A timed run is a durable deadline row with one timer, owned by core-blocks](adr-0993-a-timed-run-is-a-durable-deadline-owned-by-core-blocks.md) | ✅ accepted | 2026-11-01 |
 | D994 | [Passive discovery and a 30-minute sweep feed one persisted proposal stream](adr-0994-passive-discovery-feeds-one-persisted-proposal-stream.md) | ✅ accepted | 2026-11-02 |
 | D995 | [A debug watch is a hub-held window pushed as interest, never a stored value](adr-0995-a-debug-watch-is-a-hub-held-window-never-a-stored-value.md) | ✅ accepted | 2026-11-02 |
+| D996 | [Connection-holding addons are integration instances, a system collection cap over typed record kinds](adr-0996-connection-holding-addons-are-integration-instances.md) | 💭 proposed | 2026-11-02 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

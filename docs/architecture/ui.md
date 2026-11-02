@@ -470,6 +470,13 @@ grew a tab labelled "integration". `tab` means "how to group this visually" and
 may not also mean "where this lives"; it remains available to group sections
 *within* the integration page.
 
+**A connection that holds no devices** (Loki) is not an addon-level setting at all
+([D996](../decisions/adr-0996-connection-holding-addons-are-integration-instances.md)): the
+addon provides `integration-instances`, the Integrations page lists it with kind `connection`,
+and its config modal renders the instance form like an account's, with no device list, scan or
+add button. The Logging page keeps the destination's on/off switch and links to that page
+instead of rendering the settings.
+
 ### Derived vs hand-written — pick by what owns the values
 
 - **Derived (`deviceConfig` cap).** The cap declares its settings schema and

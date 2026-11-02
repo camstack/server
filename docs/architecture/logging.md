@@ -35,6 +35,10 @@ the same object to three places:
    `hub-forwarder` (agents only);
 3. live subscribers (`logs.subscribe`).
 
+Loki's connection (URL, credentials, labels) is a `destinations` record shown as an
+integration on the Integrations page ([D996](../decisions/adr-0996-connection-holding-addons-are-integration-instances.md));
+every node reads it, and the destination's on/off switch stays the per-destination toggle.
+
 An agent forwards every line to the hub (`hub-forwarder`), where it is
 re-emitted through the hub's own `LogManager` (`writeFromWorker`) and gets a
 hub id. So **the hub's files hold the whole cluster's log**, and nothing on an
