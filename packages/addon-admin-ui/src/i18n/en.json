@@ -191,9 +191,7 @@
       "destinations": "Destinations",
       "everyRegisteredLogDestinationEntries": "Every registered log destination. Entries are fanned to all enabled destinations at once — enabling one does not disable another.",
       "noLogDestinationsRegistered": "No log destinations registered",
-      "thisShouldNotHappenThe": "This should not happen — the console and rotated-file destinations are builtins. If the list is empty, the node is still booting.",
-      "connectionLivesOnIntegrations": "The connection (URL, credentials, labels) is set up on the Integrations page.",
-      "openIntegration": "Open the integration"
+      "thisShouldNotHappenThe": "This should not happen — the console and rotated-file destinations are builtins. If the list is empty, the node is still booting."
     },
     "meshNetworks": {
       "meshNetworks": "Mesh networks",
@@ -1765,8 +1763,7 @@
       "title": "New devices found",
       "dismiss": "Dismiss",
       "adopt": "Adopt"
-    },
-    "connection": "Connection"
+    }
   },
   "ai": {
     "addProfile": "Add profile",

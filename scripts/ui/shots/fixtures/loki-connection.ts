@@ -1,6 +1,7 @@
 /**
- * Loki as a connection integration: its page (`/integrations/loki-logging`) holds the
- * connection settings and no device list; the Logging page links to it. Invented data.
+ * Loki's connection on the Logging page: an `integration-instances` record edited in the
+ * destination's Settings section, with the password as a "set" view. The Integrations page lists
+ * only device-bringing integrations, never Loki. Invented data.
  */
 import { defineFixtures } from './_define'
 
@@ -11,12 +12,13 @@ const FORM = {
     {
       id: 'loki-logging',
       title: 'Loki',
+      description: 'Ship this node’s logs to a Grafana Loki instance.',
       columns: 2,
       fields: [
-        { type: 'text', key: 'url', label: 'Loki URL', value: 'http://loki.example.com:3100' },
-        { type: 'text', key: 'job', label: 'Job label', value: 'camstack' },
-        { type: 'text', key: 'username', label: 'Username', value: 'camstack' },
-        { type: 'password', key: 'password', label: 'Password', value: '' },
+        { type: 'text', key: 'url', label: 'Loki URL', default: '' },
+        { type: 'text', key: 'job', label: 'Job label', default: 'camstack' },
+        { type: 'text', key: 'username', label: 'Username', default: '' },
+        { type: 'password', key: 'password', label: 'Password' },
       ],
     },
   ],
@@ -24,41 +26,29 @@ const FORM = {
 
 export default defineFixtures({
   area: 'loki-connection',
-  description: 'Loki as a connection integration, plus the Logging destinations list',
+  description: 'Loki connection record on the Logging page; the Integrations list without it',
   handlers: {
-    'integrations.list': [
-      { id: 'int_0007', addonId: ADDON, name: 'Loki', enabled: true, processState: 'running' },
-    ],
-    'integrations.get': {
-      id: 'int_0007',
-      addonId: ADDON,
-      name: 'Loki',
-      enabled: true,
-      processState: 'running',
-    },
-    'integrations.getAvailableTypes': [
+    'integrations.list': [],
+    'integrations.getAvailableTypes': [],
+    'integrationInstances.describe': { instanceMode: 'single', kind: 'destination', canTest: true },
+    'integrationInstances.instanceFormSchema': FORM,
+    'integrationInstances.listInstances': [
       {
-        addonId: ADDON,
-        name: 'Loki Logging',
-        description: 'Ship logs to a Grafana Loki instance',
-        iconUrl: null,
-        color: 'primary',
-        instanceMode: 'unique',
-        mode: 'standalone',
-        discoveryMode: 'manual',
-        kind: 'connection',
-        brokerKind: null,
-        supportsLocationImport: false,
-        canTest: true,
-        canAdd: true,
-        existingInstances: ['int_0007'],
+        id: 'int_0007',
+        name: 'Loki',
+        configured: true,
+        formValues: {
+          url: 'http://loki.example.com:3100',
+          job: 'camstack',
+          username: 'camstack',
+          password: { $secret: 'ref', v: 1, set: true },
+        },
       },
     ],
-    'integrations.getSettings': { url: 'http://loki.example.com:3100' },
-    'addonSettings.getIntegrationFormSchema': FORM,
     'deviceManager.listAll': [],
-    'addons.listCapabilityProviders': [
-      { addonId: ADDON, capName: 'log-destination', isActive: true },
-    ],
+    'addons.listCapabilityProviders': (i: { capName: string }) =>
+      i.capName === 'log-destination' || i.capName === 'integration-instances'
+        ? [{ addonId: ADDON, capName: i.capName, isActive: true }]
+        : [],
   },
 })

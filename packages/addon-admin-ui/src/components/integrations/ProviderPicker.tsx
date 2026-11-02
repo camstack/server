@@ -13,19 +13,13 @@ import { IntegrationCard, IntegrationCardGrid } from './integration-card'
 import { IntegrationSection } from './integration-section'
 import { shouldAutofocusSearch } from './search-autofocus'
 
-/**
- * What an available type is: an adoption addon, a device provider, or a connection only
- * (a record the addon keeps, no devices — e.g. a log destination).
- */
-export type IntegrationKind = 'device-adoption' | 'device-provider' | 'connection'
-
 interface ProviderPickerProps {
   onSelect: (
     addonId: string,
     instanceMode: string,
     discoveryMode: string,
     displayName: string,
-    kind: IntegrationKind,
+    kind: 'device-adoption' | 'device-provider',
     brokerKind: string | null,
     mode: 'standalone' | 'account' | 'broker',
     /** Whether this integration declares a pre-creation connection test. */

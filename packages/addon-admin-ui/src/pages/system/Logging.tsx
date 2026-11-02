@@ -6,7 +6,9 @@
  * Enable/Disable, Restart, the schema settings and the activity stream all come
  * for free. Each destination's own configuration — Winston's level and
  * retention — is its `globalSettingsSchema()`, rendered
- * by the base's Settings section. Nothing about a destination is hard-coded here.
+ * by the base's Settings section. A destination that holds a connection as an
+ * `integration-instances` record (Loki's URL, credentials and labels) renders that record's
+ * form there instead. Nothing about a destination is hard-coded here.
  *
  * ## Why no `logging` orchestrator capability
  *
@@ -40,20 +42,16 @@
  */
 import { useMemo, type ReactElement } from 'react'
 import { FileText, ScrollText } from 'lucide-react'
-import { Button, useAddonsList, useAddonsListCapabilityProviders } from '@camstack/ui-library'
-import { useNavigate } from 'react-router-dom'
+import { useAddonsList, useAddonsListCapabilityProviders } from '@camstack/ui-library'
 import { AddonIntegrationBody } from '../../components/integration-hub/AddonIntegrationBody'
+import { ConnectionInstanceForm } from '../../components/integration-hub/ConnectionInstanceForm'
 import { IntegrationHub } from '../../components/integration-hub/IntegrationHub'
 import { providerPillState, type IntegrationGroup } from '../../components/integration-hub/types'
 import { buildAddonDisplayNameMap } from '../../lib/addon-display-names'
-import { integrationDetailUrl } from '../../lib/integration-instance-selection'
 import { useTranslation } from 'react-i18next'
 
 const POLL_INTERVAL_MS = 5_000
 const CAPABILITY = 'log-destination'
-
-/** Destinations whose connection is an integration instance: their settings live on its page. */
-const CONNECTION_DESTINATIONS: ReadonlySet<string> = new Set(['loki-logging'])
 
 /**
  * What each builtin destination does, in one line. Keyed by addon id and used only
@@ -76,10 +74,19 @@ interface LogDestinationRow {
 
 export function LoggingPage(): ReactElement {
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const providersQuery = useAddonsListCapabilityProviders(
     { capName: 'log-destination' },
     { refetchInterval: POLL_INTERVAL_MS },
+  )
+  // A destination that keeps its connection as an `integration-instances` record is edited here,
+  // through that cap, not through a settings schema of the addon.
+  const instancesQuery = useAddonsListCapabilityProviders(
+    { capName: 'integration-instances' },
+    { refetchInterval: POLL_INTERVAL_MS },
+  )
+  const instanceAddons = useMemo<ReadonlySet<string>>(
+    () => new Set((instancesQuery.data ?? []).map((p) => p.addonId)),
+    [instancesQuery.data],
   )
   const addonsQuery = useAddonsList(undefined, { refetchInterval: POLL_INTERVAL_MS })
 
@@ -127,23 +134,10 @@ export function LoggingPage(): ReactElement {
             displayName={d.displayName}
             capName={CAPABILITY}
             isActive={d.isActive}
-            {...(CONNECTION_DESTINATIONS.has(d.addonId)
+            {...(instanceAddons.has(d.addonId)
               ? {
                   settingsContent: (
-                    <div className="flex flex-col items-start gap-2">
-                      <p className="text-xs text-foreground-muted">
-                        {t(
-                          'system.logging.connectionLivesOnIntegrations',
-                          'The connection (URL, credentials, labels) is set up on the Integrations page.',
-                        )}
-                      </p>
-                      <Button
-                        variant="secondary"
-                        onClick={() => navigate(integrationDetailUrl(d.addonId))}
-                      >
-                        {t('system.logging.openIntegration', 'Open the integration')}
-                      </Button>
-                    </div>
+                    <ConnectionInstanceForm addonId={d.addonId} displayName={d.displayName} />
                   ),
                 }
               : {})}
@@ -168,7 +162,7 @@ export function LoggingPage(): ReactElement {
         'Every registered log destination. Entries are fanned to all enabled destinations at once — enabling one does not disable another.',
       )}
       groups={groups}
-      isLoading={providersQuery.isLoading}
+      isLoading={providersQuery.isLoading || instancesQuery.isLoading}
       emptyTitle={t('system.logging.noLogDestinationsRegistered', 'No log destinations registered')}
       emptyDescription={t(
         'system.logging.thisShouldNotHappenThe',

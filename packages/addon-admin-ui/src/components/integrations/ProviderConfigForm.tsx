@@ -5,53 +5,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ConfigUISchema } from '../../types/config-ui'
 import { FormBuilder } from '../form-builder/FormBuilder'
-
-/**
- * The four answers a pre-creation test can give. `validated` and `rejected` are
- * things the remote actually said; `inconclusive` and `unsupported` are things
- * nobody said, and they must NOT render as either a tick or a failure — the
- * operator has to be able to tell "your password is wrong" from "we never got
- * to ask".
- */
-type TestStatus = 'validated' | 'rejected' | 'inconclusive' | 'unsupported'
-
-interface TestResultView {
-  readonly status: TestStatus
-  readonly error?: string
-  readonly detail?: string
-}
-
-/** Older servers answer with `success` only; treat that as the binary it was. */
-function toView(result: {
-  success: boolean
-  error?: string
-  status?: string
-  detail?: string
-}): TestResultView {
-  const status: TestStatus =
-    result.status === 'validated' ||
-    result.status === 'rejected' ||
-    result.status === 'inconclusive' ||
-    result.status === 'unsupported'
-      ? result.status
-      : result.success
-        ? 'validated'
-        : 'rejected'
-  return {
-    status,
-    ...(result.error !== undefined ? { error: result.error } : {}),
-    ...(result.detail !== undefined ? { detail: result.detail } : {}),
-  }
-}
-
-const TONE: Record<TestStatus, string> = {
-  validated: 'border-success/30 bg-success/5 text-success',
-  rejected: 'border-danger/30 bg-danger/5 text-danger',
-  // Deliberately NOT red: nothing failed. A neutral/attention tone, so
-  // "could not check" never reads as "wrong password".
-  inconclusive: 'border-warning/30 bg-warning/5 text-warning',
-  unsupported: 'border-border bg-surface text-foreground-subtle',
-}
+import { TestVerdictBanner, toTestVerdict, type TestVerdict } from './connection-test-verdict'
 
 interface ProviderConfigFormProps {
   addonId: string
@@ -102,10 +56,10 @@ export function ProviderConfigForm({
   const { t } = useTranslation()
   const [name, setName] = useState(initialName ?? '')
   const [config, setConfig] = useState<Record<string, unknown>>(initialConfig ?? {})
-  const [testResult, setTestResult] = useState<TestResultView | null>(null)
+  const [testResult, setTestResult] = useState<TestVerdict | null>(null)
 
   const testMutation = useIntegrationsTestConnection({
-    onSuccess: (result) => setTestResult(toView(result)),
+    onSuccess: (result) => setTestResult(toTestVerdict(result)),
     // A transport failure of the CALL is not a verdict on the credentials.
     onError: (err) => setTestResult({ status: 'inconclusive', error: String(err) }),
   })
@@ -115,28 +69,6 @@ export function ProviderConfigForm({
   const connectionValidated = !canTest || testResult?.status === 'validated'
   const nameMissing = !hideName && name.trim().length === 0
   const canGoNext = !nameMissing && connectionValidated
-
-  const message = (view: TestResultView): string => {
-    switch (view.status) {
-      case 'validated':
-        return view.detail
-          ? `${t('integrations.connectionSuccess')} — ${view.detail}`
-          : t('integrations.connectionSuccess')
-      case 'rejected':
-        return `${t('integrations.errorPrefix')} ${view.error ?? ''}`
-      case 'inconclusive':
-        return `${t('integrations.connectionInconclusive', {
-          defaultValue: 'Could not be checked:',
-        })} ${view.error ?? ''}`
-      case 'unsupported':
-        return (
-          view.error ??
-          t('integrations.connectionUntestable', {
-            defaultValue: 'This integration cannot be tested before it is created.',
-          })
-        )
-    }
-  }
 
   return (
     <div className="space-y-4">
@@ -209,11 +141,7 @@ export function ProviderConfigForm({
         />
       )}
 
-      {testResult && (
-        <div className={`rounded-lg border px-3 py-2 text-xs ${TONE[testResult.status]}`}>
-          {message(testResult)}
-        </div>
-      )}
+      {testResult && <TestVerdictBanner verdict={testResult} />}
 
       <div className="flex items-center justify-between pt-2">
         <Button

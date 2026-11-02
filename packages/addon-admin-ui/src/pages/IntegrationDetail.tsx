@@ -159,12 +159,6 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
     // kind and this keeps their flow working.
     return entry?.kind === 'device-adoption' ? 'device-adoption' : 'device-provider'
   }, [availableTypes, integration?.addonId, typesReady])
-  // A connection holds settings only: no devices to list, scan or add.
-  const isConnection = useMemo(
-    () =>
-      (availableTypes ?? []).find((a) => a.addonId === integration?.addonId)?.kind === 'connection',
-    [availableTypes, integration?.addonId],
-  )
   // Whether THIS integration's provider supports a network scan — gates the
   // per-integration "Scan network" button (with the extra-param form).
   const { data: discoveryProvidersData } = useDeviceManagerDiscoveryProviders({})
@@ -489,9 +483,7 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
           <div className="min-w-0">
             <h1 className="text-lg font-semibold text-foreground truncate">{addonTitle}</h1>
             <p className="text-[11px] text-foreground-subtle mt-0.5 truncate">
-              {isConnection
-                ? t('integrations.connection', 'Connection')
-                : `${String(topLevelCountLabel)} ${t('integrations.devices')}`}
+              {topLevelCountLabel} {t('integrations.devices')}
             </p>
           </div>
         </div>
@@ -499,7 +491,7 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
           {/* Add-device — same primary header button as the Integrations list
               page. Routes to the adopt surface by the addon's declared cap kind
               (see `integrationKind`); disabled until the kind resolves. */}
-          {canScan && !isConnection && (
+          {canScan && (
             <Button
               variant="unstyled"
               onClick={() => setShowScan(true)}
@@ -513,7 +505,7 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
               {t('integrationDetail.scanNetwork', 'Scan network')}
             </Button>
           )}
-          {!isFixed && !isConnection && (
+          {!isFixed && (
             <Button
               variant="unstyled"
               onClick={() => {
@@ -565,8 +557,8 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
               integrations have no integration-level config; connection lives
               per-device). Shown for `account`/`broker` when the addon has a
               settings schema or is a device-adoption (broker-backed) flow. */}
-          {(isConnection || integrationMode !== 'standalone') &&
-            (hasConfig || isConnection || integrationKind === 'device-adoption') && (
+          {integrationMode !== 'standalone' &&
+            (hasConfig || integrationKind === 'device-adoption') && (
               <Button
                 variant="unstyled"
                 onClick={() => setShowConfig(true)}
@@ -676,35 +668,33 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
           `forceIntegrationId` so the integration-chip group is hidden. URL
           scope is 'root' because this IS the root view for the page (no
           nesting). */}
-      {!isConnection && (
-        <DeviceList
-          context="integration-detail"
-          devices={deviceList}
-          trpc={system.trpcClient}
-          integrationOf={integrationOf}
-          forceIntegrationId={integrationId}
-          urlScope="root"
-          lsKey={`integration-detail:${integration.addonId}`}
-          resolveIntegrationIcon={deviceIntegrationIcon}
-          resolveParent={resolveParent}
-          onNavigate={onDeviceNavigate}
-          batchActions={{
-            remove: removeMutation.mutate,
-            disable: disableMutation.mutate,
-            enable: enableMutation.mutate,
-          }}
-          // Built-in confirmed per-row delete (table feature). The table renders
-          // the red trash + the centered "Delete device?" confirm itself; we only
-          // declare the destructive action. Replaces the former renderRowAction +
-          // ad-hoc confirm stopgap.
-          // A fixed integration's devices belong to the addon that declared them:
-          // removing one leaves a hub that recreates it on the next boot, which
-          // reads as a bug rather than as the refusal it is.
-          {...(isFixed
-            ? {}
-            : { onDeleteDevice: (d: { id: number }) => removeMutation.mutate({ deviceId: d.id }) })}
-        />
-      )}
+      <DeviceList
+        context="integration-detail"
+        devices={deviceList}
+        trpc={system.trpcClient}
+        integrationOf={integrationOf}
+        forceIntegrationId={integrationId}
+        urlScope="root"
+        lsKey={`integration-detail:${integration.addonId}`}
+        resolveIntegrationIcon={deviceIntegrationIcon}
+        resolveParent={resolveParent}
+        onNavigate={onDeviceNavigate}
+        batchActions={{
+          remove: removeMutation.mutate,
+          disable: disableMutation.mutate,
+          enable: enableMutation.mutate,
+        }}
+        // Built-in confirmed per-row delete (table feature). The table renders
+        // the red trash + the centered "Delete device?" confirm itself; we only
+        // declare the destructive action. Replaces the former renderRowAction +
+        // ad-hoc confirm stopgap.
+        // A fixed integration's devices belong to the addon that declared them:
+        // removing one leaves a hub that recreates it on the next boot, which
+        // reads as a bug rather than as the refusal it is.
+        {...(isFixed
+          ? {}
+          : { onDeleteDevice: (d: { id: number }) => removeMutation.mutate({ deviceId: d.id }) })}
+      />
 
       {showAddDevice && integrationId && isMatter && !adoptAfterCommission && (
         <AddMatterDeviceDialog
@@ -750,7 +740,7 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
           integrationId={integrationId}
           addonId={integration.addonId}
           name={integration.name}
-          kind={isConnection ? 'connection' : integrationKind}
+          kind={integrationKind}
           mode={integrationMode}
           brokerKind={integrationBrokerKind}
           canTest={integrationCanTest}

@@ -30,7 +30,7 @@ import { BrokerStep } from './BrokerStep'
 import { DeviceDiscoveryStep } from './DeviceDiscoveryStep'
 import { ProviderConfigForm } from './ProviderConfigForm'
 import type { IntegrationFormSeed } from './integration-setup-seed'
-import { type IntegrationKind, ProviderPicker } from './ProviderPicker'
+import { ProviderPicker } from './ProviderPicker'
 import { ScanNetworkModal } from './ScanNetworkModal'
 
 /**
@@ -91,7 +91,6 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
 
   const [step, setStep] = useState<WizardStep>('picker')
   const [selectedAddonId, setSelectedAddonId] = useState<string | null>(null)
-  const [selectedKind, setSelectedKind] = useState<IntegrationKind | null>(null)
   const [createdProviderId, setCreatedProviderId] = useState<string | null>(null)
   const [discoveryMode, setDiscoveryMode] = useState<string>('manual')
   // Broker kind to create/link for a `device-adoption` addon (Approach A).
@@ -202,7 +201,7 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
     _instanceMode: string,
     providerDiscoveryMode: string,
     displayName: string,
-    kind: IntegrationKind,
+    _kind: 'device-adoption' | 'device-provider',
     providerBrokerKind: string | null,
     mode: 'standalone' | 'account' | 'broker',
     providerCanTest: boolean,
@@ -210,7 +209,6 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
     if (addProviderMutation.isPending) return
 
     setSelectedAddonId(addonId)
-    setSelectedKind(kind)
     setCanTest(providerCanTest)
     setDiscoveryMode(providerDiscoveryMode)
     setPendingName(displayName)
@@ -232,13 +230,6 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
     // This REVISES the earlier "every device-provider goes through the config
     // step" behaviour: standalone SKIPS config and goes straight to devices;
     // only account keeps the config step.
-    // A connection holds only settings: it is named and configured like an account, and it
-    // has no devices to discover or adopt.
-    if (kind === 'connection') {
-      setStep('config')
-      return
-    }
-
     if (mode === 'broker') {
       // A broker integration MUST carry a broker kind it routes through.
       // Without it the broker step has no list filter / form schema to render
@@ -299,10 +290,6 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
       })
       setCreatedProviderId(result.id)
       setCreatedIntegrationId(result.id)
-      if (selectedKind === 'connection') {
-        finish(result.id)
-        return
-      }
       if (discoveryMode === 'auto' || discoveryMode === 'both') {
         setStep('discovery')
       } else {
@@ -366,7 +353,6 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
   function resetState() {
     setStep('picker')
     setSelectedAddonId(null)
-    setSelectedKind(null)
     setCreatedProviderId(null)
     setDiscoveryMode('manual')
     setBrokerKind(null)
