@@ -19,6 +19,35 @@ export interface BrokerConnectionDetails {
   readonly clientIdPrefix?: string
 }
 
+/** What the session reports about its broker; the addon maps it onto integrations. */
+export interface MqttHaBrokerHealthSink {
+  /** The session cannot reach its broker (no config, refused, unreachable). */
+  failed(brokerId: string, fault: MqttHaBrokerFault): void
+  /** The session connected. */
+  ok(brokerId: string): void
+}
+
+export type MqttHaBrokerFaultKind = 'config-unavailable' | 'auth-refused' | 'unreachable'
+
+export class MqttHaBrokerFault extends Error {
+  constructor(
+    readonly kind: MqttHaBrokerFaultKind,
+    message: string,
+  ) {
+    super(message)
+    this.name = 'MqttHaBrokerFault'
+  }
+}
+
+const AUTH_REFUSAL_CODES: ReadonlySet<number> = new Set([4, 5, 134, 135])
+const AUTH_REFUSAL_TEXT =
+  /not authori[sz]ed|bad user ?name|bad user name or password|identifier rejected/i
+
+function isAuthRefusal(err: Error): boolean {
+  const code = 'code' in err && typeof err.code === 'number' ? err.code : null
+  return (code !== null && AUTH_REFUSAL_CODES.has(code)) || AUTH_REFUSAL_TEXT.test(err.message)
+}
+
 export type GetBrokerConnection = (brokerId: string) => Promise<BrokerConnectionDetails | null>
 
 export interface MqttHaBrokerSessionDeps {
@@ -28,6 +57,7 @@ export interface MqttHaBrokerSessionDeps {
   readonly stateGateway: MqttHaStateGateway
   readonly logger: IScopedLogger
   readonly addonId: string
+  readonly health: MqttHaBrokerHealthSink
 }
 
 /**
@@ -41,17 +71,29 @@ export class MqttHaBrokerSession {
   /** topic → the entities listening to it (a JSON state topic feeds many). */
   private readonly topicEntities = new Map<string, Set<string>>()
   private running = false
+  private connecting: Promise<void> | null = null
 
   constructor(private readonly deps: MqttHaBrokerSessionDeps) {}
+
+  /** Running but with no client: the broker config was unavailable. */
+  get isIdle(): boolean {
+    return this.running && this.client === null && this.connecting === null
+  }
 
   get isConnected(): boolean {
     return this.client?.connected === true
   }
 
+  /** Idempotent: starts the session, or re-attempts the connect of an idle one. */
   async start(): Promise<void> {
-    if (this.running) return
     this.running = true
-    await this.connect()
+    if (this.client !== null) return
+    if (this.connecting === null) {
+      this.connecting = this.connect().finally(() => {
+        this.connecting = null
+      })
+    }
+    await this.connecting
   }
 
   async stop(): Promise<void> {
@@ -71,10 +113,16 @@ export class MqttHaBrokerSession {
 
   private async connect(): Promise<void> {
     const details = await this.deps.getConnection(this.deps.brokerId)
+    if (!this.running) return
     if (details === null) {
-      this.deps.logger.warn('mqtt-ha: broker config unavailable — session idle', {
-        meta: { brokerId: this.deps.brokerId },
-      })
+      this.deps.logger.warn(
+        'mqtt-ha: broker config unavailable — session idle until the broker provider is ready',
+        { meta: { brokerId: this.deps.brokerId } },
+      )
+      this.deps.health.failed(
+        this.deps.brokerId,
+        new MqttHaBrokerFault('config-unavailable', 'broker configuration unavailable'),
+      )
       return
     }
 
@@ -93,6 +141,7 @@ export class MqttHaBrokerSession {
       this.deps.logger.info('mqtt-ha: MQTT connected', {
         meta: { brokerId: this.deps.brokerId },
       })
+      this.deps.health.ok(this.deps.brokerId)
       client.subscribe(DISCOVERY_SUBSCRIBE, { qos: 0 }, (err) => {
         if (err !== undefined && err !== null) {
           this.deps.logger.warn('mqtt-ha: discovery subscribe failed', {
@@ -114,6 +163,10 @@ export class MqttHaBrokerSession {
       this.deps.logger.warn('mqtt-ha: MQTT client error', {
         meta: { brokerId: this.deps.brokerId, error: errMsg(err) },
       })
+      this.deps.health.failed(
+        this.deps.brokerId,
+        new MqttHaBrokerFault(isAuthRefusal(err) ? 'auth-refused' : 'unreachable', errMsg(err)),
+      )
     })
 
     client.on('close', () => {
@@ -224,6 +277,7 @@ export interface MqttHaBrokerSessionManagerDeps {
   readonly store: MqttHaDiscoveryStore
   readonly stateGateway: MqttHaStateGateway
   readonly logger: IScopedLogger
+  readonly health: MqttHaBrokerHealthSink
 }
 
 export class MqttHaBrokerSessionManager {
@@ -236,9 +290,21 @@ export class MqttHaBrokerSessionManager {
     if (session === undefined) {
       session = new MqttHaBrokerSession({ ...this.deps, brokerId })
       this.sessions.set(brokerId, session)
+    }
+    // A session whose connect failed is idle, not done: ask it to connect again.
+    await session.start()
+    return session
+  }
+
+  /** The broker provider became ready: every idle session connects now. */
+  async retryIdle(): Promise<void> {
+    for (const [brokerId, session] of this.sessions) {
+      if (!session.isIdle) continue
+      this.deps.logger.info('mqtt-ha: broker provider ready — reconnecting idle session', {
+        meta: { brokerId },
+      })
       await session.start()
     }
-    return session
   }
 
   getSession(brokerId: string): MqttHaBrokerSession | null {

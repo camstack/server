@@ -20,7 +20,12 @@ import type { Alert, AlertSeverity } from '../capabilities/alerts.cap.js'
 import type { IScopedLogger } from '../interfaces/logging.js'
 
 /** Why the session ended. `kicked` = the same account signed in elsewhere. */
-export type SessionLossReason = 'kicked' | 'auth-rejected' | 'token-expired' | 'connection-lost'
+export type SessionLossReason =
+  | 'kicked'
+  | 'auth-rejected'
+  | 'token-expired'
+  | 'connection-lost'
+  | 'broker-unavailable'
 
 /** What an alert's action looks like (the `Alert.action` shape). */
 export interface SessionAlertAction {
@@ -47,6 +52,7 @@ const REASON_TEXT: Readonly<Record<SessionLossReason, string>> = {
   'auth-rejected': 'the cloud rejected the sign-in (check the credentials)',
   'token-expired': 'the session token expired and could not be renewed',
   'connection-lost': 'the connection to the cloud was lost',
+  'broker-unavailable': 'the broker is unreachable or its configuration is missing',
 }
 
 export function sessionLostAlertId(kind: string, integrationId: string): string {

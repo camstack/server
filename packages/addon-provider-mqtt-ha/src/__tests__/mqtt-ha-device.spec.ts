@@ -162,6 +162,13 @@ describe('MqttHaDevice on a zigbee2mqtt plug', () => {
     expect(h.state().getCapState('switch')).toMatchObject({ on: true })
   })
 
+  it('reads a switch that never reported as unknown, never as off (D393)', async () => {
+    mqttHaStateGateway.clearBroker(BROKER)
+    const h = build(DeviceType.Switch, configOf(plugMessages()))
+    await h.device.onActivate()
+    expect(h.state().getCapState('switch')).toMatchObject({ on: null, lastChangedAt: 0 })
+  })
+
   it('publishes the switch command on its command topic', async () => {
     const h = build(DeviceType.Switch, configOf(plugMessages()))
     await h.device.onActivate()

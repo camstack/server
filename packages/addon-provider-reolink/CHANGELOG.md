@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Compile against the switch status where a never-reported state reads as unknown
+
 ## [1.2.220] - 2026-11-02
 
 ### Changed

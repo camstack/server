@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A media player can step its volume and channel (volumeUp, volumeDown, channelUp, channelDown) and be turned on or off, and a composition may serve it through the remote
+- A switch that never reported its state reads as unknown (on: null) instead of off; session-lost alerts gain a broker-unavailable reason
 
 ## [1.2.484] - 2026-11-02
 

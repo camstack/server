@@ -4718,12 +4718,12 @@
 
 ### `switch` → `switch.*`
 
-- **Source:** `packages/types/src/capabilities/switch.cap.ts:20`
+- **Source:** `packages/types/src/capabilities/switch.cap.ts:24`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `switch, siren, light, fan, heater`
 - **Archetypes:** status(command-driven) · runtimeState · settings(1 binding(s))
 - **Provider interface:** `ISwitchProvider`
 - **runtimeState:** `SwitchStatusSchema`
-- **Events:** `onStateChanged` → `{ deviceId: number; on: boolean; lastChangedAt: number }`
+- **Events:** `onStateChanged` → `{ deviceId: number; on: boolean \| null; lastChangedAt: number }`
 
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|

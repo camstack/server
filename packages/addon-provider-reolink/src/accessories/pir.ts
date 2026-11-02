@@ -366,7 +366,7 @@ export class PirAccessory extends BaseDevice<typeof pirAccessorySchema> {
     await this.config.setAll(patch)
     if ('pirSensitive' in patch || 'pirReduceAlarm' in patch || 'pirIntervalS' in patch) {
       try {
-        await this.pushConfigToFirmware(this.switchView().on)
+        await this.pushConfigToFirmware(this.switchView().on === true)
       } catch (err) {
         this.ctx.logger.warn('pir firmware push failed', {
           meta: { error: err instanceof Error ? err.message : String(err) },

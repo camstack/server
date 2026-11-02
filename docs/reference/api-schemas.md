@@ -6790,7 +6790,7 @@ Enum: `"main" \| "sub" \| "ext"`
 
 ### `SwitchStatusSchema`
 
-- `on`: `boolean`
+- `on`: `boolean \| null`
 - `lastChangedAt`: `number`
 
 ### `SystemHeldSecretNameSchema`

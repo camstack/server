@@ -532,7 +532,13 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
   }
 
   private registerSwitch(): void {
-    const COLD = { on: false, lastChangedAt: 0 }
+    // `on: null` = never reported. A slice restored from an older run that was
+    // seeded `false` with no change time is that same "never reported".
+    const COLD = { on: null, lastChangedAt: 0 }
+    const restored = this.getCapSlice(switchCapability)
+    if (restored !== null && restored.on === false && restored.lastChangedAt === 0) {
+      this.setCapSlice(switchCapability, COLD)
+    }
     const provider: InferNativeProvider<typeof switchCapability> = {
       getStatus: async () => this.getCapSlice(switchCapability) ?? COLD,
       setState: async ({ on }) => {

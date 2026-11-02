@@ -18,7 +18,9 @@ import { MqttHaDiscoveryStore } from './mqtt-ha-discovery-store.js'
 import {
   MqttHaBrokerSessionManager,
   type BrokerConnectionDetails,
+  type MqttHaBrokerHealthSink,
 } from './mqtt-ha-broker-session.js'
+import { mqttHaSession } from './mqtt-ha-session-health.js'
 import { mqttHaStateGateway } from './mqtt-ha-state-gateway.js'
 import { MqttHaDevice } from './devices/mqtt-ha-device.js'
 import { MqttHaContainerDevice } from './devices/mqtt-ha-container-device.js'
@@ -70,7 +72,12 @@ export class MqttHaProviderAddon extends BaseDeviceProvider<MqttHaProviderConfig
   protected override async onInitialize(): Promise<ProviderRegistration[]> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
 
+    mqttHaSession.bind({
+      logger: this.ctx.logger,
+      getAlerts: () => this.ctx.api.alerts,
+    })
     this.sessionManager = new MqttHaBrokerSessionManager({
+      health: this.brokerHealthSink(),
       addonId: this.ctx.id,
       store: this.discoveryStore,
       stateGateway: mqttHaStateGateway,
@@ -84,6 +91,19 @@ export class MqttHaProviderAddon extends BaseDeviceProvider<MqttHaProviderConfig
       await session.publish(topic, payload)
     })
 
+    // Registry-driven: a boot before the `mqtt-broker` provider leaves sessions
+    // idle; its ready-state event connects them (no timer, no polling).
+    this.watchCapability(MQTT_BROKER_ADDON_ID, {
+      onReady: () => {
+        void this.requireSessionManager()
+          .retryIdle()
+          .catch((err: unknown) => {
+            this.ctx.logger.warn('mqtt-ha: reconnect of idle sessions failed', {
+              meta: { error: errMsg(err) },
+            })
+          })
+      },
+    })
     await this.reconcileIntegrationsToBrokers()
     this.subscribeIntegrationLifecycle()
 
@@ -103,6 +123,7 @@ export class MqttHaProviderAddon extends BaseDeviceProvider<MqttHaProviderConfig
   protected override async onShutdown(): Promise<void> {
     await this.sessionManager?.shutdownAll()
     this.sessionManager = null
+    mqttHaSession.unbind()
     await super.onShutdown()
   }
 
@@ -179,14 +200,34 @@ export class MqttHaProviderAddon extends BaseDeviceProvider<MqttHaProviderConfig
     }
   }
 
+  /** A broker's health is its linked integrations' health: one alert per integration. */
+  private brokerHealthSink(): MqttHaBrokerHealthSink {
+    const integrationsOf = (brokerId: string): string[] =>
+      [...this.integrationToMqttBroker].filter(([, b]) => b === brokerId).map(([id]) => id)
+    return {
+      failed: (brokerId, fault) => {
+        for (const id of integrationsOf(brokerId)) mqttHaSession.failure(id, fault)
+      },
+      ok: (brokerId) => {
+        for (const id of integrationsOf(brokerId)) void mqttHaSession.ok(id)
+      },
+    }
+  }
+
   private async reconcileIntegrationsToBrokers(): Promise<void> {
     try {
       const all = await this.ctx.api.integrations.list.query()
       const mine = all.filter((i) => i.addonId === this.ctx.id)
+      const previous = [...this.integrationToMqttBroker.keys()]
       this.integrationToMqttBroker.clear()
+      for (const id of previous) {
+        if (!mine.some((i) => i.id === id)) await mqttHaSession.forget(id)
+      }
 
       for (const integration of mine) {
-        const settings = await this.ctx.api.integrations.getSettings.query({ id: integration.id })
+        const settings = await this.ctx.api.integrations.getSettings.query({
+          id: integration.id,
+        })
         const mqttBrokerId =
           typeof settings['mqttBrokerId'] === 'string'
             ? settings['mqttBrokerId']
@@ -195,6 +236,7 @@ export class MqttHaProviderAddon extends BaseDeviceProvider<MqttHaProviderConfig
               : undefined
         if (mqttBrokerId === undefined) continue
         this.integrationToMqttBroker.set(integration.id, mqttBrokerId)
+        mqttHaSession.register(integration.id, integration.name)
         await this.requireSessionManager().ensureSession(mqttBrokerId)
       }
     } catch (err) {
@@ -271,7 +313,9 @@ export class MqttHaProviderAddon extends BaseDeviceProvider<MqttHaProviderConfig
       getMqttBrokerIdForIntegration: async (integrationId) => {
         const fromMap = this.integrationToMqttBroker.get(integrationId)
         if (fromMap !== undefined) return fromMap
-        const settings = await this.ctx.api.integrations.getSettings.query({ id: integrationId })
+        const settings = await this.ctx.api.integrations.getSettings.query({
+          id: integrationId,
+        })
         const mqttBrokerId =
           typeof settings['mqttBrokerId'] === 'string'
             ? settings['mqttBrokerId']

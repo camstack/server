@@ -10,7 +10,11 @@ import { DeviceType } from '../device/device-type.js'
  * `getSettingsUISchema()` surface.
  */
 export const SwitchStatusSchema = z.object({
-  on: z.boolean().meta({ label: 'On' }),
+  /**
+   * `null` = the device has never reported its state (a measurement that
+   * has not happened is unknown, never `false`).
+   */
+  on: z.boolean().nullable().meta({ label: 'On' }),
   /** Ms epoch of the last state change. Useful for UI "X minutes ago". */
   lastChangedAt: z.number(),
 })
@@ -41,7 +45,7 @@ export const switchCapability = {
     onStateChanged: {
       data: z.object({
         deviceId: z.number(),
-        on: z.boolean(),
+        on: z.boolean().nullable(),
         lastChangedAt: z.number(),
       }),
     },
