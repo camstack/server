@@ -10,7 +10,10 @@ import type { AdapterDirectiveContext } from '../endpoints/adapters/types.js'
 import { buildGenericDeviceEndpoint } from '../endpoints/generic-device.js'
 import { validateAlexaEndpoint } from '../endpoints/validate-endpoint.js'
 import type { DirectiveRouterDeps } from '../directive-router.js'
-import { handleMediaPlayerDirective } from '../handlers/media-player-controller.js'
+import {
+  handleMediaPlayerDirective,
+  STEP_ANSWER_BUDGET_MS,
+} from '../handlers/media-player-controller.js'
 import { genericPropertiesFor } from '../handlers/generic-state.js'
 import { quietLogger } from './helpers/fake-device-api.js'
 
@@ -271,5 +274,56 @@ describe('media-player directives', () => {
     expect(fake.mediaPlayer.turnOn.mutate).toHaveBeenCalledWith({
       deviceId: 5478,
     })
+  })
+})
+
+describe('media-player answers assert only what is read back', () => {
+  const props = (answer: unknown) =>
+    (answer as { context?: { properties: Array<{ name: string }> } }).context?.properties ?? []
+
+  it('an assumed source gets no powerState after turnOn', async () => {
+    const fake = api()
+    fake.deviceState.getCapSlice.query.mockResolvedValue(slice({ state: 'on' }))
+    const answer = await run('Alexa.PowerController/TurnOn', {}, fake)
+    expect(answer.event.header.name).toBe('Response')
+    expect(props(answer)).toEqual([])
+  })
+
+  it('a reported source gets the re-read powerState', async () => {
+    const fake = api()
+    fake.deviceState.getCapSlice.query.mockResolvedValue(
+      slice({ state: 'on', stateSource: 'reported', assumedFields: [] }),
+    )
+    const answer = await run('Alexa.PowerController/TurnOn', {}, fake)
+    expect(props(answer).map((p) => p.name)).toEqual(['powerState'])
+  })
+
+  it('an assumed mute is not asserted either', async () => {
+    const fake = api()
+    fake.deviceState.getCapSlice.query.mockResolvedValue(slice({ state: 'on', isMuted: true }))
+    const answer = await run('Alexa.Speaker/SetMute', { mute: true }, fake)
+    expect(props(answer)).toEqual([])
+  })
+})
+
+describe('a long train run does not hold the Alexa answer', () => {
+  it('answers after the budget while the sends continue, and names a late failure', async () => {
+    vi.useFakeTimers()
+    try {
+      const fake = api()
+      let fail: (e: Error) => void = () => undefined
+      fake.mediaPlayer.volumeUp.mutate.mockReturnValue(
+        new Promise<void>((_, reject) => {
+          fail = reject
+        }),
+      )
+      const pending = run('Alexa.StepSpeaker/AdjustVolume', { volumeSteps: 50 }, fake)
+      await vi.advanceTimersByTimeAsync(STEP_ANSWER_BUDGET_MS)
+      expect((await pending).event.header.name).toBe('Response')
+      fail(new Error('board is off'))
+      await vi.advanceTimersByTimeAsync(0)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

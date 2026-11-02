@@ -12,6 +12,7 @@ import { z } from 'zod'
 import {
   CAP_MEDIA_PLAYER,
   inputPairs,
+  mediaPlayerProperties,
   readMediaPlayerSlice,
 } from '../endpoints/adapters/media-player-model.js'
 import type { AdapterDirectiveContext, GenericProperty } from '../endpoints/adapters/types.js'
@@ -81,26 +82,83 @@ export async function claimsMediaPlayerPower(c: AdapterDirectiveContext): Promis
   }
 }
 
+/** How long a step command may run before Alexa is answered anyway (its own budget is ~8 s). */
+export const STEP_ANSWER_BUDGET_MS = 3000
+
+/** The properties a command may assert: only those the player READS back, never an assumption (D393). */
+async function reportedProperties(
+  c: AdapterDirectiveContext,
+  namespace: string,
+): Promise<readonly GenericProperty[]> {
+  const deps = c.deps.mediaPlayerController
+  try {
+    const slice = await deps.ctx.api.deviceState.getCapSlice.query({
+      deviceId: c.deviceId,
+      capName: CAP_MEDIA_PLAYER,
+    })
+    const status = readMediaPlayerSlice(slice)
+    if (status === null || status.stateSource !== 'reported') return []
+    return mediaPlayerProperties(slice).filter((p) => p.namespace === namespace)
+  } catch (err: unknown) {
+    deps.logger.warn('alexa media-player-controller: the state could not be re-read', {
+      tags: { deviceId: c.deviceId },
+      meta: { error: message(err) },
+    })
+    return []
+  }
+}
+
+type Settled = { readonly ok: true } | { readonly ok: false; readonly error: unknown }
+
 async function attempt(
   c: AdapterDirectiveContext,
   what: string,
   run: () => Promise<unknown>,
-  properties: readonly GenericProperty[] = [],
+  options: { readonly namespace?: string; readonly slow?: boolean } = {},
 ): Promise<unknown> {
   const deps = c.deps.mediaPlayerController
-  try {
-    await run()
-  } catch (err: unknown) {
+  const settled: Promise<Settled> = run().then(
+    (): Settled => ({ ok: true }),
+    (error: unknown): Settled => ({ ok: false, error }),
+  )
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const outcome =
+    options.slow === true
+      ? await Promise.race([
+          settled,
+          new Promise<null>((resolve) => {
+            timer = setTimeout(() => resolve(null), STEP_ANSWER_BUDGET_MS)
+          }),
+        ])
+      : await settled
+  if (timer !== undefined) clearTimeout(timer)
+  if (outcome === null) {
+    // Many trains take longer than Alexa waits: answer now, and name a late failure.
+    deps.logger.info(`alexa media-player-controller: ${what} still sending, answered`, {
+      tags: { deviceId: c.deviceId },
+    })
+    void settled.then((late) => {
+      if (!late.ok) {
+        deps.logger.warn(`alexa media-player-controller: ${what} failed after the answer`, {
+          tags: { deviceId: c.deviceId },
+          meta: { error: message(late.error) },
+        })
+      }
+    })
+    return success(c, [])
+  }
+  if (!outcome.ok) {
     deps.logger.warn(`alexa media-player-controller: ${what} failed`, {
       tags: { deviceId: c.deviceId },
-      meta: { error: message(err) },
+      meta: { error: message(outcome.error) },
     })
     return errorEnvelope(c.header, 'ENDPOINT_UNREACHABLE', `the player did not accept ${what}`)
   }
-  deps.logger.info(`alexa media-player-controller: ${what}`, {
-    tags: { deviceId: c.deviceId },
-  })
-  return success(c, properties)
+  deps.logger.info(`alexa media-player-controller: ${what}`, { tags: { deviceId: c.deviceId } })
+  return success(
+    c,
+    options.namespace === undefined ? [] : await reportedProperties(c, options.namespace),
+  )
 }
 
 async function volume(c: AdapterDirectiveContext): Promise<unknown> {
@@ -111,10 +169,14 @@ async function volume(c: AdapterDirectiveContext): Promise<unknown> {
   const steps = Math.min(Math.abs(payload.data.volumeSteps), MEDIA_PLAYER_MAX_STEPS)
   const api = c.deps.mediaPlayerController.ctx.api.mediaPlayer
   const up = payload.data.volumeSteps > 0
-  return attempt(c, `volume ${up ? 'up' : 'down'} ${steps}`, () =>
-    up
-      ? api.volumeUp.mutate({ deviceId: c.deviceId, steps })
-      : api.volumeDown.mutate({ deviceId: c.deviceId, steps }),
+  return attempt(
+    c,
+    `volume ${up ? 'up' : 'down'} ${steps}`,
+    () =>
+      up
+        ? api.volumeUp.mutate({ deviceId: c.deviceId, steps })
+        : api.volumeDown.mutate({ deviceId: c.deviceId, steps }),
+    { slow: true },
   )
 }
 
@@ -126,10 +188,14 @@ async function channel(c: AdapterDirectiveContext): Promise<unknown> {
   const steps = Math.min(Math.abs(payload.data.channelCount), MEDIA_PLAYER_MAX_STEPS)
   const api = c.deps.mediaPlayerController.ctx.api.mediaPlayer
   const up = payload.data.channelCount > 0
-  return attempt(c, `channel ${up ? 'up' : 'down'} ${steps}`, () =>
-    up
-      ? api.channelUp.mutate({ deviceId: c.deviceId, steps })
-      : api.channelDown.mutate({ deviceId: c.deviceId, steps }),
+  return attempt(
+    c,
+    `channel ${up ? 'up' : 'down'} ${steps}`,
+    () =>
+      up
+        ? api.channelUp.mutate({ deviceId: c.deviceId, steps })
+        : api.channelDown.mutate({ deviceId: c.deviceId, steps }),
+    { slow: true },
   )
 }
 
@@ -142,7 +208,7 @@ async function mute(c: AdapterDirectiveContext): Promise<unknown> {
     c,
     `mute ${String(muted)}`,
     () => api.setMute.mutate({ deviceId: c.deviceId, muted }),
-    [{ namespace: 'Alexa.Speaker', name: 'muted', value: muted }],
+    { namespace: 'Alexa.Speaker' },
   )
 }
 
@@ -156,13 +222,7 @@ async function power(c: AdapterDirectiveContext): Promise<unknown> {
       on
         ? api.turnOn.mutate({ deviceId: c.deviceId })
         : api.turnOff.mutate({ deviceId: c.deviceId }),
-    [
-      {
-        namespace: 'Alexa.PowerController',
-        name: 'powerState',
-        value: on ? 'ON' : 'OFF',
-      },
-    ],
+    { namespace: 'Alexa.PowerController' },
   )
 }
 
@@ -219,13 +279,7 @@ async function selectInput(c: AdapterDirectiveContext): Promise<unknown> {
         deviceId: c.deviceId,
         source: chosen,
       }),
-    [
-      {
-        namespace: 'Alexa.InputController',
-        name: 'input',
-        value: payload.data.input,
-      },
-    ],
+    { namespace: 'Alexa.InputController' },
   )
 }
 

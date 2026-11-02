@@ -57,6 +57,8 @@ function world(
     readonly running?: boolean | null
     /** The linked plug: true on, false off, null none / unknown. */
     readonly plug?: boolean | null
+    /** A plug that changes during the test; wins over `plug`. */
+    readonly plugState?: { current: boolean | null }
     readonly assumptions?: { current: RemoteAssumedState | null }
   } = {},
 ) {
@@ -84,7 +86,7 @@ function world(
     isMediaPlayer: async () => options.mediaPlayer ?? true,
     reportedStatus: async () => options.reported ?? null,
     runningState: async () => options.running ?? null,
-    plugOn: async () => options.plug ?? null,
+    plugOn: async () => (options.plugState ? options.plugState.current : (options.plug ?? null)),
     sleep: async (ms) => {
       clock.at += ms
     },
@@ -97,22 +99,43 @@ function world(
     logger: recordingLogger().logger,
     now: () => 5,
   }
-  return { service: new RemoteService(deps), calls, sentAt, stored: () => stored }
+  return {
+    service: new RemoteService(deps),
+    calls,
+    sentAt,
+    stored: () => stored,
+  }
 }
 
 describe('RemoteService.sendCommand', () => {
   it('runs the bound action once by default and repeat times when asked', async () => {
     const w = world(config({ bindings: { volume_up: ir('vol') } }))
-    expect(await w.service.sendCommand({ deviceId: TV, role: 'volume_up', repeat: 1 })).toEqual({
+    expect(
+      await w.service.sendCommand({
+        deviceId: TV,
+        role: 'volume_up',
+        repeat: 1,
+      }),
+    ).toEqual({
       status: 'sent',
       sends: 1,
     })
-    expect(await w.service.sendCommand({ deviceId: TV, role: 'volume_up', repeat: 5 })).toEqual({
+    expect(
+      await w.service.sendCommand({
+        deviceId: TV,
+        role: 'volume_up',
+        repeat: 5,
+      }),
+    ).toEqual({
       status: 'sent',
       sends: 5,
     })
     expect(w.calls).toHaveLength(6)
-    expect(w.calls[0]).toMatchObject({ deviceId: BOARD, cap: 'ir-transmitter', method: 'send' })
+    expect(w.calls[0]).toMatchObject({
+      deviceId: BOARD,
+      cap: 'ir-transmitter',
+      method: 'send',
+    })
   })
 
   it('refuses an unbound role without calling anything', async () => {
@@ -125,9 +148,15 @@ describe('RemoteService.sendCommand', () => {
   })
 
   it('stops at the first failing send and reports the cause', async () => {
-    const w = world(config({ bindings: { volume_up: ir('vol') } }), { failOn: 2 })
+    const w = world(config({ bindings: { volume_up: ir('vol') } }), {
+      failOn: 2,
+    })
     expect(
-      await w.service.sendCommand({ deviceId: TV, role: 'volume_up', repeat: 4 }),
+      await w.service.sendCommand({
+        deviceId: TV,
+        role: 'volume_up',
+        repeat: 4,
+      }),
     ).toMatchObject({
       status: 'refused',
       reason: 'action-failed',
@@ -144,23 +173,40 @@ describe('RemoteService.sendCommand', () => {
       }),
     )
     expect(
-      await w.service.sendCommand({ deviceId: TV, role: customRole('hdmi1'), repeat: 1 }),
+      await w.service.sendCommand({
+        deviceId: TV,
+        role: customRole('hdmi1'),
+        repeat: 1,
+      }),
     ).toMatchObject({ status: 'sent' })
   })
 })
 
 describe('power on a toggle remote', () => {
-  const toggle = config({ bindings: { power: ir('pwr') }, power: { mode: 'toggle' } })
+  const toggle = config({
+    bindings: { power: ir('pwr') },
+    power: { mode: 'toggle' },
+  })
 
   it('sends only when the current state differs from the requested one', async () => {
     const w = world(toggle, { reported: nativeStatus('off') })
-    expect(await w.service.sendMediaCommand({ deviceId: TV, command: 'stop', repeat: 1 })).toEqual({
+    expect(
+      await w.service.sendMediaCommand({
+        deviceId: TV,
+        command: 'stop',
+        repeat: 1,
+      }),
+    ).toEqual({
       status: 'skipped',
       reason: 'already-in-state',
     })
     expect(w.calls).toEqual([])
     expect(
-      await w.service.sendMediaCommand({ deviceId: TV, command: 'play', repeat: 1 }),
+      await w.service.sendMediaCommand({
+        deviceId: TV,
+        command: 'play',
+        repeat: 1,
+      }),
     ).toMatchObject({
       status: 'sent',
     })
@@ -172,12 +218,21 @@ describe('power on a toggle remote', () => {
     await w.service.sendCommand({ deviceId: TV, role: 'power_on', repeat: 1 })
     expect(w.calls).toHaveLength(1)
     // already assumed on: a second power_on sends nothing
-    expect(await w.service.sendCommand({ deviceId: TV, role: 'power_on', repeat: 1 })).toEqual({
+    expect(
+      await w.service.sendCommand({
+        deviceId: TV,
+        role: 'power_on',
+        repeat: 1,
+      }),
+    ).toEqual({
       status: 'skipped',
       reason: 'already-in-state',
     })
     expect(w.calls).toHaveLength(1)
-    expect(await w.service.assumedStatus(TV)).toMatchObject({ state: 'on', stateSource: 'assumed' })
+    expect(await w.service.assumedStatus(TV)).toMatchObject({
+      state: 'on',
+      stateSource: 'assumed',
+    })
     await w.service.sendCommand({ deviceId: TV, role: 'power_off', repeat: 1 })
     expect(w.calls).toHaveLength(2)
     expect(await w.service.assumedStatus(TV)).toMatchObject({ state: 'off' })
@@ -193,7 +248,11 @@ describe('power on a toggle remote', () => {
     const w = world(toggle, { reported: nativeStatus('on') })
     // the source reads `on` and nothing was assumed yet: a power_on is skipped on the reading
     expect(
-      await w.service.sendCommand({ deviceId: TV, role: 'power_on', repeat: 1 }),
+      await w.service.sendCommand({
+        deviceId: TV,
+        role: 'power_on',
+        repeat: 1,
+      }),
     ).toMatchObject({
       status: 'skipped',
     })
@@ -214,17 +273,30 @@ describe('power on a toggle remote', () => {
 })
 
 describe('the power source', () => {
-  const toggle = config({ bindings: { power: ir('pwr') }, power: { mode: 'toggle' } })
+  const toggle = config({
+    bindings: { power: ir('pwr') },
+    power: { mode: 'toggle' },
+  })
 
   it('reads the running-state source before anything else', async () => {
     const on = world(toggle, { running: true })
-    expect(await on.service.sendCommand({ deviceId: TV, role: 'power_on', repeat: 1 })).toEqual({
+    expect(
+      await on.service.sendCommand({
+        deviceId: TV,
+        role: 'power_on',
+        repeat: 1,
+      }),
+    ).toEqual({
       status: 'skipped',
       reason: 'already-in-state',
     })
     const off = world(toggle, { running: false })
     expect(
-      await off.service.sendCommand({ deviceId: TV, role: 'power_on', repeat: 1 }),
+      await off.service.sendCommand({
+        deviceId: TV,
+        role: 'power_on',
+        repeat: 1,
+      }),
     ).toMatchObject({ status: 'sent' })
     expect(off.calls).toHaveLength(1)
   })
@@ -232,10 +304,18 @@ describe('the power source', () => {
   it('a running-state reading outranks a stale assumption', async () => {
     const assumptions = { current: null as RemoteAssumedState | null }
     const first = world(toggle, { assumptions })
-    await first.service.sendCommand({ deviceId: TV, role: 'power_on', repeat: 1 })
+    await first.service.sendCommand({
+      deviceId: TV,
+      role: 'power_on',
+      repeat: 1,
+    })
     const second = world(toggle, { assumptions, running: false })
     expect(
-      await second.service.sendCommand({ deviceId: TV, role: 'power_on', repeat: 1 }),
+      await second.service.sendCommand({
+        deviceId: TV,
+        role: 'power_on',
+        repeat: 1,
+      }),
     ).toMatchObject({ status: 'sent' })
   })
 
@@ -251,9 +331,19 @@ describe('the power source', () => {
   it('keeps an assumption across a restart', async () => {
     const assumptions = { current: null as RemoteAssumedState | null }
     const before = world(toggle, { assumptions })
-    await before.service.sendCommand({ deviceId: TV, role: 'power_on', repeat: 1 })
+    await before.service.sendCommand({
+      deviceId: TV,
+      role: 'power_on',
+      repeat: 1,
+    })
     const after = world(toggle, { assumptions })
-    expect(await after.service.sendCommand({ deviceId: TV, role: 'power_on', repeat: 1 })).toEqual({
+    expect(
+      await after.service.sendCommand({
+        deviceId: TV,
+        role: 'power_on',
+        repeat: 1,
+      }),
+    ).toEqual({
       status: 'skipped',
       reason: 'already-in-state',
     })
@@ -287,7 +377,12 @@ describe('mute on a device that does not report it', () => {
 
   it('does not resend a mute the assumption already holds, and flips on the opposite', async () => {
     const w = world(withMute, { running: true })
-    await w.service.sendMediaCommand({ deviceId: TV, command: 'setMute', muted: true, repeat: 1 })
+    await w.service.sendMediaCommand({
+      deviceId: TV,
+      command: 'setMute',
+      muted: true,
+      repeat: 1,
+    })
     expect(
       await w.service.sendMediaCommand({
         deviceId: TV,
@@ -325,7 +420,13 @@ describe('mute on a device that does not report it', () => {
 describe('RemoteService.sendMediaCommand', () => {
   it('routes a bound media command and passes the caller count through', async () => {
     const w = world(config({ bindings: { next: ir('nx') } }))
-    expect(await w.service.sendMediaCommand({ deviceId: TV, command: 'next', repeat: 3 })).toEqual({
+    expect(
+      await w.service.sendMediaCommand({
+        deviceId: TV,
+        command: 'next',
+        repeat: 3,
+      }),
+    ).toEqual({
       status: 'sent',
       sends: 3,
     })
@@ -333,17 +434,27 @@ describe('RemoteService.sendMediaCommand', () => {
 
   it('answers not-routed for an unbound role so the native cap runs', async () => {
     const w = world(config())
-    expect(await w.service.sendMediaCommand({ deviceId: TV, command: 'pause', repeat: 1 })).toEqual(
-      {
-        status: 'not-routed',
-      },
-    )
+    expect(
+      await w.service.sendMediaCommand({
+        deviceId: TV,
+        command: 'pause',
+        repeat: 1,
+      }),
+    ).toEqual({
+      status: 'not-routed',
+    })
     expect(w.calls).toEqual([])
   })
 
   it('answers not-routed for a device with no remote at all', async () => {
     const w = world(config({ bindings: {} }), { mediaPlayer: false })
-    expect(await w.service.sendMediaCommand({ deviceId: TV, command: 'play', repeat: 1 })).toEqual({
+    expect(
+      await w.service.sendMediaCommand({
+        deviceId: TV,
+        command: 'play',
+        repeat: 1,
+      }),
+    ).toEqual({
       status: 'not-routed',
     })
   })
@@ -394,7 +505,9 @@ describe('RemoteService config', () => {
       bindings: { power: ir('p'), volume_up: ir('v') },
       power: { mode: 'toggle' },
     })
-    expect(await w.service.setConfig({ deviceId: TV, config: next })).toEqual({ status: 'saved' })
+    expect(await w.service.setConfig({ deviceId: TV, config: next })).toEqual({
+      status: 'saved',
+    })
     expect(await w.service.getConfig({ deviceId: TV })).toEqual(next)
     const list = await w.service.listCommands({ deviceId: TV })
     expect(list.commands.map((c) => c.role).toSorted()).toEqual(['power', 'volume_up'])
@@ -404,7 +517,10 @@ describe('RemoteService config', () => {
   it('refuses a template that does not exist and a device that is not a media player', async () => {
     const w = world(config())
     expect(
-      await w.service.setConfig({ deviceId: TV, config: config({ layoutTemplateId: 'ghost' }) }),
+      await w.service.setConfig({
+        deviceId: TV,
+        config: config({ layoutTemplateId: 'ghost' }),
+      }),
     ).toMatchObject({ status: 'refused', reason: 'unknown-template' })
     const other = world(config(), { mediaPlayer: false })
     expect(await other.service.setConfig({ deviceId: TV, config: config() })).toMatchObject({
@@ -429,13 +545,20 @@ describe('RemoteService — a repeat is N full sends, 150 ms apart (D964)', () =
 
   it('a single send waits for nothing', async () => {
     const w = world(config({ bindings: { channel_up: ir('ch') } }))
-    await w.service.sendMediaCommand({ deviceId: TV, command: 'channelUp', repeat: 1 })
+    await w.service.sendMediaCommand({
+      deviceId: TV,
+      command: 'channelUp',
+      repeat: 1,
+    })
     expect(w.sentAt).toEqual([0])
   })
 })
 
 describe('RemoteService.assumedStatus — power truth from the linked plug', () => {
-  const standing = config({ bindings: { power: ir('power') }, power: { mode: 'toggle' } })
+  const standing = config({
+    bindings: { power: ir('power') },
+    power: { mode: 'toggle' },
+  })
 
   it('a plug that is off reports the television off, as a reading', async () => {
     const w = world(standing, { plug: false })
@@ -457,8 +580,15 @@ describe('RemoteService.assumedStatus — power truth from the linked plug', () 
 
   it('after a power command the plug-on television reports what the remote sent', async () => {
     const w = world(standing, { plug: true })
-    await w.service.sendMediaCommand({ deviceId: TV, command: 'turnOn', repeat: 1 })
-    expect(await w.service.assumedStatus(TV)).toMatchObject({ state: 'on', stateSource: 'assumed' })
+    await w.service.sendMediaCommand({
+      deviceId: TV,
+      command: 'turnOn',
+      repeat: 1,
+    })
+    expect(await w.service.assumedStatus(TV)).toMatchObject({
+      state: 'on',
+      stateSource: 'assumed',
+    })
   })
 
   it('an unreadable plug and nothing sent knows no state (never off, D393)', async () => {
@@ -469,10 +599,61 @@ describe('RemoteService.assumedStatus — power truth from the linked plug', () 
   it('getAssumedStatus is only what the remote sent, whatever the plug says', async () => {
     const w = world(standing, { plug: false })
     expect(await w.service.getAssumedStatus({ deviceId: TV })).toBeNull()
-    await w.service.sendMediaCommand({ deviceId: TV, command: 'turnOn', repeat: 1 })
+    await w.service.sendMediaCommand({
+      deviceId: TV,
+      command: 'turnOn',
+      repeat: 1,
+    })
     expect(await w.service.getAssumedStatus({ deviceId: TV })).toMatchObject({
       state: 'on',
       assumedFields: ['state'],
     })
+  })
+})
+
+describe('RemoteService — ONE power truth for the status and the toggle guard', () => {
+  const standing = config({
+    bindings: { power: ir('power') },
+    power: { mode: 'toggle' },
+  })
+
+  it('a plug cut after turnOn makes the next turnOn send, not skip as already-on', async () => {
+    const plugState = { current: true as boolean | null }
+    const w = world(standing, { plugState })
+    await w.service.sendMediaCommand({
+      deviceId: TV,
+      command: 'turnOn',
+      repeat: 1,
+    })
+    expect(w.calls).toHaveLength(1)
+    plugState.current = false
+    expect((await w.service.assumedStatus(TV))?.state).toBe('off')
+    plugState.current = true
+    const again = await w.service.sendMediaCommand({
+      deviceId: TV,
+      command: 'turnOn',
+      repeat: 1,
+    })
+    expect(again).not.toMatchObject({ status: 'skipped' })
+    expect(w.calls).toHaveLength(2)
+  })
+
+  it('an assumed off is dropped when the plug is on', async () => {
+    const stale = world(standing, {
+      plug: true,
+      assumptions: { current: { power: { state: 'off', at: 1 }, muted: null } },
+    })
+    expect(await stale.service.assumedStatus(TV)).toMatchObject({ state: 'standby' })
+  })
+
+  it('the toggle guard sees the plug off, so a turnOff is skipped as already off', async () => {
+    const w = world(standing, { plug: false })
+    const result = await w.service.sendMediaCommand({
+      deviceId: TV,
+      command: 'turnOff',
+      repeat: 1,
+    })
+    expect(result).toMatchObject({ status: 'skipped' })
+    expect(w.calls).toHaveLength(0)
   })
 })

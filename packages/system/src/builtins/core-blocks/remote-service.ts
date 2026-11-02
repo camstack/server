@@ -164,7 +164,11 @@ export class RemoteService implements IRemoteProvider {
         custom: key !== null,
       }
     })
-    return { layoutTemplateId: config.layoutTemplateId, power: config.power, commands }
+    return {
+      layoutTemplateId: config.layoutTemplateId,
+      power: config.power,
+      commands,
+    }
   }
 
   readonly sendCommand: IRemoteProvider['sendCommand'] = async ({ deviceId, role, repeat }) => {
@@ -212,28 +216,11 @@ export class RemoteService implements IRemoteProvider {
    */
   async assumedStatus(deviceId: number): Promise<MediaPlayerStatus | null> {
     const kept = await this.readAssumed(deviceId)
-    const running = await this.deps.runningState(deviceId)
-    const plug = running === null ? await this.deps.plugOn(deviceId) : null
-    const assumedFields: MediaPlayerAssumedField[] = []
-    let state: MediaPlayerStatus['state']
-    let changedAt: number
-    if (running !== null) {
-      state = running ? 'on' : 'off'
-      changedAt = this.now()
-    } else if (plug === false) {
-      state = 'off'
-      changedAt = this.now()
-    } else if (kept.power !== null) {
-      state = kept.power.state
-      changedAt = kept.power.at
-      assumedFields.push('state')
-    } else if (plug === true) {
-      state = 'standby'
-      changedAt = this.now()
-      assumedFields.push('state')
-    } else {
-      return null
-    }
+    const truth = await this.powerTruth(deviceId)
+    if (truth === null) return null
+    const assumedFields: MediaPlayerAssumedField[] = truth.assumed ? ['state'] : []
+    const state = truth.state
+    const changedAt = truth.at
     const mute = state === 'off' ? null : (kept.muted ?? null)
     if (mute !== null) assumedFields.push('isMuted')
     const config = await this.deps.store.read(deviceId)
@@ -272,7 +259,10 @@ export class RemoteService implements IRemoteProvider {
 
   private mediaRole(
     config: RemoteConfig,
-    input: { readonly command: RemoteMediaCommand; readonly source?: string | undefined },
+    input: {
+      readonly command: RemoteMediaCommand
+      readonly source?: string | undefined
+    },
   ): string | null {
     if (input.command === 'selectSource') {
       const wanted = input.source
@@ -302,7 +292,35 @@ export class RemoteService implements IRemoteProvider {
     if (running !== null) return running ? 'on' : 'off'
     const reported = await this.deps.reportedStatus(deviceId)
     if (reported !== null) return POWER_OFF_STATES.has(reported.state) ? 'off' : 'on'
-    return (await this.readAssumed(deviceId)).power?.state ?? null
+    const truth = await this.powerTruth(deviceId)
+    if (truth === null || truth.state === 'standby') return null
+    return truth.state === 'off' ? 'off' : 'on'
+  }
+
+  /**
+   * THE ordered power truth, read by the status and by the toggle guard alike:
+   * a `running-state` reading; the linked plug (off is `off`, a reading, and
+   * it forgets what the remote assumed, so the next plug-on starts from
+   * standby; on contradicts an assumed `off`, which is dropped); then the
+   * remote's own assumption; a plug on with nothing sent is `standby`.
+   */
+  private async powerTruth(deviceId: number): Promise<{
+    readonly state: MediaPlayerStatus['state']
+    readonly assumed: boolean
+    readonly at: number
+  } | null> {
+    const running = await this.deps.runningState(deviceId)
+    if (running !== null) return { state: running ? 'on' : 'off', assumed: false, at: this.now() }
+    const plug = await this.deps.plugOn(deviceId)
+    const kept = await this.readAssumed(deviceId)
+    if (plug === false) {
+      if (kept.power !== null) await this.deps.assumptions.write(deviceId, { ...kept, power: null })
+      return { state: 'off', assumed: false, at: this.now() }
+    }
+    const keptPower = plug === true && kept.power?.state === 'off' ? null : kept.power
+    if (keptPower !== null) return { state: keptPower.state, assumed: true, at: keptPower.at }
+    if (plug === true) return { state: 'standby', assumed: true, at: this.now() }
+    return null
   }
 
   /** The mute as a native source reads it, else as last assumed, else unknown. */
@@ -356,7 +374,11 @@ export class RemoteService implements IRemoteProvider {
     const viaToggle = wantsState !== null && config.bindings[role] === undefined
     const bound = viaToggle ? config.bindings['power'] : config.bindings[role]
     if (bound === undefined || (viaToggle && config.power.mode !== 'toggle')) {
-      return { status: 'refused', reason: 'unbound-role', detail: `${role} is not bound` }
+      return {
+        status: 'refused',
+        reason: 'unbound-role',
+        detail: `${role} is not bound`,
+      }
     }
     if (viaToggle && (await this.currentState(deviceId)) === wantsState) {
       this.deps.logger.info('remote: power command skipped, the device is already in that state', {
@@ -380,7 +402,11 @@ export class RemoteService implements IRemoteProvider {
           tags: { deviceId },
           meta: { role, sent, error: errorText(err) },
         })
-        return { status: 'refused', reason: 'action-failed', detail: errorText(err) }
+        return {
+          status: 'refused',
+          reason: 'action-failed',
+          detail: errorText(err),
+        }
       }
     }
     await this.moveAssumption(deviceId, role, wantsState)
