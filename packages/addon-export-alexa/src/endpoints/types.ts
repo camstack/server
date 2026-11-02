@@ -23,6 +23,7 @@ export type AlexaDisplayCategory =
   | 'THERMOSTAT'
   | 'AIR_CONDITIONER'
   | 'FAN'
+  | 'TV'
   | 'SCENE_TRIGGER'
   | 'OTHER'
 
@@ -112,6 +113,10 @@ export interface AlexaCapability {
   readonly capabilityResources?: AlexaModeResource
   /** `Alexa.RangeController` / `Alexa.ModeController` voice semantics. */
   readonly semantics?: AlexaSemantics
+  /** `Alexa.PlaybackController`: the transport operations the endpoint answers. */
+  readonly supportedOperations?: readonly string[]
+  /** `Alexa.InputController`: the inputs `SelectInput` may name. */
+  readonly inputs?: ReadonlyArray<{ readonly name: string }>
   readonly properties?: {
     readonly supported: ReadonlyArray<{ readonly name: string }>
     readonly proactivelyReported: boolean

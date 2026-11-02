@@ -11,6 +11,7 @@ applies-to:
   - packages/system/src/builtins/composer/forward-commands.ts
   - packages/system/src/builtins/composer/actuator-groups.ts
   - packages/system/src/builtins/composer/composed-device.ts
+  - packages/types/src/remote/remote-media-features.ts
 ---
 
 ## Context
@@ -82,6 +83,29 @@ has forwards takes `ForwardCommands` there instead of the fan-out.
 - The forked composer runner dispatches a native method over UDS; this record
   is proven through the hub-style registry path only. The first deploy verifies
   `getBindings` on the composed device and one command end to end.
+
+## Amendment (planning#398): an `extension` command
+
+A `media-player` composition may name `{ kind: 'extension', target: 'remote' }`
+as a method's command. It forwards to no source device: the call falls through
+to the D964 redirect, which sends the bound remote role. Rules:
+
+- The validator counts it as a command, so `has-commands` is satisfied, and it
+  skips the required-field loop: the status comes from the composer, not from a
+  source field. It is refused on any cap but `media-player`, and on a target
+  that is not `new`.
+- The composer registers a native `media-player` whose status holds only known
+  fields (null or empty for the rest, `stateSource: 'assumed'`). Power follows
+  the composed `power-source` (D963): plug off is `off` (reported); plug on is
+  `standby` (assumed) until a power command is sent, then the remote's assumed
+  power (`remote.getAssumedStatus`).
+- A method whose role is not bound is a typed `media-player.unsupported`
+  (`ForwardCommands`), never a silent no-op.
+- The device's features are derived from the bound roles
+  (`mediaPlayerFeaturesOfRoles`) and pushed with `syncShared` after each
+  composer apply. They are not refreshed when the remote config changes alone.
+- Step methods (`volumeUp/Down`, `channelUp/Down`, `steps` 1..50) are N full
+  trains 150 ms apart (`REMOTE_REPEAT_GAP_MS`), caller-side and never stored.
 
 ## Enforcement
 

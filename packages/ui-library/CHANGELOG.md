@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Generated hooks include the media-player power and step methods
+
 ## [1.2.375] - 2026-11-02
 
 ### Changed

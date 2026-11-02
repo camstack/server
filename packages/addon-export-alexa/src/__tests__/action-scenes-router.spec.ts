@@ -100,6 +100,7 @@ function setup() {
     coverController: { ctx, logger, sendAsyncResponse: async () => true },
     climateController: { ctx, logger },
     fanController: { ctx, logger },
+    mediaPlayerController: { ctx, logger },
     access: { gate, isExposed: () => false },
     afterDiscovery: () => {},
     actionScenes: { exports, api, logger },

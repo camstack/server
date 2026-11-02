@@ -649,6 +649,10 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
           ctx: this.ctx,
           logger: this.ctx.logger,
         },
+        mediaPlayerController: {
+          ctx: this.ctx,
+          logger: this.ctx.logger,
+        },
         coverController: {
           ctx: this.ctx,
           logger: this.ctx.logger,

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A media player is exported to Alexa as a TV with power, step volume, mute, channel skip, playback and inputs
+
 ## [1.2.179] - 2026-11-02
 
 ### Changed

@@ -130,6 +130,7 @@ function makeMinimalDeps(opts: StubDepsOptions = {}): DirectiveRouterDeps {
     },
     climateController: { ctx: stubCtx, logger: stubLoggerRef },
     fanController: { ctx: stubCtx, logger: stubLoggerRef },
+    mediaPlayerController: { ctx: stubCtx, logger: stubLoggerRef },
     access: allowAllAccess(),
     afterDiscovery: () => {},
   }

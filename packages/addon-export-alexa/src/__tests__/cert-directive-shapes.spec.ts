@@ -67,6 +67,7 @@ function makeDeps(): {
       coverController: { ...base, sendAsyncResponse: async () => true },
       climateController: { ...base },
       fanController: { ...base },
+      mediaPlayerController: { ...base },
       access: allowAllAccess(),
       afterDiscovery: () => {},
     },

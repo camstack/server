@@ -458,6 +458,8 @@ function mapMediaPlayer(attributes: Record<string, unknown>): HaEntityMapping {
     if ((sf & 8) !== 0) features.push(DeviceFeature.MediaPlayerMute)
     if ((sf & 16) !== 0) features.push(DeviceFeature.MediaPlayerPrevious)
     if ((sf & 32) !== 0) features.push(DeviceFeature.MediaPlayerNext)
+    if ((sf & 384) === 384) features.push(DeviceFeature.MediaPlayerPower)
+    if ((sf & 1024) !== 0) features.push(DeviceFeature.MediaPlayerVolumeStep)
     if ((sf & 512) !== 0) features.push(DeviceFeature.MediaPlayerPlayMedia)
     if ((sf & 2048) !== 0) features.push(DeviceFeature.MediaPlayerSelectSource)
     if ((sf & 4096) !== 0) features.push(DeviceFeature.MediaPlayerStop)

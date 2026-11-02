@@ -42,6 +42,11 @@ export const ALLOWED_INTERFACE_VERSIONS: Readonly<Record<string, string>> = {
   'Alexa.SmartVision.ObjectDetectionSensor': '1.0',
   'Alexa.DataController': '1.0',
   'Alexa.SceneController': '3',
+  'Alexa.StepSpeaker': '3',
+  'Alexa.Speaker': '3',
+  'Alexa.ChannelController': '3',
+  'Alexa.PlaybackController': '3',
+  'Alexa.InputController': '3',
 }
 
 /** `imageNetClass` values Amazon accepts (alexa-smartvision-objectdetectionsensor). */
@@ -86,6 +91,7 @@ const DISPLAY_CATEGORIES = new Set([
   'THERMOSTAT',
   'AIR_CONDITIONER',
   'FAN',
+  'TV',
   'DOOR',
   'GATE',
   'GARAGE_DOOR',

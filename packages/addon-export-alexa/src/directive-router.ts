@@ -47,6 +47,7 @@ import { type DiscoveryContext, handleDiscovery } from './handlers/discovery.js'
 import { errorEnvelope } from './handlers/error-envelope.js'
 import { handleLock, type LockControllerContext } from './handlers/lock-controller.js'
 import type { ClimateControllerContext } from './handlers/climate-controller.js'
+import type { MediaPlayerControllerContext } from './handlers/media-player-controller.js'
 import type { FanControllerContext } from './handlers/fan-controller.js'
 import type { CoverControllerContext } from './handlers/cover-controller.js'
 import { handlePower, type PowerControllerContext } from './handlers/power-controller.js'
@@ -155,6 +156,8 @@ export interface DirectiveRouterDeps {
   readonly climateController: ClimateControllerContext
   /** `Alexa.RangeController` / `ToggleController` / `ModeController` on a fan. */
   readonly fanController: FanControllerContext
+  /** `Alexa.PowerController` / `StepSpeaker` / `Speaker` / `ChannelController` / `PlaybackController` / `InputController` on a media player. */
+  readonly mediaPlayerController: MediaPlayerControllerContext
   /** R2 (D773): `Alexa.SmartVision.SnapshotProvider/GetSnapshot`. */
   readonly snapshotProvider: SnapshotProviderContext
   /** R4 (D779): `SetObjectDetectionClasses` and `Alexa.DataController`. */

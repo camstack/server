@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Echo devices answer the new media-player step and power methods as unsupported
+
 ## [0.2.179] - 2026-11-02
 
 ### Changed

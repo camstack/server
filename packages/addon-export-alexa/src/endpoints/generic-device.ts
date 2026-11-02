@@ -48,6 +48,7 @@ export const GENERIC_DEVICE_TYPES: readonly string[] = [
   'climate',
   'cover',
   'fan',
+  'media-player',
   'generic',
 ]
 

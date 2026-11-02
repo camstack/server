@@ -12,6 +12,7 @@ import { coverAdapter } from './cover.js'
 import { fanAdapter } from './fan.js'
 import { humidityAdapter } from './humidity.js'
 import { lockAdapter } from './lock.js'
+import { mediaPlayerAdapter } from './media-player.js'
 import { motionAdapter } from './motion.js'
 import { presenceAdapter } from './presence.js'
 import { BASE, HEALTH } from './shared.js'
@@ -47,6 +48,7 @@ export const GENERIC_ADAPTERS: readonly GenericAdapter[] = [
   humidityAdapter,
   // Before switch: a fan that also binds `switch` is a FAN, not a SWITCH.
   fanAdapter,
+  mediaPlayerAdapter,
   switchAdapter,
   coverAdapter,
 ]

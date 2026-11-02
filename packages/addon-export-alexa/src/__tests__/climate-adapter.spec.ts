@@ -384,7 +384,10 @@ function directive(
 ): AdapterDirectiveContext {
   const [namespace = '', name = ''] = key.split('/')
   const ctx = { api } as unknown as AddonContext
-  const deps = { climateController: { ctx, logger: quietLogger } } as unknown as DirectiveRouterDeps
+  const deps = {
+    climateController: { ctx, logger: quietLogger },
+    mediaPlayerController: { ctx, logger: quietLogger },
+  } as unknown as DirectiveRouterDeps
   return {
     header: {
       namespace,
