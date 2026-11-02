@@ -17,6 +17,7 @@ import type {
   ReadinessScope,
   StorageLocationDeclaration,
 } from '@camstack/types'
+import { resolveRunnerId } from '@camstack/types'
 import { createDebugEmitter } from '@camstack/types/addon'
 import {
   createDeviceProxy,
@@ -748,7 +749,9 @@ async function buildAddonContext(
     // This addon's record kinds (D881). Same identity model as `secrets`: the
     // calls carry no owner, the transport stamps who is calling.
     records: createRecordsAccess({
-      owner: addonId,
+      // The engine builds a secret's one valid ref from the transport's stamp, and a forked
+      // runner is stamped with its GROUP: the facade must mint markers under that same owner.
+      owner: runtime.mode === 'uds' ? resolveRunnerId(declaration, addonId) : addonId,
       transport: recordsTransportOf(api),
       secrets,
       logger: scopedLogger,
