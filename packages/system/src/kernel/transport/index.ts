@@ -62,6 +62,7 @@ export type {
   EventInterestMessage,
   SetLogLevelMessage,
 } from './child-cap-protocol.js'
+export { RunnerOfAddon } from './runner-of-addon.js'
 export {
   LocalChildRegistry,
   afterWorkerOnlineAnnounce,

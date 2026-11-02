@@ -1092,9 +1092,14 @@ export class LocalChildRegistry {
   private callerStampOf(childId: string | null, out: CapCallOutMessage): string | null {
     const claimed = out.actingAddonId
     if (claimed === undefined || childId === null) return childId
-    // A registry that does not know the runner->addons map (an agent's) cannot verify the claim:
-    // it keeps the connection stamp rather than refusing every grouped call.
-    if (this.resolveChildIdForAddon === undefined) return childId
+    // A registry wired without the runner->addons map cannot verify a claim. A cap keyed by the
+    // addon is refused then, never silently re-keyed by the group; any other cap keeps the stamp.
+    if (this.resolveChildIdForAddon === undefined) {
+      if (claimed !== childId && ADDON_KEYED_CAPS.includes(out.capName)) {
+        throw new ActingAddonRefusedError(childId, claimed)
+      }
+      return childId
+    }
     const hostedBy = this.resolveChildIdForAddon(claimed) ?? claimed
     if (hostedBy !== childId) {
       throw new ActingAddonRefusedError(childId, claimed)

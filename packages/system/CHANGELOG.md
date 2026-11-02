@@ -26,9 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Loki logging no longer switches itself off at boot: the retired enabled flag is only removed, and the registry-toggle migration now runs after registration under the right addon id
 - Integration rows are keyed by the bare addon id (rows saved as addon:<id> are rewritten on boot), a tolerated migration failure raises a warning instead of a critical alert, and the camera grid asks for its own devices under the right id
 - A migration converts stored pet-fountain core blocks to the split pump-cycle composition
-- A forked addon that shares a runner with others (such as Cloudflare TURN in the net-access group) can now save a secret field of its records; the write was refused as a foreign marker.
 - An addon blocked by its own migrations no longer takes the other addons of its runner down; it is logged as blocked and skipped, and a runner where nothing could start is parked as refused instead of crash-looping.
-- A record kind and its secret refs are always owned by the addon id, even for an addon in a shared runner group: the hub verifies which addon a grouped runner acts for, and a migration re-owns kinds an earlier build declared under the group id
+- An addon in a shared runner group (such as Cloudflare TURN in net-access) can save a secret field of its records, on the hub and on an agent: a record kind and its secret refs are always owned by the addon id, the hub or agent verifies which addon a grouped runner acts for, and a migration re-owns kinds an earlier build declared under the group id
 
 ### Fixed
 

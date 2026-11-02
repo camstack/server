@@ -24,7 +24,7 @@ commits. A generated page may not.
 | Subsystem | Files | Documents | Freshest | State |
 | --- | --- | --- | --- | --- |
 | Kernel, addon lifecycle and boot | 111 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `architecture/overview.md` _(covers)_, +84 more, 13 ADRs | 2026-11-02 | ✅ |
-| Transport and cross-node routing | 107 | `architecture/transport.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/overview.md` _(covers)_, +56 more, 12 ADRs | 2026-10-22 | ✅ |
+| Transport and cross-node routing | 108 | `architecture/transport.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/overview.md` _(covers)_, +56 more, 12 ADRs | 2026-10-22 | ✅ |
 | Capability system and codegen | 331 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/capabilities.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +242 more, 51 ADRs | 2026-11-02 | ✅ |
 | Device model and the provider contract | 112 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/device-model.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +60 more, 6 ADRs | 2026-11-02 | ✅ |
 | Device providers (per vendor) | 755 | `architecture/device-model.md` _(covers)_, `addons/addon-provider-reolink.md` _(covers)_, `addons/addon-provider-homeassistant.md` _(covers)_, +84 more, 14 ADRs | 2026-10-26 | ✅ |
@@ -72,7 +72,7 @@ Carries every call between hub, agents and addon runners, and decides which node
 
 - **Owner doc**: `docs/architecture/transport.md`
 - **Code**: `packages/system/src/kernel/transport/**`, `packages/system/src/kernel/moleculer/**`, `server/backend/src/core/moleculer/**`, `server/backend/src/core/topology/**`, `packages/types/src/node.ts`
-- **Files**: 107 (103 claimed by some document)
+- **Files**: 108 (104 claimed by some document)
 - **Uncovered**: `server/backend/src/core/moleculer` (4)
 
 ### ✅ Capability system and codegen

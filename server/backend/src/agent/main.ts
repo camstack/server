@@ -40,6 +40,7 @@ import {
   HUB_CAP_FWD_ACTION,
   HubNodeRegistry,
   LocalChildRegistry,
+  RunnerOfAddon,
   localEndpointPath,
   registerEventBusService,
   setNodeEventInterest,
@@ -166,6 +167,7 @@ const RECONNECT_DEADLINE_MS = 90_000
 const MEMBERSHIP_TICK_MS = 15_000
 
 const agentLogManager = new LogManager(5000)
+const agentRunnerOfAddon = new RunnerOfAddon()
 
 /**
  * Caps whose `nodeId` arg is provider DATA (`nodeIdMode: 'data'` —
@@ -867,6 +869,7 @@ async function startAgent(configPath?: string): Promise<void> {
       // it with "no provider registered" unless it knew the agent hosts the
       // cap). A pin to ANOTHER node still bypasses the sibling → onUnownedCall.
       ownNodeId: agentNodeId,
+      resolveChildIdForAddon: agentRunnerOfAddon.resolve,
       onUnownedCall,
       // NO `capUsageObserver` here, deliberately. `getCapUsageRegistry()` is a
       // per-process singleton and the reader (`nodes.getCapUsageGraph`) runs on
@@ -1602,7 +1605,10 @@ async function loadClusterCapableAddons(
       const placement = resolveAddonPlacement(registered.declaration)
       if (placement === 'hub-only') continue
       allGroupCandidates.push({
-        groupId: resolveRunnerId(registered.declaration, registered.declaration.id),
+        groupId: agentRunnerOfAddon.record(
+          registered.declaration.id,
+          resolveRunnerId(registered.declaration, registered.declaration.id),
+        ),
         addonId: registered.declaration.id,
         addonDir: dir,
         version: registered.declaration.version ?? '0.0.0',
@@ -1705,7 +1711,7 @@ async function loadDeployedAddons(
 
       if (isGroupRunnerAddon(decl)) {
         groupCandidates.push({
-          groupId: resolveRunnerId(decl, addonId),
+          groupId: agentRunnerOfAddon.record(addonId, resolveRunnerId(decl, addonId)),
           addonId,
           addonDir: dir,
           version: decl.version ?? '0.0.0',
