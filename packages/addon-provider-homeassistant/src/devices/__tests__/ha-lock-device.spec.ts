@@ -94,6 +94,20 @@ function getLockProvider(ctx: import('@camstack/types').DeviceContext): {
 }
 
 describe('HaLockDevice', () => {
+  it('starts as a PLACEHOLDER (lastChangedAt 0), never as a measured unlocked state', async () => {
+    // The value-unknown convention every consumer reads (`cold-slice` in the analytics
+    // sensor gate, `unknown` in the alarm's opening table): the cold `unlocked` word is
+    // only there to satisfy the schema. 2026-11-02: planning#396.
+    const ctx = buildLockCtx('lock.laundry')
+    void new HaLockDevice(ctx)
+    const registerNativeCap = ctx.registerNativeCap as ReturnType<typeof vi.fn>
+    const call = registerNativeCap.mock.calls.find(
+      (c: ReadonlyArray<{ name: string }>) => c[0]?.name === 'lock-control',
+    )
+    const provider = call![1] as { getStatus: () => Promise<{ lastChangedAt: number }> }
+    expect((await provider.getStatus()).lastChangedAt).toBe(0)
+  })
+
   it('registers the "lock-control" cap on construction', () => {
     const ctx = buildLockCtx('lock.front_door')
     void new HaLockDevice(ctx)
