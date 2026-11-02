@@ -7,11 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Notification rules: the template catalog now serves the default text of an appliance cycle finish, so editors can pre-fill and rebuild it
+
 ## [1.2.480] - 2026-11-02
 
 ### Changed
 
-- Notification rules: the template catalog now serves the default text of an appliance cycle finish, so editors can pre-fill and rebuild it
 - Every integration instance carries its own on/off switch: IntegrationInstance.enabled and the integrationInstances.setInstanceEnabled method
 - A discovered select field can declare noneLabel and missingLabel to be an optional picker.
 - Adds the smtp-inbound broker schemas (settings, config, filter, message).
