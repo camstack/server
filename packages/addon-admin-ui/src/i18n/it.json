@@ -187,7 +187,6 @@
       "storedUploadNoCa": "senza CA"
     },
     "logging": {
-      "logDestinations": "Destinazioni dei log",
       "destinations": "Destinazioni",
       "everyRegisteredLogDestinationEntries": "Ogni destinazione di log registrata. Le voci vengono inviate a tutte le destinazioni abilitate contemporaneamente — abilitarne una non ne disabilita un'altra.",
       "noLogDestinationsRegistered": "Nessuna destinazione di log registrata",
@@ -1261,7 +1260,9 @@
       "connections_one": "{{count}} connessione",
       "connections_other": "{{count}} connessioni",
       "connectionsConnected_one": "{{count}} connessione · {{connected}} connessa",
-      "connectionsConnected_other": "{{count}} connessioni · {{connected}} connesse"
+      "connectionsConnected_other": "{{count}} connessioni · {{connected}} connesse",
+      "emailSubtitle": "I relay SMTP attraverso cui le destinazioni di notifica inviano la posta.",
+      "emailAdd": "Aggiungi relay"
     },
     "ai": "IA",
     "calendars": "Calendari",

@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Connectivity → Email links to the Integrations page, where each SMTP relay is configured
 - Export tables: new strings for the Integration filter and the bulk selection bar (English and Italian)
 - A sensor notification rule can opt out of waking a sleeping battery camera for its linked picture
+- Logs → Destinations and Connectivity → Email are one list of instances: add through a provider picker, edit, test and delete a relay or destination in a dialog.
 
 ## [1.2.556] - 2026-11-02
 

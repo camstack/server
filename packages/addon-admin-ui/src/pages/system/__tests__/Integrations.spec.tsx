@@ -42,6 +42,12 @@ vi.mock('../../../components/settings/NodeAddonsSettingsPanel', () => ({
   NodeAddonsSettingsPanel: () => <div data-testid="schema-settings">settings</div>,
 }))
 
+vi.mock('../../../components/integration-hub/provider-instances/ProviderInstancesPanel', () => ({
+  ProviderInstancesPanel: ({ functionCap }: { functionCap: string }) => (
+    <div data-testid="provider-instances" data-cap={functionCap} />
+  ),
+}))
+
 vi.mock('../../../components/brokers/BrokerManager', () => ({
   BrokerManager: () => <div>broker connections</div>,
 }))
@@ -134,12 +140,10 @@ describe('Connectivity SectionedPage', () => {
     expect(within(pills).queryByText('Alexa')).toBeNull()
   })
 
-  it('email section lists google-services and smtp-nodemailer', () => {
+  it('email section is the provider-instances list of smtp-provider, not a pill hub', () => {
     renderAt('/system/integrations?tab=email')
-    const pills = screen.getByRole('navigation', { name: /Email integrations/i })
-    expect(within(pills).getByText('Google')).toBeTruthy()
-    expect(within(pills).getByText('SMTP')).toBeTruthy()
-    expect(within(pills).queryByText('Waste')).toBeNull()
+    expect(screen.getByTestId('provider-instances').getAttribute('data-cap')).toBe('smtp-provider')
+    expect(screen.queryByRole('navigation', { name: /Email integrations/i })).toBeNull()
   })
 
   it('remaps legacy ?tab=device-export to exporters', async () => {

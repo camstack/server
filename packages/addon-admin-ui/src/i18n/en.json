@@ -187,7 +187,6 @@
       "storedUploadNoCa": "no CA"
     },
     "logging": {
-      "logDestinations": "Log destinations",
       "destinations": "Destinations",
       "everyRegisteredLogDestinationEntries": "Every registered log destination. Entries are fanned to all enabled destinations at once — enabling one does not disable another.",
       "noLogDestinationsRegistered": "No log destinations registered",
@@ -1261,7 +1260,9 @@
       "connections_one": "{{count}} connection",
       "connections_other": "{{count}} connections",
       "connectionsConnected_one": "{{count}} connection · {{connected}} connected",
-      "connectionsConnected_other": "{{count}} connections · {{connected}} connected"
+      "connectionsConnected_other": "{{count}} connections · {{connected}} connected",
+      "emailSubtitle": "The SMTP relays that notification targets send mail through.",
+      "emailAdd": "Add relay"
     },
     "ai": "AI",
     "calendars": "Calendars",

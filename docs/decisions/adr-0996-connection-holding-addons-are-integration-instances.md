@@ -30,7 +30,7 @@ typed record kind (kind names are lower-case-dashed, so Loki's is `destinations`
 `loki-logging`), the secret is a keychain marker bound to the row, and the shared helper
 `RecordIntegrationInstances` implements the cap over a kind. The hub routes on the presence
 of the provider alone: with one, the integrations cap reads and writes the record; without
-one, the legacy `integration-settings` path runs. **Operator decision (2026-11-02): a service instance is configured from its function page.** The Integrations page lists only integrations that bring devices: `integrations.list` omits every addon whose manifest declares `integration-instances` (generic, no per-addon list), and `getAvailableTypes` offers none, so the add wizard never shows one. The stored row (for Loki `int_0038`) and the record and its keychain secret are kept; `get` and `getByAddonId` still resolve it, which the migration relies on. Loki is edited on the Logging page in place, through the cap (`ConnectionInstanceForm`); with no record yet the form creates it, under the addon id. There is no `connection` kind in the UI.
+one, the legacy `integration-settings` path runs. **Operator decision (2026-11-02): a service instance is configured from its function page.** The Integrations page lists only integrations that bring devices: `integrations.list` omits every addon whose manifest declares `integration-instances` (generic, no per-addon list), and `getAvailableTypes` offers none, so the add wizard never shows one. The stored row (for Loki `int_0038`) and the record and its keychain secret are kept; `get` and `getByAddonId` still resolve it, which the migration relies on. Loki is a row of the Logging page's destinations list, edited through the cap in a dialog; with no record yet the provider picker creates it, under the addon id. There is no `connection` kind in the UI.
 The per-destination on/off switch of a log destination
 (D777) is unchanged and is not wired to the integration's `enabled`.
 
@@ -62,6 +62,13 @@ blocks the owner), then a `deleteKeys` plan on the canonical `addon-settings` ta
 only once the record is confirmed to hold the host and the password. The addon is an npm addon,
 hub-only, one forked process; it reads its settings from the same canonical table as a builtin,
 through the settings-store door.
+
+**Amendment (operator, 2026-11-02): one list, a provider picker.** Every function page that has
+instance-holding providers is one `ProviderInstancesPanel`: a row per record of each provider, a
+fixed row (registry switch, addon settings) for a provider that holds none, and a picker that offers
+the providers able to take another record. A `single` provider is offered while it has no record and
+names its record after the addon; a `multiple` provider gets an opaque `inst-<8 hex>` id minted by the
+UI. Ids are opaque: an `inst-` id and a migrated `relay-` id coexist in one list.
 
 ## Enforcement
 

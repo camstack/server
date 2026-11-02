@@ -55,7 +55,7 @@ applies-to:
 covers:
   - packages/addon-admin-ui/src/**
   - packages/ui-library/src/**
-last-verified: 2026-10-26
+last-verified: 2026-11-02
 ---
 
 # Admin UI
@@ -473,9 +473,11 @@ may not also mean "where this lives"; it remains available to group sections
 **A connection that holds no devices** (Loki) is not an addon-level setting at all
 ([D996](../decisions/adr-0996-connection-holding-addons-are-integration-instances.md)): the
 addon provides `integration-instances`, the hub omits it from `integrations.list` and the add
-wizard, and its function page edits the record in place through the cap
-(`ConnectionInstanceForm`, as the Logging page does for Loki). The Integrations page lists only
-integrations that bring devices.
+wizard, and its function page lists the records through one `ProviderInstancesPanel`
+(`components/integration-hub/provider-instances/`): Logs → Destinations over `log-destination`,
+Connectivity → Email over `smtp-provider`. A row per record, a fixed row with the registry switch
+for a provider that holds none, a provider picker to add, the provider's own `instanceFormSchema`
+to edit. The Integrations page lists only integrations that bring devices.
 
 ### Derived vs hand-written — pick by what owns the values
 

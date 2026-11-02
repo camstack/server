@@ -60,6 +60,7 @@ import {
   toConnectivityRow,
   type ConnectivityRow,
 } from './connectivity-model'
+import { ProviderInstancesPanel } from '../../components/integration-hub/provider-instances/ProviderInstancesPanel'
 import { WasteSettingsSources } from './WasteSettingsSources'
 import i18n from '../../i18n/index'
 import type { TFunction } from 'i18next'
@@ -74,6 +75,11 @@ interface KindDescriptor {
   readonly installLabelKey: string
   readonly emptyTitleKey: string
   readonly emptyDescriptionKey: string
+  /**
+   * A kind whose providers keep `integration-instances` records is one list over this function
+   * cap (a row per relay), not a pill per addon.
+   */
+  readonly instances?: { readonly functionCap: string }
 }
 
 /**
@@ -110,6 +116,7 @@ const KINDS: readonly KindDescriptor[] = [
     installLabelKey: 'system.connectivity.emailInstall',
     emptyTitleKey: 'system.connectivity.emailEmptyTitle',
     emptyDescriptionKey: 'system.connectivity.emailEmptyDescription',
+    instances: { functionCap: 'smtp-provider' },
   },
   {
     sectionId: 'brokers',
@@ -262,13 +269,27 @@ export function IntegrationsPage(): ReactElement {
         id: descriptor.sectionId,
         label: t(descriptor.labelKey),
         ownedParams: INTEGRATION_HUB_OWNED_PARAMS,
-        content: (
-          <ConnectivityKindHub
-            descriptor={descriptor}
-            rows={rows}
-            isLoading={addonsQuery.isLoading}
-          />
-        ),
+        content:
+          descriptor.instances !== undefined ? (
+            <ProviderInstancesPanel
+              functionCap={descriptor.instances.functionCap}
+              icon={descriptor.icon}
+              title={t(descriptor.labelKey)}
+              subtitle={t(
+                'system.connectivity.emailSubtitle',
+                'The SMTP relays that notification targets send mail through.',
+              )}
+              emptyTitle={t(descriptor.emptyTitleKey)}
+              emptyDescription={t(descriptor.emptyDescriptionKey)}
+              addLabel={t('system.connectivity.emailAdd', 'Add relay')}
+            />
+          ) : (
+            <ConnectivityKindHub
+              descriptor={descriptor}
+              rows={rows}
+              isLoading={addonsQuery.isLoading}
+            />
+          ),
       })),
     [addonsQuery.isLoading, rows, t],
   )
