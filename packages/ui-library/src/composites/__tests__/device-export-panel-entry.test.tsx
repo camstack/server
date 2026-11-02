@@ -223,6 +223,22 @@ describe('bulk selection by filter (D875)', () => {
     expect(screen.queryByText('provider-tuya')).toBeNull()
   })
 
+  it('offers a searchable Type selector like the others: typing narrows it', async () => {
+    renderPanel()
+    const typeBox = within(screen.getByTestId('export-filter-type')).getByRole('combobox')
+    fireEvent.focus(typeBox)
+    expect(screen.getByRole('option', { name: /Camera/ })).toBeTruthy()
+    expect(screen.getByRole('option', { name: /Light/ })).toBeTruthy()
+    fireEvent.change(typeBox, { target: { value: 'lig' } })
+    expect(screen.queryByRole('option', { name: /Camera/ })).toBeNull()
+    fireEvent.click(screen.getByRole('option', { name: /Light/ }))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select all 1 shown' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Expose 1' }))
+    await waitFor(() => expect(exposeCalls.length).toBe(1))
+    expect(exposeCalls[0]?.deviceId).toBe('3')
+  })
+
   it('shows a role by its display label', () => {
     renderPanel()
     fireEvent.focus(within(screen.getByTestId('export-filter-role')).getByRole('combobox'))

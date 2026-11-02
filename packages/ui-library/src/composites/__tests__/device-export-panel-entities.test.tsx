@@ -111,18 +111,12 @@ function renderPanel() {
 
 /** The labels the Type filter offers. */
 function typeFilterLabels(): string[] {
-  const trigger = screen
-    .getAllByRole('button')
-    .find(
-      (b) =>
-        b.getAttribute('aria-haspopup') === 'listbox' && (b.textContent ?? '').startsWith('Type'),
-    )
-  if (trigger === undefined) throw new Error('no Type filter on screen')
-  fireEvent.click(trigger)
+  const box = within(screen.getByTestId('export-filter-type')).getByRole('combobox')
+  fireEvent.focus(box)
   const labels = within(screen.getByRole('listbox'))
     .getAllByRole('option')
     .map((o) => o.textContent?.trim() ?? '')
-  fireEvent.click(trigger)
+  fireEvent.blur(box)
   return labels
 }
 

@@ -1151,6 +1151,9 @@ export function DeviceExportPanel({
             getSearchText={getSearchText}
             getFilterType={getFilterType}
             filterOptions={typeFilterOptions}
+            filterLabel={t('uiLibrary.deviceExport.filterType', 'Type')}
+            searchableTypeFilter
+            typeFilterTestId="export-filter-type"
             columns={columns}
             onRowClick={onOpenDevice ? onRowClick : undefined}
             filters={filterSelectors}

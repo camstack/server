@@ -12,6 +12,7 @@ import { useSearchFieldHotkey } from '../../hotkeys/use-search-field-hotkey'
 import { useUiText } from '../../contexts/ui-text'
 import { type MultiSelectOption } from './multi-select'
 import { ResponsiveTypeFilter } from './type-filter'
+import { OptionSelect } from '../option-select/OptionSelect'
 import { useDebouncedString } from '../../hooks/use-debounced-string'
 import { fuzzyMatch } from './fuzzy-match'
 import { Pagination } from './pagination'
@@ -92,6 +93,14 @@ export interface DeviceListGenericProps<T> {
   /** Label for the type multi-select trigger. Default 'Type'. */
   readonly filterLabel?: string
   /**
+   * Render the type filter as the library's searchable multi `OptionSelect`
+   * (typing narrows the list), sized like a sibling selector in `filters`,
+   * instead of the chips / compact dropdown. Default false.
+   */
+  readonly searchableTypeFilter?: boolean
+  /** `data-testid` of the searchable type filter. Default `device-list-filter-type`. */
+  readonly typeFilterTestId?: string
+  /**
    * Initial type-filter selection. Empty (default) = no filter. Used once at
    * mount — later changes to this prop are ignored (local state owns it).
    */
@@ -143,6 +152,8 @@ export function GenericModeList<T>(props: DeviceListGenericProps<T>): ReactNode 
     mapFilterOption,
     filterOptions,
     filterLabel = 'Type',
+    searchableTypeFilter = false,
+    typeFilterTestId = 'device-list-filter-type',
     initialTypeFilters = [],
     columns,
     renderExpanded,
@@ -226,7 +237,20 @@ export function GenericModeList<T>(props: DeviceListGenericProps<T>): ReactNode 
       <div className="flex items-start justify-between gap-3 flex-wrap shrink-0">
         <div className="flex min-w-0 flex-1 flex-wrap items-start gap-2">
           {filters}
-          {getFilterType && typeOptions.length > 0 ? (
+          {getFilterType && typeOptions.length > 0 && searchableTypeFilter ? (
+            <div className="min-w-36 flex-1 sm:w-44 sm:flex-none">
+              <OptionSelect
+                mode="multi"
+                searchable
+                options={typeOptions.map((o) => ({ value: o.id, label: o.label }))}
+                value={typeFilters}
+                onChange={setTypeFilters}
+                placeholder={filterLabel}
+                emptyMessage={t('uiLibrary.deviceExport.filterNoOption', 'No match.')}
+                testId={typeFilterTestId}
+              />
+            </div>
+          ) : getFilterType && typeOptions.length > 0 ? (
             <div className="flex min-w-40 flex-1">
               <ResponsiveTypeFilter
                 label={filterLabel}
