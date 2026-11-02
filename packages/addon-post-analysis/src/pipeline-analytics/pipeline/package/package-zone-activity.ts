@@ -23,6 +23,8 @@ export interface PackageZoneRuleLike {
   readonly zoneIds: readonly string[]
 }
 
+import type { PackageZoneCropRect } from './package-reference-area.js'
+
 export interface PackageOptionRule extends PackageZoneRuleLike {
   readonly detectBySceneDifference?: boolean
   readonly confirmWithLlm?: boolean
@@ -54,4 +56,59 @@ export function collectPackageZoneIds(rules: readonly PackageZoneRuleLike[]): Re
     for (const z of r.zoneIds) ids.add(z)
   }
   return ids
+}
+
+/**
+ * How much the package zone box grows on every side when asking whether motion
+ * reached it. Mirrors the D144 dilation of the pipeline's burst trigger
+ * (`PACKAGE_ZONE_DILATION` in addon-pipeline, not importable from here): about
+ * one adult's width beside a doormat, the place a courier stands.
+ */
+export const PACKAGE_ZONE_MOTION_DILATION = 0.5
+
+/**
+ * A motion region covering more than this fraction of the frame is a light
+ * change or the weather, not a person: it never counts as a deliverer.
+ */
+export const PACKAGE_ZONE_MOTION_MAX_REGION_FRAC = 0.8
+
+export interface DelivererMotionInput {
+  /** This tick's motion regions, in pixel space. */
+  readonly regions: readonly {
+    readonly bbox: {
+      readonly x: number
+      readonly y: number
+      readonly w: number
+      readonly h: number
+    }
+  }[]
+  readonly frameWidth: number
+  readonly frameHeight: number
+  /** Normalised union of the package zones; null when unknown. */
+  readonly zoneRect: PackageZoneCropRect | null
+}
+
+/**
+ * Did analyzer motion reach the dilated package zone with a person-sized
+ * region? Unknown geometry answers false: this stamp only ever BACKS the open
+ * of a candidate, so failing closed keeps the light-wedge guard intact.
+ */
+export function delivererMotionNearPackageZone(input: DelivererMotionInput): boolean {
+  const { zoneRect, frameWidth, frameHeight } = input
+  if (zoneRect === null || frameWidth <= 0 || frameHeight <= 0) return false
+  const dx = zoneRect.w * PACKAGE_ZONE_MOTION_DILATION
+  const dy = zoneRect.h * PACKAGE_ZONE_MOTION_DILATION
+  const left = Math.max(0, zoneRect.x - dx)
+  const top = Math.max(0, zoneRect.y - dy)
+  const right = Math.min(1, zoneRect.x + zoneRect.w + dx)
+  const bottom = Math.min(1, zoneRect.y + zoneRect.h + dy)
+  for (const region of input.regions) {
+    const x = region.bbox.x / frameWidth
+    const y = region.bbox.y / frameHeight
+    const w = region.bbox.w / frameWidth
+    const h = region.bbox.h / frameHeight
+    if (w * h > PACKAGE_ZONE_MOTION_MAX_REGION_FRAC) continue
+    if (x < right && left < x + w && y < bottom && top < y + h) return true
+  }
+  return false
 }

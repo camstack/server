@@ -1,5 +1,5 @@
 ---
-id: D1001
+id: D1002
 title: A model box may open in a scene zone, a sub-floor box continues, and a lighting flip is not a change
 status: accepted
 date: 2026-11-02
@@ -27,11 +27,14 @@ empty, so two silent bursts disarmed the cadence.
 Amends D931. A model box inside a scene-difference zone is still a stillness
 sighting: it may OPEN a candidate, and the scene diff's own sighting merges
 with it by IoU. A below-threshold package box (score at least 0.3, observed
-0.35 to 0.50) on a looked frame may CONTINUE an unpromoted candidate and never
-opens one (D665). A day to IR flip, read from the crop's chroma spread
+0.35 to 0.50) on a looked frame may CONTINUE an unpromoted candidate that
+already has two above-floor hits, and never opens one (D665); a real sighting
+and a continuation box on one frame count once. A day to IR flip, read from the crop's chroma spread
 (`IR_CHROMA_THRESHOLD`), is rejected as `lighting-mode-changed`, not as a
-zone-wide change: the reference is re-baselined and the model's boxes inside
-the crop are the gate for that episode. A burst that produced no result is
+zone-wide change: the reference is re-baselined, a pending blob is dropped,
+and the model's gated box (delivered by the plan) is the gate for that episode.
+The measure is taken on a 32x32 box-averaged grid, where the threshold was
+calibrated. A burst that produced no result is
 `no-verdict`: the empty streak and the cadence stay as they were.
 
 ## Consequences

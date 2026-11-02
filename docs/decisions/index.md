@@ -4,7 +4,7 @@
 
 # Decisions
 
-965 architecture decision records. One file per decision, never
+966 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -978,8 +978,9 @@ that rots.
 | D998 | [A notification that needs a sleeping battery camera wakes it once, by the rule's leave, and waits bounded](adr-0998-a-notification-that-needs-a-sleeping-battery-camera-wakes-it-once-by-the-rules-leave-and-waits-bounded.md) | 💭 proposed | 2026-11-02 |
 | D999 | [Inbound camera alarms ride existing planes — SMTP is a broker kind, HTTP is the addon data plane](adr-0999-inbound-camera-alarms-ride-existing-planes-smtp-is-a-broker-kind-http-is-the-addon-data-plane.md) | ✅ accepted (supersedes D986 §6 (inbound receivers as a hub builtin)) | 2026-11-02 |
 | D1000 | [A parcel still is taken from a frame that still exists](adr-1000-a-parcel-still-is-taken-from-a-frame-that-still-exists.md) | 💭 proposed | 2026-11-02 |
-| D1001 | [A model box may open in a scene zone, a sub-floor box continues, and a lighting flip is not a change](adr-1001-a-model-box-may-open-in-a-scene-zone-a-sub-floor-box-continues-and-a-lighting-flip-is-not-a-change.md) | ✅ accepted | 2026-11-02 |
 | D1001 | [ESPHome board keys are read through Home Assistant ingress, never from a port opened on the LAN](adr-1001-esphome-board-keys-are-read-through-ha-ingress-never-a-lan-port.md) | 💭 proposed | 2026-11-02 |
+| D1002 | [A model box may open in a scene zone, a sub-floor box continues, and a lighting flip is not a change](adr-1002-a-model-box-may-open-in-a-scene-zone-a-sub-floor-box-continues-and-a-lighting-flip-is-not-a-change.md) | ✅ accepted | 2026-11-02 |
+| D1003 | [Zone motion backs the open of a package candidate, learned late but anchored at the open](adr-1003-zone-motion-backs-the-open-of-a-package-candidate-learned-late-anchored-at-open.md) | ✅ accepted | 2026-11-02 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

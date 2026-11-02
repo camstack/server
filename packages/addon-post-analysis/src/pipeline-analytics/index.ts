@@ -876,7 +876,10 @@ import {
   type PackageLookRawKept,
   packageLookSightings,
 } from './pipeline/package/package-look-sightings.js'
-import { packageReferenceArea } from './pipeline/package/package-reference-area.js'
+import {
+  packageReferenceArea,
+  packageZoneCropRect,
+} from './pipeline/package/package-reference-area.js'
 import type { PackageReferenceZone } from './pipeline/package/package-reference-area.js'
 import { PackageSceneCoordinator } from './pipeline/package/package-scene-coordinator.js'
 import type { PackageSceneDelivery } from './pipeline/package/package-scene-coordinator.js'
@@ -893,6 +896,7 @@ import {
 } from './pipeline/package/package-stillness-sweep.js'
 import {
   collectPackageZoneIds,
+  delivererMotionNearPackageZone,
   isDelivererInPackageZone,
   type PackageOptionRule,
 } from './pipeline/package/package-zone-activity.js'
@@ -5426,6 +5430,7 @@ export default class PipelineAnalyticsAddon
       this.packageDropDetector?.forgetDevice(data.deviceId)
       this.packageScene?.forget(data.deviceId)
       this.frameState.lastNonPackageActivityAt.delete(data.deviceId)
+      this.frameState.lastPackageZoneMotionAt.delete(data.deviceId)
       this.frameState.packageCollectors.forgetDevice(data.deviceId)
       this.frameState.packageOversizeLogAt.delete(data.deviceId)
       this.frameState.packageLookFrames.delete(data.deviceId)
@@ -5458,6 +5463,7 @@ export default class PipelineAnalyticsAddon
     this.packageDropDetector?.forgetDevice(deviceId)
     this.packageScene?.forget(deviceId)
     this.frameState.lastNonPackageActivityAt.delete(deviceId)
+    this.frameState.lastPackageZoneMotionAt.delete(deviceId)
     this.frameState.packageCollectors.forgetDevice(deviceId)
     this.frameState.packageOversizeLogAt.delete(deviceId)
     this.frameState.packageLookFrames.delete(deviceId)
@@ -9463,6 +9469,7 @@ export default class PipelineAnalyticsAddon
 
     const detected = payload.detected === true
     this.frameState.lastMotionTickByDevice.set(deviceId, { detected, atMs: timestamp })
+    if (detected) await this.stampPackageZoneMotion(deviceId, payload, timestamp)
     // The motion-activity LTS tap used to ride `insertMotion`, which fired on
     // every heartbeat row (~5 s while motion stayed on). An episode now
     // inserts only once, at open — sampled here, on every observation
@@ -9479,6 +9486,37 @@ export default class PipelineAnalyticsAddon
       frameWidth: payload.frameWidth,
       frameHeight: payload.frameHeight,
     })
+  }
+
+  /**
+   * Stamp analyzer motion that reached a package drop-off zone (D1003): the
+   * courier who never became an L1 track still backs the OPEN of a candidate.
+   * Onboard motion carries no regions or dimensions and never stamps.
+   */
+  private async stampPackageZoneMotion(
+    deviceId: number,
+    payload: MotionAnalysisPayload,
+    timestamp: number,
+  ): Promise<void> {
+    const proxy = await this.ensureProxy(deviceId)
+    const packageZoneIds = collectPackageZoneIds(proxy?.state.zoneRules.value?.package ?? [])
+    if (packageZoneIds.size === 0) return
+    const zoneRect = packageZoneCropRect({
+      zones: proxy?.state.zones.value?.zones ?? [],
+      packageZoneIds,
+      frameWidth: payload.frameWidth,
+      frameHeight: payload.frameHeight,
+    })
+    if (
+      delivererMotionNearPackageZone({
+        regions: payload.regions,
+        frameWidth: payload.frameWidth,
+        frameHeight: payload.frameHeight,
+        zoneRect,
+      })
+    ) {
+      this.frameState.lastPackageZoneMotionAt.set(deviceId, timestamp)
+    }
   }
 
   /**
@@ -9930,6 +9968,11 @@ export default class PipelineAnalyticsAddon
     )
   }
 
+  private zoneMotionStamp(deviceId: number): { lastDelivererMotionAt?: number } {
+    const at = this.frameState.lastPackageZoneMotionAt.get(deviceId)
+    return at === undefined ? {} : { lastDelivererMotionAt: at }
+  }
+
   private deliverPackageSceneSightings(delivery: PackageSceneDelivery): void {
     const settings = this.packageDropSettingsFromCache(delivery.deviceId)
     const lastActivityAt = this.frameState.lastNonPackageActivityAt.get(delivery.deviceId)
@@ -9943,6 +9986,7 @@ export default class PipelineAnalyticsAddon
       minDwellMs: settings.packageDropDwellSec * 1000,
       activityWindowMs: settings.packageDropActivityWindowSec * 1000,
       ...(lastActivityAt !== undefined ? { lastActivityAt } : {}),
+      ...this.zoneMotionStamp(delivery.deviceId),
       looked: false,
     })
     this.bridgePackageStillness({
@@ -10150,6 +10194,7 @@ export default class PipelineAnalyticsAddon
       minDwellMs: input.settings.packageDropDwellSec * 1000,
       activityWindowMs: input.settings.packageDropActivityWindowSec * 1000,
       ...(lastActivityAt !== undefined ? { lastActivityAt } : {}),
+      ...this.zoneMotionStamp(input.deviceId),
       ...lookEvidence,
     })
     this.bridgePackageStillness({
@@ -10415,6 +10460,7 @@ export default class PipelineAnalyticsAddon
           observedDwellMs,
           requiredDwellMs,
           activityBackedAtOpen: ex.activityBackedAtOpen,
+          lastZoneMotionAt: this.frameState.lastPackageZoneMotionAt.get(input.deviceId) ?? null,
           reasons,
         },
       })

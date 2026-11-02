@@ -207,6 +207,13 @@ export interface PackageStillnessInput {
    *  DROP-OFF ZONE (frame clock, same domain as `timestamp`). Undefined = never. */
   readonly lastActivityAt?: number
   /**
+   * Timestamp of the most recent analyzer motion NEAR a package drop-off zone
+   * (person-sized, no L1 track needed). It backs the OPEN of a candidate only:
+   * the courier who never became a track still delivers. It never witnesses a
+   * pick-up and never feeds the early-pick-up rule (D1003).
+   */
+  readonly lastDelivererMotionAt?: number
+  /**
    * Did the `package-detection` step RUN on this frame (`FrameResult.
    * packageLooked`)? Only a frame that looked can say a parcel is absent: on
    * every other frame an empty `sightings` means "nobody asked". Absent ⇒
@@ -595,9 +602,10 @@ export class PackageStillnessTracker {
   }
 
   private promoteWhenReady(
-    updated: PackageCandidate,
+    candidate: PackageCandidate,
     input: PackageStillnessInput,
   ): PackageCandidate | null {
+    const updated = this.backedLate(candidate, input)
     const minHits = input.minHits ?? this.config.minHits
     const ready =
       updated.promotedAt === null &&
@@ -605,6 +613,21 @@ export class PackageStillnessTracker {
       updated.hits >= minHits &&
       input.timestamp - updated.firstSeenAt >= input.minDwellMs
     return ready ? { ...updated, promotedAt: input.timestamp } : null
+  }
+
+  /**
+   * Zone motion learned AFTER the open still backs the candidate when its stamp
+   * lies in the window around the FIRST sighting (the same slack a pick-up
+   * gets): the backing stays anchored at the open, a later passer-by never
+   * validates scenery (D1003).
+   */
+  private backedLate(c: PackageCandidate, input: PackageStillnessInput): PackageCandidate {
+    if (c.activityBackedAtOpen || c.promotedAt !== null) return c
+    const at = input.lastDelivererMotionAt
+    const windowMs = input.activityWindowMs ?? 0
+    if (at === undefined || windowMs <= 0) return c
+    const inWindow = at >= c.firstSeenAt - windowMs && at <= c.firstSeenAt + this.config.roundGapMs
+    return inWindow ? { ...c, activityBackedAtOpen: true } : c
   }
 
   private bestMatch(
@@ -630,7 +653,9 @@ export class PackageStillnessTracker {
     const windowMs = input.activityWindowMs ?? 0
     const activityBackedAtOpen =
       windowMs <= 0 ||
-      (input.lastActivityAt !== undefined && input.timestamp - input.lastActivityAt <= windowMs)
+      (input.lastActivityAt !== undefined && input.timestamp - input.lastActivityAt <= windowMs) ||
+      (input.lastDelivererMotionAt !== undefined &&
+        input.timestamp - input.lastDelivererMotionAt <= windowMs)
     return {
       id: this.newId(),
       deviceId: input.deviceId,

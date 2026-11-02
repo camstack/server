@@ -2790,8 +2790,11 @@ Verified traps in this table's fine print (2026-08-02):
   tracker `minHits` (tracklets die between looks). A box overlapping a **person**
   does not start a candidate. Between looks, confirmed package tracks may still
   refresh a candidate. The generic loop skips package classes so one parcel never
-  promotes twice. Dwell default is 0. The activity gate stamps only a non-package
-  track in a configured drop-off zone. Min bbox area is a fraction of the **zone
+  promotes twice. Dwell default is 0. The activity gate is backed by a non-package
+  track in a configured drop-off zone, or by person-sized analyzer motion near it
+  when the courier never became a track
+  ([D1003](../decisions/adr-1003-zone-motion-backs-the-open-of-a-package-candidate-learned-late-anchored-at-open.md)):
+  that motion backs the OPEN only and never witnesses a pick-up. Min bbox area is a fraction of the **zone
   crop** the step saw (full frame when there is no crop); max area stays a fraction
   of the **full** frame. Drop reasons log with `tags: { deviceId }`. A packages
   rule may also turn on two options, both default off

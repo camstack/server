@@ -204,6 +204,9 @@ export class FrameState {
    * which would let the streetlight wedge vouch for its own delivery.
    */
   readonly lastNonPackageActivityAt = new Map<number, number>()
+  /** Last analyzer motion near a package drop-off zone, per device (D1003).
+   *  Backs the OPEN of a candidate only; never a pick-up witness. */
+  readonly lastPackageZoneMotionAt = new Map<number, number>()
   /**
    * WHO was in the drop-off zone, and when (D404). The pick-up is CONCLUDED
    * minutes after the fact, so the collector must be remembered while it is

@@ -297,6 +297,77 @@ describe('the activity gate — a parcel needs a deliverer', () => {
     expect(out.promoted).toHaveLength(0)
   })
 
+  function observeWithMotion(
+    t: PackageStillnessTracker,
+    timestamp: number,
+    sightings: readonly PackageSighting[],
+    lastActivityAt: number | undefined,
+    lastDelivererMotionAt: number | undefined,
+  ): ReturnType<PackageStillnessTracker['observe']> {
+    return t.observe({
+      deviceId: DEVICE,
+      sightings,
+      frameWidth: FRAME_W,
+      frameHeight: FRAME_H,
+      timestamp,
+      minDwellMs: 0,
+      activityWindowMs: WINDOW,
+      ...(lastActivityAt !== undefined ? { lastActivityAt } : {}),
+      ...(lastDelivererMotionAt !== undefined ? { lastDelivererMotionAt } : {}),
+    })
+  }
+
+  it('no track ever, zone motion 20 s before open promotes (the courier who was never tracked)', () => {
+    const t = makeTracker()
+    const start = 10_000_000
+    const motion = start - 20_000
+    observeWithMotion(t, start, [sighting()], undefined, motion)
+    observeWithMotion(t, start + 400, [sighting()], undefined, motion)
+    const out = observeWithMotion(t, start + 800, [sighting()], undefined, motion)
+    expect(out.promoted).toHaveLength(1)
+  })
+
+  it('activity learned late (a stamp at or before the first sighting, passed on a later observe) promotes', () => {
+    const t = makeTracker()
+    const start = 10_000_000
+    observeWithMotion(t, start, [sighting()], undefined, undefined)
+    observeWithMotion(t, start + 400, [sighting()], undefined, start - 1_000)
+    const out = observeWithMotion(t, start + 800, [sighting()], undefined, start - 1_000)
+    expect(out.promoted).toHaveLength(1)
+  })
+
+  it('zone motion that arrives long after the open does not back it', () => {
+    const t = makeTracker()
+    const start = 10_000_000
+    observeWithMotion(t, start, [sighting()], undefined, undefined)
+    let promoted = 0
+    for (let i = 1; i < 6; i += 1) {
+      promoted += observeWithMotion(t, start + i * POLL_MS, [sighting()], undefined, start + 60_000)
+        .promoted.length
+    }
+    expect(promoted).toBe(0)
+  })
+
+  it('zone motion alone never witnesses a pick-up: departedWithoutActivity', () => {
+    const t = makeTracker()
+    const start = 10_000_000
+    const motion = start - 20_000
+    observeWithMotion(t, start, [sighting()], undefined, motion)
+    observeWithMotion(t, start + 400, [sighting()], undefined, motion)
+    expect(
+      observeWithMotion(t, start + 800, [sighting()], undefined, motion).promoted,
+    ).toHaveLength(1)
+    const gone = observeWithMotion(
+      t,
+      start + 800 + PACKAGE_STILLNESS_TTL_MS + 1,
+      [],
+      undefined,
+      start + 800 + 1_000,
+    )
+    expect(gone.departed).toHaveLength(0)
+    expect(gone.departedWithoutActivity).toHaveLength(1)
+  })
+
   it('window 0 disables the gate entirely (default/back-compat)', () => {
     const t = makeTracker()
     expect(confirmDefault(t).promoted).toHaveLength(1)

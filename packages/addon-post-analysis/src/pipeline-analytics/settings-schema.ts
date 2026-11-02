@@ -667,7 +667,7 @@ export function buildGlobalSettingsSchema(cap?: string): ConfigUISchema {
           key: 'packageDropActivityWindowSec',
           label: 'Deliverer window',
           description:
-            'A delivery only counts if a person or vehicle was in the configured package drop-off zone within this many seconds before the package appeared — and a pick-up only with somebody in that zone when it vanished. Motion elsewhere on the camera does not count. 0 disables the requirement.',
+            'A delivery only counts if a person or vehicle was in the configured package drop-off zone within this many seconds before the package appeared — and a pick-up only with somebody in that zone when it vanished. Person-sized motion beside the drop-off zone also counts when nobody was tracked. Motion elsewhere on the camera does not count. 0 disables the requirement.',
           min: 0,
           max: 1800,
           step: 30,
