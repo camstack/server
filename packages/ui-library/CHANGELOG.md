@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Device export table: selectors on the left with the search on the right, searchable Role and Integration filters showing display names, a bulk bar with select all / none, and a multi export that now lands every selected device
 - A select that discovers its options can be an optional picker ('Default' choice, 'missing' label for a gone value); the device export table's Type filter is searchable like Role and Integration.
+- A searchable select no longer throws after it closes on a page that was just left.
 
 ## [1.2.372] - 2026-11-02
 

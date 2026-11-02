@@ -126,6 +126,13 @@ export function OptionSelect(props: OptionSelectProps): JSX.Element | null {
   const triggerRef = useRef<HTMLElement | null>(null)
   const listboxRef = useRef<HTMLDivElement | null>(null)
   const blurTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // A blur that is still pending when the select unmounts must not fire on a torn-down document.
+  useEffect(
+    () => () => {
+      if (blurTimer.current) clearTimeout(blurTimer.current)
+    },
+    [],
+  )
 
   const computeListboxCoords = (): ListboxCoords | null => {
     const trigger = triggerRef.current
