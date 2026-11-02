@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Addon migrations of a grouped addon (Home Assistant export, Google export) are no longer refused at boot: the engine accepts the runner that hosts the owner, like the keychain
 - The migration engine now accepts a grouped addon's catalogue from the runner that hosts it, read from the installed manifests, so Home Assistant export and Google export migrations are no longer refused at every boot
 - A linked camera's still is no longer rejected as stale after a slow capture: the snapshot capture time is now when the frame arrived, not when the capture was queued
+- Loki logging has a per-instance on/off switch on its destinations record; a Loki switched off at the old registry toggle is carried over to it
 
 ### Fixed
 

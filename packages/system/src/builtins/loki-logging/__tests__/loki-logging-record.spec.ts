@@ -21,7 +21,7 @@ function logger(): IScopedLogger {
   } as unknown as IScopedLogger
 }
 
-async function boot(localNodeId: string, seed?: { url: string }) {
+async function boot(localNodeId: string, seed?: { url: string; enabled?: boolean }) {
   const world = makeInMemoryRecords('loki-logging')
   await world.records.declare({ destinations: lokiDestinationsKind })
   if (seed !== undefined) {
@@ -39,6 +39,7 @@ async function boot(localNodeId: string, seed?: { url: string }) {
           batchIntervalMs: 5000,
           batchSize: 200,
           timeoutMs: 10000,
+          ...(seed.enabled === undefined ? {} : { enabled: seed.enabled }),
         },
       },
       { ifRev: 0 },
@@ -72,7 +73,7 @@ async function boot(localNodeId: string, seed?: { url: string }) {
   const addon = new LokiLoggingAddon()
   const result = await addon.initialize(ctx)
   const registrations = result && 'providers' in result && result.providers ? result.providers : []
-  return { addon, registrations }
+  return { addon, registrations, world }
 }
 
 describe('LokiLoggingAddon — connection record (D985)', () => {
@@ -105,5 +106,35 @@ describe('LokiLoggingAddon — connection record (D985)', () => {
       addons.push(addon)
       expect(addon.getDestination().getStatus().configured).toBe(true)
     }
+  })
+
+  it('a record switched off configures no push on any node, and switching it on resumes (D996)', async () => {
+    for (const node of ['hub', 'agent-1']) {
+      const { addon } = await boot(node, { url: 'http://loki:3100', enabled: false })
+      addons.push(addon)
+      expect(addon.getDestination().getStatus()).toMatchObject({
+        enabled: false,
+        configured: false,
+      })
+    }
+  })
+
+  it('setInstanceEnabled on the hub stops and resumes the destination at once', async () => {
+    const { addon, registrations } = await boot('hub', { url: 'http://loki:3100' })
+    addons.push(addon)
+    expect(addon.getDestination().getStatus()).toMatchObject({ enabled: true, configured: true })
+    const reg = registrations.find((r) => r.capability.name === integrationInstancesCapability.name)
+    const target = reg?.provider
+    const setEnabled: unknown =
+      target === undefined ? undefined : Reflect.get(target, 'setInstanceEnabled')
+    if (typeof setEnabled !== 'function' || target === undefined) throw new Error('no provider')
+    const provider = {
+      setInstanceEnabled: async (input: { id: string; enabled: boolean }): Promise<unknown> =>
+        Reflect.apply(setEnabled, target, [input]),
+    }
+    await provider.setInstanceEnabled({ id: 'int_0001', enabled: false })
+    expect(addon.getDestination().getStatus()).toMatchObject({ enabled: false, configured: false })
+    await provider.setInstanceEnabled({ id: 'int_0001', enabled: true })
+    expect(addon.getDestination().getStatus()).toMatchObject({ enabled: true, configured: true })
   })
 })

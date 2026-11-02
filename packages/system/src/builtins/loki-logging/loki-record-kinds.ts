@@ -34,6 +34,8 @@ export type LokiDestinationBody = {
   readonly batchIntervalMs: number
   readonly batchSize: number
   readonly timeoutMs: number
+  /** The instance's own switch (D996). Absent means on, so no data migration was needed. */
+  readonly enabled?: boolean | undefined
 }
 
 /** The schema is checked against the interface by its annotation: a drifted field fails the typecheck. */
@@ -53,6 +55,7 @@ export const LokiDestinationBodySchema: z.ZodType<LokiDestinationBody> = z.objec
     .max(LOKI_BOUNDS.batchIntervalMs.max),
   batchSize: z.number().int().min(LOKI_BOUNDS.batchSize.min).max(LOKI_BOUNDS.batchSize.max),
   timeoutMs: z.number().int().min(LOKI_BOUNDS.timeoutMs.min).max(LOKI_BOUNDS.timeoutMs.max),
+  enabled: z.boolean().optional(),
 })
 
 export const LOKI_DESTINATIONS_KIND_NAME = 'destinations'

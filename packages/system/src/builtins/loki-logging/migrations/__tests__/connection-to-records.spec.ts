@@ -55,6 +55,10 @@ async function world(initial: Record<string, unknown>, readFails = false) {
       writes.push('clear-password')
       store.delete('password')
     },
+    readRegistryState: async () => 'active',
+    findToggleRecord: async () => null,
+    disableRecord: async () => undefined,
+    enableRegistry: async () => undefined,
   }
   const bound = defineAddonMigrations(ADDON_MIGRATIONS, ports)
   const run = async (id: string): Promise<MigrationOwnerResult> => {

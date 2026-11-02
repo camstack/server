@@ -145,6 +145,10 @@ describe('loki-logging/2026-11-02-drop-moved-settings on real SQLite', () => {
         return row === null ? null : { url: row.data.url, hasPassword: false }
       },
       clearOldPassword: async () => undefined,
+      readRegistryState: async () => 'active',
+      findToggleRecord: async () => null,
+      disableRecord: async () => undefined,
+      enableRegistry: async () => undefined,
     }
     const report = await runAddonMigrations(
       host,
@@ -154,11 +158,13 @@ describe('loki-logging/2026-11-02-drop-moved-settings on real SQLite', () => {
     expect(ledger()).toEqual({
       'loki-logging/2026-11-02-connection-to-records': 'applied',
       'loki-logging/2026-11-02-drop-moved-settings': 'applied',
+      'loki-logging/2026-11-02-registry-toggle-to-record': 'applied',
     })
     expect(report.failed ?? []).toEqual([])
     expect(report.applied).toEqual([
       'loki-logging/2026-11-02-connection-to-records',
       'loki-logging/2026-11-02-drop-moved-settings',
+      'loki-logging/2026-11-02-registry-toggle-to-record',
     ])
     expect(Object.keys(rows()).sort()).toEqual(['loki-logging.migratedEnabled', 'other-addon.url'])
     expect(rows()['other-addon.url']).toBe(wrapper('other-addon', 'url', 'keep-me'))

@@ -34,7 +34,12 @@ import {
   RevConflictError,
 } from '@camstack/types'
 import { LokiDestination, type LokiConfig } from './loki-destination.js'
-import { type LokiCataloguePorts, type LokiRecordState } from './migrations/index.js'
+import {
+  type LokiCataloguePorts,
+  type LokiRecordState,
+  type RegistryState,
+  REGISTRY_TOGGLE_TO_RECORD_ID,
+} from './migrations/index.js'
 import {
   LOKI_DEFAULT_BODY,
   type LokiDestinationBody,
@@ -99,6 +104,7 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
   private current: LokiDestinationBody | null = null
   private refreshTimer: ReturnType<typeof setInterval> | null = null
   private retirementTimer: ReturnType<typeof setTimeout> | null = null
+  private toggleMigrationTimer: ReturnType<typeof setTimeout> | null = null
   private shuttingDown = false
   private declared = false
   private secretsWarned = false
@@ -162,6 +168,7 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
     // registered yet, and the one returned below is registered only after this
     // method returns — so the carry-over retries in the background.
     void this.attemptEnabledFlagRetirement(0)
+    if (this.isHub() && this.instances !== null) void this.attemptRegistryToggleMigration(0)
     return registrations
   }
 
@@ -263,6 +270,28 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
         }
         return 'created'
       },
+      readRegistryState: async (): Promise<RegistryState> => {
+        const providers = await this.ctx.api.addons.listCapabilityProviders.query({
+          capName: logDestinationCapability.name,
+        })
+        const own = providers.find((p) => p.addonId === this.ctx.id)
+        if (own === undefined) return 'unregistered'
+        return own.isActive ? 'active' : 'inactive'
+      },
+      findToggleRecord: async () => {
+        const [first] = await instances.listResolved()
+        return first === undefined ? null : { id: first.id, enabled: first.enabled }
+      },
+      disableRecord: async (id: string) => {
+        await handle.patch(id, { enabled: false })
+      },
+      enableRegistry: async () => {
+        await this.ctx.api.addons.setCapabilityProviderEnabled.mutate({
+          capName: logDestinationCapability.name,
+          addonId: this.ctx.id,
+          enabled: true,
+        })
+      },
       clearOldPassword: async () => {
         await this.clearSecrets(['password'])
       },
@@ -320,6 +349,14 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
       outcome = await retireEnabledFlag({
         readStoredKey: (key) => this.readStoredGlobalKey(key),
         disableAtCapability: async () => {
+          // The switch is the record's own (D996): switch it off there when a record exists.
+          const instances = this.instances
+          const [first] = instances === null ? [] : await instances.listResolved()
+          if (first !== undefined && this.ctx.records !== undefined) {
+            await this.ctx.records.kind(lokiDestinationsKind).patch(first.id, { enabled: false })
+            await this.refreshFromRecord()
+            return
+          }
           await this.ctx.api.addons.setCapabilityProviderEnabled.mutate({
             capName: logDestinationCapability.name,
             addonId: this.ctx.id,
@@ -363,10 +400,46 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
     this.retirementTimer.unref?.()
   }
 
+  /**
+   * The registry-toggle migration needs the provider to be registered, which happens only after
+   * `onInitialize` returns: the pass inside it fails (tolerated) and this runs the catalogue
+   * again until the migration lands, bounded by the same delays as the D777 carry-over.
+   */
+  private async attemptRegistryToggleMigration(attempt: number): Promise<void> {
+    if (this.shuttingDown) return
+    let landed = false
+    try {
+      const report = await this.runMigrations(
+        defineAddonMigrations(ADDON_MIGRATIONS, this.migrationPorts()),
+      )
+      landed = !report.failed.includes(REGISTRY_TOGGLE_TO_RECORD_ID)
+    } catch (err: unknown) {
+      this.ctx.logger.debug('Loki logging: the registry-toggle migration could not run yet', {
+        meta: { error: err instanceof Error ? err.message : String(err), attempt },
+      })
+    }
+    if (landed) {
+      await this.refreshFromRecord()
+      return
+    }
+    const delay = RETIREMENT_RETRY_DELAYS_MS[attempt]
+    if (delay === undefined) {
+      this.ctx.logger.warn('Loki logging: the registry-toggle migration is deferred to next boot')
+      return
+    }
+    this.toggleMigrationTimer = setTimeout(() => {
+      this.toggleMigrationTimer = null
+      void this.attemptRegistryToggleMigration(attempt + 1)
+    }, delay)
+    this.toggleMigrationTimer.unref?.()
+  }
+
   protected async onShutdown(): Promise<void> {
     this.shuttingDown = true
     if (this.retirementTimer !== null) clearTimeout(this.retirementTimer)
     this.retirementTimer = null
+    if (this.toggleMigrationTimer !== null) clearTimeout(this.toggleMigrationTimer)
+    this.toggleMigrationTimer = null
     if (this.refreshTimer !== null) clearInterval(this.refreshTimer)
     this.refreshTimer = null
     await this.destination?.shutdown()
@@ -398,13 +471,12 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
    * would have broken this addon's settings reload.
    */
   private destinationConfig(): LokiConfig {
-    // `enabled: true` unconditionally: the destination's own activity gate is
-    // now only "is a URL set". Whether it is used at all is the orchestrator's
-    // per-destination toggle, enforced in the LogManager fan-out — one truth,
-    // not two (2026-07-30).
+    // The destination's own gate is "enabled AND a URL is set". `enabled` is the instance's switch
+    // on the record (D996, `setInstanceEnabled`); the registry toggle (D777) is no longer the
+    // operator's switch and is left on. With no record the destination stays inert (no URL).
     const body = this.current ?? { ...LOKI_DEFAULT_BODY, name: '' }
     return {
-      enabled: true,
+      enabled: body.enabled !== false,
       url: body.url,
       job: body.job,
       node: this.ctx.kernel.localNodeId ?? 'hub',
