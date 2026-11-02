@@ -150,6 +150,15 @@ D985 build on it, and the move would carry secrets for no gain.
   addon-level cap methods are removed. An older admin UI calling them gets the typed "no procedure"
   error and does not crash.
 
+## Phases
+
+The field-by-field census is [docs/design/2026-11-03-addon-settings-census.md](../design/2026-11-03-addon-settings-census.md)
+(372 addon-level values, each with its scope, destination and D987 migration id). It supersedes the 328 count in
+Context and carries the ordered mover plan: the node-row `nodeId` mover first, then dead keys, unmarked node fields,
+the orchestrator's id-keyed blobs, shared-across-instance values, service instances (D996), and last the removal of
+`globalSettingsSchema` and the guard. Cluster and fleet-default fields keep their rows and need no mover. D999
+replaces §6: receivers are not a builtin phase.
+
 ## Enforcement
 
 - `scripts/check-no-global-settings-schema.ts` (new, wired in checks.yml): refuses `globalSettingsSchema`, <!-- drift-ok: new guard, lands with this decision -->
