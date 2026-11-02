@@ -149,7 +149,7 @@ addon-level declaration deploys immediately.
   through both the forwarded surface and the addon page and compares the two
   `updateGlobalSettings` inputs for equality — a scoped key (`emailPushPort@hub`)
   fails it.
-- `packages/addon-provider-reolink/src/__tests__/integration-forwarding.spec.ts`
+- `packages/addon-provider-reolink/src/__tests__/integration-forwarding.spec.ts` <!-- drift-ok: deleted with the Reolink webhook section (D999) -->
   pins the tab literal on the provider side, pins exactly which keys are
   forwarded, forbids a `perNode` field among them, and asserts the forwarded
   sections are the *same objects* as the schema's — so a future "integration

@@ -43,7 +43,6 @@ applies-to:
   - packages/addon-pipeline/src/recorder/band-engine.ts
   - packages/addon-pipeline-orchestrator/src/camera-switch-service.ts
   - packages/addon-pipeline-orchestrator/src/display-palette-provider.ts
-  - packages/addon-provider-reolink/src/baichuan-webhook-schema.ts
   - server/backend/src/api/core/auth.router.ts
   - server/backend/src/api/static/frame-policy.ts
   - server/backend/src/api/static/spa-mount.ts
@@ -427,8 +426,8 @@ protected override integrationSettingSections(): readonly string[] {
 `BaseAddon.getIntegrationSettings()` then serves exactly those sections, and
 `addonSettings.getIntegrationSettings` carries them to the UI. Declaring nothing
 returns `null` and no surface is offered.
-`packages/addon-provider-reolink/src/baichuan-webhook-schema.ts` is the reference
-consumer, and the only one.
+Reolink was the reference consumer until D999 moved its webhook to the data
+plane; no addon declares integration sections today.
 
 ### One form per integration instance
 

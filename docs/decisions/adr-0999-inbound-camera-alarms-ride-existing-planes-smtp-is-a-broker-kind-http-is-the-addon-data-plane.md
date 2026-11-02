@@ -66,9 +66,12 @@ D986 §6 is withdrawn.
   container.
 - A recipient is claimed by one subscriber only
   (`smtp-inbound/recipient-claimed`).
-- The webhook half (HaCfg push over the data plane, the :9081 compatibility
-  intake and the removal of `listLanHosts`) is a follow-up; until it lands the
-  Reolink webhook server is unchanged.
+- The webhook half: the HaCfg push is a public plane of the Reolink addon's
+  data plane (`/addon/provider-reolink/webhook/<stableId>`, host from the
+  `internal` role); `listLanHosts` and the private listener are gone. A
+  receive-only :9081 intake stays until 2026-12-15 so a camera asleep through
+  the upgrade loses no alarm, and each armed camera is re-pointed on its first
+  Baichuan contact (`webhookUrlGeneration`).
 
 ## Enforcement
 

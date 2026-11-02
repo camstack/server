@@ -120,6 +120,19 @@ Hardware-aware object-detection defaults stay **320** (`yolov9m-320` /
 The reference NVR Model Studio catalog is pinned to **resize 320**
 ([`2026-08-23-model-studio-external-catalog.md`](../design/2026-08-23-model-studio-external-catalog.md)).
 
+## A public inbound plane: the Reolink webhook
+
+A data plane is not only for the hub's own consumers. A device that cannot sign in (a battery camera
+POSTing its HaCfg wake/sleep push) can be served by a plane with `access: 'public'`:
+`provider-reolink` serves `prefix: 'webhook'`, reachable at
+`http://<internal-host>:<lan-http-port>/addon/provider-reolink/webhook/<stableId>` through the hub's
+plain-HTTP LAN listener (port 4480 by default; the firmware refuses a self-signed certificate). The
+host is the `internal` role of the `local-network` palette. Because the hub does no auth on such a plane,
+the handler is the whole gate: it bounds the body (64 KiB), accepts only POST/PUT and only a known
+`stableId`, and answers 404 otherwise ([D999](../decisions/adr-0999-inbound-camera-alarms-ride-existing-planes-smtp-is-a-broker-kind-http-is-the-addon-data-plane.md)).
+The retired private `:9081` listener stays for one release as a receive-only compatibility intake
+feeding the same handler; remove it after 2026-12-15.
+
 ## Streaming
 
 `packages/addon-pipeline/src/stream-broker/` does RTSP read, pre-buffer, WebRTC and

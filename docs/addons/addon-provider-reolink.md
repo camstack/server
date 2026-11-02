@@ -69,6 +69,35 @@ it is a `broker` of kind `smtp-inbound` owned by `smtp-nodemailer`, one record =
 - **Container contract (D717).** Port 2525 moves process (hub-main to `smtp-nodemailer`), not
   container; nothing in the Unraid template, the Proxmox script or the Compose example changes.
 
+## The HaCfg webhook (battery cameras that support it)
+
+A battery camera that supports Baichuan HaCfg (cmd 806/807) can POST its wake/sleep push over plain
+HTTP. It is a plane of this addon's HTTP data plane ([D999](../decisions/adr-0999-inbound-camera-alarms-ride-existing-planes-smtp-is-a-broker-kind-http-is-the-addon-data-plane.md)),
+not a private listener: `webhook-plane.ts` is served with `ctx.dataPlane.serve({ prefix: 'webhook',
+access: 'public' })` (the firmware cannot sign in, so the handler is the gate).
+
+- **URL.** `http://<internal-host>:<lan-http-port>/addon/provider-reolink/webhook/<stableId>`. The host
+  is the `internal` role of the `local-network` palette (D729) and the port is the plain-HTTP origin
+  the hub lists for it (`resolveWebhookEndpoint`). With no internal address, or with LAN HTTP off,
+  Auto-configure refuses with the reason; it never falls back to HTTPS (the firmware refuses a
+  self-signed certificate).
+- **Handler.** POST or PUT, JSON body of at most 64 KiB. nodelink's `parseBaichuanWebhookBody` and
+  `mapBaichuanWebhookToSimpleEvents` feed `handleSimpleEvent({ source: 'baichuanWebhook' })`. An
+  unknown or ineligible `stableId` is a 404 with a log line (tagged `deviceId` when the camera is known),
+  an oversized body 413, an unparsable one 400.
+- **Re-pointing after the upgrade.** The old URL was `:9081/webhook/<id>`. Each battery camera is moved
+  on its first Baichuan contact after the upgrade, only if its own `getHaCfg` shows the webhook armed at
+  another URL (an e-mail camera is never switched). Progress is `webhookUrlGeneration` in the device
+  store; a failure leaves it unwritten and the next contact retries.
+- **:9081 compatibility window.** For one release a receive-only listener on :9081
+  (`legacy-webhook-intake.ts`) feeds the same handler, so a camera that sleeps through the upgrade
+  loses no alarm. Each camera's first hit logs `legacy webhook port used — camera will be re-pointed`.
+  Remove it after 2026-12-15 (a spec fails from that date while the file exists); then :9081 leaves
+  the container-contract mirrors (D717).
+- **Settings.** `baichuanWebhookEnabled`, `baichuanWebhookPort` and `baichuanWebhookBindHost` no longer
+  exist; the migration `provider-reolink/2026-11-02-drop-webhook-intake-settings` (a plan, `deleteKeys`)
+  removes the persisted keys.
+
 ## Standalone vs under an NVR
 
 An NVR or Home Hub is its **own integration** (D985), never a device. The addon is
@@ -104,7 +133,7 @@ nobody offline.
 - A hub integration's form (the create wizard, and the edit page of a migrated or
   hub-born instance) is the connection only — host, port, rtspPort, username,
   password, plus the hub debug section — through `integrationSettingsSchema`. The
-  default integration keeps the full global schema (webhook, clips). An
+  default integration keeps the full global schema (clips). An
   instance that cannot be read falls back to the full schema.
 
 ## Passive contact, and where a standalone camera gets none

@@ -163,7 +163,7 @@ controls with one label writing two tables.
   no tab is named after the mechanism; the three re-scoping mounts throw; and a
   save from this surface is compared for equality with a save from the addon
   page (a scoped key fails it).
-- `packages/addon-provider-reolink/src/__tests__/integration-forwarding.spec.ts`
+- `packages/addon-provider-reolink/src/__tests__/integration-forwarding.spec.ts` <!-- drift-ok: deleted with the Reolink webhook section (D999) -->
   — 8 assertions: the declaration is wired to the core hook, the schema is
   declared rather than the getter overridden, the declared ids exist, the
   sections are the same OBJECTS as the schema's (so a separate "integration
