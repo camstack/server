@@ -176,6 +176,7 @@ jobs:
             scripts/check-storage-location-mode-single-owner.ts \
             scripts/check-registered-caps-declared.ts \
             scripts/check-device-scoped-wrapper-mounts.ts \
+            scripts/check-cap-mount-codegen-agrees.ts \
             scripts/check-extension-slots.ts \
             scripts/check-field-claims.ts \
             scripts/check-owner-only-events.ts \

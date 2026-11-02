@@ -4,12 +4,12 @@
 
 # Guards
 
-209 repository guards: 204 in `scripts/`,
+210 repository guards: 205 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (199)
+## Enforced by CI checks (200)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -33,6 +33,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-age-keyed-retention.ts` | Retention guard — there is exactly ONE age-keyed sweep, and it is over TRACKS. |
 | `scripts/check-authored-fields-reachable.ts` | Authored-field guard — **a field an operator is meant to set has a control that sets it, or it does not exist.** ## The failure this catches `RecordingTriggers.sensorDeviceIds` shipped on 2026-08 with a schema, a recorder that listened o… |
 | `scripts/check-cap-history-declared.ts` | Cap history guard (D850) — a value is recorded as long-term history because its own capability said so, in a diff someone reviewed. |
+| `scripts/check-cap-mount-codegen-agrees.ts` | Cap mount agreement guard — the type-only codegen mount and the runtime builder must tell the same story about every cap. |
 | `scripts/check-cap-name-kebab.ts` | Cap-name guard — **a capability name is kebab-case, because the transport recovers it from the router key with a string transform.** ## The failure this catches A forked addon calls `ctx.api.<routerKey>.<method>()`. The router key is `ke… |
 | `scripts/check-cap-status-type-imports.ts` | Guard: `generated/cap-status-types.ts` must import capability schemas as `import type`, NEVER as a value import. |
 | `scripts/check-cap-vocabulary.ts` | Cap vocabulary guard (D920) — the map of what every capability lets an operator DO to a device and WATCH it for must be complete and true. |
