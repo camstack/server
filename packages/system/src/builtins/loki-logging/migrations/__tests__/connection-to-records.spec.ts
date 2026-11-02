@@ -105,10 +105,18 @@ describe('loki-logging/2026-11-02-connection-to-records', () => {
     const [edit] = result.plan.edits
     expect(edit?.op).toBe('deleteKeys')
     if (edit?.op !== 'deleteKeys') return
-    expect(edit.keys).toContain('url')
-    expect(edit.keys).not.toContain('migratedEnabled')
+    expect(edit.scope).toBe('addon-settings')
+    expect(edit.keys).toContain('loki-logging.url')
+    expect(edit.keys).not.toContain('loki-logging.migratedEnabled')
     expect(edit.precondition).toBe(
-      preconditionOf(Object.fromEntries(edit.keys.map((k) => [k, w.store.get(k) ?? null]))),
+      preconditionOf(
+        Object.fromEntries(
+          edit.keys.map((id) => {
+            const key = id.slice('loki-logging.'.length)
+            return [id, { addonId: 'loki-logging', key, value: w.store.get(key) ?? null }]
+          }),
+        ),
+      ),
     )
   })
 

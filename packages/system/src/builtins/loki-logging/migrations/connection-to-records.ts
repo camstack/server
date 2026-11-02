@@ -11,8 +11,15 @@
 import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@camstack/types'
 import { LOKI_DEFAULT_BODY, type LokiDestinationBody, LOKI_BOUNDS } from '../loki-record-kinds.js'
 
-/** The settings scope of this addon (`<addonId>:addon-settings`). */
-export const LOKI_SETTINGS_SCOPE = 'loki-logging:addon-settings'
+/** The addon id, the prefix of its rows in the canonical settings table. */
+export const LOKI_ADDON_ID = 'loki-logging'
+
+/**
+ * Where the addon's global settings live: the canonical `addon-settings` table, one row per
+ * key, id `<addonId>.<key>`, data `{ addonId, key, value }` (never a per-addon scoped table,
+ * which exists only when something lazily declared it).
+ */
+export const ADDON_SETTINGS_TABLE = 'addon-settings'
 
 /** The connection keys the record now owns. `password` is the secret, cleared separately. */
 export const MOVED_PLAIN_KEYS: readonly string[] = [
@@ -147,13 +154,19 @@ export async function planDropMovedSettings(ports: DropMovedSettingsPorts): Prom
   const present = [...MOVED_PLAIN_KEYS, 'password'].filter((key) => key in stored)
   if (present.length === 0) return { edits: [] }
   await confirmRecordHoldsLegacy(ports, stored)
+  const rowId = (key: string): string => `${LOKI_ADDON_ID}.${key}`
   return {
     edits: [
       {
         op: 'deleteKeys',
-        scope: LOKI_SETTINGS_SCOPE,
-        keys: present,
-        precondition: preconditionOf(Object.fromEntries(present.map((key) => [key, stored[key]]))),
+        scope: ADDON_SETTINGS_TABLE,
+        keys: present.map(rowId),
+        // The precondition is the rows as the settings writer stores them: `{ addonId, key, value }`.
+        precondition: preconditionOf(
+          Object.fromEntries(
+            present.map((key) => [rowId(key), { addonId: LOKI_ADDON_ID, key, value: stored[key] }]),
+          ),
+        ),
       },
     ],
   }
