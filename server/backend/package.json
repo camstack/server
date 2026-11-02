@@ -1,6 +1,6 @@
 {
   "name": "@camstack/server",
-  "version": "1.2.731",
+  "version": "1.2.732",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -66,17 +66,12 @@
     ],
     "requires": {
       "addons": {
-        "@camstack/addon-admin-ui": ">=1.2.551",
-        "@camstack/addon-agent-ui": ">=1.2.312",
-        "@camstack/addon-ai": ">=0.4.176",
-        "@camstack/addon-benchmark": ">=1.2.310",
-        "@camstack/addon-export-google": ">=0.1.121",
-        "@camstack/addon-import-alexa": ">=0.2.178",
-        "@camstack/addon-model-studio": ">=1.1.341",
-        "@camstack/addon-osd-manager": ">=0.1.314",
-        "@camstack/addon-provider-homeassistant": ">=1.2.647",
-        "@camstack/addon-provider-homematic": ">=1.2.180",
-        "@camstack/addon-training": ">=0.1.127"
+        "@camstack/addon-admin-ui": ">=1.2.552",
+        "@camstack/addon-agent-ui": ">=1.2.313",
+        "@camstack/addon-benchmark": ">=1.2.311",
+        "@camstack/addon-pipeline": ">=1.2.638",
+        "@camstack/addon-pipeline-orchestrator": ">=1.2.652",
+        "@camstack/addon-provider-reolink": ">=1.2.218"
       },
       "wrapper": {
         "desktop": ">=0.0.1",
