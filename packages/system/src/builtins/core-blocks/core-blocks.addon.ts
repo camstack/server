@@ -28,6 +28,7 @@ import {
   type CoreBlockInput,
   coreBlockComposition,
   coreBlocksCapability,
+  defineAddonMigrations,
   powerSourceCapability,
   timedRunCapability,
   actionsCapability,
@@ -45,6 +46,7 @@ import {
   templateCapability,
   EventCategory,
 } from '@camstack/types'
+import { ADDON_MIGRATIONS, coreBlocksMigrationPorts } from './migrations/index.js'
 import { parseDeviceStateChanged } from '../shared/device-state-changed.js'
 import { armTimedRuns, buildTimedRunService } from './timed-run/timed-run-wiring.js'
 import type { TimedRunService } from './timed-run/timed-run-service.js'
@@ -143,6 +145,18 @@ export class CoreBlocksAddon extends BaseAddon {
       throw new Error('core-blocks needs ctx.records on the hub')
     }
     await records.declare(coreBlocksRecordKinds)
+    // Stored compositions take the shape the current caps validate BEFORE the store loads
+    // them: a fountain still carrying its pump cycle on `pet-fountain` would not build.
+    await this.runMigrations(
+      defineAddonMigrations(
+        ADDON_MIGRATIONS,
+        coreBlocksMigrationPorts(
+          records.kind(coreBlocksRecordKinds.blocks),
+          this.ctx.logger.child('migrations'),
+          () => Date.now(),
+        ),
+      ),
+    )
     this.store = CoreBlockStore.of(records, this.ctx.logger.child('store'))
     this.prefs = new BlockSettingsStore({
       store: settingsStore,

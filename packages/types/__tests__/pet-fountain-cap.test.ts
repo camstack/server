@@ -12,9 +12,6 @@ const FULL: PetFountainStatus = {
   waterVolume: 1.2,
   empty: false,
   pumpRunning: true,
-  pumpIntervalEnabled: true,
-  pumpOnTime: 600,
-  pumpOffTime: 1200,
   lastDrink: 0.03,
   currentHourDrink: 0.1,
   last24hDrink: 0.8,
@@ -28,9 +25,6 @@ const UNKNOWN: PetFountainStatus = {
   waterVolume: null,
   empty: null,
   pumpRunning: null,
-  pumpIntervalEnabled: null,
-  pumpOnTime: null,
-  pumpOffTime: null,
   lastDrink: null,
   currentHourDrink: null,
   last24hDrink: null,
@@ -60,8 +54,6 @@ describe('petFountainCapability', () => {
     expect({
       waterLevel: quantityOf('waterLevel'),
       waterVolume: quantityOf('waterVolume'),
-      pumpOnTime: quantityOf('pumpOnTime'),
-      pumpOffTime: quantityOf('pumpOffTime'),
       lastDrink: quantityOf('lastDrink'),
       currentHourDrink: quantityOf('currentHourDrink'),
       last24hDrink: quantityOf('last24hDrink'),
@@ -69,8 +61,6 @@ describe('petFountainCapability', () => {
     }).toEqual({
       waterLevel: 'percentage',
       waterVolume: 'volume',
-      pumpOnTime: 'duration',
-      pumpOffTime: 'duration',
       lastDrink: 'volume',
       currentHourDrink: 'volume',
       last24hDrink: 'volume',
@@ -78,14 +68,12 @@ describe('petFountainCapability', () => {
     })
   })
 
-  it('serves the five fountain methods, all mutations', () => {
+  it('serves the two model-independent methods, all mutations (the duty cycle is pump-cycle)', () => {
     expect(Object.keys(petFountainCapability.methods).toSorted()).toEqual([
       'resetDailyConsumption',
       'setPump',
-      'setPumpInterval',
-      'setPumpOffMinutes',
-      'setPumpOnMinutes',
     ])
+    expect(Object.keys(PetFountainStatusSchema.shape)).not.toContain('pumpIntervalEnabled')
     for (const m of Object.values(petFountainCapability.methods)) expect(m.kind).toBe('mutation')
   })
 

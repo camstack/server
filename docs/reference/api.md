@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**202 capabilities · 1494 methods.**
+**203 capabilities · 1495 methods.**
 
 ## Method index
 
@@ -836,9 +836,6 @@
 | `petFeeder.setVolume` | mutation | protected | pet-feeder |
 | `petFountain.getStatus` | query | protected | pet-fountain (auto) |
 | `petFountain.setPump` | mutation | protected | pet-fountain |
-| `petFountain.setPumpInterval` | mutation | protected | pet-fountain |
-| `petFountain.setPumpOnMinutes` | mutation | protected | pet-fountain |
-| `petFountain.setPumpOffMinutes` | mutation | protected | pet-fountain |
 | `petFountain.resetDailyConsumption` | mutation | protected | pet-fountain |
 | `pipelineAnalytics.getDeviceSettingsContribution` | query | protected | pipeline-analytics (auto) |
 | `pipelineAnalytics.getDeviceLiveContribution` | query | protected | pipeline-analytics (auto) |
@@ -1094,6 +1091,10 @@
 | `ptzAutotrack.setEnabled` | mutation | protected | ptz-autotrack |
 | `ptzAutotrack.getSettings` | query | protected | ptz-autotrack |
 | `ptzAutotrack.setSettings` | mutation | protected | ptz-autotrack |
+| `pumpCycle.getStatus` | query | protected | pump-cycle (auto) |
+| `pumpCycle.setEnabled` | mutation | protected | pump-cycle |
+| `pumpCycle.setOnMinutes` | mutation | protected | pump-cycle |
+| `pumpCycle.setOffMinutes` | mutation | protected | pump-cycle |
 | `reboot.reboot` | mutation | admin | reboot |
 | `recordEntries.listEntryKinds` | query | admin | record-entries |
 | `recordEntries.listEntries` | query | admin | record-entries |
@@ -3727,7 +3728,7 @@
 
 ### `pet-fountain` → `petFountain.*`
 
-- **Source:** `packages/types/src/capabilities/pet-fountain.cap.ts:63`
+- **Source:** `packages/types/src/capabilities/pet-fountain.cap.ts:58`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `pet-fountain`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IPetFountainProvider`
@@ -3737,9 +3738,6 @@
 |---|---|---|---|---|---|
 | getStatus _(auto)_ | `petFountain.getStatus` | query | protected | `{ deviceId: number }` | `PetFountainStatusSchema` |
 | setPump | `petFountain.setPump` | mutation | protected | `{ deviceId: number; on: boolean }` | `void` |
-| setPumpInterval | `petFountain.setPumpInterval` | mutation | protected | `{ deviceId: number; on: boolean }` | `void` |
-| setPumpOnMinutes | `petFountain.setPumpOnMinutes` | mutation | protected | `{ deviceId: number; minutes: number }` | `void` |
-| setPumpOffMinutes | `petFountain.setPumpOffMinutes` | mutation | protected | `{ deviceId: number; minutes: number }` | `void` |
 | resetDailyConsumption | `petFountain.resetDailyConsumption` | mutation | protected | `{ deviceId: number }` | `void` |
 
 ### `pipeline-analytics` → `pipelineAnalytics.*`
@@ -4133,6 +4131,21 @@
 | setEnabled | `ptzAutotrack.setEnabled` | mutation | protected | `{ deviceId: number; enabled: boolean }` | `void` |
 | getSettings | `ptzAutotrack.getSettings` | query | protected | `{ deviceId: number }` | `PtzAutotrackSettingsSchema \| null` |
 | setSettings | `ptzAutotrack.setSettings` | mutation | protected | `{ deviceId: number; settings: { targetType?: string; stopDelaySeconds?: number; disappearDelaySeconds?: number } }` | `void` |
+
+### `pump-cycle` → `pumpCycle.*`
+
+- **Source:** `packages/types/src/capabilities/pump-cycle.cap.ts:36`
+- **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `pet-fountain`
+- **Archetypes:** status(push) · runtimeState
+- **Provider interface:** `IPumpCycleProvider`
+- **runtimeState:** `PumpCycleStatusSchema`
+
+| Method | tRPC path | Kind | Auth | Input | Output |
+|---|---|---|---|---|---|
+| getStatus _(auto)_ | `pumpCycle.getStatus` | query | protected | `{ deviceId: number }` | `PumpCycleStatusSchema` |
+| setEnabled | `pumpCycle.setEnabled` | mutation | protected | `{ deviceId: number; on: boolean }` | `void` |
+| setOnMinutes | `pumpCycle.setOnMinutes` | mutation | protected | `{ deviceId: number; minutes: number }` | `void` |
+| setOffMinutes | `pumpCycle.setOffMinutes` | mutation | protected | `{ deviceId: number; minutes: number }` | `void` |
 
 ### `reboot` → `reboot.*`
 

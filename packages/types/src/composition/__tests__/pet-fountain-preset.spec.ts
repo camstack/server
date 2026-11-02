@@ -33,31 +33,39 @@ const SOURCES: PetFountainEntitySources = {
   waterLevel: ref('water_level'),
   waterVolume: ref('water_volume'),
   pump: ref('pump'),
-  pumpInterval: ref('interval'),
-  pumpOnMinutes: ref('on_minutes'),
-  pumpOffMinutes: ref('off_minutes'),
+  pumpCycle: {
+    interval: ref('interval'),
+    onMinutes: ref('on_minutes'),
+    offMinutes: ref('off_minutes'),
+  },
   lastDrink: ref('last_drink'),
   currentHourDrink: ref('hour_drink'),
   last24hDrink: ref('day_drink'),
   todayDrink: ref('today_drink'),
   clearDaily: ref('clear_daily'),
   filter: { daysRemaining: ref('filter_days'), changed: ref('filter_changed') },
+  cleaning: { daysRemaining: ref('cleaning_days'), changed: ref('cleaning_done') },
+  waterChange: { daysRemaining: ref('water_days'), changed: ref('water_changed') },
 }
 
 const CAPS_BY_SOURCE: Readonly<Record<string, string>> = {
   [SOURCES.waterLevel.stableId]: 'enum-sensor',
   [SOURCES.waterVolume.stableId]: 'enum-sensor',
   [SOURCES.pump.stableId]: 'switch',
-  [SOURCES.pumpInterval.stableId]: 'switch',
-  [SOURCES.pumpOnMinutes.stableId]: 'control',
-  [SOURCES.pumpOffMinutes.stableId]: 'control',
+  [ref('interval').stableId]: 'switch',
+  [ref('on_minutes').stableId]: 'control',
+  [ref('off_minutes').stableId]: 'control',
   [SOURCES.lastDrink.stableId]: 'enum-sensor',
   [SOURCES.currentHourDrink.stableId]: 'enum-sensor',
   [SOURCES.last24hDrink.stableId]: 'enum-sensor',
-  [SOURCES.todayDrink.stableId]: 'enum-sensor',
+  [ref('today_drink').stableId]: 'enum-sensor',
   [SOURCES.clearDaily.stableId]: 'button',
-  [SOURCES.filter?.daysRemaining.stableId ?? '']: 'enum-sensor',
-  [SOURCES.filter?.changed.stableId ?? '']: 'button',
+  [ref('filter_days').stableId]: 'enum-sensor',
+  [ref('filter_changed').stableId]: 'button',
+  [ref('cleaning_days').stableId]: 'enum-sensor',
+  [ref('cleaning_done').stableId]: 'button',
+  [ref('water_days').stableId]: 'enum-sensor',
+  [ref('water_changed').stableId]: 'button',
 }
 
 function described(
@@ -106,9 +114,21 @@ function field(
   return source
 }
 
-function evaluate(name: string, values: Readonly<Record<string, string | number | boolean>>) {
+function commandsOf(sources: PetFountainEntitySources, cap: string) {
+  const feature = petFountainFromEntitiesComposition(sources).features.find(
+    (f) => f.kind === 'fields' && f.cap === cap,
+  )
+  return feature?.kind === 'fields' ? (feature.commands ?? {}) : {}
+}
+
+function evaluate(
+  name: string,
+  values: Readonly<Record<string, string | number | boolean>>,
+  sources: PetFountainEntitySources = SOURCES,
+  cap = 'pet-fountain',
+) {
   return evaluateCompositionField({
-    source: field(SOURCES, 'pet-fountain', name),
+    source: field(sources, cap, name),
     read: readerOf(values),
     now: 1000,
   })
@@ -121,29 +141,13 @@ describe('petFountainFromEntitiesComposition', () => {
     const result = validate(SOURCES)
     expect(result.problems).toEqual([])
     expect(new Set(result.fields.map((f) => f.cap))).toEqual(
-      new Set(['pet-fountain', 'consumables']),
+      new Set(['pet-fountain', 'pump-cycle', 'consumables']),
     )
   })
 
   it('serves every pet-fountain method with a forward to its entity', () => {
-    const feature = petFountainFromEntitiesComposition(SOURCES).features.find(
-      (f) => f.kind === 'fields' && f.cap === 'pet-fountain',
-    )
-    const commands = feature?.kind === 'fields' ? (feature.commands ?? {}) : {}
-    expect(Object.keys(commands).toSorted()).toEqual([
-      'resetDailyConsumption',
-      'setPump',
-      'setPumpInterval',
-      'setPumpOffMinutes',
-      'setPumpOnMinutes',
-    ])
-    expect(commands['setPumpOnMinutes']).toMatchObject({
-      kind: 'forward',
-      source: SOURCES.pumpOnMinutes,
-      cap: 'control',
-      method: 'setValue',
-      args: { control: { kind: 'numeric', value: { $input: 'minutes' } } },
-    })
+    const commands = commandsOf(SOURCES, 'pet-fountain')
+    expect(Object.keys(commands).toSorted()).toEqual(['resetDailyConsumption', 'setPump'])
     expect(commands['resetDailyConsumption']).toMatchObject({
       source: SOURCES.clearDaily,
       cap: 'button',
@@ -151,31 +155,92 @@ describe('petFountainFromEntitiesComposition', () => {
     })
   })
 
-  it('makes the filter a resettable consumables item forwarding to the changed button', () => {
+  it('serves every pump-cycle method with a forward to its entity', () => {
+    const commands = commandsOf(SOURCES, 'pump-cycle')
+    expect(Object.keys(commands).toSorted()).toEqual([
+      'setEnabled',
+      'setOffMinutes',
+      'setOnMinutes',
+    ])
+    expect(commands['setOnMinutes']).toMatchObject({
+      kind: 'forward',
+      source: ref('on_minutes'),
+      cap: 'control',
+      method: 'setValue',
+      args: { control: { kind: 'numeric', value: { $input: 'minutes' } } },
+    })
+    expect(commands['setEnabled']).toMatchObject({ source: ref('interval'), method: 'setState' })
+  })
+
+  it('composes no pump-cycle for a fountain without the cycle entities, and still validates', () => {
+    const { pumpCycle: _cycle, ...withoutCycle } = SOURCES
+    const composition = petFountainFromEntitiesComposition(withoutCycle)
+    expect(composition.features.map((f) => f.kind === 'fields' && f.cap)).toEqual([
+      'pet-fountain',
+      'consumables',
+    ])
+    expect(compositionSourceRefs(composition).map((r) => r.stableId)).not.toContain(
+      ref('interval').stableId,
+    )
+    expect(validate(withoutCycle).problems).toEqual([])
+    expect(Object.keys(commandsOf(withoutCycle, 'pet-fountain')).toSorted()).toEqual([
+      'resetDailyConsumption',
+      'setPump',
+    ])
+  })
+
+  it('makes every maintenance cadence a resettable consumables item forwarding to its button', () => {
     const feature = petFountainFromEntitiesComposition(SOURCES).features.find(
       (f) => f.kind === 'fields' && f.cap === 'consumables',
     )
-    const reset = feature?.kind === 'fields' ? feature.items?.['filter']?.reset : undefined
-    expect(reset).toMatchObject({ source: SOURCES.filter?.changed, cap: 'button', method: 'press' })
+    const items = feature?.kind === 'fields' ? (feature.items ?? {}) : {}
+    expect(Object.keys(items).toSorted()).toEqual(['cleaning', 'filter', 'water-change'])
+    expect(items['filter']?.reset).toMatchObject({ source: ref('filter_changed'), method: 'press' })
+    expect(items['cleaning']?.reset).toMatchObject({ source: ref('cleaning_done'), cap: 'button' })
+    expect(items['water-change']?.reset).toMatchObject({
+      source: ref('water_changed'),
+      cap: 'button',
+    })
   })
 
-  it('has no consumables feature when the fountain has no filter entities', () => {
-    const { filter: _filter, ...withoutFilter } = SOURCES
-    const composition = petFountainFromEntitiesComposition(withoutFilter)
-    expect(composition.features.map((f) => f.kind === 'fields' && f.cap)).toEqual(['pet-fountain'])
+  it('has no consumables feature when the fountain has no maintenance entities', () => {
+    const { filter: _f, cleaning: _c, waterChange: _w, ...bare } = SOURCES
+    const composition = petFountainFromEntitiesComposition(bare)
+    expect(composition.features.map((f) => f.kind === 'fields' && f.cap)).toEqual([
+      'pet-fountain',
+      'pump-cycle',
+    ])
     expect(compositionSourceRefs(composition).map((r) => r.stableId)).not.toContain(
-      SOURCES.filter?.changed.stableId,
+      ref('filter_changed').stableId,
     )
   })
 
+  it('reads today as unknown, and binds no entity, when the fountain has no today sensor', () => {
+    const { todayDrink: _t, ...withoutToday } = SOURCES
+    const composition = petFountainFromEntitiesComposition(withoutToday)
+    expect(compositionSourceRefs(composition).map((r) => r.stableId)).not.toContain(
+      ref('today_drink').stableId,
+    )
+    expect(evaluate('todayDrink', {}, withoutToday).value).toBeNull()
+    expect(validate(withoutToday).problems).toEqual([])
+  })
+
   it('converts millilitres to litres (D944)', () => {
-    expect(evaluate('todayDrink', { [SOURCES.todayDrink.stableId]: '420' })).toMatchObject({
+    expect(evaluate('todayDrink', { [ref('today_drink').stableId]: '420' })).toMatchObject({
       value: 0.42,
     })
   })
 
   it('leaves the cycle times unknown: a number box value is not a readable field', () => {
-    expect(evaluate('pumpOnTime', { [SOURCES.pumpOnMinutes.stableId]: 10 }).value).toBeNull()
+    expect(
+      evaluate('onTime', { [ref('on_minutes').stableId]: 10 }, SOURCES, 'pump-cycle').value,
+    ).toBeNull()
+  })
+
+  it('reads the cycle switch as the pump-cycle enabled flag', () => {
+    expect(
+      evaluate('enabled', { [ref('interval').stableId]: true }, SOURCES, 'pump-cycle').value,
+    ).toBe(true)
   })
 
   it('reads a non-numeric source as unknown, never zero (D393)', () => {

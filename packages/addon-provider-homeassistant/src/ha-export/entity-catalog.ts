@@ -2367,9 +2367,16 @@ export const CAPS_NOT_EXPORTED: readonly UnexportedCap[] = [
     cap: 'pet-fountain',
     reason:
       'A fountain is BUILT here from the loose entities Home Assistant already ' +
-      'holds (a pump switch, two number boxes, a button), so exporting it back ' +
+      'holds (a pump switch, a button, sensors), so exporting it back ' +
       'would publish a second copy of entities that already exist there. A ' +
       'dedicated mapping can follow when an ecosystem asks for the built device.',
+  },
+  {
+    cap: 'pump-cycle',
+    reason:
+      'The pump duty cycle of a fountain BUILT here from a cycle switch and two ' +
+      'number boxes Home Assistant already holds, so exporting it back would ' +
+      'publish a second copy of entities that already exist there.',
   },
   {
     cap: 'ir-transmitter',

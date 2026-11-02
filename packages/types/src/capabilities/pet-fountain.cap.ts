@@ -6,7 +6,7 @@ import { method, type CapabilityDefinition, type InferProvider } from './capabil
 /**
  * Pet water-fountain cap. Models the telemetry and the control surface of a
  * circulating drinking fountain: how much water is in the tank, how much the
- * pet drank, whether the pump runs and on what duty cycle.
+ * pet drank, whether the pump runs.
  *
  * It has no native vendor provider of its own: a fountain reaches CamStack as
  * a container of loose entities (a pump switch, two number boxes, a "filter
@@ -22,8 +22,10 @@ import { method, type CapabilityDefinition, type InferProvider } from './capabil
  * never here. Every reading may be `null`: a source that is offline or does
  * not report is unknown, never zero.
  *
- * The filter is not a field of this cap: it is an item of the `consumables`
- * cap on the same device (kind `wear`), reset by the same forward mechanism.
+ * The pump's on/off duty cycle is model-specific and lives in the optional
+ * `pump-cycle` cap. The filter, the cleaning and the water change are not
+ * fields of this cap: they are items of the `consumables` cap on the same
+ * device (kind `wear`), reset by the same forward mechanism.
  */
 
 export const PetFountainStatusSchema = z.object({
@@ -35,19 +37,13 @@ export const PetFountainStatusSchema = z.object({
   empty: z.boolean().nullable(),
   /** True while the pump is running. Null while unknown. */
   pumpRunning: z.boolean().nullable(),
-  /** True when the pump works on an on/off duty cycle rather than continuously. */
-  pumpIntervalEnabled: z.boolean().nullable(),
-  /** How long the pump runs per cycle, in seconds. */
-  pumpOnTime: z.number().min(0).nullable().meta(readingMeta('duration')),
-  /** How long the pump rests per cycle, in seconds. */
-  pumpOffTime: z.number().min(0).nullable().meta(readingMeta('duration')),
   /** Water drunk in the last drink, in litres. */
   lastDrink: z.number().min(0).nullable().meta(readingMeta('volume')),
   /** Water drunk in the current hour, in litres. */
   currentHourDrink: z.number().min(0).nullable().meta(readingMeta('volume')),
   /** Water drunk over the last 24 hours (rolling), in litres. */
   last24hDrink: z.number().min(0).nullable().meta(readingMeta('volume')),
-  /** Water drunk since local midnight, in litres. */
+  /** Water drunk since local midnight, in litres. Null when the fountain has no such sensor. */
   todayDrink: z.number().min(0).nullable().meta(readingMeta('volume')),
   /** Decoded fault message. Null means healthy; a non-null string is an active fault. */
   error: z.string().nullable(),
@@ -58,7 +54,6 @@ export const PetFountainStatusSchema = z.object({
 export type PetFountainStatus = z.infer<typeof PetFountainStatusSchema>
 
 const DeviceIdSchema = z.number().int().nonnegative()
-const MinutesSchema = z.number().int().min(0)
 
 export const petFountainCapability = {
   name: 'pet-fountain',
@@ -72,23 +67,6 @@ export const petFountainCapability = {
       kind: 'mutation',
       auth: 'protected',
     }),
-    /** Switch the on/off duty cycle on or off (off = the pump runs continuously). */
-    setPumpInterval: method(z.object({ deviceId: DeviceIdSchema, on: z.boolean() }), z.void(), {
-      kind: 'mutation',
-      auth: 'protected',
-    }),
-    /** Set how many minutes the pump runs per cycle. */
-    setPumpOnMinutes: method(
-      z.object({ deviceId: DeviceIdSchema, minutes: MinutesSchema }),
-      z.void(),
-      { kind: 'mutation', auth: 'protected' },
-    ),
-    /** Set how many minutes the pump rests per cycle. */
-    setPumpOffMinutes: method(
-      z.object({ deviceId: DeviceIdSchema, minutes: MinutesSchema }),
-      z.void(),
-      { kind: 'mutation', auth: 'protected' },
-    ),
     /** Clear the rolling daily consumption counters on the device. */
     resetDailyConsumption: method(z.object({ deviceId: DeviceIdSchema }), z.void(), {
       kind: 'mutation',

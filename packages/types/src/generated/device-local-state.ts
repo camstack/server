@@ -61,6 +61,7 @@ import { presenceCapability } from '../capabilities/presence.cap.js'
 import { pressureSensorCapability } from '../capabilities/pressure-sensor.cap.js'
 import { privacyMaskCapability } from '../capabilities/privacy-mask.cap.js'
 import { ptzAutotrackCapability } from '../capabilities/ptz-autotrack.cap.js'
+import { pumpCycleCapability } from '../capabilities/pump-cycle.cap.js'
 import { recordingOnboardCapability } from '../capabilities/recording-onboard.cap.js'
 import { recordingSignalCapability } from '../capabilities/recording-signal.cap.js'
 import { runningStateCapability } from '../capabilities/running-state.cap.js'
@@ -154,6 +155,7 @@ export interface DeviceLocalState {
   pressureSensor: InferRuntimeState<typeof pressureSensorCapability>
   privacyMask: InferRuntimeState<typeof privacyMaskCapability>
   ptzAutotrack: InferRuntimeState<typeof ptzAutotrackCapability>
+  pumpCycle: InferRuntimeState<typeof pumpCycleCapability>
   recordingOnboard: InferRuntimeState<typeof recordingOnboardCapability>
   recordingSignal: InferRuntimeState<typeof recordingSignalCapability>
   runningState: InferRuntimeState<typeof runningStateCapability>
@@ -243,6 +245,7 @@ export const DEVICE_LOCAL_STATE_CAPS: Record<keyof DeviceLocalState, CapabilityD
   pressureSensor: pressureSensorCapability,
   privacyMask: privacyMaskCapability,
   ptzAutotrack: ptzAutotrackCapability,
+  pumpCycle: pumpCycleCapability,
   recordingOnboard: recordingOnboardCapability,
   recordingSignal: recordingSignalCapability,
   runningState: runningStateCapability,
@@ -339,6 +342,7 @@ export interface CapNameToRuntimeStateMap {
   'pressure-sensor': InferRuntimeState<typeof pressureSensorCapability>
   'privacy-mask': InferRuntimeState<typeof privacyMaskCapability>
   'ptz-autotrack': InferRuntimeState<typeof ptzAutotrackCapability>
+  'pump-cycle': InferRuntimeState<typeof pumpCycleCapability>
   'recording-onboard': InferRuntimeState<typeof recordingOnboardCapability>
   'recording-signal': InferRuntimeState<typeof recordingSignalCapability>
   'running-state': InferRuntimeState<typeof runningStateCapability>

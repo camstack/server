@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1494 method paths across 202 capabilities.
+ * Coverage: 1495 method paths across 203 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -846,9 +846,6 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'petFountain.getStatus': { capName: "pet-fountain", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'petFountain.resetDailyConsumption': { capName: "pet-fountain", capScope: "device", addonId: null, access: "delete", role: "viewer" } as const,
   'petFountain.setPump': { capName: "pet-fountain", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
-  'petFountain.setPumpInterval': { capName: "pet-fountain", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
-  'petFountain.setPumpOffMinutes': { capName: "pet-fountain", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
-  'petFountain.setPumpOnMinutes': { capName: "pet-fountain", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'pipelineAnalytics.addRetrainFrameFromRecording': { capName: "pipeline-analytics", capScope: "device", addonId: null, access: "create", role: "feature:retrain" } as const,
   'pipelineAnalytics.addRetrainFramesToCollection': { capName: "pipeline-analytics", capScope: "device", addonId: null, access: "create", role: "feature:retrain" } as const,
   'pipelineAnalytics.applyDeviceSettingsPatch': { capName: "pipeline-analytics", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
@@ -1103,6 +1100,10 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'ptzAutotrack.getStatus': { capName: "ptz-autotrack", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'ptzAutotrack.setEnabled': { capName: "ptz-autotrack", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'ptzAutotrack.setSettings': { capName: "ptz-autotrack", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
+  'pumpCycle.getStatus': { capName: "pump-cycle", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
+  'pumpCycle.setEnabled': { capName: "pump-cycle", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'pumpCycle.setOffMinutes': { capName: "pump-cycle", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'pumpCycle.setOnMinutes': { capName: "pump-cycle", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'reboot.reboot': { capName: "reboot", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
   'recordEntries.deleteEntry': { capName: "record-entries", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'recordEntries.listEntries': { capName: "record-entries", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
@@ -1666,6 +1667,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "privacy-mask",
   "ptz",
   "ptz-autotrack",
+  "pump-cycle",
   "reboot",
   "record-entries",
   "recording",
@@ -1800,6 +1802,7 @@ export const DEVICE_CAP_NAMES: readonly string[] = [
   "privacy-mask",
   "ptz",
   "ptz-autotrack",
+  "pump-cycle",
   "reboot",
   "recording",
   "recording-onboard",

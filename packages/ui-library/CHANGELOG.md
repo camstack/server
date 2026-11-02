@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Device export table: selectors on the left with the search on the right, searchable Role and Integration filters showing display names, a bulk bar with select all / none, and a multi export that now lands every selected device
+- The pet fountain panel shows the pump cycle section only when the device has the pump-cycle capability
 
 ## [1.2.372] - 2026-11-02
 

@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Rebuilt against updated dependencies.
+- Generated capability routers include the pump-cycle capability
 
 ## [1.2.739] - 2026-11-02
 

@@ -7,6 +7,8 @@
 import {
   type Composition,
   type CompositionSourceRef,
+  type PetFountainCadenceSources,
+  type PetFountainPumpCycleSources,
   petFountainFromEntitiesComposition,
 } from '@camstack/types'
 
@@ -51,68 +53,99 @@ const PET_FOUNTAIN: CompositionPreset = {
   descriptionKey: 'preset.petFountain.description',
   nameKey: 'preset.petFountain.name',
   slots: [
+    // What every fountain has: required.
     slot('waterLevel', 'enum-sensor'),
     slot('waterVolume', 'enum-sensor'),
     slot('pump', 'switch'),
-    slot('pumpInterval', 'switch'),
-    slot('pumpOnMinutes', 'control'),
-    slot('pumpOffMinutes', 'control'),
     slot('lastDrink', 'enum-sensor'),
     slot('currentHourDrink', 'enum-sensor'),
     slot('last24hDrink', 'enum-sensor'),
-    slot('todayDrink', 'enum-sensor'),
     slot('clearDaily', 'button'),
+    // What a model may have on top: each group is picked whole or not at all.
+    slot('todayDrink', 'enum-sensor', 'today'),
+    slot('pumpInterval', 'switch', 'cycle'),
+    slot('pumpOnMinutes', 'control', 'cycle'),
+    slot('pumpOffMinutes', 'control', 'cycle'),
     slot('filterDaysRemaining', 'enum-sensor', 'filter'),
     slot('filterChanged', 'button', 'filter'),
+    slot('cleaningDaysRemaining', 'enum-sensor', 'cleaning'),
+    slot('cleaningDone', 'button', 'cleaning'),
+    slot('waterChangeDaysRemaining', 'enum-sensor', 'waterChange'),
+    slot('waterChanged', 'button', 'waterChange'),
   ],
   build: (picks) => {
     const waterLevel = pick(picks, 'waterLevel')
     const waterVolume = pick(picks, 'waterVolume')
     const pump = pick(picks, 'pump')
-    const pumpInterval = pick(picks, 'pumpInterval')
-    const pumpOnMinutes = pick(picks, 'pumpOnMinutes')
-    const pumpOffMinutes = pick(picks, 'pumpOffMinutes')
     const lastDrink = pick(picks, 'lastDrink')
     const currentHourDrink = pick(picks, 'currentHourDrink')
     const last24hDrink = pick(picks, 'last24hDrink')
-    const todayDrink = pick(picks, 'todayDrink')
     const clearDaily = pick(picks, 'clearDaily')
-    const daysRemaining = pick(picks, 'filterDaysRemaining')
-    const changed = pick(picks, 'filterChanged')
     if (
       waterLevel === undefined ||
       waterVolume === undefined ||
       pump === undefined ||
-      pumpInterval === undefined ||
-      pumpOnMinutes === undefined ||
-      pumpOffMinutes === undefined ||
       lastDrink === undefined ||
       currentHourDrink === undefined ||
       last24hDrink === undefined ||
-      todayDrink === undefined ||
       clearDaily === undefined
     ) {
       return null
     }
-    // The filter is a pair: one half alone builds nothing.
-    if ((daysRemaining === undefined) !== (changed === undefined)) return null
+    const pumpCycle = cycleOf(picks)
+    const filter = cadenceOf(picks, 'filterDaysRemaining', 'filterChanged')
+    const cleaning = cadenceOf(picks, 'cleaningDaysRemaining', 'cleaningDone')
+    const waterChange = cadenceOf(picks, 'waterChangeDaysRemaining', 'waterChanged')
+    // A group is whole or absent: a half-picked one builds nothing.
+    if (
+      pumpCycle === 'partial' ||
+      filter === 'partial' ||
+      cleaning === 'partial' ||
+      waterChange === 'partial'
+    ) {
+      return null
+    }
+    const todayDrink = pick(picks, 'todayDrink')
     return petFountainFromEntitiesComposition({
       waterLevel,
       waterVolume,
       pump,
-      pumpInterval,
-      pumpOnMinutes,
-      pumpOffMinutes,
       lastDrink,
       currentHourDrink,
       last24hDrink,
-      todayDrink,
       clearDaily,
-      ...(daysRemaining !== undefined && changed !== undefined
-        ? { filter: { daysRemaining, changed } }
-        : {}),
+      ...(todayDrink === undefined ? {} : { todayDrink }),
+      ...(pumpCycle === null ? {} : { pumpCycle }),
+      ...(filter === null ? {} : { filter }),
+      ...(cleaning === null ? {} : { cleaning }),
+      ...(waterChange === null ? {} : { waterChange }),
     })
   },
+}
+
+/** A pair of picks: both, neither (null) or only one (`partial`). */
+function cadenceOf(
+  picks: PresetPicks,
+  daysKey: string,
+  changedKey: string,
+): PetFountainCadenceSources | null | 'partial' {
+  const daysRemaining = pick(picks, daysKey)
+  const changed = pick(picks, changedKey)
+  if (daysRemaining === undefined && changed === undefined) return null
+  return daysRemaining !== undefined && changed !== undefined
+    ? { daysRemaining, changed }
+    : 'partial'
+}
+
+/** The pump duty cycle: all three picks, none (null) or a partial set. */
+function cycleOf(picks: PresetPicks): PetFountainPumpCycleSources | null | 'partial' {
+  const interval = pick(picks, 'pumpInterval')
+  const onMinutes = pick(picks, 'pumpOnMinutes')
+  const offMinutes = pick(picks, 'pumpOffMinutes')
+  if (interval === undefined && onMinutes === undefined && offMinutes === undefined) return null
+  return interval !== undefined && onMinutes !== undefined && offMinutes !== undefined
+    ? { interval, onMinutes, offMinutes }
+    : 'partial'
 }
 
 export const COMPOSITION_PRESETS: readonly CompositionPreset[] = [PET_FOUNTAIN]

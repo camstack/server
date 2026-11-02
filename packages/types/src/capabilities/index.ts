@@ -2785,6 +2785,12 @@ export {
   petFountainCapability,
 } from './pet-fountain.cap.js'
 export {
+  type IPumpCycleProvider,
+  type PumpCycleStatus,
+  PumpCycleStatusSchema,
+  pumpCycleCapability,
+} from './pump-cycle.cap.js'
+export {
   type IPlateGalleryProvider,
   type PlateInfo,
   plateGalleryCapability,
@@ -3500,6 +3506,7 @@ import type { osdCapability } from './osd.cap.js'
 import type { osdManagerCapability } from './osd-manager.cap.js'
 import type { petFeederCapability } from './pet-feeder.cap.js'
 import type { petFountainCapability } from './pet-fountain.cap.js'
+import type { pumpCycleCapability } from './pump-cycle.cap.js'
 import type { pipelineAnalyticsCapability } from './pipeline-analytics.cap.js'
 import type { pipelineExecutorCapability } from './pipeline-executor.cap.js'
 import type { pipelineOrchestratorCapability } from './pipeline-orchestrator.cap.js'
@@ -3668,6 +3675,7 @@ type AnyCapability =
   | typeof vacuumControlCapability
   | typeof petFeederCapability
   | typeof petFountainCapability
+  | typeof pumpCycleCapability
   | typeof lawnMowerControlCapability
   | typeof fanControlCapability
   | typeof controlCapability

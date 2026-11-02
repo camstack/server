@@ -2,14 +2,16 @@
  * Pet-fountain controls for a `DeviceType.PetFountain` device.
  *
  * Reads the `pet-fountain` cap status slice (water level and volume, empty,
- * pump and its duty cycle, the water drunk) and renders:
+ * pump, the water drunk) and renders:
  *   - PetFountainInlineControl (device-list row): the tank level and a pump
  *     on/off toggle.
  *   - PetFountainHeroCard (device-detail hero): the tank gauge with the level
  *     and the volume first, what the pet drank today / in 24 h / this hour /
- *     last time, the pump switch, its duty-cycle switch and the run / rest
- *     minutes. The filter is a consumable: the page's Consumables section
- *     draws it, never this card (D915).
+ *     last time and the pump switch. The pump's duty-cycle switch and run /
+ *     rest minutes belong to the optional `pump-cycle` cap: that section is
+ *     drawn only on a fountain that composes it (planning#366). The filter,
+ *     the cleaning and the water change are consumables: the page's
+ *     Consumables section draws them, never this card (D915).
  *
  * Every reading may be unknown (`null`) and is drawn as a dash, never as
  * zero. Stored volumes are litres and durations seconds (D944); the card
@@ -17,7 +19,12 @@
  */
 import { AlertTriangle, Droplet, Droplets, Eraser, Pause, Play, Timer } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { DeviceType, TIMED_RUN_LIMITS, type PetFountainStatus } from '@camstack/types'
+import {
+  DeviceType,
+  TIMED_RUN_LIMITS,
+  type PetFountainStatus,
+  type PumpCycleStatus,
+} from '@camstack/types'
 import { useUiText } from '../../contexts/ui-text'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { useOptimisticSlice } from '../../hooks/use-optimistic-slice'
@@ -111,10 +118,6 @@ export function PetFountainPanel({
     )
   }
 
-  const intervalOn = display.pumpIntervalEnabled === true
-  const onMinutes = minutesOf(display.pumpOnTime)
-  const offMinutes = minutesOf(display.pumpOffTime)
-
   return (
     <div className="flex flex-col items-stretch gap-3 rounded-lg border border-border bg-surface p-4">
       <div className="flex items-center gap-4 rounded-lg border border-border-subtle bg-background-elevated p-3">
@@ -176,38 +179,7 @@ export function PetFountainPanel({
             disabled={busy}
             onChange={setPump}
           />
-          <SwitchRow
-            icon={<Timer className="h-4 w-4" />}
-            label={t('uiLibrary.petFountain.cycle', 'On / off cycle')}
-            checked={intervalOn}
-            disabled={busy}
-            onChange={(on) => {
-              applyOptimistic({ pumpIntervalEnabled: on })
-              void cap.setPumpInterval({ on })
-            }}
-          />
-          {intervalOn && (
-            <div className="flex flex-col gap-2">
-              <MinutesStepper
-                label={t('uiLibrary.petFountain.runMinutes', 'Runs for')}
-                minutes={onMinutes}
-                disabled={busy}
-                onChange={(minutes) => {
-                  applyOptimistic({ pumpOnTime: minutes * SECONDS_PER_MINUTE })
-                  void cap.setPumpOnMinutes({ minutes })
-                }}
-              />
-              <MinutesStepper
-                label={t('uiLibrary.petFountain.restMinutes', 'Rests for')}
-                minutes={offMinutes}
-                disabled={busy}
-                onChange={(minutes) => {
-                  applyOptimistic({ pumpOffTime: minutes * SECONDS_PER_MINUTE })
-                  void cap.setPumpOffMinutes({ minutes })
-                }}
-              />
-            </div>
-          )}
+          <PumpCycleSection trpc={trpc} deviceId={deviceId} optimistic={optimistic} />
         </div>
       </Section>
 
@@ -229,6 +201,69 @@ export function PetFountainPanel({
 }
 
 // ── Building blocks ───────────────────────────────────────────────────────────
+
+/**
+ * The pump's on/off duty cycle: its switch and, while it is on, the run / rest
+ * minutes. It reads the optional `pump-cycle` cap and draws nothing on a fountain
+ * that does not compose it. The device proxy resolves every binding of the device
+ * at once and the card is already drawn from `pet-fountain`, so a missing handle
+ * here is a fountain without a cycle, not a query still in flight (D315).
+ */
+function PumpCycleSection({
+  trpc,
+  deviceId,
+  optimistic,
+}: Pick<ControlPanelProps, 'trpc' | 'deviceId' | 'optimistic'>): ReactNode {
+  const t = useUiText()
+  const { cap, slice, available } = useDeviceCapability({
+    trpc,
+    deviceId,
+    cap: (d) => d.pumpCycle,
+    slice: (d) => d.state.pumpCycle,
+  })
+  const { display, applyOptimistic } = useOptimisticSlice<PumpCycleStatus>(slice, {
+    enabled: optimistic ?? true,
+  })
+  if (cap === undefined || display === undefined) return null
+  const busy = !available
+  const intervalOn = display.enabled === true
+  return (
+    <>
+      <SwitchRow
+        icon={<Timer className="h-4 w-4" />}
+        label={t('uiLibrary.petFountain.cycle', 'On / off cycle')}
+        checked={intervalOn}
+        disabled={busy}
+        onChange={(on) => {
+          applyOptimistic({ enabled: on })
+          void cap.setEnabled({ on })
+        }}
+      />
+      {intervalOn && (
+        <div className="flex flex-col gap-2">
+          <MinutesStepper
+            label={t('uiLibrary.petFountain.runMinutes', 'Runs for')}
+            minutes={minutesOf(display.onTime)}
+            disabled={busy}
+            onChange={(minutes) => {
+              applyOptimistic({ onTime: minutes * SECONDS_PER_MINUTE })
+              void cap.setOnMinutes({ minutes })
+            }}
+          />
+          <MinutesStepper
+            label={t('uiLibrary.petFountain.restMinutes', 'Rests for')}
+            minutes={minutesOf(display.offTime)}
+            disabled={busy}
+            onChange={(minutes) => {
+              applyOptimistic({ offTime: minutes * SECONDS_PER_MINUTE })
+              void cap.setOffMinutes({ minutes })
+            }}
+          />
+        </div>
+      )}
+    </>
+  )
+}
 
 /** A tank outline whose water rises with the level; danger-coloured when empty. */
 function TankGauge({

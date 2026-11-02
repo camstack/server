@@ -82,6 +82,7 @@ import type { pressureSensorCapability } from '../capabilities/pressure-sensor.c
 import type { privacyMaskCapability } from '../capabilities/privacy-mask.cap.js'
 import type { ptzCapability } from '../capabilities/ptz.cap.js'
 import type { ptzAutotrackCapability } from '../capabilities/ptz-autotrack.cap.js'
+import type { pumpCycleCapability } from '../capabilities/pump-cycle.cap.js'
 import type { rebootCapability } from '../capabilities/reboot.cap.js'
 import type { recordingCapability } from '../capabilities/recording.cap.js'
 import type { recordingOnboardCapability } from '../capabilities/recording-onboard.cap.js'
@@ -193,6 +194,7 @@ export interface DeviceProxyState {
   readonly pressureSensor: SliceHandle<InferRuntimeState<typeof pressureSensorCapability>>
   readonly privacyMask: SliceHandle<InferRuntimeState<typeof privacyMaskCapability>>
   readonly ptzAutotrack: SliceHandle<InferRuntimeState<typeof ptzAutotrackCapability>>
+  readonly pumpCycle: SliceHandle<InferRuntimeState<typeof pumpCycleCapability>>
   readonly recordingOnboard: SliceHandle<InferRuntimeState<typeof recordingOnboardCapability>>
   readonly recordingSignal: SliceHandle<InferRuntimeState<typeof recordingSignalCapability>>
   readonly runningState: SliceHandle<InferRuntimeState<typeof runningStateCapability>>
@@ -309,6 +311,7 @@ export interface DeviceProxy {
   readonly privacyMask?: InferDeviceProxyCap<typeof privacyMaskCapability>
   readonly ptz?: InferDeviceProxyCap<typeof ptzCapability>
   readonly ptzAutotrack?: InferDeviceProxyCap<typeof ptzAutotrackCapability>
+  readonly pumpCycle?: InferDeviceProxyCap<typeof pumpCycleCapability>
   readonly reboot?: InferDeviceProxyCap<typeof rebootCapability>
   readonly recording?: InferDeviceProxyCap<typeof recordingCapability>
   readonly recordingOnboard?: InferDeviceProxyCap<typeof recordingOnboardCapability>
@@ -838,9 +841,6 @@ export function createDeviceProxy(
 
   const petFountainInterface = {
     setPump: (input?: unknown) => dispatch('pet-fountain', 'petFountain', 'setPump', 'mutation', input),
-    setPumpInterval: (input?: unknown) => dispatch('pet-fountain', 'petFountain', 'setPumpInterval', 'mutation', input),
-    setPumpOnMinutes: (input?: unknown) => dispatch('pet-fountain', 'petFountain', 'setPumpOnMinutes', 'mutation', input),
-    setPumpOffMinutes: (input?: unknown) => dispatch('pet-fountain', 'petFountain', 'setPumpOffMinutes', 'mutation', input),
     resetDailyConsumption: (input?: unknown) => dispatch('pet-fountain', 'petFountain', 'resetDailyConsumption', 'mutation', input),
     getStatus: (input?: unknown) => dispatch('pet-fountain', 'petFountain', 'getStatus', 'query', input),
   }
@@ -987,6 +987,13 @@ export function createDeviceProxy(
     setEnabled: (input?: unknown) => dispatch('ptz-autotrack', 'ptzAutotrack', 'setEnabled', 'mutation', input),
     getSettings: (input?: unknown) => dispatch('ptz-autotrack', 'ptzAutotrack', 'getSettings', 'query', input),
     setSettings: (input?: unknown) => dispatch('ptz-autotrack', 'ptzAutotrack', 'setSettings', 'mutation', input),
+  }
+
+  const pumpCycleInterface = {
+    setEnabled: (input?: unknown) => dispatch('pump-cycle', 'pumpCycle', 'setEnabled', 'mutation', input),
+    setOnMinutes: (input?: unknown) => dispatch('pump-cycle', 'pumpCycle', 'setOnMinutes', 'mutation', input),
+    setOffMinutes: (input?: unknown) => dispatch('pump-cycle', 'pumpCycle', 'setOffMinutes', 'mutation', input),
+    getStatus: (input?: unknown) => dispatch('pump-cycle', 'pumpCycle', 'getStatus', 'query', input),
   }
 
   const rebootInterface = {
@@ -1420,6 +1427,7 @@ export function createDeviceProxy(
       pressureSensor: createSliceHandle<InferRuntimeState<typeof pressureSensorCapability>>(stateSource, binding.deviceId, 'pressure-sensor'),
       privacyMask: createSliceHandle<InferRuntimeState<typeof privacyMaskCapability>>(stateSource, binding.deviceId, 'privacy-mask'),
       ptzAutotrack: createSliceHandle<InferRuntimeState<typeof ptzAutotrackCapability>>(stateSource, binding.deviceId, 'ptz-autotrack'),
+      pumpCycle: createSliceHandle<InferRuntimeState<typeof pumpCycleCapability>>(stateSource, binding.deviceId, 'pump-cycle'),
       recordingOnboard: createSliceHandle<InferRuntimeState<typeof recordingOnboardCapability>>(stateSource, binding.deviceId, 'recording-onboard'),
       recordingSignal: createSliceHandle<InferRuntimeState<typeof recordingSignalCapability>>(stateSource, binding.deviceId, 'recording-signal'),
       runningState: createSliceHandle<InferRuntimeState<typeof runningStateCapability>>(stateSource, binding.deviceId, 'running-state'),
@@ -1517,6 +1525,7 @@ export function createDeviceProxy(
     ...(bound('privacy-mask') ? { privacyMask: privacyMaskInterface } : {}),
     ...(bound('ptz') ? { ptz: ptzInterface } : {}),
     ...(bound('ptz-autotrack') ? { ptzAutotrack: ptzAutotrackInterface } : {}),
+    ...(bound('pump-cycle') ? { pumpCycle: pumpCycleInterface } : {}),
     ...(bound('reboot') ? { reboot: rebootInterface } : {}),
     ...(bound('recording') ? { recording: recordingInterface } : {}),
     ...(bound('recording-onboard') ? { recordingOnboard: recordingOnboardInterface } : {}),

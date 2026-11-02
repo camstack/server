@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A notification target is no longer named after an optional discovered picker such as the email relay.
 - Logs → Destinations and Connectivity → Email: every instance row gets its own on/off switch (an off row reads one neutral Off badge), a Restart action and the provider's Logs / Events under the list.
 - TURN Servers lists every provider in one table with per-row switch, test, restart and activity
+- The pet fountain composition preset has an optional pump cycle group and maintenance cadence groups
 
 ## [1.2.557] - 2026-11-02
 

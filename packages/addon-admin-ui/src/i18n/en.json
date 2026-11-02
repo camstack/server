@@ -11228,12 +11228,16 @@
         "todayDrink": "Drinking today",
         "clearDaily": "Clear daily counters",
         "filterDaysRemaining": "Filter days remaining",
-        "filterChanged": "Filter changed"
+        "filterChanged": "Filter changed",
+        "cleaningDaysRemaining": "Cleaning days remaining",
+        "cleaningDone": "Cleaning done",
+        "waterChangeDaysRemaining": "Water change days remaining",
+        "waterChanged": "Water changed"
       }
     },
     "name": "Name",
     "slots": "Entities",
-    "optional": "optional, as a pair",
+    "optional": "optional, all or none of its group",
     "choose": "Choose",
     "clear": "Clear",
     "missing": "Still to pick: {{slots}}",

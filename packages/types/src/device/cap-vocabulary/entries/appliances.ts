@@ -14,6 +14,7 @@ type ApplianceCap =
   | 'dishwasher'
   | 'pet-feeder'
   | 'pet-fountain'
+  | 'pump-cycle'
   | 'media-player'
   | 'consumables'
   | 'running-state'
@@ -674,62 +675,6 @@ export const APPLIANCE_CAP_VOCABULARY: CapVocabularySlice<ApplianceCap> = {
         args: { on: false },
       },
       {
-        id: 'petFountain.intervalOn',
-        method: 'setPumpInterval',
-        label: t('Pump cycle on', 'Ciclo pompa attivo'),
-        phrase: t(
-          'Run the pump of {device} on its on/off cycle',
-          'Fai lavorare la pompa di {device} a ciclo acceso/spento',
-        ),
-        icon: 'timer',
-        args: { on: true },
-      },
-      {
-        id: 'petFountain.intervalOff',
-        method: 'setPumpInterval',
-        label: t('Pump cycle off', 'Ciclo pompa spento'),
-        phrase: t(
-          'Run the pump of {device} continuously',
-          'Fai lavorare la pompa di {device} in continuo',
-        ),
-        icon: 'timer-off',
-        args: { on: false },
-      },
-      {
-        id: 'petFountain.pumpOnMinutes',
-        method: 'setPumpOnMinutes',
-        label: t('Set pump run time', 'Imposta il tempo di lavoro della pompa'),
-        phrase: t(
-          'Set the pump of {device} to run {minutes} minutes per cycle',
-          'Imposta la pompa di {device} a lavorare {minutes} minuti per ciclo',
-        ),
-        icon: 'timer',
-        openArgs: [
-          {
-            key: 'minutes',
-            label: t('Minutes', 'Minuti'),
-            offer: { kind: 'number', min: 0, step: 1, unit: 'min' },
-          },
-        ],
-      },
-      {
-        id: 'petFountain.pumpOffMinutes',
-        method: 'setPumpOffMinutes',
-        label: t('Set pump rest time', 'Imposta il tempo di riposo della pompa'),
-        phrase: t(
-          'Set the pump of {device} to rest {minutes} minutes per cycle',
-          'Imposta la pompa di {device} a riposare {minutes} minuti per ciclo',
-        ),
-        icon: 'timer-off',
-        openArgs: [
-          {
-            key: 'minutes',
-            label: t('Minutes', 'Minuti'),
-            offer: { kind: 'number', min: 0, step: 1, unit: 'min' },
-          },
-        ],
-      },
-      {
         id: 'petFountain.resetDailyConsumption',
         method: 'resetDailyConsumption',
         label: t('Clear daily consumption', 'Azzera il consumo giornaliero'),
@@ -762,6 +707,85 @@ export const APPLIANCE_CAP_VOCABULARY: CapVocabularySlice<ApplianceCap> = {
         label: t('Water level', 'Livello dell’acqua'),
         unit: '%',
         icon: 'droplets',
+      },
+    ],
+  },
+
+  'pump-cycle': {
+    scope: 'device',
+    noun: t('Pump cycle', 'Ciclo della pompa'),
+    actions: [
+      {
+        id: 'pumpCycle.on',
+        method: 'setEnabled',
+        label: t('Pump cycle on', 'Ciclo pompa attivo'),
+        phrase: t(
+          'Run the pump of {device} on its on/off cycle',
+          'Fai lavorare la pompa di {device} a ciclo acceso/spento',
+        ),
+        icon: 'timer',
+        args: { on: true },
+      },
+      {
+        id: 'pumpCycle.off',
+        method: 'setEnabled',
+        label: t('Pump cycle off', 'Ciclo pompa spento'),
+        phrase: t(
+          'Run the pump of {device} continuously',
+          'Fai lavorare la pompa di {device} in continuo',
+        ),
+        icon: 'timer-off',
+        args: { on: false },
+      },
+      {
+        id: 'pumpCycle.onMinutes',
+        method: 'setOnMinutes',
+        label: t('Set pump run time', 'Imposta il tempo di lavoro della pompa'),
+        phrase: t(
+          'Set the pump of {device} to run {minutes} minutes per cycle',
+          'Imposta la pompa di {device} a lavorare {minutes} minuti per ciclo',
+        ),
+        icon: 'timer',
+        openArgs: [
+          {
+            key: 'minutes',
+            label: t('Minutes', 'Minuti'),
+            offer: { kind: 'number', min: 0, step: 1, unit: 'min' },
+          },
+        ],
+      },
+      {
+        id: 'pumpCycle.offMinutes',
+        method: 'setOffMinutes',
+        label: t('Set pump rest time', 'Imposta il tempo di riposo della pompa'),
+        phrase: t(
+          'Set the pump of {device} to rest {minutes} minutes per cycle',
+          'Imposta la pompa di {device} a riposare {minutes} minuti per ciclo',
+        ),
+        icon: 'timer-off',
+        openArgs: [
+          {
+            key: 'minutes',
+            label: t('Minutes', 'Minuti'),
+            offer: { kind: 'number', min: 0, step: 1, unit: 'min' },
+          },
+        ],
+      },
+    ],
+    state: [
+      {
+        kind: 'boolean',
+        field: 'enabled',
+        label: t('Pump cycle', 'Ciclo pompa'),
+        whenTrue: t(
+          'When {device} starts running its pump on a cycle',
+          'Quando {device} inizia a far lavorare la pompa a ciclo',
+        ),
+        whenFalse: t(
+          'When {device} runs its pump continuously',
+          'Quando {device} fa lavorare la pompa in continuo',
+        ),
+        icon: 'timer',
       },
     ],
   },

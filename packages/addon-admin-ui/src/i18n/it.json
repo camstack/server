@@ -11250,12 +11250,16 @@
         "todayDrink": "Bevuto oggi",
         "clearDaily": "Azzera i contatori giornalieri",
         "filterDaysRemaining": "Giorni residui del filtro",
-        "filterChanged": "Filtro sostituito"
+        "filterChanged": "Filtro sostituito",
+        "cleaningDaysRemaining": "Giorni residui alla pulizia",
+        "cleaningDone": "Pulizia eseguita",
+        "waterChangeDaysRemaining": "Giorni residui al cambio dell'acqua",
+        "waterChanged": "Acqua cambiata"
       }
     },
     "name": "Nome",
     "slots": "Entita'",
-    "optional": "facoltativo, in coppia",
+    "optional": "facoltativo, tutto il gruppo o niente",
     "choose": "Scegli",
     "clear": "Rimuovi",
     "missing": "Da scegliere: {{slots}}",

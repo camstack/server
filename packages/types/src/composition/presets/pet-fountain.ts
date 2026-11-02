@@ -2,14 +2,18 @@
  * The preset for a pet water fountain built from loose entities (D659, D967).
  *
  * A fountain reaches CamStack as a container of single-purpose entities: a
- * pump switch, a cycle switch, two number boxes, a handful of sensors that
- * report millilitres as text, and a few buttons. This preset names the
- * `pet-fountain` cap's fields over those entities, forwards each of its five
- * methods to ONE entity method, and adds the filter as a resettable
- * `consumables` item.
+ * pump switch, a handful of sensors that report millilitres as text, a button,
+ * and — on some models — a pump duty cycle (a switch and two number boxes) and
+ * maintenance pairs (days left + a "done" button). This preset names the
+ * `pet-fountain` cap's fields over the entities every fountain has, forwards its
+ * two methods to ONE entity method each, and adds what a model has on top: the
+ * `pump-cycle` cap when the cycle entities are given (planning#366), and one
+ * resettable `consumables` item per maintenance pair (filter, cleaning, water
+ * change). Nothing optional is required: a fountain without a cycle is built
+ * without the cap, never refused.
  *
  * Stored quantities are base units (D944): litres for volume, seconds for
- * duration. The cycle times cannot be read back (see `pumpOnTime` below). The sensors are `enum-sensor`s, so their value is a STRING:
+ * duration. The cycle times cannot be read back (see `onTime` below). The sensors are `enum-sensor`s, so their value is a STRING:
  * `number(x)` reads it and anything that is not a number stays `null`, never
  * 0 (D393). The caller supplies the sources — it knows which entity is which;
  * the preset guesses no entity id.
@@ -24,12 +28,22 @@ import {
   type CompositionSourceRef,
 } from '../composition.js'
 
-/** The optional filter of a fountain: its remaining days and the "filter changed" button. */
-export interface PetFountainFilterSources {
+/** An optional maintenance cadence: the days left and the button that says it was done. */
+export interface PetFountainCadenceSources {
   /** An `enum-sensor` whose value is the days left, as a numeric string. */
   readonly daysRemaining: CompositionSourceRef
-  /** A `button` the filter reset presses. */
+  /** A `button` the item's reset presses. */
   readonly changed: CompositionSourceRef
+}
+
+/** The entities of the optional pump duty cycle; all three or none. */
+export interface PetFountainPumpCycleSources {
+  /** `switch`: the on/off duty cycle. */
+  readonly interval: CompositionSourceRef
+  /** `control` (numeric): minutes the pump runs per cycle. */
+  readonly onMinutes: CompositionSourceRef
+  /** `control` (numeric): minutes the pump rests per cycle. */
+  readonly offMinutes: CompositionSourceRef
 }
 
 /** The entities a pet fountain is built from. */
@@ -40,24 +54,24 @@ export interface PetFountainEntitySources {
   readonly waterVolume: CompositionSourceRef
   /** `switch`: the pump. */
   readonly pump: CompositionSourceRef
-  /** `switch`: the on/off duty cycle. */
-  readonly pumpInterval: CompositionSourceRef
-  /** `control` (numeric): minutes the pump runs per cycle. */
-  readonly pumpOnMinutes: CompositionSourceRef
-  /** `control` (numeric): minutes the pump rests per cycle. */
-  readonly pumpOffMinutes: CompositionSourceRef
   /** `enum-sensor.value`: the last drink, millilitres as text. */
   readonly lastDrink: CompositionSourceRef
   /** `enum-sensor.value`: this hour's drinking, millilitres as text. */
   readonly currentHourDrink: CompositionSourceRef
   /** `enum-sensor.value`: the rolling 24 h drinking, millilitres as text. */
   readonly last24hDrink: CompositionSourceRef
-  /** `enum-sensor.value`: today's drinking, millilitres as text. */
-  readonly todayDrink: CompositionSourceRef
   /** `button`: clears the rolling daily counters. */
   readonly clearDaily: CompositionSourceRef
+  /** `enum-sensor.value`: today's drinking, millilitres as text. Absent: today reads unknown. */
+  readonly todayDrink?: CompositionSourceRef
+  /** Present when the pump has a duty cycle; adds the `pump-cycle` cap. */
+  readonly pumpCycle?: PetFountainPumpCycleSources
   /** Present when the fountain has a filter entity pair; adds a `filter` consumable. */
-  readonly filter?: PetFountainFilterSources
+  readonly filter?: PetFountainCadenceSources
+  /** Present when the fountain tracks a cleaning cadence; adds a `cleaning` consumable. */
+  readonly cleaning?: PetFountainCadenceSources
+  /** Present when the fountain tracks a water-change cadence; adds a `water-change` consumable. */
+  readonly waterChange?: PetFountainCadenceSources
 }
 
 const UNKNOWN: CompositionFieldSource = { kind: 'expression', expr: 'null', bindings: {} }
@@ -84,32 +98,79 @@ function percentOf(source: CompositionSourceRef): CompositionFieldSource {
   return over('l', from(source, 'enum-sensor', 'value'), 'number(l)')
 }
 
-function filterFeature(filter: PetFountainFilterSources) {
-  const days = { d: from(filter.daysRemaining, 'enum-sensor', 'value') }
+function cadenceItem(label: string, cadence: PetFountainCadenceSources) {
+  const days = { d: from(cadence.daysRemaining, 'enum-sensor', 'value') }
+  return {
+    label,
+    fields: {
+      'remaining.value': { kind: 'expression', expr: 'number(d)', bindings: days },
+      'remaining.kind': { kind: 'expression', expr: '"duration"', bindings: {} },
+      status: {
+        kind: 'expression',
+        expr: 'number(d) == null ? null : (number(d) <= 0 ? "replace" : "ok")',
+        bindings: days,
+      },
+    },
+    reset: { kind: 'forward', source: cadence.changed, cap: 'button', method: 'press' },
+  }
+}
+
+function consumablesFeature(sources: PetFountainEntitySources) {
+  const items = {
+    ...(sources.filter === undefined ? {} : { filter: cadenceItem('Filter', sources.filter) }),
+    ...(sources.cleaning === undefined
+      ? {}
+      : { cleaning: cadenceItem('Cleaning', sources.cleaning) }),
+    ...(sources.waterChange === undefined
+      ? {}
+      : { 'water-change': cadenceItem('Water change', sources.waterChange) }),
+  }
+  if (Object.keys(items).length === 0) return []
+  return [
+    {
+      kind: 'fields',
+      cap: 'consumables',
+      fields: { lastChangedAt: NOW, lastFetchedAt: NOW },
+      items,
+    },
+  ]
+}
+
+function pumpCycleFeature(cycle: PetFountainPumpCycleSources) {
+  const minutes = { kind: 'numeric', value: { $input: 'minutes' } }
   return {
     kind: 'fields',
-    cap: 'consumables',
-    fields: { lastChangedAt: NOW, lastFetchedAt: NOW },
-    items: {
-      filter: {
-        label: 'Filter',
-        fields: {
-          'remaining.value': { kind: 'expression', expr: 'number(d)', bindings: days },
-          'remaining.kind': { kind: 'expression', expr: '"duration"', bindings: {} },
-          status: {
-            kind: 'expression',
-            expr: 'number(d) == null ? null : (number(d) <= 0 ? "replace" : "ok")',
-            bindings: days,
-          },
-        },
-        reset: { kind: 'forward', source: filter.changed, cap: 'button', method: 'press' },
+    cap: 'pump-cycle',
+    fields: {
+      enabled: from(cycle.interval, 'switch', 'on'),
+      // A number box's value is a number-or-text union, which a composition cannot
+      // read (`control.value` is not a wireable field), so the current cycle times
+      // stay unknown; the setters still work through their forwards.
+      onTime: UNKNOWN,
+      offTime: UNKNOWN,
+      lastFetchedAt: NOW,
+    },
+    commands: {
+      setEnabled: { kind: 'forward', source: cycle.interval, cap: 'switch', method: 'setState' },
+      setOnMinutes: {
+        kind: 'forward',
+        source: cycle.onMinutes,
+        cap: 'control',
+        method: 'setValue',
+        args: { control: minutes },
+      },
+      setOffMinutes: {
+        kind: 'forward',
+        source: cycle.offMinutes,
+        cap: 'control',
+        method: 'setValue',
+        args: { control: minutes },
       },
     },
   }
 }
 
 export function petFountainFromEntitiesComposition(sources: PetFountainEntitySources): Composition {
-  const minutes = { kind: 'numeric', value: { $input: 'minutes' } }
   return CompositionSchema.parse({
     target: { kind: 'new', type: DeviceType.PetFountain },
     features: [
@@ -125,41 +186,16 @@ export function petFountainFromEntitiesComposition(sources: PetFountainEntitySou
             'number(l) == null ? null : number(l) <= 0',
           ),
           pumpRunning: from(sources.pump, 'switch', 'on'),
-          pumpIntervalEnabled: from(sources.pumpInterval, 'switch', 'on'),
-          // A number box's value is a number-or-text union, which a composition cannot
-          // read (`control.value` is not a wireable field), so the current cycle times
-          // stay unknown; the setters still work through their forwards.
-          pumpOnTime: UNKNOWN,
-          pumpOffTime: UNKNOWN,
           lastDrink: millilitresAsLitres(sources.lastDrink),
           currentHourDrink: millilitresAsLitres(sources.currentHourDrink),
           last24hDrink: millilitresAsLitres(sources.last24hDrink),
-          todayDrink: millilitresAsLitres(sources.todayDrink),
+          todayDrink:
+            sources.todayDrink === undefined ? UNKNOWN : millilitresAsLitres(sources.todayDrink),
           error: UNKNOWN,
           lastFetchedAt: NOW,
         },
         commands: {
           setPump: { kind: 'forward', source: sources.pump, cap: 'switch', method: 'setState' },
-          setPumpInterval: {
-            kind: 'forward',
-            source: sources.pumpInterval,
-            cap: 'switch',
-            method: 'setState',
-          },
-          setPumpOnMinutes: {
-            kind: 'forward',
-            source: sources.pumpOnMinutes,
-            cap: 'control',
-            method: 'setValue',
-            args: { control: minutes },
-          },
-          setPumpOffMinutes: {
-            kind: 'forward',
-            source: sources.pumpOffMinutes,
-            cap: 'control',
-            method: 'setValue',
-            args: { control: minutes },
-          },
           resetDailyConsumption: {
             kind: 'forward',
             source: sources.clearDaily,
@@ -168,7 +204,8 @@ export function petFountainFromEntitiesComposition(sources: PetFountainEntitySou
           },
         },
       },
-      ...(sources.filter === undefined ? [] : [filterFeature(sources.filter)]),
+      ...(sources.pumpCycle === undefined ? [] : [pumpCycleFeature(sources.pumpCycle)]),
+      ...consumablesFeature(sources),
     ],
   })
 }

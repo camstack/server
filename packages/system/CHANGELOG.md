@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Loki logging has a per-instance on/off switch on its destinations record; a Loki switched off at the old registry toggle is carried over to it
 - Loki logging no longer switches itself off at boot: the retired enabled flag is only removed, and the registry-toggle migration now runs after registration under the right addon id
 - Integration rows are keyed by the bare addon id (rows saved as addon:<id> are rewritten on boot), a tolerated migration failure raises a warning instead of a critical alert, and the camera grid asks for its own devices under the right id
+- A migration converts stored pet-fountain core blocks to the split pump-cycle composition
 
 ### Fixed
 

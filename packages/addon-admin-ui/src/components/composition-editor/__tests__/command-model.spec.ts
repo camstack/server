@@ -32,9 +32,11 @@ const SOURCES = {
   waterLevel: ref('sensor.level'),
   waterVolume: ref('sensor.volume'),
   pump: ref('switch.pump'),
-  pumpInterval: ref('switch.cycle'),
-  pumpOnMinutes: ref('number.on'),
-  pumpOffMinutes: ref('number.off'),
+  pumpCycle: {
+    interval: ref('switch.cycle'),
+    onMinutes: ref('number.on'),
+    offMinutes: ref('number.off'),
+  },
   lastDrink: ref('sensor.last'),
   currentHourDrink: ref('sensor.hour'),
   last24hDrink: ref('sensor.day'),
@@ -65,13 +67,13 @@ const PRESS = (stableId: string): CompositionForwardCommand => ({
 describe('commandRows', () => {
   it('lists every method the built cap serves, in the cap order, with its stored forward', () => {
     const rows = commandRows(def('pet-fountain'), featureOf('pet-fountain'))
-    expect(rows.map((r) => r.method)).toEqual([
-      'setPump',
-      'setPumpInterval',
-      'setPumpOnMinutes',
-      'setPumpOffMinutes',
-      'resetDailyConsumption',
-    ])
+    expect(rows.map((r) => r.method)).toEqual(['setPump', 'resetDailyConsumption'])
+    expect(rows.every((r) => r.command !== null && !r.orphan)).toBe(true)
+  })
+
+  it('lists the three pump-cycle methods of the optional cap, each with its forward', () => {
+    const rows = commandRows(def('pump-cycle'), featureOf('pump-cycle'))
+    expect(rows.map((r) => r.method)).toEqual(['setEnabled', 'setOnMinutes', 'setOffMinutes'])
     expect(rows.every((r) => r.command !== null && !r.orphan)).toBe(true)
   })
 
@@ -109,7 +111,7 @@ describe('withRowCommand', () => {
   it('sets one method command and keeps every other', () => {
     const feature = featureOf('pet-fountain')
     const rows = commandRows(def('pet-fountain'), feature)
-    const next = withRowCommand(feature, rows[4]!, PRESS('button.other'))
+    const next = withRowCommand(feature, rows[1]!, PRESS('button.other'))
     expect(next.commands?.['resetDailyConsumption']).toEqual(PRESS('button.other'))
     expect(next.commands?.['setPump']).toEqual(feature.commands?.['setPump'])
     expect(Object.keys(next.commands ?? {})).toEqual(Object.keys(feature.commands ?? {}))
@@ -145,7 +147,8 @@ describe('rowProblems — the validator, by name', () => {
   const feature = featureOf('pet-fountain')
   const rows = commandRows(def('pet-fountain'), feature)
   const setPump = rows[0]!
-  const setOnMinutes = rows[2]!
+  const cycle = featureOf('pump-cycle')
+  const setOnMinutes = commandRows(def('pump-cycle'), cycle)[1]!
 
   it('has none for the preset forwards', () => {
     for (const row of rows) {
@@ -185,9 +188,7 @@ describe('rowProblems — the validator, by name', () => {
       method: 'setValue',
       args: {},
     }
-    const codes = rowProblems(def('pet-fountain'), feature, 0, setOnMinutes, command).map(
-      (p) => p.code,
-    )
+    const codes = rowProblems(def('pump-cycle'), cycle, 0, setOnMinutes, command).map((p) => p.code)
     expect(codes).toContain('command-input-missing')
   })
 })

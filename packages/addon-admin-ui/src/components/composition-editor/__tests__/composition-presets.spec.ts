@@ -44,21 +44,59 @@ describe('the preset registry', () => {
     expect(missingSlots(fountain, rest).map((s) => s.key)).toEqual(['pump'])
   })
 
-  it('builds the fountain without a filter', () => {
+  it('builds the minimal fountain: only the model-independent slots are required', () => {
     const composition = fountain.build(allPicks())
     expect(composition?.target).toMatchObject({ kind: 'new' })
     expect(composition?.features.map((f) => f.cap)).toEqual(['pet-fountain'])
+    expect(fountain.slots.filter((s) => s.optionalGroup === undefined).map((s) => s.key)).toEqual([
+      'waterLevel',
+      'waterVolume',
+      'pump',
+      'lastDrink',
+      'currentHourDrink',
+      'last24hDrink',
+      'clearDaily',
+    ])
   })
 
-  it('treats the filter as a pair: one half alone builds nothing, both add the consumable', () => {
-    const half = { ...allPicks(), filterChanged: ref('button.filter') }
-    expect(fountain.build(half)).toBeNull()
-    expect(missingSlots(fountain, half).map((s) => s.key)).toEqual(['filterDaysRemaining'])
-    const both = { ...half, filterDaysRemaining: ref('sensor.filter') }
-    expect(fountain.build(both)?.features.map((f) => f.cap)).toEqual([
-      'pet-fountain',
-      'consumables',
+  it('treats the pump cycle as a triple: a partial one builds nothing, all three add pump-cycle', () => {
+    const one = { ...allPicks(), pumpInterval: ref('switch.cycle') }
+    expect(fountain.build(one)).toBeNull()
+    expect(missingSlots(fountain, one).map((s) => s.key)).toEqual([
+      'pumpOnMinutes',
+      'pumpOffMinutes',
     ])
+    const all = {
+      ...one,
+      pumpOnMinutes: ref('number.on'),
+      pumpOffMinutes: ref('number.off'),
+    }
+    expect(fountain.build(all)?.features.map((f) => f.cap)).toEqual(['pet-fountain', 'pump-cycle'])
+  })
+
+  it('treats today as an optional single slot: absent builds, present is bound', () => {
+    expect(fountain.build(allPicks())).not.toBeNull()
+    const withToday = fountain.build({ ...allPicks(), todayDrink: ref('sensor.today') })
+    expect(JSON.stringify(withToday)).toContain('sensor.today')
+    expect(JSON.stringify(fountain.build(allPicks()))).not.toContain('sensor.today')
+  })
+
+  it('treats each maintenance cadence as a pair: one half alone builds nothing, both add an item', () => {
+    for (const [days, changed, item] of [
+      ['filterDaysRemaining', 'filterChanged', 'filter'],
+      ['cleaningDaysRemaining', 'cleaningDone', 'cleaning'],
+      ['waterChangeDaysRemaining', 'waterChanged', 'water-change'],
+    ] as const) {
+      const half = { ...allPicks(), [changed]: ref('button.x') }
+      expect(fountain.build(half)).toBeNull()
+      expect(missingSlots(fountain, half).map((s) => s.key)).toEqual([days])
+      const built = fountain.build({ ...half, [days]: ref('sensor.x') })
+      expect(built?.features.map((f) => f.cap)).toEqual(['pet-fountain', 'consumables'])
+      const consumables = built?.features.find((f) => f.cap === 'consumables')
+      expect(Object.keys(consumables?.kind === 'fields' ? (consumables.items ?? {}) : {})).toEqual([
+        item,
+      ])
+    }
   })
 
   it('anchors suggestions on the first slot picked, in slot order', () => {

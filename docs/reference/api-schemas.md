@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1039 shared schemas.**
+**1040 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -5016,9 +5016,6 @@ Enum: `"f32le" \| "s16le"`
 - `waterVolume`: `number \| null`
 - `empty`: `boolean \| null`
 - `pumpRunning`: `boolean \| null`
-- `pumpIntervalEnabled`: `boolean \| null`
-- `pumpOnTime`: `number \| null`
-- `pumpOffTime`: `number \| null`
 - `lastDrink`: `number \| null`
 - `currentHourDrink`: `number \| null`
 - `last24hDrink`: `number \| null`
@@ -5280,6 +5277,13 @@ Enum: `"home" \| "day-mode" \| "night-mode" \| "day-night-auto" \| "set-limits" 
 - `tilt`: `number \| null`
 - `zoom`: `number \| null`
 - `autofocus`: `boolean`
+
+### `PumpCycleStatusSchema`
+
+- `enabled`: `boolean \| null`
+- `onTime`: `number \| null`
+- `offTime`: `number \| null`
+- `lastFetchedAt`: `number`
 
 ### `QueryFilterSchema`
 

@@ -29,9 +29,11 @@ const FOUNTAIN: Composition = petFountainFromEntitiesComposition({
   waterLevel: ref('sensor.level'),
   waterVolume: ref('sensor.volume'),
   pump: ref('switch.pump'),
-  pumpInterval: ref('switch.cycle'),
-  pumpOnMinutes: ref('number.on'),
-  pumpOffMinutes: ref('number.off'),
+  pumpCycle: {
+    interval: ref('switch.cycle'),
+    onMinutes: ref('number.on'),
+    offMinutes: ref('number.off'),
+  },
   lastDrink: ref('sensor.last'),
   currentHourDrink: ref('sensor.hour'),
   last24hDrink: ref('sensor.day'),
@@ -42,7 +44,7 @@ const FOUNTAIN: Composition = petFountainFromEntitiesComposition({
 
 const SELF: CompositionSourceRef = { addonId: 'composer', stableId: 'composed-blk-fountain' }
 
-function commandsOf(composition: Composition, cap: string): unknown {
+function commandsOf(composition: Composition, cap: string): Record<string, unknown> | undefined {
   const feature = composition.features.find((f) => f.cap === cap)
   return feature?.kind === 'fields' ? feature.commands : undefined
 }
@@ -58,7 +60,8 @@ describe('a stored composition with commands, opened and saved untouched', () =>
       Object.keys(
         FOUNTAIN.features.flatMap((f) => (f.kind === 'fields' ? [f] : []))[0]?.commands ?? {},
       ),
-    ).toHaveLength(5)
+    ).toHaveLength(2)
+    expect(Object.keys(commandsOf(FOUNTAIN, 'pump-cycle') ?? {})).toHaveLength(3)
     expect(resetOf(FOUNTAIN)).toMatchObject({ kind: 'forward', cap: 'button', method: 'press' })
   })
 

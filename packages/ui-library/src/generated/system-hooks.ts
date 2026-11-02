@@ -2210,15 +2210,6 @@ export const usePetFeederGetStatus: typeof trpc.petFeeder.getStatus.useQuery = /
 /** Generated alias around `trpc.petFountain.setPump.useMutation`. */
 export const usePetFountainSetPump: typeof trpc.petFountain.setPump.useMutation = /*#__PURE__*/ alias(() => trpc.petFountain.setPump.useMutation)
 
-/** Generated alias around `trpc.petFountain.setPumpInterval.useMutation`. */
-export const usePetFountainSetPumpInterval: typeof trpc.petFountain.setPumpInterval.useMutation = /*#__PURE__*/ alias(() => trpc.petFountain.setPumpInterval.useMutation)
-
-/** Generated alias around `trpc.petFountain.setPumpOnMinutes.useMutation`. */
-export const usePetFountainSetPumpOnMinutes: typeof trpc.petFountain.setPumpOnMinutes.useMutation = /*#__PURE__*/ alias(() => trpc.petFountain.setPumpOnMinutes.useMutation)
-
-/** Generated alias around `trpc.petFountain.setPumpOffMinutes.useMutation`. */
-export const usePetFountainSetPumpOffMinutes: typeof trpc.petFountain.setPumpOffMinutes.useMutation = /*#__PURE__*/ alias(() => trpc.petFountain.setPumpOffMinutes.useMutation)
-
 /** Generated alias around `trpc.petFountain.resetDailyConsumption.useMutation`. */
 export const usePetFountainResetDailyConsumption: typeof trpc.petFountain.resetDailyConsumption.useMutation = /*#__PURE__*/ alias(() => trpc.petFountain.resetDailyConsumption.useMutation)
 
@@ -2986,6 +2977,18 @@ export const usePtzAutotrackGetSettings: typeof trpc.ptzAutotrack.getSettings.us
 
 /** Generated alias around `trpc.ptzAutotrack.setSettings.useMutation`. */
 export const usePtzAutotrackSetSettings: typeof trpc.ptzAutotrack.setSettings.useMutation = /*#__PURE__*/ alias(() => trpc.ptzAutotrack.setSettings.useMutation)
+
+/** Generated alias around `trpc.pumpCycle.setEnabled.useMutation`. */
+export const usePumpCycleSetEnabled: typeof trpc.pumpCycle.setEnabled.useMutation = /*#__PURE__*/ alias(() => trpc.pumpCycle.setEnabled.useMutation)
+
+/** Generated alias around `trpc.pumpCycle.setOnMinutes.useMutation`. */
+export const usePumpCycleSetOnMinutes: typeof trpc.pumpCycle.setOnMinutes.useMutation = /*#__PURE__*/ alias(() => trpc.pumpCycle.setOnMinutes.useMutation)
+
+/** Generated alias around `trpc.pumpCycle.setOffMinutes.useMutation`. */
+export const usePumpCycleSetOffMinutes: typeof trpc.pumpCycle.setOffMinutes.useMutation = /*#__PURE__*/ alias(() => trpc.pumpCycle.setOffMinutes.useMutation)
+
+/** Generated alias around `trpc.pumpCycle.getStatus.useQuery`. */
+export const usePumpCycleGetStatus: typeof trpc.pumpCycle.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.pumpCycle.getStatus.useQuery)
 
 /** Generated alias around `trpc.reboot.reboot.useMutation`. */
 export const useRebootReboot: typeof trpc.reboot.reboot.useMutation = /*#__PURE__*/ alias(() => trpc.reboot.reboot.useMutation)

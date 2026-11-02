@@ -6,7 +6,7 @@
  * system-scope cap that takes a deviceId was previously never device-filtered
  * — see the generator header).
  *
- * Coverage: 585 methods carry a device reference, of which
+ * Coverage: 586 methods carry a device reference, of which
  * 189 are on SYSTEM-scope caps.
  *
  * Top-level fields, number arrays, and one-level arrays of objects carrying
@@ -338,9 +338,6 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'petFountain.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'petFountain.resetDailyConsumption': [{ name: "deviceId", form: "single", optional: false }] as const,
   'petFountain.setPump': [{ name: "deviceId", form: "single", optional: false }] as const,
-  'petFountain.setPumpInterval': [{ name: "deviceId", form: "single", optional: false }] as const,
-  'petFountain.setPumpOffMinutes': [{ name: "deviceId", form: "single", optional: false }] as const,
-  'petFountain.setPumpOnMinutes': [{ name: "deviceId", form: "single", optional: false }] as const,
   'pipelineAnalytics.addRetrainFrameFromRecording': [{ name: "deviceId", form: "single", optional: false }] as const,
   'pipelineAnalytics.applyDeviceSettingsPatch': [{ name: "deviceId", form: "single", optional: false }] as const,
   'pipelineAnalytics.backfillRetrainOrigins': [{ name: "deviceId", form: "single", optional: false }] as const,
@@ -468,6 +465,10 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'ptzAutotrack.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'ptzAutotrack.setEnabled': [{ name: "deviceId", form: "single", optional: false }] as const,
   'ptzAutotrack.setSettings': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'pumpCycle.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'pumpCycle.setEnabled': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'pumpCycle.setOffMinutes': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'pumpCycle.setOnMinutes': [{ name: "deviceId", form: "single", optional: false }] as const,
   'reboot.reboot': [{ name: "deviceId", form: "single", optional: false }] as const,
   'recording.getAvailability': [{ name: "deviceId", form: "single", optional: false }] as const,
   'recording.getDaysWithRecordings': [{ name: "deviceId", form: "single", optional: false }] as const,

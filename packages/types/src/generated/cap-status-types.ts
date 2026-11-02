@@ -66,6 +66,7 @@ import type { PressureSensorStatusSchema } from '../capabilities/pressure-sensor
 import type { PrivacyMaskStatusSchema } from '../capabilities/privacy-mask.cap.js'
 import type { PtzStatusSchema } from '../capabilities/ptz.cap.js'
 import type { PtzAutotrackStatusSchema } from '../capabilities/ptz-autotrack.cap.js'
+import type { PumpCycleStatusSchema } from '../capabilities/pump-cycle.cap.js'
 import type { recordingArchiveCapability } from '../capabilities/recording-archive.cap.js'
 import type { RecordingOnboardStatusSchema } from '../capabilities/recording-onboard.cap.js'
 import type { RecordingSignalStatusSchema } from '../capabilities/recording-signal.cap.js'
@@ -155,6 +156,7 @@ export type CapStatusTypeMap = {
   readonly 'privacy-mask': z.infer<typeof PrivacyMaskStatusSchema>
   readonly 'ptz': z.infer<typeof PtzStatusSchema>
   readonly 'ptz-autotrack': z.infer<typeof PtzAutotrackStatusSchema>
+  readonly 'pump-cycle': z.infer<typeof PumpCycleStatusSchema>
   readonly 'recording-archive': z.infer<(typeof recordingArchiveCapability)['status']['schema']>
   readonly 'recording-onboard': z.infer<typeof RecordingOnboardStatusSchema>
   readonly 'recording-signal': z.infer<typeof RecordingSignalStatusSchema>
@@ -248,6 +250,7 @@ export const CAP_NAMES_WITH_STATUS = [
   'privacy-mask',
   'ptz',
   'ptz-autotrack',
+  'pump-cycle',
   'recording-archive',
   'recording-onboard',
   'recording-signal',

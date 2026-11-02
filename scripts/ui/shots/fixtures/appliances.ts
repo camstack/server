@@ -131,6 +131,7 @@ const BINDINGS: Readonly<Record<number, readonly ReturnType<typeof entry>[]>> = 
   5065: [
     entry('device-status', 'composer'),
     entry('pet-fountain', 'composer'),
+    entry('pump-cycle', 'composer'),
     entry('consumables', 'composer'),
   ],
   505: [
@@ -347,14 +348,13 @@ const FEEDER_CONSUMABLES = {
   lastChangedAt: NOW,
 }
 
+const PUMP_CYCLE = { enabled: true, onTime: 10 * 60, offTime: 20 * 60, lastFetchedAt: NOW }
+
 const PET_FOUNTAIN = {
   waterLevel: 64,
   waterVolume: 1.3,
   empty: false,
   pumpRunning: true,
-  pumpIntervalEnabled: true,
-  pumpOnTime: 10 * 60,
-  pumpOffTime: 20 * 60,
   lastDrink: 0.032,
   currentHourDrink: 0.085,
   last24hDrink: 0.61,
@@ -414,6 +414,7 @@ const SLICES: Readonly<Record<string, unknown>> = {
   '5064/consumables': FEEDER_CONSUMABLES,
   '5065/device-status': { online: true, lastChangedAt: NOW },
   '5065/pet-fountain': PET_FOUNTAIN,
+  '5065/pump-cycle': PUMP_CYCLE,
   '5065/consumables': FOUNTAIN_CONSUMABLES,
   '501/device-status': { online: true, lastChangedAt: NOW },
   '501/dishwasher': DISHWASHER,
