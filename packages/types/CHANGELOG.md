@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The integration-instances capability is public and admin-gated, so a function page can edit a service connection
 - smtp-provider sendEmail, verify and getStatus take an optional instanceId that picks one relay of a multi-relay provider
+- power-source: a device's own provider may call forceRestart as a bounded self-recovery (comment only).
 
 ## [1.2.476] - 2026-11-02
 

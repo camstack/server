@@ -12,9 +12,12 @@ import { DeviceType } from '../device/device-type.js'
  * operator picks that switch in the device's Customize. The device then offers
  * power on, power off and a forced restart (switch off, wait, switch on).
  *
- * MANUAL ONLY: nothing here restarts a device by itself. It is not the native
- * `reboot` cap and never replaces or wraps it: `reboot` talks to the device,
- * this cuts the power of the device that no longer answers.
+ * Manual by default: nothing here restarts a device by itself. The one
+ * exception (D997) is a device's OWN provider calling `forceRestart` for its own
+ * device as a bounded self-recovery (unreachable for a long stretch, linked,
+ * one attempt per cooldown, never with a live session); Velux is the first. It
+ * is not the native `reboot` cap and never replaces or wraps it: `reboot` talks
+ * to the device, this cuts the power of the device that no longer answers.
  *
  * The link is a Customize extension (`add`): one scalar target whose source is
  * the switch. The stored composition is the ONE copy of the link and of

@@ -617,8 +617,14 @@ second copy (D676). The `core-blocks` builtin serves `powerOn`, `powerOff`,
 is switch off, wait `offSeconds`, switch on, on an injected scheduler cancelled
 on stop. Every refusal is a typed result (`switch-offline`, `switch-unknown`,
 `restart-in-progress`, ...), logged with the device tag and the switch id.
-It is MANUAL only: nothing restarts a device by itself, and it is separate from
-the native `reboot` cap, which it never replaces or wraps.
+It is manual by default, and separate from the native `reboot` cap, which it
+never replaces or wraps. One exception
+([D997](../decisions/adr-0997-a-device-provider-may-restart-its-own-device-through-power-source-as-bounded-self-recovery.md)):
+a device's OWN provider may call `forceRestart` for its own device as a bounded
+self-recovery. The Velux provider does, for a KLF-200 that stayed unreachable
+for 10 minutes: only when `getStatus` says `linked`, one attempt per 30 minutes
+(persisted across a respawn, a refusal counts), never with a live session; it
+then waits for the boot and reconnects.
 
 ### Helpers: a group is a template, not an expression
 
