@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.474] - 2026-11-02
+
 ### Changed
 
 - Scoped addon settings: a capability provider can declare cluster, node and fleet-default schemas, and a device's settings resolve as device, fleet default, schema default with the source per field
