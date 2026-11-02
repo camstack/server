@@ -14,7 +14,6 @@ applies-to:
   - packages/addon-admin-ui/src/lib/settings-forwarding.ts
   - packages/addon-admin-ui/src/components/settings/NodeAddonsSettingsPanel.tsx
   - packages/addon-admin-ui/src/pages/IntegrationDetail.tsx
-  - packages/addon-provider-reolink/src/email-push-schema.ts
 ---
 
 ## Context

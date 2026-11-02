@@ -453,7 +453,7 @@ The SFTP config schema already declares `password`, `privateKey` and
 redact the wire. **Today, any authenticated session can read the SFTP password
 of every configured location.** Same shape as `deviceExport.getStatus` returning
 an Alexa ingress token in the clear and `provider-reolink`'s
-`emailPushAuthPassword` (`packages/addon-provider-reolink/src/email-push-schema.ts:105`).
+`emailPushAuthPassword` (`packages/addon-provider-reolink/src/email-push-schema.ts:105`, since removed). <!-- drift-ok -->
 
 Adding SMB credentials to that surface makes an existing hole one entry wider.
 So:

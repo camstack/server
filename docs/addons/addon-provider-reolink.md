@@ -37,6 +37,38 @@ sleeping linked camera, bounded to 15 s, at most once a minute.
 | `reconcileChildSleepState` (in `reolink-hub-session.ts`) | under an NVR the NVR already knows — no camera poll, no mail server |
 | the attribution log in `ensureApi` | prints the caller stack whenever a sleeping battery cam logs in; this is how the last wake was found |
 
+## The camera mailbox (battery cameras report motion by mail)
+
+A standalone battery camera mails its motion to the hub, so it is not woken to be asked. The
+mailbox is NOT served by this addon any more ([D999](../decisions/adr-0999-inbound-camera-alarms-ride-existing-planes-smtp-is-a-broker-kind-http-is-the-addon-data-plane.md)):
+it is a `broker` of kind `smtp-inbound` owned by `smtp-nodemailer`, one record = one listener.
+`email-push-bridge.ts` is this addon's side.
+
+- **First need creates it.** `ensureMailbox` lists `smtp-inbound` brokers and, when none exists,
+  adopts the id `smtp-inbound-default`; "id in use" re-reads the list. It runs when a standalone
+  camera is eligible or on Auto-configure, never at a bare boot. This addon never deletes the mailbox.
+- **Recipients.** `sync` subscribes the `cam-<stableId>` local-parts of the eligible cameras under
+  the subscriber id `provider-reolink` (a re-subscribe replaces this addon's set). A removed camera
+  re-syncs through the `device-removal-hook` provider. A recipient claimed by another subscriber is
+  logged, not thrown.
+- **Messages.** A `broker.message` is parsed (`SmtpInboundMessageSchema`), classified with nodelink's
+  `classifyEmailPushMessage` and mapped by `mapInferredTypeToSimpleEvents` into
+  `handleSimpleEvent({ source: 'email' })`, stamped with the message's `receivedAt`.
+- **Lost events (D8).** Events are telemetry. Each message carries a monotonic `seq`; a gap, a
+  `broker.status-changed` to `connected`, and every subscribe read the mailbox ring
+  (`getState('since:<seq>')`, last 200 messages / 15 minutes) and replay what was missed, once, in order.
+  A `lastSeq` lower than the stored one means the mailbox restarted: the baseline resets to 0.
+- **Auto-configure** reads `getBrokerConfig`: the camera-facing host is the `internal` role of the
+  `local-network` palette (D729), never ranked here. With no internal address it refuses and the error
+  names System → Network.
+- **Migration** `provider-reolink/2026-11-02-email-push-to-mailbox` (D987, a procedure, idempotent)
+  creates the default mailbox from `emailPushPort`, `emailPushDomain`, `emailPushRequireAuth`,
+  `emailPushAuthUsername` and the keychain password, so no camera is reconfigured. A password that
+  cannot be resolved fails the run (never read as empty), as does an unavailable mail addon; the next
+  boot retries. The legacy keys and `secretStatePaths` stay one release.
+- **Container contract (D717).** Port 2525 moves process (hub-main to `smtp-nodemailer`), not
+  container; nothing in the Unraid template, the Proxmox script or the Compose example changes.
+
 ## Standalone vs under an NVR
 
 An NVR or Home Hub is its **own integration** (D985), never a device. The addon is
@@ -72,7 +104,7 @@ nobody offline.
 - A hub integration's form (the create wizard, and the edit page of a migrated or
   hub-born instance) is the connection only — host, port, rtspPort, username,
   password, plus the hub debug section — through `integrationSettingsSchema`. The
-  default integration keeps the full global schema (email, webhook, clips). An
+  default integration keeps the full global schema (webhook, clips). An
   instance that cannot be read falls back to the full schema.
 
 ## Passive contact, and where a standalone camera gets none

@@ -2662,6 +2662,11 @@ Send failures are returned and logged through `stripUrls` (`provider.ts`): a
 transport error names the url it dialled, and for Telegram (token in the path)
 or Discord (the URL is the secret) that url is the credential.
 
+`smtp-nodemailer` also owns the INBOUND side: the `smtp-inbound` broker kind (a `mailboxes` record
+per listener), which devices mail alarms to ([D999](../decisions/adr-0999-inbound-camera-alarms-ride-existing-planes-smtp-is-a-broker-kind-http-is-the-addon-data-plane.md)).
+It is not part of the outbox: a received mail is a `broker.message` event a consumer turns into its own
+signal (Reolink: a motion event).
+
 ### An email target picks a provider and, optionally, one relay ([D996](../decisions/adr-0996-connection-holding-addons-are-integration-instances.md))
 
 The email target's `smtpAddonId` picks the `smtp-provider` (the collection pin). A provider that

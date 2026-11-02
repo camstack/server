@@ -43,7 +43,7 @@ applies-to:
   - packages/addon-pipeline/src/recorder/band-engine.ts
   - packages/addon-pipeline-orchestrator/src/camera-switch-service.ts
   - packages/addon-pipeline-orchestrator/src/display-palette-provider.ts
-  - packages/addon-provider-reolink/src/email-push-schema.ts
+  - packages/addon-provider-reolink/src/baichuan-webhook-schema.ts
   - server/backend/src/api/core/auth.router.ts
   - server/backend/src/api/static/frame-policy.ts
   - server/backend/src/api/static/spa-mount.ts
@@ -414,20 +414,20 @@ does the narrowing; `settings-surface-scope.spec.ts` is the guard.
 ### Integration-level settings
 
 An addon may declare that some of its global sections ARE the configuration of
-its **integration**, so an operator hunting "the Reolink SMTP port" finds it
+its **integration**, so an operator hunting "the Reolink webhook port" finds it
 under System → Integrations → Reolink instead of only in the cluster-wide list
 of every addon. It is opt-in and the declaration lives in core:
 
 ```ts
 protected override integrationSettingSections(): readonly string[] {
-  return ['email-push', 'email-push-auth']   // ids from globalSettingsSchema()
+  return ['baichuan-webhook']   // ids from globalSettingsSchema()
 }
 ```
 
 `BaseAddon.getIntegrationSettings()` then serves exactly those sections, and
 `addonSettings.getIntegrationSettings` carries them to the UI. Declaring nothing
 returns `null` and no surface is offered.
-`packages/addon-provider-reolink/src/email-push-schema.ts` is the reference
+`packages/addon-provider-reolink/src/baichuan-webhook-schema.ts` is the reference
 consumer, and the only one.
 
 ### One form per integration instance
