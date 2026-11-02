@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The integration-instances capability gains setInstanceEnabled and an enabled field in every instance view
+- Integrations page lists an addon by its declared integrationRole; a dual entry (devices and service instances) is no longer hidden
 
 ## [1.2.740] - 2026-11-02
 

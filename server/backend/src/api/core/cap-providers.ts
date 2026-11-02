@@ -24,6 +24,7 @@
  * nodes,integrations,addons}.router.ts`.
  */
 
+import { bringsDevices, resolveIntegrationRole } from './integration-role.js'
 import { findInstancesProvider } from '../../core/addon/integration-instances-provider.js'
 import { readIntegrationSettings, writeIntegrationSettings } from './integration-secrets'
 import { randomUUID } from 'node:crypto'
@@ -121,7 +122,10 @@ export function buildSystemProvider(
 ): ISystemProvider {
   const siteLocation = buildSiteLocationService(registry, logger)
   const store = buildSettingsStoreGateway(registry)
-  const serverName = new ServerNameReader({ store, ...(logger !== undefined ? { logger } : {}) })
+  const serverName = new ServerNameReader({
+    store,
+    ...(logger !== undefined ? { logger } : {}),
+  })
   const requestCensus = new RequestCensusService({
     census,
     store,
@@ -137,25 +141,35 @@ export function buildSystemProvider(
   const channels = buildLogChannelPlane(
     { entries: () => registry?.getCollectionEntries('log-channels') ?? [] },
     (addonId, phase, error) => {
-      logger?.warn('log-channels provider unreachable', { meta: { addonId, phase, error } })
+      logger?.warn('log-channels provider unreachable', {
+        meta: { addonId, phase, error },
+      })
     },
   )
   // Every addon's OWN reported cost, assembled by enumeration. Nothing here
   // knows which pid belongs to which camera — the addon that spawned the child
   // does, and it is the one that says so.
   const loadContributions = buildLoadContributionPlane(
-    { entries: () => registry?.getCollectionEntries('load-contribution') ?? [] },
+    {
+      entries: () => registry?.getCollectionEntries('load-contribution') ?? [],
+    },
     (addonId, error) => {
-      logger?.warn('load-contribution provider unreachable', { meta: { addonId, error } })
+      logger?.warn('load-contribution provider unreachable', {
+        meta: { addonId, error },
+      })
     },
   )
   // Every addon's OWN reported losses, per camera, with the denominator
   // attached. Same enumeration, same reason: the addon that owns the failing
   // path is the only thing that knows which camera it lost work for.
   const failureContributions = buildFailureContributionPlane(
-    { entries: () => registry?.getCollectionEntries('failure-contribution') ?? [] },
+    {
+      entries: () => registry?.getCollectionEntries('failure-contribution') ?? [],
+    },
     (addonId, error) => {
-      logger?.warn('failure-contribution provider unreachable', { meta: { addonId, error } })
+      logger?.warn('failure-contribution provider unreachable', {
+        meta: { addonId, error },
+      })
     },
   )
   const loggingSettings = new LoggingSettingsService({
@@ -166,12 +180,20 @@ export function buildSystemProvider(
     ...(logger !== undefined ? { logger } : {}),
   })
   return {
-    info: async () => ({ ...feature.getManifest(), serverName: await serverName.read() }),
+    info: async () => ({
+      ...feature.getManifest(),
+      serverName: await serverName.read(),
+    }),
     health: async () => ({ status: 'ok' as const, uptime: process.uptime() }),
     featureFlags: async () => feature.getManifest(),
     networkAddresses: async () => {
       const ifaces = os.networkInterfaces()
-      const result: Array<{ name: string; address: string; family: string; internal: boolean }> = []
+      const result: Array<{
+        name: string
+        address: string
+        family: string
+        internal: boolean
+      }> = []
       for (const [name, addrs] of Object.entries(ifaces)) {
         for (const addr of addrs ?? []) {
           result.push({
@@ -313,7 +335,9 @@ interface SubProcessLite {
 }
 
 /** `{ meshTransport }` for an online agent, `{}` when the hub cannot tell. */
-function meshTransportField(nodeId: string): { readonly meshTransport?: MeshTransport } {
+function meshTransportField(nodeId: string): {
+  readonly meshTransport?: MeshTransport
+} {
   const meshTransport = getProcessNodeMeshTransport(nodeId)
   return meshTransport === undefined ? {} : { meshTransport }
 }
@@ -434,11 +458,19 @@ async function computeTopologyInternal(
     const inGroupAddonIds = new Set(getInGroupAddonIds(node))
     const agentAddonIds: readonly string[] =
       (node as { agentAddons?: readonly string[] }).agentAddons ?? []
-    type NodeAddonEntry = { id: string; capabilities: readonly string[]; status: 'running' }
+    type NodeAddonEntry = {
+      id: string
+      capabilities: readonly string[]
+      status: 'running'
+    }
     const allNodeAddons: NodeAddonEntry[] = node.isHub
       ? allAddons.map((a) => {
           const id = a.manifest?.id ?? 'unknown'
-          return { id, capabilities: [...(addonCaps.get(id) ?? [])], status: 'running' as const }
+          return {
+            id,
+            capabilities: [...(addonCaps.get(id) ?? [])],
+            status: 'running' as const,
+          }
         })
       : agentAddonIds.map((addonId) => ({
           id: addonId,
@@ -499,7 +531,12 @@ async function computeTopologyInternal(
         category: string
         total: number
         healthy: number
-        addons: { id: string; status: string; cpuPercent: number; memoryRss: number }[]
+        addons: {
+          id: string
+          status: string
+          cpuPercent: number
+          memoryRss: number
+        }[]
       }
     >()
     const procByAddon = new Map<string, { cpuPercent: number; memoryRss: number; state: string }>()
@@ -515,7 +552,12 @@ async function computeTopologyInternal(
     for (const a of allNodeAddons) {
       const category = addonCategory.get(a.id) ?? 'system'
       const procInfo = procByAddon.get(a.id)
-      const entry = byCategory.get(category) ?? { category, total: 0, healthy: 0, addons: [] }
+      const entry = byCategory.get(category) ?? {
+        category,
+        total: 0,
+        healthy: 0,
+        addons: [],
+      }
       const status = procInfo?.state ?? a.status
       entry.total += 1
       if (status === 'running') entry.healthy += 1
@@ -780,7 +822,12 @@ export function buildNodesProvider(
       // — the cache otherwise lags the cluster heartbeat interval.
       try {
         const status = await broker.call<{
-          addons?: readonly { id: string; status: string; version?: string; packageName?: string }[]
+          addons?: readonly {
+            id: string
+            status: string
+            version?: string
+            packageName?: string
+          }[]
         }>('$agent.status', {}, { nodeID: input.nodeId, timeout: 5_000 })
         type AgentAddonRow = {
           id: string
@@ -857,7 +904,13 @@ export function buildNodesProvider(
       for (const [addonId, hubAddon] of hubMap) {
         const hubVersion = hubAddon.manifest.packageVersion
         const addonNodes: NodeDeployment[] = [
-          { nodeId: 'hub', name: 'hub', version: hubVersion, status: 'running', synced: true },
+          {
+            nodeId: 'hub',
+            name: 'hub',
+            version: hubVersion,
+            status: 'running',
+            synced: true,
+          },
         ]
 
         for (const remote of remoteStatuses) {
@@ -907,7 +960,10 @@ export function buildNodesProvider(
           },
         })
       }
-      return reg.getGraph({ windowSeconds: input.windowSeconds, nowMs: Date.now() })
+      return reg.getGraph({
+        windowSeconds: input.windowSeconds,
+        nowMs: Date.now(),
+      })
     },
     setProcessLogLevel: async (input) => {
       // E2: for hub-local children, try the UDS path first (fire-and-forget);
@@ -967,7 +1023,10 @@ async function integrationSecretKeys(
     const provider = ar
       .getCapabilityRegistry()
       .getSingleton<IAddonSettingsProvider>('addon-settings')
-    const schema = await provider?.getGlobalSettings({ addonId, nodeId: 'hub' })
+    const schema = await provider?.getGlobalSettings({
+      addonId,
+      nodeId: 'hub',
+    })
     return collectKeychainStoredKeys(schema ?? null)
   } catch (err) {
     logger.warn(
@@ -1089,7 +1148,10 @@ async function runConnectionTest(
     (await instances.describe()).canTest
   ) {
     try {
-      const result = await instances.testInstance({ id: null, values: settings })
+      const result = await instances.testInstance({
+        id: null,
+        values: settings,
+      })
       const status = result.status ?? (result.success ? 'validated' : 'rejected')
       return {
         status,
@@ -1127,7 +1189,11 @@ async function runConnectionTest(
       if (outcome.outcome === 'rejected') {
         return { status: 'rejected', error: outcome.error, testedBy: addonId }
       }
-      return { status: 'inconclusive', error: outcome.error, testedBy: addonId }
+      return {
+        status: 'inconclusive',
+        error: outcome.error,
+        testedBy: addonId,
+      }
     } catch (err) {
       logger.warn('connection test could not run', {
         tags: { addonId },
@@ -1160,7 +1226,11 @@ async function runConnectionTest(
     try {
       const result = await brokerProvider.testConnection({ id: brokerId })
       return result.ok
-        ? { status: 'validated', latencyMs: result.latencyMs, testedBy: addonId }
+        ? {
+            status: 'validated',
+            latencyMs: result.latencyMs,
+            testedBy: addonId,
+          }
         : { status: 'rejected', error: result.error, testedBy: addonId }
     } catch (err) {
       logger.warn('broker connection test could not run', {
@@ -1203,17 +1273,20 @@ async function runConnectionTest(
 export const INTEGRATION_CAP_MARKERS = new Set(['device-provider', 'device-adoption'])
 
 /**
- * An addon that keeps its connection as typed `integration-instances` records is configured
- * from its own function page (D996): it is neither an integration type nor a row of the
- * Integrations list. Decided from the manifest, so a not-yet-registered provider does not
- * flash a row in. A row it already has stays in the registry and reachable by id.
+ * An entry that brings only service connections (`integrationRole: 'services'`, or derived
+ * from `integration-instances`) is configured from its function page (D996): it is neither
+ * an integration type nor a row of the Integrations list. A dual entry declares `both` and
+ * is listed for its devices. Decided from the manifest, so a not-yet-registered provider does
+ * not flash a row in. A row it already has stays in the registry and reachable by id.
  */
-function declaresInstances(ar: AddonRegistryService, addonId: string): boolean {
+function hidesFromIntegrations(ar: AddonRegistryService, addonId: string): boolean {
   const addon = ar.listAddons().find((a) => a.manifest.id === addonId)
-  return (
-    addon?.manifest.capabilities?.some(
-      (c) => (typeof c === 'string' ? c : c.name) === 'integration-instances',
-    ) === true
+  if (addon === undefined) return false
+  return !bringsDevices(
+    resolveIntegrationRole({
+      integrationRole: addon.declaration?.integrationRole ?? addon.manifest.integrationRole,
+      capabilities: addon.manifest.capabilities,
+    }),
   )
 }
 
@@ -1240,7 +1313,7 @@ export function buildIntegrationsProvider(
   return {
     list: async () => {
       const integrations = await requireIntegrationRegistry(ar).listIntegrations()
-      return integrations.filter((i) => !declaresInstances(ar, i.addonId)).map(withProcessState)
+      return integrations.filter((i) => !hidesFromIntegrations(ar, i.addonId)).map(withProcessState)
     },
     get: async (input) => {
       const integration = await requireIntegrationRegistry(ar).getIntegration(input.id)
@@ -1296,7 +1369,11 @@ export function buildIntegrationsProvider(
       if (verdict.status === 'rejected') {
         logger.warn('rejected — connection test refused the settings', {
           tags: { addonId: input.addonId },
-          meta: { phase: 'create', status: verdict.status, testedBy: verdict.testedBy },
+          meta: {
+            phase: 'create',
+            status: verdict.status,
+            testedBy: verdict.testedBy,
+          },
         })
         throw new TRPCError({
           code: 'BAD_REQUEST',
@@ -1311,7 +1388,11 @@ export function buildIntegrationsProvider(
       } else {
         logger.warn('creating without validation — the settings were not validated', {
           tags: { addonId: input.addonId },
-          meta: { phase: 'create', status: verdict.status, reason: verdict.error },
+          meta: {
+            phase: 'create',
+            status: verdict.status,
+            reason: verdict.error,
+          },
         })
       }
 
@@ -1320,9 +1401,15 @@ export function buildIntegrationsProvider(
         // The connection is a typed record keyed by the registry id. A refusal
         // deletes the row: a registry entry with no record is an orphan.
         try {
-          await instances.createInstance({ id: integration.id, name: integration.name })
+          await instances.createInstance({
+            id: integration.id,
+            name: integration.name,
+          })
           if (settings !== undefined && Object.keys(settings).length > 0) {
-            await instances.updateInstance({ id: integration.id, values: settings })
+            await instances.updateInstance({
+              id: integration.id,
+              values: settings,
+            })
           }
         } catch (err) {
           await instances.deleteInstance({ id: integration.id }).catch(() => undefined)
@@ -1331,12 +1418,18 @@ export function buildIntegrationsProvider(
           } catch (rollbackErr) {
             // The rollback failing must not hide WHY the create was refused.
             logger.warn('instance record refused — registry row could not be removed', {
-              tags: { integrationId: integration.id, addonId: integration.addonId },
+              tags: {
+                integrationId: integration.id,
+                addonId: integration.addonId,
+              },
               meta: { phase: 'create-rollback', error: errMsg(rollbackErr) },
             })
           }
           logger.warn('instance record refused — registry row removed', {
-            tags: { integrationId: integration.id, addonId: integration.addonId },
+            tags: {
+              integrationId: integration.id,
+              addonId: integration.addonId,
+            },
             meta: { phase: 'create', error: errMsg(err) },
           })
           throw err
@@ -1392,7 +1485,10 @@ export function buildIntegrationsProvider(
       const reg = requireIntegrationRegistry(ar)
       const previous = await reg.getIntegration(input.id)
       if (!previous) {
-        logger.warn('not found', { tags: { integrationId: input.id }, meta: { phase: 'update' } })
+        logger.warn('not found', {
+          tags: { integrationId: input.id },
+          meta: { phase: 'update' },
+        })
         throw new Error(`Integration "${input.id}" not found`)
       }
       const { id, ...updates } = input
@@ -1429,7 +1525,11 @@ export function buildIntegrationsProvider(
       if (input.name !== undefined && input.name !== previous.name) {
         logger.info('renamed', {
           tags: { integrationId: result.id },
-          meta: { phase: 'update', previousName: previous.name, newName: input.name },
+          meta: {
+            phase: 'update',
+            previousName: previous.name,
+            newName: input.name,
+          },
         })
       }
 
@@ -1445,17 +1545,25 @@ export function buildIntegrationsProvider(
           meta: { phase: 'update' },
         })
       } else {
-        logger.info('no restart needed (only enabled/name changed)', { meta: { phase: 'update' } })
+        logger.info('no restart needed (only enabled/name changed)', {
+          meta: { phase: 'update' },
+        })
       }
       return result
     },
     delete: async (input) => {
       const reg = requireIntegrationRegistry(ar)
-      logger.info('request', { tags: { integrationId: input.id }, meta: { phase: 'delete' } })
+      logger.info('request', {
+        tags: { integrationId: input.id },
+        meta: { phase: 'delete' },
+      })
 
       const integration = await reg.getIntegration(input.id)
       if (!integration) {
-        logger.warn('not found', { tags: { integrationId: input.id }, meta: { phase: 'delete' } })
+        logger.warn('not found', {
+          tags: { integrationId: input.id },
+          meta: { phase: 'delete' },
+        })
         throw new Error(`Integration "${input.id}" not found`)
       }
       // REFUSE BEFORE MUTATING ANYTHING.
@@ -1540,7 +1648,9 @@ export function buildIntegrationsProvider(
 
       if (dm?.removeByIntegration) {
         try {
-          const result = await dm.removeByIntegration({ integrationId: input.id })
+          const result = await dm.removeByIntegration({
+            integrationId: input.id,
+          })
           logger.info('cascade-removed devices', {
             tags: { integrationId: input.id },
             meta: { phase: 'delete', removed: result.removed },
@@ -1560,7 +1670,9 @@ export function buildIntegrationsProvider(
 
       // The record and its keychain refs go first; a refusal stops here, with
       // the registry row still naming what was not removed.
-      await getInstancesProvider(ar, integration.addonId)?.deleteInstance({ id: input.id })
+      await getInstancesProvider(ar, integration.addonId)?.deleteInstance({
+        id: input.id,
+      })
 
       await reg.deleteIntegration(input.id)
 
@@ -1603,7 +1715,10 @@ export function buildIntegrationsProvider(
         ? undefined
         : await integrationSecretKeys(ar, integration.addonId, logger)
       return readIntegrationSettings(
-        { registry: reg, secrets: forOwner ? ownerSecrets(ar, integration.addonId) : null },
+        {
+          registry: reg,
+          secrets: forOwner ? ownerSecrets(ar, integration.addonId) : null,
+        },
         {
           integrationId: input.id,
           forOwner,
@@ -1615,7 +1730,12 @@ export function buildIntegrationsProvider(
                 : 'integration secret stored as PLAINTEXT under a keychain-declared key — withheld from the form; re-type it to move it into the keychain',
               {
                 tags: { integrationId: input.id, addonId: integration.addonId },
-                meta: { phase: 'getSettings', key: suspect.key, kind: suspect.kind, forOwner },
+                meta: {
+                  phase: 'getSettings',
+                  key: suspect.key,
+                  kind: suspect.kind,
+                  forOwner,
+                },
               },
             ),
         },
@@ -1639,7 +1759,10 @@ export function buildIntegrationsProvider(
       const instances = getInstancesProvider(ar, integration.addonId)
       if (instances !== null) {
         // The addon re-applies the change itself (its `onChanged`): no respawn.
-        await instances.updateInstance({ id: input.id, values: input.settings })
+        await instances.updateInstance({
+          id: input.id,
+          values: input.settings,
+        })
         logger.info('persisted as an instance record (no restart)', {
           tags: { integrationId: input.id, addonId: integration.addonId },
           meta: { phase: 'setSettings' },
@@ -1705,6 +1828,7 @@ export function buildIntegrationsProvider(
       const providerAddons = addons.filter(
         (a) =>
           a.process?.state !== 'failed' &&
+          !hidesFromIntegrations(ar, a.manifest.id) &&
           a.manifest.capabilities?.some((c) => {
             const name = typeof c === 'string' ? c : c.name
             return typeof name === 'string' && INTEGRATION_CAP_MARKERS.has(name)
@@ -1798,7 +1922,11 @@ export function buildIntegrationsProvider(
       const verdict = await runConnectionTest(ar, input.addonId, input.settings, logger)
       logger.info('connection test', {
         tags: { addonId: input.addonId },
-        meta: { phase: 'test', status: verdict.status, testedBy: verdict.testedBy },
+        meta: {
+          phase: 'test',
+          status: verdict.status,
+          testedBy: verdict.testedBy,
+        },
       })
       return {
         success: verdict.status === 'validated',
@@ -1826,7 +1954,10 @@ function ensureCustomActionAuth(ctx: TrpcContext, level: CapabilityMethodAuth): 
   if (level === 'protected') return
   if (level === 'admin') {
     if (!ctx.user.isAdmin) {
-      throw new TRPCError({ code: 'FORBIDDEN', message: 'custom action requires admin' })
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'custom action requires admin',
+      })
     }
     return
   }
@@ -1905,7 +2036,10 @@ export async function dispatchCustomAction(
 ): Promise<unknown> {
   const entry = registry.resolve(input.addonId, input.action)
   if (!entry) {
-    throw new TRPCError({ code: 'NOT_FOUND', message: describeUnresolved(registry, input) })
+    throw new TRPCError({
+      code: 'NOT_FOUND',
+      message: describeUnresolved(registry, input),
+    })
   }
   ensureCustomActionAuth(ctx, entry.spec.auth)
   const parsedInput = entry.spec.input.parse(input.input)
@@ -2158,7 +2292,10 @@ export function buildAddonsProvider(
               await fetchAgentInstalledPackages(broker, nodeId),
               nodeId,
             )
-      return updates.map((u) => ({ ...u, isSystem: frameworkAllowSet.has(u.name) }))
+      return updates.map((u) => ({
+        ...u,
+        isSystem: frameworkAllowSet.has(u.name),
+      }))
     },
     updatePackage: async (input) => {
       const nodeId = input.nodeId
@@ -2229,7 +2366,12 @@ export function buildAddonsProvider(
       await deployPackedToAgent(nodeId, input.name, packed.buffer)
       // An operator's explicit delivery lifts the node's tombstone (D982).
       await agentRegistry?.noteExplicitDelivery(nodeId, input.name)
-      return { success: true, name: input.name, version: packed.version, nodeId }
+      return {
+        success: true,
+        name: input.name,
+        version: packed.version,
+        nodeId,
+      }
     },
     rollbackPackage: async (input) => ps.rollbackPackage(input.name),
     forceRefresh: async (input) => {

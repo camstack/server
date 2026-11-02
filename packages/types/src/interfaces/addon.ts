@@ -1160,6 +1160,14 @@ export interface IAdminUI {
 /** The two blocks of the admin Integrations page. */
 export type IntegrationSection = 'system' | 'providers'
 
+/**
+ * What an addon entry brings to the operator: `devices` (listed on the Integrations page),
+ * `services` (connections to a service, configured on the function page through the
+ * `integration-instances` cap, never listed), or `both` (a dual entry: its devices are on
+ * Integrations, its service instances stay on the function page).
+ */
+export type IntegrationRole = 'devices' | 'services' | 'both'
+
 export interface AddonDeclaration {
   // ── Identity ────────────────────────────────────────────────────────
   readonly id: string
@@ -1233,6 +1241,12 @@ export interface AddonDeclaration {
    * for an addon shipped in a framework package, `providers` otherwise.
    */
   readonly integrationSection?: IntegrationSection
+  /**
+   * What this entry brings: devices, service connections, or both. Absent: derived from
+   * what it declares — `integration-instances` means `services`, otherwise `devices`. An
+   * entry that brings both MUST say `both`; the derivation never guesses a dual entry.
+   */
+  readonly integrationRole?: IntegrationRole
   /**
    * Group-runner execution model.
    *

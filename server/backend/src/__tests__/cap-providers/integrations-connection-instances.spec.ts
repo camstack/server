@@ -54,7 +54,10 @@ function harness(opts: { instanceMode?: 'single' | 'multiple'; withProvider?: bo
       id: input.id,
       name: 'Loki',
       configured: true,
-      formValues: { url: 'http://loki:3100', password: { $secret: 'ref', v: 1, set: true } },
+      formValues: {
+        url: 'http://loki:3100',
+        password: { $secret: 'ref', v: 1, set: true },
+      },
     })),
     listInstances: vi.fn(async () => []),
     instanceFormSchema: vi.fn(async () => ({ sections: [] })),
@@ -110,7 +113,47 @@ describe('integrations over an integration-instances provider', () => {
     expect(h.registry.deleteIntegration).not.toHaveBeenCalled()
     expect(await h.registry.listIntegrations()).toHaveLength(1)
     // the row stays reachable by its id and by the addon id (the Loki migration uses it)
-    expect(await h.provider.get({ id: 'int_0001' })).toMatchObject({ addonId: ADDON_ID })
+    expect(await h.provider.get({ id: 'int_0001' })).toMatchObject({
+      addonId: ADDON_ID,
+    })
+  })
+
+  it('a dual entry (integrationRole both) is listed on Integrations while its instances stay on the function page', async () => {
+    const h = harness({ instanceMode: 'single' })
+    h.addonReg.listAddons.mockReturnValue([
+      {
+        manifest: {
+          id: ADDON_ID,
+          name: 'Dual',
+          description: 'Services and devices',
+          integrationRole: 'both',
+          capabilities: [{ name: 'device-provider' }, { name: 'integration-instances' }],
+        },
+      },
+    ])
+    await h.provider.create({ addonId: ADDON_ID, name: 'Dual' })
+    expect(await h.provider.list()).toHaveLength(1)
+    const [type] = await h.provider.getAvailableTypes()
+    expect(type).toMatchObject({ addonId: ADDON_ID })
+    // the service instances are still answered by the integration-instances cap
+    expect(h.instances.describe).toBeDefined()
+  })
+
+  it('an undeclared dual entry is derived as services and stays off Integrations', async () => {
+    const h = harness()
+    h.addonReg.listAddons.mockReturnValue([
+      {
+        manifest: {
+          id: ADDON_ID,
+          name: 'Dual',
+          description: 'x',
+          capabilities: [{ name: 'device-provider' }, { name: 'integration-instances' }],
+        },
+      },
+    ])
+    await h.provider.create({ addonId: ADDON_ID, name: 'Dual' })
+    expect(await h.provider.list()).toEqual([])
+    expect(await h.provider.getAvailableTypes()).toEqual([])
   })
 
   it('a device-bringing addon is still listed', async () => {
@@ -134,7 +177,10 @@ describe('integrations over an integration-instances provider', () => {
     await h.provider.create({ addonId: ADDON_ID, name: 'Loki' })
     h.registry.setIntegrationSettings.mockClear()
     h.registry.setIntegrationSetting.mockClear()
-    await h.provider.setSettings({ id: 'int_0001', settings: { url: 'http://x' } })
+    await h.provider.setSettings({
+      id: 'int_0001',
+      settings: { url: 'http://x' },
+    })
     expect(h.instances.updateInstance).toHaveBeenLastCalledWith({
       id: 'int_0001',
       values: { url: 'http://x' },
@@ -148,7 +194,10 @@ describe('integrations over an integration-instances provider', () => {
     const h = harness()
     await h.provider.create({ addonId: ADDON_ID, name: 'Loki' })
     const settings = await h.provider.getSettings({ id: 'int_0001' })
-    expect(settings).toMatchObject({ url: 'http://loki:3100', password: { set: true } })
+    expect(settings).toMatchObject({
+      url: 'http://loki:3100',
+      password: { set: true },
+    })
     expect(h.registry.getIntegrationSettings).not.toHaveBeenCalled()
   })
 
@@ -160,7 +209,10 @@ describe('integrations over an integration-instances provider', () => {
       settings: { url: 'http://x' },
     })
     expect(created.id).toBe('int_0001')
-    expect(h.instances.createInstance).toHaveBeenCalledWith({ id: 'int_0001', name: 'Loki' })
+    expect(h.instances.createInstance).toHaveBeenCalledWith({
+      id: 'int_0001',
+      name: 'Loki',
+    })
     expect(h.instances.updateInstance).toHaveBeenCalledWith({
       id: 'int_0001',
       values: { url: 'http://x' },
@@ -173,7 +225,11 @@ describe('integrations over an integration-instances provider', () => {
     const h = harness()
     h.instances.updateInstance.mockRejectedValueOnce(new Error('refused'))
     await expect(
-      h.provider.create({ addonId: ADDON_ID, name: 'Loki', settings: { url: 'bad' } }),
+      h.provider.create({
+        addonId: ADDON_ID,
+        name: 'Loki',
+        settings: { url: 'bad' },
+      }),
     ).rejects.toThrow('refused')
     expect(h.registry.deleteIntegration).toHaveBeenCalledWith('int_0001')
     expect(await h.registry.listIntegrations()).toHaveLength(0)
@@ -184,7 +240,11 @@ describe('integrations over an integration-instances provider', () => {
     h.instances.updateInstance.mockRejectedValueOnce(new Error('refused'))
     h.registry.deleteIntegration.mockRejectedValueOnce(new Error('registry down'))
     await expect(
-      h.provider.create({ addonId: ADDON_ID, name: 'Loki', settings: { url: 'bad' } }),
+      h.provider.create({
+        addonId: ADDON_ID,
+        name: 'Loki',
+        settings: { url: 'bad' },
+      }),
     ).rejects.toThrow('refused')
     expect(h.log.warn).toHaveBeenCalledWith(
       expect.stringContaining('could not be removed'),
@@ -200,7 +260,11 @@ describe('integrations over an integration-instances provider', () => {
       error: 'bad credentials',
     })
     await expect(
-      h.provider.create({ addonId: ADDON_ID, name: 'Loki', settings: { url: 'bad' } }),
+      h.provider.create({
+        addonId: ADDON_ID,
+        name: 'Loki',
+        settings: { url: 'bad' },
+      }),
     ).rejects.toThrow('bad credentials')
     expect(h.registry.createIntegration).not.toHaveBeenCalled()
   })
@@ -229,7 +293,10 @@ describe('integrations over an integration-instances provider', () => {
   it('without a provider the legacy integration-settings path is unchanged', async () => {
     const h = harness({ withProvider: false })
     await h.provider.create({ addonId: ADDON_ID, name: 'Loki' })
-    await h.provider.setSettings({ id: 'int_0001', settings: { url: 'http://x' } })
+    await h.provider.setSettings({
+      id: 'int_0001',
+      settings: { url: 'http://x' },
+    })
     expect(h.registry.setIntegrationSettings).toHaveBeenCalled()
     expect(h.instances.updateInstance).not.toHaveBeenCalled()
   })
