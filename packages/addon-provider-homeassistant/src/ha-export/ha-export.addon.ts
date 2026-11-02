@@ -65,6 +65,10 @@ import {
 } from './camera-functions.js'
 import {
   applyCapCommand,
+  APPLIED,
+  type CommandOutcome,
+  commandNotAppliedBody,
+  type CommandRefusal,
   type CommandTarget,
   type ExportCommand,
   isCapCommand,
@@ -2679,12 +2683,21 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
       reply.send({ error: `unroutable command (${resolution.reason})` })
       return
     }
-    const applied = await this.dispatch(resolution.command)
-    reply.status(applied ? 200 : 422)
-    reply.send(applied ? {} : { error: 'command not applied' })
+    const outcome = await this.dispatch(resolution.command)
+    if (outcome.ok) {
+      reply.status(200)
+      reply.send({})
+      return
+    }
+    this.ctx.logger.warn('ha-export: command answered 422', {
+      tags: { deviceId: exported.deviceId },
+      meta: { topic, entity: parsed.entity, reason: outcome.reason, message: outcome.message },
+    })
+    reply.status(422)
+    reply.send(commandNotAppliedBody(outcome))
   }
 
-  private async dispatch(command: ExportCommand): Promise<boolean> {
+  private async dispatch(command: ExportCommand): Promise<CommandOutcome> {
     try {
       /**
        * The capability half goes through the route table that NAMED the
@@ -2697,7 +2710,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
       if (isCapCommand(command)) {
         const device = await this.ctx.fetchDevice(command.deviceId)
         const outcome = await applyCapCommand(device, command)
-        if (outcome.ok) return true
+        if (outcome.ok) return APPLIED
         if (outcome.reason === 'no-provider') {
           return this.noProvider(command.deviceId, outcome.capName)
         }
@@ -2709,7 +2722,11 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
             ...(outcome.error !== undefined ? { error: outcome.error } : {}),
           },
         })
-        return false
+        return {
+          ok: false,
+          reason: outcome.reason,
+          ...(outcome.error !== undefined ? { message: outcome.error } : {}),
+        }
       }
       switch (command.kind) {
         case 'camera-function': {
@@ -2719,7 +2736,11 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
               tags: { deviceId: command.deviceId },
               meta: { switchId: command.switchId },
             })
-            return false
+            return {
+              ok: false,
+              reason: 'unknown-function',
+              message: 'the switch id is not a camera function',
+            }
           }
           /**
            * A FRESH read for this one device — the pass-level caches are up to
@@ -2734,7 +2755,11 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
               'ha-export: dropping a camera-function command, the device is not in the registry',
               { tags: { deviceId: command.deviceId } },
             )
-            return false
+            return {
+              ok: false,
+              reason: 'device-not-found',
+              message: 'the device is not in the registry',
+            }
           }
           const privacySlice = await this.ctx.api.deviceState.getCapSlice
             .query({ deviceId: command.deviceId, capName: 'privacy-mask' })
@@ -2776,22 +2801,26 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
                 meta: { switchId: parsed.data },
               },
             )
-            return false
+            return {
+              ok: false,
+              reason: 'function-unavailable',
+              message: 'the camera function is not available',
+            }
           }
           await applyCameraFunctionWrite(this.ctx.api, command.deviceId, write, sourceNodeId)
-          return true
+          return APPLIED
         }
         case 'reboot': {
           const device = await this.ctx.fetchDevice(command.deviceId)
           if (device.reboot === undefined) return this.noProvider(command.deviceId, 'reboot')
           await device.reboot.reboot({})
-          return true
+          return APPLIED
         }
         case 'ptz-move': {
           const device = await this.ctx.fetchDevice(command.deviceId)
           if (device.ptz === undefined) return this.noProvider(command.deviceId, 'ptz')
           await device.ptz.move(PTZ_MOVE_BY_DIRECTION[command.direction] ?? {})
-          return true
+          return APPLIED
         }
         case 'ptz-preset': {
           const device = await this.ctx.fetchDevice(command.deviceId)
@@ -2803,10 +2832,10 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
               tags: { deviceId: command.deviceId },
               meta: { preset: command.preset },
             })
-            return false
+            return { ok: false, reason: 'no-such-preset', message: 'no preset by that name' }
           }
           await device.ptz.goToPreset({ presetId: preset.id })
-          return true
+          return APPLIED
         }
       }
     } catch (err) {
@@ -2819,17 +2848,21 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
         tags: { deviceId: command.deviceId },
         meta: { kind: command.kind, error: errMsg(err) },
       })
-      return false
+      return { ok: false, reason: 'error', message: errMsg(err) }
     }
   }
 
   /** A cap the device does not provide. Refused, and never silently. */
-  private noProvider(deviceId: number, capName: string): boolean {
+  private noProvider(deviceId: number, capName: string): CommandRefusal {
     this.ctx.logger.warn('ha-export: dropping a command, the device has no provider for it', {
       tags: { deviceId },
       meta: { capName },
     })
-    return false
+    return {
+      ok: false,
+      reason: 'no-provider',
+      message: `the device has no provider for ${capName}`,
+    }
   }
 
   /**

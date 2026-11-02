@@ -1083,6 +1083,32 @@ export interface CapCommandFailed {
 
 export type CapCommandOutcome = CapCommandApplied | CapCommandFailed
 
+/** Why the export did not apply a command — what the 422 body names. */
+export interface CommandRefusal {
+  readonly ok: false
+  /** `no-provider` | `refused` | a dispatch-level reason such as `unknown-function`. */
+  readonly reason: string
+  /** The provider's own words, when it gave any. */
+  readonly message?: string
+}
+
+export type CommandOutcome = CommandRefusal | { readonly ok: true }
+
+export const APPLIED: CommandOutcome = { ok: true }
+
+/** The 422 body of a command that was not applied: the reason travels with it. */
+export function commandNotAppliedBody(refusal: CommandRefusal): {
+  readonly error: 'command not applied'
+  readonly reason: string
+  readonly message?: string
+} {
+  return {
+    error: 'command not applied',
+    reason: refusal.reason,
+    ...(refusal.message !== undefined ? { message: refusal.message } : {}),
+  }
+}
+
 /**
  * Make the call the command names.
  *

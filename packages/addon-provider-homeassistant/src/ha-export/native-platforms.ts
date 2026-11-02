@@ -86,6 +86,12 @@ export interface NativeSourceMapping extends NativeSourceDescriptor {
  * its own.
  */
 export interface NativeControlBinding {
+  /**
+   * The `DeviceFeature` the device must declare for this control to exist.
+   * A cover without `cover-tilt` has no tilt slider; the control is left out
+   * and so is the degraded entity it would have absorbed.
+   */
+  readonly requiresFeature?: string
   readonly from: string | null
   /**
    * The entity whose COMMAND topic this control writes, when it is not the
@@ -127,6 +133,12 @@ export interface NativePlatformMapping {
   readonly controls?: Readonly<Record<string, NativeControlBinding>>
   /** Emitted verbatim on the component. `temperature_unit`, and nothing implicit. */
   readonly constants?: Readonly<Record<string, string>>
+  /**
+   * The entity is available only while the device's `online` topic says so.
+   * Without it Home Assistant shows the last state of a device whose provider
+   * lost its session.
+   */
+  readonly availableWhenOnline?: true
   /** Boolean component keys read from the slice — `code_arm_required`. */
   readonly flagFields?: Readonly<Record<string, string>>
 }
@@ -149,10 +161,17 @@ export const NATIVE_CAP_PLATFORMS: Readonly<Record<string, NativePlatformMapping
    */
   cover: {
     platform: 'cover',
+    availableWhenOnline: true,
     primary: { from: null },
     controls: {
-      position: { from: 'position', min: 0, max: 100, step: 1 },
-      tilt: { from: 'tilt', min: 0, max: 100, step: 1 },
+      position: {
+        from: 'position',
+        min: 0,
+        max: 100,
+        step: 1,
+        requiresFeature: 'cover-positionable',
+      },
+      tilt: { from: 'tilt', min: 0, max: 100, step: 1, requiresFeature: 'cover-tilt' },
       open: { from: 'open', commandOnly: true },
       close: { from: 'close', commandOnly: true },
       stop: { from: 'stop', commandOnly: true },
@@ -369,6 +388,8 @@ export interface NativeBuildInput {
   readonly deviceId: number
   readonly capName: string
   readonly label: string
+  /** The device's declared `DeviceFeature` flags; gates sub-controls. */
+  readonly features?: readonly string[]
   /** The capability's status slice, for the option lists and the bounds. */
   readonly slice: Readonly<Record<string, unknown>> | undefined
   /** The capability's row in `CAP_ENTITY_MAP`. */
@@ -502,9 +523,13 @@ export function buildNativeComponent(input: NativeBuildInput): NativeComponentPl
   // A native platform whose own state has no source is not a platform.
   if (primary === null) return null
 
+  const features = input.features ?? []
   const absorbed = new Set<string>([derivedEntityId(input.capName), ...primary.entities])
   const controls: Record<string, HaNativeControl> = {}
   for (const [name, binding] of Object.entries(native.controls ?? {})) {
+    if (binding.requiresFeature !== undefined && !features.includes(binding.requiresFeature)) {
+      continue
+    }
     const resolved = resolveBinding(input, binding)
     if (resolved === null) continue
     controls[name] = resolved.control
@@ -524,6 +549,13 @@ export function buildNativeComponent(input: NativeBuildInput): NativeComponentPl
     ...primary.control,
     ...(native.deviceClass !== undefined ? { device_class: native.deviceClass } : {}),
     ...(native.icon !== undefined ? { icon: native.icon } : {}),
+    ...(native.availableWhenOnline === true
+      ? {
+          availability_topic: stateTopic(input.deviceKey, 'online'),
+          payload_available: 'true',
+          payload_not_available: 'false',
+        }
+      : {}),
     ...(Object.keys(controls).length > 0 ? { controls } : {}),
     ...native.constants,
     ...flags,

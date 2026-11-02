@@ -83,6 +83,15 @@ export interface HaComponent {
   readonly attributes?: Readonly<Record<string, string>>
   readonly entity_category?: 'config' | 'diagnostic'
   /**
+   * The entity is available only while this topic carries `payload_available`.
+   * Absent means always available (the heartbeat still applies). A component
+   * that predates it ignores the key. Home Assistant's own MQTT semantic: no
+   * payload yet reads as unavailable, so an unknown state never looks available.
+   */
+  readonly availability_topic?: string
+  readonly payload_available?: string
+  readonly payload_not_available?: string
+  /**
    * Absent means `true` to the component. Set explicitly to `false` for
    * everything an operator would not automate on — the pressure valve
    * that makes ~73 entities per camera survivable.

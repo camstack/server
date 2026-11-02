@@ -519,7 +519,8 @@ function derivedDevice(capName: string): CatalogDevice {
     id: 700,
     name: 'Front door',
     type: 'sensor',
-    features: [],
+    // Every feature a sub-entity is gated on, so the walk sees every entity.
+    features: ['cover-positionable', 'cover-tilt'],
     boundCaps: [capName],
     zones: [],
     switches: [],

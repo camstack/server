@@ -41,7 +41,7 @@ function device(overrides: Partial<CatalogDevice> = {}): CatalogDevice {
     id: 812,
     name: 'Tapparella hall',
     type: 'cover',
-    features: [],
+    features: ['cover-positionable', 'cover-tilt'],
     boundCaps: ['cover'],
     zones: [],
     switches: [],

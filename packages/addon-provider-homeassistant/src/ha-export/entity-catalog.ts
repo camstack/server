@@ -893,6 +893,8 @@ export interface CapEntityDescriptor {
 /** A secondary entity of the same capability. Named, never auto-labelled. */
 export interface CapExtraEntity extends CapEntityDescriptor {
   readonly label: string
+  /** The `DeviceFeature` a device must declare for this entity to exist. */
+  readonly requiresFeature?: string
 }
 
 /**
@@ -1186,6 +1188,7 @@ export const CAP_ENTITY_MAP: Readonly<Record<string, CapEntityMapping>> = {
         icon: 'mdi:arrow-up-down',
         writable: true,
         range: PERCENT_RANGE,
+        requiresFeature: 'cover-positionable',
       },
       tilt: {
         platform: 'number',
@@ -1196,6 +1199,7 @@ export const CAP_ENTITY_MAP: Readonly<Record<string, CapEntityMapping>> = {
         writable: true,
         range: PERCENT_RANGE,
         enabledByDefault: false,
+        requiresFeature: 'cover-tilt',
       },
     },
     commands: {
@@ -2113,6 +2117,8 @@ export interface CapEntityRef {
   readonly entity: string
   readonly label: string
   readonly descriptor: CapEntityDescriptor
+  /** From the extra's `requiresFeature`; absent for the primary entity. */
+  readonly requiresFeature?: string
 }
 
 /** Every write-only entity one capability produces. */
@@ -2166,6 +2172,7 @@ export function capEntities(capName: string): readonly CapEntityRef[] {
       entity: derivedExtraEntityId(capName, suffix),
       label: extra.label,
       descriptor: extra,
+      ...(extra.requiresFeature !== undefined ? { requiresFeature: extra.requiresFeature } : {}),
     })
   }
   return refs
@@ -2187,24 +2194,28 @@ export function deriveCapValue(derivation: CapValueDerivation | undefined, raw: 
 }
 
 /** A capability's entities as the catalog builders consume them. */
-function capEntitySpecs(capName: string): readonly EntitySpec[] {
-  const specs: EntitySpec[] = capEntities(capName).map((ref) => ({
-    entity: ref.entity,
-    platform: ref.descriptor.platform,
-    label: ref.label,
-    enabledByDefault: ref.descriptor.enabledByDefault ?? true,
-    ...(ref.descriptor.deviceClass !== undefined
-      ? { deviceClass: ref.descriptor.deviceClass }
-      : {}),
-    ...(ref.descriptor.unit !== undefined ? { unit: ref.descriptor.unit } : {}),
-    ...(ref.descriptor.icon !== undefined ? { icon: ref.descriptor.icon } : {}),
-    ...(ref.descriptor.options !== undefined ? { options: ref.descriptor.options } : {}),
-    ...(ref.descriptor.range !== undefined ? { range: ref.descriptor.range } : {}),
-    ...(ref.descriptor.entityCategory !== undefined
-      ? { entityCategory: ref.descriptor.entityCategory }
-      : {}),
-    ...(ref.descriptor.writable === true ? { writable: true } : {}),
-  }))
+function capEntitySpecs(capName: string, features: readonly string[] = []): readonly EntitySpec[] {
+  const declared = (required: string | undefined): boolean =>
+    required === undefined || features.includes(required)
+  const specs: EntitySpec[] = capEntities(capName)
+    .filter((ref) => declared(ref.requiresFeature))
+    .map((ref) => ({
+      entity: ref.entity,
+      platform: ref.descriptor.platform,
+      label: ref.label,
+      enabledByDefault: ref.descriptor.enabledByDefault ?? true,
+      ...(ref.descriptor.deviceClass !== undefined
+        ? { deviceClass: ref.descriptor.deviceClass }
+        : {}),
+      ...(ref.descriptor.unit !== undefined ? { unit: ref.descriptor.unit } : {}),
+      ...(ref.descriptor.icon !== undefined ? { icon: ref.descriptor.icon } : {}),
+      ...(ref.descriptor.options !== undefined ? { options: ref.descriptor.options } : {}),
+      ...(ref.descriptor.range !== undefined ? { range: ref.descriptor.range } : {}),
+      ...(ref.descriptor.entityCategory !== undefined
+        ? { entityCategory: ref.descriptor.entityCategory }
+        : {}),
+      ...(ref.descriptor.writable === true ? { writable: true } : {}),
+    }))
   for (const ref of capCommandEntities(capName)) {
     specs.push({
       entity: ref.entity,
@@ -2793,11 +2804,14 @@ export function buildDerivedPlan(
             deviceId: device.id,
             capName: cap,
             label: humanise(cap),
+            features: device.features,
             slice: device.capSlices?.[cap],
             mapping,
           })
     if (plan === null) {
-      specs.push(...capEntitySpecs(cap).map((spec) => degradeUnsupported(spec, options)))
+      specs.push(
+        ...capEntitySpecs(cap, device.features).map((spec) => degradeUnsupported(spec, options)),
+      )
       continue
     }
     native[toComponentKey(plan.component.platform, derivedEntityId(cap))] = plan.component
@@ -2808,7 +2822,9 @@ export function buildDerivedPlan(
      * to make the device look tidy would be a silent loss of a value an
      * operator already automates on.
      */
-    specs.push(...capEntitySpecs(cap).filter((spec) => !plan.absorbed.has(spec.entity)))
+    specs.push(
+      ...capEntitySpecs(cap, device.features).filter((spec) => !plan.absorbed.has(spec.entity)),
+    )
   }
   const assembled = assemble(device, specs)
   return { ...assembled, cmps: { ...assembled.cmps, ...native } }

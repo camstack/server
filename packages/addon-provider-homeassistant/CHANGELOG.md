@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Home Assistant export: a cover offers position and tilt only when the device declares them, shows unavailable while its provider is offline, and a refused command now answers 422 with the reason
+
 ## [1.2.649] - 2026-11-02
 
 ### Changed
