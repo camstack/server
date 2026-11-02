@@ -49,6 +49,10 @@ import {
   DiscoveryCandidateSchema,
   FieldProbeResultSchema,
 } from './device-provider.cap.js'
+import {
+  DiscoveryObservationSchema,
+  DiscoveryProposalSchema,
+} from './schemas/discovery-proposals.js'
 import { StreamSourceEntrySchema } from './schemas/streaming-shared.js'
 
 /**
@@ -1673,6 +1677,40 @@ export const deviceManagerCapability = {
       }),
       z.object({ candidates: z.array(DiscoveryCandidateSchema).readonly() }),
       { kind: 'mutation', auth: 'admin' },
+    ),
+
+    // ── Persistent discovery proposals (D994) ─────────────────────────────
+    // The passive listener and the 30-minute sweep of `local-network` feed ONE
+    // proposal stream. Adopting a proposal goes through `adoptDevice` (or the
+    // integration setup form for a `setupIntegration` candidate), never a
+    // parallel flow.
+
+    /** Proposals still worth showing: not dismissed, not adopted, not an integration we own. */
+    listDiscoveryProposals: method(
+      z.object({}),
+      z.object({ proposals: z.array(DiscoveryProposalSchema).readonly() }),
+      { auth: 'admin' },
+    ),
+
+    /** Hide a proposal for good; seeing the device again does not bring it back. */
+    dismissDiscoveryProposal: method(
+      z.object({ id: z.string() }),
+      z.object({ dismissed: z.boolean() }),
+      { kind: 'mutation', auth: 'admin' },
+    ),
+
+    /** Raw passive sightings from `local-network`; classified by the matching providers. */
+    reportDiscoveryObservations: method(
+      z.object({ observations: z.array(DiscoveryObservationSchema).max(512) }),
+      z.object({ proposed: z.number().int() }),
+      { kind: 'mutation', auth: 'admin' },
+    ),
+
+    /** Run the providers' discovery once and record what it found as proposals. */
+    runDiscoverySweep: method(
+      z.object({}),
+      z.object({ providers: z.number().int(), proposed: z.number().int() }),
+      { kind: 'mutation', auth: 'admin', timeoutMs: 120_000 },
     ),
 
     /** The device type a provider creates via manual add (Camera/Container/Hub),

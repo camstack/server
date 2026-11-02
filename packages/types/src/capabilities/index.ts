@@ -3038,6 +3038,14 @@ export {
   sceneMonitorCapability,
 } from './scene-monitor.cap.js'
 export {
+  type DiscoveryObservation,
+  DiscoveryObservationSchema,
+  type DiscoveryProposal,
+  type DiscoveryProposalBody,
+  DiscoveryProposalBodySchema,
+  DiscoveryProposalSchema,
+} from './schemas/discovery-proposals.js'
+export {
   type PackageLlmVerdict,
   PackageLlmVerdictSchema,
 } from './schemas/package-llm-verdict.js'

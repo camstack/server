@@ -6314,6 +6314,78 @@ export function createCapRouter_deviceManager(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.discoverProvider(methodInput as any)
       }),
+    listDiscoveryProposals: adminProcedure
+      .input(deviceManagerCapability.methods.listDiscoveryProposals.input.loose())
+      .output(deviceManagerCapability.methods.listDiscoveryProposals.output)
+      .query(async ({ input, ctx }) => {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
+        const p = resolveProvider(
+          'device-manager',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.listDiscoveryProposals(methodInput as any)
+      }),
+    dismissDiscoveryProposal: adminProcedure
+      .input(deviceManagerCapability.methods.dismissDiscoveryProposal.input.loose())
+      .output(deviceManagerCapability.methods.dismissDiscoveryProposal.output)
+      .mutation(async ({ input, ctx }) => {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
+        const p = resolveProvider(
+          'device-manager',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.dismissDiscoveryProposal(methodInput as any)
+      }),
+    reportDiscoveryObservations: adminProcedure
+      .input(deviceManagerCapability.methods.reportDiscoveryObservations.input.loose())
+      .output(deviceManagerCapability.methods.reportDiscoveryObservations.output)
+      .mutation(async ({ input, ctx }) => {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
+        const p = resolveProvider(
+          'device-manager',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.reportDiscoveryObservations(methodInput as any)
+      }),
+    runDiscoverySweep: adminProcedure
+      .input(deviceManagerCapability.methods.runDiscoverySweep.input.loose())
+      .output(deviceManagerCapability.methods.runDiscoverySweep.output)
+      .mutation(async ({ input, ctx }) => {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
+        const p = resolveProvider(
+          'device-manager',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.runDiscoverySweep(methodInput as any)
+      }),
     providerCreationType: adminProcedure
       .input(deviceManagerCapability.methods.providerCreationType.input.loose())
       .output(deviceManagerCapability.methods.providerCreationType.output)

@@ -96,6 +96,11 @@ vi.mock('../../components/integrations/IntegrationWizard', () => ({
 
 // Stubbed: it calls tRPC discovery hooks at render (even when closed) which
 // need a tRPC context this page test does not provide.
+// Stubbed for the same reason: it reads the discovery proposals through tRPC.
+vi.mock('../../components/integrations/DiscoveryProposalsBanner', () => ({
+  DiscoveryProposalsBanner: () => null,
+}))
+
 vi.mock('../../components/integrations/ScanNetworkModal', () => ({
   ScanNetworkModal: () => null,
 }))

@@ -1755,7 +1755,15 @@
     "scanFromForm": "Cerca in rete",
     "reconnecting": "Un'integrazione si sta riavviando. L'elenco si aggiornerà da solo.",
     "saved": "Configurazione salvata",
-    "saveFailed": "Impossibile salvare la configurazione"
+    "saveFailed": "Impossibile salvare la configurazione",
+    "discoveryBanner": {
+      "count_one": "{{count}} nuovo dispositivo trovato",
+      "count_other": "{{count}} nuovi dispositivi trovati",
+      "review": "Rivedi",
+      "title": "Nuovi dispositivi trovati",
+      "dismiss": "Ignora",
+      "adopt": "Adotta"
+    }
   },
   "serverManagement": {
     "title": "Gestione server",

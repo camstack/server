@@ -1755,7 +1755,15 @@
     "scanFromForm": "Scan the network",
     "reconnecting": "An integration is restarting. The list will refresh on its own.",
     "saved": "Configuration saved",
-    "saveFailed": "Could not save the configuration"
+    "saveFailed": "Could not save the configuration",
+    "discoveryBanner": {
+      "count_one": "{{count}} new device found",
+      "count_other": "{{count}} new devices found",
+      "review": "Review",
+      "title": "New devices found",
+      "dismiss": "Dismiss",
+      "adopt": "Adopt"
+    }
   },
   "ai": {
     "addProfile": "Add profile",

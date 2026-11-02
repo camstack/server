@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1031 shared schemas.**
+**1033 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -1780,6 +1780,20 @@ Enum: `"online" \| "sleeping" \| "offline" \| "unknown"`
 - `{ kind: "udp-broadcast"; port: number; payloadHex: string; listenPort?: number }`
 - `{ kind: "http-probe"; port: number; path: string; method?: "GET" \| "POST" = "GET"; bodyText?: string; contentType?: string; tls?: boolean = false; acceptStatus?: number[] }`
 - `{ kind: "custom"; reason: string }`
+
+### `DiscoveryObservationSchema`
+
+- `{ kind: "mdns"; serviceType: string; instance: string; host: string; address: string \| null; port: number; txt: Record<string, string> }`
+- `{ kind: "ssdp"; host: string; port: number; target: string; headers: Record<string, string> }`
+
+### `DiscoveryProposalSchema`
+
+- `id`: `string`
+- `addonId`: `string`
+- `candidate`: `{ stableId: string; type: "camera" \| "hub" \| "light" \| "siren" \| "switch" \| "sensor" \| "thermostat" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "pet-fountain" \| "dishwasher" \| "washer" \| "heater" \| "dryer" \| "gateway"; suggestedName: string; prefilledConfig: Record<string, unknown>; sourceInfo?: { id: string; system: string; uniqueId?: string; quantity?: "temperature" \| "pressure" \| "speed" \| "precipitation" \| "precipitation-rate" \| "length" \| "area" \| "illuminance" \| "irradiance" \| "power" \| "energy" \| "voltage" \| "current" \| "apparent-power" \| "humidity" \| "percentage" \| "concentration-volume" \| "concentration-mass" \| "concentration-ppb" \| "volume" \| "duration" \| "duration-ms" \| "information" \| "sound-level" \| "signal-level" \| "colour-temperature" \| "angle" \| "bitrate" \| "rate" \| "mass" \| "index" \| "ratio" \| "count" \| "none" \| "device"; dateTimeShape?: "date" \| "time" \| "datetime"; raw?: Record<string, unknown> }; alreadyOnboarded?: boolean; onboardedDeviceId?: number; onboardedName?: string; setupIntegration?: boolean; parentStableId?: string; selectable?: boolean }`
+- `firstSeenAt`: `number`
+- `lastSeenAt`: `number`
+- `dismissed`: `boolean`
 
 ### `DishwasherAccessSchema`
 

@@ -1085,6 +1085,18 @@ export const useDeviceManagerDiscoverAllProviders: typeof trpc.deviceManager.dis
 /** Generated alias around `trpc.deviceManager.discoverProvider.useMutation`. */
 export const useDeviceManagerDiscoverProvider: typeof trpc.deviceManager.discoverProvider.useMutation = /*#__PURE__*/ alias(() => trpc.deviceManager.discoverProvider.useMutation)
 
+/** Generated alias around `trpc.deviceManager.listDiscoveryProposals.useQuery`. */
+export const useDeviceManagerListDiscoveryProposals: typeof trpc.deviceManager.listDiscoveryProposals.useQuery = /*#__PURE__*/ alias(() => trpc.deviceManager.listDiscoveryProposals.useQuery)
+
+/** Generated alias around `trpc.deviceManager.dismissDiscoveryProposal.useMutation`. */
+export const useDeviceManagerDismissDiscoveryProposal: typeof trpc.deviceManager.dismissDiscoveryProposal.useMutation = /*#__PURE__*/ alias(() => trpc.deviceManager.dismissDiscoveryProposal.useMutation)
+
+/** Generated alias around `trpc.deviceManager.reportDiscoveryObservations.useMutation`. */
+export const useDeviceManagerReportDiscoveryObservations: typeof trpc.deviceManager.reportDiscoveryObservations.useMutation = /*#__PURE__*/ alias(() => trpc.deviceManager.reportDiscoveryObservations.useMutation)
+
+/** Generated alias around `trpc.deviceManager.runDiscoverySweep.useMutation`. */
+export const useDeviceManagerRunDiscoverySweep: typeof trpc.deviceManager.runDiscoverySweep.useMutation = /*#__PURE__*/ alias(() => trpc.deviceManager.runDiscoverySweep.useMutation)
+
 /** Generated alias around `trpc.deviceManager.providerCreationType.useQuery`. */
 export const useDeviceManagerProviderCreationType: typeof trpc.deviceManager.providerCreationType.useQuery = /*#__PURE__*/ alias(() => trpc.deviceManager.providerCreationType.useQuery)
 

@@ -68,6 +68,7 @@ import {
   type Integration,
   type IntegrationRowStatus,
 } from '../components/integrations/integration-columns'
+import { DiscoveryProposalsBanner } from '../components/integrations/DiscoveryProposalsBanner'
 import { ScanNetworkModal } from '../components/integrations/ScanNetworkModal'
 import { deviceIntegrationIcon } from '../components/shared/device-integration-icon'
 import { useEventInvalidation } from '../hooks/useEventInvalidation'
@@ -435,6 +436,8 @@ export function IntegrationsPage(): ReactNode {
         </>
       }
     >
+      <DiscoveryProposalsBanner onSetupIntegration={handleSetupIntegration} />
+
       {listFailed && (
         <ErrorBox
           message={t('integrations.loadFailed', 'Integrations could not be loaded.')}

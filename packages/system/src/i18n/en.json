@@ -145,6 +145,8 @@
   "globalSettings.s_local-access.httpPort.description": "Dedicated listener. Must not equal the HTTPS port (4443 by default).",
   "globalSettings.s_local-access.mdnsAdvertise.label": "Announce this hub on the LAN (mDNS)",
   "globalSettings.s_local-access.mdnsAdvertise.description": "Lets `camstack login` find the hub without an address. Advertises only the HTTPS address, never a secret. Needs UDP 5353 multicast to reach the LAN (host networking or a dedicated container IP).",
+  "globalSettings.s_local-access.passiveDiscovery.label": "Find new devices on the LAN by listening",
+  "globalSettings.s_local-access.passiveDiscovery.description": "On by default. Listens for mDNS and SSDP announcements and proposes the devices an integration can adopt; a low-cost scan also runs every 30 minutes. It never sends a probe of its own. Needs UDP multicast to reach the LAN (host networking or a dedicated container IP).",
   "globalSettings.s_local-access.localHostname.label": "Local hostname",
   "globalSettings.s_local-access.localHostname.description": "Advertised to the viewer instead of the raw LAN IP, and added to the certificate SAN. Requires this name to resolve on the LAN (router DNS, mDNS, or a hosts file). Leave empty to keep using the IP.",
   "globalSettings.s_loki-logging.title": "Loki",

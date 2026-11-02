@@ -89,6 +89,8 @@ import {
 } from './ipv6-lan.js'
 import { parseLocalHostname } from './local-hostname.js'
 import { runScan } from './scan/scan-engine.js'
+import { DiscoveryWatcher } from './passive/discovery-watcher.js'
+import { nodePassiveListenIo } from './passive/passive-io-node.js'
 import { nodeScanIo } from './scan/scan-io-node.js'
 import { validateSavedSubnets } from './scan/subnets.js'
 
@@ -200,6 +202,8 @@ interface LocalNetworkConfig {
    * finds it. On by default; needs UDP 5353 multicast to reach the LAN.
    */
   readonly mdnsAdvertise: boolean
+  /** Listen passively for mDNS and SSDP announcements and propose what is found (D994). */
+  readonly passiveDiscovery: boolean
   /**
    * Extra subnets the discovery engine scans besides the hub's own links, as
    * canonical CIDR strings. A cluster setting: every scan uses it.
@@ -225,6 +229,8 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
    */
   private meshEndpoint: MeshEndpointCache | null = null
   private mdns: HubMdnsAdvertiser | null = null
+  private discoveryWatcher: DiscoveryWatcher | null = null
+  private watcherPassive = true
 
   constructor() {
     super({
@@ -240,6 +246,7 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
       internalUrl: '',
       publicEndpointUrl: '',
       mdnsAdvertise: true,
+      passiveDiscovery: true,
       scanSubnets: [],
     })
   }
@@ -680,6 +687,11 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
     }
 
     await this.applyMdnsAdvertisement()
+    void this.applyDiscoveryWatcher().catch((err: unknown) => {
+      this.ctx.logger.warn('local-network: discovery watcher not started', {
+        meta: { error: err instanceof Error ? err.message : String(err) },
+      })
+    })
 
     return [{ capability: localNetworkCapability, provider }]
   }
@@ -740,6 +752,17 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
               default: true,
             }),
             this.field({
+              type: 'boolean',
+              key: 'passiveDiscovery',
+              label: 'Find new devices on the LAN by listening',
+              labelKey: 'server:globalSettings.s_local-access.passiveDiscovery.label',
+              description:
+                'On by default. Listens for mDNS and SSDP announcements and proposes the devices an integration can adopt; a low-cost scan also runs every 30 minutes. It never sends a probe of its own. Needs UDP multicast to reach the LAN (host networking or a dedicated container IP).',
+              descriptionKey: 'server:globalSettings.s_local-access.passiveDiscovery.description',
+              style: 'switch',
+              default: true,
+            }),
+            this.field({
               type: 'text',
               key: 'localHostname',
               label: 'Local hostname',
@@ -759,6 +782,36 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
   protected override async onConfigChanged(): Promise<void> {
     await this.applyLanAccessFromSettings()
     await this.applyMdnsAdvertisement()
+    await this.applyDiscoveryWatcher()
+  }
+
+  /**
+   * (Re)start the passive listener and the 30-minute sweep, both feeding the
+   * proposal stream of device-manager. Never throws: a socket that cannot open
+   * is logged by the watcher and the sweep still runs.
+   */
+  private async applyDiscoveryWatcher(): Promise<void> {
+    const passive = this.config.passiveDiscovery !== false
+    if (this.discoveryWatcher !== null && passive === this.watcherPassive) return
+    await this.discoveryWatcher?.stop()
+    const api = this.ctx.api
+    if (api === undefined) return
+    this.watcherPassive = passive
+    this.discoveryWatcher = new DiscoveryWatcher({
+      io: nodePassiveListenIo,
+      logger: this.ctx.logger.child('discovery'),
+      sink: {
+        report: async (observations) => {
+          await api.deviceManager.reportDiscoveryObservations.mutate({
+            observations: [...observations],
+          })
+        },
+        sweep: async () => {
+          await api.deviceManager.runDiscoverySweep.mutate({})
+        },
+      },
+    })
+    await this.discoveryWatcher.start({ passive })
   }
 
   /**
@@ -783,6 +836,8 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
   }
 
   protected async onShutdown(): Promise<void> {
+    await this.discoveryWatcher?.stop()
+    this.discoveryWatcher = null
     await this.mdns?.stop()
     this.mdns = null
     if (this.pollTimer) {

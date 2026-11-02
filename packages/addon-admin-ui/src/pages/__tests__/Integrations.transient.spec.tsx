@@ -54,6 +54,11 @@ vi.mock('../../hooks/useEventInvalidation', () => ({ useEventInvalidation: () =>
 vi.mock('../../components/integrations/IntegrationWizard', () => ({
   IntegrationWizard: () => null,
 }))
+// Stubbed for the same reason: it reads the discovery proposals through tRPC.
+vi.mock('../../components/integrations/DiscoveryProposalsBanner', () => ({
+  DiscoveryProposalsBanner: () => null,
+}))
+
 vi.mock('../../components/integrations/ScanNetworkModal', () => ({ ScanNetworkModal: () => null }))
 
 import { IntegrationsPage } from '../Integrations'

@@ -87,6 +87,8 @@ import type { ProviderContext, ProviderHost } from './device-provider-context.js
 import * as queries from './device-queries.js'
 import { cleanupDeletedDevicesData, settingsScopes } from './device-removal-hooks.js'
 import { DeviceTombstoneStore } from './device-tombstone-store.js'
+import { DiscoveryProposalService } from './discovery-proposal-service.js'
+import { DiscoveryProposalStore } from './discovery-proposal-store.js'
 import { deviceManagerRecordKinds } from './record-kinds.js'
 import { DeviceRowStore, deviceRowBackendOf } from './device-row-store.js'
 import { createDeviceStateClaimMethods } from './device-state-claims.js'
@@ -628,6 +630,17 @@ export class DeviceManagerAddon extends BaseAddon {
     }
     await records.declare(deviceManagerRecordKinds)
     const tombstones = DeviceTombstoneStore.of(records, this.ctx.logger.child('tombstones'))
+    const discoveryProposals = new DiscoveryProposalService({
+      store: DiscoveryProposalStore.of(records),
+      orchestrator: this.discoveryDeps(),
+      providerIds: () => this.listDiscoveryCapableProviderIds(),
+      requireProvider: (addonId) => this.requireDeviceProvider(addonId),
+      ownership: async () => ({
+        deviceStableIds: new Set((await deviceRows.listAll()).map((r) => r.meta.stableId)),
+        integrationOriginIds: await this.discoveryDeps().originStableIds(),
+      }),
+      logger: this.ctx.logger.child('discovery-proposals'),
+    })
 
     // Once per process, read-only: name every stored activation of a RETIRED
     // wrapper, even on a device nobody asks about (task 17 review M1). Not
@@ -935,6 +948,13 @@ export class DeviceManagerAddon extends BaseAddon {
         if (outcome?.error) throw new Error(outcome.error)
         return { candidates: outcome?.candidates ?? [] }
       },
+      listDiscoveryProposals: async () => ({ proposals: await discoveryProposals.list() }),
+      dismissDiscoveryProposal: async (input) => ({
+        dismissed: await discoveryProposals.dismiss(input.id),
+      }),
+      reportDiscoveryObservations: (input) =>
+        discoveryProposals.reportObservations(input.observations),
+      runDiscoverySweep: () => discoveryProposals.runSweep(),
       providerCreationType: async (input) => {
         const provider = await this.requireDeviceProvider(input.addonId)
         return provider.getManualCreationType({})

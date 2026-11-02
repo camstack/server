@@ -20,6 +20,36 @@ export default defineFixtures({
       },
     ],
     'deviceManager.listAll': [],
+    'deviceManager.listDiscoveryProposals': {
+      proposals: [
+        {
+          id: 'provider-esphome::esp-kitchen',
+          addonId: 'provider-esphome',
+          firstSeenAt: 1_700_000_000_000,
+          lastSeenAt: 1_700_000_600_000,
+          dismissed: false,
+          candidate: {
+            stableId: 'esp-kitchen',
+            type: 'container',
+            suggestedName: 'Kitchen board',
+            prefilledConfig: { host: '192.0.2.10' },
+          },
+        },
+        {
+          id: 'provider-gree::gree-bedroom',
+          addonId: 'provider-gree',
+          firstSeenAt: 1_700_000_000_000,
+          lastSeenAt: 1_700_000_600_000,
+          dismissed: false,
+          candidate: {
+            stableId: 'gree-bedroom',
+            type: 'climate',
+            suggestedName: 'Bedroom AC',
+            prefilledConfig: { host: '192.0.2.31' },
+          },
+        },
+      ],
+    },
     'mut:deviceManager.discoverAllProviders': {
       groups: [
         {

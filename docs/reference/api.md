@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**200 capabilities · 1477 methods.**
+**200 capabilities · 1481 methods.**
 
 ## Method index
 
@@ -403,6 +403,10 @@
 | `deviceManager.discoveryProviders` | query | admin | device-manager |
 | `deviceManager.discoverAllProviders` | mutation | admin | device-manager |
 | `deviceManager.discoverProvider` | mutation | admin | device-manager |
+| `deviceManager.listDiscoveryProposals` | query | admin | device-manager |
+| `deviceManager.dismissDiscoveryProposal` | mutation | admin | device-manager |
+| `deviceManager.reportDiscoveryObservations` | mutation | admin | device-manager |
+| `deviceManager.runDiscoverySweep` | mutation | admin | device-manager |
 | `deviceManager.providerCreationType` | query | admin | device-manager |
 | `deviceManager.providerDiscoveryParamsSchema` | query | admin | device-manager |
 | `deviceManager.testField` | mutation | admin | device-manager |
@@ -2396,7 +2400,7 @@
 
 ### `device-manager` → `deviceManager.*`
 
-- **Source:** `packages/types/src/capabilities/device-manager.cap.ts:505`
+- **Source:** `packages/types/src/capabilities/device-manager.cap.ts:509`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IDeviceManagerProvider`
@@ -2490,6 +2494,10 @@
 | discoveryProviders | `deviceManager.discoveryProviders` | query | admin | `{}` | `{ providers: ({ addonId: string; label: string })[] }` |
 | discoverAllProviders | `deviceManager.discoverAllProviders` | mutation | admin | `{ subnets?: string[] }` | `{ groups: ({ addonId: string; label: string; candidates: ({ stableId: string; type: "camera" \| "hub" \| "light" \| "siren" \| "switch" \| "sensor" \| "thermostat" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "pet-fountain" \| "dishwasher" \| "washer" \| "heater" \| "dryer" \| "gateway"; suggestedName: string; prefilledConfig: Record<string, unknown>; sourceInfo?: { id: string; system: string; uniqueId?: string; quantity?: "temperature" \| "pressure" \| "speed" \| "precipitation" \| "precipitation-rate" \| "length" \| "area" \| "illuminance" \| "irradiance" \| "power" \| "energy" \| "voltage" \| "current" \| "apparent-power" \| "humidity" \| "percentage" \| "concentration-volume" \| "concentration-mass" \| "concentration-ppb" \| "volume" \| "duration" \| "duration-ms" \| "information" \| "sound-level" \| "signal-level" \| "colour-temperature" \| "angle" \| "bitrate" \| "rate" \| "mass" \| "index" \| "ratio" \| "count" \| "none" \| "device"; dateTimeShape?: "date" \| "time" \| "datetime"; raw?: Record<string, unknown> }; alreadyOnboarded?: boolean; onboardedDeviceId?: number; onboardedName?: string; setupIntegration?: boolean; parentStableId?: string; selectable?: boolean })[]; error: string \| null })[] }` |
 | discoverProvider | `deviceManager.discoverProvider` | mutation | admin | `{ addonId: string; params?: Record<string, unknown>; subnets?: string[] }` | `{ candidates: ({ stableId: string; type: "camera" \| "hub" \| "light" \| "siren" \| "switch" \| "sensor" \| "thermostat" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "pet-fountain" \| "dishwasher" \| "washer" \| "heater" \| "dryer" \| "gateway"; suggestedName: string; prefilledConfig: Record<string, unknown>; sourceInfo?: { id: string; system: string; uniqueId?: string; quantity?: "temperature" \| "pressure" \| "speed" \| "precipitation" \| "precipitation-rate" \| "length" \| "area" \| "illuminance" \| "irradiance" \| "power" \| "energy" \| "voltage" \| "current" \| "apparent-power" \| "humidity" \| "percentage" \| "concentration-volume" \| "concentration-mass" \| "concentration-ppb" \| "volume" \| "duration" \| "duration-ms" \| "information" \| "sound-level" \| "signal-level" \| "colour-temperature" \| "angle" \| "bitrate" \| "rate" \| "mass" \| "index" \| "ratio" \| "count" \| "none" \| "device"; dateTimeShape?: "date" \| "time" \| "datetime"; raw?: Record<string, unknown> }; alreadyOnboarded?: boolean; onboardedDeviceId?: number; onboardedName?: string; setupIntegration?: boolean; parentStableId?: string; selectable?: boolean })[] }` |
+| listDiscoveryProposals | `deviceManager.listDiscoveryProposals` | query | admin | `{}` | `{ proposals: DiscoveryProposalSchema[] }` |
+| dismissDiscoveryProposal | `deviceManager.dismissDiscoveryProposal` | mutation | admin | `{ id: string }` | `{ dismissed: boolean }` |
+| reportDiscoveryObservations | `deviceManager.reportDiscoveryObservations` | mutation | admin | `{ observations: DiscoveryObservationSchema[] }` | `{ proposed: number }` |
+| runDiscoverySweep | `deviceManager.runDiscoverySweep` | mutation | admin | `{}` | `{ providers: number; proposed: number }` |
 | providerCreationType | `deviceManager.providerCreationType` | query | admin | `{ addonId: string }` | `{ deviceType: "camera" \| "hub" \| "light" \| "siren" \| "switch" \| "sensor" \| "thermostat" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "pet-fountain" \| "dishwasher" \| "washer" \| "heater" \| "dryer" \| "gateway" \| null }` |
 | providerDiscoveryParamsSchema | `deviceManager.providerDiscoveryParamsSchema` | query | admin | `{ addonId: string }` | `unknown` |
 | testField | `deviceManager.testField` | mutation | admin | `{ deviceId: number; key: string; value: unknown }` | `{ status: "ok" \| "error"; labels?: string[]; error?: string }` |
