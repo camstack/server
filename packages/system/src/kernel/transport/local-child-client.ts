@@ -8,6 +8,7 @@ import { liftRoutingHints } from './cap-routing-hints.js'
 import type {
   AddonCallInput,
   CapCallInput,
+  ChildCallOutInput,
   CapCallOutMessage,
   ChildCapDescriptor,
   ChildEventMessage,
@@ -439,7 +440,7 @@ export class LocalChildClient {
    * to its `onUnownedCall` fallback (the cluster CapabilityRegistry in
    * production). Throws if called before `start()`.
    */
-  async callOut(input: CapCallInput): Promise<unknown> {
+  async callOut(input: ChildCallOutInput): Promise<unknown> {
     if (this.channel === null) {
       throw new Error('LocalChildClient: callOut before start')
     }
@@ -450,6 +451,7 @@ export class LocalChildClient {
       // this child's own tRPC chain, which never sees this call) resolving a
       // wrapper cap NAME back to the wrapper that is asking.
       ...(input.native === true ? { native: true } : {}),
+      ...(input.actingAddonId !== undefined ? { actingAddonId: input.actingAddonId } : {}),
     }
     if (this.parentRawForward && input.args !== undefined) {
       // Raw-forward: the args are packed ONCE here and travel as the frame's

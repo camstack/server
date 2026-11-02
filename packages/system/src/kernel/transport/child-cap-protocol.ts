@@ -101,6 +101,14 @@ export interface CapCallOutMessage {
   readonly kind: 'cap-call-out'
   readonly capName: string
   readonly method: string
+  /**
+   * The addon this call acts FOR, claimed by a child that hosts several (a grouped runner is
+   * stamped with its group id, which says nothing about WHICH member is calling). The parent
+   * trusts it only when its own runner map says this runner hosts that addon, and otherwise
+   * refuses the call (`ActingAddonRefusedError`). Used for the caps whose data is keyed by the
+   * addon, which never changes, unlike the group (`records`).
+   */
+  readonly actingAddonId?: string
   readonly args?: unknown
   readonly hints?: CapRoutingHints
   readonly deviceId?: number
@@ -350,6 +358,9 @@ export interface RegisteredChild {
 
 /** Arguments to route a cap method call (the `cap-call` message minus its discriminant). */
 export type CapCallInput = Omit<CapCallMessage, 'kind'>
+
+/** A call a child sends out: the routed input plus the addon it acts for. */
+export type ChildCallOutInput = CapCallInput & { readonly actingAddonId?: string }
 
 /** Arguments to route an addon-level call (the `addon-call` message minus its discriminant). */
 export type AddonCallInput = Omit<AddonCallMessage, 'kind'>

@@ -25,7 +25,10 @@ const GROUP = 'records-owner-group'
 const kind = defineEntryKind('accounts', {
   title: 'Account',
   nameField: 'name',
-  schema: z.object({ name: z.string(), token: z.string().optional().meta({ secret: true }) }),
+  schema: z.object({
+    name: z.string(),
+    token: z.string().optional().meta({ secret: true }),
+  }),
 })
 
 describe('ctx.records in a grouped runner', () => {
@@ -39,6 +42,7 @@ describe('ctx.records in a grouped runner', () => {
     calls.length = 0
     registry = new LocalChildRegistry({
       server: createLocalTransport().createServer('hub'),
+      resolveChildIdForAddon: (addonId) => (addonId === 'member-addon' ? GROUP : addonId),
       onUnownedCall: async (input) => {
         calls.push(input)
         if (input.capName === 'records' && input.method === 'declareKinds') return { kinds: [] }
@@ -66,25 +70,38 @@ describe('ctx.records in a grouped runner', () => {
     fs.rmSync(tmpDir, { recursive: true, force: true })
   })
 
-  it('stores a secret under the owner the engine will expect (the runner stamp)', async () => {
-    const declaration: AddonDeclaration = {
-      id: 'member-addon',
-      entry: './index.js',
-      execution: { placement: 'hub-only', group: GROUP },
-    }
-    const ctx = await createUdsAddonContext(client, `hub/${GROUP}`, declaration, tmpDir)
+  const member: AddonDeclaration = {
+    id: 'member-addon',
+    entry: './index.js',
+    execution: { placement: 'hub-only', group: GROUP },
+  }
+
+  it('keys the rows and the secret ref by the ADDON id, not by the group', async () => {
+    const ctx = await createUdsAddonContext(client, `hub/${GROUP}`, member, tmpDir)
     const records = ctx.records
     if (records === undefined) throw new Error('no records')
     await records.declare({ accounts: kind })
     await records.kind(kind).put({ id: 'row', data: { name: 'n', token: 'plain' } }, { ifRev: 0 })
 
     const put = calls.find((c) => c.capName === 'records' && c.method === 'put')
-    expect(put?.callerAddonId).toBe(GROUP)
+    expect(put?.callerAddonId).toBe('member-addon')
     const body: unknown = Reflect.get(
       Reflect.get(Reflect.get(put?.args ?? {}, 'record') ?? {}, 'data') ?? {},
       'token',
     )
     if (!isSecretMarker(body)) throw new Error('the token was not stored as a marker')
-    expect(body.$secret).toBe(recordSecretRef(GROUP, 'accounts', 'row', 'token'))
+    expect(body.$secret).toBe(recordSecretRef('member-addon', 'accounts', 'row', 'token'))
+    // The keychain is checked against the runner, so its stamp is unchanged.
+    const keychainPut = calls.find((c) => c.capName === 'keychain' && c.method === 'put')
+    expect(keychainPut?.callerAddonId).toBe(GROUP)
+  })
+
+  it('refuses a call that claims an addon the runner does not host', async () => {
+    const stranger: AddonDeclaration = { id: 'stranger', entry: './index.js' }
+    const ctx = await createUdsAddonContext(client, `hub/${GROUP}`, stranger, tmpDir)
+    const records = ctx.records
+    if (records === undefined) throw new Error('no records')
+    await expect(records.declare({ accounts: kind })).rejects.toThrow(/acting-addon-not-hosted/)
+    expect(calls.filter((c) => c.capName === 'records')).toEqual([])
   })
 })

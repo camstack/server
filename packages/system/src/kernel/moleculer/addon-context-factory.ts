@@ -17,7 +17,6 @@ import type {
   ReadinessScope,
   StorageLocationDeclaration,
 } from '@camstack/types'
-import { resolveRunnerId } from '@camstack/types'
 import { createDebugEmitter } from '@camstack/types/addon'
 import {
   createDeviceProxy,
@@ -450,7 +449,13 @@ async function buildAddonContext(
   const links: Array<TRPCLink<AnyRouter>> = [localProviderLink(workerResolver, observerOpts)]
   if (runtime.mode === 'uds') {
     const udsClient = runtime.client
-    links.push(ipcParentLink(() => (input: CapCallInput) => udsClient.callOut(input)))
+    // The addon this context belongs to rides every call out: a grouped runner is stamped
+    // with its group, and the parent verifies the claim against the runner it spawned.
+    links.push(
+      ipcParentLink(
+        () => (input: CapCallInput) => udsClient.callOut({ ...input, actingAddonId: addonId }),
+      ),
+    )
   } else {
     const parentCallOutGetter = options?.getParentCallOut
     if (parentCallOutGetter !== undefined) {
@@ -749,9 +754,7 @@ async function buildAddonContext(
     // This addon's record kinds (D881). Same identity model as `secrets`: the
     // calls carry no owner, the transport stamps who is calling.
     records: createRecordsAccess({
-      // The engine builds a secret's one valid ref from the transport's stamp, and a forked
-      // runner is stamped with its GROUP: the facade must mint markers under that same owner.
-      owner: runtime.mode === 'uds' ? resolveRunnerId(declaration, addonId) : addonId,
+      owner: addonId,
       transport: recordsTransportOf(api),
       secrets,
       logger: scopedLogger,

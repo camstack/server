@@ -33,6 +33,7 @@ import type {
   RegisteredChild,
   SetLogLevelMessage,
 } from './child-cap-protocol.js'
+import { ADDON_KEYED_CAPS, ActingAddonRefusedError } from './acting-addon.js'
 import { unpackPayload } from './frame-codec.js'
 import type { LocalChannel, LocalTransportServer } from './local-transport.js'
 import type { SocketTrafficSample } from './socket-traffic.js'
@@ -1082,6 +1083,25 @@ export class LocalChildRegistry {
     }
   }
 
+  /**
+   * The caller stamp of a `cap-call-out`. A claim (`actingAddonId`) is checked against the
+   * runner map the parent built at spawn (`resolveChildIdForAddon`, identity for a solo runner):
+   * a runner that does not host the addon is refused. Only the caps keyed by the ADDON
+   * (`ADDON_KEYED_CAPS`) use the verified addon id; every other cap keeps the runner stamp.
+   */
+  private callerStampOf(childId: string | null, out: CapCallOutMessage): string | null {
+    const claimed = out.actingAddonId
+    if (claimed === undefined || childId === null) return childId
+    // A registry that does not know the runner->addons map (an agent's) cannot verify the claim:
+    // it keeps the connection stamp rather than refusing every grouped call.
+    if (this.resolveChildIdForAddon === undefined) return childId
+    const hostedBy = this.resolveChildIdForAddon(claimed) ?? claimed
+    if (hostedBy !== childId) {
+      throw new ActingAddonRefusedError(childId, claimed)
+    }
+    return ADDON_KEYED_CAPS.includes(out.capName) ? claimed : childId
+  }
+
   private onConnection(channel: LocalChannel): void {
     let childId: string | null = null
     const incarnation = this.nextIncarnation++
@@ -1198,6 +1218,9 @@ export class LocalChildRegistry {
       }
       if (msg.kind === 'cap-call-out') {
         const out = msg as CapCallOutMessage // wire-boundary: trusted local UDS channel
+        // WHO the call acts for: the connection's runner id, or - for the caps keyed by the
+        // addon - the member addon the child claimed, once this runner is verified to host it.
+        const callerStamp = this.callerStampOf(childId, out)
         // Everything the routing below reads out of the args, in ONE shape for
         // both modes: lifted by the sender under raw-forward (the args are
         // opaque bytes here), lifted by the parent for a legacy inline frame.
@@ -1220,7 +1243,7 @@ export class LocalChildRegistry {
           // `CapCallMessage.callerAddonId`. A solo-addon runner's childId IS
           // its addonId (`resolveRunnerId`); a grouped runner attributes to
           // the RUNNER, which is the identity actually known at this layer.
-          ...(childId !== null ? { callerAddonId: childId } : {}),
+          ...(callerStamp !== null ? { callerAddonId: callerStamp } : {}),
         })
         // `getStatus` of a CLAIMED cap — the hub mirror answers (D663, S3),
         // before any name-based resolution below. See
@@ -1354,7 +1377,7 @@ export class LocalChildRegistry {
               ...(out.deviceId !== undefined ? { deviceId: out.deviceId } : {}),
               // The caller, known from the connection this frame arrived on —
               // the sibling stamps it into the args it decodes (D787).
-              ...(childId !== null ? { callerAddonId: childId } : {}),
+              ...(callerStamp !== null ? { callerAddonId: callerStamp } : {}),
             }
             const declared = this.capTimeoutMs?.(out.capName, out.method)
             return entry.channel.request(forward, {
