@@ -9,7 +9,7 @@
  * loaded because members were blocked leaves, with the D877 refusal code: parked `refused`, with
  * the reason, no breaker and no respawn.
  */
-import { findMigrationsBlocked } from '@camstack/types'
+import { findMigrationsBlocked } from '@camstack/types/addon'
 import type { RunnerRefusalReport } from './runner-refusal.js'
 
 export interface RunnerInitEntry {

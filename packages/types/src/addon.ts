@@ -19,6 +19,10 @@
 
 // --- Addon-authoring surface (BaseAddon + the admin-ui capability) ---
 export { BaseAddon, normalizeAddonInitResult } from './addon/base-addon.js'
+export {
+  AddonMigrationsBlockedError,
+  findMigrationsBlocked,
+} from './addon/migrations-blocked-error.js'
 export { ErrorI18nPayloadSchema, readErrorI18n } from './i18n/camstack-error.js'
 export type { ErrorI18nPayload } from './i18n/camstack-error.js'
 export { nodePin, readNodePin } from './cap-call-context.js'
