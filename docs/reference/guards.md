@@ -9,7 +9,7 @@
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (200)
+## Enforced by CI checks (199)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -167,7 +167,6 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-reserved-collection-sources.ts` | A RESERVED collection source id is spelled by its OWNER and by nobody else (D625). |
 | `scripts/check-retention-settings-consumed.ts` | Retention-settings guard — **an operator-visible retention value has exactly one consumer, and a retired one does not come back.** ## The failure this catches D61 collapsed retention into one age sweep over tracks. It did not touch the s… |
 | `scripts/check-runner-barrel-free.ts` | Runner-footprint guard (D28) — fail the build if the addon-runner's transitive SOURCE closure imports a runtime VALUE from the `@camstack/types` root barrel. |
-| `scripts/check-runner-dist-barrel-free.ts` | Runner-footprint guard on the BUILT output (D28) — the twin of `check-runner-barrel-free.ts`, which reads SOURCE. |
 | `scripts/check-runner-group-isolation.ts` | Runner-group guard — a DEVICE PROVIDER never shares a runner (D29). |
 | `scripts/check-runtime-deps-reachable-from-dist.ts` | A published package declares as a runtime `dependency` only what its shipped artefact `require`s or `import`s at run time (D479, extending D477). A UI whose `files` is a bundled `dist` — the bundler, framework, icon set, editor, or playe… |
 | `scripts/check-runtime-state-durability.ts` | Runtime-state durability guard — a value reaches disk only because its own capability asked for it, in a diff someone reviewed. |
@@ -231,7 +230,7 @@ violation the guard was written for, so a broken guard cannot pass in silence.
 | `packages/addon-pipeline/src/__tests__/guards/per-macro-slider-reaches-the-pool.guard.ts` | A per-macro confidence slider must be able to LOWER the detector. |
 | `server/backend/src/__tests__/guards/core-router-classification.guard.ts` | GUARD: every hand-written CORE (non-cap) tRPC router is explicitly classified, and its source agrees with the classification. |
 
-## Available but not wired into CI (4)
+## Available but not wired into CI (5)
 
 Run manually, from a hook, or via another script. If one of these encodes a
 rule that matters, wiring it into `checks.yml` is a one-line change.
@@ -241,4 +240,5 @@ rule that matters, wiring it into `checks.yml` is a one-line change.
 | `scripts/check-capability-activation-single-authority.ts` | Capability activation has ONE authority: the addon manifest's `autoActivate`. |
 | `scripts/check-hosted-model-revisions.ts` | Hosted-revision guard — every artefact on the CamStack model mirror has a revision, and that revision is the sha256 the mirror holds for its weight file (D743, D744). |
 | `scripts/check-public-docs-staleness.ts` | Public-docs staleness reminder — lists public docs pages whose described server code changed after they were verified. |
+| `scripts/check-runner-dist-barrel-free.ts` | Runner-footprint guard on the BUILT output (D28) — the twin of `check-runner-barrel-free.ts`, which reads SOURCE. |
 | `scripts/check-trainer-vendor.ts` | The trainer's vendored code must be byte-identical to its source. |
