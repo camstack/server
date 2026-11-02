@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Addons can emit device debug lines with ctx.debug, evaluated only while an operator watches that device; log channels carry a kind and system.debugWatch starts, renews and stops a watch.
+
 ## [1.2.471] - 2026-11-02
 
 ### Changed
@@ -16,7 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Stationary-present conditions accept a minimum count; the trigger variables of a condition are listed from one place
 - New do-not-disturb capability: a read and write Do Not Disturb switch for speakers
 - server-management launch overrides now carry the hub RSS budget (rssBudgetMb)
-- Addons can emit device debug lines with ctx.debug, evaluated only while an operator watches that device; log channels carry a kind and system.debugWatch starts, renews and stops a watch.
 
 ## [1.2.470] - 2026-11-01
 
