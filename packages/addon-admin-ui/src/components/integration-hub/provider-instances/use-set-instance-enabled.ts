@@ -1,9 +1,8 @@
 /**
  * The seam to `integrationInstances.setInstanceEnabled`: the panel depends on this hook only,
- * so its specs stub one module. The body is wired to the generated hook in its own commit
- * (needs instance-enabled-386); until then a switch change answers with a toast and writes nothing.
+ * so its specs stub one module.
  */
-import { pushToast } from '../../ui/toast-bus'
+import { useIntegrationInstancesSetInstanceEnabled } from '@camstack/ui-library'
 
 export interface SetInstanceEnabledInput {
   readonly addonId: string
@@ -16,16 +15,9 @@ export interface SetInstanceEnabled {
   readonly isPending: boolean
 }
 
-export function useSetInstanceEnabled(_options: {
+export function useSetInstanceEnabled(options: {
   readonly onSuccess: () => void
 }): SetInstanceEnabled {
-  return {
-    mutate: () =>
-      pushToast({
-        title: 'Switch unavailable',
-        message: 'This hub does not know the per-instance switch yet.',
-        severity: 'warning',
-      }),
-    isPending: false,
-  }
+  const mutation = useIntegrationInstancesSetInstanceEnabled({ onSuccess: options.onSuccess })
+  return { mutate: mutation.mutate, isPending: mutation.isPending }
 }
