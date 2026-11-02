@@ -87,7 +87,12 @@ interface Harness {
   sessionActive: boolean
   refuse: 'battery-asleep' | null
   /** Every info/debug/warn line, with its tags (fix round 1: a dropped look is said). */
-  readonly lines: { level: string; msg: string; tags: unknown; meta: Record<string, unknown> }[]
+  readonly lines: {
+    level: string
+    msg: string
+    tags: unknown
+    meta: Record<string, unknown>
+  }[]
 }
 
 function makeHarness(): Harness {
@@ -153,9 +158,29 @@ describe('buildRecheckAttachConfig — the registration a recheck rides on', () 
 
 describe('foldBurstOutcome — the runner discipline, kept', () => {
   it('a found burst resets the streak; two consecutive empty bursts disarm', () => {
-    expect(foldBurstOutcome({ emptyStreak: 1 }, true)).toEqual({ emptyStreak: 0, armed: true })
-    expect(foldBurstOutcome({ emptyStreak: 0 }, false)).toEqual({ emptyStreak: 1, armed: true })
-    expect(foldBurstOutcome({ emptyStreak: 1 }, false)).toEqual({ emptyStreak: 2, armed: false })
+    expect(foldBurstOutcome({ emptyStreak: 1 }, 'found')).toEqual({
+      emptyStreak: 0,
+      armed: true,
+    })
+    expect(foldBurstOutcome({ emptyStreak: 0 }, 'empty')).toEqual({
+      emptyStreak: 1,
+      armed: true,
+    })
+    expect(foldBurstOutcome({ emptyStreak: 1 }, 'empty')).toEqual({
+      emptyStreak: 2,
+      armed: false,
+    })
+  })
+
+  it('a burst with no result is no verdict: the streak and the cadence stay', () => {
+    expect(foldBurstOutcome({ emptyStreak: 0 }, 'no-verdict')).toEqual({
+      emptyStreak: 0,
+      armed: true,
+    })
+    expect(foldBurstOutcome({ emptyStreak: 1 }, 'no-verdict')).toEqual({
+      emptyStreak: 1,
+      armed: true,
+    })
   })
 })
 
@@ -227,16 +252,48 @@ describe('OccupancyRecheckController — a detached camera is re-sampled', () =>
     await vi.advanceTimersByTimeAsync(300_000)
     h.controller.noteInferenceResult(DEVICE_ID, 'burst', 1)
     await vi.advanceTimersByTimeAsync(RECHECK_BURST_WINDOW_MS)
-    // Burst 2 and 3: gone.
+    // Burst 2 and 3: answered, and gone.
     await vi.advanceTimersByTimeAsync(300_000)
+    h.controller.noteInferenceResult(DEVICE_ID, 'burst', 0)
     await vi.advanceTimersByTimeAsync(RECHECK_BURST_WINDOW_MS)
     await vi.advanceTimersByTimeAsync(300_000)
+    h.controller.noteInferenceResult(DEVICE_ID, 'burst', 0)
     await vi.advanceTimersByTimeAsync(RECHECK_BURST_WINDOW_MS)
     expect(h.bursts).toHaveLength(3)
     // Disarmed: no fourth.
     await vi.advanceTimersByTimeAsync(300_000 + RECHECK_BURST_WINDOW_MS)
     expect(h.bursts).toHaveLength(3)
     expect(h.detached).toEqual([DEVICE_ID, DEVICE_ID, DEVICE_ID])
+  })
+
+  it('two bursts with no burst result leave the streak at 0 and the cadence armed', async () => {
+    const h = makeHarness()
+    h.controller.noteSessionDispatched(DEVICE_ID, NODE, sessionConfig())
+    h.controller.noteSessionClosed(DEVICE_ID, { sawSubject: true })
+    for (let i = 0; i < 3; i += 1) {
+      await vi.advanceTimersByTimeAsync(300_000)
+      await vi.advanceTimersByTimeAsync(RECHECK_BURST_WINDOW_MS)
+    }
+    // Never disarmed: a third burst ran, and a fourth is still coming.
+    expect(h.bursts).toHaveLength(3)
+    const lines = h.lines.filter(
+      (l) => l.msg === 'occupancy recheck: burst complete — no verdict, streak unchanged',
+    )
+    expect(lines).toHaveLength(3)
+    await vi.advanceTimersByTimeAsync(300_000)
+    expect(h.bursts).toHaveLength(4)
+  })
+
+  it('a burst result with 0 detections is empty', async () => {
+    const h = makeHarness()
+    h.controller.noteSessionDispatched(DEVICE_ID, NODE, sessionConfig())
+    h.controller.noteSessionClosed(DEVICE_ID, { sawSubject: true })
+    await vi.advanceTimersByTimeAsync(300_000)
+    h.controller.noteInferenceResult(DEVICE_ID, 'burst', 0)
+    await vi.advanceTimersByTimeAsync(RECHECK_BURST_WINDOW_MS)
+    const done = h.lines.find((l) => l.msg === 'occupancy recheck: burst complete')
+    expect(done).toBeDefined()
+    expect(JSON.stringify(done)).toContain('"verdict":"empty"')
   })
 
   it('a session dispatched DURING a burst supersedes it — the burst never detaches the session registration', async () => {
@@ -314,7 +371,10 @@ describe('OccupancyRecheckController — one early look per pending occupancy ed
     h.controller.noteSessionDispatched(DEVICE_ID, NODE, sessionConfig())
     h.controller.noteSessionClosed(DEVICE_ID, { sawSubject: true })
     const answer = h.controller.requestEarlyLook(DEVICE_ID, SUSTAIN_LEFT_MS, 'occupancy-pending')
-    expect(answer).toEqual({ scheduled: true, dueInMs: SUSTAIN_LEFT_MS + EARLY_LOOK_MARGIN_MS })
+    expect(answer).toEqual({
+      scheduled: true,
+      dueInMs: SUSTAIN_LEFT_MS + EARLY_LOOK_MARGIN_MS,
+    })
 
     await vi.advanceTimersByTimeAsync(SUSTAIN_LEFT_MS + EARLY_LOOK_MARGIN_MS - 1)
     expect(h.bursts).toHaveLength(0)

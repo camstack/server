@@ -132,9 +132,25 @@ export interface BurstFold extends BurstStreak {
   readonly armed: boolean
 }
 
-/** A found burst resets the streak; two consecutive empty ones disarm. */
-export function foldBurstOutcome(streak: BurstStreak, found: boolean): BurstFold {
-  if (found) return { emptyStreak: 0, armed: true }
+/**
+ * What a burst concluded. `no-verdict` is a burst that produced no result at
+ * all (the runner never answered): it saw nothing, so it cannot say "empty".
+ */
+export type BurstVerdict = 'found' | 'empty' | 'no-verdict'
+
+export function burstVerdict(burst: {
+  readonly found: boolean
+  readonly results: number
+}): BurstVerdict {
+  if (burst.found) return 'found'
+  return burst.results > 0 ? 'empty' : 'no-verdict'
+}
+
+/** A found burst resets the streak; two consecutive empty ones disarm; a
+ *  burst without a verdict changes nothing. */
+export function foldBurstOutcome(streak: BurstStreak, verdict: BurstVerdict): BurstFold {
+  if (verdict === 'found') return { emptyStreak: 0, armed: true }
+  if (verdict === 'no-verdict') return { emptyStreak: streak.emptyStreak, armed: true }
   const emptyStreak = streak.emptyStreak + 1
   return { emptyStreak, armed: emptyStreak < RECHECK_DISARM_AFTER_EMPTY }
 }
@@ -160,6 +176,8 @@ interface BurstInFlight {
    *  the session's now, and this burst must not detach it. */
   superseded: boolean
   found: boolean
+  /** Burst-occasion inference results seen, detections or not. */
+  results: number
 }
 
 interface DeviceRecheckState {
@@ -170,7 +188,10 @@ interface DeviceRecheckState {
   timer: ReturnType<typeof setTimeout> | null
   burst: BurstInFlight | null
   /** The ONE pending early look (D691) and the instant it is due. */
-  earlyLook: { readonly timer: ReturnType<typeof setTimeout>; readonly dueAt: number } | null
+  earlyLook: {
+    readonly timer: ReturnType<typeof setTimeout>
+    readonly dueAt: number
+  } | null
   /** The early look since the last session has dialled (review H2): further
    *  asks are refused `already-looked` until the next session re-arms it. */
   earlyLookSpent: boolean
@@ -251,7 +272,9 @@ export class OccupancyRecheckController {
   ): void {
     const state = this.devices.get(deviceId)
     if (state === undefined || state.burst === null) return
-    if (occasion === 'burst' && detectionCount > 0) state.burst.found = true
+    if (occasion !== 'burst') return
+    state.burst.results += 1
+    if (detectionCount > 0) state.burst.found = true
   }
 
   /**
@@ -464,7 +487,12 @@ export class OccupancyRecheckController {
     const nodeId = state.lastNodeId
     const config = buildRecheckAttachConfig(state.lastConfig)
     const frames = Math.max(1, state.lastConfig.occupancyRecheckFrames ?? 4)
-    const burst: BurstInFlight = { nodeId, superseded: false, found: false }
+    const burst: BurstInFlight = {
+      nodeId,
+      superseded: false,
+      found: false,
+      results: 0,
+    }
     state.burst = burst
     try {
       await this.deps.attachOn(nodeId, config)
@@ -474,7 +502,10 @@ export class OccupancyRecheckController {
         cadence
           ? 'occupancy recheck: attach failed — retried next tick'
           : 'occupancy early look: attach failed — the cadence will commit the edge',
-        { tags: { deviceId, nodeId }, meta: { deviceId, nodeId, error: errMsg(err), kind } },
+        {
+          tags: { deviceId, nodeId },
+          meta: { deviceId, nodeId, error: errMsg(err), kind },
+        },
       )
       if (cadence) this.schedule(deviceId, state)
       return
@@ -534,15 +565,22 @@ export class OccupancyRecheckController {
     burst: BurstInFlight,
   ): Promise<void> {
     await this.release(deviceId, state, burst)
-    const fold = foldBurstOutcome({ emptyStreak: state.emptyStreak }, burst.found)
+    const verdict = burstVerdict(burst)
+    const fold = foldBurstOutcome({ emptyStreak: state.emptyStreak }, verdict)
     state.emptyStreak = fold.emptyStreak
     state.armed = fold.armed
-    this.deps.logger.info('occupancy recheck: burst complete', {
+    const message =
+      verdict === 'no-verdict'
+        ? 'occupancy recheck: burst complete — no verdict, streak unchanged'
+        : 'occupancy recheck: burst complete'
+    this.deps.logger.info(message, {
       tags: { deviceId, nodeId: burst.nodeId },
       meta: {
         deviceId,
         nodeId: burst.nodeId,
         found: burst.found,
+        verdict,
+        results: burst.results,
         emptyStreak: fold.emptyStreak,
         armed: fold.armed,
         superseded: burst.superseded,
@@ -564,7 +602,12 @@ export class OccupancyRecheckController {
     await this.release(deviceId, state, burst)
     this.deps.logger.info('occupancy early look: burst complete', {
       tags: { deviceId, nodeId: burst.nodeId },
-      meta: { deviceId, nodeId: burst.nodeId, found: burst.found, superseded: burst.superseded },
+      meta: {
+        deviceId,
+        nodeId: burst.nodeId,
+        found: burst.found,
+        superseded: burst.superseded,
+      },
     })
   }
 
