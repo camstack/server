@@ -43,25 +43,6 @@ export interface LinkedAccount {
 }
 
 export interface GoogleExportSettings {
-  /**
-   * Public HTTPS origin of this hub. Used for ONE thing: rendering the three
-   * URLs the operator must paste into the Actions console (fulfillment,
-   * authorize, token). Nothing routes on it — Google calls the fulfillment URL
-   * it was configured with, directly.
-   *
-   * Defaults, when EMPTY, to the first publicly routable HTTPS address the
-   * `network-access` cap reports. A value already here is never overwritten —
-   * see `public-hub-url.ts`, which owns that policy.
-   */
-  readonly publicHubUrl: string
-  /**
-   * The address auto-detection last saw, whether or not it was adopted. Hidden
-   * state; exists so the settings panel can distinguish a derived value from
-   * one the operator typed, and can offer the detected alternative when they
-   * disagree. Never a fallback for `publicHubUrl` — a blank field is the honest
-   * answer when detection found nothing.
-   */
-  readonly detectedPublicHubUrl: string
   /** Operator-curated device list. Hidden state, written via `device-export`. */
   readonly exposed: readonly ExposedDeviceEntry[]
   /** Operator-curated action list, exported as scenes (D968). Hidden state. */
@@ -71,8 +52,6 @@ export interface GoogleExportSettings {
 }
 
 export const DEFAULT_SETTINGS: GoogleExportSettings = {
-  publicHubUrl: '',
-  detectedPublicHubUrl: '',
   exposed: [],
   exposedActions: [],
   linkedAccounts: [],

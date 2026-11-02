@@ -33,40 +33,24 @@ OAuth bearer, then answers `action.devices.SYNC`, `.QUERY`, `.EXECUTE` and
   this was written. Every claim below about Google's behaviour comes from the
   published contract, not from a session.
 
-## `publicHubUrl` — the one value an operator owns
+## The public URL is the `publicEndpoint` role — this addon stores no URL
 
 It is used for ONE thing: rendering the three console URLs. Nothing routes on
-it. All of the policy lives in `src/public-hub-url.ts`, which is pure and
-carries the long-form reasoning; the addon holds only the adapter onto
-`ctx.api.networkAccess` and the settings surface.
+it. `src/public-endpoint.ts` reads `local-network.getAddresses().roles.publicEndpoint`
+on every `getStatus`, so changing the role on the Network page changes the URLs
+on the next read, with no restart and no copy to go stale
+([D986](../decisions/adr-0986-addon-level-settings-are-retired-every-value-lives-in-its-owner-scope.md) §5).
 
-- **Source: the `network-access` cap**, the same one `addon-export-alexa` uses.
-  **Not** the hub's `agents` or `signIn` address (`local-network.getAddresses`) — Google calls
-  from its own cloud, and a LAN or loopback answer here renders three console
-  URLs that look finished and can never be reached.
-- **Default, never override.** Detection FILLS an empty field. A value already
-  there is what the operator pasted into Google's console; rewriting it would
-  leave the two sides disagreeing with nothing on screen to say so. This is the
-  one place the mechanism diverges from Alexa's, whose `redetectPublicHubUrl`
-  *does* clobber — sound there, because Alexa routes on the value.
-- **The field says where its content came from.** `detectedPublicHubUrl` is
-  persisted alongside so the panel can render `Derived from remote access` vs
-  `Set by you`, and offer the detected alternative when they disagree. A URL
-  that appears by itself with no provenance is worse than a blank field.
-- **A non-routable address is refused, not adopted.** A `network-access`
-  provider reporting an HTTPS ingress on `192.168.…` / `localhost` / `*.local`
-  is dropped with a logged reason. Alexa forwards those; here they would be
-  strictly worse than an empty field.
-- **Text field, not Alexa's `select`.** A hub behind a port-forward + DDNS name,
-  or a reverse proxy, has no `network-access` provider at all and still works
-  perfectly with Google. A picker limited to detected endpoints makes that setup
-  unreachable.
-- **Detection is detached at init and re-run on `NetworkTunnelStarted`.**
-  Awaiting a cross-addon `ctx.api` call inside `onInitialize` is what left
-  `export-alexa` stuck in "Still waiting for capability": a provider goes live
-  only once `onInitialize` RETURNS.
-- The button is a `customAction` (`src/custom-actions.ts`), so it costs no
-  capability, no codegen and no framework publish train.
+- **No setting, no detection, no cache.** `publicHubUrl` / `detectedPublicHubUrl`
+  and the "Detect external address" button are gone; the migration
+  `export-google/2026-11-02-drop-public-hub-url` deletes the stored keys.
+- **A role that resolves to nothing refuses, with a typed reason.** The setup
+  block carries `no-public-endpoint` and names the Network page. There is no
+  loopback or LAN fallback: Google calls from its own cloud, and three console
+  URLs that look finished and can never be reached are worse than a refusal.
+- **A hub behind a port-forward and a DDNS name** flags that address as
+  "Public endpoint" on the Network page (a custom address); it needs no
+  `network-access` provider.
 
 ## The one rule that shapes the whole addon
 
@@ -139,10 +123,8 @@ a different class of credential and the answer is always no.
 5. The hub must be reachable from the public internet over HTTPS — Google calls
    from its own cloud.
 
-The Export panel renders 2–4 once `publicHubUrl` is set — and it sets itself
-from remote access when one is detected, so on a hub with a tunnel up the
-operator usually finds them already filled. When nothing is detected the panel
-says so instead of guessing. Nothing comes back to
+The Export panel renders 2–4 from the hub's `publicEndpoint` role (Network page).
+When the role resolves to nothing the panel says so instead of guessing. Nothing comes back to
 the hub: the client id and secret live in the Google console, and the hub does
 not verify the client secret
 ([D92](../../docs/decisions/adr-0092.md)).

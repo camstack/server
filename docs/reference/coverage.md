@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**228 units · 7777 source files · 214 units claimed by at least one document (7734 files).**
+**228 units · 7780 source files · 214 units claimed by at least one document (7737 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -67,8 +67,8 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/ui-library/src/primitives` | 30 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md`, +3 more | 2026-10-26 |
 | `packages/addon-provider-bosch/src/shc` | 29 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0932-a-bosch-sign-in-is-one-field-and-homecom-is-not-a-home-connect-login.md` | 2026-10-26 |
 | `packages/addon-provider-esphome` | 28 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0952-esphome-speaks-its-native-api-from-node-through-esphome-client-one-broker-per-board.md`, `decisions/adr-0978-esphome-is-one-integration-holding-several-boards-each-secret-keyed-by-board-id.md` | 2026-10-26 |
+| `packages/addon-provider-homeassistant/src/ha-export` | 28 | `device-providers`, `ecosystem-exports` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, +6 more, 9 ADRs | 2026-10-26 |
 | `packages/addon-export-alexa/src/handlers` | 26 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +11 more, 2 ADRs | 2026-08-26 |
-| `packages/addon-provider-homeassistant/src/ha-export` | 26 | `device-providers`, `ecosystem-exports` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, +6 more, 9 ADRs | 2026-10-26 |
 | `packages/addon-provider-reolink/src/clips` | 26 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_, `design/2026-09-20-clip-export.md` _(covers)_, +19 more | 2026-10-26 |
 | `packages/addon-matter-broker` | 25 | `ecosystem-exports` | `addons/addon-matter-broker.md` _(covers)_, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md` | 2026-09-29 |
 | `packages/addon-notifiers` | 24 | `notification-center` | `architecture/notifications.md`, `decisions/adr-0981-a-notification-target-picks-a-broker-and-fetches-its-own-options-inside-its-form-there-is-no-mass-discovery.md`, `decisions/adr-0634-notifier-credentials-are-admin-only-and-a-stored-secret-never-follows-a-new-destination.md`, 1 ADR | 2026-10-07 |
@@ -89,10 +89,10 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-provider-unraid` | 20 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `server/backend` | 20 | `api-surface` | `decisions/adr-0693-a-live-database-is-backed-up-by-its-owner-never-copied-as-files.md`, `design/2026-08-13-single-copy-addons-first-boot-install.md`, `architecture/overview.md`, +20 more, 6 ADRs | 2026-10-27 |
 | `packages/addon-auth` | 19 | `auth` | `decisions/adr-0777-an-auth-providers-only-enable-is-its-capability-toggle-on-identity-authentication.md`, `decisions/adr-0780-an-icon-setting-is-a-display-icon-vocabulary-key-chosen-with-the-shared-picker.md`, `architecture/authentication.md`, +7 more | 2026-10-21 |
+| `packages/addon-export-google` | 19 | `ecosystem-exports` | `addons/addon-export-google.md` _(covers)_, `design/2026-08-28-google-home-camera-streaming.md` _(covers)_, `decisions/adr-0269-a-google-export-that-holds-no-google-credential.md`, +2 more | 2026-08-28 |
 | `packages/addon-post-analysis/src/shared` | 19 | `post-analysis`, `recognition` | `decisions/adr-0867-the-capture-paths-materialise-no-media-copies-in-the-js-process.md`, `architecture/notifications.md`, `decisions/adr-0209-a-hosted-model-artifact-is-not-verified-until-its-embedding-space-is.md`, +3 more, 1 ADR | 2026-10-07 |
 | `packages/cli/src/commands` | 19 | `tooling` | `decisions/adr-0838-clients-find-a-hub-over-mdns-of-its-https-endpoint-mesh-discovery-stays-retired.md`, `decisions/adr-0988-a-terminal-signs-in-by-browser-approval.md`, `architecture/authentication.md`, +3 more | 2026-10-21 |
 | `packages/ui-library/src/lib` | 19 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md`, +5 more, 2 ADRs | 2026-10-26 |
-| `packages/addon-export-google` | 18 | `ecosystem-exports` | `addons/addon-export-google.md` _(covers)_, `design/2026-08-28-google-home-camera-streaming.md` _(covers)_, `decisions/adr-0269-a-google-export-that-holds-no-google-credential.md`, +2 more | 2026-08-28 |
 | `packages/addon-provider-tuya` | 18 | `device-providers` | `architecture/device-model.md` _(covers)_, 1 ADR | 2026-10-26 |
 | `packages/system/src/auth` | 18 | `auth` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `architecture/authentication.md`, +17 more | 2026-10-21 |
 | `packages/types/src/generated` | 18 | `capabilities` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0648-a-device-extension-is-a-slot-declared-by-the-cap-that-owns-the-function-and-served-over-its-existing-store.md`, `decisions/adr-0936-a-customize-declaration-is-the-override-contract.md`, +1 more, 2 ADRs | — |

@@ -26,9 +26,24 @@ function harness(): {
   const pushed: (readonly StateValue[])[] = []
   Reflect.set(addon, '_ctx', { logger: silent })
   Reflect.set(addon, 'keyByDeviceId', new Map([[101, 'camstack-reolink-101']]))
-  Reflect.set(addon, 'push', (_deviceId: number, values: readonly StateValue[]) => {
-    pushed.push(values)
-  })
+  // The lifecycle publishes per broker (each on its own media role): one fake link captures it.
+  Reflect.set(addon, 'exported', new Map([['camstack-reolink-101', { brokerIds: ['b1'] }]]))
+  Reflect.set(
+    addon,
+    'links',
+    new Map([
+      [
+        'b1',
+        {
+          client: {
+            publishState: (topic: string, value: string) => {
+              pushed.push([{ topic, value }])
+            },
+          },
+        },
+      ],
+    ]),
+  )
   const handler: unknown = Reflect.get(addon, 'onTrackLifecycle')
   if (typeof handler !== 'function') throw new Error('no onTrackLifecycle')
   return {
@@ -58,8 +73,7 @@ describe('HA export — a fused piece ending (D683)', () => {
   it('a real end is pushed', async () => {
     const h = harness()
     await h.onLifecycle(END)
-    expect(h.pushed).toHaveLength(1)
-    expect(h.pushed[0]).toContainEqual({
+    expect(h.pushed.flat()).toContainEqual({
       topic: 'camstack/camstack-reolink-101/person_detected',
       value: 'false',
     })

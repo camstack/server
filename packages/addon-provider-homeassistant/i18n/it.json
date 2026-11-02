@@ -14,8 +14,6 @@
   "globalSettings.s_ha-export-brokers.title": "Istanze di Home Assistant",
   "globalSettings.s_ha-export-brokers.ha-export___no-brokers.label": "Nessun broker",
   "globalSettings.s_ha-export-transport.title": "Connessione",
-  "globalSettings.s_ha-export-transport.publicBaseUrl.label": "URL dell'hub raggiungibile da Home Assistant",
-  "globalSettings.s_ha-export-transport.publicBaseUrl.description": "Usato per i link firmati delle immagini che Home Assistant scarica; lascia vuoto per ricavarlo automaticamente.",
   "globalSettings.s_ha-export-advanced.title": "Avanzate",
   "globalSettings.s_ha-export-advanced.reconcileIntervalSec.label": "Intervallo di riconciliazione (s)",
   "globalSettings.s_ha-export-advanced.reconcileIntervalSec.description": "Cadenza di ri-annuncio e ri-invio completo.",

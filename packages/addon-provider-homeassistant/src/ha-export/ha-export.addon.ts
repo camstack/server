@@ -41,6 +41,7 @@ import {
   CameraSwitchIdSchema,
   type ConfigUISchema,
   type ConfigUISchemaWithValues,
+  defineAddonMigrations,
   deviceExportCapability,
   EventCategory,
   type IAddonHttpRoute,
@@ -76,10 +77,12 @@ import {
   parseComponentReport,
   supportSignature,
 } from './component-support.js'
+import { ADDON_MIGRATIONS } from './migrations/index.js'
 import { buildDevicePlan, CAMERA_DERIVED_CAPS, unclassifiedCaps } from './entity-catalog.js'
 import {
   buildMediaUrl,
-  haMediaBaseUrl,
+  mediaBasesByBroker,
+  mediaRoleKey,
   MEDIA_URL_TTL_MS,
   verifyMediaSignature,
 } from './media-url.js'
@@ -197,13 +200,6 @@ interface HaExportConfig {
    * Hidden state, written through `exposeEntity` / `unexposeEntity` only.
    */
   readonly exportedEntities: ExportedEntitiesState
-  /**
-   * Base URL Home Assistant should use to FETCH media from this hub.
-   * Empty means "work it out from the network caps"; a link that cannot
-   * be resolved is never minted, because a broken image URL in HA reads
-   * as a broken integration.
-   */
-  readonly publicBaseUrl: string
   /** `exportTo:<brokerId>` — one checkbox per broker present. */
   readonly [enabledKey: `exportTo:${string}`]: unknown
 }
@@ -213,7 +209,6 @@ const DEFAULT_CONFIG: HaExportConfig = {
   membership: {},
   knownBrokers: [],
   exportedEntities: { actions: [], targets: [] },
-  publicBaseUrl: '',
 }
 
 /** Resolved connection to one Home Assistant instance. */
@@ -265,7 +260,6 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
   /** numeric deviceId → deviceKey, for the event path. */
   private keyByDeviceId = new Map<number, string>()
   private mediaSecret = ''
-  private mediaBaseUrl: string | null = null
   private reconcileTimer: NodeJS.Timeout | null = null
   private reconcileInFlight = false
   /** A reason asked for while one was running. Re-run, never dropped. */
@@ -374,6 +368,12 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
   }
 
   protected async onInitialize(): Promise<ProviderRegistration[]> {
+    await this.runMigrations(
+      defineAddonMigrations(ADDON_MIGRATIONS, {
+        readStored: async () => this.resolveGlobalStore(),
+      }),
+    )
+
     const secret = this.state<string>('haExportMediaSecret', z.string(), '')
     const existing = await secret.get()
     if (existing.length === 0) {
@@ -874,31 +874,42 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
     const zonesVisited = readStringArray(data, 'zonesVisited')
     const fusedIntoTrackId = readString(data, 'fusedIntoTrackId')
 
-    const mediaUrl = this.mintTrackMediaUrl(trackId, deviceId)
-    const values = projectTrackLifecycle(
-      deviceKey,
-      {
-        deviceId,
-        trackId,
-        phase,
-        classes,
-        ...(bestClassName !== null ? { bestClassName } : {}),
-        ...(label !== null ? { label } : {}),
-        ...(plateText !== null ? { plateText } : {}),
-        lastSeen,
-        zonesVisited,
-        ...(fusedIntoTrackId !== null ? { fusedIntoTrackId } : {}),
-      },
-      mediaUrl,
-    )
-    if (values.length === 0) {
+    const exported = this.exported.get(deviceKey)
+    if (exported === undefined) return
+    // Each broker's link is minted on ITS role, read now: a role changed on the
+    // Network page or on the integration applies to the next track event.
+    const bases = await this.mediaBasesFor(exported.brokerIds, deviceId)
+    let produced = false
+    for (const brokerId of exported.brokerIds) {
+      const link = this.links.get(brokerId)
+      if (link === undefined) continue
+      const base = bases.get(brokerId) ?? null
+      const values = projectTrackLifecycle(
+        deviceKey,
+        {
+          deviceId,
+          trackId,
+          phase,
+          classes,
+          ...(bestClassName !== null ? { bestClassName } : {}),
+          ...(label !== null ? { label } : {}),
+          ...(plateText !== null ? { plateText } : {}),
+          lastSeen,
+          zonesVisited,
+          ...(fusedIntoTrackId !== null ? { fusedIntoTrackId } : {}),
+        },
+        base === null ? null : this.mintTrackMediaUrl(trackId, deviceId, base),
+      )
+      if (values.length === 0) continue
+      produced = true
+      for (const value of values) link.client.publishState(value.topic, value.value)
+    }
+    if (!produced) {
       this.ctx.logger.debug('ha-export: track produced no exportable state', {
         tags: { deviceId },
         meta: { trackId, bestClassName, phase, fusedIntoTrackId },
       })
-      return
     }
-    this.push(deviceId, values)
   }
 
   private onAudioWindow(data: unknown): void {
@@ -1071,7 +1082,6 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
       // After the brokers: a link opened by this very pass is a gap too.
       const fullResync = this.resync.take(reason)
       let readsHeld = false
-      await this.refreshMediaBaseUrl()
       // Before any plan is built: the answer decides which platforms the
       // plans may use, and a plan built on last pass's answer would
       // announce entities this Home Assistant cannot construct.
@@ -1494,7 +1504,10 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
     readonly lastTrigger: SyntheticLastTrigger | null
     readonly lastTriggerByRule: ReadonlyMap<string, SyntheticLastTrigger>
   }> {
-    const NONE = { lastTrigger: null, lastTriggerByRule: new Map<string, SyntheticLastTrigger>() }
+    const NONE = {
+      lastTrigger: null,
+      lastTriggerByRule: new Map<string, SyntheticLastTrigger>(),
+    }
     try {
       const { entries } = await this.ctx.api.notificationRules.getHistory.query({
         filter: { limit: NC_HISTORY_LIMIT_MAX },
@@ -1567,7 +1580,10 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
    */
   private async readActiveAlerts(): Promise<AlertSummary> {
     try {
-      const alerts = await this.ctx.api.alerts.list.query({ unreadOnly: false, limit: 50 })
+      const alerts = await this.ctx.api.alerts.list.query({
+        unreadOnly: false,
+        limit: 50,
+      })
       return deriveAlertSummary(alerts)
     } catch (err) {
       this.ctx.logger.warn('ha-export: could not read alerts, the alert entities go quiet', {
@@ -2000,13 +2016,19 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
       const minted = slice === undefined ? [] : itemEntitiesFor(cap, slice)
       const outcome: ReadOutcome<ItemEntity> =
         minted === null
-          ? { kind: 'failed', reason: `the ${cap} slice is not the capability shape` }
+          ? {
+              kind: 'failed',
+              reason: `the ${cap} slice is not the capability shape`,
+            }
           : { kind: 'answered', items: minted }
       const resolution = mirror.resolve(deviceId, outcome)
       if (resolution.status === 'unknown') {
         this.ctx.logger.warn(
           'ha-export: a per-item slice is not the capability shape and nothing was exported yet, announcing the device without its items',
-          { tags: { deviceId }, meta: { capName: cap, reason: resolution.reason } },
+          {
+            tags: { deviceId },
+            meta: { capName: cap, reason: resolution.reason },
+          },
         )
         entities[cap] = []
         continue
@@ -2123,7 +2145,10 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
         deviceIds: [...deviceIds],
       })
       this.ctx.logger.debug('ha-export: read camera statuses for the pass', {
-        meta: { cameraStatusMs: Date.now() - startedAt, cameras: deviceIds.length },
+        meta: {
+          cameraStatusMs: Date.now() - startedAt,
+          cameras: deviceIds.length,
+        },
       })
       return new Map(statuses.map((status) => [status.deviceId, status]))
     } catch (err) {
@@ -2246,7 +2271,10 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
             .catch((err: unknown): null => {
               this.ctx.logger.warn(
                 'ha-export: could not read broker audio mute, the broker-audio function degrades',
-                { tags: { deviceId }, meta: { sourceNodeId, error: errMsg(err) } },
+                {
+                  tags: { deviceId },
+                  meta: { sourceNodeId, error: errMsg(err) },
+                },
               )
               return null
             })
@@ -2338,7 +2366,10 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
      * of Home Assistant: 2026-08-24 21:55:13.
      */
     const patch = brokerRefreshPatch(
-      { knownBrokers: this.config.knownBrokers, membership: this.config.membership },
+      {
+        knownBrokers: this.config.knownBrokers,
+        membership: this.config.membership,
+      },
       { knownBrokers: known, membership: pruned },
     )
     if (patch !== null) {
@@ -2710,7 +2741,10 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
             .catch((err: unknown): null => {
               this.ctx.logger.warn(
                 'ha-export: could not read the privacy slice for a camera-function command',
-                { tags: { deviceId: command.deviceId }, meta: { error: errMsg(err) } },
+                {
+                  tags: { deviceId: command.deviceId },
+                  meta: { error: errMsg(err) },
+                },
               )
               return null
             })
@@ -2737,7 +2771,10 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
              */
             this.ctx.logger.warn(
               'ha-export: dropping a camera-function command, the function is not available',
-              { tags: { deviceId: command.deviceId }, meta: { switchId: parsed.data } },
+              {
+                tags: { deviceId: command.deviceId },
+                meta: { switchId: parsed.data },
+              },
             )
             return false
           }
@@ -2895,10 +2932,10 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
    * cannot open is worse than no image, because it renders as a broken
    * entity rather than an empty one.
    */
-  private mintTrackMediaUrl(trackId: string, deviceId: number): string | null {
-    if (this.mediaBaseUrl === null || this.mediaSecret.length === 0) return null
+  private mintTrackMediaUrl(trackId: string, deviceId: number, baseUrl: string): string | null {
+    if (this.mediaSecret.length === 0) return null
     return buildMediaUrl({
-      baseUrl: this.mediaBaseUrl,
+      baseUrl,
       routePrefix: MEDIA_ROUTE_PREFIX,
       // The signed id carries the owning device: `getTrackMedia` requires the
       // deviceId (it is the authorization subject and the store's read
@@ -2910,27 +2947,38 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
     })
   }
 
-  private async refreshMediaBaseUrl(): Promise<void> {
-    if (this.config.publicBaseUrl.length > 0) {
-      this.mediaBaseUrl = this.config.publicBaseUrl
-      return
-    }
+  /**
+   * Each broker's media base, read per use: the palette's role the broker chose
+   * (`mediaRole:<brokerId>`, `internal` by default). A role that resolves to nothing
+   * is `null` and says so — the image entities then carry no value, which reads as
+   * empty rather than as a broken link.
+   */
+  private async mediaBasesFor(
+    brokerIds: readonly string[],
+    deviceId: number,
+  ): Promise<ReadonlyMap<string, string | null>> {
+    let bases: ReadonlyMap<string, string | null>
     try {
-      // `haMediaBaseUrl`: the `internal` role, never loopback — a link Home
-      // Assistant cannot open is worse than no image, because it renders as a
-      // broken entity rather than an empty one. Ranked by `local-network`.
-      this.mediaBaseUrl = haMediaBaseUrl(await this.ctx.api.localNetwork.getAddresses.query())
+      bases = mediaBasesByBroker(
+        await this.resolveGlobalStore(),
+        brokerIds,
+        await this.ctx.api.localNetwork.getAddresses.query(),
+      )
     } catch (err) {
-      this.mediaBaseUrl = null
-      this.ctx.logger.debug('ha-export: could not resolve a media base URL', {
+      this.ctx.logger.debug('ha-export: could not resolve the media base URLs', {
+        tags: { deviceId },
         meta: { error: errMsg(err) },
       })
+      return new Map(brokerIds.map((brokerId) => [brokerId, null]))
     }
-    if (this.mediaBaseUrl === null) {
+    for (const brokerId of brokerIds) {
+      if (bases.get(brokerId) !== null) continue
       this.ctx.logger.warn(
-        'ha-export: no reachable hub URL — image entities will carry no value until one is set',
+        'ha-export: the broker media role resolves to no hub address — image entities carry no value until the Network page names one',
+        { tags: { deviceId }, meta: { brokerId } },
       )
     }
+    return bases
   }
 
   // ── Membership ──────────────────────────────────────────────────────
@@ -2999,26 +3047,33 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
                   },
                 ],
         },
-        {
-          id: 'ha-export-transport',
-          title: 'Connection',
-          titleKey: 'provider-homeassistant:globalSettings.s_ha-export-transport.title',
-          columns: 1,
-          fields: [
-            {
-              type: 'text' as const,
-              key: 'publicBaseUrl',
-              label: 'Hub URL Home Assistant can reach',
-              labelKey:
-                'provider-homeassistant:globalSettings.s_ha-export-transport.publicBaseUrl.label',
-              description:
-                'Used for the signed image links Home Assistant fetches; leave empty to derive one automatically.',
-              descriptionKey:
-                'provider-homeassistant:globalSettings.s_ha-export-transport.publicBaseUrl.description',
-              default: '',
-            },
-          ],
-        },
+        // One media role per Home Assistant instance, stored beside its `exportTo:` switch.
+        // The role is read from the hub's address palette on every use; no URL is stored.
+        ...(this.config.knownBrokers.length > 0
+          ? [
+              {
+                id: 'ha-export-transport',
+                title: 'Connection',
+                titleKey: 'provider-homeassistant:globalSettings.s_ha-export-transport.title',
+                description:
+                  'The hub address each Home Assistant instance fetches image links from. Internal is the address flagged Internal on the Network page; choose Public endpoint for an instance outside your network.',
+                columns: 1 as const,
+                fields: this.config.knownBrokers.map((broker) => ({
+                  type: 'select' as const,
+                  key: mediaRoleKey(broker.id),
+                  label: `Image links for ${broker.name}`,
+                  options: [
+                    { value: 'internal', label: 'Internal (LAN address)' },
+                    {
+                      value: 'publicEndpoint',
+                      label: 'Public endpoint (reachable from outside)',
+                    },
+                  ],
+                  default: 'internal',
+                })),
+              },
+            ]
+          : []),
         // Tuning, not setup: collapsed so the page opens on what an operator
         // has to check (the exporter page pattern).
         {

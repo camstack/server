@@ -18,7 +18,7 @@ The traps and rules for this package live in
 file so root + package `AGENTS.md` fit the 32 KiB Codex reads). Sections:
 
 - What is built, and what is not
-- `publicHubUrl` — the one value an operator owns
+- The public URL is the `publicEndpoint` role — this addon stores no URL
 - The one rule that shapes the whole addon
 - Traps
 - Credentials — read before adding a settings field

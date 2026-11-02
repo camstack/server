@@ -13,7 +13,6 @@ applies-to:
   - packages/addon-export-alexa/src/setup-block.ts
   - packages/addon-export-alexa/src/export-alexa.addon.ts
   - packages/addon-export-google/src/export-google.addon.ts
-  - packages/addon-export-google/src/custom-actions.ts
   - packages/addon-provider-homeassistant/src/ha-export/ha-export.addon.ts
   - packages/types/src/interfaces/config-ui.ts
   - packages/ui-library/src/composites/config-form-field.tsx

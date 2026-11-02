@@ -23,20 +23,54 @@
  */
 import { signExpiringUrl, verifyExpiringUrl } from '@camstack/types/node'
 
-/** The `internal` slice of `local-network.getAddresses()` the media base reads. */
-export interface InternalAddressAnswer {
-  readonly roles: { readonly internal: { readonly resolved: string | null } }
+/** The hub address roles a Home Assistant media link may be minted on. */
+export const HA_MEDIA_ROLES = ['internal', 'publicEndpoint'] as const
+export type HaMediaRole = (typeof HA_MEDIA_ROLES)[number]
+
+/** The slice of `local-network.getAddresses()` the media bases read. */
+export interface MediaAddressAnswer {
+  readonly roles: {
+    readonly internal: { readonly resolved: string | null }
+    readonly publicEndpoint: { readonly resolved: string | null }
+  }
+}
+
+/** The settings key that carries one broker's media role (per-instance, like `exportTo:`). */
+export function mediaRoleKey(brokerId: string): string {
+  return `mediaRole:${brokerId}`
+}
+
+/** A broker's chosen role; anything stored that is not a known role is `internal`. */
+export function haMediaRoleOf(
+  store: Readonly<Record<string, unknown>>,
+  brokerId: string,
+): HaMediaRole {
+  const raw = store[mediaRoleKey(brokerId)]
+  return raw === 'publicEndpoint' ? 'publicEndpoint' : 'internal'
 }
 
 /**
- * The base a media link is minted on when the operator left the addon's own
- * field empty: the hub's `internal` role (D734) — the address flagged
- * "Internal" on the Network page, else the detected LAN address. Home
- * Assistant is a LAN device pulling from the hub, so never the public
- * endpoint, and never loopback (`null` when nothing qualifies).
+ * The base a media link is minted on: the hub's role (D734) — `internal` unless the
+ * broker chose `publicEndpoint`. Ranked by `local-network`, never loopback (`null`
+ * when the role resolves to nothing): a link Home Assistant cannot open is worse
+ * than no image.
  */
-export function haMediaBaseUrl(book: InternalAddressAnswer): string | null {
-  return book.roles.internal.resolved
+export function haMediaBaseUrl(
+  book: MediaAddressAnswer,
+  role: HaMediaRole = 'internal',
+): string | null {
+  return book.roles[role].resolved
+}
+
+/** brokerId → media base, each broker on ITS role. Pure: the caller reads the palette per use. */
+export function mediaBasesByBroker(
+  store: Readonly<Record<string, unknown>>,
+  brokerIds: readonly string[],
+  book: MediaAddressAnswer,
+): ReadonlyMap<string, string | null> {
+  return new Map(
+    brokerIds.map((brokerId) => [brokerId, haMediaBaseUrl(book, haMediaRoleOf(store, brokerId))]),
+  )
 }
 
 /** How long a minted link stays valid. Long enough for HA to render it. */

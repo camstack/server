@@ -23,7 +23,7 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 - Home Assistant broker: Brokers are managed separately
 - Home Assistant connection: Auth mode, HA base URL, Long-lived access token, Supervisor token
 - Home Assistant instances: No brokers
-- Connection: Hub URL Home Assistant can reach
+- Connection: per Home Assistant instance, the hub address role its image links use (Internal, or Public endpoint)
 - Advanced: Reconcile interval (s)
 
 ## Requirements

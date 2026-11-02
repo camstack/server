@@ -1,12 +1,10 @@
 /**
- * The exporter page pattern on the Google export: the address detection is an
- * admin-only `addon-action-button` that says what it did.
+ * The Google settings page holds no hub URL: it is the `publicEndpoint` role of the
+ * Network page (D986 §5), so nothing here can show or edit one.
  */
 import { describe, expect, it } from 'vitest'
 import type { ConfigUISchema } from '@camstack/types'
-import { exportGoogleActions } from '../custom-actions.js'
 import { ExportGoogleAddon } from '../export-google.addon.js'
-import { describeDetectResult } from '../public-hub-url.js'
 
 function schema(): ConfigUISchema {
   const addon = new ExportGoogleAddon()
@@ -16,51 +14,14 @@ function schema(): ConfigUISchema {
 }
 
 describe('Google settings page', () => {
-  it('every action is admin-only', () => {
-    for (const [name, spec] of Object.entries(exportGoogleActions)) {
-      expect({ name, auth: spec.auth }).toEqual({ name, auth: 'admin' })
-    }
-  })
-
-  it('detection is an addon-action-button that reports its outcome', () => {
+  it('stores no URL: no field, no button', () => {
     const fields = schema().sections.flatMap((s) => s.fields)
-    expect(fields.filter((f) => f.type === 'button')).toEqual([])
-    const detect = fields.find((f) => 'key' in f && f.key === '__detect-public-hub-url')
-    expect(detect?.type).toBe('addon-action-button')
-    if (detect?.type !== 'addon-action-button') return
-    expect(detect.action).toBe('detectPublicHubUrl')
-    expect(detect.successMessage).toBe('{summary}')
+    const keys = fields.flatMap((f) => ('key' in f ? [f.key] : []))
+    expect(keys.filter((k) => /url/i.test(k))).toEqual([])
+    expect(fields.filter((f) => f.type === 'addon-action-button' || f.type === 'text')).toEqual([])
   })
 
   it('the connection settings sit in a section named Connection', () => {
     expect(schema().sections.map((s) => s.title)).toEqual(['Connection'])
-  })
-})
-
-describe('describeDetectResult', () => {
-  it('says it filled the empty field', () => {
-    expect(
-      describeDetectResult({
-        publicHubUrl: 'https://a',
-        detectedPublicHubUrl: 'https://a',
-        filled: true,
-      }),
-    ).toBe('Filled in https://a.')
-  })
-
-  it('says the value you set was kept, and names what was detected', () => {
-    expect(
-      describeDetectResult({
-        publicHubUrl: 'https://mine',
-        detectedPublicHubUrl: 'https://a',
-        filled: false,
-      }),
-    ).toBe('Detected https://a; your value https://mine was kept.')
-  })
-
-  it('says when nothing was detected', () => {
-    expect(
-      describeDetectResult({ publicHubUrl: '', detectedPublicHubUrl: '', filled: false }),
-    ).toBe('No public HTTPS address detected. Set up remote access first.')
   })
 })

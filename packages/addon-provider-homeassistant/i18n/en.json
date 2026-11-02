@@ -14,8 +14,6 @@
   "globalSettings.s_ha-export-brokers.title": "Home Assistant instances",
   "globalSettings.s_ha-export-brokers.ha-export___no-brokers.label": "No brokers",
   "globalSettings.s_ha-export-transport.title": "Connection",
-  "globalSettings.s_ha-export-transport.publicBaseUrl.label": "Hub URL Home Assistant can reach",
-  "globalSettings.s_ha-export-transport.publicBaseUrl.description": "Used for the signed image links Home Assistant fetches; leave empty to derive one automatically.",
   "globalSettings.s_ha-export-advanced.title": "Advanced",
   "globalSettings.s_ha-export-advanced.reconcileIntervalSec.label": "Reconcile interval (s)",
   "globalSettings.s_ha-export-advanced.reconcileIntervalSec.description": "Full re-announce and re-push cadence.",
