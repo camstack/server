@@ -429,6 +429,36 @@ describe('SensorTransitionGate — a lock transitions on its state word', () => 
     })
   })
 
+  it('a stale active word seen first never becomes the baseline the rest word "changes" from (planning#396)', () => {
+    const g = gate()
+    expect(g.observe(LOCK, 'lock-control', lock('unlocked', STARTED_AT - 3_600_000))).toEqual({
+      changed: false,
+      reason: 'baseline-seeded-stale-active',
+    })
+    // The real state lands: locked for hours. Unknown → real is no event.
+    expect(g.observe(LOCK, 'lock-control', lock('locked', STARTED_AT - 3_600_000)).changed).toBe(
+      false,
+    )
+  })
+
+  it('a slice with no numeric stamp is a placeholder, remembers nothing (planning#396)', () => {
+    const g = gate()
+    for (const bad of [{ state: 'unlocked' }, { state: 'unlocked', lastChangedAt: null }]) {
+      expect(g.observe(LOCK, 'lock-control', bad)).toEqual({ changed: false, reason: 'cold-slice' })
+    }
+    expect(g.observe(LOCK, 'lock-control', lock('locked', STARTED_AT - 3_600_000)).changed).toBe(
+      false,
+    )
+  })
+
+  it('a FRESH active word seen first is still remembered, so locking after it is an event', () => {
+    const g = gate()
+    expect(g.observe(LOCK, 'lock-control', lock('unlocked', STARTED_AT + 50_000)).changed).toBe(
+      true,
+    )
+    expect(g.observe(LOCK, 'lock-control', lock('locked', STARTED_AT + 55_000)).changed).toBe(true)
+  })
+
   it('a first-sighting `unlocked` is an event only when fresh', () => {
     expect(gate().observe(LOCK, 'lock-control', lock('unlocked', STARTED_AT - 3_600_000))).toEqual({
       changed: false,

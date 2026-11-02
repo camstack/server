@@ -301,6 +301,14 @@ export class SensorTransitionGate {
   ): SensorTransitionVerdict {
     if (slice['lastChangedAt'] === 0) return this.drop(deviceId, capName, 'cold-slice')
     const wordField = WORD_LEVEL_FIELD[capName]
+    if (wordField !== undefined) {
+      // A word with no numeric stamp is not a state either: it cannot say when it
+      // happened, so it must not seed a baseline the real word later "changes" from.
+      const stamp = slice['lastChangedAt']
+      if (typeof stamp !== 'number' || !Number.isFinite(stamp) || stamp <= 0) {
+        return this.drop(deviceId, capName, 'cold-slice')
+      }
+    }
     if (wordField !== undefined) return this.observeWord(deviceId, capName, slice, wordField)
     const levelField = BOOLEAN_LEVEL_FIELD[capName]
     if (levelField !== undefined) return this.observeLevel(deviceId, capName, slice, levelField)
@@ -398,7 +406,15 @@ export class SensorTransitionGate {
     const key = `${deviceId}:${capName}`
     const prior = this.lastWords.get(key)
     this.lastWords.set(key, raw)
-    if (prior === undefined) return this.firstWordSighting(deviceId, capName, slice, raw)
+    if (prior === undefined) {
+      const verdict = this.firstWordSighting(deviceId, capName, slice, raw)
+      // An active word that was stale is not a baseline: the real rest word that
+      // follows is unknown → real, never an event (planning#396).
+      if (!verdict.changed && verdict.reason === 'baseline-seeded-stale-active') {
+        this.lastWords.delete(key)
+      }
+      return verdict
+    }
     if (prior === raw) return this.drop(deviceId, capName, 'no-change')
     return { changed: true }
   }
