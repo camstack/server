@@ -22,6 +22,19 @@ export { BaseAddon, normalizeAddonInitResult } from './addon/base-addon.js'
 export { ErrorI18nPayloadSchema, readErrorI18n } from './i18n/camstack-error.js'
 export type { ErrorI18nPayload } from './i18n/camstack-error.js'
 export { nodePin, readNodePin } from './cap-call-context.js'
+export {
+  nodeIdOfScopedKey,
+  resolveDeviceSettings,
+  resolvedValues,
+  SCOPED_SETTINGS_SCOPES,
+} from './addon/scoped-settings.js'
+export type {
+  DeviceSettingsLayers,
+  ResolvedSetting,
+  ResolvedSettings,
+  ScopedSettingsScope,
+  SettingSource,
+} from './addon/scoped-settings.js'
 // --- Type-only re-exports (erased at runtime, zero cost) ---
 export type { IAdminUiProvider } from './capabilities/admin-ui.cap.js'
 export { adminUiCapability } from './capabilities/admin-ui.cap.js'

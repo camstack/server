@@ -25,6 +25,7 @@ import {
 } from '../migrations/addon-migration.js'
 import { createDurableState, type DurableState } from './durable-state.js'
 import { normalizeNodeId, projectStore, readNodeValue, scopePatch } from './per-node-store.js'
+import type { ScopedSettingsScope } from './scoped-settings.js'
 import { createSecretAwareContext, type SecretAwareSettingsHandle } from './secret-aware-context.js'
 import { mergeSecretStatePaths, type SecretTree, secretTreeFromSchema } from './secret-paths.js'
 import {
@@ -522,6 +523,54 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     _instance: IntegrationInstanceRef,
   ): Promise<ConfigUISchema | null> {
     return null
+  }
+
+  /**
+   * D986 scoped settings: the form shape of the CLUSTER-wide settings one capability this addon
+   * provides owns, or `null` when it has none. `cap` is a capability name the addon's manifest
+   * declares. Stored as `addon-settings` rows `<addonId>.<field>`. The keys of this schema, of
+   * {@link nodeSettingsSchema} and of {@link deviceDefaultsSchema} are disjoint, and a key never
+   * contains `@` (guard `check-scoped-settings-declared`). SHAPE only: values are read by scope.
+   */
+  protected async clusterSettingsSchema(_cap: string): Promise<ConfigUISchema | null> {
+    return null
+  }
+
+  /**
+   * D986: the form shape of the settings one capability owns PER NODE, or `null`. Stored as
+   * `addon-settings` rows `<addonId>.<field>@<nodeId>` carrying `nodeId` in the row data, so a
+   * forgotten node's rows go in one central delete.
+   */
+  protected async nodeSettingsSchema(_cap: string): Promise<ConfigUISchema | null> {
+    return null
+  }
+
+  /**
+   * D986: the form shape of the FLEET DEFAULTS of the per-device settings one capability owns,
+   * or `null`. Stored as `addon-settings` rows `<addonId>.<field>`; a device resolves its value
+   * as device row, then this default, then the schema default (`resolveDeviceSettings`).
+   */
+  protected async deviceDefaultsSchema(_cap: string): Promise<ConfigUISchema | null> {
+    return null
+  }
+
+  /**
+   * The host's read of the scoped declarations: the schema one capability declares for `scope`,
+   * or `null`. Beside {@link getIntegrationFormSchema}, the same shape: the hook is protected, the
+   * host asks this method.
+   */
+  async getScopedSettingsSchema(
+    scope: ScopedSettingsScope,
+    cap: string,
+  ): Promise<ConfigUISchema | null> {
+    switch (scope) {
+      case 'cluster':
+        return this.clusterSettingsSchema(cap)
+      case 'node':
+        return this.nodeSettingsSchema(cap)
+      case 'device-defaults':
+        return this.deviceDefaultsSchema(cap)
+    }
   }
 
   /**

@@ -8,9 +8,10 @@ import type { AddonPeerBytes } from './addon-peer-bytes.js'
 import type { SecretsAccess } from '../keychain/secrets-access.js'
 import type { RecordsAccess } from '../records/records-access.js'
 import type { IntegrationInstanceRef } from '../addon/integration-instance-ref.js'
+import type { ScopedSettingsScope } from '../addon/scoped-settings.js'
 import type { PackageRequires } from '../addon/package-requires.js'
 import type { CapabilityDeclaration } from './capability.js'
-import type { ConfigUISchemaWithValues, FieldProbeResult } from './config-ui.js'
+import type { ConfigUISchema, ConfigUISchemaWithValues, FieldProbeResult } from './config-ui.js'
 import type { IEventBus, ReadinessScope } from './event-bus.js'
 import type { ICapabilityRegistry } from './kernel-abstractions.js'
 import type { IScopedLogger } from './logging.js'
@@ -1045,6 +1046,12 @@ export interface ICamstackAddon {
     instance: IntegrationInstanceRef,
     nodeId?: string,
   ): Promise<ConfigUISchemaWithValues | null>
+
+  /**
+   * D986: the schema one capability this addon provides declares for a settings scope
+   * (`cluster`, `node`, `device-defaults`), or `null`. See `BaseAddon.getScopedSettingsSchema`.
+   */
+  getScopedSettingsSchema?(scope: ScopedSettingsScope, cap: string): Promise<ConfigUISchema | null>
 
   /**
    * Stale-data audit: the global-settings keys this addon still declares,

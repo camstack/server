@@ -25,6 +25,19 @@ export type { CapabilitiesAccess } from './addon/base-addon.js'
 export { BaseAddon, classifyStoreError, normalizeAddonInitResult } from './addon/base-addon.js'
 export { normalizeNodeId } from './addon/per-node-store.js'
 export {
+  nodeIdOfScopedKey,
+  resolveDeviceSettings,
+  resolvedValues,
+  SCOPED_SETTINGS_SCOPES,
+} from './addon/scoped-settings.js'
+export type {
+  DeviceSettingsLayers,
+  ResolvedSetting,
+  ResolvedSettings,
+  ScopedSettingsScope,
+  SettingSource,
+} from './addon/scoped-settings.js'
+export {
   compareVersions,
   describeUnmet,
   MinVersionSchema,
