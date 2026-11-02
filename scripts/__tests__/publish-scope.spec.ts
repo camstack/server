@@ -51,10 +51,12 @@ describe('resolvePublishSet', () => {
 
   it('finds the bundlers by READING the build configs', () => {
     const bundles = bundledSources(ROOT)
-    // model-studio declares its alias in `vite.page.config.ts`; the first
-    // version of this scanned a hand-written list of config filenames and
-    // missed it.
-    expect([...(bundles.get('packages/addon-model-studio') ?? [])]).toContain('packages/ui-library')
+    // agent-ui is a standalone app that bundles the library on purpose. A page
+    // remote takes it from the host (#332), and a vitest config's alias builds
+    // nothing, so neither makes a package a bundler.
+    expect([...(bundles.get('packages/addon-agent-ui') ?? [])]).toContain('packages/ui-library')
+    expect(bundles.get('packages/addon-model-studio')).toBeUndefined()
+    expect(bundles.get('packages/addon-benchmark')).toBeUndefined()
     expect([...(bundles.get('packages/addon-admin-ui') ?? [])]).toContain('packages/ui-library')
     // A package that bundles nothing has no entry at all.
     expect(bundles.get('packages/addon-provider-rtsp')).toBeUndefined()

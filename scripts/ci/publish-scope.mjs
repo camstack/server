@@ -58,7 +58,9 @@ const WORKSPACE_ROOTS = ['packages', 'server']
  * ui-library through that one, and a list of build-config filenames goes stale
  * exactly like the list of who-bundles-whom it was meant to replace.
  */
-const BUILD_CONFIG_PATTERN = /^[a-z0-9.-]*config\.(ts|mts|js|mjs)$/
+// A vitest config builds no published output: its source aliases only point the
+// tests at workspace code (#332 — benchmark and training read as bundlers).
+const BUILD_CONFIG_PATTERN = /^(?!vitest\.)[a-z0-9.-]*config\.(ts|mts|js|mjs)$/
 
 /** dir → package.json, for every workspace package. */
 export function readWorkspace(root = process.cwd()) {

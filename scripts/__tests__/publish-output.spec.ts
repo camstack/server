@@ -31,13 +31,9 @@ const RUN_FILES = [
   'packages/addon-admin-ui/src/pages/Integrations.tsx',
 ]
 
-const BUNDLE_CANDIDATES = [
-  'packages/addon-agent-ui',
-  'packages/addon-benchmark',
-  'packages/addon-model-studio',
-  'packages/addon-osd-manager',
-  'packages/addon-training',
-]
+// Page remotes take ui-library from the host (#332): only the standalone
+// agent-ui still bundles it.
+const BUNDLE_CANDIDATES = ['packages/addon-agent-ui']
 
 function file(rel: string, text: string): { path: string; bytes: Buffer } {
   return { path: rel, bytes: Buffer.from(text) }
@@ -88,7 +84,9 @@ describe('finalizePublishSet', () => {
     const final = finalizePublishSet(part, new Set(['packages/addon-agent-ui']), ROOT)
     expect(final.publish).toContain('packages/addon-agent-ui')
     expect(final.dropped).not.toContain('packages/addon-agent-ui')
-    expect(final.dropped).toContain('packages/addon-benchmark')
+    // A page remote is not even a candidate any more (#332).
+    expect(final.publish).not.toContain('packages/addon-benchmark')
+    expect(final.dropped).not.toContain('packages/addon-benchmark')
   })
 
   it('a types change publishes types and the server, and never the folded framework (D989)', () => {
