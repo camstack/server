@@ -1,6 +1,6 @@
 {
   "name": "@camstack/server",
-  "version": "1.2.738",
+  "version": "1.2.739",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -66,8 +66,11 @@
     ],
     "requires": {
       "addons": {
-        "@camstack/addon-export-google": ">=0.1.123",
-        "@camstack/addon-provider-homeassistant": ">=1.2.649"
+        "@camstack/addon-admin-ui": ">=1.2.557",
+        "@camstack/addon-agent-ui": ">=1.2.314",
+        "@camstack/addon-google-services": ">=0.2.35",
+        "@camstack/addon-notifiers": ">=1.2.627",
+        "@camstack/addon-smtp-nodemailer": ">=1.2.145"
       },
       "wrapper": {
         "desktop": ">=0.0.1",

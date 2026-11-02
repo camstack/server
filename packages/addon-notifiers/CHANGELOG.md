@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.627] - 2026-11-02
+
 ### Changed
 
 - An email target can be pinned to one relay of its SMTP provider; unpinned targets keep using the first configured relay
