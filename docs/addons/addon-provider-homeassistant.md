@@ -264,3 +264,25 @@ message goes through `notification-output.send`. `notify` is a platform the
 custom component must BUILD: it is negotiated like the others
 (`component-support.ts`), and against a component that does not build it the
 targets are withheld and logged by name.
+
+## `board-key-source`: ESPHome keys through ingress
+
+`ha-board-key-source.ts` provides the admin-only `board-key-source` collection
+cap (`listSources`, `listBoards`, `getBoardKey`; one source per HA broker). It
+reuses the broker's long-lived token and opens no port:
+
+1. `supervisor/api GET /discovery` finds the add-on that announced `esphome`.
+2. `GET /addons/<slug>/info` gives its `ingress_url` (must sit under
+   `/api/hassio_ingress/`, else `no-ingress-url`).
+3. `POST /ingress/session` (administrator only) grants a session.
+4. `GET <ha><ingress_url>devices` with cookie `ingress_session` lists boards.
+5. `GET …/json-config?configuration=<x>.yaml` gives the key.
+
+The `json-config` body carries every YAML secret (Wi-Fi included). It is parsed
+into a schema that names only `api.encryption.key`; nothing else is kept,
+returned or logged, and a failure logs a reason only. Failures are typed
+(`not-admin`, `no-builder`, `no-ingress-url`, `unreachable`, `unknown-board`,
+`no-encryption-key`, `unreadable-config`, `unknown-source`); the table with
+their meaning is in [addon-provider-esphome](addon-provider-esphome.md). A
+supervisor-token broker has no address and answers `no-ingress-url`.
+Decision: [D1001](../decisions/adr-1001-esphome-board-keys-are-read-through-ha-ingress-never-a-lan-port.md).
