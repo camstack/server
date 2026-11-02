@@ -44,4 +44,22 @@ describe('getIntegrationFormSchema route', () => {
     const out = await p.getIntegrationFormSchema({ addonId: 'a', instance: INSTANCE })
     expect(firstKey(out)).toBe('global')
   })
+
+  it('an addon with integration-instances answers with its instanceFormSchema for that id', async () => {
+    const hook = vi.fn(async () => schema('scoped'))
+    const instanceFormSchema = vi.fn(async () => schema('instance'))
+    const gateway = {
+      isInProcess: () => true,
+      callForked: vi.fn(),
+    } as unknown as AddonCallGateway
+    const p = createAddonSettingsProvider({
+      getAddon: () => ({ getIntegrationFormSchema: hook }) as unknown as ICamstackAddon,
+      gateway,
+      instancesFor: () => ({ instanceFormSchema }) as never,
+    })
+    const out = await p.getIntegrationFormSchema({ addonId: 'a', instance: INSTANCE })
+    expect(firstKey(out)).toBe('instance')
+    expect(instanceFormSchema).toHaveBeenCalledWith({ id: 'i1' })
+    expect(hook).not.toHaveBeenCalled()
+  })
 })

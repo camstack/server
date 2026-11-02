@@ -121,6 +121,7 @@ import { decidePrune, prunePlacementLeftovers } from './prune-misplaced-addons.j
 import { planRunnerConvergence, type RunnerProcessSnapshot } from './runner-convergence'
 import { createRunnerSerializer, type RunnerSerializer } from './runner-serialization'
 import { spawnPlanConcurrently } from './runner-spawn-fanout.js'
+import { findInstancesProvider } from './integration-instances-provider.js'
 import { wireSettingsDoor } from './settings-door-wiring.js'
 
 type AddonSource = 'core' | 'installed'
@@ -775,6 +776,7 @@ export class AddonRegistryService {
         return entry?.addon ?? null
       },
       gateway: this.addonCallGateway,
+      instancesFor: (addonId) => findInstancesProvider(this.capabilityRegistry, addonId),
     })
     this.capabilityRegistry.registerProvider('addon-settings', '$hub', settingsProvider)
 

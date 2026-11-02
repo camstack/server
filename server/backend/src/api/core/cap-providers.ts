@@ -24,6 +24,7 @@
  * nodes,integrations,addons}.router.ts`.
  */
 
+import { findInstancesProvider } from '../../core/addon/integration-instances-provider.js'
 import { readIntegrationSettings, writeIntegrationSettings } from './integration-secrets'
 import { randomUUID } from 'node:crypto'
 import * as os from 'node:os'
@@ -53,6 +54,7 @@ import type {
   IConnectionTestProvider,
   IDeviceProvider,
   IIntegrationRegistry,
+  IIntegrationInstancesProvider,
   IIntegrationsProvider,
   INetworkQualityProvider,
   INodesProvider,
@@ -1079,6 +1081,36 @@ async function runConnectionTest(
   settings: Record<string, unknown>,
   logger: IScopedLogger,
 ): Promise<ConnectionTestVerdict> {
+  // 0. An addon that keeps its connection as typed instances tests it there.
+  const instances = getInstancesProvider(ar, addonId)
+  if (
+    instances !== null &&
+    instances.testInstance !== undefined &&
+    (await instances.describe()).canTest
+  ) {
+    try {
+      const result = await instances.testInstance({ id: null, values: settings })
+      const status = result.status ?? (result.success ? 'validated' : 'rejected')
+      return {
+        status,
+        testedBy: addonId,
+        ...(result.error !== undefined ? { error: result.error } : {}),
+        ...(result.latencyMs !== undefined ? { latencyMs: result.latencyMs } : {}),
+        ...(result.detail !== undefined ? { detail: result.detail } : {}),
+      }
+    } catch (err) {
+      logger.warn('connection test could not run', {
+        tags: { addonId },
+        meta: { phase: 'test', error: errMsg(err) },
+      })
+      return {
+        status: 'inconclusive',
+        error: `Connection test could not run: ${errMsg(err)}`,
+        testedBy: addonId,
+      }
+    }
+  }
+
   // 1. The provider's own declared test — the primary path.
   const tester = getConnectionTestProvider(ar, addonId)
   if (tester) {
@@ -1168,7 +1200,18 @@ async function runConnectionTest(
  * Exported so the integration-markers spec can assert the recognised set
  * without booting the whole provider factory.
  */
-export const INTEGRATION_CAP_MARKERS = new Set(['device-provider', 'device-adoption'])
+export const INTEGRATION_CAP_MARKERS = new Set([
+  'device-provider',
+  'device-adoption',
+  'integration-instances',
+])
+
+function getInstancesProvider(
+  ar: AddonRegistryService,
+  addonId: string,
+): IIntegrationInstancesProvider | null {
+  return findInstancesProvider(ar.getCapabilityRegistry(), addonId)
+}
 
 export function buildIntegrationsProvider(
   ar: AddonRegistryService,
@@ -1208,8 +1251,13 @@ export function buildIntegrationsProvider(
       })
 
       const addon = ar.listAddons().find((a) => a.manifest.id === input.addonId)
+      const instances = getInstancesProvider(ar, input.addonId)
       const instanceMode =
-        addon?.declaration?.instanceMode ?? addon?.manifest?.instanceMode ?? 'multiple'
+        instances !== null
+          ? (await instances.describe()).instanceMode === 'single'
+            ? 'unique'
+            : 'multiple'
+          : (addon?.declaration?.instanceMode ?? addon?.manifest?.instanceMode ?? 'multiple')
       if (instanceMode === 'unique') {
         const existing = (await reg.listIntegrations()).filter((i) => i.addonId === input.addonId)
         if (existing.length > 0) {
@@ -1257,6 +1305,29 @@ export function buildIntegrationsProvider(
       }
 
       const integration = await reg.createIntegration(payload)
+      if (instances !== null) {
+        // The connection is a typed record keyed by the registry id. A refusal
+        // deletes the row: a registry entry with no record is an orphan.
+        try {
+          await instances.createInstance({ id: integration.id, name: integration.name })
+          if (settings !== undefined && Object.keys(settings).length > 0) {
+            await instances.updateInstance({ id: integration.id, values: settings })
+          }
+        } catch (err) {
+          await instances.deleteInstance({ id: integration.id }).catch(() => undefined)
+          await reg.deleteIntegration(integration.id)
+          logger.warn('instance record refused — registry row removed', {
+            tags: { integrationId: integration.id, addonId: integration.addonId },
+            meta: { phase: 'create', error: errMsg(err) },
+          })
+          throw err
+        }
+        logger.info('persisted as an instance record (no restart)', {
+          tags: { integrationId: integration.id, addonId: integration.addonId },
+          meta: { phase: 'create' },
+        })
+        return integration
+      }
       if (settings !== undefined && Object.keys(settings).length > 0) {
         await writeIntegrationSettings(
           {
@@ -1468,6 +1539,10 @@ export function buildIntegrationsProvider(
         })
       }
 
+      // The record and its keychain refs go first; a refusal stops here, with
+      // the registry row still naming what was not removed.
+      await getInstancesProvider(ar, integration.addonId)?.deleteInstance({ id: input.id })
+
       await reg.deleteIntegration(input.id)
 
       eb.emit({
@@ -1491,6 +1566,11 @@ export function buildIntegrationsProvider(
       const reg = requireIntegrationRegistry(ar)
       const integration = await reg.getIntegration(input.id)
       if (!integration) throw new Error(`Integration "${input.id}" not found`)
+      const instances = getInstancesProvider(ar, integration.addonId)
+      if (instances !== null) {
+        const instance = await instances.getInstance({ id: input.id })
+        return instance?.formValues ?? {}
+      }
       // The integration's own addon (the caller the transport stamped) reads
       // its secrets resolved; anyone else — the admin form — reads "set"
       // views, never a value (D787, D789).
@@ -1537,6 +1617,16 @@ export function buildIntegrationsProvider(
         tags: { integrationId: input.id, addonId: integration.addonId },
         meta: { phase: 'setSettings', keys: settingsKeys },
       })
+      const instances = getInstancesProvider(ar, integration.addonId)
+      if (instances !== null) {
+        // The addon re-applies the change itself (its `onChanged`): no respawn.
+        await instances.updateInstance({ id: input.id, values: input.settings })
+        logger.info('persisted as an instance record (no restart)', {
+          tags: { integrationId: input.id, addonId: integration.addonId },
+          meta: { phase: 'setSettings' },
+        })
+        return { success: true }
+      }
       await writeIntegrationSettings(
         {
           registry: reg,
@@ -1602,74 +1692,93 @@ export function buildIntegrationsProvider(
           }),
       )
       const integrations = await reg.listIntegrations()
-      return providerAddons.map((addon) => {
-        const m = addon.manifest
-        const d = addon.declaration
-        const icon = d?.icon ?? m.icon
-        const color = d?.color ?? m.color ?? '#78716c'
-        const instanceMode = d?.instanceMode ?? m.instanceMode ?? 'multiple'
-        const existing = integrations.filter((i) => i.addonId === m.id)
-        const provider = getDeviceProvider(ar, m.id)
-        const discoveryMode = provider?.discoveryMode ?? 'manual'
+      return Promise.all(
+        providerAddons.map(async (addon) => {
+          const m = addon.manifest
+          const d = addon.declaration
+          const icon = d?.icon ?? m.icon
+          const color = d?.color ?? m.color ?? '#78716c'
+          const instances = getInstancesProvider(ar, m.id)
+          const described = instances === null ? null : await instances.describe()
+          const instanceMode =
+            described !== null
+              ? described.instanceMode === 'single'
+                ? 'unique'
+                : 'multiple'
+              : (d?.instanceMode ?? m.instanceMode ?? 'multiple')
+          const existing = integrations.filter((i) => i.addonId === m.id)
+          const provider = getDeviceProvider(ar, m.id)
+          const discoveryMode = provider?.discoveryMode ?? 'manual'
 
-        // Branch by CAP, not by addon name. Surface which integration-marker
-        // cap the addon declared so the wizard routes `device-adoption`
-        // (Approach A: pick/create a broker, store `{ brokerId }`) vs the
-        // legacy `device-provider` config → discovery flow. A `device-adoption`
-        // marker wins when both are present (an integration-style addon may
-        // also expose a `device-provider` shim); the broker step is the
-        // intended entry point for it.
-        const capNames = (m.capabilities ?? []).map((c) => (typeof c === 'string' ? c : c.name))
-        const kind: 'device-adoption' | 'device-provider' = capNames.includes('device-adoption')
-          ? 'device-adoption'
-          : 'device-provider'
+          // Branch by CAP, not by addon name. Surface which integration-marker
+          // cap the addon declared so the wizard routes `device-adoption`
+          // (Approach A: pick/create a broker, store `{ brokerId }`) vs the
+          // legacy `device-provider` config → discovery flow. A `device-adoption`
+          // marker wins when both are present (an integration-style addon may
+          // also expose a `device-provider` shim); the broker step is the
+          // intended entry point for it.
+          const capNames = (m.capabilities ?? []).map((c) => (typeof c === 'string' ? c : c.name))
+          // `connection`: the addon holds only a connection (typed instances), no devices.
+          const kind: 'device-adoption' | 'device-provider' | 'connection' = capNames.includes(
+            'device-adoption',
+          )
+            ? 'device-adoption'
+            : capNames.includes('device-provider')
+              ? 'device-provider'
+              : capNames.includes('integration-instances')
+                ? 'connection'
+                : 'device-provider'
 
-        // For device-adoption addons, the broker kind to create/link comes
-        // from the addon manifest (`brokerKind`). Null for device-provider
-        // addons, which carry no broker.
-        const brokerKind =
-          kind === 'device-adoption' ? (d?.brokerKind ?? m.brokerKind ?? null) : null
+          // For device-adoption addons, the broker kind to create/link comes
+          // from the addon manifest (`brokerKind`). Null for device-provider
+          // addons, which carry no broker.
+          const brokerKind =
+            kind === 'device-adoption' ? (d?.brokerKind ?? m.brokerKind ?? null) : null
 
-        const supportsLocationImport =
-          kind === 'device-adoption'
-            ? (d?.supportsLocationImport ?? m.supportsLocationImport ?? false)
-            : false
+          const supportsLocationImport =
+            kind === 'device-adoption'
+              ? (d?.supportsLocationImport ?? m.supportsLocationImport ?? false)
+              : false
 
-        // Integration wizard `mode` (LOCKED MODEL — supersedes `instanceMode`
-        // for wizard routing). Explicit manifest `mode` wins; otherwise derive:
-        //   1. broker cap AND a brokerKind → 'broker' (HA/MQTT shared session)
-        //   2. device-adoption (and NOT broker) → 'account'
-        //   3. device-provider only / old `instanceMode: unique` → 'standalone'
-        const explicitMode = d?.mode ?? m.mode
-        const declaresBroker = capNames.includes('broker')
-        const mode: 'standalone' | 'account' | 'broker' =
-          explicitMode ??
-          (declaresBroker && brokerKind
-            ? 'broker'
-            : kind === 'device-adoption'
-              ? 'account'
-              : 'standalone')
+          // Integration wizard `mode` (LOCKED MODEL — supersedes `instanceMode`
+          // for wizard routing). Explicit manifest `mode` wins; otherwise derive:
+          //   1. broker cap AND a brokerKind → 'broker' (HA/MQTT shared session)
+          //   2. device-adoption (and NOT broker) → 'account'
+          //   3. device-provider only / old `instanceMode: unique` → 'standalone'
+          const explicitMode = d?.mode ?? m.mode
+          const declaresBroker = capNames.includes('broker')
+          //   4. connection: one instance (`single`) is standalone, several an account
+          const mode: 'standalone' | 'account' | 'broker' =
+            explicitMode ??
+            (declaresBroker && brokerKind
+              ? 'broker'
+              : kind === 'device-adoption'
+                ? 'account'
+                : kind === 'connection' && described?.instanceMode === 'multiple'
+                  ? 'account'
+                  : 'standalone')
 
-        return {
-          addonId: m.id,
-          name: m.name ?? m.id,
-          description: m.description ?? '',
-          iconUrl: icon ? `/api/addon-assets/${m.id}/${icon}` : null,
-          color,
-          instanceMode,
-          mode,
-          discoveryMode,
-          kind,
-          brokerKind,
-          supportsLocationImport,
-          canTest: declaresConnectionTest(ar, m.id, mode),
-          existingInstances: existing.map((i) => ({
-            id: i.id,
-            name: i.name,
-          })),
-          canAdd: instanceMode === 'multiple' || existing.length === 0,
-        }
-      })
+          return {
+            addonId: m.id,
+            name: m.name ?? m.id,
+            description: m.description ?? '',
+            iconUrl: icon ? `/api/addon-assets/${m.id}/${icon}` : null,
+            color,
+            instanceMode,
+            mode,
+            discoveryMode,
+            kind,
+            brokerKind,
+            supportsLocationImport,
+            canTest: described?.canTest === true || declaresConnectionTest(ar, m.id, mode),
+            existingInstances: existing.map((i) => ({
+              id: i.id,
+              name: i.name,
+            })),
+            canAdd: instanceMode === 'multiple' || existing.length === 0,
+          }
+        }),
+      )
     },
     testConnection: async (input) => {
       // The Test button. Routes to the DECLARED test (see `runConnectionTest`)

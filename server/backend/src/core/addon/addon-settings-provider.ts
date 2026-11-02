@@ -11,10 +11,11 @@
 import { z } from 'zod'
 import type {
   ICamstackAddon,
+  ConfigUISchema,
   ConfigUISchemaWithValues,
   IntegrationInstanceRef,
 } from '@camstack/types'
-import type { IAddonSettingsProvider } from '@camstack/types'
+import type { IAddonSettingsProvider, IIntegrationInstancesProvider } from '@camstack/types'
 import type { AddonSettingsMethod } from '@camstack/server/system'
 import type { AddonCallGateway } from './addon-call-gateway.js'
 
@@ -96,7 +97,7 @@ interface ReshapedSchema {
   }>
 }
 
-function reshapeForOutput(schema: ConfigUISchemaWithValues): ReshapedSchema {
+function reshapeForOutput(schema: ConfigUISchema | ConfigUISchemaWithValues): ReshapedSchema {
   return {
     tabs: schema.tabs
       ? schema.tabs.map((t) => ({ id: t.id, label: t.label, icon: t.icon, order: t.order }))
@@ -133,6 +134,11 @@ interface AddonSettingsProviderDeps {
   readonly getAddon: AddonLookup
   /** Shared router for forked addon-level calls (hub-local-child / remote). */
   readonly gateway: AddonCallGateway
+  /**
+   * The addon's `integration-instances` provider (D985), or null. When it exists
+   * the integration form is ITS `instanceFormSchema`, wherever the addon runs.
+   */
+  readonly instancesFor?: (addonId: string) => IIntegrationInstancesProvider | null
 }
 
 function createAddonSettingsProvider(deps: AddonSettingsProviderDeps): IAddonSettingsProvider {
@@ -231,6 +237,12 @@ function createAddonSettingsProvider(deps: AddonSettingsProviderDeps): IAddonSet
     },
 
     async getIntegrationFormSchema(input: IntegrationFormInput) {
+      const instances = deps.instancesFor?.(input.addonId) ?? null
+      if (instances !== null) {
+        return reshapeForOutput(
+          await instances.instanceFormSchema({ id: input.instance.integrationId }),
+        )
+      }
       if (gateway.isInProcess(input.addonId, input.nodeId)) {
         const addon = getAddon(input.addonId)
         if (!addon) return null

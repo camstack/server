@@ -65,9 +65,11 @@ const AvailableIntegrationTypeSchema = z.object({
    * branch on CAP — never on addon name. `device-adoption` integrations
    * (Home Assistant, …) route through the broker step (Approach A);
    * `device-provider` integrations (Reolink/ONVIF) keep the
-   * legacy config → discovery flow.
+   * legacy config → discovery flow. `connection` is an addon that only holds a
+   * connection as typed records (`integration-instances`, D985): no devices,
+   * no discovery.
    */
-  kind: z.enum(['device-adoption', 'device-provider']),
+  kind: z.enum(['device-adoption', 'device-provider', 'connection']),
   /**
    * For `device-adoption` addons: the broker kind to create/link
    * (e.g. `home-assistant`), declared in the addon manifest. `null` for

@@ -39,7 +39,10 @@ function harness() {
     restartAddon,
     runnerIdFor: vi.fn(() => RUNNER_ID),
     listAddons: vi.fn(() => []),
-    getCapabilityRegistry: vi.fn(() => ({ getSingleton: vi.fn(() => null) })),
+    getCapabilityRegistry: vi.fn(() => ({
+      getSingleton: vi.fn(() => null),
+      getProviderByAddon: vi.fn(() => null),
+    })),
   }
   const provider = buildIntegrationsProvider(
     addonReg as never,
