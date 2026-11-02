@@ -73,6 +73,7 @@ import { buildCreationFormSchema, buildDiscoveryParamsFormSchema } from './creat
 import { createBrokerPort, EmailPushBridge } from './email-push-bridge.js'
 import { createEmailPushRemovalHook } from './email-push-removal-hook.js'
 import { buildHubInstanceSchema, isHubIntegration } from './hub-connection.js'
+import { type LegacyWebhookIntake, startLegacyWebhookIntake } from './legacy-webhook-intake.js'
 import {
   type EmailPushMigrationPorts,
   type LegacyMailboxSettings,
@@ -528,16 +529,31 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
    * in, so the handler is the gate. Like the clip planes it is served from `onInitialize` (the hub
    * pulls planes during registration) and a host without the facility only loses this intake.
    */
+  private legacyWebhook: LegacyWebhookIntake | undefined
+
   private async serveWebhookPlane(): Promise<void> {
     try {
+      const handler = createWebhookHandler({
+        logger: this.ctx.logger.child('baichuan-webhook'),
+        listCameras: () => this.listReolinkCameras(),
+      })
       await this.ctx.dataPlane?.serve({
         prefix: BAICHUAN_WEBHOOK_PREFIX,
         access: 'public',
-        handler: createWebhookHandler({
+        handler,
+      })
+      // One-release compatibility window (retire after 2026-12-15, see legacy-webhook-intake.ts).
+      try {
+        this.legacyWebhook = await startLegacyWebhookIntake({
           logger: this.ctx.logger.child('baichuan-webhook'),
           listCameras: () => this.listReolinkCameras(),
-        }),
-      })
+          handler,
+        })
+      } catch (err: unknown) {
+        this.ctx.logger.warn('baichuan-webhook: legacy :9081 intake not bound (port in use?)', {
+          meta: { error: err instanceof Error ? err.message : String(err) },
+        })
+      }
     } catch (err: unknown) {
       this.ctx.logger.warn(
         'baichuan-webhook: data plane failed to serve — battery push will not arrive',
@@ -627,6 +643,7 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     await this.clipService?.disposeClipStreamDial().catch(() => {
       /* best-effort */
     })
+    await this.legacyWebhook?.close().catch(() => undefined)
     // We do NOT call `super.onShutdown()`: the Reolink provider intentionally keeps its
     // device decommission flow lightweight (autodetect-cache dispose
     // only), matching the pre-existing override.
