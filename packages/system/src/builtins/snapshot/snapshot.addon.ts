@@ -1460,7 +1460,11 @@ export class SnapshotAddon extends BaseAddon<SnapshotAddonConfig> {
           this.stateFrames.delete(deviceId)
           this.cache.set(deviceId, effectiveStreamId, {
             data: result,
-            ts: now,
+            // The LANDING instant, not `now` (taken before the native pool
+            // queued and the camera answered): a frame that took 20 s to
+            // arrive is not from 20 s ago, and `lastCapturedAt` is what the
+            // linked-still freshness judge compares with the event time.
+            ts: Date.now(),
             streamId: effectiveStreamId ?? null,
           })
           // Best-effort, throttled, and never awaited into the answer: the
@@ -1507,7 +1511,8 @@ export class SnapshotAddon extends BaseAddon<SnapshotAddonConfig> {
           this.stateFrames.delete(deviceId)
           this.cache.set(deviceId, effectiveStreamId, {
             data: fallback,
-            ts: now,
+            // Landing instant, as on the native path above.
+            ts: Date.now(),
             streamId: effectiveStreamId ?? null,
           })
           // Both capture paths persist. Persisting only the native one would
