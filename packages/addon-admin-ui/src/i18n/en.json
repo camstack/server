@@ -6793,6 +6793,16 @@
       "nodeColour": "Node colour",
       "nodeColourGroup": "Node colour",
       "reachableHost": "Reachable host"
+    },
+    "launch": {
+      "heap": "Heap ceiling (MB)",
+      "rss": "RSS budget (MB)",
+      "default": "Default",
+      "restartNote": "Takes effect on restart",
+      "saved": "Saved. Takes effect on restart.",
+      "savedNow": "Saved.",
+      "failed": "Save failed.",
+      "invalid": "Enter a whole number between {{min}} and {{max}} MB, or leave the field empty."
     }
   },
   "serverManagement": {

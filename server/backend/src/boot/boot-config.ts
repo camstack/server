@@ -42,29 +42,6 @@ export interface InfraContext {
 // ---------------------------------------------------------------------------
 
 /**
- * Env variables that once carried a secret into the hub. Ignored since D797
- * (`CAMSTACK_CLUSTER_SECRET`: the secret itself was removed by D857) —
- * still named so a container template that sets them is told, not silently
- * obeyed or silently dropped. Only their PRESENCE is read, never the value.
- */
-const RETIRED_SECRET_ENV = [
-  'CAMSTACK_JWT_SECRET',
-  'CAMSTACK_ADMIN_USER',
-  'CAMSTACK_ADMIN_PASS',
-  'CAMSTACK_CLUSTER_SECRET',
-  'CAMSTACK_SECRET_KEY',
-  'HF_TOKEN',
-  'HUGGING_FACE_HUB_TOKEN',
-] as const
-
-/**
- * The extra browser origins moved to the `auth.corsOrigins` setting (D707):
- * edited in Identity → Authentication, read live. The former env source is
- * ignored, and named at boot so a stale value is told, never silently honoured.
- */
-const RETIRED_CORS_ENV = 'CAMSTACK_CORS_ORIGINS'
-
-/**
  * HTTPS on or off is the `tlsEnabled` setting in Network → Local access, read
  * at boot from the `tls/enabled` marker the setting writes. The old variable
  * is ignored, and named at boot.
@@ -93,13 +70,6 @@ function setEnvNames(
   })
 }
 
-/** The retired CORS variable, when set (name only, never the value). */
-export function retiredCorsSources(
-  env: Readonly<Record<string, string | undefined>>,
-): readonly string[] {
-  return setEnvNames(env, [RETIRED_CORS_ENV])
-}
-
 /** The retired HTTPS toggle variable, when set (name only). */
 export function retiredTlsEnabledSources(
   env: Readonly<Record<string, string | undefined>>,
@@ -114,44 +84,18 @@ export function ignoredTlsCertSources(
   return setEnvNames(env, IGNORED_TLS_CERT_ENV)
 }
 
-/** Every retired secret variable set. Names only — a value is never read into a log. */
-export function retiredSecretSources(
-  env: Readonly<Record<string, string | undefined>>,
-): readonly string[] {
-  return setEnvNames(env, RETIRED_SECRET_ENV)
-}
-
 // ---------------------------------------------------------------------------
 // loadBootstrapConfig
 // ---------------------------------------------------------------------------
 
 /**
  * The kernel's bootstrap loader (config.yaml + `CAMSTACK_PORT` / `HOST` /
- * `DATA`) — the ONE loader — plus a boot warning for every retired env
- * variable still set, so a container template that carries one is told.
+ * `DATA`) — the ONE loader — plus a boot warning for the retired HTTPS
+ * variables still set, so a container template that carries one is told.
  */
 export function loadBootstrapConfig(configPath: string): BootstrapConfig {
   const config = loadKernelBootstrapConfig(configPath, { warnRetiredKeys: true })
   const env = process.env
-
-  const retired = retiredSecretSources(env)
-  if (retired.length > 0) {
-    console.warn(
-      `[Phase1] WARN ${retired.join(', ')} ignored — no secret is read from the environment or ` +
-        'config.yaml any more (D797). The session signing key lives in the ' +
-        'keychain; a fresh hub seeds admin / changeme. ' +
-        'Remove these entries — after importing their values with scripts/ops/keychain-migrate-hub.mjs.',
-    )
-  }
-
-  const retiredCors = retiredCorsSources(env)
-  if (retiredCors.length > 0) {
-    console.warn(
-      `[Phase1] WARN ${retiredCors.join(', ')} ignored — the allowed browser origins are set ` +
-        'only in the admin UI (Identity → Authentication → Allowed browser origins, D707). ' +
-        'Re-enter them there and remove the entry.',
-    )
-  }
 
   const retiredTls = retiredTlsEnabledSources(env)
   if (retiredTls.length > 0) {

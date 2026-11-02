@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument -- pre-existing lint debt across this 800+ line bootstrap module. The flagged sites cross typed boundaries (Fastify request typing, AddonRouteRegistry, AuthService inherited methods) where the projectService context can't trace inheritance chains. Tracked separately; do not amend in unrelated edits. */
 
+import { launchDataDir, readRssBudgetOverrideMb } from './launch-args.js'
 import { createLazyUiServing, type StaticUiProvider } from './ui-serving/lazy-ui-serving.js'
 import { execSync } from 'node:child_process'
 import * as fs from 'node:fs'
@@ -387,7 +388,7 @@ async function bootstrap() {
     undefined,
     undefined,
     true,
-    hubMainRssBudget(),
+    hubMainRssBudget(process.env, readRssBudgetOverrideMb(launchDataDir(process.env))),
     {
       eventPlane: createEventPlaneReader({
         registry: () => moleculerForEventPlane?.childRegistry ?? null,

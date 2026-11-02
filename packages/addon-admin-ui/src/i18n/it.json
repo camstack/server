@@ -6868,6 +6868,16 @@
       "nodeColour": "Colore del nodo",
       "nodeColourGroup": "Colore del nodo",
       "reachableHost": "Host raggiungibile"
+    },
+    "launch": {
+      "heap": "Limite heap (MB)",
+      "rss": "Budget RSS (MB)",
+      "default": "Predefinito",
+      "restartNote": "Ha effetto al riavvio",
+      "saved": "Salvato. Ha effetto al riavvio.",
+      "savedNow": "Salvato.",
+      "failed": "Salvataggio non riuscito.",
+      "invalid": "Inserisci un numero intero tra {{min}} e {{max}} MB, oppure lascia il campo vuoto."
     }
   },
   "uiLibrary": {

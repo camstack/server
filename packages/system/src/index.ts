@@ -369,6 +369,7 @@ export {
   HUB_MAIN_HEAP_WATCH_LABEL,
   HUB_MAIN_RSS_BUDGET_MB,
   HUB_RSS_BUDGET_ENV,
+  HUB_RSS_BUDGET_OVERRIDE_SOURCE,
   hubMainRssBudget,
   describeRss,
   nextRssBudgetState,

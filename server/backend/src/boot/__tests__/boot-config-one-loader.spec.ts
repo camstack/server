@@ -64,6 +64,25 @@ describe('one bootstrap loader', () => {
     expect(manager.getBootstrap<number>('server.port')).toBe(5151)
   })
 
+  it('the retired secret and CORS env variables are not named at boot any more', () => {
+    for (const name of [
+      'CAMSTACK_JWT_SECRET',
+      'CAMSTACK_ADMIN_USER',
+      'CAMSTACK_ADMIN_PASS',
+      'CAMSTACK_CLUSTER_SECRET',
+      'CAMSTACK_SECRET_KEY',
+      'HF_TOKEN',
+      'HUGGING_FACE_HUB_TOKEN',
+      'CAMSTACK_CORS_ORIGINS',
+    ]) {
+      vi.stubEnv(name, 'set-in-the-container')
+    }
+    const warn = vi.spyOn(console, 'warn')
+    loadBootstrapConfig(configPath)
+    const warned = warn.mock.calls.map((c) => c.map(String).join(' ')).join('\n')
+    expect(warned).not.toMatch(/CAMSTACK_JWT_SECRET|CAMSTACK_CORS_ORIGINS|HF_TOKEN|ignored/)
+  })
+
   it('the launcher no longer reads bootstrap.requiredAddons: its set is the role default', () => {
     const launcher = fs.readFileSync(path.resolve(__dirname, '../../launcher.ts'), 'utf-8')
     expect(launcher).not.toMatch(/requiredAddons|readBootstrapRequiredAddons|bootstrapSchema/)

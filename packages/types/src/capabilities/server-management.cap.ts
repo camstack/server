@@ -460,6 +460,14 @@ const ServerUpdateActionResultSchema = z.object({
 const LaunchOverridesSchema = z.object({
   /** The persisted heap ceiling in MB, or `null` when none is set. */
   heapMb: z.number().int().nullable(),
+  /** The persisted hub-main RSS budget in MB, or `null` when none is set. */
+  rssBudgetMb: z.number().int().nullable(),
+})
+
+const SetLaunchOverridesInputSchema = z.object({
+  heapMb: z.number().int().min(512).max(65536).nullable(),
+  /** Omitted keeps the stored budget; `null` clears it. */
+  rssBudgetMb: z.number().int().min(512).max(65536).nullable().optional(),
 })
 
 const SetLaunchOverridesResultSchema = LaunchOverridesSchema.extend({
@@ -545,15 +553,15 @@ export const serverManagementCapability = {
      */
     getLaunchOverrides: method(z.void(), LaunchOverridesSchema, { auth: 'admin' }),
     /**
-     * Set (`heapMb`) or clear (`null`) the node's heap-ceiling override. It is
+     * Set or clear (`null`) the node's heap-ceiling (`heapMb`) and hub-main RSS
+     * budget (`rssBudgetMb`) overrides; the budget wins over its env. It is
      * written on the node itself and applies at the NEXT launch — restart the
      * node (`restartServer`) for it to take effect.
      */
-    setLaunchOverrides: method(
-      z.object({ heapMb: z.number().int().min(512).max(65536).nullable() }),
-      SetLaunchOverridesResultSchema,
-      { kind: 'mutation', auth: 'admin' },
-    ),
+    setLaunchOverrides: method(SetLaunchOverridesInputSchema, SetLaunchOverridesResultSchema, {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
   },
   /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */
   mount: { kind: 'server-provided' },
@@ -577,6 +585,7 @@ export type ServerUpdateCheckResult = z.infer<typeof ServerUpdateCheckResultSche
 export type ServerUpdateOutcome = z.infer<typeof ServerUpdateOutcomeSchema>
 export type ServerUpdateActionResult = z.infer<typeof ServerUpdateActionResultSchema>
 export type LaunchOverrides = z.infer<typeof LaunchOverridesSchema>
+export type SetLaunchOverridesInput = z.infer<typeof SetLaunchOverridesInputSchema>
 export type SetLaunchOverridesResult = z.infer<typeof SetLaunchOverridesResultSchema>
 export type RunnerBootCheck = z.infer<typeof RunnerBootCheckSchema>
 export type RunnerRefusal = z.infer<typeof RunnerRefusalSchema>

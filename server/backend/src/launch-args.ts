@@ -14,7 +14,7 @@
  *
  *     arg --max-old-space-size=2048      an extra node argv entry (flags only)
  *     env NAME=value                     an environment variable to export
- *     source override|legacy-env|computed|v8-default
+ *     source override|computed|v8-default
  *     warn <free text>                   something the launcher should log
  *
  * Nothing else is printed. A launcher treats any line it does not recognise as
@@ -24,8 +24,10 @@
  *
  *  - `override` — `<dataDir>/launch-overrides.json` `{ "heapMb": N }`, set from
  *    the hub (`serverManagement.setLaunchOverrides`) and persisted on the node.
- *  - `legacy-env` — `CAMSTACK_HUB_HEAP_MB` (hub) / `CAMSTACK_AGENT_HEAP_MB`
- *    (agent), still honoured when no override is set.
+ *    The same file carries `rssBudgetMb`, hub-main's RSS budget, read by the
+ *    running hub (not by this launcher) and winning over its env variable.
+ *  - `CAMSTACK_HUB_HEAP_MB` / `CAMSTACK_AGENT_HEAP_MB` are RETIRED: never
+ *    read for a value, named in a `warn` line when set.
  *  - `computed` — AGENT only: clamp(min(RAM, cgroup limit) / 4, 1536, 4096) MB.
  *    V8's own quarter-of-RAM rule with a floor above every measured agent RSS
  *    (0.8-1.4 GB), so it bounds a runaway and never a healthy root.
@@ -40,11 +42,14 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 
 export type LaunchRole = 'hub' | 'agent'
-export type CeilingSource = 'override' | 'legacy-env' | 'computed' | 'v8-default'
+export type CeilingSource = 'override' | 'computed' | 'v8-default'
 
 export const LAUNCH_OVERRIDES_FILE = 'launch-overrides.json'
 /** Env var carrying {@link CeilingSource} to the node so its heartbeat can say who chose. */
 export const HEAP_CEILING_SOURCE_ENV = 'CAMSTACK_HEAP_CEILING_SOURCE'
+
+/** The retired heap variables: ignored, and named at launch when set. */
+export const RETIRED_HEAP_ENV = ['CAMSTACK_HUB_HEAP_MB', 'CAMSTACK_AGENT_HEAP_MB'] as const
 
 export const AGENT_HEAP_FLOOR_MB = 1536
 export const AGENT_HEAP_CAP_MB = 4096
@@ -79,8 +84,8 @@ export interface LaunchInput {
   readonly host: LaunchHost
   /** The persisted per-node override in MB, or `null`. */
   readonly overrideMb: number | null
-  /** The legacy env value for this role, verbatim, or `undefined`. */
-  readonly legacyEnv: string | undefined
+  /** Names (never values) of the retired heap variables found set. */
+  readonly legacyEnvNames: readonly string[]
   readonly allocatorEnv: boolean
 }
 
@@ -110,17 +115,11 @@ export function planLaunch(input: LaunchInput): LaunchPlan {
   let source: CeilingSource = input.role === 'agent' ? 'computed' : 'v8-default'
   let heapMb: number | null = input.role === 'agent' ? computedAgentHeapMb(input.host) : null
 
-  const legacy = input.legacyEnv
-  if (legacy !== undefined && legacy !== '') {
-    const mb = /^[1-9][0-9]*$/.test(legacy) ? Number(legacy) : Number.NaN
-    if (validMb(mb)) {
-      source = 'legacy-env'
-      heapMb = mb
-    } else {
-      warnings.push(
-        `ignoring the legacy heap env "${legacy}": not an integer in ${OVERRIDE_MIN_MB}-${OVERRIDE_MAX_MB} MB`,
-      )
-    }
+  if (input.legacyEnvNames.length > 0) {
+    warnings.push(
+      `${input.legacyEnvNames.join(', ')} ignored — the heap ceiling is set per node in ` +
+        'Cluster → node → Launch settings (applies after a restart). Remove the entry.',
+    )
   }
   if (input.overrideMb !== null) {
     if (validMb(input.overrideMb)) {
@@ -172,44 +171,88 @@ const realFs: LaunchFs = {
   },
 }
 
+/** The data dir the launcher (and the hub's own boot) read the overrides from. */
+export function launchDataDir(env: Readonly<Record<string, string | undefined>>): string {
+  return path.resolve(env['CAMSTACK_DATA'] ?? 'camstack-data')
+}
+
 export function overridesPath(dataDir: string): string {
   return path.join(dataDir, LAUNCH_OVERRIDES_FILE)
 }
 
-/** The persisted heap override in MB; `null` when absent, unreadable or not a number. */
-export function readHeapOverrideMb(dataDir: string, io: LaunchFs = realFs): number | null {
+export interface LaunchOverrides {
+  readonly heapMb: number | null
+  readonly rssBudgetMb: number | null
+}
+
+function numberField(parsed: object, key: string): number | null {
+  if (!(key in parsed)) return null
+  const value: unknown = Object.getOwnPropertyDescriptor(parsed, key)?.value
+  return typeof value === 'number' ? value : null
+}
+
+/** Both persisted overrides; a field is `null` when absent, unreadable or not a number. */
+export function readLaunchOverrides(dataDir: string, io: LaunchFs = realFs): LaunchOverrides {
+  const none: LaunchOverrides = { heapMb: null, rssBudgetMb: null }
   const raw = io.readFile(overridesPath(dataDir))
-  if (raw === null) return null
+  if (raw === null) return none
   try {
     const parsed: unknown = JSON.parse(raw)
-    if (typeof parsed !== 'object' || parsed === null || !('heapMb' in parsed)) return null
-    const value = parsed.heapMb
-    return typeof value === 'number' ? value : null
+    if (typeof parsed !== 'object' || parsed === null) return none
+    return {
+      heapMb: numberField(parsed, 'heapMb'),
+      rssBudgetMb: numberField(parsed, 'rssBudgetMb'),
+    }
   } catch {
-    return null
+    return none
   }
 }
 
+/** The persisted heap override in MB; `null` when absent, unreadable or not a number. */
+export function readHeapOverrideMb(dataDir: string, io: LaunchFs = realFs): number | null {
+  return readLaunchOverrides(dataDir, io).heapMb
+}
+
+/** The persisted hub-main RSS budget override in MB; `null` when none. */
+export function readRssBudgetOverrideMb(dataDir: string, io: LaunchFs = realFs): number | null {
+  return readLaunchOverrides(dataDir, io).rssBudgetMb
+}
+
 /**
- * Persist (or, with `null`, clear) the heap override. Validated against the same
- * range the launcher enforces, so a value the next launch would ignore is refused
- * here instead of silently doing nothing. Written atomically (temp + rename).
+ * Persist the overrides (a `null` field clears it; both `null` removes the file).
+ * Each value is validated against the range the readers enforce, so a value the
+ * next launch would ignore is refused here instead of silently doing nothing.
+ * Written atomically (temp + rename).
  */
-export function writeHeapOverrideMb(dataDir: string, heapMb: number | null): void {
+export function writeLaunchOverrides(dataDir: string, next: LaunchOverrides): void {
   const file = overridesPath(dataDir)
-  if (heapMb === null) {
+  for (const [name, value] of [
+    ['heap override', next.heapMb],
+    ['RSS budget override', next.rssBudgetMb],
+  ] as const) {
+    if (value !== null && !validMb(value)) {
+      throw new Error(
+        `${name} must be an integer in ${OVERRIDE_MIN_MB}-${OVERRIDE_MAX_MB} MB, got ${value}`,
+      )
+    }
+  }
+  if (next.heapMb === null && next.rssBudgetMb === null) {
     fs.rmSync(file, { force: true })
     return
   }
-  if (!validMb(heapMb)) {
-    throw new Error(
-      `heap override must be an integer in ${OVERRIDE_MIN_MB}-${OVERRIDE_MAX_MB} MB, got ${heapMb}`,
-    )
-  }
   fs.mkdirSync(dataDir, { recursive: true })
+  const body = {
+    ...(next.heapMb === null ? {} : { heapMb: next.heapMb }),
+    ...(next.rssBudgetMb === null ? {} : { rssBudgetMb: next.rssBudgetMb }),
+  }
   const tmp = `${file}.${process.pid}.tmp`
-  fs.writeFileSync(tmp, `${JSON.stringify({ heapMb })}\n`, { mode: 0o600 })
+  fs.writeFileSync(tmp, `${JSON.stringify(body)}\n`, { mode: 0o600 })
   fs.renameSync(tmp, file)
+}
+
+/** Persist (or, with `null`, clear) the heap override, keeping the RSS budget. */
+export function writeHeapOverrideMb(dataDir: string, heapMb: number | null): void {
+  writeLaunchOverrides(dataDir, { heapMb, rssBudgetMb: readRssBudgetOverrideMb(dataDir) })
 }
 
 export function readCgroupLimitBytes(
@@ -252,8 +295,7 @@ export function runLaunchCli(
 ): { readonly stdout: string; readonly code: number } {
   const role = parseRole(argv)
   if (role === null) return { stdout: '', code: 2 }
-  const dataDir = path.resolve(deps.env['CAMSTACK_DATA'] ?? 'camstack-data')
-  const legacyName = role === 'hub' ? 'CAMSTACK_HUB_HEAP_MB' : 'CAMSTACK_AGENT_HEAP_MB'
+  const dataDir = launchDataDir(deps.env)
   const plan = planLaunch({
     role,
     host: {
@@ -261,7 +303,10 @@ export function runLaunchCli(
       cgroupLimitBytes: readCgroupLimitBytes(deps.io, deps.cgroupFiles),
     },
     overrideMb: readHeapOverrideMb(dataDir, deps.io),
-    legacyEnv: deps.env[legacyName],
+    legacyEnvNames: RETIRED_HEAP_ENV.filter((name) => {
+      const value = deps.env[name]
+      return value !== undefined && value !== ''
+    }),
     allocatorEnv: argv.includes('--allocator-env'),
   })
   return { stdout: renderLaunchPlan(plan), code: 0 }

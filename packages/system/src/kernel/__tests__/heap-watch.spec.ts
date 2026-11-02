@@ -22,6 +22,7 @@ import {
   heapCeilingOrigin,
   HUB_MAIN_RSS_BUDGET_MB,
   HUB_RSS_BUDGET_ENV,
+  HUB_RSS_BUDGET_OVERRIDE_SOURCE,
   hubMainRssBudget,
   type LoopDelayMeter,
   type LoopDelaySample,
@@ -1303,5 +1304,15 @@ describe('an undeclared budget is declared', () => {
     expect(overridden.source).toBe(HUB_RSS_BUDGET_ENV)
     // …including all the way off, which is still an explicit, reported choice.
     expect(hubMainRssBudget({ [HUB_RSS_BUDGET_ENV]: '0' }).budgetMb).toBeUndefined()
+  })
+
+  it('the node setting (launch-overrides) wins over the env, and says so', () => {
+    const fromNode = hubMainRssBudget({ [HUB_RSS_BUDGET_ENV]: '6144' }, 8192)
+    expect(fromNode.budgetMb).toBe(8192)
+    expect(fromNode.source).toBe(HUB_RSS_BUDGET_OVERRIDE_SOURCE)
+    expect(hubMainRssBudget({}, 8192).budgetMb).toBe(8192)
+    // No node setting: the env (and then the declared number) still apply.
+    expect(hubMainRssBudget({ [HUB_RSS_BUDGET_ENV]: '6144' }, null).budgetMb).toBe(6144)
+    expect(hubMainRssBudget({}, null).budgetMb).toBe(HUB_MAIN_RSS_BUDGET_MB)
   })
 })

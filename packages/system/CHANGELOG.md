@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Customizing a device with an optional reading (power, energy) no longer fails validation; the composed reading is omitted when its source is lost
 - device-history now records appliance runs (start, finish, energy) and survives restarts.
 - Core blocks keeps a durable timed-run deadline per device, so a heater or pump left running is switched off even after a restart.
+- The hub RSS budget can be set per node and wins over CAMSTACK_HUB_RSS_BUDGET_MB
 
 ### Fixed
 

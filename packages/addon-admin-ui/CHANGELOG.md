@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An addon page that needs a newer UI library than this admin UI provides now shows a clear message instead of failing to render.
 - The AI profile editor hides the reasoning switch for a model that declares it cannot reason
 - Actions ask for their variables before Run now, command options that depend on the device become a choice list, the detection editor uses the class taxonomy labels, and parked-object rules can require a minimum count
+- Node page has a launch settings card for the heap ceiling and the hub RSS budget (takes effect on restart)
 
 ## [1.2.550] - 2026-11-01
 

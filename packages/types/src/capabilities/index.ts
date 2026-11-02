@@ -1653,6 +1653,7 @@ export {
   type ServerRollbackInfo,
   ServerRollbackInfoSchema,
   type LaunchOverrides,
+  type SetLaunchOverridesInput,
   type SetLaunchOverridesResult,
   type ServerUpdateActionResult,
   ServerUpdateActionResultSchema,

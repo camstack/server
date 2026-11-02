@@ -398,7 +398,8 @@ done
 # by the SERVER CLOSURE, not by this image: `dist/launch-args.js` prints them and
 # the block below only executes what it printed (ADR 0970). hub-main still gets
 # NO hardcoded heap cap — that module returns V8's default for the hub unless a
-# per-node override or CAMSTACK_HUB_HEAP_MB is set. The history below is why.
+# per-node override (Cluster -> node -> Launch settings) is set. The history
+# below is why. CAMSTACK_HUB_HEAP_MB is retired: ignored, named in a boot warning.
 #
 # It used to be a hard `--max-old-space-size=1536`, and that number killed the
 # hub four times in ~15h on 2026-08-01/02 — once nine seconds after a viewer
@@ -440,7 +441,7 @@ done
 #
 # Recommended value when the container is next recreated:
 #
-#     -e CAMSTACK_HUB_HEAP_MB=3072      # V8's real limit here: 3264MB
+#     heap ceiling 3072 MB (node setting; the env var is retired) # V8's real limit here: 3264MB
 #
 # 3264MB is 15% above the all-time measured max (2847MB, 2026-08-08) and 33%
 # above today's, while the configuration that OOM'd four times in 15h (1536 →
@@ -451,10 +452,10 @@ done
 # (D181). Not worth an image rebuild.
 #
 # This is no longer an IMAGE-level knob: the ceiling comes from the closure's
-# launch-args module (a per-node override set from the hub, then the legacy
-# CAMSTACK_HUB_HEAP_MB), so changing it needs a closure update and a restart,
+# launch-args module (a per-node override set from the hub; the legacy
+# CAMSTACK_HUB_HEAP_MB is ignored with a warning), so changing it needs a closure update and a restart,
 # not a new image or a recreated container. The node says which case it is in
-# on every boot: `[mem] hub-main heap ceiling …MB, set by <override|legacy-env|
+# on every boot: `[mem] hub-main heap ceiling …MB, set by <override|
 # computed>`, or `… is V8's DEFAULT (…MB)` when no `--max-old-space-size`
 # reached argv.
 #

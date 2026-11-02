@@ -23,6 +23,7 @@ import { NodeDetailSettingsTab } from './tabs/NodeDetailSettingsTab'
 import { NodeDetailCapabilitiesTab } from './tabs/NodeDetailCapabilitiesTab'
 import { NodeInfoTab } from './tabs/NodeInfoTab'
 import { NodeGeneralIdentitySection } from './NodeGeneralIdentitySection'
+import { NodeLaunchSettingsCard } from './tabs/NodeLaunchSettingsCard'
 import { NodeServerManagementSection } from './tabs/NodeServerManagementSection'
 import { useTranslation } from 'react-i18next'
 // Models live in Model Studio (catalog + per-node download), not on
@@ -519,6 +520,9 @@ export function NodeCard({ node }: { readonly node: NodeData }) {
                 }}
               />
             </div>
+            <NodeLaunchSettingsCard
+              node={{ id: node.id, isHub: node.isHub, isOnline: node.isOnline }}
+            />
           </div>
         )}
         {activeTab === 'forks' && <ForksTab nodeId={node.id} processes={processes} />}

@@ -1,7 +1,7 @@
 /**
  * The node's launch arguments are decided by the closure (`launch-args.ts`) and
  * only EXECUTED by the Docker entrypoint. This pins both halves: the decision
- * (override > legacy env > computed / V8 default), the output format, and the
+ * (override > computed / V8 default; the legacy heap env is ignored with a warning), the output format, and the
  * entrypoint's fail-open behaviour against a fake `node`.
  */
 import { execFileSync } from 'node:child_process'
@@ -19,6 +19,8 @@ import {
   planLaunch,
   readCgroupLimitBytes,
   readHeapOverrideMb,
+  readLaunchOverrides,
+  readRssBudgetOverrideMb,
   renderLaunchPlan,
   runLaunchCli,
 } from '../launch-args.js'
@@ -31,7 +33,7 @@ const host = (totalGb: number, cgroupGb: number | null = null): LaunchHost => ({
 const base = {
   host: host(8),
   overrideMb: null,
-  legacyEnv: undefined,
+  legacyEnvNames: [] as readonly string[],
   allocatorEnv: false,
 } as const
 
@@ -75,16 +77,16 @@ describe('planLaunch', () => {
     expect(plan.source).toBe('computed')
   })
 
-  it('the legacy env sets the hub ceiling', () => {
-    const plan = planLaunch({ ...base, role: 'hub', legacyEnv: '3072' })
-    expect(plan.args).toEqual(['--max-old-space-size=3072'])
-    expect(plan.source).toBe('legacy-env')
+  it('a legacy heap env is ignored and named in a warning, the ceiling stays the default', () => {
+    const plan = planLaunch({ ...base, role: 'hub', legacyEnvNames: ['CAMSTACK_HUB_HEAP_MB'] })
+    expect(plan.args).toEqual([])
+    expect(plan.source).toBe('v8-default')
+    expect(plan.warnings.join(' ')).toContain('CAMSTACK_HUB_HEAP_MB')
+    expect(plan.warnings.join(' ')).toContain('ignored')
   })
 
-  it('a per-node override beats the legacy env and the computed value', () => {
-    expect(
-      planLaunch({ ...base, role: 'agent', overrideMb: 3000, legacyEnv: '2500' }),
-    ).toMatchObject({
+  it('a per-node override beats the computed value', () => {
+    expect(planLaunch({ ...base, role: 'agent', overrideMb: 3000 })).toMatchObject({
       args: ['--max-old-space-size=3000'],
       source: 'override',
     })
@@ -98,9 +100,6 @@ describe('planLaunch', () => {
     const plan = planLaunch({ ...base, role: 'agent', overrideMb: 10 })
     expect(plan.source).toBe('computed')
     expect(plan.warnings.join(' ')).toContain('heap override 10')
-    const legacy = planLaunch({ ...base, role: 'hub', legacyEnv: 'lots' })
-    expect(legacy.args).toEqual([])
-    expect(legacy.warnings.join(' ')).toContain('"lots"')
   })
 
   it('always names the source in the env, and adds the allocator pair on request', () => {
@@ -123,6 +122,15 @@ describe('reading the node', () => {
     expect(readHeapOverrideMb('/data', fakeFs({ [file]: '{nope' }))).toBeNull()
     expect(readHeapOverrideMb('/data', fakeFs({ [file]: '{"heapMb":"big"}' }))).toBeNull()
     expect(readHeapOverrideMb('/data', fakeFs({ [file]: '{"heapMb":null}' }))).toBeNull()
+  })
+
+  it('reads the RSS budget override beside the heap one', () => {
+    const file = '/data/launch-overrides.json'
+    const both = fakeFs({ [file]: '{"heapMb":3072,"rssBudgetMb":6144}' })
+    expect(readRssBudgetOverrideMb('/data', both)).toBe(6144)
+    expect(readLaunchOverrides('/data', both)).toEqual({ heapMb: 3072, rssBudgetMb: 6144 })
+    expect(readRssBudgetOverrideMb('/data', fakeFs({ [file]: '{"heapMb":3072}' }))).toBeNull()
+    expect(readRssBudgetOverrideMb('/data', fakeFs({}))).toBeNull()
   })
 
   it('reads a cgroup limit, treating "max" and the v1 unlimited sentinel as none', () => {
@@ -163,13 +171,15 @@ describe('runLaunchCli', () => {
     )
   })
 
-  it('honours the legacy env per role', () => {
-    expect(
-      runLaunchCli(['--role', 'hub'], deps({ CAMSTACK_HUB_HEAP_MB: '2048' })).stdout,
-    ).toContain('arg --max-old-space-size=2048')
-    expect(
-      runLaunchCli(['--role', 'agent'], deps({ CAMSTACK_HUB_HEAP_MB: '2048' })).stdout,
-    ).toContain('source computed')
+  it('ignores the legacy heap env per role, with one warning naming it', () => {
+    const hub = runLaunchCli(['--role', 'hub'], deps({ CAMSTACK_HUB_HEAP_MB: '2048' })).stdout
+    expect(hub).not.toContain('--max-old-space-size')
+    expect(hub).toContain('source v8-default')
+    expect(hub).toMatch(/warn .*CAMSTACK_HUB_HEAP_MB.* ignored/)
+    const agent = runLaunchCli(['--role', 'agent'], deps({ CAMSTACK_AGENT_HEAP_MB: '9000' })).stdout
+    expect(agent).toContain('source computed')
+    expect(agent).toMatch(/warn .*CAMSTACK_AGENT_HEAP_MB.* ignored/)
+    expect(runLaunchCli(['--role', 'hub'], deps({})).stdout).not.toContain('warn ')
   })
 
   it('refuses a missing or unknown role with no output', () => {

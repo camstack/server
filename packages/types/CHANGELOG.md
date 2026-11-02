@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Model features carry a reasoning flag (null when the endpoint does not say)
 - Stationary-present conditions accept a minimum count; the trigger variables of a condition are listed from one place
 - New do-not-disturb capability: a read and write Do Not Disturb switch for speakers
+- server-management launch overrides now carry the hub RSS budget (rssBudgetMb)
 
 ## [1.2.470] - 2026-11-01
 

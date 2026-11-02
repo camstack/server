@@ -244,8 +244,8 @@ used — the request's `Host`), the hosted viewer at
 Expo web on `http://localhost:8081`, add it under Identity → Authentication →
 Sign-in policy → Allowed browser origins. It applies to the next request, with
 no restart. There is no environment variable and no `config.yaml` key for it:
-the retired `server.corsOrigins` and `CAMSTACK_CORS_ORIGINS` are ignored and
-named in the boot log.
+the retired `server.corsOrigins` and `CAMSTACK_CORS_ORIGINS` are ignored
+(silently: the boot no longer names them).
 
 The hub logs a refused origin once, in the `cors` scope, with this hint.
 Cross-origin callers authenticate with a bearer token. The session cookie

@@ -11,8 +11,10 @@ import { buildLaunchOverrideMethods } from '../api/core/server-management.provid
 import {
   LAUNCH_OVERRIDES_FILE,
   readHeapOverrideMb,
+  readRssBudgetOverrideMb,
   runLaunchCli,
   writeHeapOverrideMb,
+  writeLaunchOverrides,
 } from '../launch-args.js'
 
 const fresh = (): string => mkdtempSync(join(tmpdir(), 'launch-overrides-'))
@@ -66,12 +68,46 @@ describe('server-management launch overrides', () => {
   it('the methods read and write the node data dir', async () => {
     const dir = fresh()
     const provider = buildLaunchOverrideMethods(dir)
-    expect(await provider.getLaunchOverrides()).toEqual({ heapMb: null })
-    const set = await provider.setLaunchOverrides({ heapMb: 5120 })
-    expect(set).toEqual({ heapMb: 5120, restartRequired: true })
+    expect(await provider.getLaunchOverrides()).toEqual({ heapMb: null, rssBudgetMb: null })
+    const set = await provider.setLaunchOverrides({ heapMb: 5120, rssBudgetMb: 6144 })
+    expect(set).toEqual({ heapMb: 5120, rssBudgetMb: 6144, restartRequired: true })
     expect(readHeapOverrideMb(dir)).toBe(5120)
-    expect(await provider.getLaunchOverrides()).toEqual({ heapMb: 5120 })
-    await provider.setLaunchOverrides({ heapMb: null })
+    expect(readRssBudgetOverrideMb(dir)).toBe(6144)
+    expect(await provider.getLaunchOverrides()).toEqual({ heapMb: 5120, rssBudgetMb: 6144 })
+    await provider.setLaunchOverrides({ heapMb: null, rssBudgetMb: null })
     expect(readHeapOverrideMb(dir)).toBeNull()
+    expect(existsSync(join(dir, LAUNCH_OVERRIDES_FILE))).toBe(false)
+  })
+
+  it('an omitted rssBudgetMb keeps the stored budget; the heap write keeps it too', async () => {
+    const dir = fresh()
+    const provider = buildLaunchOverrideMethods(dir)
+    writeLaunchOverrides(dir, { heapMb: null, rssBudgetMb: 8192 })
+    expect(await provider.setLaunchOverrides({ heapMb: 4096 })).toMatchObject({
+      heapMb: 4096,
+      rssBudgetMb: 8192,
+    })
+    writeHeapOverrideMb(dir, 2048)
+    expect(readRssBudgetOverrideMb(dir)).toBe(8192)
+  })
+
+  it('refuses an out-of-range RSS budget, writing nothing', () => {
+    const dir = fresh()
+    expect(() => writeLaunchOverrides(dir, { heapMb: null, rssBudgetMb: 100 })).toThrow(/512/)
+    expect(readdirSync(dir)).toEqual([])
+  })
+
+  it('the cap input carries the RSS budget and the write is admin-gated', () => {
+    const { setLaunchOverrides, getLaunchOverrides } = serverManagementCapability.methods
+    expect(setLaunchOverrides.auth).toBe('admin')
+    expect(setLaunchOverrides.input.safeParse({ heapMb: null, rssBudgetMb: 6144 }).success).toBe(
+      true,
+    )
+    expect(setLaunchOverrides.input.safeParse({ heapMb: null, rssBudgetMb: 10 }).success).toBe(
+      false,
+    )
+    expect(getLaunchOverrides.output.safeParse({ heapMb: null, rssBudgetMb: null }).success).toBe(
+      true,
+    )
   })
 })

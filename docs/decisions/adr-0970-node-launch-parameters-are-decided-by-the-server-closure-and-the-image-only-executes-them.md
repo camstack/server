@@ -29,8 +29,10 @@ closure, `@camstack/server/dist/launch-args.js`
 runs it, validates what came back, and applies it. A launcher carries no formula.
 
 - Heap ceiling precedence: the per-node override file `<dataDir>/launch-overrides.json`
-  (`{ "heapMb": N }`, set from the hub through `serverManagement.setLaunchOverrides`),
-  then the legacy `CAMSTACK_HUB_HEAP_MB` / `CAMSTACK_AGENT_HEAP_MB`, then the agent's
+  (`{ "heapMb": N, "rssBudgetMb": M }`, set from the hub through
+  `serverManagement.setLaunchOverrides`; `rssBudgetMb` is hub-main's RSS budget and
+  wins over `CAMSTACK_HUB_RSS_BUDGET_MB`). The legacy `CAMSTACK_HUB_HEAP_MB` /
+  `CAMSTACK_AGENT_HEAP_MB` are retired: ignored, named in a `warn` record. Then the agent's
   computed clamp(min(RAM, cgroup)/4, 1536, 4096) MB, or V8's default for the hub.
 - The allocator pair `MALLOC_ARENA_MAX=2` + `VIPS_CONCURRENCY=1` comes from the same
   module (an operator value wins); it must exist before `exec node`, which is why

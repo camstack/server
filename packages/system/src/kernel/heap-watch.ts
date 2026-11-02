@@ -1603,8 +1603,20 @@ export const HUB_RSS_BUDGET_ENV = 'CAMSTACK_HUB_RSS_BUDGET_MB'
  */
 export const HUB_MAIN_RSS_BUDGET_MB = 4096
 
-/** hub-main's budget: the declared number, or the operator's override. */
-export function hubMainRssBudget(env: NodeJS.ProcessEnv = process.env): RssBudgetOptions {
+/** Source label when the budget comes from the node's launch-overrides setting. */
+export const HUB_RSS_BUDGET_OVERRIDE_SOURCE = 'node setting (launch-overrides.json rssBudgetMb)'
+
+/**
+ * hub-main's budget: the node setting (`overrideMb`, from `launch-overrides.json`),
+ * else the operator's env override, else the declared number.
+ */
+export function hubMainRssBudget(
+  env: NodeJS.ProcessEnv = process.env,
+  overrideMb: number | null = null,
+): RssBudgetOptions {
+  if (overrideMb !== null) {
+    return { budgetMb: overrideMb, source: HUB_RSS_BUDGET_OVERRIDE_SOURCE }
+  }
   const override = env[HUB_RSS_BUDGET_ENV]
   if (override !== undefined) {
     return { budgetMb: parseRssBudgetMb(override), source: HUB_RSS_BUDGET_ENV }

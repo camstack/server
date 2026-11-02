@@ -4331,7 +4331,7 @@
 
 ### `server-management` → `serverManagement.*`
 
-- **Source:** `packages/types/src/capabilities/server-management.cap.ts:470`
+- **Source:** `packages/types/src/capabilities/server-management.cap.ts:478`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `server-provided`
 - **Archetypes:** —
 - **Provider interface:** `IServerManagementProvider`
@@ -4344,8 +4344,8 @@
 | installDesktopUpdate | `serverManagement.installDesktopUpdate` | mutation | admin | `void` | `InstallDesktopUpdateResultSchema` |
 | rollbackServerUpdate | `serverManagement.rollbackServerUpdate` | mutation | admin | `void` | `ServerUpdateActionResultSchema` |
 | restartServer | `serverManagement.restartServer` | mutation | admin | `void` | `ServerUpdateActionResultSchema` |
-| getLaunchOverrides | `serverManagement.getLaunchOverrides` | query | admin | `void` | `{ heapMb: number \| null }` |
-| setLaunchOverrides | `serverManagement.setLaunchOverrides` | mutation | admin | `{ heapMb: number \| null }` | `{ heapMb: number \| null; restartRequired: boolean }` |
+| getLaunchOverrides | `serverManagement.getLaunchOverrides` | query | admin | `void` | `{ heapMb: number \| null; rssBudgetMb: number \| null }` |
+| setLaunchOverrides | `serverManagement.setLaunchOverrides` | mutation | admin | `{ heapMb: number \| null; rssBudgetMb?: number \| null }` | `{ heapMb: number \| null; rssBudgetMb: number \| null; restartRequired: boolean }` |
 
 ### `settings-store` → `settingsStore.*`
 

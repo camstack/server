@@ -8,22 +8,32 @@
  * `RootUpdateService` subclasses, so there is no per-node provider copy.
  */
 import type { IServerManagementProvider } from '@camstack/types'
-import type { LaunchOverrides, SetLaunchOverridesResult } from '@camstack/types'
-import { readHeapOverrideMb, writeHeapOverrideMb } from '../../launch-args.js'
+import type {
+  LaunchOverrides,
+  SetLaunchOverridesInput,
+  SetLaunchOverridesResult,
+} from '@camstack/types'
+import { readLaunchOverrides, writeLaunchOverrides } from '../../launch-args.js'
 import type { RootUpdateService } from '../../server-root/index.js'
 
 /** The per-node launch override methods (ADR 0970), backed by the node's data dir. */
 export function buildLaunchOverrideMethods(dataDir: string): {
   readonly getLaunchOverrides: () => Promise<LaunchOverrides>
-  readonly setLaunchOverrides: (input: {
-    readonly heapMb: number | null
-  }) => Promise<SetLaunchOverridesResult>
+  readonly setLaunchOverrides: (input: SetLaunchOverridesInput) => Promise<SetLaunchOverridesResult>
 } {
   return {
-    getLaunchOverrides: () => Promise.resolve({ heapMb: readHeapOverrideMb(dataDir) }),
+    getLaunchOverrides: () => Promise.resolve(readLaunchOverrides(dataDir)),
     setLaunchOverrides: (input) => {
-      writeHeapOverrideMb(dataDir, input.heapMb)
-      return Promise.resolve({ heapMb: input.heapMb, restartRequired: true })
+      const next = {
+        heapMb: input.heapMb,
+        // Omitted = keep what is stored; null = clear.
+        rssBudgetMb:
+          input.rssBudgetMb === undefined
+            ? readLaunchOverrides(dataDir).rssBudgetMb
+            : input.rssBudgetMb,
+      }
+      writeLaunchOverrides(dataDir, next)
+      return Promise.resolve({ ...next, restartRequired: true })
     },
   }
 }
