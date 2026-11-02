@@ -93,7 +93,7 @@ function harness(opts: { instanceMode?: 'single' | 'multiple'; withProvider?: bo
     { createLogger: vi.fn(() => log) } as never,
     null,
   )
-  return { provider, registry, instances, restartAddon }
+  return { provider, registry, instances, restartAddon, log }
 }
 
 describe('integrations over an integration-instances provider', () => {
@@ -165,6 +165,19 @@ describe('integrations over an integration-instances provider', () => {
     ).rejects.toThrow('refused')
     expect(h.registry.deleteIntegration).toHaveBeenCalledWith('int_0001')
     expect(await h.registry.listIntegrations()).toHaveLength(0)
+  })
+
+  it('a failing rollback does not hide why the record was refused', async () => {
+    const h = harness()
+    h.instances.updateInstance.mockRejectedValueOnce(new Error('refused'))
+    h.registry.deleteIntegration.mockRejectedValueOnce(new Error('registry down'))
+    await expect(
+      h.provider.create({ addonId: ADDON_ID, name: 'Loki', settings: { url: 'bad' } }),
+    ).rejects.toThrow('refused')
+    expect(h.log.warn).toHaveBeenCalledWith(
+      expect.stringContaining('could not be removed'),
+      expect.anything(),
+    )
   })
 
   it('a rejected test blocks the create before any row exists', async () => {

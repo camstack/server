@@ -1315,7 +1315,15 @@ export function buildIntegrationsProvider(
           }
         } catch (err) {
           await instances.deleteInstance({ id: integration.id }).catch(() => undefined)
-          await reg.deleteIntegration(integration.id)
+          try {
+            await reg.deleteIntegration(integration.id)
+          } catch (rollbackErr) {
+            // The rollback failing must not hide WHY the create was refused.
+            logger.warn('instance record refused — registry row could not be removed', {
+              tags: { integrationId: integration.id, addonId: integration.addonId },
+              meta: { phase: 'create-rollback', error: errMsg(rollbackErr) },
+            })
+          }
           logger.warn('instance record refused — registry row removed', {
             tags: { integrationId: integration.id, addonId: integration.addonId },
             meta: { phase: 'create', error: errMsg(err) },
