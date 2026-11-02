@@ -61,6 +61,7 @@ export function fireRefFor(
   rule: NcRule,
   subject: NcRuleSubject,
   kind: NcSubjectKind,
+  sensorName?: string,
 ): NcRuleFireRef {
   const hasEventMedia = kind === 'object-event' || kind === 'package-event'
   // What the rule's OWN notification would have said. Carried only when the
@@ -83,6 +84,17 @@ export function fireRefFor(
     // The SENSOR, when there is one. Provenance the alarm panel reads to know
     // whether this trigger came from a contact it excluded at arm time.
     ...(subject.sourceDeviceId !== undefined ? { sourceDeviceId: subject.sourceDeviceId } : {}),
+    ...(subject.sensorKind !== undefined &&
+    subject.sensorState !== undefined &&
+    sensorName !== undefined
+      ? {
+          sensorChange: {
+            name: sensorName,
+            kind: subject.sensorKind,
+            state: subject.sensorState,
+          },
+        }
+      : {}),
     recordId: subject.recordId,
     ...(trackId !== undefined ? { trackId } : {}),
     ...(linkedOwners !== undefined && linkedOwners.extraStills.length > 0
@@ -97,6 +109,13 @@ export function fireRefFor(
     zones: notificationZones(rule, subject),
     ...(subject.confidence !== undefined ? { confidence: subject.confidence } : {}),
   }
+}
+
+/** The directory name of the sensor a match was about; absent for a camera subject. */
+function sensorNameOf(host: RuleActionDispatchHost, subject: NcRuleSubject): string | undefined {
+  if (subject.source !== 'sensor') return undefined
+  const name = host.deviceDirectory.get(subject.sourceDeviceId ?? subject.deviceId)?.name.trim()
+  return name !== undefined && name.length > 0 ? name : undefined
 }
 
 export interface RuleActionDispatchHost {
@@ -155,7 +174,7 @@ export function runRuleActions(
     lookup: (id) => host.sequences.get(id),
     // The provenance that makes an alarm this sequence sets off deliver ONE
     // notification instead of two — see {@link NcRuleFireRef}.
-    origin: fireRefFor(rule, subject, kind),
+    origin: fireRefFor(rule, subject, kind, sensorNameOf(host, subject)),
   })
   return phase
 }
@@ -181,7 +200,7 @@ export function autoTriggerAlarmPanel(
     })
     return NO_ALARM_PHASE
   }
-  const origin = fireRefFor(rule, subject, kind)
+  const origin = fireRefFor(rule, subject, kind, sensorNameOf(host, subject))
   const phase = panel.classifyRuleMatch(origin)
   // SYNCHRONOUS, the source in the call (D735): the press lands before the next match of
   // this evaluation chain is classified, so no two presses can exchange their sources.

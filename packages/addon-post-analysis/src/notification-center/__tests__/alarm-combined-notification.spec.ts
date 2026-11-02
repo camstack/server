@@ -317,3 +317,80 @@ describe('a row enqueued before this deploy', () => {
     expect(sent.notification.body).toBe('Triggered by Person at gate on Front door')
   })
 })
+
+describe('a sensor-caused trigger names the location AND what moved', () => {
+  const LOCK = 1864
+  const DOOR = 1865
+  const places: Readonly<Record<number, NcDeviceIdentity>> = {
+    [LOCK]: {
+      deviceId: LOCK,
+      type: 'lock',
+      name: 'Laundry lock',
+      isCamera: false,
+      location: 'Laundry',
+    },
+    [DOOR]: {
+      deviceId: DOOR,
+      type: 'sensor',
+      name: 'Back door',
+      isCamera: false,
+      location: 'Hall',
+    },
+  }
+  const lookup = (id: number): NcDeviceIdentity | undefined => places[id]
+  const lockRef = fireRef({
+    className: undefined,
+    trackId: undefined,
+    eventId: undefined,
+    sourceDeviceId: LOCK,
+    sensorChange: { name: 'Laundry lock', kind: 'lock', state: 'unlocked' },
+  })
+  const doorRef = fireRef({
+    className: undefined,
+    trackId: undefined,
+    eventId: undefined,
+    sourceDeviceId: DOOR,
+    sensorChange: { name: 'Back door', kind: 'contact', state: 'open' },
+  })
+
+  function sensorRow(followers: readonly NcRuleFireRef[]): NcOutboxEntry {
+    const incoming = incomingFromAlarmTransition({
+      transition: { ...triggered(lockRef), followers },
+      panelDeviceId: PANEL,
+      lookup,
+    })
+    const systemEvent = incoming.subject.systemEvent
+    if (systemEvent === undefined) throw new Error('the intake produced no system event')
+    return makeEntry({
+      subject: {
+        deviceId: incoming.subject.deviceId,
+        className: 'event',
+        zones: [],
+        timestamp: incoming.subject.timestamp,
+        systemEvent,
+      },
+    })
+  }
+
+  it('says the location and the device with its state', async () => {
+    const sent = await deliver(sensorRow([]))
+    expect(sent.notification.body).toBe('Intrusion: Laundry — Laundry lock unlocked')
+  })
+
+  it('lists every device of the incident', async () => {
+    const sent = await deliver(sensorRow([doorRef]))
+    expect(sent.notification.body).toBe(
+      'Intrusion: Laundry, Hall — Laundry lock unlocked, Back door open',
+    )
+  })
+
+  it('speaks the hub language', async () => {
+    const sent = await deliver(sensorRow([]), 'it')
+    expect(sent.notification.body).toBe('Intrusione: Laundry — Laundry lock aperta')
+  })
+
+  it('keeps the plain location line when the trigger was no sensor', async () => {
+    const sent = await deliver(rowFor(fireRef({ className: undefined })))
+    expect(sent.notification.body).toBe('Intrusion: Front door')
+  })
+})

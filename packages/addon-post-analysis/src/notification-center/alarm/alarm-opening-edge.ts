@@ -58,3 +58,20 @@ export function sensorEdgeOf(
   // notifying, never towards silence).
   return undefined
 }
+
+/**
+ * The WORD a sensor change is told with — the state the device moved to, read off
+ * the same slice the edge is: `unlocked`, `open`, `closed`… for a lock, cover, contact
+ * or switch, else `raised` / `cleared` for a boolean sensor (water, smoke…). Undefined
+ * when the slice cannot say: a sentence never invents a state (D393).
+ */
+export function sensorStateWordOf(
+  kind: string,
+  value: Readonly<Record<string, unknown>> | null,
+  raised: boolean | undefined,
+): string | undefined {
+  const opening = alarmOpeningFromSensorEvent(kind, value)
+  if (opening.kind === 'reading') return opening.state
+  if (raised === undefined) return undefined
+  return raised ? 'raised' : 'cleared'
+}

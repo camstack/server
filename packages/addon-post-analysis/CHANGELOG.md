@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- An alarm triggered by a sensor now names the location and what changed: "Intrusione: Lavanderia — Serratura lavanderia aperta", one entry per device
+
 ## [1.2.665] - 2026-11-02
 
 ### Changed

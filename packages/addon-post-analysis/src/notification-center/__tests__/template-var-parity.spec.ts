@@ -1144,6 +1144,27 @@ const SYSTEM_SAMPLES: readonly SystemSample[] = [
         },
       }),
   },
+  {
+    // The COMBINED row of a SENSOR-caused trigger: `{{changes}}` is filled here.
+    name: 'alarm triggered (by a sensor rule)',
+    build: () =>
+      alarm({
+        kind: 'alarm-triggered',
+        state: 'triggered',
+        previous: 'armed_away',
+        at: SYS_AT,
+        source: {
+          ruleId: 'rule-10',
+          ruleName: 'Allarme notte',
+          deviceId: 104,
+          sourceDeviceId: 105,
+          recordId: 'ev-10',
+          timestamp: SYS_AT,
+          zones: [],
+          sensorChange: { name: 'Serratura lavanderia', kind: 'lock', state: 'unlocked' },
+        },
+      }),
+  },
 ]
 
 /** Freeze an intake subject as `NotificationCenter.buildEntries` (index.ts)

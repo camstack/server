@@ -106,7 +106,7 @@ import {
   NcNotificationImageStage,
   primaryImageCamera,
 } from './notification-image.js'
-import { cleanSourcePreference, isAnnotatedSceneKind } from './rule-engine.js'
+import { cleanSourcePreference, isAnnotatedSceneKind, type NcRuleFireRef } from './rule-engine.js'
 import {
   type MosaicRenderRequest,
   type MosaicRenderResult,
@@ -3801,8 +3801,37 @@ export function buildTemplateVars(
     // the live vocabulary would be answering a different question by the time a
     // held row drains. Absent on every row enqueued before this deploy, and on
     // every row that is not a system event.
+    ...(systemEvent?.alarmSource !== undefined
+      ? { changes: alarmChangesText(texts, systemEvent.alarmSource, systemEvent.alarmFollowers) }
+      : {}),
     ...systemEventParamsForTemplate(systemEvent?.textParams),
   }
+}
+
+/**
+ * `{{changes}}` of the combined alarm body: what each sensor of the incident did, in
+ * arrival order and one phrase per device — "Laundry lock unlocked". The phrase is a
+ * catalog key per kind and state (`alarm.change.<kind>.<state>`), then per state
+ * (`alarm.change.<state>`), then the bare name: a state nobody worded never drops the device.
+ */
+function alarmChangesText(
+  texts: NcTextCatalog,
+  source: NcRuleFireRef,
+  followers: readonly NcRuleFireRef[] | undefined,
+): string {
+  const phrases: string[] = []
+  for (const ref of [source, ...(followers ?? [])]) {
+    const change = ref.sensorChange
+    if (change === undefined) continue
+    const key = [
+      `alarm.change.${change.kind}.${change.state}`,
+      `alarm.change.${change.state}`,
+    ].find((candidate) => texts.has(candidate))
+    const phrase =
+      key === undefined ? change.name : texts.text({ key, vars: { device: change.name } })
+    if (!phrases.includes(phrase)) phrases.push(phrase)
+  }
+  return phrases.join(', ')
 }
 
 /**

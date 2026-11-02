@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - An addon blocked by its migrations now throws a typed AddonMigrationsBlockedError naming the migration ids.
+- New template variable {{changes}} for the combined alarm body: the sensors of the incident and what each did
 
 ## [1.2.481] - 2026-11-02
 

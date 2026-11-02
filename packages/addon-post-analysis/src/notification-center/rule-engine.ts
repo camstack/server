@@ -50,7 +50,7 @@ import {
 import type { BboxRect } from '../pipeline-analytics/pipeline/zones/geometry.js'
 import type { TrackLabelTiers } from '../pipeline-analytics/store/track-store.js'
 import { bboxPolygonOverlap } from '../pipeline-analytics/pipeline/zones/overlap.js'
-import { type NcSensorEdge, sensorEdgeOf } from './alarm/alarm-opening-edge.js'
+import { type NcSensorEdge, sensorEdgeOf, sensorStateWordOf } from './alarm/alarm-opening-edge.js'
 import {
   type AudioWindowHit,
   type AudioWindowSpec,
@@ -107,6 +107,13 @@ export const NC_SYSTEM_DEVICE_ID = 0
  * the outbox freezes it, and a row written tonight is read back by whatever the
  * panel and the runner have become next month.
  */
+/** One sensor change as an alarm sentence tells it — see {@link NcRuleFireRef.sensorChange}. */
+export interface NcSensorChange {
+  readonly name: string
+  readonly kind: string
+  readonly state: string
+}
+
 export interface NcRuleFireRef {
   readonly ruleId: string
   readonly ruleName: string
@@ -122,6 +129,13 @@ export interface NcRuleFireRef {
    * about to set it off. Absent when the subject is the camera itself.
    */
   readonly sourceDeviceId?: number
+  /**
+   * WHAT the sensor did, when the match was about one: its taxonomy kind, the word it
+   * moved to and its name, frozen at the match. The combined alarm body tells it beside
+   * the location ("Laundry — Laundry lock unlocked"). Absent for a camera subject, and
+   * when the slice could not say which way the sensor moved.
+   */
+  readonly sensorChange?: NcSensorChange
   /** The evaluated record id, so the rule's own row can be found again. */
   readonly recordId: string
   readonly trackId?: string
@@ -463,6 +477,9 @@ export interface NcRuleSubject {
    *  for a kind with no raise and for an unreadable slice — a
    *  `sensorTransition` condition then PASSES (never silence on a bad read). */
   readonly sensorRaised?: boolean
+  /** DEVICE-EVENT: the word the sensor moved to (`unlocked`, `open`, `raised`…) —
+   *  what an alarm sentence tells beside the device's name. Absent when unreadable. */
+  readonly sensorState?: string
   /** PACKAGE-EVENT: which lifecycle phase this record represents. */
   readonly packagePhase?: NcPackagePhase
   /**
@@ -668,6 +685,7 @@ export function subjectFromSensorEvent(
   // unowned-sensor subject built from this one) answers the same edge.
   const sensorEdge = sensorEdgeOf(ev.kind, ev.value)
   const sensorRaised = sensorRaisedOf(ev.kind, ev.value)
+  const sensorState = sensorStateWordOf(ev.kind, ev.value, sensorRaised)
   return {
     kind: 'device-event',
     // `String`, deliberately: an event id is a rowid since D474 but a TRACK id
@@ -695,6 +713,7 @@ export function subjectFromSensorEvent(
     ...(eventType !== undefined ? { eventType } : {}),
     ...(sensorEdge !== undefined ? { sensorEdge } : {}),
     ...(sensorRaised !== undefined ? { sensorRaised } : {}),
+    ...(sensorState !== undefined ? { sensorState } : {}),
     // ONE evaluation for the whole linked set (ADR 0632): every camera it
     // shows, primary first — the same shape the unowned subject uses.
     ...(linked !== undefined

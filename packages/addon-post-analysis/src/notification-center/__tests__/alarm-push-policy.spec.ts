@@ -372,7 +372,10 @@ async function replayIncident(h: Harness): Promise<readonly Push[]> {
 }
 
 const ENTRY = 'Entry delay — away, 30s to disarm'
-const ALARM = { title: 'ALARM', body: 'Intrusion: Front door, Hallway piano terra, Hall' }
+const ALARM = {
+  title: 'ALARM',
+  body: 'Intrusion: Front door, Hallway piano terra, Hall — Porta front door open',
+}
 const REARMED = 'Re-armed — away'
 
 const brief = (pushes: readonly Push[]) => pushes.map((p) => [p.at, p.title, p.body] as const)

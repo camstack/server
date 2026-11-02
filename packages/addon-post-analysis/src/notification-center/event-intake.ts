@@ -2053,16 +2053,21 @@ function unique(values: readonly string[]): readonly string[] {
 function combinedAlarmText(
   kind: NcAlarmTransition['kind'],
   source: NcRuleFireRef | undefined,
+  followers: readonly NcRuleFireRef[] = [],
 ): { readonly titleKey: string; readonly bodyKey: string } | null {
   // Only the TRIGGER combines. An entry delay started by the same rule is a
   // countdown, and its own notification is the one push about that match (D706).
   if (kind !== 'alarm-triggered' || source === undefined) return null
   // D706: the body names WHERE the intrusion went — the locations of the source and of
   // every follower, frozen as `{{locations}}` — not one camera's detection sentence.
+  // A sensor-caused trigger also names WHAT moved (`{{changes}}`, rendered at delivery
+  // from the fire refs' `sensorChange`): the variant is picked here, like every sentence.
   return {
     titleKey:
       source.className !== undefined ? 'alarm.combined.title' : 'system.alarm-triggered.title',
-    bodyKey: 'alarm.intrusion.body',
+    bodyKey: [source, ...followers].some((ref) => ref.sensorChange !== undefined)
+      ? 'alarm.intrusion.body.withChanges'
+      : 'alarm.intrusion.body',
   }
 }
 
@@ -2086,7 +2091,7 @@ function alarmTextKeys(
     | undefined,
 ): { readonly titleKey: string; readonly bodyKey: string } {
   const { kind, source } = transition
-  const combined = combinedAlarmText(kind, source)
+  const combined = combinedAlarmText(kind, source, transition.followers)
   if (combined !== null) return combined
   const baseTitle =
     transition.mode !== undefined

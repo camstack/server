@@ -551,6 +551,19 @@ export const NC_TEMPLATE_VARS: readonly NcTemplateVarDescriptor[] = [
     systemEventKinds: [...COMBINED_ALARM],
   },
   {
+    // What the sensors of an alarm a rule set off did, one phrase per device — the
+    // device's name and its new state ("Laundry lock unlocked"), in arrival order.
+    // Empty when the trigger was a camera, not a sensor.
+    name: 'changes',
+    label: 'Intrusion changes',
+    example: 'Laundry lock unlocked, Back door open',
+    group: 'system',
+    families: ['rule'],
+    fields: [...RULE_TEXT],
+    kinds: ['system'],
+    systemEventKinds: [...COMBINED_ALARM],
+  },
+  {
     name: 'deviceId',
     label: 'Device id',
     example: '102',
