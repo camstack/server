@@ -8,8 +8,13 @@
  * Decisions that shape this file:
  *  - **What a button does is the action's business.** This service never
  *    knows what an infrared code is; it invokes a cap method on a device.
- *  - **`repeat` is the caller's** (volume ×5), never stored. A failing send
- *    stops the row and reports the cause; it is never swallowed.
+ *  - **`repeat` is the caller's** (volume ×5), never stored. It is N FULL
+ *    sends, `REMOTE_REPEAT_GAP_MS` apart (the SmartIR / Home Assistant model: no
+ *    protocol repeat frame, the caller re-sends). A failing send stops the row
+ *    and reports the cause; it is never swallowed.
+ *  - **Power truth** (`assumedStatus`): a `running-state` reading wins; else the
+ *    linked plug — off is `off` (a reading), on is `standby` (assumed) until a
+ *    power command is sent, then what the remote sent.
  *  - **State is read from the running-state cap if the device has one, else
  *    from a native media-player reading, else assumed.** An assumption moves
  *    only AFTER a send succeeded, is persisted per device and never recorded
@@ -58,9 +63,21 @@ export interface RemoteServiceDeps {
   reportedStatus(deviceId: number): Promise<MediaPlayerStatus | null>
   /** The `running-state` reading, or null when the device has none or it is unknown (D393). */
   runningState(deviceId: number): Promise<boolean | null>
+  /** The linked `power-source` switch: true on, false off, null when none is linked or it is unknown (D393). */
+  plugOn(deviceId: number): Promise<boolean | null>
   readonly logger: IScopedLogger
   readonly now?: () => number
+  /** Waits between two sends of a repeat; a spec drives it. */
+  readonly sleep?: (ms: number) => Promise<void>
 }
+
+/** The pause between two full sends of a repeat — never stored, never a setting. */
+export const REMOTE_REPEAT_GAP_MS = 150
+
+const realSleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms)
+  })
 
 type PowerState = 'on' | 'off'
 
@@ -81,6 +98,18 @@ function rolesFor(command: RemoteMediaCommand): readonly string[] {
       return ['previous']
     case 'setMute':
       return ['mute']
+    case 'turnOn':
+      return ['power_on']
+    case 'turnOff':
+      return ['power_off']
+    case 'volumeUp':
+      return ['volume_up']
+    case 'volumeDown':
+      return ['volume_down']
+    case 'channelUp':
+      return ['channel_up']
+    case 'channelDown':
+      return ['channel_down']
     case 'selectSource':
       return []
   }
@@ -92,9 +121,11 @@ function errorText(err: unknown): string {
 
 export class RemoteService implements IRemoteProvider {
   private readonly now: () => number
+  private readonly sleep: (ms: number) => Promise<void>
 
   constructor(private readonly deps: RemoteServiceDeps) {
     this.now = deps.now ?? Date.now
+    this.sleep = deps.sleep ?? realSleep
   }
 
   readonly getConfig: IRemoteProvider['getConfig'] = async ({ deviceId }) =>
@@ -153,44 +184,89 @@ export class RemoteService implements IRemoteProvider {
   }
 
   /**
+   * What the remote ASSUMES (the last power and mute it sent), or null when it
+   * knows neither. No plug, no running-state: that is `assumedStatus`.
+   */
+  readonly getAssumedStatus: IRemoteProvider['getAssumedStatus'] = async ({ deviceId }) => {
+    const kept = await this.readAssumed(deviceId)
+    if (kept.power === null && kept.muted === null) return null
+    const config = await this.deps.store.read(deviceId)
+    const assumedFields: MediaPlayerAssumedField[] = []
+    if (kept.power !== null) assumedFields.push('state')
+    if (kept.muted !== null) assumedFields.push('isMuted')
+    return this.statusOf({
+      state: kept.power?.state ?? 'standby',
+      assumedFields,
+      muted: kept.muted?.value ?? null,
+      changedAt: Math.max(kept.power?.at ?? 0, kept.muted?.at ?? 0),
+      sources: config.customButtons.map((b) => b.name),
+    })
+  }
+
+  /**
    * The device's state as the remote knows it, or null when it knows no power
-   * state (nothing reads one and nothing was sent). The media-player
-   * `getStatus` hook asks the native source FIRST and serves this only when
-   * none answers. Power comes from the running-state cap when there is one,
-   * else from the assumption; mute comes from the assumption.
+   * state. Power truth, in order: a `running-state` reading; the linked plug
+   * (off is `off`, a reading; on is `standby` until a power command was sent,
+   * then what the remote sent); the remote's own assumption. Mute comes from
+   * the assumption, and only while the device may be on.
    */
   async assumedStatus(deviceId: number): Promise<MediaPlayerStatus | null> {
-    const kept = (await this.deps.assumptions.read(deviceId)) ?? EMPTY_REMOTE_ASSUMED_STATE
+    const kept = await this.readAssumed(deviceId)
     const running = await this.deps.runningState(deviceId)
+    const plug = running === null ? await this.deps.plugOn(deviceId) : null
     const assumedFields: MediaPlayerAssumedField[] = []
-    let state: PowerState
+    let state: MediaPlayerStatus['state']
     let changedAt: number
     if (running !== null) {
       state = running ? 'on' : 'off'
+      changedAt = this.now()
+    } else if (plug === false) {
+      state = 'off'
       changedAt = this.now()
     } else if (kept.power !== null) {
       state = kept.power.state
       changedAt = kept.power.at
       assumedFields.push('state')
+    } else if (plug === true) {
+      state = 'standby'
+      changedAt = this.now()
+      assumedFields.push('state')
     } else {
       return null
     }
-    if (kept.muted !== null) assumedFields.push('isMuted')
+    const mute = state === 'off' ? null : (kept.muted ?? null)
+    if (mute !== null) assumedFields.push('isMuted')
     const config = await this.deps.store.read(deviceId)
-    return {
+    return this.statusOf({
       state,
-      stateSource: assumedFields.length > 0 ? 'assumed' : 'reported',
       assumedFields,
+      muted: mute?.value ?? null,
+      changedAt: Math.max(changedAt, mute?.at ?? 0),
+      sources: config.customButtons.map((b) => b.name),
+    })
+  }
+
+  private statusOf(input: {
+    readonly state: MediaPlayerStatus['state']
+    readonly assumedFields: readonly MediaPlayerAssumedField[]
+    readonly muted: boolean | null
+    readonly changedAt: number
+    readonly sources: readonly string[]
+  }): MediaPlayerStatus {
+    return {
+      state: input.state,
+      stateSource: input.assumedFields.length > 0 ? 'assumed' : 'reported',
+      assumedFields: [...input.assumedFields],
       volumeLevel: null,
-      isMuted: kept.muted?.value ?? null,
+      isMuted: input.muted,
       source: '',
-      availableSources: config.customButtons.map((b) => b.name),
+      availableSources: [...input.sources],
       currentMedia: null,
       position: null,
       duration: null,
       shuffle: null,
       repeat: null,
-      lastChangedAt: Math.max(changedAt, kept.muted?.at ?? 0),
+      lastChangedAt: input.changedAt,
     }
   }
 
@@ -291,6 +367,7 @@ export class RemoteService implements IRemoteProvider {
     }
     const times = wantsState === null && role !== 'power' ? repeat : 1
     for (let sent = 0; sent < times; sent += 1) {
+      if (sent > 0) await this.sleep(REMOTE_REPEAT_GAP_MS)
       try {
         await this.deps.invoke({
           deviceId: bound.action.deviceId,

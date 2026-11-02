@@ -2593,6 +2593,7 @@ export {
   type MediaPlayerStatus,
   MediaPlayerStatusSchema,
   mediaPlayerCapability,
+  MEDIA_PLAYER_MAX_STEPS,
 } from './media-player.cap.js'
 // ── Mesh networks (Tailscale / Headscale / ZeroTier) ────────────────
 //

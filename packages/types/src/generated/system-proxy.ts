@@ -128,7 +128,7 @@ export interface SystemProxy {
   readonly recordEntries: Pick<InferProvider<typeof recordEntriesCapability>, 'listEntryKinds' | 'listEntries' | 'putEntry' | 'deleteEntry'>
   readonly recordingArchive: Pick<InferProvider<typeof recordingArchiveCapability>, 'getAvailabilityBatch' | 'getDaysWithRecordingsBatch' | 'getStorageUsage' | 'listOpsLog' | 'pauseForStorageMigration' | 'resumeForStorageMigration' | 'refreshStorageLocationsForMigration' | 'startStorageMigrationMove' | 'getStorageMigrationMoveStatus' | 'cancelStorageMigrationMove' | 'relocateFootage' | 'listRelocateJobs' | 'getRelocateResidue' | 'reconcileLedgerAgainstDisk' | 'cancelRelocateJob' | 'planStorageRebalance' | 'startStorageRebalance' | 'getPlacement' | 'setDevicePlacement'>
   readonly recordingExport: Pick<InferProvider<typeof recordingExportCapability>, 'createExport' | 'getExport' | 'cancelExport' | 'deleteExport' | 'getDownloadUrl' | 'readExportBytes'>
-  readonly remote: Pick<InferProvider<typeof remoteCapability>, 'getConfig' | 'setConfig' | 'listCommands' | 'sendCommand' | 'sendMediaCommand'>
+  readonly remote: Pick<InferProvider<typeof remoteCapability>, 'getConfig' | 'setConfig' | 'listCommands' | 'sendCommand' | 'getAssumedStatus' | 'sendMediaCommand'>
   readonly remoteLayoutComponents: Pick<InferProvider<typeof remoteLayoutComponentsCapability>, 'listComponents'>
   readonly schedulers: Pick<InferProvider<typeof schedulersCapability>, 'list' | 'get' | 'create' | 'update' | 'delete' | 'setEnabled' | 'preview' | 'conflicts' | 'getStatus' | 'getTraces'>
   readonly serverManagement: Pick<InferProvider<typeof serverManagementCapability>, 'getServerPackageStatus' | 'checkServerUpdate' | 'applyServerUpdate' | 'installDesktopUpdate' | 'rollbackServerUpdate' | 'restartServer' | 'getLaunchOverrides' | 'setLaunchOverrides'>
@@ -891,6 +891,7 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     setConfig: (input?: unknown) => dispatch('remote', 'setConfig', 'mutation', input),
     listCommands: (input?: unknown) => dispatch('remote', 'listCommands', 'query', input),
     sendCommand: (input?: unknown) => dispatch('remote', 'sendCommand', 'mutation', input),
+    getAssumedStatus: (input?: unknown) => dispatch('remote', 'getAssumedStatus', 'query', input),
     sendMediaCommand: (input?: unknown) => dispatch('remote', 'sendMediaCommand', 'mutation', input),
   }
 

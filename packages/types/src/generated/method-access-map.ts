@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1495 method paths across 203 capabilities.
+ * Coverage: 1502 method paths across 203 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -655,6 +655,8 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'logDestination.read': { capName: "log-destination", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'logDestination.write': { capName: "log-destination", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'loginMethod.getLoginMethods': { capName: "login-method", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'mediaPlayer.channelDown': { capName: "media-player", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'mediaPlayer.channelUp': { capName: "media-player", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'mediaPlayer.getStatus': { capName: "media-player", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'mediaPlayer.next': { capName: "media-player", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'mediaPlayer.pause': { capName: "media-player", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
@@ -668,6 +670,10 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'mediaPlayer.setShuffle': { capName: "media-player", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'mediaPlayer.setVolume': { capName: "media-player", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'mediaPlayer.stop': { capName: "media-player", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'mediaPlayer.turnOff': { capName: "media-player", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'mediaPlayer.turnOn': { capName: "media-player", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'mediaPlayer.volumeDown': { capName: "media-player", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'mediaPlayer.volumeUp': { capName: "media-player", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'meshNetwork.getStatus': { capName: "mesh-network", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'meshNetwork.join': { capName: "mesh-network", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'meshNetwork.leave': { capName: "mesh-network", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
@@ -1176,6 +1182,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'records.query': { capName: "records", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'records.secretRefs': { capName: "records", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'records.transact': { capName: "records", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'remote.getAssumedStatus': { capName: "remote", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'remote.getConfig': { capName: "remote", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'remote.listCommands': { capName: "remote", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'remote.sendCommand': { capName: "remote", capScope: "system", addonId: null, access: "create", role: "admin" } as const,

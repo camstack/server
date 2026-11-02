@@ -22,6 +22,7 @@ import {
   BaseAddon,
   buildCapabilityLookup,
   type ConfigUISchema,
+  COMPOSER_ADDON_ID,
   CORE_BLOCKS_ADDON_ID,
   type CoreBlock,
   type CoreBlockCompileInput,
@@ -330,8 +331,10 @@ export class CoreBlocksAddon extends BaseAddon {
           : [
               remoteCallRedirect({
                 remote: runtime.remote,
-                hasNative: (deviceId) =>
-                  registry.getProviderForDevice('media-player', deviceId) !== null,
+                hasNative: (deviceId) => {
+                  const owner = registry.getNativeAddonId('media-player', deviceId)
+                  return owner !== null && owner !== COMPOSER_ADDON_ID
+                },
                 logger: this.ctx.logger.child('remote'),
               }),
             ]),

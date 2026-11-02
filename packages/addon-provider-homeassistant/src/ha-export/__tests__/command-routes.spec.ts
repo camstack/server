@@ -114,6 +114,12 @@ function recordingDevice(calls: RecordedCall[]): CapCommandDevice {
       getStatus: async () => null,
     },
     mediaPlayer: {
+      turnOn: rec(calls, 'mediaPlayer.turnOn'),
+      turnOff: rec(calls, 'mediaPlayer.turnOff'),
+      volumeUp: rec(calls, 'mediaPlayer.volumeUp'),
+      volumeDown: rec(calls, 'mediaPlayer.volumeDown'),
+      channelUp: rec(calls, 'mediaPlayer.channelUp'),
+      channelDown: rec(calls, 'mediaPlayer.channelDown'),
       play: rec(calls, 'mediaPlayer.play'),
       pause: rec(calls, 'mediaPlayer.pause'),
       stop: rec(calls, 'mediaPlayer.stop'),

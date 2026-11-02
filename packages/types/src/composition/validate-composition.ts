@@ -9,6 +9,7 @@
  * re-runs at apply time, where the sources are the tracker's business.
  */
 import type { CapabilityDefinition } from '../capabilities/capability-definition.js'
+import { mediaPlayerCapability } from '../capabilities/media-player.cap.js'
 import type { CustomizeCatalog } from '../capabilities/customize-catalog.js'
 import { CAP_CUSTOMIZE_CATALOG } from '../generated/customize-catalog.js'
 import type { z } from 'zod'
@@ -199,6 +200,17 @@ function actuatorCommandCaps(composition: Composition): ReadonlySet<string> {
   return new Set(template.commandCaps)
 }
 
+/** True when a `media-player` feature names the `remote` extension for a method: its status is the extension's. */
+function servesStatusByExtension(
+  def: CapabilityDefinition,
+  feature: CompositionFieldsFeature,
+): boolean {
+  return (
+    def.name === mediaPlayerCapability.name &&
+    Object.values(feature.commands ?? {}).some((target) => target.kind === 'extension')
+  )
+}
+
 function builtCapProblems(
   { def, state, fields: targetFields }: ComposableCap,
   feature: CompositionFieldsFeature,
@@ -218,7 +230,7 @@ function builtCapProblems(
   }
   const commanded = new Set(
     Object.entries(feature.commands ?? {}).flatMap(([name, target]) =>
-      target.kind === 'forward' ? [name] : [],
+      target.kind === 'forward' || target.kind === 'extension' ? [name] : [],
     ),
   )
   const unserved = commandedMethods(def)
@@ -235,7 +247,10 @@ function builtCapProblems(
   }
   // A composition that names `items` owns the whole item array (planItems).
   const itemArrayPath = feature.items === undefined ? null : (def.status?.itemArray?.path ?? null)
-  for (const key of requiredTopLevelKeys(state)) {
+  // A status the remote extension serves (D967 amendment) has no source: its
+  // reading is composed from the plug and the remote, not from fields.
+  const extensionStatus = servesStatusByExtension(def, feature)
+  for (const key of extensionStatus ? [] : requiredTopLevelKeys(state)) {
     if (key === itemArrayPath) continue
     if (!targetFields.has(key)) {
       problems.push(
@@ -333,7 +348,22 @@ function commandProblems(
   const problems: CompositionProblem[] = code.map(([method]) =>
     problem('reserved-variant', `${at}.commands.${method}`, 'a `code` command arrives in slice 4'),
   )
-  if (forwards.length > 0 && mode !== 'new') {
+  const extensions = Object.entries(feature.commands ?? {}).filter(
+    ([, t]) => t.kind === 'extension',
+  )
+  if (extensions.length > 0 && def.name !== mediaPlayerCapability.name) {
+    return [
+      ...problems,
+      ...extensions.map(([method]) =>
+        problem(
+          'command-method-unknown',
+          `${at}.commands.${method}`,
+          `the \`remote\` extension serves a \`media-player\` only, not \`${def.name}\``,
+        ),
+      ),
+    ]
+  }
+  if ((forwards.length > 0 || extensions.length > 0) && mode !== 'new') {
     return [
       ...problems,
       problem(

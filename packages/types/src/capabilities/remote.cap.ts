@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import type { CapabilityCustomizeSpec } from './customize-spec.js'
 import { DeviceType } from '../device/device-type.js'
+import { MediaPlayerStatusSchema } from './media-player.cap.js'
 import { RemoteConfigSchema, RemotePowerModeSchema } from '../remote/remote-config.js'
 import { RemoteRoleSchema } from '../remote/remote-roles.js'
 
@@ -72,6 +73,12 @@ export const REMOTE_MEDIA_COMMANDS = [
   'previous',
   'setMute',
   'selectSource',
+  'turnOn',
+  'turnOff',
+  'volumeUp',
+  'volumeDown',
+  'channelUp',
+  'channelDown',
 ] as const
 export const RemoteMediaCommandSchema = z.enum(REMOTE_MEDIA_COMMANDS)
 export type RemoteMediaCommand = z.infer<typeof RemoteMediaCommandSchema>
@@ -144,6 +151,14 @@ export const remoteCapability = {
      * The dispatch redirect calls this for every caller (UI, automation,
      * exporter); `repeat` is the caller's count where it has one.
      */
+    /**
+     * The state the remote ASSUMES for the device (what it last sent), or null
+     * when it knows none. Power is NOT read here from a plug: that is the
+     * media-player status's own composition (D967 amendment).
+     */
+    getAssumedStatus: method(deviceInput, MediaPlayerStatusSchema.nullable(), {
+      auth: 'protected',
+    }),
     sendMediaCommand: method(
       deviceInput.extend({
         command: RemoteMediaCommandSchema,

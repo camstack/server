@@ -6,8 +6,8 @@
  * system-scope cap that takes a deviceId was previously never device-filtered
  * — see the generator header).
  *
- * Coverage: 586 methods carry a device reference, of which
- * 189 are on SYSTEM-scope caps.
+ * Coverage: 593 methods carry a device reference, of which
+ * 190 are on SYSTEM-scope caps.
  *
  * Top-level fields, number arrays, and one-level arrays of objects carrying
  * a numeric device field (targets[].deviceId) are all mapped; the matcher
@@ -264,6 +264,8 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'lockControl.open': [{ name: "deviceId", form: "single", optional: false }] as const,
   'lockControl.unlock': [{ name: "deviceId", form: "single", optional: false }] as const,
   'logDestination.read': [{ name: "deviceId", form: "single", optional: true }] as const,
+  'mediaPlayer.channelDown': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'mediaPlayer.channelUp': [{ name: "deviceId", form: "single", optional: false }] as const,
   'mediaPlayer.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'mediaPlayer.next': [{ name: "deviceId", form: "single", optional: false }] as const,
   'mediaPlayer.pause': [{ name: "deviceId", form: "single", optional: false }] as const,
@@ -277,6 +279,10 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'mediaPlayer.setShuffle': [{ name: "deviceId", form: "single", optional: false }] as const,
   'mediaPlayer.setVolume': [{ name: "deviceId", form: "single", optional: false }] as const,
   'mediaPlayer.stop': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'mediaPlayer.turnOff': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'mediaPlayer.turnOn': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'mediaPlayer.volumeDown': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'mediaPlayer.volumeUp': [{ name: "deviceId", form: "single", optional: false }] as const,
   'meter.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'motion.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'motion.isDetected': [{ name: "deviceId", form: "single", optional: false }] as const,
@@ -509,6 +515,7 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'records.histogram': [{ name: "deviceId", form: "single", optional: true }] as const,
   'records.putMany': [{ name: "records", form: "object-array", optional: false, itemField: "deviceId" }] as const,
   'records.query': [{ name: "deviceId", form: "single", optional: true }] as const,
+  'remote.getAssumedStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'remote.getConfig': [{ name: "deviceId", form: "single", optional: false }] as const,
   'remote.listCommands': [{ name: "deviceId", form: "single", optional: false }] as const,
   'remote.sendCommand': [{ name: "deviceId", form: "single", optional: false }] as const,
@@ -787,6 +794,7 @@ export const SYSTEM_SCOPE_DEVICE_METHODS: readonly string[] = [
   "records.histogram",
   "records.putMany",
   "records.query",
+  "remote.getAssumedStatus",
   "remote.getConfig",
   "remote.listCommands",
   "remote.sendCommand",

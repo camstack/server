@@ -25,16 +25,23 @@ const ir: RemoteConfig['bindings'][string] = {
 
 function world(config: RemoteConfig, native = false) {
   const calls: CapCall[] = []
+  const clock = { at: 0 }
+  const sentAt: number[] = []
   const kept = { current: null as RemoteAssumedState | null }
   const remote = new RemoteService({
     store: { read: async () => config, write: async () => undefined },
     invoke: async (call) => {
       calls.push(call)
+      sentAt.push(clock.at)
     },
     templateExists: async () => true,
     isMediaPlayer: async () => true,
     reportedStatus: async () => null,
     runningState: async () => null,
+    plugOn: async () => null,
+    sleep: async (ms) => {
+      clock.at += ms
+    },
     assumptions: {
       read: async () => kept.current,
       write: async (_id, next) => {
@@ -49,7 +56,7 @@ function world(config: RemoteConfig, native = false) {
     hasNative: () => native,
     logger: recordingLogger().logger,
   })
-  return { redirect, calls, remote }
+  return { redirect, calls, remote, sentAt }
 }
 
 const call = (method: string, args: Record<string, unknown> = {}) => ({
@@ -72,6 +79,9 @@ describe('remoteCallRedirect — precedence at dispatch (D963)', () => {
       'selectSource',
       'getStatus',
     ]) {
+      expect(redirect.covers('media-player', m)).toBe(true)
+    }
+    for (const m of ['turnOn', 'turnOff', 'volumeUp', 'volumeDown', 'channelUp', 'channelDown']) {
       expect(redirect.covers('media-player', m)).toBe(true)
     }
     expect(redirect.covers('media-player', 'setVolume')).toBe(false)
@@ -112,6 +122,7 @@ describe('remoteCallRedirect — precedence at dispatch (D963)', () => {
       isMediaPlayer: async () => true,
       reportedStatus: async () => null,
       runningState: async () => null,
+      plugOn: async () => null,
       assumptions: { read: async () => null, write: async () => undefined },
       logger: recordingLogger().logger,
     })
@@ -161,5 +172,34 @@ describe('remoteCallRedirect — the state hook (D963)', () => {
   it('answers nothing before anything was sent', async () => {
     const { redirect } = world(toggle, false)
     expect(await redirect.attempt(call('getStatus'))).toEqual({ kind: 'not-redirected' })
+  })
+})
+
+describe('remoteCallRedirect — an Alexa-shaped step call', () => {
+  const bound = { ...EMPTY_REMOTE_CONFIG, bindings: { volume_up: ir, channel_down: ir } }
+
+  it('"volume up 5" (AdjustVolume volumeSteps 5) is five trains 150 ms apart at the transmitter', async () => {
+    const { redirect, calls, sentAt } = world(bound)
+    expect(await redirect.attempt(call('volumeUp', { steps: 5 }))).toEqual({
+      kind: 'redirected',
+      result: undefined,
+    })
+    expect(calls).toHaveLength(5)
+    expect(calls.every((c) => c.deviceId === BOARD && c.method === 'send')).toBe(true)
+    expect(sentAt).toEqual([0, 150, 300, 450, 600])
+  })
+
+  it('"skip 3 channels back" sends the channel_down code three times', async () => {
+    const { redirect, calls } = world(bound)
+    await redirect.attempt(call('channelDown', { steps: 3 }))
+    expect(calls).toHaveLength(3)
+  })
+
+  it('a step on an unbound role is left to the native cap', async () => {
+    const { redirect, calls } = world(bound)
+    expect(await redirect.attempt(call('channelUp', { steps: 2 }))).toEqual({
+      kind: 'not-redirected',
+    })
+    expect(calls).toEqual([])
   })
 })

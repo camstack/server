@@ -23,6 +23,7 @@ import {
   DAY_MS,
   DEFAULT_HISTORY_RETENTION,
   errMsg,
+  mediaPlayerFeaturesOfRoles,
   EventCategory,
   type HistoryRetention,
   type IComposerProvider,
@@ -249,6 +250,18 @@ export class ComposerAddon extends BaseAddon<Record<string, never>> {
           throw new Error(`\`${cap}.${method}\` is not a mutation reachable through ctx.api`)
         }
         await mutate({ deviceId, ...args })
+      },
+      extensionFeatures: async (deviceId) => {
+        try {
+          const list = await api.remote.listCommands.query({ deviceId })
+          return mediaPlayerFeaturesOfRoles(list.commands.map((c) => c.role))
+        } catch (err: unknown) {
+          this.ctx.logger.warn('composer: the remote of a media player could not be read', {
+            tags: { deviceId },
+            meta: { error: errMsg(err) },
+          })
+          return null
+        }
       },
       invokeActuator: (call) =>
         invokeActuatorCall(

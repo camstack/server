@@ -194,9 +194,22 @@ export const CompositionForwardCommandSchema = z.object({
 })
 export type CompositionForwardCommand = z.infer<typeof CompositionForwardCommandSchema>
 
+/**
+ * `extension` (D967 amendment): a method of a BUILT `media-player` is served by
+ * the device's `remote` extension (D963/D964). No source is named — the remote
+ * is the device's own. The dispatch redirect runs the bound role; a method whose
+ * role is not bound answers a typed `media-player.unsupported`.
+ */
+export const CompositionExtensionCommandSchema = z.object({
+  kind: z.literal('extension'),
+  target: z.literal('remote'),
+})
+export type CompositionExtensionCommand = z.infer<typeof CompositionExtensionCommandSchema>
+
 export const CompositionCommandTargetSchema = z.discriminatedUnion('kind', [
   CompositionForwardCommandSchema,
   CompositionCodeSourceSchema,
+  CompositionExtensionCommandSchema,
 ])
 export type CompositionCommandTarget = z.infer<typeof CompositionCommandTargetSchema>
 

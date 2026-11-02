@@ -9,8 +9,11 @@
  *   A binding that FAILS fails the call: the native cap never silently runs in
  *   its place. `repeat`, where the caller supplies one, is passed through.
  * - `getStatus` is answered from the remote's own bookkeeping — marked
- *   `assumed` — only when NO running source exists for the device. A device
- *   with a native media-player cap is reported by it, as before.
+ *   `assumed` — only when NO reading source exists for the device. A device
+ *   with a driver's native media-player cap is reported by it, as before; a
+ *   composed IR television (D967 `extension`) has none, so the remote answers.
+ * - A step command (`volumeUp`, `channelDown`, …) takes `steps` as its repeat:
+ *   N full sends (D964).
  */
 import {
   type DeviceCall,
@@ -18,25 +21,21 @@ import {
   type DeviceCallRedirect,
   type IScopedLogger,
   REMOTE_MAX_REPEAT,
+  REMOTE_MEDIA_COMMANDS,
   type RemoteMediaCommand,
 } from '@camstack/types'
 import type { RemoteService } from './remote-service.js'
 
 const MEDIA_PLAYER = 'media-player'
 
-const COMMANDS: ReadonlySet<string> = new Set<RemoteMediaCommand>([
-  'play',
-  'pause',
-  'stop',
-  'next',
-  'previous',
-  'setMute',
-  'selectSource',
-])
+const COMMANDS: ReadonlySet<string> = new Set<RemoteMediaCommand>(REMOTE_MEDIA_COMMANDS)
 
 export interface RemoteCallRedirectDeps {
   readonly remote: Pick<RemoteService, 'sendMediaCommand' | 'assumedStatus'>
-  /** Whether a running source (the native media-player cap) exists for the device. */
+  /**
+   * Whether a source that READS the device answers `getStatus` (a driver's native
+   * media-player cap). The composer's own native, which holds no reading, is not one.
+   */
   readonly hasNative: (deviceId: number) => boolean
   readonly logger: IScopedLogger
 }
@@ -49,8 +48,9 @@ function field(args: unknown, key: string): unknown {
   return args !== null && typeof args === 'object' ? Reflect.get(args, key) : undefined
 }
 
+/** The caller's count: `steps` (a step method) or `repeat` (D964), at most `REMOTE_MAX_REPEAT`. */
 function repeatOf(args: unknown): number {
-  const raw = field(args, 'repeat')
+  const raw = field(args, 'steps') ?? field(args, 'repeat')
   if (typeof raw !== 'number' || !Number.isInteger(raw) || raw < 1) return 1
   return Math.min(raw, REMOTE_MAX_REPEAT)
 }

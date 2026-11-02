@@ -11,7 +11,7 @@
  * Plain data, zero Zod: a forked runner must not import the schema barrel
  * (~144MB RSS per runner — D28).
  *
- * Coverage: 34 caps, 81 methods with defaults.
+ * Coverage: 35 caps, 85 methods with defaults.
  */
 export const CAP_INPUT_DEFAULTS: Readonly<
   Record<string, Readonly<Record<string, Readonly<Record<string, unknown>>>>>
@@ -56,6 +56,12 @@ export const CAP_INPUT_DEFAULTS: Readonly<
   "llm-runtime": {
     "complete": {"runtime":{"__nested__":{"contextSize":4096,"gpuLayers":0,"parallel":1,"flashAttention":false,"mlock":false,"noMmap":false,"extraArgs":[],"autoStart":false,"idleStopMinutes":30}}},
     "ensureStarted": {"runtime":{"__nested__":{"contextSize":4096,"gpuLayers":0,"parallel":1,"flashAttention":false,"mlock":false,"noMmap":false,"extraArgs":[],"autoStart":false,"idleStopMinutes":30}}},
+  },
+  "media-player": {
+    "channelDown": {"steps":1},
+    "channelUp": {"steps":1},
+    "volumeDown": {"steps":1},
+    "volumeUp": {"steps":1},
   },
   "mqtt-broker": {
     "startEmbeddedBroker": {"port":1883,"allowAnonymous":false},

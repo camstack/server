@@ -55,12 +55,17 @@ function world(
     readonly templates?: readonly string[]
     readonly mediaPlayer?: boolean
     readonly running?: boolean | null
+    /** The linked plug: true on, false off, null none / unknown. */
+    readonly plug?: boolean | null
     readonly assumptions?: { current: RemoteAssumedState | null }
   } = {},
 ) {
   let stored: RemoteConfig = initial
   const kept = options.assumptions ?? { current: null }
   const calls: CapCall[] = []
+  /** The fake clock a send is stamped with; `sleep` is the only thing that moves it. */
+  const clock = { at: 0 }
+  const sentAt: number[] = []
   const deps: RemoteServiceDeps = {
     store: {
       read: async () => stored,
@@ -70,6 +75,7 @@ function world(
     },
     invoke: async (call) => {
       calls.push(call)
+      sentAt.push(clock.at)
       if (options.failOn !== undefined && calls.length === options.failOn) {
         throw new Error('board is off')
       }
@@ -78,6 +84,10 @@ function world(
     isMediaPlayer: async () => options.mediaPlayer ?? true,
     reportedStatus: async () => options.reported ?? null,
     runningState: async () => options.running ?? null,
+    plugOn: async () => options.plug ?? null,
+    sleep: async (ms) => {
+      clock.at += ms
+    },
     assumptions: {
       read: async () => kept.current,
       write: async (_id, next) => {
@@ -87,7 +97,7 @@ function world(
     logger: recordingLogger().logger,
     now: () => 5,
   }
-  return { service: new RemoteService(deps), calls, stored: () => stored }
+  return { service: new RemoteService(deps), calls, sentAt, stored: () => stored }
 }
 
 describe('RemoteService.sendCommand', () => {
@@ -402,5 +412,67 @@ describe('RemoteService config', () => {
       reason: 'not-a-media-player',
     })
     expect(w.stored().layoutTemplateId).toBeNull()
+  })
+})
+
+describe('RemoteService — a repeat is N full sends, 150 ms apart (D964)', () => {
+  it('volumeUp x5 sends five trains, each one 150 ms after the one before', async () => {
+    const w = world(config({ bindings: { volume_up: ir('vol') } }))
+    const result = await w.service.sendMediaCommand({
+      deviceId: TV,
+      command: 'volumeUp',
+      repeat: 5,
+    })
+    expect(result).toEqual({ status: 'sent', sends: 5 })
+    expect(w.sentAt).toEqual([0, 150, 300, 450, 600])
+  })
+
+  it('a single send waits for nothing', async () => {
+    const w = world(config({ bindings: { channel_up: ir('ch') } }))
+    await w.service.sendMediaCommand({ deviceId: TV, command: 'channelUp', repeat: 1 })
+    expect(w.sentAt).toEqual([0])
+  })
+})
+
+describe('RemoteService.assumedStatus — power truth from the linked plug', () => {
+  const standing = config({ bindings: { power: ir('power') }, power: { mode: 'toggle' } })
+
+  it('a plug that is off reports the television off, as a reading', async () => {
+    const w = world(standing, { plug: false })
+    expect(await w.service.assumedStatus(TV)).toMatchObject({
+      state: 'off',
+      stateSource: 'reported',
+      assumedFields: [],
+    })
+  })
+
+  it('a plug that is on and no power command sent reports standby, assumed', async () => {
+    const w = world(standing, { plug: true })
+    expect(await w.service.assumedStatus(TV)).toMatchObject({
+      state: 'standby',
+      stateSource: 'assumed',
+      assumedFields: ['state'],
+    })
+  })
+
+  it('after a power command the plug-on television reports what the remote sent', async () => {
+    const w = world(standing, { plug: true })
+    await w.service.sendMediaCommand({ deviceId: TV, command: 'turnOn', repeat: 1 })
+    expect(await w.service.assumedStatus(TV)).toMatchObject({ state: 'on', stateSource: 'assumed' })
+  })
+
+  it('an unreadable plug and nothing sent knows no state (never off, D393)', async () => {
+    const w = world(standing, { plug: null })
+    expect(await w.service.assumedStatus(TV)).toBeNull()
+  })
+
+  it('getAssumedStatus is only what the remote sent, whatever the plug says', async () => {
+    const w = world(standing, { plug: false })
+    expect(await w.service.getAssumedStatus({ deviceId: TV })).toBeNull()
+    await w.service.sendMediaCommand({ deviceId: TV, command: 'turnOn', repeat: 1 })
+    expect(await w.service.getAssumedStatus({ deviceId: TV })).toMatchObject({
+      state: 'on',
+      assumedFields: ['state'],
+    })
   })
 })

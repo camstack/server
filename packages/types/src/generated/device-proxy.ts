@@ -741,6 +741,12 @@ export function createDeviceProxy(
   }
 
   const mediaPlayerInterface = {
+    turnOn: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'turnOn', 'mutation', input),
+    turnOff: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'turnOff', 'mutation', input),
+    volumeUp: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'volumeUp', 'mutation', input),
+    volumeDown: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'volumeDown', 'mutation', input),
+    channelUp: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'channelUp', 'mutation', input),
+    channelDown: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'channelDown', 'mutation', input),
     play: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'play', 'mutation', input),
     pause: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'pause', 'mutation', input),
     stop: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'stop', 'mutation', input),

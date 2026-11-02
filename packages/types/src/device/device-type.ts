@@ -240,6 +240,12 @@ export enum DeviceFeature {
   MediaPlayerPrevious = 'media-player-previous',
   /** Media player exposes stop distinct from pause. */
   MediaPlayerStop = 'media-player-stop',
+  /** Media player exposes volume up / down in steps (an infrared TV has no level). */
+  MediaPlayerVolumeStep = 'media-player-volume-step',
+  /** Media player exposes channel up / down in steps. */
+  MediaPlayerChannelStep = 'media-player-channel-step',
+  /** Media player exposes power on / off. */
+  MediaPlayerPower = 'media-player-power',
   /** Alarm panel requires a PIN code on arm/disarm. */
   AlarmPinRequired = 'alarm-pin-required',
   /** Presence device carries GPS coordinates (lat/lng/accuracy) in

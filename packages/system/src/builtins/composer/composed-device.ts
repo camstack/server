@@ -241,6 +241,12 @@ export class ComposedDevice
         pause: () => call('media-player', 'pause', {}),
         setVolume: (input) => call('media-player', 'setVolume', { volumeLevel: input.volumeLevel }),
         // Not in the group's method table: the group refuses them by name.
+        turnOn: () => call('media-player', 'turnOn', {}),
+        turnOff: () => call('media-player', 'turnOff', {}),
+        volumeUp: (input) => call('media-player', 'volumeUp', { steps: input.steps }),
+        volumeDown: (input) => call('media-player', 'volumeDown', { steps: input.steps }),
+        channelUp: (input) => call('media-player', 'channelUp', { steps: input.steps }),
+        channelDown: (input) => call('media-player', 'channelDown', { steps: input.steps }),
         stop: () => call('media-player', 'stop', {}),
         next: () => call('media-player', 'next', {}),
         previous: () => call('media-player', 'previous', {}),

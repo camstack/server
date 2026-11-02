@@ -18,6 +18,7 @@ import {
   type MediaPlayerStatus,
   MediaPlayerStatusSchema,
   type RecordsAccess,
+  PowerSourceInfoSchema,
   type RemoteAssumedState,
   RemoteAssumedStateSchema,
   type RemoteConfig,
@@ -50,6 +51,9 @@ export interface RemoteRuntimeDeps {
   readonly settings: DeviceSettings
   readonly api: () => AddonApi | undefined
   readonly logger: IScopedLogger
+  /** The wait between two sends of a repeat; a spec drives it. */
+  readonly sleep?: (ms: number) => Promise<void>
+  readonly now?: () => number
 }
 
 export interface RemoteRuntime {
@@ -133,6 +137,32 @@ export function runningStateOver(
   }
 }
 
+/**
+ * The linked plug of a device (`power-source`): its switch state, null when no
+ * plug is linked, it errors, or the state is unknown (D393) — never "off".
+ */
+export function plugOnOver(
+  api: () => AddonApi | undefined,
+  logger: IScopedLogger,
+): (deviceId: number) => Promise<boolean | null> {
+  return async (deviceId) => {
+    const current = api()
+    if (current === undefined) return null
+    try {
+      const parsed = PowerSourceInfoSchema.safeParse(
+        await current.powerSource.getStatus.query({ deviceId }),
+      )
+      return parsed.success && parsed.data.linked ? parsed.data.switchOn : null
+    } catch (err: unknown) {
+      logger.debug('remote: no power-source reading for the device', {
+        tags: { deviceId },
+        meta: { error: err instanceof Error ? err.message : String(err) },
+      })
+      return null
+    }
+  }
+}
+
 /** The devices whose remote configuration points at a template. */
 export function templateUsageOver(
   settings: Pick<DeviceSettings, 'listDeviceStoreIds' | 'readDeviceStoreBatch'>,
@@ -199,8 +229,11 @@ export function buildRemoteRuntime(deps: RemoteRuntimeDeps): RemoteRuntime {
     },
     reportedStatus: reportedStatusOver(deps.api, deps.logger.child('remote')),
     runningState: runningStateOver(deps.api, deps.logger.child('remote')),
+    plugOn: plugOnOver(deps.api, deps.logger.child('remote')),
     assumptions: remoteAssumptionStoreOver(deps.settings, deps.logger.child('remote')),
     logger: deps.logger.child('remote'),
+    ...(deps.sleep === undefined ? {} : { sleep: deps.sleep }),
+    ...(deps.now === undefined ? {} : { now: deps.now }),
   })
   return { templates, remote }
 }

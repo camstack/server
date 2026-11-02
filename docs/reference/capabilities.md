@@ -75,7 +75,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `ir-transmitter` | 2 | — | — | — | — | — |
 | `lawn-mower-control` | 4 | ✓ | ✓ | 1 series | — | `provider-homeassistant` |
 | `lock-control` | 4 | ✓ | ✓ | 1 series | — | — |
-| `media-player` | 13 | ✓ | ✓ | 2 series | — | — |
+| `media-player` | 19 | ✓ | ✓ | 2 series | — | — |
 | `meter` | 1 | ✓ | ✓ | 1 series | — | — |
 | `motion` | 2 | ✓ | ✓ | 1 series | — | `camera-grid` |
 | `motion-detection` | 6 | — | — | — | — | `motion-wasm` |
@@ -208,7 +208,7 @@ Singleton or collection providers, addressed without a device.
 | `recording-archive` | 34 | ✓ | — | — | — | `recorder` |
 | `recording-export` | 7 | — | — | — | — | `recorder` |
 | `records` | 17 | — | — | — | ✓ | `sqlite-settings` |
-| `remote` | 5 | — | — | — | — | `core-blocks` |
+| `remote` | 6 | — | — | — | — | `core-blocks` |
 | `remote-layout-components` | 1 | — | — | — | — | `core-blocks` |
 | `schedulers` | 10 | — | — | — | — | `core-blocks` |
 | `server-management` | 8 | — | — | — | — | — |

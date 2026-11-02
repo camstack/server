@@ -104,6 +104,17 @@ export const MediaPlayerStatusSchema = z.object({
 
 export type MediaPlayerStatus = z.infer<typeof MediaPlayerStatusSchema>
 
+/** The most steps one volume / channel step call takes (the remote's repeat bound, D964). */
+export const MEDIA_PLAYER_MAX_STEPS = 50
+
+const stepInput = z.object({
+  deviceId: z.number().int().nonnegative(),
+  /** How many presses: the caller's count (Alexa `volumeSteps`, `channelCount`). */
+  steps: z.number().int().min(1).max(MEDIA_PLAYER_MAX_STEPS).default(1),
+})
+
+const deviceOnly = z.object({ deviceId: z.number().int().nonnegative() })
+
 export const mediaPlayerCapability = {
   name: 'media-player',
   scope: 'device',
@@ -111,6 +122,12 @@ export const mediaPlayerCapability = {
   mode: 'singleton',
   deviceTypes: [DeviceType.MediaPlayer],
   methods: {
+    turnOn: method(deviceOnly, z.void(), { kind: 'mutation', auth: 'protected' }),
+    turnOff: method(deviceOnly, z.void(), { kind: 'mutation', auth: 'protected' }),
+    volumeUp: method(stepInput, z.void(), { kind: 'mutation', auth: 'protected' }),
+    volumeDown: method(stepInput, z.void(), { kind: 'mutation', auth: 'protected' }),
+    channelUp: method(stepInput, z.void(), { kind: 'mutation', auth: 'protected' }),
+    channelDown: method(stepInput, z.void(), { kind: 'mutation', auth: 'protected' }),
     play: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',

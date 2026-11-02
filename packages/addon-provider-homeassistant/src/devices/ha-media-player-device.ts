@@ -81,10 +81,36 @@ export class HaMediaPlayerDevice extends HaBaseChildDevice {
     this.ctx.registerNativeCap(runningStateCapability, provider)
   }
 
+  /** One service call per step, in order: HA has no "N steps" form. */
+  private async repeatHaService(service: string, steps: number): Promise<void> {
+    for (let step = 0; step < steps; step += 1) {
+      await this.callHaService('media_player', service)
+    }
+  }
+
   private registerMediaPlayerCap(): void {
     const provider: InferNativeProvider<typeof mediaPlayerCapability> = {
       getStatus: async () => {
         return this.runtimeState.getCapState<MediaPlayerStatus>('media-player') ?? COLD_START
+      },
+      turnOn: async () => {
+        await this.callHaService('media_player', 'turn_on')
+      },
+      turnOff: async () => {
+        await this.callHaService('media_player', 'turn_off')
+      },
+      volumeUp: async ({ steps }) => {
+        await this.repeatHaService('volume_up', steps)
+      },
+      volumeDown: async ({ steps }) => {
+        await this.repeatHaService('volume_down', steps)
+      },
+      // HA has no channel service: next / previous track is what a TV maps them to.
+      channelUp: async ({ steps }) => {
+        await this.repeatHaService('media_next_track', steps)
+      },
+      channelDown: async ({ steps }) => {
+        await this.repeatHaService('media_previous_track', steps)
       },
       play: async () => {
         await this.callHaService('media_player', 'media_play')

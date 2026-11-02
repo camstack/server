@@ -1706,6 +1706,24 @@ export const useLockControlOpen: typeof trpc.lockControl.open.useMutation = /*#_
 /** Generated alias around `trpc.lockControl.getStatus.useQuery`. */
 export const useLockControlGetStatus: typeof trpc.lockControl.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.lockControl.getStatus.useQuery)
 
+/** Generated alias around `trpc.mediaPlayer.turnOn.useMutation`. */
+export const useMediaPlayerTurnOn: typeof trpc.mediaPlayer.turnOn.useMutation = /*#__PURE__*/ alias(() => trpc.mediaPlayer.turnOn.useMutation)
+
+/** Generated alias around `trpc.mediaPlayer.turnOff.useMutation`. */
+export const useMediaPlayerTurnOff: typeof trpc.mediaPlayer.turnOff.useMutation = /*#__PURE__*/ alias(() => trpc.mediaPlayer.turnOff.useMutation)
+
+/** Generated alias around `trpc.mediaPlayer.volumeUp.useMutation`. */
+export const useMediaPlayerVolumeUp: typeof trpc.mediaPlayer.volumeUp.useMutation = /*#__PURE__*/ alias(() => trpc.mediaPlayer.volumeUp.useMutation)
+
+/** Generated alias around `trpc.mediaPlayer.volumeDown.useMutation`. */
+export const useMediaPlayerVolumeDown: typeof trpc.mediaPlayer.volumeDown.useMutation = /*#__PURE__*/ alias(() => trpc.mediaPlayer.volumeDown.useMutation)
+
+/** Generated alias around `trpc.mediaPlayer.channelUp.useMutation`. */
+export const useMediaPlayerChannelUp: typeof trpc.mediaPlayer.channelUp.useMutation = /*#__PURE__*/ alias(() => trpc.mediaPlayer.channelUp.useMutation)
+
+/** Generated alias around `trpc.mediaPlayer.channelDown.useMutation`. */
+export const useMediaPlayerChannelDown: typeof trpc.mediaPlayer.channelDown.useMutation = /*#__PURE__*/ alias(() => trpc.mediaPlayer.channelDown.useMutation)
+
 /** Generated alias around `trpc.mediaPlayer.play.useMutation`. */
 export const useMediaPlayerPlay: typeof trpc.mediaPlayer.play.useMutation = /*#__PURE__*/ alias(() => trpc.mediaPlayer.play.useMutation)
 
@@ -3166,6 +3184,9 @@ export const useRemoteListCommands: typeof trpc.remote.listCommands.useQuery = /
 
 /** Generated alias around `trpc.remote.sendCommand.useMutation`. */
 export const useRemoteSendCommand: typeof trpc.remote.sendCommand.useMutation = /*#__PURE__*/ alias(() => trpc.remote.sendCommand.useMutation)
+
+/** Generated alias around `trpc.remote.getAssumedStatus.useQuery`. */
+export const useRemoteGetAssumedStatus: typeof trpc.remote.getAssumedStatus.useQuery = /*#__PURE__*/ alias(() => trpc.remote.getAssumedStatus.useQuery)
 
 /** Generated alias around `trpc.remote.sendMediaCommand.useMutation`. */
 export const useRemoteSendMediaCommand: typeof trpc.remote.sendMediaCommand.useMutation = /*#__PURE__*/ alias(() => trpc.remote.sendMediaCommand.useMutation)

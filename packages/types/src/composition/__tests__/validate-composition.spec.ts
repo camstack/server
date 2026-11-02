@@ -8,6 +8,7 @@ import { z } from 'zod'
 import { binaryCapability } from '../../capabilities/binary.cap.js'
 import { method, type CapabilityDefinition } from '../../capabilities/capability-definition.js'
 import { deviceStatusCapability } from '../../capabilities/device-status.cap.js'
+import { mediaPlayerCapability } from '../../capabilities/media-player.cap.js'
 import { motionCapability } from '../../capabilities/motion.cap.js'
 import { temperatureSensorCapability } from '../../capabilities/temperature-sensor.cap.js'
 import { DeviceType } from '../../device/device-type.js'
@@ -24,6 +25,7 @@ import {
   ROOM_OCCUPANCY_WINDOW_MS,
   roomCompositionExample,
 } from '../examples.js'
+import { mediaPlayerExtensionCommands } from '../validate-forward.js'
 import {
   buildCapabilityLookup,
   type CompositionSourceDescription,
@@ -426,5 +428,73 @@ describe('cycles', () => {
     expect(result.problems.find((p) => p.code === 'duplicate-target')?.message).toContain(
       compositionSourceKey(stolenTarget),
     )
+  })
+})
+
+describe('the `remote` extension command (D967 amendment)', () => {
+  const lookup = buildCapabilityLookup([
+    mediaPlayerCapability,
+    COMMANDED_CAP,
+    deviceStatusCapability,
+  ])
+  const tv = (
+    commands: Record<string, unknown>,
+    cap = 'media-player',
+    type = DeviceType.MediaPlayer,
+  ) =>
+    CompositionSchema.parse({
+      target: { kind: 'new', type },
+      features: [{ kind: 'fields', cap, fields: {}, commands }],
+    })
+  const problemsOf = (composition: Composition): readonly string[] =>
+    validateComposition(composition, ctx(composition, { lookupCap: lookup })).problems.map(
+      (p) => p.code,
+    )
+
+  it('accepts a media-player whose every method is served by the extension, with no status field', () => {
+    expect(problemsOf(tv(mediaPlayerExtensionCommands()))).toEqual([])
+  })
+
+  it('covers every method the cap serves, the step methods and power included', () => {
+    const methods = Object.keys(mediaPlayerExtensionCommands())
+    for (const name of [
+      'turnOn',
+      'turnOff',
+      'volumeUp',
+      'volumeDown',
+      'channelUp',
+      'channelDown',
+    ]) {
+      expect(methods).toContain(name)
+    }
+  })
+
+  it('still names a method with no command (has-commands)', () => {
+    const { turnOn: _left, ...rest } = mediaPlayerExtensionCommands()
+    expect(problemsOf(tv(rest))).toContain('has-commands')
+  })
+
+  it('refuses the extension on any cap but a media-player, by name', () => {
+    expect(
+      problemsOf(
+        tv({ poke: { kind: 'extension', target: 'remote' } }, 'test-commanded', DeviceType.Sensor),
+      ),
+    ).toContain('command-method-unknown')
+  })
+
+  it('refuses a target other than `remote` at parse time', () => {
+    expect(
+      CompositionSchema.safeParse({
+        target: { kind: 'new', type: DeviceType.MediaPlayer },
+        features: [
+          {
+            kind: 'fields',
+            cap: 'media-player',
+            fields: {},
+            commands: { play: { kind: 'extension', target: 'other' } },
+          },
+        ],
+      }).success,
+    ).toBe(false)
   })
 })

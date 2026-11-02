@@ -13,9 +13,11 @@
  */
 import { z } from 'zod'
 import type { CapabilityDefinition } from '../capabilities/capability-definition.js'
+import { mediaPlayerCapability } from '../capabilities/media-player.cap.js'
 import { unwrapSchema } from '../device/schema-fields.js'
 import {
   type Composition,
+  type CompositionExtensionCommand,
   type CompositionFieldsFeature,
   type CompositionForwardArg,
   type CompositionForwardCommand,
@@ -84,6 +86,21 @@ export function commandedMethods(def: CapabilityDefinition): readonly string[] {
   return Object.entries(def.methods)
     .filter(([name, m]) => m.systemOnly !== true && def.composedMethods?.[name] === undefined)
     .map(([name]) => name)
+}
+
+/**
+ * The `commands` of a `media-player` feature served by the `remote` extension:
+ * every method the cap serves, each one `extension` (D967 amendment). The
+ * method list is the cap's own, so a method added to it is covered here.
+ */
+export function mediaPlayerExtensionCommands(): Readonly<
+  Record<string, CompositionExtensionCommand>
+> {
+  return Object.fromEntries(
+    commandedMethods(mediaPlayerCapability).map(
+      (method) => [method, { kind: 'extension', target: 'remote' } as const] as const,
+    ),
+  )
 }
 
 interface InputFields {

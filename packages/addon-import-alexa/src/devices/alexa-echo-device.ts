@@ -209,6 +209,12 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
         this.rereadSoon()
       },
       stop: async () => unsupported('stop'),
+      turnOn: async () => unsupported('power'),
+      turnOff: async () => unsupported('power'),
+      volumeUp: async () => unsupported('volume steps'),
+      volumeDown: async () => unsupported('volume steps'),
+      channelUp: async () => unsupported('channel steps'),
+      channelDown: async () => unsupported('channel steps'),
       seek: async () => unsupported('seek'),
       setMute: async () => unsupported('mute'),
       setShuffle: async () => unsupported('shuffle'),

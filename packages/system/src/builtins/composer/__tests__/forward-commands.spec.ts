@@ -4,7 +4,13 @@
  */
 import { type CompositionFieldsFeature, CompositionSchema, DeviceType } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import { ForwardCommands, ForwardRefusedError, forwardArguments } from '../forward-commands.js'
+import {
+  ForwardCommands,
+  ForwardRefusedError,
+  MediaPlayerUnsupportedError,
+  forwardArguments,
+} from '../forward-commands.js'
+import { mediaPlayerExtensionCommands } from '@camstack/types'
 import type { SourceResolution } from '../source-readings.js'
 import { recordingLogger } from './fixtures.js'
 
@@ -207,5 +213,44 @@ describe('ForwardCommands', () => {
     const { forwards } = world({})
     forwards.sync([])
     expect(forwards.serves(COMPOSED_ID)).toBe(false)
+  })
+})
+
+describe('ForwardCommands — the `remote` extension (D967 amendment)', () => {
+  function tv(): ForwardCommands {
+    const composition = CompositionSchema.parse({
+      target: { kind: 'new', type: DeviceType.MediaPlayer },
+      features: [
+        {
+          kind: 'fields',
+          cap: 'media-player',
+          fields: {},
+          commands: mediaPlayerExtensionCommands(),
+        },
+      ],
+    })
+    const forwards = new ForwardCommands({
+      logger: recordingLogger().logger,
+      resolve: async () => ({ kind: 'found', deviceId: 77, type: DeviceType.Switch }),
+      callCapMethod: async () => {
+        throw new Error('an extension never calls a source')
+      },
+      deviceIdOf: (blockId) => (blockId === 'tv' ? COMPOSED_ID : null),
+    })
+    forwards.sync([
+      { id: 'tv', features: composition.features.flatMap((f) => (f.kind === 'fields' ? [f] : [])) },
+    ])
+    return forwards
+  }
+
+  it('serves the device, and an unbound role is a typed media-player.unsupported', async () => {
+    const forwards = tv()
+    expect(forwards.serves(COMPOSED_ID)).toBe(true)
+    const refused = await forwards.command(dispatch('media-player', 'volumeUp', { steps: 5 })).then(
+      () => null,
+      (err: unknown) => err,
+    )
+    expect(refused).toBeInstanceOf(MediaPlayerUnsupportedError)
+    expect(refused).toMatchObject({ code: 'media-player.unsupported', method: 'volumeUp' })
   })
 })

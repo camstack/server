@@ -9743,6 +9743,60 @@ export function createCapRouter_mediaPlayer(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
+    turnOn: protectedProcedure
+      .input(mediaPlayerCapability.methods.turnOn.input.loose())
+      .output(mediaPlayerCapability.methods.turnOn.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('media-player', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.turnOn(methodInput as any)
+      }),
+    turnOff: protectedProcedure
+      .input(mediaPlayerCapability.methods.turnOff.input.loose())
+      .output(mediaPlayerCapability.methods.turnOff.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('media-player', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.turnOff(methodInput as any)
+      }),
+    volumeUp: protectedProcedure
+      .input(mediaPlayerCapability.methods.volumeUp.input.loose())
+      .output(mediaPlayerCapability.methods.volumeUp.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('media-player', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.volumeUp(methodInput as any)
+      }),
+    volumeDown: protectedProcedure
+      .input(mediaPlayerCapability.methods.volumeDown.input.loose())
+      .output(mediaPlayerCapability.methods.volumeDown.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('media-player', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.volumeDown(methodInput as any)
+      }),
+    channelUp: protectedProcedure
+      .input(mediaPlayerCapability.methods.channelUp.input.loose())
+      .output(mediaPlayerCapability.methods.channelUp.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('media-player', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.channelUp(methodInput as any)
+      }),
+    channelDown: protectedProcedure
+      .input(mediaPlayerCapability.methods.channelDown.input.loose())
+      .output(mediaPlayerCapability.methods.channelDown.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('media-player', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.channelDown(methodInput as any)
+      }),
     play: protectedProcedure
       .input(mediaPlayerCapability.methods.play.input.loose())
       .output(mediaPlayerCapability.methods.play.output)
@@ -16659,6 +16713,15 @@ export function createCapRouter_remote(
         const p = resolveProvider('remote', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.sendCommand(methodInput as any)
+      }),
+    getAssumedStatus: protectedProcedure
+      .input(remoteCapability.methods.getAssumedStatus.input.loose())
+      .output(remoteCapability.methods.getAssumedStatus.output)
+      .query(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('remote', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.getAssumedStatus(methodInput as any)
       }),
     sendMediaCommand: protectedProcedure
       .input(remoteCapability.methods.sendMediaCommand.input.loose())

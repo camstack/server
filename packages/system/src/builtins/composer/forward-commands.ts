@@ -52,6 +52,20 @@ export class ForwardRefusedError extends Error {
   }
 }
 
+/**
+ * A method the `remote` extension serves was not taken by it: its role is not
+ * bound (D967 amendment). The redirect runs a BOUND role before a call ever
+ * reaches the native, so reaching it means nothing is bound — a typed answer,
+ * never a silent no-op.
+ */
+export class MediaPlayerUnsupportedError extends Error {
+  readonly code = 'media-player.unsupported'
+  constructor(readonly method: string) {
+    super(`media-player.unsupported: \`${method}\` has no bound button on this device's remote`)
+    this.name = 'MediaPlayerUnsupportedError'
+  }
+}
+
 export interface ForwardBlock {
   readonly id: string
   readonly features: readonly CompositionFieldsFeature[]
@@ -73,6 +87,8 @@ export interface ForwardCommandsDeps {
 }
 
 interface DeviceForwards {
+  /** `<cap>.<method>` served by the `remote` extension. */
+  readonly extensions: ReadonlySet<string>
   readonly byMethod: ReadonlyMap<string, CompositionForwardCommand>
   readonly resets: ReadonlyMap<string, ReadonlyMap<string, CompositionForwardCommand>>
 }
@@ -125,7 +141,11 @@ export class ForwardCommands {
       if (deviceId === null) continue
       const byMethod = new Map<string, CompositionForwardCommand>()
       const resets = new Map<string, Map<string, CompositionForwardCommand>>()
+      const extensions = new Set<string>()
       for (const feature of block.features) {
+        for (const [method, target] of Object.entries(feature.commands ?? {})) {
+          if (target.kind === 'extension') extensions.add(methodKey(feature.cap, method))
+        }
         for (const forward of featureForwards(feature, 0)) {
           if (forward.itemKey === undefined) {
             byMethod.set(methodKey(feature.cap, forward.method), forward.command)
@@ -136,7 +156,8 @@ export class ForwardCommands {
           resets.set(feature.cap, items)
         }
       }
-      if (byMethod.size > 0 || resets.size > 0) next.set(deviceId, { byMethod, resets })
+      if (byMethod.size > 0 || resets.size > 0 || extensions.size > 0)
+        next.set(deviceId, { extensions, byMethod, resets })
     }
     this.devices = next
   }
@@ -148,6 +169,16 @@ export class ForwardCommands {
 
   async command(input: ActuatorDispatchInput): Promise<void> {
     const forwards = this.devices.get(input.groupDeviceId)
+    if (forwards?.extensions.has(methodKey(input.cap, input.method)) === true) {
+      this.deps.logger.warn(
+        'media-player command not taken by the remote — its role is not bound',
+        {
+          tags: { deviceId: input.groupDeviceId },
+          meta: { cap: input.cap, method: input.method },
+        },
+      )
+      throw new MediaPlayerUnsupportedError(input.method)
+    }
     const command = forwards === undefined ? undefined : this.commandFor(forwards, input)
     if (command === undefined) {
       this.deps.logger.warn('forward command dropped — this method has no command', {

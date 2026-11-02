@@ -60,6 +60,7 @@ import {
   composedDeviceStableId,
   compositionFeatureEnabled,
   type DeviceDeclaration,
+  type DeviceFeature,
   type DeviceHistoryQueryResult,
   type HistoryRetention,
   type ReadingQuantity,
@@ -210,6 +211,12 @@ export interface ComposerDeps {
    * device refuses its commands by name.
    */
   readonly callCapMethod?: ForwardCommandsDeps['callCapMethod']
+  /**
+   * The media-player features the bound roles of a device's remote stand for, or
+   * null when they could not be read (the device keeps the ones it has, D49).
+   * Absent in tests that predate the `extension` command.
+   */
+  readonly extensionFeatures?: (deviceId: number) => Promise<readonly DeviceFeature[] | null>
 }
 
 interface RuntimeRebuild {
@@ -339,6 +346,25 @@ export class Composer {
     for (const entry of this.live.values()) entry.runtime?.stop()
     this.actuators?.shutdown()
     this.history?.stop()
+  }
+
+  /**
+   * A media player served by the `remote` extension reports nothing, so its
+   * features are what its remote binds (`mediaPlayerFeaturesOfRoles`), pushed
+   * through `syncShared`. A read that fails changes nothing (D49).
+   */
+  private async syncExtensionFeatures(blocks: readonly ForwardBlock[]): Promise<void> {
+    const read = this.deps.extensionFeatures
+    if (read === undefined) return
+    for (const block of blocks) {
+      const served = block.features.some((feature) =>
+        Object.values(feature.commands ?? {}).some((target) => target.kind === 'extension'),
+      )
+      const device = this.composed.get(composedDeviceStableId(block.id))
+      if (!served || device === null || !isActuatorGroupDevice(device)) continue
+      const features = await read(device.id)
+      if (features !== null) device.syncShared([], features)
+    }
   }
 
   private attachForwards(deps: ComposerDeps): ForwardCommands | null {
@@ -482,6 +508,7 @@ export class Composer {
     const unreleasedClaims = await this.releaseConfirmed(releasing)
     await this.syncSources(rebuilt)
     this.forwards?.sync(forwardBlocksOf(input.blocks))
+    await this.syncExtensionFeatures(forwardBlocksOf(input.blocks))
     await this.actuators?.sync(
       input.blocks.flatMap((block) => {
         const helper = block.composition.helper
