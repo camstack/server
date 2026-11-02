@@ -5541,7 +5541,8 @@
       "disabled": "Disabilitato",
       "restart": "Riavvia",
       "restart2": "Riavviare \"{{displayName}}\"?",
-      "restartingTheAddonBouncesIts": "Riavviare l'addon riavvia il suo sottoprocesso — il provider si disconnetterà brevemente e si riconnetterà in automatico."
+      "restartingTheAddonBouncesIts": "Riavviare l'addon riavvia il suo sottoprocesso — il provider si disconnetterà brevemente e si riconnetterà in automatico.",
+      "restartNamed": "Riavvia {{name}}"
     },
     "staleIntegration": {
       "notice": "Questo link indicava <mono>{{id}}</mono>, che non è installato qui.",
@@ -11521,6 +11522,11 @@
     "testRow": "Prova {{name}}",
     "editRow": "Modifica {{name}}",
     "deleteRow": "Elimina {{name}}",
-    "actionsNotSortable": "Le azioni di riga non sono valori."
+    "actionsNotSortable": "Le azioni di riga non sono valori.",
+    "off": "Spento",
+    "restartConfirm": "Riavvia l'addon sull'hub. Se condivide un gruppo di runner, si riavviano tutti gli addon del gruppo.",
+    "activityProvider": "Attività di",
+    "pinnedBy_one": "{{count}} destinazione usa questo relay",
+    "pinnedBy_other": "{{count}} destinazioni usano questo relay"
   }
 }

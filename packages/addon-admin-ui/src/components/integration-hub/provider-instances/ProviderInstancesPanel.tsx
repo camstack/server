@@ -22,7 +22,7 @@ import {
   useSystem,
   type DataColumn,
 } from '@camstack/ui-library'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Loader2, Pencil, Play, Plus, Trash2, type LucideIcon } from 'lucide-react'
 import { useCallback, useMemo, useState, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -33,16 +33,20 @@ import {
   type TestVerdict,
 } from '../../integrations/connection-test-verdict'
 import { pushToast } from '../../ui/toast-bus'
+import { RestartButton } from '../addon-controls'
+import { IntegrationActivity } from '../IntegrationActivity'
 import { InstanceFormDialog } from './InstanceFormDialog'
 import { ProviderPickerDialog } from './ProviderPickerDialog'
 import {
   creatableProviders,
   formatEditRef,
   parseEditRef,
+  providersOf,
   targetsPinning,
   type InstanceRow,
   type PanelRow,
 } from './provider-instances-model'
+import { useSetInstanceEnabled } from './use-set-instance-enabled'
 import {
   HOLDER_QUERY_KEY,
   useProviderInstancesData,
@@ -64,6 +68,14 @@ export interface ProviderInstancesPanelProps {
 
 function StateCell({ row }: { readonly row: InstanceRow }): ReactElement {
   const { t } = useTranslation()
+  // A switched-off row is quiet, not broken (D62): one neutral badge, no status of its own.
+  if (!row.enabled) {
+    return (
+      <span className="flex flex-wrap items-center gap-1">
+        <Badge variant="default">{t('providerInstances.off', 'Off')}</Badge>
+      </span>
+    )
+  }
   return (
     <span className="flex flex-wrap items-center gap-1">
       <Badge variant={row.configured ? 'success' : 'default'}>
@@ -84,6 +96,39 @@ function StateCell({ row }: { readonly row: InstanceRow }): ReactElement {
         >
           {row.status.state}
         </Badge>
+      )}
+    </span>
+  )
+}
+
+function InstanceSwitchCell({
+  row,
+  pinning,
+}: {
+  readonly row: InstanceRow
+  readonly pinning: number
+}): ReactElement {
+  const { t } = useTranslation()
+  const queryClient = useQueryClient()
+  const setEnabled = useSetInstanceEnabled({
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: [HOLDER_QUERY_KEY] }),
+  })
+  return (
+    <span className="flex flex-col gap-1">
+      <Switch
+        checked={row.enabled}
+        disabled={setEnabled.isPending}
+        aria-label={t('providerInstances.enable', 'Enable {{name}}', {
+          name: row.name,
+        })}
+        onCheckedChange={(enabled) =>
+          setEnabled.mutate({ addonId: row.addonId, id: row.id, enabled })
+        }
+      />
+      {pinning > 0 && (
+        <span className="text-[11px] text-foreground-subtle">
+          {t('providerInstances.pinnedBy', { count: pinning })}
+        </span>
       )}
     </span>
   )
@@ -141,6 +186,16 @@ export function ProviderInstancesPanel({
     readonly verdict: TestVerdict
   } | null>(null)
 
+  const targets = useQuery({
+    queryKey: [HOLDER_QUERY_KEY, 'pinning-targets'],
+    queryFn: () => system.trpcClient.notificationOutput.listTargets.query({}),
+  })
+  const pinningCount = useCallback(
+    (id: string): number => targetsPinning(targets.data ?? [], id).length,
+    [targets.data],
+  )
+  const [activityAddon, setActivityAddon] = useState<string | null>(null)
+
   const creatable = useMemo(() => creatableProviders(data.holders), [data.holders])
   const nameOf = useCallback(
     (addonId: string): string => data.displayNames.get(addonId) ?? addonId,
@@ -161,7 +216,10 @@ export function ProviderInstancesPanel({
       } catch (err: unknown) {
         // A transport failure of the CALL is not a verdict on the credentials.
         const message = err instanceof Error ? err.message : String(err)
-        setLastTest({ name: row.name, verdict: { status: 'inconclusive', error: message } })
+        setLastTest({
+          name: row.name,
+          verdict: { status: 'inconclusive', error: message },
+        })
       } finally {
         setTesting(null)
       }
@@ -185,7 +243,9 @@ export function ProviderInstancesPanel({
             )}`
           : ''
       const ok = await confirm({
-        title: t('providerInstances.deleteTitle', 'Delete {{name}}?', { name: row.name }),
+        title: t('providerInstances.deleteTitle', 'Delete {{name}}?', {
+          name: row.name,
+        }),
         message: `${t(
           'providerInstances.deleteMessage',
           'The record and its stored credentials are removed.',
@@ -221,7 +281,15 @@ export function ProviderInstancesPanel({
         sortValue: (row) => row.name,
         render: (row) => (
           <span className="flex flex-col">
-            <span className="font-medium text-foreground">{row.name}</span>
+            <span
+              className={`font-medium ${
+                row.kind === 'instance' && !row.enabled
+                  ? 'text-foreground-muted'
+                  : 'text-foreground'
+              }`}
+            >
+              {row.name}
+            </span>
             {row.kind === 'fixed' && row.description.length > 0 && (
               <span
                 className="line-clamp-2 text-[11px] text-foreground-subtle"
@@ -256,7 +324,11 @@ export function ProviderInstancesPanel({
           'A switch is not a value to order by.',
         ),
         render: (row) =>
-          row.kind === 'fixed' ? <EnableCell row={row} functionCap={functionCap} /> : null,
+          row.kind === 'fixed' ? (
+            <EnableCell row={row} functionCap={functionCap} />
+          ) : (
+            <InstanceSwitchCell row={row} pinning={pinningCount(row.id)} />
+          ),
       },
       {
         key: 'actions',
@@ -269,7 +341,9 @@ export function ProviderInstancesPanel({
                 icon={testing === row.key ? Loader2 : Play}
                 variant="ghost"
                 size="sm"
-                aria-label={t('providerInstances.testRow', 'Test {{name}}', { name: row.name })}
+                aria-label={t('providerInstances.testRow', 'Test {{name}}', {
+                  name: row.name,
+                })}
                 disabled={testing !== null}
                 onClick={() => void runTest(row)}
               />
@@ -278,12 +352,23 @@ export function ProviderInstancesPanel({
               icon={Pencil}
               variant="ghost"
               size="sm"
-              aria-label={t('providerInstances.editRow', 'Edit {{name}}', { name: row.name })}
+              aria-label={t('providerInstances.editRow', 'Edit {{name}}', {
+                name: row.name,
+              })}
               onClick={() =>
                 form.openEdit(
                   formatEditRef(row.addonId, row.kind === 'instance' ? row.id : undefined),
                 )
               }
+            />
+            <RestartButton
+              iconOnly
+              addonId={row.addonId}
+              displayName={row.providerName}
+              description={t(
+                'providerInstances.restartConfirm',
+                'Restarts the addon on the hub. If it shares a runner group, every addon in that group restarts with it.',
+              )}
             />
             {row.kind === 'instance' && (
               <IconButton
@@ -298,7 +383,7 @@ export function ProviderInstancesPanel({
         ),
       },
     ],
-    [form, functionCap, runDelete, runTest, t, testing],
+    [form, functionCap, pinningCount, runDelete, runTest, t, testing],
   )
 
   let body: ReactElement
@@ -349,6 +434,9 @@ export function ProviderInstancesPanel({
     >
       <p className="px-3 pt-2 text-xs text-foreground-muted">{subtitle}</p>
       {body}
+      {data.state === 'ready' && data.rows.length > 0 && (
+        <ProviderActivity rows={data.rows} selected={activityAddon} onSelect={setActivityAddon} />
+      )}
       {lastTest !== null && (
         <div className="space-y-1 p-3">
           <p className="text-[11px] font-medium text-foreground">{lastTest.name}</p>
@@ -377,6 +465,56 @@ export function ProviderInstancesPanel({
         />
       )}
     </SectionCard>
+  )
+}
+
+function ProviderActivity({
+  rows,
+  selected,
+  onSelect,
+}: {
+  readonly rows: readonly PanelRow[]
+  readonly selected: string | null
+  readonly onSelect: (addonId: string) => void
+}): ReactElement | null {
+  const { t } = useTranslation()
+  const chips = useMemo(() => providersOf(rows), [rows])
+  const first = chips[0]
+  if (first === undefined) return null
+  // A selection whose provider left the list falls back to the first row's provider.
+  const current = chips.find((c) => c.addonId === selected) ?? first
+  return (
+    <div className="p-3">
+      <IntegrationActivity
+        addonId={current.addonId}
+        switcher={
+          chips.length > 1 ? (
+            <div
+              role="group"
+              aria-label={t('providerInstances.activityProvider', 'Activity of')}
+              className="flex flex-wrap items-center gap-1"
+            >
+              {chips.map((chip) => (
+                <Button
+                  key={chip.addonId}
+                  variant="unstyled"
+                  type="button"
+                  aria-pressed={chip.addonId === current.addonId}
+                  onClick={() => onSelect(chip.addonId)}
+                  className={`rounded px-2 py-0.5 text-[11px] font-medium transition-colors ${
+                    chip.addonId === current.addonId
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-foreground-subtle hover:bg-surface-hover hover:text-foreground'
+                  }`}
+                >
+                  {chip.name}
+                </Button>
+              ))}
+            </div>
+          ) : undefined
+        }
+      />
+    </div>
   )
 }
 

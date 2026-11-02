@@ -25,18 +25,17 @@
  *
  * ## What "enabled" means here
  *
- * Two independent switches, and the distinction matters:
+ * Two switches, by what the row is:
  *
- *   - **Enable/Disable** (this page, per row) flips the registry's
- *     `disabledProviders` set via `addons.setCapabilityProviderEnabled`. A disabled
- *     provider stops receiving entries. Persisted GLOBALLY under
- *     `capabilities.collection.log-destination` — not per node.
- *   - **A destination's own `enabled` setting** (Loki has one) lives in its addon
- *     settings and IS per node. Loki also stays inert without a URL.
+ *   - **A record row** (Loki) carries its own `enabled` on the record, switched by
+ *     `integrationInstances.setInstanceEnabled`. A record that is off stays in the list, reads
+ *     "Off" and ingests nothing; an absent value means on.
+ *   - **A fixed row** (Winston, Console, the hub forwarder) has no record, so its switch is the
+ *     registry's `disabledProviders` set via `addons.setCapabilityProviderEnabled`, persisted
+ *     GLOBALLY under `capabilities.collection.log-destination` — not per node.
  *
- * So a destination can be registry-enabled and still do nothing, which is why the
- * badges below report configuration state separately rather than collapsing both
- * into one "on" indicator.
+ * Restart (per row) bounces the provider's addon on the hub, and the provider's Logs / Events
+ * stream sits under the list.
  */
 import { ScrollText } from 'lucide-react'
 import type { ReactElement } from 'react'

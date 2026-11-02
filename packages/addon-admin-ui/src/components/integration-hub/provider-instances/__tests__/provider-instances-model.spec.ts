@@ -11,6 +11,7 @@ import {
   formatEditRef,
   mintInstanceId,
   parseEditRef,
+  providersOf,
   targetsPinning,
   type HolderData,
 } from '../provider-instances-model'
@@ -188,5 +189,41 @@ describe('targetsPinning', () => {
       { name: 'Mail other', config: { smtpInstanceId: 'relay-default' } },
     ]
     expect(targetsPinning(targets, 'inst-aaaaaaaa')).toEqual(['Mail ops'])
+  })
+})
+
+describe('enabled and providersOf', () => {
+  const off: HolderData = {
+    ...smtp,
+    instances: [
+      { id: 'a', name: 'On by default', configured: true, formValues: {} },
+      { id: 'b', name: 'Switched off', configured: true, formValues: {}, enabled: false },
+    ],
+  }
+  const rows = buildRows({
+    functionProviders: [
+      { addonId: 'loki-logging', isActive: true },
+      { addonId: 'smtp-nodemailer', isActive: true },
+    ],
+    holders: [loki, off],
+    displayNames: names,
+    descriptions,
+  })
+
+  it('a row without the field reads as enabled, an explicit false as off', () => {
+    const flags = rows.flatMap((r) => (r.kind === 'instance' ? [[r.id, r.enabled]] : []))
+    expect(flags).toEqual([
+      ['loki-logging', true],
+      ['a', true],
+      ['b', false],
+    ])
+  })
+
+  it('names each provider once, in row order', () => {
+    expect(providersOf(rows)).toEqual([
+      { addonId: 'loki-logging', name: 'Loki' },
+      { addonId: 'smtp-nodemailer', name: 'SMTP' },
+    ])
+    expect(providersOf([])).toEqual([])
   })
 })

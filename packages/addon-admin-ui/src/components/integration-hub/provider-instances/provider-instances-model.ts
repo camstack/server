@@ -12,6 +12,12 @@ import type {
   IntegrationInstanceMode,
 } from '@camstack/types'
 
+/**
+ * A stored record as the list sees it. `enabled` is absent on a view from before the switch
+ * existed, and absent means switched on.
+ */
+export type InstanceView = IntegrationInstance & { readonly enabled?: boolean }
+
 /** One provider of the function cap (`log-destination`, `smtp-provider`). */
 export interface FunctionProvider {
   readonly addonId: string
@@ -22,7 +28,7 @@ export interface FunctionProvider {
 export interface HolderData {
   readonly addonId: string
   readonly description: IntegrationInstanceDescription
-  readonly instances: readonly IntegrationInstance[]
+  readonly instances: readonly InstanceView[]
 }
 
 export interface InstanceRow {
@@ -33,6 +39,8 @@ export interface InstanceRow {
   readonly id: string
   readonly name: string
   readonly configured: boolean
+  /** The row's own switch; an off row is quiet, not broken (D62). */
+  readonly enabled: boolean
   readonly status: IntegrationInstance['status']
   readonly canTest: boolean
 }
@@ -84,12 +92,30 @@ export function buildRows(input: BuildRowsInput): readonly PanelRow[] {
         id: instance.id,
         name: instance.name,
         configured: instance.configured,
+        enabled: instance.enabled !== false,
         status: instance.status,
         canTest: holder.description.canTest,
       })
     }
   }
   return rows
+}
+
+export interface ProviderChip {
+  readonly addonId: string
+  readonly name: string
+}
+
+/** The distinct providers among the rows, in row order — the activity panel's chips. */
+export function providersOf(rows: readonly PanelRow[]): readonly ProviderChip[] {
+  const seen = new Set<string>()
+  const chips: ProviderChip[] = []
+  for (const row of rows) {
+    if (seen.has(row.addonId)) continue
+    seen.add(row.addonId)
+    chips.push({ addonId: row.addonId, name: row.providerName })
+  }
+  return chips
 }
 
 /** Providers the operator can create an instance in: several allowed, or one allowed and none yet. */
@@ -189,7 +215,7 @@ export interface PinningTarget {
   readonly config: Readonly<Record<string, unknown>>
 }
 
-/** Names of the notification targets that pin one relay (`smtpInstanceId`), for the delete warning. */
+/** Names of the notification targets that pin one relay (`smtpInstanceId`): the delete warning and the row hint. */
 export function targetsPinning(
   targets: readonly PinningTarget[],
   instanceId: string,

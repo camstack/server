@@ -5466,7 +5466,8 @@
       "disabled": "Disabled",
       "restart": "Restart",
       "restart2": "Restart \"{{displayName}}\"?",
-      "restartingTheAddonBouncesIts": "Restarting the addon bounces its subprocess — the provider will briefly drop and reconnect automatically."
+      "restartingTheAddonBouncesIts": "Restarting the addon bounces its subprocess — the provider will briefly drop and reconnect automatically.",
+      "restartNamed": "Restart {{name}}"
     },
     "staleIntegration": {
       "notice": "This link named <mono>{{id}}</mono>, which is not installed here.",
@@ -11499,6 +11500,11 @@
     "testRow": "Test {{name}}",
     "editRow": "Edit {{name}}",
     "deleteRow": "Delete {{name}}",
-    "actionsNotSortable": "Row actions are not values."
+    "actionsNotSortable": "Row actions are not values.",
+    "off": "Off",
+    "restartConfirm": "Restarts the addon on the hub. If it shares a runner group, every addon in that group restarts with it.",
+    "activityProvider": "Activity of",
+    "pinnedBy_one": "{{count}} target pins this relay",
+    "pinnedBy_other": "{{count}} targets pin this relay"
   }
 }

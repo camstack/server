@@ -4,7 +4,7 @@
  * answers for loading, failed and empty. Only the cap hooks and the tRPC client are stubbed.
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import type { ConfigUISchema } from '@camstack/types'
 import { Mail } from 'lucide-react'
 import { MemoryRouter } from 'react-router-dom'
@@ -24,6 +24,8 @@ const h = vi.hoisted(() => ({
   records: {} as Record<string, unknown[]>,
   describeFails: false,
   setEnabled: vi.fn(),
+  setInstanceEnabled: vi.fn(),
+  restart: vi.fn(async (_input: unknown) => ({ ok: true as const })),
   create: vi.fn(async (_input: unknown) => ({ id: 'x' })),
   update: vi.fn(async (_input: unknown) => ({ ok: true as const })),
   remove: vi.fn(async (_input: unknown) => ({ ok: true as const })),
@@ -77,6 +79,15 @@ vi.mock('@camstack/ui-library', async () => {
       mutate: h.setEnabled,
       isPending: false,
     }),
+    useAddonsRestartAddon: () => ({
+      mutateAsync: h.restart,
+      mutate: h.restart,
+      isPending: false,
+    }),
+    LogStream: ({ addonId }: { addonId: string }) => <div data-testid="log-stream">{addonId}</div>,
+    EventStream: ({ addonId }: { addonId: string }) => (
+      <div data-testid="event-stream">{addonId}</div>
+    ),
     useSystem: () => ({
       trpcClient: {
         integrationInstances: {
@@ -103,6 +114,13 @@ vi.mock('@camstack/ui-library', async () => {
     }),
   }
 })
+
+vi.mock('../use-set-instance-enabled', () => ({
+  useSetInstanceEnabled: () => ({
+    mutate: h.setInstanceEnabled,
+    isPending: false,
+  }),
+}))
 
 import { ConfirmDialogProvider } from '@camstack/ui-library'
 import { ProviderInstancesPanel } from '../ProviderInstancesPanel'
@@ -138,6 +156,8 @@ beforeEach(() => {
   h.records = {}
   h.describeFails = false
   h.setEnabled.mockReset()
+  h.setInstanceEnabled.mockReset()
+  h.restart.mockClear()
   h.create.mockClear()
   h.update.mockClear()
   h.remove.mockClear()
@@ -186,8 +206,8 @@ describe('ProviderInstancesPanel', () => {
     expect(screen.getByText('Office relay')).toBeTruthy()
     expect(screen.getByText('Not configured')).toBeTruthy()
     expect(screen.getByText('Rotated files')).toBeTruthy()
-    // Only the fixed row (Winston) carries the registry switch.
-    expect(screen.getAllByRole('switch')).toHaveLength(1)
+    // The fixed row (Winston) carries the registry switch, each record its own.
+    expect(screen.getAllByRole('switch')).toHaveLength(4)
   })
 
   it('shows no empty text while a query is still unanswered', () => {
@@ -239,7 +259,9 @@ describe('ProviderInstancesPanel', () => {
       renderPanel()
       fireEvent.click(await screen.findByRole('button', { name: /Add destination/ }))
       // Loki has no record yet and SMTP takes several: two providers, so a picker.
-      fireEvent.click(await screen.findByRole('button', { name: /SMTP/ }))
+      fireEvent.click(
+        within(await screen.findByRole('dialog')).getByRole('button', { name: /SMTP/ }),
+      )
       // The form's labels are not bound to their inputs: the empty text input is Host.
       await screen.findByDisplayValue('SMTP')
       const host = await waitFor(() => {
@@ -272,7 +294,10 @@ describe('ProviderInstancesPanel', () => {
       fireEvent.change(host, { target: { value: 'mail2.example.com' } })
       fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
       await waitFor(() => expect(h.update).toHaveBeenCalledTimes(1))
-      const sent = h.update.mock.calls[0]?.[0] as { id: string; values: Record<string, unknown> }
+      const sent = h.update.mock.calls[0]?.[0] as {
+        id: string
+        values: Record<string, unknown>
+      }
       expect(sent.id).toBe('relay-default')
       expect(sent.values).toEqual({ host: 'mail2.example.com' })
       expect('password' in sent.values).toBe(false)
@@ -290,6 +315,85 @@ describe('ProviderInstancesPanel', () => {
         addonId: 'smtp-nodemailer',
         id: 'relay-default',
       })
+    })
+  })
+
+  describe('per-instance switch, restart and activity', () => {
+    beforeEach(() => {
+      h.fn.data = [
+        { addonId: 'loki-logging', isActive: true },
+        { addonId: 'smtp-nodemailer', isActive: true },
+      ]
+      h.holders.data = [
+        { addonId: 'loki-logging', isActive: true },
+        { addonId: 'smtp-nodemailer', isActive: true },
+      ]
+      h.records = {
+        'loki-logging': [],
+        'smtp-nodemailer': [
+          {
+            id: 'relay-default',
+            name: 'Default relay',
+            configured: true,
+            formValues: {},
+            status: { state: 'error', detail: 'refused' },
+            enabled: false,
+          },
+          {
+            id: 'inst-aaaaaaaa',
+            name: 'Office relay',
+            configured: true,
+            formValues: {},
+          },
+        ],
+      }
+    })
+
+    it('the switch of a record calls setInstanceEnabled with the addon, the id and the new value', async () => {
+      renderPanel()
+      fireEvent.click(await screen.findByRole('switch', { name: 'Enable Office relay' }))
+      expect(h.setInstanceEnabled).toHaveBeenCalledWith({
+        addonId: 'smtp-nodemailer',
+        id: 'inst-aaaaaaaa',
+        enabled: false,
+      })
+    })
+
+    it('a row that is off shows one Off badge and no error or configured badge', async () => {
+      renderPanel()
+      await screen.findByText('Default relay')
+      expect(screen.getAllByText('Off')).toHaveLength(1)
+      expect(screen.queryByText('error')).toBeNull()
+      // The other record is on and keeps its Configured badge.
+      expect(screen.getAllByText('Configured')).toHaveLength(1)
+      const toggle = screen.getByRole('switch', {
+        name: 'Enable Default relay',
+      })
+      expect(toggle.getAttribute('aria-checked')).toBe('false')
+    })
+
+    it('restart confirms, names the runner group, then restarts the addon', async () => {
+      renderPanel()
+      fireEvent.click((await screen.findAllByRole('button', { name: 'Restart SMTP' }))[0]!)
+      expect(await screen.findByText(/runner group/)).toBeTruthy()
+      expect(h.restart).not.toHaveBeenCalled()
+      fireEvent.click(screen.getByRole('button', { name: 'Restart' }))
+      await waitFor(() => expect(h.restart).toHaveBeenCalledWith({ addonId: 'smtp-nodemailer' }))
+    })
+
+    it('activity follows the first row provider and switches with the chips', async () => {
+      renderPanel()
+      await waitFor(() =>
+        expect(screen.getByTestId('log-stream').textContent).toBe('smtp-nodemailer'),
+      )
+      fireEvent.click(screen.getByRole('button', { name: 'Events' }))
+      expect(screen.getByTestId('event-stream').textContent).toBe('smtp-nodemailer')
+    })
+
+    it('says how many targets pin a relay', async () => {
+      h.targets = [{ name: 'Mail ops', config: { smtpInstanceId: 'inst-aaaaaaaa' } }]
+      renderPanel()
+      expect(await screen.findByText('1 target pins this relay')).toBeTruthy()
     })
   })
 })

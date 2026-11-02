@@ -70,6 +70,14 @@ const INSTANCES: Readonly<Record<string, readonly unknown[]>> = {
       configured: false,
       formValues: { host: '', port: 587, username: '' },
     },
+    {
+      id: 'inst-77b0d4aa',
+      name: 'Backup relay',
+      configured: true,
+      enabled: false,
+      status: { state: 'error', detail: 'connection refused' },
+      formValues: { host: 'backup.example.com', port: 587, username: 'alerts' },
+    },
   ],
 }
 
@@ -84,10 +92,14 @@ export default defineFixtures({
     'integrationInstances.instanceFormSchema': (i: { addonId: string }) =>
       i.addonId === 'loki-logging' ? LOKI_FORM : SMTP_FORM,
     'integrationInstances.listInstances': (i: { addonId: string }) => INSTANCES[i.addonId] ?? [],
+    'notificationOutput.listTargets': [
+      { name: 'Mail ops', config: { smtpInstanceId: 'inst-3f9a1c2e' } },
+    ],
     'mut:integrationInstances.createInstance': (i: { id: string }) => ({
       id: i.id,
     }),
     'mut:integrationInstances.updateInstance': { ok: true },
+    'mut:integrationInstances.setInstanceEnabled': { ok: true },
     'mut:integrationInstances.deleteInstance': { ok: true },
     'mut:integrationInstances.testInstance': {
       success: true,

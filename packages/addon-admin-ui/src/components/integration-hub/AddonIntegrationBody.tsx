@@ -25,18 +25,16 @@
  * body inside the same Settings section (e.g. auth-oidc DataTable + dialog) —
  * still not a new panel id.
  */
-import { Bell, ScrollText, Settings2, type LucideIcon } from 'lucide-react'
-import { useState, type ReactElement, type ReactNode } from 'react'
-import { ErrorBox, EventStream, LogStream, Button } from '@camstack/ui-library'
+import { Settings2, type LucideIcon } from 'lucide-react'
+import type { ReactElement, ReactNode } from 'react'
+import { ErrorBox } from '@camstack/ui-library'
 
-import { ACTIVITY_SECTION, SETTINGS_SECTION } from '../../lib/integration-hub-url'
+import { SETTINGS_SECTION } from '../../lib/integration-hub-url'
 import { NodeAddonsSettingsPanel } from '../settings/NodeAddonsSettingsPanel'
 import { EnableToggleButton, EnabledBadge, RestartButton } from './addon-controls'
+import { IntegrationActivity } from './IntegrationActivity'
 import { IntegrationSection } from './IntegrationSection'
 import { useTranslation } from 'react-i18next'
-
-/** Default height of the Logs / Events scroll region. */
-const ACTIVITY_MAX_HEIGHT = 'max-h-72'
 
 export interface IntegrationPanel {
   /** The `?section=` id that targets it (`devices`, `peers`, …). */
@@ -173,55 +171,5 @@ function StatusStrip({
         <RestartButton addonId={addonId} displayName={displayName} />
       </div>
     </div>
-  )
-}
-
-type ActivityKind = 'logs' | 'events'
-
-const ACTIVITY_KINDS: readonly { kind: ActivityKind; labelKey: string; icon: LucideIcon }[] = [
-  { kind: 'logs', labelKey: 'common.logs', icon: ScrollText },
-  { kind: 'events', labelKey: 'common.events', icon: Bell },
-]
-
-function IntegrationActivity({ addonId }: { readonly addonId: string }): ReactElement {
-  const { t } = useTranslation()
-  const [kind, setKind] = useState<ActivityKind>('logs')
-  return (
-    <IntegrationSection
-      id={ACTIVITY_SECTION}
-      title={t('integrationHub.addonIntegrationBody.activity', 'Activity')}
-      framed
-      actions={
-        <div
-          role="group"
-          aria-label={t('integrationHub.addonIntegrationBody.activityStream', 'Activity stream')}
-          className="flex items-center gap-1"
-        >
-          {ACTIVITY_KINDS.map(({ kind: k, labelKey, icon: Icon }) => (
-            <Button
-              variant="unstyled"
-              key={k}
-              type="button"
-              aria-pressed={kind === k}
-              onClick={() => setKind(k)}
-              className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium transition-colors ${
-                kind === k
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-foreground-subtle hover:bg-surface-hover hover:text-foreground'
-              }`}
-            >
-              <Icon className="h-3 w-3" aria-hidden />
-              {t(labelKey)}
-            </Button>
-          ))}
-        </div>
-      }
-    >
-      {kind === 'logs' ? (
-        <LogStream addonId={addonId} maxHeight={ACTIVITY_MAX_HEIGHT} showFilters={false} />
-      ) : (
-        <EventStream addonId={addonId} category="addon.*" maxHeight={ACTIVITY_MAX_HEIGHT} />
-      )}
-    </IntegrationSection>
   )
 }
