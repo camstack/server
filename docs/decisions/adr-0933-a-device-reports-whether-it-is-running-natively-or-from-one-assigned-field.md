@@ -79,7 +79,7 @@ pausing for one to two minutes without holding "running" for long after a
 real end. The operator can change all three; they are named constants.
 
 The delay is the expression builtin `dwell(active, onForMs, offForMs)`. It
-returns null until the first delay elapses (unknown, not idle), holds the
+returns null until the first delay elapses (unknown, not idle) when nothing was restored; a boot that restores the field's last boolean starts latched on it, so only a change that holds for the opposing delay flips it. It holds the
 previous boolean through a gap shorter than the delay, and asks the composer
 for one deadline at the instant the delay will elapse — a timer, not a poll.
 `latchedAt(value)` stamps `since` at the evaluation where the boolean

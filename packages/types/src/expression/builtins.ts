@@ -207,7 +207,9 @@ function asNonNegativeMs(value: unknown, name: string, index: number): number {
 
 /**
  * `dwell(active, onForMs, offForMs)`: unknown until a delay elapses, then holds
- * the latched boolean through gaps shorter than the opposing delay (D933).
+ * the latched boolean through gaps shorter than the opposing delay (D933). A new
+ * call state seeded with the restored output starts latched on it, so it is never
+ * unknown after a boot.
  */
 export function evaluateDwell(
   activeRaw: unknown,

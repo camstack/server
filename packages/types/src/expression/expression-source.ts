@@ -146,7 +146,8 @@ export function evaluateStatefulExpressionCall(
           : {
               kind: 'dwell',
               pendingSince: null,
-              latched: null,
+              // A boot restores the last answer: hold it, never read as unknown (D933).
+              latched: typeof env.currentOutput === 'boolean' ? env.currentOutput : null,
               seenSince: null,
             }
       memory.calls.set(invocation.path, call)

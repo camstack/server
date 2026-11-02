@@ -8,14 +8,19 @@ import {
 const ON = 30_000
 const OFF = 180_000
 
-function dwellAt(nowMs: number, active: boolean, memory = createStatefulExpressionMemory()) {
+function dwellAt(
+  nowMs: number,
+  active: boolean,
+  memory = createStatefulExpressionMemory(),
+  currentOutput: boolean | null = null,
+) {
   const deadlines: number[] = []
   const result = evaluateExpressionSource(`dwell(active, ${ON}, ${OFF})`, { active }, nowMs, {
     invokeStateful: (invocation) =>
       evaluateStatefulExpressionCall(
         invocation,
         memory,
-        { currentOutput: null, startedAtMs: 0, nowMs },
+        { currentOutput, startedAtMs: 0, nowMs },
         { noteDeadline: (at) => deadlines.push(at) },
       ),
   })
@@ -93,5 +98,31 @@ describe('dwell builtin', () => {
       },
     )
     expect(broken.ok && broken.value === false).toBe(true)
+  })
+})
+
+describe('dwell seeded from the restored output', () => {
+  it('seeded true, input still true: true at once, not unknown', () => {
+    expect(dwellAt(1_000, true, createStatefulExpressionMemory(), true).value).toBe(true)
+  })
+
+  it('seeded true, input false: holds true until the stop delay, then false', () => {
+    const memory = createStatefulExpressionMemory()
+    expect(dwellAt(0, false, memory, true).value).toBe(true)
+    expect(dwellAt(OFF - 1, false, memory, true).value).toBe(true)
+    expect(dwellAt(OFF, false, memory, true).value).toBe(false)
+  })
+
+  it('seeded false, input true: false until the start delay, then true', () => {
+    const memory = createStatefulExpressionMemory()
+    expect(dwellAt(0, true, memory, false).value).toBe(false)
+    expect(dwellAt(ON - 1, true, memory, false).value).toBe(false)
+    expect(dwellAt(ON, true, memory, false).value).toBe(true)
+  })
+
+  it('no seed: unknown until the first delay elapses', () => {
+    const memory = createStatefulExpressionMemory()
+    expect(dwellAt(0, false, memory, null).value).toBeNull()
+    expect(dwellAt(OFF, false, memory, null).value).toBe(false)
   })
 })
