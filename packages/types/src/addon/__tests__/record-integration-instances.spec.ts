@@ -142,5 +142,10 @@ describe('RecordIntegrationInstances', () => {
     const body = await instances.getResolved('int_1')
     expect(body).toMatchObject({ url: 'http://a' })
     expect(body).not.toHaveProperty('password')
+    // The caller can tell a locked keychain from a row that simply has no secret (D49).
+    const read = await instances.readResolved('int_1')
+    expect(read?.secrets).toBe('unavailable')
+    const [listed] = await instances.listResolved()
+    expect(listed?.secrets).toBe('unavailable')
   })
 })

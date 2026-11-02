@@ -54,6 +54,15 @@ function topLevelSecretKeys(paths: readonly string[]): ReadonlySet<string> {
   return new Set(paths.filter((p) => !p.includes('.') && !p.includes('[')))
 }
 
+/** Whether an instance's secret fields were read (`resolved`) or the keychain refused (`unavailable`). */
+export type ResolvedSecretsState = 'resolved' | 'unavailable'
+
+export interface ResolvedInstance<TBody extends Record<string, unknown>> {
+  readonly id: string
+  readonly body: TBody
+  readonly secrets: ResolvedSecretsState
+}
+
 export class RecordIntegrationInstances<TBody extends Record<string, unknown>> {
   private readonly handle: RecordKindHandle<TBody>
   private readonly secretKeys: ReadonlySet<string>
@@ -69,32 +78,40 @@ export class RecordIntegrationInstances<TBody extends Record<string, unknown>> {
     this.nameField = kind.declaration.entry?.nameField ?? 'name'
   }
 
-  /** One instance with its secrets resolved, for the addon's own runtime; null when absent. */
-  async getResolved(id: string): Promise<TBody | null> {
-    let record: RecordRow<TBody> | null
+  /**
+   * One instance read for the addon's own runtime; null when absent. When the keychain is
+   * locked the row is served WITHOUT its secrets and says so (`secrets: 'unavailable'`), so the
+   * caller can keep what it had instead of reconfiguring with an empty secret (D49).
+   */
+  async readResolved(id: string): Promise<ResolvedInstance<TBody> | null> {
     try {
-      record = await this.handle.getResolved(id)
+      const record = await this.handle.getResolved(id)
+      return record === null ? null : { id, body: record.data, secrets: 'resolved' }
     } catch (err: unknown) {
       if (!(err instanceof RecordSecretUnavailableError)) throw err
       const stored = await this.handle.get(id)
       if (stored === null) return null
-      // The keychain is locked: serve the row WITHOUT its secrets, never the marker.
+      // The keychain is locked: the row WITHOUT its secrets, never the marker.
       const open = Object.fromEntries(
         Object.entries(stored.data).filter(([key]) => !this.secretKeys.has(key)),
       )
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- documented type boundary: the stored body minus its secret keys, which the kind schema marks optional
-      return open as TBody
+      return { id, body: open as TBody, secrets: 'unavailable' }
     }
-    return record === null ? null : record.data
   }
 
-  /** Every instance with its secrets resolved; one that cannot be read is skipped. */
-  async listResolved(): Promise<readonly { readonly id: string; readonly body: TBody }[]> {
+  /** The body of {@link readResolved} alone; a locked keychain yields the row without secrets. */
+  async getResolved(id: string): Promise<TBody | null> {
+    return (await this.readResolved(id))?.body ?? null
+  }
+
+  /** Every instance, secrets resolved where the keychain allows; an absent one is skipped. */
+  async listResolved(): Promise<readonly ResolvedInstance<TBody>[]> {
     const page = await this.handle.query({ limit: INSTANCES_LIST_MAX })
-    const out: { id: string; body: TBody }[] = []
+    const out: ResolvedInstance<TBody>[] = []
     for (const record of page.records) {
-      const body = await this.getResolved(record.id)
-      if (body !== null) out.push({ id: record.id, body })
+      const read = await this.readResolved(record.id)
+      if (read !== null) out.push(read)
     }
     return out
   }

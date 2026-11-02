@@ -81,7 +81,11 @@ export {
   SessionHealthTracker,
   sessionLostAlertId,
 } from './addon/session-health.js'
-export type { RecordIntegrationInstancesHooks } from './addon/record-integration-instances.js'
+export type {
+  RecordIntegrationInstancesHooks,
+  ResolvedInstance,
+  ResolvedSecretsState,
+} from './addon/record-integration-instances.js'
 export { RecordIntegrationInstances } from './addon/record-integration-instances.js'
 export type { DurableState, DurableStateDeps } from './addon/durable-state.js'
 export { createDurableState } from './addon/durable-state.js'
