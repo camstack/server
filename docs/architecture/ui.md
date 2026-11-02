@@ -472,10 +472,10 @@ may not also mean "where this lives"; it remains available to group sections
 
 **A connection that holds no devices** (Loki) is not an addon-level setting at all
 ([D996](../decisions/adr-0996-connection-holding-addons-are-integration-instances.md)): the
-addon provides `integration-instances`, the Integrations page lists it with kind `connection`,
-and its config modal renders the instance form like an account's, with no device list, scan or
-add button. The Logging page keeps the destination's on/off switch and links to that page
-instead of rendering the settings.
+addon provides `integration-instances`, the hub omits it from `integrations.list` and the add
+wizard, and its function page edits the record in place through the cap
+(`ConnectionInstanceForm`, as the Logging page does for Loki). The Integrations page lists only
+integrations that bring devices.
 
 ### Derived vs hand-written — pick by what owns the values
 

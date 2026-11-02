@@ -23,16 +23,15 @@ without an owner.
 ## Decision
 
 A connection-holding addon is an integration instance. It provides `integration-instances`
-(system scope, collection, internal, no mount): `describe`, `instanceFormSchema`,
+(system scope, collection, no mount; admin-gated, with typed hooks for the function page): `describe`, `instanceFormSchema`,
 `listInstances`, `getInstance`, `createInstance`, `updateInstance`, `deleteInstance` and an
 optional `testInstance`. The instance id IS the `integrations` registry id. The state is a
 typed record kind (kind names are lower-case-dashed, so Loki's is `destinations`, owner
 `loki-logging`), the secret is a keychain marker bound to the row, and the shared helper
 `RecordIntegrationInstances` implements the cap over a kind. The hub routes on the presence
 of the provider alone: with one, the integrations cap reads and writes the record; without
-one, the legacy `integration-settings` path runs. An addon with this cap and no device
-provider or adoption is listed with kind `connection`, which the admin UI treats like an
-account without device discovery. The per-destination on/off switch of a log destination
+one, the legacy `integration-settings` path runs. **Operator decision (2026-11-02): a service instance is configured from its function page.** The Integrations page lists only integrations that bring devices: `integrations.list` omits every addon whose manifest declares `integration-instances` (generic, no per-addon list), and `getAvailableTypes` offers none, so the add wizard never shows one. The stored row (for Loki `int_0038`) and the record and its keychain secret are kept; `get` and `getByAddonId` still resolve it, which the migration relies on. Loki is edited on the Logging page in place, through the cap (`ConnectionInstanceForm`); with no record yet the form creates it, under the addon id. There is no `connection` kind in the UI.
+The per-destination on/off switch of a log destination
 (D777) is unchanged and is not wired to the integration's `enabled`.
 
 ## Consequences
