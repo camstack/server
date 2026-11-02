@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Loki is configured on the Logging page again and no longer listed among integrations
+- The generated smtp-provider router accepts an optional instanceId to address one SMTP relay
 
 ## [1.2.738] - 2026-11-02
 

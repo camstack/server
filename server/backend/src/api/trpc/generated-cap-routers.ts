@@ -17347,28 +17347,38 @@ export function createCapRouter_smtpProvider(
         return p.sendEmail(methodInput as any)
       }),
     verify: adminProcedure
-      .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
+      .input(smtpProviderCapability.methods.verify.input.loose())
       .output(smtpProviderCapability.methods.verify.output)
       .mutation(async ({ input, ctx }) => {
+        const { nodeId, addonId, ...methodInput } = input as {
+          nodeId?: string
+          addonId?: string
+        } & Record<string, unknown>
         const p = resolveProvider(
           'smtp-provider',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
+          nodeId,
+          () => getProvider(ctx, addonId),
           createRemoteProxy,
         )
-        return p.verify()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.verify(methodInput as any)
       }),
     getStatus: adminProcedure
-      .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
+      .input(DEVICE_STATUS_METHOD.getStatus.input.loose())
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
+        const { nodeId, addonId, ...methodInput } = input as {
+          nodeId?: string
+          addonId?: string
+        } & Record<string, unknown>
         const p = resolveProvider(
           'smtp-provider',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
+          nodeId,
+          () => getProvider(ctx, addonId),
           createRemoteProxy,
         )
-        return p.getStatus()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.getStatus(methodInput as any)
       }),
   })
 }

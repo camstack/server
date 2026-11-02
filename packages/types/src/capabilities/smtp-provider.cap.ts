@@ -16,7 +16,18 @@ import { method, type CapabilityDefinition, type InferProvider } from './capabil
 
 const EmailAddressSchema = z.email()
 
+/**
+ * Which relay of a multi-relay provider answers (D996). Absent = the provider's first / default
+ * relay, so a caller written before relays existed keeps working unchanged. A provider with one
+ * fixed relay ignores it. This is the integration instance id (`int_NNNN`), NOT the addon id: the
+ * collection pin `addonId` still picks the provider, `instanceId` picks the relay inside it.
+ */
+const InstanceIdSchema = z.string().min(1).optional()
+
+const RelayPinSchema = z.object({ instanceId: InstanceIdSchema })
+
 const SendEmailInputSchema = z.object({
+  instanceId: InstanceIdSchema,
   to: z.union([EmailAddressSchema, z.array(EmailAddressSchema).min(1)]),
   cc: z.array(EmailAddressSchema).optional(),
   bcc: z.array(EmailAddressSchema).optional(),
@@ -65,8 +76,12 @@ export const smtpProviderCapability = {
     }),
     /** Round-trip ping against the SMTP relay (EHLO + AUTH if configured).
      *  Used by the operator's "Test connection" button. */
-    verify: method(z.void(), SmtpStatusSchema, { kind: 'mutation', auth: 'admin', access: 'view' }),
-    getStatus: method(z.void(), SmtpStatusSchema, { auth: 'admin' }),
+    verify: method(RelayPinSchema, SmtpStatusSchema, {
+      kind: 'mutation',
+      auth: 'admin',
+      access: 'view',
+    }),
+    getStatus: method(RelayPinSchema, SmtpStatusSchema, { auth: 'admin' }),
   },
 } as const satisfies CapabilityDefinition
 

@@ -4423,7 +4423,7 @@
 
 ### `smtp-provider` → `smtpProvider.*`
 
-- **Source:** `packages/types/src/capabilities/smtp-provider.cap.ts:54`
+- **Source:** `packages/types/src/capabilities/smtp-provider.cap.ts:65`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection` · providerKind: `email`
 - **Archetypes:** internal
 - **Provider interface:** `ISmtpProvider`
@@ -4431,8 +4431,8 @@
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | sendEmail | `smtpProvider.sendEmail` | mutation | admin | `SendEmailInputSchema` | `SendEmailResultSchema` |
-| verify | `smtpProvider.verify` | mutation | admin | `void` | `SmtpStatusSchema` |
-| getStatus | `smtpProvider.getStatus` | query | admin | `void` | `SmtpStatusSchema` |
+| verify | `smtpProvider.verify` | mutation | admin | `{ instanceId?: string }` | `SmtpStatusSchema` |
+| getStatus | `smtpProvider.getStatus` | query | admin | `{ instanceId?: string }` | `SmtpStatusSchema` |
 
 ### `snapshot` → `snapshot.*`
 

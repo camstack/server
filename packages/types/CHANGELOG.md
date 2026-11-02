@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The integration-instances capability is public and admin-gated, so a function page can edit a service connection
+- smtp-provider sendEmail, verify and getStatus take an optional instanceId that picks one relay of a multi-relay provider
 
 ## [1.2.476] - 2026-11-02
 

@@ -97,7 +97,7 @@ describe('createGmailSmtpProvider', () => {
 
   it('getStatus is not ready when disconnected', async () => {
     const smtp = make([{ ...accountA, connected: false }])
-    const status = await smtp.getStatus()
+    const status = await smtp.getStatus({})
     expect(status.ready).toBe(false)
     expect(status.error).toMatch(/not connected|No Google broker/i)
   })
@@ -113,7 +113,7 @@ describe('createGmailSmtpProvider', () => {
       } as Response
     }
     const smtp = make([accountA], fetchMock)
-    const status = await smtp.verify()
+    const status = await smtp.verify({})
     expect(calls[0]).toContain('/users/me/profile')
     expect(status.ready).toBe(true)
     expect(status.error).toBeUndefined()

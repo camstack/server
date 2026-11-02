@@ -6348,6 +6348,7 @@ Enum: `"matched" \| "diverged" \| "unknown"`
 
 ### `SendEmailInputSchema`
 
+- `instanceId?`: `string`
 - `to`: `string(email) \| string(email)[]`
 - `cc?`: `string(email)[]`
 - `bcc?`: `string(email)[]`
