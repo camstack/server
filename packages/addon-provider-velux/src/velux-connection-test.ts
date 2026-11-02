@@ -1,6 +1,7 @@
 import {
   CONNECTION_TEST_TIMEOUT_MS,
   errMsg,
+  isSecretMarker,
   type ConnectionTestOutcome,
   type IConnectionTestProvider,
   type IScopedLogger,
@@ -89,11 +90,12 @@ export function buildVeluxConnectionTestProvider(
   /** The tail of the test queue per host: a second test waits for the first to log out. */
   const queues = new Map<string, Promise<unknown>>()
 
-  async function run(host: string, password: string): Promise<ConnectionTestOutcome> {
+  /** `password` is null when the form sent the saved password's keychain marker, not its value. */
+  async function run(host: string, password: string | null): Promise<ConnectionTestOutcome> {
     const live = liveSession(host)
     if (live !== null) {
       // The gateway has one password and this session logged in with the saved one.
-      if (live.password !== password) {
+      if (password !== null && live.password !== password) {
         return {
           outcome: 'rejected',
           error:
@@ -105,6 +107,13 @@ export function buildVeluxConnectionTestProvider(
         outcome: 'validated',
         latencyMs: 0,
         ...(live.firmware === null ? {} : { detail: `Firmware ${live.firmware}` }),
+      }
+    }
+    if (password === null) {
+      return {
+        outcome: 'inconclusive',
+        error:
+          'The saved password cannot be tested while the gateway is not connected. Type the password again to test it.',
       }
     }
     if (liveSessions(host) >= KLF_MAX_SESSIONS) {
@@ -166,8 +175,13 @@ export function buildVeluxConnectionTestProvider(
       if (host === null) {
         return { outcome: 'rejected', error: 'Enter the gateway host or IP address.' }
       }
-      const password = readString(settings, 'password')
-      if (password === null) {
+      const savedMarker = isSecretMarker(
+        typeof settings === 'object' && settings !== null
+          ? Reflect.get(settings, 'password')
+          : null,
+      )
+      const password = savedMarker ? null : readString(settings, 'password')
+      if (password === null && !savedMarker) {
         return {
           outcome: 'rejected',
           error: 'Enter the password printed on the back of the gateway.',

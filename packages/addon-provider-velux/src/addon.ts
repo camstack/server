@@ -317,21 +317,35 @@ export class VeluxProviderAddon extends BaseDeviceProvider {
   /** The gateway device's `power-source` cap, through `ctx.api`; the cap owns off, wait, on. */
   private buildPowerSourcePort(): PowerSourcePort {
     return {
-      gatewayDeviceId: async (integrationId) => {
+      gatewayDevice: async (integrationId) => {
         const reg = this.ctx.kernel.deviceRegistry
         const devices = this.ctx.kernel.devices
-        if (!reg || !devices) return null
+        if (!reg || !devices)
+          return { kind: 'unknown', error: 'the device registry is unavailable' }
+        let failure: string | null = null
         for (const d of reg.getAllForAddon(this.addonId)) {
           if (d.parentDeviceId !== null) continue
-          const config = await devices.loadConfig(d.id).catch((): Record<string, unknown> => ({}))
-          if (
-            config['system'] === 'velux' &&
-            config['nativeId'] === gatewayNativeId(integrationId)
-          ) {
-            return d.id
+          try {
+            const config = await devices.loadConfig(d.id)
+            if (
+              config['system'] === 'velux' &&
+              config['nativeId'] === gatewayNativeId(integrationId)
+            ) {
+              return { kind: 'found', deviceId: d.id }
+            }
+          } catch (err) {
+            // A failed read is not absence: say so, and keep looking at the others.
+            failure = errMsg(err)
+            this.ctx.logger.warn(
+              'velux: a device config could not be read for the gateway lookup',
+              {
+                tags: { integrationId, deviceId: d.id },
+                meta: { error: failure },
+              },
+            )
           }
         }
-        return null
+        return failure === null ? { kind: 'missing' } : { kind: 'unknown', error: failure }
       },
       getStatus: (deviceId) => this.ctx.api.powerSource.getStatus.query({ deviceId }),
       forceRestart: (deviceId) => this.ctx.api.powerSource.forceRestart.mutate({ deviceId }),
@@ -340,20 +354,17 @@ export class VeluxProviderAddon extends BaseDeviceProvider {
 
   /** The last restart attempt per integration, in the addon store, so a respawn keeps the cooldown. */
   private buildPowerCycleStore(): PowerCycleStore {
-    const KEY = 'powerRestartAt'
+    // One flat key per integration: `writeAddonStore` merges top-level keys, so
+    // one integration's write never rewrites another's (no whole-map read-modify-write).
+    const key = (integrationId: string): string => `powerRestartAt:${integrationId}`
     return {
       read: async (integrationId) => {
         const store = (await this.ctx.settings?.readAddonStore()) ?? {}
-        const all: unknown = store[KEY]
-        if (all === null || typeof all !== 'object') return null
-        const at: unknown = Reflect.get(all, integrationId)
+        const at: unknown = store[key(integrationId)]
         return typeof at === 'number' ? at : null
       },
       write: async (integrationId, at) => {
-        const store = (await this.ctx.settings?.readAddonStore()) ?? {}
-        const current: unknown = store[KEY]
-        const previous = current !== null && typeof current === 'object' ? current : {}
-        await this.ctx.settings?.writeAddonStore({ [KEY]: { ...previous, [integrationId]: at } })
+        await this.ctx.settings?.writeAddonStore({ [key(integrationId)]: at })
       },
     }
   }

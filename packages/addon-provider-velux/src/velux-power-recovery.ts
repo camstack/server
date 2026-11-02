@@ -9,13 +9,19 @@ export const RECOVERY_COOLDOWN_MS = 30 * 60 * 1000
 /** How long a KLF-200 takes to boot after power returns, before a reconnect is tried. */
 export const GATEWAY_BOOT_MS = 90 * 1000
 
+/** Result of looking the integration's gateway device up. */
+export type GatewayDeviceLookup =
+  | { readonly kind: 'found'; readonly deviceId: number }
+  | { readonly kind: 'missing' }
+  | { readonly kind: 'unknown'; readonly error: string }
+
 /**
  * The `power-source` cap of the gateway's own device, through `ctx.api`. The
  * cap owns the off, wait, on sequence; this side only asks for it.
  */
 export interface PowerSourcePort {
-  /** The gateway device of this integration, or null while it is not adopted. */
-  gatewayDeviceId(integrationId: string): Promise<number | null>
+  /** The gateway device of this integration; a failed read is `unknown`, never `missing` (D49). */
+  gatewayDevice(integrationId: string): Promise<GatewayDeviceLookup>
   getStatus(deviceId: number): Promise<{ readonly linked: boolean }>
   forceRestart(deviceId: number): Promise<PowerSourceActionResult>
 }
@@ -45,8 +51,26 @@ export interface VeluxPowerRecoveryDeps {
   readonly store?: PowerCycleStore
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+/** A wait that `abort()` can cut short. The timer never keeps the process alive. */
+class AbortableWait {
+  #timer: ReturnType<typeof setTimeout> | null = null
+  #resolve: (() => void) | null = null
+
+  wait(ms: number): Promise<void> {
+    return new Promise((resolve) => {
+      this.#resolve = resolve
+      this.#timer = setTimeout(() => this.abort(), ms)
+      this.#timer.unref?.()
+    })
+  }
+
+  abort(): void {
+    if (this.#timer !== null) clearTimeout(this.#timer)
+    this.#timer = null
+    const resolve = this.#resolve
+    this.#resolve = null
+    resolve?.()
+  }
 }
 
 /**
@@ -60,6 +84,9 @@ export class VeluxPowerRecovery {
   #loaded = false
   #inFlight = false
   #lastSkipLogAt: Map<string, number> = new Map()
+  /** The gateway device id, kept per integration; dropped on any lookup miss. */
+  #deviceId: number | null = null
+  readonly #bootWait = new AbortableWait()
 
   constructor(deps: VeluxPowerRecoveryDeps) {
     this.#deps = deps
@@ -67,6 +94,11 @@ export class VeluxPowerRecovery {
 
   get inFlight(): boolean {
     return this.#inFlight
+  }
+
+  /** Stop or disconnect: cut the boot wait short and free the in-flight slot. */
+  abort(): void {
+    this.#bootWait.abort()
   }
 
   /**
@@ -103,13 +135,30 @@ export class VeluxPowerRecovery {
     onCycleStart: () => void,
   ): Promise<VeluxRecoveryResult> {
     const { logger, integrationId } = this.#deps
-    const deviceId = await powerSource.gatewayDeviceId(integrationId).catch(() => null)
-    if (deviceId === null) {
+    // Local state first: the cooldown is answered before any RPC.
+    const now = Date.now()
+    if (!this.#loaded && store) {
+      try {
+        this.#lastAttemptAt = await store.read(integrationId)
+        this.#loaded = true
+      } catch (err) {
+        return this.#skip(
+          'state-unreadable',
+          `power restart skipped, the last attempt time is unreadable: ${errMsg(err)}`,
+        )
+      }
+    }
+    const last = this.#lastAttemptAt
+    if (last !== null && now - last < RECOVERY_COOLDOWN_MS) {
+      const ago = Math.round((now - last) / 60_000)
       return this.#skip(
-        'no-gateway-device',
-        `gateway unreachable for ${minutes} min; the gateway device is not adopted`,
+        'cooldown',
+        `gateway unreachable for ${minutes} min; power restart skipped, the last attempt was ${ago} min ago`,
+        this.#deviceId ?? undefined,
       )
     }
+    const deviceId = await this.#resolveDevice(powerSource, minutes)
+    if (typeof deviceId !== 'number') return deviceId
     const tags = { deviceId }
     let linked: boolean
     try {
@@ -125,28 +174,6 @@ export class VeluxPowerRecovery {
       return this.#skip(
         'no-source',
         `gateway unreachable for ${minutes} min; no power source linked`,
-        deviceId,
-      )
-    }
-    const now = Date.now()
-    if (!this.#loaded && store) {
-      try {
-        this.#lastAttemptAt = await store.read(integrationId)
-        this.#loaded = true
-      } catch (err) {
-        return this.#skip(
-          'state-unreadable',
-          `power restart skipped, the last attempt time is unreadable: ${errMsg(err)}`,
-          deviceId,
-        )
-      }
-    }
-    const last = this.#lastAttemptAt
-    if (last !== null && now - last < RECOVERY_COOLDOWN_MS) {
-      const ago = Math.round((now - last) / 60_000)
-      return this.#skip(
-        'cooldown',
-        `gateway unreachable for ${minutes} min; power restart skipped, the last attempt was ${ago} min ago`,
         deviceId,
       )
     }
@@ -185,8 +212,32 @@ export class VeluxPowerRecovery {
       `velux: power restart accepted, waiting ${GATEWAY_BOOT_MS / 1000}s for the gateway to boot`,
       { tags },
     )
-    await sleep(GATEWAY_BOOT_MS)
+    await this.#bootWait.wait(GATEWAY_BOOT_MS)
     return { kind: 'done', record: { at: now, outcome: 'restarted', detail: null } }
+  }
+
+  /** The cached gateway device id, or a skip result when the lookup misses or fails. */
+  async #resolveDevice(
+    powerSource: PowerSourcePort,
+    minutes: number,
+  ): Promise<number | VeluxRecoveryResult> {
+    if (this.#deviceId !== null) return this.#deviceId
+    const lookup = await powerSource.gatewayDevice(this.#deps.integrationId)
+    if (lookup.kind === 'found') {
+      this.#deviceId = lookup.deviceId
+      return lookup.deviceId
+    }
+    this.#deviceId = null
+    if (lookup.kind === 'unknown') {
+      return this.#skip(
+        'gateway-lookup-failed',
+        `gateway unreachable for ${minutes} min; gateway device lookup failed: ${lookup.error}`,
+      )
+    }
+    return this.#skip(
+      'no-gateway-device',
+      `gateway unreachable for ${minutes} min; the gateway device is not adopted`,
+    )
   }
 
   /** One skip line per reason per cooldown window, so a failing gateway does not spam the log. */

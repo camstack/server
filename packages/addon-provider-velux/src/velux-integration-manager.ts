@@ -179,6 +179,7 @@ export class VeluxIntegrationManager implements VeluxNodeSource {
     }
     this.#wanted = true
     this.#attempt = 0
+    this.#unreachableSince = null
     this.#generation += 1
     await this.#connect()
   }
@@ -188,6 +189,7 @@ export class VeluxIntegrationManager implements VeluxNodeSource {
     this.#wanted = false
     this.#generation += 1
     this.#cancelRetry()
+    this.#recovery.abort()
     const client = this.#client
     this.#detach()
     this.#nodes = new Map()

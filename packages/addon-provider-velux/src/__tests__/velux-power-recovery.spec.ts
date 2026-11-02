@@ -4,6 +4,7 @@ import type { VeluxDisconnect, VeluxGatewayClient } from '../velux-client-contra
 import { VeluxIntegrationManager } from '../velux-integration-manager.js'
 import {
   GATEWAY_BOOT_MS,
+  type GatewayDeviceLookup,
   type PowerCycleStore,
   type PowerSourcePort,
   RECOVERY_COOLDOWN_MS,
@@ -48,8 +49,14 @@ class FakePowerSource implements PowerSourcePort {
   gatewayId: number | null = GATEWAY_DEVICE
   statusCalls = 0
   restarts: number[] = []
-  async gatewayDeviceId(): Promise<number | null> {
-    return this.gatewayId
+  lookupError: string | null = null
+  lookups = 0
+  async gatewayDevice(): Promise<GatewayDeviceLookup> {
+    this.lookups += 1
+    if (this.lookupError !== null) return { kind: 'unknown', error: this.lookupError }
+    return this.gatewayId === null
+      ? { kind: 'missing' }
+      : { kind: 'found', deviceId: this.gatewayId }
   }
   async getStatus(): Promise<{ linked: boolean }> {
     this.statusCalls += 1
@@ -218,6 +225,57 @@ describe('gateway recovery through the power-source link', () => {
     expect(logger.lines.some((l) => l.message.includes('power restart failed'))).toBe(true)
     await vi.advanceTimersByTimeAsync(10 * 60_000)
     expect(source.restarts).toHaveLength(1)
+    await manager.stop()
+  })
+
+  it('says the lookup failed, not that the gateway is not adopted, and tries again later', async () => {
+    const source = new FakePowerSource()
+    source.lookupError = 'loadConfig timed out'
+    const { manager, logger } = build(source, new MemoryStore())
+    await manager.start()
+    await vi.advanceTimersByTimeAsync(RECOVERY_UNREACHABLE_MS + 5 * 60_000)
+    expect(source.restarts).toEqual([])
+    expect(
+      logger.lines.some((l) =>
+        l.message.includes('gateway device lookup failed: loadConfig timed out'),
+      ),
+    ).toBe(true)
+    expect(logger.lines.some((l) => l.message.includes('not adopted'))).toBe(false)
+    source.lookupError = null
+    await vi.advanceTimersByTimeAsync(10 * 60_000)
+    expect(source.restarts).toEqual([GATEWAY_DEVICE])
+    await manager.stop()
+  })
+
+  it('answers the cooldown before any call, and caches the gateway device id', async () => {
+    const store = new MemoryStore()
+    store.at = Date.now()
+    const source = new FakePowerSource()
+    const { manager } = build(source, store)
+    await manager.start()
+    await vi.advanceTimersByTimeAsync(RECOVERY_UNREACHABLE_MS + 5 * 60_000)
+    expect(source.lookups).toBe(0)
+    expect(source.statusCalls).toBe(0)
+    await vi.advanceTimersByTimeAsync(RECOVERY_COOLDOWN_MS)
+    expect(source.restarts).toHaveLength(1)
+    expect(source.lookups).toBe(1)
+    await manager.stop()
+  })
+
+  it('cuts the boot wait short on stop, and recovers again after the cooldown', async () => {
+    const source = new FakePowerSource()
+    const { manager } = build(source, new MemoryStore())
+    await manager.start()
+    // The restart fires at the failure at 810 s; the boot wait ends 90 s later.
+    await vi.advanceTimersByTimeAsync(815_000)
+    expect(source.restarts).toHaveLength(1)
+    // Inside the 90 s boot wait.
+    await vi.advanceTimersByTimeAsync(10_000)
+    await manager.stop()
+    expect(vi.getTimerCount()).toBe(0)
+    await manager.start()
+    await vi.advanceTimersByTimeAsync(RECOVERY_COOLDOWN_MS + RECOVERY_UNREACHABLE_MS + 5 * 60_000)
+    expect(source.restarts).toHaveLength(2)
     await manager.stop()
   })
 })

@@ -106,6 +106,31 @@ describe('Velux connection test', () => {
     expect(probed).toBe(0)
   })
 
+  it('treats the saved password marker as the saved password, never as text', async () => {
+    let probed = 0
+    const marker = { $secret: 'secret://velux/int-1/password' }
+    const live = buildVeluxConnectionTestProvider({
+      logger: new RecordingLogger(),
+      liveSession: () => ({ password: PASSWORD, firmware: null }),
+      probe: async () => {
+        probed += 1
+        return { firmware: null }
+      },
+    })
+    const ok = await live.testSettings({ settings: { host: '10.0.0.5', password: marker } })
+    expect(ok.outcome).toBe('validated')
+    const down = buildVeluxConnectionTestProvider({
+      logger: new RecordingLogger(),
+      probe: async () => {
+        probed += 1
+        return { firmware: null }
+      },
+    })
+    const notTested = await down.testSettings({ settings: { host: '10.0.0.5', password: marker } })
+    expect(notTested.outcome).toBe('inconclusive')
+    expect(probed).toBe(0)
+  })
+
   it('rejects a wrong password, and only that', async () => {
     const { certPem } = await startGateway()
     const provider = buildVeluxConnectionTestProvider({

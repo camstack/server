@@ -26,6 +26,7 @@ async function setup(
   extra: {
     makeConnection?: (tls: { ca: string[]; checkServerIdentity: () => undefined }) => Connection
     statsIntervalMs?: number
+    teardownDrainMs?: number
   } = {},
 ): Promise<KlfGatewayClient> {
   gateway = new FakeKlfGateway(PASSWORD, nodes)
@@ -38,6 +39,7 @@ async function setup(
     logger,
     tls,
     rainRefreshMs: 600_000,
+    ...(extra.teardownDrainMs === undefined ? {} : { teardownDrainMs: extra.teardownDrainMs }),
     ...(extra.statsIntervalMs === undefined ? {} : { statsIntervalMs: extra.statsIntervalMs }),
     ...(extra.makeConnection === undefined
       ? {}
@@ -151,4 +153,31 @@ describe('KlfGatewayClient session discipline', () => {
     const line = logger.lines.find((l) => l.message.includes('requests in the last interval'))
     expect(JSON.stringify(line?.extras?.meta)).toContain('get-version')
   })
+
+  it('never runs a request queued under an older session on the next one', async () => {
+    const c = await setup([windowNode(0), windowNode(1)])
+    await c.connect()
+    gateway.slowReplies(300)
+    const first = c.readVersion()
+    const stale = c.open(1).then(
+      () => 'ran',
+      () => 'rejected',
+    )
+    const closing = c.disconnect()
+    await c.connect()
+    await Promise.allSettled([first, closing])
+    expect(await stale).toBe('rejected')
+    expect(gateway.moves).toEqual([])
+  })
+
+  it('logs a drain that timed out and still sends the monitor disable', async () => {
+    const c = await setup([windowNode(0)], { teardownDrainMs: 100 })
+    await c.connect()
+    gateway.slowReplies(1500)
+    const pending = c.readVersion().catch(() => undefined)
+    await c.disconnect()
+    await pending
+    expect(logger.lines.some((l) => l.message.includes('still in flight at teardown'))).toBe(true)
+    expect(gateway.log).toContain('HOUSE_STATUS_MONITOR_DISABLE_REQ')
+  }, 15_000)
 })

@@ -45,8 +45,14 @@ const MONITOR_TIMEOUT_S = 5
 /** Seconds the library may take to end the socket before it is destroyed. */
 const LOGOUT_TIMEOUT_S = 5
 
-/** How long a teardown waits for the request in flight before it sends the monitor disable. */
-const TEARDOWN_DRAIN_MS = 2_000
+/**
+ * How long a teardown waits for the request in flight before it sends the
+ * monitor disable: the library's own request timeout (10 s). The KLF-200 answers
+ * one request at a time, and a disable sent on top of a pending request has no
+ * documented behaviour, so the teardown lets that request finish (or time out)
+ * first. A drain that times out is logged and the disable goes out anyway.
+ */
+export const KLF_TEARDOWN_DRAIN_MS = 10_000
 
 /** How often the per-request-type counters are written to the log. */
 export const KLF_STATS_INTERVAL_MS = 60 * 60 * 1000
@@ -69,6 +75,8 @@ export interface KlfGatewayClientOptions {
   readonly keepAliveMs?: number
   readonly rainRefreshMs?: number
   readonly statsIntervalMs?: number
+  /** Longest a teardown waits for the request in flight; defaults to {@link KLF_TEARDOWN_DRAIN_MS}. */
+  readonly teardownDrainMs?: number
   /** Seam: builds the library connection. Defaults to a real one for `host`. */
   readonly makeConnection?: () => Connection
 }
@@ -102,8 +110,10 @@ export class KlfGatewayClient implements VeluxGatewayClient {
   #closing = false
   /** The connection being opened: not yet a usable session, but a socket a stop must close. */
   #opening: Connection | null = null
-  /** True between a monitor enable and its disable on the live connection. */
-  #monitorOn = false
+  /** Connections whose house status monitor is on: per session, never shared with the next one. */
+  readonly #monitorOn: WeakSet<Connection> = new WeakSet()
+  /** Bumped by every connect(); a queued request carries the number it was asked under. */
+  #session = 0
   readonly #tornDown: WeakSet<Connection> = new WeakSet()
   /** Tail of the request queue: the gateway gets one request in flight. */
   #tail: Promise<void> = Promise.resolve()
@@ -116,6 +126,7 @@ export class KlfGatewayClient implements VeluxGatewayClient {
 
   async connect(): Promise<void> {
     this.#closing = false
+    this.#session += 1
     const log = this.#opts.logger
     const connection = this.#makeConnection()
     this.#opening = connection
@@ -382,8 +393,12 @@ export class KlfGatewayClient implements VeluxGatewayClient {
 
   /** Queue a gateway request behind the one in flight; counted per type for the hourly line. */
   #enqueue<T>(type: string, task: () => Promise<T>): Promise<T> {
+    const token = this.#session
     const run = this.#tail.then(() => {
-      if (this.#closing) throw new Error('KLF-200 gateway session is closing')
+      // A request queued under an older session must never run on the new one.
+      if (token !== this.#session || this.#closing) {
+        throw new Error('KLF-200 gateway session is closing')
+      }
       this.#count(type)
       return task()
     })
@@ -405,7 +420,8 @@ export class KlfGatewayClient implements VeluxGatewayClient {
     } else {
       await connection.sendFrameAsync(new GW_HOUSE_STATUS_MONITOR_DISABLE_REQ(), MONITOR_TIMEOUT_S)
     }
-    this.#monitorOn = enabled
+    if (enabled) this.#monitorOn.add(connection)
+    else this.#monitorOn.delete(connection)
     this.#opts.logger.info(`velux: house status monitor ${enabled ? 'enabled' : 'disabled'}`, {
       meta: {},
     })
@@ -423,7 +439,18 @@ export class KlfGatewayClient implements VeluxGatewayClient {
     this.#tornDown.add(connection)
     const log = this.#opts.logger
     log.info('velux: tearing the session down', { meta: { path } })
-    await settle(Promise.race([this.#tail, delay(TEARDOWN_DRAIN_MS)]))
+    const drained = await Promise.race([
+      this.#tail.then(() => true),
+      delay(this.#opts.teardownDrainMs ?? KLF_TEARDOWN_DRAIN_MS).then(() => false),
+    ])
+    if (!drained) {
+      log.warn(
+        'velux: a request was still in flight at teardown, sending the monitor disable anyway',
+        {
+          meta: { path },
+        },
+      )
+    }
     try {
       await this.#setMonitor(connection, false)
     } catch (err) {
@@ -431,7 +458,6 @@ export class KlfGatewayClient implements VeluxGatewayClient {
         meta: { path, error: errMsg(err) },
       })
     }
-    this.#monitorOn = false
     try {
       await connection.logoutAsync(LOGOUT_TIMEOUT_S)
       log.info('velux: socket ended cleanly', { meta: { path } })
@@ -458,7 +484,7 @@ export class KlfGatewayClient implements VeluxGatewayClient {
         meta: {
           by: this.#tornDown.has(connection) || this.#closing ? 'local' : 'remote',
           hadError,
-          monitorOn: this.#monitorOn,
+          monitorOn: this.#monitorOn.has(connection),
         },
       })
     })
