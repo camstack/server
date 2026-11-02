@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**229 units · 7808 source files · 216 units claimed by at least one document (7767 files).**
+**229 units · 7812 source files · 216 units claimed by at least one document (7771 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -127,6 +127,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/types/src/expression` | 11 | `automations` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `design/2026-08-08-automation-scripts-custom-devices.md`, `design/2026-08-09-automation-recipe-phase6-design.md`, +2 more | — |
 | `packages/addon-export-hap/src/multi-tier` | 10 | `ecosystem-exports` | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md` _(covers)_, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +2 more, 1 ADR | 2026-09-29 |
 | `packages/addon-mqtt-broker` | 10 | `ecosystem-exports` | `decisions/adr-0831-mqtt-ha-discovery-import-is-its-own-provider.md`, `decisions/adr-0797-no-secret-reaches-a-node-through-its-environment-the-hub-keeps-its-own-in-the-keychain.md` | — |
+| `packages/addon-smtp-nodemailer` | 10 | `notification-center` | `decisions/adr-0999-inbound-camera-alarms-ride-existing-planes-smtp-is-a-broker-kind-http-is-the-addon-data-plane.md` | — |
 | `packages/sdk` | 10 | `tooling` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/authentication.md`, `decisions/adr-0812-every-session-token-belongs-to-a-server-side-login-session-checked-on-every-verify.md` | 2026-10-21 |
 | `packages/types/src/deps` | 10 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/ffmpeg.md`, `architecture/windows-agent.md`, +3 more | 2026-10-24 |
 | `e2e` | 9 | `tooling` | — | — |
@@ -149,7 +150,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-post-analysis` | 6 | `post-analysis` | — | — |
 | `packages/addon-provider-onvif` | 6 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0522-home-is-a-stored-choice-not-a-vendor-convention.md`, `decisions/adr-0677-the-runtime-state-row-writer-never-writes-a-row-this-process-has-not-read.md` _(covers)_ | 2026-10-26 |
 | `packages/addon-provider-reolink/src/accessories` | 6 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_ | 2026-10-26 |
-| `packages/addon-smtp-nodemailer` | 6 | `notification-center` | `decisions/adr-0999-inbound-camera-alarms-ride-existing-planes-smtp-is-a-broker-kind-http-is-the-addon-data-plane.md` | — |
 | `packages/system/src/http` | 6 | `api-surface` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0707-a-browser-origin-reads-the-hub-only-from-an-allowlist-and-never-with-the-session-cookie.md`, +1 more | 2026-08-29 |
 | `packages/types/src/ir` | 6 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0963-infrared-control-is-two-caps-a-transport-on-the-board-and-a-remote-on-the-appliance-and-its-state-is-assumed-never-reported.md` | — |
 | `packages/types/src/keychain` | 6 | `secrets` | `architecture/secrets-keychain.md` _(covers)_, `decisions/adr-0787-a-secret-field-stores-a-keychain-marker-and-the-value-lives-in-the-keychain.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, +1 more | 2026-10-18 |

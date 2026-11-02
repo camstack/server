@@ -1,7 +1,7 @@
 {
   "name": "@camstack/addon-smtp-nodemailer",
   "version": "1.2.145",
-  "description": "SMTP email provider addon for CamStack — wraps `nodemailer` and registers a `smtp-provider` cap collection entry. Used by notifier addons.",
+  "description": "SMTP email provider addon for CamStack \u2014 wraps `nodemailer` and registers a `smtp-provider` cap collection entry. Used by notifier addons.",
   "keywords": [
     "camstack",
     "addon",
@@ -36,7 +36,7 @@
         "id": "smtp-nodemailer",
         "category": "messaging",
         "name": "Email (SMTP)",
-        "description": "Outbound SMTP relay backed by `nodemailer`. Every relay is an integration instance; `smtp-provider.sendEmail` + `verify` serve consumers (notifications, alerts), optionally pinned to one relay.",
+        "description": "Outbound SMTP relay backed by `nodemailer`, plus the `smtp-inbound` broker kind: a mailbox cameras can send alarm mail to. Every relay is an integration instance; `smtp-provider.sendEmail` + `verify` serve consumers (notifications, alerts), optionally pinned to one relay.",
         "entry": "./dist/smtp.addon.js",
         "execution": {
           "placement": "hub-only"
@@ -47,9 +47,16 @@
           },
           {
             "name": "integration-instances"
+          },
+          {
+            "name": "broker"
           }
         ]
       }
+    ],
+    "runtimeDependencies": [
+      "mailparser",
+      "smtp-server"
     ],
     "requires": {
       "server": ">=1.2.739"
@@ -69,12 +76,16 @@
     "@camstack/types": "*"
   },
   "dependencies": {
+    "mailparser": "^3.7.1",
     "nodemailer": "^9.0.1",
+    "smtp-server": "^3.13.6",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@camstack/types": "*",
+    "@types/mailparser": "^3.4.6",
     "@types/nodemailer": "^8.0.1",
+    "@types/smtp-server": "^3.5.13",
     "typescript": "~6.0.3",
     "vite": "^8.0.11",
     "vitest": "^4.0.0"

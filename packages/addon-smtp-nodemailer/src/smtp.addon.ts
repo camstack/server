@@ -11,6 +11,9 @@
  * one the first configured relay answers, so every caller written before relays existed keeps
  * working.
  *
+ * The addon also provides the `broker` kind `smtp-inbound` (D999): a `mailboxes` record is an SMTP
+ * mailbox cameras send alarm mail to, served by `./inbound-broker.ts`.
+ *
  * Transporters are rebuilt whenever a relay's record changes; failures are surfaced via each
  * relay's in-memory `lastError` / `lastVerifiedAt` instead of throwing on boot.
  */
@@ -21,10 +24,14 @@ import {
   type ConfigUISchemaWithValues,
   type IntegrationTestConnectionResult,
   type ISmtpProvider,
+  EventCategory,
   type ProviderRegistration,
+  type RecordKindHandle,
   REDACTED_SECRET,
   RecordIntegrationInstances,
   RevConflictError,
+  brokerCapability,
+  createEvent,
   defineAddonMigrations,
   hydrateSchema,
   integrationInstancesCapability,
@@ -37,6 +44,9 @@ import {
   type SmtpRecordState,
   ADDON_MIGRATIONS,
 } from './migrations/index.js'
+import { SmtpInboundBroker, hostFromRole } from './inbound-broker.js'
+import { type ListenerFactory, smtpServerFactory } from './inbound-listener.js'
+import { mailboxesKind } from './mailbox-record-kinds.js'
 import {
   RelayPool,
   type TransportFactory,
@@ -49,6 +59,7 @@ import {
   type SmtpRelayBody,
   smtpRelaysKind,
 } from './relay-record-kinds.js'
+import type { MailboxBody } from './mailbox-record-kinds.js'
 
 /** The addon keeps no setting of its own: the relays are records. */
 type SmtpAddonConfig = Readonly<Record<string, unknown>>
@@ -89,9 +100,16 @@ export class SmtpNodemailerAddon extends BaseAddon<SmtpAddonConfig> {
   private readonly pool: RelayPool
   private instances: RecordIntegrationInstances<SmtpRelayBody> | null = null
   private secretsWarned = false
+  private inbound: SmtpInboundBroker | null = null
 
-  /** `factory` is the transporter seam: the loader passes nothing, a spec passes a fake. */
-  constructor(private readonly factory: TransportFactory = nodemailerFactory) {
+  /**
+   * `factory` is the transporter seam: the loader passes nothing, a spec passes a fake.
+   * `listeners` is the same seam for the inbound mailbox's smtp-server.
+   */
+  constructor(
+    private readonly factory: TransportFactory = nodemailerFactory,
+    private readonly listeners: ListenerFactory = smtpServerFactory,
+  ) {
     super({})
     this.pool = new RelayPool(factory, {
       info: (message, context) => this.ctxIfReady?.logger.info(message, context),
@@ -104,7 +122,7 @@ export class SmtpNodemailerAddon extends BaseAddon<SmtpAddonConfig> {
     if (records === undefined) {
       throw new Error('smtp-nodemailer needs ctx.records — check execution.placement (hub-only)')
     }
-    await records.declare({ relays: smtpRelaysKind })
+    await records.declare({ relays: smtpRelaysKind, mailboxes: mailboxesKind })
     this.instances = new RecordIntegrationInstances(records, smtpRelaysKind, {
       description: { instanceMode: 'multiple', kind: 'relays', canTest: true },
       formSchema: () => this.relayForm(),
@@ -124,14 +142,60 @@ export class SmtpNodemailerAddon extends BaseAddon<SmtpAddonConfig> {
       verify: async (input) => this.pool.verify(input?.instanceId),
       getStatus: async (input) => this.pool.status(input?.instanceId),
     }
+    const inbound = this.buildInbound(records.kind(mailboxesKind))
+    this.inbound = inbound
+    // One smtp-server per mailbox record; with no record nothing is bound (D999).
+    await inbound.start()
     return [
       { capability: smtpProviderCapability, provider },
-      { capability: integrationInstancesCapability, provider: this.instances.toProvider() },
+      {
+        capability: integrationInstancesCapability,
+        provider: this.instances.toProvider(),
+      },
+      { capability: brokerCapability, provider: inbound.provider() },
     ]
   }
 
   protected async onShutdown(): Promise<void> {
     this.pool.closeAll()
+    await this.inbound?.stop()
+  }
+
+  /** The `smtp-inbound` broker kind: records in, events and the hub's internal address out. */
+  private buildInbound(handle: RecordKindHandle<MailboxBody>): SmtpInboundBroker {
+    const source = { type: 'addon' as const, id: this.ctx.id }
+    return new SmtpInboundBroker({
+      addonId: this.ctx.id,
+      handle,
+      factory: this.listeners,
+      // The camera-facing host is the `internal` role of the palette, read on every use (D729).
+      readInternalHost: async () => {
+        const book = await this.ctx.api.localNetwork.getAddresses.query()
+        return hostFromRole(book.roles.internal.resolved)
+      },
+      emitMessage: (m) => {
+        this.ctx.eventBus.emit(
+          createEvent(EventCategory.BrokerMessage, source, {
+            brokerId: m.brokerId,
+            subscriptionId: m.subscriptionId,
+            key: m.key,
+            payload: m.payload,
+          }),
+        )
+      },
+      emitStatus: (s) => {
+        this.ctx.eventBus.emit(
+          createEvent(EventCategory.BrokerStatusChanged, source, {
+            brokerId: s.brokerId,
+            status: s.status,
+            ...(s.error === undefined ? {} : { error: s.error }),
+          }),
+        )
+      },
+      log: (level, message) => {
+        this.ctx.logger[level](message, { tags: { topic: 'smtp-inbound' } })
+      },
+    })
   }
 
   /** Re-read every relay record and make the pool serve exactly those. */
@@ -209,7 +273,10 @@ export class SmtpNodemailerAddon extends BaseAddon<SmtpAddonConfig> {
       readRecord: async (id: string): Promise<SmtpRecordState | null> => {
         const row = await handle.getResolved(id)
         if (row === null) return null
-        return { host: row.data.host, hasPassword: (row.data.password ?? '').length > 0 }
+        return {
+          host: row.data.host,
+          hasPassword: (row.data.password ?? '').length > 0,
+        }
       },
       ensureRelayId: async () => (await this.firstRelayId()) ?? mintRelayId(),
       putRecord: async (id: string, body: SmtpRelayBody): Promise<'created' | 'exists'> => {
@@ -250,7 +317,9 @@ export class SmtpNodemailerAddon extends BaseAddon<SmtpAddonConfig> {
     const row = id === undefined ? null : await this.instances.readResolved(id)
     // A locked keychain serves the row without its password: the form shows it unset, and an
     // untouched save sends the view back, which keeps the stored one.
-    return hydrateSchema(schema, row?.body ?? {}, { inlineSecretsAsViews: true })
+    return hydrateSchema(schema, row?.body ?? {}, {
+      inlineSecretsAsViews: true,
+    })
   }
 
   override async updateGlobalSettingsAsOperator(patch: Record<string, unknown>): Promise<void> {
@@ -305,7 +374,11 @@ export class SmtpNodemailerAddon extends BaseAddon<SmtpAddonConfig> {
     const host = text('host')
     if (host.length === 0) return { success: false, status: 'rejected', error: 'No SMTP host set' }
     if (port < RELAY_PORT_BOUNDS.min || port > RELAY_PORT_BOUNDS.max) {
-      return { success: false, status: 'rejected', error: `Port ${port} is out of range` }
+      return {
+        success: false,
+        status: 'rejected',
+        error: `Port ${port} is out of range`,
+      }
     }
     const started = Date.now()
     const transporter = this.factory(
@@ -322,9 +395,17 @@ export class SmtpNodemailerAddon extends BaseAddon<SmtpAddonConfig> {
     )
     try {
       await transporter.verify()
-      return { success: true, status: 'validated', latencyMs: Date.now() - started }
+      return {
+        success: true,
+        status: 'validated',
+        latencyMs: Date.now() - started,
+      }
     } catch (err: unknown) {
-      return { success: false, status: 'inconclusive', error: scrub(errMsg(err), password) }
+      return {
+        success: false,
+        status: 'inconclusive',
+        error: scrub(errMsg(err), password),
+      }
     } finally {
       transporter.close()
     }

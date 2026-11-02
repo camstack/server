@@ -97,7 +97,7 @@ this column exists to stop.
 | `s3-storage` | `@camstack/addon-remote-storage` | system | own runner | `any-node` | `remote-storage` | unique | `storage-provider` |
 | `sftp-storage` | `@camstack/addon-remote-storage` | system | own runner | `any-node` | `remote-storage` | unique | `storage-provider` |
 | `smb-storage` | `@camstack/addon-remote-storage` | system | own runner | `any-node` | `remote-storage` | unique | `storage-provider` |
-| `smtp-nodemailer` | `@camstack/addon-smtp-nodemailer` | messaging | own runner | `hub-only` | — | — | `integration-instances` `smtp-provider` |
+| `smtp-nodemailer` | `@camstack/addon-smtp-nodemailer` | messaging | own runner | `hub-only` | — | — | `broker` `integration-instances` `smtp-provider` |
 | `snapshot` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `snapshot` |
 | `sqlite-settings` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `data-store-provider` `database-snapshot` `migrations` `records` `storage-admin` `vector-store` |
 | `static-turn` | `@camstack/addon-static-turn` | networking | own runner | `hub-only` | `net-access` | — | `turn-provider` |
