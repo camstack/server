@@ -1,7 +1,7 @@
 ---
 id: D986
 title: Addon-level settings are retired — every value lives in the scope its owner cap declares (integration, cluster, node, fleet default, device), in the existing settings tables
-status: proposed
+status: accepted
 date: 2026-10-31
 supersedes: D268 (already superseded), the integrationSettingSections forwarding of D269
 applies-to:
