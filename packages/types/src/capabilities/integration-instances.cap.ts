@@ -10,18 +10,17 @@ import { TestConnectionResultSchema } from './integrations.cap.js'
 
 /**
  * `integration-instances` - the connection of an addon that holds ONE or SEVERAL
- * (an account, a relay, a destination) as typed records, shown on the
- * Integrations page like every other integration (D985, D986).
+ * (an account, a relay, a destination) as typed records (D985, D986). The addon's
+ * own function page reads and writes them (Logging for Loki); the Integrations
+ * page lists only the integrations that bring devices (D996).
  *
- * A collection of providers: each addon that holds connections registers one
- * and the hub aggregator (`integrations.*`) reaches a provider with the pinned
- * `addonId`. It is internal and has no route: the operator-facing surface is
- * the `integrations` cap, which keeps ONE list.
+ * A collection of providers: each addon that holds connections registers one and a
+ * caller reaches a provider with the pinned `addonId`.
  *
- * Identity: the instance id IS the `integrations` registry id (`int_NNNN`,
- * immutable, already in the `/integrations/<id>` URL). A second operator-chosen
- * slug would be a second authority over one identity (D224). `name` is the
- * editable label.
+ * Identity: the instance id is immutable and opaque to the caller. A record the
+ * Loki migration made keeps the `integrations` registry id it was created under
+ * (`int_NNNN`); a single instance made by its function page takes the addon id.
+ * `name` is the editable label.
  *
  * Secrets: every field the instance kind marks `.meta({ secret: true })` reaches
  * the form as a `SecretFieldView`, never text (D789). A patch value omitted, `''`
@@ -74,33 +73,37 @@ export const integrationInstancesCapability = {
   name: 'integration-instances',
   scope: 'system',
   mode: 'collection',
-  internal: true,
   methods: {
-    describe: method(z.void(), IntegrationInstanceDescriptionSchema),
+    describe: method(z.void(), IntegrationInstanceDescriptionSchema, { auth: 'admin' }),
     /** The form; `id: null` is the create form. */
     instanceFormSchema: method(
       z.object({ id: IntegrationInstanceIdSchema.nullable() }),
       ConfigSchemaPassthrough,
+      { auth: 'admin' },
     ),
-    listInstances: method(z.void(), z.array(IntegrationInstanceSchema).readonly()),
+    listInstances: method(z.void(), z.array(IntegrationInstanceSchema).readonly(), {
+      auth: 'admin',
+    }),
     getInstance: method(
       z.object({ id: IntegrationInstanceIdSchema }),
       IntegrationInstanceSchema.nullable(),
+      { auth: 'admin' },
     ),
-    /** Insert the typed record for a registry row that already exists. */
+    /** Insert the typed record under the given id (a duplicate id is refused). */
     createInstance: method(
       z.object({ id: IntegrationInstanceIdSchema, name: z.string().min(1) }),
       z.object({ id: z.string() }),
-      { kind: 'mutation' },
+      { kind: 'mutation', auth: 'admin' },
     ),
     updateInstance: method(IntegrationInstancePatchSchema, z.object({ ok: z.literal(true) }), {
       kind: 'mutation',
+      auth: 'admin',
     }),
     /** Delete the record and its keychain refs together. */
     deleteInstance: method(
       z.object({ id: IntegrationInstanceIdSchema }),
       z.object({ ok: z.literal(true) }),
-      { kind: 'mutation' },
+      { kind: 'mutation', auth: 'admin' },
     ),
     testInstance: optionalMethod(
       z.object({
@@ -108,7 +111,7 @@ export const integrationInstancesCapability = {
         values: z.record(z.string(), z.unknown()),
       }),
       TestConnectionResultSchema,
-      { kind: 'mutation' },
+      { kind: 'mutation', auth: 'admin' },
     ),
   },
   mount: { kind: 'skip' },

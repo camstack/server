@@ -30,6 +30,7 @@ import type { deviceStateCapability } from '../capabilities/device-state.cap.js'
 import type { displayPaletteCapability } from '../capabilities/display-palette.cap.js'
 import type { faceGalleryCapability } from '../capabilities/face-gallery.cap.js'
 import type { fanPresetsCapability } from '../capabilities/fan-presets.cap.js'
+import type { integrationInstancesCapability } from '../capabilities/integration-instances.cap.js'
 import type { integrationsCapability } from '../capabilities/integrations.cap.js'
 import type { keychainAdminCapability } from '../capabilities/keychain-admin.cap.js'
 import type { llmCapability } from '../capabilities/llm.cap.js'
@@ -102,6 +103,7 @@ export interface SystemProxy {
   readonly displayPalette: Pick<InferProvider<typeof displayPaletteCapability>, 'getPalette' | 'listPresets' | 'setPalette'>
   readonly faceGallery: Pick<InferProvider<typeof faceGalleryCapability>, 'listIdentities' | 'createIdentity' | 'renameIdentity' | 'deleteIdentity' | 'listIdentitySamples' | 'auditIdentitySamples' | 'removeSample' | 'getFaceMedia' | 'assignFace' | 'unassignFace' | 'deleteFace' | 'assignFaces' | 'unassignFaces' | 'suggestFaceClusters'>
   readonly fanPresets: Pick<InferProvider<typeof fanPresetsCapability>, 'getPresets' | 'setPresets' | 'applyPreset' | 'capturePreset'>
+  readonly integrationInstances: Pick<InferProvider<typeof integrationInstancesCapability>, 'describe' | 'instanceFormSchema' | 'listInstances' | 'getInstance' | 'createInstance' | 'updateInstance' | 'deleteInstance' | 'testInstance'>
   readonly integrations: Pick<InferProvider<typeof integrationsCapability>, 'list' | 'get' | 'getByAddonId' | 'create' | 'update' | 'delete' | 'getSettings' | 'setSettings' | 'getAvailableTypes' | 'testConnection'>
   readonly keychainAdmin: Pick<InferProvider<typeof keychainAdminCapability>, 'status' | 'listSecrets' | 'listAudit' | 'reveal' | 'setSystemSecret' | 'importSecret' | 'deleteOrphans' | 'rotateMasterKey' | 'purgeRetiredKeys' | 'downloadRecoveryKey' | 'resetKeychain' | 'resetReport' | 'acknowledgeReset'>
   readonly llm: Pick<InferProvider<typeof llmCapability>, 'generate' | 'generateVision' | 'cancel' | 'listProfileKinds' | 'listProfiles' | 'upsertProfile' | 'migrateRawSecrets' | 'deleteProfile' | 'testProfile' | 'listModels' | 'getDefaults' | 'setDefault' | 'getUsage' | 'listModelCatalog' | 'listRuntimeNodes' | 'listNodeModels' | 'resolveModelRef' | 'installModel' | 'deleteModel' | 'getRuntimeStatus' | 'startRuntime' | 'stopRuntime'>
@@ -499,6 +501,17 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     setPresets: (input?: unknown) => dispatch('fanPresets', 'setPresets', 'mutation', input),
     applyPreset: (input?: unknown) => dispatch('fanPresets', 'applyPreset', 'mutation', input),
     capturePreset: (input?: unknown) => dispatch('fanPresets', 'capturePreset', 'query', input),
+  }
+
+  const integrationInstancesInterface = {
+    describe: (input?: unknown) => dispatch('integrationInstances', 'describe', 'query', input),
+    instanceFormSchema: (input?: unknown) => dispatch('integrationInstances', 'instanceFormSchema', 'query', input),
+    listInstances: (input?: unknown) => dispatch('integrationInstances', 'listInstances', 'query', input),
+    getInstance: (input?: unknown) => dispatch('integrationInstances', 'getInstance', 'query', input),
+    createInstance: (input?: unknown) => dispatch('integrationInstances', 'createInstance', 'mutation', input),
+    updateInstance: (input?: unknown) => dispatch('integrationInstances', 'updateInstance', 'mutation', input),
+    deleteInstance: (input?: unknown) => dispatch('integrationInstances', 'deleteInstance', 'mutation', input),
+    testInstance: (input?: unknown) => dispatch('integrationInstances', 'testInstance', 'mutation', input),
   }
 
   const integrationsInterface = {
@@ -1107,6 +1120,7 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     displayPalette: displayPaletteInterface,
     faceGallery: faceGalleryInterface,
     fanPresets: fanPresetsInterface,
+    integrationInstances: integrationInstancesInterface,
     integrations: integrationsInterface,
     keychainAdmin: keychainAdminInterface,
     llm: llmInterface,

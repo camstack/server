@@ -442,7 +442,7 @@ Enum: `"f32le" \| "pcmu" \| "pcma"`
 - `instanceMode`: `string`
 - `mode`: `"standalone" \| "account" \| "broker"`
 - `discoveryMode`: `string`
-- `kind`: `"device-adoption" \| "device-provider" \| "connection"`
+- `kind`: `"device-adoption" \| "device-provider"`
 - `brokerKind`: `string \| null`
 - `supportsLocationImport`: `boolean`
 - `canTest`: `boolean`

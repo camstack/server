@@ -3,9 +3,10 @@ import { describe, expect, it, vi } from 'vitest'
 import { buildIntegrationsProvider } from '../../api/core/cap-providers'
 
 /**
- * An addon that registers `integration-instances` is a `connection` integration
- * type: the Integrations page lists it, and its create / settings / delete /
- * test go to ITS provider (typed records), never to `integration-settings`.
+ * An addon that registers `integration-instances` keeps its connection as typed
+ * records and is configured from its function page: the Integrations page neither
+ * lists it nor offers it. Its settings / delete / test still go to ITS provider,
+ * never to `integration-settings`.
  */
 
 const ADDON_ID = 'loki-logging'
@@ -93,28 +94,39 @@ function harness(opts: { instanceMode?: 'single' | 'multiple'; withProvider?: bo
     { createLogger: vi.fn(() => log) } as never,
     null,
   )
-  return { provider, registry, instances, restartAddon, log }
+  return { provider, registry, instances, restartAddon, log, addonReg }
 }
 
 describe('integrations over an integration-instances provider', () => {
-  it('lists the addon as a connection type; single is standalone and unique', async () => {
+  it('does not offer the addon as an integration type: its page is the function page', async () => {
     const h = harness({ instanceMode: 'single' })
-    const types = await h.provider.getAvailableTypes()
-    expect(types).toHaveLength(1)
-    expect(types[0]).toMatchObject({
-      addonId: ADDON_ID,
-      kind: 'connection',
-      mode: 'standalone',
-      instanceMode: 'unique',
-      canTest: true,
-      canAdd: true,
-    })
+    expect(await h.provider.getAvailableTypes()).toEqual([])
   })
 
-  it('multiple instances are an account', async () => {
-    const h = harness({ instanceMode: 'multiple' })
+  it("does not list the addon's registry rows, and keeps them (no delete)", async () => {
+    const h = harness()
+    await h.provider.create({ addonId: ADDON_ID, name: 'Loki' })
+    expect(await h.provider.list()).toEqual([])
+    expect(h.registry.deleteIntegration).not.toHaveBeenCalled()
+    expect(await h.registry.listIntegrations()).toHaveLength(1)
+    // the row stays reachable by its id and by the addon id (the Loki migration uses it)
+    expect(await h.provider.get({ id: 'int_0001' })).toMatchObject({ addonId: ADDON_ID })
+  })
+
+  it('a device-bringing addon is still listed', async () => {
+    const h = harness({ withProvider: false })
+    h.addonReg.listAddons.mockReturnValue([
+      {
+        manifest: {
+          id: 'reolink',
+          name: 'Reolink',
+          description: 'Reolink cameras',
+          capabilities: [{ name: 'device-provider' }],
+        },
+      },
+    ])
     const [type] = await h.provider.getAvailableTypes()
-    expect(type).toMatchObject({ kind: 'connection', mode: 'account', canAdd: true })
+    expect(type).toMatchObject({ addonId: 'reolink', kind: 'device-provider' })
   })
 
   it('setSettings writes the instance record and never integration-settings', async () => {

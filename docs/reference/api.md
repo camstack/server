@@ -2938,9 +2938,9 @@
 
 ### `integration-instances` → `integrationInstances.*`
 
-- **Source:** `packages/types/src/capabilities/integration-instances.cap.ts:73`
+- **Source:** `packages/types/src/capabilities/integration-instances.cap.ts:72`
 - **Meta:** scope: `system` · mode: `collection` · mount: `skip`
-- **Archetypes:** internal
+- **Archetypes:** —
 - **Provider interface:** `IIntegrationInstancesProvider`
 
 | Method | tRPC path | Kind | Auth | Input | Output |
@@ -2956,7 +2956,7 @@
 
 ### `integrations` → `integrations.*`
 
-- **Source:** `packages/types/src/capabilities/integrations.cap.ts:158`
+- **Source:** `packages/types/src/capabilities/integrations.cap.ts:156`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `server-provided`
 - **Archetypes:** —
 - **Provider interface:** `IIntegrationsProvider`

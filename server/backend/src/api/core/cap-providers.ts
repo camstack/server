@@ -1200,11 +1200,22 @@ async function runConnectionTest(
  * Exported so the integration-markers spec can assert the recognised set
  * without booting the whole provider factory.
  */
-export const INTEGRATION_CAP_MARKERS = new Set([
-  'device-provider',
-  'device-adoption',
-  'integration-instances',
-])
+export const INTEGRATION_CAP_MARKERS = new Set(['device-provider', 'device-adoption'])
+
+/**
+ * An addon that keeps its connection as typed `integration-instances` records is configured
+ * from its own function page (D996): it is neither an integration type nor a row of the
+ * Integrations list. Decided from the manifest, so a not-yet-registered provider does not
+ * flash a row in. A row it already has stays in the registry and reachable by id.
+ */
+function declaresInstances(ar: AddonRegistryService, addonId: string): boolean {
+  const addon = ar.listAddons().find((a) => a.manifest.id === addonId)
+  return (
+    addon?.manifest.capabilities?.some(
+      (c) => (typeof c === 'string' ? c : c.name) === 'integration-instances',
+    ) === true
+  )
+}
 
 function getInstancesProvider(
   ar: AddonRegistryService,
@@ -1229,7 +1240,7 @@ export function buildIntegrationsProvider(
   return {
     list: async () => {
       const integrations = await requireIntegrationRegistry(ar).listIntegrations()
-      return integrations.map(withProcessState)
+      return integrations.filter((i) => !declaresInstances(ar, i.addonId)).map(withProcessState)
     },
     get: async (input) => {
       const integration = await requireIntegrationRegistry(ar).getIntegration(input.id)
@@ -1726,16 +1737,9 @@ export function buildIntegrationsProvider(
           // also expose a `device-provider` shim); the broker step is the
           // intended entry point for it.
           const capNames = (m.capabilities ?? []).map((c) => (typeof c === 'string' ? c : c.name))
-          // `connection`: the addon holds only a connection (typed instances), no devices.
-          const kind: 'device-adoption' | 'device-provider' | 'connection' = capNames.includes(
-            'device-adoption',
-          )
+          const kind: 'device-adoption' | 'device-provider' = capNames.includes('device-adoption')
             ? 'device-adoption'
-            : capNames.includes('device-provider')
-              ? 'device-provider'
-              : capNames.includes('integration-instances')
-                ? 'connection'
-                : 'device-provider'
+            : 'device-provider'
 
           // For device-adoption addons, the broker kind to create/link comes
           // from the addon manifest (`brokerKind`). Null for device-provider
@@ -1755,16 +1759,13 @@ export function buildIntegrationsProvider(
           //   3. device-provider only / old `instanceMode: unique` → 'standalone'
           const explicitMode = d?.mode ?? m.mode
           const declaresBroker = capNames.includes('broker')
-          //   4. connection: one instance (`single`) is standalone, several an account
           const mode: 'standalone' | 'account' | 'broker' =
             explicitMode ??
             (declaresBroker && brokerKind
               ? 'broker'
               : kind === 'device-adoption'
                 ? 'account'
-                : kind === 'connection' && described?.instanceMode === 'multiple'
-                  ? 'account'
-                  : 'standalone')
+                : 'standalone')
 
           return {
             addonId: m.id,

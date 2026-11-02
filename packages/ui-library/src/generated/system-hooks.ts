@@ -1412,6 +1412,30 @@ export const useImageSettingsSetSettings: typeof trpc.imageSettings.setSettings.
 /** Generated alias around `trpc.imageSettings.getStatus.useQuery`. */
 export const useImageSettingsGetStatus: typeof trpc.imageSettings.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.imageSettings.getStatus.useQuery)
 
+/** Generated alias around `trpc.integrationInstances.describe.useQuery`. */
+export const useIntegrationInstancesDescribe: typeof trpc.integrationInstances.describe.useQuery = /*#__PURE__*/ alias(() => trpc.integrationInstances.describe.useQuery)
+
+/** Generated alias around `trpc.integrationInstances.instanceFormSchema.useQuery`. */
+export const useIntegrationInstancesInstanceFormSchema: typeof trpc.integrationInstances.instanceFormSchema.useQuery = /*#__PURE__*/ alias(() => trpc.integrationInstances.instanceFormSchema.useQuery)
+
+/** Generated alias around `trpc.integrationInstances.listInstances.useQuery`. */
+export const useIntegrationInstancesListInstances: typeof trpc.integrationInstances.listInstances.useQuery = /*#__PURE__*/ alias(() => trpc.integrationInstances.listInstances.useQuery)
+
+/** Generated alias around `trpc.integrationInstances.getInstance.useQuery`. */
+export const useIntegrationInstancesGetInstance: typeof trpc.integrationInstances.getInstance.useQuery = /*#__PURE__*/ alias(() => trpc.integrationInstances.getInstance.useQuery)
+
+/** Generated alias around `trpc.integrationInstances.createInstance.useMutation`. */
+export const useIntegrationInstancesCreateInstance: typeof trpc.integrationInstances.createInstance.useMutation = /*#__PURE__*/ alias(() => trpc.integrationInstances.createInstance.useMutation)
+
+/** Generated alias around `trpc.integrationInstances.updateInstance.useMutation`. */
+export const useIntegrationInstancesUpdateInstance: typeof trpc.integrationInstances.updateInstance.useMutation = /*#__PURE__*/ alias(() => trpc.integrationInstances.updateInstance.useMutation)
+
+/** Generated alias around `trpc.integrationInstances.deleteInstance.useMutation`. */
+export const useIntegrationInstancesDeleteInstance: typeof trpc.integrationInstances.deleteInstance.useMutation = /*#__PURE__*/ alias(() => trpc.integrationInstances.deleteInstance.useMutation)
+
+/** Generated alias around `trpc.integrationInstances.testInstance.useMutation`. */
+export const useIntegrationInstancesTestInstance: typeof trpc.integrationInstances.testInstance.useMutation = /*#__PURE__*/ alias(() => trpc.integrationInstances.testInstance.useMutation)
+
 /** Generated alias around `trpc.integrations.list.useQuery`. */
 export const useIntegrationsList: typeof trpc.integrations.list.useQuery = /*#__PURE__*/ alias(() => trpc.integrations.list.useQuery)
 

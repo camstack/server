@@ -170,7 +170,7 @@ Singleton or collection providers, addressed without a device.
 | `failure-contribution` | 1 | — | — | — | ✓ | `pipeline-runner` `pipeline-analytics` `provider-hikvision` `provider-reolink` |
 | `fan-presets` | 4 | — | — | — | — | `core-blocks` |
 | `filesystem-browse` | 3 | — | — | — | ✓ | `filesystem-storage` |
-| `integration-instances` | 8 | — | — | — | ✓ | `loki-logging` |
+| `integration-instances` | 8 | — | — | — | — | `loki-logging` |
 | `integrations` | 10 | — | — | — | — | — |
 | `keychain` | 7 | — | — | — | ✓ | `keychain` |
 | `keychain-admin` | 13 | — | — | — | — | `keychain` |
