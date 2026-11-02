@@ -19,5 +19,5 @@ export function useSetInstanceEnabled(options: {
   readonly onSuccess: () => void
 }): SetInstanceEnabled {
   const mutation = useIntegrationInstancesSetInstanceEnabled({ onSuccess: options.onSuccess })
-  return { mutate: mutation.mutate, isPending: mutation.isPending }
+  return { mutate: (input) => mutation.mutate({ ...input }), isPending: mutation.isPending }
 }

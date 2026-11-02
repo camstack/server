@@ -12,12 +12,6 @@ import type {
   IntegrationInstanceMode,
 } from '@camstack/types'
 
-/**
- * A stored record as the list sees it. `enabled` is absent on a view from before the switch
- * existed, and absent means switched on.
- */
-export type InstanceView = IntegrationInstance & { readonly enabled?: boolean }
-
 /** One provider of the function cap (`log-destination`, `smtp-provider`). */
 export interface FunctionProvider {
   readonly addonId: string
@@ -28,7 +22,7 @@ export interface FunctionProvider {
 export interface HolderData {
   readonly addonId: string
   readonly description: IntegrationInstanceDescription
-  readonly instances: readonly InstanceView[]
+  readonly instances: readonly IntegrationInstance[]
 }
 
 export interface InstanceRow {
@@ -92,7 +86,7 @@ export function buildRows(input: BuildRowsInput): readonly PanelRow[] {
         id: instance.id,
         name: instance.name,
         configured: instance.configured,
-        enabled: instance.enabled !== false,
+        enabled: instance.enabled,
         status: instance.status,
         canTest: holder.description.canTest,
       })
