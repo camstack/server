@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- An agent now verifies which addon a shared runner acts for, so a grouped addon's records and secrets are owned by the addon on agents too
+
 ## [1.2.743] - 2026-11-02
 
 ### Changed
