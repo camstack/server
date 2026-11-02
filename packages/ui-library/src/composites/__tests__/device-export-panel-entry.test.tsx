@@ -16,7 +16,7 @@
  *     "export failed" would leave the operator re-running the whole set to
  *     find out which ones actually landed.
  */
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 
@@ -48,6 +48,7 @@ const DEVICES = [
     addonId: 'provider-reolink',
     type: 'camera',
     name: 'Gate cam',
+    role: 'doorbell',
     online: true,
     disabled: false,
     parentDeviceId: null,
@@ -82,6 +83,13 @@ vi.mock('../../generated/system-hooks', () => ({
   useActionsList: () => ({ data: undefined, isLoading: false }),
   useNotificationOutputListTargets: () => ({ data: undefined, isLoading: false }),
   useDeviceManagerListAll: () => ({ data: DEVICES, isLoading: false }),
+  useIntegrationsList: () => ({
+    data: [
+      { id: 'int_0001', addonId: 'provider-reolink', name: 'Reolink' },
+      { id: 'int_0002', addonId: 'provider-tuya', name: 'Tuya' },
+    ],
+    isLoading: false,
+  }),
   useDeviceExportExposeDevice: () => ({
     mutateAsync: (input: MutationInput) => {
       exposeCalls.push(input)
@@ -201,34 +209,48 @@ describe('exporting several entries at once', () => {
 })
 
 describe('bulk selection by filter (D875)', () => {
-  it('offers a Role and a Provider filter, and hides nothing until one is used', () => {
+  it('offers searchable Role and Integration selectors, by display name', () => {
     renderPanel()
-    expect(screen.getByRole('button', { name: /^Role/ })).toBeTruthy()
-    expect(screen.getByRole('button', { name: /^Provider/ })).toBeTruthy()
-    expect(screen.getByText('Garden cam')).toBeTruthy()
-    expect(screen.getByText('Hall light')).toBeTruthy()
+    const role = screen.getByTestId('export-filter-role')
+    const integration = screen.getByTestId('export-filter-integration')
+    expect(within(role).getByRole('combobox')).toBeTruthy()
+    expect(within(integration).getByRole('combobox')).toBeTruthy()
+    fireEvent.focus(within(integration).getByRole('combobox'))
+    // Names, never the integration id or the addon id.
+    expect(screen.getByRole('option', { name: /Reolink/ })).toBeTruthy()
+    expect(screen.getByRole('option', { name: /Tuya/ })).toBeTruthy()
+    expect(screen.queryByText(/int_000/)).toBeNull()
+    expect(screen.queryByText('provider-tuya')).toBeNull()
   })
 
-  it('"Select N shown" selects every row the filters leave, then exposes them', async () => {
+  it('shows a role by its display label', () => {
     renderPanel()
+    fireEvent.focus(within(screen.getByTestId('export-filter-role')).getByRole('combobox'))
+    expect(screen.getByRole('option', { name: /Doorbell/ })).toBeTruthy()
+    expect(screen.getByRole('option', { name: /No role/ })).toBeTruthy()
+  })
+
+  it('"Select all N shown" selects every row the filters leave, then exposes them', async () => {
+    renderPanel()
+    expect(screen.getByText('None selected')).toBeTruthy()
     // 3 rows are shown by default.
-    fireEvent.click(screen.getByRole('button', { name: 'Select 3 shown' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Select all 3 shown' }))
     expect(screen.getByTestId('export-selection-count').textContent).toContain('3 selected')
 
     fireEvent.click(screen.getByRole('button', { name: 'Deselect shown' }))
     expect(screen.queryByTestId('export-selection-count')).toBeNull()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Select 3 shown' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Select all 3 shown' }))
     fireEvent.click(screen.getByRole('button', { name: 'Expose 3' }))
     await waitFor(() => expect(exposeCalls.length).toBe(3))
   })
 
-  it('a provider filter narrows what "Select shown" acts on', async () => {
+  it('an integration filter narrows what "Select all shown" acts on', async () => {
     renderPanel()
-    fireEvent.click(screen.getByRole('button', { name: /^Provider/ }))
-    fireEvent.click(screen.getByText('provider-tuya'))
+    fireEvent.focus(within(screen.getByTestId('export-filter-integration')).getByRole('combobox'))
+    fireEvent.click(screen.getByRole('option', { name: /Tuya/ }))
 
-    fireEvent.click(screen.getByRole('button', { name: 'Select 1 shown' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Select all 1 shown' }))
     fireEvent.click(screen.getByRole('button', { name: 'Expose 1' }))
     await waitFor(() => expect(exposeCalls.length).toBe(1))
     expect(exposeCalls[0]?.deviceId).toBe('3')

@@ -7,12 +7,41 @@
  * the only filter, D869).
  */
 import type { MultiSelectOption } from './device-list/multi-select'
+import {
+  deviceIntegrationResolver,
+  type DeviceIntegrationRef,
+} from './device-list/device-integration'
 
 /** The slice of a device row the bulk filters read. */
 export interface ExportFilterable {
   readonly id: number
   readonly addonId: string
   readonly role?: string | null
+  /** The integration that created the device (`integrations.list` `id`). */
+  readonly integrationId?: string | null
+}
+
+/** The slice of an `integrations.list` row the provider filter reads. */
+export interface ExportIntegration extends DeviceIntegrationRef {
+  readonly name: string
+}
+
+/** The provider filter value of a device no registered integration claims. */
+const UNREGISTERED_PREFIX = 'addon:'
+
+/**
+ * The provider filter value of a row: the id of the integration it belongs to,
+ * or `addon:<addonId>` when no registered integration claims it (or the list
+ * has not answered). The raw id is never shown — `providerFilterOptions` names it.
+ */
+export function providerFilterId(
+  device: ExportFilterable,
+  integrations: readonly ExportIntegration[] | null | undefined,
+): string {
+  const resolved = deviceIntegrationResolver(integrations)(device)
+  return resolved.kind === 'resolved'
+    ? resolved.integration.id
+    : `${UNREGISTERED_PREFIX}${device.addonId}`
 }
 
 export interface ExportBulkFilters {
@@ -36,32 +65,49 @@ export function roleFilterId(device: ExportFilterable): string {
 export function applyExportFilters<T extends ExportFilterable>(
   devices: readonly T[],
   filters: ExportBulkFilters,
+  integrations?: readonly ExportIntegration[] | null,
 ): readonly T[] {
   const roles = new Set(filters.roles)
   const providers = new Set(filters.providers)
   return devices.filter(
     (d) =>
       (roles.size === 0 || roles.has(roleFilterId(d))) &&
-      (providers.size === 0 || providers.has(d.addonId)),
+      (providers.size === 0 || providers.has(providerFilterId(d, integrations))),
   )
 }
 
-function distinctOptions(values: readonly string[]): readonly MultiSelectOption[] {
-  return [...new Set(values)].toSorted().map((id) => ({ id, label: id }))
+function sortedByLabel(options: readonly MultiSelectOption[]): readonly MultiSelectOption[] {
+  return options.toSorted((a, b) => a.label.localeCompare(b.label))
 }
 
-/** Distinct roles present among the rows (a roleless row counts as "(none)"). */
+/**
+ * Distinct roles present among the rows, named by `labelOf` (a roleless row is
+ * `NO_ROLE_FILTER_ID`).
+ */
 export function roleFilterOptions(
   devices: readonly ExportFilterable[],
+  labelOf: (roleId: string) => string = (id) => id,
 ): readonly MultiSelectOption[] {
-  return distinctOptions(devices.map(roleFilterId))
+  const ids = [...new Set(devices.map(roleFilterId))]
+  return sortedByLabel(ids.map((id) => ({ id, label: labelOf(id) })))
 }
 
-/** Distinct provider addons present among the rows. */
+/**
+ * Distinct integrations present among the rows, by NAME. A device no
+ * registered integration claims is listed under its addon id.
+ */
 export function providerFilterOptions(
   devices: readonly ExportFilterable[],
+  integrations?: readonly ExportIntegration[] | null,
 ): readonly MultiSelectOption[] {
-  return distinctOptions(devices.map((d) => d.addonId))
+  const nameById = new Map((integrations ?? []).map((i) => [i.id, i.name]))
+  const options = new Map<string, string>()
+  for (const d of devices) {
+    const id = providerFilterId(d, integrations)
+    if (options.has(id)) continue
+    options.set(id, nameById.get(id) ?? d.addonId)
+  }
+  return sortedByLabel([...options].map(([id, label]) => ({ id, label })))
 }
 
 /** `current` plus every shown row. */

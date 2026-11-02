@@ -76,6 +76,7 @@ import {
   useDeviceExportUnexposeDevice,
   useDeviceExportUnexposeEntity,
   useDeviceManagerListAll,
+  useIntegrationsList,
   useNotificationOutputListTargets,
 } from '../generated/system-hooks'
 import { Badge } from '../primitives/badge'
@@ -86,9 +87,11 @@ import { DeviceName, useDeviceLabel } from './device-name'
 import { DeviceList } from './device-list'
 import type { DeviceListColumn, GenericPageSizeSelector } from './device-list/generic-mode'
 import { PAGE_SIZE_ALL } from '../hooks/use-persisted-page-size'
-import { MultiSelectDropdown, type MultiSelectOption } from './device-list/multi-select'
+import type { MultiSelectOption } from './device-list/multi-select'
+import { OptionSelect, type OptionSelectOption } from './option-select'
 import {
   NO_EXPORT_FILTERS,
+  NO_ROLE_FILTER_ID,
   applyExportFilters,
   deselectShown,
   providerFilterOptions,
@@ -96,7 +99,7 @@ import {
   selectShown,
   type ExportBulkFilters,
 } from './export-bulk-selection'
-import { deviceTypeMetaOf } from './device-meta'
+import { deviceRoleMetaOf, deviceTypeMetaOf } from './device-meta'
 import { EmptyState } from './empty-state'
 import { ErrorBox } from './error-box'
 import {
@@ -130,6 +133,7 @@ const DeviceItemRowSchema = z.object({
   disabled: z.boolean(),
   parentDeviceId: z.number().nullable(),
   role: z.string().nullable().optional(),
+  integrationId: z.string().nullable().optional(),
   features: z.array(z.string()).optional(),
   isCamera: z.boolean().optional(),
   // NO `sourceInfo`. The fleet read below is SLIM, and slim does not carry it
@@ -140,6 +144,9 @@ const DeviceItemRowSchema = z.object({
   // `listSupportedDeviceKinds` is a set of leaf types). If a provider ever
   // declares `container`, this read must stop being slim in the same commit.
 })
+const IntegrationRowsSchema = z.array(
+  z.object({ id: z.string(), addonId: z.string(), name: z.string() }),
+)
 const SupportedKindsSchema = z.array(z.string())
 
 const STATUS_POLL_INTERVAL_MS = 10_000
@@ -583,6 +590,15 @@ export function DeviceExportPanel({
     { refetchInterval: FLEET_POLL_INTERVAL_MS },
   )
 
+  // The integrations name the provider filter (never `int_NNNN`, never an
+  // addon id). Unanswered stays unknown: the filter then falls back to the
+  // addon id, and nothing is hidden.
+  const integrationsQuery = useIntegrationsList(undefined)
+  const integrations = useMemo(() => {
+    const parsed = IntegrationRowsSchema.safeParse(integrationsQuery.data)
+    return parsed.success ? parsed.data : null
+  }, [integrationsQuery.data])
+
   // Actions and notification targets (D968). What this exporter can expose
   // beyond devices is ASKED, not assumed: a provider without the method (or an
   // unanswered query) leaves `entityKinds` null, which is "unknown" — devices
@@ -751,25 +767,25 @@ export function DeviceExportPanel({
       const succeeded: string[] = []
       const failed: BulkFailure[] = []
       const mutation = action === 'expose' ? exposeMutation : unexposeMutation
-      const results = await Promise.allSettled(
-        deviceIds.map((deviceId) => mutation.mutateAsync({ deviceId, nodeId: 'hub', addonId })),
-      )
-      results.forEach((result, index) => {
-        const deviceId = deviceIds[index] ?? ''
+      // One device at a time. An exporter's expose / unexpose reads its
+      // persisted list, awaits, then writes the list back; two in flight read
+      // the same list and the last writer drops the others, so a multi export
+      // kept a single device. Awaiting each keeps every result.
+      for (const deviceId of deviceIds) {
         const label = labelFor(deviceId)
-        if (result.status === 'fulfilled') {
+        try {
+          await mutation.mutateAsync({ deviceId, nodeId: 'hub', addonId })
           succeeded.push(label)
-          return
+        } catch (reason: unknown) {
+          const message = reason instanceof Error ? reason.message : String(reason)
+          console.error(`[device-export] ${action} failed`, {
+            tags: { deviceId: Number.parseInt(deviceId, 10) },
+            addonId,
+            error: message,
+          })
+          failed.push({ label, message })
         }
-        const message =
-          result.reason instanceof Error ? result.reason.message : String(result.reason)
-        console.error(`[device-export] ${action} failed`, {
-          tags: { deviceId: Number.parseInt(deviceId, 10) },
-          addonId,
-          error: message,
-        })
-        failed.push({ label, message })
-      })
+      }
       setOutcome({ action, total: deviceIds.length, succeeded, failed })
       setSelectedIds(new Set())
       setRunning(false)
@@ -814,11 +830,26 @@ export function DeviceExportPanel({
   // D875: role / provider filters narrow the rows; "select shown" then acts on
   // what the search, the type filter and these leave, across every page.
   const [bulkFilters, setBulkFilters] = useState<ExportBulkFilters>(NO_EXPORT_FILTERS)
-  const roleOptions = useMemo(() => roleFilterOptions(candidateDevices), [candidateDevices])
-  const providerOptions = useMemo(() => providerFilterOptions(candidateDevices), [candidateDevices])
+  const roleOptions = useMemo<readonly OptionSelectOption[]>(
+    () =>
+      roleFilterOptions(candidateDevices, (id) =>
+        id === NO_ROLE_FILTER_ID
+          ? t('uiLibrary.deviceExport.noRole', 'No role')
+          : deviceRoleMetaOf(id, t).label,
+      ).map((o) => ({ value: o.id, label: o.label })),
+    [candidateDevices, t],
+  )
+  const providerOptions = useMemo<readonly OptionSelectOption[]>(
+    () =>
+      providerFilterOptions(candidateDevices, integrations).map((o) => ({
+        value: o.id,
+        label: o.label,
+      })),
+    [candidateDevices, integrations],
+  )
   const shownDevices = useMemo(
-    () => applyExportFilters(candidateDevices, bulkFilters),
-    [candidateDevices, bulkFilters],
+    () => applyExportFilters(candidateDevices, bulkFilters, integrations),
+    [candidateDevices, bulkFilters, integrations],
   )
   // Actions and targets have neither a role nor a provider addon, so an active
   // role / provider filter leaves them out; with none active they all show.
@@ -959,35 +990,82 @@ export function DeviceExportPanel({
     [addonId, busy, exposedIds, onRowToggle, runEntityExport, selectedIds, toggleSelection, t],
   )
 
-  const renderToolbar = useCallback(
+  // Selectors: one group on the left of the search box (D875). Searchable —
+  // the library's multi `OptionSelect`, so a long role or integration list is
+  // typed into, not scrolled.
+  const filterSelectors = (
+    <>
+      {roleOptions.length > 1 && (
+        <div className="min-w-36 flex-1 sm:w-44 sm:flex-none">
+          <OptionSelect
+            mode="multi"
+            searchable
+            options={roleOptions}
+            value={bulkFilters.roles}
+            onChange={setRoleFilter}
+            placeholder={t('uiLibrary.deviceExport.filterRole', 'Role')}
+            emptyMessage={t('uiLibrary.deviceExport.filterNoOption', 'No match.')}
+            testId="export-filter-role"
+          />
+        </div>
+      )}
+      {providerOptions.length > 1 && (
+        <div className="min-w-36 flex-1 sm:w-44 sm:flex-none">
+          <OptionSelect
+            mode="multi"
+            searchable
+            options={providerOptions}
+            value={bulkFilters.providers}
+            onChange={setProviderFilter}
+            placeholder={t('uiLibrary.deviceExport.filterIntegration', 'Integration')}
+            emptyMessage={t('uiLibrary.deviceExport.filterNoOption', 'No match.')}
+            testId="export-filter-integration"
+          />
+        </div>
+      )}
+    </>
+  )
+
+  // The bulk bar. It is always there when devices are listed: "select all" is
+  // reachable before anything is selected, and the actions appear (primary
+  // tint) the moment something is.
+  const renderBulkBar = useCallback(
     ({ filtered: filteredRows }: { readonly filtered: readonly ExportRow[] }) => {
       // Bulk selection acts on devices; actions and targets toggle per row.
       const filtered = filteredRows.flatMap((row) => (row.kind === 'device' ? [row.device] : []))
+      if (filtered.length === 0 && selectedIds.size === 0) return null
+      const hasSelection = selectedIds.size > 0
       return (
-        <span className="inline-flex flex-wrap items-center gap-1.5">
-          <MultiSelectDropdown
-            label={t('uiLibrary.deviceExport.filterRole', 'Role')}
-            options={roleOptions}
-            selected={bulkFilters.roles}
-            onChange={setRoleFilter}
-          />
-          <MultiSelectDropdown
-            label={t('uiLibrary.deviceExport.filterProvider', 'Provider')}
-            options={providerOptions}
-            selected={bulkFilters.providers}
-            onChange={setProviderFilter}
-          />
+        <div
+          role="toolbar"
+          aria-label={t('uiLibrary.deviceExport.bulkBar', 'Bulk export')}
+          className={`flex flex-wrap items-center gap-2 rounded-md border px-2.5 py-1.5 ${
+            hasSelection ? 'border-primary/40 bg-primary/10' : 'border-border bg-surface'
+          }`}
+        >
+          <span
+            {...(hasSelection ? { 'data-testid': 'export-selection-count' } : {})}
+            className={`text-[11px] font-medium ${
+              hasSelection ? 'text-foreground' : 'text-foreground-subtle'
+            }`}
+          >
+            {hasSelection
+              ? t('uiLibrary.deviceExport.selected', '{{count}} selected', {
+                  count: selectedIds.size,
+                })
+              : t('uiLibrary.deviceExport.noneSelected', 'None selected')}
+          </span>
           <Button
             size="sm"
-            variant="secondary"
+            variant="ghost"
             disabled={filtered.length === 0}
             onClick={() => setSelectedIds((current) => selectShown(current, filtered))}
           >
-            {t('uiLibrary.deviceExport.selectShown', 'Select {{count}} shown', {
+            {t('uiLibrary.deviceExport.selectShown', 'Select all {{count}} shown', {
               count: filtered.length,
             })}
           </Button>
-          {selectedIds.size > 0 && (
+          {hasSelection && (
             <>
               <Button
                 size="sm"
@@ -996,45 +1074,27 @@ export function DeviceExportPanel({
               >
                 {t('uiLibrary.deviceExport.deselectShown', 'Deselect shown')}
               </Button>
-              <span
-                data-testid="export-selection-count"
-                className="text-[11px] text-foreground-subtle"
-              >
-                {t('uiLibrary.deviceExport.selected', '{{count}} selected', {
-                  count: selectedIds.size,
-                })}
-              </span>
-              <Button size="sm" variant="primary" disabled={busy} onClick={exposeSelected}>
-                {t('uiLibrary.deviceExport.exposeN', 'Expose {{count}}', {
-                  count: selectedIds.size,
-                })}
-              </Button>
-              <Button size="sm" variant="secondary" disabled={busy} onClick={unexposeSelected}>
-                {t('uiLibrary.deviceExport.unexposeN', 'Unexpose {{count}}', {
-                  count: selectedIds.size,
-                })}
-              </Button>
               <Button size="sm" variant="ghost" onClick={clearSelection}>
                 {t('uiLibrary.deviceExport.clear', 'Clear')}
               </Button>
+              <span className="ml-auto inline-flex flex-wrap items-center gap-1.5">
+                <Button size="sm" variant="primary" disabled={busy} onClick={exposeSelected}>
+                  {t('uiLibrary.deviceExport.exposeN', 'Expose {{count}}', {
+                    count: selectedIds.size,
+                  })}
+                </Button>
+                <Button size="sm" variant="secondary" disabled={busy} onClick={unexposeSelected}>
+                  {t('uiLibrary.deviceExport.unexposeN', 'Unexpose {{count}}', {
+                    count: selectedIds.size,
+                  })}
+                </Button>
+              </span>
             </>
           )}
-        </span>
+        </div>
       )
     },
-    [
-      t,
-      roleOptions,
-      providerOptions,
-      bulkFilters,
-      setRoleFilter,
-      setProviderFilter,
-      selectedIds.size,
-      busy,
-      exposeSelected,
-      unexposeSelected,
-      clearSelection,
-    ],
+    [t, selectedIds.size, busy, exposeSelected, unexposeSelected, clearSelection],
   )
 
   const hasSupportedKinds = supportedKindList.length > 0
@@ -1093,7 +1153,8 @@ export function DeviceExportPanel({
             filterOptions={typeFilterOptions}
             columns={columns}
             onRowClick={onOpenDevice ? onRowClick : undefined}
-            toolbar={renderToolbar}
+            filters={filterSelectors}
+            belowFilters={renderBulkBar}
             pageSizeSelector={DEVICE_EXPORT_PAGE_SIZE}
             searchPlaceholder={t('uiLibrary.deviceExport.search', 'Search by name or stableId')}
             emptyLabel={t('uiLibrary.deviceExport.noMatch', 'No device matches this search.')}

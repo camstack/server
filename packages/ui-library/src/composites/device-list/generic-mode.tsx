@@ -113,6 +113,17 @@ export interface DeviceListGenericProps<T> {
    * (every page), for controls that act on "what is shown".
    */
   readonly toolbar?: ReactNode | ((ctx: { readonly filtered: readonly T[] }) => ReactNode)
+  /**
+   * Extra selectors rendered on the LEFT, before the type filter, so every
+   * selector sits in one group and the search box stays alone on the right.
+   * Wraps onto their own row on a narrow screen.
+   */
+  readonly filters?: ReactNode
+  /**
+   * Full-width row between the filter row and the table (a bulk-action bar).
+   * A function receives the rows the search and filters currently leave.
+   */
+  readonly belowFilters?: ReactNode | ((ctx: { readonly filtered: readonly T[] }) => ReactNode)
 }
 
 /**
@@ -144,6 +155,8 @@ export function GenericModeList<T>(props: DeviceListGenericProps<T>): ReactNode 
     pageSize: fixedPageSize = FIXED_PAGE_SIZE,
     pageSizeSelector,
     toolbar,
+    filters,
+    belowFilters,
   } = props
 
   // Always called (hooks may not be conditional); without a selector it is an
@@ -210,19 +223,22 @@ export function GenericModeList<T>(props: DeviceListGenericProps<T>): ReactNode 
 
   return (
     <div className="flex flex-col gap-3 h-full min-h-0">
-      <div className="flex items-center justify-between gap-3 flex-wrap shrink-0">
-        {getFilterType && typeOptions.length > 0 ? (
-          <ResponsiveTypeFilter
-            label={filterLabel}
-            options={typeOptions}
-            selected={typeFilters}
-            onChange={setTypeFilters}
-          />
-        ) : (
-          <span />
-        )}
-        <div className="flex items-center gap-2">
-          <div className="relative">
+      <div className="flex items-start justify-between gap-3 flex-wrap shrink-0">
+        <div className="flex min-w-0 flex-1 flex-wrap items-start gap-2">
+          {filters}
+          {getFilterType && typeOptions.length > 0 ? (
+            <div className="flex min-w-40 flex-1">
+              <ResponsiveTypeFilter
+                label={filterLabel}
+                options={typeOptions}
+                selected={typeFilters}
+                onChange={setTypeFilters}
+              />
+            </div>
+          ) : null}
+        </div>
+        <div className="flex items-center gap-2 max-sm:w-full">
+          <div className="relative max-sm:flex-1">
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-foreground-subtle pointer-events-none" />
             <input
               ref={searchRef}
@@ -231,12 +247,14 @@ export function GenericModeList<T>(props: DeviceListGenericProps<T>): ReactNode 
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder={searchPlaceholder}
               aria-label={searchPlaceholder}
-              className="h-7 pl-7 pr-2.5 rounded-md border border-border bg-surface text-[11px] text-foreground placeholder:text-foreground-subtle/60 focus:outline-none focus:ring-1 focus:ring-primary/40 w-56"
+              className="h-7 pl-7 pr-2.5 rounded-md border border-border bg-surface text-[11px] text-foreground placeholder:text-foreground-subtle/60 focus:outline-none focus:ring-1 focus:ring-primary/40 w-56 max-sm:w-full"
             />
           </div>
           {typeof toolbar === 'function' ? toolbar({ filtered }) : toolbar}
         </div>
       </div>
+
+      {typeof belowFilters === 'function' ? belowFilters({ filtered }) : belowFilters}
 
       <div className="flex-1 min-h-0 overflow-y-auto">
         {isLoading && totalItems === 0 ? (

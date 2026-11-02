@@ -61,6 +61,7 @@ vi.mock('../../generated/system-hooks', () => ({
   useDeviceExportUnexposeEntity: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useActionsList: () => ({ data: undefined, isLoading: false }),
   useNotificationOutputListTargets: () => ({ data: undefined, isLoading: false }),
+  useIntegrationsList: () => ({ data: undefined, isLoading: false }),
   useDeviceManagerListAll: (input: unknown, options: unknown) => {
     fleetReads.push({ input, options })
     return { data: fleet, isLoading: false, error: null }

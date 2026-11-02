@@ -31,7 +31,15 @@ export default defineFixtures({
         process: { state: 'running' },
       },
     ],
-    'deviceManager.listAll': [camera(1, 'Garden cam'), camera(2, 'Gate cam')],
+    'integrations.list': [
+      { id: 'int_0001', addonId: 'provider-reolink', name: 'Reolink', enabled: true },
+      { id: 'int_0002', addonId: 'provider-tuya', name: 'Tuya', enabled: true },
+    ],
+    'deviceManager.listAll': [
+      { ...camera(1, 'Garden cam'), integrationId: 'int_0001' },
+      { ...camera(2, 'Gate cam'), integrationId: 'int_0001', role: 'doorbell' },
+      { ...camera(3, 'Hall cam'), addonId: 'provider-tuya', integrationId: 'int_0002' },
+    ],
     'deviceExport.getStatus': { linkState: 'linked', exposedDeviceCount: 1 },
     'deviceExport.listSupportedDeviceKinds': ['camera'],
     'deviceExport.listExposedDevices': [{ deviceId: '1', exposedAs: 'Garden cam' }],

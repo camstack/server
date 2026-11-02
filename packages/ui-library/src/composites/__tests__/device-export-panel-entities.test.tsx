@@ -54,6 +54,7 @@ vi.mock('../../generated/system-hooks', () => ({
   useDeviceExportListSupportedEntityKinds: () => ({ data: entityKinds, isLoading: false }),
   useDeviceExportListExposedEntities: () => ({ data: exposedEntities, isLoading: false }),
   useDeviceManagerListAll: () => ({ data: DEVICES, isLoading: false }),
+  useIntegrationsList: () => ({ data: undefined, isLoading: false }),
   useActionsList: (_input: unknown, options?: { enabled?: boolean }) => {
     actionsListEnabled.push(options?.enabled !== false)
     return {

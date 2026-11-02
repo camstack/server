@@ -7735,7 +7735,7 @@
       "unexposeN": "Unexpose {{count}}",
       "filterRole": "Role",
       "filterProvider": "Provider",
-      "selectShown": "Select {{count}} shown",
+      "selectShown": "Select all {{count}} shown",
       "deselectShown": "Deselect shown",
       "clear": "Clear",
       "title": "Exported devices",
@@ -7747,7 +7747,12 @@
       "emptyKinds": "No devices of the supported kinds ({{kinds}}) are available to expose to \"{{addon}}\".",
       "emptyNoKinds": "\"{{addon}}\" reports no exportable device kinds yet.",
       "typeAction": "Action",
-      "typeNotifier": "Notifier"
+      "typeNotifier": "Notifier",
+      "noRole": "No role",
+      "filterIntegration": "Integration",
+      "filterNoOption": "No match.",
+      "noneSelected": "None selected",
+      "bulkBar": "Bulk export"
     },
     "motionZones": {
       "title": "Motion Zones",

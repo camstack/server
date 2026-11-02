@@ -7757,7 +7757,7 @@
       "unexposeN": "Rimuovi {{count}} dall'esposizione",
       "filterRole": "Ruolo",
       "filterProvider": "Provider",
-      "selectShown": "Seleziona {{count}} mostrati",
+      "selectShown": "Seleziona tutti i {{count}} mostrati",
       "deselectShown": "Deseleziona mostrati",
       "clear": "Cancella",
       "title": "Dispositivi esportati",
@@ -7769,7 +7769,12 @@
       "emptyKinds": "Nessun dispositivo dei tipi supportati ({{kinds}}) è disponibile da esporre a \"{{addon}}\".",
       "emptyNoKinds": "\"{{addon}}\" non segnala ancora alcun tipo di dispositivo esportabile.",
       "typeAction": "Azione",
-      "typeNotifier": "Notificatore"
+      "typeNotifier": "Notificatore",
+      "noRole": "Nessun ruolo",
+      "filterIntegration": "Integrazione",
+      "filterNoOption": "Nessun risultato.",
+      "noneSelected": "Nessuno selezionato",
+      "bulkBar": "Esportazione multipla"
     },
     "motionZones": {
       "title": "Zone di movimento",

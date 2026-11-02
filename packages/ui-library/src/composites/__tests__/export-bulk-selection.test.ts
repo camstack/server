@@ -32,23 +32,52 @@ describe('export bulk filters', () => {
 
   it('filters by provider, and role and provider combine (AND)', () => {
     expect(
-      ids(applyExportFilters(DEVICES, { roles: [], providers: ['provider-homematic'] })),
+      ids(applyExportFilters(DEVICES, { roles: [], providers: ['addon:provider-homematic'] })),
     ).toEqual([3, 4])
     expect(
       ids(
         applyExportFilters(DEVICES, {
           roles: ['cover-blind', 'outlet'],
-          providers: ['provider-homematic'],
+          providers: ['addon:provider-homematic'],
         }),
       ),
     ).toEqual([3])
   })
 
-  it('offers only the roles and providers present, sorted', () => {
+  it('offers only the roles and providers present, sorted by label', () => {
     expect(roleFilterOptions(DEVICES).map((o) => o.id)).toEqual(['(none)', 'cover-blind', 'outlet'])
-    expect(providerFilterOptions(DEVICES).map((o) => o.id)).toEqual([
+    expect(providerFilterOptions(DEVICES).map((o) => o.label)).toEqual([
       'provider-homeassistant',
       'provider-homematic',
+    ])
+  })
+
+  it('labels roles through the caller, and providers by integration NAME', () => {
+    const integrations = [
+      { id: 'int_0007', addonId: 'provider-homematic', name: 'Homematic CCU' },
+      { id: 'int_0003', addonId: 'provider-homeassistant', name: 'Home Assistant' },
+    ]
+    const labelled = roleFilterOptions(DEVICES, (id) => `L:${id}`)
+    expect(labelled.map((o) => o.label)).toEqual(['L:(none)', 'L:cover-blind', 'L:outlet'])
+    const options = providerFilterOptions(DEVICES, integrations)
+    expect(options).toEqual([
+      { id: 'int_0003', label: 'Home Assistant' },
+      { id: 'int_0007', label: 'Homematic CCU' },
+    ])
+    // The filter value is the integration id, so it narrows to its devices.
+    expect(
+      ids(applyExportFilters(DEVICES, { roles: [], providers: ['int_0007'] }, integrations)),
+    ).toEqual([3, 4])
+  })
+
+  it('a device created under another integration is filed under THAT one', () => {
+    const integrations = [
+      { id: 'int_0024', addonId: 'core-blocks', name: 'Blocks' },
+      { id: 'int_0001', addonId: 'composer', name: 'Composer' },
+    ]
+    const composed = [{ id: 1, addonId: 'composer', integrationId: 'int_0024' }]
+    expect(providerFilterOptions(composed, integrations)).toEqual([
+      { id: 'int_0024', label: 'Blocks' },
     ])
   })
 })

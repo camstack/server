@@ -44,6 +44,7 @@ vi.mock('../../generated/system-hooks', () => ({
   useActionsList: () => ({ data: undefined, isLoading: false }),
   useNotificationOutputListTargets: () => ({ data: undefined, isLoading: false }),
   useDeviceManagerListAll: () => devices,
+  useIntegrationsList: () => ({ data: undefined, isLoading: false }),
   useDeviceExportExposeDevice: () => ({ mutate: vi.fn(), isPending: false }),
   useDeviceExportUnexposeDevice: () => ({ mutate: vi.fn(), isPending: false }),
 }))
