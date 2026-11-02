@@ -69,6 +69,8 @@ export interface PackageSceneRejection {
   readonly reason: PackageSceneRejectReason
   readonly bbox?: StationaryBbox
   readonly areaFrac?: number
+  /** Chroma spread of the two crops, on rejections about a lighting change. */
+  readonly chroma?: { readonly before: number; readonly after: number }
 }
 
 export interface PackageSceneDiffResult {
@@ -95,7 +97,15 @@ export function diffZoneLuma(input: PackageSceneDiffInput): PackageSceneDiffResu
   // A day to IR flip changes every pixel: no luma comparison across the two
   // modes means anything, and it is not a zone-wide change either.
   if (isIrCrop(before) !== isIrCrop(after)) {
-    return { blobs: [], rejections: [{ reason: 'lighting-mode-changed' }] }
+    return {
+      blobs: [],
+      rejections: [
+        {
+          reason: 'lighting-mode-changed',
+          chroma: { before: before.chromaSpread, after: after.chromaSpread },
+        },
+      ],
+    }
   }
   const median = medianDelta(before.luma, after.luma)
   const mask = residualMask(before.luma, after.luma, median)

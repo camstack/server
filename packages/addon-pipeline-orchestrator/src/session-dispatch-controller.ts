@@ -542,8 +542,9 @@ export class SessionDispatchController {
     deviceId: number,
     occasion: string | undefined,
     detectionCount: number,
+    shed = false,
   ): void {
-    this.recheck?.noteInferenceResult(deviceId, occasion, detectionCount)
+    this.recheck?.noteInferenceResult(deviceId, occasion, detectionCount, shed)
   }
 
   /**

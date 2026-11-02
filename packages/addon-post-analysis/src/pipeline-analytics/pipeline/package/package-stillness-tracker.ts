@@ -110,6 +110,10 @@ const PACKAGE_STILLNESS_ASSOC_IOU = 0.3
  */
 export const PACKAGE_STILLNESS_CONTINUATION_MIN_SCORE = 0.3
 
+/** Above-floor sightings a candidate needs before a sub-floor box may count:
+ *  one confident look plus a doormat-shaped reading is not a parcel. */
+const PACKAGE_CONTINUATION_MIN_REAL_HITS = 2
+
 /**
  * Two absence reads closer than this are ONE look, not two. A settle burst
  * runs the package step 5 s apart and a poll 45 s apart, so a real second
@@ -316,6 +320,9 @@ interface PackageCandidate {
   readonly lastSeenAt: number
   /** Distinct frames this box has been seen on. */
   readonly hits: number
+  /** Hits from above-floor sightings only: a sub-floor box may continue a
+   *  candidate that already has {@link PACKAGE_CONTINUATION_MIN_REAL_HITS}. */
+  readonly realHits: number
   readonly promotedAt: number | null
   /** Unoccluded looks that found no box here since `lastSeenAt`, oldest
    *  first, at least {@link PACKAGE_ABSENCE_READ_MIN_GAP_MS} apart. A
@@ -378,6 +385,7 @@ export class PackageStillnessTracker {
       for (let i = 0; i < next.length; i += 1) {
         const c = next[i]
         if (c === undefined || c.promotedAt !== null || consumed.has(c.id)) continue
+        if (c.realHits < PACKAGE_CONTINUATION_MIN_REAL_HITS) continue
         const box = this.continuationFor(c, input.continuationBoxes)
         if (box === null) continue
         consumed.add(c.id)
@@ -633,6 +641,7 @@ export class PackageStillnessTracker {
       firstSeenAt: input.timestamp,
       lastSeenAt: input.timestamp,
       hits: 1,
+      realHits: 1,
       promotedAt: null,
       absenceReads: [],
       lastLook: null,
@@ -660,6 +669,7 @@ function confirm(
     frameHeight: input.frameHeight,
     lastSeenAt: input.timestamp,
     hits: prev.hits + 1,
+    realHits: prev.realHits + 1,
     absenceReads: [],
     lastLook: 'present',
     earlyUnbackedReported: false,

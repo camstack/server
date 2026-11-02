@@ -284,6 +284,20 @@ describe('OccupancyRecheckController — a detached camera is re-sampled', () =>
     expect(h.bursts).toHaveLength(4)
   })
 
+  it('a shed burst result is not a burst result: the burst stays without a verdict', async () => {
+    const h = makeHarness()
+    h.controller.noteSessionDispatched(DEVICE_ID, NODE, sessionConfig())
+    h.controller.noteSessionClosed(DEVICE_ID, { sawSubject: true })
+    await vi.advanceTimersByTimeAsync(300_000)
+    h.controller.noteInferenceResult(DEVICE_ID, 'burst', 0, true)
+    await vi.advanceTimersByTimeAsync(RECHECK_BURST_WINDOW_MS)
+    expect(
+      h.lines.some(
+        (l) => l.msg === 'occupancy recheck: burst complete — no verdict, streak unchanged',
+      ),
+    ).toBe(true)
+  })
+
   it('a burst result with 0 detections is empty', async () => {
     const h = makeHarness()
     h.controller.noteSessionDispatched(DEVICE_ID, NODE, sessionConfig())

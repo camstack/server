@@ -269,10 +269,12 @@ export class OccupancyRecheckController {
     deviceId: number,
     occasion: string | undefined,
     detectionCount: number,
+    shed = false,
   ): void {
     const state = this.devices.get(deviceId)
     if (state === undefined || state.burst === null) return
-    if (occasion !== 'burst') return
+    // A frame the pool deliberately skipped carries no detections it looked for.
+    if (occasion !== 'burst' || shed) return
     state.burst.results += 1
     if (detectionCount > 0) state.burst.found = true
   }

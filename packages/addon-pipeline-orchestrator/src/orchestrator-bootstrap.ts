@@ -1468,6 +1468,7 @@ export async function buildOrchestratorControllers(
         payload.deviceId,
         payload.occasion,
         payload.frame.detections?.length ?? 0,
+        payload.frame.shed === true,
       )
       return deps.handleInferenceResult(payload)
     },

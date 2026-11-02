@@ -90,7 +90,7 @@ function okCrop(
     width,
     height,
     luma: lumaFromRgb(rgb, width, height),
-    chromaSpread: chromaSpreadFromRgb(rgb),
+    chromaSpread: chromaSpreadFromRgb(rgb, width, height),
     jpeg: new Uint8Array(jpeg),
   }
 }
@@ -109,21 +109,44 @@ export function lumaFromRgb(bytes: Uint8Array, width: number, height: number): U
   return luma
 }
 
+/** The grid `IR_CHROMA_THRESHOLD` was calibrated on (`chromaSpread`, scene-crop.ts). */
+const CHROMA_GRID = 32
+
 /**
- * Mean of max(r,g,b) - min(r,g,b) over the crop, 0..255 — the same measure as
- * `chromaSpread` in `scene-crop.ts` (which needs sharp), on the RGB already
- * decoded. Daylight measures tens, an IR frame ~0.
+ * Mean of max(r,g,b) - min(r,g,b), 0..255, measured on a 32x32 box-averaged
+ * copy of the crop: the same measure and grid as `chromaSpread` in
+ * `scene-crop.ts` (which needs sharp), so `IR_CHROMA_THRESHOLD` means the same
+ * thing. Averaging first matters: sensor noise and JPEG chroma speckle on an IR
+ * frame cancel out, where per-pixel they read as colour.
  */
-export function chromaSpreadFromRgb(bytes: Uint8Array): number {
-  const pixels = Math.floor(bytes.length / 3)
-  if (pixels === 0) return 0
-  let total = 0
-  for (let i = 0; i < pixels; i++) {
-    const o = i * 3
-    const r = bytes[o] ?? 0
-    const g = bytes[o + 1] ?? 0
-    const b = bytes[o + 2] ?? 0
-    total += Math.max(r, g, b) - Math.min(r, g, b)
+export function chromaSpreadFromRgb(bytes: Uint8Array, width: number, height: number): number {
+  if (width <= 0 || height <= 0 || bytes.length < width * height * 3) return 0
+  const gw = Math.min(CHROMA_GRID, width)
+  const gh = Math.min(CHROMA_GRID, height)
+  const sum = new Float64Array(gw * gh * 3)
+  const count = new Float64Array(gw * gh)
+  for (let y = 0; y < height; y++) {
+    const cy = Math.min(gh - 1, Math.floor((y * gh) / height))
+    for (let x = 0; x < width; x++) {
+      const cx = Math.min(gw - 1, Math.floor((x * gw) / width))
+      const cell = cy * gw + cx
+      const o = (y * width + x) * 3
+      sum[cell * 3] = (sum[cell * 3] ?? 0) + (bytes[o] ?? 0)
+      sum[cell * 3 + 1] = (sum[cell * 3 + 1] ?? 0) + (bytes[o + 1] ?? 0)
+      sum[cell * 3 + 2] = (sum[cell * 3 + 2] ?? 0) + (bytes[o + 2] ?? 0)
+      count[cell] = (count[cell] ?? 0) + 1
+    }
   }
-  return total / pixels
+  let total = 0
+  let cells = 0
+  for (let cell = 0; cell < gw * gh; cell++) {
+    const n = count[cell] ?? 0
+    if (n === 0) continue
+    const r = (sum[cell * 3] ?? 0) / n
+    const g = (sum[cell * 3 + 1] ?? 0) / n
+    const b = (sum[cell * 3 + 2] ?? 0) / n
+    total += Math.max(r, g, b) - Math.min(r, g, b)
+    cells += 1
+  }
+  return cells === 0 ? 0 : total / cells
 }

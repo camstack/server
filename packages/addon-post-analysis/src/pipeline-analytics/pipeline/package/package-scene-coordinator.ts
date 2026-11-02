@@ -282,6 +282,12 @@ export class PackageSceneCoordinator {
         tags: { deviceId },
         meta: {
           reason: rejection.reason,
+          ...(rejection.chroma !== undefined
+            ? {
+                chromaBefore: Number(rejection.chroma.before.toFixed(2)),
+                chromaAfter: Number(rejection.chroma.after.toFixed(2)),
+              }
+            : {}),
           ...(rejection.areaFrac !== undefined
             ? { areaFrac: Number(rejection.areaFrac.toFixed(5)) }
             : {}),

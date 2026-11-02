@@ -45,6 +45,8 @@ export interface RgbPixels {
  */
 export async function decodeJpegToRgb(jpeg: string | Uint8Array): Promise<RgbPixels> {
   const { data, info } = await sharp(typeof jpeg === 'string' ? Buffer.from(jpeg, 'base64') : jpeg)
+    .removeAlpha()
+    .toColourspace('srgb')
     .raw()
     .toBuffer({ resolveWithObject: true })
   return { bytes: data, width: info.width, height: info.height }

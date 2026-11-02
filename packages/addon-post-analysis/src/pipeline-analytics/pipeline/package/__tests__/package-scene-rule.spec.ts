@@ -79,7 +79,25 @@ const EMPTY = luma(40)
 const WITH_BLOB = luma(40, { x: 16, y: 16, w: 8, h: 8, value: 200 })
 const BRIGHTER = luma(80)
 /** An IR crop: no colour, a different luma level and the parcel in it. */
-const IR_WITH_BLOB = luma(150, { x: 16, y: 16, w: 8, h: 8, value: 230 }, 0)
+/** Column-dependent luma: a non-uniform shift the median cannot absorb. */
+function gradient(
+  base: number,
+  slope: number,
+  chromaSpread: number,
+  paint?: { x: number; y: number; w: number; h: number; value: number },
+): PackageZoneLuma {
+  const bytes = new Uint8Array(W * H)
+  for (let y = 0; y < H; y += 1) {
+    for (let x = 0; x < W; x += 1) bytes[y * W + x] = base + Math.floor(x * slope)
+  }
+  if (paint) {
+    for (let y = paint.y; y < paint.y + paint.h; y += 1) {
+      for (let x = paint.x; x < paint.x + paint.w; x += 1) bytes[y * W + x] = paint.value
+    }
+  }
+  return { width: W, height: H, luma: bytes, chromaSpread }
+}
+const IR_WITH_BLOB = gradient(60, 3, 0, { x: 16, y: 16, w: 8, h: 8, value: 240 })
 
 function occluderPerson(): {
   readonly className: 'person'
@@ -543,21 +561,40 @@ describe('a lighting-mode flip is not a zone-wide change', () => {
     score?: number
   }[]
 
-  it('after the flip the kept model box opens the candidate and the reference is IR', () => {
+  it('a day gradient shift of the same mode is still a zone-wide-change', () => {
+    const diff = diffZoneLuma({
+      before: gradient(60, 0, 20),
+      after: gradient(60, 3, 20),
+      minAreaFrac: 0,
+      occluders: [],
+    })
+    expect(diff.rejections.map((r) => r.reason)).toEqual(['zone-wide-change'])
+  })
+
+  it('flip frame: one model box counts once (the plan delivers it, the flip only re-baselines)', () => {
     const out = leftAndSettled(IR_WITH_BLOB, [{ bbox: { x: 16, y: 16, w: 8, h: 8 }, score: 0.75 }])
     expect(out.rejections.map((r) => r.reason)).toEqual(['lighting-mode-changed'])
-    expect(out.sightings).toHaveLength(1)
-    expect(out.sightings[0]?.confidence).toBe(0.75)
+    expect(out.sightings).toEqual([])
     expect(out.state.before?.chromaSpread).toBe(0)
   })
 
-  it('a flip with no model box emits nothing but still re-baselines', () => {
+  it('a box above the area ceiling never opens via the flip path', () => {
+    const out = leftAndSettled(IR_WITH_BLOB, [{ bbox: { x: 0, y: 0, w: W, h: H }, score: 0.9 }])
+    expect(out.sightings).toEqual([])
+  })
+
+  it('the rejection carries the chroma spread of both crops', () => {
+    const diff = diffZoneLuma({ before: EMPTY, after: IR_WITH_BLOB, minAreaFrac: 0, occluders: [] })
+    expect(diff.rejections[0]?.chroma).toEqual({ before: 20, after: 0 })
+  })
+
+  it('a flip re-baselines on the IR crop', () => {
     const out = leftAndSettled(IR_WITH_BLOB, [])
     expect(out.sightings).toEqual([])
     expect(out.state.before?.chromaSpread).toBe(0)
   })
 
-  it('a pending blob survives a flip, confirmed on the next IR look', () => {
+  it('a pending blob is dropped on a flip: the model is the gate for the episode', () => {
     let state: PackageSceneState | null = null
     state = step({
       scene: true,
@@ -597,17 +634,10 @@ describe('a lighting-mode flip is not a zone-wide change', () => {
       state: pending.state,
       timestamp: at,
     })
-    expect(flipped.rejections.map((r) => r.reason)).not.toContain('unstable')
-    expect(flipped.state.phase).toBe('pending')
-    expect(flipped.state.pending.length).toBeGreaterThan(0)
-    at += PACKAGE_SCENE_DIFF_LOOK_GAP_MS
-    const confirmed = step({
-      scene: true,
-      personInZone: false,
-      crop: IR_WITH_BLOB,
-      state: flipped.state,
-      timestamp: at,
-    })
-    expect(confirmed.sightings).toHaveLength(1)
+    expect(flipped.rejections.map((r) => r.reason)).toEqual(['lighting-mode-changed'])
+    expect(flipped.sightings).toEqual([])
+    expect(flipped.state.phase).toBe('clear')
+    expect(flipped.state.pending).toEqual([])
+    expect(flipped.state.before?.chromaSpread).toBe(0)
   })
 })

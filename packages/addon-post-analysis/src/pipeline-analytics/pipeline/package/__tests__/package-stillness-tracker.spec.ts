@@ -419,13 +419,40 @@ describe('sub-floor continuation (a box under the floor continues, never opens)'
     })
   }
 
-  it('0.75 then 0.45, 0.40 on looked frames promotes', () => {
+  it('0.75, 0.75 then 0.45 on looked frames promotes', () => {
+    const t = makeTracker()
+    look(t, 0, [sighting({ confidence: 0.75 })], [])
+    look(t, 400, [sighting({ confidence: 0.75 })], [])
+    const out = look(t, 800, [], [{ bbox: DOORMAT, score: 0.45 }])
+    expect(out.promoted).toHaveLength(1)
+    expect(out.promoted[0]?.confidence).toBe(0.75)
+  })
+
+  it('one real hit and then sub-floor boxes never promote (a doormat is not a parcel)', () => {
     const t = makeTracker()
     look(t, 0, [sighting({ confidence: 0.75 })], [])
     look(t, 400, [], [{ bbox: DOORMAT, score: 0.45 }])
     const out = look(t, 800, [], [{ bbox: DOORMAT, score: 0.4 }])
+    expect(out.promoted).toHaveLength(0)
+    expect(out.continued).toHaveLength(0)
+  })
+
+  it('a real sighting and a continuation box on one frame count once', () => {
+    const t = makeTracker()
+    look(t, 0, [sighting()], [])
+    look(t, 400, [sighting()], [])
+    const out = look(t, 800, [sighting()], [{ bbox: DOORMAT, score: 0.45 }])
+    expect(out.continued).toHaveLength(0)
     expect(out.promoted).toHaveLength(1)
-    expect(out.promoted[0]?.confidence).toBe(0.75)
+  })
+
+  it('a promoted candidate is never continued', () => {
+    const t = makeTracker()
+    look(t, 0, [sighting()], [])
+    look(t, 400, [sighting()], [])
+    look(t, 800, [sighting()], [])
+    const out = look(t, 1200, [], [{ bbox: DOORMAT, score: 0.45 }])
+    expect(out.continued).toHaveLength(0)
   })
 
   it('a sub-floor box alone opens nothing', () => {
