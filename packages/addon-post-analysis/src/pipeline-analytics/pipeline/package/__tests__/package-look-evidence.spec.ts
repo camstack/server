@@ -35,14 +35,28 @@ const frame: FrameResult = {
     },
   ],
   discarded: [
-    { bbox: [10, 20, 110, 70], macroClass: 'package', score: 0.2, reason: 'below-threshold' },
-    { bbox: [0, 0, 5, 5], macroClass: 'vehicle', score: 0.2, reason: 'below-threshold' },
+    {
+      bbox: [10, 20, 110, 70],
+      macroClass: 'package',
+      score: 0.2,
+      reason: 'below-threshold',
+    },
+    {
+      bbox: [0, 0, 5, 5],
+      macroClass: 'vehicle',
+      score: 0.2,
+      reason: 'below-threshold',
+    },
   ],
 }
 
 describe('packageLookEvidence', () => {
   it('reads the look from FrameResult.packageLooked', () => {
-    const base = { tracked: [], packageClasses: PACKAGES, earlyPickupEnabled: false }
+    const base = {
+      tracked: [],
+      packageClasses: PACKAGES,
+      earlyPickupEnabled: false,
+    }
     expect(packageLookEvidence({ ...base, frame: { ...frame, packageLooked: true } }).looked).toBe(
       true,
     )
@@ -79,5 +93,41 @@ describe('packageLookEvidence', () => {
     const base = { frame, tracked: [], packageClasses: PACKAGES }
     expect(packageLookEvidence({ ...base, earlyPickupEnabled: true }).earlyPickup).toBe(true)
     expect(packageLookEvidence({ ...base, earlyPickupEnabled: false }).earlyPickup).toBe(false)
+  })
+
+  it('carries below-threshold package discards as continuation boxes with their score', () => {
+    const out = packageLookEvidence({
+      frame,
+      tracked: [],
+      packageClasses: PACKAGES,
+      earlyPickupEnabled: false,
+    })
+    expect(out.continuationBoxes).toEqual([{ bbox: { x: 10, y: 20, w: 100, h: 50 }, score: 0.2 }])
+  })
+
+  it('does not carry class-filter or zone-gate discards as continuation boxes', () => {
+    const out = packageLookEvidence({
+      frame: {
+        ...frame,
+        discarded: [
+          {
+            bbox: [10, 20, 110, 70],
+            macroClass: 'package',
+            score: 0.4,
+            reason: 'class-filter',
+          },
+          {
+            bbox: [10, 20, 110, 70],
+            macroClass: 'package',
+            score: 0.4,
+            reason: 'zone-gate',
+          },
+        ],
+      },
+      tracked: [],
+      packageClasses: PACKAGES,
+      earlyPickupEnabled: false,
+    })
+    expect(out.continuationBoxes).toEqual([])
   })
 })

@@ -82,7 +82,11 @@ export class PackageSceneCoordinator {
     }
     this.episodes.set(input.deviceId, next)
     if (!cropDue(next, input)) return
-    this.episodes.set(input.deviceId, { ...next, inflight: true, lastFetchAt: input.timestamp })
+    this.episodes.set(input.deviceId, {
+      ...next,
+      inflight: true,
+      lastFetchAt: input.timestamp,
+    })
     void this.fetch(input)
   }
 
@@ -128,7 +132,13 @@ export class PackageSceneCoordinator {
   private stepJpeg(prev: Episode, input: PackageSceneNote): Episode {
     if (!input.confirmWithLlm) return prev
     if (input.personInZone) {
-      return { ...prev, jpegPhase: 'person', leftAt: null, afterJpeg: undefined, held: false }
+      return {
+        ...prev,
+        jpegPhase: 'person',
+        leftAt: null,
+        afterJpeg: undefined,
+        held: false,
+      }
     }
     if (prev.jpegPhase === 'person') {
       return { ...prev, jpegPhase: 'settling', leftAt: input.timestamp }
@@ -178,10 +188,18 @@ export class PackageSceneCoordinator {
     input: PackageSceneNote,
   ): void {
     if (prev.scene?.phase === 'person') {
-      this.episodes.set(deviceId, { ...prev, logged: clearFetchLogs(prev.logged) })
+      this.episodes.set(deviceId, {
+        ...prev,
+        logged: clearFetchLogs(prev.logged),
+      })
       return
     }
-    const crop = { width: fetched.width, height: fetched.height, luma: fetched.luma }
+    const crop = {
+      width: fetched.width,
+      height: fetched.height,
+      luma: fetched.luma,
+      chromaSpread: fetched.chromaSpread,
+    }
     const stepped = stepPackageScene({
       deviceId,
       timestamp: input.timestamp,
@@ -238,7 +256,10 @@ export class PackageSceneCoordinator {
       return
     }
     if (prev.held) {
-      this.episodes.set(deviceId, { ...prev, logged: clearFetchLogs(prev.logged) })
+      this.episodes.set(deviceId, {
+        ...prev,
+        logged: clearFetchLogs(prev.logged),
+      })
       return
     }
     this.episodes.set(deviceId, {
@@ -280,7 +301,10 @@ export class PackageSceneCoordinator {
       this.episodes.set(deviceId, episode)
       return
     }
-    this.deps.logger.info(message, { tags: { deviceId }, ...(meta !== undefined ? { meta } : {}) })
+    this.deps.logger.info(message, {
+      tags: { deviceId },
+      ...(meta !== undefined ? { meta } : {}),
+    })
     const logged = new Set(episode.logged)
     logged.add(key)
     this.episodes.set(deviceId, { ...episode, logged })
@@ -310,13 +334,19 @@ function cropDue(episode: Episode, input: PackageSceneNote): boolean {
   return true
 }
 
-function originOf(input: PackageSceneNote): { readonly x: number; readonly y: number } {
+function originOf(input: PackageSceneNote): {
+  readonly x: number
+  readonly y: number
+} {
   const crop = input.crop
   if (crop === null) return { x: 0, y: 0 }
   return { x: crop.x * input.frameWidth, y: crop.y * input.frameHeight }
 }
 
-function spanOf(input: PackageSceneNote): { readonly w: number; readonly h: number } {
+function spanOf(input: PackageSceneNote): {
+  readonly w: number
+  readonly h: number
+} {
   const crop = input.crop
   if (crop === null) return { w: input.frameWidth, h: input.frameHeight }
   return { w: crop.w * input.frameWidth, h: crop.h * input.frameHeight }

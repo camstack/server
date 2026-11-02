@@ -6,6 +6,7 @@
  * connected region. The package model is not consulted here.
  */
 
+import { IR_CHROMA_THRESHOLD } from '../../scene/condition-resolver.js'
 import type { StationaryBbox } from '../stationary/stationary-types.js'
 
 /** Residual, after the median shift, that counts as a changed pixel. */
@@ -33,6 +34,14 @@ export interface PackageZoneLuma {
   readonly width: number
   readonly height: number
   readonly luma: Uint8Array
+  /** Mean max-min channel spread of the crop. Below {@link IR_CHROMA_THRESHOLD}
+   *  the crop is infrared. */
+  readonly chromaSpread: number
+}
+
+/** True when the crop was shot in infrared (no colour). */
+export function isIrCrop(crop: PackageZoneLuma): boolean {
+  return crop.chromaSpread < IR_CHROMA_THRESHOLD
 }
 
 export type PackageSceneRejectReason =
@@ -43,6 +52,7 @@ export type PackageSceneRejectReason =
   | 'overlaps-vehicle'
   | 'unstable'
   | 'crop-mismatch'
+  | 'lighting-mode-changed'
 
 export interface PackageSceneBlob {
   readonly bbox: StationaryBbox
@@ -82,12 +92,20 @@ export function diffZoneLuma(input: PackageSceneDiffInput): PackageSceneDiffResu
   ) {
     return { blobs: [], rejections: [{ reason: 'crop-mismatch' }] }
   }
+  // A day to IR flip changes every pixel: no luma comparison across the two
+  // modes means anything, and it is not a zone-wide change either.
+  if (isIrCrop(before) !== isIrCrop(after)) {
+    return { blobs: [], rejections: [{ reason: 'lighting-mode-changed' }] }
+  }
   const median = medianDelta(before.luma, after.luma)
   const mask = residualMask(before.luma, after.luma, median)
   const zonePx = before.width * before.height
   const changed = countOnes(mask)
   if (changed / zonePx >= PACKAGE_SCENE_DIFF_MAX_CHANGED_FRAC) {
-    return { blobs: [], rejections: [{ reason: 'zone-wide-change', areaFrac: changed / zonePx }] }
+    return {
+      blobs: [],
+      rejections: [{ reason: 'zone-wide-change', areaFrac: changed / zonePx }],
+    }
   }
   const judged = judgeComponents(
     connectedComponents(mask, before.width, before.height),
@@ -166,11 +184,19 @@ function judgeComponents(
   for (const component of components) {
     const areaFrac = component.areaPx / zonePx
     if (areaFrac < minAreaFrac) {
-      rejections.push({ reason: 'below-min-area', bbox: component.bbox, areaFrac })
+      rejections.push({
+        reason: 'below-min-area',
+        bbox: component.bbox,
+        areaFrac,
+      })
       continue
     }
     if (areaFrac > PACKAGE_SCENE_DIFF_MAX_CHANGED_FRAC) {
-      rejections.push({ reason: 'zone-wide-change', bbox: component.bbox, areaFrac })
+      rejections.push({
+        reason: 'zone-wide-change',
+        bbox: component.bbox,
+        areaFrac,
+      })
       continue
     }
     const occluder = overlappingOccluder(component.bbox, occluders)
@@ -224,7 +250,10 @@ function connectedComponents(
       pushNeighbor(stack, seen, mask, width, height, x, y - 1)
       pushNeighbor(stack, seen, mask, width, height, x, y + 1)
     }
-    out.push({ bbox: { x: minX, y: minY, w: maxX - minX, h: maxY - minY }, areaPx: area })
+    out.push({
+      bbox: { x: minX, y: minY, w: maxX - minX, h: maxY - minY },
+      areaPx: area,
+    })
   }
   return out
 }
@@ -251,7 +280,10 @@ export function occlusionReason(
 ): PackageSceneRejection | null {
   const who = overlappingOccluder(blob, occluders)
   if (who === null) return null
-  return { reason: who === 'person' ? 'overlaps-person' : 'overlaps-vehicle', bbox: blob }
+  return {
+    reason: who === 'person' ? 'overlaps-person' : 'overlaps-vehicle',
+    bbox: blob,
+  }
 }
 
 function overlappingOccluder(

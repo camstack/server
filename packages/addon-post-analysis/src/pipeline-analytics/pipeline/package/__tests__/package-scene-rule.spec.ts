@@ -14,6 +14,8 @@ import { PackageDropDetector, type PackageObjectEventClient } from '../../packag
 import { PACKAGE_LLM_SILENCE_STREAK, type PackageLlmSilenceEdge } from '../package-llm-silence.js'
 import type { StationaryEntry } from '../../stationary/stationary-types.js'
 import { PackageStillnessTracker } from '../package-stillness-tracker.js'
+import { diffZoneLuma } from '../package-scene-diff.js'
+import { planPackageSceneFrame } from '../package-scene-plan.js'
 import {
   PACKAGE_LLM_CONFIRM_TIMEOUT_MS,
   PACKAGE_SCENE_DIFF_LOOK_GAP_MS,
@@ -59,6 +61,7 @@ function rule(flags: { readonly scene?: boolean; readonly llm?: boolean }): Zone
 function luma(
   fill: number,
   paint?: { x: number; y: number; w: number; h: number; value: number },
+  chromaSpread = 20,
 ): PackageZoneLuma {
   const bytes = new Uint8Array(W * H)
   bytes.fill(fill)
@@ -69,12 +72,14 @@ function luma(
       }
     }
   }
-  return { width: W, height: H, luma: bytes }
+  return { width: W, height: H, luma: bytes, chromaSpread }
 }
 
 const EMPTY = luma(40)
 const WITH_BLOB = luma(40, { x: 16, y: 16, w: 8, h: 8, value: 200 })
 const BRIGHTER = luma(80)
+/** An IR crop: no colour, a different luma level and the parcel in it. */
+const IR_WITH_BLOB = luma(150, { x: 16, y: 16, w: 8, h: 8, value: 230 }, 0)
 
 function occluderPerson(): {
   readonly className: 'person'
@@ -375,7 +380,10 @@ describe('package llm confirm', () => {
   })
 
   it('drops an uncertain confirm and logs the reason with the device', async () => {
-    const { events, lines } = await deliver(async () => ({ kind: 'uncertain', reason: 'timeout' }))
+    const { events, lines } = await deliver(async () => ({
+      kind: 'uncertain',
+      reason: 'timeout',
+    }))
     expect(events.rows).toHaveLength(0)
     const line = lines.find((l) => l.message.includes('llm confirm uncertain'))
     expect(line?.deviceId).toBe(DEVICE)
@@ -428,7 +436,11 @@ describe('package llm confirm', () => {
     })
     const fire = async (id: string): Promise<void> => {
       const { entry, timestamp } = await promotedEntry(id)
-      await detector.onStationaryChange({ phase: 'appeared', entry, timestamp })
+      await detector.onStationaryChange({
+        phase: 'appeared',
+        entry,
+        timestamp,
+      })
     }
     for (let i = 0; i < PACKAGE_LLM_SILENCE_STREAK + 1; i += 1) {
       await fire(`streak-${String(i)}`)
@@ -449,5 +461,153 @@ describe('package llm confirm', () => {
     await fire('streak-yes')
     expect(events.rows).toHaveLength(1)
     expect(edges[1]).toEqual({ phase: 'answered', deviceId: DEVICE })
+  })
+})
+
+describe('a kept model box inside a scene-difference zone', () => {
+  it('is still a stillness sighting', () => {
+    const sighting = {
+      className: 'package',
+      bbox: { x: 10, y: 10, w: 10, h: 10 },
+      confidence: 0.75,
+    }
+    const plan = planPackageSceneFrame(DEVICE, {
+      rules: [{ ...rule({ scene: true }) }],
+      zones: [ZONE],
+      sightings: [sighting],
+      tracked: [],
+      frameWidth: W,
+      frameHeight: H,
+      frameHandle: null,
+      timestamp: T0,
+      minAreaFrac: 0,
+      modelBoxes: [],
+    })
+    expect(plan.sightings).toEqual([sighting])
+  })
+})
+
+describe('a lighting-mode flip is not a zone-wide change', () => {
+  it('day reference vs IR crop names lighting-mode-changed, never zone-wide-change', () => {
+    const diff = diffZoneLuma({
+      before: EMPTY,
+      after: IR_WITH_BLOB,
+      minAreaFrac: 0,
+      occluders: [],
+    })
+    expect(diff.blobs).toEqual([])
+    expect(diff.rejections.map((r) => r.reason)).toEqual(['lighting-mode-changed'])
+  })
+
+  function leftAndSettled(crop: PackageZoneLuma, modelBoxes: StepModelBoxes) {
+    let state: PackageSceneState | null = null
+    state = step({
+      scene: true,
+      personInZone: false,
+      crop: EMPTY,
+      state,
+      timestamp: T0,
+    }).state
+    state = step({
+      scene: true,
+      personInZone: true,
+      crop: null,
+      state,
+      timestamp: T0 + 1_000,
+    }).state
+    state = step({
+      scene: true,
+      personInZone: false,
+      crop: null,
+      state,
+      timestamp: T0 + 2_000,
+    }).state
+    return stepPackageScene({
+      deviceId: DEVICE,
+      timestamp: T0 + 2_000 + PACKAGE_SCENE_DIFF_SETTLE_MS,
+      detectBySceneDifference: true,
+      personInZone: false,
+      crop,
+      cropOrigin: { x: 0, y: 0 },
+      frameWidth: W,
+      frameHeight: H,
+      minAreaFrac: PACKAGE_DROP_DEFAULTS.packageDropMinBboxAreaFrac,
+      occluders: [],
+      modelBoxes,
+      state,
+    })
+  }
+
+  type StepModelBoxes = readonly {
+    bbox: { x: number; y: number; w: number; h: number }
+    score?: number
+  }[]
+
+  it('after the flip the kept model box opens the candidate and the reference is IR', () => {
+    const out = leftAndSettled(IR_WITH_BLOB, [{ bbox: { x: 16, y: 16, w: 8, h: 8 }, score: 0.75 }])
+    expect(out.rejections.map((r) => r.reason)).toEqual(['lighting-mode-changed'])
+    expect(out.sightings).toHaveLength(1)
+    expect(out.sightings[0]?.confidence).toBe(0.75)
+    expect(out.state.before?.chromaSpread).toBe(0)
+  })
+
+  it('a flip with no model box emits nothing but still re-baselines', () => {
+    const out = leftAndSettled(IR_WITH_BLOB, [])
+    expect(out.sightings).toEqual([])
+    expect(out.state.before?.chromaSpread).toBe(0)
+  })
+
+  it('a pending blob survives a flip, confirmed on the next IR look', () => {
+    let state: PackageSceneState | null = null
+    state = step({
+      scene: true,
+      personInZone: false,
+      crop: EMPTY,
+      state,
+      timestamp: T0,
+    }).state
+    state = step({
+      scene: true,
+      personInZone: true,
+      crop: null,
+      state,
+      timestamp: T0 + 1_000,
+    }).state
+    state = step({
+      scene: true,
+      personInZone: false,
+      crop: null,
+      state,
+      timestamp: T0 + 2_000,
+    }).state
+    let at = T0 + 2_000 + PACKAGE_SCENE_DIFF_SETTLE_MS
+    const pending = step({
+      scene: true,
+      personInZone: false,
+      crop: WITH_BLOB,
+      state,
+      timestamp: at,
+    })
+    expect(pending.state.phase).toBe('pending')
+    at += PACKAGE_SCENE_DIFF_LOOK_GAP_MS
+    const flipped = step({
+      scene: true,
+      personInZone: false,
+      crop: IR_WITH_BLOB,
+      state: pending.state,
+      timestamp: at,
+    })
+    expect(flipped.rejections.map((r) => r.reason)).not.toContain('unstable')
+    expect(flipped.state.phase).toBe('pending')
+    expect(flipped.state.pending.length).toBeGreaterThan(0)
+    at += PACKAGE_SCENE_DIFF_LOOK_GAP_MS
+    const confirmed = step({
+      scene: true,
+      personInZone: false,
+      crop: IR_WITH_BLOB,
+      state: flipped.state,
+      timestamp: at,
+    })
+    expect(confirmed.sightings).toHaveLength(1)
   })
 })

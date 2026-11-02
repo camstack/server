@@ -16,6 +16,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_PACKAGE_STILLNESS_CONFIG,
+  PACKAGE_STILLNESS_CONTINUATION_MIN_SCORE,
   PACKAGE_STILLNESS_TTL_MS,
   type PackageSighting,
   PackageStillnessTracker,
@@ -395,5 +396,67 @@ describe('the defaults are satisfiable by construction', () => {
   it('promotion completes well inside the TTL', () => {
     const worstCaseMs = (DEFAULT_PACKAGE_STILLNESS_CONFIG.minHits - 1) * POLL_MS
     expect(worstCaseMs).toBeLessThan(DEFAULT_PACKAGE_STILLNESS_CONFIG.ttlMs)
+  })
+})
+
+describe('sub-floor continuation (a box under the floor continues, never opens)', () => {
+  function look(
+    t: PackageStillnessTracker,
+    timestamp: number,
+    sightings: readonly PackageSighting[],
+    continuationBoxes: readonly { bbox: typeof DOORMAT; score: number }[],
+    looked = true,
+  ) {
+    return t.observe({
+      deviceId: DEVICE,
+      sightings,
+      frameWidth: FRAME_W,
+      frameHeight: FRAME_H,
+      timestamp,
+      minDwellMs: 0,
+      looked,
+      continuationBoxes,
+    })
+  }
+
+  it('0.75 then 0.45, 0.40 on looked frames promotes', () => {
+    const t = makeTracker()
+    look(t, 0, [sighting({ confidence: 0.75 })], [])
+    look(t, 400, [], [{ bbox: DOORMAT, score: 0.45 }])
+    const out = look(t, 800, [], [{ bbox: DOORMAT, score: 0.4 }])
+    expect(out.promoted).toHaveLength(1)
+    expect(out.promoted[0]?.confidence).toBe(0.75)
+  })
+
+  it('a sub-floor box alone opens nothing', () => {
+    const t = makeTracker()
+    look(t, 0, [], [{ bbox: DOORMAT, score: 0.45 }])
+    expect(t.debugCandidateCount(DEVICE)).toBe(0)
+  })
+
+  it('under the continuation floor is not a hit', () => {
+    const t = makeTracker()
+    look(t, 0, [sighting()], [])
+    look(
+      t,
+      400,
+      [],
+      [
+        {
+          bbox: DOORMAT,
+          score: PACKAGE_STILLNESS_CONTINUATION_MIN_SCORE - 0.05,
+        },
+      ],
+    )
+    const out = look(t, 800, [], [{ bbox: DOORMAT, score: 0.25 }])
+    expect(out.promoted).toHaveLength(0)
+  })
+
+  it('is not a hit on an unlooked frame', () => {
+    const t = makeTracker()
+    look(t, 0, [sighting()], [])
+    look(t, 400, [], [{ bbox: DOORMAT, score: 0.45 }], false)
+    const out = look(t, 800, [], [{ bbox: DOORMAT, score: 0.4 }], false)
+    expect(out.promoted).toHaveLength(0)
   })
 })

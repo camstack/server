@@ -17,6 +17,7 @@ import {
   PACKAGE_SCENE_DIFF_SETTLE_MS,
   PACKAGE_SCENE_DIFF_STABLE_MEAN,
   diffZoneLuma,
+  isIrCrop,
   meanAbsInBox,
   occlusionReason,
   type PackageSceneBlob,
@@ -105,7 +106,13 @@ function holdForPerson(prev: PackageSceneState): PackageSceneStepResult {
 
 function beginSettle(prev: PackageSceneState, timestamp: number): PackageSceneStepResult {
   return {
-    state: { ...prev, phase: 'settling', leftAt: timestamp, pending: [], lastDiffAt: 0 },
+    state: {
+      ...prev,
+      phase: 'settling',
+      leftAt: timestamp,
+      pending: [],
+      lastDiffAt: 0,
+    },
     sightings: [],
     rejections: [],
   }
@@ -148,6 +155,19 @@ function compareAfterLeave(
     minAreaFrac: input.minAreaFrac,
     occluders: input.occluders,
   })
+  if (diff.rejections.some((r) => r.reason === 'lighting-mode-changed')) {
+    // The reference is of the other lighting mode and cannot be compared. The
+    // model is the gate for this episode (D49): its boxes inside the crop are
+    // the sightings, and the reference becomes this crop.
+    return {
+      state: {
+        ...rememberClear(prev, input).state,
+        lastDiffAt: input.timestamp,
+      },
+      sightings: modelSightings(input),
+      rejections: diff.rejections,
+    }
+  }
   const blocked = diff.rejections.some(
     (r) => r.reason === 'overlaps-person' || r.reason === 'overlaps-vehicle',
   )
@@ -192,6 +212,20 @@ function confirmPending(
   if (!input.crop || !prev.after || !prev.before) {
     return { state: prev, sightings: [], rejections: [] }
   }
+  if (isIrCrop(prev.after) !== isIrCrop(input.crop)) {
+    // The lighting mode flipped under a pending blob: its look-to-look
+    // stability is not comparable. Keep it, and judge it on the next look.
+    return {
+      state: {
+        ...prev,
+        after: input.crop,
+        ...(input.cropJpeg ? { afterJpeg: copyBytes(input.cropJpeg) } : {}),
+        lastDiffAt: input.timestamp,
+      },
+      sightings: [],
+      rejections: [],
+    }
+  }
   const sightings: PackageSighting[] = []
   const rejections: PackageSceneRejection[] = []
   const still: PackageSceneBlob[] = []
@@ -206,7 +240,10 @@ function confirmPending(
   }
   if (still.length === 0) {
     return {
-      state: { ...rememberClear(prev, input).state, lastDiffAt: input.timestamp },
+      state: {
+        ...rememberClear(prev, input).state,
+        lastDiffAt: input.timestamp,
+      },
       sightings: [],
       rejections,
     }
@@ -236,10 +273,40 @@ function judgeBlob(
   const crop = input.crop
   if (!after || !before || !crop) return { rejection: { reason: 'unstable', bbox: blob.bbox } }
   const stable = meanAbsInBox(after, crop, blob.bbox) <= PACKAGE_SCENE_DIFF_STABLE_MEAN
-  const present = meanAbsInBox(before, crop, blob.bbox) >= PACKAGE_SCENE_DIFF_LUMA_THRESHOLD
+  // A reference of the other lighting mode says nothing about presence.
+  const present =
+    isIrCrop(before) !== isIrCrop(crop) ||
+    meanAbsInBox(before, crop, blob.bbox) >= PACKAGE_SCENE_DIFF_LUMA_THRESHOLD
   if (!stable || !present)
-    return { rejection: { reason: 'unstable', bbox: blob.bbox, areaFrac: blob.areaFrac } }
+    return {
+      rejection: {
+        reason: 'unstable',
+        bbox: blob.bbox,
+        areaFrac: blob.areaFrac,
+      },
+    }
   return {}
+}
+
+/** Scored model boxes whose center lies inside the crop, as sightings. */
+function modelSightings(input: PackageSceneStepInput): readonly PackageSighting[] {
+  const x0 = input.cropOrigin.x
+  const y0 = input.cropOrigin.y
+  const x1 = x0 + (input.cropSizeInFrame?.w ?? input.frameWidth)
+  const y1 = y0 + (input.cropSizeInFrame?.h ?? input.frameHeight)
+  const out: PackageSighting[] = []
+  for (const model of input.modelBoxes) {
+    if (model.score === undefined) continue
+    const cx = model.bbox.x + model.bbox.w / 2
+    const cy = model.bbox.y + model.bbox.h / 2
+    if (cx < x0 || cx >= x1 || cy < y0 || cy >= y1) continue
+    out.push({
+      className: 'package',
+      bbox: { ...model.bbox },
+      confidence: model.score,
+    })
+  }
+  return out
 }
 
 function toSighting(input: PackageSceneStepInput, cropBox: StationaryBbox): PackageSighting {

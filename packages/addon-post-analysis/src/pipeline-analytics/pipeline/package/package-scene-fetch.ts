@@ -28,6 +28,7 @@ export type PackageSceneCropFetch =
       readonly width: number
       readonly height: number
       readonly luma: Uint8Array
+      readonly chromaSpread: number
       readonly jpeg: Uint8Array
     }
   | { readonly kind: 'preview' }
@@ -58,7 +59,10 @@ export async function fetchPackageSceneCrop(
     if (reply === null) return { kind: 'miss', reason: 'no-crop' }
     return await cropOf(reply)
   } catch (err) {
-    return { kind: 'miss', reason: err instanceof Error ? err.message : String(err) }
+    return {
+      kind: 'miss',
+      reason: err instanceof Error ? err.message : String(err),
+    }
   }
 }
 
@@ -86,6 +90,7 @@ function okCrop(
     width,
     height,
     luma: lumaFromRgb(rgb, width, height),
+    chromaSpread: chromaSpreadFromRgb(rgb),
     jpeg: new Uint8Array(jpeg),
   }
 }
@@ -102,4 +107,23 @@ export function lumaFromRgb(bytes: Uint8Array, width: number, height: number): U
     luma[i] = (77 * r + 150 * g + 29 * b) >> 8
   }
   return luma
+}
+
+/**
+ * Mean of max(r,g,b) - min(r,g,b) over the crop, 0..255 — the same measure as
+ * `chromaSpread` in `scene-crop.ts` (which needs sharp), on the RGB already
+ * decoded. Daylight measures tens, an IR frame ~0.
+ */
+export function chromaSpreadFromRgb(bytes: Uint8Array): number {
+  const pixels = Math.floor(bytes.length / 3)
+  if (pixels === 0) return 0
+  let total = 0
+  for (let i = 0; i < pixels; i++) {
+    const o = i * 3
+    const r = bytes[o] ?? 0
+    const g = bytes[o + 1] ?? 0
+    const b = bytes[o + 2] ?? 0
+    total += Math.max(r, g, b) - Math.min(r, g, b)
+  }
+  return total / pixels
 }

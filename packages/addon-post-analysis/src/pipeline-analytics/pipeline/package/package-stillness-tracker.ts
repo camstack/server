@@ -104,6 +104,13 @@ export const PACKAGE_STILLNESS_TTL_MS = 5 * 60_000
 const PACKAGE_STILLNESS_ASSOC_IOU = 0.3
 
 /**
+ * Lowest score of a below-threshold box that may CONTINUE an open candidate
+ * (D665: a box under the floor may continue, never open). Observed on a real
+ * parcel after the day to IR flip: 0.35 to 0.50.
+ */
+export const PACKAGE_STILLNESS_CONTINUATION_MIN_SCORE = 0.3
+
+/**
  * Two absence reads closer than this are ONE look, not two. A settle burst
  * runs the package step 5 s apart and a poll 45 s apart, so a real second
  * look is always further away; two frames of one moment (a re-dispatch, a
@@ -161,6 +168,12 @@ export interface PackageSighting {
   readonly keyFrameMediaId?: number
 }
 
+/** A below-threshold package box the step returned: continues, never opens. */
+export interface PackageContinuationBox {
+  readonly bbox: StationaryBbox
+  readonly score: number
+}
+
 export interface PackageStillnessInput {
   readonly deviceId: number
   /** This frame's package-class detections. EMPTY is a valid, meaningful
@@ -208,6 +221,13 @@ export interface PackageStillnessInput {
    * Absent ⇒ the frame attests nothing, looked or not.
    */
   readonly rawPackageBoxes?: readonly StationaryBbox[]
+  /**
+   * Below-threshold package boxes of this frame. On a looked frame, one at an
+   * unpromoted candidate's place with a score of at least
+   * {@link PACKAGE_STILLNESS_CONTINUATION_MIN_SCORE} is a hit. Never opens a
+   * candidate. Absent ⇒ none.
+   */
+  readonly continuationBoxes?: readonly PackageContinuationBox[]
   /**
    * `packageDropEarlyPickupEnabled` for this camera (D687, default off): a
    * promoted parcel with {@link PACKAGE_EARLY_PICKUP_MIN_READS} absence reads
@@ -258,6 +278,15 @@ export interface PackageStillnessOutcome {
   /** Candidates whose early evidence is complete but that nobody was around
    *  to pick up — reported ONCE each, left to the TTL. Log-only. */
   readonly earlyEvidenceUnbacked: readonly EarlyEvidenceUnbacked[]
+  /** Candidates continued by a sub-floor box this frame. Log-only (D391). */
+  readonly continued: readonly PackageContinued[]
+}
+
+/** A candidate hit by a below-threshold box. */
+export interface PackageContinued {
+  readonly id: string
+  readonly hits: number
+  readonly score: number
 }
 
 /** Why complete early-pick-up evidence did not conclude a departure. */
@@ -326,6 +355,7 @@ export class PackageStillnessTracker {
     const next: PackageCandidate[] = [...previous]
     const consumed = new Set<string>()
     const promoted: StationaryEntry[] = []
+    const continuedLog: PackageContinued[] = []
 
     for (const s of input.sightings) {
       const index = this.bestMatch(next, s, consumed)
@@ -339,22 +369,31 @@ export class PackageStillnessTracker {
       if (prev === undefined) continue
       consumed.add(prev.id)
       const updated = confirm(prev, input, s)
-      const minHits = input.minHits ?? this.config.minHits
-      const ready =
-        updated.promotedAt === null &&
-        updated.activityBackedAtOpen &&
-        updated.hits >= minHits &&
-        input.timestamp - updated.firstSeenAt >= input.minDwellMs
-      if (!ready) {
-        next[index] = updated
-        continue
+      const parked = this.promoteWhenReady(updated, input)
+      next[index] = parked ?? updated
+      if (parked !== null) promoted.push(toEntry(parked))
+    }
+
+    if (input.looked === true && input.continuationBoxes !== undefined) {
+      for (let i = 0; i < next.length; i += 1) {
+        const c = next[i]
+        if (c === undefined || c.promotedAt !== null || consumed.has(c.id)) continue
+        const box = this.continuationFor(c, input.continuationBoxes)
+        if (box === null) continue
+        consumed.add(c.id)
+        const continued: PackageCandidate = {
+          ...c,
+          lastSeenAt: input.timestamp,
+          hits: c.hits + 1,
+          absenceReads: [],
+          lastLook: 'present',
+          earlyUnbackedReported: false,
+        }
+        continuedLog.push({ id: c.id, hits: continued.hits, score: box.score })
+        const parked = this.promoteWhenReady(continued, input)
+        next[i] = parked ?? continued
+        if (parked !== null) promoted.push(toEntry(parked))
       }
-      const parked: PackageCandidate = {
-        ...updated,
-        promotedAt: input.timestamp,
-      }
-      next[index] = parked
-      promoted.push(toEntry(parked))
     }
 
     // A raw package box at a promoted parcel's place is a PRESENCE on any
@@ -401,7 +440,13 @@ export class PackageStillnessTracker {
       activityWindowMs: windowMs,
       ...(input.lastActivityAt !== undefined ? { lastActivityAt: input.lastActivityAt } : {}),
     })
-    return { promoted, ...judged, earlyDepartureIds: [...early], earlyEvidenceUnbacked: unbacked }
+    return {
+      promoted,
+      ...judged,
+      earlyDepartureIds: [...early],
+      earlyEvidenceUnbacked: unbacked,
+      continued: continuedLog,
+    }
   }
 
   /** Why complete early evidence may NOT conclude, or null when it may. */
@@ -436,7 +481,13 @@ export class PackageStillnessTracker {
       activityWindowMs: input.activityWindowMs ?? 0,
       ...(input.lastActivityAt !== undefined ? { lastActivityAt: input.lastActivityAt } : {}),
     })
-    return { promoted: [], ...judged, earlyDepartureIds: [], earlyEvidenceUnbacked: [] }
+    return {
+      promoted: [],
+      ...judged,
+      earlyDepartureIds: [],
+      earlyEvidenceUnbacked: [],
+      continued: [],
+    }
   }
 
   /** The devices holding a candidate — what a sweep has to visit. */
@@ -518,6 +569,36 @@ export class PackageStillnessTracker {
   /** Best same-class candidate over the association floor, ignoring any already
    *  consumed by an earlier sighting in THIS frame (two boxes never collapse
    *  into one parcel). */
+  private continuationFor(
+    c: PackageCandidate,
+    boxes: readonly PackageContinuationBox[],
+  ): PackageContinuationBox | null {
+    let best: PackageContinuationBox | null = null
+    let bestIou = this.config.assocIou
+    for (const b of boxes) {
+      if (b.score < PACKAGE_STILLNESS_CONTINUATION_MIN_SCORE) continue
+      const overlap = iou(c.bbox, b.bbox)
+      if (overlap >= bestIou) {
+        bestIou = overlap
+        best = b
+      }
+    }
+    return best
+  }
+
+  private promoteWhenReady(
+    updated: PackageCandidate,
+    input: PackageStillnessInput,
+  ): PackageCandidate | null {
+    const minHits = input.minHits ?? this.config.minHits
+    const ready =
+      updated.promotedAt === null &&
+      updated.activityBackedAtOpen &&
+      updated.hits >= minHits &&
+      input.timestamp - updated.firstSeenAt >= input.minDwellMs
+    return ready ? { ...updated, promotedAt: input.timestamp } : null
+  }
+
   private bestMatch(
     candidates: readonly PackageCandidate[],
     s: PackageSighting,
@@ -606,7 +687,12 @@ function withRawPresence(
   return candidates.map((c) => {
     if (c.promotedAt === null || sighted.has(c.id)) return c
     if (!raw.some((b) => iou(b, c.bbox) >= assocIou)) return c
-    return { ...c, lastSeenAt: timestamp, absenceReads: [], lastLook: 'present' }
+    return {
+      ...c,
+      lastSeenAt: timestamp,
+      absenceReads: [],
+      lastLook: 'present',
+    }
   })
 }
 
@@ -638,7 +724,11 @@ function withLook(
     if (last !== undefined && input.timestamp - last < PACKAGE_ABSENCE_READ_MIN_GAP_MS) {
       return { ...c, lastLook: 'absent' }
     }
-    return { ...c, absenceReads: [...c.absenceReads, input.timestamp], lastLook: 'absent' }
+    return {
+      ...c,
+      absenceReads: [...c.absenceReads, input.timestamp],
+      lastLook: 'absent',
+    }
   })
 }
 

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A finished-cycle notification whose custom template drops the run summary is now logged once per rule; the cycle default text is served to editors
+- A parcel the model sees inside a scene-difference zone now opens a candidate, a lower-confidence continuing box keeps it alive, and a day-to-IR switch no longer blinds the scene check
 
 ## [1.2.664] - 2026-11-02
 

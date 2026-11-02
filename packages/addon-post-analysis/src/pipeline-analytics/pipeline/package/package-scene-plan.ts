@@ -2,8 +2,10 @@
  * What one frame owes the packages scene path (D931).
  *
  * Options off: the sightings are unchanged and there is nothing to fetch.
- * Scene difference on: a model box whose center sits in that zone is not
- * the gate. Confirm-with-LLM still wants the same native crop pair.
+ * Scene difference on: a model box inside that zone is still a stillness
+ * sighting (D931 amended: it may OPEN a candidate; the scene diff adds its own
+ * sighting at the same place and IoU association merges them). Confirm-with-LLM
+ * still wants the same native crop pair.
  */
 
 import type { FrameHandle } from '@camstack/types'
@@ -78,17 +80,8 @@ export function planPackageSceneFrame(
     frameWidth: input.frameWidth,
     frameHeight: input.frameHeight,
   })
-  const sceneRect =
-    sceneZones.size === 0
-      ? null
-      : packageZoneCropRect({
-          zones: input.zones,
-          packageZoneIds: sceneZones,
-          frameWidth: input.frameWidth,
-          frameHeight: input.frameHeight,
-        })
   return {
-    sightings: sceneRect === null ? input.sightings : withoutSceneCenters(input, sceneRect),
+    sightings: input.sightings,
     note: {
       deviceId,
       timestamp: input.timestamp,
@@ -127,22 +120,4 @@ function occludersOf(tracked: readonly PackageSceneTrack[]): readonly PackageSce
     if (track.className === 'vehicle') out.push({ className: 'vehicle', bbox: track.bbox })
   }
   return out
-}
-
-function withoutSceneCenters(
-  input: PackageScenePlanInput,
-  rect: PackageZoneCropRect,
-): readonly PackageSighting[] {
-  if (input.frameWidth <= 0 || input.frameHeight <= 0) return input.sightings
-  return input.sightings.filter((sighting) => !centerInside(sighting.bbox, rect, input))
-}
-
-function centerInside(
-  bbox: StationaryBbox,
-  rect: PackageZoneCropRect,
-  input: PackageScenePlanInput,
-): boolean {
-  const cx = (bbox.x + bbox.w / 2) / input.frameWidth
-  const cy = (bbox.y + bbox.h / 2) / input.frameHeight
-  return cx >= rect.x && cx < rect.x + rect.w && cy >= rect.y && cy < rect.y + rect.h
 }

@@ -10,7 +10,7 @@
  */
 import type { FrameResult } from '@camstack/types'
 import type { StationaryBbox } from '../stationary/stationary-types.js'
-import type { PackageStillnessInput } from './package-stillness-tracker.js'
+import type { PackageContinuationBox, PackageStillnessInput } from './package-stillness-tracker.js'
 
 /** The tracked box shape the frame processor emits. */
 export interface PackageEvidenceTrack {
@@ -28,11 +28,12 @@ export interface PackageLookEvidenceInput {
 
 export type PackageLookEvidence = Pick<
   PackageStillnessInput,
-  'looked' | 'occluders' | 'rawPackageBoxes' | 'earlyPickup'
+  'looked' | 'occluders' | 'rawPackageBoxes' | 'earlyPickup' | 'continuationBoxes'
 >
 
 export function packageLookEvidence(input: PackageLookEvidenceInput): PackageLookEvidence {
   const raw: StationaryBbox[] = []
+  const continuation: PackageContinuationBox[] = []
   for (const d of input.frame.detections) {
     if (d.kind !== 'first-level' || !input.packageClasses.has(d.macroClass)) continue
     raw.push({ x: d.bbox.x, y: d.bbox.y, w: d.bbox.width, h: d.bbox.height })
@@ -42,7 +43,11 @@ export function packageLookEvidence(input: PackageLookEvidenceInput): PackageLoo
   for (const d of input.frame.discarded ?? []) {
     if (!input.packageClasses.has(d.macroClass)) continue
     const [x1, y1, x2, y2] = d.bbox
-    raw.push({ x: x1, y: y1, w: x2 - x1, h: y2 - y1 })
+    const box = { x: x1, y: y1, w: x2 - x1, h: y2 - y1 }
+    raw.push(box)
+    // Only a below-threshold discard is a detector reading under the floor;
+    // a class-filter or zone-gate discard says nothing about the parcel.
+    if (d.reason === 'below-threshold') continuation.push({ bbox: box, score: d.score })
   }
   return {
     looked: input.frame.packageLooked === true,
@@ -51,6 +56,7 @@ export function packageLookEvidence(input: PackageLookEvidenceInput): PackageLoo
       .filter((t) => !input.packageClasses.has(t.className))
       .map((t) => ({ x: t.bbox.x, y: t.bbox.y, w: t.bbox.w, h: t.bbox.h })),
     rawPackageBoxes: raw,
+    continuationBoxes: continuation,
     earlyPickup: input.earlyPickupEnabled,
   }
 }

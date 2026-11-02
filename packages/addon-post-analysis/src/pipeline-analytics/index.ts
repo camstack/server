@@ -10379,6 +10379,13 @@ export default class PipelineAnalyticsAddon
         })
         .catch(() => undefined)
     }
+    for (const c of outcome.continued) {
+      // A sub-floor box keeping a candidate alive (D391: say it, never silent).
+      this.ctx.logger.info('package candidate continued by a sub-floor box', {
+        tags,
+        meta: { entryId: c.id, hits: c.hits, score: c.score, via: input.via },
+      })
+    }
     for (const u of outcome.earlyEvidenceUnbacked) {
       // Complete early-pick-up evidence that concludes NOTHING (D687): a
       // branch that accepts work and drops it logs it. Once per candidate.
