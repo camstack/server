@@ -956,6 +956,15 @@ export {
   StartEmbeddedInputSchema,
 } from './mqtt-broker.cap.js'
 export type {
+  BoardKeyBoard,
+  BoardKeyFailureReason,
+  BoardKeyListResult,
+  BoardKeyResult,
+  BoardKeySource,
+  IBoardKeySourceProvider,
+} from './board-key-source.cap.js'
+export { BoardKeyFailureReasonSchema, boardKeySourceCapability } from './board-key-source.cap.js'
+export type {
   NetworkAccessStatus,
   NetworkEndpoint,
   NetworkTunnelStartedData,
@@ -3475,6 +3484,7 @@ import type { motionZonesCapability } from './motion-zones.cap.js'
 import type { mqttBrokerCapability } from './mqtt-broker.cap.js'
 import type { nativeObjectDetectionCapability } from './native-object-detection.cap.js'
 import type { navigationCapability } from './navigation.cap.js'
+import type { boardKeySourceCapability } from './board-key-source.cap.js'
 import type { networkAccessCapability } from './network-access.cap.js'
 import type { networkLinkCapability } from './network-link.cap.js'
 import type { networkQualityCapability } from './network-quality.cap.js'
@@ -3625,6 +3635,7 @@ type AnyCapability =
   | typeof authProviderCapability
   | typeof loginMethodCapability
   | typeof networkAccessCapability
+  | typeof boardKeySourceCapability
   | typeof turnProviderCapability
   | typeof snapshotCapability
   | typeof llmCapability

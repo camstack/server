@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1491 method paths across 201 capabilities.
+ * Coverage: 1494 method paths across 202 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -154,6 +154,9 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'battery.getStatus': { capName: "battery", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'battery.wakeForStream': { capName: "battery", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'binary.getStatus': { capName: "binary", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
+  'boardKeySource.getBoardKey': { capName: "board-key-source", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'boardKeySource.listBoards': { capName: "board-key-source", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'boardKeySource.listSources': { capName: "board-key-source", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'brightness.getStatus': { capName: "brightness", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'brightness.setBrightness': { capName: "brightness", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'broker.add': { capName: "broker", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
@@ -1541,6 +1544,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "backup",
   "battery",
   "binary",
+  "board-key-source",
   "brightness",
   "broker",
   "button",
@@ -1842,6 +1846,7 @@ export const SYSTEM_CAP_NAMES: readonly string[] = [
   "audio-codec",
   "auth-provider",
   "backup",
+  "board-key-source",
   "broker",
   "calendar-source",
   "calendars",

@@ -15626,6 +15626,12 @@
           "type": "string",
           "optional": true,
           "doc": "testID of the card."
+        },
+        {
+          "name": "centered",
+          "type": "boolean",
+          "optional": true,
+          "doc": "A centred card with a fade on every platform (a notice, not a sheet)."
         }
       ]
     },

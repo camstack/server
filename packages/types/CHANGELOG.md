@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adds the smtp-inbound broker schemas (settings, config, filter, message).
 - Every integration instance carries its own on/off switch: IntegrationInstance.enabled and the integrationInstances.setInstanceEnabled method
 - Addon declarations can state integrationRole (devices, services or both) so a dual entry is listed on Integrations
+- New board-key-source capability: where a device board's API encryption key can be read from.
 
 ## [1.2.477] - 2026-11-02
 

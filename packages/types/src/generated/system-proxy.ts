@@ -15,6 +15,7 @@ import type { alertsCapability } from '../capabilities/alerts.cap.js'
 import type { audioAnalyzerCapability } from '../capabilities/audio-analyzer.cap.js'
 import type { audioCodecCapability } from '../capabilities/audio-codec.cap.js'
 import type { backupCapability } from '../capabilities/backup.cap.js'
+import type { boardKeySourceCapability } from '../capabilities/board-key-source.cap.js'
 import type { brokerCapability } from '../capabilities/broker.cap.js'
 import type { calendarsCapability } from '../capabilities/calendars.cap.js'
 import type { connectionTestCapability } from '../capabilities/connection-test.cap.js'
@@ -88,6 +89,7 @@ export interface SystemProxy {
   readonly audioAnalyzer: Pick<InferProvider<typeof audioAnalyzerCapability>, 'analyseChunk' | 'classify' | 'attachDevice' | 'isReady' | 'dispose' | 'reprobeAudioEngine'>
   readonly audioCodec: Pick<InferProvider<typeof audioCodecCapability>, 'listSupportedCodecs' | 'canHandle' | 'createDecodeSession' | 'createEncodeSession' | 'closeSession' | 'pushEncodedFrame' | 'pullPcm' | 'pushPcm' | 'pullEncoded' | 'flushEncode' | 'listActiveSessions'>
   readonly backup: Pick<InferProvider<typeof backupCapability>, 'listDestinations' | 'trigger' | 'listRuns' | 'cancel' | 'list' | 'listLocations' | 'getEntries' | 'restore' | 'getEncryption' | 'setupEncryption' | 'disableEncryption' | 'checkBackupKey' | 'delete' | 'listArchives' | 'upsertDestinationPolicy' | 'previewSchedule' | 'listSchedules' | 'listAvailableDatabases' | 'upsertSchedule' | 'deleteSchedule'>
+  readonly boardKeySource: Pick<InferProvider<typeof boardKeySourceCapability>, 'listSources' | 'listBoards' | 'getBoardKey'>
   readonly broker: Pick<InferProvider<typeof brokerCapability>, 'list' | 'get' | 'listProviders' | 'add' | 'remove' | 'testConnection' | 'getSettings' | 'setSettings' | 'getBrokerConfig' | 'getSettingsSchema' | 'testSettings' | 'publish' | 'subscribe' | 'unsubscribe' | 'getState' | 'getStatus'>
   readonly calendars: Pick<InferProvider<typeof calendarsCapability>, 'listCalendars' | 'listEvents' | 'getPreferences' | 'setCalendarPreference'>
   readonly connectionTest: Pick<InferProvider<typeof connectionTestCapability>, 'testSettings' | 'describeTest'>
@@ -281,6 +283,12 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     listAvailableDatabases: (input?: unknown) => dispatch('backup', 'listAvailableDatabases', 'query', input),
     upsertSchedule: (input?: unknown) => dispatch('backup', 'upsertSchedule', 'mutation', input),
     deleteSchedule: (input?: unknown) => dispatch('backup', 'deleteSchedule', 'mutation', input),
+  }
+
+  const boardKeySourceInterface = {
+    listSources: (input?: unknown) => dispatch('boardKeySource', 'listSources', 'query', input),
+    listBoards: (input?: unknown) => dispatch('boardKeySource', 'listBoards', 'query', input),
+    getBoardKey: (input?: unknown) => dispatch('boardKeySource', 'getBoardKey', 'query', input),
   }
 
   const brokerInterface = {
@@ -1106,6 +1114,7 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     audioAnalyzer: audioAnalyzerInterface,
     audioCodec: audioCodecInterface,
     backup: backupInterface,
+    boardKeySource: boardKeySourceInterface,
     broker: brokerInterface,
     calendars: calendarsInterface,
     connectionTest: connectionTestInterface,

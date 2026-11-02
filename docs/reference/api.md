@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**201 capabilities · 1491 methods.**
+**202 capabilities · 1494 methods.**
 
 ## Method index
 
@@ -145,6 +145,9 @@
 | `battery.getStatus` | query | protected | battery (auto) |
 | `battery.wakeForStream` | mutation | protected | battery |
 | `binary.getStatus` | query | protected | binary (auto) |
+| `boardKeySource.listSources` | query | admin | board-key-source |
+| `boardKeySource.listBoards` | query | admin | board-key-source |
+| `boardKeySource.getBoardKey` | query | admin | board-key-source |
 | `brightness.getStatus` | query | protected | brightness (auto) |
 | `brightness.setBrightness` | mutation | protected | brightness |
 | `broker.getStatus` | query | protected | broker |
@@ -1891,6 +1894,19 @@
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | getStatus _(auto)_ | `binary.getStatus` | query | protected | `{ deviceId: number }` | `BinaryStatusSchema` |
+
+### `board-key-source` → `boardKeySource.*`
+
+- **Source:** `packages/types/src/capabilities/board-key-source.cap.ts:60`
+- **Meta:** scope: `system` · mode: `collection` · mount: `collection`
+- **Archetypes:** —
+- **Provider interface:** `IBoardKeySourceProvider`
+
+| Method | tRPC path | Kind | Auth | Input | Output |
+|---|---|---|---|---|---|
+| listSources | `boardKeySource.listSources` | query | admin | `void` | `({ sourceId: string; name: string })[]` |
+| listBoards | `boardKeySource.listBoards` | query | admin | `{ sourceId: string }` | `{ ok: true; boards: ({ configuration: string; name: string; address: string \| null })[] } \| { ok: false; reason: BoardKeyFailureReasonSchema; detail?: string }` |
+| getBoardKey | `boardKeySource.getBoardKey` | query | admin | `{ sourceId: string; configuration: string }` | `{ ok: true; key: string } \| { ok: false; reason: BoardKeyFailureReasonSchema; detail?: string }` |
 
 ### `brightness` → `brightness.*`
 

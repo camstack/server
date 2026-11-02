@@ -4,7 +4,7 @@
 
 # Capabilities
 
-201 capability definitions in `packages/types/src/capabilities/`.
+202 capability definitions in `packages/types/src/capabilities/`.
 The `.cap.ts` file is the single source of truth: codegen derives the tRPC
 routers, the status-type map and the `DeviceProxy` facade from it. Touching a
 cap without `npm run codegen` = silent drift.
@@ -125,7 +125,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `zone-rules` | 2 | — | ✓ | none | — | `pipeline-orchestrator` |
 | `zones` | 4 | — | ✓ | none | — | `pipeline-orchestrator` |
 
-## System-scoped (100)
+## System-scoped (101)
 
 Singleton or collection providers, addressed without a device.
 
@@ -146,6 +146,7 @@ Singleton or collection providers, addressed without a device.
 | `audio-codec` | 11 | — | — | — | — | `decoder-nodeav` |
 | `auth-provider` | 4 | — | — | — | ✓ | `auth-oidc` `local-auth` |
 | `backup` | 20 | — | — | — | — | `backup-orchestrator` |
+| `board-key-source` | 3 | — | — | — | — | — |
 | `broker` | 16 | ✓ | — | — | — | `google-services` `import-alexa` `matter-broker` `mqtt-broker` `provider-homeassistant` `smtp-nodemailer` |
 | `calendar-source` | 2 | — | — | — | ✓ | `google-services` `provider-homeassistant` `waste-collections` |
 | `calendars` | 4 | — | — | — | — | `calendars` |

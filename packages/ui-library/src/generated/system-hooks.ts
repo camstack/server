@@ -389,6 +389,15 @@ export const useBatteryGetStatus: typeof trpc.battery.getStatus.useQuery = /*#__
 /** Generated alias around `trpc.binary.getStatus.useQuery`. */
 export const useBinaryGetStatus: typeof trpc.binary.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.binary.getStatus.useQuery)
 
+/** Generated alias around `trpc.boardKeySource.listSources.useQuery`. */
+export const useBoardKeySourceListSources: typeof trpc.boardKeySource.listSources.useQuery = /*#__PURE__*/ alias(() => trpc.boardKeySource.listSources.useQuery)
+
+/** Generated alias around `trpc.boardKeySource.listBoards.useQuery`. */
+export const useBoardKeySourceListBoards: typeof trpc.boardKeySource.listBoards.useQuery = /*#__PURE__*/ alias(() => trpc.boardKeySource.listBoards.useQuery)
+
+/** Generated alias around `trpc.boardKeySource.getBoardKey.useQuery`. */
+export const useBoardKeySourceGetBoardKey: typeof trpc.boardKeySource.getBoardKey.useQuery = /*#__PURE__*/ alias(() => trpc.boardKeySource.getBoardKey.useQuery)
+
 /** Generated alias around `trpc.brightness.setBrightness.useMutation`. */
 export const useBrightnessSetBrightness: typeof trpc.brightness.setBrightness.useMutation = /*#__PURE__*/ alias(() => trpc.brightness.setBrightness.useMutation)
 

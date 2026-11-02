@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1038 shared schemas.**
+**1039 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -543,6 +543,10 @@ Enum: `"queued" \| "running" \| "succeeded" \| "failed" \| "cancelled"`
 
 - `on`: `boolean`
 - `lastChangedAt`: `number`
+
+### `BoardKeyFailureReasonSchema`
+
+Enum: `"unknown-source" \| "not-admin" \| "no-builder" \| "no-ingress-url" \| "unreachable" \| "unknown-board" \| "no-encryption-key" \| "unreadable-config"`
 
 ### `BoundingBoxSchema`
 

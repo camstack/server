@@ -38,6 +38,7 @@ export const SYSTEM_CAP_VOCABULARY: CapVocabularySlice<SystemVocabCapName> = {
   'audio-analyzer': system(PIPELINE),
   'audio-codec': system(INTERNAL),
   'auth-provider': system(IDENTITY),
+  'board-key-source': system(INTERNAL),
   backup: system('system backups — run and restored from the Backups page'),
   broker: system('message-broker connections — configured, not actuated'),
   'calendar-source': system(INTERNAL),
