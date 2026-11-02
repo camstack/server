@@ -59,7 +59,11 @@ export function migrationCatalogueProblems(metas: readonly unknown[]): readonly 
       )
 }
 
-const BODY_OF_KIND = { sql: 'run', plan: 'plan', procedure: 'procedure' } as const
+const BODY_OF_KIND = {
+  sql: 'run',
+  plan: 'plan',
+  procedure: 'procedure',
+} as const
 
 function stringField(value: unknown, key: string): string | undefined {
   if (typeof value !== 'object' || value === null || !(key in value)) return undefined
@@ -149,29 +153,55 @@ function manifestIds(pkgDir: string): readonly string[] {
   })
 }
 
+/**
+ * Every `migrations/index.ts` under an addon package's `src`, at any depth: a bundle that holds
+ * several addons (cloudflare: `src/turn/migrations`) keeps one catalogue per addon.
+ */
+export function catalogueEntryFiles(srcDir: string): readonly string[] {
+  const found: string[] = []
+  const walk = (current: string): void => {
+    for (const entry of readdirSync(current, { withFileTypes: true })) {
+      if (entry.name === 'node_modules' || entry.name === '__tests__' || entry.name === 'dist') {
+        continue
+      }
+      const full = path.join(current, entry.name)
+      if (entry.isDirectory()) walk(full)
+      else if (entry.name === 'index.ts' && path.basename(current) === 'migrations') {
+        found.push(full)
+      }
+    }
+  }
+  if (existsSync(srcDir)) walk(srcDir)
+  return found
+}
+
 async function addonShapes(): Promise<readonly CatalogueShape[]> {
   const packages = path.join(ROOT, 'packages')
   const shapes: CatalogueShape[] = []
   for (const dir of readdirSync(packages).filter((name) => name.startsWith('addon-'))) {
-    const entryFile = path.join(packages, dir, 'src', 'migrations', 'index.ts')
-    if (!existsSync(entryFile)) continue
-    const loaded: unknown = await import(pathToFileURL(entryFile).href)
-    const exported: unknown =
-      typeof loaded === 'object' && loaded !== null
-        ? Reflect.get(loaded, 'ADDON_MIGRATIONS')
-        : undefined
-    const list = Array.isArray(exported) ? exported : []
-    shapes.push({
-      name: dir,
-      kind: 'addon',
-      addonIds: manifestIds(path.join(packages, dir)),
-      entries: list.flatMap((entry: unknown) =>
-        typeof entry === 'object' && entry !== null
-          ? [{ meta: Reflect.get(entry, 'meta'), bodies: bodiesOf(entry) }]
-          : [],
-      ),
-      runsItsCatalogue: sourcesCall(path.join(packages, dir, 'src'), 'runMigrations('),
-    })
+    for (const entryFile of catalogueEntryFiles(path.join(packages, dir, 'src'))) {
+      const loaded: unknown = await import(pathToFileURL(entryFile).href)
+      const exported: unknown =
+        typeof loaded === 'object' && loaded !== null
+          ? Reflect.get(loaded, 'ADDON_MIGRATIONS')
+          : undefined
+      const list = Array.isArray(exported) ? exported : []
+      const nested = path.relative(
+        path.join(packages, dir, 'src'),
+        path.dirname(path.dirname(entryFile)),
+      )
+      shapes.push({
+        name: nested === '' ? dir : `${dir}/${nested}`,
+        kind: 'addon',
+        addonIds: manifestIds(path.join(packages, dir)),
+        entries: list.flatMap((entry: unknown) =>
+          typeof entry === 'object' && entry !== null
+            ? [{ meta: Reflect.get(entry, 'meta'), bodies: bodiesOf(entry) }]
+            : [],
+        ),
+        runsItsCatalogue: sourcesCall(path.join(packages, dir, 'src'), 'runMigrations('),
+      })
+    }
   }
   return shapes
 }

@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
 import {
+  catalogueEntryFiles,
   migrationCatalogueProblems,
   migrationShapeProblems,
   type CatalogueShape,
@@ -49,7 +53,13 @@ describe('check-migrations-well-formed', () => {
 })
 
 function addon(entries: CatalogueShape['entries'], runs = true): CatalogueShape {
-  return { name: 'addon-x', kind: 'addon', addonIds: ['x'], entries, runsItsCatalogue: runs }
+  return {
+    name: 'addon-x',
+    kind: 'addon',
+    addonIds: ['x'],
+    entries,
+    runsItsCatalogue: runs,
+  }
 }
 
 const addonMeta = (kind: string, extra: object = {}): object => ({
@@ -103,5 +113,26 @@ describe('migrationShapeProblems', () => {
       ],
     }
     expect(migrationShapeProblems(hub).join()).toMatch(/no procedure body/)
+  })
+})
+
+describe('catalogueEntryFiles', () => {
+  it('finds a catalogue at any depth, and ignores specs and non-migrations indexes', () => {
+    const src = mkdtempSync(path.join(tmpdir(), 'catalogues-'))
+    for (const dir of ['migrations', 'turn/migrations', 'turn/migrations/__tests__', 'other']) {
+      mkdirSync(path.join(src, dir), { recursive: true })
+      writeFileSync(path.join(src, dir, 'index.ts'), '')
+    }
+    const found = catalogueEntryFiles(src)
+      .map((file) => path.relative(src, file))
+      .sort()
+    expect(found).toEqual(['migrations/index.ts', 'turn/migrations/index.ts'])
+  })
+
+  it('sees the real cloudflare turn catalogue', () => {
+    const src = path.resolve(__dirname, '../../packages/addon-cloudflare/src')
+    expect(catalogueEntryFiles(src).map((file) => path.relative(src, file))).toContain(
+      'turn/migrations/index.ts',
+    )
   })
 })
