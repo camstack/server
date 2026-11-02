@@ -11549,7 +11549,7 @@ export default class PipelineAnalyticsAddon
     const verdict = this.sensorTransitions.observe(data.deviceId, data.capName, { ...slice })
     this.flushSensorTransitionDrops()
     // A slice that PASSES is the one that can reach a rule: say which, so the next
-    // unexplained match names its slice (planning#396). Debug — it is per transition.
+    // unexplained match names its slice (planning#396). Info — it is per transition, and rare.
     if (verdict.changed) {
       const entries = Object.entries(slice)
       const field = (key: string): unknown => entries.find(([k]) => k === key)?.[1]
