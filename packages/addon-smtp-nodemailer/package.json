@@ -1,7 +1,7 @@
 {
   "name": "@camstack/addon-smtp-nodemailer",
-  "version": "1.2.145",
-  "description": "SMTP email provider addon for CamStack \u2014 wraps `nodemailer` and registers a `smtp-provider` cap collection entry. Used by notifier addons.",
+  "version": "1.2.146",
+  "description": "SMTP email provider addon for CamStack — wraps `nodemailer` and registers a `smtp-provider` cap collection entry. Used by notifier addons.",
   "keywords": [
     "camstack",
     "addon",
@@ -59,7 +59,7 @@
       "smtp-server"
     ],
     "requires": {
-      "server": ">=1.2.739"
+      "server": ">=1.2.741"
     }
   },
   "files": [

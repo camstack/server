@@ -1,6 +1,6 @@
 {
   "name": "@camstack/server",
-  "version": "1.2.740",
+  "version": "1.2.741",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -66,15 +66,13 @@
     ],
     "requires": {
       "addons": {
-        "@camstack/addon-admin-ui": ">=1.2.558",
-        "@camstack/addon-agent-ui": ">=1.2.315",
-        "@camstack/addon-matter-broker": ">=0.2.154",
-        "@camstack/addon-post-analysis": ">=1.2.663",
-        "@camstack/addon-provider-esphome": ">=0.1.8",
-        "@camstack/addon-provider-homeassistant": ">=1.2.650",
-        "@camstack/addon-provider-homematic": ">=1.2.181",
-        "@camstack/addon-provider-rademacher": ">=0.2.157",
-        "@camstack/addon-provider-velux": ">=0.2.156"
+        "@camstack/addon-admin-ui": ">=1.2.559",
+        "@camstack/addon-agent-ui": ">=1.2.316",
+        "@camstack/addon-notifiers": ">=1.2.628",
+        "@camstack/addon-post-analysis": ">=1.2.664",
+        "@camstack/addon-provider-homeassistant": ">=1.2.651",
+        "@camstack/addon-provider-reolink": ">=1.2.219",
+        "@camstack/addon-smtp-nodemailer": ">=1.2.146"
       },
       "wrapper": {
         "desktop": ">=0.0.1",

@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-provider-reolink",
-  "version": "1.2.218",
+  "version": "1.2.219",
   "description": "Reolink camera device provider addon for CamStack — native Baichuan protocol",
   "keywords": [
     "camstack",
@@ -92,7 +92,7 @@
       "werift"
     ],
     "requires": {
-      "server": ">=1.2.732"
+      "server": ">=1.2.741"
     }
   },
   "files": [

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.664] - 2026-11-02
+
 ### Changed
 
 - A package notification's still is now taken from a live camera frame when the look frame's handle has expired, so parcel notifications on cameras like 615 carry their picture again.

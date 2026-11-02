@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.651] - 2026-11-02
+
 ### Changed
 
 - A Home Assistant restart no longer parks the link for 10 minutes: a 404 must persist for a minute before the component counts as missing, and a suspended link is now logged and reported on every reconcile

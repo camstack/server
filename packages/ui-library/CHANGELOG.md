@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.374] - 2026-11-02
+
 ### Changed
 
 - A select that discovers its options can be an optional picker ('Default' choice, 'missing' label for a gone value); the device export table's Type filter is searchable like Role and Integration.
