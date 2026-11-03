@@ -43,6 +43,7 @@ export interface FleetRow {
   readonly type?: string
   readonly stableId?: string
   readonly location?: string | null
+  readonly parentDeviceId?: number | null
   readonly disabled?: boolean
   readonly isCamera?: boolean
 }

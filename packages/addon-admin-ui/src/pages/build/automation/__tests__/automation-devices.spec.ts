@@ -29,7 +29,14 @@ import { type FleetRow, fleetListResult } from '../../../system/__tests__/fleet-
 
 const FLEET_ROWS: readonly FleetRow[] = [
   { id: 42, name: 'Serratura front door', stableId: 'lock-42', type: 'lock' },
-  { id: 101, name: 'Camera atrio', stableId: 'cam-101', type: 'camera', location: 'Atrio' },
+  {
+    id: 101,
+    name: 'Camera atrio',
+    stableId: 'cam-101',
+    type: 'camera',
+    location: 'Atrio',
+    parentDeviceId: 7,
+  },
   // A container is a parent grouping node, never an automation target.
   { id: 7, name: 'Atrio hub', stableId: 'container-7', type: 'container' },
 ]
@@ -66,7 +73,7 @@ describe('useAutomationDevices', () => {
     expect(mockListAllRaw).not.toHaveBeenCalled()
   })
 
-  it('carries every field the picker reads — id, name, stableId, type, location — sorted by name, containers dropped', () => {
+  it('carries every field the picker reads — id, name, stableId, type, location, parentName — sorted by name, containers dropped', () => {
     const { result } = renderHook(() => useAutomationDevices())
     // `stableId` is the load-bearing one: an expression binding addresses a
     // device BY it, and slim keeps it (slim drops only `config`, `metadata`
@@ -74,8 +81,22 @@ describe('useAutomationDevices', () => {
     // `type` and `location` feed the picker's Type / Location filters; an
     // absent location is `null` (unknown), never a made-up room.
     expect(result.current).toEqual([
-      { id: 101, name: 'Camera atrio', stableId: 'cam-101', type: 'camera', location: 'Atrio' },
-      { id: 42, name: 'Serratura front door', stableId: 'lock-42', type: 'lock', location: null },
+      {
+        id: 101,
+        name: 'Camera atrio',
+        stableId: 'cam-101',
+        type: 'camera',
+        location: 'Atrio',
+        parentName: 'Atrio hub',
+      },
+      {
+        id: 42,
+        name: 'Serratura front door',
+        stableId: 'lock-42',
+        type: 'lock',
+        location: null,
+        parentName: null,
+      },
     ])
   })
 })
