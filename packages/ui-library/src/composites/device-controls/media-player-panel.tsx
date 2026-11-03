@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { Pause, Play } from 'lucide-react'
 import { useDeviceCapability } from '../../hooks/use-device-capability.js'
 import { useOptimisticSlice } from '../../hooks/use-optimistic-slice.js'
+import { deriveMediaPlayerView } from './media-player-view.js'
 import { cn } from '../../lib/cn.js'
 import type { ControlPanelProps } from './types.js'
 import type { MediaPlayerStatus, MediaPlayerState, MediaPlayerRepeat } from '@camstack/types'
@@ -12,24 +13,24 @@ import type { MediaPlayerStatus, MediaPlayerState, MediaPlayerRepeat } from '@ca
  * Build fails if a state is added and not reflected here.
  */
 export const STATE_COLOR: Record<MediaPlayerState, string> = {
-  playing: 'border-green-400 bg-green-50 dark:bg-green-950',
-  paused: 'border-amber-400 bg-amber-50 dark:bg-amber-950',
-  buffering: 'border-blue-400 bg-blue-50 dark:bg-blue-950',
-  on: 'border-slate-400 bg-slate-50 dark:bg-slate-950',
-  idle: 'border-slate-400 bg-slate-50 dark:bg-slate-950',
-  off: 'border-zinc-300 bg-zinc-50 dark:bg-zinc-900',
-  standby: 'border-zinc-300 bg-zinc-50 dark:bg-zinc-900',
+  playing: 'border-success/50 bg-success/10',
+  paused: 'border-warning/50 bg-warning/10',
+  buffering: 'border-info/50 bg-info/10',
+  on: 'border-foreground-subtle/40 bg-surface-hover',
+  idle: 'border-foreground-subtle/40 bg-surface-hover',
+  off: 'border-border bg-surface',
+  standby: 'border-border bg-surface',
 } satisfies Record<MediaPlayerState, string>
 
 /** Dot indicator colour (small circle) per state. */
 const STATE_DOT_COLOR: Record<MediaPlayerState, string> = {
-  playing: 'bg-green-500',
-  paused: 'bg-amber-400',
-  buffering: 'bg-blue-400',
-  on: 'bg-slate-400',
-  idle: 'bg-slate-400',
-  off: 'bg-zinc-300',
-  standby: 'bg-zinc-300',
+  playing: 'bg-success',
+  paused: 'bg-warning',
+  buffering: 'bg-info',
+  on: 'bg-foreground-subtle',
+  idle: 'bg-foreground-subtle',
+  off: 'bg-border',
+  standby: 'bg-border',
 } satisfies Record<MediaPlayerState, string>
 
 /** Exhaustive tuple of valid repeat values — single source of truth. */
@@ -60,7 +61,7 @@ function toggleAction(state: MediaPlayerState): 'play' | 'pause' {
 export function MediaPlayerPanel({
   trpc,
   deviceId,
-  features: _features,
+  features,
   layout,
   optimistic,
 }: ControlPanelProps): ReactNode {
@@ -77,6 +78,7 @@ export function MediaPlayerPanel({
   })
 
   if (display === undefined) return null
+  const declared = deriveMediaPlayerView(display, features, {})
 
   const busy = !available
   const action = toggleAction(display.state)
@@ -103,7 +105,7 @@ export function MediaPlayerPanel({
         />
 
         {/* Play/Pause toggle */}
-        <button
+        <button // ui-check-ok: compact inline control; no library size at this density
           type="button"
           aria-label={
             action === 'play'
@@ -136,7 +138,7 @@ export function MediaPlayerPanel({
         <>
           {/* Transport controls: previous / next */}
           <div className="inline-flex items-center gap-1">
-            <button
+            <button // ui-check-ok: compact inline control; no library size at this density
               type="button"
               aria-label={t('uiLibrary.mediaPlayerPanel.previous', 'Previous')}
               disabled={busy}
@@ -151,7 +153,7 @@ export function MediaPlayerPanel({
             >
               ⏮
             </button>
-            <button
+            <button // ui-check-ok: compact inline control; no library size at this density
               type="button"
               aria-label={t('uiLibrary.mediaPlayerPanel.next', 'Next')}
               disabled={busy}
@@ -169,7 +171,7 @@ export function MediaPlayerPanel({
           </div>
 
           {/* Volume slider */}
-          {display.volumeLevel !== null && (
+          {(declared.volume === 'slider' || display.volumeLevel !== null) && (
             <label className="flex items-center gap-2 text-xs text-foreground-subtle">
               <span>{t('uiLibrary.mediaPlayerPanel.vol', 'Vol')}</span>
               <input
@@ -178,7 +180,7 @@ export function MediaPlayerPanel({
                 min={0}
                 max={100}
                 step={1}
-                value={display.volumeLevel}
+                value={display.volumeLevel ?? 0}
                 disabled={busy}
                 onChange={(e) => {
                   const volumeLevel = Number(e.target.value)
@@ -186,13 +188,15 @@ export function MediaPlayerPanel({
                   if (!busy) void cap?.setVolume({ volumeLevel })
                 }}
               />
-              <span className="tabular-nums w-8 text-right">{display.volumeLevel}%</span>
+              <span className="tabular-nums w-8 text-right">
+                {display.volumeLevel === null ? '—' : `${display.volumeLevel}%`}
+              </span>
             </label>
           )}
 
           {/* Mute toggle */}
-          {display.isMuted !== null && (
-            <button
+          {(declared.mute || display.isMuted !== null) && (
+            <button // ui-check-ok: compact inline control; no library size at this density
               type="button"
               aria-label={
                 display.isMuted
@@ -202,8 +206,8 @@ export function MediaPlayerPanel({
               disabled={busy}
               onClick={(e) => {
                 e.stopPropagation()
-                if (!busy && display.isMuted !== null) {
-                  const muted = !display.isMuted
+                if (!busy) {
+                  const muted = display.isMuted === null ? true : !display.isMuted
                   applyOptimistic({ isMuted: muted })
                   void cap?.setMute({ muted })
                 }
@@ -211,7 +215,7 @@ export function MediaPlayerPanel({
               className={cn(
                 'inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs transition-colors',
                 display.isMuted
-                  ? 'bg-amber-400 text-amber-950'
+                  ? 'bg-warning-fill text-warning-on'
                   : 'text-foreground-subtle hover:text-foreground hover:bg-surface-hover',
                 busy && 'opacity-40 cursor-not-allowed',
               )}
@@ -224,7 +228,7 @@ export function MediaPlayerPanel({
           {display.availableSources.length > 0 && (
             <label className="flex items-center gap-2 text-xs text-foreground-subtle">
               <span>{t('uiLibrary.mediaPlayerPanel.source', 'Source')}</span>
-              <select
+              <select // ui-check-ok: compact inline control; no library size at this density
                 aria-label={t('uiLibrary.mediaPlayerPanel.source', 'Source')}
                 value={display.source}
                 disabled={busy}
@@ -251,7 +255,7 @@ export function MediaPlayerPanel({
 
           {/* Shuffle toggle */}
           {display.shuffle !== null && (
-            <button
+            <button // ui-check-ok: compact inline control; no library size at this density
               type="button"
               aria-label={t('uiLibrary.mediaPlayerPanel.shuffle', 'Shuffle')}
               disabled={busy}
@@ -266,7 +270,7 @@ export function MediaPlayerPanel({
               className={cn(
                 'inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs transition-colors',
                 display.shuffle
-                  ? 'bg-green-400 text-green-950'
+                  ? 'bg-success-fill text-success-on'
                   : 'text-foreground-subtle hover:text-foreground hover:bg-surface-hover',
                 busy && 'opacity-40 cursor-not-allowed',
               )}
@@ -279,7 +283,7 @@ export function MediaPlayerPanel({
           {display.repeat !== null && (
             <label className="flex items-center gap-2 text-xs text-foreground-subtle">
               <span>{t('uiLibrary.mediaPlayerPanel.repeat', 'Repeat')}</span>
-              <select
+              <select // ui-check-ok: compact inline control; no library size at this density
                 aria-label={t('uiLibrary.mediaPlayerPanel.repeat', 'Repeat')}
                 value={display.repeat}
                 disabled={busy}

@@ -7589,8 +7589,22 @@
         "playing": "In riproduzione",
         "paused": "In pausa",
         "buffering": "Caricamento",
-        "standby": "Standby"
-      }
+        "standby": "Standby",
+        "unknown": "Stato sconosciuto"
+      },
+      "turnOn": "Accendi",
+      "turnOff": "Spegni",
+      "powerUnknown": "Stato di accensione sconosciuto",
+      "stop": "Stop",
+      "volumeUp": "Alza il volume",
+      "volumeDown": "Abbassa il volume",
+      "shuffle": "Casuale",
+      "repeat": "Ripeti",
+      "source": "Sorgente",
+      "running": "In funzione",
+      "notRunning": "Non in funzione",
+      "runningUnknown": "Funzionamento: sconosciuto",
+      "wattsUnknown": "Consumo sconosciuto"
     },
     "acPanel": {
       "modeCool": "Raffredda",

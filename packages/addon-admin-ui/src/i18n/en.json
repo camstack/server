@@ -7567,8 +7567,22 @@
         "playing": "Playing",
         "paused": "Paused",
         "buffering": "Buffering",
-        "standby": "Standby"
-      }
+        "standby": "Standby",
+        "unknown": "State unknown"
+      },
+      "turnOn": "Turn on",
+      "turnOff": "Turn off",
+      "powerUnknown": "Power state unknown",
+      "stop": "Stop",
+      "volumeUp": "Volume up",
+      "volumeDown": "Volume down",
+      "shuffle": "Shuffle",
+      "repeat": "Repeat",
+      "source": "Source",
+      "running": "Running",
+      "notRunning": "Not running",
+      "runningUnknown": "Running: unknown",
+      "wattsUnknown": "Power draw unknown"
     },
     "acPanel": {
       "modeCool": "Cool",

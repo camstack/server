@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Media-player hero card rewritten: power, running state, power-meter watts and every declared control, unknown shown as unknown; artwork with cross-fade; a declared volume or mute always shows (unknown level) instead of hiding
+
 ## [1.2.376] - 2026-11-03
 
 ### Changed

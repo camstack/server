@@ -3,7 +3,8 @@
  * layout, where a press sends the button's command (`remote.sendCommand`). It
  * self-gates: nothing is drawn until the `remote` capability is known present
  * and the device has at least one saved command — a device with only a remote
- * (no media-player binding) still gets it.
+ * (no media-player binding) still gets it. The link to the layout template is
+ * NOT here: it lives on the device's customization page (`RemoteExtensionCard`).
  */
 import {
   Button,
@@ -22,7 +23,6 @@ import {
 import { Gamepad2 } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { EditTemplateButton } from './EditTemplateButton'
 import { layoutOf } from './layout-model'
 import { RemoteGrid } from './RemoteGrid'
 
@@ -35,7 +35,6 @@ export function RemoteHeroButton({ deviceId, deviceName }: RemoteHeroButtonProps
   const { t } = useTranslation()
   const presence = useCapabilityPresence('remote')
   const commands = useRemoteListCommands({ deviceId }, { enabled: presence === 'present' })
-  const config = useRemoteGetConfig({ deviceId }, { enabled: presence === 'present' })
   const [open, setOpen] = useState(false)
   if (presence !== 'present') return null
   if ((commands.data?.commands.length ?? 0) === 0) return null
@@ -45,9 +44,6 @@ export function RemoteHeroButton({ deviceId, deviceName }: RemoteHeroButtonProps
         <Gamepad2 className="h-3.5 w-3.5" aria-hidden />
         {t('remote.hero.open')}
       </Button>
-      {config.data?.layoutTemplateId != null && (
-        <EditTemplateButton templateId={config.data.layoutTemplateId} testId="hero-edit-template" />
-      )}
       {open && (
         <RemotePressDialog
           deviceId={deviceId}
@@ -123,11 +119,6 @@ function RemotePressDialog({ deviceId, deviceName, onClose }: PressProps): React
             <p role="alert" className="text-xs text-danger">
               {failure}
             </p>
-          )}
-          {templateId !== null && (
-            <div className="flex justify-end">
-              <EditTemplateButton templateId={templateId} testId="hero-remote-edit-template" />
-            </div>
           )}
         </DialogBody>
       </DialogContent>

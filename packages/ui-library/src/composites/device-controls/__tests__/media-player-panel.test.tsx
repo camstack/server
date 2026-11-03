@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
+import { DeviceFeature } from '@camstack/types'
 import { MediaPlayerPanel } from '../media-player-panel'
 
 const play = vi.fn()
@@ -88,7 +89,7 @@ describe('MediaPlayerPanel', () => {
         <MediaPlayerPanel trpc={trpc} deviceId={1} features={[]} layout="compact" />,
       )
       const root = container.firstChild as HTMLElement
-      expect(root.className).toContain('green')
+      expect(root.className).toContain('success')
     })
 
     it('applies an amber class when state is paused', () => {
@@ -112,7 +113,7 @@ describe('MediaPlayerPanel', () => {
         <MediaPlayerPanel trpc={trpc} deviceId={1} features={[]} layout="compact" />,
       )
       const root = container.firstChild as HTMLElement
-      expect(root.className).toContain('amber')
+      expect(root.className).toContain('warning')
     })
 
     it('renders a state indicator dot', () => {
@@ -251,6 +252,20 @@ describe('MediaPlayerPanel', () => {
       }
       render(<MediaPlayerPanel trpc={trpc} deviceId={1} features={[]} layout="full" />)
       expect(screen.queryByLabelText('Volume')).toBeNull()
+    })
+
+    it('renders the volume slider and mute for a declared feature even when the level is null', () => {
+      mockResult = { ...mockResult, slice: { ...baseSlice, volumeLevel: null, isMuted: null } }
+      render(
+        <MediaPlayerPanel
+          trpc={trpc}
+          deviceId={1}
+          features={[DeviceFeature.MediaPlayerVolume, DeviceFeature.MediaPlayerMute]}
+          layout="full"
+        />,
+      )
+      expect(screen.getByLabelText('Volume')).toBeTruthy()
+      expect(screen.getByRole('button', { name: 'Mute' })).toBeTruthy()
     })
 
     it('renders a mute button when isMuted is non-null', () => {

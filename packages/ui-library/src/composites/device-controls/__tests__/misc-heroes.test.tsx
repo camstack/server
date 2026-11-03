@@ -227,11 +227,17 @@ describe('MediaPlayerHeroCard', () => {
     expect(mediaCap.previous).toHaveBeenCalledWith({})
   })
 
-  it('does not render the volume GripTrack when there is no volume surface', () => {
+  it('does not render the volume GripTrack when no volume is declared and no level is read', () => {
     slots = mediaSlots({
       mediaPlayer: { cap: mediaCap, slice: mediaSlice({ volumeLevel: null }), available: true },
     })
-    render(<MediaPlayerHeroCard trpc={trpc} deviceId={1} features={ALL_MEDIA_FEATURES} />)
+    render(
+      <MediaPlayerHeroCard
+        trpc={trpc}
+        deviceId={1}
+        features={ALL_MEDIA_FEATURES.filter((f) => f !== DeviceFeature.MediaPlayerVolume)}
+      />,
+    )
     expect(screen.queryByTestId('media-volume')).toBeNull()
   })
 

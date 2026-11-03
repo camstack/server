@@ -35,7 +35,16 @@ const device = (id: number, name: string, type: string, location: string) => ({
   metadata: {},
 })
 
-const TV = device(TV_ID, 'Living room TV', 'media-player', 'Living room')
+const TV = {
+  ...device(TV_ID, 'Living room TV', 'media-player', 'Living room'),
+  features: [
+    'media-player-power',
+    'media-player-volume',
+    'media-player-mute',
+    'media-player-next',
+    'media-player-previous',
+  ],
+}
 const PARENT_ID = 903
 const PARENT = device(PARENT_ID, 'Living room IR board', 'generic', 'Living room')
 const BOARD = {
@@ -154,16 +163,19 @@ const irBinding = (note: string) => ({
   },
 })
 
-/** An infrared TV: the driver only tracks what it sent, so everything else is unknown. */
+const ARTWORK =
+  "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='200' height='200' fill='gray'/><circle cx='100' cy='100' r='60' fill='silver'/></svg>"
+
+/** A player that reports playback but no volume level (an imported speaker): volume is declared, its level unknown. */
 const TV_MEDIA_PLAYER = {
-  state: 'standby',
-  stateSource: 'assumed',
-  assumedFields: ['state'],
+  state: 'playing',
+  stateSource: 'reported',
+  assumedFields: [],
   volumeLevel: null,
   isMuted: null,
   source: '',
   availableSources: [],
-  currentMedia: null,
+  currentMedia: { title: 'Evening mix', artist: 'The Band', imageUrl: ARTWORK },
   position: null,
   duration: null,
   shuffle: null,

@@ -76,13 +76,14 @@ describe('RemoteHeroButton', () => {
 
   it('opens the remote and a press sends the button role once; an unbound key sends nothing', async () => {
     renderButton()
-    expect(screen.getByTestId('hero-edit-template')).toBeTruthy()
+    // The layout link belongs on the customization page, not on the card.
+    expect(screen.queryByTestId('hero-edit-template')).toBeNull()
     fireEvent.click(screen.getByTestId('hero-remote'))
     fireEvent.click(screen.getByTestId('remote-grid-button-b'))
     expect(sendCommand).not.toHaveBeenCalled()
     fireEvent.click(screen.getByTestId('remote-grid-button-a'))
     await waitFor(() => expect(sendCommand).toHaveBeenCalledTimes(1))
     expect(sendCommand).toHaveBeenCalledWith({ deviceId: 7, role: 'power', repeat: 1 })
-    expect(screen.getByTestId('hero-remote-edit-template')).toBeTruthy()
+    expect(screen.queryByTestId('hero-remote-edit-template')).toBeNull()
   })
 })
