@@ -20,16 +20,7 @@ import { hydrateSchema, type ConfigUISchemaWithValues } from '@camstack/types'
 // A spec may mount a sibling's real code: the point is THIS addon's schema.
 import { buildAlexaSettingsSections } from '../../../../../addon-export-alexa/src/settings-schema'
 
-const ALEXA_DEFAULTS = {
-  skillMode: 'public',
-  region: 'EU',
-  expectedAudience: '',
-  publicHubUrl: '',
-  detectionSensors: true,
-  objectDetection: true,
-  snapshots: true,
-  enforceIngressToken: false,
-} as const
+const DEFAULT_SKILL_MODE = 'public'
 
 function alexaForm(stored: Record<string, unknown>): ConfigUISchemaWithValues {
   return hydrateSchema(
@@ -38,7 +29,8 @@ function alexaForm(stored: Record<string, unknown>): ConfigUISchemaWithValues {
         linkedAccounts: [],
         tokens: [],
         now: 0,
-        defaults: ALEXA_DEFAULTS,
+        skillMode:
+          typeof stored['skillMode'] === 'string' ? stored['skillMode'] : DEFAULT_SKILL_MODE,
       }),
     },
     stored,
@@ -140,7 +132,7 @@ beforeEach(() => {
 describe.each(SURFACES)('the Alexa settings on $name', ({ node }) => {
   it('draws every section with its heading', async () => {
     renderTree(node())
-    for (const title of ['Connection', 'Features', 'Account link', 'Troubleshooting']) {
+    for (const title of ['Account link', 'Troubleshooting']) {
       expect(await screen.findByText(title)).toBeTruthy()
     }
   })
@@ -160,31 +152,21 @@ describe.each(SURFACES)('the Alexa settings on $name', ({ node }) => {
     )
   })
 
-  it('draws no empty section frame: public mode has no Custom-skill security at all', async () => {
+  it('draws no empty section frame: public mode has no Custom-skill ingress token at all', async () => {
     const { container } = renderTree(node())
-    await screen.findByText('Features')
-    expect(screen.queryByText('Custom-skill security')).toBeNull()
+    await screen.findByText('Account link')
+    expect(screen.queryByText('Custom-skill ingress token')).toBeNull()
     expect(
-      container.querySelector('[data-settings-section="export-alexa-custom-security"]'),
+      container.querySelector('[data-settings-section="export-alexa-custom-security-token"]'),
     ).toBeNull()
     for (const section of container.querySelectorAll('[data-settings-section]')) {
       expect(section.textContent?.trim().length ?? 0).toBeGreaterThan(0)
     }
   })
 
-  it('shows Custom-skill security live when the operator switches to the custom skill', async () => {
-    renderTree(node())
-    const mode = (await screen.findByText('Alexa skill')).parentElement?.querySelector('select')
-    if (!mode) throw new Error('no skill-mode select')
-    expect(screen.queryByText('Alexa skill id')).toBeNull()
-    fireEvent.change(mode, { target: { value: 'custom' } })
-    expect(await screen.findByText('Custom-skill security')).toBeTruthy()
-    expect(screen.getByText('Alexa skill id')).toBeTruthy()
-  })
-
   it('a hub already in custom mode shows the section on load', async () => {
     served = alexaForm({ skillMode: 'custom' })
     renderTree(node())
-    expect(await screen.findByText('Custom-skill security')).toBeTruthy()
+    expect(await screen.findByText('Custom-skill ingress token')).toBeTruthy()
   })
 })
