@@ -4,12 +4,12 @@
 
 # Guards
 
-210 repository guards: 205 in `scripts/`,
+211 repository guards: 206 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (200)
+## Enforced by CI checks (201)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -127,6 +127,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-no-glyph-chevrons.ts` | No text-glyph disclosure markers (▸ ▾ ▶ ▼) in UI source. |
 | `scripts/check-no-hand-rolled-modal.ts` | No hand-rolled `fixed inset-0` overlay outside the UI library. |
 | `scripts/check-no-heap-dump-command.ts` | There is NO operator-triggerable heap dump. Twice is enough. |
+| `scripts/check-no-hero-self-drawn-power.ts` | No device-controls hero card draws the device's electrical draw itself (D1004). |
 | `scripts/check-no-hub-address-env.ts` | No runtime code reads the hub's address from the environment. |
 | `scripts/check-no-legacy-token-prefix.ts` | No source names a pre-D892 opaque token format (D895). |
 | `scripts/check-no-legacy-tracker.ts` | The old tracker stays deleted (D683). |

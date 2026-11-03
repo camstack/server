@@ -148,6 +148,7 @@ export type {
 } from './webrtc-diagnostics/endpoint-test'
 export { AutotrackSection } from './cap-settings/AutotrackSection'
 export { ConsumablesPanel } from './cap-settings/ConsumablesPanel'
+export { PowerMeterLine } from './cap-settings/PowerMeterLine'
 // CapSettingsComponentProps is a plain interface — safe to import from the barrel
 // type-only (no module code executes for type-only imports).
 export type { CapSettingsComponentProps } from './cap-settings/index'

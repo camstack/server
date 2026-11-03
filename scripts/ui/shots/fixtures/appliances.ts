@@ -15,7 +15,7 @@
  * binding, as on a hub whose provider has not registered the cap); 5064 is
  * the same feeder WITH the binding, so its Consumables section shows. Data
  * is invented.
- * 505 "Washing machine" (running, 412 W) and 506 "Tumble dryer" (nothing reported)
+ * 505 "Washing machine" (running, 412 W and 18.42 kWh, shown by the power-meter hero line) and 506 "Tumble dryer" (nothing reported)
  * are the appliance hero.
  * 5065 "Water fountain" is a pet fountain built from loose entities, with its
  * filter as a consumable.
@@ -458,7 +458,7 @@ const SLICES: Readonly<Record<string, unknown>> = {
     phase: 'Rinse',
     lastFetchedAt: NOW,
   },
-  '505/power-meter': { power: 412, lastFetchedAt: NOW },
+  '505/power-meter': { power: 412, energy: 18.42, lastFetchedAt: NOW },
   '506/device-status': { online: true, lastChangedAt: NOW },
   '506/running-state': {
     running: null,
@@ -578,6 +578,28 @@ const consumablesSection = (writerAddonId: string) => ({
   ],
 })
 
+/** The `power-meter` hero line (D1004): every device bound to the cap gets it. */
+const powerMeterSection = (writerAddonId: string) => ({
+  id: 'power-meter-widget',
+  title: 'Power',
+  tab: 'power',
+  location: 'hero',
+  columns: 1,
+  order: 4,
+  fields: [
+    {
+      type: 'widget',
+      key: 'power-meterWidget',
+      label: 'Power',
+      widgetId: 'host/power-meter-line',
+      span: 1,
+      source: 'settings',
+      writerCapName: 'power-meter',
+      writerAddonId,
+    },
+  ],
+})
+
 const aggregateFor = (deviceId: number) => ({
   settings: {
     tabs: [],
@@ -590,7 +612,9 @@ const aggregateFor = (deviceId: number) => ({
             ? [consumablesSection('provider-petkit')]
             : deviceId === 5065
               ? [consumablesSection('composer')]
-              : [],
+              : deviceId === 505 || deviceId === 506
+                ? [powerMeterSection('provider-homeassistant')]
+                : [],
   },
   live: { sections: [] },
   tabs: undefined,

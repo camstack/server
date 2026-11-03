@@ -8671,6 +8671,13 @@
       "summary": ""
     },
     {
+      "name": "PowerMeterLine",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/cap-settings/PowerMeterLine.tsx",
+      "summary": "PowerMeterLine — the ONE place a device's electrical draw is shown (D1004): a slim line directly under the device page's hero card, for every device bound to the `power-meter` capability, whatever its type. The cap de…"
+    },
+    {
       "name": "preferenceForQuantity",
       "kind": "function",
       "area": "lib",

@@ -1,17 +1,15 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import type { PowerMeterStatus, RunningStateStatus } from '@camstack/types'
-import { ApplianceHeroCard, ApplianceInlineControl, formatWatts } from '../appliance-control'
+import type { RunningStateStatus } from '@camstack/types'
+import { ApplianceHeroCard, ApplianceInlineControl } from '../appliance-control'
 
 let running: RunningStateStatus | undefined
-let power: PowerMeterStatus | undefined
 
 vi.mock('../../../hooks/use-device-proxy', () => ({
   useDeviceState: (_t: unknown, _id: number, select: (s: Record<string, unknown>) => unknown) => {
-    const probe = { runningState: 'running', powerMeter: 'power' }
-    const picked = select(probe)
-    return picked === 'running' ? running : power
+    const probe = { runningState: 'running' }
+    return select(probe) === 'running' ? running : undefined
   },
 }))
 
@@ -30,19 +28,17 @@ function runningSlice(overrides: Partial<RunningStateStatus>): RunningStateStatu
 
 beforeEach(() => {
   running = undefined
-  power = undefined
 })
 
 describe('ApplianceHeroCard', () => {
-  it('tumbles the drum only while running, and shows state, phase and watts', () => {
+  it('tumbles the drum only while running, and shows state and phase', () => {
     running = runningSlice({})
-    power = { power: 412, lastFetchedAt: 1 }
     render(<ApplianceHeroCard {...props} />)
     expect(screen.getByTestId('appliance-state').textContent).toBe('Running')
     expect(screen.getByTestId('appliance-drum-ring').className).toContain('apl-drum-run')
     expect(screen.getByText('Rinse')).toBeTruthy()
     expect(screen.getByText('for 35 min')).toBeTruthy()
-    expect(screen.getByTestId('appliance-power').textContent).toContain('412 W')
+    expect(screen.queryByTestId('appliance-power')).toBeNull()
   })
 
   it('keeps the drum still when idle', () => {
@@ -52,27 +48,18 @@ describe('ApplianceHeroCard', () => {
     expect(screen.getByTestId('appliance-drum-ring').className).not.toContain('apl-drum-run')
   })
 
-  it('draws an unknown reading as Unknown, never as Idle, off or 0 W', () => {
+  it('draws an unknown reading as Unknown, never as Idle or off', () => {
     running = runningSlice({ running: null, since: null, phase: 'Rinse' })
-    power = { lastFetchedAt: 1 }
     render(<ApplianceHeroCard {...props} />)
     expect(screen.getByTestId('appliance-state').textContent).toBe('Unknown')
     expect(screen.getByTestId('appliance-drum-ring').className).not.toContain('apl-drum-run')
     expect(screen.getByTestId('appliance-drum').getAttribute('data-running')).toBe('unknown')
     expect(screen.queryByText('Rinse')).toBeNull()
-    expect(screen.getByTestId('appliance-power').textContent).toContain('—')
-    expect(screen.getByTestId('appliance-power').textContent).not.toContain('0 W')
   })
 
-  it('shows Unknown and no power row while no slice has landed', () => {
+  it('shows Unknown while no slice has landed', () => {
     render(<ApplianceHeroCard {...props} />)
     expect(screen.getByTestId('appliance-state').textContent).toBe('Unknown')
-    expect(screen.queryByTestId('appliance-power')).toBeNull()
-  })
-
-  it('formats a real zero as 0 W but a missing reading as a dash', () => {
-    expect(formatWatts(0)).toBe('0 W')
-    expect(formatWatts(undefined)).toBe('—')
   })
 })
 

@@ -8,6 +8,7 @@ import { ConsumablesPanel } from '../composites/cap-settings/ConsumablesPanel.js
 import { ClipsSection } from '../composites/clips/ClipsSection.js'
 import { ExtensionsPanel } from '../composites/extensions/ExtensionsPanel.js'
 import { NavigationPanel } from '../composites/cap-settings/NavigationPanel.js'
+import { PowerMeterLine } from '../composites/cap-settings/PowerMeterLine.js'
 import { PtzPanel } from '../composites/cap-settings/PtzPanel.js'
 import { RecordingPanel } from '../composites/cap-settings/RecordingPanel.js'
 
@@ -48,6 +49,7 @@ export const HOST_WIDGETS: Readonly<Record<string, ComponentType<HostWidgetProps
   'host/ptz-panel': PtzPanel,
   'host/navigation-panel': NavigationPanel,
   'host/consumables-panel': ConsumablesPanel,
+  'host/power-meter-line': PowerMeterLine,
   'host/ptz-autotrack': AutotrackSection,
   'host/recording-panel': RecordingPanel,
   'host/camera-grid-layout': CameraGridLayoutEditor,

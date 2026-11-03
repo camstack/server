@@ -2,21 +2,20 @@
  * Appliance card for a `DeviceType.Washer` / `DeviceType.Dryer` device.
  *
  * These appliances have no program surface: what is worth showing is whether
- * the cycle is running (the `running-state` cap), for how long, and what the
- * appliance draws right now (the `power-meter` cap). Both slices are read
- * straight from the device; neither is required.
+ * the cycle is running (the `running-state` cap) and for how long. The draw
+ * is NOT drawn here: the `power-meter` cap's hero widget shows it under every
+ * hero card (D1004).
  *   - ApplianceInlineControl (device-list row): the running badge round the
- *     drum icon, plus the live watts when there are any.
+ *     drum icon.
  *   - ApplianceHeroCard (device-detail hero): the drum (turning only while a
- *     cycle runs), the state, the phase, the dwell and the power.
+ *     cycle runs), the state, the phase and the dwell.
  *
  * UNKNOWN IS NOT OFF (D393). `running: null` is drawn as "Unknown" and the
- * drum stays still and unbadged; a missing watt reading is a dash, never
- * "0 W". A slice that has not landed hides its row instead of faking a value.
+ * drum stays still and unbadged.
  */
-import { WashingMachine, Zap } from 'lucide-react'
+import { WashingMachine } from 'lucide-react'
 import type { ReactNode } from 'react'
-import type { PowerMeterStatus, RunningStateStatus } from '@camstack/types'
+import type { RunningStateStatus } from '@camstack/types'
 import { useUiText, type UiTextFn } from '../../contexts/ui-text'
 import { useDeviceState } from '../../hooks/use-device-proxy'
 import { cn } from '../../lib/cn'
@@ -32,11 +31,6 @@ const KEYFRAMES = `
   .apl-drum-run { animation: none !important; }
 }
 `
-
-/** Whole watts, or a dash when the appliance has not reported a reading. */
-export function formatWatts(power: number | undefined): string {
-  return power === undefined || !Number.isFinite(power) ? '—' : `${Math.round(power)} W`
-}
 
 interface StateLabel {
   readonly label: string
@@ -65,15 +59,13 @@ function dwellText(running: boolean | null, since: number | null, now: number, t
 
 function useApplianceState(props: DeviceControlProps): {
   readonly running: RunningStateStatus | undefined
-  readonly power: PowerMeterStatus | undefined
 } {
   const running = useDeviceState<RunningStateStatus>(
     props.trpc,
     props.deviceId,
     (s) => s.runningState,
   )
-  const power = useDeviceState<PowerMeterStatus>(props.trpc, props.deviceId, (s) => s.powerMeter)
-  return { running, power }
+  return { running }
 }
 
 /** The drum: a ring with a few items in it, turning only while a cycle runs. */
@@ -102,7 +94,7 @@ function Drum({ running }: { readonly running: boolean | null }): ReactNode {
 
 export function ApplianceHeroCard(props: DeviceControlProps): ReactNode {
   const t = useUiText()
-  const { running, power } = useApplianceState(props)
+  const { running } = useApplianceState(props)
   const state = running?.running ?? null
   const meta = applianceStateLabel(state, t)
   const phase = running?.phase?.trim() ?? ''
@@ -124,38 +116,19 @@ export function ApplianceHeroCard(props: DeviceControlProps): ReactNode {
         {phase !== '' && state !== null && (
           <span className="text-sm text-foreground-subtle">{phase}</span>
         )}
-        {power !== undefined && (
-          <span
-            data-testid="appliance-power"
-            className="inline-flex items-center gap-1 text-sm tabular-nums text-foreground-muted"
-            title={
-              power.power === undefined
-                ? t('uiLibrary.appliance.powerUnknown', 'Power unknown')
-                : undefined
-            }
-          >
-            <Zap className="h-3.5 w-3.5" aria-hidden />
-            {formatWatts(power.power)}
-          </span>
-        )}
       </div>
     </div>
   )
 }
 
 export function ApplianceInlineControl(props: DeviceControlProps): ReactNode {
-  const { running, power } = useApplianceState(props)
+  const { running } = useApplianceState(props)
   const state = running?.running ?? null
   return (
     <div className="inline-flex items-center gap-1.5 max-w-full">
       <RunningBadge running={state}>
         <WashingMachine className="h-4 w-4 text-foreground-muted" aria-hidden />
       </RunningBadge>
-      {power !== undefined && (
-        <span className="text-xs tabular-nums text-foreground-subtle">
-          {formatWatts(power.power)}
-        </span>
-      )}
     </div>
   )
 }

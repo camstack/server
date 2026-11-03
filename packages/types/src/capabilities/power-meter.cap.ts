@@ -120,6 +120,19 @@ export const powerMeterCapability = {
   deviceNative: true,
   mode: 'singleton',
   deviceTypes: POWER_METER_DEVICE_TYPES,
+  deviceConfig: {
+    // ONE line directly under the hero card of every device bound to this
+    // cap — the draw is a feature of the device, and no hero card draws
+    // watts itself (D1004).
+    ui: {
+      kind: 'widget',
+      widgetId: 'host/power-meter-line',
+      tab: 'power',
+      placement: 'hero',
+      label: 'Power',
+      order: 4,
+    },
+  },
   methods: {},
   status: {
     schema: PowerMeterStatusSchema,

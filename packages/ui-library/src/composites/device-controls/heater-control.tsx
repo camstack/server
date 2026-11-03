@@ -7,7 +7,7 @@
  *     "Run N min".
  *   - HeaterHeroCard (device-detail hero): the glowing heat backdrop (the same
  *     rising streaks a heating air conditioner draws) while it is on, the
- *     on/off switch, the power draw when the plug measures one, and the timed
+ *     on/off switch and the timed
  *     run (number, unit, Run, countdown, Cancel).
  *
  * Every reading may be unknown (`null`) and is drawn as a dash, never as zero.
@@ -43,12 +43,6 @@ function useHeater({ trpc, deviceId, optimistic }: DeviceControlProps) {
     cap: (d) => d.runningState,
     slice: (d) => d.state.runningState,
   })
-  const power = useDeviceCapability({
-    trpc,
-    deviceId,
-    cap: (d) => d.powerMeter,
-    slice: (d) => d.state.powerMeter,
-  })
   const timer = useDeviceCapability({
     trpc,
     deviceId,
@@ -64,7 +58,6 @@ function useHeater({ trpc, deviceId, optimistic }: DeviceControlProps) {
     available,
     applyOptimistic,
     running: running.slice,
-    power: power.slice,
     timer,
   }
 }
@@ -111,11 +104,10 @@ export function HeaterInlineControl(props: DeviceControlProps): ReactNode {
 
 export function HeaterHeroCard(props: DeviceControlProps): ReactNode {
   const t = useUiText()
-  const { cap, display, available, applyOptimistic, running, power, timer } = useHeater(props)
+  const { cap, display, available, applyOptimistic, running, timer } = useHeater(props)
   if (cap === undefined || display === undefined) return null
   const on = display.on === true
   const heating = running?.running ?? on
-  const watts = power?.power ?? null
   return (
     <div className="relative flex flex-col items-stretch gap-3 overflow-hidden rounded-lg border border-border bg-surface p-4">
       <style>{KEYFRAMES}</style>
@@ -141,9 +133,6 @@ export function HeaterHeroCard(props: DeviceControlProps): ReactNode {
           />
           <span className="text-sm font-medium text-foreground">
             {heating ? t('uiLibrary.heater.heating', 'Heating') : t('uiLibrary.heater.off', 'Off')}
-          </span>
-          <span className="text-xs tabular-nums text-foreground-muted" data-testid="heater-watts">
-            {watts === null ? '—' : `${Math.round(watts)} W`}
           </span>
         </div>
       </div>

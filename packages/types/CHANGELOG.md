@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The power-meter capability shows its reading as a hero line under every device's hero card
+
 ## [1.2.486] - 2026-11-03
 
 ### Changed
