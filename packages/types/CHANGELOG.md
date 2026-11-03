@@ -7,13 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Log tags gain source, user, platform, appVersion and clientSessionId; the data-plane gate names the authenticated caller in x-camstack-user
+- FFmpeg encode plans can name -fps_mode explicitly; callers that do not are unchanged
+
 ## [1.2.490] - 2026-11-03
 
 ### Changed
 
 - Every remote key role now has a name in English and Italian and an icon, shared by the admin and the viewer
-- Log tags gain source, user, platform, appVersion and clientSessionId; the data-plane gate names the authenticated caller in x-camstack-user
-- FFmpeg encode plans can name -fps_mode explicitly; callers that do not are unchanged
 
 ## [1.2.489] - 2026-11-03
 

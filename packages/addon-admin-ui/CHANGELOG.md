@@ -7,13 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- System logs page: filter to the viewer app's own lines
+
 ## [1.2.573] - 2026-11-03
 
 ### Changed
 
 - The remote grid shows an icon for every key, with its name as tooltip and accessible label, from the shared role vocabulary
 - Customize tab: one sectioned table of every customization the device offers (value and source, edit and remove per row, a picker to add), a missing power-source title, and no more incompatible values in the source picker
-- System logs page: filter to the viewer app's own lines
 
 ## [1.2.572] - 2026-11-03
 
