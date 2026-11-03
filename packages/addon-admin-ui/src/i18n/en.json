@@ -191,7 +191,8 @@
       "everyRegisteredLogDestinationEntries": "Every registered log destination. Entries are fanned to all enabled destinations at once — enabling one does not disable another.",
       "noLogDestinationsRegistered": "No log destinations registered",
       "thisShouldNotHappenThe": "This should not happen — the console and rotated-file destinations are builtins. If the list is empty, the node is still booting.",
-      "addDestination": "Add destination"
+      "addDestination": "Add destination",
+      "installDestination": "Install a destination"
     },
     "meshNetworks": {
       "meshNetworks": "Mesh networks",
@@ -11580,5 +11581,17 @@
     "activityProvider": "Activity of",
     "pinnedBy_one": "{{count}} target pins this relay",
     "pinnedBy_other": "{{count}} targets pin this relay"
+  },
+  "instances": {
+    "colStatus": "Status",
+    "all": "All",
+    "filterByProvider": "Filter by provider",
+    "noneForProvider": "This provider has no instance yet.",
+    "health": {
+      "ok": "Healthy",
+      "error": "Error",
+      "off": "Off",
+      "unknown": "Unknown"
+    }
   }
 }

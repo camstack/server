@@ -21,12 +21,12 @@ import {
   TestVerdictBanner,
   toTestVerdict,
   type TestVerdict,
-} from '../../integrations/connection-test-verdict'
-import { pushToast } from '../../ui/toast-bus'
-import { HOLDER_QUERY_KEY } from './use-provider-instances-data'
-import { diffInstanceValues, mintInstanceId, randomHex8 } from './provider-instances-model'
+} from '../integrations/connection-test-verdict'
+import { pushToast } from '../ui/toast-bus'
+import { HOLDER_QUERY_KEY } from './use-instances-data'
+import { diffInstanceValues, mintInstanceId, randomHex8 } from './instances-model'
 
-export interface InstanceFormDialogProps {
+export interface InstanceEditorDialogProps {
   readonly addonId: string
   readonly providerName: string
   readonly description: IntegrationInstanceDescription
@@ -37,13 +37,13 @@ export interface InstanceFormDialogProps {
 
 const NO_VALUES: Readonly<Record<string, unknown>> = {}
 
-export function InstanceFormDialog({
+export function InstanceEditorDialog({
   addonId,
   providerName,
   description,
   instance,
   onClose,
-}: InstanceFormDialogProps): ReactElement {
+}: InstanceEditorDialogProps): ReactElement {
   const { t } = useTranslation()
   const system = useSystem()
   const queryClient = useQueryClient()

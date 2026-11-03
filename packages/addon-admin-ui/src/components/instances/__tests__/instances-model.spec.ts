@@ -1,5 +1,5 @@
 /**
- * The row model of the provider-instances panel: pure data in, rows and a three-state answer
+ * The row model of the instances table: pure data in, rows and a three-state answer
  * out. An unanswered query is never an empty list (D315), and an edit sends only what changed.
  */
 import { describe, expect, it } from 'vitest'
@@ -8,13 +8,18 @@ import {
   creatableProviders,
   deriveState,
   diffInstanceValues,
+  filterRows,
   formatEditRef,
   mintInstanceId,
   parseEditRef,
+  providerPills,
+  rowHealth,
+  worstHealth,
+  type InstanceRow,
   providersOf,
   targetsPinning,
   type HolderData,
-} from '../provider-instances-model'
+} from '../instances-model'
 
 const SECRET_VIEW = { $secret: 'ref', v: 1, set: true }
 
@@ -228,5 +233,78 @@ describe('enabled and providersOf', () => {
       { addonId: 'smtp-nodemailer', name: 'SMTP' },
     ])
     expect(providersOf([])).toEqual([])
+  })
+})
+
+describe('add stays offered (instanceMode)', () => {
+  const many = (n: number): HolderData => ({
+    addonId: 'm',
+    description: { instanceMode: 'multiple', kind: 'x', canTest: false },
+    instances: Array.from({ length: n }, (_, i) => ({
+      id: `i${i}`,
+      name: `N${i}`,
+      configured: true,
+      enabled: true,
+      formValues: {},
+    })),
+  })
+  it('a multiple provider is creatable with 0, 1 and 5 rows', () => {
+    for (const n of [0, 1, 5]) expect(creatableProviders([many(n)])).toHaveLength(1)
+  })
+  it('a single provider is creatable only while it has no row', () => {
+    const single = (n: number): HolderData => ({
+      ...many(n),
+      description: { instanceMode: 'single', kind: 'x', canTest: false },
+    })
+    expect(creatableProviders([single(0)])).toHaveLength(1)
+    expect(creatableProviders([single(1)])).toHaveLength(0)
+    expect(creatableProviders([single(3)])).toHaveLength(0)
+  })
+})
+
+describe('pills and filter', () => {
+  const names = new Map([['smtp-nodemailer', 'SMTP']])
+  const rows = buildRows({
+    functionProviders: [
+      { addonId: 'loki-logging', isActive: true },
+      { addonId: 'smtp-nodemailer', isActive: true },
+      { addonId: 'console', isActive: true },
+    ],
+    holders: [loki, smtp],
+    displayNames: names,
+    descriptions: new Map(),
+  })
+
+  it('counts instances per holder and reports the worst status', () => {
+    const pills = providerPills([loki, smtp], rows, names)
+    expect(pills.map((p) => [p.addonId, p.name, p.count, p.health])).toEqual([
+      ['loki-logging', 'loki-logging', 1, 'ok'],
+      ['smtp-nodemailer', 'SMTP', 2, 'error'],
+    ])
+  })
+
+  it('a holder with no record keeps a pill with count 0 and an unknown dot', () => {
+    const empty: HolderData = { ...smtp, instances: [] }
+    expect(providerPills([empty], [], names)[0]).toMatchObject({ count: 0, health: 'unknown' })
+  })
+
+  it('an off row is off, an unconfigured one unknown, and error outranks ok', () => {
+    const base = rows.find((r): r is InstanceRow => r.kind === 'instance')!
+    const off = { ...base, enabled: false }
+    const ok = { ...base, status: undefined, configured: true }
+    const bad = { ...base, status: { state: 'error' as const } }
+    expect(rowHealth(off)).toBe('off')
+    expect(rowHealth({ ...ok, configured: false })).toBe('unknown')
+    expect(worstHealth([ok, off])).toBe('ok')
+    expect(worstHealth([ok, bad])).toBe('error')
+  })
+
+  it('"All" (null) keeps every row, a pill keeps only its provider, fixed rows included under All', () => {
+    expect(filterRows(rows, null)).toHaveLength(rows.length)
+    expect(filterRows(rows, 'smtp-nodemailer').map((r) => r.addonId)).toEqual([
+      'smtp-nodemailer',
+      'smtp-nodemailer',
+    ])
+    expect(filterRows(rows, 'console').map((r) => r.kind)).toEqual(['fixed'])
   })
 })

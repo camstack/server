@@ -60,7 +60,7 @@ import {
   toConnectivityRow,
   type ConnectivityRow,
 } from './connectivity-model'
-import { ProviderInstancesPanel } from '../../components/integration-hub/provider-instances/ProviderInstancesPanel'
+import { InstancesTable } from '../../components/instances/InstancesTable'
 import { WasteSettingsSources } from './WasteSettingsSources'
 import i18n from '../../i18n/index'
 import type { TFunction } from 'i18next'
@@ -271,7 +271,7 @@ export function IntegrationsPage(): ReactElement {
         ownedParams: INTEGRATION_HUB_OWNED_PARAMS,
         content:
           descriptor.instances !== undefined ? (
-            <ProviderInstancesPanel
+            <InstancesTable
               functionCap={descriptor.instances.functionCap}
               icon={descriptor.icon}
               title={t(descriptor.labelKey)}

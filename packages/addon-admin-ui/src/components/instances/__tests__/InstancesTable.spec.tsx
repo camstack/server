@@ -123,7 +123,7 @@ vi.mock('../use-set-instance-enabled', () => ({
 }))
 
 import { ConfirmDialogProvider } from '@camstack/ui-library'
-import { ProviderInstancesPanel } from '../ProviderInstancesPanel'
+import { InstancesTable } from '../InstancesTable'
 
 function renderPanel(search = '') {
   // The open dialog lives in the real URL (`useUrlQueryParam` reads `window.location`).
@@ -135,7 +135,7 @@ function renderPanel(search = '') {
     <QueryClientProvider client={client}>
       <MemoryRouter>
         <ConfirmDialogProvider>
-          <ProviderInstancesPanel
+          <InstancesTable
             functionCap="log-destination"
             icon={Mail}
             title="Destinations"
@@ -165,7 +165,7 @@ beforeEach(() => {
   window.history.replaceState(null, '', '/')
 })
 
-describe('ProviderInstancesPanel', () => {
+describe('InstancesTable', () => {
   it('lists an instance row per record of two providers, and a fixed row with a switch', async () => {
     h.fn.data = [
       { addonId: 'winston-logging', isActive: true },
@@ -211,6 +211,61 @@ describe('ProviderInstancesPanel', () => {
     expect(screen.getByText('Rotated files')).toBeTruthy()
     // The fixed row (Winston) carries the registry switch, each record its own.
     expect(screen.getAllByRole('switch')).toHaveLength(4)
+  })
+
+  describe('sub-header pills and Add', () => {
+    beforeEach(() => {
+      h.fn.data = [
+        { addonId: 'loki-logging', isActive: true },
+        { addonId: 'smtp-nodemailer', isActive: true },
+      ]
+      h.holders.data = [
+        { addonId: 'loki-logging', isActive: true },
+        { addonId: 'smtp-nodemailer', isActive: true },
+      ]
+      h.records = {
+        'loki-logging': [
+          {
+            id: 'loki-logging',
+            name: 'Loki prod',
+            configured: true,
+            enabled: true,
+            formValues: {},
+          },
+        ],
+        'smtp-nodemailer': [
+          { id: 'a', name: 'Relay A', configured: true, enabled: true, formValues: {} },
+          { id: 'b', name: 'Relay B', configured: true, enabled: true, formValues: {} },
+        ],
+      }
+    })
+
+    it('a pill filters the table and All restores it', async () => {
+      renderPanel()
+      expect(await screen.findByText('Loki prod')).toBeTruthy()
+      fireEvent.click(screen.getByTestId('instance-pill-smtp-nodemailer'))
+      expect(screen.queryByText('Loki prod')).toBeNull()
+      expect(screen.getByText('Relay A')).toBeTruthy()
+      fireEvent.click(screen.getByTestId('instance-pill-all'))
+      expect(screen.getByText('Loki prod')).toBeTruthy()
+    })
+
+    it('Add is offered for a multiple provider that already holds two rows, and goes straight to its form', async () => {
+      renderPanel()
+      await screen.findByText('Relay A')
+      fireEvent.click(screen.getByTestId('instance-pill-smtp-nodemailer'))
+      fireEvent.click(screen.getByRole('button', { name: /Add destination/ }))
+      expect(await screen.findByText('Add SMTP')).toBeTruthy()
+    })
+
+    it('a single provider with a row is not offered: the only creatable one opens directly', async () => {
+      renderPanel()
+      await screen.findByText('Relay A')
+      fireEvent.click(screen.getByRole('button', { name: /Add destination/ }))
+      // Loki is `single` and holds one record, so SMTP is the only choice and opens its form.
+      expect(await screen.findByText('Add SMTP')).toBeTruthy()
+      expect(screen.queryByText('Add loki-logging')).toBeNull()
+    })
   })
 
   it('shows no empty text while a query is still unanswered', () => {

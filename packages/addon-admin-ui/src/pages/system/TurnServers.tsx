@@ -1,7 +1,7 @@
 /**
  * TURN servers page — Network → TURN Servers.
  *
- * A `<ProviderInstancesPanel>` over `turn-provider`: a static (coturn) server is a row per
+ * A `<InstancesTable>` over `turn-provider`: a static (coturn) server is a row per
  * `integration-instances` record, created from a provider picker; Cloudflare TURN is one account
  * row. The ICE servers a WebRTC session receives are the union across the ENABLED rows (the
  * `turn-provider` auto-mount aggregates them); the "Combined ICE server list" card below the panel
@@ -16,7 +16,7 @@ import {
   SectionCard,
   useTurnProviderGetTurnServers,
 } from '@camstack/ui-library'
-import { ProviderInstancesPanel } from '../../components/integration-hub/provider-instances/ProviderInstancesPanel'
+import { InstancesTable } from '../../components/instances/InstancesTable'
 
 export function TurnServersPage(): ReactElement {
   const { t } = useTranslation()
@@ -25,7 +25,7 @@ export function TurnServersPage(): ReactElement {
   const allServers = allServersQuery.data ?? []
   return (
     <div className="flex flex-col gap-4">
-      <ProviderInstancesPanel
+      <InstancesTable
         functionCap="turn-provider"
         icon={Network}
         title={t('system.turnServers.turnServers', 'TURN Servers')}

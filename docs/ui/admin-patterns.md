@@ -576,6 +576,27 @@ components: a kind's interactive sign-in is its `signIn.basePath` on
 the schema's (`arrangeBrokerSchema`: required fields first; defaulted and
 sign-in-filled fields under a collapsed Advanced).
 
+## A collection of connections is one `InstancesTable`
+
+Need → component: **a collection of connections** (log destinations, SMTP relays, TURN
+servers, tunnels — anything whose provider keeps `integration-instances` records) →
+`components/instances/InstancesTable`. A page names only the function cap and its wording
+(`functionCap`, `icon`, `title`, `subtitle`, `emptyTitle`, `emptyDescription`, `addLabel`,
+optional `install`); there are no per-cap columns.
+
+- **Sub-header.** `InstanceProviderPills`: "All" first, then one pill per provider that holds
+  records (icon, name, count, a dot for the worst status). A pill FILTERS the table; the install
+  link sits on the right. It is not rendered when there is nothing to choose between.
+- **Table.** `DataTable`: Name / Provider / Status / On switch / Actions (Test, Edit, Restart,
+  Delete through `useConfirm`). A provider without records is a fixed row under "All".
+- **Add is always offered for a `multiple` provider, however many rows it holds**; a `single`
+  provider only while it has none (`creatableProviders`). A selected pill adds to its own
+  provider; otherwise provider picker, then `InstanceEditorDialog` (form, Test, Save).
+- **States (D315).** Pending is a spinner, never "empty"; failed is `ErrorBox` with retry; empty
+  is `EmptyState`, shown only once every query answered with nothing.
+
+Do not write a page-local list of connections or a raw `<table>` for one.
+
 ## System is one page with tabs; a page with its own `?tab=` stays out
 
 Until 2026-10-08 the sidebar's Administration section carried Secrets,

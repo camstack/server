@@ -191,7 +191,8 @@
       "everyRegisteredLogDestinationEntries": "Ogni destinazione di log registrata. Le voci vengono inviate a tutte le destinazioni abilitate contemporaneamente — abilitarne una non ne disabilita un'altra.",
       "noLogDestinationsRegistered": "Nessuna destinazione di log registrata",
       "thisShouldNotHappenThe": "Non dovrebbe succedere — le destinazioni console e file a rotazione sono integrate. Se l'elenco è vuoto, il nodo è ancora in avvio.",
-      "addDestination": "Aggiungi destinazione"
+      "addDestination": "Aggiungi destinazione",
+      "installDestination": "Installa una destinazione"
     },
     "meshNetworks": {
       "meshNetworks": "Reti mesh",
@@ -11602,5 +11603,17 @@
     "activityProvider": "Attività di",
     "pinnedBy_one": "{{count}} destinazione usa questo relay",
     "pinnedBy_other": "{{count}} destinazioni usano questo relay"
+  },
+  "instances": {
+    "colStatus": "Stato",
+    "all": "Tutti",
+    "filterByProvider": "Filtra per provider",
+    "noneForProvider": "Questo provider non ha ancora istanze.",
+    "health": {
+      "ok": "In salute",
+      "error": "Errore",
+      "off": "Spento",
+      "unknown": "Sconosciuto"
+    }
   }
 }

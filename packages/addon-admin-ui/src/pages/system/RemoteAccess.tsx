@@ -2,7 +2,7 @@
  * Remote Access — the `network-access` providers registered on the hub
  * (Cloudflare Tunnel, ngrok, Tailscale Funnel, …), one at a time.
  *
- * A `<ProviderInstancesPanel>` over `network-access` (Network → Remote Access): a provider that
+ * A `<InstancesTable>` over `network-access` (Network → Remote Access): a provider that
  * keeps `integration-instances` records (Cloudflare Tunnel) is a row per record, edited in the
  * panel's dialog; one without is a fixed row. The Enable switch, Restart and the activity stream
  * are the panel's. Below it, one control per provider carries what is remote-access-specific:
@@ -27,7 +27,7 @@ import { NetworkAccessStatusSchema } from '@camstack/types'
 import type { NetworkAccessStatus } from '@camstack/types'
 import { useQueryClient } from '@tanstack/react-query'
 import { STATUS_BADGE_CLASS } from '../../components/integration-hub/addon-controls'
-import { ProviderInstancesPanel } from '../../components/integration-hub/provider-instances/ProviderInstancesPanel'
+import { InstancesTable } from '../../components/instances/InstancesTable'
 import { buildAddonDisplayNameMap } from '../../lib/addon-display-names'
 import { useTranslation } from 'react-i18next'
 
@@ -124,7 +124,7 @@ export function RemoteAccessPage(): ReactElement {
 
   return (
     <div className="flex flex-col gap-4">
-      <ProviderInstancesPanel
+      <InstancesTable
         functionCap={CAPABILITY}
         icon={Globe}
         title={t('system.remoteAccess.remoteAccess2', 'Remote Access')}

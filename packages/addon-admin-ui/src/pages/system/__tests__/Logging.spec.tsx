@@ -5,8 +5,8 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
-vi.mock('../../../components/integration-hub/provider-instances/ProviderInstancesPanel', () => ({
-  ProviderInstancesPanel: ({ functionCap, title }: { functionCap: string; title: string }) => (
+vi.mock('../../../components/instances/InstancesTable', () => ({
+  InstancesTable: ({ functionCap, title }: { functionCap: string; title: string }) => (
     <div data-testid="provider-instances" data-cap={functionCap}>
       {title}
     </div>
@@ -16,7 +16,7 @@ vi.mock('../../../components/integration-hub/provider-instances/ProviderInstance
 import { LoggingPage } from '../Logging'
 
 describe('LoggingPage', () => {
-  it('mounts the provider-instances panel over log-destination', () => {
+  it('mounts the instances table over log-destination', () => {
     render(<LoggingPage />)
     const panel = screen.getByTestId('provider-instances')
     expect(panel.getAttribute('data-cap')).toBe('log-destination')

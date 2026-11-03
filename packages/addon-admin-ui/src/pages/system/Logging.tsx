@@ -2,7 +2,7 @@
  * Logging destinations page — every registered `log-destination` provider in
  * one list (Logs → Destinations).
  *
- * A `<ProviderInstancesPanel>`: a destination that holds its connection as an
+ * A `<InstancesTable>`: a destination that holds its connection as an
  * `integration-instances` record (Loki's URL, credentials and labels) is a row per record,
  * created from a provider picker; a destination with nothing to configure (Winston, Console,
  * the hub forwarder) is a fixed row with its registry switch. Nothing about a destination is
@@ -40,12 +40,12 @@
 import { ScrollText } from 'lucide-react'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ProviderInstancesPanel } from '../../components/integration-hub/provider-instances/ProviderInstancesPanel'
+import { InstancesTable } from '../../components/instances/InstancesTable'
 
 export function LoggingPage(): ReactElement {
   const { t } = useTranslation()
   return (
-    <ProviderInstancesPanel
+    <InstancesTable
       functionCap="log-destination"
       icon={ScrollText}
       title={t('system.logging.destinations', 'Destinations')}
@@ -59,6 +59,10 @@ export function LoggingPage(): ReactElement {
         'This should not happen — the console and rotated-file destinations are builtins. If the list is empty, the node is still booting.',
       )}
       addLabel={t('system.logging.addDestination', 'Add destination')}
+      install={{
+        capability: 'log-destination',
+        label: t('system.logging.installDestination', 'Install a destination'),
+      }}
     />
   )
 }

@@ -472,8 +472,8 @@ may not also mean "where this lives"; it remains available to group sections
 **A connection that holds no devices** (Loki, the SMTP relays, the TURN servers) is not an addon-level setting at all
 ([D996](../decisions/adr-0996-connection-holding-addons-are-integration-instances.md)): the
 addon provides `integration-instances`, the hub omits it from `integrations.list` and the add
-wizard, and its function page lists the records through one `ProviderInstancesPanel`
-(`components/integration-hub/provider-instances/`): Logs → Destinations over `log-destination`,
+wizard, and its function page lists the records through one `InstancesTable`
+(`components/instances/`): Logs → Destinations over `log-destination`,
 Connectivity → Email over `smtp-provider`. A row per record with its own switch
 (`integrationInstances.setInstanceEnabled`; an off row reads one neutral "Off" badge, never an error),
 a fixed row with the registry switch for a provider that holds none, a Restart action on every row

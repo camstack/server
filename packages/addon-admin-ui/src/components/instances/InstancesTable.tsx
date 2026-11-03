@@ -1,7 +1,8 @@
 /**
- * One list for everything that provides a function (Logs → Destinations, Connectivity →
- * Email): a row per instance of each provider that keeps `integration-instances` records, and a
- * fixed row per provider that has none. Every row, name and switch is derived from the
+ * The one table of a collection of connections (Logs → Destinations, Connectivity → Email, …):
+ * a row per instance of each provider that keeps `integration-instances` records, and a fixed
+ * row per provider that has none. A pill per record-holding provider filters it, and Add is
+ * offered for every `multiple` provider however many rows it already has. Every row, name and switch is derived from the
  * capabilities; the page names only the function cap and its wording.
  *
  * Loading, failed and empty are three different answers (D315): the empty message appears only
@@ -26,34 +27,33 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Loader2, Pencil, Play, Plus, Trash2, type LucideIcon } from 'lucide-react'
 import { useCallback, useMemo, useState, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AddonSettingsModal } from '../../settings/AddonSettingsModal'
+import { AddonSettingsModal } from '../settings/AddonSettingsModal'
 import {
   TestVerdictBanner,
   toTestVerdict,
   type TestVerdict,
-} from '../../integrations/connection-test-verdict'
-import { pushToast } from '../../ui/toast-bus'
-import { RestartButton } from '../addon-controls'
-import { IntegrationActivity } from '../IntegrationActivity'
-import { InstanceFormDialog } from './InstanceFormDialog'
+} from '../integrations/connection-test-verdict'
+import { pushToast } from '../ui/toast-bus'
+import { RestartButton } from '../integration-hub/addon-controls'
+import { IntegrationActivity } from '../integration-hub/IntegrationActivity'
+import { InstanceEditorDialog } from './InstanceEditorDialog'
+import { InstanceProviderPills, type InstanceInstallLink } from './InstanceProviderPills'
 import { ProviderPickerDialog } from './ProviderPickerDialog'
 import {
   creatableProviders,
+  filterRows,
   formatEditRef,
   parseEditRef,
+  providerPills,
   providersOf,
   targetsPinning,
   type InstanceRow,
   type PanelRow,
-} from './provider-instances-model'
+} from './instances-model'
 import { useSetInstanceEnabled } from './use-set-instance-enabled'
-import {
-  HOLDER_QUERY_KEY,
-  useProviderInstancesData,
-  type ProviderInstancesData,
-} from './use-provider-instances-data'
+import { HOLDER_QUERY_KEY, useInstancesData, type InstancesData } from './use-instances-data'
 
-export interface ProviderInstancesPanelProps {
+export interface InstancesTableProps {
   /** The function capability whose providers are listed (`log-destination`, `smtp-provider`). */
   readonly functionCap: string
   readonly icon: LucideIcon
@@ -62,6 +62,8 @@ export interface ProviderInstancesPanelProps {
   readonly emptyTitle: string
   readonly emptyDescription: string
   readonly addLabel: string
+  /** The add-on catalogue link at the right of the sub-header, when the function has providers to install. */
+  readonly install?: InstanceInstallLink
   /** The `?<key>=` that holds an open instance in the URL. Defaults to `instance`. */
   readonly editKey?: string
 }
@@ -164,7 +166,7 @@ function EnableCell({
   )
 }
 
-export function ProviderInstancesPanel({
+export function InstancesTable({
   functionCap,
   icon,
   title,
@@ -172,13 +174,14 @@ export function ProviderInstancesPanel({
   emptyTitle,
   emptyDescription,
   addLabel,
+  install,
   editKey = 'instance',
-}: ProviderInstancesPanelProps): ReactElement {
+}: InstancesTableProps): ReactElement {
   const { t } = useTranslation()
   const system = useSystem()
   const queryClient = useQueryClient()
   const confirm = useConfirm()
-  const data = useProviderInstancesData(functionCap)
+  const data = useInstancesData(functionCap)
   const form = useItemFormUrl({ editKey, newKey: `${editKey}-new` })
   const [testing, setTesting] = useState<string | null>(null)
   const [lastTest, setLastTest] = useState<{
@@ -195,8 +198,16 @@ export function ProviderInstancesPanel({
     [targets.data],
   )
   const [activityAddon, setActivityAddon] = useState<string | null>(null)
+  const [providerFilter, setProviderFilter] = useState<string | null>(null)
 
   const creatable = useMemo(() => creatableProviders(data.holders), [data.holders])
+  const pills = useMemo(
+    () => providerPills(data.holders, data.rows, data.displayNames),
+    [data.holders, data.rows, data.displayNames],
+  )
+  // A filter whose provider left the list falls back to All.
+  const activeFilter = pills.some((p) => p.addonId === providerFilter) ? providerFilter : null
+  const visibleRows = useMemo(() => filterRows(data.rows, activeFilter), [data.rows, activeFilter])
   const nameOf = useCallback(
     (addonId: string): string => data.displayNames.get(addonId) ?? addonId,
     [data.displayNames],
@@ -309,7 +320,7 @@ export function ProviderInstancesPanel({
       },
       {
         key: 'state',
-        header: t('providerInstances.colState', 'State'),
+        header: t('instances.colStatus', 'Status'),
         notSortableReason: t(
           'providerInstances.stateNotSortable',
           'A row carries a badge, not a value to order by.',
@@ -408,12 +419,20 @@ export function ProviderInstancesPanel({
     body = <EmptyState icon={icon} title={emptyTitle} description={emptyDescription} />
   } else {
     body = (
-      <DataTable columns={columns} rows={data.rows} rowKey={(row) => row.key} bordered={false} />
+      <DataTable
+        columns={columns}
+        rows={visibleRows}
+        rowKey={(row) => row.key}
+        bordered={false}
+        emptyMessage={t('instances.noneForProvider', 'This provider has no instance yet.')}
+      />
     )
   }
 
   const onAdd = (): void => {
-    const only = creatable.length === 1 ? creatable[0] : undefined
+    // A selected pill adds to its own provider; otherwise the picker, unless there is no choice.
+    const chosen = creatable.find((h) => h.addonId === activeFilter)
+    const only = chosen ?? (creatable.length === 1 ? creatable[0] : undefined)
     if (only !== undefined) form.openEdit(formatEditRef(only.addonId, null))
     else form.openNew()
   }
@@ -433,6 +452,16 @@ export function ProviderInstancesPanel({
       }
     >
       <p className="px-3 pt-2 text-xs text-foreground-muted">{subtitle}</p>
+      {data.state === 'ready' && (pills.length > 1 || install !== undefined) && (
+        <InstanceProviderPills
+          pills={pills}
+          total={data.rows.length}
+          selected={activeFilter}
+          onSelect={setProviderFilter}
+          fallbackIcon={icon}
+          {...(install !== undefined ? { install } : {})}
+        />
+      )}
       {body}
       {data.state === 'ready' && data.rows.length > 0 && (
         <ProviderActivity rows={data.rows} selected={activityAddon} onSelect={setActivityAddon} />
@@ -525,7 +554,7 @@ function EditDialog({
   onClose,
 }: {
   readonly refValue: string
-  readonly data: ProviderInstancesData
+  readonly data: InstancesData
   readonly nameOf: (addonId: string) => string
   readonly onClose: () => void
 }): ReactElement | null {
@@ -547,7 +576,7 @@ function EditDialog({
   // A link to a record that no longer exists opens nothing.
   if (ref.kind === 'instance' && instance === null) return null
   return (
-    <InstanceFormDialog
+    <InstanceEditorDialog
       addonId={ref.addonId}
       providerName={nameOf(ref.addonId)}
       description={holder.description}

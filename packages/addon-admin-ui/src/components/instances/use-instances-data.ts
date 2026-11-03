@@ -1,5 +1,5 @@
 /**
- * The queries behind the provider-instances panel, all derived from capabilities: the
+ * The queries behind the instances table, all derived from capabilities: the
  * providers of the function cap, the providers that hold `integration-instances` records, and
  * for each provider that is both, its description and its records. One query per provider, by
  * `addonId` — a record carries no addon id, so a fan-out without one could not route an action.
@@ -7,7 +7,7 @@
 import { useAddonsList, useAddonsListCapabilityProviders, useSystem } from '@camstack/ui-library'
 import { useQueries } from '@tanstack/react-query'
 import { useCallback, useMemo } from 'react'
-import { buildAddonDisplayNameMap } from '../../../lib/addon-display-names'
+import { buildAddonDisplayNameMap } from '../../lib/addon-display-names'
 import {
   buildRows,
   deriveState,
@@ -15,14 +15,14 @@ import {
   type HolderData,
   type PanelRow,
   type PanelState,
-} from './provider-instances-model'
+} from './instances-model'
 
 const POLL_INTERVAL_MS = 5_000
 const HOLDER_CAP = 'integration-instances'
 
 export const HOLDER_QUERY_KEY = 'provider-instances-holder'
 
-export interface ProviderInstancesData {
+export interface InstancesData {
   readonly state: PanelState
   readonly error: string | null
   readonly rows: readonly PanelRow[]
@@ -45,7 +45,7 @@ function descriptionMap(addons: readonly unknown[]): ReadonlyMap<string, string>
   return map
 }
 
-export function useProviderInstancesData(functionCap: string): ProviderInstancesData {
+export function useInstancesData(functionCap: string): InstancesData {
   const system = useSystem()
   const functionQuery = useAddonsListCapabilityProviders(
     { capName: functionCap },

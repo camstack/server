@@ -1,5 +1,5 @@
 /**
- * The row model of the provider-instances panel, pure: which providers of a function cap
+ * The row model of the instances table, pure: which providers of a function cap
  * become instance rows and which stay fixed rows, which providers can create an instance, the
  * three-state answer of the queries behind it, and the patch an edit sends.
  *
@@ -112,7 +112,69 @@ export function providersOf(rows: readonly PanelRow[]): readonly ProviderChip[] 
   return chips
 }
 
-/** Providers the operator can create an instance in: several allowed, or one allowed and none yet. */
+/** The health of one row or of a provider's rows; a hollow dot is `unknown`. */
+export type InstanceHealth = 'ok' | 'off' | 'error' | 'unknown'
+
+const HEALTH_SEVERITY: Readonly<Record<InstanceHealth, number>> = {
+  error: 3,
+  unknown: 2,
+  ok: 1,
+  off: 0,
+}
+
+/** A switched-off row is quiet (D62); otherwise its own status, else configured or not. */
+export function rowHealth(row: InstanceRow): InstanceHealth {
+  if (!row.enabled) return 'off'
+  if (row.status !== undefined) return row.status.state
+  return row.configured ? 'ok' : 'unknown'
+}
+
+/** The worst of several rows; no rows at all is `unknown`, never a healthy-looking `ok`. */
+export function worstHealth(rows: readonly InstanceRow[]): InstanceHealth {
+  let worst: InstanceHealth | null = null
+  for (const row of rows) {
+    const health = rowHealth(row)
+    if (worst === null || HEALTH_SEVERITY[health] > HEALTH_SEVERITY[worst]) worst = health
+  }
+  return worst ?? 'unknown'
+}
+
+/** One sub-header pill: a provider that holds records, with its count and worst status. */
+export interface InstancePill {
+  readonly addonId: string
+  readonly name: string
+  readonly count: number
+  readonly health: InstanceHealth
+}
+
+/** A pill per record-holding provider, in holder order; a provider with no record still has one. */
+export function providerPills(
+  holders: readonly HolderData[],
+  rows: readonly PanelRow[],
+  displayNames: ReadonlyMap<string, string>,
+): readonly InstancePill[] {
+  return holders.map((holder) => {
+    const own = rows.filter(
+      (row): row is InstanceRow => row.kind === 'instance' && row.addonId === holder.addonId,
+    )
+    return {
+      addonId: holder.addonId,
+      name: displayNames.get(holder.addonId) ?? holder.addonId,
+      count: own.length,
+      health: worstHealth(own),
+    }
+  })
+}
+
+/** The rows a pill selects; `null` is the "All" pill. */
+export function filterRows(rows: readonly PanelRow[], addonId: string | null): readonly PanelRow[] {
+  return addonId === null ? rows : rows.filter((row) => row.addonId === addonId)
+}
+
+/**
+ * Providers the operator can create an instance in: a `multiple` provider ALWAYS, however many
+ * rows it holds; a `single` one only while it has none.
+ */
 export function creatableProviders(holders: readonly HolderData[]): readonly HolderData[] {
   return holders.filter(
     (h) => h.description.instanceMode === 'multiple' || h.instances.length === 0,

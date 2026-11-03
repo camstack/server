@@ -42,8 +42,8 @@ vi.mock('../../../components/settings/NodeAddonsSettingsPanel', () => ({
   NodeAddonsSettingsPanel: () => <div data-testid="schema-settings">settings</div>,
 }))
 
-vi.mock('../../../components/integration-hub/provider-instances/ProviderInstancesPanel', () => ({
-  ProviderInstancesPanel: ({ functionCap }: { functionCap: string }) => (
+vi.mock('../../../components/instances/InstancesTable', () => ({
+  InstancesTable: ({ functionCap }: { functionCap: string }) => (
     <div data-testid="provider-instances" data-cap={functionCap} />
   ),
 }))
