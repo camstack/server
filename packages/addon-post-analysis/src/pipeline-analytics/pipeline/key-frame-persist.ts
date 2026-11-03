@@ -48,7 +48,7 @@ export type KeyFrameCaptureOutcome =
 export interface KeyFrameMediaWriter {
   putReplacing(input: {
     readonly deviceId: number
-    readonly ownerKind: 'track'
+    readonly ownerKind: 'track' | 'object'
     readonly ownerId: string
     readonly kind: 'keyFrame' | 'keyFrameSmall'
     readonly timestamp: number
@@ -191,4 +191,54 @@ export async function persistTrackKeyFrame(
     deps.logger.warn('key-frame write failed', { ...drop, meta: { ...drop.meta, error } })
     return { kind: 'error', error }
   }
+}
+
+export interface ObjectFramePersistDeps {
+  fetchParkedKeyFrame(deviceId: number, trackId: string): Promise<ParkedKeyFrame | null>
+  readonly media: KeyFrameMediaWriter
+  readonly logger: IScopedLogger
+}
+
+export interface ObjectFramePersistInput {
+  readonly deviceId: number
+  /** The track whose parked frame is written. */
+  readonly trackId: string
+  /** The object event row that will own the still. */
+  readonly objectId: string
+  /** The row's own timestamp: an object owner's media is read back by
+   *  generation, which is the row's timestamp (D694). */
+  readonly timestamp: number
+}
+
+/**
+ * Write one parked frame under an OBJECT event (`object:<id>`), once.
+ *
+ * A package delivery has no track row owning a key frame, and the notification
+ * ladder reads only `track:` and `object:` owners — so without this the
+ * delivery ships text-only. `null` = no parcel to write (said at the caller).
+ * `putReplacing` makes a repeat the same row, never a second one.
+ */
+export async function persistObjectFrame(
+  deps: ObjectFramePersistDeps,
+  input: ObjectFramePersistInput,
+): Promise<number | null> {
+  const { deviceId, trackId, objectId, timestamp } = input
+  const parcel = await deps.fetchParkedKeyFrame(deviceId, trackId)
+  if (parcel === null || parcel.jpeg.byteLength === 0) {
+    deps.logger.warn('object frame parcel missing — nothing to write', {
+      tags: { deviceId },
+      meta: { trackId, objectId },
+    })
+    return null
+  }
+  const subjectBox = isStatableSubject(parcel.subject) ? { subjectBox: parcel.subject } : {}
+  return deps.media.putReplacing({
+    deviceId,
+    ownerKind: 'object',
+    ownerId: objectId,
+    kind: 'keyFrame',
+    timestamp,
+    data: parcel.jpeg,
+    ...subjectBox,
+  })
 }

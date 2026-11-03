@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { IScopedLogger } from '@camstack/types'
 import {
+  persistObjectFrame,
   persistTrackKeyFrame,
   type KeyFrameMediaWriter,
   type KeyFramePersistDeps,
@@ -195,5 +196,48 @@ describe('persistTrackKeyFrame', () => {
       request,
     )
     expect(outcome.kind).toBe('error')
+  })
+})
+
+describe('persistObjectFrame (#383)', () => {
+  it('writes the parked frame under object:<id>, stamped with the ROW timestamp', async () => {
+    const puts: Array<{ ownerKind: string; ownerId: string; kind: string; timestamp: number }> = []
+    const id = await persistObjectFrame(
+      {
+        fetchParkedKeyFrame: async () => parcel,
+        media: {
+          putReplacing: async (input) => {
+            puts.push({
+              ownerKind: input.ownerKind,
+              ownerId: input.ownerId,
+              kind: input.kind,
+              timestamp: input.timestamp,
+            })
+            return 55
+          },
+        },
+        logger: makeLoggerSpy().logger,
+      },
+      { deviceId: 615, trackId: 'trk-1', objectId: '812', timestamp: 9_000 },
+    )
+    expect(id).toBe(55)
+    expect(puts).toEqual([
+      { ownerKind: 'object', ownerId: '812', kind: 'keyFrame', timestamp: 9_000 },
+    ])
+  })
+
+  it('no parcel writes nothing and warns with the camera tag', async () => {
+    const spy = makeLoggerSpy()
+    const putReplacing = vi.fn(async () => 1)
+    const id = await persistObjectFrame(
+      { fetchParkedKeyFrame: async () => null, media: { putReplacing }, logger: spy.logger },
+      { deviceId: 615, trackId: 'trk-1', objectId: '812', timestamp: 9_000 },
+    )
+    expect(id).toBeNull()
+    expect(putReplacing).not.toHaveBeenCalled()
+    expect(spy.calls[0]).toMatchObject({
+      level: 'warn',
+      extras: { tags: { deviceId: 615 } },
+    })
   })
 })

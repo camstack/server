@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A package delivery with no stored key frame now writes its picture once, so a rule asking for an image no longer ships text-only.
+
 ### Fixed
 
 - A sensor notification now wakes a sleeping battery camera even when its snapshot state could not be read, so the alarm keeps its picture; the read failure is now logged with its cause

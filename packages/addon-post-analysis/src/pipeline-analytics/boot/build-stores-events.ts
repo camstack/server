@@ -331,6 +331,7 @@ export class BuildStores extends BuildStoresBase {
       resolveZoneMembershipMinOverlap: async (deviceId) =>
         (await this.resolveDeviceTrackingSettings(deviceId)).zoneMembershipMinOverlap,
       confirmPackage: (input) => this.deps.confirmPackage(input),
+      persistDeliveryFrame: (request) => this.deps.persistPackageDeliveryFrame(request),
       onLlmSilence: (edge) => {
         const deviceId = edge.phase === 'silent' ? edge.note.deviceId : edge.deviceId
         this.ctx.eventBus.emit({

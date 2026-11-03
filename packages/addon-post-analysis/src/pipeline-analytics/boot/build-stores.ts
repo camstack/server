@@ -36,7 +36,10 @@ import { MotionEpisodeTracker } from '../motion-episode-tracker.js'
 import type { PackageDropSettings } from '../package-settings.js'
 import { PackageBackgroundRegistry } from '../pipeline/package/package-background.js'
 import type { PackageLlmConfirmOutcome } from '../pipeline/package/package-llm-confirm.js'
-import { PackageDropDetector } from '../pipeline/package-drop-detector.js'
+import {
+  PackageDropDetector,
+  type PackageDeliveryFrameRequest,
+} from '../pipeline/package-drop-detector.js'
 import { PhantomCellRegistry } from '../pipeline/stationary/phantom-cells.js'
 import { StationaryEvidenceLedger } from '../pipeline/stationary/stationary-evidence-ledger.js'
 import { resolveStationaryEventZones } from '../pipeline/stationary/stationary-event-zones.js'
@@ -103,6 +106,10 @@ export interface BuildStoresDeps {
     readonly entryId: string
     readonly zoneIds: readonly string[]
   }) => Promise<PackageLlmConfirmOutcome>
+  /** Write a package delivery's still under `object:<rowId>` (#383). */
+  readonly persistPackageDeliveryFrame: (
+    request: PackageDeliveryFrameRequest,
+  ) => Promise<number | null>
   readonly stationaryEvidence: () => StationaryEvidenceLedger | null
   readonly setStationaryEvidence: (value: StationaryEvidenceLedger | null) => void
   readonly phantomCells: () => PhantomCellRegistry | null

@@ -35,6 +35,7 @@ import type {
   Zone,
   ZoneRule,
 } from '@camstack/types'
+import { errMsg } from '@camstack/types'
 import type { PackageDropSettings } from '../package-settings.js'
 import { type PackageCollector, pickupInstantOf } from './package/package-collector-mirror.js'
 import type { PackageLlmConfirmOutcome } from './package/package-llm-confirm.js'
@@ -112,8 +113,32 @@ export interface PackageDropEmitter {
   pickedUp(payload: PipelineAnalyticsPackagePickedUpPayload): void
 }
 
+/**
+ * How long a delivery waits for its still to be written before it ships
+ * without one. Under the notification still poll (`NC_STILL_WAIT_MS`, 3 s) so
+ * a slow store never holds the alert longer than the dispatcher would.
+ */
+export const PACKAGE_FRAME_PERSIST_BOUND_MS = 2_000
+
+/** What a delivery hands the writer of its still. */
+export interface PackageDeliveryFrameRequest {
+  readonly deviceId: number
+  /** The track the parked frame belongs to — the source track, else the entry. */
+  readonly trackId: string
+  /** The row the delivery just created; the still is owned by `object:<rowId>`. */
+  readonly rowId: number
+  /** The row's own timestamp — the media row is stamped with it (D694). */
+  readonly timestamp: number
+}
+
 export interface PackageDropDetectorDeps {
   readonly events: PackageObjectEventClient
+  /**
+   * Persist the delivery's still under `object:<rowId>` when the entry carried
+   * no key frame (#383). Resolves with the media id, or `null` when there was
+   * no frame to write. Optional: absent means the row ships as it always did.
+   */
+  readonly persistDeliveryFrame?: (request: PackageDeliveryFrameRequest) => Promise<number | null>
   readonly emit: PackageDropEmitter
   readonly logger: IScopedLogger
   /** Device's current 0–1 zone catalogue (geometry). */
@@ -169,6 +194,61 @@ export class PackageDropDetector {
    * LLM gate (D931). `null` means the delivery is dropped (no, or no yes).
    * An empty object means the rule did not ask. A verdict is spread onto the row.
    */
+  /**
+   * The delivery's still, written once under `object:<rowId>` when the entry
+   * had no key frame. Never throws and never waits past
+   * {@link PACKAGE_FRAME_PERSIST_BOUND_MS}: a delivery without a picture still
+   * ships, and says why (D391).
+   */
+  private async persistDeliveryStill(
+    entry: StationaryEntry,
+    rowId: number,
+    timestamp: number,
+  ): Promise<number | undefined> {
+    const persist = this.deps.persistDeliveryFrame
+    if (persist === undefined) return undefined
+    const tags = { deviceId: entry.deviceId }
+    const meta = { entryId: entry.id, rowId }
+    let timer: ReturnType<typeof setTimeout> | undefined
+    try {
+      const bound = new Promise<'timeout'>((resolve) => {
+        timer = setTimeout(() => resolve('timeout'), PACKAGE_FRAME_PERSIST_BOUND_MS)
+      })
+      const written = await Promise.race([
+        persist({
+          deviceId: entry.deviceId,
+          trackId: entry.sourceTrackId ?? entry.id,
+          rowId,
+          timestamp,
+        }),
+        bound,
+      ])
+      if (written === 'timeout') {
+        this.deps.logger.warn('package delivery still not written in time — shipping without it', {
+          tags,
+          meta: { ...meta, boundMs: PACKAGE_FRAME_PERSIST_BOUND_MS },
+        })
+        return undefined
+      }
+      if (written === null) {
+        this.deps.logger.warn('package delivery has no frame to write — shipping without a still', {
+          tags,
+          meta,
+        })
+        return undefined
+      }
+      return written
+    } catch (err) {
+      this.deps.logger.warn('package delivery still write failed — shipping without it', {
+        tags,
+        meta: { ...meta, error: errMsg(err) },
+      })
+      return undefined
+    } finally {
+      if (timer !== undefined) clearTimeout(timer)
+    }
+  }
+
   private async llmFields(
     entry: StationaryEntry,
     rules: readonly ZoneRule[],
@@ -497,6 +577,11 @@ export class PackageDropDetector {
       })
       return
     }
+    // BEFORE `onPersisted`: that hook is what lets the notification centre see
+    // the row, and a sent outbox row is final — the still must already exist
+    // when its dispatcher first looks (#383).
+    const keyFrameMediaId =
+      entry.keyFrameMediaId ?? (await this.persistDeliveryStill(entry, rowId, rowTimestamp))
     const ev: ObjectEvent = { ...draft, id: rowId }
     this.deps.onPersisted?.(ev, 'delivered')
 
@@ -506,7 +591,7 @@ export class PackageDropDetector {
       eventId: String(rowId),
       className: entry.className,
       zoneIds: hitZones,
-      ...(entry.keyFrameMediaId !== undefined ? { keyFrameMediaId: entry.keyFrameMediaId } : {}),
+      ...(keyFrameMediaId !== undefined ? { keyFrameMediaId } : {}),
       bbox: {
         x: entry.bbox.x,
         y: entry.bbox.y,

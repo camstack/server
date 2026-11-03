@@ -4,13 +4,15 @@
  */
 
 import type { IScopedLogger, ObjectEvent, Zone, ZoneRule } from '@camstack/types'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createNoopLogger } from '../../../embedding-encoder/shared/noop-logger.js'
 import { PACKAGE_DROP_DEFAULTS, type PackageDropSettings } from '../../package-settings.js'
 import {
   deliveredIdempotencyKey,
   PACKAGE_EVENT_CLASS,
+  PACKAGE_FRAME_PERSIST_BOUND_MS,
   PackageDropDetector,
+  type PackageDeliveryFrameRequest,
   type PackageObjectEventClient,
   pickedUpIdempotencyKey,
   type StationaryChange,
@@ -187,6 +189,7 @@ function makeDetector(opts: {
   rules?: readonly ZoneRule[]
   events?: ReturnType<typeof makeEvents>
   recordLogs?: boolean
+  persistDeliveryFrame?: (request: PackageDeliveryFrameRequest) => Promise<number | null>
 }): Harness {
   const events = opts.events ?? makeEvents()
   const emitter = makeEmitter()
@@ -204,6 +207,9 @@ function makeDetector(opts: {
     resolvePackageRules: async () => opts.rules ?? [PACKAGE_RULE],
     resolveSettings: async () => settings,
     resolveZoneMembershipMinOverlap: async () => 0,
+    ...(opts.persistDeliveryFrame !== undefined
+      ? { persistDeliveryFrame: opts.persistDeliveryFrame }
+      : {}),
   })
   return {
     detector,
@@ -361,6 +367,80 @@ describe('PackageDropDetector — delivered gates', () => {
     await h.detector.onStationaryChange(appeared(entry))
     expect(h.captured.delivered).toHaveLength(1)
     expect(h.events.rows.size).toBe(1)
+  })
+})
+
+describe('PackageDropDetector — the delivery still (#383)', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('an entry with no key frame persists its frame under the new row, BEFORE the row is announced', async () => {
+    const announcedAtPersist: number[] = []
+    const requests: PackageDeliveryFrameRequest[] = []
+    const events = makeEvents()
+    const holder: { h?: Harness } = {}
+    const h = makeDetector({
+      events,
+      persistDeliveryFrame: async (request) => {
+        requests.push(request)
+        announcedAtPersist.push(holder.h?.captured.delivered.length ?? -1)
+        return 4242
+      },
+    })
+    holder.h = h
+    const entry = makeEntry({ sourceTrackId: 'trk-9' })
+    await h.detector.onStationaryChange(appeared(entry))
+
+    const row = events.byKey(deliveredIdempotencyKey('entry-1'))
+    expect(requests).toEqual([
+      { deviceId: 102, trackId: 'trk-9', rowId: row?.id, timestamp: row?.timestamp },
+    ])
+    expect(h.captured.delivered).toHaveLength(1)
+    expect(announcedAtPersist).toEqual([0])
+  })
+
+  it('an entry that already has a key frame is not written a second time', async () => {
+    const requests: PackageDeliveryFrameRequest[] = []
+    const h = makeDetector({
+      persistDeliveryFrame: async (request) => {
+        requests.push(request)
+        return 1
+      },
+    })
+    await h.detector.onStationaryChange(appeared(makeEntry({ keyFrameMediaId: 77 })))
+    expect(requests).toHaveLength(0)
+    expect(h.captured.delivered).toHaveLength(1)
+  })
+
+  it('a writer that throws still ships the delivery, and says so with the camera tag', async () => {
+    const h = makeDetector({
+      persistDeliveryFrame: async () => {
+        throw new Error('disk full')
+      },
+    })
+    await h.detector.onStationaryChange(appeared(makeEntry()))
+    expect(h.captured.delivered).toHaveLength(1)
+    const line = gateLine(h, 'still write failed')
+    expect(line.level).toBe('warn')
+    expect(line.deviceId).toBe(102)
+  })
+
+  it('no frame to write is logged, not silent (D391)', async () => {
+    const h = makeDetector({ persistDeliveryFrame: async () => null })
+    await h.detector.onStationaryChange(appeared(makeEntry()))
+    expect(h.captured.delivered).toHaveLength(1)
+    expect(gateLine(h, 'no frame to write').deviceId).toBe(102)
+  })
+
+  it('a writer that never answers cannot hold the delivery past the bound', async () => {
+    vi.useFakeTimers()
+    const h = makeDetector({ persistDeliveryFrame: () => new Promise<number | null>(() => {}) })
+    const done = h.detector.onStationaryChange(appeared(makeEntry()))
+    await vi.advanceTimersByTimeAsync(PACKAGE_FRAME_PERSIST_BOUND_MS + 10)
+    await done
+    expect(h.captured.delivered).toHaveLength(1)
+    expect(gateLine(h, 'not written in time').deviceId).toBe(102)
   })
 })
 

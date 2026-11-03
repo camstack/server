@@ -904,7 +904,11 @@ import {
   PACKAGE_NATIVE_HANDLE_MAX_AGE_MS,
   promoteWithStill,
 } from './pipeline/package/package-still-capture.js'
-import { PackageDropDetector } from './pipeline/package-drop-detector.js'
+import {
+  PackageDropDetector,
+  type PackageDeliveryFrameRequest,
+} from './pipeline/package-drop-detector.js'
+import { persistObjectFrame } from './pipeline/key-frame-persist.js'
 import { personOverVehicle } from './pipeline/person-over-vehicle.js'
 import { PhantomCellRegistry } from './pipeline/stationary/phantom-cells.js'
 import {
@@ -4002,6 +4006,7 @@ export default class PipelineAnalyticsAddon
         this.packageDropDetector = value
       },
       confirmPackage: (input) => this.confirmPackageDelivery(input),
+      persistPackageDeliveryFrame: (request) => this.persistPackageDeliveryFrame(request),
       stationaryEvidence: () => this.stationaryEvidence,
       setStationaryEvidence: (value) => {
         this.stationaryEvidence = value
@@ -9997,6 +10002,50 @@ export default class PipelineAnalyticsAddon
       ...(lastActivityAt !== undefined ? { lastActivityAt } : {}),
       via: 'frame',
     })
+  }
+
+  /**
+   * #383: a delivery whose entry had no key frame writes the source track's
+   * parked frame under the object row it just created — the one owner the
+   * notification ladder reads for a package event.
+   */
+  private async persistPackageDeliveryFrame(
+    request: PackageDeliveryFrameRequest,
+  ): Promise<number | null> {
+    const mediaStore = this.mediaStore
+    if (mediaStore === null) return null
+    return persistObjectFrame(
+      {
+        fetchParkedKeyFrame: async (deviceId, trackId) => {
+          const parcel = await this.mediaCapture.fetchParkedParcel(trackId, 'keyFrame')
+          if (parcel === null || parcel.info.deviceId !== deviceId) return null
+          const subject = parcel.info.subject
+          return {
+            jpeg: parcel.jpeg,
+            width: parcel.width,
+            height: parcel.height,
+            timestamp: parcel.timestamp,
+            nodeId: parcel.info.nodeId,
+            subject: {
+              x: subject.bbox.x,
+              y: subject.bbox.y,
+              w: subject.bbox.w,
+              h: subject.bbox.h,
+              frameWidth: subject.frameWidth,
+              frameHeight: subject.frameHeight,
+            },
+          }
+        },
+        media: mediaStore,
+        logger: this.ctx.logger,
+      },
+      {
+        deviceId: request.deviceId,
+        trackId: request.trackId,
+        objectId: String(request.rowId),
+        timestamp: request.timestamp,
+      },
+    )
   }
 
   private async confirmPackageDelivery(input: {
