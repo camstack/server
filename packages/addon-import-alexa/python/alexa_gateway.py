@@ -322,8 +322,20 @@ class AlexaPyGateway:
             if is_rate_limited(err):
                 raise RateLimitedError("amazon rate limit (429) on the device volumes") from err
             raise
+        # `_static_request` hands back the raw response (None on status >= 400): parse it here.
+        if body is None:
+            raise RuntimeError("amazon returned no response for the device volume list (HTTP >= 400)")
+        status = getattr(body, "status", None)
+        try:
+            body = await body.json(content_type=None)
+        except Exception as err:  # noqa: BLE001 — typed below
+            raise RuntimeError(
+                f"amazon returned an unexpected body for the device volume list (HTTP {status}, unparseable)"
+            ) from err
         if not isinstance(body, dict):
-            raise RuntimeError("amazon returned no device volume list")
+            raise RuntimeError(
+                f"amazon returned an unexpected body for the device volume list (HTTP {status}, not an object)"
+            )
         rows = body.get("volumes")
         devices = []
         for row in rows if isinstance(rows, list) else []:
