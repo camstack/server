@@ -9352,6 +9352,9 @@
       "remaining": "{{time}} rimasti",
       "run": "Avvia",
       "unsupported": "Questo dispositivo non supporta il timer."
+    },
+    "powerMeterLine": {
+      "energy": "Energia"
     }
   },
   "helpers": {

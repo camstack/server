@@ -9330,6 +9330,9 @@
       "remaining": "{{time}} left",
       "run": "Run",
       "unsupported": "This device cannot run on a timer."
+    },
+    "powerMeterLine": {
+      "energy": "Energy"
     }
   },
   "helpers": {
