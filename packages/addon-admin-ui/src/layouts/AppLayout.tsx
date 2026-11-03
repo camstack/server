@@ -15,6 +15,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query'
 import {
   Activity,
+  Bug,
   ChevronLeft,
   ChevronRight,
   Loader2,
@@ -36,6 +37,7 @@ import { AlertBell } from '../components/ui/AlertBell'
 import { CriticalAlertsOnLoadPanel } from '../components/ui/CriticalAlertsOnLoadPanel'
 import { useAuth } from '../contexts/auth-context'
 import { useServerName } from '../hooks/use-server-name'
+import { useDebugLayers } from '../lib/debug-layers-store'
 import { useConnectionHealth } from '../hooks/useConnectionHealth'
 import { partitionAddonPages } from '../lib/addon-page-sections'
 import { describeConnectionHealth } from '../lib/connection-health'
@@ -68,6 +70,7 @@ export function AppLayout() {
   const theme = useThemeMode()
   const { t } = useTranslation()
   const isMobile = useIsMobile()
+  const debugLayers = useDebugLayers()
   const isMidWidth = useIsMidWidth()
   // The hub's own name (D861) titles the tab and the sidebar. Until the hub has
   // answered there is no name, so the title stays what it was.
@@ -351,7 +354,9 @@ export function AppLayout() {
         aria-disabled={unavailable || undefined}
         title={
           unavailable
-            ? t('nav.notInstalled', '{{page}} — not installed', { page: item.label })
+            ? t('nav.notInstalled', '{{page}} — not installed', {
+                page: item.label,
+              })
             : compact
               ? item.label
               : undefined
@@ -518,6 +523,26 @@ export function AppLayout() {
         >
           <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
           {!compact && <span className="truncate">{t('system.myAccess', 'My access')}</span>}
+        </Button>
+
+        {/* Debug layers (planning#362): the installed app has no URL bar for
+            `?debugLayers=1`, so the same flag flips here. */}
+        <Button
+          variant="unstyled"
+          type="button"
+          onClick={() => debugLayers.setOn(!debugLayers.on)}
+          className={navButtonCls(debugLayers.on)}
+          aria-pressed={debugLayers.on}
+          title={compact ? t('layouts.appLayout.debugLayers', 'Debug layers') : undefined}
+        >
+          <Bug className="h-3.5 w-3.5 shrink-0" />
+          {!compact && (
+            <span className="truncate">
+              {debugLayers.on
+                ? t('layouts.appLayout.debugLayersOn', 'Debug layers: on')
+                : t('layouts.appLayout.debugLayers', 'Debug layers')}
+            </span>
+          )}
         </Button>
 
         <Button

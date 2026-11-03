@@ -121,3 +121,87 @@ export function resolveDebugLayers(
   if (asked === '0') return { on: false, persist: null }
   return { on: stored === '1', persist: 'keep' }
 }
+
+/** Remembers the "no backdrop blur" experiment for the session, beside the mode flag. */
+export const DEBUG_NO_BLUR_STORAGE_KEY = 'camstack.debugLayers.noBlur'
+
+/** Class on `<html>` while the experiment runs; the rule that uses it is in `index.css`. */
+export const DEBUG_NO_BLUR_CLASS = 'debug-no-backdrop-blur'
+
+/** The slice of `Storage` the flags need (a `sessionStorage` satisfies it). */
+export interface FlagStorage {
+  getItem(key: string): string | null
+  setItem(key: string, value: string): void
+  removeItem(key: string): void
+}
+
+export interface DebugLayersState {
+  readonly on: boolean
+  readonly noBlur: boolean
+}
+
+export interface DebugLayersStore {
+  getState(): DebugLayersState
+  subscribe(listener: () => void): () => void
+  setOn(on: boolean): void
+  setNoBlur(noBlur: boolean): void
+}
+
+function safeGet(storage: FlagStorage | null, key: string): string | null {
+  try {
+    return storage === null ? null : storage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function safeWrite(storage: FlagStorage | null, key: string, value: '1' | null): void {
+  try {
+    if (storage === null) return
+    if (value === null) storage.removeItem(key)
+    else storage.setItem(key, value)
+  } catch {
+    // Private mode: the in-memory state still holds for this page load.
+  }
+}
+
+/**
+ * The one place the flags change. It starts from the query and the session
+ * (`resolveDebugLayers`), keeps `storage` in step, and notifies subscribers,
+ * so the in-app switch and `?debugLayers=` flip the same flag.
+ */
+export function createDebugLayersStore(
+  storage: FlagStorage | null,
+  search: string,
+): DebugLayersStore {
+  const decision = resolveDebugLayers(search, safeGet(storage, DEBUG_LAYERS_STORAGE_KEY))
+  if (decision.persist !== 'keep') safeWrite(storage, DEBUG_LAYERS_STORAGE_KEY, decision.persist)
+  let state: DebugLayersState = {
+    on: decision.on,
+    noBlur: safeGet(storage, DEBUG_NO_BLUR_STORAGE_KEY) === '1',
+  }
+  const listeners = new Set<() => void>()
+  const publish = (next: DebugLayersState): void => {
+    state = next
+    for (const listener of listeners) listener()
+  }
+  return {
+    getState: () => state,
+    subscribe: (listener) => {
+      listeners.add(listener)
+      return () => {
+        listeners.delete(listener)
+      }
+    },
+    setOn: (on) => {
+      safeWrite(storage, DEBUG_LAYERS_STORAGE_KEY, on ? '1' : null)
+      // Turning the mode off also ends the experiment: nothing stays altered unseen.
+      if (!on) safeWrite(storage, DEBUG_NO_BLUR_STORAGE_KEY, null)
+      publish({ on, noBlur: on ? state.noBlur : false })
+    },
+    setNoBlur: (noBlur) => {
+      safeWrite(storage, DEBUG_NO_BLUR_STORAGE_KEY, noBlur ? '1' : null)
+      publish({ on: state.on, noBlur })
+    },
+  }
+}

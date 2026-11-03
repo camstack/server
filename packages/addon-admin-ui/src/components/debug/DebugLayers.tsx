@@ -1,6 +1,7 @@
 /**
  * Debug layers (planning#362) — an instrument, not a fix. Open the admin with
- * `?debugLayers=1` (remembered for the session; `?debugLayers=0` ends it) and
+ * `?debugLayers=1` (remembered for the session; `?debugLayers=0` ends it) or the
+ * "Debug layers" item in the menu (for the installed app, which has no URL bar) and
  * every element near the top of the viewport that can blur, dim or paint over
  * what is behind it gets an outline and a label (tag, classes, z-index, the
  * offending property); a corner badge shows the safe-area insets and the
@@ -13,13 +14,14 @@ import { cn } from '@camstack/ui-library'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { ReactNode } from 'react'
+import { Switch } from '@camstack/ui-library'
 import {
-  DEBUG_LAYERS_STORAGE_KEY,
+  DEBUG_NO_BLUR_CLASS,
   classifyLayer,
   describeLayer,
-  resolveDebugLayers,
   type LayerReason,
 } from '../../lib/debug-layers'
+import { useDebugLayers } from '../../lib/debug-layers-store'
 
 const ROOT_ATTR = 'data-debug-layers'
 const RESCAN_MS = 250
@@ -40,30 +42,6 @@ interface Insets {
   readonly right: number
   readonly bottom: number
   readonly left: number
-}
-
-function readStored(): string | null {
-  try {
-    return window.sessionStorage.getItem(DEBUG_LAYERS_STORAGE_KEY)
-  } catch {
-    return null
-  }
-}
-
-function writeStored(value: '1' | null): void {
-  try {
-    if (value === null) window.sessionStorage.removeItem(DEBUG_LAYERS_STORAGE_KEY)
-    else window.sessionStorage.setItem(DEBUG_LAYERS_STORAGE_KEY, value)
-  } catch {
-    // Private mode: the flag then lasts for this page load only.
-  }
-}
-
-/** Reads the query and the session, and keeps the session in step with the query. */
-function isDebugLayersOn(): boolean {
-  const decision = resolveDebugLayers(window.location.search, readStored())
-  if (decision.persist !== 'keep') writeStored(decision.persist)
-  return decision.on
 }
 
 function scan(): readonly Box[] {
@@ -123,7 +101,10 @@ function readInsets(probe: HTMLElement): Insets {
   }
 }
 
-function toneOf(reasons: readonly LayerReason[]): { outline: string; chip: string } {
+function toneOf(reasons: readonly LayerReason[]): {
+  outline: string
+  chip: string
+} {
   if (reasons.includes('backdrop-filter') || reasons.includes('filter')) {
     return { outline: 'outline-danger', chip: 'bg-danger' }
   }
@@ -162,9 +143,20 @@ function raiseToTopLayer(el: HTMLElement | null): void {
   }
 }
 
-function DebugLayersOverlay(): ReactNode {
+function DebugLayersOverlay({
+  noBlur,
+  onNoBlurChange,
+}: {
+  readonly noBlur: boolean
+  readonly onNoBlurChange: (noBlur: boolean) => void
+}): ReactNode {
   const [boxes, setBoxes] = useState<readonly Box[]>([])
-  const [insets, setInsets] = useState<Insets>({ top: 0, right: 0, bottom: 0, left: 0 })
+  const [insets, setInsets] = useState<Insets>({
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+  })
   const probe = useRef<HTMLDivElement>(null)
   const root = useRef<HTMLDivElement>(null)
   const timer = useRef<number | null>(null)
@@ -192,7 +184,11 @@ function DebugLayersOverlay(): ReactNode {
       )
       if (outside) schedule()
     })
-    observer.observe(document.body, { childList: true, subtree: true, attributes: true })
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+    })
     window.addEventListener('resize', schedule)
     window.addEventListener('orientationchange', schedule)
     window.addEventListener('scroll', schedule, true)
@@ -233,7 +229,12 @@ function DebugLayersOverlay(): ReactNode {
             data-testid="debug-layer-box"
             className={cn('absolute outline outline-1 -outline-offset-1', tone.outline)}
             // ui-check-ok: measured viewport rectangle of the inspected element
-            style={{ top: box.top, left: box.left, width: box.width, height: box.height }}
+            style={{
+              top: box.top,
+              left: box.left,
+              width: box.width,
+              height: box.height,
+            }}
           >
             <span
               className={cn(
@@ -250,16 +251,26 @@ function DebugLayersOverlay(): ReactNode {
       })}
       <div
         data-testid="debug-layers-badge"
-        className="absolute bottom-1 right-1 rounded-md bg-background-elevated px-2 py-1 font-mono text-[10px] leading-4 text-foreground outline outline-1 outline-border"
+        className="absolute right-1 top-14 rounded-md bg-background-elevated px-2 py-1 font-mono text-[10px] leading-4 text-foreground outline outline-1 outline-border"
       >
         <div>admin-ui {appVersion()}</div>
         <div>
           inset t{insets.top} r{insets.right} b{insets.bottom} l{insets.left}
         </div>
         <div>
-          {isStandalone() ? 'standalone' : 'browser'} · {window.innerWidth}x{window.innerHeight} ·
-          {` ${boxes.length} layers`}
+          display-mode standalone:{' '}
+          {window.matchMedia('(display-mode: standalone)').matches ? 'yes' : 'no'}
+          {' · '}navigator.standalone: {isStandalone() ? 'yes' : 'no'}
         </div>
+        <div>
+          {window.innerWidth}x{window.innerHeight} · {boxes.length} layers
+        </div>
+        <Switch
+          checked={noBlur}
+          onCheckedChange={onNoBlurChange}
+          label="no backdrop blur"
+          className="pointer-events-auto mt-1 text-[10px]"
+        />
       </div>
     </div>,
     document.body,
@@ -268,6 +279,13 @@ function DebugLayersOverlay(): ReactNode {
 
 /** Mounted once in the app: renders nothing unless the mode is on. */
 export function DebugLayers(): ReactNode {
-  const [on] = useState(isDebugLayersOn)
-  return on ? <DebugLayersOverlay /> : null
+  const { on, noBlur, setNoBlur } = useDebugLayers()
+  // Debug-only exception to "no blur in the shell": the rule behind this class
+  // (index.css) strips every backdrop-filter so sharpness can be compared live.
+  useEffect(() => {
+    const active = on && noBlur
+    document.documentElement.classList.toggle(DEBUG_NO_BLUR_CLASS, active)
+    return () => document.documentElement.classList.remove(DEBUG_NO_BLUR_CLASS)
+  }, [on, noBlur])
+  return on ? <DebugLayersOverlay noBlur={noBlur} onNoBlurChange={setNoBlur} /> : null
 }

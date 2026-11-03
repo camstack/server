@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
+  DEBUG_LAYERS_STORAGE_KEY,
+  DEBUG_NO_BLUR_STORAGE_KEY,
   classifyLayer,
+  createDebugLayersStore,
   describeLayer,
   resolveDebugLayers,
+  type FlagStorage,
   type RectLike,
   type StyleLike,
 } from '../debug-layers'
@@ -45,10 +49,18 @@ describe('classifyLayer', () => {
 
   it('lists every reason and keeps the z-index', () => {
     const found = classifyLayer(
-      { ...PLAIN, position: 'fixed', zIndex: '40', backdropFilter: 'blur(4px)' },
+      {
+        ...PLAIN,
+        position: 'fixed',
+        zIndex: '40',
+        backdropFilter: 'blur(4px)',
+      },
       TOP,
     )
-    expect(found).toEqual({ reasons: ['fixed', 'backdrop-filter'], zIndex: '40' })
+    expect(found).toEqual({
+      reasons: ['fixed', 'backdrop-filter'],
+      zIndex: '40',
+    })
   })
 
   it('does not flag opacity 1 or an unparseable opacity', () => {
@@ -81,13 +93,81 @@ describe('describeLayer', () => {
 
 describe('resolveDebugLayers', () => {
   it('turns on and persists with ?debugLayers=1', () => {
-    expect(resolveDebugLayers('?debugLayers=1', null)).toEqual({ on: true, persist: '1' })
+    expect(resolveDebugLayers('?debugLayers=1', null)).toEqual({
+      on: true,
+      persist: '1',
+    })
   })
   it('turns off and forgets with ?debugLayers=0', () => {
-    expect(resolveDebugLayers('?debugLayers=0', '1')).toEqual({ on: false, persist: null })
+    expect(resolveDebugLayers('?debugLayers=0', '1')).toEqual({
+      on: false,
+      persist: null,
+    })
   })
   it('follows the remembered value without a query', () => {
     expect(resolveDebugLayers('', '1')).toEqual({ on: true, persist: 'keep' })
-    expect(resolveDebugLayers('?x=1', null)).toEqual({ on: false, persist: 'keep' })
+    expect(resolveDebugLayers('?x=1', null)).toEqual({
+      on: false,
+      persist: 'keep',
+    })
+  })
+})
+
+describe('createDebugLayersStore', () => {
+  const memory = (
+    initial: Record<string, string> = {},
+  ): FlagStorage & { data: Record<string, string> } => {
+    const data = { ...initial }
+    return {
+      data,
+      getItem: (k) => data[k] ?? null,
+      setItem: (k, v) => {
+        data[k] = v
+      },
+      removeItem: (k) => {
+        delete data[k]
+      },
+    }
+  }
+
+  it('starts off, and the in-app flip turns it on, remembered and notified', () => {
+    const storage = memory()
+    const store = createDebugLayersStore(storage, '')
+    let calls = 0
+    store.subscribe(() => {
+      calls += 1
+    })
+    expect(store.getState()).toEqual({ on: false, noBlur: false })
+    store.setOn(true)
+    expect(store.getState().on).toBe(true)
+    expect(storage.data[DEBUG_LAYERS_STORAGE_KEY]).toBe('1')
+    expect(calls).toBe(1)
+  })
+
+  it('still honours ?debugLayers=1 and the remembered value', () => {
+    expect(createDebugLayersStore(memory(), '?debugLayers=1').getState().on).toBe(true)
+    expect(
+      createDebugLayersStore(memory({ [DEBUG_LAYERS_STORAGE_KEY]: '1' }), '').getState().on,
+    ).toBe(true)
+    const off = memory({ [DEBUG_LAYERS_STORAGE_KEY]: '1' })
+    expect(createDebugLayersStore(off, '?debugLayers=0').getState().on).toBe(false)
+    expect(off.data[DEBUG_LAYERS_STORAGE_KEY]).toBeUndefined()
+  })
+
+  it('turning the mode off also ends the no-blur experiment', () => {
+    const storage = memory()
+    const store = createDebugLayersStore(storage, '?debugLayers=1')
+    store.setNoBlur(true)
+    expect(store.getState()).toEqual({ on: true, noBlur: true })
+    expect(storage.data[DEBUG_NO_BLUR_STORAGE_KEY]).toBe('1')
+    store.setOn(false)
+    expect(store.getState()).toEqual({ on: false, noBlur: false })
+    expect(storage.data[DEBUG_NO_BLUR_STORAGE_KEY]).toBeUndefined()
+  })
+
+  it('works with no storage at all (private mode)', () => {
+    const store = createDebugLayersStore(null, '')
+    store.setOn(true)
+    expect(store.getState().on).toBe(true)
   })
 })

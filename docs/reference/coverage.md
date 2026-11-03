@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**234 units · 7898 source files · 221 units claimed by at least one document (7854 files).**
+**234 units · 7899 source files · 221 units claimed by at least one document (7855 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -39,8 +39,8 @@ it never describes how the thing works, and it is never re-verified.
 | `hf` | 62 | `cloud-training` | `architecture/cloud-training.md` | 2026-10-14 |
 | `packages/addon-pipeline/src/detection-pipeline` | 61 | `detection-execution` | `architecture/data-planes.md` _(covers)_, `architecture/detection-execution.md`, `architecture/inference-devices.md`, +50 more, 5 ADRs | 2026-10-24 |
 | `packages/addon-provider-reolink` | 61 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0847-a-battery-camera-refreshes-everything-it-owns-once-per-window-by-an-awake-moment-or-one-wake.md`, +21 more, 2 ADRs | 2026-10-26 |
+| `packages/addon-admin-ui/src/lib` | 60 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `ui/admin-patterns.md`, +22 more, 1 ADR | 2026-11-02 |
 | `packages/addon-training/src/page` | 60 | `cloud-training` | `architecture/cloud-training.md`, `decisions/adr-0790-a-machine-proposed-retrain-box-is-a-draft-until-the-operator-confirms-it.md`, `decisions/adr-0849-retrain-annotations-keep-their-origin.md`, +4 more, 1 ADR | 2026-10-14 |
-| `packages/addon-admin-ui/src/lib` | 59 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `ui/admin-patterns.md`, +22 more, 1 ADR | 2026-11-02 |
 | `packages/addon-pipeline/src/pipeline-runner` | 58 | `pipeline-orchestration`, `zones` | `architecture/data-planes.md`, `architecture/detection-execution.md` _(covers)_, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +42 more, 14 ADRs | 2026-10-24 |
 | `packages/addon-import-alexa` | 57 | `ecosystem-exports` | `addons/addon-import-alexa.md` _(covers)_, `decisions/adr-0947-echo-speech-uses-a-long-lived-alexapy-worker.md`, `decisions/adr-0949-echo-speech-signs-in-as-an-import-broker.md`, +4 more | — |
 | `packages/addon-provider-homematic` | 56 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0626-a-parameter-carried-by-two-channels-is-read-from-the-status-one.md`, `decisions/adr-0677-the-runtime-state-row-writer-never-writes-a-row-this-process-has-not-read.md` _(covers)_ | 2026-10-26 |

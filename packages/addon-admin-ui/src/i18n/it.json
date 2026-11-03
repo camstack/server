@@ -5809,7 +5809,9 @@
       "user": "Utente",
       "adminUiV": "admin-ui v{{__APP_VERSION__}}",
       "openMenu": "Apri il menu",
-      "camstack": "CamStack"
+      "camstack": "CamStack",
+      "debugLayers": "Livelli di debug",
+      "debugLayersOn": "Livelli di debug: attivi"
     }
   },
   "build": {

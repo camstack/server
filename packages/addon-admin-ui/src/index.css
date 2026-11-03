@@ -141,3 +141,13 @@ button, a, input, select, textarea, [role="button"] {
   padding: 0 0.25rem;
   border-radius: 3px;
 }
+
+/* Debug-only exception (planning#362): while the debug-layers panel's "no
+   backdrop blur" switch is on, every backdrop-filter is stripped so the
+   operator can compare sharpness live on the installed iOS app. Never set by
+   anything else; the shell itself carries no backdrop blur. */
+.debug-no-backdrop-blur *,
+.debug-no-backdrop-blur *::backdrop {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}

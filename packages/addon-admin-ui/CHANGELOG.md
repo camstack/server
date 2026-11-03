@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The debug-layers mode can be turned on from the menu, for the installed app
+
 ## [1.2.567] - 2026-11-03
 
 ### Changed
