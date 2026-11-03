@@ -28,6 +28,8 @@ export interface PerNodeFixture {
   readonly rows: () => Record<string, Record<string, unknown>>
   /** Insert (or replace) a raw row between the plan's read and its apply. */
   readonly insertRow: (id: string, data: Record<string, unknown>) => void
+  /** What the plan said it left alone (a twin conflict), across every boot. */
+  readonly warnings: string[]
   readonly boot: (afterRead?: () => void) => Promise<{
     readonly failed: readonly string[]
     readonly applied: readonly string[]
@@ -88,6 +90,7 @@ export function perNodeFixture(
       }),
     )
   }
+  const warnings: string[] = []
   let hook: (() => void) | undefined
   const host: AddonMigrationHost = {
     declareOwner: async (input) => ({
@@ -147,12 +150,17 @@ export function perNodeFixture(
   }
   return {
     rows,
+    warnings,
     insertRow: (id, data) => void insert.run(id, JSON.stringify(data)),
     boot: async (afterRead) => {
       hook = afterRead
       const report = await runAddonMigrations(
         host,
-        defineAddonMigrations(catalogue, { readStored, nodeIds: async () => nodes }),
+        defineAddonMigrations(catalogue, {
+          readStored,
+          nodeIds: async () => nodes,
+          warn: (m) => void warnings.push(m),
+        }),
         silentLogger,
       )
       return { failed: report.failed, applied: report.applied }

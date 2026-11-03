@@ -311,6 +311,7 @@ export class StreamBrokerAddon extends BaseAddon<StreamBrokerConfig> {
           readRawKeys((key) => this.readStoredGlobalKey(key), STREAM_BROKER_ID, keys),
         nodeIds: () =>
           clusterNodeIds(() => this.ctx.api.nodes.directory.query(), this.ctx.kernel.localNodeId),
+        warn: (message) => this.ctx.logger.warn(message),
       }),
     )
     if (report.applied.length > 0) await this.resolveConfig()

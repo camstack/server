@@ -36,6 +36,13 @@ describe('pipeline-orchestrator drop-bindings-migration-flag', () => {
     expect(rows['other-addon.bindingsMigration_v1_done']?.['value']).toBe('keep-me')
   })
 
+  it('refuses while the flag is not true: the carry-over never ran, the row stays', async () => {
+    const f = orchestrator({ bindingsMigration_v1_done: false, enabledNodes: ['hub'] })
+    const before = f.rows()
+    expect(await f.boot()).toEqual({ failed: [DROP_BINDINGS_MIGRATION_FLAG_ID], applied: [] })
+    expect(f.rows()).toEqual(before)
+  })
+
   it('is a no-op when the flag was never stored, and on a second run', async () => {
     const f = orchestrator({ enabledNodes: ['hub'] })
     await f.boot()

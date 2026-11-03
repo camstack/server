@@ -58,16 +58,44 @@ describe('pipeline-runner unmarked-node-fields-per-node', () => {
     )
   })
 
-  it('a twin conflict throws and writes nothing', async () => {
+  it('a node override against the cluster value is not a conflict: it wins on its node, the cluster value reaches the rest, and the plain keys copy', async () => {
+    // The prod shape: the cluster values are bare, one node carries its own limit.
     const f = runner({
       maxQueueDepth: 40,
       maxLiveDecodeWorkers: 8,
+      nodeDecodeBudgetMb: 8192,
       'decodeMaxLiveWorkers@agent-1': 4,
     })
-    const before = f.rows()
-    const result = await f.boot()
-    expect(result.failed).toEqual([NODE_FIELDS_ID])
-    expect(f.rows()).toEqual(before)
+    expect(await f.boot()).toEqual({ failed: [], applied: [NODE_FIELDS_ID] })
+    expect(f.warnings).toEqual([])
+    const rows = f.rows()
+    expect(rows['pipeline-runner.maxLiveDecodeWorkers@agent-1']?.['value']).toBe(4)
+    expect(rows['pipeline-runner.maxLiveDecodeWorkers@hub']?.['value']).toBe(8)
+    expect(rows['pipeline-runner.decodeBudgetMb@hub']?.['value']).toBe(8192)
+    expect(rows['pipeline-runner.decodeBudgetMb@agent-1']?.['value']).toBe(8192)
+    expect(rows['pipeline-runner.maxQueueDepth@hub']?.['value']).toBe(40)
+    expect(rows['pipeline-runner.maxQueueDepth@agent-1']?.['value']).toBe(40)
+    expect(rows['pipeline-runner.decodeMaxLiveWorkers~superseded@agent-1']?.['value']).toBe(4)
+  })
+
+  it('two values of the SAME level that disagree leave that twin alone, say so, and still copy the plain keys', async () => {
+    const f = runner({
+      maxQueueDepth: 40,
+      maxLiveDecodeWorkers: 8,
+      decodeMaxLiveWorkers: 4,
+      nodeDecodeBudgetMb: 6144,
+    })
+    expect(await f.boot()).toEqual({ failed: [], applied: [NODE_FIELDS_ID] })
+    const rows = f.rows()
+    expect(f.warnings.length).toBeGreaterThan(0)
+    expect(f.warnings[0]).toContain('maxLiveDecodeWorkers')
+    // The conflicting twin is untouched, losers included.
+    expect(rows['pipeline-runner.maxLiveDecodeWorkers@hub']).toBeUndefined()
+    expect(rows['pipeline-runner.decodeMaxLiveWorkers']?.['value']).toBe(4)
+    expect(rows['pipeline-runner.decodeMaxLiveWorkers~superseded']).toBeUndefined()
+    // The plain keys and the other twin are not blocked.
+    expect(rows['pipeline-runner.maxQueueDepth@agent-1']?.['value']).toBe(40)
+    expect(rows['pipeline-runner.decodeBudgetMb@hub']?.['value']).toBe(6144)
   })
 
   it('a survivor equal to its twin is not a conflict; the loser is parked', async () => {

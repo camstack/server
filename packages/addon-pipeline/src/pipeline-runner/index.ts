@@ -4147,17 +4147,17 @@ export default class PipelineRunnerAddon
    * drifted apart before.
    */
   private resolvedNodeDecodeLimits(): NodeDecodeLimits {
-    // This node's own decode limits, in order: its `decodeBudgetMb` row, else the legacy
-    // orchestrator agent-settings entry (D365 carry-over), else a share of its RAM. The worker
-    // cap is this node's `maxLiveDecodeWorkers` row, unless that entry sets one.
+    // Both limits are node rows now (the migration copied the cluster value to every node, and
+    // a node's own earlier value kept precedence). The legacy orchestrator agent-settings entry
+    // (D365 carry-over) still outranks the row; the row stands where the cluster value stood.
     const fromAgent = this.nodeLimits?.current() ?? {}
     return resolveNodeDecodeLimits({
-      clusterBudgetMb: DEFAULT_NODE_DECODE_BUDGET_MB,
+      clusterBudgetMb: this.config.decodeBudgetMb ?? DEFAULT_NODE_DECODE_BUDGET_MB,
       clusterMaxWorkers: this.config.maxLiveDecodeWorkers,
       defaultBudgetMb: DEFAULT_NODE_DECODE_BUDGET_MB,
       defaultMaxWorkers: DEFAULT_CONFIG.maxLiveDecodeWorkers,
       node: {
-        decodeBudgetMb: this.config.decodeBudgetMb ?? fromAgent.decodeBudgetMb,
+        decodeBudgetMb: fromAgent.decodeBudgetMb,
         maxLiveDecodeWorkers: fromAgent.maxLiveDecodeWorkers,
       },
       totalMemMb: Math.round(os.totalmem() / 1_048_576),
@@ -6995,6 +6995,7 @@ export default class PipelineRunnerAddon
           readRawKeys((key) => this.readStoredGlobalKey(key), PIPELINE_RUNNER_ID, keys),
         nodeIds: () =>
           clusterNodeIds(() => this.ctx.api.nodes.directory.query(), this.ctx.kernel.localNodeId),
+        warn: (message) => this.ctx.logger.warn(message),
       }),
     )
     if (report.applied.length > 0) await this.resolveConfig()

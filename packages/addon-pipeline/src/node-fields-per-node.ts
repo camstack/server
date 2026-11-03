@@ -10,10 +10,13 @@
  * never overwritten (a seed never overwrites).
  *
  * Twins: two keys that carried one fact. The survivor is the key the code keeps reading; the
- * loser folds in only when the survivor is unset. Both set and different is a decision only the
- * operator can take, so the plan throws and writes nothing. A loser is never deleted: its row
- * is renamed `<key>~superseded` (a node row `<key>~superseded@<nodeId>`), so its value stays on
- * disk, unreachable by the live key, recoverable by hand.
+ * loser folds into it. Per node N the value is the node-level one (`survivor@N`, else
+ * `loser@N`) when it exists, else the cluster one (bare survivor, else bare loser): a node's own
+ * value beats the cluster value, which is the documented setup, not a conflict. A conflict is
+ * two values of the SAME level that disagree (both bare, or both `@N`); the twin is then left
+ * untouched, reported through `ports.warn`, and never blocks the plain copies. A loser is never
+ * deleted: its row is renamed `<key>~superseded` (a node row `<key>~superseded@<nodeId>`), so its
+ * value stays on disk, unreachable by the live key, recoverable by hand.
  *
  * Idempotent: with every node row copied and every loser parked the plan is empty.
  */
@@ -39,6 +42,8 @@ export interface NodeFieldsPorts {
   readStored(keys: readonly string[]): Promise<Readonly<Record<string, unknown>>>
   /** Every node the field is copied to. Throws when the cluster's nodes cannot be listed. */
   nodeIds(): Promise<readonly string[]>
+  /** Say what the plan left alone and why (a twin conflict); never carries a secret. */
+  warn(message: string): void
 }
 
 export const nodeKeyOf = (key: string, nodeId: string): string => `${key}@${nodeId}`
@@ -53,16 +58,6 @@ function rowOf(
   nodeId: string | null,
 ): Record<string, unknown> {
   return nodeId === null ? { addonId, key, value } : { addonId, key, value, nodeId }
-}
-
-/** A twin the plan cannot fold without choosing a value for the operator. */
-export class NodeFieldTwinConflictError extends Error {
-  constructor(readonly conflicts: readonly string[]) {
-    super(
-      `twin settings disagree, nothing was written (set one value and retry): ${conflicts.join('; ')}`,
-    )
-    this.name = 'NodeFieldTwinConflictError'
-  }
 }
 
 interface PlanState {
@@ -92,21 +87,31 @@ function park(state: PlanState, key: string, nodeId: string | null): void {
   }
 }
 
-function foldTwin(state: PlanState, twin: NodeFieldTwin, nodeId: string): void {
+const differ = (a: unknown, b: unknown): boolean =>
+  isSet(a) && isSet(b) && JSON.stringify(a) !== JSON.stringify(b)
+
+/** Fold one twin on one node; false when the twin disagrees with itself at one level. */
+function foldTwin(state: PlanState, twin: NodeFieldTwin, nodeId: string): boolean {
+  const { stored } = state
   const survivorKey = nodeKeyOf(twin.survivor, nodeId)
-  const survivor = state.stored[survivorKey] ?? state.stored[twin.survivor]
-  const loser = state.stored[nodeKeyOf(twin.loser, nodeId)] ?? state.stored[twin.loser]
-  if (isSet(survivor) && isSet(loser) && JSON.stringify(survivor) !== JSON.stringify(loser)) {
+  const nodeSurvivor = stored[survivorKey]
+  const nodeLoser = stored[nodeKeyOf(twin.loser, nodeId)]
+  const clusterSurvivor = stored[twin.survivor]
+  const clusterLoser = stored[twin.loser]
+  if (differ(nodeSurvivor, nodeLoser) || differ(clusterSurvivor, clusterLoser)) {
     state.conflicts.push(
-      `${twin.survivor}=${JSON.stringify(survivor)} vs ${twin.loser}=${JSON.stringify(loser)} on ${nodeId}`,
+      `${twin.survivor} and ${twin.loser} disagree on ${nodeId}: left as they are, set one and retry`,
     )
-    return
+    return false
   }
-  const folded = isSet(survivor) ? survivor : loser
-  if (isSet(folded) && !(survivorKey in state.stored)) {
+  const nodeValue = isSet(nodeSurvivor) ? nodeSurvivor : nodeLoser
+  const clusterValue = isSet(clusterSurvivor) ? clusterSurvivor : clusterLoser
+  const folded = isSet(nodeValue) ? nodeValue : clusterValue
+  if (isSet(folded) && !(survivorKey in stored)) {
     state.sets[idOf(state, survivorKey)] = rowOf(state.addonId, survivorKey, folded, nodeId)
   }
   park(state, twin.loser, nodeId)
+  return true
 }
 
 export async function planNodeFields(
@@ -122,15 +127,16 @@ export async function planNodeFields(
     ...nodes.flatMap((nodeId) => names.map((key) => nodeKeyOf(key, nodeId))),
   ])
   const state: PlanState = { stored, addonId, sets: {}, deletes: {}, conflicts: [] }
+  const clean = new Set(twins.map((twin) => twin.survivor))
   for (const nodeId of nodes) {
     for (const key of plain) copyPlain(state, key, nodeId)
     for (const twin of twins) {
-      // A survivor kept as a bare row copies like a plain field; the twin fold sees the copy.
-      foldTwin(state, twin, nodeId)
+      if (!foldTwin(state, twin, nodeId)) clean.delete(twin.survivor)
     }
   }
-  if (state.conflicts.length > 0) throw new NodeFieldTwinConflictError(state.conflicts)
-  for (const twin of twins) park(state, twin.loser, null)
+  for (const message of state.conflicts) ports.warn(message)
+  // The bare loser is parked only when no node found its twin in disagreement.
+  for (const twin of twins) if (clean.has(twin.survivor)) park(state, twin.loser, null)
   const setIds = Object.keys(state.sets)
   const deleteIds = Object.keys(state.deletes)
   if (setIds.length === 0 && deleteIds.length === 0) return { edits: [] }
