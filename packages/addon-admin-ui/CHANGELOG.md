@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A remote attached to a built media player now gives it the media-player commands, and the appliance and heater creation templates are removed.
+- Debug layers: switches to turn off the outlines and the top layer, and the header's compositing styles
 
 ## [1.2.569] - 2026-11-03
 

@@ -31,8 +31,16 @@ export function debugLayersStore(): DebugLayersStore {
 export function useDebugLayers(): DebugLayersState & {
   readonly setOn: (on: boolean) => void
   readonly setNoBlur: (noBlur: boolean) => void
+  readonly setOutlines: (outlines: boolean) => void
+  readonly setTopLayer: (topLayer: boolean) => void
 } {
   const store = debugLayersStore()
   const state = useSyncExternalStore(store.subscribe, store.getState)
-  return { ...state, setOn: store.setOn, setNoBlur: store.setNoBlur }
+  return {
+    ...state,
+    setOn: store.setOn,
+    setNoBlur: store.setNoBlur,
+    setOutlines: store.setOutlines,
+    setTopLayer: store.setTopLayer,
+  }
 }

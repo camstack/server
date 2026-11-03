@@ -125,6 +125,10 @@ export function resolveDebugLayers(
 /** Remembers the "no backdrop blur" experiment for the session, beside the mode flag. */
 export const DEBUG_NO_BLUR_STORAGE_KEY = 'camstack.debugLayers.noBlur'
 
+/** Remember the bisect switches that default ON; the stored value `0` means switched off. */
+export const DEBUG_OUTLINES_STORAGE_KEY = 'camstack.debugLayers.outlines'
+export const DEBUG_TOP_LAYER_STORAGE_KEY = 'camstack.debugLayers.topLayer'
+
 /** Class on `<html>` while the experiment runs; the rule that uses it is in `index.css`. */
 export const DEBUG_NO_BLUR_CLASS = 'debug-no-backdrop-blur'
 
@@ -138,6 +142,10 @@ export interface FlagStorage {
 export interface DebugLayersState {
   readonly on: boolean
   readonly noBlur: boolean
+  /** Bisect: draw the outlines and labels (default on). */
+  readonly outlines: boolean
+  /** Bisect: raise the overlay into the browser's top layer (default on). */
+  readonly topLayer: boolean
 }
 
 export interface DebugLayersStore {
@@ -145,6 +153,8 @@ export interface DebugLayersStore {
   subscribe(listener: () => void): () => void
   setOn(on: boolean): void
   setNoBlur(noBlur: boolean): void
+  setOutlines(outlines: boolean): void
+  setTopLayer(topLayer: boolean): void
 }
 
 function safeGet(storage: FlagStorage | null, key: string): string | null {
@@ -155,7 +165,7 @@ function safeGet(storage: FlagStorage | null, key: string): string | null {
   }
 }
 
-function safeWrite(storage: FlagStorage | null, key: string, value: '1' | null): void {
+function safeWrite(storage: FlagStorage | null, key: string, value: '1' | '0' | null): void {
   try {
     if (storage === null) return
     if (value === null) storage.removeItem(key)
@@ -179,6 +189,8 @@ export function createDebugLayersStore(
   let state: DebugLayersState = {
     on: decision.on,
     noBlur: safeGet(storage, DEBUG_NO_BLUR_STORAGE_KEY) === '1',
+    outlines: safeGet(storage, DEBUG_OUTLINES_STORAGE_KEY) !== '0',
+    topLayer: safeGet(storage, DEBUG_TOP_LAYER_STORAGE_KEY) !== '0',
   }
   const listeners = new Set<() => void>()
   const publish = (next: DebugLayersState): void => {
@@ -196,12 +208,45 @@ export function createDebugLayersStore(
     setOn: (on) => {
       safeWrite(storage, DEBUG_LAYERS_STORAGE_KEY, on ? '1' : null)
       // Turning the mode off also ends the experiment: nothing stays altered unseen.
-      if (!on) safeWrite(storage, DEBUG_NO_BLUR_STORAGE_KEY, null)
-      publish({ on, noBlur: on ? state.noBlur : false })
+      if (!on) {
+        safeWrite(storage, DEBUG_NO_BLUR_STORAGE_KEY, null)
+        safeWrite(storage, DEBUG_OUTLINES_STORAGE_KEY, null)
+        safeWrite(storage, DEBUG_TOP_LAYER_STORAGE_KEY, null)
+        publish({ on, noBlur: false, outlines: true, topLayer: true })
+        return
+      }
+      publish({ ...state, on })
     },
     setNoBlur: (noBlur) => {
       safeWrite(storage, DEBUG_NO_BLUR_STORAGE_KEY, noBlur ? '1' : null)
-      publish({ on: state.on, noBlur })
+      publish({ ...state, noBlur })
+    },
+    setOutlines: (outlines) => {
+      safeWrite(storage, DEBUG_OUTLINES_STORAGE_KEY, outlines ? null : '0')
+      publish({ ...state, outlines })
+    },
+    setTopLayer: (topLayer) => {
+      safeWrite(storage, DEBUG_TOP_LAYER_STORAGE_KEY, topLayer ? null : '0')
+      publish({ ...state, topLayer })
     },
   }
+}
+
+/** The compositing-relevant styles the panel prints for one element. */
+export const COMPOSITING_PROPS = [
+  'transform',
+  'will-change',
+  'position',
+  'backdrop-filter',
+  'filter',
+  'opacity',
+] as const
+
+export type CompositingProp = (typeof COMPOSITING_PROPS)[number]
+
+/** One `prop: value` line per property, `n/a` when the element is absent. */
+export function formatCompositing(
+  read: ((prop: CompositingProp) => string) | null,
+): readonly string[] {
+  return COMPOSITING_PROPS.map((prop) => `${prop}: ${read === null ? 'n/a' : read(prop) || '-'}`)
 }

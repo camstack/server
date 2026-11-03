@@ -642,7 +642,10 @@ export function AppLayout() {
 
           {/* Mobile top bar */}
           {isMobile && (
-            <header className="flex items-center h-12 border-b border-border px-3 shrink-0 bg-surface">
+            <header
+              data-debug-header=""
+              className="flex items-center h-12 border-b border-border px-3 shrink-0 bg-surface"
+            >
               <Button
                 variant="unstyled"
                 onClick={() => setDrawerOpen(true)}

@@ -18,6 +18,7 @@ import { Switch } from '@camstack/ui-library'
 import {
   DEBUG_NO_BLUR_CLASS,
   classifyLayer,
+  formatCompositing,
   describeLayer,
   type LayerReason,
 } from '../../lib/debug-layers'
@@ -133,22 +134,42 @@ function appVersion(): string {
  * outlines stay visible over an open dialog. A browser without the Popover
  * API keeps the plain fixed overlay.
  */
-function raiseToTopLayer(el: HTMLElement | null): void {
+function raiseToTopLayer(el: HTMLElement | null, topLayer: boolean): void {
   if (el === null || typeof el.showPopover !== 'function') return
   try {
     if (el.matches(':popover-open')) el.hidePopover()
-    el.showPopover()
+    if (topLayer) el.showPopover()
   } catch {
     // Not attached yet, or the popover is already in the state asked for.
   }
 }
 
+/** Computed compositing styles of the app header and of its logo, printed by the panel. */
+function readHeaderStyles(): {
+  readonly header: readonly string[]
+  readonly logo: readonly string[]
+} {
+  const header = document.querySelector('[data-debug-header]')
+  const logo = header === null ? null : header.querySelector('img')
+  const of = (el: Element | null): readonly string[] =>
+    formatCompositing(el === null ? null : (prop) => getComputedStyle(el).getPropertyValue(prop))
+  return { header: of(header), logo: of(logo) }
+}
+
 function DebugLayersOverlay({
   noBlur,
   onNoBlurChange,
+  outlines,
+  onOutlinesChange,
+  topLayer,
+  onTopLayerChange,
 }: {
   readonly noBlur: boolean
   readonly onNoBlurChange: (noBlur: boolean) => void
+  readonly outlines: boolean
+  readonly onOutlinesChange: (outlines: boolean) => void
+  readonly topLayer: boolean
+  readonly onTopLayerChange: (topLayer: boolean) => void
 }): ReactNode {
   const [boxes, setBoxes] = useState<readonly Box[]>([])
   const [insets, setInsets] = useState<Insets>({
@@ -161,11 +182,14 @@ function DebugLayersOverlay({
   const root = useRef<HTMLDivElement>(null)
   const timer = useRef<number | null>(null)
 
+  const [headerStyles, setHeaderStyles] = useState(readHeaderStyles)
+
   const refresh = useCallback(() => {
-    raiseToTopLayer(root.current)
-    setBoxes(scan())
+    raiseToTopLayer(root.current, topLayer)
+    setBoxes(outlines ? scan() : [])
+    setHeaderStyles(readHeaderStyles())
     if (probe.current !== null) setInsets(readInsets(probe.current))
-  }, [])
+  }, [outlines, topLayer])
 
   const schedule = useCallback(() => {
     if (timer.current !== null) return
@@ -271,6 +295,28 @@ function DebugLayersOverlay({
           label="no backdrop blur"
           className="pointer-events-auto mt-1 text-[10px]"
         />
+        <Switch
+          checked={outlines}
+          onCheckedChange={onOutlinesChange}
+          label="outlines"
+          className="pointer-events-auto mt-1 text-[10px]"
+        />
+        <Switch
+          checked={topLayer}
+          onCheckedChange={onTopLayerChange}
+          label="top layer"
+          className="pointer-events-auto mt-1 text-[10px]"
+        />
+        <div data-testid="debug-header-styles" className="mt-1">
+          <div>header</div>
+          {headerStyles.header.map((line) => (
+            <div key={line}>{line}</div>
+          ))}
+          <div>header logo</div>
+          {headerStyles.logo.map((line) => (
+            <div key={line}>{line}</div>
+          ))}
+        </div>
       </div>
     </div>,
     document.body,
@@ -279,7 +325,7 @@ function DebugLayersOverlay({
 
 /** Mounted once in the app: renders nothing unless the mode is on. */
 export function DebugLayers(): ReactNode {
-  const { on, noBlur, setNoBlur } = useDebugLayers()
+  const { on, noBlur, setNoBlur, outlines, setOutlines, topLayer, setTopLayer } = useDebugLayers()
   // Debug-only exception to "no blur in the shell": the rule behind this class
   // (index.css) strips every backdrop-filter so sharpness can be compared live.
   useEffect(() => {
@@ -287,5 +333,14 @@ export function DebugLayers(): ReactNode {
     document.documentElement.classList.toggle(DEBUG_NO_BLUR_CLASS, active)
     return () => document.documentElement.classList.remove(DEBUG_NO_BLUR_CLASS)
   }, [on, noBlur])
-  return on ? <DebugLayersOverlay noBlur={noBlur} onNoBlurChange={setNoBlur} /> : null
+  return on ? (
+    <DebugLayersOverlay
+      noBlur={noBlur}
+      onNoBlurChange={setNoBlur}
+      outlines={outlines}
+      onOutlinesChange={setOutlines}
+      topLayer={topLayer}
+      onTopLayerChange={setTopLayer}
+    />
+  ) : null
 }

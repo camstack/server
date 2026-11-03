@@ -5,6 +5,9 @@ import {
   classifyLayer,
   createDebugLayersStore,
   describeLayer,
+  formatCompositing,
+  DEBUG_OUTLINES_STORAGE_KEY,
+  DEBUG_TOP_LAYER_STORAGE_KEY,
   resolveDebugLayers,
   type FlagStorage,
   type RectLike,
@@ -137,7 +140,12 @@ describe('createDebugLayersStore', () => {
     store.subscribe(() => {
       calls += 1
     })
-    expect(store.getState()).toEqual({ on: false, noBlur: false })
+    expect(store.getState()).toEqual({
+      on: false,
+      noBlur: false,
+      outlines: true,
+      topLayer: true,
+    })
     store.setOn(true)
     expect(store.getState().on).toBe(true)
     expect(storage.data[DEBUG_LAYERS_STORAGE_KEY]).toBe('1')
@@ -158,10 +166,20 @@ describe('createDebugLayersStore', () => {
     const storage = memory()
     const store = createDebugLayersStore(storage, '?debugLayers=1')
     store.setNoBlur(true)
-    expect(store.getState()).toEqual({ on: true, noBlur: true })
+    expect(store.getState()).toEqual({
+      on: true,
+      noBlur: true,
+      outlines: true,
+      topLayer: true,
+    })
     expect(storage.data[DEBUG_NO_BLUR_STORAGE_KEY]).toBe('1')
     store.setOn(false)
-    expect(store.getState()).toEqual({ on: false, noBlur: false })
+    expect(store.getState()).toEqual({
+      on: false,
+      noBlur: false,
+      outlines: true,
+      topLayer: true,
+    })
     expect(storage.data[DEBUG_NO_BLUR_STORAGE_KEY]).toBeUndefined()
   })
 
@@ -169,5 +187,52 @@ describe('createDebugLayersStore', () => {
     const store = createDebugLayersStore(null, '')
     store.setOn(true)
     expect(store.getState().on).toBe(true)
+  })
+
+  it('keeps the outlines and top-layer switches, default on, until switched off', () => {
+    const storage = memory()
+    const store = createDebugLayersStore(storage, '?debugLayers=1')
+    expect(store.getState()).toMatchObject({ outlines: true, topLayer: true })
+    const before = store.getState()
+    store.setOutlines(false)
+    store.setTopLayer(false)
+    expect(before.outlines).toBe(true)
+    expect(store.getState()).toMatchObject({
+      on: true,
+      outlines: false,
+      topLayer: false,
+    })
+    expect(storage.data[DEBUG_OUTLINES_STORAGE_KEY]).toBe('0')
+    expect(storage.data[DEBUG_TOP_LAYER_STORAGE_KEY]).toBe('0')
+    const reloaded = createDebugLayersStore(storage, '')
+    expect(reloaded.getState()).toMatchObject({
+      outlines: false,
+      topLayer: false,
+    })
+    store.setOn(false)
+    expect(store.getState()).toMatchObject({ outlines: true, topLayer: true })
+    expect(storage.data[DEBUG_OUTLINES_STORAGE_KEY]).toBeUndefined()
+  })
+
+  it('notifies subscribers when a switch changes', () => {
+    const store = createDebugLayersStore(null, '?debugLayers=1')
+    let calls = 0
+    const off = store.subscribe(() => {
+      calls += 1
+    })
+    store.setTopLayer(false)
+    off()
+    store.setOutlines(false)
+    expect(calls).toBe(1)
+  })
+})
+
+describe('formatCompositing', () => {
+  it('prints each property, `-` for empty and `n/a` without an element', () => {
+    const lines = formatCompositing((prop) => (prop === 'opacity' ? '1' : ''))
+    expect(lines).toHaveLength(6)
+    expect(lines).toContain('opacity: 1')
+    expect(lines).toContain('transform: -')
+    expect(formatCompositing(null)[0]).toBe('transform: n/a')
   })
 })
