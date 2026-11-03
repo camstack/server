@@ -2,6 +2,7 @@ import {
   type AccessoryChildSpec,
   BaseDevice,
   type DeviceContext,
+  DeviceRole,
   DeviceType,
   type IDevice,
 } from '@camstack/types'
@@ -44,7 +45,14 @@ export class VeluxWindowDevice extends BaseDevice<typeof veluxWindowSchema> {
       },
       {
         stableIdSuffix: 'rain',
-        meta: { type: DeviceType.Sensor, name: `${this.name} rain`, ...link },
+        // The role is stamped from THIS spec on every spawn (restore included); the
+        // child constructor's `role` option only sets the in-memory field.
+        meta: {
+          type: DeviceType.Sensor,
+          role: DeviceRole.LeakSensor,
+          name: `${this.name} rain`,
+          ...link,
+        },
         config: node,
         factory: (childCtx: DeviceContext): IDevice => new VeluxRainSensorDevice(childCtx),
       },
