@@ -59,8 +59,11 @@ export function NetworkLinkBadge({ status, className }: NetworkLinkBadgeProps): 
     )
   }
 
-  const Icon = status.type === 'cellular' ? RadioTower : pickWifiIcon(status.signal)
-  const signal = status.signal === null ? null : Math.round(status.signal)
+  // A missing or non-finite reading (null, undefined, NaN) is "not read", never a percentage.
+  const reading =
+    typeof status.signal === 'number' && Number.isFinite(status.signal) ? status.signal : null
+  const Icon = status.type === 'cellular' ? RadioTower : pickWifiIcon(reading)
+  const signal = reading === null ? null : Math.round(reading)
   const networkText = status.ssid
     ? t('uiLibrary.networkLinkBadge.typeSsid', 'Network: {{type}} ({{ssid}})', {
         type: status.type,
@@ -75,7 +78,7 @@ export function NetworkLinkBadge({ status, className }: NetworkLinkBadgeProps): 
     <span
       className={cn(
         'inline-flex items-center gap-1 text-[10px] font-medium',
-        signalColor(status.signal),
+        signalColor(reading),
         className,
       )}
       title={title}

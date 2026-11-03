@@ -24,4 +24,13 @@ describe('NetworkLinkBadge', () => {
     const { getByTitle } = render(<NetworkLinkBadge status={{ type: 'wifi', signal: null }} />)
     expect(getByTitle('Network: wifi').textContent).toBe('')
   })
+
+  it('shows no NaN for a wireless link whose signal is absent or not a number', () => {
+    const absent = JSON.parse('{"type":"wifi"}')
+    const first = render(<NetworkLinkBadge status={absent} />)
+    expect(first.container.textContent).toBe('')
+    first.unmount()
+    const second = render(<NetworkLinkBadge status={{ type: 'wifi', signal: Number.NaN }} />)
+    expect(second.container.textContent).not.toContain('NaN')
+  })
 })
