@@ -57,6 +57,7 @@ import type {
   IScopedLogger,
   KernelInferenceHardware,
   ModelFormat,
+  ConfigUISchema,
   MotionAnalysisPayload,
   MotionRegion,
   MotionSource,
@@ -86,6 +87,7 @@ import {
   type BackgroundRunContext,
   BaseAddon,
   cameraOwnsMotionViaSensor,
+  defineAddonMigrations,
   createEvent,
   EventCategory,
   errMsg,
@@ -278,6 +280,8 @@ import {
   resolveNativeCropSource,
 } from './native-crop-tier.js'
 import { NativeLeaseSettingsSource } from './native-lease-settings-source.js'
+import { clusterNodeIds, readRawKeys } from '../node-fields-per-node.js'
+import { ADDON_MIGRATIONS, PIPELINE_RUNNER_ID } from './migrations/index.js'
 import { NodeDecodeLimitsSource } from './node-decode-limits-source.js'
 import {
   encodeCrossNodeCrop,
@@ -422,22 +426,10 @@ export interface RunnerAddonConfig {
    */
   readonly maxLiveDecodeWorkers: number
   /**
-   * RAM live decode workers may commit on this node, in MB. Divided by one
-   * worker's worst case it DERIVES the ceiling; `maxLiveDecodeWorkers` only
-   * clamps the result. See `DEFAULT_NODE_DECODE_BUDGET_MB`.
-   */
-  readonly nodeDecodeBudgetMb: number
-  /**
-   * Per-node override of the decode RAM budget (MB). Absent ⇒ cluster /
-   * derived (D365). Schema field is `perNode: true` on Engine & decoder.
+   * This node's decode RAM budget (MB). Absent ⇒ derived from this node's RAM
+   * (D365). A node field (`perNode`).
    */
   readonly decodeBudgetMb?: number
-  /**
-   * Per-node override of the live-worker cap. Absent ⇒ cluster
-   * `maxLiveDecodeWorkers`. Key differs so it does not collide with the
-   * cluster field of the same conceptual name.
-   */
-  readonly decodeMaxLiveWorkers?: number
 }
 
 export const DEFAULT_CONFIG: RunnerAddonConfig = {
@@ -459,9 +451,6 @@ export const DEFAULT_CONFIG: RunnerAddonConfig = {
   // See DECODE_WORKER_BASELINE_MB for the three contradicting figures this
   // replaced.
   maxLiveDecodeWorkers: DEFAULT_MAX_LIVE_DECODE_WORKERS,
-  // The actual RAM bound. The ceiling in force is
-  // `min(maxLiveDecodeWorkers, floor(nodeDecodeBudgetMb / workerFootprint))`.
-  nodeDecodeBudgetMb: DEFAULT_NODE_DECODE_BUDGET_MB,
 }
 
 /** An acquired session-decode restream + its one-shot refcount release. */
@@ -1393,6 +1382,7 @@ export default class PipelineRunnerAddon
     // node. In-process boot leaves the value untouched.
     const raw = this.ctx.kernel.localNodeId ?? this.ctx.id
     this.nodeId = raw.includes('/') ? raw.split('/')[0]! : raw
+    await this.migrateNodeFields()
     // This node's own decode limits (D365) — read on the lease-knob cadence.
     this.nodeLimits = new NodeDecodeLimitsSource({
       logger: {
@@ -4157,25 +4147,18 @@ export default class PipelineRunnerAddon
    * drifted apart before.
    */
   private resolvedNodeDecodeLimits(): NodeDecodeLimits {
-    // Prefer this addon's per-node schema fields (Engine tab); fall back to
-    // orchestrator agent-settings while older overrides migrate (D365).
-    const fromSchema = {
-      ...(typeof this.config.decodeBudgetMb === 'number'
-        ? { decodeBudgetMb: this.config.decodeBudgetMb }
-        : {}),
-      ...(typeof this.config.decodeMaxLiveWorkers === 'number'
-        ? { maxLiveDecodeWorkers: this.config.decodeMaxLiveWorkers }
-        : {}),
-    }
+    // This node's own decode limits, in order: its `decodeBudgetMb` row, else the legacy
+    // orchestrator agent-settings entry (D365 carry-over), else a share of its RAM. The worker
+    // cap is this node's `maxLiveDecodeWorkers` row, unless that entry sets one.
     const fromAgent = this.nodeLimits?.current() ?? {}
     return resolveNodeDecodeLimits({
-      clusterBudgetMb: this.config.nodeDecodeBudgetMb,
+      clusterBudgetMb: DEFAULT_NODE_DECODE_BUDGET_MB,
       clusterMaxWorkers: this.config.maxLiveDecodeWorkers,
-      defaultBudgetMb: DEFAULT_CONFIG.nodeDecodeBudgetMb,
+      defaultBudgetMb: DEFAULT_NODE_DECODE_BUDGET_MB,
       defaultMaxWorkers: DEFAULT_CONFIG.maxLiveDecodeWorkers,
       node: {
-        decodeBudgetMb: fromSchema.decodeBudgetMb ?? fromAgent.decodeBudgetMb,
-        maxLiveDecodeWorkers: fromSchema.maxLiveDecodeWorkers ?? fromAgent.maxLiveDecodeWorkers,
+        decodeBudgetMb: this.config.decodeBudgetMb ?? fromAgent.decodeBudgetMb,
+        maxLiveDecodeWorkers: fromAgent.maxLiveDecodeWorkers,
       },
       totalMemMb: Math.round(os.totalmem() / 1_048_576),
     })
@@ -7000,22 +6983,51 @@ export default class PipelineRunnerAddon
   // fields live in `getAddonSettings()`. When the UI surface moves in
   // Phase 9 these will be rendered under Pipeline -> node -> Settings.
 
-  protected globalSettingsSchema() {
+  /**
+   * The cluster-wide rows of an older version become this runner's node rows (D986, D987), for
+   * every node the hub knows. The config was resolved before this ran, from node rows that did
+   * not exist yet, so it is resolved again once the copy landed.
+   */
+  private async migrateNodeFields(): Promise<void> {
+    const report = await this.runMigrations(
+      defineAddonMigrations(ADDON_MIGRATIONS, {
+        readStored: (keys) =>
+          readRawKeys((key) => this.readStoredGlobalKey(key), PIPELINE_RUNNER_ID, keys),
+        nodeIds: () =>
+          clusterNodeIds(() => this.ctx.api.nodes.directory.query(), this.ctx.kernel.localNodeId),
+      }),
+    )
+    if (report.applied.length > 0) await this.resolveConfig()
+  }
+
+  /**
+   * Every field of this form is a fact of ONE node's runner (D986): its tuning and its decode
+   * limits. They persist as `<key>@<nodeId>` rows; nothing is cluster-wide.
+   */
+  protected async nodeSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    return cap === 'pipeline-runner' ? this.nodeSchema() : null
+  }
+
+  /** The form the settings API still asks `globalSettingsSchema` for: the same node schema. */
+  protected globalSettingsSchema(): ConfigUISchema {
+    return this.nodeSchema()
+  }
+
+  private nodeSchema(): ConfigUISchema {
     return this.schema({
       sections: [
         {
           id: 'pipeline-runner-tuning',
           title: 'Pipeline Runner',
           tab: 'scheduler',
-          // Stored ONCE for the cluster (no `perNode`): every node's runner
-          // reads these values, so they are edited on Cluster → Settings.
-          description:
-            "Values every node's detection runner uses. A node's own decode limits (Engine & decoder) take precedence over the two decode values.",
+          // One value PER NODE: each node's runner reads its own row.
+          description: "Tuning of this node's detection runner.",
           columns: 2,
           fields: [
             {
               type: 'slider',
               key: 'maxConcurrentInferences',
+              perNode: true,
               label: 'Scheduler concurrency',
               description:
                 'Most inferences a node runs at once, across all its cameras. Not the same as the pool threads on the node Scheduler tab.',
@@ -7028,6 +7040,7 @@ export default class PipelineRunnerAddon
             {
               type: 'slider',
               key: 'maxQueueDepth',
+              perNode: true,
               label: 'Max queue depth',
               description: 'Maximum frames held per camera before dropping.',
               min: 5,
@@ -7039,6 +7052,7 @@ export default class PipelineRunnerAddon
             {
               type: 'slider',
               key: 'targetLoadPercent',
+              perNode: true,
               label: 'Target load',
               description: 'Percentage of inference capacity to target before throttling FPS.',
               min: 50,
@@ -7051,6 +7065,7 @@ export default class PipelineRunnerAddon
             {
               type: 'slider',
               key: 'minThrottledFps',
+              perNode: true,
               label: 'Min throttled FPS',
               description: 'Lowest FPS the runner will allow when load-shedding.',
               min: 1,
@@ -7062,6 +7077,7 @@ export default class PipelineRunnerAddon
             {
               type: 'slider',
               key: 'maxConcurrentDecodeSpawns',
+              perNode: true,
               label: 'Max concurrent decode-worker spawns',
               description:
                 'How many camera decoders a node may START at the same moment; the rest wait their turn. Stops a burst of motion on many cameras from overloading the GPU.',
@@ -7074,25 +7090,14 @@ export default class PipelineRunnerAddon
             {
               type: 'slider',
               key: 'maxLiveDecodeWorkers',
+              perNode: true,
               label: 'Max live decode workers',
               description:
-                'Most camera decoders running at once on a node (the RAM budget below usually decides first). A camera that does not fit is retried as soon as one frees up.',
+                'Most camera decoders running at once on this node (the RAM budget below usually decides first). A camera that does not fit is retried as soon as one frees up.',
               min: 1,
               max: 32,
               step: 1,
               default: DEFAULT_CONFIG.maxLiveDecodeWorkers,
-              showValue: true,
-            },
-            {
-              type: 'slider',
-              key: 'nodeDecodeBudgetMb',
-              label: 'Decode worker RAM budget (MB)',
-              description:
-                'RAM a node lets its camera decoders use, unless the node sets its own on Engine & decoder. Left at the default, each node uses half its RAM (2–16 GB). Each decoder counts ~660 MB with the default full-resolution crop settings, so raising those lowers how many decoders run at once.',
-              min: 1024,
-              max: 32_768,
-              step: 512,
-              default: DEFAULT_CONFIG.nodeDecodeBudgetMb,
               showValue: true,
             },
           ],
@@ -7102,32 +7107,18 @@ export default class PipelineRunnerAddon
           title: 'Decode limits',
           tab: 'engine',
           description:
-            "How much live decode THIS node may run. Auto uses the cluster default above, else half this node's RAM. The runner picks up changes on its next lease refresh.",
+            "How much RAM this node lets live decode use. Auto is half this node's RAM. The runner picks up changes on its next lease refresh.",
           columns: 2,
           fields: [
             {
               type: 'slider',
               key: 'decodeBudgetMb',
               label: 'Decode RAM budget (MB)',
-              description: 'RAM for live camera decoders on this node. Auto = cluster / half RAM.',
+              description:
+                "RAM for live camera decoders on this node. Auto = half this node's RAM.",
               min: 1024,
               max: 65_536,
               step: 512,
-              default: undefined,
-              showValue: true,
-              nullable: true,
-              nullLabel: 'Auto',
-              perNode: true,
-            },
-            {
-              type: 'slider',
-              key: 'decodeMaxLiveWorkers',
-              label: 'Max live decode workers',
-              description:
-                'Most camera decoders running at once on this node. Auto = cluster Max live decode workers.',
-              min: 1,
-              max: 32,
-              step: 1,
               default: undefined,
               showValue: true,
               nullable: true,
@@ -7157,7 +7148,7 @@ export default class PipelineRunnerAddon
         minThrottledFps: this.config.minThrottledFps,
         maxConcurrentDecodeSpawns: this.config.maxConcurrentDecodeSpawns,
         maxLiveDecodeWorkers: this.config.maxLiveDecodeWorkers,
-        nodeDecodeBudgetMb: this.config.nodeDecodeBudgetMb,
+        decodeBudgetMb: this.config.decodeBudgetMb,
         decodeCeilingInForce: this.liveWorkers?.ceiling,
         decodeWorkerFootprintMb: decodeWorkerFootprintMb(this.nativeLease.current()),
       },

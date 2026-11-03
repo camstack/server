@@ -13,6 +13,7 @@ import {
   AUDIO_BACKEND_CHOICES,
   BaseAddon,
   DEFAULT_AUDIO_ANALYZER_CONFIG,
+  defineAddonMigrations,
   EventCategory,
   audioAnalysisCapability,
   audioAnalyzerCapability,
@@ -27,6 +28,8 @@ import type {
   AudioClassificationResult as AudioPipelineResult,
   IAudioPipeline,
 } from '../../audio-pipeline.js'
+import { clusterNodeIds, readRawKeys } from '../../../node-fields-per-node.js'
+import { ADDON_MIGRATIONS, AUDIO_ANALYZER_ID } from './migrations/index.js'
 import { createAudioPipeline } from '../../audio-pipeline.js'
 import type { AudioAttachRequest } from '../../audio-device-attachments.js'
 import { AudioDeviceAttachments } from '../../audio-device-attachments.js'
@@ -884,7 +887,37 @@ export class AudioAnalyzerAddon extends BaseAddon<AudioAnalyzerGlobalConfig> {
     super(DEFAULT_AUDIO_ANALYZER_CONFIG)
   }
 
+  /**
+   * Every field of this form is a fact of ONE node (D986): the probed backend and the operator's
+   * choice. They persist as `<key>@<nodeId>` rows; nothing is cluster-wide.
+   */
+  protected async nodeSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    return cap === 'audio-analyzer' ? this.nodeSchema() : null
+  }
+
+  /** The form the settings API still asks `globalSettingsSchema` for: the same node schema. */
   protected globalSettingsSchema(): ConfigUISchema {
+    return this.nodeSchema()
+  }
+
+  /**
+   * The cluster-wide `audioBackend` of an older version becomes a node row for every node the hub
+   * knows (D986, D987). The config was resolved before this ran, so it is resolved again once
+   * the copy landed.
+   */
+  private async migrateNodeFields(): Promise<void> {
+    const report = await this.runMigrations(
+      defineAddonMigrations(ADDON_MIGRATIONS, {
+        readStored: (keys) =>
+          readRawKeys((key) => this.readStoredGlobalKey(key), AUDIO_ANALYZER_ID, keys),
+        nodeIds: () =>
+          clusterNodeIds(() => this.ctx.api.nodes.directory.query(), this.ctx.kernel.localNodeId),
+      }),
+    )
+    if (report.applied.length > 0) await this.resolveConfig()
+  }
+
+  private nodeSchema(): ConfigUISchema {
     return {
       sections: [
         {
@@ -901,7 +934,7 @@ export class AudioAnalyzerAddon extends BaseAddon<AudioAnalyzerGlobalConfig> {
           // (`order: 0`) on the "Inference Engine" tab.
           order: 10,
           description:
-            'The audio classifier. "Auto" uses Apple SoundAnalysis on macOS and YAMNet elsewhere. The backend choice is one value for the cluster (Cluster → Settings); the probed best is each node\'s own.',
+            'The audio classifier. "Auto" uses Apple SoundAnalysis on macOS and YAMNet elsewhere. The backend choice and the probed best are each node\'s own.',
           // Field order — `probedBest*` lives at the top so the operator
           // sees the auto-detected hint first and can compare it against
           // their override below at a glance. Same convention as the
@@ -917,7 +950,7 @@ export class AudioAnalyzerAddon extends BaseAddon<AudioAnalyzerGlobalConfig> {
               default: '',
               // The probe result is a NODE fact — persisted node-scoped
               // (`probedBestAudioBackend@<nodeId>`) by the BaseAddon per-node
-              // machinery. `audioBackend` stays cluster-shared.
+              // machinery, like `audioBackend`.
               perNode: true,
               actions: [
                 {
@@ -932,9 +965,10 @@ export class AudioAnalyzerAddon extends BaseAddon<AudioAnalyzerGlobalConfig> {
               key: 'audioBackend',
               label: 'Audio backend',
               description:
-                'One value for every node. Auto picks the best backend on each node; a choice a node cannot run falls back to Auto there.',
+                'Auto picks the best backend on this node; a choice this node cannot run falls back to Auto.',
               options: AUDIO_BACKEND_CHOICES.map((o) => ({ value: o.value, label: o.label })),
               default: DEFAULT_AUDIO_ANALYZER_CONFIG.audioBackend,
+              perNode: true,
               immediate: true,
             },
           ],
@@ -1065,6 +1099,7 @@ export class AudioAnalyzerAddon extends BaseAddon<AudioAnalyzerGlobalConfig> {
   }
 
   protected async onInitialize(): Promise<ProviderRegistration[]> {
+    await this.migrateNodeFields()
     const logger = this.ctx.logger as IScopedLogger
 
     // Enable/disable is driven by the binding system (per-device

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The runner's tuning fields, the broker's RTSP port and the audio analyzer's backend are now per-node settings; each node's existing value is copied to its node row, and the two duplicate decode-limit settings fold into one (a conflict is reported and nothing is changed)
+
 ## [1.2.638] - 2026-11-02
 
 ### Changed

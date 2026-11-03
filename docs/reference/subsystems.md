@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 7876 source files · 1248 file(s) in no subsystem.**
+**31 subsystems · 7880 source files · 1250 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -30,13 +30,13 @@ commits. A generated page may not.
 | Device providers (per vendor) | 763 | `architecture/device-model.md` _(covers)_, `addons/addon-provider-homeassistant.md` _(covers)_, `addons/addon-provider-reolink.md` _(covers)_, +84 more, 14 ADRs | 2026-10-26 | ✅ |
 | Decode and the data planes | 81 | `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-28-faces-plates-frame-locality.md` _(covers)_, `design/2026-08-29-media-plane-memory-comparison.md` _(covers)_, +28 more, 7 ADRs | 2026-10-13 | ⚠️ |
 | Detection execution and inference | 142 | `architecture/detection-execution.md`, `architecture/data-planes.md` _(covers)_, `architecture/inference-devices.md`, +62 more, 5 ADRs | 2026-10-24 | ✅ |
-| Pipeline orchestration and placement | 200 | `architecture/detection-execution.md` _(covers)_, `architecture/data-planes.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +104 more, 27 ADRs | 2026-11-02 | ✅ |
+| Pipeline orchestration and placement | 201 | `architecture/detection-execution.md` _(covers)_, `architecture/data-planes.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +104 more, 27 ADRs | 2026-11-02 | ✅ |
 | Post-analysis — tracking, the confirmation gate and media | 504 | `architecture/post-analysis.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-25-viewer-track-query-plan.md` _(covers)_, +174 more, 29 ADRs | 2026-10-14 | ✅ |
 | Face, plate and embedding recognition | 50 | `architecture/post-analysis.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-25-viewer-track-query-plan.md` _(covers)_, +26 more, 4 ADRs | 2026-10-04 | ⚠️ |
 | Notification Center — rules, outbox, occupancy, timelapse | 280 | `architecture/notifications.md`, `decisions/adr-0701-an-alarm-rule-gated-on-armed-auto-triggers-the-panel-and-post-siren-policy-lives-per-mode.md`, `design/2026-08-03-storage-table-map.md` _(covers)_, +92 more, 27 ADRs | 2026-10-07 | ✅ |
 | Recorder, scrub and recorded playback | 140 | `decisions/adr-0228-recording-write-stays-in-recorder-scrub-stays-on-the-live-webrtc-session.md`, `design/2026-08-25-reference-scrub-teardown-and-plan.md` _(covers)_, `design/2026-08-25-scrub-advanced-analysis.md` _(covers)_, +93 more, 19 ADRs | 2026-11-02 | ⚠️ |
 | Stream broker, WebRTC and live delivery | 170 | `architecture/data-planes.md`, `design/2026-08-29-media-plane-memory-comparison.md` _(covers)_, `decisions/adr-0228-recording-write-stays-in-recorder-scrub-stays-on-the-live-webrtc-session.md`, +42 more, 16 ADRs | 2026-10-08 | ✅ |
-| Audio analysis and audio delivery | 17 | `decisions/adr-0660-an-audio-window-waits-for-the-classifier-it-is-never-dropped-for-contention.md`, `decisions/adr-0450-the-audio-plane-carries-the-source-rate-and-the-one-consumer-that-needs-more-resamples-next-to-itself.md`, `decisions/adr-0455-the-audio-plane-carries-the-source-bytes-and-only-to-a-consumer-that-declared-it-reads-them.md`, +9 more | 2026-10-08 | ⚠️ |
+| Audio analysis and audio delivery | 18 | `decisions/adr-0660-an-audio-window-waits-for-the-classifier-it-is-never-dropped-for-contention.md`, `decisions/adr-0450-the-audio-plane-carries-the-source-rate-and-the-one-consumer-that-needs-more-resamples-next-to-itself.md`, `decisions/adr-0455-the-audio-plane-carries-the-source-bytes-and-only-to-a-consumer-that-declared-it-reads-them.md`, +9 more | 2026-10-08 | ⚠️ |
 | Zones and zone rules | 5 | `architecture/data-planes.md` _(covers)_, `architecture/detection-execution.md` _(covers)_, `design/2026-08-13-durable-value-tracking-and-runtime-state.md`, +2 more, 4 ADRs | 2026-10-24 | ⚠️ |
 | Storage, retention and backup | 131 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0328-the-live-sqlite-file-is-the-bind-the-container-has-open.md`, +62 more, 11 ADRs | 2026-11-02 | ⚠️ |
 | Secrets and the keychain | 30 | `architecture/secrets-keychain.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0787-a-secret-field-stores-a-keychain-marker-and-the-value-lives-in-the-keychain.md`, +23 more, 5 ADRs | 2026-11-02 | ✅ |
@@ -126,7 +126,7 @@ Decides which node runs which camera's pipeline, and keeps sessions, balancing a
 
 - **Owner doc**: `docs/architecture/detection-execution.md`
 - **Code**: `packages/addon-pipeline-orchestrator/src/*.ts`, `packages/addon-pipeline-orchestrator/src/durable/**`, `packages/addon-pipeline-orchestrator/src/camera-status/**`, `packages/addon-pipeline-orchestrator/src/camera-sensors/**`, `packages/addon-pipeline/src/pipeline-runner/**`, `packages/addon-pipeline-orchestrator/src/widgets/**`, `packages/addon-pipeline-orchestrator/src/auto-tune/**`, `packages/system/src/pipeline/**`, `packages/types/src/pipeline/**`
-- **Files**: 200 (200 claimed by some document)
+- **Files**: 201 (201 claimed by some document)
 - **Uncovered**: —
 
 ### ✅ Post-analysis — tracking, the confirmation gate and media
@@ -180,8 +180,8 @@ Detects events in sound rather than pixels, and carries audio alongside video.
 
 - **Owner doc**: — none
 - **Code**: `packages/addon-pipeline/src/audio-analyzer/**`, `packages/addon-decoder-nodeav/src/audio-codec/**`, `packages/types/src/audio/**`
-- **Files**: 17 (11 claimed by some document)
-- **Uncovered**: `packages/addon-decoder-nodeav/src/audio-codec` (4), `packages/addon-pipeline/src/audio-analyzer` (2)
+- **Files**: 18 (11 claimed by some document)
+- **Uncovered**: `packages/addon-decoder-nodeav/src/audio-codec` (4), `packages/addon-pipeline/src/audio-analyzer` (2), `packages/addon-pipeline/src/audio-analyzer/addons/analyzer/migrations` (1)
 
 ### ⚠️ Zones and zone rules
 
@@ -341,4 +341,4 @@ Everything that measures or builds CamStack rather than running it — the bench
 The taxonomy has a hole here. This list is the `--max-orphans` ratchet in
 `.github/workflows/ci.yml`; it only ever goes down.
 
-`packages/addon-waste-collections/python/vendor/waste_collection_schedule/source` (978), `packages/addon-waste-collections/python/vendor/waste_collection_schedule/service` (30), `packages/addon-google-services/src` (13), `packages/addon-waste-collections/src` (13), `packages/types/src/records` (13), `packages/mcp-dev/src/ops` (10), +63 more directories
+`packages/addon-waste-collections/python/vendor/waste_collection_schedule/source` (978), `packages/addon-waste-collections/python/vendor/waste_collection_schedule/service` (30), `packages/addon-google-services/src` (13), `packages/addon-waste-collections/src` (13), `packages/types/src/records` (13), `packages/mcp-dev/src/ops` (10), +65 more directories

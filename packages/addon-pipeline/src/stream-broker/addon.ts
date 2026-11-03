@@ -1,8 +1,11 @@
-import type { ProviderRegistration } from '@camstack/types'
+import type { ConfigUISchema, ProviderRegistration } from '@camstack/types'
+import { clusterNodeIds, readRawKeys } from '../node-fields-per-node.js'
+import { ADDON_MIGRATIONS, STREAM_BROKER_ID } from './migrations/index.js'
 import { createClientLogIngest, entryDeviceId } from './client-log-ingest'
 import { type BrokerFfmpegWiring, wireBrokerFfmpeg } from './stream-broker/ffmpeg-reresolve.js'
 import {
   BaseAddon,
+  defineAddonMigrations,
   EventCategory,
   createEvent,
   streamBrokerCapability,
@@ -296,7 +299,25 @@ export class StreamBrokerAddon extends BaseAddon<StreamBrokerConfig> {
     return await this.pinnedFfmpeg()
   }
 
+  /**
+   * The cluster-wide `rtspPort` of an older version becomes a node row for every node the hub
+   * knows (D986, D987). The config was resolved before this ran, so it is resolved again once
+   * the copy landed.
+   */
+  private async migrateNodeFields(): Promise<void> {
+    const report = await this.runMigrations(
+      defineAddonMigrations(ADDON_MIGRATIONS, {
+        readStored: (keys) =>
+          readRawKeys((key) => this.readStoredGlobalKey(key), STREAM_BROKER_ID, keys),
+        nodeIds: () =>
+          clusterNodeIds(() => this.ctx.api.nodes.directory.query(), this.ctx.kernel.localNodeId),
+      }),
+    )
+    if (report.applied.length > 0) await this.resolveConfig()
+  }
+
   protected async onInitialize(): Promise<ProviderRegistration[]> {
+    await this.migrateNodeFields()
     // Declare this addon's log channels to the cluster. The import of
     // `./log-channels.js` is what RUNS the declarations; registering the
     // provider is what lets the hub enumerate them and push an armed window
@@ -1288,6 +1309,59 @@ export class StreamBrokerAddon extends BaseAddon<StreamBrokerConfig> {
     })
   }
 
+  /**
+   * The fields of this form that are a fact of ONE node (D986): the RTSP port, the transcode
+   * hardware and the ffmpeg path. They persist as `<key>@<nodeId>` rows.
+   */
+  private nodeFields(): ConfigUISchema['sections'][number]['fields'] {
+    return [
+      {
+        type: 'number',
+        key: 'rtspPort',
+        label: 'RTSP Restream Port',
+        description: "Port of this node's RTSP restream server. Requires restart.",
+        min: 1024,
+        max: 65535,
+        step: 1,
+        default: 8554,
+        perNode: true,
+      },
+      {
+        type: 'select',
+        key: 'hwaccel',
+        label: 'Transcode hardware acceleration',
+        description:
+          'Per-node decode/encode hwaccel for the WebRTC/restream transcode path. "Software (copy)" is the safe default (decodes every HEVC source); a concrete backend is resolved from this node’s own hardware. Per-node because hardware differs per node.',
+        options: [...FFMPEG_HW_ACCEL_SETTINGS].map((s) => ({
+          value: s,
+          label: hwAccelOptionLabel(s),
+        })),
+        default: 'copy',
+        perNode: true,
+      },
+      {
+        type: 'text',
+        key: 'binaryPath',
+        label: 'ffmpeg binary path (override)',
+        description:
+          'Optional per-node override for the ffmpeg binary. Leave empty to auto-provision a portable static ffmpeg on this node (recommended).',
+        placeholder: 'ffmpeg',
+        default: '',
+        perNode: true,
+      },
+    ]
+  }
+
+  protected async nodeSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    return cap === 'stream-broker'
+      ? this.schema({
+          sections: [
+            { id: 'stream-broker-node', title: 'Stream Broker', fields: this.nodeFields() },
+          ],
+        })
+      : null
+  }
+
   protected globalSettingsSchema() {
     return this.schema({
       sections: [
@@ -1308,39 +1382,7 @@ export class StreamBrokerAddon extends BaseAddon<StreamBrokerConfig> {
               default: DEFAULT_PREBUFFER_SEC,
               unit: 's',
             },
-            {
-              type: 'number',
-              key: 'rtspPort',
-              label: 'RTSP Restream Port',
-              description: 'Port for the RTSP restream server. Requires restart.',
-              min: 1024,
-              max: 65535,
-              step: 1,
-              default: 8554,
-            },
-            {
-              type: 'select',
-              key: 'hwaccel',
-              label: 'Transcode hardware acceleration',
-              description:
-                'Per-node decode/encode hwaccel for the WebRTC/restream transcode path. "Software (copy)" is the safe default (decodes every HEVC source); a concrete backend is resolved from this node’s own hardware. Per-node because hardware differs per node.',
-              options: [...FFMPEG_HW_ACCEL_SETTINGS].map((s) => ({
-                value: s,
-                label: hwAccelOptionLabel(s),
-              })),
-              default: 'copy',
-              perNode: true,
-            },
-            {
-              type: 'text',
-              key: 'binaryPath',
-              label: 'ffmpeg binary path (override)',
-              description:
-                'Optional per-node override for the ffmpeg binary. Leave empty to auto-provision a portable static ffmpeg on this node (recommended).',
-              placeholder: 'ffmpeg',
-              default: '',
-              perNode: true,
-            },
+            ...this.nodeFields(),
             {
               type: 'number',
               key: 'joinBurstMaxSpanMs',
