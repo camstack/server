@@ -38,6 +38,12 @@ const CANDIDATES = [
   candidate('dev:3', 'Garage Door', 'cover'),
   candidate('dev:4', 'Porch Camera', 'camera', true),
   candidate('dev:5', 'Living Room Thermostat', 'climate'),
+  candidate('alexa:G0014D060156024W', 'Echo Flex Giardino', 'speaker'),
+  candidate(
+    'alexa:76b7a6b8c1d24e0f9a3b5c7d8e9f0a1b',
+    "roberta's Voice in a can for Apple Watch",
+    'speaker',
+  ),
 ]
 
 export default defineFixtures({

@@ -627,7 +627,7 @@ function FilterSelector({ filters, activeFilter, onSelect }: FilterSelectorProps
   )
 }
 
-interface CandidateNameCellProps {
+export interface CandidateNameCellProps {
   candidate: DiscoveredChildDevice
   // Nesting level under a parent candidate (0 = top level).
   depth: number
@@ -648,7 +648,7 @@ interface CandidateNameCellProps {
  * when the candidate has entity-children to expand; its entity count rides
  * alongside it — candidate-specific affordance preserved.
  */
-function CandidateNameCell({
+export function CandidateNameCell({
   candidate,
   depth,
   expandable,
@@ -688,12 +688,18 @@ function CandidateNameCell({
         </span>
       )}
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <span className="truncate text-xs font-medium text-foreground">{candidate.name}</span>
-          {distinguisher.length > 0 && (
-            <span className="truncate text-[10px] text-foreground-subtle">{distinguisher}</span>
-          )}
+        <div className="truncate text-xs font-medium text-foreground" data-testid="candidate-name">
+          {candidate.name}
         </div>
+        {/* Model and id tail: its own line, so it can never shorten the name. */}
+        {distinguisher.length > 0 && (
+          <div
+            className="truncate text-[10px] text-foreground-subtle"
+            data-testid="candidate-subtitle"
+          >
+            {distinguisher}
+          </div>
+        )}
         {/* The Type column is hidden on a phone: its label rides under the name. */}
         <div className="truncate text-[10px] text-foreground-subtle sm:hidden">{typeLabel}</div>
       </div>
