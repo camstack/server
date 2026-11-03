@@ -795,6 +795,51 @@ export const APPLIANCE_CAP_VOCABULARY: CapVocabularySlice<ApplianceCap> = {
     noun: t('Media player', 'Lettore multimediale'),
     actions: [
       {
+        id: 'media.turnOn',
+        method: 'turnOn',
+        label: t('Turn on', 'Accendi'),
+        phrase: t('Turn on {device}', 'Accendi {device}'),
+        icon: 'power',
+      },
+      {
+        id: 'media.turnOff',
+        method: 'turnOff',
+        label: t('Turn off', 'Spegni'),
+        phrase: t('Turn off {device}', 'Spegni {device}'),
+        icon: 'power',
+      },
+      {
+        id: 'media.volumeUp',
+        method: 'volumeUp',
+        label: t('Volume up', 'Alza il volume'),
+        phrase: t('Raise the volume of {device}', 'Alza il volume di {device}'),
+        icon: 'volume-2',
+      },
+      {
+        id: 'media.volumeDown',
+        method: 'volumeDown',
+        label: t('Volume down', 'Abbassa il volume'),
+        phrase: t('Lower the volume of {device}', 'Abbassa il volume di {device}'),
+        icon: 'volume-2',
+      },
+      {
+        id: 'media.channelUp',
+        method: 'channelUp',
+        label: t('Channel up', 'Canale successivo'),
+        phrase: t('Go to the next channel on {device}', 'Passa al canale successivo su {device}'),
+        icon: 'skip-forward',
+      },
+      {
+        id: 'media.channelDown',
+        method: 'channelDown',
+        label: t('Channel down', 'Canale precedente'),
+        phrase: t(
+          'Go to the previous channel on {device}',
+          'Torna al canale precedente su {device}',
+        ),
+        icon: 'skip-back',
+      },
+      {
         id: 'media.play',
         method: 'play',
         label: t('Play', 'Riproduci'),
