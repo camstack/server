@@ -3,12 +3,9 @@
  * device, D1004); `helper` is the picker whose other tiles are the aggregators.
  * The room is set later, on the device.
  */
+import { useCreateComposition } from '../../lib/create-composition'
 import { type Composition, groupTemplate } from '@camstack/types'
-import {
-  useCoreBlocksCreateComposition,
-  useDeviceManagerListPersistedByAddon,
-  useDeviceManagerSetName,
-} from '@camstack/ui-library'
+import { useDeviceManagerListPersistedByAddon, useDeviceManagerSetName } from '@camstack/ui-library'
 import type { TFunction } from 'i18next'
 import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -49,7 +46,7 @@ export function CompositionCreateForm({ mode, onTitle }: CompositionCreateFormPr
 function HelperCreate({ onTitle }: TitleSink): ReactNode {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const create = useCoreBlocksCreateComposition()
+  const create = useCreateComposition()
   const setName = useDeviceManagerSetName()
   const fleet = useDeviceManagerListPersistedByAddon({ addonId: 'composer' })
   const [draft, setDraft] = useState<HelperDraft | null>(null)

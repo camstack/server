@@ -8,7 +8,8 @@
  * look, and only for its own device type (a heater, an appliance, a media
  * player), so the same plug read differently from one device to the next.
  *
- * Scope: `packages/ui-library/src/composites/device-controls/` runtime files.
+ * Scope: `packages/ui-library/src/composites/device-controls/` and the admin-ui
+ * hero cards (`packages/addon-admin-ui/src/components/device/hero/`) runtime files.
  * The two files that serve a SENSOR device — whose reading IS the device —
  * are the only ones that may read the slice. Comment-only lines are skipped.
  * Textual: a name assembled at runtime passes.
@@ -19,6 +20,7 @@ import { fileURLToPath } from 'node:url'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const DIR = 'packages/ui-library/src/composites/device-controls'
+const HERO_DIRS = [DIR, 'packages/addon-admin-ui/src/components/device/hero']
 
 /** A sensor device's own reading: the sensor hero resolves its source slice here. */
 const ALLOWED = new Set([`${DIR}/sensor-hero-source.ts`, `${DIR}/sensor-value-atom.tsx`])
@@ -63,7 +65,7 @@ export function findSelfDrawnPower(
 
 function main(): void {
   const paths: string[] = []
-  walk(path.join(ROOT, DIR), paths)
+  for (const d of HERO_DIRS) walk(path.join(ROOT, d), paths)
   const files = paths.map((p) => ({
     rel: path.relative(ROOT, p).split(path.sep).join('/'),
     content: readFileSync(p, 'utf-8'),

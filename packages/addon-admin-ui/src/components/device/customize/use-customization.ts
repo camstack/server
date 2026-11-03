@@ -3,9 +3,9 @@
  * plan in `customization-save.ts`. Every refusal — the plan's or the server's,
  * which names each problem by path (D391) — comes back as a reason to show.
  */
+import { useCreateComposition } from '../../../lib/create-composition'
 import type { Composition, CompositionSourceRef } from '@camstack/types'
 import {
-  useCoreBlocksCreateComposition,
   useCoreBlocksDelete,
   useCoreBlocksGetCustomization,
   useCoreBlocksUpdateComposition,
@@ -40,7 +40,7 @@ export function useCustomization(target: CompositionSourceRef): CustomizationHan
     addonId: target.addonId,
     stableId: target.stableId,
   })
-  const create = useCoreBlocksCreateComposition()
+  const create = useCreateComposition()
   const update = useCoreBlocksUpdateComposition()
   const remove = useCoreBlocksDelete()
   const state = resolveCustomization({

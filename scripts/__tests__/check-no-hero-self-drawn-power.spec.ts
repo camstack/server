@@ -20,4 +20,14 @@ describe('check-no-hero-self-drawn-power', () => {
       ]),
     ).toEqual([])
   })
+
+  it('also watches the admin-ui hero cards', () => {
+    const found = findSelfDrawnPower([
+      {
+        rel: 'packages/addon-admin-ui/src/components/device/hero/HeaterHero.tsx',
+        content: 'const watts = device.powerMeter?.power\n',
+      },
+    ])
+    expect(found).toHaveLength(1)
+  })
 })

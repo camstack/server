@@ -3,13 +3,13 @@
  * where the type needs it pick the one source it is meaningless without. The
  * device is created naked; everything else attaches through Customize.
  */
+import { useCreateComposition } from '../../lib/create-composition'
 import { DeviceType, type HelperMember } from '@camstack/types'
 import {
   Button,
   deviceTypeMetaOf,
   Input,
   Select,
-  useCoreBlocksCreateComposition,
   useDeviceManagerListPersistedByAddon,
   useDeviceManagerSetName,
   useUiText,
@@ -30,7 +30,7 @@ export function DeviceCreateForm({ onTitle }: DeviceCreateFormProps): ReactNode 
   const { t } = useTranslation()
   const uiText = useUiText()
   const navigate = useNavigate()
-  const create = useCoreBlocksCreateComposition()
+  const create = useCreateComposition()
   const setName = useDeviceManagerSetName()
   const fleet = useDeviceManagerListPersistedByAddon({ addonId: 'composer' })
   const [type, setType] = useState<DeviceType>(DeviceType.Sensor)

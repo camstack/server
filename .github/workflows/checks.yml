@@ -321,6 +321,8 @@ jobs:
             scripts/check-reserved-collection-sources.ts \
             scripts/check-no-legacy-tracker.ts \
             scripts/check-no-hero-self-drawn-power.ts \
+            scripts/check-helper-kinds-are-aggregators.ts \
+            scripts/check-single-composition-creator.ts \
             scripts/check-migrations-well-formed.ts \
             scripts/check-no-camera-model-layer.ts \
             scripts/check-no-hub-address-env.ts \
