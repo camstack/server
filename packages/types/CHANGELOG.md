@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.491] - 2026-11-03
+
 ### Changed
 
 - Log tags gain source, user, platform, appVersion and clientSessionId; the data-plane gate names the authenticated caller in x-camstack-user

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.757] - 2026-11-03
+
 ### Changed
 
 - The data-plane gate writes the authenticated caller's username into x-camstack-user (client-supplied value dropped)

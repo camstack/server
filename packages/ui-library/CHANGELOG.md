@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.379] - 2026-11-03
+
 ### Changed
 
 - LogStream can offer an Origin filter (all / viewer app)

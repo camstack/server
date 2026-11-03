@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.220] - 2026-11-03
+
 ### Changed
 
 - MCP: assisted-setup tools (setup_locations, setup_recording, setup_streams, setup_benchmark, setup_pipeline and their gated configure_setup_* applies), debug_report (versions, streams, churn, tracks and media per kind, viewer lines) and client_logs for the viewer app's own log
