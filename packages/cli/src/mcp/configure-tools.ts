@@ -19,6 +19,7 @@ import type { McpContext, ToolTextResult } from './context.js'
 import { registerAddonTools } from './configure-addons.js'
 import { registerCameraTools } from './configure-cameras.js'
 import { registerNotifierTools } from './configure-notifiers.js'
+import { registerSetupApplyTools } from './setup-register.js'
 import { noSessionResult } from './ops-tools.js'
 
 export interface RenameDeviceArgs {
@@ -108,4 +109,5 @@ export function registerConfigureTools(server: McpServer, ctx: McpContext): void
   registerCameraTools(server, ctx)
   registerNotifierTools(server, ctx)
   registerConfigureP3bTools(server, ctx)
+  registerSetupApplyTools(server, ctx)
 }

@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**234 units · 7916 source files · 221 units claimed by at least one document (7872 files).**
+**234 units · 7927 source files · 221 units claimed by at least one document (7883 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -40,6 +40,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-admin-ui/src/lib` | 62 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `ui/admin-patterns.md`, +22 more, 1 ADR | 2026-11-02 |
 | `packages/addon-pipeline/src/detection-pipeline` | 61 | `detection-execution` | `architecture/data-planes.md` _(covers)_, `architecture/detection-execution.md`, `architecture/inference-devices.md`, +50 more, 5 ADRs | 2026-10-24 |
 | `packages/addon-provider-reolink` | 61 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0847-a-battery-camera-refreshes-everything-it-owns-once-per-window-by-an-awake-moment-or-one-wake.md`, +21 more, 2 ADRs | 2026-10-26 |
+| `packages/cli/src/mcp` | 61 | `tooling` | `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `architecture/assisted-setup-mcp.md`, `decisions/adr-0975-the-home-assistant-integration-stays-a-custom-repository-and-its-docs-change-only-after-the-core-marketplace-ships.md` _(covers)_, +2 more | 2026-11-03 |
 | `packages/addon-training/src/page` | 60 | `cloud-training` | `architecture/cloud-training.md`, `decisions/adr-0790-a-machine-proposed-retrain-box-is-a-draft-until-the-operator-confirms-it.md`, `decisions/adr-0849-retrain-annotations-keep-their-origin.md`, +4 more, 1 ADR | 2026-10-14 |
 | `packages/addon-pipeline/src/pipeline-runner` | 58 | `pipeline-orchestration`, `zones` | `architecture/data-planes.md`, `architecture/detection-execution.md` _(covers)_, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +42 more, 14 ADRs | 2026-10-24 |
 | `packages/addon-import-alexa` | 57 | `ecosystem-exports` | `addons/addon-import-alexa.md` _(covers)_, `decisions/adr-0947-echo-speech-uses-a-long-lived-alexapy-worker.md`, `decisions/adr-0949-echo-speech-signs-in-as-an-import-broker.md`, +4 more | — |
@@ -48,7 +49,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/types/src/device` | 52 | `device-model` | `architecture/device-model.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0920-a-devices-vocabulary-is-one-cap-keyed-map-outside-the-caps.md`, +26 more, 1 ADR | 2026-11-02 |
 | `packages/addon-ai` | 51 | `ai` | `addons/addon-ai.md` _(covers)_, `design/2026-08-28-tts-stt-capabilities.md` _(covers)_, `decisions/adr-0639-apple-foundation-models-runs-as-a-supervised-child-behind-llm-runtime.md`, +8 more, 1 ADR | 2026-10-18 |
 | `packages/addon-provider-hikvision` | 51 | `device-providers` | `addons/addon-provider-hikvision.md` _(covers)_, `architecture/device-model.md` _(covers)_, `design/2026-09-24-onboard-source-for-recordings-motion-events.md` _(covers)_, +12 more, 2 ADRs | 2026-10-26 |
-| `packages/cli/src/mcp` | 50 | `tooling` | `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `decisions/adr-0975-the-home-assistant-integration-stays-a-custom-repository-and-its-docs-change-only-after-the-core-marketplace-ships.md` _(covers)_, `decisions/adr-0980-an-automation-has-one-when-tree-an-event-is-an-instant-a-state-is-a-fact-and-a-detection-is-a-macro-class-with-an-optional-label.md`, +1 more | — |
 | `packages/addon-pipeline/src/session-decode` | 49 | `decode-and-data-planes` | `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-28-faces-plates-frame-locality.md` _(covers)_, `design/2026-08-29-media-plane-memory-comparison.md` _(covers)_, +13 more, 4 ADRs | 2026-08-29 |
 | `packages/desktop` | 46 | `secrets`, `tooling` | `decisions/adr-0943-the-product-release-is-not-the-npm-version.md`, `decisions/adr-0402-a-certificate-bypass-is-scoped-to-the-role-that-needs-it.md`, `decisions/adr-0846-the-windows-agent-service-is-a-pinned-winsw-around-a-supervisor-and-never-runs-user-writable-code.md`, +8 more | 2026-10-27 |
 | `packages/addon-export-hap/src/mappers` | 42 | `ecosystem-exports` | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md`, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +5 more, 9 ADRs | 2026-09-29 |

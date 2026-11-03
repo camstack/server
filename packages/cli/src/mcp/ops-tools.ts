@@ -16,6 +16,7 @@ import { opsLogs } from './ops-logs.js'
 import { opsStatus } from './ops-status.js'
 import { opsUpdateApply, UPDATE_APPLY_TOOL } from './ops-update-apply.js'
 import { opsUpdateCheck } from './ops-update-check.js'
+import { registerSetupReadTools } from './setup-register.js'
 import {
   allCurrent,
   formatWarning,
@@ -96,6 +97,7 @@ export function registerOpsTools(
   /** The preflight's own refresh, so `version_check` also warms its cache. */
   refreshVersions: () => Promise<VersionProbe> = () => probeVersions(ctx),
 ): void {
+  registerSetupReadTools(server, ctx)
   server.tool(
     'ops_whoami',
     'Which hub this MCP talks to and as whom, from the `camstack login` session (no network call). If there is no session, says to run `camstack login <host>` in a terminal.',

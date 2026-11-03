@@ -9,6 +9,7 @@
  * Nothing leaves without the output scrub, so a value the scrubber hides stays
  * hidden.
  */
+import type { HubClient } from '@camstack/develop'
 import { z } from 'zod'
 import type { McpContext } from './context.js'
 import { cap, readQuery, withHub, type NoSessionResult, type RefusedResult } from './ops-hub.js'
@@ -24,7 +25,7 @@ const LogEntrySchema = z.looseObject({
   tags: z.record(z.string(), z.string().optional()).optional(),
   meta: z.record(z.string(), z.unknown()).optional(),
 })
-type LogEntry = z.infer<typeof LogEntrySchema>
+export type LogEntry = z.infer<typeof LogEntrySchema>
 
 const LogPageSchema = z.looseObject({
   entries: z.array(LogEntrySchema),
@@ -161,14 +162,14 @@ function tagsOf(args: OpsLogsArgs): {
   }
 }
 
-interface PageQuery {
+export interface PageQuery {
   readonly source: string
   readonly since: number
   readonly until: number
   readonly args: OpsLogsArgs
   readonly text?: string
   readonly limit: number
-  readonly tags?: { deviceId?: string; addonId?: string; nodeId?: string }
+  readonly tags?: { readonly [tag: string]: string }
 }
 
 function pageInput(q: PageQuery): { [key: string]: unknown } {
@@ -202,6 +203,91 @@ const lineOf = (e: LogEntry): LogLine => ({
   deviceId: e.tags?.['deviceId'] ?? null,
 })
 
+type TierPage = z.infer<typeof LogPageSchema>
+
+/**
+ * The tiered read: the ring first; the persisted default destination when the
+ * ring does not reach back to the start of the window. `tried` and
+ * `unavailable` are filled as tiers are asked, so the caller can say which one
+ * answered and which could not.
+ */
+export function makeTierQuery(
+  client: HubClient,
+  tried: string[],
+  unavailable: { [part: string]: string },
+): (q: Omit<PageQuery, 'source'>) => Promise<{ tier: string; page: TierPage } | null> {
+  const fetchTier = async (
+    source: string,
+    q: Omit<PageQuery, 'source'>,
+  ): Promise<TierPage | null> => {
+    tried.push(source === RING_SOURCE ? RING_SOURCE : `persisted:${source}`)
+    const read = await readQuery(client, 'logs.query', pageInput({ ...q, source }), LogPageSchema)
+    if (!read.ok) {
+      unavailable[source] = read.reason
+      return null
+    }
+    return read.value
+  }
+
+  const persistedSource = async (): Promise<string | null> => {
+    const sources = await readQuery(client, 'logs.sources', undefined, LogSourcesSchema)
+    if (!sources.ok) {
+      unavailable['logs.sources'] = sources.reason
+      return null
+    }
+    return sources.value.find((s) => s.isDefault && s.readable)?.addonId ?? null
+  }
+
+  return async (q) => {
+    const ring = await fetchTier(RING_SOURCE, q)
+    if (ring && ringCovers(ring.entries, q.since, q.limit)) return { tier: RING_SOURCE, page: ring }
+    const persisted = await persistedSource()
+    if (persisted !== null) {
+      const page = await fetchTier(persisted, q)
+      if (page) return { tier: `persisted:${persisted}`, page }
+    }
+    // The ring is all there is: its answer stands, flagged by `tier`.
+    return ring ? { tier: RING_SOURCE, page: ring } : null
+  }
+}
+
+/** One camera's log lines in a window, through the tiers. Never throws. */
+export interface LogWindow {
+  readonly tier: string
+  readonly tiersTried: readonly string[]
+  readonly entries: readonly LogEntryView[]
+  /** True when the page was cut by the line cap: older lines exist. */
+  readonly partial: boolean
+  readonly unavailable: { readonly [part: string]: string }
+}
+
+export type LogEntryView = LogEntry
+
+export async function readLogWindow(
+  client: HubClient,
+  args: { readonly deviceId: number; readonly sinceMs: number; readonly untilMs: number },
+): Promise<LogWindow> {
+  const tried: string[] = []
+  const unavailable: { [part: string]: string } = {}
+  const query = makeTierQuery(client, tried, unavailable)
+  const answered = await query({
+    since: args.sinceMs,
+    until: args.untilMs,
+    args: { deviceId: args.deviceId },
+    limit: FETCH_LIMIT,
+  })
+  if (answered === null) {
+    return { tier: 'none', tiersTried: tried, entries: [], partial: false, unavailable }
+  }
+  return {
+    tier: answered.tier,
+    tiersTried: tried,
+    entries: answered.page.entries,
+    partial: !answered.page.done || answered.page.entries.length >= FETCH_LIMIT,
+    unavailable,
+  }
+}
+
 export async function opsLogs(
   ctx: McpContext,
   args: OpsLogsArgs,
@@ -221,46 +307,7 @@ export async function opsLogs(
     const unavailable: { [part: string]: string } = {}
     const tried: string[] = []
 
-    const fetchTier = async (
-      source: string,
-      q: Omit<PageQuery, 'source'>,
-    ): Promise<z.infer<typeof LogPageSchema> | null> => {
-      tried.push(source === RING_SOURCE ? RING_SOURCE : `persisted:${source}`)
-      const read = await readQuery(client, 'logs.query', pageInput({ ...q, source }), LogPageSchema)
-      if (!read.ok) {
-        unavailable[source] = read.reason
-        return null
-      }
-      return read.value
-    }
-
-    const persistedSource = async (): Promise<string | null> => {
-      const sources = await readQuery(client, 'logs.sources', undefined, LogSourcesSchema)
-      if (!sources.ok) {
-        unavailable['logs.sources'] = sources.reason
-        return null
-      }
-      return sources.value.find((s) => s.isDefault && s.readable)?.addonId ?? null
-    }
-
-    // Pick the tier whose page holds the window, ring first.
-    const query = async (
-      q: Omit<PageQuery, 'source'>,
-    ): Promise<{
-      tier: string
-      page: z.infer<typeof LogPageSchema>
-    } | null> => {
-      const ring = await fetchTier(RING_SOURCE, q)
-      if (ring && ringCovers(ring.entries, q.since, q.limit))
-        return { tier: RING_SOURCE, page: ring }
-      const persisted = await persistedSource()
-      if (persisted !== null) {
-        const page = await fetchTier(persisted, q)
-        if (page) return { tier: `persisted:${persisted}`, page }
-      }
-      // The ring is all there is: its answer stands, flagged by `tier`.
-      return ring ? { tier: RING_SOURCE, page: ring } : null
-    }
+    const query = makeTierQuery(client, tried, unavailable)
 
     const base = { since, until, args, limit: FETCH_LIMIT }
 
