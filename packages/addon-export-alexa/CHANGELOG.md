@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.181] - 2026-11-03
+
 ### Changed
 
 - Fixes the Alexa account-link migration that failed with 'tokens.find is not a function' and could delete the old link settings without a verified copy; a retry now repairs a partial link record
