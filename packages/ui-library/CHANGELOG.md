@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Generated hooks include the media-player power and step methods
 - Media-player hero shows only what the device reports: no fake 0% volume, no empty now-playing, and an assumed state is marked as assumed
+- A closed mobile drawer or bottom sheet mounts nothing, so no off-screen layer blurs the top bar on iPhone; the app shell top bar is opaque
 
 ## [1.2.375] - 2026-11-02
 

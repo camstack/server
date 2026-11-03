@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Infrared TVs get a Remote button on the device page, a per-button command panel with Test in the remote editor, layout edit shortcuts, readable binding targets and Samsung BN59-01315 and Hisense ERF3 layouts
 - Remote Access lists tunnels as records with a separate Start/Stop control per provider.
+- Toasts over the top bar are no longer blurred on iPhone
 
 ## [1.2.564] - 2026-11-02
 

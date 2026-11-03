@@ -1039,7 +1039,7 @@ function InstalledTab({
           iOS notch — so the safe-area offsets are what keep this off the
           status bar. They collapse to `1rem` where the insets are 0. */}
       {showBulkRestartToast && (
-        <div className="fixed top-[calc(env(safe-area-inset-top)+1rem)] right-[calc(env(safe-area-inset-right)+1rem)] z-50 flex items-start gap-2 px-3 py-2.5 rounded-md border border-green-500/30 bg-green-500/10 shadow-lg backdrop-blur-sm max-w-sm pointer-events-auto">
+        <div className="fixed top-[calc(env(safe-area-inset-top)+1rem)] right-[calc(env(safe-area-inset-right)+1rem)] z-50 flex items-start gap-2 px-3 py-2.5 rounded-md border border-green-500/30 bg-green-500/10 shadow-lg max-w-sm pointer-events-auto">
           <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-green-400" />
           <div>
             <div className="text-[11px] font-semibold text-foreground">

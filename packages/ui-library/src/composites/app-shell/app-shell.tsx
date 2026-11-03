@@ -51,7 +51,7 @@ export function AppShell({
       <div className="flex flex-1 flex-col min-w-0">
         {/* Mobile top bar */}
         {isMobile && (
-          <header className="flex items-center h-12 border-b border-border px-3 shrink-0 bg-surface/80 backdrop-blur-sm">
+          <header className="flex items-center h-12 border-b border-border px-3 shrink-0 bg-surface">
             <button
               onClick={() => setDrawerOpen(true)}
               className="p-1.5 -ml-1.5 rounded-md hover:bg-surface-hover text-foreground-muted transition-colors"

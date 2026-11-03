@@ -125,7 +125,7 @@ function ToastStack({ toasts }: { toasts: readonly CompletionToast[] }) {
       {toasts.map((t) => (
         <div
           key={t.id}
-          className="pointer-events-auto flex items-start gap-2 px-3 py-2.5 rounded-md border border-green-500/30 bg-green-500/10 shadow-lg backdrop-blur-sm"
+          className="pointer-events-auto flex items-start gap-2 px-3 py-2.5 rounded-md border border-green-500/30 bg-green-500/10 shadow-lg"
         >
           <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-green-400" />
           <div>

@@ -16,7 +16,7 @@ export function BottomSheet({
   title,
   children,
   className,
-}: BottomSheetProps): JSX.Element {
+}: BottomSheetProps): JSX.Element | null {
   useEffect(() => {
     if (!open) return
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -30,14 +30,16 @@ export function BottomSheet({
     }
   }, [open, onClose])
 
+  // Mounted only while open: a closed, transparent full-screen backdrop and an
+  // off-screen sheet remain composited fixed layers above the page chrome and
+  // dim/blur the non-scrolling top bar on iOS WebKit (installed PWA).
+  if (!open) return null
+
   return (
     <>
       {/* Backdrop */}
       <div
-        className={cn(
-          'fixed inset-0 z-40 bg-black/50 transition-opacity duration-200',
-          open ? 'opacity-100' : 'pointer-events-none opacity-0',
-        )}
+        className="fixed inset-0 z-40 bg-black/50 animate-in fade-in duration-200"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -52,9 +54,8 @@ export function BottomSheet({
           // that edge (its background fills the gap), so the inset is absorbed
           // as padding — without it the sheet's last row is under the
           // indicator and effectively untappable. Collapses to 0 elsewhere.
-          'fixed inset-x-0 bottom-0 z-50 flex flex-col bg-background-elevated border-t border-border rounded-t-xl shadow-2xl transition-transform duration-200 ease-out pb-[env(safe-area-inset-bottom)]',
+          'fixed inset-x-0 bottom-0 z-50 flex flex-col bg-background-elevated border-t border-border rounded-t-xl shadow-2xl animate-in slide-in-from-bottom duration-200 ease-out pb-[env(safe-area-inset-bottom)]',
           'max-h-[80dvh]',
-          open ? 'translate-y-0' : 'translate-y-full',
           className,
         )}
       >

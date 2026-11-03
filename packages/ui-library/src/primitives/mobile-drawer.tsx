@@ -16,7 +16,7 @@ export function MobileDrawer({
   children,
   className,
   width = 'w-64',
-}: MobileDrawerProps): JSX.Element {
+}: MobileDrawerProps): JSX.Element | null {
   const drawerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -32,19 +32,20 @@ export function MobileDrawer({
     }
   }, [open, onClose])
 
+  // Nothing of the drawer stays mounted while closed. A closed `opacity-0`
+  // backdrop and an off-screen `translate-x-full` panel are both still fixed,
+  // composited layers above the page chrome: on iOS WebKit (installed PWA)
+  // they dimmed and blurred the non-scrolling mobile top bar and left the
+  // panel's rounded edge drawn on the left of the page.
+  if (!open) return null
+
   return (
     <>
-      {/* Backdrop — mounted only while open. A closed `opacity-0` layer that
-          spans the viewport is still a composited layer above the page chrome:
-          on iOS WebKit (installed PWA) it dimmed and blurred the mobile top
-          bar, which is not part of the scrolling content. */}
-      {open && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 animate-in fade-in duration-200"
-          onClick={onClose}
-          aria-hidden="true"
-        />
-      )}
+      <div
+        className="fixed inset-0 z-40 bg-black/50 animate-in fade-in duration-200"
+        onClick={onClose}
+        aria-hidden="true"
+      />
 
       {/* Drawer panel — `fixed inset-y-0` pins it to the viewport edges
           (ignoring any parent padding), so the safe-area inset must be
@@ -57,9 +58,8 @@ export function MobileDrawer({
         role="dialog"
         aria-modal="true"
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex flex-col bg-surface border-r border-border shadow-2xl transition-transform duration-200 ease-out pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]',
+          'fixed inset-y-0 left-0 z-50 flex flex-col bg-surface border-r border-border shadow-2xl animate-in slide-in-from-left duration-200 ease-out pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]',
           width,
-          open ? 'translate-x-0' : '-translate-x-full shadow-none',
           className,
         )}
       >

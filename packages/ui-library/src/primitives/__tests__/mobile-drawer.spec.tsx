@@ -15,6 +15,15 @@ describe('MobileDrawer', () => {
     expect(container.querySelector('.inset-0')).toBeNull()
   })
 
+  it('mounts nothing while closed, panel included', () => {
+    const { container } = render(
+      <MobileDrawer open={false} onClose={vi.fn()}>
+        <span>nav</span>
+      </MobileDrawer>,
+    )
+    expect(container.querySelector('[role="dialog"]')).toBeNull()
+  })
+
   it('renders a backdrop that closes the drawer while open, without a backdrop filter', () => {
     const onClose = vi.fn()
     const { container } = render(

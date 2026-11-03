@@ -32,7 +32,7 @@ function ToastCard({ toast, onDismiss }: { toast: ToastItem; onDismiss: (id: str
 
   return (
     <div
-      className={`flex items-start gap-3 px-4 py-3 rounded-lg border ${style.border} ${style.bg} shadow-lg backdrop-blur-sm animate-in slide-in-from-right-5 fade-in duration-200`}
+      className={`flex items-start gap-3 px-4 py-3 rounded-lg border ${style.border} ${style.bg} shadow-lg animate-in slide-in-from-right-5 fade-in duration-200`}
     >
       <Icon className="h-4 w-4 shrink-0 mt-0.5 text-foreground-subtle" />
       <div className="flex-1 min-w-0">
