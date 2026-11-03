@@ -49,6 +49,16 @@ export const NC_LINKED_WAKE_CAPTURE_TIMEOUT_MS = 15_000
 const NC_LINKED_WAKE_POLL_MS = 1_000
 export const NC_LINKED_WAKE_MIN_GAP_MS = 60_000
 
+/**
+ * D60 — a tile the freshness read calls stale is RE-POLLED, unforced, until the
+ * wrapper hands back a frame from the event or this bound is spent. The wrapper
+ * settles a soft miss with its old cached hit; one more ask, a moment later,
+ * usually finds the refreshed one. The bound sits inside the dispatcher's still
+ * deadline (`NC_STILL_WAIT_MS`, 3 s): the row waits for it through `pendingUntil`.
+ */
+const NC_LINKED_STALE_POLL_MS = 500
+const NC_LINKED_STALE_MAX_POLLS = 5
+
 /** Per camera — the marker's own bound (`SENSOR_MARKER_SNAPSHOT_TIMEOUT_MS`). */
 const SENSOR_LINKED_CAPTURE_TIMEOUT_MS = 2_500
 
@@ -333,13 +343,17 @@ export class NcLinkedStillShelf {
       startedAt,
       options,
     }
-    let results: readonly TileResult[]
+    let judged: readonly TileResult[]
     try {
-      results = await Promise.all(stills.cameraIds.map((id) => this.captureOne(id, ctx)))
+      const results = await Promise.all(stills.cameraIds.map((id) => this.captureOne(id, ctx)))
+      judged = await this.repollStale(
+        ctx,
+        atMs,
+        await this.judgeFreshness(stills.sensorId, results, atMs),
+      )
     } finally {
       this.pendingWakes.delete(setId)
     }
-    const judged = await this.judgeFreshness(stills.sensorId, results, atMs)
     for (const r of judged) this.logTile(stills.sensorId, r)
     const landed = judged.filter(isLandedTile)
     const composed = await this.compose(stills.sensorId, landed, atMs)
@@ -515,8 +529,67 @@ export class NcLinkedStillShelf {
   }
 
   private markPending(ctx: SetContext): void {
-    const until = ctx.startedAt + NC_LINKED_WAKE_CAPTURE_TIMEOUT_MS + NC_LINKED_WAKE_POLL_MS
-    this.pendingWakes.set(ctx.setId, Math.max(this.pendingWakes.get(ctx.setId) ?? 0, until))
+    this.markPendingUntil(
+      ctx.setId,
+      ctx.startedAt + NC_LINKED_WAKE_CAPTURE_TIMEOUT_MS + NC_LINKED_WAKE_POLL_MS,
+    )
+  }
+
+  private markPendingUntil(setId: string, until: number): void {
+    this.pendingWakes.set(setId, Math.max(this.pendingWakes.get(setId) ?? 0, until))
+  }
+
+  /**
+   * D60: a `stale` tile asks again (unforced — a poll never wakes) until its
+   * frame is from the event or the bound is spent; the row's still-wait is held
+   * open meanwhile. A camera that never freshens stays `stale`, said on its line.
+   */
+  private async repollStale(
+    ctx: SetContext,
+    atMs: number,
+    judged: readonly TileResult[],
+  ): Promise<readonly TileResult[]> {
+    let current = judged
+    if (!current.some((r) => r.outcome === 'stale')) return current
+    this.markPendingUntil(
+      ctx.setId,
+      this.deps.now() + NC_LINKED_STALE_POLL_MS * (NC_LINKED_STALE_MAX_POLLS + 1),
+    )
+    for (let i = 0; i < NC_LINKED_STALE_MAX_POLLS; i++) {
+      const waiting = current.filter((r) => r.outcome === 'stale').map((r) => r.cameraId)
+      if (waiting.length === 0) break
+      await new Promise<void>((resolve) => setTimeout(resolve, NC_LINKED_STALE_POLL_MS))
+      const recaptured = await Promise.all(
+        waiting.map(async (cameraId): Promise<TileResult | null> => {
+          const capture = await this.captureStill(cameraId, false, SENSOR_LINKED_CAPTURE_TIMEOUT_MS)
+          return capture.outcome === 'landed' && capture.jpeg !== undefined
+            ? {
+                cameraId,
+                outcome: 'landed',
+                jpeg: capture.jpeg,
+                tookMs: this.deps.now() - ctx.startedAt,
+              }
+            : null
+        }),
+      )
+      const landedAgain = recaptured.filter((r): r is TileResult => r !== null)
+      if (landedAgain.length === 0) continue
+      const rejudged = await this.judgeFreshness(ctx.sensorId, landedAgain, atMs)
+      const fresh = new Map(
+        rejudged.filter((r) => r.outcome === 'landed').map((r) => [r.cameraId, r]),
+      )
+      current = current.map((r) => fresh.get(r.cameraId) ?? r)
+      for (const cameraId of fresh.keys()) {
+        this.deps.logger.info(
+          'linked camera frame was stale — a re-poll brought one from the event',
+          {
+            tags: { deviceId: cameraId },
+            meta: { sensorId: ctx.sensorId, polls: i + 1 },
+          },
+        )
+      }
+    }
+    return current
   }
 
   /** A wake that brought nothing back names itself, not the generic `empty`. */

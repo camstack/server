@@ -1370,6 +1370,13 @@ export class SnapshotAddon extends BaseAddon<SnapshotAddonConfig> {
             meta: { ageMs },
           })
         }
+        // D391: the old frame goes out as the answer — a caller that gates on the
+        // frame's age (the NC's linked stills) sees an old hit, so the line says
+        // that a miss, not a capture, produced it.
+        log.info('snapshot: soft miss — serving the cached frame', {
+          tags: { deviceId },
+          meta: { ageMs },
+        })
         return hit.data
       }
       return null

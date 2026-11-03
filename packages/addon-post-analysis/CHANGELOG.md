@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - A sensor notification now wakes a sleeping battery camera even when its snapshot state could not be read, so the alarm keeps its picture; the read failure is now logged with its cause
+- A sensor notification now re-polls a linked camera whose first frame is older than the event, instead of dropping it, for up to a few seconds
 
 ## [1.2.666] - 2026-11-02
 

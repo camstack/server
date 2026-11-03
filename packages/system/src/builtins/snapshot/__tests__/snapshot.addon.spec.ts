@@ -286,6 +286,38 @@ describe('SnapshotAddon (wrapper)', () => {
     }
   })
 
+  it('a soft miss that serves the cached frame says so at info, with its age, on the device (kitchen, D391)', async () => {
+    // The wrapper settled a miss with its OLD hit and said nothing: the caller
+    // (the NC's linked stills) received a frame older than its event and the
+    // log read as a normal serve.
+    let calls = 0
+    const native: NativeMock = {
+      getSnapshot: vi.fn(async () => {
+        calls += 1
+        return calls === 1 ? { base64: 'OLD', contentType: 'image/jpeg' } : null
+      }),
+      invalidateCache: vi.fn(async () => undefined),
+    }
+    const { ctx, logger } = makeCtx({ nativeFactory: () => native })
+    const provider = getProvider(addon, await initAddon(addon, ctx))
+    await provider.getSnapshot({ deviceId: 7 })
+    vi.useFakeTimers()
+    try {
+      vi.setSystemTime(Date.now() + 20_000)
+      const second = await provider.getSnapshot({ deviceId: 7 })
+      expect(second).toEqual({ base64: 'OLD', contentType: 'image/jpeg' })
+      expect(logger.info).toHaveBeenCalledWith(
+        'snapshot: soft miss — serving the cached frame',
+        expect.objectContaining({
+          tags: { deviceId: 7 },
+          meta: expect.objectContaining({ ageMs: expect.any(Number) }),
+        }),
+      )
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('lets a camera that could not answer REST: the next miss within the window never dials it', async () => {
     // Retro casa, 2026-09-05: 68 native 503s in an hour, one ISAPI request per
     // poll, on a camera already too weak to keep its streams. A null from the

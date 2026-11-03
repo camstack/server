@@ -208,7 +208,7 @@ describe('NcLinkedStillShelf', () => {
         ]),
     })
     const set = shelf.captureSet(3243, [101, 102], 1_000)
-    const mosaic = await until(() => shelf.get(set.mosaicOwnerId))
+    const mosaic = await until(() => shelf.get(set.mosaicOwnerId), 6_000)
     // Only 101 survived: ONE tile ships as the plain still, uncomposed.
     expect(await widthOf(mosaic[0]!.base64)).toBe(64)
     expect(shelf.get(set.cameraOwnerIds[1]!)).toEqual([])
@@ -645,7 +645,7 @@ describe('NcLinkedStillShelf — state read in parallel with the capture (fix ro
         ),
     })
     const set = shelf.captureSet(3243, [101, 102], 1_000)
-    const mosaic = await until(() => shelf.get(set.mosaicOwnerId))
+    const mosaic = await until(() => shelf.get(set.mosaicOwnerId), 6_000)
     expect(await widthOf(mosaic[0]!.base64)).toBe(64)
   })
 
@@ -731,5 +731,54 @@ describe('NcLinkedStillShelf — a failed state read must not destroy the wake (
     const line = lines.find((l) => l.level === 'warn' && l.deviceId === 101)
     expect(line?.msg).toBe('linked camera snapshot state read failed — state unknown')
     expect(String(line?.meta?.['error'])).toContain('no native provider')
+  })
+})
+
+describe('NcLinkedStillShelf — a stale tile is re-polled, not dropped (D60, kitchen)', () => {
+  it('a frame older than the event on the first read is re-captured until it lands fresh', async () => {
+    let reads = 0
+    let captures = 0
+    const lines: MetaLine[] = []
+    const shelf = shelfWith({
+      getSnapshot: async () => {
+        captures += 1
+        return jpeg()
+      },
+      getFrameCapturedAt: async () => {
+        reads += 1
+        // The wrapper settles a soft miss with its old hit once, then refreshes.
+        return new Map([[101, reads === 1 ? 1_000 - 60_000 : 1_000]])
+      },
+      logger: metaLogger(lines),
+    })
+    const set = shelf.captureSet(3243, [101], 1_000)
+    const mosaic = await until(() => shelf.get(set.mosaicOwnerId))
+    expect(await widthOf(mosaic[0]!.base64)).toBe(64)
+    expect(captures).toBe(2)
+    expect(lines.find((l) => l.deviceId === 101 && l.meta?.['outcome'] === 'landed')).toBeDefined()
+  })
+
+  it('pendingUntil is open while the re-poll runs, so the dispatcher waits for it', async () => {
+    const shelf = shelfWith({
+      getFrameCapturedAt: async () => new Map([[101, 1_000 - 60_000]]),
+    })
+    const set = shelf.captureSet(3243, [101], 1_000)
+    await until(() => shelf.pendingUntil(set.cameraOwnerIds[0]!) !== undefined)
+    expect(shelf.pendingUntil(set.cameraOwnerIds[0]!)).toBeGreaterThan(1_000)
+  })
+
+  it('a frame that never freshens is dropped at the bound, as stale', async () => {
+    const lines: MetaLine[] = []
+    const shelf = shelfWith({
+      getFrameCapturedAt: async () => new Map([[101, 1_000 - 60_000]]),
+      logger: metaLogger(lines),
+    })
+    const set = shelf.captureSet(3243, [101], 1_000)
+    await until(
+      () => lines.find((l) => l.msg.startsWith('sensor notification has no linked')),
+      6_000,
+    )
+    expect(shelf.get(set.mosaicOwnerId)).toEqual([])
+    expect(lines.find((l) => l.meta?.['outcome'] === 'stale')).toBeDefined()
   })
 })
