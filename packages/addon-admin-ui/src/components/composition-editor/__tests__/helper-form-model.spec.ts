@@ -88,7 +88,6 @@ describe('helper template groups', () => {
           'climate',
         ],
       },
-      { id: 'appliances', templateIds: ['appliance'] },
     ])
   })
 

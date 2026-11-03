@@ -10426,7 +10426,8 @@
       "lockSummary": "Locked when at least one lock is locked, or only when all are. Unlocking the group always asks for a confirmation.",
       "media-playerSummary": "Playing when at least one player is playing, or only when all are. Volume appears only when every player has it.",
       "climateSummary": "Running when at least one device is not off, or only when all are. Target temperature and fan appear only when every device has them.",
-      "composition": "Free composition"
+      "composition": "Free composition",
+      "device": "New device"
     },
     "aggregate": {
       "mean": "Mean",
@@ -10443,7 +10444,7 @@
     "next": "Next",
     "save": "Save",
     "step": {
-      "template": "Pick a group, a calculation or an advanced build.",
+      "template": "Create a device, or aggregate others into a group or a calculation.",
       "parameters": "Name it and choose how members combine.",
       "members": "Choose the members.",
       "appliance": "Name it and choose the appliance.",
@@ -10585,7 +10586,8 @@
       "expressionStale": "Unlike the groups, an expression keeps using an input's last value when that input goes offline.",
       "derivative": "How fast a reading rises or falls over a window, per second, minute or hour.",
       "lockConfirm": "Unlocking the group always asks for a confirmation, and nothing is sent without it.",
-      "composition": "Build the device block by block: pick its type and edit its fields yourself."
+      "composition": "Build the device block by block: pick its type and edit its fields yourself.",
+      "device": "Create a device of the type you choose. Power metrics, running state and the rest are added afterwards in Customize."
     },
     "stat": "Statistic",
     "statName": {
@@ -10727,7 +10729,8 @@
       "group": "Group",
       "calculation": "Calculation",
       "advanced": "Advanced",
-      "presets": "Presets"
+      "presets": "Presets",
+      "device": "Device"
     },
     "badge": {
       "group": "Group: {{kind}}",
@@ -10735,7 +10738,12 @@
       "advanced": "Advanced",
       "advancedKind": "Advanced: {{kind}}"
     },
-    "saving": "Saving…"
+    "saving": "Saving…",
+    "newDevice": "New device",
+    "deviceSource": {
+      "media-source": "Source (optional): the device whose media-player commands this player carries.",
+      "control-source": "Plug: the switch this heater turns on and off."
+    }
   },
   "pageRequires": {
     "unknownTitle": "Could not check whether this page is available",

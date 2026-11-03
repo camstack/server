@@ -96,10 +96,15 @@ export function withoutScalarTarget(
   }
 }
 
-/** The composition without the feature of `cap`; `null` when nothing is left (≥ 1 feature). */
+/**
+ * The composition without the feature of `cap`. A customization of an
+ * existing device has no reason to stay once nothing is left (`null`: delete
+ * the block); a composed device is the device itself, so it stays, naked (D1004).
+ */
 export function withoutFeature(current: Composition, cap: string): Composition | null {
   const features = current.features.filter((f) => f.cap !== cap)
-  return features.length === 0 ? null : { ...current, features }
+  if (features.length === 0 && current.target.kind === 'existing') return null
+  return { ...current, features }
 }
 
 export function featureOf(

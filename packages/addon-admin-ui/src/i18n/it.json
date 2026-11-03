@@ -10448,7 +10448,8 @@
       "lockSummary": "Chiusa se almeno una serratura è chiusa, oppure solo se lo sono tutte. Aprire il gruppo chiede sempre una conferma.",
       "media-playerSummary": "In riproduzione se almeno un lettore riproduce, oppure solo se lo fanno tutti. Il volume compare solo se ogni lettore lo ha.",
       "climateSummary": "Attivo se almeno un dispositivo non è spento, oppure solo se lo sono tutti. Temperatura obiettivo e ventola compaiono solo se ogni dispositivo le ha.",
-      "composition": "Composizione libera"
+      "composition": "Composizione libera",
+      "device": "Nuovo dispositivo"
     },
     "aggregate": {
       "mean": "Media",
@@ -10465,7 +10466,7 @@
     "next": "Avanti",
     "save": "Salva",
     "step": {
-      "template": "Scegli un gruppo, un calcolo o una costruzione avanzata.",
+      "template": "Crea un dispositivo, oppure aggrega altri in un gruppo o in un calcolo.",
       "parameters": "Dagli un nome e scegli come combinare i membri.",
       "members": "Scegli i membri.",
       "appliance": "Dagli un nome e scegli l'elettrodomestico.",
@@ -10607,7 +10608,8 @@
       "expressionStale": "A differenza dei gruppi, un'espressione continua a usare l'ultimo valore di un ingresso quando va offline.",
       "derivative": "Quanto velocemente una lettura sale o scende su una finestra, al secondo, al minuto o all'ora.",
       "lockConfirm": "Aprire il gruppo chiede sempre una conferma e senza non viene inviato nulla.",
-      "composition": "Costruisci il dispositivo blocco per blocco: scegli il tipo e modifica i campi a mano."
+      "composition": "Costruisci il dispositivo blocco per blocco: scegli il tipo e modifica i campi a mano.",
+      "device": "Crea un dispositivo del tipo che scegli. Metriche di potenza, stato di funzionamento e il resto si aggiungono dopo, in Personalizza."
     },
     "stat": "Statistica",
     "statName": {
@@ -10749,7 +10751,8 @@
       "group": "Gruppo",
       "calculation": "Calcolo",
       "advanced": "Avanzato",
-      "presets": "Preset"
+      "presets": "Preset",
+      "device": "Dispositivo"
     },
     "badge": {
       "group": "Gruppo: {{kind}}",
@@ -10757,7 +10760,12 @@
       "advanced": "Avanzato",
       "advancedKind": "Avanzato: {{kind}}"
     },
-    "saving": "Salvataggio…"
+    "saving": "Salvataggio…",
+    "newDevice": "Nuovo dispositivo",
+    "deviceSource": {
+      "media-source": "Sorgente (facoltativa): il dispositivo di cui questo player porta i comandi media-player.",
+      "control-source": "Presa: l'interruttore che questo riscaldatore accende e spegne."
+    }
   },
   "pageRequires": {
     "unknownTitle": "Impossibile verificare se questa pagina è disponibile",

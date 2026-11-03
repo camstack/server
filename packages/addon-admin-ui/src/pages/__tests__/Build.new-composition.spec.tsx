@@ -205,25 +205,27 @@ describe('Build New composition', () => {
     for (const id of ['threshold', 'difference', 'ratio', 'derivative', 'statistic', 'integral']) {
       expect(screen.getByTestId(`helper-template-${id}`)).toBeTruthy()
     }
+    // Device section: one tile, a naked device; the appliance tile is gone (D1004).
+    expect(screen.getByTestId('helper-template-device')).toBeTruthy()
+    expect(screen.queryByTestId('helper-template-appliance')).toBeNull()
     // Advanced section.
-    expect(screen.getByTestId('helper-template-composition')).toBeTruthy()
     expect(screen.getByTestId('helper-template-expression')).toBeTruthy()
     expect(screen.getByText('Calculation')).toBeTruthy()
     expect(screen.getByText('Advanced')).toBeTruthy()
     expect(screen.getByText('Group · Readings')).toBeTruthy()
   })
 
-  it('Advanced > Free composition opens the free composition form', async () => {
+  it('the Device tile opens the device form', async () => {
     renderAt('/build?tab=custom-device', <BuildPage />)
     fireEvent.click(screen.getByTestId('build-new-composed'))
-    fireEvent.click(await screen.findByTestId('helper-template-composition'))
-    expect(await screen.findByTestId('blank-composition-form')).toBeTruthy()
+    fireEvent.click(await screen.findByTestId('helper-template-device'))
+    expect(await screen.findByTestId('device-create-form')).toBeTruthy()
     expect(screen.queryByTestId('helper-template-picker')).toBeNull()
   })
 
-  it('the legacy new=blank link still opens the free composition form', async () => {
+  it('the legacy new=blank link still opens the device form', async () => {
     renderAt('/build?tab=custom-device&new=blank', <BuildPage />)
-    expect(await screen.findByTestId('blank-composition-form')).toBeTruthy()
+    expect(await screen.findByTestId('device-create-form')).toBeTruthy()
   })
 
   it('lists a group, a calculation and a free composition with their type badge', async () => {

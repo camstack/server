@@ -37,6 +37,25 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   }
 })
 
+vi.mock('../../device/customize/source-selector/SourceSelector', () => ({
+  SourceSelector: (props: { readonly onMembersChange: (members: readonly unknown[]) => void }) => (
+    <button
+      type="button"
+      onClick={() =>
+        props.onMembersChange([
+          {
+            source: { addonId: 'provider-homeassistant', stableId: 'switch.plug' },
+            cap: 'switch',
+            fieldPath: 'on',
+          },
+        ])
+      }
+    >
+      pick-plug
+    </button>
+  ),
+}))
+
 const { CompositionCreateForm, awaitDeviceIdForBlock } = await import('../CompositionCreateForm')
 
 describe('CompositionCreateForm', () => {
@@ -48,6 +67,35 @@ describe('CompositionCreateForm', () => {
     await waitFor(() =>
       expect(navigate).toHaveBeenCalledWith('/devices/4700?tab=customize', { replace: true }),
     )
+  })
+
+  it('creates a sensor naked: no feature in the composition', async () => {
+    create.mockClear()
+    render(<CompositionCreateForm mode="blank" onTitle={() => undefined} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(create).toHaveBeenCalledTimes(1))
+    expect(create).toHaveBeenCalledWith({
+      block: {
+        enabled: true,
+        composition: { target: { kind: 'new', type: 'sensor' }, features: [] },
+      },
+    })
+  })
+
+  it('a heater needs its plug before it can be saved, then forwards on/off to it', async () => {
+    create.mockClear()
+    render(<CompositionCreateForm mode="blank" onTitle={() => undefined} />)
+    fireEvent.change(screen.getByRole('combobox', { name: /type/i }), {
+      target: { value: 'heater' },
+    })
+    expect((screen.getByRole('button', { name: 'Save' }) as HTMLButtonElement).disabled).toBe(true)
+    fireEvent.click(screen.getByText('pick-plug'))
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(create).toHaveBeenCalledTimes(1))
+    const calls = create.mock.calls as unknown as ReadonlyArray<
+      readonly [{ block: { composition: { features: ReadonlyArray<{ cap: string }> } } }]
+    >
+    expect(calls[0]?.[0].block.composition.features.map((f) => f.cap)).toEqual(['switch'])
   })
 
   it('finds the new device when the persisted list has not refreshed yet', async () => {

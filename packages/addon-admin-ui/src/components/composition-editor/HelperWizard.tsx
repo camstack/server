@@ -59,7 +59,7 @@ export interface HelperWizardProps {
   readonly onSave: (draft: HelperDraft, intent: HelperSaveIntent) => Promise<HelperSaveResult>
   readonly onDraftChange?: (draft: HelperDraft | null) => void
   /** Create only: the picker's Advanced "Free composition" tile. */
-  readonly onFreeComposition?: () => void
+  readonly onDevice?: () => void
   /** Create only: a preset tile of the picker. */
   readonly onPreset?: (presetId: string) => void
   /**
@@ -81,7 +81,7 @@ export function HelperWizard({
   saving,
   onSave,
   onDraftChange,
-  onFreeComposition,
+  onDevice,
   onPreset,
   fillHeight = false,
 }: HelperWizardProps): ReactNode {
@@ -174,11 +174,7 @@ export function HelperWizard({
       )}
       <p className="text-[11px] text-foreground-muted">{t(stepCopy(step, draft))}</p>
       {step === 'template' && (
-        <HelperTemplatePicker
-          onPick={pick}
-          onFreeComposition={onFreeComposition}
-          onPreset={onPreset}
-        />
+        <HelperTemplatePicker onPick={pick} onDevice={onDevice} onPreset={onPreset} />
       )}
       {step === 'parameters' &&
         draft?.kind === 'group' &&

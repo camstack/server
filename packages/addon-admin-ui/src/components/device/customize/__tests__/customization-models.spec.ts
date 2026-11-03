@@ -1,4 +1,9 @@
-import type { Composition, CompositionFieldsFeature, CompositionView } from '@camstack/types'
+import {
+  type Composition,
+  type CompositionFieldsFeature,
+  type CompositionView,
+  DeviceType,
+} from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { compositionEditorPath, customizePath } from '../../../../lib/customization-routes'
 import { currentComposition, resolveCustomization } from '../customization-read'
@@ -146,6 +151,16 @@ describe('feature merge', () => {
       features: [INVERT],
     })
     expect(withoutFeature(STORED, 'battery')).toBeNull()
+  })
+  it('a composed device stays when its last feature goes: it is created naked (D1004)', () => {
+    const composed: Composition = {
+      target: { kind: 'new', type: DeviceType.Heater },
+      features: [BATTERY],
+    }
+    expect(withoutFeature(composed, 'battery')).toEqual({
+      target: composed.target,
+      features: [],
+    })
   })
   it('featureOf answers null for a cap that is not composed', () => {
     expect(featureOf(STORED, 'binary')).toBeNull()

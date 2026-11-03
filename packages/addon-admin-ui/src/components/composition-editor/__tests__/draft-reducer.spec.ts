@@ -60,8 +60,13 @@ describe('editorReducer', () => {
     d = editorReducer(d, { type: 'clear-field', cap: 'temperature-sensor', path: 'lastFetchedAt' })
     expect(Object.keys(d.features[0]?.fields ?? {})).toEqual(['celsius'])
   })
+  it('a draft with no feature is a naked device, and parses (D1004)', () => {
+    expect(draftToComposition(newDraft(DeviceType.Sensor)).ok).toBe(true)
+  })
   it('a draft the schema refuses says why, by path', () => {
-    const parsed = draftToComposition(newDraft(DeviceType.Sensor))
+    const base = editorReducer(newDraft(DeviceType.Sensor), { type: 'add-feature', cap: 'binary' })
+    const twice = { ...base, features: [...base.features, ...base.features] }
+    const parsed = draftToComposition(twice)
     expect(parsed.ok).toBe(false)
     expect(!parsed.ok && parsed.problems.join(' ')).toContain('features')
   })

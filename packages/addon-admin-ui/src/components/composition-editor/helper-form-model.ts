@@ -50,7 +50,7 @@ import {
 
 export type HelperPickerId = GroupTemplateId | typeof APPLIANCE_TEMPLATE_ID
 
-export type HelperTemplateGroupId = 'readings' | 'binary' | 'actuators' | 'appliances'
+export type HelperTemplateGroupId = 'readings' | 'binary' | 'actuators'
 
 export interface HelperTemplateGroup {
   readonly id: HelperTemplateGroupId
@@ -288,8 +288,6 @@ const BINARY: readonly GroupTemplateId[] = [
 
 const ACTUATORS: readonly GroupTemplateId[] = ACTUATOR_TEMPLATE_IDS
 
-const APPLIANCES: readonly HelperPickerId[] = [APPLIANCE_TEMPLATE_ID]
-
 const REFUSAL_MARKER = 'was refused — '
 const REFUSAL_PART = /^(.+?) \[([a-z0-9-]+)\]: (.+)$/
 
@@ -298,7 +296,6 @@ export function helperTemplateGroups(): readonly HelperTemplateGroup[] {
     { id: 'readings', templateIds: READINGS },
     { id: 'binary', templateIds: BINARY },
     { id: 'actuators', templateIds: ACTUATORS },
-    { id: 'appliances', templateIds: APPLIANCES },
   ]
 }
 

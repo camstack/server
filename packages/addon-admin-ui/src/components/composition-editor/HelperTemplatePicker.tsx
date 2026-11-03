@@ -4,8 +4,6 @@
  */
 import {
   ACTIVE_CRITERIA,
-  APPLIANCE_TEMPLATE_ID,
-  DeviceType,
   GROUP_TEMPLATE_IDS,
   type GroupTemplateId,
   groupTemplate,
@@ -28,17 +26,17 @@ import {
 
 export interface HelperTemplatePickerProps {
   readonly onPick: (pick: HelperTemplatePick) => void
-  /** The Advanced "Free composition" tile; omitted where only helpers are offered. */
-  readonly onFreeComposition?: () => void
+  /** The Device tile (a naked device, D1004); omitted where only aggregators are offered. */
+  readonly onDevice?: () => void
   /** A preset tile was picked (create flow only); omitted where presets are not offered. */
   readonly onPreset?: (presetId: string) => void
 }
 
-const FREE_COMPOSITION_KEY = 'composition'
+const DEVICE_KEY = 'device'
 
 export function HelperTemplatePicker({
   onPick,
-  onFreeComposition,
+  onDevice,
   onPreset,
 }: HelperTemplatePickerProps): ReactNode {
   const { t } = useTranslation()
@@ -47,8 +45,8 @@ export function HelperTemplatePicker({
       <GroupedTilePicker
         emptyMessage={t('helper.noTemplates')}
         onPick={(key) => {
-          if (key === FREE_COMPOSITION_KEY) {
-            onFreeComposition?.()
+          if (key === DEVICE_KEY) {
+            onDevice?.()
             return
           }
           const preset = COMPOSITION_PRESETS.find((candidate) => candidate.id === key)
@@ -60,10 +58,6 @@ export function HelperTemplatePicker({
             onPick({ kind: key })
             return
           }
-          if (key === APPLIANCE_TEMPLATE_ID) {
-            onPick({ kind: 'appliance' })
-            return
-          }
           if (isMathTileId(key)) {
             onPick(pickForMathTile(key))
             return
@@ -72,6 +66,9 @@ export function HelperTemplatePicker({
           onPick({ kind: 'group', templateId: key })
         }}
         groups={[
+          ...(onDevice === undefined
+            ? []
+            : [{ id: 'device', label: t('helper.section.device'), tiles: [deviceTile(t)] }]),
           ...pickerGroups(t),
           ...(onPreset === undefined || COMPOSITION_PRESETS.length === 0
             ? []
@@ -94,10 +91,7 @@ export function HelperTemplatePicker({
           {
             id: 'advanced',
             label: t('helper.section.advanced'),
-            tiles: [
-              ...(onFreeComposition === undefined ? [] : [compositionTile(t)]),
-              mathTile('expression', t),
-            ],
+            tiles: [mathTile('expression', t)],
           },
         ]}
       />
@@ -121,17 +115,17 @@ function presetTile(preset: CompositionPreset, t: TFunction): PickerTile {
   }
 }
 
-function compositionTile(t: TFunction): PickerTile {
-  const label = t('helper.template.composition')
+function deviceTile(t: TFunction): PickerTile {
+  const label = t('helper.template.device')
   return {
-    key: FREE_COMPOSITION_KEY,
+    key: DEVICE_KEY,
     label,
-    testId: 'helper-template-composition',
+    testId: 'helper-template-device',
     icon: <Blocks className="h-5 w-5 text-foreground-muted" aria-hidden />,
     detailLabel: t('helper.detailsOf', { name: label }),
     detail: (
       <div className="max-w-xs text-xs">
-        <p className="text-foreground-muted">{t('helper.detail.composition')}</p>
+        <p className="text-foreground-muted">{t('helper.detail.device')}</p>
       </div>
     ),
   }
@@ -244,7 +238,6 @@ function tilesOf(ids: readonly HelperPickerId[], t: TFunction): readonly PickerT
 }
 
 function tileOf(id: HelperPickerId, t: TFunction): PickerTile | null {
-  if (id === APPLIANCE_TEMPLATE_ID) return applianceTile(t)
   if (!isGroupTemplateId(id)) return null
   const template = groupTemplate(id)
   if (template === null) return null
@@ -261,28 +254,6 @@ function tileOf(id: HelperPickerId, t: TFunction): PickerTile | null {
     detailLabel: t('helper.detailsOf', { name: label }),
     detail: <TemplateDetail templateId={id} />,
   }
-}
-
-function applianceTile(t: TFunction): PickerTile {
-  const label = t('helper.template.appliance')
-  const Icon = deviceTypeMeta(DeviceType.Washer).icon
-  return {
-    key: APPLIANCE_TEMPLATE_ID,
-    label,
-    testId: 'helper-template-appliance',
-    icon: <Icon className="h-5 w-5 text-foreground-muted" aria-hidden />,
-    detailLabel: t('helper.detailsOf', { name: label }),
-    detail: <ApplianceDetail />,
-  }
-}
-
-function ApplianceDetail(): ReactNode {
-  const { t } = useTranslation()
-  return (
-    <div className="max-w-xs text-xs">
-      <p className="text-foreground-muted">{t('helper.template.applianceSummary')}</p>
-    </div>
-  )
 }
 
 function TemplateDetail({ templateId }: { readonly templateId: GroupTemplateId }): ReactNode {

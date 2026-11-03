@@ -123,8 +123,8 @@ describe('HelperWizard', () => {
     expect(screen.queryByTestId('helper-template-sum')).toBeNull()
     expect(screen.getByText('Calculation')).toBeTruthy()
     expect(screen.getByText('Advanced')).toBeTruthy()
-    // Free composition is offered only where the wizard can hand over to it.
-    expect(screen.queryByTestId('helper-template-composition')).toBeNull()
+    // The Device tile is offered only where the wizard can hand over to it.
+    expect(screen.queryByTestId('helper-template-device')).toBeNull()
   })
 
   it('a threshold asks for its two edges and warns when they are reversed', () => {

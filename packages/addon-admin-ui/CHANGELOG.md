@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The device hero no longer links to the remote layout editor (it stays on the Customize page)
 - A built device's Customize tab now shows the same lists as a native device of its type, helper devices included; removing the last facet leaves the device naked instead of being refused.
 - A sensor's page no longer repeats its own reading in a second Power line under the hero
+- One creation dialog: a Device section creates a naked device (a heater with its plug, a media player with its commands when the source has them) and the appliance tile is gone; removing a composed device's last facet keeps the device
 
 ## [1.2.566] - 2026-11-03
 
