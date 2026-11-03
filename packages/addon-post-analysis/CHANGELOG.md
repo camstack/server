@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.667] - 2026-11-03
+
 ### Changed
 
 - A package delivery with no stored key frame now writes its picture once, so a rule asking for an image no longer ships text-only.

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.570] - 2026-11-03
+
 ### Changed
 
 - A remote attached to a built media player now gives it the media-player commands, and the appliance and heater creation templates are removed.
