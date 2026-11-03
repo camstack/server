@@ -50,7 +50,26 @@ reply, so a send can never be confirmed. An IR appliance does not answer either.
 A UI cannot present an assumed state as a reading: it must read `stateSource`.
 There is no vendor-specific code in the remote.
 
+## Amendment (planning#398): power of a media player powered by a switch
+
+For a media player composed with a `power-source` (a television behind a smart
+plug), the plug is the only READING of its power. The remote's status rule:
+
+- plug off: `off`, `stateSource: 'reported'` (a plug cut is a fact, not a guess);
+- plug on: `standby`, `stateSource: 'assumed'`, until the remote sends a power
+  command, then the power the remote last sent (still `assumed`);
+- plug off also forgets the remote's assumed power, so the next plug-on starts
+  from `standby`; plug on drops an assumed `off` (the plug contradicts it);
+- plug unknown (`null`): nothing is claimed from the plug (D393); the remote's
+  own assumption, if any, is all there is.
+
+A `running-state` reading, when the device has one, still wins over both. A
+native media-player reading that is `reported` is never overridden. The
+composition side of this (the composed native and its fields) is the D967
+amendment; the dispatch-to-transmitter chain for step commands is covered end to
+end by `remote-alexa-chain.spec.ts`.
+
 ## Enforcement
 
-Specs: `remote-service.spec.ts`, `smartir-draft.spec.ts`, `ir.spec.ts`.
+Specs: `remote-service.spec.ts`, `smartir-draft.spec.ts`, `ir.spec.ts`, `remote-alexa-chain.spec.ts`.
 `check-method-tiers` and `check-export-coverage` cover the cap methods.
