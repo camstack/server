@@ -2691,7 +2691,27 @@
         "lte": "Minore o uguale"
       },
       "clampMin": "Minimo",
-      "clampMax": "Massimo"
+      "clampMax": "Massimo",
+      "proposal": {
+        "label": "Proposta",
+        "error": "Impossibile calcolare una proposta.",
+        "apply": "Applica",
+        "summary": "Da {{runs}} cicli in {{days}} giorni: {{threshold}} W, avvio {{start}} s, arresto {{stop}} min",
+        "defaults": "Valori predefiniti mostrati: {{threshold}} W, avvio {{start}} s, arresto {{stop}} min.",
+        "confidence": {
+          "high": "Affidabilità alta",
+          "medium": "Affidabilità media",
+          "low": "Affidabilità bassa"
+        },
+        "reason": {
+          "no-history": "Nessuno storico per questo valore.",
+          "span-too-short": "Meno di un giorno di storico, non basta per vedere due cicli.",
+          "truncated": "Lo storico è troppo fitto per essere letto per intero.",
+          "no-idle-floor": "Il dispositivo non resta a riposo su un livello.",
+          "no-runs": "Nessun ciclo trovato nello storico.",
+          "no-separation": "Standby e funzionamento si sovrappongono, nessuna soglia li separa."
+        }
+      }
     },
     "keyed": {
       "title": {

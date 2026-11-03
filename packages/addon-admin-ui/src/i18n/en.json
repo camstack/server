@@ -2616,7 +2616,27 @@
         "lte": "At or below"
       },
       "clampMin": "Minimum",
-      "clampMax": "Maximum"
+      "clampMax": "Maximum",
+      "proposal": {
+        "label": "Proposal",
+        "error": "Could not compute a proposal.",
+        "apply": "Apply",
+        "summary": "From {{runs}} runs over {{days}} days: {{threshold}} W, start {{start}} s, stop {{stop}} min",
+        "defaults": "Defaults shown: {{threshold}} W, start {{start}} s, stop {{stop}} min.",
+        "confidence": {
+          "high": "High confidence",
+          "medium": "Medium confidence",
+          "low": "Low confidence"
+        },
+        "reason": {
+          "no-history": "No history stored for this value yet.",
+          "span-too-short": "Less than a day of history, not enough to see a cycle twice.",
+          "truncated": "The history is too dense to read in full.",
+          "no-idle-floor": "The device does not rest near one level.",
+          "no-runs": "No run was found in the history.",
+          "no-separation": "Standby and running levels overlap, so no threshold separates them."
+        }
+      }
     },
     "keyed": {
       "title": {

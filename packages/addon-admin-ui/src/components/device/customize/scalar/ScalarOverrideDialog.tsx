@@ -10,6 +10,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  useCoreBlocksProposeRunningThreshold,
   useDeviceManagerGetWireableFields,
   useDeviceManagerListAll,
   useDeviceStateGetSnapshot,
@@ -23,6 +24,7 @@ import {
   type PickerDevice,
   type WireableCatalog,
 } from '../source-picker-model'
+import { RunningProposalLine, type RunningProposalState } from './RunningProposalLine'
 import { ScalarPreviewLine } from './ScalarPreviewLine'
 import { scalarFieldFit, scalarFieldOffers, type ScalarFieldOffer } from './scalar-fit'
 import {
@@ -134,6 +136,28 @@ function DialogForm(props: ScalarOverrideDialogProps & { readonly heading: strin
             sourceValue,
             nowMs: Date.now(),
           })
+  const proposalWanted =
+    props.cap === 'running-state' &&
+    transform.kind === 'threshold' &&
+    source !== null &&
+    source.valueKind === 'number' &&
+    device !== null
+  const proposalQuery = useCoreBlocksProposeRunningThreshold(
+    {
+      deviceId: device?.id ?? 0,
+      cap: source?.cap ?? '-',
+      fieldPath: source?.fieldPath ?? '-',
+      deviceType: props.host.type,
+    },
+    { enabled: proposalWanted, retry: false },
+  )
+  const proposal: RunningProposalState | null = !proposalWanted
+    ? null
+    : proposalQuery.status === 'success'
+      ? { kind: 'answer', proposal: proposalQuery.data }
+      : proposalQuery.status === 'error'
+        ? { kind: 'error' }
+        : { kind: 'pending' }
   return (
     <>
       <DialogBody className="flex flex-col gap-3 p-2 sm:p-4">
@@ -164,6 +188,7 @@ function DialogForm(props: ScalarOverrideDialogProps & { readonly heading: strin
           onTransformChange={setTransform}
         />
         {preview !== null && <ScalarPreviewLine preview={preview} />}
+        {proposal !== null && <RunningProposalLine state={proposal} onApply={setTransform} />}
       </DialogBody>
       <DialogFooter className="flex flex-wrap gap-2">
         <Button variant="ghost" onClick={props.onClose}>

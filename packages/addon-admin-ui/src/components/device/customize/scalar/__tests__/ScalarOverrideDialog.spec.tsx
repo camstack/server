@@ -40,6 +40,10 @@ const METER = {
 }
 const GARAGE = { ...METER, id: 304, name: 'Garage lamp', stableId: 'lamp', location: 'Garage' }
 
+const proposalResult = vi.hoisted(() => ({
+  current: { status: 'pending' } as { status: string; data?: unknown },
+}))
+
 vi.mock('../../assignments/use-cap-index', () => ({
   useCapIndex: () => ({
     kind: 'known' as const,
@@ -54,6 +58,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@camstack/ui-library')>()
   return {
     ...actual,
+    useCoreBlocksProposeRunningThreshold: () => proposalResult.current,
     useDeviceManagerListAll: () => ({ status: 'success', data: [HOST, METER, GARAGE] }),
     useDeviceManagerGetWireableFields: ({ deviceId }: { deviceId: number }) =>
       deviceId === 305
@@ -145,5 +150,84 @@ describe('ScalarOverrideDialog', () => {
     expect(screen.getByTestId('scalar-preview').textContent).toMatch(/30/)
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
     expect(onSave).toHaveBeenCalledWith(powerStored())
+  })
+
+  function renderPicked(onSave = vi.fn()) {
+    render(
+      <ScalarOverrideDialog
+        open
+        mode="add"
+        title="Running"
+        cap="running-state"
+        targetId="running"
+        host={HOST}
+        target={DISHWASHER}
+        apply="add"
+        seed={null}
+        canSave
+        onClose={() => undefined}
+        onSave={onSave}
+      />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: /Porch power meter/ }))
+    fireEvent.click(screen.getByTestId('source-value-power-meter.power'))
+    return onSave
+  }
+  const threshold = {
+    kind: 'threshold' as const,
+    comparison: 'gte' as const,
+    threshold: 7,
+    startDwellMs: 90_000,
+    stopDwellMs: 600_000,
+  }
+
+  it('shows a pending proposal as an ellipsis', () => {
+    proposalResult.current = { status: 'pending' }
+    renderPicked()
+    expect(screen.getByTestId('running-proposal').textContent).toMatch(/…/)
+  })
+
+  it('shows a proposal; Apply fills the fields and saves nothing', () => {
+    proposalResult.current = {
+      status: 'success',
+      data: {
+        state: 'proposal',
+        transform: threshold,
+        confidence: 'high',
+        notes: [],
+        evidence: { spanMs: 14 * 86_400_000, runsFound: 9 },
+      },
+    }
+    const onSave = renderPicked()
+    expect(screen.getByTestId('running-proposal').textContent).toMatch(
+      /From 9 runs over 14 days: 7 W, start 90 s, stop 10 min/,
+    )
+    fireEvent.click(screen.getByTestId('running-proposal-apply'))
+    expect(onSave).not.toHaveBeenCalled()
+    expect(screen.getByTestId('scalar-preview').textContent).toMatch(/90/)
+  })
+
+  it('names the reason and the defaults when history is insufficient', () => {
+    proposalResult.current = {
+      status: 'success',
+      data: {
+        state: 'insufficient',
+        reason: 'span-too-short',
+        evidence: { spanMs: 3600_000, points: 10, runsFound: 0 },
+        fallback: { ...threshold, threshold: 5, startDwellMs: 30_000, stopDwellMs: 300_000 },
+      },
+    }
+    renderPicked()
+    const text = screen.getByTestId('running-proposal').textContent ?? ''
+    expect(text).toMatch(/Less than a day/)
+    expect(text).toMatch(/Defaults shown: 5 W, start 30 s, stop 5 min/)
+    expect(screen.queryByTestId('running-proposal-apply')).toBeNull()
+  })
+
+  it('shows a short error line without blocking the dialog', () => {
+    proposalResult.current = { status: 'error' }
+    renderPicked()
+    expect(screen.getByTestId('running-proposal').textContent).toMatch(/Could not compute/)
+    expect(screen.getByRole('button', { name: 'Save' })).not.toBeDisabled()
   })
 })
