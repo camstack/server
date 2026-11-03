@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- An in-process addon's call to a system-only capability method no longer routes to the camera's driver by its device id
+
 ## [1.2.752] - 2026-11-03
 
 ### Changed

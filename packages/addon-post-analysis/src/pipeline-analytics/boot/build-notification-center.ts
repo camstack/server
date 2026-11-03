@@ -190,6 +190,10 @@ export class BuildNotificationCenter extends BuildNotificationCenterBase {
       // linked-camera shelf (ADR 0632): which cameras must not be dialled, and
       // how old the frame a capture returned really is.
       ...buildLinkedSnapshotReads(api.snapshot),
+      // The unknown-state wake (D49): a camera is a battery camera when it has a
+      // `battery` slice. A device without the cap answers a throw (read as no).
+      isBatteryCamera: async (deviceId: number) =>
+        (await api.battery.getStatus.query({ deviceId })) !== null,
       // DISPLAY NAME → GALLERY ID, for the lazy migration of rules authored
       // before an identity condition meant an id. Both galleries feed one map:
       // `identities` and `plates` are the same question asked of a person and

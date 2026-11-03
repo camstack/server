@@ -174,6 +174,13 @@ export interface NotificationCenterDeps {
    */
   readonly getSnapshotState?: (deviceId: number) => Promise<NcLinkedSnapshotState | undefined>
   /**
+   * Whether a camera is a battery camera, off its `battery` slice — read only
+   * when the wrapper state above could not be read and an unforced capture came
+   * back empty, so a failed read does not cost a sleeping camera its D998 wake.
+   * Throws / `undefined` = not known to be one. Absent = no unknown-state wake.
+   */
+  readonly isBatteryCamera?: (deviceId: number) => Promise<boolean | undefined>
+  /**
    * CACHE-ONLY: when each camera's cached frame was captured (null = none),
    * for the linked-camera shelf's freshness check. Absent = every landed
    * frame is kept.

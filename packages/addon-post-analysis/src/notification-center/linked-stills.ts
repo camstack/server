@@ -60,6 +60,9 @@ const SENSOR_LINKED_CAPTURE_TIMEOUT_MS = 2_500
  *  tile (D49). */
 const SENSOR_LINKED_STATE_READ_TIMEOUT_MS = SENSOR_LINKED_CAPTURE_TIMEOUT_MS
 
+/** The battery-slice read behind the unknown-state wake: cheap, and bounded. */
+const SENSOR_LINKED_BATTERY_READ_TIMEOUT_MS = 1_000
+
 /** The one cache-only freshness read for the set — one hop, after the
  *  captures. A read that misses it keeps every tile and says `freshness
  *  unverified` (D49). */
@@ -145,6 +148,14 @@ export interface NcLinkedStillShelfDeps {
   readonly getFrameCapturedAt?: (
     deviceIds: readonly number[],
   ) => Promise<ReadonlyMap<number, number | null>>
+  /**
+   * Whether the camera is a battery camera, off its `battery` slice. Asked ONLY
+   * when the wrapper's state could not be read and the unforced capture came
+   * back empty (D49): a sleeping battery camera answers exactly that way, and
+   * the failed read must not cost it its D998 wake. Throws/undefined = not known
+   * to be a battery camera.
+   */
+  readonly isBatteryCamera?: (deviceId: number) => Promise<boolean | undefined>
   /** The NC directory's liveness mirror; false = offline, undefined = unknown. */
   readonly isOnline: (deviceId: number) => boolean | undefined
   readonly logger: IScopedLogger
@@ -396,11 +407,49 @@ export class NcLinkedStillShelf {
       // The bytes, if any, are the wrapper's state card — never a photograph.
       return excluded(verdict.reason)
     }
+    // D49: a state that could not be read must not destroy the wake. A sleeping
+    // battery camera answers an unforced capture with nothing, and the wrapper
+    // that would have said `sleeping` is the very read that failed.
+    if (
+      verdict.unknown !== null &&
+      capture.outcome === 'empty' &&
+      ctx.options.wakeSleeping &&
+      (await this.isBatteryCamera(cameraId))
+    ) {
+      this.deps.logger.info(
+        'linked camera state unknown and capture empty — waking as a battery camera',
+        {
+          tags: { deviceId: cameraId },
+          meta: { sensorId: ctx.sensorId, stateUnknown: verdict.unknown },
+        },
+      )
+      return this.wakeOne(cameraId, ctx)
+    }
     return {
       cameraId,
       ...capture,
       ...(verdict.unknown !== null ? { stateUnknown: verdict.unknown } : {}),
       tookMs: took(),
+    }
+  }
+
+  /** Only a camera KNOWN to be a battery camera is woken on an unknown state. */
+  private async isBatteryCamera(cameraId: number): Promise<boolean> {
+    const read = this.deps.isBatteryCamera
+    if (read === undefined) return false
+    try {
+      const isBattery = await withTimeout(
+        read(cameraId),
+        SENSOR_LINKED_BATTERY_READ_TIMEOUT_MS,
+        'battery read',
+      )
+      return isBattery === true
+    } catch (err: unknown) {
+      this.deps.logger.warn('linked camera battery read failed — not woken on an unknown state', {
+        tags: { deviceId: cameraId },
+        meta: { error: String(err) },
+      })
+      return false
     }
   }
 
@@ -540,10 +589,14 @@ export class NcLinkedStillShelf {
         ? { reason: null, unknown: 'empty' }
         : { reason: state.reason, unknown: null }
     } catch (err: unknown) {
-      return {
-        reason: null,
-        unknown: err instanceof LinkedReadTimeout ? 'timeout' : 'error',
-      }
+      const timedOut = err instanceof LinkedReadTimeout
+      // D391: a read that failed names why, on the camera — the verdict alone
+      // (`stateUnknown: error`) lost the cause.
+      this.deps.logger.warn('linked camera snapshot state read failed — state unknown', {
+        tags: { deviceId: cameraId },
+        meta: { error: String(err), timedOut },
+      })
+      return { reason: null, unknown: timedOut ? 'timeout' : 'error' }
     }
   }
 

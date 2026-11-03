@@ -950,6 +950,9 @@ export class NotificationCenter implements NcEventConsumer {
             ...(deps.getSnapshotState !== undefined
               ? { getSnapshotState: deps.getSnapshotState }
               : {}),
+            ...(deps.isBatteryCamera !== undefined
+              ? { isBatteryCamera: deps.isBatteryCamera }
+              : {}),
             ...(deps.getFrameCapturedAt !== undefined
               ? { getFrameCapturedAt: deps.getFrameCapturedAt }
               : {}),

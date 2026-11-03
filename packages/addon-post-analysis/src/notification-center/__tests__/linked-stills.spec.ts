@@ -666,3 +666,70 @@ describe('NcLinkedStillShelf — state read in parallel with the capture (fix ro
     )
   })
 })
+
+describe('NcLinkedStillShelf — a failed state read must not destroy the wake (D49, #382)', () => {
+  const failingState = async (): Promise<never> => {
+    throw new Error('getDebugState: no native provider implementing it')
+  }
+
+  it('state unknown + an EMPTY unforced capture on a battery camera → the D998 wake is taken', async () => {
+    const forced: boolean[] = []
+    const shelf = shelfWith({
+      getSnapshotState: failingState,
+      isBatteryCamera: async () => true,
+      getSnapshot: async (_id, opts) => {
+        forced.push(opts?.force === true)
+        return opts?.force === true ? jpeg() : null
+      },
+    })
+    const set = shelf.captureSet(3243, [101], 1_000, { wakeSleeping: true, ruleIds: ['r1'] })
+    const mosaic = await until(() => shelf.get(set.mosaicOwnerId))
+    expect(await widthOf(mosaic[0]!.base64)).toBe(64)
+    expect(forced).toEqual([false, true])
+  })
+
+  it('a camera that is NOT a battery camera is never woken on an unknown state', async () => {
+    const forced: boolean[] = []
+    const lines: MetaLine[] = []
+    const shelf = shelfWith({
+      getSnapshotState: failingState,
+      isBatteryCamera: async () => false,
+      getSnapshot: async (_id, opts) => {
+        forced.push(opts?.force === true)
+        return null
+      },
+      logger: metaLogger(lines),
+    })
+    const set = shelf.captureSet(3243, [101], 1_000, { wakeSleeping: true })
+    await until(() => lines.find((l) => l.msg.startsWith('sensor notification has no linked')))
+    expect(forced).toEqual([false])
+    expect(shelf.get(set.mosaicOwnerId)).toEqual([])
+  })
+
+  it('a rule that did not allow the wake never forces, battery or not', async () => {
+    const forced: boolean[] = []
+    const lines: MetaLine[] = []
+    const shelf = shelfWith({
+      getSnapshotState: failingState,
+      isBatteryCamera: async () => true,
+      getSnapshot: async (_id, opts) => {
+        forced.push(opts?.force === true)
+        return null
+      },
+      logger: metaLogger(lines),
+    })
+    shelf.captureSet(3243, [101], 1_000, { wakeSleeping: false })
+    await until(() => lines.find((l) => l.msg.startsWith('sensor notification has no linked')))
+    expect(forced).toEqual([false])
+  })
+
+  it('the failed state read names its error at warn, on the camera (D391)', async () => {
+    const lines: MetaLine[] = []
+    const shelf = shelfWith({ getSnapshotState: failingState, logger: metaLogger(lines) })
+    const set = shelf.captureSet(3243, [101], 1_000)
+    await until(() => shelf.get(set.mosaicOwnerId))
+    const line = lines.find((l) => l.level === 'warn' && l.deviceId === 101)
+    expect(line?.msg).toBe('linked camera snapshot state read failed — state unknown')
+    expect(String(line?.meta?.['error'])).toContain('no native provider')
+  })
+})

@@ -97,6 +97,16 @@ export interface ParentUnownedCallDeps {
    */
   readonly isDeviceNativeCap?: (capName: string) => boolean
   /**
+   * Optional predicate — returns `true` when `(capName, method)` is declared
+   * with `systemMethod()` (`systemOnly`): served ONLY by the cap's
+   * system/wrapper provider. Such a call carries a `deviceId` as an ARGUMENT
+   * (`snapshot.getDebugState({ deviceId })`), but it must not ROUTE by it —
+   * the route resolver prefers the exact device-native owner of the cap, which
+   * does not implement the method (the hub's own cap router makes the same
+   * choice, `methodMountKindFor`). Omitted ⇒ every method routes by its deviceId.
+   */
+  readonly isSystemOnlyMethod?: (capName: string, method: string) => boolean
+  /**
    * Optional predicate — returns `true` when `capName` declares
    * `nodeIdMode: 'data'` in its `CapabilityDefinition` (`addon-settings`,
    * `addons`, `nodes`, `pipeline-orchestrator`): an inline `nodeId` in the
@@ -329,7 +339,13 @@ export function createParentUnownedCallHandler(
     // pulled out of `input.args` (where device-scoped caps carry it). Used for
     // BOTH the resolver attempt (device-scoped routing to the owning provider)
     // and the pinned broker fallback below.
-    const deviceId = input.deviceId ?? extractDeviceId(input.args)
+    const argDeviceId = input.deviceId ?? extractDeviceId(input.args)
+    // A `systemOnly` method names its device in the ARGS only; the route is the
+    // cap's system/wrapper provider, never the device-native owner.
+    const deviceId =
+      input.native !== true && deps.isSystemOnlyMethod?.(input.capName, input.method) === true
+        ? undefined
+        : argDeviceId
 
     // ── `native: true` — the per-device NATIVE provider, or nothing ──────
     // Answered BEFORE every capName-based path below, because every one of

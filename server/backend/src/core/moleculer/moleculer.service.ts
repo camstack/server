@@ -418,6 +418,9 @@ export class MoleculerService {
         // than the unroutable broker fallback (`switch.switch.getStatus`).
         isDeviceNativeCap: (capName) =>
           this.capabilityService.getRegistry()?.getDefinition(capName)?.deviceNative === true,
+        // A `systemMethod()` routes to the cap's system/wrapper provider, never
+        // the device-native owner its `deviceId` argument would select.
+        isSystemOnlyMethod: (capName, method) => this.isSystemOnlyMethod(capName, method),
         // `native: true` route — a forked WRAPPER asking for the per-device
         // native behind its own cap name (the snapshot wrapper, once it moved
         // out of hub-main). `getNativeProvider` is the single authority that
@@ -994,6 +997,12 @@ export class MoleculerService {
     }
   }
 
+  /** True when `(capName, method)` is declared with `systemMethod()`. */
+  private isSystemOnlyMethod(capName: string, method: string): boolean {
+    const def = this.capabilityService.getRegistry()?.getDefinition(capName)
+    return def?.methods[method]?.systemOnly === true
+  }
+
   /**
    * Call a capability method on a specific node.
    *
@@ -1042,8 +1051,12 @@ export class MoleculerService {
       // the legacy callFn store. The deviceId hint is a number extracted from the method args.
       const rawDeviceId: unknown =
         params !== null && typeof params === 'object' ? Reflect.get(params, 'deviceId') : undefined
+      // A `systemMethod()` names its device in the args only — it routes to the
+      // cap's system/wrapper provider, not to the device-native owner.
       const routeDeviceId: number | undefined =
-        typeof rawDeviceId === 'number' ? rawDeviceId : undefined
+        typeof rawDeviceId === 'number' && !this.isSystemOnlyMethod(capabilityName, methodName)
+          ? rawDeviceId
+          : undefined
       try {
         const route = resolver.resolveCapRoute(capabilityName, { nodeId, deviceId: routeDeviceId })
         return await resolver.dispatch(route, methodName, params)
