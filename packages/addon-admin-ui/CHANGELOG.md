@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The remote grid shows an icon for every key, with its name as tooltip and accessible label, from the shared role vocabulary
+
 ## [1.2.572] - 2026-11-03
 
 ### Changed

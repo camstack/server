@@ -5,7 +5,13 @@
  * arrow keys; it owns no data. A button wears its icon, else its label, else
  * its role's name. The look of a shape, tone or frame is `remote-look`.
  */
-import type { RemoteLayoutButton, RemoteLayoutGroup, RemoteLayoutPayload } from '@camstack/types'
+import {
+  type RemoteLayoutButton,
+  type RemoteLayoutGroup,
+  type RemoteLayoutPayload,
+  remoteRoleIcon,
+  remoteRoleLegend,
+} from '@camstack/types'
 import { Button, cn, useDisplayIconResolver } from '@camstack/ui-library'
 import { GripVertical } from 'lucide-react'
 import type { KeyboardEvent, PointerEvent, ReactNode, Ref } from 'react'
@@ -13,7 +19,8 @@ import { useTranslation } from 'react-i18next'
 import { AppBrandGlyph } from './AppBrandGlyph'
 import { resolveAppBrand } from './app-brand-icons'
 import type { DragItem, DragPreview } from './layout-drag'
-import { humanRole, slimRowsOf } from './layout-model'
+import { slimRowsOf } from './layout-model'
+import { roleName } from './role-vocabulary'
 import { clampToGrid, frameClass, isDividerFrame, shapeClass, toneClass } from './remote-look'
 
 /** A drag in progress: what is held and where it would land. */
@@ -67,29 +74,40 @@ function keyName(button: RemoteLayoutButton, roleName: string): string {
   return button.label ?? resolveAppBrand(button.icon)?.label ?? roleName
 }
 
-/** A key shows an icon, or a colour, or text: text only when nothing else says what it is. */
-function showsWords(button: RemoteLayoutButton, hasIcon: boolean): boolean {
-  if (hasIcon || resolveAppBrand(button.icon) !== undefined) return false
+/** A key's text is its own label (the layout's); a role's name is only its accessible name. */
+function showsWords(button: RemoteLayoutButton): boolean {
+  if (button.label === undefined || resolveAppBrand(button.icon) !== undefined) return false
   return button.tone === undefined || !COLOUR_TONES.has(button.tone)
+}
+
+/** The glyph a key wears: its own icon, else its role's, none on a colour key. */
+function iconKeyOf(button: RemoteLayoutButton): string | undefined {
+  if (button.icon !== undefined) return button.icon
+  if (button.tone !== undefined && COLOUR_TONES.has(button.tone)) return undefined
+  return remoteRoleIcon(button.role)
 }
 
 function Face({
   button,
-  name,
   compact,
 }: {
   readonly button: RemoteLayoutButton
-  readonly name: string
   readonly compact: boolean
 }): ReactNode {
   const resolve = useDisplayIconResolver()
   const brand = resolveAppBrand(button.icon)
-  const Icon = button.icon === undefined || brand !== undefined ? undefined : resolve(button.icon)
-  const words = showsWords(button, Icon !== undefined) ? name : undefined
+  const iconKey = iconKeyOf(button)
+  const legend = button.icon === undefined ? remoteRoleLegend(button.role) : undefined
+  const Icon =
+    iconKey === undefined || brand !== undefined || legend !== undefined
+      ? undefined
+      : resolve(iconKey)
+  const words = showsWords(button) ? button.label : undefined
   return (
     <span className="flex flex-col items-center justify-center gap-0.5 leading-none">
       {brand !== undefined && <AppBrandGlyph brand={brand} />}
       {Icon !== undefined && <Icon className="h-4 w-4" aria-hidden />}
+      {legend !== undefined && <span className="text-sm font-medium">{legend}</span>}
       {words !== undefined && !compact && (
         <span className="max-w-full truncate text-[11px]">{words}</span>
       )}
@@ -198,7 +216,7 @@ export function RemoteGrid({
   onItemKeyDown,
   drag = null,
 }: RemoteGridProps): ReactNode {
-  const { t } = useTranslation()
+  const { i18n } = useTranslation()
   const editable = onItemPointerDown !== undefined
   const dragging = drag !== null
   const taken = occupied(grid)
@@ -274,7 +292,7 @@ export function RemoteGrid({
         const bound = boundRoles === undefined || boundRoles.has(button.role)
         const held = drag?.item.kind === 'button' && drag.item.id === button.id
         const item: DragItem = { kind: 'button', id: button.id }
-        const name = keyName(button, t(`remote.role.${button.role}`, humanRole(button.role)))
+        const name = keyName(button, roleName(button.role, i18n.language))
         return (
           <Button
             key={button.id}
@@ -308,7 +326,7 @@ export function RemoteGrid({
               onItemKeyDown === undefined ? undefined : (event) => onItemKeyDown(item, event)
             }
           >
-            <Face button={button} name={name} compact={compact} />
+            <Face button={button} compact={compact} />
           </Button>
         )
       })}

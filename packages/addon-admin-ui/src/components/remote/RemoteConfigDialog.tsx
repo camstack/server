@@ -39,7 +39,8 @@ import { BindingPanel } from './BindingPanel'
 import { composedBlockIdOf, withMediaPlayerExtension } from './composed-remote'
 import { deviceLabel } from './binding-summary'
 import { EditTemplateButton } from './EditTemplateButton'
-import { humanRole, layoutOf } from './layout-model'
+import { layoutOf } from './layout-model'
+import { roleName as vocabRoleName } from './role-vocabulary'
 import {
   applyDraft,
   type BindableRole,
@@ -109,7 +110,7 @@ function describeResult(result: RemoteSendResult, t: TFunction): string {
 }
 
 function DialogForm({ device, initial, onClose }: FormProps): ReactNode {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const queryClient = useQueryClient()
   const [config, setConfig] = useState<RemoteConfig>(initial)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -144,7 +145,7 @@ function DialogForm({ device, initial, onClose }: FormProps): ReactNode {
   const roleName = (role: BindableRole): string =>
     role.name ??
     layout?.buttons.find((b) => b.role === role.role)?.label ??
-    t(`remote.role.${role.role}`, humanRole(role.role))
+    vocabRoleName(role.role, i18n.language)
   const selected = roles.find((r) => r.role === selectedRole)
   const selectedKey = layout?.buttons.find((b) => b.role === selectedRole)?.id ?? null
   const offLayout = roles.filter((r) => !r.inLayout)

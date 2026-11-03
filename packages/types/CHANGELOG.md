@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Every remote key role now has a name in English and Italian and an icon, shared by the admin and the viewer
+
 ## [1.2.489] - 2026-11-03
 
 ### Changed

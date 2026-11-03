@@ -54,7 +54,6 @@ import {
   addButton,
   deleteGroup,
   groupById,
-  humanRole,
   isCustomRole,
   knownRolesOfGroup,
   type LayoutResult,
@@ -70,6 +69,7 @@ import {
   shiftButton,
 } from './layout-model'
 import { RemoteGrid } from './RemoteGrid'
+import { roleName } from './role-vocabulary'
 import { useGridDrag } from './useGridDrag'
 
 const CUSTOM_CHOICE = '__custom__'
@@ -234,12 +234,15 @@ interface InspectorProps {
   readonly onRemove: () => void
 }
 
-function roleOptions(t: (key: string, fallback?: string) => string): readonly OptionSelectOption[] {
+function roleOptions(
+  t: (key: string, fallback?: string) => string,
+  language: string,
+): readonly OptionSelectOption[] {
   const known = ROLE_GROUP_ORDER.flatMap((group) =>
     knownRolesOfGroup(group).map(
       (role): OptionSelectOption => ({
         value: role,
-        label: t(`remote.role.${role}`, humanRole(role)),
+        label: roleName(role, language),
         group: t(`remote.roleGroup.${group}`),
       }),
     ),
@@ -255,7 +258,7 @@ function roleOptions(t: (key: string, fallback?: string) => string): readonly Op
 }
 
 function ButtonInspector({ grid, buttonId, apply, onRemove }: InspectorProps): ReactNode {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const button = grid.buttons.find((b) => b.id === buttonId)
   const customKey = button === undefined ? null : customKeyOfRole(button.role)
   const [customDraft, setCustomDraft] = useState<string | null>(null)
@@ -285,7 +288,7 @@ function ButtonInspector({ grid, buttonId, apply, onRemove }: InspectorProps): R
         mode="single"
         singleDisplay="field"
         label={t('remote.layout.role')}
-        options={roleOptions((key, fallback) => t(key, fallback ?? key))}
+        options={roleOptions((key, fallback) => t(key, fallback ?? key), i18n.language)}
         value={custom ? CUSTOM_CHOICE : button.role}
         onChange={(next) => {
           if (next === CUSTOM_CHOICE) {

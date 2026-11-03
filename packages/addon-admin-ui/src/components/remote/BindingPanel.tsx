@@ -4,8 +4,8 @@
  * and the device / command pickers to change it. Only the selected button's
  * action is rendered; the grid is the list. Test sends the SAVED command once.
  */
-import type { RemoteBinding, RemoteBindingAction } from '@camstack/types'
-import { Badge, Button, Select } from '@camstack/ui-library'
+import { type RemoteBinding, type RemoteBindingAction, remoteRoleIcon } from '@camstack/types'
+import { Badge, Button, Select, useDisplayIconResolver } from '@camstack/ui-library'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AutomationDevice } from '../../pages/build/automation/automation-data'
@@ -76,6 +76,7 @@ export function BindingPanel({
   onTest,
 }: BindingPanelProps): ReactNode {
   const { t } = useTranslation()
+  const RoleIcon = useDisplayIconResolver()(remoteRoleIcon(role.role))
   const [editing, setEditing] = useState(false)
   const complete = binding !== undefined && isCompleteAction(binding.action)
   const irTransmitter = binding === undefined ? null : transmitterOf(binding)
@@ -90,6 +91,9 @@ export function BindingPanel({
       aria-label={t('remote.panel.title', { name })}
     >
       <div className="flex flex-wrap items-center gap-2">
+        {RoleIcon !== undefined && (
+          <RoleIcon className="h-4 w-4 shrink-0 text-foreground-muted" aria-hidden />
+        )}
         <h4 className="text-sm font-medium text-foreground">{name}</h4>
         {role.custom && <Badge variant="neutral">{t('remote.bindings.custom')}</Badge>}
         {!role.inLayout && <Badge variant="warning">{t('remote.bindings.notInLayout')}</Badge>}

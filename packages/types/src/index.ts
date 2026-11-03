@@ -828,6 +828,7 @@ export * from './cap-call-context.js'
 // ── Capability definitions (Zod-schema-first) ──────────────────
 export * from './capabilities/index.js'
 export * from './running-state/defaults.js'
+export * from './remote/remote-role-vocabulary.js'
 export * from './remote/remote-roles.js'
 export * from './remote/remote-media-features.js'
 export * from './remote/remote-config.js'

@@ -231,7 +231,7 @@ describe('moving on the grid', () => {
 })
 
 describe('what a key shows', () => {
-  it('an icon key and a colour key carry no visible text, but keep their name', () => {
+  it('a key carries no visible text unless the layout labels it, and keeps its name', () => {
     const layout: RemoteLayoutPayload = {
       columns: 3,
       rows: 1,
@@ -257,7 +257,9 @@ describe('what a key shows', () => {
     const colour = screen.getByTestId('remote-grid-button-r')
     expect(colour.getAttribute('aria-label')).toBe('Red')
     expect(colour.textContent).toBe('')
-    // No icon, no colour: the text stays.
-    expect(screen.getByTestId('remote-grid-button-o').textContent).not.toBe('')
+    // A key with no icon of its own wears its role's glyph and says its name, not words.
+    const ok = screen.getByTestId('remote-grid-button-o')
+    expect(ok.getAttribute('aria-label')).toBe('OK')
+    expect(ok.textContent).toBe('')
   })
 })
