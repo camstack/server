@@ -51,14 +51,19 @@ scalar caps), so the facets a template attached could not be changed later.
 
 ## Consequences
 
-- The appliance and heater template code goes away in a later phase; until then
-  both entry points exist.
+- The appliance and heater template code is deleted (phase 5): the helper kinds
+  are the aggregators only, and the creation form builds a naked device. The
+  migration keeps a private read-only schema of the old `helper` specs, the only
+  place that still names them.
+- A remote attached through Customize to a naked media player adds the
+  `media-player` feature with every command served by the remote, so the device
+  gains its media-player commands (D964).
 - Stored compositions made from the appliance and heater helper blocks are
   rewritten by the `core-blocks` migration `2026-11-03-helper-to-customize`
   (D987 procedure body): running, power meter and power source recompiled in the
   Customize catalog format with the same threshold, dwells and plugs, a heater's
   `switch` forward kept, the `helper` spec dropped, the block id unchanged. It
-  runs before the templates are deleted.
+  ran on every node before the templates were deleted.
 - A facet an operator wants on a built device costs one Customize step instead
   of a template choice.
 
@@ -66,6 +71,11 @@ scalar caps), so the facets a template attached could not be changed later.
 
 A catalog-wide admin-ui spec: for every Customize target in the catalog, a
 composed device of a compatible type exposes it (a helper device included).
-Reintroducing an early return in `ComposedCustomizeBody` fails it. The
-template removal is not enforced yet: review only. The migration has a real-SQLite
+Reintroducing an early return in `ComposedCustomizeBody` fails it. Three
+guards, wired into `checks.yml`: `check-helper-kinds-are-aggregators` (the
+helper spec declares exactly the aggregator kinds), `check-single-composition-creator`
+(one non-test caller of `createComposition`, `lib/create-composition.ts`) and
+`check-no-hero-self-drawn-power` (no hero card, in ui-library or admin-ui, draws
+watts). A remote attached to a naked media player is covered by a
+`RemoteConfigDialog` spec. The migration has a real-SQLite
 spec (`helper-to-customize.spec.ts`) that marks threshold, dwells and plugs.

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The appliance and heater helper templates are gone: the helper kinds are the aggregators only, and a device type is a naked composed device grown through Customize.
+
 ## [1.2.487] - 2026-11-03
 
 ### Changed

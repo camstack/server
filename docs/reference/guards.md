@@ -4,12 +4,12 @@
 
 # Guards
 
-211 repository guards: 206 in `scripts/`,
+213 repository guards: 208 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (201)
+## Enforced by CI checks (203)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -87,6 +87,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-fleet-query-defaults.ts` | Fleet-query-defaults guard — enforcement for D274. |
 | `scripts/check-global-schema-declared.ts` | An addon that SERVES a global form with a secret field DECLARES that form through `globalSettingsSchema()` (D787). |
 | `scripts/check-heavy-specs.ts` | Heavy-spec guard — a `*.heavy.spec.*` file is out of every automatic lane and IN the on-demand Checks workflow, never in neither. |
+| `scripts/check-helper-kinds-are-aggregators.ts` | The helper kinds are exactly the aggregators (D1004, D944). |
 | `scripts/check-history-single-mechanism.ts` | D850 P4 — numeric history has one mechanism (device-history). |
 | `scripts/check-host-externals-identical.ts` | The three host-external lists name the same specifiers. |
 | `scripts/check-host-widget-resolves.ts` | Host-widget guard — every `host/…` widget a capability DECLARES must exist in `HOST_WIDGETS`. |
@@ -184,6 +185,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-settings-help-length.ts` | Provider settings help-text guard — a settings field explains only what an operator cannot read off its label. |
 | `scripts/check-settings-key-has-reader.ts` | Settings-key guard — a form must not offer a knob that writes a store NOBODY READS. |
 | `scripts/check-silent-observation-drop.ts` | Silent-observation-drop guard — enforcement for D237 (docs/decisions/adr-0237-a-verification-must-be-able-to-say-unknown.md). |
+| `scripts/check-single-composition-creator.ts` | One caller of `createComposition` outside tests (D1004). |
 | `scripts/check-single-copy-layout.ts` | Single-copy layout guard — enforcement step 3 of D45 (docs/decisions/adr-0045). |
 | `scripts/check-single-prebuffer-knob.ts` | There is ONE prebuffer configuration, and it lives in one file. |
 | `scripts/check-single-recorded-surface.ts` | D42 guard — the viewer has ONE recorded surface: the WebRTC track. |

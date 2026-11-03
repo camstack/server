@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An infrared TV is a real media player: plug power truth, volume and channel steps sent as repeated trains 150 ms apart, and a typed error for a button the remote lacks
 - The LAN access settings (HTTP, HTTPS, mDNS, passive discovery, local hostname) are per-node settings, copied from the existing values
 - Existing washer, dryer and heater helper devices are converted at boot to plain Customize running, power and power-source settings, keeping their threshold, dwell times and plugs.
+- Appliance and heater helper compositions are no longer compiled; stored ones were already rewritten into Customize facets by the helper-to-customize migration.
 
 ### Fixed
 
