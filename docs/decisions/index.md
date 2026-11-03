@@ -4,7 +4,7 @@
 
 # Decisions
 
-966 architecture decision records. One file per decision, never
+967 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -981,6 +981,7 @@ that rots.
 | D1001 | [ESPHome board keys are read through Home Assistant ingress, never from a port opened on the LAN](adr-1001-esphome-board-keys-are-read-through-ha-ingress-never-a-lan-port.md) | 💭 proposed | 2026-11-02 |
 | D1002 | [A model box may open in a scene zone, a sub-floor box continues, and a lighting flip is not a change](adr-1002-a-model-box-may-open-in-a-scene-zone-a-sub-floor-box-continues-and-a-lighting-flip-is-not-a-change.md) | ✅ accepted | 2026-11-02 |
 | D1003 | [Zone motion backs the open of a package candidate, learned late but anchored at the open](adr-1003-zone-motion-backs-the-open-of-a-package-candidate-learned-late-anchored-at-open.md) | ✅ accepted | 2026-11-02 |
+| D1004 | [One creation entry point: a composed device is created naked, facets attach through Customize](adr-1004-one-creation-entry-point-a-composed-device-is-created-naked-facets-attach-through-customize.md) | ✅ accepted (supersedes D944 (the appliance template part only; the fixed extension set, the helper templates and the one source selector stay)) | 2026-11-03 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next
