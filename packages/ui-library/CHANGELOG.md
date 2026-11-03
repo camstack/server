@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Media-player hero card rewritten: power, running state, power-meter watts and every declared control, unknown shown as unknown; artwork with cross-fade; a declared volume or mute always shows (unknown level) instead of hiding
+- A wireless link badge with no signal reading shows no percentage (it showed NaN%)
+- Media-player hero: a status with no state draws an unknown orb and unknown running, never on or Not running
 
 ## [1.2.376] - 2026-11-03
 

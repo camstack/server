@@ -36,8 +36,8 @@ function pickWifiIcon(signalPercent: number | null): typeof Wifi {
 
 function signalColor(signalPercent: number | null): string {
   if (signalPercent === null) return 'text-foreground-subtle'
-  if (signalPercent <= 20) return 'text-rose-400'
-  if (signalPercent <= 50) return 'text-amber-400'
+  if (signalPercent <= 20) return 'text-danger'
+  if (signalPercent <= 50) return 'text-warning'
   return 'text-foreground-subtle'
 }
 

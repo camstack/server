@@ -190,4 +190,26 @@ describe('MediaPlayerHeroCard — only what is known', () => {
     )
     expect(screen.getByText('Band')).toBeTruthy()
   })
+
+  it('a status with no state draws an unknown orb and never says Not running', () => {
+    mockSlices = {}
+    renderHero(JSON.parse('{"stateSource":"reported","assumedFields":[]}'))
+    expect(screen.getByTestId('media-hero').getAttribute('data-power')).toBe('unknown')
+    expect(screen.getByTestId('media-state-unknown')).toBeTruthy()
+    expect(screen.queryByText('Not running')).toBeNull()
+    expect(screen.getByTestId('media-running-state').getAttribute('data-reading')).toBe('unknown')
+  })
+
+  it('an absent running-state cap never reads as Not running, even with a known state', () => {
+    mockSlices = {}
+    renderHero({ ...infrared, state: 'off', stateSource: 'reported', assumedFields: [] })
+    expect(screen.queryByText('Not running')).toBeNull()
+  })
+
+  it('a running-state cap that answered false says Not running', () => {
+    mockSlices = { runningState: { running: false } }
+    renderHero({ ...infrared, state: 'off', stateSource: 'reported', assumedFields: [] })
+    expect(screen.getByText('Not running')).toBeTruthy()
+    mockSlices = {}
+  })
 })

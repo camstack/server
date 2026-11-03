@@ -224,4 +224,18 @@ describe('sibling readings: running-state and power-meter', () => {
     expect(deriveMediaPlayerView(BASE, ALL, { watts: 84.4 }).watts).toBe(84.4)
     expect(deriveMediaPlayerView(BASE, ALL, { watts: Number.NaN }).watts).toBeNull()
   })
+
+  it('a status that carries no state is unknown power and unknown running, never on', () => {
+    const stateless = JSON.parse('{"stateSource":"reported","assumedFields":[]}')
+    const view = deriveMediaPlayerView(stateless, ALL)
+    expect(view.power).toBe('unknown')
+    expect(view.running).toBe('unknown')
+    expect(view.runningReading).toBe('unknown')
+  })
+
+  it('a stateless status takes its power from a running-state reading that answered', () => {
+    const stateless = JSON.parse('{"stateSource":"reported","assumedFields":[]}')
+    expect(deriveMediaPlayerView(stateless, ALL, { running: true }).power).toBe('on')
+    expect(deriveMediaPlayerView(stateless, ALL, { running: false }).power).toBe('off')
+  })
 })

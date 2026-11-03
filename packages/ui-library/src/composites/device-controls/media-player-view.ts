@@ -77,13 +77,15 @@ export interface MediaPlayerView {
 const NO_TRANSPORT: TransportView = { playPause: false, previous: false, next: false, stop: false }
 
 /** Whether the status carries any activity the device actually reported. */
-function runningOf(state: MediaPlayerStatus['state']): RunningView {
+function runningOf(state: MediaPlayerStatus['state'] | undefined): RunningView {
   switch (state) {
     case 'playing':
     case 'paused':
     case 'buffering':
     case 'idle':
       return state
+    case undefined:
+      return 'unknown'
     default:
       return 'none'
   }
@@ -94,7 +96,8 @@ function artworkOf(status: MediaPlayerStatus): string | null {
   return url === '' ? null : url
 }
 
-function powerOf(state: MediaPlayerStatus['state']): PowerView {
+function powerOf(state: MediaPlayerStatus['state'] | undefined): PowerView {
+  if (state === undefined) return 'unknown'
   if (state === 'off') return 'off'
   if (state === 'standby') return 'standby'
   return 'on'
@@ -150,7 +153,7 @@ export function deriveMediaPlayerView(
   const watts = extras.watts !== undefined && Number.isFinite(extras.watts) ? extras.watts : null
   const view = deriveFromStatus(status, features)
   // A reading from a running source outranks the driver's guess (and fills a missing status).
-  const guessed = status === undefined || view.stateAssumed
+  const guessed = status === undefined || status.state === undefined || view.stateAssumed
   if (runningReading === 'unknown' || !guessed) return { ...view, runningReading, watts }
   if (runningReading === 'idle') {
     const off = { ...UNKNOWN_VIEW, power: 'off' as const, running: 'none' as const }
@@ -161,7 +164,7 @@ export function deriveMediaPlayerView(
     status === undefined
       ? view
       : deriveFromStatus(
-          status.state === 'off' || status.state === 'standby'
+          status.state === undefined || status.state === 'off' || status.state === 'standby'
             ? { ...status, state: 'on' }
             : status,
           features,
@@ -175,7 +178,10 @@ function deriveFromStatus(
 ): MediaPlayerView {
   const has = (f: DeviceFeature): boolean => features?.includes(f) ?? false
   const canSwitchPower = has(DeviceFeature.MediaPlayerPower)
-  if (status === undefined) return { ...UNKNOWN_VIEW, canSwitchPower }
+  // No status, or a status that carries no state: nothing is known, so nothing is drawn as on.
+  if (status === undefined || status.state === undefined) {
+    return { ...UNKNOWN_VIEW, canSwitchPower }
+  }
 
   const power = powerOf(status.state)
   const running = runningOf(status.state)
