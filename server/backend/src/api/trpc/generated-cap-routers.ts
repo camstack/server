@@ -9645,13 +9645,17 @@ export function createCapRouter_logDestination(
         return p.write(methodInput as any)
       }),
     describeRead: adminProcedure
-      .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
+      .input(logDestinationCapability.methods.describeRead.input.loose())
       .output(logDestinationCapability.methods.describeRead.output)
       .query(async ({ input, ctx }) => {
+        const { nodeId, addonId, ...methodInput } = input as {
+          nodeId?: string
+          addonId?: string
+        } & Record<string, unknown>
         const p = resolveProvider(
           'log-destination',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
+          nodeId,
+          () => getProvider(ctx, addonId),
           createRemoteProxy,
         )
         const fn = p.describeRead
@@ -9661,7 +9665,8 @@ export function createCapRouter_logDestination(
             message: 'Capability "log-destination" provider does not implement "describeRead"',
           })
         }
-        return fn.call(p)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return fn.call(p, methodInput as any)
       }),
     read: adminProcedure
       .input(logDestinationCapability.methods.read.input.loose())

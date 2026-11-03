@@ -3387,6 +3387,7 @@ Enum: `"debug" \| "info" \| "warn" \| "error"`
 
 ### `LogReadQuerySchema`
 
+- `instanceId?`: `string`
 - `requestId?`: `string`
 - `deviceId?`: `number`
 - `fromAddonId?`: `string`

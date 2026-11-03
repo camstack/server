@@ -3215,7 +3215,7 @@
 
 ### `log-destination` → `logDestination.*`
 
-- **Source:** `packages/types/src/capabilities/log-destination.cap.ts:121`
+- **Source:** `packages/types/src/capabilities/log-destination.cap.ts:131`
 - **Meta:** scope: `system` · mode: `collection` · mount: `skip`
 - **Archetypes:** internal
 - **Provider interface:** `ILogDestinationProvider`
@@ -3223,7 +3223,7 @@
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | write | `logDestination.write` | mutation | admin | `LogEntrySchema` | `void` |
-| describeRead | `logDestination.describeRead` | query | admin | `void` | `LogReadCapabilitiesSchema` |
+| describeRead | `logDestination.describeRead` | query | admin | `{ instanceId?: string }` | `LogReadCapabilitiesSchema` |
 | read | `logDestination.read` | query | admin | `LogReadQuerySchema` | `LogReadResultSchema` |
 | cancelRead | `logDestination.cancelRead` | mutation | admin | `{ requestId: string }` | `{ cancelled: boolean }` |
 

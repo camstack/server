@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The log-destination capability can name a destination instance (instanceId) on read and describeRead
+
 ## [1.2.488] - 2026-11-03
 
 ### Changed

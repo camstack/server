@@ -125,7 +125,7 @@ export interface ILogDestination {
   shutdown(): Promise<void>
   write(entry: LogEntry): void
   /** Absent ⇒ this destination only ships lines (D898). */
-  describeRead?(): Promise<LogReadCapabilities>
+  describeRead?(input?: { readonly instanceId?: string | undefined }): Promise<LogReadCapabilities>
   read?(query: LogReadQuery): Promise<LogReadResult>
   cancelRead?(input: { readonly requestId: string }): Promise<{ readonly cancelled: boolean }>
 }

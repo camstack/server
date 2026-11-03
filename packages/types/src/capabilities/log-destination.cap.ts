@@ -33,6 +33,11 @@ const LogEntrySchema = z.object({
  * flight, and not asking for the next slice ends the scan.
  */
 const LogReadQuerySchema = z.object({
+  /**
+   * Which destination INSTANCE answers (a destination addon may hold several records). Absent ⇒
+   * the provider's first readable one, so a caller written before instances existed is unchanged.
+   */
+  instanceId: z.string().min(1).max(200).optional(),
   /** Correlates `cancelRead`. Caller-chosen, unique per in-flight read. */
   requestId: z.string().min(1).max(64).optional(),
   /** The device the line is about (`tags.deviceId`, numeric). */
@@ -99,6 +104,11 @@ const LogReadResultSchema = z.object({
   cancelled: z.boolean().optional(),
 })
 
+/** Names one destination instance; absent ⇒ the provider's first readable one. */
+const LogInstanceSelectorSchema = z.object({
+  instanceId: z.string().min(1).max(200).optional(),
+})
+
 const LogReadCapabilitiesSchema = z.object({
   /** False ⇒ this destination only ships lines (console, forwarder, an unconfigured Loki). */
   readable: z.boolean(),
@@ -126,8 +136,12 @@ export const logDestinationCapability = {
   methods: {
     write: method(LogEntrySchema, z.void(), { kind: 'mutation' }),
     /** Absent ⇒ the destination cannot read back (same as `readable: false`). */
-    describeRead: optionalMethod(z.void(), LogReadCapabilitiesSchema, { auth: 'admin' }),
-    read: optionalMethod(LogReadQuerySchema, LogReadResultSchema, { auth: 'admin' }),
+    describeRead: optionalMethod(LogInstanceSelectorSchema, LogReadCapabilitiesSchema, {
+      auth: 'admin',
+    }),
+    read: optionalMethod(LogReadQuerySchema, LogReadResultSchema, {
+      auth: 'admin',
+    }),
     cancelRead: optionalMethod(
       z.object({ requestId: z.string().min(1).max(64) }),
       z.object({ cancelled: z.boolean() }),

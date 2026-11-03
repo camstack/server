@@ -35,7 +35,8 @@ import {
   bareAddonId,
   isSameAddonId,
 } from '@camstack/types'
-import { LokiDestination, type LokiConfig } from './loki-destination.js'
+import type { LokiConfig } from './loki-destination.js'
+import { LokiDestinationSet } from './loki-destination-set.js'
 import {
   type LokiCataloguePorts,
   type LokiRecordState,
@@ -101,14 +102,14 @@ export function stripUserinfo(message: string, typedUrl: string): string {
 const READY_PATH = '/ready'
 
 export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
-  private destination: LokiDestination | null = null
+  private destination: LokiDestinationSet | null = null
   private instances: RecordIntegrationInstances<LokiDestinationBody> | null = null
-  private current: LokiDestinationBody | null = null
   private refreshTimer: ReturnType<typeof setInterval> | null = null
   private retirementTimer: ReturnType<typeof setTimeout> | null = null
   private shuttingDown = false
   private declared = false
-  private secretsWarned = false
+  /** Instances whose keychain lock was already warned about — once per lock, per instance. */
+  private readonly secretsWarned = new Set<string>()
 
   constructor() {
     super({})
@@ -119,7 +120,7 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
   }
 
   protected async onInitialize(): Promise<ProviderRegistration[]> {
-    this.destination = new LokiDestination()
+    this.destination = new LokiDestinationSet()
     this.shuttingDown = false
     const registrations: ProviderRegistration[] = [
       { capability: logDestinationCapability, provider: this.destination },
@@ -132,7 +133,11 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
       if (hub) await this.ensureDeclared()
       else await this.ensureDeclaredQuietly()
       this.instances = new RecordIntegrationInstances(records, lokiDestinationsKind, {
-        description: { instanceMode: 'single', kind: 'destination', canTest: true },
+        description: {
+          instanceMode: 'multiple',
+          kind: 'destination',
+          canTest: true,
+        },
         formSchema: () => this.connectionForm(),
         initialBody: (name) => ({ ...LOKI_DEFAULT_BODY, name }),
         configured: (body) => body.url.length > 0,
@@ -157,15 +162,18 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
       }
       await this.refreshFromRecord()
     }
-    await this.destination.initialize(this.destinationConfig())
+    await this.destination.initialize()
     // Logged once, at boot, by the ADDON — not by the destination, which must
     // never log (it would feed itself). Safe here because it happens before the
     // destination is registered and cannot recurse.
-    const url = this.current?.url ?? ''
+    const urls = this.destination
+      .getStatuses()
+      .filter((status) => status.configured)
+      .map((status) => status.instanceId)
     this.ctx.logger.info(
-      url.length > 0
-        ? `Loki logging initialized → ${url}`
-        : 'Loki logging registered but inactive (no URL set)',
+      urls.length > 0
+        ? `Loki logging initialized with ${String(urls.length)} destination(s): ${urls.join(', ')}`
+        : 'Loki logging registered but inactive (no destination configured)',
     )
     // Not awaited: the capability toggle refuses a provider that is not
     // registered yet, and the one returned below is registered only after this
@@ -191,34 +199,42 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
     }
   }
 
-  /** Re-read the connection record and apply it to the live destination. */
+  /**
+   * Re-read every connection record and reconcile the live destinations with them: a new record
+   * starts one, an edit reconfigures it, a deleted record closes its client. A record whose
+   * secret cannot be read (locked keychain) keeps the configuration it had (D49) and is skipped
+   * if it never had one; the others are unaffected.
+   */
   private async refreshFromRecord(): Promise<void> {
     if (this.instances === null || this.shuttingDown) return
-    let first: ResolvedInstance<LokiDestinationBody> | undefined
+    let resolved: readonly ResolvedInstance<LokiDestinationBody>[]
     try {
       if (!this.declared) await this.ensureDeclared()
-      ;[first] = await this.instances.listResolved()
+      resolved = await this.instances.listResolved()
     } catch (err: unknown) {
-      // A failed read changes nothing: the destination keeps the config it has.
-      this.ctx.logger.warn('Loki logging: the connection record could not be read', {
+      // A failed read changes nothing: the destinations keep the config they have.
+      this.ctx.logger.warn('Loki logging: the connection records could not be read', {
         meta: { error: err instanceof Error ? err.message : String(err) },
       })
       return
     }
-    if (first?.secrets === 'unavailable') {
-      // A locked keychain is a failed read of the password: keep the destination as it is
-      // rather than reconfigure it with an empty one (D49). Warned once per lock.
-      if (!this.secretsWarned) {
-        this.secretsWarned = true
-        this.ctx.logger.warn(
-          'Loki logging: the keychain is locked; the destination keeps its previous configuration',
-        )
+    const configs = new Map<string, LokiConfig>()
+    const keep = new Set<string>()
+    for (const instance of resolved) {
+      if (instance.secrets === 'unavailable') {
+        keep.add(instance.id)
+        if (!this.secretsWarned.has(instance.id)) {
+          this.secretsWarned.add(instance.id)
+          this.ctx.logger.warn(
+            `Loki logging: the keychain is locked; destination ${instance.id} keeps its previous configuration`,
+          )
+        }
+        continue
       }
-      return
+      this.secretsWarned.delete(instance.id)
+      configs.set(instance.id, this.destinationConfig(instance.body))
     }
-    this.secretsWarned = false
-    this.current = first?.body ?? null
-    await this.destination?.reconfigure(this.destinationConfig())
+    await this.destination?.apply(configs, keep)
   }
 
   /**
@@ -266,7 +282,10 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
       readRecord: async (id: string): Promise<LokiRecordState | null> => {
         const row = await handle.getResolved(id)
         if (row === null) return null
-        return { url: row.data.url, hasPassword: (row.data.password ?? '').length > 0 }
+        return {
+          url: row.data.url,
+          hasPassword: (row.data.password ?? '').length > 0,
+        }
       },
       ensureIntegration: async (name: string) => {
         const existing = await this.ctx.api.integrations.getByAddonId.query({
@@ -350,8 +369,16 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
         signal: AbortSignal.timeout(stored?.timeoutMs ?? LOKI_DEFAULT_BODY.timeoutMs),
       })
       return res.ok
-        ? { success: true, status: 'validated', latencyMs: Date.now() - started }
-        : { success: false, status: 'rejected', error: `Loki answered HTTP ${res.status}` }
+        ? {
+            success: true,
+            status: 'validated',
+            latencyMs: Date.now() - started,
+          }
+        : {
+            success: false,
+            status: 'rejected',
+            error: `Loki answered HTTP ${res.status}`,
+          }
     } catch (err: unknown) {
       return {
         success: false,
@@ -379,7 +406,10 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
         },
       })
     } catch (err: unknown) {
-      outcome = { kind: 'deferred', reason: err instanceof Error ? err.message : String(err) }
+      outcome = {
+        kind: 'deferred',
+        reason: err instanceof Error ? err.message : String(err),
+      }
     }
     if (outcome.kind === 'retired' && outcome.strippedValue !== null) {
       this.ctx.logger.info(
@@ -468,11 +498,10 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
    * different signature is a type error — usefully, since silently overriding it
    * would have broken this addon's settings reload.
    */
-  private destinationConfig(): LokiConfig {
+  private destinationConfig(body: LokiDestinationBody): LokiConfig {
     // The destination's own gate is "enabled AND a URL is set". `enabled` is the instance's switch
     // on the record (D996, `setInstanceEnabled`); the registry toggle (D777) is no longer the
-    // operator's switch and is left on. With no record the destination stays inert (no URL).
-    const body = this.current ?? { ...LOKI_DEFAULT_BODY, name: '' }
+    // operator's switch and is left on.
     return {
       enabled: body.enabled !== false,
       url: body.url,
@@ -489,7 +518,7 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
     }
   }
 
-  getDestination(): LokiDestination {
+  getDestination(): LokiDestinationSet {
     if (!this.destination) throw new Error('Loki logging not initialized')
     return this.destination
   }

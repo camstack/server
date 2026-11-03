@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The snapshot wrapper logs, at info and on the camera, when a failed capture is answered with the cached frame
 - A composed device (a dryer, washer or heater) now resumes its last running state after a hub restart instead of reporting unknown, so a cycle that ends right after a restart still notifies
 - core-blocks can propose a running threshold and dwells from a device's own power history (read-only)
+- Loki log destinations can now be several: every enabled destination receives the logs
 
 ### Fixed
 

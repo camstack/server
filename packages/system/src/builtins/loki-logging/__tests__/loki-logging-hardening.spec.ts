@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return -- AddonContext stub crosses typed boundaries. */
+import { LokiDestination } from '../loki-destination.js'
 import type { AddonContext, IIntegrationInstancesProvider, IScopedLogger } from '@camstack/types'
 import {
   integrationInstancesCapability,
@@ -135,7 +136,7 @@ describe('LokiLoggingAddon — review hardening', () => {
     const lockKeychain = { locked: false }
     const { addon, registrations, warn } = await boot('hub', { lockKeychain })
     addons.push(addon)
-    const reconfigure = vi.spyOn(addon.getDestination(), 'reconfigure')
+    const reconfigure = vi.spyOn(LokiDestination.prototype, 'reconfigure')
     lockKeychain.locked = true
     const provider = instancesOf(registrations)
     await provider.updateInstance({ id: 'int_0001', values: { job: 'a' } })
