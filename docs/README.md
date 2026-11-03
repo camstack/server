@@ -39,6 +39,7 @@ repo path mentioned must resolve.
 | [architecture/records.md](architecture/records.md) | you are persisting an addon's own facts, a list of entries, or a credential in a row (`ctx.records`) |
 | [architecture/notifications.md](architecture/notifications.md) | you are touching rules, the outbox, attachments or notifiers |
 | [architecture/logging.md](architecture/logging.md) | you are touching log destinations, the log buffer, `logs.query` or the log viewer |
+| [architecture/assisted-setup-mcp.md](architecture/assisted-setup-mcp.md) | you are touching the public MCP's setup, `debug_report` or `client_logs` tools |
 | [architecture/object-detection.md](architecture/object-detection.md) | you are tuning a threshold, or a detection feature looks "not implemented" |
 | [architecture/detection-execution.md](architecture/detection-execution.md) | you are touching engines, pools, step dispatch, or the frame→result path |
 | [architecture/inference-devices.md](architecture/inference-devices.md) | you are asking which accelerator ran a camera, or why one did not |

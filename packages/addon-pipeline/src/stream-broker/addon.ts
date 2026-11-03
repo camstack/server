@@ -1,7 +1,7 @@
 import type { ConfigUISchema, ProviderRegistration } from '@camstack/types'
 import { clusterNodeIds, readRawKeys } from '../node-fields-per-node.js'
 import { ADDON_MIGRATIONS, STREAM_BROKER_ID } from './migrations/index.js'
-import { createClientLogIngest, entryDeviceId } from './client-log-ingest'
+import { clientLogTags, createClientLogIngest, entryDeviceId } from './client-log-ingest'
 import { type BrokerFfmpegWiring, wireBrokerFfmpeg } from './stream-broker/ffmpeg-reresolve.js'
 import {
   BaseAddon,
@@ -998,13 +998,19 @@ export class StreamBrokerAddon extends BaseAddon<StreamBrokerConfig> {
     // forwarded to the hub logger (meta.source) so it lands in winston + the
     // admin logs query. Lets us debug the app (live/playback/scrub) from the hub.
     try {
-      const clientLogHandler = createClientLogIngest((entries, source) => {
+      const clientLogHandler = createClientLogIngest((entries, source, identity) => {
         for (const e of entries) {
           const m = `[${source}:${e.level}:${e.scope}] ${e.msg}`
           const deviceId = entryDeviceId(e)
           const opts = {
             meta: { source, level: e.level, clientTs: e.ts, data: e.data },
-            ...(deviceId !== undefined ? { tags: { deviceId } } : {}),
+            // `source: 'viewer'` + the authenticated user + the client's own
+            // platform / appVersion / clientSessionId: a tag filter selects the
+            // viewer's lines instead of a text grep on "[app:".
+            tags: {
+              ...clientLogTags(identity),
+              ...(deviceId !== undefined ? { deviceId } : {}),
+            },
           }
           // NB: the hub's winston destination drops `debug`, so client `debug`
           // entries are logged at `info` (the client level is in the message +

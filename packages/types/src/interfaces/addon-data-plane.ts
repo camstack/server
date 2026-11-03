@@ -10,6 +10,15 @@ import type { RouteAccess } from './addon-routes.js'
 export const DATAPLANE_SECRET_HEADER = 'x-camstack-dataplane-secret'
 
 /**
+ * The authenticated caller's username, written by the HUB gate on every
+ * non-public data-plane request AFTER it verified the credential. Whatever the
+ * client sent under this name is dropped first, so a plane may trust it as the
+ * identity of the request, percent-encoded (a viewer's log batch is attributed with it, never
+ * with a field of its own body).
+ */
+export const CALLER_USERNAME_HEADER = 'x-camstack-user'
+
+/**
  * Addon HTTP **data-plane** — a generic, framework-level mechanism for an addon
  * to serve HTTP responses of ANY shape (files with `Range`, live streams, large
  * dynamic payloads) through the **hub's own port**, with the **addon producing

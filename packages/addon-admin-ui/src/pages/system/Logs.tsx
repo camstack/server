@@ -20,7 +20,13 @@ function LogViewerTab() {
   return (
     <AdminPage embedded>
       <div className="rounded-lg border border-border bg-surface overflow-hidden">
-        <LogStream limit={500} maxHeight="max-h-[calc(100vh-310px)]" showScope showFilters />
+        <LogStream
+          limit={500}
+          maxHeight="max-h-[calc(100vh-310px)]"
+          showScope
+          showFilters
+          showOriginFilter
+        />
       </div>
     </AdminPage>
   )

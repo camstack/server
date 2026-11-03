@@ -125,7 +125,7 @@ export type {
   ICamstackAddon,
   ProviderRegistration,
 } from './interfaces/addon.js'
-export { DATAPLANE_SECRET_HEADER } from './interfaces/addon-data-plane.js'
+export { CALLER_USERNAME_HEADER, DATAPLANE_SECRET_HEADER } from './interfaces/addon-data-plane.js'
 export { createEvent, emitReadiness } from './interfaces/event-bus.js'
 export {
   ReadinessRegistry,

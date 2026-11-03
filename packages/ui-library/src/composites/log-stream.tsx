@@ -89,6 +89,12 @@ export interface LogStreamProps {
    * live socket / handshake lines streaming during the test.
    */
   readonly requestId?: string
+  /**
+   * Offer an "Origin" filter in the filter bar: all lines, or only the lines
+   * the viewer app shipped (`tags.source = 'viewer'`, set by the hub's client
+   * log ingest). Off by default; the system Logs page turns it on.
+   */
+  readonly showOriginFilter?: boolean
 
   // ── Display ───────────────────────────────────────────────────────
   /** Initial log level filter. */
@@ -160,6 +166,7 @@ export function LogStream({
   containerDeviceId: propsContainerDeviceId,
   integrationId: propsIntegrationId,
   requestId: propsRequestId,
+  showOriginFilter = false,
   level: initialLevel,
   maxHeight = 'max-h-96',
   showScope = false,
@@ -178,6 +185,7 @@ export function LogStream({
   // ── Local filter state (for unlocked scope levels) ────────────────
   const [localAddonId, setLocalAddonId] = useState<string>('')
   const [localDeviceId, setLocalDeviceId] = useState<string>('')
+  const [viewerOnly, setViewerOnly] = useState<boolean>(false)
   // Default 'info' when no explicit level prop is given.
   const [levelFilter, setLevelFilter] = useState<LogHistoryLevel>(initialLevel ?? 'info')
   // History source picked by the operator; undefined = the server default.
@@ -211,8 +219,18 @@ export function LogStream({
     }
     if (integrationId) tags.integrationId = integrationId
     if (requestId) tags.requestId = requestId
+    if (showOriginFilter && viewerOnly) tags.source = 'viewer'
     return Object.keys(tags).length > 0 ? tags : undefined
-  }, [agentId, addonId, deviceId, propsContainerDeviceId, integrationId, requestId])
+  }, [
+    agentId,
+    addonId,
+    deviceId,
+    propsContainerDeviceId,
+    integrationId,
+    requestId,
+    showOriginFilter,
+    viewerOnly,
+  ])
 
   // ── Data ──────────────────────────────────────────────────────────
   const fallbackBuffer = useLiveBuffer<LogEntry>(MAX_LIVE_ENTRIES)
@@ -666,6 +684,20 @@ export function LogStream({
                 className="w-28 px-1.5 py-0.5 rounded border border-border bg-background text-foreground text-[10px] focus:outline-none focus:border-primary/50"
               />
             </label>
+          )}
+          {showOriginFilter && (
+            <div className="w-32">
+              <Select
+                aria-label={t('uiLibrary.logStream.origin', 'Origin')}
+                className="h-5 text-[10px]"
+                value={viewerOnly ? 'viewer' : 'all'}
+                onChange={(e) => setViewerOnly(e.target.value === 'viewer')}
+                options={[
+                  { value: 'all', label: t('uiLibrary.logStream.originAll', 'All origins') },
+                  { value: 'viewer', label: t('uiLibrary.logStream.originViewer', 'Viewer app') },
+                ]}
+              />
+            </div>
           )}
           {!propsDeviceId && (
             <label className="flex items-center gap-1">

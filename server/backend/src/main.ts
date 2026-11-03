@@ -41,7 +41,7 @@ import {
   startEventLoopStallMonitor,
   startHeapWatch,
 } from '@camstack/server/system'
-import type { ILocalNetworkProvider } from '@camstack/types'
+import { CALLER_USERNAME_HEADER, type ILocalNetworkProvider } from '@camstack/types'
 import fastifyCompress from '@fastify/compress'
 import fastifyCookie from '@fastify/cookie'
 import { fastifyTRPCPlugin } from '@trpc/server/adapters/fastify'
@@ -1301,6 +1301,7 @@ async function bootstrap() {
       if (dpMatch) {
         const access = dpMatch.endpoint.access
         let shareHeaders: Readonly<Record<string, string>> | null = null
+        let callerUsername: string | null = null
         if (access !== 'public') {
           const authHeader = request.headers.authorization
           const cookieToken = request.cookies?.[SESSION_COOKIE]
@@ -1326,6 +1327,7 @@ async function bootstrap() {
           })
           if (!auth.ok) return reply.status(auth.status).send({ error: auth.error })
           shareHeaders = auth.shareHeaders
+          callerUsername = auth.principal.username
         }
         const qIdx = request.url.indexOf('?')
         const queryString = qIdx >= 0 ? request.url.slice(qIdx) : ''
@@ -1338,11 +1340,16 @@ async function bootstrap() {
         for (const name of Object.keys(request.raw.headers)) {
           if (
             name.toLowerCase() === SHARE_KIND_HEADER ||
-            name.toLowerCase() === SHARE_DEVICES_HEADER
+            name.toLowerCase() === SHARE_DEVICES_HEADER ||
+            name.toLowerCase() === CALLER_USERNAME_HEADER
           )
             delete request.raw.headers[name]
         }
         if (shareHeaders !== null) Object.assign(request.raw.headers, shareHeaders)
+        // Who is calling, written by the hub from the verified credential only.
+        if (callerUsername !== null && callerUsername !== '') {
+          request.raw.headers[CALLER_USERNAME_HEADER] = encodeURIComponent(callerUsername)
+        }
         const replayBody = dataPlaneReplayBody(request.raw, request.body, addonGateLogger)
         if (replayBody === null) {
           return reply.status(500).send({ error: 'Request body could not be forwarded' })

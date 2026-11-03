@@ -7100,6 +7100,12 @@
           "doc": "Correlation id for short-lived operations that have no `deviceId` yet (e.g. a creation-field probe). The matching surface (the Add-Device mo"
         },
         {
+          "name": "showOriginFilter",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Offer an \"Origin\" filter in the filter bar: all lines, or only the lines the viewer app shipped (`tags.source = 'viewer'`, set by the hub's "
+        },
+        {
           "name": "level",
           "type": "'debug' | 'info' | 'warn' | 'error'",
           "optional": true,

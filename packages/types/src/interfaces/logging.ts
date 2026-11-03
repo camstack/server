@@ -87,6 +87,16 @@ export interface LogTags {
    * name" defect this mechanism exists to remove.
    */
   readonly logChannel?: string
+  /** Where a line came from when it was not emitted by the hub itself: `viewer` for the viewer app's shipped log. */
+  readonly source?: string
+  /** Username of the authenticated caller a client-shipped line is attributed to (taken from the hub's auth, never from the body). */
+  readonly user?: string
+  /** Client platform (`ios`, `android`, `web`) of a client-shipped line. */
+  readonly platform?: string
+  /** Client app version of a client-shipped line. */
+  readonly appVersion?: string
+  /** Per-launch id of the client app that shipped the line. Not `sessionId`: that one names decoder / webrtc / rtsp sessions. */
+  readonly clientSessionId?: string
   /** Arbitrary extra tags */
   readonly [key: string]: string | number | undefined
 }

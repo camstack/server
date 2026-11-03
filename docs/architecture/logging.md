@@ -9,6 +9,7 @@ applies-to:
   - packages/system/src/builtins/loki-logging/loki-read.ts
   - server/backend/src/core/logging/log-history.ts
   - server/backend/src/api/core/logs.router.ts
+  - packages/addon-pipeline/src/stream-broker/client-log-ingest.ts
 covers:
   - packages/system/src/logging/**
   - packages/system/src/builtins/winston-logging/**
@@ -114,3 +115,31 @@ destination that registers late. A hub without winston keeps the larger buffer.
 
 `CAMSTACK_HEAVY_SPECS=1 npx vitest run packages/system/src/builtins/winston-logging/__tests__/log-file-reader-1gb.heavy.spec.ts`
 reproduces it.
+
+## The viewer app's own log
+
+The viewer batches its in-app log and POSTs it to `/addon/stream-broker/clientlog/`
+(`access: authenticated`). The ingest (`client-log-ingest.ts`) logs each entry as
+`[app:<level>:<scope>] msg` through the stream-broker logger, tagged:
+
+| Tag | Comes from | Absent when |
+| --- | --- | --- |
+| `source` = `viewer` | the ingest | never |
+| `user` | the hub's gate, via `x-camstack-user` (`CALLER_USERNAME_HEADER`, percent-encoded; whatever the client sent under that name is dropped) | the request was not authenticated as a person |
+| `platform`, `appVersion`, `clientSessionId` | the batch's optional `client` object | an old viewer, or a value that is not a short token (`[\w.+:@/-]{1,64}`) |
+| `deviceId` | the entry's own `data.deviceId` | the entry names no camera |
+
+The user is never read from the body. A tag filter (`source=viewer`, the System
+Logs page's Origin select, MCP `client_logs`) replaces the old text grep on
+`[app:`; an older hub's lines carry no tag, which `client_logs` reports as
+`match: text-legacy`. The viewer's `debug` is logged at `info` (the winston
+destination drops `debug`), so the viewer level lives in the message, not the
+line's level.
+
+The batch the viewer sends:
+
+```json
+{ "source": "app",
+  "client": { "platform": "ios|android|web", "appVersion": "1.4.2", "sessionId": "<id minted once per app launch>" },
+  "entries": [{ "ts": 1730000000000, "level": "warn", "scope": "live", "msg": "…", "data": { "deviceId": 7 } }] }
+```

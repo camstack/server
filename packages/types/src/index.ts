@@ -139,7 +139,11 @@ export {
   resolveRunnerId,
 } from './interfaces/addon.js'
 export type * from './interfaces/addon-data-plane.js'
-export { DATAPLANE_SECRET_HEADER, SHARE_VIEW_KINDS } from './interfaces/addon-data-plane.js'
+export {
+  CALLER_USERNAME_HEADER,
+  DATAPLANE_SECRET_HEADER,
+  SHARE_VIEW_KINDS,
+} from './interfaces/addon-data-plane.js'
 export type * from './interfaces/addon-peer-bytes.js'
 export {
   PeerBytesTicketSchema,
