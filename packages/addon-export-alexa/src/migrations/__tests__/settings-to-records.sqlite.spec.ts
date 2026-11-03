@@ -233,6 +233,10 @@ async function boot(options: Options = {}) {
       await links.put({ id: ALEXA_INSTANCE_ID, data: body }, { ifRev: 0 })
       return 'created'
     },
+    replaceLinks: async (body) => {
+      calls.push('replace-links')
+      await links.put({ id: ALEXA_INSTANCE_ID, data: body })
+    },
     readLinks: async () => {
       calls.push('read-back')
       const row = await links.getResolved(ALEXA_INSTANCE_ID)

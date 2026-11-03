@@ -118,6 +118,7 @@ function fixture(initial: Record<string, unknown>) {
           warn: () => undefined,
           putSkill: async () => 'exists',
           putLinks: async () => 'exists',
+          replaceLinks: async () => undefined,
           readLinks: async () => null,
           hasSkill: async () => false,
           clearOldTokenSecrets: async () => undefined,
