@@ -172,6 +172,7 @@ describe('camstack mcp — toolset selection', () => {
         'setup_install_guide',
         'setup_login',
         'setup_login_wait',
+        'report_issue',
         'setup_wizard',
         'support_benchmark_run',
         'support_benchmark_status',

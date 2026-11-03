@@ -17,6 +17,7 @@ import {
 } from './support-benchmark.js'
 import { supportDiagnoseCamera } from './support-camera.js'
 import { defaultSupportDeps, type SupportDeps } from './support-deps.js'
+import { REPORT_ISSUE_TOOL, ReportKindSchema, reportIssue } from './report-issue.js'
 import {
   BenchmarkCellsSchema,
   DRAFT_ISSUE_TOOL,
@@ -131,6 +132,33 @@ export function registerSupportTools(
     DraftShape,
     async (input): Promise<ToolTextResult> =>
       text(await supportDraftIssue(ctx, deps, draftArgs(input), input.confirm_token)),
+  )
+  server.tool(
+    REPORT_ISSUE_TOOL,
+    "Draft a GitHub issue for camstack/server about a problem on THIS install and file it only after the user approved the text. The draft has the title and description, a typed Environment section (server version per node, platform/arch, node count, the state of the critical addons: tunnel, TURN, remote access, notifiers, exporters, recording/storage, pipeline, stream broker, webrtc, viewer version), and bounded logs chosen by `kind`. Every string is scrubbed (tokens, secret markers, IPs, hostnames, URLs, emails, MACs, RTSP credentials, home paths, device and camera names become device#<id>) and the redaction counts are listed. Two steps. The FIRST call (no confirm_token) files nothing and returns the FULL rendered markdown and a confirm_token bound to that exact text: YOU MUST SHOW THAT MARKDOWN TO THE USER IN FULL and wait for an explicit yes before the second call. Any edit (a new title or description) or a re-run is a new draft with a new token. The SECOND call, with the SAME arguments and the token, runs the user's own `gh issue create` (never a token of ours); without gh or sign-in it returns a prefilled new-issue link instead. Needs an admin `camstack login`.",
+    {
+      kind: ReportKindSchema,
+      title: z.string().min(3).max(300),
+      description: z.string().min(3).max(4000),
+      deviceId: z.number().int().optional(),
+      since: z.string().max(40).optional(),
+      confirm_token: z.string().optional(),
+    },
+    async ({ kind, title, description, deviceId, since, confirm_token }): Promise<ToolTextResult> =>
+      text(
+        await reportIssue(
+          ctx,
+          deps,
+          {
+            kind,
+            title,
+            description,
+            ...(deviceId !== undefined ? { deviceId } : {}),
+            ...(since !== undefined ? { since } : {}),
+          },
+          confirm_token,
+        ),
+      ),
   )
   server.tool(
     DRAFT_PR_TOOL,

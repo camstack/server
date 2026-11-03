@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - MCP: assisted-setup tools (setup_locations, setup_recording, setup_streams, setup_benchmark, setup_pipeline and their gated configure_setup_* applies), debug_report (versions, streams, churn, tracks and media per kind, viewer lines) and client_logs for the viewer app's own log
+- MCP: report_issue drafts a GitHub issue for camstack/server (typed environment, per-kind logs, every string scrubbed with redaction counts) and files it with your own gh only after you read the full text and confirm; without gh it returns a prefilled link
 
 ## [1.2.219] - 2026-11-01
 
