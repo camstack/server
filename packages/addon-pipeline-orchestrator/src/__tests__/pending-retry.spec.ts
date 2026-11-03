@@ -145,9 +145,18 @@ describe('PipelineOrchestratorAddon — pending retry sweep (T3)', () => {
     })
     // getCameraStatus fans out to remote stages the lightweight harness omits;
     // degrade the unstubbed ones to null so only the assignment block is asserted.
-    ;(ctx as { api: Record<string, unknown> }).api = degradingApi(
-      (ctx as { api: Record<string, unknown> }).api,
-    )
+    // The migration engine is NOT one of those stages: its answer is read (`steps`), so a null
+    // leaf would crash the boot. It answers like the hub's engine does for an owner with
+    // nothing to run.
+    const harnessApi = (ctx as { api: Record<string, unknown> }).api
+    ;(ctx as { api: Record<string, unknown> }).api = degradingApi({
+      ...harnessApi,
+      migrations: {
+        declareOwner: {
+          mutate: async () => ({ bootId: 'spec-boot', snapshot: 'none', steps: [] }),
+        },
+      },
+    })
     addon = new TestOrchestrator()
     await addon.initialize(ctx)
 
