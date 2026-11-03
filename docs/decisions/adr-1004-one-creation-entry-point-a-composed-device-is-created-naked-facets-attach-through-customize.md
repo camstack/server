@@ -53,8 +53,12 @@ scalar caps), so the facets a template attached could not be changed later.
 
 - The appliance and heater template code goes away in a later phase; until then
   both entry points exist.
-- Stored compositions made from the five helper blocks need a migration (list
-  first, dry run, then convert) before the templates are deleted.
+- Stored compositions made from the appliance and heater helper blocks are
+  rewritten by the `core-blocks` migration `2026-11-03-helper-to-customize`
+  (D987 procedure body): running, power meter and power source recompiled in the
+  Customize catalog format with the same threshold, dwells and plugs, a heater's
+  `switch` forward kept, the `helper` spec dropped, the block id unchanged. It
+  runs before the templates are deleted.
 - A facet an operator wants on a built device costs one Customize step instead
   of a template choice.
 
@@ -63,4 +67,5 @@ scalar caps), so the facets a template attached could not be changed later.
 A catalog-wide admin-ui spec: for every Customize target in the catalog, a
 composed device of a compatible type exposes it (a helper device included).
 Reintroducing an early return in `ComposedCustomizeBody` fails it. The
-template removal and the migration are not enforced yet: review only.
+template removal is not enforced yet: review only. The migration has a real-SQLite
+spec (`helper-to-customize.spec.ts`) that marks threshold, dwells and plugs.
