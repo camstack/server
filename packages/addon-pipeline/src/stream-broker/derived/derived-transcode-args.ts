@@ -154,8 +154,78 @@ export function resolveDerivedAudio(
   return { audio: DERIVED_AAC_RECODE, decision: { kind: 'recode-aac', sourceCodec: observed } }
 }
 
+/** What the SOURCE broker has measured of its own video cadence. */
+export interface DerivedSourceCadence {
+  /** Observed input frames per second; `null`/`0` when nothing was measured. */
+  readonly fps: number | null
+  /** Observed milliseconds between two IDRs; `null`/`0` when unknown. */
+  readonly idrIntervalMs: number | null
+}
+
+/** The cadence a derived encode runs at, and the numbers behind it. */
+export interface DerivedCadence {
+  readonly fpsMode: 'cfr' | 'passthrough'
+  /** Frame rate the GOP is counted in; `null` when nothing names one. */
+  readonly outputFps: number | null
+  readonly gopFrames: number
+  readonly vbvSeconds: number
+}
+
+/** IDR interval assumed when the source's own is unknown. */
+const DERIVED_FALLBACK_IDR_SECONDS = 2
+const DERIVED_MIN_IDR_SECONDS = 1
+const DERIVED_MAX_IDR_SECONDS = 10
+const DERIVED_MIN_VBV_SECONDS = 2
+
+function positive(value: number | null | undefined): number | null {
+  return value !== null && value !== undefined && Number.isFinite(value) && value > 0 ? value : null
+}
+
+/**
+ * Resolve the cadence of a derived encode.
+ *
+ * - **Frame rate.** A profile `fps` is explicit intent (`cfr`). Without one the
+ *   source's cadence is passed through: ffmpeg is never asked to duplicate a
+ *   20 fps source up to a guessed 30, which put an IDR every second on a
+ *   400 kbps cap and starved the VBV on each one (the visible flicker).
+ * - **GOP.** An explicit `gopFrames` wins. Otherwise, with a measured source,
+ *   the source's own IDR interval (else 2 s) in OUTPUT frames. With nothing
+ *   measured the legacy second-of-frames stays.
+ * - **VBV.** In cap mode the buffer covers the whole GOP, so one IDR cannot
+ *   starve it.
+ */
+export function resolveDerivedCadence(
+  video: VideoEncode,
+  source: DerivedSourceCadence | undefined,
+): DerivedCadence {
+  const sourceFps = positive(source?.fps)
+  const outputFps = video.fps ?? sourceFps
+  const observed = sourceFps !== null
+  const idrSeconds = Math.min(
+    DERIVED_MAX_IDR_SECONDS,
+    Math.max(
+      DERIVED_MIN_IDR_SECONDS,
+      (positive(source?.idrIntervalMs) ?? DERIVED_FALLBACK_IDR_SECONDS * 1000) / 1000,
+    ),
+  )
+  const gopFrames =
+    video.gopFrames ??
+    (observed && outputFps !== null
+      ? Math.max(1, Math.round(outputFps * idrSeconds))
+      : (video.fps ?? DERIVED_DEFAULT_GOP_FRAMES))
+  const gopSeconds = gopFrames / (outputFps ?? DERIVED_DEFAULT_GOP_FRAMES)
+  return {
+    fpsMode: video.fps !== undefined ? 'cfr' : 'passthrough',
+    outputFps,
+    gopFrames,
+    vbvSeconds: Math.max(DERIVED_MIN_VBV_SECONDS, Math.ceil(gopSeconds * 10) / 10),
+  }
+}
+
 export interface DerivedTranscodeArgsInput {
   readonly profile: EncodeProfile
+  /** The source broker's measured cadence; absent keeps the legacy defaults. */
+  readonly sourceCadence?: DerivedSourceCadence
   /** The source's broker RTSP loopback — this transcode's `-i`. */
   readonly loopbackUrl: string
   /**
@@ -185,6 +255,7 @@ export interface DerivedTranscodeArgsInput {
 export interface DerivedTranscodeArgs {
   readonly args: string[]
   readonly audio: DerivedAudioPlan
+  readonly cadence: DerivedCadence
 }
 
 /**
@@ -253,11 +324,11 @@ function derivedBitrateCeilingKbps(video: VideoEncode): number | undefined {
  *   NATIVE low at the identical geometry, peaking at 1.19 MB in a 10 s
  *   segment. Quiet scenes still spend less than the cap.
  */
-function withCarrierDefaults(video: VideoEncode): VideoEncode {
+function withCarrierDefaults(video: VideoEncode, cadence: DerivedCadence): VideoEncode {
   const bitrateKbps = video.bitrateKbps ?? derivedBitrateCeilingKbps(video)
   return {
     ...video,
-    gopFrames: video.gopFrames ?? video.fps ?? DERIVED_DEFAULT_GOP_FRAMES,
+    gopFrames: cadence.gopFrames,
     bf: video.bf ?? DERIVED_DEFAULT_BF,
     preset: video.preset ?? DERIVED_DEFAULT_PRESET,
     tune: video.tune ?? DERIVED_DEFAULT_TUNE,
@@ -267,7 +338,8 @@ function withCarrierDefaults(video: VideoEncode): VideoEncode {
 
 export function buildDerivedTranscodeArgs(input: DerivedTranscodeArgsInput): DerivedTranscodeArgs {
   const audio = resolveDerivedAudio(input.profile.audio, input.sourceAudioCodec)
-  const video = withCarrierDefaults(input.profile.video)
+  const cadence = resolveDerivedCadence(input.profile.video, input.sourceCadence)
+  const video = withCarrierDefaults(input.profile.video, cadence)
   const args = buildFfmpegArgs(
     invocationFromEncodeProfile({
       profile: { ...input.profile, video, audio: audio.audio },
@@ -278,7 +350,9 @@ export function buildDerivedTranscodeArgs(input: DerivedTranscodeArgsInput): Der
       sourceUrl: input.loopbackUrl,
       sink: { kind: 'stdout', container: 'mpegts' },
       decodeHwAccel: input.decodeHwAccel ?? null,
+      fpsMode: cadence.fpsMode,
+      rateControl: { kind: 'cap', vbvSeconds: cadence.vbvSeconds },
     }),
   )
-  return { args, audio }
+  return { args, audio, cadence }
 }

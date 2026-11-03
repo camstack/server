@@ -93,7 +93,10 @@ import {
   derivedSourceToStreamRequest,
 } from '../derived/derived-source.js'
 import { DerivedStreamFeeder } from '../derived/derived-stream-feeder.js'
-import { buildDerivedTranscodeArgs } from '../derived/derived-transcode-args.js'
+import {
+  buildDerivedTranscodeArgs,
+  type DerivedSourceCadence,
+} from '../derived/derived-transcode-args.js'
 import { fillEmptyProfileSlots } from '../fill-empty-profile-slots.js'
 import { rankInitialAssignment } from '../initial-assignment.js'
 import {
@@ -8228,10 +8231,24 @@ export class StreamBrokerManager {
     }
 
     const sourceAudioCodec = this.observedSourceAudioCodec(deviceId, source)
-    const { args, audio } = buildDerivedTranscodeArgs({
+    const sourceCadence = this.observedSourceCadence(deviceId, source)
+    const { args, audio, cadence } = buildDerivedTranscodeArgs({
       profile: encodeProfile,
       loopbackUrl,
       sourceAudioCodec,
+      sourceCadence,
+    })
+    this.logger.info('derived feeder cadence', {
+      tags: { deviceId },
+      meta: {
+        camStreamId,
+        sourceFps: sourceCadence.fps,
+        sourceIdrIntervalMs: sourceCadence.idrIntervalMs,
+        fpsMode: cadence.fpsMode,
+        outputFps: cadence.outputFps,
+        gopFrames: cadence.gopFrames,
+        vbvSeconds: cadence.vbvSeconds,
+      },
     })
     if (audio.decision.kind === 'recode-aac') {
       // The documented ripiego, said out loud once per feeder spawn. An
@@ -8291,13 +8308,31 @@ export class StreamBrokerManager {
    * a camera, which is the direction that cost 108 four silent days.
    */
   private observedSourceAudioCodec(deviceId: number, source: DerivedSourceRef): string | null {
+    const stats = this.observedSourceStats(deviceId, source)
+    return stats?.audio?.codec ?? null
+  }
+
+  /**
+   * The video cadence the derived stream's SOURCE broker has measured. Both
+   * fields are `null` when nothing was read, which leaves the encoder on its
+   * legacy defaults rather than guessing a rate.
+   */
+  private observedSourceCadence(deviceId: number, source: DerivedSourceRef): DerivedSourceCadence {
+    const stats = this.observedSourceStats(deviceId, source)
+    return {
+      fps: stats?.inputFps ?? null,
+      idrIntervalMs: stats?.idrIntervalMs ?? null,
+    }
+  }
+
+  private observedSourceStats(deviceId: number, source: DerivedSourceRef): BrokerStats | null {
     const camStreamId =
       source.kind === 'camStream'
         ? source.camStreamId
         : (this.assignments.get(deviceId)?.map[source.profile] ?? null)
     if (camStreamId === null) return null
     const broker = this.brokers.get(brokerIdFor(deviceId, camStreamId))
-    return broker?.getStats().audio?.codec ?? null
+    return broker?.getStats() ?? null
   }
 
   /**

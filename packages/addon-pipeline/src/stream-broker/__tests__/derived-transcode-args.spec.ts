@@ -291,3 +291,72 @@ describe('buildDerivedTranscodeArgs — a recorded derived tier is bounded in by
     expect(args).not.toContain('-maxrate')
   })
 })
+
+describe('buildDerivedTranscodeArgs — the derived encode follows the source cadence', () => {
+  const URL = 'rtsp://127.0.0.1:8554/tok'
+  const noFps: EncodeProfile = {
+    video: { codec: 'h264', width: 1280, height: 720, bitrateKbps: 400 },
+    audio: 'passthrough',
+  }
+  // The reporter's source (camstack/server#15): main at 20 fps, IDR every 4 s.
+  const source = { fps: 20, idrIntervalMs: 4000 }
+  const value = (args: readonly string[], flag: string): string | undefined => {
+    const i = args.indexOf(flag)
+    return i === -1 ? undefined : args[i + 1]
+  }
+
+  it('no fps: passes the source cadence through and emits no -r', () => {
+    const { args } = buildDerivedTranscodeArgs({
+      profile: noFps,
+      loopbackUrl: URL,
+      sourceCadence: source,
+    })
+    expect(value(args, '-fps_mode')).toBe('passthrough')
+    expect(args).not.toContain('-r')
+  })
+
+  it('fps 30: explicit -r 30 with cfr', () => {
+    const { args } = buildDerivedTranscodeArgs({
+      profile: { ...noFps, video: { ...noFps.video, fps: 30 } },
+      loopbackUrl: URL,
+    })
+    expect(value(args, '-r')).toBe('30')
+    expect(value(args, '-fps_mode')).toBe('cfr')
+  })
+
+  it('the GOP is the source IDR interval in source frames (20 fps x 4 s = 80)', () => {
+    const { args, cadence } = buildDerivedTranscodeArgs({
+      profile: noFps,
+      loopbackUrl: URL,
+      sourceCadence: source,
+    })
+    expect(value(args, '-g')).toBe('80')
+    expect(cadence.gopFrames).toBe(80)
+  })
+
+  it('an unknown source IDR interval assumes 2 s of observed frames', () => {
+    const { args } = buildDerivedTranscodeArgs({
+      profile: noFps,
+      loopbackUrl: URL,
+      sourceCadence: { fps: 20, idrIntervalMs: null },
+    })
+    expect(value(args, '-g')).toBe('40')
+  })
+
+  it('cap mode: the VBV buffer covers one whole GOP', () => {
+    const { args } = buildDerivedTranscodeArgs({
+      profile: noFps,
+      loopbackUrl: URL,
+      sourceCadence: source,
+    })
+    // 80 frames at 20 fps = 4 s of GOP -> 400 kbps x 4 s.
+    expect(value(args, '-maxrate')).toBe('400k')
+    expect(value(args, '-bufsize')).toBe('1600k')
+  })
+
+  it('nothing observed keeps the legacy second-of-frames GOP and 2 s buffer', () => {
+    const { args } = buildDerivedTranscodeArgs({ profile: PROFILE_NO_GOP, loopbackUrl: URL })
+    expect(value(args, '-g')).toBe('25')
+    expect(value(args, '-bufsize')).toBe('1200k')
+  })
+})

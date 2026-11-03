@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The viewer's shipped log is tagged source=viewer with the authenticated user, platform, app version and a per-launch session, so the Logs page and MCP can filter it by tag
+- A derived stream now keeps its source's frame cadence and IDR interval and sizes its rate buffer to a whole GOP, fixing the once-a-second flicker at a low bitrate cap
 
 ## [1.2.639] - 2026-11-03
 

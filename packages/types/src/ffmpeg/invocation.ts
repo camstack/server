@@ -207,6 +207,13 @@ export interface FfmpegVideoEncodePlan {
   readonly level?: string
   readonly pixelFormat?: string
   readonly fps?: number
+  /**
+   * `-fps_mode`. Absent emits nothing (ffmpeg's auto choice), which is every
+   * caller's behaviour today. `cfr` names the intent of an explicit `fps`;
+   * `passthrough` keeps the source's own frame cadence so the encoder is not
+   * handed duplicated frames up to a declared rate.
+   */
+  readonly fpsMode?: 'cfr' | 'passthrough'
   readonly gopFrames?: number
   /**
    * `-force_key_frames expr:gte(t,n_forced*<sec>)` — an IDR every `<sec>`
@@ -775,6 +782,7 @@ export function buildVideoArgs(
   if (video.level !== undefined) args.push('-level', video.level)
   if (video.pixelFormat !== undefined) args.push('-pix_fmt', video.pixelFormat)
   if (video.fps !== undefined) args.push('-r', String(video.fps))
+  if (video.fpsMode !== undefined) args.push('-fps_mode', video.fpsMode)
   if (video.gopFrames !== undefined) args.push('-g', String(video.gopFrames))
   if (video.forceKeyFramesSeconds !== undefined) {
     args.push('-force_key_frames', `expr:gte(t,n_forced*${video.forceKeyFramesSeconds})`)
@@ -1113,6 +1121,8 @@ export interface EncodeProfileInvocationInput {
    * an operator who has no way to judge it.
    */
   readonly rateControl?: FfmpegRateControl
+  /** `-fps_mode` of the encode block; see {@link FfmpegVideoEncodePlan.fpsMode}. */
+  readonly fpsMode?: 'cfr' | 'passthrough'
   /** `-bsf:v` — `dump_extra` for a consumer that negotiates its own SDP. */
   readonly bitstreamFilter?: string
   /** `-pix_fmt`. */
@@ -1184,6 +1194,7 @@ export function invocationFromEncodeProfile(input: EncodeProfileInvocationInput)
         ...(v.level !== undefined ? { level: v.level } : {}),
         ...(input.pixelFormat !== undefined ? { pixelFormat: input.pixelFormat } : {}),
         ...(v.fps !== undefined ? { fps: v.fps } : {}),
+        ...(input.fpsMode !== undefined ? { fpsMode: input.fpsMode } : {}),
         ...(v.gopFrames !== undefined ? { gopFrames: v.gopFrames } : {}),
         ...(input.forceKeyFramesSeconds !== undefined
           ? { forceKeyFramesSeconds: input.forceKeyFramesSeconds }
