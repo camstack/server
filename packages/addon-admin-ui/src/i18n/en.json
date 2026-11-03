@@ -8634,7 +8634,10 @@
       "cancel": "Cancel",
       "retry": "Retry",
       "beginning": "Beginning of logs",
-      "loadOlder": "Load older"
+      "loadOlder": "Load older",
+      "origin": "Origin",
+      "originAll": "All origins",
+      "originViewer": "Viewer app"
     },
     "modelBoundSlider": {
       "resetToDefault": "Reset to model default",

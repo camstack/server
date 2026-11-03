@@ -8656,7 +8656,10 @@
       "cancel": "Annulla",
       "retry": "Riprova",
       "beginning": "Inizio dei log",
-      "loadOlder": "Carica più vecchi"
+      "loadOlder": "Carica più vecchi",
+      "origin": "Origine",
+      "originAll": "Tutte le origini",
+      "originViewer": "App viewer"
     },
     "modelBoundSlider": {
       "resetToDefault": "Ripristina il valore predefinito del modello",
