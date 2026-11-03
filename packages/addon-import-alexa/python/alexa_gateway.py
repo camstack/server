@@ -95,6 +95,9 @@ def normalize_device(raw: dict) -> dict | None:
 # The skill alexapy itself names for an AlexaAnnouncement node.
 ANNOUNCEMENT_SKILL_ID = "amzn1.ask.1p.routines.messaging"
 
+VOLUMES_PATH = "/api/devices/deviceType/dsn/audio/v1/allDeviceVolumes"
+
+
 class AlexaPyGateway:
     """Holds one AlexaLogin for the life of the process (one process per broker)."""
 
@@ -306,6 +309,37 @@ class AlexaPyGateway:
             enabled = row.get("enabled") if isinstance(row, dict) else None
             if isinstance(serial, str) and serial != "" and isinstance(enabled, bool):
                 devices.append({"serial": serial, "enabled": enabled})
+        self._touch_success()
+        return {"devices": devices}
+
+    async def device_volumes(self) -> dict:
+        """Speaker volume and mute of every device, in one call (idle Echos included)."""
+        login = self._require_login()
+        _AlexaLogin, AlexaAPI = _import_alexapy()
+        try:
+            body = await AlexaAPI._static_request("get", login, VOLUMES_PATH)
+        except Exception as err:  # noqa: BLE001 — typed below
+            if is_rate_limited(err):
+                raise RateLimitedError("amazon rate limit (429) on the device volumes") from err
+            raise
+        if not isinstance(body, dict):
+            raise RuntimeError("amazon returned no device volume list")
+        rows = body.get("volumes")
+        devices = []
+        for row in rows if isinstance(rows, list) else []:
+            if not isinstance(row, dict):
+                continue
+            serial = row.get("dsn")
+            volume = row.get("speakerVolume")
+            muted = row.get("speakerMuted")
+            if not isinstance(serial, str) or serial == "":
+                continue
+            entry = {"serial": serial}
+            if isinstance(volume, (int, float)) and not isinstance(volume, bool):
+                entry["volume"] = volume
+            if isinstance(muted, bool):
+                entry["muted"] = muted
+            devices.append(entry)
         self._touch_success()
         return {"devices": devices}
 

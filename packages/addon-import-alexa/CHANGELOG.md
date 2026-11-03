@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- An idle Echo now shows its real volume and mute (read once per account from Amazon's volume list); volume up and down step the level by 10.
+
 ## [0.2.180] - 2026-11-03
 
 ### Changed

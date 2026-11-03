@@ -10,6 +10,7 @@ interface FakeSession extends EchoSession {
   npCommand: ReturnType<typeof vi.fn>
   setVolume: ReturnType<typeof vi.fn>
   dndState: ReturnType<typeof vi.fn>
+  deviceVolumes: ReturnType<typeof vi.fn>
   setDnd: ReturnType<typeof vi.fn>
   state: 'ready'
   rateLimitedUntil: number | null
@@ -53,6 +54,13 @@ function session(over: Partial<FakeSession> = {}): FakeSession {
         new Map([
           ['S1', true],
           ['S2', false],
+        ]),
+    ),
+    deviceVolumes: vi.fn(
+      async () =>
+        new Map([
+          ['S1', { volume: 46, muted: false }],
+          ['S2', { volume: 20, muted: true }],
         ]),
     ),
     setDnd: vi.fn(async () => undefined),
@@ -230,6 +238,79 @@ describe('AlexaEchoDevice', () => {
     expect(slice(b.device, 'do-not-disturb')).toMatchObject({ enabled: false })
     await a.device.removeDevice()
     await b.device.removeDevice()
+  })
+
+  describe('idle volume from the account list', () => {
+    const idle = async (): Promise<PlayerInfo> => ({ state: 'IDLE' })
+
+    it('an idle Echo takes volume and mute from the volume list', async () => {
+      const s = session({ playerState: vi.fn(idle) })
+      alexaEchoSessions.setResolver(() => s)
+      const { device } = await build()
+      expect(slice(device, 'media-player')).toMatchObject({ volumeLevel: 46, isMuted: false })
+      await device.removeDevice()
+    })
+
+    it('the player volume beats the list', async () => {
+      const s = session({
+        playerState: vi.fn(
+          async (): Promise<PlayerInfo> => ({
+            state: 'PLAYING',
+            volume: { volume: 40, muted: false },
+          }),
+        ),
+      })
+      alexaEchoSessions.setResolver(() => s)
+      const { device } = await build()
+      expect(slice(device, 'media-player')).toMatchObject({ volumeLevel: 40 })
+      expect(s.deviceVolumes).not.toHaveBeenCalled()
+      await device.removeDevice()
+    })
+
+    it('a failed list read leaves volume null (never 0) and warns once with the deviceId', async () => {
+      const s = session({
+        playerState: vi.fn(idle),
+        deviceVolumes: vi.fn(async () => {
+          throw new Error('boom')
+        }),
+      })
+      alexaEchoSessions.setResolver(() => s)
+      const { device, logs } = await build()
+      await vi.advanceTimersByTimeAsync(30_000)
+      await vi.advanceTimersByTimeAsync(30_000)
+      expect(slice(device, 'media-player')).toMatchObject({ volumeLevel: null, isMuted: null })
+      const warns = logs.filter((l) => l.level === 'warn' && l.message.includes('volume list'))
+      expect(warns).toHaveLength(1)
+      expect(warns[0]?.extras).toMatchObject({ tags: { deviceId: 7 } })
+      await device.removeDevice()
+    })
+
+    it('two Echoes of one account share one volume list read', async () => {
+      const s = session({ playerState: vi.fn(idle) })
+      alexaEchoSessions.setResolver(() => s)
+      const a = await build('S1')
+      const b = await build('S2')
+      expect(s.deviceVolumes).toHaveBeenCalledTimes(1)
+      expect(slice(a.device, 'media-player')).toMatchObject({ volumeLevel: 46 })
+      expect(slice(b.device, 'media-player')).toMatchObject({ volumeLevel: 20, isMuted: true })
+      await a.device.removeDevice()
+      await b.device.removeDevice()
+    })
+
+    it('volume steps move from the known level and refuse without one', async () => {
+      const s = session({ playerState: vi.fn(idle) })
+      alexaEchoSessions.setResolver(() => s)
+      const { device, providers } = await build()
+      const player = providers.get('media-player') as {
+        volumeUp(i: { deviceId: number }): Promise<void>
+        volumeDown(i: { deviceId: number }): Promise<void>
+      }
+      await player.volumeUp({ deviceId: 7 })
+      expect(s.setVolume).toHaveBeenLastCalledWith('S1', 56)
+      await player.volumeDown({ deviceId: 7 })
+      expect(s.setVolume).toHaveBeenLastCalledWith('S1', 36)
+      await device.removeDevice()
+    })
   })
 
   it('removing the device stops the poll', async () => {

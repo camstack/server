@@ -10,6 +10,7 @@ import { scrubSecrets, withSpeakSecretFiles } from './secret-file.js'
 import type { AlexaWorker } from './worker-client.js'
 import { ECHO_RATE_BACKOFF_BASE_MS, ECHO_RATE_BACKOFF_MAX_MS } from './constants.js'
 import {
+  type DeviceVolume,
   type EchoDevice,
   type NpCommand,
   type PlayerInfo,
@@ -18,6 +19,7 @@ import {
   type TargetDelivery,
   parseDeliveries,
   parseDevices,
+  parseDeviceVolumes,
   parseDndState,
   parseLoginResult,
   parsePlayerState,
@@ -232,6 +234,14 @@ export class BrokerEcho {
     await this.requireReady()
     return this.limited(async () =>
       parseDndState(await this.deps.worker.request({ op: 'dnd_state' })),
+    )
+  }
+
+  /** Speaker volume and mute of every device of the account, by serial, in one call. */
+  async deviceVolumes(): Promise<ReadonlyMap<string, DeviceVolume>> {
+    await this.requireReady()
+    return this.limited(async () =>
+      parseDeviceVolumes(await this.deps.worker.request({ op: 'device_volumes' })),
     )
   }
 

@@ -44,6 +44,8 @@ class Gateway(Protocol):
 
     async def dnd_state(self) -> dict: ...
 
+    async def device_volumes(self) -> dict: ...
+
     async def set_dnd(self, serial: str, enabled: bool) -> None: ...
 
     def target_for(self, serial: str) -> EchoTarget | None: ...
@@ -116,6 +118,8 @@ class Session:
             return {}
         if op == "dnd_state":
             return await self._gateway.dnd_state()
+        if op == "device_volumes":
+            return await self._gateway.device_volumes()
         if op == "set_dnd":
             enabled = message.get("enabled")
             if not isinstance(enabled, bool):

@@ -22,7 +22,7 @@ def run(coro):
     return asyncio.run(coro)
 
 
-def install_fake(state=None, dnd=None, raises=None):
+def install_fake(state=None, dnd=None, raises=None, volumes=None):
     calls: dict = {"behaviors": [], "media": [], "dnd_set": [], "state_for": [], "active": 0, "max_active": 0}
 
     class FakeAPI:
@@ -53,6 +53,13 @@ def install_fake(state=None, dnd=None, raises=None):
             if raises:
                 raise raises
             calls["behaviors"].append(node)
+
+        @staticmethod
+        async def _static_request(method, login, uri, data=None, query=None):
+            if raises:
+                raise raises
+            calls.setdefault("static", []).append((method, uri))
+            return volumes
 
         @staticmethod
         async def get_dnd_state(login):
@@ -133,6 +140,30 @@ class EchoMediaTests(unittest.TestCase):
         )
         result = run(gateway.dnd_state())
         self.assertEqual(result["devices"], [{"serial": "s1", "enabled": True}, {"serial": "s2", "enabled": False}])
+
+    def test_device_volumes_is_one_call_keeping_only_typed_readings(self) -> None:
+        gateway, calls = install_fake(
+            volumes={
+                "volumes": [
+                    {"dsn": "s1", "deviceType": "T1", "speakerVolume": 46, "speakerMuted": False},
+                    {"dsn": "s2", "speakerVolume": None, "speakerMuted": True},
+                    {"deviceType": "T1", "speakerVolume": 10},
+                ]
+            }
+        )
+        result = run(gateway.device_volumes())
+        self.assertEqual(
+            result["devices"],
+            [{"serial": "s1", "volume": 46, "muted": False}, {"serial": "s2", "muted": True}],
+        )
+        self.assertEqual(
+            calls["static"], [("get", "/api/devices/deviceType/dsn/audio/v1/allDeviceVolumes")]
+        )
+
+    def test_device_volumes_429_is_typed(self) -> None:
+        gateway, _ = install_fake(raises=AlexapyTooManyRequestsError("Too Many Requests"))
+        with self.assertRaises(RateLimitedError):
+            run(gateway.device_volumes())
 
     def test_set_dnd_goes_to_the_device(self) -> None:
         gateway, calls = install_fake()

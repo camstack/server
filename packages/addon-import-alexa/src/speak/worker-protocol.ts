@@ -101,6 +101,7 @@ export type WorkerRequest =
       readonly level: number
     }
   | { readonly op: 'dnd_state' }
+  | { readonly op: 'device_volumes' }
   | {
       readonly op: 'set_dnd'
       readonly serial: string
@@ -184,6 +185,29 @@ export function parseDndState(result: unknown): ReadonlyMap<string, boolean> {
   const parsed = z.object({ devices: z.array(DndEntrySchema) }).safeParse(result)
   if (!parsed.success) throw new Error('worker returned an unexpected Do Not Disturb list')
   return new Map(parsed.data.devices.map((entry) => [entry.serial, entry.enabled]))
+}
+
+export const DeviceVolumeEntrySchema = z.object({
+  serial: z.string().min(1),
+  volume: z.number().finite().optional(),
+  muted: z.boolean().optional(),
+})
+
+/** One device's speaker reading from the account's volume list; a field Amazon left out is absent. */
+export interface DeviceVolume {
+  readonly volume: number | null
+  readonly muted: boolean | null
+}
+
+export function parseDeviceVolumes(result: unknown): ReadonlyMap<string, DeviceVolume> {
+  const parsed = z.object({ devices: z.array(DeviceVolumeEntrySchema) }).safeParse(result)
+  if (!parsed.success) throw new Error('worker returned an unexpected device volume list')
+  return new Map(
+    parsed.data.devices.map((entry) => [
+      entry.serial,
+      { volume: entry.volume ?? null, muted: entry.muted ?? null },
+    ]),
+  )
 }
 
 export function isSpeakOp(mode: (typeof SPEAK_MODES)[number]): 'speak' | 'announce' {

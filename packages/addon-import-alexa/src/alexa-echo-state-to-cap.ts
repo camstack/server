@@ -6,7 +6,7 @@
  * volume reading, not volume 0.
  */
 import type { MediaPlayerRepeat, MediaPlayerState, MediaPlayerStatus } from '@camstack/types'
-import type { PlayerInfo } from './speak/worker-protocol.js'
+import type { DeviceVolume, PlayerInfo } from './speak/worker-protocol.js'
 
 export interface EchoStatusInput {
   /** Whether Amazon lists the Echo as online. An offline Echo is `off`, whatever it last played. */
@@ -101,5 +101,21 @@ export function mapPlayerInfoToStatus(info: PlayerInfo, input: EchoStatusInput):
     duration: length === 0 ? null : length,
     shuffle: shuffleOf(info.transport?.shuffle),
     repeat: repeatOf(info.transport?.repeat),
+  }
+}
+
+/**
+ * Fill the volume and mute the player read left null from the account's volume
+ * list. The player read wins when it has a value; a value neither source has stays null.
+ */
+export function withListedVolume(
+  status: MediaPlayerStatus,
+  listed: DeviceVolume | undefined,
+): MediaPlayerStatus {
+  if (listed === undefined) return status
+  return {
+    ...status,
+    volumeLevel: status.volumeLevel ?? percent(listed.volume),
+    isMuted: status.isMuted ?? listed.muted,
   }
 }

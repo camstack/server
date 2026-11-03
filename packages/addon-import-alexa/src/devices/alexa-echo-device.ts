@@ -11,7 +11,11 @@ import {
   type MediaPlayerStatus,
 } from '@camstack/types'
 import { alexaEchoSessions, type EchoSession } from '../alexa-echo-sessions.js'
-import { emptyEchoStatus, mapPlayerInfoToStatus } from '../alexa-echo-state-to-cap.js'
+import {
+  emptyEchoStatus,
+  mapPlayerInfoToStatus,
+  withListedVolume,
+} from '../alexa-echo-state-to-cap.js'
 import { ECHO_POLL_MS, ECHO_REREAD_MS } from '../speak/constants.js'
 import { RateLimitedError, type NpCommand } from '../speak/worker-protocol.js'
 
@@ -33,6 +37,9 @@ export type AlexaEchoDeviceConfig = z.infer<typeof alexaEchoDeviceSchema>
 /** `ok` after a good read, `rate-limited` while Amazon asked for a pause, `degraded` after a failed read. */
 export type EchoPollHealth = 'ok' | 'rate-limited' | 'degraded'
 
+/** Percent points one volume-up / volume-down moves an Echo. */
+const VOLUME_STEP = 10
+
 const COLD_DND: DoNotDisturbStatus = { enabled: null, lastChangedAt: 0 }
 
 function unsupported(what: string): never {
@@ -53,6 +60,7 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
   private rereadTimer: ReturnType<typeof setTimeout> | null = null
   private polling = false
   private failureLogged = false
+  private volumeFailureLogged = false
   private health: EchoPollHealth = 'ok'
 
   constructor(ctx: DeviceContext) {
@@ -136,10 +144,8 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
     try {
       const info = await session.playerState(this.serial, deviceType)
       const now = Date.now()
-      this.runtimeState.setCapState(
-        'media-player',
-        mapPlayerInfoToStatus(info, { online: true, now }),
-      )
+      const fromPlayer = mapPlayerInfoToStatus(info, { online: true, now })
+      this.runtimeState.setCapState('media-player', await this.completeVolume(fromPlayer))
       this.markOnline(true)
       this.noteRecovered()
     } catch (err: unknown) {
@@ -147,6 +153,34 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
       return
     }
     await this.readDoNotDisturb()
+  }
+
+  /**
+   * An idle Echo's player read carries no volume. Ask the account's volume list
+   * (shared by every Echo of the account in this cycle); a failed read leaves null.
+   */
+  private async completeVolume(status: MediaPlayerStatus): Promise<MediaPlayerStatus> {
+    if (status.volumeLevel !== null && status.isMuted !== null) return status
+    try {
+      const all = await alexaEchoSessions.volumes(this.brokerId, Date.now())
+      if (this.volumeFailureLogged) {
+        this.ctx.logger.info('alexa echo: the volume list reads again', {
+          tags: { deviceId: this.id },
+        })
+      }
+      this.volumeFailureLogged = false
+      return withListedVolume(status, all.get(this.serial))
+    } catch (err: unknown) {
+      if (err instanceof RateLimitedError) return status
+      if (!this.volumeFailureLogged) {
+        this.volumeFailureLogged = true
+        this.ctx.logger.warn('alexa echo: could not read the volume list, volume stays unknown', {
+          tags: { deviceId: this.id },
+          meta: { error: err instanceof Error ? err.message : String(err) },
+        })
+      }
+      return status
+    }
   }
 
   private async readDoNotDisturb(): Promise<void> {
@@ -195,6 +229,15 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
     this.rereadSoon()
   }
 
+  /** Amazon has no step command: move from the last known level, refuse when there is none. */
+  private async stepVolume(delta: number): Promise<void> {
+    const level = this.runtimeState.getCapState<MediaPlayerStatus>('media-player')?.volumeLevel
+    if (level === null || level === undefined) throw new Error('the Echo volume is not known yet')
+    const next = Math.max(0, Math.min(100, level + delta))
+    await this.session().setVolume(this.serial, next)
+    this.rereadSoon()
+  }
+
   private registerMediaPlayer(): void {
     const provider: InferNativeProvider<typeof mediaPlayerCapability> = {
       getStatus: async () =>
@@ -211,8 +254,8 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
       stop: async () => unsupported('stop'),
       turnOn: async () => unsupported('power'),
       turnOff: async () => unsupported('power'),
-      volumeUp: async () => unsupported('volume steps'),
-      volumeDown: async () => unsupported('volume steps'),
+      volumeUp: async () => this.stepVolume(VOLUME_STEP),
+      volumeDown: async () => this.stepVolume(-VOLUME_STEP),
       channelUp: async () => unsupported('channel steps'),
       channelDown: async () => unsupported('channel steps'),
       seek: async () => unsupported('seek'),
