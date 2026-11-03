@@ -313,7 +313,7 @@ describe('ProviderInstancesPanel', () => {
       fireEvent.click(await screen.findByRole('button', { name: 'Delete Default relay' }))
       expect(await screen.findByText(/Mail ops/)).toBeTruthy()
       expect(h.remove).not.toHaveBeenCalled()
-      fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+      fireEvent.click(await screen.findByRole('button', { name: 'Delete' }))
       await waitFor(() => expect(h.remove).toHaveBeenCalledTimes(1))
       expect(h.remove.mock.calls[0]?.[0]).toEqual({
         addonId: 'smtp-nodemailer',
