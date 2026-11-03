@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.157] - 2026-11-03
+
 ### Changed
 
 - The window rain sensor now carries its leak-sensor role, so its device page shows the rain state instead of waiting forever.
