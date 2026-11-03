@@ -11614,6 +11614,9 @@
       "error": "Errore",
       "off": "Spento",
       "unknown": "Sconosciuto"
-    }
+    },
+    "active": "Attivo",
+    "addBlocked": "{{names}}: è consentita una sola istanza e esiste già.",
+    "addNone": "Nessun provider qui può contenere istanze."
   }
 }

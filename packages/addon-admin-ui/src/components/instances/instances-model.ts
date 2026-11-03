@@ -139,7 +139,7 @@ export function worstHealth(rows: readonly InstanceRow[]): InstanceHealth {
   return worst ?? 'unknown'
 }
 
-/** One sub-header pill: a provider that holds records, with its count and worst status. */
+/** One sub-header pill: a provider of the function cap, with its row count and a status dot. */
 export interface InstancePill {
   readonly addonId: string
   readonly name: string
@@ -147,21 +147,34 @@ export interface InstancePill {
   readonly health: InstanceHealth
 }
 
-/** A pill per record-holding provider, in holder order; a provider with no record still has one. */
+/**
+ * A pill for EVERY provider of the function cap, in provider order. A record holder shows its
+ * instance count and the worst row status (no record is `unknown`); a fixed-row provider counts
+ * its one row and takes its dot from the registry switch (active is `ok`, otherwise `off`).
+ */
 export function providerPills(
-  holders: readonly HolderData[],
+  functionProviders: readonly FunctionProvider[],
   rows: readonly PanelRow[],
   displayNames: ReadonlyMap<string, string>,
 ): readonly InstancePill[] {
-  return holders.map((holder) => {
-    const own = rows.filter(
-      (row): row is InstanceRow => row.kind === 'instance' && row.addonId === holder.addonId,
-    )
+  return functionProviders.map((provider) => {
+    const name = displayNames.get(provider.addonId) ?? provider.addonId
+    const own = rows.filter((row) => row.addonId === provider.addonId)
+    const instances = own.filter((row): row is InstanceRow => row.kind === 'instance')
+    const fixed = own.find((row): row is FixedRow => row.kind === 'fixed')
+    if (fixed !== undefined) {
+      return {
+        addonId: provider.addonId,
+        name,
+        count: 1,
+        health: fixed.isActive ? 'ok' : 'off',
+      }
+    }
     return {
-      addonId: holder.addonId,
-      name: displayNames.get(holder.addonId) ?? holder.addonId,
-      count: own.length,
-      health: worstHealth(own),
+      addonId: provider.addonId,
+      name,
+      count: instances.length,
+      health: worstHealth(instances),
     }
   })
 }

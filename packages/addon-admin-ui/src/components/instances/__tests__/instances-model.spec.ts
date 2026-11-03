@@ -27,14 +27,26 @@ const loki: HolderData = {
   addonId: 'loki-logging',
   description: { instanceMode: 'single', kind: 'destination', canTest: true },
   instances: [
-    { id: 'loki-logging', name: 'Loki', configured: true, enabled: true, formValues: {} },
+    {
+      id: 'loki-logging',
+      name: 'Loki',
+      configured: true,
+      enabled: true,
+      formValues: {},
+    },
   ],
 }
 const smtp: HolderData = {
   addonId: 'smtp-nodemailer',
   description: { instanceMode: 'multiple', kind: 'relay', canTest: false },
   instances: [
-    { id: 'relay-default', name: 'Default', configured: true, enabled: true, formValues: {} },
+    {
+      id: 'relay-default',
+      name: 'Default',
+      configured: true,
+      enabled: true,
+      formValues: {},
+    },
     {
       id: 'inst-aaaaaaaa',
       name: 'Office',
@@ -185,7 +197,11 @@ describe('edit refs', () => {
     }
   })
   it('keeps a colon inside an instance id', () => {
-    expect(parseEditRef('a:b:c')).toEqual({ kind: 'instance', addonId: 'a', id: 'b:c' })
+    expect(parseEditRef('a:b:c')).toEqual({
+      kind: 'instance',
+      addonId: 'a',
+      id: 'b:c',
+    })
   })
 })
 
@@ -204,8 +220,20 @@ describe('enabled and providersOf', () => {
   const off: HolderData = {
     ...smtp,
     instances: [
-      { id: 'a', name: 'Switched on', configured: true, enabled: true, formValues: {} },
-      { id: 'b', name: 'Switched off', configured: true, formValues: {}, enabled: false },
+      {
+        id: 'a',
+        name: 'Switched on',
+        configured: true,
+        enabled: true,
+        formValues: {},
+      },
+      {
+        id: 'b',
+        name: 'Switched off',
+        configured: true,
+        formValues: {},
+        enabled: false,
+      },
     ],
   }
   const rows = buildRows({
@@ -275,17 +303,21 @@ describe('pills and filter', () => {
     descriptions: new Map(),
   })
 
-  it('counts instances per holder and reports the worst status', () => {
-    const pills = providerPills([loki, smtp], rows, names)
+  const fnProviders = [
+    { addonId: 'loki-logging', isActive: true },
+    { addonId: 'smtp-nodemailer', isActive: true },
+    { addonId: 'console', isActive: true },
+    { addonId: 'empty-holder', isActive: true },
+  ]
+
+  it('has a pill for EVERY provider: holders count instances, fixed rows count 1 with the registry dot', () => {
+    const pills = providerPills(fnProviders, rows, names)
     expect(pills.map((p) => [p.addonId, p.name, p.count, p.health])).toEqual([
       ['loki-logging', 'loki-logging', 1, 'ok'],
       ['smtp-nodemailer', 'SMTP', 2, 'error'],
+      ['console', 'console', 1, 'ok'],
+      ['empty-holder', 'empty-holder', 0, 'unknown'],
     ])
-  })
-
-  it('a holder with no record keeps a pill with count 0 and an unknown dot', () => {
-    const empty: HolderData = { ...smtp, instances: [] }
-    expect(providerPills([empty], [], names)[0]).toMatchObject({ count: 0, health: 'unknown' })
   })
 
   it('an off row is off, an unconfigured one unknown, and error outranks ok', () => {

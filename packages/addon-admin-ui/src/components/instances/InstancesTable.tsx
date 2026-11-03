@@ -202,8 +202,8 @@ export function InstancesTable({
 
   const creatable = useMemo(() => creatableProviders(data.holders), [data.holders])
   const pills = useMemo(
-    () => providerPills(data.holders, data.rows, data.displayNames),
-    [data.holders, data.rows, data.displayNames],
+    () => providerPills(data.functionProviders, data.rows, data.displayNames),
+    [data.functionProviders, data.rows, data.displayNames],
   )
   // A filter whose provider left the list falls back to All.
   const activeFilter = pills.some((p) => p.addonId === providerFilter) ? providerFilter : null
@@ -325,7 +325,14 @@ export function InstancesTable({
           'providerInstances.stateNotSortable',
           'A row carries a badge, not a value to order by.',
         ),
-        render: (row) => (row.kind === 'instance' ? <StateCell row={row} /> : null),
+        render: (row) =>
+          row.kind === 'instance' ? (
+            <StateCell row={row} />
+          ) : (
+            <Badge variant={row.isActive ? 'success' : 'default'}>
+              {row.isActive ? t('instances.active', 'Active') : t('providerInstances.off', 'Off')}
+            </Badge>
+          ),
       },
       {
         key: 'on',
@@ -429,6 +436,21 @@ export function InstancesTable({
     )
   }
 
+  // Add stays visible; when nothing is creatable it is disabled and says why.
+  const blocked = data.holders.filter((h) => !creatable.includes(h)).map((h) => nameOf(h.addonId))
+  const addDisabledReason =
+    creatable.length > 0
+      ? undefined
+      : blocked.length > 0
+        ? t(
+            'instances.addBlocked',
+            '{{names}}: only one instance is allowed and it already exists.',
+            {
+              names: blocked.join(', '),
+            },
+          )
+        : t('instances.addNone', 'No provider here can hold instances.')
+
   const onAdd = (): void => {
     // A selected pill adds to its own provider; otherwise the picker, unless there is no choice.
     const chosen = creatable.find((h) => h.addonId === activeFilter)
@@ -438,21 +460,9 @@ export function InstancesTable({
   }
 
   return (
-    <SectionCard
-      headingId={`provider-instances-${functionCap}`}
-      title={title}
-      icon={icon}
-      actions={
-        data.state === 'ready' && creatable.length > 0 ? (
-          <Button size="sm" variant="outline" onClick={onAdd}>
-            <Plus className="h-3.5 w-3.5" />
-            {addLabel}
-          </Button>
-        ) : undefined
-      }
-    >
+    <SectionCard headingId={`provider-instances-${functionCap}`} title={title} icon={icon}>
       <p className="px-3 pt-2 text-xs text-foreground-muted">{subtitle}</p>
-      {data.state === 'ready' && (pills.length > 1 || install !== undefined) && (
+      {data.state === 'ready' && (
         <InstanceProviderPills
           pills={pills}
           total={data.rows.length}
@@ -460,6 +470,9 @@ export function InstancesTable({
           onSelect={setProviderFilter}
           fallbackIcon={icon}
           {...(install !== undefined ? { install } : {})}
+          addLabel={addLabel}
+          onAdd={onAdd}
+          {...(addDisabledReason !== undefined ? { addDisabledReason } : {})}
         />
       )}
       {body}

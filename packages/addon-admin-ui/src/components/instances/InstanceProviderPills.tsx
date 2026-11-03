@@ -48,6 +48,10 @@ export interface InstanceProviderPillsProps {
   readonly onSelect: (addonId: string | null) => void
   readonly fallbackIcon: LucideIcon
   readonly install?: InstanceInstallLink
+  readonly addLabel: string
+  readonly onAdd: () => void
+  /** Why Add is disabled; when set, Add is shown disabled with this as helper text. */
+  readonly addDisabledReason?: string
 }
 
 export function InstanceProviderPills({
@@ -57,62 +61,81 @@ export function InstanceProviderPills({
   onSelect,
   fallbackIcon,
   install,
+  addLabel,
+  onAdd,
+  addDisabledReason,
 }: InstanceProviderPillsProps): ReactElement {
   const { t } = useTranslation()
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 px-3 pt-2">
-      <div
-        role="group"
-        aria-label={t('instances.filterByProvider', 'Filter by provider')}
-        className="flex min-w-0 flex-wrap items-center gap-1.5"
-      >
-        <Button
-          variant="unstyled"
-          type="button"
-          aria-pressed={selected === null}
-          data-testid="instance-pill-all"
-          onClick={() => onSelect(null)}
-          className={`${PILL_BASE} pl-2.5 ${selected === null ? PILL_CURRENT : PILL_OTHER}`}
+    <div className="px-3 pt-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div
+          role="group"
+          aria-label={t('instances.filterByProvider', 'Filter by provider')}
+          className="flex min-w-0 flex-wrap items-center gap-1.5"
         >
-          <span className="truncate">{t('instances.all', 'All')}</span>
-          <span className="shrink-0 text-[10px] font-normal text-foreground-subtle">{total}</span>
-        </Button>
-        {pills.map((pill) => (
           <Button
-            key={pill.addonId}
             variant="unstyled"
             type="button"
-            aria-pressed={selected === pill.addonId}
-            data-testid={`instance-pill-${pill.addonId}`}
-            onClick={() => onSelect(pill.addonId)}
-            className={`${PILL_BASE} ${selected === pill.addonId ? PILL_CURRENT : PILL_OTHER}`}
+            aria-pressed={selected === null}
+            data-testid="instance-pill-all"
+            onClick={() => onSelect(null)}
+            className={`${PILL_BASE} pl-2.5 ${selected === null ? PILL_CURRENT : PILL_OTHER}`}
           >
-            <AddonAssetIcon
-              addonId={pill.addonId}
-              fallback={fallbackIcon}
-              tileClassName=""
-              size="sm"
-            />
-            <span className="truncate">{pill.name}</span>
-            <span className="shrink-0 text-[10px] font-normal text-foreground-subtle">
-              {pill.count}
-            </span>
-            <span
-              className={`h-1.5 w-1.5 shrink-0 rounded-full ${HEALTH_DOT[pill.health]}`}
-              aria-hidden
-            />
-            <span className="sr-only">{healthLabel(t, pill.health)}</span>
+            <span className="truncate">{t('instances.all', 'All')}</span>
+            <span className="shrink-0 text-[10px] font-normal text-foreground-subtle">{total}</span>
           </Button>
-        ))}
+          {pills.map((pill) => (
+            <Button
+              key={pill.addonId}
+              variant="unstyled"
+              type="button"
+              aria-pressed={selected === pill.addonId}
+              data-testid={`instance-pill-${pill.addonId}`}
+              onClick={() => onSelect(pill.addonId)}
+              className={`${PILL_BASE} ${selected === pill.addonId ? PILL_CURRENT : PILL_OTHER}`}
+            >
+              <AddonAssetIcon
+                addonId={pill.addonId}
+                fallback={fallbackIcon}
+                tileClassName=""
+                size="sm"
+              />
+              <span className="truncate">{pill.name}</span>
+              <span className="shrink-0 text-[10px] font-normal text-foreground-subtle">
+                {pill.count}
+              </span>
+              <span
+                className={`h-1.5 w-1.5 shrink-0 rounded-full ${HEALTH_DOT[pill.health]}`}
+                aria-hidden
+              />
+              <span className="sr-only">{healthLabel(t, pill.health)}</span>
+            </Button>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {install !== undefined && (
+            <Link
+              to={addonCatalogHref(install.capability)}
+              className={`${PILL_BASE} border-dashed border-border pl-2 text-foreground-subtle hover:border-primary/50 hover:text-foreground`}
+            >
+              <Plus className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              <span className="truncate">{install.label}</span>
+            </Link>
+          )}
+          <Button
+            size="sm"
+            variant="primary"
+            disabled={addDisabledReason !== undefined}
+            onClick={onAdd}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            {addLabel}
+          </Button>
+        </div>
       </div>
-      {install !== undefined && (
-        <Link
-          to={addonCatalogHref(install.capability)}
-          className={`${PILL_BASE} border-dashed border-border pl-2 text-foreground-subtle hover:border-primary/50 hover:text-foreground`}
-        >
-          <Plus className="h-3.5 w-3.5 shrink-0" aria-hidden />
-          <span className="truncate">{install.label}</span>
-        </Link>
+      {addDisabledReason !== undefined && (
+        <p className="mt-1 text-right text-[11px] text-foreground-subtle">{addDisabledReason}</p>
       )}
     </div>
   )

@@ -258,6 +258,18 @@ describe('InstancesTable', () => {
       expect(await screen.findByText('Add SMTP')).toBeTruthy()
     })
 
+    it('Add stays visible but disabled, with the reason, when nothing is creatable', async () => {
+      h.fn.data = [{ addonId: 'loki-logging', isActive: true }]
+      h.holders.data = [{ addonId: 'loki-logging', isActive: true }]
+      renderPanel()
+      await screen.findByText('Loki prod')
+      const add = screen.getByRole('button', { name: /Add destination/ }) as HTMLButtonElement
+      expect(add.disabled).toBe(true)
+      expect(screen.getByText(/only one instance is allowed/)).toBeTruthy()
+      // A lone provider still has its pill.
+      expect(screen.getByTestId('instance-pill-loki-logging')).toBeTruthy()
+    })
+
     it('a single provider with a row is not offered: the only creatable one opens directly', async () => {
       renderPanel()
       await screen.findByText('Relay A')

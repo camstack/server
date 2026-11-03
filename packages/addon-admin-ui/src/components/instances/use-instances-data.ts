@@ -25,6 +25,7 @@ export const HOLDER_QUERY_KEY = 'provider-instances-holder'
 export interface InstancesData {
   readonly state: PanelState
   readonly error: string | null
+  readonly functionProviders: readonly FunctionProvider[]
   readonly rows: readonly PanelRow[]
   readonly holders: readonly HolderData[]
   readonly displayNames: ReadonlyMap<string, string>
@@ -116,6 +117,7 @@ export function useInstancesData(functionCap: string): InstancesData {
   return {
     state,
     error: firstError === null ? null : firstError.message,
+    functionProviders,
     rows,
     holders,
     displayNames,

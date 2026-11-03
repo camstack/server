@@ -11592,6 +11592,9 @@
       "error": "Error",
       "off": "Off",
       "unknown": "Unknown"
-    }
+    },
+    "active": "Active",
+    "addBlocked": "{{names}}: only one instance is allowed and it already exists.",
+    "addNone": "No provider here can hold instances."
   }
 }
