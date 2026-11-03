@@ -1,6 +1,8 @@
 // packages/system/src/builtins/composer/__tests__/composer.spec.ts
 import {
   type ComposerApplyInput,
+  type Composition,
+  DeviceType,
   ROOM_EXAMPLE_MOTION_SOURCES,
   ROOM_EXAMPLE_TEMPERATURE_SOURCES,
   ROOM_OCCUPANCY_WINDOW_MS,
@@ -162,6 +164,18 @@ describe('apply', () => {
       cap: 'temperature-sensor',
       values: { temperature: 21.3 },
     })
+  })
+
+  it('a naked composition (no feature) declares its device and reports running (D1004)', async () => {
+    const naked: Composition = { target: { kind: 'new', type: DeviceType.Heater }, features: [] }
+    const result = await composer.apply(
+      input({
+        blocks: [{ id: 'b1', name: 'Stove', enabled: true, updatedAt: 1, composition: naked }],
+      }),
+    )
+    expect(declared).toEqual([['composed-b1']])
+    expect(result.blocks).toEqual([{ blockId: 'b1', status: 'running' }])
+    expect(targets.get('composed-b1')?.writes ?? []).toEqual([])
   })
 
   it('does not re-declare on an unchanged apply', async () => {

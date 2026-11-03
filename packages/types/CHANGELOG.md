@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The power-meter capability shows its reading as a hero line under every device's hero card
+- A composed device may have no feature: a device can be created naked and gets its facets from Customize
 
 ## [1.2.486] - 2026-11-03
 

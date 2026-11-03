@@ -33,6 +33,24 @@ function room() {
   })
 }
 
+describe('a naked composition (D1004)', () => {
+  it('parses with no feature: the device exists before any facet is attached', () => {
+    const parsed = CompositionSchema.safeParse({
+      target: { kind: 'new', type: DeviceType.Heater },
+      features: [],
+    })
+    expect(parsed.success).toBe(true)
+  })
+  it('still refuses more than the feature limit', () => {
+    const feature = (cap: string) => ({ kind: 'fields', cap, fields: {} })
+    const parsed = CompositionSchema.safeParse({
+      target: { kind: 'new', type: DeviceType.Heater },
+      features: Array.from({ length: 17 }, (_, i) => feature(`cap-${i}`)),
+    })
+    expect(parsed.success).toBe(false)
+  })
+})
+
 describe('the room example', () => {
   it('parses, and names temperature and occupancy fields', () => {
     const composition = room()

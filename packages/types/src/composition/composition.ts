@@ -307,7 +307,7 @@ export type CompositionTarget = z.infer<typeof CompositionTargetSchema>
 export const CompositionSchema = z
   .object({
     target: CompositionTargetSchema,
-    features: z.array(CompositionFeatureSchema).min(1).max(MAX_COMPOSITION_FEATURES),
+    features: z.array(CompositionFeatureSchema).min(0).max(MAX_COMPOSITION_FEATURES),
     /**
      * Present when the block is a helper template. Absent on a free
      * composition (the room example, device 4603). The editor reads this,
