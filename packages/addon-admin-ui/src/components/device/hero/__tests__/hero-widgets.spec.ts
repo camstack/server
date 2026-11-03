@@ -6,6 +6,7 @@
  */
 import type { ConfigSectionWithValues } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
+import { heroDrawnWidgets } from '../hero-drawn-widgets'
 import { heroWidgets } from '../hero-widgets'
 
 const consumables = (order = 5): ConfigSectionWithValues => ({
@@ -73,5 +74,29 @@ describe('heroWidgets', () => {
     expect(
       heroWidgets({ sections: [consumables(5), other], deviceId: 1 }).map((w) => w.widgetId),
     ).toEqual(['host/other', 'host/consumables-panel'])
+  })
+
+  it("leaves out a widget the device's own hero card draws, keeping the rest", () => {
+    const power: ConfigSectionWithValues = {
+      id: 'power-meter-widget',
+      title: 'Power',
+      tab: 'power',
+      location: 'hero',
+      order: 4,
+      fields: [{ type: 'widget', key: 'p', label: 'Power', widgetId: 'host/power-meter-line' }],
+    }
+    expect(
+      heroWidgets({
+        sections: [power, consumables()],
+        deviceId: 9,
+        drawnByHero: ['host/power-meter-line'],
+      }).map((w) => w.widgetId),
+    ).toEqual(['host/consumables-panel'])
+  })
+
+  it('a Sensor hero draws the reading itself; other types declare nothing', () => {
+    expect(heroDrawnWidgets('sensor')).toEqual(['host/power-meter-line'])
+    expect(heroDrawnWidgets('washer')).toEqual([])
+    expect(heroDrawnWidgets(undefined)).toEqual([])
   })
 })

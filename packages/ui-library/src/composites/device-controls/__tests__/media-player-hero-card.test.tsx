@@ -4,7 +4,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { MediaPlayerHeroCard } from '../media-player-hero-card'
 
-let mockSlices: { runningState?: unknown; powerMeter?: unknown } = {}
+let mockSlices: { runningState?: unknown } = {}
 let mockResult: { cap: unknown; slice: unknown; available: boolean }
 
 vi.mock('../../../hooks/use-device-proxy', () => ({
@@ -133,26 +133,12 @@ describe('MediaPlayerHeroCard — only what is known', () => {
     expect(cap.volumeUp).toHaveBeenCalledWith({ steps: 1 })
   })
 
-  it('shows the running state unknown and no watts when neither cap is bound', () => {
-    mockSlices = {}
+  it('a bound running-state settles the power guess; the card draws no readings of its own', () => {
+    mockSlices = { runningState: { running: true } }
     renderHero({ ...infrared })
-    expect(screen.getByTestId('media-running-state').getAttribute('data-reading')).toBe('unknown')
-    expect(screen.queryByTestId('media-watts')).toBeNull()
-  })
-
-  it('reads running-state and power-meter watts when bound', () => {
-    mockSlices = { runningState: { running: true }, powerMeter: { power: 84.4 } }
-    renderHero({ ...infrared })
-    expect(screen.getByTestId('media-running-state').getAttribute('data-reading')).toBe('running')
-    expect(screen.getByTestId('media-watts').textContent).toContain('84 W')
     expect(screen.getByTestId('media-hero').getAttribute('data-power')).toBe('on')
-    mockSlices = {}
-  })
-
-  it('a bound meter with no reading shows a dash, not zero', () => {
-    mockSlices = { powerMeter: {} }
-    renderHero({ ...infrared })
-    expect(screen.getByTestId('media-watts').textContent).toContain('—')
+    expect(screen.queryByTestId('media-running-state')).toBeNull()
+    expect(screen.queryByTestId('media-watts')).toBeNull()
     mockSlices = {}
   })
 
@@ -197,7 +183,6 @@ describe('MediaPlayerHeroCard — only what is known', () => {
     expect(screen.getByTestId('media-hero').getAttribute('data-power')).toBe('unknown')
     expect(screen.getByTestId('media-state-unknown')).toBeTruthy()
     expect(screen.queryByText('Not running')).toBeNull()
-    expect(screen.getByTestId('media-running-state').getAttribute('data-reading')).toBe('unknown')
   })
 
   it('an absent running-state cap never reads as Not running, even with a known state', () => {
@@ -206,10 +191,11 @@ describe('MediaPlayerHeroCard — only what is known', () => {
     expect(screen.queryByText('Not running')).toBeNull()
   })
 
-  it('a running-state cap that answered false says Not running', () => {
+  it('a running-state cap that answered false reads as off, without a line of its own', () => {
     mockSlices = { runningState: { running: false } }
     renderHero({ ...infrared, state: 'off', stateSource: 'reported', assumedFields: [] })
-    expect(screen.getByText('Not running')).toBeTruthy()
+    expect(screen.getByTestId('media-hero').getAttribute('data-power')).toBe('off')
+    expect(screen.queryByText('Not running')).toBeNull()
     mockSlices = {}
   })
 })

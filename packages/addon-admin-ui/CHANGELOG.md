@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The remote used from a device no longer prints group names such as Numbers or Volume; they only appear in the layout editor
 - The device hero no longer links to the remote layout editor (it stays on the Customize page)
 - A built device's Customize tab now shows the same lists as a native device of its type, helper devices included; removing the last facet leaves the device naked instead of being refused.
+- A sensor's page no longer repeats its own reading in a second Power line under the hero
 
 ## [1.2.566] - 2026-11-03
 

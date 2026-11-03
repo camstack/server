@@ -77,6 +77,7 @@ import { CameraFunctionSwitches } from '../components/device/CameraFunctionSwitc
 import { DeviceAdminLinkButton } from '../components/device/DeviceAdminLinkButton'
 import { ChildrenList } from '../components/device/ChildrenList'
 import { DeviceHero } from '../components/device/hero/HeroRegistry'
+import { heroDrawnWidgets } from '../components/device/hero/hero-drawn-widgets'
 import { DeviceHeroWidgets } from '../components/device/hero/DeviceHeroWidgets'
 import { heroWidgets } from '../components/device/hero/hero-widgets'
 import {
@@ -397,6 +398,7 @@ export function DeviceDetailPage() {
           ...(aggregateData?.live?.sections ?? []),
         ],
         deviceId,
+        drawnByHero: heroDrawnWidgets(deviceTypeStr),
         ...(primaryChildId !== null
           ? {
               child: {
@@ -409,7 +411,7 @@ export function DeviceDetailPage() {
             }
           : {}),
       }),
-    [aggregateData, childAggregateData, deviceId, primaryChildId],
+    [aggregateData, childAggregateData, deviceId, deviceTypeStr, primaryChildId],
   )
   // Parent device — surfaced as a clickable link under the title for
   // accessory children (Floodlight / Siren / PIR under a camera). The

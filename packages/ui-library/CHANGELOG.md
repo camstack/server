@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A wireless link badge with no signal reading shows no percentage (it showed NaN%)
 - Media-player hero: a status with no state draws an unknown orb and unknown running, never on or Not running
 - A Power line under every device's hero card shows watts and energy; heater and appliance cards no longer draw watts themselves
+- The media-player hero no longer draws its own running line and watts; the device page's running line and Power line show them
 
 ## [1.2.376] - 2026-11-03
 

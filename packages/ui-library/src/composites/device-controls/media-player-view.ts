@@ -41,16 +41,12 @@ export type RunningReading = 'running' | 'idle' | 'unknown'
 export interface MediaPlayerExtras {
   /** `running-state` slice's `running`. */
   readonly running?: boolean | null | undefined
-  /** `power-meter` slice's instantaneous watts. */
-  readonly watts?: number | undefined
 }
 
 export interface MediaPlayerView {
   readonly power: PowerView
   /** The `running-state` cap's reading; `unknown` when the cap is absent or has no answer. */
   readonly runningReading: RunningReading
-  /** Instantaneous watts of a bound `power-meter`; null when absent or not reported. */
-  readonly watts: number | null
   readonly running: RunningView
   /** The power / running state is the driver's own bookkeeping, not a reading. */
   readonly stateAssumed: boolean
@@ -119,7 +115,6 @@ function isAssumed(
 const UNKNOWN_VIEW: MediaPlayerView = {
   power: 'unknown',
   runningReading: 'unknown',
-  watts: null,
   running: 'unknown',
   stateAssumed: false,
   canSwitchPower: false,
@@ -150,14 +145,13 @@ export function deriveMediaPlayerView(
   extras: MediaPlayerExtras = {},
 ): MediaPlayerView {
   const runningReading = readingOf(extras.running)
-  const watts = extras.watts !== undefined && Number.isFinite(extras.watts) ? extras.watts : null
   const view = deriveFromStatus(status, features)
   // A reading from a running source outranks the driver's guess (and fills a missing status).
   const guessed = status === undefined || status.state === undefined || view.stateAssumed
-  if (runningReading === 'unknown' || !guessed) return { ...view, runningReading, watts }
+  if (runningReading === 'unknown' || !guessed) return { ...view, runningReading }
   if (runningReading === 'idle') {
     const off = { ...UNKNOWN_VIEW, power: 'off' as const, running: 'none' as const }
-    return { ...off, canSwitchPower: view.canSwitchPower, runningReading, watts }
+    return { ...off, canSwitchPower: view.canSwitchPower, runningReading }
   }
   // Running: the device is on whatever the guess said; its other controls follow.
   const powered =
@@ -169,7 +163,7 @@ export function deriveMediaPlayerView(
             : status,
           features,
         )
-  return { ...powered, power: 'on', stateAssumed: false, runningReading, watts }
+  return { ...powered, power: 'on', stateAssumed: false, runningReading }
 }
 
 function deriveFromStatus(

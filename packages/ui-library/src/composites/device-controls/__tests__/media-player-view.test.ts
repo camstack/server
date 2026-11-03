@@ -181,13 +181,12 @@ describe('controls come from what the device exposes', () => {
   })
 })
 
-describe('sibling readings: running-state and power-meter', () => {
+describe('sibling reading: running-state', () => {
   const infrared = { ...BASE, state: 'standby' as const, stateSource: 'assumed' as const }
 
-  it('is unknown when the running-state cap is absent, and carries no watts', () => {
+  it('is unknown when the running-state cap is absent', () => {
     const view = deriveMediaPlayerView(infrared, ALL)
     expect(view.runningReading).toBe('unknown')
-    expect(view.watts).toBeNull()
     expect(view.power).toBe('standby')
   })
 
@@ -218,11 +217,6 @@ describe('sibling readings: running-state and power-meter', () => {
   it('a reported state is not overridden by a running reading', () => {
     const view = deriveMediaPlayerView({ ...BASE, state: 'off' }, ALL, { running: true })
     expect(view.power).toBe('off')
-  })
-
-  it('carries the watts; a non-finite value is unknown', () => {
-    expect(deriveMediaPlayerView(BASE, ALL, { watts: 84.4 }).watts).toBe(84.4)
-    expect(deriveMediaPlayerView(BASE, ALL, { watts: Number.NaN }).watts).toBeNull()
   })
 
   it('a status that carries no state is unknown power and unknown running, never on', () => {

@@ -34,6 +34,12 @@ export interface HeroWidgetSource {
 export interface HeroWidgetsInput extends HeroWidgetSource {
   /** The container's primary child, when the device is a container with one. */
   readonly child?: HeroWidgetSource
+  /**
+   * Widget ids this device's own hero card already draws (`HERO_DRAWN_WIDGETS`):
+   * they are not stacked under it a second time. Applies to the device's own
+   * sections only.
+   */
+  readonly drawnByHero?: readonly string[]
 }
 
 function widgetsOf(source: HeroWidgetSource): HeroWidget[] {
@@ -51,7 +57,8 @@ function widgetsOf(source: HeroWidgetSource): HeroWidget[] {
 }
 
 export function heroWidgets(input: HeroWidgetsInput): readonly HeroWidget[] {
-  const own = widgetsOf(input)
+  const drawn = new Set(input.drawnByHero ?? [])
+  const own = widgetsOf(input).filter((w) => !drawn.has(w.widgetId))
   const ownIds = new Set(own.map((w) => w.widgetId))
   const promoted = input.child === undefined ? [] : widgetsOf(input.child)
   const merged = [...own, ...promoted.filter((w) => !ownIds.has(w.widgetId))]

@@ -14,7 +14,6 @@ import {
   Square,
   Volume2,
   VolumeX,
-  Zap,
 } from 'lucide-react'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { useDeviceState } from '../../hooks/use-device-proxy'
@@ -25,7 +24,6 @@ import type {
   MediaPlayerRepeat,
   MediaPlayerStatus,
   MediaPlayerState,
-  PowerMeterStatus,
   RunningStateStatus,
 } from '@camstack/types'
 import type { DeviceControlProps } from './control-registry'
@@ -211,68 +209,6 @@ function StateLine({ state, assumed, source, running }: StateLineProps): ReactNo
   )
 }
 
-// ── Sibling readings: running-state and power-meter ─────────────────────────
-
-interface DeviceReadingsProps {
-  readonly reading: 'running' | 'idle' | 'unknown'
-  readonly watts: number | null
-  /** A power-meter is bound (the watts may still be unreported). */
-  readonly meterBound: boolean
-}
-
-/** Whether the device runs (from `running-state`; unknown when absent) and its draw in watts (only when a meter is bound). */
-function DeviceReadings({ reading, watts, meterBound }: DeviceReadingsProps): ReactNode {
-  const t = useUiText()
-  const label =
-    reading === 'running'
-      ? t('uiLibrary.mediaPlayerHero.running', 'Running')
-      : reading === 'idle'
-        ? t('uiLibrary.mediaPlayerHero.notRunning', 'Not running')
-        : t('uiLibrary.mediaPlayerHero.runningUnknown', 'Running: unknown')
-  return (
-    <div
-      className="flex flex-wrap items-center justify-center gap-3 text-xs"
-      data-testid="media-readings"
-    >
-      <span
-        data-testid="media-running-state"
-        data-reading={reading}
-        className={cn(
-          'inline-flex items-center gap-1.5 transition-colors duration-500 motion-reduce:transition-none',
-          reading === 'running' && 'text-success',
-          reading === 'idle' && 'text-foreground-muted',
-          reading === 'unknown' && 'text-foreground-subtle',
-        )}
-      >
-        <span
-          aria-hidden="true"
-          className={cn(
-            'h-2 w-2 rounded-full border',
-            reading === 'running' && 'border-success bg-success',
-            reading === 'idle' && 'border-border bg-border',
-            reading === 'unknown' && 'border-dashed border-foreground-subtle',
-          )}
-        />
-        {label}
-      </span>
-      {meterBound && (
-        <span
-          data-testid="media-watts"
-          className="inline-flex items-center gap-1 tabular-nums text-foreground-muted"
-          title={
-            watts === null
-              ? t('uiLibrary.mediaPlayerHero.wattsUnknown', 'Power draw unknown')
-              : undefined
-          }
-        >
-          <Zap className="h-3.5 w-3.5" aria-hidden="true" />
-          {watts === null ? '—' : `${Math.round(watts)} W`}
-        </span>
-      )}
-    </div>
-  )
-}
-
 // ── Buttons ───────────────────────────────────────────────────────────────────
 
 interface TransportButtonProps {
@@ -360,16 +296,15 @@ export function MediaPlayerHeroCard({
     enabled: optimistic ?? true,
   })
 
-  // Sibling caps bound to the same device (an infrared TV composed with them);
-  // an unbound or unanswered one is `undefined` and reads as unknown.
+  // A sibling `running-state` cap on the same device (an infrared TV composed with it) can
+  // settle the power guess; the running line and the draw are the device page's hero line
+  // and the power-meter hero widget (D1004), not this card's.
   const runningSlice = useDeviceState<RunningStateStatus>(trpc, deviceId, (st) => st.runningState)
-  const powerSlice = useDeviceState<PowerMeterStatus>(trpc, deviceId, (st) => st.powerMeter)
 
   if (cap === undefined) return null
 
   const view = deriveMediaPlayerView(display, features, {
     running: runningSlice?.running,
-    watts: powerSlice?.power,
   })
   const busy = !available
   const status = display
@@ -428,11 +363,6 @@ export function MediaPlayerHeroCard({
           label={powerLabel}
           busy={busy}
           onPress={view.canSwitchPower ? switchPower : undefined}
-        />
-        <DeviceReadings
-          reading={view.runningReading}
-          watts={view.watts}
-          meterBound={powerSlice !== undefined}
         />
         <StateLine
           state={status?.state}
