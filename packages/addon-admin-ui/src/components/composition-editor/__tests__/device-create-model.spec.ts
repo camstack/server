@@ -44,11 +44,20 @@ describe('a device is created naked (D1004)', () => {
 })
 
 describe('media player', () => {
-  it('carries the media-player commands, served by the remote, when its source exposes them', () => {
+  it('forwards every media-player command to the source when it exposes them, never to a remote', () => {
     const composition = nakedComposition(DeviceType.MediaPlayer, PLAYER)
-    expect(composition?.features).toEqual([
-      { kind: 'fields', cap: 'media-player', fields: {}, commands: mediaPlayerExtensionCommands() },
-    ])
+    const feature = composition?.features[0]
+    const commands = feature?.kind === 'fields' ? (feature.commands ?? {}) : {}
+    const methods = Object.keys(mediaPlayerExtensionCommands())
+    expect(Object.keys(commands).sort()).toEqual([...methods].sort())
+    for (const method of methods) {
+      expect(commands[method]).toEqual({
+        kind: 'forward',
+        source: PLAYER.source,
+        cap: 'media-player',
+        method,
+      })
+    }
   })
 
   it('is naked without a source', () => {

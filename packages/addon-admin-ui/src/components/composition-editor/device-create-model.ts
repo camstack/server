@@ -3,13 +3,15 @@
  * naked. Creation picks a type and, where the type needs it, the one thing
  * without which the device is meaningless. Facets attach later, in Customize.
  *
- *   media player  the media-player commands when the picked source exposes
- *                 them, else naked (the remote is attached in Customize, D964)
+ *   media player  the media-player commands, forwarded to the picked source
+ *                 when it exposes them, else naked (a remote is attached in
+ *                 Customize, D964)
  *   heater        the plug it switches: on/off forward to it
  *   anything else naked
  */
 import {
   type Composition,
+  type CompositionCommandTarget,
   type CompositionFeature,
   type CompositionFieldSource,
   DeviceType,
@@ -68,11 +70,16 @@ function heaterControl(plug: HelperMember): CompositionFeature {
   }
 }
 
+/** Every method the cap serves, each one a forward to the source (the heater's mechanism). */
 function mediaPlayerCommands(source: HelperMember | null): CompositionFeature[] {
   if (source === null || source.cap !== MEDIA_PLAYER_CAP) return []
-  return [
-    { kind: 'fields', cap: MEDIA_PLAYER_CAP, fields: {}, commands: mediaPlayerExtensionCommands() },
-  ]
+  const commands: Record<string, CompositionCommandTarget> = Object.fromEntries(
+    Object.keys(mediaPlayerExtensionCommands()).map((method) => [
+      method,
+      { kind: 'forward', source: source.source, cap: MEDIA_PLAYER_CAP, method } as const,
+    ]),
+  )
+  return [{ kind: 'fields', cap: MEDIA_PLAYER_CAP, fields: {}, commands }]
 }
 
 /**
