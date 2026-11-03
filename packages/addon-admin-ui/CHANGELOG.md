@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Opening the admin with ?debugLayers=1 outlines and labels every layer near the top of the screen (fixed, sticky, blur, opacity) and shows the safe-area insets, to track down the blurred mobile top bar
 - The remote used from a device no longer prints group names such as Numbers or Volume; they only appear in the layout editor
 - The device hero no longer links to the remote layout editor (it stays on the Customize page)
+- A built device's Customize tab now shows the same lists as a native device of its type, helper devices included; removing the last facet leaves the device naked instead of being refused.
 
 ## [1.2.566] - 2026-11-03
 

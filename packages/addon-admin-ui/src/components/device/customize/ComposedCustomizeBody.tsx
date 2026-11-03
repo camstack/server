@@ -19,12 +19,15 @@ import { ComposedDeviceEditDialog } from '../../composition-editor/ComposedDevic
 import { draftFromHelper, isHelperComposition } from '../../composition-editor/helper-form-model'
 import { CompositionFieldsCardList } from './cards/CompositionFieldsCardList'
 import { ConfigCustomizeList, configCardCaps } from './config/ConfigCustomizeList'
+import { EventCustomizeList } from './event/EventCustomizeList'
 import { eventCardTargets } from './event/event-targets'
 import { HelperSummaryCard } from './HelperSummaryCard'
 import { IdentityRow } from './IdentityRow'
-import { keyedArrayCardTargets } from './keyed/KeyedArrayCard'
+import { KeyedArrayCustomizeList, keyedArrayCardTargets } from './keyed/KeyedArrayCard'
 import { ScalarCustomizeList, scalarCardTargets } from './scalar/ScalarOverrideCard'
+import { useCameraSensors } from './use-camera-sensors-presence'
 import { useCustomizeFacts } from './use-customize-facts'
+import { useDefaultConsumables } from './use-default-consumables'
 import type { AssignmentFacts } from './assignment-availability'
 
 export interface ComposedCustomizeBodyProps {
@@ -44,6 +47,8 @@ export function ComposedCustomizeBody({ device }: ComposedCustomizeBodyProps): R
   const [editing, setEditing] = useState(false)
   // Hooks run before any early return: the facts are read for the device whatever the block says.
   const facts = useCustomizeFacts(device, null)
+  const cameraSensors = useCameraSensors(device.id, false)
+  const defaultConsumables = useDefaultConsumables(device.id, facts.nativeCaps, facts.wireable)
   const skipCaps = useMemo(() => {
     const s = new Set<string>()
     for (const { cap } of scalarCardTargets()) s.add(cap)
@@ -88,41 +93,19 @@ export function ComposedCustomizeBody({ device }: ComposedCustomizeBodyProps): R
     return <p className="text-xs text-foreground-subtle">{t('compositionEditor.notComposition')}</p>
   }
 
-  if (isHelperComposition(composition)) {
-    const helperDraft = draftFromHelper(composition.helper, device.name, device.location ?? '')
-    if (helperDraft === null) {
-      return <p role="alert">{t('helper.unreadable')}</p>
-    }
-    return (
-      <div className="flex flex-col gap-3">
-        <IdentityRow device={device} />
-        <HelperSummaryCard draft={helperDraft} device={device} onEdit={() => setEditing(true)} />
-        <ComposedDeviceEditDialog
-          blockId={editing ? view.block.id : null}
-          onClose={() => {
-            setEditing(false)
-            void read.refetch()
-          }}
-        />
-      </div>
-    )
-  }
-
   const handle = {
     target: { addonId: device.addonId, stableId: device.stableId },
     state: { kind: 'present' as const, view, composition },
     saving: update.isPending,
     save: async (next: typeof composition | null) => {
-      if (next === null)
-        return {
-          kind: 'refused' as const,
-          reason: t('customize.composed.noDelete'),
-        }
+      // A built device exists without facets: removing the last one leaves it naked, it never
+      // deletes the block (D1004).
+      const stored = next ?? { ...composition, features: [] }
       try {
         await update.mutateAsync({
           blockId: view.block.id,
           expectedUpdatedAt: view.block.updatedAt,
-          block: { composition: next },
+          block: { composition: stored },
         })
         await read.refetch()
         return { kind: 'saved' as const }
@@ -139,13 +122,45 @@ export function ComposedCustomizeBody({ device }: ComposedCustomizeBodyProps): R
     nativeCaps: facts.nativeCaps,
     cameraSensors: 'absent',
   }
+  // A helper keeps its read-only summary and its Edit dialog, and ALSO gets the lists any
+  // composed device gets (D1004): the helper never hides Customize.
+  const helperDraft = isHelperComposition(composition)
+    ? draftFromHelper(composition.helper, device.name, device.location ?? '')
+    : null
   return (
     <div className="flex flex-col gap-3">
       <IdentityRow device={device} />
+      {isHelperComposition(composition) && helperDraft === null && (
+        <p role="alert">{t('helper.unreadable')}</p>
+      )}
+      {helperDraft !== null && (
+        <>
+          <HelperSummaryCard draft={helperDraft} device={device} onEdit={() => setEditing(true)} />
+          <ComposedDeviceEditDialog
+            blockId={editing ? view.block.id : null}
+            onClose={() => {
+              setEditing(false)
+              void read.refetch()
+            }}
+          />
+        </>
+      )}
       {skeletonFillStatus(composition) === 'incomplete' && (
         <Badge variant="warning">{t('customize.blockStatus.incomplete')}</Badge>
       )}
+      <EventCustomizeList
+        device={device}
+        handle={handle}
+        facts={assignmentFacts}
+        sensors={cameraSensors}
+      />
       <ScalarCustomizeList device={device} handle={handle} facts={assignmentFacts} />
+      <KeyedArrayCustomizeList
+        device={device}
+        handle={handle}
+        facts={assignmentFacts}
+        defaults={defaultConsumables}
+      />
       <ConfigCustomizeList device={device} />
       <CompositionFieldsCardList device={device} handle={handle} skipCaps={skipCaps} />
     </div>

@@ -55,6 +55,8 @@ export function withFeature(
   const features = current?.features ?? []
   const index = features.findIndex((f) => f.cap === feature.cap)
   return {
+    // A composed device keeps whatever else it carries (a helper spec): only the features change.
+    ...current,
     target: current?.target ?? { kind: 'existing', device: target },
     features:
       index === -1 ? [...features, feature] : features.map((f, i) => (i === index ? feature : f)),
@@ -89,7 +91,7 @@ export function withoutScalarTarget(
   const remaining = removeScalarTarget(featureOf(current, cap), cap, targetId)
   if (remaining === null) return withoutFeature(current, cap)
   return {
-    target: current.target,
+    ...current,
     features: current.features.map((f) => (f.cap === cap ? remaining : f)),
   }
 }
@@ -97,7 +99,7 @@ export function withoutScalarTarget(
 /** The composition without the feature of `cap`; `null` when nothing is left (≥ 1 feature). */
 export function withoutFeature(current: Composition, cap: string): Composition | null {
   const features = current.features.filter((f) => f.cap !== cap)
-  return features.length === 0 ? null : { target: current.target, features }
+  return features.length === 0 ? null : { ...current, features }
 }
 
 export function featureOf(

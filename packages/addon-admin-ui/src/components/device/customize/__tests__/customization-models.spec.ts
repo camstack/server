@@ -122,6 +122,21 @@ describe('feature merge', () => {
     expect(featureOf(replaced, 'battery')?.enabled).toBe(false)
     expect(replaced.features.length).toBe(2)
   })
+  it('a helper spec survives adding, replacing and removing a feature (D1004)', () => {
+    const helper: Composition = {
+      ...STORED,
+      helper: {
+        kind: 'statistic',
+        stat: 'max',
+        window: { kind: 'rolling', span: '24h' },
+        source: { source: BATTERY_SRC, cap: 'numeric-sensor', fieldPath: 'value' },
+      },
+    }
+    expect(withFeature(helper, FEEDER, INVERT).helper).toEqual(helper.helper)
+    expect(withoutFeature(withFeature(helper, FEEDER, INVERT), 'battery')?.helper).toEqual(
+      helper.helper,
+    )
+  })
   it('the first feature creates an existing-target composition', () => {
     expect(withFeature(null, FEEDER, BATTERY)).toEqual(STORED)
   })
