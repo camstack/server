@@ -411,6 +411,22 @@ export function enabledNodesFromBroker(broker: unknown): string[] {
  * merged on top. The legacy list keys are left in place (harmless — the
  * orchestrator ignores them now).
  */
+/**
+ * The node-keyed maps (`agentSettings`, `nodeBindings`) live as node rows (`<field>@<nodeId>`,
+ * D986), so a spec that seeds the readable map shape gets it exploded the way the hub's
+ * migration leaves the store. The map key itself is not left behind: nothing reads it.
+ */
+function explodeNodeMaps(global: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...global }
+  for (const field of ['agentSettings', 'nodeBindings']) {
+    const map = out[field]
+    if (typeof map !== 'object' || map === null || Array.isArray(map)) continue
+    delete out[field]
+    for (const [nodeId, entry] of Object.entries(map)) out[`${field}@${nodeId}`] = entry
+  }
+  return out
+}
+
 export function translateEnableListsToCapabilities(
   global: Record<string, unknown>,
 ): Record<string, unknown> {
@@ -419,7 +435,7 @@ export function translateEnableListsToCapabilities(
   const detectList = asList(global['enabledNodes'])
   const decodeList = asList(global['enabledDecoderNodes'])
   const audioList = asList(global['enabledAudioNodes'])
-  if (!detectList && !decodeList && !audioList) return global
+  if (!detectList && !decodeList && !audioList) return explodeNodeMaps(global)
 
   const referenced = new Set<string>(['hub'])
   for (const list of [detectList, decodeList, audioList]) {
@@ -441,7 +457,7 @@ export function translateEnableListsToCapabilities(
   for (const [nodeId, entry] of Object.entries(existing)) {
     if (!(nodeId in agentSettings)) agentSettings[nodeId] = entry
   }
-  return { ...global, agentSettings }
+  return explodeNodeMaps({ ...global, agentSettings })
 }
 
 export interface FakeContextOptions {
@@ -694,6 +710,13 @@ export function makeFakeContext(opts: FakeContextOptions = {}): {
   // whole e2e suite fails at `declare`. It is a real in-memory backend, not a
   // no-op: a test that reads a row it never wrote still gets nothing.
   fakeApi.settingsStore = makeFakeSettingsStore().client
+  // The hub's migration engine for an owner with nothing to run (D987): a `block-owner`
+  // migration counts as blocked when the engine is unreachable, so the harness answers.
+  fakeApi.migrations = {
+    declareOwner: {
+      mutate: async () => ({ bootId: 'spec-boot', snapshot: 'none', steps: [] }),
+    },
+  }
 
   fakeApi.deviceHistory = {
     declareSeries: leaf((input: unknown) => {

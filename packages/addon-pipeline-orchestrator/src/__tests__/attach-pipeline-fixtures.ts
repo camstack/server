@@ -13,6 +13,7 @@ import {
 } from '@camstack/types'
 import type { ZodType } from 'zod'
 import { PipelineSettingsStore } from '../pipeline-settings-store.js'
+import { applyPatch, rowFakes } from './settings-store-row-fakes.js'
 import { makeSilentLogger } from './e2e-helpers.js'
 
 export const NODE = 'hub'
@@ -129,7 +130,7 @@ export function makeRealStore(catalog: PipelineSchema = CORAL_GPU_CATALOG): Real
         return blob
       },
       write: async (patch) => {
-        blob = { ...blob, ...patch }
+        blob = applyPatch(blob, patch)
       },
     })
   const api = {
@@ -154,6 +155,10 @@ export function makeRealStore(catalog: PipelineSchema = CORAL_GPU_CATALOG): Real
   }
   const store = new PipelineSettingsStore({
     state,
+    ...rowFakes(() => {
+      reads++
+      return blob
+    }),
     api: () => api as never,
     acquireCapability,
     getAssignmentNode: () => NODE,

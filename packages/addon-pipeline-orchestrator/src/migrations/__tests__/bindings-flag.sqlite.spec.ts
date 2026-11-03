@@ -5,7 +5,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import { settingsFixture } from '../../../../system/src/builtins/sqlite-storage/__tests__/support/addon-settings-fixture.js'
-import type { DropKeysPorts } from '../drop-keys.js'
+import type { BlobToRowsPorts } from '../blob-to-rows.js'
 import {
   ADDON_MIGRATIONS,
   DROP_BINDINGS_MIGRATION_FLAG_ID,
@@ -13,12 +13,15 @@ import {
 } from '../index.js'
 
 const orchestrator = (seed: Record<string, unknown>) =>
-  settingsFixture<DropKeysPorts>({
+  settingsFixture<BlobToRowsPorts>({
     addonId: PIPELINE_ORCHESTRATOR_ID,
     catalogue: ADDON_MIGRATIONS,
     seed,
     neighbour: 'keep-me',
-    ports: (rows) => ({ readStored: rows.readStored }),
+    ports: (rows) => ({
+      readStored: rows.readStored,
+      readDeviceField: rows.readDeviceField,
+    }),
   })
 
 describe('pipeline-orchestrator drop-bindings-migration-flag', () => {
@@ -28,7 +31,9 @@ describe('pipeline-orchestrator drop-bindings-migration-flag', () => {
       enabledNodes: ['hub'],
       unknownMarked: { mark: 'survive' },
     })
-    expect(await f.boot()).toEqual({ failed: [], applied: [DROP_BINDINGS_MIGRATION_FLAG_ID] })
+    const report = await f.boot()
+    expect(report.failed).toEqual([])
+    expect(report.applied).toContain(DROP_BINDINGS_MIGRATION_FLAG_ID)
     const rows = f.rows()
     expect(rows['pipeline-orchestrator.bindingsMigration_v1_done']).toBeUndefined()
     expect(rows['pipeline-orchestrator.enabledNodes']?.['value']).toEqual(['hub'])
@@ -39,7 +44,9 @@ describe('pipeline-orchestrator drop-bindings-migration-flag', () => {
   it('refuses while the flag is not true: the carry-over never ran, the row stays', async () => {
     const f = orchestrator({ bindingsMigration_v1_done: false, enabledNodes: ['hub'] })
     const before = f.rows()
-    expect(await f.boot()).toEqual({ failed: [DROP_BINDINGS_MIGRATION_FLAG_ID], applied: [] })
+    const report = await f.boot()
+    expect(report.failed).toEqual([DROP_BINDINGS_MIGRATION_FLAG_ID])
+    expect(report.applied).not.toContain(DROP_BINDINGS_MIGRATION_FLAG_ID)
     expect(f.rows()).toEqual(before)
   })
 

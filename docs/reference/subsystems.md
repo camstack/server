@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 7885 source files · 1250 file(s) in no subsystem.**
+**31 subsystems · 7887 source files · 1251 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -30,7 +30,7 @@ commits. A generated page may not.
 | Device providers (per vendor) | 763 | `architecture/device-model.md` _(covers)_, `addons/addon-provider-homeassistant.md` _(covers)_, `addons/addon-provider-reolink.md` _(covers)_, +84 more, 14 ADRs | 2026-10-26 | ✅ |
 | Decode and the data planes | 81 | `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-28-faces-plates-frame-locality.md` _(covers)_, `design/2026-08-29-media-plane-memory-comparison.md` _(covers)_, +28 more, 7 ADRs | 2026-10-13 | ⚠️ |
 | Detection execution and inference | 142 | `architecture/detection-execution.md`, `architecture/data-planes.md` _(covers)_, `architecture/inference-devices.md`, +62 more, 5 ADRs | 2026-10-24 | ✅ |
-| Pipeline orchestration and placement | 201 | `architecture/detection-execution.md` _(covers)_, `architecture/data-planes.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +104 more, 27 ADRs | 2026-11-02 | ✅ |
+| Pipeline orchestration and placement | 202 | `architecture/detection-execution.md` _(covers)_, `architecture/data-planes.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +104 more, 27 ADRs | 2026-11-02 | ✅ |
 | Post-analysis — tracking, the confirmation gate and media | 504 | `architecture/post-analysis.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-25-viewer-track-query-plan.md` _(covers)_, +174 more, 29 ADRs | 2026-10-14 | ✅ |
 | Face, plate and embedding recognition | 50 | `architecture/post-analysis.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-25-viewer-track-query-plan.md` _(covers)_, +26 more, 4 ADRs | 2026-10-04 | ⚠️ |
 | Notification Center — rules, outbox, occupancy, timelapse | 280 | `architecture/notifications.md`, `decisions/adr-0701-an-alarm-rule-gated-on-armed-auto-triggers-the-panel-and-post-siren-policy-lives-per-mode.md`, `design/2026-08-03-storage-table-map.md` _(covers)_, +92 more, 27 ADRs | 2026-10-07 | ✅ |
@@ -126,7 +126,7 @@ Decides which node runs which camera's pipeline, and keeps sessions, balancing a
 
 - **Owner doc**: `docs/architecture/detection-execution.md`
 - **Code**: `packages/addon-pipeline-orchestrator/src/*.ts`, `packages/addon-pipeline-orchestrator/src/durable/**`, `packages/addon-pipeline-orchestrator/src/camera-status/**`, `packages/addon-pipeline-orchestrator/src/camera-sensors/**`, `packages/addon-pipeline/src/pipeline-runner/**`, `packages/addon-pipeline-orchestrator/src/widgets/**`, `packages/addon-pipeline-orchestrator/src/auto-tune/**`, `packages/system/src/pipeline/**`, `packages/types/src/pipeline/**`
-- **Files**: 201 (201 claimed by some document)
+- **Files**: 202 (202 claimed by some document)
 - **Uncovered**: —
 
 ### ✅ Post-analysis — tracking, the confirmation gate and media

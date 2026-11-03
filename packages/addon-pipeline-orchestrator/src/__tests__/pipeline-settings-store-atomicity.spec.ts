@@ -15,6 +15,7 @@ import { describe, expect, it } from 'vitest'
 import { type AgentPipelineSettings, createDurableState, type DurableState } from '@camstack/types'
 import type { ZodType } from 'zod'
 import { PipelineSettingsStore } from '../pipeline-settings-store.js'
+import { applyPatch, rowFakes } from './settings-store-row-fakes.js'
 import { makeSilentLogger } from './e2e-helpers.js'
 
 interface StoreHarness {
@@ -41,11 +42,12 @@ function makeStoreHarness(): StoreHarness {
       },
       write: async (patch) => {
         await Promise.resolve()
-        blob = { ...blob, ...patch }
+        blob = applyPatch(blob, patch)
       },
     })
   const store = new PipelineSettingsStore({
     state,
+    ...rowFakes(() => blob),
     api: () => null,
     acquireCapability: () => Promise.reject(new Error('acquireCapability not used here')),
     getAssignmentNode: () => 'hub',

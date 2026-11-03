@@ -54,12 +54,11 @@ import {
 } from './removed-model-pin-reset.js'
 import {
   type AgentSettingsMapBlob,
-  AgentSettingsMapSchema,
-  type CameraSettingsMapBlob,
-  CameraSettingsMapSchema,
-  type NodeBindingsBlob,
-  NodeBindingsSchema,
+  StoredAgentPipelineSettingsSchema,
+  StoredCameraPipelineSettingsSchema,
+  StoredNodeBindingsSchema,
 } from './orchestrator-store-schemas.js'
+import { DeviceRows, type DeviceRowsPort, NodeRows } from './orchestrator-row-maps.js'
 
 /** How a resolve reads the node's catalog: wait for the executor, or the cache only. */
 type CatalogRead = { readonly kind: 'await' } | { readonly kind: 'cached' }
@@ -87,6 +86,10 @@ export interface DeviceProvisioningSource {
 export interface PipelineSettingsStoreDeps {
   /** Same lazy-durable-state factory `BaseAddon.state<T>()` exposes — pass `this.state.bind(this)`. */
   readonly state: <T>(key: string, schema: ZodType<T>, fallback: T) => DurableState<T>
+  /** The addon's raw global store (every key, node rows included); throws when it cannot be read. */
+  readonly readStore: () => Promise<Readonly<Record<string, unknown>>>
+  /** The per-device settings door (`ctx.settings`), `null` once the context is gone. */
+  readonly deviceSettings: () => DeviceRowsPort | null
   /**
    * Live api accessor. Backed by `this.ctxIfReady?.api ?? null` (NOT the
    * throwing `this.ctx.api` getter) so a call that lands after `dispose()`
@@ -143,7 +146,18 @@ export class PipelineSettingsStore {
    */
   private static readonly SEED_MAX_RECONCILE_ROUNDS = 4
 
-  constructor(private readonly deps: PipelineSettingsStoreDeps) {}
+  /** One node row per node: the capability bindings (`nodeBindings@<node>`). */
+  private readonly bindingRows: NodeRows<Record<string, string>>
+  /** One node row per node: the agent settings (`agentSettings@<node>`). */
+  private readonly agentRows: NodeRows<AgentSettingsMapBlob[string]>
+  /** One device row per camera: the pipeline settings (`cameraSettings` of the device store). */
+  private readonly cameraRows: DeviceRows<CameraPipelineSettings>
+
+  constructor(private readonly deps: PipelineSettingsStoreDeps) {
+    this.bindingRows = new NodeRows(deps, 'nodeBindings', StoredNodeBindingsSchema)
+    this.agentRows = new NodeRows(deps, 'agentSettings', StoredAgentPipelineSettingsSchema)
+    this.cameraRows = new DeviceRows(deps, 'cameraSettings', StoredCameraPipelineSettingsSchema)
+  }
 
   // ── Disposal (smell #20) ──────────────────────────────────────────────
   //
@@ -185,52 +199,7 @@ export class PipelineSettingsStore {
   })
 
   private static readonly AGENT_SETTINGS_LOCK_KEY = 'agentSettings'
-
-  // ── Durable whole-blob store handles ─────────────────────────────────
-  //
-  // Each routes BOTH the boot read and every write for one addon-store key
-  // through a single Zod-validated handle (`deps.state(KEY, Schema, {})`).
-  // The WHOLE value round-trips on every read/write — no hand-listed field
-  // set can silently drop a key on persist. Built lazily (needs the
-  // addon's ctx, indirectly via `deps.state`) and memoised so the
-  // read-modify-write paths share one handle.
-
-  private _nodeBindingsState: DurableState<NodeBindingsBlob> | null = null
-  private _agentSettingsState: DurableState<AgentSettingsMapBlob> | null = null
-  private _cameraSettingsState: DurableState<CameraSettingsMapBlob> | null = null
-
-  private get nodeBindingsState(): DurableState<NodeBindingsBlob> {
-    if (!this._nodeBindingsState) {
-      this._nodeBindingsState = this.deps.state<NodeBindingsBlob>(
-        'nodeBindings',
-        NodeBindingsSchema,
-        {},
-      )
-    }
-    return this._nodeBindingsState
-  }
-
-  private get agentSettingsState(): DurableState<AgentSettingsMapBlob> {
-    if (!this._agentSettingsState) {
-      this._agentSettingsState = this.deps.state<AgentSettingsMapBlob>(
-        'agentSettings',
-        AgentSettingsMapSchema,
-        {},
-      )
-    }
-    return this._agentSettingsState
-  }
-
-  private get cameraSettingsState(): DurableState<CameraSettingsMapBlob> {
-    if (!this._cameraSettingsState) {
-      this._cameraSettingsState = this.deps.state<CameraSettingsMapBlob>(
-        'cameraSettings',
-        CameraSettingsMapSchema,
-        {},
-      )
-    }
-    return this._cameraSettingsState
-  }
+  private static readonly NODE_BINDINGS_LOCK_KEY = 'nodeBindings'
 
   // ── Capability bindings (nodeBindings) ────────────────────────────────
   //
@@ -241,54 +210,32 @@ export class PipelineSettingsStore {
   // side (this store has no eventBus dependency).
 
   async getCapabilityBindings(nodeId: string): Promise<Readonly<Record<string, string>>> {
-    const bindings = await this.nodeBindingsState.get().catch((): NodeBindingsBlob => ({}))
-    const perNodeRaw = bindings[nodeId]
-    if (!perNodeRaw || typeof perNodeRaw !== 'object') return {}
-    const perNode: Record<string, unknown> = { ...perNodeRaw }
+    const bindings = await this.bindingRows.get(nodeId).catch(() => undefined)
+    if (!bindings) return {}
     const out: Record<string, string> = {}
-    for (const [capName, addonId] of Object.entries(perNode)) {
+    for (const [capName, addonId] of Object.entries(bindings)) {
       if (typeof addonId === 'string' && addonId.length > 0) out[capName] = addonId
     }
     return out
   }
 
   /**
-   * Drop one node's capability bindings. `false` when it had none. Read-modify-
-   * write over the whole blob, so a concurrent binding for another node is kept.
-   * A failed read propagates: an unanswered read never counts as "nothing there".
+   * Drop one node's capability bindings. `false` when it had none. A failed read
+   * propagates: an unanswered read never counts as "nothing there".
    */
   async removeCapabilityBindings(nodeId: string): Promise<boolean> {
     let removed = false
-    await this.nodeBindingsState.update((prev) => {
-      if (!(nodeId in prev)) return prev
-      const { [nodeId]: _drop, ...rest } = prev
-      removed = true
-      return rest
+    await this.blobWriteLock.run(PipelineSettingsStore.NODE_BINDINGS_LOCK_KEY, async () => {
+      removed = await this.bindingRows.remove(nodeId)
     })
     return removed
   }
 
-  /** Read-modify-write the WHOLE `nodeBindings` blob so a concurrent binding for another node/cap can't be dropped. */
+  /** Read-modify-write ONE node's row, so a concurrent binding for another cap of the node is kept. */
   async setCapabilityBinding(nodeId: string, capName: string, addonId: string): Promise<void> {
-    await this.nodeBindingsState.update((prev) => {
-      const prevBindings: NodeBindingsBlob = {}
-      for (const [nodeKey, nodeVal] of Object.entries(prev)) {
-        if (!nodeVal || typeof nodeVal !== 'object') continue
-        const nodeAsRecord: Record<string, unknown> = { ...nodeVal }
-        const nodeBinding: Record<string, string> = {}
-        for (const [cn, aid] of Object.entries(nodeAsRecord)) {
-          if (typeof aid === 'string') nodeBinding[cn] = aid
-        }
-        prevBindings[nodeKey] = nodeBinding
-      }
-      const nodeBindings: Record<string, string> = {
-        ...prevBindings[nodeId],
-      }
-      nodeBindings[capName] = addonId
-      return {
-        ...prevBindings,
-        [nodeId]: nodeBindings,
-      }
+    await this.blobWriteLock.run(PipelineSettingsStore.NODE_BINDINGS_LOCK_KEY, async () => {
+      const prev = (await this.bindingRows.get(nodeId)) ?? {}
+      await this.bindingRows.set(nodeId, { ...prev, [capName]: addonId })
     })
   }
 
@@ -298,7 +245,7 @@ export class PipelineSettingsStore {
   async readAgentSettingsMap(): Promise<AgentSettingsMapBlob> {
     // `get()` returns a fresh object each call, so callers may safely
     // mutate the returned copy.
-    return { ...(await this.agentSettingsState.get()) }
+    return await this.agentRows.getAll()
   }
 
   /**
@@ -314,9 +261,10 @@ export class PipelineSettingsStore {
   ): Promise<readonly ResetModelPin[]> {
     const cleared: ResetModelPin[] = []
     await this.blobWriteLock.run(PipelineSettingsStore.AGENT_SETTINGS_LOCK_KEY, async () => {
-      const swept = sweepAgentSettingsPins(await this.agentSettingsState.get(), isCustom)
+      const prev = await this.agentRows.getAll()
+      const swept = sweepAgentSettingsPins(prev, isCustom)
       if (swept.cleared.length === 0) return
-      await this.agentSettingsState.set(swept.next)
+      await this.agentRows.applyDiff(prev, swept.next)
       cleared.push(...swept.cleared)
     })
     return cleared
@@ -344,12 +292,11 @@ export class PipelineSettingsStore {
       return
     }
     await this.blobWriteLock.run(PipelineSettingsStore.AGENT_SETTINGS_LOCK_KEY, async () => {
-      const all = await this.readAgentSettingsMap()
       // Overlay the caller's settings on top of any persisted entry: fields the
       // caller omits (key absent) are preserved from `existing`, while fields the
       // caller sets — INCLUDING an explicit `undefined` to reset a capability
       // flag to its node default — override.
-      const existing = all[nodeId]
+      const existing = await this.agentRows.get(nodeId)
       const merged: AgentSettingsMapBlob[string] = {
         ...existing,
         ...settings,
@@ -360,7 +307,7 @@ export class PipelineSettingsStore {
             ? (settings.maxCameras ?? null)
             : (existing?.maxCameras ?? null),
       }
-      await this.agentSettingsState.set({ ...all, [nodeId]: merged })
+      await this.agentRows.set(nodeId, merged)
     })
   }
 
@@ -374,7 +321,8 @@ export class PipelineSettingsStore {
     transform: (prev: AgentSettingsMapBlob) => AgentSettingsMapBlob,
   ): Promise<void> {
     await this.blobWriteLock.run(PipelineSettingsStore.AGENT_SETTINGS_LOCK_KEY, async () => {
-      await this.agentSettingsState.set(transform(await this.readAgentSettingsMap()))
+      const prev = await this.agentRows.getAll()
+      await this.agentRows.applyDiff(prev, transform(prev))
     })
   }
 
@@ -387,11 +335,7 @@ export class PipelineSettingsStore {
   async removeAgentSettings(nodeId: string): Promise<boolean> {
     let removed = false
     await this.blobWriteLock.run(PipelineSettingsStore.AGENT_SETTINGS_LOCK_KEY, async () => {
-      const all = await this.readAgentSettingsMap()
-      if (!(nodeId in all)) return
-      const { [nodeId]: _drop, ...rest } = all
-      await this.agentSettingsState.set(rest)
-      removed = true
+      removed = await this.agentRows.remove(nodeId)
     })
     return removed
   }
@@ -399,14 +343,17 @@ export class PipelineSettingsStore {
   /** Read the `cameraSettings` map (keyed on `deviceId` as string) via the durable handle. */
   async readCameraSettingsMap(): Promise<Record<string, CameraPipelineSettings>> {
     // Fresh object per `get()`, so callers may safely mutate it.
-    return { ...(await this.cameraSettingsState.get()) }
+    return await this.cameraRows.getAll()
+  }
+
+  /** One camera's settings, `null` when it has none. A failed read throws. */
+  async readCameraSettings(deviceId: number): Promise<CameraPipelineSettings | null> {
+    return (await this.cameraRows.get(deviceId)) ?? null
   }
 
   /** Overwrite one camera's settings. */
   async writeCameraSettings(deviceId: number, settings: CameraPipelineSettings): Promise<void> {
-    const all = await this.readCameraSettingsMap()
-    all[String(deviceId)] = settings
-    await this.cameraSettingsState.set(all)
+    await this.cameraRows.set(deviceId, settings)
   }
 
   /**
@@ -420,21 +367,18 @@ export class PipelineSettingsStore {
     addonId: string,
     settings: Readonly<Record<string, unknown>> | null,
   ): Promise<void> {
-    await this.cameraSettingsState.update((prev) => {
-      const key = String(deviceId)
-      const camera = prev[key] ?? {}
-      const nextLayer: Record<string, Readonly<Record<string, unknown>>> = {
-        ...camera.stepSettings,
-      }
-      if (settings === null || Object.keys(settings).length === 0) delete nextLayer[addonId]
-      else nextLayer[addonId] = { ...settings }
-      const { stepSettings: _drop, ...rest } = camera
-      const nextCamera: CameraPipelineSettings = {
-        ...rest,
-        ...(Object.keys(nextLayer).length > 0 ? { stepSettings: nextLayer } : {}),
-      }
-      return { ...prev, [key]: nextCamera }
-    })
+    const camera = (await this.cameraRows.get(deviceId)) ?? {}
+    const nextLayer: Record<string, Readonly<Record<string, unknown>>> = {
+      ...camera.stepSettings,
+    }
+    if (settings === null || Object.keys(settings).length === 0) delete nextLayer[addonId]
+    else nextLayer[addonId] = { ...settings }
+    const { stepSettings: _drop, ...rest } = camera
+    const nextCamera: CameraPipelineSettings = {
+      ...rest,
+      ...(Object.keys(nextLayer).length > 0 ? { stepSettings: nextLayer } : {}),
+    }
+    await this.cameraRows.set(deviceId, nextCamera)
   }
 
   /**
@@ -448,25 +392,21 @@ export class PipelineSettingsStore {
     settings: Readonly<Record<string, unknown>> | null,
   ): Promise<void> {
     await this.blobWriteLock.run(PipelineSettingsStore.AGENT_SETTINGS_LOCK_KEY, async () => {
-      const all = await this.readAgentSettingsMap()
-      const existing = all[nodeId] ?? { maxCameras: null }
+      const existing = (await this.agentRows.get(nodeId)) ?? { maxCameras: null }
       const layer: Record<string, Readonly<Record<string, unknown>>> = { ...existing.stepSettings }
       if (settings === null || Object.keys(settings).length === 0) delete layer[addonId]
       else layer[addonId] = { ...settings }
       const { stepSettings: _drop, ...rest } = existing
-      await this.agentSettingsState.set({
-        ...all,
-        [nodeId]: { ...rest, ...(Object.keys(layer).length > 0 ? { stepSettings: layer } : {}) },
+      await this.agentRows.set(nodeId, {
+        ...rest,
+        ...(Object.keys(layer).length > 0 ? { stepSettings: layer } : {}),
       })
     })
   }
 
-  /** Purge one device's entry through the durable handle (whole-blob round-trip). */
+  /** Purge one device's row. */
   async deleteCameraSettings(deviceId: number): Promise<void> {
-    await this.cameraSettingsState.update((prev) => {
-      const { [String(deviceId)]: _c, ...rest } = prev
-      return rest
-    })
+    await this.cameraRows.remove(deviceId)
   }
 
   // ── Pipeline-executor catalog cache ──────────────────────────────────
@@ -693,7 +633,7 @@ export class PipelineSettingsStore {
       maxRounds: PipelineSettingsStore.SEED_MAX_RECONCILE_ROUNDS,
     })
     if (!catalog) return null
-    const existing = (await this.readAgentSettingsMap())[nodeId]
+    const existing = await this.agentRows.get(nodeId)
     if (existing) return existing
     const next: AgentPipelineSettings = { maxCameras: null }
     await this.writeAgentSettings(nodeId, next)
@@ -848,8 +788,7 @@ export class PipelineSettingsStore {
     // resolved once here and applied to every non-empty return path below.
     const hasPackageZone = await this.deps.hasPackageZone(deviceId)
 
-    const cameraMap = await this.readCameraSettingsMap()
-    const cam: CameraPipelineSettings | null = cameraMap[String(deviceId)] ?? null
+    const cam: CameraPipelineSettings | null = (await this.cameraRows.get(deviceId)) ?? null
 
     // ── Catalog path — block until the node's executor is answering ──
     // (`waitForAgentAndCatalog` also guarantees a bare agentSettings entry.)
@@ -1006,7 +945,7 @@ export class PipelineSettingsStore {
     while (!this.disposed) {
       const catalog = await this.awaitExecutorCatalog(nodeId)
       if (!catalog) break // disposed mid-wait — fall through to the abort throw
-      let agent = (await this.readAgentSettingsMap())[nodeId]
+      let agent = await this.agentRows.get(nodeId)
       if (!agent) {
         const seeded = await this.seedAgentSettingsFromCatalog(nodeId)
         if (!seeded) {
@@ -1014,7 +953,7 @@ export class PipelineSettingsStore {
           continue
         }
         // Re-read after seeding so `agent` carries the full persisted blob.
-        agent = (await this.readAgentSettingsMap())[nodeId]
+        agent = await this.agentRows.get(nodeId)
       }
       if (!agent) {
         await sleep(2_000)
@@ -1036,7 +975,7 @@ export class PipelineSettingsStore {
    * per-node maximums without polling the store on each decision.
    */
   async buildNodeCaps(): Promise<Record<string, number | null>> {
-    const blob = await this.agentSettingsState.get()
+    const blob = await this.agentRows.getAll()
     const caps: Record<string, number | null> = {}
     for (const [nodeId, settings] of Object.entries(blob)) {
       caps[nodeId] = settings.maxCameras ?? null
@@ -1060,7 +999,7 @@ export class PipelineSettingsStore {
    * `manual` applies and what `auto` falls back to before its first answer.
    */
   async buildStoredNodeWeights(): Promise<Record<string, number>> {
-    const blob = await this.agentSettingsState.get()
+    const blob = await this.agentRows.getAll()
     const weights: Record<string, number> = {}
     for (const [nodeId, settings] of Object.entries(blob)) {
       if (typeof settings.detectWeight === 'number' && settings.detectWeight > 0) {
@@ -1099,8 +1038,7 @@ export class PipelineSettingsStore {
     nodeId: string,
     deviceKey: string,
   ): Promise<Record<string, DeviceStepConfig>> {
-    const blob = await this.agentSettingsState.get()
-    return nodeDeviceBase(blob[nodeId], deviceKey)
+    return nodeDeviceBase(await this.agentRows.get(nodeId), deviceKey)
   }
 
   /**
@@ -1117,12 +1055,11 @@ export class PipelineSettingsStore {
     nodeId: string,
     deviceKeys: readonly string[],
   ): Promise<ReadonlyMap<string, DeviceProvisioningSource>> {
-    const [agentBlob, cameraMap] = await Promise.all([
-      this.agentSettingsState.get(),
-      this.readCameraSettingsMap(),
+    const [node, camera] = await Promise.all([
+      this.agentRows.get(nodeId),
+      this.cameraRows.get(deviceId),
     ])
-    const node = agentBlob[nodeId]
-    const cameraLayer = layerCameraStepSettings(cameraMap[String(deviceId)]?.stepSettings)
+    const cameraLayer = layerCameraStepSettings(camera?.stepSettings)
     const out = new Map<string, DeviceProvisioningSource>()
     for (const deviceKey of deviceKeys) {
       out.set(deviceKey, {

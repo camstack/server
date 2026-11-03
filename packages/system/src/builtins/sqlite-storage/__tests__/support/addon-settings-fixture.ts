@@ -16,6 +16,8 @@ import {
 import Database from 'better-sqlite3'
 
 const TABLE = 'addon-settings'
+const DEVICE_TABLE = 'addon-device-settings'
+const TABLES: readonly string[] = [TABLE, DEVICE_TABLE]
 
 const silentLogger: IScopedLogger = {
   debug: () => undefined,
@@ -32,10 +34,17 @@ export interface SettingsRows {
   /** Write one key of the addon as the settings writer would (a node row carries `nodeId`). */
   write(key: string, value: unknown): void
   remove(key: string): void
+  /** The addon's per-device rows of `field` that exist, by device id (`addon-device-settings`). */
+  readDeviceField(
+    deviceIds: readonly number[],
+    field: string,
+  ): Promise<ReadonlyMap<number, unknown>>
 }
 
 export interface SettingsFixture {
   readonly rows: () => Record<string, Record<string, unknown>>
+  /** The `addon-device-settings` rows by id (`<addonId>:<deviceId>.<field>`). */
+  readonly deviceRows: () => Record<string, Record<string, unknown>>
   readonly boot: () => Promise<{
     readonly failed: readonly string[]
     readonly applied: readonly string[]
@@ -49,12 +58,36 @@ export function settingsFixture<TPorts>(input: {
   readonly seed: Readonly<Record<string, unknown>>
   /** A neighbour addon's row of the same key, which no migration of this addon may touch. */
   readonly neighbour: string
+  /** Per-device fields to seed: device id -> field -> value as stored. */
+  readonly deviceSeed?: Readonly<Record<string, Readonly<Record<string, unknown>>>>
   readonly ports: (rows: SettingsRows) => TPorts
 }): SettingsFixture {
   const { addonId } = input
   const db = new Database(':memory:')
-  db.exec(`CREATE TABLE "${TABLE}" (id TEXT PRIMARY KEY NOT NULL, data TEXT NOT NULL)`)
+  for (const table of TABLES) {
+    db.exec(`CREATE TABLE "${table}" (id TEXT PRIMARY KEY NOT NULL, data TEXT NOT NULL)`)
+  }
   const upsert = db.prepare(`INSERT OR REPLACE INTO "${TABLE}" (id, data) VALUES (?, ?)`)
+  const upsertDevice = db.prepare(
+    `INSERT OR REPLACE INTO "${DEVICE_TABLE}" (id, data) VALUES (?, ?)`,
+  )
+  for (const [deviceId, fields] of Object.entries(input.deviceSeed ?? {})) {
+    for (const [field, value] of Object.entries(fields)) {
+      upsertDevice.run(
+        `${addonId}:${deviceId}.${field}`,
+        JSON.stringify({ addonId, deviceId, key: field, value }),
+      )
+      upsertDevice.run(
+        `other-addon:${deviceId}.${field}`,
+        JSON.stringify({
+          addonId: 'other-addon',
+          deviceId,
+          key: field,
+          value: input.neighbour,
+        }),
+      )
+    }
+  }
   const dataOf = (owner: string, key: string, value: unknown): string => {
     const at = key.indexOf('@')
     return JSON.stringify(
@@ -69,10 +102,10 @@ export function settingsFixture<TPorts>(input: {
     write(key, value)
     upsert.run(`other-addon.${key}`, dataOf('other-addon', key, input.neighbour))
   }
-  const rows = (): Record<string, Record<string, unknown>> =>
+  const rowsOf = (table: string): Record<string, Record<string, unknown>> =>
     Object.fromEntries(
       db
-        .prepare(`SELECT id, data FROM "${TABLE}"`)
+        .prepare(`SELECT id, data FROM "${table}"`)
         .all()
         .flatMap((row) =>
           typeof row === 'object' &&
@@ -85,6 +118,20 @@ export function settingsFixture<TPorts>(input: {
             : [],
         ),
     )
+  const rows = (): Record<string, Record<string, unknown>> => rowsOf(TABLE)
+  const deviceRows = (): Record<string, Record<string, unknown>> => rowsOf(DEVICE_TABLE)
+  const readDeviceField = async (
+    deviceIds: readonly number[],
+    field: string,
+  ): Promise<ReadonlyMap<number, unknown>> => {
+    const all = deviceRows()
+    return new Map(
+      deviceIds.flatMap((id) => {
+        const row = all[`${addonId}:${id}.${field}`]
+        return row === undefined ? [] : [[id, Reflect.get(row, 'value')] as const]
+      }),
+    )
+  }
   const readStored = async (keys: readonly string[]): Promise<Record<string, unknown>> => {
     const all = rows()
     return Object.fromEntries(
@@ -121,14 +168,18 @@ export function settingsFixture<TPorts>(input: {
           if (edit.op !== 'setKeys' && edit.op !== 'deleteKeys') {
             throw new Error(`unexpected edit ${edit.op}`)
           }
-          if (edit.scope !== TABLE) throw new Error(`no such table ${edit.scope}`)
-          const now = rows()
+          if (!TABLES.includes(edit.scope)) throw new Error(`no such table ${edit.scope}`)
+          const now = rowsOf(edit.scope)
           const ids = edit.op === 'setKeys' ? Object.keys(edit.values) : edit.keys
           const seen = Object.fromEntries(ids.map((id) => [id, now[id] ?? null]))
           if (edit.precondition !== preconditionOf(seen)) throw new Error('precondition mismatch')
           for (const id of ids) {
-            if (edit.op === 'setKeys') upsert.run(id, JSON.stringify(edit.values[id]))
-            else db.prepare(`DELETE FROM "${TABLE}" WHERE id = ?`).run(id)
+            if (edit.op === 'setKeys') {
+              db.prepare(`INSERT OR REPLACE INTO "${edit.scope}" (id, data) VALUES (?, ?)`).run(
+                id,
+                JSON.stringify(edit.values[id]),
+              )
+            } else db.prepare(`DELETE FROM "${edit.scope}" WHERE id = ?`).run(id)
             changed += 1
           }
         }
@@ -146,10 +197,14 @@ export function settingsFixture<TPorts>(input: {
   }
   return {
     rows,
+    deviceRows,
     boot: async () => {
       const report = await runAddonMigrations(
         host,
-        defineAddonMigrations(input.catalogue, input.ports({ readStored, write, remove })),
+        defineAddonMigrations(
+          input.catalogue,
+          input.ports({ readStored, write, remove, readDeviceField }),
+        ),
         silentLogger,
       )
       return { failed: report.failed, applied: report.applied }

@@ -23,6 +23,8 @@ import { NodeColorIdSchema } from '@camstack/types/node-color'
 // Persisted by `setCapabilityBinding`, read by `getCapabilityBindings`.
 // A two-level string→string map.
 export const NodeBindingsSchema = z.record(z.string(), z.record(z.string(), z.string()))
+/** One node's entry of the map: `capName -> addonId`, the value of its `nodeBindings@<node>` row. */
+export const StoredNodeBindingsSchema = z.record(z.string(), z.string())
 export type NodeBindingsBlob = z.infer<typeof NodeBindingsSchema>
 
 // ── autoBenchmarkAttempts: nodeId → deviceKey → attempts ────────────────
@@ -56,7 +58,7 @@ const StoredDeviceStepConfigSchema = z.object({
   jumpDeviceKey: z.string().optional(),
 })
 
-const StoredAgentPipelineSettingsSchema = z.object({
+export const StoredAgentPipelineSettingsSchema = z.object({
   maxCameras: z.number().int().nonnegative().nullable().default(null),
   // Per-node detection WEIGHT (relative share). Unpinned cameras distribute
   // proportionally to weight across detect-capable nodes (placement-model-design
@@ -118,7 +120,7 @@ export type AgentSettingsMapBlob = z.infer<typeof AgentSettingsMapSchema>
 // old blob are not in the schema, so they are stripped on the next write and
 // never read (the offline runbook in D927 removes them up front).
 
-const StoredCameraPipelineSettingsSchema = z.object({
+export const StoredCameraPipelineSettingsSchema = z.object({
   // `pinnedAgentNodeId` was retired (D748): nothing wrote it; the live node pin
   // is the device store's `pipelineNodeId`. An old blob's value is stripped.
   stepToggles: z.record(z.string(), z.boolean()).optional(),

@@ -459,6 +459,8 @@ export async function buildOrchestratorControllers(
 
   const settingsStore: PipelineSettingsStore = new PipelineSettingsStore({
     state: deps.state,
+    readStore: () => deps.resolveGlobalStore(),
+    deviceSettings: () => deps.ctxIfReady()?.settings ?? null,
     api: () => deps.ctxIfReady()?.api ?? null,
     acquireCapability: (capName, scope, opts) => {
       const ctx = deps.ctxIfReady()

@@ -94,6 +94,8 @@ function makeAddon() {
     state: () => {
       throw new Error('state not used in this harness')
     },
+    readStore: async () => ({}),
+    deviceSettings: () => null,
     api: () => null,
     acquireCapability: () =>
       Promise.reject(new Error('acquireCapability not used in this harness')),

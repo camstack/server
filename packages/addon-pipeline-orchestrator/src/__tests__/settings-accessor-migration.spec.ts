@@ -38,8 +38,13 @@ describe('PipelineOrchestrator — settings accessor migration', () => {
 
     expect(store.global['enabledNodes']).toEqual(['hub'])
     expect(store.global['loadShedEnabled']).toBe(false)
-    // No node-scoped key variants — nothing here is perNode.
-    expect(Object.keys(store.global).some((k) => k.includes('@'))).toBe(false)
+    // No node-scoped variant of a bare setting — nothing here is perNode. The node rows the
+    // orchestrator owns (`agentSettings@<node>`, `nodeBindings@<node>`) are not settings.
+    const nodeRowFields = ['agentSettings@', 'nodeBindings@']
+    const variants = Object.keys(store.global).filter(
+      (k) => k.includes('@') && !nodeRowFields.some((f) => k.startsWith(f)),
+    )
+    expect(variants).toEqual([])
   })
 
   it('updateGlobalSettings emits the AddonUpdated lifecycle event (base settings API)', async () => {

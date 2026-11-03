@@ -156,7 +156,7 @@ describe('resolveAttachPipeline (D650)', () => {
     })
   })
 
-  it('provisions from ONE read of each settings blob, whatever the roster size', async () => {
+  it('provisions from ONE read of the settings store, whatever the roster size', async () => {
     const { store, blobReads } = makeRealStore()
     await seedCoralGpuNode(store)
     // A THREE-device roster: the per-device reads it replaced cost 2 + 2×3 = 8.
@@ -172,10 +172,11 @@ describe('resolveAttachPipeline (D650)', () => {
     const r0 = blobReads()
     await store.resolvePipelineForDevice(DEVICE_ID, NODE, CORAL, [GPU, 'openvino:npu'])
     const structureReads = blobReads() - r0
-    // …and what the whole attach costs: provisioning adds exactly the 2 blobs.
+    // …and what the whole attach costs: provisioning adds exactly the ONE read of the node rows
+    // (the camera's layer is one read of that device's own store, not a store-wide blob).
     const r1 = blobReads()
     await resolveAttachPipeline(input, store)
-    expect(blobReads() - r1 - structureReads).toBe(2)
+    expect(blobReads() - r1 - structureReads).toBe(1)
   })
 
   it("a camera's settings travel with a manually jumped step — there is no per-device camera layer (D927)", async () => {

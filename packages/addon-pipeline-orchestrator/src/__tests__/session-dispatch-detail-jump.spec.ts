@@ -25,6 +25,7 @@ import {
 import type { ZodType } from 'zod'
 import { describe, expect, it } from 'vitest'
 import { PipelineSettingsStore } from '../pipeline-settings-store.js'
+import { applyPatch, rowFakes } from './settings-store-row-fakes.js'
 import {
   SessionDispatchController,
   type SessionDispatchControllerDeps,
@@ -145,7 +146,7 @@ function makeStore(): PipelineSettingsStore {
       fallback,
       read: async () => blob,
       write: async (patch) => {
-        blob = { ...blob, ...patch }
+        blob = applyPatch(blob, patch)
       },
     })
   const api = {
@@ -162,6 +163,7 @@ function makeStore(): PipelineSettingsStore {
     undefined) as AddonContext['acquireCapability']
   return new PipelineSettingsStore({
     state,
+    ...rowFakes(() => blob),
     api: () => api as never,
     acquireCapability,
     getAssignmentNode: () => NODE,

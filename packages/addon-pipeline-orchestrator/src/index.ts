@@ -122,7 +122,13 @@ import {
   zonesCapability,
 } from '@camstack/types'
 import { readRawKeys } from './migrations/drop-keys.js'
-import { ADDON_MIGRATIONS, PIPELINE_ORCHESTRATOR_ID } from './migrations/index.js'
+import {
+  ADDON_MIGRATIONS,
+  AGENT_SETTINGS_FIELD,
+  CAMERA_SETTINGS_FIELD,
+  NODE_BINDINGS_FIELD,
+  PIPELINE_ORCHESTRATOR_ID,
+} from './migrations/index.js'
 import { AgentLoadService } from './agent-load-service.js'
 import type { NodeBenchmarkService } from './node-benchmark/node-benchmark-service.js'
 import { NodeBenchmarkStore } from './node-benchmark/node-benchmark-store.js'
@@ -227,7 +233,10 @@ import { SessionPlacementStats } from './session-placement-stats.js'
 import { applyLoadBalancingShares } from './load-balancing-shares.js'
 import { EffectiveSharesService } from './load-balancing/effective-shares-service.js'
 import {
+  AgentSettingsMapSchema,
   AutoBenchmarkAttemptsSchema,
+  CameraSettingsMapSchema,
+  NodeBindingsSchema,
   type AgentSettingsMapBlob,
   type AutoBenchmarkAttemptsBlob,
 } from './orchestrator-store-schemas.js'
@@ -680,14 +689,34 @@ export default class PipelineOrchestratorAddon
     }
   }
 
-  /** Delete the one-shot flag of the retired legacy-flags-to-bindings carry-over (D987). */
+  /**
+   * The orchestrator's D987 catalogue: the retired bindings flag is deleted, and the three id-keyed
+   * maps become one row per node / per camera (D986 §2). The readers read the rows, so a failure
+   * here blocks the addon (`block-owner`) instead of letting it serve an empty store.
+   */
   private async migrateSettings(): Promise<void> {
     await this.runMigrations(
       defineAddonMigrations(ADDON_MIGRATIONS, {
         readStored: (keys) =>
           readRawKeys((key) => this.readStoredGlobalKey(key), PIPELINE_ORCHESTRATOR_ID, keys),
+        readDeviceField: async (deviceIds, field) => {
+          const settings = this.ctx.settings
+          if (settings === undefined)
+            throw new Error('the per-device settings store is unavailable')
+          const found = new Map<number, unknown>()
+          for (const [deviceId, blob] of await settings.readDeviceStoreBatch(deviceIds)) {
+            if (field in blob) found.set(deviceId, blob[field])
+          }
+          return found
+        },
       }),
     )
+    // The three maps are not read any more but stay stored for one release (a rolled-back build
+    // reads them). Declared, so the stale-key audit does not offer them (or the node rows
+    // `<field>@<node>` that share their name) for removal.
+    this.state(NODE_BINDINGS_FIELD, NodeBindingsSchema, {})
+    this.state(AGENT_SETTINGS_FIELD, AgentSettingsMapSchema, {})
+    this.state(CAMERA_SETTINGS_FIELD, CameraSettingsMapSchema, {})
   }
 
   protected async onInitialize(): Promise<AddonInitResult<PipelineOrchestratorActions>> {
@@ -3061,8 +3090,7 @@ export default class PipelineOrchestratorAddon
   async getCameraSettings(input: {
     readonly deviceId: number
   }): Promise<CameraPipelineSettings | null> {
-    const all = await this.settingsStore!.readCameraSettingsMap()
-    return all[String(input.deviceId)] ?? null
+    return await this.settingsStore!.readCameraSettings(input.deviceId)
   }
 
   async setCameraStepToggle(input: {
@@ -3070,9 +3098,7 @@ export default class PipelineOrchestratorAddon
     readonly addonId: string
     readonly enabled: boolean | null
   }): Promise<{ success: true }> {
-    const all = await this.settingsStore!.readCameraSettingsMap()
-    const key = String(input.deviceId)
-    const existing = all[key] ?? {}
+    const existing = (await this.settingsStore!.readCameraSettings(input.deviceId)) ?? {}
     const nextToggles = { ...existing.stepToggles }
     if (input.enabled === null) {
       delete nextToggles[input.addonId]

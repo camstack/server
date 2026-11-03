@@ -16,6 +16,7 @@ import {
 import type { ZodType } from 'zod'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { PipelineSettingsStore } from '../pipeline-settings-store.js'
+import { applyPatch, rowFakes } from './settings-store-row-fakes.js'
 import { CORAL_GPU_CATALOG, NODE } from './attach-pipeline-fixtures.js'
 import { makeSilentLogger } from './e2e-helpers.js'
 
@@ -37,7 +38,7 @@ function makeHarness(): Harness {
       fallback,
       read: async () => blob,
       write: async (patch) => {
-        blob = { ...blob, ...patch }
+        blob = applyPatch(blob, patch)
       },
     })
   const pending: Array<{ resolve: (s: PipelineSchema) => void; reject: (e: Error) => void }> = []
@@ -54,6 +55,7 @@ function makeHarness(): Harness {
   const warns: string[] = []
   const store = new PipelineSettingsStore({
     state,
+    ...rowFakes(() => blob),
     api: () => api as never,
     acquireCapability: (async (): Promise<unknown> =>
       undefined) as AddonContext['acquireCapability'],

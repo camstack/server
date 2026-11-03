@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Node bindings, per-node agent settings and per-camera pipeline settings now live as one row per node or per camera, so forgetting a node or deleting a camera removes them; existing values are copied on first boot.
+
 ## [1.2.654] - 2026-11-03
 
 ### Changed

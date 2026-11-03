@@ -320,10 +320,9 @@ describe('PipelineOrchestratorAddon — E2E', () => {
       addonId: 'motion-wasm',
     })
 
-    // Persisted under nodeBindings.<nodeId>.<capName>
-    const stored = store.global['nodeBindings'] as Record<string, Record<string, string>>
-    expect(stored).toBeDefined()
-    expect(stored['agent-gpu']).toEqual({ 'motion-detection': 'motion-wasm' })
+    // Persisted as the node's own row, `nodeBindings@<nodeId>` (D986)
+    expect(store.global['nodeBindings@agent-gpu']).toEqual({ 'motion-detection': 'motion-wasm' })
+    expect(store.global['nodeBindings']).toBeUndefined()
 
     // Emitted as a typed event
     const emitted = captured.find((e) => e.category === EventCategory.CapabilityBindingChanged)

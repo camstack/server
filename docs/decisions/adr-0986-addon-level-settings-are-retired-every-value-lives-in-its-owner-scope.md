@@ -156,7 +156,9 @@ The field-by-field census is [docs/design/2026-11-03-addon-settings-census.md](.
 (372 addon-level values, each with its scope, destination and D987 migration id). It supersedes the 328 count in
 Context and carries the ordered mover plan: the node-row `nodeId` mover first, then dead keys, unmarked node fields,
 the orchestrator's id-keyed blobs, shared-across-instance values, service instances (D996), and last the removal of
-`globalSettingsSchema` and the guard. Cluster and fleet-default fields keep their rows and need no mover. D999
+`globalSettingsSchema` and the guard. Movers 5 and 6 (the orchestrator's `nodeBindings`, `agentSettings` and
+`cameraSettings` blobs) have landed: node rows and the per-device store, with the readers switched in the same change
+and the old keys left for one release. Cluster and fleet-default fields keep their rows and need no mover. D999
 replaces §6: receivers are not a builtin phase.
 
 ## Enforcement

@@ -24,6 +24,7 @@ import type { ZodType } from 'zod'
 import { applyDeviceProvisioning } from '../apply-device-provisioning.js'
 import PipelineOrchestratorAddon from '../index.js'
 import { PipelineSettingsStore } from '../pipeline-settings-store.js'
+import { applyPatch, explodeLegacySeed, rowFakes } from './settings-store-row-fakes.js'
 import { makeFakeBroker, makeFakeContext, makeSilentLogger } from './e2e-helpers.js'
 
 const NODE = 'hub'
@@ -31,7 +32,10 @@ const DEVICE_ID = 101
 const STEP = 'object-detection'
 
 function makeStore(seed: Record<string, unknown> = {}): PipelineSettingsStore {
-  let blob: Record<string, unknown> = { ...seed }
+  const seeded = explodeLegacySeed(seed)
+  let blob: Record<string, unknown> = seeded.blob
+  const fakes = rowFakes(() => blob)
+  for (const [id, entry] of seeded.devices) fakes.devices.set(id, entry)
   const state = <T>(key: string, schema: ZodType<T>, fallback: T): DurableState<T> =>
     createDurableState<T>({
       key,
@@ -39,11 +43,12 @@ function makeStore(seed: Record<string, unknown> = {}): PipelineSettingsStore {
       fallback,
       read: async () => blob,
       write: async (patch) => {
-        blob = { ...blob, ...patch }
+        blob = applyPatch(blob, patch)
       },
     })
   return new PipelineSettingsStore({
     state,
+    ...fakes,
     api: () => null,
     acquireCapability: () => Promise.reject(new Error('not used')),
     getAssignmentNode: () => NODE,

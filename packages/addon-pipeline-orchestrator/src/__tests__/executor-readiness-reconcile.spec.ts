@@ -26,6 +26,7 @@ import { createDurableState, type AddonContext, type DurableState, sleep } from 
 import type { ZodType } from 'zod'
 import { describe, expect, it, vi } from 'vitest'
 import { PipelineSettingsStore } from '../pipeline-settings-store.js'
+import { applyPatch, rowFakes } from './settings-store-row-fakes.js'
 import { makeSilentLogger } from './e2e-helpers.js'
 
 /** Minimal-but-valid executor catalog (same shape as the e2e-helpers stub).
@@ -92,7 +93,7 @@ function makeHarness(opts: HarnessOptions = {}): Harness {
       },
       write: async (patch) => {
         await Promise.resolve()
-        blob = { ...blob, ...patch }
+        blob = applyPatch(blob, patch)
       },
     })
 
@@ -136,6 +137,7 @@ function makeHarness(opts: HarnessOptions = {}): Harness {
 
   const store = new PipelineSettingsStore({
     state,
+    ...rowFakes(() => blob),
     api: () => fakeApi as never,
     acquireCapability,
     getAssignmentNode: () => 'agent-a',

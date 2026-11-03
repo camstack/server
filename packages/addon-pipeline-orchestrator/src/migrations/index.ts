@@ -1,9 +1,21 @@
 import type { AddonMigration, MigrationPlan } from '@camstack/types'
+import { type BlobToRowsPorts, planBlobToDeviceRows, planBlobToNodeRows } from './blob-to-rows.js'
 import { type DropKeysPorts, planDropKeys } from './drop-keys.js'
 
 export const PIPELINE_ORCHESTRATOR_ID = 'pipeline-orchestrator'
 export const DROP_BINDINGS_MIGRATION_FLAG_ID =
   'pipeline-orchestrator/2026-11-03-drop-bindings-migration-flag'
+export const NODE_BINDINGS_TO_NODE_ROWS_ID =
+  'pipeline-orchestrator/2026-11-03-node-bindings-to-node-rows'
+export const AGENT_SETTINGS_TO_NODE_ROWS_ID =
+  'pipeline-orchestrator/2026-11-03-agent-settings-to-node-rows'
+export const CAMERA_SETTINGS_TO_DEVICE_ROWS_ID =
+  'pipeline-orchestrator/2026-11-03-camera-settings-to-device-rows'
+
+/** The three id-keyed maps this version stopped reading; their keys stay one release. */
+export const NODE_BINDINGS_FIELD = 'nodeBindings'
+export const AGENT_SETTINGS_FIELD = 'agentSettings'
+export const CAMERA_SETTINGS_FIELD = 'cameraSettings'
 
 /** The one-shot flag of the retired legacy-flags-to-bindings carry-over; the D987 ledger replaces it. */
 export const RETIRED_FLAG_KEYS: readonly string[] = ['bindingsMigration_v1_done']
@@ -27,7 +39,7 @@ async function planDropFlag(ports: DropKeysPorts): Promise<MigrationPlan> {
 }
 
 /** The `pipeline-orchestrator` catalogue (D987): offered to the engine when the addon initialises. */
-export const ADDON_MIGRATIONS: readonly AddonMigration<DropKeysPorts>[] = [
+export const ADDON_MIGRATIONS: readonly AddonMigration<BlobToRowsPorts>[] = [
   {
     meta: {
       id: DROP_BINDINGS_MIGRATION_FLAG_ID,
@@ -43,5 +55,54 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<DropKeysPorts>[] = [
       fixtureMark: 'a setting the migration does not know',
     },
     plan: planDropFlag,
+  },
+  {
+    meta: {
+      id: NODE_BINDINGS_TO_NODE_ROWS_ID,
+      owner: PIPELINE_ORCHESTRATOR_ID,
+      level: 'addon-state',
+      seq: 2,
+      dependsOn: [],
+      store: 'settings',
+      scope: 'per-node',
+      // The readers read the rows: an owner that could not move the map must not serve.
+      onFailure: 'block-owner',
+      bodyKind: 'plan',
+      description: 'Explode the node-keyed nodeBindings map into one node row per node',
+      fixtureMark: 'a capability binding of one node, and a node that only this map holds',
+    },
+    plan: (ports) => planBlobToNodeRows(PIPELINE_ORCHESTRATOR_ID, NODE_BINDINGS_FIELD, ports),
+  },
+  {
+    meta: {
+      id: AGENT_SETTINGS_TO_NODE_ROWS_ID,
+      owner: PIPELINE_ORCHESTRATOR_ID,
+      level: 'addon-state',
+      seq: 3,
+      dependsOn: [NODE_BINDINGS_TO_NODE_ROWS_ID],
+      store: 'settings',
+      scope: 'per-node',
+      onFailure: 'block-owner',
+      bodyKind: 'plan',
+      description: 'Explode the node-keyed agentSettings map into one node row per node',
+      fixtureMark: 'a detection weight and a pinned model of one node',
+    },
+    plan: (ports) => planBlobToNodeRows(PIPELINE_ORCHESTRATOR_ID, AGENT_SETTINGS_FIELD, ports),
+  },
+  {
+    meta: {
+      id: CAMERA_SETTINGS_TO_DEVICE_ROWS_ID,
+      owner: PIPELINE_ORCHESTRATOR_ID,
+      level: 'addon-state',
+      seq: 4,
+      dependsOn: [AGENT_SETTINGS_TO_NODE_ROWS_ID],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'block-owner',
+      bodyKind: 'plan',
+      description: 'Explode the device-keyed cameraSettings map into one device row per camera',
+      fixtureMark: 'a step toggle and a step setting of one camera',
+    },
+    plan: (ports) => planBlobToDeviceRows(PIPELINE_ORCHESTRATOR_ID, CAMERA_SETTINGS_FIELD, ports),
   },
 ]
