@@ -26,11 +26,9 @@ const CUSTOM_SKILL_ONLY: ConfigCondition = {
   equals: 'custom',
 }
 
-export interface AlexaSettingsPageInput {
-  readonly linkedAccounts: readonly LinkedAccount[]
-  readonly tokens: readonly LwaTokenEntry[]
-  readonly now: number
-  /** Field defaults, from the addon's `DEFAULT_CONFIG`. */
+/** The skill's own form: the switches of the `skills` record (D985, D996). */
+export interface AlexaInstanceFormInput {
+  /** Field defaults, from the record kind's default body. */
   readonly defaults: {
     readonly skillMode: string
     readonly region: string
@@ -42,6 +40,15 @@ export interface AlexaSettingsPageInput {
   }
 }
 
+/** What the addon's own settings page needs: the ledgers and which skill is selected. */
+export interface AlexaSettingsPageInput {
+  readonly linkedAccounts: readonly LinkedAccount[]
+  readonly tokens: readonly LwaTokenEntry[]
+  readonly now: number
+  /** The selected skill: the custom-skill rows exist only for `custom`. */
+  readonly skillMode: string
+}
+
 const CONNECTION_DESCRIPTION = [
   'Public skill (default): enable the "CamStack" skill in the Alexa app and link your account. No Amazon developer setup is needed.',
   "Custom skill: enter your skill id and deploy the skill Lambda from this addon's lambda-template in your own AWS account.",
@@ -49,7 +56,7 @@ const CONNECTION_DESCRIPTION = [
   'This hub must be reachable from the internet over HTTPS (Cloudflare Tunnel, Tailscale Funnel, …). The skill calls back on the hub\'s "Public endpoint" address, set on the Network page.',
 ].join('\n')
 
-function connectionSection(input: AlexaSettingsPageInput): ConfigSection {
+function connectionSection(input: AlexaInstanceFormInput): ConfigSection {
   const { defaults } = input
   const fields: ConfigField[] = [
     {
@@ -100,7 +107,7 @@ function connectionSection(input: AlexaSettingsPageInput): ConfigSection {
   }
 }
 
-function featuresSection(input: AlexaSettingsPageInput): ConfigSection {
+function featuresSection(input: AlexaInstanceFormInput): ConfigSection {
   const { defaults } = input
   return {
     id: 'export-alexa-features',
@@ -231,12 +238,34 @@ function troubleshootingSection(): ConfigSection {
   }
 }
 
-/** Custom skill only: the public skill's shared Lambda sends one ingress token
- *  for every hub (`HUB_INGRESS_TOKEN`), so a per-hub token cannot apply to it. */
-function customSkillSecuritySection(input: AlexaSettingsPageInput): ConfigSection {
+/** The enforcement switch of the custom skill's ingress token: part of the skill instance. */
+function instanceSecuritySection(input: AlexaInstanceFormInput): ConfigSection {
   return {
     id: 'export-alexa-custom-security',
     title: 'Custom-skill security',
+    columns: 1,
+    fields: [
+      {
+        type: 'boolean',
+        key: 'enforceIngressToken',
+        label: 'Require ingress token',
+        description:
+          'When on, this hub refuses skill calls without the matching token. Turn it on only after HUB_INGRESS_TOKEN is set in your Lambda. The token itself is shown on the addon page.',
+        default: input.defaults.enforceIngressToken,
+        showWhen: CUSTOM_SKILL_ONLY,
+      },
+    ],
+  }
+}
+
+/** Custom skill only: the public skill's shared Lambda sends one ingress token
+ *  for every hub (`HUB_INGRESS_TOKEN`), so a per-hub token cannot apply to it. The rows are
+ *  built only for a custom skill: the mode is not a field of this page. */
+function customSkillSecuritySection(input: AlexaSettingsPageInput): ConfigSection | null {
+  if (input.skillMode !== 'custom') return null
+  return {
+    id: 'export-alexa-custom-security-token',
+    title: 'Custom-skill ingress token',
     style: 'accordion',
     defaultCollapsed: true,
     columns: 1,
@@ -246,9 +275,8 @@ function customSkillSecuritySection(input: AlexaSettingsPageInput): ConfigSectio
         key: '__ingress-token-info',
         label: 'Ingress token',
         variant: 'info',
-        showWhen: CUSTOM_SKILL_ONLY,
         content:
-          'An optional shared secret your skill Lambda sends on every call to this hub. Show it, put it in the Lambda\'s HUB_INGRESS_TOKEN environment variable, then turn on "Require ingress token". After a rotation, update the Lambda.',
+          'An optional shared secret your skill Lambda sends on every call to this hub. Show it, put it in the Lambda\'s HUB_INGRESS_TOKEN environment variable, then turn on "Require ingress token" on the skill. After a rotation, update the Lambda.',
       },
       {
         type: 'addon-action-button',
@@ -260,7 +288,6 @@ function customSkillSecuritySection(input: AlexaSettingsPageInput): ConfigSectio
         action: 'revealIngressToken',
         variant: 'default',
         successMessage: 'Ingress token: {ingressToken}',
-        showWhen: CUSTOM_SKILL_ONLY,
       },
       {
         type: 'addon-action-button',
@@ -275,27 +302,21 @@ function customSkillSecuritySection(input: AlexaSettingsPageInput): ConfigSectio
         successMessage: 'New ingress token: {ingressToken} — put it in HUB_INGRESS_TOKEN now.',
         confirmMessage:
           'Rotate the ingress token? With "Require ingress token" on, the Lambda is refused until you update HUB_INGRESS_TOKEN.',
-        showWhen: CUSTOM_SKILL_ONLY,
-      },
-      {
-        type: 'boolean',
-        key: 'enforceIngressToken',
-        label: 'Require ingress token',
-        description:
-          'When on, this hub refuses skill calls without the matching token. Turn it on only after HUB_INGRESS_TOKEN is set in your Lambda.',
-        default: input.defaults.enforceIngressToken,
-        showWhen: CUSTOM_SKILL_ONLY,
       },
     ],
   }
 }
 
+/** The skill instance's form (`skills` record). */
+export function buildAlexaInstanceSections(input: AlexaInstanceFormInput): ConfigSection[] {
+  return [connectionSection(input), featuresSection(input), instanceSecuritySection(input)]
+}
+
 export function buildAlexaSettingsSections(input: AlexaSettingsPageInput): ConfigSection[] {
+  const security = customSkillSecuritySection(input)
   return [
-    connectionSection(input),
-    featuresSection(input),
     accountLinkSection(input),
     troubleshootingSection(),
-    customSkillSecuritySection(input),
+    ...(security === null ? [] : [security]),
   ]
 }

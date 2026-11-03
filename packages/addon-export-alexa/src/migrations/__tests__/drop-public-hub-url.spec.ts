@@ -15,7 +15,7 @@ import {
 import Database from 'better-sqlite3'
 import { describe, expect, it } from 'vitest'
 import { ADDON_SETTINGS_TABLE, ALEXA_ADDON_ID } from '../drop-public-hub-url.js'
-import { ADDON_MIGRATIONS } from '../index.js'
+import { ADDON_MIGRATIONS, DROP_PUBLIC_HUB_URL_ID } from '../index.js'
 
 const NEIGHBOUR = 'keep-me'
 const MARK = [{ deviceId: 7, exposedAt: 1 }]
@@ -109,9 +109,20 @@ function fixture(initial: Record<string, unknown>) {
   const boot = () =>
     runAddonMigrations(
       host,
-      defineAddonMigrations(ADDON_MIGRATIONS, {
-        readStored: async () => read(),
-      }),
+      defineAddonMigrations(
+        ADDON_MIGRATIONS.filter((m) => m.meta.id === DROP_PUBLIC_HUB_URL_ID),
+        {
+          readStored: async () => read(),
+          // This fixture runs the URL migration only; the others are covered by their own spec.
+          readRawStored: async () => read(),
+          warn: () => undefined,
+          putSkill: async () => 'exists',
+          putLinks: async () => 'exists',
+          readLinks: async () => null,
+          hasSkill: async () => false,
+          clearOldTokenSecrets: async () => undefined,
+        },
+      ),
       silentLogger,
     )
   return { read, neighbours, boot }

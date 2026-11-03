@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A media player is exported to Alexa as a TV with power, step volume, mute, channel skip, playback and inputs
+- The Alexa skill (mode, region, audience, feature switches) is now an integration instance, and the linked accounts and Amazon push grants moved into a record; they survive the move unchanged.
 
 ## [1.2.179] - 2026-11-02
 

@@ -2,13 +2,16 @@
  * The exporter settings page pattern: Connection / Features / Account link /
  * one collapsed Troubleshooting section, every action an `addon-action-button`
  * that reports its outcome, and rows that belong to the custom skill gated by
- * `showWhen` on `skillMode` — so the form reacts the moment the operator
- * switches mode, and a section whose rows are all hidden is not drawn.
+ * `showWhen` on `skillMode`. The skill's own values (mode, region, audience, feature switches, the
+ * ingress-token enforcement) are the INSTANCE form of the `skills` record (D987); the addon page
+ * keeps the account link, the troubleshooting actions and, in custom mode, the ingress-token rows.
  */
 import { describe, expect, it } from 'vitest'
 import type { ConfigField, ConfigSection, ConfigUISchema } from '@camstack/types'
 import { exportAlexaActions } from '../custom-actions.js'
 import { ExportAlexaAddon } from '../export-alexa.addon.js'
+import { buildAlexaInstanceSections } from '../settings-schema.js'
+import { ALEXA_SKILL_DEFAULT_BODY } from '../skill-records.js'
 
 type Mode = 'public' | 'custom'
 
@@ -34,58 +37,59 @@ function field(schema: ConfigUISchema, key: string): ConfigField | undefined {
 
 describe('Alexa settings page layout', () => {
   const CUSTOM_ONLY = { field: 'skillMode', equals: 'custom' }
-  const CUSTOM_ONLY_KEYS = [
-    'expectedAudience',
-    '__ingress-token-info',
-    '__reveal-ingress-token',
-    '__regenerate-ingress-token',
-    'enforceIngressToken',
-  ]
 
-  it('Connection, Features, Account link, then collapsed Troubleshooting and Custom-skill security', () => {
-    const schema = schemaFor('public')
-    expect(schema.sections.map((s) => s.title)).toEqual([
+  it('the instance form is Connection, Features, Custom-skill security', () => {
+    const sections = buildAlexaInstanceSections({ defaults: ALEXA_SKILL_DEFAULT_BODY })
+    expect(sections.map((s) => s.title)).toEqual([
       'Connection',
       'Features',
-      'Account link',
-      'Troubleshooting',
       'Custom-skill security',
     ])
-    for (const section of schema.sections.slice(3)) {
-      expect(section.style).toBe('accordion')
-      expect(section.defaultCollapsed).toBe(true)
-    }
+    expect(keysOf(sections[0])).toEqual(['skillMode', 'region', 'expectedAudience'])
+    expect(keysOf(sections[1])).toEqual(['detectionSensors', 'objectDetection', 'snapshots'])
+    expect(keysOf(sections[2])).toEqual(['enforceIngressToken'])
   })
 
-  it('the page is the same in both modes: the form, not the build, decides what shows', () => {
-    expect(schemaFor('custom')).toEqual(schemaFor('public'))
-  })
-
-  it('every custom-skill row is gated on skillMode, and nothing else is', () => {
-    const fields = schemaFor('public').sections.flatMap((s) => s.fields)
+  it('every custom-skill row of the instance form is gated on skillMode, and nothing else is', () => {
+    const fields = buildAlexaInstanceSections({ defaults: ALEXA_SKILL_DEFAULT_BODY }).flatMap(
+      (s) => s.fields,
+    )
     const gated = fields.flatMap((f) => ('showWhen' in f && f.showWhen ? [f] : []))
-    expect(gated.map((f) => ('key' in f ? f.key : ''))).toEqual(CUSTOM_ONLY_KEYS)
+    expect(gated.map((f) => ('key' in f ? f.key : ''))).toEqual([
+      'expectedAudience',
+      'enforceIngressToken',
+    ])
     for (const f of gated) expect('showWhen' in f ? f.showWhen : null).toEqual(CUSTOM_ONLY)
   })
 
-  it('Custom-skill security holds only gated rows, so public mode draws none of it', () => {
-    const security = schemaFor('public').sections.find((s) => s.title === 'Custom-skill security')
-    expect(keysOf(security)).toEqual(CUSTOM_ONLY_KEYS.slice(1))
-    for (const f of security?.fields ?? []) {
-      expect('showWhen' in f ? f.showWhen : null).toEqual(CUSTOM_ONLY)
-    }
-  })
-
-  it('places each row in its section', () => {
+  it('public mode: the page is the account link, then collapsed Troubleshooting', () => {
     const schema = schemaFor('public')
-    const [connection, features, account, trouble] = schema.sections
-    expect(keysOf(connection)).toEqual(['skillMode', 'region', 'expectedAudience'])
-    expect(keysOf(features)).toEqual(['detectionSensors', 'objectDetection', 'snapshots'])
+    expect(schema.sections.map((s) => s.title)).toEqual(['Account link', 'Troubleshooting'])
+    const [account, trouble] = schema.sections
     expect(keysOf(account)).toEqual(['__alexa-link-status', '__unlink-alexa-accounts'])
+    expect(trouble?.style).toBe('accordion')
+    expect(trouble?.defaultCollapsed).toBe(true)
     expect(keysOf(trouble)).toEqual([
       '__resync-discovery',
       '__remove-alexa-endpoints',
       '__rotate-broker-credential',
+    ])
+  })
+
+  it('custom mode adds the ingress-token rows, collapsed, and nothing public mode shows moves', () => {
+    const custom = schemaFor('custom')
+    expect(custom.sections.map((s) => s.title)).toEqual([
+      'Account link',
+      'Troubleshooting',
+      'Custom-skill ingress token',
+    ])
+    const security = custom.sections[2]
+    expect(security?.style).toBe('accordion')
+    expect(security?.defaultCollapsed).toBe(true)
+    expect(keysOf(security)).toEqual([
+      '__ingress-token-info',
+      '__reveal-ingress-token',
+      '__regenerate-ingress-token',
     ])
   })
 

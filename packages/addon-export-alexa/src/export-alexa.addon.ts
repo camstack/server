@@ -56,12 +56,18 @@ import {
   defineAddonMigrations,
   deviceExportCapability,
   EventCategory,
+  integrationInstancesCapability,
+  isSecretMarker,
   ExportSetupSchema,
   errMsg,
   type IAddonRouteProvider,
   type IDeviceExportProvider,
   type IOauthIntegrationProvider,
   oauthIntegrationCapability,
+  RecordIntegrationInstances,
+  RecordSecretUnavailableError,
+  RevConflictError,
+  type RecordKindHandle,
 } from '@camstack/types'
 import { z } from 'zod'
 
@@ -96,7 +102,7 @@ import {
   LwaEventGateway,
 } from './lwa-event-gateway.js'
 import { removeEndpointsFromAlexa } from './remove-endpoints.js'
-import { buildAlexaSettingsSections } from './settings-schema.js'
+import { buildAlexaInstanceSections, buildAlexaSettingsSections } from './settings-schema.js'
 import type { AlexaAccessGate } from './access/access-gate.js'
 import { AccountVisibilityMirror, type StoredVisibilityMap } from './access/account-visibility.js'
 import { type EndpointAccessDeps, filterEndpointsForPrincipal } from './access/endpoint-access.js'
@@ -121,7 +127,15 @@ import {
   objectDetectionField,
   objectDetectionKey,
 } from './vision/vision-runtime.js'
-import { ADDON_MIGRATIONS } from './migrations/index.js'
+import { ADDON_MIGRATIONS, type AlexaCataloguePorts } from './migrations/index.js'
+import {
+  ALEXA_INSTANCE_ID,
+  ALEXA_SKILL_DEFAULT_BODY,
+  type AlexaSkillBody,
+  alexaSkillLinksKind,
+  alexaSkillsKind,
+  type SkillLinksBody,
+} from './skill-records.js'
 import { buildAlexaOauthIntegration } from './oauth-integration.js'
 import { createPublicEndpointReader, type PublicEndpointReader } from './public-endpoint.js'
 import { buildAlexaSetupBlock } from './setup-block.js'
@@ -383,6 +397,16 @@ const SUPPORTED_KINDS: readonly string[] = [
 /** Generic `device-export` setup block — copyable account-linking rows. */
 type ExportSetup = z.infer<typeof ExportSetupSchema>
 
+/** Whether a stored token entry still carries a keychain marker instead of a resolved credential. */
+function hasUnresolvedCredential(entry: unknown): boolean {
+  if (typeof entry !== 'object' || entry === null) return false
+  return (
+    ('accessToken' in entry && isSecretMarker(entry.accessToken)) ||
+    ('refreshToken' in entry && isSecretMarker(entry.refreshToken)) ||
+    ('brokerCredential' in entry && isSecretMarker(entry.brokerCredential))
+  )
+}
+
 // ── Addon ───────────────────────────────────────────────────────────
 
 export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
@@ -422,6 +446,39 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     super({ ...DEFAULT_CONFIG })
   }
 
+  private instances: RecordIntegrationInstances<AlexaSkillBody> | null = null
+  /** The `skills` record, once it exists; until then the legacy settings keys answer. */
+  private skillRow: AlexaSkillBody | null = null
+  /** The `skill-links` record, once it exists; until then the legacy ledger keys answer. */
+  private linksRow: SkillLinksBody | null = null
+  /** The keychain refused the link credentials: the ledger is read-only until it answers (D49). */
+  private linksLocked = false
+
+  /**
+   * The settings as the addon reads them: the records where they exist, the legacy keys until
+   * the migrations have moved them.
+   */
+  private get view(): AlexaSettings {
+    const skill = this.skillRow
+    const links = this.linksRow
+    if (skill === null && links === null) return this.config
+    return {
+      ...this.config,
+      ...(skill === null
+        ? {}
+        : {
+            skillMode: skill.skillMode,
+            region: skill.region,
+            expectedAudience: skill.expectedAudience,
+            detectionSensors: skill.detectionSensors,
+            objectDetection: skill.objectDetection,
+            snapshots: skill.snapshots,
+            enforceIngressToken: skill.enforceIngressToken,
+          }),
+      ...(links === null ? {} : { linkedAccounts: links.linkedAccounts, tokens: links.tokens }),
+    }
+  }
+
   /**
    * The hub's public origin: the `publicEndpoint` role of `local-network`, read on every use
    * through `ctx.api` (planning#378). No setting holds it and nothing ranks the palette here.
@@ -432,11 +489,23 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
 
   protected async onInitialize(): Promise<AddonInitResult<ExportAlexaActions>> {
     // The retired `publicHubUrl` setting is deleted through the migration engine.
-    await this.runMigrations(
-      defineAddonMigrations(ADDON_MIGRATIONS, {
-        readStored: async () => this.resolveGlobalStore(),
-      }),
-    )
+    const records = this.ctx.records
+    if (records === undefined) {
+      throw new Error('export-alexa needs ctx.records — check execution.placement (hub-only)')
+    }
+    await records.declare({ skills: alexaSkillsKind, 'skill-links': alexaSkillLinksKind })
+    this.instances = new RecordIntegrationInstances(records, alexaSkillsKind, {
+      description: { instanceMode: 'single', kind: 'skills', canTest: false },
+      formSchema: () => this.skillForm(),
+      initialBody: (name): AlexaSkillBody => ({ ...ALEXA_SKILL_DEFAULT_BODY, name }),
+      configured: () => true,
+      onChanged: async () => {
+        await this.refreshRecords()
+        await this.onConfigChanged()
+      },
+    })
+    await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, this.migrationPorts()))
+    await this.refreshRecords()
 
     // Ensure an ingress token exists on first boot (shown in settings; the
     // operator pastes it into the Lambda's HUB_INGRESS_TOKEN env). Enforcement
@@ -482,7 +551,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     })
     this.visibilityRef = new AccountVisibilityMirror({
       gate: this.accessGateRef,
-      listLinkedUserIds: () => this.config.linkedAccounts.map((a) => a.userId),
+      listLinkedUserIds: () => this.view.linkedAccounts.map((a) => a.userId),
       listExposedDeviceIds: () => this.config.exposed.map((e) => e.deviceId),
       getStored: () => this.config.accountVisibility,
       setStored: (next) => this.updateGlobalSettings({ accountVisibility: next }),
@@ -492,8 +561,8 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     this.visionRef = new AlexaVisionRuntime({
       ctx: this.ctx,
       logger: this.ctx.logger,
-      integrationOn: () => this.config.objectDetection,
-      snapshotsOn: () => this.config.snapshots,
+      integrationOn: () => this.view.objectDetection,
+      snapshotsOn: () => this.view.snapshots,
       isExposed: (deviceId) => this.config.exposed.some((e) => e.deviceId === deviceId),
       knownClasses: (deviceId) => this.config.detectionClasses[deviceId]?.classes ?? [],
       namespace: () => this.config.visionNamespace,
@@ -506,12 +575,12 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       {
         api: this.ctx.api,
         logger: this.ctx.logger,
-        linkedUserIds: () => this.config.linkedAccounts.map((a) => a.userId),
+        linkedUserIds: () => this.view.linkedAccounts.map((a) => a.userId),
         isAdminUser: async (userId) => {
           const lookup = await this.accessGate.principal(userId)
           return lookup.kind === 'found' && lookup.principal.kind === 'admin'
         },
-        canPush: () => this.config.tokens.length > 0,
+        canPush: () => this.view.tokens.length > 0,
         postAddOrUpdate: (userId, endpoints) =>
           this.requireGateway().postReport(
             userId,
@@ -538,7 +607,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
 
     const deviceExportProvider: IDeviceExportProvider = {
       getStatus: async () => ({
-        linkState: this.config.linkedAccounts.length > 0 ? 'linked' : 'unlinked',
+        linkState: this.view.linkedAccounts.length > 0 ? 'linked' : 'unlinked',
         exposedDeviceCount: this.config.exposed.length,
         setup: await this.buildSetupBlock(),
       }),
@@ -663,7 +732,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
           ctx: this.ctx,
           logger: this.ctx.logger,
           store: this.snapshotStore,
-          enabled: () => this.config.snapshots,
+          enabled: () => this.view.snapshots,
           publicEndpoint: this.publicEndpoint,
         },
         vision: this.vision.context(),
@@ -686,7 +755,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       onBrokerAdvertised: (raw) => this.rememberAdvertisedBroker(raw),
       snapshotRoute: {
         store: this.snapshotStore,
-        enabled: () => this.config.snapshots,
+        enabled: () => this.view.snapshots,
         verifyToken: (token) => this.verifyAccountLinkToken(token),
         mayView: async (userId, deviceId) => {
           const lookup = await this.accessGate.principal(userId)
@@ -731,13 +800,13 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       onExposedDoorbellPress: (deviceId) => {
         void this.egressPrewarm?.onPress(deviceId)
       },
-      listLinkedAccounts: () => this.config.linkedAccounts,
-      listTokens: () => this.config.tokens,
+      listLinkedAccounts: () => this.view.linkedAccounts,
+      listTokens: () => this.view.tokens,
       upsertToken: (input) => this.upsertToken(input),
       removeLinkedAccount: (userId) => this.removeLinkedAccount(userId),
       getAdvertisedBrokerUrl: () => this.config.advertisedBrokerUrl || null,
       getPublicEndpoint: this.publicEndpoint,
-      getRegion: () => this.config.region,
+      getRegion: () => this.view.region,
       getExportedSignature: (deviceId) => this.config.exportedSignatures[deviceId] ?? null,
       accountMaySee: (userId, deviceId) => this.visibility.allows(userId, deviceId),
     })
@@ -748,7 +817,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     const gatewayForFeed = this.lwaGateway
     this.detectionFeed = new DetectionSensorFeed({
       eventBus: this.ctx.eventBus,
-      enabled: () => this.config.detectionSensors,
+      enabled: () => this.view.detectionSensors,
       isExposed: (deviceId) => this.config.exposed.some((e) => e.deviceId === deviceId),
       readActiveTracks: async (deviceId) => {
         const tracks = await this.ctx.api.pipelineAnalytics.getActiveTracks.query({
@@ -813,8 +882,8 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     this.syncEngine = new SyncEngine({
       logger: this.ctx.logger,
       listExposed: () => this.config.exposed,
-      listLinkedAccounts: () => this.config.linkedAccounts,
-      hasProactiveCredentials: () => this.config.tokens.length > 0,
+      listLinkedAccounts: () => this.view.linkedAccounts,
+      hasProactiveCredentials: () => this.view.tokens.length > 0,
       buildEndpoints: (deviceId) => this.buildEndpointsForOneDevice(deviceId),
       filterForAccount: (userId, endpoints) => this.filterForAccount(userId, endpoints),
       afterPush: (userId, endpoints) =>
@@ -888,16 +957,20 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     this.ctx.logger.info('export-alexa: initialized', {
       meta: {
         exposedCount: this.config.exposed.length,
-        skillMode: this.config.skillMode,
+        skillMode: this.view.skillMode,
         skillIdSet: this.effectiveSettings().expectedAudience.length > 0,
-        pushGrants: this.config.tokens.length,
-        brokerGrants: this.config.tokens.filter(isBrokerGrant).length,
+        pushGrants: this.view.tokens.length,
+        brokerGrants: this.view.tokens.filter(isBrokerGrant).length,
       },
     })
 
     return {
       providers: [
         { capability: deviceExportCapability, provider: deviceExportProvider },
+        {
+          capability: integrationInstancesCapability,
+          provider: this.requireInstances().toProvider(),
+        },
         { capability: addonRoutesCapability, provider: routeProvider },
         {
           capability: oauthIntegrationCapability,
@@ -1038,9 +1111,9 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     return buildEndpointsForExposedDevice(deviceId, {
       ctx: this.ctx,
       logger: this.ctx.logger,
-      snapshots: this.config.snapshots,
+      snapshots: this.view.snapshots,
       // D778: offered (the pipeline) ∩ chosen (the camera's saved selection).
-      ...(this.config.detectionSensors
+      ...(this.view.detectionSensors
         ? {
             detectionClasses: async (id: number) =>
               effectiveSensorClasses(
@@ -1052,7 +1125,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       // D875: the operator's Alexa name, same endpoint id.
       alexaName: async (id: number) => readAlexaName(await vision.readPrefs(id)),
       // D779: the camera's object detection + history.
-      ...(this.config.objectDetection
+      ...(this.view.objectDetection
         ? {
             objectDetection: async (id: number) => vision.buildClasses(id, await classesOf(id)),
           }
@@ -1063,9 +1136,9 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
   /** The settings that change every exposed endpoint's shape, as one key. */
   private shapeSwitches(): string {
     return JSON.stringify({
-      detectionSensors: this.config.detectionSensors,
-      snapshots: this.config.snapshots,
-      objectDetection: this.config.objectDetection,
+      detectionSensors: this.view.detectionSensors,
+      snapshots: this.view.snapshots,
+      objectDetection: this.view.objectDetection,
     })
   }
 
@@ -1080,7 +1153,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     this.appliedShapeSwitches = now
     // Switched off: every URL already handed to Alexa dies now, not in ten
     // minutes (the route also refuses while off).
-    if (!this.config.snapshots) this.snapshotStore.clear()
+    if (!this.view.snapshots) this.snapshotStore.clear()
     this.ctx.logger.info(
       'export-alexa: an endpoint-shape switch changed — re-syncing every device',
       {
@@ -1100,7 +1173,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     const timer = setInterval(() => {
       // Both surfaces follow the camera's classes (package support comes and
       // goes with its package zone).
-      if (!this.config.detectionSensors && !this.config.objectDetection) return
+      if (!this.view.detectionSensors && !this.view.objectDetection) return
       void this.requireSyncEngine()
         .reconcileAllExposed()
         .catch((err: unknown) => {
@@ -1291,10 +1364,10 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
    * Throws when nothing can be sent, so the button says why.
    */
   private async resyncDiscovery(): Promise<ResyncResult> {
-    if (this.config.linkedAccounts.length === 0) {
+    if (this.view.linkedAccounts.length === 0) {
       throw new Error('No linked Amazon account. Link the skill from the Alexa app first.')
     }
-    if (this.config.tokens.length === 0) {
+    if (this.view.tokens.length === 0) {
       throw new Error(
         'No Amazon push grant is stored for the linked account, so nothing can be sent. Re-link the skill from the Alexa app.',
       )
@@ -1368,12 +1441,11 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     // Delete each link at the skill's broker too, so the refresh token it holds
     // for this hub dies with the link. Best-effort: an unreachable broker must
     // not block the unlink (the item still expires on its idle TTL).
-    await this.revokeAtBroker(this.config.tokens)
+    await this.revokeAtBroker(this.view.tokens)
 
-    const removedAccounts = this.config.linkedAccounts.length
+    const removedAccounts = this.view.linkedAccounts.length
+    await this.writeLedger({ linkedAccounts: [], tokens: [] })
     await this.updateGlobalSettings({
-      linkedAccounts: [],
-      tokens: [],
       exportedEndpoints: {},
       exportedSignatures: {},
       accountVisibility: {},
@@ -1396,15 +1468,15 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       ...(input.brokerUrl ? { brokerUrl: input.brokerUrl } : {}),
       ...(input.brokerCredential ? { brokerCredential: input.brokerCredential } : {}),
     }
-    const next: LwaTokenEntry[] = this.config.tokens.filter((t) => t.userId !== input.userId)
+    const next: LwaTokenEntry[] = this.view.tokens.filter((t) => t.userId !== input.userId)
     next.push(entry)
-    await this.updateGlobalSettings({ tokens: next })
+    await this.writeLedger({ tokens: next })
   }
 
   private async removeLinkedAccount(userId: string): Promise<void> {
-    await this.updateGlobalSettings({
-      tokens: this.config.tokens.filter((t) => t.userId !== userId),
-      linkedAccounts: this.config.linkedAccounts.filter((a) => a.userId !== userId),
+    await this.writeLedger({
+      tokens: this.view.tokens.filter((t) => t.userId !== userId),
+      linkedAccounts: this.view.linkedAccounts.filter((a) => a.userId !== userId),
     })
     this.ctx.logger.warn('export-alexa: unlinked revoked account', {
       meta: { userId },
@@ -1412,14 +1484,14 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
   }
 
   private async recordLinkedAccount(input: { userId: string; username: string }): Promise<void> {
-    if (this.config.linkedAccounts.some((a) => a.userId === input.userId)) {
+    if (this.view.linkedAccounts.some((a) => a.userId === input.userId)) {
       return // idempotent — already recorded
     }
     const next: LinkedAccount[] = [
-      ...this.config.linkedAccounts,
+      ...this.view.linkedAccounts,
       { userId: input.userId, username: input.username, linkedAt: Date.now() },
     ]
-    await this.updateGlobalSettings({ linkedAccounts: next })
+    await this.writeLedger({ linkedAccounts: next })
     // A genuinely new account has none of our exposed devices yet — push them
     // all to this one account so the operator's cameras appear immediately in
     // the freshly-linked Alexa app (no manual "Discover Devices"). Only on the
@@ -1452,8 +1524,8 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
    * token carries none). Idempotent via recordLinkedAccount.
    */
   private async backfillLinkedAccounts(): Promise<void> {
-    const linked = new Set(this.config.linkedAccounts.map((a) => a.userId))
-    const missing = this.config.tokens.filter((t) => !linked.has(t.userId))
+    const linked = new Set(this.view.linkedAccounts.map((a) => a.userId))
+    const missing = this.view.tokens.filter((t) => !linked.has(t.userId))
     for (const t of missing) {
       await this.recordLinkedAccount({ userId: t.userId, username: t.userId })
     }
@@ -1517,14 +1589,14 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     rotated: number
     failed: number
   }> {
-    if (!this.config.tokens.some(isBrokerGrant)) {
+    if (!this.view.tokens.some(isBrokerGrant)) {
       throw new Error(
         "No link is held at the skill's token broker, so there is no credential to rotate. Link the skill from the Alexa app first.",
       )
     }
     let rotated = 0
     let failed = 0
-    for (const t of this.config.tokens) {
+    for (const t of this.view.tokens) {
       if (!isBrokerGrant(t)) continue
       try {
         const next = await rotateBrokerCredential(fetch, t.brokerUrl, t.brokerCredential)
@@ -1581,8 +1653,133 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     return buildAlexaSetupBlock({
       publicEndpoint,
       ingressToken: this.config.ingressToken,
-      skillMode: this.config.skillMode,
+      skillMode: this.view.skillMode,
     })
+  }
+
+  // ── Records: the skill instance and its link ledger ───────────────
+
+  private requireInstances(): RecordIntegrationInstances<AlexaSkillBody> {
+    if (this.instances === null) throw new Error('export-alexa: the instances are not open')
+    return this.instances
+  }
+
+  private skillHandle(): RecordKindHandle<AlexaSkillBody> {
+    const records = this.ctx.records
+    if (records === undefined) throw new Error('records are not available')
+    return records.kind(alexaSkillsKind)
+  }
+
+  private linksHandle(): RecordKindHandle<SkillLinksBody> {
+    const records = this.ctx.records
+    if (records === undefined) throw new Error('records are not available')
+    return records.kind(alexaSkillLinksKind)
+  }
+
+  /** Re-read both records. A failed read changes nothing: the addon keeps what it has. */
+  private async refreshRecords(): Promise<void> {
+    try {
+      this.skillRow = (await this.skillHandle().getResolved(ALEXA_INSTANCE_ID))?.data ?? null
+    } catch (err: unknown) {
+      this.ctx.logger.warn('export-alexa: the skill record could not be read', {
+        meta: { error: errMsg(err) },
+        tags: { topic: 'export-alexa', phase: 'records-read-failed' },
+      })
+    }
+    try {
+      this.linksRow = (await this.linksHandle().getResolved(ALEXA_INSTANCE_ID))?.data ?? null
+      this.linksLocked = false
+    } catch (err: unknown) {
+      if (!(err instanceof RecordSecretUnavailableError)) {
+        this.ctx.logger.warn('export-alexa: the link record could not be read', {
+          meta: { error: errMsg(err) },
+          tags: { topic: 'export-alexa', phase: 'records-read-failed' },
+        })
+        return
+      }
+      // A locked keychain is a failed read of the credentials: the ledger keeps what it had
+      // and takes no write, so an upsert cannot replace the record with a half-read one (D49).
+      this.linksLocked = true
+      this.ctx.logger.warn('export-alexa: the keychain is locked; the link ledger is read-only', {
+        tags: { topic: 'export-alexa', phase: 'keychain-locked' },
+      })
+    }
+  }
+
+  /**
+   * Write the account-link ledgers: to the `skill-links` record once it exists, to the legacy
+   * settings keys until then (the migration moves them).
+   */
+  private async writeLedger(patch: {
+    readonly linkedAccounts?: readonly LinkedAccount[]
+    readonly tokens?: readonly LwaTokenEntry[]
+  }): Promise<void> {
+    if (this.linksRow === null) {
+      await this.updateGlobalSettings({
+        ...(patch.linkedAccounts === undefined ? {} : { linkedAccounts: patch.linkedAccounts }),
+        ...(patch.tokens === undefined ? {} : { tokens: patch.tokens }),
+      })
+      return
+    }
+    if (this.linksLocked) {
+      throw new Error('the keychain is locked: the Amazon link ledger cannot be changed right now')
+    }
+    const next: SkillLinksBody = {
+      name: this.linksRow.name,
+      linkedAccounts: patch.linkedAccounts ?? this.linksRow.linkedAccounts,
+      tokens: patch.tokens ?? this.linksRow.tokens,
+    }
+    await this.linksHandle().put({ id: ALEXA_INSTANCE_ID, data: next })
+    this.linksRow = next
+  }
+
+  /** The ports of the settings migrations: the old settings in, the records out. */
+  private migrationPorts(): AlexaCataloguePorts {
+    const skills = this.skillHandle()
+    const links = this.linksHandle()
+    const putOnce = async <T extends { readonly name: string }>(
+      handle: RecordKindHandle<T>,
+      body: T,
+    ): Promise<'created' | 'exists'> => {
+      if ((await handle.get(ALEXA_INSTANCE_ID)) !== null) return 'exists'
+      try {
+        await handle.put({ id: ALEXA_INSTANCE_ID, data: body }, { ifRev: 0 })
+      } catch (err: unknown) {
+        if (err instanceof RevConflictError) return 'exists'
+        throw err
+      }
+      return 'created'
+    }
+    return {
+      readStored: async (): Promise<Readonly<Record<string, unknown>>> => {
+        const stored = await this.resolveGlobalStore()
+        // A credential that is still a marker was not resolved: abort before anything is written.
+        const tokens = stored['tokens']
+        if (Array.isArray(tokens) && tokens.some(hasUnresolvedCredential)) {
+          throw new Error('the old Amazon push grants could not be resolved')
+        }
+        return stored
+      },
+      readRawStored: async (): Promise<Readonly<Record<string, unknown>>> =>
+        (await this.ctx.settings?.readAddonStore()) ?? {},
+      warn: (message: string) => {
+        this.ctx.logger.warn(message, { tags: { topic: 'export-alexa', phase: 'migration' } })
+      },
+      putSkill: (body) => putOnce(skills, body),
+      putLinks: (body) => putOnce(links, body),
+      readLinks: async () => (await links.getResolved(ALEXA_INSTANCE_ID))?.data ?? null,
+      hasSkill: async () => (await skills.get(ALEXA_INSTANCE_ID)) !== null,
+      clearOldTokenSecrets: async () => {
+        await this.clearSecrets(['tokens'])
+      },
+    }
+  }
+
+  /** The instance form: how the skill reaches this hub and what each camera carries. */
+  private skillForm(): ConfigUISchema {
+    return {
+      sections: buildAlexaInstanceSections({ defaults: ALEXA_SKILL_DEFAULT_BODY }),
+    }
   }
 
   // ── Settings UI ─────────────────────────────────────────────────
@@ -1592,10 +1789,10 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
   protected globalSettingsSchema(): ConfigUISchema {
     return {
       sections: buildAlexaSettingsSections({
-        linkedAccounts: this.config.linkedAccounts,
-        tokens: this.config.tokens,
+        linkedAccounts: this.view.linkedAccounts,
+        tokens: this.view.tokens,
         now: Date.now(),
-        defaults: DEFAULT_CONFIG,
+        skillMode: this.view.skillMode,
       }),
     }
   }
@@ -1659,7 +1856,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     // Alexa toggles routed to HAP's writer). Namespacing keeps each
     // exporter's form state isolated.
     const enabledKey = `alexa:${deviceId}:enabled`
-    const linkedCount = this.config.linkedAccounts.length
+    const linkedCount = this.view.linkedAccounts.length
     const statusLabel = enabled
       ? `Exposed${linkedCount > 0 ? `, ${linkedCount} linked Alexa account(s)` : ' (no linked Alexa account yet)'}`
       : linkedCount > 0
@@ -1746,13 +1943,13 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
         available,
         saved: parseSensorSelection(store),
         enabledKey,
-        masterOn: this.config.detectionSensors,
+        masterOn: this.view.detectionSensors,
       }),
       objectDetectionField({
         deviceId,
         store,
         enabledKey,
-        integrationOn: this.config.objectDetection,
+        integrationOn: this.view.objectDetection,
       }),
     ]
   }

@@ -45,7 +45,7 @@ this column exists to stop.
 | `device-history` | `@camstack/server-framework` | system | own runner | `hub-only` | — | — | `device-history` `device-removal-hook` `device-runs` |
 | `device-manager` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `device-extension` `device-manager` `device-state` |
 | `embedding-encoder` | `@camstack/addon-post-analysis` | analytics | own runner | `any-node` | — | — | `embedding-encoder` |
-| `export-alexa` | `@camstack/addon-export-alexa` | exports | own runner | `hub-only` | — | — | `addon-routes` `device-export` `oauth-integration` |
+| `export-alexa` | `@camstack/addon-export-alexa` | exports | own runner | `hub-only` | — | — | `addon-routes` `device-export` `integration-instances` `oauth-integration` |
 | `export-google` | `@camstack/addon-export-google` | exports | own runner | `hub-only` | `integrations` | — | `addon-routes` `device-export` `oauth-integration` |
 | `export-hap` | `@camstack/addon-export-hap` | exports | own runner | `hub-only` | — | — | `device-export` `videoclips` |
 | `filesystem-storage` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `filesystem-browse` `storage-provider` |
