@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The appliance and heater helper templates are gone: the helper kinds are the aggregators only, and a device type is a naked composed device grown through Customize.
+- Running state: a pure proposal of the running threshold and dwells from a device's own power history, verified by replaying the real dwell expression
 
 ## [1.2.487] - 2026-11-03
 

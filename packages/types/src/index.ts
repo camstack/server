@@ -837,6 +837,8 @@ export * from './remote/remote-builtin-components.js'
 export * from './remote/smartir-draft.js'
 export * from './template/template-kinds.js'
 export * from './running-state/from-operation.js'
+export * from './running-state/proposal-schema.js'
+export * from './running-state/propose-threshold.js'
 // Our detections joined onto any clip source's listing — one overlap rule (D923).
 export * from './clips/clip-event-labels.js'
 export * from './device-extension/index.js'
