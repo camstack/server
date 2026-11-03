@@ -20,12 +20,10 @@ import {
   composerCapability,
   type DeclaredDeviceRow,
   DeclaredDevices,
-  DAY_MS,
-  DEFAULT_HISTORY_RETENTION,
+  historyRetentionFromSettings,
   errMsg,
   mediaPlayerFeaturesOfRoles,
   EventCategory,
-  type HistoryRetention,
   type IComposerProvider,
   isReadingQuantity,
   kebabToCamel,
@@ -216,7 +214,7 @@ export class ComposerAddon extends BaseAddon<Record<string, never>> {
         }),
       readHistoryRetention: async () => {
         const raw = await api.addonSettingsRaw.getGlobal.query({ addonId: 'device-history' })
-        return historyRetentionOf(raw)
+        return historyRetentionFromSettings(raw)
       },
       readSourceQuantity: async (deviceId) => {
         const found = await api.deviceManager.getDevice.query({ deviceId })
@@ -408,24 +406,3 @@ export class ComposerAddon extends BaseAddon<Record<string, never>> {
 }
 
 export default ComposerAddon
-
-/** `dayDays` of 0 keeps the daily tier forever (device-history). A missing number is the default. */
-function historyRetentionOf(raw: Readonly<Record<string, unknown>>): HistoryRetention {
-  return {
-    rawMs: positiveDays(raw['rawDays'], DEFAULT_HISTORY_RETENTION.rawMs),
-    fiveMinuteMs: positiveDays(raw['fiveMinuteDays'], DEFAULT_HISTORY_RETENTION.fiveMinuteMs),
-    hourMs: positiveDays(raw['hourDays'], DEFAULT_HISTORY_RETENTION.hourMs),
-    dayMs: positiveDaysOrForever(raw['dayDays']),
-  }
-}
-
-function positiveDays(value: unknown, fallbackMs: number): number {
-  return typeof value === 'number' && Number.isFinite(value) && value > 0
-    ? value * DAY_MS
-    : fallbackMs
-}
-
-function positiveDaysOrForever(value: unknown): number | null {
-  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return null
-  return value * DAY_MS
-}

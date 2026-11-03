@@ -46,6 +46,7 @@ import {
   remoteLayoutComponentsCapability,
   templateCapability,
   EventCategory,
+  historyRetentionFromSettings,
 } from '@camstack/types'
 import { ADDON_MIGRATIONS, coreBlocksMigrationPorts } from './migrations/index.js'
 import { parseDeviceStateChanged } from '../shared/device-state-changed.js'
@@ -883,6 +884,24 @@ export class CoreBlocksAddon extends BaseAddon {
           )
         }
         return this.supervisor.convergeForClaims()
+      },
+      runningProposal: {
+        listSeries: (deviceId) => requireApi().deviceHistory.listSeries.query({ deviceId }),
+        query: (input) =>
+          requireApi().deviceHistory.query.query({
+            deviceId: input.deviceId,
+            key: input.key,
+            from: input.from,
+            to: input.to,
+            resolution: input.resolution,
+            maxPoints: input.maxPoints,
+          }),
+        retention: async () =>
+          historyRetentionFromSettings(
+            await requireApi().addonSettingsRaw.getGlobal.query({ addonId: 'device-history' }),
+          ),
+        now: () => Date.now(),
+        logger: this.ctx.logger.child('running-proposal'),
       },
       logger: this.ctx.logger.child('compositions'),
       capabilityDefinitions: ALL_CAPABILITY_DEFINITIONS,

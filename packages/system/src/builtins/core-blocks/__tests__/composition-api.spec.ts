@@ -8,6 +8,7 @@ import {
   type CompositionView,
   type CoreBlock,
   CompositionSchema,
+  DEFAULT_HISTORY_RETENTION,
   composedDeviceRef,
   composedDeviceStableId,
   DeviceType,
@@ -147,6 +148,15 @@ function loadedViews(read: CompositionListRead): readonly CompositionView[] {
 
 function deps(over: Partial<CompositionApiDeps> = {}): CompositionApiDeps {
   return {
+    runningProposal: {
+      listSeries: async () => [],
+      query: async () => {
+        throw new Error('no history in this spec')
+      },
+      retention: async () => DEFAULT_HISTORY_RETENTION,
+      now: () => 0,
+      logger: recordingLogger().logger,
+    },
     store: {
       isLoaded: () => loaded,
       list: () => stored,
@@ -851,5 +861,27 @@ describe('listComposableCaps (G2, D676)', () => {
     const { caps } = await api.listComposableCaps({ deviceType: DeviceType.PetFeeder })
     expect(caps.map((c) => c.cap)).toEqual(expect.arrayContaining(['battery', 'consumables']))
     expect(caps.map((c) => c.cap)).not.toContain('device-status')
+  })
+
+  it('proposeRunningThreshold reads through the history ports of the deps', async () => {
+    const asked: number[] = []
+    const api = buildCompositionApi(
+      deps({
+        runningProposal: {
+          ...deps().runningProposal,
+          listSeries: async (deviceId) => {
+            asked.push(deviceId)
+            return []
+          },
+        },
+      }),
+    )
+    const answer = await api.proposeRunningThreshold({
+      deviceId: 42,
+      cap: 'power-meter',
+      fieldPath: 'power',
+    })
+    expect(asked).toEqual([42])
+    expect(answer).toMatchObject({ state: 'insufficient', reason: 'no-history' })
   })
 })

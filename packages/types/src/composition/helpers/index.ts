@@ -89,6 +89,7 @@ export {
   CalendarWindowSchema,
   DAY_MS,
   DEFAULT_HISTORY_RETENTION,
+  historyRetentionFromSettings,
   HISTORY_FAST_MS,
   HISTORY_SLOW_MS,
   HISTORY_TIERS,

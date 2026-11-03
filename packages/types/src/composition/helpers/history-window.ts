@@ -57,6 +57,33 @@ export const DEFAULT_HISTORY_RETENTION: HistoryRetention = {
   dayMs: null,
 }
 
+/**
+ * The retention a device-history settings document states. A missing or
+ * invalid number is the default; a `dayDays` of 0 (or none) keeps the daily
+ * tier forever.
+ */
+export function historyRetentionFromSettings(
+  raw: Readonly<Record<string, unknown>>,
+): HistoryRetention {
+  return {
+    rawMs: positiveDays(raw['rawDays'], DEFAULT_HISTORY_RETENTION.rawMs),
+    fiveMinuteMs: positiveDays(raw['fiveMinuteDays'], DEFAULT_HISTORY_RETENTION.fiveMinuteMs),
+    hourMs: positiveDays(raw['hourDays'], DEFAULT_HISTORY_RETENTION.hourMs),
+    dayMs: positiveDaysOrForever(raw['dayDays']),
+  }
+}
+
+function positiveDays(value: unknown, fallbackMs: number): number {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0
+    ? value * DAY_MS
+    : fallbackMs
+}
+
+function positiveDaysOrForever(value: unknown): number | null {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return null
+  return value * DAY_MS
+}
+
 export type RollingWindow = {
   readonly kind: 'rolling'
   readonly span: RollingSpan

@@ -108,8 +108,8 @@ export function proposeRunningThreshold(series: ProposalSeries): RunningThreshol
     },
   })
 
-  if (segments.length === 0) return insufficient('no-history', 0)
   if (series.truncated) return insufficient('truncated', 0)
+  if (segments.length === 0) return insufficient('no-history', 0)
   if (spanMs < PROPOSAL_MIN_SPAN_MS) return insufficient('span-too-short', 0)
 
   const idleFloor = weightedQuantile(weigh(segments), 0.5)

@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - An in-process addon's call to a system-only capability method no longer routes to the camera's driver by its device id
 
+### Changed
+
+- The running-threshold proposal is reachable as a core-blocks query (admin, view access)
+
 ## [1.2.752] - 2026-11-03
 
 ### Changed

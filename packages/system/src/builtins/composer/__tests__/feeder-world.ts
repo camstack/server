@@ -400,6 +400,13 @@ export async function buildWorld(opts: WorldOptions = {}): Promise<World> {
     loadStore: () => blocks.load(),
   })
   const compositions = buildCompositionApi({
+    runningProposal: {
+      listSeries: async () => [],
+      query: () => Promise.reject(new Error('feeder-world has no history')),
+      retention: () => Promise.reject(new Error('feeder-world has no history')),
+      now: () => Date.now(),
+      logger,
+    },
     store: blocks,
     describe: (sources, targets) =>
       describeCompositionSources(

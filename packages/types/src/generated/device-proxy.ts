@@ -113,6 +113,7 @@ import type { zonesCapability } from '../capabilities/zones.cap.js'
 import type { actionsCapability } from '../capabilities/actions.cap.js'
 import type { addonSettingsCapability } from '../capabilities/addon-settings.cap.js'
 import type { audioAnalyzerCapability } from '../capabilities/audio-analyzer.cap.js'
+import type { coreBlocksCapability } from '../capabilities/core-blocks.cap.js'
 import type { deviceAdoptionCapability } from '../capabilities/device-adoption.cap.js'
 import type { deviceExportCapability } from '../capabilities/device-export.cap.js'
 import type { deviceHistoryCapability } from '../capabilities/device-history.cap.js'
@@ -342,6 +343,7 @@ export interface DeviceProxy {
   readonly actions: Pick<InferDeviceProxyCap<typeof actionsCapability>, 'get' | 'run' | 'listForCamera' | 'getLinks'>
   readonly addonSettings: Pick<InferDeviceProxyCap<typeof addonSettingsCapability>, 'getDeviceSettings' | 'updateDeviceSettings'>
   readonly audioAnalyzer: Pick<InferDeviceProxyCap<typeof audioAnalyzerCapability>, 'detachDevice'>
+  readonly coreBlocks: Pick<InferDeviceProxyCap<typeof coreBlocksCapability>, 'proposeRunningThreshold'>
   readonly deviceAdoption: Pick<InferDeviceProxyCap<typeof deviceAdoptionCapability>, 'getStatus'>
   readonly deviceExport: Pick<InferDeviceProxyCap<typeof deviceExportCapability>, 'getDeviceSettingsContribution' | 'getDeviceLiveContribution' | 'applyDeviceSettingsPatch'>
   readonly deviceHistory: Pick<InferDeviceProxyCap<typeof deviceHistoryCapability>, 'listSeries' | 'query' | 'getDeviceEnabled' | 'setDeviceEnabled'>
@@ -1195,6 +1197,10 @@ export function createDeviceProxy(
     detachDevice: (input?: unknown) => dispatchSystem('audioAnalyzer', 'detachDevice', 'mutation', input),
   }
 
+  const coreBlocksInterface = {
+    proposeRunningThreshold: (input?: unknown) => dispatchSystem('coreBlocks', 'proposeRunningThreshold', 'query', input),
+  }
+
   const deviceAdoptionInterface = {
     getStatus: (input?: unknown) => dispatchSystem('deviceAdoption', 'getStatus', 'query', input),
   }
@@ -1562,6 +1568,7 @@ export function createDeviceProxy(
     actions: actionsInterface,
     addonSettings: addonSettingsInterface,
     audioAnalyzer: audioAnalyzerInterface,
+    coreBlocks: coreBlocksInterface,
     deviceAdoption: deviceAdoptionInterface,
     deviceExport: deviceExportInterface,
     deviceHistory: deviceHistoryInterface,

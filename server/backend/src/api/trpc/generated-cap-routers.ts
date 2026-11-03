@@ -3279,6 +3279,19 @@ export function createCapRouter_coreBlocks(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.validateComposition(methodInput as any)
       }),
+    proposeRunningThreshold: adminProcedure
+      .input(coreBlocksCapability.methods.proposeRunningThreshold.input.loose())
+      .output(coreBlocksCapability.methods.proposeRunningThreshold.output)
+      .query(async ({ input, ctx }) => {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
+        const p = resolveProvider('core-blocks', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.proposeRunningThreshold(methodInput as any)
+      }),
     reportAutomationRun: adminProcedure
       .input(coreBlocksCapability.methods.reportAutomationRun.input.loose())
       .output(coreBlocksCapability.methods.reportAutomationRun.output)

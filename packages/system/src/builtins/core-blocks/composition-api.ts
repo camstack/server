@@ -42,6 +42,7 @@ import { customizationBlockName } from '@camstack/types/node'
 import type { NamedCompositionInput } from './core-block-store.js'
 import { storedCustomizationTargets, storedPeers } from './composition-peers.js'
 import type { CompositionDescriptions } from './composition-sources.js'
+import { proposeForDevice, type RunningProposalPorts } from './running-proposal.js'
 
 export interface CompositionStoreView {
   /** False until the table has been READ; a verdict against an empty peer set would hide a cycle. */
@@ -70,6 +71,8 @@ export interface CompositionApiDeps {
    * and is in the list.
    */
   readonly convergeForClaims: () => Promise<readonly UnreleasedClaim[]>
+  /** The history reads behind `proposeRunningThreshold`. */
+  readonly runningProposal: RunningProposalPorts
   readonly logger: IScopedLogger
   /** Every capability definition — the listing is derived from them, never from the registry's live state. */
   readonly capabilityDefinitions: readonly CapabilityDefinition[]
@@ -84,6 +87,7 @@ export type CompositionApi = Pick<
   | 'validateComposition'
   | 'getCustomization'
   | 'listComposableCaps'
+  | 'proposeRunningThreshold'
 >
 
 const NOT_LOADED_REASON = 'core_blocks has not loaded yet'
@@ -389,6 +393,8 @@ function customizationOf(
 export function buildCompositionApi(deps: CompositionApiDeps): CompositionApi {
   const serialized = writeQueue()
   return {
+    proposeRunningThreshold: (input) => proposeForDevice(deps.runningProposal, input),
+
     createComposition: ({ block, caller }) =>
       serialized(async () => {
         const name = await nameOnCreate(deps, block)

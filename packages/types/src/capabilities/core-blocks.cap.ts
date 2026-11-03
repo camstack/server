@@ -8,6 +8,7 @@ import {
   CompositionValidationSchema,
 } from '../composition/composition-report.js'
 import { DeviceType } from '../device/device-type.js'
+import { RunningThresholdProposalSchema } from '../running-state/proposal-schema.js'
 import type { ConfigUISchema } from '../interfaces/config-ui.js'
 import {
   SettingsPatchSchema,
@@ -539,6 +540,22 @@ export const coreBlocksCapability = {
       z.object({ composition: CompositionSchema, blockId: z.string().optional() }),
       CompositionValidationSchema,
       { kind: 'mutation', auth: 'admin', access: 'view' },
+    ),
+    /**
+     * Propose the running threshold and dwells of a SOURCE device's power
+     * field from its own history (planning#405). Read-only advice: nothing is
+     * stored, the operator applies it through the ordinary save. An answer
+     * with too little history says why, with the catalog defaults.
+     */
+    proposeRunningThreshold: method(
+      z.object({
+        deviceId: z.number().int(),
+        cap: z.string().min(1),
+        fieldPath: z.string().min(1),
+        deviceType: z.enum(DeviceType).optional(),
+      }),
+      RunningThresholdProposalSchema,
+      { auth: 'admin', access: 'view' },
     ),
     /**
      * An automation block reports one run (or one coalesced skip) to the hub's

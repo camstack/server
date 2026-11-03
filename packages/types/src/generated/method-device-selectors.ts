@@ -6,8 +6,8 @@
  * system-scope cap that takes a deviceId was previously never device-filtered
  * — see the generator header).
  *
- * Coverage: 593 methods carry a device reference, of which
- * 190 are on SYSTEM-scope caps.
+ * Coverage: 594 methods carry a device reference, of which
+ * 191 are on SYSTEM-scope caps.
  *
  * Top-level fields, number arrays, and one-level arrays of objects carrying
  * a numeric device field (targets[].deviceId) are all mapped; the matcher
@@ -97,6 +97,7 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'contact.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'control.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'control.setValue': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'coreBlocks.proposeRunningThreshold': [{ name: "deviceId", form: "single", optional: false }] as const,
   'cover.close': [{ name: "deviceId", form: "single", optional: false }] as const,
   'cover.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'cover.open': [{ name: "deviceId", form: "single", optional: false }] as const,
@@ -638,6 +639,7 @@ export const SYSTEM_SCOPE_DEVICE_METHODS: readonly string[] = [
   "audioAnalyzer.attachDevice",
   "audioAnalyzer.classify",
   "audioAnalyzer.detachDevice",
+  "coreBlocks.proposeRunningThreshold",
   "deviceAdoption.getStatus",
   "deviceAdoption.release",
   "deviceAdoption.resync",

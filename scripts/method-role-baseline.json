@@ -211,6 +211,7 @@
   "coreBlocks.listComposableCaps": "admin",
   "coreBlocks.listCompositions": "admin",
   "coreBlocks.migrateRawSecrets": "admin",
+  "coreBlocks.proposeRunningThreshold": "admin",
   "coreBlocks.reportAutomationRun": "admin",
   "coreBlocks.restart": "admin",
   "coreBlocks.setEnabled": "admin",

@@ -629,6 +629,9 @@ export const useCoreBlocksListComposableCaps: typeof trpc.coreBlocks.listComposa
 /** Generated alias around `trpc.coreBlocks.validateComposition.useMutation`. */
 export const useCoreBlocksValidateComposition: typeof trpc.coreBlocks.validateComposition.useMutation = /*#__PURE__*/ alias(() => trpc.coreBlocks.validateComposition.useMutation)
 
+/** Generated alias around `trpc.coreBlocks.proposeRunningThreshold.useQuery`. */
+export const useCoreBlocksProposeRunningThreshold: typeof trpc.coreBlocks.proposeRunningThreshold.useQuery = /*#__PURE__*/ alias(() => trpc.coreBlocks.proposeRunningThreshold.useQuery)
+
 /** Generated alias around `trpc.coreBlocks.reportAutomationRun.useMutation`. */
 export const useCoreBlocksReportAutomationRun: typeof trpc.coreBlocks.reportAutomationRun.useMutation = /*#__PURE__*/ alias(() => trpc.coreBlocks.reportAutomationRun.useMutation)
 
