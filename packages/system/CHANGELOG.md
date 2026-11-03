@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Existing washer, dryer and heater helper devices are converted at boot to plain Customize running, power and power-source settings, keeping their threshold, dwell times and plugs.
 - Appliance and heater helper compositions are no longer compiled; stored ones were already rewritten into Customize facets by the helper-to-customize migration.
 - The snapshot wrapper logs, at info and on the camera, when a failed capture is answered with the cached frame
+- A composed device (a dryer, washer or heater) now resumes its last running state after a hub restart instead of reporting unknown, so a cycle that ends right after a restart still notifies
 
 ### Fixed
 

@@ -685,6 +685,30 @@ export class Composer {
           continue
         }
       }
+      // A composed device resumes from its OWN last published slice, exactly as
+      // an existing target does: a stateful call (`dwell`) is seeded from it, so
+      // a restart mid-run publishes the previous answer, never unknown (D933).
+      // An unread slice only costs the seed (the device is not a claimed one).
+      if (
+        targetSeed === undefined &&
+        p.target.kind === 'new' &&
+        device !== null &&
+        p.block.enabled &&
+        p.fields.length > 0
+      ) {
+        try {
+          targetSeed = await readExistingTargetSeeds(
+            device.id,
+            p.fields.map((field) => field.cap),
+            this.deps.readExistingTargetCap,
+          )
+        } catch (err: unknown) {
+          this.deps.logger.warn(
+            'composed device slice could not be read — the runtime starts without a restored seed',
+            { tags: { deviceId: device.id }, meta: { blockId: p.block.id, error: errMsg(err) } },
+          )
+        }
+      }
       // Rule 4: a customization that stops planning keeps its claims, so the hub
       // keeps its last values — read them before the runtime goes.
       const heldFields = this.heldFieldsFor(p, previous)

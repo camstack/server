@@ -2,6 +2,10 @@
 import {
   type ComposerApplyInput,
   type Composition,
+  type CompositionSourceRef,
+  compileScalarOverride,
+  CompositionSchema,
+  composedDeviceRef,
   DeviceType,
   ROOM_EXAMPLE_MOTION_SOURCES,
   ROOM_EXAMPLE_TEMPERATURE_SOURCES,
@@ -566,5 +570,57 @@ describe('hardening', () => {
     const [a, b] = await Promise.all([composer.apply(input()), composer.apply(input())])
     expect(declared).toEqual([['composed-b1']])
     expect(a.blocks).toEqual(b.blocks)
+  })
+})
+
+describe('a restart mid-run (D933, D49)', () => {
+  const PLUG: CompositionSourceRef = { addonId: 'zigbee', stableId: 'dryer-plug' }
+  const PLUG_ID = 31
+
+  function dryer(): Composition {
+    const compiled = compileScalarOverride({
+      draft: {
+        kind: 'scalar',
+        cap: 'running-state',
+        targetId: 'running',
+        source: { ...PLUG, cap: 'power-meter', fieldPath: 'power' },
+        transform: {
+          kind: 'threshold',
+          comparison: 'gte',
+          threshold: 8,
+          startDwellMs: 30_000,
+          stopDwellMs: 600_000,
+        },
+      },
+      device: composedDeviceRef('b1'),
+      apply: 'add',
+      sourceValueKind: 'number',
+      changedAtField: null,
+      sourceUnit: 'W',
+    })
+    if (!compiled.ok) throw new Error(compiled.reason)
+    return CompositionSchema.parse({
+      target: { kind: 'new', type: DeviceType.Dryer },
+      features: [compiled.value],
+    })
+  }
+
+  it('a composed device resumes its last published running instead of publishing unknown', async () => {
+    hub.add(PLUG, PLUG_ID, { 'power-meter': { power: 1 } })
+    // The composed device's own persisted slice, as the first mint (1900) restored it.
+    hub.add({ addonId: 'composer', stableId: 'composed-b1' }, 1900, {
+      'running-state': { running: true, since: 500_000 },
+    })
+    await composer.apply(
+      input({
+        blocks: [{ id: 'b1', name: 'Dryer', enabled: true, updatedAt: 1, composition: dryer() }],
+      }),
+    )
+    const running = (targets.get('composed-b1')?.writes ?? [])
+      .filter((w) => w.cap === 'running-state')
+      .map((w) => w.values['running'])
+    expect(running.length).toBeGreaterThan(0)
+    expect(running).not.toContain(null)
+    expect(running.at(-1)).toBe(true)
   })
 })
