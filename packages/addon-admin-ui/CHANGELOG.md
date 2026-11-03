@@ -7,13 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Customize running: the scalar dialog proposes a running threshold and dwells from the device's power history, with an Apply button; nothing is saved until Save.
+
 ## [1.2.570] - 2026-11-03
 
 ### Changed
 
 - A remote attached to a built media player now gives it the media-player commands, and the appliance and heater creation templates are removed.
 - Debug layers: switches to turn off the outlines and the top layer, and the header's compositing styles
-- Customize running: the scalar dialog proposes a running threshold and dwells from the device's power history, with an Apply button; nothing is saved until Save.
 
 ## [1.2.569] - 2026-11-03
 
