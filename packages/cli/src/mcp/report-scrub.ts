@@ -120,6 +120,16 @@ const HOST_TLDS: ReadonlySet<string> = new Set([
 
 const NAME_MIN_LENGTH = 3
 
+/** Words the draft itself prints (`(hub)`): hiding them would garble the text and hides nothing. */
+const GENERIC_NAMES: ReadonlySet<string> = new Set([
+  'hub',
+  'node',
+  'agent',
+  'server',
+  'camera',
+  'device',
+])
+
 function emptyCounts(): { [K in RedactionKind]: number } {
   return {
     tokens: 0,
@@ -161,7 +171,12 @@ function urlShape(raw: string): { shape: string; hadCredentials: boolean } {
 export function createRedactor(names: readonly KnownName[] = []): Redactor {
   const counts = emptyCounts()
   const usable = names
-    .filter((n) => n.name.trim().length >= NAME_MIN_LENGTH && !/^\d+$/.test(n.name.trim()))
+    .filter(
+      (n) =>
+        n.name.trim().length >= NAME_MIN_LENGTH &&
+        !GENERIC_NAMES.has(n.name.trim().toLowerCase()) &&
+        !/^\d+$/.test(n.name.trim()),
+    )
     .toSorted((a, b) => b.name.length - a.name.length)
   const labelOf = new Map(usable.map((n) => [n.name.trim().toLowerCase(), n.label]))
   const nameRe =

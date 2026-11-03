@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, statSync } from 'node:fs'
-import { MutationGate } from '@camstack/develop'
+import { MutationGate, scrubValue } from '@camstack/develop'
 import { describe, expect, it } from 'vitest'
 import type { McpContext } from '../mcp/context.js'
 import { CRITICAL_ADDONS } from '../mcp/report-environment.js'
@@ -197,6 +197,53 @@ describe('report_issue: the draft', () => {
     expect(d.markdown).not.toContain(HOSTNAME)
   })
 
+  it('keeps the redaction counts numeric through the whole dry-run payload', async () => {
+    const { ctx } = ctxOf()
+    const result = await reportIssue(ctx, fakeGh().deps, ARGS, undefined, NOW)
+    const describe = dryRunOf(result).describe
+    const redactions =
+      typeof describe === 'object' && describe !== null && 'redactions' in describe
+        ? describe.redactions
+        : null
+    expect(Array.isArray(redactions)).toBe(true)
+    const rows = Array.isArray(redactions) ? redactions : []
+    expect(rows.length).toBeGreaterThan(5)
+    for (const row of rows)
+      expect(row).toEqual({ kind: expect.any(String), count: expect.any(Number) })
+    expect(rows).toContainEqual({ kind: 'ipv4', count: expect.any(Number) })
+    const tokens = rows.find((r) => r.kind === 'tokens')
+    expect(tokens?.count).toBeGreaterThan(0)
+    // the real output scrub (what the MCP wire applies) must leave the numbers
+    expect(JSON.stringify(scrubValue(describe))).toContain('"kind":"tokens","count":1')
+  })
+
+  it('prints the hub marker, not a node label, for a node named hub', async () => {
+    const { ctx } = ctxOf()
+    const d = dry(await reportIssue(ctx, fakeGh().deps, ARGS, undefined, NOW))
+    expect(d.markdown).not.toContain('node#1 (node#1)')
+    const hubNamed = ctxOf({
+      'nodes.topology': [
+        { id: 'hub', name: 'hub', isHub: true, isOnline: true, platform: 'linux', addons: [] },
+      ],
+    })
+    const d2 = dry(await reportIssue(hubNamed.ctx, fakeGh().deps, ARGS, undefined, NOW))
+    expect(d2.markdown).toContain('- node#1 (hub): server')
+  })
+
+  it('collapses an identical addon across nodes into one row', async () => {
+    const two = ctxOf({
+      'nodes.topology': [
+        { id: 'a', isHub: true, isOnline: true, platform: 'linux', addons: [] },
+        { id: 'b', isHub: false, isOnline: true, platform: 'linux', addons: [] },
+      ],
+    })
+    const d = dry(await reportIssue(two.ctx, fakeGh().deps, ARGS, undefined, NOW))
+    const rows = d.markdown.split('\n').filter((l) => l.startsWith('| stream-broker'))
+    expect(rows).toEqual([
+      '| stream-broker | stream broker | node#1, node#2 | 2.1.0 | enabled | failed |',
+    ])
+  })
+
   it('names the critical addons found on no node', async () => {
     const { ctx } = ctxOf()
     const d = dry(await reportIssue(ctx, fakeGh().deps, ARGS, undefined, NOW))
@@ -209,6 +256,24 @@ describe('report_issue: the draft', () => {
 describe('report_issue: the recipe per kind', () => {
   it('has a recipe for every kind', () => {
     for (const kind of REPORT_KINDS) expect(RECIPES[kind].length).toBeGreaterThan(0)
+  })
+
+  it('maps each kind to the debug_report issue that holds its evidence', () => {
+    const issueOf = (k: (typeof REPORT_KINDS)[number]): string[] =>
+      RECIPES[k].flatMap((s) => (s.type === 'debug-report' ? [s.issue] : []))
+    expect(issueOf('streams')).toEqual(['stream'])
+    expect(issueOf('media-thumbnails')).toEqual(['media'])
+    expect(issueOf('ui')).toEqual(['ui'])
+    expect(issueOf('pipeline-detection')).toEqual(['detections'])
+    for (const k of [
+      'notifications',
+      'remote-access',
+      'recording-storage',
+      'integration',
+      'other',
+    ] as const) {
+      expect(issueOf(k)).toEqual([])
+    }
   })
 
   it('media-thumbnails reads the events:media viewer scope and pipeline-analytics', () => {

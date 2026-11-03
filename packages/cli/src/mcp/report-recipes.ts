@@ -82,7 +82,7 @@ export const RECIPES: { readonly [K in ReportKind]: readonly LogSource[] } = {
       level: 'warn',
       perDevice: true,
     },
-    { type: 'debug-report', title: 'Track media (debug_report)', issue: 'ui' },
+    { type: 'debug-report', title: 'Track media (debug_report media)', issue: 'media' },
   ],
   ui: [
     { type: 'viewer', title: 'Viewer, all scopes', level: 'warn' },

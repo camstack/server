@@ -24,7 +24,7 @@ import { mapLimit, adminRefusal, READ_CONCURRENCY } from './setup-assist-common.
 import { readCameraRows, readCameraStatuses } from './setup-camera-reads.js'
 import { cameraStreamsView, type CameraStreamsView } from './setup-streams.js'
 
-export const DEBUG_ISSUES = ['stream', 'detections', 'ui'] as const
+export const DEBUG_ISSUES = ['stream', 'detections', 'ui', 'media'] as const
 export type DebugIssue = (typeof DEBUG_ISSUES)[number]
 
 export const DEFAULT_SINCE_MINUTES = 30
@@ -346,7 +346,7 @@ export async function debugReport(
       for (const [k, v] of Object.entries(camStreams.unavailable)) unavailable[`streams:${k}`] = v
     }
     const tracks =
-      wants('detections') || wants('ui')
+      wants('detections') || wants('ui') || wants('media')
         ? await tracksSection(client, deviceId, window, link, unavailable)
         : null
     const logs = logsSection(log, window, unavailable)

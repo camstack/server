@@ -76,7 +76,7 @@ proposal only works from volumes locations already sit on, and says so.
 
 ### Finding out what is wrong
 
-`debug_report({ deviceId?, issue?: 'stream'|'detections'|'ui', since? })` is one
+`debug_report({ deviceId?, issue?: 'stream'|'detections'|'ui'|'media', since? })` is one
 read-only bundle: server and addon versions on every node; for a camera its streams
 (slots and derived streams with fps / bitrate / IDR / subscribers), the churn in the
 window found in logs tagged with the `deviceId` (profile-slot changes, detection
@@ -102,7 +102,7 @@ It picks the logs (`report-recipes.ts`, data a spec asserts):
 | kind | Logs read |
 | --- | --- |
 | `streams` | `debug_report` stream state, stream-broker warnings (this device), viewer `live` scope |
-| `media-thumbnails` | viewer `events:media` scope, pipeline-analytics warnings (this device), track media summary |
+| `media-thumbnails` | viewer `events:media` scope, pipeline-analytics warnings (this device), `debug_report` issue `media` (track media only) |
 | `ui` | viewer warnings, admin-ui and local-auth warnings, device view |
 | `notifications` | notifiers and smtp warnings, the `matched NO rule` lines |
 | `remote-access` | tunnel, cloudflare/static TURN, tailscale, remote-access orchestrator, webrtc warnings; viewer `live` |
@@ -111,7 +111,7 @@ It picks the logs (`report-recipes.ts`, data a spec asserts):
 | `integration` | HomeKit, Alexa, Google, Matter, Home Assistant warnings |
 | `other` | hub errors, viewer errors |
 
-Each section holds at most 20 lines of 240 characters, repeats folded with a count.
+An addon identical on several nodes is one table row listing them. Each section holds at most 20 lines of 240 characters, repeats folded with a count.
 
 **The review flow.**
 

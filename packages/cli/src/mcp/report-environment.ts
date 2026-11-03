@@ -282,6 +282,34 @@ export async function collectEnvironment(
   }
 }
 
+export interface AddonRow {
+  readonly id: string
+  readonly group: string
+  readonly nodes: readonly string[]
+  readonly version: string
+  readonly state: AddonState
+  readonly runner: string
+}
+
+/** Identical addon + version + state + runner on several nodes is one row listing them. */
+export function collapseAddons(addons: readonly AddonFact[]): AddonRow[] {
+  const rows = new Map<string, { row: AddonFact; nodes: string[] }>()
+  for (const a of addons) {
+    const key = [a.id, a.version, a.state, a.runner].join('|')
+    const hit = rows.get(key)
+    if (hit) hit.nodes.push(a.node)
+    else rows.set(key, { row: a, nodes: [a.node] })
+  }
+  return [...rows.values()].map(({ row, nodes }) => ({
+    id: row.id,
+    group: row.group,
+    nodes,
+    version: row.version,
+    state: row.state,
+    runner: row.runner,
+  }))
+}
+
 /** The markdown of the section. Only allow-listed facts reach it. */
 export function renderEnvironment(env: EnvironmentFacts): string {
   const lines: string[] = [
@@ -299,11 +327,13 @@ export function renderEnvironment(env: EnvironmentFacts): string {
   if (env.addons.length > 0) {
     lines.push(
       '',
-      '| addon | group | node | version | state | runner |',
+      '| addon | group | nodes | version | state | runner |',
       '| --- | --- | --- | --- | --- | --- |',
     )
-    for (const a of env.addons) {
-      lines.push(`| ${a.id} | ${a.group} | ${a.node} | ${a.version} | ${a.state} | ${a.runner} |`)
+    for (const row of collapseAddons(env.addons)) {
+      lines.push(
+        `| ${row.id} | ${row.group} | ${row.nodes.join(', ')} | ${row.version} | ${row.state} | ${row.runner} |`,
+      )
     }
   }
   if (env.absent.length > 0) lines.push('', `Not installed on any node: ${env.absent.join(', ')}`)

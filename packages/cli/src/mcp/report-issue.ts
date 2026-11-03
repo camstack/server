@@ -215,7 +215,8 @@ export interface ReportDryRun {
   readonly targetRepo: string
   readonly markdown: string
   readonly redacted: string
-  readonly redactions: RedactionCounts
+  /** A list, not an object keyed by kind: the output scrub hides values under keys named token / secret. */
+  readonly redactions: readonly { readonly kind: string; readonly count: number }[]
   readonly instructions: string
 }
 
@@ -272,7 +273,7 @@ export async function reportIssue(
         targetRepo: outcome.repo,
         markdown: outcome.markdown,
         redacted: outcome.redactionSummary,
-        redactions: outcome.redactions,
+        redactions: Object.entries(outcome.redactions).map(([kind, count]) => ({ kind, count })),
         instructions: SHOW_FIRST,
       },
       next: `Nothing was filed. After the user said yes, call ${REPORT_ISSUE_TOOL} again with the SAME arguments and confirm_token. The token is single-use and bound to this exact text.`,

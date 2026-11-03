@@ -178,6 +178,15 @@ describe('debug_report', () => {
     })
   })
 
+  it('issue media reports track media and nothing about streams or viewer lines', async () => {
+    const { ctx } = fakeHub(answers())
+    const out = await debugReport(ctx, { deviceId: 1, issue: 'media' }, NOW)
+    if (out.status !== 'ok') throw new Error('expected ok')
+    expect(out.camera?.tracks?.checked).toBeGreaterThan(0)
+    expect(out.camera?.streams).toBeNull()
+    expect(out.camera?.viewer).toBeNull()
+  })
+
   it('a failed log read is reported, not an empty churn analysis', async () => {
     const { ctx } = fakeHub(answers({ 'logs.query': new Error('ring down') }))
     const out = await debugReport(ctx, { deviceId: 1 }, NOW)

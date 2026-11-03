@@ -121,7 +121,10 @@ export function registerSetupReadTools(server: McpServer, ctx: McpContext): void
     'Read-only support bundle for one problem: server and addon versions on every node; for a camera its streams (profile slots, derived streams with fps / bitrate / IDR / subscribers), churn in the window (slot changes, detection restarts, derived-encoder respawns) from logs tagged with the deviceId, recent tracks with media presence per kind (thumbnail / keyFrame) and the thumbnail URL shape the viewer requests. A read that failed is null with a reason, never 0. Secrets scrubbed. Needs an admin `camstack login`.',
     {
       deviceId: z.number().int().nonnegative().optional(),
-      issue: z.enum(DEBUG_ISSUES).optional().describe('stream | detections | ui'),
+      issue: z
+        .enum(DEBUG_ISSUES)
+        .optional()
+        .describe('stream | detections | ui | media (track media only)'),
       since: z
         .string()
         .min(1)
