@@ -1,4 +1,4 @@
-import type { DiscoveredChildDevice } from '@camstack/types'
+import { DeviceType, type DiscoveredChildDevice } from '@camstack/types'
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import '../../../i18n'
@@ -7,7 +7,7 @@ import { CandidateNameCell } from '../AdoptDevicesModal'
 const candidate = (over: Partial<DiscoveredChildDevice>): DiscoveredChildDevice => ({
   childNativeId: 'alexa:G0014D060156024W',
   name: 'Echo Flex Giardino',
-  type: 'speaker',
+  type: DeviceType.MediaPlayer,
   status: 'online',
   metadata: {},
   alreadyAdopted: false,
