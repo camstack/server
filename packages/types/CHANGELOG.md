@@ -11,16 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A media player can step its volume and channel (volumeUp, volumeDown, channelUp, channelDown) and be turned on or off, and a composition may serve it through the remote
 - A switch that never reported its state reads as unknown (on: null) instead of off; session-lost alerts gain a broker-unavailable reason
+- The IR codec encodes a Samsung frame (data and bit count) into the pulse train a transmitter sends
 
 ## [1.2.484] - 2026-11-02
 
 ### Added
 
 - New template variable {{changes}} for the combined alarm body: the sensors of the incident and what each did
-
-### Changed
-
-- The IR codec encodes a Samsung frame (data and bit count) into the pulse train a transmitter sends
 
 ## [1.2.483] - 2026-11-02
 
