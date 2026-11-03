@@ -9,7 +9,7 @@
  * listed by name: a camera-sensors span (a composed device has no camera
  * bridge) and a `replace` (it rewrites a field of the device's OWN native cap).
  */
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -104,17 +104,16 @@ const notOffered = (r: Row): boolean =>
   r.target.applyAuthority?.kind === 'camera-sensors' || r.target.apply === 'replace'
 const offered = rows.filter((r) => !notOffered(r))
 
-function testIdsOf(r: Row): readonly string[] {
-  switch (r.target.cardinality) {
-    case 'scalar':
-      return [`scalar-card-${r.cap}`, `scalar-card-${r.cap}.${r.target.id}`]
-    case 'keyedArray':
-      return [`keyed-card-${r.cap}`]
-    case 'event':
-      return [`event-card-${r.cap}`]
-    case 'config':
-      return [`config-card-${r.cap}`]
+/** An extension is listed in the table; every other target is attached from the picker. */
+function isExposed(r: Row): boolean {
+  const key = `${r.cap}.${r.target.id}`
+  if (r.target.cardinality === 'config') {
+    return screen.queryByTestId(`customize-manage-${key}`) !== null
   }
+  const trigger = screen.queryByTestId('customize-table-add')
+  if (trigger === null) return false
+  fireEvent.click(trigger)
+  return screen.queryByTestId(`customize-table-add-${key}`) !== null
 }
 
 function deviceOf(r: Row): DeviceInfo {
@@ -205,8 +204,7 @@ describe('every Customize target reaches a composed device (D1004)', () => {
       for (const r of offered) {
         it(`${r.cap}.${r.target.id} (${r.target.cardinality}) is exposed`, () => {
           mount(r, helper)
-          const ids = testIdsOf(r)
-          expect(ids.some((id) => screen.queryByTestId(id) !== null)).toBe(true)
+          expect(isExposed(r)).toBe(true)
         })
       }
     })

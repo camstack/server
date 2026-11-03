@@ -192,7 +192,7 @@ describe('partitionSourceDevices', () => {
 })
 
 describe('groupSourceValues', () => {
-  it('two caps → two groups; incompatible rows outside groups', () => {
+  it('two caps → two groups; an incompatible value is not listed at all', () => {
     const fields: readonly SourceWireableField[] = [
       {
         cap: 'battery',
@@ -216,10 +216,9 @@ describe('groupSourceValues', () => {
         currentText: 'false',
       },
     ]
-    const { groups, incompatible } = groupSourceValues(fields, batteryDest, 'en')
+    const { groups } = groupSourceValues(fields, batteryDest, 'en')
     expect(groups).toHaveLength(2)
     expect(groups.map((g) => g.cap)).toEqual(['battery', 'power-meter'])
-    expect(incompatible).toHaveLength(1)
-    expect(incompatible[0]?.path).toBe('on')
+    expect(groups.flatMap((g) => g.rows.map((r) => r.path))).not.toContain('on')
   })
 })

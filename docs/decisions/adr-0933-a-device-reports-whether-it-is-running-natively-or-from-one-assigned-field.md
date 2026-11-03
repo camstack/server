@@ -9,7 +9,7 @@ applies-to:
   - packages/types/src/running-state/**
   - packages/types/src/expression/builtins.ts
   - packages/system/src/builtins/device-manager/running-flip.ts
-  - packages/addon-admin-ui/src/components/device/customize/scalar/ScalarOverrideCard.tsx
+  - packages/addon-admin-ui/src/components/device/customize/scalar/use-scalar-row.ts
   - packages/ui-library/src/composites/running-badge.tsx
 ---
 

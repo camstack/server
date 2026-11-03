@@ -11,7 +11,7 @@ import { PORCH_COMPOSITION } from '../../../../../../../types/src/composition/ca
 import { buildSkeletonComposition } from '../../../../composition-editor/build-skeleton'
 import { eventCardTargets } from '../../event/event-targets'
 import { keyedArrayCardTargets } from '../../keyed/KeyedArrayCard'
-import { scalarCardTargets } from '../../scalar/ScalarOverrideCard'
+import { scalarCardTargets } from '../../scalar/scalar-targets'
 import { presentState } from '../../kinds/__tests__/customization-fixture'
 import { type CustomizationHandle, type CustomizationSaveOutcome } from '../../use-customization'
 

@@ -359,12 +359,15 @@ export interface KeyedArrayCustomizeListProps {
   readonly handle: CustomizationHandle
   readonly facts: AssignmentFacts
   readonly defaults: Known<readonly DefaultConsumable[]>
+  /** Render only this cap's card (the Customize table opens one at a time). */
+  readonly onlyCap?: string
 }
 
 export function KeyedArrayCustomizeList(props: KeyedArrayCustomizeListProps): ReactNode {
   return (
     <>
       {keyedArrayCardTargets().map((card) => {
+        if (props.onlyCap !== undefined && card.cap !== props.onlyCap) return null
         if (!card.target.deviceTypes.includes(props.device.type)) return null
         return (
           <KeyedArrayCard

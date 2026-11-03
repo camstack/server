@@ -4,7 +4,7 @@
  *
  * Enum keyed destinations: devices with `consumables` or any cap listed in
  * `CAP_RUNTIME_FIELD_UNITS` are candidates; other caps may still yield
- * incompatible values, which the value column collapses.
+ * incompatible values, which the value column leaves out.
  */
 import {
   CAP_CUSTOMIZE_CATALOG,
@@ -276,10 +276,8 @@ export function groupSourceValues(
   language: string,
 ): {
   readonly groups: readonly SourceValueGroup[]
-  readonly incompatible: readonly SourceValueRow[]
 } {
   const byCap = new Map<string, SourceValueRow[]>()
-  const incompatible: SourceValueRow[] = []
   for (const field of fields) {
     const compatibility = judgeSourceCompatibility(destination, field)
     const label = vocabularyFieldLabel(field.cap, field.path, language)
@@ -290,10 +288,7 @@ export function groupSourceValues(
       currentText: field.currentText,
       compatibility,
     }
-    if (compatibility.kind === 'incompatible') {
-      incompatible.push(row)
-      continue
-    }
+    if (compatibility.kind === 'incompatible') continue
     const list = byCap.get(field.cap) ?? []
     list.push(row)
     byCap.set(field.cap, list)
@@ -305,7 +300,7 @@ export function groupSourceValues(
       title: vocabularyCapTitle(cap, language),
       rows: rows.toSorted((a, b) => a.label.localeCompare(b.label)),
     }))
-  return { groups, incompatible }
+  return { groups }
 }
 
 /** Cap names for `useCapIndex` while the device column is open. */

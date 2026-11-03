@@ -23,19 +23,17 @@ import type { AssignmentFacts } from './assignment-availability'
 import { type CustomizationState, currentComposition } from './customization-read'
 import { IdentityRow } from './IdentityRow'
 import { QuickDetailSaveProvider } from '../quick-detail-save'
-import { KeyedArrayCustomizeList } from './keyed/KeyedArrayCard'
-import { ScalarCustomizeList } from './scalar/ScalarOverrideCard'
-import { EventCustomizeList } from './event/EventCustomizeList'
+import { CustomizeTable } from './table/CustomizeTable'
 import { LinkedActionsCard } from './kinds/LinkedActionsCard'
 import { LinkedDevicesTable } from './kinds/LinkedDevicesTable'
 import { useCustomization } from './use-customization'
 import { useCameraSensors } from './use-camera-sensors-presence'
 import { useCustomizeFacts } from './use-customize-facts'
 import { useDefaultConsumables } from './use-default-consumables'
-import { ConfigCustomizeList, configCardCaps } from './config/ConfigCustomizeList'
+import { configCardCaps } from './config/ConfigCustomizeList'
 import { CompositionFieldsCardList } from './cards/CompositionFieldsCardList'
 import { ComposedCustomizeBody } from './ComposedCustomizeBody'
-import { scalarCardTargets } from './scalar/ScalarOverrideCard'
+import { scalarCardTargets } from './scalar/scalar-targets'
 import { keyedArrayCardTargets } from './keyed/KeyedArrayCard'
 import { eventCardTargets } from './event/event-targets'
 
@@ -129,20 +127,13 @@ function CustomizeBody({ device, target }: CustomizeBodyProps): ReactNode {
         </p>
       )}
       {handle.state.kind !== 'none' && <CustomizationStatus state={handle.state} />}
-      <EventCustomizeList
+      <CustomizeTable
         device={device}
         handle={handle}
         facts={assignmentFacts}
         sensors={cameraSensors}
-      />
-      <ScalarCustomizeList device={device} handle={handle} facts={assignmentFacts} />
-      <KeyedArrayCustomizeList
-        device={device}
-        handle={handle}
-        facts={assignmentFacts}
         defaults={defaultConsumables}
       />
-      <ConfigCustomizeList device={device} />
       <CompositionFieldsCardList device={device} handle={handle} skipCaps={skipCaps} />
       <LinkedDevicesTable device={device} />
       {device.type === DeviceType.Camera && <LinkedActionsCard device={device} />}

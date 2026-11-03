@@ -207,7 +207,6 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
     setStep(reconciled.step)
   }
   const [incompatibleOpen, setIncompatibleOpen] = useState(false)
-  const [incompatibleValuesOpen, setIncompatibleValuesOpen] = useState(false)
   const devices = useDeviceManagerListAll({ projection: 'slim' })
   const deviceFilter = props.kind === 'formula' ? props.deviceFilter : undefined
   const fleet = useMemo(() => {
@@ -255,11 +254,7 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
   )
   const devicePickerTestId =
     props.kind === 'event' ? props.devicePickerTestId : 'source-selector-device-picker'
-  const { groups, incompatible: incompatibleValues } = groupSourceValues(
-    fields,
-    props.destination,
-    i18n.language,
-  )
+  const { groups } = groupSourceValues(fields, props.destination, i18n.language)
   const fit = fieldFit(props, catalog, snapshot.status === 'success' ? snapshot.data : null)
   const pickDevice = (ids: readonly number[]): void => {
     const id = ids[0]
@@ -517,30 +512,6 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
                 </ul>
               </section>
             ))}
-          {props.kind !== 'event' && incompatibleValues.length > 0 && (
-            <div data-testid="source-incompatible-values">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-auto w-full justify-start gap-1 px-0 text-[11px] text-foreground-muted"
-                onClick={() => setIncompatibleValuesOpen((open) => !open)}
-              >
-                <ChevronDown
-                  className={`size-3 transition-transform ${incompatibleValuesOpen ? 'rotate-180' : ''}`}
-                />
-                {t('customize.sourceSelector.otherValues')}
-              </Button>
-              {incompatibleValuesOpen && (
-                <ul className="mt-1 flex flex-col gap-1 pl-4 text-[11px] text-foreground-subtle">
-                  {incompatibleValues.map((row) => (
-                    <li key={`${row.cap}.${row.path}`}>
-                      {row.label} · {row.currentText}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
         </div>
       )}
       {props.kind === 'scalar' && fit !== null && fit.ok && (

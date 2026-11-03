@@ -137,7 +137,8 @@ describe('ScalarOverrideDialog', () => {
     expect(screen.getByTestId('source-selector')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
     fireEvent.click(screen.getByRole('button', { name: /Porch power meter/ }))
-    expect(screen.getByTestId('source-incompatible-values')).toBeTruthy()
+    // A value the target cannot read is not listed at all, collapsed or not.
+    expect(screen.queryByTestId('source-incompatible-values')).toBeNull()
     fireEvent.click(screen.getByTestId('source-value-power-meter.power'))
     const watts = screen.getByTestId('source-value-power-meter.power')
     expect(watts instanceof HTMLInputElement && watts.checked).toBe(true)

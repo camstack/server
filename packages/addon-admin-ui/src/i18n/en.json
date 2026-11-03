@@ -2551,7 +2551,9 @@
       "caps": {
         "battery": "Battery",
         "running-state": "Running",
-        "power-meter": "Power and energy"
+        "power-meter": "Power and energy",
+        "power-source": "Power source",
+        "lock-control": "Door contact"
       },
       "add": "+ Add",
       "change": "Change",
@@ -2717,7 +2719,6 @@
     "sourceSelector": {
       "pickDevice": "Pick the source for {{title}}",
       "notCompatibleDevices": "{{count}} not compatible",
-      "otherValues": "Other values (not compatible)",
       "direct": "direct",
       "withConversion": "with {{name}}",
       "backToDevices": "Back to devices",
@@ -2739,6 +2740,48 @@
       "pickTitle": "Link actions to {{name}}",
       "pickHint": "Pick the actions to link. Nothing is chosen for you.",
       "addN": "Add {{count}}"
+    },
+    "table": {
+      "title": "Customizations",
+      "add": "+ Add customization",
+      "addAria": "Add a customization",
+      "col": {
+        "item": "Item",
+        "value": "Value",
+        "source": "Source",
+        "actions": "Actions"
+      },
+      "section": {
+        "power": "Power",
+        "readings": "Readings",
+        "events": "Events",
+        "lists": "Lists",
+        "extensions": "Extensions"
+      },
+      "caps": {
+        "battery": "Battery",
+        "consumables": "Consumables",
+        "doorbell": "Doorbell",
+        "fan-presets": "Fan presets",
+        "lock-control": "Door contact",
+        "motion": "Motion",
+        "power-meter": "Power and energy",
+        "power-source": "Power source",
+        "remote": "Remote",
+        "running-state": "Running"
+      },
+      "edit": "Edit",
+      "editWhat": "Edit {{title}}",
+      "remove": "Remove",
+      "manage": "Manage",
+      "close": "Close",
+      "empty": "Nothing is customized yet. Use “+ Add customization” to link a value from another device.",
+      "nothingToAdd": "Every customization that applies to this device is already linked.",
+      "sourceMissing": "Source device missing",
+      "otherFormula": "Set in Advanced",
+      "customized": "Customized",
+      "configured": "Extension",
+      "sourceOf": "{{name}} · {{field}}"
     }
   },
   "compositionEditor": {

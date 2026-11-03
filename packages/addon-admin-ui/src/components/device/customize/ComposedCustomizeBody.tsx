@@ -18,13 +18,13 @@ import { skeletonFillStatus } from '../../composition-editor/build-skeleton'
 import { ComposedDeviceEditDialog } from '../../composition-editor/ComposedDeviceEditDialog'
 import { draftFromHelper, isHelperComposition } from '../../composition-editor/helper-form-model'
 import { CompositionFieldsCardList } from './cards/CompositionFieldsCardList'
-import { ConfigCustomizeList, configCardCaps } from './config/ConfigCustomizeList'
-import { EventCustomizeList } from './event/EventCustomizeList'
+import { configCardCaps } from './config/ConfigCustomizeList'
+import { CustomizeTable } from './table/CustomizeTable'
 import { eventCardTargets } from './event/event-targets'
 import { HelperSummaryCard } from './HelperSummaryCard'
 import { IdentityRow } from './IdentityRow'
-import { KeyedArrayCustomizeList, keyedArrayCardTargets } from './keyed/KeyedArrayCard'
-import { ScalarCustomizeList, scalarCardTargets } from './scalar/ScalarOverrideCard'
+import { keyedArrayCardTargets } from './keyed/KeyedArrayCard'
+import { scalarCardTargets } from './scalar/scalar-targets'
 import { useCameraSensors } from './use-camera-sensors-presence'
 import { useCustomizeFacts } from './use-customize-facts'
 import { useDefaultConsumables } from './use-default-consumables'
@@ -148,20 +148,13 @@ export function ComposedCustomizeBody({ device }: ComposedCustomizeBodyProps): R
       {skeletonFillStatus(composition) === 'incomplete' && (
         <Badge variant="warning">{t('customize.blockStatus.incomplete')}</Badge>
       )}
-      <EventCustomizeList
+      <CustomizeTable
         device={device}
         handle={handle}
         facts={assignmentFacts}
         sensors={cameraSensors}
-      />
-      <ScalarCustomizeList device={device} handle={handle} facts={assignmentFacts} />
-      <KeyedArrayCustomizeList
-        device={device}
-        handle={handle}
-        facts={assignmentFacts}
         defaults={defaultConsumables}
       />
-      <ConfigCustomizeList device={device} />
       <CompositionFieldsCardList device={device} handle={handle} skipCaps={skipCaps} />
     </div>
   )

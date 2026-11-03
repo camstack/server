@@ -448,8 +448,8 @@ describe('CustomizeTab — layout (spec §5)', () => {
     renderTab()
     const identity = screen.getAllByText('Room')[0] as HTMLElement
     const status = screen.getByText('Customization active')
-    const battery = screen.getByRole('heading', { name: 'Battery' })
-    const order = [identity, status, battery].map(top)
+    const table = screen.getByRole('heading', { name: 'Customizations' })
+    const order = [identity, status, table].map(top)
     expect(order).toEqual([...order].sort((x, y) => x - y))
     expect(screen.queryByRole('heading', { name: 'What changes on the device' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Remove customization' })).toBeNull()
@@ -466,8 +466,8 @@ describe('CustomizeTab — layout (spec §5)', () => {
       ]),
     }
     renderTab()
-    expect(screen.queryByRole('heading', { name: 'Battery' })).toBeNull()
-    expect(screen.getByRole('heading', { name: 'Consumables' })).toBeTruthy()
+    expect(screen.getByTestId('customize-table').textContent).not.toMatch(/Battery/)
+    expect(screen.getByTestId('customize-table').textContent).toMatch(/Consumables/)
     expect(screen.queryByText('battery.level')).toBeNull()
   })
   it('pending or failed facts speak no preset sentence — the presets are gone (task 7 L5, task 15 L2)', () => {
@@ -484,6 +484,7 @@ describe('CustomizeTab — layout (spec §5)', () => {
     {
       heading: 'Doorbell',
       cap: 'doorbell',
+      manage: 'customize-manage-doorbell.pressed',
       feature: (): object => ({
         kind: 'fields',
         cap: 'doorbell',
@@ -494,6 +495,7 @@ describe('CustomizeTab — layout (spec §5)', () => {
     {
       heading: 'Battery',
       cap: 'battery',
+      manage: null,
       feature: (): object => ({
         kind: 'fields',
         cap: 'battery',
@@ -503,6 +505,7 @@ describe('CustomizeTab — layout (spec §5)', () => {
     {
       heading: 'Consumables',
       cap: 'consumables',
+      manage: 'customize-manage-consumables.items',
       feature: (): object => ({
         kind: 'fields',
         cap: 'consumables',
@@ -513,9 +516,10 @@ describe('CustomizeTab — layout (spec §5)', () => {
   ] as const
   it.each(
     ANOTHER_FORMULA,
-  )("the $heading card's another-formula row opens the formula dialog and leaves the card", ({
+  )("the $heading row's another-formula entry opens the formula dialog and leaves the row", ({
     heading,
     cap,
+    manage,
     feature,
   }) => {
     const host = cap === 'doorbell' ? CAMERA : FEEDER
@@ -527,12 +531,44 @@ describe('CustomizeTab — layout (spec §5)', () => {
       data: loadedRead({ addonId: host.addonId, stableId: host.stableId }, [feature()]),
     }
     renderTab()
-    const card = screen.getByRole('heading', { name: heading }).closest('section')
-    if (card === null) throw new Error('no card section')
-    fireEvent.click(within(card).getByRole('button', { name: /^Formula$/ }))
+    // A scalar row carries the Formula entry itself; an event or a list opens its editor first.
+    if (manage !== null) fireEvent.click(screen.getByTestId(manage))
+    fireEvent.click(screen.getAllByRole('button', { name: /^Formula$/ })[0] as HTMLElement)
     expect(screen.getByTestId('formula-dialog')).toBeTruthy()
     expect(screen.queryByText('1 · Target')).toBeNull()
-    expect(screen.getByRole('heading', { name: heading })).toBeTruthy()
+    expect(screen.getAllByText(heading).length).toBeGreaterThan(0)
+  })
+})
+
+describe('CustomizeTab — the one table', () => {
+  it('lists a linked reading in its section, and offers only the unlinked ones in the picker', () => {
+    composable.current = {
+      status: 'success',
+      data: { caps: [{ cap: 'battery' }, { cap: 'power-meter' }] },
+    }
+    bindings.current = { status: 'success', data: { entries: [] } }
+    customization.current = {
+      ...PRESENT,
+      data: loadedRead({ addonId: FEEDER.addonId, stableId: FEEDER.stableId }, [batteryFeature()]),
+    }
+    renderTab()
+    const table = screen.getByTestId('customize-table')
+    expect(table.textContent).toMatch(/Power/)
+    expect(table.textContent).toMatch(/Battery/)
+    fireEvent.click(screen.getByTestId('customize-table-add'))
+    expect(screen.getByTestId('customize-table-add-power-meter.power')).toBeTruthy()
+    expect(screen.queryByTestId('customize-table-add-battery.level')).toBeNull()
+  })
+  it('says so when nothing applies, instead of an empty table', () => {
+    composable.current = { status: 'success', data: { caps: [] } }
+    bindings.current = { status: 'success', data: { entries: [] } }
+    customization.current = {
+      status: 'success',
+      data: { state: 'loaded', view: null },
+      refetch: vi.fn(async () => undefined),
+    }
+    renderTab()
+    expect(screen.queryByTestId('customize-table-add')).toBeNull()
   })
 })
 
@@ -548,7 +584,7 @@ describe('CustomizeTab — removal', () => {
       data: loadedRead({ addonId: FEEDER.addonId, stableId: FEEDER.stableId }, [batteryFeature()]),
     }
     renderTab()
-    fireEvent.click(screen.getByRole('button', { name: 'Remove' }))
+    fireEvent.click(screen.getByRole('button', { name: /^Remove/ }))
     await waitFor(() => expect(deleteMutate).toHaveBeenCalledWith({ blockId: 'blk-feeder' }))
     expect(confirmMock).toHaveBeenCalledTimes(1)
   })
@@ -564,7 +600,7 @@ describe('CustomizeTab — removal', () => {
     }
     confirmMock.mockResolvedValueOnce(false)
     renderTab()
-    fireEvent.click(screen.getByRole('button', { name: 'Remove' }))
+    fireEvent.click(screen.getByRole('button', { name: /^Remove/ }))
     await waitFor(() => expect(confirmMock).toHaveBeenCalled())
     expect(deleteMutate).not.toHaveBeenCalled()
   })
@@ -682,8 +718,10 @@ describe('CustomizeTab — a composed IR media player', () => {
       refetch: vi.fn(async () => undefined),
     }
     renderTab()
-    expect(screen.getByTestId('scalar-card-running-state')).toBeTruthy()
-    expect(screen.getByTestId('scalar-card-power-meter.power')).toBeTruthy()
+    // Nothing is linked yet: both extensions are attached from the picker.
+    fireEvent.click(screen.getByTestId('customize-table-add'))
+    expect(screen.getByTestId('customize-table-add-running-state.running')).toBeTruthy()
+    expect(screen.getByTestId('customize-table-add-power-meter.power')).toBeTruthy()
   })
 })
 
@@ -800,8 +838,8 @@ describe('CustomizeTab — battery on a sensor (D944)', () => {
   it('offers the Battery add card when native caps are known and lack battery', () => {
     bindings.current = numericOnly
     renderSensor()
-    expect(screen.getByRole('heading', { name: 'Battery' })).toBeTruthy()
-    expect(screen.getByTestId('scalar-add-battery')).toBeTruthy()
+    fireEvent.click(screen.getByTestId('customize-table-add'))
+    expect(screen.getByTestId('customize-table-add-battery.level')).toBeTruthy()
   })
   it('hides the Battery card when the sensor already serves battery natively', () => {
     bindings.current = {
@@ -817,14 +855,22 @@ describe('CustomizeTab — battery on a sensor (D944)', () => {
       },
     }
     renderSensor()
-    expect(screen.queryByRole('heading', { name: 'Battery' })).toBeNull()
-    expect(screen.queryByTestId('scalar-add-battery')).toBeNull()
+    expect(screen.getByTestId('customize-table').textContent ?? '').not.toMatch(/Battery/)
+    expect(screen.queryByTestId('customize-table-add-battery.level')).toBeNull()
   })
 })
 
-describe('CustomizeTab — the Motion card (spec U8, D676)', () => {
-  const motion = (): HTMLElement | null => screen.queryByRole('heading', { name: 'Motion' })
-  it('a camera whose sensor read answered is offered the Motion card', () => {
+describe('CustomizeTab — the Motion row (spec U8, D676)', () => {
+  const answeredNone: Query = {
+    status: 'success',
+    data: { state: 'loaded', view: null },
+    refetch: vi.fn(async () => undefined),
+  }
+  beforeEach(() => {
+    customization.current = answeredNone
+  })
+  const motion = (): HTMLElement | null => screen.queryByText('Motion')
+  it('a camera whose sensor read answered is offered the Motion row', () => {
     device.current = CAMERA
     cameraStatus.current = {
       status: 'success',

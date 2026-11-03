@@ -13,6 +13,11 @@ export interface ConfigCardProps {
   readonly device: DeviceInfo
 }
 
+export interface ConfigCustomizeListProps extends ConfigCardProps {
+  /** Render only this cap's editor (the Customize table opens one at a time). */
+  readonly onlyCap?: string
+}
+
 const CONFIG_CARDS: Readonly<Record<string, ComponentType<ConfigCardProps>>> = {
   remote: RemoteExtensionCard,
   'fan-presets': FanPresetsExtensionCard,
@@ -32,8 +37,9 @@ export function configCardCaps(deviceType: string): readonly string[] {
   return caps
 }
 
-export function ConfigCustomizeList({ device }: ConfigCardProps): ReactNode {
+export function ConfigCustomizeList({ device, onlyCap }: ConfigCustomizeListProps): ReactNode {
   return configCardCaps(device.type).map((cap) => {
+    if (onlyCap !== undefined && cap !== onlyCap) return null
     const Card = CONFIG_CARDS[cap]
     return Card === undefined ? null : <Card key={cap} device={device} />
   })

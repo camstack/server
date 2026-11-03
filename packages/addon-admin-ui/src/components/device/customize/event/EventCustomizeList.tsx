@@ -27,6 +27,8 @@ export interface EventCustomizeListProps {
   readonly handle: CustomizationHandle
   readonly facts: AssignmentFacts
   readonly sensors: CameraSensorsRead
+  /** Render only this cap's card (the Customize table opens one at a time). */
+  readonly onlyCap?: string
 }
 
 function targetOf(cap: string, id: string): CustomizeCatalogTarget | null {
@@ -40,11 +42,13 @@ export function EventCustomizeList({
   handle,
   facts,
   sensors,
+  onlyCap,
 }: EventCustomizeListProps): ReactNode {
   const { t } = useTranslation()
   return (
     <>
       {eventCardTargets().map((card) => {
+        if (onlyCap !== undefined && card.cap !== onlyCap) return null
         const view = card.pulse ?? card.span
         if (view === null) return null
         if (!view.deviceTypes.includes(device.type)) return null

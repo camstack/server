@@ -2626,7 +2626,9 @@
       "caps": {
         "battery": "Batteria",
         "running-state": "In esecuzione",
-        "power-meter": "Potenza ed energia"
+        "power-meter": "Potenza ed energia",
+        "power-source": "Fonte di alimentazione",
+        "lock-control": "Contatto porta"
       },
       "add": "+ Aggiungi",
       "change": "Cambia",
@@ -2792,7 +2794,6 @@
     "sourceSelector": {
       "pickDevice": "Scegli la sorgente per {{title}}",
       "notCompatibleDevices": "{{count}} non compatibili",
-      "otherValues": "Altri valori (non compatibili)",
       "direct": "diretto",
       "withConversion": "con {{name}}",
       "backToDevices": "Torna ai dispositivi",
@@ -2814,6 +2815,48 @@
       "pickTitle": "Collega azioni a {{name}}",
       "pickHint": "Scegli le azioni da collegare. Non viene scelto nulla al posto tuo.",
       "addN": "Aggiungi {{count}}"
+    },
+    "table": {
+      "title": "Personalizzazioni",
+      "add": "+ Aggiungi personalizzazione",
+      "addAria": "Aggiungi una personalizzazione",
+      "col": {
+        "item": "Voce",
+        "value": "Valore",
+        "source": "Origine",
+        "actions": "Azioni"
+      },
+      "section": {
+        "power": "Alimentazione",
+        "readings": "Letture",
+        "events": "Eventi",
+        "lists": "Elenchi",
+        "extensions": "Estensioni"
+      },
+      "caps": {
+        "battery": "Batteria",
+        "consumables": "Materiali di consumo",
+        "doorbell": "Campanello",
+        "fan-presets": "Preset ventola",
+        "lock-control": "Contatto porta",
+        "motion": "Movimento",
+        "power-meter": "Potenza ed energia",
+        "power-source": "Fonte di alimentazione",
+        "remote": "Telecomando",
+        "running-state": "In funzione"
+      },
+      "edit": "Modifica",
+      "editWhat": "Modifica {{title}}",
+      "remove": "Rimuovi",
+      "manage": "Gestisci",
+      "close": "Chiudi",
+      "empty": "Nessuna personalizzazione. Usa “+ Aggiungi personalizzazione” per collegare un valore di un altro dispositivo.",
+      "nothingToAdd": "Ogni personalizzazione applicabile a questo dispositivo è già collegata.",
+      "sourceMissing": "Dispositivo di origine mancante",
+      "otherFormula": "Impostata in Avanzate",
+      "customized": "Personalizzato",
+      "configured": "Estensione",
+      "sourceOf": "{{name}} · {{field}}"
     }
   },
   "compositionEditor": {
