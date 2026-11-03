@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.485] - 2026-11-03
+
 ### Changed
 
 - A media player can step its volume and channel (volumeUp, volumeDown, channelUp, channelDown) and be turned on or off, and a composition may serve it through the remote

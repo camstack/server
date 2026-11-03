@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.747] - 2026-11-03
+
 ### Changed
 
 - The media-player routes include power and volume/channel steps

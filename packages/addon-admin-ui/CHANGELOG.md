@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.565] - 2026-11-03
+
 ### Changed
 
 - Infrared TVs get a Remote button on the device page, a per-button command panel with Test in the remote editor, layout edit shortcuts, readable binding targets and Samsung BN59-01315 and Hisense ERF3 layouts

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.654] - 2026-11-03
+
 ### Changed
 
 - A Home Assistant media player supports turn on/off and stepped volume and channel, and declares them as features

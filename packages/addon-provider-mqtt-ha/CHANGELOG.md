@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.34] - 2026-11-03
+
 ### Changed
 
 - MQTT discovery no longer loses its broker session when it starts before the MQTT broker is ready, raises a connection-lost alert when the broker is unreachable or refuses the login, and shows a switch that never reported as unknown instead of off

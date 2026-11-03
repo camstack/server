@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.153] - 2026-11-03
+
 ### Changed
 
 - The addon-wide default username and password are removed and the stored password is cleared from the keychain; discovered cameras are no longer pre-filled with them, so enter each camera's credentials when adopting it
