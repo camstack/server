@@ -10,6 +10,8 @@ export const MqttBrokerBodySchema = entryBody({
   password: z.string().optional().meta({ secret: true }),
   clientIdPrefix: z.string().optional(),
   onboard: mqttOnboardDescriptorSchema.optional(),
+  /** The instance's own switch (D996). Absent means on. */
+  enabled: z.boolean().optional(),
 })
 export type MqttBrokerBody = z.infer<typeof MqttBrokerBodySchema>
 

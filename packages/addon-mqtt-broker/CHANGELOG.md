@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- External MQTT brokers are now integration instances: they list on the Integrations page, an instance can be switched off, and the old settings list is migrated into records and removed.
+
 ## [1.2.148] - 2026-11-01
 
 ### Changed

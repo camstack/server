@@ -18,6 +18,7 @@ function rowToEntry(id: string, data: MqttBrokerBody): MqttExternalBrokerEntry |
     password: data.password,
     clientIdPrefix: data.clientIdPrefix,
     onboard: data.onboard,
+    enabled: data.enabled,
   })
   return parsed.success ? parsed.data : null
 }
@@ -57,7 +58,7 @@ export class MqttBrokerStore {
       if (!nextIds.has(row.id)) await this.kind.delete(row.id)
     }
     for (const entry of entries) {
-      const { id, name, url, username, password, clientIdPrefix, onboard } = entry
+      const { id, name, url, username, password, clientIdPrefix, onboard, enabled } = entry
       const body = {
         name,
         url,
@@ -65,6 +66,7 @@ export class MqttBrokerStore {
         ...(password === undefined ? {} : { password }),
         ...(clientIdPrefix === undefined ? {} : { clientIdPrefix }),
         ...(onboard === undefined ? {} : { onboard }),
+        ...(enabled === undefined ? {} : { enabled }),
       }
       const parsed = mqttBrokersEntryKind.schema.safeParse(body)
       if (!parsed.success) throw new Error(`invalid MQTT broker '${id}': ${parsed.error.message}`)

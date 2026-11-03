@@ -22,8 +22,8 @@ describe('MqttBrokerAddon settings scoped to the broker cap', () => {
     expect(sectionIds('broker')).toContain('mqtt-broker-embedded')
   })
 
-  it('keeps every section on the addon’s own page', () => {
-    expect(sectionIds()).toContain('mqtt-broker-external')
+  it('draws no editor for the external brokers on the addon’s own page either: they are integration instances', () => {
+    expect(sectionIds()).not.toContain('mqtt-broker-external')
     expect(sectionIds()).toContain('mqtt-broker-embedded')
   })
 })

@@ -62,7 +62,7 @@ this column exists to stop.
 | `metrics-native` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `metrics-provider` |
 | `model-studio` | `@camstack/addon-model-studio` | system | own runner | `any-node` | `ml` | — | `addon-pages-source` `custom-model-registry` `model-convert` `node-removal-hook` |
 | `motion-wasm` | `@camstack/addon-pipeline` | pipeline | own runner | `any-node` | `detection` | — | `motion-detection` |
-| `mqtt-broker` | `@camstack/addon-mqtt-broker` | messaging | own runner | `hub-only` | — | — | `broker` `mqtt-broker` |
+| `mqtt-broker` | `@camstack/addon-mqtt-broker` | messaging | own runner | `hub-only` | — | — | `broker` `integration-instances` `mqtt-broker` |
 | `notifiers` | `@camstack/addon-notifiers` | messaging | own runner | `hub-only` | `notifiers` | — | `addon-routes` `notification-output` |
 | `osd-manager` | `@camstack/addon-osd-manager` | system | own runner | `hub-only` | `integrations` | unique | `addon-pages-source` `osd-manager` |
 | `pipeline-analytics` | `@camstack/addon-post-analysis` | analytics | own runner | `any-node` | — | — | `addon-widgets-source` `audio-metrics` `device-removal-hook` `face-gallery` `failure-contribution` `notification-rules` `pipeline-analytics` `plate-gallery` `scene-monitor` `storage-occupancy` `zone-analytics` |

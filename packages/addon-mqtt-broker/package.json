@@ -47,6 +47,9 @@
           },
           {
             "name": "broker"
+          },
+          {
+            "name": "integration-instances"
           }
         ],
         "icon": "assets/icon.svg",
@@ -57,7 +60,7 @@
       "aedes"
     ],
     "requires": {
-      "server": ">=1.2.719"
+      "server": ">=1.2.746"
     }
   },
   "files": [

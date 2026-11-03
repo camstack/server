@@ -67,6 +67,9 @@ export const SPEC_CONFIG_OVERRIDES: Readonly<Record<string, Readonly<Record<stri
   '@camstack/addon-smtp-nodemailer': { rootDir: '../..' },
   // The Cloudflare tunnel migration spec mounts the same engine.
   '@camstack/addon-cloudflare': { rootDir: '../..' },
+  // The MQTT broker and Alexa migration specs mount the same engine.
+  '@camstack/addon-mqtt-broker': { rootDir: '../..' },
+  '@camstack/addon-export-alexa': { rootDir: '../..' },
   '@camstack/desktop': { allowJs: true },
 }
 

@@ -44,13 +44,16 @@
 import {
   BaseAddon,
   brokerCapability,
+  defineAddonMigrations,
   EventCategory,
+  integrationInstancesCapability,
   type IBrokerProvider,
   type IMqttBrokerProvider,
   type MqttBrokerInfo,
   type MqttBrokerLiveStatus,
   mqttBrokerCapability,
   type ProviderRegistration,
+  RecordIntegrationInstances,
   type UnifiedBrokerInfo,
 } from '@camstack/types'
 
@@ -85,7 +88,12 @@ import {
   resolveStoredPassword,
   retiredCiphertextPaths,
 } from './retired-ciphertext.js'
-import { mqttBrokersEntryKind } from './broker-record-kinds.js'
+import { type MqttBrokerBody, mqttBrokersEntryKind } from './broker-record-kinds.js'
+import {
+  ADDON_MIGRATIONS,
+  type MqttBrokerMigrationPorts,
+  type MqttBrokerRecordState,
+} from './migrations/index.js'
 import { mqttAclEntryKind, mqttClientEntryKind } from './mqtt-entry-record-kinds.js'
 import { MqttBrokerStore } from './mqtt-broker-store.js'
 import type { MqttExternalBrokerEntry } from './mqtt-external-broker-entry.js'
@@ -213,7 +221,6 @@ interface EmbeddedBrokerEntry {
  * config keys, mirroring `addon-export-ha-mqtt`.
  */
 interface MqttBrokerConfig {
-  readonly brokers: readonly ExternalBrokerEntry[]
   /** Whether the embedded `aedes` broker should be running. */
   readonly embeddedEnabled: boolean
   /** Stable id for the embedded broker entry — generated lazily. */
@@ -231,7 +238,6 @@ interface MqttBrokerConfig {
 }
 
 const DEFAULT_CONFIG: MqttBrokerConfig = {
-  brokers: [],
   embeddedEnabled: false,
   embeddedId: '',
   embeddedPort: DEFAULT_EMBEDDED_PORT,
@@ -254,18 +260,16 @@ interface EmbeddedRuntime {
   credentialsSnapshot: ReadonlyMap<string, string>
 }
 
-/** The section that edits `config.brokers`, the same store the broker cap lists. */
-const EXTERNAL_BROKERS_SECTION_ID = 'mqtt-broker-external'
-
 export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
   private embeddedRuntime: EmbeddedRuntime | null = null
   /** Per-entry onboard `aedes` runtimes, keyed by `ExternalBrokerEntry.id`. */
   private onboardRuntimes = new Map<string, EmbeddedRuntime>()
   private probeCache: BrokerProbeCache | null = null
   private brokerStore: MqttBrokerStore | null = null
+  private instances: RecordIntegrationInstances<MqttBrokerBody> | null = null
   private clientStore: MqttClientStore | null = null
   private aclStore: MqttAclStore | null = null
-  /** External broker rows (records when B2 is live, else settings mirror). */
+  /** The external broker rows: the `brokers` records, secrets resolved. */
   private activeExternalBrokers: readonly ExternalBrokerEntry[] = []
   private activeEmbeddedClients: readonly EmbeddedClientEntry[] = []
   private activeEmbeddedAcl: readonly EmbeddedAclEntry[] = []
@@ -274,23 +278,23 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
     super({ ...DEFAULT_CONFIG })
   }
 
-  private async loadPersistedExternalBrokers(): Promise<readonly ExternalBrokerEntry[]> {
-    const store = this.brokerStore
-    if (store !== null) {
-      const fromRecords = await store.listResolved()
-      if (fromRecords.length > 0) return fromRecords
-    }
-    return this.config.brokers
+  private requireBrokerStore(): MqttBrokerStore {
+    if (this.brokerStore === null) throw new Error('mqtt-broker: the broker records are not open')
+    return this.brokerStore
   }
 
   private async persistExternalBrokers(entries: readonly ExternalBrokerEntry[]): Promise<void> {
     this.activeExternalBrokers = [...entries]
-    const store = this.brokerStore
-    if (store !== null) {
-      await store.replaceAll(entries)
-      return
-    }
-    await this.updateGlobalSettings({ brokers: entries })
+    await this.requireBrokerStore().replaceAll(entries)
+  }
+
+  /** Re-read the broker records after an instance create / update / delete / switch. */
+  private async refreshExternalBrokers(): Promise<void> {
+    const before = new Set(this.activeExternalBrokers.map((b) => b.id))
+    this.activeExternalBrokers = await this.requireBrokerStore().listResolved()
+    const now = new Set(this.activeExternalBrokers.map((b) => b.id))
+    for (const id of before) if (!now.has(id)) this.probeCache?.evict(id)
+    await this.reconcileOnboardRuntimes()
   }
 
   private async loadEmbeddedClients(): Promise<readonly EmbeddedClientEntry[]> {
@@ -323,8 +327,6 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
   }
 
   protected async onInitialize(): Promise<ProviderRegistration[]> {
-    this.reportRetiredCiphertext()
-
     const records = this.ctx.records
     if (records === undefined) {
       throw new Error('mqtt-broker: ctx.records is required (hub-only addon)')
@@ -337,11 +339,19 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
     this.brokerStore = MqttBrokerStore.of(records)
     this.clientStore = MqttClientStore.of(records)
     this.aclStore = MqttAclStore.of(records)
-    this.activeExternalBrokers = await this.loadPersistedExternalBrokers()
-    if ((await this.brokerStore.listResolved()).length === 0 && this.config.brokers.length > 0) {
-      await this.brokerStore.replaceAll(this.config.brokers)
-      this.activeExternalBrokers = await this.loadPersistedExternalBrokers()
-    }
+    this.instances = new RecordIntegrationInstances(records, mqttBrokersEntryKind, {
+      description: { instanceMode: 'multiple', kind: 'brokers', canTest: false },
+      formSchema: () => this.brokerForm(),
+      initialBody: (name): MqttBrokerBody => ({ name, url: 'mqtt://' }),
+      configured: (body) => body.url.trim().length > 0 && body.url.trim() !== 'mqtt://',
+      onChanged: async () => {
+        await this.refreshExternalBrokers()
+      },
+    })
+    // The addon checks the old settings list against the records, then serves the records.
+    await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, this.migrationPorts()))
+    this.activeExternalBrokers = await this.brokerStore.listResolved()
+    this.reportRetiredCiphertext()
     this.activeEmbeddedClients = await this.loadEmbeddedClients()
     this.activeEmbeddedAcl = await this.loadEmbeddedAcl()
     if (
@@ -417,6 +427,7 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
     return [
       { capability: mqttBrokerCapability, provider },
       { capability: brokerCapability, provider: unifiedProvider },
+      { capability: integrationInstancesCapability, provider: this.instances.toProvider() },
     ]
   }
 
@@ -581,7 +592,7 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
   }
 
   protected async onConfigChanged(): Promise<void> {
-    this.activeExternalBrokers = await this.loadPersistedExternalBrokers()
+    this.activeExternalBrokers = await this.requireBrokerStore().listResolved()
     await this.syncEmbeddedEntriesFromConfig()
 
     // Reconcile per-entry onboard brokers first (independent of the legacy
@@ -684,6 +695,9 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
   } {
     const external = this.activeExternalBrokers.find((b) => b.id === id)
     if (external) {
+      if (external.enabled === false) {
+        throw new Error(`mqtt-broker: broker '${id}' is switched off`)
+      }
       // Throws for an enc:v1 leftover that cannot be decrypted — never
       // connects without the password it stands for.
       const password = this.storedPassword(external.password)
@@ -1018,7 +1032,9 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
    * entry disappeared, and respawn runtimes whose port changed.
    */
   private async reconcileOnboardRuntimes(): Promise<void> {
-    const desiredEntries = this.activeExternalBrokers.filter(hasOnboard)
+    const desiredEntries = this.activeExternalBrokers
+      .filter(hasOnboard)
+      .filter((b) => b.enabled !== false)
     const desired = desiredEntries.map((b) => ({ id: b.id, port: b.onboard.port }))
     const runningIds = [...this.onboardRuntimes.keys()]
     const portById = new Map<string, number>()
@@ -1256,7 +1272,7 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
     // status comes from the runtime map, not the external probe loop.
     const out: { id: string; url: string; username?: string; password?: string }[] = []
     for (const b of this.activeExternalBrokers) {
-      if (b.onboard !== undefined) continue
+      if (b.onboard !== undefined || b.enabled === false) continue
       let password: string | undefined
       try {
         password = this.storedPassword(b.password)
@@ -1298,7 +1314,10 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
    * here (no migration code ships): the operator's one-off `mqtt` step does.
    */
   private reportRetiredCiphertext(): void {
-    const paths = retiredCiphertextPaths(this.config)
+    const paths = retiredCiphertextPaths({
+      brokers: this.activeExternalBrokers,
+      embeddedPassword: this.config.embeddedPassword,
+    })
     if (paths.length === 0) return
     const unreadable: string[] = []
     const values = [
@@ -1334,97 +1353,84 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
     )
   }
 
-  // ── Settings UI ─────────────────────────────────────────────────
+  // ── Instance form ─────────────────────────────────────────────────
 
-  /**
-   * Under the unified `broker` cap (Connectivity → MQTT Broker) the external
-   * brokers are the CONNECTIONS that page's own panel lists and edits through
-   * `broker.list` / `add` / `setSettings`, all over `config.brokers`. Drawing
-   * the editable array as well would put two "Add broker" editors for ONE
-   * store on one page, so that scope leaves it out; the addon's full page (no
-   * cap) keeps it.
-   */
-  protected globalSettingsSchema(cap?: string) {
-    const schema = this.fullSettingsSchema()
-    if (cap !== brokerCapability.name) return schema
-    return {
-      ...schema,
-      sections: schema.sections.filter((s) => s.id !== EXTERNAL_BROKERS_SECTION_ID),
-    }
-  }
-
-  private fullSettingsSchema() {
+  private brokerForm() {
     return this.schema({
       sections: [
         {
-          id: EXTERNAL_BROKERS_SECTION_ID,
-          title: 'External brokers',
+          id: 'broker',
+          title: 'External broker',
           description:
-            'Brokers running outside CamStack (mosquitto, EMQX, HiveMQ, cloud bridges, …). Passwords are kept in the keychain.',
+            'A broker running outside CamStack (mosquitto, EMQX, HiveMQ, cloud bridges, …). The password is kept in the keychain.',
           columns: 1,
           fields: [
             {
-              type: 'editable-array',
-              key: 'brokers',
-              label: 'External brokers',
-              labelKey: 'mqtt-broker:fullSettings.brokers.label',
-              emptyMessage: 'No external brokers configured.',
-              addLabel: 'Add broker',
-              rowTitleTemplate: '{name} — {url}',
-              defaultItem: {
-                id: '',
-                name: '',
-                url: 'mqtt://',
-                username: '',
-                password: '',
-                clientIdPrefix: '',
-              },
-              itemFields: [
-                {
-                  type: 'text',
-                  key: 'id',
-                  label: 'ID',
-                  labelKey: 'mqtt-broker:fullSettings.brokers.id.label',
-                  description: 'Auto-generated; leave blank when adding new rows.',
-                  descriptionKey: 'mqtt-broker:fullSettings.brokers.id.description',
-                },
-                {
-                  type: 'text',
-                  key: 'name',
-                  label: 'Display name',
-                  labelKey: 'mqtt-broker:fullSettings.brokers.name.label',
-                },
-                {
-                  type: 'text',
-                  key: 'url',
-                  label: 'Broker URL',
-                  labelKey: 'mqtt-broker:fullSettings.brokers.url.label',
-                  description: 'mqtt://, mqtts://, ws://, wss://',
-                  descriptionKey: 'mqtt-broker:fullSettings.brokers.url.description',
-                },
-                {
-                  type: 'text',
-                  key: 'username',
-                  label: 'Username',
-                  labelKey: 'mqtt-broker:fullSettings.brokers.username.label',
-                },
-                {
-                  type: 'password',
-                  key: 'password',
-                  label: 'Password',
-                  labelKey: 'mqtt-broker:fullSettings.brokers.password.label',
-                  showToggle: true,
-                },
-                {
-                  type: 'text',
-                  key: 'clientIdPrefix',
-                  label: 'Client id prefix',
-                  labelKey: 'mqtt-broker:fullSettings.brokers.clientIdPrefix.label',
-                },
-              ],
+              type: 'text',
+              key: 'url',
+              label: 'Broker URL',
+              labelKey: 'mqtt-broker:fullSettings.brokers.url.label',
+              description: 'mqtt://, mqtts://, ws://, wss://',
+              descriptionKey: 'mqtt-broker:fullSettings.brokers.url.description',
+              required: true,
+            },
+            {
+              type: 'text',
+              key: 'username',
+              label: 'Username',
+              labelKey: 'mqtt-broker:fullSettings.brokers.username.label',
+            },
+            {
+              type: 'password',
+              key: 'password',
+              label: 'Password',
+              labelKey: 'mqtt-broker:fullSettings.brokers.password.label',
+              showToggle: true,
+            },
+            {
+              type: 'text',
+              key: 'clientIdPrefix',
+              label: 'Client id prefix',
+              labelKey: 'mqtt-broker:fullSettings.brokers.clientIdPrefix.label',
             },
           ],
         },
+      ],
+    })
+  }
+
+  /** The ports of the settings migrations: the old `brokers` key in, the records read. */
+  private migrationPorts(): MqttBrokerMigrationPorts {
+    const handle = this.ctx.records?.kind(mqttBrokersEntryKind)
+    if (handle === undefined) throw new Error('records are not available')
+    return {
+      // The value as stored, markers unresolved: the plan's precondition is that very row.
+      readRawBrokers: async (): Promise<unknown> =>
+        (await this.ctx.settings?.readAddonStore())?.['brokers'],
+      readRecords: async (): Promise<ReadonlyMap<string, MqttBrokerRecordState>> => {
+        const page = await handle.query({ limit: 1000 })
+        return new Map(
+          page.records.map((r): [string, MqttBrokerRecordState] => [
+            r.id,
+            { hasPassword: (r.data.password ?? '').length > 0 },
+          ]),
+        )
+      },
+      warn: (message: string) => {
+        this.ctx.logger.warn(message, { tags: { topic: 'mqtt-broker', phase: 'migration' } })
+      },
+    }
+  }
+
+  // ── Settings UI ─────────────────────────────────────────────────
+
+  /**
+   * The embedded broker, its credentials and the ACL. The external brokers are records, listed
+   * on the Brokers page and edited as integration instances (`brokerForm`).
+   */
+  protected globalSettingsSchema() {
+    return this.schema({
+      sections: [
         {
           id: 'mqtt-broker-embedded',
           title: 'Embedded broker',
