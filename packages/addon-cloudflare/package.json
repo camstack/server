@@ -56,6 +56,9 @@
         "capabilities": [
           {
             "name": "network-access"
+          },
+          {
+            "name": "integration-instances"
           }
         ],
         "icon": "assets/icon.svg",
@@ -84,7 +87,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.742"
+      "server": ">=1.2.746"
     }
   },
   "files": [

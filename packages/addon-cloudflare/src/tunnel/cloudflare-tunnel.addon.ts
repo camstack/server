@@ -1,6 +1,17 @@
-import { userError } from '@camstack/types'
-import type { AddonInitResult } from '@camstack/types'
-import { BaseAddon, networkAccessCapability } from '@camstack/types'
+import {
+  type AddonInitResult,
+  BaseAddon,
+  type ConfigUISchema,
+  type ProviderRegistration,
+  RecordIntegrationInstances,
+  RevConflictError,
+  defineAddonMigrations,
+  integrationInstancesCapability,
+  isSecretMarker,
+  networkAccessCapability,
+  normalizeNodeId,
+  userError,
+} from '@camstack/types'
 import type { z } from 'zod'
 import * as path from 'node:path'
 import { CloudflareTunnelService, type CloudflareTunnelConfig } from './cloudflare-tunnel'
@@ -9,6 +20,18 @@ import { removeTokenFile, tokenFileIn } from './cloudflared-invocation'
 import { CloudflareApi } from './cloudflare-api'
 import { cloudflareTunnelActions, type CloudflareTunnelActions } from './cloudflare-actions'
 import { shouldAutoStartTunnel } from './auto-start'
+import {
+  ADDON_MIGRATIONS,
+  type CloudflareTunnelCataloguePorts,
+  type CloudflareTunnelRecordState,
+} from './migrations/index'
+import {
+  CLOUDFLARE_TUNNEL_DEFAULT_BODY,
+  CLOUDFLARE_TUNNEL_RECORD_ID,
+  type CloudflareTunnelBody,
+  cloudflareTunnelsKind,
+} from './tunnel-record-kinds'
+import { DEFAULT_NODE_ORIGIN, legacySettingsOf, nodeOriginOf, settingsOf } from './tunnel-settings'
 
 // Re-export under the conventional name so the kernel addon-loader can
 // discover the catalog directly off the entry module (the manifest's
@@ -16,8 +39,15 @@ import { shouldAutoStartTunnel } from './auto-start'
 // would be invisible to the hub).
 export { cloudflareTunnelActions as customActions } from './cloudflare-actions'
 
+type CloudflareTunnelAddonConfig = Readonly<Record<string, unknown>>
+
 /**
  * Cloudflare Tunnel — exposes CamStack via Cloudflare's network.
+ *
+ * The connection is ONE `tunnels` record named after the addon, edited on the Remote Access
+ * page through `integration-instances` (D985, D996); where the tunnel forwards to is a node
+ * setting of the `network-access` cap (D986). The migrations of `./migrations` moved the old
+ * settings; while one was tolerated the old keys are still read.
  *
  * Two flows, both driven by a single `start()` button on the Remote
  * Access page:
@@ -36,47 +66,27 @@ export { cloudflareTunnelActions as customActions } from './cloudflare-actions'
  * `listZones` is exposed as a customAction so the settings form's
  * `addon-action-select` zone picker can populate options live.
  */
-export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelConfig> {
-  /** The named-tunnel JWT the addon provisions itself — kept in the keychain (D787). */
-  protected override readonly secretStatePaths = ['customTunnelToken']
+export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelAddonConfig> {
   private service: CloudflareTunnelService | null = null
+  private instances: RecordIntegrationInstances<CloudflareTunnelBody> | null = null
+  /**
+   * What the tunnel runs on: the record's body plus this node's origin. Until the record exists
+   * (a tolerated migration, a fresh install) it is the old settings, or the defaults.
+   */
+  private settings: CloudflareTunnelConfig = settingsOf(
+    { name: '', ...CLOUDFLARE_TUNNEL_DEFAULT_BODY },
+    DEFAULT_NODE_ORIGIN,
+  )
+  /** The instance's own switch; an absent record reads as on (a fresh install starts quick). */
+  private enabled = true
+  /** Whether the settings were read at all: a read that did not answer is no operator choice. */
+  private settingsLoaded = false
+  private secretsWarned = false
 
   constructor() {
-    // ALL config keys must appear here — `BaseAddon.resolveConfig`
-    // only re-reads keys present in `defaults`, anything else stays
-    // stuck on its constructor value regardless of what's on disk.
-    // Custom-mode fields default to empty strings so the type guard
-    // in `handleStart` ("token / zoneId / hostname missing") doubles
-    // as a "filled by operator?" check.
-    super({
-      mode: 'quick',
-      localPort: 0, // 0 = auto-detect from CAMSTACK_PORT / PORT env at start
-      localPortMode: 'default' as 'default' | 'custom',
-      localHost: '', // empty = auto-detect from local-network cap at start
-      // TLS handling on the cloudflared→origin hop. Camstack's hub runs
-      // HTTPS with a self-signed cert, so `noTLSVerify=true` is the
-      // sensible default — operators with a properly-issued cert on the
-      // origin can disable it.
-      noTLSVerify: true,
-      // Optional SNI to send during the TLS handshake to the origin.
-      // Empty = match the URL host (the LAN IP). Useful when the origin
-      // cert is issued for a specific hostname (e.g. `camstack.local`).
-      originServerName: '',
-      // Optional Host header override sent to the origin. Empty = pass
-      // the public-facing hostname through. Needed when the origin
-      // routes by Host header (rare for camstack).
-      httpHostHeader: '',
-      customApiToken: '',
-      customAccountId: '',
-      customTunnelId: '',
-      customTunnelToken: '',
-      customZoneId: '',
-      customZoneName: '',
-      customDnsRecordId: '',
-      customHostname: 'camstack',
-      debugLogging: false,
-      protocol: 'auto' as 'auto' | 'http2' | 'quic',
-    })
+    // The addon keeps no setting of its own: the tunnel is a record and where it forwards to is
+    // a node setting (D986).
+    super({})
   }
 
   /**
@@ -88,14 +98,14 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelConfig> {
    */
   private resolveLocalPort(): number {
     // `localPortMode === 'custom'` is the only path that honours
-    // `this.config.localPort`. Default mode auto-resolves regardless of
+    // `this.settings.localPort`. Default mode auto-resolves regardless of
     // whatever value sits in `localPort` (stale data from older forms).
     if (
-      this.config.localPortMode === 'custom' &&
-      this.config.localPort &&
-      this.config.localPort > 0
+      this.settings.localPortMode === 'custom' &&
+      this.settings.localPort &&
+      this.settings.localPort > 0
     ) {
-      return this.config.localPort
+      return this.settings.localPort
     }
     const camstack = Number.parseInt(process.env['CAMSTACK_PORT'] ?? '', 10)
     if (Number.isFinite(camstack) && camstack > 0) return camstack
@@ -152,30 +162,45 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelConfig> {
   // (the service already emits them) and tracks the hostname there.
 
   protected async onInitialize(): Promise<AddonInitResult<CloudflareTunnelActions>> {
-    // One-shot migration — earlier builds let operators point the tunnel
-    // at the Vite admin-ui dev port (3001). Vite blocks unknown hosts so
-    // the public domain returned "Cloudflare Tunnel error". Reset
-    // back to "auto" (=`resolveLocalPort()` → CAMSTACK_PORT / 4443) so
-    // the next start syncs the correct hub backend port.
-    if (this.config.localPort === 3001) {
-      this.ctx.logger.warn('Resetting stale localPort=3001 (Vite admin-ui dev port) → 0 (auto)', {
-        tags: { topic: 'tunnel', phase: 'localport-migration' },
-      })
-      await this.updateGlobalSettings({ localPort: 0 }).catch(() => undefined)
+    const records = this.ctx.records
+    if (records === undefined) {
+      throw new Error('cloudflare-tunnel needs ctx.records — check execution.placement (hub-only)')
     }
+    await records.declare({ tunnels: cloudflareTunnelsKind })
+    this.instances = new RecordIntegrationInstances(records, cloudflareTunnelsKind, {
+      description: {
+        instanceMode: 'single',
+        kind: 'tunnels',
+        canTest: false,
+      },
+      formSchema: () => this.tunnelForm(),
+      initialBody: (name) => ({ ...CLOUDFLARE_TUNNEL_DEFAULT_BODY, name }),
+      configured: (body) =>
+        body.mode === 'quick' ||
+        (body.customHostname.length > 0 && (body.customTunnelToken ?? '') !== ''),
+      onChanged: async (id) => {
+        if (id === CLOUDFLARE_TUNNEL_RECORD_ID) await this.reload()
+      },
+    })
+    // The addon moves the old settings first, then serves the record.
+    await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, this.migrationPorts()))
+    await this.refresh()
     // A token file can outlive a hard kill (OOM, SIGKILL) of the previous
     // process; nothing is running yet, so drop it before anything spawns.
     removeTokenFile(tokenFileIn(this.tokenFileDir()))
     const localHost = await this.resolveLocalHost()
     this.service = new CloudflareTunnelService(
-      { ...this.config, localPort: this.resolveLocalPort(), localHost },
+      { ...this.settings, localPort: this.resolveLocalPort(), localHost },
       this.ctx.logger,
       this.ctx.eventBus,
       () => this.resolveCloudflared(),
       this.tokenFileDir(),
     )
     this.ctx.logger.info('Cloudflare Tunnel addon initialized', {
-      meta: { mode: this.config.mode, hasCustomToken: !!this.config.customTunnelToken },
+      meta: {
+        mode: this.settings.mode,
+        hasCustomToken: !!this.settings.customTunnelToken,
+      },
     })
 
     // Wrap the service so `start()` runs custom-mode provisioning lazily
@@ -192,7 +217,7 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelConfig> {
     // this, an addon restart (deploy, config change that respawns the
     // runner) leaves the tunnel down until the operator manually re-hits
     // Start — and a config-change like flipping `debugLogging` is then a
-    // no-op because `onConfigChanged` sees `wasRunning: false`.
+    // no-op because `reload` sees `wasRunning: false`.
     if (this.isRunCapable()) {
       // Fire-and-forget: any failure is already logged inside handleStart,
       // and we don't want to block `onInitialize` on a tunnel handshake.
@@ -202,15 +227,22 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelConfig> {
           tags: { topic: 'tunnel', phase: 'auto-start-error' },
         })
       })
-    } else if (!this.settingsStoreReady) {
+    } else if (!this.settingsLoaded) {
       this.ctx.logger.warn(
-        'boot auto-start skipped — settings store did not answer; defaults are not an operator choice',
+        'boot auto-start skipped — the settings did not answer; defaults are not an operator choice',
         { tags: { topic: 'tunnel', phase: 'auto-start-skipped' } },
       )
     }
 
+    const providers: ProviderRegistration[] = [
+      { capability: networkAccessCapability, provider },
+      {
+        capability: integrationInstancesCapability,
+        provider: this.instances.toProvider(),
+      },
+    ]
     return {
-      providers: [{ capability: networkAccessCapability, provider }],
+      providers,
       customActions: cloudflareTunnelActions,
       actionHandlers: {
         validateToken: async (input) => this.validateToken(input),
@@ -229,10 +261,10 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelConfig> {
    *  warrants a respawn even when no instance was previously running. */
   private isRunCapable(): boolean {
     return shouldAutoStartTunnel({
-      settingsStoreReady: this.settingsStoreReady,
-      mode: this.config.mode,
-      hasCustomToken: !!this.config.customTunnelToken,
-      hasCustomHostname: !!this.config.customHostname,
+      settingsStoreReady: this.settingsLoaded && this.enabled,
+      mode: this.settings.mode,
+      hasCustomToken: !!this.settings.customTunnelToken,
+      hasCustomHostname: !!this.settings.customHostname,
     })
   }
 
@@ -243,7 +275,16 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelConfig> {
     }
   }
 
+  /** A write to a node row of the old store (the origin) is a change of the tunnel too. */
   protected async onConfigChanged(): Promise<void> {
+    await this.reload()
+  }
+
+  private reloads = 0
+
+  private async reload(): Promise<void> {
+    this.reloads += 1
+    await this.refresh()
     // Rebuild the service against the new config so `start()` picks up
     // the latest mode + persisted custom-tunnel state, then respawn the
     // tunnel whenever the config is run-capable — even when this addon
@@ -258,7 +299,7 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelConfig> {
     }
     const localHost = await this.resolveLocalHost()
     this.service = new CloudflareTunnelService(
-      { ...this.config, localPort: this.resolveLocalPort(), localHost },
+      { ...this.settings, localPort: this.resolveLocalPort(), localHost },
       this.ctx.logger,
       this.ctx.eventBus,
       () => this.resolveCloudflared(),
@@ -266,7 +307,10 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelConfig> {
     )
     if (this.isRunCapable()) {
       this.ctx.logger.info('config changed — (re-)spawning tunnel', {
-        meta: { mode: this.config.mode, debugLogging: this.config.debugLogging },
+        meta: {
+          mode: this.settings.mode,
+          debugLogging: this.settings.debugLogging,
+        },
         tags: { topic: 'tunnel', phase: 'config-reload' },
       })
       try {
@@ -296,19 +340,19 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelConfig> {
     //    rule matches the literal hostname so a non-FQDN stays
     //    permanently unreachable until re-provision.
     const needsReprovision =
-      this.config.mode === 'custom' &&
-      (!this.config.customTunnelToken || !this.config.customHostname.includes('.'))
+      this.settings.mode === 'custom' &&
+      (!this.settings.customTunnelToken || !this.settings.customHostname.includes('.'))
     if (needsReprovision) {
       this.ctx.logger.info('start: custom mode needs (re)provisioning', {
         meta: {
-          hasToken: !!this.config.customTunnelToken,
-          hostname: this.config.customHostname,
+          hasToken: !!this.settings.customTunnelToken,
+          hostname: this.settings.customHostname,
         },
         tags: { topic: 'tunnel', phase: 'auto-provision' },
       })
-      const token = this.config.customApiToken
-      const zoneId = this.config.customZoneId
-      const hostname = this.config.customHostname
+      const token = this.settings.customApiToken
+      const zoneId = this.settings.customZoneId
+      const hostname = this.settings.customHostname
       if (!token || !zoneId || !hostname) {
         const missing = [!token && 'API token', !zoneId && 'zone', !hostname && 'hostname']
           .filter(Boolean)
@@ -328,14 +372,15 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelConfig> {
         token,
         zoneId,
         hostname,
-        localPortMode: this.config.localPort && this.config.localPort > 0 ? 'custom' : 'default',
-        localPort: this.config.localPort || undefined,
+        localPortMode:
+          this.settings.localPort && this.settings.localPort > 0 ? 'custom' : 'default',
+        localPort: this.settings.localPort || undefined,
       })
     } else if (
-      this.config.mode === 'custom' &&
-      this.config.customApiToken &&
-      this.config.customAccountId &&
-      this.config.customTunnelId
+      this.settings.mode === 'custom' &&
+      this.settings.customApiToken &&
+      this.settings.customAccountId &&
+      this.settings.customTunnelId
     ) {
       // Idempotent sync: re-PUT the ingress config on every start so
       // operator-side edits (localPort change, protocol upgrade,
@@ -370,10 +415,14 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelConfig> {
     originServerName?: string
     httpHostHeader?: string
   } {
-    const out: { noTLSVerify?: boolean; originServerName?: string; httpHostHeader?: string } = {}
-    if (this.config.noTLSVerify === true) out.noTLSVerify = true
-    if (this.config.originServerName) out.originServerName = this.config.originServerName
-    if (this.config.httpHostHeader) out.httpHostHeader = this.config.httpHostHeader
+    const out: {
+      noTLSVerify?: boolean
+      originServerName?: string
+      httpHostHeader?: string
+    } = {}
+    if (this.settings.noTLSVerify === true) out.noTLSVerify = true
+    if (this.settings.originServerName) out.originServerName = this.settings.originServerName
+    if (this.settings.httpHostHeader) out.httpHostHeader = this.settings.httpHostHeader
     return out
   }
 
@@ -384,17 +433,17 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelConfig> {
    * for self-signed) propagate without operator action.
    */
   private async syncCustomIngress(): Promise<void> {
-    const token = this.config.customApiToken
-    const accountId = this.config.customAccountId
-    const tunnelId = this.config.customTunnelId
+    const token = this.settings.customApiToken
+    const accountId = this.settings.customAccountId
+    const tunnelId = this.settings.customTunnelId
     if (!token || !accountId || !tunnelId) return
     const api = new CloudflareApi(token)
     const localHost = await this.resolveLocalHost()
     const targetPort =
-      this.config.localPort && this.config.localPort > 0
-        ? this.config.localPort
+      this.settings.localPort && this.settings.localPort > 0
+        ? this.settings.localPort
         : this.resolveLocalPort()
-    const fqdn = this.config.customHostname
+    const fqdn = this.settings.customHostname
     await api.putTunnelConfiguration(accountId, tunnelId, [
       {
         hostname: fqdn,
@@ -447,7 +496,12 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelConfig> {
    * local-network.getPreferred()".
    */
   private async listLocalAddresses(): Promise<{
-    addresses: readonly { value: string; label: string; labelKey?: string; description: string }[]
+    addresses: readonly {
+      value: string
+      label: string
+      labelKey?: string
+      description: string
+    }[]
   }> {
     try {
       const api = this.ctx.api as {
@@ -513,7 +567,7 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelConfig> {
     this.ctx.logger.info('listZones: fetching zones', {
       tags: { topic: 'tunnel', phase: 'list-zones' },
     })
-    const token = input.token ?? this.config.customApiToken
+    const token = input.token ?? this.settings.customApiToken
     if (token.length === 0)
       throw userError(
         'cloudflare.zone-token-missing',
@@ -527,7 +581,9 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelConfig> {
         meta: { count: zones.length },
         tags: { topic: 'tunnel', phase: 'list-zones-ok' },
       })
-      return { zones: zones.map((z) => ({ id: z.id, name: z.name, status: z.status })) }
+      return {
+        zones: zones.map((z) => ({ id: z.id, name: z.name, status: z.status })),
+      }
     } catch (err) {
       this.ctx.logger.error('listZones: fetch failed', {
         meta: { error: err instanceof Error ? err.message : String(err) },
@@ -551,7 +607,11 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelConfig> {
     input: z.infer<CloudflareTunnelActions['enableCustom']['input']>,
   ): Promise<z.infer<CloudflareTunnelActions['enableCustom']['output']>> {
     this.ctx.logger.info('enableCustom: starting', {
-      meta: { hostname: input.hostname, zoneId: input.zoneId, localPort: input.localPort },
+      meta: {
+        hostname: input.hostname,
+        zoneId: input.zoneId,
+        localPort: input.localPort,
+      },
       tags: { topic: 'tunnel', phase: 'enable-start' },
     })
     const api = new CloudflareApi(input.token)
@@ -594,17 +654,17 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelConfig> {
       // tear the old CNAME down — keep the tunnel itself (it gets
       // repointed at the new hostname below).
       if (
-        this.config.customDnsRecordId &&
-        this.config.customZoneId &&
-        this.config.customHostname &&
-        this.config.customHostname.toLowerCase() !== fqdn.toLowerCase()
+        this.settings.customDnsRecordId &&
+        this.settings.customZoneId &&
+        this.settings.customHostname &&
+        this.settings.customHostname.toLowerCase() !== fqdn.toLowerCase()
       ) {
         this.ctx.logger.info('enableCustom: removing previous DNS record (hostname changed)', {
-          meta: { from: this.config.customHostname, to: input.hostname },
+          meta: { from: this.settings.customHostname, to: input.hostname },
           tags: { topic: 'tunnel', phase: 'enable-dns-cleanup' },
         })
         try {
-          await api.deleteDnsRecord(this.config.customZoneId, this.config.customDnsRecordId)
+          await api.deleteDnsRecord(this.settings.customZoneId, this.settings.customDnsRecordId)
         } catch (err) {
           this.ctx.logger.warn('enableCustom: previous DNS cleanup failed (continuing)', {
             meta: { error: err instanceof Error ? err.message : String(err) },
@@ -720,21 +780,25 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelConfig> {
         }
       }
 
-      const patch: Partial<CloudflareTunnelConfig> = {
-        mode: 'custom',
-        // Persist `0` for default-mode so future restarts go through
-        // `resolveLocalPort()` instead of pinning to the once-resolved
-        // value (which would drift if CAMSTACK_PORT changes).
-        localPort: useDefault ? 0 : (input.localPort ?? 0),
-        customAccountId: account.id,
-        customTunnelId: tunnel.id,
-        customTunnelToken: tunnel.token,
-        customZoneId: input.zoneId,
-        customZoneName: zone.name,
-        customDnsRecordId: dns.id,
-        customHostname: fqdn,
-      }
-      await this.updateGlobalSettings(patch)
+      await this.applyConnection(
+        {
+          mode: 'custom',
+          customAccountId: account.id,
+          customTunnelId: tunnel.id,
+          customTunnelToken: tunnel.token,
+          customZoneId: input.zoneId,
+          customZoneName: zone.name,
+          customDnsRecordId: dns.id,
+          customHostname: fqdn,
+        },
+        {
+          // Persist `0` for default-mode so future restarts go through
+          // `resolveLocalPort()` instead of pinning to the once-resolved
+          // value (which would drift if CAMSTACK_PORT changes).
+          localPort: useDefault ? 0 : (input.localPort ?? 0),
+          localPortMode: useDefault ? 'default' : 'custom',
+        },
+      )
 
       this.ctx.logger.info('enableCustom: complete', {
         meta: { tunnelId: tunnel.id, hostname: fqdn },
@@ -774,7 +838,7 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelConfig> {
   ): Promise<z.infer<CloudflareTunnelActions['pruneStaleTunnels']['output']>> {
     const api = new CloudflareApi(input.token)
     const account = await api.getAccount()
-    const activeId = this.config.customTunnelId || null
+    const activeId = this.settings.customTunnelId || null
     const tunnels = await api.listTunnels(account.id, { name: 'camstack' })
     const stale = tunnels.filter((t) => t.id !== activeId)
 
@@ -794,7 +858,10 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelConfig> {
         })
       } catch (err) {
         this.ctx.logger.warn('pruneStaleTunnels: failed to delete tunnel — continuing', {
-          meta: { tunnelId: t.id, error: err instanceof Error ? err.message : String(err) },
+          meta: {
+            tunnelId: t.id,
+            error: err instanceof Error ? err.message : String(err),
+          },
           tags: { topic: 'tunnel', phase: 'prune-delete-failed' },
         })
       }
@@ -805,15 +872,15 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelConfig> {
     // active tunnel id. Only attempt when we actually have an active id
     // + the persisted zone id is set.
     let dnsRepaired = false
-    if (activeId && this.config.customZoneId && this.config.customHostname) {
-      const fqdn = this.config.customHostname.includes('.')
-        ? this.config.customHostname
-        : `${this.config.customHostname}.${this.config.customZoneName}`
-      const existing = await api.findDnsRecord(this.config.customZoneId, fqdn).catch(() => null)
+    if (activeId && this.settings.customZoneId && this.settings.customHostname) {
+      const fqdn = this.settings.customHostname.includes('.')
+        ? this.settings.customHostname
+        : `${this.settings.customHostname}.${this.settings.customZoneName}`
+      const existing = await api.findDnsRecord(this.settings.customZoneId, fqdn).catch(() => null)
       const expected = `${activeId}.cfargotunnel.com`
       if (existing && (existing.type !== 'CNAME' || existing.content !== expected)) {
         try {
-          await api.updateDnsRecord(this.config.customZoneId, existing.id, {
+          await api.updateDnsRecord(this.settings.customZoneId, existing.id, {
             type: 'CNAME',
             content: expected,
             proxied: true,
@@ -825,7 +892,10 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelConfig> {
           })
         } catch (err) {
           this.ctx.logger.warn('pruneStaleTunnels: failed to rewrite CNAME', {
-            meta: { hostname: fqdn, error: err instanceof Error ? err.message : String(err) },
+            meta: {
+              hostname: fqdn,
+              error: err instanceof Error ? err.message : String(err),
+            },
             tags: { topic: 'tunnel', phase: 'prune-dns-repair-failed' },
           })
         }
@@ -842,36 +912,244 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelConfig> {
   private async disableCustom(): Promise<
     z.infer<CloudflareTunnelActions['disableCustom']['output']>
   > {
-    const reset: Partial<CloudflareTunnelConfig> = {
-      mode: 'quick',
-      localHost: '',
-      customAccountId: '',
-      customTunnelId: '',
-      customZoneId: '',
-      customZoneName: '',
-      customDnsRecordId: '',
-      customHostname: 'camstack',
-    }
     this.ctx.logger.info('disableCustom: reset to quick mode', {
       tags: { topic: 'tunnel', phase: 'disable' },
     })
-    await this.updateGlobalSettings(reset)
-    // '' keeps a keychain secret (D787); forgetting the tokens is explicit.
-    await this.clearSecrets(['customTunnelToken', 'customApiToken'])
+    // `null` removes a secret from the record and its keychain entry; forgetting the tokens is
+    // explicit.
+    await this.applyConnection(
+      {
+        mode: 'quick',
+        customAccountId: '',
+        customTunnelId: '',
+        customZoneId: '',
+        customZoneName: '',
+        customDnsRecordId: '',
+        customHostname: 'camstack',
+        customTunnelToken: null,
+        customApiToken: null,
+      },
+      { localHost: '' },
+    )
     return { ok: true }
   }
 
-  protected globalSettingsSchema() {
+  /** The node this addon runs on, as the scoped-settings rows name it. */
+  private localNode(): string {
+    return normalizeNodeId(this.ctx.kernel?.localNodeId)
+  }
+
+  /**
+   * Write what the operator decided: the record fields first, then this node's origin rows.
+   * The rows write reloads the tunnel itself when it changed anything; when it did not, the
+   * reload is done here, so a respawn happens exactly once.
+   */
+  private async applyConnection(
+    fields: Readonly<Record<string, unknown>>,
+    origin: Readonly<Record<string, unknown>>,
+  ): Promise<void> {
+    const records = this.ctx.records
+    if (records === undefined) throw new Error('records are not available')
+    const handle = records.kind(cloudflareTunnelsKind)
+    if ((await handle.get(CLOUDFLARE_TUNNEL_RECORD_ID)) === null) {
+      try {
+        await handle.put(
+          {
+            id: CLOUDFLARE_TUNNEL_RECORD_ID,
+            data: {
+              ...CLOUDFLARE_TUNNEL_DEFAULT_BODY,
+              name: CLOUDFLARE_TUNNEL_RECORD_ID,
+            },
+          },
+          { ifRev: 0 },
+        )
+      } catch (err: unknown) {
+        // A concurrent first write created it: patch on top of it.
+        if (!(err instanceof RevConflictError)) throw err
+      }
+    }
+    await handle.patch(CLOUDFLARE_TUNNEL_RECORD_ID, fields)
+    const node = this.localNode()
+    const rows = Object.fromEntries(
+      Object.entries(origin).map(([key, value]) => [`${key}@${node}`, value]),
+    )
+    const before = this.reloads
+    await this.updateGlobalSettings(rows)
+    if (this.reloads === before) await this.reload()
+  }
+
+  /**
+   * Read what the tunnel runs on: the record and this node's origin; the old keys while no record
+   * exists. A read that did not answer changes nothing (D49).
+   */
+  private async refresh(): Promise<void> {
+    if (this.instances === null) return
+    try {
+      const row = await this.instances.readResolved(CLOUDFLARE_TUNNEL_RECORD_ID)
+      if (row?.secrets === 'unavailable') {
+        // A locked keychain is a failed read of the tokens: keep what the tunnel has.
+        if (!this.secretsWarned) {
+          this.secretsWarned = true
+          this.ctx.logger.warn(
+            'cloudflare-tunnel: the keychain is locked; the tunnel keeps its previous configuration',
+            { tags: { topic: 'tunnel', phase: 'keychain-locked' } },
+          )
+        }
+        return
+      }
+      this.secretsWarned = false
+      const store = await this.resolveGlobalStore()
+      const node = this.localNode()
+      const origin = nodeOriginOf(store, node)
+      if (origin.staleDevPort) {
+        // Earlier builds let operators point the tunnel at the Vite admin-ui dev port, whose
+        // host check answered "Cloudflare Tunnel error". It is read as automatic.
+        this.ctx.logger.warn('localPort 3001 (Vite admin-ui dev port) is read as automatic', {
+          tags: { topic: 'tunnel', phase: 'localport-stale' },
+        })
+      }
+      this.settings = row === null ? legacySettingsOf(store, node) : settingsOf(row.body, origin)
+      this.enabled = row === null ? true : row.enabled
+      this.settingsLoaded = this.settingsStoreReady
+    } catch (err: unknown) {
+      this.ctx.logger.warn('cloudflare-tunnel: the settings could not be read; keeping the last', {
+        meta: { error: err instanceof Error ? err.message : String(err) },
+        tags: { topic: 'tunnel', phase: 'settings-read-failed' },
+      })
+    }
+  }
+
+  /** The ports of the connection migrations: the old settings in, the record out. */
+  private migrationPorts(): CloudflareTunnelCataloguePorts {
+    const records = this.ctx.records
+    if (records === undefined) throw new Error('records are not available')
+    const handle = records.kind(cloudflareTunnelsKind)
+    return {
+      readStored: async (): Promise<Readonly<Record<string, unknown>>> => {
+        const stored = await this.resolveGlobalStore()
+        // A token that is still a marker was not resolved: abort before anything is written.
+        if (
+          isSecretMarker(stored['customApiToken']) ||
+          isSecretMarker(stored['customTunnelToken'])
+        ) {
+          throw new Error('the old Cloudflare tunnel tokens could not be resolved')
+        }
+        return stored
+      },
+      readRawStored: async () => this.resolveGlobalStore(),
+      warn: (message: string) => {
+        this.ctx.logger.warn(message)
+      },
+      readRecord: async (): Promise<CloudflareTunnelRecordState | null> => {
+        const row = await handle.getResolved(CLOUDFLARE_TUNNEL_RECORD_ID)
+        if (row === null) return null
+        return {
+          hostname: row.data.customHostname,
+          apiToken: row.data.customApiToken ?? '',
+          tunnelToken: row.data.customTunnelToken ?? '',
+        }
+      },
+      putRecord: async (body: CloudflareTunnelBody): Promise<'created' | 'exists'> => {
+        if ((await handle.get(CLOUDFLARE_TUNNEL_RECORD_ID)) !== null) return 'exists'
+        try {
+          await handle.put({ id: CLOUDFLARE_TUNNEL_RECORD_ID, data: body }, { ifRev: 0 })
+        } catch (err: unknown) {
+          if (err instanceof RevConflictError) return 'exists'
+          throw err
+        }
+        return 'created'
+      },
+      clearOldSecrets: async (keys) => {
+        await this.clearSecrets(keys)
+      },
+    }
+  }
+
+  protected async nodeSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    if (cap !== 'network-access') return null
+    return this.schema({
+      sections: [
+        {
+          id: 'origin',
+          title: 'Local origin',
+          titleKey: 'cloudflare:globalSettings.s_custom.title',
+          fields: [
+            {
+              type: 'addon-action-select' as const,
+              key: 'localHost',
+              label: 'Local Address',
+              labelKey: 'cloudflare:globalSettings.s_mode.localHost.label',
+              description:
+                'Which local host address cloudflared should forward traffic to. "Auto" follows the local-network preferred interface — pin a specific address only when running multi-NIC or Docker sidecar setups.',
+              descriptionKey: 'cloudflare:globalSettings.s_mode.localHost.description',
+              // `''` = "Auto (use local-network preferred)" — first option
+              // the `listLocalAddresses` handler prepends. Pinning a
+              // default here means a freshly-installed addon doesn't
+              // accidentally show the first probed IP as if the operator
+              // had selected it.
+              default: '',
+              addonId: 'cloudflare-tunnel',
+              action: 'listLocalAddresses',
+              mapOption: {
+                value: 'value',
+                label: 'label',
+                description: 'description',
+              },
+              emptyResultsMessage:
+                'No local addresses available — fix the local-network cap first.',
+            },
+            this.field({
+              type: 'select',
+              key: 'localPortMode',
+              label: 'Local port',
+              labelKey: 'cloudflare:globalSettings.s_custom.localPortMode.label',
+              description:
+                'Default: the addon resolves the hub backend port automatically (CAMSTACK_PORT, fallback 4443 HTTPS). Pick "Custom" only when you need to forward to a non-default service.',
+              descriptionKey: 'cloudflare:globalSettings.s_custom.localPortMode.description',
+              default: 'default',
+              options: [
+                {
+                  value: 'default',
+                  label: 'Default (auto-detect hub port)',
+                  labelKey: 'cloudflare:globalSettings.s_custom.localPortMode.o_default.label',
+                  description: 'Recommended — follows CAMSTACK_PORT env / 4443',
+                },
+                {
+                  value: 'custom',
+                  label: 'Custom port',
+                  labelKey: 'cloudflare:globalSettings.s_custom.localPortMode.o_custom.label',
+                  description: 'Pin to a specific port — must serve HTTPS',
+                },
+              ],
+              showWhen: { field: 'mode', equals: 'custom' },
+            }),
+            this.field({
+              type: 'number',
+              key: 'localPort',
+              label: 'Port',
+              labelKey: 'cloudflare:globalSettings.s_custom.localPort.label',
+              description:
+                'Local HTTPS port cloudflared forwards to. Must accept https:// requests (the addon adds noTLSVerify to handle the self-signed cert).',
+              descriptionKey: 'cloudflare:globalSettings.s_custom.localPort.description',
+              default: 0,
+              placeholder: '4443',
+              min: 1,
+              max: 65535,
+              showWhen: { field: 'localPortMode', equals: 'custom' },
+            }),
+          ],
+        },
+      ],
+    })
+  }
+
+  private tunnelForm(): ConfigUISchema {
     return this.schema({
       sections: [
         {
           id: 'mode',
           title: 'Tunnel Mode',
           titleKey: 'cloudflare:globalSettings.s_mode.title',
-          // Auto-save every change — Start (single entry point) reads
-          // persisted config; no Save button means no "filled the form
-          // but forgot to commit" footguns.
-          immediate: true,
           fields: [
             this.field({
               type: 'select',
@@ -897,37 +1175,12 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelConfig> {
                 },
               ],
             }),
-            {
-              type: 'addon-action-select' as const,
-              key: 'localHost',
-              label: 'Local Address',
-              labelKey: 'cloudflare:globalSettings.s_mode.localHost.label',
-              description:
-                'Which local host address cloudflared should forward traffic to. "Auto" follows the local-network preferred interface — pin a specific address only when running multi-NIC or Docker sidecar setups.',
-              descriptionKey: 'cloudflare:globalSettings.s_mode.localHost.description',
-              // `''` = "Auto (use local-network preferred)" — first option
-              // the `listLocalAddresses` handler prepends. Pinning a
-              // default here means a freshly-installed addon doesn't
-              // accidentally show the first probed IP as if the operator
-              // had selected it.
-              default: '',
-              addonId: 'cloudflare-tunnel',
-              action: 'listLocalAddresses',
-              mapOption: {
-                value: 'value',
-                label: 'label',
-                description: 'description',
-              },
-              emptyResultsMessage:
-                'No local addresses available — fix the local-network cap first.',
-            },
           ],
         },
         {
           id: 'custom',
           title: 'Custom Domain Setup',
           titleKey: 'cloudflare:globalSettings.s_custom.title',
-          immediate: true,
           fields: [
             {
               type: 'info' as const,
@@ -993,45 +1246,6 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelConfig> {
               showWhen: { field: 'mode', equals: 'custom' },
             }),
             this.field({
-              type: 'select',
-              key: 'localPortMode',
-              label: 'Local port',
-              labelKey: 'cloudflare:globalSettings.s_custom.localPortMode.label',
-              description:
-                'Default: the addon resolves the hub backend port automatically (CAMSTACK_PORT, fallback 4443 HTTPS). Pick "Custom" only when you need to forward to a non-default service.',
-              descriptionKey: 'cloudflare:globalSettings.s_custom.localPortMode.description',
-              default: 'default',
-              options: [
-                {
-                  value: 'default',
-                  label: 'Default (auto-detect hub port)',
-                  labelKey: 'cloudflare:globalSettings.s_custom.localPortMode.o_default.label',
-                  description: 'Recommended — follows CAMSTACK_PORT env / 4443',
-                },
-                {
-                  value: 'custom',
-                  label: 'Custom port',
-                  labelKey: 'cloudflare:globalSettings.s_custom.localPortMode.o_custom.label',
-                  description: 'Pin to a specific port — must serve HTTPS',
-                },
-              ],
-              showWhen: { field: 'mode', equals: 'custom' },
-            }),
-            this.field({
-              type: 'number',
-              key: 'localPort',
-              label: 'Port',
-              labelKey: 'cloudflare:globalSettings.s_custom.localPort.label',
-              description:
-                'Local HTTPS port cloudflared forwards to. Must accept https:// requests (the addon adds noTLSVerify to handle the self-signed cert).',
-              descriptionKey: 'cloudflare:globalSettings.s_custom.localPort.description',
-              default: 0,
-              placeholder: '4443',
-              min: 1,
-              max: 65535,
-              showWhen: { field: 'localPortMode', equals: 'custom' },
-            }),
-            this.field({
               type: 'boolean',
               key: 'noTLSVerify',
               label: 'Skip TLS verification',
@@ -1092,7 +1306,6 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelConfig> {
           id: 'diagnostics',
           title: 'Diagnostics',
           titleKey: 'cloudflare:globalSettings.s_diagnostics.title',
-          immediate: true,
           fields: [
             {
               type: 'info' as const,

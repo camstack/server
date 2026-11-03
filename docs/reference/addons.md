@@ -35,7 +35,7 @@ this column exists to stop.
 | `bosch-shc` | `@camstack/addon-provider-bosch` | providers | own runner | `hub-only` | — | multiple | `connection-test` `device-adoption` `device-provider` |
 | `calendars` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `calendars` |
 | `camera-grid` | `@camstack/server-framework` | system | own runner | `any-node` | — | unique | `camera-grid-layout` `motion` |
-| `cloudflare-tunnel` | `@camstack/addon-cloudflare` | networking | own runner | `hub-only` | `net-access` | — | `network-access` |
+| `cloudflare-tunnel` | `@camstack/addon-cloudflare` | networking | own runner | `hub-only` | `net-access` | — | `integration-instances` `network-access` |
 | `cloudflare-turn` | `@camstack/addon-cloudflare` | networking | own runner | `hub-only` | `net-access` | — | `integration-instances` `turn-provider` |
 | `composer` | `@camstack/server-framework` | system | own runner | `hub-only` | `composer` | — | `composer` |
 | `console-logging` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `log-destination` |

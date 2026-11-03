@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Cloudflare tunnel is now one record on the Remote Access page (tokens in the keychain), and where it forwards to is a per-node setting; the old settings are moved automatically.
+
 ## [1.2.152] - 2026-11-02
 
 ### Changed

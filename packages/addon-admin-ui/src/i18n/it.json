@@ -971,7 +971,8 @@
       "connected": "Connesso",
       "disconnected": "Disconnesso",
       "stop": "Ferma",
-      "start": "Avvia"
+      "start": "Avvia",
+      "tunnelControl": "Controllo tunnel"
     },
     "storage": {
       "disable": "Disabilitare \"{{displayName}}\"?",

@@ -2,19 +2,21 @@
  * Remote Access — the `network-access` providers registered on the hub
  * (Cloudflare Tunnel, ngrok, Tailscale Funnel, …), one at a time.
  *
- * An `<IntegrationHub>` page (Network → Remote Access): the pills, the
- * Enable/Disable toggle, Restart, the schema settings and the activity stream
- * are all the base's. This page only contributes what's genuinely
- * remote-access-specific:
- *   • The PRIMARY action — per-provider Start / Stop (`renderPrimaryAction`).
+ * A `<ProviderInstancesPanel>` over `network-access` (Network → Remote Access): a provider that
+ * keeps `integration-instances` records (Cloudflare Tunnel) is a row per record, edited in the
+ * panel's dialog; one without is a fixed row. The Enable switch, Restart and the activity stream
+ * are the panel's. Below it, one control per provider carries what is remote-access-specific:
+ *   • The PRIMARY action — per-provider Start / Stop.
  *   • Connected/Disconnected + endpoint-link status badge.
- *   • Per-row start/stop error surfaced via `itemError`.
+ *   • The start/stop error of that provider.
  */
 import { useMemo, useState, type ReactElement } from 'react'
 import { Globe, Play, Square, Loader2, ExternalLink } from 'lucide-react'
 import {
   Badge,
   Button,
+  SECTION_BODY,
+  SectionCard,
   useAddonsList,
   useAddonsListCapabilityProviders,
   useNetworkAccessGetStatus,
@@ -24,10 +26,8 @@ import {
 import { NetworkAccessStatusSchema } from '@camstack/types'
 import type { NetworkAccessStatus } from '@camstack/types'
 import { useQueryClient } from '@tanstack/react-query'
-import { AddonIntegrationBody } from '../../components/integration-hub/AddonIntegrationBody'
 import { STATUS_BADGE_CLASS } from '../../components/integration-hub/addon-controls'
-import { IntegrationHub } from '../../components/integration-hub/IntegrationHub'
-import { providerPillState, type IntegrationGroup } from '../../components/integration-hub/types'
+import { ProviderInstancesPanel } from '../../components/integration-hub/provider-instances/ProviderInstancesPanel'
 import { buildAddonDisplayNameMap } from '../../lib/addon-display-names'
 import { useTranslation } from 'react-i18next'
 
@@ -63,7 +63,9 @@ export function RemoteAccessPage(): ReactElement {
     { capName: 'network-access' },
     { refetchInterval: STATUS_POLL_INTERVAL_MS },
   )
-  const addonsQuery = useAddonsList(undefined, { refetchInterval: STATUS_POLL_INTERVAL_MS })
+  const addonsQuery = useAddonsList(undefined, {
+    refetchInterval: STATUS_POLL_INTERVAL_MS,
+  })
 
   const displayNames = useMemo(
     () => buildAddonDisplayNameMap(addonsQuery.data ?? []),
@@ -120,64 +122,64 @@ export function RemoteAccessPage(): ReactElement {
   const startMutation = useNetworkAccessStart({ onSuccess, onError })
   const stopMutation = useNetworkAccessStop({ onSuccess, onError })
 
-  const groups: readonly IntegrationGroup[] = [
-    {
-      id: CAPABILITY,
-      label: t('system.remoteAccess.remoteAccess', 'Remote access'),
-      install: { capability: CAPABILITY, label: t('system.remoteAccess.addTunnel', 'Add tunnel') },
-      entries: providers.map((p) => ({
-        id: p.addonId,
-        name: p.displayName,
-        fallbackIcon: Globe,
-        ...providerPillState(p.isActive),
-        render: () => (
-          <AddonIntegrationBody
-            addonId={p.addonId}
-            displayName={p.displayName}
-            capName={CAPABILITY}
-            isActive={p.isActive}
-            badges={<ProviderStatusBadges addonId={p.addonId} />}
-            error={errorByAddon[p.addonId] ?? null}
-            primaryAction={
-              <ProviderPrimaryAction
-                addonId={p.addonId}
-                busyId={busyId}
-                onStart={(addonId) => {
-                  setBusyId(addonId)
-                  startMutation.mutate({ addonId })
-                }}
-                onStop={(addonId) => {
-                  setBusyId(addonId)
-                  stopMutation.mutate({ addonId })
-                }}
-              />
-            }
-          />
-        ),
-      })),
-    },
-  ]
-
   return (
-    <IntegrationHub
-      embedded
-      icon={Globe}
-      title={t('system.remoteAccess.remoteAccess2', 'Remote Access')}
-      subtitle={t(
-        'system.remoteAccess.publicFacingTunnelsThatExpose',
-        'Public-facing tunnels that expose this hub to the internet (Cloudflare Tunnel, ngrok, …).',
+    <div className="flex flex-col gap-4">
+      <ProviderInstancesPanel
+        functionCap={CAPABILITY}
+        icon={Globe}
+        title={t('system.remoteAccess.remoteAccess2', 'Remote Access')}
+        subtitle={t(
+          'system.remoteAccess.publicFacingTunnelsThatExpose',
+          'Public-facing tunnels that expose this hub to the internet (Cloudflare Tunnel, ngrok, …).',
+        )}
+        emptyTitle={t(
+          'system.remoteAccess.noRemoteAccessProvidersInstalled',
+          'No remote-access providers installed',
+        )}
+        emptyDescription={t(
+          'system.remoteAccess.installATunnelAddonE',
+          'Install a tunnel addon (e.g. @camstack/addon-cloudflare) to expose this hub publicly.',
+        )}
+        addLabel={t('system.remoteAccess.addTunnel', 'Add tunnel')}
+      />
+      {providers.length > 0 && (
+        <SectionCard
+          headingId="remote-access-control"
+          title={t('system.remoteAccess.tunnelControl', 'Tunnel control')}
+          icon={Globe}
+        >
+          <ul className="divide-y divide-border">
+            {providers.map((p) => (
+              <li key={p.addonId} className={`${SECTION_BODY} flex flex-col gap-2`}>
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="text-sm font-medium text-foreground">{p.displayName}</span>
+                  <ProviderStatusBadges addonId={p.addonId} />
+                  <span className="ml-auto">
+                    <ProviderPrimaryAction
+                      addonId={p.addonId}
+                      busyId={busyId}
+                      onStart={(addonId) => {
+                        setBusyId(addonId)
+                        startMutation.mutate({ addonId })
+                      }}
+                      onStop={(addonId) => {
+                        setBusyId(addonId)
+                        stopMutation.mutate({ addonId })
+                      }}
+                    />
+                  </span>
+                </div>
+                {errorByAddon[p.addonId] !== undefined && (
+                  <p role="alert" className="text-xs text-danger">
+                    {errorByAddon[p.addonId]}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </SectionCard>
       )}
-      groups={groups}
-      isLoading={providersQuery.isLoading}
-      emptyTitle={t(
-        'system.remoteAccess.noRemoteAccessProvidersInstalled',
-        'No remote-access providers installed',
-      )}
-      emptyDescription={t(
-        'system.remoteAccess.installATunnelAddonE',
-        'Install a tunnel addon (e.g. @camstack/addon-cloudflare) to expose this hub publicly.',
-      )}
-    />
+    </div>
   )
 }
 

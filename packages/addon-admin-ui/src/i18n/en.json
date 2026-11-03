@@ -971,7 +971,8 @@
       "connected": "Connected",
       "disconnected": "Disconnected",
       "stop": "Stop",
-      "start": "Start"
+      "start": "Start",
+      "tunnelControl": "Tunnel control"
     },
     "storage": {
       "disable": "Disable \"{{displayName}}\"?",

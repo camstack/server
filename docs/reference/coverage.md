@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**231 units · 7857 source files · 218 units claimed by at least one document (7813 files).**
+**231 units · 7861 source files · 218 units claimed by at least one document (7817 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -89,6 +89,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-provider-unraid` | 20 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `server/backend` | 20 | `api-surface` | `decisions/adr-0693-a-live-database-is-backed-up-by-its-owner-never-copied-as-files.md`, `design/2026-08-13-single-copy-addons-first-boot-install.md`, `architecture/overview.md`, +20 more, 6 ADRs | 2026-10-27 |
 | `packages/addon-auth` | 19 | `auth` | `decisions/adr-0777-an-auth-providers-only-enable-is-its-capability-toggle-on-identity-authentication.md`, `decisions/adr-0780-an-icon-setting-is-a-display-icon-vocabulary-key-chosen-with-the-shared-picker.md`, `architecture/authentication.md`, +7 more | 2026-10-21 |
+| `packages/addon-cloudflare` | 19 | `remote-access` | `decisions/adr-0783-secrets-are-declared-by-schema-type-and-never-travel-on-argv-env-or-logs.md`, `decisions/adr-0234-forked-addons-spawn-after-settings-door.md`, `decisions/adr-0860-an-install-this-addon-offer-is-answered-from-the-published-manifests-and-a-temporary-tunnel-address-is-never-an-automatic-hub-address.md` | — |
 | `packages/addon-export-google` | 19 | `ecosystem-exports` | `addons/addon-export-google.md` _(covers)_, `design/2026-08-28-google-home-camera-streaming.md` _(covers)_, `decisions/adr-0269-a-google-export-that-holds-no-google-credential.md`, +2 more | 2026-08-28 |
 | `packages/addon-post-analysis/src/shared` | 19 | `post-analysis`, `recognition` | `decisions/adr-0867-the-capture-paths-materialise-no-media-copies-in-the-js-process.md`, `architecture/notifications.md`, `decisions/adr-0209-a-hosted-model-artifact-is-not-verified-until-its-embedding-space-is.md`, +3 more, 1 ADR | 2026-10-07 |
 | `packages/cli/src/commands` | 19 | `tooling` | `decisions/adr-0838-clients-find-a-hub-over-mdns-of-its-https-endpoint-mesh-discovery-stays-retired.md`, `decisions/adr-0988-a-terminal-signs-in-by-browser-approval.md`, `architecture/authentication.md`, +3 more | 2026-10-21 |
@@ -105,7 +106,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-provider-petkit` | 16 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0959-a-petkit-re-login-is-gated-because-the-account-has-one-session.md`, `decisions/adr-0953-a-cloud-session-that-ends-raises-one-standard-alert-per-integration-and-clears-itself.md`, 1 ADR | 2026-10-26 |
 | `packages/addon-provider-rademacher` | 16 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/addon-remote-storage` | 16 | `storage` | `decisions/adr-0384-never-ran-must-never-look-like-ran.md`, `decisions/adr-0298-a-storage-kind-declares-how-it-reaches-its-bytes-and-a-provider-that-cannot-is-refused.md` | — |
-| `packages/addon-cloudflare` | 15 | `remote-access` | `decisions/adr-0783-secrets-are-declared-by-schema-type-and-never-travel-on-argv-env-or-logs.md`, `decisions/adr-0234-forked-addons-spawn-after-settings-door.md`, `decisions/adr-0860-an-install-this-addon-offer-is-answered-from-the-published-manifests-and-a-temporary-tunnel-address-is-never-an-automatic-hub-address.md` | — |
 | `packages/addon-training/src/orchestrator` | 15 | `cloud-training` | `architecture/cloud-training.md`, `decisions/adr-0805-cloud-training-is-one-orchestrator-over-a-provider-collection-and-never-registers-on-its-own.md`, `decisions/adr-0824-a-training-job-selects-frames-live-and-addresses-a-provider-by-entry-id.md`, +2 more | 2026-10-14 |
 | `packages/system/src/tls` | 15 | `remote-access` | `decisions/adr-0227-the-hub-reissues-its-certificate-only-when-it-cannot-do-its-job.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +5 more | — |
 | `packages/types/src/addon` | 15 | `kernel`, `secrets` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/secrets-keychain.md`, `decisions/adr-0787-a-secret-field-stores-a-keychain-marker-and-the-value-lives-in-the-keychain.md`, +9 more | 2026-10-18 |
