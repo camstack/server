@@ -87,6 +87,9 @@ function fixture(initial: Record<string, unknown>) {
       reason: null,
     }),
     finishMigration: async ({ result }: { result: MigrationOwnerResult }) => {
+      if (result.kind === 'procedure') {
+        return { status: 'applied' as const, error: null, rowsChanged: 0 }
+      }
       if (result.kind !== 'plan')
         return {
           status: 'failed' as const,
@@ -111,6 +114,8 @@ function fixture(initial: Record<string, unknown>) {
       host,
       defineAddonMigrations(ADDON_MIGRATIONS, {
         readStored: async () => read(),
+        listInstances: async () => [],
+        patchInstanceSettings: async () => false,
       }),
       silentLogger,
     )

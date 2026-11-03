@@ -6,6 +6,10 @@
   "googleBrokerSettings.s_google-oauth-client.description": "Web application client from Google Cloud Console. The same Cloud project can be reused across Google brokers.",
   "googleBrokerSettings.s_google-oauth-client.clientId.label": "Client ID",
   "googleBrokerSettings.s_google-oauth-client.clientSecret.label": "Client secret",
+  "googleBrokerSettings.s_google-calendars-import.title": "Calendars to import",
+  "googleBrokerSettings.s_google-calendars-import.description": "Nothing selected = no calendars imported from this account. Options appear once the account is signed in.",
+  "googleBrokerSettings.s_google-calendars-import.calendarIds.label": "Calendars",
+  "googleBrokerSettings.s_google-calendars-import.calendarIds.description": "The calendars of this Google account that CamStack imports.",
   "googleBrokerSettings.s_gmail-send.title": "Gmail send",
   "googleBrokerSettings.s_gmail-send.description": "From must be this connected account or a verified send-as. Disable Email on Connectivity to turn Gmail off without removing the broker.",
   "googleBrokerSettings.s_gmail-send.fromAddress.label": "From address",
@@ -13,9 +17,5 @@
   "googleBrokerSettings.s_gmail-send.fromName.label": "From display name (optional)",
   "googleFeatureSettings.s_setup-intro.title": "Google brokers",
   "googleFeatureSettings.s_setup-intro._setupSteps.label": "Setup",
-  "googleFeatureSettings.s_google-calendars-import.title": "Calendars to import",
-  "googleFeatureSettings.s_google-calendars-import.description": "Nothing selected = no calendars imported. Options appear after at least one Google broker is signed in.",
-  "googleFeatureSettings.s_google-calendars-import.calendarIds.label": "Calendars",
-  "googleFeatureSettings.s_google-calendars-import.calendarIds.description": "Ids are stamped as brokerId:googleCalendarId across every Google broker.",
   "googleFeatureSettings._setupSteps.label": "Setup"
 }

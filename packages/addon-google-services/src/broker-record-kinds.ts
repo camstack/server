@@ -10,6 +10,7 @@ export const GoogleBrokerBodySchema = entryBody({
   calendarFilter: GoogleBrokerEntrySchema.shape.calendarFilter,
   fromAddress: GoogleBrokerEntrySchema.shape.fromAddress,
   fromName: GoogleBrokerEntrySchema.shape.fromName,
+  calendarIds: GoogleBrokerEntrySchema.shape.calendarIds,
 })
 export type GoogleBrokerBody = z.infer<typeof GoogleBrokerBodySchema>
 

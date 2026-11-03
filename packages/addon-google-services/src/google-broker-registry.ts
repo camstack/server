@@ -60,6 +60,7 @@ export function settingsToBrokerFields(settings: unknown): Omit<GoogleBrokerEntr
     calendarFilter: calendarIdsToFilter(parsed),
     fromAddress: parsed.fromAddress ?? '',
     fromName: parsed.fromName ?? '',
+    ...(parsed.calendarIds !== undefined ? { calendarIds: [...parsed.calendarIds] } : {}),
   }
 }
 
@@ -67,7 +68,7 @@ export function brokerEntryToSettings(entry: GoogleBrokerEntry): Record<string, 
   return {
     clientId: entry.clientId,
     clientSecret: entry.clientSecret,
-    calendarIds: [...parseCalendarFilter(entry.calendarFilter)],
+    calendarIds: [...(entry.calendarIds ?? parseCalendarFilter(entry.calendarFilter))],
     fromAddress: entry.fromAddress,
     fromName: entry.fromName,
   }
@@ -133,6 +134,17 @@ export function migrateLegacyToBrokers(
       : []
 
   return { brokers: [entry], oauthAccounts, didMigrate: true }
+}
+
+/**
+ * The stamped calendar ids one broker imports: its own set, or — while the migration has not
+ * reached it — the shared setting older versions wrote, so the move never changes what is imported.
+ */
+export function calendarIdsOfEntry(
+  entry: Pick<GoogleBrokerEntry, 'calendarIds'> | null,
+  shared: readonly string[],
+): ReadonlySet<string> {
+  return new Set(entry?.calendarIds ?? shared)
 }
 
 export function parseCalendarFilter(raw: string): Set<string> {
@@ -253,7 +265,8 @@ export class GoogleBrokerRegistry {
   ): GoogleBrokerEntry {
     const fields = settingsToBrokerFields(settings)
     const id = opts.id !== undefined ? this.adoptId(opts.id) : this.allocateId()
-    const entry = GoogleBrokerEntrySchema.parse({ id, name, ...fields })
+    // A broker made now owns its calendar set from the start: empty, never the shared one.
+    const entry = GoogleBrokerEntrySchema.parse({ id, name, calendarIds: [], ...fields })
     this.entries = [...this.entries, entry]
     return entry
   }
@@ -266,6 +279,8 @@ export class GoogleBrokerRegistry {
     const next = GoogleBrokerEntrySchema.parse({
       id: prev.id,
       name: prev.name,
+      // A form that does not carry the calendars leaves them as they were.
+      ...(prev.calendarIds !== undefined ? { calendarIds: prev.calendarIds } : {}),
       ...fields,
     })
     this.entries = this.entries.map((e, i) => (i === idx ? next : e))

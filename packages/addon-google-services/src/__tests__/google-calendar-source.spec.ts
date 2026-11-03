@@ -166,4 +166,28 @@ describe('createGoogleCalendarSource', () => {
     })
     expect(await provider.listCalendars()).toEqual([])
   })
+
+  it('two instances: a selection on A is invisible on B', async () => {
+    const byBroker = new Map([
+      ['google_001', new Set(['google_001:a@g', 'google_002:b@g'])],
+      ['google_002', new Set<string>()],
+    ])
+    const provider = createGoogleCalendarSource({
+      logger,
+      selectedCalendarIds: (brokerId) => byBroker.get(brokerId) ?? new Set(),
+      accounts: () =>
+        ['google_001', 'google_002'].map((brokerId) => ({
+          brokerId,
+          connected: true,
+          api: apiFor([
+            { id: 'a@g', summary: 'A' },
+            { id: 'b@g', summary: 'B' },
+          ]),
+        })),
+    })
+    // B selected nothing of its own: A's set naming B's calendar does not select it on B.
+    expect((await provider.listCalendars()).map((c) => c.id)).toEqual(['google_001:a@g'])
+    const events = await provider.listEvents({ startMs: 0, endMs: Date.parse('2026-12-01') })
+    expect(events.map((e) => e.calendarId)).toEqual(['google_001:a@g'])
+  })
 })

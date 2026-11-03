@@ -29,8 +29,8 @@ function fieldContent(cap: string | undefined, sectionId: string, key: string): 
 }
 
 describe('GoogleServicesAddon settings scoped by capability', () => {
-  it('calendar-source: Brokers pointer + calendars import multiselect', () => {
-    expect(sectionIds('calendar-source')).toEqual(['setup-intro', 'google-calendars-import'])
+  it('calendar-source: only the Brokers pointer; the calendar picker moved to each broker (D985)', () => {
+    expect(sectionIds('calendar-source')).toEqual(['setup-intro'])
     const html = fieldContent('calendar-source', 'setup-intro', '_setupSteps')
     expect(html).toContain('Brokers')
   })
@@ -68,7 +68,12 @@ describe('google broker Setup HTML', () => {
   it('broker schema includes setup-intro + oauth client (no Connect link field)', () => {
     const schema = buildGoogleBrokerSettingsSchema('https://hub.example')
     expect(schema.sections.map((s) => s.id)).toEqual(
-      expect.arrayContaining(['setup-intro', 'google-oauth-client', 'gmail-send']),
+      expect.arrayContaining([
+        'setup-intro',
+        'google-oauth-client',
+        'google-calendars-import',
+        'gmail-send',
+      ]),
     )
     expect(schema.sections.map((s) => s.id)).not.toContain('google-calendar')
     const keys = schema.sections.flatMap((s) =>

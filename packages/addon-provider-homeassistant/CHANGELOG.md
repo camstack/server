@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A Home Assistant media player supports turn on/off and stepped volume and channel, and declares them as features
+- Each Home Assistant instance now keeps its own calendars to import, its export switch and its image address role on its integration; the old shared settings are copied over on first start.
 
 ## [1.2.653] - 2026-11-02
 

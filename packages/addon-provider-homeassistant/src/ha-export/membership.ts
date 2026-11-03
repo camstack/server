@@ -103,13 +103,27 @@ export function pruneBrokers(
  *
  * A broker that is no longer known is not enabled, whatever the store says:
  * a stale `exportTo:` key for a deleted instance must not resurrect it.
+ *
+ * The switch is a setting of the INSTANCE (D985): `perBroker` carries each broker's integration
+ * settings, and a broker whose integration has an `exportTo` answers from it. A broker whose
+ * integration has none yet — the migration has not copied it — falls back to the legacy
+ * `exportTo:<brokerId>` key, so the move never flips a switch mid-way.
  */
 export function enabledBrokerIds(
   store: Readonly<Record<string, unknown>>,
   knownBrokerIds: readonly string[],
+  perBroker: BrokerInstanceSettings = NO_INSTANCE_SETTINGS,
 ): readonly string[] {
-  return knownBrokerIds.filter((brokerId) => store[`exportTo:${brokerId}`] === true)
+  return knownBrokerIds.filter((brokerId) => {
+    const own = perBroker.get(brokerId)?.['exportTo']
+    return typeof own === 'boolean' ? own : store[`exportTo:${brokerId}`] === true
+  })
 }
+
+/** brokerId → the settings of the integration that links it. */
+export type BrokerInstanceSettings = ReadonlyMap<string, Readonly<Record<string, unknown>>>
+
+export const NO_INSTANCE_SETTINGS: BrokerInstanceSettings = new Map()
 
 /** A broker the operator can tick. Cached so the settings form can render. */
 export interface KnownBroker {

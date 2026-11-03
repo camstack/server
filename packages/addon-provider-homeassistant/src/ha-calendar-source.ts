@@ -22,10 +22,11 @@ export interface HaCalendarSourceDeps {
   readonly brokers: HaBrokerRegistry
   readonly logger: IScopedLogger
   /**
-   * Entity ids to import (`calendar.*`). Empty = every calendar entity
-   * (legacy default). Connectivity → Calendars settings writes this.
+   * Entity ids to import (`calendar.*`) from ONE broker: the selection is a fact of each Home
+   * Assistant instance (D985), so a pick on one never selects a same-named entity on another.
+   * Empty = import nothing.
    */
-  readonly selectedCalendarIds: () => ReadonlySet<string>
+  readonly selectedCalendarIds: (brokerId: string) => ReadonlySet<string>
 }
 
 function isCalendarEntity(entityId: string): boolean {
@@ -192,9 +193,9 @@ function isSelected(entityId: string, selected: ReadonlySet<string>): boolean {
 export function createHaCalendarSource(deps: HaCalendarSourceDeps): ICalendarSourceProvider {
   return {
     listCalendars: async (): Promise<readonly CalendarInfo[]> => {
-      const selected = deps.selectedCalendarIds()
       const out: CalendarInfo[] = []
-      for (const { manager } of deps.brokers.listManagers()) {
+      for (const { brokerId, manager } of deps.brokers.listManagers()) {
+        const selected = deps.selectedCalendarIds(brokerId)
         const states = manager.snapshotAllStates()
         for (const [entityId, raw] of Object.entries(states)) {
           if (!isCalendarEntity(entityId)) continue
@@ -215,7 +216,6 @@ export function createHaCalendarSource(deps: HaCalendarSourceDeps): ICalendarSou
     listEvents: async (input: CalendarListEventsInput): Promise<readonly CalendarEvent[]> => {
       const startIso = new Date(input.startMs).toISOString()
       const endIso = new Date(input.endMs).toISOString()
-      const selected = deps.selectedCalendarIds()
       const wanted =
         input.calendarIds !== undefined && input.calendarIds.length > 0
           ? new Set(input.calendarIds)
@@ -223,6 +223,7 @@ export function createHaCalendarSource(deps: HaCalendarSourceDeps): ICalendarSou
 
       const out: CalendarEvent[] = []
       for (const { brokerId, manager } of deps.brokers.listManagers()) {
+        const selected = deps.selectedCalendarIds(brokerId)
         const states = manager.snapshotAllStates()
         const entityIds = Object.keys(states).filter((id) => {
           if (!isCalendarEntity(id)) return false
@@ -251,10 +252,12 @@ export function createHaCalendarSource(deps: HaCalendarSourceDeps): ICalendarSou
 /** Discover every HA calendar entity (ignores the import filter) — for settings catalog. */
 export function listHaCalendarCatalog(
   brokers: HaBrokerRegistry,
+  onlyBrokerId?: string,
 ): readonly { readonly value: string; readonly label: string }[] {
   const out: { value: string; label: string }[] = []
   const seen = new Set<string>()
-  for (const { manager } of brokers.listManagers()) {
+  for (const { brokerId, manager } of brokers.listManagers()) {
+    if (onlyBrokerId !== undefined && brokerId !== onlyBrokerId) continue
     const states = manager.snapshotAllStates()
     for (const [entityId, raw] of Object.entries(states)) {
       if (!isCalendarEntity(entityId) || seen.has(entityId)) continue

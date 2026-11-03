@@ -92,6 +92,30 @@ export function buildGoogleBrokerSettingsSchema(publicOrigin: string | null) {
         ],
       },
       {
+        id: 'google-calendars-import',
+        title: 'Calendars to import',
+        titleKey: 'google-services:googleBrokerSettings.s_google-calendars-import.title',
+        description:
+          'Nothing selected = no calendars imported from this account. Options appear once the account is signed in.',
+        descriptionKey:
+          'google-services:googleBrokerSettings.s_google-calendars-import.description',
+        columns: 1,
+        fields: [
+          {
+            type: 'multiselect' as const,
+            key: 'calendarIds',
+            label: 'Calendars',
+            labelKey:
+              'google-services:googleBrokerSettings.s_google-calendars-import.calendarIds.label',
+            options: [] as const,
+            optionsFrom: '_calendarCatalog',
+            description: 'The calendars of this Google account that CamStack imports.',
+            descriptionKey:
+              'google-services:googleBrokerSettings.s_google-calendars-import.calendarIds.description',
+          },
+        ],
+      },
+      {
         id: 'gmail-send',
         title: 'Gmail send',
         titleKey: 'google-services:googleBrokerSettings.s_gmail-send.title',
@@ -121,7 +145,7 @@ export function buildGoogleBrokerSettingsSchema(publicOrigin: string | null) {
   } as const
 }
 
-/** Connectivity Calendars / Email pages — calendar import picker lives here (not on broker Add). */
+/** Connectivity Calendars / Email pages — the calendar import picker is on each broker. */
 export function buildGoogleFeatureSettingsSchema(
   cap: GoogleSettingsCap,
   publicOrigin: string | null,
@@ -144,34 +168,9 @@ export function buildGoogleFeatureSettingsSchema(
               format: 'html' as const,
               content: [
                 '<p>Link a Google account under Connectivity → <strong>Brokers</strong> ',
-                '(Client ID / secret + Sign in). Then pick calendars below. ',
+                '(Client ID / secret + Sign in). Pick the calendars to import on each broker. ',
                 `OAuth redirect URI: <code>${redirect}</code>.</p>`,
               ].join(''),
-            },
-          ],
-        },
-        {
-          id: 'google-calendars-import',
-          title: 'Calendars to import',
-          titleKey: 'google-services:googleFeatureSettings.s_google-calendars-import.title',
-          description:
-            'Nothing selected = no calendars imported. Options appear after at least one Google broker is signed in.',
-          descriptionKey:
-            'google-services:googleFeatureSettings.s_google-calendars-import.description',
-          columns: 1,
-          fields: [
-            {
-              type: 'multiselect' as const,
-              key: 'calendarIds',
-              label: 'Calendars',
-              labelKey:
-                'google-services:googleFeatureSettings.s_google-calendars-import.calendarIds.label',
-              options: [] as const,
-              optionsFrom: '_calendarCatalog',
-              description:
-                'Ids are stamped as brokerId:googleCalendarId across every Google broker.',
-              descriptionKey:
-                'google-services:googleFeatureSettings.s_google-calendars-import.calendarIds.description',
             },
           ],
         },

@@ -166,3 +166,20 @@ describe('a broker refresh writes only the key it changed', () => {
     expect(patch).toEqual({ knownBrokers: [{ id: 'ha_001', name: 'Casa' }] })
   })
 })
+
+describe('per-instance export switch (D985)', () => {
+  const known = ['ha_a', 'ha_b']
+
+  it('an integration value wins over the legacy key; a value on A is invisible on B', () => {
+    const perBroker = new Map([['ha_a', { exportTo: true }]])
+    expect(enabledBrokerIds({ 'exportTo:ha_b': false }, known, perBroker)).toEqual(['ha_a'])
+    expect(enabledBrokerIds({ 'exportTo:ha_a': false }, known, perBroker)).toEqual(['ha_a'])
+  })
+
+  it('falls back to the legacy key until the move has run', () => {
+    expect(enabledBrokerIds({ 'exportTo:ha_b': true }, known)).toEqual(['ha_b'])
+    expect(enabledBrokerIds({ 'exportTo:ha_b': true }, known, new Map([['ha_b', {}]]))).toEqual([
+      'ha_b',
+    ])
+  })
+})

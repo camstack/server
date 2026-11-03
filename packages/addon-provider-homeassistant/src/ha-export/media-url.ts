@@ -22,6 +22,7 @@
  * URL stops working on its own.
  */
 import { signExpiringUrl, verifyExpiringUrl } from '@camstack/types/node'
+import { type BrokerInstanceSettings, NO_INSTANCE_SETTINGS } from './membership.js'
 
 /** The hub address roles a Home Assistant media link may be minted on. */
 export const HA_MEDIA_ROLES = ['internal', 'publicEndpoint'] as const
@@ -40,12 +41,18 @@ export function mediaRoleKey(brokerId: string): string {
   return `mediaRole:${brokerId}`
 }
 
-/** A broker's chosen role; anything stored that is not a known role is `internal`. */
+/**
+ * A broker's chosen role; anything stored that is not a known role is `internal`. The role is a
+ * setting of the INSTANCE (D985): the integration's `mediaRole` answers when it has one, and a
+ * broker the migration has not reached falls back to the legacy `mediaRole:<brokerId>` key.
+ */
 export function haMediaRoleOf(
   store: Readonly<Record<string, unknown>>,
   brokerId: string,
+  perBroker: BrokerInstanceSettings = NO_INSTANCE_SETTINGS,
 ): HaMediaRole {
-  const raw = store[mediaRoleKey(brokerId)]
+  const own = perBroker.get(brokerId)?.['mediaRole']
+  const raw = own !== undefined ? own : store[mediaRoleKey(brokerId)]
   return raw === 'publicEndpoint' ? 'publicEndpoint' : 'internal'
 }
 
@@ -67,9 +74,13 @@ export function mediaBasesByBroker(
   store: Readonly<Record<string, unknown>>,
   brokerIds: readonly string[],
   book: MediaAddressAnswer,
+  perBroker: BrokerInstanceSettings = NO_INSTANCE_SETTINGS,
 ): ReadonlyMap<string, string | null> {
   return new Map(
-    brokerIds.map((brokerId) => [brokerId, haMediaBaseUrl(book, haMediaRoleOf(store, brokerId))]),
+    brokerIds.map((brokerId) => [
+      brokerId,
+      haMediaBaseUrl(book, haMediaRoleOf(store, brokerId, perBroker)),
+    ]),
   )
 }
 

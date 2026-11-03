@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Each Google account now keeps its own list of calendars to import; the shared list is copied to every account on first start.
+
 ## [0.2.35] - 2026-11-02
 
 ### Changed

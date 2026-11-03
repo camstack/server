@@ -46,10 +46,10 @@ export interface GoogleCalendarSourceDeps {
   readonly logger: IScopedLogger
   readonly accounts: () => readonly GoogleCalendarAccountView[]
   /**
-   * Stamped ids (`brokerId:googleCalendarId`) selected under Connectivity →
-   * Calendars. Empty = import none.
+   * The stamped ids (`brokerId:googleCalendarId`) ONE broker imports: a value of that broker,
+   * never of the addon. Empty = import none.
    */
-  readonly selectedCalendarIds: () => ReadonlySet<string>
+  readonly selectedCalendarIds: (brokerId: string) => ReadonlySet<string>
 }
 
 export function parseGoogleInstant(value: string): number | null {
@@ -130,11 +130,11 @@ export function createGoogleCalendarSource(
 ): ICalendarSourceProvider {
   return {
     listCalendars: async (): Promise<readonly CalendarInfo[]> => {
-      const selected = deps.selectedCalendarIds()
-      if (selected.size === 0) return []
       const out: CalendarInfo[] = []
       for (const account of deps.accounts()) {
         if (!account.connected) continue
+        const selected = deps.selectedCalendarIds(account.brokerId)
+        if (selected.size === 0) continue
         try {
           const list = await account.api.listCalendars()
           for (const c of list) {
@@ -159,8 +159,6 @@ export function createGoogleCalendarSource(
       return out
     },
     listEvents: async (input: CalendarListEventsInput): Promise<readonly CalendarEvent[]> => {
-      const selected = deps.selectedCalendarIds()
-      if (selected.size === 0) return []
       const timeMin = new Date(input.startMs).toISOString()
       const timeMax = new Date(input.endMs).toISOString()
       const accounts = deps.accounts().filter((a) => a.connected)
@@ -169,15 +167,25 @@ export function createGoogleCalendarSource(
       const requestIds =
         input.calendarIds !== undefined && input.calendarIds.length > 0
           ? input.calendarIds
-          : [...selected]
+          : [
+              ...new Set(
+                deps
+                  .accounts()
+                  .flatMap((account) =>
+                    [...deps.selectedCalendarIds(account.brokerId)].filter(
+                      (stamped) => parseStampedCalendarId(stamped)?.brokerId === account.brokerId,
+                    ),
+                  ),
+              ),
+            ]
 
       /** brokerId → google calendar ids to fetch */
       const wanted = new Map<string, string[]>()
       for (const stamped of requestIds) {
-        if (!selected.has(stamped)) continue
         const parsed = parseStampedCalendarId(stamped)
         if (parsed === null) continue
         if (!byBroker.has(parsed.brokerId)) continue
+        if (!deps.selectedCalendarIds(parsed.brokerId).has(stamped)) continue
         const list = wanted.get(parsed.brokerId) ?? []
         list.push(parsed.googleCalendarId)
         wanted.set(parsed.brokerId, list)

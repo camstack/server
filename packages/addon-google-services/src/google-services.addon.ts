@@ -14,6 +14,7 @@ import {
   brokerCapability,
   buildAddonRouteProvider,
   calendarSourceCapability,
+  defineAddonMigrations,
   smtpProviderCapability,
   type AddonHttpReply,
   type AddonHttpRequest,
@@ -23,12 +24,14 @@ import {
   type IBrokerProvider,
   type ICalendarSourceProvider,
   type ISmtpProvider,
+  type RecordsAccess,
 } from '@camstack/types'
 import { randomBytes } from 'node:crypto'
 import { z } from 'zod'
 import {
   GoogleBrokerRegistry,
   brokerEntryToSettings,
+  calendarIdsOfEntry,
   migrateLegacyToBrokers,
   stampCalendarId,
 } from './google-broker-registry.js'
@@ -67,6 +70,8 @@ import {
 } from './google-types.js'
 import { pickOauthRedirectOrigin } from './oauth-redirect-origin.js'
 import { googleBrokersEntryKind } from './broker-record-kinds.js'
+import { ADDON_MIGRATIONS } from './migrations/index.js'
+import { calendarIdsPortsOver } from './migrations/ports.js'
 import { GoogleBrokerStore } from './google-broker-store.js'
 import type { GoogleBrokerEntry } from './google-types.js'
 
@@ -174,6 +179,7 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
       await this.brokerStore.replaceAll(this.config.brokers)
       this.activeBrokers = await this.loadPersistedBrokers()
     }
+    await this.migrateCalendarIds(records)
 
     this.registry.seedFrom(this.activeBrokers, oauthAccounts.accounts)
     await this.refreshPublicOrigin()
@@ -186,7 +192,7 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
           connected: this.registry.isConnected(entry.id),
           api: createGoogleCalendarApi(() => this.ensureAccessToken(entry.id)),
         })),
-      selectedCalendarIds: () => new Set(this.config.calendarIds ?? []),
+      selectedCalendarIds: (brokerId) => this.calendarIdsOf(brokerId),
     })
 
     const smtpProvider: ISmtpProvider = createGmailSmtpProvider({
@@ -368,7 +374,10 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
       getSettings: async ({ id }) => {
         const entry = this.registry.getEntry(id)
         if (entry === null) return null
-        return brokerEntryToSettings(entry)
+        return {
+          ...brokerEntryToSettings(entry),
+          _calendarCatalog: await this.loadStampedCalendarCatalog(id),
+        }
       },
       setSettings: async ({ id, settings }) => {
         if (!owns(id)) return
@@ -381,6 +390,7 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
         const oauth = this.registry.getOauth(id)
         return {
           ...brokerEntryToSettings(entry),
+          _calendarCatalog: await this.loadStampedCalendarCatalog(id),
           accountEmail: oauth?.accountEmail ?? '',
           connected: this.registry.isConnected(id),
         }
@@ -610,6 +620,22 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
     }
   }
 
+  /**
+   * The shared calendar set becomes each broker's own (D985, D987). Brokers are reloaded once the
+   * copy landed, so the registry is seeded with the sets the migration wrote.
+   */
+  private async migrateCalendarIds(records: Pick<RecordsAccess, 'kind'>): Promise<void> {
+    const report = await this.runMigrations(
+      defineAddonMigrations(
+        ADDON_MIGRATIONS,
+        calendarIdsPortsOver(records.kind(googleBrokersEntryKind), (key) =>
+          this.readStoredGlobalKey(key),
+        ),
+      ),
+    )
+    if (report.applied.length > 0) this.activeBrokers = await this.loadPersistedBrokers()
+  }
+
   private async loadPersistedBrokers(): Promise<readonly GoogleBrokerEntry[]> {
     const store = this.brokerStore
     if (store !== null) {
@@ -636,11 +662,12 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
   }
 
   /** Stamped catalog for Connectivity → Calendars (`optionsFrom`). */
-  private async loadStampedCalendarCatalog(): Promise<
-    readonly { readonly value: string; readonly label: string }[]
-  > {
+  private async loadStampedCalendarCatalog(
+    onlyBrokerId?: string,
+  ): Promise<readonly { readonly value: string; readonly label: string }[]> {
     const out: { value: string; label: string }[] = []
     for (const entry of this.registry.listEntries()) {
+      if (onlyBrokerId !== undefined && entry.id !== onlyBrokerId) continue
       if (!this.registry.isConnected(entry.id)) continue
       try {
         const api = createGoogleCalendarApi(() => this.ensureAccessToken(entry.id))
@@ -824,19 +851,16 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
     nodeId?: string,
   ) {
     await this.refreshPublicOrigin()
-    if (cap !== 'calendar-source') {
-      return super.getGlobalSettings(overlay, cap, nodeId)
-    }
-    const catalog = await this.loadStampedCalendarCatalog()
-    return super.getGlobalSettings(
-      {
-        ...overlay,
-        calendarIds: this.config.calendarIds ?? [],
-        ...(catalog.length > 0 ? { _calendarCatalog: catalog } : {}),
-      },
-      cap,
-      nodeId,
-    )
+    return super.getGlobalSettings(overlay, cap, nodeId)
+  }
+
+  /**
+   * The stamped calendar ids ONE broker imports. A broker the migration has not reached yet
+   * (no `calendarIds` of its own) reads the shared setting older versions wrote, so the move
+   * never changes what is imported mid-way.
+   */
+  private calendarIdsOf(brokerId: string): ReadonlySet<string> {
+    return calendarIdsOfEntry(this.registry.getEntry(brokerId), this.config.calendarIds ?? [])
   }
 }
 

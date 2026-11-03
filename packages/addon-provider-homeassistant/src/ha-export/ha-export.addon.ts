@@ -82,6 +82,13 @@ import {
   supportSignature,
 } from './component-support.js'
 import { ADDON_MIGRATIONS } from './migrations/index.js'
+import { instanceOverlay, splitInstanceKeys } from './instance-flags.js'
+import {
+  type HaInstanceSettingsPorts,
+  haInstanceSettingsPortsOver,
+  listInstancesOrNothing,
+  settingsByBroker,
+} from '../ha-instance-settings.js'
 import { buildDevicePlan, CAMERA_DERIVED_CAPS, unclassifiedCaps } from './entity-catalog.js'
 import {
   buildMediaUrl,
@@ -97,7 +104,9 @@ import {
   enabledBrokerIds,
   exposedDeviceIds,
   isExposed,
+  type BrokerInstanceSettings,
   type KnownBroker,
+  NO_INSTANCE_SETTINGS,
   pruneBrokers,
   setExposed,
 } from './membership.js'
@@ -376,6 +385,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
     await this.runMigrations(
       defineAddonMigrations(ADDON_MIGRATIONS, {
         readStored: async () => this.resolveGlobalStore(),
+        ...this.instancePorts(),
       }),
     )
 
@@ -504,6 +514,45 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
         provider: oauthIntegrationProvider,
       },
     ]
+  }
+
+  /**
+   * The form of the addon shows each instance's own switch and media role: the values sit on its
+   * integration (D985), overlaid on the legacy keys the store may still hold.
+   */
+  override async getGlobalSettings(
+    overlay?: Record<string, unknown>,
+    cap?: string,
+    nodeId?: string,
+  ) {
+    const rows = await listInstancesOrNothing(this.instancePorts(), (error) =>
+      this.ctx.logger.warn('ha-export: the instance settings could not be read for the form', {
+        meta: { error },
+      }),
+    )
+    return super.getGlobalSettings({ ...overlay, ...instanceOverlay(rows) }, cap, nodeId)
+  }
+
+  /**
+   * An operator write: the `exportTo:` / `mediaRole:` keys go to the integration of their broker
+   * (D985), everything else to the addon store as before. A key whose broker has no integration
+   * stays in the store.
+   */
+  override async updateGlobalSettingsAsOperator(
+    patch: Record<string, unknown>,
+    nodeId?: string,
+  ): Promise<void> {
+    const ports = this.instancePorts()
+    const { toInstances, rest } = splitInstanceKeys(patch, await ports.listInstances())
+    for (const [integrationId, flags] of toInstances) {
+      if (await ports.patchInstanceSettings(integrationId, flags)) continue
+      throw new Error(`ha-export: integration ${integrationId} is gone — the setting was not saved`)
+    }
+    if (Object.keys(rest).length > 0 || toInstances.size === 0) {
+      await super.updateGlobalSettingsAsOperator(rest, nodeId)
+      return
+    }
+    await this.onConfigChanged()
   }
 
   protected async onConfigChanged(): Promise<void> {
@@ -2575,7 +2624,28 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
     this.enabled = enabledBrokerIds(
       store,
       known.map((broker) => broker.id),
+      await this.readInstanceSettings(),
     )
+  }
+
+  /** The hub's `integrations` capability, as the one reader and writer of an instance's settings. */
+  private instancePorts(): HaInstanceSettingsPorts {
+    return haInstanceSettingsPortsOver(this.ctx.api.integrations)
+  }
+
+  /**
+   * Each broker's integration settings (D985): the switch and the media role of an instance.
+   * A read that fails answers nothing, so every broker falls back to its legacy key and the
+   * failure is logged — never read as "everything off".
+   */
+  private async readInstanceSettings(): Promise<BrokerInstanceSettings> {
+    const rows = await listInstancesOrNothing(this.instancePorts(), (error) =>
+      this.ctx.logger.warn(
+        'ha-export: the instance settings could not be read — the legacy per-broker keys answer',
+        { meta: { error } },
+      ),
+    )
+    return rows.length === 0 ? NO_INSTANCE_SETTINGS : settingsByBroker(rows)
   }
 
   private enabledBrokerIds(): readonly string[] {
@@ -3014,6 +3084,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
         await this.resolveGlobalStore(),
         brokerIds,
         await this.ctx.api.localNetwork.getAddresses.query(),
+        await this.readInstanceSettings(),
       )
     } catch (err) {
       this.ctx.logger.debug('ha-export: could not resolve the media base URLs', {

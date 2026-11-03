@@ -169,3 +169,39 @@ describe('createHaCalendarSource listEvents', () => {
     expect(events.map((e) => e.title).sort()).toEqual(['A', 'B'])
   })
 })
+
+describe('createHaCalendarSource: the selection is per broker', () => {
+  const state = (id: string) => ({
+    entity_id: id,
+    state: 'off',
+    attributes: {},
+    last_changed: '',
+    last_updated: '',
+    context: { id: 'x', parent_id: null, user_id: null },
+  })
+  const manager = (publish: ReturnType<typeof vi.fn>) => ({
+    snapshotAllStates: () => ({ 'calendar.shared': state('calendar.shared') }),
+    publish,
+  })
+
+  it('a calendar picked on A is not imported from B, though B has the same entity id', async () => {
+    const publishA = vi.fn(async () => ({ response: {} }))
+    const publishB = vi.fn(async () => ({ response: {} }))
+    const source = createHaCalendarSource({
+      brokers: {
+        listManagers: () => [
+          { brokerId: 'ha_a', manager: manager(publishA) },
+          { brokerId: 'ha_b', manager: manager(publishB) },
+        ],
+      } as never,
+      selectedCalendarIds: (brokerId) =>
+        brokerId === 'ha_a' ? new Set(['calendar.shared']) : new Set(),
+      logger: { warn: vi.fn(), child: vi.fn() } as never,
+    })
+    const range = { startMs: 0, endMs: 1000 }
+    await source.listEvents(range)
+    expect(publishA).toHaveBeenCalledTimes(1)
+    expect(publishB).not.toHaveBeenCalled()
+    expect((await source.listCalendars()).length).toBe(1)
+  })
+})

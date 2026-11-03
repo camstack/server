@@ -8,6 +8,8 @@ import {
   bestLocationMatch,
   brokerCapability,
   type ConfigUISchema,
+  type IntegrationInstanceRef,
+  defineAddonMigrations,
   type CreateDeviceSpec,
   type DeviceSummary,
   DeviceType,
@@ -68,6 +70,8 @@ import {
 import { HaBrokerStore } from './ha-broker-store.js'
 import { haAllRecordKinds } from './record-kinds.js'
 import { createHaBoardKeyProvider, HaBoardKeySource } from './ha-board-key-source.js'
+import { haInstanceSettingsPortsOver } from './ha-instance-settings.js'
+import { ADDON_MIGRATIONS } from './migrations/index.js'
 import { createHaCalendarSource, listHaCalendarCatalog } from './ha-calendar-source.js'
 import { reconcileBroker } from './ha-reconcile-broker.js'
 import { computeBrokerCleanup, linkBrokersToIntegrations } from './ha-reconciler.js'
@@ -232,6 +236,14 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
 
     // Sync integration records → broker entries (initial reconcile +
     // event-driven on integration lifecycle changes).
+    // The calendars each instance imports move from the addon's shared set onto its integration
+    // (D985): before the first reconcile reads them.
+    await this.runMigrations(
+      defineAddonMigrations(ADDON_MIGRATIONS, {
+        readStored: (key) => this.readStoredGlobalKey(key),
+        ...haInstanceSettingsPortsOver(this.ctx.api.integrations),
+      }),
+    )
     await this.reconcileIntegrationsToBrokers()
     this.subscribeIntegrationLifecycle()
 
@@ -256,7 +268,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
         provider: createHaCalendarSource({
           brokers: this.requireRegistry(),
           logger: this.ctx.logger.child('calendar-source'),
-          selectedCalendarIds: () => new Set(this.config.calendarIds ?? []),
+          selectedCalendarIds: (brokerId) => this.calendarIdsOf(brokerId),
         }),
       },
     ]
@@ -381,6 +393,26 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
    *
    * Idempotent — runs on boot + on every integration.* event.
    */
+  /**
+   * Calendars to import, per broker (D985): the integration's own selection, filled by the
+   * reconcile that already reads each integration's settings. A broker whose integration has no
+   * selection yet (the move has not run) uses the legacy shared set, so a boot mid-move never
+   * changes what is imported.
+   */
+  private readonly calendarIdsByBroker = new Map<string, ReadonlySet<string>>()
+
+  private noteInstanceCalendars(brokerId: string, raw: unknown): void {
+    if (Array.isArray(raw) && raw.every((id): id is string => typeof id === 'string')) {
+      this.calendarIdsByBroker.set(brokerId, new Set(raw))
+    } else {
+      this.calendarIdsByBroker.delete(brokerId)
+    }
+  }
+
+  private calendarIdsOf(brokerId: string): ReadonlySet<string> {
+    return this.calendarIdsByBroker.get(brokerId) ?? new Set(this.config.calendarIds ?? [])
+  }
+
   private async reconcileIntegrationsToBrokers(): Promise<void> {
     type IntegrationApi = {
       integrations?: {
@@ -409,6 +441,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
         const settings = await api.integrations.getSettings.query({ id: integration.id })
         const brokerId = typeof settings['brokerId'] === 'string' ? settings['brokerId'] : null
         if (!brokerId) continue
+        this.noteInstanceCalendars(brokerId, settings['calendarIds'])
         const matching = this.activeBrokers.find((b) => b.id === brokerId)
         if (!matching) {
           this.ctx.logger.warn('integration→broker: linked broker not found', {
@@ -491,34 +524,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
   // by cramming a creation form into the integration settings. So this
   // schema is purely informational — there are no editable fields.
 
-  protected globalSettingsSchema(cap?: string) {
-    if (cap === 'calendar-source') {
-      return this.schema({
-        sections: [
-          {
-            id: 'ha-calendars-import',
-            title: 'Calendars to import',
-            titleKey: 'provider-homeassistant:globalSettings.s_ha-calendars-import.title',
-            columns: 1,
-            fields: [
-              {
-                type: 'multiselect' as const,
-                key: 'calendarIds',
-                label: 'Calendars',
-                labelKey:
-                  'provider-homeassistant:globalSettings.s_ha-calendars-import.calendarIds.label',
-                options: [] as const,
-                optionsFrom: '_calendarCatalog',
-                description:
-                  'Discovered from connected HA brokers. Select at least one to import; leave empty to import none.',
-                descriptionKey:
-                  'provider-homeassistant:globalSettings.s_ha-calendars-import.calendarIds.description',
-              },
-            ],
-          },
-        ],
-      })
-    }
+  protected globalSettingsSchema(_cap?: string) {
     return this.schema({
       sections: [
         {
@@ -541,24 +547,52 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
     })
   }
 
-  override async getGlobalSettings(
-    overlay?: Record<string, unknown>,
-    cap?: string,
-    nodeId?: string,
-  ) {
-    if (cap !== 'calendar-source') {
-      return super.getGlobalSettings(overlay, cap, nodeId)
+  /**
+   * The calendars of ONE Home Assistant instance (D985): picked on its integration, offered from
+   * that broker's own `calendar.*` entities.
+   */
+  protected override async integrationSettingsSchema(
+    instance: IntegrationInstanceRef,
+  ): Promise<ConfigUISchema | null> {
+    if (instance.integrationId === null || !this.registry) return null
+    let brokerId: unknown
+    try {
+      const settings = await this.ctx.api.integrations.getSettings.query({
+        id: instance.integrationId,
+      })
+      brokerId = settings['brokerId']
+    } catch (err) {
+      this.ctx.logger.warn('HA integration form: instance lookup failed — broker form shown', {
+        meta: { integrationId: instance.integrationId, error: errMsg(err) },
+      })
+      return null
     }
-    const catalog = this.registry ? listHaCalendarCatalog(this.registry) : []
-    return super.getGlobalSettings(
-      {
-        ...overlay,
-        calendarIds: this.config.calendarIds ?? [],
-        ...(catalog.length > 0 ? { _calendarCatalog: catalog } : {}),
-      },
-      cap,
-      nodeId,
-    )
+    if (typeof brokerId !== 'string') return null
+    const options = listHaCalendarCatalog(this.registry, brokerId)
+    return this.schema({
+      sections: [
+        {
+          id: 'ha-calendars-import',
+          title: 'Calendars to import',
+          titleKey: 'provider-homeassistant:globalSettings.s_ha-calendars-import.title',
+          columns: 1,
+          fields: [
+            {
+              type: 'multiselect' as const,
+              key: 'calendarIds',
+              label: 'Calendars',
+              labelKey:
+                'provider-homeassistant:globalSettings.s_ha-calendars-import.calendarIds.label',
+              options,
+              description:
+                'Discovered from this Home Assistant instance. Select at least one to import; leave empty to import none.',
+              descriptionKey:
+                'provider-homeassistant:globalSettings.s_ha-calendars-import.calendarIds.description',
+            },
+          ],
+        },
+      ],
+    })
   }
 
   protected override async onShutdown(): Promise<void> {
