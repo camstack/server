@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.182] - 2026-11-03
+
 ### Changed
 
 - An idle Echo shows its volume and mute again (the volume list is read correctly)
