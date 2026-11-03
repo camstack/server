@@ -7,9 +7,6 @@ import {
   ACTUATOR_TEMPLATE_IDS,
   type ActiveCriterion,
   type AggregateReducer,
-  APPLIANCE_DEFAULTS,
-  APPLIANCE_TEMPLATE_ID,
-  type ApplianceKind,
   type ArithmeticHelperSpec,
   type ArithmeticOp,
   type Composition,
@@ -39,7 +36,6 @@ import {
   sharedColorModes,
   sharedLightCaps,
   type SourcePickRequest,
-  sourcePickForAppliance,
   sourcePickForHistory,
   sourcePickForMath,
   sourcePickForTemplate,
@@ -48,7 +44,7 @@ import {
   type StatisticWindow,
 } from '@camstack/types'
 
-export type HelperPickerId = GroupTemplateId | typeof APPLIANCE_TEMPLATE_ID
+export type HelperPickerId = GroupTemplateId
 
 export type HelperTemplateGroupId = 'readings' | 'binary' | 'actuators'
 
@@ -63,11 +59,6 @@ export interface HelperFormDraft {
   readonly aggregate: AggregateReducer
   /** Set on an actuator template. Readings leave it null. */
   readonly active: ActiveCriterion | null
-  /** Set on the appliance template. Groups leave it null. */
-  readonly appliance: ApplianceKind | null
-  readonly thresholdWatts: number
-  readonly startDwellMs: number
-  readonly stopDwellMs: number
   readonly name: string
   readonly room: string
   readonly members: readonly HelperMember[]
@@ -137,7 +128,6 @@ export type HelperDraft = HelperFormDraft | StatisticFormDraft | IntegralFormDra
 
 export type HelperTemplatePick =
   | { readonly kind: 'group'; readonly templateId: GroupTemplateId }
-  | { readonly kind: 'appliance' }
   | { readonly kind: 'statistic' }
   | { readonly kind: 'integral' }
   | { readonly kind: 'threshold' }
@@ -299,30 +289,7 @@ export function helperTemplateGroups(): readonly HelperTemplateGroup[] {
   ]
 }
 
-const NO_APPLIANCE = {
-  appliance: null,
-  thresholdWatts: 0,
-  startDwellMs: 0,
-  stopDwellMs: 0,
-} as const
-
 export function draftForTemplate(templateId: HelperPickerId): HelperFormDraft | null {
-  if (templateId === APPLIANCE_TEMPLATE_ID) {
-    const defaults = APPLIANCE_DEFAULTS.washer
-    return {
-      kind: 'group',
-      templateId,
-      aggregate: 'any',
-      active: null,
-      appliance: 'washer',
-      thresholdWatts: defaults.thresholdWatts,
-      startDwellMs: defaults.startDwellMs,
-      stopDwellMs: defaults.stopDwellMs,
-      name: '',
-      room: '',
-      members: [],
-    }
-  }
   const template = groupTemplate(templateId)
   if (template === null) return null
   return {
@@ -330,7 +297,6 @@ export function draftForTemplate(templateId: HelperPickerId): HelperFormDraft | 
     templateId,
     aggregate: template.defaultAggregate,
     active: template.family === 'actuator' ? 'at-least-one' : null,
-    ...NO_APPLIANCE,
     name: '',
     room: '',
     members: [],
@@ -339,7 +305,6 @@ export function draftForTemplate(templateId: HelperPickerId): HelperFormDraft | 
 
 export function draftForPick(pick: HelperTemplatePick): HelperDraft | null {
   if (pick.kind === 'group') return draftForTemplate(pick.templateId)
-  if (pick.kind === 'appliance') return draftForTemplate(APPLIANCE_TEMPLATE_ID)
   if (pick.kind === 'statistic') {
     return {
       kind: 'statistic',
@@ -388,21 +353,6 @@ export function draftForPick(pick: HelperTemplatePick): HelperDraft | null {
 }
 
 export function draftFromHelper(spec: HelperSpec, name: string, room: string): HelperDraft | null {
-  if (spec.kind === 'appliance') {
-    return {
-      kind: 'group',
-      templateId: APPLIANCE_TEMPLATE_ID,
-      aggregate: 'any',
-      active: null,
-      appliance: spec.appliance,
-      thresholdWatts: spec.thresholdWatts,
-      startDwellMs: spec.startDwellMs,
-      stopDwellMs: spec.stopDwellMs,
-      name,
-      room,
-      members: [copyMember(spec.member)],
-    }
-  }
   if (spec.kind === 'statistic') {
     return {
       kind: 'statistic',
@@ -451,8 +401,6 @@ export function draftFromHelper(spec: HelperSpec, name: string, room: string): H
       source: copyMember(spec.source),
     }
   }
-  // A heater is built from the plug wizard, not edited as a draft here (yet).
-  if (spec.kind === 'heater') return null
   const template = groupTemplate(spec.templateId)
   if (template === null || !template.aggregates.includes(spec.aggregate)) return null
   if (template.family === 'actuator' && spec.active === undefined) return null
@@ -462,7 +410,6 @@ export function draftFromHelper(spec: HelperSpec, name: string, room: string): H
     templateId: spec.templateId,
     aggregate: spec.aggregate,
     active: spec.active ?? null,
-    ...NO_APPLIANCE,
     name,
     room,
     members: spec.members.map(copyMember),
@@ -479,14 +426,12 @@ export function withAggregate(
   draft: HelperFormDraft,
   aggregate: AggregateReducer,
 ): HelperFormDraft {
-  if (draft.templateId === APPLIANCE_TEMPLATE_ID) return draft
   const template = groupTemplate(draft.templateId)
   if (template === null || !template.aggregates.includes(aggregate)) return draft
   return { ...draft, aggregate }
 }
 
 export function withActive(draft: HelperFormDraft, active: ActiveCriterion): HelperFormDraft {
-  if (draft.templateId === APPLIANCE_TEMPLATE_ID) return draft
   const template = groupTemplate(draft.templateId)
   if (template === null || template.family !== 'actuator') return draft
   return { ...draft, active, aggregate: reducerForActive(active) }
@@ -509,19 +454,6 @@ export function withTemplate(draft: HelperFormDraft, templateId: HelperPickerId)
   return draftForTemplate(templateId) ?? draft
 }
 
-/** A different appliance type starts from that type's dwells. */
-export function withAppliance(draft: HelperFormDraft, kind: ApplianceKind): HelperFormDraft {
-  if (draft.templateId !== APPLIANCE_TEMPLATE_ID) return draft
-  const defaults = APPLIANCE_DEFAULTS[kind]
-  return {
-    ...draft,
-    appliance: kind,
-    thresholdWatts: defaults.thresholdWatts,
-    startDwellMs: defaults.startDwellMs,
-    stopDwellMs: defaults.stopDwellMs,
-  }
-}
-
 export type HelperSaveIntent = 'open' | 'again'
 
 export type HelperSaveResult =
@@ -535,7 +467,6 @@ export function memberRequest(draft: HelperDraft): SourcePickRequest | null {
   if (draft.kind === 'arithmetic') return sourcePickForMath(draft.op)
   if (draft.kind === 'expression') return sourcePickForMath('expression')
   if (draft.kind === 'derivative') return sourcePickForMath('derivative')
-  if (draft.templateId === APPLIANCE_TEMPLATE_ID) return sourcePickForAppliance()
   const template = groupTemplate(draft.templateId)
   if (template === null) return null
   return sourcePickForTemplate(template)
@@ -548,26 +479,10 @@ export function specFromDraft(draft: HelperDraft): HelperSpec | null {
   if (draft.kind === 'arithmetic') return arithmeticSpec(draft)
   if (draft.kind === 'expression') return expressionSpec(draft)
   if (draft.kind === 'derivative') return derivativeSpec(draft)
-  if (draft.templateId === APPLIANCE_TEMPLATE_ID) return applianceSpec(draft)
   return groupSpec(draft)
 }
 
-function applianceSpec(draft: HelperFormDraft): HelperSpec | null {
-  const member = draft.members[0]
-  if (member === undefined || draft.appliance === null) return null
-  return {
-    kind: 'appliance',
-    templateId: APPLIANCE_TEMPLATE_ID,
-    appliance: draft.appliance,
-    thresholdWatts: draft.thresholdWatts,
-    startDwellMs: draft.startDwellMs,
-    stopDwellMs: draft.stopDwellMs,
-    member: copyMember(member),
-  }
-}
-
 function groupSpec(draft: HelperFormDraft): GroupHelperSpec | null {
-  if (draft.templateId === APPLIANCE_TEMPLATE_ID) return null
   const template = groupTemplate(draft.templateId)
   const actuator = template?.family === 'actuator' && draft.active !== null
   return {
@@ -577,12 +492,6 @@ function groupSpec(draft: HelperFormDraft): GroupHelperSpec | null {
     ...(actuator && draft.active !== null ? { active: draft.active } : {}),
     members: draft.members.map(copyMember),
   }
-}
-
-const MISSING_MEMBER: CompositionProblem = {
-  code: 'member-constraint',
-  path: 'helper.member',
-  message: 'an appliance helper needs one power reading',
 }
 
 const MISSING_HISTORY: CompositionProblem = {
@@ -604,9 +513,7 @@ const MISSING_INPUTS: CompositionProblem = {
 }
 
 function missingFor(draft: HelperDraft): CompositionProblem {
-  if (draft.kind === 'group') {
-    return draft.templateId === APPLIANCE_TEMPLATE_ID ? MISSING_MEMBER : MISSING_INPUTS
-  }
+  if (draft.kind === 'group') return MISSING_INPUTS
   if (draft.kind === 'threshold') return MISSING_READING
   if (draft.kind === 'arithmetic' || draft.kind === 'expression') return MISSING_INPUTS
   return MISSING_HISTORY
@@ -643,7 +550,6 @@ export function canSaveDraft(draft: HelperDraft): boolean {
     return draft.op === 'sum' ? draft.inputs.length >= 2 : draft.inputs.length === 2
   }
   if (draft.kind === 'expression') return draft.inputs.length >= 1 && draft.expr.trim() !== ''
-  if (draft.templateId === APPLIANCE_TEMPLATE_ID) return draft.members.length === 1
   return draft.members.length >= 1 && draft.members.length <= MAX_HELPER_MEMBERS
 }
 

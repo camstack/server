@@ -10372,7 +10372,6 @@
       "readings": "Readings",
       "binary": "Binary sensors",
       "actuators": "Actuators",
-      "appliances": "Appliances",
       "history": "History",
       "math": "Math"
     },
@@ -10409,8 +10408,6 @@
       "switchSummary": "On when at least one is on, or only when every one is. Offline members stay out of that decision and still receive the command.",
       "light": "Light group",
       "lightSummary": "Same as a switch group. Brightness and colour appear only when every light has them.",
-      "appliance": "Appliance from a smart plug",
-      "applianceSummary": "One power reading. Running while power stays above a threshold, long enough that a wash pause is not the end of the cycle.",
       "statistic": "Statistics",
       "integral": "Energy from power",
       "threshold": "Threshold",
@@ -10452,8 +10449,6 @@
       "template": "Create a device, or aggregate others into a group or a calculation.",
       "parameters": "Name it and choose how members combine.",
       "members": "Choose the members.",
-      "appliance": "Name it and choose the appliance.",
-      "applianceMembers": "Choose the plug's power reading.",
       "historyParameters": "Choose the range and name it.",
       "historySource": "Choose the reading.",
       "math": {
@@ -10552,9 +10547,6 @@
       "binary": "New binary sensor",
       "switch": "New switch group",
       "light": "New light group",
-      "washer": "New washing machine",
-      "dryer": "New dryer",
-      "dishwasher": "New dishwasher",
       "statistic": "New statistics",
       "integral": "New energy meter",
       "threshold": "New threshold",
@@ -10570,15 +10562,6 @@
       "media-player": "New media player group",
       "climate": "New climate group"
     },
-    "appliance": {
-      "washer": "Washing machine",
-      "dryer": "Dryer",
-      "dishwasher": "Dishwasher"
-    },
-    "applianceType": "Appliance",
-    "threshold": "Threshold (W)",
-    "startDwell": "Starts after (min)",
-    "stopDwell": "Stops after (min)",
     "detail": {
       "statistic": "Minimum, maximum, time-weighted mean, sum, count or change over a range, read from history. Sum is for a counter; a gauge's sum is the integral.",
       "integral": "Power becomes energy. A flow becomes volume. Any other instantaneous reading becomes a meter in unit-seconds, growing until the reset.",

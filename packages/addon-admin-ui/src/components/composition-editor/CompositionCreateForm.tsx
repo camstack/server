@@ -174,10 +174,6 @@ function titleForDraft(draft: HelperDraft | null, t: TFunction): string {
   if (draft.kind === 'threshold' || draft.kind === 'expression' || draft.kind === 'derivative') {
     return t(`helper.newTitle.${draft.kind}`)
   }
-  if (draft.templateId === 'appliance' && draft.appliance !== null) {
-    return t(`helper.newTitle.${draft.appliance}`)
-  }
-  if (draft.templateId === 'appliance') return t('helper.newComposed')
   const template = groupTemplate(draft.templateId)
   if (template === null) return t('helper.newComposed')
   // One whole phrase per template and locale: gluing a type word and a

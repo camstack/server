@@ -11,7 +11,6 @@
  * running exactly as the old helper did, over one watts series.
  */
 import {
-  type ApplianceHelperSpec,
   type Composition,
   CompositionSchema,
   compositionReadKey,
@@ -25,7 +24,6 @@ import {
   createRecordsAccess,
   decodeScalarOverride,
   defineAddonMigrations,
-  type HeaterHelperSpec,
   planComposition,
   type SourceReading,
 } from '@camstack/types'
@@ -37,6 +35,13 @@ import {
   LOOKUP_CAP,
   recordingLogger as composerLogger,
 } from '../../../composer/__tests__/fixtures.js'
+import {
+  legacyAppliance,
+  legacyHeater,
+  type LegacyApplianceSpec,
+  type LegacyHeaterSpec,
+  type LegacyHelperComposition,
+} from './legacy-helper-fixtures.js'
 import { makeRecordsWorld } from '../../../sqlite-storage/__tests__/support/records-world.js'
 import { coreBlocksRecordKinds, type CoreBlockRowBody } from '../../record-kinds.js'
 import { recordingLogger } from '../../__tests__/fixtures.js'
@@ -69,7 +74,7 @@ const HEATER_METER = {
 }
 
 // Marked values: none of them is a default of the old templates.
-const WASHER: ApplianceHelperSpec = {
+const WASHER: LegacyApplianceSpec = {
   kind: 'appliance',
   templateId: 'appliance',
   appliance: 'washer',
@@ -80,7 +85,7 @@ const WASHER: ApplianceHelperSpec = {
   powerSwitch: WASHER_PLUG,
   offSeconds: 23,
 }
-const DRYER: ApplianceHelperSpec = {
+const DRYER: LegacyApplianceSpec = {
   kind: 'appliance',
   templateId: 'appliance',
   appliance: 'dryer',
@@ -93,7 +98,7 @@ const DRYER: ApplianceHelperSpec = {
     fieldPath: 'power',
   },
 }
-const HEATER: HeaterHelperSpec = {
+const HEATER: LegacyHeaterSpec = {
   kind: 'heater',
   templateId: 'heater',
   plug: HEATER_PLUG,
@@ -102,7 +107,7 @@ const HEATER: HeaterHelperSpec = {
   startDwellMs: 13_000,
   stopDwellMs: 71_000,
 }
-const HEATER_NO_METER: HeaterHelperSpec = {
+const HEATER_NO_METER: LegacyHeaterSpec = {
   kind: 'heater',
   templateId: 'heater',
   plug: { source: ref('bare_plug'), cap: 'switch', fieldPath: 'on' },
@@ -111,35 +116,39 @@ const HEATER_NO_METER: HeaterHelperSpec = {
   stopDwellMs: 6_000,
 }
 
-function compiled(spec: ApplianceHelperSpec | HeaterHelperSpec): Composition {
-  const out = compileHelper(spec)
-  if (!out.ok) throw new Error(out.problems.map((p) => p.message).join('; '))
-  return CompositionSchema.parse(out.composition)
+function compiled(spec: LegacyApplianceSpec | LegacyHeaterSpec): LegacyHelperComposition {
+  return spec.kind === 'appliance' ? legacyAppliance(spec) : legacyHeater(spec)
 }
 
-function blockOf(id: string, composition: Composition, mark: string): CoreBlock {
-  return CoreBlockSchema.parse({
+interface StoredFixture {
+  readonly id: string
+  readonly body: CoreBlockRowBody
+}
+
+/** A row as the old code stored it: `stored` is the composition WITH its helper spec. */
+function blockOf(id: string, composition: LegacyHelperComposition, mark: string): StoredFixture {
+  const base = CoreBlockSchema.parse({
     id,
     name: `name-${id}`,
     code: '',
     enabled: mark !== 'off',
     placement: 'hub',
-    source: { kind: 'composition', composition },
+    source: { kind: 'composition', composition: composition.plain },
     createdBy: `marker-${mark}`,
     createdAt: 10,
     updatedAt: 20,
     status: 'stopped',
     lastChangedAt: 20,
   })
-}
-
-function rowBody(block: CoreBlock): CoreBlockRowBody {
   return {
-    name: block.name,
-    enabled: block.enabled,
-    placement: block.placement,
-    updatedAt: block.updatedAt,
-    block,
+    id,
+    body: {
+      name: base.name,
+      enabled: base.enabled,
+      placement: base.placement,
+      updatedAt: base.updatedAt,
+      block: { ...base, source: { kind: 'composition', composition: composition.stored } },
+    },
   }
 }
 
@@ -160,6 +169,10 @@ function groupComposition(): Composition {
   return CompositionSchema.parse(out.composition)
 }
 
+function plainOnly(composition: Composition): LegacyHelperComposition {
+  return { plain: composition, stored: { ...composition } }
+}
+
 function failFixture(): never {
   throw new Error('no fixture')
 }
@@ -167,12 +180,12 @@ function failFixture(): never {
 let records: ReturnType<typeof createRecordsAccess>
 const NOW = 5_000
 
-const BLOCKS: readonly CoreBlock[] = [
+const BLOCKS: readonly StoredFixture[] = [
   blockOf('washer-1', compiled(WASHER), 'washer'),
   blockOf('dryer-1', compiled(DRYER), 'dryer'),
   blockOf('heater-1', compiled(HEATER), 'heater'),
   blockOf('heater-bare', compiled(HEATER_NO_METER), 'bare'),
-  blockOf('group-1', groupComposition(), 'group'),
+  blockOf('group-1', plainOnly(groupComposition()), 'group'),
 ]
 
 beforeEach(async () => {
@@ -185,7 +198,7 @@ beforeEach(async () => {
   })
   await records.declare(coreBlocksRecordKinds)
   const handle = records.kind(coreBlocksRecordKinds.blocks)
-  for (const block of BLOCKS) await handle.put({ id: block.id, data: rowBody(block) })
+  for (const block of BLOCKS) await handle.put({ id: block.id, data: block.body })
 })
 
 async function execute() {
@@ -270,7 +283,7 @@ describe('core-blocks migration: appliance and heater helpers become plain Custo
       fieldPath: 'on',
     })
     expect(powerSource.fields['offSeconds']).toEqual(
-      featureOf(compiled(WASHER), 'power-source').fields['offSeconds'],
+      featureOf(compiled(WASHER).plain, 'power-source').fields['offSeconds'],
     )
   })
 
@@ -294,7 +307,7 @@ describe('core-blocks migration: appliance and heater helpers become plain Custo
     const composition = compositionOf(block)
     expect(composition.helper).toBeUndefined()
     expect(composition.target).toEqual({ kind: 'new', type: 'heater' })
-    expect(featureOf(composition, 'switch')).toEqual(featureOf(compiled(HEATER), 'switch'))
+    expect(featureOf(composition, 'switch')).toEqual(featureOf(compiled(HEATER).plain, 'switch'))
     expect(featureOf(composition, 'switch').commands?.['setState']).toEqual({
       kind: 'forward',
       source: HEATER_PLUG.source,
@@ -372,7 +385,7 @@ describe('core-blocks migration: appliance and heater helpers become plain Custo
   it('throws on a malformed helper block instead of guessing, and writes nothing', async () => {
     const handle = records.kind(coreBlocksRecordKinds.blocks)
     const broken = {
-      ...rowBody(BLOCKS[0] ?? failFixture()),
+      ...(BLOCKS[0] ?? failFixture()).body,
       block: {
         id: 'broken',
         helper: 'x',
@@ -475,7 +488,7 @@ describe('the composer runtime decides running as the old helper did', () => {
   it('the same watts series gives the same running decisions, with the marked dwells', async () => {
     await runMigration()
     const migrated = compositionOf(await storedBlock('washer-1'))
-    const old = decisions(compiled(WASHER))
+    const old = decisions(compiled(WASHER).plain)
     const now = decisions(migrated)
     expect(now).toEqual(old)
     // The series really crosses both dwells, so the equality is not two empty arrays.

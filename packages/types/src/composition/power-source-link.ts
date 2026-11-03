@@ -47,7 +47,7 @@ function storedOffSeconds(composition: Composition): unknown {
 
 /**
  * The link a composition stores. An `existing` target names its own device; a
- * `new` target (an appliance helper) is the composer's own device, so the caller
+ * `new` target (a composed device) is the composer's own device, so the caller
  * passes the block id and a new-target composition without one has no link.
  */
 export function powerSourceLinkOfComposition(

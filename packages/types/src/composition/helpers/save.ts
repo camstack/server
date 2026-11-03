@@ -93,42 +93,9 @@ export function helperSaveProblems(
       ),
     ]
   }
-  if (spec.kind === 'appliance') return applianceMemberProblems(spec.member, facts)
   if (spec.kind === 'arithmetic') return arithmeticQuantityProblems(spec, facts)
   if (spec.kind !== 'group') return []
   return [...quantityProblems(spec, facts), ...deviceTypeProblems(spec, facts)]
-}
-
-function applianceMemberProblems(
-  member: GroupHelperSpec['members'][number],
-  facts: ReadonlyMap<string, HelperMemberFact>,
-): readonly CompositionProblem[] {
-  const fact = facts.get(compositionSourceKey(member.source))
-  if (fact === undefined) return []
-  const problems: CompositionProblem[] = []
-  if (
-    fact.deviceType !== undefined &&
-    fact.deviceType !== DeviceType.Sensor &&
-    fact.deviceType !== DeviceType.Switch
-  ) {
-    problems.push(
-      problem(
-        'member-constraint',
-        'helper.member',
-        `an appliance helper reads a sensor or a switch; this member is a ${fact.deviceType}`,
-      ),
-    )
-  }
-  if (fact.quantity !== undefined && fact.quantity !== 'power') {
-    problems.push(
-      problem(
-        'mixed-quantity',
-        'helper.member',
-        `an appliance helper reads power (W); this member is ${fact.quantity}`,
-      ),
-    )
-  }
-  return problems
 }
 
 /**

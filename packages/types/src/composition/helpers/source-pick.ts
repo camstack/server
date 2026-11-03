@@ -3,7 +3,7 @@
  * The selector's layout is not specified here. Groups ask for one device type
  * and the catalog field; they do not opt into incompatible fields.
  */
-import type { DeviceType } from '../../device/device-type.js'
+import { DeviceType } from '../../device/device-type.js'
 import { HISTORY_CATALOG, historyFieldsFor } from '../../generated/history-catalog.js'
 import type { CompositionSourceRef } from '../source-ref.js'
 import type { GroupTemplate } from './catalog.js'
@@ -137,4 +137,22 @@ export function sourcePickForMath(kind: MathSourceKind): SourcePickRequest {
 
 function numericAccept(): readonly SourcePickAccept[] {
   return historyAccept('statistic').filter((field) => field.valueKind === 'number')
+}
+
+/**
+ * The one thing a naked heater needs at creation (D1004 point 5): the plug it
+ * switches. On and off forward to that plug; no other facet is attached.
+ */
+export function sourcePickForHeaterPlug(): SourcePickRequest {
+  return {
+    fieldChoice: 'operator',
+    purpose: 'member',
+    multiple: false,
+    max: 1,
+    deviceTypes: [DeviceType.Switch],
+    accept: [{ cap: 'switch', fieldPath: 'on', valueKind: 'boolean' }],
+    history: { required: false, minRetentionMs: null },
+    mustBindCaps: ['switch'],
+    exclude: [] as readonly CompositionSourceRef[],
+  }
 }

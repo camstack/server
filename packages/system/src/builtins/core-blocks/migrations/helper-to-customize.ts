@@ -30,7 +30,6 @@
  * refuses rather than guess, and the owner does not start.
  */
 import {
-  type ApplianceHelperSpec,
   type Composition,
   type CompositionFieldSource,
   type CompositionFieldsFeature,
@@ -40,8 +39,8 @@ import {
   CompositionSchema,
   type CoreBlock,
   CoreBlockSchema,
-  type HeaterHelperSpec,
   type HelperMember,
+  HelperMemberSchema,
   type MigrationProcedureResult,
   type ScalarCompileInput,
 } from '@camstack/types'
@@ -51,7 +50,38 @@ import type { CoreBlocksMigrationPorts, StoredBlockRow } from './pump-cycle-spli
 
 export const HELPER_TO_CUSTOMIZE_ID = 'core-blocks/2026-11-03-helper-to-customize'
 
-type RewritableHelper = ApplianceHelperSpec | HeaterHelperSpec
+/**
+ * The documented read-only boundary (D1004 phase 5): the appliance and heater
+ * helper templates are deleted from `@camstack/types`, but a stored block can
+ * still carry their `helper` spec until this migration has run. These two
+ * schemas READ that old shape and nothing else; no live code builds it.
+ */
+const LegacyApplianceSchema = z.object({
+  kind: z.literal('appliance'),
+  thresholdWatts: z.number(),
+  startDwellMs: z.number(),
+  stopDwellMs: z.number(),
+  member: HelperMemberSchema,
+  powerSwitch: HelperMemberSchema.optional(),
+})
+const LegacyHeaterSchema = z.object({
+  kind: z.literal('heater'),
+  plug: HelperMemberSchema,
+  meter: HelperMemberSchema.optional(),
+  thresholdWatts: z.number(),
+  startDwellMs: z.number(),
+  stopDwellMs: z.number(),
+})
+const LegacyHelperSchema = z.discriminatedUnion('kind', [LegacyApplianceSchema, LegacyHeaterSchema])
+type RewritableHelper = z.infer<typeof LegacyHelperSchema>
+
+/** A stored block whose composition carries an appliance or heater `helper`, read raw. */
+const LegacyHelperBlockSchema = z.looseObject({
+  source: z.looseObject({
+    kind: z.literal('composition'),
+    composition: z.looseObject({ helper: LegacyHelperSchema }),
+  }),
+})
 
 /** The raw shape of a helper block, enough to refuse one the schema cannot read. */
 const RawHelperBlockSchema = z.object({
@@ -219,9 +249,11 @@ function replacementsOf(
   }
 }
 
-function rewriteComposition(blockId: string, composition: Composition): Composition | null {
-  const helper = composition.helper
-  if (helper === undefined || (helper.kind !== 'appliance' && helper.kind !== 'heater')) return null
+function rewriteComposition(
+  blockId: string,
+  composition: Composition,
+  helper: RewritableHelper,
+): Composition {
   if (composition.target.kind !== 'new')
     return refuse(blockId, 'a helper that targets an existing device')
   const replacements = replacementsOf(blockId, composition, helper)
@@ -235,8 +267,7 @@ function rewriteComposition(blockId: string, composition: Composition): Composit
   const missing = Object.keys(replacements).filter((cap) => !seen.has(cap))
   if (missing.length > 0)
     return refuse(blockId, `no stored ${missing.join(', ')} feature to rewrite`)
-  const { helper: _helper, ...rest } = composition
-  const parsed = CompositionSchema.safeParse({ ...rest, features })
+  const parsed = CompositionSchema.safeParse({ ...composition, features })
   if (!parsed.success)
     return refuse(blockId, `the rewritten composition is invalid: ${parsed.error.message}`)
   return parsed.data
@@ -247,17 +278,35 @@ interface Rewrite {
   readonly data: CoreBlockRowBody
 }
 
-function rewriteOf(row: StoredBlockRow, ports: CoreBlocksMigrationPorts): Rewrite | null {
-  const parsed = CoreBlockSchema.safeParse(row.data.block)
-  if (!parsed.success) {
-    if (RawHelperBlockSchema.safeParse(row.data.block).success)
-      return refuse(row.id, `the stored block does not parse: ${parsed.error.message}`)
-    return null
+interface LegacyHelperBlock {
+  readonly helper: RewritableHelper
+  /** The stored block with its `helper` spec taken out: the live schema reads it. */
+  readonly withoutHelper: unknown
+}
+
+/** `null` when the row holds no appliance or heater helper; throws when it holds one it cannot read. */
+function legacyHelperOf(row: StoredBlockRow): LegacyHelperBlock | null {
+  if (!RawHelperBlockSchema.safeParse(row.data.block).success) return null
+  const envelope = LegacyHelperBlockSchema.safeParse(row.data.block)
+  if (!envelope.success)
+    return refuse(row.id, `the stored helper spec does not parse: ${envelope.error.message}`)
+  const { helper, ...composition } = envelope.data.source.composition
+  return {
+    helper,
+    withoutHelper: { ...envelope.data, source: { ...envelope.data.source, composition } },
   }
+}
+
+function rewriteOf(row: StoredBlockRow, ports: CoreBlocksMigrationPorts): Rewrite | null {
+  const legacy = legacyHelperOf(row)
+  if (legacy === null) return null
+  const parsed = CoreBlockSchema.safeParse(legacy.withoutHelper)
+  if (!parsed.success)
+    return refuse(row.id, `the stored block does not parse: ${parsed.error.message}`)
   const block: CoreBlock = parsed.data
-  if (block.source === undefined || block.source.kind !== 'composition') return null
-  const composition = rewriteComposition(row.id, block.source.composition)
-  if (composition === null) return null
+  if (block.source === undefined || block.source.kind !== 'composition')
+    return refuse(row.id, 'the helper block has no composition source')
+  const composition = rewriteComposition(row.id, block.source.composition, legacy.helper)
   const updatedAt = Math.max(block.updatedAt + 1, ports.now())
   const next = CoreBlockSchema.safeParse({
     ...block,

@@ -10394,7 +10394,6 @@
       "readings": "Letture",
       "binary": "Sensori binari",
       "actuators": "Attuatori",
-      "appliances": "Elettrodomestici",
       "history": "Storico",
       "math": "Calcoli"
     },
@@ -10431,8 +10430,6 @@
       "switchSummary": "Acceso se almeno uno lo è, oppure solo se lo sono tutti. I membri offline restano fuori da quella decisione e ricevono comunque il comando.",
       "light": "Gruppo di luci",
       "lightSummary": "Come un gruppo di interruttori. Luminosità e colore compaiono solo se ogni luce li ha.",
-      "appliance": "Elettrodomestico da una presa intelligente",
-      "applianceSummary": "Una lettura di potenza. In funzione finché la potenza resta sopra una soglia, abbastanza a lungo da non scambiare una pausa di lavaggio per la fine del ciclo.",
       "statistic": "Statistiche",
       "integral": "Energia dalla potenza",
       "threshold": "Soglia",
@@ -10474,8 +10471,6 @@
       "template": "Crea un dispositivo, oppure aggrega altri in un gruppo o in un calcolo.",
       "parameters": "Dagli un nome e scegli come combinare i membri.",
       "members": "Scegli i membri.",
-      "appliance": "Dagli un nome e scegli l'elettrodomestico.",
-      "applianceMembers": "Scegli la lettura di potenza della presa.",
       "historyParameters": "Scegli l'intervallo e dagli un nome.",
       "historySource": "Scegli la lettura.",
       "math": {
@@ -10574,9 +10569,6 @@
       "binary": "Nuovo sensore binario",
       "switch": "Nuovo gruppo di interruttori",
       "light": "Nuovo gruppo di luci",
-      "washer": "Nuova lavatrice",
-      "dryer": "Nuova asciugatrice",
-      "dishwasher": "Nuova lavastoviglie",
       "statistic": "Nuove statistiche",
       "integral": "Nuovo contatore di energia",
       "threshold": "Nuova soglia",
@@ -10592,15 +10584,6 @@
       "media-player": "Nuovo gruppo di lettori multimediali",
       "climate": "Nuovo gruppo di clima"
     },
-    "appliance": {
-      "washer": "Lavatrice",
-      "dryer": "Asciugatrice",
-      "dishwasher": "Lavastoviglie"
-    },
-    "applianceType": "Elettrodomestico",
-    "threshold": "Soglia (W)",
-    "startDwell": "Parte dopo (min)",
-    "stopDwell": "Si ferma dopo (min)",
     "detail": {
       "statistic": "Minimo, massimo, media pesata nel tempo, somma, conteggio o variazione su un intervallo, letti dallo storico. La somma è per un contatore; la somma di un valore istantaneo è l'integrale.",
       "integral": "La potenza diventa energia. Una portata diventa un volume. Ogni altra lettura istantanea diventa un contatore in unità per secondo, che cresce fino all'azzeramento.",

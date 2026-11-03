@@ -16,7 +16,6 @@ import {
   type ValidateCompositionContext,
 } from '../index.js'
 import type { CompositionFieldsFeature, CompositionSourceRef } from '../composition.js'
-import { compileHelper } from '../helpers/compile.js'
 import { composedDeviceRef } from '../composition.js'
 import { compileScalarOverride } from '../customize/scalar-compile.js'
 
@@ -177,25 +176,14 @@ describe('the stored feature is a valid customization of a gateway', () => {
   })
 })
 
-describe('powerSourceLinkOfComposition on a new-target appliance', () => {
-  const compiled = compileHelper({
-    kind: 'appliance',
-    templateId: 'appliance',
-    appliance: 'washer',
-    thresholdWatts: 5,
-    startDwellMs: 1000,
-    stopDwellMs: 1000,
-    member: {
-      source: { addonId: 'provider-x', stableId: 'meter-1' },
-      cap: 'power-meter',
-      fieldPath: 'power',
-    },
-    powerSwitch: { source: PLUG, cap: 'switch', fieldPath: 'on' },
+describe('powerSourceLinkOfComposition on a new-target composed device', () => {
+  const stored = CompositionSchema.parse({
+    target: { kind: 'new', type: DeviceType.Washer },
+    features: [compiledFeature()],
   })
 
   it('links the composed device to its plug, given the block id', () => {
-    if (!compiled.ok) throw new Error('appliance did not compile')
-    expect(powerSourceLinkOfComposition(compiled.composition, 'blk1')).toEqual({
+    expect(powerSourceLinkOfComposition(stored, 'blk1')).toEqual({
       device: composedDeviceRef('blk1'),
       switch: PLUG,
       offSeconds: 10,
@@ -203,7 +191,6 @@ describe('powerSourceLinkOfComposition on a new-target appliance', () => {
   })
 
   it('has no link without the block id', () => {
-    if (!compiled.ok) throw new Error('appliance did not compile')
-    expect(powerSourceLinkOfComposition(compiled.composition)).toBeNull()
+    expect(powerSourceLinkOfComposition(stored)).toBeNull()
   })
 })

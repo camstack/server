@@ -5,8 +5,6 @@
  */
 import {
   ACTIVE_CRITERIA,
-  APPLIANCE_KINDS,
-  APPLIANCE_TEMPLATE_ID,
   CALENDAR_PERIODS,
   DERIVATIVE_UNITS,
   EXPRESSION_OUTPUTS,
@@ -43,7 +41,6 @@ import {
   type ThresholdFormDraft,
   withActive,
   withAggregate,
-  withAppliance,
   withDraftMembers,
   withName,
   withTemplate,
@@ -102,11 +99,7 @@ export function HelperWizard({
 
   const pick = (chosen: HelperTemplatePick): void => {
     setDraft((current) => {
-      if (
-        chosen.kind === 'group' &&
-        current?.kind === 'group' &&
-        current.templateId !== APPLIANCE_TEMPLATE_ID
-      ) {
+      if (chosen.kind === 'group' && current?.kind === 'group') {
         return withTemplate(current, chosen.templateId)
       }
       return draftForPick(chosen)
@@ -146,10 +139,7 @@ export function HelperWizard({
   }
 
   const request = draft === null ? null : memberRequest(draft)
-  const template =
-    draft !== null && draft.kind === 'group' && draft.templateId !== APPLIANCE_TEMPLATE_ID
-      ? groupTemplate(draft.templateId)
-      : null
+  const template = draft !== null && draft.kind === 'group' ? groupTemplate(draft.templateId) : null
   const members = draft === null ? [] : draftMembers(draft)
 
   return (
@@ -176,11 +166,6 @@ export function HelperWizard({
       {step === 'template' && (
         <HelperTemplatePicker onPick={pick} onDevice={onDevice} onPreset={onPreset} />
       )}
-      {step === 'parameters' &&
-        draft?.kind === 'group' &&
-        draft.templateId === APPLIANCE_TEMPLATE_ID && (
-          <ApplianceParameters draft={draft} onDraft={(next) => setDraft(next)} />
-        )}
       {step === 'parameters' && draft?.kind === 'group' && template !== null && (
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {template.family === 'actuator' && draft.active !== null ? (
@@ -332,90 +317,6 @@ export function HelperWizard({
       </div>
     </div>
   )
-}
-
-const MS_PER_MINUTE = 60_000
-
-interface ApplianceParametersProps {
-  readonly draft: HelperFormDraft
-  readonly onDraft: (draft: HelperFormDraft) => void
-}
-
-function ApplianceParameters({ draft, onDraft }: ApplianceParametersProps): ReactNode {
-  const { t } = useTranslation()
-  const kind = draft.appliance ?? 'washer'
-  return (
-    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-      <label className="flex flex-col gap-1 text-[11px]">
-        {t('helper.applianceType')}
-        <Select
-          aria-label={t('helper.applianceType')}
-          data-testid="helper-appliance"
-          value={kind}
-          onChange={(event) => {
-            const next = APPLIANCE_KINDS.find((item) => item === event.target.value)
-            if (next !== undefined) onDraft(withAppliance(draft, next))
-          }}
-          options={APPLIANCE_KINDS.map((item) => ({
-            value: item,
-            label: t(`helper.appliance.${item}`),
-          }))}
-        />
-      </label>
-      <label className="flex flex-col gap-1 text-[11px]">
-        {t('helper.name')}
-        <Input
-          aria-label={t('helper.name')}
-          data-testid="helper-name"
-          value={draft.name}
-          onChange={(event) => onDraft({ ...draft, name: event.target.value })}
-        />
-      </label>
-      <NumberField
-        label={t('helper.threshold')}
-        testId="helper-threshold"
-        value={String(draft.thresholdWatts)}
-        onValue={(text) => {
-          const watts = positiveNumber(text)
-          if (watts !== null) onDraft({ ...draft, thresholdWatts: watts })
-        }}
-      />
-      <NumberField
-        label={t('helper.startDwell')}
-        testId="helper-start-dwell"
-        value={minutesText(draft.startDwellMs)}
-        onValue={(text) => {
-          const ms = msFromMinutes(text)
-          if (ms !== null) onDraft({ ...draft, startDwellMs: ms })
-        }}
-      />
-      <NumberField
-        label={t('helper.stopDwell')}
-        testId="helper-stop-dwell"
-        value={minutesText(draft.stopDwellMs)}
-        onValue={(text) => {
-          const ms = msFromMinutes(text)
-          if (ms !== null) onDraft({ ...draft, stopDwellMs: ms })
-        }}
-      />
-    </div>
-  )
-}
-
-function minutesText(ms: number): string {
-  return String(ms / MS_PER_MINUTE)
-}
-
-function msFromMinutes(text: string): number | null {
-  const value = Number(text)
-  if (!Number.isFinite(value) || value < 0) return null
-  return Math.round(value * MS_PER_MINUTE)
-}
-
-function positiveNumber(text: string): number | null {
-  const value = Number(text)
-  if (!Number.isFinite(value) || value <= 0) return null
-  return value
 }
 
 interface NumberFieldProps {
@@ -888,10 +789,6 @@ function stepCopy(step: WizardStep, draft: HelperDraft | null): string {
   if (draft?.kind === 'statistic' || draft?.kind === 'integral') {
     if (step === 'parameters') return 'helper.step.historyParameters'
     if (step === 'members') return 'helper.step.historySource'
-  }
-  if (draft?.kind === 'group' && draft.templateId === APPLIANCE_TEMPLATE_ID) {
-    if (step === 'parameters') return 'helper.step.appliance'
-    if (step === 'members') return 'helper.step.applianceMembers'
   }
   return `helper.step.${step}`
 }

@@ -1,9 +1,8 @@
 import {
-  APPLIANCE_DEFAULTS,
   DeviceFeature,
-  type ApplianceHelperSpec,
   type GroupCommandResult,
   type GroupHelperSpec,
+  type HelperSpec,
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { actuatorDispatcher, type ActuatorDispatchInput } from '../actuator-dispatch.js'
@@ -16,20 +15,18 @@ import { recordingLogger } from './fixtures.js'
 
 const IDS: Readonly<Record<string, number>> = { a: 1, b: 2, c: 3 }
 
-function appliance(kind: ApplianceHelperSpec['appliance']): ApplianceHelperSpec {
-  const defaults = APPLIANCE_DEFAULTS[kind]
+function nonGroup(): HelperSpec {
   return {
-    kind: 'appliance',
-    templateId: 'appliance',
-    appliance: kind,
-    thresholdWatts: defaults.thresholdWatts,
-    startDwellMs: defaults.startDwellMs,
-    stopDwellMs: defaults.stopDwellMs,
-    member: {
+    kind: 'threshold',
+    source: {
       source: { addonId: 'lights', stableId: 'a' },
       cap: 'power-meter',
       fieldPath: 'power',
     },
+    high: 5,
+    low: 3,
+    onForMs: 1000,
+    offForMs: 1000,
   }
 }
 
@@ -161,9 +158,9 @@ describe('actuator groups', () => {
     world.groups.shutdown()
   })
 
-  it('does not treat an appliance helper as a command group', async () => {
+  it('does not treat a non-group helper as a command group', async () => {
     const world = harness(() => ({ kind: 'ready', caps: ['switch'], features: [] }))
-    await world.groups.sync([{ id: 'washer', helper: appliance('washer') }])
+    await world.groups.sync([{ id: 'washer', helper: nonGroup() }])
     expect(world.group.shared).toEqual([])
     const run = actuatorDispatcher()
     if (run === null) throw new Error('dispatcher was not attached')

@@ -85,8 +85,6 @@ export function originOfComposition(composition: Composition): CompositionRowOri
   switch (helper.kind) {
     case 'group':
       return { section: 'group', kind: helper.templateId }
-    case 'appliance':
-      return { section: 'group', kind: 'appliance' }
     case 'arithmetic':
       return { section: 'calculation', kind: helper.op }
     case 'expression':

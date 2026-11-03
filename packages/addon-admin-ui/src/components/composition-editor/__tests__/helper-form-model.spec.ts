@@ -35,7 +35,6 @@ import {
   specFromDraft,
   withActive,
   withAggregate,
-  withAppliance,
   withTemplate,
 } from '../helper-form-model'
 
@@ -278,10 +277,6 @@ function specAsDraft(spec: GroupHelperSpec): HelperFormDraft {
     templateId: spec.templateId,
     aggregate: spec.aggregate,
     active: spec.active ?? null,
-    appliance: null,
-    thresholdWatts: 0,
-    startDwellMs: 0,
-    stopDwellMs: 0,
     name: '',
     room: '',
     members: spec.members,
@@ -293,41 +288,6 @@ function requireTemplate(id: 'temperature'): GroupTemplate {
   if (template === null) throw new Error('missing template')
   return template
 }
-
-describe('an appliance from a smart plug', () => {
-  const plug: HelperMember = {
-    source: { addonId: 'provider-homeassistant', stableId: 'sensor.plug_power' },
-    cap: 'power-meter',
-    fieldPath: 'power',
-  }
-
-  it('compiles one power reading with the washer defaults and reopens the saved numbers', () => {
-    const draft = draftForTemplate('appliance')
-    expect(draft?.appliance).toBe('washer')
-    expect(draft?.thresholdWatts).toBe(5)
-    expect(draft?.startDwellMs).toBe(30_000)
-    expect(draft?.stopDwellMs).toBe(600_000)
-    expect(canSaveDraft(draft ?? specAsDraft(temperature([porch])))).toBe(false)
-    if (draft === null) return
-    const filled = { ...draft, name: 'Laundry', members: [plug] }
-    expect(canSaveDraft(filled)).toBe(true)
-    expect(withTemplate(filled, 'appliance')).toBe(filled)
-    const spec = specFromDraft(filled)
-    expect(spec?.kind).toBe('appliance')
-    if (spec?.kind !== 'appliance') return
-    expect(spec.thresholdWatts).toBe(5)
-    expect(spec.stopDwellMs).toBe(600_000)
-    const compiled = compileHelper(spec)
-    expect(compiled.ok).toBe(true)
-    const dryer = withAppliance(filled, 'dryer')
-    expect(dryer.appliance).toBe('dryer')
-    expect(dryer.stopDwellMs).toBe(600_000)
-    const reopened = draftFromHelper({ ...spec, thresholdWatts: 8 }, 'Laundry', '')
-    if (reopened?.kind !== 'group') throw new Error('expected the appliance draft')
-    expect(reopened.thresholdWatts).toBe(8)
-    expect(reopened.members).toEqual([plug])
-  })
-})
 
 describe('the helper dialog title', () => {
   it('has a whole phrase for every template in both locales', async () => {
@@ -344,12 +304,6 @@ describe('the helper dialog title', () => {
       expect(en[template.id], template.id).toBeTruthy()
       expect(it_[template.id], template.id).toBeTruthy()
     }
-    expect(en.washer).toBe('New washing machine')
-    expect(it_.washer).toBe('Nuova lavatrice')
-    expect(en.dryer).toBe('New dryer')
-    expect(it_.dryer).toBe('Nuova asciugatrice')
-    expect(en.dishwasher).toBe('New dishwasher')
-    expect(it_.dishwasher).toBe('Nuova lavastoviglie')
   })
 })
 

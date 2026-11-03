@@ -1,4 +1,4 @@
-import { compileHelper, composedDeviceRef, CompositionSchema } from '@camstack/types'
+import { composedDeviceRef, CompositionSchema } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import {
   PowerSourceService,
@@ -64,26 +64,26 @@ function fakeScheduler() {
   return { scheduler, pending }
 }
 
-/** A washer helper: a NEW-target composition whose own device carries the plug. */
+/** A composed washer: a NEW-target composition whose own device carries the plug. */
 function applianceBlock() {
-  const compiled = compileHelper({
-    kind: 'appliance',
-    templateId: 'appliance',
-    appliance: 'washer',
-    thresholdWatts: 5,
-    startDwellMs: 1000,
-    stopDwellMs: 1000,
-    member: {
-      source: { addonId: 'ha', stableId: 'meter' },
-      cap: 'power-meter',
-      fieldPath: 'power',
-    },
-    powerSwitch: { source: PLUG_REF, cap: 'switch', fieldPath: 'on' },
-  })
-  if (!compiled.ok) throw new Error('appliance did not compile')
   return {
     id: 'blk-washer',
-    source: { kind: 'composition' as const, composition: compiled.composition },
+    source: {
+      kind: 'composition' as const,
+      composition: CompositionSchema.parse({
+        target: { kind: 'new', type: 'washer' },
+        features: [
+          {
+            kind: 'fields',
+            cap: 'power-source',
+            fields: {
+              switchOn: { kind: 'from', source: PLUG_REF, cap: 'switch', fieldPath: 'on' },
+              offSeconds: { kind: 'expression', expr: '10', bindings: {} },
+            },
+          },
+        ],
+      }),
+    },
   }
 }
 
@@ -140,7 +140,7 @@ describe('forceRestart', () => {
     ])
   })
 
-  it('cuts the plug of an appliance helper (a new-target composition)', async () => {
+  it('cuts the plug of a composed appliance (a new-target composition)', async () => {
     const w = world({ appliance: true })
     expect(await w.service.forceRestart({ deviceId: GATEWAY_ID })).toEqual({
       accepted: true,
