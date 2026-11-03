@@ -1,11 +1,17 @@
 /**
  * D944 — every declared behaviour parameter is on the catalog the editor reads.
  */
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import { loadCustomizeCaps } from '../lib/customize-declaration.ts'
 import { projectCustomize } from '../lib/customize-project.ts'
 
 describe('customize parameter projection', () => {
+  // The first loadCustomizeCaps() imports every cap file cold (several seconds on a loaded
+  // worker); it is paid once here, under a hook budget sized for it, not inside the test.
+  beforeAll(async () => {
+    await loadCustomizeCaps()
+  }, 120_000)
+
   it('projects clamp, threshold defaults, comparison options, edges and debounce', async () => {
     const caps = await loadCustomizeCaps()
     const battery = caps.find((cap) => cap.capName === 'battery')
