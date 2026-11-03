@@ -20,6 +20,7 @@ export type UiRule =
   | 'raw-hex'
   | 'raw-color-fn'
   | 'palette-class'
+  | 'undeclared-token'
   | 'inline-style'
   | 'raw-button'
   | 'raw-table'
@@ -51,6 +52,26 @@ const PALETTE_CLASS = new RegExp(
   `(?<![\\w-])(?:[a-z0-9-]+:)*(${PALETTE_PREFIXES})-(${PALETTE_HUES})-(50|[1-9]00|950)(\\/\\d{1,3})?(?![\\w-])`,
   'g',
 )
+/**
+ * A utility whose colour name belongs to the theme's vocabulary but is not
+ * declared there (`bg-surface-2`, `ring-accent`). Tailwind silently emits NO
+ * rule for it, and `cn()` (twMerge) still lets it evict the real `bg-surface`
+ * of a primitive. Only names whose first segment is a theme family are judged,
+ * so `text-xs`, `border-t`, `bg-cover` and `text-white` are not mistaken for
+ * colours.
+ */
+const TOKEN_UTILITY =
+  /(?<![\w-])(?:[a-z0-9-]+:)*(bg|text|border|ring)-([a-z][a-z0-9]*(?:-[a-z0-9]+)*)(?:\/\d{1,3})?(?![\w[/-])/g
+const EXTRA_TOKEN_FAMILIES: readonly string[] = [
+  'accent',
+  'secondary',
+  'muted',
+  'card',
+  'popover',
+  'destructive',
+  'input',
+  'surface',
+]
 const HEX = /(?<![&\w])#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})(?![0-9a-zA-Z_-])/g
 const COLOR_FN = /(?<![\w-])(rgba?|hsla?)\(/g
 
@@ -103,7 +124,10 @@ export function isCheckedFile(file: string): boolean {
     return false
   }
   // Build OUTPUT only: a build/ directly under a package root, not a source dir named build.
-  if (/(^|\/)(node_modules|dist)\//.test(file) || /(^|\/)(packages|server)\/[^/]+\/build\//.test(file)) {
+  if (
+    /(^|\/)(node_modules|dist)\//.test(file) ||
+    /(^|\/)(packages|server)\/[^/]+\/build\//.test(file)
+  ) {
     return false
   }
   return true
@@ -194,6 +218,7 @@ export function checkUiSource(
   source: string,
   tokens: HexTokenMap = new Map(),
   libraryComponents: ReadonlySet<string> = new Set(),
+  declaredColors: ReadonlySet<string> = new Set(),
 ): UiFinding[] {
   if (!isCheckedFile(file)) return []
   const findings: UiFinding[] = []
@@ -233,6 +258,23 @@ export function checkUiSource(
         whole,
         `palette class ${whole} → ${paletteReplacement(prefix, hue, opacity ?? '')}`,
       )
+    }
+
+    if (declaredColors.size > 0) {
+      const families = new Set([
+        ...EXTRA_TOKEN_FAMILIES,
+        ...[...declaredColors].map((c) => c.split('-')[0] ?? c),
+      ])
+      for (const m of text.matchAll(TOKEN_UTILITY)) {
+        const name = m[2]
+        if (declaredColors.has(name) || !families.has(name.split('-')[0] ?? name)) continue
+        push(
+          lineNo,
+          'undeclared-token',
+          m[0],
+          `\`${m[0]}\` names no theme token (\`--color-${name}\` is not in camstack-theme.css) → Tailwind emits nothing; pick one from \`ui:tokens\``,
+        )
+      }
     }
 
     if (isTsx && /\bstyle=\{/.test(text)) {
@@ -308,5 +350,9 @@ export function summarizeFindings(findings: readonly UiFinding[]): {
   }
   const filesByRule: Record<string, number> = {}
   for (const [rule, set] of filesPerRule) filesByRule[rule] = set.size
-  return { byRule, filesByRule, files: new Set(findings.map((f) => f.file)).size }
+  return {
+    byRule,
+    filesByRule,
+    files: new Set(findings.map((f) => f.file)).size,
+  }
 }

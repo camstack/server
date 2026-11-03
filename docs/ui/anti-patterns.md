@@ -29,6 +29,7 @@ dialogs, status tokens, daily paths) is planned in
 | `raw-table` | 13 / 12 | 6 / 6 | 1 | `DataTable`, `DeviceList mode="generic"` |
 | `raw-color-fn` | 1 / 1 | 11 / 8 | 0 | a token with an opacity modifier |
 | `shadows-library` | 0 | — | 0 | the library export, or a prop on it |
+| `undeclared-token` (added 2026-11-03; first run: 253 hits in 76 files) | most | most | `addon-pipeline`, `osd-manager` | a declared token: `bg-muted` → `bg-surface-hover`, `text-muted-foreground` → `text-foreground-muted`, `text-destructive` → `text-danger`, `bg-surface-subtle/-elevated/-raised/-alt` → `bg-surface` / `bg-background-elevated`, `accent` → `primary`. Tailwind emits nothing for an undeclared name, and `cn()` still lets it evict a primitive's real `bg-*` (the invisible dropdown options). |
 
 Total: 2,142 findings in 413 of 1,156 UI files. A `raw-button` in the library
 is often legitimate (a primitive's own internals, a chip that is a button);

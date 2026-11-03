@@ -241,11 +241,20 @@ function check(catalogue: UiCatalogue, args: readonly string[]): void {
   const libraryComponents = new Set(
     catalogue.entries.filter((e) => e.kind === 'component').map((e) => e.name),
   )
+  const declaredColors = new Set(catalogue.colors.map((c) => c.name))
   const findings: UiFinding[] = []
   for (const f of files) {
     const abs = path.join(ROOT, f)
     if (!fs.existsSync(abs)) continue
-    findings.push(...checkUiSource(f, fs.readFileSync(abs, 'utf8'), hexTokens, libraryComponents))
+    findings.push(
+      ...checkUiSource(
+        f,
+        fs.readFileSync(abs, 'utf8'),
+        hexTokens,
+        libraryComponents,
+        declaredColors,
+      ),
+    )
   }
   if (summary) {
     const s = summarizeFindings(findings)

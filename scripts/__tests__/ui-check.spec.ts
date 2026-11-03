@@ -196,3 +196,44 @@ describe('scope and escape hatch', () => {
     })
   })
 })
+
+describe('undeclared-token', () => {
+  const declared = new Set([
+    'surface',
+    'surface-hover',
+    'foreground',
+    'foreground-muted',
+    'border',
+    'primary',
+  ])
+  const run = (src: string): string[] =>
+    checkUiSource(ADMIN, src, new Map(), new Set(), declared).map((f) => f.match)
+
+  it('flags a utility whose theme-family colour is not declared', () => {
+    expect(run('<div className="bg-surface-2 text-foreground" />\n')).toEqual(['bg-surface-2'])
+    expect(run('<div className="bg-surface-2/30 focus:ring-accent" />\n')).toEqual([
+      'bg-surface-2/30',
+      'focus:ring-accent',
+    ])
+  })
+
+  it('accepts declared tokens, with opacity and variants', () => {
+    expect(
+      run(
+        '<div className="bg-surface/50 hover:bg-surface-hover text-foreground-muted border-border" />\n',
+      ),
+    ).toEqual([])
+  })
+
+  it('does not mistake sizes, sides or keywords for colours', () => {
+    expect(
+      run(
+        '<div className="text-xs text-left border-t border-2 bg-cover text-white bg-transparent border-dashed" />\n',
+      ),
+    ).toEqual([])
+  })
+
+  it('is off when the theme set is not supplied', () => {
+    expect(rules(ADMIN, '<div className="bg-surface-2" />\n')).toEqual([])
+  })
+})
