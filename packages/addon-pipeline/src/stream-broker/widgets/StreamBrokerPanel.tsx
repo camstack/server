@@ -298,7 +298,7 @@ export function StreamBrokerPanelInner({
           {sourceNodeId !== null && (
             <span
               title={t('panel.sourceNodeTitle', { node: sourceNodeId })}
-              className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium bg-accent/10 text-accent border border-accent/30 min-w-0 max-w-full"
+              className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium bg-primary/10 text-primary border border-primary/30 min-w-0 max-w-full"
             >
               <Radio className="h-2.5 w-2.5 shrink-0" />
               <span className="truncate">{sourceNodeId}</span>

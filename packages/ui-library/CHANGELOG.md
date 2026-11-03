@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - LogStream can offer an Origin filter (all / viewer app)
+- Select keeps its themed background and text colour whatever a caller passes, and native option lists follow the theme, so dropdown options are readable in dark mode
 
 ## [1.2.378] - 2026-11-03
 

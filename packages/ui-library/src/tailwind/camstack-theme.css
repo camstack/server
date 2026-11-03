@@ -84,6 +84,20 @@
   color-scheme: dark;
 }
 
+/* Native form popups (select, option, optgroup) are painted by the UA from the element's own
+   colours; without these a transparent select shows white options with near-white text. */
+select,
+option,
+optgroup {
+  background-color: var(--color-surface);
+  color: var(--color-foreground);
+}
+
+option:checked {
+  background-color: var(--color-primary);
+  color: var(--color-primary-foreground);
+}
+
 /* Dark theme (default) */
 .dark {
   color-scheme: dark;

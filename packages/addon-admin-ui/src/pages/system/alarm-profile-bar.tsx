@@ -55,7 +55,7 @@ export function AlarmProfileBar({
 
   return (
     <div
-      className="flex flex-col gap-2 rounded-md border border-border bg-surface-1 p-3"
+      className="flex flex-col gap-2 rounded-md border border-border bg-surface p-3"
       data-testid="alarm-profiles"
     >
       <div className="flex flex-wrap items-center gap-2">

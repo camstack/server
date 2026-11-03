@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - System logs page: filter to the viewer app's own lines
+- The alarm profile bar uses the surface background
 
 ## [1.2.573] - 2026-11-03
 

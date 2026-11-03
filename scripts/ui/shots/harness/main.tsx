@@ -42,6 +42,9 @@ if (window.location.pathname === '/sso-complete') {
 } else if (window.location.pathname.startsWith('/bosch-signin')) {
   const { BoschFormsPreview } = await import('./bosch-forms')
   createRoot(root).render(<BoschFormsPreview />)
+} else if (window.location.pathname.startsWith('/ffmpeg-params-preview')) {
+  const { FfmpegParamsPreview } = await import('./ffmpeg-params-preview')
+  createRoot(root).render(<FfmpegParamsPreview />)
 } else {
   createRoot(root).render(<App />)
 }

@@ -243,15 +243,13 @@ const PASSTHROUGH_DEFAULT: EncodeProfile = { video: { codec: 'copy' }, audio: 'p
 
 // ── Tailwind primitives matching StreamBrokerPanel conventions ──────────
 const inputCls =
-  'rounded border border-border bg-surface-2 px-2 py-1 text-xs text-foreground ' +
-  'focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50 disabled:cursor-not-allowed ' +
+  'rounded border border-border bg-surface px-2 py-1 text-xs text-foreground ' +
+  'focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed ' +
   'read-only:opacity-60 read-only:cursor-not-allowed'
 
-const selectCls = inputCls + ' appearance-none pr-6'
-
 const textareaCls =
-  'w-full rounded border border-border bg-surface-2 px-2 py-1.5 text-[11px] font-mono text-foreground ' +
-  'focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50 read-only:opacity-60 ' +
+  'w-full rounded border border-border bg-surface px-2 py-1.5 text-[11px] font-mono text-foreground ' +
+  'focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50 read-only:opacity-60 ' +
   'min-h-[60px] resize-y'
 
 const labelRowCls = 'flex items-center justify-between gap-3 py-1.5'
@@ -484,7 +482,7 @@ export function FfmpegParamsCore({
                     onChange={(e) =>
                       setVideoCodec(e.target.value as EncodeProfile['video']['codec'])
                     }
-                    className={selectCls + ' min-w-[120px]'}
+                    className="min-w-[120px]"
                   >
                     <option value="h264">h264</option>
                     <option value="h265">h265</option>
@@ -580,7 +578,7 @@ export function FfmpegParamsCore({
                         onChange={(e) =>
                           setAudioCodec(e.target.value as 'opus' | 'aac' | 'pcmu' | 'pcma' | 'copy')
                         }
-                        className={selectCls + ' min-w-[120px]'}
+                        className="min-w-[120px]"
                       >
                         <option value="opus">opus</option>
                         <option value="aac">aac</option>
@@ -691,7 +689,7 @@ function SaveStatusBadge({ status }: { readonly status: FfmpegSaveStatus }): Rea
     'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium border'
   if (status === 'saving') {
     return (
-      <span className={`${base} bg-accent/10 text-accent border-accent/30`}>
+      <span className={`${base} bg-primary/10 text-primary border-primary/30`}>
         <Loader2 className="h-2.5 w-2.5 animate-spin" />
         {t('ffmpeg.saving')}
       </span>
@@ -707,7 +705,7 @@ function SaveStatusBadge({ status }: { readonly status: FfmpegSaveStatus }): Rea
   }
   if (status === 'error') {
     return (
-      <span className={`${base} bg-red-500/10 text-red-400 border-red-500/30`}>
+      <span className={`${base} bg-danger/10 text-danger border-danger/30`}>
         <AlertCircle className="h-2.5 w-2.5" />
         {t('ffmpeg.saveFailed')}
       </span>

@@ -44,9 +44,13 @@ export const Select: ForwardRefExoticComponent<SelectProps & RefAttributes<HTMLS
             ref={ref}
             disabled={disabled}
             className={cn(
-              'h-7 w-full px-2.5 text-xs bg-surface border border-border rounded-md text-foreground appearance-none pr-7 focus:outline-none focus:ring-1 focus:ring-primary',
+              'h-7 w-full px-2.5 text-xs border border-border rounded-md appearance-none pr-7 focus:outline-none focus:ring-1 focus:ring-primary',
               'disabled:opacity-50 disabled:cursor-not-allowed',
               className,
+              // Last, so twMerge keeps them: the native popup paints from this element,
+              // and a caller-supplied bg-* (or a mistyped one) must never leave it
+              // transparent.
+              'bg-surface text-foreground',
             )}
             {...props}
           >

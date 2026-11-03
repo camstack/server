@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The viewer's shipped log is tagged source=viewer with the authenticated user, platform, app version and a per-launch session, so the Logs page and MCP can filter it by tag
 - A derived stream now keeps its source's frame cadence and IDR interval and sizes its rate buffer to a whole GOP, fixing the once-a-second flicker at a low bitrate cap
+- The stream broker's codec and geometry dropdowns are readable in dark mode (the editor fields used a colour the theme does not define)
 
 ## [1.2.639] - 2026-11-03
 

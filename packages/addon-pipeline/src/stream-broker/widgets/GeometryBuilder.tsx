@@ -86,9 +86,8 @@ export function upsertVfInOutputArgs(args: readonly string[], chain: string): st
 
 // ── Tailwind primitives matching FfmpegParamsField conventions ──────────
 const inputCls =
-  'rounded border border-border bg-surface-2 px-2 py-1 text-xs text-foreground ' +
-  'focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50 disabled:cursor-not-allowed'
-const selectCls = inputCls + ' appearance-none pr-6'
+  'rounded border border-border bg-surface px-2 py-1 text-xs text-foreground ' +
+  'focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed'
 const labelTextCls = 'text-[11px] uppercase tracking-wider text-foreground-subtle font-medium'
 
 export interface GeometryBuilderProps {
@@ -137,7 +136,7 @@ export function GeometryBuilder({
   const apply = (): void => onChange(upsertVfInOutputArgs(outputArgs, preview))
 
   return (
-    <div className="space-y-2 rounded border border-border/50 bg-surface-2/30 px-3 py-2">
+    <div className="space-y-2 rounded border border-border/50 bg-surface/30 px-3 py-2">
       <div className="flex items-center justify-between">
         <span className={labelTextCls}>
           {t('geometry.title')}
@@ -165,7 +164,7 @@ export function GeometryBuilder({
           id="geom-aspect"
           value={targetAspect}
           onChange={(e) => setTargetAspect(e.target.value as TargetAspect | '')}
-          className={selectCls + ' min-w-[90px]'}
+          className="min-w-[90px]"
         >
           <option value="">{t('geometry.none')}</option>
           <option value="16:9">16:9</option>
@@ -179,7 +178,7 @@ export function GeometryBuilder({
               aria-label={t('geometry.aspectMode')}
               value={mode}
               onChange={(e) => setMode(e.target.value as GeometryMode)}
-              className={selectCls + ' min-w-[80px]'}
+              className="min-w-[80px]"
             >
               <option value="pad">{t('geometry.pad')}</option>
               <option value="crop">{t('geometry.crop')}</option>
@@ -257,7 +256,7 @@ export function GeometryBuilder({
           id="geom-rotate"
           value={String(rotate)}
           onChange={(e) => setRotate(Number(e.target.value) as RotateAngle)}
-          className={selectCls + ' min-w-[80px]'}
+          className="min-w-[80px]"
         >
           <option value="0">0°</option>
           <option value="90">90°</option>
