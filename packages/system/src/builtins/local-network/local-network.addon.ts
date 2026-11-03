@@ -35,6 +35,7 @@ import type {
 } from '@camstack/types'
 import {
   BaseAddon,
+  defineAddonMigrations,
   CAMSTACK_APP_LINK_ORIGIN,
   checkRoleAddress,
   EventCategory,
@@ -49,6 +50,8 @@ import {
   shortHostname,
   validateCustomAddress,
 } from '@camstack/types'
+import { ADDON_MIGRATIONS, LOCAL_NETWORK_ID } from './migrations/index.js'
+import { readRawKeys } from './migrations/hub-node-fields.js'
 import { applyLanHttp, DEFAULT_LAN_HTTP_PORT, readLanHttpState } from '../../http/lan-http-bind.js'
 import {
   applyCertificateToListener,
@@ -476,7 +479,22 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
     )
   }
 
+  /**
+   * Copy each bare LAN access setting to its hub node row (D986, D987), then re-resolve the
+   * config so this boot binds the node values.
+   */
+  private async migrateNodeFields(): Promise<void> {
+    const report = await this.runMigrations(
+      defineAddonMigrations(ADDON_MIGRATIONS, {
+        readStored: (keys) =>
+          readRawKeys((key) => this.readStoredGlobalKey(key), LOCAL_NETWORK_ID, keys),
+      }),
+    )
+    if (report.applied.length > 0) await this.resolveConfig()
+  }
+
   protected async onInitialize(): Promise<ProviderRegistration[]> {
+    await this.migrateNodeFields()
     // First-boot auto-seed: on fresh installs, pre-populate the
     // allowlist with addresses from interfaces classified as `lan` or
     // `wifi`. Operators usually want those participating; docker/vpn
@@ -696,7 +714,16 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
     return [{ capability: localNetworkCapability, provider }]
   }
 
+  protected override async nodeSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    return cap === 'local-network' ? this.lanSchema() : null
+  }
+
   protected override globalSettingsSchema(): ConfigUISchema {
+    return this.lanSchema()
+  }
+
+  /** How THIS host listens and announces itself: every field is a node setting (D986). */
+  private lanSchema(): ConfigUISchema {
     return this.schema({
       sections: [
         {
@@ -711,6 +738,7 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
             this.field({
               type: 'boolean',
               key: 'httpEnabled',
+              perNode: true,
               label: 'Enable HTTP on the LAN',
               labelKey: 'server:globalSettings.s_local-access.httpEnabled.label',
               style: 'switch',
@@ -719,6 +747,7 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
             this.field({
               type: 'number',
               key: 'httpPort',
+              perNode: true,
               label: 'HTTP port',
               labelKey: 'server:globalSettings.s_local-access.httpPort.label',
               description: 'Dedicated listener. Must not equal the HTTPS port (4443 by default).',
@@ -732,6 +761,7 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
             this.field({
               type: 'boolean',
               key: 'tlsEnabled',
+              perNode: true,
               label: 'Serve HTTPS',
               labelKey: 'server:globalSettings.s_local-access.tlsEnabled.label',
               description:
@@ -743,6 +773,7 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
             this.field({
               type: 'boolean',
               key: 'mdnsAdvertise',
+              perNode: true,
               label: 'Announce this hub on the LAN (mDNS)',
               labelKey: 'server:globalSettings.s_local-access.mdnsAdvertise.label',
               description:
@@ -754,6 +785,7 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
             this.field({
               type: 'boolean',
               key: 'passiveDiscovery',
+              perNode: true,
               label: 'Find new devices on the LAN by listening',
               labelKey: 'server:globalSettings.s_local-access.passiveDiscovery.label',
               description:
@@ -765,6 +797,7 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
             this.field({
               type: 'text',
               key: 'localHostname',
+              perNode: true,
               label: 'Local hostname',
               labelKey: 'server:globalSettings.s_local-access.localHostname.label',
               description:

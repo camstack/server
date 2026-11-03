@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The network interface is a per-node setting, and the fixed setup code is a password field kept in the keychain
+
 ## [1.2.189] - 2026-11-01
 
 ### Changed

@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The records-owner migration no longer stops on a kind declared under both the group and the addon: when only one side holds rows the empty one is discarded, both empty keeps the addon's, and rows on both sides fail naming each side's row count and newest update
 - A record kind that exists under both a runner group and its addon with rows on both now keeps the newer side and parks the older one as <kind>~superseded-<owner>, instead of failing the owner migration.
 - An infrared TV is a real media player: plug power truth, volume and channel steps sent as repeated trains 150 ms apart, and a typed error for a button the remote lacks
+- The LAN access settings (HTTP, HTTPS, mDNS, passive discovery, local hostname) are per-node settings, copied from the existing values
 
 ### Fixed
 

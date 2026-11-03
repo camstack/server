@@ -46,7 +46,9 @@ import {
   BaseAddon,
   type ConfigOption,
   type ConfigSectionWithValues,
+  type ConfigUISchema,
   type ConfigUISchemaWithValues,
+  defineAddonMigrations,
   deviceExportCapability,
   type DeviceType,
   EventCategory,
@@ -70,6 +72,8 @@ import { type ActionExportEntry, ActionExports } from './action-exports.js'
 import { BridgeHost } from './bridge-host.js'
 import { shouldBridge } from './bridge-policy.js'
 import { carryForward } from './exposed-entry.js'
+import { ADDON_MIGRATIONS, EXPORT_HAP_ID } from './migrations/index.js'
+import { readRawKeys } from './migrations/hub-node-fields.js'
 import { firstExposedAccessorySetupUri } from './hap-setup-uri.js'
 import type { HksvBuildOutcome } from './hksv/build-outcome.js'
 import { HksvBuildOutcomes } from './hksv/build-outcome.js'
@@ -558,6 +562,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
   }
 
   protected async onInitialize(): Promise<ProviderRegistration[]> {
+    await this.migrateSettings()
     const identity = await this.ensureIdentity()
     this.pincode = identity.pincode
     this.bind = this.config.interfaceName || undefined
@@ -1478,6 +1483,47 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
 
   // ── Settings UI ─────────────────────────────────────────────────
 
+  /** The one declaration of the bind-interface field, shared by the node form and the global form. */
+  private interfaceNameField() {
+    return this.field({
+      type: 'text',
+      key: 'interfaceName',
+      perNode: true,
+      label: 'Network interface',
+      description:
+        'Optional. Restrict mDNS advertisement and HAP bind to this node\'s interface (e.g. "en0"). Leave blank to advertise on all interfaces.',
+      default: DEFAULT_CONFIG.interfaceName,
+      requiresRestart: true,
+      placement: { tab: 'advanced' },
+    })
+  }
+
+  protected async nodeSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    return cap === 'device-export'
+      ? this.schema({
+          sections: [
+            { id: 'export-hap-node', title: 'HomeKit Export', fields: [this.interfaceNameField()] },
+          ],
+        })
+      : null
+  }
+
+  /**
+   * Copy the bare `interfaceName` to its hub node row and move an inline `fixedPin` into the
+   * keychain (D986, D987). Re-resolves the config when either landed, so this boot binds the
+   * value the migration wrote.
+   */
+  private async migrateSettings(): Promise<void> {
+    const report = await this.runMigrations(
+      defineAddonMigrations(ADDON_MIGRATIONS, {
+        readStored: (keys) =>
+          readRawKeys((key) => this.readStoredGlobalKey(key), EXPORT_HAP_ID, keys),
+        storeFixedPin: (pin) => this.updateGlobalSettingsAsOperator({ fixedPin: pin }),
+      }),
+    )
+    if (report.applied.length > 0) await this.resolveConfig()
+  }
+
   protected globalSettingsSchema() {
     // Pairing info (setup code + `X-HM://…` URI + scannable QR) is
     // surfaced through the `device-export` cap's `setup` block and
@@ -1503,11 +1549,10 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
               placement: { tab: 'advanced' },
             }),
             this.field({
-              type: 'text',
+              // The setup code pairs a controller with the bridge: a password field, so it
+              // lives in the keychain (D783) and is withheld from non-admin reads.
+              type: 'password',
               key: 'fixedPin',
-              // The setup code pairs a controller with the bridge: a secret,
-              // declared as one (D783) — withheld from non-admin reads.
-              secret: true,
               label: 'Fixed setup code (XXX-XX-XXX)',
               description:
                 'Optional. Leave blank to use the auto-generated code persisted on first boot. Useful for CI replay.',
@@ -1515,16 +1560,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
               requiresRestart: true,
               placement: { tab: 'advanced' },
             }),
-            this.field({
-              type: 'text',
-              key: 'interfaceName',
-              label: 'Network interface',
-              description:
-                'Optional. Restrict mDNS advertisement and HAP bind to a specific interface (e.g. "en0"). Leave blank to advertise on all interfaces.',
-              default: DEFAULT_CONFIG.interfaceName,
-              requiresRestart: true,
-              placement: { tab: 'advanced' },
-            }),
+            this.interfaceNameField(),
             this.field({
               type: 'number',
               key: 'clipRetentionDays',
