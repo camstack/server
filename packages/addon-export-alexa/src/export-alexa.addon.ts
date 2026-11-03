@@ -455,15 +455,29 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
   private linksLocked = false
 
   /**
+   * The legacy ledger keys as lists. A store written by an older build may hold something that
+   * is not a list there (a clear instruction stored as the value); the page and the gateway read
+   * a list or nothing.
+   */
+  private legacyLedgers(): Pick<AlexaSettings, 'linkedAccounts' | 'tokens'> {
+    return {
+      linkedAccounts: Array.isArray(this.config.linkedAccounts) ? this.config.linkedAccounts : [],
+      tokens: Array.isArray(this.config.tokens) ? this.config.tokens : [],
+    }
+  }
+
+  /**
    * The settings as the addon reads them: the records where they exist, the legacy keys until
    * the migrations have moved them.
    */
   private get view(): AlexaSettings {
     const skill = this.skillRow
     const links = this.linksRow
-    if (skill === null && links === null) return this.config
+    const legacy = this.legacyLedgers()
+    if (skill === null && links === null) return { ...this.config, ...legacy }
     return {
       ...this.config,
+      ...legacy,
       ...(skill === null
         ? {}
         : {
@@ -1767,6 +1781,9 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       },
       putSkill: (body) => putOnce(skills, body),
       putLinks: (body) => putOnce(links, body),
+      replaceLinks: async (body) => {
+        await links.put({ id: ALEXA_INSTANCE_ID, data: body })
+      },
       readLinks: async () => (await links.getResolved(ALEXA_INSTANCE_ID))?.data ?? null,
       hasSkill: async () => (await skills.get(ALEXA_INSTANCE_ID)) !== null,
       clearOldTokenSecrets: async () => {

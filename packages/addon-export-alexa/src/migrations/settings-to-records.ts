@@ -13,7 +13,12 @@
  *
  * All three are `tolerate`: the addon keeps reading the legacy keys until a record exists.
  */
-import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@camstack/types'
+import {
+  isSecretClear,
+  type MigrationPlan,
+  type MigrationProcedureResult,
+  preconditionOf,
+} from '@camstack/types'
 import {
   ALEXA_INSTANCE_ID,
   ALEXA_SKILL_DEFAULT_BODY,
@@ -46,6 +51,8 @@ export interface MoveLedgersPorts extends AlexaMigrationLog {
   readStored(): Promise<Readonly<Record<string, unknown>>>
   /** Put the `skill-links` record with `ifRev: 0`; `exists` when one is already there. */
   putLinks(body: SkillLinksBody): Promise<'created' | 'exists'>
+  /** Overwrite the existing `skill-links` record with `body`. */
+  replaceLinks(body: SkillLinksBody): Promise<void>
   /** The `skill-links` record, credentials resolved; null when absent. Throws when unreadable. */
   readLinks(): Promise<SkillLinksBody | null>
   /** Remove the old token credentials (their keychain values and markers) from the settings. */
@@ -159,12 +166,20 @@ export async function moveLedgersToLinks(
   const tokens = tokensOf(stored['tokens'])
   const put = await ports.putLinks({ name: LINKS_NAME, linkedAccounts, tokens })
   // The old credentials are the only copy until the record verifiably holds the SAME ones.
-  const held = await ports.readLinks()
-  const identical =
-    held !== null &&
-    canonical(held.linkedAccounts) === canonical(linkedAccounts) &&
-    canonical(held.tokens) === canonical(tokens)
-  if (!identical) {
+  let held = await ports.readLinks()
+  const matches = (record: SkillLinksBody | null): boolean =>
+    record !== null &&
+    canonical(record.linkedAccounts) === canonical(linkedAccounts) &&
+    canonical(record.tokens) === canonical(tokens)
+  // A record an earlier pass left behind (it carries this migration's name) that holds LESS than
+  // the settings (a failed or partial write) is rewritten from the settings, which stay the
+  // source of truth until a read-back matches. A record that holds anything the settings do not
+  // carry is somebody's newer work.
+  if (put === 'exists' && !matches(held) && isCoveredBy(held, linkedAccounts, tokens)) {
+    await ports.replaceLinks({ name: LINKS_NAME, linkedAccounts, tokens })
+    held = await ports.readLinks()
+  }
+  if (!matches(held)) {
     ports.warn(
       'Alexa migration: the skill-links record does not hold what the settings carried; the legacy ledgers are kept',
     )
@@ -180,7 +195,34 @@ export async function moveLedgersToLinks(
   if (tokens.length > 0) await ports.clearOldTokenSecrets()
   return put === 'created'
     ? { outcome: 'done', summary: { moved: true, accounts: linkedAccounts.length } }
-    : { outcome: 'already-done', summary: { moved: false } }
+    : { outcome: 'done', summary: { moved: true, repaired: true, accounts: linkedAccounts.length } }
+}
+
+/**
+ * The record carries this migration's own name and every account and grant it holds is also in
+ * the settings: rewriting it loses nothing and touches nothing an operator named.
+ */
+function isCoveredBy(
+  held: SkillLinksBody | null,
+  linkedAccounts: readonly LinkedAccount[],
+  tokens: readonly LwaTokenEntry[],
+): boolean {
+  if (held === null || held.name !== LINKS_NAME) return false
+  const accounts = new Set(linkedAccounts.map((a) => a.userId))
+  const grants = new Set(tokens.map((t) => t.userId))
+  return (
+    held.linkedAccounts.every((a) => accounts.has(a.userId)) &&
+    held.tokens.every((t) => grants.has(t.userId))
+  )
+}
+
+/**
+ * A ledger key the drop may judge: absent, a list, or the leftover of a credential clear
+ * (`{ $secretClear: true }`, stored where a list belongs by an older build). Anything else is
+ * not understood, so nothing is deleted on its account.
+ */
+function isLedgerShape(value: unknown): boolean {
+  return value === undefined || Array.isArray(value) || isSecretClear(value)
 }
 
 /** Whether a stored token entry still carries a credential: text, or a keychain marker. */
@@ -210,16 +252,28 @@ export async function planDropMovedSettings(ports: DropMovedSettingsPorts): Prom
   if (ledgerKeys.length > 0) {
     const links = await ports.readLinks()
     if (links === null) return refuse('no Alexa link record exists')
-    const held = new Set(links.linkedAccounts.map((a) => a.userId))
-    const heldTokens = new Set(links.tokens.map((t) => t.userId))
+    // POSITIVE proof only: the ledgers are deleted when the settings carry nothing the record
+    // lacks, never because a comparison could not be made.
+    if (!isLedgerShape(stored['linkedAccounts'])) {
+      return refuse('the old linkedAccounts setting is not a list the migration understands')
+    }
+    if (!isLedgerShape(stored['tokens'])) {
+      return refuse('the old tokens setting is not a list the migration understands')
+    }
     // A credential still in the old settings means the record was never verified to hold it
     // (the migration clears the old ones only after the read-back matched): keep the key.
     const legacyTokens = stored['tokens']
     if (Array.isArray(legacyTokens) && legacyTokens.some(carriesCredential)) {
       return refuse('the old settings still carry Amazon push credentials')
     }
+    const heldAccounts = new Map(links.linkedAccounts.map((a) => [a.userId, a]))
+    const heldTokens = new Set(links.tokens.map((t) => t.userId))
     for (const account of accountsOf(stored['linkedAccounts'])) {
-      if (!held.has(account.userId)) return refuse(`the record lacks the account ${account.userId}`)
+      const held = heldAccounts.get(account.userId)
+      if (held === undefined) return refuse(`the record lacks the account ${account.userId}`)
+      if (canonical(held) !== canonical(account)) {
+        return refuse(`the record holds the account ${account.userId} differently`)
+      }
     }
     for (const token of tokensOf(stored['tokens'])) {
       if (!heldTokens.has(token.userId)) return refuse(`the record lacks the grant ${token.userId}`)

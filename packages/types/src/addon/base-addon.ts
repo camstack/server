@@ -759,6 +759,13 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     // Only a keychain-stored key understands the clear instruction; any other
     // key is cleared the way it always was.
     for (const key of keys) {
+      // A list of rows that carry secrets is cleared by replacing it with an EMPTY list: the write
+      // then releases every row's credentials. The clear instruction is for a leaf; stored under a
+      // list's key it stays there as an object and the addon reads a list as `{ $secretClear }`.
+      if (tree.get(key)?.kind === 'array') {
+        patch[key] = []
+        continue
+      }
       const keychainStored = tree.has(key) || collectSecretMarkerRefs(stored[key]).length > 0
       patch[key] = keychain && keychainStored ? SECRET_CLEAR : ''
     }

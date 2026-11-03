@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Clearing a list of rows that carry secrets (addon settings) now stores an empty list instead of the clear instruction
+
 ## [1.2.485] - 2026-11-03
 
 ### Changed
