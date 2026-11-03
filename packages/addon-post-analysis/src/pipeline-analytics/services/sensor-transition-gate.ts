@@ -192,6 +192,16 @@ const BOOLEAN_LEVEL_FIELD: Readonly<Record<string, string>> = {
 }
 
 /**
+ * The device-history series key of a level cap's boolean — `cap:<cap>.<field>`,
+ * the shape of `capSeriesKey` (system builtin, not importable from an addon;
+ * the wiring spec pins the literal). `null` for a cap with no boolean level.
+ */
+export function levelSeriesKey(capName: string): string | null {
+  const field = BOOLEAN_LEVEL_FIELD[capName]
+  return field === undefined ? null : `cap:${capName}.${field}`
+}
+
+/**
  * Caps whose level is a WORD with NO change stamp: cap → field. `enum-sensor`
  * carries `{ value, lastFetchedAt }`, and `lastFetchedAt` moves on every
  * provider refresh, so it says nothing about when the word changed. Gated by
@@ -237,6 +247,19 @@ export type SensorTransitionIgnoreReason =
   | 'cold-slice'
   /** An advance-derived cap whose stamp is absent, null, or not past the last one seen. */
   | 'no-advance'
+  /**
+   * A level cap's first boolean is `false` while its persisted prior is still
+   * being read. Never counted as a drop: {@link SensorTransitionGate.observeSettled}
+   * waits (bounded) for the read and re-decides.
+   */
+  | 'seed-pending'
+
+/** The last boolean a level cap held before this process began watching it. */
+export interface SensorLevelSeed {
+  readonly value: boolean
+  /** Epoch ms the value began (the history point's time). */
+  readonly since: number
+}
 
 /**
  * Whether one slice carried a real transition.
@@ -269,7 +292,20 @@ export interface SensorTransitionGateOptions {
   /** How long drops accumulate before {@link SensorTransitionGate.takeDropSummary}
    *  will hand them over. Default 10 minutes. */
   readonly summaryWindowMs?: number
+  /**
+   * Reads the persisted last boolean of a level cap (device-history). Called at
+   * most once per `(device, cap)`, on the first sighting, and never awaited by
+   * {@link SensorTransitionGate.observe} — see {@link SensorTransitionGate.observeSettled}.
+   * `null` is "nothing persisted".
+   */
+  readonly readSeed?: (deviceId: number, capName: string) => Promise<SensorLevelSeed | null>
+  /** A seed read that threw: the gate behaves as unseeded; the caller logs it. */
+  readonly onSeedFailed?: (deviceId: number, capName: string, error: unknown) => void
+  /** Longest a first `false` waits for its seed. Default 2 s. */
+  readonly seedWaitMs?: number
 }
+
+const DEFAULT_SEED_WAIT_MS = 2_000
 
 /** Default drop-summary window: one line per device per ten minutes, at most. */
 const DEFAULT_DROP_SUMMARY_WINDOW_MS = 600_000
@@ -283,6 +319,14 @@ export class SensorTransitionGate {
   private readonly lastStamps = new Map<string, number>()
   /** Drops since the window opened, keyed by `${deviceId}:${capName}:${reason}`. */
   private readonly drops = new Map<string, SensorTransitionDropCount>()
+  /** Seed reads started, by key; a settled one stays so a seed is read once. */
+  private readonly seeds = new Map<string, Promise<void>>()
+  private readonly seedsSettled = new Set<string>()
+  /** Seeds whose wait ran out: decided as unseeded from then on. */
+  private readonly seedsAbandoned = new Set<string>()
+  private readonly readSeed: SensorTransitionGateOptions['readSeed']
+  private readonly onSeedFailed: SensorTransitionGateOptions['onSeedFailed']
+  private readonly seedWaitMs: number
   private windowStartedAt: number
   private readonly startedAtMs: number
   private readonly now: () => number
@@ -295,6 +339,66 @@ export class SensorTransitionGate {
     this.freshnessMs = options.firstSightingFreshnessMs ?? DEFAULT_FIRST_SIGHTING_FRESHNESS_MS
     this.summaryWindowMs = options.summaryWindowMs ?? DEFAULT_DROP_SUMMARY_WINDOW_MS
     this.windowStartedAt = options.now()
+    this.readSeed = options.readSeed
+    this.onSeedFailed = options.onSeedFailed
+    this.seedWaitMs = options.seedWaitMs ?? DEFAULT_SEED_WAIT_MS
+  }
+
+  /**
+   * {@link observe}, plus: a level cap's first boolean `false` whose persisted
+   * prior is still being read waits for that read, bounded by `seedWaitMs`, and
+   * is decided again. This is the only wait on the path, and it is on a read
+   * that was started at the FIRST sighting of the device (a null at boot, long
+   * before the boolean) — never one begun by the event itself unless the
+   * boolean really is the first thing seen. A read that fails or times out
+   * decides as unseeded, i.e. exactly as before the seed existed (D49).
+   */
+  async observeSettled(
+    deviceId: number,
+    capName: string,
+    slice: Readonly<Record<string, unknown>>,
+  ): Promise<SensorTransitionVerdict> {
+    const first = this.observe(deviceId, capName, slice)
+    if (first.changed || first.reason !== 'seed-pending') return first
+    const key = `${deviceId}:${capName}`
+    const pending = this.seeds.get(key)
+    if (pending !== undefined) {
+      let timer: ReturnType<typeof setTimeout> | undefined
+      const timeout = new Promise<void>((resolve) => {
+        timer = setTimeout(resolve, this.seedWaitMs)
+      })
+      await Promise.race([pending, timeout])
+      if (timer !== undefined) clearTimeout(timer)
+      if (!this.seedsSettled.has(key)) this.seedsAbandoned.add(key)
+    }
+    return this.observe(deviceId, capName, slice)
+  }
+
+  /** Start the one seed read of a level cap's key; never awaited here. */
+  private ensureSeed(deviceId: number, capName: string): void {
+    const read = this.readSeed
+    if (read === undefined) return
+    const key = `${deviceId}:${capName}`
+    if (this.seeds.has(key)) return
+    const settle = (): void => {
+      this.seedsSettled.add(key)
+    }
+    const started = read(deviceId, capName).then(
+      (seed) => {
+        // A seed never overwrites a value the live stream already provided.
+        if (seed !== null && !this.lastValues.has(key)) this.lastValues.set(key, seed.value)
+        settle()
+      },
+      (error: unknown) => {
+        this.onSeedFailed?.(deviceId, capName, error)
+        settle()
+      },
+    )
+    this.seeds.set(key, started)
+  }
+
+  private seedPending(key: string): boolean {
+    return this.seeds.has(key) && !this.seedsSettled.has(key) && !this.seedsAbandoned.has(key)
   }
 
   /**
@@ -311,6 +415,7 @@ export class SensorTransitionGate {
     capName: string,
     slice: Readonly<Record<string, unknown>>,
   ): SensorTransitionVerdict {
+    if (BOOLEAN_LEVEL_FIELD[capName] !== undefined) this.ensureSeed(deviceId, capName)
     if (slice['lastChangedAt'] === 0) return this.drop(deviceId, capName, 'cold-slice')
     const unstampedField = UNSTAMPED_WORD_FIELD[capName]
     if (unstampedField !== undefined) {
@@ -382,6 +487,11 @@ export class SensorTransitionGate {
     if (typeof raw !== 'boolean') return this.drop(deviceId, capName, 'non-boolean-value')
     const key = `${deviceId}:${capName}`
     const prior = this.lastValues.get(key)
+    // An inactive first boolean may be the END of a cycle begun before this
+    // process: hold it (remember nothing) until the persisted prior answers.
+    if (prior === undefined && !raw && this.seedPending(key)) {
+      return { changed: false, reason: 'seed-pending' }
+    }
     this.lastValues.set(key, raw)
     if (prior === undefined) {
       if (!raw) return this.drop(deviceId, capName, 'baseline-seeded-inactive')

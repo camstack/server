@@ -1059,7 +1059,15 @@ import type {
 import { EventMediaDispatcher } from './services/event-media-dispatcher.js'
 import { MotionEventSnapshotCapturer } from './services/motion-event-snapshot.js'
 import { projectSensorMarkers } from './services/sensor-marker-projector.js'
-import { SensorTransitionGate } from './services/sensor-transition-gate.js'
+import {
+  levelSeriesKey,
+  SensorTransitionGate,
+  type SensorLevelSeed,
+} from './services/sensor-transition-gate.js'
+
+/** How far back a restart looks for a level cap's last persisted boolean. */
+const LEVEL_SEED_WINDOW_MS = 48 * 3_600_000
+
 import { SyntheticTrackMaterializer } from './services/synthetic-track.js'
 import {
   buildGlobalSettingsSchema,
@@ -1574,6 +1582,12 @@ export default class PipelineAnalyticsAddon
   private readonly sensorTransitions = new SensorTransitionGate({
     startedAtMs: Date.now(),
     now: () => Date.now(),
+    readSeed: (deviceId, capName) => this.readPersistedLevel(deviceId, capName),
+    onSeedFailed: (deviceId, capName, error) =>
+      this.ctx.logger.warn('level seed read failed — gate starts unseeded', {
+        tags: { deviceId },
+        meta: { capName, error: errMsg(error) },
+      }),
   })
   /** `camera-index-unknown` drops, summarised per window — see the file. */
   private readonly cameraIndexUnknownDrops = new CameraIndexUnknownDrops({ nowMs: Date.now() })
@@ -11344,7 +11358,7 @@ export default class PipelineAnalyticsAddon
     const store = this.sensorEventStore
     const cache = this.linkedCamerasCache
     if (store === null || cache === null) return
-    if (!this.sensorSliceCarriedATransition(data)) return
+    if (!(await this.sensorSliceCarriedATransition(data))) return
     // Every camera a notification about this change shows (ADR 0632) —
     // resolved and photographed NOW, before the rows and markers below are
     // awaited: the capture runs while they do, and the shelf's owners exist
@@ -11582,11 +11596,11 @@ export default class PipelineAnalyticsAddon
    * The drops are SUMMARISED, never logged one by one: this path carries every
    * camera's native `motion` slice at motion rate.
    */
-  private sensorSliceCarriedATransition(data: {
+  private async sensorSliceCarriedATransition(data: {
     deviceId: number
     capName: string
     slice?: unknown
-  }): boolean {
+  }): Promise<boolean> {
     const slice = data.slice
     if (typeof slice !== 'object' || slice === null || Array.isArray(slice)) {
       this.ctx.logger.debug('sensor state change carried no slice — dropped', {
@@ -11595,7 +11609,9 @@ export default class PipelineAnalyticsAddon
       })
       return false
     }
-    const verdict = this.sensorTransitions.observe(data.deviceId, data.capName, { ...slice })
+    const verdict = await this.sensorTransitions.observeSettled(data.deviceId, data.capName, {
+      ...slice,
+    })
     this.flushSensorTransitionDrops()
     // A slice that PASSES is the one that can reach a rule: say which, so the next
     // unexplained match names its slice (planning#396). Info — it is per transition, and rare.
@@ -11613,6 +11629,43 @@ export default class PipelineAnalyticsAddon
       })
     }
     return verdict.changed
+  }
+
+  /**
+   * The last persisted boolean of a level cap, from device-history — the
+   * gate's seed after a restart. Off the event path (the gate starts it at the
+   * first sighting). A cap that declares no history field, or a series with no
+   * point, answers `null`.
+   */
+  private async readPersistedLevel(
+    deviceId: number,
+    capName: string,
+  ): Promise<SensorLevelSeed | null> {
+    const key = levelSeriesKey(capName)
+    if (key === null) return null
+    const to = Date.now()
+    const result = await this.ctx.api.deviceHistory.query.query({
+      deviceId,
+      key,
+      from: to - LEVEL_SEED_WINDOW_MS,
+      to,
+      resolution: 'raw',
+      maxPoints: 200,
+    })
+    const points = result.series.flatMap((s) => s.points)
+    const latest = points.reduce<(typeof points)[number] | null>(
+      (best, p) => (best === null || p.t > best.t ? p : best),
+      null,
+    )
+    if (latest !== null && latest.last !== null) {
+      return { value: latest.last >= 0.5, since: latest.t }
+    }
+    const before = result.series.flatMap((s) => (s.before === null ? [] : [s.before]))
+    const held = before.reduce<(typeof before)[number] | null>(
+      (best, b) => (best === null || b.t > best.t ? b : best),
+      null,
+    )
+    return held !== null && held.value !== null ? { value: held.value >= 0.5, since: held.t } : null
   }
 
   /**

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A package delivery with no stored key frame now writes its picture once, so a rule asking for an image no longer ships text-only.
+- An appliance cycle that started before a restart now raises its finished notification: the transition gate seeds its last running state from history instead of dropping the first off.
 
 ### Fixed
 
