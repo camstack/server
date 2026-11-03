@@ -11210,7 +11210,18 @@
       "timings": "{{count}} impulsi",
       "timingsCarrier": "{{count}} impulsi a {{khz}} kHz",
       "repeat": "Ripetizione",
-      "repeatValue": "Una volta per pressione; chi lo invia può ripeterlo"
+      "repeatValue": "Una volta per pressione; chi lo invia può ripeterlo",
+      "unbound": "Non associato. Questo tasto non invia nessun comando dal telecomando.",
+      "incomplete": "Incompleto: scegli il dispositivo e il comando da inviare.",
+      "infrared": "Invia un codice a infrarossi tramite {{target}}.",
+      "infraredPulses": "Invia un codice a infrarossi di {{count}} impulsi tramite {{target}}.",
+      "infraredPulsesCarrier": "Invia un codice a infrarossi di {{count}} impulsi a {{khz}} kHz tramite {{target}}.",
+      "call": "Chiama {{call}} su {{target}}.",
+      "withArgs": "Con {{args}}.",
+      "sendThrough": "Invia tramite",
+      "otherCommands": "Comandi fuori dal layout",
+      "pickOther": "Scegline uno da modificare",
+      "hint": "Scegli un tasto per vedere e modificare cosa fa."
     },
     "editTemplate": "Modifica layout",
     "hero": {

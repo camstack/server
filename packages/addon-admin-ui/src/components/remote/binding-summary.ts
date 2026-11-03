@@ -6,6 +6,7 @@
  */
 import type { RemoteBindingAction } from '@camstack/types'
 import type { AutomationDevice } from '../../pages/build/automation/automation-data'
+import { IR_CAP, IR_SEND, isCompleteAction } from './remote-config-model'
 
 export interface BindingSummary {
   /** `cap.method`, e.g. `ir-transmitter.send`. */
@@ -47,4 +48,62 @@ export function targetLabel(
 
 export function deviceLabel(device: AutomationDevice): string {
   return device.parentName ? `${device.name} · ${device.parentName}` : device.name
+}
+
+export interface DescribedArg {
+  readonly name: string
+  readonly value: string
+}
+
+/**
+ * What a button does, in the terms a person recognises. `unbound` is no
+ * binding at all, `incomplete` one still missing its device, cap or method.
+ * An infrared send is told apart from any other cap call only by the cap and
+ * method it names; everything shown is read off the binding itself.
+ */
+export type BindingDescription =
+  | { readonly kind: 'unbound' }
+  | { readonly kind: 'incomplete' }
+  | {
+      readonly kind: 'infrared'
+      readonly target: string
+      readonly pulses: number | null
+      readonly carrierKhz: number | null
+      readonly args: readonly DescribedArg[]
+    }
+  | {
+      readonly kind: 'call'
+      readonly target: string
+      readonly call: string
+      readonly args: readonly DescribedArg[]
+    }
+
+/** Scalar arguments only: a list or object has no one-word reading. */
+function scalarArgs(args: Readonly<Record<string, unknown>>): readonly DescribedArg[] {
+  return Object.entries(args).flatMap(([name, value]): DescribedArg[] =>
+    typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+      ? [{ name, value: String(value) }]
+      : [],
+  )
+}
+
+export function describeBinding(
+  action: RemoteBindingAction | undefined,
+  devices: readonly AutomationDevice[],
+): BindingDescription {
+  if (action === undefined) return { kind: 'unbound' }
+  if (!isCompleteAction(action)) return { kind: 'incomplete' }
+  const target = targetLabel(action.deviceId, devices, `#${action.deviceId}`)
+  const summary = summarizeBinding(action)
+  const args = scalarArgs(action.args ?? {})
+  if (action.cap === IR_CAP && action.method === IR_SEND) {
+    return {
+      kind: 'infrared',
+      target,
+      pulses: summary.timings,
+      carrierKhz: summary.carrierHz === null ? null : Math.round(summary.carrierHz / 1000),
+      args,
+    }
+  }
+  return { kind: 'call', target, call: summary.call, args }
 }

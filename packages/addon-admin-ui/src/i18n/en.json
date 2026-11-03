@@ -11188,7 +11188,18 @@
       "timings": "{{count}} timings",
       "timingsCarrier": "{{count}} timings at {{khz}} kHz",
       "repeat": "Repeat",
-      "repeatValue": "Once per press; a caller can repeat it"
+      "repeatValue": "Once per press; a caller can repeat it",
+      "unbound": "Not bound. Nothing is sent from the remote for this button.",
+      "incomplete": "Unfinished: pick the device and the command to send.",
+      "infrared": "Sends an infrared code through {{target}}.",
+      "infraredPulses": "Sends an infrared code of {{count}} pulses through {{target}}.",
+      "infraredPulsesCarrier": "Sends an infrared code of {{count}} pulses at {{khz}} kHz through {{target}}.",
+      "call": "Calls {{call}} on {{target}}.",
+      "withArgs": "With {{args}}.",
+      "sendThrough": "Send through",
+      "otherCommands": "Commands not on the layout",
+      "pickOther": "Pick one to edit",
+      "hint": "Pick a button to see and edit what it does."
     },
     "editTemplate": "Edit layout",
     "hero": {

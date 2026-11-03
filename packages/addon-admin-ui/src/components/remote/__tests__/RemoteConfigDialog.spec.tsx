@@ -97,6 +97,11 @@ const SMARTIR = JSON.stringify({
   commands: { on: TRAIN, off: TRAIN_OFF, volumeUp: TRAIN },
 })
 
+/** Select a button of the preview grid (a = power, b = mute in the test template). */
+const pick = (id: string): void => {
+  fireEvent.click(screen.getByTestId(`remote-grid-button-${id}`))
+}
+
 function renderDialog(): void {
   render(
     <MemoryRouter>
@@ -117,6 +122,7 @@ beforeEach(() => {
 describe('RemoteConfigDialog', () => {
   it('saves a binding made with the command picker', async () => {
     renderDialog()
+    pick('a')
     fireEvent.click(screen.getByTestId('bind-power'))
     fireEvent.click(screen.getByTestId('pick-command'))
     fireEvent.click(screen.getByTestId('remote-save'))
@@ -134,6 +140,7 @@ describe('RemoteConfigDialog', () => {
 
   it('blocks Save while a binding is unfinished', () => {
     renderDialog()
+    pick('b')
     fireEvent.click(screen.getByTestId('bind-mute'))
     expect(screen.getByTestId('remote-incomplete')).toBeTruthy()
     expect((screen.getByTestId('remote-save') as HTMLButtonElement).disabled).toBe(true)
@@ -159,6 +166,10 @@ describe('RemoteConfigDialog', () => {
     fireEvent.click(screen.getByTestId('smartir-read'))
     expect(screen.getByTestId('smartir-summary').textContent).toMatch(/fills 3 commands/)
     fireEvent.click(screen.getByTestId('smartir-apply'))
+    // volume_up is not on the test layout: it is reached through the off-layout picker.
+    fireEvent.change(screen.getByTestId('binding-other'), {
+      target: { value: 'volume_up' },
+    })
     expect(screen.getByTestId('transmitter-volume_up')).toBeTruthy()
     fireEvent.click(screen.getByTestId('remote-save'))
     await waitFor(() => expect(setConfig).toHaveBeenCalledTimes(1))
@@ -202,7 +213,9 @@ describe('RemoteConfigDialog', () => {
     }
     savedCommands = ['power']
     renderDialog()
+    pick('b')
     expect((screen.getByTestId('test-mute') as HTMLButtonElement).disabled).toBe(true)
+    pick('a')
     fireEvent.click(screen.getByTestId('test-power'))
     await waitFor(() => expect(screen.getByTestId('result-power').textContent).toMatch(/Sent/))
     expect(sendCommand).toHaveBeenCalledWith({
@@ -228,9 +241,12 @@ describe('RemoteConfigDialog', () => {
       },
     }
     renderDialog()
+    pick('a')
     const select = screen.getByTestId('transmitter-power') as HTMLSelectElement
     expect(select.textContent).toContain('send_raw_command · Kitchen board')
-    expect(screen.getByTestId('summary-power').textContent).toBe('ir-transmitter.send · 6 timings')
+    expect(screen.getByTestId('summary-power').textContent).toBe(
+      'Sends an infrared code of 6 pulses through send_raw_command · Kitchen board.',
+    )
   })
 
   it('selecting a button shows its binding and sends nothing until Test is clicked', async () => {
@@ -238,7 +254,12 @@ describe('RemoteConfigDialog', () => {
       ...storedConfig,
       bindings: {
         power: {
-          action: { kind: 'cap', deviceId: TV, cap: 'switch', method: 'turnOn' },
+          action: {
+            kind: 'cap',
+            deviceId: TV,
+            cap: 'switch',
+            method: 'turnOn',
+          },
         },
       },
     }
@@ -247,13 +268,59 @@ describe('RemoteConfigDialog', () => {
     expect(screen.queryByTestId('binding-panel')).toBeNull()
     fireEvent.click(screen.getByTestId('remote-grid-button-a'))
     const panel = screen.getByTestId('binding-panel')
-    expect(panel.textContent).toContain('switch.turnOn')
-    expect(panel.textContent).toContain('Living room TV')
+    expect(panel.textContent).toContain('Calls switch.turnOn on Living room TV.')
     expect(sendCommand).not.toHaveBeenCalled()
-    fireEvent.click(screen.getByTestId('panel-test'))
-    await waitFor(() => expect(screen.getByTestId('panel-result').textContent).toMatch(/Sent/))
+    fireEvent.click(screen.getByTestId('test-power'))
+    await waitFor(() => expect(screen.getByTestId('result-power').textContent).toMatch(/Sent/))
     expect(sendCommand).toHaveBeenCalledTimes(1)
-    expect(sendCommand).toHaveBeenCalledWith({ deviceId: TV, role: 'power', repeat: 1 })
+    expect(sendCommand).toHaveBeenCalledWith({
+      deviceId: TV,
+      role: 'power',
+      repeat: 1,
+    })
+  })
+
+  it("renders only the selected button's action, never the whole list", () => {
+    storedConfig = {
+      ...storedConfig,
+      bindings: {
+        power: {
+          action: {
+            kind: 'cap',
+            deviceId: TV,
+            cap: 'switch',
+            method: 'turnOn',
+          },
+        },
+        mute: {
+          action: {
+            kind: 'cap',
+            deviceId: TV,
+            cap: 'switch',
+            method: 'turnOff',
+          },
+        },
+      },
+    }
+    renderDialog()
+    expect(screen.queryByTestId('summary-power')).toBeNull()
+    expect(screen.queryByTestId('summary-mute')).toBeNull()
+    pick('a')
+    expect(screen.getAllByTestId('binding-panel')).toHaveLength(1)
+    expect(screen.getByTestId('summary-power')).toBeTruthy()
+    expect(screen.queryByTestId('summary-mute')).toBeNull()
+    pick('b')
+    expect(screen.getAllByTestId('binding-panel')).toHaveLength(1)
+    expect(screen.getByTestId('summary-mute').textContent).toContain('switch.turnOff')
+    expect(screen.queryByTestId('summary-power')).toBeNull()
+  })
+
+  it('reads an unbound button as unbound', () => {
+    renderDialog()
+    pick('b')
+    expect(screen.getByTestId('summary-mute').textContent).toMatch(/^Not bound/)
+    expect(screen.getByTestId('bind-mute')).toBeTruthy()
+    expect(screen.queryByTestId('test-mute')).toBeNull()
   })
 
   it('offers a shortcut to the layout template editor', () => {

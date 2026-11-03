@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Adopt devices: a candidate's model and id now sit under its name instead of shortening it
+- Remote configure: selecting a button shows its own action in plain words (target device and command), with Test and Clear
+
 ## [1.2.566] - 2026-11-03
 
 ### Changed

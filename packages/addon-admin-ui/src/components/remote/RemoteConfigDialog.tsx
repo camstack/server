@@ -33,12 +33,12 @@ import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAutomationDevices } from '../../pages/build/automation/automation-data'
 import { BindingPanel } from './BindingPanel'
-import { BindingRow } from './BindingRow'
 import { deviceLabel } from './binding-summary'
 import { EditTemplateButton } from './EditTemplateButton'
 import { humanRole, layoutOf } from './layout-model'
 import {
   applyDraft,
+  type BindableRole,
   bindableRoles,
   checkForSave,
   clearBinding,
@@ -109,7 +109,7 @@ function DialogForm({ device, initial, onClose }: FormProps): ReactNode {
   const queryClient = useQueryClient()
   const [config, setConfig] = useState<RemoteConfig>(initial)
   const [saveError, setSaveError] = useState<string | null>(null)
-  const [selectedKey, setSelectedKey] = useState<string | null>(null)
+  const [selectedRole, setSelectedRole] = useState<string | null>(null)
   const [results, setResults] = useState<Readonly<Record<string, string>>>({})
   const templates = useTemplateList({ kind: 'remote' })
   const commands = useRemoteListCommands({ deviceId: device.id })
@@ -131,14 +131,13 @@ function DialogForm({ device, initial, onClose }: FormProps): ReactNode {
     () => new Set((commands.data?.commands ?? []).map((c) => c.role)),
     [commands.data],
   )
-  const selectedButton = layout?.buttons.find((b) => b.id === selectedKey)
-  const selectedRole = selectedButton?.role ?? null
-  const selectedName =
-    selectedButton === undefined
-      ? ''
-      : (selectedButton.label ??
-        roles.find((r) => r.role === selectedButton.role)?.name ??
-        t(`remote.role.${selectedButton.role}`, humanRole(selectedButton.role)))
+  const roleName = (role: BindableRole): string =>
+    role.name ??
+    layout?.buttons.find((b) => b.role === role.role)?.label ??
+    t(`remote.role.${role.role}`, humanRole(role.role))
+  const selected = roles.find((r) => r.role === selectedRole)
+  const selectedKey = layout?.buttons.find((b) => b.role === selectedRole)?.id ?? null
+  const offLayout = roles.filter((r) => !r.inLayout)
   const check = checkForSave(config)
   const bound = useMemo(() => new Set(Object.keys(config.bindings)), [config.bindings])
 
@@ -254,19 +253,47 @@ function DialogForm({ device, initial, onClose }: FormProps): ReactNode {
                 label={t('remote.dialog.preview')}
                 boundRoles={bound}
                 selectedId={selectedKey}
-                onSelect={setSelectedKey}
+                onSelect={(id) =>
+                  setSelectedRole(layout.buttons.find((b) => b.id === id)?.role ?? null)
+                }
               />
             </div>
-            {selectedRole !== null && (
-              <BindingPanel
-                name={selectedName}
-                binding={config.bindings[selectedRole]}
-                devices={devices}
-                testable={savedRoles.has(selectedRole)}
-                testResult={results[selectedRole] ?? null}
-                onTest={() => void doTest(selectedRole)}
-              />
-            )}
+            <div className="min-w-0 space-y-2">
+              {selected === undefined ? (
+                <p className="text-xs text-foreground-muted" data-testid="binding-hint">
+                  {t('remote.panel.hint')}
+                </p>
+              ) : (
+                <BindingPanel
+                  key={selected.role}
+                  role={selected}
+                  name={roleName(selected)}
+                  binding={config.bindings[selected.role]}
+                  devices={devices}
+                  transmitters={transmitters}
+                  testable={savedRoles.has(selected.role)}
+                  testResult={results[selected.role] ?? null}
+                  onBind={(action) => bind(selected.role, action)}
+                  onClear={() => setConfig((prev) => clearBinding(prev, selected.role))}
+                  onTest={() => void doTest(selected.role)}
+                />
+              )}
+              {offLayout.length > 0 && (
+                <Select
+                  aria-label={t('remote.panel.otherCommands')}
+                  value={selected?.inLayout === false ? selected.role : ''}
+                  options={[
+                    { value: '', label: t('remote.panel.pickOther') },
+                    ...offLayout.map((r) => ({
+                      value: r.role,
+                      label: roleName(r),
+                    })),
+                  ]}
+                  onChange={(e) => setSelectedRole(e.target.value === '' ? null : e.target.value)}
+                  data-testid="binding-other"
+                />
+              )}
+            </div>
           </div>
         )}
         {config.layoutTemplateId !== null && (
@@ -280,29 +307,6 @@ function DialogForm({ device, initial, onClose }: FormProps): ReactNode {
             transmitterId={config.defaultTransmitterId}
             onApply={(draft) => setConfig((prev) => applyDraft(prev, draft))}
           />
-        </section>
-        <section className="space-y-2">
-          <h3 className="text-sm font-medium text-foreground">{t('remote.bindings.title')}</h3>
-          {roles.length === 0 ? (
-            <p className="text-xs text-foreground-muted">{t('remote.bindings.empty')}</p>
-          ) : (
-            <ul className="space-y-2">
-              {roles.map((role) => (
-                <BindingRow
-                  key={role.role}
-                  role={role}
-                  binding={config.bindings[role.role]}
-                  devices={devices}
-                  transmitters={transmitters}
-                  testable={savedRoles.has(role.role)}
-                  testResult={results[role.role] ?? null}
-                  onBind={(action) => bind(role.role, action)}
-                  onClear={() => setConfig((prev) => clearBinding(prev, role.role))}
-                  onTest={() => void doTest(role.role)}
-                />
-              ))}
-            </ul>
-          )}
         </section>
         {check.incomplete.length > 0 && (
           <p role="alert" className="text-xs text-warning" data-testid="remote-incomplete">
