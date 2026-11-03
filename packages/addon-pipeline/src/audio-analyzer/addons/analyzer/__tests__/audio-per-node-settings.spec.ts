@@ -5,8 +5,8 @@
  * The probed-best hint is a NODE fact (the platform probe runs on one host),
  * so it persists node-scoped as `probedBestAudioBackend@<nodeId>` through the
  * P2a BaseAddon surface — node-blind writes (`updateGlobalSettings`), no
- * bare-key fallback. `audioBackend` / `selectedAudioModel` stay
- * cluster-shared (bare keys).
+ * bare-key fallback. `audioBackend` is a node setting too (planning#327);
+ * `selectedAudioModel` stays cluster-shared (bare key).
  *
  * Fake-ctx style mirrors `audio-analyzer-platform-gate.spec.ts` (pipeline
  * factory stubbed so initialize never spawns Python / loads a model) plus the
@@ -183,7 +183,9 @@ describe('AudioAnalyzerAddon — probedBestAudioBackend per-node', () => {
         'probedBestAudioBackend@hub': 'yamnet-onnx',
         'probedBestAudioBackend@macmini': 'apple-soundanalysis',
         probedBestAudioBackend: 'stale-bare',
-        audioBackend: 'yamnet-onnx',
+        'audioBackend@hub': 'yamnet-onnx',
+        'audioBackend@macmini': 'apple-soundanalysis',
+        audioBackend: 'stale-bare',
       },
       topology: [
         { id: 'hub', platform: 'linux' },
@@ -202,10 +204,11 @@ describe('AudioAnalyzerAddon — probedBestAudioBackend per-node', () => {
     const agent99 = await addon!.getGlobalSettings(undefined, undefined, 'agent-99')
     expect(fieldValue(agent99, 'probedBestAudioBackend')).toBe('')
 
-    // audioBackend stays cluster-shared — every node sees the same bare value.
+    // `audioBackend` is a node setting too (planning#327): each node its own row, and a node
+    // with none gets the schema default, never the bare cluster value of an older version.
     expect(fieldValue(hub, 'audioBackend')).toBe('yamnet-onnx')
-    expect(fieldValue(macmini, 'audioBackend')).toBe('yamnet-onnx')
-    expect(fieldValue(agent99, 'audioBackend')).toBe('yamnet-onnx')
+    expect(fieldValue(macmini, 'audioBackend')).toBe('apple-soundanalysis')
+    expect(fieldValue(agent99, 'audioBackend')).toBe('auto')
   })
 
   it('node-blind getGlobalSettings resolves the LOCAL node scoped value', async () => {
