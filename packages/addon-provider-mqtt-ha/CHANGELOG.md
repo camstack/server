@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A zigbee2mqtt switch no longer fails to start with a missing-schema error, so its state is served again
+
 ## [0.1.34] - 2026-11-03
 
 ### Changed

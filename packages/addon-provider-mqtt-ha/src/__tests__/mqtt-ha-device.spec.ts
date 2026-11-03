@@ -60,7 +60,11 @@ interface Harness {
  * A DeviceContext stub. The cast is the documented test boundary: the real
  * context is the kernel's and cannot be built in a unit test.
  */
-function build(type: DeviceType, config: Record<string, unknown>): Harness {
+function build(
+  type: DeviceType,
+  config: Record<string, unknown>,
+  restored: Record<string, unknown> = {},
+): Harness {
   let runtime: IDeviceRuntimeState | null = null
   const emitted: unknown[] = []
   let switchProvider: { setState: (input: { on: boolean }) => Promise<void> } | null = null
@@ -77,7 +81,7 @@ function build(type: DeviceType, config: Record<string, unknown>): Harness {
       metadata: {},
     },
     persistedConfig: config,
-    initialRuntimeState: {},
+    initialRuntimeState: restored,
     eventBus: {
       emit: (e: unknown) => emitted.push(e),
       subscribe: vi.fn(() => () => {}),
@@ -166,6 +170,15 @@ describe('MqttHaDevice on a zigbee2mqtt plug', () => {
     mqttHaStateGateway.clearBroker(BROKER)
     const h = build(DeviceType.Switch, configOf(plugMessages()))
     await h.device.onActivate()
+    expect(h.state().getCapState('switch')).toMatchObject({ on: null, lastChangedAt: 0 })
+  })
+
+  it('migrates a legacy restored off-with-no-change-time slice to unknown, after the cap schema is registered', async () => {
+    mqttHaStateGateway.clearBroker(BROKER)
+    const h = build(DeviceType.Switch, configOf(plugMessages()), {
+      switch: { on: false, lastChangedAt: 0 },
+    })
+    await expect(h.device.onActivate()).resolves.toBeUndefined()
     expect(h.state().getCapState('switch')).toMatchObject({ on: null, lastChangedAt: 0 })
   })
 

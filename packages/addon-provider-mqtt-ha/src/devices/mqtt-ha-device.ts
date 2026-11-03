@@ -535,10 +535,6 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
     // `on: null` = never reported. A slice restored from an older run that was
     // seeded `false` with no change time is that same "never reported".
     const COLD = { on: null, lastChangedAt: 0 }
-    const restored = this.getCapSlice(switchCapability)
-    if (restored !== null && restored.on === false && restored.lastChangedAt === 0) {
-      this.setCapSlice(switchCapability, COLD)
-    }
     const provider: InferNativeProvider<typeof switchCapability> = {
       getStatus: async () => this.getCapSlice(switchCapability) ?? COLD,
       setState: async ({ on }) => {
@@ -555,6 +551,12 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
       },
     }
     this.registerStatusOnly(switchCapability, provider, COLD)
+    // After registration: the runtime state refuses a write to a cap whose
+    // schema is not installed yet.
+    const restored = this.getCapSlice(switchCapability)
+    if (restored !== null && restored.on === false && restored.lastChangedAt === 0) {
+      this.setCapSlice(switchCapability, COLD)
+    }
   }
 
   private registerBrightness(): void {
