@@ -565,15 +565,15 @@ export function AppLayout() {
   )
 
   return (
-    // Safe-area insets: when installed as a PWA the OS draws its status
-    // bar (iOS notch / Dynamic Island, Android system bar) and home
-    // indicator on top of the viewport — `viewport-fit=cover` in
-    // index.html opts us into the full screen but then the app paints
-    // under those system surfaces and the header content gets clipped.
-    // The top inset is its own SOLID strip in the chrome token (`bg-surface`,
-    // the same as the mobile top bar and the sidebar), so the status bar sits
-    // over one opaque band — never over a translucent / blurred surface. The
-    // bottom inset is the shell's padding (`bg-background` fills it).
+    // Safe-area insets. The installed iOS app uses the `default` status bar
+    // style, so iOS draws the bar ABOVE the viewport (painted in `theme-color`,
+    // kept equal to the `bg-surface` header by lib/theme-color.ts) and the top
+    // inset is 0 there. `viewport-fit=cover` stays for the bottom inset (home
+    // indicator) and the landscape side insets. The top spacer is a SOLID
+    // `bg-surface` strip that only has height where a platform still extends the
+    // viewport behind its own bar or notch, so that bar never sits over a
+    // translucent / blurred surface. The bottom inset is the shell's padding
+    // (`bg-background` fills it).
     <div className="flex h-dvh flex-col overflow-hidden bg-background text-foreground pb-[env(safe-area-inset-bottom)]">
       <div aria-hidden="true" className="h-[env(safe-area-inset-top)] shrink-0 bg-surface" />
       <div className="flex min-h-0 flex-1">

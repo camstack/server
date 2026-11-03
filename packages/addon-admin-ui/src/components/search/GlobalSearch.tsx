@@ -303,8 +303,9 @@ export function GlobalSearch({ navSections, addonPages, compact, onNavigated }: 
       {panelOpen ? (
         // `position: fixed` resolves against the VIEWPORT, so it bypasses the
         // `env(safe-area-inset-*)` padding that AppLayout puts on the shell.
-        // Under `viewport-fit=cover` that viewport starts BEHIND the notch —
-        // and that is how the restart toast ended up on top of the status clock.
+        // Where the viewport extends BEHIND a notch the top inset is non-zero
+        // (it is 0 in iOS standalone, whose status bar iOS draws), so the
+        // offset below has to include it.
         <div
           // Same content-sizing as the docked panel above — the folded
           // sidebar has even less room to lend, so a fixed `w-72` truncated

@@ -6,16 +6,25 @@
     <title>CamStack Admin</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="manifest" href="manifest.webmanifest" />
-    <meta name="theme-color" content="#f59e42" />
+    <meta name="theme-color" content="#1c1917" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
     <!--
       Theme before first paint. The ThemeProvider sets `.dark` / `.light` only
       once React runs; until then the tokens followed the OS preference, so a
       dark-theme operator on a light OS saw a WHITE page (boot splash included)
       on every cold load. Same key and default as the ThemeProvider.
+
+      It also sets `theme-color`, which iOS paints as the standalone status bar
+      (`apple-mobile-web-app-status-bar-style=default`) and which must equal the
+      header surface of the active theme. The stylesheet is usually not parsed
+      yet here, so the `--color-surface` token is read when it is, and otherwise
+      the literals below are used: they MIRROR `--color-surface` of `.dark` /
+      `.light` in camstack-theme.css (pinned by src/lib/__tests__/theme-color.spec.ts).
+      Once React mounts, `watchThemeColor` (src/lib/theme-color.ts) takes over
+      from the token and follows every theme change.
     -->
     <script>
       (function () {
@@ -24,7 +33,12 @@
           if (mode === 'system') {
             mode = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
           }
-          document.documentElement.classList.add(mode === 'light' ? 'light' : 'dark')
+          var resolved = mode === 'light' ? 'light' : 'dark'
+          document.documentElement.classList.add(resolved)
+          var surface = getComputedStyle(document.documentElement).getPropertyValue('--color-surface').trim()
+          document
+            .querySelector('meta[name="theme-color"]')
+            .setAttribute('content', surface || (resolved === 'light' ? '#f5f5f4' : '#1c1917'))
         } catch (e) {
           document.documentElement.classList.add('dark')
         }

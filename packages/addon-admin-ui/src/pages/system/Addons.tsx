@@ -1035,9 +1035,10 @@ function InstalledTab({
       )}
 
       {/* Post-restart bulk-update toast. `position: fixed` resolves against
-          the viewport, which under `viewport-fit=cover` starts behind the
-          iOS notch — so the safe-area offsets are what keep this off the
-          status bar. They collapse to `1rem` where the insets are 0. */}
+          the viewport, so it bypasses the shell's safe-area padding; the
+          offsets keep it off a notch where the viewport extends behind one.
+          They collapse to `1rem` where the insets are 0 (iOS standalone, whose
+          status bar is drawn by iOS). */}
       {showBulkRestartToast && (
         <div className="fixed top-[calc(env(safe-area-inset-top)+1rem)] right-[calc(env(safe-area-inset-right)+1rem)] z-50 flex items-start gap-2 px-3 py-2.5 rounded-md border border-green-500/30 bg-green-500/10 shadow-lg max-w-sm pointer-events-auto">
           <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-green-400" />

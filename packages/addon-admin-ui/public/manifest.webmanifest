@@ -4,8 +4,8 @@
   "description": "CamStack camera management admin panel",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#0f0f11",
-  "theme_color": "#f59e42",
+  "background_color": "#0c0a09",
+  "theme_color": "#1c1917",
   "icons": [
     {
       "src": "icons/icon-192.png",

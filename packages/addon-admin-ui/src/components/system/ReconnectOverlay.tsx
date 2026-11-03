@@ -116,11 +116,11 @@ function ToastStack({ toasts }: { toasts: readonly CompletionToast[] }) {
     // Safe-area offsets are NOT optional here. `position: fixed` resolves
     // against the VIEWPORT, so it bypasses the `env(safe-area-inset-*)`
     // padding AppLayout puts on the app shell — and this component is
-    // mounted outside AppLayout anyway. Under `viewport-fit=cover` (set in
-    // index.html) plus `apple-mobile-web-app-status-bar-style:
-    // black-translucent`, the viewport starts at y=0 BEHIND the notch, so a
-    // plain `top-4` landed this toast on top of the iOS clock. `calc(env(…)
-    // + 1rem)` collapses to exactly the old `1rem` on non-notched devices.
+    // mounted outside AppLayout anyway. The installed iOS app uses
+    // `viewport-fit=cover` (index.html) with the `default` status bar, so the
+    // top inset is 0 in standalone; in a notched landscape or a browser that
+    // draws behind the notch it is not. `calc(env(…) + 1rem)` collapses to
+    // exactly `1rem` wherever the inset is 0.
     <div className="fixed top-[calc(env(safe-area-inset-top)+1rem)] right-[calc(env(safe-area-inset-right)+1rem)] z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none">
       {toasts.map((t) => (
         <div

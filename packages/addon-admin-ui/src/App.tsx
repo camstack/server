@@ -41,6 +41,7 @@ import { COMPOSITION_EDITOR_ROUTE, NEW_COMPOSITION_PATH } from './lib/customizat
 import { integrationHubHref } from './lib/integration-hub-url'
 import { readLastLocation } from './lib/last-location'
 import { stripLegacyAdminPrefix } from './lib/legacy-admin-path'
+import { watchThemeColor } from './lib/theme-color'
 import { routerBasename } from './lib/mount'
 import { SECRETS_LEGACY_PATH, SYSTEM_LEGACY_ROUTES, SYSTEM_PAGE_PATH } from './lib/system-page-url'
 import { AccessDeniedPage } from './pages/AccessDenied'
@@ -354,6 +355,8 @@ function PageSuspenseFallback() {
 }
 
 export function App() {
+  // iOS paints the standalone status bar in `theme-color`; keep it the header's surface.
+  useEffect(() => watchThemeColor(), [])
   return (
     <ThemeProvider defaultMode="dark">
       <HotkeyProvider>

@@ -21,8 +21,9 @@ export interface PanelAnchor {
  * Where the alerts dropdown sits. The panel is portalled to `body` with
  * `position: fixed`, so it is NOT inside the app shell that pads itself by
  * the safe-area insets: the insets must be part of its own clamp, otherwise an
- * installed iOS app (viewport-fit=cover, translucent status bar) can place or
- * grow it under the status bar / notch or the home indicator. The pixel
+ * installed iOS app (viewport-fit=cover) can place or grow it under the home
+ * indicator or a landscape notch (the top inset is 0 in iOS standalone, whose
+ * status bar iOS draws, but not in every browser). The pixel
  * numbers come from the button's rect; the insets stay CSS `env()` because
  * only the browser knows them.
  */
