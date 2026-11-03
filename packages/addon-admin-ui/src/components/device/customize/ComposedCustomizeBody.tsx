@@ -23,7 +23,9 @@ import { eventCardTargets } from './event/event-targets'
 import { HelperSummaryCard } from './HelperSummaryCard'
 import { IdentityRow } from './IdentityRow'
 import { keyedArrayCardTargets } from './keyed/KeyedArrayCard'
-import { scalarCardTargets } from './scalar/ScalarOverrideCard'
+import { ScalarCustomizeList, scalarCardTargets } from './scalar/ScalarOverrideCard'
+import { useCustomizeFacts } from './use-customize-facts'
+import type { AssignmentFacts } from './assignment-availability'
 
 export interface ComposedCustomizeBodyProps {
   readonly device: DeviceInfo
@@ -40,6 +42,8 @@ export function ComposedCustomizeBody({ device }: ComposedCustomizeBodyProps): R
   )
   const update = useCoreBlocksUpdateComposition()
   const [editing, setEditing] = useState(false)
+  // Hooks run before any early return: the facts are read for the device whatever the block says.
+  const facts = useCustomizeFacts(device, null)
   const skipCaps = useMemo(() => {
     const s = new Set<string>()
     for (const { cap } of scalarCardTargets()) s.add(cap)
@@ -129,12 +133,19 @@ export function ComposedCustomizeBody({ device }: ComposedCustomizeBodyProps): R
     },
   }
 
+  const assignmentFacts: AssignmentFacts = {
+    deviceType: device.type,
+    composable: facts.composable,
+    nativeCaps: facts.nativeCaps,
+    cameraSensors: 'absent',
+  }
   return (
     <div className="flex flex-col gap-3">
       <IdentityRow device={device} />
       {skeletonFillStatus(composition) === 'incomplete' && (
         <Badge variant="warning">{t('customize.blockStatus.incomplete')}</Badge>
       )}
+      <ScalarCustomizeList device={device} handle={handle} facts={assignmentFacts} />
       <ConfigCustomizeList device={device} />
       <CompositionFieldsCardList device={device} handle={handle} skipCaps={skipCaps} />
     </div>

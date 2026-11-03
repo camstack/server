@@ -46,13 +46,17 @@ interface Query {
   readonly error?: { readonly message: string } | null
   readonly refetch: () => Promise<unknown>
 }
-const device = vi.hoisted((): { current: Record<string, unknown> | null } => ({ current: null }))
+const device = vi.hoisted((): { current: Record<string, unknown> | null } => ({
+  current: null,
+}))
 const customization = vi.hoisted((): { current: Query } => ({
   current: { status: 'pending', refetch: async () => undefined },
 }))
 /** The camera-sensors read: unanswered unless a test says otherwise. */
 const cameraStatus = vi.hoisted(
-  (): { current: { readonly status: Query['status']; readonly data?: unknown } } => ({
+  (): {
+    current: { readonly status: Query['status']; readonly data?: unknown }
+  } => ({
     current: { status: 'pending' },
   }),
 )
@@ -90,19 +94,30 @@ const fleet = vi.hoisted(
     }
   } => ({ current: { status: 'pending' } }),
 )
-const composerPresence = vi.hoisted((): { current: string } => ({ current: 'present' }))
+const composerPresence = vi.hoisted((): { current: string } => ({
+  current: 'present',
+}))
 /** How the device read answered; `data` is `device.current` unless pending/error. */
 const deviceRead = vi.hoisted(
-  (): { current: { readonly status: Query['status']; readonly error?: Query['error'] } } => ({
+  (): {
+    current: {
+      readonly status: Query['status']
+      readonly error?: Query['error']
+    }
+  } => ({
     current: { status: 'success' },
   }),
 )
 const integrations = vi.hoisted(
-  (): { current: readonly { id: string; addonId: string; name: string }[] | undefined } => ({
+  (): {
+    current: readonly { id: string; addonId: string; name: string }[] | undefined
+  } => ({
     current: undefined,
   }),
 )
-const deleteMutate = vi.fn(async (_input: { readonly blockId: string }) => ({ success: true }))
+const deleteMutate = vi.fn(async (_input: { readonly blockId: string }) => ({
+  success: true,
+}))
 const confirmMock = vi.fn(async () => true)
 const compositionRead = vi.hoisted((): { current: Query } => ({
   current: { status: 'pending', refetch: async () => undefined },
@@ -134,23 +149,39 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     useDeviceManagerSetRole: () => ({ mutate: vi.fn(), isPending: false }),
     useDeviceManagerSetDisplay: () => ({ mutate: vi.fn(), isPending: false }),
     useDeviceManagerSetName: () => ({ mutateAsync: vi.fn(), isPending: false }),
-    useDeviceManagerSetLocation: () => ({ mutateAsync: vi.fn(), isPending: false }),
+    useDeviceManagerSetLocation: () => ({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    }),
     useDeviceManagerListLocations: () => ({ data: [] }),
     useDeviceManagerGetRoleDisplayDefaults: () => ({ data: { defaults: {} } }),
-    useDeviceManagerSetRoleDisplayDefaults: () => ({ mutate: vi.fn(), isPending: false }),
+    useDeviceManagerSetRoleDisplayDefaults: () => ({
+      mutate: vi.fn(),
+      isPending: false,
+    }),
     // The Presets section (Task 13) reads these facts; unanswered here, so it only says "Checking…".
     useCoreBlocksListComposableCaps: () => composable.current,
     useDeviceManagerGetBindings: () => bindings.current,
-    useDeviceManagerGetWireableFields: () => ({ status: 'pending', data: undefined }),
+    useDeviceManagerGetWireableFields: () => ({
+      status: 'pending',
+      data: undefined,
+    }),
     useDeviceStateGetSnapshot: () => ({ status: 'pending', data: undefined }),
     // The Advanced editor (Task 19) validates the draft on the server; not under test here.
-    useCoreBlocksValidateComposition: () => ({ mutateAsync: vi.fn(), isPending: false }),
+    useCoreBlocksValidateComposition: () => ({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    }),
     useDeviceManagerListAll: () => fleet.current,
     // The assignment cards' capability index (one query per source cap); unanswered here.
     trpc: { ...actual.trpc, useQueries: () => [] },
     // The cards' live values (the native battery row); unanswered here.
     useSystem: () => ({ trpcClient: null }),
-    useDeviceStateGetCapSlice: () => ({ status: 'pending', data: undefined, error: null }),
+    useDeviceStateGetCapSlice: () => ({
+      status: 'pending',
+      data: undefined,
+      error: null,
+    }),
     useDeviceCapSlice: () => undefined,
     // The linked-devices table calls its hooks on every device (gated by `enabled`); unanswered here.
     useDeviceExtensionListSlots: () => ({
@@ -159,20 +190,37 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
       error: null,
       refetch: async () => undefined,
     }),
-    useDeviceExtensionListCandidates: () => ({ status: 'pending', data: undefined, error: null }),
-    useDeviceExtensionSetSlot: () => ({ mutateAsync: vi.fn(), isPending: false }),
+    useDeviceExtensionListCandidates: () => ({
+      status: 'pending',
+      data: undefined,
+      error: null,
+    }),
+    useDeviceExtensionSetSlot: () => ({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    }),
     // The camera's Linked actions card; its own spec covers it.
     useActionsList: () => ({ data: undefined }),
     useActionsGetLinks: () => ({ data: undefined }),
-    useActionsSetLinks: () => ({ mutate: vi.fn(), isPending: false, error: null }),
+    useActionsSetLinks: () => ({
+      mutate: vi.fn(),
+      isPending: false,
+      error: null,
+    }),
     useActionsRun: () => ({ mutate: vi.fn(), isPending: false }),
     // The Motion card (Task 15) writes the camera-sensors setting; not under test here.
-    usePipelineOrchestratorSetCameraSensors: () => ({ mutateAsync: vi.fn(), isPending: false }),
+    usePipelineOrchestratorSetCameraSensors: () => ({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    }),
     usePipelineOrchestratorApplyDeviceSettingsPatch: () => ({
       mutateAsync: vi.fn(),
       isPending: false,
     }),
-    useAddonSettingsGetDeviceSettings: () => ({ status: 'pending', data: undefined }),
+    useAddonSettingsGetDeviceSettings: () => ({
+      status: 'pending',
+      data: undefined,
+    }),
     usePipelineOrchestratorGetCameraStatus: () => ({
       status: cameraStatus.current.status,
       data: cameraStatus.current.data,
@@ -180,6 +228,11 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     }),
   }
 })
+
+// The remote card talks to tRPC; the media-player test below is about the scalar cards.
+vi.mock('../../../remote/RemoteExtensionCard', () => ({
+  RemoteExtensionCard: () => null,
+}))
 
 const { CustomizeTab } = await import('../CustomizeTab')
 
@@ -228,7 +281,10 @@ function loadedRead(
         lastChangedAt: 1,
         source: {
           kind: 'composition',
-          composition: { target: { kind: 'existing', device: target }, features },
+          composition: {
+            target: { kind: 'existing', device: target },
+            features,
+          },
         },
       },
       state: { kind: 'answered', state: null },
@@ -252,7 +308,10 @@ beforeEach(() => {
   device.current = FEEDER
   deviceRead.current = { status: 'success' }
   integrations.current = undefined
-  customization.current = { status: 'pending', refetch: vi.fn(async () => undefined) }
+  customization.current = {
+    status: 'pending',
+    refetch: vi.fn(async () => undefined),
+  }
   composerPresence.current = 'present'
   cameraStatus.current = { status: 'pending' }
   bindings.current = { status: 'pending' }
@@ -278,7 +337,9 @@ function consumablesFeature(): object {
     kind: 'fields',
     cap: 'consumables',
     fields: {},
-    items: { essiccante: { label: 'Essiccante', fields: { level: REMAINING } } },
+    items: {
+      essiccante: { label: 'Essiccante', fields: { level: REMAINING } },
+    },
   }
 }
 
@@ -341,7 +402,10 @@ describe('CustomizeTab — the device read (D315)', () => {
     expect(screen.getByText('Loading the device…')).toBeTruthy()
   })
   it('a failed read shows its reason, never "loading" forever', () => {
-    deviceRead.current = { status: 'error', error: { message: 'UNAUTHORIZED' } }
+    deviceRead.current = {
+      status: 'error',
+      error: { message: 'UNAUTHORIZED' },
+    }
     renderTab()
     expect(screen.getByText('The device could not be read')).toBeTruthy()
     expect(screen.getByText(/UNAUTHORIZED/)).toBeTruthy()
@@ -430,7 +494,11 @@ describe('CustomizeTab — layout (spec §5)', () => {
     {
       heading: 'Battery',
       cap: 'battery',
-      feature: (): object => ({ kind: 'fields', cap: 'battery', fields: { level: hand } }),
+      feature: (): object => ({
+        kind: 'fields',
+        cap: 'battery',
+        fields: { level: hand },
+      }),
     },
     {
       heading: 'Consumables',
@@ -470,7 +538,10 @@ describe('CustomizeTab — layout (spec §5)', () => {
 
 describe('CustomizeTab — removal', () => {
   it('removing the last card entry deletes the ONE block after confirm', async () => {
-    composable.current = { status: 'success', data: { caps: [{ cap: 'battery' }] } }
+    composable.current = {
+      status: 'success',
+      data: { caps: [{ cap: 'battery' }] },
+    }
     bindings.current = { status: 'success', data: { entries: [] } }
     customization.current = {
       ...PRESENT,
@@ -482,7 +553,10 @@ describe('CustomizeTab — removal', () => {
     expect(confirmMock).toHaveBeenCalledTimes(1)
   })
   it('a declined confirm deletes nothing', async () => {
-    composable.current = { status: 'success', data: { caps: [{ cap: 'battery' }] } }
+    composable.current = {
+      status: 'success',
+      data: { caps: [{ cap: 'battery' }] },
+    }
     bindings.current = { status: 'success', data: { entries: [] } }
     customization.current = {
       ...PRESENT,
@@ -523,13 +597,21 @@ describe('CustomizeTab — a composed device', () => {
             source: {
               kind: 'composition',
               composition: {
-                target: { kind: 'new', type: 'sensor', role: 'temperature-sensor' },
+                target: {
+                  kind: 'new',
+                  type: 'sensor',
+                  role: 'temperature-sensor',
+                },
                 features: [
                   {
                     kind: 'fields',
                     cap: 'temperature-sensor',
                     fields: {
-                      celsius: { kind: 'expression', expr: 'null', bindings: {} },
+                      celsius: {
+                        kind: 'expression',
+                        expr: 'null',
+                        bindings: {},
+                      },
                     },
                   },
                 ],
@@ -544,6 +626,64 @@ describe('CustomizeTab — a composed device', () => {
     renderTab()
     expect(screen.queryByRole('link', { name: 'Edit its composition' })).toBeNull()
     expect(screen.getByTestId('fields-card-temperature-sensor')).toBeTruthy()
+  })
+})
+
+describe('CustomizeTab — a composed IR media player', () => {
+  const TV = {
+    ...COMPOSED,
+    id: 5478,
+    name: 'TV salone',
+    stableId: 'composed-blk-tv',
+    type: 'media-player',
+  }
+  it('offers the running and power-meter extensions, which an IR remote cannot report itself', () => {
+    device.current = TV
+    bindings.current = {
+      status: 'success',
+      data: {
+        entries: [
+          { capName: 'media-player', nativeAddonId: 'composer' },
+          { capName: 'power-source', nativeAddonId: 'composer' },
+        ],
+      },
+    }
+    composable.current = {
+      status: 'success',
+      data: { caps: [{ cap: 'running-state' }, { cap: 'power-meter' }] },
+    }
+    compositionRead.current = {
+      status: 'success',
+      data: {
+        state: 'loaded',
+        view: {
+          block: {
+            id: 'blk-tv',
+            name: 'TV salone',
+            code: '',
+            enabled: true,
+            placement: 'hub',
+            createdAt: 1,
+            updatedAt: 1,
+            createdBy: 'admin',
+            status: 'running',
+            lastChangedAt: 1,
+            source: {
+              kind: 'composition',
+              composition: {
+                target: { kind: 'new', type: 'media-player' },
+                features: [],
+              },
+            },
+          },
+          state: { kind: 'answered', state: { deviceId: 5478 } },
+        },
+      },
+      refetch: vi.fn(async () => undefined),
+    }
+    renderTab()
+    expect(screen.getByTestId('scalar-card-running-state')).toBeTruthy()
+    expect(screen.getByTestId('scalar-card-power-meter.power')).toBeTruthy()
   })
 })
 
@@ -650,7 +790,10 @@ describe('CustomizeTab — battery on a sensor (D944)', () => {
   }
   function renderSensor(): void {
     device.current = SENSOR
-    composable.current = { status: 'success', data: { caps: [{ cap: 'battery' }] } }
+    composable.current = {
+      status: 'success',
+      data: { caps: [{ cap: 'battery' }] },
+    }
     customization.current = loadedNone
     renderTab()
   }
@@ -665,7 +808,10 @@ describe('CustomizeTab — battery on a sensor (D944)', () => {
       status: 'success',
       data: {
         entries: [
-          { capName: 'numeric-sensor', nativeAddonId: 'provider-homeassistant' },
+          {
+            capName: 'numeric-sensor',
+            nativeAddonId: 'provider-homeassistant',
+          },
           { capName: 'battery', nativeAddonId: 'provider-homeassistant' },
         ],
       },
