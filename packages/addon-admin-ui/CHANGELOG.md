@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.571] - 2026-11-03
+
 ### Changed
 
 - Customize running: the scalar dialog proposes a running threshold and dwells from the device's power history, with an Apply button; nothing is saved until Save.
