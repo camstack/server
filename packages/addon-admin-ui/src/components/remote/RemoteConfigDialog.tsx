@@ -4,6 +4,7 @@
  * SmartIR file. Nothing is saved until Save; Test sends the SAVED command.
  */
 import {
+  coreBlockComposition,
   type DeviceInfo,
   type RemoteBindingAction,
   type RemoteConfig,
@@ -20,6 +21,8 @@ import {
   ErrorBox,
   FormField,
   Select,
+  useCoreBlocksGetComposition,
+  useCoreBlocksUpdateComposition,
   useDeviceManagerListDeviceIdsByCaps,
   useRemoteGetConfig,
   useRemoteListCommands,
@@ -33,6 +36,7 @@ import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAutomationDevices } from '../../pages/build/automation/automation-data'
 import { BindingPanel } from './BindingPanel'
+import { composedBlockIdOf, withMediaPlayerExtension } from './composed-remote'
 import { deviceLabel } from './binding-summary'
 import { EditTemplateButton } from './EditTemplateButton'
 import { humanRole, layoutOf } from './layout-model'
@@ -118,6 +122,12 @@ function DialogForm({ device, initial, onClose }: FormProps): ReactNode {
     capNames: [IR_CAP],
   })
   const save = useRemoteSetConfig()
+  const blockId = composedBlockIdOf(device)
+  const block = useCoreBlocksGetComposition(
+    { blockId: blockId ?? '' },
+    { enabled: blockId !== null },
+  )
+  const updateBlock = useCoreBlocksUpdateComposition()
   const send = useRemoteSendCommand()
 
   const transmitters = useMemo(() => {
@@ -141,6 +151,20 @@ function DialogForm({ device, initial, onClose }: FormProps): ReactNode {
   const check = checkForSave(config)
   const bound = useMemo(() => new Set(Object.keys(config.bindings)), [config.bindings])
 
+  /** A built player has no media-player cap until the remote gives it one (D1004). */
+  const attachMediaPlayerFeature = async (): Promise<void> => {
+    const view = block.data?.state === 'loaded' ? block.data.view : null
+    if (blockId === null || view === null) return
+    const composition = coreBlockComposition(view.block)
+    const next = composition === null ? null : withMediaPlayerExtension(composition)
+    if (next === null) return
+    await updateBlock.mutateAsync({
+      blockId,
+      expectedUpdatedAt: view.block.updatedAt,
+      block: { composition: next },
+    })
+  }
+
   const doSave = async (): Promise<void> => {
     if (check.config === null) return
     setSaveError(null)
@@ -153,6 +177,7 @@ function DialogForm({ device, initial, onClose }: FormProps): ReactNode {
         setSaveError(result.detail)
         return
       }
+      await attachMediaPlayerFeature()
       await queryClient.invalidateQueries({ queryKey: [['remote']] })
       onClose()
     } catch (err: unknown) {
