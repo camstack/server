@@ -11,6 +11,7 @@
 
 import type { AddonContext, ILocalNetworkProvider, IScopedLogger } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
+import { makeMigrationsApi } from './migrations-api.js'
 import { LocalNetworkAddon, resolveAdvertisedPort } from '../local-network.addon.js'
 
 // The addon would start a real mDNS responder on the host; specs never do.
@@ -96,6 +97,7 @@ function makeCtx(serverSection: Record<string, unknown>): CtxHarness {
     addonConfig: {},
     dataDir: '/tmp/local-network-test',
     kernel: { localNodeId: 'hub' },
+    api: makeMigrationsApi(),
     settings: {
       readAddonStore: vi.fn(async () => ({ ...addonStore })),
       writeAddonStore: vi.fn(async (patch: Record<string, unknown>) => {

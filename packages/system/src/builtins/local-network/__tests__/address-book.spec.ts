@@ -15,6 +15,7 @@ import type {
   IScopedLogger,
 } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
+import { makeMigrationsApi } from './migrations-api.js'
 import { normalizeAddressBook, withLanHttpsCounterparts } from '../address-book.js'
 import { LocalNetworkAddon } from '../local-network.addon.js'
 
@@ -54,6 +55,7 @@ function makeCtx(addonStore: Record<string, unknown>): AddonContext {
     addonConfig: {},
     dataDir: '/tmp/local-network-test',
     kernel: { localNodeId: 'hub' },
+    api: makeMigrationsApi(),
     settings: {
       readAddonStore: vi.fn(async () => ({ ...addonStore })),
       writeAddonStore: vi.fn(async (patch: Record<string, unknown>) => {
@@ -443,7 +445,7 @@ describe('listenerOrigins: where a browser can really reach the hub', () => {
 
   it('lists both listeners when LAN HTTP listens — each also has its https counterpart row (D859)', async () => {
     lanState.listening = true
-    const { provider } = await start({ localHostname: HOST })
+    const { provider } = await start({ 'localHostname@hub': HOST })
     const book = await provider.getAddresses({})
     expect(book.rows.map((r) => r.baseUrl)).toContain(`http://${HOST}:4480`)
     expect(book.listenerOrigins).toEqual(
@@ -453,7 +455,7 @@ describe('listenerOrigins: where a browser can really reach the hub', () => {
 
   it('lists only the https listener when LAN HTTP is off', async () => {
     lanState.listening = false
-    const { provider } = await start({ localHostname: HOST })
+    const { provider } = await start({ 'localHostname@hub': HOST })
     const origins = (await provider.getAddresses({})).listenerOrigins ?? []
     expect(origins).toContain(`https://${HOST}:4443`)
     expect(origins.filter((o) => o.startsWith('http://'))).toEqual([])
@@ -461,7 +463,7 @@ describe('listenerOrigins: where a browser can really reach the hub', () => {
 
   it('never lists loopback or the app link', async () => {
     lanState.listening = true
-    const { provider } = await start({ localHostname: HOST })
+    const { provider } = await start({ 'localHostname@hub': HOST })
     const origins = (await provider.getAddresses({})).listenerOrigins ?? []
     expect(origins.filter((o) => /127\.0\.0\.1|localhost|zentik/.test(o))).toEqual([])
   })
@@ -476,7 +478,7 @@ describe('LAN https counterparts', () => {
 
   it('advertises https://<lan>:<tls port> next to each plain-http LAN row, raced by default', async () => {
     lanState.listening = true
-    const { provider } = await start({ localHostname: HOST })
+    const { provider } = await start({ 'localHostname@hub': HOST })
     const book = await provider.getAddresses({})
     const urls = book.rows.map((r) => r.baseUrl)
     expect(urls).toContain(HTTP_ROW)
@@ -497,7 +499,7 @@ describe('LAN https counterparts', () => {
 
   it('turning the twin off persists and stops advertising it; the http row keeps racing', async () => {
     lanState.listening = true
-    const { provider, store } = await start({ localHostname: HOST })
+    const { provider, store } = await start({ 'localHostname@hub': HOST })
     const book = await provider.setAddressRole({
       role: 'appConnections',
       baseUrl: HTTPS_ROW,
@@ -517,7 +519,7 @@ describe('LAN https counterparts', () => {
 
   it('has no twin once LAN HTTP is off — the rows are https already', async () => {
     lanState.listening = false
-    const { provider } = await start({ localHostname: HOST })
+    const { provider } = await start({ 'localHostname@hub': HOST })
     const lan = (await provider.getAddresses({})).rows.filter((r) => r.kind === 'lan-ipv4')
     expect(lan.every((r) => r.baseUrl.startsWith('https://'))).toBe(true)
     expect(lan.some((r) => r.label.includes('(HTTPS)'))).toBe(false)
@@ -525,7 +527,7 @@ describe('LAN https counterparts', () => {
 
   it('leaves internal and public endpoint where they were — twins never win an automatic role', async () => {
     lanState.listening = true
-    const { provider } = await start({ localHostname: HOST })
+    const { provider } = await start({ 'localHostname@hub': HOST })
     const { roles } = await provider.getAddresses({})
     expect(roles.internal.resolved).not.toBeNull()
     expect(roles.internal.resolved?.startsWith('http://')).toBe(true)

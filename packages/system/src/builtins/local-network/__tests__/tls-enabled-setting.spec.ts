@@ -11,6 +11,7 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 import type { AddonContext, IScopedLogger } from '@camstack/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { makeMigrationsApi } from './migrations-api.js'
 import { readTlsEnabled } from '../../../tls/tls-status.js'
 import { LocalNetworkAddon } from '../local-network.addon.js'
 
@@ -30,7 +31,7 @@ function makeLogger(): IScopedLogger {
 }
 
 async function startAddon(dataDir: string, stored: Record<string, unknown>): Promise<void> {
-  const addonStore: Record<string, unknown> = { httpEnabled: false, ...stored }
+  const addonStore: Record<string, unknown> = { 'httpEnabled@hub': false, ...stored }
   // Documented type boundary: the suite exercises only the members the settings path reads.
   const ctx = {
     id: 'local-network',
@@ -39,6 +40,7 @@ async function startAddon(dataDir: string, stored: Record<string, unknown>): Pro
     addonConfig: {},
     dataDir,
     kernel: { localNodeId: 'hub' },
+    api: makeMigrationsApi(),
     settings: {
       readAddonStore: vi.fn(async () => ({ ...addonStore })),
       writeAddonStore: vi.fn(async (patch: Record<string, unknown>) => {
@@ -69,7 +71,7 @@ describe('local-network tlsEnabled setting', () => {
   })
 
   it('a stored false is mirrored to the marker the boot reads', async () => {
-    await startAddon(dir, { tlsEnabled: false })
+    await startAddon(dir, { 'tlsEnabled@hub': false })
     expect(fs.readFileSync(path.join(dir, 'tls', 'enabled'), 'utf-8').trim()).toBe('false')
     expect(readTlsEnabled(dir)).toBe(false)
   })
