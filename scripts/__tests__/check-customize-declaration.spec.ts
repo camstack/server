@@ -2,7 +2,7 @@
  * D936 — a customize declaration names paths, types and vocabulary the cap
  * actually has. Each case removes one fact from a known-good fixture.
  */
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { CAP_CUSTOMIZE_CATALOG } from '../../packages/types/src/generated/customize-catalog.ts'
 import type { CapabilityCustomizeSpec } from '../../packages/types/src/capabilities/customize-spec.ts'
@@ -142,6 +142,13 @@ const itemsArray: CustomizeCapView['itemArray'] = {
 }
 
 describe('customize declaration guard', () => {
+  // The first loadCustomizeCaps() transforms and imports every cap file cold (about 3 s alone,
+  // several times that on a loaded CI worker). It is paid once, here, under a hook budget sized
+  // for that cold load, so no individual test races the default 10 s test timeout for it.
+  beforeAll(async () => {
+    await loadCustomizeCaps()
+  }, 120_000)
+
   it('accepts a scalar number leaf, including a numeric string', () => {
     const found = judgeCustomize(
       view(percentageState, { version: 1, targets: [percentageTarget()] }),
