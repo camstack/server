@@ -172,7 +172,7 @@ const TV_MEDIA_PLAYER = {
 }
 
 const REMOTE_CONFIG = {
-  layoutTemplateId: 'tpl-tv',
+  layoutTemplateId: 'tpl-composed',
   defaultTransmitterId: BOARD_ID,
   bindings: {
     power: irBinding('power'),
@@ -236,7 +236,7 @@ export default defineFixtures({
     'remote.getConfig': REMOTE_CONFIG,
     'mut:remote.setConfig': { status: 'saved' },
     'remote.listCommands': {
-      layoutTemplateId: 'tpl-tv',
+      layoutTemplateId: 'tpl-composed',
       power: { mode: 'toggle' },
       commands: [
         { role: 'power', custom: false },

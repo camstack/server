@@ -1,7 +1,7 @@
 /**
  * The button grid of a remote layout (D964, D973): the editor's canvas and the
  * modal's preview. It draws a `RemoteLayoutPayload` — buttons with their shape
- * and tone, groups with their frame and title — and reports taps, grabs and
+ * and tone, groups with their frame (and, in the editor only, their title) — and reports taps, grabs and
  * arrow keys; it owns no data. A button wears its icon, else its label, else
  * its role's name. The look of a shape, tone or frame is `remote-look`.
  */
@@ -133,7 +133,9 @@ function GroupFrame({
 }: GroupFrameProps): ReactNode {
   const { t } = useTranslation()
   const divider = isDividerFrame(group.frame)
-  const title = compact || group.hideTitle === true ? undefined : group.title
+  // A title names a group for the person LAYING OUT the remote; where the remote is used
+  // (the press modal, the config preview) a group is only a gap between key clusters.
+  const title = !editable || compact || group.hideTitle === true ? undefined : group.title
   return (
     <div
       data-testid={`remote-group-${group.id}`}
