@@ -121,7 +121,6 @@ import { ShareElectionHistory } from './share-election-history.js'
 import { SessionAffinityMemory } from './session-affinity.js'
 import { DEFAULT_MOTION_COOLDOWN_MS, sustainIntervalMs } from './device-activity-source.js'
 import { DeviceConfigContributions } from './device-config-contributions.js'
-import { migrateLegacyFlagsToBindings } from './legacy-migrations.js'
 import { LoadShedController } from './load-shed-controller.js'
 import { NodeLifecycleHandler } from './node-lifecycle-handler.js'
 import { NodeStressController } from './node-stress-controller.js'
@@ -1346,23 +1345,6 @@ export async function buildOrchestratorControllers(
   )
 
   deps.ctx().logger.info('Pipeline orchestrator detection-wiring subscriptions installed')
-  // Kick off the one-shot audioEnabled/pipelineEnabled/disableInference →
-  // bindings migration in the background. Fire-and-forget so this function
-  // resolves immediately; the migration awaits api availability internally.
-  void migrateLegacyFlagsToBindings({
-    api: () => deps.ctx().api ?? null,
-    settings: deps.ctx().settings,
-    cameraSettingsStore: () => settingsStore.readCameraSettingsMap(),
-    doneFlag: settingsStore.bindingsMigrationDoneState,
-    logger: deps.ctx().logger,
-  }).catch((err: unknown) => {
-    // `ctxIfReady`: the background task can lose the race with
-    // `shutdown()` (tests tear the addon down quickly) — a nulled ctx
-    // must not turn the warn itself into an unhandled rejection.
-    deps.ctxIfReady()?.logger.warn('bindings migration failed — will retry on next boot', {
-      meta: { error: errMsg(err) },
-    })
-  })
   // Per-camera zones CRUD — backed by the orchestrator's per-device
   // settings store, mirrored into `dev.state.zones` on every mutation.
   // Constructed here (after agent + readiness wiring) because it

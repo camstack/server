@@ -124,14 +124,6 @@ const StoredCameraPipelineSettingsSchema = z.object({
   stepToggles: z.record(z.string(), z.boolean()).optional(),
   // Camera-wide, field-level step settings (D754): [step] → { key → value }.
   stepSettings: z.record(z.string(), z.record(z.string(), z.unknown()).readonly()).optional(),
-  /**
-   * Legacy "nuke inference" flag. Superseded by the detection-pipeline
-   * wrapper binding, but the one-shot boot migration
-   * (`migrateLegacyFlagsToBindings`) still reads it off the persisted
-   * blob to flip the binding off. Kept here so the durable round-trip
-   * does NOT strip it before the migration runs.
-   */
-  disableInference: z.boolean().optional(),
 })
 
 export const CameraSettingsMapSchema = z.record(z.string(), StoredCameraPipelineSettingsSchema)

@@ -42,7 +42,6 @@ import type {
 } from '@camstack/types'
 import { cameraScopedStepSettings, errMsg, sleep } from '@camstack/types'
 import type { ZodType } from 'zod'
-import { z } from 'zod'
 import type { CameraStepLayer } from './apply-device-provisioning.js'
 import { applyPackageZoneActivation, resolvePipelineWithSkips } from './pipeline-resolver.js'
 import { parseDeviceKey } from './inference-device-model.js'
@@ -199,7 +198,6 @@ export class PipelineSettingsStore {
   private _nodeBindingsState: DurableState<NodeBindingsBlob> | null = null
   private _agentSettingsState: DurableState<AgentSettingsMapBlob> | null = null
   private _cameraSettingsState: DurableState<CameraSettingsMapBlob> | null = null
-  private _bindingsMigrationDoneState: DurableState<boolean> | null = null
 
   private get nodeBindingsState(): DurableState<NodeBindingsBlob> {
     if (!this._nodeBindingsState) {
@@ -232,22 +230,6 @@ export class PipelineSettingsStore {
       )
     }
     return this._cameraSettingsState
-  }
-
-  /**
-   * One-shot `migrateLegacyFlagsToBindings` guard flag. Exposed as a public
-   * getter (not wrapped) because `migrateLegacyFlagsToBindings` takes the
-   * raw `DurableState<boolean>` handle directly as its `doneFlag` dep.
-   */
-  get bindingsMigrationDoneState(): DurableState<boolean> {
-    if (!this._bindingsMigrationDoneState) {
-      this._bindingsMigrationDoneState = this.deps.state<boolean>(
-        'bindingsMigration_v1_done',
-        z.boolean(),
-        false,
-      )
-    }
-    return this._bindingsMigrationDoneState
   }
 
   // ── Capability bindings (nodeBindings) ────────────────────────────────

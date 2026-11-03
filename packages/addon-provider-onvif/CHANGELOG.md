@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The unused addon-wide default username and password are removed, and the stored password is cleared from the keychain
+
 ## [1.2.152] - 2026-11-01
 
 ### Changed

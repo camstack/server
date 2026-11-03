@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Serves viewer 1.0.678
+- The finished legacy-flags-to-bindings carry-over and its stored flag are removed
 
 ## [1.2.653] - 2026-11-02
 

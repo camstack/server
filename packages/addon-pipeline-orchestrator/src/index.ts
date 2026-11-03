@@ -97,6 +97,7 @@ import {
   nodeRemovalHookCapability,
   AUTO_SHARE_HEADROOM,
   BaseAddon,
+  defineAddonMigrations,
   cameraPipelineConfigCapability,
   modelScopedStepSettingKeys,
   CLUSTER_MODEL_SCOPED_STEPS,
@@ -120,6 +121,8 @@ import {
   zoneRulesCapability,
   zonesCapability,
 } from '@camstack/types'
+import { readRawKeys } from './migrations/drop-keys.js'
+import { ADDON_MIGRATIONS, PIPELINE_ORCHESTRATOR_ID } from './migrations/index.js'
 import { AgentLoadService } from './agent-load-service.js'
 import type { NodeBenchmarkService } from './node-benchmark/node-benchmark-service.js'
 import { NodeBenchmarkStore } from './node-benchmark/node-benchmark-store.js'
@@ -677,8 +680,19 @@ export default class PipelineOrchestratorAddon
     }
   }
 
+  /** Delete the one-shot flag of the retired legacy-flags-to-bindings carry-over (D987). */
+  private async migrateSettings(): Promise<void> {
+    await this.runMigrations(
+      defineAddonMigrations(ADDON_MIGRATIONS, {
+        readStored: (keys) =>
+          readRawKeys((key) => this.readStoredGlobalKey(key), PIPELINE_ORCHESTRATOR_ID, keys),
+      }),
+    )
+  }
+
   protected async onInitialize(): Promise<AddonInitResult<PipelineOrchestratorActions>> {
     this.initTimestamp = Date.now()
+    await this.migrateSettings()
 
     // Record kinds (D881, phase 2 steps 12-15) — declared FIRST, before any
     // store or controller that depends on them.  hub-only: the addon's

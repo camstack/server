@@ -9,24 +9,23 @@ import type {
   IDevice,
   SavedDevice,
 } from '@camstack/types'
-import { BaseDeviceProvider, DeviceType, errMsg } from '@camstack/types'
+import { BaseDeviceProvider, defineAddonMigrations, DeviceType, errMsg } from '@camstack/types'
+import type { ProviderRegistration } from '@camstack/types'
+import { ADDON_MIGRATIONS, PROVIDER_ONVIF_ID } from './migrations/index.js'
+import { readRawKeys } from './migrations/drop-keys.js'
 import { OnvifCamera, onvifCameraSchema } from './onvif-camera.js'
 import { OnvifClient } from './onvif-client.js'
 import { ONVIF_DISCOVERY_MODES, onvifCamerasFromHits } from './onvif-discovery.js'
-import type { DiscoveredOnvifCamera, OnvifProviderConfig } from './onvif-types.js'
+import type { DiscoveredOnvifCamera } from './onvif-types.js'
 
 const ADDON_ID = 'provider-onvif'
 /** Stored flat, under its dotted schema key — the store is not nested. */
 
 /**
- * The global keys `BaseAddon` resolves into `this.config`. `defaultPassword`
- * is a keychain secret (D787): the store holds a marker, and only the base
- * resolve path turns it back into the string discovery needs.
+ * The addon has no global settings. The type admits any key only so the migration can clear a
+ * retired keychain secret by name (`clearSecrets`).
  */
-interface OnvifGlobalConfig {
-  defaultUsername: string
-  defaultPassword: string
-}
+type OnvifGlobalConfig = Record<string, never>
 
 export class OnvifProviderAddon extends BaseDeviceProvider<OnvifGlobalConfig> {
   protected readonly addonId = ADDON_ID
@@ -36,7 +35,26 @@ export class OnvifProviderAddon extends BaseDeviceProvider<OnvifGlobalConfig> {
   private lastDiscovered: readonly DiscoveredOnvifCamera[] = []
 
   constructor() {
-    super({ defaultUsername: '', defaultPassword: '' })
+    super({})
+  }
+
+  /**
+   * Retire the addon-wide default credentials (D986 Q8, D987): clear the password from the
+   * keychain, then delete both rows. Nothing reads them; each camera holds its own.
+   */
+  private async migrateSettings(): Promise<void> {
+    await this.runMigrations(
+      defineAddonMigrations(ADDON_MIGRATIONS, {
+        readStored: (keys) =>
+          readRawKeys((key) => this.readStoredGlobalKey(key), PROVIDER_ONVIF_ID, keys),
+        clearDefaultPassword: () => this.clearSecrets(['defaultPassword']),
+      }),
+    )
+  }
+
+  protected override async onInitialize(): Promise<ProviderRegistration[]> {
+    await this.migrateSettings()
+    return this.providerRegistrationsFromSuper(await super.onInitialize())
   }
 
   // ── Discovery (override defaults) ───────────────────────────────────
@@ -49,12 +67,11 @@ export class OnvifProviderAddon extends BaseDeviceProvider<OnvifGlobalConfig> {
     return ONVIF_DISCOVERY_MODES
   }
 
-  /** The engine's WS-Discovery probe finds the cameras; the default credentials are attached here only. */
+  /** The engine's WS-Discovery probe finds the cameras; a candidate carries no credentials: each camera holds its own. */
   override async classifyDiscoveryHits(input: {
     hits: readonly DiscoveryHit[]
     params?: Record<string, unknown>
   }): Promise<readonly DiscoveryCandidate[]> {
-    const config = await this._getAddonConfig()
     const cameras = onvifCamerasFromHits(input.hits)
     this.lastDiscovered = cameras
     this.ctx.logger.info('ONVIF discovery complete', { meta: { cameraCount: cameras.length } })
@@ -67,8 +84,8 @@ export class OnvifProviderAddon extends BaseDeviceProvider<OnvifGlobalConfig> {
         name: c.name ?? c.host,
         host: c.host,
         port: c.port,
-        username: config.defaultUsername ?? '',
-        password: config.defaultPassword ?? '',
+        username: '',
+        password: '',
       },
     }))
   }
@@ -222,59 +239,7 @@ export class OnvifProviderAddon extends BaseDeviceProvider<OnvifGlobalConfig> {
     })
   }
 
-  // ── Global settings ─────────────────────────────────────────────────
-  //
-  // The schema is DECLARED, not served by a `getGlobalSettings` override:
-  // the keychain save path derives the addon's secret tree from this
-  // declaration. With only a getter override the tree was empty and
-  // `defaultPassword` was stored as plaintext. The base `getGlobalSettings`
-  // hydrates it and shows a stored secret as a view, never as its value;
-  // the base `updateGlobalSettings` persists the same bare keys.
-
-  protected override globalSettingsSchema(): ConfigUISchema {
-    return {
-      sections: [
-        {
-          id: 'credentials',
-          title: 'Default Credentials',
-          titleKey: 'provider-onvif:globalSettings.s_credentials.title',
-          columns: 2,
-          fields: [
-            {
-              type: 'text',
-              key: 'defaultUsername',
-              label: 'Default Username',
-              labelKey: 'provider-onvif:globalSettings.s_credentials.defaultUsername.label',
-            },
-            {
-              type: 'password',
-              key: 'defaultPassword',
-              label: 'Default Password',
-              labelKey: 'provider-onvif:globalSettings.s_credentials.defaultPassword.label',
-              showToggle: true,
-            },
-          ],
-        },
-      ],
-    }
-  }
-
   // ── Private helpers ─────────────────────────────────────────────────
-
-  private async _getAddonConfig(): Promise<OnvifProviderConfig> {
-    // Non-secret keys come from the projected store; the default
-    // credentials from `this.config`, which BaseAddon resolves through the
-    // keychain (a raw read would see the marker object, not the password).
-    const raw = await this.resolveGlobalStore()
-    const { defaultUsername, defaultPassword } = this.config
-    return {
-      id: typeof raw['id'] === 'string' ? raw['id'] : 'onvif-default',
-      name: typeof raw['name'] === 'string' ? raw['name'] : 'ONVIF Cameras',
-      cameras: raw['cameras'] as OnvifProviderConfig['cameras'],
-      defaultUsername: defaultUsername !== '' ? defaultUsername : undefined,
-      defaultPassword: defaultPassword !== '' ? defaultPassword : undefined,
-    }
-  }
 
   /**
    * The context a camera is BUILT from, hydrated from its stored runtime state

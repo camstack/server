@@ -3,9 +3,6 @@ export interface OnvifProviderConfig {
   readonly name: string
   /** Manually added cameras (in addition to discovered) */
   readonly cameras?: readonly OnvifCameraConfig[]
-  /** Default credentials for discovered cameras */
-  readonly defaultUsername?: string
-  readonly defaultPassword?: string
 }
 
 export interface OnvifCameraConfig {
