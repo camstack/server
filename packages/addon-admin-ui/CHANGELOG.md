@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Adopt devices: a candidate's model and id now sit under its name instead of shortening it
 - Remote configure: selecting a button shows its own action in plain words (target device and command), with Test and Clear
+- The remote used from a device no longer prints group names such as Numbers or Volume; they only appear in the layout editor
+- Opening the admin with ?debugLayers=1 outlines and labels every layer near the top of the screen (fixed, sticky, blur, opacity) and shows the safe-area insets, to track down the blurred mobile top bar
 
 ## [1.2.566] - 2026-11-03
 

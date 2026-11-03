@@ -769,3 +769,17 @@ pattern for an action that rewrites many nodes and cameras with no undo:
 - Launching an app is just the usual action binding on that button; if a
   provider exposes a launch-app action the binding picker can offer it, but no
   capability is added for it.
+
+## Debug layers (device-specific paint bugs)
+
+Open the admin with `?debugLayers=1` to outline every element near the top of
+the viewport that is fixed or sticky, or has a backdrop filter, a filter,
+opacity below 1 or a stacking-context transform; each gets a label (tag,
+classes, z-index, the offending property) and a corner badge shows the
+safe-area insets and the admin-ui version. The flag is kept in
+`sessionStorage`, so it survives navigation inside an installed PWA;
+`?debugLayers=0` ends it. The overlay joins the browser's top layer (a manual
+popover) so it stays visible over an open dialog. Classifier:
+`packages/addon-admin-ui/src/lib/debug-layers.ts`; overlay:
+`packages/addon-admin-ui/src/components/debug/DebugLayers.tsx`. Use it before
+guessing at a blur or dimming that does not reproduce in Chromium.

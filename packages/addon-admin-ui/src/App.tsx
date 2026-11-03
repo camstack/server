@@ -1,3 +1,4 @@
+import { DebugLayers } from './components/debug/DebugLayers'
 import {
   applyFleetQueryDefaults,
   ConfirmDialogProvider,
@@ -696,6 +697,7 @@ export function App() {
                         </DeviceQuickDetailHost>
                       </BrowserRouter>
                       <ToastContainer />
+                      <DebugLayers />
                     </BrokerPickerSlotProvider>
                   </CustomFieldRenderersProvider>
                 </KeychainRevealHost>

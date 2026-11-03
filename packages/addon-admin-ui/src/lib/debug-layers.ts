@@ -1,0 +1,123 @@
+/**
+ * Debug layers (planning#362): the pure half of the admin's layer inspector.
+ *
+ * On an installed iOS PWA the mobile top bar renders blurred and a grey
+ * rounded element sits on the left edge, and it does not reproduce in
+ * Chromium. The inspector outlines every element near the top of the viewport
+ * that can paint over, blur or dim what is behind it. This file decides WHICH
+ * elements qualify and whether the mode is on; the DOM walk is
+ * `components/debug/DebugLayers.tsx`.
+ */
+
+/** How far from the top of the viewport an element must start to be considered. */
+export const DEBUG_LAYERS_TOP_PX = 120
+
+export const DEBUG_LAYERS_STORAGE_KEY = 'camstack.debugLayers'
+
+/** The computed-style properties the classifier reads (a `CSSStyleDeclaration` satisfies it). */
+export interface StyleLike {
+  readonly position: string
+  readonly zIndex: string
+  readonly opacity: string
+  readonly filter: string
+  readonly backdropFilter: string
+  readonly webkitBackdropFilter: string
+  readonly transform: string
+  readonly perspective: string
+  readonly isolation: string
+  readonly mixBlendMode: string
+  readonly willChange: string
+}
+
+export interface RectLike {
+  readonly top: number
+  readonly bottom: number
+  readonly width: number
+  readonly height: number
+}
+
+export type LayerReason =
+  | 'fixed'
+  | 'sticky'
+  | 'backdrop-filter'
+  | 'filter'
+  | 'opacity'
+  | 'transform'
+  | 'perspective'
+  | 'isolation'
+  | 'mix-blend-mode'
+  | 'will-change'
+
+export interface LayerFinding {
+  readonly reasons: readonly LayerReason[]
+  /** The z-index as computed (`auto` when none). */
+  readonly zIndex: string
+}
+
+const STACKING_WILL_CHANGE = /(transform|opacity|filter|perspective)/
+
+function isSet(value: string): boolean {
+  return value !== '' && value !== 'none'
+}
+
+/**
+ * The reasons an element is a layer worth outlining, or `null` when it is
+ * not one, or sits entirely outside the top band of the viewport.
+ */
+export function classifyLayer(
+  style: StyleLike,
+  rect: RectLike,
+  topPx: number = DEBUG_LAYERS_TOP_PX,
+): LayerFinding | null {
+  if (rect.width <= 0 || rect.height <= 0) return null
+  if (rect.top >= topPx || rect.bottom <= 0) return null
+  const reasons: LayerReason[] = []
+  if (style.position === 'fixed') reasons.push('fixed')
+  if (style.position === 'sticky') reasons.push('sticky')
+  if (isSet(style.backdropFilter) || isSet(style.webkitBackdropFilter)) {
+    reasons.push('backdrop-filter')
+  }
+  if (isSet(style.filter)) reasons.push('filter')
+  const opacity = Number.parseFloat(style.opacity)
+  if (Number.isFinite(opacity) && opacity < 1) reasons.push('opacity')
+  if (isSet(style.transform)) reasons.push('transform')
+  if (isSet(style.perspective)) reasons.push('perspective')
+  if (style.isolation === 'isolate') reasons.push('isolation')
+  if (style.mixBlendMode !== '' && style.mixBlendMode !== 'normal') reasons.push('mix-blend-mode')
+  if (STACKING_WILL_CHANGE.test(style.willChange)) reasons.push('will-change')
+  return reasons.length === 0 ? null : { reasons, zIndex: style.zIndex }
+}
+
+/** The label of a finding: `tag.first-classes · z=… · reason, reason`. */
+export function describeLayer(
+  tag: string,
+  classes: string,
+  dataAttr: string | null,
+  finding: LayerFinding,
+): string {
+  const named =
+    dataAttr !== null && dataAttr !== ''
+      ? `[${dataAttr}]`
+      : classes
+          .split(/\s+/)
+          .filter((c) => c !== '')
+          .slice(0, 3)
+          .map((c) => `.${c}`)
+          .join('')
+  return `${tag.toLowerCase()}${named} z=${finding.zIndex} ${finding.reasons.join('+')}`
+}
+
+/**
+ * Whether the mode is on. `?debugLayers=1` turns it on and remembers that for
+ * the session (the installed PWA navigates without the query), `?debugLayers=0`
+ * turns it off and forgets; with no query the remembered value decides.
+ */
+export function resolveDebugLayers(
+  search: string,
+  stored: string | null,
+): { readonly on: boolean; readonly persist: '1' | null | 'keep' } {
+  const asked = new URLSearchParams(search).get('debugLayers')
+  if (asked === '1') return { on: true, persist: '1' }
+  if (asked === '0') return { on: false, persist: null }
+  return { on: stored === '1', persist: 'keep' }
+}
