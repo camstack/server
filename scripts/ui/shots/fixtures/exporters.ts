@@ -25,7 +25,12 @@ const INSTANCES: Readonly<Record<string, readonly unknown[]>> = {
       formValues: { label: 'Home' },
       status: { state: 'ok', label: 'Linked' },
     },
-    { id: 'hae_002', name: 'Cabin', configured: false, formValues: { label: 'Cabin' } },
+    {
+      id: 'hae_002',
+      name: 'Cabin',
+      configured: false,
+      formValues: { label: 'Cabin' },
+    },
   ],
   'export-hap': [
     {
