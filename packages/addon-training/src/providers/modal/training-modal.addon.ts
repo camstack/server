@@ -150,7 +150,7 @@ export class TrainingModalAddon extends BaseAddon<TrainingModalConfig> {
     }
     await records.declare({ [ACCOUNT_KIND]: trainingAccountEntryKind })
     const instances = new RecordIntegrationInstances(records, trainingAccountEntryKind, {
-      description: { instanceMode: 'multiple', kind: 'account', canTest: true },
+      description: { role: 'services', instanceMode: 'multiple', kind: 'account', canTest: true },
       formSchema: () => MODAL_ENTRY_CONFIG_SCHEMA,
       initialBody: (name) => initialAccountBody(name),
       mintId: () => randomUUID(),

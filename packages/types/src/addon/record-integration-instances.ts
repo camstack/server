@@ -11,7 +11,7 @@
  * token or the view the form was given KEEP the stored secret;
  * `{ $secretClear: true }` clears it; any other string replaces it.
  */
-import type { z } from 'zod'
+import { z } from 'zod'
 import type {
   IntegrationInstance,
   IntegrationInstanceDescription,
@@ -32,6 +32,9 @@ const INSTANCES_LIST_MAX = 1000
 
 /** What every instance body carries: an absent `enabled` means on (no data migration). */
 export type InstanceBody = Record<string, unknown> & { readonly enabled?: boolean | undefined }
+
+/** What the instance went through when `onChanged` runs. */
+export type InstanceChange = 'created' | 'updated' | 'enabled' | 'deleted'
 
 export interface RecordIntegrationInstancesHooks<TBody extends InstanceBody> {
   /** Includes the optional `kinds` and `allowRestoreId` a provider offers the Add flow. */
@@ -57,8 +60,14 @@ export interface RecordIntegrationInstancesHooks<TBody extends InstanceBody> {
   }
   /** The addon's own rule for "this instance can work". */
   configured(body: TBody): boolean
-  /** Runs after every create / update / delete; the addon re-applies its runtime. */
-  onChanged?(id: string): void | Promise<void>
+  /**
+   * Runs after every create / update / enable / delete, IN the process that serves the instance:
+   * the addon re-applies its runtime from the record (`readResolved(id)`), so an edit takes effect
+   * on the next use with no respawn. `change` says what happened; a `deleted` id has no record.
+   * A device-bringing addon (`description.role !== 'services'`) is expected to declare it
+   * (`check-integration-instances-declared`).
+   */
+  onChanged?(id: string, change: InstanceChange): void | Promise<void>
   /** Probe the remote with the (possibly unsaved) values. */
   test?(input: {
     readonly id: string | null
@@ -68,7 +77,38 @@ export interface RecordIntegrationInstancesHooks<TBody extends InstanceBody> {
 
 /** The keys of the kind's secret fields that sit at the top level of the body. */
 function topLevelSecretKeys(paths: readonly string[]): ReadonlySet<string> {
-  return new Set(paths.filter((p) => !p.includes('.') && !p.includes('[')))
+  return new Set(paths.filter((p) => !p.includes('.') && !p.includes('[') && !p.includes('{')))
+}
+
+/** The keys of the kind's top-level MAPS whose values are secrets (`applianceSecrets{}`). */
+function secretMapKeys(paths: readonly string[]): ReadonlySet<string> {
+  return new Set(
+    paths
+      .filter((p) => p.endsWith('{}') && !p.slice(0, -2).match(/[.[{]/))
+      .map((p) => p.slice(0, -2)),
+  )
+}
+
+/**
+ * A patch value for a map of secrets: an entry that is omitted, `''`, the redaction token or the
+ * view the form was given KEEPS its stored secret (it is left out of the merge); `{ $secretClear }`
+ * or `null` removes the entry; any other string replaces it. Null when nothing is left to merge.
+ */
+function secretMapPatch(value: unknown): Record<string, unknown> | null {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return null
+  const out: Record<string, unknown> = {}
+  for (const [key, entry] of Object.entries(value)) {
+    if (entry === null || isSecretClear(entry)) out[key] = null
+    else if (
+      typeof entry === 'string' &&
+      entry !== '' &&
+      entry !== REDACTED_SECRET &&
+      !isSecretFieldView(entry)
+    ) {
+      out[key] = entry
+    }
+  }
+  return Object.keys(out).length > 0 ? out : null
 }
 
 /** Whether an instance's secret fields were read (`resolved`) or the keychain refused (`unavailable`). */
@@ -77,15 +117,25 @@ export type ResolvedSecretsState = 'resolved' | 'unavailable'
 export interface ResolvedInstance<TBody extends InstanceBody> {
   readonly id: string
   readonly body: TBody
-  /** The instance's own switch; an absent value in the body reads as on. */
+  /** The instance's own switch; an absent value in the body reads as on. Always true for role "devices": the registry gates the addon. */
   readonly enabled: boolean
   readonly secrets: ResolvedSecretsState
+}
+
+/** Does the kind's body schema carry an `enabled` field? */
+function declaresEnabled(kind: DefinedRecordKind<z.ZodType>): boolean {
+  const json = z.toJSONSchema(kind.schema, { unrepresentable: 'any', io: 'input' })
+  const properties = Reflect.get(json, 'properties')
+  return typeof properties === 'object' && properties !== null && 'enabled' in properties
 }
 
 export class RecordIntegrationInstances<TBody extends InstanceBody> {
   private readonly handle: RecordKindHandle<TBody>
   private readonly secretKeys: ReadonlySet<string>
+  private readonly secretMaps: ReadonlySet<string>
   private readonly nameField: string
+  /** The `integrations` registry owns the on/off switch (`role: devices`); the body has none. */
+  private readonly registryOwnsEnabled: boolean
 
   constructor(
     private readonly records: Pick<RecordsAccess, 'kind' | 'owner'>,
@@ -94,7 +144,14 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
   ) {
     this.handle = records.kind(kind)
     this.secretKeys = topLevelSecretKeys(kind.declaration.secretPaths)
+    this.secretMaps = secretMapKeys(kind.declaration.secretPaths)
     this.nameField = kind.declaration.entry?.nameField ?? 'name'
+    this.registryOwnsEnabled = hooks.description.role === 'devices'
+    if (this.registryOwnsEnabled && declaresEnabled(kind)) {
+      throw new Error(
+        `kind "${kind.name}": the integrations registry owns the on/off switch of a role "devices" addon, so the body must not declare "enabled"`,
+      )
+    }
   }
 
   /**
@@ -157,7 +214,7 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
       id: record.id,
       name: typeof rawName === 'string' ? rawName : record.id,
       configured: this.hooks.configured(record.data),
-      enabled: record.data.enabled !== false,
+      ...(this.registryOwnsEnabled ? {} : { enabled: record.data.enabled !== false }),
       formValues: shown,
       ...(kind !== undefined ? { kind } : {}),
       ...(health?.status !== undefined ? { status: health.status } : {}),
@@ -190,7 +247,7 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
       throw new Error('createInstance needs an id: this provider does not mint one')
     }
     await this.handle.put({ id: minted, data: this.hooks.initialBody(name, kind) }, { ifRev: 0 })
-    await this.hooks.onChanged?.(minted)
+    await this.hooks.onChanged?.(minted, 'created')
     return { id: minted }
   }
 
@@ -202,7 +259,10 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
     const patch: Record<string, unknown> = {}
     for (const [key, value] of Object.entries(values)) {
       if (value === undefined) continue
-      if (!this.secretKeys.has(key)) {
+      if (this.secretMaps.has(key)) {
+        const entries = secretMapPatch(value)
+        if (entries !== null) patch[key] = entries
+      } else if (!this.secretKeys.has(key)) {
         patch[key] = value
       } else if (isSecretClear(value)) {
         patch[key] = null
@@ -218,7 +278,7 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
     }
     if (name !== undefined) patch[this.nameField] = name
     await this.handle.patch(id, patch)
-    await this.hooks.onChanged?.(id)
+    await this.hooks.onChanged?.(id, 'updated')
     return { ok: true as const }
   }
 
@@ -227,15 +287,20 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
     id,
     enabled,
   }) => {
+    if (this.registryOwnsEnabled) {
+      throw new Error(
+        `instance "${id}": the integrations registry owns the on/off switch of this addon; set it with integrations.update`,
+      )
+    }
     await this.handle.patch(id, { enabled })
-    await this.hooks.onChanged?.(id)
+    await this.hooks.onChanged?.(id, 'enabled')
     return { ok: true as const }
   }
 
   /** The row and its keychain refs go together (the records door). */
   deleteInstance: IIntegrationInstancesProvider['deleteInstance'] = async ({ id }) => {
     await this.handle.delete(id)
-    await this.hooks.onChanged?.(id)
+    await this.hooks.onChanged?.(id, 'deleted')
     return { ok: true as const }
   }
 

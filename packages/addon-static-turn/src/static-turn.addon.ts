@@ -65,7 +65,7 @@ export class StaticTurnAddon extends BaseAddon<StaticTurnConfig> {
     }
     await records.declare({ servers: staticTurnServersKind })
     this.instances = new RecordIntegrationInstances(records, staticTurnServersKind, {
-      description: { instanceMode: 'multiple', kind: 'servers', canTest: false },
+      description: { role: 'services', instanceMode: 'multiple', kind: 'servers', canTest: false },
       formSchema: () => this.serverForm(),
       initialBody: (name) => ({ ...TURN_DEFAULT_BODY, name }),
       configured: (body) => parseTurnUrls(body.urls).length > 0,

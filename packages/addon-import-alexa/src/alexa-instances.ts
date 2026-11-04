@@ -47,6 +47,7 @@ export function buildAlexaInstances(
 ): RecordIntegrationInstances<AlexaBrokerBody> {
   return new RecordIntegrationInstances<AlexaBrokerBody>(records, alexaBrokersEntryKind, {
     description: {
+      role: 'both',
       instanceMode: 'multiple',
       kind: 'account',
       canTest: true,

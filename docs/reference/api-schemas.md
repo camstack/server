@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1044 shared schemas.**
+**1046 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -2774,12 +2774,19 @@ Enum: `"not-electron" \| "no-app-state" \| "app-state-stale" \| "not-downloaded"
 
 ### `IntegrationInstanceDescriptionSchema`
 
+- `role`: `IntegrationInstanceRoleSchema`
+- `discovery?`: `IntegrationInstanceDiscoverySchema`
 - `instanceMode`: `IntegrationInstanceModeSchema`
 - `kind`: `string`
 - `canTest`: `boolean`
 - `kinds?`: `IntegrationInstanceKindSchema[]`
 - `allowRestoreId?`: `boolean`
 - `mintsId?`: `boolean`
+
+### `IntegrationInstanceDiscoverySchema`
+
+- `mode`: `"none" \| "lan" \| "account"`
+- `scopedToInstance`: `boolean`
 
 ### `IntegrationInstanceKindSchema`
 
@@ -2799,12 +2806,16 @@ Enum: `"single" \| "multiple"`
 - `name?`: `string`
 - `values`: `Record<string, unknown>`
 
+### `IntegrationInstanceRoleSchema`
+
+Enum: `"devices" \| "services" \| "both"`
+
 ### `IntegrationInstanceSchema`
 
 - `id`: `string`
 - `name`: `string`
 - `configured`: `boolean`
-- `enabled`: `boolean`
+- `enabled?`: `boolean`
 - `kind?`: `string`
 - `formValues`: `Record<string, unknown>`
 - `status?`: `IntegrationInstanceStatusSchema`

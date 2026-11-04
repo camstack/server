@@ -28,6 +28,7 @@ async function setup(withMint: boolean) {
   let counter = 0
   const instances = new RecordIntegrationInstances<Body>(world.records, kind, {
     description: {
+      role: 'services',
       instanceMode: 'multiple',
       kind: 'target',
       canTest: false,
@@ -54,6 +55,7 @@ describe('integration-instances additive fields (P2)', () => {
   it('the schemas accept the new optional fields and the old shapes', () => {
     expect(
       IntegrationInstanceDescriptionSchema.safeParse({
+        role: 'services',
         instanceMode: 'multiple',
         kind: 'x',
         canTest: true,
@@ -61,6 +63,7 @@ describe('integration-instances additive fields (P2)', () => {
     ).toBe(true)
     expect(
       IntegrationInstanceDescriptionSchema.safeParse({
+        role: 'services',
         instanceMode: 'multiple',
         kind: 'x',
         canTest: true,

@@ -3,6 +3,10 @@
  * (`collectZodSecretPaths`): dotted keys, `[]` for "each element of this array"
  * (`auth.accessToken`, `headers[].value`).
  *
+ * `{}` after a key means "each value of this map" (`applianceSecrets{}`): the map's own key
+ * names the value (`applianceSecrets{fridge}`), so no id key is declared and a body that drops a
+ * key releases exactly that key's secret.
+ *
  * Array elements are matched by a DECLARED id key (`secretArrayKeys`:
  * `{ headers: 'name' }`), never by index, so reordering a list keeps every
  * keychain ref (the same rule as `arrayItemFieldPath`). The concrete path of a
@@ -19,6 +23,8 @@ export interface SecretPathSegment {
   readonly key: string
   /** `true` when the key holds an array and the path continues into each element. */
   readonly each: boolean
+  /** `true` when the key holds a map and the path continues into each of its values. */
+  readonly map: boolean
 }
 
 /** The array prefixes (declared form, e.g. `headers` or `a.headers`) of a path. */
@@ -26,9 +32,10 @@ export function parseSecretPath(path: string): readonly SecretPathSegment[] {
   if (path.length === 0) throw new InvalidRecordError('an empty secret path')
   return path.split('.').map((raw) => {
     const each = raw.endsWith('[]')
-    const key = each ? raw.slice(0, -2) : raw
+    const map = raw.endsWith('{}')
+    const key = each || map ? raw.slice(0, -2) : raw
     if (key.length === 0) throw new InvalidRecordError(`secret path "${path}" has an empty segment`)
-    return { key, each }
+    return { key, each, map }
   })
 }
 
@@ -110,6 +117,23 @@ function mapAt(
         : mapAt(element, segments, index + 1, keys, concrete, declared, arrayKeys, visit)
     })
     return { ...node, [segment.key]: mapped }
+  }
+
+  if (segment.map) {
+    if (!isRecord(child)) return node
+    const entries = Object.entries(child).map(([mapKey, value]): [string, unknown] => {
+      const concrete = `${concretePrefix}${concretePrefix.length > 0 ? '.' : ''}${segment.key}{${encodeURIComponent(mapKey)}}`
+      if (!last) {
+        return [
+          mapKey,
+          mapAt(value, segments, index + 1, keys, concrete, declared, arrayKeys, visit),
+        ]
+      }
+      const replacement = visit({ declared, concrete, value })
+      return [mapKey, replacement]
+    })
+    const kept = entries.filter(([, value]) => value !== REMOVE_LEAF)
+    return { ...node, [segment.key]: Object.fromEntries(kept) }
   }
 
   const concrete = `${concretePrefix}${concretePrefix.length > 0 ? '.' : ''}${segment.key}`

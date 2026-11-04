@@ -169,6 +169,7 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelAddonConfig
     await records.declare({ tunnels: cloudflareTunnelsKind })
     this.instances = new RecordIntegrationInstances(records, cloudflareTunnelsKind, {
       description: {
+        role: 'services',
         instanceMode: 'single',
         kind: 'tunnels',
         canTest: false,

@@ -9,6 +9,7 @@ import { makeCtx, invokeProcedure, buildCapRouterForTest } from './harness.js'
 function makeProvider(): IIntegrationInstancesProvider {
   return {
     describe: vi.fn(async () => ({
+      role: 'services' as const,
       instanceMode: 'multiple' as const,
       kind: 'target',
       canTest: true,

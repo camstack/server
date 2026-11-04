@@ -28,7 +28,7 @@ const SECRET_VIEW = { $secret: 'ref', v: 1, set: true }
 
 const loki: HolderData = {
   addonId: 'loki-logging',
-  description: { instanceMode: 'single', kind: 'destination', canTest: true },
+  description: { role: 'services', instanceMode: 'single', kind: 'destination', canTest: true },
   instances: [
     {
       id: 'loki-logging',
@@ -41,7 +41,7 @@ const loki: HolderData = {
 }
 const smtp: HolderData = {
   addonId: 'smtp-nodemailer',
-  description: { instanceMode: 'multiple', kind: 'relay', canTest: false },
+  description: { role: 'services', instanceMode: 'multiple', kind: 'relay', canTest: false },
   instances: [
     {
       id: 'relay-default',
@@ -270,7 +270,7 @@ describe('enabled and providersOf', () => {
 describe('add stays offered (instanceMode)', () => {
   const many = (n: number): HolderData => ({
     addonId: 'm',
-    description: { instanceMode: 'multiple', kind: 'x', canTest: false },
+    description: { role: 'services', instanceMode: 'multiple', kind: 'x', canTest: false },
     instances: Array.from({ length: n }, (_, i) => ({
       id: `i${i}`,
       name: `N${i}`,
@@ -285,7 +285,7 @@ describe('add stays offered (instanceMode)', () => {
   it('a single provider is creatable only while it has no row', () => {
     const single = (n: number): HolderData => ({
       ...many(n),
-      description: { instanceMode: 'single', kind: 'x', canTest: false },
+      description: { role: 'services', instanceMode: 'single', kind: 'x', canTest: false },
     })
     expect(creatableProviders([single(0)])).toHaveLength(1)
     expect(creatableProviders([single(1)])).toHaveLength(0)
@@ -348,6 +348,7 @@ describe('kinds, status label and last check', () => {
   const kinds: HolderData = {
     addonId: 'notifier',
     description: {
+      role: 'services' as const,
       instanceMode: 'multiple',
       kind: 'target',
       canTest: true,

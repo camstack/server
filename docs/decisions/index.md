@@ -4,7 +4,7 @@
 
 # Decisions
 
-969 architecture decision records. One file per decision, never
+970 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -984,6 +984,7 @@ that rots.
 | D1004 | [One creation entry point: a composed device is created naked, facets attach through Customize](adr-1004-one-creation-entry-point-a-composed-device-is-created-naked-facets-attach-through-customize.md) | ✅ accepted (supersedes D944 (the appliance template part only; the fixed extension set, the helper templates and the one source selector stay)) | 2026-11-03 |
 | D1005 | [The transition gate seeds its last level from history, off the event path; a first false waits a bounded moment for it](adr-1005-the-transition-gate-seeds-its-last-level-from-history-off-the-event-path.md) | ✅ accepted | 2026-11-03 |
 | D1006 | [A storage type is pruned only when no INSTALLED package declares it, and a missing writable location is an alert](adr-1006-a-failed-addon-load-never-prunes-its-storage-locations.md) | ✅ accepted | 2026-11-04 |
+| D1007 | [Every integration is a typed instance record; the registry keeps identity and the on/off switch of a device integration](adr-1007-every-integration-is-a-typed-instance-record-the-registry-keeps-identity-and-the-on-off-switch.md) | 💭 proposed (supersedes the "legacy integration_settings rows stay for addons that bring devices" part of D996, and the integrationSettingSections / per-integration settings rows part of D986) | 2026-11-04 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

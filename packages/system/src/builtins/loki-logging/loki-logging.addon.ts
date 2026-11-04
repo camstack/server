@@ -134,6 +134,7 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
       else await this.ensureDeclaredQuietly()
       this.instances = new RecordIntegrationInstances(records, lokiDestinationsKind, {
         description: {
+          role: 'services',
           instanceMode: 'multiple',
           kind: 'destination',
           canTest: true,

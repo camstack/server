@@ -4,12 +4,12 @@
 
 # Guards
 
-214 repository guards: 209 in `scripts/`,
+215 repository guards: 210 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (204)
+## Enforced by CI checks (205)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -96,6 +96,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-icon-catalog.ts` | The icon catalog is ONE list, and it is still drawable (D854). |
 | `scripts/check-inlined-sources-known.ts` | Every workspace package whose BUILT artifact carries a copy of another workspace package's source is known to the publish-scope resolver (`scripts/ci/publish-scope.mjs` → `inlinedSources`), as an authoritative copy (republished with its … |
 | `scripts/check-integration-hub-links.ts` | Integration-hub link guard — **`lib/integration-hub-url.ts` is the only place a link into an integration page is spelled.** ## The failure this catches Every page built on `<IntegrationHub>` reads `?integration=<addonId>` and `?section=<… |
+| `scripts/check-integration-instances-declared.ts` | Every integration that brings devices keeps its configuration as a typed instance record (planning#416, "one store"). Two rules, one list. |
 | `scripts/check-intercom-rate-refusal.ts` | Intercom rate-conversion wiring — the seam a unit test cannot reach. |
 | `scripts/check-inventory-never-fatal.ts` | The boot-time inventories can NEVER refuse a boot — operator directive, 2026-08-12: *"non dovremmo mai prevenire il boot"*. |
 | `scripts/check-keychain-backed-rows.ts` | A secret that lives in a business row is written to the keychain by its owner and nowhere else (D878). |

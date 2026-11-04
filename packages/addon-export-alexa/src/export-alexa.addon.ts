@@ -535,7 +535,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       'skill-exports': alexaSkillExportsKind,
     })
     this.instances = new RecordIntegrationInstances(records, alexaSkillsKind, {
-      description: { instanceMode: 'single', kind: 'skills', canTest: false },
+      description: { role: 'services', instanceMode: 'single', kind: 'skills', canTest: false },
       formSchema: () => this.skillForm(),
       initialBody: (name): AlexaSkillBody => ({
         ...ALEXA_SKILL_DEFAULT_BODY,

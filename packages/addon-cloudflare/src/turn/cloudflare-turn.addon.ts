@@ -79,6 +79,7 @@ export class CloudflareTurnAddon extends BaseAddon<CloudflareTurnAddonConfig> {
     await records.declare({ accounts: cloudflareTurnAccountsKind })
     this.instances = new RecordIntegrationInstances(records, cloudflareTurnAccountsKind, {
       description: {
+        role: 'services',
         instanceMode: 'multiple',
         kind: 'accounts',
         canTest: true,

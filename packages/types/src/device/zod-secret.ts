@@ -31,6 +31,7 @@ interface ZodInternalDef {
   readonly out?: z.ZodType
   readonly shape?: Record<string, z.ZodType>
   readonly element?: z.ZodType
+  readonly valueType?: z.ZodType
   readonly options?: readonly z.ZodType[]
   readonly left?: z.ZodType
   readonly right?: z.ZodType
@@ -90,7 +91,8 @@ export function isZodSecret(schema: z.ZodType): boolean {
 
 /**
  * Every declared secret path in a config schema: dotted keys, `[]` for "each
- * element of this array" (`connection.password`, `rows[].token`). A declared
+ * element of this array" (`connection.password`, `rows[].token`), `{}` for "each value of this
+ * map" (`applianceSecrets{}`). A declared
  * object or array is reported as one path and not descended into — everything
  * under it is secret.
  */
@@ -105,6 +107,10 @@ export function collectZodSecretPaths(schema: z.ZodType, prefix = ''): readonly 
       }
     } else if (def.type === 'array' && def.element) {
       paths.push(...collectZodSecretPaths(def.element, `${prefix}[]`))
+    } else if (def.type === 'record' && def.valueType) {
+      // A map keyed by an id the body chooses (`applianceSecrets: { [id]: secret }`): one level,
+      // each value its own secret, the key stays in the row.
+      paths.push(...collectZodSecretPaths(def.valueType, `${prefix}{}`))
     } else if (def.type === 'union' && def.options) {
       // A (discriminated) union's variants share the path: a secret in ANY
       // variant is a secret at that path (ecowitt's local vs listener transport).

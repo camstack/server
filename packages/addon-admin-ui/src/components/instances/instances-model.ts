@@ -96,7 +96,7 @@ export function buildRows(input: BuildRowsInput): readonly PanelRow[] {
         id: instance.id,
         name: instance.name,
         configured: instance.configured,
-        enabled: instance.enabled,
+        enabled: instance.enabled ?? true,
         status: instance.status,
         canTest: holder.description.canTest,
         ...(instance.kind !== undefined ? { kindId: instance.kind } : {}),

@@ -56,6 +56,7 @@ import type {
   IDeviceProvider,
   IIntegrationRegistry,
   IIntegrationInstancesProvider,
+  IntegrationInstanceDescription,
   IIntegrationsProvider,
   INetworkQualityProvider,
   INodesProvider,
@@ -1279,15 +1280,39 @@ export const INTEGRATION_CAP_MARKERS = new Set(['device-provider', 'device-adopt
  * is listed for its devices. Decided from the manifest, so a not-yet-registered provider does
  * not flash a row in. A row it already has stays in the registry and reachable by id.
  */
-function hidesFromIntegrations(ar: AddonRegistryService, addonId: string): boolean {
+async function hidesFromIntegrations(ar: AddonRegistryService, addonId: string): Promise<boolean> {
   const addon = ar.listAddons().find((a) => a.manifest.id === addonId)
   if (addon === undefined) return false
+  const declared = addon.declaration?.integrationRole ?? addon.manifest.integrationRole
+  const described =
+    declared === undefined ? await describedInstancesOf(getInstancesProvider(ar, addonId)) : null
   return !bringsDevices(
     resolveIntegrationRole({
-      integrationRole: addon.declaration?.integrationRole ?? addon.manifest.integrationRole,
+      integrationRole: declared,
+      describedRole: described?.role,
       capabilities: addon.manifest.capabilities,
     }),
   )
+}
+
+/**
+ * The provider's own description, or null when it has none or cannot answer: an addon that
+ * is mid-restart must not make the Integrations page throw, it falls back to the manifest.
+ */
+async function describedInstancesOf(
+  provider: IIntegrationInstancesProvider | null,
+): Promise<IntegrationInstanceDescription | null> {
+  if (provider === null) return null
+  try {
+    return await provider.describe()
+  } catch {
+    return null
+  }
+}
+
+/** The wizard's discovery word for what a provider describes (`none` and `account` find nothing before an instance exists). */
+function wizardDiscoveryMode(described: IntegrationInstanceDescription): 'auto' | 'manual' {
+  return described.discovery?.mode === 'lan' ? 'auto' : 'manual'
 }
 
 function getInstancesProvider(
@@ -1313,7 +1338,11 @@ export function buildIntegrationsProvider(
   return {
     list: async () => {
       const integrations = await requireIntegrationRegistry(ar).listIntegrations()
-      return integrations.filter((i) => !hidesFromIntegrations(ar, i.addonId)).map(withProcessState)
+      const hidden = new Map<string, boolean>()
+      for (const addonId of new Set(integrations.map((i) => i.addonId))) {
+        hidden.set(addonId, await hidesFromIntegrations(ar, addonId))
+      }
+      return integrations.filter((i) => hidden.get(i.addonId) !== true).map(withProcessState)
     },
     get: async (input) => {
       const integration = await requireIntegrationRegistry(ar).getIntegration(input.id)
@@ -1825,15 +1854,18 @@ export function buildIntegrationsProvider(
       // Markers that flag an addon as a creatable integration type live
       // in the module-level `INTEGRATION_CAP_MARKERS` set (exported so the
       // integration-markers spec can assert the recognised caps).
-      const providerAddons = addons.filter(
+      const markerAddons = addons.filter(
         (a) =>
           a.process?.state !== 'failed' &&
-          !hidesFromIntegrations(ar, a.manifest.id) &&
           a.manifest.capabilities?.some((c) => {
             const name = typeof c === 'string' ? c : c.name
             return typeof name === 'string' && INTEGRATION_CAP_MARKERS.has(name)
           }),
       )
+      const providerAddons: typeof markerAddons = []
+      for (const addon of markerAddons) {
+        if (!(await hidesFromIntegrations(ar, addon.manifest.id))) providerAddons.push(addon)
+      }
       const integrations = await reg.listIntegrations()
       return Promise.all(
         providerAddons.map(async (addon) => {
@@ -1842,7 +1874,7 @@ export function buildIntegrationsProvider(
           const icon = d?.icon ?? m.icon
           const color = d?.color ?? m.color ?? '#78716c'
           const instances = getInstancesProvider(ar, m.id)
-          const described = instances === null ? null : await instances.describe()
+          const described = await describedInstancesOf(instances)
           const instanceMode =
             described !== null
               ? described.instanceMode === 'single'
@@ -1851,7 +1883,10 @@ export function buildIntegrationsProvider(
               : (d?.instanceMode ?? m.instanceMode ?? 'multiple')
           const existing = integrations.filter((i) => i.addonId === m.id)
           const provider = getDeviceProvider(ar, m.id)
-          const discoveryMode = provider?.discoveryMode ?? 'manual'
+          const discoveryMode =
+            described !== null
+              ? wizardDiscoveryMode(described)
+              : (provider?.discoveryMode ?? 'manual')
 
           // Branch by CAP, not by addon name. Surface which integration-marker
           // cap the addon declared so the wizard routes `device-adoption`
@@ -1887,7 +1922,7 @@ export function buildIntegrationsProvider(
             explicitMode ??
             (declaresBroker && brokerKind
               ? 'broker'
-              : kind === 'device-adoption'
+              : kind === 'device-adoption' || described?.discovery?.mode === 'account'
                 ? 'account'
                 : 'standalone')
 

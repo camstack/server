@@ -481,8 +481,11 @@ a fixed row with the registry switch for a provider that holds none, a Restart a
 own `instanceFormSchema` to edit, and the provider's Logs / Events (`IntegrationActivity`) under the
 list. The Integrations page lists only integrations that bring devices: `integrations.list` keeps an
 addon entry by its resolved role (`resolveIntegrationRole` in `server/backend/src/api/core/integration-role.ts`).
-A manifest declares `integrationRole` (`devices`, `services` or `both`); absent, an entry declaring
-`integration-instances` is `services` and anything else is `devices`. A dual entry declares `both`, is listed
+The role is, in order: the manifest's `integrationRole` (`devices`, `services` or `both`, an override), the
+`role` the addon's `integration-instances` provider answers in `describe()` (with its `discovery`:
+`none | lan | account`, which the wizard reads as `auto` for `lan` and `manual` otherwise), and, for an addon
+still on legacy rows, the capabilities it declares (`integration-instances` means `services`, anything else
+`devices`). The registry owns `enabled` for `role: devices` ([D1007](../decisions/adr-1007-every-integration-is-a-typed-instance-record-the-registry-keeps-identity-and-the-on-off-switch.md)). A dual entry declares `both`, is listed
 on Integrations for its devices, and keeps its service instances on the function page. Loki, the SMTP relays
 and the TURN servers (static and Cloudflare) therefore have no Integrations row; the TURN Servers page holds
 their records.

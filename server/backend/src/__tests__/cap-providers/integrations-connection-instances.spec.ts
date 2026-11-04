@@ -38,7 +38,14 @@ function row(id: string): Integration {
   } as unknown as Integration
 }
 
-function harness(opts: { instanceMode?: 'single' | 'multiple'; withProvider?: boolean } = {}) {
+function harness(
+  opts: {
+    instanceMode?: 'single' | 'multiple'
+    withProvider?: boolean
+    role?: 'devices' | 'services' | 'both'
+    discovery?: { mode: 'none' | 'lan' | 'account'; scopedToInstance: boolean }
+  } = {},
+) {
   const withProvider = opts.withProvider ?? true
   const stored = new Map<string, Integration>()
   const registry = {
@@ -58,6 +65,8 @@ function harness(opts: { instanceMode?: 'single' | 'multiple'; withProvider?: bo
   }
   const instances = {
     describe: vi.fn(async () => ({
+      ...(opts.role !== undefined ? { role: opts.role } : {}),
+      ...(opts.discovery !== undefined ? { discovery: opts.discovery } : {}),
       instanceMode: opts.instanceMode ?? 'single',
       kind: 'destination',
       canTest: true,
@@ -314,5 +323,85 @@ describe('integrations over an integration-instances provider', () => {
     })
     expect(h.registry.setIntegrationSettings).toHaveBeenCalled()
     expect(h.instances.updateInstance).not.toHaveBeenCalled()
+  })
+})
+
+describe('the provider describes what its instances are (planning#416)', () => {
+  /** A device-bringing addon on records: the manifest says nothing, `describe()` decides. */
+  function deviceAddon(
+    h: ReturnType<typeof harness>,
+    extra: { integrationRole?: 'services' } = {},
+  ) {
+    h.addonReg.listAddons.mockReturnValue([
+      {
+        manifest: {
+          id: ADDON_ID,
+          name: 'Gizmo',
+          description: 'Gizmo devices',
+          ...extra,
+          capabilities: [{ name: 'device-provider' }, { name: 'integration-instances' }],
+        },
+      },
+    ])
+  }
+
+  it('describe().role devices lists the addon and offers it, though the manifest declares no role', async () => {
+    const h = harness({ role: 'devices', instanceMode: 'multiple' })
+    deviceAddon(h)
+    await h.provider.create({ addonId: ADDON_ID, name: 'Gizmo' })
+    expect(await h.provider.list()).toHaveLength(1)
+    const [type] = await h.provider.getAvailableTypes()
+    expect(type).toMatchObject({ addonId: ADDON_ID, instanceMode: 'multiple' })
+  })
+
+  it('describe().role services hides it, and the manifest integrationRole still overrides describe()', async () => {
+    const hidden = harness({ role: 'services' })
+    deviceAddon(hidden)
+    expect(await hidden.provider.getAvailableTypes()).toEqual([])
+    const overridden = harness({ role: 'services' })
+    overridden.addonReg.listAddons.mockReturnValue([
+      {
+        manifest: {
+          id: ADDON_ID,
+          name: 'Gizmo',
+          description: 'x',
+          integrationRole: 'both',
+          capabilities: [{ name: 'device-provider' }, { name: 'integration-instances' }],
+        },
+      },
+    ])
+    expect(await overridden.provider.getAvailableTypes()).toHaveLength(1)
+  })
+
+  it('a provider that cannot answer describe() falls back to the manifest instead of failing the page', async () => {
+    const h = harness({ role: 'devices' })
+    deviceAddon(h)
+    h.instances.describe.mockRejectedValue(new Error('addon restarting'))
+    await h.provider.create({ addonId: ADDON_ID, name: 'Gizmo' }).catch(() => undefined)
+    expect(await h.provider.list()).toEqual([])
+  })
+
+  it('the wizard word for discovery and the test button come from describe()', async () => {
+    const lan = harness({
+      role: 'devices',
+      instanceMode: 'multiple',
+      discovery: { mode: 'lan', scopedToInstance: false },
+    })
+    deviceAddon(lan)
+    expect((await lan.provider.getAvailableTypes())[0]).toMatchObject({
+      discoveryMode: 'auto',
+      canTest: true,
+      mode: 'standalone',
+    })
+    const account = harness({
+      role: 'devices',
+      instanceMode: 'multiple',
+      discovery: { mode: 'account', scopedToInstance: true },
+    })
+    deviceAddon(account)
+    expect((await account.provider.getAvailableTypes())[0]).toMatchObject({
+      discoveryMode: 'manual',
+      mode: 'account',
+    })
   })
 })

@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A composed device (a dryer, washer or heater) now resumes its last running state after a hub restart instead of reporting unknown, so a cycle that ends right after a restart still notifies
 - core-blocks can propose a running threshold and dwells from a device's own power history (read-only)
 - Loki log destinations can now be several: every enabled destination receives the logs
+- The sqlite registry can clear an integration's legacy settings rows and answer the keychain refs they held, for the rows-to-record migration
 
 ### Fixed
 

@@ -51,6 +51,7 @@ export function buildHaInstances(
 ): RecordIntegrationInstances<HaBrokerBody> {
   return new RecordIntegrationInstances<HaBrokerBody>(records, haBrokersEntryKind, {
     description: {
+      role: 'both',
       instanceMode: 'multiple',
       kind: 'connection',
       canTest: true,

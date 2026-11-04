@@ -54,6 +54,7 @@ export function buildGoogleInstances(
 ): RecordIntegrationInstances<GoogleBrokerBody> {
   return new RecordIntegrationInstances<GoogleBrokerBody>(records, googleBrokersEntryKind, {
     description: {
+      role: 'services',
       instanceMode: 'multiple',
       kind: 'account',
       canTest: true,

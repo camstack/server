@@ -29,7 +29,12 @@ async function setup() {
   await world.records.declare({ 'spec-destinations': kind })
   const changed: string[] = []
   const instances = new RecordIntegrationInstances<Body>(world.records, kind, {
-    description: { instanceMode: 'multiple', kind: 'destination', canTest: false },
+    description: {
+      role: 'services',
+      instanceMode: 'multiple',
+      kind: 'destination',
+      canTest: false,
+    },
     formSchema: () => EMPTY_FORM,
     initialBody: (name) => ({ name, url: '', username: '' }),
     configured: (body) => body.url.length > 0,
@@ -135,7 +140,12 @@ describe('RecordIntegrationInstances', () => {
         }),
     }
     const instances = new RecordIntegrationInstances<Body>(locked, kind, {
-      description: { instanceMode: 'single', kind: 'destination', canTest: false },
+      description: {
+        role: 'services',
+        instanceMode: 'single',
+        kind: 'destination',
+        canTest: false,
+      },
       formSchema: () => EMPTY_FORM,
       initialBody: (name) => ({ name, url: '', username: '' }),
       configured: (body) => body.url.length > 0,

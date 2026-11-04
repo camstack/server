@@ -8,7 +8,7 @@ import type {
   RecordKindHandle,
   RecordsAccess,
 } from '@camstack/types'
-import { bareAddonId, parseJsonObject } from '@camstack/types'
+import { bareAddonId, collectSecretMarkerRefs, parseJsonObject } from '@camstack/types'
 import { readAllRows } from '../../records/read-all-rows.js'
 import {
   INTEGRATIONS_LEGACY,
@@ -408,6 +408,28 @@ export class IntegrationRegistry implements IIntegrationRegistry {
       )
     }
     return result
+  }
+
+  /**
+   * Delete every legacy setting row of an integration and answer the keychain refs the rows
+   * carried, so the caller (the rows-to-record migration) releases them after the rows are gone.
+   * The integration itself stays.
+   */
+  async clearIntegrationSettings(integrationId: string): Promise<readonly string[]> {
+    const stored = await this.getIntegrationSettings(integrationId)
+    const refs = collectSecretMarkerRefs(stored)
+    const kind = this.recordStores?.settings
+    if (kind !== undefined) {
+      for (const row of await readAllRows(kind)) {
+        if (row.data.integrationId === integrationId) await kind.delete(row.id)
+      }
+      return refs
+    }
+    await this.store.deleteWhere({
+      collection: INTEGRATION_SETTINGS,
+      filter: { where: { integration_id: integrationId } },
+    })
+    return refs
   }
 
   async setIntegrationSetting(integrationId: string, key: string, value: unknown): Promise<void> {

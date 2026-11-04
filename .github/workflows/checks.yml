@@ -281,6 +281,7 @@ jobs:
             scripts/check-records-index-served.ts \
             scripts/check-records-no-unindexed-where.ts \
             scripts/check-device-settings-standard.ts \
+            scripts/check-integration-instances-declared.ts \
             scripts/check-hub-settings-ready-before-forks.ts \
             scripts/check-export-coverage.ts \
             scripts/check-no-credential-urls-in-fixtures.ts \

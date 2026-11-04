@@ -39,6 +39,7 @@ export function buildMatterInstances(
 ): RecordIntegrationInstances<MatterBrokerBody> {
   return new RecordIntegrationInstances<MatterBrokerBody>(records, matterBrokersEntryKind, {
     description: {
+      role: 'both',
       instanceMode: 'multiple',
       kind: 'connection',
       canTest: true,

@@ -60,7 +60,33 @@ export const IntegrationInstanceKindSchema = z.object({
 })
 export type IntegrationInstanceKind = z.infer<typeof IntegrationInstanceKindSchema>
 
+/**
+ * What the addon's instances ARE for the Integrations page (planning#416). `devices`: each
+ * instance is an integration that brings devices (the registry owns its on/off switch);
+ * `services`: a connection configured from the addon's own function page, never listed on
+ * Integrations; `both`: a dual entry listed for its devices that also keeps service connections.
+ * It is the same vocabulary as the manifest's `integrationRole`, which stays as an override.
+ */
+export const IntegrationInstanceRoleSchema = z.enum(['devices', 'services', 'both'])
+export type IntegrationInstanceRole = z.infer<typeof IntegrationInstanceRoleSchema>
+
+/**
+ * How devices of an instance are found. `none`: the operator adds them by hand; `lan`: the addon
+ * scans the network before any instance exists (the wizard offers the candidates); `account`: the
+ * devices appear after the instance signs in. `scopedToInstance`: a discovery run belongs to ONE
+ * instance and its candidates are claimed by it.
+ */
+export const IntegrationInstanceDiscoverySchema = z.object({
+  mode: z.enum(['none', 'lan', 'account']),
+  scopedToInstance: z.boolean(),
+})
+export type IntegrationInstanceDiscovery = z.infer<typeof IntegrationInstanceDiscoverySchema>
+
 export const IntegrationInstanceDescriptionSchema = z.object({
+  /** What the instances are for the Integrations page; see {@link IntegrationInstanceRoleSchema}. */
+  role: IntegrationInstanceRoleSchema,
+  /** How the devices of an instance are found; absent means `{ mode: 'none' }`. */
+  discovery: IntegrationInstanceDiscoverySchema.optional(),
   /** `single`: at most one instance can exist (Loki). `multiple`: an account each. */
   instanceMode: IntegrationInstanceModeSchema,
   /** What the instance is, for the UI (`destination`, `relay`, `account`). */
@@ -98,10 +124,11 @@ export const IntegrationInstanceSchema = z.object({
   /** The addon's own rule (an URL is present, a client id is present...). */
   configured: z.boolean(),
   /**
-   * The instance's own on/off switch (D996): always present, derived from the record body
-   * (`enabled !== false`, so a row written before the field existed is on).
+   * The instance's own on/off switch (D996), derived from the record body (`enabled !== false`,
+   * so a row written before the field existed is on). Absent when the `integrations` registry
+   * owns the switch (`describe().role` is `devices`): read it from the registry row.
    */
-  enabled: z.boolean(),
+  enabled: z.boolean().optional(),
   /** The kind of this instance (one of `describe().kinds[].id`), when the provider has kinds. */
   kind: z.string().optional(),
   /** Values for the instance form; a secret is a `SecretFieldView`, never text. */
