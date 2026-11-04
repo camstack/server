@@ -33,8 +33,6 @@ import {
   DEFAULT_MODAL_ENTRY_NAME,
   type ModalEntriesConfig,
   type ModalEntryRecord,
-  ensureModalEntryIds,
-  migrateLegacyModalConfig,
   normalizeModalEntry,
 } from './modal-entries.js'
 import { MODAL_ENTRY_CONFIG_SCHEMA } from './modal-entry-schema.js'
@@ -48,6 +46,7 @@ import { ModalAuthError } from './modal-gateway.js'
 import { ModalSdkGateway } from './modal-sdk-gateway.js'
 import {
   ADDON_MIGRATIONS,
+  FLAT_ACCOUNT_ID,
   type ModalCataloguePorts,
   type ModalRecordState,
 } from './migrations/index.js'
@@ -163,18 +162,6 @@ export class TrainingModalAddon extends BaseAddon<TrainingModalConfig> {
     })
     this.instances = instances
 
-    // An ancient flat config becomes a settings entry first; the catalogue then moves entries.
-    let next = this.config
-    let migratedLegacy = false
-    if (next.entries.length === 0) {
-      const migrated = migrateLegacyModalConfig(next, () => randomUUID())
-      migratedLegacy = migrated !== next
-      next = migrated
-    }
-    next = ensureModalEntryIds(next, () => randomUUID())
-    if (next !== this.config) await this.updateGlobalSettings(next)
-    // Writing `tokenSecret: ''` KEEPS a keychain value (D787): the flat secret is cleared by name.
-    if (migratedLegacy) await this.clearSecrets(['tokenSecret'])
     await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, this.migrationPorts()))
     await this.refreshAll()
 
@@ -397,6 +384,9 @@ export class TrainingModalAddon extends BaseAddon<TrainingModalConfig> {
       readStored: async (): Promise<Readonly<Record<string, unknown>>> => {
         const stored = await this.resolveGlobalStore()
         // A secret that is still a marker was not resolved: abort before anything is written.
+        if (isSecretMarker(stored['tokenSecret'])) {
+          throw new Error('the old flat Modal token secret could not be resolved')
+        }
         const list = stored['entries']
         if (Array.isArray(list)) {
           for (const row of list) {
@@ -432,9 +422,12 @@ export class TrainingModalAddon extends BaseAddon<TrainingModalConfig> {
       },
       clearOldSecrets: async (ids: readonly string[]) => {
         // The clear instruction on a row's secret removes its keychain value and its marker.
+        if (ids.includes(FLAT_ACCOUNT_ID)) await this.clearSecrets(['tokenSecret'])
+        const rows = this.config.entries
+        if (!rows.some((row) => ids.includes(row.id))) return
         await this.updateGlobalSettings({
           ...this.config,
-          entries: this.config.entries.map((row) =>
+          entries: rows.map((row) =>
             ids.includes(row.id) ? { ...row, tokenSecret: SECRET_CLEAR } : row,
           ),
         })

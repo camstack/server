@@ -14,6 +14,7 @@ import {
   ADDON_MIGRATIONS,
   DROP_MOVED_SETTINGS_ID,
   ENTRIES_TO_RECORDS_ID,
+  FLAT_ACCOUNT_ID,
   type ModalCataloguePorts,
 } from '../index.js'
 
@@ -75,6 +76,7 @@ async function world(initial: Record<string, unknown>, readFails = false) {
     },
     clearOldSecrets: async (ids) => {
       writes.push('clear-secrets')
+      if (ids.includes(FLAT_ACCOUNT_ID)) store.set('tokenSecret', '')
       const list = store.get('entries')
       if (!Array.isArray(list)) return
       store.set(
@@ -119,6 +121,40 @@ describe('training-modal/2026-11-04-entries-to-records', () => {
     expect(w.store.get('someUnrelatedKey')).toBe('keep-me')
     expect(JSON.stringify(w.store.get('entries'))).not.toContain('as-home-secret')
     expect(JSON.stringify(result)).not.toContain('as-home-secret')
+  })
+
+  it('the oldest flat settings (no entries) become one account, secret moved, mark kept', async () => {
+    const w = await world({
+      tokenId: 'ak-flat',
+      tokenSecret: 'as-flat-secret',
+      environment: 'prod',
+      gpuType: 'A10G',
+      ...MARK,
+    })
+    expect(await w.run(ENTRIES_TO_RECORDS_ID)).toMatchObject({ result: { outcome: 'done' } })
+    const row = await w.handle.getResolved(FLAT_ACCOUNT_ID)
+    expect(row?.data).toMatchObject({
+      name: 'Default',
+      tokenId: 'ak-flat',
+      tokenSecret: 'as-flat-secret',
+      environment: 'prod',
+      gpuType: 'A10G',
+    })
+    expect(w.store.get('tokenSecret')).toBe('')
+    expect(w.store.get('someUnrelatedKey')).toBe('keep-me')
+    // The drop is allowed now, and a rerun of the move changes nothing.
+    expect(await w.run(DROP_MOVED_SETTINGS_ID)).toMatchObject({ kind: 'plan' })
+    expect(await w.run(ENTRIES_TO_RECORDS_ID)).toMatchObject({
+      result: { outcome: 'already-done' },
+    })
+  })
+
+  it('a row without an id is moved under a stable id from its position', async () => {
+    const w = await world({ entries: [{ ...ROW_A, id: '' }] })
+    await w.run(ENTRIES_TO_RECORDS_ID)
+    expect((await w.handle.getResolved('modal-account-0'))?.data.tokenId).toBe('ak-home')
+    await w.run(ENTRIES_TO_RECORDS_ID)
+    expect((await w.handle.query({ limit: 10 })).records).toHaveLength(1)
   })
 
   it('a failed read of the old settings writes nothing', async () => {

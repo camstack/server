@@ -6,6 +6,7 @@ import {
   planDropMovedSettings,
 } from './entries-to-records.js'
 
+export { FLAT_ACCOUNT_ID } from './entries-to-records.js'
 export type {
   DropMovedSettingsPorts,
   ModalMigrationLog,

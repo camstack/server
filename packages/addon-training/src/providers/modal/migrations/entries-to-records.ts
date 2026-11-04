@@ -49,7 +49,7 @@ export interface ModalMigrationPorts extends ModalMigrationLog {
   putRecord(id: string, body: TrainingAccountBody): Promise<'created' | 'exists'>
   /** The record under `id`, secret resolved; null when absent. Throws when it cannot be read. */
   readRecord(id: string): Promise<ModalRecordState | null>
-  /** Remove the old token secret (and its keychain value) of these accounts. */
+  /** Remove the old token secret (and its keychain value) of these accounts; `FLAT_ACCOUNT_ID` is the flat one. */
   clearOldSecrets(ids: readonly string[]): Promise<void>
 }
 
@@ -75,7 +75,10 @@ function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
-/** One old account row, its id kept; rows without an id cannot be named and are skipped. */
+/** The id the pre-multi-account flat settings (one token, no `entries`) become an account under. */
+export const FLAT_ACCOUNT_ID = 'modal-default'
+
+/** One old account row, its id kept; a row without one gets a stable id from its position. */
 export interface OldAccount {
   readonly id: string
   readonly body: TrainingAccountBody
@@ -83,33 +86,41 @@ export interface OldAccount {
 
 export function oldAccountsOf(stored: Readonly<Record<string, unknown>>): readonly OldAccount[] {
   const list = stored['entries']
-  if (!Array.isArray(list)) return []
-  const out: OldAccount[] = []
-  for (const row of list) {
-    if (!isRecord(row)) continue
-    const id = text(row, 'id', '').trim()
-    if (id === '') continue
-    const secret = text(row, 'tokenSecret', '').trim()
-    out.push({
-      id,
-      body: {
-        name: text(row, 'name', 'Default') || 'Default',
-        tokenId: text(row, 'tokenId', ''),
-        ...(secret.length > 0 ? { tokenSecret: secret } : {}),
-        environment: text(row, 'environment', ''),
-        gpuType: text(row, 'gpuType', DEFAULTS.gpuType),
-        region: text(row, 'region', DEFAULTS.region),
-        costCapUsd: num(row, 'costCapUsd', DEFAULTS.costCapUsd),
-        maxRuntimeHours: num(row, 'maxRuntimeHours', DEFAULTS.maxRuntimeHours),
-        failedDatasetGraceHours: num(
-          row,
-          'failedDatasetGraceHours',
-          DEFAULTS.failedDatasetGraceHours,
-        ),
-      },
-    })
+  const rows = Array.isArray(list) ? list.filter(isRecord) : []
+  if (rows.length === 0) {
+    // The oldest shape: one token in the flat settings, no list at all.
+    const flat = accountOf(FLAT_ACCOUNT_ID, stored, 'Default')
+    return flat.body.tokenId.trim() !== '' || flat.body.tokenSecret !== undefined ? [flat] : []
   }
-  return out
+  return rows.map((row, index) =>
+    accountOf(text(row, 'id', '').trim() || `modal-account-${index}`, row, 'Default'),
+  )
+}
+
+function accountOf(
+  id: string,
+  row: Readonly<Record<string, unknown>>,
+  fallbackName: string,
+): OldAccount {
+  const secret = text(row, 'tokenSecret', '').trim()
+  return {
+    id,
+    body: {
+      name: text(row, 'name', fallbackName) || fallbackName,
+      tokenId: text(row, 'tokenId', ''),
+      ...(secret.length > 0 ? { tokenSecret: secret } : {}),
+      environment: text(row, 'environment', ''),
+      gpuType: text(row, 'gpuType', DEFAULTS.gpuType),
+      region: text(row, 'region', DEFAULTS.region),
+      costCapUsd: num(row, 'costCapUsd', DEFAULTS.costCapUsd),
+      maxRuntimeHours: num(row, 'maxRuntimeHours', DEFAULTS.maxRuntimeHours),
+      failedDatasetGraceHours: num(
+        row,
+        'failedDatasetGraceHours',
+        DEFAULTS.failedDatasetGraceHours,
+      ),
+    },
+  }
 }
 
 export async function moveEntriesToRecords(
@@ -184,10 +195,12 @@ async function confirmRecordsHoldLegacy(
     ports.warn(`Modal migration: the legacy keys are kept: ${reason}`)
     throw new Error(`the legacy Modal keys are not deleted: ${reason}`)
   }
-  if (text(stored, 'tokenSecret', '').trim().length > 0) {
+  const accounts = oldAccountsOf(stored)
+  const flatConsumed = accounts.some((a) => a.id === FLAT_ACCOUNT_ID)
+  if (text(stored, 'tokenSecret', '').trim().length > 0 && !flatConsumed) {
     return refuse('a flat legacy token secret is still stored')
   }
-  for (const account of oldAccountsOf(stored)) {
+  for (const account of accounts) {
     const record = await ports.readRecord(account.id)
     if (record === null) return refuse(`the account ${account.id} has no record`)
     if (account.body.tokenSecret !== undefined && !record.hasSecret) {

@@ -1,9 +1,6 @@
 /**
  * Modal provider entries — one credentials + defaults row per operator
  * account. Pure helpers so the store is unit-tested without BaseAddon.
- *
- * A pre-multi-entry config (flat tokenId/tokenSecret on the addon) migrates
- * to a single entry named {@link DEFAULT_MODAL_ENTRY_NAME}.
  */
 import type { SecretClearInstruction } from '@camstack/types'
 
@@ -46,10 +43,6 @@ const DEFAULT_COST = 5
 const DEFAULT_HOURS = 4
 const DEFAULT_GRACE = 24
 
-function legacyConfigured(config: ModalEntriesConfig): boolean {
-  return (config.tokenId ?? '').trim() !== '' || (config.tokenSecret ?? '').trim() !== ''
-}
-
 /**
  * Keychain / secretStatePaths may omit an empty `tokenSecret` from a stored
  * row (writing `''` is KEEP, not "store empty"). Readers must never see
@@ -74,54 +67,4 @@ export function normalizeModalEntry(
     maxRuntimeHours: entry.maxRuntimeHours ?? DEFAULT_HOURS,
     failedDatasetGraceHours: entry.failedDatasetGraceHours ?? DEFAULT_GRACE,
   }
-}
-
-/** Persist a Default entry from legacy flat fields; clear the flat secrets. */
-export function migrateLegacyModalConfig(
-  config: ModalEntriesConfig,
-  newId: () => string,
-): ModalEntriesConfig {
-  if (config.entries.length > 0) return config
-  if (!legacyConfigured(config)) return config
-  const entry: ModalEntryRecord = {
-    id: newId(),
-    name: DEFAULT_MODAL_ENTRY_NAME,
-    tokenId: config.tokenId ?? '',
-    tokenSecret: config.tokenSecret ?? '',
-    environment: config.environment ?? '',
-    gpuType: config.gpuType ?? DEFAULT_GPU,
-    region: config.region ?? '',
-    costCapUsd: config.costCapUsd ?? DEFAULT_COST,
-    maxRuntimeHours: config.maxRuntimeHours ?? DEFAULT_HOURS,
-    failedDatasetGraceHours: config.failedDatasetGraceHours ?? DEFAULT_GRACE,
-  }
-  return {
-    entries: [entry],
-    tokenId: '',
-    tokenSecret: '',
-    environment: '',
-    gpuType: entry.gpuType,
-    region: entry.region,
-    costCapUsd: entry.costCapUsd,
-    maxRuntimeHours: entry.maxRuntimeHours,
-    failedDatasetGraceHours: entry.failedDatasetGraceHours,
-  }
-}
-
-/**
- * Mint a stable id for every persisted entry that lacks one. Operator-typed
- * empty ids (legacy settings UI) must never stay empty — createEntry always
- * generates; this heals rows that bypassed it.
- */
-export function ensureModalEntryIds(
-  config: ModalEntriesConfig,
-  newId: () => string,
-): ModalEntriesConfig {
-  let changed = false
-  const entries = config.entries.map((entry) => {
-    if (entry.id.trim() !== '') return entry
-    changed = true
-    return { ...entry, id: newId() }
-  })
-  return changed ? { ...config, entries } : config
 }
