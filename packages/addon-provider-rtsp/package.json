@@ -52,6 +52,9 @@
             "name": "device-provider"
           },
           {
+            "name": "integration-instances"
+          },
+          {
             "name": "connection-test"
           }
         ]

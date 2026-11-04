@@ -187,6 +187,8 @@ function makeAddonContext(
       registeredProviders[name] = provider
     },
     settings: undefined,
+    // The records door of a hub-only addon: the integration kind is declared, nothing is stored.
+    records: { declare: async () => undefined, kind: () => ({}), owner: () => ({}) },
   } as unknown as AddonContext
 }
 
@@ -368,6 +370,12 @@ function makeFakePersistenceApi(
     // resolution fixtures per-URL via `setProbeMetadata` — absent
     // URLs resolve to "reachable but no metadata" so the addon still
     // persists the user's input.
+    // The migration engine of the hub: it has nothing to run for this catalogue.
+    migrations: {
+      declareOwner: { mutate: async () => ({ steps: [] }) },
+      startMigration: { mutate: async () => ({ proceed: false }) },
+      finishMigration: { mutate: async () => ({ status: 'applied' }) },
+    },
     streamProbe: {
       probe: {
         mutate: async (input: { url: string; force?: boolean }) => {

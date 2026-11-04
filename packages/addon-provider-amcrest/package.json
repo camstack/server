@@ -54,6 +54,9 @@
             "name": "device-provider"
           },
           {
+            "name": "integration-instances"
+          },
+          {
             "name": "stream-params"
           },
           {

@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**234 units · 7967 source files · 221 units claimed by at least one document (7923 files).**
+**234 units · 7969 source files · 221 units claimed by at least one document (7925 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -58,8 +58,8 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-provider-homeassistant` | 38 | `device-providers` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0951-power-and-energy-are-a-feature-of-the-electrical-device-not-a-sensor-beside-it.md`, +5 more | 2026-10-26 |
 | `packages/develop` | 36 | — | `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `decisions/adr-0835-hub-credentials-and-tls-trust-live-in-develop-one-chain-pinned-ca-never-a-password.md`, `decisions/adr-0884-the-cli-session-is-the-logged-in-user.md`, +2 more | — |
 | `server/backend/src/auth` | 36 | `auth` | `architecture/authentication.md`, `decisions/adr-0858-the-native-app-signs-in-through-dedicated-hub-app-flows-never-the-admin-ui.md`, `decisions/adr-0782-an-oidc-identity-signs-in-only-the-user-who-linked-it-from-their-own-session.md`, +13 more, 2 ADRs | 2026-10-21 |
+| `packages/addon-provider-amcrest` | 35 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0615-an-amcrest-clip-catalog-gates-on-findfile-and-an-ambiguous-refusal-is-settled-by-a-control-search.md`, `design/2026-09-24-onboard-source-for-recordings-motion-events.md` _(covers)_, +8 more | 2026-10-26 |
 | `packages/ui-library/src/hooks` | 35 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +5 more | 2026-11-02 |
-| `packages/addon-provider-amcrest` | 34 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0615-an-amcrest-clip-catalog-gates-on-findfile-and-an-ambiguous-refusal-is-settled-by-a-control-search.md`, `design/2026-09-24-onboard-source-for-recordings-motion-events.md` _(covers)_, +8 more | 2026-10-26 |
 | `packages/addon-provider-homeassistant/src/ha-export` | 33 | `device-providers`, `ecosystem-exports` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, +6 more, 9 ADRs | 2026-10-26 |
 | `packages/addon-osd-manager` | 31 | `device-surfaces` | `architecture/osd-manager.md`, `design/2026-08-30-fleet-multiplier-round-trip-audit.md` _(covers)_, 1 ADR | 2026-10-04 |
 | `packages/types/src/pipeline` | 31 | `pipeline-orchestration` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/inference-devices.md`, `decisions/adr-0755-shares-and-auto-tune-are-sized-by-capacity-never-by-load.md`, +27 more, 2 ADRs | 2026-10-24 |
@@ -153,6 +153,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-pipeline-orchestrator/src/node-benchmark` | 6 | — | `architecture/benchmark.md`, `decisions/adr-0791-the-node-benchmark-is-one-node-at-a-time-in-an-orchestrator-benchmark-mode-and-measured-on-the-node-beats-the-table.md`, `decisions/adr-0913-balancing-is-automatic-a-new-device-is-measured-and-the-shares-follow-the-live-hardware.md`, 1 ADR | 2026-10-23 |
 | `packages/addon-post-analysis` | 6 | `post-analysis` | — | — |
 | `packages/addon-provider-reolink/src/accessories` | 6 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_ | 2026-10-26 |
+| `packages/addon-provider-rtsp` | 6 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0689-a-stream-leaves-the-broker-when-two-catalog-pulls-agree-and-a-provider-restart-retracts-nothing.md`, 1 ADR | 2026-10-26 |
 | `packages/system/src/http` | 6 | `api-surface` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0707-a-browser-origin-reads-the-hub-only-from-an-allowlist-and-never-with-the-session-cookie.md`, +1 more | 2026-08-29 |
 | `packages/types/src/keychain` | 6 | `secrets` | `architecture/secrets-keychain.md` _(covers)_, `decisions/adr-0787-a-secret-field-stores-a-keychain-marker-and-the-value-lives-in-the-keychain.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, +1 more | 2026-10-18 |
 | `packages/types/src/vendor-login-proxy` | 6 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0955-vendor-sign-in-through-a-hub-login-proxy-the-vendor-page-opens-under-the-hub-and-the-addon-says-when-it-is-done.md` | — |
@@ -162,7 +163,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-export-hap/src/migrations` | 5 | `ecosystem-exports` | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md` _(covers)_, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +1 more, 1 ADR | 2026-09-29 |
 | `packages/addon-pipeline/src/motion-wasm` | 5 | `detection-execution` | `decisions/adr-0394-the-motion-area-bar-judges-a-merged-subject-relative-to-the-view.md` | — |
 | `packages/addon-provider-bosch/src/shared` | 5 | `device-providers` | `architecture/device-model.md` _(covers)_, `addons/addon-provider-bosch-homecom.md` _(covers)_, `decisions/adr-0932-a-bosch-sign-in-is-one-field-and-homecom-is-not-a-home-connect-login.md`, +1 more | 2026-10-26 |
-| `packages/addon-provider-rtsp` | 5 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0689-a-stream-leaves-the-broker-when-two-catalog-pulls-agree-and-a-provider-restart-retracts-nothing.md`, 1 ADR | 2026-10-26 |
 | `packages/addon-static-turn` | 5 | `stream-broker` | — | — |
 | `packages/cli` | 5 | `tooling` | `decisions/adr-0884-the-cli-session-is-the-logged-in-user.md` | — |
 | `packages/types/src/i18n` | 5 | `notification-center` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0863-settings-texts-and-user-facing-errors-are-translated-by-the-hub-from-catalogs-the-english-text-always-travels-beside-the-key.md`, `architecture/notifications.md`, +1 more | 2026-10-07 |

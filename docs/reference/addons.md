@@ -69,7 +69,7 @@ this column exists to stop.
 | `pipeline-orchestrator` | `@camstack/addon-pipeline-orchestrator` | pipeline | own runner | `hub-only` | — | — | `addon-widgets-source` `camera-pipeline-config` `display-palette` `node-removal-hook` `pipeline-orchestrator` `viewer-ui` `zone-rules` `zones` |
 | `pipeline-runner` | `@camstack/addon-pipeline` | pipeline | own runner | `any-node` | `detection` | — | `failure-contribution` `load-contribution` `pipeline-runner` |
 | `platform-probe` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `platform-probe` |
-| `provider-amcrest` | `@camstack/addon-provider-amcrest` | providers | own runner | `hub-only` | — | unique | `day-night` `device-provider` `image-settings` `motion-zones` `privacy-mask` `recording-onboard` `stream-params` `videoclips` |
+| `provider-amcrest` | `@camstack/addon-provider-amcrest` | providers | own runner | `hub-only` | — | unique | `day-night` `device-provider` `image-settings` `integration-instances` `motion-zones` `privacy-mask` `recording-onboard` `stream-params` `videoclips` |
 | `provider-dreame` | `@camstack/addon-provider-dreame` | providers | own runner | `hub-only` | — | multiple | `connection-test` `consumables` `device-adoption` `device-provider` `navigation` `recording-signal` `running-state` |
 | `provider-dreo` | `@camstack/addon-provider-dreo` | providers | own runner | `hub-only` | — | multiple | `connection-test` `device-adoption` `device-provider` |
 | `provider-ecowitt` | `@camstack/addon-provider-ecowitt` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` |
@@ -84,7 +84,7 @@ this column exists to stop.
 | `provider-petkit` | `@camstack/addon-provider-petkit` | providers | own runner | `hub-only` | — | multiple | `connection-test` `consumables` `device-adoption` `device-provider` `pet-feeder` |
 | `provider-rademacher` | `@camstack/addon-provider-rademacher` | providers | own runner | `hub-only` | — | multiple | `connection-test` `device-adoption` `device-provider` |
 | `provider-reolink` | `@camstack/addon-provider-reolink` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `device-removal-hook` `failure-contribution` `log-channels` `motion-zones` `privacy-mask` `recording-onboard` `stream-params` `stream-signals` `videoclips` |
-| `provider-rtsp` | `@camstack/addon-provider-rtsp` | providers | own runner | `hub-only` | — | unique | `connection-test` `device-provider` |
+| `provider-rtsp` | `@camstack/addon-provider-rtsp` | providers | own runner | `hub-only` | — | unique | `connection-test` `device-provider` `integration-instances` |
 | `provider-tuya` | `@camstack/addon-provider-tuya` | providers | own runner | `hub-only` | — | multiple | `connection-test` `device-adoption` `device-provider` |
 | `provider-unifi` | `@camstack/addon-provider-unifi` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` |
 | `provider-unraid` | `@camstack/addon-provider-unraid` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` |

@@ -1,3 +1,16 @@
+import {
+  type AddonInitResult,
+  defaultIntegrationApiOver,
+  defaultIntegrationMigrations,
+  defaultIntegrationPortsOver,
+  defineAddonMigrations,
+  integrationInstancesCapability,
+} from '@camstack/types'
+import {
+  buildAmcrestInstances,
+  amcrestConnectionsEntryKind,
+  amcrestRecordKinds,
+} from './amcrest-instances.js'
 import type {
   ConfigUISchema,
   CreateDeviceSpec,
@@ -8,7 +21,6 @@ import type {
   DiscoveryMode,
   FieldProbeResult,
   IDevice,
-  ProviderRegistration,
 } from '@camstack/types'
 import {
   BaseDeviceProvider,
@@ -225,8 +237,26 @@ export class AmcrestProviderAddon extends BaseDeviceProvider {
     )
   }
 
-  protected override async onInitialize(): Promise<ProviderRegistration[]> {
+  protected override async onInitialize(): Promise<AddonInitResult> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
+    const records = this.ctx.records
+    if (records === undefined)
+      throw new Error('provider-amcrest: ctx.records is required (hub-only addon)')
+    await records.declare(amcrestRecordKinds)
+    const defaultIntegration = defineAddonMigrations(
+      defaultIntegrationMigrations({
+        addonId: this.addonId,
+        date: '2026-11-04',
+      }),
+      defaultIntegrationPortsOver({
+        api: defaultIntegrationApiOver(this.ctx.api),
+        records,
+        kind: amcrestConnectionsEntryKind,
+        info: (message) => this.ctx.logger.info(message),
+        warn: (message) => this.ctx.logger.warn(message),
+      }),
+    )
+    await this.runMigrations(defaultIntegration)
 
     // NOTE: `device.online` is NO LONGER mirrored from the stream broker's
     // `camera-streams` health. `online` must reflect CONTROL-PLANE
@@ -295,7 +325,15 @@ export class AmcrestProviderAddon extends BaseDeviceProvider {
     // pull and the route never registers.
     await this.serveClipPlane(this.clipService)
 
-    return regs
+    return {
+      providers: [
+        ...regs,
+        {
+          capability: integrationInstancesCapability,
+          provider: buildAmcrestInstances(records).toProvider(),
+        },
+      ],
+    }
   }
 
   /** The clip service: catalog, the player's file route, the export's bytes,

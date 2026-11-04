@@ -1,4 +1,13 @@
 import { userError } from '@camstack/types'
+import {
+  type AddonInitResult,
+  defaultIntegrationApiOver,
+  defaultIntegrationMigrations,
+  defaultIntegrationPortsOver,
+  defineAddonMigrations,
+  integrationInstancesCapability,
+} from '@camstack/types'
+import { buildRtspInstances, rtspConnectionsEntryKind, rtspRecordKinds } from './rtsp-instances.js'
 import type {
   ConfigUISchema,
   CreateDeviceSpec,
@@ -6,7 +15,6 @@ import type {
   FieldProbeResult,
   IConnectionTestProvider,
   IDevice,
-  ProviderRegistration,
   StreamQuality,
 } from '@camstack/types'
 import {
@@ -144,8 +152,26 @@ export class RtspProviderAddon extends BaseDeviceProvider {
     super({})
   }
 
-  protected override async onInitialize(): Promise<ProviderRegistration[]> {
+  protected override async onInitialize(): Promise<AddonInitResult> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
+    const records = this.ctx.records
+    if (records === undefined)
+      throw new Error('provider-rtsp: ctx.records is required (hub-only addon)')
+    await records.declare(rtspRecordKinds)
+    const defaultIntegration = defineAddonMigrations(
+      defaultIntegrationMigrations({
+        addonId: this.addonId,
+        date: '2026-11-04',
+      }),
+      defaultIntegrationPortsOver({
+        api: defaultIntegrationApiOver(this.ctx.api),
+        records,
+        kind: rtspConnectionsEntryKind,
+        info: (message) => this.ctx.logger.info(message),
+        warn: (message) => this.ctx.logger.warn(message),
+      }),
+    )
+    await this.runMigrations(defaultIntegration)
     // NOTE: `device.online` is NO LONGER mirrored from stream-broker health.
     // `online` must reflect CONTROL-PLANE reachability — an on-demand RTSP
     // camera with no consumer attached is reachable yet has no active stream,
@@ -154,10 +180,16 @@ export class RtspProviderAddon extends BaseDeviceProvider {
     // probe every 30s, see `startReachabilityPolling`) that drives `online`.
     // The stream-broker health signal remains available as the separate
     // `camera-streams` runtime-state slice ("is the video flowing").
-    return [
-      ...regs,
-      { capability: connectionTestCapability, provider: this.buildConnectionTestProvider() },
-    ]
+    return {
+      providers: [
+        ...regs,
+        { capability: connectionTestCapability, provider: this.buildConnectionTestProvider() },
+        {
+          capability: integrationInstancesCapability,
+          provider: buildRtspInstances(records).toProvider(),
+        },
+      ],
+    }
   }
 
   /**

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The amcrest integration is now a typed integration instance and its devices are claimed to it
+
 ## [0.2.164] - 2026-11-01
 
 ### Changed
