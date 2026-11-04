@@ -5,9 +5,8 @@
  * Operator flow:
  *   1. Install + enable the addon (hub-only, group `export-hap`).
  *   2. On first boot the addon generates a random pincode + bridge
- *      MAC username and persists them on `this.config.identity` via
- *      `updateGlobalSettings` (no JSON sidecar files — the kernel
- *      addon-store IS the cache).
+ *      MAC username and persists them in the default instance record
+ *      (`hap-bridges`, no JSON sidecar files).
  *   3. The setup URI (`X-HM://…`) is logged AND surfaced via the
  *      `getStatus` cap method so the wizard UI can render the QR.
  *   4. Operator opens iOS Home → + → scan QR → enter pincode.
@@ -56,8 +55,11 @@ import {
   EventCategory,
   ExportSetupSchema,
   type IDeviceExportProvider,
+  integrationInstancesCapability,
   memoizePinnedFfmpeg,
   type ProviderRegistration,
+  RecordIntegrationInstances,
+  RevConflictError,
   videoclipsCapability,
 } from '@camstack/types'
 import { canonicalDeviceFingerprint, resolveExportFingerprint } from '@camstack/types/node'
@@ -74,7 +76,20 @@ import { type ActionExportEntry, ActionExports } from './action-exports.js'
 import { BridgeHost } from './bridge-host.js'
 import { shouldBridge } from './bridge-policy.js'
 import { carryForward } from './exposed-entry.js'
-import { ADDON_MIGRATIONS, EXPORT_HAP_ID } from './migrations/index.js'
+import { resolveBridgeIdentity } from './hap-identity.js'
+import {
+  HAP_DEFAULT_INSTANCE_ID,
+  HAP_DEFAULT_PERSIST_DIR,
+  type HapBridgeBody,
+  type HapBridgeIdentity,
+  hapBridgesKind,
+} from './hap-instance-kinds.js'
+import {
+  ADDON_MIGRATIONS,
+  EXPORT_HAP_ID,
+  type IdentityToInstancePorts,
+  legacyIdentityOf,
+} from './migrations/index.js'
 import { readRawKeys } from './migrations/hub-node-fields.js'
 import { firstExposedAccessorySetupUri } from './hap-setup-uri.js'
 import type { HksvBuildOutcome } from './hksv/build-outcome.js'
@@ -506,6 +521,8 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
   /** The exported actions — switches beside the devices (D968). */
   private actionExports: ActionExports | null = null
   private lastError: string | undefined
+  /** The HomeKit instances (D985): one record per bridge identity. */
+  private instances: RecordIntegrationInstances<HapBridgeBody> | null = null
   /** Shared HAP setup code applied to every published accessory. */
   private pincode = ''
   /** Optional mDNS/bind interface (config.interfaceName), or undefined. */
@@ -564,6 +581,25 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
   }
 
   protected async onInitialize(): Promise<ProviderRegistration[]> {
+    const records = this.ctx.records
+    if (records === undefined) {
+      throw new Error('export-hap needs ctx.records — check execution.placement (hub-only)')
+    }
+    await records.declare({ 'hap-bridges': hapBridgesKind })
+    this.instances = new RecordIntegrationInstances(records, hapBridgesKind, {
+      // One bridge identity per addon today: the default instance adopted the identity the
+      // addon always had. Additional bridges are not served yet, so none can be created.
+      description: { instanceMode: 'single', kind: 'bridge', canTest: false },
+      formSchema: () => this.schema({ sections: [] }),
+      initialBody: (name) => ({
+        name,
+        username: generateUsername(),
+        uuid: buildBridgeUuid(name),
+        pincode: generatePincode(),
+        persistDir: HAP_DEFAULT_PERSIST_DIR,
+      }),
+      configured: (body) => body.username !== '' && body.pincode !== '',
+    })
     await this.migrateSettings()
     const identity = await this.ensureIdentity()
     this.pincode = identity.pincode
@@ -579,7 +615,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     try {
       // hap-nodejs library-internal pairing-state storage (one shared dir;
       // each accessory's AccessoryInfo is keyed by its derived username).
-      await initHapStorage(path.join(this.ctx.dataDir, 'hap-store'))
+      await initHapStorage(path.join(this.ctx.dataDir, identity.persistDir))
     } catch (err) {
       this.lastError = errMsg(err)
       this.ctx.logger.error('export-hap: HAP storage init failed', {
@@ -845,7 +881,9 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
           readHomekitRecordingActive(this.exposed.get(String(deviceId))?.accessories ?? []),
         ),
       readCatalog: async (deviceId) =>
-        (await this.hksvClipStore?.listCatalog(deviceId)) ?? { kind: 'no-root' },
+        (await this.hksvClipStore?.listCatalog(deviceId)) ?? {
+          kind: 'no-root',
+        },
       // The ONE module that interprets a storage location's mode (D385) is
       // also the one that says why there is no root.
       locationRefusal: () => this.hksvClipLocation?.lastRefusal ?? null,
@@ -861,70 +899,101 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     return [
       { capability: deviceExportCapability, provider },
       { capability: videoclipsCapability, provider: clipsProvider },
+      {
+        capability: integrationInstancesCapability,
+        provider: this.requireInstances().toProvider(),
+      },
     ]
   }
 
   protected async onConfigChanged(): Promise<void> {
-    // Bridge identity is persisted in `this.config.identity` — changing
-    // bridge name / port / pin requires a restart. Those fields are
-    // flagged `requiresRestart: true` so BaseAddon's auto-restart kicks
-    // in when they change. Also: if the operator typed a fixedPin we
-    // honour it by patching the persisted identity below (still on the
-    // next restart, since the bridge is already running with the old
-    // pin). Nothing to do here today beyond that.
-    if (
-      this.config.fixedPin &&
-      isValidPincode(this.config.fixedPin) &&
-      this.config.identity.pincode !== this.config.fixedPin &&
-      this.config.identity.username !== ''
-    ) {
-      const updated: HapIdentity = {
-        username: this.config.identity.username,
-        uuid: this.config.identity.uuid,
-        pincode: this.config.fixedPin,
-      }
-      await this.updateGlobalSettings({ identity: updated })
-    }
+    // The bridge identity lives in the default instance record — changing bridge name / port / pin
+    // requires a restart. Those fields are flagged `requiresRestart: true` so BaseAddon's
+    // auto-restart kicks in when they change. If the operator typed a fixedPin we honour it by
+    // patching the persisted identity (effective on the next restart: the bridge is already
+    // running with the old pin).
+    const fixedPin = this.config.fixedPin
+    if (!fixedPin || !isValidPincode(fixedPin)) return
+    const handle = this.requireRecords().kind(hapBridgesKind)
+    const row = await handle.getResolved(HAP_DEFAULT_INSTANCE_ID)
+    if (row === null || row.data.pincode === fixedPin) return
+    await handle.patch(HAP_DEFAULT_INSTANCE_ID, { pincode: fixedPin })
   }
 
   // ── Identity bootstrap ─────────────────────────────────────────
 
-  /**
-   * Resolve the persistent bridge identity. Empty `username` is the
-   * "first boot" sentinel — generate fresh + persist. On subsequent
-   * boots the persisted record is reused. An operator-supplied
-   * `fixedPin` overrides the persisted pincode (useful for CI replay)
-   * but never the username/uuid (those drive the iOS pairing record).
-   */
-  private async ensureIdentity(): Promise<HapIdentity> {
-    const current = this.config.identity
+  private requireInstances(): RecordIntegrationInstances<HapBridgeBody> {
+    if (this.instances === null) throw new Error('export-hap: instances are not initialised')
+    return this.instances
+  }
+
+  private requireRecords(): NonNullable<typeof this.ctx.records> {
+    const records = this.ctx.records
+    if (records === undefined) throw new Error('export-hap: records are not available')
+    return records
+  }
+
+  /** The ports the identity migration reads and writes through. */
+  private identityMigrationPorts(): IdentityToInstancePorts {
+    const handle = this.requireRecords().kind(hapBridgesKind)
+    return {
+      readLegacyIdentity: async () => {
+        const stored = (await this.resolveGlobalStore())['identity']
+        return legacyIdentityOf(stored)
+      },
+      readBridgeName: async () => {
+        const name = (await this.resolveGlobalStore())['bridgeName']
+        return typeof name === 'string' ? name : ''
+      },
+      putDefaultRecord: async (body) => {
+        if ((await handle.get(HAP_DEFAULT_INSTANCE_ID)) !== null) return 'exists'
+        try {
+          await handle.put({ id: HAP_DEFAULT_INSTANCE_ID, data: body }, { ifRev: 0 })
+        } catch (err: unknown) {
+          if (err instanceof RevConflictError) return 'exists'
+          throw err
+        }
+        return 'created'
+      },
+      readDefaultRecord: async () =>
+        (await handle.getResolved(HAP_DEFAULT_INSTANCE_ID))?.data ?? null,
+    }
+  }
+
+  /** The identity of the default instance; see `resolveBridgeIdentity`. */
+  private async ensureIdentity(): Promise<HapBridgeIdentity> {
+    const handle = this.requireRecords().kind(hapBridgesKind)
     const fixedPin =
       this.config.fixedPin && isValidPincode(this.config.fixedPin) ? this.config.fixedPin : null
-
-    if (current.username !== '' && current.uuid !== '' && current.pincode !== '') {
-      // Already initialised.
-      if (fixedPin && fixedPin !== current.pincode) {
-        const updated: HapIdentity = {
-          username: current.username,
-          uuid: current.uuid,
-          pincode: fixedPin,
-        }
-        await this.updateGlobalSettings({ identity: updated })
-        return updated
-      }
-      return current
-    }
-
-    const fresh: HapIdentity = {
-      username: generateUsername(),
-      pincode: fixedPin ?? generatePincode(),
-      uuid: buildBridgeUuid(this.config.bridgeName),
-    }
-    await this.updateGlobalSettings({ identity: fresh })
-    this.ctx.logger.info('export-hap: generated bridge identity on first boot', {
-      meta: { username: fresh.username },
+    const { identity, minted } = await resolveBridgeIdentity(fixedPin, {
+      readRecord: async () => {
+        const resolved = await this.requireInstances().readResolved(HAP_DEFAULT_INSTANCE_ID)
+        if (resolved === null) return { kind: 'absent' }
+        return resolved.secrets === 'resolved'
+          ? { kind: 'resolved', body: resolved.body }
+          : { kind: 'unavailable' }
+      },
+      readLegacy: async () => legacyIdentityOf((await this.resolveGlobalStore())['identity']),
+      patchPincode: async (pincode) => {
+        await handle.patch(HAP_DEFAULT_INSTANCE_ID, { pincode })
+      },
+      putFresh: async (body) => {
+        await handle.put({ id: HAP_DEFAULT_INSTANCE_ID, data: body }, { ifRev: 0 })
+      },
+      mint: () => ({
+        name: this.config.bridgeName,
+        username: generateUsername(),
+        uuid: buildBridgeUuid(this.config.bridgeName),
+        pincode: generatePincode(),
+        persistDir: HAP_DEFAULT_PERSIST_DIR,
+      }),
     })
-    return fresh
+    if (minted) {
+      this.ctx.logger.info('export-hap: generated bridge identity on first boot', {
+        meta: { username: identity.username },
+      })
+    }
+    return identity
   }
 
   // ── Export setup block ──────────────────────────────────────────
@@ -937,7 +1006,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
    * until the bridge has booted and produced both values.
    */
   private buildSetupBlock(): ExportSetup | null {
-    const setupCode = this.config.identity.pincode
+    const setupCode = this.pincode
     if (!setupCode) return null
     const qr = firstExposedAccessorySetupUri(this.exposed, this.ctx.logger)
     return {
@@ -1490,7 +1559,10 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       const capNames = new Set(proxy.binding?.entries.map((entry) => entry.capName) ?? [])
       if (rowsForCaps(capNames).length > 0) return 'generic'
       this.ctx.logger.withTags({ deviceId }).debug('export-hap: no Export tab — no mapped caps', {
-        meta: { type: summary?.type, caps: [...capNames].toSorted().join(',') },
+        meta: {
+          type: summary?.type,
+          caps: [...capNames].toSorted().join(','),
+        },
       })
       return null
     } catch (err) {
@@ -1524,7 +1596,11 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     return cap === 'device-export'
       ? this.schema({
           sections: [
-            { id: 'export-hap-node', title: 'HomeKit Export', fields: [this.interfaceNameField()] },
+            {
+              id: 'export-hap-node',
+              title: 'HomeKit Export',
+              fields: [this.interfaceNameField()],
+            },
           ],
         })
       : null
@@ -1541,6 +1617,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
         readStored: (keys) =>
           readRawKeys((key) => this.readStoredGlobalKey(key), EXPORT_HAP_ID, keys),
         storeFixedPin: (pin) => this.updateGlobalSettingsAsOperator({ fixedPin: pin }),
+        ...this.identityMigrationPorts(),
       }),
     )
     if (report.applied.length > 0) await this.resolveConfig()
@@ -1643,10 +1720,10 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       : bridged
         ? bridgePaired
           ? `On the “${this.config.bridgeName}” bridge, as “${name}”`
-          : `On the “${this.config.bridgeName}” bridge, as “${name}” — the BRIDGE is not paired yet. In iOS Home: + → Add Accessory → “${this.config.bridgeName}”, then enter setup code ${this.config.identity.pincode}. Every bridged device arrives with it.`
+          : `On the “${this.config.bridgeName}” bridge, as “${name}” — the BRIDGE is not paired yet. In iOS Home: + → Add Accessory → “${this.config.bridgeName}”, then enter setup code ${this.pincode}. Every bridged device arrives with it.`
         : paired
           ? `Paired — exposed as “${name}”`
-          : `Exposed as “${name}” — not paired yet. In iOS Home: + → Add Accessory → “${name}”, then enter setup code ${this.config.identity.pincode}.`
+          : `Exposed as “${name}” — not paired yet. In iOS Home: + → Add Accessory → “${name}”, then enter setup code ${this.pincode}.`
     // Per-camera pairing QR: read this Accessory's own `X-HM://…` URI.
     // The URI bakes in this camera's category + setupID bits, so scanning
     // it opens iOS Home's pairing prompt directly on THIS camera. We
@@ -1833,8 +1910,8 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
           key: '__hap-pair-qr',
           label: paired ? 'Pairing QR (already paired)' : 'Pairing QR',
           caption: paired
-            ? `Already paired with at least one device. Scan from another iPhone / iPad to add it there too. Setup code: ${this.config.identity.pincode}.`
-            : `Scan with the iOS Camera app to pair this accessory in HomeKit. Setup code: ${this.config.identity.pincode}.`,
+            ? `Already paired with at least one device. Scan from another iPhone / iPad to add it there too. Setup code: ${this.pincode}.`
+            : `Scan with the iOS Camera app to pair this accessory in HomeKit. Setup code: ${this.pincode}.`,
           value: qrValue,
           size: 192,
           alt: `HomeKit pairing QR for ${name}`,
@@ -1932,7 +2009,10 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     const clipRetentionDays =
       clipRetentionKey in patch
         ? resolveClipRetentionDays(
-            { streamPreference, clipRetentionDays: Number(patch[clipRetentionKey]) },
+            {
+              streamPreference,
+              clipRetentionDays: Number(patch[clipRetentionKey]),
+            },
             this.config.clipRetentionDays,
           )
         : resolveClipRetentionDays(current?.settings, this.config.clipRetentionDays)
@@ -1972,7 +2052,10 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     // where the field is ignored — never reads as a change and never triggers a
     // rebuild that would drop its pairing for nothing.
     const mapperKind = current?.mapperKind ?? 'generic'
-    const wasBridged = shouldBridge({ mapperKind, useBridge: current?.settings?.useBridge })
+    const wasBridged = shouldBridge({
+      mapperKind,
+      useBridge: current?.settings?.useBridge,
+    })
     const willBridge = shouldBridge({ mapperKind, useBridge })
     await this.updateEntrySettings(deviceIdStr, nextSettings)
     // HKSV is rebuilt for the same reason as the stream preference, and one
@@ -2001,7 +2084,9 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
         // identities to iOS, and leaving the stale pairing blob behind is what
         // makes an accessory advertise `sf=0` and never reappear in "Add
         // Accessory". So that one case wipes it, deliberately.
-        await this.unexposeDevice(deviceIdStr, { clearPairing: wasBridged !== willBridge })
+        await this.unexposeDevice(deviceIdStr, {
+          clearPairing: wasBridged !== willBridge,
+        })
         // The settings travel INTO the rebuild. `unexposeDevice` has just
         // deleted the stored entry, so `carryForward` inside `exposeDevice` has
         // nothing to carry and would rebuild on the DEFAULTS — which is the

@@ -47,6 +47,9 @@
           },
           {
             "name": "videoclips"
+          },
+          {
+            "name": "integration-instances"
           }
         ],
         "storageLocations": [

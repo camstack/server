@@ -14,6 +14,7 @@ import {
   EXPORT_HAP_ID,
   FIXED_PIN_TO_KEYCHAIN_ID,
   type HapCataloguePorts,
+  IDENTITY_TO_INSTANCE_ID,
   INTERFACE_NAME_PER_NODE_ID,
 } from '../index.js'
 
@@ -23,6 +24,10 @@ const NEIGHBOUR = 'keep-me'
 function keychainPorts(rows: SettingsRows, vault: Map<string, string>): HapCataloguePorts {
   return {
     readStored: rows.readStored,
+    readLegacyIdentity: async () => null,
+    readBridgeName: async () => '',
+    putDefaultRecord: async () => 'exists',
+    readDefaultRecord: async () => null,
     storeFixedPin: async (pin) => {
       const existing = (await rows.readStored(['fixedPin']))['fixedPin']
       if (typeof existing === 'object' && existing !== null) return
@@ -48,7 +53,7 @@ describe('export-hap settings migrations', () => {
     const { fixture } = hap({ interfaceName: 'en0', bridgeName: 'Home' })
     expect(await fixture.boot()).toEqual({
       failed: [],
-      applied: [INTERFACE_NAME_PER_NODE_ID, FIXED_PIN_TO_KEYCHAIN_ID],
+      applied: [INTERFACE_NAME_PER_NODE_ID, FIXED_PIN_TO_KEYCHAIN_ID, IDENTITY_TO_INSTANCE_ID],
     })
     const rows = fixture.rows()
     expect(rows['export-hap.interfaceName@hub']).toEqual({
@@ -64,7 +69,10 @@ describe('export-hap settings migrations', () => {
   })
 
   it('does not overwrite an interfaceName already on the node row', async () => {
-    const { fixture } = hap({ interfaceName: 'en0', 'interfaceName@hub': 'eth1' })
+    const { fixture } = hap({
+      interfaceName: 'en0',
+      'interfaceName@hub': 'eth1',
+    })
     // The run is a clean no-op for that key: it neither overwrites the row nor fails on it.
     expect((await fixture.boot()).failed).toEqual([])
     expect(fixture.rows()['export-hap.interfaceName@hub']?.['value']).toBe('eth1')
@@ -75,7 +83,10 @@ describe('export-hap settings migrations', () => {
     await fixture.boot()
     const stored = (
       await readRawKeys(
-        async (key) => ({ kind: 'present', value: fixture.rows()[`export-hap.${key}`]?.['value'] }),
+        async (key) => ({
+          kind: 'present',
+          value: fixture.rows()[`export-hap.${key}`]?.['value'],
+        }),
         EXPORT_HAP_ID,
         ['fixedPin'],
       )
@@ -89,9 +100,14 @@ describe('export-hap settings migrations', () => {
     const marked = hap({ fixedPin: { $secret: 'ref-9' } })
     await marked.fixture.boot()
     expect(marked.vault.size).toBe(0)
-    expect(marked.fixture.rows()['export-hap.fixedPin']?.['value']).toEqual({ $secret: 'ref-9' })
+    expect(marked.fixture.rows()['export-hap.fixedPin']?.['value']).toEqual({
+      $secret: 'ref-9',
+    })
 
-    const { fixture, vault } = hap({ interfaceName: 'en0', fixedPin: '123-45-678' })
+    const { fixture, vault } = hap({
+      interfaceName: 'en0',
+      fixedPin: '123-45-678',
+    })
     await fixture.boot()
     const first = JSON.stringify(fixture.rows())
     // The engine would skip an applied id; running the bodies again must change nothing either.
