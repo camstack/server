@@ -18,9 +18,14 @@ import {
   type IDeviceAdoptionProvider,
   type SystemEvent,
   collectOwnerIntegrationIds,
+  defaultIntegrationApiOver,
+  defineAddonMigrations,
+  integrationInstancesCapability,
+  integrationRowsMigration,
+  integrationRowsPortsOver,
+  type RecordIntegrationInstances,
 } from '@camstack/types'
 import { VeluxReconciler, type IntegrationLifecycleKind } from './velux-reconciler.js'
-import { buildConnectionFormSchema, connectionFromSettings } from './config.js'
 import { veluxActions } from './custom-actions.js'
 import { VeluxCoverDevice } from './devices/velux-cover-device.js'
 import { VeluxGatewayDevice } from './devices/velux-gateway-device.js'
@@ -41,7 +46,17 @@ import {
   veluxDiscoverySummary,
   veluxGatewaysFromHits,
 } from './velux-gateway-discovery.js'
+import {
+  buildVeluxInstances,
+  veluxConnectionOf,
+  veluxConnectionsEntryKind,
+  type VeluxConnectionBody,
+  veluxRecordKinds,
+} from './velux-instances.js'
 import { veluxGateways } from './velux-node-resolver.js'
+
+/** The date of the integration-rows-to-record migration (D1007). */
+const VELUX_MIGRATIONS_DATE = '2026-11-05'
 
 /**
  * Velux KLF-200 — `mode: account`, one integration per gateway.
@@ -66,6 +81,7 @@ export class VeluxProviderAddon extends BaseDeviceProvider {
 
   private integrationReconciler: VeluxReconciler | null = null
   private clients: VeluxClientRegistry | null = null
+  private instances: RecordIntegrationInstances<VeluxConnectionBody> | null = null
 
   constructor() {
     super({})
@@ -73,6 +89,31 @@ export class VeluxProviderAddon extends BaseDeviceProvider {
 
   protected override async onInitialize(): Promise<AddonInitResult<typeof veluxActions>> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
+    const records = this.ctx.records
+    if (records === undefined)
+      throw new Error('provider-velux: ctx.records is required (hub-only addon)')
+    await records.declare(veluxRecordKinds)
+    await this.runMigrations(
+      defineAddonMigrations(
+        [
+          integrationRowsMigration({
+            addonId: this.addonId,
+            date: VELUX_MIGRATIONS_DATE,
+            kind: veluxConnectionsEntryKind,
+            fixtureMark: 'host',
+          }),
+        ],
+        integrationRowsPortsOver({
+          api: defaultIntegrationApiOver(this.ctx.api),
+          records,
+          kind: veluxConnectionsEntryKind,
+          warn: (message) => this.ctx.logger.warn(message),
+        }),
+      ),
+    )
+    this.instances = buildVeluxInstances(records, {
+      onChanged: () => this.reconcileIntegrations(),
+    })
 
     // The library writes its own diagnostics to the console; keep them on our logger.
     setKlfLibraryLogSink((level, message) => {
@@ -103,6 +144,10 @@ export class VeluxProviderAddon extends BaseDeviceProvider {
         {
           capability: connectionTestCapability,
           provider: this.buildConnectionTestProvider(),
+        },
+        {
+          capability: integrationInstancesCapability,
+          provider: this.requireInstances().toProvider(),
         },
       ],
       customActions: veluxActions,
@@ -143,10 +188,6 @@ export class VeluxProviderAddon extends BaseDeviceProvider {
     this.integrationReconciler = null
     setKlfLibraryLogSink(null)
     await super.onShutdown()
-  }
-
-  protected override globalSettingsSchema(): ConfigUISchema {
-    return buildConnectionFormSchema()
   }
 
   override async supportsManualCreation(): Promise<boolean> {
@@ -209,10 +250,7 @@ export class VeluxProviderAddon extends BaseDeviceProvider {
       for (const integration of all) {
         if (integration.addonId !== this.ctx.id) continue
         try {
-          const settings = await this.ctx.api.integrations.getSettings.query({
-            id: integration.id,
-          })
-          const connection = connectionFromSettings(settings)
+          const connection = await veluxConnectionOf(this.requireInstances(), integration.id)
           if (connection) hosts.push(connection.host)
         } catch (err) {
           this.ctx.logger.warn('Velux discovery: settings read failed', {
@@ -228,6 +266,11 @@ export class VeluxProviderAddon extends BaseDeviceProvider {
       })
       return []
     }
+  }
+
+  private requireInstances(): RecordIntegrationInstances<VeluxConnectionBody> {
+    if (!this.instances) throw new Error('Velux provider not initialised')
+    return this.instances
   }
 
   private requireClients(): VeluxClientRegistry {
@@ -247,11 +290,7 @@ export class VeluxProviderAddon extends BaseDeviceProvider {
       },
       listIntegrations: () => this.ctx.api.integrations.list.query(),
       applySettings: async (integration) => {
-        const connection = connectionFromSettings(
-          await this.ctx.api.integrations.getSettings.query({
-            id: integration.id,
-          }),
-        )
+        const connection = await veluxConnectionOf(this.requireInstances(), integration.id)
         if (!connection) return false
         await this.requireClients().upsert(integration.id, integration.name, connection)
         return true

@@ -13,7 +13,6 @@
     "provider-petkit",
     "provider-rademacher",
     "provider-reolink",
-    "provider-velux",
     "provider-vesync"
   ]
 }

@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 7976 source files · 1261 file(s) in no subsystem.**
+**31 subsystems · 7977 source files · 1261 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -27,7 +27,7 @@ commits. A generated page may not.
 | Transport and cross-node routing | 108 | `architecture/transport.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/overview.md` _(covers)_, +56 more, 12 ADRs | 2026-10-22 | ✅ |
 | Capability system and codegen | 331 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/capabilities.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +244 more, 51 ADRs | 2026-11-02 | ✅ |
 | Device model and the provider contract | 112 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/device-model.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +60 more, 6 ADRs | 2026-11-02 | ✅ |
-| Device providers (per vendor) | 777 | `architecture/device-model.md` _(covers)_, `addons/addon-provider-homeassistant.md` _(covers)_, `addons/addon-provider-reolink.md` _(covers)_, +84 more, 14 ADRs | 2026-10-26 | ✅ |
+| Device providers (per vendor) | 778 | `architecture/device-model.md` _(covers)_, `addons/addon-provider-homeassistant.md` _(covers)_, `addons/addon-provider-reolink.md` _(covers)_, +84 more, 14 ADRs | 2026-10-26 | ✅ |
 | Decode and the data planes | 81 | `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-28-faces-plates-frame-locality.md` _(covers)_, `design/2026-08-29-media-plane-memory-comparison.md` _(covers)_, +28 more, 7 ADRs | 2026-10-13 | ⚠️ |
 | Detection execution and inference | 142 | `architecture/detection-execution.md`, `architecture/data-planes.md` _(covers)_, `architecture/inference-devices.md`, +62 more, 5 ADRs | 2026-10-24 | ✅ |
 | Pipeline orchestration and placement | 202 | `architecture/detection-execution.md` _(covers)_, `architecture/data-planes.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +104 more, 27 ADRs | 2026-11-02 | ✅ |
@@ -99,7 +99,7 @@ Twenty vendor integrations that turn a camera, a plug or a robot vacuum into dev
 
 - **Owner doc**: `docs/architecture/device-model.md`
 - **Code**: `packages/addon-provider-*/**`
-- **Files**: 777 (777 claimed by some document)
+- **Files**: 778 (778 claimed by some document)
 - **Uncovered**: —
 
 ### ⚠️ Decode and the data planes
