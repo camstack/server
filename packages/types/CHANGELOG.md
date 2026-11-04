@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.496] - 2026-11-04
+
 ### Changed
 
 - The migration ledger entry carries ownerNotLoaded for an applied row whose owner catalogue the answering process has not loaded

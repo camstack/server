@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.185] - 2026-11-04
+
 ### Changed
 
 - Alexa starts without waiting for the first appliance list and state poll, so a large account no longer exceeds the runner init budget during an update
