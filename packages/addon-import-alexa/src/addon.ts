@@ -9,6 +9,8 @@ import {
   DeviceType,
   errMsg,
   EventCategory,
+  flattenPortsOver,
+  integrationInstancesCapability,
   type AddonDataPlaneHandle,
   type AddonInitResult,
   type ConfigUISchema,
@@ -17,6 +19,8 @@ import {
   type IBrokerProvider,
   type IDevice,
   type IDeviceAdoptionProvider,
+  type RecordsAccess,
+  type RecordIntegrationInstances,
   notificationOutputCapability,
   type SystemEvent,
   VENDOR_LOGIN_PROXY_PREFIX,
@@ -43,18 +47,23 @@ import { mapAlexaCapabilitiesToCamStack } from './alexa-domain-mapping.js'
 import { AlexaDevice } from './devices/alexa-device.js'
 import { AlexaEchoDevice } from './devices/alexa-echo-device.js'
 import { alexaEchoSessions } from './alexa-echo-sessions.js'
-import { alexaRecordKinds } from './broker-record-kinds.js'
+import type { AlexaBrokerBody } from './broker-record-kinds.js'
+import { alexaBrokersEntryKind, alexaRecordKinds } from './broker-record-kinds.js'
+import { buildAlexaInstances } from './alexa-instances.js'
 import { AlexaBrokerStore } from './alexa-broker-store.js'
 import { readEchoTargets, type AlexaBrokerEntry } from './config.js'
 import { readBrokerSeed } from './speak/broker-seed.js'
 import { AlexaSpeakController } from './speak/controller.js'
-import { ADDON_MIGRATIONS } from './migrations/index.js'
+import {
+  ADDON_MIGRATIONS,
+  FLATTEN_BROKER_RECORDS_ID,
+  type AlexaMigrationPorts,
+} from './migrations/index.js'
 import { speakIconRoutes } from './speak/icon-routes.js'
 import { RecordsSpeakSessionStore } from './speak/session-store.js'
 
 /** Default config — a fresh install starts with no accounts. */
 const DEFAULTS: AlexaAddonConfig = {
-  brokers: [],
   proxyLogin: { proxyPort: 3456 },
   echoTargets: [],
 }
@@ -106,6 +115,7 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
   private loginPlane: AddonDataPlaneHandle | null = null
   private loginProxy: VendorLoginProxy | null = null
   private brokerStore: AlexaBrokerStore | null = null
+  private instances: RecordIntegrationInstances<AlexaBrokerBody> | null = null
   private activeBrokers: readonly AlexaBrokerEntry[] = []
   private speak: AlexaSpeakController | null = null
 
@@ -122,6 +132,18 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
     }
     await records.declare(alexaRecordKinds)
     this.brokerStore = AlexaBrokerStore.of(records)
+    this.instances = buildAlexaInstances(records, {
+      mintId: () => this.requireRegistry().allocateId(),
+      infoOf: (id) => this.registry?.get(id) ?? null,
+      onChanged: (id) => this.syncBrokerRuntime(id),
+    })
+    // The stored broker records move to the flat shape BEFORE anything reads them.
+    await this.runMigrations(
+      defineAddonMigrations(
+        ADDON_MIGRATIONS.filter((m) => m.meta.id === FLATTEN_BROKER_RECORDS_ID),
+        this.migrationPorts(records),
+      ),
+    )
     this.activeBrokers = await this.loadPersistedBrokers()
 
     this.registry = new AlexaBrokerRegistry(this.ctx.logger, {
@@ -186,14 +208,10 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
     ]
 
     await this.runMigrations(
-      defineAddonMigrations(ADDON_MIGRATIONS, {
-        readRows: () => (Array.isArray(this.config.echoTargets) ? this.config.echoTargets : []),
-        writeRows: async (rows) => {
-          await this.updateGlobalSettings({
-            echoTargets: [...readEchoTargets({ echoTargets: rows })],
-          })
-        },
-      }),
+      defineAddonMigrations(
+        ADDON_MIGRATIONS.filter((m) => m.meta.id !== FLATTEN_BROKER_RECORDS_ID),
+        this.migrationPorts(records),
+      ),
     )
 
     const speak = new AlexaSpeakController({
@@ -228,6 +246,10 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
       providers: [
         ...regs,
         { capability: brokerCapability, provider: this.buildBrokerProvider() },
+        {
+          capability: integrationInstancesCapability,
+          provider: this.requireInstances().toProvider(),
+        },
         { capability: deviceAdoptionCapability, provider: this.buildAdoptionProvider() },
         {
           capability: addonRoutesCapability,
@@ -238,23 +260,75 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
     }
   }
 
-  private async loadPersistedBrokers(): Promise<readonly AlexaBrokerEntry[]> {
-    const store = this.brokerStore
-    if (store !== null) {
-      const fromRecords = await store.listResolved()
-      if (fromRecords.length > 0) return fromRecords
+  private migrationPorts(records: RecordsAccess): AlexaMigrationPorts {
+    const secrets = this.ctx.secrets
+    if (secrets === undefined) throw new Error('import-alexa: ctx.secrets is required')
+    return {
+      readRows: () => (Array.isArray(this.config.echoTargets) ? this.config.echoTargets : []),
+      writeRows: async (rows) => {
+        await this.updateGlobalSettings({
+          echoTargets: [...readEchoTargets({ echoTargets: rows })],
+        })
+      },
+      ...flattenPortsOver(records.kind(alexaBrokersEntryKind), secrets),
     }
-    return this.config.brokers
+  }
+
+  /**
+   * Bring the runtime in line with one record after the instances page changed it: a removed
+   * record stops its manager and cascades its devices, an off record only stops the manager, a
+   * live one re-applies its connection or starts under the record's own id.
+   */
+  private async syncBrokerRuntime(id: string): Promise<void> {
+    const reg = this.requireRegistry()
+    const entry = await this.requireBrokerStore().getById(id)
+    this.activeBrokers = await this.loadPersistedBrokers()
+    if (entry === null) {
+      await reg.removeEntry(id)
+      await this.cascadeRemoveDevicesForBroker(id)
+      void this.speak?.brokersChanged()
+      return
+    }
+    const configured =
+      entry.connection.cookie.length > 0 || entry.connection.refreshToken.length > 0
+    if (entry.enabled === false || !configured) {
+      await reg.removeEntry(id)
+      void this.speak?.brokersChanged()
+      return
+    }
+    try {
+      if (reg.get(id) !== null) await reg.updateEntry(id, entry.connection)
+      else {
+        await reg.createEntry(entry.name, entry.connection, {
+          id,
+          ...(entry.integrationId !== undefined ? { integrationId: entry.integrationId } : {}),
+        })
+      }
+    } catch (err) {
+      this.ctx.logger.warn('alexa instance: could not start the account', {
+        meta: { brokerId: id, error: errMsg(err) },
+      })
+    }
+    void this.speak?.brokersChanged()
+  }
+
+  private requireBrokerStore(): AlexaBrokerStore {
+    if (this.brokerStore === null) throw new Error('import-alexa: broker store not ready')
+    return this.brokerStore
+  }
+
+  private requireInstances(): RecordIntegrationInstances<AlexaBrokerBody> {
+    if (this.instances === null) throw new Error('import-alexa: instances not ready')
+    return this.instances
+  }
+
+  private async loadPersistedBrokers(): Promise<readonly AlexaBrokerEntry[]> {
+    return this.requireBrokerStore().listResolved()
   }
 
   private async persistBrokerEntries(entries: readonly AlexaBrokerEntry[]): Promise<void> {
     this.activeBrokers = [...entries]
-    const store = this.brokerStore
-    if (store !== null) {
-      await store.replaceAll(entries)
-    } else {
-      await this.updateGlobalSettings({ brokers: [...entries] })
-    }
+    await this.requireBrokerStore().replaceAll(entries)
     void this.speak?.brokersChanged()
   }
 
@@ -279,6 +353,7 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
     }
 
     for (const entry of persisted) {
+      if (entry.enabled === false) continue
       if (entry.id && liveIds.has(entry.id)) {
         if (sameConnection(entry.connection, reg.getConnection(entry.id))) continue
         try {

@@ -35,7 +35,11 @@ export const alexaConnectionSchema = z.object({
     .describe('Alexa refresh token (must be inside cookie blob)')
     .meta({ secret: true }),
   /** Device-registration secret some flows need. */
-  macDms: z.string().default('').describe('macDms device-registration secret (optional)'),
+  macDms: z
+    .string()
+    .default('')
+    .describe('macDms device-registration secret (optional)')
+    .meta({ secret: true }),
   /** Poll interval for state sync (Alexa has no clean 3rd-party push). */
   pollIntervalMs: z
     .preprocess(
@@ -63,6 +67,8 @@ export const AlexaBrokerEntrySchema = z.object({
   name: z.string().min(1),
   connection: alexaConnectionSchema,
   integrationId: z.string().optional(),
+  /** Absent means on; the instances page switches a connection off without deleting it. */
+  enabled: z.boolean().optional(),
 })
 export type AlexaBrokerEntry = z.infer<typeof AlexaBrokerEntrySchema>
 
@@ -114,7 +120,6 @@ export function readEchoTargets(config: { echoTargets?: unknown }): readonly Ale
 
 /** Top-level addon config — broker entries + the proxy-login settings. */
 export const alexaAddonConfigSchema = z.object({
-  brokers: z.array(AlexaBrokerEntrySchema).default([]),
   proxyLogin: alexaProxyLoginSchema.default({ proxyPort: 3456 }),
   echoTargets: z.array(alexaEchoTargetSchema).default([]),
 })

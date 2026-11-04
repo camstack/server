@@ -6,6 +6,7 @@
 
 import {
   type AddonMigrationHost,
+  type FlattenRowPorts,
   defineAddonMigrations,
   type IScopedLogger,
   type MigrationOwnerResult,
@@ -15,6 +16,13 @@ import { describe, expect, it } from 'vitest'
 import { ADDON_MIGRATIONS } from '../index.js'
 
 const MIGRATION_ID = 'import-alexa/2026-11-01-strip-echo-target-volume-and-mode'
+const NO_FLATTEN_PORTS: FlattenRowPorts = {
+  listRaw: async () => [],
+  resolve: async () => ({}),
+  patch: async () => undefined,
+  deleteRefs: async () => undefined,
+  readFlatSecrets: async () => ({}),
+}
 const MARK = 'kitchen echo, kept as written'
 
 const silentLogger: IScopedLogger = {
@@ -78,7 +86,10 @@ function storeWith(initial: readonly unknown[]) {
 async function boot(store: ReturnType<typeof storeWith>, host: AddonMigrationHost) {
   return runAddonMigrations(
     host,
-    defineAddonMigrations(ADDON_MIGRATIONS, store.ports),
+    defineAddonMigrations(
+      ADDON_MIGRATIONS.filter((m) => m.meta.id === MIGRATION_ID),
+      { ...store.ports, ...NO_FLATTEN_PORTS },
+    ),
     silentLogger,
   )
 }

@@ -53,6 +53,9 @@
             "name": "broker"
           },
           {
+            "name": "integration-instances"
+          },
+          {
             "name": "device-adoption"
           },
           {

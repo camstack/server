@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Alexa accounts are listed on the instances page with their sign-in; their stored account is flattened once at start-up (same ids and cookies), and the macDms secret now lives in the keychain.
+
 ## [0.2.182] - 2026-11-03
 
 ### Changed

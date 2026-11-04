@@ -1,12 +1,13 @@
 import { defineEntryKind, entryBody } from '@camstack/types'
 import { z } from 'zod'
-import { AlexaBrokerEntrySchema } from './config.js'
+import { alexaConnectionSchema } from './config.js'
 
 export const ALEXA_BROKERS_OWNER = 'import-alexa'
 
 export const AlexaBrokerBodySchema = entryBody({
-  connection: AlexaBrokerEntrySchema.shape.connection,
+  ...alexaConnectionSchema.shape,
   integrationId: z.string().optional(),
+  enabled: z.boolean().optional(),
 })
 export type AlexaBrokerBody = z.infer<typeof AlexaBrokerBodySchema>
 

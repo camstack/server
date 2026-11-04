@@ -10,8 +10,15 @@ function rowToEntry(id: string, data: AlexaBrokerBody): AlexaBrokerEntry | null 
   const parsed = AlexaBrokerEntrySchema.safeParse({
     id,
     name: data.name,
-    connection: data.connection,
+    connection: {
+      amazonDomain: data.amazonDomain,
+      cookie: data.cookie,
+      refreshToken: data.refreshToken,
+      macDms: data.macDms,
+      pollIntervalMs: data.pollIntervalMs,
+    },
     integrationId: data.integrationId,
+    enabled: data.enabled,
   })
   return parsed.success ? parsed.data : null
 }
@@ -44,6 +51,10 @@ export class AlexaBrokerStore {
     return out
   }
 
+  async getById(id: string): Promise<AlexaBrokerEntry | null> {
+    return (await this.listResolved()).find((entry) => entry.id === id) ?? null
+  }
+
   async replaceAll(entries: readonly AlexaBrokerEntry[]): Promise<void> {
     const page = await this.kind.query({ limit: 1000 })
     const nextIds = new Set(entries.map((e) => e.id))
@@ -51,8 +62,13 @@ export class AlexaBrokerStore {
       if (!nextIds.has(row.id)) await this.kind.delete(row.id)
     }
     for (const entry of entries) {
-      const { id, name, connection, integrationId } = entry
-      const body = { name, connection, ...(integrationId === undefined ? {} : { integrationId }) }
+      const { id, name, connection, integrationId, enabled } = entry
+      const body = {
+        name,
+        ...connection,
+        ...(integrationId === undefined ? {} : { integrationId }),
+        ...(enabled === undefined ? {} : { enabled }),
+      }
       const parsed = alexaBrokersEntryKind.schema.safeParse(body)
       if (!parsed.success) throw new Error(`invalid Alexa broker '${id}': ${parsed.error.message}`)
       await this.kind.put({ id, data: parsed.data })

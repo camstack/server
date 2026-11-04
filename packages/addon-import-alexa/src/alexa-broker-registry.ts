@@ -97,6 +97,7 @@ export class AlexaBrokerRegistry {
   async restore(entries: readonly AlexaBrokerEntry[]): Promise<void> {
     for (const entry of entries) this.#seedCounter(entry.id)
     for (const entry of entries) {
+      if (entry.enabled === false) continue
       try {
         await this.#startManager(entry)
       } catch (err: unknown) {
@@ -149,9 +150,10 @@ export class AlexaBrokerRegistry {
   async createEntry(
     name: string,
     connection: AlexaConnection,
-    opts: { readonly integrationId?: string } = {},
+    opts: { readonly integrationId?: string; readonly id?: string } = {},
   ): Promise<AlexaBrokerEntry> {
-    const id = this.#allocateId()
+    const id = opts.id ?? this.#allocateId()
+    if (opts.id !== undefined) this.#seedCounter(opts.id)
     const entry: AlexaBrokerEntry = {
       id,
       name,
@@ -165,7 +167,7 @@ export class AlexaBrokerRegistry {
 
   async removeEntry(id: string): Promise<void> {
     const mgr = this.#managers.get(id)
-    if (!mgr) throw new Error(`AlexaBrokerRegistry: unknown broker id "${id}"`)
+    if (!mgr) return
     for (const [integrationId, brokerId] of this.#integrationToBroker.entries()) {
       if (brokerId === id) this.#integrationToBroker.delete(integrationId)
     }
@@ -255,6 +257,11 @@ export class AlexaBrokerRegistry {
       this.#integrationToBroker.set(entry.integrationId, entry.id)
     }
     await mgr.start()
+  }
+
+  /** The next free broker id, for a record minted before its manager exists. */
+  allocateId(): string {
+    return this.#allocateId()
   }
 
   #allocateId(): string {
