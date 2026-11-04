@@ -88,6 +88,7 @@ describe('StaticTurnAddon: TURN servers are integration instances (D996)', () =>
       instanceMode: 'multiple',
       kind: 'servers',
       canTest: false,
+      role: 'services',
     })
     expect((await w.instances.listInstances()).map((i) => i.id)).toEqual([
       'turn-aaaaaaaa',

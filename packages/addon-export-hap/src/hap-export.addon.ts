@@ -468,7 +468,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     this.instances = new RecordIntegrationInstances(records, hapBridgesKind, {
       // One bridge identity per addon today: the default instance adopted the identity the
       // addon always had. Additional bridges are not served yet, so none can be created.
-      description: { instanceMode: 'single', kind: 'bridge', canTest: false },
+      description: { role: 'services', instanceMode: 'single', kind: 'bridge', canTest: false },
       formSchema: () => this.schema({ sections: [] }),
       initialBody: (name) => ({
         name,

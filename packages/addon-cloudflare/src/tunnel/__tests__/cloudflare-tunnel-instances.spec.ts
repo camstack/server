@@ -106,6 +106,7 @@ describe('CloudflareTunnelAddon: the tunnel is an integration instance (D996)', 
       instanceMode: 'single',
       kind: 'tunnels',
       canTest: false,
+      role: 'services',
     })
     expect((await w.instances.listInstances()).map((i) => i.id)).toEqual(['cloudflare-tunnel'])
   })
