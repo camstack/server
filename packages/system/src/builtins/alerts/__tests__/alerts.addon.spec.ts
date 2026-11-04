@@ -350,9 +350,9 @@ describe('AlertCenterAddon', () => {
       expect(subscribedCategories).toContain('recording.error')
       expect(subscribedCategories).toContain('recording.storage.critical')
       expect(subscribedCategories).toContain('notification.failed')
-      // Cluster — disconnect only
+      // Cluster — disconnect mints a card; connect only asks for a reconcile
       expect(subscribedCategories).toContain('agent.offline')
-      expect(subscribedCategories).not.toContain('agent.online')
+      expect(subscribedCategories).toContain('agent.online')
       // Node / package updates
       expect(subscribedCategories).toContain('system.restarting')
       expect(subscribedCategories).toContain('system.restart-completed')

@@ -27,6 +27,12 @@ import {
 } from './runner-alert.js'
 import { AlertStore } from './alert-store.js'
 import { planMigrationAlerts } from './migration-alerts.js'
+import {
+  CLUSTER_STATE_RECONCILE_MS,
+  planClusterStateDismissals,
+  type ClusterNodeRow,
+  type RestartCompletion,
+} from './cluster-state-alerts.js'
 import { alertCenterRecordKinds } from './record-kinds.js'
 
 // ── Category → severity mapping ─────────────────────────────────────
@@ -106,6 +112,8 @@ const SILENT_TRACKED_CATEGORIES: readonly string[] = [
   // The migration ledger changed (D987): a hint to reconcile, never the truth.
   'migration.failed',
   'migration.applied',
+  // A node coming back is a hint. The node list is the authority (D49).
+  'agent.online',
 ]
 
 /** The `stream.offline` reasons that are an outage (D883) — mirrors the broker's `isStreamOutageReason`. */
@@ -294,6 +302,12 @@ export class AlertCenterAddon extends BaseAddon<AlertCenterConfig> {
     void this.dismissLegacyStreamCards(undefined)
     // Events from before this addon subscribed are gone (D8); the ledger is not.
     void this.reconcileMigrationAlerts()
+    // The same for node alerts: a dropped `agent.online` still clears on the next read.
+    void this.enqueue(() => this.reconcileClusterAlerts())
+    this.clusterReconcileTimer = setInterval(() => {
+      void this.enqueue(() => this.reconcileClusterAlerts())
+    }, CLUSTER_STATE_RECONCILE_MS)
+    if (typeof this.clusterReconcileTimer.unref === 'function') this.clusterReconcileTimer.unref()
 
     this.ctx.logger.info('Initialized', {
       meta: { trackedCategoriesCount: TRACKED_CATEGORIES.length },
@@ -302,6 +316,10 @@ export class AlertCenterAddon extends BaseAddon<AlertCenterConfig> {
   }
 
   protected async onShutdown(): Promise<void> {
+    if (this.clusterReconcileTimer !== null) {
+      clearInterval(this.clusterReconcileTimer)
+      this.clusterReconcileTimer = null
+    }
     for (const unsub of this.unsubscribers) {
       unsub()
     }
@@ -396,9 +414,19 @@ export class AlertCenterAddon extends BaseAddon<AlertCenterConfig> {
    */
   private eventChain: Promise<void> = Promise.resolve()
 
+  /** Restarts this process has heard completed. The node list covers a dropped one. */
+  private restartCompletions: readonly RestartCompletion[] = []
+
+  private clusterReconcileTimer: ReturnType<typeof setInterval> | null = null
+
+  private enqueue(work: () => Promise<void>): Promise<void> {
+    const run = this.eventChain.then(work, work)
+    this.eventChain = run
+    return run
+  }
+
   private handleEvent(category: string, event: SystemEvent): Promise<void> {
-    this.eventChain = this.eventChain.then(() => this.processEvent(category, event))
-    return this.eventChain
+    return this.enqueue(() => this.processEvent(category, event))
   }
 
   private async processEvent(category: string, event: SystemEvent): Promise<void> {
@@ -462,6 +490,14 @@ export class AlertCenterAddon extends BaseAddon<AlertCenterConfig> {
       if (category === EventCategory.NotificationRuleRepaired) {
         await this.handleRuleRepaired(event)
         return
+      }
+      if (category === EventCategory.AgentOnline) {
+        await this.reconcileClusterAlerts()
+        return
+      }
+      if (category === EventCategory.SystemRestartCompleted) {
+        this.noteRestartCompleted(event)
+        await this.reconcileClusterAlerts()
       }
 
       const mapping = CATEGORY_MAPPINGS[category]
@@ -1008,6 +1044,56 @@ export class AlertCenterAddon extends BaseAddon<AlertCenterConfig> {
       metadata: { ruleId, ruleName, reason, offendingIds, reasons: event.data['reasons'] },
     }
     await this.emitAlert(alert)
+  }
+
+  /** A heard completion. An older one must not close a restart announced after it. */
+  private noteRestartCompleted(event: SystemEvent): void {
+    const nodeId = typeof event.data['nodeId'] === 'string' ? event.data['nodeId'] : null
+    if (nodeId === null || nodeId.length === 0) return
+    const requestedAt =
+      typeof event.data['requestedAt'] === 'number' ? event.data['requestedAt'] : Date.now()
+    const next = [...this.restartCompletions, { nodeId, requestedAt }]
+    this.restartCompletions = next.length > 64 ? next.slice(next.length - 64) : next
+  }
+
+  /**
+   * The node list says who is back (D49). A read that fails changes nothing.
+   * Not called from the handler that opens `system.restarting` — that event
+   * is emitted while the node is still up. The next read dismisses it once
+   * the list says the node is online. A heard `system.restart-completed`
+   * dismisses the matching alert even when the list has not flipped yet.
+   */
+  private async reconcileClusterAlerts(): Promise<void> {
+    try {
+      const nodes = await this.readClusterNodes()
+      if (nodes === null) return
+      const ids = planClusterStateDismissals({
+        alerts: await this.listAlerts({ limit: 1_000 }),
+        nodes,
+        completions: this.restartCompletions,
+      })
+      for (const alertId of ids) await this.dismiss(alertId)
+      if (ids.length === 0) return
+      this.ctx.logger?.info('cluster alerts resolved from the node list', {
+        meta: { count: ids.length },
+      })
+    } catch (err) {
+      this.ctx.logger?.warn('cluster alerts: reconcile failed', {
+        meta: { error: errMsg(err) },
+      })
+    }
+  }
+
+  private async readClusterNodes(): Promise<readonly ClusterNodeRow[] | null> {
+    try {
+      const directory = await this.ctx.api.nodes.directory.query()
+      return directory.nodes
+    } catch (err) {
+      this.ctx.logger?.warn('cluster alerts: reconcile skipped, the node list could not be read', {
+        meta: { error: errMsg(err) },
+      })
+      return null
+    }
   }
 
   /**
