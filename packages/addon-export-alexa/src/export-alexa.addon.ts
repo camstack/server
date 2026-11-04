@@ -135,6 +135,8 @@ import {
   type AlexaSkillBody,
   alexaSkillExportsKind,
   alexaSkillStateKind,
+  EMPTY_SKILL_STATE,
+  keyedByText,
   type SkillStateBody,
   alexaSkillLinksKind,
   alexaSkillsKind,
@@ -142,6 +144,7 @@ import {
   type SkillExportsBody,
   type SkillLinksBody,
 } from './skill-records.js'
+import { SkillStateStore } from './skill-state-store.js'
 import { buildAlexaOauthIntegration } from './oauth-integration.js'
 import { createPublicEndpointReader, type PublicEndpointReader } from './public-endpoint.js'
 import { buildAlexaSetupBlock } from './setup-block.js'
@@ -413,6 +416,7 @@ const EXPORT_ALEXA_ADDON_ID = 'export-alexa'
 export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
   /** Hidden state that is a credential — kept in the keychain, never the blob (D787). */
   protected override readonly secretStatePaths = [
+    // Declared only so the migration resolves a legacy marker; the live token is the `skill-state` record's.
     'ingressToken',
     'snapshotSigningKey',
     'tokens[userId].accessToken',
@@ -458,8 +462,15 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
    * in-memory copy is the synchronous read the event path needs. No settings key backs it.
    */
   private exportsRow: SkillExportsBody = EMPTY_SKILL_EXPORTS
+  /** The hidden state of the skill: the `skill-state` record (token, namespace, push mirrors). */
+  private stateStore: SkillStateStore | null = null
   /** The keychain refused the link credentials: the ledger is read-only until it answers (D49). */
   private linksLocked = false
+
+  private get skillState(): SkillStateStore {
+    if (this.stateStore === null) throw new Error('export-alexa: the skill state is not loaded yet')
+    return this.stateStore
+  }
 
   private get exposedDevices(): readonly ExposedDeviceEntry[] {
     return this.exportsRow.devices
@@ -498,10 +509,23 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     const skill = this.skillRow
     const links = this.linksRow
     const legacy = this.legacyLedgers()
-    if (skill === null && links === null) return { ...this.config, ...legacy }
+    // The hidden state comes from its record only: no moved key is read from the settings.
+    const hidden = this.stateStore?.current ?? EMPTY_SKILL_STATE
+    const state = {
+      ingressToken: hidden.ingressToken ?? '',
+      visionNamespace: hidden.visionNamespace,
+      detectionClasses: hidden.detectionClasses,
+      accountVisibility: hidden.accountVisibility,
+      exportedEndpoints: hidden.exportedEndpoints,
+      exportedSignatures: hidden.exportedSignatures,
+      advertisedBrokerUrl: hidden.advertisedBrokerUrl,
+      lwaClientId: hidden.lwaClientId,
+    }
+    if (skill === null && links === null) return { ...this.config, ...legacy, ...state }
     return {
       ...this.config,
       ...legacy,
+      ...state,
       ...(skill === null
         ? {}
         : {
@@ -560,9 +584,16 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     // Ensure an ingress token exists on first boot (shown in settings; the
     // operator pastes it into the Lambda's HUB_INGRESS_TOKEN env). Enforcement
     // is opt-in (`enforceIngressToken`) so this never breaks an existing link.
-    if (!this.config.ingressToken) {
-      await this.updateGlobalSettings({ ingressToken: generateIngressToken() })
-    }
+    // The migrations have already moved a token that existed; one that exists is NEVER replaced.
+    this.stateStore = new SkillStateStore({
+      handle: this.stateHandle(),
+      instanceId: ALEXA_INSTANCE_ID,
+      logger: this.ctx.logger,
+    })
+    await this.stateStore.ensureIdentity({
+      token: generateIngressToken,
+      namespace: randomUUID,
+    })
 
     // The snapshot URL signing key (R2). Generated once, hidden, rotated by
     // nothing: a minted URL lives ten minutes.
@@ -570,10 +601,6 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       await this.updateGlobalSettings({
         snapshotSigningKey: generateIngressToken(),
       })
-    }
-    // R4 (D779): the namespace every object/event identifier is derived under.
-    if (!this.config.visionNamespace) {
-      await this.updateGlobalSettings({ visionNamespace: randomUUID() })
     }
 
     // D753: the hub never holds the skill's LWA client secret. A custom-skill
@@ -595,16 +622,16 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     this.detectionClassSource = new DetectionClassSource({
       readEventKinds: (deviceId) =>
         this.ctx.api.pipelineAnalytics.listEventKinds.query({ deviceId }),
-      getStored: () => this.config.detectionClasses,
-      setStored: (next) => this.updateGlobalSettings({ detectionClasses: next }),
+      getStored: () => this.view.detectionClasses,
+      setStored: (next) => this.skillState.update({ detectionClasses: keyedByText(next) }),
       logger: this.ctx.logger,
     })
     this.visibilityRef = new AccountVisibilityMirror({
       gate: this.accessGateRef,
       listLinkedUserIds: () => this.view.linkedAccounts.map((a) => a.userId),
       listExposedDeviceIds: () => this.exposedDevices.map((e) => e.deviceId),
-      getStored: () => this.config.accountVisibility,
-      setStored: (next) => this.updateGlobalSettings({ accountVisibility: next }),
+      getStored: () => this.view.accountVisibility,
+      setStored: (next) => this.skillState.update({ accountVisibility: keyedByText(next) }),
       logger: this.ctx.logger,
     })
 
@@ -614,8 +641,8 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       integrationOn: () => this.view.objectDetection,
       snapshotsOn: () => this.view.snapshots,
       isExposed: (deviceId) => this.exposedDevices.some((e) => e.deviceId === deviceId),
-      knownClasses: (deviceId) => this.config.detectionClasses[deviceId]?.classes ?? [],
-      namespace: () => this.config.visionNamespace,
+      knownClasses: (deviceId) => this.view.detectionClasses[deviceId]?.classes ?? [],
+      namespace: () => this.view.visionNamespace,
       publicEndpoint: this.publicEndpoint,
       store: this.snapshotStore,
       post: (opts) => this.requireGateway().postObjectDetection(opts),
@@ -881,10 +908,10 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       listTokens: () => this.view.tokens,
       upsertToken: (input) => this.upsertToken(input),
       removeLinkedAccount: (userId) => this.removeLinkedAccount(userId),
-      getAdvertisedBrokerUrl: () => this.config.advertisedBrokerUrl || null,
+      getAdvertisedBrokerUrl: () => this.view.advertisedBrokerUrl || null,
       getPublicEndpoint: this.publicEndpoint,
       getRegion: () => this.view.region,
-      getExportedSignature: (deviceId) => this.config.exportedSignatures[deviceId] ?? null,
+      getExportedSignature: (deviceId) => this.view.exportedSignatures[deviceId] ?? null,
       accountMaySee: (userId, deviceId) => this.visibility.allows(userId, deviceId),
     })
     this.lwaGateway.start()
@@ -923,7 +950,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     // autotrack, accessories, connectivity — pushed as a ChangeReport.
     this.stateReporter = new StateChangeReporter({
       eventBus: this.ctx.eventBus,
-      getExportedEndpoints: () => this.config.exportedEndpoints,
+      getExportedEndpoints: () => this.view.exportedEndpoints,
       reportConnectivity: (deviceId, connectivity) =>
         gatewayForFeed.reportConnectivity(deviceId, connectivity),
       postStateChange: (report) => gatewayForFeed.postStateChange(report),
@@ -942,7 +969,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     // endpoint's slices are re-read and only a difference is pushed.
     this.stateReconciler = new StateReconciler({
       reporter: this.stateReporter,
-      getExportedEndpoints: () => this.config.exportedEndpoints,
+      getExportedEndpoints: () => this.view.exportedEndpoints,
       readSlice: (deviceId, capName) =>
         this.ctx.api.deviceState.getCapSlice.query({ deviceId, capName }),
       logger: this.ctx.logger,
@@ -981,10 +1008,12 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
           (accessToken) => buildDeleteReportPayload(userId, ids, accessToken),
           `delete (${ids.length})`,
         ),
-      getExportedEndpoints: () => this.config.exportedEndpoints,
-      setExportedEndpoints: (next) => this.updateGlobalSettings({ exportedEndpoints: next }),
-      getExportedSignatures: () => this.config.exportedSignatures,
-      setExportedSignatures: (next) => this.updateGlobalSettings({ exportedSignatures: next }),
+      getExportedEndpoints: () => this.view.exportedEndpoints,
+      setExportedEndpoints: (next) =>
+        this.skillState.update({ exportedEndpoints: keyedByText(next) }),
+      getExportedSignatures: () => this.view.exportedSignatures,
+      setExportedSignatures: (next) =>
+        this.skillState.update({ exportedSignatures: keyedByText(next) }),
     })
 
     // ── Discovery drift reconcile ──────────────────────────────────
@@ -1059,15 +1088,15 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
         regenerateIngressToken: async () => this.regenerateIngressToken(),
         revealIngressToken: async () => {
           this.ctx.logger.info('export-alexa: an administrator revealed the ingress token')
-          return { ingressToken: this.config.ingressToken }
+          return { ingressToken: this.view.ingressToken }
         },
         resyncDiscovery: async () => this.resyncDiscovery(),
         removeAlexaEndpoints: async ({ endpointIds }) =>
           removeEndpointsFromAlexa({
             raw: endpointIds,
             purge: (ids) => this.requireGateway().purgeEndpoints(ids),
-            getTracked: () => this.config.exportedEndpoints,
-            setTracked: (next) => this.updateGlobalSettings({ exportedEndpoints: next }),
+            getTracked: () => this.view.exportedEndpoints,
+            setTracked: (next) => this.skillState.update({ exportedEndpoints: keyedByText(next) }),
           }).then((r) => {
             this.ctx.logger.info('export-alexa: operator removed endpoint ids from Alexa', {
               meta: { ...r, endpointIds },
@@ -1522,7 +1551,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
 
     const removedAccounts = this.view.linkedAccounts.length
     await this.writeLedger({ linkedAccounts: [], tokens: [] })
-    await this.updateGlobalSettings({
+    await this.skillState.update({
       exportedEndpoints: {},
       exportedSignatures: {},
       accountVisibility: {},
@@ -1617,7 +1646,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
 
   /** Settings as the runtime reads them (`effectiveAlexaSettings`). */
   private effectiveSettings(): AlexaSettings {
-    return effectiveAlexaSettings(this.config)
+    return effectiveAlexaSettings(this.view)
   }
 
   // ── Skill token broker (D753) ───────────────────────────────────
@@ -1631,8 +1660,9 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       )
       return
     }
-    if (url === this.config.advertisedBrokerUrl) return
-    void this.updateGlobalSettings({ advertisedBrokerUrl: url })
+    if (url === this.view.advertisedBrokerUrl) return
+    void this.skillState
+      .update({ advertisedBrokerUrl: url })
       .then(() => {
         this.ctx.logger.info('export-alexa: the skill Lambda advertised its token broker', {
           meta: { brokerUrl: url },
@@ -1711,7 +1741,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
    */
   async regenerateIngressToken(): Promise<{ ingressToken: string }> {
     const ingressToken = generateIngressToken()
-    await this.updateGlobalSettings({ ingressToken })
+    await this.skillState.update({ ingressToken })
     this.ctx.logger.info('export-alexa: regenerated ingress token')
     return { ingressToken }
   }
@@ -1729,7 +1759,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     const publicEndpoint = await this.publicEndpoint()
     return buildAlexaSetupBlock({
       publicEndpoint,
-      ingressToken: this.config.ingressToken,
+      ingressToken: this.view.ingressToken,
       skillMode: this.view.skillMode,
     })
   }
