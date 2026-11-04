@@ -38,6 +38,7 @@
     "addons": [
       {
         "id": "provider-homeassistant",
+        "integrationRole": "both",
         "category": "messaging",
         "name": "Home Assistant",
         "version": "0.1.0",

@@ -35,6 +35,7 @@
     "addons": [
       {
         "id": "matter-broker",
+        "integrationRole": "both",
         "category": "providers",
         "name": "Matter",
         "version": "0.1.0",

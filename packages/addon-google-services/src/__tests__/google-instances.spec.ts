@@ -43,7 +43,7 @@ async function setup(session: 'connected' | 'reauth' | 'none' = 'none') {
 describe('Google accounts as integration instances', () => {
   it('lists the existing broker under its id, with its sign-in and status', async () => {
     const { instances } = await setup('connected')
-    const [one] = await instances.listInstances({})
+    const [one] = await instances.listInstances()
     expect(one).toMatchObject({
       id: 'google_007',
       name: 'Home account',
