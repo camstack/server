@@ -5,7 +5,6 @@ status: accepted
 date: 2026-10-12
 applies-to:
   - packages/types/src/capabilities/training-provider.cap.ts
-  - packages/addon-training/src/page/ProviderSection.tsx
   - packages/addon-training/src/providers/modal/**
 ---
 

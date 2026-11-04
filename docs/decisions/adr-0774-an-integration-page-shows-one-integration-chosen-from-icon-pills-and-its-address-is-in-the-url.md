@@ -9,7 +9,6 @@ applies-to:
   - packages/addon-admin-ui/src/lib/integration-hub-url.ts
   - packages/addon-admin-ui/src/hooks/useIntegrationSelection.ts
   - packages/addon-admin-ui/src/pages/system/Integrations.tsx
-  - packages/addon-admin-ui/src/components/brokers/BrokerManager.tsx
   - scripts/check-integration-hub-links.ts
 ---
 
