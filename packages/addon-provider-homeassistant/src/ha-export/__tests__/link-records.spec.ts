@@ -24,11 +24,12 @@ async function open() {
 }
 
 describe('ExportLinks', () => {
-  it('is off, internal and empty for an instance with no record', async () => {
+  it('is off, public-endpoint and empty for an instance with no record', async () => {
     const links = await (await open()).load()
     expect(links.isEnabled('ha_001')).toBe(false)
-    expect(links.mediaRole('ha_001')).toBe('internal')
+    expect(links.mediaRole('ha_001')).toBe('publicEndpoint')
     expect(links.membership()).toEqual({})
+    expect(defaultLinks('Home').mediaRole).toBe('publicEndpoint')
   })
 
   it('reads the switch, the role and the devices from the record, per instance', async () => {

@@ -47,6 +47,6 @@ describe('HA export settings page', () => {
     expect(field?.type).toBe('select')
     if (field?.type !== 'select') return
     expect(field.options.map((o) => o.value)).toEqual(['internal', 'publicEndpoint'])
-    expect(field.default).toBe('internal')
+    expect(field.default).toBe('publicEndpoint')
   })
 })

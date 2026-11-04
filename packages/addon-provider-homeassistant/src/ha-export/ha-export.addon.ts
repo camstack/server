@@ -99,6 +99,7 @@ import {
   HA_MEDIA_ROLES,
   type HaMediaRole,
   mediaBasesByBroker,
+  usedInternalFallback,
   MEDIA_URL_TTL_MS,
   verifyMediaSignature,
 } from './media-url.js'
@@ -896,6 +897,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
 
   /** deviceId:cap:field already reported. Bounded by devices × mapped caps. */
   private readonly warnedCapFields = new Set<string>()
+  private readonly warnedMediaFallback = new Set<string>()
 
   private warnOnce(
     deviceId: number,
@@ -3090,7 +3092,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
 
   /**
    * Each broker's media base, read per use: the palette's role the broker chose
-   * (the `ha-export-links` record's `mediaRole`, `internal` by default). A role that resolves to nothing
+   * (the `ha-export-links` record's `mediaRole`, `publicEndpoint` by default, internal when none is set). A role that resolves to nothing
    * is `null` and says so — the image entities then carry no value, which reads as
    * empty rather than as a broken link.
    */
@@ -3100,11 +3102,17 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
   ): Promise<ReadonlyMap<string, string | null>> {
     let bases: ReadonlyMap<string, string | null>
     try {
-      bases = mediaBasesByBroker(
-        brokerIds,
-        await this.ctx.api.localNetwork.getAddresses.query(),
-        (brokerId) => this.book().mediaRole(brokerId),
-      )
+      const answer = await this.ctx.api.localNetwork.getAddresses.query()
+      bases = mediaBasesByBroker(brokerIds, answer, (brokerId) => this.book().mediaRole(brokerId))
+      for (const brokerId of brokerIds) {
+        if (this.warnedMediaFallback.has(brokerId)) continue
+        if (!usedInternalFallback(answer, this.book().mediaRole(brokerId))) continue
+        this.warnedMediaFallback.add(brokerId)
+        this.ctx.logger.info(
+          'ha-export: no public endpoint is set, so image links use the internal address',
+          { tags: { deviceId }, meta: { brokerId } },
+        )
+      }
     } catch (err) {
       this.ctx.logger.debug('ha-export: could not resolve the media base URLs', {
         tags: { deviceId },
@@ -3227,7 +3235,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
                 title: 'Connection',
                 titleKey: 'provider-homeassistant:globalSettings.s_ha-export-transport.title',
                 description:
-                  'The hub address each Home Assistant instance fetches image links from. Internal is the address flagged Internal on the Network page; choose Public endpoint for an instance outside your network.',
+                  'The hub address each Home Assistant instance fetches image links from. Public endpoint is the default, so notifications show images away from home; when none is set the internal address is used. Choose Internal to never use the public endpoint.',
                 columns: 1 as const,
                 fields: this.config.knownBrokers.map((broker) => ({
                   type: 'select' as const,
@@ -3240,7 +3248,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
                       label: 'Public endpoint (reachable from outside)',
                     },
                   ],
-                  default: 'internal',
+                  default: 'publicEndpoint',
                 })),
               },
             ]

@@ -36,16 +36,29 @@ export interface MediaAddressAnswer {
 }
 
 /**
- * The base a media link is minted on: the hub's role (D734) — `internal` unless the
- * broker chose `publicEndpoint`. Ranked by `local-network`, never loopback (`null`
- * when the role resolves to nothing): a link Home Assistant cannot open is worse
- * than no image.
+ * The base a media link is minted on: the hub's role (D734) the broker chose. Links reach
+ * Home Assistant notifications on phones away from home, so a new broker chooses `publicEndpoint`;
+ * when that resolves to nothing the `internal` address answers instead (a LAN Home Assistant still
+ * gets an image). A broker that chose `internal` never falls back to public. Ranked by
+ * `local-network`, never loopback (`null` when nothing resolves): a link Home Assistant cannot
+ * open is worse than no image.
  */
 export function haMediaBaseUrl(
   book: MediaAddressAnswer,
-  role: HaMediaRole = 'internal',
+  role: HaMediaRole = 'publicEndpoint',
 ): string | null {
-  return book.roles[role].resolved
+  const chosen = book.roles[role].resolved
+  if (chosen !== null || role !== 'publicEndpoint') return chosen
+  return book.roles.internal.resolved
+}
+
+/** True when `haMediaBaseUrl` answered with the internal address because the public endpoint was chosen but unset. */
+export function usedInternalFallback(book: MediaAddressAnswer, role: HaMediaRole): boolean {
+  return (
+    role === 'publicEndpoint' &&
+    book.roles.publicEndpoint.resolved === null &&
+    book.roles.internal.resolved !== null
+  )
 }
 
 /** brokerId → media base, each broker on ITS role. Pure: the caller reads the palette per use. */

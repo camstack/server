@@ -40,9 +40,9 @@ export const haExportLinksKind: DefinedRecordKind<z.ZodType<HaExportLinksBody>> 
   },
 )
 
-/** A link the operator has not touched: off, on the internal address, no device. */
+/** A link the operator has not touched: off, on the public endpoint, no device. */
 export function defaultLinks(name: string): HaExportLinksBody {
-  return { name, exportTo: false, mediaRole: 'internal', devices: [] }
+  return { name, exportTo: false, mediaRole: 'publicEndpoint', devices: [] }
 }
 
 /** Every record of the kind, once; a failed read throws (the caller must not serve "nothing"). */
@@ -94,7 +94,7 @@ export class ExportLinks {
   }
 
   mediaRole(brokerId: string): HaMediaRole {
-    return this.rows.get(brokerId)?.mediaRole ?? 'internal'
+    return this.rows.get(brokerId)?.mediaRole ?? 'publicEndpoint'
   }
 
   /** brokerId → exported device ids, for the brokers that export at least one. */
