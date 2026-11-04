@@ -15,6 +15,8 @@ export const alexaBrokersEntryKind = defineEntryKind('brokers', {
   title: 'Alexa import brokers',
   schema: AlexaBrokerBodySchema,
   writeTrigger: 'an operator links or removes an Alexa account broker',
+  // The nested shape's secrets: a declared secret path never stops being secret.
+  retiredSecretPaths: ['connection.cookie', 'connection.refreshToken'],
 })
 
 /**

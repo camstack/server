@@ -90,7 +90,7 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
     await this.runMigrations(
       defineAddonMigrations(
         ADDON_MIGRATIONS,
-        flattenPortsOver(records.kind(matterBrokersEntryKind), secrets),
+        flattenPortsOver(records.kind(matterBrokersEntryKind)),
       ),
     )
     this.activeBrokers = await this.loadPersistedBrokers()

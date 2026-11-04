@@ -6418,7 +6418,11 @@
         "externalSystemsThisHubTalks": "External systems this hub talks to — exporters, email, brokers and calendar sources.",
         "devices": "Devices",
         "connections": "Connections",
-        "exposed": "{{linkState}} · {{exposedDeviceCount}} exposed"
+        "exposed": "{{linkState}} · {{exposedDeviceCount}} exposed",
+        "connectionsSubtitle": "The accounts and connections this integration reaches its devices through.",
+        "connectionsEmpty": "No connections yet",
+        "connectionsEmptyHint": "Add one to start bringing its devices in.",
+        "connectionsAdd": "Add connection"
       },
       "logs": {
         "viewer": "Viewer",

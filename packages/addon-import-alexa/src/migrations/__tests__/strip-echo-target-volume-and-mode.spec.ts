@@ -17,11 +17,9 @@ import { ADDON_MIGRATIONS } from '../index.js'
 
 const MIGRATION_ID = 'import-alexa/2026-11-01-strip-echo-target-volume-and-mode'
 const NO_FLATTEN_PORTS: FlattenRowPorts = {
-  listRaw: async () => [],
-  resolve: async () => ({}),
+  listNested: async () => [],
+  readResolved: async () => ({}),
   patch: async () => undefined,
-  deleteRefs: async () => undefined,
-  readFlatSecrets: async () => ({}),
 }
 const MARK = 'kitchen echo, kept as written'
 

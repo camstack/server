@@ -4,40 +4,63 @@
  * keychain secret read back before the nested object goes, the old refs deleted.
  */
 import {
+  defineEntryKind,
+  entryBody,
   type FlattenRowPorts,
   flattenPortsOver,
   makeInMemoryRecords,
   recordSecretRef,
 } from '@camstack/types'
+import { z } from 'zod'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { alexaBrokersEntryKind } from '../../broker-record-kinds.js'
 import { ADDON_MIGRATIONS, FLATTEN_BROKER_RECORDS_ID } from '../index.js'
 import { flattenBrokerRecords } from '../flatten-broker-records.js'
 
 const OWNER = 'import-alexa'
+const FLAT_SECRETS: readonly string[] = ['cookie', 'refreshToken', 'macDms']
 const nestedRef = (id: string, key: string): string =>
   recordSecretRef(OWNER, 'brokers', id, `connection.${key}`)
 
+/** The kind as the hub declared it before the flat body: the connection nested, secrets inside. */
+const legacyKind = defineEntryKind('brokers', {
+  title: 'legacy brokers',
+  schema: entryBody({
+    connection: z.object({
+      amazonDomain: z.string().optional(),
+      cookie: z.string().optional().meta({ secret: true }),
+      refreshToken: z.string().optional().meta({ secret: true }),
+      macDms: z.string().optional(),
+      pollIntervalMs: z.number().optional(),
+    }),
+    integrationId: z.string().optional(),
+  }),
+})
+
 async function world() {
   const memory = makeInMemoryRecords(OWNER)
-  await memory.records.declare({ brokers: alexaBrokersEntryKind })
-  const handle = memory.records.kind(alexaBrokersEntryKind)
+  await memory.records.declare({ brokers: legacyKind })
+  const legacyHandle = memory.records.kind(legacyKind)
   const seed = async (
     id: string,
     plain: Record<string, unknown>,
     secrets: Record<string, string>,
   ): Promise<void> => {
-    const connection: Record<string, unknown> = { ...plain }
-    for (const [key, value] of Object.entries(secrets)) {
-      await memory.secrets.put(nestedRef(id, key), value)
-      connection[key] = { $secret: nestedRef(id, key), v: 1 }
-    }
-    memory.seed('brokers', {
-      id,
-      data: { name: `Account ${id}`, integrationId: `int-${id}`, connection },
-    })
+    await legacyHandle.put(
+      {
+        id,
+        data: {
+          name: `Account ${id}`,
+          integrationId: `int-${id}`,
+          connection: { ...plain, ...secrets },
+        },
+      },
+      { ifRev: 0 },
+    )
   }
-  return { memory, handle, ports: flattenPortsOver(handle, memory.secrets), seed }
+  await memory.records.declare({ brokers: alexaBrokersEntryKind })
+  const handle = memory.records.kind(alexaBrokersEntryKind)
+  return { memory, handle, ports: flattenPortsOver(handle), seed }
 }
 type World = Awaited<ReturnType<typeof world>>
 const snapshot = (w: World): string =>
@@ -91,7 +114,9 @@ describe('import-alexa flatten-broker-records', () => {
   it('a second run is already-done and writes nothing', async () => {
     await flattenBrokerRecords(w.ports)
     const before = snapshot(w)
-    expect(await flattenBrokerRecords(w.ports)).toMatchObject({ outcome: 'already-done' })
+    expect(await flattenBrokerRecords(w.ports)).toMatchObject({
+      outcome: 'already-done',
+    })
     expect(snapshot(w)).toBe(before)
   })
 
@@ -103,12 +128,51 @@ describe('import-alexa flatten-broker-records', () => {
   })
 
   it('a secret that does not read back keeps the nested row and its refs', async () => {
-    const lying: FlattenRowPorts = { ...w.ports, readFlatSecrets: async () => ({}) }
+    const seen = new Set<string>()
+    const lying: FlattenRowPorts = {
+      ...w.ports,
+      // The first read of a row is the honest phase-A read; the read-back finds no flat secret.
+      readResolved: async (id) => {
+        const data = await w.ports.readResolved(id)
+        if (!seen.has(id)) {
+          seen.add(id)
+          return data
+        }
+        return Object.fromEntries(
+          Object.entries(data).filter(([key]) => !FLAT_SECRETS.includes(key)),
+        )
+      },
+    }
     await expect(flattenBrokerRecords(lying)).rejects.toThrow()
     const row = (await w.handle.query({ limit: 10 })).records.find((r) => r.id === 'alexa_001')
     expect(row?.data).toHaveProperty('connection')
     expect(row?.data).not.toHaveProperty('cookie')
     const answers = await w.memory.secrets.resolve([nestedRef('alexa_001', 'cookie')])
     expect(answers[nestedRef('alexa_001', 'cookie')]?.kind).toBe('value')
+  })
+
+  it('a crash before the nested object is patched out strands no ref; the rerun finishes the row', async () => {
+    let calls = 0
+    const crashing: FlattenRowPorts = {
+      ...w.ports,
+      patch: async (id, patch) => {
+        calls += 1
+        // 1 = flat fields of the first row, 2 = its nested object going out: crash there.
+        if (calls === 2) throw new Error('crash before the nested object left')
+        await w.ports.patch(id, patch)
+      },
+    }
+    await expect(flattenBrokerRecords(crashing)).rejects.toThrow(/crash/)
+    const stillThere = await w.memory.secrets.resolve([nestedRef('alexa_001', 'cookie')])
+    expect(stillThere[nestedRef('alexa_001', 'cookie')]?.kind).toBe('value')
+
+    expect(await flattenBrokerRecords(w.ports)).toMatchObject({
+      outcome: 'done',
+    })
+    for (const row of (await w.handle.query({ limit: 10 })).records) {
+      expect(row.data).not.toHaveProperty('connection')
+    }
+    const gone = await w.memory.secrets.resolve([nestedRef('alexa_001', 'cookie')])
+    expect(gone[nestedRef('alexa_001', 'cookie')]?.kind).toBe('missing')
   })
 })

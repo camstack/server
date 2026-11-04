@@ -21,6 +21,8 @@ export interface EntryKindSpec<S extends z.ZodType> {
   readonly database?: 'settings' | 'events'
   readonly indexes?: readonly RecordIndex[]
   readonly secretArrayKeys?: Readonly<Record<string, string>>
+  /** Secret paths an earlier shape of the body declared (see `RecordKindSpec`). */
+  readonly retiredSecretPaths?: readonly string[]
 }
 
 /** The body of a plain entry: a name and the fields the kind adds. */
@@ -45,6 +47,9 @@ export function defineEntryKind<S extends z.ZodType>(
       ...(spec.database === undefined ? {} : { database: spec.database }),
       ...(spec.indexes === undefined ? {} : { indexes: spec.indexes }),
       ...(spec.secretArrayKeys === undefined ? {} : { secretArrayKeys: spec.secretArrayKeys }),
+      ...(spec.retiredSecretPaths === undefined
+        ? {}
+        : { retiredSecretPaths: spec.retiredSecretPaths }),
       entry: {
         title: spec.title,
         ...(spec.nameField === undefined ? {} : { nameField: spec.nameField }),

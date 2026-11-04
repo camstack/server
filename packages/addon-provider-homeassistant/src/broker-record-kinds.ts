@@ -25,4 +25,6 @@ export const haBrokersEntryKind = defineEntryKind(HA_BROKERS_KIND, {
   title: 'Home Assistant brokers',
   schema: HaBrokerBodySchema,
   writeTrigger: 'an operator adds, edits or removes a Home Assistant broker connection',
+  // The nested shape's secrets: a declared secret path never stops being secret.
+  retiredSecretPaths: ['auth.accessToken', 'auth.supervisorToken'],
 })

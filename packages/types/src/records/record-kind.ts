@@ -174,6 +174,12 @@ export interface RecordKindSpec<S extends z.ZodType = z.ZodType> {
   readonly deviceRemoval?: 'delete' | 'none'
   readonly maxDataBytes?: number
   readonly secretArrayKeys?: Readonly<Record<string, string>>
+  /**
+   * Secret paths the body no longer has but an earlier declaration did. The engine never lets a
+   * path stop being secret, so a body that moved its secrets (nested to flat) names the old paths
+   * here; nothing reads them, they only keep the re-declaration additive.
+   */
+  readonly retiredSecretPaths?: readonly string[]
   readonly transactFamily?: string
   /** Makes this an ENTRY kind: it gets the generic list/add/edit/delete UI. */
   readonly entry?: { readonly title: string; readonly nameField?: string }
@@ -233,7 +239,7 @@ export function defineRecordKinds<const T extends Readonly<Record<string, Record
       retention: spec.retention,
       deviceRemoval: spec.deviceRemoval,
       maxDataBytes: spec.maxDataBytes,
-      secretPaths: [...secretPaths],
+      secretPaths: [...new Set([...secretPaths, ...(spec.retiredSecretPaths ?? [])])],
       secretArrayKeys: spec.secretArrayKeys === undefined ? undefined : { ...spec.secretArrayKeys },
       transactFamily: spec.transactFamily,
       entry: spec.entry === undefined ? undefined : { title: spec.entry.title, nameField, fields },

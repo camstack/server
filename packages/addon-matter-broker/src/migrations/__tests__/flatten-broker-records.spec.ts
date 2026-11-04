@@ -4,40 +4,62 @@
  * old refs deleted.
  */
 import {
+  defineEntryKind,
+  entryBody,
   type FlattenRowPorts,
   flattenPortsOver,
   makeInMemoryRecords,
   recordSecretRef,
 } from '@camstack/types'
+import { z } from 'zod'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { matterBrokersEntryKind } from '../../broker-record-kinds.js'
 import { ADDON_MIGRATIONS, FLATTEN_BROKER_RECORDS_ID } from '../index.js'
 import { flattenBrokerRecords } from '../flatten-broker-records.js'
 
 const OWNER = 'matter-broker'
+const FLAT_SECRETS: readonly string[] = ['threadDataset', 'wifiPassword']
 const nestedRef = (id: string, key: string): string =>
   recordSecretRef(OWNER, 'brokers', id, `connection.${key}`)
 
+/** The kind as the hub declared it before the flat body: the connection nested, secrets inside. */
+const legacyKind = defineEntryKind('brokers', {
+  title: 'legacy brokers',
+  schema: entryBody({
+    connection: z.object({
+      threadDataset: z.string().optional().meta({ secret: true }),
+      wifiSsid: z.string().optional(),
+      wifiPassword: z.string().optional().meta({ secret: true }),
+      reconcileIntervalMs: z.number().optional(),
+    }),
+    integrationId: z.string().optional(),
+  }),
+})
+
 async function world() {
   const memory = makeInMemoryRecords(OWNER)
-  await memory.records.declare({ brokers: matterBrokersEntryKind })
-  const handle = memory.records.kind(matterBrokersEntryKind)
+  await memory.records.declare({ brokers: legacyKind })
+  const legacyHandle = memory.records.kind(legacyKind)
   const seed = async (
     id: string,
     plain: Record<string, unknown>,
     secrets: Record<string, string>,
   ): Promise<void> => {
-    const connection: Record<string, unknown> = { ...plain }
-    for (const [key, value] of Object.entries(secrets)) {
-      await memory.secrets.put(nestedRef(id, key), value)
-      connection[key] = { $secret: nestedRef(id, key), v: 1 }
-    }
-    memory.seed('brokers', {
-      id,
-      data: { name: `Fabric ${id}`, integrationId: `int-${id}`, connection },
-    })
+    await legacyHandle.put(
+      {
+        id,
+        data: {
+          name: `Fabric ${id}`,
+          integrationId: `int-${id}`,
+          connection: { ...plain, ...secrets },
+        },
+      },
+      { ifRev: 0 },
+    )
   }
-  return { memory, handle, ports: flattenPortsOver(handle, memory.secrets), seed }
+  await memory.records.declare({ brokers: matterBrokersEntryKind })
+  const handle = memory.records.kind(matterBrokersEntryKind)
+  return { memory, handle, ports: flattenPortsOver(handle), seed }
 }
 type World = Awaited<ReturnType<typeof world>>
 const snapshot = (w: World): string =>
@@ -86,7 +108,9 @@ describe('matter-broker flatten-broker-records', () => {
   it('a second run is already-done and writes nothing', async () => {
     await flattenBrokerRecords(w.ports)
     const before = snapshot(w)
-    expect(await flattenBrokerRecords(w.ports)).toMatchObject({ outcome: 'already-done' })
+    expect(await flattenBrokerRecords(w.ports)).toMatchObject({
+      outcome: 'already-done',
+    })
     expect(snapshot(w)).toBe(before)
   })
 
@@ -98,12 +122,51 @@ describe('matter-broker flatten-broker-records', () => {
   })
 
   it('a secret that does not read back keeps the nested row and its refs', async () => {
-    const lying: FlattenRowPorts = { ...w.ports, readFlatSecrets: async () => ({}) }
+    const seen = new Set<string>()
+    const lying: FlattenRowPorts = {
+      ...w.ports,
+      // The first read of a row is the honest phase-A read; the read-back finds no flat secret.
+      readResolved: async (id) => {
+        const data = await w.ports.readResolved(id)
+        if (!seen.has(id)) {
+          seen.add(id)
+          return data
+        }
+        return Object.fromEntries(
+          Object.entries(data).filter(([key]) => !FLAT_SECRETS.includes(key)),
+        )
+      },
+    }
     await expect(flattenBrokerRecords(lying)).rejects.toThrow()
     const row = (await w.handle.query({ limit: 10 })).records.find((r) => r.id === 'matter_001')
     expect(row?.data).toHaveProperty('connection')
     expect(row?.data).not.toHaveProperty('wifiPassword')
     const answers = await w.memory.secrets.resolve([nestedRef('matter_001', 'wifiPassword')])
     expect(answers[nestedRef('matter_001', 'wifiPassword')]?.kind).toBe('value')
+  })
+
+  it('a crash before the nested object is patched out strands no ref; the rerun finishes the row', async () => {
+    let calls = 0
+    const crashing: FlattenRowPorts = {
+      ...w.ports,
+      patch: async (id, patch) => {
+        calls += 1
+        // 1 = flat fields of the first row, 2 = its nested object going out: crash there.
+        if (calls === 2) throw new Error('crash before the nested object left')
+        await w.ports.patch(id, patch)
+      },
+    }
+    await expect(flattenBrokerRecords(crashing)).rejects.toThrow(/crash/)
+    const stillThere = await w.memory.secrets.resolve([nestedRef('matter_001', 'wifiPassword')])
+    expect(stillThere[nestedRef('matter_001', 'wifiPassword')]?.kind).toBe('value')
+
+    expect(await flattenBrokerRecords(w.ports)).toMatchObject({
+      outcome: 'done',
+    })
+    for (const row of (await w.handle.query({ limit: 10 })).records) {
+      expect(row.data).not.toHaveProperty('connection')
+    }
+    const gone = await w.memory.secrets.resolve([nestedRef('matter_001', 'wifiPassword')])
+    expect(gone[nestedRef('matter_001', 'wifiPassword')]?.kind).toBe('missing')
   })
 })

@@ -270,7 +270,7 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
           echoTargets: [...readEchoTargets({ echoTargets: rows })],
         })
       },
-      ...flattenPortsOver(records.kind(alexaBrokersEntryKind), secrets),
+      ...flattenPortsOver(records.kind(alexaBrokersEntryKind)),
     }
   }
 

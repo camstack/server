@@ -15,4 +15,6 @@ export const matterBrokersEntryKind = defineEntryKind('brokers', {
   title: 'Matter brokers',
   schema: MatterBrokerBodySchema,
   writeTrigger: 'an operator adds, edits or removes a Matter fabric broker',
+  // The nested shape's secrets: a declared secret path never stops being secret.
+  retiredSecretPaths: ['connection.threadDataset', 'connection.wifiPassword'],
 })

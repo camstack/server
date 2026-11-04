@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - device-export: instanceId on reads (optional) and writes (required), listInstances, and the export-instance-unknown refusal
 - The integration instance health hook receives the instance id
 - Added flattenNestedRecords and flattenPortsOver, a D987 helper that moves a kind's nested connection object to flat top-level fields under the same ids, reading every secret back before the nested copy goes; makeInMemoryRecords exposes its spec keychain.
+- Entry kinds can name retired secret paths, so a body that moved its secrets keeps its keychain refs released with the old shape
 
 ## [1.2.492] - 2026-11-04
 

@@ -11,11 +11,9 @@ import { haInstanceSettingsPortsOver } from '../../ha-instance-settings.js'
 import { ADDON_MIGRATIONS, FLATTEN_BROKER_RECORDS_ID } from '../index.js'
 
 const NO_FLATTEN_PORTS: FlattenRowPorts = {
-  listRaw: async () => [],
-  resolve: async () => ({}),
+  listNested: async () => [],
+  readResolved: async () => ({}),
   patch: async () => undefined,
-  deleteRefs: async () => undefined,
-  readFlatSecrets: async () => ({}),
 }
 const COPY = 'provider-homeassistant/2026-11-03-calendar-ids-to-integration'
 const DROP = 'provider-homeassistant/2026-11-03-drop-shared-calendar-ids'

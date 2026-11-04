@@ -6493,7 +6493,11 @@
         "externalSystemsThisHubTalks": "Sistemi esterni con cui questo hub comunica — exporter, email, broker e sorgenti di calendario.",
         "devices": "Dispositivi",
         "connections": "Connessioni",
-        "exposed": "{{linkState}} · {{exposedDeviceCount}} esposti"
+        "exposed": "{{linkState}} · {{exposedDeviceCount}} esposti",
+        "connectionsSubtitle": "Gli account e le connessioni attraverso cui questa integrazione raggiunge i suoi dispositivi.",
+        "connectionsEmpty": "Nessuna connessione per ora",
+        "connectionsEmptyHint": "Aggiungine una per iniziare a importare i suoi dispositivi.",
+        "connectionsAdd": "Aggiungi connessione"
       },
       "logs": {
         "viewer": "Visualizzatore",

@@ -206,7 +206,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
     return {
       readStored: (key) => this.readStoredGlobalKey(key),
       ...haInstanceSettingsPortsOver(this.ctx.api.integrations),
-      ...flattenPortsOver(records.kind(haBrokersEntryKind), secrets),
+      ...flattenPortsOver(records.kind(haBrokersEntryKind)),
     }
   }
 
