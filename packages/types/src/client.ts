@@ -27,6 +27,8 @@ export {
   ICON_VIEWER_MODULES,
   IconKeySchema,
   LOCATION_ICON_FALLBACK,
+  REMOTE_CUSTOM_ROLE_ICON,
+  REMOTE_ROLE_VOCABULARY,
   DEFINITIVE_DEVICE_REFUSALS,
   DEVICE_CERT_RENEW_WINDOW_DAYS,
   DEVICE_DEFINITIVE_REFUSALS_BEFORE_DELETE,
@@ -101,6 +103,9 @@ export {
   pickerForCondition,
   pickerForRuleClasses,
   parseRetrainRevisionConflict,
+  remoteRoleIcon,
+  remoteRoleLabel,
+  remoteRoleLegend,
   resolveIconKey,
   resolveModeDelays,
   retrainBoxIou,
@@ -145,3 +150,4 @@ export {
   resolveContainerPrimaryChild,
 } from './index.js'
 export type { PaletteReady, PaletteResult, PaletteEntryId, PalettePresetId } from './index.js'
+export type { RemoteRoleVocabEntry, VocabLocale } from './index.js'
