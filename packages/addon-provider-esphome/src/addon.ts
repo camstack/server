@@ -5,6 +5,10 @@ import {
   errMsg,
   EventCategory,
   type AddonInitResult,
+  defaultIntegrationApiOver,
+  defineAddonMigrations,
+  integrationInstancesCapability,
+  integrationRowsPortsOverApi,
   type ConfigUISchema,
   type ConfigUISchemaWithValues,
   type CreateDeviceSpec,
@@ -17,7 +21,8 @@ import {
   type IDeviceAdoptionProvider,
   type SystemEvent,
 } from '@camstack/types'
-import { buildIntegrationFormSchema, type EspAddonConfig } from './config.js'
+import { z } from 'zod'
+import type { EspAddonConfig } from './config.js'
 import { espBrokersEntryKind } from './broker-record-kinds.js'
 import { EspBrokerStore } from './esphome-broker-store.js'
 import { EspBrokerRegistry } from './esphome-registry.js'
@@ -30,6 +35,12 @@ import {
 import { clientLinkFactory } from './esphome-client-link.js'
 import { boardCandidates, ESPHOME_DISCOVERY_MODES } from './esphome-discovery.js'
 import { EspIntegrationBoards, type AddBoardInput } from './esphome-integration-boards.js'
+import {
+  buildEspBoardsStore,
+  buildEspInstances,
+  espConnectionsEntryKind,
+} from './esphome-instances.js'
+import { ESPHOME_ROWS_TO_RECORD_MIGRATION } from './migrations/index.js'
 import { EspContainerDevice } from './devices/esp-container-device.js'
 import { EspServiceRunner } from './esphome-services.js'
 import { espIrOverrides, loadIrOverrides } from './esphome-ir-overrides.js'
@@ -70,9 +81,30 @@ export class ESPHomeProviderAddon extends BaseDeviceProvider<EspAddonConfig> {
     if (records === undefined) {
       throw new Error('provider-esphome: ctx.records is required (hub-only addon)')
     }
-    // The single-board layout kept its boards here; read once, to move them.
-    await records.declare({ brokers: espBrokersEntryKind })
+    // The single-board layout kept its boards in `brokers`: read once, by the migration below.
+    await records.declare({ brokers: espBrokersEntryKind, connections: espConnectionsEntryKind })
     this.brokerStore = EspBrokerStore.of(records)
+    const brokerStore = this.brokerStore
+    const instances = buildEspInstances(records, {
+      onChanged: () => this.requireBoards().reconcile(),
+    })
+    // The rows move BEFORE the instances provider registers (below): while it is registered the
+    // hub answers from the record, not from the rows.
+    await this.runMigrations(
+      defineAddonMigrations([ESPHOME_ROWS_TO_RECORD_MIGRATION], {
+        ...integrationRowsPortsOverApi({
+          api: defaultIntegrationApiOver(this.ctx.api),
+          records: records.kind({
+            name: espConnectionsEntryKind.name,
+            declaration: espConnectionsEntryKind.declaration,
+            schema: z.record(z.string(), z.unknown()),
+          }),
+          log: { warn: (message) => this.ctx.logger.warn(message) },
+        }),
+        listLegacy: () => brokerStore.listResolved(),
+        removeLegacy: (ids) => brokerStore.remove(ids),
+      }),
+    )
     await this.loadAllIrOverrides()
 
     this.registry = new EspBrokerRegistry({
@@ -92,11 +124,9 @@ export class ESPHomeProviderAddon extends BaseDeviceProvider<EspAddonConfig> {
           const all = await this.ctx.api.integrations.list.query()
           return all.map((i) => ({ id: i.id, addonId: i.addonId, enabled: i.enabled }))
         },
-        getSettings: (id) => this.ctx.api.integrations.getSettings.query({ id }),
-        setSettings: (input) => this.ctx.api.integrations.setSettings.mutate(input),
       },
       sessions: registry,
-      legacy: this.brokerStore,
+      store: buildEspBoardsStore(records, instances),
       cascadeRemoveDevices: (boardId) => this.cascadeRemoveDevicesForBroker(boardId),
       logger: this.ctx.logger,
     })
@@ -118,6 +148,7 @@ export class ESPHomeProviderAddon extends BaseDeviceProvider<EspAddonConfig> {
       providers: [
         ...regs,
         { capability: deviceAdoptionCapability, provider: this.buildAdoptionProvider() },
+        { capability: integrationInstancesCapability, provider: instances.toProvider() },
       ],
       customActions: espServiceActions,
       actionHandlers: {
@@ -404,21 +435,10 @@ export class ESPHomeProviderAddon extends BaseDeviceProvider<EspAddonConfig> {
 
   // ── integration → board reconcile ───────────────────────────────────────
 
-  /** Move any single-board integration to a one-entry list, then start every board. */
+  /** Start every board of every enabled integration. */
   private async settleBoards(): Promise<void> {
-    const boards = this.requireBoards()
     try {
-      const report = await boards.migrateLegacy()
-      if (report.migrated.length > 0) {
-        this.ctx.logger.info('ESPHome: boards moved into their integration', {
-          meta: { boardIds: [...report.migrated] },
-        })
-      }
-    } catch (err: unknown) {
-      this.ctx.logger.warn('ESPHome board migration failed', { meta: { error: errMsg(err) } })
-    }
-    try {
-      await boards.reconcile()
+      await this.requireBoards().reconcile()
     } catch (err: unknown) {
       this.ctx.logger.warn('ESPHome integration→board reconcile failed', {
         meta: { error: errMsg(err) },
@@ -444,10 +464,6 @@ export class ESPHomeProviderAddon extends BaseDeviceProvider<EspAddonConfig> {
   }
 
   // ── settings / manual creation ──────────────────────────────────────────
-
-  protected globalSettingsSchema(): ConfigUISchema {
-    return buildIntegrationFormSchema()
-  }
 
   override async supportsManualCreation(): Promise<boolean> {
     return false

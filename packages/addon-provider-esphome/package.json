@@ -35,6 +35,7 @@
     "addons": [
       {
         "id": "provider-esphome",
+        "integrationRole": "devices",
         "category": "providers",
         "name": "ESPHome",
         "version": "0.1.0",
@@ -50,6 +51,9 @@
         "capabilities": [
           {
             "name": "device-provider"
+          },
+          {
+            "name": "integration-instances"
           },
           {
             "name": "device-adoption"

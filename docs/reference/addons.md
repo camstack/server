@@ -74,7 +74,7 @@ this column exists to stop.
 | `provider-dreo` | `@camstack/addon-provider-dreo` | providers | own runner | `hub-only` | — | multiple | `connection-test` `device-adoption` `device-provider` `integration-instances` |
 | `provider-ecowitt` | `@camstack/addon-provider-ecowitt` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
 | `provider-enpal` | `@camstack/addon-provider-enpal` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
-| `provider-esphome` | `@camstack/addon-provider-esphome` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` |
+| `provider-esphome` | `@camstack/addon-provider-esphome` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
 | `provider-gree` | `@camstack/addon-provider-gree` | providers | own runner | `hub-only` | — | multiple | `device-provider` `integration-instances` |
 | `provider-hikvision` | `@camstack/addon-provider-hikvision` | providers | own runner | `hub-only` | — | unique | `day-night` `device-provider` `failure-contribution` `image-settings` `integration-instances` `motion-zones` `privacy-mask` `recording-onboard` `stream-params` `videoclips` |
 | `provider-homeassistant` | `@camstack/addon-provider-homeassistant` | messaging | own runner | `hub-only` | — | multiple | `addon-routes` `board-key-source` `broker` `calendar-source` `device-adoption` `humidifier` `image` `integration-instances` `lawn-mower-control` `notification-output` `running-state` `update` `vacuum-control` `valve` `water-heater` `weather` |
