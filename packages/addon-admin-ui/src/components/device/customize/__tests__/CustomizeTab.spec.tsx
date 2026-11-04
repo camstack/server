@@ -84,6 +84,12 @@ const composable = vi.hoisted(
     current: { status: 'pending' },
   }),
 )
+/** Wireable fields (`getWireableFields`): unanswered unless a test says so. */
+const wireable = vi.hoisted(
+  (): {
+    current: { readonly status: Query['status']; readonly data?: unknown }
+  } => ({ current: { status: 'pending' } }),
+)
 /** The fleet read (`listAll`): unanswered unless a test says otherwise. */
 const fleet = vi.hoisted(
   (): {
@@ -97,6 +103,13 @@ const fleet = vi.hoisted(
 /** Live cap slices by `<deviceId>.<cap>`: unanswered unless a test says so; `'error'` is a failed read. */
 const capSlices = vi.hoisted((): { current: Record<string, unknown> } => ({
   current: {},
+}))
+/** Linked actions (`actions.list` / `actions.getLinks`): unanswered unless a test says so. */
+const actionList = vi.hoisted((): { current: { readonly data?: unknown } } => ({
+  current: { data: undefined },
+}))
+const actionLinks = vi.hoisted((): { current: { readonly data?: unknown } } => ({
+  current: { data: undefined },
 }))
 /** The extension slots read (linked devices): unanswered unless a test says so. */
 const linkedSlots = vi.hoisted(
@@ -189,10 +202,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     // The Presets section (Task 13) reads these facts; unanswered here, so it only says "Checking…".
     useCoreBlocksListComposableCaps: () => composable.current,
     useDeviceManagerGetBindings: () => bindings.current,
-    useDeviceManagerGetWireableFields: () => ({
-      status: 'pending',
-      data: undefined,
-    }),
+    useDeviceManagerGetWireableFields: () => wireable.current,
     useDeviceStateGetSnapshot: () => ({ status: 'pending', data: undefined }),
     // The Advanced editor (Task 19) validates the draft on the server; not under test here.
     useCoreBlocksValidateComposition: () => ({
@@ -240,9 +250,8 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
       mutateAsync: vi.fn(),
       isPending: false,
     }),
-    // The camera's Linked actions card; its own spec covers it.
-    useActionsList: () => ({ data: undefined }),
-    useActionsGetLinks: () => ({ data: undefined }),
+    useActionsList: () => actionList.current,
+    useActionsGetLinks: () => actionLinks.current,
     useActionsSetLinks: () => ({
       mutate: vi.fn(),
       isPending: false,
@@ -358,8 +367,11 @@ beforeEach(() => {
   bindings.current = { status: 'pending' }
   composable.current = { status: 'pending' }
   fleet.current = { status: 'pending' }
+  wireable.current = { status: 'pending' }
   capSlices.current = {}
   linkedSlots.current = { status: 'pending' }
+  actionList.current = { data: undefined }
+  actionLinks.current = { data: undefined }
   remoteConfig.current = { status: 'pending' }
   remoteTemplates.current = { status: 'pending' }
   deleteMutate.mockClear()
@@ -1075,25 +1087,26 @@ describe('CustomizeTab — event and extension rows carry a value and a source',
   })
 })
 
-describe('CustomizeTab — linked devices are rows of the one table', () => {
-  it('lists the linked devices in the table, not in a block below it', () => {
+describe('CustomizeTab — linked devices stay a camera table, outside Customize', () => {
+  const slot = {
+    status: 'success' as const,
+    data: [
+      {
+        state: 'ok',
+        slotRef: 'device-manager:linked-devices',
+        slot: 'linked-devices',
+        authority: 'device-manager:_linkedDeviceIds',
+        activation: null,
+        value: { slot: 'linked-devices', deviceIds: [303] },
+        sources: [{ deviceId: 303, name: 'Porch light', health: 'ok' }],
+      },
+    ],
+  }
+  it('a camera renders the linked-devices table outside the Customize table', () => {
     device.current = CAMERA
     composable.current = { status: 'success', data: { caps: [] } }
     bindings.current = { status: 'success', data: { entries: [] } }
-    linkedSlots.current = {
-      status: 'success',
-      data: [
-        {
-          state: 'ok',
-          slotRef: 'device-manager:linked-devices',
-          slot: 'linked-devices',
-          authority: 'device-manager:_linkedDeviceIds',
-          activation: null,
-          value: { slot: 'linked-devices', deviceIds: [303] },
-          sources: [{ deviceId: 303, name: 'Porch light', health: 'ok' }],
-        },
-      ],
-    }
+    linkedSlots.current = slot
     customization.current = {
       status: 'success',
       data: { state: 'loaded', view: null },
@@ -1101,11 +1114,99 @@ describe('CustomizeTab — linked devices are rows of the one table', () => {
     }
     renderTab()
     const table = screen.getByTestId('customize-table')
-    const row = SPREAD_ROW('customize-manage-linked-devices')
-    expect(row.textContent).toMatch(/Linked devices|1 linked/)
-    expect(row.textContent).toMatch(/Porch light/)
-    // The only "Linked devices" text is inside the table: no separate section below it.
-    for (const node of screen.getAllByText('Linked devices'))
-      expect(table.contains(node)).toBe(true)
+    expect(table.textContent).not.toMatch(/Linked devices/)
+    expect(screen.queryByTestId('customize-manage-linked-devices')).toBeNull()
+    const heading = screen.getByRole('heading', { name: 'Linked devices' })
+    expect(table.contains(heading)).toBe(false)
+    expect(screen.getByText('Porch light')).toBeTruthy()
+  })
+  it('a non-camera shows no linked-devices table', () => {
+    device.current = FEEDER
+    composable.current = { status: 'success', data: { caps: [] } }
+    bindings.current = { status: 'success', data: { entries: [] } }
+    linkedSlots.current = slot
+    customization.current = {
+      status: 'success',
+      data: { state: 'loaded', view: null },
+      refetch: vi.fn(async () => undefined),
+    }
+    renderTab()
+    expect(screen.queryByRole('heading', { name: 'Linked devices' })).toBeNull()
+    expect(screen.queryByText('Porch light')).toBeNull()
+  })
+})
+
+describe('CustomizeTab — lists, plurals, linked actions', () => {
+  it('a lists row shows the count and the item names', () => {
+    composable.current = { status: 'success', data: { caps: [{ cap: 'consumables' }] } }
+    bindings.current = { status: 'success', data: { entries: [] } }
+    wireable.current = { status: 'success', data: { caps: [] } }
+    customization.current = {
+      ...PRESENT,
+      data: loadedRead({ addonId: FEEDER.addonId, stableId: FEEDER.stableId }, [
+        {
+          kind: 'fields',
+          cap: 'consumables',
+          fields: {},
+          items: {
+            salt: {
+              label: 'Salt',
+              fields: { status: { kind: 'expression', expr: '0', bindings: {} } },
+            },
+            rinse: {
+              label: 'Rinse aid',
+              fields: { status: { kind: 'expression', expr: '0', bindings: {} } },
+            },
+          },
+        },
+      ]),
+    }
+    renderTab()
+    const row = SPREAD_ROW('customize-manage-consumables.items')
+    const shown = row.querySelector('[data-testid="list-value-shown"]')
+    expect(shown?.textContent).toMatch(/2 items: Salt, Rinse aid/)
+    expect(row.textContent).not.toMatch(/\[object Object\]/)
+    expect(row.textContent).not.toMatch(/Customized/)
+  })
+  it('one command is singular and several are plural', () => {
+    device.current = { ...FEEDER, id: 55, type: 'media-player', name: 'TV' }
+    composable.current = { status: 'success', data: { caps: [] } }
+    bindings.current = { status: 'success', data: { entries: [] } }
+    remoteConfig.current = {
+      status: 'success',
+      data: { bindings: { a: {} }, layoutTemplateId: null },
+    }
+    customization.current = {
+      status: 'success',
+      data: { state: 'loaded', view: null },
+      refetch: vi.fn(async () => undefined),
+    }
+    renderTab()
+    expect(SPREAD_ROW('customize-manage-remote.remote').textContent).toMatch(/1 command/)
+    expect(SPREAD_ROW('customize-manage-remote.remote').textContent).not.toMatch(/1 commands/)
+  })
+  it('linked actions are rows of the Customize table', () => {
+    device.current = CAMERA
+    composable.current = { status: 'success', data: { caps: [] } }
+    bindings.current = { status: 'success', data: { entries: [] } }
+    actionList.current = {
+      data: [
+        { id: 'internal:feed', name: 'Feed the dog', readOnly: false, addonId: 'automation' },
+        { id: 'ha:movie', name: 'Movie night', readOnly: true, addonId: 'provider-homeassistant' },
+      ],
+    }
+    actionLinks.current = { data: { deviceId: 103, actionIds: ['internal:feed', 'ha:movie'] } }
+    customization.current = {
+      status: 'success',
+      data: { state: 'loaded', view: null },
+      refetch: vi.fn(async () => undefined),
+    }
+    renderTab()
+    const table = screen.getByTestId('customize-table')
+    expect(table.textContent).toMatch(/Linked actions/)
+    expect(table.textContent).toMatch(/Feed the dog/)
+    expect(table.textContent).toMatch(/Movie night/)
+    expect(table.textContent).toMatch(/Internal/)
+    expect(screen.queryByTestId('linked-actions')).toBeNull()
   })
 })

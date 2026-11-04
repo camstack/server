@@ -6,9 +6,8 @@
  * ScalarOverrideDialog; an event, a list or an extension opens its own editor
  * (D315: unread applicability is said, never read as "nothing to add").
  */
-import type { DeviceInfo } from '@camstack/types'
+import { type DeviceInfo, DeviceType } from '@camstack/types'
 import {
-  Badge,
   DataTable,
   type DataColumn,
   Dropdown,
@@ -46,14 +45,23 @@ import {
   ExtraActionsCell,
   type ExtraRow,
   ExtraRowDialog,
-  LinkedSourceCell,
-  LinkedValueCell,
   OffCatalogSourceCell,
   OffCatalogValueCell,
   offCatalogTitle,
 } from './ExtraRowCells'
+import { KeyedValueCell } from './KeyedValueCell'
+import {
+  isLinkedActionLine,
+  LinkedActionButtons,
+  LinkedActionItem,
+  LinkedActionSource,
+  LinkedActionValue,
+  type LinkedActionsState,
+  type LinkedActionTableLine,
+  linkedActionTableLines,
+  useLinkedActions,
+} from '../kinds/LinkedActionsCard'
 import { ManagedRowDialog } from './ManagedRowDialog'
-import { useLinkedRow } from './use-linked-row'
 import {
   ScalarActionsCell,
   ScalarDialogHost,
@@ -69,13 +77,14 @@ export interface CustomizeTableProps {
   readonly defaults: Known<readonly DefaultConsumable[]>
 }
 
-/** The catalog sections, then the two groups that are not catalog targets. */
-type TableSection = CustomizeSection | 'offCatalog' | 'linked'
+/** The catalog sections, then field groups the catalog does not know. */
+type TableSection = CustomizeSection | 'offCatalog'
 
 type TableLine =
   | { readonly kind: 'section'; readonly section: TableSection }
   | { readonly kind: 'row'; readonly plan: CustomizeRowPlan }
   | { readonly kind: 'extra'; readonly row: ExtraRow }
+  | LinkedActionTableLine
 
 function lineKey(line: TableLine): string {
   switch (line.kind) {
@@ -85,12 +94,23 @@ function lineKey(line: TableLine): string {
       return line.plan.spec.key
     case 'extra':
       return line.row.key
+    case 'actionSection':
+      return 'action-section'
+    case 'actionPending':
+      return 'action-pending'
+    case 'actionEmpty':
+      return 'action-empty'
+    case 'actionError':
+      return 'action-error'
+    case 'actionEntry':
+      return `action:${line.entry.id}`
   }
 }
 
 function buildLines(
   active: readonly CustomizeRowPlan[],
   extras: readonly ExtraRow[],
+  actions: readonly LinkedActionTableLine[],
 ): readonly TableLine[] {
   const catalog = activeSections(active).flatMap((section) => [
     { kind: 'section' as const, section },
@@ -98,24 +118,33 @@ function buildLines(
       .filter((plan) => plan.spec.section === section)
       .map((plan) => ({ kind: 'row' as const, plan })),
   ])
-  const groups: readonly (readonly [TableSection, ExtraRow['kind']])[] = [
-    ['offCatalog', 'offCatalog'],
-    ['linked', 'linked'],
-  ]
-  const rest = groups.flatMap(([section, kind]) => {
-    const rows = extras.filter((row) => row.kind === kind)
-    return rows.length === 0
+  const offCatalog = extras.filter((row) => row.kind === 'offCatalog')
+  const rest =
+    offCatalog.length === 0
       ? []
       : [
-          { kind: 'section' as const, section },
-          ...rows.map((row) => ({ kind: 'extra' as const, row })),
+          { kind: 'section' as const, section: 'offCatalog' as const },
+          ...offCatalog.map((row) => ({ kind: 'extra' as const, row })),
         ]
-  })
-  return [...catalog, ...rest]
+  return [...catalog, ...rest, ...actions]
 }
 
 export function CustomizeTable(props: CustomizeTableProps): ReactNode {
-  const { device, handle, facts } = props
+  if (props.device.type === DeviceType.Camera) return <CameraCustomizeTable {...props} />
+  return <CustomizeTableBody {...props} actions={null} />
+}
+
+function CameraCustomizeTable(props: CustomizeTableProps): ReactNode {
+  const actions = useLinkedActions(props.device)
+  return <CustomizeTableBody {...props} actions={actions} />
+}
+
+interface CustomizeTableBodyProps extends CustomizeTableProps {
+  readonly actions: LinkedActionsState | null
+}
+
+function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
+  const { device, handle, facts, actions } = props
   const { t, i18n } = useTranslation()
   const [open, setOpen] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -139,34 +168,26 @@ export function CustomizeTable(props: CustomizeTableProps): ReactNode {
         return true
     }
   }
-  const linkedRead = useLinkedRow(device)
   const offCatalog = useMemo(
     () => offCatalogCards(current, catalogCoveredCaps(device.type)),
     [current, device.type],
   )
-  const extras: readonly ExtraRow[] = [
-    ...offCatalog.map((card) => ({
-      kind: 'offCatalog' as const,
-      key: `offcatalog.${card.cap}`,
-      card,
-    })),
-    ...(linkedRead.kind === 'hidden'
-      ? []
-      : [{ kind: 'linked' as const, key: 'linked-devices' as const }]),
-  ]
+  const extras: readonly ExtraRow[] = offCatalog.map((card) => ({
+    kind: 'offCatalog' as const,
+    key: `offcatalog.${card.cap}`,
+    card,
+  }))
   const split = splitRows(planRows(specs, facts, isLinked))
-  if (specs.length === 0 && extras.length === 0) return null
+  const actionLines = actions === null ? [] : linkedActionTableLines(actions)
+  if (specs.length === 0 && extras.length === 0 && actionLines.length === 0) return null
   const titleOf = (spec: CustomizeRowSpec): string =>
     spec.kind === 'scalar'
       ? scalarRowTitle(t, i18n.language, spec.cap, spec.target)
       : t(`customize.table.caps.${spec.cap}`)
   const openPlan = [...split.active, ...split.addable].find((plan) => plan.spec.key === open)
-  const lines = buildLines(split.active, extras)
+  const lines = buildLines(split.active, extras, actionLines)
   const openExtra = extras.find((row) => row.key === open)
-  const extraTitle = (row: ExtraRow): string =>
-    row.kind === 'linked'
-      ? t('customize.table.section.linked')
-      : offCatalogTitle(i18n.language, row.card)
+  const extraTitle = (row: ExtraRow): string => offCatalogTitle(i18n.language, row.card)
   const scalarProps = (
     spec: CustomizeRowSpec,
   ): { cap: string; target: CustomizeRowSpec['target'] } => ({
@@ -180,8 +201,9 @@ export function CustomizeTable(props: CustomizeTableProps): ReactNode {
       header: t('customize.table.col.item'),
       notSortableReason: t('customize.table.col.item'),
       nowrap: false,
-      render: (line) =>
-        line.kind === 'section' ? (
+      render: (line) => {
+        if (isLinkedActionLine(line)) return <LinkedActionItem line={line} />
+        return line.kind === 'section' ? (
           <span className="text-[11px] font-medium uppercase tracking-wide text-foreground-muted">
             {t(`customize.table.section.${line.section}`)}
           </span>
@@ -189,32 +211,33 @@ export function CustomizeTable(props: CustomizeTableProps): ReactNode {
           <span className="text-xs text-foreground">
             {line.kind === 'row' ? titleOf(line.plan.spec) : extraTitle(line.row)}
           </span>
-        ),
+        )
+      },
     },
     {
       key: 'value',
       header: t('customize.table.col.value'),
       notSortableReason: t('customize.table.col.value'),
       render: (line) => {
+        if (isLinkedActionLine(line)) return <LinkedActionValue line={line} />
         if (line.kind === 'section') return null
-        if (line.kind === 'extra') {
-          return line.row.kind === 'linked' ? (
-            <LinkedValueCell read={linkedRead} />
-          ) : (
-            <OffCatalogValueCell device={device} card={line.row.card} />
-          )
-        }
+        if (line.kind === 'extra')
+          return <OffCatalogValueCell device={device} card={line.row.card} />
         const { spec } = line.plan
         if (spec.kind === 'scalar') {
           return <ScalarValueCell device={device} handle={handle} {...scalarProps(spec)} />
+        }
+        if (spec.kind === 'keyed') {
+          return (
+            <KeyedValueCell device={device} handle={handle} spec={spec} defaults={props.defaults} />
+          )
         }
         if (spec.kind === 'event') {
           return (
             <EventValueCell spec={spec} device={device} handle={handle} sensors={props.sensors} />
           )
         }
-        if (spec.kind === 'config') return <ConfigValueCell spec={spec} device={device} />
-        return <Badge>{t('customize.table.customized')}</Badge>
+        return <ConfigValueCell spec={spec} device={device} />
       },
     },
     {
@@ -223,14 +246,9 @@ export function CustomizeTable(props: CustomizeTableProps): ReactNode {
       notSortableReason: t('customize.table.col.source'),
       nowrap: false,
       render: (line) => {
+        if (isLinkedActionLine(line)) return <LinkedActionSource line={line} />
         if (line.kind === 'section') return null
-        if (line.kind === 'extra') {
-          return line.row.kind === 'linked' ? (
-            <LinkedSourceCell read={linkedRead} />
-          ) : (
-            <OffCatalogSourceCell card={line.row.card} />
-          )
-        }
+        if (line.kind === 'extra') return <OffCatalogSourceCell card={line.row.card} />
         const { spec } = line.plan
         if (spec.kind === 'event') {
           return (
@@ -248,6 +266,9 @@ export function CustomizeTable(props: CustomizeTableProps): ReactNode {
       notSortableReason: t('customize.table.col.actions'),
       align: 'right',
       render: (line) => {
+        if (isLinkedActionLine(line)) {
+          return actions === null ? null : <LinkedActionButtons line={line} state={actions} />
+        }
         if (line.kind === 'section') return null
         if (line.kind === 'extra') {
           return (
@@ -321,7 +342,11 @@ export function CustomizeTable(props: CustomizeTableProps): ReactNode {
             rowKey={lineKey}
             bordered={false}
             minWidthPx={320}
-            rowClassName={(line) => (line.kind === 'section' ? 'bg-surface-hover' : undefined)}
+            rowClassName={(line) =>
+              line.kind === 'section' || line.kind === 'actionSection'
+                ? 'bg-surface-hover'
+                : undefined
+            }
           />
         )}
         {answered && lines.length === 0 && !split.pending && split.unknownReason === null && (
@@ -353,6 +378,7 @@ export function CustomizeTable(props: CustomizeTableProps): ReactNode {
           onClose={() => setOpen(null)}
         />
       )}
+      {actions?.dialog}
       {openPlan !== undefined && openPlan.spec.kind !== 'scalar' && (
         <ManagedRowDialog
           key={openPlan.spec.key}

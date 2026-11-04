@@ -27,6 +27,7 @@ import { extractOrchestratorCameraSettings } from '../../../pipeline/cameras/cam
 import type { CameraSensorsRead } from '../use-camera-sensors-presence'
 import { applySpan, type SpanFormSource } from './event-form'
 import { EventSpanDialog } from './EventSpanDialog'
+import { formatCustomizeSeconds } from './format-customize-duration'
 import { motionNowStatus } from './event-status-text'
 import { eventBadgeKey, type SpanCatalogView } from './event-targets'
 
@@ -160,7 +161,7 @@ export function EventSpanCard({
               )}
               <p className="text-[11px] text-foreground-subtle">
                 {t('customize.event.timeoutSeconds', {
-                  seconds: timeoutMs / 1000,
+                  duration: formatCustomizeSeconds(timeoutMs / 1000),
                 })}
               </p>
               {error !== null && (
@@ -234,7 +235,10 @@ export function MotionNowLine({ deviceId }: MotionNowLineProps): ReactNode {
       : `customize.event.motionNow.${status.kind}`
   return (
     <p role="status" className="text-xs text-foreground">
-      {t(key, status.seconds === null ? undefined : { seconds: status.seconds })}
+      {t(
+        key,
+        status.seconds === null ? undefined : { duration: formatCustomizeSeconds(status.seconds) },
+      )}
     </p>
   )
 }

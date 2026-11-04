@@ -1,7 +1,7 @@
 /**
- * Linked actions (D356): the actions an operator chose to show on this camera.
- * Nothing is linked on its own; the picker lists what exists and the operator
- * ticks. Reads and writes `actions.getLinks` / `actions.setLinks`.
+ * Linked actions (D356), as rows of the Customize table. Nothing is linked
+ * on its own; the picker lists what exists and the operator ticks. Reads and
+ * writes `actions.getLinks` / `actions.setLinks`.
  */
 import type { ActionEntry, DeviceInfo } from '@camstack/types'
 import {
@@ -22,28 +22,57 @@ import {
   useActionsSetLinks,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
-import { ListChecks, Play, X } from 'lucide-react'
+import { Play, X } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AssignmentSection } from '../assignments/AssignmentSection'
 
-export interface LinkedActionsCardProps {
-  readonly device: DeviceInfo
+export interface LinkedActionsState {
+  readonly ready: boolean
+  readonly rows: readonly ActionEntry[]
+  readonly available: readonly ActionEntry[]
+  readonly error: string | null
+  readonly saving: boolean
+  readonly running: boolean
+  readonly deviceName: string
+  readonly openPicker: () => void
+  readonly unlink: (id: string) => void
+  readonly run: (id: string) => void
+  readonly dialog: ReactNode
 }
 
-const ROW = 'flex items-center gap-2 px-3 py-2 text-sm sm:px-4'
-const NOTE = 'list-none px-3 py-2 text-xs text-foreground-subtle sm:px-4'
+export type LinkedActionTableLine =
+  | { readonly kind: 'actionSection' }
+  | { readonly kind: 'actionPending' }
+  | { readonly kind: 'actionEmpty' }
+  | { readonly kind: 'actionError'; readonly message: string }
+  | { readonly kind: 'actionEntry'; readonly entry: ActionEntry }
 
-function SourceBadge({ entry }: { readonly entry: ActionEntry }): ReactNode {
-  const { t } = useTranslation()
-  return entry.readOnly ? (
-    <Badge variant="info">{entry.addonId}</Badge>
-  ) : (
-    <Badge variant="primary">{t('actions.source.internal', 'Internal')}</Badge>
+export function linkedActionTableLines(
+  state: Pick<LinkedActionsState, 'ready' | 'rows' | 'error'>,
+): readonly LinkedActionTableLine[] {
+  const error = state.error === null ? [] : [{ kind: 'actionError' as const, message: state.error }]
+  if (!state.ready) return [{ kind: 'actionSection' }, { kind: 'actionPending' }, ...error]
+  if (state.rows.length === 0) {
+    return [{ kind: 'actionSection' }, { kind: 'actionEmpty' }, ...error]
+  }
+  return [
+    { kind: 'actionSection' },
+    ...state.rows.map((entry) => ({ kind: 'actionEntry' as const, entry })),
+    ...error,
+  ]
+}
+
+export function isLinkedActionLine(line: { readonly kind: string }): line is LinkedActionTableLine {
+  return (
+    line.kind === 'actionSection' ||
+    line.kind === 'actionPending' ||
+    line.kind === 'actionEmpty' ||
+    line.kind === 'actionError' ||
+    line.kind === 'actionEntry'
   )
 }
 
-export function LinkedActionsCard({ device }: LinkedActionsCardProps): ReactNode {
+export function useLinkedActions(device: DeviceInfo): LinkedActionsState {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const actions = useActionsList({})
@@ -53,91 +82,39 @@ export function LinkedActionsCard({ device }: LinkedActionsCardProps): ReactNode
   const refresh = (): void => void queryClient.invalidateQueries({ queryKey: [['actions']] })
   const save = useActionsSetLinks({ onSuccess: refresh })
   const run = useActionsRun({ onSuccess: refresh })
-
   const entries: readonly ActionEntry[] = actions.data ?? []
   const linkedIds: readonly string[] = links.data?.actionIds ?? []
-  const rows = linkedIds.flatMap((id) => entries.filter((e) => e.id === id))
-  const available = entries.filter((e) => !linkedIds.includes(e.id))
+  const rows = linkedIds.flatMap((id) => entries.filter((entry) => entry.id === id))
+  const available = entries.filter((entry) => !linkedIds.includes(entry.id))
   const ready = links.data !== undefined && actions.data !== undefined
-
   const write = (actionIds: readonly string[]): void =>
     save.mutate({ deviceId: device.id, actionIds: [...actionIds] })
-
-  const open = (): void => {
+  const openPicker = (): void => {
     setDraft([])
     setPicking(true)
   }
   const toggle = (id: string): void =>
-    setDraft(draft.includes(id) ? draft.filter((x) => x !== id) : [...draft, id])
-
-  return (
-    <>
-      <AssignmentSection
-        id="linked-actions"
-        icon={ListChecks}
-        title={t('customize.linkedActions.title', 'Linked actions')}
-        addLabel={t('customize.linkedActions.add', 'Add')}
-        onAdd={ready && available.length > 0 ? open : undefined}
-        addDisabled={save.isPending}
-      >
-        {!ready && (
-          <li className={NOTE}>
-            {t('customize.linkedActions.loading', 'Checking linked actions.')}
-          </li>
-        )}
-        {ready && rows.length === 0 && (
-          <li className={NOTE}>{t('customize.linkedActions.none', 'None linked.')}</li>
-        )}
-        {rows.map((entry) => (
-          <li key={entry.id} className={ROW}>
-            <span className="min-w-0 flex-1 truncate">{entry.name}</span>
-            <SourceBadge entry={entry} />
-            <IconButton
-              icon={Play}
-              variant="ghost"
-              size="sm"
-              aria-label={t('customize.linkedActions.run', 'Run {{name}}', { name: entry.name })}
-              disabled={run.isPending}
-              onClick={() => run.mutate({ actionId: entry.id, deviceId: device.id })}
-            />
-            <IconButton
-              icon={X}
-              variant="ghost"
-              size="sm"
-              aria-label={t('customize.linkedActions.unlink', 'Unlink {{name}}', {
-                name: entry.name,
-              })}
-              disabled={save.isPending}
-              onClick={() => write(linkedIds.filter((id) => id !== entry.id))}
-            />
-          </li>
-        ))}
-        {save.error !== null && (
-          <li role="alert" className="list-none px-3 py-2 text-xs text-danger sm:px-4">
-            {save.error.message}
-          </li>
-        )}
-        <li className={NOTE}>
-          {t(
-            'customize.linkedActions.hint',
-            'Linked actions show as buttons on this camera. Nothing is linked unless you pick it.',
-          )}
-        </li>
-      </AssignmentSection>
+    setDraft(draft.includes(id) ? draft.filter((item) => item !== id) : [...draft, id])
+  const error = save.error === null || save.error === undefined ? null : save.error.message
+  return {
+    ready,
+    rows,
+    available,
+    error,
+    saving: save.isPending,
+    running: run.isPending,
+    deviceName: device.name,
+    openPicker,
+    unlink: (id) => write(linkedIds.filter((linked) => linked !== id)),
+    run: (id) => run.mutate({ actionId: id, deviceId: device.id }),
+    dialog: (
       <Dialog open={picking} onOpenChange={setPicking}>
         <DialogContent placement="sheet-on-mobile">
           <DialogHeader>
             <DialogTitle>
-              {t('customize.linkedActions.pickTitle', 'Link actions to {{name}}', {
-                name: device.name,
-              })}
+              {t('customize.linkedActions.pickTitle', { name: device.name })}
             </DialogTitle>
-            <DialogDescription>
-              {t(
-                'customize.linkedActions.pickHint',
-                'Pick the actions to link. Nothing is chosen for you.',
-              )}
-            </DialogDescription>
+            <DialogDescription>{t('customize.linkedActions.pickHint')}</DialogDescription>
           </DialogHeader>
           <DialogBody>
             <ul className="space-y-1">
@@ -166,11 +143,110 @@ export function LinkedActionsCard({ device }: LinkedActionsCardProps): ReactNode
                 setPicking(false)
               }}
             >
-              {t('customize.linkedActions.addN', 'Add {{count}}', { count: draft.length })}
+              {t('customize.linkedActions.addN', { count: draft.length })}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    ),
+  }
+}
+
+function SourceBadge({ entry }: { readonly entry: ActionEntry }): ReactNode {
+  const { t } = useTranslation()
+  return entry.readOnly ? (
+    <Badge variant="info">{entry.addonId}</Badge>
+  ) : (
+    <Badge variant="primary">{t('actions.source.internal', 'Internal')}</Badge>
+  )
+}
+
+function Muted({ children }: { readonly children: ReactNode }): ReactNode {
+  return <span className="text-xs text-foreground-subtle">{children}</span>
+}
+
+export function LinkedActionItem({ line }: { readonly line: LinkedActionTableLine }): ReactNode {
+  const { t } = useTranslation()
+  switch (line.kind) {
+    case 'actionSection':
+      return (
+        <span
+          className="text-[11px] font-medium uppercase tracking-wide text-foreground-muted"
+          title={t('customize.linkedActions.hint')}
+        >
+          {t('customize.table.section.actions')}
+        </span>
+      )
+    case 'actionPending':
+      return <Muted>{t('customize.linkedActions.loading')}</Muted>
+    case 'actionEmpty':
+      return <Muted>{t('customize.linkedActions.none')}</Muted>
+    case 'actionError':
+      return (
+        <span role="alert" className="text-xs text-danger break-words">
+          {line.message}
+        </span>
+      )
+    case 'actionEntry':
+      return <span className="text-xs text-foreground">{line.entry.name}</span>
+  }
+}
+
+export function LinkedActionValue({ line }: { readonly line: LinkedActionTableLine }): ReactNode {
+  const { t } = useTranslation()
+  if (line.kind === 'actionEntry') {
+    const steps = line.entry.steps
+    if (steps === undefined) return <Muted>—</Muted>
+    return (
+      <span className="text-xs text-foreground">
+        {t('customize.linkedActions.steps', { count: steps.length })}
+      </span>
+    )
+  }
+  if (line.kind === 'actionPending') return <Muted>{t('customize.linkedActions.loading')}</Muted>
+  return null
+}
+
+export function LinkedActionSource({ line }: { readonly line: LinkedActionTableLine }): ReactNode {
+  if (line.kind !== 'actionEntry') return null
+  return <SourceBadge entry={line.entry} />
+}
+
+export function LinkedActionButtons({
+  line,
+  state,
+}: {
+  readonly line: LinkedActionTableLine
+  readonly state: LinkedActionsState
+}): ReactNode {
+  const { t } = useTranslation()
+  if (line.kind === 'actionSection' && state.ready && state.available.length > 0) {
+    return (
+      <Button variant="outline" size="sm" disabled={state.saving} onClick={state.openPicker}>
+        {t('customize.linkedActions.add')}
+      </Button>
+    )
+  }
+  if (line.kind !== 'actionEntry') return null
+  const { entry } = line
+  return (
+    <span className="flex items-center justify-end gap-1">
+      <IconButton
+        icon={Play}
+        variant="ghost"
+        size="sm"
+        aria-label={t('customize.linkedActions.run', { name: entry.name })}
+        disabled={state.running}
+        onClick={() => state.run(entry.id)}
+      />
+      <IconButton
+        icon={X}
+        variant="ghost"
+        size="sm"
+        aria-label={t('customize.linkedActions.unlink', { name: entry.name })}
+        disabled={state.saving}
+        onClick={() => state.unlink(entry.id)}
+      />
+    </span>
   )
 }

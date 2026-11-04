@@ -2424,7 +2424,9 @@
       "checking": "Controllo…",
       "spanOpen": "Intervallo aperto",
       "spanQuiet": "Intervallo quieto",
-      "timeoutSeconds": "Timeout {{seconds}} s",
+      "durationSeconds_one": "{{count}} secondo",
+      "durationSeconds_other": "{{count}} secondi",
+      "timeoutSeconds": "Timeout {{duration}}",
       "badge": {
         "active": "Attivo",
         "stale": "Non aggiornato",
@@ -2442,7 +2444,7 @@
         "pending": "Ora: …",
         "unknown": "Ora: sconosciuto",
         "quiet": "Ora: nessun movimento",
-        "active": "Ora: movimento da {{seconds}} s"
+        "active": "Ora: movimento da {{duration}}"
       },
       "doorbellLast": {
         "none": "Nessun campanello dal {{when}}",
@@ -2823,7 +2825,10 @@
       "hint": "Le azioni collegate compaiono come pulsanti su questa telecamera. Non viene collegato nulla se non lo scegli tu.",
       "pickTitle": "Collega azioni a {{name}}",
       "pickHint": "Scegli le azioni da collegare. Non viene scelto nulla al posto tuo.",
-      "addN": "Aggiungi {{count}}"
+      "addN_one": "Aggiungi {{count}} azione",
+      "addN_other": "Aggiungi {{count}} azioni",
+      "steps_one": "{{count}} passo",
+      "steps_other": "{{count}} passi"
     },
     "table": {
       "title": "Personalizzazioni",
@@ -2842,6 +2847,7 @@
         "lists": "Elenchi",
         "extensions": "Estensioni",
         "offCatalog": "Altri campi",
+        "actions": "Azioni collegate",
         "linked": "Dispositivi collegati"
       },
       "caps": {
@@ -2872,10 +2878,15 @@
       "noSource": "Nessuna origine",
       "notConfigured": "Non configurato",
       "noPresets": "Nessun preset",
-      "commandsCount": "{{count}} comandi",
-      "presetsCount": "{{count}} preset",
-      "fieldsCount": "{{count}} campi",
-      "linkedCount": "{{count}} collegati"
+      "commandsCount_one": "{{count}} comando",
+      "commandsCount_other": "{{count}} comandi",
+      "presetsCount_one": "{{count}} preset",
+      "presetsCount_other": "{{count}} preset",
+      "fieldsCount_one": "{{count}} campo",
+      "fieldsCount_other": "{{count}} campi",
+      "listCount_one": "{{count}} elemento",
+      "listCount_other": "{{count}} elementi",
+      "listNone": "Nessuno"
     }
   },
   "compositionEditor": {

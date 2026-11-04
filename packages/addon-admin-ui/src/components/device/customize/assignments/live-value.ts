@@ -13,6 +13,7 @@ import {
 import type { QueryErrorLike } from '../known'
 import { readPath } from '../source-picker-model'
 import i18n from '../../../../i18n/index'
+import { labelsFromList } from '../table/list-value'
 
 export interface LiveValueTarget {
   readonly deviceId: number
@@ -121,6 +122,12 @@ export function liveValueDisplay(
       if (typeof raw === 'boolean') return booleanDisplay(raw, target, labels)
       if (typeof raw === 'number') return numberDisplay(raw, value, target)
       if (typeof raw === 'string') return { text: raw, tone: 'normal' }
+      const itemLabels = labelsFromList(raw)
+      if (itemLabels !== null) {
+        if (itemLabels.length === 0) return { text: '—', tone: 'muted' }
+        const text = itemLabels.join(', ')
+        return { text, title: text, tone: 'normal' }
+      }
       return { text: JSON.stringify(raw), tone: 'normal' }
     }
   }

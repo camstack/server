@@ -3,7 +3,7 @@
  * (D663). It stores nothing: the assignment cards merge a feature into the
  * block, identity writes the authorities that already exist, links are the
  * D648 slot. What it claims about the block is one of five answered states
- * (D315). Order: identity, status, then the one table (catalog rows, other fields, linked devices — D944).
+ * (D315). Order: identity, status, the one table, then a camera's linked-devices table.
  */
 import {
   COMPOSER_ADDON_ID,
@@ -24,7 +24,7 @@ import { type CustomizationState, currentComposition } from './customization-rea
 import { IdentityRow } from './IdentityRow'
 import { QuickDetailSaveProvider } from '../quick-detail-save'
 import { CustomizeTable } from './table/CustomizeTable'
-import { LinkedActionsCard } from './kinds/LinkedActionsCard'
+import { LinkedDevicesTable } from './kinds/LinkedDevicesTable'
 import { useCustomization } from './use-customization'
 import { useCameraSensors } from './use-camera-sensors-presence'
 import { useCustomizeFacts } from './use-customize-facts'
@@ -120,7 +120,7 @@ function CustomizeBody({ device, target }: CustomizeBodyProps): ReactNode {
         sensors={cameraSensors}
         defaults={defaultConsumables}
       />
-      {device.type === DeviceType.Camera && <LinkedActionsCard device={device} />}
+      {device.type === DeviceType.Camera && <LinkedDevicesTable device={device} />}
     </div>
   )
 }

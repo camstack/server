@@ -2349,7 +2349,9 @@
       "checking": "Checking…",
       "spanOpen": "Span open",
       "spanQuiet": "Span quiet",
-      "timeoutSeconds": "Timeout {{seconds}} s",
+      "durationSeconds_one": "{{count}} second",
+      "durationSeconds_other": "{{count}} seconds",
+      "timeoutSeconds": "Timeout {{duration}}",
       "badge": {
         "active": "Active",
         "stale": "Stale",
@@ -2367,7 +2369,7 @@
         "pending": "Now: …",
         "unknown": "Now: unknown",
         "quiet": "Now: no motion",
-        "active": "Now: motion for {{seconds}} s"
+        "active": "Now: motion for {{duration}}"
       },
       "doorbellLast": {
         "none": "No ring seen since {{when}}",
@@ -2748,7 +2750,10 @@
       "hint": "Linked actions show as buttons on this camera. Nothing is linked unless you pick it.",
       "pickTitle": "Link actions to {{name}}",
       "pickHint": "Pick the actions to link. Nothing is chosen for you.",
-      "addN": "Add {{count}}"
+      "addN_one": "Add {{count}} action",
+      "addN_other": "Add {{count}} actions",
+      "steps_one": "{{count}} step",
+      "steps_other": "{{count}} steps"
     },
     "table": {
       "title": "Customizations",
@@ -2767,6 +2772,7 @@
         "lists": "Lists",
         "extensions": "Extensions",
         "offCatalog": "Other fields",
+        "actions": "Linked actions",
         "linked": "Linked devices"
       },
       "caps": {
@@ -2797,10 +2803,15 @@
       "noSource": "No source",
       "notConfigured": "Not configured",
       "noPresets": "No presets",
-      "commandsCount": "{{count}} commands",
-      "presetsCount": "{{count}} presets",
-      "fieldsCount": "{{count}} fields",
-      "linkedCount": "{{count}} linked"
+      "commandsCount_one": "{{count}} command",
+      "commandsCount_other": "{{count}} commands",
+      "presetsCount_one": "{{count}} preset",
+      "presetsCount_other": "{{count}} presets",
+      "fieldsCount_one": "{{count}} field",
+      "fieldsCount_other": "{{count}} fields",
+      "listCount_one": "{{count}} item",
+      "listCount_other": "{{count}} items",
+      "listNone": "None"
     }
   },
   "compositionEditor": {

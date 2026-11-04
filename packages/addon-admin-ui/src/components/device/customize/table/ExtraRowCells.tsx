@@ -1,6 +1,6 @@
 /**
  * The cells and the editor dialog of the table's non-catalog rows: a field
- * group the catalog does not know (Other fields) and the linked devices.
+ * group the catalog does not know (Other fields).
  */
 import { compositionSourceKey, type CompositionFieldsCard, type DeviceInfo } from '@camstack/types'
 import {
@@ -20,14 +20,12 @@ import { useTranslation } from 'react-i18next'
 import { FieldsCardBody } from '../cards/FieldsCardBody'
 import { LiveValueText } from '../assignments/LiveValueText'
 import { useCandidateDevices } from '../assignments/use-source-candidates'
-import { LinkedDevicesTable } from '../kinds/LinkedDevicesTable'
 import type { CustomizationHandle } from '../use-customization'
 import { vocabularyCapTitle } from '../vocabulary-field-label'
 import { currentComposition } from '../customization-read'
 import { withoutFeature } from '../customization-save'
 import { useConfirmRemove } from '../use-confirm-remove'
 import { entryReads } from './extra-rows'
-import type { LinkedRowRead } from './use-linked-row'
 
 function Checking(): ReactNode {
   const { t } = useTranslation()
@@ -93,46 +91,11 @@ export function OffCatalogSourceCell({ card }: Pick<FieldsRowProps, 'card'>): Re
   )
 }
 
-interface LinkedCellProps {
-  readonly read: LinkedRowRead
+export interface ExtraRow {
+  readonly kind: 'offCatalog'
+  readonly key: string
+  readonly card: CompositionFieldsCard
 }
-
-export function LinkedValueCell({ read }: LinkedCellProps): ReactNode {
-  const { t } = useTranslation()
-  if (read.kind === 'pending' || read.kind === 'hidden') return <Checking />
-  if (read.kind === 'unknown') {
-    return (
-      <span role="alert" className="text-xs text-warning" title={read.reason}>
-        {t('customize.table.unknown')}
-      </span>
-    )
-  }
-  return read.names.length === 0 ? (
-    <span className="text-xs text-foreground-subtle">{t('customize.assign.none')}</span>
-  ) : (
-    <span className="text-xs text-foreground">
-      {t('customize.table.linkedCount', { count: read.names.length })}
-    </span>
-  )
-}
-
-export function LinkedSourceCell({ read }: LinkedCellProps): ReactNode {
-  const { t } = useTranslation()
-  if (read.kind === 'pending' || read.kind === 'hidden') return <Checking />
-  if (read.kind === 'unknown')
-    return <span className="text-xs text-foreground-subtle">{t('customize.table.unknown')}</span>
-  if (read.names.length === 0)
-    return <span className="text-xs text-foreground-subtle">{t('customize.table.noSource')}</span>
-  return <span className="text-xs text-foreground">{read.names.join(', ')}</span>
-}
-
-export type ExtraRow =
-  | {
-      readonly kind: 'offCatalog'
-      readonly key: string
-      readonly card: CompositionFieldsCard
-    }
-  | { readonly kind: 'linked'; readonly key: 'linked-devices' }
 
 export function offCatalogTitle(language: string, card: CompositionFieldsCard): string {
   return vocabularyCapTitle(card.cap, language)
@@ -224,17 +187,13 @@ export function ExtraRowDialog({
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <DialogBody className="flex flex-col gap-3 p-2 sm:p-4">
-          {row.kind === 'offCatalog' ? (
-            <FieldsCardBody
-              deviceId={device.id}
-              selfName={selfLabel}
-              card={row.card}
-              handle={handle}
-              names={names}
-            />
-          ) : (
-            <LinkedDevicesTable device={device} />
-          )}
+          <FieldsCardBody
+            deviceId={device.id}
+            selfName={selfLabel}
+            card={row.card}
+            handle={handle}
+            names={names}
+          />
         </DialogBody>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>

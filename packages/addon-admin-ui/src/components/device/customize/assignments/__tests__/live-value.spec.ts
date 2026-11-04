@@ -72,6 +72,17 @@ describe('liveValueDisplay', () => {
     expect(liveValueDisplay({ kind: 'value', value: null }, press, LABELS).text).toBe('—')
   })
 
+  it('a list of objects is their names, never the default object tag', () => {
+    const list = { deviceId: 1, cap: 'consumables', path: 'items' }
+    const display = liveValueDisplay(
+      { kind: 'value', value: [{ label: 'Salt' }, { name: 'Rinse aid' }, { foo: 1 }] },
+      list,
+      LABELS,
+    )
+    expect(display.text).toBe('Salt, Rinse aid, {"foo":1}')
+    expect(display.text).not.toContain('[object Object]')
+  })
+
   it('a binary battery prints Normal or Low, not a percentage', () => {
     const battery = { deviceId: 103, cap: 'battery', path: 'level' }
     const normal = liveValueOf(

@@ -5,6 +5,7 @@
 import { DeviceType } from '@camstack/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen } from '@testing-library/react'
+import type { ReactElement } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import '../../../../../i18n'
 
@@ -48,13 +49,62 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   }
 })
 
-import { LinkedActionsCard } from '../LinkedActionsCard'
+import { DataTable, type DataColumn } from '@camstack/ui-library'
+import {
+  LinkedActionButtons,
+  LinkedActionItem,
+  LinkedActionSource,
+  LinkedActionValue,
+  type LinkedActionTableLine,
+  linkedActionTableLines,
+  useLinkedActions,
+} from '../LinkedActionsCard'
+
+function Rows(): ReactElement {
+  const state = useLinkedActions(CAMERA)
+  const columns: readonly DataColumn<LinkedActionTableLine>[] = [
+    {
+      key: 'item',
+      header: 'Item',
+      notSortableReason: 'item',
+      render: (line) => <LinkedActionItem line={line} />,
+    },
+    {
+      key: 'value',
+      header: 'Value',
+      notSortableReason: 'value',
+      render: (line) => <LinkedActionValue line={line} />,
+    },
+    {
+      key: 'source',
+      header: 'Source',
+      notSortableReason: 'source',
+      render: (line) => <LinkedActionSource line={line} />,
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      notSortableReason: 'actions',
+      render: (line) => <LinkedActionButtons line={line} state={state} />,
+    },
+  ]
+  return (
+    <>
+      <DataTable
+        columns={columns}
+        rows={linkedActionTableLines(state)}
+        rowKey={(line) => (line.kind === 'actionEntry' ? line.entry.id : line.kind)}
+      />
+      {state.dialog}
+    </>
+  )
+}
 
 function renderCard() {
   const client = new QueryClient()
   return render(
     <QueryClientProvider client={client}>
-      <LinkedActionsCard device={CAMERA} />
+      <Rows />
     </QueryClientProvider>,
   )
 }
@@ -75,9 +125,9 @@ describe('LinkedActionsCard', () => {
   it('links only the ticked actions, on top of the existing ones', () => {
     linkedIds.current = ['internal:feed']
     renderCard()
-    fireEvent.click(screen.getByRole('button', { name: /Add/ }))
+    fireEvent.click(screen.getByRole('button', { name: /^Add$/ }))
     fireEvent.click(screen.getByText('Movie night'))
-    fireEvent.click(screen.getByRole('button', { name: 'Add 1' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Add 1 action' }))
     expect(setLinks).toHaveBeenCalledWith({
       deviceId: 103,
       actionIds: ['internal:feed', 'ha:movie'],

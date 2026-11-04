@@ -717,7 +717,9 @@ precision), the customization's status (not shown when there is none), one
 card per declared `customize` target the device type can take and does not
 already serve (scalar, keyed array, pulse, span — battery, running-state,
 consumables, doorbell, motion; `apply: 'add'` only, [D944](../decisions/adr-0944-customize-attaches-a-fixed-set-of-extensions-and-everything-else-is-a-built-device.md)),
-then the **Linked devices** table. A card is absent when the device provides
+then, on a camera only, the separate **Linked devices** table. Parameters
+share one table (a list shows its count and item names; linked actions are
+rows of that table). A card is absent when the device provides
 that capability natively. Motion stays on a camera through the camera-sensors
 authority; its source modes (in-addition, confirm, replace) are that
 extension's behaviour. A row is current value, "No override" or the entry, and
@@ -798,11 +800,13 @@ that reason. Hrefs come only from `lib/customization-routes.ts`.
   editable until the stored list was READ. `notForwarded` and `notEnforced`
   are warnings: a camera that cannot enforce a mode says so instead of looking
   suppressed.
-- **Linked devices** is a `<DeviceList mode="generic">` (the same table, search
-  and type filter as the collection pages); "Controls with the camera" is read-only
-  text (there is no per-device backend switch), "Tracked events" writes
-  `trackedDeviceIds`. A device the owner links by structure is listed and cannot
-  be removed. A camera links only what the operator picked (D356).
+- **Linked devices** stays a separate `<DeviceList mode="generic">` and only on
+  a camera (the same table, search and type filter as the collection pages);
+  "Controls with the camera" is read-only text (there is no per-device backend
+  switch), "Tracked events" writes `trackedDeviceIds`. A device the owner links
+  by structure is listed and cannot be removed. A camera links only what the
+  operator picked (D356). The host types are cameras, so a non-camera has no
+  linked-devices slot to show.
 - **Every picker suggests the device's room, and assigns nothing on its own**
   ([D749](../decisions/adr-0749-a-room-suggests-a-container-by-the-child-it-stands-for.md)).
   A card that can add shows "N suggested · <room>" in its header, which opens

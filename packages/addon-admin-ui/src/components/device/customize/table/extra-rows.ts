@@ -1,8 +1,7 @@
 /**
  * The rows of the Customize table that are not catalog targets: a composition
- * field group the catalog has no row for (an "off-catalog" cap), and the
- * device's linked devices. They list in the same table, with the same columns
- * and actions, instead of below it.
+ * field group the catalog has no row for (an "off-catalog" cap). They list in
+ * the same table, with the same columns and actions.
  */
 import {
   type CompositionFieldsCard,
