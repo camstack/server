@@ -4,12 +4,12 @@
 
 # Guards
 
-213 repository guards: 208 in `scripts/`,
+214 repository guards: 209 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (203)
+## Enforced by CI checks (204)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -192,6 +192,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-skill-pack-sync.ts` | The public skill pack and the repository skills do not say the same thing twice. |
 | `scripts/check-slab-writes-held.ts` | A broker packet is written to a socket only through `writeHeld` (D868). |
 | `scripts/check-spec-dynamic-imports-declared.ts` | Dynamic-import guard — **a spec that loads another workspace package at runtime must declare it, or `nx affected` never runs that spec.** ## The failure this catches `addon-pages-wiring.spec.ts` in `server/backend` reaches the benchmark … |
+| `scripts/check-spec-subpaths-resolve.ts` | Spec-load guard — a spec that imports a package SUBPATH must be able to resolve it, under the runner's own alias table. |
 | `scripts/check-specs-are-typechecked.ts` | Spec-typecheck guard — every spec file a package carries is inside the tsc program its `typecheck` script runs. |
 | `scripts/check-specs-have-test-script.ts` | Spec-collection guard — a workspace package that has spec files declares a `test` script that runs them. |
 | `scripts/check-sqlite-files-not-opened-by-fs.ts` | GUARD: a live SQLite file is reached only through its OWNER's connection (D679). |

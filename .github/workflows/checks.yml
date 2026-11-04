@@ -338,6 +338,7 @@ jobs:
             scripts/check-slab-writes-held.ts \
             scripts/check-secret-files-owner-only.ts \
             scripts/check-specs-have-test-script.ts \
+            scripts/check-spec-subpaths-resolve.ts \
             scripts/check-heavy-specs.ts \
             scripts/check-specs-are-typechecked.ts \
             scripts/check-src-imports-stay-in-package.ts \

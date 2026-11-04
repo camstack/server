@@ -1,26 +1,48 @@
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitest/config'
 
 const repoRoot = path.dirname(fileURLToPath(import.meta.url))
 
+/**
+ * One alias per subpath export of `@camstack/types`, read from its
+ * package.json `exports` (the single source), most specific first.
+ *
+ * A string alias `@camstack/types` -> `dist/index.mjs` also matches the prefix
+ * `@camstack/types/<sub>` and rewrites it to `dist/index.mjs/<sub>`, so a spec
+ * importing `@camstack/types/node` (or `/client`, `/enums`, `/catalogs`) failed
+ * to LOAD with "Cannot find package" — it was never collected, which reads as
+ * "no failures". Exact-match regexes make each subpath resolve to its own file.
+ */
+function typesAliases(): { find: RegExp; replacement: string }[] {
+  const pkgDir = path.join(repoRoot, 'packages/types')
+  const pkg = JSON.parse(readFileSync(path.join(pkgDir, 'package.json'), 'utf8')) as {
+    exports: Record<string, string | { import?: string }>
+  }
+  const aliases: { find: RegExp; replacement: string }[] = []
+  for (const [subpath, target] of Object.entries(pkg.exports)) {
+    if (typeof target === 'string' || target.import === undefined) continue
+    const specifier = subpath === '.' ? '@camstack/types' : `@camstack/types/${subpath.slice(2)}`
+    const escaped = specifier.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')
+    aliases.push({
+      find: new RegExp(`^${escaped}$`),
+      replacement: path.join(pkgDir, target.import),
+    })
+  }
+  return aliases
+}
+
 const isAdminUiRun = process.argv.some((arg) => arg.includes('packages/addon-admin-ui'))
 
 export default defineConfig({
   resolve: {
     alias: [
+      ...typesAliases(),
+      /** The desktop shell's alias for ONE source file of `@camstack/types` (see packages/desktop/vitest.config.ts); a root run has no other way to resolve it. */
       {
-        find: '@camstack/types/node-color',
-        replacement: path.join(repoRoot, 'packages/types/dist/node-color.mjs'),
-      },
-      {
-        find: '@camstack/types/addon',
-        replacement: path.join(repoRoot, 'packages/types/dist/addon.mjs'),
-      },
-      {
-        find: '@camstack/types',
-        replacement: path.join(repoRoot, 'packages/types/dist/index.mjs'),
+        find: /^@camstack\/owner-only-file$/,
+        replacement: path.join(repoRoot, 'packages/types/src/util/owner-only-file.ts'),
       },
     ],
   },
