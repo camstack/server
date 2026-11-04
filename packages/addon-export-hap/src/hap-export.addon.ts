@@ -48,6 +48,8 @@ import {
   type ConfigSectionWithValues,
   type ConfigUISchema,
   type ConfigUISchemaWithValues,
+  assertOwnExportInstance,
+  deviceExportStatusInstanceOf,
   defineAddonMigrations,
   deviceExportCapability,
   type DeviceType,
@@ -733,8 +735,11 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     // per-subscription.
     this.disposeSharedRebuildTimers()
 
+    const ownInstance = (instanceId: string | undefined): void =>
+      assertOwnExportInstance('export-hap', EXPORT_HAP_ADDON_ID, instanceId)
     const provider: IDeviceExportProvider = {
-      getStatus: async () => {
+      getStatus: async (input) => {
+        ownInstance(deviceExportStatusInstanceOf(input))
         const anyPaired = Array.from(this.exposed.values()).some((m) =>
           accessoryPaired(m.accessory),
         )
@@ -757,21 +762,36 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       // orchestrator auto-detects motion, intercom, doorbell, PTZ and its
       // accessory children; every other type goes through the capability
       // table. See `mappers/kind.ts` for why the list stops where it does.
-      listSupportedDeviceKinds: async () => [...HAP_EXPORTABLE_DEVICE_TYPES],
-      listExposedDevices: async () =>
-        Array.from(this.exposed.entries()).map(([deviceId, m]) => {
+      listInstances: async () => [
+        { instanceId: EXPORT_HAP_ADDON_ID, name: 'HomeKit', enabled: true, kind: 'hap-bridge' },
+      ],
+      listSupportedDeviceKinds: async ({ instanceId }) => {
+        ownInstance(instanceId)
+        return [...HAP_EXPORTABLE_DEVICE_TYPES]
+      },
+      listExposedDevices: async ({ instanceId }) => {
+        ownInstance(instanceId)
+        return Array.from(this.exposed.entries()).map(([deviceId, m]) => {
           const entry = this.config.exposed.find((e) => e.deviceId === deviceId)
           return {
             deviceId,
             exposedAs: m.accessory.displayName,
             ...(entry?.capabilities ? { capabilities: [...entry.capabilities] } : {}),
           }
-        }),
-      exposeDevice: async ({ deviceId, capabilities }) => this.exposeDevice(deviceId, capabilities),
-      unexposeDevice: async ({ deviceId }) => this.unexposeDevice(deviceId),
+        })
+      },
+      exposeDevice: async ({ instanceId, deviceId, capabilities }) => {
+        ownInstance(instanceId)
+        return this.exposeDevice(deviceId, capabilities)
+      },
+      unexposeDevice: async ({ instanceId, deviceId }) => {
+        ownInstance(instanceId)
+        return this.unexposeDevice(deviceId)
+      },
       // ── Entities beside devices (D968): actions only, as momentary switches.
       listSupportedEntityKinds: async () => ['device', 'action'],
-      listExposedEntities: async () => {
+      listExposedEntities: async ({ instanceId }) => {
+        ownInstance(instanceId)
         await this.actionExports?.reconcile()
         return [
           ...Array.from(this.exposed.entries()).map(([deviceId, m]) => ({
@@ -781,12 +801,14 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
           ...(this.actionExports?.list() ?? []),
         ]
       },
-      exposeEntity: async ({ entity }) => {
+      exposeEntity: async ({ instanceId, entity }) => {
+        ownInstance(instanceId)
         if (entity.kind === 'device') return this.exposeDevice(entity.deviceId)
         if (entity.kind === 'action') return this.requireActionExports().expose(entity.actionId)
         throw new Error('export-hap: a notification target cannot be exported to HomeKit')
       },
-      unexposeEntity: async ({ entity }) => {
+      unexposeEntity: async ({ instanceId, entity }) => {
+        ownInstance(instanceId)
         if (entity.kind === 'device') return this.unexposeDevice(entity.deviceId)
         if (entity.kind === 'action') return this.requireActionExports().unexpose(entity.actionId)
         throw new Error('export-hap: a notification target cannot be exported to HomeKit')

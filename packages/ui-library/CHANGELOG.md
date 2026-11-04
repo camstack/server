@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The export panel names the export instance in every expose and unexpose call
+
 ## [1.2.379] - 2026-11-03
 
 ### Changed

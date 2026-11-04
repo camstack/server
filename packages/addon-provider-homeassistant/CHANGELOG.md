@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Exposing or hiding a device in Home Assistant export changes only the Home Assistant instance it names, not every instance
+
 ## [1.2.654] - 2026-11-03
 
 ### Changed

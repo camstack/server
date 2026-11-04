@@ -61,6 +61,8 @@ import {
   ExportSetupSchema,
   errMsg,
   type IAddonRouteProvider,
+  assertOwnExportInstance,
+  deviceExportStatusInstanceOf,
   type IDeviceExportProvider,
   type IOauthIntegrationProvider,
   oauthIntegrationCapability,
@@ -409,6 +411,9 @@ function hasUnresolvedCredential(entry: unknown): boolean {
 
 // ── Addon ───────────────────────────────────────────────────────────
 
+/** The one export instance this addon serves. */
+const EXPORT_ALEXA_ADDON_ID = 'export-alexa'
+
 export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
   /** Hidden state that is a credential — kept in the keychain, never the blob (D787). */
   protected override readonly secretStatePaths = [
@@ -507,11 +512,17 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     if (records === undefined) {
       throw new Error('export-alexa needs ctx.records — check execution.placement (hub-only)')
     }
-    await records.declare({ skills: alexaSkillsKind, 'skill-links': alexaSkillLinksKind })
+    await records.declare({
+      skills: alexaSkillsKind,
+      'skill-links': alexaSkillLinksKind,
+    })
     this.instances = new RecordIntegrationInstances(records, alexaSkillsKind, {
       description: { instanceMode: 'single', kind: 'skills', canTest: false },
       formSchema: () => this.skillForm(),
-      initialBody: (name): AlexaSkillBody => ({ ...ALEXA_SKILL_DEFAULT_BODY, name }),
+      initialBody: (name): AlexaSkillBody => ({
+        ...ALEXA_SKILL_DEFAULT_BODY,
+        name,
+      }),
       configured: () => true,
       onChanged: async () => {
         await this.refreshRecords()
@@ -619,21 +630,46 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       })
     })
 
+    const ownInstance = (instanceId: string | undefined): void =>
+      assertOwnExportInstance('export-alexa', EXPORT_ALEXA_ADDON_ID, instanceId)
     const deviceExportProvider: IDeviceExportProvider = {
-      getStatus: async () => ({
-        linkState: this.view.linkedAccounts.length > 0 ? 'linked' : 'unlinked',
-        exposedDeviceCount: this.config.exposed.length,
-        setup: await this.buildSetupBlock(),
-      }),
-      listSupportedDeviceKinds: async () => [...SUPPORTED_KINDS],
-      listExposedDevices: async () =>
-        this.config.exposed.map((e) => ({
+      getStatus: async (input) => {
+        ownInstance(deviceExportStatusInstanceOf(input))
+        return {
+          linkState: this.view.linkedAccounts.length > 0 ? 'linked' : 'unlinked',
+          exposedDeviceCount: this.config.exposed.length,
+          setup: await this.buildSetupBlock(),
+        }
+      },
+      listInstances: async () => [
+        {
+          instanceId: EXPORT_ALEXA_ADDON_ID,
+          name: 'Alexa',
+          enabled: true,
+          kind: 'alexa-skill',
+        },
+      ],
+      listSupportedDeviceKinds: async ({ instanceId }) => {
+        ownInstance(instanceId)
+        return [...SUPPORTED_KINDS]
+      },
+      listExposedDevices: async ({ instanceId }) => {
+        ownInstance(instanceId)
+        return this.config.exposed.map((e) => ({
           deviceId: String(e.deviceId),
-        })),
-      exposeDevice: async ({ deviceId }) => this.exposeDevice(deviceId),
-      unexposeDevice: async ({ deviceId }) => this.unexposeDevice(deviceId),
+        }))
+      },
+      exposeDevice: async ({ instanceId, deviceId }) => {
+        ownInstance(instanceId)
+        return this.exposeDevice(deviceId)
+      },
+      unexposeDevice: async ({ instanceId, deviceId }) => {
+        ownInstance(instanceId)
+        return this.unexposeDevice(deviceId)
+      },
       listSupportedEntityKinds: async () => ['device', 'action'],
-      listExposedEntities: async () => {
+      listExposedEntities: async ({ instanceId }) => {
+        ownInstance(instanceId)
         await actionScenes.reconcile()
         return [
           ...this.config.exposed.map((e) => ({
@@ -642,12 +678,14 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
           ...actionScenes.list(),
         ]
       },
-      exposeEntity: async ({ entity }) => {
+      exposeEntity: async ({ instanceId, entity }) => {
+        ownInstance(instanceId)
         if (entity.kind === 'device') return this.exposeDevice(entity.deviceId)
         if (entity.kind === 'action') return actionScenes.expose(entity.actionId)
         throw new Error('export-alexa: a notification target cannot be exported to Alexa')
       },
-      unexposeEntity: async ({ entity }) => {
+      unexposeEntity: async ({ instanceId, entity }) => {
+        ownInstance(instanceId)
         if (entity.kind === 'device') return this.unexposeDevice(entity.deviceId)
         if (entity.kind === 'action') return actionScenes.unexpose(entity.actionId)
         throw new Error('export-alexa: a notification target cannot be exported to Alexa')
@@ -1777,7 +1815,9 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       readRawStored: async (): Promise<Readonly<Record<string, unknown>>> =>
         (await this.ctx.settings?.readAddonStore()) ?? {},
       warn: (message: string) => {
-        this.ctx.logger.warn(message, { tags: { topic: 'export-alexa', phase: 'migration' } })
+        this.ctx.logger.warn(message, {
+          tags: { topic: 'export-alexa', phase: 'migration' },
+        })
       },
       putSkill: (body) => putOnce(skills, body),
       putLinks: (body) => putOnce(links, body),
@@ -1795,7 +1835,9 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
   /** The instance form: how the skill reaches this hub and what each camera carries. */
   private skillForm(): ConfigUISchema {
     return {
-      sections: buildAlexaInstanceSections({ defaults: ALEXA_SKILL_DEFAULT_BODY }),
+      sections: buildAlexaInstanceSections({
+        defaults: ALEXA_SKILL_DEFAULT_BODY,
+      }),
     }
   }
 

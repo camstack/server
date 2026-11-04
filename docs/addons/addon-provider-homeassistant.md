@@ -237,8 +237,10 @@ Named here rather than shipped looking implemented:
 `brokerId → deviceId[]`, in the export addon's own settings, and it is the ONLY
 export-membership store. The per-device Export panel renders one switch per
 enabled broker over it; the `device-export` cap's `exposeDevice` /
-`unexposeDevice` apply to every enabled broker at once, because the cap is the
-common surface across export targets and has no notion of a broker.
+`unexposeDevice` name an `instanceId` - the broker id - and change that
+broker's membership only; there is no write without a target. `listInstances`
+answers the known brokers, and an `instanceId` the addon does not know is
+refused with `export-instance-unknown`.
 
 Field keys in the device Export tab are namespaced `haExport:<deviceId>:<brokerId>`.
 The device-details form flattens fields by `key` across every contributing

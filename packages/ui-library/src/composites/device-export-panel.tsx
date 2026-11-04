@@ -50,7 +50,11 @@
  */
 
 import { useUiText, type UiTextFn } from '../contexts/ui-text'
-import { DeviceExportStatusSchema, ExposedDeviceSchema } from '@camstack/types'
+import {
+  DeviceExportStatusSchema,
+  ExportInstanceSchema,
+  ExposedDeviceSchema,
+} from '@camstack/types'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   Bell,
@@ -70,6 +74,7 @@ import {
   useDeviceExportExposeEntity,
   useDeviceExportGetStatus,
   useDeviceExportListExposedDevices,
+  useDeviceExportListInstances,
   useDeviceExportListExposedEntities,
   useDeviceExportListSupportedDeviceKinds,
   useDeviceExportListSupportedEntityKinds,
@@ -118,6 +123,7 @@ type ExportSetup = NonNullable<DeviceExportStatus['setup']>
 type ExportSetupField = NonNullable<ExportSetup['fields']>[number]
 
 const ExposedDeviceArraySchema = z.array(ExposedDeviceSchema)
+const ExportInstanceArraySchema = z.array(ExportInstanceSchema)
 
 // `deviceManager.listAll` rows are codegen'd with the loose collection
 // wire output. Parse each row into the exact `DeviceItemDevice` shape
@@ -628,6 +634,16 @@ export function DeviceExportPanel({
     queryClient.invalidateQueries({ queryKey: [['deviceExport']] })
   }, [queryClient])
 
+  // A write names the instance it changes. This panel is not per-instance yet:
+  // it acts on every ENABLED instance of the exporter (one for most exporters,
+  // one per broker for Home Assistant). An unanswered query refuses the write.
+  const instancesQuery = useDeviceExportListInstances({ nodeId: 'hub', addonId }, { retry: false })
+  const targetInstanceIds = useMemo<readonly string[] | null>(() => {
+    const parsed = ExportInstanceArraySchema.safeParse(instancesQuery.data)
+    if (!parsed.success) return null
+    return parsed.data.filter((i) => i.enabled).map((i) => i.instanceId)
+  }, [instancesQuery.data])
+
   const exposeMutation = useDeviceExportExposeDevice({ onSuccess: invalidate })
   const unexposeMutation = useDeviceExportUnexposeDevice({ onSuccess: invalidate })
   const exposeEntityMutation = useDeviceExportExposeEntity({ onSuccess: invalidate })
@@ -774,7 +790,12 @@ export function DeviceExportPanel({
       for (const deviceId of deviceIds) {
         const label = labelFor(deviceId)
         try {
-          await mutation.mutateAsync({ deviceId, nodeId: 'hub', addonId })
+          if (targetInstanceIds === null || targetInstanceIds.length === 0) {
+            throw new Error('no export instance is available to act on')
+          }
+          for (const instanceId of targetInstanceIds) {
+            await mutation.mutateAsync({ instanceId, deviceId, nodeId: 'hub', addonId })
+          }
           succeeded.push(label)
         } catch (reason: unknown) {
           const message = reason instanceof Error ? reason.message : String(reason)
@@ -790,7 +811,7 @@ export function DeviceExportPanel({
       setSelectedIds(new Set())
       setRunning(false)
     },
-    [addonId, exposeMutation, unexposeMutation, labelFor, running],
+    [addonId, exposeMutation, unexposeMutation, labelFor, running, targetInstanceIds],
   )
 
   /**
@@ -807,7 +828,12 @@ export function DeviceExportPanel({
       const succeeded: string[] = []
       const failed: BulkFailure[] = []
       try {
-        await mutation.mutateAsync({ entity: row.ref, nodeId: 'hub', addonId })
+        if (targetInstanceIds === null || targetInstanceIds.length === 0) {
+          throw new Error('no export instance is available to act on')
+        }
+        for (const instanceId of targetInstanceIds) {
+          await mutation.mutateAsync({ instanceId, entity: row.ref, nodeId: 'hub', addonId })
+        }
         succeeded.push(row.name)
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err)
@@ -824,7 +850,7 @@ export function DeviceExportPanel({
       setOutcome({ action, total: 1, succeeded, failed })
       setRunning(false)
     },
-    [addonId, exposeEntityMutation, unexposeEntityMutation, running],
+    [addonId, exposeEntityMutation, unexposeEntityMutation, running, targetInstanceIds],
   )
 
   // D875: role / provider filters narrow the rows; "select shown" then acts on

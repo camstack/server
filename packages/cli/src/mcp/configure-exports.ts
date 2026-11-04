@@ -36,6 +36,10 @@ const ExposedSchema = z.array(
   }),
 )
 
+const InstancesSchema = z.array(
+  z.looseObject({ instanceId: z.string(), enabled: z.boolean().optional() }),
+)
+
 async function readProviders(
   client: HubClient,
 ): Promise<readonly string[] | { readonly reason: string }> {
@@ -164,14 +168,27 @@ export function exportSetSpec(client: HubClient): GatedToolSpec<ExportSetArgs> {
       }
     },
     async execute(args) {
-      await client.call(
-        'POST',
-        args.exposed ? 'deviceExport.exposeDevice' : 'deviceExport.unexposeDevice',
-        {
-          addonId: args.addonId,
-          deviceId: String(args.deviceId),
-        },
+      // A write names the instance it changes: every enabled instance of the exporter.
+      const instances = await readQuery(
+        client,
+        'deviceExport.listInstances',
+        { addonId: args.addonId },
+        InstancesSchema,
       )
+      if (!instances.ok) throw new Error(instances.reason)
+      const targets = instances.value.filter((i) => i.enabled !== false)
+      if (targets.length === 0) throw new Error(`${args.addonId} has no enabled export instance`)
+      for (const target of targets) {
+        await client.call(
+          'POST',
+          args.exposed ? 'deviceExport.exposeDevice' : 'deviceExport.unexposeDevice',
+          {
+            addonId: args.addonId,
+            instanceId: target.instanceId,
+            deviceId: String(args.deviceId),
+          },
+        )
+      }
       return {
         exporter: args.addonId,
         deviceId: args.deviceId,

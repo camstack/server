@@ -34,6 +34,7 @@ export default defineFixtures({
     ],
     'deviceExport.getStatus': { linkState: 'linked', exposedDeviceCount: 1 },
     'deviceExport.listSupportedDeviceKinds': ['camera'],
+    'deviceExport.listInstances': [{ instanceId: 'ha_001', name: 'Instance', enabled: true }],
     'deviceExport.listExposedDevices': [{ deviceId: '1', exposedAs: 'Garden cam' }],
     'deviceExport.listSupportedEntityKinds': ['device', 'action', 'notifier'],
     'deviceExport.listExposedEntities': [

@@ -4313,16 +4313,21 @@ export function createCapRouter_deviceExport(
 ) {
   return trpcRouter({
     getStatus: protectedProcedure
-      .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
+      .input(DEVICE_STATUS_METHOD.getStatus.input.loose())
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
+        const { nodeId, addonId, ...methodInput } = input as {
+          nodeId?: string
+          addonId?: string
+        } & Record<string, unknown>
         const p = resolveProvider(
           'device-export',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
+          nodeId,
+          () => getProvider(ctx, addonId),
           createRemoteProxy,
         )
-        return p.getStatus()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.getStatus(methodInput as any)
       }),
     getDeviceSettingsContribution: protectedProcedure
       .input(DEVICE_SETTINGS_CONTRIBUTION_METHODS.getDeviceSettingsContribution.input.loose())
@@ -4375,29 +4380,51 @@ export function createCapRouter_deviceExport(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.applyDeviceSettingsPatch(methodInput as any)
       }),
-    listSupportedDeviceKinds: protectedProcedure
+    listInstances: protectedProcedure
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
+      .output(deviceExportCapability.methods.listInstances.output)
+      .query(async ({ input, ctx }) => {
+        const p = resolveProvider(
+          'device-export',
+          input?.nodeId,
+          () => getProvider(ctx, input?.addonId),
+          createRemoteProxy,
+        )
+        return p.listInstances()
+      }),
+    listSupportedDeviceKinds: protectedProcedure
+      .input(deviceExportCapability.methods.listSupportedDeviceKinds.input.loose())
       .output(deviceExportCapability.methods.listSupportedDeviceKinds.output)
       .query(async ({ input, ctx }) => {
+        const { nodeId, addonId, ...methodInput } = input as {
+          nodeId?: string
+          addonId?: string
+        } & Record<string, unknown>
         const p = resolveProvider(
           'device-export',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
+          nodeId,
+          () => getProvider(ctx, addonId),
           createRemoteProxy,
         )
-        return p.listSupportedDeviceKinds()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.listSupportedDeviceKinds(methodInput as any)
       }),
     listExposedDevices: protectedProcedure
-      .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
+      .input(deviceExportCapability.methods.listExposedDevices.input.loose())
       .output(deviceExportCapability.methods.listExposedDevices.output)
       .query(async ({ input, ctx }) => {
+        const { nodeId, addonId, ...methodInput } = input as {
+          nodeId?: string
+          addonId?: string
+        } & Record<string, unknown>
         const p = resolveProvider(
           'device-export',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
+          nodeId,
+          () => getProvider(ctx, addonId),
           createRemoteProxy,
         )
-        return p.listExposedDevices()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.listExposedDevices(methodInput as any)
       }),
     exposeDevice: adminProcedure
       .input(deviceExportCapability.methods.exposeDevice.input.loose())
@@ -4454,13 +4481,17 @@ export function createCapRouter_deviceExport(
         return fn.call(p)
       }),
     listExposedEntities: protectedProcedure
-      .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
+      .input(deviceExportCapability.methods.listExposedEntities.input.loose())
       .output(deviceExportCapability.methods.listExposedEntities.output)
       .query(async ({ input, ctx }) => {
+        const { nodeId, addonId, ...methodInput } = input as {
+          nodeId?: string
+          addonId?: string
+        } & Record<string, unknown>
         const p = resolveProvider(
           'device-export',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
+          nodeId,
+          () => getProvider(ctx, addonId),
           createRemoteProxy,
         )
         const fn = p.listExposedEntities
@@ -4470,7 +4501,8 @@ export function createCapRouter_deviceExport(
             message: 'Capability "device-export" provider does not implement "listExposedEntities"',
           })
         }
-        return fn.call(p)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return fn.call(p, methodInput as any)
       }),
     exposeEntity: adminProcedure
       .input(deviceExportCapability.methods.exposeEntity.input.loose())

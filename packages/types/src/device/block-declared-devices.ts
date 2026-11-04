@@ -121,21 +121,37 @@ export async function exposeBlockDevices(
   input: ExposeBlockDevicesInput,
 ): Promise<void> {
   for (const exporterAddonId of input.exporterAddonIds) {
-    for (const deviceId of input.deviceIds) {
-      try {
-        await ctx.api.deviceExport.exposeDevice.mutate({
-          addonId: exporterAddonId,
-          deviceId: String(deviceId),
-          nodeId: 'hub',
-        })
-      } catch (err: unknown) {
-        ctx.logger.warn('exposeBlockDevices: expose refused', {
-          tags: { deviceId },
+    const instances = await ctx.api.deviceExport.listInstances
+      .query({ addonId: exporterAddonId })
+      .catch((err: unknown) => {
+        ctx.logger.warn('exposeBlockDevices: exporter instances unreadable', {
           meta: {
             exporterAddonId,
             error: err instanceof Error ? err.message : String(err),
           },
         })
+        return []
+      })
+    for (const instance of instances) {
+      if (!instance.enabled) continue
+      for (const deviceId of input.deviceIds) {
+        try {
+          await ctx.api.deviceExport.exposeDevice.mutate({
+            addonId: exporterAddonId,
+            instanceId: instance.instanceId,
+            deviceId: String(deviceId),
+            nodeId: 'hub',
+          })
+        } catch (err: unknown) {
+          ctx.logger.warn('exposeBlockDevices: expose refused', {
+            tags: { deviceId },
+            meta: {
+              exporterAddonId,
+              instanceId: instance.instanceId,
+              error: err instanceof Error ? err.message : String(err),
+            },
+          })
+        }
       }
     }
   }

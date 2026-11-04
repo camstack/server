@@ -921,6 +921,9 @@ export function mountAllCaps(services: MountAllCapsServices) {
       const first = providers[0]!
       return {
         ...first,
+        listInstances: concatCollection(providers, 'listInstances') as InferProvider<
+          typeof deviceExportCapability
+        >['listInstances'],
         listSupportedDeviceKinds: concatCollection(
           providers,
           'listSupportedDeviceKinds',

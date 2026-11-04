@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1042 shared schemas.**
+**1044 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -1584,8 +1584,13 @@ Enum: `"info" \| "warning" \| "error"`
 
 ### `DeviceExportExposeInputSchema`
 
+- `instanceId`: `string`
 - `deviceId`: `string`
 - `capabilities?`: `string[]`
+
+### `DeviceExportInstancePinSchema`
+
+- `instanceId?`: `string`
 
 ### `DeviceExportStatusSchema`
 
@@ -1596,6 +1601,7 @@ Enum: `"info" \| "warning" \| "error"`
 
 ### `DeviceExportUnexposeInputSchema`
 
+- `instanceId`: `string`
 - `deviceId`: `string`
 
 ### `DeviceHistoryKindSchema`
@@ -2177,6 +2183,13 @@ Enum: `"device" \| "action" \| "notifier"`
 - `fromMs`: `number`
 - `toMs`: `number`
 
+### `ExportInstanceSchema`
+
+- `instanceId`: `string`
+- `name`: `string`
+- `enabled`: `boolean`
+- `kind?`: `string`
+
 ### `ExportOptionsSchema`
 
 - `speed?`: `number`
@@ -2246,6 +2259,7 @@ Enum: `"queued" \| "rendering" \| "ready" \| "failed" \| "expired" \| "deleted"`
 
 ### `ExposeEntityInputSchema`
 
+- `instanceId`: `string`
 - `entity`: `ExportEntityRefSchema`
 
 ### `ExposureModeSchema`
@@ -7376,6 +7390,7 @@ Enum: `"http" \| "ws" \| "mesh" \| "unknown"`
 
 ### `UnexposeEntityInputSchema`
 
+- `instanceId`: `string`
 - `entity`: `ExportEntityRefSchema`
 
 ### `UninstallNodeOutcomeSchema`

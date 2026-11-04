@@ -50,6 +50,10 @@ vi.mock('../../generated/system-hooks', () => ({
     isLoading: false,
   }),
   useDeviceExportListExposedDevices: () => ({ data: [], isLoading: false }),
+  useDeviceExportListInstances: () => ({
+    data: [{ instanceId: 'export-x', name: 'X', enabled: true }],
+    isLoading: false,
+  }),
   useDeviceExportListSupportedDeviceKinds: () => ({ data: ['camera'], isLoading: false }),
   useDeviceExportListSupportedEntityKinds: () => ({ data: entityKinds, isLoading: false }),
   useDeviceExportListExposedEntities: () => ({ data: exposedEntities, isLoading: false }),
@@ -145,6 +149,7 @@ describe('actions and notification targets in the export table', () => {
     fireEvent.click(screen.getByLabelText('Expose Open gate'))
     await waitFor(() => expect(exposeEntityCalls).toHaveLength(1))
     expect(exposeEntityCalls[0]).toEqual({
+      instanceId: 'export-x',
       entity: { kind: 'action', actionId: 'internal:a' },
       nodeId: 'hub',
       addonId: 'export-hap',

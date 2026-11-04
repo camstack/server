@@ -44,6 +44,8 @@ import {
   deviceExportCapability,
   errMsg,
   type IAddonRouteProvider,
+  assertOwnExportInstance,
+  deviceExportStatusInstanceOf,
   type IDeviceExportProvider,
   type IOauthIntegrationProvider,
   oauthIntegrationCapability,
@@ -108,21 +110,46 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
       })
     })
 
+    const ownInstance = (instanceId: string | undefined): void =>
+      assertOwnExportInstance('export-google', ADDON_ID, instanceId)
     const deviceExportProvider: IDeviceExportProvider = {
-      getStatus: async () => ({
-        linkState: this.config.linkedAccounts.length > 0 ? 'linked' : 'unlinked',
-        exposedDeviceCount: this.config.exposed.length,
-        setup: await this.buildSetupBlock(),
-      }),
-      listSupportedDeviceKinds: async () => [...SUPPORTED_DEVICE_KINDS],
-      listExposedDevices: async () =>
-        this.config.exposed.map((entry) => ({
+      getStatus: async (input) => {
+        ownInstance(deviceExportStatusInstanceOf(input))
+        return {
+          linkState: this.config.linkedAccounts.length > 0 ? 'linked' : 'unlinked',
+          exposedDeviceCount: this.config.exposed.length,
+          setup: await this.buildSetupBlock(),
+        }
+      },
+      listInstances: async () => [
+        {
+          instanceId: ADDON_ID,
+          name: 'Google Home',
+          enabled: true,
+          kind: 'google-home',
+        },
+      ],
+      listSupportedDeviceKinds: async ({ instanceId }) => {
+        ownInstance(instanceId)
+        return [...SUPPORTED_DEVICE_KINDS]
+      },
+      listExposedDevices: async ({ instanceId }) => {
+        ownInstance(instanceId)
+        return this.config.exposed.map((entry) => ({
           deviceId: String(entry.deviceId),
-        })),
-      exposeDevice: async ({ deviceId }) => this.exposeDevice(deviceId),
-      unexposeDevice: async ({ deviceId }) => this.unexposeDevice(deviceId),
+        }))
+      },
+      exposeDevice: async ({ instanceId, deviceId }) => {
+        ownInstance(instanceId)
+        return this.exposeDevice(deviceId)
+      },
+      unexposeDevice: async ({ instanceId, deviceId }) => {
+        ownInstance(instanceId)
+        return this.unexposeDevice(deviceId)
+      },
       listSupportedEntityKinds: async () => ['device', 'action'],
-      listExposedEntities: async () => {
+      listExposedEntities: async ({ instanceId }) => {
+        ownInstance(instanceId)
         await actionScenes.reconcile()
         return [
           ...this.config.exposed.map((entry) => ({
@@ -134,12 +161,14 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
           ...actionScenes.list(),
         ]
       },
-      exposeEntity: async ({ entity }) => {
+      exposeEntity: async ({ instanceId, entity }) => {
+        ownInstance(instanceId)
         if (entity.kind === 'device') return this.exposeDevice(entity.deviceId)
         if (entity.kind === 'action') return actionScenes.expose(entity.actionId)
         throw new Error('export-google: a notification target cannot be exported to Google Home')
       },
-      unexposeEntity: async ({ entity }) => {
+      unexposeEntity: async ({ instanceId, entity }) => {
+        ownInstance(instanceId)
         if (entity.kind === 'device') return this.unexposeDevice(entity.deviceId)
         if (entity.kind === 'action') return actionScenes.unexpose(entity.actionId)
         throw new Error('export-google: a notification target cannot be exported to Google Home')

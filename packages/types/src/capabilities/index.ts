@@ -567,11 +567,18 @@ export {
 export type {
   ExportEntityKind,
   ExportEntityRef,
+  ExportInstance,
   ExposedEntity,
   IDeviceExportProvider,
 } from './device-export.cap.js'
 export {
+  assertOwnExportInstance,
   DeviceExportStatusSchema,
+  EXPORT_INSTANCE_UNKNOWN,
+  ExportInstanceSchema,
+  ExportInstanceUnknownError,
+  statusInstanceOf as deviceExportStatusInstanceOf,
+  InstancePinSchema as DeviceExportInstancePinSchema,
   deviceExportCapability,
   ExportEntityKindSchema,
   ExportEntityRefSchema,

@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**203 capabilities · 1503 methods.**
+**203 capabilities · 1504 methods.**
 
 ## Method index
 
@@ -295,6 +295,7 @@
 | `deviceExport.getDeviceSettingsContribution` | query | protected | device-export (auto) |
 | `deviceExport.getDeviceLiveContribution` | query | protected | device-export (auto) |
 | `deviceExport.applyDeviceSettingsPatch` | mutation | admin | device-export (auto) |
+| `deviceExport.listInstances` | query | protected | device-export |
 | `deviceExport.listSupportedDeviceKinds` | query | protected | device-export |
 | `deviceExport.listExposedDevices` | query | protected | device-export |
 | `deviceExport.exposeDevice` | mutation | admin | device-export |
@@ -2377,23 +2378,24 @@
 
 ### `device-export` → `deviceExport.*`
 
-- **Source:** `packages/types/src/capabilities/device-export.cap.ts:100`
+- **Source:** `packages/types/src/capabilities/device-export.cap.ts:168`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection` · providerKind: `device-export`
 - **Archetypes:** status(poll) · exposesDeviceSettings
 - **Provider interface:** `IDeviceExportProvider`
 
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
-| getStatus | `deviceExport.getStatus` | query | protected | `void` | `DeviceExportStatusSchema` |
+| getStatus | `deviceExport.getStatus` | query | protected | `DeviceExportInstancePinSchema` | `DeviceExportStatusSchema` |
 | getDeviceSettingsContribution _(auto)_ | `deviceExport.getDeviceSettingsContribution` | query | protected | `{ deviceId: number }` | `{ tabs?: ({ id: string; label: string; icon: string; order?: number })[]; sections: ({ id: string; title: string; description?: string; style?: "card" \| "accordion"; defaultCollapsed?: boolean; columns?: 1 \| 2 \| 3 \| 4; tab?: string; location?: "settings" \| "top-tab" \| "hero"; order?: number; fields: any[] })[] } \| null` |
 | getDeviceLiveContribution _(auto)_ | `deviceExport.getDeviceLiveContribution` | query | protected | `{ deviceId: number }` | `{ tabs?: ({ id: string; label: string; icon: string; order?: number })[]; sections: ({ id: string; title: string; description?: string; style?: "card" \| "accordion"; defaultCollapsed?: boolean; columns?: 1 \| 2 \| 3 \| 4; tab?: string; location?: "settings" \| "top-tab" \| "hero"; order?: number; fields: any[] })[] } \| null` |
 | applyDeviceSettingsPatch _(auto)_ | `deviceExport.applyDeviceSettingsPatch` | mutation | admin | `{ deviceId: number; patch: Record<string, unknown> }` | `{ success: true }` |
-| listSupportedDeviceKinds | `deviceExport.listSupportedDeviceKinds` | query | protected | `void` | `string[]` |
-| listExposedDevices | `deviceExport.listExposedDevices` | query | protected | `void` | `ExposedDeviceSchema[]` |
+| listInstances | `deviceExport.listInstances` | query | protected | `void` | `ExportInstanceSchema[]` |
+| listSupportedDeviceKinds | `deviceExport.listSupportedDeviceKinds` | query | protected | `DeviceExportInstancePinSchema` | `string[]` |
+| listExposedDevices | `deviceExport.listExposedDevices` | query | protected | `DeviceExportInstancePinSchema` | `ExposedDeviceSchema[]` |
 | exposeDevice | `deviceExport.exposeDevice` | mutation | admin | `DeviceExportExposeInputSchema` | `void` |
 | unexposeDevice | `deviceExport.unexposeDevice` | mutation | admin | `DeviceExportUnexposeInputSchema` | `void` |
 | listSupportedEntityKinds | `deviceExport.listSupportedEntityKinds` | query | protected | `void` | `ExportEntityKindSchema[]` |
-| listExposedEntities | `deviceExport.listExposedEntities` | query | protected | `void` | `ExposedEntitySchema[]` |
+| listExposedEntities | `deviceExport.listExposedEntities` | query | protected | `DeviceExportInstancePinSchema` | `ExposedEntitySchema[]` |
 | exposeEntity | `deviceExport.exposeEntity` | mutation | admin | `ExposeEntityInputSchema` | `void` |
 | unexposeEntity | `deviceExport.unexposeEntity` | mutation | admin | `UnexposeEntityInputSchema` | `void` |
 

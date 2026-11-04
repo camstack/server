@@ -68,6 +68,10 @@ vi.mock('../../generated/system-hooks', () => ({
   },
   useDeviceExportGetStatus: () => ({ data: EXPORT_STATUS, isLoading: false, error: null }),
   useDeviceExportListExposedDevices: () => ({ data: [], isLoading: false, error: null }),
+  useDeviceExportListInstances: () => ({
+    data: [{ instanceId: 'export-x', name: 'X', enabled: true }],
+    isLoading: false,
+  }),
   useDeviceExportListSupportedDeviceKinds: () => ({
     data: ['camera', 'sensor'],
     isLoading: false,

@@ -250,6 +250,7 @@
   "deviceExport.getStatus": "protected",
   "deviceExport.listExposedDevices": "protected",
   "deviceExport.listExposedEntities": "protected",
+  "deviceExport.listInstances": "protected",
   "deviceExport.listSupportedDeviceKinds": "protected",
   "deviceExport.listSupportedEntityKinds": "protected",
   "deviceExport.unexposeDevice": "admin",

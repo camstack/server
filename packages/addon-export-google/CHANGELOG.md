@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Export calls name the export instance they address; an unknown instance is refused with export-instance-unknown
+
 ## [0.1.123] - 2026-11-02
 
 ### Changed

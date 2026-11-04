@@ -30,7 +30,10 @@ describe('device-export entity references', () => {
   it('lists the kinds an exporter may answer', () => {
     expect(ExportEntityKindSchema.options).toEqual(['device', 'action', 'notifier'])
     expect(
-      ExposeEntityInputSchema.parse({ entity: { kind: 'action', actionId: 'a' } }).entity.kind,
+      ExposeEntityInputSchema.parse({
+        instanceId: 'export-hap',
+        entity: { kind: 'action', actionId: 'a' },
+      }).entity.kind,
     ).toBe('action')
   })
 

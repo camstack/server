@@ -35,6 +35,10 @@ let devices: unknown = PENDING
 vi.mock('../../generated/system-hooks', () => ({
   useDeviceExportGetStatus: () => ({ data: undefined, isLoading: false }),
   useDeviceExportListExposedDevices: () => ({ data: [], isLoading: false }),
+  useDeviceExportListInstances: () => ({
+    data: [{ instanceId: 'export-x', name: 'X', enabled: true }],
+    isLoading: false,
+  }),
   useDeviceExportListSupportedDeviceKinds: () => kinds,
   // An exporter that does not answer what else it can expose: devices only.
   useDeviceExportListSupportedEntityKinds: () => ({ data: undefined, isLoading: false }),

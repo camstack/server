@@ -16,6 +16,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 interface MutationInput {
   readonly deviceId: string
+  readonly instanceId?: string
 }
 
 let persisted: readonly string[] = []
@@ -47,6 +48,10 @@ vi.mock('../../generated/system-hooks', () => ({
     isLoading: false,
   }),
   useDeviceExportListExposedDevices: () => ({ data: [], isLoading: false }),
+  useDeviceExportListInstances: () => ({
+    data: [{ instanceId: 'export-x', name: 'X', enabled: true }],
+    isLoading: false,
+  }),
   useDeviceExportListSupportedDeviceKinds: () => ({ data: ['camera'], isLoading: false }),
   useDeviceExportListSupportedEntityKinds: () => ({ data: undefined, isLoading: false }),
   useDeviceExportListExposedEntities: () => ({ data: undefined, isLoading: false }),
@@ -57,7 +62,10 @@ vi.mock('../../generated/system-hooks', () => ({
   useDeviceManagerListAll: () => ({ data: DEVICES, isLoading: false }),
   useIntegrationsList: () => ({ data: undefined, isLoading: false }),
   useDeviceExportExposeDevice: () => ({
-    mutateAsync: (input: MutationInput) => exposeLikeAnExporter(input.deviceId),
+    mutateAsync: (input: MutationInput) =>
+      input.instanceId === 'export-x'
+        ? exposeLikeAnExporter(input.deviceId)
+        : Promise.reject(new Error('a write must name its instance')),
     isPending: false,
   }),
   useDeviceExportUnexposeDevice: () => ({ mutateAsync: vi.fn(), isPending: false }),

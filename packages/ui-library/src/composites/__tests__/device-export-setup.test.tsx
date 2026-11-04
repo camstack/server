@@ -17,6 +17,10 @@ let status: Record<string, unknown> = {}
 vi.mock('../../generated/system-hooks', () => ({
   useDeviceExportGetStatus: () => ({ data: status, isLoading: false }),
   useDeviceExportListExposedDevices: () => ({ data: [], isLoading: false }),
+  useDeviceExportListInstances: () => ({
+    data: [{ instanceId: 'export-x', name: 'X', enabled: true }],
+    isLoading: false,
+  }),
   useDeviceExportListSupportedDeviceKinds: () => ({ data: ['camera'], isLoading: false }),
   // An exporter that does not answer what else it can expose: devices only.
   useDeviceExportListSupportedEntityKinds: () => ({ data: undefined, isLoading: false }),

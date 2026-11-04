@@ -53,6 +53,16 @@ function makeCtx(overrides: {
       },
       deviceExport: {
         exposeDevice: { mutate: expose },
+        listInstances: {
+          query: vi.fn(async ({ addonId }: { addonId: string }) =>
+            addonId === 'provider-homeassistant'
+              ? [
+                  { instanceId: 'ha_001', enabled: true },
+                  { instanceId: 'ha_002', enabled: false },
+                ]
+              : [{ instanceId: addonId, enabled: true }],
+          ),
+        },
       },
     },
   } as unknown as AddonContext
@@ -109,7 +119,7 @@ describe('reconcileBlockDevices', () => {
 })
 
 describe('exposeBlockDevices', () => {
-  it('calls exposeDevice for each device × exporter pair', async () => {
+  it('calls exposeDevice for each device × enabled exporter instance', async () => {
     const expose = vi.fn(async () => undefined)
     const ctx = makeCtx({ expose })
     await exposeBlockDevices(ctx, {
@@ -119,11 +129,13 @@ describe('exposeBlockDevices', () => {
     expect(expose).toHaveBeenCalledTimes(4)
     expect(expose).toHaveBeenCalledWith({
       addonId: 'provider-homeassistant',
+      instanceId: 'ha_001',
       deviceId: '42',
       nodeId: 'hub',
     })
     expect(expose).toHaveBeenCalledWith({
       addonId: 'export-hap',
+      instanceId: 'export-hap',
       deviceId: '43',
       nodeId: 'hub',
     })

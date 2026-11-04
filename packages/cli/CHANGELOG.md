@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- configure_export_set writes to each enabled export instance of the exporter
+
 ## [1.2.221] - 2026-11-04
 
 ### Changed

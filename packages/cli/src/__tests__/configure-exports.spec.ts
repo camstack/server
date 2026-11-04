@@ -28,6 +28,7 @@ const reads = {
     { deviceId: '587', exposedAs: 'camera' },
     { deviceId: '900', exposedAs: 'light' },
   ],
+  'deviceExport.listInstances': [{ instanceId: 'ha_001', enabled: true }],
   'deviceExport.exposeDevice': undefined,
   'deviceExport.unexposeDevice': undefined,
 }
@@ -66,6 +67,7 @@ describe('configure_export_set', () => {
     await exportSet(w, args, preview.confirm_token)
     expect(calls.find((c) => c.path === 'deviceExport.unexposeDevice')?.input).toEqual({
       addonId: 'homeassistant-export',
+      instanceId: 'ha_001',
       deviceId: '587',
     })
   })

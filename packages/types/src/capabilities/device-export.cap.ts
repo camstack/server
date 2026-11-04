@@ -16,7 +16,68 @@ import {
  * exposes only the COMMON surface: link state, supported device
  * kinds (so the UI can filter the device picker), and per-device
  * expose/unexpose.
+ *
+ * INSTANCES. One export addon can serve several independent targets (a
+ * HomeKit bridge, a Home Assistant broker). `listInstances` names them.
+ * `instanceId` on a READ is optional: absent = the whole addon (linked if any
+ * enabled instance is, `exposedDeviceCount` = distinct devices, `setup` = the
+ * default instance's); present = that instance; an id the provider does not
+ * serve is refused with `ExportInstanceUnknownError` (`export-instance-unknown`),
+ * never answered empty. `instanceId` on a WRITE is REQUIRED: a membership
+ * change always names the target it changes. A single-instance provider
+ * accepts an absent id on a read or its own id, and refuses any other.
  */
+
+/** Which instance of an export addon a call addresses. Absent on a read = the whole addon. */
+const InstanceIdSchema = z.string().min(1)
+const InstancePinSchema = z.object({ instanceId: InstanceIdSchema.optional() })
+
+/** One independent export target of an addon. */
+const ExportInstanceSchema = z.object({
+  instanceId: InstanceIdSchema,
+  name: z.string(),
+  enabled: z.boolean(),
+  kind: z.string().optional(),
+})
+
+export const EXPORT_INSTANCE_UNKNOWN = 'export-instance-unknown'
+
+/** The named failure of an `instanceId` the provider does not serve. The message starts with the code. */
+export class ExportInstanceUnknownError extends Error {
+  readonly code = EXPORT_INSTANCE_UNKNOWN
+  readonly instanceId: string
+
+  constructor(addon: string, instanceId: string) {
+    super(`${EXPORT_INSTANCE_UNKNOWN}: ${addon} serves no instance "${instanceId}"`)
+    this.name = 'ExportInstanceUnknownError'
+    this.instanceId = instanceId
+  }
+}
+
+/**
+ * The instance a `getStatus` call names. The cap's `status` block injects a per-device
+ * `getStatus({ deviceId })` beside the method's own `{ instanceId? }`, so the provider sees
+ * both shapes; only the second names an instance (a per-device status read is addon-wide).
+ */
+export function statusInstanceOf(
+  input: { readonly instanceId?: string } | { readonly deviceId: number },
+): string | undefined {
+  return 'instanceId' in input ? input.instanceId : undefined
+}
+
+/**
+ * A single-instance provider's check: an absent id or its own passes, any other throws
+ * `ExportInstanceUnknownError`.
+ */
+export function assertOwnExportInstance(
+  addon: string,
+  own: string,
+  instanceId: string | undefined,
+): void {
+  if (instanceId !== undefined && instanceId !== own) {
+    throw new ExportInstanceUnknownError(addon, instanceId)
+  }
+}
 
 const LinkStateSchema = z.enum(['unlinked', 'linked', 'error'])
 
@@ -70,11 +131,12 @@ const ExposedDeviceSchema = z.object({
 })
 
 const ExposeInputSchema = z.object({
+  instanceId: InstanceIdSchema,
   deviceId: z.string(),
   capabilities: z.array(z.string()).optional(),
 })
 
-const UnexposeInputSchema = z.object({ deviceId: z.string() })
+const UnexposeInputSchema = z.object({ instanceId: InstanceIdSchema, deviceId: z.string() })
 
 /**
  * What an exporter may expose besides devices (D968). An action and a
@@ -94,8 +156,14 @@ const ExposedEntitySchema = z.object({
   exposedAs: z.string().optional(),
 })
 
-const ExposeEntityInputSchema = z.object({ entity: ExportEntityRefSchema })
-const UnexposeEntityInputSchema = z.object({ entity: ExportEntityRefSchema })
+const ExposeEntityInputSchema = z.object({
+  instanceId: InstanceIdSchema,
+  entity: ExportEntityRefSchema,
+})
+const UnexposeEntityInputSchema = z.object({
+  instanceId: InstanceIdSchema,
+  entity: ExportEntityRefSchema,
+})
 
 export const deviceExportCapability = {
   name: 'device-export',
@@ -113,9 +181,10 @@ export const deviceExportCapability = {
    */
   exposesDeviceSettings: true,
   methods: {
-    getStatus: method(z.void(), DeviceExportStatusSchema),
-    listSupportedDeviceKinds: method(z.void(), z.array(DeviceKindSchema)),
-    listExposedDevices: method(z.void(), z.array(ExposedDeviceSchema)),
+    getStatus: method(InstancePinSchema, DeviceExportStatusSchema),
+    listInstances: method(z.void(), z.array(ExportInstanceSchema)),
+    listSupportedDeviceKinds: method(InstancePinSchema, z.array(DeviceKindSchema)),
+    listExposedDevices: method(InstancePinSchema, z.array(ExposedDeviceSchema)),
     // Publishing a camera to HomeKit / Alexa / Google hands it to another
     // ecosystem's users — an administrator's act, not an operator's (D634 r3).
     // The only UI caller is the admin export panel.
@@ -131,7 +200,7 @@ export const deviceExportCapability = {
     // exports devices only; the UI treats an unanswered `listSupportedEntityKinds`
     // as "unknown", never as "devices only" (D315).
     listSupportedEntityKinds: optionalMethod(z.void(), z.array(ExportEntityKindSchema)),
-    listExposedEntities: optionalMethod(z.void(), z.array(ExposedEntitySchema)),
+    listExposedEntities: optionalMethod(InstancePinSchema, z.array(ExposedEntitySchema)),
     exposeEntity: optionalMethod(ExposeEntityInputSchema, z.void(), {
       kind: 'mutation',
       auth: 'admin',
@@ -146,6 +215,8 @@ export const deviceExportCapability = {
 export type IDeviceExportProvider = InferProvider<typeof deviceExportCapability>
 
 export {
+  InstancePinSchema,
+  ExportInstanceSchema,
   DeviceExportStatusSchema,
   ExportSetupSchema,
   ExportSetupFieldSchema,
@@ -158,6 +229,7 @@ export {
   ExposeEntityInputSchema,
   UnexposeEntityInputSchema,
 }
+export type ExportInstance = z.infer<typeof ExportInstanceSchema>
 export type ExportEntityKind = z.infer<typeof ExportEntityKindSchema>
 export type ExportEntityRef = z.infer<typeof ExportEntityRefSchema>
 export type ExposedEntity = z.infer<typeof ExposedEntitySchema>

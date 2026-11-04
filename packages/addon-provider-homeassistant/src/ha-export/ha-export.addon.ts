@@ -45,6 +45,8 @@ import {
   deviceExportCapability,
   EventCategory,
   type IAddonHttpRoute,
+  deviceExportStatusInstanceOf,
+  ExportInstanceUnknownError,
   type IDeviceExportProvider,
   isReadingQuantity,
   type IOauthIntegrationProvider,
@@ -446,38 +448,49 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
     this.exportedEntities = exportedEntities
 
     const exportProvider: IDeviceExportProvider = {
-      getStatus: async () => this.buildStatus(),
-      listSupportedDeviceKinds: async () => [...SUPPORTED_DEVICE_KINDS],
-      listExposedDevices: async () =>
-        exposedDeviceIds(this.config.membership, this.enabledBrokerIds()).map((deviceId) => ({
-          deviceId,
-          exposedAs: brokersExposing(this.config.membership, deviceId)
-            .map((brokerId) => this.brokerName(brokerId))
-            .join(', '),
+      getStatus: async (input) =>
+        this.buildStatus(this.brokerScope(deviceExportStatusInstanceOf(input))),
+      listInstances: async () =>
+        this.config.knownBrokers.map((broker) => ({
+          instanceId: broker.id,
+          name: broker.name,
+          enabled: this.enabledBrokerIds().includes(broker.id),
+          kind: 'home-assistant',
         })),
-      exposeDevice: async ({ deviceId }) => this.setMembershipEverywhere(deviceId, true),
-      unexposeDevice: async ({ deviceId }) => this.setMembershipEverywhere(deviceId, false),
+      listSupportedDeviceKinds: async ({ instanceId }) => {
+        this.brokerScope(instanceId)
+        return [...SUPPORTED_DEVICE_KINDS]
+      },
+      listExposedDevices: async ({ instanceId }) =>
+        this.exposedDeviceRows(this.brokerScope(instanceId)),
+      exposeDevice: async ({ instanceId, deviceId }) =>
+        this.setBrokerMembership(instanceId, deviceId, true),
+      unexposeDevice: async ({ instanceId, deviceId }) =>
+        this.setBrokerMembership(instanceId, deviceId, false),
       listSupportedEntityKinds: async () => ['device', 'action', 'notifier'],
-      listExposedEntities: async () => {
+      listExposedEntities: async ({ instanceId }) => {
+        const scope = this.brokerScope(instanceId)
         await exportedEntities.pruneDeleted()
         return [
-          ...exposedDeviceIds(this.config.membership, this.enabledBrokerIds()).map((deviceId) => ({
-            entity: { kind: 'device' as const, deviceId },
-            exposedAs: brokersExposing(this.config.membership, deviceId)
-              .map((brokerId) => this.brokerName(brokerId))
-              .join(', '),
+          ...this.exposedDeviceRows(scope).map((row) => ({
+            entity: { kind: 'device' as const, deviceId: row.deviceId },
+            exposedAs: row.exposedAs,
           })),
           ...exportedEntities.list(),
         ]
       },
-      exposeEntity: async ({ entity }) =>
-        entity.kind === 'device'
-          ? this.setMembershipEverywhere(entity.deviceId, true)
-          : exportedEntities.expose(entity),
-      unexposeEntity: async ({ entity }) =>
-        entity.kind === 'device'
-          ? this.setMembershipEverywhere(entity.deviceId, false)
-          : exportedEntities.unexpose(entity),
+      exposeEntity: async ({ instanceId, entity }) => {
+        if (entity.kind === 'device')
+          return this.setBrokerMembership(instanceId, entity.deviceId, true)
+        this.brokerScope(instanceId)
+        return exportedEntities.expose(entity)
+      },
+      unexposeEntity: async ({ instanceId, entity }) => {
+        if (entity.kind === 'device')
+          return this.setBrokerMembership(instanceId, entity.deviceId, false)
+        this.brokerScope(instanceId)
+        return exportedEntities.unexpose(entity)
+      },
       getDeviceSettingsContribution: async ({ deviceId }) => this.buildContribution(deviceId),
       getDeviceLiveContribution: async () => null,
       applyDeviceSettingsPatch: async ({ deviceId, patch }) =>
@@ -3106,29 +3119,59 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
   // ── Membership ──────────────────────────────────────────────────────
 
   /**
-   * The cap-level expose/unexpose applies to EVERY enabled broker.
-   *
-   * The `device-export` cap is the COMMON surface across export targets
-   * and has no notion of a broker; per-broker granularity lives in the
-   * derived Export panel, over the same store. There is exactly one
-   * authority either way.
+   * Every broker this addon knows, enabled or not: a membership write may
+   * target a broker that is switched off (its devices resume when it is turned
+   * back on). A cold `knownBrokers` still counts the enabled ids.
    */
-  private async setMembershipEverywhere(deviceId: string, exposed: boolean): Promise<void> {
-    let next = this.config.membership
-    for (const brokerId of this.enabledBrokerIds()) {
-      next = setExposed(next, brokerId, deviceId, exposed)
+  private knownBrokerIds(): ReadonlySet<string> {
+    return new Set([...this.config.knownBrokers.map((b) => b.id), ...this.enabledBrokerIds()])
+  }
+
+  /**
+   * The brokers a `device-export` read answers over: the named instance, or
+   * (absent) every enabled broker. A broker this addon does not know is
+   * refused, never answered empty.
+   */
+  private brokerScope(instanceId: string | undefined): readonly string[] {
+    if (instanceId === undefined) return this.enabledBrokerIds()
+    if (!this.knownBrokerIds().has(instanceId)) {
+      throw new ExportInstanceUnknownError('provider-homeassistant', instanceId)
     }
+    return [instanceId]
+  }
+
+  private exposedDeviceRows(scope: readonly string[]): { deviceId: string; exposedAs: string }[] {
+    return exposedDeviceIds(this.config.membership, scope).map((deviceId) => ({
+      deviceId,
+      exposedAs: brokersExposing(this.config.membership, deviceId)
+        .map((brokerId) => this.brokerName(brokerId))
+        .join(', '),
+    }))
+  }
+
+  /**
+   * A cap-level expose/unexpose changes ONE broker's membership — the named
+   * instance. There is no write without a target and no "everywhere": the
+   * other brokers' membership is not touched.
+   */
+  private async setBrokerMembership(
+    instanceId: string,
+    deviceId: string,
+    exposed: boolean,
+  ): Promise<void> {
+    this.brokerScope(instanceId)
+    const next = setExposed(this.config.membership, instanceId, deviceId, exposed)
     if (next === this.config.membership) {
       this.ctx.logger.debug('ha-export: membership already in that state, nothing to do', {
         tags: { deviceId: Number(deviceId) },
-        meta: { exposed },
+        meta: { exposed, brokerId: instanceId },
       })
       return
     }
     await this.updateGlobalSettings({ membership: next })
     this.ctx.logger.info('ha-export: export membership changed', {
       tags: { deviceId: Number(deviceId) },
-      meta: { exposed, brokers: this.enabledBrokerIds() },
+      meta: { exposed, brokerId: instanceId },
     })
     await this.reconcile(exposed ? 'expose' : 'unexpose')
   }
@@ -3322,7 +3365,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
     return { success: true }
   }
 
-  private buildStatus(): {
+  private buildStatus(scope: readonly string[]): {
     linkState: 'linked' | 'unlinked' | 'error'
     exposedDeviceCount: number
     error?: string
@@ -3331,14 +3374,15 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
       note: string
     }
   } {
-    const enabled = this.enabledBrokerIds()
-    const healthy = [...this.links.values()].filter((link) => link.client.healthy).length
-    const failures = [...this.links.values()]
-      .map((link) => link.client.failure)
-      .filter((failure) => failure !== null)
+    const enabled = scope
+    const links = [...this.links.entries()]
+      .filter(([brokerId]) => scope.includes(brokerId))
+      .map(([, link]) => link)
+    const healthy = links.filter((link) => link.client.healthy).length
+    const failures = links.map((link) => link.client.failure).filter((failure) => failure !== null)
     const linkFailure = failures[0]?.text
     const linkState =
-      enabled.length === 0 ? 'unlinked' : healthy === this.links.size ? 'linked' : 'error'
+      enabled.length === 0 ? 'unlinked' : healthy === links.length ? 'linked' : 'error'
     return {
       linkState,
       exposedDeviceCount: exposedDeviceIds(this.config.membership, enabled).length,
@@ -3351,7 +3395,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
         fields: [
           {
             label: 'Home Assistant instances',
-            value: `${healthy} / ${this.links.size} reachable`,
+            value: `${healthy} / ${links.length} reachable`,
           },
           {
             label: 'Last push failure',

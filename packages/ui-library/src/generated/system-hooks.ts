@@ -752,6 +752,9 @@ export const useDeviceDiscoveryGetStatus: typeof trpc.deviceDiscovery.getStatus.
 /** Generated alias around `trpc.deviceExport.getStatus.useQuery`. */
 export const useDeviceExportGetStatus: typeof trpc.deviceExport.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.deviceExport.getStatus.useQuery)
 
+/** Generated alias around `trpc.deviceExport.listInstances.useQuery`. */
+export const useDeviceExportListInstances: typeof trpc.deviceExport.listInstances.useQuery = /*#__PURE__*/ alias(() => trpc.deviceExport.listInstances.useQuery)
+
 /** Generated alias around `trpc.deviceExport.listSupportedDeviceKinds.useQuery`. */
 export const useDeviceExportListSupportedDeviceKinds: typeof trpc.deviceExport.listSupportedDeviceKinds.useQuery = /*#__PURE__*/ alias(() => trpc.deviceExport.listSupportedDeviceKinds.useQuery)
 

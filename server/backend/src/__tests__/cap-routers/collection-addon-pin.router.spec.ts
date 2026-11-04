@@ -151,7 +151,7 @@ describe('system-collection cap: { addonId } pin resolution', () => {
 
   it('still aggregates when NO pin is supplied', async () => {
     const { router } = buildDeviceExportRouter()
-    const all = await invokeProcedure(router, 'listExposedDevices', makeCtx('admin'))
+    const all = await invokeProcedure(router, 'listExposedDevices', makeCtx('admin'), {})
     expect(all.ok).toBe(true)
     expect(all.ok === true && (all.value as readonly unknown[]).length).toBe(6)
   })
