@@ -58,6 +58,8 @@ import { HOLDER_QUERY_KEY, useInstancesData, type InstancesData } from './use-in
 export interface InstancesTableProps {
   /** The function capability whose providers are listed (`log-destination`, `smtp-provider`). */
   readonly functionCap: string
+  /** Narrow the table to one provider. */
+  readonly onlyAddonId?: string
   readonly icon: LucideIcon
   readonly title: string
   readonly subtitle: string
@@ -179,6 +181,7 @@ function EnableCell({
 
 export function InstancesTable({
   functionCap,
+  onlyAddonId,
   icon,
   title,
   subtitle,
@@ -192,7 +195,7 @@ export function InstancesTable({
   const system = useSystem()
   const queryClient = useQueryClient()
   const confirm = useConfirm()
-  const data = useInstancesData(functionCap)
+  const data = useInstancesData(functionCap, onlyAddonId)
   const form = useItemFormUrl({ editKey, newKey: `${editKey}-new` })
   const [testing, setTesting] = useState<string | null>(null)
   const [lastTest, setLastTest] = useState<{

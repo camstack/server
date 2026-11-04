@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Connection lists offer a kind picker on Add, an interactive sign-in or connect action, the provider's own status word and a restore under the old id, when the provider declares them
+- Broker connections (Home Assistant, Alexa, Matter, Google, MQTT, SMTP) are created and edited in the same instances dialog and table; the old broker manager is gone
 
 ## [1.2.575] - 2026-11-04
 

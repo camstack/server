@@ -46,7 +46,8 @@ function descriptionMap(addons: readonly unknown[]): ReadonlyMap<string, string>
   return map
 }
 
-export function useInstancesData(functionCap: string): InstancesData {
+/** `onlyAddonId` narrows the table to one provider (a broker integration's own Connections panel). */
+export function useInstancesData(functionCap: string, onlyAddonId?: string): InstancesData {
   const system = useSystem()
   const functionQuery = useAddonsListCapabilityProviders(
     { capName: functionCap },
@@ -62,11 +63,13 @@ export function useInstancesData(functionCap: string): InstancesData {
 
   const functionProviders = useMemo<readonly FunctionProvider[]>(
     () =>
-      (functionQuery.data ?? []).map((p) => ({
-        addonId: p.addonId,
-        isActive: p.isActive,
-      })),
-    [functionQuery.data],
+      (functionQuery.data ?? [])
+        .filter((p) => onlyAddonId === undefined || p.addonId === onlyAddonId)
+        .map((p) => ({
+          addonId: p.addonId,
+          isActive: p.isActive,
+        })),
+    [functionQuery.data, onlyAddonId],
   )
   const holderIds = useMemo<readonly string[]>(() => {
     const holding = new Set((holdersQuery.data ?? []).map((p) => p.addonId))

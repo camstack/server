@@ -15,11 +15,8 @@ const integrations = join(here, '..', '..', 'integrations')
 const FILES: readonly string[] = [
   join(brokers, 'BrokerEditorDialog.tsx'),
   join(brokers, 'BrokerPicker.tsx'),
-  join(brokers, 'BrokerForm.tsx'),
   join(brokers, 'BrokerSignInPanel.tsx'),
-  join(brokers, 'BrokerManager.tsx'),
   join(brokers, 'broker-kinds.ts'),
-  join(brokers, 'broker-schema-arrange.ts'),
   join(integrations, 'BrokerStep.tsx'),
 ]
 
@@ -67,17 +64,17 @@ describe('there is one broker list and one broker dialog', () => {
     }
   })
 
-  it('only BrokerManager lists brokers for a provider (Connectivity)', () => {
+  it('no broker component lists brokers itself: the instances table does', () => {
     const listers = sources.filter(({ code }) => /<DataTable|<table/.test(code)).map(({ f }) => f)
-    expect(listers).toEqual(['BrokerManager.tsx'])
+    expect(listers).toEqual([])
   })
 
-  it('Connectivity mounts BrokerManager for a broker integration', () => {
+  it('Connectivity mounts the instances table for a broker integration', () => {
     const page = readFileSync(
       join(here, '..', '..', '..', 'pages', 'system', 'Integrations.tsx'),
       'utf8',
     )
-    expect(page).toMatch(/<BrokerManager addonId=\{addonId\} \/>/)
+    expect(page).toMatch(/functionCap="broker"[\s\S]*onlyAddonId=\{addonId\}/)
     expect(page).not.toMatch(/RecordEntriesPanel/)
   })
 })

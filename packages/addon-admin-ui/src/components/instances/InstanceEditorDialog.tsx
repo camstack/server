@@ -53,6 +53,8 @@ export interface InstanceEditorDialogProps {
   /** The record being edited, or null for a new one. */
   readonly instance: IntegrationInstance | null
   readonly onClose: () => void
+  /** The record exists: created, edited or signed in. A wizard that needs the id uses this. */
+  readonly onSaved?: (id: string) => void
 }
 
 const NO_VALUES: Readonly<Record<string, unknown>> = {}
@@ -63,6 +65,7 @@ export function InstanceEditorDialog({
   description,
   instance,
   onClose,
+  onSaved,
 }: InstanceEditorDialogProps): ReactElement {
   const { t } = useTranslation()
   const system = useSystem()
@@ -155,7 +158,7 @@ export function InstanceEditorDialog({
   )
 
   const save = useMutation({
-    mutationFn: async (): Promise<void> => {
+    mutationFn: async (): Promise<string> => {
       const client = system.trpcClient.integrationInstances
       const patch = diffInstanceValues(stored, values)
       if (instance === null) {
@@ -175,7 +178,7 @@ export function InstanceEditorDialog({
         if (Object.keys(patch).length > 0) {
           await client.updateInstance.mutate({ addonId, id: created.id, values: patch })
         }
-        return
+        return created.id
       }
       await client.updateInstance.mutate({
         addonId,
@@ -183,14 +186,16 @@ export function InstanceEditorDialog({
         name,
         values: patch,
       })
+      return instance.id
     },
-    onSuccess: () => {
+    onSuccess: (savedId) => {
       void queryClient.invalidateQueries({ queryKey: [HOLDER_QUERY_KEY] })
       pushToast({
         title: t('providerInstances.saved', 'Saved'),
         message: name,
         severity: 'info',
       })
+      onSaved?.(savedId)
       onClose()
     },
     onError: (err: Error) => setError(err.message),
@@ -264,8 +269,9 @@ export function InstanceEditorDialog({
             {...(instance !== null ? { brokerId: instance.id } : {})}
             getSettings={() => diffInstanceValues(stored, values)}
             disabled={name.length === 0}
-            onSignedIn={() => {
+            onSignedIn={(signedInId) => {
               void queryClient.invalidateQueries({ queryKey: [HOLDER_QUERY_KEY] })
+              onSaved?.(signedInId)
               onClose()
             }}
           />

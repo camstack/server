@@ -47,7 +47,6 @@ import {
 import { STATUS_BADGE_CLASS } from '../../components/integration-hub/addon-controls'
 import { IntegrationHub } from '../../components/integration-hub/IntegrationHub'
 import type { IntegrationGroup } from '../../components/integration-hub/types'
-import { BrokerManager } from '../../components/brokers/BrokerManager'
 import {
   type ConnectivitySectionId,
   INTEGRATION_HUB_OWNED_PARAMS,
@@ -338,7 +337,25 @@ function panelsFor(
         id: 'connections',
         title: i18n.t('admin.system.integrations.connections', 'Connections'),
         icon: Radio,
-        content: <BrokerManager addonId={addonId} />,
+        content: (
+          <InstancesTable
+            functionCap="broker"
+            onlyAddonId={addonId}
+            icon={Radio}
+            title={i18n.t('admin.system.integrations.connections', 'Connections')}
+            subtitle={i18n.t(
+              'admin.system.integrations.connectionsSubtitle',
+              'The accounts and connections this integration reaches its devices through.',
+            )}
+            emptyTitle={i18n.t('admin.system.integrations.connectionsEmpty', 'No connections yet')}
+            emptyDescription={i18n.t(
+              'admin.system.integrations.connectionsEmptyHint',
+              'Add one to start bringing its devices in.',
+            )}
+            addLabel={i18n.t('admin.system.integrations.connectionsAdd', 'Add connection')}
+            editKey={`connection-${addonId}`}
+          />
+        ),
       },
     ]
   }
