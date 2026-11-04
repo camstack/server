@@ -851,6 +851,10 @@ export class AlertCenterAddon extends BaseAddon<AlertCenterConfig> {
     if (!findingId) return
     const deviceId = typeof data['deviceId'] === 'number' ? data['deviceId'] : undefined
     const severity: AlertSeverity = data['severity'] === 'warning' ? 'warning' : 'error'
+    // A finding may point the operator at the page that fixes it.
+    const href =
+      typeof data['href'] === 'string' && data['href'].startsWith('/') ? data['href'] : undefined
+    const actionLabel = typeof data['actionLabel'] === 'string' ? data['actionLabel'] : 'Open'
 
     const alert: Alert = {
       id: findingId,
@@ -858,6 +862,7 @@ export class AlertCenterAddon extends BaseAddon<AlertCenterConfig> {
       severity,
       title: String(data['title'] ?? 'Node liveness'),
       message: String(data['message'] ?? ''),
+      ...(href !== undefined ? { action: { label: actionLabel, href } } : {}),
       status: 'active',
       read: false,
       createdAt: Date.now(),

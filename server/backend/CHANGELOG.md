@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - device-export calls name their instance (listInstances; writes require instanceId) and broker connections are integration instances
+### Added
+
+- The Alerts panel now warns, with a link to the Storage page, when a storage type an addon needs has no writable location (for example event media: no thumbnails or track photos are saved), and clears itself once one exists
+
 ### Fixed
 
 - A boot where some addons fail to load no longer deletes the default storage locations of the types those addons declare (event media, recordings, artifacts); the failure is logged and the default is kept

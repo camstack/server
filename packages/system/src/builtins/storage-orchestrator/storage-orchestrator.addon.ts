@@ -36,6 +36,7 @@ import type {
   ProviderRegistration,
   RecordKindHandle,
   StorageLocation,
+  StorageLocationDeclarer,
   StorageLocationsChangedReason,
 } from '@camstack/types'
 import {
@@ -95,6 +96,10 @@ import {
 } from './storage-orchestrator.service.js'
 import type { DrainPlanEntry } from './storage-pressure-manager.js'
 import { StoragePressureManager } from './storage-pressure-manager.js'
+import {
+  StorageWritabilityMonitor,
+  type WritabilityEmission,
+} from './storage-writability-monitor.js'
 import { StorageLocationBandMonitor } from './storage-location-band-monitor.js'
 import { LocationHistoryRecorder, type LocationReading } from './location-history-recorder.js'
 
@@ -1219,6 +1224,7 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
     locationType: string,
     reason: StorageLocationsChangedReason,
   ): void {
+    this.evaluateWritability()
     try {
       this.ctx.eventBus.emit({
         id: randomUUID(),
@@ -1524,6 +1530,35 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
 
   // ── Seeding helpers (declaration-driven) ────────────────────────────
 
+  private declarersSeen: StorageLocationDeclarer[] | null = null
+  private seedAnswered = false
+  private writabilityMonitor: StorageWritabilityMonitor | null = null
+
+  /** Built on first use: `this.ctx` does not exist in a field initializer. */
+  private get writability(): StorageWritabilityMonitor {
+    this.writabilityMonitor ??= new StorageWritabilityMonitor({
+      logger: this.ctx.logger,
+      emit: (event) => this.emitWritabilityEvent(event),
+    })
+    return this.writabilityMonitor
+  }
+
+  private emitWritabilityEvent(event: WritabilityEmission): void {
+    try {
+      this.ctx.eventBus.emit({
+        id: randomUUID(),
+        timestamp: new Date(),
+        source: { type: 'addon', id: this.ctx.id },
+        category: event.category,
+        data: { ...event.data },
+      })
+    } catch (err: unknown) {
+      this.ctx.logger.warn('storage-orchestrator: could not emit the writability finding', {
+        meta: { error: err instanceof Error ? err.message : String(err) },
+      })
+    }
+  }
+
   /**
    * Seed default storage locations from the addon-declared
    * `storageLocations`, aggregated by the kernel into a
@@ -1566,7 +1601,7 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
     // `/backups` in the image) so archives never fill the appData disk. Unset
     // → falls back to the data root like everything else.
     const backupRoot = process.env.CAMSTACK_BACKUP_ROOT?.trim()
-    this.service.seedDefaults({
+    const seedOutcome = this.service.seedDefaults({
       providerId: 'filesystem-storage',
       basePath: this.ctx.nodeDataDir,
       mediaBasePath: mediaRoot && mediaRoot.length > 0 ? mediaRoot : undefined,
@@ -1579,6 +1614,25 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
     // defaults get stamped too. No-op until the filesystem provider's
     // `nodeLocal` snapshot is cached (else nothing resolves as node-local).
     await this.service.backfillNodeIds(HUB_NODE_ID)
+    this.declarersSeen = declarers ?? null
+    this.seedAnswered = seedOutcome.deferred === undefined
+    this.evaluateWritability()
+  }
+
+  /**
+   * Alert when a declared type has nowhere to write. Runs after every seed pass
+   * and every change to the set of locations; a no-op until a pass has an
+   * answered state AND the kernel could list its declarers (D315).
+   */
+  private evaluateWritability(): void {
+    const service = this.service
+    const declarers = this.declarersSeen
+    if (!service || declarers === null) return
+    this.writability.evaluate({
+      authoritative: this.seedAnswered && service.locationsAuthoritative(),
+      declarers,
+      locations: service.listLocations(),
+    })
   }
 
   /**

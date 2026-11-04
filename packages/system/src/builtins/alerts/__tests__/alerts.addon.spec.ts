@@ -478,6 +478,36 @@ describe('AlertCenterAddon', () => {
       expect(alerts[0]!.read).toBe(false)
     })
 
+    it('a liveness finding that names a page becomes a card with a link to it, and the recovery dismisses it', async () => {
+      const findingId = 'storage:no-writable-location:eventMedia'
+      eventBus._fire(
+        'system.liveness-failed',
+        makeSystemEvent('system.liveness-failed', {
+          findingId,
+          severity: 'error',
+          title: 'No writable event media location',
+          message: 'no thumbnails or track photos are saved',
+          href: '/system/storage',
+          actionLabel: 'Open Storage',
+        }),
+      )
+      await vi.waitFor(async () => {
+        expect(await addon.listAlerts()).toHaveLength(1)
+      })
+      const [alert] = await addon.listAlerts()
+      expect(alert!.id).toBe(findingId)
+      expect(alert!.action).toEqual({ label: 'Open Storage', href: '/system/storage' })
+
+      eventBus._fire(
+        'system.liveness-recovered',
+        makeSystemEvent('system.liveness-recovered', { findingId }),
+      )
+      await vi.waitFor(async () => {
+        const rows = await addon.listAlerts()
+        expect(rows.filter((a) => a.status === 'active')).toHaveLength(0)
+      })
+    })
+
     it('creates alert for addon.crashed event', async () => {
       eventBus._fire(
         'addon.crashed',

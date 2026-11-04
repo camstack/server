@@ -301,6 +301,15 @@ export class StorageOrchestratorService {
     })
   }
 
+  /**
+   * Do the rows this service holds answer "which locations exist"? False while
+   * a store that must answer has not (not wired, adoption pending, read
+   * failed): an empty map then means NOT YET KNOWN, never "none" (D315).
+   */
+  locationsAuthoritative(): boolean {
+    return !(this.storeRequiredForSeed && this.locationStore === null)
+  }
+
   /** True once a persistence store is wired (constructor or {@link attachStore}). */
   hasStore(): boolean {
     return this.locationStore !== null

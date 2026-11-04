@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 7945 source files · 1256 file(s) in no subsystem.**
+**31 subsystems · 7946 source files · 1256 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -38,7 +38,7 @@ commits. A generated page may not.
 | Stream broker, WebRTC and live delivery | 170 | `architecture/data-planes.md`, `design/2026-08-29-media-plane-memory-comparison.md` _(covers)_, `decisions/adr-0228-recording-write-stays-in-recorder-scrub-stays-on-the-live-webrtc-session.md`, +43 more, 16 ADRs | 2026-10-21 | ✅ |
 | Audio analysis and audio delivery | 18 | `decisions/adr-0660-an-audio-window-waits-for-the-classifier-it-is-never-dropped-for-contention.md`, `decisions/adr-0450-the-audio-plane-carries-the-source-rate-and-the-one-consumer-that-needs-more-resamples-next-to-itself.md`, `decisions/adr-0455-the-audio-plane-carries-the-source-bytes-and-only-to-a-consumer-that-declared-it-reads-them.md`, +9 more | 2026-10-08 | ⚠️ |
 | Zones and zone rules | 5 | `architecture/data-planes.md` _(covers)_, `architecture/detection-execution.md` _(covers)_, `design/2026-08-13-durable-value-tracking-and-runtime-state.md`, +2 more, 4 ADRs | 2026-10-24 | ⚠️ |
-| Storage, retention and backup | 131 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0328-the-live-sqlite-file-is-the-bind-the-container-has-open.md`, +63 more, 11 ADRs | 2026-11-02 | ⚠️ |
+| Storage, retention and backup | 132 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0328-the-live-sqlite-file-is-the-bind-the-container-has-open.md`, +63 more, 11 ADRs | 2026-11-02 | ⚠️ |
 | Secrets and the keychain | 30 | `architecture/secrets-keychain.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0787-a-secret-field-stores-a-keychain-marker-and-the-value-lives-in-the-keychain.md`, +24 more, 5 ADRs | 2026-11-02 | ✅ |
 | Auth, scopes and method tiers | 98 | `architecture/authentication.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +31 more, 3 ADRs | 2026-10-21 | ⚠️ |
 | The hub API surface | 169 | `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/authentication.md`, +109 more, 18 ADRs | 2026-11-02 | ⚠️ |
@@ -198,7 +198,7 @@ Every durable byte — the SQLite collections, where media lives, what prunes it
 
 - **Owner doc**: — none
 - **Code**: `packages/system/src/builtins/sqlite-storage/**`, `packages/system/src/builtins/storage-orchestrator/**`, `packages/system/src/builtins/backup-orchestrator/**`, `packages/system/src/builtins/system-backup/**`, `packages/system/src/storage/**`, `packages/system/src/kernel/storage-location-registry.ts`, `packages/types/src/storage/**`, `packages/addon-remote-storage/**`, `packages/addon-pipeline/src/durable/**`, `server/backend/src/core/storage/**`
-- **Files**: 131 (115 claimed by some document)
+- **Files**: 132 (116 claimed by some document)
 - **Uncovered**: `packages/addon-remote-storage/src` (6), `server/backend/src/core/storage` (3), `packages/addon-remote-storage/src/providers/s3` (2), `packages/addon-remote-storage/src/providers/sftp` (2), `packages/addon-remote-storage/src/providers/webdav` (2), `packages/addon-pipeline/src/durable` (1)
 
 ### ✅ Secrets and the keychain
