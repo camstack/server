@@ -102,7 +102,10 @@ export class PetkitClientRegistry {
       if (sameConnection(existing.connection, connection)) return
       try {
         await existing.manager.applyConnection(connection)
-        this.#entries.set(integrationId, { manager: existing.manager, connection })
+        this.#entries.set(integrationId, {
+          manager: existing.manager,
+          connection,
+        })
       } catch (err: unknown) {
         this.#logger.warn('PetkitClientRegistry: applyConnection failed', {
           tags: { integrationId },

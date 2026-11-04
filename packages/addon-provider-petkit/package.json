@@ -35,6 +35,7 @@
     "addons": [
       {
         "id": "provider-petkit",
+        "integrationRole": "devices",
         "category": "providers",
         "name": "PetKit",
         "version": "0.1.0",
@@ -62,6 +63,9 @@
           },
           {
             "name": "connection-test"
+          },
+          {
+            "name": "integration-instances"
           }
         ]
       }

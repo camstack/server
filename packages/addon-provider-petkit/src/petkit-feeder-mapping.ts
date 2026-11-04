@@ -20,7 +20,11 @@ export interface LastFeedPortions {
   readonly hopper2: number | null
 }
 
-export const NO_LAST_FEED: LastFeedPortions = { grams: null, hopper1: null, hopper2: null }
+export const NO_LAST_FEED: LastFeedPortions = {
+  grams: null,
+  hopper1: null,
+  hopper2: null,
+}
 
 /** The device-config keys that remember a manual feed. */
 export type FeedMemoryPatch = {

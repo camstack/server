@@ -24,7 +24,10 @@ export interface PetkitAdoptionProviderDeps {
   /** The registered integration ids (one per account). */
   readonly listIntegrations: () => readonly string[]
   readonly listAdoptedPetkit: () => Promise<
-    ReadonlyArray<{ readonly id: number; readonly config: Record<string, unknown> }>
+    ReadonlyArray<{
+      readonly id: number
+      readonly config: Record<string, unknown>
+    }>
   >
   readonly adoptDevice: (input: {
     readonly petkitDeviceId: string
@@ -39,7 +42,11 @@ export interface PetkitAdoptionProviderDeps {
 }
 
 /** The single granularity this provider advertises: whole-device adoption. */
-const DEVICES_FILTER: AdoptionFilter = { id: 'devices', label: 'Devices', isDefault: true } as const
+const DEVICES_FILTER: AdoptionFilter = {
+  id: 'devices',
+  label: 'Devices',
+  isDefault: true,
+} as const
 
 /** Build a `petkitDeviceId → CamStack deviceId` map for a single integration. */
 async function adoptedMapForIntegration(
@@ -136,7 +143,9 @@ export function buildPetkitAdoptionProvider(
           lastError: null,
         } satisfies AdoptionStatus
       } catch (err: unknown) {
-        logger.warn('petkit adoption: getStatus failed', { meta: { error: errMsg(err) } })
+        logger.warn('petkit adoption: getStatus failed', {
+          meta: { error: errMsg(err) },
+        })
         return {
           lastDiscoveryAt: null,
           candidateCount: 0,

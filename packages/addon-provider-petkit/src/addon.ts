@@ -3,6 +3,11 @@ import {
   BaseDeviceProvider,
   type ConfigUISchema,
   type CreateDeviceSpec,
+  defaultIntegrationApiOver,
+  defineAddonMigrations,
+  integrationInstancesCapability,
+  type AddonInitResult,
+  type RecordIntegrationInstances,
   connectionTestCapability,
   type DeviceConstructor,
   DeviceType,
@@ -12,17 +17,19 @@ import {
   type IConnectionTestProvider,
   type IDevice,
   type IDeviceAdoptionProvider,
-  type ProviderRegistration,
   type SystemEvent,
   collectOwnerIntegrationIds,
 } from '@camstack/types'
 import { PetkitReconciler, type IntegrationLifecycleKind } from './petkit-reconciler.js'
+import { toNodepetkitOptions, toPetkitCredentials } from './config.js'
 import {
-  buildConnectionFormSchema,
-  connectionFromSettings,
-  toNodepetkitOptions,
-  toPetkitCredentials,
-} from './config.js'
+  buildPetkitInstances,
+  PETKIT_MIGRATIONS,
+  petkitConnectionOf,
+  type PetkitConnectionBody,
+  petkitRecordKinds,
+  petkitRowsPorts,
+} from './petkit-instances.js'
 import { PetkitFeederDevice } from './devices/petkit-feeder-device.js'
 import { buildPetkitAdoptionProvider } from './petkit-adoption-provider.js'
 import { PetkitClientRegistry } from './petkit-client-registry.js'
@@ -54,13 +61,34 @@ export class PetkitProviderAddon extends BaseDeviceProvider {
 
   private integrationReconciler: PetkitReconciler | null = null
   private clients: PetkitClientRegistry | null = null
+  private instances: RecordIntegrationInstances<PetkitConnectionBody> | null = null
 
   constructor() {
     super({})
   }
 
-  protected override async onInitialize(): Promise<ProviderRegistration[]> {
+  protected override async onInitialize(): Promise<AddonInitResult> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
+    const records = this.ctx.records
+    if (records === undefined)
+      throw new Error('provider-petkit: ctx.records is required (hub-only addon)')
+    await records.declare(petkitRecordKinds)
+    // Before the provider registers: while it is registered the hub answers from the record.
+    await this.runMigrations(
+      defineAddonMigrations(
+        PETKIT_MIGRATIONS,
+        petkitRowsPorts({
+          api: defaultIntegrationApiOver(this.ctx.api),
+          records,
+          warn: (message) => this.ctx.logger.warn(message),
+        }),
+      ),
+    )
+    const instances = buildPetkitInstances(records, {
+      onChanged: () => this.reconcileIntegrations(),
+      tester: this.buildConnectionTestProvider(),
+    })
+    this.instances = instances
 
     petkitSession.bind({
       logger: this.ctx.logger,
@@ -84,17 +112,23 @@ export class PetkitProviderAddon extends BaseDeviceProvider {
       meta: { integrationCount: this.requireClients().size() },
     })
 
-    return [
-      ...regs,
-      {
-        capability: deviceAdoptionCapability,
-        provider: this.buildAdoptionProvider(),
-      },
-      {
-        capability: connectionTestCapability,
-        provider: this.buildConnectionTestProvider(),
-      },
-    ]
+    return {
+      providers: [
+        ...regs,
+        {
+          capability: deviceAdoptionCapability,
+          provider: this.buildAdoptionProvider(),
+        },
+        {
+          capability: connectionTestCapability,
+          provider: this.buildConnectionTestProvider(),
+        },
+        {
+          capability: integrationInstancesCapability,
+          provider: instances.toProvider(),
+        },
+      ],
+    }
   }
 
   /**
@@ -121,8 +155,14 @@ export class PetkitProviderAddon extends BaseDeviceProvider {
     this.clients = null
     this.integrationReconciler?.dispose()
     this.integrationReconciler = null
+    this.instances = null
     petkitSession.unbind()
     await super.onShutdown()
+  }
+
+  private requireInstances(): RecordIntegrationInstances<PetkitConnectionBody> {
+    if (!this.instances) throw new Error('PetKit provider not initialised')
+    return this.instances
   }
 
   private requireClients(): PetkitClientRegistry {
@@ -155,11 +195,7 @@ export class PetkitProviderAddon extends BaseDeviceProvider {
       },
       listIntegrations: () => this.ctx.api.integrations.list.query(),
       applySettings: async (integration) => {
-        const connection = connectionFromSettings(
-          await this.ctx.api.integrations.getSettings.query({
-            id: integration.id,
-          }),
-        )
+        const connection = await petkitConnectionOf(this.requireInstances(), integration.id)
         if (!connection) return false
         await this.requireClients().upsert(integration.id, integration.name, connection)
         return true
@@ -281,12 +317,6 @@ export class PetkitProviderAddon extends BaseDeviceProvider {
         return devices.loadConfig(id).catch((): null => null)
       },
     })
-  }
-
-  // ── Config form (account credentials, rendered by the wizard) ────────────
-
-  protected override globalSettingsSchema(): ConfigUISchema {
-    return buildConnectionFormSchema()
   }
 
   // ── Manual creation: not supported (feeders are adopted from the cloud) ──

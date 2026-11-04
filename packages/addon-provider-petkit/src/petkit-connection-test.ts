@@ -32,7 +32,9 @@ export function buildPetkitConnectionTestProvider(
       const parsed = petkitConfigSchema.safeParse(settings)
       if (!parsed.success) {
         const missing = parsed.error.issues.map((i) => i.path.join('.') || '(root)').join(', ')
-        logger.warn('PetKit connection test: settings incomplete', { meta: { missing } })
+        logger.warn('PetKit connection test: settings incomplete', {
+          meta: { missing },
+        })
         return {
           outcome: 'rejected',
           error: `PetKit account settings are incomplete or invalid: ${missing}`,

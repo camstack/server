@@ -24,7 +24,10 @@ export interface PetkitReconcilerDeps {
   /** Integration ids that own devices here; absent = no orphan sweep (two concordant reads, see OrphanIntegrationSweep). */
   readonly ownerIntegrationIds?: () => Promise<readonly string[]>
   /** Test seam for the sweep's clock and interval. */
-  readonly sweepOptions?: { readonly minIntervalMs?: number; readonly now?: () => number }
+  readonly sweepOptions?: {
+    readonly minIntervalMs?: number
+    readonly now?: () => number
+  }
 }
 
 export type IntegrationLifecycleKind = 'enabled' | 'disabled' | 'deleted'
@@ -41,7 +44,10 @@ export class PetkitReconciler {
 
   constructor(deps: PetkitReconcilerDeps) {
     this.#deps = deps
-    this.#sweep = new OrphanIntegrationSweep({ logger: deps.logger, ...deps.sweepOptions })
+    this.#sweep = new OrphanIntegrationSweep({
+      logger: deps.logger,
+      ...deps.sweepOptions,
+    })
   }
 
   /** Upsert a client per usable enabled integration; drop the CLIENT (never devices) of one the list answered is gone. */
@@ -93,7 +99,11 @@ export class PetkitReconciler {
     if (ownerIntegrationIds === undefined) return
     try {
       const ownerIds = await ownerIntegrationIds()
-      const result = await this.#sweep.sweep({ ownerIds, listedIds, removeDevices })
+      const result = await this.#sweep.sweep({
+        ownerIds,
+        listedIds,
+        removeDevices,
+      })
       if (result.newSuspects > 0 && this.#rerun === null) {
         this.#rerun = setTimeout(() => {
           this.#rerun = null

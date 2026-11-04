@@ -10,7 +10,6 @@
     "provider-homematic",
     "provider-mqtt-ha",
     "provider-onvif",
-    "provider-petkit",
     "provider-reolink",
     "provider-vesync"
   ]
