@@ -3787,7 +3787,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-export-panel.tsx",
-      "summary": "Generic device-export panel. Addon-agnostic — only the `device-export` cap drives it.",
+      "summary": "The export surface of one exporter addon, per export INSTANCE. The instances are asked of the provider (`listInstances`), never assumed: one instance renders the table alone, several render one named section each (one…",
       "props": [
         {
           "name": "addonId",
@@ -3814,7 +3814,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-export-panel.tsx",
-      "summary": "The exporter's error and Setup block on their own — for a page that shows them above its settings while the devices table sits at the bottom. Renders nothing when the exporter reports neither. Shares `getStatus`'s que…"
+      "summary": "The exporter's error and Setup block on their own — for a page that shows them above its settings while the devices table sits at the bottom. One block per ENABLED instance (named when there are several); renders noth…"
     },
     {
       "name": "DeviceFilterBar",

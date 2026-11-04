@@ -7894,7 +7894,12 @@
       "filterType": "Tipo",
       "filterNoOption": "Nessun risultato.",
       "noneSelected": "Nessuno selezionato",
-      "bulkBar": "Esportazione multipla"
+      "bulkBar": "Esportazione multipla",
+      "instancesLoading": "Caricamento delle istanze di esportazione…",
+      "instancesUnknown": "Impossibile leggere le istanze di esportazione. Riprova tra poco.",
+      "instancesNone": "\"{{addon}}\" non ha istanze di esportazione.",
+      "instanceDisabled": "Disattivata",
+      "instanceDisabledHint": "Questa istanza è disattivata. Attivala per esporre dispositivi tramite essa."
     },
     "motionZones": {
       "title": "Zone di movimento",

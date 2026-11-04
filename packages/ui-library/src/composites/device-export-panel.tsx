@@ -54,6 +54,7 @@ import {
   DeviceExportStatusSchema,
   ExportInstanceSchema,
   ExposedDeviceSchema,
+  type ExportInstance,
 } from '@camstack/types'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -313,20 +314,48 @@ function parseStatus(data: unknown): DeviceExportStatus | null {
 }
 
 /**
- * The exporter's error and Setup block on their own — for a page that shows
- * them above its settings while the devices table sits at the bottom. Renders
- * nothing when the exporter reports neither. Shares `getStatus`'s query key
- * with the panel, so mounting both costs one request.
+ * What `listInstances` says. Three states, never collapsed (D315): an instance
+ * list that has not answered is `pending`, one that failed or came back
+ * malformed is `unknown`, and only an answered list is `answered` — even when
+ * it is empty. None of the first two may read as "nothing exported".
  */
-export function DeviceExportSetup({ addonId }: { readonly addonId: string }): ReactElement | null {
+type InstancesState =
+  | { readonly kind: 'pending' }
+  | { readonly kind: 'unknown' }
+  | { readonly kind: 'answered'; readonly instances: readonly ExportInstance[] }
+
+function useExportInstances(addonId: string): InstancesState {
+  const query = useDeviceExportListInstances({ nodeId: 'hub', addonId }, { retry: false })
+  return useMemo<InstancesState>(() => {
+    if (query.data === undefined) return query.isError ? { kind: 'unknown' } : { kind: 'pending' }
+    const parsed = ExportInstanceArraySchema.safeParse(query.data)
+    return parsed.success ? { kind: 'answered', instances: parsed.data } : { kind: 'unknown' }
+  }, [query.data, query.isError])
+}
+
+/** One instance's error and Setup block. Renders nothing when it reports neither. */
+function InstanceSetup({
+  addonId,
+  instance,
+  named,
+}: {
+  readonly addonId: string
+  readonly instance: ExportInstance
+  readonly named: boolean
+}): ReactElement | null {
   const statusQuery = useDeviceExportGetStatus(
-    { nodeId: 'hub', addonId },
+    { nodeId: 'hub', addonId, instanceId: instance.instanceId },
     { refetchInterval: STATUS_POLL_INTERVAL_MS, retry: false },
   )
   const status = useMemo(() => parseStatus(statusQuery.data), [statusQuery.data])
   if (!status?.error && !status?.setup) return null
   return (
     <div className="rounded-lg border border-border bg-surface overflow-hidden">
+      {named && (
+        <div className="px-2 sm:px-4 py-2 border-b border-border text-xs font-medium text-foreground">
+          {instance.name}
+        </div>
+      )}
       {status.error && (
         <div className="px-2 sm:px-4 py-3 border-b border-border">
           <ErrorBox message={status.error} />
@@ -334,6 +363,32 @@ export function DeviceExportSetup({ addonId }: { readonly addonId: string }): Re
       )}
       {status.setup && <SetupSection setup={status.setup} />}
     </div>
+  )
+}
+
+/**
+ * The exporter's error and Setup block on their own — for a page that shows
+ * them above its settings while the devices table sits at the bottom. One block
+ * per ENABLED instance (named when there are several); renders nothing while
+ * the instances are unanswered or when none reports an error or a setup. Shares
+ * `getStatus`'s query key with the panel, so mounting both costs one request.
+ */
+export function DeviceExportSetup({ addonId }: { readonly addonId: string }): ReactElement | null {
+  const state = useExportInstances(addonId)
+  if (state.kind !== 'answered') return null
+  const enabled = state.instances.filter((i) => i.enabled)
+  if (enabled.length === 0) return null
+  return (
+    <>
+      {enabled.map((instance) => (
+        <InstanceSetup
+          key={instance.instanceId}
+          addonId={addonId}
+          instance={instance}
+          named={state.instances.length > 1}
+        />
+      ))}
+    </>
   )
 }
 
@@ -550,24 +605,36 @@ function BulkSummary({
  * Generic device-export panel. Addon-agnostic — only the `device-export`
  * cap drives it.
  */
-export function DeviceExportPanel({
+interface DeviceExportInstancePanelProps {
+  readonly addonId: string
+  readonly instance: ExportInstance
+  /** Several instances share the surface: the header names this one. */
+  readonly named: boolean
+  readonly onOpenDevice?: (deviceId: string) => void
+  readonly showSetup?: boolean
+}
+
+function DeviceExportInstancePanel({
   addonId,
+  instance,
+  named,
   onOpenDevice,
   showSetup = true,
-}: DeviceExportPanelProps): ReactElement {
+}: DeviceExportInstancePanelProps): ReactElement {
+  const instanceId = instance.instanceId
   const t = useUiText()
   const queryClient = useQueryClient()
 
   const statusQuery = useDeviceExportGetStatus(
-    { nodeId: 'hub', addonId },
+    { nodeId: 'hub', addonId, instanceId },
     { refetchInterval: STATUS_POLL_INTERVAL_MS, retry: false },
   )
   const exposedQuery = useDeviceExportListExposedDevices(
-    { nodeId: 'hub', addonId },
+    { nodeId: 'hub', addonId, instanceId },
     { refetchInterval: STATUS_POLL_INTERVAL_MS, retry: false },
   )
   const kindsQuery = useDeviceExportListSupportedDeviceKinds(
-    { nodeId: 'hub', addonId },
+    { nodeId: 'hub', addonId, instanceId },
     { retry: false },
   )
   // The fleet, SLIM and on the fleet window.
@@ -618,7 +685,7 @@ export function DeviceExportPanel({
     [entityKindsQuery.data],
   )
   const exposedEntitiesQuery = useDeviceExportListExposedEntities(
-    { nodeId: 'hub', addonId },
+    { nodeId: 'hub', addonId, instanceId },
     { refetchInterval: STATUS_POLL_INTERVAL_MS, retry: false, enabled: entityKinds !== null },
   )
   const actionsQuery = useActionsList(
@@ -633,16 +700,6 @@ export function DeviceExportPanel({
   const invalidate = useCallback((): void => {
     queryClient.invalidateQueries({ queryKey: [['deviceExport']] })
   }, [queryClient])
-
-  // A write names the instance it changes. This panel is not per-instance yet:
-  // it acts on every ENABLED instance of the exporter (one for most exporters,
-  // one per broker for Home Assistant). An unanswered query refuses the write.
-  const instancesQuery = useDeviceExportListInstances({ nodeId: 'hub', addonId }, { retry: false })
-  const targetInstanceIds = useMemo<readonly string[] | null>(() => {
-    const parsed = ExportInstanceArraySchema.safeParse(instancesQuery.data)
-    if (!parsed.success) return null
-    return parsed.data.filter((i) => i.enabled).map((i) => i.instanceId)
-  }, [instancesQuery.data])
 
   const exposeMutation = useDeviceExportExposeDevice({ onSuccess: invalidate })
   const unexposeMutation = useDeviceExportUnexposeDevice({ onSuccess: invalidate })
@@ -790,12 +847,7 @@ export function DeviceExportPanel({
       for (const deviceId of deviceIds) {
         const label = labelFor(deviceId)
         try {
-          if (targetInstanceIds === null || targetInstanceIds.length === 0) {
-            throw new Error('no export instance is available to act on')
-          }
-          for (const instanceId of targetInstanceIds) {
-            await mutation.mutateAsync({ instanceId, deviceId, nodeId: 'hub', addonId })
-          }
+          await mutation.mutateAsync({ instanceId, deviceId, nodeId: 'hub', addonId })
           succeeded.push(label)
         } catch (reason: unknown) {
           const message = reason instanceof Error ? reason.message : String(reason)
@@ -811,7 +863,7 @@ export function DeviceExportPanel({
       setSelectedIds(new Set())
       setRunning(false)
     },
-    [addonId, exposeMutation, unexposeMutation, labelFor, running, targetInstanceIds],
+    [addonId, exposeMutation, unexposeMutation, labelFor, running, instanceId],
   )
 
   /**
@@ -828,12 +880,7 @@ export function DeviceExportPanel({
       const succeeded: string[] = []
       const failed: BulkFailure[] = []
       try {
-        if (targetInstanceIds === null || targetInstanceIds.length === 0) {
-          throw new Error('no export instance is available to act on')
-        }
-        for (const instanceId of targetInstanceIds) {
-          await mutation.mutateAsync({ instanceId, entity: row.ref, nodeId: 'hub', addonId })
-        }
+        await mutation.mutateAsync({ instanceId, entity: row.ref, nodeId: 'hub', addonId })
         succeeded.push(row.name)
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err)
@@ -850,7 +897,7 @@ export function DeviceExportPanel({
       setOutcome({ action, total: 1, succeeded, failed })
       setRunning(false)
     },
-    [addonId, exposeEntityMutation, unexposeEntityMutation, running, targetInstanceIds],
+    [addonId, exposeEntityMutation, unexposeEntityMutation, running, instanceId],
   )
 
   // D875: role / provider filters narrow the rows; "select shown" then acts on
@@ -1133,6 +1180,9 @@ export function DeviceExportPanel({
           <span className="text-[11px] font-semibold text-foreground-subtle uppercase tracking-wide">
             {t('uiLibrary.deviceExport.title', 'Exported devices')}
           </span>
+          {named && (
+            <span className="text-xs font-medium text-foreground truncate">{instance.name}</span>
+          )}
           <Badge variant={statusVariant(linkState)}>{capitaliseLinkState(t, linkState)}</Badge>
           <span className="text-[11px] text-foreground-subtle">
             {t('uiLibrary.deviceExport.exposedCount', '{{count}} exposed', { count: exposedCount })}
@@ -1208,6 +1258,96 @@ export function DeviceExportPanel({
           />
         )}
       </div>
+    </div>
+  )
+}
+
+/** A switched-off instance: named, marked disabled, and asked nothing. */
+function DisabledInstanceCard({ instance }: { readonly instance: ExportInstance }): ReactElement {
+  const t = useUiText()
+  return (
+    <div className="rounded-lg border border-border bg-surface overflow-hidden">
+      <div className="flex items-center gap-2 px-2 sm:px-4 py-2.5 bg-surface-hover/20">
+        <Share2 className="h-3.5 w-3.5 text-foreground-subtle shrink-0" />
+        <span className="text-xs font-medium text-foreground truncate">{instance.name}</span>
+        <Badge variant="neutral">{t('uiLibrary.deviceExport.instanceDisabled', 'Disabled')}</Badge>
+      </div>
+      <p className="px-2 sm:px-4 py-3 text-xs text-foreground-subtle border-t border-border">
+        {t(
+          'uiLibrary.deviceExport.instanceDisabledHint',
+          'This instance is switched off. Enable it to expose devices through it.',
+        )}
+      </p>
+    </div>
+  )
+}
+
+/**
+ * The export surface of one exporter addon, per export INSTANCE. The instances
+ * are asked of the provider (`listInstances`), never assumed: one instance
+ * renders the table alone, several render one named section each (one per
+ * Home Assistant broker), and every read and write names the instance it acts
+ * on. A disabled instance reads as disabled; an unanswered list reads as
+ * loading or unknown, never as "nothing exposed".
+ */
+export function DeviceExportPanel({
+  addonId,
+  onOpenDevice,
+  showSetup = true,
+}: DeviceExportPanelProps): ReactElement {
+  const t = useUiText()
+  const state = useExportInstances(addonId)
+
+  if (state.kind === 'pending') {
+    return (
+      <div className="flex items-center gap-2 px-1 py-6 text-xs text-foreground-subtle">
+        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        {t('uiLibrary.deviceExport.instancesLoading', 'Loading export instances…')}
+      </div>
+    )
+  }
+  if (state.kind === 'unknown') {
+    return (
+      <ErrorBox
+        message={t(
+          'uiLibrary.deviceExport.instancesUnknown',
+          'The export instances could not be read. Try again in a moment.',
+        )}
+      />
+    )
+  }
+  if (state.instances.length === 0) {
+    return (
+      <EmptyState
+        icon={Share2}
+        title={t('uiLibrary.deviceExport.emptyTitle', 'No exportable devices')}
+        description={t(
+          'uiLibrary.deviceExport.instancesNone',
+          '"{{addon}}" has no export instance.',
+          {
+            addon: addonId,
+          },
+        )}
+      />
+    )
+  }
+  const named = state.instances.length > 1
+  return (
+    <div className="flex flex-col gap-3">
+      {state.instances.map((instance) =>
+        instance.enabled ? (
+          <DeviceExportInstancePanel
+            key={instance.instanceId}
+            addonId={addonId}
+            instance={instance}
+            named={named}
+            onOpenDevice={onOpenDevice}
+            showSetup={showSetup}
+          />
+        ) : (
+          <DisabledInstanceCard key={instance.instanceId} instance={instance} />
+        ),
+      )}
     </div>
   )
 }

@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The export panel names the export instance in every expose and unexpose call
+- The device export panel shows each export instance on its own (one section per Home Assistant broker), writes to the instance you act on, and reads a disabled instance as disabled
 
 ## [1.2.379] - 2026-11-03
 

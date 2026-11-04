@@ -7872,7 +7872,12 @@
       "filterType": "Type",
       "filterNoOption": "No match.",
       "noneSelected": "None selected",
-      "bulkBar": "Bulk export"
+      "bulkBar": "Bulk export",
+      "instancesLoading": "Loading export instances…",
+      "instancesUnknown": "The export instances could not be read. Try again in a moment.",
+      "instancesNone": "\"{{addon}}\" has no export instance.",
+      "instanceDisabled": "Disabled",
+      "instanceDisabledHint": "This instance is switched off. Enable it to expose devices through it."
     },
     "motionZones": {
       "title": "Motion Zones",

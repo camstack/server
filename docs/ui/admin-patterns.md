@@ -260,6 +260,11 @@ panel. Both render `<DeviceList mode="generic">`: a caller supplies `getKey`,
 pagination with it. Two tables with one job diverge; this repo has paid for
 that shape before.
 
+The export panel is also per export INSTANCE: it asks `deviceExport.listInstances`, shows
+one instance bare and several as one named section each, passes the instance id on every
+read and write, shows a disabled instance as disabled, and treats an unanswered instance
+list as loading or unknown, never as "nothing exposed".
+
 The integration pages (Connectivity, Remote Access, Mesh, TURN, Authentication,
 Log destinations) were a third such table until 2026-10-08 — `AddonCollectionPage`,
 one collapsible row per addon. They are a pill selector now; see
