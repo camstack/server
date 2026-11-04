@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { fileURLToPath } from 'node:url'
+import * as fs from 'node:fs'
+import * as os from 'node:os'
+import * as path from 'node:path'
 import type { StorageLocationDeclaration } from '@camstack/types'
 import {
   AddonLoader,
@@ -157,5 +160,60 @@ describe('AddonLoader.loadFromDirectory', () => {
     } finally {
       await cleanup()
     }
+  })
+})
+
+describe('AddonLoader.listStorageLocationDeclarers', () => {
+  function installAddon(root: string, name: string, entry: string | null): string {
+    const dir = path.join(root, '@camstack', name)
+    fs.mkdirSync(path.join(dir, 'dist'), { recursive: true })
+    fs.writeFileSync(
+      path.join(dir, 'package.json'),
+      JSON.stringify({
+        name: `@camstack/${name}`,
+        version: '1.0.0',
+        camstack: {
+          addons: [
+            {
+              id: name,
+              entry: './dist/index.js',
+              storageLocations: [
+                { id: 'eventMedia', displayName: 'Event media', cardinality: 'multi' },
+              ],
+            },
+          ],
+        },
+      }),
+    )
+    if (entry !== null) fs.writeFileSync(path.join(dir, 'dist', 'index.js'), entry)
+    return dir
+  }
+
+  it('keeps what an addon that FAILED to load declares, apart from the loaded ones', async () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'declarers-'))
+    installAddon(root, 'broken-analytics', "throw new Error('Cannot find module x')")
+    installAddon(root, 'missing-entry', null)
+    const loader = new AddonLoader()
+    await loader.loadFromDirectory(root)
+    const declarers = loader.listStorageLocationDeclarers()
+    expect(declarers.map((d) => [d.addonId, d.loaded]).sort()).toEqual([
+      ['broken-analytics', false],
+      ['missing-entry', false],
+    ])
+    expect(declarers.every((d) => d.declarations.some((x) => x.id === 'eventMedia'))).toBe(true)
+    // the loaded-only view is exactly what made the prune destroy their defaults
+    expect(loader.listStorageLocationDeclarations()).toEqual([])
+  })
+
+  it('marks an unreadable package as unknown (addonId null)', async () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'declarers-'))
+    const dir = path.join(root, '@camstack', 'garbled')
+    fs.mkdirSync(dir, { recursive: true })
+    fs.writeFileSync(path.join(dir, 'package.json'), '{ not json')
+    const loader = new AddonLoader()
+    await loader.loadFromDirectory(root)
+    expect(loader.listStorageLocationDeclarers()).toEqual([
+      expect.objectContaining({ addonId: null, loaded: false, declarations: [] }),
+    ])
   })
 })

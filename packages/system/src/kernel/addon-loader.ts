@@ -4,6 +4,7 @@ import type {
   ICamstackAddon,
   IScopedLogger,
   StorageLocationDeclaration,
+  StorageLocationDeclarer,
 } from '@camstack/types'
 import { asJsonObject, parseJsonUnknown } from '@camstack/types'
 import { createHash } from 'node:crypto'
@@ -185,6 +186,12 @@ export interface AddonLoadFailure {
   readonly packageName: string
   readonly addonDir: string
   readonly addonId?: string
+  /**
+   * The manifest declaration of the addon that failed (declaration-level
+   * failures only). The kernel read it before the import threw, so what the
+   * addon DECLARES stays known even though it is not running.
+   */
+  readonly declaration?: AddonDeclaration
   readonly error: Error
   readonly timestamp: number
 }
@@ -344,6 +351,7 @@ export class AddonLoader {
           packageName,
           addonDir,
           addonId: declaration.id,
+          declaration,
           error,
           timestamp: Date.now(),
         })
@@ -485,6 +493,36 @@ export class AddonLoader {
    */
   listStorageLocationDeclarations(): StorageLocationDeclaration[][] {
     return extractStorageLocationDeclarations(this.addons.values())
+  }
+
+  /**
+   * Every addon that declares storage locations, loaded or not. A failed load
+   * keeps the declarations its manifest carried; a package that could not be
+   * read at all is listed with `addonId: null` and no declarations (unknown).
+   */
+  listStorageLocationDeclarers(): StorageLocationDeclarer[] {
+    const result: StorageLocationDeclarer[] = []
+    for (const [addonId, addon] of this.addons) {
+      const declared = addon.declaration.storageLocations
+      if (declared !== undefined && declared.length > 0) {
+        result.push({
+          addonId,
+          packageName: addon.packageName,
+          loaded: true,
+          declarations: [...declared],
+        })
+      }
+    }
+    for (const failure of this.loadFailures) {
+      if (failure.addonId !== undefined && this.addons.has(failure.addonId)) continue
+      result.push({
+        addonId: failure.addonId ?? null,
+        packageName: failure.packageName,
+        loaded: false,
+        declarations: failure.declaration?.storageLocations ?? [],
+      })
+    }
+    return result
   }
 
   /** Check if an addon is registered */

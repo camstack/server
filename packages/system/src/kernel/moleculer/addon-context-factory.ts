@@ -16,6 +16,7 @@ import type {
   IClusterBroker,
   ReadinessScope,
   StorageLocationDeclaration,
+  StorageLocationDeclarer,
 } from '@camstack/types'
 import { createDebugEmitter } from '@camstack/types/addon'
 import {
@@ -223,6 +224,8 @@ interface AddonContextOptions {
    * "No default storage location configured for type addons-data".
    */
   readonly listStorageLocationDeclarations?: () => StorageLocationDeclaration[][]
+  /** Declarers loaded or not — what the orchestrator's prune consults (D49, D315). */
+  readonly listStorageLocationDeclarers?: () => StorageLocationDeclarer[]
 }
 
 /**
@@ -815,6 +818,9 @@ async function buildAddonContext(
         // own); agents/workers pass it from their AddonLoader.
         ...(options?.listStorageLocationDeclarations
           ? { listStorageLocationDeclarations: options.listStorageLocationDeclarations }
+          : {}),
+        ...(options?.listStorageLocationDeclarers
+          ? { listStorageLocationDeclarers: options.listStorageLocationDeclarers }
           : {}),
         readinessRegistry: readinessRegistry(),
         // Expose the per-process device registry so worker-side providers

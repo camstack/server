@@ -33,6 +33,7 @@ import type {
   StorageAccess,
   StorageLocation,
   StorageLocationDeclaration,
+  StorageLocationDeclarer,
   StorageLocationMode,
   StorageLocationRef,
 } from '@camstack/types'
@@ -284,6 +285,17 @@ export class StorageOrchestratorService {
     seeded.add(type)
     void store.markTypeSeeded(type).catch((err) => {
       this.logger.error('storage-orchestrator: persisting the seed memory failed', {
+        meta: { type, error: err instanceof Error ? err.message : String(err) },
+      })
+    })
+  }
+
+  private forgetSeeded(type: string): void {
+    const seeded = this.seededTypes
+    const store = this.locationStore
+    if (seeded === null || !seeded.delete(type) || !store?.unmarkTypeSeeded) return
+    void store.unmarkTypeSeeded(type).catch((err) => {
+      this.logger.error('storage-orchestrator: forgetting the seed memory failed', {
         meta: { type, error: err instanceof Error ? err.message : String(err) },
       })
     })
@@ -879,9 +891,22 @@ export class StorageOrchestratorService {
   }
 
   /**
-   * Remove seed-shaped locations (`<type>:default`) whose type is no longer
-   * declared by any addon (stale defaults from a removed location type).
+   * Remove seed-shaped locations (`<type>:default`) whose type no INSTALLED
+   * package declares any more (stale defaults from a removed location type).
    * Operator-added locations of an undeclared type are KEPT but warned.
+   *
+   * "Undeclared" means undeclared by every installed package, not by every
+   * LOADED addon. The registry is built from the addons that loaded; an addon
+   * whose load failed (`Cannot find module` after a bad deploy) declares the
+   * same types it always did, and "not known right now" is not "removed"
+   * (D49, D315). `unloaded` is that other half — every installed declarer
+   * that is not loaded. A type one of them declares is kept, by name in the
+   * log; a package that could not even be read has unknown declarations, so
+   * the whole pass is skipped (a read that would DESTROY needs an answer).
+   *
+   * A pruned type also forgets that it was seeded: were it declared again, it
+   * seeds again, while an operator's own delete (which never reaches here)
+   * keeps sticking.
    *
    * FAIL-SAFE: if the registry is EMPTY (no addon declared any location), we
    * refuse to prune anything. An empty registry almost always means
@@ -889,7 +914,7 @@ export class StorageOrchestratorService {
    * "everything undeclared" in that state would wipe every seeded location
    * (data/logs/recordings/…). Better to keep stale rows than destroy live ones.
    */
-  pruneUndeclaredSystemLocations(): void {
+  pruneUndeclaredSystemLocations(unloaded: readonly StorageLocationDeclarer[] = []): void {
     if (!this.registry) return
     if (this.registry.list().length === 0) {
       this.logger.warn(
@@ -897,31 +922,52 @@ export class StorageOrchestratorService {
       )
       return
     }
+    const unreadable = unloaded.filter((d) => d.addonId === null)
+    if (unreadable.length > 0) {
+      this.logger.warn(
+        'storage-orchestrator: skipping prune — an installed package could not be read, so what it declares is unknown',
+        { meta: { packages: unreadable.map((d) => d.packageName) } },
+      )
+      return
+    }
     for (const [id, loc] of Array.from(this.locations)) {
       if (this.registry.cardinalityOf(loc.type) !== null) continue // still declared
       const seeded = loc.id === `${loc.type}:default`
-      if (seeded) {
-        this.locations.delete(id)
-        if (this.locationStore) {
-          const store = this.locationStore
-          void store.delete(id).catch((err) => {
-            this.logger.error('storage-orchestrator: prune persistence failed', {
-              meta: {
-                id,
-                error: err instanceof Error ? err.message : String(err),
-              },
-            })
-          })
-        }
-        this.logger.info('storage-orchestrator: pruned stale seeded location', {
-          meta: { id, type: loc.type },
-        })
-      } else {
+      if (!seeded) {
         this.logger.warn(
           'storage-orchestrator: location of undeclared type kept (operator-owned)',
           { meta: { id, type: loc.type } },
         )
+        continue
       }
+      const holders = unloaded.filter((d) => d.declarations.some((x) => x.id === loc.type))
+      if (holders.length > 0) {
+        this.logger.info(
+          'storage-orchestrator: prune skipped — type declared by an installed addon that is not loaded',
+          {
+            meta: {
+              id,
+              type: loc.type,
+              addons: holders.map((d) => d.addonId),
+              reason: 'declaring-addon-unloaded',
+            },
+          },
+        )
+        continue
+      }
+      this.locations.delete(id)
+      this.forgetSeeded(loc.type)
+      if (this.locationStore) {
+        const store = this.locationStore
+        void store.delete(id).catch((err) => {
+          this.logger.error('storage-orchestrator: prune persistence failed', {
+            meta: { id, error: err instanceof Error ? err.message : String(err) },
+          })
+        })
+      }
+      this.logger.info('storage-orchestrator: pruned stale seeded location', {
+        meta: { id, type: loc.type, reason: 'no-installed-package-declares-type' },
+      })
     }
   }
 

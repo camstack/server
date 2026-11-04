@@ -60,6 +60,13 @@ export interface ILocationStore {
    */
   loadSeededTypes?(): Promise<readonly string[]>
   markTypeSeeded?(type: string): Promise<void>
+  /**
+   * Forget that a type was seeded. Called ONLY when the declaration pass prunes
+   * the type's default because no installed package declares it any more — so a
+   * later re-declaration seeds it again, and an operator's own delete (which
+   * never calls this) keeps sticking.
+   */
+  unmarkTypeSeeded?(type: string): Promise<void>
 }
 
 /**
@@ -169,6 +176,12 @@ export class SqliteLocationStore implements ILocationStore {
     const kind = this.seedMarkersKind
     if (kind === null) return
     await kind.put({ id: type, data: { seededAt: Date.now() } })
+  }
+
+  async unmarkTypeSeeded(type: string): Promise<void> {
+    const kind = this.seedMarkersKind
+    if (kind === null) return
+    await kind.delete(type)
   }
 
   static recordStoresOf(

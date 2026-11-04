@@ -1542,13 +1542,19 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
     // Refresh the node-local snapshot first so the upsert guard fired by
     // `seedDefaults` + the post-seed backfill classify providers correctly.
     await this.refreshNodeLocalCache()
-    const perAddon = this.ctx.kernel.listStorageLocationDeclarations?.() ?? []
+    const declarers = this.ctx.kernel.listStorageLocationDeclarers?.()
+    const perAddon =
+      declarers !== undefined
+        ? declarers.filter((d) => d.loaded).map((d) => d.declarations)
+        : (this.ctx.kernel.listStorageLocationDeclarations?.() ?? [])
+    // Installed but not loaded: they still declare, and a prune must see that.
+    const unloaded = declarers?.filter((d) => !d.loaded) ?? []
     const registry = buildStorageLocationRegistry(perAddon)
     this.service.setRegistry(registry)
     // Prune stale system-seeded locations whose type is no longer declared
     // (old defaults left in the SQLite store from before a location type was
     // removed). Must run after `setRegistry` so the declaration check is live.
-    this.service.pruneUndeclaredSystemLocations()
+    this.service.pruneUndeclaredSystemLocations(unloaded)
     // Default base for configurable destinations = this node's data root.
     // `ctx.nodeDataDir` is already `CAMSTACK_DATA ?? <node root>`, node-correct
     // everywhere. Declarations marked `defaultRoot: 'media'` (recordings,

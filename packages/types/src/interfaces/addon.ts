@@ -17,7 +17,10 @@ import type { ICapabilityRegistry } from './kernel-abstractions.js'
 import type { IScopedLogger } from './logging.js'
 import type { DebugEmitter } from '../logging/debug-watch.js'
 import type { ICapabilityHandle } from './readiness.js'
-import type { StorageLocationDeclaration } from './storage-location-declaration.js'
+import type {
+  StorageLocationDeclaration,
+  StorageLocationDeclarer,
+} from './storage-location-declaration.js'
 /** Sub-process info (inlined from deleted worker-protocol.ts) */
 export interface SubProcessInfo {
   readonly pid: number
@@ -343,6 +346,17 @@ export interface IKernelServices {
    * workers and remote agents (the orchestrator runs hub-side).
    */
   readonly listStorageLocationDeclarations?: () => StorageLocationDeclaration[][]
+
+  /**
+   * Every addon that declares storage locations — LOADED or not. An addon whose
+   * load failed is listed with `loaded: false` and the declarations its
+   * manifest carries; a package the kernel could not even read is listed with
+   * `addonId: null`. The storage-orchestrator prunes a default location only
+   * when no entry here, loaded or not, declares its type (D49, D315).
+   *
+   * Hub-only, like {@link listStorageLocationDeclarations}.
+   */
+  readonly listStorageLocationDeclarers?: () => StorageLocationDeclarer[]
 
   /**
    * D3 handshake-fed native-cap view of the whole cluster. Returns every

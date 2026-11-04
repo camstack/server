@@ -3667,6 +3667,7 @@ export class AddonRegistryService {
         // addon — surfaced from the kernel's AddonLoader so the
         // storage-orchestrator builtin can aggregate them and seed defaults.
         listStorageLocationDeclarations: () => this.addonLoader.listStorageLocationDeclarations(),
+        listStorageLocationDeclarers: () => this.addonLoader.listStorageLocationDeclarers(),
         readinessRegistry: this.moleculer.readinessRegistry,
         // D3: handshake-fed native-cap view of the whole cluster. Backed by
         // `HubNodeRegistry.listNativeCapEntries()` populated by every

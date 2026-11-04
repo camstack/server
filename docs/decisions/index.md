@@ -4,7 +4,7 @@
 
 # Decisions
 
-968 architecture decision records. One file per decision, never
+969 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -983,6 +983,7 @@ that rots.
 | D1003 | [Zone motion backs the open of a package candidate, learned late but anchored at the open](adr-1003-zone-motion-backs-the-open-of-a-package-candidate-learned-late-anchored-at-open.md) | ✅ accepted | 2026-11-02 |
 | D1004 | [One creation entry point: a composed device is created naked, facets attach through Customize](adr-1004-one-creation-entry-point-a-composed-device-is-created-naked-facets-attach-through-customize.md) | ✅ accepted (supersedes D944 (the appliance template part only; the fixed extension set, the helper templates and the one source selector stay)) | 2026-11-03 |
 | D1005 | [The transition gate seeds its last level from history, off the event path; a first false waits a bounded moment for it](adr-1005-the-transition-gate-seeds-its-last-level-from-history-off-the-event-path.md) | ✅ accepted | 2026-11-03 |
+| D1006 | [A storage type is pruned only when no INSTALLED package declares it, and a missing writable location is an alert](adr-1006-a-failed-addon-load-never-prunes-its-storage-locations.md) | ✅ accepted | 2026-11-04 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

@@ -122,3 +122,19 @@ export const StorageLocationDeclarationSchema = z.object({
 
 /** Inferred TypeScript type for `StorageLocationDeclarationSchema`. */
 export type StorageLocationDeclaration = z.infer<typeof StorageLocationDeclarationSchema>
+
+/**
+ * One addon (or one unreadable package) as the kernel knows it for storage
+ * declarations. A package whose addon FAILED to load still has a manifest the
+ * kernel read: its declarations are known even though the addon is not running.
+ * That difference is the whole point — "declared by an addon that did not load"
+ * is NOT "declared by nobody" (D49, D315), and a prune must tell them apart.
+ */
+export interface StorageLocationDeclarer {
+  /** The addon id; `null` when the package itself could not be read (its declarations are UNKNOWN). */
+  readonly addonId: string | null
+  readonly packageName: string
+  /** True when the addon registered; false when its load failed. */
+  readonly loaded: boolean
+  readonly declarations: readonly StorageLocationDeclaration[]
+}

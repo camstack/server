@@ -314,6 +314,7 @@ export {
 export type {
   StorageAccess,
   StorageLocationDeclaration,
+  StorageLocationDeclarer,
 } from './interfaces/storage-location-declaration.js'
 export {
   STORAGE_ACCESS_FALLBACK,

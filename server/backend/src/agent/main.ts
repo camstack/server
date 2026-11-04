@@ -1500,6 +1500,7 @@ async function bootCoreAddons(
         // sqlite-settings aborts boot: "No default storage location
         // configured for type addons-data" → fatal crash-loop.
         listStorageLocationDeclarations: () => loader.listStorageLocationDeclarations(),
+        listStorageLocationDeclarers: () => loader.listStorageLocationDeclarers(),
       })
 
       const initResult = normalizeAddonInitResult(await instance.initialize(context))

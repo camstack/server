@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - device-export calls name their instance (listInstances; writes require instanceId) and broker connections are integration instances
+### Fixed
+
+- A boot where some addons fail to load no longer deletes the default storage locations of the types those addons declare (event media, recordings, artifacts); the failure is logged and the default is kept
 
 ## [1.2.759] - 2026-11-04
 
