@@ -23,6 +23,8 @@ export interface EntryKindSpec<S extends z.ZodType> {
   readonly secretArrayKeys?: Readonly<Record<string, string>>
   /** Secret paths an earlier shape of the body declared (see `RecordKindSpec`). */
   readonly retiredSecretPaths?: readonly string[]
+  /** A body over the 64 KiB default (a kind that keeps a device description); capped at 1 MiB. */
+  readonly maxDataBytes?: number
 }
 
 /** The body of a plain entry: a name and the fields the kind adds. */
@@ -44,6 +46,7 @@ export function defineEntryKind<S extends z.ZodType>(
       class: 'config',
       writeTrigger: spec.writeTrigger ?? 'an operator adds or edits an entry in the entries UI',
       retention: { none: 'an entry goes only when the operator deletes it' },
+      ...(spec.maxDataBytes === undefined ? {} : { maxDataBytes: spec.maxDataBytes }),
       ...(spec.database === undefined ? {} : { database: spec.database }),
       ...(spec.indexes === undefined ? {} : { indexes: spec.indexes }),
       ...(spec.secretArrayKeys === undefined ? {} : { secretArrayKeys: spec.secretArrayKeys }),

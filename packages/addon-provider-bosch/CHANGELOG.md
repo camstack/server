@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Bosch Smart Home, Home Connect and HomeCom keep each account as a typed instance on the Integrations page; the saved connections move over on first start, and tokens and pairing keys stay in the keychain
+
 ## [0.1.35] - 2026-11-01
 
 ### Changed

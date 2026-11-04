@@ -61,8 +61,6 @@ export function homeComApiBase(_region: HomeComConfig['region']): string {
   return HOMECOM_POINTT_API_ORIGIN
 }
 
-export const HOMECOM_SECRET_KEYS = ['username', 'token', 'refresh'] as const
-
 const HIDDEN_UNTIL_ADVANCED = { field: '__hidden__', equals: 'yes' } as const
 
 const HOMECOM_CODE_HELP =

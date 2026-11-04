@@ -1,4 +1,3 @@
-import { makeSecretMarker } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 import { buildHomeConnectConnectionPersister } from '../home-connect-connection-persist.js'
 import { entityIndexFromDescription } from '../home-connect-device-description.js'
@@ -240,23 +239,23 @@ describe('Home Connect IDDF fetch refreshes the account token', () => {
   })
 })
 
-describe('the rotated token is persisted to the keychain', () => {
-  function persistHarness(stored: Record<string, unknown>) {
-    const setSettings = vi.fn(
-      async (_input: unknown): Promise<unknown> => ({
-        success: true,
+describe('the rotated token is persisted to the record', () => {
+  function persistHarness(stored: Record<string, unknown>, locked = false) {
+    const patch = vi.fn(
+      async (_id: string, _patch: Record<string, unknown>): Promise<unknown> => ({
+        rev: 2,
       }),
     )
     const warn = vi.fn()
     const persist = buildHomeConnectConnectionPersister({
-      getSettings: async () => stored,
-      setSettings,
+      read: async () => ({ settings: stored, locked }),
+      patch,
       logger: { warn },
     })
-    return { persist, setSettings, warn }
+    return { persist, patch, warn }
   }
 
-  it('writes the rotated access + refresh token, named as keychain secrets', async () => {
+  it('patches the rotated access + refresh token into the record', async () => {
     const x = persistHarness({
       token: STALE,
       refresh: 'ref-old',
@@ -264,24 +263,16 @@ describe('the rotated token is persisted to the keychain', () => {
     })
     await x.persist('int-1', { ...connection(FRESH), refresh: 'ref-new' })
 
-    expect(x.setSettings).toHaveBeenCalledTimes(1)
-    const call = x.setSettings.mock.calls[0]?.[0]
-    expect(call).toMatchObject({
-      id: 'int-1',
-      settings: { token: FRESH, refresh: 'ref-new' },
-    })
-    expect(call).toHaveProperty('secretKeys', expect.arrayContaining(['token', 'refresh']))
+    expect(x.patch).toHaveBeenCalledTimes(1)
+    expect(x.patch.mock.calls[0]?.[0]).toBe('int-1')
+    expect(x.patch.mock.calls[0]?.[1]).toMatchObject({ token: FRESH, refresh: 'ref-new' })
   })
 
-  it('writes nothing while a stored token cannot be read from the keychain', async () => {
-    const x = persistHarness({
-      token: makeSecretMarker('secret://addon/int-1/token'),
-      refresh: 'ref-old',
-      appliances: [],
-    })
+  it('writes nothing while the stored secrets cannot be read from the keychain', async () => {
+    const x = persistHarness({ refresh: 'ref-old', appliances: [] }, true)
     await x.persist('int-1', connection(FRESH))
 
-    expect(x.setSettings).not.toHaveBeenCalled()
+    expect(x.patch).not.toHaveBeenCalled()
     expect(x.warn).toHaveBeenCalledTimes(1)
     expect(JSON.stringify(x.warn.mock.calls)).not.toContain(FRESH)
   })

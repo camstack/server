@@ -4,6 +4,9 @@ import {
   type ConfigUISchema,
   type CreateDeviceSpec,
   connectionTestCapability,
+  defaultIntegrationApiOver,
+  defineAddonMigrations,
+  integrationInstancesCapability,
   type DeviceConstructor,
   type DeviceSummary,
   type DiscoveryCandidate,
@@ -16,10 +19,18 @@ import {
   type IConnectionTestProvider,
   type IDevice,
   type IDeviceAdoptionProvider,
+  type RecordIntegrationInstances,
   type SystemEvent,
 } from '@camstack/types'
 import { boschShcActions } from './custom-actions.js'
-import { buildConnectionFormSchema, connectionFromSettings } from './config.js'
+import {
+  buildShcInstances,
+  SHC_MIGRATIONS,
+  shcConnectionOf,
+  shcRecordKinds,
+  shcRowsPorts,
+  type ShcConnectionBody,
+} from './shc-instances.js'
 import { registerShcClient } from './shc-register.js'
 import {
   proposeShcControllers,
@@ -59,6 +70,7 @@ export class BoschShcProviderAddon extends BaseDeviceProvider {
   }
 
   private clients: ShcClientRegistry | null = null
+  private instances: RecordIntegrationInstances<ShcConnectionBody> | null = null
 
   constructor() {
     super({})
@@ -66,6 +78,26 @@ export class BoschShcProviderAddon extends BaseDeviceProvider {
 
   protected override async onInitialize(): Promise<AddonInitResult<typeof boschShcActions>> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
+    const records = this.ctx.records
+    if (records === undefined)
+      throw new Error('bosch-shc: ctx.records is required (hub-only addon)')
+    await records.declare(shcRecordKinds)
+    // Before the provider registers: while it is registered the hub answers from the record.
+    await this.runMigrations(
+      defineAddonMigrations(
+        SHC_MIGRATIONS,
+        shcRowsPorts({
+          api: defaultIntegrationApiOver(this.ctx.api),
+          records,
+          warn: (message) => this.ctx.logger.warn(message),
+        }),
+      ),
+    )
+    const built = buildShcInstances(records, {
+      onChanged: () => this.reconcileIntegrations(),
+      tester: this.buildConnectionTestProvider(),
+    })
+    this.instances = built.instances
 
     this.clients = new ShcClientRegistry(this.ctx.logger)
     this.clients.setOnConnected((integrationId) => {
@@ -88,6 +120,10 @@ export class BoschShcProviderAddon extends BaseDeviceProvider {
         {
           capability: connectionTestCapability,
           provider: this.buildConnectionTestProvider(),
+        },
+        {
+          capability: integrationInstancesCapability,
+          provider: built.provider,
         },
       ],
       customActions: boschShcActions,
@@ -135,11 +171,8 @@ export class BoschShcProviderAddon extends BaseDeviceProvider {
       })
     }
     this.clients = null
+    this.instances = null
     await super.onShutdown()
-  }
-
-  protected override globalSettingsSchema(): ConfigUISchema {
-    return buildConnectionFormSchema()
   }
 
   override async supportsManualCreation(): Promise<boolean> {
@@ -205,10 +238,7 @@ export class BoschShcProviderAddon extends BaseDeviceProvider {
       for (const integration of all) {
         if (integration.addonId !== this.ctx.id) continue
         try {
-          const settings = await this.ctx.api.integrations.getSettings.query({
-            id: integration.id,
-          })
-          const connection = connectionFromSettings(settings)
+          const connection = await shcConnectionOf(this.requireInstances(), integration.id)
           if (connection) hosts.push(connection.host)
         } catch (err) {
           this.ctx.logger.warn('SHC discovery: settings read failed', {
@@ -225,6 +255,11 @@ export class BoschShcProviderAddon extends BaseDeviceProvider {
     }
   }
 
+  private requireInstances(): RecordIntegrationInstances<ShcConnectionBody> {
+    if (!this.instances) throw new Error('Bosch SHC provider not initialised')
+    return this.instances
+  }
+
   private requireClients(): ShcClientRegistry {
     if (!this.clients) throw new Error('Bosch SHC provider not initialised')
     return this.clients
@@ -238,10 +273,7 @@ export class BoschShcProviderAddon extends BaseDeviceProvider {
       const surviving = new Set<string>()
       for (const integration of mine) {
         try {
-          const settings = await this.ctx.api.integrations.getSettings.query({
-            id: integration.id,
-          })
-          const connection = connectionFromSettings(settings)
+          const connection = await shcConnectionOf(this.requireInstances(), integration.id)
           if (!connection) continue
           await reg.upsert(integration.id, integration.name, connection)
           surviving.add(integration.id)

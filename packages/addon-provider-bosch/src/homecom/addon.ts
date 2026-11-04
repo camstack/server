@@ -5,6 +5,9 @@ import {
   type ConfigUISchema,
   type CreateDeviceSpec,
   connectionTestCapability,
+  defaultIntegrationApiOver,
+  defineAddonMigrations,
+  integrationInstancesCapability,
   type DeviceConstructor,
   DeviceType,
   deviceAdoptionCapability,
@@ -29,7 +32,15 @@ import {
 import { buildHomeComAdoptionProvider } from './homecom-adoption-provider.js'
 import { HomeComClientRegistry } from './homecom-client-registry.js'
 import { buildHomeComConnectionTestProvider } from './homecom-connection-test.js'
-import { buildHomeComFormSchema, connectionFromSettings } from './config.js'
+import {
+  buildHomeComInstances,
+  HOMECOM_MIGRATIONS,
+  type HomeComInstances,
+  homeComConnectionOf,
+  homeComRecordKinds,
+  homeComRowsPorts,
+  homeComStoredOf,
+} from './homecom-instances.js'
 import { homeComConnections } from './homecom-gateway.js'
 import { HomeComClimateDevice } from './devices/homecom-climate-device.js'
 import { HomeComWaterHeaterDevice } from './devices/homecom-water-heater-device.js'
@@ -43,6 +54,7 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
   }
 
   private clients: HomeComClientRegistry | null = null
+  private instances: HomeComInstances | null = null
   private loginProxy: VendorLoginProxy | null = null
   private loginPlane: AddonDataPlaneHandle | null = null
 
@@ -52,14 +64,30 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
 
   protected override async onInitialize(): Promise<AddonInitResult<typeof homeComActions>> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
+    const records = this.ctx.records
+    if (records === undefined)
+      throw new Error('bosch-homecom: ctx.records is required (hub-only addon)')
+    await records.declare(homeComRecordKinds)
+    // Before the provider registers: while it is registered the hub answers from the record.
+    await this.runMigrations(
+      defineAddonMigrations(
+        HOMECOM_MIGRATIONS,
+        homeComRowsPorts({
+          api: defaultIntegrationApiOver(this.ctx.api),
+          records,
+          warn: (message) => this.ctx.logger.warn(message),
+        }),
+      ),
+    )
+    const built = buildHomeComInstances(records, {
+      onChanged: () => this.reconcileIntegrations(),
+      tester: this.buildConnectionTestProvider(),
+    })
+    this.instances = built
     await this.serveLoginProxy()
     const persistDeps = {
-      getSettings: (id: string) => this.ctx.api.integrations.getSettings.query({ id }),
-      setSettings: (input: {
-        readonly id: string
-        readonly settings: Record<string, unknown>
-        readonly secretKeys: string[]
-      }) => this.ctx.api.integrations.setSettings.mutate(input),
+      read: (id: string) => homeComStoredOf(built.instances, id),
+      patch: (id: string, patch: Record<string, unknown>) => built.handle.patch(id, patch),
       logger: this.ctx.logger,
     }
     const persistTokens = buildHomeComTokenPersister(persistDeps)
@@ -87,6 +115,7 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
           capability: connectionTestCapability,
           provider: this.buildConnectionTestProvider(),
         },
+        { capability: integrationInstancesCapability, provider: built.provider },
       ],
       customActions: homeComActions,
       actionHandlers: {
@@ -141,6 +170,7 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
       })
     }
     this.clients = null
+    this.instances = null
     await super.onShutdown()
   }
 
@@ -169,10 +199,10 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
       const surviving = new Set<string>()
       for (const integration of mine) {
         try {
-          const settings = await this.ctx.api.integrations.getSettings.query({
-            id: integration.id,
-          })
-          const connection = connectionFromSettings(settings)
+          const connection = await homeComConnectionOf(
+            this.requireInstances().instances,
+            integration.id,
+          )
           if (!connection) continue
           await reg.upsert(integration.id, integration.name, connection)
           surviving.add(integration.id)
@@ -271,10 +301,6 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
     })
   }
 
-  protected override globalSettingsSchema(): ConfigUISchema {
-    return buildHomeComFormSchema()
-  }
-
   override async supportsManualCreation(): Promise<boolean> {
     return false
   }
@@ -288,6 +314,11 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
     _config: Record<string, unknown>,
   ): Promise<CreateDeviceSpec> {
     throw new Error('HomeCom devices are adopted from the cloud')
+  }
+
+  private requireInstances(): HomeComInstances {
+    if (!this.instances) throw new Error('HomeCom provider not initialised')
+    return this.instances
   }
 
   private setIntegrationDevicesOnline(integrationId: string, online: boolean): void {

@@ -36,6 +36,7 @@
     "addons": [
       {
         "id": "bosch-shc",
+        "integrationRole": "devices",
         "category": "providers",
         "name": "Bosch Smart Home",
         "version": "0.1.0",
@@ -57,11 +58,15 @@
           },
           {
             "name": "connection-test"
+          },
+          {
+            "name": "integration-instances"
           }
         ]
       },
       {
         "id": "bosch-home-connect",
+        "integrationRole": "devices",
         "category": "providers",
         "name": "Bosch Home Connect",
         "version": "0.1.0",
@@ -85,6 +90,9 @@
             "name": "connection-test"
           },
           {
+            "name": "integration-instances"
+          },
+          {
             "name": "dishwasher"
           },
           {
@@ -97,6 +105,7 @@
       },
       {
         "id": "bosch-homecom",
+        "integrationRole": "devices",
         "category": "providers",
         "name": "Bosch HomeCom",
         "version": "0.1.0",
@@ -118,6 +127,9 @@
           },
           {
             "name": "connection-test"
+          },
+          {
+            "name": "integration-instances"
           },
           {
             "name": "climate-control"

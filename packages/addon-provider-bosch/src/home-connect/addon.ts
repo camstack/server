@@ -5,6 +5,9 @@ import {
   type ConfigUISchema,
   type CreateDeviceSpec,
   connectionTestCapability,
+  defaultIntegrationApiOver,
+  defineAddonMigrations,
+  integrationInstancesCapability,
   type DeviceConstructor,
   DeviceType,
   deviceAdoptionCapability,
@@ -33,7 +36,6 @@ import { HomeConnectClientRegistry } from './home-connect-client-registry.js'
 import { buildHomeConnectConnectionTestProvider } from './home-connect-connection-test.js'
 import {
   appliancesWithoutCredential,
-  buildHomeConnectFormSchema,
   connectionFromSettings,
   logHomeConnectSettingsGap,
   type HomeConnectConfig,
@@ -50,9 +52,13 @@ import {
   persistedChildBindingsFromConfig,
 } from './home-connect-child-reconciler.js'
 import {
-  planLegacyApplianceSecretAdopt,
-  type SecretAdoptPlan,
-} from './home-connect-secret-adopt.js'
+  buildHomeConnectInstances,
+  HOME_CONNECT_MIGRATIONS,
+  type HomeConnectInstances,
+  homeConnectRecordKinds,
+  homeConnectRowsPorts,
+  homeConnectStoredOf,
+} from './home-connect-instances.js'
 
 export class BoschHomeConnectProviderAddon extends BaseDeviceProvider {
   protected readonly addonId = 'bosch-home-connect'
@@ -65,6 +71,7 @@ export class BoschHomeConnectProviderAddon extends BaseDeviceProvider {
   }
 
   private clients: HomeConnectClientRegistry | null = null
+  private instances: HomeConnectInstances | null = null
   private reconciler: HomeConnectChildReconciler | null = null
   private loginProxy: VendorLoginProxy | null = null
   private loginPlane: AddonDataPlaneHandle | null = null
@@ -75,6 +82,26 @@ export class BoschHomeConnectProviderAddon extends BaseDeviceProvider {
 
   protected override async onInitialize(): Promise<AddonInitResult<typeof homeConnectActions>> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
+    const records = this.ctx.records
+    if (records === undefined)
+      throw new Error('bosch-home-connect: ctx.records is required (hub-only addon)')
+    await records.declare(homeConnectRecordKinds)
+    // Before the provider registers: while it is registered the hub answers from the record.
+    await this.runMigrations(
+      defineAddonMigrations(
+        HOME_CONNECT_MIGRATIONS,
+        homeConnectRowsPorts({
+          api: defaultIntegrationApiOver(this.ctx.api),
+          records,
+          warn: (message) => this.ctx.logger.warn(message),
+        }),
+      ),
+    )
+    const built = buildHomeConnectInstances(records, {
+      onChanged: () => this.reconcileIntegrations(),
+      tester: this.buildConnectionTestProvider(),
+    })
+    this.instances = built
     await this.serveLoginProxy()
     this.clients = new HomeConnectClientRegistry(this.ctx.logger, {
       onConnectionUpdated: (integrationId, connection) => {
@@ -97,6 +124,7 @@ export class BoschHomeConnectProviderAddon extends BaseDeviceProvider {
         ...regs,
         { capability: deviceAdoptionCapability, provider: this.buildAdoptionProvider() },
         { capability: connectionTestCapability, provider: this.buildConnectionTestProvider() },
+        { capability: integrationInstancesCapability, provider: built.provider },
       ],
       customActions: homeConnectActions,
       actionHandlers: {
@@ -159,6 +187,7 @@ export class BoschHomeConnectProviderAddon extends BaseDeviceProvider {
       this.ctx.logger.warn('Home Connect shutdown error', { meta: { error: errMsg(err) } })
     }
     this.clients = null
+    this.instances = null
     await super.onShutdown()
   }
 
@@ -191,8 +220,8 @@ export class BoschHomeConnectProviderAddon extends BaseDeviceProvider {
     connection: HomeConnectConfig,
   ): Promise<void> {
     return buildHomeConnectConnectionPersister({
-      getSettings: (id) => this.ctx.api.integrations.getSettings.query({ id }),
-      setSettings: (input) => this.ctx.api.integrations.setSettings.mutate(input),
+      read: (id) => homeConnectStoredOf(this.requireInstances().instances, id),
+      patch: (id, patch) => this.requireInstances().handle.patch(id, patch),
       logger: this.ctx.logger,
     })(integrationId, connection)
   }
@@ -203,20 +232,21 @@ export class BoschHomeConnectProviderAddon extends BaseDeviceProvider {
       const all = await this.ctx.api.integrations.list.query()
       const mine = all.filter((i) => i.addonId === this.ctx.id && i.enabled)
       const surviving = new Set<string>()
-      const secretMoves: SecretAdoptPlan[] = []
       for (const integration of mine) {
         try {
-          const stored = await this.ctx.api.integrations.getSettings.query({ id: integration.id })
-          const adopt = planLegacyApplianceSecretAdopt(
-            {
-              setSettings: (input) => this.ctx.api.integrations.setSettings.mutate(input),
-              logger: this.ctx.logger,
-            },
+          const stored = await homeConnectStoredOf(
+            this.requireInstances().instances,
             integration.id,
-            stored,
           )
-          if (adopt !== null) secretMoves.push(adopt)
-          const settings = adopt?.settings ?? stored
+          if (stored === null) continue
+          if (stored.locked) {
+            // Stored, not absent: keep the client it has rather than reconfigure it without tokens (D49).
+            this.ctx.logger.warn('Home Connect reconcile skipped: the keychain is locked', {
+              meta: { integrationId: integration.id },
+            })
+            continue
+          }
+          const settings = stored.settings
           const connection = connectionFromSettings(settings)
           if (!connection) {
             logHomeConnectSettingsGap(this.ctx.logger, integration.id, settings)
@@ -250,9 +280,6 @@ export class BoschHomeConnectProviderAddon extends BaseDeviceProvider {
           })
         }
       }
-      // Written last and not awaited: the hub restarts this addon after a settings write, and
-      // this boot already connects with the keys it read.
-      for (const move of secretMoves) void move.persist()
       const vanished = reg.list().filter((id) => !surviving.has(id))
       await reg.retain(surviving)
       const deviceReg = this.ctx.kernel.deviceRegistry
@@ -397,10 +424,6 @@ export class BoschHomeConnectProviderAddon extends BaseDeviceProvider {
     )
   }
 
-  protected override globalSettingsSchema(): ConfigUISchema {
-    return buildHomeConnectFormSchema()
-  }
-
   override async supportsManualCreation(): Promise<boolean> {
     return false
   }
@@ -414,6 +437,11 @@ export class BoschHomeConnectProviderAddon extends BaseDeviceProvider {
     _config: Record<string, unknown>,
   ): Promise<CreateDeviceSpec> {
     throw new Error('Home Connect devices are adopted from the gateway')
+  }
+
+  private requireInstances(): HomeConnectInstances {
+    if (!this.instances) throw new Error('Home Connect provider not initialised')
+    return this.instances
   }
 
   private setIntegrationDevicesOnline(integrationId: string, online: boolean): void {

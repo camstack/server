@@ -30,9 +30,9 @@ this column exists to stop.
 | `autotrack` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `ptz-autotrack` |
 | `backup-orchestrator` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `backup` |
 | `benchmark` | `@camstack/addon-benchmark` | system | own runner | `hub-only` | `ml` | — | `addon-pages-source` |
-| `bosch-home-connect` | `@camstack/addon-provider-bosch` | providers | own runner | `hub-only` | — | multiple | `connection-test` `consumables` `device-adoption` `device-provider` `dishwasher` `running-state` |
-| `bosch-homecom` | `@camstack/addon-provider-bosch` | providers | own runner | `hub-only` | — | multiple | `climate-control` `connection-test` `device-adoption` `device-provider` `water-heater` |
-| `bosch-shc` | `@camstack/addon-provider-bosch` | providers | own runner | `hub-only` | — | multiple | `connection-test` `device-adoption` `device-provider` |
+| `bosch-home-connect` | `@camstack/addon-provider-bosch` | providers | own runner | `hub-only` | — | multiple | `connection-test` `consumables` `device-adoption` `device-provider` `dishwasher` `integration-instances` `running-state` |
+| `bosch-homecom` | `@camstack/addon-provider-bosch` | providers | own runner | `hub-only` | — | multiple | `climate-control` `connection-test` `device-adoption` `device-provider` `integration-instances` `water-heater` |
+| `bosch-shc` | `@camstack/addon-provider-bosch` | providers | own runner | `hub-only` | — | multiple | `connection-test` `device-adoption` `device-provider` `integration-instances` |
 | `calendars` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `calendars` |
 | `camera-grid` | `@camstack/server-framework` | system | own runner | `any-node` | — | unique | `camera-grid-layout` `motion` |
 | `cloudflare-tunnel` | `@camstack/addon-cloudflare` | networking | own runner | `hub-only` | `net-access` | — | `integration-instances` `network-access` |

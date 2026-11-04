@@ -1,15 +1,12 @@
-import { errMsg, isSecretMarker, isSecretMarkerLike, type IScopedLogger } from '@camstack/types'
-import { HOMECOM_SECRET_KEYS } from './config.js'
+import { errMsg, type IScopedLogger } from '@camstack/types'
 import type { HomeComTokens } from './homecom-api-client.js'
+import type { HomeComStored } from './homecom-instances.js'
 
 export interface HomeComTokenPersisterDeps {
-  readonly getSettings: (integrationId: string) => Promise<Record<string, unknown>>
-  /** `integrations.setSettings`, called as the integration's own addon. */
-  readonly setSettings: (input: {
-    readonly id: string
-    readonly settings: Record<string, unknown>
-    readonly secretKeys: string[]
-  }) => Promise<unknown>
+  /** The integration's record as a settings map; `locked` when its secrets cannot be read. */
+  readonly read: (integrationId: string) => Promise<HomeComStored | null>
+  /** Merge a patch into the record (a secret key goes to the keychain). */
+  readonly patch: (integrationId: string, patch: Record<string, unknown>) => Promise<unknown>
   readonly logger: Pick<IScopedLogger, 'warn'>
 }
 
@@ -17,35 +14,25 @@ export interface HomeComSettingsPatchDeps extends HomeComTokenPersisterDeps {
   readonly what: string
 }
 
-function unreadable(value: unknown): boolean {
-  return isSecretMarker(value) || isSecretMarkerLike(value)
-}
-
 /**
- * Merge `patch` into the integration's stored settings in ONE `setSettings` write, one at a
- * time per integration. Refuses (and says so, without values) when a secret the write
- * touches cannot be read back from the keychain: the hub refuses an overwrite of a secret the
- * addon could not read, so the write would only fail.
+ * Patch the integration's record, one write at a time per integration. Refuses (and says so,
+ * without values) when the record's secrets cannot be read right now: the write would replace a
+ * secret the addon cannot see.
  */
 function buildSerialPatcher(deps: HomeComSettingsPatchDeps) {
   const tails = new Map<string, Promise<void>>()
   return (integrationId: string, patch: Record<string, unknown>): Promise<void> => {
     const run = async (): Promise<void> => {
       try {
-        const stored = await deps.getSettings(integrationId)
-        const locked = HOMECOM_SECRET_KEYS.filter((key) => unreadable(stored[key]))
-        if (locked.length > 0) {
+        const stored = await deps.read(integrationId)
+        if (stored === null) return
+        if (stored.locked) {
           deps.logger.warn(`HomeCom not persisting ${deps.what} — stored secrets are locked`, {
             tags: { integrationId },
-            meta: { locked },
           })
           return
         }
-        await deps.setSettings({
-          id: integrationId,
-          settings: { ...stored, ...patch },
-          secretKeys: [...HOMECOM_SECRET_KEYS],
-        })
+        await deps.patch(integrationId, patch)
       } catch (err) {
         deps.logger.warn(`HomeCom failed to persist ${deps.what}`, {
           tags: { integrationId },

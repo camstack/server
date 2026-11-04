@@ -34,16 +34,6 @@ export type HomeConnectGatewayConfig = z.infer<typeof homeConnectGatewaySchema>
 /** Setting key of the keychain-stored credentials of every paired appliance. */
 export const APPLIANCE_SECRETS_KEY = 'applianceSecrets'
 
-/**
- * The integration-settings keys that hold a credential — what a write from this addon names
- * as `secretKeys` so the hub moves them into the keychain.
- */
-export const HOME_CONNECT_SECRET_KEYS: readonly string[] = [
-  'token',
-  'refresh',
-  APPLIANCE_SECRETS_KEY,
-]
-
 /** One appliance as persisted in the integration's `appliances` setting: no credential on it. */
 export const homeConnectApplianceRowSchema = z.object({
   haId: z.string().min(1),
@@ -178,7 +168,7 @@ export function splitApplianceSecrets(
 }
 
 /**
- * Before `integrations.setSettings`: keep objects as-is (serializes as `json`), parse
+ * Before the record write: keep objects as-is (serializes as `json`), parse
  * textarea JSON strings into objects so they are not re-serialized as `string` and
  * corrupted on read by `deserializeSetting(String(object))` — and move any credential
  * still sitting on an appliance row into `applianceSecrets`, so a row is never written
@@ -242,30 +232,6 @@ function moveInlineSecrets(settings: Record<string, unknown>): Record<string, un
     appliances: stripped,
     ...(Object.keys(merged).length > 0 ? { [APPLIANCE_SECRETS_KEY]: JSON.stringify(merged) } : {}),
   }
-}
-
-/**
- * One-time adopt: the settings that must be written so a pairing key found on an appliance
- * row moves into the keychain. `null` when nothing needs moving. The caller writes it with
- * {@link HOME_CONNECT_SECRET_KEYS} as `secretKeys`.
- */
-export function legacyApplianceSecretPatch(settings: Record<string, unknown>): {
-  readonly appliances: readonly HomeConnectApplianceRow[]
-  readonly applianceSecrets: string
-} | null {
-  const moved = moveInlineSecrets({
-    ...settings,
-    appliances: parseJsonValue(settings['appliances']),
-  })
-  const rows = moved['appliances']
-  const secrets = moved[APPLIANCE_SECRETS_KEY]
-  if (!Array.isArray(rows) || typeof secrets !== 'string') return null
-  const parsedRows: HomeConnectApplianceRow[] = []
-  for (const row of rows) {
-    const parsed = homeConnectApplianceRowSchema.safeParse(row)
-    if (parsed.success) parsedRows.push(parsed.data)
-  }
-  return { appliances: parsedRows, applianceSecrets: secrets }
 }
 
 export function connectionFromSettings(

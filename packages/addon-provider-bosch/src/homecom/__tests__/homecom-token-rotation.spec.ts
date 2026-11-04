@@ -110,10 +110,10 @@ describe('HomeCom token rotation', () => {
     const store: Record<string, unknown> = { ...STORED }
     const writes: Record<string, unknown>[] = []
     const persist = buildHomeComTokenPersister({
-      getSettings: async () => ({ ...store }),
-      setSettings: async ({ settings, secretKeys }) => {
-        writes.push({ ...settings, __secretKeys: secretKeys })
-        Object.assign(store, settings)
+      read: async () => ({ settings: { ...store }, locked: false }),
+      patch: async (_id, patch) => {
+        writes.push({ ...patch })
+        Object.assign(store, patch)
       },
       logger: logger() as never,
     })
@@ -127,7 +127,7 @@ describe('HomeCom token rotation', () => {
     expect(store['refresh']).toBe('refresh-1')
     expect(store['username']).toBe('me@example.com')
     expect(writes).toHaveLength(1)
-    expect(writes[0]?.['__secretKeys']).toEqual(expect.arrayContaining(['token', 'refresh']))
+    expect(writes[0]).toEqual({ token: 'access-1', refresh: 'refresh-1' })
 
     // Session 2 (restart): rebuilt from the store only. The old refresh token is SPENT.
     const calls: Call[] = []
@@ -148,17 +148,14 @@ describe('HomeCom token rotation', () => {
   })
 
   it('does not write over tokens the keychain could not serve', async () => {
-    const setSettings = vi.fn(async () => undefined)
+    const patch = vi.fn(async () => undefined)
     const persist = buildHomeComTokenPersister({
-      getSettings: async () => ({
-        ...STORED,
-        refresh: { $secret: 'secret://x/y/refresh', v: 1 },
-      }),
-      setSettings,
+      read: async () => ({ settings: { ...STORED }, locked: true }),
+      patch,
       logger: logger() as never,
     })
     await persist('int-1', { token: 'a', refresh: 'b' })
-    expect(setSettings).not.toHaveBeenCalled()
+    expect(patch).not.toHaveBeenCalled()
   })
 })
 
