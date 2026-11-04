@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.10] - 2026-11-04
+
 ### Changed
 
 - ESPHome integrations are kept as typed connection records: each board keeps its id and its own encryption key and password, moved once from the old integration settings

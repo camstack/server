@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.150] - 2026-11-04
+
 ### Changed
 
 - Tuya accounts are now typed records under their integration; the Access Secret stays in the keychain and the legacy settings rows are moved and cleared on first start

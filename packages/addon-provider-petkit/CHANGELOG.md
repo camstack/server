@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.159] - 2026-11-04
+
 ### Changed
 
 - PetKit accounts are now typed integration instances; existing accounts are migrated on the first start, nothing to re-enter

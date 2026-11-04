@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.223] - 2026-11-04
+
 ### Changed
 
 - Reolink integrations keep their connection (host, ports, username, transport, password) as one typed record each, moved from the old settings by a boot migration; each integration keeps its own values and password

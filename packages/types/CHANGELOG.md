@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.498] - 2026-11-04
+
 ### Changed
 
 - Device addons whose integrations hold real settings move them into typed instance records through one shared migration (rows to record, secrets verified before the legacy rows are cleared)

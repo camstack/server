@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.154] - 2026-11-04
+
 ### Changed
 
 - ONVIF is now an integration instance of its own and runs on the hub only; cameras that named no integration are claimed to it on first start
