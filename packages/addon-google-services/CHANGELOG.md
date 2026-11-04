@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.37] - 2026-11-04
+
 ### Changed
 
 - Google accounts are listed and edited as integration instances on the instances table, under their existing ids

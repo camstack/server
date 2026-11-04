@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.155] - 2026-11-04
+
 ### Changed
 
 - Matter fabrics are listed on the instances page; their stored settings are flattened once at start-up (same ids, Thread dataset and Wi-Fi password kept).

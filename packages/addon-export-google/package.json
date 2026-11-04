@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-export-google",
-  "version": "0.1.123",
+  "version": "0.1.124",
   "description": "Google Home Export — hub-side smart-home fulfillment (SYNC / QUERY / EXECUTE / DISCONNECT) for the non-camera fleet, served over the hub's own OAuth account link. No Google credential is stored, sent or required.",
   "keywords": [
     "camstack",
@@ -58,7 +58,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.738"
+      "server": ">=1.2.761"
     }
   },
   "files": [

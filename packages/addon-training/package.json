@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-training",
-  "version": "0.1.127",
+  "version": "0.1.129",
   "description": "Cloud training for CamStack: fine-tune the root detector on your own frames, on your own GPU-cloud account",
   "keywords": [
     "camstack",
@@ -88,9 +88,9 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.731",
+      "server": ">=1.2.761",
       "addons": {
-        "@camstack/addon-admin-ui": ">=1.2.551"
+        "@camstack/addon-admin-ui": ">=1.2.578"
       }
     }
   },

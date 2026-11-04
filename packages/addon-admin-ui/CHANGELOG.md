@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.578] - 2026-11-04
+
 ### Changed
 
 - Broker connections (Home Assistant, Alexa, Matter, Google, MQTT, SMTP) are created and edited in the same instances dialog and table; the old broker manager is gone

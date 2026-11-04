@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.155] - 2026-11-04
+
 ### Changed
 
 - Cloudflare TURN now supports several accounts; the ICE servers of every enabled account are served together
