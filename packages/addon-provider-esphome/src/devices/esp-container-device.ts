@@ -4,6 +4,7 @@ import {
   DeviceFeature,
   DeviceRole,
   DeviceType,
+  errMsg,
   type AccessoryChildSpec,
   type DeviceContext,
 } from '@camstack/types'
@@ -42,6 +43,12 @@ export class EspContainerDevice extends BaseDevice<typeof espContainerSchema> {
 
   private readonly brokerId: string
   private readonly integrationId: string | undefined
+  /** False until the kernel has finished the registration reconcile (onActivate). */
+  private registrationSettled = false
+  /** A connect arrived while that reconcile was still spawning children. */
+  private connectDuringRegistration = false
+  /** Overlapping reconciles would register the same child twice. */
+  private reconcileChain: Promise<void> = Promise.resolve()
 
   constructor(ctx: DeviceContext) {
     const cfg = espContainerSchema.parse(ctx.persistedConfig ?? {})
@@ -57,11 +64,51 @@ export class EspContainerDevice extends BaseDevice<typeof espContainerSchema> {
    * empty child list together with a stamped probe is how the kernel prunes
    * orphaned accessory children: a restore that races an unreachable board
    * would otherwise delete every child. Leaving the probe unstamped keeps that
-   * gate closed; `reprobe()` on connect completes it.
+   * gate closed; {@link onBoardConnected} completes it once registration has settled.
    */
   override async onProbe(): Promise<void> {
     if (espLinkHub.link(this.brokerId) === null) return
     await super.onProbe()
+  }
+
+  /**
+   * The kernel calls this after its own registration reconcile. A connect that
+   * landed during that reconcile is run now, so it cannot register the same
+   * child a second time while the first spawn is still in flight.
+   */
+  override async onActivate(): Promise<void> {
+    this.registrationSettled = true
+    if (!this.connectDuringRegistration) return
+    this.connectDuringRegistration = false
+    await this.reconcileBoard()
+  }
+
+  /** The board session connected. Deferred while registration is still spawning. */
+  onBoardConnected(): void {
+    if (!this.registrationSettled) {
+      this.connectDuringRegistration = true
+      return
+    }
+    void this.reconcileBoard().catch((err: unknown) => {
+      this.ctx.logger.warn('esphome: board reconcile failed', {
+        tags: { deviceId: this.id },
+        meta: { brokerId: this.brokerId, error: errMsg(err) },
+      })
+    })
+  }
+
+  /** Re-read the live board and reconcile its children, after any reconcile already running. */
+  reconcileBoard(): Promise<void> {
+    if (!this.registrationSettled) {
+      this.connectDuringRegistration = true
+      return Promise.resolve()
+    }
+    const run = this.reconcileChain.then(() => this.reprobe())
+    this.reconcileChain = run.then(
+      () => undefined,
+      () => undefined,
+    )
+    return run
   }
 
   override getAccessoryChildren(): readonly AccessoryChildSpec[] {
@@ -77,7 +124,25 @@ export class EspContainerDevice extends BaseDevice<typeof espContainerSchema> {
     const transmitters = planIrServices(link.listServices(), espIrOverrides.get(this.id)).map(
       (plan) => this.irChildSpec(plan),
     )
-    return [...entityChildren, ...transmitters]
+    return this.oneSpecPerSuffix([...entityChildren, ...transmitters])
+  }
+
+  /** One child per suffix. A repeated entity (the list answered twice) is not a second device. */
+  private oneSpecPerSuffix(specs: readonly AccessoryChildSpec[]): readonly AccessoryChildSpec[] {
+    const seen = new Set<string>()
+    const unique: AccessoryChildSpec[] = []
+    for (const spec of specs) {
+      if (seen.has(spec.stableIdSuffix)) {
+        this.ctx.logger.warn('esphome: board entity repeated; the second child is not registered', {
+          tags: { deviceId: this.id },
+          meta: { brokerId: this.brokerId, stableIdSuffix: spec.stableIdSuffix },
+        })
+        continue
+      }
+      seen.add(spec.stableIdSuffix)
+      unique.push(spec)
+    }
+    return unique
   }
 
   /** One `ir-transmitter` child per API service the board exposes as a transmitter. */

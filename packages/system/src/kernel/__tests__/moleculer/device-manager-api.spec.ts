@@ -1351,6 +1351,117 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
     expect(singleInputs).toEqual([])
   })
 
+  it('a reconcile that starts while the previous one is still spawning does not register the same child twice', async () => {
+    // ESPHome calls reprobe when the board connects, inside the registration
+    // reconcile. Both used to pass the id guard; the second register threw
+    // "already registered". The second reconcile waits for the first.
+    const logger = makeFakeLogger()
+    let nextId = 9000
+    const allocated = new Map<string, number>()
+    let spawning = 0
+    const overlapApi = {
+      deviceManager: new Proxy({} as Record<string, unknown>, {
+        get(_t, method) {
+          if (typeof method !== 'string') return undefined
+          const handler = vi.fn(async (input: unknown) => {
+            if (method === 'allocateDeviceId') {
+              const { stableId } = input as { stableId: string }
+              const existing = allocated.get(stableId)
+              if (existing !== undefined) return { id: existing }
+              const id = nextId++
+              allocated.set(stableId, id)
+              return { id }
+            }
+            if (method === 'applyInitialMeta') {
+              spawning += 1
+              await new Promise((resolve) => setTimeout(resolve, 30))
+              spawning -= 1
+              return undefined
+            }
+            if (method === 'loadRuntimeState') return {}
+            if (method === 'loadMeta' || method === 'loadConfig')
+              return method === 'loadMeta' ? null : {}
+            if (method === 'getChildren' || method === 'getChildrenBatch') {
+              return method === 'getChildren' ? [] : {}
+            }
+            return undefined
+          })
+          return { mutate: handler, query: handler }
+        },
+      }),
+    } as unknown as AddonApi
+    const deviceApi = createBrokerDeviceManagerApi({
+      api: overlapApi,
+      addonId: 'provider-esphome',
+      nodeId: 'worker-esp',
+      logger,
+      eventBus: bus,
+      registry,
+      capabilityRegistry,
+    })
+    const parentId = fakeDeviceIdCounter++
+    let reads = 0
+    let overlapped = false
+    const parent = asAccessoryParent({
+      id: parentId,
+      stableId: 'esp:ir-transmitter-camera:board',
+      parentDeviceId: null,
+      type: 'container' as import('@camstack/types').DeviceType,
+      name: 'IR camera',
+      online: true,
+      features: [],
+      config: fakeDeviceConfig(),
+      removeDevice: async () => {},
+      getSettingsUISchema: () => ({ sections: [] }),
+      applySettingsPatch: async () => {},
+      runtimeState: probedRuntimeState(),
+      getAccessoryChildren() {
+        reads += 1
+        if (spawning > 0) overlapped = true
+        if (reads === 1) {
+          const again = Reflect.get(this, '_kernelReprobe')
+          if (typeof again === 'function') void again()
+        }
+        return [
+          {
+            stableIdSuffix: 'button-menu',
+            meta: {
+              type: 'button' as import('@camstack/types').DeviceType,
+              name: 'Menu',
+            },
+            config: {},
+            factory: (ctx: import('@camstack/types').DeviceContext) =>
+              asDevice({
+                id: ctx.id,
+                stableId: ctx.stableId,
+                parentDeviceId: parentId,
+                type: 'button' as import('@camstack/types').DeviceType,
+                name: 'Menu',
+                online: true,
+                features: [],
+                config: fakeDeviceConfig(),
+                removeDevice: async () => {},
+                getSettingsUISchema: () => ({ sections: [] }),
+                applySettingsPatch: async () => {},
+              }),
+          },
+        ]
+      },
+    })
+    await deviceApi.register(parent)
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    const spawned = registry
+      .getAll()
+      .filter((d) => d.stableId === 'esp:ir-transmitter-camera:board-button-menu')
+    expect(spawned).toHaveLength(1)
+    expect(overlapped).toBe(false)
+    expect(reads).toBeGreaterThan(1)
+    const warned = vi
+      .mocked(logger.warn)
+      .mock.calls.some((call) => call[0] === 'Failed to spawn accessory child')
+    expect(warned).toBe(false)
+  })
+
   it('reconcile spawns N accessory children concurrently with distinct ids; a failing spec does not abort the rest, and prune runs after all spawns', async () => {
     // N specs → N children, each with a DISTINCT allocated id. One spec's
     // factory throws — its failure is isolated (logged) and must NOT abort the

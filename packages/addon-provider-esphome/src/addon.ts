@@ -112,7 +112,7 @@ export class ESPHomeProviderAddon extends BaseDeviceProvider<EspAddonConfig> {
       logger: this.ctx.logger,
       onConnected: (brokerId) => {
         this.setBrokerDevicesOnline(brokerId, true)
-        void this.reprobeBrokerContainers(brokerId)
+        this.notifyBoardConnected(brokerId)
       },
       onDisconnected: (brokerId) => this.setBrokerDevicesOnline(brokerId, false),
     })
@@ -249,7 +249,7 @@ export class ESPHomeProviderAddon extends BaseDeviceProvider<EspAddonConfig> {
     const container = this.containerById(deviceId)
     if (container === undefined) return
     await this.loadIrOverridesFor([deviceId])
-    await container.reprobe()
+    await container.reconcileBoard()
   }
 
   private containerById(deviceId: number): EspContainerDevice | undefined {
@@ -494,26 +494,20 @@ export class ESPHomeProviderAddon extends BaseDeviceProvider<EspAddonConfig> {
     }
   }
 
-  /** Re-run the accessory reconcile of a board's container once its entity list exists. */
-  private async reprobeBrokerContainers(brokerId: string): Promise<void> {
+  /** Tell each container of this board that its session is up. The container decides when to reconcile. */
+  private notifyBoardConnected(brokerId: string): void {
+    for (const container of this.containersFor(brokerId)) container.onBoardConnected()
+  }
+
+  private containersFor(brokerId: string): readonly EspContainerDevice[] {
     const reg = this.ctx.kernel.deviceRegistry
-    if (!reg) return
-    const containers = reg
+    if (!reg) return []
+    return reg
       .getAllForAddon(this.addonId)
       .filter(
         (d): d is EspContainerDevice =>
           d instanceof EspContainerDevice && d.config.get('brokerId') === brokerId,
       )
-    for (const container of containers) {
-      try {
-        await container.reprobe()
-      } catch (err: unknown) {
-        this.ctx.logger.warn('ESPHome: container reprobe failed', {
-          tags: { deviceId: container.id },
-          meta: { brokerId, error: errMsg(err) },
-        })
-      }
-    }
   }
 
   private requireRegistry(): EspBrokerRegistry {

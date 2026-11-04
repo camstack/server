@@ -1346,7 +1346,7 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
       // D49 — a shrink of this parent's accessory set is deleted only after a
       // second agreeing SUCCESSFUL read on a later probe (accessory-prune-gate.ts).
       const shrinkGate = new AccessoryShrinkGate()
-      const runReconcile = async (): Promise<void> => {
+      const runReconcileNow = async (): Promise<void> => {
         // Phase 4a — refresh the meta `features` array on the
         // device-manager. The probe may have changed `device.features`;
         // the initial `registerDevice` call wrote a snapshot before
@@ -1495,6 +1495,19 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
             meta: { error: err instanceof Error ? err.message : String(err) },
           })
         }
+      }
+
+      // A board connect calls reprobe while this registration reconcile is still
+      // spawning. Two reconciles in flight both pass the id guard, and the
+      // second `register` throws "already registered". Later callers wait.
+      let reconcileChain: Promise<void> = Promise.resolve()
+      const runReconcile = (): Promise<void> => {
+        const run = reconcileChain.then(runReconcileNow, runReconcileNow)
+        reconcileChain = run.then(
+          () => undefined,
+          () => undefined,
+        )
+        return run
       }
 
       // Phase 3 — driver-side probe (optional). Drivers populate
