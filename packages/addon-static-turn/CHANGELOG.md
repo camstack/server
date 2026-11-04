@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.144] - 2026-11-04
+
 ### Changed
 
 - The instances state their role (service connections) so the Integrations page lists the addon correctly

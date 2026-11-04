@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.579] - 2026-11-04
+
 ### Changed
 
 - Exporter pages show and change exposure per export instance instead of every instance at once, with new strings for the instance states

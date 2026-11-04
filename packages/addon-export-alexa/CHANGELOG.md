@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.183] - 2026-11-04
+
 ### Changed
 
 - The devices and actions exposed to Alexa are kept in their own record instead of the addon settings; they move across on the first start and the addon refuses to start if they cannot be moved.

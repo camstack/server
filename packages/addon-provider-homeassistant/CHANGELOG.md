@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.656] - 2026-11-04
+
 ### Changed
 
 - Home Assistant export: each instance's export switch, image-link address and exported devices now live in one record per instance; a migration moves the old settings and integration values, and the export no longer reads them

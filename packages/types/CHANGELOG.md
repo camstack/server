@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.495] - 2026-11-04
+
 ### Changed
 
 - Integration instances state a role and a discovery in describe(); a record secret may sit in a map of the body; a migration helper moves an integration's legacy settings rows into its instance record

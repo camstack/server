@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.192] - 2026-11-04
+
 ### Changed
 
 - HomeKit export keeps its bridge identity (name, MAC, setup code, pairing folder) in a default instance, adopted unchanged from the old settings so paired controllers keep working
