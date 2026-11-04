@@ -167,6 +167,24 @@ function bareNodeId(raw: string | undefined): string {
 }
 
 /** What a {@link StorageOrchestratorService.seedDefaults} pass did. */
+export interface SeedDefaultsInput {
+  readonly providerId: string
+  readonly basePath: string
+  /**
+   * Root for declarations marked `defaultRoot: 'media'` (the dedicated media
+   * volume, `CAMSTACK_MEDIA_ROOT`). Absent → media declarations fall back to
+   * `basePath` like everything else.
+   */
+  readonly mediaBasePath?: string
+  /**
+   * Root for declarations marked `defaultRoot: 'backup'` (the dedicated
+   * backup volume, `CAMSTACK_BACKUP_ROOT`, default `/backups`). Absent →
+   * backup declarations fall back to `basePath`.
+   */
+  readonly backupBasePath?: string
+  readonly declarations: readonly StorageLocationDeclaration[]
+}
+
 export type SeedOutcome = {
   readonly added: number
   readonly deferred?: 'store-not-answered' | 'provider-unclassified'
@@ -1194,23 +1212,7 @@ export class StorageOrchestratorService {
    * the referenced location's default instance (sharing the same root
    * directory for derivative slots like `recordingsLow` → `recordings`).
    */
-  seedDefaults(input: {
-    readonly providerId: string
-    readonly basePath: string
-    /**
-     * Root for declarations marked `defaultRoot: 'media'` (the dedicated media
-     * volume, `CAMSTACK_MEDIA_ROOT`). Absent → media declarations fall back to
-     * `basePath` like everything else.
-     */
-    readonly mediaBasePath?: string
-    /**
-     * Root for declarations marked `defaultRoot: 'backup'` (the dedicated
-     * backup volume, `CAMSTACK_BACKUP_ROOT`, default `/backups`). Absent →
-     * backup declarations fall back to `basePath`.
-     */
-    readonly backupBasePath?: string
-    readonly declarations: readonly StorageLocationDeclaration[]
-  }): SeedOutcome {
+  seedDefaults(input: SeedDefaultsInput): SeedOutcome {
     // A seed never runs while the store it seeds is not authoritative: no
     // answered read means "not yet known", never "there is no location".
     if (this.storeRequiredForSeed && this.locationStore === null) {
@@ -1293,6 +1295,43 @@ export class StorageOrchestratorService {
       )
     }
     return deferredProvider ? { added, deferred: 'provider-unclassified' } : { added }
+  }
+
+  /**
+   * Re-create the default of a type whose seed marker survived the loss of every
+   * row (the 2026-11-01 prune: it deleted the rows and, until D1006, left the
+   * marker). That state cannot be an operator action — the service refuses to
+   * delete or disable the LAST enabled location of a type — so it is repaired
+   * with the normal seed rules (media/backup roots, `defaultsTo`), each one
+   * logged with its reason. Returns the types that got their default back.
+   *
+   * The caller states that every declaring addon is loaded and the store has
+   * answered: this never guesses (D49, D315).
+   */
+  reseedPrunedDefaults(input: SeedDefaultsInput): readonly string[] {
+    const seeded = this.seededTypes
+    if (seeded === null) return []
+    const candidates = input.declarations.filter(
+      (d) => seeded.has(d.id) && !this.hasAnyLocationOfType(d.id),
+    )
+    if (candidates.length === 0) return []
+    // The marker says "seeded once"; the repair is exactly the case where that
+    // seed is gone. Forget it in memory so the normal seed path applies; the
+    // seed re-writes the marker.
+    for (const d of candidates) seeded.delete(d.id)
+    this.seedDefaults(input)
+    const restored = candidates.filter((d) => this.hasAnyLocationOfType(d.id)).map((d) => d.id)
+    for (const d of candidates) {
+      if (restored.includes(d.id)) {
+        this.logger.info('storage-orchestrator: re-seeded a default that a prune had removed', {
+          meta: { type: d.id, reason: 'seed-marker-without-rows' },
+        })
+      } else {
+        // Not restorable now (provider unclassified): the marker stays valid.
+        this.rememberSeeded(d.id)
+      }
+    }
+    return restored
   }
 
   /**

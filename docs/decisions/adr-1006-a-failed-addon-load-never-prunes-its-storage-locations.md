@@ -37,14 +37,23 @@ package raise nothing.
 
 ## Consequences
 
-Hubs already hit keep their seed marker with zero rows, which cannot be told from
-an operator delete; the alert now shows them, and a D987 migration (re-seed a
-declared type that has a marker and zero rows) is the proposed repair, not yet
-written. Liveness events are telemetry: the monitor re-announces on every seed
-pass and location change, and a first healthy pass clears a card whose recovery
-was dropped.
+Hubs already hit keep their seed marker with zero rows. That shape is NOT an
+operator delete: the service refuses to delete or disable the last enabled
+location of a type, so the operator cannot produce it. The repair is therefore safe
+on the shape alone: the one-shot D987 migration
+`storage-orchestrator/2026-11-04-reseed-pruned-defaults` re-seeds, with the normal
+seed rules (media and backup roots), every declared type that has a marker and zero
+rows, and logs each one (`seed-marker-without-rows`). It is a ledger migration, not
+a runtime fallback. It is offered only once the picture is known (every declarer
+loaded and readable, the seed pass answered); otherwise it is not offered and the
+next seed pass tries again. Its failure policy is `tolerate`: `block-owner` would
+stop the storage orchestrator, and with it the settings store, from booting over the
+repair of a default, and a repair that did not run leaves the alert in place.
+Liveness events are telemetry: the monitor re-announces on every seed pass and
+location change, and a first healthy pass clears a card whose recovery was dropped.
 
 ## Enforcement
 
 `prune-keeps-unloaded-declarations.spec.ts`, `storage-writability-monitor.spec.ts`,
-`storage-writability-alert.spec.ts` and `addon-loader.spec.ts`.
+`storage-writability-alert.spec.ts`, `addon-loader.spec.ts` and
+`migrations/__tests__/reseed-pruned-defaults.sqlite.spec.ts` (real SQLite).

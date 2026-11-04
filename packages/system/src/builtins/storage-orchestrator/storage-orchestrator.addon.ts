@@ -41,6 +41,7 @@ import type {
 } from '@camstack/types'
 import {
   BaseAddon,
+  defineAddonMigrations,
   EventCategory,
   evictionPolicyOfLocation,
   gbToBytes,
@@ -59,6 +60,7 @@ import {
 } from '@camstack/types'
 import { z } from 'zod'
 import { buildStorageLocationRegistry } from '../../kernel/storage-location-registry.js'
+import { ADDON_MIGRATIONS } from './migrations/index.js'
 import { LocationRepointer, type RepointTarget } from './location-repointer.js'
 import { STORAGE_LOCATIONS } from './location-store.js'
 import { canProbeOccupancyLocally, resolveRefusalFor } from './access-guards.js'
@@ -92,6 +94,7 @@ import { StorageCleanupCoordinator } from './storage-cleanup-coordinator.js'
 import { StorageMigrationCoordinator } from './storage-migration-coordinator.js'
 import {
   type LocationOccupancy,
+  type SeedDefaultsInput,
   StorageOrchestratorService,
 } from './storage-orchestrator.service.js'
 import type { DrainPlanEntry } from './storage-pressure-manager.js'
@@ -1532,6 +1535,8 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
 
   private declarersSeen: StorageLocationDeclarer[] | null = null
   private seedAnswered = false
+  private reseedRepairDone = false
+  private reseedRepairRunning = false
   private writabilityMonitor: StorageWritabilityMonitor | null = null
 
   /** Built on first use: `this.ctx` does not exist in a field initializer. */
@@ -1601,13 +1606,14 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
     // `/backups` in the image) so archives never fill the appData disk. Unset
     // → falls back to the data root like everything else.
     const backupRoot = process.env.CAMSTACK_BACKUP_ROOT?.trim()
-    const seedOutcome = this.service.seedDefaults({
+    const seedInput: SeedDefaultsInput = {
       providerId: 'filesystem-storage',
       basePath: this.ctx.nodeDataDir,
       mediaBasePath: mediaRoot && mediaRoot.length > 0 ? mediaRoot : undefined,
       backupBasePath: backupRoot && backupRoot.length > 0 ? backupRoot : undefined,
       declarations: registry.list(),
-    })
+    }
+    const seedOutcome = this.service.seedDefaults(seedInput)
     // Backfill `nodeId` on node-local locations seeded before the field
     // existed (single-node deployments → `'hub'`). Idempotent: only rows
     // missing `nodeId` are touched. Runs after seeding so freshly-seeded
@@ -1616,7 +1622,40 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
     await this.service.backfillNodeIds(HUB_NODE_ID)
     this.declarersSeen = declarers ?? null
     this.seedAnswered = seedOutcome.deferred === undefined
+    await this.repairPrunedDefaults(seedInput, declarers)
     this.evaluateWritability()
+  }
+
+  /**
+   * One-shot ledger migration (D987): re-create the default of a declared type whose
+   * seed marker survived the 2026-11-01 prune with no rows left. It is offered ONLY
+   * when the whole picture is known: the kernel listed its declarers, every one of them
+   * is loaded and readable, and the seed pass answered. Otherwise it is not offered and
+   * the next seed pass tries again; it never guesses (D49/D315).
+   */
+  private async repairPrunedDefaults(
+    seedInput: SeedDefaultsInput,
+    declarers: readonly StorageLocationDeclarer[] | undefined,
+  ): Promise<void> {
+    const service = this.service
+    if (!service || this.reseedRepairDone || this.reseedRepairRunning) return
+    if (declarers === undefined || declarers.some((d) => !d.loaded || d.addonId === null)) return
+    if (!this.seedAnswered || !service.locationsAuthoritative()) return
+    this.reseedRepairRunning = true
+    try {
+      await this.runMigrations(
+        defineAddonMigrations(ADDON_MIGRATIONS, {
+          reseed: () => service.reseedPrunedDefaults(seedInput),
+        }),
+      )
+      this.reseedRepairDone = true
+    } catch (err) {
+      this.ctx.logger.warn('storage-orchestrator: the pruned-default repair did not run', {
+        meta: { error: err instanceof Error ? err.message : String(err) },
+      })
+    } finally {
+      this.reseedRepairRunning = false
+    }
   }
 
   /**

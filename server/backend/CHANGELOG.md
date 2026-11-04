@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - A boot where some addons fail to load no longer deletes the default storage locations of the types those addons declare (event media, recordings, artifacts); the failure is logged and the default is kept
+- A hub whose storage defaults were removed by a failed addon load gets them back on the next boot, once every addon declaring a storage type is readable
 
 ## [1.2.759] - 2026-11-04
 
