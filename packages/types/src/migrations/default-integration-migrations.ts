@@ -19,6 +19,7 @@ import type { DefinedRecordKind } from '../records/record-kind.js'
 import type { RecordsAccess } from '../records/records-access.js'
 import { type AddonMigration, type AddonProcedureMigration } from './addon-migration.js'
 import {
+  type ClaimDevice,
   type ClaimDevicesPorts,
   claimDevicesToDefaultIntegration,
 } from './claim-devices-to-default-integration.js'
@@ -35,12 +36,8 @@ export type DefaultIntegrationPorts = IntegrationRowsPorts & ClaimDevicesPorts
 
 /** The slice of the hub API (`ctx.api`) the two migrations need, as plain calls. */
 export interface DefaultIntegrationApi extends IntegrationRowsApi {
-  listDevices(addonId: string): Promise<
-    readonly {
-      readonly id: number
-      readonly integrationId?: string | null | undefined
-    }[]
-  >
+  listDevices(addonId: string): Promise<readonly ClaimDevice[]>
+  readDeviceHasConfig(deviceId: number): Promise<boolean>
   setDeviceIntegrationId(deviceId: number, integrationId: string): Promise<void>
   readDeviceIntegrationId(deviceId: number): Promise<string | null>
 }
@@ -52,6 +49,7 @@ export function defaultIntegrationPortsOver(deps: {
   readonly kind: DefinedRecordKind
   readonly info: (message: string) => void
   readonly warn: (message: string) => void
+  readonly warnDevice: (message: string, deviceId: number) => void
 }): DefaultIntegrationPorts {
   const rows = integrationRowsPortsOverApi({
     api: deps.api,
@@ -65,7 +63,7 @@ export function defaultIntegrationPortsOver(deps: {
   })
   return {
     ...rows,
-    ...claimDevicesPortsOver({ api: deps.api, info: deps.info }),
+    ...claimDevicesPortsOver({ api: deps.api, info: deps.info, warnDevice: deps.warnDevice }),
   }
 }
 
@@ -73,9 +71,14 @@ export function defaultIntegrationPortsOver(deps: {
 export function claimDevicesPortsOver(deps: {
   readonly api: Pick<
     DefaultIntegrationApi,
-    'list' | 'listDevices' | 'setDeviceIntegrationId' | 'readDeviceIntegrationId'
+    | 'list'
+    | 'listDevices'
+    | 'readDeviceHasConfig'
+    | 'setDeviceIntegrationId'
+    | 'readDeviceIntegrationId'
   >
   readonly info: (message: string) => void
+  readonly warnDevice: (message: string, deviceId: number) => void
 }): ClaimDevicesPorts {
   return {
     listIntegrations: async (addonId) =>
@@ -83,10 +86,12 @@ export function claimDevicesPortsOver(deps: {
         .filter((i) => i.addonId === addonId)
         .map((i) => ({ id: i.id, name: i.name, info: i.info ?? {} })),
     listDevices: (addonId) => deps.api.listDevices(addonId),
+    hasConfig: (deviceId) => deps.api.readDeviceHasConfig(deviceId),
     setIntegrationId: (deviceId, integrationId) =>
       deps.api.setDeviceIntegrationId(deviceId, integrationId),
     readIntegrationId: (deviceId) => deps.api.readDeviceIntegrationId(deviceId),
     info: deps.info,
+    warnDevice: deps.warnDevice,
   }
 }
 
@@ -212,12 +217,7 @@ export interface DefaultIntegrationHubApi {
   }
   readonly deviceManager: {
     readonly listAll: {
-      query(input: { addonId: string; projection: 'slim' }): Promise<
-        readonly {
-          readonly id: number
-          readonly integrationId?: string | null | undefined
-        }[]
-      >
+      query(input: { addonId: string; projection: 'slim' }): Promise<readonly ClaimDevice[]>
     }
     readonly setIntegrationId: {
       mutate(input: { deviceId: number; integrationId: string }): Promise<unknown>
@@ -225,6 +225,7 @@ export interface DefaultIntegrationHubApi {
     readonly getDevice: {
       query(input: { deviceId: number }): Promise<{
         readonly integrationId?: string | null | undefined
+        readonly config?: Readonly<Record<string, unknown>> | undefined
       } | null>
     }
   }
@@ -242,6 +243,8 @@ export function defaultIntegrationApiOver(api: DefaultIntegrationHubApi): Defaul
         integrationId,
       })
     },
+    readDeviceHasConfig: async (deviceId) =>
+      Object.keys((await api.deviceManager.getDevice.query({ deviceId }))?.config ?? {}).length > 0,
     readDeviceIntegrationId: async (deviceId) =>
       (await api.deviceManager.getDevice.query({ deviceId }))?.integrationId ?? null,
   }

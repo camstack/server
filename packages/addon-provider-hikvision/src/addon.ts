@@ -284,6 +284,7 @@ export class HikvisionProviderAddon extends BaseDeviceProvider {
           kind: hikvisionConnectionsEntryKind,
           info: (message) => this.ctx.logger.info(message),
           warn: (message) => this.ctx.logger.warn(message),
+          warnDevice: (message, deviceId) => this.ctx.logger.warn(message, { tags: { deviceId } }),
         }),
       ),
     )

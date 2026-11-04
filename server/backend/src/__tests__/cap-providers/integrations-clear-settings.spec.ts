@@ -63,9 +63,8 @@ describe('integrations.clearSettings', () => {
     await expect(h.provider.clearSettings({ id: 'int_0001' })).rejects.toThrow(
       /only by its own addon/,
     )
-    await expect(
-      h.provider.clearSettings({ id: 'int_0001', callerAddonId: 'provider-someone-else' }),
-    ).rejects.toThrow(/only by its own addon/)
+    const foreign = { id: 'int_0001', callerAddonId: 'provider-someone-else' }
+    await expect(h.provider.clearSettings(foreign)).rejects.toThrow(/only by its own addon/)
     expect(h.registry.clearIntegrationSettings).not.toHaveBeenCalled()
   })
 })

@@ -25,6 +25,12 @@ export interface ClaimIntegration {
 export interface ClaimDevice {
   readonly id: number
   readonly integrationId?: string | null | undefined
+  /** The owning device; null or absent for a root. */
+  readonly parentDeviceId?: number | null | undefined
+  /** With `name` and `stableId`: what tells an allocation reservation apart (D376). */
+  readonly type?: string | undefined
+  readonly name?: string | undefined
+  readonly stableId?: string | undefined
 }
 
 export interface ClaimDevicesPorts {
@@ -32,11 +38,15 @@ export interface ClaimDevicesPorts {
   listIntegrations(addonId: string): Promise<readonly ClaimIntegration[]>
   /** Every persisted device of `addonId`, whether or not it is running. */
   listDevices(addonId: string): Promise<readonly ClaimDevice[]>
+  /** Whether the device has any stored configuration (a reservation has none). */
+  hasConfig(deviceId: number): Promise<boolean>
   /** Patch the one `integrationId` field of a device. */
   setIntegrationId(deviceId: number, integrationId: string): Promise<void>
   /** The device's integration id as stored; null when none. */
   readIntegrationId(deviceId: number): Promise<string | null>
   info(message: string): void
+  /** A device the claim could not resolve: the line carries `tags: { deviceId }` (D391). */
+  warnDevice(message: string, deviceId: number): void
 }
 
 export interface ClaimDevicesSpec {
@@ -70,33 +80,97 @@ function unstamped(device: ClaimDevice): boolean {
   )
 }
 
+/**
+ * An allocation reservation is not a device (D376): `allocateDeviceId` writes a row of type
+ * `generic`, named by its stable id, that is not registered and holds no configuration. The hub
+ * listing does not carry the `registered` bit, so the shape picks the candidates and the missing
+ * configuration decides.
+ */
+async function isReservation(ports: ClaimDevicesPorts, device: ClaimDevice): Promise<boolean> {
+  if (device.type !== 'generic' || device.name === undefined || device.name !== device.stableId) {
+    return false
+  }
+  return !(await ports.hasConfig(device.id))
+}
+
 export async function claimDevicesToDefaultIntegration(
   ports: ClaimDevicesPorts,
   spec: ClaimDevicesSpec,
 ): Promise<MigrationProcedureResult> {
-  const orphans = (await ports.listDevices(spec.addonId)).filter(unstamped)
-  if (orphans.length === 0) return { outcome: 'already-done', summary: { claimed: 0 } }
+  const all = await ports.listDevices(spec.addonId)
+  const byId = new Map(all.map((d) => [d.id, d]))
+  const reservations = new Set<number>()
+  for (const device of all) {
+    if (unstamped(device) && (await isReservation(ports, device))) reservations.add(device.id)
+  }
+  const orphans = all.filter((d) => unstamped(d) && !reservations.has(d.id))
+  const summaryBase = { reservations: reservations.size }
+  if (orphans.length === 0) {
+    return { outcome: 'already-done', summary: { claimed: 0, unresolved: 0, ...summaryBase } }
+  }
 
-  const target = defaultIntegrationOf(await ports.listIntegrations(spec.addonId), spec.eligible)
-  if (target === null) {
+  const integrations = await ports.listIntegrations(spec.addonId)
+  const fallback = defaultIntegrationOf(integrations, spec.eligible)
+  const plan = new Map<number, string>()
+  const unresolved = new Set<number>()
+  const failed = new Set<number>()
+
+  // The integration a device is stamped with, planned parents first; null when it cannot be.
+  const resolve = (device: ClaimDevice, seen: ReadonlySet<number>): string | null => {
+    if (!unstamped(device)) return device.integrationId ?? null
+    const planned = plan.get(device.id)
+    if (planned !== undefined) return planned
+    if (failed.has(device.id)) return null
+    let target: string | null = null
+    const parentId = device.parentDeviceId ?? null
+    if (parentId === null) {
+      target = fallback?.id ?? null
+    } else {
+      const parent = byId.get(parentId)
+      if (parent !== undefined && !reservations.has(parentId) && !seen.has(parentId)) {
+        target = resolve(parent, new Set([...seen, device.id]))
+      }
+    }
+    if (target === null) failed.add(device.id)
+    else plan.set(device.id, target)
+    return target
+  }
+
+  const rootsNeedDefault = orphans.some((d) => (d.parentDeviceId ?? null) === null)
+  if (rootsNeedDefault && fallback === null) {
     throw new Error(
       `${orphans.length} device(s) of '${spec.addonId}' carry no integration and the addon has no integration to claim them to`,
     )
   }
   for (const device of orphans) {
-    await ports.setIntegrationId(device.id, target.id)
+    if (resolve(device, new Set([device.id])) === null) unresolved.add(device.id)
+  }
+  for (const id of unresolved) {
+    ports.warnDevice(
+      `device ${id} of '${spec.addonId}' carries no integration and its owner chain does not resolve to one: left unstamped`,
+      id,
+    )
+  }
+
+  // Map insertion order is parents first: a child is planned after the parent it reads from.
+  for (const [deviceId, integrationId] of plan) {
+    await ports.setIntegrationId(deviceId, integrationId)
   }
   const wrong: number[] = []
-  for (const device of orphans) {
-    if ((await ports.readIntegrationId(device.id)) !== target.id) wrong.push(device.id)
+  for (const [deviceId, integrationId] of plan) {
+    if ((await ports.readIntegrationId(deviceId)) !== integrationId) wrong.push(deviceId)
   }
   if (wrong.length > 0) {
     throw new Error(
-      `device(s) ${wrong.join(', ')} did not read back integration '${target.id}' after the claim`,
+      `device(s) ${wrong.join(', ')} did not read back their integration after the claim`,
     )
   }
+  const claimed = plan.size
   ports.info(
-    `${orphans.length} device(s) of '${spec.addonId}' claimed to integration '${target.id}'`,
+    `${claimed} device(s) of '${spec.addonId}' claimed to their owner's integration or the default; ${unresolved.size} unresolved, ${reservations.size} reservation(s) skipped`,
   )
-  return { outcome: 'done', summary: { claimed: orphans.length, integrationId: target.id } }
+  return {
+    outcome: claimed > 0 ? 'done' : 'already-done',
+    summary: { claimed, unresolved: unresolved.size, ...summaryBase },
+  }
 }

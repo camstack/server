@@ -24,7 +24,9 @@ function world(devices: { id: number; integrationId?: string }[]) {
       stored.set(id, integrationId)
     },
     readIntegrationId: async (id) => stored.get(id) ?? null,
+    hasConfig: async () => true,
     info: () => undefined,
+    warnDevice: () => undefined,
   }
   return { stored, ports }
 }

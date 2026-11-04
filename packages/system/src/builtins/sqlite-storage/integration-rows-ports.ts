@@ -11,6 +11,7 @@ import {
   type RowsMigrationLog,
   RevConflictError,
   type SecretsAccess,
+  collectSecretMarkerRefs,
 } from '@camstack/types'
 import type { IntegrationRegistry } from './integration-registry.js'
 
@@ -36,17 +37,20 @@ export interface ClearIntegrationRowsDeps {
 
 /**
  * The hub-side "clear rows" operation: delete one integration's legacy setting rows AND the
- * keychain values they pointed at. The integration itself stays. A rerun on cleared rows is a
+ * keychain values they pointed at (values first, so a failed delete leaves the rows to retry). The integration itself stays. A rerun on cleared rows is a
  * no-op. Counts only; never a value.
  */
 export async function clearIntegrationRows(
   deps: ClearIntegrationRowsDeps,
   integrationId: string,
 ): Promise<{ readonly rows: number; readonly secrets: number }> {
-  const rows = Object.keys(await deps.registry.getIntegrationSettings(integrationId)).length
-  const refs = await deps.registry.clearIntegrationSettings(integrationId)
+  // The values go FIRST: while the rows still point at them a failed delete is retried by the
+  // next run; clearing the rows first would orphan whatever the delete left behind.
+  const stored = await deps.registry.getIntegrationSettings(integrationId)
+  const refs = collectSecretMarkerRefs(stored)
   if (refs.length > 0 && deps.secrets !== null) await deps.secrets.delete(refs)
-  return { rows, secrets: refs.length }
+  await deps.registry.clearIntegrationSettings(integrationId)
+  return { rows: Object.keys(stored).length, secrets: refs.length }
 }
 
 export function integrationRowsPortsOver(deps: IntegrationRowsPortsDeps): IntegrationRowsPorts {

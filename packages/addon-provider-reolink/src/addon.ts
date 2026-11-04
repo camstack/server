@@ -1059,6 +1059,7 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
         claimDevicesPortsOver({
           api: defaultIntegrationApiOver(this.ctx.api),
           info: (message) => this.ctx.logger.info(message),
+          warnDevice: (message, deviceId) => this.ctx.logger.warn(message, { tags: { deviceId } }),
         }),
       ),
     ])

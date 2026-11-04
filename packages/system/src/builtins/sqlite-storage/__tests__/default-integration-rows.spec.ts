@@ -84,6 +84,7 @@ async function setupWorld() {
     api: {
       ...api,
       listDevices: async () => [],
+      readDeviceHasConfig: async () => true,
       setDeviceIntegrationId: async () => undefined,
       readDeviceIntegrationId: async () => null,
     },
@@ -91,6 +92,7 @@ async function setupWorld() {
     kind,
     info: () => undefined,
     warn: (m) => warnings.push(m),
+    warnDevice: () => undefined,
   })
   const run = async () => {
     const [rows] = defineAddonMigrations(

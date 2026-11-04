@@ -94,6 +94,25 @@ describe('clearIntegrationRows', () => {
   })
 })
 
+describe('clearIntegrationRows ordering', () => {
+  it('a failed keychain delete leaves the rows, so the next run retries and clears both', async () => {
+    const t = await setup()
+    const a = await t.registry.createIntegration({ addonId: ADDON, name: 'A' })
+    await t.fill(a.id)
+    const failing = { ...t.secrets, delete: async () => Promise.reject(new Error('keychain down')) }
+    await expect(
+      clearIntegrationRows({ registry: t.registry, secrets: failing }, a.id),
+    ).rejects.toThrow(/keychain down/)
+    // the rows still point at the value
+    expect(Object.keys(await t.registry.getIntegrationSettings(a.id))).toContain('password')
+    expect(t.keychain.values.size).toBe(1)
+
+    const retry = await clearIntegrationRows({ registry: t.registry, secrets: t.secrets }, a.id)
+    expect(retry).toEqual({ rows: 2, secrets: 1 })
+    expect(t.keychain.values.size).toBe(0)
+  })
+})
+
 describe('the addon-side ports over the hub API', () => {
   it('move the rows into the addon record and have the hub clear them, secrets included', async () => {
     const t = await setup()

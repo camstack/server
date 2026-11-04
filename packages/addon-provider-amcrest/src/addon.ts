@@ -254,6 +254,7 @@ export class AmcrestProviderAddon extends BaseDeviceProvider {
         kind: amcrestConnectionsEntryKind,
         info: (message) => this.ctx.logger.info(message),
         warn: (message) => this.ctx.logger.warn(message),
+        warnDevice: (message, deviceId) => this.ctx.logger.warn(message, { tags: { deviceId } }),
       }),
     )
     await this.runMigrations(defaultIntegration)

@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Integrations page, wizard discovery word and test button follow what an addon's integration-instances provider describes (role, discovery)
 - The hub can clear one integration's legacy settings rows and their keychain values for the addon that migrated them
+- Clearing an integration's legacy rows deletes its keychain values first, so a failed delete is retried
 
 ## [1.2.761] - 2026-11-04
 

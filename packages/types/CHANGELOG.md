@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An addon that moves its legacy integration settings into a record can now ask the hub to clear the old rows and their keychain values
 - Added the shared migrations for a device addon whose integrations hold no settings: integration rows to a name-only record, and claiming un-stamped devices to the default integration
 - Added the device-claim migration alone and its hub ports, for an addon that moves its settings later
+- The device claim gives a child its parent's integration, skips allocation reservations and reports what it could not resolve
 
 ## [1.2.494] - 2026-11-04
 
