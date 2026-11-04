@@ -580,6 +580,17 @@ export default defineFixtures({
             }
           : { state: 'configured', sensors: [] },
     }),
+    'powerSource.getStatus': {
+      linked: false,
+      switchDeviceId: null,
+      switchName: null,
+      switchOn: null,
+      switchOnline: null,
+      restartInProgress: false,
+      offSeconds: 0,
+    },
+    'preferences.get': { rows: [] },
+    'deviceManager.listLocations': [],
     'actions.list': ACTIONS,
     'actions.getLinks': (i: { deviceId?: number }) => ({
       deviceId: i.deviceId ?? 0,
