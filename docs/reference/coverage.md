@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**234 units · 7984 source files · 221 units claimed by at least one document (7940 files).**
+**234 units · 7985 source files · 221 units claimed by at least one document (7941 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -136,12 +136,12 @@ it never describes how the thing works, and it is never re-verified.
 | `e2e` | 9 | `tooling` | — | — |
 | `packages/addon-decoder-nodeav` | 9 | `audio`, `decode-and-data-planes` | `decisions/adr-0281-a-talk-frame-at-the-wrong-rate-is-converted-by-the-codec-cap-or-refused-loudly.md`, `decisions/adr-0763-the-decoder-cap-is-a-hwaccel-answer-and-shm-ring-and-decoder-ffmpeg-are-deleted.md` | — |
 | `packages/addon-pipeline/src/shared` | 9 | `decode-and-data-planes` | `decisions/adr-0177-a-python-pool-is-bounded-by-its-own-watchdog-not-the-kernel.md`, `decisions/adr-0199-a-model-choice-has-a-scope-and-a-scope-change-has-a-workflow.md`, `decisions/adr-0236-the-electron-bundle-seeds-addons-from-its-own-closure.md`, +2 more | — |
+| `packages/addon-provider-onvif` | 9 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0522-home-is-a-stored-choice-not-a-vendor-convention.md`, `decisions/adr-0677-the-runtime-state-row-writer-never-writes-a-row-this-process-has-not-read.md` _(covers)_ | 2026-10-26 |
 | `packages/nx-plugin` | 9 | `tooling` | — | — |
 | `packages/system/src/logging` | 9 | `logging`, `secrets` | `architecture/logging.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +9 more | 2026-10-21 |
 | `packages/types/src/migrations` | 9 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0987-a-migration-runs-at-boot-under-its-owner.md`, `decisions/adr-1007-every-integration-is-a-typed-instance-record-the-registry-keeps-identity-and-the-on-off-switch.md` | — |
 | `packages/types/src/units` | 9 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0972-a-number-tied-to-a-quantity-is-entered-in-a-unit-the-person-picks.md` | — |
 | `packages/ui-library/src/theme` | 9 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md`, +2 more | 2026-11-02 |
-| `packages/addon-provider-onvif` | 8 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0522-home-is-a-stored-choice-not-a-vendor-convention.md`, `decisions/adr-0677-the-runtime-state-row-writer-never-writes-a-row-this-process-has-not-read.md` _(covers)_ | 2026-10-26 |
 | `packages/types/src/auth` | 8 | `auth` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0801-a-native-account-link-returns-to-the-app-and-is-claimed-with-the-apps-own-session.md`, `decisions/adr-0810-an-sso-login-bridge-is-single-use-and-bound-to-the-browser-that-started-the-sign-in.md`, +5 more, 1 ADR | — |
 | `packages/types/src/remote` | 8 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0964-a-remote-is-a-customize-extension-over-a-generic-template-collection-binds-roles-to-actions-and-takes-precedence-at-dispatch.md`, `decisions/adr-0973-remote-layout-components-are-data-the-ui-draws-from-closed-vocabularies.md`, +1 more | — |
 | `packages/addon-model-studio/src/plugin-catalog` | 7 | `tooling` | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_ | — |

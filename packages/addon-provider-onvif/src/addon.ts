@@ -9,16 +9,32 @@ import type {
   IDevice,
   SavedDevice,
 } from '@camstack/types'
-import { BaseDeviceProvider, defineAddonMigrations, DeviceType, errMsg } from '@camstack/types'
-import type { ProviderRegistration } from '@camstack/types'
+import {
+  BaseDeviceProvider,
+  defaultIntegrationApiOver,
+  defaultIntegrationMigrations,
+  defaultIntegrationPortsOver,
+  defineAddonMigrations,
+  DeviceType,
+  errMsg,
+  integrationInstancesCapability,
+} from '@camstack/types'
+import type { ProviderRegistration, RecordsAccess } from '@camstack/types'
 import { ADDON_MIGRATIONS, PROVIDER_ONVIF_ID } from './migrations/index.js'
 import { readRawKeys } from './migrations/drop-keys.js'
+import {
+  buildOnvifInstances,
+  onvifConnectionsEntryKind,
+  onvifRecordKinds,
+} from './onvif-instances.js'
 import { OnvifCamera, onvifCameraSchema } from './onvif-camera.js'
 import { OnvifClient } from './onvif-client.js'
 import { ONVIF_DISCOVERY_MODES, onvifCamerasFromHits } from './onvif-discovery.js'
 import type { DiscoveredOnvifCamera } from './onvif-types.js'
 
 const ADDON_ID = 'provider-onvif'
+/** The date of the integration-rows and device-claim migrations (D1007). */
+const ONVIF_INTEGRATION_MIGRATIONS_DATE = '2026-11-05'
 /** Stored flat, under its dotted schema key — the store is not nested. */
 
 /**
@@ -42,19 +58,47 @@ export class OnvifProviderAddon extends BaseDeviceProvider<OnvifGlobalConfig> {
    * Retire the addon-wide default credentials (D986 Q8, D987): clear the password from the
    * keychain, then delete both rows. Nothing reads them; each camera holds its own.
    */
-  private async migrateSettings(): Promise<void> {
-    await this.runMigrations(
-      defineAddonMigrations(ADDON_MIGRATIONS, {
+  private async migrateSettings(records: RecordsAccess): Promise<void> {
+    // The WHOLE catalogue in one declaration (#417): the two earlier migrations, then the
+    // integration rows move into a record and the cameras carrying no integration are claimed (D1007).
+    await this.runMigrations([
+      ...defineAddonMigrations(ADDON_MIGRATIONS, {
         readStored: (keys) =>
           readRawKeys((key) => this.readStoredGlobalKey(key), PROVIDER_ONVIF_ID, keys),
         clearDefaultPassword: () => this.clearSecrets(['defaultPassword']),
       }),
-    )
+      ...defineAddonMigrations(
+        defaultIntegrationMigrations({
+          addonId: ADDON_ID,
+          date: ONVIF_INTEGRATION_MIGRATIONS_DATE,
+          seq: ADDON_MIGRATIONS.length + 1,
+        }),
+        defaultIntegrationPortsOver({
+          api: defaultIntegrationApiOver(this.ctx.api),
+          records,
+          kind: onvifConnectionsEntryKind,
+          info: (message) => this.ctx.logger.info(message),
+          warn: (message) => this.ctx.logger.warn(message),
+          warnDevice: (message, deviceId) => this.ctx.logger.warn(message, { tags: { deviceId } }),
+        }),
+      ),
+    ])
   }
 
   protected override async onInitialize(): Promise<ProviderRegistration[]> {
-    await this.migrateSettings()
-    return this.providerRegistrationsFromSuper(await super.onInitialize())
+    const records = this.ctx.records
+    if (records === undefined)
+      throw new Error('provider-onvif: ctx.records is required (hub-only addon)')
+    await records.declare(onvifRecordKinds)
+    // Before the provider registers: while it is registered the hub answers from the record.
+    await this.migrateSettings(records)
+    return [
+      ...this.providerRegistrationsFromSuper(await super.onInitialize()),
+      {
+        capability: integrationInstancesCapability,
+        provider: buildOnvifInstances(records).toProvider(),
+      },
+    ]
   }
 
   // ── Discovery (override defaults) ───────────────────────────────────
