@@ -7,6 +7,12 @@ import {
   planDropMovedExposure,
 } from './exposure-to-record.js'
 import {
+  type DropMovedStatePorts,
+  type MoveStatePorts,
+  moveStateToInstance,
+  planDropMovedState,
+} from './state-to-instance.js'
+import {
   type DropMovedSettingsPorts,
   type MoveLedgersPorts,
   type MoveSettingsPorts,
@@ -21,6 +27,7 @@ export type {
   ExposureMigrationLog,
   MoveExposurePorts,
 } from './exposure-to-record.js'
+export type { DropMovedStatePorts, MoveStatePorts } from './state-to-instance.js'
 export type {
   AlexaMigrationLog,
   DropMovedSettingsPorts,
@@ -34,7 +41,9 @@ export type AlexaCataloguePorts = DropPublicHubUrlPorts &
   MoveLedgersPorts &
   DropMovedSettingsPorts &
   MoveExposurePorts &
-  DropMovedExposurePorts
+  DropMovedExposurePorts &
+  MoveStatePorts &
+  DropMovedStatePorts
 
 export const DROP_PUBLIC_HUB_URL_ID = 'export-alexa/2026-11-02-drop-public-hub-url'
 export const SETTINGS_TO_INTEGRATION_ID = 'export-alexa/2026-11-03-settings-to-integration'
@@ -43,6 +52,9 @@ export const DROP_MOVED_SETTINGS_ID = 'export-alexa/2026-11-03-drop-moved-settin
 
 export const EXPOSURE_TO_RECORD_ID = 'export-alexa/2026-11-04-exposure-to-record'
 export const DROP_MOVED_EXPOSURE_ID = 'export-alexa/2026-11-04-drop-moved-exposure'
+
+export const STATE_TO_INSTANCE_ID = 'export-alexa/2026-11-04-state-to-instance'
+export const DROP_MOVED_STATE_ID = 'export-alexa/2026-11-04-drop-moved-state'
 
 const FIXTURE_MARK = 'the endpoint sync state the migration does not know'
 
@@ -151,5 +163,39 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<AlexaCataloguePorts>[] = 
       fixtureMark: FIXTURE_MARK,
     },
     plan: planDropMovedExposure,
+  },
+  {
+    meta: {
+      id: STATE_TO_INSTANCE_ID,
+      owner: 'export-alexa',
+      level: 'addon-state',
+      seq: 7,
+      dependsOn: [],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'block-owner',
+      bodyKind: 'procedure',
+      description:
+        'Move the ingress token, vision namespace and push mirrors into the skill-state record of the default instance; the record is read back, token included',
+      fixtureMark: FIXTURE_MARK,
+    },
+    procedure: moveStateToInstance,
+  },
+  {
+    meta: {
+      id: DROP_MOVED_STATE_ID,
+      owner: 'export-alexa',
+      level: 'addon-state',
+      seq: 8,
+      dependsOn: [STATE_TO_INSTANCE_ID],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'block-owner',
+      bodyKind: 'plan',
+      description:
+        'Release the ingress token keychain entry and delete the moved state keys once the record holds what they carried',
+      fixtureMark: FIXTURE_MARK,
+    },
+    plan: planDropMovedState,
   },
 ]

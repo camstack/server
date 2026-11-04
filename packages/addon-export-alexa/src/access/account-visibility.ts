@@ -34,10 +34,10 @@ import type { AlexaAccessGate } from './access-gate.js'
 export type StoredVisibility =
   | { readonly all: true }
   | {
-      readonly all?: false
+      readonly all?: false | undefined
       readonly view: readonly number[]
       /** Devices one refresh saw as lost; deleted from Alexa when the next agrees. */
-      readonly pendingRemoval?: readonly number[]
+      readonly pendingRemoval?: readonly number[] | undefined
     }
 
 export type StoredVisibilityMap = Readonly<Record<string, StoredVisibility>>

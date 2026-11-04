@@ -8,6 +8,9 @@
 import { CamProfileSchema, type DefinedRecordKind, defineEntryKind } from '@camstack/types'
 import { z } from 'zod'
 import type { ActionSceneEntry } from './action-scenes.js'
+import type { StoredVisibilityMap } from './access/account-visibility.js'
+import type { StoredDetectionClasses } from './detection-sensors/detection-classes.js'
+import { DETECTION_SENSOR_CLASSES } from './handlers/endpoint-id.js'
 import type {
   ExportDeviceSettings,
   ExposedDeviceEntry,
@@ -172,4 +175,94 @@ export const EMPTY_SKILL_EXPORTS: SkillExportsBody = {
   name: SKILL_EXPORTS_NAME,
   devices: [],
   actions: [],
+}
+
+/** The settings keys that moved into the `skill-state` record; the migrations name them. */
+export const MOVED_STATE_KEYS = [
+  'ingressToken',
+  'visionNamespace',
+  'detectionClasses',
+  'accountVisibility',
+  'exportedEndpoints',
+  'exportedSignatures',
+  'advertisedBrokerUrl',
+  'lwaClientId',
+] as const
+
+/**
+ * What ONE skill told Alexa and what its Lambda holds, under the instance's id: the ingress
+ * token its Lambda presents (a credential, kept in the keychain), the namespace its object
+ * identifiers derive under, and the mirrors of what Alexa was last sent. Maps keyed by device id
+ * are keyed by the id's text (a record is JSON).
+ */
+export type SkillStateBody = {
+  readonly name: string
+  /** Absent until first generated; the keychain holds it. */
+  readonly ingressToken?: string | undefined
+  readonly visionNamespace: string
+  readonly detectionClasses: Readonly<Record<string, StoredDetectionClasses>>
+  readonly accountVisibility: StoredVisibilityMap
+  readonly exportedEndpoints: Readonly<Record<string, readonly string[]>>
+  readonly exportedSignatures: Readonly<Record<string, string>>
+  readonly advertisedBrokerUrl: string
+  readonly lwaClientId: string
+}
+
+const DetectionClassEnum = z.enum(DETECTION_SENSOR_CLASSES)
+
+export const StoredDetectionClassesSchema: z.ZodType<StoredDetectionClasses> = z.object({
+  classes: z.array(DetectionClassEnum),
+  missingSince: z.partialRecord(DetectionClassEnum, z.number()).optional(),
+})
+
+export const StoredVisibilitySchema: z.ZodType<StoredVisibilityMap[string]> = z.union([
+  z.object({ all: z.literal(true) }),
+  z.object({
+    all: z.literal(false).optional(),
+    view: z.array(z.number()),
+    pendingRemoval: z.array(z.number()).optional(),
+  }),
+])
+
+export const DetectionClassesMapSchema = z.record(z.string(), StoredDetectionClassesSchema)
+export const AccountVisibilityMapSchema = z.record(z.string(), StoredVisibilitySchema)
+export const ExportedEndpointsMapSchema = z.record(z.string(), z.array(z.string()))
+export const ExportedSignaturesMapSchema = z.record(z.string(), z.string())
+
+export const SkillStateBodySchema: z.ZodType<SkillStateBody> = z.object({
+  name: z.string().min(1),
+  ingressToken: z.string().optional().meta({ secret: true }),
+  visionNamespace: z.string(),
+  detectionClasses: DetectionClassesMapSchema,
+  accountVisibility: AccountVisibilityMapSchema,
+  exportedEndpoints: ExportedEndpointsMapSchema,
+  exportedSignatures: ExportedSignaturesMapSchema,
+  advertisedBrokerUrl: z.string(),
+  lwaClientId: z.string(),
+})
+
+export const SKILL_STATE_KIND_NAME = 'skill-state'
+
+export const SKILL_STATE_NAME = 'Alexa skill state'
+
+export const alexaSkillStateKind: DefinedRecordKind<z.ZodType<SkillStateBody>> = defineEntryKind(
+  SKILL_STATE_KIND_NAME,
+  { title: 'Alexa skill state', nameField: 'name', schema: SkillStateBodySchema },
+)
+
+/** What a skill's state starts as, before a token and a namespace are generated. */
+export const EMPTY_SKILL_STATE: SkillStateBody = {
+  name: SKILL_STATE_NAME,
+  visionNamespace: '',
+  detectionClasses: {},
+  accountVisibility: {},
+  exportedEndpoints: {},
+  exportedSignatures: {},
+  advertisedBrokerUrl: '',
+  lwaClientId: '',
+}
+
+/** A device-keyed map as the record keeps it: the id's text is the key. */
+export function keyedByText<T>(map: Readonly<Record<number, T>>): Readonly<Record<string, T>> {
+  return Object.fromEntries(Object.entries(map))
 }

@@ -29,13 +29,17 @@ import {
   alexaSkillExportsKind,
   alexaSkillLinksKind,
   alexaSkillsKind,
+  alexaSkillStateKind,
+  type SkillStateBody,
 } from '../../skill-records.js'
 import {
   ADDON_MIGRATIONS,
   type AlexaCataloguePorts,
   DROP_MOVED_SETTINGS_ID,
+  DROP_MOVED_STATE_ID,
   LEDGERS_TO_INTEGRATION_ID,
   SETTINGS_TO_INTEGRATION_ID,
+  STATE_TO_INSTANCE_ID,
 } from '../index.js'
 
 const SNAPSHOT_WORKER = fileURLToPath(
@@ -69,6 +73,9 @@ const TOKENS_STORED = [
   { ...TOKENS_RESOLVED[0], accessToken: ACCESS_MARKER, refreshToken: REFRESH_MARKER },
 ]
 
+const INGRESS_MARKER = { $secret: 'ref-ingress' }
+const INGRESS_PLAIN = 'ingress-token-plain-0123456789'
+
 const LEGACY: Record<string, unknown> = {
   skillMode: 'custom',
   region: 'EU',
@@ -79,7 +86,7 @@ const LEGACY: Record<string, unknown> = {
   enforceIngressToken: true,
   linkedAccounts: ACCOUNTS,
   tokens: TOKENS_STORED,
-  exportedEndpoints: { 7: ['keep-me'] },
+  unrelatedKey: { 7: ['keep-me'] },
 }
 
 let h: Harness
@@ -146,9 +153,11 @@ function storedValues(): Record<string, unknown> {
 function resolved(): Record<string, unknown> {
   const stored = storedValues()
   const tokens = stored['tokens']
-  return Array.isArray(tokens) && tokens.length > 0
-    ? { ...stored, tokens: TOKENS_RESOLVED }
-    : stored
+  const withTokens =
+    Array.isArray(tokens) && tokens.length > 0 ? { ...stored, tokens: TOKENS_RESOLVED } : stored
+  return 'ingressToken' in withTokens && typeof withTokens['ingressToken'] === 'object'
+    ? { ...withTokens, ingressToken: INGRESS_PLAIN }
+    : withTokens
 }
 
 function deleteRow(key: string): void {
@@ -167,6 +176,11 @@ interface Options {
   readonly readFails?: boolean
   /** A link record is already there, with these accounts and no grants. */
   readonly existingLinks?: boolean
+  /** The state record already exists, with this body. */
+  readonly existingState?: SkillStateBody
+  /** The state record reads back with this ingress token instead of the one written. */
+  readonly stateReadBackToken?: string
+  readonly stateReadFails?: boolean
 }
 
 async function boot(options: Options = {}) {
@@ -208,7 +222,12 @@ async function boot(options: Options = {}) {
     skills: alexaSkillsKind,
     'skill-links': alexaSkillLinksKind,
     'skill-exports': alexaSkillExportsKind,
+    'skill-state': alexaSkillStateKind,
   })
+  const states = memory.records.kind(alexaSkillStateKind)
+  if (options.existingState !== undefined) {
+    await states.put({ id: ALEXA_INSTANCE_ID, data: options.existingState }, { ifRev: 0 })
+  }
   const exposure = memory.records.kind(alexaSkillExportsKind)
   const skills = memory.records.kind(alexaSkillsKind)
   const links = memory.records.kind(alexaSkillLinksKind)
@@ -269,6 +288,28 @@ async function boot(options: Options = {}) {
       calls.push('clear:tokens')
       deleteRow('tokens')
     },
+    hasInstanceRecords: async () =>
+      (await links.get(ALEXA_INSTANCE_ID)) !== null ||
+      (await exposure.get(ALEXA_INSTANCE_ID)) !== null,
+    putState: async (body) => {
+      if ((await states.get(ALEXA_INSTANCE_ID)) !== null) return 'exists'
+      calls.push('put-state')
+      await states.put({ id: ALEXA_INSTANCE_ID, data: body }, { ifRev: 0 })
+      return 'created'
+    },
+    readState: async () => {
+      calls.push('read-state')
+      if (options.stateReadFails === true) throw new Error('keychain locked')
+      const row = await states.getResolved(ALEXA_INSTANCE_ID)
+      if (row === null) return null
+      return options.stateReadBackToken === undefined
+        ? row.data
+        : { ...row.data, ingressToken: options.stateReadBackToken }
+    },
+    clearIngressTokenSecret: async () => {
+      calls.push('clear:ingressToken')
+      deleteRow('ingressToken')
+    },
   }
   const bound = defineAddonMigrations(ADDON_MIGRATIONS, ports)
   const runCatalogue = () => runAddonMigrations(host, bound, recordingLogger(h.lines, 'Addon'))
@@ -277,7 +318,7 @@ async function boot(options: Options = {}) {
     if (entry === undefined) throw new Error(`no ${id}`)
     return entry.execute()
   }
-  return { skills, links, calls, warnings, runCatalogue, execute }
+  return { skills, links, states, calls, warnings, runCatalogue, execute }
 }
 
 describe('export-alexa migrations on real SQLite', () => {
@@ -307,10 +348,10 @@ describe('export-alexa migrations on real SQLite', () => {
     const after = rows()
     // The moved keys are gone; the unrelated marked key and another addon's rows stay.
     expect(Object.keys(after).sort()).toEqual(
-      [`${ADDON}.exportedEndpoints`, 'other-addon.skillMode', 'other-addon.tokens'].sort(),
+      [`${ADDON}.unrelatedKey`, 'other-addon.skillMode', 'other-addon.tokens'].sort(),
     )
-    expect(after[`${ADDON}.exportedEndpoints`]).toBe(
-      wrapper(ADDON, 'exportedEndpoints', LEGACY['exportedEndpoints']),
+    expect(after[`${ADDON}.unrelatedKey`]).toBe(
+      wrapper(ADDON, 'unrelatedKey', LEGACY['unrelatedKey']),
     )
     expect(after['other-addon.tokens']).toBe(wrapper('other-addon', 'tokens', ['keep-me-too']))
   })
@@ -413,5 +454,147 @@ describe('export-alexa migrations on real SQLite', () => {
       error: expect.stringContaining('still carry') as string,
     })
     expect(Object.keys(rows())).toContain(`${ADDON}.tokens`)
+  })
+})
+
+/** The state a skill carried before the move: the credential is a keychain marker in the settings. */
+const STATE_LEGACY: Record<string, unknown> = {
+  ...LEGACY,
+  ingressToken: INGRESS_MARKER,
+  visionNamespace: 'cs-ns-1',
+  detectionClasses: { 7: { classes: ['person'], missingSince: 1700000000000 } },
+  accountVisibility: { 'amzn1.u1': { all: false, pendingRemoval: [7] } },
+  exportedEndpoints: { 7: ['ep-a', 'ep-b'] },
+  exportedSignatures: { 'ep-a': 'sig-a' },
+  advertisedBrokerUrl: 'https://hub.example/broker',
+  lwaClientId: 'amzn1.application-oa2-client.x',
+}
+
+describe('export-alexa state migrations on real SQLite', () => {
+  it('moves the state, the token reads back from the record, then the keys and the secret go', async () => {
+    seed(STATE_LEGACY)
+    const w = await boot()
+    const report = await w.runCatalogue()
+    expect(report.failed ?? []).toEqual([])
+    expect(ledger()[STATE_TO_INSTANCE_ID]).toBe('applied')
+    expect(ledger()[DROP_MOVED_STATE_ID]).toBe('applied')
+    const held = await w.states.getResolved(ALEXA_INSTANCE_ID)
+    // The token survives byte for byte.
+    expect(held?.data.ingressToken).toBe(INGRESS_PLAIN)
+    expect(held?.data).toMatchObject({
+      visionNamespace: 'cs-ns-1',
+      exportedEndpoints: { 7: ['ep-a', 'ep-b'] },
+      exportedSignatures: { 'ep-a': 'sig-a' },
+      advertisedBrokerUrl: 'https://hub.example/broker',
+      lwaClientId: 'amzn1.application-oa2-client.x',
+    })
+    expect(w.calls).toContain('clear:ingressToken')
+    const left = Object.keys(storedValues())
+    for (const moved of [
+      'ingressToken',
+      'visionNamespace',
+      'detectionClasses',
+      'accountVisibility',
+      'exportedEndpoints',
+      'exportedSignatures',
+      'advertisedBrokerUrl',
+      'lwaClientId',
+    ]) {
+      expect(left).not.toContain(moved)
+    }
+    expect(left).toContain('unrelatedKey')
+    expect(rows()['other-addon.skillMode']).toBe(wrapper('other-addon', 'skillMode', 'keep-me'))
+  })
+
+  it('a second run is already-done and writes nothing', async () => {
+    seed(STATE_LEGACY)
+    const w = await boot()
+    await w.runCatalogue()
+    const before = rows()
+    expect(await w.execute(STATE_TO_INSTANCE_ID)).toMatchObject({
+      result: { outcome: 'already-done' },
+    })
+    expect(await w.execute(DROP_MOVED_STATE_ID)).toMatchObject({
+      kind: 'plan',
+      plan: { edits: [] },
+    })
+    expect(rows()).toEqual(before)
+  })
+
+  it('never overwrites an existing state record and keeps the legacy keys', async () => {
+    seed(STATE_LEGACY)
+    const existing: SkillStateBody = {
+      name: 'Mine',
+      ingressToken: 'a-token-that-must-survive-0000',
+      visionNamespace: 'mine',
+      detectionClasses: {},
+      accountVisibility: {},
+      exportedEndpoints: {},
+      exportedSignatures: {},
+      advertisedBrokerUrl: '',
+      lwaClientId: '',
+    }
+    const w = await boot({ existingState: existing })
+    await w.execute(SETTINGS_TO_INTEGRATION_ID)
+    expect(await w.execute(STATE_TO_INSTANCE_ID)).toMatchObject({
+      result: { outcome: 'already-done' },
+    })
+    const held = await w.states.getResolved(ALEXA_INSTANCE_ID)
+    expect(held?.data.ingressToken).toBe('a-token-that-must-survive-0000')
+    // The record does not hold what the settings carried: the drop refuses.
+    expect(await w.execute(DROP_MOVED_STATE_ID)).toMatchObject({ kind: 'failed' })
+    expect(Object.keys(storedValues())).toContain('ingressToken')
+    expect(w.calls).not.toContain('clear:ingressToken')
+  })
+
+  it('a record that reads back with another token fails, and nothing is cleared', async () => {
+    seed(STATE_LEGACY)
+    const w = await boot({ stateReadBackToken: 'tampered' })
+    await w.execute(SETTINGS_TO_INTEGRATION_ID)
+    expect(await w.execute(STATE_TO_INSTANCE_ID)).toMatchObject({
+      kind: 'failed',
+      error: expect.stringContaining('does not match') as string,
+    })
+    expect(await w.execute(DROP_MOVED_STATE_ID)).toMatchObject({ kind: 'failed' })
+    expect(Object.keys(storedValues())).toContain('ingressToken')
+    expect(w.calls).not.toContain('clear:ingressToken')
+  })
+
+  it('a failed read of the settings writes nothing', async () => {
+    seed(STATE_LEGACY)
+    const before = rows()
+    const w = await boot({ readFails: true })
+    expect(await w.execute(STATE_TO_INSTANCE_ID)).toMatchObject({
+      kind: 'failed',
+      error: expect.stringContaining('keychain locked') as string,
+    })
+    expect(await w.states.get(ALEXA_INSTANCE_ID)).toBeNull()
+    expect(rows()).toEqual(before)
+  })
+
+  it('a failed read of the record keeps the legacy keys', async () => {
+    seed(STATE_LEGACY)
+    const w = await boot({ stateReadFails: true })
+    await w.execute(SETTINGS_TO_INTEGRATION_ID)
+    expect(await w.execute(DROP_MOVED_STATE_ID)).toMatchObject({ kind: 'failed' })
+    expect(Object.keys(storedValues())).toContain('ingressToken')
+    expect(w.calls).not.toContain('clear:ingressToken')
+  })
+
+  it('adopts the default instance when only the token was ever minted', async () => {
+    seed({ ingressToken: INGRESS_MARKER })
+    const w = await boot()
+    expect(await w.execute(STATE_TO_INSTANCE_ID)).toMatchObject({ result: { outcome: 'done' } })
+    expect((await w.states.getResolved(ALEXA_INSTANCE_ID))?.data.ingressToken).toBe(INGRESS_PLAIN)
+    expect(await w.skills.get(ALEXA_INSTANCE_ID)).not.toBeNull()
+  })
+
+  it('does nothing when no state key is stored', async () => {
+    seed({ unrelatedKey: 1 })
+    const w = await boot()
+    expect(await w.execute(STATE_TO_INSTANCE_ID)).toMatchObject({
+      result: { outcome: 'already-done' },
+    })
+    expect(await w.states.get(ALEXA_INSTANCE_ID)).toBeNull()
   })
 })

@@ -134,6 +134,8 @@ import {
   ALEXA_SKILL_DEFAULT_BODY,
   type AlexaSkillBody,
   alexaSkillExportsKind,
+  alexaSkillStateKind,
+  type SkillStateBody,
   alexaSkillLinksKind,
   alexaSkillsKind,
   EMPTY_SKILL_EXPORTS,
@@ -533,6 +535,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       skills: alexaSkillsKind,
       'skill-links': alexaSkillLinksKind,
       'skill-exports': alexaSkillExportsKind,
+      'skill-state': alexaSkillStateKind,
     })
     this.instances = new RecordIntegrationInstances(records, alexaSkillsKind, {
       description: { role: 'services', instanceMode: 'single', kind: 'skills', canTest: false },
@@ -1756,6 +1759,12 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     return records.kind(alexaSkillExportsKind)
   }
 
+  private stateHandle(): RecordKindHandle<SkillStateBody> {
+    const records = this.ctx.records
+    if (records === undefined) throw new Error('records are not available')
+    return records.kind(alexaSkillStateKind)
+  }
+
   /** Re-read both records. A failed read changes nothing: the addon keeps what it has. */
   private async refreshRecords(): Promise<void> {
     try {
@@ -1818,6 +1827,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     const skills = this.skillHandle()
     const links = this.linksHandle()
     const exportsHandle = this.exportsHandle()
+    const stateHandle = this.stateHandle()
     const putOnce = async <T extends { readonly name: string }>(
       handle: RecordKindHandle<T>,
       body: T,
@@ -1859,6 +1869,14 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       hasSkill: async () => (await skills.get(ALEXA_INSTANCE_ID)) !== null,
       clearOldTokenSecrets: async () => {
         await this.clearSecrets(['tokens'])
+      },
+      hasInstanceRecords: async () =>
+        (await links.get(ALEXA_INSTANCE_ID)) !== null ||
+        (await exportsHandle.get(ALEXA_INSTANCE_ID)) !== null,
+      putState: (body) => putOnce(stateHandle, body),
+      readState: async () => (await stateHandle.getResolved(ALEXA_INSTANCE_ID))?.data ?? null,
+      clearIngressTokenSecret: async () => {
+        await this.clearSecrets(['ingressToken'])
       },
     }
   }

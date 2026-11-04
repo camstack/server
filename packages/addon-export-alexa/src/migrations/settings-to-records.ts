@@ -144,7 +144,7 @@ function isTokenEntry(value: unknown): value is LwaTokenEntry {
 }
 
 /** Key-order-independent JSON, so "byte-identical" does not depend on how a store orders keys. */
-function canonical(value: unknown): string {
+export function canonical(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`
   if (typeof value === 'object' && value !== null) {
     const entries = Object.entries(value)

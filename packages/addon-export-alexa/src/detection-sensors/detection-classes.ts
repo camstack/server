@@ -31,7 +31,7 @@ export interface EventKindLike {
 export interface StoredDetectionClasses {
   readonly classes: readonly DetectionSensorClass[]
   /** class → ms epoch it was first seen missing. */
-  readonly missingSince?: Readonly<Partial<Record<DetectionSensorClass, number>>>
+  readonly missingSince?: Readonly<Partial<Record<DetectionSensorClass, number>>> | undefined
 }
 
 export type StoredDetectionClassMap = Readonly<Record<number, StoredDetectionClasses>>
