@@ -105,6 +105,10 @@ machine as running after its state became unknown. HomeKit's boolean
 sensors coerce a missing reading to the false characteristic. Both wait
 until a null can be published as unavailable.
 
+A pending OFF survives a short return to the active side (an anti-crease pulse
+shorter than the start delay), and the run ends at the start of that pending
+transition, not at its confirmation (D1008).
+
 ## Consequences
 
 - A new integration that knows an operation state writes `running-state` in

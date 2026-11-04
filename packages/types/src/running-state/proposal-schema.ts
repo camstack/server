@@ -52,6 +52,9 @@ export const RunningProposalEvidenceSchema = z.object({
   runsFound: z.number().int().nonnegative(),
   pausesFound: z.number().int().nonnegative(),
   longestPauseMs: z.number().nonnegative(),
+  /** Episodes shorter than ~90 s (an anti-crease pulse, a display waking): never a run, never a pause. */
+  pulsesFound: z.number().int().nonnegative(),
+  longestPulseMs: z.number().nonnegative(),
   idleFloorW: z.number(),
   noiseCeilingW: z.number(),
   plateauW: z.number(),

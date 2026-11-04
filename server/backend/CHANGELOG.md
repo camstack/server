@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - An agent-offline alert resolves when that agent is back online, and a system-restarting alert resolves when the restart completed or the node is back, even if the online event was dropped
 
+### Changed
+
+- A finished appliance cycle's duration excludes the stop delay, and a short pulse after a cycle no longer extends it
+
 ## [1.2.768] - 2026-11-04
 
 ### Changed

@@ -33,6 +33,7 @@ import { normalizeUnit } from '../device/source-info.js'
 import type { ExpressionValue } from '../expression/ast.js'
 import { type ExpressionEvalHooks, evaluateCount } from '../expression/builtins.js'
 import {
+  type DwellTransition,
   evaluateExpressionSource,
   evaluateStatefulExpressionCall,
   type StatefulExpressionMemory,
@@ -51,6 +52,12 @@ import { expressionContainsBuiltinCall } from './expression-kinds.js'
 export interface SourceFreshReading {
   readonly state: 'fresh'
   readonly value: ExpressionValue
+  /**
+   * An own field whose `dwell` flipped in its last evaluation: when the pending
+   * transition to this value began. A `latchedAt` reading it stamps a flip to
+   * false there (the last real active instant), not at the confirmation.
+   */
+  readonly transition?: DwellTransition
 }
 export interface SourceStaleReading {
   readonly state: 'stale'
@@ -74,6 +81,8 @@ export interface FieldValueOutcome {
   readonly reason: string | null
   /** When a windowed builtin's answer flips on its own; null when nothing will. */
   readonly deadline: number | null
+  /** A `dwell` in this field's expression flipped in this evaluation: see {@link SourceFreshReading.transition}. */
+  readonly transition?: DwellTransition
   /**
    * The value is the field's LAST output, held over a source that did not
    * answer: the expression did not run. Set by the composer for an
@@ -176,6 +185,9 @@ function expressionOutcome(
       continue
     }
     values[name] = reading.value
+    if (reading.state === 'fresh' && reading.transition !== undefined && stateful !== undefined) {
+      stateful.expressionMemory.dwellTransition = reading.transition
+    }
     if (reading.state === 'stale') staleReasons.push(`\`${name}\`: ${reading.reason}`)
   }
   const unavailable = fatalUnavailable ?? nonFatalUnavailable
@@ -228,6 +240,8 @@ function expressionOutcome(
             ),
         }),
   })
+  const transition = stateful?.expressionMemory.dwellTransition ?? null
+  if (stateful !== undefined) stateful.expressionMemory.dwellTransition = null
   if (!result.ok) {
     return {
       state: 'unavailable',
@@ -243,6 +257,7 @@ function expressionOutcome(
     value: result.value,
     reason: staleReasons.length > 0 ? staleReasons.join('; ') : null,
     deadline: deadlines.length > 0 ? Math.min(...deadlines) : null,
+    ...(transition === null ? {} : { transition }),
   }
 }
 

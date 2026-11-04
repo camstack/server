@@ -4,6 +4,10 @@
  * the recorder measured and the energy it integrated - instead of a start the
  * notification centre remembered itself.
  *
+ * The run's `endedAt` is the last real active instant (the start of the pending
+ * stop, planning#424), so the duration is the time the appliance really worked -
+ * not that plus the stop dwell the finish notification waited.
+ *
  * The run may close a moment AFTER the sensor event that drives this lookup
  * (both come from the same `running-state` flip, through two different
  * subscribers). So the newest run is read, and while it is still OPEN the read
@@ -25,8 +29,14 @@ import {
 
 export const CYCLE_FACTS_WAIT_MS = 3000
 export const CYCLE_FACTS_POLL_MS = 250
-/** A closed run belongs to this finish when it ended within this much of it. */
+/** A closed run belongs to this finish when it ended within this much AFTER it. */
 export const CYCLE_RUN_MATCH_MS: number = 10 * 60_000
+/**
+ * ... or up to this long BEFORE it: a run ends at the last real active instant
+ * (the start of the pending stop), and the finish is announced one stop dwell
+ * later - the longest a stop dwell is proposed is 20 minutes.
+ */
+export const CYCLE_RUN_END_LAG_MS: number = 30 * 60_000
 
 export interface ApplianceCycleRunsPorts {
   /** The newest run of the device (open or closed), or `null` when it has none. */
@@ -35,9 +45,9 @@ export interface ApplianceCycleRunsPorts {
 }
 
 function factsOfClosed(run: DeviceRun, finishedAtMs: number): NcApplianceCycleFacts {
-  if (run.endedAt === null || Math.abs(run.endedAt - finishedAtMs) > CYCLE_RUN_MATCH_MS) {
-    return NC_UNKNOWN_CYCLE_FACTS
-  }
+  if (run.endedAt === null) return NC_UNKNOWN_CYCLE_FACTS
+  const lag = finishedAtMs - run.endedAt
+  if (lag > CYCLE_RUN_END_LAG_MS || -lag > CYCLE_RUN_MATCH_MS) return NC_UNKNOWN_CYCLE_FACTS
   return { durationMs: run.durationMs, energyKwh: run.detail.energyKwh }
 }
 

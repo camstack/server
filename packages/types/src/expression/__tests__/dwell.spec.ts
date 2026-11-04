@@ -126,3 +126,121 @@ describe('dwell seeded from the restored output', () => {
     expect(dwellAt(OFF, false, memory, null).value).toBe(false)
   })
 })
+
+describe('dwell is immune to a pulse during a pending off (D1008)', () => {
+  const PULSE_ON = 90_000
+  const PULSE_OFF = 180_000
+  const SECOND = 1_000
+
+  function stamped(memory: ReturnType<typeof createStatefulExpressionMemory>) {
+    return (nowMs: number, active: boolean) => {
+      const deadlines: number[] = []
+      const result = evaluateExpressionSource(
+        `latchedAt(dwell(active, ${PULSE_ON}, ${PULSE_OFF}))`,
+        { active },
+        nowMs,
+        {
+          invokeStateful: (invocation) =>
+            evaluateStatefulExpressionCall(
+              invocation,
+              memory,
+              { currentOutput: true, startedAtMs: 0, nowMs },
+              { noteDeadline: (at) => deadlines.push(at) },
+            ),
+        },
+      )
+      if (!result.ok) throw new Error(result.error)
+      return { value: result.value, deadlines }
+    }
+  }
+
+  function pureDwell(
+    memory: ReturnType<typeof createStatefulExpressionMemory>,
+    currentOutput: boolean = true,
+  ) {
+    return (nowMs: number, active: boolean) => {
+      const result = evaluateExpressionSource(
+        `dwell(active, ${PULSE_ON}, ${PULSE_OFF})`,
+        { active },
+        nowMs,
+        {
+          invokeStateful: (invocation) =>
+            evaluateStatefulExpressionCall(invocation, memory, {
+              currentOutput,
+              startedAtMs: 0,
+              nowMs,
+            }),
+        },
+      )
+      if (!result.ok) throw new Error(result.error)
+      return result.value
+    }
+  }
+
+  it('a 60 s pulse inside a pending off does not cancel it', () => {
+    const run = pureDwell(createStatefulExpressionMemory())
+    expect(run(0, false)).toBe(true) // pending off starts
+    expect(run(60 * SECOND, true)).toBe(true) // the pulse begins
+    expect(run(120 * SECOND, false)).toBe(true) // 60 s pulse is over, off pending since 0
+    expect(run(PULSE_OFF, false)).toBe(false) // the ORIGINAL deadline still fires
+  })
+
+  it('a return that holds for the run delay does cancel the pending off', () => {
+    const run = pureDwell(createStatefulExpressionMemory())
+    expect(run(0, false)).toBe(true)
+    expect(run(30 * SECOND, true)).toBe(true)
+    expect(run(30 * SECOND + PULSE_ON, true)).toBe(true) // 90 s back: cancelled
+    expect(run(PULSE_OFF, false)).toBe(true) // a new pending off began at PULSE_OFF
+    expect(run(PULSE_OFF + PULSE_OFF, false)).toBe(false)
+  })
+
+  it('notes the return deadline while the pulse lasts, and the pending one once it is off', () => {
+    const run = stamped(createStatefulExpressionMemory())
+    run(0, false)
+    expect(run(60 * SECOND, true).deadlines).toEqual([60 * SECOND + PULSE_ON])
+    expect(run(100 * SECOND, false).deadlines).toEqual([PULSE_OFF])
+  })
+
+  it('a pending ON is still dropped at once by a return to off (start needs unbroken activity)', () => {
+    const run = pureDwell(createStatefulExpressionMemory(), false)
+    expect(run(0, true)).toBe(false)
+    expect(run(60 * SECOND, false)).toBe(false)
+    expect(run(100 * SECOND, true)).toBe(false) // pending restarts at 100 s
+    expect(run(100 * SECOND + PULSE_ON - 1, true)).toBe(false)
+    expect(run(100 * SECOND + PULSE_ON, true)).toBe(true)
+  })
+
+  it('stamps the flip to off at the last real active instant, not the confirmation', () => {
+    const run = stamped(createStatefulExpressionMemory())
+    expect(run(100 * SECOND, true).value).toBe(100 * SECOND) // held running, stamped at first sight
+    run(200 * SECOND, false) // power falls: pending off starts
+    run(260 * SECOND, true) // anti-crease pulse
+    run(300 * SECOND, false)
+    const closed = run(200 * SECOND + PULSE_OFF, false)
+    expect(closed.value).toBe(200 * SECOND)
+  })
+
+  it('stamps a flip to on at the confirmation instant', () => {
+    const memory = createStatefulExpressionMemory()
+    const at = (nowMs: number, active: boolean) => {
+      const result = evaluateExpressionSource(
+        `latchedAt(dwell(active, ${PULSE_ON}, ${PULSE_OFF}))`,
+        { active },
+        nowMs,
+        {
+          invokeStateful: (invocation) =>
+            evaluateStatefulExpressionCall(invocation, memory, {
+              currentOutput: false,
+              startedAtMs: 0,
+              nowMs,
+            }),
+        },
+      )
+      if (!result.ok) throw new Error(result.error)
+      return result.value
+    }
+    at(0, false)
+    at(10 * SECOND, true)
+    expect(at(10 * SECOND + PULSE_ON, true)).toBe(10 * SECOND + PULSE_ON)
+  })
+})

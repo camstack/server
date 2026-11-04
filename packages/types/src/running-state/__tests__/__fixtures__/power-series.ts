@@ -2,6 +2,7 @@
  * Deterministic power histories for the running-threshold proposal. Every
  * fixture is a held-value step series; a seeded generator keeps them stable.
  */
+import { DeviceType } from '../../../device/device-type.js'
 import type { ProposalSeries, ProposalStepPoint } from '../../propose-threshold.js'
 
 export const SEC = 1000
@@ -217,4 +218,85 @@ export function ambiguousGaps(): ProposalSeries {
     standby(b, t + 20 * MIN, day + DAY, 0.5, 1.5, 4)
   }
   return series(b, days)
+}
+
+/** One cycle of the heat-pump dryer: start offset from `T0` and duration. */
+interface DryerCycle {
+  readonly startAt: number
+  readonly durationMs: number
+}
+
+function at(day: number, hours: number, minutes: number): number {
+  return T0 + day * DAY + hours * HOUR + minutes * MIN
+}
+
+/** The fourteen cycles of the real trace (days 0..3 = 2026-11-01..04), one of them a 4.7 min restart. */
+const HEAT_PUMP_CYCLES: readonly DryerCycle[] = [
+  { startAt: at(0, 21, 3), durationMs: 317 * MIN },
+  { startAt: at(1, 8, 49), durationMs: 34 * MIN },
+  { startAt: at(1, 10, 44), durationMs: 43 * MIN },
+  { startAt: at(2, 11, 19), durationMs: 242 * MIN },
+  { startAt: at(2, 15, 26), durationMs: 38 * MIN },
+  { startAt: at(2, 16, 42), durationMs: 35 * MIN },
+  { startAt: at(2, 17, 48), durationMs: 33 * MIN },
+  { startAt: at(2, 19, 4), durationMs: 34 * MIN },
+  { startAt: at(2, 21, 20), durationMs: 34 * MIN },
+  { startAt: at(2, 22, 5), durationMs: 388 * MIN },
+  { startAt: at(3, 9, 33), durationMs: 43 * MIN },
+  { startAt: at(3, 10, 37), durationMs: 33 * MIN },
+  { startAt: at(3, 16, 10), durationMs: 307 * MIN },
+  { startAt: at(3, 22, 9), durationMs: 34 * MIN },
+]
+
+const HEAT_PUMP_RAMP_MS = 25 * MIN
+const HEAT_PUMP_COMPRESSOR_MS = 4.5 * MIN
+const HEAT_PUMP_DRUM_MS = 4 * MIN
+const HEAT_PUMP_PULSE_MS = 45 * SEC
+/** Anti-crease pulses after a cycle: +1.5, +11.5 and +21.5 minutes. */
+const HEAT_PUMP_PULSE_OFFSETS_MS: readonly number[] = [1.5 * MIN, 11.5 * MIN, 21.5 * MIN]
+const HEAT_PUMP_POWER_OFF_MS = 31 * MIN
+
+/**
+ * A heat-pump dryer as measured on a smart plug (planning#424): a 160-650 W ramp,
+ * then compressor 650 W / drum-only 120-180 W alternating (never below ~115 W),
+ * a 38 s dip to 2 W once mid-cycle, then a tail to 2 W and three 320 W x 45 s
+ * anti-crease pulses before the dryer powers off (0 W). Fourteen cycles in four
+ * days; one is a restart 4.7 min after the previous one ended.
+ */
+export function heatPumpDryer(): ProposalSeries {
+  const b = builder(97)
+  b.put(T0, 0)
+  HEAT_PUMP_CYCLES.forEach((cycle, i) => {
+    const end = cycle.startAt + cycle.durationMs
+    const next = HEAT_PUMP_CYCLES[i + 1]?.startAt ?? Number.POSITIVE_INFINITY
+    const rampEnd = cycle.startAt + HEAT_PUMP_RAMP_MS
+    b.span(
+      cycle.startAt,
+      rampEnd,
+      60 * SEC,
+      (t) => 160 + ((t - cycle.startAt) / HEAT_PUMP_RAMP_MS) * 490,
+    )
+    let t = rampEnd
+    while (t < end) {
+      const compressorEnd = Math.min(end, t + HEAT_PUMP_COMPRESSOR_MS)
+      b.span(t, compressorEnd, 60 * SEC, () => 560 + b.rand() * 150)
+      t = compressorEnd
+      const drumEnd = Math.min(end, t + HEAT_PUMP_DRUM_MS)
+      b.span(t, drumEnd, 60 * SEC, () => 120 + b.rand() * 60)
+      t = drumEnd
+    }
+    b.put(end, 12)
+    b.put(end + 40 * SEC, 2)
+    for (const offset of HEAT_PUMP_PULSE_OFFSETS_MS) {
+      const pulseAt = end + offset
+      if (pulseAt + HEAT_PUMP_PULSE_MS >= next) continue
+      b.put(pulseAt, 280 + b.rand() * 90)
+      b.put(pulseAt + HEAT_PUMP_PULSE_MS, 2)
+    }
+    if (end + HEAT_PUMP_POWER_OFF_MS < next) b.put(end + HEAT_PUMP_POWER_OFF_MS, 0)
+  })
+  // The one mid-cycle dip (2026-11-03 12:45): 38 s at 2 W.
+  b.put(at(2, 12, 45), 2)
+  b.put(at(2, 12, 45) + 38 * SEC, 600)
+  return { ...series(b, 4), deviceType: DeviceType.Dryer }
 }

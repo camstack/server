@@ -77,7 +77,7 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite build --watch",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit -p tsconfig.spec.json",
     "test": "vitest run",
     "publish:npm": "npm publish --access public"
   },

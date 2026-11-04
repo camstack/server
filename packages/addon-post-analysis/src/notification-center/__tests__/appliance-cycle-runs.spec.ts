@@ -67,6 +67,21 @@ describe('applianceCycleFactsFromRuns', () => {
     ).toEqual({ durationMs: 52 * MIN, energyKwh: 0.84 })
   })
 
+  it('a run that ended at its last active instant, minutes before the confirmed finish, still belongs to it (planning#424)', async () => {
+    const stopDwell = 12 * MIN
+    const p = ports([run({ endedAt: FINISHED_AT - stopDwell, durationMs: 40 * MIN })])
+    expect(
+      await applianceCycleFactsFromRuns(p.ports)({ deviceId: 9, finishedAtMs: FINISHED_AT }),
+    ).toEqual({ durationMs: 40 * MIN, energyKwh: 0.84 })
+  })
+
+  it('a run that ended longer ago than any stop dwell is another cycle: unknown', async () => {
+    const p = ports([run({ endedAt: FINISHED_AT - 45 * MIN, durationMs: 7 * MIN })])
+    expect(
+      await applianceCycleFactsFromRuns(p.ports)({ deviceId: 9, finishedAtMs: FINISHED_AT }),
+    ).toEqual({ durationMs: null, energyKwh: null })
+  })
+
   it('keeps an unmeasured energy null, never 0', async () => {
     const p = ports([run({ energyKwh: null })])
     expect(

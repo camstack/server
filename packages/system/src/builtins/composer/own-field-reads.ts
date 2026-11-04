@@ -62,5 +62,9 @@ export function ownFieldReading(
       value: outcome.value,
       reason: `own field \`${key}\`: ${outcome.reason ?? 'stale'}`,
     }
-  return { state: 'fresh', value: outcome.value }
+  return {
+    state: 'fresh',
+    value: outcome.value,
+    ...(outcome.transition === undefined ? {} : { transition: outcome.transition }),
+  }
 }

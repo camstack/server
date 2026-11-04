@@ -6,11 +6,16 @@
  * stand-ins.
  */
 import {
+  type CompositionFieldRead,
   createRecordsAccess,
+  createStatefulExpressionMemory,
   type DeviceRun,
   DeviceType,
   type EventCategory,
+  evaluateCompositionField,
+  type FieldOutcome,
   type RecordKindHandle,
+  type SourceReading,
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import {
@@ -408,5 +413,115 @@ describe('device-runs provider', () => {
     expect((await provider.getRun({ deviceId: WASHER, runId: `${WASHER}:${T0}` }))?.state).toBe(
       'closed',
     )
+  })
+})
+
+/**
+ * The composed dryer as the composer runs it: `running = dwell(power >= 15, 90 s,
+ * 180 s)` and `since = latchedAt(running)` over the own field. Samples are fed
+ * every 15 s (the composer's own deadline timer), and a `running-state` slice goes
+ * to the recorder exactly when the boolean flips.
+ */
+function composedDryer(rig: Rig, rec: RunRecorder, deviceId: number) {
+  const PLUG: CompositionFieldRead = {
+    source: { addonId: 'zigbee', stableId: 'plug' },
+    cap: 'power-meter',
+    fieldPath: 'power',
+  }
+  const OWN: CompositionFieldRead = {
+    source: { addonId: 'composer', stableId: 'self' },
+    cap: 'running-state',
+    fieldPath: 'running',
+  }
+  const runningMemory = createStatefulExpressionMemory()
+  const sinceMemory = createStatefulExpressionMemory()
+  let runningOutcome: FieldOutcome | null = null
+  let sinceValue: unknown = null
+  let published: boolean | null = false
+  return {
+    tick(at: number, watts: number): void {
+      rig.now = at
+      rec.handleState(deviceId, 'power-meter', { power: watts, energy: null }, at)
+      runningOutcome = evaluateCompositionField({
+        source: {
+          kind: 'expression',
+          expr: 'dwell(x >= 15, 90000, 180000)',
+          bindings: { x: { kind: 'from', ...PLUG } },
+        },
+        read: () => ({ state: 'fresh', value: watts }),
+        now: at,
+        stateful: {
+          currentOutput: runningOutcome?.value ?? false,
+          expressionMemory: runningMemory,
+          startedAtMs: T0,
+        },
+      })
+      const own: SourceReading =
+        runningOutcome.state === 'unavailable'
+          ? { state: 'unavailable', reason: 'n/a', fatal: false }
+          : {
+              state: 'fresh',
+              value: runningOutcome.value,
+              ...(runningOutcome.state === 'fresh' && runningOutcome.transition !== undefined
+                ? { transition: runningOutcome.transition }
+                : {}),
+            }
+      const since = evaluateCompositionField({
+        source: {
+          kind: 'expression',
+          expr: 'latchedAt(running)',
+          bindings: { running: { kind: 'from', ...OWN } },
+        },
+        read: () => own,
+        now: at,
+        stateful: { currentOutput: sinceValue, expressionMemory: sinceMemory, startedAtMs: T0 },
+      })
+      sinceValue = since.value
+      const on = runningOutcome.value
+      if (typeof on === 'boolean' && on !== published && typeof since.value === 'number') {
+        published = on
+        rec.handleState(deviceId, 'running-state', running(on, since.value), at)
+      }
+    },
+  }
+}
+
+describe('RunRecorder - a dryer that ends with anti-crease pulses (planning#424)', () => {
+  const DRYER = 10
+  const TICK = 15_000
+  const CYCLE_MS = 40 * MIN
+
+  async function runCycleWithPulses() {
+    const rig = await makeRig()
+    rig.types.set(DRYER, DeviceType.Dryer)
+    const rec = rig.recorder()
+    await rec.reconcile()
+    const dryer = composedDryer(rig, rec, DRYER)
+    const watts = (offset: number): number => {
+      if (offset < CYCLE_MS) return 600
+      const sinceEnd = offset - CYCLE_MS
+      for (const pulseAt of [1.5 * MIN, 11.5 * MIN, 21.5 * MIN]) {
+        if (sinceEnd >= pulseAt && sinceEnd < pulseAt + 45_000) return 320
+      }
+      return 2
+    }
+    for (let offset = 0; offset <= CYCLE_MS + 40 * MIN; offset += TICK) {
+      dryer.tick(T0 + offset, watts(offset))
+      await rec.idle()
+    }
+    const handle = await rig.runs()
+    return (await handle.query({ deviceId: DRYER, limit: 100 })).records.map((r) => r.data)
+  }
+
+  it('records one run, and the pulses after it open nothing', async () => {
+    const runs = await runCycleWithPulses()
+    expect(runs).toHaveLength(1)
+    expect(runs[0]?.state).toBe('closed')
+  })
+
+  it('ends the run at the last real active instant, not at the confirmed stop', async () => {
+    const [run] = await runCycleWithPulses()
+    expect(run?.endedAt).toBe(T0 + CYCLE_MS)
+    expect(run?.durationMs).toBe(CYCLE_MS - 90_000)
   })
 })

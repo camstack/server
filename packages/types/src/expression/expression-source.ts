@@ -55,8 +55,22 @@ export interface CountCallState {
 export interface DwellCallState {
   readonly kind: 'dwell'
   pendingSince: number | null
+  /**
+   * Epoch ms a return to the LATCHED side began during a pending transition.
+   * The pending transition survives it until the return has held that side's
+   * own delay (a symmetric debounce), so a short pulse cannot re-arm a run.
+   */
+  returnSince: number | null
   latched: boolean | null
   seenSince: number | null
+  /** The flip the last evaluation made, with the instant its pending transition began; else null. */
+  transition: DwellTransition | null
+}
+
+/** A confirmed `dwell` flip: the new value and when the transition to it began. */
+export interface DwellTransition {
+  readonly value: boolean
+  readonly startedAt: number
 }
 
 export interface LatchedAtCallState {
@@ -82,6 +96,12 @@ export interface StatefulExpressionMemory {
   readonly calls: Map<string, StatefulCallState>
   acceptedEdgeAt: number | null
   /**
+   * The flip a `dwell` made in the current pass. A `latchedAt` wrapping it stamps
+   * a flip to false at the instant the pending transition BEGAN (the last real
+   * active instant), then consumes it.
+   */
+  dwellTransition: DwellTransition | null
+  /**
    * Every `rose` call in the next successful evaluation baselines without
    * rising. Set when the field recovers from unavailable (binding flap).
    */
@@ -89,7 +109,12 @@ export interface StatefulExpressionMemory {
 }
 
 export function createStatefulExpressionMemory(): StatefulExpressionMemory {
-  return { calls: new Map(), acceptedEdgeAt: null, disarmRoseNext: false }
+  return {
+    calls: new Map(),
+    acceptedEdgeAt: null,
+    dwellTransition: null,
+    disarmRoseNext: false,
+  }
 }
 
 export function cloneStatefulExpressionMemory(
@@ -98,6 +123,7 @@ export function cloneStatefulExpressionMemory(
   return {
     calls: new Map([...memory.calls].map(([path, call]) => [path, { ...call }])),
     acceptedEdgeAt: memory.acceptedEdgeAt,
+    dwellTransition: memory.dwellTransition,
     disarmRoseNext: memory.disarmRoseNext,
   }
 }
@@ -146,12 +172,14 @@ export function evaluateStatefulExpressionCall(
           : {
               kind: 'dwell',
               pendingSince: null,
+              returnSince: null,
+              transition: null,
               // A boot restores the last answer: hold it, never read as unknown (D933).
               latched: typeof env.currentOutput === 'boolean' ? env.currentOutput : null,
               seenSince: null,
             }
       memory.calls.set(invocation.path, call)
-      return evaluateDwell(
+      const dwelled = evaluateDwell(
         invocation.args[0],
         invocation.args[1],
         invocation.args[2],
@@ -159,6 +187,8 @@ export function evaluateStatefulExpressionCall(
         env.nowMs,
         hooks,
       )
+      memory.dwellTransition = call.transition
+      return dwelled
     }
     case 'schmitt': {
       const call: SchmittCallState =
@@ -173,7 +203,9 @@ export function evaluateStatefulExpressionCall(
       const call: LatchedAtCallState =
         existing?.kind === 'latchedAt' ? existing : { kind: 'latchedAt', last: undefined, at: null }
       memory.calls.set(invocation.path, call)
-      return evaluateLatchedAt(invocation.args[0], call, env.nowMs)
+      const stamped = evaluateLatchedAt(invocation.args[0], call, env.nowMs, memory.dwellTransition)
+      memory.dwellTransition = null
+      return stamped
     }
   }
 }

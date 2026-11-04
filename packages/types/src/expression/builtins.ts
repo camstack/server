@@ -24,6 +24,7 @@ import {
 import type {
   CountCallState,
   DwellCallState,
+  DwellTransition,
   LatchedAtCallState,
   RoseCallState,
   SchmittCallState,
@@ -223,6 +224,7 @@ export function evaluateDwell(
   const onForMs = asNonNegativeMs(onForMsRaw, 'dwell', 1)
   const offForMs = asNonNegativeMs(offForMsRaw, 'dwell', 2)
 
+  call.transition = null
   if (call.latched === null) {
     if (call.seenSince === null) call.seenSince = nowMs
     const delay = active ? onForMs : offForMs
@@ -234,20 +236,57 @@ export function evaluateDwell(
     return null
   }
 
-  if (active === call.latched) {
-    call.pendingSince = null
-    return call.latched
-  }
+  if (active === call.latched) return holdAgainstReturn(call, active, onForMs, nowMs, hooks)
 
+  call.returnSince = null
   if (call.pendingSince === null) call.pendingSince = nowMs
   const delay = active ? onForMs : offForMs
-  if (nowMs - call.pendingSince >= delay) {
-    call.latched = active
-    call.pendingSince = null
-    return call.latched
-  }
+  if (nowMs - call.pendingSince >= delay) return flip(call, active, call.pendingSince)
   hooks?.noteDeadline?.(call.pendingSince + delay)
   return call.latched
+}
+
+function flip(call: DwellCallState, to: boolean, startedAt: number): boolean {
+  const transition: DwellTransition = { value: to, startedAt }
+  call.latched = to
+  call.pendingSince = null
+  call.returnSince = null
+  call.transition = transition
+  return to
+}
+
+/**
+ * The input is on the latched side. Without a pending transition that is the
+ * steady state. A pending ON is dropped at once (a start needs `onForMs` of
+ * unbroken activity). A pending OFF survives a return until the return has held
+ * `onForMs`: a shorter one (an anti-crease pulse) must not re-arm a finished
+ * run, and the original deadline still fires once the input is off again.
+ */
+function holdAgainstReturn(
+  call: DwellCallState,
+  latched: boolean,
+  onForMs: number,
+  nowMs: number,
+  hooks: ExpressionEvalHooks | undefined,
+): boolean {
+  if (call.pendingSince === null) {
+    call.returnSince = null
+    return latched
+  }
+  if (!latched) {
+    call.pendingSince = null
+    call.returnSince = null
+    return latched
+  }
+  if (call.returnSince === null) call.returnSince = nowMs
+  const returnDeadline = call.returnSince + onForMs
+  if (nowMs >= returnDeadline) {
+    call.pendingSince = null
+    call.returnSince = null
+    return latched
+  }
+  hooks?.noteDeadline?.(returnDeadline)
+  return latched
 }
 
 /**
@@ -297,6 +336,7 @@ export function evaluateLatchedAt(
   value: unknown,
   call: LatchedAtCallState,
   nowMs: number,
+  dwellTransition: DwellTransition | null = null,
 ): number | null {
   if (value === null) {
     call.last = null
@@ -308,7 +348,9 @@ export function evaluateLatchedAt(
   }
   if (call.last !== value) {
     call.last = value
-    call.at = nowMs
+    // A flip to false that a `dwell` confirmed began when its pending transition did.
+    call.at =
+      dwellTransition?.value === false && value === false ? dwellTransition.startedAt : nowMs
   }
   return call.at
 }

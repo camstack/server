@@ -354,6 +354,11 @@ a `detail` branch so a mower or vacuum adds a branch, not a kind.
   was unknown, the stored history (5-minute buckets, runs of 10 min or more);
   otherwise `null`.
 - **Events**: `DeviceRunOpened` / `DeviceRunClosed`.
+- **End of a run** (D1008): `endedAt` and the duration are the last real active
+  instant, the start of the pending stop (`running-state.since` carries it), not
+  the confirmed flip one stop dwell later. An anti-crease pulse shorter than the
+  start delay neither keeps a run alive nor opens one. The finish notification's
+  facts match a run that ended up to 30 min before the announcement.
 
 ## Traps
 

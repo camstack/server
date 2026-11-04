@@ -9,14 +9,19 @@
  *  1. idle floor F = time-weighted median; noise ceiling N = highest value seen
  *     near F. A device that is not near one level most of the time has no floor.
  *  2. coarse activity = above max(2N, N + 5 W); consecutive stretches are episodes.
- *  3. gaps between episodes split in two by the largest log-scale jump (>= 3x):
- *     the short ones are pauses INSIDE a run (a soak), the long ones separate runs.
+ *  3. an episode shorter than `PULSE_MAX_MS` is a PULSE (an anti-crease tumble, a
+ *     display waking): it is neither a run nor a pause. Among the remaining
+ *     episodes, gaps over `PAUSE_MAX_MS` always separate runs; the rest split in
+ *     two by the largest log-scale jump (>= 3x): the short ones are pauses INSIDE
+ *     a run (a soak), the long ones separate runs. A stretch under `MIN_RUN_MS`
+ *     is no run.
  *  4. T = geometric mean of N and the plateau's 10th percentile, snapped to a
- *     grid a person would type; stop dwell covers the longest pause; start dwell
- *     covers the longest standby blip above T.
+ *     grid a person would type; stop dwell covers the longest pause and the
+ *     kind's floor; start dwell covers the longest pulse and standby blip above T.
  *  5. the numbers are proved by REPLAY through the real `dwell` evaluation: each
  *     run must hold exactly one true interval and nothing may flap outside.
  */
+import { DeviceType } from '../device/device-type.js'
 import { evaluateDwell, type ExpressionEvalHooks } from '../expression/builtins.js'
 import type { DwellCallState } from '../expression/expression-source.js'
 import {
@@ -49,6 +54,18 @@ const STOP_FACTOR = 1.5
 const STOP_STEP_MS = 30 * SECOND_MS
 const STOP_MIN_MS = 60 * SECOND_MS
 const STOP_MAX_MS = 20 * MINUTE_MS
+/** An episode shorter than this is a pulse: the start dwell is held above it. */
+export const PULSE_MAX_MS = 90 * SECOND_MS
+/** A gap longer than this always separates two runs; the pause search never reaches it. */
+export const PAUSE_MAX_MS = 30 * MINUTE_MS
+/** A stretch above the threshold shorter than this is a pulse, not a run. */
+export const MIN_RUN_MS = 10 * MINUTE_MS
+/** What a kind needs at least before it is called stopped: a soak pause is longer for a washer. */
+const STOP_FLOOR_BY_KIND: Readonly<Partial<Record<DeviceType, number>>> = {
+  [DeviceType.Dryer]: 3 * MINUTE_MS,
+  [DeviceType.Dishwasher]: 3 * MINUTE_MS,
+  [DeviceType.Washer]: 10 * MINUTE_MS,
+}
 const START_STEP_MS = 10 * SECOND_MS
 const START_MIN_MS = 10 * SECOND_MS
 const STOP_WALK_STEPS = 6
@@ -69,6 +86,8 @@ export interface ProposalStepPoint {
 
 export interface ProposalSeries {
   readonly tier: RunningProposalTier
+  /** The appliance kind, when known: it sets the floor of the stop dwell. */
+  readonly deviceType?: DeviceType
   readonly from: number
   readonly to: number
   /** The read hit its point cap. */
@@ -127,7 +146,14 @@ export function proposeRunningThreshold(series: ProposalSeries): RunningThreshol
     return insufficient('no-runs', 0)
   }
 
-  const { runs, pauses, betweenGaps } = splitRuns(episodes)
+  const pulseEpisodes = episodes.filter((e) => e.end - e.start < PULSE_MAX_MS)
+  const bodies = episodes.filter((e) => e.end - e.start >= PULSE_MAX_MS)
+  const split = splitRuns(bodies)
+  const runs = split.runs.filter((r) => r.end - r.start >= MIN_RUN_MS)
+  const { pauses, betweenGaps } = split
+  const pulsesFound = pulseEpisodes.length + (split.runs.length - runs.length)
+  const longestPulse = maxOf(pulseEpisodes.map((e) => e.end - e.start))
+  if (runs.length === 0) return insufficient('no-runs', 0)
   const plateau = weightedQuantile(
     weigh(active.filter((s) => runs.some((r) => s.start < r.end && s.end > r.start))),
     PLATEAU_QUANTILE,
@@ -137,14 +163,25 @@ export function proposeRunningThreshold(series: ProposalSeries): RunningThreshol
 
   const notes: string[] = []
   const longestPause = pauses.length === 0 ? 0 : Math.max(...pauses)
-  let stop = clamp(roundUp(STOP_FACTOR * longestPause, STOP_STEP_MS), STOP_MIN_MS, STOP_MAX_MS)
+  const stopFloor =
+    series.deviceType === undefined
+      ? STOP_MIN_MS
+      : (STOP_FLOOR_BY_KIND[series.deviceType] ?? STOP_MIN_MS)
+  let stop = clamp(
+    Math.max(stopFloor, roundUp(STOP_FACTOR * longestPause, STOP_STEP_MS)),
+    STOP_MIN_MS,
+    STOP_MAX_MS,
+  )
   const shortestGap = betweenGaps.length === 0 ? null : Math.min(...betweenGaps)
-  if (shortestGap !== null && stop > shortestGap / 2) {
-    notes.push('stop-dwell-exceeds-half-of-shortest-gap')
+  if (shortestGap !== null && stop >= shortestGap) {
+    notes.push('stop-dwell-exceeds-shortest-gap')
   }
 
   const blips = excursionsOutside(segments, threshold, runs)
   let start = Math.max(START_MIN_MS, roundUp(STOP_FACTOR * maxOf(blips), START_STEP_MS))
+  // A pulse is shorter than PULSE_MAX_MS by definition: the start dwell holds above it,
+  // so a pulse after a run closes can neither open a run nor keep one alive.
+  if (pulsesFound > 0) start = Math.max(start, PULSE_MAX_MS)
   const shortestRun = Math.min(...runs.map((r) => r.end - r.start))
   if (start > shortestRun / 2) {
     notes.push('start-dwell-exceeds-half-of-shortest-run')
@@ -176,6 +213,8 @@ export function proposeRunningThreshold(series: ProposalSeries): RunningThreshol
       runsFound: runs.length,
       pausesFound: pauses.length,
       longestPauseMs: longestPause,
+      pulsesFound,
+      longestPulseMs: longestPulse,
       idleFloorW: idleFloor,
       noiseCeilingW: noise,
       plateauW: plateau,
@@ -267,8 +306,9 @@ function mergeContiguous(segments: readonly Segment[]): Span[] {
 
 /**
  * Gaps between episodes: the largest log-scale jump (>= 3x) in the sorted gaps
- * separates pauses inside a run from the gaps between runs. No jump: every gap
- * separates runs — a lone pause is indistinguishable from a short standby.
+ * separates pauses inside a run from the gaps between runs, but a pause is never
+ * longer than `PAUSE_MAX_MS`: a cut above it is not taken. No jump: every gap separates
+ * runs - a lone pause is indistinguishable from a short standby.
  */
 function splitRuns(episodes: readonly Span[]): {
   runs: Span[]
@@ -283,7 +323,7 @@ function splitRuns(episodes: readonly Span[]): {
     const lo = sorted[i] ?? 0
     const hi = sorted[i + 1] ?? 0
     const ratio = lo > 0 ? hi / lo : Number.POSITIVE_INFINITY
-    if (ratio >= best) {
+    if (ratio >= best && lo <= PAUSE_MAX_MS) {
       best = ratio
       cut = lo
     }
@@ -332,7 +372,27 @@ function excursionsOutside(
     .map((h) => h.end - h.start)
 }
 
-/** Drive the real `dwell` evaluation over the series, deadlines included. */
+/** The numbers a proposal (or a stored expression) is replayed with. */
+export interface ReplayTransform {
+  readonly threshold: number
+  readonly startDwellMs: number
+  readonly stopDwellMs: number
+}
+
+/** The intervals the real `dwell` evaluation holds true over a series, deadlines included. */
+export function replayDwellIntervals(
+  series: ProposalSeries,
+  transform: ReplayTransform,
+): readonly Span[] {
+  return runDwell(
+    toSegments(series),
+    series.to,
+    transform.threshold,
+    transform.startDwellMs,
+    transform.stopDwellMs,
+  )
+}
+
 function replayDwell(
   segments: readonly Segment[],
   to: number,
@@ -341,16 +401,28 @@ function replayDwell(
   stopMs: number,
   runs: readonly Span[],
 ): RunningProposalReplay {
+  return judge(runDwell(segments, to, threshold, startMs, stopMs), runs)
+}
+
+function runDwell(
+  segments: readonly Segment[],
+  to: number,
+  threshold: number,
+  startMs: number,
+  stopMs: number,
+): Span[] {
   const call: DwellCallState = {
     kind: 'dwell',
     pendingSince: null,
+    returnSince: null,
     latched: null,
     seenSince: null,
+    transition: null,
   }
   let deadline: number | null = null
   const hooks: ExpressionEvalHooks = {
     noteDeadline: (at: number) => {
-      deadline = at
+      deadline = deadline === null ? at : Math.min(deadline, at)
     },
   }
   const intervals: Span[] = []
@@ -371,7 +443,7 @@ function replayDwell(
     while (deadline !== null && deadline <= next) evaluate(active, deadline)
   })
   if (openAt !== null) intervals.push({ start: openAt, end: to })
-  return judge(intervals, runs)
+  return intervals
 }
 
 function judge(intervals: readonly Span[], runs: readonly Span[]): RunningProposalReplay {
