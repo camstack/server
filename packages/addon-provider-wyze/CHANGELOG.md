@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Wyze accounts are now typed records under their integration; the password and the API key stay in the keychain and the legacy settings rows are moved and cleared on first start
+
 ## [0.2.161] - 2026-11-01
 
 ### Changed

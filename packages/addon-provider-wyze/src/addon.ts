@@ -1,6 +1,11 @@
 import { userError } from '@camstack/types'
 import {
   BaseDeviceProvider,
+  defaultIntegrationApiOver,
+  defineAddonMigrations,
+  integrationInstancesCapability,
+  integrationRowsMigration,
+  integrationRowsPortsOver,
   DeviceType,
   EventCategory,
   connectionTestCapability,
@@ -11,6 +16,7 @@ import {
   memoizePinnedFfmpeg,
 } from '@camstack/types'
 import type {
+  AddonInitResult,
   ConfigUISchema,
   ConfigUISchemaWithValues,
   CreateDeviceSpec,
@@ -18,17 +24,23 @@ import type {
   IConnectionTestProvider,
   IDevice,
   IDeviceAdoptionProvider,
-  ProviderRegistration,
+  RecordIntegrationInstances,
   SavedDevice,
   SystemEvent,
 } from '@camstack/types'
 import { WyzeClientRegistry } from './client-registry.js'
-import type { WyzeCredentials } from './cloud-client.js'
 import { WYZE_ADDON_ID } from './constants.js'
 import { buildCreationFormSchema } from './creation-schema.js'
 import { buildSettingsSchema } from './settings-schema.js'
 import { cameraConfigFromCloud, stableIdForMac } from './mapping.js'
 import { wyzeCameraSchema } from './schema.js'
+import {
+  buildWyzeInstances,
+  wyzeConnectionsEntryKind,
+  wyzeCredentialsOf,
+  type WyzeConnectionBody,
+  wyzeRecordKinds,
+} from './wyze-instances.js'
 import { buildWyzeAdoptionProvider } from './wyze-adoption-provider.js'
 import { WyzeCamera as WyzeCameraDevice } from './wyze-camera.js'
 import {
@@ -42,6 +54,9 @@ function getString(obj: Record<string, unknown>, key: string): string {
   return typeof v === 'string' ? v : ''
 }
 
+/** The date of the integration-rows-to-record migration (D1007). */
+const WYZE_MIGRATIONS_DATE = '2026-11-05'
+
 /**
  * Keys the account form declares. They belong to `integration.settings`; in
  * the addon's global store they are stale leftovers.
@@ -51,16 +66,6 @@ const GLOBAL_CREDENTIAL_KEYS = ['email', 'password', 'apiKey', 'apiId'] as const
 /** A stored value worth removing: a non-empty string or a keychain marker. */
 function isStoredValue(v: unknown): boolean {
   return (typeof v === 'string' && v.length > 0) || isSecretMarker(v)
-}
-
-/** Extract account credentials from an integration's settings, or null. */
-function credentialsFromSettings(settings: Record<string, unknown>): WyzeCredentials | null {
-  const email = getString(settings, 'email').trim()
-  const password = getString(settings, 'password')
-  const apiKey = getString(settings, 'apiKey').trim()
-  const apiId = getString(settings, 'apiId').trim()
-  if (!email || !password || !apiKey || !apiId) return null
-  return { email, password, apiKey, apiId }
 }
 
 /**
@@ -89,6 +94,7 @@ export class WyzeProviderAddon extends BaseDeviceProvider {
   }
 
   private clients: WyzeClientRegistry | null = null
+  private instances: RecordIntegrationInstances<WyzeConnectionBody> | null = null
   /** This node's PINNED ffmpeg (D540), asked once for every camera's live
    *  snapshot. The snapshot used to spawn a bare `'ffmpeg'` off PATH. */
   private readonly pinnedFfmpeg = memoizePinnedFfmpeg(() => this.ctx.deps.ensureFfmpeg())
@@ -99,12 +105,38 @@ export class WyzeProviderAddon extends BaseDeviceProvider {
 
   // ── Lifecycle ────────────────────────────────────────────────────────
 
-  protected override async onInitialize(): Promise<ProviderRegistration[]> {
+  protected override async onInitialize(): Promise<AddonInitResult> {
     // Restore DigiCert Global Root CA before any Wyze cloud fetch. Ubuntu
     // 24.04's ca-certificates dropped it; api.wyzecam.com still chains to it.
     applyWyzeCloudTlsTrust()
 
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
+
+    const records = this.ctx.records
+    if (records === undefined)
+      throw new Error('provider-wyze: ctx.records is required (hub-only addon)')
+    await records.declare(wyzeRecordKinds)
+    await this.runMigrations(
+      defineAddonMigrations(
+        [
+          integrationRowsMigration({
+            addonId: this.addonId,
+            date: WYZE_MIGRATIONS_DATE,
+            kind: wyzeConnectionsEntryKind,
+            fixtureMark: 'email',
+          }),
+        ],
+        integrationRowsPortsOver({
+          api: defaultIntegrationApiOver(this.ctx.api),
+          records,
+          kind: wyzeConnectionsEntryKind,
+          warn: (message) => this.ctx.logger.warn(message),
+        }),
+      ),
+    )
+    this.instances = buildWyzeInstances(records, {
+      onChanged: () => this.reconcileIntegrations(),
+    })
 
     this.clients = new WyzeClientRegistry({
       dataDir: this.ctx.dataDir,
@@ -137,17 +169,28 @@ export class WyzeProviderAddon extends BaseDeviceProvider {
     await this.reconcileIntegrations()
     this.subscribeIntegrationLifecycle()
 
-    return [
-      ...regs,
-      { capability: deviceAdoptionCapability, provider: this.buildAdoptionProvider() },
-      { capability: connectionTestCapability, provider: this.buildConnectionTestProvider() },
-    ]
+    return {
+      providers: [
+        ...regs,
+        { capability: deviceAdoptionCapability, provider: this.buildAdoptionProvider() },
+        { capability: connectionTestCapability, provider: this.buildConnectionTestProvider() },
+        {
+          capability: integrationInstancesCapability,
+          provider: this.requireInstances().toProvider(),
+        },
+      ],
+    }
   }
 
   protected override async onShutdown(): Promise<void> {
     this.clients?.clear()
     this.clients = null
     await super.onShutdown()
+  }
+
+  private requireInstances(): RecordIntegrationInstances<WyzeConnectionBody> {
+    if (!this.instances) throw new Error('Wyze provider not initialised')
+    return this.instances
   }
 
   private requireClients(): WyzeClientRegistry {
@@ -173,8 +216,7 @@ export class WyzeProviderAddon extends BaseDeviceProvider {
       const surviving = new Set<string>()
       for (const integration of mine) {
         try {
-          const settings = await this.ctx.api.integrations.getSettings.query({ id: integration.id })
-          const credentials = credentialsFromSettings(settings)
+          const credentials = await wyzeCredentialsOf(this.requireInstances(), integration.id)
           if (!credentials) {
             this.ctx.logger.warn('Wyze integration has no complete credentials — skipping', {
               meta: { integrationId: integration.id },

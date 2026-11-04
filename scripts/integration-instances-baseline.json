@@ -14,7 +14,6 @@
     "provider-rademacher",
     "provider-reolink",
     "provider-velux",
-    "provider-vesync",
-    "provider-wyze"
+    "provider-vesync"
   ]
 }

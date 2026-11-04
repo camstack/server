@@ -93,7 +93,7 @@ function contextFor(w: World): AddonContext {
 class GlobalStoreOnlyWyze extends WyzeProviderAddon {
   protected override async onInitialize() {
     await this.purgeStaleGlobalCredentials()
-    return []
+    return { providers: [] }
   }
 }
 
