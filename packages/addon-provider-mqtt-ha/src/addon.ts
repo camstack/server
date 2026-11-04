@@ -4,14 +4,26 @@ import {
   DeviceType,
   errMsg,
   EventCategory,
+  type AddonInitResult,
   type ConfigUISchema,
   type CreateDeviceSpec,
+  defaultIntegrationApiOver,
+  defineAddonMigrations,
+  integrationInstancesCapability,
+  type RecordIntegrationInstances,
   type DeviceConstructor,
   type IDevice,
   type IDeviceAdoptionProvider,
-  type ProviderRegistration,
   type SystemEvent,
 } from '@camstack/types'
+import {
+  buildMqttHaInstances,
+  MQTT_HA_MIGRATIONS,
+  type MqttHaConnectionBody,
+  mqttHaBrokerIdOf,
+  mqttHaRecordKinds,
+  mqttHaRowsPorts,
+} from './mqtt-ha-instances.js'
 import { buildMqttHaAdoptionProvider } from './mqtt-ha-adoption-provider.js'
 import { buildMqttHaDeviceStableId, buildMqttHaStableId } from './mqtt-ha-discovery-parser.js'
 import { MqttHaDiscoveryStore } from './mqtt-ha-discovery-store.js'
@@ -62,6 +74,7 @@ export class MqttHaProviderAddon extends BaseDeviceProvider<MqttHaProviderConfig
 
   private readonly discoveryStore = new MqttHaDiscoveryStore()
   private sessionManager: MqttHaBrokerSessionManager | null = null
+  private instances: RecordIntegrationInstances<MqttHaConnectionBody> | null = null
   /** integrationId → mqtt broker registry id */
   private readonly integrationToMqttBroker = new Map<string, string>()
 
@@ -69,8 +82,27 @@ export class MqttHaProviderAddon extends BaseDeviceProvider<MqttHaProviderConfig
     super({})
   }
 
-  protected override async onInitialize(): Promise<ProviderRegistration[]> {
+  protected override async onInitialize(): Promise<AddonInitResult> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
+    const records = this.ctx.records
+    if (records === undefined)
+      throw new Error('provider-mqtt-ha: ctx.records is required (hub-only addon)')
+    await records.declare(mqttHaRecordKinds)
+    // Before the provider registers: while it is registered the hub answers from the record.
+    await this.runMigrations(
+      defineAddonMigrations(
+        MQTT_HA_MIGRATIONS,
+        mqttHaRowsPorts({
+          api: defaultIntegrationApiOver(this.ctx.api),
+          records,
+          warn: (message) => this.ctx.logger.warn(message),
+        }),
+      ),
+    )
+    const instances = buildMqttHaInstances(records, {
+      onChanged: () => this.reconcileIntegrationsToBrokers(),
+    })
+    this.instances = instances
 
     mqttHaSession.bind({
       logger: this.ctx.logger,
@@ -111,45 +143,27 @@ export class MqttHaProviderAddon extends BaseDeviceProvider<MqttHaProviderConfig
       meta: { linkedIntegrations: this.integrationToMqttBroker.size },
     })
 
-    return [
-      ...regs,
-      {
-        capability: deviceAdoptionCapability,
-        provider: this.buildAdoptionProvider(),
-      },
-    ]
+    return {
+      providers: [
+        ...regs,
+        {
+          capability: deviceAdoptionCapability,
+          provider: this.buildAdoptionProvider(),
+        },
+        {
+          capability: integrationInstancesCapability,
+          provider: instances.toProvider(),
+        },
+      ],
+    }
   }
 
   protected override async onShutdown(): Promise<void> {
     await this.sessionManager?.shutdownAll()
     this.sessionManager = null
+    this.instances = null
     mqttHaSession.unbind()
     await super.onShutdown()
-  }
-
-  protected globalSettingsSchema(): ConfigUISchema {
-    return this.schema({
-      sections: [
-        {
-          id: 'mqtt-ha-broker-link',
-          title: 'MQTT broker',
-          titleKey: 'provider-mqtt-ha:globalSettings.s_mqtt-ha-broker-link.title',
-          description:
-            'Each integration instance links to an MQTT broker (Connectivity → MQTT brokers).',
-          descriptionKey: 'provider-mqtt-ha:globalSettings.s_mqtt-ha-broker-link.description',
-          columns: 1,
-          fields: [
-            {
-              type: 'info',
-              key: 'help',
-              label: 'Broker link',
-              labelKey: 'provider-mqtt-ha:globalSettings.s_mqtt-ha-broker-link.help.label',
-              content: 'Entities appear under Integrations → Adopt once discovery messages arrive.',
-            },
-          ],
-        },
-      ],
-    })
   }
 
   protected async onGetCreationSchema(_type: DeviceType): Promise<ConfigUISchema | null> {
@@ -173,6 +187,11 @@ export class MqttHaProviderAddon extends BaseDeviceProvider<MqttHaProviderConfig
     return deviceKey !== null
       ? buildMqttHaDeviceStableId(brokerId, deviceKey)
       : buildMqttHaStableId(brokerId, entityKey)
+  }
+
+  private requireInstances(): RecordIntegrationInstances<MqttHaConnectionBody> {
+    if (!this.instances) throw new Error('mqtt-ha: provider not initialised')
+    return this.instances
   }
 
   private requireSessionManager(): MqttHaBrokerSessionManager {
@@ -225,15 +244,7 @@ export class MqttHaProviderAddon extends BaseDeviceProvider<MqttHaProviderConfig
       }
 
       for (const integration of mine) {
-        const settings = await this.ctx.api.integrations.getSettings.query({
-          id: integration.id,
-        })
-        const mqttBrokerId =
-          typeof settings['mqttBrokerId'] === 'string'
-            ? settings['mqttBrokerId']
-            : typeof settings['brokerId'] === 'string'
-              ? settings['brokerId']
-              : undefined
+        const mqttBrokerId = await mqttHaBrokerIdOf(this.requireInstances(), integration.id)
         if (mqttBrokerId === undefined) continue
         this.integrationToMqttBroker.set(integration.id, mqttBrokerId)
         mqttHaSession.register(integration.id, integration.name)
@@ -313,15 +324,7 @@ export class MqttHaProviderAddon extends BaseDeviceProvider<MqttHaProviderConfig
       getMqttBrokerIdForIntegration: async (integrationId) => {
         const fromMap = this.integrationToMqttBroker.get(integrationId)
         if (fromMap !== undefined) return fromMap
-        const settings = await this.ctx.api.integrations.getSettings.query({
-          id: integrationId,
-        })
-        const mqttBrokerId =
-          typeof settings['mqttBrokerId'] === 'string'
-            ? settings['mqttBrokerId']
-            : typeof settings['brokerId'] === 'string'
-              ? settings['brokerId']
-              : undefined
+        const mqttBrokerId = await mqttHaBrokerIdOf(this.requireInstances(), integrationId)
         if (mqttBrokerId === undefined) {
           throw new Error(`integration ${integrationId} has no mqttBrokerId`)
         }

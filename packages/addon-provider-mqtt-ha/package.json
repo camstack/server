@@ -35,6 +35,7 @@
     "addons": [
       {
         "id": "provider-mqtt-ha",
+        "integrationRole": "devices",
         "category": "providers",
         "name": "MQTT Discovery",
         "version": "0.1.0",
@@ -53,6 +54,9 @@
           },
           {
             "name": "device-adoption"
+          },
+          {
+            "name": "integration-instances"
           }
         ]
       }

@@ -1,5 +1,12 @@
 {
   "globalSettings.s_mqtt-ha-broker-link.title": "MQTT broker",
   "globalSettings.s_mqtt-ha-broker-link.description": "Each integration instance links to an MQTT broker (Connectivity → MQTT brokers).",
-  "globalSettings.s_mqtt-ha-broker-link.help.label": "Broker link"
+  "globalSettings.s_mqtt-ha-broker-link.help.label": "Broker link",
+  "globalSettings": {
+    "s_mqtt-ha-broker-link": {
+      "mqttBrokerId": {
+        "label": "MQTT broker"
+      }
+    }
+  }
 }
