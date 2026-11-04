@@ -36,6 +36,7 @@
     "addons": [
       {
         "id": "provider-hikvision",
+        "integrationRole": "devices",
         "category": "providers",
         "name": "Hikvision",
         "version": "0.1.0",

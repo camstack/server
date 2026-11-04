@@ -37,6 +37,7 @@
     "addons": [
       {
         "id": "provider-gree",
+        "integrationRole": "devices",
         "category": "providers",
         "name": "Gree",
         "version": "0.1.0",

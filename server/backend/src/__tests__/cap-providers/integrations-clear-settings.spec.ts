@@ -25,7 +25,7 @@ function integration(): Integration {
 function harness() {
   const registry = {
     getIntegration: vi.fn(async () => integration()),
-    getIntegrationSettings: vi.fn(async () => ({ a: 1, b: 2 })),
+    getIntegrationSettings: vi.fn(async () => ({ a: { $secret: 'ref-1' }, b: 2 })),
     clearIntegrationSettings: vi.fn(async () => ['ref-1']),
   }
   const secretsDelete = vi.fn(async () => undefined)

@@ -26,7 +26,7 @@ describe('resolveIntegrationRole', () => {
 })
 
 describe('package manifests', () => {
-  it('an entry declaring integration-instances AND a device marker says integrationRole both', () => {
+  it('an entry declaring integration-instances AND a device marker states its integrationRole, never derived', () => {
     const packagesDir = resolve(__dirname, '../../../../../../packages')
     const offenders: string[] = []
     for (const dir of readdirSync(packagesDir)) {
@@ -46,7 +46,7 @@ describe('package manifests', () => {
         const dual =
           names.includes('integration-instances') &&
           names.some((n) => INTEGRATION_CAP_MARKERS.has(n))
-        if (dual && entry.integrationRole !== 'both') offenders.push(`${dir}:${entry.id}`)
+        if (dual && entry.integrationRole === undefined) offenders.push(`${dir}:${entry.id}`)
       }
     }
     expect(offenders).toEqual([])

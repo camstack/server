@@ -37,6 +37,7 @@
     "addons": [
       {
         "id": "provider-amcrest",
+        "integrationRole": "devices",
         "category": "providers",
         "name": "Amcrest",
         "version": "0.1.0",
