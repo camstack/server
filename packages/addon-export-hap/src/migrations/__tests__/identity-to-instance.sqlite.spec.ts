@@ -109,6 +109,10 @@ async function build(seed: Record<string, unknown>, options: Options = {}) {
       await handle.put({ id: HAP_DEFAULT_INSTANCE_ID, data: body }, { ifRev: 0 })
       return 'created'
     },
+    patchDefaultName: async (name) => {
+      await handle.patch(HAP_DEFAULT_INSTANCE_ID, { name })
+    },
+    clearFixedPin: async () => undefined,
     putExposure: async () => 'exists',
     readExposure: async () => null,
     readDefaultRecord: async () => {

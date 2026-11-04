@@ -31,6 +31,10 @@ function keychainPorts(rows: SettingsRows, vault: Map<string, string>): HapCatal
     putDefaultRecord: async () => 'exists',
     readDefaultRecord: async () => null,
     clearLegacyIdentity: async () => undefined,
+    patchDefaultName: async () => undefined,
+    clearFixedPin: async () => {
+      rows.remove('fixedPin')
+    },
     putExposure: async () => 'exists',
     readExposure: async () => null,
     storeFixedPin: async (pin) => {
@@ -46,7 +50,8 @@ const hap = (seed: Record<string, unknown>, vault = new Map<string, string>()) =
   vault,
   fixture: settingsFixture<HapCataloguePorts>({
     addonId: EXPORT_HAP_ID,
-    catalogue: ADDON_MIGRATIONS,
+    // Migrations 6-8 delete these very rows and have their own spec (global-knobs.sqlite.spec.ts).
+    catalogue: ADDON_MIGRATIONS.filter((m) => m.meta.seq <= 5),
     seed,
     neighbour: NEIGHBOUR,
     ports: (rows) => keychainPorts(rows, vault),

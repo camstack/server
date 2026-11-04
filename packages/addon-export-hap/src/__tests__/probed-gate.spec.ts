@@ -19,7 +19,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { EventCategory } from '@camstack/types'
 import type { SystemEvent } from '@camstack/types'
 import { canonicalDeviceFingerprint } from '@camstack/types/node'
+import { BridgeInstance } from '../bridge-instance.js'
+import type { BridgeHost } from '../bridge-host.js'
 import { ExportHapAddon } from '../hap-export.addon.js'
+import { HAP_DEFAULT_INSTANCE_ID } from '../hap-instance-kinds.js'
 
 type LifecycleHandler = (event: SystemEvent) => void
 
@@ -30,7 +33,11 @@ interface FakeDevice {
 }
 
 interface FakeConfig {
-  exposed: ReadonlyArray<{ deviceId: string; displayName: string; mapperKind: 'camera' }>
+  exposed: ReadonlyArray<{
+    deviceId: string
+    displayName: string
+    mapperKind: 'camera'
+  }>
   exportSyncState: Record<string, { fingerprint: string; externalIds: readonly string[] }>
 }
 
@@ -43,7 +50,22 @@ class TestAddon extends ExportHapAddon {
   /** The exposed list lives in the exposure record the addon holds; the rest is `config`. */
   set fakeConfig(value: FakeConfig) {
     this.fake = value
-    this.exposure = { name: 'HomeKit exposure', devices: value.exposed, actions: [] }
+    this.bridges.set(
+      HAP_DEFAULT_INSTANCE_ID,
+      new BridgeInstance(
+        HAP_DEFAULT_INSTANCE_ID,
+        'Test bridge',
+        { username: 'AA:BB:CC:DD:EE:FF', uuid: 'u', pincode: '031-45-154' },
+        // The gate never touches the bridge accessory.
+        {} as unknown as BridgeHost,
+        { name: 'HomeKit exposure', devices: value.exposed, actions: [] },
+      ),
+    )
+  }
+  private get inst(): BridgeInstance {
+    const found = this.bridges.get(HAP_DEFAULT_INSTANCE_ID)
+    if (found === undefined) throw new Error('no fake bridge')
+    return found
   }
   reconciled: string[] = []
   private handlers = new Map<EventCategory, LifecycleHandler>()
@@ -83,12 +105,12 @@ class TestAddon extends ExportHapAddon {
     return this.fake as unknown as ExportHapAddon['config']
   }
 
-  protected override async reconcileDevice(deviceId: string): Promise<void> {
+  protected override async reconcileDevice(_inst: BridgeInstance, deviceId: string): Promise<void> {
     this.reconciled.push(deviceId)
   }
 
   callComputeExportFingerprint(deviceId: number): Promise<string | null> {
-    return this.computeExportFingerprint(deviceId)
+    return this.computeExportFingerprint(this.inst, deviceId)
   }
 
   armReadySubscription(): void {
@@ -96,7 +118,10 @@ class TestAddon extends ExportHapAddon {
   }
 
   emit(category: EventCategory, deviceId: number): void {
-    this.handlers.get(category)?.({ category, data: { deviceId } } as unknown as SystemEvent)
+    this.handlers.get(category)?.({
+      category,
+      data: { deviceId },
+    } as unknown as SystemEvent)
   }
 
   async runDisposers(): Promise<void> {
@@ -105,7 +130,11 @@ class TestAddon extends ExportHapAddon {
 }
 
 function exposed(deviceId: number): FakeConfig['exposed'][number] {
-  return { deviceId: String(deviceId), displayName: `cam-${deviceId}`, mapperKind: 'camera' }
+  return {
+    deviceId: String(deviceId),
+    displayName: `cam-${deviceId}`,
+    mapperKind: 'camera',
+  }
 }
 
 const fp = (type: string, features: readonly string[]): string =>
@@ -132,11 +161,17 @@ beforeEach(() => {
 
 describe('computeExportFingerprint — probe-readiness gate', () => {
   it('un-probed device WITH a persisted entry → carries the persisted fingerprint forward', async () => {
-    addon.devices.set(1, { type: 'camera', features: ['motion-trigger'], probed: false })
+    addon.devices.set(1, {
+      type: 'camera',
+      features: ['motion-trigger'],
+      probed: false,
+    })
     const persisted = fp('camera', ['motion-trigger', 'pan-tilt-zoom', 'two-way-audio'])
     addon.fakeConfig = {
       exposed: [exposed(1)],
-      exportSyncState: { '1': { fingerprint: persisted, externalIds: ['uuid-1'] } },
+      exportSyncState: {
+        '1': { fingerprint: persisted, externalIds: ['uuid-1'] },
+      },
     }
 
     expect(await addon.callComputeExportFingerprint(1)).toBe(persisted)
@@ -161,7 +196,11 @@ describe('computeExportFingerprint — probe-readiness gate', () => {
   })
 
   it('un-probed device with NO persisted entry → falls back to fresh (publishes once)', async () => {
-    addon.devices.set(1, { type: 'camera', features: ['motion-trigger'], probed: false })
+    addon.devices.set(1, {
+      type: 'camera',
+      features: ['motion-trigger'],
+      probed: false,
+    })
     addon.fakeConfig = { exposed: [exposed(1)], exportSyncState: {} }
 
     expect(await addon.callComputeExportFingerprint(1)).toBe(camFp(['motion-trigger']))
@@ -169,11 +208,17 @@ describe('computeExportFingerprint — probe-readiness gate', () => {
 
   it('restart of an unchanged-but-un-probed device → fingerprint equals persisted (no rebuild)', async () => {
     // The reconcile compares this against `last.fingerprint` and no-ops when equal.
-    addon.devices.set(1, { type: 'camera', features: ['motion-trigger'], probed: false })
+    addon.devices.set(1, {
+      type: 'camera',
+      features: ['motion-trigger'],
+      probed: false,
+    })
     const persisted = fp('camera', ['motion-trigger', 'pan-tilt-zoom'])
     addon.fakeConfig = {
       exposed: [exposed(1)],
-      exportSyncState: { '1': { fingerprint: persisted, externalIds: ['uuid-1'] } },
+      exportSyncState: {
+        '1': { fingerprint: persisted, externalIds: ['uuid-1'] },
+      },
     }
 
     const current = await addon.callComputeExportFingerprint(1)

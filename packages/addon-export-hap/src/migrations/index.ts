@@ -11,6 +11,16 @@ import {
   moveIdentityToDefaultInstance,
 } from './identity-to-instance.js'
 
+import {
+  type BridgeNameToInstancePorts,
+  moveBridgeNameToInstance,
+} from './bridge-name-to-instance.js'
+import {
+  clearFixedPin,
+  type DropGlobalKnobsPorts,
+  planDropGlobalKnobRows,
+} from './drop-global-knobs.js'
+
 export { legacyIdentityOf } from './identity-to-instance.js'
 export type { IdentityToInstancePorts } from './identity-to-instance.js'
 export type { ExposureToRecordPorts } from './exposure-to-record.js'
@@ -22,11 +32,16 @@ export const FIXED_PIN_TO_KEYCHAIN_ID = 'export-hap/2026-11-03-fixed-pin-to-keyc
 export const IDENTITY_TO_INSTANCE_ID = 'export-hap/2026-11-04-identity-to-default-instance'
 export const EXPOSURE_TO_RECORD_ID = 'export-hap/2026-11-04-exposure-to-record'
 export const DROP_EXPOSURE_KEYS_ID = 'export-hap/2026-11-04-drop-exposure-keys'
+export const BRIDGE_NAME_TO_INSTANCE_ID = 'export-hap/2026-11-04-bridge-name-to-instance'
+export const DROP_GLOBAL_KNOBS_ID = 'export-hap/2026-11-04-drop-global-knobs'
+export const DROP_GLOBAL_KNOB_ROWS_ID = 'export-hap/2026-11-04-drop-global-knob-rows'
 
 export type HapCataloguePorts = HubNodeFieldsPorts &
   FixedPinPorts &
   IdentityToInstancePorts &
-  ExposureToRecordPorts
+  ExposureToRecordPorts &
+  BridgeNameToInstancePorts &
+  DropGlobalKnobsPorts
 
 /** The `export-hap` catalogue (D987): offered to the engine when the addon initialises. */
 export const ADDON_MIGRATIONS: readonly AddonMigration<HapCataloguePorts>[] = [
@@ -114,5 +129,56 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<HapCataloguePorts>[] = [
       fixtureMark: 'the bridge name the migration does not know',
     },
     plan: planDropExposureKeys,
+  },
+  {
+    meta: {
+      id: BRIDGE_NAME_TO_INSTANCE_ID,
+      owner: EXPORT_HAP_ID,
+      level: 'addon-state',
+      seq: 6,
+      dependsOn: [IDENTITY_TO_INSTANCE_ID],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'block-owner',
+      bodyKind: 'procedure',
+      description:
+        'Make the installation name the name of the default HomeKit instance record, verified by read-back',
+      fixtureMark: 'the bridge name the migration does not know',
+    },
+    procedure: moveBridgeNameToInstance,
+  },
+  {
+    meta: {
+      id: DROP_GLOBAL_KNOBS_ID,
+      owner: EXPORT_HAP_ID,
+      level: 'addon-state',
+      seq: 7,
+      dependsOn: [FIXED_PIN_TO_KEYCHAIN_ID, IDENTITY_TO_INSTANCE_ID],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'tolerate',
+      bodyKind: 'procedure',
+      description:
+        'Release the retired fixed setup code from the keychain: a bridge setup code is read-only now',
+      fixtureMark: 'the bridge name the migration does not know',
+    },
+    procedure: clearFixedPin,
+  },
+  {
+    meta: {
+      id: DROP_GLOBAL_KNOB_ROWS_ID,
+      owner: EXPORT_HAP_ID,
+      level: 'addon-state',
+      seq: 8,
+      dependsOn: [BRIDGE_NAME_TO_INSTANCE_ID, DROP_GLOBAL_KNOBS_ID, INTERFACE_NAME_PER_NODE_ID],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'tolerate',
+      bodyKind: 'plan',
+      description:
+        'Delete the retired bridgeName, fixedPin and cluster interfaceName rows; the node rows are untouched',
+      fixtureMark: 'the bridge name the migration does not know',
+    },
+    plan: (ports) => planDropGlobalKnobRows(EXPORT_HAP_ID, ports),
   },
 ]

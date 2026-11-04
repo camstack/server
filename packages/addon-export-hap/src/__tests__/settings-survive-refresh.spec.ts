@@ -42,13 +42,18 @@ describe('the refresh after a settings change', () => {
    * `streamPreference=auto`.
    */
   it('re-exposes WITH the settings the patch computed', () => {
-    const refresh = SOURCE.slice(
-      SOURCE.indexOf('await this.unexposeDevice(deviceIdStr, { clearPairing'),
+    // Whitespace-insensitive: the formatter wraps long calls.
+    const flat = SOURCE.replace(/\s+/g, ' ')
+      .replace(/\( /g, '(')
+      .replace(/,? \)/g, ')')
+      .replace(/,? \}/g, ' }')
+    const refresh = flat.slice(
+      flat.indexOf('await this.unexposeDevice(inst, deviceIdStr, { clearPairing'),
     )
     expect(
       refresh.slice(0, 2000),
       'the re-expose does not carry nextSettings — the accessory will be rebuilt on the defaults, because the unexpose deleted the entry carryForward reads',
-    ).toContain('await this.exposeDevice(deviceIdStr, undefined, nextSettings)')
+    ).toContain('await this.exposeDevice(inst, deviceIdStr, undefined, nextSettings)')
   })
 
   /**

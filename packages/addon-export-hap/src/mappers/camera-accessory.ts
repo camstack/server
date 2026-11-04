@@ -72,7 +72,7 @@ export async function buildCameraAccessory(input: CameraAccessoryInput): Promise
   // Doorbell vs camera category selection.
   const isDoorbell = capNames.has('doorbell')
   const category = isDoorbell ? Categories.VIDEO_DOORBELL : Categories.IP_CAMERA
-  const accessoryUuid = accessoryUuidFor('camera', numericId)
+  const accessoryUuid = accessoryUuidFor('camera', numericId, options.instanceId)
   const accessory = new Accessory(displayName, accessoryUuid)
   accessory.category = category
 

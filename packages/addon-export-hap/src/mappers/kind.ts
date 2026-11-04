@@ -7,6 +7,7 @@
  */
 import { applianceExport, DeviceType } from '@camstack/types'
 import { uuid } from '@homebridge/hap-nodejs'
+import { instanceSalt } from '../hap-instance-kinds.js'
 
 /** Mapper kind id — the orchestrator that builds a device's accessory. */
 export type MapperKind = 'camera' | 'generic'
@@ -78,8 +79,7 @@ export function pickMapperKind(deviceType: string | null | undefined): MapperKin
  * namespace so a switch and a camera that happen to share a device id are not
  * the same HomeKit accessory.
  */
-export function accessoryUuidFor(kind: MapperKind, deviceId: number): string {
-  return uuid.generate(
-    kind === 'camera' ? `camstack:camera:${deviceId}` : `camstack:device:${deviceId}`,
-  )
+export function accessoryUuidFor(kind: MapperKind, deviceId: number, instanceId?: string): string {
+  const seed = kind === 'camera' ? `camstack:camera:${deviceId}` : `camstack:device:${deviceId}`
+  return uuid.generate(`${seed}${instanceSalt(instanceId)}`)
 }

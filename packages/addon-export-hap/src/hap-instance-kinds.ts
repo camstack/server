@@ -13,6 +13,18 @@ import { z } from 'zod'
 /** The default instance keeps its record under the addon id (it adopted the old identity). */
 export const HAP_DEFAULT_INSTANCE_ID = 'export-hap'
 
+/**
+ * What an instance adds to the identity seed of every accessory it publishes. EMPTY for the
+ * default instance (and for no instance at all), which keeps the legacy seed byte for byte so no
+ * paired controller has to pair again; any other instance is salted with its id, so one camera
+ * exposed by two bridges is two different HomeKit accessories, never one colliding MAC.
+ */
+export function instanceSalt(instanceId: string | undefined): string {
+  return instanceId === undefined || instanceId === HAP_DEFAULT_INSTANCE_ID
+    ? ''
+    : `:instance:${instanceId}`
+}
+
 /** Where the pairing state of the default instance has always lived, under the addon data dir. */
 const HAP_DEFAULT_PERSIST_DIR = 'hap-store'
 

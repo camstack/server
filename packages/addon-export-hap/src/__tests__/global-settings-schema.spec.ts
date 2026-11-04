@@ -33,13 +33,7 @@ describe('export-hap global settings', () => {
     expect(fieldKeys(schemaOf(new ExportHapAddon()))).not.toContain('ptzPulseMs')
   })
 
-  it('describes the installation name as the bridge for non-camera devices', () => {
-    const field = schemaOf(new ExportHapAddon())
-      .sections.flatMap((s) => s.fields)
-      .find((f) => 'key' in f && f.key === 'bridgeName')
-    const description = field && 'description' in field ? String(field.description) : ''
-    expect(description).toMatch(/bridge/i)
-    expect(description).toMatch(/not a camera/i)
-    expect(description).not.toMatch(/nothing is bridged/i)
+  it('keeps only the node-scoped interface name: the bridge knobs left the global form', () => {
+    expect(fieldKeys(schemaOf(new ExportHapAddon()))).toEqual(['interfaceName'])
   })
 })

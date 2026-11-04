@@ -37,6 +37,11 @@ export interface Mapper {
  */
 export interface CameraMapperOptions {
   /**
+   * The bridge instance this accessory is published for. Salts the accessory identity of every
+   * instance but the default one (`accessoryUuidFor`); absent is the default instance.
+   */
+  readonly instanceId?: string | undefined
+  /**
    * What the decode path remembers between sessions: the decoder addon's
    * per-node reading, and the backend that last died at init.
    *

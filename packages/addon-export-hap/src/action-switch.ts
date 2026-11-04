@@ -15,19 +15,22 @@
  */
 import { Accessory, Categories, Characteristic, Service, uuid } from '@homebridge/hap-nodejs'
 
+import { instanceSalt } from './hap-instance-kinds.js'
 import type { Mapper } from './mappers/types.js'
 
 /** How long the switch stays on after a press. */
 export const ACTION_SWITCH_AUTO_OFF_MS = 1000
 
 /** Deterministic and distinct from every device accessory uuid. */
-export function actionSwitchUuid(actionId: string): string {
-  return uuid.generate(`camstack:hap:action:${actionId}`)
+export function actionSwitchUuid(actionId: string, instanceId?: string): string {
+  return uuid.generate(`camstack:hap:action:${actionId}${instanceSalt(instanceId)}`)
 }
 
 export interface ActionSwitchInput {
   readonly actionId: string
   readonly displayName: string
+  /** The bridge instance the switch belongs to; absent is the default instance. */
+  readonly instanceId?: string | undefined
   /** Starts the action. Never throws into HomeKit: a failure is the caller's to log. */
   readonly run: () => Promise<void>
   readonly autoOffMs?: number
@@ -37,7 +40,7 @@ export function buildActionSwitch(input: ActionSwitchInput): Mapper {
   const { actionId, displayName, run } = input
   const autoOffMs = input.autoOffMs ?? ACTION_SWITCH_AUTO_OFF_MS
 
-  const accessory = new Accessory(displayName, actionSwitchUuid(actionId))
+  const accessory = new Accessory(displayName, actionSwitchUuid(actionId, input.instanceId))
   accessory.category = Categories.SWITCH
 
   const info = accessory.getService(Service.AccessoryInformation)

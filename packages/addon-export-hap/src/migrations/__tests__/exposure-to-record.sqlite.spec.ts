@@ -27,7 +27,11 @@ const DEVICES = [
     capabilities: ['camera', 'motion'],
     childAccessoryUuids: ['uuid-a', 'uuid-b'],
     addedAt: 1760000000000,
-    settings: { streamPreference: 'low', keepClips: false, clipRetentionDays: 9 },
+    settings: {
+      streamPreference: 'low',
+      keepClips: false,
+      clipRetentionDays: 9,
+    },
   },
   { deviceId: '52', displayName: 'Hall switch', mapperKind: 'generic' },
 ]
@@ -61,6 +65,8 @@ async function build(seed: Record<string, unknown>, options: Options = {}) {
       putDefaultRecord: async () => 'exists',
       readDefaultRecord: async () => null,
       clearLegacyIdentity: async () => undefined,
+      patchDefaultName: async () => undefined,
+      clearFixedPin: async () => undefined,
       putExposure: async (body) => {
         if ((await handle.get(HAP_DEFAULT_INSTANCE_ID)) !== null) return 'exists'
         puts += 1
@@ -88,7 +94,8 @@ describe('export-hap exposure -> hap-bridge-exports record', () => {
     const rows = fixture.rows()
     expect(rows['export-hap.exposed']).toBeUndefined()
     expect(rows['export-hap.exposedActions']).toBeUndefined()
-    expect(rows['export-hap.bridgeName']?.['value']).toBe('Home')
+    // the retired global knob is deleted by seq 8 once the name has moved
+    expect(rows['export-hap.bridgeName']).toBeUndefined()
     expect(rows['other-addon.exposed']?.['value']).toBe(NEIGHBOUR)
   })
 

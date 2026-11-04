@@ -39,16 +39,17 @@
  */
 
 import { spawn } from 'node:child_process'
-import { randomBytes } from 'node:crypto'
+import { randomBytes, randomUUID } from 'node:crypto'
 import * as path from 'node:path'
 import {
   BaseAddon,
+  type AddonInitResult,
   type ConfigOption,
   type ConfigSectionWithValues,
   type ConfigUISchema,
   type ConfigUISchemaWithValues,
-  assertOwnExportInstance,
   deviceExportStatusInstanceOf,
+  ExportInstanceUnknownError,
   defineAddonMigrations,
   deviceExportCapability,
   type DeviceType,
@@ -57,12 +58,16 @@ import {
   type IDeviceExportProvider,
   integrationInstancesCapability,
   memoizePinnedFfmpeg,
-  type ProviderRegistration,
   RecordIntegrationInstances,
   RevConflictError,
+  SECRET_CLEAR,
   videoclipsCapability,
 } from '@camstack/types'
-import { canonicalDeviceFingerprint, resolveExportFingerprint } from '@camstack/types/node'
+import {
+  canonicalDeviceFingerprint,
+  type ExportTargetEntry,
+  resolveExportFingerprint,
+} from '@camstack/types/node'
 import { uuid as HapUuid } from '@homebridge/hap-nodejs'
 import type { z } from 'zod'
 import {
@@ -74,7 +79,9 @@ import {
 } from './accessory-publisher.js'
 import { type ActionExportEntry, ActionExports } from './action-exports.js'
 import { BridgeHost } from './bridge-host.js'
+import { BridgeInstance } from './bridge-instance.js'
 import { shouldBridge } from './bridge-policy.js'
+import { type ExportHapActions, exportHapActions } from './custom-actions.js'
 import { carryForward } from './exposed-entry.js'
 import {
   type ExportDeviceSettings,
@@ -83,11 +90,11 @@ import {
   type HapBridgeExportsBody,
   hapBridgeExportsKind,
 } from './hap-export-records.js'
-import { resolveBridgeIdentity } from './hap-identity.js'
+import { resolveDefaultBridge } from './hap-identity.js'
 import {
   HAP_DEFAULT_INSTANCE_ID,
   type HapBridgeBody,
-  type HapBridgeIdentity,
+  identityOfBody,
   hapBridgesKind,
   hapPersistDirOf,
 } from './hap-instance-kinds.js'
@@ -95,6 +102,7 @@ import {
   ADDON_MIGRATIONS,
   EXPORT_HAP_ID,
   type ExposureToRecordPorts,
+  type HapCataloguePorts,
   type IdentityToInstancePorts,
   legacyIdentityOf,
 } from './migrations/index.js'
@@ -123,10 +131,8 @@ import {
   type HapDecodeMemos,
 } from './mappers/builders/stream-hwaccel-memo.js'
 import {
-  accessoryUuidFor,
   getMapperFactory,
   HAP_EXPORTABLE_DEVICE_TYPES,
-  type Mapper,
   type MapperKind,
   pickMapperKind,
   SUPPORTED_MAPPER_KINDS,
@@ -289,8 +295,6 @@ export interface ExportTargetEntryJson {
 }
 
 interface ExportHapConfig {
-  readonly bridgeName: string
-  readonly fixedPin: string
   readonly interfaceName: string
   /**
    * Fleet default for how many days a kept HomeKit clip survives. Per camera
@@ -308,8 +312,6 @@ interface ExportHapConfig {
 type ExportSetup = z.infer<typeof ExportSetupSchema>
 
 const DEFAULT_CONFIG: ExportHapConfig = {
-  bridgeName: 'CamStack Bridge',
-  fixedPin: '',
   interfaceName: '',
   clipRetentionDays: DEFAULT_CLIP_RETENTION_DAYS,
   exportSyncState: {},
@@ -350,12 +352,6 @@ const BANNED_PINCODES = new Set<string>([
   '876-54-321',
 ])
 
-const PINCODE_REGEX = /^\d{3}-\d{2}-\d{3}$/
-
-function isValidPincode(pin: string): boolean {
-  return PINCODE_REGEX.test(pin) && !BANNED_PINCODES.has(pin)
-}
-
 function generateUsername(): string {
   const bytes = randomBytes(6)
   return Array.from(bytes, (b) => b.toString(16).toUpperCase().padStart(2, '0')).join(':')
@@ -373,34 +369,28 @@ function generatePincode(): string {
   throw new Error('export-hap: failed to generate a non-trivial pincode')
 }
 
+/** What a change to a record did, as `onChanged` reports it. */
+type InstanceChange = 'created' | 'updated' | 'enabled' | 'deleted'
+
+const DEFAULT_BRIDGE_NAME = 'CamStack Bridge'
+
 function buildBridgeUuid(bridgeName: string): string {
   return HapUuid.generate(`camstack:bridge:${bridgeName}:${Date.now()}`)
 }
 
 export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
   /**
-   * The old `identity.pincode` secret: declared only so the identity migration can release its
-   * keychain entry when it clears the old setting. The identity itself is a record now.
+   * The old `identity.pincode` and `fixedPin` secrets: declared only so the migrations can
+   * release their keychain entries when they clear the old settings. The identity itself is a record now.
    */
-  protected override readonly secretStatePaths = ['identity.pincode']
-  private readonly exposed = new Map<string, Mapper>()
-  /** The exported actions — switches beside the devices (D968). */
-  private actionExports: ActionExports | null = null
+  protected override readonly secretStatePaths = ['identity.pincode', 'fixedPin']
+  /** The running bridges, by instance id: one runtime per ENABLED `hap-bridges` record. */
+  protected readonly bridges = new Map<string, BridgeInstance>()
+  /** Start / stop / regenerate of bridges run one at a time: they share one HAP storage. */
+  private lifecycle: Promise<void> = Promise.resolve()
   private lastError: string | undefined
   /** The HomeKit instances (D985): one record per bridge identity. */
   private instances: RecordIntegrationInstances<HapBridgeBody> | null = null
-  /**
-   * What the bridge exposes: the devices (with their per-device settings) and the actions, held in
-   * the `hap-bridge-exports` record of the default instance. The in-memory copy is loaded once at
-   * boot and written through on every change; this addon is the record's only writer.
-   */
-  protected exposure: HapBridgeExportsBody = {
-    name: HAP_EXPOSURE_NAME,
-    devices: [],
-    actions: [],
-  }
-  /** Shared HAP setup code applied to every published accessory. */
-  private pincode = ''
   /** Optional mDNS/bind interface (config.interfaceName), or undefined. */
   private bind: string | undefined
   /**
@@ -445,18 +435,11 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
   /** The clip byte + still routes. `null` until `onInitialize` has served them. */
   private hksvClipPlanes: HksvClipPlanes | null = null
 
-  /**
-   * THE bridge. Lazily created and published the first time a non-camera
-   * accessory needs it; never torn down while the addon runs, because an
-   * unpublish would drop a pairing the operator already entered a code for.
-   */
-  private bridgeHost: BridgeHost | null = null
-
   constructor() {
     super({ ...DEFAULT_CONFIG })
   }
 
-  protected async onInitialize(): Promise<ProviderRegistration[]> {
+  protected async onInitialize(): Promise<AddonInitResult<ExportHapActions>> {
     const records = this.ctx.records
     if (records === undefined) {
       throw new Error('export-hap needs ctx.records — check execution.placement (hub-only)')
@@ -466,30 +449,28 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       'hap-bridge-exports': hapBridgeExportsKind,
     })
     this.instances = new RecordIntegrationInstances(records, hapBridgesKind, {
-      // One bridge identity per addon today: the default instance adopted the identity the
-      // addon always had. Additional bridges are not served yet, so none can be created.
-      description: { role: 'services', instanceMode: 'single', kind: 'bridge', canTest: false },
-      formSchema: () => this.schema({ sections: [] }),
+      // One HomeKit bridge per record (#422): the operator adds as many as there are Home
+      // households to serve. The default one is the identity the addon always had.
+      description: {
+        role: 'services',
+        instanceMode: 'multiple',
+        kind: 'bridge',
+        canTest: false,
+      },
+      formSchema: (id) => this.bridgeForm(id),
       initialBody: (name) => ({
         name,
         username: generateUsername(),
         uuid: buildBridgeUuid(name),
         pincode: generatePincode(),
       }),
+      mintId: () => `hap-${randomUUID().slice(0, 8)}`,
       configured: (body) => body.username !== '' && body.pincode !== '',
+      onChanged: (id, change) => this.enqueue(() => this.applyChange(id, change)),
     })
     await this.migrateSettings()
-    const identity = await this.ensureIdentity()
-    await this.loadExposure()
-    this.pincode = identity.pincode
+    await this.ensureDefaultBridge()
     this.bind = this.config.interfaceName || undefined
-    this.bridgeHost = new BridgeHost({
-      displayName: this.config.bridgeName,
-      uuid: identity.uuid,
-      pincode: identity.pincode,
-      bind: this.bind,
-      logger: this.ctx.logger,
-    })
 
     try {
       // hap-nodejs library-internal pairing-state storage (one shared dir;
@@ -517,7 +498,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       // no second copy of a camera's retention.
       maxAgeMsFor: (deviceId) =>
         resolveClipRetentionDays(
-          this.findEntry(deviceId)?.settings,
+          this.instanceForDevice(deviceId)?.findEntry(deviceId)?.settings,
           this.config.clipRetentionDays,
         ) *
         24 *
@@ -557,82 +538,27 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     // pull and the route never registers.
     await this.serveHksvClipPlanes()
 
-    // Sweep the persisted `exposed` list and drop entries whose
-    // `mapperKind` no longer maps to a registered factory (legacy
-    // entries written by an earlier shape of the addon, or entries
-    // whose persist write was interrupted before the kind field
-    // landed). Persist the cleaned list once so subsequent boots are
-    // quiet — without this, the no-mapper warn keeps firing at every
-    // restart even after every exposed device has been re-published.
-    const validKinds = new Set<MapperKind>(SUPPORTED_MAPPER_KINDS)
-    const cleaned = this.exposure.devices.filter((entry) => {
-      if (validKinds.has(entry.mapperKind)) return true
-      this.ctx.logger
-        .withTags({ deviceId: Number.parseInt(entry.deviceId, 10) })
-        .info('export-hap: dropping stale exposed entry (unknown mapperKind)', {
-          meta: { mapperKind: entry.mapperKind },
-        })
-      return false
-    })
-    if (cleaned.length !== this.exposure.devices.length) {
-      await this.setExposedDevices(cleaned)
-    }
-
-    // Re-attach mappers for the surviving entries.
-    for (const entry of cleaned) {
-      const log = this.ctx.logger.withTags({
-        deviceId: Number.parseInt(entry.deviceId, 10),
-      })
+    // Every enabled bridge, the default one first so it owns the unsalted accessory identities.
+    const resolved = await this.requireInstances().listResolved()
+    const ordered = resolved.toSorted(
+      (x, y) => Number(y.id === HAP_DEFAULT_INSTANCE_ID) - Number(x.id === HAP_DEFAULT_INSTANCE_ID),
+    )
+    for (const row of ordered) {
       try {
-        await this.attachMapper(entry)
-        const numericId = Number.parseInt(entry.deviceId, 10)
-        if (Number.isFinite(numericId)) {
-          const fp = await this.computeExportFingerprint(numericId)
-          if (fp !== null) await this.persistFingerprint(numericId, fp)
-        }
+        await this.startInstance(row.id)
       } catch (err) {
-        log.warn('export-hap: failed to re-attach mapper on boot', {
-          meta: { error: errMsg(err) },
+        this.ctx.logger.error('export-hap: bridge failed to start', {
+          meta: { instanceId: row.id, error: errMsg(err) },
         })
       }
     }
 
-    this.actionExports = new ActionExports(
-      {
-        api: this.ctx.api,
-        logger: this.ctx.logger,
-        publish: async (accessory) => {
-          const bridged = this.bridgeHost !== null && (await this.bridgeHost.add(accessory))
-          if (bridged) return
-          await publishStandalone(accessory, {
-            pincode: this.pincode,
-            port: 0,
-            bind: this.bind,
-            logger: this.ctx.logger,
-          })
-        },
-        unpublish: async (accessory) => {
-          if (this.bridgeHost?.holds(accessory) === true) {
-            this.bridgeHost.remove(accessory)
-            return
-          }
-          await unpublishAccessory(accessory, this.ctx.logger)
-        },
-        persist: (entries) => this.setExposedActions(entries),
-      },
-      this.exposure.actions,
-    )
-    await this.actionExports.attachAll()
-    // The operator may have deleted an action while this addon was down.
-    await this.actionExports.reconcile()
-
     this.ctx.addDisposer(async () => {
-      await this.actionExports?.dispose()
-      await this.detachAll()
-      // The bridge goes down with the process, and only with the process: it is
-      // never unpublished while the addon runs, because an unpublish drops the
-      // pairing the operator already entered a code for.
-      await this.bridgeHost?.dispose()
+      // The bridges go down with the process, and otherwise only when the operator deletes,
+      // disables or regenerates one: an unpublish drops the pairing the operator entered a code for.
+      await this.enqueue(async () => {
+        for (const id of Array.from(this.bridges.keys())) await this.stopInstance(id)
+      })
     })
 
     // ── Reconcile on device lifecycle ────────────────────────────────
@@ -645,96 +571,8 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     this.subscribeDeviceProvisionedForReconcile()
     this.subscribeDeviceReadyForReconcile()
     this.subscribeStorageLocationsForClips()
-    // Both subscriptions above schedule timers into the SHARED
-    // `pendingRebuildTimers`; its teardown is owned once here, not
-    // per-subscription.
-    this.disposeSharedRebuildTimers()
 
-    const ownInstance = (instanceId: string | undefined): void =>
-      assertOwnExportInstance('export-hap', EXPORT_HAP_ADDON_ID, instanceId)
-    const provider: IDeviceExportProvider = {
-      getStatus: async (input) => {
-        ownInstance(deviceExportStatusInstanceOf(input))
-        const anyPaired = Array.from(this.exposed.values()).some((m) =>
-          accessoryPaired(m.accessory),
-        )
-        const linkState: 'linked' | 'unlinked' | 'error' = this.lastError
-          ? 'error'
-          : anyPaired
-            ? 'linked'
-            : 'unlinked'
-        const setup = this.buildSetupBlock()
-        return {
-          linkState,
-          exposedDeviceCount: this.exposed.size,
-          ...(this.lastError ? { error: this.lastError } : {}),
-          ...(setup ? { setup } : {}),
-        }
-      },
-      // A UI FILTER over `DeviceType`, and nothing else — the cap contract
-      // says so and nothing enforces it on `exposeDevice`. Whether a device
-      // publishes anything is decided by its bound capabilities: a camera's
-      // orchestrator auto-detects motion, intercom, doorbell, PTZ and its
-      // accessory children; every other type goes through the capability
-      // table. See `mappers/kind.ts` for why the list stops where it does.
-      listInstances: async () => [
-        { instanceId: EXPORT_HAP_ADDON_ID, name: 'HomeKit', enabled: true, kind: 'hap-bridge' },
-      ],
-      listSupportedDeviceKinds: async ({ instanceId }) => {
-        ownInstance(instanceId)
-        return [...HAP_EXPORTABLE_DEVICE_TYPES]
-      },
-      listExposedDevices: async ({ instanceId }) => {
-        ownInstance(instanceId)
-        return Array.from(this.exposed.entries()).map(([deviceId, m]) => {
-          const entry = this.exposure.devices.find((e) => e.deviceId === deviceId)
-          return {
-            deviceId,
-            exposedAs: m.accessory.displayName,
-            ...(entry?.capabilities ? { capabilities: [...entry.capabilities] } : {}),
-          }
-        })
-      },
-      exposeDevice: async ({ instanceId, deviceId, capabilities }) => {
-        ownInstance(instanceId)
-        return this.exposeDevice(deviceId, capabilities)
-      },
-      unexposeDevice: async ({ instanceId, deviceId }) => {
-        ownInstance(instanceId)
-        return this.unexposeDevice(deviceId)
-      },
-      // ── Entities beside devices (D968): actions only, as momentary switches.
-      listSupportedEntityKinds: async () => ['device', 'action'],
-      listExposedEntities: async ({ instanceId }) => {
-        ownInstance(instanceId)
-        await this.actionExports?.reconcile()
-        return [
-          ...Array.from(this.exposed.entries()).map(([deviceId, m]) => ({
-            entity: { kind: 'device' as const, deviceId },
-            exposedAs: m.accessory.displayName,
-          })),
-          ...(this.actionExports?.list() ?? []),
-        ]
-      },
-      exposeEntity: async ({ instanceId, entity }) => {
-        ownInstance(instanceId)
-        if (entity.kind === 'device') return this.exposeDevice(entity.deviceId)
-        if (entity.kind === 'action') return this.requireActionExports().expose(entity.actionId)
-        throw new Error('export-hap: a notification target cannot be exported to HomeKit')
-      },
-      unexposeEntity: async ({ instanceId, entity }) => {
-        ownInstance(instanceId)
-        if (entity.kind === 'device') return this.unexposeDevice(entity.deviceId)
-        if (entity.kind === 'action') return this.requireActionExports().unexpose(entity.actionId)
-        throw new Error('export-hap: a notification target cannot be exported to HomeKit')
-      },
-      // ── DeviceSettingsContribution surface ─────────────────────────
-      getDeviceSettingsContribution: (input) =>
-        this.buildDeviceSettingsContribution(input.deviceId),
-      getDeviceLiveContribution: async () => null,
-      applyDeviceSettingsPatch: (input) =>
-        this.applyDeviceSettingsPatch(input.deviceId, input.patch),
-    }
+    const provider = this.buildExportProvider()
 
     // ── The HomeKit clips, as a `videoclips` SOURCE (D571) ──────────────
     //
@@ -753,11 +591,13 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       addonId: EXPORT_HAP_ADDON_ID,
       describeCamera: (deviceId) =>
         describeHksvCamera(
-          this.findEntry(deviceId),
+          this.instanceForDevice(deviceId)?.findEntry(deviceId) ?? null,
           this.hksvBuilds.lastFor(deviceId),
           // Read from the published accessory at call time: the characteristic
           // IS the state, and there is no second copy to go stale.
-          readHomekitRecordingActive(this.exposed.get(String(deviceId))?.accessories ?? []),
+          readHomekitRecordingActive(
+            this.instanceForDevice(deviceId)?.exposed.get(String(deviceId))?.accessories ?? [],
+          ),
         ),
       readCatalog: async (deviceId) =>
         (await this.hksvClipStore?.listCatalog(deviceId)) ?? {
@@ -775,28 +615,417 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
         (await this.hksvClipStore?.artifactPath(deviceId, stem, 'clip')) ?? null,
     })
 
-    return [
-      { capability: deviceExportCapability, provider },
-      { capability: videoclipsCapability, provider: clipsProvider },
-      {
-        capability: integrationInstancesCapability,
-        provider: this.requireInstances().toProvider(),
+    return {
+      providers: [
+        { capability: deviceExportCapability, provider },
+        { capability: videoclipsCapability, provider: clipsProvider },
+        {
+          capability: integrationInstancesCapability,
+          provider: this.requireInstances().toProvider(),
+        },
+      ],
+      customActions: exportHapActions,
+      actionHandlers: {
+        regenerateBridge: async ({ instanceId }) => this.regenerateBridge(instanceId),
       },
-    ]
+    }
   }
 
-  protected async onConfigChanged(): Promise<void> {
-    // The bridge identity lives in the default instance record — changing bridge name / port / pin
-    // requires a restart. Those fields are flagged `requiresRestart: true` so BaseAddon's
-    // auto-restart kicks in when they change. If the operator typed a fixedPin we honour it by
-    // patching the persisted identity (effective on the next restart: the bridge is already
-    // running with the old pin).
-    const fixedPin = this.config.fixedPin
-    if (!fixedPin || !isValidPincode(fixedPin)) return
-    const handle = this.requireRecords().kind(hapBridgesKind)
-    const row = await handle.getResolved(HAP_DEFAULT_INSTANCE_ID)
-    if (row === null || row.data.pincode === fixedPin) return
-    await handle.patch(HAP_DEFAULT_INSTANCE_ID, { pincode: fixedPin })
+  // ── Bridge lifecycle ────────────────────────────────────────────
+
+  /** Run one start / stop / regenerate at a time: bridges share one HAP storage and one clip store. */
+  private enqueue<T>(job: () => Promise<T>): Promise<T> {
+    const run = this.lifecycle.then(job)
+    this.lifecycle = run.then(
+      () => undefined,
+      () => undefined,
+    )
+    return run
+  }
+
+  /** The bridge that owns a device: the one that exposes it (the default first), else the default, else any. */
+  private instanceForDevice(deviceId: number): BridgeInstance | null {
+    const key = String(deviceId)
+    const ordered = [...this.bridges.values()].toSorted(
+      (x, y) => Number(y.id === HAP_DEFAULT_INSTANCE_ID) - Number(x.id === HAP_DEFAULT_INSTANCE_ID),
+    )
+    return (
+      ordered.find((b) => b.exposed.has(key)) ??
+      ordered.find((b) => b.findEntry(deviceId) !== null) ??
+      ordered[0] ??
+      null
+    )
+  }
+
+  private requireBridge(instanceId: string): BridgeInstance {
+    const inst = this.bridges.get(instanceId)
+    if (inst === undefined) throw new ExportInstanceUnknownError(EXPORT_HAP_ADDON_ID, instanceId)
+    return inst
+  }
+
+  /** Bring a record's runtime up from the record: (re)publish its bridge and every exposed device. */
+  private async startInstance(id: string): Promise<void> {
+    await this.stopInstance(id)
+    const resolved = await this.requireInstances().readResolved(id)
+    if (resolved === null || !resolved.enabled) return
+    if (resolved.secrets === 'unavailable') {
+      this.ctx.logger.error(
+        'export-hap: bridge not started — the keychain cannot serve its setup code',
+        { meta: { instanceId: id } },
+      )
+      return
+    }
+    const identity = identityOfBody(resolved.body)
+    const exposure = await this.loadExposure(id)
+    const inst = new BridgeInstance(
+      id,
+      resolved.body.name,
+      identity,
+      new BridgeHost({
+        displayName: resolved.body.name,
+        uuid: identity.uuid,
+        pincode: identity.pincode,
+        bind: this.bind,
+        logger: this.ctx.logger,
+      }),
+      exposure,
+    )
+    this.bridges.set(id, inst)
+    this.warnOnDuplicateName(inst)
+
+    // Sweep the persisted `exposed` list and drop entries whose
+    // `mapperKind` no longer maps to a registered factory (legacy
+    // entries written by an earlier shape of the addon, or entries
+    // whose persist write was interrupted before the kind field
+    // landed). Persist the cleaned list once so subsequent boots are
+    // quiet — without this, the no-mapper warn keeps firing at every
+    // restart even after every exposed device has been re-published.
+    const validKinds = new Set<MapperKind>(SUPPORTED_MAPPER_KINDS)
+    const cleaned = inst.exposure.devices.filter((entry) => {
+      if (validKinds.has(entry.mapperKind)) return true
+      this.ctx.logger
+        .withTags({ deviceId: Number.parseInt(entry.deviceId, 10) })
+        .info('export-hap: dropping stale exposed entry (unknown mapperKind)', {
+          meta: { mapperKind: entry.mapperKind },
+        })
+      return false
+    })
+    if (cleaned.length !== inst.exposure.devices.length) {
+      await this.setExposedDevices(inst, cleaned)
+    }
+
+    // Re-attach mappers for the surviving entries.
+    for (const entry of cleaned) {
+      const log = this.ctx.logger.withTags({
+        deviceId: Number.parseInt(entry.deviceId, 10),
+      })
+      try {
+        await this.attachMapper(inst, entry)
+        const numericId = Number.parseInt(entry.deviceId, 10)
+        if (Number.isFinite(numericId)) {
+          const fp = await this.computeExportFingerprint(inst, numericId)
+          if (fp !== null) await this.persistFingerprint(inst, numericId, fp)
+        }
+      } catch (err) {
+        log.warn('export-hap: failed to re-attach mapper on boot', {
+          meta: { error: errMsg(err) },
+        })
+      }
+    }
+
+    inst.actionExports = new ActionExports(
+      {
+        api: this.ctx.api,
+        logger: this.ctx.logger,
+        instanceId: id,
+        publish: async (accessory) => {
+          const bridged = await inst.bridgeHost.add(accessory)
+          if (bridged) return
+          await publishStandalone(accessory, {
+            pincode: inst.pincode,
+            port: 0,
+            bind: this.bind,
+            logger: this.ctx.logger,
+          })
+        },
+        unpublish: async (accessory) => {
+          if (inst.bridgeHost.holds(accessory)) {
+            inst.bridgeHost.remove(accessory)
+            return
+          }
+          await unpublishAccessory(accessory, this.ctx.logger)
+        },
+        persist: (entries) => this.setExposedActions(inst, entries),
+      },
+      inst.exposure.actions,
+    )
+    await inst.actionExports.attachAll()
+    // The operator may have deleted an action while this addon was down.
+    await inst.actionExports.reconcile()
+    this.ctx.logger.info('export-hap: bridge started', {
+      meta: { instanceId: id, name: inst.name, devices: inst.exposed.size },
+    })
+  }
+
+  /** Take a bridge's runtime down. Its pairing files stay: a stop is not a withdrawal. */
+  private async stopInstance(id: string): Promise<void> {
+    const inst = this.bridges.get(id)
+    if (inst === undefined) return
+    this.bridges.delete(id)
+    for (const timer of inst.pendingRebuildTimers.values()) clearTimeout(timer)
+    inst.pendingRebuildTimers.clear()
+    await inst.actionExports?.dispose()
+    await this.detachAll(inst)
+    await inst.bridgeHost.dispose()
+  }
+
+  /** A record changed: re-apply it. An edit that moved nothing the bridge publishes republishes nothing. */
+  private async applyChange(id: string, change: InstanceChange): Promise<void> {
+    if (change === 'deleted') {
+      await this.removeInstance(id)
+      return
+    }
+    const resolved = await this.requireInstances().readResolved(id)
+    if (resolved === null || !resolved.enabled) {
+      await this.stopInstance(id)
+      return
+    }
+    const running = this.bridges.get(id)
+    if (change === 'updated' && running !== undefined && resolved.secrets === 'resolved') {
+      const next = identityOfBody(resolved.body)
+      const same =
+        running.name === resolved.body.name &&
+        running.identity.uuid === next.uuid &&
+        running.identity.username === next.username &&
+        running.identity.pincode === next.pincode
+      if (same) return
+    }
+    await this.startInstance(id)
+  }
+
+  /**
+   * A bridge was deleted: unpublish it, wipe the pairing state of every accessory it carried (a
+   * leftover blob makes a re-created accessory advertise as already paired) and drop its exposure.
+   */
+  protected async removeInstance(id: string): Promise<void> {
+    const inst = this.bridges.get(id)
+    const uuids = inst?.pairingUuids() ?? []
+    await this.stopInstance(id)
+    for (const uuid of uuids) clearPairingFiles(uuid, this.ctx.logger)
+    await this.exposureHandle().delete(id)
+    if (id === HAP_DEFAULT_INSTANCE_ID) await this.updateGlobalSettings({ exportSyncState: {} })
+    this.ctx.logger.info('export-hap: bridge removed', {
+      meta: { instanceId: id },
+    })
+  }
+
+  /**
+   * "Regenerate" (operator decision): a new setup code, every pairing of this bridge cleared and
+   * the bridge republished. Every controller has to pair again; the instance and its exposed
+   * devices stay.
+   */
+  private regenerateBridge(instanceId: string): Promise<{ regenerated: boolean }> {
+    return this.enqueue(async () => {
+      const inst = this.requireBridge(instanceId)
+      const uuids = inst.pairingUuids()
+      await this.stopInstance(instanceId)
+      for (const uuid of uuids) clearPairingFiles(uuid, this.ctx.logger)
+      await this.requireRecords()
+        .kind(hapBridgesKind)
+        .patch(instanceId, { pincode: generatePincode() })
+      await this.startInstance(instanceId)
+      this.ctx.logger.info('export-hap: bridge setup code regenerated; pairings cleared', {
+        meta: { instanceId, accessories: uuids.length },
+      })
+      return { regenerated: true }
+    })
+  }
+
+  protected warnOnDuplicateName(inst: BridgeInstance): void {
+    const key = inst.name.trim().toLowerCase()
+    const others = [...this.bridges.values()].filter(
+      (b) => b.id !== inst.id && b.name.trim().toLowerCase() === key,
+    )
+    if (others.length === 0) return
+    this.ctx.logger.warn(
+      'export-hap: two bridges share a name — iOS Home lists them under the same label',
+      {
+        meta: {
+          instanceId: inst.id,
+          name: inst.name,
+          others: others.map((b) => b.id),
+        },
+      },
+    )
+  }
+
+  /** The instance form: the setup code is READ-ONLY (it changes only through Regenerate). */
+  protected bridgeForm(id: string | null): ConfigUISchema {
+    const inst = id === null ? undefined : this.bridges.get(id)
+    let qr = ''
+    try {
+      qr = inst?.bridgeHost.accessory?.setupURI() ?? ''
+    } catch (err) {
+      this.ctx.logger.debug('export-hap: bridge setupURI failed', {
+        meta: { instanceId: id, error: errMsg(err) },
+      })
+    }
+    return this.schema({
+      sections: [
+        {
+          id: 'bridge',
+          title: 'HomeKit bridge',
+          description:
+            'One HomeKit bridge carries every exported device that is not a camera (switches, sensors, locks, alarm panels); each camera is published as its own accessory with the same setup code. In iOS Home tap + → Add Accessory and enter the setup code.',
+          fields: [
+            ...(inst === undefined
+              ? []
+              : [
+                  {
+                    type: 'info' as const,
+                    key: 'setupCode',
+                    label: 'Setup code',
+                    content: inst.pincode,
+                  },
+                  ...(qr === ''
+                    ? []
+                    : [
+                        {
+                          type: 'qr-code' as const,
+                          key: 'setupQr',
+                          label: 'Pairing QR',
+                          caption: 'Scan with the iOS Camera app.',
+                          value: qr,
+                          size: 192,
+                        },
+                      ]),
+                ]),
+            ...(id === null
+              ? []
+              : [
+                  {
+                    type: 'addon-action-button' as const,
+                    key: '__regenerate-bridge',
+                    label: 'Regenerate setup code',
+                    description:
+                      'Creates a new setup code and unpairs every controller from this bridge: each iPhone, iPad and Apple TV must add it again. The bridge and its exported devices stay.',
+                    addonId: EXPORT_HAP_ADDON_ID,
+                    action: 'regenerateBridge',
+                    buttonLabel: 'Regenerate',
+                    variant: 'danger' as const,
+                    paramsStatic: { instanceId: id },
+                    confirmMessage:
+                      'Regenerate the setup code? Every controller paired with this bridge is unpaired, its pairings are cleared and the bridge is republished. You must pair each one again with the new code.',
+                  },
+                ]),
+          ],
+        },
+      ],
+    })
+  }
+
+  /** Whole-addon status of the bridges: linked when any is paired. */
+  private statusOf(bridges: readonly BridgeInstance[]) {
+    const anyPaired = bridges.some((b) =>
+      Array.from(b.exposed.values()).some((m) => accessoryPaired(m.accessory)),
+    )
+    const linkState: 'linked' | 'unlinked' | 'error' = this.lastError
+      ? 'error'
+      : anyPaired
+        ? 'linked'
+        : 'unlinked'
+    const setup = bridges.length > 0 ? this.buildSetupBlock(bridges[0]!) : null
+    const devices = new Set(bridges.flatMap((b) => [...b.exposed.keys()]))
+    return {
+      linkState,
+      exposedDeviceCount: devices.size,
+      ...(this.lastError ? { error: this.lastError } : {}),
+      ...(setup ? { setup } : {}),
+    }
+  }
+
+  /** The bridges a read names: one, or (no id) all of them with the default first. */
+  private bridgesOf(instanceId: string | undefined): readonly BridgeInstance[] {
+    if (instanceId !== undefined) return [this.requireBridge(instanceId)]
+    return [...this.bridges.values()].toSorted(
+      (x, y) => Number(y.id === HAP_DEFAULT_INSTANCE_ID) - Number(x.id === HAP_DEFAULT_INSTANCE_ID),
+    )
+  }
+
+  protected buildExportProvider(): IDeviceExportProvider {
+    return {
+      getStatus: async (input) =>
+        this.statusOf(this.bridgesOf(deviceExportStatusInstanceOf(input))),
+      // A UI FILTER over `DeviceType`, and nothing else — the cap contract
+      // says so and nothing enforces it on `exposeDevice`. Whether a device
+      // publishes anything is decided by its bound capabilities: a camera's
+      // orchestrator auto-detects motion, intercom, doorbell, PTZ and its
+      // accessory children; every other type goes through the capability
+      // table. See `mappers/kind.ts` for why the list stops where it does.
+      listInstances: async () =>
+        (await this.requireInstances().listResolved()).map((row) => ({
+          instanceId: row.id,
+          name: row.body.name,
+          enabled: row.enabled,
+          kind: 'hap-bridge',
+        })),
+      listSupportedDeviceKinds: async ({ instanceId }) => {
+        this.bridgesOf(instanceId)
+        return [...HAP_EXPORTABLE_DEVICE_TYPES]
+      },
+      listExposedDevices: async ({ instanceId }) =>
+        this.bridgesOf(instanceId).flatMap((inst) =>
+          Array.from(inst.exposed.entries()).map(([deviceId, m]) => {
+            const entry = inst.exposure.devices.find((e) => e.deviceId === deviceId)
+            return {
+              deviceId,
+              exposedAs: m.accessory.displayName,
+              ...(entry?.capabilities ? { capabilities: [...entry.capabilities] } : {}),
+            }
+          }),
+        ),
+      exposeDevice: async ({ instanceId, deviceId, capabilities }) =>
+        this.exposeDevice(this.requireBridge(instanceId), deviceId, capabilities),
+      unexposeDevice: async ({ instanceId, deviceId }) =>
+        this.unexposeDevice(this.requireBridge(instanceId), deviceId),
+      // ── Entities beside devices (D968): actions only, as momentary switches.
+      listSupportedEntityKinds: async () => ['device', 'action'],
+      listExposedEntities: async ({ instanceId }) => {
+        const out = []
+        for (const inst of this.bridgesOf(instanceId)) {
+          await inst.actionExports?.reconcile()
+          out.push(
+            ...Array.from(inst.exposed.entries()).map(([deviceId, m]) => ({
+              entity: { kind: 'device' as const, deviceId },
+              exposedAs: m.accessory.displayName,
+            })),
+            ...(inst.actionExports?.list() ?? []),
+          )
+        }
+        return out
+      },
+      exposeEntity: async ({ instanceId, entity }) => {
+        const inst = this.requireBridge(instanceId)
+        if (entity.kind === 'device') return this.exposeDevice(inst, entity.deviceId)
+        if (entity.kind === 'action') return this.requireActionExports(inst).expose(entity.actionId)
+        throw new Error('export-hap: a notification target cannot be exported to HomeKit')
+      },
+      unexposeEntity: async ({ instanceId, entity }) => {
+        const inst = this.requireBridge(instanceId)
+        if (entity.kind === 'device') return this.unexposeDevice(inst, entity.deviceId)
+        if (entity.kind === 'action')
+          return this.requireActionExports(inst).unexpose(entity.actionId)
+        throw new Error('export-hap: a notification target cannot be exported to HomeKit')
+      },
+      // ── DeviceSettingsContribution surface ─────────────────────────
+      // The per-device methods carry no instance id (an SDK limit): the panel speaks for the
+      // bridge that already exposes the device, else the default one.
+      getDeviceSettingsContribution: (input) =>
+        this.buildDeviceSettingsContribution(input.deviceId),
+      getDeviceLiveContribution: async () => null,
+      applyDeviceSettingsPatch: (input) =>
+        this.applyDeviceSettingsPatch(input.deviceId, input.patch),
+    }
   }
 
   // ── Identity bootstrap ─────────────────────────────────────────
@@ -813,7 +1042,8 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
   }
 
   /** The ports the identity migration reads and writes through. */
-  private identityMigrationPorts(): IdentityToInstancePorts {
+  private identityMigrationPorts(): IdentityToInstancePorts &
+    Pick<HapCataloguePorts, 'patchDefaultName' | 'clearFixedPin'> {
     const handle = this.requireRecords().kind(hapBridgesKind)
     return {
       readLegacyIdentity: async () =>
@@ -837,15 +1067,18 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       },
       readDefaultRecord: async () =>
         (await handle.getResolved(HAP_DEFAULT_INSTANCE_ID))?.data ?? null,
+      patchDefaultName: async (name) => {
+        await handle.patch(HAP_DEFAULT_INSTANCE_ID, { name })
+      },
+      // The keychain value and marker of the retired setup-code setting.
+      clearFixedPin: () => this.updateGlobalSettingsAsOperator({ fixedPin: SECRET_CLEAR }),
     }
   }
 
-  /** The identity of the default instance; see `resolveBridgeIdentity`. */
-  private async ensureIdentity(): Promise<HapBridgeIdentity> {
+  /** The default bridge: read its record, or mint it on a first boot with no bridge at all. */
+  private async ensureDefaultBridge(): Promise<void> {
     const handle = this.requireRecords().kind(hapBridgesKind)
-    const fixedPin =
-      this.config.fixedPin && isValidPincode(this.config.fixedPin) ? this.config.fixedPin : null
-    const { identity, minted } = await resolveBridgeIdentity(fixedPin, {
+    const boot = await resolveDefaultBridge({
       readRecord: async () => {
         const resolved = await this.requireInstances().readResolved(HAP_DEFAULT_INSTANCE_ID)
         if (resolved === null) return { kind: 'absent' }
@@ -855,25 +1088,25 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       },
       legacyIdentityPresent: async () =>
         legacyIdentityOf((await this.resolveGlobalStore())['identity']) !== null,
-      patchPincode: async (pincode) => {
-        await handle.patch(HAP_DEFAULT_INSTANCE_ID, { pincode })
-      },
+      otherBridgesExist: async () =>
+        (await this.requireInstances().listResolved()).some(
+          (row) => row.id !== HAP_DEFAULT_INSTANCE_ID,
+        ),
       putFresh: async (body) => {
         await handle.put({ id: HAP_DEFAULT_INSTANCE_ID, data: body }, { ifRev: 0 })
       },
       mint: () => ({
-        name: this.config.bridgeName,
+        name: DEFAULT_BRIDGE_NAME,
         username: generateUsername(),
-        uuid: buildBridgeUuid(this.config.bridgeName),
+        uuid: buildBridgeUuid(DEFAULT_BRIDGE_NAME),
         pincode: generatePincode(),
       }),
     })
-    if (minted) {
+    if (boot.kind === 'minted') {
       this.ctx.logger.info('export-hap: generated bridge identity on first boot', {
-        meta: { username: identity.username },
+        meta: { username: boot.identity.username },
       })
     }
-    return identity
   }
 
   // ── Export setup block ──────────────────────────────────────────
@@ -885,10 +1118,10 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
    * a copyable field, and a short pairing instruction. Returns `null`
    * until the bridge has booted and produced both values.
    */
-  private buildSetupBlock(): ExportSetup | null {
-    const setupCode = this.pincode
+  private buildSetupBlock(inst: BridgeInstance): ExportSetup | null {
+    const setupCode = inst.pincode
     if (!setupCode) return null
-    const qr = firstExposedAccessorySetupUri(this.exposed, this.ctx.logger)
+    const qr = firstExposedAccessorySetupUri(inst.exposed, this.ctx.logger)
     return {
       ...(qr !== undefined ? { qr } : {}),
       fields: [{ label: 'Setup code (all cameras)', value: setupCode }],
@@ -913,17 +1146,18 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
    * still said `streamPreference=auto`.
    */
   private async exposeDevice(
+    inst: BridgeInstance,
     deviceId: string,
     capabilities?: readonly string[],
     settings?: ExportDeviceSettings,
   ): Promise<void> {
     const numericId = Number.parseInt(deviceId, 10)
     const log = this.ctx.logger.withTags({ deviceId: numericId })
-    if (this.exposed.has(deviceId)) {
+    if (inst.exposed.has(deviceId)) {
       log.debug('export-hap: device already exposed — refreshing capabilities')
       // Idempotent re-expose: detach then re-attach so capability
       // changes flow through to the mapper.
-      await this.detachMapper(deviceId)
+      await this.detachMapper(inst, deviceId)
     }
 
     // The device's TYPE picks the accessory shape; its CAPABILITIES decide what
@@ -946,7 +1180,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     // dropped between the write and the rebuild, and the accessory came back
     // advertising the DEFAULT. The selector only ever worked after a full
     // addon restart, when settings loaded before the first expose.
-    const previous = this.exposure.devices.find((e) => e.deviceId === deviceId)
+    const previous = inst.exposure.devices.find((e) => e.deviceId === deviceId)
     const rebuilt: ExposedConfigEntry = {
       deviceId,
       displayName,
@@ -959,20 +1193,21 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       'settings',
       'capabilities',
     ])
-    const attached = await this.attachMapper(baseEntry)
+    const attached = await this.attachMapper(inst, baseEntry)
     const finalEntry: ExposedConfigEntry = {
       ...baseEntry,
       childAccessoryUuids: attached.childAccessoryUuids,
     }
-    const next = this.exposure.devices.filter((e) => e.deviceId !== deviceId)
+    const next = inst.exposure.devices.filter((e) => e.deviceId !== deviceId)
     next.push(finalEntry)
-    await this.setExposedDevices(next)
+    await this.setExposedDevices(inst, next)
     if (Number.isFinite(numericId)) {
-      const fp = await this.computeExportFingerprint(numericId)
-      if (fp !== null) await this.persistFingerprint(numericId, fp)
+      const fp = await this.computeExportFingerprint(inst, numericId)
+      if (fp !== null) await this.persistFingerprint(inst, numericId, fp)
     }
     log.info('export-hap: exposed device', {
       meta: {
+        instanceId: inst.id,
         displayName,
         mapperKind,
         childCount: attached.childAccessoryUuids.length,
@@ -981,6 +1216,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
   }
 
   private async unexposeDevice(
+    inst: BridgeInstance,
     deviceId: string,
     options: { readonly clearPairing?: boolean } = {},
   ): Promise<void> {
@@ -989,11 +1225,11 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     // Read the entry BEFORE it is filtered out: the accessory uuid to clear
     // depends on which shape published it, and by the time the pairing wipe
     // runs both the entry and the mapper are gone.
-    const mapperKind = this.findEntry(numericId)?.mapperKind ?? 'camera'
-    await this.detachMapper(deviceId)
-    const next = this.exposure.devices.filter((e) => e.deviceId !== deviceId)
-    if (next.length !== this.exposure.devices.length) {
-      await this.setExposedDevices(next)
+    const mapperKind = inst.findEntry(numericId)?.mapperKind ?? 'camera'
+    await this.detachMapper(inst, deviceId)
+    const next = inst.exposure.devices.filter((e) => e.deviceId !== deviceId)
+    if (next.length !== inst.exposure.devices.length) {
+      await this.setExposedDevices(inst, next)
     }
     // Wipe hap-nodejs's persisted pairing for this camera. Without this,
     // iOS's "Remove Accessory" (issued while our HAP server was down or
@@ -1009,18 +1245,19 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     // camera vanish from the Home app and demand a fresh pairing code — for
     // changing a dropdown. The operator hit exactly that.
     if (options.clearPairing !== false) {
-      clearPairingFiles(accessoryUuidFor(mapperKind, numericId), this.ctx.logger)
+      clearPairingFiles(inst.accessoryUuidOf(mapperKind, numericId), this.ctx.logger)
     }
-    await this.forgetFingerprint(numericId)
+    await this.forgetFingerprint(inst, numericId)
     // The build verdict was a fact about a camera HomeKit had; it is not a
     // fact about one it does not.
     this.hksvBuilds.forget(numericId)
-    log.info('export-hap: unexposed device')
+    log.info('export-hap: unexposed device', { meta: { instanceId: inst.id } })
   }
 
   // ── Mapper management ───────────────────────────────────────────
 
   private async attachMapper(
+    inst: BridgeInstance,
     entry: ExposedConfigEntry,
   ): Promise<{ childAccessoryUuids: readonly string[] }> {
     const factory = getMapperFactory(entry.mapperKind)
@@ -1030,6 +1267,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       deviceId: entry.deviceId,
       displayName: entry.displayName,
       options: {
+        instanceId: inst.id,
         decodeMemos: this.decodeMemos,
         resolveFfmpeg: this.pinnedFfmpeg,
         hksvClipStore: this.hksvClipStore,
@@ -1063,17 +1301,16 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       useBridge: entry.settings?.useBridge,
     })
     for (const accessory of mapper.accessories) {
-      const bridged =
-        wantsBridge && this.bridgeHost !== null && (await this.bridgeHost.add(accessory))
+      const bridged = wantsBridge && (await inst.bridgeHost.add(accessory))
       if (bridged) continue
       await publishStandalone(accessory, {
-        pincode: this.pincode,
+        pincode: inst.pincode,
         port: 0,
         bind: this.bind,
         logger: this.ctx.logger,
       })
     }
-    this.exposed.set(entry.deviceId, mapper)
+    inst.exposed.set(entry.deviceId, mapper)
     // `childAccessoryUuids` is now vestigial — kept on the persisted
     // shape so old entries from Round 2 (when children were
     // standalone) still round-trip without a migration. Always empty
@@ -1081,17 +1318,17 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     return { childAccessoryUuids: [] as readonly string[] }
   }
 
-  private async detachMapper(deviceId: string): Promise<void> {
+  private async detachMapper(inst: BridgeInstance, deviceId: string): Promise<void> {
     // Cancel any pending reconcile timer first — even when the mapper instance
     // is absent (boot reattach failed) — so a debounced reconcile can't fire
     // and republish a device we've just torn down. (Belt-and-suspenders:
     // reconcileDevice also re-checks findEntry before acting.)
-    const pendingTimer = this.pendingRebuildTimers.get(deviceId)
+    const pendingTimer = inst.pendingRebuildTimers.get(deviceId)
     if (pendingTimer) {
       clearTimeout(pendingTimer)
-      this.pendingRebuildTimers.delete(deviceId)
+      inst.pendingRebuildTimers.delete(deviceId)
     }
-    const mapper = this.exposed.get(deviceId)
+    const mapper = inst.exposed.get(deviceId)
     if (!mapper) {
       // Mapper instance gone (boot reattach failed) — nothing for the
       // bridge to remove. The persisted `childAccessoryUuids` are
@@ -1099,15 +1336,15 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       // the next successful re-attach.
       return
     }
-    this.exposed.delete(deviceId)
+    inst.exposed.delete(deviceId)
     for (const accessory of mapper.accessories) {
       // A BRIDGED accessory has no server of its own: taking it off the bridge
       // is the whole of the teardown, and calling `unpublish` on it would be a
       // no-op at best. Asking the bridge rather than re-deriving the decision
       // means a device whose flag changed between attach and detach is still
       // removed from wherever it actually went.
-      if (this.bridgeHost?.holds(accessory) === true) {
-        this.bridgeHost.remove(accessory)
+      if (inst.bridgeHost.holds(accessory)) {
+        inst.bridgeHost.remove(accessory)
         continue
       }
       await unpublishAccessory(accessory, this.ctx.logger)
@@ -1121,26 +1358,29 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     })
   }
 
-  private requireActionExports(): ActionExports {
-    if (this.actionExports === null) throw new Error('export-hap: addon is not initialised')
-    return this.actionExports
+  private requireActionExports(inst: BridgeInstance): ActionExports {
+    if (inst.actionExports === null) throw new Error('export-hap: bridge is not initialised')
+    return inst.actionExports
   }
 
-  private async detachAll(): Promise<void> {
-    const ids = Array.from(this.exposed.keys())
+  private async detachAll(inst: BridgeInstance): Promise<void> {
+    const ids = Array.from(inst.exposed.keys())
     for (const id of ids) {
-      await this.detachMapper(id)
+      await this.detachMapper(inst, id)
     }
   }
 
-  /** Pending rebuild timers per deviceId — used to debounce. Cleared
-   *  on detach so stale timers can't republish a removed accessory. */
-  private readonly pendingRebuildTimers = new Map<string, ReturnType<typeof setTimeout>>()
-
   /** Deterministic HAP accessory UUID for a device — the same one the
    *  orchestrator built it with (`mappers/kind.ts`). */
-  private hapAccessoryUuid(deviceId: number): string {
-    return accessoryUuidFor(this.findEntry(deviceId)?.mapperKind ?? 'camera', deviceId)
+  private hapAccessoryUuid(inst: BridgeInstance, deviceId: number): string {
+    return inst.accessoryUuidOf(inst.findEntry(deviceId)?.mapperKind ?? 'camera', deviceId)
+  }
+
+  /** The reconcile cache of a bridge: the default one is persisted, the others live in memory (boot re-attach seeds them). */
+  private syncStateOf(inst: BridgeInstance): Map<number, ExportTargetEntry> {
+    return inst.id === HAP_DEFAULT_INSTANCE_ID
+      ? syncStateFromJson(this.config.exportSyncState)
+      : inst.syncState
   }
 
   /**
@@ -1159,7 +1399,10 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
    * A brand-new un-probed device with no persisted entry falls back to its
    * fresh fingerprint (publishes once, acceptable).
    */
-  protected async computeExportFingerprint(deviceId: number): Promise<string | null> {
+  protected async computeExportFingerprint(
+    inst: BridgeInstance,
+    deviceId: number,
+  ): Promise<string | null> {
     try {
       const device = await this.ctx.api.deviceManager.getDevice.query({
         deviceId,
@@ -1170,7 +1413,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
         deviceType: device.type,
         features: device.features,
       })
-      const persisted = syncStateFromJson(this.config.exportSyncState).get(deviceId)?.fingerprint
+      const persisted = this.syncStateOf(inst).get(deviceId)?.fingerprint
       // Whether the camera can be RECORDED is part of what the accessory
       // advertises, so it belongs in the fingerprint: a camera whose RTSP
       // profiles were unreadable when the accessory was built was refused HKSV
@@ -1178,7 +1421,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       // (592, 2026-09-21). See `hksv/recordability-token.ts`.
       const withToken = withRecordabilityToken({
         base: fresh,
-        token: await this.readRecordabilityToken(deviceId, device.type),
+        token: await this.readRecordabilityToken(inst, deviceId, device.type),
         persisted,
       })
       // Absent `probed` (record from an older device-manager build) → treat as
@@ -1202,6 +1445,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
    * whose profiles could not be read right now.
    */
   private async readRecordabilityToken(
+    inst: BridgeInstance,
     deviceId: number,
     type: DeviceType | undefined,
   ): Promise<string | null> {
@@ -1210,7 +1454,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       const proxy = await this.ctx.fetchDevice(deviceId)
       const entries = await proxy.cameraStreams?.getProfileRtspEntries({})
       return recordabilityTokenFor({
-        allowTranscode: this.findEntry(deviceId)?.settings?.allowTranscode !== false,
+        allowTranscode: inst.findEntry(deviceId)?.settings?.allowTranscode !== false,
         entries: entries ?? null,
       })
     } catch {
@@ -1220,25 +1464,33 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
 
   /** Persist a device's current export fingerprint into `exportSyncState`
    *  (best-effort; called after a successful attach). */
-  private async persistFingerprint(deviceId: number, fingerprint: string): Promise<void> {
-    const state = syncStateFromJson(this.config.exportSyncState)
+  private async persistFingerprint(
+    inst: BridgeInstance,
+    deviceId: number,
+    fingerprint: string,
+  ): Promise<void> {
+    const state = this.syncStateOf(inst)
     state.set(deviceId, {
       fingerprint,
-      externalIds: [this.hapAccessoryUuid(deviceId)],
+      externalIds: [this.hapAccessoryUuid(inst, deviceId)],
     })
-    await this.updateGlobalSettings({
-      exportSyncState: syncStateToJson(state),
-    })
+    if (inst.id === HAP_DEFAULT_INSTANCE_ID) {
+      await this.updateGlobalSettings({
+        exportSyncState: syncStateToJson(state),
+      })
+    }
   }
 
   /** Drop a device's `exportSyncState` entry (on unexpose). */
-  private async forgetFingerprint(deviceId: number): Promise<void> {
-    const state = syncStateFromJson(this.config.exportSyncState)
+  private async forgetFingerprint(inst: BridgeInstance, deviceId: number): Promise<void> {
+    const state = this.syncStateOf(inst)
     if (!state.has(deviceId)) return
     state.delete(deviceId)
-    await this.updateGlobalSettings({
-      exportSyncState: syncStateToJson(state),
-    })
+    if (inst.id === HAP_DEFAULT_INSTANCE_ID) {
+      await this.updateGlobalSettings({
+        exportSyncState: syncStateToJson(state),
+      })
+    }
   }
 
   /**
@@ -1274,37 +1526,22 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       const deviceIdNumeric = typeof data?.deviceId === 'number' ? data.deviceId : null
       if (deviceIdNumeric === null) return
       const deviceId = String(deviceIdNumeric)
-      if (!this.findEntry(deviceIdNumeric)) return // not exposed for HAP
-      const existing = this.pendingRebuildTimers.get(deviceId)
-      if (existing) clearTimeout(existing)
-      const timer = setTimeout(() => {
-        this.pendingRebuildTimers.delete(deviceId)
-        void this.reconcileDevice(deviceId)
-      }, 500)
-      if (typeof timer.unref === 'function') timer.unref()
-      this.pendingRebuildTimers.set(deviceId, timer)
+      for (const inst of this.bridges.values()) {
+        if (!inst.findEntry(deviceIdNumeric)) continue // not exposed on this bridge
+        const existing = inst.pendingRebuildTimers.get(deviceId)
+        if (existing) clearTimeout(existing)
+        const timer = setTimeout(() => {
+          inst.pendingRebuildTimers.delete(deviceId)
+          void this.reconcileDevice(inst, deviceId)
+        }, 500)
+        if (typeof timer.unref === 'function') timer.unref()
+        inst.pendingRebuildTimers.set(deviceId, timer)
+      }
     })
-    // This disposer owns ONLY its own subscription. The shared
-    // `pendingRebuildTimers` map is written by BOTH the DeviceProvisioned and
-    // the DeviceReady subscription, so its cleanup is registered once by
-    // `disposeSharedRebuildTimers` (from `onInitialize`) rather than tied to —
-    // and run redundantly per — each per-category subscription's disposer.
+    // This disposer owns ONLY its own subscription; each bridge clears its
+    // rebuild timers when it stops (`stopInstance`).
     this.ctx.addDisposer(async () => {
       unsubscribe()
-    })
-  }
-
-  /**
-   * Register the SINGLE owner of the shared rebuild-timer cleanup. Called once
-   * from `onInitialize`. The per-category lifecycle subscriptions schedule
-   * per-device timers into `pendingRebuildTimers` but never clear the map on
-   * their own teardown — that shared resource is cleared here, exactly once, on
-   * shutdown.
-   */
-  private disposeSharedRebuildTimers(): void {
-    this.ctx.addDisposer(async () => {
-      for (const timer of this.pendingRebuildTimers.values()) clearTimeout(timer)
-      this.pendingRebuildTimers.clear()
     })
   }
 
@@ -1340,27 +1577,27 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
    * Errors are logged and swallowed — a failed reconcile leaves the prior
    * accessory up, which is strictly better than removing it.
    */
-  protected async reconcileDevice(deviceId: string): Promise<void> {
+  protected async reconcileDevice(inst: BridgeInstance, deviceId: string): Promise<void> {
     const numericId = Number.parseInt(deviceId, 10)
     if (!Number.isFinite(numericId)) return
-    const entry = this.findEntry(numericId)
+    const entry = inst.findEntry(numericId)
     if (!entry) return
     const log = this.ctx.logger.withTags({ deviceId: numericId })
 
-    const current = await this.computeExportFingerprint(numericId)
+    const current = await this.computeExportFingerprint(inst, numericId)
     if (current === null) {
       log.debug('export-hap: reconcile skipped — fingerprint unavailable (transient)')
       return
     }
-    const last = syncStateFromJson(this.config.exportSyncState).get(numericId)
+    const last = this.syncStateOf(inst).get(numericId)
 
     if (last?.fingerprint === current) {
-      if (!this.exposed.has(deviceId)) {
+      if (!inst.exposed.has(deviceId)) {
         // Exposed in config but not attached (boot re-attach failed earlier) —
         // attach now; shape is unchanged so this is a first publish, not churn.
         try {
-          await this.attachMapper(entry)
-          await this.persistFingerprint(numericId, current)
+          await this.attachMapper(inst, entry)
+          await this.persistFingerprint(inst, numericId, current)
         } catch (err) {
           log.warn('export-hap: reconcile attach failed', {
             meta: { error: errMsg(err) },
@@ -1381,9 +1618,9 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       },
     })
     try {
-      await this.detachMapper(deviceId)
-      await this.attachMapper(entry)
-      await this.persistFingerprint(numericId, current)
+      await this.detachMapper(inst, deviceId)
+      await this.attachMapper(inst, entry)
+      await this.persistFingerprint(inst, numericId, current)
     } catch (err) {
       log.warn('export-hap: reconcile rebuild failed', {
         meta: { error: errMsg(err) },
@@ -1457,7 +1694,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
 
   // ── Settings UI ─────────────────────────────────────────────────
 
-  /** The one declaration of the bind-interface field, shared by the node form and the global form. */
+  /** The one declaration of the bind-interface field: a fact of one node. */
   private interfaceNameField() {
     return this.field({
       type: 'text',
@@ -1486,10 +1723,36 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       : null
   }
 
+  /** The fleet default every camera's clip retention cascades from (same key, no data move). */
+  protected async deviceDefaultsSchema(cap: string): Promise<ConfigUISchema | null> {
+    return cap === 'device-export'
+      ? this.schema({
+          sections: [
+            {
+              id: 'export-hap-defaults',
+              title: 'HomeKit Export',
+              fields: [
+                this.field({
+                  type: 'number',
+                  key: 'clipRetentionDays',
+                  label: 'Keep HomeKit clips for (days)',
+                  description:
+                    'CamStack keeps its own copy of every clip it sends to HomeKit Secure Video — HomeKit itself never gives one back. This is the fleet default; each camera can override it, and each can switch the copies off entirely. Clips are also capped at 200 per camera, 512 MB per camera and 4 GB overall — whichever limit is reached first wins, and the log names which one.',
+                  default: DEFAULT_CONFIG.clipRetentionDays,
+                  placement: { tab: 'advanced' },
+                }),
+              ],
+            },
+          ],
+        })
+      : null
+  }
+
   /**
-   * Copy the bare `interfaceName` to its hub node row and move an inline `fixedPin` into the
-   * keychain (D986, D987). Re-resolves the config when either landed, so this boot binds the
-   * value the migration wrote.
+   * Move the old settings to where they live now (D986, D987): the bare `interfaceName` to its
+   * node row, the identity and exposure into records, the bridge name into the default instance,
+   * and the retired `bridgeName` / `fixedPin` / bare `interfaceName` rows out. Re-resolves the
+   * config when anything landed, so this boot binds the value the migration wrote.
    */
   private async migrateSettings(): Promise<void> {
     const report = await this.runMigrations(
@@ -1504,53 +1767,18 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     if (report.applied.length > 0) await this.resolveConfig()
   }
 
+  /**
+   * Only the declaration `perNodeKeys()` derives the node-scoped keys from: `interfaceName` is a
+   * fact of one node, and the settings machinery reads a per-node key through this schema. The
+   * editable surfaces are the node form, the device defaults and each bridge's own form.
+   */
   protected globalSettingsSchema() {
-    // Pairing info (setup code + `X-HM://…` URI + scannable QR) is
-    // surfaced through the `device-export` cap's `setup` block and
-    // rendered by the shared `DeviceExportPanel` — see `buildSetupBlock`.
-    // The settings form holds only the editable bridge knobs.
     return this.schema({
       sections: [
         {
           id: 'export-hap',
           title: 'HomeKit Export',
-          description:
-            'Publishes each exposed device as its own HomeKit accessory, sharing one setup code. Mark a device "Expose to HomeKit" on its settings page, then add it in the iOS Home app (+ → Add Accessory) and enter the setup code shown there.',
-          columns: 1,
-          fields: [
-            this.field({
-              type: 'text',
-              key: 'bridgeName',
-              label: 'Installation name',
-              description:
-                'The name of the shared bridge that carries every exposed device that is not a camera (switches, sensors, locks, alarm panels) — what iOS Home lists under Add Accessory. Cameras are never bridged: each one is published as its own accessory under its device name. Set it before you add the bridge in iOS Home.',
-              default: DEFAULT_CONFIG.bridgeName,
-              requiresRestart: true,
-              placement: { tab: 'advanced' },
-            }),
-            this.field({
-              // The setup code pairs a controller with the bridge: a password field, so it
-              // lives in the keychain (D783) and is withheld from non-admin reads.
-              type: 'password',
-              key: 'fixedPin',
-              label: 'Fixed setup code (XXX-XX-XXX)',
-              description:
-                'Optional. Leave blank to use the auto-generated code persisted on first boot. Useful for CI replay.',
-              default: DEFAULT_CONFIG.fixedPin,
-              requiresRestart: true,
-              placement: { tab: 'advanced' },
-            }),
-            this.interfaceNameField(),
-            this.field({
-              type: 'number',
-              key: 'clipRetentionDays',
-              label: 'Keep HomeKit clips for (days)',
-              description:
-                'CamStack keeps its own copy of every clip it sends to HomeKit Secure Video — HomeKit itself never gives one back. This is the fleet default; each camera can override it, and each can switch the copies off entirely. Clips are also capped at 200 per camera, 512 MB per camera and 4 GB overall — whichever limit is reached first wins, and the log names which one.',
-              default: DEFAULT_CONFIG.clipRetentionDays,
-              placement: { tab: 'advanced' },
-            }),
-          ],
+          fields: [this.interfaceNameField()],
         },
       ],
     })
@@ -1568,7 +1796,9 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
   ): Promise<ConfigUISchemaWithValues | null> {
     const kind = await this.resolveExportKind(deviceId)
     if (kind === null) return null
-    const entry = this.findEntry(deviceId)
+    const inst = this.instanceForDevice(deviceId)
+    if (inst === null) return null
+    const entry = inst.findEntry(deviceId)
     const settings = entry?.settings ?? DEFAULT_DEVICE_SETTINGS
     const enabled = entry !== null
     // Field keys are namespaced per exporter — the device-aggregate form
@@ -1584,27 +1814,25 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     const allowTranscodeKey = `hap:${deviceId}:allowTranscode`
     const keepClipsKey = `hap:${deviceId}:keepClips`
     const clipRetentionKey = `hap:${deviceId}:clipRetentionDays`
-    const mapper = this.exposed.get(String(deviceId)) ?? null
+    const mapper = inst.exposed.get(String(deviceId)) ?? null
     const paired = mapper ? accessoryPaired(mapper.accessory) : false
-    const bridged = mapper !== null && this.bridgeHost?.holds(mapper.accessory) === true
+    const bridged = mapper !== null && inst.bridgeHost.holds(mapper.accessory)
     const name = entry?.displayName ?? `Device ${deviceId}`
     // A bridged device is not separately pairable: the operator adds the BRIDGE
     // once and every device on it appears. Telling them to look for this
     // device's own name in "Add Accessory" would send them hunting for a tile
     // that does not exist.
     const bridgePaired =
-      this.bridgeHost?.accessory !== null && this.bridgeHost?.accessory !== undefined
-        ? accessoryPaired(this.bridgeHost.accessory)
-        : false
+      inst.bridgeHost.accessory !== null ? accessoryPaired(inst.bridgeHost.accessory) : false
     const statusLabel = !enabled
       ? 'Not exposed'
       : bridged
         ? bridgePaired
-          ? `On the “${this.config.bridgeName}” bridge, as “${name}”`
-          : `On the “${this.config.bridgeName}” bridge, as “${name}” — the BRIDGE is not paired yet. In iOS Home: + → Add Accessory → “${this.config.bridgeName}”, then enter setup code ${this.pincode}. Every bridged device arrives with it.`
+          ? `On the “${inst.name}” bridge, as “${name}”`
+          : `On the “${inst.name}” bridge, as “${name}” — the BRIDGE is not paired yet. In iOS Home: + → Add Accessory → “${inst.name}”, then enter setup code ${inst.pincode}. Every bridged device arrives with it.`
         : paired
           ? `Paired — exposed as “${name}”`
-          : `Exposed as “${name}” — not paired yet. In iOS Home: + → Add Accessory → “${name}”, then enter setup code ${this.pincode}.`
+          : `Exposed as “${name}” — not paired yet. In iOS Home: + → Add Accessory → “${name}”, then enter setup code ${inst.pincode}.`
     // Per-camera pairing QR: read this Accessory's own `X-HM://…` URI.
     // The URI bakes in this camera's category + setupID bits, so scanning
     // it opens iOS Home's pairing prompt directly on THIS camera. We
@@ -1619,7 +1847,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     // accessory's own URI here produced an empty string and a QR tile that
     // rendered nothing, which reads as "pairing is broken" rather than "pair
     // the bridge once".
-    const qrSource = bridged ? (this.bridgeHost?.accessory ?? null) : (mapper?.accessory ?? null)
+    const qrSource = bridged ? inst.bridgeHost.accessory : (mapper?.accessory ?? null)
     let qrValue = ''
     if (qrSource) {
       try {
@@ -1699,7 +1927,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
               key: `hap:${deviceId}:hksvRecordingStatus`,
               label: 'HomeKit recording (Secure Video)',
               content: describeHomekitRecording(
-                readHomekitRecordingActive(this.exposed.get(String(deviceId))?.accessories ?? []),
+                readHomekitRecordingActive(inst.exposed.get(String(deviceId))?.accessories ?? []),
                 this.hksvBuilds.lastFor(deviceId),
               ),
               showWhen: { field: enabledKey, equals: true },
@@ -1791,8 +2019,8 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
           key: '__hap-pair-qr',
           label: paired ? 'Pairing QR (already paired)' : 'Pairing QR',
           caption: paired
-            ? `Already paired with at least one device. Scan from another iPhone / iPad to add it there too. Setup code: ${this.pincode}.`
-            : `Scan with the iOS Camera app to pair this accessory in HomeKit. Setup code: ${this.pincode}.`,
+            ? `Already paired with at least one device. Scan from another iPhone / iPad to add it there too. Setup code: ${inst.pincode}.`
+            : `Scan with the iOS Camera app to pair this accessory in HomeKit. Setup code: ${inst.pincode}.`,
           value: qrValue,
           size: 192,
           alt: `HomeKit pairing QR for ${name}`,
@@ -1839,13 +2067,17 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
   ): Promise<{ success: true }> {
     const deviceIdStr = String(deviceId)
     const log = this.ctx.logger.withTags({ deviceId })
-    const current = this.findEntry(deviceId)
-    // Runtime truth — `this.exposed` is populated by `attachMapper`
+    const inst = this.instanceForDevice(deviceId)
+    if (inst === null) {
+      throw new Error('export-hap: no HomeKit bridge is running — add or enable one first')
+    }
+    const current = inst.findEntry(deviceId)
+    // Runtime truth — `inst.exposed` is populated by `attachMapper`
     // after a successful publish. A persisted entry that never made it
     // through attach (e.g. a stale legacy entry that errored at boot)
     // must be treated as NOT exposed so the next toggle-ON kicks off
     // a fresh `exposeDevice` (idempotent — overwrites the stale entry).
-    const wasEnabled = this.exposed.has(deviceIdStr)
+    const wasEnabled = inst.exposed.has(deviceIdStr)
 
     // ── Standard keys (enabled / streamPreference) ─────────────────
     // Both keys are namespaced per-exporter — see buildDeviceSettingsContribution.
@@ -1909,14 +2141,14 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
 
     if (!enabledValue) {
       if (wasEnabled) {
-        await this.unexposeDevice(deviceIdStr)
+        await this.unexposeDevice(inst, deviceIdStr)
       }
       return { success: true as const }
     }
 
     if (!wasEnabled) {
-      await this.exposeDevice(deviceIdStr)
-      await this.updateEntrySettings(deviceIdStr, nextSettings)
+      await this.exposeDevice(inst, deviceIdStr)
+      await this.updateEntrySettings(inst, deviceIdStr, nextSettings)
       return { success: true as const }
     }
 
@@ -1938,7 +2170,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       useBridge: current?.settings?.useBridge,
     })
     const willBridge = shouldBridge({ mapperKind, useBridge })
-    await this.updateEntrySettings(deviceIdStr, nextSettings)
+    await this.updateEntrySettings(inst, deviceIdStr, nextSettings)
     // HKSV is rebuilt for the same reason as the stream preference, and one
     // stronger: `recording` adds the CameraRecordingManagement and
     // CameraOperatingMode services and moves the MotionSensor onto the
@@ -1965,7 +2197,9 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
         // identities to iOS, and leaving the stale pairing blob behind is what
         // makes an accessory advertise `sf=0` and never reappear in "Add
         // Accessory". So that one case wipes it, deliberately.
-        await this.unexposeDevice(deviceIdStr, { clearPairing: wasBridged !== willBridge })
+        await this.unexposeDevice(inst, deviceIdStr, {
+          clearPairing: wasBridged !== willBridge,
+        })
         // The settings travel INTO the rebuild. `unexposeDevice` has just
         // deleted the stored entry, so `carryForward` inside `exposeDevice` has
         // nothing to carry and would rebuild on the DEFAULTS — which is the
@@ -1977,7 +2211,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
         // with it the advertised resolution list, is already built. Measured
         // 2026-09-17 — the stored value read `mid` while the advertisement
         // still said `streamPreference=auto`.
-        await this.exposeDevice(deviceIdStr, undefined, nextSettings)
+        await this.exposeDevice(inst, deviceIdStr, undefined, nextSettings)
       } catch (err) {
         log.warn('export-hap: failed to refresh accessory after a settings change', {
           meta: { error: errMsg(err) },
@@ -2053,32 +2287,41 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
   }
 
   /** The exposure record's handle: one row per bridge instance, under the instance id. */
-  private exposureHandle() {
+  protected exposureHandle() {
     return this.requireRecords().kind(hapBridgeExportsKind)
   }
 
-  /** Load the default instance's exposure record; create it empty when none exists. */
-  private async loadExposure(): Promise<void> {
+  /** Load a bridge's exposure record; create it empty when none exists. */
+  private async loadExposure(id: string): Promise<HapBridgeExportsBody> {
     const handle = this.exposureHandle()
-    const row = await handle.get(HAP_DEFAULT_INSTANCE_ID)
-    if (row !== null) {
-      this.exposure = row.data
-      return
+    const row = await handle.get(id)
+    if (row !== null) return row.data
+    const empty: HapBridgeExportsBody = {
+      name: HAP_EXPOSURE_NAME,
+      devices: [],
+      actions: [],
     }
-    await handle.put({ id: HAP_DEFAULT_INSTANCE_ID, data: this.exposure }, { ifRev: 0 })
+    await handle.put({ id, data: empty }, { ifRev: 0 })
+    return empty
   }
 
-  private async writeExposure(next: HapBridgeExportsBody): Promise<void> {
-    await this.exposureHandle().put({ id: HAP_DEFAULT_INSTANCE_ID, data: next })
-    this.exposure = next
+  private async writeExposure(inst: BridgeInstance, next: HapBridgeExportsBody): Promise<void> {
+    await this.exposureHandle().put({ id: inst.id, data: next })
+    inst.exposure = next
   }
 
-  private setExposedDevices(devices: readonly ExposedConfigEntry[]): Promise<void> {
-    return this.writeExposure({ ...this.exposure, devices })
+  private setExposedDevices(
+    inst: BridgeInstance,
+    devices: readonly ExposedConfigEntry[],
+  ): Promise<void> {
+    return this.writeExposure(inst, { ...inst.exposure, devices })
   }
 
-  private setExposedActions(actions: readonly ActionExportEntry[]): Promise<void> {
-    return this.writeExposure({ ...this.exposure, actions })
+  private setExposedActions(
+    inst: BridgeInstance,
+    actions: readonly ActionExportEntry[],
+  ): Promise<void> {
+    return this.writeExposure(inst, { ...inst.exposure, actions })
   }
 
   /** The ports the exposure migration reads and writes through. */
@@ -2099,19 +2342,15 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     }
   }
 
-  private findEntry(deviceId: number): ExposedConfigEntry | null {
-    const id = String(deviceId)
-    return this.exposure.devices.find((e) => e.deviceId === id) ?? null
-  }
-
   private async updateEntrySettings(
+    inst: BridgeInstance,
     deviceIdStr: string,
     settings: ExportDeviceSettings,
   ): Promise<void> {
-    const next = this.exposure.devices.map<ExposedConfigEntry>((e) =>
+    const next = inst.exposure.devices.map<ExposedConfigEntry>((e) =>
       e.deviceId === deviceIdStr ? { ...e, settings } : e,
     )
-    await this.setExposedDevices(next)
+    await this.setExposedDevices(inst, next)
   }
 }
 

@@ -34,6 +34,8 @@ export interface ActionExportEntry {
 export interface ActionExportPorts {
   readonly api: ExportEntityApi
   readonly logger: IScopedLogger
+  /** The bridge instance these switches belong to; absent is the default instance. */
+  readonly instanceId?: string | undefined
   readonly publish: (accessory: Accessory) => Promise<void>
   readonly unpublish: (accessory: Accessory) => Promise<void>
   readonly persist: (entries: readonly ActionExportEntry[]) => Promise<void>
@@ -62,6 +64,11 @@ export class ActionExports {
       entity: { kind: 'action', actionId: e.actionId },
       exposedAs: e.displayName,
     }))
+  }
+
+  /** Every accessory currently published for an action (to wipe their pairing state). */
+  accessoryUuids(): readonly string[] {
+    return [...this.mappers.values()].flatMap((m) => m.accessories.map((a) => a.UUID))
   }
 
   /** Re-publish the persisted selection (boot). One failure does not stop the rest. */
@@ -104,7 +111,9 @@ export class ActionExports {
     if (this.entries.some((e) => e.actionId === actionId)) {
       await this.save(this.entries.filter((e) => e.actionId !== actionId))
     }
-    this.ports.logger.info('export-hap: unexposed action', { tags: { actionId } })
+    this.ports.logger.info('export-hap: unexposed action', {
+      tags: { actionId },
+    })
   }
 
   /**
@@ -124,7 +133,10 @@ export class ActionExports {
       return
     }
     const { dropped } = pruneDeletedEntities(
-      this.entries.map((e) => ({ kind: 'action' as const, actionId: e.actionId })),
+      this.entries.map((e) => ({
+        kind: 'action' as const,
+        actionId: e.actionId,
+      })),
       { actionIds: live, targetIds: new Set() },
       this.ports.logger,
       EXPORTER,
@@ -146,6 +158,7 @@ export class ActionExports {
     const mapper = buildActionSwitch({
       actionId: entry.actionId,
       displayName: entry.displayName,
+      instanceId: this.ports.instanceId,
       run: async () => {
         await runExportedAction(this.ports.api, this.ports.logger, {
           exporter: EXPORTER,

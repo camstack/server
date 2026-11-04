@@ -55,7 +55,10 @@ export async function buildGenericAccessory(input: GenericAccessoryInput): Promi
   }
 
   const deviceType = await resolveDeviceType(proxy)
-  const accessory = new Accessory(displayName, accessoryUuidFor('generic', numericId))
+  const accessory = new Accessory(
+    displayName,
+    accessoryUuidFor('generic', numericId, options.instanceId),
+  )
   accessory.category = accessoryCategoryFor(deviceType)
 
   await populateAccessoryInfo(accessory, proxy, displayName, 'Accessory')
