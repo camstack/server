@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.221] - 2026-11-04
+
 ### Changed
 
 - MCP: report_issue drafts a GitHub issue for camstack/server (typed environment, per-kind logs, every string scrubbed with redaction counts) and files it with your own gh only after you read the full text and confirm; without gh it returns a prefilled link

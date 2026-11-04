@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.492] - 2026-11-04
+
 ### Changed
 
 - The client entry exports the remote-key vocabulary (role labels, legends and icons) so the viewer can show a symbol for every key
