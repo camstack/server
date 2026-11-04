@@ -2,7 +2,13 @@
  * The chart family (D899): one look for every time-based chart, built on
  * uPlot, themed only through `--color-chart-series-*` and the neutral tokens.
  */
-export { TimeSeriesChart, type ChartRange, type TimeSeriesChartProps } from './TimeSeriesChart'
+export {
+  TimeSeriesChart,
+  type ChartBand,
+  type ChartBandTone,
+  type ChartRange,
+  type TimeSeriesChartProps,
+} from './TimeSeriesChart'
 export {
   StateTimeline,
   stateStyle,

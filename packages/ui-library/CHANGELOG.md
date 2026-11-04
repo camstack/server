@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Device History tab lists an appliance's runs (start, end, duration, energy, peak and average power, outcome) and shades each run on the power chart
+
 ## [1.2.383] - 2026-11-04
 
 ### Changed

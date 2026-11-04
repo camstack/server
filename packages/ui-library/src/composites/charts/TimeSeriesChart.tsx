@@ -16,8 +16,10 @@ import type uPlot from 'uplot'
 import { useUiText } from '../../contexts/ui-text'
 import { ChartFrame, ChartPlaceholder, type ChartLegendEntry } from './chart-frame'
 import { formatCursorTime, formatTimeLabel } from './chart-data'
+import { bandsAt, type ChartBand } from './chart-bands'
 import { chartSeriesStyle, resolveChartColor, withAlpha } from './chart-palette'
 import {
+  bandShadeHook,
   chartCursor,
   defaultAxisSpec,
   formatChartValue,
@@ -46,6 +48,7 @@ import {
 } from './uplot-host'
 
 export type { TimeSeriesDef } from './time-series-model'
+export type { ChartBand, ChartBandTone } from './chart-bands'
 
 export interface ChartRange {
   readonly from: number
@@ -55,6 +58,8 @@ export interface ChartRange {
 export interface TimeSeriesChartProps<TId extends string = string> {
   readonly title: string
   readonly series: readonly TimeSeriesDef[]
+  /** Spans shaded behind the lines (a run, a window); the point tooltip names the ones under the cursor. */
+  readonly bands?: readonly ChartBand[]
   /** The window the x axis spans; default: the data's own span. */
   readonly range?: ChartRange
   /** Plot height in px. Default 120. */
@@ -82,6 +87,7 @@ export interface TimeSeriesChartProps<TId extends string = string> {
 }
 
 const DEFAULT_HEIGHT = 120
+const NO_BANDS: readonly ChartBand[] = []
 
 function seriesSpan(range: ChartRange | undefined, xs: readonly number[]): number {
   if (range !== undefined) return range.to - range.from
@@ -92,6 +98,7 @@ function seriesSpan(range: ChartRange | undefined, xs: readonly number[]): numbe
 interface SeriesTooltipInput {
   readonly model: TimeSeriesModel
   readonly series: readonly TimeSeriesDef[]
+  readonly bands: readonly ChartBand[]
   readonly range: ChartRange | undefined
   readonly preference: DisplayPreference | undefined
   readonly onDataX: (dataX: number | null) => void
@@ -119,6 +126,11 @@ function seriesTooltip(input: SeriesTooltipInput): ChartTooltipSpec {
           quantity: sample.quantity,
           unit: sample.unit ?? null,
         })),
+        extra: bandsAt(input.bands, at).map((b) => ({
+          id: `band:${b.id}`,
+          label: b.title,
+          value: b.label,
+        })),
       })
     },
     onDataX: input.onDataX,
@@ -128,6 +140,7 @@ function seriesTooltip(input: SeriesTooltipInput): ChartTooltipSpec {
 export function TimeSeriesChart<TId extends string = string>({
   title,
   series,
+  bands = NO_BANDS,
   range,
   height = DEFAULT_HEIGHT,
   stacked = false,
@@ -148,6 +161,8 @@ export function TimeSeriesChart<TId extends string = string>({
   const [cursorIdx, setCursorIdx] = useState<number | null>(null)
   const modelRef = useRef(model)
   modelRef.current = model
+  const bandsRef = useRef(bands)
+  bandsRef.current = bands
   const rangeRef = useRef(range)
   rangeRef.current = range
 
@@ -295,7 +310,10 @@ export function TimeSeriesChart<TId extends string = string>({
         bands,
         cursor: chartCursor(syncKey),
         hooks: {
-          drawClear: [gapShadeHook(() => modelRef.current.gaps)],
+          drawClear: [
+            bandShadeHook(() => bandsRef.current),
+            gapShadeHook(() => modelRef.current.gaps),
+          ],
           setCursor: [(u) => setCursorIdx(u.cursor.idx ?? null)],
         },
       }
@@ -309,13 +327,14 @@ export function TimeSeriesChart<TId extends string = string>({
       seriesTooltip({
         model,
         series,
+        bands,
         range,
         preference: displayPreference,
         onDataX: (dataX) => {
           setCursorIdx(dataX === null ? null : nearestPointIndex(model.xs, dataX))
         },
       }),
-    [model, series, range, displayPreference],
+    [model, series, bands, range, displayPreference],
   )
 
   const shown = readoutAt(model, cursorIdx)

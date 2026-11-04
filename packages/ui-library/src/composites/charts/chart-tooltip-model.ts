@@ -406,6 +406,8 @@ export interface LineTooltipBodyInput {
   readonly timeLabel: string
   readonly series: readonly LineTooltipSample[]
   readonly preference?: DisplayPreference
+  /** Rows after the series (e.g. the bands under the cursor). */
+  readonly extra?: readonly ChartTooltipLine[]
 }
 
 /** Time plus one line per visible series. */
@@ -423,7 +425,7 @@ export function lineTooltipBody(input: LineTooltipBodyInput): ChartTooltipBody {
         preference: input.preference,
       }),
     }))
-  return asBody(input.timeLabel, lines)
+  return asBody(input.timeLabel, [...lines, ...(input.extra ?? [])])
 }
 
 /** The state in force at `t`, and how long that span lasts. */

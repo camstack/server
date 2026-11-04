@@ -8,13 +8,18 @@
  * point is the empty state — never a flat zero.
  */
 import { useMemo, useState, type JSX, type ReactNode } from 'react'
-import type { DeviceHistoryQueryManyEntry, DeviceHistorySeriesInfo } from '@camstack/types'
+import type {
+  DeviceHistoryQueryManyEntry,
+  DeviceHistorySeriesInfo,
+  DeviceRun,
+} from '@camstack/types'
 import { useUiText, type UiTextFn } from '../../contexts/ui-text'
 import { Select } from '../../primitives/select'
 import { BarSeries } from '../charts/BarSeries'
 import { ChartPlaceholder } from '../charts/chart-frame'
 import { StateTimeline } from '../charts/StateTimeline'
 import { TimeSeriesChart, type TimeSeriesDef } from '../charts/TimeSeriesChart'
+import { RUN_BANDS_SERIES_KEY, runBands } from './history-runs'
 import {
   energyBuckets,
   filterOccupancyLines,
@@ -38,6 +43,9 @@ export interface HistoryChartProps {
   readonly compare: boolean
   readonly syncKey: string
   readonly actions?: ReactNode
+  /** The device's runs, drawn as bands on its power chart; an open run extends to `now`. */
+  readonly runs?: readonly DeviceRun[]
+  readonly now?: number
 }
 
 const ALL = '__all__'
@@ -81,6 +89,8 @@ export function HistoryChart({
   compare,
   syncKey,
   actions,
+  runs,
+  now,
 }: HistoryChartProps): JSX.Element {
   const t = useUiText()
   const pending = reads === null
@@ -158,6 +168,8 @@ export function HistoryChart({
       compare={compare}
       syncKey={syncKey}
       actions={actions}
+      runs={spec.series.some((s) => s.key === RUN_BANDS_SERIES_KEY) ? runs : undefined}
+      now={now}
       labelOf={(s) => (spec.series.length > 1 || s.scope !== '' ? seriesLabel(s) : spec.title)}
     />
   )
@@ -178,6 +190,8 @@ interface LinesChartProps {
   readonly actions?: ReactNode
   readonly labelOf: (s: DeviceHistorySeriesInfo) => string
   readonly toolbar?: ReactNode
+  readonly runs?: readonly DeviceRun[]
+  readonly now?: number
   /** Slot per series (stable identity); default its index. */
   readonly colorOf?: (s: DeviceHistorySeriesInfo, index: number) => number
 }
@@ -194,6 +208,8 @@ function LinesChart({
   labelOf,
   toolbar,
   colorOf,
+  runs,
+  now,
 }: LinesChartProps): JSX.Element {
   const t = useUiText()
   const errors = [
@@ -241,12 +257,17 @@ function LinesChart({
     })
     return out
   }, [series, entryFor, window.from, compare, reads, labelOf, colorOf, t])
+  const bands = useMemo(
+    () => (runs === undefined ? [] : runBands(runs, now ?? window.to, window, t)),
+    [runs, now, window, t],
+  )
   if (errors.length > 0)
     return <ReadFailed title={title} error={errors.join('; ')} actions={actions} />
   return (
     <TimeSeriesChart
       title={title}
       series={defs}
+      bands={bands}
       range={window}
       syncKey={syncKey}
       pending={reads === null}

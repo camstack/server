@@ -9389,7 +9389,30 @@
       "allZones": "All zones",
       "filterClass": "Class",
       "allClasses": "All classes",
-      "readFailed": "This history could not be read: {{error}}"
+      "readFailed": "This history could not be read: {{error}}",
+      "runs": {
+        "band": "Run",
+        "bandRunning": "running · {{parts}}",
+        "status": {
+          "running": "Running",
+          "completed": "Completed",
+          "aborted": "Aborted",
+          "error": "Error",
+          "unknown": "Unknown"
+        },
+        "start": "Start",
+        "end": "End",
+        "duration": "Duration",
+        "energy": "Energy",
+        "peak": "Peak",
+        "avg": "Average",
+        "outcome": "Outcome",
+        "outcomeNoSort": "Outcomes have no order",
+        "runningSince": "Running since {{time}}",
+        "title": "Runs",
+        "count_one": "{{count}} run",
+        "count_other": "{{count}} runs"
+      }
     },
     "consumableLevel": {
       "ok": "OK",

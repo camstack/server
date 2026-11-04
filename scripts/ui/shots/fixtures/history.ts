@@ -86,6 +86,50 @@ const answerItem = (item: QueryManyItem, from: number, to: number) => {
   return { ok: true, result: queryResult(list, item.key, item.scope, from, to) }
 }
 
+const RUN_AT = (daysBack: number, hour: number): number =>
+  Date.UTC(2026, 9, 9 - daysBack, Math.floor(hour), Math.round((hour % 1) * 60))
+
+const applianceRun = (
+  startedAt: number,
+  endedAt: number | null,
+  outcome: 'completed' | 'aborted' | null,
+  energyKwh: number | null,
+) => ({
+  runId: `202:${startedAt}`,
+  deviceId: 202,
+  kind: 'appliance',
+  state: endedAt === null ? 'open' : 'closed',
+  startedAt,
+  endedAt,
+  durationMs: endedAt === null ? null : endedAt - startedAt,
+  outcome,
+  startSource: 'running-state',
+  endSource: endedAt === null ? null : 'running-state',
+  runningSource: 'assigned',
+  phases: [],
+  detail: {
+    kind: 'appliance',
+    energyKwh,
+    energyMethod: energyKwh === null ? null : 'history-integral',
+    peakW: energyKwh === null ? null : 1800,
+    avgW: energyKwh === null ? null : 740,
+    program: null,
+    remainingAtStartSec: null,
+    finalPhase: null,
+    energyStartKwh: null,
+    powerObservedMs: 6_000_000,
+  },
+})
+
+/** The dishwasher's runs, newest first: one open, one closed with no energy reading. */
+const DEVICE_RUNS = [
+  applianceRun(NOW - 25 * 60_000, null, null, 0.31),
+  applianceRun(RUN_AT(0, 7), RUN_AT(0, 8.66), 'completed', 1.32),
+  applianceRun(RUN_AT(1, 20), RUN_AT(1, 21.2), 'aborted', null),
+  applianceRun(RUN_AT(1, 7), RUN_AT(1, 8.66), 'completed', 1.28),
+  applianceRun(RUN_AT(2, 20), RUN_AT(2, 21.66), 'completed', 1.35),
+]
+
 const PANELS_ROW = {
   namespace: 'admin.history-panels',
   revision: 3,
@@ -202,6 +246,8 @@ export default defineFixtures({
     }) => ({
       results: i.items.map((item) => answerItem(item, i.from, i.to)),
     }),
+    'deviceRuns.listRuns': (i: { deviceId: number }) =>
+      i.deviceId === 202 ? { runs: DEVICE_RUNS, nextCursor: null } : { __error: 'no provider' },
     'deviceHistory.getDeviceEnabled': { enabled: true },
     'deviceHistory.listOrphanSeries': ORPHANS,
     // 904 came back between the listing and the delete: the hub refuses it.

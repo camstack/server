@@ -91,6 +91,10 @@ export type ChartChromeToken =
   | 'border-subtle'
   | 'surface'
   | 'primary'
+  | 'info'
+  | 'success'
+  | 'warning'
+  | 'danger'
 
 /**
  * Resolve a theme token to the colour the canvas paints. Reads the computed

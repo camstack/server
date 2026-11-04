@@ -4,6 +4,7 @@
  * hole shading. Every colour is a FUNCTION so a theme switch is a redraw.
  */
 import type uPlot from 'uplot'
+import { bandToken, type ChartBand } from './chart-bands'
 import { formatTimeLabel, type GapSpan } from './chart-data'
 import { resolveChartColor, withAlpha } from './chart-palette'
 import { axisTicks, niceMax, niceRange, type AxisScale } from './chart-scale'
@@ -139,6 +140,25 @@ export function gapShadeHook(spans: () => readonly GapSpan[]): (u: uPlot) => voi
     ctx.restore()
   }
 }
+
+/** Paint the bands behind the lines, each in its tone. */
+export function bandShadeHook(bands: () => readonly ChartBand[]): (u: uPlot) => void {
+  return (u) => {
+    const list = bands()
+    if (list.length === 0) return
+    const ctx = u.ctx
+    ctx.save()
+    for (const b of list) {
+      const x0 = u.valToPos(b.from, 'x', true)
+      const x1 = u.valToPos(b.to, 'x', true)
+      ctx.fillStyle = withAlpha(resolveChartColor(bandToken(b.tone)), BAND_SHADE_ALPHA)
+      ctx.fillRect(x0, u.bbox.top, Math.max(1, x1 - x0), u.bbox.height)
+    }
+    ctx.restore()
+  }
+}
+
+const BAND_SHADE_ALPHA = 0.16
 
 // ── Values ──────────────────────────────────────────────────────────────
 

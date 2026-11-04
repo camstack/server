@@ -359,6 +359,10 @@ a `detail` branch so a mower or vacuum adds a branch, not a kind.
   the confirmed flip one stop dwell later. An anti-crease pulse shorter than the
   start delay neither keeps a run alive nor opens one. The finish notification's
   facts match a run that ended up to 30 min before the announcement.
+- **UI**: the History tab reads `listRuns` (`use-device-runs.ts`) and, only when the
+  cap answered with rows, shows `DeviceRunsPanel` and shades each run as a band on
+  the `power-meter.power` chart (an open run reaches now); a row opens the run
+  plus 15 minutes either side. An unanswered or failed read shows neither.
 
 ## Traps
 

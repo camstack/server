@@ -25,6 +25,7 @@ import { Skeleton } from '../../primitives/skeleton'
 import { EmptyState } from '../empty-state'
 import { ErrorBox } from '../error-box'
 import { KebabMenu } from '../kebab-menu'
+import { DeviceRunsPanel } from '../DeviceRunsPanel'
 import { HistoryChart } from './HistoryChart'
 import {
   chartKeys,
@@ -41,6 +42,7 @@ import {
   type HistoryWindowId,
 } from './history-window'
 import { HistoryWindowBar } from './HistoryWindowBar'
+import { useDeviceRuns } from './use-device-runs'
 import { anchorNow, readItemId, useDeviceSeriesList, useHistoryReads } from './use-device-history'
 import { useHistoryPanels } from './use-history-panels'
 
@@ -80,6 +82,7 @@ export function DeviceHistoryView({
   const now = anchorNow(Date.now(), spanGuess.to - spanGuess.from)
   const range = resolveHistoryWindow(windowId, now, custom)
 
+  const runs = useDeviceRuns(deviceId)
   const { presence, list } = useDeviceSeriesList(deviceId)
   const panels = useHistoryPanels()
   const hidden = useMemo(
@@ -186,6 +189,10 @@ export function DeviceHistoryView({
   }
 
   const syncKey = `device-history:${String(deviceId)}`
+  const showWindow = (w: { readonly from: number; readonly to: number }): void => {
+    setWindowParam('custom')
+    setCustomParam(encodeCustomWindow(w))
+  }
   return (
     <div className={STACK_GAP}>
       {fixedWindow === undefined && (
@@ -209,6 +216,9 @@ export function DeviceHistoryView({
             </Button>
           )}
         </div>
+      )}
+      {fixedWindow === undefined && runs !== undefined && (
+        <DeviceRunsPanel runs={runs} now={now} onSelectWindow={showWindow} />
       )}
       {visible.map((section) => {
         const open = !collapsed.has(section.id)
@@ -249,6 +259,8 @@ export function DeviceHistoryView({
                   window={range}
                   compare={compare}
                   syncKey={syncKey}
+                  runs={runs}
+                  now={now}
                   actions={
                     <KebabMenu
                       title={t('uiLibrary.history.chartMenu', 'Chart actions')}

@@ -278,3 +278,15 @@ describe('tooltip values carry their unit', () => {
     expect(body.liveText).toContain('1.5 kWh')
   })
 })
+
+describe('lineTooltipBody extra rows', () => {
+  it('appends the rows after the series lines', () => {
+    const body = lineTooltipBody({
+      timeLabel: '10:00',
+      series: [{ id: 'p', label: 'Power', value: 5, unit: 'W' }],
+      extra: [{ id: 'band:r1', label: 'Run', value: '10m 0s · 1.50 kWh' }],
+    })
+    expect(body.lines.map((l) => l.id)).toEqual(['p', 'band:r1'])
+    expect(body.liveText).toContain('1.50 kWh')
+  })
+})

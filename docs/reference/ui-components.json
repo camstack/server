@@ -3582,6 +3582,13 @@
       "summary": "Short nouns and the stock words they replace."
     },
     {
+      "name": "DEVICE_RUNS_PAGE",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-history/use-device-runs.ts",
+      "summary": "How many runs the panel and the bands are given; the cap's page size."
+    },
+    {
       "name": "DEVICE_TYPE_CONTROL",
       "kind": "constant",
       "area": "composites",
@@ -4278,6 +4285,39 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-meta.ts",
       "summary": "Runtime-string-safe role lookup; unknown roles fall back to `GenericSensor`."
+    },
+    {
+      "name": "DeviceRunsPanel",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/DeviceRunsPanel.tsx",
+      "summary": "DeviceRunsPanel — the runs of an appliance, newest first, on the device's History tab: start, end, duration, energy, peak and mean power, outcome. A row opens the run's window (the run plus a margin) in the history view.",
+      "props": [
+        {
+          "name": "runs",
+          "type": "readonly DeviceRun[]",
+          "optional": false,
+          "doc": "Runs as the cap returned them (newest first); never an unanswered query."
+        },
+        {
+          "name": "now",
+          "type": "number",
+          "optional": false,
+          "doc": "The instant an open run counts up to."
+        },
+        {
+          "name": "onSelectWindow",
+          "type": "(window: HistoryWindow) => void",
+          "optional": false,
+          "doc": "A row was chosen: show this window."
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
     },
     {
       "name": "DeviceSelectField",
@@ -5908,6 +5948,18 @@
         {
           "name": "actions",
           "type": "ReactNode",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "runs",
+          "type": "readonly DeviceRun[]",
+          "optional": true,
+          "doc": "The device's runs, drawn as bands on its power chart; an open run extends to `now`."
+        },
+        {
+          "name": "now",
+          "type": "number",
           "optional": true,
           "doc": ""
         }
@@ -9610,6 +9662,20 @@
       "summary": "`<BrowserRouter basename>`: the mount without its trailing slash."
     },
     {
+      "name": "RUN_WINDOW_MARGIN_MS",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-history/history-runs.ts",
+      "summary": "The context kept on each side of a run when a row opens it."
+    },
+    {
+      "name": "runBands",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-history/history-runs.ts",
+      "summary": "One band per run that overlaps `window`; the label states the duration and the energy."
+    },
+    {
       "name": "RunningBadge",
       "kind": "component",
       "area": "composites",
@@ -9695,6 +9761,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/webrtc-diagnostics/RunReport.tsx",
       "summary": "One hub session run, rendered: the verdict first, then the evidence by layer (hub candidates → timeline → path → media). Every unmeasured value reads \"unknown\" (D393), never 0."
+    },
+    {
+      "name": "runWindow",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-history/history-runs.ts",
+      "summary": "The window that frames a run: the run plus each side."
     },
     {
       "name": "sameDeviceName",
@@ -12146,6 +12219,12 @@
           "doc": ""
         },
         {
+          "name": "bands",
+          "type": "readonly ChartBand[]",
+          "optional": true,
+          "doc": "Spans shaded behind the lines (a run, a window); the point tooltip names the ones under the cursor."
+        },
+        {
           "name": "range",
           "type": "ChartRange",
           "optional": true,
@@ -12782,6 +12861,13 @@
       "area": "contexts",
       "file": "packages/ui-library/src/contexts/device-quick-detail.tsx",
       "summary": "The host's open callback, or null when no provider is mounted."
+    },
+    {
+      "name": "useDeviceRuns",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-history/use-device-runs.ts",
+      "summary": "The newest runs, or `undefined` while unanswered, absent or empty."
     },
     {
       "name": "useDevices",

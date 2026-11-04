@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Device History tab shows an appliance's runs panel and run bands on the power chart (Italian strings added)
+
 ## [1.2.585] - 2026-11-04
 
 ### Changed

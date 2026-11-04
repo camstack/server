@@ -9411,7 +9411,30 @@
       "allZones": "Tutte le zone",
       "filterClass": "Classe",
       "allClasses": "Tutte le classi",
-      "readFailed": "Impossibile leggere questa cronologia: {{error}}"
+      "readFailed": "Impossibile leggere questa cronologia: {{error}}",
+      "runs": {
+        "band": "Ciclo",
+        "bandRunning": "in corso · {{parts}}",
+        "status": {
+          "running": "In corso",
+          "completed": "Completato",
+          "aborted": "Interrotto",
+          "error": "Errore",
+          "unknown": "Sconosciuto"
+        },
+        "start": "Inizio",
+        "end": "Fine",
+        "duration": "Durata",
+        "energy": "Energia",
+        "peak": "Picco",
+        "avg": "Media",
+        "outcome": "Esito",
+        "outcomeNoSort": "Gli esiti non hanno un ordine",
+        "runningSince": "In corso dalle {{time}}",
+        "title": "Cicli",
+        "count_one": "{{count}} ciclo",
+        "count_other": "{{count}} cicli"
+      }
     },
     "consumableLevel": {
       "ok": "OK",

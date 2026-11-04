@@ -262,14 +262,9 @@ export { CopyButton } from './copy-button'
 export type { DataColumn, DataTableProps } from './data-table'
 export * from './data-table'
 export { DataTable } from './data-table'
-export type {
-  DataTablePage,
-  DataTablePaginationLabels,
-} from './data-table-pagination'
-export {
-  DEFAULT_PAGINATION_LABELS,
-  paginateRows,
-} from './data-table-pagination'
+export { DeviceRunsPanel, type DeviceRunsPanelProps } from './DeviceRunsPanel'
+export type { DataTablePage, DataTablePaginationLabels } from './data-table-pagination'
+export { DEFAULT_PAGINATION_LABELS, paginateRows } from './data-table-pagination'
 export type { DataTablePagerProps } from './data-table-pager'
 export { DataTablePager } from './data-table-pager'
 export type { DataTableSelection } from './data-table-selection'

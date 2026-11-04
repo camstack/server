@@ -5,6 +5,8 @@
  */
 export { DeviceHistoryView, humanizeName, type DeviceHistoryViewProps } from './DeviceHistoryView'
 export { HistoryChart, booleanLabels, type HistoryChartProps } from './HistoryChart'
+export { useDeviceRuns, DEVICE_RUNS_PAGE } from './use-device-runs'
+export { RUN_WINDOW_MARGIN_MS, runBands, runWindow } from './history-runs'
 export { HistoryWindowBar, type HistoryWindowBarProps } from './HistoryWindowBar'
 export {
   BOOLEAN_STATES,
