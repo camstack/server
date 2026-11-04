@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The generated hooks include the hub operation that clears an integration's legacy settings
+
 ## [1.2.381] - 2026-11-04
 
 ### Changed
