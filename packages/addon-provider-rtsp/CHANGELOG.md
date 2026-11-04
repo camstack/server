@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.150] - 2026-11-04
+
 ### Changed
 
 - The rtsp integration is now a typed integration instance and its devices are claimed to it

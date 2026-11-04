@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.497] - 2026-11-04
+
 ### Changed
 
 - An addon that moves its legacy integration settings into a record can now ask the hub to clear the old rows and their keychain values
