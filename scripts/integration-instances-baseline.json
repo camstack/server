@@ -10,7 +10,6 @@
     "provider-ecowitt",
     "provider-enpal",
     "provider-esphome",
-    "provider-gree",
     "provider-hikvision",
     "provider-homematic",
     "provider-mqtt-ha",

@@ -1,6 +1,12 @@
-import { userError } from '@camstack/types'
 import {
+  type AddonInitResult,
   BaseDeviceProvider,
+  defaultIntegrationApiOver,
+  defaultIntegrationMigrations,
+  defaultIntegrationPortsOver,
+  defineAddonMigrations,
+  integrationInstancesCapability,
+  userError,
   type ConfigUISchema,
   type CreateDeviceSpec,
   type DeviceConstructor,
@@ -12,6 +18,7 @@ import {
   type IDevice,
 } from '@camstack/types'
 import { buildConnectionFormSchema, type GreeConfig, settingsToGreeConfig } from './config.js'
+import { buildGreeInstances, greeConnectionsEntryKind, greeRecordKinds } from './gree-instances.js'
 import { GreeContainerDevice } from './devices/gree-container-device.js'
 import { greeConnections, macKey } from './gree-gateway.js'
 import { GREE_DISCOVERY_MODES, scanGreeSubnets } from './gree-subnet-scan.js'
@@ -40,6 +47,9 @@ import {
  * — the same one ONVIF uses and the aggregated "Scan network" modal fans out to.
  * Manual add-one-AC-by-IP (directed bind) remains available in parallel.
  */
+/** The date of the integration-rows and device-claim migrations (D1007). */
+const GREE_MIGRATIONS_DATE = '2026-11-04'
+
 export class GreeProviderAddon extends BaseDeviceProvider {
   protected readonly addonId = 'provider-gree'
   protected readonly providerName = 'Gree'
@@ -49,6 +59,40 @@ export class GreeProviderAddon extends BaseDeviceProvider {
 
   constructor() {
     super({})
+  }
+
+  /**
+   * The integrations are `connections` records (D1007). Before the provider is offered, the legacy
+   * integration rows move into them and the devices that carry no integration are claimed to the
+   * default one (`./migrations`).
+   */
+  protected override async onInitialize(): Promise<AddonInitResult> {
+    const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
+    const records = this.ctx.records
+    if (records === undefined)
+      throw new Error('provider-gree: ctx.records is required (hub-only addon)')
+    await records.declare(greeRecordKinds)
+    await this.runMigrations(
+      defineAddonMigrations(
+        defaultIntegrationMigrations({ addonId: this.addonId, date: GREE_MIGRATIONS_DATE }),
+        defaultIntegrationPortsOver({
+          api: defaultIntegrationApiOver(this.ctx.api),
+          records,
+          kind: greeConnectionsEntryKind,
+          info: (message) => this.ctx.logger.info(message),
+          warn: (message) => this.ctx.logger.warn(message),
+        }),
+      ),
+    )
+    return {
+      providers: [
+        ...regs,
+        {
+          capability: integrationInstancesCapability,
+          provider: buildGreeInstances(records).toProvider(),
+        },
+      ],
+    }
   }
 
   // ── Discovery: the library's encrypted UDP scan, run per covered subnet ─────

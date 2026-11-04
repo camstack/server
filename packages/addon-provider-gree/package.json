@@ -52,6 +52,9 @@
         "capabilities": [
           {
             "name": "device-provider"
+          },
+          {
+            "name": "integration-instances"
           }
         ]
       }

@@ -12,7 +12,12 @@ import type { IntegrationRowsPorts, RowsMigrationLog } from './integration-rows-
 /** The slice of `ctx.api.integrations` the move needs. */
 export interface IntegrationRowsApi {
   list(): Promise<
-    readonly { readonly id: string; readonly addonId: string; readonly name: string }[]
+    readonly {
+      readonly id: string
+      readonly addonId: string
+      readonly name: string
+      readonly info?: Readonly<Record<string, unknown>> | null | undefined
+    }[]
   >
   getSettings(input: { readonly id: string }): Promise<Readonly<Record<string, unknown>>>
   clearSettings(input: { readonly id: string }): Promise<unknown>

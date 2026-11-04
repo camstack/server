@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Gree integrations are now typed records, and air conditioners added before integrations were named are claimed to the default integration without losing their ids
+
 ## [0.2.148] - 2026-11-01
 
 ### Changed
