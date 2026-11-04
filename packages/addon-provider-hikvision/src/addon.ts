@@ -1,4 +1,5 @@
 import type {
+  AddonInitResult,
   ConfigUISchema,
   CreateDeviceSpec,
   DeviceConstructor,
@@ -8,13 +9,17 @@ import type {
   DiscoveryMode,
   FieldProbeResult,
   IDevice,
-  ProviderRegistration,
 } from '@camstack/types'
 import {
   BaseDeviceProvider,
   clipEventLabelDepsFromApi,
+  defaultIntegrationApiOver,
+  defaultIntegrationMigrations,
+  defaultIntegrationPortsOver,
+  defineAddonMigrations,
   DeviceType,
   failureContributionCapability,
+  integrationInstancesCapability,
   memoizePinnedFfmpeg,
   userError,
   videoclipsCapability,
@@ -30,6 +35,11 @@ import {
   hikvisionFromWsdHits,
   slugifyHikvisionHost,
 } from './hikvision-discovery.js'
+import {
+  buildHikvisionInstances,
+  hikvisionConnectionsEntryKind,
+  hikvisionRecordKinds,
+} from './hikvision-instances.js'
 import { HikvisionIsapiClient } from './hikvision-isapi-client.js'
 import { intercomFailureReport } from './intercom/intercom-failure-report.js'
 
@@ -189,6 +199,9 @@ function isMeaningfulIdentifier(s: string): boolean {
   return distinct.size >= 1
 }
 
+/** The date of the integration-rows and device-claim migrations (D1007). */
+const HIKVISION_MIGRATIONS_DATE = '2026-11-04'
+
 export class HikvisionProviderAddon extends BaseDeviceProvider {
   protected readonly addonId = HIKVISION_ADDON_ID
   protected readonly providerName = 'Hikvision'
@@ -256,8 +269,24 @@ export class HikvisionProviderAddon extends BaseDeviceProvider {
     throw new Error(`Hikvision: ${reason}`)
   }
 
-  protected override async onInitialize(): Promise<ProviderRegistration[]> {
+  protected override async onInitialize(): Promise<AddonInitResult> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
+    const records = this.ctx.records
+    if (records === undefined)
+      throw new Error('provider-hikvision: ctx.records is required (hub-only addon)')
+    await records.declare(hikvisionRecordKinds)
+    await this.runMigrations(
+      defineAddonMigrations(
+        defaultIntegrationMigrations({ addonId: this.addonId, date: HIKVISION_MIGRATIONS_DATE }),
+        defaultIntegrationPortsOver({
+          api: defaultIntegrationApiOver(this.ctx.api),
+          records,
+          kind: hikvisionConnectionsEntryKind,
+          info: (message) => this.ctx.logger.info(message),
+          warn: (message) => this.ctx.logger.warn(message),
+        }),
+      ),
+    )
 
     // The broker PULLS each camera's `stream-catalog` cap to (re)build
     // its registry — no provider-side re-publish on broker ready. The
@@ -337,7 +366,15 @@ export class HikvisionProviderAddon extends BaseDeviceProvider {
     // pull and the route never registers.
     await this.serveClipPlanes(this.clipService)
 
-    return regs
+    return {
+      providers: [
+        ...regs,
+        {
+          capability: integrationInstancesCapability,
+          provider: buildHikvisionInstances(records).toProvider(),
+        },
+      ],
+    }
   }
 
   /** The clip service: catalog, the player's file route, the broker's dial. */
