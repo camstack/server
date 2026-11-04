@@ -224,12 +224,9 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
       probe: (settings) => this.requireRegistry().testSettings(settings),
     })
     // The stored broker records move to the flat shape BEFORE anything reads them.
-    await this.runMigrations(
-      defineAddonMigrations(
-        ADDON_MIGRATIONS.filter((m) => m.meta.id === FLATTEN_BROKER_RECORDS_ID),
-        this.flattenPorts(records),
-      ),
-    )
+    await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, this.flattenPorts(records)), {
+      only: [FLATTEN_BROKER_RECORDS_ID],
+    })
     this.activeBrokers = await this.loadPersistedBrokers()
 
     this.registry = new HaBrokerRegistry(this.ctx.logger, this.ctx.eventBus)
@@ -271,12 +268,9 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
     // event-driven on integration lifecycle changes).
     // The calendars each instance imports move from the addon's shared set onto its integration
     // (D985): before the first reconcile reads them.
-    await this.runMigrations(
-      defineAddonMigrations(
-        ADDON_MIGRATIONS.filter((m) => m.meta.id !== FLATTEN_BROKER_RECORDS_ID),
-        this.flattenPorts(records),
-      ),
-    )
+    await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, this.flattenPorts(records)), {
+      only: ADDON_MIGRATIONS.map((m) => m.meta.id).filter((id) => id !== FLATTEN_BROKER_RECORDS_ID),
+    })
     await this.reconcileIntegrationsToBrokers()
     this.subscribeIntegrationLifecycle()
 

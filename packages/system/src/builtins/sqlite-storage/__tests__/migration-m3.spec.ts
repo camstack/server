@@ -455,6 +455,31 @@ describe('addon-owned catalogue', () => {
     })
     await second.file.stop()
   }, 90_000)
+
+  it('two boot phases of ONE catalogue (a first step before the rest) never read an applied id as newer', async () => {
+    const { file, provider, engine } = await boot()
+    const whole = [planEntry('one', 1, { edits: [] }), planEntry('two', 2, { edits: [] })]
+    const ONE = `${OWNER}/2026-11-01-one`
+    const TWO = `${OWNER}/2026-11-01-two`
+    const phase = (only: readonly string[]) =>
+      runAddonMigrations(
+        hostOf(provider),
+        defineAddonMigrations(whole, {}),
+        recordingLogger(h.lines, 'Addon'),
+        { only },
+      )
+    const first = await phase([ONE])
+    expect(first.applied).toEqual([ONE])
+    const second = await phase([TWO])
+    expect(second.applied).toEqual([TWO])
+    const ledger = await engine.listLedger()
+    expect(ledger.map((e) => [e.id, e.status])).toEqual([
+      [ONE, 'applied'],
+      [TWO, 'applied'],
+    ])
+    expect(h.lines.some((l) => l.message.includes('skipped-newer'))).toBe(false)
+    await file.stop()
+  }, 90_000)
 })
 
 describe('procedure body', () => {

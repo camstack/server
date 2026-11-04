@@ -23,6 +23,7 @@ import {
   type AddonMigrationRunReport,
   type BoundAddonMigration,
   runAddonMigrations,
+  type AddonMigrationRunOptions,
 } from '../migrations/addon-migration.js'
 import { createDurableState, type DurableState } from './durable-state.js'
 import { normalizeNodeId, projectStore, readNodeValue, scopePatch } from './per-node-store.js'
@@ -292,9 +293,14 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
    * nothing; the boot continues. A migration that FAILED (or was blocked by one)
    * and declares `onFailure: 'block-owner'` makes this throw, so the addon does not
    * serve data whose shape it cannot trust; `tolerate` migrations never do.
+   *
+   * ALWAYS pass the whole catalogue; a phase that must run only some of it passes
+   * `{ only: [ids] }` — never a filtered catalogue (the engine would judge the
+   * omitted applied ids "newer").
    */
   protected async runMigrations(
     migrations: readonly BoundAddonMigration[],
+    options?: AddonMigrationRunOptions,
   ): Promise<AddonMigrationRunReport> {
     const api = this.ctx.api.migrations
     const report = await runAddonMigrations(
@@ -305,6 +311,7 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
       },
       migrations,
       this.ctx.logger,
+      options,
     )
     if (report.blockOwner.length > 0) {
       throw new AddonMigrationsBlockedError(report.blockOwner)

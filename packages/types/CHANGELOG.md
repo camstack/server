@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Integration instances state a role and a discovery in describe(); a record secret may sit in a map of the body; a migration helper moves an integration's legacy settings rows into its instance record
 - The migration ledger entry carries ownerNotLoaded for an applied row whose owner catalogue the answering process has not loaded
+- An addon runs a phase of its migrations with runMigrations(whole, { only }) instead of declaring a filtered catalogue
 
 ## [1.2.494] - 2026-11-04
 

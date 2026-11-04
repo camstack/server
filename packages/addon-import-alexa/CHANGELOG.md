@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The integration states its role (devices, services or both) to the Integrations page
 - Alexa starts without waiting for the first appliance list and state poll, so a large account no longer exceeds the runner init budget during an update
+- Alexa broker migrations no longer read as 'skipped-newer' (and no false 'Database is newer' alert) after the addon boots
 
 ## [0.2.183] - 2026-11-04
 

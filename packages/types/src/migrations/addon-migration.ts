@@ -132,6 +132,16 @@ export interface AddonMigrationRunReport {
   readonly blockOwner: readonly string[]
 }
 
+export interface AddonMigrationRunOptions {
+  /**
+   * The ids this call runs. The WHOLE catalogue is still declared every time (the engine
+   * replaces an owner's catalogue on a declare, so a partial offer would make the engine
+   * judge an applied id the owner "no longer declares"); ids outside this set are left
+   * untouched, neither started nor reported — a later call runs them.
+   */
+  readonly only?: readonly string[]
+}
+
 const NOT_RUN: AddonMigrationRunReport = {
   declared: false,
   snapshot: null,
@@ -151,6 +161,7 @@ export async function runAddonMigrations(
   host: AddonMigrationHost,
   migrations: readonly BoundAddonMigration[],
   logger: IScopedLogger,
+  options: AddonMigrationRunOptions = {},
 ): Promise<AddonMigrationRunReport> {
   const first = migrations[0]
   if (first === undefined) return NOT_RUN
@@ -183,7 +194,9 @@ export async function runAddonMigrations(
     else if (status === 'blocked') blocked.push(id)
     else skipped.push(id)
   }
+  const selected = options.only === undefined ? null : new Set(options.only)
   for (const step of declaration.steps) {
+    if (selected !== null && !selected.has(step.id)) continue
     const bound = byId.get(step.id)
     if (bound === undefined || step.action === 'skip') {
       skipped.push(step.id)

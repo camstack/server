@@ -139,10 +139,10 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
     })
     // The stored broker records move to the flat shape BEFORE anything reads them.
     await this.runMigrations(
-      defineAddonMigrations(
-        ADDON_MIGRATIONS.filter((m) => m.meta.id === FLATTEN_BROKER_RECORDS_ID),
-        this.migrationPorts(records),
-      ),
+      defineAddonMigrations(ADDON_MIGRATIONS, this.migrationPorts(records)),
+      {
+        only: [FLATTEN_BROKER_RECORDS_ID],
+      },
     )
     this.activeBrokers = await this.loadPersistedBrokers()
 
@@ -208,10 +208,12 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
     ]
 
     await this.runMigrations(
-      defineAddonMigrations(
-        ADDON_MIGRATIONS.filter((m) => m.meta.id !== FLATTEN_BROKER_RECORDS_ID),
-        this.migrationPorts(records),
-      ),
+      defineAddonMigrations(ADDON_MIGRATIONS, this.migrationPorts(records)),
+      {
+        only: ADDON_MIGRATIONS.map((m) => m.meta.id).filter(
+          (id) => id !== FLATTEN_BROKER_RECORDS_ID,
+        ),
+      },
     )
 
     const speak = new AlexaSpeakController({
