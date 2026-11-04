@@ -71,6 +71,16 @@ const LEGACY_KEYS: readonly string[] = [
 ]
 const SECRET_KEYS: readonly string[] = ['token', 'refresh', APPLIANCE_SECRETS_KEY]
 
+/** The `appliances` row value as an array: a JSON string is parsed, anything else is as stored. */
+function parseStoredRows(raw: unknown): unknown {
+  if (typeof raw !== 'string') return raw
+  try {
+    return JSON.parse(raw)
+  } catch {
+    return undefined
+  }
+}
+
 function text(value: unknown): string | undefined {
   return typeof value === 'string' && value.length > 0 ? value : undefined
 }
@@ -92,20 +102,30 @@ export function homeConnectBodyFromRows(
     )
   }
   const normalized = homeConnectSettingsForPersist({ ...values })
-  const rawRows: unknown = normalized['appliances']
-  const appliances: z.infer<typeof homeConnectApplianceRowSchema>[] = []
-  let unreadableRows = 0
-  if (Array.isArray(rawRows)) {
-    for (const row of rawRows) {
+  // Judged on the rows as stored: the inline-key move above already leaves an unreadable one out.
+  const storedRows: unknown = parseStoredRows(values['appliances'])
+  if (Array.isArray(storedRows)) {
+    for (const row of storedRows) {
       const parsed = homeConnectApplianceRowSchema.safeParse(row)
-      if (parsed.success) appliances.push(parsed.data)
-      else unreadableRows += 1
+      if (parsed.success) continue
+      // The appliance id is not a secret; the failing paths name the field, never its value.
+      const haId =
+        typeof row === 'object' && row !== null && typeof Reflect.get(row, 'haId') === 'string'
+          ? String(Reflect.get(row, 'haId'))
+          : '(no haId)'
+      const paths = parsed.error.issues.map((issue) => issue.path.join('.') || '(row)').join(', ')
+      log.warn(
+        `integration '${integration.id}': appliance row '${haId}' could not be read and is dropped (invalid: ${paths})`,
+      )
     }
   }
-  if (unreadableRows > 0) {
-    log.warn(
-      `integration '${integration.id}': ${unreadableRows} appliance row(s) could not be read and are dropped`,
-    )
+  const appliances: z.infer<typeof homeConnectApplianceRowSchema>[] = []
+  const keptRows: unknown = normalized['appliances']
+  if (Array.isArray(keptRows)) {
+    for (const row of keptRows) {
+      const parsed = homeConnectApplianceRowSchema.safeParse(row)
+      if (parsed.success) appliances.push(parsed.data)
+    }
   }
   const token = text(normalized['token'])
   const refresh = text(normalized['refresh'])

@@ -39,7 +39,10 @@ const world = () =>
       token: TOKEN,
       refresh: REFRESH,
       accountLabel: 'me@example.com',
-      appliances: [legacyRow],
+      appliances: [
+        legacyRow,
+        { haId: 'HAI-BAD', name: 'Broken', type: 'Oven', host: '', mode: 'TLS', psk: PSK },
+      ],
       accountPassword: 'never-stored',
       stale: 'x',
     },
@@ -71,6 +74,10 @@ describe('bosch-home-connect integration rows move to a record', () => {
     expect(JSON.stringify(data?.appliances)).not.toContain(PSK)
     expect(w.rows.get(INTEGRATION.id)).toEqual({})
     expect(w.warnings.join(' ')).toContain('stale')
+    // the dropped row is named by its appliance id and the failing field, never a value
+    expect(w.warnings.join(' ')).toContain("appliance row 'HAI-BAD'")
+    expect(w.warnings.join(' ')).toContain('invalid: host')
+    expect(w.warnings.join(' ')).not.toContain(PSK)
     expect(w.warnings.join(' ')).not.toContain('accountPassword')
     const stored = JSON.stringify([...(w.mem.tables.get('connections')?.values() ?? [])])
     for (const secret of [TOKEN, REFRESH, PSK, IV]) expect(stored).not.toContain(secret)
