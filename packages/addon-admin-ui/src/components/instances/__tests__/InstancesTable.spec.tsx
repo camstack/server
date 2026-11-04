@@ -23,6 +23,7 @@ const h = vi.hoisted(() => ({
   },
   records: {} as Record<string, unknown[]>,
   describeFails: false,
+  descriptionExtra: {} as Record<string, Record<string, unknown>>,
   setEnabled: vi.fn(),
   setInstanceEnabled: vi.fn(),
   restart: vi.fn(async (_input: unknown) => ({ ok: true as const })),
@@ -98,6 +99,7 @@ vi.mock('@camstack/ui-library', async () => {
                 instanceMode: addonId === 'loki-logging' ? 'single' : 'multiple',
                 kind: 'x',
                 canTest: true,
+                ...h.descriptionExtra[addonId],
               }
             },
           },
@@ -155,6 +157,7 @@ beforeEach(() => {
   h.holders = { data: [], error: null }
   h.records = {}
   h.describeFails = false
+  h.descriptionExtra = {}
   h.setEnabled.mockReset()
   h.setInstanceEnabled.mockReset()
   h.restart.mockClear()
@@ -166,6 +169,72 @@ beforeEach(() => {
 })
 
 describe('InstancesTable', () => {
+  describe('provider kinds, status label and restore id', () => {
+    beforeEach(() => {
+      h.fn.data = [{ addonId: 'smtp-nodemailer', isActive: true }]
+      h.holders.data = [{ addonId: 'smtp-nodemailer', isActive: true }]
+      h.records = {
+        'smtp-nodemailer': [
+          {
+            id: 'a',
+            name: 'Relay A',
+            configured: true,
+            enabled: true,
+            formValues: {},
+            kind: 'k2',
+            status: { state: 'ok', label: 'Signed in' },
+            lastCheckedAt: 1_700_000_000_000,
+          },
+        ],
+      }
+      h.descriptionExtra = {
+        'smtp-nodemailer': {
+          kinds: [
+            { id: 'k1', label: 'Kind one' },
+            { id: 'k2', label: 'Kind two', connectPath: '/addon/x/connect/{{brokerId}}' },
+          ],
+          allowRestoreId: true,
+          mintsId: true,
+        },
+      }
+    })
+
+    it('shows the kind column, the status label instead of the state, and a connect action', async () => {
+      renderPanel()
+      expect(await screen.findByText('Relay A')).toBeTruthy()
+      expect(screen.getByText('Kind two')).toBeTruthy()
+      expect(screen.getByText('Signed in')).toBeTruthy()
+      expect(screen.queryByText('ok')).toBeNull()
+      expect(screen.getByRole('button', { name: 'Connect Relay A' })).toBeTruthy()
+    })
+
+    it('Add asks the kind and offers restore; the provider mints the id so none is sent', async () => {
+      renderPanel('?instance=smtp-nodemailer:%2B')
+      expect(await screen.findByText('Add SMTP')).toBeTruthy()
+      expect(await screen.findByLabelText('Kind')).toBeTruthy()
+      expect(screen.getByText('Restore under its old id')).toBeTruthy()
+      fireEvent.click(await screen.findByRole('button', { name: 'Create' }))
+      await waitFor(() => expect(h.create).toHaveBeenCalledTimes(1))
+      const sent = h.create.mock.calls[0]?.[0] as Record<string, unknown>
+      expect(sent).toMatchObject({ addonId: 'smtp-nodemailer', kind: 'k1' })
+      expect(sent).not.toHaveProperty('id')
+    })
+
+    it('without the new fields Add shows no kind picker and no restore, and still mints an id', async () => {
+      h.descriptionExtra = {}
+      renderPanel('?instance=smtp-nodemailer:%2B')
+      expect(await screen.findByText('Add SMTP')).toBeTruthy()
+      expect(screen.queryByLabelText('Kind')).toBeNull()
+      expect(screen.queryByText('Restore under its old id')).toBeNull()
+      fireEvent.click(await screen.findByRole('button', { name: 'Create' }))
+      await waitFor(() => expect(h.create).toHaveBeenCalledTimes(1))
+      expect(h.create.mock.calls[0]?.[0]).toMatchObject({
+        addonId: 'smtp-nodemailer',
+        id: expect.stringMatching(/^inst-/),
+      })
+    })
+  })
+
   it('lists an instance row per record of two providers, and a fixed row with a switch', async () => {
     h.fn.data = [
       { addonId: 'winston-logging', isActive: true },

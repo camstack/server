@@ -10,7 +10,10 @@ import {
   diffInstanceValues,
   filterRows,
   formatEditRef,
+  findKind,
   mintInstanceId,
+  needsKindPicker,
+  statusText,
   parseEditRef,
   providerPills,
   rowHealth,
@@ -338,5 +341,66 @@ describe('pills and filter', () => {
       'smtp-nodemailer',
     ])
     expect(filterRows(rows, 'console').map((r) => r.kind)).toEqual(['fixed'])
+  })
+})
+
+describe('kinds, status label and last check', () => {
+  const kinds: HolderData = {
+    addonId: 'notifier',
+    description: {
+      instanceMode: 'multiple',
+      kind: 'target',
+      canTest: true,
+      kinds: [
+        { id: 'a', label: 'Adapter A' },
+        {
+          id: 'b',
+          label: 'Adapter B',
+          connectPath: '/c/{{brokerId}}',
+          disconnectPath: '/d/{{brokerId}}',
+        },
+      ],
+    },
+    instances: [
+      {
+        id: 'i1',
+        name: 'One',
+        configured: true,
+        enabled: true,
+        formValues: {},
+        kind: 'b',
+        status: { state: 'ok', label: 'Signed in' },
+        lastCheckedAt: 7,
+      },
+    ],
+  }
+
+  it('a row carries its kind label, link paths and last check', () => {
+    const [row] = buildRows({
+      functionProviders: [{ addonId: 'notifier', isActive: true }],
+      holders: [kinds],
+      displayNames: new Map(),
+      descriptions: new Map(),
+    })
+    expect(row).toMatchObject({
+      kindId: 'b',
+      kindLabel: 'Adapter B',
+      connectPath: '/c/{{brokerId}}',
+      disconnectPath: '/d/{{brokerId}}',
+      lastCheckedAt: 7,
+    })
+  })
+
+  it('asks for a kind only when there is a choice', () => {
+    expect(needsKindPicker(kinds.description)).toBe(true)
+    expect(needsKindPicker(smtp.description)).toBe(false)
+    expect(needsKindPicker({ ...smtp.description, kinds: [{ id: 'a', label: 'A' }] })).toBe(false)
+    expect(findKind(kinds.description, 'a')?.label).toBe('Adapter A')
+    expect(findKind(kinds.description, undefined)).toBeUndefined()
+  })
+
+  it('shows the label when the provider gave one, else the state', () => {
+    expect(statusText({ state: 'ok', label: 'Signed in' })).toBe('Signed in')
+    expect(statusText({ state: 'error' })).toBe('error')
   })
 })

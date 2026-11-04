@@ -9,6 +9,7 @@
 import type {
   IntegrationInstance,
   IntegrationInstanceDescription,
+  IntegrationInstanceKind,
   IntegrationInstanceMode,
 } from '@camstack/types'
 
@@ -37,6 +38,14 @@ export interface InstanceRow {
   readonly enabled: boolean
   readonly status: IntegrationInstance['status']
   readonly canTest: boolean
+  /** The instance's kind when the provider has kinds; `kindLabel` is what the table shows. */
+  readonly kindId?: string
+  readonly kindLabel?: string
+  /** Epoch ms of the last probe behind `status`. */
+  readonly lastCheckedAt?: number
+  /** The kind's interactive link / unlink paths (may carry `{{brokerId}}`). */
+  readonly connectPath?: string
+  readonly disconnectPath?: string
 }
 
 export interface FixedRow {
@@ -78,6 +87,7 @@ export function buildRows(input: BuildRowsInput): readonly PanelRow[] {
       continue
     }
     for (const instance of holder.instances) {
+      const kind = findKind(holder.description, instance.kind)
       rows.push({
         kind: 'instance',
         key: `${provider.addonId}:${instance.id}`,
@@ -89,10 +99,33 @@ export function buildRows(input: BuildRowsInput): readonly PanelRow[] {
         enabled: instance.enabled,
         status: instance.status,
         canTest: holder.description.canTest,
+        ...(instance.kind !== undefined ? { kindId: instance.kind } : {}),
+        ...(instance.kind !== undefined ? { kindLabel: kind?.label ?? instance.kind } : {}),
+        ...(instance.lastCheckedAt !== undefined ? { lastCheckedAt: instance.lastCheckedAt } : {}),
+        ...(kind?.connectPath !== undefined ? { connectPath: kind.connectPath } : {}),
+        ...(kind?.disconnectPath !== undefined ? { disconnectPath: kind.disconnectPath } : {}),
       })
     }
   }
   return rows
+}
+
+/** The kind a record names, among the kinds its provider declared. */
+export function findKind(
+  description: IntegrationInstanceDescription,
+  kindId: string | undefined,
+): IntegrationInstanceKind | undefined {
+  return kindId === undefined ? undefined : description.kinds?.find((k) => k.id === kindId)
+}
+
+/** Whether Add must ask which kind: only when the provider offers a real choice. */
+export function needsKindPicker(description: IntegrationInstanceDescription): boolean {
+  return (description.kinds?.length ?? 0) > 1
+}
+
+/** The word a status badge shows: the provider's own label, else the state. */
+export function statusText(status: NonNullable<IntegrationInstance['status']>): string {
+  return status.label !== undefined && status.label.length > 0 ? status.label : status.state
 }
 
 export interface ProviderChip {

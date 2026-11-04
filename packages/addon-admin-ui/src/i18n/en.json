@@ -11586,7 +11586,15 @@
     "restartConfirm": "Restarts the addon on the hub. If it shares a runner group, every addon in that group restarts with it.",
     "activityProvider": "Activity of",
     "pinnedBy_one": "{{count}} target pins this relay",
-    "pinnedBy_other": "{{count}} targets pin this relay"
+    "pinnedBy_other": "{{count}} targets pin this relay",
+    "colKind": "Kind",
+    "identity": "Identity",
+    "restore": "Restore under its old id",
+    "restoreHint": "Re-adding something that was removed under its original id keeps everything that points at it working.",
+    "originalId": "Original id",
+    "connect": "Connect account",
+    "connectRow": "Connect {{name}}",
+    "disconnectRow": "Disconnect {{name}}"
   },
   "instances": {
     "colStatus": "Status",

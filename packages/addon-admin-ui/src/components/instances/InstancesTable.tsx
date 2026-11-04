@@ -24,9 +24,10 @@ import {
   type DataColumn,
 } from '@camstack/ui-library'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Loader2, Pencil, Play, Plus, Trash2, type LucideIcon } from 'lucide-react'
+import { Link2, Link2Off, Loader2, Pencil, Play, Trash2, type LucideIcon } from 'lucide-react'
 import { useCallback, useMemo, useState, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
+import { fillBrokerConnectPath, startServerNavigation } from '../../lib/broker-oauth-popup'
 import { AddonSettingsModal } from '../settings/AddonSettingsModal'
 import {
   TestVerdictBanner,
@@ -46,6 +47,7 @@ import {
   parseEditRef,
   providerPills,
   providersOf,
+  statusText,
   targetsPinning,
   type InstanceRow,
   type PanelRow,
@@ -66,6 +68,15 @@ export interface InstancesTableProps {
   readonly install?: InstanceInstallLink
   /** The `?<key>=` that holds an open instance in the URL. Defaults to `instance`. */
   readonly editKey?: string
+}
+
+/** The badge tooltip: the provider's detail and, when known, when the remote was last probed. */
+function statusTitle(row: InstanceRow): string | undefined {
+  const parts = [
+    row.status?.detail,
+    row.lastCheckedAt !== undefined ? new Date(row.lastCheckedAt).toLocaleString() : undefined,
+  ].filter((p): p is string => p !== undefined && p.length > 0)
+  return parts.length > 0 ? parts.join(' · ') : undefined
 }
 
 function StateCell({ row }: { readonly row: InstanceRow }): ReactElement {
@@ -94,9 +105,9 @@ function StateCell({ row }: { readonly row: InstanceRow }): ReactElement {
                 ? 'success'
                 : 'default'
           }
-          title={row.status.detail}
+          title={statusTitle(row)}
         >
-          {row.status.state}
+          {statusText(row.status)}
         </Badge>
       )}
     </span>
@@ -282,6 +293,21 @@ export function InstancesTable({
     [confirm, queryClient, system, t],
   )
 
+  const showKind = useMemo(
+    () => data.rows.some((row) => row.kind === 'instance' && row.kindLabel !== undefined),
+    [data.rows],
+  )
+  // An interactive link or unlink opens the provider's own route; the list refreshes when it ends.
+  const runLink = useCallback(
+    (path: string | undefined, id: string): void => {
+      if (path === undefined) return
+      startServerNavigation(fillBrokerConnectPath(path, id), () => {
+        void queryClient.invalidateQueries({ queryKey: [HOLDER_QUERY_KEY] })
+      })
+    },
+    [queryClient],
+  )
+
   const columns = useMemo<readonly DataColumn<PanelRow>[]>(
     () => [
       {
@@ -318,6 +344,20 @@ export function InstancesTable({
         sortValue: (row) => row.providerName,
         render: (row) => <span className="text-foreground-muted">{row.providerName}</span>,
       },
+      ...(showKind
+        ? [
+            {
+              key: 'kind',
+              header: t('providerInstances.colKind', 'Kind'),
+              sortValue: (row: PanelRow) => (row.kind === 'instance' ? (row.kindLabel ?? '') : ''),
+              render: (row: PanelRow) => (
+                <span className="text-foreground-muted">
+                  {row.kind === 'instance' ? (row.kindLabel ?? '') : ''}
+                </span>
+              ),
+            },
+          ]
+        : []),
       {
         key: 'state',
         header: t('instances.colStatus', 'Status'),
@@ -354,6 +394,28 @@ export function InstancesTable({
         notSortableReason: t('providerInstances.actionsNotSortable', 'Row actions are not values.'),
         render: (row) => (
           <span className="inline-flex items-center gap-1">
+            {row.kind === 'instance' && row.connectPath !== undefined && (
+              <IconButton
+                icon={Link2}
+                variant="ghost"
+                size="sm"
+                aria-label={t('providerInstances.connectRow', 'Connect {{name}}', {
+                  name: row.name,
+                })}
+                onClick={() => runLink(row.connectPath, row.id)}
+              />
+            )}
+            {row.kind === 'instance' && row.disconnectPath !== undefined && (
+              <IconButton
+                icon={Link2Off}
+                variant="ghost"
+                size="sm"
+                aria-label={t('providerInstances.disconnectRow', 'Disconnect {{name}}', {
+                  name: row.name,
+                })}
+                onClick={() => runLink(row.disconnectPath, row.id)}
+              />
+            )}
             {row.kind === 'instance' && row.canTest && (
               <IconButton
                 icon={testing === row.key ? Loader2 : Play}
@@ -401,7 +463,7 @@ export function InstancesTable({
         ),
       },
     ],
-    [form, functionCap, pinningCount, runDelete, runTest, t, testing],
+    [form, functionCap, pinningCount, runDelete, runLink, runTest, showKind, t, testing],
   )
 
   let body: ReactElement

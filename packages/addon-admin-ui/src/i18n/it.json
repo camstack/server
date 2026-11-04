@@ -11608,7 +11608,15 @@
     "restartConfirm": "Riavvia l'addon sull'hub. Se condivide un gruppo di runner, si riavviano tutti gli addon del gruppo.",
     "activityProvider": "Attività di",
     "pinnedBy_one": "{{count}} destinazione usa questo relay",
-    "pinnedBy_other": "{{count}} destinazioni usano questo relay"
+    "pinnedBy_other": "{{count}} destinazioni usano questo relay",
+    "colKind": "Tipo",
+    "identity": "Identità",
+    "restore": "Ripristina con il vecchio id",
+    "restoreHint": "Se aggiungi di nuovo qualcosa rimosso con il suo id originale, tutto ciò che lo usa continua a funzionare.",
+    "originalId": "Id originale",
+    "connect": "Collega account",
+    "connectRow": "Collega {{name}}",
+    "disconnectRow": "Scollega {{name}}"
   },
   "instances": {
     "colStatus": "Stato",

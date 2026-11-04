@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Connection lists offer a kind picker on Add, an interactive sign-in or connect action, the provider's own status word and a restore under the old id, when the provider declares them
+
 ## [1.2.575] - 2026-11-04
 
 ### Changed
