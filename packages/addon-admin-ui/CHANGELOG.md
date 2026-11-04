@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.577] - 2026-11-04
+
 ### Changed
 
 - The device Customize tab is one table: event and extension rows show their last event or configured summary and source, and other fields and linked devices are rows of that table instead of blocks below it
