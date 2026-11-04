@@ -128,6 +128,33 @@ re-link from the Alexa app and type the new address. A re-link mints a new link
 at the broker (the old credential dies) but does not move the old hub's sessions
 — Unlink first.
 
+## Several skills on one hub (planning#422)
+
+The addon is multi-instance: each skill is an integration instance (a `skills` record) with its own
+`skill-links`, `skill-exports` and `skill-state` rows under the SAME id, run by one `SkillRuntime`
+(`skill-runtime.ts`). `export-alexa.addon.ts` is only the shell: the runtimes map, the instances and
+`device-export` providers, the routes, the OAuth client, the snapshot store and the access gate.
+
+- **Routing** (`instance-routing.ts`): `/directive/:instanceId`, `/oauth/broker-link/:instanceId`,
+  `/oauth/lwa-tokens/:instanceId`. Without an id: the `X-CamStack-Ingress` header picks the skill that
+  owns the token, else the legacy URL answers `export-alexa` (its own ingress check still applies). A
+  path naming an unknown or disabled skill never falls through to another one. `/snapshot/:file` and
+  `snapshotSigningKey` are global: the signed URL names no skill.
+- **The first skill keeps its history**: id `export-alexa`, the legacy ledger keys until the
+  migrations have moved them, public mode never enforcing the token. A skill added later enforces its
+  ingress token from creation (public mode too) and its Lambda sets `HUB_INSTANCE_ID`.
+- **Unlink is scoped, but the OAuth client is one per addon.** Sessions carry the user id only, so
+  unlinking a skill revokes the active sessions EXCEPT those of users also linked to another skill
+  (`selectAlexaSessionIdsToRevoke(sessions, keep)`). A user linked to two skills is therefore signed
+  out of neither by unlinking one; unlink both to end the session.
+- **Device keys carry the skill**: `alexa:<instanceId>:<deviceId>:<field>` (`device-keys.ts`), because
+  the device form flattens keys across exporters. The Alexa name and detection classes are the
+  DEVICE's, drawn once (by the first skill) and saved once.
+- **Deleting a skill** stops its runtime and deletes its links, exposure and state rows
+  (`skill-cleanup.ts`). The addon has no settings page of its own: the skills ARE the page.
+- `ingressToken` stays in `secretStatePaths` only so migration seq 7 can resolve a legacy keychain
+  marker; the live token is the `skill-state` record's.
+
 ## Who a link acts for (D767)
 
 A link is the hub user who consented (`userId` on the token), and EVERYTHING

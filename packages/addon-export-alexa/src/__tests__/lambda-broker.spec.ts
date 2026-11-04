@@ -916,3 +916,30 @@ describe('logging', () => {
     }
   })
 })
+
+describe('HUB_INSTANCE_ID', () => {
+  async function brokerLinkPath(env: Record<string, string>): Promise<string> {
+    const paths: string[] = []
+    const w = world({
+      hub: (path) => {
+        paths.push(path)
+        return response(200, { ok: true })
+      },
+    })
+    const h = makeHandler({ fetch: w.fetch, env })
+    await h.handler(acceptGrantEvent())
+    const hit = paths.find((p) => p.includes('/oauth/broker-link'))
+    if (hit === undefined) throw new Error('the hub was never called')
+    return hit
+  }
+
+  it('names the skill in the broker-link URL of a hub that runs several', async () => {
+    expect(await brokerLinkPath({ HUB_INSTANCE_ID: 'alexa-skill-2' })).toBe(
+      '/addon/export-alexa/oauth/broker-link/alexa-skill-2',
+    )
+  })
+
+  it('keeps the pre-multi URL when unset', async () => {
+    expect(await brokerLinkPath({})).toBe('/addon/export-alexa/oauth/broker-link')
+  })
+})

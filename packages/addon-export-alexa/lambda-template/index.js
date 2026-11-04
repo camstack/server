@@ -34,6 +34,11 @@
  *                        instead of receiving the refresh token. Default on.
  *   ALLOW_MIGRATION      "0" = refuse /broker/migrate. Default on.
  *   HUB_INGRESS_TOKEN    Optional defense-in-depth header for hub calls.
+ *   HUB_INSTANCE_ID      Optional; the id of this skill's instance on the hub
+ *                        (shown in its Export panel). Set when the hub runs
+ *                        several skills: calls then go to `/directive/<id>`,
+ *                        `/oauth/broker-link/<id>` and `/oauth/lwa-tokens/<id>`.
+ *                        Unset = the hub's first skill, as before.
  *   DEBUG_DIRECTIVES     "1" = log one `directive_trace` line per directive
  *                        (debug-trace.js; never the bearer). Default off.
  * Legacy (read only when the *_PARAM is unset): LWA_CLIENT_ID,
@@ -303,6 +308,12 @@ async function handleAcceptGrant(event, deps) {
   return deliverTokensToLegacyHub(deps, header, { hubUrl, granteeToken, tokens })
 }
 
+/** The path suffix that names this skill on a hub that runs several (`HUB_INSTANCE_ID`). */
+function hubInstanceSuffix(deps) {
+  const id = deps.env.HUB_INSTANCE_ID
+  return typeof id === 'string' && id.length > 0 ? `/${encodeURIComponent(id)}` : ''
+}
+
 /**
  * The D753 link: store the grant here, give the hub only a credential and a
  * first access token. The item stays `pending` until the hub accepted it, so a
@@ -317,16 +328,19 @@ async function linkViaBroker(deps, input) {
   })
   let resp
   try {
-    resp = await deps.fetch(`${input.hubUrl}/addon/export-alexa/oauth/broker-link`, {
-      method: 'POST',
-      headers: hubHeaders(deps, input.granteeToken),
-      body: JSON.stringify({
-        brokerUrl: deps.publicUrl,
-        brokerCredential: credential,
-        lwaAccessToken: item.accessToken,
-        expiresAt: item.accessExpiresAt,
-      }),
-    })
+    resp = await deps.fetch(
+      `${input.hubUrl}/addon/export-alexa/oauth/broker-link${hubInstanceSuffix(deps)}`,
+      {
+        method: 'POST',
+        headers: hubHeaders(deps, input.granteeToken),
+        body: JSON.stringify({
+          brokerUrl: deps.publicUrl,
+          brokerCredential: credential,
+          lwaAccessToken: item.accessToken,
+          expiresAt: item.accessExpiresAt,
+        }),
+      },
+    )
   } catch (err) {
     await deps.store.remove(item.linkId)
     return { kind: 'failed', message: `hub broker-link unreachable: ${describe(err)}` }
@@ -344,15 +358,18 @@ async function linkViaBroker(deps, input) {
 
 /** Pre-D753 hand-off: the hub receives the refresh token itself. */
 async function deliverTokensToLegacyHub(deps, header, input) {
-  const callbackResp = await deps.fetch(`${input.hubUrl}/addon/export-alexa/oauth/lwa-tokens`, {
-    method: 'POST',
-    headers: hubHeaders(deps, input.granteeToken),
-    body: JSON.stringify({
-      lwaAccessToken: input.tokens.accessToken,
-      lwaRefreshToken: input.tokens.refreshToken,
-      expiresAt: deps.now() + input.tokens.expiresInSec * 1000,
-    }),
-  })
+  const callbackResp = await deps.fetch(
+    `${input.hubUrl}/addon/export-alexa/oauth/lwa-tokens${hubInstanceSuffix(deps)}`,
+    {
+      method: 'POST',
+      headers: hubHeaders(deps, input.granteeToken),
+      body: JSON.stringify({
+        lwaAccessToken: input.tokens.accessToken,
+        lwaRefreshToken: input.tokens.refreshToken,
+        expiresAt: deps.now() + input.tokens.expiresInSec * 1000,
+      }),
+    },
+  )
   if (!callbackResp.ok) {
     const text = await callbackResp.text().catch(() => '')
     return acceptGrantErrorEnvelope(
@@ -390,7 +407,7 @@ async function forwardDirective(event, deps) {
       endpoint,
     )
   }
-  const target = `${normaliseHubUrl(claims.hubUrl)}/addon/export-alexa/directive`
+  const target = `${normaliseHubUrl(claims.hubUrl)}/addon/export-alexa/directive${hubInstanceSuffix(deps)}`
   let resp
   try {
     resp = await deps.fetch(target, {

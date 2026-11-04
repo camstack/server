@@ -5,7 +5,7 @@
  */
 import type { AddonContext, AddonHttpReply, AddonHttpRequest, IScopedLogger } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import { buildRoutes, BROKER_HEADER, type HttpRouteDeps } from '../http-server.js'
+import { buildRoutes, BROKER_HEADER, type HttpRouteDeps, type RoutedSkill } from '../http-server.js'
 import { NO_PUBLIC_ENDPOINT_REASON, type PublicEndpointResult } from '../public-endpoint.js'
 
 const BROKER = 'https://broker.example.test'
@@ -55,17 +55,20 @@ async function post(token: string, endpoint: PublicEndpointResult) {
       },
     } as unknown as AddonContext,
     logger: recordingLogger(warns),
-    getSettings: () =>
-      ({
-        enforceIngressToken: false,
-        ingressToken: '',
-        expectedAudience: 'skill',
-      }) as never,
-    directiveDeps: {} as HttpRouteDeps['directiveDeps'],
-    lwaTokensCallbackDeps: {} as never,
+    resolveSkill: () => ({
+      id: 'export-alexa',
+      getSettings: () =>
+        ({
+          enforceIngressToken: false,
+          ingressToken: '',
+          expectedAudience: 'skill',
+        }) as never,
+      directiveDeps: {} as RoutedSkill['directiveDeps'],
+      lwaTokensCallbackDeps: {} as never,
+      onBrokerAdvertised: (url: string) => advertised.push(url),
+    }),
     snapshotRoute: {} as never,
     publicEndpoint: async () => endpoint,
-    onBrokerAdvertised: (url) => advertised.push(url),
   }
   const route = buildRoutes(deps).find((r) => r.path === '/directive')
   const sent: { status: number; body: unknown } = { status: 0, body: null }

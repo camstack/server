@@ -70,12 +70,21 @@ export const OauthSessionListSchema = z.array(OauthSessionRowSchema)
  * `refreshTokenTtlSec: 'never'` a leftover row refreshes indefinitely. Already
  * revoked rows are skipped — `markRevoked` is idempotent, but re-revoking would
  * make the reported count lie.
+ *
+ * `keep` is the users linked to ANOTHER skill: the OAuth client is one per addon, so their
+ * session is the one that skill is using, and it is not revoked here.
  */
 export function selectAlexaSessionIdsToRevoke(
   sessions: readonly OauthSessionRow[],
+  keep: ReadonlySet<string> = new Set(),
 ): readonly string[] {
   return sessions
-    .filter((s) => s.integrationId === ALEXA_OAUTH_INTEGRATION_ID && s.revokedAt === null)
+    .filter(
+      (s) =>
+        s.integrationId === ALEXA_OAUTH_INTEGRATION_ID &&
+        s.revokedAt === null &&
+        !keep.has(s.userId),
+    )
     .map((s) => s.id)
 }
 

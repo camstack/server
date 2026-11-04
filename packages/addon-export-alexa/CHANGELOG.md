@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The Alexa skill's ingress token and push state now live in a per-skill record; the existing token and link keep working without relinking
+- Alexa export: run several Alexa skills from one hub, each with its own account links, exposed devices and ingress token (skill-scoped URLs, optional HUB_INSTANCE_ID in the skill Lambda; the first skill keeps its URLs)
 
 ## [1.2.183] - 2026-11-04
 

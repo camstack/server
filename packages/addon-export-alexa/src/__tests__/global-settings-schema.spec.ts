@@ -10,7 +10,14 @@ import { ALEXA_SKILL_DEFAULT_BODY } from '../skill-records.js'
  */
 describe('export-alexa skill form', () => {
   it('says the skill region governs every event the hub pushes, not just the doorbell', () => {
-    const field = buildAlexaInstanceSections({ defaults: ALEXA_SKILL_DEFAULT_BODY })
+    const field = buildAlexaInstanceSections({
+      defaults: ALEXA_SKILL_DEFAULT_BODY,
+      instanceId: null,
+      legacy: true,
+      linkedAccounts: [],
+      tokens: [],
+      now: 0,
+    })
       .flatMap((s) => s.fields)
       .find((f) => 'key' in f && f.key === 'region')
     const description = field && 'description' in field ? String(field.description) : ''

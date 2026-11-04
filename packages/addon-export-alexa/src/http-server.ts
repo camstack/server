@@ -4,9 +4,12 @@
  * we register via the `addon-routes` capability.
  *
  * Public URLs (assuming the hub is reachable as `https://<hub>`):
- *   POST /addon/export-alexa/directive
- *   POST /addon/export-alexa/oauth/broker-link (Lambda → hub, D753 broker link)
- *   POST /addon/export-alexa/oauth/lwa-tokens (Lambda → hub, legacy pre-D753)
+ *   POST /addon/export-alexa/directive[/:instanceId]
+ *   POST /addon/export-alexa/oauth/broker-link[/:instanceId] (Lambda → hub, D753 broker link)
+ *   POST /addon/export-alexa/oauth/lwa-tokens[/:instanceId] (Lambda → hub, legacy pre-D753)
+ *
+ * The path names the skill; without it the skill is found by its ingress token, then falls back
+ * to the first skill (`instance-routing.ts`).
  *
  * OAuth account-linking is handled by the core `/oauth2/*` server
  * (integration=export-alexa). This addon registers an `oauth-integration`
@@ -34,7 +37,8 @@ import type { PublicEndpointReader } from './public-endpoint.js'
 import { judgeRoutingClaim, readRoutingClaim } from './routing-claim.js'
 import { handleSnapshotFetch, type SnapshotRouteDeps } from './snapshots/snapshot-route.js'
 import type { AddonContext, IScopedLogger } from '@camstack/types'
-import type { AlexaSettings } from './export-alexa.addon.js'
+import type { AlexaSettings } from './alexa-settings.js'
+import type { SkillLookup } from './instance-routing.js'
 
 // Schema for the verified result returned by oauthVerifyAccessToken.
 const OauthVerifiedResultSchema = z
@@ -45,20 +49,27 @@ const OauthVerifiedResultSchema = z
   })
   .nullable()
 
-export interface HttpRouteDeps {
-  readonly ctx: AddonContext
-  readonly logger: IScopedLogger
+/** One skill as the routes act on it: its settings and the wiring its requests run on. */
+export interface RoutedSkill {
+  readonly id: string
   readonly getSettings: () => AlexaSettings
   readonly directiveDeps: DirectiveRouterDeps
   readonly lwaTokensCallbackDeps: LwaTokensCallbackDeps
-  /** The hub's `publicEndpoint` role, read on every use. A directive token's routing claim is judged against it. */
-  readonly publicEndpoint: PublicEndpointReader
   /**
    * The skill Lambda advertised its token broker (`x-camstack-broker`) on a
    * directive whose bearer verified. Called with the raw header value; the
    * receiver validates it. D753.
    */
   readonly onBrokerAdvertised?: (rawUrl: string) => void
+}
+
+export interface HttpRouteDeps {
+  readonly ctx: AddonContext
+  readonly logger: IScopedLogger
+  /** The skill a request is for (path, then ingress header, then the legacy skill), or null. */
+  readonly resolveSkill: (lookup: SkillLookup) => RoutedSkill | null
+  /** The hub's `publicEndpoint` role, read on every use. A directive token's routing claim is judged against it. */
+  readonly publicEndpoint: PublicEndpointReader
   /** R2 (D773): where Alexa fetches a snapshot it was handed. */
   readonly snapshotRoute: SnapshotRouteDeps
 }
@@ -67,40 +78,54 @@ export interface HttpRouteDeps {
 export const BROKER_HEADER = 'x-camstack-broker'
 
 export function buildRoutes(deps: HttpRouteDeps): readonly IAddonHttpRoute[] {
+  const forSkill = (
+    description: string,
+    path: string,
+    handler: (req: AddonHttpRequest, reply: AddonHttpReply, skill: RoutedSkill) => Promise<void>,
+  ): readonly IAddonHttpRoute[] => [
+    {
+      method: 'POST',
+      path: `${path}/:instanceId`,
+      access: 'public',
+      description: `${description} (one skill, named in the path)`,
+      handler: (req, reply) => routeToSkill(req, reply, deps, req.params['instanceId'], handler),
+    },
+    {
+      method: 'POST',
+      path,
+      access: 'public',
+      description: `${description} (the skill that presents its ingress token, else the first skill)`,
+      handler: (req, reply) => routeToSkill(req, reply, deps, undefined, handler),
+    },
+  ]
   return [
-    {
-      method: 'POST',
-      path: '/directive',
-      access: 'public',
-      description: 'Alexa Smart Home directive ingress (forwarded by the user-owned Lambda)',
-      handler: (req, reply) => handleDirective(req, reply, deps),
-    },
-    {
-      method: 'POST',
-      path: '/oauth/broker-link',
-      access: 'public',
-      // The broker link is D753.
-      description:
-        'Lambda → hub broker link: broker URL + per-link credential + first access token; bearer-authenticated via oauth-access token',
-      handler: async (req, reply) => {
-        if (ingressRejected(req, reply, deps, 'alexa broker-link')) return
-        await handleBrokerLinkCallback(req, reply, deps.lwaTokensCallbackDeps)
+    ...forSkill(
+      'Alexa Smart Home directive ingress (forwarded by the user-owned Lambda)',
+      '/directive',
+      (req, reply, skill) => handleDirective(req, reply, deps, skill),
+    ),
+    // The broker link is D753.
+    ...forSkill(
+      'Lambda → hub broker link: broker URL + per-link credential + first access token; bearer-authenticated via oauth-access token',
+      '/oauth/broker-link',
+      async (req, reply, skill) => {
+        if (ingressRejected(req, reply, deps, skill, 'alexa broker-link')) return
+        await handleBrokerLinkCallback(req, reply, skill.lwaTokensCallbackDeps)
       },
-    },
-    {
-      method: 'POST',
-      path: '/oauth/lwa-tokens',
-      access: 'public',
-      description: 'Lambda → hub LWA token callback (bearer-authenticated via oauth-access token)',
-      handler: async (req, reply) => {
-        if (ingressRejected(req, reply, deps, 'alexa lwa-tokens')) return
-        await handleLwaTokensCallback(req, reply, deps.lwaTokensCallbackDeps)
+    ),
+    ...forSkill(
+      'Lambda → hub LWA token callback (bearer-authenticated via oauth-access token)',
+      '/oauth/lwa-tokens',
+      async (req, reply, skill) => {
+        if (ingressRejected(req, reply, deps, skill, 'alexa lwa-tokens')) return
+        await handleLwaTokensCallback(req, reply, skill.lwaTokensCallbackDeps)
       },
-    },
+    ),
     {
       // Public at the hub because Alexa has no hub session; the handler is the
       // gate (signed URL, expiry, the account-link token, the S1 grant). NOT
-      // behind the ingress token: Amazon fetches it, not the skill Lambda.
+      // behind the ingress token: Amazon fetches it, not the skill Lambda. It
+      // names no skill: the signed URL is the same for all of them.
       method: 'GET',
       path: '/snapshot/:file',
       access: 'public',
@@ -108,6 +133,44 @@ export function buildRoutes(deps: HttpRouteDeps): readonly IAddonHttpRoute[] {
       handler: (req, reply) => handleSnapshotFetch(req, reply, deps.snapshotRoute),
     },
   ]
+}
+
+/** Resolve the request's skill, or answer that there is none. */
+async function routeToSkill(
+  request: AddonHttpRequest,
+  reply: AddonHttpReply,
+  deps: HttpRouteDeps,
+  pathInstanceId: string | undefined,
+  handler: (req: AddonHttpRequest, reply: AddonHttpReply, skill: RoutedSkill) => Promise<void>,
+): Promise<void> {
+  const skill = deps.resolveSkill({
+    pathInstanceId,
+    ingressHeader: readIngressHeader(request.headers),
+  })
+  if (skill === null) {
+    deps.logger.warn('alexa: no enabled skill instance for this request', {
+      meta: { instanceId: pathInstanceId ?? null },
+    })
+    if (isDirectiveBody(request.body)) {
+      reply
+        .code(200)
+        .send(
+          preParseErrorEnvelope(
+            'INVALID_AUTHORIZATION_CREDENTIAL',
+            'unknown or disabled skill instance',
+          ),
+        )
+      return
+    }
+    reply.code(404).send({ error: 'unknown_skill_instance' })
+    return
+  }
+  await handler(request, reply, skill)
+}
+
+/** Whether a body looks like an Alexa directive (the reply to it must be an Alexa envelope). */
+function isDirectiveBody(body: unknown): boolean {
+  return typeof body === 'object' && body !== null && 'directive' in body
 }
 
 // ── Ingress-token channel guard ─────────────────────────────────────
@@ -124,12 +187,15 @@ function ingressRejected(
   request: AddonHttpRequest,
   reply: AddonHttpReply,
   deps: HttpRouteDeps,
+  skill: RoutedSkill,
   label: string,
 ): boolean {
-  const settings = deps.getSettings()
+  const settings = skill.getSettings()
   if (!settings.enforceIngressToken) return false
   if (verifyIngressToken(settings.ingressToken, readIngressHeader(request.headers))) return false
-  deps.logger.warn(`${label}: rejected — missing/invalid ingress token`)
+  deps.logger.warn(`${label}: rejected — missing/invalid ingress token`, {
+    meta: { instanceId: skill.id },
+  })
   reply.code(401).send({ error: 'invalid_ingress_token' })
   return true
 }
@@ -205,8 +271,9 @@ async function handleDirective(
   request: AddonHttpRequest,
   reply: AddonHttpReply,
   deps: HttpRouteDeps,
+  skill: RoutedSkill,
 ): Promise<void> {
-  if (ingressRejected(request, reply, deps, 'alexa directive')) return
+  if (ingressRejected(request, reply, deps, skill, 'alexa directive')) return
 
   // Arrival log — makes "did this directive actually reach our addon?"
   // greppable. For device-targeted directives (live-view, stream-init,
@@ -234,7 +301,7 @@ async function handleDirective(
     },
   })
 
-  const settings = deps.getSettings()
+  const settings = skill.getSettings()
   if (!settings.expectedAudience) {
     // Defensive: if the operator hasn't pasted the skill id we still
     // run the dispatch (token verification handles auth), but log a
@@ -320,7 +387,7 @@ async function handleDirective(
 
   // Only now — after the bearer verified — is the broker advertisement believed.
   const advertised = readHeader(request.headers, BROKER_HEADER)
-  if (advertised && deps.onBrokerAdvertised) deps.onBrokerAdvertised(advertised)
+  if (advertised && skill.onBrokerAdvertised) skill.onBrokerAdvertised(advertised)
 
   const callerIdentity: VerifiedDirectiveIdentity = {
     userId: verified.userId,
@@ -328,7 +395,7 @@ async function handleDirective(
     scopes: verified.scopes,
   }
 
-  const result = await dispatchDirective(request.body, deps.directiveDeps, callerIdentity)
+  const result = await dispatchDirective(request.body, skill.directiveDeps, callerIdentity)
   reply.code(result.status).send(result.body)
 }
 

@@ -1,14 +1,15 @@
 /**
- * The Alexa export's settings page — the exporter page pattern:
+ * The form of ONE Alexa skill (an integration instance) — the exporter page pattern:
  *
  *   Connection        how the skill reaches this hub (open)
  *   Features          what each exposed camera carries (open)
  *   Account link      who is linked, and the one way to unlink (open)
  *   Troubleshooting   one-off repairs (collapsed)
- *   Custom-skill security   the ingress token — custom skill only (collapsed)
+ *   Ingress token     reveal and rotate (collapsed)
  *
  * Every action is an `addon-action-button`, which shows the result or the
- * error under the button. A row that belongs to the custom skill carries
+ * error under the button, and carries `paramsStatic: { instanceId }` so it acts on THIS skill.
+ * The create form (no id yet) has the fields only. A row that belongs to the custom skill carries
  * `showWhen: skillMode = custom` rather than being left out at build time, so
  * the form reacts the moment the operator switches mode (no save, no reload);
  * a section whose rows are all hidden is not drawn at all. Pure: the addon
@@ -26,7 +27,7 @@ const CUSTOM_SKILL_ONLY: ConfigCondition = {
   equals: 'custom',
 }
 
-/** The skill's own form: the switches of the `skills` record (D985, D996). */
+/** The skill's own form: the switches of the `skills` record (D985, D996), and its actions. */
 export interface AlexaInstanceFormInput {
   /** Field defaults, from the record kind's default body. */
   readonly defaults: {
@@ -38,15 +39,14 @@ export interface AlexaInstanceFormInput {
     readonly snapshots: boolean
     readonly enforceIngressToken: boolean
   }
-}
-
-/** What the addon's own settings page needs: the ledgers and which skill is selected. */
-export interface AlexaSettingsPageInput {
+  /** The skill the form is for; null on the create form, which has no actions. */
+  readonly instanceId: string | null
+  /** The first skill (`export-alexa`): it keeps the pre-multi behaviour (public mode never enforces the token). */
+  readonly legacy: boolean
+  /** Who is linked to this skill (the status block). */
   readonly linkedAccounts: readonly LinkedAccount[]
   readonly tokens: readonly LwaTokenEntry[]
   readonly now: number
-  /** The selected skill: the custom-skill rows exist only for `custom`. */
-  readonly skillMode: string
 }
 
 const CONNECTION_DESCRIPTION = [
@@ -142,7 +142,7 @@ function featuresSection(input: AlexaInstanceFormInput): ConfigSection {
   }
 }
 
-function accountLinkSection(input: AlexaSettingsPageInput): ConfigSection {
+function accountLinkSection(input: AlexaInstanceFormInput, params: ActionParams): ConfigSection {
   return {
     id: 'export-alexa-account',
     title: 'Account link',
@@ -166,6 +166,7 @@ function accountLinkSection(input: AlexaSettingsPageInput): ConfigSection {
       {
         type: 'addon-action-button',
         addonId: ADDON_ID,
+        paramsStatic: params,
         key: '__unlink-alexa-accounts',
         label: 'Unlink Amazon account',
         description:
@@ -182,7 +183,7 @@ function accountLinkSection(input: AlexaSettingsPageInput): ConfigSection {
   }
 }
 
-function troubleshootingSection(): ConfigSection {
+function troubleshootingSection(params: ActionParams): ConfigSection {
   return {
     id: 'export-alexa-troubleshooting',
     title: 'Troubleshooting',
@@ -193,6 +194,7 @@ function troubleshootingSection(): ConfigSection {
       {
         type: 'addon-action-button',
         addonId: ADDON_ID,
+        paramsStatic: params,
         key: '__resync-discovery',
         label: 'Re-sync devices',
         description:
@@ -206,6 +208,7 @@ function troubleshootingSection(): ConfigSection {
       {
         type: 'addon-action-button',
         addonId: ADDON_ID,
+        paramsStatic: params,
         key: '__remove-alexa-endpoints',
         label: 'Remove ids from Alexa',
         description:
@@ -225,6 +228,7 @@ function troubleshootingSection(): ConfigSection {
       {
         type: 'addon-action-button',
         addonId: ADDON_ID,
+        paramsStatic: params,
         key: '__rotate-broker-credential',
         label: 'Rotate broker credential',
         description:
@@ -252,26 +256,27 @@ function instanceSecuritySection(input: AlexaInstanceFormInput): ConfigSection {
         description:
           'When on, this hub refuses skill calls without the matching token. Turn it on only after HUB_INGRESS_TOKEN is set in your Lambda. The token itself is shown on the addon page.',
         default: input.defaults.enforceIngressToken,
-        showWhen: CUSTOM_SKILL_ONLY,
+        // The first skill never enforces in public mode (its shared Lambda sends one token for
+        // every hub); a later skill always has its own Lambda and enforces.
+        ...(input.legacy ? { showWhen: CUSTOM_SKILL_ONLY } : {}),
       },
     ],
   }
 }
 
-/** Custom skill only: the public skill's shared Lambda sends one ingress token
- *  for every hub (`HUB_INGRESS_TOKEN`), so a per-hub token cannot apply to it. The rows are
- *  built only for a custom skill: the mode is not a field of this page. */
-function customSkillSecuritySection(input: AlexaSettingsPageInput): ConfigSection | null {
-  if (input.skillMode !== 'custom') return null
+/** The ingress token. The first skill's public mode shares one Lambda across every hub, so a
+ *  per-hub token cannot apply to it and the rows show for `custom` only; a later skill has its own. */
+function ingressTokenSection(input: AlexaInstanceFormInput, params: ActionParams): ConfigSection {
   return {
     id: 'export-alexa-custom-security-token',
-    title: 'Custom-skill ingress token',
+    title: 'Ingress token',
     style: 'accordion',
     defaultCollapsed: true,
     columns: 1,
     fields: [
       {
         type: 'info',
+        ...(input.legacy ? { showWhen: CUSTOM_SKILL_ONLY } : {}),
         key: '__ingress-token-info',
         label: 'Ingress token',
         variant: 'info',
@@ -281,6 +286,8 @@ function customSkillSecuritySection(input: AlexaSettingsPageInput): ConfigSectio
       {
         type: 'addon-action-button',
         addonId: ADDON_ID,
+        paramsStatic: params,
+        ...(input.legacy ? { showWhen: CUSTOM_SKILL_ONLY } : {}),
         key: '__reveal-ingress-token',
         label: 'Show ingress token',
         description: 'Administrators only. Shows the current token once, here.',
@@ -292,6 +299,8 @@ function customSkillSecuritySection(input: AlexaSettingsPageInput): ConfigSectio
       {
         type: 'addon-action-button',
         addonId: ADDON_ID,
+        paramsStatic: params,
+        ...(input.legacy ? { showWhen: CUSTOM_SKILL_ONLY } : {}),
         key: '__regenerate-ingress-token',
         label: 'Rotate ingress token',
         description:
@@ -307,16 +316,18 @@ function customSkillSecuritySection(input: AlexaSettingsPageInput): ConfigSectio
   }
 }
 
+/** What every action button of a skill's form sends along. */
+type ActionParams = { readonly instanceId: string }
+
 /** The skill instance's form (`skills` record). */
 export function buildAlexaInstanceSections(input: AlexaInstanceFormInput): ConfigSection[] {
-  return [connectionSection(input), featuresSection(input), instanceSecuritySection(input)]
-}
-
-export function buildAlexaSettingsSections(input: AlexaSettingsPageInput): ConfigSection[] {
-  const security = customSkillSecuritySection(input)
+  const fields = [connectionSection(input), featuresSection(input), instanceSecuritySection(input)]
+  if (input.instanceId === null) return fields
+  const params: ActionParams = { instanceId: input.instanceId }
   return [
-    accountLinkSection(input),
-    troubleshootingSection(),
-    ...(security === null ? [] : [security]),
+    ...fields,
+    accountLinkSection(input, params),
+    troubleshootingSection(params),
+    ingressTokenSection(input, params),
   ]
 }

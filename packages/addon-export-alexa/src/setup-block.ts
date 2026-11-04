@@ -21,10 +21,15 @@ export interface SetupBlockInput {
   /** The ingress token row is a custom-skill concern: the public skill's
    *  shared Lambda cannot send a per-hub token. */
   readonly skillMode: 'public' | 'custom'
+  /** The skill this block describes. */
+  readonly instanceId: string
+  /** The first skill keeps the pre-multi URLs (`/directive`); every other one has its id in the path. */
+  readonly legacyUrls: boolean
 }
 
 export function buildAlexaSetupBlock(input: SetupBlockInput): ExportSetup {
   const base = input.publicEndpoint.ok ? input.publicEndpoint.origin : ''
+  const suffix = input.legacyUrls ? '' : `/${encodeURIComponent(input.instanceId)}`
   const fields: ExportSetup['fields'] = [
     // What the operator types on the skill's account-linking page ("Hub address"):
     // the same public address the directive endpoint is built on. Shown, not
@@ -34,15 +39,27 @@ export function buildAlexaSetupBlock(input: SetupBlockInput): ExportSetup {
       ? [
           {
             label: 'Directive endpoint',
-            value: `${base}/addon/export-alexa/directive`,
+            value: `${base}/addon/export-alexa/directive${suffix}`,
           },
         ]
       : []),
-    ...(input.ingressToken && input.skillMode === 'custom'
+    ...(base && !input.legacyUrls
+      ? [
+          {
+            label: 'Broker link endpoint',
+            value: `${base}/addon/export-alexa/oauth/broker-link${suffix}`,
+          },
+          {
+            label: 'Skill instance id (Lambda HUB_INSTANCE_ID)',
+            value: input.instanceId,
+          },
+        ]
+      : []),
+    ...(input.ingressToken && (input.skillMode === 'custom' || !input.legacyUrls)
       ? [
           {
             label:
-              'Ingress token (Lambda HUB_INGRESS_TOKEN) — use "Show ingress token" in settings',
+              'Ingress token (Lambda HUB_INGRESS_TOKEN) — use "Show ingress token" on the skill\'s page',
             value: maskSecretTail(input.ingressToken),
           },
         ]

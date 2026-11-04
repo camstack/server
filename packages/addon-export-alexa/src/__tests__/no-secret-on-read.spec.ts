@@ -49,6 +49,8 @@ describe('the status setup block', () => {
       publicEndpoint: { ok: true, origin: 'https://hub.example' },
       ingressToken: token,
       skillMode: 'custom',
+      instanceId: 'export-alexa',
+      legacyUrls: true,
     })
     expect(JSON.stringify(block)).not.toContain(token.slice(0, 12))
     expect(JSON.stringify(block)).toContain('0042')
@@ -63,6 +65,8 @@ describe('the status setup block, by skill mode', () => {
         publicEndpoint: { ok: true, origin: 'https://hub.example' },
         ingressToken: 't0k3n',
         skillMode,
+        instanceId: 'export-alexa',
+        legacyUrls: true,
       }).fields?.map((f) => f.label) ?? []
     expect(labels('public').some((l) => /ingress/i.test(l))).toBe(false)
     expect(labels('custom').some((l) => /ingress/i.test(l))).toBe(true)
@@ -80,6 +84,8 @@ describe('the status setup block — the address the operator types into the Ale
         publicEndpoint: { ok: true, origin: 'https://hub.example' },
         ingressToken: 't',
         skillMode: 'public',
+        instanceId: 'export-alexa',
+        legacyUrls: true,
       }).fields ?? []
     expect(rows.find((r) => /address.*alexa|alexa.*address/i.test(r.label))?.value).toBe(
       'https://hub.example',
@@ -93,6 +99,8 @@ describe('the status setup block — the address the operator types into the Ale
       publicEndpoint: { ok: false, reason: NO_PUBLIC_ENDPOINT_REASON },
       ingressToken: 't',
       skillMode: 'public',
+      instanceId: 'export-alexa',
+      legacyUrls: true,
     })
     expect((block.fields ?? []).some((r) => /address/i.test(r.label))).toBe(false)
     // The typed reason is reported, and it names the Network page rather than the retired form field.
@@ -114,5 +122,40 @@ describe('effectiveAlexaSettings', () => {
       } as Parameters<typeof effectiveAlexaSettings>[0])
     expect(make('public').enforceIngressToken).toBe(false)
     expect(make('custom').enforceIngressToken).toBe(true)
+  })
+})
+
+describe('the status setup block, per skill', () => {
+  it('a later skill carries its id in every URL, the id for the Lambda, and the token row in public mode too', async () => {
+    const { buildAlexaSetupBlock } = await import('../setup-block.js')
+    const rows =
+      buildAlexaSetupBlock({
+        publicEndpoint: { ok: true, origin: 'https://hub.example' },
+        ingressToken: 'Zx9-token-0042',
+        skillMode: 'public',
+        instanceId: 'alexa-skill-2',
+        legacyUrls: false,
+      }).fields ?? []
+    const values = rows.map((r) => r.value)
+    expect(values).toContain('https://hub.example/addon/export-alexa/directive/alexa-skill-2')
+    expect(values).toContain(
+      'https://hub.example/addon/export-alexa/oauth/broker-link/alexa-skill-2',
+    )
+    expect(values).toContain('alexa-skill-2')
+    expect(rows.some((r) => /ingress/i.test(r.label))).toBe(true)
+    expect(JSON.stringify(rows)).not.toContain('Zx9-token')
+  })
+
+  it('the first skill keeps the pre-multi directive URL', async () => {
+    const { buildAlexaSetupBlock } = await import('../setup-block.js')
+    const rows =
+      buildAlexaSetupBlock({
+        publicEndpoint: { ok: true, origin: 'https://hub.example' },
+        ingressToken: 't',
+        skillMode: 'public',
+        instanceId: 'export-alexa',
+        legacyUrls: true,
+      }).fields ?? []
+    expect(rows.map((r) => r.value)).toContain('https://hub.example/addon/export-alexa/directive')
   })
 })

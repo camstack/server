@@ -16,7 +16,7 @@ import {
 } from '../broker-client.js'
 import { handleBrokerLinkCallback } from '../handlers/broker-link-callback.js'
 import type { LwaTokensCallbackDeps } from '../handlers/lwa-tokens-callback.js'
-import { BROKER_HEADER, buildRoutes, type HttpRouteDeps } from '../http-server.js'
+import { BROKER_HEADER, buildRoutes, type HttpRouteDeps, type RoutedSkill } from '../http-server.js'
 import { LwaEventGateway, type LwaEventGatewayDeps } from '../lwa-event-gateway.js'
 import type { LwaTokenEntry, UpsertLwaTokenInput } from '../types.js'
 
@@ -397,17 +397,20 @@ describe('broker advertisement', () => {
     return {
       ctx: c.deps.ctx,
       logger: noopLogger,
-      getSettings: () =>
-        ({
-          enforceIngressToken: false,
-          ingressToken: '',
-          expectedAudience: 'skill',
-        }) as never,
-      directiveDeps: {} as HttpRouteDeps['directiveDeps'],
+      resolveSkill: () => ({
+        id: 'export-alexa',
+        getSettings: () =>
+          ({
+            enforceIngressToken: false,
+            ingressToken: '',
+            expectedAudience: 'skill',
+          }) as never,
+        directiveDeps: {} as RoutedSkill['directiveDeps'],
+        lwaTokensCallbackDeps: c.deps,
+        onBrokerAdvertised,
+      }),
       snapshotRoute: snapshotsOff().route,
-      lwaTokensCallbackDeps: c.deps,
       publicEndpoint: async () => ({ ok: true, origin: 'https://hub.example' }),
-      onBrokerAdvertised,
     }
   }
 

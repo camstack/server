@@ -314,9 +314,7 @@ describe('wiring', () => {
     const routes = buildRoutes({
       ctx: {} as AddonContext,
       logger: quietLogger,
-      getSettings: () => ({}) as never,
-      directiveDeps: {} as never,
-      lwaTokensCallbackDeps: {} as never,
+      resolveSkill: () => null,
       publicEndpoint: async () => ({ ok: true, origin: 'https://hub.example' }),
       snapshotRoute: snapshotsOff().route,
     })

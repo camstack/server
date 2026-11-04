@@ -1,127 +1,132 @@
 /**
- * The exporter settings page pattern: Connection / Features / Account link /
- * one collapsed Troubleshooting section, every action an `addon-action-button`
- * that reports its outcome, and rows that belong to the custom skill gated by
- * `showWhen` on `skillMode`. The skill's own values (mode, region, audience, feature switches, the
- * ingress-token enforcement) are the INSTANCE form of the `skills` record (D987); the addon page
- * keeps the account link, the troubleshooting actions and, in custom mode, the ingress-token rows.
+ * The exporter page pattern, on the form of ONE skill: Connection / Features / Custom-skill
+ * security / Account link / one collapsed Troubleshooting / the ingress-token rows, every action
+ * an `addon-action-button` that reports its outcome and names the skill it acts on
+ * (`paramsStatic: { instanceId }`). Rows that belong to the custom skill are gated by `showWhen`
+ * on `skillMode` for the first skill; a later skill always has its own Lambda and token. The
+ * addon has no settings page of its own any more: the skills ARE the page.
  */
 import { describe, expect, it } from 'vitest'
-import type { ConfigField, ConfigSection, ConfigUISchema } from '@camstack/types'
+import type { ConfigField, ConfigSection } from '@camstack/types'
 import { exportAlexaActions } from '../custom-actions.js'
 import { ExportAlexaAddon } from '../export-alexa.addon.js'
 import { buildAlexaInstanceSections } from '../settings-schema.js'
 import { ALEXA_SKILL_DEFAULT_BODY } from '../skill-records.js'
 
-type Mode = 'public' | 'custom'
-
-function schemaFor(mode: Mode): ConfigUISchema {
-  const addon = new ExportAlexaAddon()
-  const internals = addon as unknown as {
-    _config: Record<string, unknown>
-    globalSettingsSchema: () => ConfigUISchema | null
-  }
-  internals._config = { ...internals._config, skillMode: mode }
-  const schema = internals.globalSettingsSchema.call(addon)
-  if (!schema) throw new Error('no schema')
-  return schema
+function form(opts: { id: string | null; legacy: boolean }): ConfigSection[] {
+  return buildAlexaInstanceSections({
+    defaults: ALEXA_SKILL_DEFAULT_BODY,
+    instanceId: opts.id,
+    legacy: opts.legacy,
+    linkedAccounts: [],
+    tokens: [],
+    now: 0,
+  })
 }
 
 function keysOf(section: ConfigSection | undefined): string[] {
   return (section?.fields ?? []).flatMap((f) => ('key' in f ? [f.key] : []))
 }
 
-function field(schema: ConfigUISchema, key: string): ConfigField | undefined {
-  return schema.sections.flatMap((s) => s.fields).find((f) => 'key' in f && f.key === key)
+function fieldsOf(sections: readonly ConfigSection[]): ConfigField[] {
+  return sections.flatMap((s) => s.fields)
 }
 
-describe('Alexa settings page layout', () => {
+describe('Alexa skill form', () => {
   const CUSTOM_ONLY = { field: 'skillMode', equals: 'custom' }
 
-  it('the instance form is Connection, Features, Custom-skill security', () => {
-    const sections = buildAlexaInstanceSections({ defaults: ALEXA_SKILL_DEFAULT_BODY })
+  it('the create form is the fields only: no action can name a skill that does not exist yet', () => {
+    const sections = form({ id: null, legacy: false })
     expect(sections.map((s) => s.title)).toEqual([
       'Connection',
       'Features',
       'Custom-skill security',
     ])
-    expect(keysOf(sections[0])).toEqual(['skillMode', 'region', 'expectedAudience'])
-    expect(keysOf(sections[1])).toEqual(['detectionSensors', 'objectDetection', 'snapshots'])
-    expect(keysOf(sections[2])).toEqual(['enforceIngressToken'])
+    expect(fieldsOf(sections).filter((f) => f.type === 'addon-action-button')).toEqual([])
   })
 
-  it('every custom-skill row of the instance form is gated on skillMode, and nothing else is', () => {
-    const fields = buildAlexaInstanceSections({ defaults: ALEXA_SKILL_DEFAULT_BODY }).flatMap(
-      (s) => s.fields,
-    )
-    const gated = fields.flatMap((f) => ('showWhen' in f && f.showWhen ? [f] : []))
-    expect(gated.map((f) => ('key' in f ? f.key : ''))).toEqual([
-      'expectedAudience',
-      'enforceIngressToken',
+  it('a saved skill adds Account link, collapsed Troubleshooting and the ingress token', () => {
+    const sections = form({ id: 'alexa-skill-1', legacy: false })
+    expect(sections.map((s) => s.title)).toEqual([
+      'Connection',
+      'Features',
+      'Custom-skill security',
+      'Account link',
+      'Troubleshooting',
+      'Ingress token',
     ])
-    for (const f of gated) expect('showWhen' in f ? f.showWhen : null).toEqual(CUSTOM_ONLY)
-  })
-
-  it('public mode: the page is the account link, then collapsed Troubleshooting', () => {
-    const schema = schemaFor('public')
-    expect(schema.sections.map((s) => s.title)).toEqual(['Account link', 'Troubleshooting'])
-    const [account, trouble] = schema.sections
-    expect(keysOf(account)).toEqual(['__alexa-link-status', '__unlink-alexa-accounts'])
-    expect(trouble?.style).toBe('accordion')
-    expect(trouble?.defaultCollapsed).toBe(true)
-    expect(keysOf(trouble)).toEqual([
+    expect(keysOf(sections[3])).toEqual(['__alexa-link-status', '__unlink-alexa-accounts'])
+    expect(sections[4]?.style).toBe('accordion')
+    expect(sections[4]?.defaultCollapsed).toBe(true)
+    expect(keysOf(sections[4])).toEqual([
       '__resync-discovery',
       '__remove-alexa-endpoints',
       '__rotate-broker-credential',
     ])
-  })
-
-  it('custom mode adds the ingress-token rows, collapsed, and nothing public mode shows moves', () => {
-    const custom = schemaFor('custom')
-    expect(custom.sections.map((s) => s.title)).toEqual([
-      'Account link',
-      'Troubleshooting',
-      'Custom-skill ingress token',
-    ])
-    const security = custom.sections[2]
-    expect(security?.style).toBe('accordion')
-    expect(security?.defaultCollapsed).toBe(true)
-    expect(keysOf(security)).toEqual([
+    expect(sections[5]?.style).toBe('accordion')
+    expect(keysOf(sections[5])).toEqual([
       '__ingress-token-info',
       '__reveal-ingress-token',
       '__regenerate-ingress-token',
     ])
   })
 
-  it('holds no external-address picker: the public origin is the Network page role', () => {
-    expect(field(schemaFor('public'), 'publicHubUrl')).toBeUndefined()
-    expect(field(schemaFor('custom'), 'publicHubUrl')).toBeUndefined()
+  it('the first skill gates its custom-skill rows on skillMode; a later skill gates only the audience', () => {
+    const first = fieldsOf(form({ id: 'export-alexa', legacy: true }))
+    const gatedFirst = first.flatMap((f) => ('showWhen' in f && f.showWhen ? [f] : []))
+    expect(gatedFirst.map((f) => ('key' in f ? f.key : ''))).toEqual([
+      'expectedAudience',
+      'enforceIngressToken',
+      '__ingress-token-info',
+      '__reveal-ingress-token',
+      '__regenerate-ingress-token',
+    ])
+    for (const f of gatedFirst) expect('showWhen' in f ? f.showWhen : null).toEqual(CUSTOM_ONLY)
+
+    const later = fieldsOf(form({ id: 'alexa-skill-1', legacy: false }))
+    const gatedLater = later.flatMap((f) => ('showWhen' in f && f.showWhen ? [f] : []))
+    expect(gatedLater.map((f) => ('key' in f ? f.key : ''))).toEqual(['expectedAudience'])
   })
 
-  it('every action is an addon-action-button that says what happened', () => {
-    for (const mode of ['public', 'custom'] as const) {
-      const fields = schemaFor(mode).sections.flatMap((s) => s.fields)
-      expect(fields.filter((f) => f.type === 'button')).toEqual([])
-      for (const f of fields) {
-        if (f.type !== 'addon-action-button') continue
-        expect({
-          key: f.key,
-          successMessage: f.successMessage ?? null,
-        }).not.toEqual({
-          key: f.key,
-          successMessage: null,
-        })
-        expect(Object.keys(exportAlexaActions)).toContain(f.action)
-      }
+  it('holds no external-address picker: the public origin is the Network page role', () => {
+    const keys = fieldsOf(form({ id: 'alexa-skill-1', legacy: false })).flatMap((f) =>
+      'key' in f ? [f.key] : [],
+    )
+    expect(keys).not.toContain('publicHubUrl')
+  })
+
+  it('every action says what happened and acts on THIS skill', () => {
+    const fields = fieldsOf(form({ id: 'alexa-skill-1', legacy: false }))
+    expect(fields.filter((f) => f.type === 'button')).toEqual([])
+    const buttons = fields.filter((f) => f.type === 'addon-action-button')
+    expect(buttons.length).toBe(6)
+    for (const f of buttons) {
+      if (f.type !== 'addon-action-button') continue
+      expect(f.successMessage ?? null).not.toBeNull()
+      expect(Object.keys(exportAlexaActions)).toContain(f.action)
+      expect(f.paramsStatic).toEqual({ instanceId: 'alexa-skill-1' })
     }
   })
 
   it('"Remove ids from Alexa" asks for the ids instead of reading a saved field', () => {
-    const remove = field(schemaFor('public'), '__remove-alexa-endpoints')
+    const remove = fieldsOf(form({ id: 'alexa-skill-1', legacy: false })).find(
+      (f) => 'key' in f && f.key === '__remove-alexa-endpoints',
+    )
     expect(remove?.type).toBe('addon-action-button')
     if (remove?.type !== 'addon-action-button') return
     expect(remove.action).toBe('removeAlexaEndpoints')
     expect(remove.prompt?.param).toBe('endpointIds')
-    expect(field(schemaFor('public'), 'staleEndpointPurgeInput')).toBeUndefined()
+  })
+
+  it('every action accepts the instance id the buttons send', () => {
+    for (const action of Object.values(exportAlexaActions)) {
+      expect(action.input.safeParse({ instanceId: 'x', endpointIds: 'a' }).success).toBe(true)
+    }
+  })
+
+  it('the addon has no page of its own: the skills are the page', () => {
+    const addon = new ExportAlexaAddon()
+    const internals = addon as unknown as { globalSettingsSchema: () => unknown }
+    expect(internals.globalSettingsSchema.call(addon)).toBeNull()
   })
 })

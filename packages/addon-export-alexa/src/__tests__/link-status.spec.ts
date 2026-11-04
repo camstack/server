@@ -22,7 +22,12 @@ import type { LinkedAccount, LwaTokenEntry } from '../types.js'
 const MIN = 60_000
 const NOW = 1_786_300_000_000
 
-function session(over: { id: string; integrationId?: string; revokedAt?: number | null }): {
+function session(over: {
+  id: string
+  userId?: string
+  integrationId?: string
+  revokedAt?: number | null
+}): {
   id: string
   userId: string
   username: string
@@ -31,7 +36,7 @@ function session(over: { id: string; integrationId?: string; revokedAt?: number 
 } {
   return {
     id: over.id,
-    userId: 'u1',
+    userId: over.userId ?? 'u1',
     username: 'operator',
     integrationId: over.integrationId ?? ALEXA_OAUTH_INTEGRATION_ID,
     revokedAt: over.revokedAt ?? null,
@@ -70,6 +75,18 @@ describe('selectAlexaSessionIdsToRevoke', () => {
     // would leave the previous Amazon account refreshing indefinitely.
     const ids = selectAlexaSessionIdsToRevoke([session({ id: 'first' }), session({ id: 'second' })])
     expect(ids).toEqual(['first', 'second'])
+  })
+
+  it('leaves the sessions of users linked to ANOTHER skill: the OAuth client is shared, their session is in use there', () => {
+    const ids = selectAlexaSessionIdsToRevoke(
+      [
+        session({ id: 'mine', userId: 'u1' }),
+        session({ id: 'shared', userId: 'u2' }),
+        session({ id: 'orphan', userId: 'u3' }),
+      ],
+      new Set(['u2']),
+    )
+    expect(ids).toEqual(['mine', 'orphan'])
   })
 
   it('is empty when nothing is linked', () => {

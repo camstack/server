@@ -15,15 +15,18 @@
 import { customAction, defineCustomActions } from '@camstack/types'
 import { z } from 'zod'
 
-/** tRPC/superjson elides empty-object inputs on the wire — accept both `{}`
- *  and `undefined` so the form-builder doesn't have to know. */
-const NoInput = z.object({}).optional()
+/**
+ * Which skill an action is for. The instance form's buttons send it (`paramsStatic`); a caller
+ * that sends none acts on the first skill, `export-alexa`. tRPC/superjson elides empty-object
+ * inputs on the wire — accept both `{}` and `undefined` so the form-builder doesn't have to know.
+ */
+const InstanceInput = z.object({ instanceId: z.string().optional() }).optional()
 
 export const exportAlexaActions = defineCustomActions({
   // Rotate the ingress token (the shared secret a CUSTOM skill's Lambda
   // presents on its hub calls). Returns the fresh value so the form can show
   // it once.
-  regenerateIngressToken: customAction(NoInput, z.object({ ingressToken: z.string() }), {
+  regenerateIngressToken: customAction(InstanceInput, z.object({ ingressToken: z.string() }), {
     kind: 'mutation',
     auth: 'admin',
   }),
@@ -34,7 +37,7 @@ export const exportAlexaActions = defineCustomActions({
    * push grant, so the button says why nothing happened.
    */
   resyncDiscovery: customAction(
-    NoInput,
+    InstanceInput,
     z.object({
       deviceCount: z.number(),
       endpointCount: z.number(),
@@ -53,7 +56,7 @@ export const exportAlexaActions = defineCustomActions({
    * tracking forget those ids.
    */
   removeAlexaEndpoints: customAction(
-    z.object({ endpointIds: z.string() }),
+    z.object({ endpointIds: z.string(), instanceId: z.string().optional() }),
     z.object({
       requested: z.number(),
       accountCount: z.number(),
@@ -76,7 +79,7 @@ export const exportAlexaActions = defineCustomActions({
    * events at the old Amazon account until Amazon happens to answer 403.
    */
   unlinkAlexaAccounts: customAction(
-    NoInput,
+    InstanceInput,
     z.object({
       revokedSessions: z.number(),
       removedAccounts: z.number(),
@@ -88,7 +91,7 @@ export const exportAlexaActions = defineCustomActions({
    * one read surface that returns it: `deviceExport.getStatus` and the
    * settings form carry only a mask.
    */
-  revealIngressToken: customAction(NoInput, z.object({ ingressToken: z.string() }), {
+  revealIngressToken: customAction(InstanceInput, z.object({ ingressToken: z.string() }), {
     kind: 'mutation',
     auth: 'admin',
   }),
@@ -99,7 +102,7 @@ export const exportAlexaActions = defineCustomActions({
    * a broker.
    */
   rotateBrokerCredential: customAction(
-    NoInput,
+    InstanceInput,
     z.object({ rotated: z.number(), failed: z.number() }),
     { kind: 'mutation', auth: 'admin' },
   ),
