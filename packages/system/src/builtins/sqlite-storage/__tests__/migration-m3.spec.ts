@@ -439,11 +439,16 @@ describe('addon-owned catalogue', () => {
     await first.file.stop()
     const second = await boot()
     // The owner has not booted yet: its applied rows are not "newer".
-    expect((await second.engine.listLedger()).map((e) => e.status)).toEqual(['applied', 'applied'])
+    const unloaded = await second.engine.listLedger()
+    expect(unloaded.map((e) => e.status)).toEqual(['applied', 'applied'])
+    // Typed, not silent: the answering process cannot judge a row whose owner it has not loaded.
+    expect(unloaded.map((e) => e.ownerNotLoaded)).toEqual([true, true])
     expect(h.lines.some((l) => l.message.includes('skipped-newer'))).toBe(false)
     await run(second.provider, [planEntry('one', 1, { edits: [] })])
     const ledger = await second.engine.listLedger()
     expect(ledger.find((e) => e.id.endsWith('-two'))?.status).toBe('skipped-newer')
+    // The owner IS loaded now: a genuine downgrade, no "not loaded" marker.
+    expect(ledger.every((e) => e.ownerNotLoaded === undefined)).toBe(true)
     expect(statuses()).toEqual({
       [`${OWNER}/2026-11-01-one`]: 'applied',
       [`${OWNER}/2026-11-01-two`]: 'applied',

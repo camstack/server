@@ -45,8 +45,16 @@ describe('planMigrationAlerts', () => {
   it('a failed migration that TOLERATES failure raises a warning, a block-owner one stays critical', () => {
     const plan = planMigrationAlerts(
       [
-        entry('hub/t', { status: 'failed', error: 'x', meta: metaOf('hub/t', 'tolerate') }),
-        entry('hub/b', { status: 'failed', error: 'x', meta: metaOf('hub/b', 'block-owner') }),
+        entry('hub/t', {
+          status: 'failed',
+          error: 'x',
+          meta: metaOf('hub/t', 'tolerate'),
+        }),
+        entry('hub/b', {
+          status: 'failed',
+          error: 'x',
+          meta: metaOf('hub/b', 'block-owner'),
+        }),
       ],
       [],
       NOW,
@@ -74,13 +82,31 @@ describe('planMigrationAlerts', () => {
     })
   })
 
+  it('raises no "Database is newer" alert for an applied row whose owner is not loaded', () => {
+    const plan = planMigrationAlerts(
+      [
+        entry('export-hap/a', { status: 'applied', ownerNotLoaded: true }),
+        entry('export-hap/b', {
+          status: 'skipped-newer',
+          ownerNotLoaded: true,
+        }),
+      ],
+      [],
+      NOW,
+    )
+    expect(plan.raise).toEqual([])
+  })
+
   it('raises critical for a snapshot-refused block, warning for skipped-newer, nothing for applied or dependency-blocked', () => {
     const plan = planMigrationAlerts(
       [
         entry('hub/a', { status: 'blocked', reason: 'snapshot-refused' }),
         entry('hub/b', { status: 'skipped-newer' }),
         entry('hub/c', { status: 'applied' }),
-        entry('hub/d', { status: 'blocked', reason: 'dependency-failed:hub/x' }),
+        entry('hub/d', {
+          status: 'blocked',
+          reason: 'dependency-failed:hub/x',
+        }),
       ],
       [],
       NOW,

@@ -256,8 +256,10 @@ export class MigrationEngine {
 
   /** An applied row of a DECLARED owner whose id that owner no longer lists: a newer database. */
   private judgeAddonRow(entry: MigrationLedgerEntry): MigrationLedgerEntry {
+    if (entry.owner === HUB_OWNER || entry.status !== 'applied') return entry
     const declared = this.addonMetas.get(entry.owner)
-    if (declared === undefined || entry.status !== 'applied') return entry
+    // The owner's catalogue is not loaded in this process: applied, but not judgeable here.
+    if (declared === undefined) return { ...entry, ownerNotLoaded: true }
     return declared.some((meta) => meta.id === entry.id)
       ? entry
       : { ...entry, status: 'skipped-newer' }

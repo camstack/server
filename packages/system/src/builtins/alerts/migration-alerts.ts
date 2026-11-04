@@ -19,7 +19,8 @@ function faulted(entry: MigrationLedgerEntry): 'critical' | 'warning' | null {
   if (entry.status === 'failed')
     return entry.meta?.onFailure === 'tolerate' ? 'warning' : 'critical'
   if (entry.status === 'blocked' && entry.reason === 'snapshot-refused') return 'critical'
-  if (entry.status === 'skipped-newer') return 'warning'
+  // "Newer" needs the OWNER's catalogue loaded; a row the answering process cannot judge is no downgrade.
+  if (entry.status === 'skipped-newer') return entry.ownerNotLoaded === true ? null : 'warning'
   return null
 }
 
@@ -71,7 +72,11 @@ export function planMigrationAlerts(
       createdAt: now,
       updatedAt: now,
       source: { type: 'addon', id: 'sqlite-settings' },
-      metadata: { migrationId: entry.id, owner: entry.owner, database: entry.database },
+      metadata: {
+        migrationId: entry.id,
+        owner: entry.owner,
+        database: entry.database,
+      },
     })
   }
   const dismiss = open

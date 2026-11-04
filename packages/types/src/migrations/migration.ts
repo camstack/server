@@ -333,6 +333,12 @@ export const MigrationLedgerEntrySchema = z.object({
    * catalogue lists the id (a newer database).
    */
   meta: MigrationMetaSchema.optional(),
+  /**
+   * Set when this is an applied row of an addon owner whose catalogue the answering
+   * process has not loaded (the owner has not declared yet): the row is applied, the
+   * process just cannot judge it. Never `skipped-newer` — that needs the owner loaded.
+   */
+  ownerNotLoaded: z.boolean().optional(),
 })
 export type MigrationLedgerEntry = z.infer<typeof MigrationLedgerEntrySchema>
 
