@@ -37,6 +37,7 @@
     "addons": [
       {
         "id": "provider-rademacher",
+        "integrationRole": "devices",
         "category": "providers",
         "name": "Rademacher",
         "version": "0.1.0",
@@ -58,6 +59,9 @@
           },
           {
             "name": "connection-test"
+          },
+          {
+            "name": "integration-instances"
           }
         ]
       }

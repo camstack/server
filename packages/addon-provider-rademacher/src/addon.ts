@@ -4,6 +4,9 @@ import {
   BaseDeviceProvider,
   type ConfigUISchema,
   type CreateDeviceSpec,
+  defaultIntegrationApiOver,
+  defineAddonMigrations,
+  integrationInstancesCapability,
   connectionTestCapability,
   type DeviceConstructor,
   DeviceType,
@@ -15,9 +18,17 @@ import {
   type IDeviceAdoptionProvider,
   type SystemEvent,
   collectOwnerIntegrationIds,
+  type RecordIntegrationInstances,
 } from '@camstack/types'
+import type { RademacherConnectionBody } from './rademacher-instances.js'
 import { RademacherReconciler, type IntegrationLifecycleKind } from './rademacher-reconciler.js'
-import { buildConnectionFormSchema, connectionFromSettings } from './config.js'
+import {
+  buildRademacherInstances,
+  RADEMACHER_MIGRATIONS,
+  rademacherConnectionOf,
+  rademacherRecordKinds,
+  rademacherRowsPorts,
+} from './rademacher-instances.js'
 import { RademacherCoverDevice } from './devices/rademacher-cover-device.js'
 import { RademacherGatewayDevice } from './devices/rademacher-gateway-device.js'
 import { buildRademacherAdoptionProvider } from './rademacher-adoption-provider.js'
@@ -48,6 +59,7 @@ export class RademacherProviderAddon extends BaseDeviceProvider {
 
   private integrationReconciler: RademacherReconciler | null = null
   private clients: RademacherClientRegistry | null = null
+  private instances: RecordIntegrationInstances<RademacherConnectionBody> | null = null
 
   constructor() {
     super({})
@@ -55,6 +67,26 @@ export class RademacherProviderAddon extends BaseDeviceProvider {
 
   protected override async onInitialize(): Promise<AddonInitResult> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
+    const records = this.ctx.records
+    if (records === undefined)
+      throw new Error('provider-rademacher: ctx.records is required (hub-only addon)')
+    await records.declare(rademacherRecordKinds)
+    // Before the provider registers: while it is registered the hub answers from the record.
+    await this.runMigrations(
+      defineAddonMigrations(
+        RADEMACHER_MIGRATIONS,
+        rademacherRowsPorts({
+          api: defaultIntegrationApiOver(this.ctx.api),
+          records,
+          warn: (message) => this.ctx.logger.warn(message),
+        }),
+      ),
+    )
+    const instances = buildRademacherInstances(records, {
+      onChanged: () => this.reconcileIntegrations(),
+      tester: this.buildConnectionTestProvider(),
+    })
+    this.instances = instances
 
     this.clients = new RademacherClientRegistry(this.ctx.logger)
     this.clients.setOnConnected((integrationId) => {
@@ -78,6 +110,10 @@ export class RademacherProviderAddon extends BaseDeviceProvider {
           capability: connectionTestCapability,
           provider: this.buildConnectionTestProvider(),
         },
+        {
+          capability: integrationInstancesCapability,
+          provider: instances.toProvider(),
+        },
       ],
     }
   }
@@ -93,11 +129,8 @@ export class RademacherProviderAddon extends BaseDeviceProvider {
     this.clients = null
     this.integrationReconciler?.dispose()
     this.integrationReconciler = null
+    this.instances = null
     await super.onShutdown()
-  }
-
-  protected override globalSettingsSchema(): ConfigUISchema {
-    return buildConnectionFormSchema()
   }
 
   override async supportsManualCreation(): Promise<boolean> {
@@ -124,6 +157,11 @@ export class RademacherProviderAddon extends BaseDeviceProvider {
     return `rademacher:${nativeId}`
   }
 
+  private requireInstances(): RecordIntegrationInstances<RademacherConnectionBody> {
+    if (!this.instances) throw new Error('Rademacher provider not initialised')
+    return this.instances
+  }
+
   private requireClients(): RademacherClientRegistry {
     if (!this.clients) throw new Error('Rademacher provider not initialised')
     return this.clients
@@ -141,11 +179,7 @@ export class RademacherProviderAddon extends BaseDeviceProvider {
       },
       listIntegrations: () => this.ctx.api.integrations.list.query(),
       applySettings: async (integration) => {
-        const connection = connectionFromSettings(
-          await this.ctx.api.integrations.getSettings.query({
-            id: integration.id,
-          }),
-        )
+        const connection = await rademacherConnectionOf(this.requireInstances(), integration.id)
         if (!connection) return false
         await this.requireClients().upsert(integration.id, integration.name, connection)
         return true

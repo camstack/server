@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Rademacher hub connections are now typed integration instances; existing hubs are migrated on the first start, nothing to re-enter
+
 ## [0.2.157] - 2026-11-02
 
 ### Changed
