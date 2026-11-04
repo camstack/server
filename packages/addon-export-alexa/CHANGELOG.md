@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Alexa skill's ingress token and push state now live in a per-skill record; the existing token and link keep working without relinking
+
 ## [1.2.183] - 2026-11-04
 
 ### Changed
