@@ -118,6 +118,8 @@ describe('integration-instances additive fields (P2)', () => {
     const { instances } = await setup(true)
     const d = await instances.describe()
     expect(d.allowRestoreId).toBe(true)
+    expect(d.mintsId).toBe(true)
+    expect((await (await setup(false)).instances.describe()).mintsId).toBeUndefined()
     expect(d.kinds?.map((k) => k.id)).toEqual(['a', 'b'])
   })
 })

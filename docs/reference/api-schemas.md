@@ -2765,6 +2765,7 @@ Enum: `"not-electron" \| "no-app-state" \| "app-state-stale" \| "not-downloaded"
 - `canTest`: `boolean`
 - `kinds?`: `IntegrationInstanceKindSchema[]`
 - `allowRestoreId?`: `boolean`
+- `mintsId?`: `boolean`
 
 ### `IntegrationInstanceKindSchema`
 

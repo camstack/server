@@ -77,6 +77,11 @@ export const IntegrationInstanceDescriptionSchema = z.object({
    * devices carry it). The UI then offers "restore under its old id" on Add. Absent means no.
    */
   allowRestoreId: z.boolean().optional(),
+  /**
+   * `createInstance` without an `id` works: the provider mints it. Absent means the caller must
+   * send an id (the UI then mints an opaque one).
+   */
+  mintsId: z.boolean().optional(),
 })
 export type IntegrationInstanceDescription = z.infer<typeof IntegrationInstanceDescriptionSchema>
 

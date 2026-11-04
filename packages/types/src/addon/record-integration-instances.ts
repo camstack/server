@@ -162,7 +162,10 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
     }
   }
 
-  describe: IIntegrationInstancesProvider['describe'] = async () => this.hooks.description
+  describe: IIntegrationInstancesProvider['describe'] = async () =>
+    this.hooks.mintId === undefined
+      ? this.hooks.description
+      : { ...this.hooks.description, mintsId: true }
 
   instanceFormSchema: IIntegrationInstancesProvider['instanceFormSchema'] = async ({ id }) =>
     this.hooks.formSchema(id)
