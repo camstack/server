@@ -35,9 +35,12 @@ export type DefaultIntegrationPorts = IntegrationRowsPorts & ClaimDevicesPorts
 
 /** The slice of the hub API (`ctx.api`) the two migrations need, as plain calls. */
 export interface DefaultIntegrationApi extends IntegrationRowsApi {
-  listDevices(
-    addonId: string,
-  ): Promise<readonly { readonly id: number; readonly integrationId?: string | null | undefined }[]>
+  listDevices(addonId: string): Promise<
+    readonly {
+      readonly id: number
+      readonly integrationId?: string | null | undefined
+    }[]
+  >
   setDeviceIntegrationId(deviceId: number, integrationId: string): Promise<void>
   readDeviceIntegrationId(deviceId: number): Promise<string | null>
 }
@@ -62,6 +65,19 @@ export function defaultIntegrationPortsOver(deps: {
   })
   return {
     ...rows,
+    ...claimDevicesPortsOver({ api: deps.api, info: deps.info }),
+  }
+}
+
+/** The hub side of the device claim, over `ctx.api`. */
+export function claimDevicesPortsOver(deps: {
+  readonly api: Pick<
+    DefaultIntegrationApi,
+    'list' | 'listDevices' | 'setDeviceIntegrationId' | 'readDeviceIntegrationId'
+  >
+  readonly info: (message: string) => void
+}): ClaimDevicesPorts {
+  return {
     listIntegrations: async (addonId) =>
       (await deps.api.list())
         .filter((i) => i.addonId === addonId)
@@ -90,6 +106,40 @@ export function defaultIntegrationMigrationIds(
 }
 
 const FIXTURE_MARK = 'a legacy setting key the migration does not know'
+
+/**
+ * The device claim alone, for an addon that keeps its integration settings where they are for now
+ * (its own wave moves them) but whose persisted devices must name their default integration.
+ */
+export function claimDevicesMigration(spec: {
+  readonly addonId: string
+  readonly date: string
+  readonly seq: number
+  readonly dependsOn: readonly string[]
+  readonly eligible?: (integration: { readonly info: Readonly<Record<string, unknown>> }) => boolean
+}): AddonProcedureMigration<ClaimDevicesPorts> {
+  return {
+    meta: {
+      id: defaultIntegrationMigrationIds(spec.addonId, spec.date).claimDevices,
+      owner: spec.addonId,
+      level: 'addon-state',
+      seq: spec.seq,
+      dependsOn: [...spec.dependsOn],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'tolerate',
+      bodyKind: 'procedure',
+      description:
+        "Claim the persisted devices that carry no integration to the addon's default integration, keeping their device and stable ids",
+      fixtureMark: 'a device config field the claim does not know',
+    },
+    procedure: (ports) =>
+      claimDevicesToDefaultIntegration(ports, {
+        addonId: spec.addonId,
+        ...(spec.eligible !== undefined ? { eligible: spec.eligible } : {}),
+      }),
+  }
+}
 
 export function defaultIntegrationMigrations(spec: {
   readonly addonId: string
@@ -132,27 +182,13 @@ export function defaultIntegrationMigrations(spec: {
         },
       }),
   }
-  const claim: AddonProcedureMigration<DefaultIntegrationPorts> = {
-    meta: {
-      id: ids.claimDevices,
-      owner: spec.addonId,
-      level: 'addon-state',
-      seq: seq + 1,
-      dependsOn: [ids.rowsToRecord],
-      store: 'settings',
-      scope: 'cluster',
-      onFailure: 'tolerate',
-      bodyKind: 'procedure',
-      description:
-        "Claim the persisted devices that carry no integration to the addon's default integration, keeping their device and stable ids",
-      fixtureMark: 'a device config field the claim does not know',
-    },
-    procedure: (ports) =>
-      claimDevicesToDefaultIntegration(ports, {
-        addonId: spec.addonId,
-        ...(spec.eligible !== undefined ? { eligible: spec.eligible } : {}),
-      }),
-  }
+  const claim = claimDevicesMigration({
+    addonId: spec.addonId,
+    date: spec.date,
+    seq: seq + 1,
+    dependsOn: [ids.rowsToRecord],
+    ...(spec.eligible !== undefined ? { eligible: spec.eligible } : {}),
+  })
   return [rows, claim]
 }
 
@@ -176,11 +212,11 @@ export interface DefaultIntegrationHubApi {
   }
   readonly deviceManager: {
     readonly listAll: {
-      query(input: {
-        addonId: string
-        projection: 'slim'
-      }): Promise<
-        readonly { readonly id: number; readonly integrationId?: string | null | undefined }[]
+      query(input: { addonId: string; projection: 'slim' }): Promise<
+        readonly {
+          readonly id: number
+          readonly integrationId?: string | null | undefined
+        }[]
       >
     }
     readonly setIntegrationId: {
@@ -201,7 +237,10 @@ export function defaultIntegrationApiOver(api: DefaultIntegrationHubApi): Defaul
     clearSettings: (input) => api.integrations.clearSettings.mutate(input),
     listDevices: (addonId) => api.deviceManager.listAll.query({ addonId, projection: 'slim' }),
     setDeviceIntegrationId: async (deviceId, integrationId) => {
-      await api.deviceManager.setIntegrationId.mutate({ deviceId, integrationId })
+      await api.deviceManager.setIntegrationId.mutate({
+        deviceId,
+        integrationId,
+      })
     },
     readDeviceIntegrationId: async (deviceId) =>
       (await api.deviceManager.getDevice.query({ deviceId }))?.integrationId ?? null,

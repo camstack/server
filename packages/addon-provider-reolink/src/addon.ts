@@ -30,6 +30,8 @@ import {
   clipEventLabelDepsFromApi,
   createLogChannelsProvider,
   DeviceType,
+  claimDevicesPortsOver,
+  defaultIntegrationApiOver,
   defineAddonMigrations,
   deviceAdoptionCapability,
   deviceRemovalHookCapability,
@@ -79,6 +81,7 @@ import {
   type LegacyMailboxSettings,
   type PendingMailbox,
   PendingMailboxSchema,
+  REOLINK_CLAIM_MIGRATION,
   REOLINK_MIGRATIONS,
 } from './migrations/index.js'
 import { buildReolinkAdoptionProvider } from './reolink-adoption-provider.js'
@@ -1049,7 +1052,16 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     // settings aside (no mail addon needed, it never blocks this addon); the bridge creates the
     // mailbox with them when a provider is reachable, listens for what it receives and declares
     // the eligible cameras.
-    await this.runMigrations(defineAddonMigrations(REOLINK_MIGRATIONS, this.migrationPorts()))
+    await this.runMigrations([
+      ...defineAddonMigrations(REOLINK_MIGRATIONS, this.migrationPorts()),
+      ...defineAddonMigrations(
+        [REOLINK_CLAIM_MIGRATION],
+        claimDevicesPortsOver({
+          api: defaultIntegrationApiOver(this.ctx.api),
+          info: (message) => this.ctx.logger.info(message),
+        }),
+      ),
+    ])
     this.wireEmailBridge()
 
     // Wire the per-camera Auto-configure resolvers (SMTP + HaCfg) into each

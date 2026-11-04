@@ -1,4 +1,5 @@
-import type { AddonMigration } from '@camstack/types'
+import { type AddonMigration, claimDevicesMigration } from '@camstack/types'
+import { MIGRATED_FROM_HUB_KEY } from '../reolink-hub-migration.js'
 import { planDropWebhookIntakeSettings } from './drop-webhook-intake-settings.js'
 import { type EmailPushMigrationPorts, moveEmailPushToMailbox } from './email-push-to-mailbox.js'
 
@@ -50,3 +51,19 @@ export const REOLINK_MIGRATIONS: readonly AddonMigration<EmailPushMigrationPorts
     plan: planDropWebhookIntakeSettings,
   },
 ]
+
+/** The date of the device claim (D1007). */
+export const CLAIM_DEVICES_DATE = '2026-11-04'
+
+/**
+ * Every persisted camera that names no integration is claimed to the addon's default one. The
+ * integration a hub migration created is never the default, so it is not eligible. The integration
+ * settings themselves stay where they are until this addon's own wave moves them.
+ */
+export const REOLINK_CLAIM_MIGRATION = claimDevicesMigration({
+  addonId: 'provider-reolink',
+  date: CLAIM_DEVICES_DATE,
+  seq: 3,
+  dependsOn: [],
+  eligible: (integration) => integration.info[MIGRATED_FROM_HUB_KEY] === undefined,
+})
