@@ -582,9 +582,52 @@ export class AlertCenterAddon extends BaseAddon<AlertCenterConfig> {
     const runnerId = typeof event.data['runnerId'] === 'string' ? event.data['runnerId'] : null
     if (runnerId === null) return
     const nodeId = typeof event.data['nodeId'] === 'string' ? event.data['nodeId'] : 'hub'
+    await this.settleRunnerCheck(nodeId, runnerId)
     const alertId = runnerAlertId(nodeId, runnerId)
     if ((await this.readRunnerRecord(alertId)) === null) return
     await this.dismiss(alertId)
+  }
+
+  /**
+   * The boot check runs once, so nothing else would ever tell it the runners
+   * recovered. The alert's own persisted findings are the in-memory state (D49,
+   * not a one-shot event): a runner reaching `running` leaves them, and the
+   * alert resolves when none is left.
+   */
+  private async settleRunnerCheck(nodeId: string, runnerId: string): Promise<void> {
+    const alertId = `runner-check:${nodeId}`
+    const store = this.alertStore
+    if (store === null) return
+    const raw = await store.getData(alertId)
+    if (raw === null) return
+    const parsed = AlertSchema.safeParse({ id: alertId, ...raw })
+    if (!parsed.success || parsed.data.status !== 'active') return
+    const meta = parsed.data.metadata ?? {}
+    const idOf = (v: unknown): string | null => {
+      if (typeof v === 'string') return v
+      if (typeof v === 'object' && v !== null && 'runnerId' in v && typeof v.runnerId === 'string')
+        return v.runnerId
+      return null
+    }
+    const idsOf = (value: unknown): string[] =>
+      Array.isArray(value) ? value.flatMap((v: unknown) => idOf(v) ?? []) : []
+    const pending = [...idsOf(meta['failed']), ...idsOf(meta['refused']), ...idsOf(meta['missing'])]
+    if (!pending.includes(runnerId)) return
+    if (pending.every((id) => id === runnerId)) await this.dismiss(alertId)
+    else {
+      const without = (value: unknown): unknown[] =>
+        Array.isArray(value) ? value.filter((v: unknown) => idOf(v) !== runnerId) : []
+      await this.persistAlert({
+        ...parsed.data,
+        updatedAt: Date.now(),
+        metadata: {
+          ...meta,
+          failed: without(meta['failed']),
+          refused: without(meta['refused']),
+          missing: without(meta['missing']),
+        },
+      })
+    }
   }
 
   /** The node's one-shot runner boot check: one alert, dismissed when the node is clean. */

@@ -26,7 +26,9 @@ function createStore() {
           return data === undefined ? null : { id: i.key, data }
         },
       },
-      set: { mutate: async (i: { key: string; value: Row }) => void rows.set(i.key, i.value) },
+      set: {
+        mutate: async (i: { key: string; value: Row }) => void rows.set(i.key, i.value),
+      },
       delete: { mutate: async (i: { key: string }) => void rows.delete(i.key) },
       count: { query: async () => rows.size },
       query: {
@@ -196,6 +198,33 @@ describe('runner alerts and their episodes (D877)', () => {
       refused: [],
       missing: [],
     })
+    await settle()
+    expect((await addon.listAlerts())[0]?.status).toBe('dismissed')
+  })
+
+  it('a degraded boot check resolves itself when its runners recover, and stays while one still fails', async () => {
+    const { addon, fire } = await boot()
+    fire('system.runner-check', {
+      nodeId: 'hub',
+      degraded: true,
+      summary: '26/28 runners running - failed: a; missing: b',
+      failed: ['a'],
+      refused: [],
+      missing: ['b'],
+    })
+    await settle()
+    const running = (runnerId: string): void =>
+      fire('process.state-changed', {
+        runnerId,
+        nodeId: 'hub',
+        addonIds: [runnerId],
+        state: 'running',
+      })
+    running('a')
+    await settle()
+    // b is still not running: the alert stays
+    expect((await addon.listAlerts())[0]?.status).toBe('active')
+    running('b')
     await settle()
     expect((await addon.listAlerts())[0]?.status).toBe('dismissed')
   })
