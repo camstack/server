@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Reolink starts again after the update: its integration migrations are offered in order, so the move of the connection settings runs
+
 ## [1.2.223] - 2026-11-04
 
 ### Changed

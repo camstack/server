@@ -1,7 +1,12 @@
-import { type AddonMigration, claimDevicesMigration } from '@camstack/types'
+import {
+  type AddonMigration,
+  claimDevicesMigration,
+  type DefaultIntegrationPorts,
+} from '@camstack/types'
 import { MIGRATED_FROM_HUB_KEY } from '../reolink-hub-migration.js'
 import { planDropWebhookIntakeSettings } from './drop-webhook-intake-settings.js'
 import { type EmailPushMigrationPorts, moveEmailPushToMailbox } from './email-push-to-mailbox.js'
+import { REOLINK_ROWS_TO_RECORD_MIGRATION } from './integration-rows-to-record.js'
 
 export {
   REOLINK_ROWS_TO_RECORD_ID,
@@ -71,3 +76,13 @@ export const REOLINK_CLAIM_MIGRATION = claimDevicesMigration({
   dependsOn: [],
   eligible: (integration) => integration.info[MIGRATED_FROM_HUB_KEY] === undefined,
 })
+
+/**
+ * The integration wave (D1007) in declaration order, which must follow `seq`: the device claim
+ * shipped first (seq 3) and the rows move follows it (seq 4). The engine refuses the whole
+ * catalogue when a seq does not increase, and the addon then does not start.
+ */
+export const REOLINK_INTEGRATION_MIGRATIONS: readonly AddonMigration<DefaultIntegrationPorts>[] = [
+  REOLINK_CLAIM_MIGRATION,
+  REOLINK_ROWS_TO_RECORD_MIGRATION,
+]

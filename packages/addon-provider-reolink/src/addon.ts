@@ -80,9 +80,8 @@ import {
   type LegacyMailboxSettings,
   type PendingMailbox,
   PendingMailboxSchema,
-  REOLINK_CLAIM_MIGRATION,
+  REOLINK_INTEGRATION_MIGRATIONS,
   REOLINK_MIGRATIONS,
-  REOLINK_ROWS_TO_RECORD_MIGRATION,
 } from './migrations/index.js'
 import {
   buildReolinkInstances,
@@ -1056,8 +1055,7 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     this.instances = instances
     await this.runMigrations([
       ...defineAddonMigrations(REOLINK_MIGRATIONS, this.migrationPorts()),
-      ...defineAddonMigrations([REOLINK_ROWS_TO_RECORD_MIGRATION], integrationPorts),
-      ...defineAddonMigrations([REOLINK_CLAIM_MIGRATION], integrationPorts),
+      ...defineAddonMigrations(REOLINK_INTEGRATION_MIGRATIONS, integrationPorts),
     ])
     this.wireEmailBridge()
 
