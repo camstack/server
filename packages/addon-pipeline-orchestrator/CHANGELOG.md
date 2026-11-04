@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.659] - 2026-11-04
+
 ### Changed
 
 - Serves viewer 1.0.682: the TV remote opens full screen.

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.584] - 2026-11-04
+
 ### Changed
 
 - The Customize tab is one table: linked actions are rows, lists show their items, and linked devices stay a separate table on cameras only.
