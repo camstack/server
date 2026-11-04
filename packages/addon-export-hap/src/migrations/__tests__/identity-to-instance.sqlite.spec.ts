@@ -4,7 +4,12 @@
  * bridge by (username, uuid, setup code, pairing directory) must be BYTE-IDENTICAL after the move,
  * the old copy stays for a release, and a rerun changes nothing.
  */
-import { makeInMemoryRecords } from '@camstack/types'
+import {
+  makeInMemoryRecords,
+  mergeSecretStatePaths,
+  type SecretsAccess,
+  transformSecretWrite,
+} from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import {
   type SettingsRows,
@@ -20,6 +25,7 @@ import {
   EXPORT_HAP_ID,
   type HapCataloguePorts,
   IDENTITY_TO_INSTANCE_ID,
+  legacyIdentityOf,
 } from '../index.js'
 
 const NEIGHBOUR = 'keep-me'
@@ -32,7 +38,7 @@ const PAIRED = {
 interface Options {
   /** The read-back answers with this pincode instead of the stored one. */
   readonly readBackPincode?: string
-  readonly existing?: { readonly username: string }
+  readonly existing?: { readonly username: string; readonly uuid?: string }
 }
 
 async function build(seed: Record<string, unknown>, options: Options = {}) {
@@ -46,7 +52,7 @@ async function build(seed: Record<string, unknown>, options: Options = {}) {
         data: {
           name: 'Mine',
           username: options.existing.username,
-          uuid: 'mine-uuid',
+          uuid: options.existing.uuid ?? 'mine-uuid',
           pincode: '135-79-246',
           persistDir: 'mine-store',
         },
@@ -56,30 +62,47 @@ async function build(seed: Record<string, unknown>, options: Options = {}) {
   }
   const puts: string[] = []
   const vault = new Map([['ref-pin', PAIRED.pincode]])
+  const secrets: SecretsAccess = {
+    owner: EXPORT_HAP_ID,
+    ref: () => 'unused',
+    resolve: async () => ({}),
+    put: async () => 1,
+    delete: async (refs) => refs.filter((ref) => vault.delete(ref)).length,
+    state: async () => {
+      throw new Error('unused')
+    },
+    onChange: () => () => undefined,
+    forOwner: null,
+  }
   const ports = (rows: SettingsRows): HapCataloguePorts => ({
     readStored: rows.readStored,
     storeFixedPin: async () => undefined,
     readLegacyIdentity: async () => {
       const stored = (await rows.readStored(['identity']))['identity']
       if (typeof stored !== 'object' || stored === null) return null
-      const username = Reflect.get(stored, 'username')
-      const uuid = Reflect.get(stored, 'uuid')
-      const marker = Reflect.get(stored, 'pincode')
-      const pincode =
+      const marker: unknown = Reflect.get(stored, 'pincode')
+      const ref =
         typeof marker === 'object' && marker !== null
-          ? vault.get(String(Reflect.get(marker, '$secret')))
-          : marker
-      if (
-        typeof username !== 'string' ||
-        typeof uuid !== 'string' ||
-        typeof pincode !== 'string' ||
-        username === '' ||
-        uuid === '' ||
-        pincode === ''
-      ) {
-        return null
-      }
-      return { username, uuid, pincode }
+          ? String(Reflect.get(marker, '$secret'))
+          : null
+      return legacyIdentityOf({
+        ...stored,
+        pincode: ref === null ? marker : vault.get(ref),
+      })
+    },
+    // The addon clears through the real settings secret writer: `identity: null` releases the
+    // keychain entry its marker named. The spec runs that same writer over the stored row.
+    clearLegacyIdentity: async () => {
+      const stored = (await rows.readStored(['identity']))['identity']
+      const { patch, afterWrite } = await transformSecretWrite({
+        tree: mergeSecretStatePaths(new Map(), ['identity.pincode']),
+        secrets,
+        patch: { identity: null },
+        stored: { identity: stored },
+        operatorWrite: true,
+      })
+      rows.write('identity', patch['identity'])
+      await afterWrite()
     },
     readBridgeName: async () => {
       const name = (await rows.readStored(['bridgeName']))['bridgeName']
@@ -106,7 +129,7 @@ async function build(seed: Record<string, unknown>, options: Options = {}) {
     neighbour: NEIGHBOUR,
     ports,
   })
-  return { fixture, handle, puts }
+  return { fixture, handle, puts, vault }
 }
 
 const PAIRED_SEED = {
@@ -119,8 +142,8 @@ const PAIRED_SEED = {
 }
 
 describe('export-hap identity -> default instance', () => {
-  it('adopts the paired identity byte for byte, keeps the old copy and the marked neighbour', async () => {
-    const { fixture, handle } = await build(PAIRED_SEED)
+  it('adopts the paired identity byte for byte and clears the old row, keeping the neighbour', async () => {
+    const { fixture, handle, vault } = await build(PAIRED_SEED)
     const report = await fixture.boot()
     expect(report.failed).toEqual([])
     expect(report.applied).toContain(IDENTITY_TO_INSTANCE_ID)
@@ -133,7 +156,12 @@ describe('export-hap identity -> default instance', () => {
       persistDir: HAP_DEFAULT_PERSIST_DIR,
     })
     const rows = fixture.rows()
-    expect(rows['export-hap.identity']?.['value']).toEqual(PAIRED_SEED.identity)
+    // The old row holds nothing, and the keychain entry its marker named is gone...
+    expect(rows['export-hap.identity']?.['value']).toBeNull()
+    expect(JSON.stringify(rows)).not.toContain('ref-pin')
+    expect(vault.has('ref-pin')).toBe(false)
+    // ...while the record still resolves the setup code, and the marked neighbour is untouched.
+    expect((await handle.getResolved(HAP_DEFAULT_INSTANCE_ID))?.data.pincode).toBe(PAIRED.pincode)
     expect(rows['other-addon.identity']?.['value']).toBe(NEIGHBOUR)
   })
 
@@ -146,13 +174,23 @@ describe('export-hap identity -> default instance', () => {
     expect(puts).toEqual([PAIRED.username])
   })
 
-  it('never overwrites a record that is already there', async () => {
+  it('never overwrites a record that is already there, and fails when it is another bridge', async () => {
     const { fixture, handle, puts } = await build(PAIRED_SEED, {
       existing: { username: 'DE:AD:BE:EF:00:01' },
     })
-    expect((await fixture.boot()).failed).toEqual([])
+    expect((await fixture.boot()).failed).toContain(IDENTITY_TO_INSTANCE_ID)
     expect(puts).toEqual([])
     expect((await handle.get(HAP_DEFAULT_INSTANCE_ID))?.data.username).toBe('DE:AD:BE:EF:00:01')
+    expect(fixture.rows()['export-hap.identity']?.['value']).toEqual(PAIRED_SEED.identity)
+  })
+
+  it('clears the leftover old identity of an interrupted pass whose record names the same bridge', async () => {
+    const { fixture, vault } = await build(PAIRED_SEED, {
+      existing: { username: PAIRED.username, uuid: PAIRED.uuid },
+    })
+    expect((await fixture.boot()).failed).toEqual([])
+    expect(fixture.rows()['export-hap.identity']?.['value']).toBeNull()
+    expect(vault.has('ref-pin')).toBe(false)
   })
 
   it('mints nothing when no complete identity was ever stored', async () => {

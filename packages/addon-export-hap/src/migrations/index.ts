@@ -62,10 +62,10 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<HapCataloguePorts>[] = [
       dependsOn: [],
       store: 'settings',
       scope: 'cluster',
-      onFailure: 'tolerate',
+      onFailure: 'block-owner',
       bodyKind: 'procedure',
       description:
-        'Copy the bridge identity (username, uuid, setup code) into the default HomeKit instance record, unchanged; the old copy stays for a release',
+        'Move the bridge identity (username, uuid, setup code) into the default HomeKit instance record, unchanged, then clear the old setting and its keychain entry',
       fixtureMark: 'the bridge name the migration does not know',
     },
     procedure: moveIdentityToDefaultInstance,

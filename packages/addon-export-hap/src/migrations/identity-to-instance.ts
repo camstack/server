@@ -4,10 +4,12 @@
  * these values, so the record is created with them UNCHANGED and the pass proves it by reading the
  * record back and comparing, field by field, before it reports `done`.
  *
- * The old `identity` row is a COPY left in place for a release (the repo's rule for a moved
- * setting: a copy, not a move), so a rollback of the addon still finds the identity it paired
- * with. An existing record is never overwritten; an incomplete or unreadable legacy identity is
- * `already-done` or throws, and never mints a new one (a new identity unpairs every controller).
+ * Only once the read-back matches is the old `identity` cleared (its keychain entry released with
+ * it), in this same pass: one path, no copy. An existing record is never overwritten; when it is
+ * already there and names the same bridge (username, uuid) the leftover old identity of an
+ * interrupted pass is cleared, and when it names another bridge the pass fails rather than guess.
+ * An incomplete or unreadable legacy identity is `already-done` or throws, and never mints a new
+ * one (a new identity unpairs every controller).
  */
 import { isSecretMarker, type MigrationProcedureResult } from '@camstack/types'
 import {
@@ -26,6 +28,8 @@ export interface IdentityToInstancePorts {
   putDefaultRecord(body: HapBridgeBody): Promise<'created' | 'exists'>
   /** The default record, secrets resolved; null when absent. */
   readDefaultRecord(): Promise<HapBridgeBody | null>
+  /** Remove the old `identity` setting and release its keychain entry. */
+  clearLegacyIdentity(): Promise<void>
 }
 
 export async function moveIdentityToDefaultInstance(
@@ -42,12 +46,19 @@ export async function moveIdentityToDefaultInstance(
     persistDir: HAP_DEFAULT_PERSIST_DIR,
   }
   const put = await ports.putDefaultRecord(body)
-  if (put === 'exists') return { outcome: 'already-done', summary: { moved: false } }
   const held = await ports.readDefaultRecord()
-  const wanted = identityOfBody(body)
-  if (held === null || !sameIdentity(identityOfBody(held), wanted)) {
+  if (held === null) throw new Error('the HomeKit default instance record cannot be read back')
+  if (put === 'exists') {
+    if (held.username !== body.username || held.uuid !== body.uuid) {
+      throw new Error('the HomeKit default instance is another bridge than the stored identity')
+    }
+    await ports.clearLegacyIdentity()
+    return { outcome: 'done', summary: { moved: false, cleared: true } }
+  }
+  if (!sameIdentity(identityOfBody(held), identityOfBody(body))) {
     throw new Error('the HomeKit default instance does not hold the identity it adopted')
   }
+  await ports.clearLegacyIdentity()
   return { outcome: 'done', summary: { moved: true } }
 }
 

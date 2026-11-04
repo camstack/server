@@ -28,6 +28,7 @@ function keychainPorts(rows: SettingsRows, vault: Map<string, string>): HapCatal
     readBridgeName: async () => '',
     putDefaultRecord: async () => 'exists',
     readDefaultRecord: async () => null,
+    clearLegacyIdentity: async () => undefined,
     storeFixedPin: async (pin) => {
       const existing = (await rows.readStored(['fixedPin']))['fixedPin']
       if (typeof existing === 'object' && existing !== null) return

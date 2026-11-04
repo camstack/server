@@ -126,18 +126,6 @@ import {
 import { syncStateFromJson, syncStateToJson } from './reconcile/sync-state.js'
 
 /**
- * Persistent HAP identity. With the per-camera standalone model only `pincode`
- * is meaningful — it's the SHARED setup code applied to every published
- * accessory. `username`/`uuid` are legacy (each accessory now derives its own
- * MAC from its stable UUID); kept on the config shape for back-compat.
- */
-interface HapIdentity {
-  readonly username: string
-  readonly pincode: string
-  readonly uuid: string
-}
-
-/**
  * Per-device export settings persisted on each `ExposedConfigEntry`.
  * The shape is shared across all three export addons (HAP / Alexa /
  * HA-MQTT); HA-MQTT extends it with addon-specific fields on its own
@@ -413,11 +401,6 @@ interface ExportHapConfig {
    */
   readonly clipRetentionDays: number
   /**
-   * Persistent bridge identity — generated on first boot and reused
-   * forever. Empty `username` is the "uninitialised" sentinel.
-   */
-  readonly identity: HapIdentity
-  /**
    * Operator-curated list of devices to mirror onto the HAP bridge.
    * Hidden from the global settings form — managed via the cap's
    * `exposeDevice` / `unexposeDevice` methods only.
@@ -439,14 +422,11 @@ interface ExportHapConfig {
 /** Generic `device-export` setup block — pairing QR + copyable rows + note. */
 type ExportSetup = z.infer<typeof ExportSetupSchema>
 
-const EMPTY_IDENTITY: HapIdentity = { username: '', pincode: '', uuid: '' }
-
 const DEFAULT_CONFIG: ExportHapConfig = {
   bridgeName: 'CamStack Bridge',
   fixedPin: '',
   interfaceName: '',
   clipRetentionDays: DEFAULT_CLIP_RETENTION_DAYS,
-  identity: EMPTY_IDENTITY,
   exposed: [],
   exposedActions: [],
   exportSyncState: {},
@@ -515,7 +495,10 @@ function buildBridgeUuid(bridgeName: string): string {
 }
 
 export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
-  /** The bridge setup code pairs a controller: a credential, kept in the keychain (D787). */
+  /**
+   * The old `identity.pincode` secret: declared only so the identity migration can release its
+   * keychain entry when it clears the old setting. The identity itself is a record now.
+   */
   protected override readonly secretStatePaths = ['identity.pincode']
   private readonly exposed = new Map<string, Mapper>()
   /** The exported actions — switches beside the devices (D968). */
@@ -937,10 +920,11 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
   private identityMigrationPorts(): IdentityToInstancePorts {
     const handle = this.requireRecords().kind(hapBridgesKind)
     return {
-      readLegacyIdentity: async () => {
-        const stored = (await this.resolveGlobalStore())['identity']
-        return legacyIdentityOf(stored)
-      },
+      readLegacyIdentity: async () =>
+        legacyIdentityOf((await this.resolveGlobalStore())['identity']),
+      // `null` is not a record: the secret writer releases the keychain entry the old marker
+      // named and stores `null`, which reads as "no identity".
+      clearLegacyIdentity: () => this.updateGlobalSettingsAsOperator({ identity: null }),
       readBridgeName: async () => {
         const name = (await this.resolveGlobalStore())['bridgeName']
         return typeof name === 'string' ? name : ''
@@ -973,7 +957,8 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
           ? { kind: 'resolved', body: resolved.body }
           : { kind: 'unavailable' }
       },
-      readLegacy: async () => legacyIdentityOf((await this.resolveGlobalStore())['identity']),
+      legacyIdentityPresent: async () =>
+        legacyIdentityOf((await this.resolveGlobalStore())['identity']) !== null,
       patchPincode: async (pincode) => {
         await handle.patch(HAP_DEFAULT_INSTANCE_ID, { pincode })
       },

@@ -26,11 +26,11 @@ const FRESH: HapBridgeBody = {
   persistDir: 'hap-store',
 }
 
-function ports(stored: StoredBridge, legacy: typeof PAIRED | null) {
+function ports(stored: StoredBridge, legacyPresent: boolean) {
   const calls: string[] = []
   const impl: IdentityPorts = {
     readRecord: async () => stored,
-    readLegacy: async () => legacy,
+    legacyIdentityPresent: async () => legacyPresent,
     patchPincode: async (pin) => void calls.push(`patch:${pin}`),
     putFresh: async (body) => void calls.push(`put:${body.username}`),
     mint: () => FRESH,
@@ -40,23 +40,21 @@ function ports(stored: StoredBridge, legacy: typeof PAIRED | null) {
 
 describe('resolveBridgeIdentity', () => {
   it('serves the record identity byte for byte', async () => {
-    const { impl, calls } = ports({ kind: 'resolved', body: BODY }, null)
+    const { impl, calls } = ports({ kind: 'resolved', body: BODY }, false)
     const { identity, minted } = await resolveBridgeIdentity(null, impl)
     expect(identity).toEqual({ ...PAIRED, persistDir: 'hap-store' })
     expect(minted).toBe(false)
     expect(calls).toEqual([])
   })
 
-  it('serves the legacy identity unchanged while the record does not exist yet, writing nothing', async () => {
-    const { impl, calls } = ports({ kind: 'absent' }, PAIRED)
-    const { identity, minted } = await resolveBridgeIdentity(null, impl)
-    expect(identity).toEqual({ ...PAIRED, persistDir: 'hap-store' })
-    expect(minted).toBe(false)
+  it('does not boot from a legacy identity: with no record it refuses, minting and writing nothing', async () => {
+    const { impl, calls } = ports({ kind: 'absent' }, true)
+    await expect(resolveBridgeIdentity(null, impl)).rejects.toThrow(/migration did not complete/)
     expect(calls).toEqual([])
   })
 
   it('a fixed pin changes the setup code only', async () => {
-    const { impl, calls } = ports({ kind: 'resolved', body: BODY }, null)
+    const { impl, calls } = ports({ kind: 'resolved', body: BODY }, false)
     const { identity } = await resolveBridgeIdentity('111-22-333', impl)
     expect(identity).toEqual({
       ...PAIRED,
@@ -67,7 +65,7 @@ describe('resolveBridgeIdentity', () => {
   })
 
   it('mints only when neither the record nor a legacy identity exists', async () => {
-    const { impl, calls } = ports({ kind: 'absent' }, null)
+    const { impl, calls } = ports({ kind: 'absent' }, false)
     const { identity, minted } = await resolveBridgeIdentity(null, impl)
     expect(minted).toBe(true)
     expect(identity.username).toBe(FRESH.username)
@@ -75,7 +73,7 @@ describe('resolveBridgeIdentity', () => {
   })
 
   it('refuses to mint over an identity the keychain cannot serve', async () => {
-    const { impl, calls } = ports({ kind: 'unavailable' }, PAIRED)
+    const { impl, calls } = ports({ kind: 'unavailable' }, true)
     await expect(resolveBridgeIdentity(null, impl)).rejects.toThrow(/keychain cannot serve/)
     expect(calls).toEqual([])
   })

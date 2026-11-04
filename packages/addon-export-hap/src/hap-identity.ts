@@ -1,15 +1,11 @@
 /**
- * Which HomeKit bridge identity the addon boots with. The default instance record is the
- * authority; a complete legacy `identity` (the migration has not run yet) is used as it is; only
- * when neither exists is a fresh one minted. Minting over an identity that exists but cannot be
- * read is the one mistake that matters: a new identity unpairs every controller.
+ * Which HomeKit bridge identity the addon boots with: the default instance record, and nothing
+ * else. There is no fallback to the settings the identity once lived in; the migration moved it.
+ * A fresh identity is minted only when no record exists AND no legacy identity is still stored.
+ * A legacy identity without a record means the migration did not finish, and minting then would
+ * unpair every controller, so the addon refuses to boot with the reason.
  */
-import {
-  type HapBridgeBody,
-  type HapBridgeIdentity,
-  HAP_DEFAULT_PERSIST_DIR,
-  identityOfBody,
-} from './hap-instance-kinds.js'
+import { type HapBridgeBody, type HapBridgeIdentity, identityOfBody } from './hap-instance-kinds.js'
 
 export type StoredBridge =
   | { readonly kind: 'absent' }
@@ -18,7 +14,8 @@ export type StoredBridge =
 
 export interface IdentityPorts {
   readRecord(): Promise<StoredBridge>
-  readLegacy(): Promise<Omit<HapBridgeIdentity, 'persistDir'> | null>
+  /** Whether a complete identity is still stored in the old settings (the migration is unfinished). */
+  legacyIdentityPresent(): Promise<boolean>
   /** Persist a new setup code on the existing record. */
   patchPincode(pincode: string): Promise<void>
   /** Create the record for a freshly minted identity. */
@@ -38,23 +35,14 @@ export async function resolveBridgeIdentity(
   if (stored.kind === 'resolved') {
     if (fixedPin !== null && fixedPin !== stored.body.pincode) {
       await ports.patchPincode(fixedPin)
-      return {
-        identity: identityOfBody({ ...stored.body, pincode: fixedPin }),
-        minted: false,
-      }
+      return { identity: identityOfBody({ ...stored.body, pincode: fixedPin }), minted: false }
     }
     return { identity: identityOfBody(stored.body), minted: false }
   }
-  const legacy = await ports.readLegacy()
-  if (legacy !== null) {
-    return {
-      identity: {
-        ...legacy,
-        pincode: fixedPin ?? legacy.pincode,
-        persistDir: HAP_DEFAULT_PERSIST_DIR,
-      },
-      minted: false,
-    }
+  if (await ports.legacyIdentityPresent()) {
+    throw new Error(
+      'export-hap: a bridge identity is still in the old settings but its instance record does not exist; the identity migration did not complete. Refusing to boot: a new identity would unpair every HomeKit controller',
+    )
   }
   const fresh = ports.mint()
   const body = fixedPin === null ? fresh : { ...fresh, pincode: fixedPin }
