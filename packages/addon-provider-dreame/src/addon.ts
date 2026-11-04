@@ -3,6 +3,11 @@ import {
   BaseDeviceProvider,
   type ConfigUISchema,
   type CreateDeviceSpec,
+  defaultIntegrationApiOver,
+  defineAddonMigrations,
+  integrationInstancesCapability,
+  type AddonInitResult,
+  type RecordIntegrationInstances,
   connectionTestCapability,
   type DeviceConstructor,
   DeviceType,
@@ -12,13 +17,20 @@ import {
   type IConnectionTestProvider,
   type IDevice,
   type IDeviceAdoptionProvider,
-  type ProviderRegistration,
   type SystemEvent,
   userError,
   collectOwnerIntegrationIds,
 } from '@camstack/types'
 import { DreameReconciler, type IntegrationLifecycleKind } from './dreame-reconciler.js'
-import { buildConnectionFormSchema, connectionFromSettings, toNodreameOptions } from './config.js'
+import { toNodreameOptions } from './config.js'
+import {
+  buildDreameInstances,
+  DREAME_MIGRATIONS,
+  dreameConnectionOf,
+  type DreameConnectionBody,
+  dreameRecordKinds,
+  dreameRowsPorts,
+} from './dreame-instances.js'
 import { DreameContainerDevice } from './devices/dreame-container-device.js'
 import { buildDreameAdoptionProvider } from './dreame-adoption-provider.js'
 import { DreameClientRegistry } from './dreame-client-registry.js'
@@ -60,6 +72,7 @@ export class DreameProviderAddon extends BaseDeviceProvider {
 
   private integrationReconciler: DreameReconciler | null = null
   private clients: DreameClientRegistry | null = null
+  private instances: RecordIntegrationInstances<DreameConnectionBody> | null = null
   /** Teardown for the `/map` data-plane listener (vacuum-map PNG serving). */
   private mapDataPlaneDispose: (() => Promise<void>) | null = null
 
@@ -67,8 +80,28 @@ export class DreameProviderAddon extends BaseDeviceProvider {
     super({})
   }
 
-  protected override async onInitialize(): Promise<ProviderRegistration[]> {
+  protected override async onInitialize(): Promise<AddonInitResult> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
+    const records = this.ctx.records
+    if (records === undefined)
+      throw new Error('provider-dreame: ctx.records is required (hub-only addon)')
+    await records.declare(dreameRecordKinds)
+    // Before the provider registers: while it is registered the hub answers from the record.
+    await this.runMigrations(
+      defineAddonMigrations(
+        DREAME_MIGRATIONS,
+        dreameRowsPorts({
+          api: defaultIntegrationApiOver(this.ctx.api),
+          records,
+          warn: (message) => this.ctx.logger.warn(message),
+        }),
+      ),
+    )
+    const instances = buildDreameInstances(records, {
+      onChanged: () => this.reconcileIntegrations(),
+      tester: this.buildConnectionTestProvider(),
+    })
+    this.instances = instances
 
     dreameSession.bind({
       logger: this.ctx.logger,
@@ -95,17 +128,23 @@ export class DreameProviderAddon extends BaseDeviceProvider {
       meta: { integrationCount: this.requireClients().size() },
     })
 
-    return [
-      ...regs,
-      {
-        capability: deviceAdoptionCapability,
-        provider: this.buildAdoptionProvider(),
-      },
-      {
-        capability: connectionTestCapability,
-        provider: this.buildConnectionTestProvider(),
-      },
-    ]
+    return {
+      providers: [
+        ...regs,
+        {
+          capability: deviceAdoptionCapability,
+          provider: this.buildAdoptionProvider(),
+        },
+        {
+          capability: connectionTestCapability,
+          provider: this.buildConnectionTestProvider(),
+        },
+        {
+          capability: integrationInstancesCapability,
+          provider: instances.toProvider(),
+        },
+      ],
+    }
   }
 
   /**
@@ -140,8 +179,14 @@ export class DreameProviderAddon extends BaseDeviceProvider {
     this.clients = null
     this.integrationReconciler?.dispose()
     this.integrationReconciler = null
+    this.instances = null
     dreameSession.unbind()
     await super.onShutdown()
+  }
+
+  private requireInstances(): RecordIntegrationInstances<DreameConnectionBody> {
+    if (!this.instances) throw new Error('Dreame provider not initialised')
+    return this.instances
   }
 
   private requireClients(): DreameClientRegistry {
@@ -220,11 +265,7 @@ export class DreameProviderAddon extends BaseDeviceProvider {
       },
       listIntegrations: () => this.ctx.api.integrations.list.query(),
       applySettings: async (integration) => {
-        const connection = connectionFromSettings(
-          await this.ctx.api.integrations.getSettings.query({
-            id: integration.id,
-          }),
-        )
+        const connection = await dreameConnectionOf(this.requireInstances(), integration.id)
         if (!connection) return false
         await this.requireClients().upsert(integration.id, integration.name, connection)
         return true
@@ -341,19 +382,6 @@ export class DreameProviderAddon extends BaseDeviceProvider {
         return devices.loadConfig(id).catch((): null => null)
       },
     })
-  }
-
-  // ── Config form (account credentials, rendered by the wizard) ───────────
-  //
-  // `mode: account`: the wizard's config step fetches this schema via
-  // `addonSettings.getGlobalSettings` (which hydrates `globalSettingsSchema`)
-  // and renders the account form. The SUBMITTED values are stored
-  // PER-INTEGRATION (`integrations.create({ addonId, name, settings })`) — the
-  // addon reads creds from `integration.settings`, NOT a global store. The
-  // global schema is only a form carrier here.
-
-  protected override globalSettingsSchema(): ConfigUISchema {
-    return buildConnectionFormSchema()
   }
 
   // ── Manual creation: not supported (devices are adopted from the cloud) ──
