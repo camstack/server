@@ -15,11 +15,7 @@ import {
   type SettingsRows,
   settingsFixture,
 } from '../../../../system/src/builtins/sqlite-storage/__tests__/support/addon-settings-fixture.js'
-import {
-  HAP_DEFAULT_INSTANCE_ID,
-  HAP_DEFAULT_PERSIST_DIR,
-  hapBridgesKind,
-} from '../../hap-instance-kinds.js'
+import { HAP_DEFAULT_INSTANCE_ID, hapBridgesKind } from '../../hap-instance-kinds.js'
 import {
   ADDON_MIGRATIONS,
   EXPORT_HAP_ID,
@@ -54,7 +50,6 @@ async function build(seed: Record<string, unknown>, options: Options = {}) {
           username: options.existing.username,
           uuid: options.existing.uuid ?? 'mine-uuid',
           pincode: '135-79-246',
-          persistDir: 'mine-store',
         },
       },
       { ifRev: 0 },
@@ -114,6 +109,8 @@ async function build(seed: Record<string, unknown>, options: Options = {}) {
       await handle.put({ id: HAP_DEFAULT_INSTANCE_ID, data: body }, { ifRev: 0 })
       return 'created'
     },
+    putExposure: async () => 'exists',
+    readExposure: async () => null,
     readDefaultRecord: async () => {
       const row = await handle.getResolved(HAP_DEFAULT_INSTANCE_ID)
       if (row === null) return null
@@ -153,7 +150,6 @@ describe('export-hap identity -> default instance', () => {
       username: PAIRED.username,
       uuid: PAIRED.uuid,
       pincode: PAIRED.pincode,
-      persistDir: HAP_DEFAULT_PERSIST_DIR,
     })
     const rows = fixture.rows()
     // The old row holds nothing, and the keychain entry its marker named is gone...

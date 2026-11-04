@@ -11,6 +11,8 @@ import {
 import { readRawKeys } from '../hub-node-fields.js'
 import {
   ADDON_MIGRATIONS,
+  DROP_EXPOSURE_KEYS_ID,
+  EXPOSURE_TO_RECORD_ID,
   EXPORT_HAP_ID,
   FIXED_PIN_TO_KEYCHAIN_ID,
   type HapCataloguePorts,
@@ -29,6 +31,8 @@ function keychainPorts(rows: SettingsRows, vault: Map<string, string>): HapCatal
     putDefaultRecord: async () => 'exists',
     readDefaultRecord: async () => null,
     clearLegacyIdentity: async () => undefined,
+    putExposure: async () => 'exists',
+    readExposure: async () => null,
     storeFixedPin: async (pin) => {
       const existing = (await rows.readStored(['fixedPin']))['fixedPin']
       if (typeof existing === 'object' && existing !== null) return
@@ -54,7 +58,13 @@ describe('export-hap settings migrations', () => {
     const { fixture } = hap({ interfaceName: 'en0', bridgeName: 'Home' })
     expect(await fixture.boot()).toEqual({
       failed: [],
-      applied: [INTERFACE_NAME_PER_NODE_ID, FIXED_PIN_TO_KEYCHAIN_ID, IDENTITY_TO_INSTANCE_ID],
+      applied: [
+        INTERFACE_NAME_PER_NODE_ID,
+        FIXED_PIN_TO_KEYCHAIN_ID,
+        IDENTITY_TO_INSTANCE_ID,
+        EXPOSURE_TO_RECORD_ID,
+        DROP_EXPOSURE_KEYS_ID,
+      ],
     })
     const rows = fixture.rows()
     expect(rows['export-hap.interfaceName@hub']).toEqual({

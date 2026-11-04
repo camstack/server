@@ -15,13 +15,12 @@ import { isSecretMarker, type MigrationProcedureResult } from '@camstack/types'
 import {
   type HapBridgeBody,
   type HapBridgeIdentity,
-  HAP_DEFAULT_PERSIST_DIR,
   identityOfBody,
 } from '../hap-instance-kinds.js'
 
 export interface IdentityToInstancePorts {
   /** The legacy identity, secrets resolved; null when no complete identity was ever stored. Throws when unreadable. */
-  readLegacyIdentity(): Promise<Omit<HapBridgeIdentity, 'persistDir'> | null>
+  readLegacyIdentity(): Promise<HapBridgeIdentity | null>
   /** The legacy bridge name, for the instance label. */
   readBridgeName(): Promise<string>
   /** Put the default record with `ifRev: 0`; `exists` when one is already there. */
@@ -43,7 +42,6 @@ export async function moveIdentityToDefaultInstance(
     username: legacy.username,
     uuid: legacy.uuid,
     pincode: legacy.pincode,
-    persistDir: HAP_DEFAULT_PERSIST_DIR,
   }
   const put = await ports.putDefaultRecord(body)
   const held = await ports.readDefaultRecord()
@@ -63,12 +61,7 @@ export async function moveIdentityToDefaultInstance(
 }
 
 function sameIdentity(a: HapBridgeIdentity, b: HapBridgeIdentity): boolean {
-  return (
-    a.username === b.username &&
-    a.uuid === b.uuid &&
-    a.pincode === b.pincode &&
-    a.persistDir === b.persistDir
-  )
+  return a.username === b.username && a.uuid === b.uuid && a.pincode === b.pincode
 }
 
 /**
@@ -76,7 +69,7 @@ function sameIdentity(a: HapBridgeIdentity, b: HapBridgeIdentity): boolean {
  * identity (first boot, or the empty sentinel). A pincode still a keychain marker was not
  * resolved: that throws, because treating "unreadable" as "absent" would mint a new identity.
  */
-export function legacyIdentityOf(value: unknown): Omit<HapBridgeIdentity, 'persistDir'> | null {
+export function legacyIdentityOf(value: unknown): HapBridgeIdentity | null {
   if (typeof value !== 'object' || value === null) return null
   const username: unknown = Reflect.get(value, 'username')
   const uuid: unknown = Reflect.get(value, 'uuid')

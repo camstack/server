@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Export calls name the export instance they address; an unknown instance is refused with export-instance-unknown
 - HomeKit export keeps its bridge identity (name, MAC, setup code, pairing folder) in a default instance, adopted unchanged from the old settings so paired controllers keep working
+- HomeKit export keeps the devices and actions a bridge exposes in the bridge's own record, moved unchanged from the old settings
 
 ## [1.2.190] - 2026-11-03
 

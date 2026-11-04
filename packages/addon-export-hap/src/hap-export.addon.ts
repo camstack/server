@@ -76,17 +76,25 @@ import { type ActionExportEntry, ActionExports } from './action-exports.js'
 import { BridgeHost } from './bridge-host.js'
 import { shouldBridge } from './bridge-policy.js'
 import { carryForward } from './exposed-entry.js'
+import {
+  type ExportDeviceSettings,
+  type ExposedConfigEntry,
+  HAP_EXPOSURE_NAME,
+  type HapBridgeExportsBody,
+  hapBridgeExportsKind,
+} from './hap-export-records.js'
 import { resolveBridgeIdentity } from './hap-identity.js'
 import {
   HAP_DEFAULT_INSTANCE_ID,
-  HAP_DEFAULT_PERSIST_DIR,
   type HapBridgeBody,
   type HapBridgeIdentity,
   hapBridgesKind,
+  hapPersistDirOf,
 } from './hap-instance-kinds.js'
 import {
   ADDON_MIGRATIONS,
   EXPORT_HAP_ID,
+  type ExposureToRecordPorts,
   type IdentityToInstancePorts,
   legacyIdentityOf,
 } from './migrations/index.js'
@@ -124,94 +132,6 @@ import {
   SUPPORTED_MAPPER_KINDS,
 } from './mappers/index.js'
 import { syncStateFromJson, syncStateToJson } from './reconcile/sync-state.js'
-
-/**
- * Per-device export settings persisted on each `ExposedConfigEntry`.
- * The shape is shared across all three export addons (HAP / Alexa /
- * HA-MQTT); HA-MQTT extends it with addon-specific fields on its own
- * entry type.
- */
-interface ExportDeviceSettings {
-  /** Offer Apple's new multi-tier RTP camera service (HEVC / 4K) on this
-   *  camera. Absent means ON — see {@link resolveMultiTierService}. */
-  readonly multiTierService?: boolean
-  /**
-   * Preferred broker stream id used when the HomeKit camera service
-   * dials the RTSP restream.
-   *
-   * `'auto'` resolves against the resolution the CONTROLLER negotiated:
-   * `pickPreferredRtspEntry` is driven with `request.video.{width,height}`
-   * and prefers the smallest profile at or above that target, falling back
-   * to the largest below it. Note the consequence — a controller asking for
-   * 720p is steered onto whichever slot is bound to `mid`, regardless of the
-   * frame rate that slot actually delivers.
-   *
-   * That steering is now REFLECTED in what we advertise: the frame rate
-   * offered for each resolution is the real rate of the slot this same picker
-   * resolves it to (measured by the broker, else published by the provider,
-   * else assumed). So changing this setting changes the advertisement, which
-   * is why a change triggers a full accessory rebuild below.
-   * See `mappers/builders/stream-fps.ts`.
-   */
-  readonly streamPreference: 'auto' | string
-  /**
-   * Route this device's accessory onto the shared BRIDGE instead of giving it
-   * its own mDNS advertisement, HAP server and pairing.
-   *
-   * Default ON for every non-camera, and absent means ON — the field did not
-   * exist for entries persisted before it, and one accessory each is a port, an
-   * advertisement, a pairing record and a separate "Add Accessory" per device.
-   * Ignored for cameras, which HomeKit forbids bridging; the field is not even
-   * offered there (`shouldBridge` is the one place that decides).
-   *
-   * A change REBUILDS the accessory and DROPS its pairing: a standalone
-   * accessory and a bridged one are different identities to iOS, so the device
-   * leaves the Home app and is added again from the bridge. The description in
-   * the panel says so.
-   */
-  readonly useBridge?: boolean
-  /**
-   * Whether we may DECODE AND RE-ENCODE this camera's stream for HomeKit.
-   *
-   * ON unless the operator says otherwise, and ABSENT means ON — the field did
-   * not exist for entries persisted before it. Same switch as Alexa's, and the
-   * same meaning: it says what the operator is willing to SPEND, not what they
-   * want to see. A transcode is a decode plus an encode for the life of the
-   * session, and on this hub a concurrent HEVC decode is what exhausted the
-   * VAAPI device.
-   *
-   * HomeKit's constraint differs from Alexa's in one way worth knowing: HAP
-   * NEGOTIATES the resolution and profile with the controller, so a session
-   * that cannot be served by a copy has already promised the controller
-   * something. With this off, such a session is REFUSED with a named reason
-   * rather than transcoded behind the operator's back — a refusal an operator
-   * chose is not a fault, and it must not look like one (D62).
-   */
-  readonly allowTranscode?: boolean
-  /**
-   * Keep CamStack's OWN copy of every clip HomeKit Secure Video records from
-   * this camera.
-   *
-   * ON unless the operator says otherwise, and ABSENT MEANS ON — the field did
-   * not exist for entries persisted before it, and the reason the tee shipped
-   * ahead of everything that will list its output is that HKSV is a SINK: HAP
-   * has no read-back, so a stream nobody teed is gone for good (D550). A
-   * default of off would mean the feature did nothing until the operator
-   * visited every camera, and the clips lost in between are unrecoverable.
-   *
-   * Off costs nothing and saves the disk and one thumbnail ffmpeg per clip; the
-   * HomeKit recording itself is untouched either way.
-   */
-  readonly keepClips?: boolean
-  /**
-   * How many days this camera's kept clips survive. Absent = the global
-   * default (`clipRetentionDays`), which ships at
-   * {@link DEFAULT_CLIP_RETENTION_DAYS}. Resolved ONLY through
-   * {@link resolveClipRetentionDays} so reset, unset and never-written are the
-   * same value.
-   */
-  readonly clipRetentionDays?: number
-}
 
 /**
  * What an entry with no stored settings is read as — and what a camera
@@ -359,29 +279,6 @@ const HAP_STREAM_PREFERENCE_OPTIONS: readonly ConfigOption[] = [
   { value: 'low', label: 'Low' },
 ]
 
-interface ExposedConfigEntry {
-  readonly deviceId: string
-  readonly displayName: string
-  readonly mapperKind: MapperKind
-  readonly capabilities?: readonly string[]
-  /**
-   * UUIDs of every child accessory this exposure produced. Tracked so
-   * `unexposeDevice` can remove children deterministically without
-   * re-enumerating the parent's children at unexpose time (parent
-   * device may already be gone). Empty on entries persisted by
-   * Round 1 (motion-sensor-only) — those have no children.
-   */
-  readonly childAccessoryUuids?: readonly string[]
-  /** Ms epoch — useful for diagnostic display. */
-  readonly addedAt?: number
-  /**
-   * Per-device export settings (preferred stream, …). New entries get
-   * defaults via `DEFAULT_DEVICE_SETTINGS`. Old entries persisted by
-   * pre-settings releases default at read time.
-   */
-  readonly settings?: ExportDeviceSettings
-}
-
 /** One device's advertised HAP state, persisted in the addon store. JSON-plain
  *  mirror of `ExportTargetEntry` from `@camstack/types/node`. Keyed by
  *  `String(deviceId)` in `ExportHapConfig.exportSyncState`. `externalIds` holds
@@ -400,18 +297,6 @@ interface ExportHapConfig {
    * overridable; see {@link resolveClipRetentionDays}.
    */
   readonly clipRetentionDays: number
-  /**
-   * Operator-curated list of devices to mirror onto the HAP bridge.
-   * Hidden from the global settings form — managed via the cap's
-   * `exposeDevice` / `unexposeDevice` methods only.
-   */
-  readonly exposed: readonly ExposedConfigEntry[]
-  /**
-   * Operator-curated list of ACTIONS published as momentary switches (D968).
-   * Actions are list entries, not devices (D954): this is a list of its own,
-   * managed by `exposeEntity` / `unexposeEntity` only.
-   */
-  readonly exposedActions: readonly ActionExportEntry[]
   /** Durable per-device export sync state — the Phase-C reconciler cache.
    *  Key = `String(deviceId)`, value = the device's export fingerprint at last
    *  attach. Drives `diffExportTargets`: an unchanged restart hashes to the same
@@ -427,8 +312,6 @@ const DEFAULT_CONFIG: ExportHapConfig = {
   fixedPin: '',
   interfaceName: '',
   clipRetentionDays: DEFAULT_CLIP_RETENTION_DAYS,
-  exposed: [],
-  exposedActions: [],
   exportSyncState: {},
 }
 
@@ -506,6 +389,16 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
   private lastError: string | undefined
   /** The HomeKit instances (D985): one record per bridge identity. */
   private instances: RecordIntegrationInstances<HapBridgeBody> | null = null
+  /**
+   * What the bridge exposes: the devices (with their per-device settings) and the actions, held in
+   * the `hap-bridge-exports` record of the default instance. The in-memory copy is loaded once at
+   * boot and written through on every change; this addon is the record's only writer.
+   */
+  protected exposure: HapBridgeExportsBody = {
+    name: HAP_EXPOSURE_NAME,
+    devices: [],
+    actions: [],
+  }
   /** Shared HAP setup code applied to every published accessory. */
   private pincode = ''
   /** Optional mDNS/bind interface (config.interfaceName), or undefined. */
@@ -568,7 +461,10 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     if (records === undefined) {
       throw new Error('export-hap needs ctx.records — check execution.placement (hub-only)')
     }
-    await records.declare({ 'hap-bridges': hapBridgesKind })
+    await records.declare({
+      'hap-bridges': hapBridgesKind,
+      'hap-bridge-exports': hapBridgeExportsKind,
+    })
     this.instances = new RecordIntegrationInstances(records, hapBridgesKind, {
       // One bridge identity per addon today: the default instance adopted the identity the
       // addon always had. Additional bridges are not served yet, so none can be created.
@@ -579,12 +475,12 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
         username: generateUsername(),
         uuid: buildBridgeUuid(name),
         pincode: generatePincode(),
-        persistDir: HAP_DEFAULT_PERSIST_DIR,
       }),
       configured: (body) => body.username !== '' && body.pincode !== '',
     })
     await this.migrateSettings()
     const identity = await this.ensureIdentity()
+    await this.loadExposure()
     this.pincode = identity.pincode
     this.bind = this.config.interfaceName || undefined
     this.bridgeHost = new BridgeHost({
@@ -598,7 +494,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     try {
       // hap-nodejs library-internal pairing-state storage (one shared dir;
       // each accessory's AccessoryInfo is keyed by its derived username).
-      await initHapStorage(path.join(this.ctx.dataDir, identity.persistDir))
+      await initHapStorage(path.join(this.ctx.dataDir, hapPersistDirOf(HAP_DEFAULT_INSTANCE_ID)))
     } catch (err) {
       this.lastError = errMsg(err)
       this.ctx.logger.error('export-hap: HAP storage init failed', {
@@ -669,7 +565,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     // quiet — without this, the no-mapper warn keeps firing at every
     // restart even after every exposed device has been re-published.
     const validKinds = new Set<MapperKind>(SUPPORTED_MAPPER_KINDS)
-    const cleaned = this.config.exposed.filter((entry) => {
+    const cleaned = this.exposure.devices.filter((entry) => {
       if (validKinds.has(entry.mapperKind)) return true
       this.ctx.logger
         .withTags({ deviceId: Number.parseInt(entry.deviceId, 10) })
@@ -678,8 +574,8 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
         })
       return false
     })
-    if (cleaned.length !== this.config.exposed.length) {
-      await this.updateGlobalSettings({ exposed: cleaned })
+    if (cleaned.length !== this.exposure.devices.length) {
+      await this.setExposedDevices(cleaned)
     }
 
     // Re-attach mappers for the surviving entries.
@@ -722,9 +618,9 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
           }
           await unpublishAccessory(accessory, this.ctx.logger)
         },
-        persist: (entries) => this.updateGlobalSettings({ exposedActions: [...entries] }),
+        persist: (entries) => this.setExposedActions(entries),
       },
-      this.config.exposedActions ?? [],
+      this.exposure.actions,
     )
     await this.actionExports.attachAll()
     // The operator may have deleted an action while this addon was down.
@@ -791,7 +687,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       listExposedDevices: async ({ instanceId }) => {
         ownInstance(instanceId)
         return Array.from(this.exposed.entries()).map(([deviceId, m]) => {
-          const entry = this.config.exposed.find((e) => e.deviceId === deviceId)
+          const entry = this.exposure.devices.find((e) => e.deviceId === deviceId)
           return {
             deviceId,
             exposedAs: m.accessory.displayName,
@@ -970,7 +866,6 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
         username: generateUsername(),
         uuid: buildBridgeUuid(this.config.bridgeName),
         pincode: generatePincode(),
-        persistDir: HAP_DEFAULT_PERSIST_DIR,
       }),
     })
     if (minted) {
@@ -1051,7 +946,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     // dropped between the write and the rebuild, and the accessory came back
     // advertising the DEFAULT. The selector only ever worked after a full
     // addon restart, when settings loaded before the first expose.
-    const previous = this.config.exposed.find((e) => e.deviceId === deviceId)
+    const previous = this.exposure.devices.find((e) => e.deviceId === deviceId)
     const rebuilt: ExposedConfigEntry = {
       deviceId,
       displayName,
@@ -1069,9 +964,9 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       ...baseEntry,
       childAccessoryUuids: attached.childAccessoryUuids,
     }
-    const next = this.config.exposed.filter((e) => e.deviceId !== deviceId)
+    const next = this.exposure.devices.filter((e) => e.deviceId !== deviceId)
     next.push(finalEntry)
-    await this.updateGlobalSettings({ exposed: next })
+    await this.setExposedDevices(next)
     if (Number.isFinite(numericId)) {
       const fp = await this.computeExportFingerprint(numericId)
       if (fp !== null) await this.persistFingerprint(numericId, fp)
@@ -1096,9 +991,9 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     // runs both the entry and the mapper are gone.
     const mapperKind = this.findEntry(numericId)?.mapperKind ?? 'camera'
     await this.detachMapper(deviceId)
-    const next = this.config.exposed.filter((e) => e.deviceId !== deviceId)
-    if (next.length !== this.config.exposed.length) {
-      await this.updateGlobalSettings({ exposed: next })
+    const next = this.exposure.devices.filter((e) => e.deviceId !== deviceId)
+    if (next.length !== this.exposure.devices.length) {
+      await this.setExposedDevices(next)
     }
     // Wipe hap-nodejs's persisted pairing for this camera. Without this,
     // iOS's "Remove Accessory" (issued while our HAP server was down or
@@ -1603,6 +1498,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
           readRawKeys((key) => this.readStoredGlobalKey(key), EXPORT_HAP_ID, keys),
         storeFixedPin: (pin) => this.updateGlobalSettingsAsOperator({ fixedPin: pin }),
         ...this.identityMigrationPorts(),
+        ...this.exposureMigrationPorts(),
       }),
     )
     if (report.applied.length > 0) await this.resolveConfig()
@@ -2069,9 +1965,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
         // identities to iOS, and leaving the stale pairing blob behind is what
         // makes an accessory advertise `sf=0` and never reappear in "Add
         // Accessory". So that one case wipes it, deliberately.
-        await this.unexposeDevice(deviceIdStr, {
-          clearPairing: wasBridged !== willBridge,
-        })
+        await this.unexposeDevice(deviceIdStr, { clearPairing: wasBridged !== willBridge })
         // The settings travel INTO the rebuild. `unexposeDevice` has just
         // deleted the stored entry, so `carryForward` inside `exposeDevice` has
         // nothing to carry and would rebuild on the DEFAULTS — which is the
@@ -2158,19 +2052,66 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     return `/addon/${EXPORT_HAP_ADDON_ID}/${prefix}/${String(deviceId)}/${stem}.${extension}`
   }
 
+  /** The exposure record's handle: one row per bridge instance, under the instance id. */
+  private exposureHandle() {
+    return this.requireRecords().kind(hapBridgeExportsKind)
+  }
+
+  /** Load the default instance's exposure record; create it empty when none exists. */
+  private async loadExposure(): Promise<void> {
+    const handle = this.exposureHandle()
+    const row = await handle.get(HAP_DEFAULT_INSTANCE_ID)
+    if (row !== null) {
+      this.exposure = row.data
+      return
+    }
+    await handle.put({ id: HAP_DEFAULT_INSTANCE_ID, data: this.exposure }, { ifRev: 0 })
+  }
+
+  private async writeExposure(next: HapBridgeExportsBody): Promise<void> {
+    await this.exposureHandle().put({ id: HAP_DEFAULT_INSTANCE_ID, data: next })
+    this.exposure = next
+  }
+
+  private setExposedDevices(devices: readonly ExposedConfigEntry[]): Promise<void> {
+    return this.writeExposure({ ...this.exposure, devices })
+  }
+
+  private setExposedActions(actions: readonly ActionExportEntry[]): Promise<void> {
+    return this.writeExposure({ ...this.exposure, actions })
+  }
+
+  /** The ports the exposure migration reads and writes through. */
+  private exposureMigrationPorts(): Omit<ExposureToRecordPorts, 'readStored'> {
+    const handle = this.exposureHandle()
+    return {
+      putExposure: async (body) => {
+        if ((await handle.get(HAP_DEFAULT_INSTANCE_ID)) !== null) return 'exists'
+        try {
+          await handle.put({ id: HAP_DEFAULT_INSTANCE_ID, data: body }, { ifRev: 0 })
+        } catch (err: unknown) {
+          if (err instanceof RevConflictError) return 'exists'
+          throw err
+        }
+        return 'created'
+      },
+      readExposure: async () => (await handle.get(HAP_DEFAULT_INSTANCE_ID))?.data ?? null,
+    }
+  }
+
   private findEntry(deviceId: number): ExposedConfigEntry | null {
     const id = String(deviceId)
-    return this.config.exposed.find((e) => e.deviceId === id) ?? null
+    return this.exposure.devices.find((e) => e.deviceId === id) ?? null
   }
 
   private async updateEntrySettings(
     deviceIdStr: string,
     settings: ExportDeviceSettings,
   ): Promise<void> {
-    const next = this.config.exposed.map<ExposedConfigEntry>((e) =>
+    const next = this.exposure.devices.map<ExposedConfigEntry>((e) =>
       e.deviceId === deviceIdStr ? { ...e, settings } : e,
     )
-    await this.updateGlobalSettings({ exposed: next })
+    await this.setExposedDevices(next)
   }
 }
 

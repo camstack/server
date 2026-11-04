@@ -16,14 +16,12 @@ const PAIRED = {
 const BODY: HapBridgeBody = {
   name: 'Home',
   ...PAIRED,
-  persistDir: 'hap-store',
 }
 const FRESH: HapBridgeBody = {
   name: 'Home',
   username: '00:00:00:00:00:01',
   uuid: 'fresh-uuid',
   pincode: '135-79-246',
-  persistDir: 'hap-store',
 }
 
 function ports(stored: StoredBridge, legacyPresent: boolean) {
@@ -42,7 +40,7 @@ describe('resolveBridgeIdentity', () => {
   it('serves the record identity byte for byte', async () => {
     const { impl, calls } = ports({ kind: 'resolved', body: BODY }, false)
     const { identity, minted } = await resolveBridgeIdentity(null, impl)
-    expect(identity).toEqual({ ...PAIRED, persistDir: 'hap-store' })
+    expect(identity).toEqual(PAIRED)
     expect(minted).toBe(false)
     expect(calls).toEqual([])
   })
@@ -59,7 +57,6 @@ describe('resolveBridgeIdentity', () => {
     expect(identity).toEqual({
       ...PAIRED,
       pincode: '111-22-333',
-      persistDir: 'hap-store',
     })
     expect(calls).toEqual(['patch:111-22-333'])
   })

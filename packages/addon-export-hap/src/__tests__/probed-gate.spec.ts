@@ -30,13 +30,21 @@ interface FakeDevice {
 }
 
 interface FakeConfig {
-  exposed: ReadonlyArray<{ deviceId: string; displayName: string; mapperKind: string }>
+  exposed: ReadonlyArray<{ deviceId: string; displayName: string; mapperKind: 'camera' }>
   exportSyncState: Record<string, { fingerprint: string; externalIds: readonly string[] }>
 }
 
 class TestAddon extends ExportHapAddon {
   devices = new Map<number, FakeDevice>()
-  fakeConfig: FakeConfig = { exposed: [], exportSyncState: {} }
+  private fake: FakeConfig = { exposed: [], exportSyncState: {} }
+  get fakeConfig(): FakeConfig {
+    return this.fake
+  }
+  /** The exposed list lives in the exposure record the addon holds; the rest is `config`. */
+  set fakeConfig(value: FakeConfig) {
+    this.fake = value
+    this.exposure = { name: 'HomeKit exposure', devices: value.exposed, actions: [] }
+  }
   reconciled: string[] = []
   private handlers = new Map<EventCategory, LifecycleHandler>()
   private disposers: Array<() => void | Promise<void>> = []
@@ -72,7 +80,7 @@ class TestAddon extends ExportHapAddon {
   }
 
   override get config() {
-    return this.fakeConfig as unknown as ExportHapAddon['config']
+    return this.fake as unknown as ExportHapAddon['config']
   }
 
   protected override async reconcileDevice(deviceId: string): Promise<void> {
