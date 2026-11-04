@@ -185,3 +185,22 @@ describe('reolink runtime reads the record', () => {
     expect(read[1]?.read.kind).toBe('password-locked')
   })
 })
+
+describe('reolink migration verifies the secret before it clears the rows', () => {
+  it('a record that lost its password is not trusted: the rows stay and the move stops', async () => {
+    const world = fakeRowsWorld([DEFAULT], SECRETS)
+    const lossy = {
+      ...world.ports,
+      readRecord: async (id: string) => {
+        const back = await world.ports.readRecord(id)
+        if (back === null) return back
+        return Object.fromEntries(Object.entries(back).filter(([key]) => !SECRETS.includes(key)))
+      },
+    }
+
+    await expect(REOLINK_ROWS_TO_RECORD_MIGRATION.procedure(lossy)).rejects.toThrow()
+
+    expect(world.rows.get('int_0012')).toEqual(DEFAULT.rows)
+    expect(world.rowKeychain.has('int_0012/password')).toBe(true)
+  })
+})

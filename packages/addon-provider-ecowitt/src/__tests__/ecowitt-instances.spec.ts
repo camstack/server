@@ -157,3 +157,22 @@ describe('ecowitt reconciler reads the record', () => {
     expect(connectionFromSettings(stored.values, stored.secretsLocked)).toBeNull()
   })
 })
+
+describe('ecowitt migration verifies the secret before it clears the rows', () => {
+  it('a record that lost its password is not trusted: the rows stay and the move stops', async () => {
+    const world = fakeRowsWorld([GATEWAY], SECRETS)
+    const lossy = {
+      ...world.ports,
+      readRecord: async (id: string) => {
+        const back = await world.ports.readRecord(id)
+        if (back === null) return back
+        return Object.fromEntries(Object.entries(back).filter(([key]) => !SECRETS.includes(key)))
+      },
+    }
+
+    await expect(ECOWITT_ROWS_TO_RECORD_MIGRATION.procedure(lossy)).rejects.toThrow()
+
+    expect(world.rows.get('int_0034')).toEqual(GATEWAY.rows)
+    expect(world.rowKeychain.has('int_0034/password')).toBe(true)
+  })
+})

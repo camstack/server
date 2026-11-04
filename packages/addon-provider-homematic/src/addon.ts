@@ -37,14 +37,14 @@ import { buildCcuHeatingHandlers } from './ccu/ccu-heating-actions.js'
 import { buildCcuPairingHandlers } from './ccu/ccu-pairing-actions.js'
 import { HOMEMATIC_PAGES } from './ccu/ccu-page.js'
 import { buildCcuOverviewHandlers } from './ccu/ccu-overview-actions.js'
-import { connectionFromSettings } from './config.js'
 import { homematicActions } from './custom-actions.js'
 import {
   buildHomematicInstances,
   type HomematicConnectionBody,
   homematicConnectionsEntryKind,
   homematicRecordKinds,
-  settingsReadOf,
+  knownCcuHostsOf,
+  readCcuConnection,
 } from './homematic-instances.js'
 import { HOMEMATIC_ROWS_TO_RECORD_MIGRATION } from './migrations/index.js'
 import { HmContainerDevice } from './devices/hm-container-device.js'
@@ -312,23 +312,15 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
   private async knownCcuHosts(): Promise<readonly string[]> {
     try {
       const all = await this.ctx.api.integrations.list.query()
-      const hosts: string[] = []
-      for (const integration of all) {
-        if (integration.addonId !== this.ctx.id) continue
-        try {
-          const settings = settingsReadOf(
-            await this.requireInstances().readResolved(integration.id),
-          )
-          const connection = connectionFromSettings(settings.values)
-          if (connection) hosts.push(connection.host)
-        } catch (err) {
+      return await knownCcuHostsOf({
+        instances: this.requireInstances(),
+        integrationIds: all.filter((i) => i.addonId === this.ctx.id).map((i) => i.id),
+        onUnreadable: (integrationId, err) =>
           this.ctx.logger.warn('Homematic discovery: settings read failed', {
-            tags: { integrationId: integration.id },
+            tags: { integrationId },
             meta: { error: errMsg(err) },
-          })
-        }
-      }
-      return hosts
+          }),
+      })
     } catch (err) {
       this.ctx.logger.warn('Homematic discovery: integration list failed', {
         meta: { error: errMsg(err) },
@@ -398,11 +390,12 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
       },
       listIntegrations: () => this.ctx.api.integrations.list.query(),
       applySettings: async (integration) => {
-        const settings = settingsReadOf(await this.requireInstances().readResolved(integration.id))
+        const { connection, secretsLocked } = await readCcuConnection(
+          this.requireInstances(),
+          integration.id,
+        )
         // A locked keychain makes the WebUI password unknown, not empty (D49): leave the session as it is.
-        if (settings.secretsLocked) return false
-        const connection = connectionFromSettings(settings.values)
-        if (!connection) return false
+        if (secretsLocked || !connection) return false
         await this.requireClients().upsert(integration.id, integration.name, connection)
         return true
       },

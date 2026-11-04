@@ -2,11 +2,15 @@
  * Homematic CCUs as typed records (planning#416, D1007): the rows-to-record migration moves each
  * integration's OWN connection and WebUI password into its record, and the reconciler reads the record.
  */
+import { makeInMemoryRecords } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { connectionFromSettings } from '../config.js'
 import {
+  buildHomematicInstances,
   homematicConnectionsEntryKind,
   homematicRecordKinds,
+  knownCcuHostsOf,
+  readCcuConnection,
   settingsReadOf,
 } from '../homematic-instances.js'
 import {
@@ -154,5 +158,74 @@ describe('homematic reconciler reads the record', () => {
 
   it('an absent record reads as no usable connection', () => {
     expect(connectionFromSettings(settingsReadOf(null).values)).toBeNull()
+  })
+})
+
+describe('homematic migration verifies the secret before it clears the rows', () => {
+  it('a record that lost its password is not trusted: the rows stay and the move stops', async () => {
+    const world = fakeRowsWorld([CCU_A], SECRETS)
+    const lossy = {
+      ...world.ports,
+      readRecord: async (id: string) => {
+        const back = await world.ports.readRecord(id)
+        if (back === null) return back
+        return Object.fromEntries(Object.entries(back).filter(([key]) => !SECRETS.includes(key)))
+      },
+    }
+
+    await expect(HOMEMATIC_ROWS_TO_RECORD_MIGRATION.procedure(lossy)).rejects.toThrow()
+
+    expect(world.rows.get('int_0021')).toEqual(CCU_A.rows)
+    expect(world.rowKeychain.has('int_0021/password')).toBe(true)
+  })
+})
+
+describe('homematic readers go through the record', () => {
+  async function engineWith(boards: Record<string, Record<string, unknown>>) {
+    const engine = makeInMemoryRecords(ADDON)
+    await engine.records.declare(homematicRecordKinds)
+    const instances = buildHomematicInstances(engine.records, { onChanged: async () => undefined })
+    const handle = engine.records.kind(homematicConnectionsEntryKind)
+    for (const [id, body] of Object.entries(boards)) {
+      await handle.put({ id, data: homematicConnectionsEntryKind.schema.parse(body) }, { ifRev: 0 })
+    }
+    return instances
+  }
+
+  it('a connection comes from the record with its own WebUI password', async () => {
+    const instances = await engineWith({
+      int_0021: { name: 'House', host: '10.0.21.1', username: 'u21', password: 'pw-21' },
+      int_0022: { name: 'Garage', host: '10.0.22.1', username: 'u22', password: 'pw-22' },
+    })
+    expect((await readCcuConnection(instances, 'int_0021')).connection).toMatchObject({
+      host: '10.0.21.1',
+      username: 'u21',
+      password: 'pw-21',
+    })
+    expect((await readCcuConnection(instances, 'int_0022')).connection).toMatchObject({
+      host: '10.0.22.1',
+      password: 'pw-22',
+    })
+    expect((await readCcuConnection(instances, 'int_0404')).connection).toBeNull()
+  })
+
+  it('discovery leaves out the hosts of the CCUs already set up, and skips an unreadable one', async () => {
+    const instances = await engineWith({
+      int_0021: { name: 'House', host: '10.0.21.1' },
+      int_0022: { name: 'Garage', host: '10.0.22.1' },
+    })
+    const unreadable: string[] = []
+    const hosts = await knownCcuHostsOf({
+      instances: {
+        readResolved: async (id) => {
+          if (id === 'int_0023') throw new Error('records engine unreachable')
+          return instances.readResolved(id)
+        },
+      },
+      integrationIds: ['int_0021', 'int_0022', 'int_0023', 'int_0404'],
+      onUnreadable: (id) => unreadable.push(id),
+    })
+    expect(hosts).toEqual(['10.0.21.1', '10.0.22.1'])
+    expect(unreadable).toEqual(['int_0023'])
   })
 })

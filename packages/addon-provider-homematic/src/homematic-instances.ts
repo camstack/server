@@ -12,7 +12,11 @@ import {
   type ResolvedInstance,
 } from '@camstack/types'
 import { z } from 'zod'
-import { buildConnectionFormSchema } from './config.js'
+import {
+  buildConnectionFormSchema,
+  connectionFromSettings,
+  type HomematicConfig,
+} from './config.js'
 
 export const HomematicConnectionBodySchema = entryBody({
   host: z.string().nullish(),
@@ -91,4 +95,45 @@ export function buildHomematicInstances(
       onChanged: () => deps.onChanged(),
     },
   )
+}
+
+/** The slice of the instances provider the readers need. */
+export type HomematicInstancesReader = Pick<
+  RecordIntegrationInstances<HomematicConnectionBody>,
+  'readResolved'
+>
+
+/** What a reader of one CCU's connection learns from its record. */
+export interface HomematicConnectionRead {
+  /** The usable connection, or null while the record is absent or holds no usable host. */
+  readonly connection: HomematicConfig | null
+  /** The keychain could not serve the WebUI password: unknown, never an empty password (D49). */
+  readonly secretsLocked: boolean
+}
+
+/** The ONE reader of a CCU's connection: the integration's record, never the legacy rows. */
+export async function readCcuConnection(
+  instances: HomematicInstancesReader,
+  integrationId: string,
+): Promise<HomematicConnectionRead> {
+  const read = settingsReadOf(await instances.readResolved(integrationId))
+  return { connection: connectionFromSettings(read.values), secretsLocked: read.secretsLocked }
+}
+
+/** The hosts of the CCUs already set up, for discovery to leave out; an unreadable one is skipped. */
+export async function knownCcuHostsOf(deps: {
+  readonly instances: HomematicInstancesReader
+  readonly integrationIds: readonly string[]
+  readonly onUnreadable: (integrationId: string, error: unknown) => void
+}): Promise<readonly string[]> {
+  const hosts: string[] = []
+  for (const id of deps.integrationIds) {
+    try {
+      const { connection } = await readCcuConnection(deps.instances, id)
+      if (connection !== null) hosts.push(connection.host)
+    } catch (err: unknown) {
+      deps.onUnreadable(id, err)
+    }
+  }
+  return hosts
 }
