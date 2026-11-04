@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Modal training accounts are now integration-instance records edited under Training providers; each keeps its id and its token moves into the keychain-backed record on first start
+
 ## [0.1.127] - 2026-11-02
 
 ### Changed

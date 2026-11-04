@@ -108,7 +108,7 @@ this column exists to stop.
 | `tailscale-ingress` | `@camstack/addon-tailscale` | networking | own runner | `hub-only` | `net-access` | — | `network-access` |
 | `terminal` | `@camstack/addon-terminal` | system | own runner | `any-node` | — | unique | `terminal-session` |
 | `training` | `@camstack/addon-training` | system | own runner | `hub-only` | — | — | `addon-pages-source` `training` |
-| `training-modal` | `@camstack/addon-training` | system | own runner | `hub-only` | — | — | `training-provider` |
+| `training-modal` | `@camstack/addon-training` | system | own runner | `hub-only` | — | — | `integration-instances` `training-provider` |
 | `waste-collections` | `@camstack/addon-waste-collections` | messaging | own runner | `hub-only` | `integrations` | — | `calendar-source` |
 | `webdav-storage` | `@camstack/addon-remote-storage` | system | own runner | `any-node` | `remote-storage` | unique | `storage-provider` |
 | `winston-logging` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `log-destination` |

@@ -1277,7 +1277,16 @@
     "aiRuntimes": {
       "sizeGb": "{{value}} GB"
     },
-    "templates": "Templates"
+    "templates": "Templates",
+    "trainingProviders": {
+      "title": "Training providers",
+      "backToTraining": "Back to Training",
+      "accounts": "Cloud accounts",
+      "accountsSubtitle": "GPU-cloud accounts that run training jobs. Each account keeps its own token, GPU, cost cap and region; credentials stay in the CamStack keychain.",
+      "noProviders": "No training providers installed",
+      "noProvidersDescription": "Install a training provider addon (for example @camstack/addon-training) to train on your own GPU-cloud account.",
+      "addAccount": "Add account"
+    }
   },
   "common": {
     "save": "Save",

@@ -2,7 +2,6 @@
   "page": {
     "title": "Training",
     "subtitle": "Annotate the retrain corpus, run cloud fine-tunes on your GPU account, and configure providers.",
-    "addProvider": "Add provider",
     "addJob": "Add job",
     "tabs": {
       "frames": "Frames",
@@ -144,44 +143,12 @@
     "loadingAccelerators": "Loading accelerators…"
   },
   "providers": {
-    "check": {
-      "asking": "Asking the provider…",
-      "signedIn": "Signed in",
-      "signedInAs": "Signed in — {{account}}",
-      "refused": "refused"
-    },
-    "validation": {
-      "nameRequired": "Name is required.",
-      "costCap": "Cost cap must be a non-negative number.",
-      "maxRuntime": "Max runtime must be a positive number of hours.",
-      "graceHours": "Grace hours must be a non-negative number."
-    },
-    "typeGone": "That provider type is no longer available.",
-    "entryGone": "That entry is no longer available.",
-    "deleteConfirm": {
-      "title": "Delete provider entry?",
-      "message": "Remove “{{name}}” ({{type}}). Credentials for this entry are dropped."
-    },
+    "manage": "Manage accounts",
+    "empty": "No training accounts yet",
+    "emptyHint": "Add a cloud account to run training jobs on your own GPU.",
+    "hint": "Accounts jobs can run on. Edit tokens, GPU and cost caps under Manage accounts.",
     "configured": "Configured",
-    "notConfigured": "Not configured",
-    "deleteEntry": "Delete {{name}}",
-    "registryUnreachable": "Could not reach the capability registry.",
-    "absent": {
-      "title": "No training provider installed",
-      "description": "Install a training provider addon (for example Modal) from the Addons page, then create an entry here.",
-      "addons": "Addons"
-    },
-    "couldNotLoadEntries": "Could not load entries:",
-    "couldNotLoadTypes": "Could not load types:",
-    "empty": "No provider entries yet. Add one to store credentials and run cloud jobs.",
-    "editTitle": "Edit {{name}}",
-    "fallbackName": "provider",
-    "providerType": "Provider type",
-    "selectType": "Select type…",
-    "typeLine": "Type: {{type}}",
-    "namePlaceholder": "e.g. Production",
-    "testCredentials": "Test credentials",
-    "nameOnlyHint": "This provider type only needs a name here. Credentials open after Save if the addon exposes more fields later."
+    "notConfigured": "Not configured"
   },
   "newJob": {
     "confirm": {

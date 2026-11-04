@@ -132,6 +132,9 @@ const SystemIntegrationsPage = lazy(() =>
     default: m.IntegrationsPage,
   })),
 )
+const TrainingProvidersPage = lazy(() =>
+  import('./pages/system/TrainingProviders').then((m) => ({ default: m.TrainingProvidersPage })),
+)
 const DataPage = lazy(() => import('./pages/system/Data').then((m) => ({ default: m.DataPage })))
 // System: Settings, Secrets and Capabilities as `?tab=` tabs; Terminal stays standalone.
 const SystemPage = lazy(() =>
@@ -539,6 +542,14 @@ export function App() {
                                   element={
                                     <ProtectedRoute requireAdmin>
                                       <NetworkPage />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/training/providers"
+                                  element={
+                                    <ProtectedRoute requireAdmin>
+                                      <TrainingProvidersPage />
                                     </ProtectedRoute>
                                   }
                                 />

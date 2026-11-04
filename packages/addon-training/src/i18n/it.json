@@ -2,7 +2,6 @@
   "page": {
     "title": "Addestramento",
     "subtitle": "Annota il corpus di riaddestramento, avvia fine-tuning nel cloud sul tuo account GPU e configura i provider.",
-    "addProvider": "Aggiungi provider",
     "addJob": "Aggiungi job",
     "tabs": {
       "frames": "Frame",
@@ -144,44 +143,12 @@
     "loadingAccelerators": "Caricamento degli acceleratori…"
   },
   "providers": {
-    "check": {
-      "asking": "Interrogazione del provider…",
-      "signedIn": "Accesso eseguito",
-      "signedInAs": "Accesso eseguito — {{account}}",
-      "refused": "rifiutato"
-    },
-    "validation": {
-      "nameRequired": "Il nome è obbligatorio.",
-      "costCap": "Il tetto di costo deve essere un numero non negativo.",
-      "maxRuntime": "La durata massima deve essere un numero positivo di ore.",
-      "graceHours": "Le ore di tolleranza devono essere un numero non negativo."
-    },
-    "typeGone": "Quel tipo di provider non è più disponibile.",
-    "entryGone": "Quella voce non è più disponibile.",
-    "deleteConfirm": {
-      "title": "Eliminare la voce del provider?",
-      "message": "Rimuovere “{{name}}” ({{type}}). Le credenziali di questa voce vengono eliminate."
-    },
+    "manage": "Gestisci account",
+    "empty": "Nessun account di training",
+    "emptyHint": "Aggiungi un account cloud per eseguire i job di training sulla tua GPU.",
+    "hint": "Gli account su cui possono girare i job. Modifica token, GPU e limiti di costo da Gestisci account.",
     "configured": "Configurato",
-    "notConfigured": "Non configurato",
-    "deleteEntry": "Elimina {{name}}",
-    "registryUnreachable": "Impossibile raggiungere il registro delle capability.",
-    "absent": {
-      "title": "Nessun provider di addestramento installato",
-      "description": "Installa un addon provider di addestramento (ad esempio Modal) dalla pagina Addon, poi crea qui una voce.",
-      "addons": "Addon"
-    },
-    "couldNotLoadEntries": "Impossibile caricare le voci:",
-    "couldNotLoadTypes": "Impossibile caricare i tipi:",
-    "empty": "Nessuna voce provider. Aggiungine una per salvare le credenziali ed eseguire job nel cloud.",
-    "editTitle": "Modifica {{name}}",
-    "fallbackName": "provider",
-    "providerType": "Tipo di provider",
-    "selectType": "Seleziona il tipo…",
-    "typeLine": "Tipo: {{type}}",
-    "namePlaceholder": "es. Produzione",
-    "testCredentials": "Verifica credenziali",
-    "nameOnlyHint": "Questo tipo di provider richiede solo un nome qui. Le credenziali si aprono dopo il salvataggio se l'addon espone altri campi in futuro."
+    "notConfigured": "Non configurato"
   },
   "newJob": {
     "confirm": {

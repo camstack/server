@@ -3,8 +3,8 @@
  * Training page — corpus curation (Frames), cloud jobs, and providers.
  *
  * Tabs (`?tab=`): frames (annotate), jobs (run), providers (cloud accounts).
- * Providers edit/create: `?edit=` / `?new=` (useItemFormUrl).
  * Jobs create: page header Add job → ItemFormDialog (createRequested).
+ * Providers: accounts are edited on the admin instances table (`/training/providers`).
  */
 import './index.css'
 import { useCallback, useMemo, useState } from 'react'
@@ -20,7 +20,7 @@ import {
 import { Plus } from 'lucide-react'
 import { FramesSection } from './page/frames/FramesSection.js'
 import { JobsSection } from './page/JobsSection.js'
-import { ProviderSection } from './page/ProviderSection.js'
+import { ProviderAccountsPanel } from './page/ProviderAccountsPanel.js'
 import { readTrainingTab, type TrainingTab } from './page/training-tab.js'
 import { useAsync } from './page/use-async.js'
 import { shouldPoll } from './page/view-model.js'
@@ -84,17 +84,7 @@ export default function TrainingPage({ trpc, navigate }: AddonPageProps) {
       title={t('page.title')}
       subtitle={t('page.subtitle')}
       actions={
-        tab === 'providers' ? (
-          <Button
-            type="button"
-            size="sm"
-            data-testid="training-providers-add"
-            onClick={() => setCreateRequested(true)}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            {t('page.addProvider')}
-          </Button>
-        ) : tab === 'jobs' ? (
+        tab === 'jobs' ? (
           <Button
             type="button"
             size="sm"
@@ -123,11 +113,9 @@ export default function TrainingPage({ trpc, navigate }: AddonPageProps) {
       {tab === 'frames' ? <FramesSection /> : null}
 
       {tab === 'providers' ? (
-        <ProviderSection
-          trpc={trpc}
+        <ProviderAccountsPanel
           navigate={navigate}
-          createRequested={createRequested}
-          onCreateConsumed={() => setCreateRequested(false)}
+          providers={providers.state.status === 'ok' ? providers.state.data : null}
         />
       ) : null}
 

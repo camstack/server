@@ -1,7 +1,7 @@
 /**
  * Modal entry form schema — same shape NC uses for `kind.configSchema`
- * (`ConfigFormBuilder` + `type: 'password'`). Storage stays keychain (D787)
- * via `secretStatePaths`; this schema only drives the Providers dialog.
+ * (`ConfigFormBuilder` + `type: 'password'`). Storage is the account record, whose secret is
+ * a keychain marker (D787); this schema drives the account form of the instances table.
  */
 import type { ConfigUISchema } from '@camstack/types'
 import { MODAL_DEFAULT_GPU, MODAL_GPUS, MODAL_REGIONS } from './modal-pricing.js'
@@ -80,16 +80,4 @@ export const MODAL_ENTRY_CONFIG_SCHEMA: ConfigUISchema = {
       ],
     },
   ],
-}
-
-/** Empty create values (password absent → plain PasswordField via KeychainOr). */
-export const MODAL_ENTRY_CREATE_VALUES: Record<string, unknown> = {
-  tokenId: '',
-  tokenSecret: '',
-  environment: '',
-  gpuType: MODAL_DEFAULT_GPU,
-  region: '',
-  costCapUsd: 5,
-  maxRuntimeHours: 4,
-  failedDatasetGraceHours: 24,
 }

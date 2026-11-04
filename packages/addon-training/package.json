@@ -78,6 +78,9 @@
         "capabilities": [
           {
             "name": "training-provider"
+          },
+          {
+            "name": "integration-instances"
           }
         ],
         "icon": "assets/training-modal/icon.svg",
