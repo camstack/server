@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- device-export calls name their instance (listInstances; writes require instanceId) and broker connections are integration instances
+
 ## [1.2.759] - 2026-11-04
 
 ### Changed
