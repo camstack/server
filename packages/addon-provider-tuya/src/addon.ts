@@ -1,9 +1,12 @@
 import { TuyaCloud } from '@apocaliss92/nodetuya'
 import {
+  type AddonInitResult,
   BaseDeviceProvider,
   type ConfigUISchema,
   type CreateDeviceSpec,
   connectionTestCapability,
+  defaultIntegrationApiOver,
+  defineAddonMigrations,
   type DeviceConstructor,
   DeviceType,
   deviceAdoptionCapability,
@@ -12,10 +15,13 @@ import {
   type IConnectionTestProvider,
   type IDevice,
   type IDeviceAdoptionProvider,
-  type ProviderRegistration,
+  integrationInstancesCapability,
+  integrationRowsMigration,
+  integrationRowsPortsOver,
+  type RecordIntegrationInstances,
   type SystemEvent,
 } from '@camstack/types'
-import { buildConnectionFormSchema, connectionFromSettings, toTuyaCloudOptions } from './config.js'
+import { toTuyaCloudOptions } from './config.js'
 import { TuyaKettleContainerDevice } from './devices/tuya-kettle-container-device.js'
 import { TuyaSwitchDevice } from './devices/tuya-switch-device.js'
 import { buildTuyaAdoptionProvider } from './tuya-adoption-provider.js'
@@ -23,13 +29,23 @@ import { TuyaClientRegistry } from './tuya-client-registry.js'
 import { buildTuyaConnectionTestProvider } from './tuya-connection-test.js'
 import { classifyTuyaCategory, deviceTypeForKind } from './tuya-dp-mapping.js'
 import { type TuyaCatalogEntry, tuyaConnections } from './tuya-gateway.js'
+import {
+  buildTuyaInstances,
+  tuyaConnectionOf,
+  tuyaConnectionsEntryKind,
+  type TuyaConnectionBody,
+  tuyaRecordKinds,
+} from './tuya-instances.js'
+
+/** The date of the integration-rows-to-record migration (D1007). */
+const TUYA_MIGRATIONS_DATE = '2026-11-05'
 
 /**
  * Tuya / Smart Life device-provider addon — `mode: account` (multi-account,
  * broker-less).
  *
  * Onboarding is CLOUD: each integration carries its own Tuya IoT-project
- * credentials in `integration.settings`; the addon holds one
+ * credentials in its `connections` record (`integration-instances`); the addon holds one
  * {@link import('./tuya-integration-manager.js').TuyaIntegrationManager} per
  * `integrationId` in {@link TuyaClientRegistry}, which fetches the account's
  * device list + localKeys and publishes the CATALOG on the shared
@@ -52,13 +68,37 @@ export class TuyaProviderAddon extends BaseDeviceProvider {
   }
 
   private clients: TuyaClientRegistry | null = null
+  private instances: RecordIntegrationInstances<TuyaConnectionBody> | null = null
 
   constructor() {
     super({})
   }
 
-  protected override async onInitialize(): Promise<ProviderRegistration[]> {
+  protected override async onInitialize(): Promise<AddonInitResult> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
+    const records = this.ctx.records
+    if (records === undefined)
+      throw new Error('provider-tuya: ctx.records is required (hub-only addon)')
+    await records.declare(tuyaRecordKinds)
+    await this.runMigrations(
+      defineAddonMigrations(
+        [
+          integrationRowsMigration({
+            addonId: this.addonId,
+            date: TUYA_MIGRATIONS_DATE,
+            kind: tuyaConnectionsEntryKind,
+            fixtureMark: 'accessId',
+          }),
+        ],
+        integrationRowsPortsOver({
+          api: defaultIntegrationApiOver(this.ctx.api),
+          records,
+          kind: tuyaConnectionsEntryKind,
+          warn: (message) => this.ctx.logger.warn(message),
+        }),
+      ),
+    )
+    this.instances = buildTuyaInstances(records, { onChanged: () => this.reconcileIntegrations() })
 
     this.clients = new TuyaClientRegistry(this.ctx.logger, tuyaConnections)
     this.clients.setOnConnected((integrationId) => {
@@ -75,11 +115,17 @@ export class TuyaProviderAddon extends BaseDeviceProvider {
       meta: { integrationCount: this.requireClients().size() },
     })
 
-    return [
-      ...regs,
-      { capability: deviceAdoptionCapability, provider: this.buildAdoptionProvider() },
-      { capability: connectionTestCapability, provider: this.buildConnectionTestProvider() },
-    ]
+    return {
+      providers: [
+        ...regs,
+        { capability: deviceAdoptionCapability, provider: this.buildAdoptionProvider() },
+        { capability: connectionTestCapability, provider: this.buildConnectionTestProvider() },
+        {
+          capability: integrationInstancesCapability,
+          provider: this.requireInstances().toProvider(),
+        },
+      ],
+    }
   }
 
   /**
@@ -110,6 +156,11 @@ export class TuyaProviderAddon extends BaseDeviceProvider {
     return this.clients
   }
 
+  private requireInstances(): RecordIntegrationInstances<TuyaConnectionBody> {
+    if (!this.instances) throw new Error('Tuya provider not initialised')
+    return this.instances
+  }
+
   /** Stable id, integration-scoped so two accounts exposing the same cloud
    *  device id don't collide. */
   protected override generateStableId(_type: DeviceType, config?: Record<string, unknown>): string {
@@ -128,8 +179,7 @@ export class TuyaProviderAddon extends BaseDeviceProvider {
       const surviving = new Set<string>()
       for (const integration of mine) {
         try {
-          const settings = await this.ctx.api.integrations.getSettings.query({ id: integration.id })
-          const connection = connectionFromSettings(settings)
+          const connection = await tuyaConnectionOf(this.requireInstances(), integration.id)
           if (!connection) {
             this.ctx.logger.warn('Tuya integration has no complete credentials — skipping', {
               meta: { integrationId: integration.id },
@@ -139,7 +189,7 @@ export class TuyaProviderAddon extends BaseDeviceProvider {
           await reg.upsert(integration.id, integration.name, connection)
           surviving.add(integration.id)
         } catch (err) {
-          this.ctx.logger.warn('Tuya reconcile: failed to read integration settings', {
+          this.ctx.logger.warn('Tuya reconcile: failed to read the integration record', {
             meta: { integrationId: integration.id, error: errMsg(err) },
           })
         }
@@ -226,12 +276,6 @@ export class TuyaProviderAddon extends BaseDeviceProvider {
       system: 'tuya',
       name,
     }
-  }
-
-  // ── Config form (account credentials, rendered by the wizard) ────────────
-
-  protected override globalSettingsSchema(): ConfigUISchema {
-    return buildConnectionFormSchema()
   }
 
   // ── Manual creation: not supported (devices are adopted from the cloud) ──

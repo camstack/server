@@ -15,7 +15,6 @@
     "provider-petkit",
     "provider-rademacher",
     "provider-reolink",
-    "provider-tuya",
     "provider-unifi",
     "provider-unraid",
     "provider-velux",

@@ -37,6 +37,7 @@
     "addons": [
       {
         "id": "provider-tuya",
+        "integrationRole": "devices",
         "category": "providers",
         "name": "Tuya",
         "version": "0.1.0",
@@ -52,6 +53,9 @@
         "capabilities": [
           {
             "name": "device-provider"
+          },
+          {
+            "name": "integration-instances"
           },
           {
             "name": "device-adoption"
