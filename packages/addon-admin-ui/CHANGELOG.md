@@ -7,13 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The device Customize tab is one table: event and extension rows show their last event or configured summary and source, and other fields and linked devices are rows of that table instead of blocks below it
+- New Training providers page lists the cloud training accounts as an instances table, reached from the Training page's Providers tab
+
 ## [1.2.576] - 2026-11-04
 
 ### Changed
 
 - Connection lists offer a kind picker on Add, an interactive sign-in or connect action, the provider's own status word and a restore under the old id, when the provider declares them
-- The device Customize tab is one table: event and extension rows show their last event or configured summary and source, and other fields and linked devices are rows of that table instead of blocks below it
-- New Training providers page lists the cloud training accounts as an instances table, reached from the Training page's Providers tab
 
 ## [1.2.575] - 2026-11-04
 
