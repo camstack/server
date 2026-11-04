@@ -39,7 +39,10 @@ async function build(pollImpl: () => Promise<readonly AlexaStateValue[]>) {
   const manager = new AlexaIntegrationManager({
     id: 'alexa_001',
     name: 'Alexa',
-    connection: alexaConnectionSchema.parse({ cookie: 'c', amazonDomain: 'amazon.it' }),
+    connection: alexaConnectionSchema.parse({
+      cookie: 'c',
+      amazonDomain: 'amazon.it',
+    }),
     logger,
     onConnected: () => {},
     onDisconnected: () => {},
@@ -87,6 +90,10 @@ describe('AlexaIntegrationManager poll failure status', () => {
       throw new AlexaHttpError('no body', 502)
     })
     await manager.start()
+    // The first poll runs in the background after start() resolves.
+    await vi.waitFor(() =>
+      expect(warn.mock.calls.some((c) => String(c[0]).includes('poll failed'))).toBe(true),
+    )
     const call = warn.mock.calls.find((c) => String(c[0]).includes('poll failed'))
     expect(call?.[1]).toMatchObject({ meta: { httpStatus: 502 } })
     await manager.stop()

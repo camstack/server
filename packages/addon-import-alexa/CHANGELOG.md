@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The integration states its role (devices, services or both) to the Integrations page
+- Alexa starts without waiting for the first appliance list and state poll, so a large account no longer exceeds the runner init budget during an update
 
 ## [0.2.183] - 2026-11-04
 

@@ -115,7 +115,10 @@ export class AlexaIntegrationManager {
       name: this.#name,
       kind: 'alexa',
       status: this.#status,
-      info: { applianceCount: this.#applianceCount, amazonDomain: this.#connection.amazonDomain },
+      info: {
+        applianceCount: this.#applianceCount,
+        amazonDomain: this.#connection.amazonDomain,
+      },
       lastCheckedAt: this.#lastCheckedAt,
       error: this.#error,
     }
@@ -153,10 +156,12 @@ export class AlexaIntegrationManager {
       this.#status = 'connected'
       this.#lastCheckedAt = Date.now()
       this.#onConnected(this.#id)
-      await this.refreshAppliances()
-      await this.poll()
-      this.#schedulePoll()
-      this.#logger.info('AlexaIntegrationManager: started', { tags: { brokerId: this.#id } })
+      this.#logger.info('AlexaIntegrationManager: started', {
+        tags: { brokerId: this.#id },
+      })
+      // The first appliance list, the first poll and the poll schedule run off the init path:
+      // a 250-appliance account polls in serial chunks and would blow the runner's init budget.
+      void this.#firstSync(client)
     } catch (err: unknown) {
       if (err instanceof AlexaAuthError) {
         this.#status = 'auth-failed'
@@ -176,6 +181,25 @@ export class AlexaIntegrationManager {
         meta: { error: errMsg(err) },
       })
     }
+  }
+
+  /** Background first refresh + poll, then the poll loop. Does nothing once `client` is stale. */
+  async #firstSync(client: AlexaClient): Promise<void> {
+    let refreshed = false
+    try {
+      await this.refreshAppliances()
+      refreshed = true
+    } catch (err: unknown) {
+      this.#error = errMsg(err)
+      this.#logger.warn('AlexaIntegrationManager: first appliance refresh failed', {
+        tags: { brokerId: this.#id },
+        meta: { error: errMsg(err) },
+      })
+    }
+    if (this.#client !== client) return
+    if (refreshed) await this.poll()
+    if (this.#client !== client) return
+    this.#schedulePoll()
   }
 
   /** List the account's appliances + publish them to the resolver. */
@@ -210,7 +234,11 @@ export class AlexaIntegrationManager {
       const httpStatus = err instanceof AlexaHttpError ? err.statusCode : null
       this.#logger.warn('AlexaIntegrationManager: poll failed', {
         tags: { brokerId: this.#id },
-        meta: { error: errMsg(err), consecutiveFailures: this.#pollFailures, httpStatus },
+        meta: {
+          error: errMsg(err),
+          consecutiveFailures: this.#pollFailures,
+          httpStatus,
+        },
       })
       // Only a dead session changes the broker's status. A failed state query on a valid
       // session stays 'connected' and is surfaced through `error` (the UI reads it).
