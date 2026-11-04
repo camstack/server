@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Add flow of a connection list now offers a kind picker, sign-in or connect, a status label and restore under the old id when the provider supports them
+
 ## [1.2.758] - 2026-11-04
 
 ### Changed

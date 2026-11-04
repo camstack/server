@@ -2965,7 +2965,7 @@
 
 ### `integration-instances` → `integrationInstances.*`
 
-- **Source:** `packages/types/src/capabilities/integration-instances.cap.ts:77`
+- **Source:** `packages/types/src/capabilities/integration-instances.cap.ts:118`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection`
 - **Archetypes:** —
 - **Provider interface:** `IIntegrationInstancesProvider`
@@ -2976,7 +2976,7 @@
 | instanceFormSchema | `integrationInstances.instanceFormSchema` | query | admin | `{ id: string \| null }` | `<custom>` |
 | listInstances | `integrationInstances.listInstances` | query | admin | `void` | `IntegrationInstanceSchema[]` |
 | getInstance | `integrationInstances.getInstance` | query | admin | `{ id: string }` | `IntegrationInstanceSchema \| null` |
-| createInstance | `integrationInstances.createInstance` | mutation | admin | `{ id: string; name: string }` | `{ id: string }` |
+| createInstance | `integrationInstances.createInstance` | mutation | admin | `{ id?: string; name: string; kind?: string }` | `{ id: string }` |
 | updateInstance | `integrationInstances.updateInstance` | mutation | admin | `IntegrationInstancePatchSchema` | `{ ok: true }` |
 | setInstanceEnabled | `integrationInstances.setInstanceEnabled` | mutation | admin | `{ id: string; enabled: boolean }` | `{ ok: true }` |
 | deleteInstance | `integrationInstances.deleteInstance` | mutation | admin | `{ id: string }` | `{ ok: true }` |

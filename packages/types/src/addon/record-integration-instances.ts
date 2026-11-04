@@ -14,6 +14,8 @@
 import type { z } from 'zod'
 import type {
   IntegrationInstance,
+  IntegrationInstanceDescription,
+  IntegrationInstanceStatus,
   IIntegrationInstancesProvider,
 } from '../capabilities/integration-instances.cap.js'
 import type { IntegrationTestConnectionResult } from '../capabilities/integrations.cap.js'
@@ -32,15 +34,24 @@ const INSTANCES_LIST_MAX = 1000
 export type InstanceBody = Record<string, unknown> & { readonly enabled?: boolean | undefined }
 
 export interface RecordIntegrationInstancesHooks<TBody extends InstanceBody> {
-  readonly description: {
-    readonly instanceMode: 'single' | 'multiple'
-    readonly kind: string
-    readonly canTest: boolean
-  }
+  /** Includes the optional `kinds` and `allowRestoreId` a provider offers the Add flow. */
+  readonly description: IntegrationInstanceDescription
   /** The form; `id: null` is the create form. */
   formSchema(id: string | null): ConfigUISchema
-  /** The body a new instance starts with. It must satisfy the kind's schema. */
-  initialBody(name: string): TBody
+  /** The body a new instance starts with (of `kind` when the caller picked one). It must satisfy the kind's schema. */
+  initialBody(name: string, kind?: string): TBody
+  /**
+   * Mint the id of a new instance when the caller sent none. Without it a create without an id is
+   * refused: the helper never invents an id a provider did not choose.
+   */
+  mintId?(input: { readonly name: string; readonly kind?: string }): string
+  /** The kind a stored instance is of; surfaces as `IntegrationInstance.kind`. */
+  kindOf?(body: TBody): string | undefined
+  /** The instance's own health word and the time it was last probed, from the record. */
+  health?(body: TBody): {
+    readonly status?: IntegrationInstanceStatus
+    readonly lastCheckedAt?: number
+  }
   /** The addon's own rule for "this instance can work". */
   configured(body: TBody): boolean
   /** Runs after every create / update / delete; the addon re-applies its runtime. */
@@ -137,12 +148,17 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
       record.data,
     )
     const rawName = record.data[this.nameField]
+    const kind = this.hooks.kindOf?.(record.data)
+    const health = this.hooks.health?.(record.data)
     return {
       id: record.id,
       name: typeof rawName === 'string' ? rawName : record.id,
       configured: this.hooks.configured(record.data),
       enabled: record.data.enabled !== false,
       formValues: shown,
+      ...(kind !== undefined ? { kind } : {}),
+      ...(health?.status !== undefined ? { status: health.status } : {}),
+      ...(health?.lastCheckedAt !== undefined ? { lastCheckedAt: health.lastCheckedAt } : {}),
     }
   }
 
@@ -162,10 +178,14 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
   }
 
   /** Insert ONE row (`ifRev: 0`: an existing id is refused, never overwritten). */
-  createInstance: IIntegrationInstancesProvider['createInstance'] = async ({ id, name }) => {
-    await this.handle.put({ id, data: this.hooks.initialBody(name) }, { ifRev: 0 })
-    await this.hooks.onChanged?.(id)
-    return { id }
+  createInstance: IIntegrationInstancesProvider['createInstance'] = async ({ id, name, kind }) => {
+    const minted = id ?? this.hooks.mintId?.({ name, ...(kind !== undefined ? { kind } : {}) })
+    if (minted === undefined) {
+      throw new Error('createInstance needs an id: this provider does not mint one')
+    }
+    await this.handle.put({ id: minted, data: this.hooks.initialBody(name, kind) }, { ifRev: 0 })
+    await this.hooks.onChanged?.(minted)
+    return { id: minted }
   }
 
   updateInstance: IIntegrationInstancesProvider['updateInstance'] = async ({

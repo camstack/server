@@ -35,6 +35,31 @@ export const IntegrationInstanceIdSchema = z.string().min(1)
 export const IntegrationInstanceModeSchema = z.enum(['single', 'multiple'])
 export type IntegrationInstanceMode = z.infer<typeof IntegrationInstanceModeSchema>
 
+/**
+ * One kind of instance a provider can create (an adapter, an account type). The sign-in and
+ * connect fields follow the `broker` contract (`broker.cap.ts`): `signIn.basePath` is a
+ * hub-relative route set speaking the sign-in contract, `connectPath` / `disconnectPath` open an
+ * interactive account link (popup) and may carry `{{brokerId}}`, which the UI replaces with the
+ * instance id.
+ */
+export const IntegrationInstanceKindSchema = z.object({
+  /** Stable id of the kind, sent back as `createInstance.kind`. */
+  id: z.string().min(1),
+  label: z.string().min(1),
+  /** The kind signs in through a server-held interactive session. */
+  signIn: z
+    .object({
+      basePath: z.string().min(1),
+      methods: z.array(z.enum(['device-code', 'proxy'])).optional(),
+    })
+    .optional(),
+  /** Relative hub path to start an interactive account link of an instance of this kind. */
+  connectPath: z.string().min(1).optional(),
+  /** Relative hub path to disconnect that account. */
+  disconnectPath: z.string().min(1).optional(),
+})
+export type IntegrationInstanceKind = z.infer<typeof IntegrationInstanceKindSchema>
+
 export const IntegrationInstanceDescriptionSchema = z.object({
   /** `single`: at most one instance can exist (Loki). `multiple`: an account each. */
   instanceMode: IntegrationInstanceModeSchema,
@@ -42,12 +67,24 @@ export const IntegrationInstanceDescriptionSchema = z.object({
   kind: z.string(),
   /** True when `testInstance` really probes the remote. */
   canTest: z.boolean(),
+  /**
+   * The kinds an instance can be of. Absent or one entry: nothing to choose; more than one: the
+   * Add flow asks which first and sends it as `createInstance.kind`.
+   */
+  kinds: z.array(IntegrationInstanceKindSchema).optional(),
+  /**
+   * The provider accepts `createInstance.id` for an id that once existed (an adopted id, because
+   * devices carry it). The UI then offers "restore under its old id" on Add. Absent means no.
+   */
+  allowRestoreId: z.boolean().optional(),
 })
 export type IntegrationInstanceDescription = z.infer<typeof IntegrationInstanceDescriptionSchema>
 
 export const IntegrationInstanceStatusSchema = z.object({
   state: z.enum(['ok', 'off', 'error', 'unknown']),
   detail: z.string().optional(),
+  /** A short human word for the state ("Signed in", "Token expired"); shown instead of `state`. */
+  label: z.string().optional(),
 })
 
 export const IntegrationInstanceSchema = z.object({
@@ -60,9 +97,13 @@ export const IntegrationInstanceSchema = z.object({
    * (`enabled !== false`, so a row written before the field existed is on).
    */
   enabled: z.boolean(),
+  /** The kind of this instance (one of `describe().kinds[].id`), when the provider has kinds. */
+  kind: z.string().optional(),
   /** Values for the instance form; a secret is a `SecretFieldView`, never text. */
   formValues: z.record(z.string(), z.unknown()),
   status: IntegrationInstanceStatusSchema.optional(),
+  /** Epoch ms of the last probe of the remote that produced `status`; absent when never checked. */
+  lastCheckedAt: z.number().optional(),
 })
 export type IntegrationInstance = z.infer<typeof IntegrationInstanceSchema>
 
@@ -94,9 +135,16 @@ export const integrationInstancesCapability = {
       IntegrationInstanceSchema.nullable(),
       { auth: 'admin' },
     ),
-    /** Insert the typed record under the given id (a duplicate id is refused). */
+    /**
+     * Insert the typed record. With `id` it is stored under that id (a duplicate id is refused);
+     * without one the PROVIDER mints it and answers it. `kind` picks one of `describe().kinds`.
+     */
     createInstance: method(
-      z.object({ id: IntegrationInstanceIdSchema, name: z.string().min(1) }),
+      z.object({
+        id: IntegrationInstanceIdSchema.optional(),
+        name: z.string().min(1),
+        kind: z.string().min(1).optional(),
+      }),
       z.object({ id: z.string() }),
       { kind: 'mutation', auth: 'admin' },
     ),
@@ -129,5 +177,7 @@ export const integrationInstancesCapability = {
     ),
   },
 } as const satisfies CapabilityDefinition
+
+export type IntegrationInstanceStatus = z.infer<typeof IntegrationInstanceStatusSchema>
 
 export type IIntegrationInstancesProvider = InferProvider<typeof integrationInstancesCapability>

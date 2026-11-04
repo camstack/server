@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Connection instances can now declare kinds, a sign-in or connect action, a status label, a last-checked time, an old-id restore and a provider-minted id (all optional)
+
 ## [1.2.492] - 2026-11-04
 
 ### Changed
