@@ -11,8 +11,7 @@ import {
   type IDeviceRuntimeState,
   type IScopedLogger,
   type InitialDeviceMeta,
-  isSecretMarker,
-  makeSecretMarker,
+  makeInMemoryRecords,
   secretTreeFromSchema,
 } from '@camstack/types'
 import { readFileSync } from 'node:fs'
@@ -24,6 +23,11 @@ import { UnraidGatewayDevice } from '../devices/unraid-gateway-device.js'
 import { UnraidInstanceDevice } from '../devices/unraid-instance-device.js'
 import { buildUnraidAdoptionProvider } from '../unraid-adoption-provider.js'
 import { UnraidClientRegistry } from '../unraid-client-registry.js'
+import {
+  buildUnraidInstances,
+  unraidConnectionsEntryKind,
+  unraidRecordKinds,
+} from '../unraid-instances.js'
 import type { UnraidClientLike, UnraidSnapshot } from '../unraid-client-contract.js'
 import { buildUnraidDeviceAdopter } from '../unraid-device-adopter.js'
 import { UNRAID_GATEWAY_ID, UNRAID_INSTANCE_ID } from '../unraid-discovery.js'
@@ -62,9 +66,6 @@ afterEach(() => unraidInstances.clear())
 class InspectableAddon extends UnraidProviderAddon {
   classes() {
     return this.deviceClasses
-  }
-  schema() {
-    return this.globalSettingsSchema()
   }
   stableId(type: DeviceType, config: Record<string, unknown>) {
     return this.generateStableId(type, config)
@@ -150,10 +151,14 @@ describe('Unraid integration: the server is a Gateway, a sibling of its instance
     expect(classes[DeviceType.Container]).toBe(UnraidInstanceDevice)
   })
 
-  it('serves the connection form from the integration, with the apiKey a keychain secret', () => {
-    const schema = new InspectableAddon().schema()
+  it('serves the connection form from the instance, with the apiKey a keychain secret', async () => {
+    const mem = makeInMemoryRecords('provider-unraid')
+    await mem.records.declare(unraidRecordKinds)
+    const instances = buildUnraidInstances(mem.records, { onChanged: async () => undefined })
+    const schema = await instances.instanceFormSchema({ id: null })
     expect(schema).toEqual(buildConnectionFormSchema())
     expect(secretTreeFromSchema(schema).get('apiKey')).toEqual({ kind: 'leaf' })
+    expect(unraidConnectionsEntryKind.declaration.secretPaths).toEqual(['apiKey'])
     // The server name is the integration's, not a form field.
     const keys = schema.sections.flatMap((s) => s.fields.map((f) => ('key' in f ? f.key : '')))
     expect(keys).not.toContain('name')
@@ -199,9 +204,7 @@ describe('Unraid integration: the server is a Gateway, a sibling of its instance
 
 describe('Unraid integration: the API key', () => {
   it('a key the keychain cannot serve reads as locked, never as an empty key to connect with', async () => {
-    const marker = makeSecretMarker('secret://provider-unraid/global/apiKey')
-    expect(isSecretMarker(marker)).toBe(true)
-    const read = connectionFromSettings({ host: 'tower.local', apiKey: marker })
+    const read = connectionFromSettings({ host: 'tower.local' }, true)
     expect(read?.apiKeyLocked).toBe(true)
 
     const makeClient = vi.fn()
@@ -254,7 +257,7 @@ describe('Unraid integration: the API key', () => {
       onDisconnected: () => undefined,
       onPolled: () => undefined,
     })
-    const read = connectionFromSettings({ host: 'tower.local', apiKey: 'sekrit-key-123' })
+    const read = connectionFromSettings({ host: 'tower.local', apiKey: 'sekrit-key-123' }, false)
     if (read === null) throw new Error('settings should parse')
     await registry.upsert(INT, 'Tower', read.connection, read.apiKeyLocked)
     expect(seen).toEqual(['sekrit-key-123'])

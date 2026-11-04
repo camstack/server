@@ -1,4 +1,5 @@
 import {
+  type AddonInitResult,
   BaseDeviceProvider,
   type ConfigUISchema,
   type CreateDeviceSpec,
@@ -9,11 +10,16 @@ import {
   EventCategory,
   type IDevice,
   type IDeviceAdoptionProvider,
-  type ProviderRegistration,
+  integrationInstancesCapability,
+  integrationRowsMigration,
+  integrationRowsPortsOver,
+  type RecordIntegrationInstances,
   type SystemEvent,
   collectOwnerIntegrationIds,
+  defaultIntegrationApiOver,
+  defineAddonMigrations,
 } from '@camstack/types'
-import { buildConnectionFormSchema, connectionFromSettings, UNRAID_SYSTEM } from './config.js'
+import { UNRAID_SYSTEM } from './config.js'
 import { UnraidEntityDevice } from './devices/unraid-entity-device.js'
 import { UnraidGatewayDevice } from './devices/unraid-gateway-device.js'
 import { UnraidInstanceDevice } from './devices/unraid-instance-device.js'
@@ -26,7 +32,17 @@ import { reconcileInstanceEntities } from './unraid-entity-reconcile.js'
 import { UnraidReconciler, type IntegrationLifecycleKind } from './unraid-reconciler.js'
 import { cascadeRemoveDevicesForIntegration } from './unraid-integration-device-cascade.js'
 import { setIntegrationDevicesOnline } from './unraid-integration-offline.js'
+import {
+  buildUnraidInstances,
+  unraidConnectionOf,
+  unraidConnectionsEntryKind,
+  type UnraidConnectionBody,
+  unraidRecordKinds,
+} from './unraid-instances.js'
 import { unraidInstances } from './unraid-node-resolver.js'
+
+/** The date of the integration-rows-to-record migration (D1007). */
+const UNRAID_MIGRATIONS_DATE = '2026-11-05'
 
 /**
  * Unraid device-provider addon, `mode: account` and broker-less. An integration is one
@@ -57,13 +73,39 @@ export class UnraidProviderAddon extends BaseDeviceProvider {
 
   private integrationReconciler: UnraidReconciler | null = null
   private clients: UnraidClientRegistry | null = null
+  private instances: RecordIntegrationInstances<UnraidConnectionBody> | null = null
 
   constructor() {
     super({})
   }
 
-  protected override async onInitialize(): Promise<ProviderRegistration[]> {
+  protected override async onInitialize(): Promise<AddonInitResult> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
+    const records = this.ctx.records
+    if (records === undefined)
+      throw new Error('provider-unraid: ctx.records is required (hub-only addon)')
+    await records.declare(unraidRecordKinds)
+    await this.runMigrations(
+      defineAddonMigrations(
+        [
+          integrationRowsMigration({
+            addonId: this.addonId,
+            date: UNRAID_MIGRATIONS_DATE,
+            kind: unraidConnectionsEntryKind,
+            fixtureMark: 'host',
+          }),
+        ],
+        integrationRowsPortsOver({
+          api: defaultIntegrationApiOver(this.ctx.api),
+          records,
+          kind: unraidConnectionsEntryKind,
+          warn: (message) => this.ctx.logger.warn(message),
+        }),
+      ),
+    )
+    this.instances = buildUnraidInstances(records, {
+      onChanged: () => this.reconcileIntegrations(),
+    })
     this.clients = new UnraidClientRegistry(this.ctx.logger, {
       makeClient: makeLiveUnraidClient,
       onConnected: (integrationId) => this.setIntegrationDevicesOnline(integrationId, true),
@@ -72,13 +114,19 @@ export class UnraidProviderAddon extends BaseDeviceProvider {
     })
     await this.reconcileIntegrations()
     this.subscribeIntegrationLifecycle()
-    return [
-      ...regs,
-      {
-        capability: deviceAdoptionCapability,
-        provider: this.buildAdoptionProvider(),
-      },
-    ]
+    return {
+      providers: [
+        ...regs,
+        {
+          capability: deviceAdoptionCapability,
+          provider: this.buildAdoptionProvider(),
+        },
+        {
+          capability: integrationInstancesCapability,
+          provider: this.requireInstances().toProvider(),
+        },
+      ],
+    }
   }
 
   protected override async onShutdown(): Promise<void> {
@@ -92,6 +140,11 @@ export class UnraidProviderAddon extends BaseDeviceProvider {
     this.integrationReconciler = null
     unraidInstances.clear()
     await super.onShutdown()
+  }
+
+  private requireInstances(): RecordIntegrationInstances<UnraidConnectionBody> {
+    if (!this.instances) throw new Error('Unraid provider not initialised')
+    return this.instances
   }
 
   private requireClients(): UnraidClientRegistry {
@@ -125,9 +178,7 @@ export class UnraidProviderAddon extends BaseDeviceProvider {
       listIntegrations: () => this.ctx.api.integrations.list.query(),
       applySettings: async (integration) => {
         const reg = this.requireClients()
-        const read = connectionFromSettings(
-          await this.ctx.api.integrations.getSettings.query({ id: integration.id }),
-        )
+        const read = await unraidConnectionOf(this.requireInstances(), integration.id)
         if (read === null) return false
         await reg.upsert(integration.id, integration.name, read.connection, read.apiKeyLocked)
         return true
@@ -251,11 +302,6 @@ export class UnraidProviderAddon extends BaseDeviceProvider {
       },
       logger: this.ctx.logger,
     })
-  }
-
-  /** The integration's settings form; the submitted values are stored per integration. */
-  protected override globalSettingsSchema(): ConfigUISchema {
-    return buildConnectionFormSchema()
   }
 
   override async supportsDiscovery(): Promise<boolean> {

@@ -36,6 +36,7 @@
     "addons": [
       {
         "id": "provider-unraid",
+        "integrationRole": "devices",
         "category": "providers",
         "name": "Unraid",
         "version": "0.1.0",
@@ -51,6 +52,9 @@
         "capabilities": [
           {
             "name": "device-provider"
+          },
+          {
+            "name": "integration-instances"
           },
           {
             "name": "device-adoption"

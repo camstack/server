@@ -1,14 +1,8 @@
 import { z } from 'zod'
-import { isSecretMarkerLike, type ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@camstack/types'
 
 /** The device-registry `system` tag every Unraid device carries. */
 export const UNRAID_SYSTEM = 'unraid'
-
-/** A key the keychain could not serve reads as a marker object, not a string. */
-function markerToEmpty(value: unknown): unknown {
-  if (isSecretMarkerLike(value)) return ''
-  return value === null || value === undefined ? '' : value
-}
 
 /**
  * Operator-supplied connection to ONE Unraid server: the settings of the INTEGRATION
@@ -32,7 +26,8 @@ export const unraidConnectionSchema = z.object({
     .preprocess((v) => (v === '' || v === null ? undefined : v), z.boolean().default(false))
     .describe('Accept a self-signed certificate (https only)'),
   apiKey: z
-    .preprocess(markerToEmpty, z.string().default(''))
+    .string()
+    .default('')
     .describe('ADMIN-role API key (`unraid-api apikey --create`)')
     .meta({ secret: true }),
   pollIntervalMs: z
@@ -68,12 +63,17 @@ export interface UnraidConnectionRead {
   readonly apiKeyLocked: boolean
 }
 
-/** Parse an integration's settings into a connection, or null while its host is missing. */
-export function connectionFromSettings(settings: unknown): UnraidConnectionRead | null {
-  const raw = toRecord(settings)
-  const parsed = unraidConnectionSchema.safeParse(raw)
+/**
+ * Parse an integration's record body into a connection, or null while its host is missing.
+ * `apiKeyLocked` says the keychain could not serve the key (the record read came back without it).
+ */
+export function connectionFromSettings(
+  settings: unknown,
+  apiKeyLocked: boolean,
+): UnraidConnectionRead | null {
+  const parsed = unraidConnectionSchema.safeParse(toRecord(settings))
   if (!parsed.success) return null
-  return { connection: parsed.data, apiKeyLocked: isSecretMarkerLike(raw['apiKey']) }
+  return { connection: parsed.data, apiKeyLocked }
 }
 
 /** True when two connections would poll the server the same way. */

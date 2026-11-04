@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**234 units · 7971 source files · 221 units claimed by at least one document (7927 files).**
+**234 units · 7972 source files · 221 units claimed by at least one document (7928 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -83,11 +83,11 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-model-studio/src/components` | 21 | `tooling` | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_ | — |
 | `packages/addon-provider-dreo` | 21 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0953-a-cloud-session-that-ends-raises-one-standard-alert-per-integration-and-clears-itself.md`, 1 ADR | 2026-10-26 |
 | `packages/addon-provider-ecowitt` | 21 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
+| `packages/addon-provider-unraid` | 21 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/types/src/utils` | 21 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0177-a-python-pool-is-bounded-by-its-own-watchdog-not-the-kernel.md`, `decisions/adr-0646-a-benchmark-names-a-pool-and-never-swaps-an-engine-a-replay-runs-the-cameras-root-step-pinned.md`, +2 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-benchmark` | 20 | `tooling` | `architecture/benchmark.md`, `decisions/adr-0646-a-benchmark-names-a-pool-and-never-swaps-an-engine-a-replay-runs-the-cameras-root-step-pinned.md`, `decisions/adr-0792-the-benchmark-page-is-node-benchmark-image-and-audio-and-the-session-replay-is-deleted.md`, +2 more | 2026-10-23 |
 | `packages/addon-export-hap/src/hksv` | 20 | `ecosystem-exports` | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md`, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +9 more, 2 ADRs | 2026-09-29 |
 | `packages/addon-provider-unifi` | 20 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
-| `packages/addon-provider-unraid` | 20 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `server/backend` | 20 | `api-surface` | `decisions/adr-0693-a-live-database-is-backed-up-by-its-owner-never-copied-as-files.md`, `design/2026-08-13-single-copy-addons-first-boot-install.md`, `architecture/overview.md`, +20 more, 6 ADRs | 2026-10-27 |
 | `packages/addon-auth` | 19 | `auth` | `decisions/adr-0777-an-auth-providers-only-enable-is-its-capability-toggle-on-identity-authentication.md`, `decisions/adr-0780-an-icon-setting-is-a-display-icon-vocabulary-key-chosen-with-the-shared-picker.md`, `architecture/authentication.md`, +7 more | 2026-10-21 |
 | `packages/addon-cloudflare` | 19 | `remote-access` | `decisions/adr-0783-secrets-are-declared-by-schema-type-and-never-travel-on-argv-env-or-logs.md`, `decisions/adr-0234-forked-addons-spawn-after-settings-door.md`, `decisions/adr-0860-an-install-this-addon-offer-is-answered-from-the-published-manifests-and-a-temporary-tunnel-address-is-never-an-automatic-hub-address.md` | — |

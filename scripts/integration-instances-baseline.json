@@ -16,7 +16,6 @@
     "provider-rademacher",
     "provider-reolink",
     "provider-unifi",
-    "provider-unraid",
     "provider-velux",
     "provider-vesync",
     "provider-wyze"
