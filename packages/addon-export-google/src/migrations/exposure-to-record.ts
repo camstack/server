@@ -54,7 +54,7 @@ function actionsOf(value: unknown): readonly ActionSceneEntry[] {
 }
 
 /** Key-order-independent JSON, so "identical" does not depend on how a store orders keys. */
-function canonical(value: unknown): string {
+export function canonical(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`
   if (typeof value === 'object' && value !== null) {
     const entries = Object.entries(value)
@@ -84,7 +84,11 @@ export async function moveExposureToRecord(
       `Google migration: ${dropped} exposure entr(ies) were not understood and are left out`,
     )
   }
-  const body: GoogleExportsBody = { name: GOOGLE_EXPORTS_NAME, devices, actions }
+  const body: GoogleExportsBody = {
+    name: GOOGLE_EXPORTS_NAME,
+    devices,
+    actions,
+  }
   const put = await ports.putExports(body)
   if (put === 'exists') return { outcome: 'already-done', summary: { moved: false } }
   const held = await ports.readExports()

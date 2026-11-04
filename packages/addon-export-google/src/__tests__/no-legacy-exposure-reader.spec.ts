@@ -19,14 +19,22 @@ function sources(dir: string): string[] {
   })
 }
 
-describe('no runtime reader of the legacy exposure keys', () => {
-  it('reads exposure only through the record', () => {
-    const code = (file: string): string[] =>
-      readFileSync(file, 'utf8')
-        .split('\n')
-        .filter((line) => !/^\s*(\/\/|\*|\/\*)/.test(line))
+const code = (file: string): string[] =>
+  readFileSync(file, 'utf8')
+    .split('\n')
+    .filter((line) => !/^\s*(\/\/|\*|\/\*)/.test(line))
+
+describe('no runtime reader of the legacy exposure and link keys', () => {
+  it('keeps no global settings page or writer: the instance form is the page, links are a record', () => {
     const offenders = sources(SRC).filter((file) =>
-      code(file).some((line) => /config\??\.(exposed|exposedActions)\b/.test(line)),
+      code(file).some((line) => /globalSettingsSchema|updateGlobalSettings/.test(line)),
+    )
+    expect(offenders).toEqual([])
+  })
+
+  it('reads exposure and links only through the records', () => {
+    const offenders = sources(SRC).filter((file) =>
+      code(file).some((line) => /config\??\.(exposed|exposedActions|linkedAccounts)\b/.test(line)),
     )
     expect(offenders).toEqual([])
   })

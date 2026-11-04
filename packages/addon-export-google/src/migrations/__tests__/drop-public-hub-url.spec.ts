@@ -113,10 +113,14 @@ function fixture(initial: Record<string, unknown>) {
         ADDON_MIGRATIONS.filter((m) => m.meta.id === DROP_PUBLIC_HUB_URL_ID),
         {
           readStored: async () => read(),
-          // This fixture runs the URL migration only; the exposure ones have their own spec.
+          // This fixture runs the URL migration only; the exposure and instance ones have their own specs.
           warn: () => undefined,
           putExports: async () => 'exists',
           readExports: async () => null,
+          putHome: async () => 'exists',
+          putLinks: async () => 'exists',
+          readHome: async () => null,
+          readLinks: async () => null,
         },
       ),
       silentLogger,

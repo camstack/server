@@ -51,6 +51,9 @@
           },
           {
             "name": "oauth-integration"
+          },
+          {
+            "name": "integration-instances"
           }
         ],
         "icon": "assets/icon.svg",

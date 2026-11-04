@@ -41,6 +41,8 @@ export const resolvePublicEndpoint = (book: PublicEndpointAnswer): PublicEndpoin
 
 export interface ConsoleSetupInput {
   readonly addonId: string
+  /** The instance whose fulfillment URL is shown; absent shows the legacy first-instance URL. */
+  readonly instanceId?: string
   readonly linkedAccounts: number
   /** Asks the hub for its address book NOW; called on every build, never memoised. */
   readonly read: () => Promise<PublicEndpointAnswer>
@@ -69,6 +71,10 @@ export const buildConsoleSetupFromRole = async (input: ConsoleSetupInput): Promi
     }
   }
   const origin = result.origin
+  const fulfillmentPath =
+    input.instanceId === undefined
+      ? `/addon/${input.addonId}/fulfillment`
+      : `/addon/${input.addonId}/fulfillment/${input.instanceId}`
   return {
     note: [
       'In the Google Home Developer Console create a cloud-to-cloud integration, then paste these three URLs.',
@@ -79,7 +85,7 @@ export const buildConsoleSetupFromRole = async (input: ConsoleSetupInput): Promi
     fields: [
       {
         label: 'Fulfillment URL',
-        value: `${origin}/addon/${input.addonId}/fulfillment`,
+        value: `${origin}${fulfillmentPath}`,
       },
       {
         label: 'Authorization URL',

@@ -7,7 +7,18 @@ import {
   planDropMovedExposure,
 } from './exposure-to-record.js'
 
+import {
+  type DropMovedLinksPorts,
+  type MoveInstanceAndLinksPorts,
+  moveInstanceAndLinks,
+  planDropMovedLinks,
+} from './instance-and-links.js'
+
 export type { DropPublicHubUrlPorts } from './drop-public-hub-url.js'
+export type {
+  DropMovedLinksPorts,
+  MoveInstanceAndLinksPorts,
+} from './instance-and-links.js'
 export type {
   DropMovedExposurePorts,
   ExposureMigrationLog,
@@ -17,11 +28,15 @@ export type {
 /** Every body reads through ONE port object, so the addon binds the catalogue once. */
 export type GoogleCataloguePorts = DropPublicHubUrlPorts &
   MoveExposurePorts &
-  DropMovedExposurePorts
+  DropMovedExposurePorts &
+  MoveInstanceAndLinksPorts &
+  DropMovedLinksPorts
 
 export const DROP_PUBLIC_HUB_URL_ID = 'export-google/2026-11-02-drop-public-hub-url'
 export const EXPOSURE_TO_RECORD_ID = 'export-google/2026-11-04-exposure-to-record'
 export const DROP_MOVED_EXPOSURE_ID = 'export-google/2026-11-04-drop-moved-exposure'
+export const INSTANCE_AND_LINKS_ID = 'export-google/2026-11-04-instance-and-links'
+export const DROP_MOVED_LINKS_ID = 'export-google/2026-11-04-drop-moved-links'
 
 const FIXTURE_MARK = 'the linked account list the migration does not know'
 
@@ -77,5 +92,39 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<GoogleCataloguePorts>[] =
       fixtureMark: FIXTURE_MARK,
     },
     plan: planDropMovedExposure,
+  },
+  {
+    meta: {
+      id: INSTANCE_AND_LINKS_ID,
+      owner: 'export-google',
+      level: 'addon-state',
+      seq: 4,
+      dependsOn: [],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'block-owner',
+      bodyKind: 'procedure',
+      description:
+        'Create the first Google Home instance under the id export-google and move the linked accounts into its google-links record; both rows are read back before anything is deleted',
+      fixtureMark: FIXTURE_MARK,
+    },
+    procedure: moveInstanceAndLinks,
+  },
+  {
+    meta: {
+      id: DROP_MOVED_LINKS_ID,
+      owner: 'export-google',
+      level: 'addon-state',
+      seq: 5,
+      dependsOn: [INSTANCE_AND_LINKS_ID],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'block-owner',
+      bodyKind: 'plan',
+      description:
+        'Delete the linkedAccounts settings key once the google-links record holds what it carried',
+      fixtureMark: FIXTURE_MARK,
+    },
+    plan: planDropMovedLinks,
   },
 ]

@@ -3,12 +3,14 @@
  * catch-all (`/addon/:addonId/*`) calls the routes registered through the
  * `addon-routes` capability.
  *
- * One public URL, assuming the hub is reachable as `https://<hub>`:
+ * One public URL per instance, assuming the hub is reachable as `https://<hub>`:
  *
- *   POST /addon/export-google/fulfillment
+ *   POST /addon/export-google/fulfillment/<instanceId>
+ *   POST /addon/export-google/fulfillment            (the first instance, `export-google`)
  *
  * That is the URL the operator pastes into the Actions console as the
- * fulfillment URL. Account linking uses the hub's core `/api/oauth2/*` server
+ * fulfillment URL of ONE project. The path alone names the instance: the token
+ * never does (one OAuth client serves every instance). Account linking uses the hub's core `/api/oauth2/*` server
  * (`integration=export-google`) — this addon registers an `oauth-integration`
  * provider and owns no authorize/token route of its own.
  *
@@ -30,6 +32,7 @@ import type {
 import { TokenScopeSchema } from '@camstack/types'
 import { z } from 'zod'
 
+import { GOOGLE_INSTANCE_ID } from './export-records.js'
 import {
   type FulfillmentDeps,
   handleFulfillment,
@@ -45,20 +48,35 @@ const OauthVerifiedResultSchema = z
   })
   .nullable()
 
+/** What a path's instance id resolved to. */
+export type FulfillmentLookup =
+  | { readonly ok: true; readonly deps: FulfillmentDeps }
+  | { readonly ok: false; readonly code: 'unknown_instance' | 'instance_disabled' }
+
 export interface HttpRouteDeps {
   readonly ctx: AddonContext
   readonly logger: IScopedLogger
-  readonly fulfillment: FulfillmentDeps
+  /** The fulfillment wiring of one instance, loaded (links included) before it is returned. */
+  readonly resolveFulfillment: (instanceId: string) => Promise<FulfillmentLookup>
 }
 
 export function buildRoutes(deps: HttpRouteDeps): readonly IAddonHttpRoute[] {
   return [
     {
       method: 'POST',
+      path: '/fulfillment/:instanceId',
+      access: 'public',
+      description:
+        'Google Home smart-home fulfillment of one instance (SYNC / QUERY / EXECUTE / DISCONNECT)',
+      handler: (req, reply) =>
+        handleFulfillmentRequest(req, reply, deps, req.params['instanceId'] ?? ''),
+    },
+    {
+      method: 'POST',
       path: '/fulfillment',
       access: 'public',
-      description: 'Google Home smart-home fulfillment (SYNC / QUERY / EXECUTE / DISCONNECT)',
-      handler: (req, reply) => handleFulfillmentRequest(req, reply, deps),
+      description: `Legacy fulfillment URL: answers for the first instance (${GOOGLE_INSTANCE_ID})`,
+      handler: (req, reply) => handleFulfillmentRequest(req, reply, deps, GOOGLE_INSTANCE_ID),
     },
   ]
 }
@@ -78,6 +96,7 @@ async function handleFulfillmentRequest(
   request: AddonHttpRequest,
   reply: AddonHttpReply,
   deps: HttpRouteDeps,
+  instanceId: string,
 ): Promise<void> {
   const bearer = readBearer(request.headers)
   if (bearer === null) {
@@ -105,6 +124,15 @@ async function handleFulfillmentRequest(
     scopes: verified.data.scopes,
   }
 
-  const result = await handleFulfillment(request.body, deps.fulfillment, caller)
+  const lookup = await deps.resolveFulfillment(instanceId)
+  if (!lookup.ok) {
+    deps.logger.warn('google fulfillment: rejected — instance not served', {
+      meta: { instanceId, reason: lookup.code },
+    })
+    reply.code(404).send({ error: lookup.code })
+    return
+  }
+
+  const result = await handleFulfillment(request.body, lookup.deps, caller)
   reply.code(result.status).send(result.body)
 }

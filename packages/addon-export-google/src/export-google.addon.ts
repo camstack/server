@@ -3,8 +3,13 @@
  *
  * Architecture:
  *
- *   Google Home / Assistant --HTTPS--> POST /addon/export-google/fulfillment
+ *   Google Home / Assistant --HTTPS--> POST /addon/export-google/fulfillment/<instanceId>
  *                                      (hub Fastify → addon-routes cap)
+ *
+ * The addon is MULTI-instance (planning#422): every Actions-console project is one
+ * `integration-instances` row of the `google-homes` kind with its own exposure and its own
+ * link ledger. The first instance keeps the id `export-google`, so the legacy
+ * `/fulfillment` URL still answers for it. One OAuth client serves every instance.
  *
  * There is no cloud function in the middle. Google's smart-home platform calls
  * the fulfillment URL the operator configured, so the hub answers directly —
@@ -13,7 +18,8 @@
  *
  * Capabilities registered:
  *   - `device-export`      — the operator picks which devices Google sees.
- *   - `addon-routes`       — mounts `/addon/export-google/fulfillment`.
+ *   - `addon-routes`       — mounts `/addon/export-google/fulfillment[/<instanceId>]`.
+ *   - `integration-instances` — the Google Home instances (role `services`).
  *   - `oauth-integration`  — declares this addon a linkable client of the
  *                            hub's core `/api/oauth2/*` server.
  *
@@ -34,82 +40,79 @@
  * (docs/decisions/adr-0273-one-capability-is-one-trait-row-that-declares-reads-and-writes.md); the trait catalog is the single place that
  * decides, so widening scope is one row.
  */
+import { randomUUID } from 'node:crypto'
 import {
   addonRoutesCapability,
   BaseAddon,
   buildAddonRouteProvider,
-  defineAddonMigrations,
   type ConfigSectionWithValues,
+  type ConfigUISchema,
   type ConfigUISchemaWithValues,
+  defineAddonMigrations,
   deviceExportCapability,
-  errMsg,
-  type IAddonRouteProvider,
-  assertOwnExportInstance,
   deviceExportStatusInstanceOf,
+  errMsg,
+  ExportInstanceUnknownError,
+  type IAddonRouteProvider,
   type IDeviceExportProvider,
   type IOauthIntegrationProvider,
+  integrationInstancesCapability,
   oauthIntegrationCapability,
   type ProviderRegistration,
-  type RecordKindHandle,
+  RecordIntegrationInstances,
   RevConflictError,
 } from '@camstack/types'
 
 import { ActionSceneExports } from './action-scenes.js'
-import {
-  EMPTY_GOOGLE_EXPORTS,
-  GOOGLE_INSTANCE_ID,
-  type GoogleExportsBody,
-  googleExportsKind,
-} from './export-records.js'
 import { createApiDeviceGateway, type DeviceGateway } from './device-gateway.js'
-import type { VerifiedGoogleCaller } from './fulfillment-router.js'
+import {
+  GOOGLE_INSTANCE_ID,
+  type GoogleHomeBody,
+  googleExportsKind,
+  googleHomesKind,
+  googleLinksKind,
+} from './export-records.js'
+import type { FulfillmentDeps } from './fulfillment-router.js'
+import {
+  GoogleInstance,
+  GoogleInstanceRegistry,
+  type GoogleInstanceStores,
+} from './google-instance.js'
 import { SUPPORTED_DEVICE_KINDS } from './google-home/device-model.js'
 import { traitsForCaps } from './google-home/trait-catalog.js'
-import { buildRoutes } from './http-server.js'
-import { buildGoogleOauthIntegration } from './oauth-integration.js'
+import { buildRoutes, type FulfillmentLookup } from './http-server.js'
 import { ADDON_MIGRATIONS } from './migrations/index.js'
+import { buildGoogleOauthIntegration } from './oauth-integration.js'
 import { buildConsoleSetupFromRole } from './public-endpoint.js'
-import {
-  DEFAULT_SETTINGS,
-  type ExportSetup,
-  type ExposedDeviceEntry,
-  type GoogleExportSettings,
-  type LinkedAccount,
-} from './types.js'
+import { DEFAULT_SETTINGS, type ExportSetup, type GoogleExportSettings } from './types.js'
 
 const ADDON_ID = 'export-google'
 
+/** The per-device toggle key: `google:<instanceId>:<deviceId>:enabled`. */
+const DEVICE_KEY = /^google:([^:]+):(\d+):enabled$/
+const deviceKey = (instanceId: string, deviceId: number): string =>
+  `google:${instanceId}:${deviceId}:enabled`
+
 export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
   private gateway: DeviceGateway | null = null
-  /**
-   * The `google-exports` record: what Google syncs. Loaded once at boot after the migrations;
-   * this addon is its only writer, so the in-memory copy is the synchronous read the fulfillment
-   * path needs. No settings key backs it.
-   */
-  private exportsRow: GoogleExportsBody = EMPTY_GOOGLE_EXPORTS
-  private exportsHandle: RecordKindHandle<GoogleExportsBody> | null = null
-
-  private get exposedDevices(): readonly ExposedDeviceEntry[] {
-    return this.exportsRow.devices
-  }
-
-  /** Persist a change of the exposure: the record first, the in-memory copy after it landed. */
-  private async writeExports(
-    patch: Partial<Pick<GoogleExportsBody, 'devices' | 'actions'>>,
-  ): Promise<void> {
-    const handle = this.exportsHandle
-    if (handle === null) throw new Error('export-google: the exposure record is not open')
-    const next: GoogleExportsBody = {
-      name: this.exportsRow.name,
-      devices: patch.devices ?? this.exportsRow.devices,
-      actions: patch.actions ?? this.exportsRow.actions,
-    }
-    await handle.put({ id: GOOGLE_INSTANCE_ID, data: next })
-    this.exportsRow = next
-  }
+  private registry: GoogleInstanceRegistry | null = null
+  private instances: RecordIntegrationInstances<GoogleHomeBody> | null = null
+  private readonly fulfillments = new WeakMap<GoogleInstance, FulfillmentDeps>()
 
   constructor() {
     super({ ...DEFAULT_SETTINGS })
+  }
+
+  private requireRegistry(): GoogleInstanceRegistry {
+    if (this.registry === null) throw new Error('export-google: addon not initialized')
+    return this.registry
+  }
+
+  /** The instance or a typed refusal naming it: a device-export call never guesses one. */
+  private async requireInstance(instanceId: string): Promise<GoogleInstance> {
+    const instance = await this.requireRegistry().get(instanceId)
+    if (instance === null) throw new ExportInstanceUnknownError(ADDON_ID, instanceId)
+    return instance
   }
 
   protected async onInitialize(): Promise<ProviderRegistration[]> {
@@ -123,9 +126,52 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
     if (records === undefined) {
       throw new Error('export-google needs ctx.records — check execution.placement (hub-only)')
     }
-    await records.declare({ 'google-exports': googleExportsKind })
-    const exportsHandle = records.kind(googleExportsKind)
-    this.exportsHandle = exportsHandle
+    await records.declare({
+      'google-homes': googleHomesKind,
+      'google-exports': googleExportsKind,
+      'google-links': googleLinksKind,
+    })
+    const stores: GoogleInstanceStores = {
+      homes: records.kind(googleHomesKind),
+      exports: records.kind(googleExportsKind),
+      links: records.kind(googleLinksKind),
+    }
+    const registry = new GoogleInstanceRegistry(
+      stores,
+      this.ctx.logger,
+      (persist, initial) =>
+        new ActionSceneExports(
+          {
+            api: this.ctx.api,
+            logger: this.ctx.logger,
+            isAdminUser: async (userId) => {
+              const users = await this.ctx.api.userManagement.listUsers.query()
+              return users.some((u) => u.id === userId && u.isAdmin)
+            },
+            persist,
+          },
+          initial,
+        ),
+    )
+    this.registry = registry
+
+    this.instances = new RecordIntegrationInstances(records, googleHomesKind, {
+      description: { role: 'services', instanceMode: 'multiple', kind: 'homes', canTest: false },
+      formSchema: (id) => this.homeForm(id),
+      initialBody: (name): GoogleHomeBody => ({ name }),
+      mintId: () => `google-home-${randomUUID().slice(0, 8)}`,
+      health: (body, id) => {
+        if (body.enabled === false) return { status: { state: 'off', label: 'Off' } }
+        const linked = registry.peek(id)?.linkedAccounts.length
+        if (linked === undefined) return { status: { state: 'unknown' } }
+        return linked > 0
+          ? { status: { state: 'ok', label: `${linked} linked account(s)` } }
+          : { status: { state: 'unknown', label: 'Not linked yet' } }
+      },
+      configured: () => true,
+      onChanged: (id, change) => this.onInstanceChanged(id, change),
+    })
+
     await this.runMigrations(
       defineAddonMigrations(ADDON_MIGRATIONS, {
         readStored: async () => this.resolveGlobalStore(),
@@ -133,141 +179,61 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
           this.ctx.logger.warn(message, { tags: { topic: 'export-google', phase: 'migration' } })
         },
         putExports: async (body) => {
-          if ((await exportsHandle.get(GOOGLE_INSTANCE_ID)) !== null) return 'exists'
+          if ((await stores.exports.get(GOOGLE_INSTANCE_ID)) !== null) return 'exists'
           try {
-            await exportsHandle.put({ id: GOOGLE_INSTANCE_ID, data: body }, { ifRev: 0 })
+            await stores.exports.put({ id: GOOGLE_INSTANCE_ID, data: body }, { ifRev: 0 })
           } catch (err: unknown) {
             if (err instanceof RevConflictError) return 'exists'
             throw err
           }
           return 'created'
         },
-        readExports: async () => (await exportsHandle.get(GOOGLE_INSTANCE_ID))?.data ?? null,
+        readExports: async () => (await stores.exports.get(GOOGLE_INSTANCE_ID))?.data ?? null,
+        putHome: async (body) => {
+          if ((await stores.homes.get(GOOGLE_INSTANCE_ID)) !== null) return 'exists'
+          try {
+            await stores.homes.put({ id: GOOGLE_INSTANCE_ID, data: body }, { ifRev: 0 })
+          } catch (err: unknown) {
+            if (err instanceof RevConflictError) return 'exists'
+            throw err
+          }
+          return 'created'
+        },
+        putLinks: async (body) => {
+          if ((await stores.links.get(GOOGLE_INSTANCE_ID)) !== null) return 'exists'
+          try {
+            await stores.links.put({ id: GOOGLE_INSTANCE_ID, data: body }, { ifRev: 0 })
+          } catch (err: unknown) {
+            if (err instanceof RevConflictError) return 'exists'
+            throw err
+          }
+          return 'created'
+        },
+        readHome: async () => (await stores.homes.get(GOOGLE_INSTANCE_ID))?.data ?? null,
+        readLinks: async () => (await stores.links.get(GOOGLE_INSTANCE_ID))?.data ?? null,
       }),
     )
-    // A failed read of the exposure record stops the boot: an empty membership would tell
-    // Google on its next SYNC that every device is gone.
-    this.exportsRow = (await exportsHandle.get(GOOGLE_INSTANCE_ID))?.data ?? EMPTY_GOOGLE_EXPORTS
 
-    const actionScenes = new ActionSceneExports(
-      {
-        api: this.ctx.api,
-        logger: this.ctx.logger,
-        isAdminUser: async (userId) => {
-          const users = await this.ctx.api.userManagement.listUsers.query()
-          return users.some((u) => u.id === userId && u.isAdmin)
-        },
-        persist: (entries) => this.writeExports({ actions: [...entries] }),
-      },
-      this.exportsRow.actions,
-    )
-    // The operator may have deleted an action while this addon was down.
-    void actionScenes.reconcile().catch((err: unknown) => {
-      this.ctx.logger.warn('export-google: action scene reconcile at boot failed', {
-        meta: { error: errMsg(err) },
+    // A failed read of an instance's exposure or links stops the boot: an empty membership would
+    // tell Google on its next SYNC that every device is gone, and an empty ledger written back
+    // would forget every link.
+    for (const row of await registry.list()) {
+      const instance = await registry.get(row.id)
+      if (instance === null) continue
+      // The operator may have deleted an action while this addon was down.
+      void instance.scenes.reconcile().catch((err: unknown) => {
+        this.ctx.logger.warn('export-google: action scene reconcile at boot failed', {
+          meta: { instanceId: instance.id, error: errMsg(err) },
+        })
       })
-    })
-
-    const ownInstance = (instanceId: string | undefined): void =>
-      assertOwnExportInstance('export-google', ADDON_ID, instanceId)
-    const deviceExportProvider: IDeviceExportProvider = {
-      getStatus: async (input) => {
-        ownInstance(deviceExportStatusInstanceOf(input))
-        return {
-          linkState: this.config.linkedAccounts.length > 0 ? 'linked' : 'unlinked',
-          exposedDeviceCount: this.exposedDevices.length,
-          setup: await this.buildSetupBlock(),
-        }
-      },
-      listInstances: async () => [
-        {
-          instanceId: ADDON_ID,
-          name: 'Google Home',
-          enabled: true,
-          kind: 'google-home',
-        },
-      ],
-      listSupportedDeviceKinds: async ({ instanceId }) => {
-        ownInstance(instanceId)
-        return [...SUPPORTED_DEVICE_KINDS]
-      },
-      listExposedDevices: async ({ instanceId }) => {
-        ownInstance(instanceId)
-        return this.exposedDevices.map((entry) => ({
-          deviceId: String(entry.deviceId),
-        }))
-      },
-      exposeDevice: async ({ instanceId, deviceId }) => {
-        ownInstance(instanceId)
-        return this.exposeDevice(deviceId)
-      },
-      unexposeDevice: async ({ instanceId, deviceId }) => {
-        ownInstance(instanceId)
-        return this.unexposeDevice(deviceId)
-      },
-      listSupportedEntityKinds: async () => ['device', 'action'],
-      listExposedEntities: async ({ instanceId }) => {
-        ownInstance(instanceId)
-        await actionScenes.reconcile()
-        return [
-          ...this.exposedDevices.map((entry) => ({
-            entity: {
-              kind: 'device' as const,
-              deviceId: String(entry.deviceId),
-            },
-          })),
-          ...actionScenes.list(),
-        ]
-      },
-      exposeEntity: async ({ instanceId, entity }) => {
-        ownInstance(instanceId)
-        if (entity.kind === 'device') return this.exposeDevice(entity.deviceId)
-        if (entity.kind === 'action') return actionScenes.expose(entity.actionId)
-        throw new Error('export-google: a notification target cannot be exported to Google Home')
-      },
-      unexposeEntity: async ({ instanceId, entity }) => {
-        ownInstance(instanceId)
-        if (entity.kind === 'device') return this.unexposeDevice(entity.deviceId)
-        if (entity.kind === 'action') return actionScenes.unexpose(entity.actionId)
-        throw new Error('export-google: a notification target cannot be exported to Google Home')
-      },
-      // `device-export` types deviceId as a string; our entries key on numbers.
-      getDeviceSettingsContribution: (input) =>
-        this.buildDeviceSettingsContribution(Number(input.deviceId)),
-      getDeviceLiveContribution: async () => null,
-      applyDeviceSettingsPatch: (input) =>
-        this.applyDeviceSettingsPatch(Number(input.deviceId), input.patch),
     }
+
+    const deviceExportProvider = this.buildDeviceExportProvider()
 
     const routes = buildRoutes({
       ctx: this.ctx,
       logger: this.ctx.logger,
-      fulfillment: {
-        logger: this.ctx.logger,
-        sync: {
-          gateway,
-          logger: this.ctx.logger,
-          // An in-process read of this addon's OWN store — no cap-router
-          // round-trip for a value we already hold. Every OTHER reader of a
-          // `device-export` exposed list pins by addonId.
-          listExposed: () => this.exposedDevices.map((entry) => entry.deviceId),
-          actions: actionScenes,
-        },
-        query: {
-          gateway,
-          logger: this.ctx.logger,
-          isExposed: (deviceId) => this.isExposed(deviceId),
-          actions: actionScenes,
-        },
-        execute: {
-          gateway,
-          logger: this.ctx.logger,
-          isExposed: (deviceId) => this.isExposed(deviceId),
-          actions: actionScenes,
-        },
-        recordLink: (caller) => this.recordLink(caller),
-        removeLink: (userId) => this.removeLink(userId),
-      },
+      resolveFulfillment: (instanceId) => this.resolveFulfillment(instanceId),
     })
     const routeProvider: IAddonRouteProvider = buildAddonRouteProvider(ADDON_ID, routes)
 
@@ -280,8 +246,7 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
 
     this.ctx.logger.info('export-google: initialized', {
       meta: {
-        exposedCount: this.exposedDevices.length,
-        linkedAccounts: this.config.linkedAccounts.length,
+        instances: (await registry.list()).length,
         // Stated in the boot log because it is the single most surprising
         // property of this addon: state reaches Google by polling only.
         willReportState: false,
@@ -291,24 +256,173 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
     return [
       { capability: deviceExportCapability, provider: deviceExportProvider },
       { capability: addonRoutesCapability, provider: routeProvider },
-      {
-        capability: oauthIntegrationCapability,
-        provider: oauthIntegrationProvider,
-      },
+      { capability: oauthIntegrationCapability, provider: oauthIntegrationProvider },
+      { capability: integrationInstancesCapability, provider: this.instances.toProvider() },
     ]
   }
 
   protected override async onShutdown(): Promise<void> {
     this.gateway = null
+    this.registry = null
+  }
+
+  // ── Instances ───────────────────────────────────────────────────
+
+  private async onInstanceChanged(
+    id: string,
+    change: 'created' | 'updated' | 'enabled' | 'deleted',
+  ): Promise<void> {
+    const registry = this.requireRegistry()
+    if (change === 'deleted') await registry.remove(id)
+    else if (change === 'created') await registry.get(id)
+    else await registry.refreshHome(id)
+  }
+
+  private homeForm(id: string | null): ConfigUISchema {
+    const target = id === null ? '<instance id>' : id
+    return this.schema({
+      sections: [
+        {
+          id: ADDON_ID,
+          title: 'Connection',
+          description:
+            'Publishes switches, dimmable lights, locks and covers to Google Home. The hub answers Google directly — no cloud function, and no Google credential is stored here.',
+          columns: 1,
+          fields: [
+            {
+              type: 'info' as const,
+              key: '__google-setup-banner',
+              label: 'Setup overview',
+              variant: 'info' as const,
+              content: [
+                'This hub must be reachable from the public internet over HTTPS (Cloudflare Tunnel, Tailscale Funnel, …) — Google calls the fulfillment URL from its own cloud.',
+                `Create a cloud-to-cloud integration in the Google Home Developer Console, paste the three URLs from the Export panel (the fulfillment URL ends in /fulfillment/${target}), and link your account from the Home app.`,
+                'Each Google Home instance is one Actions-console project with its own devices and linked accounts.',
+                'Cameras are not exported, and state is not pushed: Google polls. Ask "Hey Google, sync my devices" after exposing something new.',
+              ].join('\n'),
+            },
+          ],
+        },
+      ],
+    })
+  }
+
+  private async resolveFulfillment(instanceId: string): Promise<FulfillmentLookup> {
+    const instance = await this.requireRegistry().get(instanceId)
+    if (instance === null) return { ok: false, code: 'unknown_instance' }
+    if (!instance.enabled) return { ok: false, code: 'instance_disabled' }
+    return { ok: true, deps: this.fulfillmentFor(instance) }
+  }
+
+  /** The fulfillment wiring of ONE instance: its exposure, its links, nobody else's. */
+  private fulfillmentFor(instance: GoogleInstance): FulfillmentDeps {
+    const cached = this.fulfillments.get(instance)
+    if (cached !== undefined) return cached
+    const gateway = this.requireGateway()
+    const logger = this.ctx.logger
+    const deps: FulfillmentDeps = {
+      logger,
+      sync: {
+        gateway,
+        logger,
+        // An in-process read of this instance's OWN record — no cap-router round-trip for a
+        // value we already hold.
+        listExposed: () => instance.devices.map((entry) => entry.deviceId),
+        actions: instance.scenes,
+      },
+      query: {
+        gateway,
+        logger,
+        isExposed: (deviceId) => instance.isExposed(deviceId),
+        actions: instance.scenes,
+      },
+      execute: {
+        gateway,
+        logger,
+        isExposed: (deviceId) => instance.isExposed(deviceId),
+        actions: instance.scenes,
+      },
+      recordLink: (caller) => instance.recordLink(caller),
+      removeLink: (userId) => instance.removeLink(userId),
+    }
+    this.fulfillments.set(instance, deps)
+    return deps
   }
 
   // ── device-export ───────────────────────────────────────────────
 
-  private isExposed(deviceId: number): boolean {
-    return this.exposedDevices.some((entry) => entry.deviceId === deviceId)
+  private buildDeviceExportProvider(): IDeviceExportProvider {
+    return {
+      getStatus: async (input) => {
+        const requested = deviceExportStatusInstanceOf(input)
+        const rows = await this.requireRegistry().list()
+        const target = requested ?? rows[0]?.id
+        if (target === undefined) {
+          return {
+            linkState: 'unlinked',
+            exposedDeviceCount: 0,
+            setup: await this.buildSetupBlock(undefined, 0),
+          }
+        }
+        const instance = await this.requireInstance(target)
+        return {
+          linkState: instance.linkedAccounts.length > 0 ? 'linked' : 'unlinked',
+          exposedDeviceCount: instance.devices.length,
+          setup: await this.buildSetupBlock(instance.id, instance.linkedAccounts.length),
+        }
+      },
+      listInstances: async () =>
+        (await this.requireRegistry().list()).map((row) => ({
+          instanceId: row.id,
+          name: row.body.name,
+          enabled: row.body.enabled !== false,
+          kind: 'google-home',
+        })),
+      listSupportedDeviceKinds: async ({ instanceId }) => {
+        await this.requireInstance(instanceId ?? GOOGLE_INSTANCE_ID)
+        return [...SUPPORTED_DEVICE_KINDS]
+      },
+      listExposedDevices: async ({ instanceId }) => {
+        const instance = await this.requireInstance(instanceId ?? GOOGLE_INSTANCE_ID)
+        return instance.devices.map((entry) => ({ deviceId: String(entry.deviceId) }))
+      },
+      exposeDevice: async ({ instanceId, deviceId }) =>
+        this.exposeDevice(await this.requireInstance(instanceId ?? GOOGLE_INSTANCE_ID), deviceId),
+      unexposeDevice: async ({ instanceId, deviceId }) =>
+        this.unexposeDevice(await this.requireInstance(instanceId ?? GOOGLE_INSTANCE_ID), deviceId),
+      listSupportedEntityKinds: async () => ['device', 'action'],
+      listExposedEntities: async ({ instanceId }) => {
+        const instance = await this.requireInstance(instanceId ?? GOOGLE_INSTANCE_ID)
+        await instance.scenes.reconcile()
+        return [
+          ...instance.devices.map((entry) => ({
+            entity: { kind: 'device' as const, deviceId: String(entry.deviceId) },
+          })),
+          ...instance.scenes.list(),
+        ]
+      },
+      exposeEntity: async ({ instanceId, entity }) => {
+        const instance = await this.requireInstance(instanceId ?? GOOGLE_INSTANCE_ID)
+        if (entity.kind === 'device') return this.exposeDevice(instance, entity.deviceId)
+        if (entity.kind === 'action') return instance.scenes.expose(entity.actionId)
+        throw new Error('export-google: a notification target cannot be exported to Google Home')
+      },
+      unexposeEntity: async ({ instanceId, entity }) => {
+        const instance = await this.requireInstance(instanceId ?? GOOGLE_INSTANCE_ID)
+        if (entity.kind === 'device') return this.unexposeDevice(instance, entity.deviceId)
+        if (entity.kind === 'action') return instance.scenes.unexpose(entity.actionId)
+        throw new Error('export-google: a notification target cannot be exported to Google Home')
+      },
+      // `device-export` types deviceId as a string; our entries key on numbers.
+      getDeviceSettingsContribution: (input) =>
+        this.buildDeviceSettingsContribution(Number(input.deviceId)),
+      getDeviceLiveContribution: async () => null,
+      applyDeviceSettingsPatch: (input) =>
+        this.applyDeviceSettingsPatch(Number(input.deviceId), input.patch),
+    }
   }
 
-  private async exposeDevice(deviceIdRaw: string): Promise<void> {
+  private async exposeDevice(instance: GoogleInstance, deviceIdRaw: string): Promise<void> {
     const deviceId = Number.parseInt(deviceIdRaw, 10)
     if (!Number.isFinite(deviceId)) {
       throw new Error(`export-google: deviceId must be numeric — got "${deviceIdRaw}"`)
@@ -327,16 +441,19 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
     if (traitsForCaps(facts.capNames).length === 0) {
       this.ctx.logger.warn('export-google: refused to expose — no exported capability', {
         tags: { deviceId },
-        meta: { deviceType: facts.deviceType, capNames: facts.capNames },
+        meta: {
+          instanceId: instance.id,
+          deviceType: facts.deviceType,
+          capNames: facts.capNames,
+        },
       })
       throw new Error(
         `export-google: device ${deviceId} has no capability this addon exports (bound: ${facts.capNames.join(', ') || 'none'})`,
       )
     }
 
-    const next: ExposedDeviceEntry[] = this.exposedDevices.filter((e) => e.deviceId !== deviceId)
-    next.push({ deviceId, exposedAt: Date.now() })
-    await this.writeExports({ devices: next })
+    const next = instance.devices.filter((e) => e.deviceId !== deviceId)
+    await instance.writeExports({ devices: [...next, { deviceId, exposedAt: Date.now() }] })
 
     // Google learns about a new device only on its next SYNC, and the hub
     // cannot ASK for one: `requestSync` is a HomeGraph call and HomeGraph needs
@@ -344,48 +461,25 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
     // the line an operator will read when the device fails to appear.
     this.ctx.logger.info(
       'export-google: exposed device — visible after the next Google SYNC ("Hey Google, sync my devices")',
-      { tags: { deviceId } },
+      { tags: { deviceId }, meta: { instanceId: instance.id } },
     )
   }
 
-  private async unexposeDevice(deviceIdRaw: string): Promise<void> {
+  private async unexposeDevice(instance: GoogleInstance, deviceIdRaw: string): Promise<void> {
     const deviceId = Number.parseInt(deviceIdRaw, 10)
     if (!Number.isFinite(deviceId)) return
-    const next = this.exposedDevices.filter((e) => e.deviceId !== deviceId)
-    if (next.length === this.exposedDevices.length) return
-    await this.writeExports({ devices: next })
+    const next = instance.devices.filter((e) => e.deviceId !== deviceId)
+    if (next.length === instance.devices.length) return
+    await instance.writeExports({ devices: next })
     this.ctx.logger.info('export-google: unexposed device — removed from Google on its next SYNC', {
       tags: { deviceId },
+      meta: { instanceId: instance.id },
     })
   }
 
   private requireGateway(): DeviceGateway {
     if (this.gateway === null) throw new Error('export-google: addon not initialized')
     return this.gateway
-  }
-
-  // ── Link bookkeeping ────────────────────────────────────────────
-
-  private async recordLink(caller: VerifiedGoogleCaller): Promise<void> {
-    if (this.config.linkedAccounts.some((account) => account.userId === caller.userId)) return
-    const next: LinkedAccount[] = [
-      ...this.config.linkedAccounts,
-      {
-        userId: caller.userId,
-        username: caller.username,
-        linkedAt: Date.now(),
-      },
-    ]
-    await this.updateGlobalSettings({ linkedAccounts: next })
-    this.ctx.logger.info('export-google: recorded linked account', {
-      meta: { userId: caller.userId },
-    })
-  }
-
-  private async removeLink(userId: string): Promise<void> {
-    const next = this.config.linkedAccounts.filter((account) => account.userId !== userId)
-    if (next.length === this.config.linkedAccounts.length) return
-    await this.updateGlobalSettings({ linkedAccounts: next })
   }
 
   // ── Settings surfaces ───────────────────────────────────────────
@@ -399,45 +493,22 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
    * value still travels in the `getStatus` response — so it would be the wrong
    * tool for a real credential anyway (docs/decisions/adr-0269-a-google-export-that-holds-no-google-credential.md).
    */
-  private async buildSetupBlock(): Promise<ExportSetup> {
+  private async buildSetupBlock(
+    instanceId: string | undefined,
+    linkedAccounts: number,
+  ): Promise<ExportSetup> {
     return buildConsoleSetupFromRole({
       addonId: ADDON_ID,
-      linkedAccounts: this.config.linkedAccounts.length,
+      ...(instanceId !== undefined ? { instanceId } : {}),
+      linkedAccounts,
       read: () => this.ctx.api.localNetwork.getAddresses.query(),
     })
   }
 
-  protected globalSettingsSchema() {
-    return this.schema({
-      sections: [
-        {
-          id: ADDON_ID,
-          title: 'Connection',
-          description:
-            'Publishes switches, dimmable lights, locks and covers to Google Home. The hub answers Google directly — no cloud function, and no Google credential is stored here.',
-          columns: 1,
-          fields: [
-            {
-              type: 'info' as const,
-              key: '__google-setup-banner',
-              label: 'Setup overview',
-              variant: 'info' as const,
-              content: [
-                'This hub must be reachable from the public internet over HTTPS (Cloudflare Tunnel, Tailscale Funnel, …) — Google calls the fulfillment URL from its own cloud.',
-                'Create a cloud-to-cloud integration in the Google Home Developer Console, paste the three URLs from the Export panel, and link your account from the Home app.',
-                'Cameras are not exported, and state is not pushed: Google polls. Ask "Hey Google, sync my devices" after exposing something new.',
-              ].join('\n'),
-            },
-          ],
-        },
-      ],
-    })
-  }
-
   /**
-   * Per-device "Export" panel. Offered only for devices this addon can actually
-   * represent — a toggle on a camera would be a switch that promises something
-   * `buildSyncDevice` then refuses.
+   * Per-device "Export" panel: one section per enabled instance. Offered only for devices this
+   * addon can actually represent — a toggle on a camera would be a switch that promises
+   * something `buildSyncDevice` then refuses.
    */
   private async buildDeviceSettingsContribution(
     deviceId: number,
@@ -449,69 +520,76 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
     const descriptors = traitsForCaps(facts.capNames)
     if (descriptors.length === 0) return null
 
-    const enabled = this.isExposed(deviceId)
-    const linked = this.config.linkedAccounts.length
-    // Field keys are namespaced per exporter: the device-aggregate form
-    // flattens fields by `key` across sections, so a bare `enabled` would
-    // collide with HAP's and Alexa's and route this toggle to their writer.
-    const enabledKey = `google:${deviceId}:enabled`
-    const statusLabel = enabled
-      ? `Exposed as ${descriptors.map((d) => d.trait.replace('action.devices.traits.', '')).join(' + ')}${
-          linked > 0 ? `, ${linked} linked Google account(s)` : ' (no linked Google account yet)'
-        }`
-      : 'Not exposed'
-
-    const section: ConfigSectionWithValues = {
-      id: ADDON_ID,
-      title: 'Google Home Export',
-      description: 'Surface this device to the linked Google Home account.',
-      tab: 'export',
-      columns: 1,
-      order: 30,
-      fields: [
-        {
-          type: 'info' as const,
-          key: '__google-status',
-          label: 'Status',
-          content: statusLabel,
-          variant: 'info' as const,
-        },
-        {
-          type: 'boolean' as const,
-          key: enabledKey,
-          label: 'Expose to Google Home',
-          description:
-            'Google picks the change up on its next sync — say "Hey Google, sync my devices" to force one.',
-          style: 'switch' as const,
-          value: enabled,
-          // Auto-save: a single toggle has no draft state worth reviewing, and
-          // the operator expects expose/unexpose to fire on release.
-          immediate: true,
-        },
-      ],
+    const registry = this.requireRegistry()
+    const rows = (await registry.list()).filter((row) => row.body.enabled !== false)
+    const sections: ConfigSectionWithValues[] = []
+    for (const row of rows) {
+      const instance = await registry.get(row.id)
+      if (instance === null) continue
+      const enabled = instance.isExposed(deviceId)
+      const linked = instance.linkedAccounts.length
+      const statusLabel = enabled
+        ? `Exposed as ${descriptors.map((d) => d.trait.replace('action.devices.traits.', '')).join(' + ')}${
+            linked > 0 ? `, ${linked} linked Google account(s)` : ' (no linked Google account yet)'
+          }`
+        : 'Not exposed'
+      sections.push({
+        id: `${ADDON_ID}:${instance.id}`,
+        title: rows.length === 1 ? 'Google Home Export' : `Google Home Export — ${instance.name}`,
+        description: 'Surface this device to the linked Google Home account.',
+        tab: 'export',
+        columns: 1,
+        order: 30 + sections.length,
+        fields: [
+          {
+            type: 'info' as const,
+            key: `__google-status:${instance.id}`,
+            label: 'Status',
+            content: statusLabel,
+            variant: 'info' as const,
+          },
+          {
+            type: 'boolean' as const,
+            // Namespaced per exporter AND instance: the device-aggregate form flattens fields
+            // by `key` across sections, so a bare `enabled` would collide with HAP's and Alexa's
+            // and one instance's toggle would drive another's.
+            key: deviceKey(instance.id, deviceId),
+            label: 'Expose to Google Home',
+            description:
+              'Google picks the change up on its next sync — say "Hey Google, sync my devices" to force one.',
+            style: 'switch' as const,
+            value: enabled,
+            // Auto-save: a single toggle has no draft state worth reviewing, and
+            // the operator expects expose/unexpose to fire on release.
+            immediate: true,
+          },
+        ],
+      })
     }
-    return {
-      tabs: [{ id: 'export', label: 'Export', icon: 'share-2', order: 80 }],
-      sections: [section],
-    }
+    if (sections.length === 0) return null
+    return { tabs: [{ id: 'export', label: 'Export', icon: 'share-2', order: 80 }], sections }
   }
 
   private async applyDeviceSettingsPatch(
     deviceId: number,
     patch: Record<string, unknown>,
   ): Promise<{ success: true }> {
-    const enabledKey = `google:${deviceId}:enabled`
-    if (!(enabledKey in patch)) return { success: true as const }
-    const next = patch[enabledKey]
-    if (typeof next !== 'boolean') {
-      this.ctx.logger.warn('export-google: ignored export toggle — value was not a boolean', {
-        tags: { deviceId },
-      })
-      return { success: true as const }
+    for (const [key, next] of Object.entries(patch)) {
+      const match = DEVICE_KEY.exec(key)
+      if (match === null || Number(match[2]) !== deviceId) continue
+      const instanceId = match[1] ?? ''
+      if (typeof next !== 'boolean') {
+        this.ctx.logger.warn('export-google: ignored export toggle — value was not a boolean', {
+          tags: { deviceId },
+          meta: { instanceId },
+        })
+        continue
+      }
+      const instance = await this.requireInstance(instanceId)
+      if (next === instance.isExposed(deviceId)) continue
+      if (next) await this.exposeDevice(instance, String(deviceId))
+      else await this.unexposeDevice(instance, String(deviceId))
     }
-    if (next === this.isExposed(deviceId)) return { success: true as const }
-    if (next) await this.exposeDevice(String(deviceId))
-    else await this.unexposeDevice(String(deviceId))
     return { success: true as const }
   }
 }
