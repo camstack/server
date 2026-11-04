@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**234 units · 8031 source files · 221 units claimed by at least one document (7987 files).**
+**234 units · 8033 source files · 221 units claimed by at least one document (7989 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -164,6 +164,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-export-alexa/src/migrations` | 5 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +1 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-export-alexa/src/state-reports` | 5 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0776-alexa-state-changes-are-reported-proactively-from-device-state-changed.md`, `decisions/adr-0869-the-alexa-export-maps-caps-through-one-adapter-registry-covers-first-and-shapes-its-reports.md`, +3 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-pipeline/src/motion-wasm` | 5 | `detection-execution` | `decisions/adr-0394-the-motion-area-bar-judges-a-merged-subject-relative-to-the-view.md` | — |
+| `packages/addon-provider-homeassistant/src/migrations` | 5 | `device-providers` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/addon-static-turn` | 5 | `stream-broker` | — | — |
 | `packages/cli` | 5 | `tooling` | `decisions/adr-0884-the-cli-session-is-the-logged-in-user.md` | — |
 | `packages/types/src/i18n` | 5 | `notification-center` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0863-settings-texts-and-user-facing-errors-are-translated-by-the-hub-from-catalogs-the-english-text-always-travels-beside-the-key.md`, `architecture/notifications.md`, +1 more | 2026-10-07 |
@@ -181,7 +182,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-export-alexa/src/snapshots` | 3 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0773-alexa-snapshots-are-signed-ten-minute-token-checked-urls-behind-an-integration-switch.md`, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, +2 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-pipeline-orchestrator/src/migrations` | 3 | — | 1 ADR | — |
 | `packages/addon-pipeline/src/durable` | 3 | `storage` | `decisions/adr-0185-a-forked-addons-settings-row-holds-config-not-a-workload.md`, `design/2026-08-29-recorder-heap-what-is-retained.md` _(covers)_, `design/2026-08-29-recorder-index-at-scale.md` _(covers)_ | 2026-08-30 |
-| `packages/addon-provider-homeassistant/src/migrations` | 3 | `device-providers` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/addon-training` | 3 | `cloud-training` | — | — |
 | `packages/cli/src/http` | 3 | `tooling` | — | — |
 | `packages/system` | 3 | `kernel` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0417-a-diagnostic-more-than-one-bundle-needs-lives-in-system.md` | — |

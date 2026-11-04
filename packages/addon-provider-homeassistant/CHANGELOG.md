@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Home Assistant: the calendars an instance imports are now a field of the instance itself (edited in its form), moved there automatically from the old integration settings
+
 ## [1.2.659] - 2026-11-04
 
 ### Changed

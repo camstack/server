@@ -8,7 +8,6 @@ import {
   bestLocationMatch,
   brokerCapability,
   type ConfigUISchema,
-  type IntegrationInstanceRef,
   defineAddonMigrations,
   flattenPortsOver,
   type RecordsAccess,
@@ -76,7 +75,8 @@ import { haBrokersEntryKind, type HaBrokerBody } from './broker-record-kinds.js'
 import { buildHaInstances } from './ha-instances.js'
 import { haAllRecordKinds } from './record-kinds.js'
 import { createHaBoardKeyProvider, HaBoardKeySource } from './ha-board-key-source.js'
-import { haInstanceSettingsPortsOver } from './ha-instance-settings.js'
+import { haInstanceRecordPortsOver } from './ha-instance-settings.js'
+import { haInstanceSettingsPortsOver } from './migrations/legacy-integration-rows.js'
 import {
   ADDON_MIGRATIONS,
   FLATTEN_BROKER_RECORDS_ID,
@@ -84,7 +84,7 @@ import {
 } from './migrations/index.js'
 import { createHaCalendarSource, listHaCalendarCatalog } from './ha-calendar-source.js'
 import { reconcileBroker } from './ha-reconcile-broker.js'
-import { computeBrokerCleanup, linkBrokersToIntegrations } from './ha-reconciler.js'
+import { computeBrokerCleanup } from './ha-reconciler.js'
 import {
   buildStandaloneEntityCandidates,
   buildStandaloneEntityConfig,
@@ -205,7 +205,9 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
     if (secrets === undefined) throw new Error('provider-homeassistant: ctx.secrets is required')
     return {
       readStored: (key) => this.readStoredGlobalKey(key),
+      // The old rows: read by the migrations only (planning#416).
       ...haInstanceSettingsPortsOver(this.ctx.api.integrations),
+      ...haInstanceRecordPortsOver(records.kind(haBrokersEntryKind)),
       ...flattenPortsOver(records.kind(haBrokersEntryKind)),
     }
   }
@@ -220,6 +222,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
     this.instances = buildHaInstances(records, {
       mintId: () => this.requireRegistry().allocateId(),
       infoOf: (id) => this.registry?.get(id) ?? null,
+      calendarOptions: (id) => (this.registry ? listHaCalendarCatalog(this.registry, id) : []),
       onChanged: (id) => this.syncBrokerRuntime(id),
       probe: (settings) => this.requireRegistry().testSettings(settings),
     })
@@ -430,69 +433,30 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
    * selection yet (the move has not run) uses the legacy shared set, so a boot mid-move never
    * changes what is imported.
    */
-  private readonly calendarIdsByBroker = new Map<string, ReadonlySet<string>>()
-
-  private noteInstanceCalendars(brokerId: string, raw: unknown): void {
-    if (Array.isArray(raw) && raw.every((id): id is string => typeof id === 'string')) {
-      this.calendarIdsByBroker.set(brokerId, new Set(raw))
-    } else {
-      this.calendarIdsByBroker.delete(brokerId)
-    }
-  }
-
+  /** The calendars one instance imports: its record's set, else the addon default. */
   private calendarIdsOf(brokerId: string): ReadonlySet<string> {
-    return this.calendarIdsByBroker.get(brokerId) ?? new Set(this.config.calendarIds ?? [])
+    const own = this.activeBrokers.find((b) => b.id === brokerId)?.calendarIds
+    return new Set(own ?? this.config.calendarIds ?? [])
   }
 
   private async reconcileIntegrationsToBrokers(): Promise<void> {
-    type IntegrationApi = {
-      integrations?: {
-        list?: {
-          query: () => Promise<
-            readonly { id: string; addonId: string; name: string; enabled: boolean }[]
-          >
-        }
-        getSettings?: { query: (input: { id: string }) => Promise<Record<string, unknown>> }
-      }
-    }
-    const api = this.ctx.api as IntegrationApi
-    if (!api.integrations?.list?.query || !api.integrations.getSettings?.query) {
-      return
-    }
+    const api = this.ctx.api.integrations
+    if (!api?.list?.query) return
     try {
-      const all = await api.integrations.list.query()
+      const all = await api.list.query()
       const haIntegrations = all.filter((i) => i.addonId === this.ctx.id)
       const survivingIntegrationIds = new Set(haIntegrations.map((i) => i.id))
 
-      // ── Link: tag each integration's referenced broker ─────────────
-      // Builds the in-memory registry index AND collects the
-      // integration→brokerId pairs used to persist the FK below.
-      const integrationsWithBrokerId: { id: string; brokerId: string | undefined }[] = []
+      // ── Link: an integration belongs to the instance record that names it (`integrationId`).
       for (const integration of haIntegrations) {
-        const settings = await api.integrations.getSettings.query({ id: integration.id })
-        const brokerId = typeof settings['brokerId'] === 'string' ? settings['brokerId'] : null
-        if (!brokerId) continue
-        this.noteInstanceCalendars(brokerId, settings['calendarIds'])
-        const matching = this.activeBrokers.find((b) => b.id === brokerId)
+        const matching = this.activeBrokers.find((b) => b.integrationId === integration.id)
         if (!matching) {
-          this.ctx.logger.warn('integration→broker: linked broker not found', {
-            meta: { integrationId: integration.id, brokerId },
+          this.ctx.logger.warn('integration→broker: no instance record names this integration', {
+            meta: { integrationId: integration.id },
           })
           continue
         }
-        this.requireRegistry().linkIntegration(integration.id, brokerId)
-        integrationsWithBrokerId.push({ id: integration.id, brokerId })
-      }
-
-      // ── Persist FK: stamp integrationId onto each linked broker so the
-      //    cleanup-on-delete pass (below + future runs) can collect
-      //    orphans. Wizard-created brokers start with no FK; without this
-      //    they would leak forever. Re-reads this.activeBrokers after the
-      //    write so the cleanup pass sees the freshly-stamped FKs.
-      const linkedBrokers = linkBrokersToIntegrations(this.activeBrokers, integrationsWithBrokerId)
-      const fkChanged = linkedBrokers.some((b, i) => b !== this.activeBrokers[i])
-      if (fkChanged) {
-        await this.persistBrokerEntries(linkedBrokers)
+        this.requireRegistry().linkIntegration(integration.id, matching.id)
       }
 
       // ── Orphans are REPORTED, never removed ────────────────────────
@@ -571,54 +535,6 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
               labelKey: 'provider-homeassistant:globalSettings.s_ha-broker.brokerHelp.label',
               content:
                 'This integration links to a Home Assistant broker managed under Connectivity → Brokers.',
-            },
-          ],
-        },
-      ],
-    })
-  }
-
-  /**
-   * The calendars of ONE Home Assistant instance (D985): picked on its integration, offered from
-   * that broker's own `calendar.*` entities.
-   */
-  protected override async integrationSettingsSchema(
-    instance: IntegrationInstanceRef,
-  ): Promise<ConfigUISchema | null> {
-    if (instance.integrationId === null || !this.registry) return null
-    let brokerId: unknown
-    try {
-      const settings = await this.ctx.api.integrations.getSettings.query({
-        id: instance.integrationId,
-      })
-      brokerId = settings['brokerId']
-    } catch (err) {
-      this.ctx.logger.warn('HA integration form: instance lookup failed — broker form shown', {
-        meta: { integrationId: instance.integrationId, error: errMsg(err) },
-      })
-      return null
-    }
-    if (typeof brokerId !== 'string') return null
-    const options = listHaCalendarCatalog(this.registry, brokerId)
-    return this.schema({
-      sections: [
-        {
-          id: 'ha-calendars-import',
-          title: 'Calendars to import',
-          titleKey: 'provider-homeassistant:globalSettings.s_ha-calendars-import.title',
-          columns: 1,
-          fields: [
-            {
-              type: 'multiselect' as const,
-              key: 'calendarIds',
-              label: 'Calendars',
-              labelKey:
-                'provider-homeassistant:globalSettings.s_ha-calendars-import.calendarIds.label',
-              options,
-              description:
-                'Discovered from this Home Assistant instance. Select at least one to import; leave empty to import none.',
-              descriptionKey:
-                'provider-homeassistant:globalSettings.s_ha-calendars-import.calendarIds.description',
             },
           ],
         },

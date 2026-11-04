@@ -1,5 +1,8 @@
 /** An in-memory `integrations` api: the slice `haInstanceSettingsPortsOver` calls. */
-import { HA_PROVIDER_ADDON_ID, type HaIntegrationsApi } from '../ha-instance-settings.js'
+import {
+  HA_PROVIDER_ADDON_ID,
+  type HaIntegrationsApi,
+} from '../migrations/legacy-integration-rows.js'
 
 export interface FakeIntegrations {
   readonly api: HaIntegrationsApi

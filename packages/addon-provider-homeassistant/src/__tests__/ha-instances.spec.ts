@@ -24,6 +24,7 @@ async function setup() {
   let connected = true
   const instances = buildHaInstances(world.records, {
     mintId: () => 'ha_008',
+    calendarOptions: () => [{ value: 'calendar.home', label: 'Home' }],
     infoOf: (id) =>
       id === 'ha_007'
         ? {

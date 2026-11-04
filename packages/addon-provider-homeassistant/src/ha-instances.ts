@@ -11,7 +11,7 @@ import {
   REDACTED_SECRET,
 } from '@camstack/types'
 import { type HaBrokerBody, haBrokersEntryKind } from './broker-record-kinds.js'
-import { haBrokerSettingsSchema } from './ha-broker-settings-schema.js'
+import { haBrokerSettingsSchema, haCalendarsSection } from './ha-broker-settings-schema.js'
 import type { HaBrokerInfo } from './ha-integration-manager.js'
 
 export const HA_INSTANCE_KIND = 'home-assistant'
@@ -20,6 +20,10 @@ export interface HaInstancesDeps {
   readonly mintId: () => string
   /** The runtime's view of one broker; null while it has no manager. */
   readonly infoOf: (id: string) => HaBrokerInfo | null
+  /** The `calendar.*` entities one broker offers; empty while it is not connected. */
+  readonly calendarOptions: (
+    id: string,
+  ) => readonly { readonly value: string; readonly label: string }[]
   /** Bring the runtime in line with the records after a change. */
   readonly onChanged: (id: string) => Promise<void>
   /** Throwaway handshake with the typed settings. */
@@ -58,7 +62,12 @@ export function buildHaInstances(
       kinds: [{ id: HA_INSTANCE_KIND, label: 'Home Assistant' }],
       allowRestoreId: true,
     },
-    formSchema: () => haBrokerSettingsSchema,
+    formSchema: (id) => {
+      const options = id === null ? [] : deps.calendarOptions(id)
+      return options.length === 0
+        ? haBrokerSettingsSchema
+        : { sections: [...haBrokerSettingsSchema.sections, haCalendarsSection(options)] }
+    },
     initialBody: (name): HaBrokerBody => ({ name, authKind: 'long-lived' }),
     mintId: () => deps.mintId(),
     kindOf: () => HA_INSTANCE_KIND,

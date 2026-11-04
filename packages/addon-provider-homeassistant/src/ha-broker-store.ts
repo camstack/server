@@ -19,6 +19,7 @@ function rowToEntry(id: string, data: HaBrokerBody): HaBrokerEntry | null {
     supervisorToken: data.supervisorToken,
     integrationId: data.integrationId,
     enabled: data.enabled,
+    calendarIds: data.calendarIds,
   })
   return parsed.success ? parsed.data : null
 }

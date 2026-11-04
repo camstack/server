@@ -1,6 +1,13 @@
 import type { AddonMigration, FlattenRowPorts } from '@camstack/types'
 import { FLATTEN_BROKER_RECORDS_ID, flattenBrokerRecords } from './flatten-broker-records.js'
 import {
+  CLEAR_INSTANCE_SETTINGS_ROWS_ID,
+  INSTANCE_SETTINGS_TO_RECORD_ID,
+  type InstanceSettingsPorts,
+  clearInstanceSettingsRows,
+  moveInstanceSettingsToRecords,
+} from './instance-settings-to-record.js'
+import {
   type CalendarIdsPorts,
   copyCalendarIdsToIntegrations,
   planDropSharedCalendarIds,
@@ -8,9 +15,13 @@ import {
 
 export type { CalendarIdsPorts } from './calendar-ids-to-integration.js'
 export { FLATTEN_BROKER_RECORDS_ID } from './flatten-broker-records.js'
+export {
+  CLEAR_INSTANCE_SETTINGS_ROWS_ID,
+  INSTANCE_SETTINGS_TO_RECORD_ID,
+} from './instance-settings-to-record.js'
 
 /** What the catalogue's migrations read and write through. */
-export type HaMigrationPorts = CalendarIdsPorts & FlattenRowPorts
+export type HaMigrationPorts = CalendarIdsPorts & FlattenRowPorts & InstanceSettingsPorts
 
 /** The `provider-homeassistant` catalogue (D987): offered to the engine when the addon initialises. */
 export const ADDON_MIGRATIONS: readonly AddonMigration<HaMigrationPorts>[] = [
@@ -63,5 +74,42 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<HaMigrationPorts>[] = [
       fixtureMark: 'a non-secret field stored beside the auth of a broker record',
     },
     procedure: flattenBrokerRecords,
+  },
+  {
+    meta: {
+      id: INSTANCE_SETTINGS_TO_RECORD_ID,
+      owner: 'provider-homeassistant',
+      level: 'addon-state',
+      seq: 4,
+      dependsOn: [
+        'provider-homeassistant/2026-11-03-drop-shared-calendar-ids',
+        FLATTEN_BROKER_RECORDS_ID,
+      ],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'block-owner',
+      bodyKind: 'procedure',
+      description:
+        'Merge the calendars and the integration link of every Home Assistant integration into the instance record its broker link names; a field the record holds wins; read back',
+      fixtureMark: 'a calendar id stored in the integration settings of an instance',
+    },
+    procedure: moveInstanceSettingsToRecords,
+  },
+  {
+    meta: {
+      id: CLEAR_INSTANCE_SETTINGS_ROWS_ID,
+      owner: 'provider-homeassistant',
+      level: 'addon-state',
+      seq: 5,
+      dependsOn: [INSTANCE_SETTINGS_TO_RECORD_ID],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'block-owner',
+      bodyKind: 'procedure',
+      description:
+        'Clear the calendars from the integration settings of every Home Assistant instance whose record reads back the same set',
+      fixtureMark: 'a calendar set the instance record holds differently',
+    },
+    procedure: clearInstanceSettingsRows,
   },
 ]

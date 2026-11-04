@@ -24,7 +24,7 @@ import {
   recordingLogger,
   type Harness,
 } from '../../../../../system/src/builtins/sqlite-storage/__tests__/support/owned-files-harness.js'
-import type { HaInstanceRow } from '../../../ha-instance-settings.js'
+import type { HaInstanceRow } from '../../../migrations/legacy-integration-rows.js'
 import { defaultLinks, type HaExportLinksBody, haExportLinksKind } from '../legacy-links-kind.js'
 import { DROP_MOVED_LINKS_ID, LINKS_TO_RECORD_ID } from '../index.js'
 import { ADDON_MIGRATIONS, type HaExportMigrationPorts } from '../index.js'

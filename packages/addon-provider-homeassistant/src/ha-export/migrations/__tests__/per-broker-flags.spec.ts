@@ -5,7 +5,7 @@
 import { describe, expect, it } from 'vitest'
 import { fakeIntegrations } from '../../../__tests__/fake-integrations.js'
 import { settingsFixture } from '../../../__tests__/settings-fixture.js'
-import { haInstanceSettingsPortsOver } from '../../../ha-instance-settings.js'
+import { haInstanceSettingsPortsOver } from '../../../migrations/legacy-integration-rows.js'
 import { ADDON_MIGRATIONS } from '../index.js'
 
 const COPY = 'homeassistant-export/2026-11-03-per-broker-flags-to-integration'

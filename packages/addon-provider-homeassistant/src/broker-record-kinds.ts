@@ -18,6 +18,7 @@ export const HaBrokerBodySchema = entryBody({
   supervisorToken: HaBrokerEntrySchema.shape.supervisorToken,
   integrationId: HaBrokerEntrySchema.shape.integrationId,
   enabled: HaBrokerEntrySchema.shape.enabled,
+  calendarIds: HaBrokerEntrySchema.shape.calendarIds,
 })
 export type HaBrokerBody = z.infer<typeof HaBrokerBodySchema>
 

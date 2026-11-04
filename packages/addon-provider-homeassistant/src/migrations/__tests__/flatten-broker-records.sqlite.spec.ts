@@ -174,6 +174,9 @@ async function boot() {
       ...over,
       listInstances: async () => [],
       patchInstanceSettings: async () => false,
+      clearInstanceSettingsKeys: async () => false,
+      readInstance: async () => null,
+      patchInstance: async () => false,
       readStored: async () => ({ kind: 'absent' }),
     })
   return { keychain, handle, ports, host, bind }

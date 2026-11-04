@@ -4,7 +4,10 @@
  * retired `ha-export-links` kind and the `ha-export-targets` kind the links move into.
  */
 import { RevConflictError, type RecordKindHandle } from '@camstack/types'
-import { type HaIntegrationsApi, haInstanceSettingsPortsOver } from '../../ha-instance-settings.js'
+import {
+  type HaIntegrationsApi,
+  haInstanceSettingsPortsOver,
+} from '../../migrations/legacy-integration-rows.js'
 import { type HaExportTargetBody, readAllTargets } from '../target-records.js'
 import { type HaExportLinksBody, readAllLinks } from './legacy-links-kind.js'
 import type { HaExportMigrationPorts } from './index.js'

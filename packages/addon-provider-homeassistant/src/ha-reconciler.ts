@@ -24,29 +24,3 @@ export function computeBrokerCleanup(
     .filter((b) => b.integrationId !== undefined && !survivingIntegrationIds.has(b.integrationId))
     .map((b) => b.id)
 }
-
-/**
- * Stamp the integrationId FK onto each broker that an integration references
- * via its settings.brokerId, so cleanup-on-delete can later collect orphans.
- * Pure: returns a NEW array; does not mutate. Only the entries that change are
- * replaced (immutably) — unchanged entries keep their original object reference.
- */
-export function linkBrokersToIntegrations<TBroker extends { id: string; integrationId?: string }>(
-  brokers: readonly TBroker[],
-  integrations: readonly { id: string; brokerId: string | undefined }[],
-): TBroker[] {
-  const brokerToIntegration = new Map<string, string>()
-  for (const integration of integrations) {
-    if (integration.brokerId !== undefined) {
-      brokerToIntegration.set(integration.brokerId, integration.id)
-    }
-  }
-
-  return brokers.map((b) => {
-    const integrationId = brokerToIntegration.get(b.id)
-    if (integrationId !== undefined && b.integrationId !== integrationId) {
-      return { ...b, integrationId }
-    }
-    return b
-  })
-}

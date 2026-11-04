@@ -18,7 +18,10 @@
  * Both are idempotent.
  */
 import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@camstack/types'
-import type { HaInstanceRow, HaInstanceSettingsPorts } from '../../ha-instance-settings.js'
+import type {
+  HaInstanceRow,
+  HaInstanceSettingsPorts,
+} from '../../migrations/legacy-integration-rows.js'
 import { HA_EXPORT_ADDON_ID, ADDON_SETTINGS_TABLE } from './drop-public-base-url.js'
 import { HA_MEDIA_ROLES } from '../media-url.js'
 

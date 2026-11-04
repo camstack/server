@@ -7,8 +7,8 @@ import type { FlattenRowPorts } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { fakeIntegrations } from '../../__tests__/fake-integrations.js'
 import { settingsFixture } from '../../__tests__/settings-fixture.js'
-import { haInstanceSettingsPortsOver } from '../../ha-instance-settings.js'
-import { ADDON_MIGRATIONS, FLATTEN_BROKER_RECORDS_ID } from '../index.js'
+import { haInstanceSettingsPortsOver } from '../legacy-integration-rows.js'
+import { ADDON_MIGRATIONS } from '../index.js'
 
 const NO_FLATTEN_PORTS: FlattenRowPorts = {
   listNested: async () => [],
@@ -29,10 +29,12 @@ function start(
   const world = fakeIntegrations(instances)
   const f = settingsFixture(
     'provider-homeassistant',
-    ADDON_MIGRATIONS.filter((m) => m.meta.id !== FLATTEN_BROKER_RECORDS_ID),
+    ADDON_MIGRATIONS.filter((m) => m.meta.id === COPY || m.meta.id === DROP),
     (readStored) => ({
       readStored,
       ...haInstanceSettingsPortsOver(world.api),
+      readInstance: async () => null,
+      patchInstance: async () => false,
       ...NO_FLATTEN_PORTS,
     }),
     stored,
