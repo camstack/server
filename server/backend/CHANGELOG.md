@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The migration ledger no longer shows an applied migration of a not-yet-loaded addon as skipped-newer, and no longer raises a false 'Database is newer' alert; the 'Runners degraded' alert resolves itself once the failed runners are running again
+
 ## [1.2.762] - 2026-11-04
 
 ### Changed
 
 - Integrations page, wizard discovery word and test button follow what an addon's integration-instances provider describes (role, discovery)
-- The migration ledger no longer shows an applied migration of a not-yet-loaded addon as skipped-newer, and no longer raises a false 'Database is newer' alert; the 'Runners degraded' alert resolves itself once the failed runners are running again
 
 ## [1.2.761] - 2026-11-04
 

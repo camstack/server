@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Home Assistant broker migrations no longer read as 'skipped-newer' (and no false 'Database is newer' alert) after the addon boots
+
 ## [1.2.656] - 2026-11-04
 
 ### Changed
 
 - Home Assistant export: each instance's export switch, image-link address and exported devices now live in one record per instance; a migration moves the old settings and integration values, and the export no longer reads them
-- Home Assistant broker migrations no longer read as 'skipped-newer' (and no false 'Database is newer' alert) after the addon boots
 
 ## [1.2.655] - 2026-11-04
 
