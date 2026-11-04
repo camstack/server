@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Reading the settings of a legacy integration row no instance record answers for now returns the row instead of an empty object.
+
 ## [1.2.765] - 2026-11-04
 
 ### Changed

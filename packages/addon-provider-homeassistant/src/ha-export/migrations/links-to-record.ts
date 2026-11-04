@@ -93,6 +93,14 @@ function legacyLinks(
   warn: (message: string) => void,
 ): readonly LegacyLinks[] {
   const membership = membershipOf(stored[MEMBERSHIP_KEY])
+  // A stored integration always carries at least its `brokerId`: a row that reads as empty is a
+  // row the hub could not answer, and its flags would be defaulted to off from nothing.
+  const unreadable = rows.find((row) => Object.keys(row.settings).length === 0)
+  if (unreadable !== undefined && membership.size > 0) {
+    throw new Error(
+      `the settings of integration ${unreadable.integrationId} read as empty; the export switch cannot be carried from an unreadable source, nothing was written`,
+    )
+  }
   const integrations = integrationByBroker(rows, warn)
   const brokers = new Set<string>(membership.keys())
   for (const key of Object.keys(stored)) {

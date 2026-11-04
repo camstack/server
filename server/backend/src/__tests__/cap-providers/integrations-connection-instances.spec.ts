@@ -225,6 +225,19 @@ describe('integrations over an integration-instances provider', () => {
     expect(h.registry.getIntegrationSettings).not.toHaveBeenCalled()
   })
 
+  it('getSettings of a legacy row no instance record answers for reads the row itself, not {}', async () => {
+    const h = harness()
+    await h.provider.create({ addonId: ADDON_ID, name: 'Loki' })
+    h.instances.getInstance.mockResolvedValueOnce(null as never)
+    h.registry.getIntegrationSettings.mockResolvedValueOnce({
+      brokerId: 'ha_001',
+      exportTo: true,
+      mediaRole: 'publicEndpoint',
+    })
+    const settings = await h.provider.getSettings({ id: 'int_0001', callerAddonId: ADDON_ID })
+    expect(settings).toMatchObject({ brokerId: 'ha_001', exportTo: true })
+  })
+
   it('create inserts the registry row, then the record with the typed settings, no restart', async () => {
     const h = harness()
     const created = await h.provider.create({

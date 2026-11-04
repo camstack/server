@@ -1730,7 +1730,9 @@ export function buildIntegrationsProvider(
       const instances = getInstancesProvider(ar, integration.addonId)
       if (instances !== null) {
         const instance = await instances.getInstance({ id: input.id })
-        return instance?.formValues ?? {}
+        if (instance !== null && instance !== undefined) return instance.formValues
+        // No instance record carries this id: it is a legacy row the addon has not moved yet
+        // (its migration reads it here), so answer the row, never an empty object (D1007).
       }
       // The integration's own addon (the caller the transport stamped) reads
       // its secrets resolved; anyone else — the admin form — reads "set"

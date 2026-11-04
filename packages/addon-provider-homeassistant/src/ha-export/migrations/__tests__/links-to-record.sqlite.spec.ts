@@ -97,6 +97,8 @@ function storedValues(): Record<string, unknown> {
 interface Options {
   readonly readFails?: boolean
   readonly integrationsFail?: boolean
+  /** What the hub answers for the integrations instead of {@link INSTANCES}. */
+  readonly instances?: readonly HaInstanceRow[]
   /** The read-back of `ha_001` answers with these devices instead of what was written. */
   readBackDevices?: readonly string[]
   /** Records already there. */
@@ -152,7 +154,7 @@ async function boot(options: Options = {}) {
     },
     listInstances: async () => {
       if (options.integrationsFail === true) throw new Error('integrations unreadable')
-      return INSTANCES
+      return options.instances ?? INSTANCES
     },
     warn: (message) => {
       warnings.push(message)
@@ -251,6 +253,35 @@ describe('homeassistant-export links migration on real SQLite', () => {
     const before = rows()
     const w = await boot({ integrationsFail: true })
     expect(await w.execute(LINKS_TO_RECORD_ID)).toMatchObject({ kind: 'failed' })
+    expect(await w.record('ha_001')).toBeNull()
+    expect(rows()).toEqual(before)
+  })
+
+  it('flags that live only on the integration row are carried, the key being long dropped', async () => {
+    seed({ membership: { ha_001: ['101'] } })
+    const w = await boot({
+      instances: [
+        {
+          integrationId: 'int_0019',
+          brokerId: 'ha_001',
+          settings: { brokerId: 'ha_001', exportTo: true, mediaRole: 'publicEndpoint' },
+        },
+      ],
+    })
+    expect(await w.execute(LINKS_TO_RECORD_ID)).toMatchObject({ result: { outcome: 'done' } })
+    expect(await w.record('ha_001')).toMatchObject({ exportTo: true, mediaRole: 'publicEndpoint' })
+  })
+
+  it('an integration row that reads as empty refuses the move, naming it, and writes no switch', async () => {
+    seed({ membership: { ha_001: ['101'] } })
+    const before = rows()
+    const w = await boot({
+      instances: [{ integrationId: 'int_0019', brokerId: null, settings: {} }],
+    })
+    expect(await w.execute(LINKS_TO_RECORD_ID)).toMatchObject({
+      kind: 'failed',
+      error: expect.stringContaining('int_0019') as string,
+    })
     expect(await w.record('ha_001')).toBeNull()
     expect(rows()).toEqual(before)
   })
