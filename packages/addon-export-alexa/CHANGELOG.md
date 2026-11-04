@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The devices and actions exposed to Alexa are kept in their own record instead of the addon settings; they move across on the first start and the addon refuses to start if they cannot be moved.
+
 ## [1.2.182] - 2026-11-04
 
 ### Changed
 
 - Export calls name the export instance they address; an unknown instance is refused with export-instance-unknown
-- The devices and actions exposed to Alexa are kept in their own record instead of the addon settings; they move across on the first start and the addon refuses to start if they cannot be moved.
 
 ## [1.2.181] - 2026-11-03
 

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The integration states its role (devices, services or both) to the Integrations page
+
 ## [0.2.37] - 2026-11-04
 
 ### Changed
