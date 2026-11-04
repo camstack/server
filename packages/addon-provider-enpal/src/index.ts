@@ -4,7 +4,6 @@ export {
   connectionFromSettings,
   enpalConnectionSchema,
   ENPAL_SYSTEM,
-  readConnection,
   sameConnection,
   settingsToConnection,
 } from './config.js'

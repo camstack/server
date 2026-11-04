@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { isSecretMarkerLike, type ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@camstack/types'
 
 /**
  * Operator-supplied connection of ONE Enpal integration (`mode: account`, broker-less): the
@@ -25,9 +25,8 @@ function cleanHost(value: unknown): unknown {
     ?.trim()
 }
 
-/** A token the keychain could not serve reads as a marker object, not a string. */
-function markerToEmpty(value: unknown): unknown {
-  if (isSecretMarkerLike(value)) return ''
+/** A blank or absent token reads as the empty string. */
+function nullToEmpty(value: unknown): unknown {
   return value === null || value === undefined ? '' : value
 }
 
@@ -63,7 +62,7 @@ export const enpalConnectionSchema = z.object({
     .default('solar')
     .describe('InfluxDB bucket'),
   token: z
-    .preprocess(markerToEmpty, z.string().default(''))
+    .preprocess(nullToEmpty, z.string().default(''))
     .describe('InfluxDB access token (issued by Enpal support)')
     .meta({ secret: true }),
   pagePort: z
@@ -99,24 +98,17 @@ export function settingsToConnection(settings: unknown): EnpalConnection {
   return enpalConnectionSchema.parse(toRecord(settings))
 }
 
-/** Same, but also reports a token the keychain could not serve (a marker, not a string). */
-export function readConnection(settings: unknown): EnpalConnectionRead {
-  const raw = toRecord(settings)
-  return {
-    connection: enpalConnectionSchema.parse(raw),
-    tokenLocked: isSecretMarkerLike(raw['token']),
-  }
-}
-
-/** Parse an integration's settings into a connection, or null while its host is missing. */
-export function connectionFromSettings(settings: unknown): EnpalConnectionRead | null {
-  const raw = toRecord(settings)
-  const parsed = enpalConnectionSchema.safeParse(raw)
+/**
+ * Parse an integration's record body into a connection, or null while its host is missing.
+ * `tokenLocked` says the keychain could not serve the token (the record read came back without it).
+ */
+export function connectionFromSettings(
+  settings: unknown,
+  tokenLocked: boolean,
+): EnpalConnectionRead | null {
+  const parsed = enpalConnectionSchema.safeParse(toRecord(settings))
   if (!parsed.success) return null
-  return {
-    connection: parsed.data,
-    tokenLocked: isSecretMarkerLike(raw['token']),
-  }
+  return { connection: parsed.data, tokenLocked }
 }
 
 /** True when two connections would poll the box the same way. */

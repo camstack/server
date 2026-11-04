@@ -172,7 +172,7 @@ Singleton or collection providers, addressed without a device.
 | `failure-contribution` | 1 | — | — | — | ✓ | `pipeline-runner` `pipeline-analytics` `provider-hikvision` `provider-reolink` |
 | `fan-presets` | 4 | — | — | — | — | `core-blocks` |
 | `filesystem-browse` | 3 | — | — | — | ✓ | `filesystem-storage` |
-| `integration-instances` | 9 | — | — | — | — | `cloudflare-tunnel` `cloudflare-turn` `export-alexa` `export-hap` `google-services` `import-alexa` `matter-broker` `mqtt-broker` `provider-amcrest` `provider-gree` `provider-hikvision` `provider-homeassistant` `provider-rtsp` `provider-tuya` `provider-unifi` `provider-unraid` `smtp-nodemailer` `static-turn` `training-modal` `loki-logging` |
+| `integration-instances` | 9 | — | — | — | — | `cloudflare-tunnel` `cloudflare-turn` `export-alexa` `export-hap` `google-services` `import-alexa` `matter-broker` `mqtt-broker` `provider-amcrest` `provider-enpal` `provider-gree` `provider-hikvision` `provider-homeassistant` `provider-rtsp` `provider-tuya` `provider-unifi` `provider-unraid` `smtp-nodemailer` `static-turn` `training-modal` `loki-logging` |
 | `integrations` | 11 | — | — | — | — | — |
 | `keychain` | 7 | — | — | — | ✓ | `keychain` |
 | `keychain-admin` | 13 | — | — | — | — | `keychain` |

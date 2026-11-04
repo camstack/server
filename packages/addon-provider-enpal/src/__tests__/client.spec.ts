@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { readConnection, settingsToConnection, type EnpalConnection } from '../config.js'
+import { connectionFromSettings, settingsToConnection, type EnpalConnection } from '../config.js'
 import { EnpalError, readEnpalSnapshot, type FetchLike } from '../enpal-client.js'
 
 const csv = readFileSync(join(__dirname, 'fixtures', 'influx-last-values.csv'), 'utf8')
@@ -169,10 +169,10 @@ describe('readEnpalSnapshot - failures are typed, never zeros', () => {
     expect(fake.calls).toHaveLength(0)
   })
 
-  it('a keychain marker is not a token: token-missing, nothing sent', async () => {
+  it('a token the keychain cannot serve is not a token: token-missing, nothing sent', async () => {
     const fake = box({})
-    const marker = { $secret: 'secret://x/y/z', v: 1 }
-    const read = readConnection({ host: '192.0.2.10', source: 'influx', token: marker })
+    const read = connectionFromSettings({ host: '192.0.2.10', source: 'influx' }, true)
+    if (read === null) throw new Error('settings should parse')
     expect(read.tokenLocked).toBe(true)
     expect(
       await kindOf(

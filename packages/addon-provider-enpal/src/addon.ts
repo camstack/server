@@ -1,4 +1,5 @@
 import {
+  type AddonInitResult,
   BaseDeviceProvider,
   type ConfigUISchema,
   type CreateDeviceSpec,
@@ -9,20 +10,35 @@ import {
   EventCategory,
   type IDevice,
   type IDeviceAdoptionProvider,
-  type ProviderRegistration,
+  integrationInstancesCapability,
+  integrationRowsMigration,
+  integrationRowsPortsOver,
+  type RecordIntegrationInstances,
   type SystemEvent,
   collectOwnerIntegrationIds,
+  defaultIntegrationApiOver,
+  defineAddonMigrations,
 } from '@camstack/types'
-import { buildConnectionFormSchema, connectionFromSettings, ENPAL_SYSTEM } from './config.js'
+import { ENPAL_SYSTEM } from './config.js'
 import { EnpalEquipmentDevice } from './devices/enpal-equipment-device.js'
 import { buildEnpalAdoptionProvider } from './enpal-adoption-provider.js'
 import { EnpalClientRegistry } from './enpal-client-registry.js'
+import {
+  buildEnpalInstances,
+  enpalConnectionOf,
+  enpalConnectionsEntryKind,
+  type EnpalConnectionBody,
+  enpalRecordKinds,
+} from './enpal-instances.js'
 import { EnpalReconciler, type IntegrationLifecycleKind } from './enpal-reconciler.js'
 import { cascadeRemoveDevicesForIntegration } from './enpal-integration-device-cascade.js'
 import { EnpalGatewayDevice } from './devices/enpal-gateway-device.js'
 import { ENPAL_BOX_ID } from './enpal-discovery.js'
 import { setIntegrationDevicesOnline } from './enpal-integration-offline.js'
 import { enpalConnections } from './enpal-resolver.js'
+
+/** The date of the integration-rows-to-record migration (D1007). */
+const ENPAL_MIGRATIONS_DATE = '2026-11-05'
 
 /**
  * Enpal solar box provider, `mode: account` and broker-less. An integration is one box: its
@@ -45,26 +61,58 @@ export class EnpalProviderAddon extends BaseDeviceProvider {
 
   private integrationReconciler: EnpalReconciler | null = null
   private clients: EnpalClientRegistry | null = null
+  private instances: RecordIntegrationInstances<EnpalConnectionBody> | null = null
 
   constructor() {
     super({})
   }
 
-  protected override async onInitialize(): Promise<ProviderRegistration[]> {
+  protected override async onInitialize(): Promise<AddonInitResult> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
+    const records = this.ctx.records
+    if (records === undefined)
+      throw new Error('provider-enpal: ctx.records is required (hub-only addon)')
+    await records.declare(enpalRecordKinds)
+    await this.runMigrations(
+      defineAddonMigrations(
+        [
+          integrationRowsMigration({
+            addonId: this.addonId,
+            date: ENPAL_MIGRATIONS_DATE,
+            kind: enpalConnectionsEntryKind,
+            fixtureMark: 'host',
+          }),
+        ],
+        integrationRowsPortsOver({
+          api: defaultIntegrationApiOver(this.ctx.api),
+          records,
+          kind: enpalConnectionsEntryKind,
+          warn: (message) => this.ctx.logger.warn(message),
+        }),
+      ),
+    )
+    this.instances = buildEnpalInstances(records, {
+      onChanged: () => this.reconcileIntegrations(),
+    })
     this.clients = new EnpalClientRegistry(this.ctx.logger, {
       onConnected: (integrationId) => this.setIntegrationDevicesOnline(integrationId, true),
       onDisconnected: (integrationId) => this.setIntegrationDevicesOnline(integrationId, false),
     })
     await this.reconcileIntegrations()
     this.subscribeIntegrationLifecycle()
-    return [
-      ...regs,
-      {
-        capability: deviceAdoptionCapability,
-        provider: this.buildAdoptionProvider(),
-      },
-    ]
+    return {
+      providers: [
+        ...regs,
+        {
+          capability: deviceAdoptionCapability,
+          provider: this.buildAdoptionProvider(),
+        },
+        {
+          capability: integrationInstancesCapability,
+          provider: this.requireInstances().toProvider(),
+        },
+      ],
+    }
   }
 
   protected override async onShutdown(): Promise<void> {
@@ -80,6 +128,11 @@ export class EnpalProviderAddon extends BaseDeviceProvider {
     this.integrationReconciler = null
     enpalConnections.clear()
     await super.onShutdown()
+  }
+
+  private requireInstances(): RecordIntegrationInstances<EnpalConnectionBody> {
+    if (!this.instances) throw new Error('Enpal provider not initialised')
+    return this.instances
   }
 
   private requireClients(): EnpalClientRegistry {
@@ -113,9 +166,7 @@ export class EnpalProviderAddon extends BaseDeviceProvider {
       listIntegrations: () => this.ctx.api.integrations.list.query(),
       applySettings: async (integration) => {
         const reg = this.requireClients()
-        const read = connectionFromSettings(
-          await this.ctx.api.integrations.getSettings.query({ id: integration.id }),
-        )
+        const read = await enpalConnectionOf(this.requireInstances(), integration.id)
         if (read === null) return false
         await reg.upsert(integration.id, integration.name, read.connection, read.tokenLocked)
         return true
@@ -238,11 +289,6 @@ export class EnpalProviderAddon extends BaseDeviceProvider {
       },
       logger: this.ctx.logger,
     })
-  }
-
-  /** The integration's settings form; the submitted values are stored per integration. */
-  protected override globalSettingsSchema(): ConfigUISchema {
-    return buildConnectionFormSchema()
   }
 
   override async supportsManualCreation(): Promise<boolean> {
