@@ -4,7 +4,6 @@
     "provider-ecowitt",
     "provider-esphome",
     "provider-homematic",
-    "provider-reolink",
     "provider-vesync"
   ]
 }

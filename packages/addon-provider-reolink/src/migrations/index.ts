@@ -4,6 +4,10 @@ import { planDropWebhookIntakeSettings } from './drop-webhook-intake-settings.js
 import { type EmailPushMigrationPorts, moveEmailPushToMailbox } from './email-push-to-mailbox.js'
 
 export {
+  REOLINK_ROWS_TO_RECORD_ID,
+  REOLINK_ROWS_TO_RECORD_MIGRATION,
+} from './integration-rows-to-record.js'
+export {
   type EmailPushMigrationPorts,
   type LegacyMailboxSettings,
   type PendingMailbox,

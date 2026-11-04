@@ -1,12 +1,18 @@
 /**
  * D985, one form per instance: an NVR / Home Hub integration is configured by its connection
- * only, the default integration keeps the addon's own sections. The create wizard has no id yet
- * and always sets up a NEW instance.
+ * only, the default integration shows no hub form. The create wizard has no id yet and always sets
+ * up a NEW instance. The form is the `instanceFormSchema` of the instances provider.
  */
-import type { ConfigField, ConfigUISchema, IntegrationInstanceRef } from '@camstack/types'
-import { describe, expect, it, vi } from 'vitest'
+import type {
+  ConfigField,
+  ConfigUISchema,
+  IIntegrationInstancesProvider,
+  RecordIntegrationInstances,
+} from '@camstack/types'
+import { describe, expect, it } from 'vitest'
 import { ReolinkProviderAddon } from '../addon.js'
 import { isHubIntegration } from '../hub-connection.js'
+import { type ReolinkConnectionBody, reolinkInstancesProvider } from '../reolink-instances.js'
 
 interface FakeIntegration {
   readonly originStableId?: string
@@ -24,42 +30,46 @@ function keysOf(schema: ConfigUISchema | null): string[] {
   return out
 }
 
-function schemaFor(
-  instance: IntegrationInstanceRef,
-  integration: FakeIntegration | 'unreachable' = { info: {}, settings: {} },
-): Promise<ConfigUISchema | null> {
-  const lookup = async <T>(pick: (i: FakeIntegration) => T): Promise<T> => {
-    if (integration === 'unreachable') throw new Error('hub unreachable')
-    return pick(integration)
-  }
-  const subject = {
-    ctx: {
-      logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn(), debug: vi.fn() },
-      api: {
-        integrations: {
-          get: {
-            query: () =>
-              lookup((i) => ({
-                originStableId: i.originStableId,
-                info: i.info,
-              })),
-          },
-          getSettings: { query: () => lookup((i) => i.settings) },
-        },
-      },
-    },
-  }
-  return ReolinkProviderAddon.prototype['integrationSettingsSchema'].call(subject, instance)
+const refused = async (): Promise<never> => {
+  throw new Error('the fake serves the form only')
 }
 
-const EDIT = (integrationId: string): IntegrationInstanceRef => ({
-  integrationId,
-  mode: 'account',
-})
+const stubProvider: IIntegrationInstancesProvider = {
+  describe: refused,
+  instanceFormSchema: refused,
+  listInstances: refused,
+  getInstance: refused,
+  createInstance: refused,
+  updateInstance: refused,
+  setInstanceEnabled: refused,
+  deleteInstance: refused,
+  testInstance: refused,
+}
+
+function schemaFor(
+  id: string | null,
+  integration: FakeIntegration | 'unreachable' = { info: {}, settings: {} },
+): Promise<ConfigUISchema> {
+  const instances: Pick<
+    RecordIntegrationInstances<ReolinkConnectionBody>,
+    'toProvider' | 'getResolved'
+  > = {
+    toProvider: () => stubProvider,
+    getResolved: async () =>
+      integration === 'unreachable' ? null : { name: 'x', ...integration.settings },
+  }
+  const provider = reolinkInstancesProvider(instances, {
+    registryEvidenceOf: async () =>
+      integration === 'unreachable'
+        ? null
+        : { originStableId: integration.originStableId, info: integration.info },
+  })
+  return provider.instanceFormSchema({ id })
+}
 
 describe('Reolink per-instance integration form', () => {
   it('the create wizard (no id yet) shows the hub connection and nothing else', async () => {
-    const keys = keysOf(await schemaFor({ integrationId: null, mode: 'account' }))
+    const keys = keysOf(await schemaFor(null))
     expect(keys).toEqual(
       expect.arrayContaining(['host', 'port', 'rtspPort', 'username', 'password']),
     )
@@ -73,16 +83,16 @@ describe('Reolink per-instance integration form', () => {
       { originStableId: 'reolink-hub-uid-abc', info: {}, settings: {} },
       { info: {}, settings: { host: '10.0.0.5' } },
     ] satisfies FakeIntegration[]) {
-      expect(keysOf(await schemaFor(EDIT('int-1'), hub))).toContain('rtspPort')
+      expect(keysOf(await schemaFor('int-1', hub))).toContain('rtspPort')
     }
   })
 
-  it('the default integration keeps the full schema (null = the global one)', async () => {
-    expect(await schemaFor(EDIT('int-default'))).toBeNull()
+  it('the default integration shows no hub form', async () => {
+    expect(keysOf(await schemaFor('int-default'))).toEqual([])
   })
 
-  it('an unreadable instance falls back to the full schema instead of a half form', async () => {
-    expect(await schemaFor(EDIT('int-1'), 'unreachable')).toBeNull()
+  it('an unreadable instance shows the hub form instead of a half form', async () => {
+    expect(keysOf(await schemaFor('int-1', 'unreachable'))).toContain('rtspPort')
   })
 
   it('the global schema no longer carries the hub connection', () => {

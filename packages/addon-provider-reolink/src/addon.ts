@@ -18,10 +18,9 @@ import type {
   FieldProbeResult,
   IDevice,
   IDeviceAdoptionProvider,
-  IntegrationInstanceRef,
   IScopedLogger,
   LogChannelsProviderHandle,
-  ProviderRegistration,
+  RecordIntegrationInstances,
   SavedDevice,
   SystemEvent,
 } from '@camstack/types'
@@ -30,14 +29,15 @@ import {
   clipEventLabelDepsFromApi,
   createLogChannelsProvider,
   DeviceType,
-  claimDevicesPortsOver,
   defaultIntegrationApiOver,
+  defaultIntegrationPortsOver,
   defineAddonMigrations,
   deviceAdoptionCapability,
   deviceRemovalHookCapability,
   EventCategory,
   errMsg,
   failureContributionCapability,
+  integrationInstancesCapability,
   isSecretMarker,
   logChannelsCapability,
   memoizePinnedFfmpeg,
@@ -74,7 +74,6 @@ import {
 import { buildCreationFormSchema, buildDiscoveryParamsFormSchema } from './creation-schema.js'
 import { createBrokerPort, EmailPushBridge } from './email-push-bridge.js'
 import { createEmailPushRemovalHook } from './email-push-removal-hook.js'
-import { buildHubInstanceSchema, isHubIntegration } from './hub-connection.js'
 import { type LegacyWebhookIntake, startLegacyWebhookIntake } from './legacy-webhook-intake.js'
 import {
   type EmailPushMigrationPorts,
@@ -83,7 +82,16 @@ import {
   PendingMailboxSchema,
   REOLINK_CLAIM_MIGRATION,
   REOLINK_MIGRATIONS,
+  REOLINK_ROWS_TO_RECORD_MIGRATION,
 } from './migrations/index.js'
+import {
+  buildReolinkInstances,
+  type ReolinkConnectionBody,
+  reolinkConnectionsEntryKind,
+  reolinkInstancesProvider,
+  readHubConnections,
+  reolinkRecordKinds,
+} from './reolink-instances.js'
 import { buildReolinkAdoptionProvider } from './reolink-adoption-provider.js'
 import {
   mapReolinkDiscoveryToCandidates,
@@ -355,6 +363,7 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
   private readonly autodetectCache = new AutodetectCache()
 
   private hubManager: ReolinkHubManager | null = null
+  private instances: RecordIntegrationInstances<ReolinkConnectionBody> | null = null
   /**
    * The camera mailbox bridge (`email-push-bridge.ts`, D999): battery cameras mail motion to a
    * mailbox of the `smtp-inbound` broker, the bridge turns each message into the camera's
@@ -664,32 +673,19 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
 
   /**
    * Make the hub sessions match the live integration list: one per enabled integration with a
-   * host. Idempotent; runs at boot, after a migration and on every lifecycle event. When any
-   * integration's settings cannot be read the whole pass is skipped — an unreadable list must
+   * host. Idempotent; runs at boot, after a migration, after an instance change and on every
+   * lifecycle event. When any integration's record cannot be read the whole pass is skipped — an unreadable list must
    * never close a healthy session.
    */
   private async reconcileIntegrations(): Promise<void> {
     const manager = this.hubManager
-    if (manager === null) return
+    const instances = this.instances
+    if (manager === null || instances === null) return
     try {
       const all = await this.ctx.api.integrations.list.query()
       const mine = all.filter((i) => i.addonId === this.ctx.id && i.enabled)
-      const withSettings: {
-        id: string
-        name: string
-        settings: Record<string, unknown>
-      }[] = []
-      for (const integration of mine) {
-        const settings = await this.ctx.api.integrations.getSettings.query({
-          id: integration.id,
-        })
-        withSettings.push({
-          id: integration.id,
-          name: integration.name,
-          settings,
-        })
-      }
-      await manager.reconcile(withSettings)
+      const withConnection = await readHubConnections(instances, mine)
+      await manager.reconcile(withConnection)
     } catch (err) {
       this.ctx.logger.warn('Reolink integration reconcile failed — sessions left as they were', {
         meta: { error: errMsg(err) },
@@ -888,45 +884,11 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     }
   }
 
-  /**
-   * Per-instance form (D985): an NVR / Home Hub integration shows its connection only; the
-   * default integration keeps the full schema (`null`). A create wizard has no id yet and is
-   * always setting up a NEW instance — the default one already exists — so it gets the hub form.
-   */
-  protected override async integrationSettingsSchema(
-    instance: IntegrationInstanceRef,
-  ): Promise<ConfigUISchema | null> {
-    if (instance.integrationId === null) return buildHubInstanceSchema()
-    try {
-      const [integration, settings] = await Promise.all([
-        this.ctx.api.integrations.get.query({ id: instance.integrationId }),
-        this.ctx.api.integrations.getSettings.query({
-          id: instance.integrationId,
-        }),
-      ])
-      return isHubIntegration({
-        originStableId: integration.originStableId,
-        info: integration.info,
-        settings,
-      })
-        ? buildHubInstanceSchema()
-        : null
-    } catch (err) {
-      this.ctx.logger.warn('Reolink integration form: instance lookup failed — full schema shown', {
-        meta: { integrationId: instance.integrationId, error: errMsg(err) },
-      })
-      return null
-    }
-  }
+  // An integration's connection is its `connections` record (`reolink-instances.ts`): the
+  // instances provider is the only reader and writer, and `onConfigChanged` above only follows
+  // the addon-level clip refresh default.
 
-  // `updateGlobalSettings` intentionally NOT overridden: the base
-  // implementation persists the patch (same bare keys) and invokes
-  // `onConfigChanged()` — which rebinds the SMTP intake exactly like the
-  // old hand-written override did. There is no integration-specific writer
-  // either: integration-level settings are a SUBSET of these, so this one
-  // path is the only writer and the store key cannot diverge.
-
-  protected override async onInitialize(): Promise<ProviderRegistration[]> {
+  protected override async onInitialize(): Promise<AddonInitResult> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
 
     // Declare this addon's log channels to the cluster. Importing
@@ -1052,16 +1014,50 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     // settings aside (no mail addon needed, it never blocks this addon); the bridge creates the
     // mailbox with them when a provider is reachable, listens for what it receives and declares
     // the eligible cameras.
+    const records = this.ctx.records
+    if (records === undefined) {
+      throw new Error('provider-reolink: ctx.records is required (hub-only addon)')
+    }
+    await records.declare(reolinkRecordKinds)
+    // The integrations' own record door and the migration ports over the hub API. The rows move
+    // BEFORE the instances provider registers (below): while it is registered the hub answers
+    // from the record, not from the rows.
+    const integrationPorts = defaultIntegrationPortsOver({
+      api: defaultIntegrationApiOver(this.ctx.api),
+      records,
+      kind: reolinkConnectionsEntryKind,
+      info: (message) => this.ctx.logger.info(message),
+      warn: (message) => this.ctx.logger.warn(message),
+      warnDevice: (message, deviceId) => this.ctx.logger.warn(message, { tags: { deviceId } }),
+    })
+    const registryEvidenceOf = async (
+      id: string,
+    ): Promise<{
+      originStableId?: string | undefined
+      info: Record<string, unknown>
+    } | null> => {
+      try {
+        const integration = await this.ctx.api.integrations.get.query({ id })
+        return {
+          originStableId: integration.originStableId,
+          info: { ...integration.info },
+        }
+      } catch (err) {
+        this.ctx.logger.warn('Reolink integration form: instance lookup failed — hub form shown', {
+          meta: { integrationId: id, error: errMsg(err) },
+        })
+        return null
+      }
+    }
+    const instances = buildReolinkInstances(records, {
+      onChanged: () => this.reconcileIntegrations(),
+      registryEvidenceOf,
+    })
+    this.instances = instances
     await this.runMigrations([
       ...defineAddonMigrations(REOLINK_MIGRATIONS, this.migrationPorts()),
-      ...defineAddonMigrations(
-        [REOLINK_CLAIM_MIGRATION],
-        claimDevicesPortsOver({
-          api: defaultIntegrationApiOver(this.ctx.api),
-          info: (message) => this.ctx.logger.info(message),
-          warnDevice: (message, deviceId) => this.ctx.logger.warn(message, { tags: { deviceId } }),
-        }),
-      ),
+      ...defineAddonMigrations([REOLINK_ROWS_TO_RECORD_MIGRATION], integrationPorts),
+      ...defineAddonMigrations([REOLINK_CLAIM_MIGRATION], integrationPorts),
     ])
     this.wireEmailBridge()
 
@@ -1139,8 +1135,12 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
         resync: () => this.ensureEmailBridge().sync(),
       }),
     })
+    regs.push({
+      capability: integrationInstancesCapability,
+      provider: reolinkInstancesProvider(instances, { registryEvidenceOf }),
+    })
 
-    return regs
+    return { providers: regs }
   }
 
   /** What the catalogue's migration reads and writes (D987). */

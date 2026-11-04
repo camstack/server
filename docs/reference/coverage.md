@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**234 units · 7985 source files · 221 units claimed by at least one document (7941 files).**
+**234 units · 7987 source files · 221 units claimed by at least one document (7943 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -39,8 +39,8 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/types/src/composition` | 65 | `automations` | `architecture/device-model.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, +15 more | 2026-10-26 |
 | `hf` | 62 | `cloud-training` | `architecture/cloud-training.md` | 2026-10-14 |
 | `packages/addon-admin-ui/src/lib` | 62 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `ui/admin-patterns.md`, +22 more, 1 ADR | 2026-11-02 |
+| `packages/addon-provider-reolink` | 62 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0847-a-battery-camera-refreshes-everything-it-owns-once-per-window-by-an-awake-moment-or-one-wake.md`, +21 more, 2 ADRs | 2026-10-26 |
 | `packages/addon-pipeline/src/detection-pipeline` | 61 | `detection-execution` | `architecture/data-planes.md` _(covers)_, `architecture/detection-execution.md`, `architecture/inference-devices.md`, +50 more, 5 ADRs | 2026-10-24 |
-| `packages/addon-provider-reolink` | 61 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0847-a-battery-camera-refreshes-everything-it-owns-once-per-window-by-an-awake-moment-or-one-wake.md`, +21 more, 2 ADRs | 2026-10-26 |
 | `packages/addon-import-alexa` | 59 | `ecosystem-exports` | `addons/addon-import-alexa.md` _(covers)_, `decisions/adr-0947-echo-speech-uses-a-long-lived-alexapy-worker.md`, `decisions/adr-0949-echo-speech-signs-in-as-an-import-broker.md`, +4 more | — |
 | `packages/addon-training/src/page` | 59 | `cloud-training` | `architecture/cloud-training.md`, `decisions/adr-0790-a-machine-proposed-retrain-box-is-a-draft-until-the-operator-confirms-it.md`, `decisions/adr-0849-retrain-annotations-keep-their-origin.md`, +2 more, 1 ADR | 2026-10-14 |
 | `packages/addon-pipeline/src/pipeline-runner` | 58 | `pipeline-orchestration`, `zones` | `architecture/data-planes.md`, `architecture/detection-execution.md` _(covers)_, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +42 more, 14 ADRs | 2026-10-24 |
@@ -171,6 +171,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-export-alexa/src/migrations` | 4 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +1 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-export-alexa/src/vision` | 4 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0779-alexa-object-detection-and-event-history-ship-as-a-switchable-experiment-on-the-camera-endpoint.md`, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, +2 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-post-analysis/src/durable` | 4 | `post-analysis` | `decisions/adr-0642-a-consumable-is-judged-at-each-rules-threshold-and-tanks-notify.md`, `design/2026-08-13-durable-value-tracking-and-runtime-state.md`, `design/durable-store-convergence.md`, 1 ADR | 2026-10-03 |
+| `packages/addon-provider-reolink/src/migrations` | 4 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/system/src/migrations` | 4 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md` | — |
 | `packages/types/src/logging` | 4 | `logging` | `decisions/adr-0248-channels-are-declared-by-addons-values-stay-in-one-document.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0995-a-debug-watch-is-a-hub-held-window-never-a-stored-value.md` _(covers)_ | — |
 | `packages/types/src/running-state` | 4 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0933-a-device-reports-whether-it-is-running-natively-or-from-one-assigned-field.md` | — |
@@ -181,7 +182,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-pipeline-orchestrator/src/migrations` | 3 | — | 1 ADR | — |
 | `packages/addon-pipeline/src/durable` | 3 | `storage` | `decisions/adr-0185-a-forked-addons-settings-row-holds-config-not-a-workload.md`, `design/2026-08-29-recorder-heap-what-is-retained.md` _(covers)_, `design/2026-08-29-recorder-index-at-scale.md` _(covers)_ | 2026-08-30 |
 | `packages/addon-provider-homeassistant/src/migrations` | 3 | `device-providers` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_ | 2026-10-26 |
-| `packages/addon-provider-reolink/src/migrations` | 3 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/addon-training` | 3 | `cloud-training` | — | — |
 | `packages/cli/src/http` | 3 | `tooling` | — | — |
 | `packages/system` | 3 | `kernel` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0417-a-diagnostic-more-than-one-bundle-needs-lives-in-system.md` | — |

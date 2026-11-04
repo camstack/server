@@ -1,8 +1,8 @@
 import type { ReolinkBaichuanApi } from '@apocaliss92/nodelink-js'
 import type { IScopedLogger } from '@camstack/types'
 import {
+  type HubConnectionRead,
   type ReolinkHubConnection,
-  readHubConnection,
   sameHubConnection,
 } from './hub-connection.js'
 import {
@@ -13,11 +13,11 @@ import {
   type ReolinkHubSessions,
 } from './reolink-hub-session.js'
 
-/** One enabled integration of this addon, as the manager reads it. */
-export interface HubIntegrationSettings {
+/** One enabled integration of this addon, with what its connection record says about its hub. */
+export interface HubIntegrationConnection {
   readonly id: string
   readonly name: string
-  readonly settings: Readonly<Record<string, unknown>>
+  readonly read: HubConnectionRead
 }
 
 export interface ReolinkHubManagerDeps<TApi extends HubApiPort> {
@@ -54,11 +54,11 @@ export class ReolinkHubManager<TApi extends HubApiPort = ReolinkBaichuanApi> {
     return this.#sessions.get(integrationId) ?? null
   }
 
-  async reconcile(integrations: readonly HubIntegrationSettings[]): Promise<void> {
+  async reconcile(integrations: readonly HubIntegrationConnection[]): Promise<void> {
     const { logger } = this.#deps
     const wanted = new Set<string>()
     for (const integration of integrations) {
-      const read = readHubConnection(integration.settings)
+      const { read } = integration
       if (read.kind === 'no-host') continue // the default integration: standalone cameras only
       wanted.add(integration.id)
       if (read.kind !== 'ok') {

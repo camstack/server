@@ -4,7 +4,8 @@
  */
 import type { IScopedLogger } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
-import { ReolinkHubManager } from '../reolink-hub-manager.js'
+import { readHubConnection } from '../hub-connection.js'
+import { type HubIntegrationConnection, ReolinkHubManager } from '../reolink-hub-manager.js'
 import { type HubApiPort, ReolinkHubSession, ReolinkHubSessions } from '../reolink-hub-session.js'
 
 function logger(): IScopedLogger {
@@ -56,22 +57,23 @@ function setup() {
   return { manager, registry, connect }
 }
 
-const NVR = {
-  id: 'int-1',
-  name: 'Hub',
-  settings: { host: '10.0.0.5', password: 'pw' },
+/** One integration as the addon hands it over: what its connection record says about its hub. */
+function integration(
+  id: string,
+  name: string,
+  settings: Readonly<Record<string, unknown>>,
+): HubIntegrationConnection {
+  return { id, name, read: readHubConnection(settings) }
 }
+
+const NVR = integration('int-1', 'Hub', { host: '10.0.0.5', password: 'pw' })
 
 describe('ReolinkHubManager', () => {
   it('starts one session per NVR integration and publishes it to the registry', async () => {
     const { manager, registry } = setup()
     await manager.reconcile([
       NVR,
-      {
-        id: 'int-2',
-        name: 'Other',
-        settings: { host: '10.0.0.6', password: 'x' },
-      },
+      integration('int-2', 'Other', { host: '10.0.0.6', password: 'x' }),
     ])
     expect(manager.list()).toEqual(['int-1', 'int-2'])
     expect(registry.get('int-1')).not.toBeNull()
@@ -82,22 +84,17 @@ describe('ReolinkHubManager', () => {
 
   it('gives the default integration (no host) no session', async () => {
     const { manager } = setup()
-    await manager.reconcile([{ id: 'default', name: 'Reolink', settings: {} }])
+    await manager.reconcile([integration('default', 'Reolink', {})])
     expect(manager.list()).toEqual([])
   })
 
   it('does not start a session on a locked or missing password, and leaves a running one alone', async () => {
     const { manager } = setup()
     await manager.reconcile([NVR])
-    await manager.reconcile([
-      {
-        ...NVR,
-        settings: { host: '10.0.0.5', password: { $secret: 'r', v: 1 } },
-      },
-    ])
+    await manager.reconcile([{ ...NVR, read: { kind: 'password-locked' } }])
     expect(manager.get('int-1')?.connection.password).toBe('pw')
     const fresh = setup()
-    await fresh.manager.reconcile([{ ...NVR, settings: { host: '10.0.0.5' } }])
+    await fresh.manager.reconcile([integration('int-1', 'Hub', { host: '10.0.0.5' })])
     expect(fresh.manager.list()).toEqual([])
     await manager.shutdown()
   })
@@ -106,7 +103,9 @@ describe('ReolinkHubManager', () => {
     const { manager } = setup()
     await manager.reconcile([NVR])
     const before = manager.get('int-1')
-    await manager.reconcile([{ ...NVR, settings: { host: '10.0.0.5', password: 'rotated' } }])
+    await manager.reconcile([
+      integration('int-1', 'Hub', { host: '10.0.0.5', password: 'rotated' }),
+    ])
     expect(manager.get('int-1')).toBe(before)
     expect(manager.get('int-1')?.connection.password).toBe('rotated')
     await manager.shutdown()

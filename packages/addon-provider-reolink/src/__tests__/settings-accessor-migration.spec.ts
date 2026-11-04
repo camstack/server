@@ -68,6 +68,8 @@ function makeCtx(seed: Record<string, unknown> = {}): FakeHarness {
     eventBus: bus,
     addonConfig: {},
     kernel: { localNodeId: 'hub' },
+    // The records door of a hub-only addon: the integration kind is declared, nothing is stored.
+    records: { declare: async () => undefined, kind: () => ({}), owner: 'provider-reolink' },
     api: {
       migrations: {
         declareOwner: { mutate: vi.fn(async () => ({ bootId: 'b', snapshot: 'none', steps: [] })) },

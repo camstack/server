@@ -36,6 +36,7 @@
     "addons": [
       {
         "id": "provider-reolink",
+        "integrationRole": "devices",
         "category": "providers",
         "name": "Reolink",
         "version": "0.1.0",
@@ -53,6 +54,9 @@
         "capabilities": [
           {
             "name": "device-provider"
+          },
+          {
+            "name": "integration-instances"
           },
           {
             "name": "stream-params"

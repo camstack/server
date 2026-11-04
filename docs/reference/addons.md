@@ -83,7 +83,7 @@ this column exists to stop.
 | `provider-onvif` | `@camstack/addon-provider-onvif` | providers | own runner | `hub-only` | — | unique | `device-provider` `integration-instances` |
 | `provider-petkit` | `@camstack/addon-provider-petkit` | providers | own runner | `hub-only` | — | multiple | `connection-test` `consumables` `device-adoption` `device-provider` `integration-instances` `pet-feeder` |
 | `provider-rademacher` | `@camstack/addon-provider-rademacher` | providers | own runner | `hub-only` | — | multiple | `connection-test` `device-adoption` `device-provider` `integration-instances` |
-| `provider-reolink` | `@camstack/addon-provider-reolink` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `device-removal-hook` `failure-contribution` `log-channels` `motion-zones` `privacy-mask` `recording-onboard` `stream-params` `stream-signals` `videoclips` |
+| `provider-reolink` | `@camstack/addon-provider-reolink` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `device-removal-hook` `failure-contribution` `integration-instances` `log-channels` `motion-zones` `privacy-mask` `recording-onboard` `stream-params` `stream-signals` `videoclips` |
 | `provider-rtsp` | `@camstack/addon-provider-rtsp` | providers | own runner | `hub-only` | — | unique | `connection-test` `device-provider` `integration-instances` |
 | `provider-tuya` | `@camstack/addon-provider-tuya` | providers | own runner | `hub-only` | — | multiple | `connection-test` `device-adoption` `device-provider` `integration-instances` |
 | `provider-unifi` | `@camstack/addon-provider-unifi` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |

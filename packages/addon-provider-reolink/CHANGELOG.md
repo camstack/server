@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Cameras that named no integration are claimed to the default Reolink integration
+- Reolink integrations keep their connection (host, ports, username, transport, password) as one typed record each, moved from the old settings by a boot migration; each integration keeps its own values and password
 
 ## [1.2.221] - 2026-11-03
 
