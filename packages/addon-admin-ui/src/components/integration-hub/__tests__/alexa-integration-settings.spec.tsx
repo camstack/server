@@ -18,19 +18,19 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { hydrateSchema, type ConfigUISchemaWithValues } from '@camstack/types'
 // A spec may mount a sibling's real code: the point is THIS addon's schema.
-import { buildAlexaSettingsSections } from '../../../../../addon-export-alexa/src/settings-schema'
-
-const DEFAULT_SKILL_MODE = 'public'
+import { ALEXA_SKILL_DEFAULT_BODY } from '../../../../../addon-export-alexa/src/skill-records'
+import { buildAlexaInstanceSections } from '../../../../../addon-export-alexa/src/settings-schema'
 
 function alexaForm(stored: Record<string, unknown>): ConfigUISchemaWithValues {
   return hydrateSchema(
     {
-      sections: buildAlexaSettingsSections({
+      sections: buildAlexaInstanceSections({
+        defaults: ALEXA_SKILL_DEFAULT_BODY,
+        instanceId: 'export-alexa',
+        legacy: true,
         linkedAccounts: [],
         tokens: [],
         now: 0,
-        skillMode:
-          typeof stored['skillMode'] === 'string' ? stored['skillMode'] : DEFAULT_SKILL_MODE,
       }),
     },
     stored,
@@ -155,7 +155,7 @@ describe.each(SURFACES)('the Alexa settings on $name', ({ node }) => {
   it('draws no empty section frame: public mode has no Custom-skill ingress token at all', async () => {
     const { container } = renderTree(node())
     await screen.findByText('Account link')
-    expect(screen.queryByText('Custom-skill ingress token')).toBeNull()
+    expect(screen.queryByText('Ingress token')).toBeNull()
     expect(
       container.querySelector('[data-settings-section="export-alexa-custom-security-token"]'),
     ).toBeNull()
@@ -167,6 +167,6 @@ describe.each(SURFACES)('the Alexa settings on $name', ({ node }) => {
   it('a hub already in custom mode shows the section on load', async () => {
     served = alexaForm({ skillMode: 'custom' })
     renderTree(node())
-    expect(await screen.findByText('Custom-skill ingress token')).toBeTruthy()
+    expect(await screen.findByText('Ingress token')).toBeTruthy()
   })
 })
