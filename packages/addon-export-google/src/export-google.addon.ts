@@ -50,9 +50,17 @@ import {
   type IOauthIntegrationProvider,
   oauthIntegrationCapability,
   type ProviderRegistration,
+  type RecordKindHandle,
+  RevConflictError,
 } from '@camstack/types'
 
 import { ActionSceneExports } from './action-scenes.js'
+import {
+  EMPTY_GOOGLE_EXPORTS,
+  GOOGLE_INSTANCE_ID,
+  type GoogleExportsBody,
+  googleExportsKind,
+} from './export-records.js'
 import { createApiDeviceGateway, type DeviceGateway } from './device-gateway.js'
 import type { VerifiedGoogleCaller } from './fulfillment-router.js'
 import { SUPPORTED_DEVICE_KINDS } from './google-home/device-model.js'
@@ -73,6 +81,32 @@ const ADDON_ID = 'export-google'
 
 export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
   private gateway: DeviceGateway | null = null
+  /**
+   * The `google-exports` record: what Google syncs. Loaded once at boot after the migrations;
+   * this addon is its only writer, so the in-memory copy is the synchronous read the fulfillment
+   * path needs. No settings key backs it.
+   */
+  private exportsRow: GoogleExportsBody = EMPTY_GOOGLE_EXPORTS
+  private exportsHandle: RecordKindHandle<GoogleExportsBody> | null = null
+
+  private get exposedDevices(): readonly ExposedDeviceEntry[] {
+    return this.exportsRow.devices
+  }
+
+  /** Persist a change of the exposure: the record first, the in-memory copy after it landed. */
+  private async writeExports(
+    patch: Partial<Pick<GoogleExportsBody, 'devices' | 'actions'>>,
+  ): Promise<void> {
+    const handle = this.exportsHandle
+    if (handle === null) throw new Error('export-google: the exposure record is not open')
+    const next: GoogleExportsBody = {
+      name: this.exportsRow.name,
+      devices: patch.devices ?? this.exportsRow.devices,
+      actions: patch.actions ?? this.exportsRow.actions,
+    }
+    await handle.put({ id: GOOGLE_INSTANCE_ID, data: next })
+    this.exportsRow = next
+  }
 
   constructor() {
     super({ ...DEFAULT_SETTINGS })
@@ -85,11 +119,35 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
     })
     this.gateway = gateway
 
+    const records = this.ctx.records
+    if (records === undefined) {
+      throw new Error('export-google needs ctx.records — check execution.placement (hub-only)')
+    }
+    await records.declare({ 'google-exports': googleExportsKind })
+    const exportsHandle = records.kind(googleExportsKind)
+    this.exportsHandle = exportsHandle
     await this.runMigrations(
       defineAddonMigrations(ADDON_MIGRATIONS, {
         readStored: async () => this.resolveGlobalStore(),
+        warn: (message) => {
+          this.ctx.logger.warn(message, { tags: { topic: 'export-google', phase: 'migration' } })
+        },
+        putExports: async (body) => {
+          if ((await exportsHandle.get(GOOGLE_INSTANCE_ID)) !== null) return 'exists'
+          try {
+            await exportsHandle.put({ id: GOOGLE_INSTANCE_ID, data: body }, { ifRev: 0 })
+          } catch (err: unknown) {
+            if (err instanceof RevConflictError) return 'exists'
+            throw err
+          }
+          return 'created'
+        },
+        readExports: async () => (await exportsHandle.get(GOOGLE_INSTANCE_ID))?.data ?? null,
       }),
     )
+    // A failed read of the exposure record stops the boot: an empty membership would tell
+    // Google on its next SYNC that every device is gone.
+    this.exportsRow = (await exportsHandle.get(GOOGLE_INSTANCE_ID))?.data ?? EMPTY_GOOGLE_EXPORTS
 
     const actionScenes = new ActionSceneExports(
       {
@@ -99,9 +157,9 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
           const users = await this.ctx.api.userManagement.listUsers.query()
           return users.some((u) => u.id === userId && u.isAdmin)
         },
-        persist: (entries) => this.updateGlobalSettings({ exposedActions: [...entries] }),
+        persist: (entries) => this.writeExports({ actions: [...entries] }),
       },
-      this.config.exposedActions ?? [],
+      this.exportsRow.actions,
     )
     // The operator may have deleted an action while this addon was down.
     void actionScenes.reconcile().catch((err: unknown) => {
@@ -117,7 +175,7 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
         ownInstance(deviceExportStatusInstanceOf(input))
         return {
           linkState: this.config.linkedAccounts.length > 0 ? 'linked' : 'unlinked',
-          exposedDeviceCount: this.config.exposed.length,
+          exposedDeviceCount: this.exposedDevices.length,
           setup: await this.buildSetupBlock(),
         }
       },
@@ -135,7 +193,7 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
       },
       listExposedDevices: async ({ instanceId }) => {
         ownInstance(instanceId)
-        return this.config.exposed.map((entry) => ({
+        return this.exposedDevices.map((entry) => ({
           deviceId: String(entry.deviceId),
         }))
       },
@@ -152,7 +210,7 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
         ownInstance(instanceId)
         await actionScenes.reconcile()
         return [
-          ...this.config.exposed.map((entry) => ({
+          ...this.exposedDevices.map((entry) => ({
             entity: {
               kind: 'device' as const,
               deviceId: String(entry.deviceId),
@@ -192,7 +250,7 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
           // An in-process read of this addon's OWN store — no cap-router
           // round-trip for a value we already hold. Every OTHER reader of a
           // `device-export` exposed list pins by addonId.
-          listExposed: () => this.config.exposed.map((entry) => entry.deviceId),
+          listExposed: () => this.exposedDevices.map((entry) => entry.deviceId),
           actions: actionScenes,
         },
         query: {
@@ -222,7 +280,7 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
 
     this.ctx.logger.info('export-google: initialized', {
       meta: {
-        exposedCount: this.config.exposed.length,
+        exposedCount: this.exposedDevices.length,
         linkedAccounts: this.config.linkedAccounts.length,
         // Stated in the boot log because it is the single most surprising
         // property of this addon: state reaches Google by polling only.
@@ -247,7 +305,7 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
   // ── device-export ───────────────────────────────────────────────
 
   private isExposed(deviceId: number): boolean {
-    return this.config.exposed.some((entry) => entry.deviceId === deviceId)
+    return this.exposedDevices.some((entry) => entry.deviceId === deviceId)
   }
 
   private async exposeDevice(deviceIdRaw: string): Promise<void> {
@@ -276,9 +334,9 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
       )
     }
 
-    const next: ExposedDeviceEntry[] = this.config.exposed.filter((e) => e.deviceId !== deviceId)
+    const next: ExposedDeviceEntry[] = this.exposedDevices.filter((e) => e.deviceId !== deviceId)
     next.push({ deviceId, exposedAt: Date.now() })
-    await this.updateGlobalSettings({ exposed: next })
+    await this.writeExports({ devices: next })
 
     // Google learns about a new device only on its next SYNC, and the hub
     // cannot ASK for one: `requestSync` is a HomeGraph call and HomeGraph needs
@@ -293,9 +351,9 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
   private async unexposeDevice(deviceIdRaw: string): Promise<void> {
     const deviceId = Number.parseInt(deviceIdRaw, 10)
     if (!Number.isFinite(deviceId)) return
-    const next = this.config.exposed.filter((e) => e.deviceId !== deviceId)
-    if (next.length === this.config.exposed.length) return
-    await this.updateGlobalSettings({ exposed: next })
+    const next = this.exposedDevices.filter((e) => e.deviceId !== deviceId)
+    if (next.length === this.exposedDevices.length) return
+    await this.writeExports({ devices: next })
     this.ctx.logger.info('export-google: unexposed device — removed from Google on its next SYNC', {
       tags: { deviceId },
     })

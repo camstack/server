@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Export calls name the export instance they address; an unknown instance is refused with export-instance-unknown
+- The devices and actions exposed to Google Home are kept in their own record instead of the addon settings; they move across on the first start and the addon refuses to start if they cannot be moved.
 
 ## [0.1.123] - 2026-11-02
 

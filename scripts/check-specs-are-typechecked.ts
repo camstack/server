@@ -70,6 +70,8 @@ export const SPEC_CONFIG_OVERRIDES: Readonly<Record<string, Readonly<Record<stri
   // The MQTT broker and Alexa migration specs mount the same engine.
   '@camstack/addon-mqtt-broker': { rootDir: '../..' },
   '@camstack/addon-export-alexa': { rootDir: '../..' },
+  // The Google exposure-migration spec mounts the same engine.
+  '@camstack/addon-export-google': { rootDir: '../..' },
   // The Home Assistant flatten-migration spec mounts the real records and migration engines.
   '@camstack/addon-provider-homeassistant': { rootDir: '../..' },
   // The settings-migration specs mount the sibling package's real `addon-settings` ledger fixture.

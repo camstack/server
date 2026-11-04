@@ -15,7 +15,7 @@ import {
 import Database from 'better-sqlite3'
 import { describe, expect, it } from 'vitest'
 import { ADDON_SETTINGS_TABLE, GOOGLE_ADDON_ID } from '../drop-public-hub-url.js'
-import { ADDON_MIGRATIONS } from '../index.js'
+import { ADDON_MIGRATIONS, DROP_PUBLIC_HUB_URL_ID } from '../index.js'
 
 const NEIGHBOUR = 'keep-me'
 const MARK = [{ deviceId: 7, exposedAt: 1 }]
@@ -109,9 +109,16 @@ function fixture(initial: Record<string, unknown>) {
   const boot = () =>
     runAddonMigrations(
       host,
-      defineAddonMigrations(ADDON_MIGRATIONS, {
-        readStored: async () => read(),
-      }),
+      defineAddonMigrations(
+        ADDON_MIGRATIONS.filter((m) => m.meta.id === DROP_PUBLIC_HUB_URL_ID),
+        {
+          readStored: async () => read(),
+          // This fixture runs the URL migration only; the exposure ones have their own spec.
+          warn: () => undefined,
+          putExports: async () => 'exists',
+          readExports: async () => null,
+        },
+      ),
       silentLogger,
     )
   return { read, neighbours, boot }
@@ -122,14 +129,14 @@ describe('drop-public-hub-url', () => {
     const { read, neighbours, boot } = fixture({
       publicHubUrl: 'https://hub.example.org',
       detectedPublicHubUrl: 'https://hub.example.org',
-      exposed: MARK,
+      linkedAccounts: MARK,
     })
     const report = await boot()
     expect(report.failed).toEqual([])
-    expect(read()).toEqual({ exposed: MARK })
+    expect(read()).toEqual({ linkedAccounts: MARK })
     expect(neighbours()).toEqual([
       'other-addon.detectedPublicHubUrl',
-      'other-addon.exposed',
+      'other-addon.linkedAccounts',
       'other-addon.publicHubUrl',
     ])
   })
@@ -137,11 +144,11 @@ describe('drop-public-hub-url', () => {
   it('a second run is a no-op', async () => {
     const { read, boot } = fixture({
       publicHubUrl: 'https://hub.example.org',
-      exposed: MARK,
+      linkedAccounts: MARK,
     })
     await boot()
     const second = await boot()
     expect(second.failed).toEqual([])
-    expect(read()).toEqual({ exposed: MARK })
+    expect(read()).toEqual({ linkedAccounts: MARK })
   })
 })
