@@ -86,7 +86,7 @@ this column exists to stop.
 | `provider-reolink` | `@camstack/addon-provider-reolink` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `device-removal-hook` `failure-contribution` `log-channels` `motion-zones` `privacy-mask` `recording-onboard` `stream-params` `stream-signals` `videoclips` |
 | `provider-rtsp` | `@camstack/addon-provider-rtsp` | providers | own runner | `hub-only` | — | unique | `connection-test` `device-provider` `integration-instances` |
 | `provider-tuya` | `@camstack/addon-provider-tuya` | providers | own runner | `hub-only` | — | multiple | `connection-test` `device-adoption` `device-provider` `integration-instances` |
-| `provider-unifi` | `@camstack/addon-provider-unifi` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` |
+| `provider-unifi` | `@camstack/addon-provider-unifi` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
 | `provider-unraid` | `@camstack/addon-provider-unraid` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
 | `provider-velux` | `@camstack/addon-provider-velux` | providers | own runner | `hub-only` | — | multiple | `connection-test` `device-adoption` `device-provider` |
 | `provider-vesync` | `@camstack/addon-provider-vesync` | providers | own runner | `hub-only` | — | multiple | `device-provider` |

@@ -1,12 +1,11 @@
 import { z } from 'zod'
-import { isSecretMarkerLike, type ConfigUISchema } from '@camstack/types'
+import type { ConfigUISchema } from '@camstack/types'
 
 /** The device-registry `system` tag every UniFi device carries. */
 export const UNIFI_SYSTEM = 'unifi'
 
-/** A secret the keychain could not serve reads as a marker object, not a string. */
-function markerToEmpty(value: unknown): unknown {
-  if (isSecretMarkerLike(value)) return ''
+/** A blank or absent credential reads as the empty string. */
+function nullToEmpty(value: unknown): unknown {
   return value === null || value === undefined ? '' : value
 }
 
@@ -26,12 +25,12 @@ export const unifiConnectionSchema = z.object({
     )
     .describe('Controller HTTPS port (443 on UniFi OS, 8443 on legacy)'),
   apiKey: z
-    .preprocess(markerToEmpty, z.string().default(''))
+    .preprocess(nullToEmpty, z.string().default(''))
     .describe('UniFi OS API key (preferred). Leave blank to use username + password.')
     .meta({ secret: true }),
   username: z.string().default('').describe('Local admin username (when no API key)'),
   password: z
-    .preprocess(markerToEmpty, z.string().default(''))
+    .preprocess(nullToEmpty, z.string().default(''))
     .describe('Local admin password (when no API key)')
     .meta({ secret: true }),
   site: z.string().default('default').describe('Controller site name'),
@@ -166,14 +165,13 @@ export interface UnifiConnectionRead {
 }
 
 /** Parse an integration's settings into a connection, or null while its host is missing. */
-export function connectionFromSettings(settings: unknown): UnifiConnectionRead | null {
-  const raw = toRecord(settings)
-  const parsed = unifiConnectionSchema.safeParse(raw)
+export function connectionFromSettings(
+  settings: unknown,
+  credentialsLocked: boolean,
+): UnifiConnectionRead | null {
+  const parsed = unifiConnectionSchema.safeParse(toRecord(settings))
   if (!parsed.success) return null
-  return {
-    connection: parsed.data,
-    credentialsLocked: isSecretMarkerLike(raw['apiKey']) || isSecretMarkerLike(raw['password']),
-  }
+  return { connection: parsed.data, credentialsLocked }
 }
 
 /** True when two connections would poll the controller the same way. */

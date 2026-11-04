@@ -15,7 +15,6 @@
     "provider-petkit",
     "provider-rademacher",
     "provider-reolink",
-    "provider-unifi",
     "provider-velux",
     "provider-vesync",
     "provider-wyze"

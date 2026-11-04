@@ -12,7 +12,7 @@ import {
   type IDeviceRuntimeState,
   type IScopedLogger,
   type InitialDeviceMeta,
-  makeSecretMarker,
+  makeInMemoryRecords,
   secretTreeFromSchema,
 } from '@camstack/types'
 import { readFileSync } from 'node:fs'
@@ -25,6 +25,11 @@ import { UnifiGatewayDevice } from '../devices/unifi-gateway-device.js'
 import { UnifiInfraDevice } from '../devices/unifi-infra-device.js'
 import { buildUnifiAdoptionProvider } from '../unifi-adoption-provider.js'
 import { UnifiClientRegistry } from '../unifi-client-registry.js'
+import {
+  buildUnifiInstances,
+  unifiConnectionsEntryKind,
+  unifiRecordKinds,
+} from '../unifi-instances.js'
 import type {
   UnifiClientSnapshot,
   UnifiControllerClient,
@@ -90,9 +95,6 @@ class InspectableAddon extends UnifiProviderAddon {
   classes() {
     return this.deviceClasses
   }
-  schema() {
-    return this.globalSettingsSchema()
-  }
 }
 
 interface Created {
@@ -110,7 +112,7 @@ async function harness() {
     onDisconnected: () => undefined,
     onPolled: () => undefined,
   })
-  const read = connectionFromSettings({ host: 'ctl.local', apiKey: 'k' })
+  const read = connectionFromSettings({ host: 'ctl.local', apiKey: 'k' }, false)
   if (read === null) throw new Error('settings should parse')
   await registry.upsert(INT, 'Home UDM', read.connection, read.credentialsLocked)
 
@@ -190,8 +192,12 @@ describe('UniFi integration: the controller is a Gateway, a sibling of its devic
     expect(classes[DeviceType.Container]).toBe(UnifiInfraDevice)
   })
 
-  it('serves the connection form from the integration, both credentials keychain secrets', () => {
-    const schema = new InspectableAddon().schema()
+  it('serves the connection form from the instance, both credentials keychain secrets', async () => {
+    const mem = makeInMemoryRecords('provider-unifi')
+    await mem.records.declare(unifiRecordKinds)
+    const instances = buildUnifiInstances(mem.records, { onChanged: async () => undefined })
+    const schema = await instances.instanceFormSchema({ id: null })
+    expect(unifiConnectionsEntryKind.declaration.secretPaths).toEqual(['apiKey', 'password'])
     expect(schema).toEqual(buildConnectionFormSchema())
     const tree = secretTreeFromSchema(schema)
     expect(tree.get('apiKey')).toEqual({ kind: 'leaf' })
@@ -246,8 +252,7 @@ describe('UniFi integration: the controller is a Gateway, a sibling of its devic
 
 describe('UniFi integration: the credentials', () => {
   it('a credential the keychain cannot serve reads as locked, never as an empty one to connect with', async () => {
-    const marker = makeSecretMarker('secret://provider-unifi/global/password')
-    const read = connectionFromSettings({ host: 'ctl.local', username: 'admin', password: marker })
+    const read = connectionFromSettings({ host: 'ctl.local', username: 'admin' }, true)
     expect(read?.credentialsLocked).toBe(true)
     if (read === null) throw new Error('settings should parse')
 
@@ -283,7 +288,7 @@ describe('UniFi integration: the credentials', () => {
       onDisconnected: () => undefined,
       onPolled: () => undefined,
     })
-    const read = connectionFromSettings({ host: 'ctl.local', apiKey: 'sekrit-key-123' })
+    const read = connectionFromSettings({ host: 'ctl.local', apiKey: 'sekrit-key-123' }, false)
     if (read === null) throw new Error('settings should parse')
     await registry.upsert(INT, 'Home UDM', read.connection, read.credentialsLocked)
     expect(seen).toEqual(['sekrit-key-123'])

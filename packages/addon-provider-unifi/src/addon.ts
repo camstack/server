@@ -1,4 +1,5 @@
 import {
+  type AddonInitResult,
   BaseDeviceProvider,
   type ConfigUISchema,
   type CreateDeviceSpec,
@@ -9,11 +10,16 @@ import {
   EventCategory,
   type IDevice,
   type IDeviceAdoptionProvider,
-  type ProviderRegistration,
+  integrationInstancesCapability,
+  integrationRowsMigration,
+  integrationRowsPortsOver,
+  type RecordIntegrationInstances,
   type SystemEvent,
   collectOwnerIntegrationIds,
+  defaultIntegrationApiOver,
+  defineAddonMigrations,
 } from '@camstack/types'
-import { buildConnectionFormSchema, connectionFromSettings, UNIFI_SYSTEM } from './config.js'
+import { UNIFI_SYSTEM } from './config.js'
 import { UnifiFeatureDevice } from './devices/unifi-feature-device.js'
 import { UnifiGatewayDevice } from './devices/unifi-gateway-device.js'
 import { UnifiInfraDevice } from './devices/unifi-infra-device.js'
@@ -26,7 +32,17 @@ import { reconcileInfraFeatures } from './unifi-feature-reconcile.js'
 import { UnifiReconciler, type IntegrationLifecycleKind } from './unifi-reconciler.js'
 import { cascadeRemoveDevicesForIntegration } from './unifi-integration-device-cascade.js'
 import { setIntegrationDevicesOnline } from './unifi-integration-offline.js'
+import {
+  buildUnifiInstances,
+  unifiConnectionOf,
+  unifiConnectionsEntryKind,
+  type UnifiConnectionBody,
+  unifiRecordKinds,
+} from './unifi-instances.js'
 import { unifiControllers } from './unifi-node-resolver.js'
+
+/** The date of the integration-rows-to-record migration (D1007). */
+const UNIFI_MIGRATIONS_DATE = '2026-11-05'
 
 /**
  * UniFi Network device-provider addon, `mode: account` and broker-less. An integration is one
@@ -59,13 +75,39 @@ export class UnifiProviderAddon extends BaseDeviceProvider {
 
   private integrationReconciler: UnifiReconciler | null = null
   private clients: UnifiClientRegistry | null = null
+  private instances: RecordIntegrationInstances<UnifiConnectionBody> | null = null
 
   constructor() {
     super({})
   }
 
-  protected override async onInitialize(): Promise<ProviderRegistration[]> {
+  protected override async onInitialize(): Promise<AddonInitResult> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
+    const records = this.ctx.records
+    if (records === undefined)
+      throw new Error('provider-unifi: ctx.records is required (hub-only addon)')
+    await records.declare(unifiRecordKinds)
+    await this.runMigrations(
+      defineAddonMigrations(
+        [
+          integrationRowsMigration({
+            addonId: this.addonId,
+            date: UNIFI_MIGRATIONS_DATE,
+            kind: unifiConnectionsEntryKind,
+            fixtureMark: 'host',
+          }),
+        ],
+        integrationRowsPortsOver({
+          api: defaultIntegrationApiOver(this.ctx.api),
+          records,
+          kind: unifiConnectionsEntryKind,
+          warn: (message) => this.ctx.logger.warn(message),
+        }),
+      ),
+    )
+    this.instances = buildUnifiInstances(records, {
+      onChanged: () => this.reconcileIntegrations(),
+    })
     this.clients = new UnifiClientRegistry(this.ctx.logger, {
       onConnected: (integrationId) => this.setIntegrationDevicesOnline(integrationId, true),
       onDisconnected: (integrationId) => this.setIntegrationDevicesOnline(integrationId, false),
@@ -74,13 +116,19 @@ export class UnifiProviderAddon extends BaseDeviceProvider {
     })
     await this.reconcileIntegrations()
     this.subscribeIntegrationLifecycle()
-    return [
-      ...regs,
-      {
-        capability: deviceAdoptionCapability,
-        provider: this.buildAdoptionProvider(),
-      },
-    ]
+    return {
+      providers: [
+        ...regs,
+        {
+          capability: deviceAdoptionCapability,
+          provider: this.buildAdoptionProvider(),
+        },
+        {
+          capability: integrationInstancesCapability,
+          provider: this.requireInstances().toProvider(),
+        },
+      ],
+    }
   }
 
   protected override async onShutdown(): Promise<void> {
@@ -94,6 +142,11 @@ export class UnifiProviderAddon extends BaseDeviceProvider {
     this.integrationReconciler = null
     unifiControllers.clear()
     await super.onShutdown()
+  }
+
+  private requireInstances(): RecordIntegrationInstances<UnifiConnectionBody> {
+    if (!this.instances) throw new Error('UniFi provider not initialised')
+    return this.instances
   }
 
   private requireClients(): UnifiClientRegistry {
@@ -127,9 +180,7 @@ export class UnifiProviderAddon extends BaseDeviceProvider {
       listIntegrations: () => this.ctx.api.integrations.list.query(),
       applySettings: async (integration) => {
         const reg = this.requireClients()
-        const read = connectionFromSettings(
-          await this.ctx.api.integrations.getSettings.query({ id: integration.id }),
-        )
+        const read = await unifiConnectionOf(this.requireInstances(), integration.id)
         if (read === null) return false
         await reg.upsert(integration.id, integration.name, read.connection, read.credentialsLocked)
         return true
@@ -251,11 +302,6 @@ export class UnifiProviderAddon extends BaseDeviceProvider {
       },
       logger: this.ctx.logger,
     })
-  }
-
-  /** The integration's settings form; the submitted values are stored per integration. */
-  protected override globalSettingsSchema(): ConfigUISchema {
-    return buildConnectionFormSchema()
   }
 
   override async supportsDiscovery(): Promise<boolean> {
