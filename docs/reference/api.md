@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**203 capabilities · 1504 methods.**
+**203 capabilities · 1505 methods.**
 
 ## Method index
 
@@ -544,6 +544,7 @@
 | `integrations.delete` | mutation | admin | integrations |
 | `integrations.getSettings` | query | admin | integrations |
 | `integrations.setSettings` | mutation | admin | integrations |
+| `integrations.clearSettings` | mutation | admin | integrations |
 | `integrations.getAvailableTypes` | query | admin | integrations |
 | `integrations.testConnection` | mutation | admin | integrations |
 | `intercom.getStatus` | query | protected | intercom (auto) |
@@ -3001,6 +3002,7 @@
 | delete | `integrations.delete` | mutation | admin | `{ id: string }` | `DeleteIntegrationResultSchema` |
 | getSettings | `integrations.getSettings` | query | admin | `{ id: string }` | `Record<string, unknown>` |
 | setSettings | `integrations.setSettings` | mutation | admin | `{ id: string; settings: Record<string, unknown>; secretKeys?: string[]; skipRestart?: boolean }` | `{ success: boolean }` |
+| clearSettings | `integrations.clearSettings` | mutation | admin | `{ id: string }` | `{ rows: number; secrets: number }` |
 | getAvailableTypes | `integrations.getAvailableTypes` | query | admin | `void` | `AvailableIntegrationTypeSchema[]` |
 | testConnection | `integrations.testConnection` | mutation | admin | `{ addonId: string; settings: Record<string, unknown> }` | `TestConnectionResultSchema` |
 

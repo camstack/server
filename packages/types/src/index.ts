@@ -203,6 +203,7 @@ export * from './migrations/addon-migration.js'
 export * from './migrations/flatten-nested-records.js'
 export * from './migrations/integration-migration-ports.js'
 export * from './migrations/integration-rows-to-record.js'
+export * from './migrations/integration-rows-api-ports.js'
 export * from './training/index.js'
 export * from './retrain-review.js'
 export {

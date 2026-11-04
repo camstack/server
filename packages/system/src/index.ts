@@ -524,6 +524,7 @@ export type {
 
 // Integration & Device Registry
 export { IntegrationRegistry } from './builtins/sqlite-storage/integration-registry.js'
+export { clearIntegrationRows } from './builtins/sqlite-storage/integration-rows-ports.js'
 export type { IntegrationRecordStores } from './builtins/sqlite-storage/integration-registry.js'
 export {
   integrationRegistryRecordKinds,

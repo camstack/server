@@ -42,6 +42,7 @@ import {
   getLoggingGate,
   getProcessNodeMeshTransport,
   IntegrationRegistry,
+  clearIntegrationRows,
   type BrokerLike,
 } from '@camstack/server/system'
 import type {
@@ -1841,6 +1842,30 @@ export function buildIntegrationsProvider(
         meta: { phase: 'setSettings' },
       })
       return { success: true }
+    },
+    clearSettings: async (input) => {
+      const reg = requireIntegrationRegistry(ar)
+      const integration = await reg.getIntegration(input.id)
+      if (!integration) throw new Error(`Integration "${input.id}" not found`)
+      // Only the integration's own addon clears its rows, after it moved them (D1007).
+      const caller: unknown = Reflect.get(input, 'callerAddonId')
+      const isOwner =
+        typeof caller === 'string' &&
+        (caller === integration.addonId || ar.runnerIdFor(integration.addonId) === caller)
+      if (!isOwner) {
+        throw new Error(
+          `Integration "${input.id}" settings can be cleared only by its own addon (${integration.addonId})`,
+        )
+      }
+      const cleared = await clearIntegrationRows(
+        { registry: reg, secrets: ownerSecrets(ar, integration.addonId) },
+        input.id,
+      )
+      logger.info('legacy settings cleared', {
+        tags: { integrationId: input.id, addonId: integration.addonId },
+        meta: { phase: 'clearSettings', ...cleared },
+      })
+      return cleared
     },
     getAvailableTypes: async () => {
       const reg = requireIntegrationRegistry(ar)

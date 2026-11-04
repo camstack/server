@@ -188,6 +188,16 @@ export const integrationsCapability = {
       z.object({ success: z.boolean() }),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /**
+     * Delete the integration's LEGACY setting rows and their keychain values, once the owning addon
+     * moved them into its own record and read the record back (D1007). Only the integration's own
+     * addon may call it; the integration itself stays. Answers counts, never a value.
+     */
+    clearSettings: method(
+      z.object({ id: z.string() }),
+      z.object({ rows: z.number().int().nonnegative(), secrets: z.number().int().nonnegative() }),
+      { kind: 'mutation', auth: 'admin' },
+    ),
     getAvailableTypes: method(z.void(), z.array(AvailableIntegrationTypeSchema), { auth: 'admin' }),
     testConnection: method(
       z.object({

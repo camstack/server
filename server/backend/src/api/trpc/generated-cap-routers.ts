@@ -8413,6 +8413,19 @@ export function createCapRouter_integrations(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setSettings(methodInput as any)
       }),
+    clearSettings: adminProcedure
+      .input(integrationsCapability.methods.clearSettings.input.loose())
+      .output(integrationsCapability.methods.clearSettings.output)
+      .mutation(async ({ input, ctx }) => {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
+        const p = resolveProvider('integrations', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.clearSettings(methodInput as any)
+      }),
     getAvailableTypes: adminProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(integrationsCapability.methods.getAvailableTypes.output)

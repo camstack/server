@@ -522,6 +522,7 @@
   "integrationInstances.setInstanceEnabled": "admin",
   "integrationInstances.testInstance": "admin",
   "integrationInstances.updateInstance": "admin",
+  "integrations.clearSettings": "admin",
   "integrations.create": "admin",
   "integrations.delete": "admin",
   "integrations.get": "admin",

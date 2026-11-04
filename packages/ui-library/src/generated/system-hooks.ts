@@ -1478,6 +1478,9 @@ export const useIntegrationsGetSettings: typeof trpc.integrations.getSettings.us
 /** Generated alias around `trpc.integrations.setSettings.useMutation`. */
 export const useIntegrationsSetSettings: typeof trpc.integrations.setSettings.useMutation = /*#__PURE__*/ alias(() => trpc.integrations.setSettings.useMutation)
 
+/** Generated alias around `trpc.integrations.clearSettings.useMutation`. */
+export const useIntegrationsClearSettings: typeof trpc.integrations.clearSettings.useMutation = /*#__PURE__*/ alias(() => trpc.integrations.clearSettings.useMutation)
+
 /** Generated alias around `trpc.integrations.getAvailableTypes.useQuery`. */
 export const useIntegrationsGetAvailableTypes: typeof trpc.integrations.getAvailableTypes.useQuery = /*#__PURE__*/ alias(() => trpc.integrations.getAvailableTypes.useQuery)
 

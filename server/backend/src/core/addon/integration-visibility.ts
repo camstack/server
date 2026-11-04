@@ -118,5 +118,6 @@ export function createFilteredIntegrationRegistry(
     getIntegrationSettings: (id) => raw.getIntegrationSettings(id),
     setIntegrationSetting: (id, key, value) => raw.setIntegrationSetting(id, key, value),
     setIntegrationSettings: (id, settings) => raw.setIntegrationSettings(id, settings),
+    clearIntegrationSettings: (id) => raw.clearIntegrationSettings(id),
   }
 }

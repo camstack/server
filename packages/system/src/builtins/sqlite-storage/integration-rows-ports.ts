@@ -25,6 +25,30 @@ export interface IntegrationRowsPortsDeps {
   readonly log: RowsMigrationLog
 }
 
+export interface ClearIntegrationRowsDeps {
+  readonly registry: Pick<
+    IntegrationRegistry,
+    'getIntegrationSettings' | 'clearIntegrationSettings'
+  >
+  /** The OWNER addon's keychain handle, or null when there is no keychain. */
+  readonly secrets: SecretsAccess | null
+}
+
+/**
+ * The hub-side "clear rows" operation: delete one integration's legacy setting rows AND the
+ * keychain values they pointed at. The integration itself stays. A rerun on cleared rows is a
+ * no-op. Counts only; never a value.
+ */
+export async function clearIntegrationRows(
+  deps: ClearIntegrationRowsDeps,
+  integrationId: string,
+): Promise<{ readonly rows: number; readonly secrets: number }> {
+  const rows = Object.keys(await deps.registry.getIntegrationSettings(integrationId)).length
+  const refs = await deps.registry.clearIntegrationSettings(integrationId)
+  if (refs.length > 0 && deps.secrets !== null) await deps.secrets.delete(refs)
+  return { rows, secrets: refs.length }
+}
+
 export function integrationRowsPortsOver(deps: IntegrationRowsPortsDeps): IntegrationRowsPorts {
   return {
     warn: (message) => deps.log.warn(message),
@@ -56,8 +80,7 @@ export function integrationRowsPortsOver(deps: IntegrationRowsPortsDeps): Integr
       await deps.records.delete(id)
     },
     clearRows: async (integrationId) => {
-      const refs = await deps.registry.clearIntegrationSettings(integrationId)
-      if (refs.length > 0 && deps.secrets !== null) await deps.secrets.delete(refs)
+      await clearIntegrationRows(deps, integrationId)
     },
   }
 }

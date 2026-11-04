@@ -106,7 +106,7 @@ export interface SystemProxy {
   readonly faceGallery: Pick<InferProvider<typeof faceGalleryCapability>, 'listIdentities' | 'createIdentity' | 'renameIdentity' | 'deleteIdentity' | 'listIdentitySamples' | 'auditIdentitySamples' | 'removeSample' | 'getFaceMedia' | 'assignFace' | 'unassignFace' | 'deleteFace' | 'assignFaces' | 'unassignFaces' | 'suggestFaceClusters'>
   readonly fanPresets: Pick<InferProvider<typeof fanPresetsCapability>, 'getPresets' | 'setPresets' | 'applyPreset' | 'capturePreset'>
   readonly integrationInstances: Pick<InferProvider<typeof integrationInstancesCapability>, 'describe' | 'instanceFormSchema' | 'listInstances' | 'getInstance' | 'createInstance' | 'updateInstance' | 'setInstanceEnabled' | 'deleteInstance' | 'testInstance'>
-  readonly integrations: Pick<InferProvider<typeof integrationsCapability>, 'list' | 'get' | 'getByAddonId' | 'create' | 'update' | 'delete' | 'getSettings' | 'setSettings' | 'getAvailableTypes' | 'testConnection'>
+  readonly integrations: Pick<InferProvider<typeof integrationsCapability>, 'list' | 'get' | 'getByAddonId' | 'create' | 'update' | 'delete' | 'getSettings' | 'setSettings' | 'clearSettings' | 'getAvailableTypes' | 'testConnection'>
   readonly keychainAdmin: Pick<InferProvider<typeof keychainAdminCapability>, 'status' | 'listSecrets' | 'listAudit' | 'reveal' | 'setSystemSecret' | 'importSecret' | 'deleteOrphans' | 'rotateMasterKey' | 'purgeRetiredKeys' | 'downloadRecoveryKey' | 'resetKeychain' | 'resetReport' | 'acknowledgeReset'>
   readonly llm: Pick<InferProvider<typeof llmCapability>, 'generate' | 'generateVision' | 'cancel' | 'listProfileKinds' | 'listProfiles' | 'upsertProfile' | 'migrateRawSecrets' | 'deleteProfile' | 'testProfile' | 'listModels' | 'getDefaults' | 'setDefault' | 'getUsage' | 'listModelCatalog' | 'listRuntimeNodes' | 'listNodeModels' | 'resolveModelRef' | 'installModel' | 'deleteModel' | 'getRuntimeStatus' | 'startRuntime' | 'stopRuntime'>
   readonly localNetwork: Pick<InferProvider<typeof localNetworkCapability>, 'list' | 'getPreferred' | 'getConnectionEndpoints' | 'getNotificationEndpoint' | 'setNotificationEndpoint' | 'getViewerEndpoints' | 'setViewerEndpoints' | 'getAddresses' | 'addCustomAddress' | 'removeCustomAddress' | 'setAddressRole' | 'getHubAddresses' | 'getAllowedAddresses' | 'setAllowedAddresses' | 'resetAllowlistToBestMatch' | 'getTlsStatus' | 'regenerateCertificate' | 'uploadCertificate' | 'downloadCa' | 'useStoredUploadedCertificate' | 'scanNetwork' | 'getScanSubnets' | 'setScanSubnets' | 'revertToGeneratedCertificate'>
@@ -533,6 +533,7 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     delete: (input?: unknown) => dispatch('integrations', 'delete', 'mutation', input),
     getSettings: (input?: unknown) => dispatch('integrations', 'getSettings', 'query', input),
     setSettings: (input?: unknown) => dispatch('integrations', 'setSettings', 'mutation', input),
+    clearSettings: (input?: unknown) => dispatch('integrations', 'clearSettings', 'mutation', input),
     getAvailableTypes: (input?: unknown) => dispatch('integrations', 'getAvailableTypes', 'query', input),
     testConnection: (input?: unknown) => dispatch('integrations', 'testConnection', 'mutation', input),
   }

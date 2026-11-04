@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Integration instances state a role and a discovery in describe(); a record secret may sit in a map of the body; a migration helper moves an integration's legacy settings rows into its instance record
+- An addon that moves its legacy integration settings into a record can now ask the hub to clear the old rows and their keychain values
 
 ## [1.2.494] - 2026-11-04
 

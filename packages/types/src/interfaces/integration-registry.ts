@@ -53,4 +53,6 @@ export interface IIntegrationRegistry {
   getIntegrationSettings(integrationId: string): Promise<Record<string, unknown>>
   setIntegrationSetting(integrationId: string, key: string, value: unknown): Promise<void>
   setIntegrationSettings(integrationId: string, settings: Record<string, unknown>): Promise<void>
+  /** Delete every setting row of an integration; answers the keychain refs the rows carried. */
+  clearIntegrationSettings(integrationId: string): Promise<readonly string[]>
 }
