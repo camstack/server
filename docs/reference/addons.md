@@ -49,7 +49,7 @@ this column exists to stop.
 | `export-google` | `@camstack/addon-export-google` | exports | own runner | `hub-only` | `integrations` | — | `addon-routes` `device-export` `oauth-integration` |
 | `export-hap` | `@camstack/addon-export-hap` | exports | own runner | `hub-only` | — | — | `device-export` `videoclips` |
 | `filesystem-storage` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `filesystem-browse` `storage-provider` |
-| `google-services` | `@camstack/addon-google-services` | messaging | own runner | `hub-only` | — | — | `addon-routes` `broker` `calendar-source` `smtp-provider` |
+| `google-services` | `@camstack/addon-google-services` | messaging | own runner | `hub-only` | — | — | `addon-routes` `broker` `calendar-source` `integration-instances` `smtp-provider` |
 | `homeassistant-export` | `@camstack/addon-provider-homeassistant` | exports | own runner | `hub-only` | `integrations` | — | `addon-routes` `device-export` `oauth-integration` |
 | `hub-forwarder` | `@camstack/server-framework` | system | own runner | `agent-only` | — | — | `log-destination` |
 | `import-alexa` | `@camstack/addon-import-alexa` | providers | own runner | `any-node` | — | multiple | `addon-routes` `broker` `device-adoption` `device-provider` `notification-output` |

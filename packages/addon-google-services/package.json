@@ -47,6 +47,9 @@
             "name": "broker"
           },
           {
+            "name": "integration-instances"
+          },
+          {
             "name": "calendar-source"
           },
           {

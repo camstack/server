@@ -48,7 +48,10 @@ export interface RecordIntegrationInstancesHooks<TBody extends InstanceBody> {
   /** The kind a stored instance is of; surfaces as `IntegrationInstance.kind`. */
   kindOf?(body: TBody): string | undefined
   /** The instance's own health word and the time it was last probed, from the record. */
-  health?(body: TBody): {
+  health?(
+    body: TBody,
+    id: string,
+  ): {
     readonly status?: IntegrationInstanceStatus
     readonly lastCheckedAt?: number
   }
@@ -149,7 +152,7 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
     )
     const rawName = record.data[this.nameField]
     const kind = this.hooks.kindOf?.(record.data)
-    const health = this.hooks.health?.(record.data)
+    const health = this.hooks.health?.(record.data, record.id)
     return {
       id: record.id,
       name: typeof rawName === 'string' ? rawName : record.id,

@@ -15,6 +15,8 @@ import {
   buildAddonRouteProvider,
   calendarSourceCapability,
   defineAddonMigrations,
+  integrationInstancesCapability,
+  RecordIntegrationInstances,
   smtpProviderCapability,
   type AddonHttpReply,
   type AddonHttpRequest,
@@ -69,7 +71,8 @@ import {
   type GoogleServicesConfig,
 } from './google-types.js'
 import { pickOauthRedirectOrigin } from './oauth-redirect-origin.js'
-import { googleBrokersEntryKind } from './broker-record-kinds.js'
+import { type GoogleBrokerBody, googleBrokersEntryKind } from './broker-record-kinds.js'
+import { buildGoogleInstances } from './google-instances.js'
 import { ADDON_MIGRATIONS } from './migrations/index.js'
 import { calendarIdsPortsOver } from './migrations/ports.js'
 import { GoogleBrokerStore } from './google-broker-store.js'
@@ -109,6 +112,7 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
   private oauthAccountsHandle: DurableState<GoogleOauthAccountsState> | null = null
   private registry = new GoogleBrokerRegistry()
   private brokerStore: GoogleBrokerStore | null = null
+  private instances: RecordIntegrationInstances<GoogleBrokerBody> | null = null
   private activeBrokers: readonly GoogleBrokerEntry[] = []
   /** CSRF state → { brokerId, issuedAt } for the in-flight OAuth consents. */
   private pendingStates = new Map<string, { brokerId: string; issuedAt: number }>()
@@ -174,6 +178,7 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
     }
     await records.declare({ brokers: googleBrokersEntryKind })
     this.brokerStore = GoogleBrokerStore.of(records)
+    this.instances = this.buildInstances(records)
     this.activeBrokers = await this.loadPersistedBrokers()
     if ((await this.brokerStore.listResolved()).length === 0 && this.config.brokers.length > 0) {
       await this.brokerStore.replaceAll(this.config.brokers)
@@ -247,6 +252,10 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
     return {
       providers: [
         { capability: brokerCapability, provider: this.buildBrokerProvider() },
+        {
+          capability: integrationInstancesCapability,
+          provider: this.requireInstances().toProvider(),
+        },
         { capability: calendarSourceCapability, provider: calendarProvider },
         { capability: smtpProviderCapability, provider: smtpProvider },
         { capability: addonRoutesCapability, provider: routeProvider },
@@ -258,6 +267,43 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
     const accounts = this.registry.listOauthAccounts()
     this.activeBrokers = await this.loadPersistedBrokers()
     this.registry.seedFrom(this.activeBrokers, accounts)
+  }
+
+  private requireInstances(): RecordIntegrationInstances<GoogleBrokerBody> {
+    if (this.instances === null)
+      throw new Error('google-services: instances used before initialize')
+    return this.instances
+  }
+
+  /** The accounts as `integration-instances`, over the same `brokers` records (planning#408 P3). */
+  private buildInstances(
+    records: Pick<RecordsAccess, 'kind' | 'owner'>,
+  ): RecordIntegrationInstances<GoogleBrokerBody> {
+    const brokerProvider = this.buildBrokerProvider()
+    return buildGoogleInstances(records, {
+      connectPath: `/addon/${ADDON_ID}${START_PATH}?brokerId={{brokerId}}`,
+      disconnectPath: `/addon/${ADDON_ID}${DISCONNECT_PATH}?brokerId={{brokerId}}`,
+      publicOrigin: () => this.publicOrigin,
+      mintId: () => this.registry.allocateId(),
+      session: (id) =>
+        this.registry.isConnected(id)
+          ? 'connected'
+          : this.registry.needsReauth(id)
+            ? 'reauth'
+            : 'none',
+      onChanged: async () => {
+        const accounts = this.registry.listOauthAccounts()
+        this.activeBrokers = await this.loadPersistedBrokers()
+        this.registry.seedFrom(this.activeBrokers, accounts)
+        await this.persistOauthAccounts()
+      },
+      testSaved: async (id) => brokerProvider.testConnection({ id }),
+      testClient: async (clientId, clientSecret) =>
+        brokerProvider.testSettings({
+          kind: GOOGLE_BROKER_KIND,
+          settings: { clientId, clientSecret },
+        }),
+    })
   }
 
   private buildBrokerProvider(): IBrokerProvider {

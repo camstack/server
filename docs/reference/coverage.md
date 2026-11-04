@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**234 units · 7941 source files · 221 units claimed by at least one document (7897 files).**
+**234 units · 7942 source files · 221 units claimed by at least one document (7898 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -99,10 +99,10 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/system/src/auth` | 18 | `auth` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `architecture/authentication.md`, +17 more | 2026-10-21 |
 | `packages/types/src/generated` | 18 | `capabilities` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0648-a-device-extension-is-a-slot-declared-by-the-cap-that-owns-the-function-and-served-over-its-existing-store.md`, `decisions/adr-0936-a-customize-declaration-is-the-override-contract.md`, +1 more, 2 ADRs | — |
 | `packages/addon-admin-ui/src/hooks` | 17 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `ui/admin-patterns.md` _(covers)_, +7 more | 2026-11-02 |
+| `packages/addon-google-services` | 17 | — | `addons/addon-google-services.md` _(covers)_, `decisions/adr-0885-a-critical-alert-is-a-severity-on-the-alert-centre.md` | — |
 | `packages/addon-provider-wyze` | 17 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/addon-terminal` | 17 | `device-surfaces` | `architecture/terminal.md` _(covers)_, `design/2026-07-26-terminal-session-design.md`, `decisions/adr-0321-a-polled-fleet-read-joins-the-shared-slim-key-and-a-config-bearing-read-can-never-be-slim.md`, 2 ADRs | 2026-10-03 |
 | `packages/addon-agent-ui` | 16 | `admin-ui` | `decisions/adr-0839-the-agent-finds-hubs-the-way-the-cli-does-one-shared-mdns-browse-in-develop.md`, `decisions/adr-0841-the-agent-ui-lists-addons-and-their-runners-as-one-joined-list.md` | — |
-| `packages/addon-google-services` | 16 | — | `addons/addon-google-services.md` _(covers)_, `decisions/adr-0885-a-critical-alert-is-a-severity-on-the-alert-centre.md` | — |
 | `packages/addon-post-analysis/src/embedding-encoder` | 16 | `recognition` | `decisions/adr-0649-a-clip-model-carries-its-feature-space-contract-and-gets-its-own-index.md`, `decisions/adr-0177-a-python-pool-is-bounded-by-its-own-watchdog-not-the-kernel.md`, `decisions/adr-0209-a-hosted-model-artifact-is-not-verified-until-its-embedding-space-is.md`, +3 more | 2026-10-01 |
 | `packages/addon-provider-petkit` | 16 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0959-a-petkit-re-login-is-gated-because-the-account-has-one-session.md`, `decisions/adr-0953-a-cloud-session-that-ends-raises-one-standard-alert-per-integration-and-clears-itself.md`, 1 ADR | 2026-10-26 |
 | `packages/addon-provider-rademacher` | 16 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
