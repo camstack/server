@@ -5,6 +5,7 @@
  */
 import type { IScopedLogger } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
+import type { EcowittSettingsRead } from '../ecowitt-instances.js'
 import {
   EcowittReconciler,
   type ReconcilerClients,
@@ -25,11 +26,19 @@ const ADDON = 'provider-ecowitt'
 const A: ReconcilerIntegration = { id: 'int-a', addonId: ADDON, name: 'A', enabled: true }
 const B: ReconcilerIntegration = { id: 'int-b', addonId: ADDON, name: 'B', enabled: true }
 
-const LOCAL = { transport: 'local', host: '192.168.1.50', port: 80, password: 'pw' }
-const LOCKED = { ...LOCAL, password: { $secret: 'secret://x', v: 1 } }
+const LOCAL: EcowittSettingsRead = {
+  values: { transport: 'local', host: '192.168.1.50', port: 80, password: 'pw' },
+  secretsLocked: false,
+}
+/** The keychain refused: the record comes back WITHOUT its password, and says so. */
+const LOCKED: EcowittSettingsRead = {
+  values: { transport: 'local', host: '192.168.1.50', port: 80 },
+  secretsLocked: true,
+}
+const NONE: EcowittSettingsRead = { values: {}, secretsLocked: false }
 
 function harness(
-  settings: Record<string, unknown | Error>,
+  settings: Record<string, EcowittSettingsRead | Error>,
   list: () => Promise<readonly ReconcilerIntegration[]>,
 ) {
   const live = new Set<string>(['int-a', 'int-b'])
@@ -44,10 +53,10 @@ function harness(
     logger,
     clients,
     listIntegrations: list,
-    getSettings: async (id) => {
+    readSettings: async (id) => {
       const v = settings[id]
       if (v instanceof Error) throw v
-      return v
+      return v ?? NONE
     },
     removeDevices: async (id) => {
       removedDevices.push(id)
@@ -66,7 +75,7 @@ describe('Ecowitt reconcile never removes devices on an unanswered read', () => 
   })
 
   it('settings that throw, a missing connection and a failed list all change nothing', async () => {
-    const throwing = harness({ 'int-a': new Error('boom'), 'int-b': {} }, async () => [A, B])
+    const throwing = harness({ 'int-a': new Error('boom'), 'int-b': NONE }, async () => [A, B])
     await throwing.reconciler.onLifecycle('enabled', 'int-a')
     expect(throwing.removedDevices).toEqual([])
     expect([...throwing.live].sort()).toEqual(['int-a', 'int-b'])

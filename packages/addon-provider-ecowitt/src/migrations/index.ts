@@ -3,12 +3,18 @@ import { migrateEcowittHubs } from './ecowitt-hub-to-integration.js'
 import type { EcowittMigrationPorts } from './ports.js'
 
 export type { EcowittMigrationPorts } from './ports.js'
+export {
+  ECOWITT_ROWS_TO_RECORD_ID,
+  ECOWITT_ROWS_TO_RECORD_MIGRATION,
+} from './integration-rows-to-record.js'
 
-/** The Ecowitt catalogue (D987): offered to the engine from `onRestoreDevices`. */
+export const ECOWITT_HUB_MIGRATION_ID = 'provider-ecowitt/2026-11-01-hub-to-integration-gateway'
+
+/** The Ecowitt catalogue that needs the persisted devices (D987): offered to the engine from `onRestoreDevices`. */
 export const ADDON_MIGRATIONS: readonly AddonMigration<EcowittMigrationPorts>[] = [
   {
     meta: {
-      id: 'provider-ecowitt/2026-11-01-hub-to-integration-gateway',
+      id: ECOWITT_HUB_MIGRATION_ID,
       owner: 'provider-ecowitt',
       level: 'addon-state',
       seq: 1,

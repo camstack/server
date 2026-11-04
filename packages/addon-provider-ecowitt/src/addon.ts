@@ -10,18 +10,23 @@ import {
   type DiscoveryCandidate,
   type DiscoveryHit,
   type DiscoveryMode,
+  defaultIntegrationApiOver,
   defineAddonMigrations,
   errMsg,
   EventCategory,
   type IDevice,
   type IDeviceAdoptionProvider,
-  type ProviderRegistration,
+  integrationInstancesCapability,
+  integrationRowsPortsOverApi,
+  type AddonInitResult,
+  type RecordIntegrationInstances,
   type SavedDevice,
   type SystemEvent,
   type DeviceSummary,
   userError,
 } from '@camstack/types'
-import { buildConnectionFormSchema, ECOWITT_SYSTEM, gatewayKeyOf } from './config.js'
+import { z } from 'zod'
+import { ECOWITT_SYSTEM, gatewayKeyOf } from './config.js'
 import { EcowittContainerDevice } from './devices/ecowitt-container-device.js'
 import {
   ECOWITT_GATEWAY_DEVICE_KIND,
@@ -47,7 +52,20 @@ import { findDuplicateGatewaySensors, type DuplicateScanRow } from './ecowitt-du
 import { bucketSensorsByGroup, configDeviceGroup, sensorsEqual } from './ecowitt-sensor-groups.js'
 import { EcowittReconciler, type IntegrationLifecycleKind } from './ecowitt-reconciler.js'
 import { restoreAfterMigration } from './migrations/restore-after-migration.js'
-import { ADDON_MIGRATIONS, type EcowittMigrationPorts } from './migrations/index.js'
+import {
+  buildEcowittInstances,
+  type EcowittConnectionBody,
+  ecowittConnectionsEntryKind,
+  ecowittRecordKinds,
+  settingsReadOf,
+} from './ecowitt-instances.js'
+import {
+  ADDON_MIGRATIONS,
+  ECOWITT_HUB_MIGRATION_ID,
+  ECOWITT_ROWS_TO_RECORD_ID,
+  ECOWITT_ROWS_TO_RECORD_MIGRATION,
+  type EcowittMigrationPorts,
+} from './migrations/index.js'
 
 /**
  * Ecowitt weather-station provider, `mode: account` and broker-less. An integration is one
@@ -70,13 +88,30 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
   }
 
   private clients: EcowittClientRegistry | null = null
+  private instances: RecordIntegrationInstances<EcowittConnectionBody> | null = null
 
   constructor() {
     super({})
   }
 
-  protected override async onInitialize(): Promise<ProviderRegistration[]> {
+  protected override async onInitialize(): Promise<AddonInitResult> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
+    const records = this.ctx.records
+    if (records === undefined) {
+      throw new Error('provider-ecowitt: ctx.records is required (hub-only addon)')
+    }
+    await records.declare(ecowittRecordKinds)
+    const instances = buildEcowittInstances(records, {
+      onChanged: () => this.reconcileIntegrations(),
+    })
+    this.instances = instances
+    // The rows move BEFORE the instances provider registers (below): while it is registered the
+    // hub answers from the record, not from the rows. The hub-device migration of the same
+    // catalogue needs the persisted devices and runs from `onRestoreDevices`.
+    await this.runMigrations(
+      this.migrationCatalogue(this.buildMigrationPorts([], async () => undefined)),
+      { only: [ECOWITT_ROWS_TO_RECORD_ID] },
+    )
     this.clients = new EcowittClientRegistry(this.ctx.logger, {
       onOnline: (_integrationId, gatewayKey, online) =>
         this.setGatewayDevicesOnline(gatewayKey, online),
@@ -85,12 +120,39 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
     })
     await this.reconcileIntegrations()
     this.subscribeIntegrationLifecycle()
+    return {
+      providers: [
+        ...regs,
+        {
+          capability: deviceAdoptionCapability,
+          provider: this.buildAdoptionProvider(),
+        },
+        { capability: integrationInstancesCapability, provider: instances.toProvider() },
+      ],
+    }
+  }
+
+  /**
+   * The WHOLE catalogue, whatever phase runs (a partial declare would make the applied ids of the
+   * other phase read as newer): each phase names its own with `only`.
+   */
+  private migrationCatalogue(hubPorts: EcowittMigrationPorts) {
+    const records = this.ctx.records
+    if (records === undefined) {
+      throw new Error('provider-ecowitt: ctx.records is required (hub-only addon)')
+    }
+    const rowsPorts = integrationRowsPortsOverApi({
+      api: defaultIntegrationApiOver(this.ctx.api),
+      records: records.kind({
+        name: ecowittConnectionsEntryKind.name,
+        declaration: ecowittConnectionsEntryKind.declaration,
+        schema: z.record(z.string(), z.unknown()),
+      }),
+      log: { warn: (message) => this.ctx.logger.warn(message) },
+    })
     return [
-      ...regs,
-      {
-        capability: deviceAdoptionCapability,
-        provider: this.buildAdoptionProvider(),
-      },
+      ...defineAddonMigrations(ADDON_MIGRATIONS, hubPorts),
+      ...defineAddonMigrations([ECOWITT_ROWS_TO_RECORD_MIGRATION], rowsPorts),
     ]
   }
 
@@ -111,6 +173,11 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
   /** The rows persisted at boot: a Gateway saved but not restored yet is found here. */
   private savedRows: readonly SavedDevice[] = []
 
+  private requireInstances(): RecordIntegrationInstances<EcowittConnectionBody> {
+    if (!this.instances) throw new Error('Ecowitt provider not initialised')
+    return this.instances
+  }
+
   private requireClients(): EcowittClientRegistry {
     if (!this.clients) throw new Error('Ecowitt provider not initialised')
     return this.clients
@@ -127,14 +194,15 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
     savedDevices: readonly SavedDevice[],
   ): Promise<DeviceRestoreReport | void> {
     this.savedRows = savedDevices
-    const migrationId = ADDON_MIGRATIONS[0]?.meta.id ?? ''
     return restoreAfterMigration({
       saved: savedDevices,
-      migrationId,
+      migrationId: ECOWITT_HUB_MIGRATION_ID,
       logger: this.ctx.logger,
       runMigration: (restoreRows) => {
         const ports = this.buildMigrationPorts(savedDevices, restoreRows)
-        return this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, ports))
+        return this.runMigrations(this.migrationCatalogue(ports), {
+          only: [ECOWITT_HUB_MIGRATION_ID],
+        })
       },
       restoreRows: async (rows) => {
         await this.reconciler().reconcile()
@@ -149,7 +217,6 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
     restoreRows: (rows: readonly SavedDevice[]) => Promise<void>,
   ): EcowittMigrationPorts {
     const devices = this.ctx.kernel.devices
-    if (!devices) throw new Error('ecowitt hub migration: kernel.devices unavailable')
     return {
       addonId: this.ctx.id,
       logger: this.ctx.logger,
@@ -181,6 +248,7 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
         })
       },
       persistConfig: async (stableId, config) => {
+        if (!devices) throw new Error('ecowitt hub migration: kernel.devices unavailable')
         await devices.persistInitialConfig(stableId, config)
       },
       childIdsOf: async (parentDeviceId) =>
@@ -214,7 +282,7 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
       logger: this.ctx.logger,
       clients: reg,
       listIntegrations: () => this.ctx.api.integrations.list.query(),
-      getSettings: (id) => this.ctx.api.integrations.getSettings.query({ id }),
+      readSettings: async (id) => settingsReadOf(await this.requireInstances().readResolved(id)),
       removeDevices: (integrationId) => this.cascadeRemoveDevicesForIntegration(integrationId),
     })
   }
@@ -514,11 +582,6 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
 
   override async supportsManualCreation(): Promise<boolean> {
     return false
-  }
-
-  /** The integration's settings form; the submitted values are stored per integration. */
-  protected override globalSettingsSchema(): ConfigUISchema {
-    return buildConnectionFormSchema()
   }
 
   protected async onGetCreationSchema(_type: DeviceType): Promise<ConfigUISchema | null> {

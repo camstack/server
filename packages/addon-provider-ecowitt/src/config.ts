@@ -105,7 +105,7 @@ export function settingsToEcowittConfig(settings: unknown): EcowittConfig {
 /** The device-registry `system` tag every Ecowitt device carries. */
 export const ECOWITT_SYSTEM = 'ecowitt'
 
-/** A connection read from an integration's settings, plus whether its password is stored but unreadable. */
+/** A connection read from an integration's record, plus whether its password is stored but unreadable. */
 export interface EcowittConnectionRead {
   readonly connection: EcowittConfig
   readonly passwordLocked: boolean
@@ -113,15 +113,18 @@ export interface EcowittConnectionRead {
 
 /**
  * Parse an integration's settings into a connection, or null while they are unusable (no host for
- * the local transport). `passwordLocked` reports a stored password the keychain cannot serve now:
- * the caller must not dial with an empty one.
+ * the local transport). `secretsLocked` reports a record whose secrets the keychain cannot serve
+ * now: the caller must not dial with an empty password.
  */
-export function connectionFromSettings(settings: unknown): EcowittConnectionRead | null {
+export function connectionFromSettings(
+  settings: unknown,
+  secretsLocked: boolean,
+): EcowittConnectionRead | null {
   const raw = toRecord(settings)
   try {
     return {
       connection: settingsToEcowittConfig(raw),
-      passwordLocked: isSecretMarkerLike(raw['password']),
+      passwordLocked: secretsLocked,
     }
   } catch {
     return null

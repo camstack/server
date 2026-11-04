@@ -1,6 +1,7 @@
 import { errMsg, type IScopedLogger } from '@camstack/types'
 import { connectionFromSettings, gatewayKeyOf, type EcowittConnectionRead } from './config.js'
 import type { EcowittConfig } from './config.js'
+import type { EcowittSettingsRead } from './ecowitt-instances.js'
 
 export interface ReconcilerIntegration {
   readonly id: string
@@ -26,7 +27,8 @@ export interface EcowittReconcilerDeps {
   readonly logger: IScopedLogger
   readonly clients: ReconcilerClients
   readonly listIntegrations: () => Promise<readonly ReconcilerIntegration[]>
-  readonly getSettings: (integrationId: string) => Promise<unknown>
+  /** The integration's connection record, read through the instances provider. */
+  readonly readSettings: (integrationId: string) => Promise<EcowittSettingsRead>
   /** Remove the Gateway and Container devices of an integration (sensors follow their Container). */
   readonly removeDevices: (integrationId: string) => Promise<number>
 }
@@ -70,8 +72,10 @@ export class EcowittReconciler {
   async #upsertOne(integration: ReconcilerIntegration): Promise<void> {
     const { logger, clients } = this.#deps
     try {
+      const stored = await this.#deps.readSettings(integration.id)
       const read: EcowittConnectionRead | null = connectionFromSettings(
-        await this.#deps.getSettings(integration.id),
+        stored.values,
+        stored.secretsLocked,
       )
       if (read === null) {
         logger.warn('Ecowitt integration has no usable connection — left as it is', {

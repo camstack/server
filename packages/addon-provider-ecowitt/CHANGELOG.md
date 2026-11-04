@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Ecowitt gateways keep their connection (transport, host, port, password, poll and listen settings) as one typed record each, moved from the old settings by a boot migration; devices, ids and history are untouched
+
 ## [0.2.154] - 2026-11-01
 
 ### Changed

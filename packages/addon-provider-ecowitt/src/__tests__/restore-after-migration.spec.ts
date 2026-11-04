@@ -118,7 +118,10 @@ describe('restoreAfterMigration', () => {
   it('addon.ts routes onRestoreDevices through it, with the catalogue bound to ports', () => {
     const src = readFileSync(fileURLToPath(new URL('../addon.ts', import.meta.url)), 'utf8')
     expect(src).toMatch(/onRestoreDevices[\s\S]{0,400}restoreAfterMigration\(/)
-    expect(src).toMatch(/this\.runMigrations\(defineAddonMigrations\(ADDON_MIGRATIONS, ports\)\)/)
+    expect(src).toMatch(
+      /this\.runMigrations\(this\.migrationCatalogue\(ports\), \{\s*only: \[ECOWITT_HUB_MIGRATION_ID\]/,
+    )
+    expect(src).toMatch(/defineAddonMigrations\(ADDON_MIGRATIONS, hubPorts\)/)
   })
 })
 
