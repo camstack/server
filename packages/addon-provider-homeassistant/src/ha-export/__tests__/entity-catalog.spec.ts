@@ -566,7 +566,12 @@ describe('the derived half', () => {
       switches: [],
       slices: ['control'],
       capSlices: {
-        control: { kind: 'select', value: options[0], options, lastChangedAt: 1 },
+        control: {
+          kind: 'select',
+          value: options[0],
+          options,
+          lastChangedAt: 1,
+        },
       },
     }
     const plan = buildDerivedPlan(device)
@@ -577,7 +582,12 @@ describe('the derived half', () => {
   })
 
   it('falls back to a read-only sensor when a select has no options', () => {
-    const specs = controlEntitySpecs({ kind: 'select', value: '', options: [], lastChangedAt: 1 })
+    const specs = controlEntitySpecs({
+      kind: 'select',
+      value: '',
+      options: [],
+      lastChangedAt: 1,
+    })
     expect(specs[0]?.platform).toBe('sensor')
     expect(specs[0]?.writable).toBeUndefined()
   })

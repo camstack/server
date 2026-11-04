@@ -218,7 +218,12 @@ export function projectCapSlice(
     if (raw === null || raw === undefined) continue
     const rendered = renderCapValue(ref.descriptor, deriveCapValue(ref.descriptor.derive, raw))
     if (rendered === null) {
-      return { kind: 'unrenderable', capName, field: ref.descriptor.field, valueType: typeof raw }
+      return {
+        kind: 'unrenderable',
+        capName,
+        field: ref.descriptor.field,
+        valueType: typeof raw,
+      }
     }
     values.push({ topic: stateTopic(deviceKey, ref.entity), value: rendered })
   }
@@ -256,7 +261,10 @@ export interface MotionInput {
 
 export function projectMotion(deviceKey: string, input: MotionInput): readonly StateValue[] {
   const values: StateValue[] = [
-    { topic: stateTopic(deviceKey, 'motion_detected'), value: bool(input.detected) },
+    {
+      topic: stateTopic(deviceKey, 'motion_detected'),
+      value: bool(input.detected),
+    },
     { topic: stateTopic(deviceKey, 'triggered'), value: bool(input.detected) },
   ]
   /**
@@ -326,8 +334,14 @@ export function projectTrackLifecycle(
 
   if (active) {
     values.push(
-      { topic: stateTopic(deviceKey, `${macro}_last_detection`), value: iso(track.lastSeen) },
-      { topic: stateTopic(deviceKey, 'last_detection'), value: iso(track.lastSeen) },
+      {
+        topic: stateTopic(deviceKey, `${macro}_last_detection`),
+        value: iso(track.lastSeen),
+      },
+      {
+        topic: stateTopic(deviceKey, 'last_detection'),
+        value: iso(track.lastSeen),
+      },
     )
   }
 
@@ -340,7 +354,10 @@ export function projectTrackLifecycle(
    */
   const label = track.plateText ?? track.label
   if (label !== undefined && label.length > 0 && LABELLED_MACROS.includes(macro)) {
-    values.push({ topic: stateTopic(deviceKey, `${macro}_last_label`), value: label })
+    values.push({
+      topic: stateTopic(deviceKey, `${macro}_last_label`),
+      value: label,
+    })
     /**
      * The occurrence STAMP. A second recognition of the same person is a
      * real occurrence, but it is invisible on `_last_label`: the push
@@ -495,7 +512,10 @@ export function projectBatterySlice(
   // An UNKNOWN power source publishes no charger state: `!== 'none'` would
   // turn "nobody has read the adapter yet" into a charger plugged in.
   if (slice.charging !== 'unknown') {
-    values.push({ topic: stateTopic(deviceKey, 'charger'), value: bool(slice.charging !== 'none') })
+    values.push({
+      topic: stateTopic(deviceKey, 'charger'),
+      value: bool(slice.charging !== 'none'),
+    })
   }
   /**
    * `binary: true` means the device reports "low" or "not low" and the
@@ -507,7 +527,10 @@ export function projectBatterySlice(
    * that gauge, and coercing it to 0 would publish a flat battery.
    */
   if (slice.binary !== true && slice.percentage !== null) {
-    values.push({ topic: stateTopic(deviceKey, 'battery'), value: String(slice.percentage) })
+    values.push({
+      topic: stateTopic(deviceKey, 'battery'),
+      value: String(slice.percentage),
+    })
   }
   return values
 }
@@ -622,7 +645,10 @@ export function projectDoorbellSlice(
 
 export interface AudioWindowInput {
   /** Classified sounds in this window, strongest first is NOT assumed. */
-  readonly detections: readonly { readonly className: string; readonly confidence: number }[]
+  readonly detections: readonly {
+    readonly className: string
+    readonly confidence: number
+  }[]
   /** Window level metrics. Absent when the analyzer reported none. */
   readonly dbfs?: number
   /** Linear RMS amplitude for the same window. */
@@ -672,10 +698,10 @@ export function projectAudioWindow(
       value: String(Math.round(input.rms * 10000) / 10000),
     })
   }
-  const best = input.detections.reduce<{ className: string; confidence: number } | null>(
-    (top, d) => (top === null || d.confidence > top.confidence ? d : top),
-    null,
-  )
+  const best = input.detections.reduce<{
+    className: string
+    confidence: number
+  } | null>((top, d) => (top === null || d.confidence > top.confidence ? d : top), null)
   /**
    * `audio_detected` — the source it never had. The catalog's comment used
    * to claim this window was already feeding it; it was not (grep found no
@@ -685,9 +711,15 @@ export function projectAudioWindow(
    * `audio_last_sound` — "what was that noise" is asked after the noise has
    * stopped.
    */
-  values.push({ topic: stateTopic(deviceKey, 'audio_detected'), value: bool(best !== null) })
+  values.push({
+    topic: stateTopic(deviceKey, 'audio_detected'),
+    value: bool(best !== null),
+  })
   if (best !== null) {
-    values.push({ topic: stateTopic(deviceKey, 'audio_last_sound'), value: best.className })
+    values.push({
+      topic: stateTopic(deviceKey, 'audio_last_sound'),
+      value: best.className,
+    })
   }
   return values
 }
@@ -729,7 +761,10 @@ export function projectCameraStatus(
   } else if (!input.degradedStages.includes('recording')) {
     // No recording block and the stage answered clean: the camera genuinely
     // has no active recording, which is the truth, not a gap.
-    values.push({ topic: stateTopic(deviceKey, 'recording_active'), value: bool(false) })
+    values.push({
+      topic: stateTopic(deviceKey, 'recording_active'),
+      value: bool(false),
+    })
   }
   // Else: the `recording` stage is degraded — publish nothing, so Home
   // Assistant renders `unknown` rather than a guessed `false`.

@@ -46,7 +46,10 @@ describe('dishwasher export', () => {
       'stop',
     ])
     for (const suffix of ['power', 'child-lock', 'half-load', 'hygiene-plus', 'extra-dry']) {
-      expect(mapping?.extras?.[suffix]).toMatchObject({ platform: 'switch', writable: true })
+      expect(mapping?.extras?.[suffix]).toMatchObject({
+        platform: 'switch',
+        writable: true,
+      })
     }
     expect(mapping?.extras?.['remaining-time']).toMatchObject({
       deviceClass: 'duration',
@@ -55,7 +58,9 @@ describe('dishwasher export', () => {
   })
 
   it('publishes NOTHING for an appliance nobody has heard from — Home Assistant shows unknown, not off', () => {
-    const projection = projectCapSlice('camstack-dw', 'dishwasher', { ...UNKNOWN })
+    const projection = projectCapSlice('camstack-dw', 'dishwasher', {
+      ...UNKNOWN,
+    })
     expect(projection.kind).toBe('values')
     if (projection.kind !== 'values') return
     expect(projection.values).toEqual([])

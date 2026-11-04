@@ -39,8 +39,10 @@ import {
   buildAddonRouteProvider,
   type CameraStatus,
   CameraSwitchIdSchema,
-  type ConfigUISchema,
   type ConfigUISchemaWithValues,
+  type IntegrationInstanceStatus,
+  integrationInstancesCapability,
+  type RecordIntegrationInstances,
   defineAddonMigrations,
   deviceExportCapability,
   EventCategory,
@@ -85,19 +87,17 @@ import {
 } from './component-support.js'
 import { ADDON_MIGRATIONS } from './migrations/index.js'
 import { haExportMigrationPorts } from './migrations/bind-ports.js'
+import { declareLegacyLinks } from './migrations/legacy-links-kind.js'
 import {
-  ExportLinks,
-  exportToFormKey,
-  haExportLinksKind,
-  linkFormOverlay,
-  mediaRoleFormKey,
-  parseLinkFormKey,
-} from './link-records.js'
+  ExportTargets,
+  HA_TARGET_KIND,
+  haExportTargetsKind,
+  type HaExportTargetBody,
+} from './target-records.js'
+import { openTargetInstances, type TargetChange } from './target-instances.js'
 import { buildDevicePlan, CAMERA_DERIVED_CAPS, unclassifiedCaps } from './entity-catalog.js'
 import {
   buildMediaUrl,
-  HA_MEDIA_ROLES,
-  type HaMediaRole,
   mediaBasesByBroker,
   usedInternalFallback,
   MEDIA_URL_TTL_MS,
@@ -108,8 +108,6 @@ import {
   type ExportMembership,
   exposedDeviceIds,
   isExposed,
-  type KnownBroker,
-  sameBrokers,
   setExposed,
 } from './membership.js'
 import { footageForNode, shouldReadPackageStatus } from './node-reads.js'
@@ -206,9 +204,6 @@ const PTZ_MOVE_BY_DIRECTION: Readonly<
 }
 
 interface HaExportConfig {
-  readonly reconcileIntervalSec: number
-  /** Refreshed on every reconcile so the checkbox list stays honest. */
-  readonly knownBrokers: readonly KnownBroker[]
   /**
    * The actions and notification targets exported beside the devices (D968).
    * Hidden state, written through `exposeEntity` / `unexposeEntity` only.
@@ -217,14 +212,17 @@ interface HaExportConfig {
 }
 
 const DEFAULT_CONFIG: HaExportConfig = {
-  reconcileIntervalSec: 300,
-  knownBrokers: [],
   exportedEntities: { actions: [], targets: [] },
 }
 
-/** Resolved connection to one Home Assistant instance. */
+/**
+ * Resolved connection of one export target to its Home Assistant instance. `brokerId` is the
+ * TARGET id (the key of the membership and of every per-target cache); `connectionId` is the
+ * Home Assistant broker it pushes to.
+ */
 interface BrokerLink {
   readonly brokerId: string
+  readonly connectionId: string
   readonly name: string
   readonly baseUrl: string
   readonly token: string
@@ -266,6 +264,9 @@ interface ExportedDevice {
 
 export class HaExportAddon extends BaseAddon<HaExportConfig> {
   private links = new Map<string, BrokerLink>()
+  private instances: RecordIntegrationInstances<HaExportTargetBody> | null = null
+  /** The Home Assistant connections (broker ids) the last `broker.list` answered. */
+  private connections: ReadonlySet<string> = new Set()
   /** deviceKey → the device it addresses. Rebuilt on every reconcile. */
   private exported = new Map<string, ExportedDevice>()
   /** numeric deviceId → deviceKey, for the event path. */
@@ -381,22 +382,36 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
   protected async onInitialize(): Promise<ProviderRegistration[]> {
     const records = this.ctx.records
     if (records === undefined) throw new Error('ha-export: records are not available')
-    await records.declare({ 'ha-export-links': haExportLinksKind })
-    const linksHandle = records.kind(haExportLinksKind)
+    await records.declare({ 'ha-export-targets': haExportTargetsKind })
+    const targetsHandle = records.kind(haExportTargetsKind)
+    // The retired link kind is declared for the migrations only; nothing below reads it.
+    const legacyLinks = await declareLegacyLinks(records)
     await this.runMigrations(
       defineAddonMigrations(
         ADDON_MIGRATIONS,
         haExportMigrationPorts({
           readStored: async () => this.resolveGlobalStore(),
           api: this.ctx.api,
-          links: linksHandle,
+          links: legacyLinks,
+          targets: targetsHandle,
+          clearSettingKeys: async (keys) => {
+            await this.updateGlobalSettingsAsOperator(
+              Object.fromEntries(keys.map((key) => [key, null])),
+            )
+          },
           warn: (message) => this.ctx.logger.warn(message),
         }),
       ),
     )
-    // A failed read stops the boot: serving an empty membership would unexport every device on
-    // the next reconcile.
-    this.linkBook = await ExportLinks.load(linksHandle)
+    // A failed read stops the boot, and the boot reconcile starts only after this: serving an
+    // empty membership would unexport every device on the next reconcile.
+    this.targetBook = await ExportTargets.load(targetsHandle)
+    this.instances = openTargetInstances(records, {
+      book: () => this.book(),
+      connectionExists: (connectionId) => this.connectionExists(connectionId),
+      health: (id, body) => this.targetHealth(id, body),
+      onChanged: (id, change) => this.onTargetChanged(id, change),
+    })
 
     const secret = this.state<string>('haExportMediaSecret', z.string(), '')
     const existing = await secret.get()
@@ -456,27 +471,29 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
 
     const exportProvider: IDeviceExportProvider = {
       getStatus: async (input) =>
-        this.buildStatus(this.brokerScope(deviceExportStatusInstanceOf(input))),
+        this.buildStatus(this.targetScope(deviceExportStatusInstanceOf(input))),
       listInstances: async () =>
-        this.config.knownBrokers.map((broker) => ({
-          instanceId: broker.id,
-          name: broker.name,
-          enabled: this.enabledBrokerIds().includes(broker.id),
-          kind: 'home-assistant',
-        })),
+        this.book()
+          .ids()
+          .map((id) => ({
+            instanceId: id,
+            name: this.book().name(id),
+            enabled: this.book().isEnabled(id),
+            kind: HA_TARGET_KIND,
+          })),
       listSupportedDeviceKinds: async ({ instanceId }) => {
-        this.brokerScope(instanceId)
+        this.targetScope(instanceId)
         return [...SUPPORTED_DEVICE_KINDS]
       },
       listExposedDevices: async ({ instanceId }) =>
-        this.exposedDeviceRows(this.brokerScope(instanceId)),
+        this.exposedDeviceRows(this.targetScope(instanceId)),
       exposeDevice: async ({ instanceId, deviceId }) =>
-        this.setBrokerMembership(instanceId, deviceId, true),
+        this.setTargetMembership(instanceId, deviceId, true),
       unexposeDevice: async ({ instanceId, deviceId }) =>
-        this.setBrokerMembership(instanceId, deviceId, false),
+        this.setTargetMembership(instanceId, deviceId, false),
       listSupportedEntityKinds: async () => ['device', 'action', 'notifier'],
       listExposedEntities: async ({ instanceId }) => {
-        const scope = this.brokerScope(instanceId)
+        const scope = this.targetScope(instanceId)
         await exportedEntities.pruneDeleted()
         return [
           ...this.exposedDeviceRows(scope).map((row) => ({
@@ -488,14 +505,14 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
       },
       exposeEntity: async ({ instanceId, entity }) => {
         if (entity.kind === 'device')
-          return this.setBrokerMembership(instanceId, entity.deviceId, true)
-        this.brokerScope(instanceId)
+          return this.setTargetMembership(instanceId, entity.deviceId, true)
+        this.targetScope(instanceId)
         return exportedEntities.expose(entity)
       },
       unexposeEntity: async ({ instanceId, entity }) => {
         if (entity.kind === 'device')
-          return this.setBrokerMembership(instanceId, entity.deviceId, false)
-        this.brokerScope(instanceId)
+          return this.setTargetMembership(instanceId, entity.deviceId, false)
+        this.targetScope(instanceId)
         return exportedEntities.unexpose(entity)
       },
       getDeviceSettingsContribution: async ({ deviceId }) => this.buildContribution(deviceId),
@@ -526,6 +543,10 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
     return [
       { capability: deviceExportCapability, provider: exportProvider },
       {
+        capability: integrationInstancesCapability,
+        provider: this.requireInstances().toProvider(),
+      },
+      {
         capability: addonRoutesCapability,
         provider: buildAddonRouteProvider(ADDON_ID, routes),
       },
@@ -536,63 +557,33 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
     ]
   }
 
-  /**
-   * The form of the addon shows each instance's own switch and media role. They are not settings
-   * of this addon: the values come from the instance's `ha-export-links` record.
-   */
-  override async getGlobalSettings(
-    overlay?: Record<string, unknown>,
-    cap?: string,
-    nodeId?: string,
-  ) {
-    return super.getGlobalSettings({ ...overlay, ...linkFormOverlay(this.book()) }, cap, nodeId)
-  }
-
-  /**
-   * An operator write: the `exportTo:` / `mediaRole:` keys go to the record of their broker,
-   * everything else to the addon store as before. A key naming a broker this addon does not know
-   * is refused, never parked.
-   */
-  override async updateGlobalSettingsAsOperator(
-    patch: Record<string, unknown>,
-    nodeId?: string,
-  ): Promise<void> {
-    const rest: Record<string, unknown> = {}
-    const flags = new Map<string, { exportTo?: boolean; mediaRole?: HaMediaRole }>()
-    for (const [key, value] of Object.entries(patch)) {
-      const field = parseLinkFormKey(key)
-      if (field === null) {
-        rest[key] = value
-        continue
-      }
-      this.brokerScope(field.brokerId)
-      const entry = flags.get(field.brokerId) ?? {}
-      if (field.flag === 'exportTo') {
-        if (typeof value !== 'boolean') throw new Error(`ha-export: ${key} must be true or false`)
-        entry.exportTo = value
-      } else {
-        const role = HA_MEDIA_ROLES.find((candidate) => candidate === value)
-        if (role === undefined) throw new Error(`ha-export: ${key} is not a known address role`)
-        entry.mediaRole = role
-      }
-      flags.set(field.brokerId, entry)
-    }
-    for (const [brokerId, change] of flags) {
-      await this.book().setFlags(brokerId, this.brokerName(brokerId), change)
-    }
-    if (Object.keys(rest).length > 0 || flags.size === 0) {
-      await super.updateGlobalSettingsAsOperator(rest, nodeId)
-      return
-    }
-    await this.onConfigChanged()
-  }
-
   protected async onConfigChanged(): Promise<void> {
+    // A settings write before the targets are loaded (a migration clearing a key) has nothing to
+    // reconcile yet: the boot reconcile runs after them.
+    if (this.targetBook === null) return
     // The operator changed something (a token, an address, the component):
     // a parked link probes again now rather than after its recheck window.
     for (const link of this.links.values()) link.client.resetBackoff()
     await this.reconcile('config-changed')
     this.startTimer()
+  }
+
+  /**
+   * A target was created, edited, switched or deleted through `integration-instances`: reload
+   * the records, then apply them (a new connection opens, a removed one closes, a changed
+   * cadence restarts the timer). A deleted target's devices simply stop being exported.
+   */
+  private async onTargetChanged(id: string, change: TargetChange): Promise<void> {
+    await this.book().reload()
+    this.ctx.logger.info('ha-export: an export target changed', {
+      meta: { targetId: id, change },
+    })
+    await this.onConfigChanged()
+  }
+
+  private requireInstances(): RecordIntegrationInstances<HaExportTargetBody> {
+    if (this.instances === null) throw new Error('ha-export: the target instances are not open')
+    return this.instances
   }
 
   // ── Listeners ───────────────────────────────────────────────────────
@@ -1174,7 +1165,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
       // announce entities this Home Assistant cannot construct.
       await this.refreshComponentSupport()
 
-      const enabled = this.enabledBrokerIds()
+      const enabled = this.enabledTargetIds()
       const devices = await this.ctx.api.deviceManager.listAll.query({})
       const snapshots = await this.ctx.api.deviceState.getAllSnapshots.query({})
       const byId = new Map(devices.map((device) => [device.id, device]))
@@ -2423,91 +2414,73 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
     const haBrokers = await listHomeAssistantBrokers((input) =>
       this.ctx.api.broker.list.query(input),
     )
-    const known: KnownBroker[] = haBrokers.map((broker) => ({
-      id: broker.id,
-      name: broker.name,
-    }))
-
     /**
-     * NEVER prune on an empty enumeration.
+     * NEVER treat an empty enumeration as "the connections are gone".
      *
-     * `broker.list` is a fan-out union, so it answers `[]` for the whole window
-     * in which `provider-homeassistant` has not finished registering — and it
-     * registers its caps only at the END of an `initialize()` that restores 239
-     * devices. An empty list there means "I do not know yet", never "the
-     * operator deleted their instance", and the two were indistinguishable to
-     * this code: every boot pruned the membership to nothing and PERSISTED it,
-     * so the operator's exported cameras silently switched themselves off. Seen
-     * live on 2026-08-09 — two cameras exposed, `devices=4`, addon redeployed,
-     * `devices=2` and both switches back to `false` with no line anywhere.
-     *
-     * This is D49 exactly: a destructive step gated on a fallible read must not
-     * fire on the reading that destroys work. A broker that really was deleted
-     * is pruned on the next pass that returns a NON-empty list without it,
-     * which costs one interval and cannot cost the operator their config.
+     * `broker.list` is a fan-out union, so it answers `[]` for the whole window in which
+     * `provider-homeassistant` has not finished registering. An empty list there means "I do not
+     * know yet", never "the operator deleted their instance". A target whose connection is not in
+     * the list is UNCONFIGURED for this pass: it pushes nothing, and its devices stay in its
+     * record, so the next pass that sees the connection resumes them. Nothing is ever pruned or
+     * unexposed from here (D49; 2026-08-09, 2026-08-24).
      */
-    if (haBrokers.length === 0) {
-      if (this.book().brokerIds().length > 0) {
+    this.connections = new Set(haBrokers.map((broker) => broker.id))
+    this.refreshEnabledTargets()
+    for (const id of this.book().ids()) {
+      const target = this.book().get(id)
+      if (target === undefined || !this.book().isEnabled(id)) continue
+      if (!this.connectionExists(target.connectionId)) {
         this.ctx.logger.warn(
-          'ha-export: no Home Assistant broker answered — keeping the export links rather than pruning them',
-          { meta: { brokers: this.book().brokerIds() } },
+          haBrokers.length === 0
+            ? 'ha-export: no Home Assistant connection answered, so this export target is unconfigured for now; its devices stay in place'
+            : 'ha-export: the Home Assistant connection of this export target does not exist, so it is unconfigured; its devices stay in place',
+          { meta: { targetId: id, connectionId: target.connectionId } },
         )
       }
-    } else {
-      const gone = await this.book().prune(haBrokers.map((broker) => broker.id))
-      if (gone.length > 0) {
-        this.ctx.logger.info('ha-export: forgot the export links of removed instances', {
-          meta: { brokers: gone },
-        })
-      }
     }
-    /**
-     * Only the roster is a setting; the membership is not, so a boot-window read that answers
-     * empty can no longer erase it (2026-08-24: a refresh wrote `membership: {}` over the
-     * operator's export list). The records are read at boot and a failed read stops it.
-     */
-    if (!sameBrokers(known, this.config.knownBrokers)) {
-      await this.updateGlobalSettings({ knownBrokers: known })
-    }
-    this.refreshEnabledBrokers(known)
 
-    const wanted = new Set(this.enabledBrokerIds())
-    for (const [brokerId, link] of this.links) {
-      if (wanted.has(brokerId)) continue
+    const wanted = new Set(this.enabledTargetIds())
+    for (const [targetId, link] of this.links) {
+      if (wanted.has(targetId) && link.connectionId === this.book().connectionId(targetId)) {
+        continue
+      }
       await link.client.dispose()
-      this.links.delete(brokerId)
-      // A broker that comes back is a component that may have been updated
+      this.links.delete(targetId)
+      // A target that comes back is a component that may have been updated
       // while it was gone; nothing negotiated survives its absence.
-      this.componentSupport.forget(brokerId)
-      this.ctx.logger.info('ha-export: stopped exporting to a broker', {
-        meta: { brokerId },
+      this.componentSupport.forget(targetId)
+      this.ctx.logger.info('ha-export: stopped exporting to a target', {
+        meta: { targetId, connectionId: link.connectionId },
       })
     }
 
-    for (const broker of haBrokers) {
-      if (!wanted.has(broker.id)) continue
-      if (this.links.has(broker.id)) continue
-      const resolved = await this.resolveBrokerConnection(broker.id, broker.addonId)
+    for (const targetId of wanted) {
+      if (this.links.has(targetId)) continue
+      const connectionId = this.book().connectionId(targetId)
+      const broker = haBrokers.find((candidate) => candidate.id === connectionId)
+      if (broker === undefined) continue
+      const resolved = await this.resolveBrokerConnection(connectionId, broker.addonId)
       if (resolved === null) continue
       const client = new PushClient({
         transport: (message) => postToHomeAssistant(resolved.baseUrl, resolved.token, message),
         logger: this.ctx.logger,
-        brokerId: broker.id,
-        onLinkRestored: (brokerId) => this.reachability.request(brokerId),
+        brokerId: targetId,
+        onLinkRestored: (restoredId) => this.reachability.request(restoredId),
       })
       client.start()
       // A link opened now has an empty dedup cache and a receiver we have not
       // spoken to: the pass that follows is a full resync.
       this.resync.markGap('broker-connected')
-      this.links.set(broker.id, {
-        brokerId: broker.id,
-        name: broker.name,
+      this.links.set(targetId, {
+        brokerId: targetId,
+        connectionId,
+        name: this.book().name(targetId),
         baseUrl: resolved.baseUrl,
         token: resolved.token,
         client,
       })
       this.ctx.logger.info('ha-export: exporting to Home Assistant', {
-        meta: { brokerId: broker.id, baseUrl: resolved.baseUrl },
+        meta: { targetId, connectionId, baseUrl: resolved.baseUrl },
       })
     }
   }
@@ -2631,42 +2604,74 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
   }
 
   /**
-   * The brokers switched on, as of the last {@link refreshEnabledBrokers}.
-   *
-   * NOT read from `this.config`: the switch is a fact of the instance's `ha-export-links`
+   * The targets that push, as of the last {@link refreshEnabledTargets}: switched on AND with a
+   * connection the hub knows. NOT read from `this.config`: the switch is a fact of the target's
    * record, and this is a read-through cache of it, refreshed at the top of every reconcile pass
    * and before the per-device panel renders, never written to.
    */
   private enabled: readonly string[] = []
 
-  /** The `ha-export-links` records, loaded at boot after the migrations. */
-  private linkBook: ExportLinks | null = null
+  /** The `ha-export-targets` records, loaded at boot after the migrations. */
+  private targetBook: ExportTargets | null = null
 
-  private book(): ExportLinks {
-    if (this.linkBook === null) throw new Error('ha-export: the export links are not loaded yet')
-    return this.linkBook
+  private book(): ExportTargets {
+    if (this.targetBook === null)
+      throw new Error('ha-export: the export targets are not loaded yet')
+    return this.targetBook
   }
 
-  /** brokerId → exported device ids, from the records. */
+  /** targetId → exported device ids, from the records. */
   private membership(): ExportMembership {
     return this.book().membership()
   }
 
-  /** Persist a membership change: each instance's record first, the in-memory copy after it. */
+  /** Persist a membership change: each target's record first, the in-memory copy after it. */
   private async persistMembership(next: ExportMembership): Promise<void> {
-    await this.book().setMembership(next, (brokerId) => this.brokerName(brokerId))
+    await this.book().setMembership(next)
   }
 
-  private refreshEnabledBrokers(known: readonly KnownBroker[]): void {
-    this.enabled = known.map((broker) => broker.id).filter((id) => this.book().isEnabled(id))
+  private connectionExists(connectionId: string): boolean {
+    return connectionId.length > 0 && this.connections.has(connectionId)
   }
 
-  private enabledBrokerIds(): readonly string[] {
+  private refreshEnabledTargets(): void {
+    this.enabled = this.book()
+      .ids()
+      .filter(
+        (id) => this.book().isEnabled(id) && this.connectionExists(this.book().connectionId(id)),
+      )
+  }
+
+  private enabledTargetIds(): readonly string[] {
     return this.enabled
   }
 
-  private brokerName(brokerId: string): string {
-    return this.config.knownBrokers.find((broker) => broker.id === brokerId)?.name ?? brokerId
+  private targetName(targetId: string): string {
+    return this.book().name(targetId)
+  }
+
+  /** The Status column of the instances table: why a target is, or is not, pushing. */
+  private targetHealth(id: string, body: HaExportTargetBody): IntegrationInstanceStatus {
+    if (body.enabled === false) return { state: 'off', label: 'Off' }
+    if (!this.connectionExists(body.connectionId)) {
+      return {
+        state: 'error',
+        label: 'Unconfigured',
+        detail:
+          body.connectionId.length === 0
+            ? 'Pick the Home Assistant connection this target pushes to'
+            : 'The Home Assistant connection of this target does not exist',
+      }
+    }
+    const link = this.links.get(id)
+    if (link === undefined) return { state: 'unknown', label: 'Not connected yet' }
+    return link.client.healthy
+      ? { state: 'ok', label: 'Connected' }
+      : {
+          state: 'error',
+          label: 'Unreachable',
+          detail: link.client.failure?.text ?? 'unreachable',
+        }
   }
 
   // ── Commands ────────────────────────────────────────────────────────
@@ -3092,7 +3097,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
 
   /**
    * Each broker's media base, read per use: the palette's role the broker chose
-   * (the `ha-export-links` record's `mediaRole`, `publicEndpoint` by default, internal when none is set). A role that resolves to nothing
+   * (the export target record's `mediaRole`, `publicEndpoint` by default, internal when none is set). A role that resolves to nothing
    * is `null` and says so — the image entities then carry no value, which reads as
    * empty rather than as a broken link.
    */
@@ -3133,12 +3138,11 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
   // ── Membership ──────────────────────────────────────────────────────
 
   /**
-   * Every broker this addon knows, enabled or not: a membership write may
-   * target a broker that is switched off (its devices resume when it is turned
-   * back on). A cold `knownBrokers` still counts the enabled ids.
+   * Every target this addon holds, enabled or not: a membership write may target one that is
+   * switched off or unconfigured (its devices resume when it is turned back on).
    */
-  private knownBrokerIds(): ReadonlySet<string> {
-    return new Set([...this.config.knownBrokers.map((b) => b.id), ...this.enabledBrokerIds()])
+  private knownTargetIds(): ReadonlySet<string> {
+    return new Set(this.book().ids())
   }
 
   /**
@@ -3146,9 +3150,9 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
    * (absent) every enabled broker. A broker this addon does not know is
    * refused, never answered empty.
    */
-  private brokerScope(instanceId: string | undefined): readonly string[] {
-    if (instanceId === undefined) return this.enabledBrokerIds()
-    if (!this.knownBrokerIds().has(instanceId)) {
+  private targetScope(instanceId: string | undefined): readonly string[] {
+    if (instanceId === undefined) return this.enabledTargetIds()
+    if (!this.knownTargetIds().has(instanceId)) {
       throw new ExportInstanceUnknownError('provider-homeassistant', instanceId)
     }
     return [instanceId]
@@ -3158,7 +3162,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
     return exposedDeviceIds(this.membership(), scope).map((deviceId) => ({
       deviceId,
       exposedAs: brokersExposing(this.membership(), deviceId)
-        .map((brokerId) => this.brokerName(brokerId))
+        .map((brokerId) => this.targetName(brokerId))
         .join(', '),
     }))
   }
@@ -3168,122 +3172,34 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
    * instance. There is no write without a target and no "everywhere": the
    * other brokers' membership is not touched.
    */
-  private async setBrokerMembership(
+  private async setTargetMembership(
     instanceId: string,
     deviceId: string,
     exposed: boolean,
   ): Promise<void> {
-    this.brokerScope(instanceId)
+    this.targetScope(instanceId)
     const next = setExposed(this.membership(), instanceId, deviceId, exposed)
     if (next === this.membership()) {
       this.ctx.logger.debug('ha-export: membership already in that state, nothing to do', {
         tags: { deviceId: Number(deviceId) },
-        meta: { exposed, brokerId: instanceId },
+        meta: { exposed, targetId: instanceId },
       })
       return
     }
     await this.persistMembership(next)
     this.ctx.logger.info('ha-export: export membership changed', {
       tags: { deviceId: Number(deviceId) },
-      meta: { exposed, brokerId: instanceId },
+      meta: { exposed, targetId: instanceId },
     })
     await this.reconcile(exposed ? 'expose' : 'unexpose')
   }
 
   // ── UI ──────────────────────────────────────────────────────────────
 
-  protected globalSettingsSchema(): ConfigUISchema {
-    const brokerFields = this.config.knownBrokers.map((broker) => ({
-      type: 'boolean' as const,
-      key: exportToFormKey(broker.id),
-      label: broker.name,
-      style: 'switch' as const,
-      default: false,
-    }))
-    return {
-      sections: [
-        {
-          id: 'ha-export-brokers',
-          title: 'Home Assistant instances',
-          titleKey: 'provider-homeassistant:globalSettings.s_ha-export-brokers.title',
-          description:
-            brokerFields.length > 0
-              ? 'An instance that is off receives nothing; its exported devices resume when it is turned back on. Export needs the CamStack custom component installed in Home Assistant (HACS).'
-              : 'No Home Assistant broker is registered yet.',
-          columns: 1,
-          fields:
-            brokerFields.length > 0
-              ? brokerFields
-              : [
-                  {
-                    type: 'info' as const,
-                    key: 'ha-export:__no-brokers',
-                    label: 'No brokers',
-                    labelKey:
-                      'provider-homeassistant:globalSettings.s_ha-export-brokers.ha-export___no-brokers.label',
-                    content: 'Register a Home Assistant broker to enable the export.',
-                    variant: 'warning' as const,
-                  },
-                ],
-        },
-        // One media role per Home Assistant instance, kept beside its export switch in the `ha-export-links` record.
-        // The role is read from the hub's address palette on every use; no URL is stored.
-        ...(this.config.knownBrokers.length > 0
-          ? [
-              {
-                id: 'ha-export-transport',
-                title: 'Connection',
-                titleKey: 'provider-homeassistant:globalSettings.s_ha-export-transport.title',
-                description:
-                  'The hub address each Home Assistant instance fetches image links from. Public endpoint is the default, so notifications show images away from home; when none is set the internal address is used. Choose Internal to never use the public endpoint.',
-                columns: 1 as const,
-                fields: this.config.knownBrokers.map((broker) => ({
-                  type: 'select' as const,
-                  key: mediaRoleFormKey(broker.id),
-                  label: `Image links for ${broker.name}`,
-                  options: [
-                    { value: 'internal', label: 'Internal (LAN address)' },
-                    {
-                      value: 'publicEndpoint',
-                      label: 'Public endpoint (reachable from outside)',
-                    },
-                  ],
-                  default: 'publicEndpoint',
-                })),
-              },
-            ]
-          : []),
-        // Tuning, not setup: collapsed so the page opens on what an operator
-        // has to check (the exporter page pattern).
-        {
-          id: 'ha-export-advanced',
-          title: 'Advanced',
-          titleKey: 'provider-homeassistant:globalSettings.s_ha-export-advanced.title',
-          style: 'accordion' as const,
-          defaultCollapsed: true,
-          columns: 1,
-          fields: [
-            {
-              type: 'number' as const,
-              key: 'reconcileIntervalSec',
-              label: 'Reconcile interval (s)',
-              labelKey:
-                'provider-homeassistant:globalSettings.s_ha-export-advanced.reconcileIntervalSec.label',
-              description: 'Full re-announce and re-push cadence.',
-              descriptionKey:
-                'provider-homeassistant:globalSettings.s_ha-export-advanced.reconcileIntervalSec.description',
-              default: DEFAULT_CONFIG.reconcileIntervalSec,
-            },
-          ],
-        },
-      ],
-    }
-  }
-
   /**
    * Per-device Export panel — one switch PER BROKER.
    *
-   * Field keys are namespaced `haExport:<deviceId>:<brokerId>`: the
+   * Field keys are namespaced `haExport:<deviceId>:<targetId>`: the
    * device-details form flattens fields by key across every contributing
    * section, so a bare `enabled` collides with the Alexa and HomeKit
    * exporters' identically-named fields and the operator sees another
@@ -3292,16 +3208,18 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
   private async buildContribution(deviceId: number): Promise<ConfigUISchemaWithValues> {
     // Refreshed here, not just on the reconcile: the panel is opened straight
     // after the operator flips an instance on, and a switch list one reconcile
-    // behind renders "Not configured" over a broker that IS enabled.
-    this.refreshEnabledBrokers(this.config.knownBrokers)
+    // behind renders "Not configured" over a target that IS enabled. Every enabled target is
+    // offered, connected or not: a switch on an unconfigured target keeps the device for later.
     const idStr = String(deviceId)
-    const enabled = this.enabledBrokerIds()
-    const fields = enabled.map((brokerId) => ({
+    const enabled = this.book()
+      .ids()
+      .filter((id) => this.book().isEnabled(id))
+    const fields = enabled.map((targetId) => ({
       type: 'boolean' as const,
-      key: `haExport:${deviceId}:${brokerId}`,
-      label: `Export to ${this.brokerName(brokerId)}`,
+      key: `haExport:${deviceId}:${targetId}`,
+      label: `Export to ${this.targetName(targetId)}`,
       style: 'switch' as const,
-      value: isExposed(this.membership(), brokerId, idStr),
+      value: isExposed(this.membership(), targetId, idStr),
       immediate: true,
     }))
     return {
@@ -3313,8 +3231,8 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
           titleKey: 'provider-homeassistant:contribution.s_ha-export.title',
           description:
             enabled.length > 0
-              ? 'Each instance receives only the devices switched on for it.'
-              : 'No Home Assistant instance is enabled for export.',
+              ? 'Each target receives only the devices switched on for it.'
+              : 'No Home Assistant export target is enabled.',
           tab: 'export',
           columns: 1,
           order: 30,
@@ -3326,7 +3244,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
                     type: 'info' as const,
                     key: `haExport:${deviceId}:__none`,
                     label: 'Not configured',
-                    content: 'Enable a Home Assistant instance in the addon settings first.',
+                    content: 'Add an export target on the Connectivity page first.',
                     variant: 'info' as const,
                   },
                 ],
@@ -3345,10 +3263,10 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
     /**
      * Driven by the PATCH KEYS, not by the enabled-broker list.
      *
-     * The key already carries the broker (`haExport:<deviceId>:<brokerId>`) —
+     * The key already carries the broker (`haExport:<deviceId>:<targetId>`) —
      * the operator could not have been shown the switch otherwise — so reading
      * the broker from it needs no other state to be warm. Iterating
-     * `enabledBrokerIds()` instead made this depend on a read-through cache,
+     * `enabledTargetIds()` instead made this depend on a read-through cache,
      * and when that cache was cold the loop matched nothing, `touched` stayed
      * false, and the method returned `{success: true}` HAVING DONE NOTHING.
      * The admin UI showed the switch flip and it silently did not persist;
@@ -3358,9 +3276,19 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
     const prefix = `haExport:${deviceId}:`
     for (const [key, value] of Object.entries(patch)) {
       if (!key.startsWith(prefix)) continue
-      const brokerId = key.slice(prefix.length)
-      if (brokerId.length === 0) continue
-      next = setExposed(next, brokerId, idStr, value === true)
+      const targetId = key.slice(prefix.length)
+      if (targetId.length === 0) continue
+      if (!this.book().has(targetId)) {
+        this.ctx.logger.warn(
+          'ha-export: a device patch names an export target that does not exist',
+          {
+            tags: { deviceId },
+            meta: { targetId },
+          },
+        )
+        continue
+      }
+      next = setExposed(next, targetId, idStr, value === true)
       touched = true
     }
     if (!touched) {
@@ -3371,9 +3299,9 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
       return { success: true }
     }
     await this.persistMembership(next)
-    this.ctx.logger.info('ha-export: per-broker export membership changed', {
+    this.ctx.logger.info('ha-export: per-target export membership changed', {
       tags: { deviceId },
-      meta: { brokers: brokersExposing(next, idStr) },
+      meta: { targets: brokersExposing(next, idStr) },
     })
     await this.reconcile('device-panel')
     return { success: true }
@@ -3394,9 +3322,16 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
       .map(([, link]) => link)
     const healthy = links.filter((link) => link.client.healthy).length
     const failures = links.map((link) => link.client.failure).filter((failure) => failure !== null)
-    const linkFailure = failures[0]?.text
+    const unconfigured = scope.filter(
+      (id) => this.book().isEnabled(id) && !this.connectionExists(this.book().connectionId(id)),
+    )
+    const linkFailure =
+      failures[0]?.text ??
+      (unconfigured.length > 0
+        ? `The Home Assistant connection of ${unconfigured.map((id) => this.targetName(id)).join(', ')} is not set or does not exist`
+        : undefined)
     const linkState =
-      enabled.length === 0 ? 'unlinked' : healthy === links.length ? 'linked' : 'error'
+      links.length === 0 ? 'unlinked' : healthy === links.length ? 'linked' : 'error'
     return {
       linkState,
       exposedDeviceCount: exposedDeviceIds(this.membership(), enabled).length,
@@ -3408,7 +3343,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
       setup: {
         fields: [
           {
-            label: 'Home Assistant instances',
+            label: 'Export targets',
             value: `${healthy} / ${links.length} reachable`,
           },
           {
@@ -3429,7 +3364,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
 
   private startTimer(): void {
     this.stopTimer()
-    const ms = Math.max(30, this.config.reconcileIntervalSec) * 1000
+    const ms = this.book().reconcileIntervalSec() * 1000
     this.reconcileTimer = setInterval(() => void this.reconcile('periodic'), ms)
   }
 

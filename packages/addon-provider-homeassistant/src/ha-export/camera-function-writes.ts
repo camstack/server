@@ -28,7 +28,9 @@ export interface CameraFunctionWriteApi {
    *  `recording` became a device collection (D625) — one reader and one
    *  writer, so an HA switch cannot disagree with the admin UI. */
   readonly recordingArchive: {
-    readonly getDeviceConfig: { query(input: { deviceId: number }): Promise<RecordingConfigShape> }
+    readonly getDeviceConfig: {
+      query(input: { deviceId: number }): Promise<RecordingConfigShape>
+    }
     readonly setDeviceConfig: {
       mutate(input: { deviceId: number; config: RecordingConfigShape }): Promise<unknown>
     }
@@ -54,7 +56,9 @@ export interface CameraFunctionWriteApi {
 }
 
 /** Opaque on purpose: here we read and rewrite, we do not interpret. */
-export type RecordingConfigShape = Readonly<Record<string, unknown>> & { readonly enabled: boolean }
+export type RecordingConfigShape = Readonly<Record<string, unknown>> & {
+  readonly enabled: boolean
+}
 
 export async function applyCameraFunctionWrite(
   api: CameraFunctionWriteApi,
@@ -64,7 +68,10 @@ export async function applyCameraFunctionWrite(
 ): Promise<void> {
   switch (write.kind) {
     case 'device-disabled':
-      await api.deviceManager.setDisabled.mutate({ deviceId, disabled: write.disabled })
+      await api.deviceManager.setDisabled.mutate({
+        deviceId,
+        disabled: write.disabled,
+      })
       return
     case 'wrapper-binding':
       await api.deviceManager.setWrapperActive.mutate({
@@ -76,7 +83,9 @@ export async function applyCameraFunctionWrite(
       return
     case 'recording-enabled': {
       // Re-read and resend: `bands` belongs to the operator, `mode` derives from it.
-      const config = await api.recordingArchive.getDeviceConfig.query({ deviceId })
+      const config = await api.recordingArchive.getDeviceConfig.query({
+        deviceId,
+      })
       await api.recordingArchive.setDeviceConfig.mutate({
         deviceId,
         config: { ...config, enabled: write.enabled },
@@ -84,14 +93,23 @@ export async function applyCameraFunctionWrite(
       return
     }
     case 'notification-mute':
-      await api.notificationRules.setDeviceMuted.mutate({ deviceId, muted: write.muted })
+      await api.notificationRules.setDeviceMuted.mutate({
+        deviceId,
+        muted: write.muted,
+      })
       return
     case 'camera-mask':
       // `enabled` and nothing else: `regions` is the operator's drawing.
-      await api.privacyMask.setMask.mutate({ deviceId, patch: { enabled: write.enabled } })
+      await api.privacyMask.setMask.mutate({
+        deviceId,
+        patch: { enabled: write.enabled },
+      })
       return
     case 'camera-audio':
-      await api.privacyMask.setAudioEnabled.mutate({ deviceId, enabled: write.enabled })
+      await api.privacyMask.setAudioEnabled.mutate({
+        deviceId,
+        enabled: write.enabled,
+      })
       return
     case 'broker-audio-mute':
       if (sourceNodeId === null) {

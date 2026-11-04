@@ -130,7 +130,11 @@ describe('a refused command says why', () => {
     expect(outcome.ok).toBe(false)
     if (outcome.ok) return
     expect(
-      commandNotAppliedBody({ ok: false, reason: outcome.reason, message: outcome.error }),
+      commandNotAppliedBody({
+        ok: false,
+        reason: outcome.reason,
+        message: outcome.error,
+      }),
     ).toEqual({
       error: 'command not applied',
       reason: 'refused',

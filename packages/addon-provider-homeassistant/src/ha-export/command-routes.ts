@@ -762,9 +762,21 @@ export const CAP_COMMAND_ROUTES: Readonly<Record<string, CapCommandRoute>> = {
       'vario-speed-plus': dishwasherSwitch('vario-speed-plus'),
     },
     commands: {
-      start: (deviceId) => ({ kind: 'dishwasher-verb', deviceId, verb: 'start' }),
-      pause: (deviceId) => ({ kind: 'dishwasher-verb', deviceId, verb: 'pause' }),
-      resume: (deviceId) => ({ kind: 'dishwasher-verb', deviceId, verb: 'resume' }),
+      start: (deviceId) => ({
+        kind: 'dishwasher-verb',
+        deviceId,
+        verb: 'start',
+      }),
+      pause: (deviceId) => ({
+        kind: 'dishwasher-verb',
+        deviceId,
+        verb: 'pause',
+      }),
+      resume: (deviceId) => ({
+        kind: 'dishwasher-verb',
+        deviceId,
+        verb: 'resume',
+      }),
       stop: (deviceId) => ({ kind: 'dishwasher-verb', deviceId, verb: 'stop' }),
     },
   },
@@ -1221,7 +1233,9 @@ export async function applyCapCommand(
           if (!Number.isFinite(numeric)) {
             throw new Error(`control value is not a number: ${command.value}`)
           }
-          await control.setValue({ control: { kind: 'numeric', value: numeric } })
+          await control.setValue({
+            control: { kind: 'numeric', value: numeric },
+          })
           return
         }
         if (kind === 'select' || kind === 'text' || kind === 'datetime') {
@@ -1423,7 +1437,9 @@ export async function applyCapCommand(
       )
     case 'color-mireds':
       return call(device.color, 'color', (color) =>
-        color.setColor({ color: { mode: 'mired', colorTemperature: command.mireds } }),
+        color.setColor({
+          color: { mode: 'mired', colorTemperature: command.mireds },
+        }),
       )
     case 'script-verb':
       return call(device.scriptRunner, 'script-runner', (script) =>

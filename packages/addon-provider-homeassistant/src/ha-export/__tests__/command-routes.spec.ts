@@ -436,7 +436,11 @@ describe('resolveCommand — the derived half', () => {
     }
     expect(resolveCommand(target, 'control', 'it536 - 5.6.7.8')).toEqual({
       ok: true,
-      command: { kind: 'cap-control', deviceId: 4652, value: 'it536 - 5.6.7.8' },
+      command: {
+        kind: 'cap-control',
+        deviceId: 4652,
+        value: 'it536 - 5.6.7.8',
+      },
     })
     const calls: RecordedCall[] = []
     const outcome = await applyCapCommand(

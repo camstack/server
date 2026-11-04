@@ -1,7 +1,7 @@
 /**
  * Home Assistant pulls images from the hub, so the media base is a hub address ROLE
  * (D734, D986 §5): `publicEndpoint` by default (falling back to `internal` when none is set), `internal` when that broker's
- * `ha-export-links` record says so. Read per use from the palette, never stored as a URL.
+ * `ha-export-targets` record says so. Read per use from the palette, never stored as a URL.
  */
 import { describe, expect, it } from 'vitest'
 import {

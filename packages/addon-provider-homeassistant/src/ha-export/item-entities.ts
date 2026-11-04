@@ -148,7 +148,9 @@ const ExportConsumableItemSchema = ConsumableItemSchema.extend({
 })
 type ExportConsumableItem = z.infer<typeof ExportConsumableItemSchema>
 
-const ExportConsumablesSchema = z.object({ items: z.array(ExportConsumableItemSchema) })
+const ExportConsumablesSchema = z.object({
+  items: z.array(ExportConsumableItemSchema),
+})
 
 /**
  * A worn part's life is a diagnostic; a tank's fill is what the device page
@@ -237,7 +239,10 @@ function consumableEntities(item: ExportConsumableItem): readonly ItemEntity[] {
 function consumableValues(item: ExportConsumableItem): readonly ItemEntityValue[] {
   const out: ItemEntityValue[] = []
   if (item.level !== null) {
-    out.push({ entity: consumableEntity(item.key, 'level'), value: String(item.level) })
+    out.push({
+      entity: consumableEntity(item.key, 'level'),
+      value: String(item.level),
+    })
   }
   /**
    * A null verdict is published OUTSIDE the enum, which the component reads
@@ -310,7 +315,10 @@ export function projectItemSlice(
   if (mapping === undefined) return null
   const values = mapping.values(slice)
   if (values === null) return null
-  return values.map((v) => ({ topic: stateTopic(deviceKey, v.entity), value: v.value }))
+  return values.map((v) => ({
+    topic: stateTopic(deviceKey, v.entity),
+    value: v.value,
+  }))
 }
 
 /** True for a capability whose entities are minted per item. */

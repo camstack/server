@@ -1633,7 +1633,12 @@ export const CAP_ENTITY_MAP: Readonly<Record<string, CapEntityMapping>> = {
         enabledByDefault: false,
         entityCategory: 'diagnostic',
       },
-      power: { platform: 'switch', field: 'powerOn', label: 'Power', writable: true },
+      power: {
+        platform: 'switch',
+        field: 'powerOn',
+        label: 'Power',
+        writable: true,
+      },
       'child-lock': {
         platform: 'switch',
         field: 'childLock',
@@ -1693,7 +1698,11 @@ export const CAP_ENTITY_MAP: Readonly<Record<string, CapEntityMapping>> = {
     commands: {
       start: { label: 'Start', icon: 'mdi:play' },
       pause: { label: 'Pause', icon: 'mdi:pause' },
-      resume: { label: 'Resume', icon: 'mdi:play-pause', enabledByDefault: false },
+      resume: {
+        label: 'Resume',
+        icon: 'mdi:play-pause',
+        enabledByDefault: false,
+      },
       stop: { label: 'Stop', icon: 'mdi:stop', enabledByDefault: false },
     },
   },

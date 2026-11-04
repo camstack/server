@@ -1,6 +1,6 @@
 /**
- * Two Home Assistant instances, two roles, two media bases: the track image link each broker
- * receives is minted on THAT broker's role (its `ha-export-links` record), read from the palette on every
+ * Two export targets, two roles, two media bases: the track image link each broker
+ * receives is minted on THAT broker's role (its `ha-export-targets` record), read from the palette on every
  * event (D986 §5). Disarm: mint one shared base again and both brokers carry the same URL.
  */
 import type { IScopedLogger } from '@camstack/types'
@@ -54,7 +54,7 @@ function harness(
       },
     },
   })
-  Reflect.set(addon, 'linkBook', {
+  Reflect.set(addon, 'targetBook', {
     mediaRole: (id: string) => roles[id] ?? 'internal',
   })
   Reflect.set(addon, 'mediaSecret', 'secret')

@@ -206,9 +206,17 @@ export class ExportedEntities {
       return
     }
     const refs: ExportEntityRef[] = [
-      ...this.state.actions.map((e): ExportEntityRef => ({ kind: 'action', actionId: e.actionId })),
+      ...this.state.actions.map(
+        (e): ExportEntityRef => ({
+          kind: 'action',
+          actionId: e.actionId,
+        }),
+      ),
       ...this.state.targets.map(
-        (e): ExportEntityRef => ({ kind: 'notifier', targetId: e.targetId }),
+        (e): ExportEntityRef => ({
+          kind: 'notifier',
+          targetId: e.targetId,
+        }),
       ),
     ]
     const { dropped } = pruneDeletedEntities(

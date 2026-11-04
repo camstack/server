@@ -171,10 +171,20 @@ export const NATIVE_CAP_PLATFORMS: Readonly<Record<string, NativePlatformMapping
         step: 1,
         requiresFeature: 'cover-positionable',
       },
-      tilt: { from: 'tilt', min: 0, max: 100, step: 1, requiresFeature: 'cover-tilt' },
+      tilt: {
+        from: 'tilt',
+        min: 0,
+        max: 100,
+        step: 1,
+        requiresFeature: 'cover-tilt',
+      },
       open: { from: 'open', commandOnly: true },
       close: { from: 'close', commandOnly: true },
-      stop: { from: 'stop', commandOnly: true, requiresFeature: 'cover-stoppable' },
+      stop: {
+        from: 'stop',
+        commandOnly: true,
+        requiresFeature: 'cover-stoppable',
+      },
     },
   },
   /** `ValveStatusSchema` — the cover lifecycle without tilt. */
@@ -260,7 +270,13 @@ export const NATIVE_CAP_PLATFORMS: Readonly<Record<string, NativePlatformMapping
    */
   'fan-control': {
     platform: 'fan',
-    primary: { from: null, min: 0, max: 100, step: 1, stepField: 'percentageStep' },
+    primary: {
+      from: null,
+      min: 0,
+      max: 100,
+      step: 1,
+      stepField: 'percentageStep',
+    },
     controls: {
       preset: { from: 'preset', optionsField: 'availablePresets' },
       oscillation: { from: 'oscillating' },
@@ -451,7 +467,10 @@ function resolveEntity(input: NativeBuildInput, suffix: string | null): Resolved
 function resolveBinding(
   input: NativeBuildInput,
   binding: NativeControlBinding,
-): { readonly entities: readonly string[]; readonly control: HaNativeControl } | null {
+): {
+  readonly entities: readonly string[]
+  readonly control: HaNativeControl
+} | null {
   const { deviceKey } = input
   const source = resolveEntity(input, binding.from)
   if (source === null) return null

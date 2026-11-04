@@ -48,7 +48,10 @@ const TWO_ITEMS: ConsumablesStatus = {
   ],
 }
 
-const ONE_ITEM: ConsumablesStatus = { ...TWO_ITEMS, items: TWO_ITEMS.items.slice(0, 1) }
+const ONE_ITEM: ConsumablesStatus = {
+  ...TWO_ITEMS,
+  items: TWO_ITEMS.items.slice(0, 1),
+}
 
 interface Harness {
   readonly addon: HaExportAddon

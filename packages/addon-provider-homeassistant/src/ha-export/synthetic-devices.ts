@@ -91,7 +91,11 @@ export function deriveAlertSummary(alerts: readonly AlertSummaryInput[]): AlertS
     (top, a) => (top === null || a.updatedAt > top.updatedAt ? a : top),
     null,
   )
-  return { active: relevant.length > 0, count: relevant.length, lastTitle: last?.title ?? null }
+  return {
+    active: relevant.length > 0,
+    count: relevant.length,
+    lastTitle: last?.title ?? null,
+  }
 }
 
 // ── Inputs ──────────────────────────────────────────────────────────────
@@ -456,15 +460,30 @@ function serverSpecs(input: SyntheticInput): readonly SyntheticSpec[] {
       // the name.
       icon: 'mdi:server-network',
     },
-    { entity: 'nodes_online', platform: 'sensor', label: 'Nodes online', icon: 'mdi:server' },
-    { entity: 'nodes_total', platform: 'sensor', label: 'Nodes total', icon: 'mdi:server' },
+    {
+      entity: 'nodes_online',
+      platform: 'sensor',
+      label: 'Nodes online',
+      icon: 'mdi:server',
+    },
+    {
+      entity: 'nodes_total',
+      platform: 'sensor',
+      label: 'Nodes total',
+      icon: 'mdi:server',
+    },
     {
       entity: 'addons_healthy',
       platform: 'binary_sensor',
       label: 'Addons healthy',
       icon: 'mdi:puzzle-check',
     },
-    { entity: 'addons_running', platform: 'sensor', label: 'Addons running', icon: 'mdi:puzzle' },
+    {
+      entity: 'addons_running',
+      platform: 'sensor',
+      label: 'Addons running',
+      icon: 'mdi:puzzle',
+    },
     {
       entity: 'addons_failed',
       platform: 'sensor',
@@ -641,7 +660,10 @@ function projectTriggerFacts(
   t: SyntheticLastTrigger,
 ): readonly SyntheticStateValue[] {
   const values: SyntheticStateValue[] = [
-    { topic: stateTopic(deviceKey, entityFor('at')), value: new Date(t.at).toISOString() },
+    {
+      topic: stateTopic(deviceKey, entityFor('at')),
+      value: new Date(t.at).toISOString(),
+    },
     { topic: stateTopic(deviceKey, entityFor('camera')), value: t.deviceName },
     { topic: stateTopic(deviceKey, entityFor('label')), value: t.label },
     { topic: stateTopic(deviceKey, entityFor('status')), value: t.status },
@@ -651,7 +673,10 @@ function projectTriggerFacts(
   // link that 404s. The entity then holds its previous known picture (or
   // `unknown` if it never had one) until a later pass mints a fresh one.
   if (t.imageUrl !== null) {
-    values.push({ topic: stateTopic(deviceKey, entityFor('image')), value: t.imageUrl })
+    values.push({
+      topic: stateTopic(deviceKey, entityFor('image')),
+      value: t.imageUrl,
+    })
   }
   return values
 }
@@ -687,21 +712,45 @@ export function projectSynthetic(
       value: String(online.length === input.nodes.length),
     },
     { topic: stateTopic(srv, 'nodes_online'), value: String(online.length) },
-    { topic: stateTopic(srv, 'nodes_total'), value: String(input.nodes.length) },
-    { topic: stateTopic(srv, 'addons_healthy'), value: String(input.addonsFailed === 0) },
-    { topic: stateTopic(srv, 'addons_running'), value: String(input.addonsRunning) },
-    { topic: stateTopic(srv, 'addons_failed'), value: String(input.addonsFailed) },
+    {
+      topic: stateTopic(srv, 'nodes_total'),
+      value: String(input.nodes.length),
+    },
+    {
+      topic: stateTopic(srv, 'addons_healthy'),
+      value: String(input.addonsFailed === 0),
+    },
+    {
+      topic: stateTopic(srv, 'addons_running'),
+      value: String(input.addonsRunning),
+    },
+    {
+      topic: stateTopic(srv, 'addons_failed'),
+      value: String(input.addonsFailed),
+    },
     { topic: stateTopic(srv, 'server_version'), value: input.serverVersion },
-    { topic: stateTopic(srv, 'update_available'), value: String(input.updateAvailable) },
-    { topic: stateTopic(srv, 'alerts_active'), value: String(input.alertsActive) },
-    { topic: stateTopic(srv, 'alerts_active_count'), value: String(input.alertsActiveCount) },
+    {
+      topic: stateTopic(srv, 'update_available'),
+      value: String(input.updateAvailable),
+    },
+    {
+      topic: stateTopic(srv, 'alerts_active'),
+      value: String(input.alertsActive),
+    },
+    {
+      topic: stateTopic(srv, 'alerts_active_count'),
+      value: String(input.alertsActiveCount),
+    },
   ]
 
   // The last trigger, five facts plus its picture — absent entirely when
   // nothing has fired yet (or the read failed this pass), which leaves every
   // one of the six entities at `unknown` rather than at an invented value.
   if (input.lastTrigger !== null) {
-    values.push({ topic: stateTopic(nc, 'last_trigger_rule'), value: input.lastTrigger.ruleName })
+    values.push({
+      topic: stateTopic(nc, 'last_trigger_rule'),
+      value: input.lastTrigger.ruleName,
+    })
     values.push(...projectTriggerFacts(nc, (suffix) => `last_trigger_${suffix}`, input.lastTrigger))
   }
 
@@ -722,7 +771,10 @@ export function projectSynthetic(
   // Never `''`: HA renders an empty string as a valid state, so "no alert" has
   // to be silence on this one topic rather than a blank sensor.
   if (input.alertsLastTitle !== null) {
-    values.push({ topic: stateTopic(srv, 'alerts_last_title'), value: input.alertsLastTitle })
+    values.push({
+      topic: stateTopic(srv, 'alerts_last_title'),
+      value: input.alertsLastTitle,
+    })
   }
   if (input.oldestFootageMs !== null) {
     values.push({
@@ -731,14 +783,20 @@ export function projectSynthetic(
     })
   }
   if (input.imageContractState !== null) {
-    values.push({ topic: stateTopic(srv, 'image_contract'), value: input.imageContractState })
+    values.push({
+      topic: stateTopic(srv, 'image_contract'),
+      value: input.imageContractState,
+    })
   }
 
   for (const node of input.nodes) {
     const slug = toSlug(node.id)
     values.push(
       { topic: stateTopic(srv, `${slug}_online`), value: String(node.online) },
-      { topic: stateTopic(srv, `${slug}_cpu`), value: String(Math.round(node.cpuPercent)) },
+      {
+        topic: stateTopic(srv, `${slug}_cpu`),
+        value: String(Math.round(node.cpuPercent)),
+      },
     )
     // Unknown memory publishes nothing (renders `unknown`), never 0 (D393).
     if (node.memoryPercent !== null) {
@@ -773,7 +831,10 @@ export function projectSynthetic(
     }
     if (!node.isHub) {
       if (node.rootPackageVersion !== null) {
-        values.push({ topic: stateTopic(srv, `${slug}_version`), value: node.rootPackageVersion })
+        values.push({
+          topic: stateTopic(srv, `${slug}_version`),
+          value: node.rootPackageVersion,
+        })
       }
       if (node.updateAvailable !== null) {
         values.push({

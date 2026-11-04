@@ -63,13 +63,18 @@ function build(initial: ExportedEntitiesState = { actions: [], targets: [] }) {
       outcome: 'started',
     }),
   )
-  const send = vi.fn(async (_input: { targetId: string; addonId: string }) => ({ success: true }))
+  const send = vi.fn(async (_input: { targetId: string; addonId: string }) => ({
+    success: true,
+  }))
   const state: { actions: { id: string; name: string }[]; targets: Target[] } = {
     actions: [{ id: 'internal:a', name: 'Open gate' }],
     targets: [TARGET],
   }
   const api: ExportEntityApi = {
-    actions: { list: { query: async () => state.actions }, run: { mutate: run } },
+    actions: {
+      list: { query: async () => state.actions },
+      run: { mutate: run },
+    },
     notificationOutput: {
       listTargets: { query: async () => state.targets },
       send: { mutate: send },
@@ -98,11 +103,17 @@ describe('ExportedEntities — selection', () => {
     const h = build()
     await h.exports.expose({ kind: 'action', actionId: 'internal:a' })
     expect(h.persisted.at(-1)?.actions).toEqual([
-      expect.objectContaining({ actionId: 'internal:a', displayName: 'Open gate' }),
+      expect.objectContaining({
+        actionId: 'internal:a',
+        displayName: 'Open gate',
+      }),
     ])
     expect(h.reconcile).toHaveBeenCalledTimes(1)
     expect(h.exports.list()).toEqual([
-      { entity: { kind: 'action', actionId: 'internal:a' }, exposedAs: 'Open gate' },
+      {
+        entity: { kind: 'action', actionId: 'internal:a' },
+        exposedAs: 'Open gate',
+      },
     ])
   })
 
@@ -186,7 +197,10 @@ describe('ExportedEntities — selection', () => {
         persist: async (n) => void persisted.push(n),
         reconcile: async () => undefined,
       },
-      { actions: [{ actionId: 'internal:gone', displayName: 'Old', addedAt: 2 }], targets: [] },
+      {
+        actions: [{ actionId: 'internal:gone', displayName: 'Old', addedAt: 2 }],
+        targets: [],
+      },
     )
     await ex.pruneDeleted()
     expect(persisted).toHaveLength(0)
@@ -281,7 +295,9 @@ describe('ExportedEntities — commands', () => {
 
   it('an entity that is not exported is not handled', async () => {
     const h = build(state)
-    expect(await h.exports.handleCommand('action_zzz', 'PRESS')).toEqual({ handled: false })
+    expect(await h.exports.handleCommand('action_zzz', 'PRESS')).toEqual({
+      handled: false,
+    })
     expect(h.run).not.toHaveBeenCalled()
   })
 })

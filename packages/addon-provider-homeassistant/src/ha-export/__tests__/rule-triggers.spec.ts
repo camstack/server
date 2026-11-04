@@ -20,10 +20,20 @@ describe('reduceLastTriggers', () => {
 
   it('keeps the FIRST occurrence of each rule id — newest-first means most recent', () => {
     const rows: HistoryRow[] = [
-      row({ ruleId: 'r1', createdAt: 300, ruleName: 'Driveway', status: 'sent' }),
+      row({
+        ruleId: 'r1',
+        createdAt: 300,
+        ruleName: 'Driveway',
+        status: 'sent',
+      }),
       row({ ruleId: 'r2', createdAt: 200, ruleName: 'Garden' }),
       // An OLDER row for r1 — must be ignored, the first one already won.
-      row({ ruleId: 'r1', createdAt: 100, ruleName: 'Driveway', status: 'dead' }),
+      row({
+        ruleId: 'r1',
+        createdAt: 100,
+        ruleName: 'Driveway',
+        status: 'dead',
+      }),
     ]
     const { overall, byRule } = reduceLastTriggers(rows)
     expect(overall?.at).toBe(300)
@@ -43,7 +53,11 @@ describe('reduceLastTriggers', () => {
   it('label falls back to className when the pipeline resolved none', () => {
     const rows: HistoryRow[] = [
       row({ ruleId: 'r1', createdAt: 100, subject: { className: 'dog' } }),
-      row({ ruleId: 'r2', createdAt: 90, subject: { className: 'person', label: 'Alice' } }),
+      row({
+        ruleId: 'r2',
+        createdAt: 90,
+        subject: { className: 'person', label: 'Alice' },
+      }),
     ]
     const { byRule } = reduceLastTriggers(rows)
     expect(byRule.get('r1')?.label).toBe('dog')
@@ -78,7 +92,11 @@ describe('reduceLastTriggers', () => {
     expect(byRule.size).toBe(2)
 
     const fewCamerasManyRules: HistoryRow[] = Array.from({ length: 40 }, (_, i) =>
-      row({ ruleId: `rule-${i}`, createdAt: 1000 - i, deviceId: (i % 3) + 1 }),
+      row({
+        ruleId: `rule-${i}`,
+        createdAt: 1000 - i,
+        deviceId: (i % 3) + 1,
+      }),
     )
     expect(reduceLastTriggers(fewCamerasManyRules).byRule.size).toBe(40)
   })

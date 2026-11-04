@@ -125,6 +125,9 @@
           },
           {
             "name": "oauth-integration"
+          },
+          {
+            "name": "integration-instances"
           }
         ]
       }

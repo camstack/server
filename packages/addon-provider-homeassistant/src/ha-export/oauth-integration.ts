@@ -59,7 +59,11 @@ export const HOME_ASSISTANT_OAUTH_INTEGRATION: OauthIntegrationDescriptor = {
     // deviceState.getAllSnapshots
     { type: 'capability', target: 'device-state', access: ['view'] },
     // pipelineOrchestrator.getCameraStatuses
-    { type: 'capability', target: 'pipeline-orchestrator', access: ['view', 'create'] },
+    {
+      type: 'capability',
+      target: 'pipeline-orchestrator',
+      access: ['view', 'create'],
+    },
     /**
      * `deviceExport.listExposedDevices` — the membership read that decides WHICH
      * devices the component imports. It is pinned to this addon so the unpinned
@@ -83,7 +87,11 @@ export const HOME_ASSISTANT_OAUTH_INTEGRATION: OauthIntegrationDescriptor = {
      * control entity answers `403 Token scope mismatch`. `view` is here for the
      * same addon's future GET routes, so a read does not force a re-link.
      */
-    { type: 'addon', target: 'homeassistant-export', access: ['view', 'create'] },
+    {
+      type: 'addon',
+      target: 'homeassistant-export',
+      access: ['view', 'create'],
+    },
   ],
   allowedRedirectPrefixes: [HA_MY_REDIRECT_PREFIX],
   allowedPrivateHostPaths: [HA_LOCAL_CALLBACK_PATH],

@@ -252,8 +252,14 @@ export class PushClient {
           // Too large as one body: halve it until each part lands. Bounded —
           // every level halves, and a single item that is still refused is
           // dropped like any other failure.
-          const first = await this.send({ type: 'batch', items: message.items.slice(0, half) })
-          const second = await this.send({ type: 'batch', items: message.items.slice(half) })
+          const first = await this.send({
+            type: 'batch',
+            items: message.items.slice(0, half),
+          })
+          const second = await this.send({
+            type: 'batch',
+            items: message.items.slice(half),
+          })
           return first && second
         }
       }
@@ -291,7 +297,10 @@ export class PushClient {
       this.onLinkRestored?.(this.brokerId)
     } catch (err) {
       this.logger.warn('ha-export: the re-announce handler threw, link is up but not repaired', {
-        meta: { brokerId: this.brokerId, error: err instanceof Error ? err.message : String(err) },
+        meta: {
+          brokerId: this.brokerId,
+          error: err instanceof Error ? err.message : String(err),
+        },
       })
     }
   }

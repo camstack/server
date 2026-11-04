@@ -58,19 +58,28 @@ describe('device status', () => {
 
 describe('motion', () => {
   it('raises motion_detected and triggered together', () => {
-    const values = projectMotion(KEY, { detected: true, timestamp: 1_770_000_000_000 })
+    const values = projectMotion(KEY, {
+      detected: true,
+      timestamp: 1_770_000_000_000,
+    })
     expect(at(values, 'camstack/camstack-reolink-101/motion_detected')).toBe('true')
     expect(at(values, 'camstack/camstack-reolink-101/triggered')).toBe('true')
   })
 
   it('stamps last_detection as an ISO timestamp HA can parse', () => {
-    const values = projectMotion(KEY, { detected: true, timestamp: 1_770_000_000_000 })
+    const values = projectMotion(KEY, {
+      detected: true,
+      timestamp: 1_770_000_000_000,
+    })
     const stamp = at(values, 'camstack/camstack-reolink-101/motion_last_detection')
     expect(stamp).toBe(new Date(1_770_000_000_000).toISOString())
   })
 
   it('does NOT stamp a timestamp when motion clears', () => {
-    const values = projectMotion(KEY, { detected: false, timestamp: 1_770_000_000_000 })
+    const values = projectMotion(KEY, {
+      detected: false,
+      timestamp: 1_770_000_000_000,
+    })
     expect(at(values, 'camstack/camstack-reolink-101/motion_detected')).toBe('false')
     expect(at(values, 'camstack/camstack-reolink-101/motion_last_detection')).toBeUndefined()
   })
@@ -130,7 +139,12 @@ describe('identification occurrence stamp', () => {
   it('stamps the vehicle occurrence for a read plate', () => {
     const values = projectTrackLifecycle(
       KEY,
-      { ...track, bestClassName: 'car', classes: ['car'], plateText: 'AB123CD' },
+      {
+        ...track,
+        bestClassName: 'car',
+        classes: ['car'],
+        plateText: 'AB123CD',
+      },
       null,
     )
     expect(at(values, 'camstack/camstack-reolink-101/vehicle_last_label_at')).toBe(
@@ -182,7 +196,12 @@ describe('track lifecycle', () => {
   it('projects a plate onto the vehicle label', () => {
     const values = projectTrackLifecycle(
       KEY,
-      { ...track, bestClassName: 'car', classes: ['car'], plateText: 'AB123CD' },
+      {
+        ...track,
+        bestClassName: 'car',
+        classes: ['car'],
+        plateText: 'AB123CD',
+      },
       null,
     )
     expect(at(values, 'camstack/camstack-reolink-101/vehicle_last_label')).toBe('AB123CD')
@@ -191,7 +210,12 @@ describe('track lifecycle', () => {
   it('emits NO label topic for a macro that has no identification', () => {
     const values = projectTrackLifecycle(
       KEY,
-      { ...track, bestClassName: 'package', classes: ['package'], label: 'nonsense' },
+      {
+        ...track,
+        bestClassName: 'package',
+        classes: ['package'],
+        label: 'nonsense',
+      },
       null,
     )
     expect(values.some((v) => v.topic.endsWith('package_last_label'))).toBe(false)
@@ -243,13 +267,19 @@ describe('zone occupancy', () => {
 
 describe('network link', () => {
   it('projects the link type and a wireless signal', () => {
-    const values = projectNetworkLinkSlice(KEY, { type: 'wifi', signalPercent: 75 })
+    const values = projectNetworkLinkSlice(KEY, {
+      type: 'wifi',
+      signalPercent: 75,
+    })
     expect(at(values, 'camstack/camstack-reolink-101/link')).toBe('wifi')
     expect(at(values, 'camstack/camstack-reolink-101/signal')).toBe('75')
   })
 
   it('publishes no signal for a wired link — a wire has none, and 0 % would read as dead', () => {
-    const values = projectNetworkLinkSlice(KEY, { type: 'ethernet', signalPercent: null })
+    const values = projectNetworkLinkSlice(KEY, {
+      type: 'ethernet',
+      signalPercent: null,
+    })
     expect(at(values, 'camstack/camstack-reolink-101/link')).toBe('ethernet')
     expect(values.some((v) => v.topic.endsWith('/signal'))).toBe(false)
   })
@@ -261,14 +291,22 @@ describe('network link', () => {
 
 describe('battery', () => {
   it('projects percentage, charging and sleeping', () => {
-    const values = projectBatterySlice(KEY, { percentage: 42, charging: 'dc', sleeping: true })
+    const values = projectBatterySlice(KEY, {
+      percentage: 42,
+      charging: 'dc',
+      sleeping: true,
+    })
     expect(at(values, 'camstack/camstack-reolink-101/battery')).toBe('42')
     expect(at(values, 'camstack/camstack-reolink-101/charger')).toBe('true')
     expect(at(values, 'camstack/camstack-reolink-101/sleeping')).toBe('true')
   })
 
   it('reads charging none as not charging', () => {
-    const values = projectBatterySlice(KEY, { percentage: 42, charging: 'none', sleeping: false })
+    const values = projectBatterySlice(KEY, {
+      percentage: 42,
+      charging: 'none',
+      sleeping: false,
+    })
     expect(at(values, 'camstack/camstack-reolink-101/charger')).toBe('false')
   })
 
@@ -312,7 +350,12 @@ describe('camera functions', () => {
   it('projects one value per available function and none for the rest', () => {
     const values = projectCameraFunctions(KEY, [
       { id: 'recording', label: 'Recording', available: true, enabled: true },
-      { id: 'notifications', label: 'Notifications', available: true, enabled: false },
+      {
+        id: 'notifications',
+        label: 'Notifications',
+        available: true,
+        enabled: false,
+      },
       { id: 'privacy-mask', label: 'Privacy', available: false, enabled: true },
     ])
     expect(at(values, 'camstack/camstack-reolink-101/recording')).toBe('true')
@@ -384,7 +427,11 @@ describe('camera status', () => {
   })
 
   it('no recording block and no degraded stage: recording_active is false, a true fact', () => {
-    const v = projectCameraStatus(KEY, { switchedOff: [], degradedStages: [], recording: null })
+    const v = projectCameraStatus(KEY, {
+      switchedOff: [],
+      degradedStages: [],
+      recording: null,
+    })
     expect(S('recording_active', v)).toBe('false')
   })
 
@@ -427,7 +474,10 @@ describe('projectDoorbellSlice', () => {
       { lastPressedAt: 1786288056692, pressCountSinceStart: 3 },
       false,
     )
-    expect(out[0]).toEqual({ topic: 'camstack/camstack-cam1/doorbell_pressed', value: 'false' })
+    expect(out[0]).toEqual({
+      topic: 'camstack/camstack-cam1/doorbell_pressed',
+      value: 'false',
+    })
     expect(out).toHaveLength(3)
   })
 
@@ -460,12 +510,18 @@ describe('projectAudioWindow', () => {
       ],
       dbfs: -32.44,
     })
-    expect(out).toContainEqual({ topic: 'camstack/camstack-cam1/audio_last_sound', value: 'dog' })
+    expect(out).toContainEqual({
+      topic: 'camstack/camstack-cam1/audio_last_sound',
+      value: 'dog',
+    })
   })
 
   /** Silence is a READING. A flat line is the point of a level entity. */
   it('publishes the level on a window with no detections', () => {
-    const out = projectAudioWindow('camstack-cam1', { detections: [], dbfs: -70.1 })
+    const out = projectAudioWindow('camstack-cam1', {
+      detections: [],
+      dbfs: -70.1,
+    })
     expect(out).toEqual([
       { topic: 'camstack/camstack-cam1/audio_volume', value: '-70.1' },
       { topic: 'camstack/camstack-cam1/audio_detected', value: 'false' },
@@ -492,9 +548,18 @@ describe('scene occupancy', () => {
       zones: [],
       scene: { totalObjects: 5, byClass: { person: 2, car: 1, kite: 2 } },
     })
-    expect(out).toContainEqual({ topic: 'camstack/camstack-cam1/objects', value: '5' })
-    expect(out).toContainEqual({ topic: 'camstack/camstack-cam1/person_objects', value: '2' })
-    expect(out).toContainEqual({ topic: 'camstack/camstack-cam1/vehicle_objects', value: '1' })
+    expect(out).toContainEqual({
+      topic: 'camstack/camstack-cam1/objects',
+      value: '5',
+    })
+    expect(out).toContainEqual({
+      topic: 'camstack/camstack-cam1/person_objects',
+      value: '2',
+    })
+    expect(out).toContainEqual({
+      topic: 'camstack/camstack-cam1/vehicle_objects',
+      value: '1',
+    })
   })
 
   /**
@@ -507,7 +572,10 @@ describe('scene occupancy', () => {
       zones: [{ zoneId: 'z1', totalObjects: 1, byClass: { person: 1 } }],
     })
     expect(out.map((v) => v.topic)).not.toContain('camstack/camstack-cam1/objects')
-    expect(out).toContainEqual({ topic: 'camstack/camstack-cam1/z1_objects', value: '1' })
+    expect(out).toContainEqual({
+      topic: 'camstack/camstack-cam1/z1_objects',
+      value: '1',
+    })
   })
 })
 
@@ -689,7 +757,9 @@ describe('the derived half — the topic the catalog built IS the topic we publi
   })
 
   it('renders a boolean slice as the payload the component matches', () => {
-    const projection = projectCapSlice('camstack-zig1', 'motion', { detected: false })
+    const projection = projectCapSlice('camstack-zig1', 'motion', {
+      detected: false,
+    })
     expect(projection).toEqual({
       kind: 'values',
       entity: 'motion',
@@ -719,7 +789,11 @@ describe('the derived half — the topic the catalog built IS the topic we publi
       lastPressedAt: null,
       pressCountSinceStart: 0,
     })
-    expect(projection).toEqual({ kind: 'values', entity: 'doorbell', values: [] })
+    expect(projection).toEqual({
+      kind: 'values',
+      entity: 'doorbell',
+      values: [],
+    })
   })
 
   /**
@@ -732,7 +806,9 @@ describe('the derived half — the topic the catalog built IS the topic we publi
    * dropped, because that is how the eleven went unnoticed.
    */
   it('names the capability and the field when the slice does not carry it', () => {
-    const projection = projectCapSlice('camstack-zig1', 'contact', { lastChangedAt: 1 })
+    const projection = projectCapSlice('camstack-zig1', 'contact', {
+      lastChangedAt: 1,
+    })
     expect(projection).toEqual({
       kind: 'missing-field',
       capName: 'contact',
@@ -766,7 +842,10 @@ describe('the derived half — the topic the catalog built IS the topic we publi
   /** The fix itself: the field the cap declares is the field we read. */
   it('reads the field ContactStatusSchema actually declares', () => {
     expect(
-      projectCapSlice('camstack-zig1', 'contact', { entryOpen: true, lastChangedAt: 1 }),
+      projectCapSlice('camstack-zig1', 'contact', {
+        entryOpen: true,
+        lastChangedAt: 1,
+      }),
     ).toEqual({
       kind: 'values',
       entity: 'contact',
@@ -847,7 +926,9 @@ describe('the derived half — the topic the catalog built IS the topic we publi
   })
 
   it('refuses to render a value the platform cannot carry', () => {
-    const projection = projectCapSlice('camstack-zig1', 'motion', { detected: 'yes' })
+    const projection = projectCapSlice('camstack-zig1', 'motion', {
+      detected: 'yes',
+    })
     expect(projection).toEqual({
       kind: 'unrenderable',
       capName: 'motion',
@@ -877,8 +958,14 @@ describe('both audio levels', () => {
       dbfs: -21.343415,
       rms: 0.008567,
     })
-    expect(out).toContainEqual({ topic: 'camstack/camstack-cam1/audio_volume', value: '-21.3' })
-    expect(out).toContainEqual({ topic: 'camstack/camstack-cam1/audio_level_rms', value: '0.0086' })
+    expect(out).toContainEqual({
+      topic: 'camstack/camstack-cam1/audio_volume',
+      value: '-21.3',
+    })
+    expect(out).toContainEqual({
+      topic: 'camstack/camstack-cam1/audio_level_rms',
+      value: '0.0086',
+    })
   })
 })
 

@@ -25,7 +25,7 @@ import {
   type Harness,
 } from '../../../../../system/src/builtins/sqlite-storage/__tests__/support/owned-files-harness.js'
 import type { HaInstanceRow } from '../../../ha-instance-settings.js'
-import { defaultLinks, type HaExportLinksBody, haExportLinksKind } from '../../link-records.js'
+import { defaultLinks, type HaExportLinksBody, haExportLinksKind } from '../legacy-links-kind.js'
 import { DROP_MOVED_LINKS_ID, LINKS_TO_RECORD_ID } from '../index.js'
 import { ADDON_MIGRATIONS, type HaExportMigrationPorts } from '../index.js'
 
@@ -48,7 +48,11 @@ const LEGACY: Record<string, unknown> = {
 }
 /** The integration of ha_002 already carries the switch: it wins over the (older) key. */
 const INSTANCES: readonly HaInstanceRow[] = [
-  { integrationId: 'int_2', brokerId: 'ha_002', settings: { brokerId: 'ha_002', exportTo: true } },
+  {
+    integrationId: 'int_2',
+    brokerId: 'ha_002',
+    settings: { brokerId: 'ha_002', exportTo: true },
+  },
 ]
 
 let h: Harness
@@ -179,7 +183,14 @@ async function boot(options: Options = {}) {
   const bound = defineAddonMigrations(
     ADDON_MIGRATIONS.filter((m) => [LINKS_TO_RECORD_ID, DROP_MOVED_LINKS_ID].includes(m.meta.id)),
     // The two bodies read only these ports; the other catalogue entries are filtered out above.
-    { ...ports, patchInstanceSettings: async () => false },
+    {
+      ...ports,
+      patchInstanceSettings: async () => false,
+      readTargets: async () => new Map(),
+      putTarget: async () => 'exists',
+      deleteLinks: async () => undefined,
+      clearSettingKeys: async () => undefined,
+    },
   )
   const runCatalogue = () => runAddonMigrations(host, bound, recordingLogger(h.lines, 'Addon'))
   const execute = async (id: string): Promise<MigrationOwnerResult> => {
@@ -252,7 +263,9 @@ describe('homeassistant-export links migration on real SQLite', () => {
     seed(LEGACY)
     const before = rows()
     const w = await boot({ integrationsFail: true })
-    expect(await w.execute(LINKS_TO_RECORD_ID)).toMatchObject({ kind: 'failed' })
+    expect(await w.execute(LINKS_TO_RECORD_ID)).toMatchObject({
+      kind: 'failed',
+    })
     expect(await w.record('ha_001')).toBeNull()
     expect(rows()).toEqual(before)
   })
@@ -264,12 +277,21 @@ describe('homeassistant-export links migration on real SQLite', () => {
         {
           integrationId: 'int_0019',
           brokerId: 'ha_001',
-          settings: { brokerId: 'ha_001', exportTo: true, mediaRole: 'publicEndpoint' },
+          settings: {
+            brokerId: 'ha_001',
+            exportTo: true,
+            mediaRole: 'publicEndpoint',
+          },
         },
       ],
     })
-    expect(await w.execute(LINKS_TO_RECORD_ID)).toMatchObject({ result: { outcome: 'done' } })
-    expect(await w.record('ha_001')).toMatchObject({ exportTo: true, mediaRole: 'publicEndpoint' })
+    expect(await w.execute(LINKS_TO_RECORD_ID)).toMatchObject({
+      result: { outcome: 'done' },
+    })
+    expect(await w.record('ha_001')).toMatchObject({
+      exportTo: true,
+      mediaRole: 'publicEndpoint',
+    })
   })
 
   it('an integration row that reads as empty refuses the move, naming it, and writes no switch', async () => {
@@ -310,10 +332,16 @@ describe('homeassistant-export links migration on real SQLite', () => {
     seed(LEGACY)
     const w = await boot({
       existing: {
-        ha_001: { ...defaultLinks('Mine'), exportTo: true, mediaRole: 'publicEndpoint' },
+        ha_001: {
+          ...defaultLinks('Mine'),
+          exportTo: true,
+          mediaRole: 'publicEndpoint',
+        },
       },
     })
-    expect(await w.execute(LINKS_TO_RECORD_ID)).toMatchObject({ result: { outcome: 'done' } })
+    expect(await w.execute(LINKS_TO_RECORD_ID)).toMatchObject({
+      result: { outcome: 'done' },
+    })
     expect((await w.record('ha_001'))?.name).toBe('Mine')
     expect(await w.record('ha_002')).toEqual(CABIN)
     expect(await w.execute(DROP_MOVED_LINKS_ID)).toMatchObject({
@@ -325,7 +353,9 @@ describe('homeassistant-export links migration on real SQLite', () => {
 
   it('the drop refuses when a record disagrees on the switch', async () => {
     seed(LEGACY)
-    const w = await boot({ existing: { ha_001: { ...HOME, exportTo: false } } })
+    const w = await boot({
+      existing: { ha_001: { ...HOME, exportTo: false } },
+    })
     await w.execute(LINKS_TO_RECORD_ID)
     expect(await w.execute(DROP_MOVED_LINKS_ID)).toMatchObject({
       kind: 'failed',

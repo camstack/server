@@ -113,7 +113,9 @@ describe('PushClient + ReachabilityReconciler', () => {
 
   it('turns an unreachable→reachable edge into exactly one bounded re-announce', async () => {
     const runs: (readonly string[])[] = []
-    const reconciler = new ReachabilityReconciler({ run: ({ brokerIds }) => runs.push(brokerIds) })
+    const reconciler = new ReachabilityReconciler({
+      run: ({ brokerIds }) => runs.push(brokerIds),
+    })
     const state = { fail: false }
     const client = new PushClient({
       transport: async (_message: PushMessage): Promise<void> => {

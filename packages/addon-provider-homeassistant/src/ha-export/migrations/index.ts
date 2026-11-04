@@ -6,6 +6,12 @@ import {
   planDropPerBrokerFlags,
 } from './per-broker-flags.js'
 import {
+  type DropLinksAndCachePorts,
+  dropLinksAndCache,
+  moveLinksToTargets,
+  type TargetsFromLinksPorts,
+} from './targets-from-links.js'
+import {
   type DropMovedLinksPorts,
   type LinksMigrationPorts,
   moveLinksToRecords,
@@ -18,15 +24,23 @@ export type {
   LinksMigrationPorts,
 } from './links-to-record.js'
 export type { PerBrokerFlagsPorts } from './per-broker-flags.js'
+export type {
+  DropLinksAndCachePorts,
+  TargetsFromLinksPorts,
+} from './targets-from-links.js'
 
 /** Everything the `homeassistant-export` catalogue reads and writes. */
 export type HaExportMigrationPorts = DropPublicBaseUrlPorts &
   PerBrokerFlagsPorts &
   LinksMigrationPorts &
-  DropMovedLinksPorts
+  DropMovedLinksPorts &
+  TargetsFromLinksPorts &
+  DropLinksAndCachePorts
 
 export const LINKS_TO_RECORD_ID = 'homeassistant-export/2026-11-04-links-to-record'
 export const DROP_MOVED_LINKS_ID = 'homeassistant-export/2026-11-04-drop-moved-links'
+export const TARGETS_FROM_LINKS_ID = 'homeassistant-export/2026-11-04-targets-from-links'
+export const DROP_LINKS_AND_CACHE_ID = 'homeassistant-export/2026-11-04-drop-links-and-cache'
 
 /** The `homeassistant-export` catalogue (D987): offered to the engine when the addon initialises. */
 export const ADDON_MIGRATIONS: readonly AddonMigration<HaExportMigrationPorts>[] = [
@@ -113,5 +127,39 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<HaExportMigrationPorts>[]
       fixtureMark: 'the reconcile interval the migration does not know',
     },
     plan: planDropMovedLinks,
+  },
+  {
+    meta: {
+      id: TARGETS_FROM_LINKS_ID,
+      owner: 'homeassistant-export',
+      level: 'addon-state',
+      seq: 6,
+      dependsOn: [LINKS_TO_RECORD_ID],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'block-owner',
+      bodyKind: 'procedure',
+      description:
+        'Turn each ha-export-links record into an export target under a minted id that names its Home Assistant connection, carrying the switch, media role, devices and reconcile interval; read back before anything is deleted',
+      fixtureMark: 'the exported entities the migration does not touch',
+    },
+    procedure: moveLinksToTargets,
+  },
+  {
+    meta: {
+      id: DROP_LINKS_AND_CACHE_ID,
+      owner: 'homeassistant-export',
+      level: 'addon-state',
+      seq: 7,
+      dependsOn: [TARGETS_FROM_LINKS_ID],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'block-owner',
+      bodyKind: 'procedure',
+      description:
+        'Delete each ha-export-links record whose target holds the same devices, then the reconcileIntervalSec and knownBrokers settings',
+      fixtureMark: 'the exported entities the migration does not touch',
+    },
+    procedure: dropLinksAndCache,
   },
 ]

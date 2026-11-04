@@ -213,7 +213,10 @@ describe('one entity set per consumable item', () => {
   })
 
   it('drops an item that left the slice from the plan', () => {
-    const fewer: ConsumablesStatus = { ...VACUUM_SLICE, items: VACUUM_SLICE.items.slice(1) }
+    const fewer: ConsumablesStatus = {
+      ...VACUUM_SLICE,
+      items: VACUUM_SLICE.items.slice(1),
+    }
     const shrunk = buildDevicePlan(device(503, 'vacuum', fewer))
     expect(Object.keys(shrunk.cmps).filter((k) => k.includes('main-brush'))).toEqual([])
   })
@@ -227,10 +230,19 @@ describe('values', () => {
       expect.arrayContaining([
         { topic: stateTopic(key, 'consumable_main_brush_level'), value: '63' },
         { topic: stateTopic(key, 'consumable_main_brush_status'), value: 'ok' },
-        { topic: stateTopic(key, 'consumable_main_brush_remaining'), value: '190' },
+        {
+          topic: stateTopic(key, 'consumable_main_brush_remaining'),
+          value: '190',
+        },
         { topic: stateTopic(key, 'consumable_clean_water_level'), value: '40' },
-        { topic: stateTopic(key, 'consumable_dirty_water_status'), value: 'full' },
-        { topic: stateTopic(key, 'consumable_descaler_remaining'), value: '12' },
+        {
+          topic: stateTopic(key, 'consumable_dirty_water_status'),
+          value: 'full',
+        },
+        {
+          topic: stateTopic(key, 'consumable_descaler_remaining'),
+          value: '12',
+        },
       ]),
     )
     // A status the provider no longer knows is published OUTSIDE the enum,

@@ -12,7 +12,12 @@ import {
 import { PushHttpError } from '../push-failure.js'
 import type { HaCmps, HaDeviceBlock, PushMessage } from '../types.js'
 
-const DEV: HaDeviceBlock = { ids: ['camstack-a'], name: 'A', mf: 'CamStack', mdl: 'camera' }
+const DEV: HaDeviceBlock = {
+  ids: ['camstack-a'],
+  name: 'A',
+  mf: 'CamStack',
+  mdl: 'camera',
+}
 const CMPS: HaCmps = {
   'binary_sensor-person-detected': {
     platform: 'binary_sensor',
@@ -50,7 +55,11 @@ describe('PushClient', () => {
   beforeEach(() => {
     vi.useFakeTimers()
     rec = recorder()
-    client = new PushClient({ transport: rec.transport, logger: noopLog, brokerId: 'ha_1' })
+    client = new PushClient({
+      transport: rec.transport,
+      logger: noopLog,
+      brokerId: 'ha_1',
+    })
   })
 
   afterEach(async () => {

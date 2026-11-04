@@ -36,7 +36,10 @@ interface LegacyFlag {
   readonly value: unknown
 }
 
-const PREFIX: Readonly<Record<Flag, string>> = { exportTo: 'exportTo:', mediaRole: 'mediaRole:' }
+const PREFIX: Readonly<Record<Flag, string>> = {
+  exportTo: 'exportTo:',
+  mediaRole: 'mediaRole:',
+}
 
 const validValue = (flag: Flag, value: unknown): boolean =>
   flag === 'exportTo'
@@ -51,7 +54,12 @@ function legacyFlags(stored: Readonly<Record<string, unknown>>): readonly Legacy
       const prefix = PREFIX[flag]
       if (!storeKey.startsWith(prefix) || storeKey.length === prefix.length) continue
       if (validValue(flag, value)) {
-        out.push({ storeKey, brokerId: storeKey.slice(prefix.length), flag, value })
+        out.push({
+          storeKey,
+          brokerId: storeKey.slice(prefix.length),
+          flag,
+          value,
+        })
       }
     }
   }
@@ -139,7 +147,11 @@ export async function planDropPerBrokerFlags(ports: PerBrokerFlagsPorts): Promis
           Object.fromEntries(
             drop.map((entry) => [
               rowId(entry.storeKey),
-              { addonId: HA_EXPORT_ADDON_ID, key: entry.storeKey, value: entry.value },
+              {
+                addonId: HA_EXPORT_ADDON_ID,
+                key: entry.storeKey,
+                value: entry.value,
+              },
             ]),
           ),
         ),

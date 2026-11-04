@@ -220,29 +220,32 @@ Named here rather than shipped looking implemented:
   `ha_001` for ~2h50m, `notification-output` lost ALL THREE providers, and three
   `restartAddon` calls answered `{success:true}` without ever spawning a process.
   `scripts/check-runner-group-isolation.ts` now refuses the regression.
-- **The instance switch GATES the per-device panel, and it is a field of the
-  instance's record, not a settings key.** The switch (`exportTo`), the image-link
-  address role (`mediaRole`) and the exported devices live in the instance's
-  `ha-export-links` record, id = the Home Assistant broker id (`link-records.ts`).
-  The settings form still names them `exportTo:<brokerId>` / `mediaRole:<brokerId>`
-  (a dynamic form key cannot be in `DEFAULT_CONFIG`); a read overlays the record on
-  the form and a write is routed to the record, never to the addon store. The
-  records are loaded once at boot after the migrations, and a failed read stops
-  the boot: an empty membership would unexport every device. Nothing reads the old
-  `membership` setting, the dynamic store keys or the integration's `exportTo` /
-  `mediaRole` any more; only the two `2026-11-04` migrations do
-  (`no-legacy-links-reader.spec.ts` keeps it so).
+- **An export target is an integration instance, and several may share one
+  Home Assistant connection.** Each target is an `ha-export-targets` record under a
+  minted id (`hae_001`, ...): `{ name, connectionId, mediaRole, reconcileIntervalSec,
+  devices, enabled }`, served through `integration-instances` (role `services`,
+  kind `ha-target`, `target-instances.ts`). `connectionId` is a reference to the
+  Home Assistant broker; a target whose connection does not exist is
+  *unconfigured*, never unexposed (devices are kept, the boot reconcile starts only
+  after the targets are loaded, and an empty `broker.list` prunes nothing). The
+  records are loaded once at boot after the migrations, and a failed read stops the
+  boot: an empty membership would unexport every device. The old
+  `ha-export-links` kind, the `exportTo:` / `mediaRole:` form keys, `knownBrokers`
+  and the addon-level `reconcileIntervalSec` are gone; only the migrations
+  `2026-11-04-targets-from-links` (seq 6) and `2026-11-04-drop-links-and-cache`
+  (seq 7) read them (`no-legacy-links-reader.spec.ts` keeps it so). Device-panel
+  keys are `haExport:<deviceId>:<targetId>`.
 - **The echo guard outranks membership.** A device whose `addonId` is
   `provider-homeassistant` is never exported back, even if selected.
 
 ## Membership
 
-`brokerId → deviceId[]`, carried by the `devices` of each instance's
-`ha-export-links` record, and it is the ONLY export-membership store. The per-device Export panel renders one switch per
-enabled broker over it; the `device-export` cap's `exposeDevice` /
-`unexposeDevice` name an `instanceId` - the broker id - and change that
-broker's membership only; there is no write without a target. `listInstances`
-answers the known brokers, and an `instanceId` the addon does not know is
+`targetId → deviceId[]`, carried by the `devices` of each target's
+`ha-export-targets` record, and it is the ONLY export-membership store. The per-device Export panel renders one switch per
+enabled target over it; the `device-export` cap's `exposeDevice` /
+`unexposeDevice` name an `instanceId` - the target id - and change that
+target's membership only; there is no write without a target. `listInstances`
+answers the export targets, and an `instanceId` the addon does not know is
 refused with `export-instance-unknown`.
 
 Field keys in the device Export tab are namespaced `haExport:<deviceId>:<brokerId>`.

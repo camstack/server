@@ -51,12 +51,18 @@ describe('deriveCameraFunctions', () => {
   })
 
   it('a wrapper that no addon provides is not a control', () => {
-    const noWrapper: CameraFunctionReads = { ...ALL_READ, wrapperAddonIdByCap: new Map() }
+    const noWrapper: CameraFunctionReads = {
+      ...ALL_READ,
+      wrapperAddonIdByCap: new Map(),
+    }
     expect(byId(noWrapper, 'object-detection')?.available).toBe(false)
   })
 
   it('a cap not bindable for this device type produces no row', () => {
-    const noAudio: CameraFunctionReads = { ...ALL_READ, bindableCapNames: ['detection-pipeline'] }
+    const noAudio: CameraFunctionReads = {
+      ...ALL_READ,
+      bindableCapNames: ['detection-pipeline'],
+    }
     expect(byId(noAudio, 'audio-analysis')?.available).toBe(false)
   })
 
@@ -131,13 +137,21 @@ describe('resolveCameraFunctionWrite', () => {
 
 function fakeApi() {
   return {
-    deviceManager: { setDisabled: { mutate: vi.fn() }, setWrapperActive: { mutate: vi.fn() } },
+    deviceManager: {
+      setDisabled: { mutate: vi.fn() },
+      setWrapperActive: { mutate: vi.fn() },
+    },
     recordingArchive: {
-      getDeviceConfig: { query: vi.fn().mockResolvedValue({ enabled: true, bands: ['B'] }) },
+      getDeviceConfig: {
+        query: vi.fn().mockResolvedValue({ enabled: true, bands: ['B'] }),
+      },
       setDeviceConfig: { mutate: vi.fn() },
     },
     notificationRules: { setDeviceMuted: { mutate: vi.fn() } },
-    privacyMask: { setMask: { mutate: vi.fn() }, setAudioEnabled: { mutate: vi.fn() } },
+    privacyMask: {
+      setMask: { mutate: vi.fn() },
+      setAudioEnabled: { mutate: vi.fn() },
+    },
     streamBroker: { setDeviceAudioMute: { mutate: vi.fn() } },
   }
 }

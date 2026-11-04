@@ -13,7 +13,15 @@ import type { CatalogDevice, HaComponent } from '../types.js'
 type RawItem = Readonly<Record<string, unknown>>
 
 function item(key: string, label: string, extra: RawItem): RawItem {
-  return { key, label, level: 50, status: null, lastResetAt: null, resettable: false, ...extra }
+  return {
+    key,
+    label,
+    level: 50,
+    status: null,
+    lastResetAt: null,
+    resettable: false,
+    ...extra,
+  }
 }
 
 function slice(items: readonly RawItem[]): RawItem {
@@ -46,7 +54,11 @@ describe('consumableForm', () => {
 
 describe('the icon follows the form', () => {
   const tanks = slice([
-    item('clean', 'Clean water', { kind: 'supply', form: 'tank', status: 'ok' }),
+    item('clean', 'Clean water', {
+      kind: 'supply',
+      form: 'tank',
+      status: 'ok',
+    }),
     item('dirty', 'Dirty water', { kind: 'waste', form: 'tank' }),
     item('salt', 'Salt', { kind: 'supply', level: null, status: 'ok' }),
     item('dust', 'Dust bin', { kind: 'waste' }),

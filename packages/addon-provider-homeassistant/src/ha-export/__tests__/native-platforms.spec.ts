@@ -409,7 +409,11 @@ describe('the lock, which is why the platform is worth having', () => {
      * writes the switch, which is the one `parseLocked` routes.
      */
     const plan = buildDerivedPlan(
-      device({ type: 'lock', boundCaps: ['lock-control'], slices: ['lock-control'] }),
+      device({
+        type: 'lock',
+        boundCaps: ['lock-control'],
+        slices: ['lock-control'],
+      }),
       { platforms: NATIVE_SUPPORT },
     )
     const native = componentOf(plan, 'lock-lock-control')
@@ -424,7 +428,11 @@ describe('the lock, which is why the platform is worth having', () => {
 
   it('maps door-open (D984) to the platform own `open`, never publishing it raw', () => {
     const plan = buildDerivedPlan(
-      device({ type: 'lock', boundCaps: ['lock-control'], slices: ['lock-control'] }),
+      device({
+        type: 'lock',
+        boundCaps: ['lock-control'],
+        slices: ['lock-control'],
+      }),
       { platforms: NATIVE_SUPPORT },
     )
     const native = componentOf(plan, 'lock-lock-control')

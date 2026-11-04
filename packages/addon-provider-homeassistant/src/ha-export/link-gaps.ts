@@ -11,7 +11,10 @@ export interface LinkGapSummary {
   /** Unhealthy and still being tried: a gap the next pass must resync. */
   readonly failing: readonly string[]
   /** Parked on a missing component: a gap too, but nothing can be sent until the probe. */
-  readonly suspended: readonly { readonly brokerId: string; readonly recheckAt: number }[]
+  readonly suspended: readonly {
+    readonly brokerId: string
+    readonly recheckAt: number
+  }[]
   /** At least one link is not parked. */
   readonly anyLive: boolean
 }

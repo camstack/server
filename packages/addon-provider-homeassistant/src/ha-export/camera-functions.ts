@@ -161,7 +161,11 @@ function resolveOne(id: CameraSwitchId, reads: CameraFunctionReads): Resolved {
 }
 
 export function deriveCameraFunctions(reads: CameraFunctionReads): readonly CameraFunction[] {
-  return ORDER.map((id) => ({ id, label: LABELS[id], ...resolveOne(id, reads) }))
+  return ORDER.map((id) => ({
+    id,
+    label: LABELS[id],
+    ...resolveOne(id, reads),
+  }))
 }
 
 /** `null` = not available: the write must be REFUSED, not approximated. */

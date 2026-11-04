@@ -33,7 +33,10 @@ export interface NodeFootage {
   readonly footageFreePercent: number | null
 }
 
-const UNREAD: NodeFootage = { footageUsedBytes: null, footageFreePercent: null }
+const UNREAD: NodeFootage = {
+  footageUsedBytes: null,
+  footageFreePercent: null,
+}
 
 export function footageForNode(nodeId: string, usage: StorageUsageAnswer | null): NodeFootage {
   if (usage === null || usage.nodeId !== nodeId) return UNREAD
@@ -42,8 +45,12 @@ export function footageForNode(nodeId: string, usage: StorageUsageAnswer | null)
   // full one.
   const freePercents = (usage.locations ?? [])
     .filter(
-      (loc): loc is StorageLocationUsage & { availableBytes: number; totalBytes: number } =>
-        loc.availableBytes !== null && loc.totalBytes !== null && loc.totalBytes > 0,
+      (
+        loc,
+      ): loc is StorageLocationUsage & {
+        availableBytes: number
+        totalBytes: number
+      } => loc.availableBytes !== null && loc.totalBytes !== null && loc.totalBytes > 0,
     )
     .map((loc) => (loc.availableBytes / loc.totalBytes) * 100)
   return {

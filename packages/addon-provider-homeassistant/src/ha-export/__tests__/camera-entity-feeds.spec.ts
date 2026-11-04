@@ -61,7 +61,11 @@ const MAXIMAL: CatalogDevice = {
   features: ['rebootable'],
   boundCaps: ['motion', 'snapshot', 'ptz', 'doorbell', 'day-night', 'intercom', 'ptz-autotrack'],
   zones: [ZONE],
-  switches: ALL_FUNCTIONS.map((fn) => ({ id: fn.id, label: fn.label, available: fn.available })),
+  switches: ALL_FUNCTIONS.map((fn) => ({
+    id: fn.id,
+    label: fn.label,
+    available: fn.available,
+  })),
   slices: ['device-status', 'motion', 'battery'],
 }
 
@@ -87,7 +91,11 @@ describe('camera entity feeds', () => {
     const feedable = new Set<string>(
       [
         ...projectDeviceStatus(KEY, true),
-        ...projectBatterySlice(KEY, { percentage: 50, charging: 'ac', sleeping: false }),
+        ...projectBatterySlice(KEY, {
+          percentage: 50,
+          charging: 'ac',
+          sleeping: false,
+        }),
         ...projectMotion(KEY, { detected: true, timestamp: 1 }),
         ...projectDoorbellSlice(KEY, { lastPressedAt: 1, pressCountSinceStart: 1 }, true),
         ...projectAudioWindow(KEY, {
@@ -117,7 +125,10 @@ describe('camera entity feeds', () => {
           scene: { totalObjects: 1, byClass: SCENE_CLASSES },
         }),
         ...CAMERA_DERIVED_CAPS.flatMap((cap) =>
-          capEntities(cap).map((ref) => ({ topic: stateTopic(KEY, ref.entity), value: '' })),
+          capEntities(cap).map((ref) => ({
+            topic: stateTopic(KEY, ref.entity),
+            value: '',
+          })),
         ),
       ].map((v) => v.topic),
     )

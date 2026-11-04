@@ -19,7 +19,7 @@
  */
 import { type MigrationPlan, type MigrationProcedureResult, preconditionOf } from '@camstack/types'
 import type { HaInstanceRow } from '../../ha-instance-settings.js'
-import type { HaExportLinksBody } from '../link-records.js'
+import type { HaExportLinksBody } from './legacy-links-kind.js'
 import { HA_MEDIA_ROLES, type HaMediaRole } from '../media-url.js'
 import { ADDON_SETTINGS_TABLE, HA_EXPORT_ADDON_ID } from './drop-public-base-url.js'
 

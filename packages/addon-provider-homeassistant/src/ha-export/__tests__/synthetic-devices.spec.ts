@@ -266,7 +266,12 @@ describe('projectSynthetic', () => {
 
     it('publishes the active count and the last title when there are alerts', () => {
       const v = projectSynthetic(
-        { ...INPUT, alertsActive: true, alertsActiveCount: 2, alertsLastTitle: 'Disk almost full' },
+        {
+          ...INPUT,
+          alertsActive: true,
+          alertsActiveCount: 2,
+          alertsLastTitle: 'Disk almost full',
+        },
         NOW,
       )
       expect(at(v, `camstack/${srv}/alerts_active`)).toBe('true')
@@ -546,7 +551,11 @@ describe('deriveAlertSummary (Task D1)', () => {
   })
 
   it('no alerts → false, 0, no title', () => {
-    expect(deriveAlertSummary([])).toEqual({ active: false, count: 0, lastTitle: null })
+    expect(deriveAlertSummary([])).toEqual({
+      active: false,
+      count: 0,
+      lastTitle: null,
+    })
   })
 
   it('an `info` alert raises neither the badge nor the count', () => {
