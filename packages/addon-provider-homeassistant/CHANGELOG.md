@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.659] - 2026-11-04
+
 ### Changed
 
 - Home Assistant export targets are now integration instances: add several, each pointing at a Home Assistant connection with its own image-link address; existing exports carry over unchanged.

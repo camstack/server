@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.126] - 2026-11-04
+
 ### Changed
 
 - Google Home export now supports several instances, one per Actions-console project: each has its own devices and linked accounts, with fulfillment URL /fulfillment/<instance id>; the existing setup keeps working at /fulfillment
