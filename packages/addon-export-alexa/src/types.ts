@@ -2,8 +2,7 @@
  * Shared data shapes for the Alexa export addon.
  *
  * These describe the entries persisted in the kernel's addon-store (via
- * `this.config.exposed`, `this.config.linkedAccounts`, and
- * `this.config.tokens`). They used to back JSON files under
+ * the `skill-exports` and `skill-links` records). They used to back JSON files under
  * `<dataDir>/alexa/`; that layer is gone — the typed config blob is the
  * persistence surface now.
  */

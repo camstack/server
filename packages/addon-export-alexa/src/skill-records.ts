@@ -5,9 +5,15 @@
  * `skill-links`, under the SAME id: the instance they belong to. The tokens' credentials are
  * keychain markers bound to that row, matched by user id so a reorder keeps every ref.
  */
-import { type DefinedRecordKind, defineEntryKind } from '@camstack/types'
+import { CamProfileSchema, type DefinedRecordKind, defineEntryKind } from '@camstack/types'
 import { z } from 'zod'
-import type { LinkedAccount, LwaTokenEntry } from './types.js'
+import type { ActionSceneEntry } from './action-scenes.js'
+import type {
+  ExportDeviceSettings,
+  ExposedDeviceEntry,
+  LinkedAccount,
+  LwaTokenEntry,
+} from './types.js'
 
 /** A single-instance addon keeps its records under its own addon id. */
 export const ALEXA_INSTANCE_ID = 'export-alexa'
@@ -112,3 +118,58 @@ export const alexaSkillLinksKind: DefinedRecordKind<z.ZodType<SkillLinksBody>> =
     secretArrayKeys: { tokens: 'userId' },
   },
 )
+
+/** The exposure keys that moved into the `skill-exports` record; the migrations name them. */
+export const MOVED_EXPOSURE_KEYS = ['exposed', 'exposedActions'] as const
+
+/**
+ * What the skill exposes, under the SAME id as the instance it belongs to: the devices Alexa
+ * discovers and the actions it sees as scenes. One record per instance id (`export-alexa`
+ * today), so a second skill gets its own membership.
+ */
+export type SkillExportsBody = {
+  readonly name: string
+  readonly devices: readonly ExposedDeviceEntry[]
+  readonly actions: readonly ActionSceneEntry[]
+}
+
+const ExportDeviceSettingsSchema: z.ZodType<ExportDeviceSettings> = z.object({
+  streamPreference: z.string(),
+  sourceProfile: CamProfileSchema.optional(),
+  allowTranscode: z.boolean().optional(),
+})
+
+export const ExposedDeviceEntrySchema: z.ZodType<ExposedDeviceEntry> = z.object({
+  deviceId: z.number(),
+  exposedAt: z.number(),
+  settings: ExportDeviceSettingsSchema.optional(),
+})
+
+export const ActionSceneEntrySchema: z.ZodType<ActionSceneEntry> = z.object({
+  actionId: z.string(),
+  displayName: z.string(),
+  addedAt: z.number(),
+})
+
+export const SkillExportsBodySchema: z.ZodType<SkillExportsBody> = z.object({
+  name: z.string().min(1),
+  devices: z.array(ExposedDeviceEntrySchema),
+  actions: z.array(ActionSceneEntrySchema),
+})
+
+export const SKILL_EXPORTS_KIND_NAME = 'skill-exports'
+
+export const SKILL_EXPORTS_NAME = 'Alexa exposure'
+
+export const alexaSkillExportsKind: DefinedRecordKind<z.ZodType<SkillExportsBody>> =
+  defineEntryKind(SKILL_EXPORTS_KIND_NAME, {
+    title: 'Alexa exposure',
+    nameField: 'name',
+    schema: SkillExportsBodySchema,
+  })
+
+export const EMPTY_SKILL_EXPORTS: SkillExportsBody = {
+  name: SKILL_EXPORTS_NAME,
+  devices: [],
+  actions: [],
+}

@@ -19,11 +19,10 @@
  *     linkable OAuth client of the hub's core `/oauth2/*` server.
  *
  * Persistence:
- *   All addon-owned data — exposed device list, linked Alexa accounts,
- *   and LWA tokens — lives on `this.config` and writes through
- *   `updateGlobalSettings`. There is NO `<dataDir>/alexa/*.json` sidecar
- *   anymore; the kernel's addon-store (a typed KV) is the single source
- *   of truth.
+ *   The skill, its account links and what it exposes are records
+ *   (`skills`, `skill-links`, `skill-exports`); the remaining hidden state
+ *   lives on `this.config` and writes through `updateGlobalSettings`. There
+ *   is NO `<dataDir>/alexa/*.json` sidecar anymore.
  *
  * Out of scope for this dispatch:
  *   - AWS Lambda template (CloudFormation + signing image) — the
@@ -134,8 +133,11 @@ import {
   ALEXA_INSTANCE_ID,
   ALEXA_SKILL_DEFAULT_BODY,
   type AlexaSkillBody,
+  alexaSkillExportsKind,
   alexaSkillLinksKind,
   alexaSkillsKind,
+  EMPTY_SKILL_EXPORTS,
+  type SkillExportsBody,
   type SkillLinksBody,
 } from './skill-records.js'
 import { buildAlexaOauthIntegration } from './oauth-integration.js'
@@ -146,7 +148,7 @@ import { StateChangeReporter } from './state-reports/state-change-reporter.js'
 import { StateReconciler } from './state-reports/state-reconciler.js'
 import { PUBLIC_SKILL_ID } from './public-skill.js'
 import { type ResyncResult, SyncEngine } from './sync-engine.js'
-import { type ActionSceneEntry, ActionSceneExports } from './action-scenes.js'
+import { ActionSceneExports } from './action-scenes.js'
 import {
   type ExportDeviceSettings,
   type ExposedDeviceEntry,
@@ -232,12 +234,6 @@ export interface AlexaSettings {
   /** Region the operator's skill is published in (NA / EU / FE). Drives
    *  the Event Gateway URL. */
   readonly region: AlexaRegion
-  /** Operator-curated list of devices to surface to Alexa. Hidden state
-   *  — written via the `device-export` cap, NOT operator-editable. */
-  readonly exposed: readonly ExposedDeviceEntry[]
-  /** Actions exported as Alexa scenes (D968). Hidden state, written through
-   *  `exposeEntity` / `unexposeEntity` only. */
-  readonly exposedActions: readonly ActionSceneEntry[]
   /** Alexa users that have completed account-linking (cloud-mode
    *  `/oauth/lwa-tokens` callback). Hidden state. */
   readonly linkedAccounts: readonly LinkedAccount[]
@@ -325,8 +321,6 @@ const DEFAULT_CONFIG: AlexaSettings = {
   lwaClientSecret: '',
   advertisedBrokerUrl: '',
   region: 'NA',
-  exposed: [],
-  exposedActions: [],
   linkedAccounts: [],
   tokens: [],
   exportedEndpoints: {},
@@ -456,8 +450,31 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
   private skillRow: AlexaSkillBody | null = null
   /** The `skill-links` record, once it exists; until then the legacy ledger keys answer. */
   private linksRow: SkillLinksBody | null = null
+  /**
+   * The `skill-exports` record: what the skill exposes (devices Alexa discovers, actions it sees
+   * as scenes). Loaded once at boot after the migrations; this addon is its only writer, so the
+   * in-memory copy is the synchronous read the event path needs. No settings key backs it.
+   */
+  private exportsRow: SkillExportsBody = EMPTY_SKILL_EXPORTS
   /** The keychain refused the link credentials: the ledger is read-only until it answers (D49). */
   private linksLocked = false
+
+  private get exposedDevices(): readonly ExposedDeviceEntry[] {
+    return this.exportsRow.devices
+  }
+
+  /** Persist a change of the exposure: the record first, the in-memory copy after it landed. */
+  private async writeExports(
+    patch: Partial<Pick<SkillExportsBody, 'devices' | 'actions'>>,
+  ): Promise<void> {
+    const next: SkillExportsBody = {
+      name: this.exportsRow.name,
+      devices: patch.devices ?? this.exportsRow.devices,
+      actions: patch.actions ?? this.exportsRow.actions,
+    }
+    await this.exportsHandle().put({ id: ALEXA_INSTANCE_ID, data: next })
+    this.exportsRow = next
+  }
 
   /**
    * The legacy ledger keys as lists. A store written by an older build may hold something that
@@ -515,6 +532,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     await records.declare({
       skills: alexaSkillsKind,
       'skill-links': alexaSkillLinksKind,
+      'skill-exports': alexaSkillExportsKind,
     })
     this.instances = new RecordIntegrationInstances(records, alexaSkillsKind, {
       description: { instanceMode: 'single', kind: 'skills', canTest: false },
@@ -531,6 +549,10 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     })
     await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, this.migrationPorts()))
     await this.refreshRecords()
+    // A failed read of the exposure record stops the boot: serving an empty membership would
+    // delete every device from Alexa on the next reconcile.
+    this.exportsRow =
+      (await this.exportsHandle().get(ALEXA_INSTANCE_ID))?.data ?? EMPTY_SKILL_EXPORTS
 
     // Ensure an ingress token exists on first boot (shown in settings; the
     // operator pastes it into the Lambda's HUB_INGRESS_TOKEN env). Enforcement
@@ -577,7 +599,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     this.visibilityRef = new AccountVisibilityMirror({
       gate: this.accessGateRef,
       listLinkedUserIds: () => this.view.linkedAccounts.map((a) => a.userId),
-      listExposedDeviceIds: () => this.config.exposed.map((e) => e.deviceId),
+      listExposedDeviceIds: () => this.exposedDevices.map((e) => e.deviceId),
       getStored: () => this.config.accountVisibility,
       setStored: (next) => this.updateGlobalSettings({ accountVisibility: next }),
       logger: this.ctx.logger,
@@ -588,7 +610,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       logger: this.ctx.logger,
       integrationOn: () => this.view.objectDetection,
       snapshotsOn: () => this.view.snapshots,
-      isExposed: (deviceId) => this.config.exposed.some((e) => e.deviceId === deviceId),
+      isExposed: (deviceId) => this.exposedDevices.some((e) => e.deviceId === deviceId),
       knownClasses: (deviceId) => this.config.detectionClasses[deviceId]?.classes ?? [],
       namespace: () => this.config.visionNamespace,
       publicEndpoint: this.publicEndpoint,
@@ -618,9 +640,9 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
             (accessToken) => buildDeleteReportPayload(userId, ids, accessToken),
             `action scenes delete (${ids.length})`,
           ),
-        persist: (entries) => this.updateGlobalSettings({ exposedActions: [...entries] }),
+        persist: (entries) => this.writeExports({ actions: [...entries] }),
       },
-      this.config.exposedActions ?? [],
+      this.exportsRow.actions,
     )
     const actionScenes = this.actionScenes
     // The operator may have deleted an action while this addon was down.
@@ -637,7 +659,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
         ownInstance(deviceExportStatusInstanceOf(input))
         return {
           linkState: this.view.linkedAccounts.length > 0 ? 'linked' : 'unlinked',
-          exposedDeviceCount: this.config.exposed.length,
+          exposedDeviceCount: this.exposedDevices.length,
           setup: await this.buildSetupBlock(),
         }
       },
@@ -655,7 +677,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       },
       listExposedDevices: async ({ instanceId }) => {
         ownInstance(instanceId)
-        return this.config.exposed.map((e) => ({
+        return this.exposedDevices.map((e) => ({
           deviceId: String(e.deviceId),
         }))
       },
@@ -672,7 +694,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
         ownInstance(instanceId)
         await actionScenes.reconcile()
         return [
-          ...this.config.exposed.map((e) => ({
+          ...this.exposedDevices.map((e) => ({
             entity: { kind: 'device' as const, deviceId: String(e.deviceId) },
           })),
           ...actionScenes.list(),
@@ -719,18 +741,18 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
           // describing a bug that no longer exists, which reads as
           // verification — the correct rule is simply that a provider reads
           // its own store directly and every OTHER reader pins by addonId.
-          listExposed: async () => this.config.exposed,
+          listExposed: async () => this.exposedDevices,
           buildEndpoints: (deviceId) => this.buildEndpointsForOneDevice(deviceId),
         },
         cameraStream: {
           ctx: this.ctx,
           logger: this.ctx.logger,
-          listExposed: () => this.config.exposed,
+          listExposed: () => this.exposedDevices,
         },
         rtcSession: {
           ctx: this.ctx,
           logger: this.ctx.logger,
-          listExposed: () => this.config.exposed,
+          listExposed: () => this.exposedDevices,
         },
         ptzPreset: {
           ctx: this.ctx,
@@ -842,13 +864,13 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     this.egressPrewarm = new AlexaEgressPrewarm({
       api: this.ctx.api,
       logger: this.ctx.logger,
-      listExposed: () => this.config.exposed,
+      listExposed: () => this.exposedDevices,
       hasLiveSession: (deviceId) => heldEgressHandles().some((h) => h.deviceId === deviceId),
     })
     this.lwaGateway = new LwaEventGateway({
       ctx: this.ctx,
       logger: this.ctx.logger,
-      listExposed: () => this.config.exposed,
+      listExposed: () => this.exposedDevices,
       onExposedDoorbellPress: (deviceId) => {
         void this.egressPrewarm?.onPress(deviceId)
       },
@@ -870,7 +892,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     this.detectionFeed = new DetectionSensorFeed({
       eventBus: this.ctx.eventBus,
       enabled: () => this.view.detectionSensors,
-      isExposed: (deviceId) => this.config.exposed.some((e) => e.deviceId === deviceId),
+      isExposed: (deviceId) => this.exposedDevices.some((e) => e.deviceId === deviceId),
       readActiveTracks: async (deviceId) => {
         const tracks = await this.ctx.api.pipelineAnalytics.getActiveTracks.query({
           deviceId,
@@ -933,7 +955,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     // verifiable (the gateway POST returns a boolean).
     this.syncEngine = new SyncEngine({
       logger: this.ctx.logger,
-      listExposed: () => this.config.exposed,
+      listExposed: () => this.exposedDevices,
       listLinkedAccounts: () => this.view.linkedAccounts,
       hasProactiveCredentials: () => this.view.tokens.length > 0,
       buildEndpoints: (deviceId) => this.buildEndpointsForOneDevice(deviceId),
@@ -989,7 +1011,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       (event) => {
         const id = (event.data as { deviceId?: unknown } | null)?.deviceId
         if (typeof id !== 'number') return
-        if (!this.config.exposed.some((e) => e.deviceId === id)) return
+        if (!this.exposedDevices.some((e) => e.deviceId === id)) return
         // `unexposeDevice` drops the device from `exposed` AND issues the
         // DeleteReport (via the SyncEngine) — a single path, no double-fire.
         void this.unexposeDevice(String(id))
@@ -1008,7 +1030,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
 
     this.ctx.logger.info('export-alexa: initialized', {
       meta: {
-        exposedCount: this.config.exposed.length,
+        exposedCount: this.exposedDevices.length,
         skillMode: this.view.skillMode,
         skillIdSet: this.effectiveSettings().expectedAudience.length > 0,
         pushGrants: this.view.tokens.length,
@@ -1095,13 +1117,13 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       throw new Error(`export-alexa: device ${deviceId} not found`)
     }
 
-    const next: ExposedDeviceEntry[] = this.config.exposed.filter((e) => e.deviceId !== deviceId)
+    const next: ExposedDeviceEntry[] = this.exposedDevices.filter((e) => e.deviceId !== deviceId)
     next.push({
       deviceId,
       exposedAt: Date.now(),
       settings: DEFAULT_DEVICE_SETTINGS,
     })
-    await this.updateGlobalSettings({ exposed: next })
+    await this.writeExports({ devices: next })
 
     this.ctx.logger.info('export-alexa: exposed device', {
       meta: { deviceId },
@@ -1128,9 +1150,9 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     const deviceId = Number.parseInt(deviceIdRaw, 10)
     if (!Number.isFinite(deviceId)) return // idempotent on bogus input
 
-    const next = this.config.exposed.filter((e) => e.deviceId !== deviceId)
-    if (next.length === this.config.exposed.length) return // already absent
-    await this.updateGlobalSettings({ exposed: next })
+    const next = this.exposedDevices.filter((e) => e.deviceId !== deviceId)
+    if (next.length === this.exposedDevices.length) return // already absent
+    await this.writeExports({ devices: next })
     this.ctx.logger.info('export-alexa: unexposed device', {
       meta: { deviceId },
     })
@@ -1305,7 +1327,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
   private get endpointAccess(): EndpointAccessDeps {
     return {
       gate: this.accessGate,
-      isExposed: (deviceId) => this.config.exposed.some((e) => e.deviceId === deviceId),
+      isExposed: (deviceId) => this.exposedDevices.some((e) => e.deviceId === deviceId),
     }
   }
 
@@ -1344,7 +1366,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       (event) => {
         const deviceId = (event.data as { deviceId?: unknown } | null)?.deviceId
         if (typeof deviceId !== 'number') return
-        if (!this.config.exposed.some((e) => e.deviceId === deviceId)) return
+        if (!this.exposedDevices.some((e) => e.deviceId === deviceId)) return
         const pending = this.pendingReconcileTimers.get(deviceId)
         if (pending) clearTimeout(pending)
         const timer = setTimeout(() => {
@@ -1728,6 +1750,12 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     return records.kind(alexaSkillLinksKind)
   }
 
+  private exportsHandle(): RecordKindHandle<SkillExportsBody> {
+    const records = this.ctx.records
+    if (records === undefined) throw new Error('records are not available')
+    return records.kind(alexaSkillExportsKind)
+  }
+
   /** Re-read both records. A failed read changes nothing: the addon keeps what it has. */
   private async refreshRecords(): Promise<void> {
     try {
@@ -1789,6 +1817,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
   private migrationPorts(): AlexaCataloguePorts {
     const skills = this.skillHandle()
     const links = this.linksHandle()
+    const exportsHandle = this.exportsHandle()
     const putOnce = async <T extends { readonly name: string }>(
       handle: RecordKindHandle<T>,
       body: T,
@@ -1821,6 +1850,8 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       },
       putSkill: (body) => putOnce(skills, body),
       putLinks: (body) => putOnce(links, body),
+      putExports: (body) => putOnce(exportsHandle, body),
+      readExports: async () => (await exportsHandle.get(ALEXA_INSTANCE_ID))?.data ?? null,
       replaceLinks: async (body) => {
         await links.put({ id: ALEXA_INSTANCE_ID, data: body })
       },
@@ -2247,17 +2278,17 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
   }
 
   private findEntry(deviceId: number): ExposedDeviceEntry | null {
-    return this.config.exposed.find((e) => e.deviceId === deviceId) ?? null
+    return this.exposedDevices.find((e) => e.deviceId === deviceId) ?? null
   }
 
   private async patchEntrySettings(
     deviceId: number,
     settings: ExportDeviceSettings,
   ): Promise<void> {
-    const next = this.config.exposed.map<ExposedDeviceEntry>((e) =>
+    const next = this.exposedDevices.map<ExposedDeviceEntry>((e) =>
       e.deviceId === deviceId ? { ...e, settings } : e,
     )
-    await this.updateGlobalSettings({ exposed: next })
+    await this.writeExports({ devices: next })
   }
 }
 

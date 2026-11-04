@@ -24,7 +24,12 @@ import {
   recordingLogger,
   type Harness,
 } from '../../../../system/src/builtins/sqlite-storage/__tests__/support/owned-files-harness.js'
-import { ALEXA_INSTANCE_ID, alexaSkillLinksKind, alexaSkillsKind } from '../../skill-records.js'
+import {
+  ALEXA_INSTANCE_ID,
+  alexaSkillExportsKind,
+  alexaSkillLinksKind,
+  alexaSkillsKind,
+} from '../../skill-records.js'
 import {
   ADDON_MIGRATIONS,
   type AlexaCataloguePorts,
@@ -74,7 +79,7 @@ const LEGACY: Record<string, unknown> = {
   enforceIngressToken: true,
   linkedAccounts: ACCOUNTS,
   tokens: TOKENS_STORED,
-  exposed: [{ deviceId: 7, marker: 'keep-me' }],
+  exportedEndpoints: { 7: ['keep-me'] },
 }
 
 let h: Harness
@@ -199,7 +204,12 @@ async function boot(options: Options = {}) {
     finishMigration: (input) => provider.finishMigration(stamp(input)),
   }
   const memory = makeInMemoryRecords(ADDON)
-  await memory.records.declare({ skills: alexaSkillsKind, 'skill-links': alexaSkillLinksKind })
+  await memory.records.declare({
+    skills: alexaSkillsKind,
+    'skill-links': alexaSkillLinksKind,
+    'skill-exports': alexaSkillExportsKind,
+  })
+  const exposure = memory.records.kind(alexaSkillExportsKind)
   const skills = memory.records.kind(alexaSkillsKind)
   const links = memory.records.kind(alexaSkillLinksKind)
   if (options.existingLinks === true) {
@@ -248,6 +258,12 @@ async function boot(options: Options = {}) {
       )
       return { ...row.data, tokens }
     },
+    putExports: async (body) => {
+      if ((await exposure.get(ALEXA_INSTANCE_ID)) !== null) return 'exists'
+      await exposure.put({ id: ALEXA_INSTANCE_ID, data: body }, { ifRev: 0 })
+      return 'created'
+    },
+    readExports: async () => (await exposure.get(ALEXA_INSTANCE_ID))?.data ?? null,
     hasSkill: async () => (await skills.get(ALEXA_INSTANCE_ID)) !== null,
     clearOldTokenSecrets: async () => {
       calls.push('clear:tokens')
@@ -291,9 +307,11 @@ describe('export-alexa migrations on real SQLite', () => {
     const after = rows()
     // The moved keys are gone; the unrelated marked key and another addon's rows stay.
     expect(Object.keys(after).sort()).toEqual(
-      [`${ADDON}.exposed`, 'other-addon.skillMode', 'other-addon.tokens'].sort(),
+      [`${ADDON}.exportedEndpoints`, 'other-addon.skillMode', 'other-addon.tokens'].sort(),
     )
-    expect(after[`${ADDON}.exposed`]).toBe(wrapper(ADDON, 'exposed', LEGACY['exposed']))
+    expect(after[`${ADDON}.exportedEndpoints`]).toBe(
+      wrapper(ADDON, 'exportedEndpoints', LEGACY['exportedEndpoints']),
+    )
     expect(after['other-addon.tokens']).toBe(wrapper('other-addon', 'tokens', ['keep-me-too']))
   })
 

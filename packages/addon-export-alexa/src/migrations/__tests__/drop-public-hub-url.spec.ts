@@ -121,6 +121,8 @@ function fixture(initial: Record<string, unknown>) {
           replaceLinks: async () => undefined,
           readLinks: async () => null,
           hasSkill: async () => false,
+          putExports: async () => 'exists',
+          readExports: async () => null,
           clearOldTokenSecrets: async () => undefined,
         },
       ),

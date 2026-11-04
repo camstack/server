@@ -1,6 +1,12 @@
 import type { AddonMigration } from '@camstack/types'
 import { type DropPublicHubUrlPorts, planDropPublicHubUrl } from './drop-public-hub-url.js'
 import {
+  type DropMovedExposurePorts,
+  type MoveExposurePorts,
+  moveExposureToRecord,
+  planDropMovedExposure,
+} from './exposure-to-record.js'
+import {
   type DropMovedSettingsPorts,
   type MoveLedgersPorts,
   type MoveSettingsPorts,
@@ -10,6 +16,11 @@ import {
 } from './settings-to-records.js'
 
 export type { DropPublicHubUrlPorts } from './drop-public-hub-url.js'
+export type {
+  DropMovedExposurePorts,
+  ExposureMigrationLog,
+  MoveExposurePorts,
+} from './exposure-to-record.js'
 export type {
   AlexaMigrationLog,
   DropMovedSettingsPorts,
@@ -21,14 +32,19 @@ export type {
 export type AlexaCataloguePorts = DropPublicHubUrlPorts &
   MoveSettingsPorts &
   MoveLedgersPorts &
-  DropMovedSettingsPorts
+  DropMovedSettingsPorts &
+  MoveExposurePorts &
+  DropMovedExposurePorts
 
 export const DROP_PUBLIC_HUB_URL_ID = 'export-alexa/2026-11-02-drop-public-hub-url'
 export const SETTINGS_TO_INTEGRATION_ID = 'export-alexa/2026-11-03-settings-to-integration'
 export const LEDGERS_TO_INTEGRATION_ID = 'export-alexa/2026-11-03-ledgers-to-integration'
 export const DROP_MOVED_SETTINGS_ID = 'export-alexa/2026-11-03-drop-moved-settings'
 
-const FIXTURE_MARK = 'the exposed device list the migration does not know'
+export const EXPOSURE_TO_RECORD_ID = 'export-alexa/2026-11-04-exposure-to-record'
+export const DROP_MOVED_EXPOSURE_ID = 'export-alexa/2026-11-04-drop-moved-exposure'
+
+const FIXTURE_MARK = 'the endpoint sync state the migration does not know'
 
 /**
  * The `export-alexa` catalogue (D987): offered to the engine when the addon initialises. Every
@@ -101,5 +117,39 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<AlexaCataloguePorts>[] = 
       fixtureMark: FIXTURE_MARK,
     },
     plan: planDropMovedSettings,
+  },
+  {
+    meta: {
+      id: EXPOSURE_TO_RECORD_ID,
+      owner: 'export-alexa',
+      level: 'addon-state',
+      seq: 5,
+      dependsOn: [],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'block-owner',
+      bodyKind: 'procedure',
+      description:
+        'Move the exposed devices and actions into the skill-exports record; the record is read back before anything is deleted',
+      fixtureMark: FIXTURE_MARK,
+    },
+    procedure: moveExposureToRecord,
+  },
+  {
+    meta: {
+      id: DROP_MOVED_EXPOSURE_ID,
+      owner: 'export-alexa',
+      level: 'addon-state',
+      seq: 6,
+      dependsOn: [EXPOSURE_TO_RECORD_ID],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'block-owner',
+      bodyKind: 'plan',
+      description:
+        'Delete the exposed and exposedActions settings keys once the record holds what they carried',
+      fixtureMark: FIXTURE_MARK,
+    },
+    plan: planDropMovedExposure,
   },
 ]
