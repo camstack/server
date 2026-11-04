@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Broker connections (Home Assistant, Alexa, Matter, Google, MQTT, SMTP) are created and edited in the same instances dialog and table; the old broker manager is gone
 - The device Customize tab is one table: event and extension rows show their last event or configured summary and source, and other fields and linked devices are rows of that table instead of blocks below it
 - New Training providers page lists the cloud training accounts as an instances table, reached from the Training page's Providers tab
+- Broker integration pages count their connections from the same list the table shows, and no longer repeat the Connections heading, the Activity panel or an empty Settings block
 
 ## [1.2.576] - 2026-11-04
 

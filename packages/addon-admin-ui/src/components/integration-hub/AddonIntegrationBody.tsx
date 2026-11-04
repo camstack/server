@@ -73,9 +73,11 @@ export interface AddonIntegrationBodyProps {
   /**
    * When set, replaces `NodeAddonsSettingsPanel` inside the Settings section
    * (same `?section=settings`). Used when the addon owns entry CRUD outside
-   * an editable-array schema.
+   * an editable-array schema. `null` drops the Settings section altogether —
+   * for an addon whose configuration lives on its instances, so the global
+   * schema is empty.
    */
-  readonly settingsContent?: ReactNode
+  readonly settingsContent?: ReactNode | null
 }
 
 export function AddonIntegrationBody({
@@ -106,22 +108,24 @@ export function AddonIntegrationBody({
       {error !== null && <ErrorBox message={error} />}
       {lead}
       <PanelSections panels={topPanels} />
-      <IntegrationSection
-        id={SETTINGS_SECTION}
-        title={t('integrationHub.addonIntegrationBody.settings', 'Settings')}
-        icon={Settings2}
-      >
-        {settingsContent !== undefined ? (
-          settingsContent
-        ) : (
-          <NodeAddonsSettingsPanel
-            nodeId="hub"
-            addonIds={[addonId]}
-            level="global"
-            capability={capName}
-          />
-        )}
-      </IntegrationSection>
+      {settingsContent !== null && (
+        <IntegrationSection
+          id={SETTINGS_SECTION}
+          title={t('integrationHub.addonIntegrationBody.settings', 'Settings')}
+          icon={Settings2}
+        >
+          {settingsContent !== undefined ? (
+            settingsContent
+          ) : (
+            <NodeAddonsSettingsPanel
+              nodeId="hub"
+              addonIds={[addonId]}
+              level="global"
+              capability={capName}
+            />
+          )}
+        </IntegrationSection>
+      )}
       <IntegrationActivity addonId={addonId} />
       <PanelSections panels={endPanels} />
     </div>

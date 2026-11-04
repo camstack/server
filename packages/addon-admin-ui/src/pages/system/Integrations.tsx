@@ -29,14 +29,9 @@ import {
   DeviceExportPanel,
   DeviceExportSetup,
   useAddonsList,
-  useBrokerGetStatus,
   useDeviceExportGetStatus,
 } from '@camstack/ui-library'
-import {
-  BrokerRegistryStatusSchema,
-  CAP_PROVIDER_KIND_MAP,
-  DeviceExportStatusSchema,
-} from '@camstack/types'
+import { CAP_PROVIDER_KIND_MAP, DeviceExportStatusSchema } from '@camstack/types'
 import type { ProviderKind } from '@camstack/types'
 
 import { AdminSectionedPage } from '../../components/AdminSectionedPage'
@@ -60,6 +55,8 @@ import {
   type ConnectivityRow,
 } from './connectivity-model'
 import { InstancesTable } from '../../components/instances/InstancesTable'
+import { rowHealth } from '../../components/instances/instances-model'
+import { useInstancesData } from '../../components/instances/use-instances-data'
 import { WasteSettingsSources } from './WasteSettingsSources'
 import i18n from '../../i18n/index'
 import type { TFunction } from 'i18next'
@@ -176,7 +173,7 @@ function buildGroup(
             settingsContent={
               row.addonId === 'waste-collections' ? (
                 <WasteSettingsSources addonId={row.addonId} capName={capName} />
-              ) : undefined
+              ) : descriptor.kind === 'broker' ? null : undefined
             }
           />
         ),
@@ -354,6 +351,7 @@ function panelsFor(
             )}
             addLabel={i18n.t('admin.system.integrations.connectionsAdd', 'Add connection')}
             editKey={`connection-${addonId}`}
+            embedded
           />
         ),
       },
@@ -386,21 +384,19 @@ function KindStatusBadge({
 
 function BrokerStatusBadge({ addonId }: { readonly addonId: string }): ReactElement | null {
   const { t } = useTranslation()
-  const { data } = useBrokerGetStatus(
-    { addonId },
-    { refetchInterval: POLL_INTERVAL_MS, retry: false },
-  )
-  const parsed = BrokerRegistryStatusSchema.safeParse(data)
-  if (!parsed.success) return null
-  const { brokerCount, connectedCount } = parsed.data
+  // The same query the Connections table reads: the badge counts what the table lists.
+  const { state, rows } = useInstancesData('broker', addonId)
+  if (state !== 'ready') return null
+  const instances = rows.filter((row) => row.kind === 'instance')
+  const connected = instances.filter((row) => rowHealth(row) === 'ok').length
   return (
     <Badge variant="info" className={STATUS_BADGE_CLASS}>
-      {connectedCount > 0
+      {connected > 0
         ? t('system.connectivity.connectionsConnected', {
-            count: brokerCount,
-            connected: connectedCount,
+            count: instances.length,
+            connected,
           })
-        : t('system.connectivity.connections', { count: brokerCount })}
+        : t('system.connectivity.connections', { count: instances.length })}
     </Badge>
   )
 }

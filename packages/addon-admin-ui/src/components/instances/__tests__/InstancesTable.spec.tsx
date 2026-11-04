@@ -127,7 +127,7 @@ vi.mock('../use-set-instance-enabled', () => ({
 import { ConfirmDialogProvider } from '@camstack/ui-library'
 import { InstancesTable } from '../InstancesTable'
 
-function renderPanel(search = '') {
+function renderPanel(search = '', embedded = false) {
   // The open dialog lives in the real URL (`useUrlQueryParam` reads `window.location`).
   window.history.replaceState(null, '', `/${search}`)
   const client = new QueryClient({
@@ -145,6 +145,7 @@ function renderPanel(search = '') {
             emptyTitle="Nothing configured"
             emptyDescription="Add one."
             addLabel="Add destination"
+            embedded={embedded}
           />
         </ConfirmDialogProvider>
       </MemoryRouter>
@@ -346,6 +347,32 @@ describe('InstancesTable', () => {
       // Loki is `single` and holds one record, so SMTP is the only choice and opens its form.
       expect(await screen.findByText('Add SMTP')).toBeTruthy()
       expect(screen.queryByText('Add loki-logging')).toBeNull()
+    })
+  })
+
+  describe('embedded in an integration page', () => {
+    beforeEach(() => {
+      h.fn.data = [{ addonId: 'smtp-nodemailer', isActive: true }]
+      h.holders.data = [{ addonId: 'smtp-nodemailer', isActive: true }]
+      h.records = {
+        'smtp-nodemailer': [
+          { id: 'a', name: 'Relay A', configured: true, enabled: true, formValues: {} },
+        ],
+      }
+    })
+
+    it('stands alone with its own title and Activity', async () => {
+      renderPanel()
+      await screen.findByText('Relay A')
+      expect(screen.getByRole('heading', { name: 'Destinations' })).toBeTruthy()
+      expect(screen.getByRole('heading', { name: 'Activity' })).toBeTruthy()
+    })
+
+    it('draws neither a second title nor a second Activity: the page section owns both', async () => {
+      renderPanel('', true)
+      await screen.findByText('Relay A')
+      expect(screen.queryByRole('heading', { name: 'Destinations' })).toBeNull()
+      expect(screen.queryByRole('heading', { name: 'Activity' })).toBeNull()
     })
   })
 

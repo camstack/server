@@ -15,6 +15,7 @@ import {
   EmptyState,
   ErrorBox,
   IconButton,
+  SECTION_CARD,
   SectionCard,
   Switch,
   useAddonsSetCapabilityProviderEnabled,
@@ -25,7 +26,7 @@ import {
 } from '@camstack/ui-library'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link2, Link2Off, Loader2, Pencil, Play, Trash2, type LucideIcon } from 'lucide-react'
-import { useCallback, useMemo, useState, type ReactElement } from 'react'
+import { useCallback, useMemo, useState, type ReactElement, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { fillBrokerConnectPath, startServerNavigation } from '../../lib/broker-oauth-popup'
 import { AddonSettingsModal } from '../settings/AddonSettingsModal'
@@ -70,6 +71,12 @@ export interface InstancesTableProps {
   readonly install?: InstanceInstallLink
   /** The `?<key>=` that holds an open instance in the URL. Defaults to `instance`. */
   readonly editKey?: string
+  /**
+   * The table sits inside a page section that already carries the heading and
+   * the addon's Activity (an integration page): draw the card without its own
+   * title strip and without a second Activity panel.
+   */
+  readonly embedded?: boolean
 }
 
 /** The badge tooltip: the provider's detail and, when known, when the remote was last probed. */
@@ -190,6 +197,7 @@ export function InstancesTable({
   addLabel,
   install,
   editKey = 'instance',
+  embedded = false,
 }: InstancesTableProps): ReactElement {
   const { t } = useTranslation()
   const system = useSystem()
@@ -525,7 +533,12 @@ export function InstancesTable({
   }
 
   return (
-    <SectionCard headingId={`provider-instances-${functionCap}`} title={title} icon={icon}>
+    <Frame
+      embedded={embedded}
+      headingId={`provider-instances-${functionCap}`}
+      title={title}
+      icon={icon}
+    >
       <p className="px-3 pt-2 text-xs text-foreground-muted">{subtitle}</p>
       {data.state === 'ready' && (
         <InstanceProviderPills
@@ -541,7 +554,7 @@ export function InstancesTable({
         />
       )}
       {body}
-      {data.state === 'ready' && data.rows.length > 0 && (
+      {!embedded && data.state === 'ready' && data.rows.length > 0 && (
         <ProviderActivity rows={data.rows} selected={activityAddon} onSelect={setActivityAddon} />
       )}
       {lastTest !== null && (
@@ -571,6 +584,27 @@ export function InstancesTable({
           onClose={form.close}
         />
       )}
+    </Frame>
+  )
+}
+
+function Frame({
+  embedded,
+  headingId,
+  title,
+  icon,
+  children,
+}: {
+  readonly embedded: boolean
+  readonly headingId: string
+  readonly title: string
+  readonly icon: LucideIcon
+  readonly children: ReactNode
+}): ReactElement {
+  if (embedded) return <section className={SECTION_CARD}>{children}</section>
+  return (
+    <SectionCard headingId={headingId} title={title} icon={icon}>
+      {children}
     </SectionCard>
   )
 }
