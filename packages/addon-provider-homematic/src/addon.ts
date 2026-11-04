@@ -22,7 +22,13 @@ import {
   type SavedDevice,
   type SystemEvent,
   collectOwnerIntegrationIds,
+  defaultIntegrationApiOver,
+  defineAddonMigrations,
+  integrationInstancesCapability,
+  integrationRowsPortsOverApi,
+  type RecordIntegrationInstances,
 } from '@camstack/types'
+import { z } from 'zod'
 import { HomematicReconciler, type IntegrationLifecycleKind } from './homematic-reconciler.js'
 import type { CcuActionDeps } from './ccu/ccu-facade.js'
 import { buildCcuDevicesHandlers } from './ccu/ccu-devices-actions.js'
@@ -31,8 +37,16 @@ import { buildCcuHeatingHandlers } from './ccu/ccu-heating-actions.js'
 import { buildCcuPairingHandlers } from './ccu/ccu-pairing-actions.js'
 import { HOMEMATIC_PAGES } from './ccu/ccu-page.js'
 import { buildCcuOverviewHandlers } from './ccu/ccu-overview-actions.js'
-import { buildConnectionFormSchema, connectionFromSettings } from './config.js'
+import { connectionFromSettings } from './config.js'
 import { homematicActions } from './custom-actions.js'
+import {
+  buildHomematicInstances,
+  type HomematicConnectionBody,
+  homematicConnectionsEntryKind,
+  homematicRecordKinds,
+  settingsReadOf,
+} from './homematic-instances.js'
+import { HOMEMATIC_ROWS_TO_RECORD_MIGRATION } from './migrations/index.js'
 import { HmContainerDevice } from './devices/hm-container-device.js'
 import { hmChildDeviceClass } from './devices/hm-child-class-factory.js'
 import { isStandaloneEntitySaved } from './devices/hm-standalone-entity.js'
@@ -78,6 +92,7 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
   /** Live per-integration CCU sessions, or null before init / after shutdown. */
   private integrationReconciler: HomematicReconciler | null = null
   private clients: HmClientRegistry | null = null
+  private instances: RecordIntegrationInstances<HomematicConnectionBody> | null = null
 
   constructor() {
     super({})
@@ -85,6 +100,32 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
 
   protected override async onInitialize(): Promise<AddonInitResult<typeof homematicActions>> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
+
+    const records = this.ctx.records
+    if (records === undefined) {
+      throw new Error('provider-homematic: ctx.records is required (hub-only addon)')
+    }
+    await records.declare(homematicRecordKinds)
+    const instances = buildHomematicInstances(records, {
+      onChanged: () => this.reconcileIntegrations(),
+    })
+    this.instances = instances
+    // The rows move BEFORE the instances provider registers (below): while it is registered the
+    // hub answers from the record, not from the rows.
+    await this.runMigrations(
+      defineAddonMigrations(
+        [HOMEMATIC_ROWS_TO_RECORD_MIGRATION],
+        integrationRowsPortsOverApi({
+          api: defaultIntegrationApiOver(this.ctx.api),
+          records: records.kind({
+            name: homematicConnectionsEntryKind.name,
+            declaration: homematicConnectionsEntryKind.declaration,
+            schema: z.record(z.string(), z.unknown()),
+          }),
+          log: { warn: (message) => this.ctx.logger.warn(message) },
+        }),
+      ),
+    )
 
     this.clients = new HmClientRegistry(this.ctx.logger)
     this.clients.setOnConnected((integrationId) => {
@@ -111,6 +152,7 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
     return {
       providers: [
         ...regs,
+        { capability: integrationInstancesCapability, provider: instances.toProvider() },
         {
           capability: deviceAdoptionCapability,
           provider: this.buildAdoptionProvider(),
@@ -197,8 +239,9 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
     await super.onShutdown()
   }
 
-  protected override globalSettingsSchema(): ConfigUISchema {
-    return buildConnectionFormSchema()
+  private requireInstances(): RecordIntegrationInstances<HomematicConnectionBody> {
+    if (!this.instances) throw new Error('Homematic provider not initialised')
+    return this.instances
   }
 
   /**
@@ -273,10 +316,10 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
       for (const integration of all) {
         if (integration.addonId !== this.ctx.id) continue
         try {
-          const settings = await this.ctx.api.integrations.getSettings.query({
-            id: integration.id,
-          })
-          const connection = connectionFromSettings(settings)
+          const settings = settingsReadOf(
+            await this.requireInstances().readResolved(integration.id),
+          )
+          const connection = connectionFromSettings(settings.values)
           if (connection) hosts.push(connection.host)
         } catch (err) {
           this.ctx.logger.warn('Homematic discovery: settings read failed', {
@@ -355,11 +398,10 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
       },
       listIntegrations: () => this.ctx.api.integrations.list.query(),
       applySettings: async (integration) => {
-        const connection = connectionFromSettings(
-          await this.ctx.api.integrations.getSettings.query({
-            id: integration.id,
-          }),
-        )
+        const settings = settingsReadOf(await this.requireInstances().readResolved(integration.id))
+        // A locked keychain makes the WebUI password unknown, not empty (D49): leave the session as it is.
+        if (settings.secretsLocked) return false
+        const connection = connectionFromSettings(settings.values)
         if (!connection) return false
         await this.requireClients().upsert(integration.id, integration.name, connection)
         return true

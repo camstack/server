@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Homematic CCUs are kept as typed connection records, each moved once from the old integration settings with its own connection and WebUI password
+
 ## [1.2.181] - 2026-11-02
 
 ### Changed
