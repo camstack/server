@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**234 units · 7958 source files · 221 units claimed by at least one document (7914 files).**
+**234 units · 7960 source files · 221 units claimed by at least one document (7916 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -60,8 +60,8 @@ it never describes how the thing works, and it is never re-verified.
 | `server/backend/src/auth` | 36 | `auth` | `architecture/authentication.md`, `decisions/adr-0858-the-native-app-signs-in-through-dedicated-hub-app-flows-never-the-admin-ui.md`, `decisions/adr-0782-an-oidc-identity-signs-in-only-the-user-who-linked-it-from-their-own-session.md`, +13 more, 2 ADRs | 2026-10-21 |
 | `packages/ui-library/src/hooks` | 35 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +5 more | 2026-11-02 |
 | `packages/addon-provider-amcrest` | 34 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0615-an-amcrest-clip-catalog-gates-on-findfile-and-an-ambiguous-refusal-is-settled-by-a-control-search.md`, `design/2026-09-24-onboard-source-for-recordings-motion-events.md` _(covers)_, +8 more | 2026-10-26 |
+| `packages/addon-provider-homeassistant/src/ha-export` | 33 | `device-providers`, `ecosystem-exports` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, +6 more, 9 ADRs | 2026-10-26 |
 | `packages/addon-osd-manager` | 31 | `device-surfaces` | `architecture/osd-manager.md`, `design/2026-08-30-fleet-multiplier-round-trip-audit.md` _(covers)_, 1 ADR | 2026-10-04 |
-| `packages/addon-provider-homeassistant/src/ha-export` | 31 | `device-providers`, `ecosystem-exports` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, +6 more, 9 ADRs | 2026-10-26 |
 | `packages/types/src/pipeline` | 31 | `pipeline-orchestration` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/inference-devices.md`, `decisions/adr-0755-shares-and-auto-tune-are-sized-by-capacity-never-by-load.md`, +27 more, 2 ADRs | 2026-10-24 |
 | `packages/addon-provider-homeassistant/src/devices` | 30 | `device-providers` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0475-a-motion-episode-belongs-to-its-source-and-the-pipeline-never-overwrites-a-sensor.md`, +1 more | 2026-10-26 |
 | `packages/types/src/automation` | 30 | `automations` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0954-actions-are-declared-list-entries-not-devices-one-actions-surface-over-action-source-providers.md`, `decisions/adr-0972-a-number-tied-to-a-quantity-is-entered-in-a-unit-the-person-picks.md`, +5 more | — |

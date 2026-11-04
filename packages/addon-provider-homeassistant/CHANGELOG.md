@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Exposing or hiding a device in Home Assistant export changes only the Home Assistant instance it names, not every instance
 - Home Assistant connections are listed on the instances page; their stored connection is flattened once at start-up (same ids and tokens).
 - Connections move to the flat body without stranding keychain refs: the old token refs are released when the nested object goes
+- Home Assistant export: each instance's export switch, image-link address and exported devices now live in one record per instance; a migration moves the old settings and integration values, and the export no longer reads them
 
 ## [1.2.654] - 2026-11-03
 

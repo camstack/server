@@ -23,7 +23,7 @@ function start(
   let rows: () => Record<string, Record<string, unknown>> = () => ({})
   const f = settingsFixture(
     'homeassistant-export',
-    ADDON_MIGRATIONS,
+    ADDON_MIGRATIONS.filter((m) => [COPY, DROP].includes(m.meta.id)),
     () => ({
       readStored: async () =>
         Object.fromEntries(
@@ -34,6 +34,9 @@ function start(
           ),
         ),
       ...haInstanceSettingsPortsOver(world.api),
+      warn: () => undefined,
+      putLinks: async () => 'exists',
+      readLinks: async () => new Map(),
     }),
     stored,
     'keep-me',
@@ -63,7 +66,10 @@ describe('homeassistant-export per-broker flags: store to integration', () => {
       mark: 'A',
       brokerId: 'ha_a',
     })
-    expect(world.settingsOf('int_b')).toMatchObject({ exportTo: false, mark: 'B' })
+    expect(world.settingsOf('int_b')).toMatchObject({
+      exportTo: false,
+      mark: 'B',
+    })
     expect(world.settingsOf('int_b')?.['mediaRole']).toBeUndefined()
     expect(legacyLeft(f.rows())).toEqual([])
     expect(f.rows()['homeassistant-export.keep']).toBeDefined()
@@ -80,7 +86,10 @@ describe('homeassistant-export per-broker flags: store to integration', () => {
   it('an existing instance value is never overwritten, and the differing key stays parked', async () => {
     const { f, world } = start(
       { 'exportTo:ha_a': true },
-      { int_a: { brokerId: 'ha_a', exportTo: false }, int_b: { brokerId: 'ha_b' } },
+      {
+        int_a: { brokerId: 'ha_a', exportTo: false },
+        int_b: { brokerId: 'ha_b' },
+      },
     )
     await f.boot()
     expect(world.settingsOf('int_a')?.['exportTo']).toBe(false)

@@ -1,12 +1,12 @@
 /**
  * Two Home Assistant instances, two roles, two media bases: the track image link each broker
- * receives is minted on THAT broker's role (`mediaRole:<id>`), read from the palette on every
+ * receives is minted on THAT broker's role (its `ha-export-links` record), read from the palette on every
  * event (D986 §5). Disarm: mint one shared base again and both brokers carry the same URL.
  */
 import type { IScopedLogger } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { HaExportAddon } from '../ha-export.addon.js'
-import { mediaRoleKey } from '../media-url.js'
+import type { HaMediaRole } from '../media-url.js'
 
 const silent: IScopedLogger = {
   debug: () => undefined,
@@ -27,7 +27,7 @@ const TRACK = {
 }
 
 function harness(
-  store: Record<string, unknown>,
+  roles: Record<string, HaMediaRole>,
   book: { internal: string; publicEndpoint: string },
 ) {
   const addon = new HaExportAddon()
@@ -54,7 +54,9 @@ function harness(
       },
     },
   })
-  Reflect.set(addon, 'resolveGlobalStore', async () => store)
+  Reflect.set(addon, 'linkBook', {
+    mediaRole: (id: string) => roles[id] ?? 'internal',
+  })
   Reflect.set(addon, 'mediaSecret', 'secret')
   Reflect.set(addon, 'keyByDeviceId', new Map([[101, 'camstack-reolink-101']]))
   Reflect.set(
@@ -78,8 +80,11 @@ function harness(
 describe('HA export — track image link per broker', () => {
   it('mints each broker on its own role', async () => {
     const h = harness(
-      { [mediaRoleKey('remote-ha')]: 'publicEndpoint' },
-      { internal: 'http://192.0.2.10:4480', publicEndpoint: 'https://cams.example.org' },
+      { 'remote-ha': 'publicEndpoint' },
+      {
+        internal: 'http://192.0.2.10:4480',
+        publicEndpoint: 'https://cams.example.org',
+      },
     )
     await h.fire()
     expect(h.sent['lan-ha']?.[0]).toMatch(

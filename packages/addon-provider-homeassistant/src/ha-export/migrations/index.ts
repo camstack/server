@@ -5,12 +5,28 @@ import {
   type PerBrokerFlagsPorts,
   planDropPerBrokerFlags,
 } from './per-broker-flags.js'
+import {
+  type DropMovedLinksPorts,
+  type LinksMigrationPorts,
+  moveLinksToRecords,
+  planDropMovedLinks,
+} from './links-to-record.js'
 
 export type { DropPublicBaseUrlPorts } from './drop-public-base-url.js'
+export type {
+  DropMovedLinksPorts,
+  LinksMigrationPorts,
+} from './links-to-record.js'
 export type { PerBrokerFlagsPorts } from './per-broker-flags.js'
 
 /** Everything the `homeassistant-export` catalogue reads and writes. */
-export type HaExportMigrationPorts = DropPublicBaseUrlPorts & PerBrokerFlagsPorts
+export type HaExportMigrationPorts = DropPublicBaseUrlPorts &
+  PerBrokerFlagsPorts &
+  LinksMigrationPorts &
+  DropMovedLinksPorts
+
+export const LINKS_TO_RECORD_ID = 'homeassistant-export/2026-11-04-links-to-record'
+export const DROP_MOVED_LINKS_ID = 'homeassistant-export/2026-11-04-drop-moved-links'
 
 /** The `homeassistant-export` catalogue (D987): offered to the engine when the addon initialises. */
 export const ADDON_MIGRATIONS: readonly AddonMigration<HaExportMigrationPorts>[] = [
@@ -63,5 +79,39 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<HaExportMigrationPorts>[]
       fixtureMark: 'a legacy flag parked when the integration holds a different one',
     },
     plan: planDropPerBrokerFlags,
+  },
+  {
+    meta: {
+      id: LINKS_TO_RECORD_ID,
+      owner: 'homeassistant-export',
+      level: 'addon-state',
+      seq: 4,
+      dependsOn: [],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'block-owner',
+      bodyKind: 'procedure',
+      description:
+        'Move each instance export switch, media role and exported devices into its ha-export-links record; the record is read back before anything is deleted',
+      fixtureMark: 'the reconcile interval the migration does not know',
+    },
+    procedure: moveLinksToRecords,
+  },
+  {
+    meta: {
+      id: DROP_MOVED_LINKS_ID,
+      owner: 'homeassistant-export',
+      level: 'addon-state',
+      seq: 5,
+      dependsOn: [LINKS_TO_RECORD_ID],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'block-owner',
+      bodyKind: 'plan',
+      description:
+        'Delete the membership, exportTo and mediaRole keys once the records hold what they carried',
+      fixtureMark: 'the reconcile interval the migration does not know',
+    },
+    plan: planDropMovedLinks,
   },
 ]

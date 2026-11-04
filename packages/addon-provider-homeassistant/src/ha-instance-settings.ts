@@ -3,13 +3,12 @@
  * D985): the integration record already carries `{ brokerId }`, and the values that belong to the
  * instance — the calendars it imports, whether the export reaches it, the address role its image
  * links use — sit beside that link. This is the one place that reads and writes them, through the
- * hub's `integrations` capability, for the provider and the export alike.
+ * hub's `integrations` capability, for the provider (its calendars) and for the export's
+ * migrations, which read the two flags the export kept here before they moved to its records.
  *
  * A write MERGES into what is stored (the registry replaces the whole record) and passes
  * `skipRestart`, which the hub honours only for the integration's own addon.
  */
-import { errMsg } from '@camstack/types'
-
 /** The addon id the integrations of a Home Assistant instance carry. */
 export const HA_PROVIDER_ADDON_ID = 'provider-homeassistant'
 
@@ -81,27 +80,5 @@ export function haInstanceSettingsPortsOver(api: HaIntegrationsApi): HaInstanceS
       })
       return true
     },
-  }
-}
-
-/** The brokerId → settings view of the instances: what a reader keeps per broker. */
-export function settingsByBroker(
-  rows: readonly HaInstanceRow[],
-): ReadonlyMap<string, Readonly<Record<string, unknown>>> {
-  const out = new Map<string, Readonly<Record<string, unknown>>>()
-  for (const row of rows) if (row.brokerId !== null) out.set(row.brokerId, row.settings)
-  return out
-}
-
-/** Read the instances, or report why not and answer nothing (a reader falls back to the legacy key). */
-export async function listInstancesOrNothing(
-  ports: HaInstanceSettingsPorts,
-  onError: (message: string) => void,
-): Promise<readonly HaInstanceRow[]> {
-  try {
-    return await ports.listInstances()
-  } catch (err) {
-    onError(errMsg(err))
-    return []
   }
 }

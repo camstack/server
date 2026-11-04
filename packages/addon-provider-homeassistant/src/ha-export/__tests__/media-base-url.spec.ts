@@ -1,14 +1,13 @@
 /**
  * Home Assistant pulls images from the hub, so the media base is a hub address ROLE
  * (D734, D986 §5): `internal` by default, `publicEndpoint` when that broker's
- * integration says so. Read per use from the palette, never stored as a URL.
+ * `ha-export-links` record says so. Read per use from the palette, never stored as a URL.
  */
 import { describe, expect, it } from 'vitest'
 import {
   haMediaBaseUrl,
-  haMediaRoleOf,
   mediaBasesByBroker,
-  mediaRoleKey,
+  type HaMediaRole,
   type MediaAddressAnswer,
 } from '../media-url.js'
 
@@ -38,24 +37,16 @@ describe('haMediaBaseUrl', () => {
   })
 })
 
-describe('haMediaRoleOf', () => {
-  it('defaults to internal and ignores anything that is not a known role', () => {
-    expect(haMediaRoleOf({}, 'b1')).toBe('internal')
-    expect(haMediaRoleOf({ [mediaRoleKey('b1')]: 'https://typed-url' }, 'b1')).toBe('internal')
-    expect(haMediaRoleOf({ [mediaRoleKey('b1')]: 'publicEndpoint' }, 'b1')).toBe('publicEndpoint')
-  })
-})
-
 describe('mediaBasesByBroker', () => {
   it('gives two brokers two roles and two bases', () => {
-    const store = {
-      [mediaRoleKey('lan-ha')]: 'internal',
-      [mediaRoleKey('remote-ha')]: 'publicEndpoint',
+    const roles: Record<string, HaMediaRole> = {
+      'lan-ha': 'internal',
+      'remote-ha': 'publicEndpoint',
     }
     const bases = mediaBasesByBroker(
-      store,
       ['lan-ha', 'remote-ha', 'unset-ha'],
       book('http://192.0.2.10:4480', 'https://cams.example.org'),
+      (id) => roles[id] ?? 'internal',
     )
     expect(Object.fromEntries(bases)).toEqual({
       'lan-ha': 'http://192.0.2.10:4480',
@@ -65,12 +56,12 @@ describe('mediaBasesByBroker', () => {
   })
 
   it('follows a role change on the next read, with no restart', () => {
-    const store = { [mediaRoleKey('b1')]: 'publicEndpoint' }
+    const role = (): HaMediaRole => 'publicEndpoint'
     expect(
-      mediaBasesByBroker(store, ['b1'], book('http://a', 'https://one.example.org')).get('b1'),
+      mediaBasesByBroker(['b1'], book('http://a', 'https://one.example.org'), role).get('b1'),
     ).toBe('https://one.example.org')
     expect(
-      mediaBasesByBroker(store, ['b1'], book('http://a', 'https://two.example.org')).get('b1'),
+      mediaBasesByBroker(['b1'], book('http://a', 'https://two.example.org'), role).get('b1'),
     ).toBe('https://two.example.org')
   })
 })

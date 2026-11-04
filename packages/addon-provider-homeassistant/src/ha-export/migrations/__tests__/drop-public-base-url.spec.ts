@@ -112,11 +112,17 @@ function fixture(initial: Record<string, unknown>) {
   const boot = () =>
     runAddonMigrations(
       host,
-      defineAddonMigrations(ADDON_MIGRATIONS, {
-        readStored: async () => read(),
-        listInstances: async () => [],
-        patchInstanceSettings: async () => false,
-      }),
+      defineAddonMigrations(
+        ADDON_MIGRATIONS.filter((m) => m.meta.id.endsWith('drop-public-base-url')),
+        {
+          readStored: async () => read(),
+          listInstances: async () => [],
+          patchInstanceSettings: async () => false,
+          warn: () => undefined,
+          putLinks: async () => 'exists',
+          readLinks: async () => new Map(),
+        },
+      ),
       silentLogger,
     )
   return { read, neighbours, boot }

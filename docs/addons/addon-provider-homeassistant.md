@@ -220,22 +220,25 @@ Named here rather than shipped looking implemented:
   `ha_001` for ~2h50m, `notification-output` lost ALL THREE providers, and three
   `restartAddon` calls answered `{success:true}` without ever spawning a process.
   `scripts/check-runner-group-isolation.ts` now refuses the regression.
-- **The instance switch GATES the per-device panel, and the switch is stored
-  under a dynamic key.** `exportTo:<brokerId>` cannot be in `DEFAULT_CONFIG`
-  (one key per broker the hub happens to know), and `BaseAddon.resolveConfig`
-  copies only keys present in the defaults — so reading it off `this.config`
-  yields `undefined` for ever. It shipped that way: `getGlobalSettings` returned
-  `value: true` (the FORM reads the store), every reconcile logged `brokers=0`,
-  and the device Export tab rendered its "Not configured" card, with no operator
-  action able to change either. Read these keys through `resolveGlobalStore()` —
-  `enabledBrokerIds` in `membership.ts` is the only derivation.
+- **The instance switch GATES the per-device panel, and it is a field of the
+  instance's record, not a settings key.** The switch (`exportTo`), the image-link
+  address role (`mediaRole`) and the exported devices live in the instance's
+  `ha-export-links` record, id = the Home Assistant broker id (`link-records.ts`).
+  The settings form still names them `exportTo:<brokerId>` / `mediaRole:<brokerId>`
+  (a dynamic form key cannot be in `DEFAULT_CONFIG`); a read overlays the record on
+  the form and a write is routed to the record, never to the addon store. The
+  records are loaded once at boot after the migrations, and a failed read stops
+  the boot: an empty membership would unexport every device. Nothing reads the old
+  `membership` setting, the dynamic store keys or the integration's `exportTo` /
+  `mediaRole` any more; only the two `2026-11-04` migrations do
+  (`no-legacy-links-reader.spec.ts` keeps it so).
 - **The echo guard outranks membership.** A device whose `addonId` is
   `provider-homeassistant` is never exported back, even if selected.
 
 ## Membership
 
-`brokerId → deviceId[]`, in the export addon's own settings, and it is the ONLY
-export-membership store. The per-device Export panel renders one switch per
+`brokerId → deviceId[]`, carried by the `devices` of each instance's
+`ha-export-links` record, and it is the ONLY export-membership store. The per-device Export panel renders one switch per
 enabled broker over it; the `device-export` cap's `exposeDevice` /
 `unexposeDevice` name an `instanceId` - the broker id - and change that
 broker's membership only; there is no write without a target. `listInstances`

@@ -84,32 +84,31 @@ import {
   supportSignature,
 } from './component-support.js'
 import { ADDON_MIGRATIONS } from './migrations/index.js'
-import { instanceOverlay, splitInstanceKeys } from './instance-flags.js'
+import { haExportMigrationPorts } from './migrations/bind-ports.js'
 import {
-  type HaInstanceSettingsPorts,
-  haInstanceSettingsPortsOver,
-  listInstancesOrNothing,
-  settingsByBroker,
-} from '../ha-instance-settings.js'
+  ExportLinks,
+  exportToFormKey,
+  haExportLinksKind,
+  linkFormOverlay,
+  mediaRoleFormKey,
+  parseLinkFormKey,
+} from './link-records.js'
 import { buildDevicePlan, CAMERA_DERIVED_CAPS, unclassifiedCaps } from './entity-catalog.js'
 import {
   buildMediaUrl,
+  HA_MEDIA_ROLES,
+  type HaMediaRole,
   mediaBasesByBroker,
-  mediaRoleKey,
   MEDIA_URL_TTL_MS,
   verifyMediaSignature,
 } from './media-url.js'
 import {
-  brokerRefreshPatch,
   brokersExposing,
   type ExportMembership,
-  enabledBrokerIds,
   exposedDeviceIds,
   isExposed,
-  type BrokerInstanceSettings,
   type KnownBroker,
-  NO_INSTANCE_SETTINGS,
-  pruneBrokers,
+  sameBrokers,
   setExposed,
 } from './membership.js'
 import { footageForNode, shouldReadPackageStatus } from './node-reads.js'
@@ -207,8 +206,6 @@ const PTZ_MOVE_BY_DIRECTION: Readonly<
 
 interface HaExportConfig {
   readonly reconcileIntervalSec: number
-  /** brokerId → exported device ids. The ONLY export-membership store. */
-  readonly membership: ExportMembership
   /** Refreshed on every reconcile so the checkbox list stays honest. */
   readonly knownBrokers: readonly KnownBroker[]
   /**
@@ -216,13 +213,10 @@ interface HaExportConfig {
    * Hidden state, written through `exposeEntity` / `unexposeEntity` only.
    */
   readonly exportedEntities: ExportedEntitiesState
-  /** `exportTo:<brokerId>` — one checkbox per broker present. */
-  readonly [enabledKey: `exportTo:${string}`]: unknown
 }
 
 const DEFAULT_CONFIG: HaExportConfig = {
   reconcileIntervalSec: 300,
-  membership: {},
   knownBrokers: [],
   exportedEntities: { actions: [], targets: [] },
 }
@@ -384,12 +378,24 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
   }
 
   protected async onInitialize(): Promise<ProviderRegistration[]> {
+    const records = this.ctx.records
+    if (records === undefined) throw new Error('ha-export: records are not available')
+    await records.declare({ 'ha-export-links': haExportLinksKind })
+    const linksHandle = records.kind(haExportLinksKind)
     await this.runMigrations(
-      defineAddonMigrations(ADDON_MIGRATIONS, {
-        readStored: async () => this.resolveGlobalStore(),
-        ...this.instancePorts(),
-      }),
+      defineAddonMigrations(
+        ADDON_MIGRATIONS,
+        haExportMigrationPorts({
+          readStored: async () => this.resolveGlobalStore(),
+          api: this.ctx.api,
+          links: linksHandle,
+          warn: (message) => this.ctx.logger.warn(message),
+        }),
+      ),
     )
+    // A failed read stops the boot: serving an empty membership would unexport every device on
+    // the next reconcile.
+    this.linkBook = await ExportLinks.load(linksHandle)
 
     const secret = this.state<string>('haExportMediaSecret', z.string(), '')
     const existing = await secret.get()
@@ -530,38 +536,50 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
   }
 
   /**
-   * The form of the addon shows each instance's own switch and media role: the values sit on its
-   * integration (D985), overlaid on the legacy keys the store may still hold.
+   * The form of the addon shows each instance's own switch and media role. They are not settings
+   * of this addon: the values come from the instance's `ha-export-links` record.
    */
   override async getGlobalSettings(
     overlay?: Record<string, unknown>,
     cap?: string,
     nodeId?: string,
   ) {
-    const rows = await listInstancesOrNothing(this.instancePorts(), (error) =>
-      this.ctx.logger.warn('ha-export: the instance settings could not be read for the form', {
-        meta: { error },
-      }),
-    )
-    return super.getGlobalSettings({ ...overlay, ...instanceOverlay(rows) }, cap, nodeId)
+    return super.getGlobalSettings({ ...overlay, ...linkFormOverlay(this.book()) }, cap, nodeId)
   }
 
   /**
-   * An operator write: the `exportTo:` / `mediaRole:` keys go to the integration of their broker
-   * (D985), everything else to the addon store as before. A key whose broker has no integration
-   * stays in the store.
+   * An operator write: the `exportTo:` / `mediaRole:` keys go to the record of their broker,
+   * everything else to the addon store as before. A key naming a broker this addon does not know
+   * is refused, never parked.
    */
   override async updateGlobalSettingsAsOperator(
     patch: Record<string, unknown>,
     nodeId?: string,
   ): Promise<void> {
-    const ports = this.instancePorts()
-    const { toInstances, rest } = splitInstanceKeys(patch, await ports.listInstances())
-    for (const [integrationId, flags] of toInstances) {
-      if (await ports.patchInstanceSettings(integrationId, flags)) continue
-      throw new Error(`ha-export: integration ${integrationId} is gone — the setting was not saved`)
+    const rest: Record<string, unknown> = {}
+    const flags = new Map<string, { exportTo?: boolean; mediaRole?: HaMediaRole }>()
+    for (const [key, value] of Object.entries(patch)) {
+      const field = parseLinkFormKey(key)
+      if (field === null) {
+        rest[key] = value
+        continue
+      }
+      this.brokerScope(field.brokerId)
+      const entry = flags.get(field.brokerId) ?? {}
+      if (field.flag === 'exportTo') {
+        if (typeof value !== 'boolean') throw new Error(`ha-export: ${key} must be true or false`)
+        entry.exportTo = value
+      } else {
+        const role = HA_MEDIA_ROLES.find((candidate) => candidate === value)
+        if (role === undefined) throw new Error(`ha-export: ${key} is not a known address role`)
+        entry.mediaRole = role
+      }
+      flags.set(field.brokerId, entry)
     }
-    if (Object.keys(rest).length > 0 || toInstances.size === 0) {
+    for (const [brokerId, change] of flags) {
+      await this.book().setFlags(brokerId, this.brokerName(brokerId), change)
+    }
+    if (Object.keys(rest).length > 0 || flags.size === 0) {
       await super.updateGlobalSettingsAsOperator(rest, nodeId)
       return
     }
@@ -1166,7 +1184,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
        * asking per camera would be the fan-out this repo just finished
        * removing from a 300 s poll.
        */
-      const exposedIds = exposedDeviceIds(this.config.membership, enabled)
+      const exposedIds = exposedDeviceIds(this.membership(), enabled)
       const cameraDeviceIds: number[] = []
       for (const idStr of exposedIds) {
         const numericId = Number(idStr)
@@ -1208,7 +1226,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
       }> = []
       let entityCount = 0
 
-      for (const deviceIdStr of exposedDeviceIds(this.config.membership, enabled)) {
+      for (const deviceIdStr of exposedDeviceIds(this.membership(), enabled)) {
         const numericId = Number(deviceIdStr)
         if (!Number.isFinite(numericId)) {
           this.ctx.logger.warn('ha-export: membership holds a non-numeric device id, skipping', {
@@ -1276,7 +1294,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
           continue
         }
         for (const cap of catalogDevice.boundCaps) allCaps.add(cap)
-        const brokerIds = brokersExposing(this.config.membership, deviceIdStr).filter((id) =>
+        const brokerIds = brokersExposing(this.membership(), deviceIdStr).filter((id) =>
           enabled.includes(id),
         )
         /**
@@ -2426,40 +2444,30 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
      * is pruned on the next pass that returns a NON-empty list without it,
      * which costs one interval and cannot cost the operator their config.
      */
-    const pruned =
-      haBrokers.length === 0
-        ? this.config.membership
-        : pruneBrokers(
-            this.config.membership,
-            haBrokers.map((broker) => broker.id),
-          )
-    if (haBrokers.length === 0 && Object.keys(this.config.membership).length > 0) {
-      this.ctx.logger.warn(
-        'ha-export: no Home Assistant broker answered — keeping the export membership rather than pruning it',
-        { meta: { brokers: Object.keys(this.config.membership) } },
-      )
+    if (haBrokers.length === 0) {
+      if (this.book().brokerIds().length > 0) {
+        this.ctx.logger.warn(
+          'ha-export: no Home Assistant broker answered — keeping the export links rather than pruning them',
+          { meta: { brokers: this.book().brokerIds() } },
+        )
+      }
+    } else {
+      const gone = await this.book().prune(haBrokers.map((broker) => broker.id))
+      if (gone.length > 0) {
+        this.ctx.logger.info('ha-export: forgot the export links of removed instances', {
+          meta: { brokers: gone },
+        })
+      }
     }
     /**
-     * ONE key per thing that actually changed — see `brokerRefreshPatch`.
-     *
-     * This used to write `knownBrokers` and `membership` together whenever
-     * EITHER differed. A boot-window settings read that answers empty leaves
-     * `this.config` on its constructor defaults, and that joint write then
-     * persisted `membership: {}` over the operator's real export list on a
-     * pass whose only news was the broker roster. It cost this hub three days
-     * of Home Assistant: 2026-08-24 21:55:13.
+     * Only the roster is a setting; the membership is not, so a boot-window read that answers
+     * empty can no longer erase it (2026-08-24: a refresh wrote `membership: {}` over the
+     * operator's export list). The records are read at boot and a failed read stops it.
      */
-    const patch = brokerRefreshPatch(
-      {
-        knownBrokers: this.config.knownBrokers,
-        membership: this.config.membership,
-      },
-      { knownBrokers: known, membership: pruned },
-    )
-    if (patch !== null) {
-      await this.updateGlobalSettings(patch)
+    if (!sameBrokers(known, this.config.knownBrokers)) {
+      await this.updateGlobalSettings({ knownBrokers: known })
     }
-    await this.refreshEnabledBrokers(known)
+    this.refreshEnabledBrokers(known)
 
     const wanted = new Set(this.enabledBrokerIds())
     for (const [brokerId, link] of this.links) {
@@ -2623,42 +2631,32 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
   /**
    * The brokers switched on, as of the last {@link refreshEnabledBrokers}.
    *
-   * NOT read from `this.config`: `exportTo:<brokerId>` is a dynamic key and
-   * `BaseAddon.resolveConfig` copies only keys present in `DEFAULT_CONFIG`, so
-   * it is `undefined` there for ever — see `enabledBrokerIds` in
-   * `membership.ts` for what that cost. The store is the authority; this is a
-   * read-through cache of it, refreshed at the top of every reconcile pass and
-   * before the per-device panel renders, never written to.
+   * NOT read from `this.config`: the switch is a fact of the instance's `ha-export-links`
+   * record, and this is a read-through cache of it, refreshed at the top of every reconcile pass
+   * and before the per-device panel renders, never written to.
    */
   private enabled: readonly string[] = []
 
-  private async refreshEnabledBrokers(known: readonly KnownBroker[]): Promise<void> {
-    const store = await this.resolveGlobalStore()
-    this.enabled = enabledBrokerIds(
-      store,
-      known.map((broker) => broker.id),
-      await this.readInstanceSettings(),
-    )
+  /** The `ha-export-links` records, loaded at boot after the migrations. */
+  private linkBook: ExportLinks | null = null
+
+  private book(): ExportLinks {
+    if (this.linkBook === null) throw new Error('ha-export: the export links are not loaded yet')
+    return this.linkBook
   }
 
-  /** The hub's `integrations` capability, as the one reader and writer of an instance's settings. */
-  private instancePorts(): HaInstanceSettingsPorts {
-    return haInstanceSettingsPortsOver(this.ctx.api.integrations)
+  /** brokerId → exported device ids, from the records. */
+  private membership(): ExportMembership {
+    return this.book().membership()
   }
 
-  /**
-   * Each broker's integration settings (D985): the switch and the media role of an instance.
-   * A read that fails answers nothing, so every broker falls back to its legacy key and the
-   * failure is logged — never read as "everything off".
-   */
-  private async readInstanceSettings(): Promise<BrokerInstanceSettings> {
-    const rows = await listInstancesOrNothing(this.instancePorts(), (error) =>
-      this.ctx.logger.warn(
-        'ha-export: the instance settings could not be read — the legacy per-broker keys answer',
-        { meta: { error } },
-      ),
-    )
-    return rows.length === 0 ? NO_INSTANCE_SETTINGS : settingsByBroker(rows)
+  /** Persist a membership change: each instance's record first, the in-memory copy after it. */
+  private async persistMembership(next: ExportMembership): Promise<void> {
+    await this.book().setMembership(next, (brokerId) => this.brokerName(brokerId))
+  }
+
+  private refreshEnabledBrokers(known: readonly KnownBroker[]): void {
+    this.enabled = known.map((broker) => broker.id).filter((id) => this.book().isEnabled(id))
   }
 
   private enabledBrokerIds(): readonly string[] {
@@ -2792,7 +2790,12 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
     }
     this.ctx.logger.warn('ha-export: command answered 422', {
       tags: { deviceId: exported.deviceId },
-      meta: { topic, entity: parsed.entity, reason: outcome.reason, message: outcome.message },
+      meta: {
+        topic,
+        entity: parsed.entity,
+        reason: outcome.reason,
+        message: outcome.message,
+      },
     })
     reply.status(422)
     reply.send(commandNotAppliedBody(outcome))
@@ -2933,7 +2936,11 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
               tags: { deviceId: command.deviceId },
               meta: { preset: command.preset },
             })
-            return { ok: false, reason: 'no-such-preset', message: 'no preset by that name' }
+            return {
+              ok: false,
+              reason: 'no-such-preset',
+              message: 'no preset by that name',
+            }
           }
           await device.ptz.goToPreset({ presetId: preset.id })
           return APPLIED
@@ -3083,7 +3090,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
 
   /**
    * Each broker's media base, read per use: the palette's role the broker chose
-   * (`mediaRole:<brokerId>`, `internal` by default). A role that resolves to nothing
+   * (the `ha-export-links` record's `mediaRole`, `internal` by default). A role that resolves to nothing
    * is `null` and says so — the image entities then carry no value, which reads as
    * empty rather than as a broken link.
    */
@@ -3094,10 +3101,9 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
     let bases: ReadonlyMap<string, string | null>
     try {
       bases = mediaBasesByBroker(
-        await this.resolveGlobalStore(),
         brokerIds,
         await this.ctx.api.localNetwork.getAddresses.query(),
-        await this.readInstanceSettings(),
+        (brokerId) => this.book().mediaRole(brokerId),
       )
     } catch (err) {
       this.ctx.logger.debug('ha-export: could not resolve the media base URLs', {
@@ -3141,9 +3147,9 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
   }
 
   private exposedDeviceRows(scope: readonly string[]): { deviceId: string; exposedAs: string }[] {
-    return exposedDeviceIds(this.config.membership, scope).map((deviceId) => ({
+    return exposedDeviceIds(this.membership(), scope).map((deviceId) => ({
       deviceId,
-      exposedAs: brokersExposing(this.config.membership, deviceId)
+      exposedAs: brokersExposing(this.membership(), deviceId)
         .map((brokerId) => this.brokerName(brokerId))
         .join(', '),
     }))
@@ -3160,15 +3166,15 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
     exposed: boolean,
   ): Promise<void> {
     this.brokerScope(instanceId)
-    const next = setExposed(this.config.membership, instanceId, deviceId, exposed)
-    if (next === this.config.membership) {
+    const next = setExposed(this.membership(), instanceId, deviceId, exposed)
+    if (next === this.membership()) {
       this.ctx.logger.debug('ha-export: membership already in that state, nothing to do', {
         tags: { deviceId: Number(deviceId) },
         meta: { exposed, brokerId: instanceId },
       })
       return
     }
-    await this.updateGlobalSettings({ membership: next })
+    await this.persistMembership(next)
     this.ctx.logger.info('ha-export: export membership changed', {
       tags: { deviceId: Number(deviceId) },
       meta: { exposed, brokerId: instanceId },
@@ -3181,7 +3187,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
   protected globalSettingsSchema(): ConfigUISchema {
     const brokerFields = this.config.knownBrokers.map((broker) => ({
       type: 'boolean' as const,
-      key: `exportTo:${broker.id}`,
+      key: exportToFormKey(broker.id),
       label: broker.name,
       style: 'switch' as const,
       default: false,
@@ -3212,7 +3218,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
                   },
                 ],
         },
-        // One media role per Home Assistant instance, stored beside its `exportTo:` switch.
+        // One media role per Home Assistant instance, kept beside its export switch in the `ha-export-links` record.
         // The role is read from the hub's address palette on every use; no URL is stored.
         ...(this.config.knownBrokers.length > 0
           ? [
@@ -3225,7 +3231,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
                 columns: 1 as const,
                 fields: this.config.knownBrokers.map((broker) => ({
                   type: 'select' as const,
-                  key: mediaRoleKey(broker.id),
+                  key: mediaRoleFormKey(broker.id),
                   label: `Image links for ${broker.name}`,
                   options: [
                     { value: 'internal', label: 'Internal (LAN address)' },
@@ -3279,7 +3285,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
     // Refreshed here, not just on the reconcile: the panel is opened straight
     // after the operator flips an instance on, and a switch list one reconcile
     // behind renders "Not configured" over a broker that IS enabled.
-    await this.refreshEnabledBrokers(this.config.knownBrokers)
+    this.refreshEnabledBrokers(this.config.knownBrokers)
     const idStr = String(deviceId)
     const enabled = this.enabledBrokerIds()
     const fields = enabled.map((brokerId) => ({
@@ -3287,7 +3293,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
       key: `haExport:${deviceId}:${brokerId}`,
       label: `Export to ${this.brokerName(brokerId)}`,
       style: 'switch' as const,
-      value: isExposed(this.config.membership, brokerId, idStr),
+      value: isExposed(this.membership(), brokerId, idStr),
       immediate: true,
     }))
     return {
@@ -3326,7 +3332,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
     patch: Readonly<Record<string, unknown>>,
   ): Promise<{ success: true }> {
     const idStr = String(deviceId)
-    let next = this.config.membership
+    let next = this.membership()
     let touched = false
     /**
      * Driven by the PATCH KEYS, not by the enabled-broker list.
@@ -3356,7 +3362,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
       })
       return { success: true }
     }
-    await this.updateGlobalSettings({ membership: next })
+    await this.persistMembership(next)
     this.ctx.logger.info('ha-export: per-broker export membership changed', {
       tags: { deviceId },
       meta: { brokers: brokersExposing(next, idStr) },
@@ -3385,7 +3391,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
       enabled.length === 0 ? 'unlinked' : healthy === links.length ? 'linked' : 'error'
     return {
       linkState,
-      exposedDeviceCount: exposedDeviceIds(this.config.membership, enabled).length,
+      exposedDeviceCount: exposedDeviceIds(this.membership(), enabled).length,
       ...(linkFailure !== undefined
         ? { error: linkFailure }
         : this.lastError !== undefined
