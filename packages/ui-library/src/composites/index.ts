@@ -14,9 +14,16 @@ export {
   stepLocalFields,
 } from './agent-step-editor'
 export type { RootModelInfo } from './root-model-source'
-export { RootModelSourceControl, rootSourceState, withUseRootModel } from './root-model-source'
+export {
+  RootModelSourceControl,
+  rootSourceState,
+  withUseRootModel,
+} from './root-model-source'
 export * from './app-shell'
-export type { AudioClassification, AudioClassificationListProps } from './audio-classification-list'
+export type {
+  AudioClassification,
+  AudioClassificationListProps,
+} from './audio-classification-list'
 export { AudioClassificationList } from './audio-classification-list'
 export type { AudioLevelWaveformProps } from './audio-level-waveform'
 export { AudioLevelWaveform } from './audio-level-waveform'
@@ -31,10 +38,17 @@ export {
   BINARY_BATTERY_LOW_BELOW,
   binaryBatteryIsLow,
 } from './binary-battery'
-export type { RunningBadgeProps, RunningStatusLineProps } from './running-badge'
+export type {
+  RunningBadgeProps,
+  RunningStatusLineProps,
+} from './running-badge'
 export { RunningBadge, RunningStatusLine } from './running-badge'
 export { runningDurationSince, runningStatusParts } from './running-status'
-export type { RunningDuration, RunningStatusKey, RunningStatusParts } from './running-status'
+export type {
+  RunningDuration,
+  RunningStatusKey,
+  RunningStatusParts,
+} from './running-status'
 export type {
   ConsumableLevel,
   ConsumableLevelBadgeProps,
@@ -50,7 +64,10 @@ export {
   isConsumableLevelField,
   parseConsumableLevel,
 } from './consumable-level-badge'
-export type { NetworkLinkBadgeProps, NetworkLinkStatusLike } from './network-link-badge'
+export type {
+  NetworkLinkBadgeProps,
+  NetworkLinkStatusLike,
+} from './network-link-badge'
 export { NetworkLinkBadge } from './network-link-badge'
 export {
   NODE_COLOR_IDS,
@@ -153,7 +170,10 @@ export { PowerMeterLine } from './cap-settings/PowerMeterLine'
 // type-only (no module code executes for type-only imports).
 export type { CapSettingsComponentProps } from './cap-settings/index'
 // MaskShapeItem / MaskShapeCanvasProps are pure interfaces — safe type-only.
-export type { MaskShapeCanvasProps, MaskShapeItem } from './cap-settings/MaskShapeCanvas'
+export type {
+  MaskShapeCanvasProps,
+  MaskShapeItem,
+} from './cap-settings/MaskShapeCanvas'
 // Cap-settings components — resolved by componentId via admin-ui UI_COMPONENTS.
 // NOTE: MotionZonesSettings, PrivacyMaskSettings and MaskShapeCanvas are
 // intentionally NOT imported here — they pull in react-konva / konva at
@@ -192,7 +212,10 @@ export {
   type RootDetectorDeviceInput,
   type RootDetectorNodeInput,
 } from './training/root-detector-placements'
-export { type TrainingFrameRefusal, trainingRefusalText } from './training/training-refusal-text'
+export {
+  type TrainingFrameRefusal,
+  trainingRefusalText,
+} from './training/training-refusal-text'
 export type { SceneCaptureVariant } from './cap-settings/scene-monitor-copy'
 // The scene copy builders are pure functions over `SceneMonitor` — no React, no
 // konva — so the /scenes table can share the exact sentences the editor shows.
@@ -239,8 +262,14 @@ export { CopyButton } from './copy-button'
 export type { DataColumn, DataTableProps } from './data-table'
 export * from './data-table'
 export { DataTable } from './data-table'
-export type { DataTablePage, DataTablePaginationLabels } from './data-table-pagination'
-export { DEFAULT_PAGINATION_LABELS, paginateRows } from './data-table-pagination'
+export type {
+  DataTablePage,
+  DataTablePaginationLabels,
+} from './data-table-pagination'
+export {
+  DEFAULT_PAGINATION_LABELS,
+  paginateRows,
+} from './data-table-pagination'
 export type { DataTablePagerProps } from './data-table-pager'
 export { DataTablePager } from './data-table-pager'
 export type { DataTableSelection } from './data-table-selection'
@@ -266,7 +295,10 @@ export type {
   DataTableFilterBarProps,
 } from './data-table-filter-bar'
 export { DataTableFilterBar } from './data-table-filter-bar'
-export type { DataTableFilter, DataTableFilterGroupView } from './use-data-table-filter'
+export type {
+  DataTableFilter,
+  DataTableFilterGroupView,
+} from './use-data-table-filter'
 export { useDataTableFilter } from './use-data-table-filter'
 export type { SortHeaderButtonProps } from './sort-header-button'
 export { SortHeaderButton } from './sort-header-button'
@@ -276,7 +308,12 @@ export type {
   TableSortState,
   TableSortValue,
 } from './table-sort'
-export { ariaSortForColumn, nextSortDirection, nextTableSort, sortRowsByColumn } from './table-sort'
+export {
+  ariaSortForColumn,
+  nextSortDirection,
+  nextTableSort,
+  sortRowsByColumn,
+} from './table-sort'
 export type { Detection, DetectionCanvasProps } from './detection-canvas'
 export { DetectionCanvas } from './detection-canvas'
 // --- Detection / Inference components ---
@@ -295,14 +332,21 @@ export type { DetectionResultTreeProps } from './detection-result-tree'
 export { DetectionResultTree } from './detection-result-tree'
 export type { DevShellProps } from './dev-shell'
 export { DevShell, useDevShell } from './dev-shell'
-export type { ActivityTabId, DeviceActivityPanelProps } from './device-activity-panel'
+export type {
+  ActivityTabId,
+  DeviceActivityPanelProps,
+} from './device-activity-panel'
 export { DeviceActivityPanel } from './device-activity-panel'
 export * from './device-card'
 export * from './device-controls'
-export type { DeviceExportPanelProps } from './device-export-panel'
+export type {
+  DeviceExportInstancePanelProps,
+  DeviceExportPanelProps,
+} from './device-export-panel'
 // --- Device export (generic `device-export` cap surface) ---
 export {
   DEVICE_EXPORT_PAGE_SIZE_KEY,
+  DeviceExportInstancePanel,
   DeviceExportPanel,
   DeviceExportSetup,
 } from './device-export-panel'
@@ -317,7 +361,10 @@ export * from './device-meta'
 export * from './device-name'
 export * from './icon-glyphs'
 export * from './icon-picker'
-export { DeviceMultiSelectField, DeviceSelectField } from './device-select-field'
+export {
+  DeviceMultiSelectField,
+  DeviceSelectField,
+} from './device-select-field'
 export type {
   NotificationTargetOption,
   NotificationTargetSelectFieldProps,
@@ -343,7 +390,10 @@ export {
   sameLocationSuggestions,
   selectedDeviceOptions,
 } from './device-select-filter'
-export type { DeviceSelectorTab, SelectorDevice } from './device-selector-picker'
+export type {
+  DeviceSelectorTab,
+  SelectorDevice,
+} from './device-selector-picker'
 // v3 DeviceSelector editor — shared by the raw ScopePicker row and the
 // simple Access panel, so one wire shape has exactly one editor.
 export {
@@ -352,7 +402,10 @@ export {
   deviceTypeLabel,
   tabForSelector,
 } from './device-selector-picker'
-export type { DeviceStepMatrixHandle, DeviceStepMatrixProps } from './device-step-matrix'
+export type {
+  DeviceStepMatrixHandle,
+  DeviceStepMatrixProps,
+} from './device-step-matrix'
 export { DeviceStepMatrix, nextGridPosition } from './device-step-matrix'
 export { DiscoveryPanel } from './discovery-panel'
 export type { DoorbellRecentPanelProps } from './doorbell-recent-panel'
@@ -367,10 +420,16 @@ export {
   eventKindLabel,
   resolveEventKindIcon,
 } from './event-kind-visuals'
-export type { EventStreamProps, FloatingEventStreamProps } from './event-stream'
+export type {
+  EventStreamProps,
+  FloatingEventStreamProps,
+} from './event-stream'
 export { EventStream, FloatingEventStream } from './event-stream'
 // --- Extensions panel (D648 slots; `slots` filter for the Customize tab, D676) ---
-export { ExtensionsPanel, type ExtensionsPanelProps } from './extensions/ExtensionsPanel.js'
+export {
+  ExtensionsPanel,
+  type ExtensionsPanelProps,
+} from './extensions/ExtensionsPanel.js'
 export * from './filter-bar'
 export * from './form-field'
 export type { GroupedModelSelectorProps } from './grouped-model-selector'
@@ -424,17 +483,21 @@ export type {
   CellState,
   MatrixSelectedCell,
 } from './pipeline-matrix-shared'
-export { agentColumnKey, groupAgentColumns, shouldUseSingleNode } from './pipeline-matrix-shared'
+export {
+  agentColumnKey,
+  groupAgentColumns,
+  shouldUseSingleNode,
+} from './pipeline-matrix-shared'
 export type { PipelineRuntimeOption } from './pipeline-runtime-selector'
 export { PipelineRuntimeSelector } from './pipeline-runtime-selector'
-export type { PipelineStepDisplayConfig, PipelineStepProps } from './pipeline-step'
+export type {
+  PipelineStepDisplayConfig,
+  PipelineStepProps,
+} from './pipeline-step'
 // --- Pipeline components ---
 export { ConfigSchemaField, PipelineStep } from './pipeline-step'
 export * from './provider-badge'
-export {
-  AddProviderEntryDialog,
-  ProviderEntryPills,
-} from './provider-entries'
+export { AddProviderEntryDialog, ProviderEntryPills } from './provider-entries'
 export type {
   AddProviderEntryCreateInput,
   AddProviderEntryDialogProps,
@@ -477,7 +540,10 @@ export { SettingRow } from './setting-row'
 // `device-list` table, and `IconAction` was absorbed into
 // `device-list/icon-action.tsx` (re-exported via `export * from './device-list'`
 // below). Nothing consumed `DeviceTable`/`TableStatusDot` outside the skeleton.
-export type { SnapshotButtonProps, SnapshotButtonTrpc } from './snapshot-button'
+export type {
+  SnapshotButtonProps,
+  SnapshotButtonTrpc,
+} from './snapshot-button'
 export { SnapshotButton } from './snapshot-button'
 export * from './stat-card'
 export type { StateValuesStreamProps } from './state-values-stream'
@@ -492,10 +558,19 @@ export { buildStepTreeFromSchema } from './step-tree'
 export type { StreamBrokerSelectorProps } from './stream-broker-selector'
 // --- Stream broker selector (per-device "preferred stream" picker) ---
 export { StreamBrokerSelector } from './stream-broker-selector'
-export type { StreamChoice, StreamPanelProps, StreamStats } from './stream-panel'
+export type {
+  StreamChoice,
+  StreamPanelProps,
+  StreamStats,
+} from './stream-panel'
 // --- Stream panel (unified viewer) ---
 export { StreamPanel } from './stream-panel'
-export type { Timezone, TimezoneDstRule, TimezoneSelectorProps, Weekday } from './timezone-selector'
+export type {
+  Timezone,
+  TimezoneDstRule,
+  TimezoneSelectorProps,
+  Weekday,
+} from './timezone-selector'
 export { findTimezone, TIMEZONES, TimezoneSelector } from './timezone-selector'
 export * from './version-badge'
 export * from './widget-panel.js'
@@ -535,7 +610,11 @@ export {
   retrainReviewBadgeLook,
 } from './training/retrain-review-badge'
 
-export { ViewSwitch, type ViewSwitchOption, type ViewSwitchProps } from './view-switch'
+export {
+  ViewSwitch,
+  type ViewSwitchOption,
+  type ViewSwitchProps,
+} from './view-switch'
 
 // --- Charts (uPlot; D899) ---
 export * from './charts/index.js'

@@ -20,7 +20,7 @@ import {
 import { Button, ConfigFormBuilder, ItemFormDialog, useSystem } from '@camstack/ui-library'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link2, Loader2 } from 'lucide-react'
-import { useMemo, useState, type ReactElement } from 'react'
+import { useMemo, useState, type ReactElement, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { fillBrokerConnectPath, startServerNavigation } from '../../lib/broker-oauth-popup'
 import type { ConfigUISchema } from '../../types/config-ui'
@@ -55,6 +55,8 @@ export interface InstanceEditorDialogProps {
   readonly onClose: () => void
   /** The record exists: created, edited or signed in. A wizard that needs the id uses this. */
   readonly onSaved?: (id: string) => void
+  /** A block shown above the form (setup, pairing) — only for a record that exists. */
+  readonly lead?: ReactNode
 }
 
 const NO_VALUES: Readonly<Record<string, unknown>> = {}
@@ -66,6 +68,7 @@ export function InstanceEditorDialog({
   instance,
   onClose,
   onSaved,
+  lead,
 }: InstanceEditorDialogProps): ReactElement {
   const { t } = useTranslation()
   const system = useSystem()
@@ -109,7 +112,10 @@ export function InstanceEditorDialog({
                     type: 'select' as const,
                     key: IDENTITY_KIND,
                     label: t('providerInstances.colKind', 'Kind'),
-                    options: kinds.map((k) => ({ value: k.id, label: k.label })),
+                    options: kinds.map((k) => ({
+                      value: k.id,
+                      label: k.label,
+                    })),
                   },
                 ]
               : []),
@@ -150,7 +156,10 @@ export function InstanceEditorDialog({
   const schemaQuery = useQuery({
     queryKey: ['provider-instance-form', addonId, instanceId],
     queryFn: () =>
-      system.trpcClient.integrationInstances.instanceFormSchema.query({ addonId, id: instanceId }),
+      system.trpcClient.integrationInstances.instanceFormSchema.query({
+        addonId,
+        id: instanceId,
+      }),
   })
   const hydrated = useMemo(
     () => (schemaQuery.data ? hydrateSchema(schemaQuery.data, { ...stored }) : null),
@@ -176,7 +185,11 @@ export function InstanceEditorDialog({
           ...(kindId !== '' ? { kind: kindId } : {}),
         })
         if (Object.keys(patch).length > 0) {
-          await client.updateInstance.mutate({ addonId, id: created.id, values: patch })
+          await client.updateInstance.mutate({
+            addonId,
+            id: created.id,
+            values: patch,
+          })
         }
         return created.id
       }
@@ -215,8 +228,12 @@ export function InstanceEditorDialog({
 
   const title =
     instance === null
-      ? t('providerInstances.createTitle', 'Add {{provider}}', { provider: providerName })
-      : t('providerInstances.editTitle', 'Edit {{name}}', { name: instance.name })
+      ? t('providerInstances.createTitle', 'Add {{provider}}', {
+          provider: providerName,
+        })
+      : t('providerInstances.editTitle', 'Edit {{name}}', {
+          name: instance.name,
+        })
 
   return (
     <ItemFormDialog
@@ -260,6 +277,7 @@ export function InstanceEditorDialog({
       }
     >
       <div className="space-y-4">
+        {instance !== null ? lead : null}
         <FormBuilder schema={identitySchema} values={identity} onChange={setIdentity} />
         {kind?.signIn !== undefined && (
           <BrokerSignInPanel
@@ -270,7 +288,9 @@ export function InstanceEditorDialog({
             getSettings={() => diffInstanceValues(stored, values)}
             disabled={name.length === 0}
             onSignedIn={(signedInId) => {
-              void queryClient.invalidateQueries({ queryKey: [HOLDER_QUERY_KEY] })
+              void queryClient.invalidateQueries({
+                queryKey: [HOLDER_QUERY_KEY],
+              })
               onSaved?.(signedInId)
               onClose()
             }}
@@ -284,7 +304,10 @@ export function InstanceEditorDialog({
             onClick={() =>
               startServerNavigation(
                 fillBrokerConnectPath(kind.connectPath ?? '', instance.id),
-                () => void queryClient.invalidateQueries({ queryKey: [HOLDER_QUERY_KEY] }),
+                () =>
+                  void queryClient.invalidateQueries({
+                    queryKey: [HOLDER_QUERY_KEY],
+                  }),
               )
             }
           >

@@ -77,6 +77,13 @@ export interface InstancesTableProps {
    * title strip and without a second Activity panel.
    */
   readonly embedded?: boolean
+  /**
+   * Columns a page adds after On and before the row actions (a count, a link). The table owns
+   * the built-in ones; the page owns the cap-specific cell.
+   */
+  readonly extraColumns?: readonly DataColumn<PanelRow>[]
+  /** A block at the top of an instance's edit dialog (setup, pairing). Called per record. */
+  readonly lead?: (row: InstanceRow) => ReactNode
 }
 
 /** The badge tooltip: the provider's detail and, when known, when the remote was last probed. */
@@ -198,6 +205,8 @@ export function InstancesTable({
   install,
   editKey = 'instance',
   embedded = false,
+  extraColumns,
+  lead,
 }: InstancesTableProps): ReactElement {
   const { t } = useTranslation()
   const system = useSystem()
@@ -399,6 +408,7 @@ export function InstancesTable({
             <InstanceSwitchCell row={row} pinning={pinningCount(row.id)} />
           ),
       },
+      ...(extraColumns ?? []),
       {
         key: 'actions',
         align: 'right',
@@ -474,7 +484,18 @@ export function InstancesTable({
         ),
       },
     ],
-    [form, functionCap, pinningCount, runDelete, runLink, runTest, showKind, t, testing],
+    [
+      extraColumns,
+      form,
+      functionCap,
+      pinningCount,
+      runDelete,
+      runLink,
+      runTest,
+      showKind,
+      t,
+      testing,
+    ],
   )
 
   let body: ReactElement
@@ -582,6 +603,7 @@ export function InstancesTable({
           data={data}
           nameOf={nameOf}
           onClose={form.close}
+          {...(lead !== undefined ? { lead } : {})}
         />
       )}
     </Frame>
@@ -664,11 +686,13 @@ function EditDialog({
   data,
   nameOf,
   onClose,
+  lead,
 }: {
   readonly refValue: string
   readonly data: InstancesData
   readonly nameOf: (addonId: string) => string
   readonly onClose: () => void
+  readonly lead?: (row: InstanceRow) => ReactNode
 }): ReactElement | null {
   const ref = parseEditRef(refValue)
   if (ref.kind === 'fixed') {
@@ -687,9 +711,14 @@ function EditDialog({
     ref.kind === 'instance' ? (holder.instances.find((i) => i.id === ref.id) ?? null) : null
   // A link to a record that no longer exists opens nothing.
   if (ref.kind === 'instance' && instance === null) return null
+  const leadRow = data.rows.find(
+    (row): row is InstanceRow =>
+      row.kind === 'instance' && row.addonId === ref.addonId && row.id === instance?.id,
+  )
   return (
     <InstanceEditorDialog
       addonId={ref.addonId}
+      {...(lead !== undefined && leadRow !== undefined ? { lead: lead(leadRow) } : {})}
       providerName={nameOf(ref.addonId)}
       description={holder.description}
       instance={instance}

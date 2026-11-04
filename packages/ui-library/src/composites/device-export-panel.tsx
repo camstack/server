@@ -322,7 +322,10 @@ function parseStatus(data: unknown): DeviceExportStatus | null {
 type InstancesState =
   | { readonly kind: 'pending' }
   | { readonly kind: 'unknown' }
-  | { readonly kind: 'answered'; readonly instances: readonly ExportInstance[] }
+  | {
+      readonly kind: 'answered'
+      readonly instances: readonly ExportInstance[]
+    }
 
 function useExportInstances(addonId: string): InstancesState {
   const query = useDeviceExportListInstances({ nodeId: 'hub', addonId }, { retry: false })
@@ -373,10 +376,19 @@ function InstanceSetup({
  * the instances are unanswered or when none reports an error or a setup. Shares
  * `getStatus`'s query key with the panel, so mounting both costs one request.
  */
-export function DeviceExportSetup({ addonId }: { readonly addonId: string }): ReactElement | null {
+export function DeviceExportSetup({
+  addonId,
+  instanceId,
+}: {
+  readonly addonId: string
+  /** Narrow to one instance (an instance's edit dialog); absent shows every enabled one. */
+  readonly instanceId?: string
+}): ReactElement | null {
   const state = useExportInstances(addonId)
   if (state.kind !== 'answered') return null
-  const enabled = state.instances.filter((i) => i.enabled)
+  const enabled = state.instances.filter(
+    (i) => i.enabled && (instanceId === undefined || i.instanceId === instanceId),
+  )
   if (enabled.length === 0) return null
   return (
     <>
@@ -413,8 +425,16 @@ type ExportAction = 'expose' | 'unexpose'
  * keeps them apart from `DeviceItemDevice` rather than faking a device.
  */
 type ExportRow =
-  | { readonly kind: 'device'; readonly key: string; readonly device: DeviceItemDevice }
-  | { readonly kind: 'entity'; readonly key: string; readonly entity: ExportEntityRow }
+  | {
+      readonly kind: 'device'
+      readonly key: string
+      readonly device: DeviceItemDevice
+    }
+  | {
+      readonly kind: 'entity'
+      readonly key: string
+      readonly entity: ExportEntityRow
+    }
 
 interface ExportRowToggleProps {
   readonly addonId: string
@@ -439,7 +459,9 @@ function ExportSelectCell({ device, checked, onToggle }: ExportSelectCellProps):
       checked={checked}
       onChange={onToggle}
       onClick={(e) => e.stopPropagation()}
-      aria-label={t('uiLibrary.deviceExport.select', 'Select {{name}}', { name: label })}
+      aria-label={t('uiLibrary.deviceExport.select', 'Select {{name}}', {
+        name: label,
+      })}
     />
   )
 }
@@ -503,15 +525,21 @@ function ExposeToggleButton({
       onClick={handleClick}
       aria-label={
         exposed
-          ? t('uiLibrary.deviceExport.unexposeDevice', 'Unexpose {{name}}', { name: label })
-          : t('uiLibrary.deviceExport.exposeDevice', 'Expose {{name}}', { name: label })
+          ? t('uiLibrary.deviceExport.unexposeDevice', 'Unexpose {{name}}', {
+              name: label,
+            })
+          : t('uiLibrary.deviceExport.exposeDevice', 'Expose {{name}}', {
+              name: label,
+            })
       }
       title={
         exposed
           ? t('uiLibrary.deviceExport.stopTitle', 'Stop exposing to "{{addon}}"', {
               addon: addonId,
             })
-          : t('uiLibrary.deviceExport.exposeTitle', 'Expose to "{{addon}}"', { addon: addonId })
+          : t('uiLibrary.deviceExport.exposeTitle', 'Expose to "{{addon}}"', {
+              addon: addonId,
+            })
       }
     >
       {exposed ? (
@@ -605,19 +633,19 @@ function BulkSummary({
  * Generic device-export panel. Addon-agnostic — only the `device-export`
  * cap drives it.
  */
-interface DeviceExportInstancePanelProps {
+export interface DeviceExportInstancePanelProps {
   readonly addonId: string
   readonly instance: ExportInstance
   /** Several instances share the surface: the header names this one. */
-  readonly named: boolean
+  readonly named?: boolean
   readonly onOpenDevice?: (deviceId: string) => void
   readonly showSetup?: boolean
 }
 
-function DeviceExportInstancePanel({
+export function DeviceExportInstancePanel({
   addonId,
   instance,
-  named,
+  named = false,
   onOpenDevice,
   showSetup = true,
 }: DeviceExportInstancePanelProps): ReactElement {
@@ -686,15 +714,25 @@ function DeviceExportInstancePanel({
   )
   const exposedEntitiesQuery = useDeviceExportListExposedEntities(
     { nodeId: 'hub', addonId, instanceId },
-    { refetchInterval: STATUS_POLL_INTERVAL_MS, retry: false, enabled: entityKinds !== null },
+    {
+      refetchInterval: STATUS_POLL_INTERVAL_MS,
+      retry: false,
+      enabled: entityKinds !== null,
+    },
   )
   const actionsQuery = useActionsList(
     {},
-    { refetchInterval: FLEET_POLL_INTERVAL_MS, enabled: entityKinds?.has('action') === true },
+    {
+      refetchInterval: FLEET_POLL_INTERVAL_MS,
+      enabled: entityKinds?.has('action') === true,
+    },
   )
   const targetsQuery = useNotificationOutputListTargets(
     {},
-    { refetchInterval: FLEET_POLL_INTERVAL_MS, enabled: entityKinds?.has('notifier') === true },
+    {
+      refetchInterval: FLEET_POLL_INTERVAL_MS,
+      enabled: entityKinds?.has('notifier') === true,
+    },
   )
 
   const invalidate = useCallback((): void => {
@@ -702,9 +740,15 @@ function DeviceExportInstancePanel({
   }, [queryClient])
 
   const exposeMutation = useDeviceExportExposeDevice({ onSuccess: invalidate })
-  const unexposeMutation = useDeviceExportUnexposeDevice({ onSuccess: invalidate })
-  const exposeEntityMutation = useDeviceExportExposeEntity({ onSuccess: invalidate })
-  const unexposeEntityMutation = useDeviceExportUnexposeEntity({ onSuccess: invalidate })
+  const unexposeMutation = useDeviceExportUnexposeDevice({
+    onSuccess: invalidate,
+  })
+  const exposeEntityMutation = useDeviceExportExposeEntity({
+    onSuccess: invalidate,
+  })
+  const unexposeEntityMutation = useDeviceExportUnexposeEntity({
+    onSuccess: invalidate,
+  })
 
   // `getStatus` / `listExposedDevices` are codegen'd with loose wire
   // output schemas (collection-cap framework methods). Validate against
@@ -780,8 +824,16 @@ function DeviceExportInstancePanel({
     const entityOptions = entityFilterOptionIds(entityKinds).map(
       (id): MultiSelectOption =>
         id === ENTITY_FILTER_IDS.action
-          ? { id, label: t('uiLibrary.deviceExport.typeAction', 'Action'), icon: Play }
-          : { id, label: t('uiLibrary.deviceExport.typeNotifier', 'Notifier'), icon: Bell },
+          ? {
+              id,
+              label: t('uiLibrary.deviceExport.typeAction', 'Action'),
+              icon: Play,
+            }
+          : {
+              id,
+              label: t('uiLibrary.deviceExport.typeNotifier', 'Notifier'),
+              icon: Bell,
+            },
     )
     return [...supportedTypeOptions, ...entityOptions]
   }, [supportedTypeOptions, entityKinds, t])
@@ -847,7 +899,12 @@ function DeviceExportInstancePanel({
       for (const deviceId of deviceIds) {
         const label = labelFor(deviceId)
         try {
-          await mutation.mutateAsync({ instanceId, deviceId, nodeId: 'hub', addonId })
+          await mutation.mutateAsync({
+            instanceId,
+            deviceId,
+            nodeId: 'hub',
+            addonId,
+          })
           succeeded.push(label)
         } catch (reason: unknown) {
           const message = reason instanceof Error ? reason.message : String(reason)
@@ -880,7 +937,12 @@ function DeviceExportInstancePanel({
       const succeeded: string[] = []
       const failed: BulkFailure[] = []
       try {
-        await mutation.mutateAsync({ instanceId, entity: row.ref, nodeId: 'hub', addonId })
+        await mutation.mutateAsync({
+          instanceId,
+          entity: row.ref,
+          nodeId: 'hub',
+          addonId,
+        })
         succeeded.push(row.name)
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err)
@@ -928,12 +990,22 @@ function DeviceExportInstancePanel({
   // role / provider filter leaves them out; with none active they all show.
   const shownRows = useMemo<readonly ExportRow[]>(() => {
     const deviceRows = shownDevices.map(
-      (device): ExportRow => ({ kind: 'device', key: String(device.id), device }),
+      (device): ExportRow => ({
+        kind: 'device',
+        key: String(device.id),
+        device,
+      }),
     )
     const filtered = bulkFilters.roles.length > 0 || bulkFilters.providers.length > 0
     const entities = filtered
       ? []
-      : entityRows.map((entity): ExportRow => ({ kind: 'entity', key: entity.key, entity }))
+      : entityRows.map(
+          (entity): ExportRow => ({
+            kind: 'entity',
+            key: entity.key,
+            entity,
+          }),
+        )
     return [...deviceRows, ...entities]
   }, [shownDevices, entityRows, bulkFilters])
   const setRoleFilter = useCallback(
@@ -1010,8 +1082,14 @@ function DeviceExportInstancePanel({
             row.kind === 'device'
               ? deviceTypeMetaOf(row.device.type, t)
               : row.entity.kind === 'action'
-                ? { label: t('uiLibrary.deviceExport.typeAction', 'Action'), icon: Play }
-                : { label: t('uiLibrary.deviceExport.typeNotifier', 'Notifier'), icon: Bell }
+                ? {
+                    label: t('uiLibrary.deviceExport.typeAction', 'Action'),
+                    icon: Play,
+                  }
+                : {
+                    label: t('uiLibrary.deviceExport.typeNotifier', 'Notifier'),
+                    icon: Bell,
+                  }
           const TypeIcon = meta.icon
           return (
             <span className="inline-flex items-center gap-1.5 text-[11px] text-foreground-subtle">
@@ -1185,7 +1263,9 @@ function DeviceExportInstancePanel({
           )}
           <Badge variant={statusVariant(linkState)}>{capitaliseLinkState(t, linkState)}</Badge>
           <span className="text-[11px] text-foreground-subtle">
-            {t('uiLibrary.deviceExport.exposedCount', '{{count}} exposed', { count: exposedCount })}
+            {t('uiLibrary.deviceExport.exposedCount', '{{count}} exposed', {
+              count: exposedCount,
+            })}
           </span>
         </div>
         {loading && <Loader2 className="h-3.5 w-3.5 animate-spin text-foreground-subtle" />}

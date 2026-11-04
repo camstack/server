@@ -125,9 +125,13 @@ vi.mock('../use-set-instance-enabled', () => ({
 }))
 
 import { ConfirmDialogProvider } from '@camstack/ui-library'
-import { InstancesTable } from '../InstancesTable'
+import { InstancesTable, type InstancesTableProps } from '../InstancesTable'
 
-function renderPanel(search = '', embedded = false) {
+function renderPanel(
+  search = '',
+  embedded = false,
+  extra: Partial<Pick<InstancesTableProps, 'extraColumns' | 'lead'>> = {},
+) {
   // The open dialog lives in the real URL (`useUrlQueryParam` reads `window.location`).
   window.history.replaceState(null, '', `/${search}`)
   const client = new QueryClient({
@@ -146,6 +150,7 @@ function renderPanel(search = '', embedded = false) {
             emptyDescription="Add one."
             addLabel="Add destination"
             embedded={embedded}
+            {...extra}
           />
         </ConfirmDialogProvider>
       </MemoryRouter>
@@ -192,7 +197,11 @@ describe('InstancesTable', () => {
         'smtp-nodemailer': {
           kinds: [
             { id: 'k1', label: 'Kind one' },
-            { id: 'k2', label: 'Kind two', connectPath: '/addon/x/connect/{{brokerId}}' },
+            {
+              id: 'k2',
+              label: 'Kind two',
+              connectPath: '/addon/x/connect/{{brokerId}}',
+            },
           ],
           allowRestoreId: true,
           mintsId: true,
@@ -304,8 +313,20 @@ describe('InstancesTable', () => {
           },
         ],
         'smtp-nodemailer': [
-          { id: 'a', name: 'Relay A', configured: true, enabled: true, formValues: {} },
-          { id: 'b', name: 'Relay B', configured: true, enabled: true, formValues: {} },
+          {
+            id: 'a',
+            name: 'Relay A',
+            configured: true,
+            enabled: true,
+            formValues: {},
+          },
+          {
+            id: 'b',
+            name: 'Relay B',
+            configured: true,
+            enabled: true,
+            formValues: {},
+          },
         ],
       }
     })
@@ -333,7 +354,9 @@ describe('InstancesTable', () => {
       h.holders.data = [{ addonId: 'loki-logging', isActive: true }]
       renderPanel()
       await screen.findByText('Loki prod')
-      const add = screen.getByRole('button', { name: /Add destination/ }) as HTMLButtonElement
+      const add = screen.getByRole('button', {
+        name: /Add destination/,
+      }) as HTMLButtonElement
       expect(add.disabled).toBe(true)
       expect(screen.getByText(/only one instance is allowed/)).toBeTruthy()
       // A lone provider still has its pill.
@@ -356,7 +379,13 @@ describe('InstancesTable', () => {
       h.holders.data = [{ addonId: 'smtp-nodemailer', isActive: true }]
       h.records = {
         'smtp-nodemailer': [
-          { id: 'a', name: 'Relay A', configured: true, enabled: true, formValues: {} },
+          {
+            id: 'a',
+            name: 'Relay A',
+            configured: true,
+            enabled: true,
+            formValues: {},
+          },
         ],
       }
     })
@@ -427,7 +456,9 @@ describe('InstancesTable', () => {
       fireEvent.click(await screen.findByRole('button', { name: /Add destination/ }))
       // Loki has no record yet and SMTP takes several: two providers, so a picker.
       fireEvent.click(
-        within(await screen.findByRole('dialog')).getByRole('button', { name: /SMTP/ }),
+        within(await screen.findByRole('dialog')).getByRole('button', {
+          name: /SMTP/,
+        }),
       )
       // The form's labels are not bound to their inputs: the empty text input is Host.
       await screen.findByDisplayValue('SMTP')
@@ -563,5 +594,56 @@ describe('InstancesTable', () => {
       renderPanel()
       expect(await screen.findByText('1 target pins this relay')).toBeTruthy()
     })
+  })
+})
+
+describe('InstancesTable extensions', () => {
+  beforeEach(() => {
+    h.fn.data = [
+      { addonId: 'smtp-nodemailer', isActive: true },
+      { addonId: 'loki-logging', isActive: true },
+    ]
+    h.holders.data = [{ addonId: 'smtp-nodemailer', isActive: true }]
+    h.records = {
+      'smtp-nodemailer': [
+        {
+          id: 'a',
+          name: 'Relay A',
+          configured: true,
+          enabled: true,
+          formValues: {},
+        },
+      ],
+    }
+  })
+
+  it('draws extra columns between On and the actions, for instance and fixed rows alike', async () => {
+    renderPanel('', false, {
+      extraColumns: [
+        {
+          key: 'devices',
+          header: 'Devices',
+          notSortableReason: 'A button',
+          render: (row) => <span>{`cell:${row.kind}:${row.name}`}</span>,
+        },
+      ],
+    })
+    expect(await screen.findByText('cell:instance:Relay A')).toBeTruthy()
+    expect(screen.getByText('cell:fixed:Loki')).toBeTruthy()
+    const headers = screen.getAllByRole('columnheader').map((c) => c.textContent?.trim())
+    expect(headers.indexOf('Devices')).toBe(headers.indexOf('On') + 1)
+  })
+
+  it('shows the lead of an instance at the top of its edit dialog', async () => {
+    renderPanel('?instance=smtp-nodemailer:a', false, {
+      lead: (row) => <p>{`lead for ${row.id}`}</p>,
+    })
+    expect(await screen.findByText('lead for a')).toBeTruthy()
+  })
+
+  it('shows no lead when the prop is absent', async () => {
+    renderPanel('?instance=smtp-nodemailer:a')
+    expect(await screen.findByText('Edit Relay A')).toBeTruthy()
+    expect(screen.queryByText(/lead for/)).toBeNull()
   })
 })

@@ -21,31 +21,62 @@ vi.mock('../../generated/system-hooks', () => ({
     data: [{ instanceId: 'export-x', name: 'X', enabled: true }],
     isLoading: false,
   }),
-  useDeviceExportListSupportedDeviceKinds: () => ({ data: ['camera'], isLoading: false }),
+  useDeviceExportListSupportedDeviceKinds: () => ({
+    data: ['camera'],
+    isLoading: false,
+  }),
   // An exporter that does not answer what else it can expose: devices only.
-  useDeviceExportListSupportedEntityKinds: () => ({ data: undefined, isLoading: false }),
-  useDeviceExportListExposedEntities: () => ({ data: undefined, isLoading: false }),
-  useDeviceExportExposeEntity: () => ({ mutateAsync: vi.fn(), isPending: false }),
-  useDeviceExportUnexposeEntity: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useDeviceExportListSupportedEntityKinds: () => ({
+    data: undefined,
+    isLoading: false,
+  }),
+  useDeviceExportListExposedEntities: () => ({
+    data: undefined,
+    isLoading: false,
+  }),
+  useDeviceExportExposeEntity: () => ({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  }),
+  useDeviceExportUnexposeEntity: () => ({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  }),
   useActionsList: () => ({ data: undefined, isLoading: false }),
-  useNotificationOutputListTargets: () => ({ data: undefined, isLoading: false }),
+  useNotificationOutputListTargets: () => ({
+    data: undefined,
+    isLoading: false,
+  }),
   useDeviceManagerListAll: () => ({ data: [], isLoading: false }),
   useIntegrationsList: () => ({ data: undefined, isLoading: false }),
-  useDeviceExportExposeDevice: () => ({ mutateAsync: vi.fn(), isPending: false }),
-  useDeviceExportUnexposeDevice: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useDeviceExportExposeDevice: () => ({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  }),
+  useDeviceExportUnexposeDevice: () => ({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  }),
 }))
 
-const { DeviceExportPanel, DeviceExportSetup } = await import('../device-export-panel')
+const { DeviceExportInstancePanel, DeviceExportPanel, DeviceExportSetup } = await import(
+  '../device-export-panel'
+)
 
 function withClient(node: ReactElement): ReactElement {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
   return <QueryClientProvider client={client}>{node}</QueryClientProvider>
 }
 
 const PAIRING = {
   linkState: 'unlinked',
   exposedDeviceCount: 0,
-  setup: { note: 'Scan with the Home app', fields: [{ label: 'Setup code', value: '123-45-678' }] },
+  setup: {
+    note: 'Scan with the Home app',
+    fields: [{ label: 'Setup code', value: '123-45-678' }],
+  },
 }
 
 beforeEach(() => {
@@ -59,8 +90,36 @@ describe('<DeviceExportSetup>', () => {
     expect(screen.getByText('Setup code')).toBeTruthy()
   })
 
+  it('narrowed to one instance shows that instance only', () => {
+    render(withClient(<DeviceExportSetup addonId="export-hap" instanceId="export-x" />))
+    expect(screen.getByText('Scan with the Home app')).toBeTruthy()
+  })
+
+  it('narrowed to an instance the provider does not list renders nothing', () => {
+    const { container } = render(
+      withClient(<DeviceExportSetup addonId="export-hap" instanceId="export-y" />),
+    )
+    expect(container.textContent).toBe('')
+  })
+
+  it('exports the single-instance devices panel for a dialog to host', () => {
+    render(
+      withClient(
+        <DeviceExportInstancePanel
+          addonId="export-hap"
+          instance={{ instanceId: 'export-x', name: 'X', enabled: true }}
+        />,
+      ),
+    )
+    expect(screen.getByText('Scan with the Home app')).toBeTruthy()
+  })
+
   it('shows the exporter error', () => {
-    status = { linkState: 'error', exposedDeviceCount: 0, error: 'token expired' }
+    status = {
+      linkState: 'error',
+      exposedDeviceCount: 0,
+      error: 'token expired',
+    }
     render(withClient(<DeviceExportSetup addonId="export-alexa" />))
     expect(screen.getByText('token expired')).toBeTruthy()
   })

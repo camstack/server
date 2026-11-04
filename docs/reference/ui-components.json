@@ -3783,6 +3783,45 @@
       ]
     },
     {
+      "name": "DeviceExportInstancePanel",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-export-panel.tsx",
+      "summary": "DeviceExportPanel — generic, addon-agnostic surface for the `device-export` capability.",
+      "props": [
+        {
+          "name": "addonId",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "instance",
+          "type": "ExportInstance",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "named",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Several instances share the surface: the header names this one."
+        },
+        {
+          "name": "onOpenDevice",
+          "type": "(deviceId: string) => void",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "showSetup",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "DeviceExportPanel",
       "kind": "component",
       "area": "composites",

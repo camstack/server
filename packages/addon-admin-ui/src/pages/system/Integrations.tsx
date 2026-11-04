@@ -12,26 +12,12 @@
  * `?integration=<addonId>&section=<settings|activity|…>` selects the body
  * (cleared when leaving a kind via `ownedParams`).
  */
-import {
-  Calendar,
-  Mail,
-  MonitorSmartphone,
-  Plug,
-  Radio,
-  Share2,
-  type LucideIcon,
-} from 'lucide-react'
+import { Calendar, Mail, Plug, Radio, Share2, type LucideIcon } from 'lucide-react'
 import { useEffect, useMemo, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import {
-  Badge,
-  DeviceExportPanel,
-  DeviceExportSetup,
-  useAddonsList,
-  useDeviceExportGetStatus,
-} from '@camstack/ui-library'
-import { CAP_PROVIDER_KIND_MAP, DeviceExportStatusSchema } from '@camstack/types'
+import { useSearchParams } from 'react-router-dom'
+import { Badge, useAddonsList, type DataColumn } from '@camstack/ui-library'
+import { CAP_PROVIDER_KIND_MAP } from '@camstack/types'
 import type { ProviderKind } from '@camstack/types'
 
 import { AdminSectionedPage } from '../../components/AdminSectionedPage'
@@ -55,8 +41,16 @@ import {
   type ConnectivityRow,
 } from './connectivity-model'
 import { InstancesTable } from '../../components/instances/InstancesTable'
-import { rowHealth } from '../../components/instances/instances-model'
+import {
+  rowHealth,
+  type InstanceRow,
+  type PanelRow,
+} from '../../components/instances/instances-model'
 import { useInstancesData } from '../../components/instances/use-instances-data'
+import {
+  ExportSetupLead,
+  exportedDevicesColumn,
+} from '../../components/integrations/exported-devices'
 import { WasteSettingsSources } from './WasteSettingsSources'
 import i18n from '../../i18n/index'
 import type { TFunction } from 'i18next'
@@ -75,7 +69,19 @@ interface KindDescriptor {
    * A kind whose providers keep `integration-instances` records is one list over this function
    * cap (a row per relay), not a pill per addon.
    */
-  readonly instances?: { readonly functionCap: string }
+  readonly instances?: InstancesDescriptor
+}
+
+interface InstancesDescriptor {
+  readonly functionCap: string
+  readonly subtitleKey: string
+  readonly subtitleDefault: string
+  readonly addLabelKey: string
+  readonly addLabelDefault: string
+  /** Columns the kind adds to the shared table (after On). */
+  readonly extraColumns?: (t: TFunction) => readonly DataColumn<PanelRow>[]
+  /** A block at the top of an instance's edit dialog. */
+  readonly lead?: (row: InstanceRow) => ReactElement
 }
 
 /**
@@ -103,6 +109,15 @@ const KINDS: readonly KindDescriptor[] = [
     installLabelKey: 'system.connectivity.exportersInstall',
     emptyTitleKey: 'system.connectivity.exportersEmptyTitle',
     emptyDescriptionKey: 'system.connectivity.exportersEmptyDescription',
+    instances: {
+      functionCap: 'device-export',
+      subtitleKey: 'system.connectivity.exportersSubtitle',
+      subtitleDefault: 'The ecosystems and hubs this hub publishes its devices to.',
+      addLabelKey: 'system.connectivity.exportersAdd',
+      addLabelDefault: 'Add export',
+      extraColumns: (t) => [exportedDevicesColumn(t)],
+      lead: (row) => <ExportSetupLead addonId={row.addonId} instanceId={row.id} />,
+    },
   },
   {
     sectionId: 'email',
@@ -112,7 +127,13 @@ const KINDS: readonly KindDescriptor[] = [
     installLabelKey: 'system.connectivity.emailInstall',
     emptyTitleKey: 'system.connectivity.emailEmptyTitle',
     emptyDescriptionKey: 'system.connectivity.emailEmptyDescription',
-    instances: { functionCap: 'smtp-provider' },
+    instances: {
+      functionCap: 'smtp-provider',
+      subtitleKey: 'system.connectivity.emailSubtitle',
+      subtitleDefault: 'The SMTP relays that notification targets send mail through.',
+      addLabelKey: 'system.connectivity.emailAdd',
+      addLabelDefault: 'Add relay',
+    },
   },
   {
     sectionId: 'brokers',
@@ -137,7 +158,6 @@ const KINDS: readonly KindDescriptor[] = [
 function buildGroup(
   descriptor: KindDescriptor,
   rows: readonly ConnectivityRow[],
-  navigate: (path: string) => void,
   t: TFunction,
 ): IntegrationGroup {
   const kindCaps = capsOfKind(CAP_PROVIDER_KIND_MAP, descriptor.kind)
@@ -164,12 +184,7 @@ function buildGroup(
                 <KindStatusBadge kind={descriptor.kind} addonId={row.addonId} />
               </>
             }
-            lead={
-              descriptor.kind === 'device-export' ? (
-                <DeviceExportSetup addonId={row.addonId} />
-              ) : undefined
-            }
-            panels={panelsFor(descriptor.kind, row.addonId, (id) => navigate(`/devices/${id}`))}
+            panels={panelsFor(descriptor.kind, row.addonId)}
             settingsContent={
               row.addonId === 'waste-collections' ? (
                 <WasteSettingsSources addonId={row.addonId} capName={capName} />
@@ -201,11 +216,7 @@ function ConnectivityKindHub({
   readonly isLoading: boolean
 }): ReactElement {
   const { t } = useTranslation()
-  const navigate = useNavigate()
-  const group = useMemo(
-    () => buildGroup(descriptor, rows, navigate, t),
-    [descriptor, rows, navigate, t],
-  )
+  const group = useMemo(() => buildGroup(descriptor, rows, t), [descriptor, rows, t])
 
   return (
     <IntegrationHub
@@ -271,13 +282,16 @@ export function IntegrationsPage(): ReactElement {
               functionCap={descriptor.instances.functionCap}
               icon={descriptor.icon}
               title={t(descriptor.labelKey)}
-              subtitle={t(
-                'system.connectivity.emailSubtitle',
-                'The SMTP relays that notification targets send mail through.',
-              )}
+              subtitle={t(descriptor.instances.subtitleKey, descriptor.instances.subtitleDefault)}
               emptyTitle={t(descriptor.emptyTitleKey)}
               emptyDescription={t(descriptor.emptyDescriptionKey)}
-              addLabel={t('system.connectivity.emailAdd', 'Add relay')}
+              addLabel={t(descriptor.instances.addLabelKey, descriptor.instances.addLabelDefault)}
+              {...(descriptor.instances.extraColumns !== undefined
+                ? { extraColumns: descriptor.instances.extraColumns(t) }
+                : {})}
+              {...(descriptor.instances.lead !== undefined
+                ? { lead: descriptor.instances.lead }
+                : {})}
             />
           ) : (
             <ConnectivityKindHub
@@ -306,28 +320,10 @@ export function IntegrationsPage(): ReactElement {
 }
 
 /**
- * The panel a kind contributes. A broker's connections sit above the settings;
- * an exporter's devices table goes last (`placement: 'end'`). Email / calendars
- * have none beyond the shared settings + activity.
+ * The panel a kind contributes. A broker's connections sit above the settings.
+ * Email / calendars have none beyond the shared settings + activity.
  */
-function panelsFor(
-  kind: ProviderKind,
-  addonId: string,
-  openDevice: (deviceId: string) => void,
-): readonly IntegrationPanel[] {
-  if (kind === 'device-export') {
-    return [
-      {
-        id: 'devices',
-        title: i18n.t('admin.system.integrations.devices', 'Devices'),
-        icon: MonitorSmartphone,
-        placement: 'end',
-        content: (
-          <DeviceExportPanel addonId={addonId} onOpenDevice={openDevice} showSetup={false} />
-        ),
-      },
-    ]
-  }
+function panelsFor(kind: ProviderKind, addonId: string): readonly IntegrationPanel[] {
   if (kind === 'broker') {
     return [
       {
@@ -378,7 +374,6 @@ function KindStatusBadge({
   readonly addonId: string
 }): ReactElement | null {
   if (kind === 'broker') return <BrokerStatusBadge addonId={addonId} />
-  if (kind === 'device-export') return <DeviceExportStatusBadge addonId={addonId} />
   return null
 }
 
@@ -397,26 +392,6 @@ function BrokerStatusBadge({ addonId }: { readonly addonId: string }): ReactElem
             connected,
           })
         : t('system.connectivity.connections', { count: instances.length })}
-    </Badge>
-  )
-}
-
-function DeviceExportStatusBadge({ addonId }: { readonly addonId: string }): ReactElement | null {
-  const { t } = useTranslation()
-  const { data } = useDeviceExportGetStatus(
-    { addonId },
-    { refetchInterval: POLL_INTERVAL_MS, retry: false },
-  )
-  const parsed = DeviceExportStatusSchema.safeParse(data)
-  if (!parsed.success) return null
-  const { linkState, exposedDeviceCount } = parsed.data
-  const variant = linkState === 'linked' ? 'success' : linkState === 'error' ? 'danger' : 'default'
-  return (
-    <Badge variant={variant} className={STATUS_BADGE_CLASS}>
-      {t('admin.system.integrations.exposed', '{{linkState}} · {{exposedDeviceCount}} exposed', {
-        linkState,
-        exposedDeviceCount,
-      })}
     </Badge>
   )
 }

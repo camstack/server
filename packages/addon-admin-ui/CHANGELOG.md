@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Connectivity → Exporters is now one table like Email and Brokers, with a Devices column that opens the devices each export target publishes.
+
 ## [1.2.584] - 2026-11-04
 
 ### Changed

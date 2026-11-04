@@ -1264,7 +1264,14 @@
       "connectionsConnected_one": "{{count}} connection · {{connected}} connected",
       "connectionsConnected_other": "{{count}} connections · {{connected}} connected",
       "emailSubtitle": "The SMTP relays that notification targets send mail through.",
-      "emailAdd": "Add relay"
+      "emailAdd": "Add relay",
+      "exportersSubtitle": "The ecosystems and hubs this hub publishes its devices to.",
+      "exportersAdd": "Add export",
+      "devicesColumn": "Devices",
+      "devicesNotSortable": "A button that opens the list is not a value to order by.",
+      "devicesDialogTitle": "Devices of {{name}}",
+      "devicesExported_one": "{{count}} device exported",
+      "devicesExported_other": "{{count}} devices exported"
     },
     "ai": "AI",
     "calendars": "Calendars",

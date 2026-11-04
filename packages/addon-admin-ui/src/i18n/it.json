@@ -1264,7 +1264,14 @@
       "connectionsConnected_one": "{{count}} connessione · {{connected}} connessa",
       "connectionsConnected_other": "{{count}} connessioni · {{connected}} connesse",
       "emailSubtitle": "I relay SMTP attraverso cui le destinazioni di notifica inviano la posta.",
-      "emailAdd": "Aggiungi relay"
+      "emailAdd": "Aggiungi relay",
+      "exportersSubtitle": "Gli ecosistemi e gli hub a cui questo hub pubblica i suoi dispositivi.",
+      "exportersAdd": "Aggiungi esportatore",
+      "devicesColumn": "Dispositivi",
+      "devicesNotSortable": "Un pulsante che apre l'elenco non è un valore per ordinare.",
+      "devicesDialogTitle": "Dispositivi di {{name}}",
+      "devicesExported_one": "{{count}} dispositivo esportato",
+      "devicesExported_other": "{{count}} dispositivi esportati"
     },
     "ai": "IA",
     "calendars": "Calendari",
