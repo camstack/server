@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**234 units · 7974 source files · 221 units claimed by at least one document (7930 files).**
+**234 units · 7975 source files · 221 units claimed by at least one document (7931 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -79,9 +79,9 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-export-alexa` | 23 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +13 more, 3 ADRs | 2026-08-26 |
 | `packages/types/src/notification` | 23 | `notification-center` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `design/2026-08-19-viewer-notification-rule-parity.md` _(covers)_, `architecture/notifications.md`, +23 more, 3 ADRs | 2026-10-07 |
 | `packages/addon-provider-bosch/src/homecom` | 22 | `device-providers` | `addons/addon-provider-bosch-homecom.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0932-a-bosch-sign-in-is-one-field-and-homecom-is-not-a-home-connect-login.md`, +1 more | 2026-10-26 |
+| `packages/addon-provider-dreo` | 22 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0953-a-cloud-session-that-ends-raises-one-standard-alert-per-integration-and-clears-itself.md`, 1 ADR | 2026-10-26 |
 | `packages/addon-export-google` | 21 | `ecosystem-exports` | `addons/addon-export-google.md` _(covers)_, `design/2026-08-28-google-home-camera-streaming.md` _(covers)_, `decisions/adr-0269-a-google-export-that-holds-no-google-credential.md`, +2 more | 2026-08-28 |
 | `packages/addon-model-studio/src/components` | 21 | `tooling` | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_ | — |
-| `packages/addon-provider-dreo` | 21 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0953-a-cloud-session-that-ends-raises-one-standard-alert-per-integration-and-clears-itself.md`, 1 ADR | 2026-10-26 |
 | `packages/addon-provider-ecowitt` | 21 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/addon-provider-unifi` | 21 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/addon-provider-unraid` | 21 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |

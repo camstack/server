@@ -71,7 +71,7 @@ this column exists to stop.
 | `platform-probe` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `platform-probe` |
 | `provider-amcrest` | `@camstack/addon-provider-amcrest` | providers | own runner | `hub-only` | — | unique | `day-night` `device-provider` `image-settings` `integration-instances` `motion-zones` `privacy-mask` `recording-onboard` `stream-params` `videoclips` |
 | `provider-dreame` | `@camstack/addon-provider-dreame` | providers | own runner | `hub-only` | — | multiple | `connection-test` `consumables` `device-adoption` `device-provider` `navigation` `recording-signal` `running-state` |
-| `provider-dreo` | `@camstack/addon-provider-dreo` | providers | own runner | `hub-only` | — | multiple | `connection-test` `device-adoption` `device-provider` |
+| `provider-dreo` | `@camstack/addon-provider-dreo` | providers | own runner | `hub-only` | — | multiple | `connection-test` `device-adoption` `device-provider` `integration-instances` |
 | `provider-ecowitt` | `@camstack/addon-provider-ecowitt` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` |
 | `provider-enpal` | `@camstack/addon-provider-enpal` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
 | `provider-esphome` | `@camstack/addon-provider-esphome` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` |

@@ -1,4 +1,5 @@
 import {
+  type AddonInitResult,
   BaseDeviceProvider,
   type ConfigUISchema,
   type CreateDeviceSpec,
@@ -11,21 +12,35 @@ import {
   type IConnectionTestProvider,
   type IDevice,
   type IDeviceAdoptionProvider,
-  type ProviderRegistration,
+  integrationInstancesCapability,
+  integrationRowsMigration,
+  integrationRowsPortsOver,
+  type RecordIntegrationInstances,
   type SystemEvent,
   collectOwnerIntegrationIds,
+  defaultIntegrationApiOver,
+  defineAddonMigrations,
 } from '@camstack/types'
 import { DreoReconciler, type IntegrationLifecycleKind } from './dreo-reconciler.js'
-import { buildConnectionFormSchema, connectionFromSettings } from './config.js'
 import { DreoContainerDevice } from './devices/dreo-container-device.js'
 import { buildDreoAdoptionProvider } from './dreo-adoption-provider.js'
 import { DreoClientRegistry } from './dreo-client-registry.js'
 import { buildDreoConnectionTestProvider } from './dreo-connection-test.js'
 import { dreoConnections } from './dreo-gateway.js'
+import {
+  buildDreoInstances,
+  dreoConnectionOf,
+  dreoConnectionsEntryKind,
+  type DreoConnectionBody,
+  dreoRecordKinds,
+} from './dreo-instances.js'
 import { cascadeRemoveDevicesForIntegration } from './dreo-integration-device-cascade.js'
 import { defaultFacade } from './dreo-integration-manager.js'
 import { type OfflineTarget, setIntegrationDevicesOnline } from './dreo-integration-offline.js'
 import { dreoSession } from './dreo-session.js'
+
+/** The date of the integration-rows-to-record migration (D1007). */
+const DREO_MIGRATIONS_DATE = '2026-11-05'
 
 /**
  * Dreo device-provider addon — `mode: account` (multi-account, broker-less).
@@ -61,13 +76,39 @@ export class DreoProviderAddon extends BaseDeviceProvider {
 
   private integrationReconciler: DreoReconciler | null = null
   private clients: DreoClientRegistry | null = null
+  private instances: RecordIntegrationInstances<DreoConnectionBody> | null = null
 
   constructor() {
     super({})
   }
 
-  protected override async onInitialize(): Promise<ProviderRegistration[]> {
+  protected override async onInitialize(): Promise<AddonInitResult> {
     const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
+    const records = this.ctx.records
+    if (records === undefined)
+      throw new Error('provider-dreo: ctx.records is required (hub-only addon)')
+    await records.declare(dreoRecordKinds)
+    await this.runMigrations(
+      defineAddonMigrations(
+        [
+          integrationRowsMigration({
+            addonId: this.addonId,
+            date: DREO_MIGRATIONS_DATE,
+            kind: dreoConnectionsEntryKind,
+            fixtureMark: 'email',
+          }),
+        ],
+        integrationRowsPortsOver({
+          api: defaultIntegrationApiOver(this.ctx.api),
+          records,
+          kind: dreoConnectionsEntryKind,
+          warn: (message) => this.ctx.logger.warn(message),
+        }),
+      ),
+    )
+    this.instances = buildDreoInstances(records, {
+      onChanged: () => this.reconcileIntegrations(),
+    })
 
     dreoSession.bind({
       logger: this.ctx.logger,
@@ -94,17 +135,23 @@ export class DreoProviderAddon extends BaseDeviceProvider {
       meta: { integrationCount: this.requireClients().size() },
     })
 
-    return [
-      ...regs,
-      {
-        capability: deviceAdoptionCapability,
-        provider: this.buildAdoptionProvider(),
-      },
-      {
-        capability: connectionTestCapability,
-        provider: this.buildConnectionTestProvider(),
-      },
-    ]
+    return {
+      providers: [
+        ...regs,
+        {
+          capability: deviceAdoptionCapability,
+          provider: this.buildAdoptionProvider(),
+        },
+        {
+          capability: connectionTestCapability,
+          provider: this.buildConnectionTestProvider(),
+        },
+        {
+          capability: integrationInstancesCapability,
+          provider: this.requireInstances().toProvider(),
+        },
+      ],
+    }
   }
 
   protected override async onShutdown(): Promise<void> {
@@ -120,6 +167,11 @@ export class DreoProviderAddon extends BaseDeviceProvider {
     this.integrationReconciler = null
     dreoSession.unbind()
     await super.onShutdown()
+  }
+
+  private requireInstances(): RecordIntegrationInstances<DreoConnectionBody> {
+    if (!this.instances) throw new Error('Dreo provider not initialised')
+    return this.instances
   }
 
   private requireClients(): DreoClientRegistry {
@@ -161,11 +213,7 @@ export class DreoProviderAddon extends BaseDeviceProvider {
       },
       listIntegrations: () => this.ctx.api.integrations.list.query(),
       applySettings: async (integration) => {
-        const connection = connectionFromSettings(
-          await this.ctx.api.integrations.getSettings.query({
-            id: integration.id,
-          }),
-        )
+        const connection = await dreoConnectionOf(this.requireInstances(), integration.id)
         if (!connection) return false
         await this.requireClients().upsert(integration.id, integration.name, connection)
         return true
@@ -296,19 +344,6 @@ export class DreoProviderAddon extends BaseDeviceProvider {
         return devices.loadConfig(id).catch((): null => null)
       },
     })
-  }
-
-  // ── Config form (account credentials, rendered by the wizard) ───────────
-  //
-  // `mode: account`: the wizard's config step fetches this schema via
-  // `addonSettings.getGlobalSettings` (which hydrates `globalSettingsSchema`)
-  // and renders the account form. The SUBMITTED values are stored
-  // PER-INTEGRATION (`integrations.create({ addonId, name, settings })`) — the
-  // addon reads creds from `integration.settings`, NOT a global store. The
-  // global schema is only a form carrier here.
-
-  protected override globalSettingsSchema(): ConfigUISchema {
-    return buildConnectionFormSchema()
   }
 
   // ── Manual creation: not supported (devices are adopted from the cloud) ──
