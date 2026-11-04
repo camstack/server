@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.658] - 2026-11-04
+
 ### Changed
 
 - Fixed the Home Assistant export migration reading every switch as off after the instances moved to typed records; it now reads the legacy integration row and refuses when that row is unreadable.

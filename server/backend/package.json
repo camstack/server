@@ -1,6 +1,6 @@
 {
   "name": "@camstack/server",
-  "version": "1.2.765",
+  "version": "1.2.766",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -66,24 +66,8 @@
     ],
     "requires": {
       "addons": {
-        "@camstack/addon-admin-ui": ">=1.2.582",
-        "@camstack/addon-provider-bosch": ">=0.1.36",
-        "@camstack/addon-provider-dreame": ">=0.2.164",
-        "@camstack/addon-provider-dreo": ">=0.2.154",
-        "@camstack/addon-provider-ecowitt": ">=0.2.155",
-        "@camstack/addon-provider-enpal": ">=0.1.8",
-        "@camstack/addon-provider-esphome": ">=0.1.10",
-        "@camstack/addon-provider-homematic": ">=1.2.182",
-        "@camstack/addon-provider-mqtt-ha": ">=0.1.36",
-        "@camstack/addon-provider-onvif": ">=1.2.154",
-        "@camstack/addon-provider-petkit": ">=0.2.159",
-        "@camstack/addon-provider-rademacher": ">=0.2.158",
-        "@camstack/addon-provider-reolink": ">=1.2.223",
-        "@camstack/addon-provider-tuya": ">=0.2.150",
-        "@camstack/addon-provider-unifi": ">=0.2.155",
-        "@camstack/addon-provider-unraid": ">=0.2.156",
-        "@camstack/addon-provider-velux": ">=0.2.158",
-        "@camstack/addon-provider-wyze": ">=0.2.162"
+        "@camstack/addon-admin-ui": ">=1.2.583",
+        "@camstack/addon-provider-homeassistant": ">=1.2.658"
       },
       "wrapper": {
         "desktop": ">=0.0.1",
