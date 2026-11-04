@@ -77,6 +77,8 @@ one scope, and is stored in one of the EXISTING settings tables:
 | node | `nodeSettingsSchema(cap)` | `addon-settings` | `<addonId>.<field>@<nodeId>` (unchanged) | `{ addonId, key, value, nodeId }`: **`nodeId` is the only addition** |
 | device override | the cap's device form (D14 / contribution) | `addon-device-settings` | `<addonId>:<deviceId>.<field>` (unchanged) | unchanged |
 
+> **Note, 2026-11-04.** The "integration instance" row above is superseded by D1007: the instance configuration is a typed record of `integration-instances` (table `records`), keyed by the registry id, and `integration_settings` is dropped once the #416 baseline is empty.
+
 1. **Keys.** The canonical collections are `(id TEXT PK, data TEXT NOT NULL)` key/value tables, so the
    one addition, `nodeId` in a node row's data, is a JSON field: no DDL change and no id rewrite. A
    rolled-back build reads every row with the meaning it already knew. Scoped reads stay primary-key
