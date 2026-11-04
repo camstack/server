@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import {
   BaseAddon,
   type AddonInitResult,
@@ -54,12 +55,15 @@ function hasText(value: unknown): value is string {
 }
 
 /**
- * Cloudflare TURN (D985, D996): the account is ONE `accounts` record named after the addon,
+ * Cloudflare TURN (D985, D996): every account is an `accounts` record (a TURN app each),
  * reachable through the `integration-instances` cap and edited on the TURN Servers page. The
- * old settings were moved into the record by the migrations of `./migrations`.
+ * ICE servers a session receives are the union over the ENABLED accounts. The first account
+ * keeps the id `cloudflare-turn` it was created under; the old settings were moved into it by
+ * the migrations of `./migrations`.
  */
 export class CloudflareTurnAddon extends BaseAddon<CloudflareTurnAddonConfig> {
-  private service: CloudflareTurnService | null = null
+  /** One service per enabled, configured account, by record id. */
+  private readonly services = new Map<string, CloudflareTurnService>()
   private instances: RecordIntegrationInstances<CloudflareTurnBody> | null = null
   private secretsWarned = false
 
@@ -74,26 +78,34 @@ export class CloudflareTurnAddon extends BaseAddon<CloudflareTurnAddonConfig> {
     }
     await records.declare({ accounts: cloudflareTurnAccountsKind })
     this.instances = new RecordIntegrationInstances(records, cloudflareTurnAccountsKind, {
-      description: { instanceMode: 'single', kind: 'accounts', canTest: true },
+      description: {
+        instanceMode: 'multiple',
+        kind: 'accounts',
+        canTest: true,
+      },
       formSchema: () => this.accountForm(),
       initialBody: (name) => ({ ...CLOUDFLARE_TURN_DEFAULT_BODY, name }),
+      mintId: () => `cf-turn-${randomUUID().slice(0, 8)}`,
       configured: (body) => body.keyId.trim().length > 0 && (body.apiToken ?? '').length > 0,
       onChanged: async (id) => {
-        if (id === CLOUDFLARE_TURN_RECORD_ID) await this.refresh()
+        await this.refreshOne(id)
       },
       test: (input) => this.probe(input.id, input.values),
     })
     // The addon moves the old settings first, then serves the account.
     await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, this.migrationPorts()))
-    await this.refresh()
+    await this.refreshAll()
     this.ctx.logger.info('Cloudflare TURN initialized')
     const providers: ProviderRegistration[] = [
       {
         capability: turnProviderCapability,
-        // Read through `this.service` on every call: a changed record swaps the service.
-        provider: { getTurnServers: async () => (await this.service?.getTurnServers()) ?? [] },
+        // Read through `this.services` on every call: a changed record swaps its service.
+        provider: { getTurnServers: async () => this.collectTurnServers() },
       },
-      { capability: integrationInstancesCapability, provider: this.instances.toProvider() },
+      {
+        capability: integrationInstancesCapability,
+        provider: this.instances.toProvider(),
+      },
     ]
     return {
       providers,
@@ -109,12 +121,15 @@ export class CloudflareTurnAddon extends BaseAddon<CloudflareTurnAddonConfig> {
   }
 
   protected async onShutdown(): Promise<void> {
-    this.service = null
+    this.services.clear()
   }
 
-  getService(): CloudflareTurnService {
-    if (!this.service) throw new Error('Cloudflare TURN not initialized')
-    return this.service
+  /** The union over the enabled accounts; one that fails serves nothing and the rest still answer. */
+  private async collectTurnServers() {
+    const lists = await Promise.all(
+      [...this.services.values()].map((service) => service.getTurnServers().catch(() => [])),
+    )
+    return lists.flat()
   }
 
   /** The stored key id + token for the probe; empty strings when the record is absent. */
@@ -124,40 +139,68 @@ export class CloudflareTurnAddon extends BaseAddon<CloudflareTurnAddonConfig> {
     return { accountId: stored?.keyId ?? '', apiToken: stored?.apiToken ?? '' }
   }
 
-  /** Re-read the account record and serve exactly what it says. */
-  private async refresh(): Promise<void> {
+  /** Re-read every account record and serve exactly those. */
+  private async refreshAll(): Promise<void> {
     if (this.instances === null) return
+    let all: Awaited<ReturnType<RecordIntegrationInstances<CloudflareTurnBody>['listResolved']>>
     try {
-      const row = await this.instances.readResolved(CLOUDFLARE_TURN_RECORD_ID)
-      if (row === null) {
-        this.service = null
-        return
-      }
-      if (row.secrets === 'unavailable') {
-        // A locked keychain is a failed read of the token: keep the service as it is rather than
-        // reconfigure it with an empty one (D49). Warned once per lock.
-        if (!this.secretsWarned) {
-          this.secretsWarned = true
-          this.ctx.logger.warn(
-            'cloudflare-turn: the keychain is locked; the account keeps its previous configuration',
-            { tags: { topic: 'cloudflare-turn', phase: 'keychain-locked' } },
-          )
-        }
-        return
-      }
-      this.secretsWarned = false
-      const keyId = row.body.keyId.trim()
-      const apiToken = row.body.apiToken ?? ''
-      this.service =
-        row.enabled && keyId.length > 0 && apiToken.length > 0
-          ? new CloudflareTurnService({ accountId: keyId, apiToken }, this.ctx.logger)
-          : null
+      all = await this.instances.listResolved()
     } catch (err: unknown) {
-      // A failed read changes nothing: the addon keeps the service it has.
-      this.ctx.logger.warn('cloudflare-turn: the account record could not be read', {
+      // A failed read changes nothing: the addon keeps the accounts it has.
+      this.ctx.logger.warn('cloudflare-turn: the account records could not be read', {
         meta: { error: errMsg(err) },
         tags: { topic: 'cloudflare-turn', phase: 'records-read-failed' },
       })
+      return
+    }
+    for (const row of all) this.applyRow(row.id, row.body, row.enabled, row.secrets)
+    const live = new Set(all.map((row) => row.id))
+    for (const id of [...this.services.keys()]) if (!live.has(id)) this.services.delete(id)
+  }
+
+  /** Re-read ONE account after a create / update / delete / switch. */
+  private async refreshOne(id: string): Promise<void> {
+    if (this.instances === null) return
+    try {
+      const row = await this.instances.readResolved(id)
+      if (row === null) this.services.delete(id)
+      else this.applyRow(row.id, row.body, row.enabled, row.secrets)
+    } catch (err: unknown) {
+      this.ctx.logger.warn('cloudflare-turn: an account record could not be read', {
+        meta: { error: errMsg(err), integrationId: id },
+        tags: { topic: 'cloudflare-turn', phase: 'records-read-failed' },
+      })
+    }
+  }
+
+  private applyRow(
+    id: string,
+    body: CloudflareTurnBody,
+    enabled: boolean,
+    secrets: 'resolved' | 'unavailable',
+  ): void {
+    if (secrets === 'unavailable') {
+      // A locked keychain is a failed read of the token: keep the service as it is rather than
+      // reconfigure it with an empty one (D49). Warned once per lock.
+      if (!this.secretsWarned) {
+        this.secretsWarned = true
+        this.ctx.logger.warn(
+          'cloudflare-turn: the keychain is locked; accounts keep their previous configuration',
+          { tags: { topic: 'cloudflare-turn', phase: 'keychain-locked' } },
+        )
+      }
+      return
+    }
+    this.secretsWarned = false
+    const keyId = body.keyId.trim()
+    const apiToken = body.apiToken ?? ''
+    if (enabled && keyId.length > 0 && apiToken.length > 0) {
+      this.services.set(
+        id,
+        new CloudflareTurnService({ accountId: keyId, apiToken }, this.ctx.logger),
+      )
+    } else {
+      this.services.delete(id)
     }
   }
 
@@ -181,7 +224,11 @@ export class CloudflareTurnAddon extends BaseAddon<CloudflareTurnAddonConfig> {
       this.ctx.logger,
     ).testCredentials()
     if (result.ok) {
-      return { success: true, status: 'validated', latencyMs: Date.now() - started }
+      return {
+        success: true,
+        status: 'validated',
+        latencyMs: Date.now() - started,
+      }
     }
     const unauthorised = result.status === 401 || result.status === 403
     return {
@@ -212,7 +259,10 @@ export class CloudflareTurnAddon extends BaseAddon<CloudflareTurnAddonConfig> {
       readRecord: async (): Promise<CloudflareTurnRecordState | null> => {
         const row = await handle.getResolved(CLOUDFLARE_TURN_RECORD_ID)
         if (row === null) return null
-        return { keyId: row.data.keyId, hasApiToken: (row.data.apiToken ?? '').length > 0 }
+        return {
+          keyId: row.data.keyId,
+          hasApiToken: (row.data.apiToken ?? '').length > 0,
+        }
       },
       putRecord: async (body: CloudflareTurnBody): Promise<'created' | 'exists'> => {
         if ((await handle.get(CLOUDFLARE_TURN_RECORD_ID)) !== null) return 'exists'

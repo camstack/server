@@ -43,7 +43,10 @@ async function boot(seed: Omit<CloudflareTurnBody, 'name'> | null) {
   const handle = world.records.kind(cloudflareTurnAccountsKind)
   if (seed !== null) {
     await handle.put(
-      { id: CLOUDFLARE_TURN_RECORD_ID, data: { name: 'Cloudflare TURN', ...seed } },
+      {
+        id: CLOUDFLARE_TURN_RECORD_ID,
+        data: { name: 'Cloudflare TURN', ...seed },
+      },
       { ifRev: 0 },
     )
   }
@@ -53,14 +56,23 @@ async function boot(seed: Omit<CloudflareTurnBody, 'name'> | null) {
     records: world.records,
     settings: {
       readAddonStore: vi.fn(async () => ({})),
-      readAddonStoreResult: vi.fn(async () => ({ kind: 'value' as const, value: {} })),
+      readAddonStoreResult: vi.fn(async () => ({
+        kind: 'value' as const,
+        value: {},
+      })),
       writeAddonStore: vi.fn(async () => undefined),
     },
     eventBus: { emit: vi.fn(), subscribe: vi.fn(() => () => undefined) },
     kernel: { localNodeId: 'hub' },
     api: {
       migrations: {
-        declareOwner: { mutate: vi.fn(async () => ({ bootId: 'b', snapshot: 'none', steps: [] })) },
+        declareOwner: {
+          mutate: vi.fn(async () => ({
+            bootId: 'b',
+            snapshot: 'none',
+            steps: [],
+          })),
+        },
         startMigration: { mutate: vi.fn() },
         finishMigration: { mutate: vi.fn() },
       },
@@ -74,7 +86,9 @@ async function boot(seed: Omit<CloudflareTurnBody, 'name'> | null) {
     (r) => r.capability.name === integrationInstancesCapability.name,
   )
   if (turn === undefined) throw new Error('the addon registered no turn-provider')
-  const provider = turn.provider as { getTurnServers(): Promise<readonly unknown[]> }
+  const provider = turn.provider as {
+    getTurnServers(): Promise<readonly unknown[]>
+  }
   return {
     addon,
     getTurnServers: async () => provider.getTurnServers(),
@@ -91,13 +105,14 @@ describe('CloudflareTurnAddon: the account is an integration instance (D996)', (
     vi.unstubAllGlobals()
   })
 
-  it('describes itself as a single-instance addon with a connection test', async () => {
+  it('describes itself as a multiple-instance addon that mints ids, with a connection test', async () => {
     const w = await boot(CONFIGURED)
     addons.push(w.addon)
     await expect(w.instances.describe()).resolves.toEqual({
-      instanceMode: 'single',
+      instanceMode: 'multiple',
       kind: 'accounts',
       canTest: true,
+      mintsId: true,
     })
     expect((await w.instances.listInstances()).map((i) => i.id)).toEqual(['cloudflare-turn'])
   })
@@ -122,11 +137,17 @@ describe('CloudflareTurnAddon: the account is an integration instance (D996)', (
   it('a switched-off record serves nothing and asks nothing; switching it on serves again', async () => {
     const w = await boot(CONFIGURED)
     addons.push(w.addon)
-    await w.instances.setInstanceEnabled({ id: CLOUDFLARE_TURN_RECORD_ID, enabled: false })
+    await w.instances.setInstanceEnabled({
+      id: CLOUDFLARE_TURN_RECORD_ID,
+      enabled: false,
+    })
     fetchMock.mockClear()
     expect(await w.getTurnServers()).toEqual([])
     expect(fetchMock).not.toHaveBeenCalled()
-    await w.instances.setInstanceEnabled({ id: CLOUDFLARE_TURN_RECORD_ID, enabled: true })
+    await w.instances.setInstanceEnabled({
+      id: CLOUDFLARE_TURN_RECORD_ID,
+      enabled: true,
+    })
     expect(await w.getTurnServers()).toHaveLength(1)
   })
 
@@ -168,8 +189,37 @@ describe('CloudflareTurnAddon: the account is an integration instance (D996)', (
     expect((init.headers as Record<string, string>)['Authorization']).toBe('Bearer tok-SECRET')
 
     fetchMock.mockImplementation(async () => new Response('nope', { status: 401 }))
-    const bad = await w.instances.testInstance?.({ id: CLOUDFLARE_TURN_RECORD_ID, values: {} })
+    const bad = await w.instances.testInstance?.({
+      id: CLOUDFLARE_TURN_RECORD_ID,
+      values: {},
+    })
     expect(bad).toMatchObject({ success: false })
     expect(JSON.stringify(bad)).not.toContain('tok-SECRET')
+  })
+
+  it('a second account is served next to the first; the new one asks with its own credentials', async () => {
+    const w = await boot(CONFIGURED)
+    addons.push(w.addon)
+    const { id } = await w.instances.createInstance({ name: 'Second app' })
+    expect(id).not.toBe(CLOUDFLARE_TURN_RECORD_ID)
+    // The record keeps the id it had; the new one is served only once it is configured.
+    fetchMock.mockClear()
+    expect(await w.getTurnServers()).toHaveLength(1)
+    await w.instances.updateInstance({
+      id,
+      values: { keyId: 'KEY-2', apiToken: 'tok-TWO' },
+    })
+    fetchMock.mockClear()
+    expect(await w.getTurnServers()).toHaveLength(2)
+    const askedWithOwnToken = fetchMock.mock.calls.some(([url, init]) => {
+      const headers = new Headers(init?.headers)
+      return (
+        String(url).includes('/keys/KEY-2/') && headers.get('Authorization') === 'Bearer tok-TWO'
+      )
+    })
+    expect(askedWithOwnToken).toBe(true)
+    // Deleting the second leaves the first.
+    await w.instances.deleteInstance({ id })
+    expect(await w.getTurnServers()).toHaveLength(1)
   })
 })

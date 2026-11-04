@@ -106,6 +106,12 @@ const INSTANCES: Readonly<Record<string, readonly unknown[]>> = {
       configured: true,
       formValues: { keyId: 'a1b2c3d4e5f6', apiToken: SET },
     },
+    {
+      id: 'cf-turn-5e6f7a8b',
+      name: 'Cloudflare TURN (office)',
+      configured: false,
+      formValues: { keyId: '' },
+    },
   ],
   'smtp-nodemailer': [
     {
@@ -146,7 +152,7 @@ export default defineFixtures({
         return { instanceMode: 'single', kind: 'destination', canTest: true }
       }
       if (i.addonId === 'cloudflare-turn') {
-        return { instanceMode: 'single', kind: 'accounts', canTest: true }
+        return { instanceMode: 'multiple', kind: 'accounts', canTest: true, mintsId: true }
       }
       if (i.addonId === 'static-turn') {
         return { instanceMode: 'multiple', kind: 'servers', canTest: false }
