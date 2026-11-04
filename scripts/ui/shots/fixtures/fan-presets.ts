@@ -64,6 +64,64 @@ const NIGHT = {
 }
 const BOOST = { id: 'p2', name: 'Boost', steps: [fanStep('setPercentage', { speed: 100 })] }
 
+/** The fan's own customization: a power link plus one field the catalog does not know (a temperature). */
+const FAN_REF = { addonId: 'provider-homeassistant', stableId: `dev-${FAN_ID}` }
+const FAN_CUSTOMIZATION = {
+  state: 'loaded',
+  view: {
+    block: {
+      id: 'blk-bedroom-fan',
+      name: 'customize:bedroom-fan',
+      code: '',
+      enabled: true,
+      placement: 'hub',
+      createdAt: 1,
+      updatedAt: 1_700_000_000_000,
+      createdBy: 'admin',
+      status: 'running',
+      lastChangedAt: 1,
+      source: {
+        kind: 'composition',
+        composition: {
+          target: { kind: 'existing', device: FAN_REF },
+          features: [
+            {
+              kind: 'fields',
+              cap: 'power-meter',
+              fields: {
+                power: {
+                  kind: 'from',
+                  source: { addonId: 'provider-homeassistant', stableId: `dev-${LAMP_ID}` },
+                  cap: 'power-meter',
+                  fieldPath: 'power',
+                },
+                lastFetchedAt: { kind: 'expression', expr: 'now', bindings: {} },
+              },
+            },
+            {
+              kind: 'fields',
+              cap: 'temperature-sensor',
+              fields: {
+                temperature: {
+                  kind: 'from',
+                  source: {
+                    addonId: 'provider-homeassistant',
+                    stableId:
+                      'ha:ha_001:dev:6cddfefa9609eb6e5778e65913b93b86-sensor.termostato_porch_temperature',
+                  },
+                  cap: 'temperature-sensor',
+                  fieldPath: 'temperature',
+                },
+              },
+            },
+          ],
+        },
+      },
+    },
+    state: { kind: 'answered', state: null },
+  },
+}
+
 const isOneOf = (i: { deviceId: number }): boolean =>
   [CONTAINER_ID, FAN_ID, LAMP_ID].includes(i.deviceId)
 
@@ -142,6 +200,13 @@ export default defineFixtures({
           : i.deviceId === CONTAINER_ID
             ? CONTAINER
             : delegate('deviceManager.getDevice', i),
+    'coreBlocks.getCustomization': (i: { stableId?: string }) =>
+      i.stableId === FAN_REF.stableId
+        ? FAN_CUSTOMIZATION
+        : delegate('coreBlocks.getCustomization', i),
+    'coreBlocks.listComposableCaps': {
+      caps: [{ cap: 'power-meter' }, { cap: 'temperature-sensor' }, { cap: 'consumables' }],
+    },
     'deviceManager.listAll': [
       CONTAINER,
       FAN,

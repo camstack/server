@@ -2756,7 +2756,9 @@
         "readings": "Readings",
         "events": "Events",
         "lists": "Lists",
-        "extensions": "Extensions"
+        "extensions": "Extensions",
+        "offCatalog": "Other fields",
+        "linked": "Linked devices"
       },
       "caps": {
         "battery": "Battery",
@@ -2781,7 +2783,15 @@
       "otherFormula": "Set in Advanced",
       "customized": "Customized",
       "configured": "Extension",
-      "sourceOf": "{{name}} · {{field}}"
+      "sourceOf": "{{name}} · {{field}}",
+      "unknown": "Unknown",
+      "noSource": "No source",
+      "notConfigured": "Not configured",
+      "noPresets": "No presets",
+      "commandsCount": "{{count}} commands",
+      "presetsCount": "{{count}} presets",
+      "fieldsCount": "{{count}} fields",
+      "linkedCount": "{{count}} linked"
     }
   },
   "compositionEditor": {

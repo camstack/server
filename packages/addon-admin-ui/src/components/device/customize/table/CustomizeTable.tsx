@@ -39,7 +39,21 @@ import {
   planRows,
   splitRows,
 } from './customize-rows'
+import { ConfigSourceCell, ConfigValueCell } from './ConfigRowCells'
+import { EventSourceCell, EventValueCell } from './EventRowCells'
+import { catalogCoveredCaps, offCatalogCards } from './extra-rows'
+import {
+  ExtraActionsCell,
+  type ExtraRow,
+  ExtraRowDialog,
+  LinkedSourceCell,
+  LinkedValueCell,
+  OffCatalogSourceCell,
+  OffCatalogValueCell,
+  offCatalogTitle,
+} from './ExtraRowCells'
 import { ManagedRowDialog } from './ManagedRowDialog'
+import { useLinkedRow } from './use-linked-row'
 import {
   ScalarActionsCell,
   ScalarDialogHost,
@@ -55,21 +69,49 @@ export interface CustomizeTableProps {
   readonly defaults: Known<readonly DefaultConsumable[]>
 }
 
+/** The catalog sections, then the two groups that are not catalog targets. */
+type TableSection = CustomizeSection | 'offCatalog' | 'linked'
+
 type TableLine =
-  | { readonly kind: 'section'; readonly section: CustomizeSection }
+  | { readonly kind: 'section'; readonly section: TableSection }
   | { readonly kind: 'row'; readonly plan: CustomizeRowPlan }
+  | { readonly kind: 'extra'; readonly row: ExtraRow }
 
 function lineKey(line: TableLine): string {
-  return line.kind === 'section' ? `section:${line.section}` : line.plan.spec.key
+  switch (line.kind) {
+    case 'section':
+      return `section:${line.section}`
+    case 'row':
+      return line.plan.spec.key
+    case 'extra':
+      return line.row.key
+  }
 }
 
-function buildLines(active: readonly CustomizeRowPlan[]): readonly TableLine[] {
-  return activeSections(active).flatMap((section) => [
+function buildLines(
+  active: readonly CustomizeRowPlan[],
+  extras: readonly ExtraRow[],
+): readonly TableLine[] {
+  const catalog = activeSections(active).flatMap((section) => [
     { kind: 'section' as const, section },
     ...active
       .filter((plan) => plan.spec.section === section)
       .map((plan) => ({ kind: 'row' as const, plan })),
   ])
+  const groups: readonly (readonly [TableSection, ExtraRow['kind']])[] = [
+    ['offCatalog', 'offCatalog'],
+    ['linked', 'linked'],
+  ]
+  const rest = groups.flatMap(([section, kind]) => {
+    const rows = extras.filter((row) => row.kind === kind)
+    return rows.length === 0
+      ? []
+      : [
+          { kind: 'section' as const, section },
+          ...rows.map((row) => ({ kind: 'extra' as const, row })),
+        ]
+  })
+  return [...catalog, ...rest]
 }
 
 export function CustomizeTable(props: CustomizeTableProps): ReactNode {
@@ -97,14 +139,34 @@ export function CustomizeTable(props: CustomizeTableProps): ReactNode {
         return true
     }
   }
+  const linkedRead = useLinkedRow(device)
+  const offCatalog = useMemo(
+    () => offCatalogCards(current, catalogCoveredCaps(device.type)),
+    [current, device.type],
+  )
+  const extras: readonly ExtraRow[] = [
+    ...offCatalog.map((card) => ({
+      kind: 'offCatalog' as const,
+      key: `offcatalog.${card.cap}`,
+      card,
+    })),
+    ...(linkedRead.kind === 'hidden'
+      ? []
+      : [{ kind: 'linked' as const, key: 'linked-devices' as const }]),
+  ]
   const split = splitRows(planRows(specs, facts, isLinked))
-  if (specs.length === 0) return null
+  if (specs.length === 0 && extras.length === 0) return null
   const titleOf = (spec: CustomizeRowSpec): string =>
     spec.kind === 'scalar'
       ? scalarRowTitle(t, i18n.language, spec.cap, spec.target)
       : t(`customize.table.caps.${spec.cap}`)
   const openPlan = [...split.active, ...split.addable].find((plan) => plan.spec.key === open)
-  const lines = buildLines(split.active)
+  const lines = buildLines(split.active, extras)
+  const openExtra = extras.find((row) => row.key === open)
+  const extraTitle = (row: ExtraRow): string =>
+    row.kind === 'linked'
+      ? t('customize.table.section.linked')
+      : offCatalogTitle(i18n.language, row.card)
   const scalarProps = (
     spec: CustomizeRowSpec,
   ): { cap: string; target: CustomizeRowSpec['target'] } => ({
@@ -124,7 +186,9 @@ export function CustomizeTable(props: CustomizeTableProps): ReactNode {
             {t(`customize.table.section.${line.section}`)}
           </span>
         ) : (
-          <span className="text-xs text-foreground">{titleOf(line.plan.spec)}</span>
+          <span className="text-xs text-foreground">
+            {line.kind === 'row' ? titleOf(line.plan.spec) : extraTitle(line.row)}
+          </span>
         ),
     },
     {
@@ -133,21 +197,24 @@ export function CustomizeTable(props: CustomizeTableProps): ReactNode {
       notSortableReason: t('customize.table.col.value'),
       render: (line) => {
         if (line.kind === 'section') return null
+        if (line.kind === 'extra') {
+          return line.row.kind === 'linked' ? (
+            <LinkedValueCell read={linkedRead} />
+          ) : (
+            <OffCatalogValueCell device={device} card={line.row.card} />
+          )
+        }
         const { spec } = line.plan
         if (spec.kind === 'scalar') {
           return <ScalarValueCell device={device} handle={handle} {...scalarProps(spec)} />
         }
-        // A camera-sensors event keeps its state in the sensors editor, not in the composition.
-        if (spec.target.applyAuthority?.kind === 'camera-sensors') {
-          return <span className="text-xs text-foreground-subtle">—</span>
+        if (spec.kind === 'event') {
+          return (
+            <EventValueCell spec={spec} device={device} handle={handle} sensors={props.sensors} />
+          )
         }
-        return (
-          <Badge>
-            {t(
-              spec.kind === 'config' ? 'customize.table.configured' : 'customize.table.customized',
-            )}
-          </Badge>
-        )
+        if (spec.kind === 'config') return <ConfigValueCell spec={spec} device={device} />
+        return <Badge>{t('customize.table.customized')}</Badge>
       },
     },
     {
@@ -157,7 +224,20 @@ export function CustomizeTable(props: CustomizeTableProps): ReactNode {
       nowrap: false,
       render: (line) => {
         if (line.kind === 'section') return null
+        if (line.kind === 'extra') {
+          return line.row.kind === 'linked' ? (
+            <LinkedSourceCell read={linkedRead} />
+          ) : (
+            <OffCatalogSourceCell card={line.row.card} />
+          )
+        }
         const { spec } = line.plan
+        if (spec.kind === 'event') {
+          return (
+            <EventSourceCell spec={spec} device={device} handle={handle} sensors={props.sensors} />
+          )
+        }
+        if (spec.kind === 'config') return <ConfigSourceCell spec={spec} device={device} />
         if (spec.kind !== 'scalar') return <span className="text-xs text-foreground-subtle">—</span>
         return <ScalarSourceCell device={device} handle={handle} {...scalarProps(spec)} />
       },
@@ -169,6 +249,16 @@ export function CustomizeTable(props: CustomizeTableProps): ReactNode {
       align: 'right',
       render: (line) => {
         if (line.kind === 'section') return null
+        if (line.kind === 'extra') {
+          return (
+            <ExtraActionsCell
+              row={line.row}
+              title={extraTitle(line.row)}
+              handle={handle}
+              onEdit={() => setOpen(line.row.key)}
+            />
+          )
+        }
         const { spec } = line.plan
         if (spec.kind === 'scalar') {
           return (
@@ -253,6 +343,16 @@ export function CustomizeTable(props: CustomizeTableProps): ReactNode {
             onError={setError}
           />
         )}
+      {openExtra !== undefined && (
+        <ExtraRowDialog
+          key={openExtra.key}
+          row={openExtra}
+          title={extraTitle(openExtra)}
+          device={device}
+          handle={handle}
+          onClose={() => setOpen(null)}
+        />
+      )}
       {openPlan !== undefined && openPlan.spec.kind !== 'scalar' && (
         <ManagedRowDialog
           key={openPlan.spec.key}

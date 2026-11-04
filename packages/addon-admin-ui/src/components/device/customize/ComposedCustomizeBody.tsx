@@ -12,19 +12,14 @@ import {
   useCoreBlocksGetComposition,
   useCoreBlocksUpdateComposition,
 } from '@camstack/ui-library'
-import { type ReactNode, useMemo, useState } from 'react'
+import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { skeletonFillStatus } from '../../composition-editor/build-skeleton'
 import { ComposedDeviceEditDialog } from '../../composition-editor/ComposedDeviceEditDialog'
 import { draftFromHelper, isHelperComposition } from '../../composition-editor/helper-form-model'
-import { CompositionFieldsCardList } from './cards/CompositionFieldsCardList'
-import { configCardCaps } from './config/ConfigCustomizeList'
 import { CustomizeTable } from './table/CustomizeTable'
-import { eventCardTargets } from './event/event-targets'
 import { HelperSummaryCard } from './HelperSummaryCard'
 import { IdentityRow } from './IdentityRow'
-import { keyedArrayCardTargets } from './keyed/KeyedArrayCard'
-import { scalarCardTargets } from './scalar/scalar-targets'
 import { useCameraSensors } from './use-camera-sensors-presence'
 import { useCustomizeFacts } from './use-customize-facts'
 import { useDefaultConsumables } from './use-default-consumables'
@@ -49,14 +44,6 @@ export function ComposedCustomizeBody({ device }: ComposedCustomizeBodyProps): R
   const facts = useCustomizeFacts(device, null)
   const cameraSensors = useCameraSensors(device.id, false)
   const defaultConsumables = useDefaultConsumables(device.id, facts.nativeCaps, facts.wireable)
-  const skipCaps = useMemo(() => {
-    const s = new Set<string>()
-    for (const { cap } of scalarCardTargets()) s.add(cap)
-    for (const { cap } of keyedArrayCardTargets()) s.add(cap)
-    for (const { cap } of eventCardTargets()) s.add(cap)
-    for (const cap of configCardCaps(device.type)) s.add(cap)
-    return s
-  }, [device.type])
 
   if (blockId === null) {
     return <p className="text-xs text-foreground-subtle">{t('customize.composed.missingBlock')}</p>
@@ -155,7 +142,6 @@ export function ComposedCustomizeBody({ device }: ComposedCustomizeBodyProps): R
         sensors={cameraSensors}
         defaults={defaultConsumables}
       />
-      <CompositionFieldsCardList device={device} handle={handle} skipCaps={skipCaps} />
     </div>
   )
 }

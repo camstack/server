@@ -90,8 +90,10 @@ export function EventPulseCard({
       ? null
       : (devices.value.find(
           (row) =>
-            compositionSourceKey({ addonId: row.addonId, stableId: row.stableId }) ===
-            compositionSourceKey(source),
+            compositionSourceKey({
+              addonId: row.addonId,
+              stableId: row.stableId,
+            }) === compositionSourceKey(source),
         ) ?? null)
   const presence = sourcePresence(recognized, devices.kind, sourceDevice !== null)
   const sourceLabel = useDeviceLabel(
@@ -280,7 +282,7 @@ interface DoorbellRingStatusProps {
   readonly startedAt: number | null
 }
 
-function DoorbellRingStatus({
+export function DoorbellRingStatus({
   deviceId,
   cap,
   timestampPath,

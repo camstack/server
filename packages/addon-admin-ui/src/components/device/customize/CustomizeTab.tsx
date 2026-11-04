@@ -3,7 +3,7 @@
  * (D663). It stores nothing: the assignment cards merge a feature into the
  * block, identity writes the authorities that already exist, links are the
  * D648 slot. What it claims about the block is one of five answered states
- * (D315). Order: identity, status, extension cards, linked devices (D944).
+ * (D315). Order: identity, status, then the one table (catalog rows, other fields, linked devices — D944).
  */
 import {
   COMPOSER_ADDON_ID,
@@ -17,7 +17,7 @@ import {
   useCapabilityPresence,
   useDeviceManagerGetDevice,
 } from '@camstack/ui-library'
-import { type ReactNode, useMemo } from 'react'
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AssignmentFacts } from './assignment-availability'
 import { type CustomizationState, currentComposition } from './customization-read'
@@ -25,17 +25,11 @@ import { IdentityRow } from './IdentityRow'
 import { QuickDetailSaveProvider } from '../quick-detail-save'
 import { CustomizeTable } from './table/CustomizeTable'
 import { LinkedActionsCard } from './kinds/LinkedActionsCard'
-import { LinkedDevicesTable } from './kinds/LinkedDevicesTable'
 import { useCustomization } from './use-customization'
 import { useCameraSensors } from './use-camera-sensors-presence'
 import { useCustomizeFacts } from './use-customize-facts'
 import { useDefaultConsumables } from './use-default-consumables'
-import { configCardCaps } from './config/ConfigCustomizeList'
-import { CompositionFieldsCardList } from './cards/CompositionFieldsCardList'
 import { ComposedCustomizeBody } from './ComposedCustomizeBody'
-import { scalarCardTargets } from './scalar/scalar-targets'
-import { keyedArrayCardTargets } from './keyed/KeyedArrayCard'
-import { eventCardTargets } from './event/event-targets'
 
 export interface CustomizeTabProps {
   readonly deviceId: number
@@ -110,14 +104,6 @@ function CustomizeBody({ device, target }: CustomizeBodyProps): ReactNode {
     nativeCaps: facts.nativeCaps,
     cameraSensors: cameraSensors.presence,
   }
-  const skipCaps = useMemo(() => {
-    const s = new Set<string>()
-    for (const { cap } of scalarCardTargets()) s.add(cap)
-    for (const { cap } of keyedArrayCardTargets()) s.add(cap)
-    for (const { cap } of eventCardTargets()) s.add(cap)
-    for (const cap of configCardCaps(device.type)) s.add(cap)
-    return s
-  }, [device.type])
   return (
     <div className="flex flex-col gap-3">
       <IdentityRow device={device} />
@@ -134,8 +120,6 @@ function CustomizeBody({ device, target }: CustomizeBodyProps): ReactNode {
         sensors={cameraSensors}
         defaults={defaultConsumables}
       />
-      <CompositionFieldsCardList device={device} handle={handle} skipCaps={skipCaps} />
-      <LinkedDevicesTable device={device} />
       {device.type === DeviceType.Camera && <LinkedActionsCard device={device} />}
     </div>
   )

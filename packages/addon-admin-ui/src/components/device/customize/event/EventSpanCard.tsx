@@ -159,7 +159,9 @@ export function EventSpanCard({
                 </ul>
               )}
               <p className="text-[11px] text-foreground-subtle">
-                {t('customize.event.timeoutSeconds', { seconds: timeoutMs / 1000 })}
+                {t('customize.event.timeoutSeconds', {
+                  seconds: timeoutMs / 1000,
+                })}
               </p>
               {error !== null && (
                 <p role="alert" className="text-xs text-danger break-words">
@@ -210,10 +212,14 @@ interface MotionNowLineProps {
   readonly deviceId: number
 }
 
-function MotionNowLine({ deviceId }: MotionNowLineProps): ReactNode {
+export function MotionNowLine({ deviceId }: MotionNowLineProps): ReactNode {
   const { t } = useTranslation()
   const detected = useLiveValue({ deviceId, cap: 'motion', path: 'detected' })
-  const lastAt = useLiveValue({ deviceId, cap: 'motion', path: 'lastDetectedAt' })
+  const lastAt = useLiveValue({
+    deviceId,
+    cap: 'motion',
+    path: 'lastDetectedAt',
+  })
   const detectedRead =
     detected.kind === 'pending'
       ? 'pending'
@@ -233,7 +239,7 @@ function MotionNowLine({ deviceId }: MotionNowLineProps): ReactNode {
   )
 }
 
-function spanRead(sensors: CameraSensorsRead): SpanRead {
+export function spanRead(sensors: CameraSensorsRead): SpanRead {
   if (sensors.presence === 'pending') return { kind: 'pending' }
   if (sensors.status === null) return { kind: 'unknown', reason: sensors.failureReason }
   return { kind: 'known', value: sensors.status }
@@ -257,7 +263,7 @@ interface SensorRowNameProps {
   readonly fleet: Known<readonly CandidateDevice[]>
 }
 
-function SensorRowName({ row, fleet }: SensorRowNameProps): ReactNode {
+export function SensorRowName({ row, fleet }: SensorRowNameProps): ReactNode {
   const nouns = useDeviceNameNouns()
   if (fleet.kind !== 'known') return row.name
   const device = fleet.value.find(

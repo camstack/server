@@ -24,21 +24,29 @@ interface Read {
   readonly status: 'pending' | 'success'
   readonly data?: unknown
 }
-const composable = vi.hoisted((): { current: Read } => ({ current: { status: 'pending' } }))
+const composable = vi.hoisted((): { current: Read } => ({
+  current: { status: 'pending' },
+}))
 const compositionRead = vi.hoisted((): { current: Read & { refetch: () => Promise<unknown> } } => ({
   current: { status: 'pending', refetch: async () => undefined },
 }))
 
 vi.mock('@camstack/ui-library', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@camstack/ui-library')>()
-  const mutation = () => ({ mutateAsync: vi.fn(async () => ({})), isPending: false })
+  const mutation = () => ({
+    mutateAsync: vi.fn(async () => ({})),
+    isPending: false,
+  })
   const pending = { status: 'pending', data: undefined, error: null }
   return {
     ...actual,
     useCoreBlocksGetComposition: () => compositionRead.current,
     useCoreBlocksUpdateComposition: mutation,
     useCoreBlocksListComposableCaps: () => composable.current,
-    useDeviceManagerGetBindings: () => ({ status: 'success', data: { entries: [] } }),
+    useDeviceManagerGetBindings: () => ({
+      status: 'success',
+      data: { entries: [] },
+    }),
     useDeviceManagerGetWireableFields: () => pending,
     useDeviceManagerListAll: () => ({ status: 'success', data: [] }),
     useDeviceManagerSetRole: () => ({ mutate: vi.fn(), isPending: false }),
@@ -47,7 +55,10 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     useDeviceManagerSetLocation: mutation,
     useDeviceManagerListLocations: () => ({ data: [] }),
     useDeviceManagerGetRoleDisplayDefaults: () => ({ data: { defaults: {} } }),
-    useDeviceManagerSetRoleDisplayDefaults: () => ({ mutate: vi.fn(), isPending: false }),
+    useDeviceManagerSetRoleDisplayDefaults: () => ({
+      mutate: vi.fn(),
+      isPending: false,
+    }),
     useDeviceStateGetSnapshot: () => pending,
     useDeviceStateGetCapSlice: () => pending,
     useDeviceCapSlice: () => undefined,
@@ -57,17 +68,31 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     useSystem: () => ({ trpcClient: null }),
     trpc: { ...actual.trpc, useQueries: () => [] },
     useConfirm: () => vi.fn(async () => true),
-    useDeviceExtensionListSlots: () => ({ ...pending, refetch: async () => undefined }),
+    // The extension rows read their own configuration; unanswered here.
+    useRemoteGetConfig: () => pending,
+    useTemplateList: () => pending,
+    useFanPresetsGetPresets: () => pending,
+    useDeviceExtensionListSlots: () => ({
+      ...pending,
+      refetch: async () => undefined,
+    }),
     useDeviceExtensionListCandidates: () => pending,
     useDeviceExtensionSetSlot: mutation,
     useActionsList: () => ({ data: undefined }),
     useActionsGetLinks: () => ({ data: undefined }),
-    useActionsSetLinks: () => ({ mutate: vi.fn(), isPending: false, error: null }),
+    useActionsSetLinks: () => ({
+      mutate: vi.fn(),
+      isPending: false,
+      error: null,
+    }),
     useActionsRun: () => ({ mutate: vi.fn(), isPending: false }),
     usePipelineOrchestratorSetCameraSensors: mutation,
     usePipelineOrchestratorApplyDeviceSettingsPatch: mutation,
     useAddonSettingsGetDeviceSettings: () => pending,
-    usePipelineOrchestratorGetCameraStatus: () => ({ ...pending, refetch: async () => undefined }),
+    usePipelineOrchestratorGetCameraStatus: () => ({
+      ...pending,
+      refetch: async () => undefined,
+    }),
   }
 })
 // The two config cards talk to tRPC; this spec asks only whether they are offered.

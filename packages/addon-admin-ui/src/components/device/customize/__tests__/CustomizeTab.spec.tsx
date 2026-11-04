@@ -94,6 +94,33 @@ const fleet = vi.hoisted(
     }
   } => ({ current: { status: 'pending' } }),
 )
+/** Live cap slices by `<deviceId>.<cap>`: unanswered unless a test says so; `'error'` is a failed read. */
+const capSlices = vi.hoisted((): { current: Record<string, unknown> } => ({
+  current: {},
+}))
+/** The extension slots read (linked devices): unanswered unless a test says so. */
+const linkedSlots = vi.hoisted(
+  (): {
+    current: { readonly status: Query['status']; readonly data?: unknown }
+  } => ({
+    current: { status: 'pending' },
+  }),
+)
+/** The Remote extension's stored config and the layout templates. */
+const remoteConfig = vi.hoisted(
+  (): {
+    current: { readonly status: Query['status']; readonly data?: unknown }
+  } => ({
+    current: { status: 'pending' },
+  }),
+)
+const remoteTemplates = vi.hoisted(
+  (): {
+    current: { readonly status: Query['status']; readonly data?: unknown }
+  } => ({
+    current: { status: 'pending' },
+  }),
+)
 const composerPresence = vi.hoisted((): { current: string } => ({
   current: 'present',
 }))
@@ -177,16 +204,30 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     trpc: { ...actual.trpc, useQueries: () => [] },
     // The cards' live values (the native battery row); unanswered here.
     useSystem: () => ({ trpcClient: null }),
-    useDeviceStateGetCapSlice: () => ({
+    useDeviceStateGetCapSlice: (input: { readonly deviceId: number; readonly capName: string }) => {
+      const slice = capSlices.current[`${input.deviceId}.${input.capName}`]
+      if (slice === undefined) return { status: 'pending', data: undefined, error: null }
+      if (slice === 'error')
+        return {
+          status: 'error',
+          data: undefined,
+          error: { message: 'slice down' },
+        }
+      return { status: 'success', data: slice, error: null }
+    },
+    useDeviceCapSlice: () => undefined,
+    // The linked-devices table calls its hooks on every device (gated by `enabled`); unanswered here.
+    // The extension rows read their own configuration; unanswered here.
+    useRemoteGetConfig: () => ({ ...remoteConfig.current, error: null }),
+    useTemplateList: () => ({ ...remoteTemplates.current, error: null }),
+    useFanPresetsGetPresets: () => ({
       status: 'pending',
       data: undefined,
       error: null,
     }),
-    useDeviceCapSlice: () => undefined,
-    // The linked-devices table calls its hooks on every device (gated by `enabled`); unanswered here.
     useDeviceExtensionListSlots: () => ({
-      status: 'pending',
-      data: undefined,
+      status: linkedSlots.current.status,
+      data: linkedSlots.current.data,
       error: null,
       refetch: async () => undefined,
     }),
@@ -317,6 +358,10 @@ beforeEach(() => {
   bindings.current = { status: 'pending' }
   composable.current = { status: 'pending' }
   fleet.current = { status: 'pending' }
+  capSlices.current = {}
+  linkedSlots.current = { status: 'pending' }
+  remoteConfig.current = { status: 'pending' }
+  remoteTemplates.current = { status: 'pending' }
   deleteMutate.mockClear()
   confirmMock.mockClear()
 })
@@ -661,7 +706,11 @@ describe('CustomizeTab — a composed device', () => {
     }
     renderTab()
     expect(screen.queryByRole('link', { name: 'Edit its composition' })).toBeNull()
-    expect(screen.getByTestId('fields-card-temperature-sensor')).toBeTruthy()
+    // The field group the catalog has no row for is a row of the one table, not a card below it.
+    const table = screen.getByTestId('customize-table')
+    expect(within(table).getByText('Other fields')).toBeTruthy()
+    expect(within(table).getByTestId('customize-manage-offcatalog.temperature-sensor')).toBeTruthy()
+    expect(screen.queryByTestId('fields-card-temperature-sensor')).toBeNull()
   })
 })
 
@@ -892,5 +941,171 @@ describe('CustomizeTab — the Motion row (spec U8, D676)', () => {
     cameraStatus.current = { status: 'success', data: {} }
     renderTab()
     expect(motion()).toBeNull()
+  })
+})
+
+const SPREAD_ROW = (testId: string): HTMLElement => {
+  const row = within(screen.getByTestId('customize-table')).getByTestId(testId).closest('tr')
+  if (row === null) throw new Error(`no row for ${testId}`)
+  return row
+}
+
+describe('CustomizeTab — event and extension rows carry a value and a source', () => {
+  const BUTTON = { addonId: 'provider-homeassistant', stableId: 'dev-307' }
+  const doorbell = (): object => ({
+    kind: 'fields',
+    cap: 'doorbell',
+    enabled: true,
+    fields: {
+      lastPressedAt: {
+        kind: 'expression',
+        expr: 'latest(rose(active0, changed0, 2000))',
+        bindings: {
+          active0: {
+            kind: 'from',
+            source: BUTTON,
+            cap: 'switch',
+            fieldPath: 'on',
+          },
+          changed0: {
+            kind: 'from',
+            source: BUTTON,
+            cap: 'switch',
+            fieldPath: 'lastChangedAt',
+          },
+        },
+      },
+      pressCountSinceStart: {
+        kind: 'expression',
+        expr: 'count(lastPressedAt)',
+        bindings: {
+          lastPressedAt: {
+            kind: 'from',
+            source: { addonId: CAMERA.addonId, stableId: CAMERA.stableId },
+            cap: 'doorbell',
+            fieldPath: 'lastPressedAt',
+          },
+        },
+      },
+    },
+  })
+  function renderDoorbell(): void {
+    device.current = CAMERA
+    composable.current = {
+      status: 'success',
+      data: { caps: [{ cap: 'doorbell' }] },
+    }
+    bindings.current = { status: 'success', data: { entries: [] } }
+    fleet.current = {
+      status: 'success',
+      data: [
+        {
+          id: 307,
+          name: 'Front door button',
+          ...BUTTON,
+          type: 'switch',
+          location: null,
+        },
+      ],
+    }
+    customization.current = {
+      ...PRESENT,
+      data: loadedRead({ addonId: CAMERA.addonId, stableId: CAMERA.stableId }, [doorbell()]),
+    }
+    renderTab()
+  }
+  it('an event row shows the last event and the device it is read from', () => {
+    capSlices.current = {
+      '103.doorbell': {
+        lastPressedAt: Date.now() - 120_000,
+        pressCountSinceStart: 4,
+      },
+    }
+    renderDoorbell()
+    const row = SPREAD_ROW('customize-manage-doorbell.pressed')
+    expect(row.textContent).toMatch(/Last ring/)
+    expect(row.textContent).toMatch(/4 rings since restart/)
+    expect(row.textContent).toMatch(/Front door button/)
+    expect(row.textContent).not.toMatch(/Customized/)
+  })
+  it('an unanswered or failed event read says so instead of showing nothing (D315)', () => {
+    capSlices.current = { '103.doorbell': 'error' }
+    renderDoorbell()
+    const row = SPREAD_ROW('customize-manage-doorbell.pressed')
+    expect(row.textContent).toMatch(/unknown|unavailable|not available|could not/i)
+    expect(row.textContent).toMatch(/Front door button/)
+  })
+  it('an extension row shows its configured summary and where it comes from', () => {
+    device.current = { ...FEEDER, id: 55, type: 'media-player', name: 'TV' }
+    composable.current = { status: 'success', data: { caps: [] } }
+    bindings.current = { status: 'success', data: { entries: [] } }
+    remoteConfig.current = {
+      status: 'success',
+      data: { bindings: { a: {}, b: {}, c: {} }, layoutTemplateId: 'tpl-1' },
+    }
+    remoteTemplates.current = {
+      status: 'success',
+      data: [{ id: 'tpl-1', name: 'Living room remote' }],
+    }
+    customization.current = {
+      status: 'success',
+      data: { state: 'loaded', view: null },
+      refetch: vi.fn(async () => undefined),
+    }
+    renderTab()
+    const row = SPREAD_ROW('customize-manage-remote.remote')
+    expect(row.textContent).toMatch(/3 commands/)
+    expect(row.textContent).toMatch(/Living room remote/)
+    expect(row.textContent).not.toMatch(/Extension/)
+  })
+  it('an extension whose read failed says unknown, not configured', () => {
+    device.current = { ...FEEDER, id: 55, type: 'media-player', name: 'TV' }
+    composable.current = { status: 'success', data: { caps: [] } }
+    bindings.current = { status: 'success', data: { entries: [] } }
+    remoteConfig.current = { status: 'error' }
+    customization.current = {
+      status: 'success',
+      data: { state: 'loaded', view: null },
+      refetch: vi.fn(async () => undefined),
+    }
+    renderTab()
+    const row = SPREAD_ROW('customize-manage-remote.remote')
+    expect(row.textContent).toMatch(/Unknown/)
+    expect(row.textContent).not.toMatch(/Not configured/)
+  })
+})
+
+describe('CustomizeTab — linked devices are rows of the one table', () => {
+  it('lists the linked devices in the table, not in a block below it', () => {
+    device.current = CAMERA
+    composable.current = { status: 'success', data: { caps: [] } }
+    bindings.current = { status: 'success', data: { entries: [] } }
+    linkedSlots.current = {
+      status: 'success',
+      data: [
+        {
+          state: 'ok',
+          slotRef: 'device-manager:linked-devices',
+          slot: 'linked-devices',
+          authority: 'device-manager:_linkedDeviceIds',
+          activation: null,
+          value: { slot: 'linked-devices', deviceIds: [303] },
+          sources: [{ deviceId: 303, name: 'Porch light', health: 'ok' }],
+        },
+      ],
+    }
+    customization.current = {
+      status: 'success',
+      data: { state: 'loaded', view: null },
+      refetch: vi.fn(async () => undefined),
+    }
+    renderTab()
+    const table = screen.getByTestId('customize-table')
+    const row = SPREAD_ROW('customize-manage-linked-devices')
+    expect(row.textContent).toMatch(/Linked devices|1 linked/)
+    expect(row.textContent).toMatch(/Porch light/)
+    // The only "Linked devices" text is inside the table: no separate section below it.
+    for (const node of screen.getAllByText('Linked devices'))
+      expect(table.contains(node)).toBe(true)
   })
 })
