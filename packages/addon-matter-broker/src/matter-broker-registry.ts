@@ -102,6 +102,7 @@ export class MatterBrokerRegistry {
   async restore(entries: readonly MatterBrokerEntry[]): Promise<void> {
     for (const entry of entries) this.#seedCounter(entry.id)
     for (const entry of entries) {
+      if (entry.enabled === false) continue
       try {
         await this.#startManager(entry)
       } catch (err: unknown) {
@@ -149,9 +150,10 @@ export class MatterBrokerRegistry {
   async createEntry(
     name: string,
     connection: MatterConnection,
-    opts: { readonly integrationId?: string } = {},
+    opts: { readonly integrationId?: string; readonly id?: string } = {},
   ): Promise<MatterBrokerEntry> {
-    const id = this.#allocateId()
+    const id = opts.id ?? this.#allocateId()
+    if (opts.id !== undefined) this.#seedCounter(opts.id)
     const entry: MatterBrokerEntry = {
       id,
       name,
@@ -165,7 +167,7 @@ export class MatterBrokerRegistry {
 
   async removeEntry(id: string): Promise<void> {
     const mgr = this.#managers.get(id)
-    if (!mgr) throw new Error(`MatterBrokerRegistry: unknown broker id "${id}"`)
+    if (!mgr) return
     for (const [integrationId, brokerId] of this.#integrationToBroker.entries()) {
       if (brokerId === id) this.#integrationToBroker.delete(integrationId)
     }
@@ -273,6 +275,11 @@ export class MatterBrokerRegistry {
       this.#integrationToBroker.set(entry.integrationId, entry.id)
     }
     await mgr.start()
+  }
+
+  /** The next free broker id, for a record minted before its manager exists. */
+  allocateId(): string {
+    return this.#allocateId()
   }
 
   #allocateId(): string {

@@ -38,13 +38,13 @@ export const MatterBrokerEntrySchema = z.object({
   name: z.string().min(1),
   connection: matterConnectionSchema,
   integrationId: z.string().optional(),
+  /** Absent means on; the instances page switches a fabric off without deleting it. */
+  enabled: z.boolean().optional(),
 })
 export type MatterBrokerEntry = z.infer<typeof MatterBrokerEntrySchema>
 
-/** Top-level addon config — an ordered list of broker entries (default empty). */
-export const matterAddonConfigSchema = z.object({
-  brokers: z.array(MatterBrokerEntrySchema).default([]),
-})
+/** Top-level addon config — the fabrics are records, so nothing is left here. */
+export const matterAddonConfigSchema = z.object({})
 export type MatterAddonConfig = z.infer<typeof matterAddonConfigSchema>
 
 /** Narrow an `unknown` to a shallow plain-object record (cast-free boundary). */

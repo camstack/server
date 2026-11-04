@@ -2,10 +2,13 @@ import {
   BaseDeviceProvider,
   brokerCapability,
   createEvent,
+  defineAddonMigrations,
   deviceAdoptionCapability,
   DeviceType,
   errMsg,
   EventCategory,
+  flattenPortsOver,
+  integrationInstancesCapability,
   type ConfigUISchema,
   type CreateDeviceSpec,
   type DeviceConstructor,
@@ -13,6 +16,7 @@ import {
   type IDevice,
   type IDeviceAdoptionProvider,
   type ProviderRegistration,
+  type RecordIntegrationInstances,
   type SystemEvent,
 } from '@camstack/types'
 import { type MatterAddonConfig } from './config.js'
@@ -26,12 +30,14 @@ import { matterCommands, matterNodes } from './matter-gateway.js'
 import type { MatterAttributeReport, MatterNodeSnapshot } from './matter-controller.js'
 import { mapMatterEndpointToCamStack } from './matter-cluster-mapping.js'
 import { MatterNodeDevice, type MatterEndpointEntry } from './devices/matter-node-device.js'
-import { matterBrokersEntryKind } from './broker-record-kinds.js'
+import { matterBrokersEntryKind, type MatterBrokerBody } from './broker-record-kinds.js'
+import { buildMatterInstances } from './matter-instances.js'
+import { ADDON_MIGRATIONS } from './migrations/index.js'
 import { MatterBrokerStore } from './matter-broker-store.js'
 import type { MatterBrokerEntry } from './config.js'
 
 /** Default config — a fresh install starts with no fabric. */
-const DEFAULTS: MatterAddonConfig = { brokers: [] }
+const DEFAULTS: MatterAddonConfig = {}
 
 /**
  * Matter broker addon (hub-only). Owns a Matter fabric per broker entry via an
@@ -57,6 +63,7 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
 
   private registry: MatterBrokerRegistry | null = null
   private brokerStore: MatterBrokerStore | null = null
+  private instances: RecordIntegrationInstances<MatterBrokerBody> | null = null
   private activeBrokers: readonly MatterBrokerEntry[] = []
 
   constructor() {
@@ -72,6 +79,20 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
     }
     await records.declare({ brokers: matterBrokersEntryKind })
     this.brokerStore = MatterBrokerStore.of(records)
+    this.instances = buildMatterInstances(records, {
+      mintId: () => this.requireRegistry().allocateId(),
+      infoOf: (id) => this.registry?.get(id) ?? null,
+      onChanged: (id) => this.syncBrokerRuntime(id),
+    })
+    // The stored fabric records move to the flat shape BEFORE anything reads them.
+    const secrets = this.ctx.secrets
+    if (secrets === undefined) throw new Error('matter-broker: ctx.secrets is required')
+    await this.runMigrations(
+      defineAddonMigrations(
+        ADDON_MIGRATIONS,
+        flattenPortsOver(records.kind(matterBrokersEntryKind), secrets),
+      ),
+    )
     this.activeBrokers = await this.loadPersistedBrokers()
 
     this.registry = new MatterBrokerRegistry(this.ctx.logger, {
@@ -108,27 +129,64 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
     return [
       ...regs,
       { capability: brokerCapability, provider: this.buildBrokerProvider() },
+      {
+        capability: integrationInstancesCapability,
+        provider: this.requireInstances().toProvider(),
+      },
       { capability: deviceAdoptionCapability, provider: this.buildAdoptionProvider() },
     ]
   }
 
   private async loadPersistedBrokers(): Promise<readonly MatterBrokerEntry[]> {
-    const store = this.brokerStore
-    if (store !== null) {
-      const fromRecords = await store.listResolved()
-      if (fromRecords.length > 0) return fromRecords
+    return this.requireBrokerStore().listResolved()
+  }
+
+  private requireBrokerStore(): MatterBrokerStore {
+    if (this.brokerStore === null) throw new Error('matter-broker: broker store not ready')
+    return this.brokerStore
+  }
+
+  private requireInstances(): RecordIntegrationInstances<MatterBrokerBody> {
+    if (this.instances === null) throw new Error('matter-broker: instances not ready')
+    return this.instances
+  }
+
+  /**
+   * Bring the runtime in line with one record after the instances page changed it: a removed
+   * record stops its controller and cascades its devices, an off record only stops the
+   * controller, a live one re-applies its settings or starts under the record's own id.
+   */
+  private async syncBrokerRuntime(id: string): Promise<void> {
+    const reg = this.requireRegistry()
+    const entry = await this.requireBrokerStore().getById(id)
+    this.activeBrokers = await this.loadPersistedBrokers()
+    if (entry === null) {
+      await reg.removeEntry(id)
+      await this.cascadeRemoveDevicesForBroker(id)
+      return
     }
-    return this.config.brokers
+    if (entry.enabled === false) {
+      await reg.removeEntry(id)
+      return
+    }
+    try {
+      if (reg.get(id) !== null) await reg.updateEntry(id, entry.connection)
+      else {
+        await reg.createEntry(entry.name, entry.connection, {
+          id,
+          ...(entry.integrationId !== undefined ? { integrationId: entry.integrationId } : {}),
+        })
+      }
+    } catch (err) {
+      this.ctx.logger.warn('matter instance: could not start the fabric', {
+        meta: { brokerId: id, error: errMsg(err) },
+      })
+    }
   }
 
   private async persistBrokerEntries(entries: readonly MatterBrokerEntry[]): Promise<void> {
     this.activeBrokers = [...entries]
-    const store = this.brokerStore
-    if (store !== null) {
-      await store.replaceAll(entries)
-      return
-    }
-    await this.updateGlobalSettings({ brokers: [...entries] })
+    await this.requireBrokerStore().replaceAll(entries)
   }
 
   protected override async onConfigChanged(): Promise<void> {
@@ -152,6 +210,7 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
     }
 
     for (const entry of persisted) {
+      if (entry.enabled === false) continue
       if (entry.id && liveIds.has(entry.id)) {
         if (sameConnection(entry.connection, reg.getConnection(entry.id))) continue
         try {

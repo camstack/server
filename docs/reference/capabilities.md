@@ -172,7 +172,7 @@ Singleton or collection providers, addressed without a device.
 | `failure-contribution` | 1 | — | — | — | ✓ | `pipeline-runner` `pipeline-analytics` `provider-hikvision` `provider-reolink` |
 | `fan-presets` | 4 | — | — | — | — | `core-blocks` |
 | `filesystem-browse` | 3 | — | — | — | ✓ | `filesystem-storage` |
-| `integration-instances` | 9 | — | — | — | — | `cloudflare-tunnel` `cloudflare-turn` `export-alexa` `google-services` `import-alexa` `mqtt-broker` `provider-homeassistant` `smtp-nodemailer` `static-turn` `training-modal` `loki-logging` |
+| `integration-instances` | 9 | — | — | — | — | `cloudflare-tunnel` `cloudflare-turn` `export-alexa` `google-services` `import-alexa` `matter-broker` `mqtt-broker` `provider-homeassistant` `smtp-nodemailer` `static-turn` `training-modal` `loki-logging` |
 | `integrations` | 10 | — | — | — | — | — |
 | `keychain` | 7 | — | — | — | ✓ | `keychain` |
 | `keychain-admin` | 13 | — | — | — | — | `keychain` |

@@ -58,7 +58,7 @@ this column exists to stop.
 | `local-auth` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `auth-provider` `device-credentials` `user-management` |
 | `local-network` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `local-network` |
 | `loki-logging` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `integration-instances` `log-destination` |
-| `matter-broker` | `@camstack/addon-matter-broker` | providers | own runner | `hub-only` | — | unique | `broker` `device-adoption` `device-provider` |
+| `matter-broker` | `@camstack/addon-matter-broker` | providers | own runner | `hub-only` | — | unique | `broker` `device-adoption` `device-provider` `integration-instances` |
 | `metrics-native` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `metrics-provider` |
 | `model-studio` | `@camstack/addon-model-studio` | system | own runner | `any-node` | `ml` | — | `addon-pages-source` `custom-model-registry` `model-convert` `node-removal-hook` |
 | `motion-wasm` | `@camstack/addon-pipeline` | pipeline | own runner | `any-node` | `detection` | — | `motion-detection` |

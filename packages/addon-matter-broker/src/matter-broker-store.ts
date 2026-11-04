@@ -10,8 +10,14 @@ function rowToEntry(id: string, data: MatterBrokerBody): MatterBrokerEntry | nul
   const parsed = MatterBrokerEntrySchema.safeParse({
     id,
     name: data.name,
-    connection: data.connection,
+    connection: {
+      threadDataset: data.threadDataset,
+      wifiSsid: data.wifiSsid,
+      wifiPassword: data.wifiPassword,
+      reconcileIntervalMs: data.reconcileIntervalMs,
+    },
     integrationId: data.integrationId,
+    enabled: data.enabled,
   })
   return parsed.success ? parsed.data : null
 }
@@ -44,6 +50,10 @@ export class MatterBrokerStore {
     return out
   }
 
+  async getById(id: string): Promise<MatterBrokerEntry | null> {
+    return (await this.listResolved()).find((entry) => entry.id === id) ?? null
+  }
+
   async replaceAll(entries: readonly MatterBrokerEntry[]): Promise<void> {
     const page = await this.kind.query({ limit: 1000 })
     const nextIds = new Set(entries.map((e) => e.id))
@@ -51,8 +61,13 @@ export class MatterBrokerStore {
       if (!nextIds.has(row.id)) await this.kind.delete(row.id)
     }
     for (const entry of entries) {
-      const { id, name, connection, integrationId } = entry
-      const body = { name, connection, ...(integrationId === undefined ? {} : { integrationId }) }
+      const { id, name, connection, integrationId, enabled } = entry
+      const body = {
+        name,
+        ...connection,
+        ...(integrationId === undefined ? {} : { integrationId }),
+        ...(enabled === undefined ? {} : { enabled }),
+      }
       const parsed = matterBrokersEntryKind.schema.safeParse(body)
       if (!parsed.success) throw new Error(`invalid Matter broker '${id}': ${parsed.error.message}`)
       await this.kind.put({ id, data: parsed.data })

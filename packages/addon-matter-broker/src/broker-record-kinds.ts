@@ -1,12 +1,13 @@
 import { defineEntryKind, entryBody } from '@camstack/types'
 import { z } from 'zod'
-import { MatterBrokerEntrySchema } from './config.js'
+import { matterConnectionSchema } from './config.js'
 
 export const MATTER_BROKERS_OWNER = 'matter-broker'
 
 export const MatterBrokerBodySchema = entryBody({
-  connection: MatterBrokerEntrySchema.shape.connection,
+  ...matterConnectionSchema.shape,
   integrationId: z.string().optional(),
+  enabled: z.boolean().optional(),
 })
 export type MatterBrokerBody = z.infer<typeof MatterBrokerBodySchema>
 
