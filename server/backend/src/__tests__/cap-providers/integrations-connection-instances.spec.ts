@@ -1,6 +1,7 @@
 import type {
   AddonDeclaration,
   Integration,
+  IntegrationInstance,
   IntegrationTestConnectionResult,
 } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
@@ -74,15 +75,17 @@ function harness(
     createInstance: vi.fn(async (input: { id: string }) => ({ id: input.id })),
     updateInstance: vi.fn(async () => ({ ok: true as const })),
     deleteInstance: vi.fn(async () => ({ ok: true as const })),
-    getInstance: vi.fn(async (input: { id: string }) => ({
-      id: input.id,
-      name: 'Loki',
-      configured: true,
-      formValues: {
-        url: 'http://loki:3100',
-        password: { $secret: 'ref', v: 1, set: true },
-      },
-    })),
+    getInstance: vi.fn(
+      async (input: { id: string }): Promise<IntegrationInstance | null> => ({
+        id: input.id,
+        name: 'Loki',
+        configured: true,
+        formValues: {
+          url: 'http://loki:3100',
+          password: { $secret: 'ref', v: 1, set: true },
+        },
+      }),
+    ),
     listInstances: vi.fn(async () => []),
     instanceFormSchema: vi.fn(async () => ({ sections: [] })),
     testInstance: vi.fn(
@@ -228,13 +231,13 @@ describe('integrations over an integration-instances provider', () => {
   it('getSettings of a legacy row no instance record answers for reads the row itself, not {}', async () => {
     const h = harness()
     await h.provider.create({ addonId: ADDON_ID, name: 'Loki' })
-    h.instances.getInstance.mockResolvedValueOnce(null as never)
+    h.instances.getInstance.mockResolvedValueOnce(null)
     h.registry.getIntegrationSettings.mockResolvedValueOnce({
       brokerId: 'ha_001',
       exportTo: true,
       mediaRole: 'publicEndpoint',
     })
-    const settings = await h.provider.getSettings({ id: 'int_0001', callerAddonId: ADDON_ID })
+    const settings = await h.provider.getSettings({ id: 'int_0001' })
     expect(settings).toMatchObject({ brokerId: 'ha_001', exportTo: true })
   })
 
