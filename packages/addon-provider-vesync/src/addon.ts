@@ -1,149 +1,497 @@
-import { userError } from '@camstack/types'
 import {
+  type AddonInitResult,
   BaseDeviceProvider,
   type ConfigUISchema,
   type CreateDeviceSpec,
   type DeviceConstructor,
   DeviceType,
-  type IDevice,
+  deviceAdoptionCapability,
+  defaultIntegrationApiOver,
+  defineAddonMigrations,
   errMsg,
+  EventCategory,
+  type IDevice,
+  integrationInstancesCapability,
+  integrationRowsPortsOver,
+  type RecordIntegrationInstances,
+  type SavedDevice,
+  type SystemEvent,
+  type DeviceRestoreReport,
 } from '@camstack/types'
-import {
-  buildConnectionFormSchema,
-  settingsToConnection,
-  slugifyEmail,
-  type VeSyncConnectionConfig,
-  vesyncConnectionSchema,
-} from './config.js'
-import { VeSyncAccountDevice } from './devices/vesync-account-device.js'
+import { VESYNC_SYSTEM, type VeSyncConnectionConfig } from './config.js'
+import { VeSyncGatewayDevice } from './devices/vesync-gateway-device.js'
 import { VeSyncPurifierDevice } from './devices/vesync-purifier-device.js'
+import {
+  ADDON_MIGRATIONS,
+  VESYNC_HUB_MIGRATION_ID,
+  VESYNC_ROWS_TO_RECORD_ID,
+  VESYNC_ROWS_TO_RECORD_MIGRATION,
+  type VeSyncMigrationPorts,
+} from './migrations/index.js'
+import { restoreAfterMigration } from './migrations/restore-after-migration.js'
 import { vesyncAccounts } from './vesync-account-resolver.js'
+import { buildVeSyncAdoptionProvider } from './vesync-adoption-provider.js'
+import { gatewayStableId } from './vesync-discovery.js'
+import {
+  buildVeSyncInstances,
+  vesyncConnectionOf,
+  vesyncConnectionsEntryKind,
+  type VeSyncConnectionBody,
+  vesyncRecordKinds,
+} from './vesync-instances.js'
+import {
+  cascadeRemoveDevicesForIntegration,
+  setIntegrationDevicesOnline,
+} from './vesync-integration-devices.js'
 import { VeSyncIntegrationManager } from './vesync-integration-manager.js'
 
 /**
- * VeSync cloud-account device-provider addon — `mode: standalone` (the Reolink /
- * Velux / Ecowitt pattern). No broker, no device-adoption cap. An account is
- * added as a DEVICE via the manual-creation form: the CREDENTIALS (email /
- * password / region / poll interval) live on the account DEVICE config. The
- * created account is a {@link DeviceType.Hub} ({@link VeSyncAccountDevice}) that
- * owns its own live client and registers `device-discovery` to adopt its own
- * air purifiers as {@link DeviceType.Fan} devices (each fanning out
- * child-lock / display Switch + air-quality / filter-life Sensor accessories).
- *
- * NOTE: the VeSync client library (`tsvesync`) is DECLARED as a dependency but
- * the adapter is not wired yet (see `plan-vesync.md`) — the integration
- * manager's default factory throws until the `VeSyncClient` adapter over
- * `tsvesync` is implemented, so a created account installs cleanly but stays
- * offline. Everything else (config, discovery flow, cap surface) is complete and
- * type-checked.
- *
- * `instanceMode: multiple` — many accounts may be added. Network auto-discovery
- * is not applicable (VeSync is a cloud account, not a LAN device).
+ * VeSync cloud-account provider, `mode: account` and broker-less. An integration is one
+ * VeSync account: email, password, region and poll interval live on its `connections`
+ * record (the password in the keychain). Discovery offers the account as a
+ * {@link DeviceType.Gateway} and each air purifier as a {@link DeviceType.Fan} sibling
+ * of it. The old Hub device that held `config.connection` is retired by the
+ * `provider-vesync` migration (D987), run from {@link onRestoreDevices}.
  */
 export class VeSyncProviderAddon extends BaseDeviceProvider {
   protected readonly addonId = 'provider-vesync'
   protected readonly providerName = 'VeSync'
   protected readonly deviceClasses: Partial<Record<DeviceType, DeviceConstructor<IDevice>>> = {
-    [DeviceType.Hub]: VeSyncAccountDevice,
     [DeviceType.Fan]: VeSyncPurifierDevice,
+    [DeviceType.Gateway]: VeSyncGatewayDevice,
   }
+
+  private instances: RecordIntegrationInstances<VeSyncConnectionBody> | null = null
+  private readonly names = new Map<string, string>()
 
   constructor() {
     super({})
   }
 
-  // ── No network auto-discovery for the account itself ────────────────────────
+  protected override async onInitialize(): Promise<AddonInitResult> {
+    const regs = this.providerRegistrationsFromSuper(await super.onInitialize())
+    const records = this.requireRecords()
+    await records.declare(vesyncRecordKinds)
+    const instances = buildVeSyncInstances(records, {
+      onChanged: () => this.reconcileIntegrations(),
+    })
+    this.instances = instances
+    // Rows move before the instances provider registers. The hub migration needs the
+    // persisted devices and runs from `onRestoreDevices`. The whole catalogue is declared
+    // either way; `only` names the phase.
+    await this.runMigrations(
+      this.migrationCatalogue(this.buildMigrationPorts([], async () => undefined)),
+      { only: [VESYNC_ROWS_TO_RECORD_ID] },
+    )
+    await this.reconcileIntegrations()
+    this.subscribeIntegrationLifecycle()
+    return {
+      providers: [
+        ...regs,
+        { capability: deviceAdoptionCapability, provider: this.buildAdoptionProvider() },
+        { capability: integrationInstancesCapability, provider: instances.toProvider() },
+      ],
+    }
+  }
+
+  protected override async onShutdown(): Promise<void> {
+    for (const id of vesyncAccounts.ids()) {
+      const mgr = vesyncAccounts.getManager(id)
+      vesyncAccounts.set(id, null)
+      if (mgr === null) continue
+      try {
+        await mgr.stop()
+      } catch (err) {
+        this.ctx.logger.warn('VeSync shutdown: client stop failed', {
+          meta: { integrationId: id, error: errMsg(err) },
+        })
+      }
+    }
+    vesyncAccounts.clear()
+    this.names.clear()
+    await super.onShutdown()
+  }
+
+  protected override async onRestoreDevices(
+    savedDevices: readonly SavedDevice[],
+  ): Promise<DeviceRestoreReport | void> {
+    return restoreAfterMigration({
+      saved: savedDevices,
+      migrationId: VESYNC_HUB_MIGRATION_ID,
+      logger: this.ctx.logger,
+      runMigration: (restoreRows) => {
+        const ports = this.buildMigrationPorts(savedDevices, restoreRows)
+        return this.runMigrations(this.migrationCatalogue(ports), {
+          only: [VESYNC_HUB_MIGRATION_ID],
+        })
+      },
+      restoreRows: async (rows) => {
+        await this.reconcileIntegrations()
+        await super.onRestoreDevices(rows)
+      },
+      restoreRest: (rows) => super.onRestoreDevices(rows),
+    })
+  }
 
   override async supportsDiscovery(): Promise<boolean> {
     return false
   }
 
-  // ── Manual creation: an account is added as a Hub device ────────────────────
-
   override async supportsManualCreation(): Promise<boolean> {
-    return true
+    return false
   }
 
-  protected async onGetCreationSchema(type: DeviceType): Promise<ConfigUISchema | null> {
-    // Only the account is manually creatable; its purifier children are spawned
-    // by the account's `device-discovery` adopt flow.
-    if (type !== DeviceType.Hub) return null
-    return buildConnectionFormSchema()
+  protected async onGetCreationSchema(_type: DeviceType): Promise<ConfigUISchema | null> {
+    return null
   }
 
   protected async onCreateDevice(
-    type: DeviceType,
-    config: Record<string, unknown>,
+    _type: DeviceType,
+    _config: Record<string, unknown>,
   ): Promise<CreateDeviceSpec> {
-    if (type !== DeviceType.Hub) {
-      throw new Error(`VeSync provider does not support device type: ${type}`)
-    }
-    const name = typeof config['name'] === 'string' ? config['name'].trim() : ''
-    if (!name) throw userError('vesync.name-required', undefined, 'Account name is required')
+    throw new Error('VeSync devices are adopted from the integration')
+  }
 
-    const connection = extractConnection(config)
-    if (connection.email.trim().length === 0) {
-      throw userError('vesync.email-required', undefined, 'Account email is required')
+  protected override generateStableId(type: DeviceType, config?: Record<string, unknown>): string {
+    const integrationId = stringField(config, 'integrationId')
+    if (integrationId.length === 0) {
+      throw new Error('vesync generateStableId: integrationId required')
     }
+    if (type === DeviceType.Gateway) return gatewayStableId(integrationId)
+    const cid = stringField(config, 'purifierNativeId')
+    if (cid.length === 0) throw new Error('vesync generateStableId: purifierNativeId required')
+    return `${integrationId}:purifier:${cid}`
+  }
 
-    // Build the live client ONCE here so the account device adopts a warm client.
-    // With no adapter wired, `start()` throws — caught + logged, the device is
-    // kept so the row persists for when the adapter lands.
-    const stableId = this.generateStableId(DeviceType.Hub, { connection })
-    const manager = new VeSyncIntegrationManager({
-      id: stableId,
-      name,
-      connection,
-      logger: this.ctx.logger,
-      onConnected: () => undefined,
-      onDisconnected: () => undefined,
-      onPolled: (accountId) => vesyncAccounts.emitSnapshot(accountId),
+  private requireRecords() {
+    const records = this.ctx.records
+    if (records === undefined) {
+      throw new Error('provider-vesync: ctx.records is required (hub-only addon)')
+    }
+    return records
+  }
+
+  private requireInstances(): RecordIntegrationInstances<VeSyncConnectionBody> {
+    if (!this.instances) throw new Error('VeSync provider not initialised')
+    return this.instances
+  }
+
+  private migrationCatalogue(hubPorts: VeSyncMigrationPorts) {
+    const records = this.requireRecords()
+    const rowsPorts = integrationRowsPortsOver({
+      api: defaultIntegrationApiOver(this.ctx.api),
+      records,
+      kind: vesyncConnectionsEntryKind,
+      warn: (message) => this.ctx.logger.warn(message),
     })
-    vesyncAccounts.set(stableId, manager)
-    try {
-      await manager.start()
-    } catch (err) {
-      this.ctx.logger.warn('VeSync create: initial login failed — device kept', {
-        meta: { stableId, error: errMsg(err) },
-      })
-    }
+    return [
+      ...defineAddonMigrations(ADDON_MIGRATIONS, hubPorts),
+      ...defineAddonMigrations([VESYNC_ROWS_TO_RECORD_MIGRATION], rowsPorts),
+    ]
+  }
 
+  private buildMigrationPorts(
+    saved: readonly SavedDevice[],
+    restoreRows: (rows: readonly SavedDevice[]) => Promise<void>,
+  ): VeSyncMigrationPorts {
+    const devices = this.ctx.kernel.devices
+    const records = this.requireRecords()
+    const handle = records.kind(vesyncConnectionsEntryKind)
     return {
-      meta: { type: DeviceType.Hub, name },
-      config: { connection, system: 'vesync-account' },
-      onAfterCreate: async (device: IDevice) => {
-        if (device instanceof VeSyncAccountDevice) {
-          device.adoptManager(manager)
-        }
+      addonId: this.ctx.id,
+      logger: this.ctx.logger,
+      listSavedDevices: async () => saved,
+      restoreRows,
+      listIntegrations: async () =>
+        (await this.ctx.api.integrations.list.query()).map((i) => ({
+          id: i.id,
+          addonId: i.addonId,
+          name: i.name,
+          info: i.info,
+          ...(i.originStableId !== undefined ? { originStableId: i.originStableId } : {}),
+        })),
+      createIntegration: async (input) => {
+        const created = await this.ctx.api.integrations.create.mutate({
+          addonId: input.addonId,
+          name: input.name,
+          info: { ...input.info },
+          originStableId: input.originStableId,
+          settings: { ...input.settings },
+          secretKeys: [...input.secretKeys],
+        })
+        return { id: created.id }
+      },
+      setIntegrationId: async (deviceId, integrationId) => {
+        await this.ctx.api.deviceManager.setIntegrationId.mutate({ deviceId, integrationId })
+      },
+      persistConfig: async (stableId, config) => {
+        if (!devices) throw new Error('vesync hub migration: kernel.devices unavailable')
+        await devices.persistInitialConfig(stableId, config)
+      },
+      childIdsOf: async (parentDeviceId) =>
+        (await this.ctx.api.deviceManager.getChildren.query({ parentDeviceId })).map((c) => c.id),
+      createGateway: async ({ integrationId, name }) => this.adoptGateway(integrationId, name),
+      removeDevice: async (deviceId) => {
+        await this.ctx.api.deviceManager.remove.mutate({ deviceId })
+      },
+      putAccountRecord: async (integrationId, body) => {
+        const existing = await handle.get(integrationId)
+        if (existing !== null) return 'exists'
+        const data = vesyncConnectionsEntryKind.schema.parse(body)
+        await handle.put({ id: integrationId, data }, { ifRev: 0 })
+        return 'created'
+      },
+      readAccountRecord: async (integrationId) => {
+        const row = await handle.getResolved(integrationId)
+        return row === null ? null : accountBodyRecord(row.data)
       },
     }
   }
 
-  /**
-   * Account stableId — derived from the account email (Reolink-style identity
-   * key). Re-adding the same account reuses its persisted row.
-   */
-  protected override generateStableId(_type: DeviceType, config?: Record<string, unknown>): string {
-    const connection = readConnection(config)
-    const email = connection?.email.trim() ?? ''
-    if (email.length > 0) return `vesync:${slugifyEmail(email)}`
-    throw new Error('VeSync: account resolved no email — cannot persist a stable row key.')
+  private async reconcileIntegrations(): Promise<void> {
+    try {
+      const all = await this.ctx.api.integrations.list.query()
+      const mine = all.filter((i) => i.addonId === this.ctx.id && i.enabled)
+      const surviving = new Set<string>()
+      for (const integration of mine) {
+        this.names.set(integration.id, integration.name)
+        try {
+          const read = await vesyncConnectionOf(this.requireInstances(), integration.id)
+          if (read === null) {
+            this.ctx.logger.warn('VeSync integration has no account record — skipping', {
+              meta: { integrationId: integration.id },
+            })
+            continue
+          }
+          if (read.passwordLocked || read.connection === null) {
+            if (vesyncAccounts.getManager(integration.id) !== null) surviving.add(integration.id)
+            else {
+              this.ctx.logger.warn(
+                'VeSync integration password is stored but unreadable — not connecting',
+                { meta: { integrationId: integration.id } },
+              )
+            }
+            continue
+          }
+          await this.ensureManager(integration.id, integration.name, read.connection)
+          surviving.add(integration.id)
+        } catch (err) {
+          this.ctx.logger.warn('VeSync reconcile: failed to read the account record', {
+            meta: { integrationId: integration.id, error: errMsg(err) },
+          })
+          if (vesyncAccounts.getManager(integration.id) !== null) surviving.add(integration.id)
+        }
+      }
+      for (const id of vesyncAccounts.ids()) {
+        if (surviving.has(id)) continue
+        const mgr = vesyncAccounts.getManager(id)
+        vesyncAccounts.set(id, null)
+        this.names.delete(id)
+        if (mgr === null) continue
+        try {
+          await mgr.stop()
+        } catch (err) {
+          this.ctx.logger.warn('VeSync reconcile: stopping a dropped integration failed', {
+            meta: { integrationId: id, error: errMsg(err) },
+          })
+        }
+      }
+    } catch (err) {
+      this.ctx.logger.warn('VeSync integration reconcile failed', { meta: { error: errMsg(err) } })
+    }
+  }
+
+  private async ensureManager(
+    id: string,
+    name: string,
+    connection: VeSyncConnectionConfig,
+  ): Promise<void> {
+    const existing = vesyncAccounts.getManager(id)
+    if (existing !== null) {
+      if (sameAccount(existing.getConnection(), connection)) return
+      await existing.applyConnection(connection)
+      return
+    }
+    const mgr = new VeSyncIntegrationManager({
+      id,
+      name,
+      connection,
+      logger: this.ctx.logger,
+      onConnected: (accountId) => this.markIntegrationOnline(accountId, true),
+      onDisconnected: (accountId) => this.markIntegrationOnline(accountId, false),
+      onPolled: (accountId) => vesyncAccounts.emitSnapshot(accountId),
+    })
+    vesyncAccounts.set(id, mgr)
+    try {
+      await mgr.start()
+    } catch (err) {
+      this.ctx.logger.warn('VeSync integration login failed — kept for retry', {
+        meta: { integrationId: id, error: errMsg(err) },
+      })
+    }
+  }
+
+  private subscribeIntegrationLifecycle(): void {
+    const on =
+      (kind: 'enabled' | 'disabled' | 'deleted') =>
+      (event: SystemEvent): void => {
+        const addonId = event.data['addonId']
+        if (typeof addonId === 'string' && addonId !== this.ctx.id) return
+        if (kind === 'enabled') {
+          void this.reconcileIntegrations()
+          return
+        }
+        const integrationId = event.data['integrationId']
+        if (typeof integrationId !== 'string') return
+        void this.dropIntegration(integrationId)
+      }
+    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationEnabled }, on('enabled'))
+    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDisabled }, on('disabled'))
+    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, on('deleted'))
+  }
+
+  private async dropIntegration(integrationId: string): Promise<void> {
+    const mgr = vesyncAccounts.getManager(integrationId)
+    vesyncAccounts.set(integrationId, null)
+    this.names.delete(integrationId)
+    if (mgr !== null) {
+      try {
+        await mgr.stop()
+      } catch (err) {
+        this.ctx.logger.warn('VeSync: stopping a removed integration failed', {
+          meta: { integrationId, error: errMsg(err) },
+        })
+      }
+    }
+    await this.cascade(integrationId)
+  }
+
+  private async cascade(integrationId: string): Promise<void> {
+    const reg = this.ctx.kernel.deviceRegistry
+    const devices = this.ctx.kernel.devices
+    if (!reg || !devices) return
+    await cascadeRemoveDevicesForIntegration({
+      reg,
+      devices,
+      addonId: this.addonId,
+      integrationId,
+      logger: this.ctx.logger,
+    })
+  }
+
+  private markIntegrationOnline(integrationId: string, online: boolean): void {
+    const reg = this.ctx.kernel.deviceRegistry
+    if (!reg) return
+    const n = setIntegrationDevicesOnline(reg.getAllForAddon(this.addonId), integrationId, online)
+    if (n > 0) {
+      this.ctx.logger.info('VeSync integration devices ' + (online ? 'online' : 'offline'), {
+        meta: { integrationId, count: n },
+      })
+    }
+  }
+
+  private buildAdoptionProvider() {
+    return buildVeSyncAdoptionProvider({
+      getPurifiers: (integrationId) => vesyncAccounts.getPurifiers(integrationId),
+      hasIntegration: (integrationId) => vesyncAccounts.getManager(integrationId) !== null,
+      integrationOnline: (integrationId) =>
+        vesyncAccounts.getManager(integrationId)?.status === 'connected',
+      listIntegrations: () => vesyncAccounts.ids(),
+      integrationName: (integrationId) => this.names.get(integrationId) ?? null,
+      listAdopted: async () => {
+        const reg = this.ctx.kernel.deviceRegistry
+        const devices = this.ctx.kernel.devices
+        if (!reg || !devices) return []
+        const out: { id: number; config: Record<string, unknown> }[] = []
+        for (const d of reg.getAllForAddon(this.addonId)) {
+          if (d.parentDeviceId !== null) continue
+          const config = await devices.loadConfig(d.id).catch((): Record<string, unknown> => ({}))
+          out.push({ id: d.id, config })
+        }
+        return out
+      },
+      adoptPurifier: async ({ integrationId, cid, name, model }) => {
+        const devices = this.ctx.kernel.devices
+        if (!devices) throw new Error('vesync adopt: kernel.devices unavailable')
+        const config: Record<string, unknown> = {
+          purifierNativeId: cid,
+          integrationId,
+          system: VESYNC_SYSTEM,
+          ...(model !== undefined ? { model } : {}),
+        }
+        const stableId = this.generateStableId(DeviceType.Fan, config)
+        const existing = (await devices.getAll()).find((d) => d.stableId === stableId)
+        if (existing !== undefined) return { deviceId: existing.id }
+        const device = await devices.create(stableId, VeSyncPurifierDevice, config, null, {
+          type: DeviceType.Fan,
+          name,
+          integrationId,
+        })
+        this.ctx.logger.info('VeSync: adopted purifier', {
+          tags: { deviceId: device.id },
+          meta: { cid, stableId, integrationId },
+        })
+        return { deviceId: device.id }
+      },
+      adoptGateway: ({ integrationId, name }) => this.adoptGateway(integrationId, name),
+      removeDevice: async (id) => {
+        await this.ctx.kernel.devices?.remove(id)
+      },
+      findDeviceConfig: async (id) => {
+        const devices = this.ctx.kernel.devices
+        if (!devices) return null
+        return devices.loadConfig(id).catch((): null => null)
+      },
+      logger: this.ctx.logger,
+    })
+  }
+
+  private async adoptGateway(
+    integrationId: string,
+    name: string,
+  ): Promise<{ readonly deviceId: number }> {
+    const devices = this.ctx.kernel.devices
+    if (!devices) throw new Error('vesync adopt: kernel.devices unavailable')
+    const config = {
+      kind: 'account' as const,
+      integrationId,
+      system: VESYNC_SYSTEM,
+    }
+    const stableId = this.generateStableId(DeviceType.Gateway, config)
+    const existing = (await devices.getAll()).find((d) => d.stableId === stableId)
+    if (existing !== undefined) return { deviceId: existing.id }
+    const device = await devices.create(stableId, VeSyncGatewayDevice, config, null, {
+      type: DeviceType.Gateway,
+      name,
+      integrationId,
+    })
+    this.ctx.logger.info('VeSync: adopted account gateway', {
+      tags: { deviceId: device.id },
+      meta: { stableId, integrationId },
+    })
+    return { deviceId: device.id }
   }
 }
 
-/** Narrow the create-spec / stable-id config's `connection` to a validated config. */
-function extractConnection(config: Record<string, unknown>): VeSyncConnectionConfig {
-  return settingsToConnection(config['connection'] ?? config)
+function stringField(config: Record<string, unknown> | undefined, key: string): string {
+  const value = config?.[key]
+  return typeof value === 'string' ? value.trim() : ''
 }
 
-/** Best-effort connection read for `generateStableId` (no throw on partial input). */
-function readConnection(
-  config: Record<string, unknown> | undefined,
-): VeSyncConnectionConfig | null {
-  if (config === undefined) return null
-  const raw = config['connection'] ?? config
-  const parsed = vesyncConnectionSchema.safeParse(
-    typeof raw === 'object' && raw !== null ? raw : {},
+function sameAccount(a: VeSyncConnectionConfig, b: VeSyncConnectionConfig): boolean {
+  return (
+    a.email === b.email &&
+    a.password === b.password &&
+    a.region === b.region &&
+    a.pollIntervalMs === b.pollIntervalMs
   )
-  return parsed.success ? parsed.data : null
+}
+
+function accountBodyRecord(data: VeSyncConnectionBody): Record<string, unknown> {
+  const out: Record<string, unknown> = { name: data.name }
+  if (data.email !== undefined) out['email'] = data.email
+  if (data.password !== undefined) out['password'] = data.password
+  if (data.region !== undefined) out['region'] = data.region
+  if (data.pollIntervalMs !== undefined) out['pollIntervalMs'] = data.pollIntervalMs
+  return out
 }

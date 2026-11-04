@@ -70,7 +70,7 @@ export class VeSyncIntegrationManager {
     this.#makeClient = options.makeClient ?? defaultVeSyncClientFactory
   }
 
-  /** The account id (= Hub device stableId). */
+  /** The integration id this manager serves. */
   get id(): string {
     return this.#id
   }

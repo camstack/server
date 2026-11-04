@@ -18,10 +18,11 @@ import { tuyaDeviceConfigSchema } from '../../packages/addon-provider-tuya/src/d
 import { buildConnectionFormSchema as unifiConnectionForm } from '../../packages/addon-provider-unifi/src/config.ts'
 import { buildConnectionFormSchema as unraidConnectionForm } from '../../packages/addon-provider-unraid/src/config.ts'
 import { veluxConnectionSchema } from '../../packages/addon-provider-velux/src/config.ts'
-import { vesyncAccountSchema } from '../../packages/addon-provider-vesync/src/config.ts'
+import { buildConnectionFormSchema as vesyncConnectionForm } from '../../packages/addon-provider-vesync/src/config.ts'
+import { vesyncConnectionsEntryKind } from '../../packages/addon-provider-vesync/src/vesync-instances.ts'
 
 const cases: ReadonlyArray<readonly [string, z.ZodType, readonly string[]]> = [
-  ['vesync account', vesyncAccountSchema, ['connection.password']],
+  ['vesync account record', vesyncConnectionsEntryKind.schema, ['password']],
   ['velux integration', veluxConnectionSchema, ['password']],
   ['rademacher integration', rademacherConnectionSchema, ['password']],
   ['tuya device', tuyaDeviceConfigSchema, ['localKey']],
@@ -49,6 +50,7 @@ const integrationForms: ReadonlyArray<readonly [string, () => ConfigUISchema, re
     ['unifi controller', unifiConnectionForm, ['apiKey', 'password']],
     ['unraid hub', unraidConnectionForm, ['apiKey']],
     ['ecowitt integration', ecowittConnectionForm, ['password']],
+    ['vesync account', vesyncConnectionForm, ['password']],
   ]
 
 describe('declared integration-form secrets', () => {

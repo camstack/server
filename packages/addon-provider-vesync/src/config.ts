@@ -1,12 +1,17 @@
 import { z } from 'zod'
 import type { ConfigUISchema } from '@camstack/types'
 
+/** The device-registry `system` tag every VeSync device carries. */
+export const VESYNC_SYSTEM = 'vesync' as const
+
+/** The Gateway device's `kind`: the account's presence, a sibling of its purifiers. */
+export const VESYNC_GATEWAY_KIND = 'account' as const
+
 /**
- * Operator-supplied credentials for ONE VeSync cloud account. The addon runs in
- * `standalone` mode (the Reolink / Ecowitt / Velux pattern): the CONNECTION lives
- * on the account DEVICE config, not a broker registry. VeSync is cloud / account
- * (not local) and exposes no push channel via the wrapper we target, so the
- * account is POLLED — `pollIntervalMs` drives the device-state refresh cadence.
+ * Operator-supplied credentials for ONE VeSync cloud account. They live on the
+ * integration's typed record, not on a device. VeSync is cloud / account and
+ * exposes no push channel via the wrapper we target, so the account is POLLED —
+ * `pollIntervalMs` drives the device-state refresh cadence.
  */
 export const vesyncConnectionSchema = z.object({
   email: z.string().min(1).describe('VeSync account email'),
@@ -23,30 +28,32 @@ export const vesyncConnectionSchema = z.object({
 export type VeSyncConnectionConfig = z.infer<typeof vesyncConnectionSchema>
 
 /**
- * Persisted config for a VeSync account {@link import('@camstack/types').DeviceType.Hub}
- * device. The account owns exactly one live client keyed on its own `stableId`;
- * adopted purifier children reference it via their `accountId` config field.
+ * The account as a {@link import('@camstack/types').DeviceType.Gateway}. The
+ * credentials live on the integration; this device is only the account's presence
+ * in the device list, a sibling of the purifiers (parent null).
  */
-export const vesyncAccountSchema = z.object({
-  connection: vesyncConnectionSchema,
-  /** Provenance marker used to scope offline / cascade helpers. */
-  system: z.literal('vesync-account').optional(),
+export const vesyncGatewaySchema = z.object({
+  kind: z.literal(VESYNC_GATEWAY_KIND),
+  integrationId: z.string().min(1).describe('Owning integration'),
+  system: z.literal(VESYNC_SYSTEM).optional(),
 })
 
-export type VeSyncAccountConfig = z.infer<typeof vesyncAccountSchema>
+export type VeSyncGatewayConfig = z.infer<typeof vesyncGatewaySchema>
 
 /**
- * Persisted config every VeSync purifier child carries. `purifierNativeId`
- * resolves the live snapshot from the account's client; `accountId` selects the
- * parent account (its Hub `stableId`). `model` records the VeSync model string
- * for display / icon. The purifier is a {@link import('@camstack/types').DeviceType.Fan}
- * that registers `switch` + `fan-control` and fans out accessory children.
+ * Persisted config every VeSync purifier carries. `purifierNativeId` resolves the
+ * live snapshot; `integrationId` selects the account. `accountId` is the legacy hub
+ * stableId a migration keeps on the blob and nothing reads. The purifier is a
+ * {@link import('@camstack/types').DeviceType.Fan} that registers `switch` +
+ * `fan-control` and fans out accessory children. It is a sibling of the Gateway.
  */
 export const vesyncPurifierSchema = z.object({
   purifierNativeId: z.string().min(1).describe('VeSync device cid'),
-  accountId: z.string().min(1).describe('Parent account stableId'),
+  integrationId: z.string().min(1).describe('Owning integration'),
+  /** Legacy hub stableId. Kept so a migrated blob still parses; not read. */
+  accountId: z.string().min(1).optional(),
   model: z.string().optional(),
-  system: z.literal('vesync').optional(),
+  system: z.literal(VESYNC_SYSTEM).optional(),
 })
 
 export type VeSyncPurifierConfig = z.infer<typeof vesyncPurifierSchema>
@@ -64,8 +71,10 @@ export type VeSyncToggleKind = z.infer<typeof VeSyncToggleKindSchema>
 export const vesyncToggleSchema = z.object({
   kind: VeSyncToggleKindSchema,
   purifierNativeId: z.string().min(1).describe('VeSync device cid'),
-  accountId: z.string().min(1).describe('Parent account stableId'),
-  system: z.literal('vesync').optional(),
+  integrationId: z.string().min(1).describe('Owning integration'),
+  /** Legacy hub stableId. Kept so a migrated blob still parses; not read. */
+  accountId: z.string().min(1).optional(),
+  system: z.literal(VESYNC_SYSTEM).optional(),
 })
 
 export type VeSyncToggleConfig = z.infer<typeof vesyncToggleSchema>
@@ -82,8 +91,10 @@ export type VeSyncSensorKind = z.infer<typeof VeSyncSensorKindSchema>
 export const vesyncSensorSchema = z.object({
   kind: VeSyncSensorKindSchema,
   purifierNativeId: z.string().min(1).describe('VeSync device cid'),
-  accountId: z.string().min(1).describe('Parent account stableId'),
-  system: z.literal('vesync').optional(),
+  integrationId: z.string().min(1).describe('Owning integration'),
+  /** Legacy hub stableId. Kept so a migrated blob still parses; not read. */
+  accountId: z.string().min(1).optional(),
+  system: z.literal(VESYNC_SYSTEM).optional(),
 })
 
 export type VeSyncSensorConfig = z.infer<typeof vesyncSensorSchema>
@@ -105,6 +116,30 @@ export function settingsToConnection(settings: unknown): VeSyncConnectionConfig 
   return vesyncConnectionSchema.parse(toRecord(settings))
 }
 
+/** The account fields a record body may carry. `name` is the instance name, ignored here. */
+export interface VeSyncAccountFields {
+  readonly email?: string | undefined
+  readonly password?: string | undefined
+  readonly region?: 'US' | 'EU' | undefined
+  readonly pollIntervalMs?: number | undefined
+}
+
+/**
+ * The account a record body holds, or null while email or password is missing.
+ * A locked secret is not a body this function sees: the caller stops first.
+ */
+export function connectionFromBody(body: VeSyncAccountFields): VeSyncConnectionConfig | null {
+  const email = (body.email ?? '').trim()
+  const password = body.password ?? ''
+  if (email.length === 0 || password.length === 0) return null
+  return vesyncConnectionSchema.parse({
+    email,
+    password,
+    ...(body.region !== undefined ? { region: body.region } : {}),
+    ...(body.pollIntervalMs !== undefined ? { pollIntervalMs: body.pollIntervalMs } : {}),
+  })
+}
+
 /**
  * Slugify an account email into a readable, stable row-key fragment. Exported so
  * the account's `stableId` derivation is consistent across create / re-add.
@@ -117,30 +152,12 @@ export function slugifyEmail(value: string): string {
 }
 
 /**
- * Hand-written credential form for the account device-creation UI (standalone
- * mode — Reolink / Velux pattern). The connection lives on the account DEVICE
- * config, not in a broker registry. A `name` field lets the operator name the
- * account at creation time.
+ * Credential form for one integration instance. The instance name is the
+ * registry's; this form is only the account the record stores.
  */
 export function buildConnectionFormSchema(): ConfigUISchema {
   return {
     sections: [
-      {
-        id: 'identity',
-        title: 'Account',
-        titleKey: 'provider-vesync:connection.s_identity.title',
-        columns: 1,
-        fields: [
-          {
-            type: 'text',
-            key: 'name',
-            label: 'Name',
-            labelKey: 'provider-vesync:connection.s_identity.name.label',
-            required: true,
-            placeholder: 'VeSync',
-          },
-        ],
-      },
       {
         id: 'connection',
         title: 'Credentials',

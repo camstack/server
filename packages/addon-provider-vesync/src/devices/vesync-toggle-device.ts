@@ -33,7 +33,7 @@ export class VeSyncToggleDevice extends BaseDevice<typeof vesyncToggleSchema> {
 
   private readonly kind: VeSyncToggleKind
   private readonly purifierNativeId: string
-  private readonly accountId: string
+  private readonly integrationId: string
 
   private snapshotUnsub: (() => void) | null = null
 
@@ -42,10 +42,11 @@ export class VeSyncToggleDevice extends BaseDevice<typeof vesyncToggleSchema> {
     super(ctx, vesyncToggleSchema, { type: ctx.deviceMeta.type })
     this.kind = cfg.kind
     this.purifierNativeId = cfg.purifierNativeId
-    this.accountId = cfg.accountId
-    this.online = vesyncAccounts.getPurifier(this.accountId, this.purifierNativeId)?.online ?? false
+    this.integrationId = cfg.integrationId
+    this.online =
+      vesyncAccounts.getPurifier(this.integrationId, this.purifierNativeId)?.online ?? false
     void this.updateSourceInfo({
-      id: `${this.accountId}:${this.purifierNativeId}:${this.kind}`,
+      id: `${this.integrationId}:${this.purifierNativeId}:${this.kind}`,
       system: 'vesync',
     })
   }
@@ -76,16 +77,17 @@ export class VeSyncToggleDevice extends BaseDevice<typeof vesyncToggleSchema> {
         this.recomputeSlice()
       } catch (err) {
         this.ctx.logger.warn('vesync toggle: snapshot handler error', {
+          tags: { deviceId: this.id },
           meta: { kind: this.kind, error: errMsg(err) },
         })
       }
     }
-    this.snapshotUnsub = vesyncAccounts.onSnapshot(this.accountId, onSnapshot)
+    this.snapshotUnsub = vesyncAccounts.onSnapshot(this.integrationId, onSnapshot)
   }
 
   /** Recompute + write this toggle's `switch` cap slice from the live snapshot. */
   private recomputeSlice(): void {
-    const purifier = vesyncAccounts.getPurifier(this.accountId, this.purifierNativeId)
+    const purifier = vesyncAccounts.getPurifier(this.integrationId, this.purifierNativeId)
     if (purifier === null) return
     if (this.online !== purifier.online) this.markOnline(purifier.online)
     const on = this.readToggle(purifier)
@@ -97,10 +99,10 @@ export class VeSyncToggleDevice extends BaseDevice<typeof vesyncToggleSchema> {
   }
 
   private resolveClient(): VeSyncClient {
-    const client = vesyncAccounts.getManager(this.accountId)?.client ?? null
+    const client = vesyncAccounts.getManager(this.integrationId)?.client ?? null
     if (client === null) {
       throw new Error(
-        `VeSync toggle ${this.kind}: account ${this.accountId} client is not available`,
+        `VeSync toggle ${this.kind}: account ${this.integrationId} client is not available`,
       )
     }
     return client

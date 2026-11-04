@@ -36,7 +36,7 @@ export class VeSyncSensorDevice extends BaseDevice<typeof vesyncSensorSchema> {
 
   private readonly kind: VeSyncSensorKind
   private readonly purifierNativeId: string
-  private readonly accountId: string
+  private readonly integrationId: string
 
   private snapshotUnsub: (() => void) | null = null
 
@@ -45,10 +45,11 @@ export class VeSyncSensorDevice extends BaseDevice<typeof vesyncSensorSchema> {
     super(ctx, vesyncSensorSchema, { type: ctx.deviceMeta.type })
     this.kind = cfg.kind
     this.purifierNativeId = cfg.purifierNativeId
-    this.accountId = cfg.accountId
-    this.online = vesyncAccounts.getPurifier(this.accountId, this.purifierNativeId)?.online ?? false
+    this.integrationId = cfg.integrationId
+    this.online =
+      vesyncAccounts.getPurifier(this.integrationId, this.purifierNativeId)?.online ?? false
     void this.updateSourceInfo({
-      id: `${this.accountId}:${this.purifierNativeId}:${this.kind}`,
+      id: `${this.integrationId}:${this.purifierNativeId}:${this.kind}`,
       system: 'vesync',
       ...(this.kind === 'filter-life' ? { quantity: 'percentage' as const } : {}),
     })
@@ -79,16 +80,17 @@ export class VeSyncSensorDevice extends BaseDevice<typeof vesyncSensorSchema> {
         this.recomputeSlice()
       } catch (err) {
         this.ctx.logger.warn('vesync sensor: snapshot handler error', {
+          tags: { deviceId: this.id },
           meta: { kind: this.kind, error: errMsg(err) },
         })
       }
     }
-    this.snapshotUnsub = vesyncAccounts.onSnapshot(this.accountId, onSnapshot)
+    this.snapshotUnsub = vesyncAccounts.onSnapshot(this.integrationId, onSnapshot)
   }
 
   /** Recompute + write this sensor's cap slice from the live snapshot. */
   private recomputeSlice(): void {
-    const purifier = vesyncAccounts.getPurifier(this.accountId, this.purifierNativeId)
+    const purifier = vesyncAccounts.getPurifier(this.integrationId, this.purifierNativeId)
     if (purifier === null) return
     if (this.online !== purifier.online) this.markOnline(purifier.online)
     const now = Date.now()

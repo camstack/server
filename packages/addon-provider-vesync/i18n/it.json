@@ -1,6 +1,4 @@
 {
-  "connection.s_identity.title": "Account",
-  "connection.s_identity.name.label": "Nome",
   "connection.s_connection.title": "Credenziali",
   "connection.s_connection.description": "Usa la stessa email e password dell'app mobile VeSync.",
   "connection.s_connection.email.label": "Email",

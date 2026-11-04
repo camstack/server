@@ -1,6 +1,4 @@
 {
-  "connection.s_identity.title": "Account",
-  "connection.s_identity.name.label": "Name",
   "connection.s_connection.title": "Credentials",
   "connection.s_connection.description": "Use the same email and password as the VeSync mobile app.",
   "connection.s_connection.email.label": "Email",

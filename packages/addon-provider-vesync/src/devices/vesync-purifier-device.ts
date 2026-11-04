@@ -43,8 +43,8 @@ interface AccessoryPlan {
 }
 
 /**
- * One VeSync air purifier as a CamStack {@link DeviceType.Fan} device. A CHILD of
- * the account Hub device (standalone mode). Registers TWO caps on itself:
+ * One VeSync air purifier as a CamStack {@link DeviceType.Fan} device. A sibling of
+ * the account Gateway. Registers TWO caps on itself:
  *   - `switch`       — the main power on/off (per the `fan-control` cap doc, the
  *                      on/off state lives on `switch`, mirroring the Light pattern).
  *   - `fan-control`  — speed percentage + preset mode.
@@ -69,7 +69,7 @@ export class VeSyncPurifierDevice extends BaseDevice<typeof vesyncPurifierSchema
   readonly features: readonly DeviceFeature[] = [DeviceFeature.FanSpeed, DeviceFeature.FanPreset]
 
   private readonly purifierNativeId: string
-  private readonly accountId: string
+  private readonly integrationId: string
 
   private snapshotUnsub: (() => void) | null = null
 
@@ -77,14 +77,15 @@ export class VeSyncPurifierDevice extends BaseDevice<typeof vesyncPurifierSchema
     const cfg = vesyncPurifierSchema.parse(ctx.persistedConfig ?? {})
     super(ctx, vesyncPurifierSchema, { type: DeviceType.Fan })
     this.purifierNativeId = cfg.purifierNativeId
-    this.accountId = cfg.accountId
-    this.online = vesyncAccounts.getPurifier(this.accountId, this.purifierNativeId)?.online ?? false
+    this.integrationId = cfg.integrationId
+    this.online =
+      vesyncAccounts.getPurifier(this.integrationId, this.purifierNativeId)?.online ?? false
     this.registerSwitchCap()
     this.registerFanCap()
     this.runtimeState.setCapState(SWITCH_CAP, SWITCH_COLD_START)
     this.runtimeState.setCapState(FAN_CAP, FAN_COLD_START)
     void this.updateSourceInfo({
-      id: `${this.accountId}:${this.purifierNativeId}`,
+      id: `${this.integrationId}:${this.purifierNativeId}`,
       system: 'vesync',
     })
   }
@@ -128,7 +129,7 @@ export class VeSyncPurifierDevice extends BaseDevice<typeof vesyncPurifierSchema
   private accessoryPlans(): readonly AccessoryPlan[] {
     const base = {
       purifierNativeId: this.purifierNativeId,
-      accountId: this.accountId,
+      integrationId: this.integrationId,
       system: 'vesync',
     }
     const toggle = (kind: VeSyncToggleKind): Record<string, unknown> => ({ ...base, kind })
@@ -175,16 +176,17 @@ export class VeSyncPurifierDevice extends BaseDevice<typeof vesyncPurifierSchema
         this.recomputeSlices()
       } catch (err) {
         this.ctx.logger.warn('vesync purifier: snapshot handler error', {
+          tags: { deviceId: this.id },
           meta: { purifierNativeId: this.purifierNativeId, error: errMsg(err) },
         })
       }
     }
-    this.snapshotUnsub = vesyncAccounts.onSnapshot(this.accountId, onSnapshot)
+    this.snapshotUnsub = vesyncAccounts.onSnapshot(this.integrationId, onSnapshot)
   }
 
   /** Recompute + write the `switch` + `fan-control` slices from the live snapshot. */
   private recomputeSlices(): void {
-    const purifier = vesyncAccounts.getPurifier(this.accountId, this.purifierNativeId)
+    const purifier = vesyncAccounts.getPurifier(this.integrationId, this.purifierNativeId)
     if (purifier === null) return
     if (this.online !== purifier.online) this.markOnline(purifier.online)
     const now = Date.now()
@@ -193,10 +195,10 @@ export class VeSyncPurifierDevice extends BaseDevice<typeof vesyncPurifierSchema
   }
 
   private resolveClient(): VeSyncClient {
-    const client = vesyncAccounts.getManager(this.accountId)?.client ?? null
+    const client = vesyncAccounts.getManager(this.integrationId)?.client ?? null
     if (client === null) {
       throw new Error(
-        `VeSync purifier ${this.purifierNativeId}: account ${this.accountId} client is not available`,
+        `VeSync purifier ${this.purifierNativeId}: integration ${this.integrationId} client is not available`,
       )
     }
     return client
@@ -223,7 +225,7 @@ export class VeSyncPurifierDevice extends BaseDevice<typeof vesyncPurifierSchema
           await client.setPower(this.purifierNativeId, false)
           return
         }
-        const purifier = vesyncAccounts.getPurifier(this.accountId, this.purifierNativeId)
+        const purifier = vesyncAccounts.getPurifier(this.integrationId, this.purifierNativeId)
         if (purifier !== null && !purifier.power) {
           await client.setPower(this.purifierNativeId, true)
         }

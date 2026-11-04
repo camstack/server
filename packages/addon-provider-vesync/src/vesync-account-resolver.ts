@@ -4,9 +4,8 @@ import type { VeSyncIntegrationManager } from './vesync-integration-manager.js'
 /**
  * Per-account registry that device classes use to reach the live
  * {@link VeSyncIntegrationManager} (and its purifier snapshots) for a given
- * account. Keyed on the account {@link import('@camstack/types').DeviceType.Hub}
- * device's `stableId` (standalone mode — the credentials live on the account
- * device, not a broker). Mirrors the Velux `VeluxNodeResolver`.
+ * account. Keyed on the integration id (the credentials live on the integration
+ * record, not a device). Mirrors the Velux `VeluxNodeResolver`.
  *
  * The account device recreates the manager on reconnect / settings change and
  * re-publishes it here; purifier children (and their accessory grandchildren)
@@ -32,9 +31,14 @@ export class VeSyncAccountResolver {
     this.#managers.set(accountId, manager)
   }
 
-  /** The live manager for an account id, or null when unknown / stopped. */
+  /** The live manager for an integration id, or null when unknown / stopped. */
   getManager(accountId: string): VeSyncIntegrationManager | null {
     return this.#managers.get(accountId) ?? null
+  }
+
+  /** Integration ids that currently have a manager. */
+  ids(): readonly string[] {
+    return [...this.#managers.keys()]
   }
 
   /** All purifier snapshots for an account id, or [] when unknown. */

@@ -1,6 +1,4 @@
 {
   "_comment": "Device-bringing addons that still keep their configuration as integration_settings rows (planning#416). The list only shrinks: an addon that declares integration-instances leaves it in the same change.",
-  "onRows": [
-    "provider-vesync"
-  ]
+  "onRows": []
 }

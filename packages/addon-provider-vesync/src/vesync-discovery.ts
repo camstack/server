@@ -6,10 +6,18 @@ import {
 } from '@camstack/types'
 import type { VeSyncPurifierSnapshot } from './vesync-client-contract.js'
 
+/** The `childNativeId` of the account Gateway, one per integration. A sibling of the purifiers. */
+export const VESYNC_GATEWAY_NATIVE_ID = 'account'
+
+/** Stable id of the Gateway device for an integration. */
+export function gatewayStableId(integrationId: string): string {
+  return `vesync:${integrationId}:${VESYNC_GATEWAY_NATIVE_ID}`
+}
+
 /**
  * The `childNativeId` a discovered VeSync purifier candidate is keyed on. The
  * VeSync device `cid` is stable across reboots; it is namespaced under the
- * account stableId so two accounts never collide.
+ * integration id so two accounts never collide.
  */
 export function purifierNativeId(accountId: string, cid: string): string {
   return `${accountId}:purifier:${cid}`
@@ -66,4 +74,43 @@ export function buildPurifierCandidates(
       capabilities: [switchCapability.name, fanControlCapability.name],
     } satisfies DiscoveredChildDevice
   })
+}
+
+/** Inputs for {@link buildVeSyncCandidates}. */
+export interface BuildVeSyncCandidatesInput {
+  readonly integrationId: string
+  readonly accountName: string
+  /** Whether the integration's client is connected. */
+  readonly online: boolean
+  readonly purifiers: readonly VeSyncPurifierSnapshot[]
+  /** The adopted Gateway device id, or null. */
+  readonly adoptedGatewayId: number | null
+  /** Adopted CamStack device id per purifier `cid`, or null when not adopted. */
+  readonly adoptedDeviceIdByCid: Readonly<Record<string, number | null>>
+}
+
+/**
+ * The account Gateway, then one Fan candidate per purifier. The Gateway is a sibling
+ * of the purifiers: nothing in this list is a child of it. Pure.
+ */
+export function buildVeSyncCandidates(
+  input: BuildVeSyncCandidatesInput,
+): readonly DiscoveredChildDevice[] {
+  const gateway: DiscoveredChildDevice = {
+    childNativeId: VESYNC_GATEWAY_NATIVE_ID,
+    name: input.accountName,
+    type: DeviceType.Gateway,
+    status: input.online ? 'online' : 'offline',
+    metadata: { manufacturer: 'VeSync', integration: 'vesync' },
+    alreadyAdopted: input.adoptedGatewayId !== null,
+    adoptedDeviceId: input.adoptedGatewayId,
+    capabilities: [],
+  }
+  const purifiers = buildPurifierCandidates({
+    accountId: input.integrationId,
+    accountName: input.accountName,
+    purifiers: input.purifiers,
+    adoptedDeviceIdByCid: input.adoptedDeviceIdByCid,
+  })
+  return [gateway, ...purifiers]
 }

@@ -9,7 +9,7 @@ Package `@camstack/addon-provider-vesync` on npm.
 ## What it provides
 
 - **VeSync** (`provider-vesync`): Sign in to a VeSync cloud account and adopt its air purifiers as Fan devices (speed, preset, child-lock, display + air-quality / filter-life sensors). Category: providers.
-  - Capabilities: `device-provider`.
+  - Capabilities: `device-provider`, `integration-instances`, `device-adoption`.
 
 ## Configuration
 
@@ -17,7 +17,6 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 
 **Connection**
 
-- Account: Name
 - Credentials: Email, Password, Region, Poll interval (ms)
 
 ## Requirements

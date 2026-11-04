@@ -44,20 +44,27 @@
         "entry": "./dist/addon.js",
         "icon": "assets/icon.svg",
         "color": "#4a8cff",
+        "integrationRole": "devices",
         "instanceMode": "multiple",
-        "mode": "standalone",
+        "mode": "account",
         "execution": {
           "placement": "hub-only"
         },
         "capabilities": [
           {
             "name": "device-provider"
+          },
+          {
+            "name": "integration-instances"
+          },
+          {
+            "name": "device-adoption"
           }
         ]
       }
     ],
     "requires": {
-      "server": ">=1.2.719"
+      "server": ">=1.2.765"
     }
   },
   "files": [
