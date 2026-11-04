@@ -10,6 +10,10 @@ import {
   type ConfigUISchema,
   type IntegrationInstanceRef,
   defineAddonMigrations,
+  flattenPortsOver,
+  type RecordsAccess,
+  integrationInstancesCapability,
+  RecordIntegrationInstances,
   type CreateDeviceSpec,
   type DeviceSummary,
   DeviceType,
@@ -33,7 +37,7 @@ import { HaContainerDevice } from './devices/ha-container-device.js'
 import { HaEventBusDevice } from './devices/ha-event-bus-device.js'
 import { cascadeRemoveDevicesForBroker } from './ha-broker-device-cascade.js'
 import { markBrokerDevicesOffline } from './ha-broker-offline.js'
-import { authToSettings, type HaBrokerEntry, HaBrokerRegistry } from './ha-broker-registry.js'
+import { entryToSettings, type HaBrokerEntry, HaBrokerRegistry } from './ha-broker-registry.js'
 import { haBrokerSettingsSchema } from './ha-broker-settings-schema.js'
 import { haDeviceToCandidate } from './ha-candidate-mapper.js'
 import type { HaContainerEntityConfig } from './ha-container-reconcile.js'
@@ -68,10 +72,16 @@ import {
   type NotifyServiceData,
 } from './ha-notification-output.js'
 import { HaBrokerStore } from './ha-broker-store.js'
+import { haBrokersEntryKind, type HaBrokerBody } from './broker-record-kinds.js'
+import { buildHaInstances } from './ha-instances.js'
 import { haAllRecordKinds } from './record-kinds.js'
 import { createHaBoardKeyProvider, HaBoardKeySource } from './ha-board-key-source.js'
 import { haInstanceSettingsPortsOver } from './ha-instance-settings.js'
-import { ADDON_MIGRATIONS } from './migrations/index.js'
+import {
+  ADDON_MIGRATIONS,
+  FLATTEN_BROKER_RECORDS_ID,
+  type HaMigrationPorts,
+} from './migrations/index.js'
 import { createHaCalendarSource, listHaCalendarCatalog } from './ha-calendar-source.js'
 import { reconcileBroker } from './ha-reconcile-broker.js'
 import { computeBrokerCleanup, linkBrokersToIntegrations } from './ha-reconciler.js'
@@ -100,7 +110,6 @@ type AdoptedEntry = AdoptResult['adopted'][number]
 const HA_KIND = 'home-assistant'
 
 interface HaProviderConfig {
-  readonly brokers: readonly HaBrokerEntry[]
   /**
    * HA `calendar.*` entity ids to expose via calendar-source. Empty = all
    * (legacy). Edited under Connectivity → Calendars → Home Assistant.
@@ -108,7 +117,7 @@ interface HaProviderConfig {
   readonly calendarIds: readonly string[]
 }
 
-const DEFAULT_CONFIG: HaProviderConfig = { brokers: [], calendarIds: [] }
+const DEFAULT_CONFIG: HaProviderConfig = { calendarIds: [] }
 
 /**
  * Home Assistant provider addon.
@@ -173,6 +182,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
   // ── HA-specific state ─────────────────────────────────────────────────
   private registry: HaBrokerRegistry | null = null
   private brokerStore: HaBrokerStore | null = null
+  private instances: RecordIntegrationInstances<HaBrokerBody> | null = null
   /** Runtime broker rows (records when B2 is live, else settings). */
   private activeBrokers: readonly HaBrokerEntry[] = []
   /** Periodic re-sync sweep handle (cleared on shutdown). */
@@ -190,6 +200,16 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
     super({ ...DEFAULT_CONFIG })
   }
 
+  private flattenPorts(records: RecordsAccess): HaMigrationPorts {
+    const secrets = this.ctx.secrets
+    if (secrets === undefined) throw new Error('provider-homeassistant: ctx.secrets is required')
+    return {
+      readStored: (key) => this.readStoredGlobalKey(key),
+      ...haInstanceSettingsPortsOver(this.ctx.api.integrations),
+      ...flattenPortsOver(records.kind(haBrokersEntryKind), secrets),
+    }
+  }
+
   protected async onInitialize(): Promise<ProviderRegistration[]> {
     const records = this.ctx.records
     if (records === undefined) {
@@ -197,6 +217,19 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
     }
     await records.declare(haAllRecordKinds)
     this.brokerStore = HaBrokerStore.of(records)
+    this.instances = buildHaInstances(records, {
+      mintId: () => this.requireRegistry().allocateId(),
+      infoOf: (id) => this.registry?.get(id) ?? null,
+      onChanged: (id) => this.syncBrokerRuntime(id),
+      probe: (settings) => this.requireRegistry().testSettings(settings),
+    })
+    // The stored broker records move to the flat shape BEFORE anything reads them.
+    await this.runMigrations(
+      defineAddonMigrations(
+        ADDON_MIGRATIONS.filter((m) => m.meta.id === FLATTEN_BROKER_RECORDS_ID),
+        this.flattenPorts(records),
+      ),
+    )
     this.activeBrokers = await this.loadPersistedBrokers()
 
     this.registry = new HaBrokerRegistry(this.ctx.logger, this.ctx.eventBus)
@@ -239,16 +272,20 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
     // The calendars each instance imports move from the addon's shared set onto its integration
     // (D985): before the first reconcile reads them.
     await this.runMigrations(
-      defineAddonMigrations(ADDON_MIGRATIONS, {
-        readStored: (key) => this.readStoredGlobalKey(key),
-        ...haInstanceSettingsPortsOver(this.ctx.api.integrations),
-      }),
+      defineAddonMigrations(
+        ADDON_MIGRATIONS.filter((m) => m.meta.id !== FLATTEN_BROKER_RECORDS_ID),
+        this.flattenPorts(records),
+      ),
     )
     await this.reconcileIntegrationsToBrokers()
     this.subscribeIntegrationLifecycle()
 
     return [
       { capability: brokerCapability, provider: this.buildBrokerProvider() },
+      {
+        capability: integrationInstancesCapability,
+        provider: this.requireInstances().toProvider(),
+      },
       { capability: deviceAdoptionCapability, provider: this.buildAdoptionProvider() },
       {
         capability: notificationOutputCapability,
@@ -664,11 +701,8 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
         try {
           // Project the entry's auth back to the settings shape the
           // registry expects (kind-discriminated payload).
-          const settings =
-            entry.auth.kind === 'supervisor'
-              ? { supervisorToken: entry.auth.supervisorToken }
-              : { baseUrl: entry.auth.baseUrl, accessToken: entry.auth.accessToken }
-          await reg.updateEntry(entry.id, settings)
+          const settings = entryToSettings(entry)
+          if (settings !== null) await reg.updateEntry(entry.id, settings)
         } catch (err) {
           this.ctx.logger.warn('ha onConfigChanged: updateEntry failed', {
             meta: { brokerId: entry.id, error: errMsg(err) },
@@ -681,10 +715,8 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
       // operator-supplied (or framework-assigned) id from the
       // persistence row. Build the registry entry directly.
       try {
-        const settings =
-          entry.auth.kind === 'supervisor'
-            ? { supervisorToken: entry.auth.supervisorToken }
-            : { baseUrl: entry.auth.baseUrl, accessToken: entry.auth.accessToken }
+        const settings = entryToSettings(entry)
+        if (settings === null) continue
         // createEntry generates a new id — call the lower-level
         // ensureEntry path. To keep the public surface small, we
         // delegate by reusing createEntry then patching the id back
@@ -707,22 +739,66 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
   }
 
   private async loadPersistedBrokers(): Promise<readonly HaBrokerEntry[]> {
-    const store = this.brokerStore
-    if (store !== null) {
-      const fromRecords = await store.listResolved()
-      if (fromRecords.length > 0) return fromRecords
+    return this.requireBrokerStore().listResolved()
+  }
+
+  private requireInstances(): RecordIntegrationInstances<HaBrokerBody> {
+    if (this.instances === null) throw new Error('provider-homeassistant: instances not ready')
+    return this.instances
+  }
+
+  /**
+   * After an instance changed (created, edited, switched, deleted) the runtime follows the record:
+   * a missing record removes the manager and its adopted devices, an off or unfilled one stops the
+   * manager but keeps the devices, a filled one starts or re-authenticates it.
+   */
+  private async syncBrokerRuntime(id: string): Promise<void> {
+    const reg = this.requireRegistry()
+    const entry = await this.requireBrokerStore().getById(id)
+    this.activeBrokers = await this.loadPersistedBrokers()
+    if (entry === null) {
+      await reg.removeEntry(id)
+      const deviceRegistry = this.ctx.kernel.deviceRegistry
+      const devices = this.ctx.kernel.devices
+      if (deviceRegistry && devices) {
+        await cascadeRemoveDevicesForBroker({
+          reg: deviceRegistry,
+          devices,
+          addonId: this.ctx.id,
+          brokerId: id,
+          logger: this.ctx.logger,
+        })
+      }
+      return
     }
-    return this.config.brokers
+    const settings = entry.enabled === false ? null : entryToSettings(entry)
+    if (settings === null) {
+      await reg.removeEntry(id)
+      return
+    }
+    try {
+      if (reg.get(id) !== null) await reg.updateEntry(id, settings)
+      else {
+        await reg.createEntry(entry.name, settings, {
+          id,
+          ...(entry.integrationId !== undefined ? { integrationId: entry.integrationId } : {}),
+        })
+      }
+    } catch (err) {
+      this.ctx.logger.warn('ha instance: could not start the broker', {
+        meta: { brokerId: id, error: errMsg(err) },
+      })
+    }
+  }
+
+  private requireBrokerStore(): HaBrokerStore {
+    if (this.brokerStore === null) throw new Error('provider-homeassistant: broker store not ready')
+    return this.brokerStore
   }
 
   private async persistBrokerEntries(entries: readonly HaBrokerEntry[]): Promise<void> {
     this.activeBrokers = [...entries]
-    const store = this.brokerStore
-    if (store !== null) {
-      await store.replaceAll(entries)
-      return
-    }
-    await this.updateGlobalSettings({ brokers: entries })
+    await this.requireBrokerStore().replaceAll(entries)
   }
 
   // ── broker cap provider ──────────────────────────────────────────────
@@ -811,7 +887,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
       getSettings: async ({ id }) => {
         const entry = this.activeBrokers.find((b) => b.id === id)
         if (!entry) return null
-        return authToSettings(entry.auth)
+        return entryToSettings(entry)
       },
       setSettings: async ({ id, settings }) => {
         if (!owns(id)) return
@@ -822,7 +898,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
       getBrokerConfig: async ({ id }) => {
         const entry = this.activeBrokers.find((b) => b.id === id)
         if (!entry) return null
-        return authToSettings(entry.auth)
+        return entryToSettings(entry)
       },
       getSettingsSchema: async ({ kind }) => {
         if (kind !== HA_KIND) return null

@@ -56,6 +56,9 @@
             "name": "broker"
           },
           {
+            "name": "integration-instances"
+          },
+          {
             "name": "board-key-source"
           },
           {

@@ -8,7 +8,7 @@ import {
   type SubscribeFilterHa,
 } from './ha-integration-manager.js'
 import { HaWsClient } from './ha-ws-client.js'
-import type { HaAuthConfig } from './ha-types.js'
+import { HaAuthConfigSchema, type HaAuthConfig } from './ha-types.js'
 
 /** Discriminated result of a pre-creation broker handshake probe. The
  *  success branch may carry the connect latency; the failure branch
@@ -30,22 +30,16 @@ const TEST_HANDSHAKE_TIMEOUT_MS = 8_000
 export const HaBrokerEntrySchema = z.object({
   id: z.string(),
   name: z.string(),
-  /** Either Supervisor (token from env) or long-lived (persisted). */
-  auth: z.discriminatedUnion('kind', [
-    z.object({ kind: z.literal('supervisor'), supervisorToken: z.string().meta({ secret: true }) }),
-    z.object({
-      kind: z.literal('long-lived'),
-      baseUrl: z.string(),
-      accessToken: z.string().meta({ secret: true }),
-    }),
-  ]),
-  /** Optional FK to the integration record that spawned this broker.
-   *  Populated when the wizard's "+ New Integration" flow created the
-   *  broker; null when the operator added it via the Settings panel
-   *  directly. Used by the integration listener to keep the broker
-   *  list in sync with the integrations table (cascade-delete on
-   *  integration removal). */
+  /** Supervisor (token from env) or long-lived (persisted); picks which fields below are used. */
+  authKind: z.enum(['long-lived', 'supervisor']),
+  /** Origin URL of the HA instance; long-lived only. */
+  baseUrl: z.string().optional(),
+  accessToken: z.string().optional().meta({ secret: true }),
+  supervisorToken: z.string().optional().meta({ secret: true }),
+  /** Optional FK to the integration record that spawned this broker. */
   integrationId: z.string().optional(),
+  /** The instance's own switch (D996); absent means on. */
+  enabled: z.boolean().optional(),
 })
 export type HaBrokerEntry = z.infer<typeof HaBrokerEntrySchema>
 
@@ -67,6 +61,31 @@ export function settingsToAuth(settings: unknown): HaAuthConfig {
     return { kind: 'supervisor', supervisorToken: parsed.supervisorToken }
   }
   return { kind: 'long-lived', baseUrl: parsed.baseUrl, accessToken: parsed.accessToken }
+}
+
+/** The flat entry fields of an auth config: the one place the two shapes meet. */
+export function authToEntryFields(
+  auth: HaAuthConfig,
+): Pick<HaBrokerEntry, 'authKind' | 'baseUrl' | 'accessToken' | 'supervisorToken'> {
+  return auth.kind === 'supervisor'
+    ? { authKind: 'supervisor', supervisorToken: auth.supervisorToken }
+    : { authKind: 'long-lived', baseUrl: auth.baseUrl, accessToken: auth.accessToken }
+}
+
+/** The auth config an entry stands for; null while the entry is not filled in. */
+export function haAuthOf(entry: HaBrokerEntry): HaAuthConfig | null {
+  const parsed = HaAuthConfigSchema.safeParse(
+    entry.authKind === 'supervisor'
+      ? { kind: 'supervisor', supervisorToken: entry.supervisorToken ?? '' }
+      : { kind: 'long-lived', baseUrl: entry.baseUrl ?? '', accessToken: entry.accessToken ?? '' },
+  )
+  return parsed.success ? parsed.data : null
+}
+
+/** The flat settings payload (`settingsToAuth` shape) of an entry; null while it is not filled in. */
+export function entryToSettings(entry: HaBrokerEntry): Record<string, unknown> | null {
+  const auth = haAuthOf(entry)
+  return auth === null ? null : authToSettings(auth)
 }
 
 export function authToSettings(auth: HaAuthConfig): Record<string, unknown> {
@@ -137,15 +156,17 @@ export class HaBrokerRegistry {
   async restore(entries: readonly HaBrokerEntry[]): Promise<void> {
     this.seedCounterFromEntries(entries)
     await Promise.all(
-      entries.map(async (entry) => {
-        try {
-          await this.startManagerForEntry(entry)
-        } catch (err) {
-          this.logger.warn('ha-broker bootstrap failed', {
-            meta: { brokerId: entry.id, error: errMsg(err) },
-          })
-        }
-      }),
+      entries
+        .filter((entry) => entry.enabled !== false && haAuthOf(entry) !== null)
+        .map(async (entry) => {
+          try {
+            await this.startManagerForEntry(entry)
+          } catch (err) {
+            this.logger.warn('ha-broker bootstrap failed', {
+              meta: { brokerId: entry.id, error: errMsg(err) },
+            })
+          }
+        }),
     )
   }
 
@@ -217,7 +238,7 @@ export class HaBrokerRegistry {
     const entry: HaBrokerEntry = {
       id: options.id !== undefined ? this.adoptId(options.id) : this.allocateId(),
       name,
-      auth,
+      ...authToEntryFields(auth),
       ...(options.integrationId !== undefined ? { integrationId: options.integrationId } : {}),
     }
     await this.startManagerForEntry(entry)
@@ -242,7 +263,7 @@ export class HaBrokerRegistry {
     if (!existing) throw new Error(`ha-broker '${id}' not found`)
     const auth = settingsToAuth(settings)
     await existing.applyAuth(auth)
-    return { id, name: existing.getInfo().name, auth }
+    return { id, name: existing.getInfo().name, ...authToEntryFields(auth) }
   }
 
   /**
@@ -464,10 +485,12 @@ export class HaBrokerRegistry {
       })
       return
     }
+    const auth = haAuthOf(entry)
+    if (auth === null) throw new Error(`ha-broker '${entry.id}' has no complete credentials`)
     const manager = new HaIntegrationManager({
       id: entry.id,
       name: entry.name,
-      auth: entry.auth,
+      auth,
       logger: this.logger,
       eventBus: this.eventBus,
       onConnected: (brokerId) => this.onBrokerConnected?.(brokerId),

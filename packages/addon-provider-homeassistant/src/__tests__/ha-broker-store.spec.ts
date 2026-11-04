@@ -10,16 +10,16 @@ describe('HaBrokerStore', () => {
     const entry = HaBrokerEntrySchema.parse({
       id: 'ha_001',
       name: 'Home',
-      auth: { kind: 'long-lived', baseUrl: 'https://hass.local:8123', accessToken: 'tok' },
+      authKind: 'long-lived',
+      baseUrl: 'https://hass.local:8123',
+      accessToken: 'tok',
     })
     await store.upsert(entry)
     const listed = await store.listResolved()
     expect(listed).toHaveLength(1)
     expect(listed[0]?.id).toBe('ha_001')
-    expect(listed[0]?.auth.kind).toBe('long-lived')
-    if (listed[0]?.auth.kind === 'long-lived') {
-      expect(listed[0].auth.accessToken).toBe('tok')
-    }
+    expect(listed[0]?.authKind).toBe('long-lived')
+    expect(listed[0]?.accessToken).toBe('tok')
   })
 
   it('replaceAll removes brokers absent from the next snapshot', async () => {
@@ -28,12 +28,16 @@ describe('HaBrokerStore', () => {
     const a = HaBrokerEntrySchema.parse({
       id: 'ha_001',
       name: 'A',
-      auth: { kind: 'long-lived', baseUrl: 'https://a', accessToken: 'a' },
+      authKind: 'long-lived',
+      baseUrl: 'https://a',
+      accessToken: 'a',
     })
     const b = HaBrokerEntrySchema.parse({
       id: 'ha_002',
       name: 'B',
-      auth: { kind: 'long-lived', baseUrl: 'https://b', accessToken: 'b' },
+      authKind: 'long-lived',
+      baseUrl: 'https://b',
+      accessToken: 'b',
     })
     await store.replaceAll([a, b])
     await store.replaceAll([b])

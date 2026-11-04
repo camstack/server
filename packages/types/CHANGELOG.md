@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Connection instances can now declare kinds, a sign-in or connect action, a status label, a last-checked time, an old-id restore and a provider-minted id (all optional)
 - device-export: instanceId on reads (optional) and writes (required), listInstances, and the export-instance-unknown refusal
 - The integration instance health hook receives the instance id
+- Added flattenNestedRecords and flattenPortsOver, a D987 helper that moves a kind's nested connection object to flat top-level fields under the same ids, reading every secret back before the nested copy goes; makeInMemoryRecords exposes its spec keychain.
 
 ## [1.2.492] - 2026-11-04
 

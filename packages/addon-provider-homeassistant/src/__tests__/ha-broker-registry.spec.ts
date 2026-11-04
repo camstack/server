@@ -118,11 +118,9 @@ describe('HA broker registry — settings <-> auth coercion', () => {
       const entry = {
         id: 'b1',
         name: 'Casa',
-        auth: {
-          kind: 'long-lived' as const,
-          baseUrl: 'https://ha.example:8123',
-          accessToken: 'll',
-        },
+        authKind: 'long-lived' as const,
+        baseUrl: 'https://ha.example:8123',
+        accessToken: 'll',
       }
       expect(HaBrokerEntrySchema.parse(entry)).toEqual(entry)
     })
@@ -131,7 +129,8 @@ describe('HA broker registry — settings <-> auth coercion', () => {
       const entry = {
         id: 'b1',
         name: 'Local HA',
-        auth: { kind: 'supervisor' as const, supervisorToken: 'sup' },
+        authKind: 'supervisor' as const,
+        supervisorToken: 'sup',
       }
       expect(HaBrokerEntrySchema.parse(entry)).toEqual(entry)
     })
@@ -141,7 +140,7 @@ describe('HA broker registry — settings <-> auth coercion', () => {
         HaBrokerEntrySchema.parse({
           id: 'b1',
           name: 'x',
-          auth: { kind: 'oauth', token: 'x' },
+          authKind: 'oauth',
         }),
       ).toThrow()
     })

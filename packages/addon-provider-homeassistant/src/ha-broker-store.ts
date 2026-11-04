@@ -13,8 +13,12 @@ function rowToEntry(id: string, data: HaBrokerBody): HaBrokerEntry | null {
   const parsed = HaBrokerEntrySchema.safeParse({
     id,
     name: data.name,
-    auth: data.auth,
+    authKind: data.authKind,
+    baseUrl: data.baseUrl,
+    accessToken: data.accessToken,
+    supervisorToken: data.supervisorToken,
     integrationId: data.integrationId,
+    enabled: data.enabled,
   })
   return parsed.success ? parsed.data : null
 }
@@ -59,8 +63,11 @@ export class HaBrokerStore {
   }
 
   async upsert(entry: HaBrokerEntry): Promise<void> {
-    const { id, name, auth, integrationId } = entry
-    const body = { name, auth, ...(integrationId === undefined ? {} : { integrationId }) }
+    const { id, integrationId, ...fields } = entry
+    const body = {
+      ...Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== undefined)),
+      ...(integrationId === undefined ? {} : { integrationId }),
+    }
     const parsed = haBrokersEntryKind.schema.safeParse(body)
     if (!parsed.success) {
       throw new Error(`invalid HA broker '${id}': ${parsed.error.message}`)

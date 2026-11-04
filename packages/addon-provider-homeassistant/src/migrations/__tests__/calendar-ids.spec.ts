@@ -3,12 +3,20 @@
  * setting is dropped after a read-back. Real SQLite for the addon settings, an in-memory
  * integrations api for the instances, through the production port binding.
  */
+import type { FlattenRowPorts } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { fakeIntegrations } from '../../__tests__/fake-integrations.js'
 import { settingsFixture } from '../../__tests__/settings-fixture.js'
 import { haInstanceSettingsPortsOver } from '../../ha-instance-settings.js'
-import { ADDON_MIGRATIONS } from '../index.js'
+import { ADDON_MIGRATIONS, FLATTEN_BROKER_RECORDS_ID } from '../index.js'
 
+const NO_FLATTEN_PORTS: FlattenRowPorts = {
+  listRaw: async () => [],
+  resolve: async () => ({}),
+  patch: async () => undefined,
+  deleteRefs: async () => undefined,
+  readFlatSecrets: async () => ({}),
+}
 const COPY = 'provider-homeassistant/2026-11-03-calendar-ids-to-integration'
 const DROP = 'provider-homeassistant/2026-11-03-drop-shared-calendar-ids'
 const SHARED = ['calendar.work', 'calendar.home']
@@ -23,8 +31,12 @@ function start(
   const world = fakeIntegrations(instances)
   const f = settingsFixture(
     'provider-homeassistant',
-    ADDON_MIGRATIONS,
-    (readStored) => ({ readStored, ...haInstanceSettingsPortsOver(world.api) }),
+    ADDON_MIGRATIONS.filter((m) => m.meta.id !== FLATTEN_BROKER_RECORDS_ID),
+    (readStored) => ({
+      readStored,
+      ...haInstanceSettingsPortsOver(world.api),
+      ...NO_FLATTEN_PORTS,
+    }),
     stored,
     'keep-me',
   )

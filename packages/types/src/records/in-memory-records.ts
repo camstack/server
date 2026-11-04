@@ -13,6 +13,7 @@
  * `records-in-memory-contract.spec.ts` (in `@camstack/server/system`) runs the same
  * cases against this world and the real engine so the two cannot drift.
  */
+import type { SecretsAccess } from '../keychain/secrets-access.js'
 import type { DeclareKindResult, RecordView } from '../capabilities/records.cap.js'
 import { RECORD_BATCH_MAX, RECORD_BATCH_MAX_BYTES, RECORD_DELETE_BATCH } from './constants.js'
 import {
@@ -93,6 +94,8 @@ export interface InMemoryRecordsOptions {
 
 export interface InMemoryRecords {
   readonly records: RecordsAccess
+  /** The keychain the records door writes its secrets to: a spec reads and seeds values here. */
+  readonly secrets: SecretsAccess
   /** kind -> id -> row, as stored. */
   readonly tables: ReadonlyMap<string, ReadonlyMap<string, InMemoryStoredRow>>
   /** Every query the owner sent, in order. */
@@ -714,6 +717,7 @@ export function makeInMemoryRecords(
   })
   return {
     records,
+    secrets: keychain.access,
     tables,
     queries,
     failWrites: (on) => {

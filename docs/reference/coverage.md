@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**234 units · 7942 source files · 221 units claimed by at least one document (7898 files).**
+**234 units · 7945 source files · 221 units claimed by at least one document (7901 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -55,7 +55,7 @@ it never describes how the thing works, and it is never re-verified.
 | `server/backend/src/agent` | 42 | `update-and-release` | `decisions/adr-0857-an-agents-identity-is-its-mesh-certificate-there-is-no-cluster-secret-and-a-pairing-is-confirmed-on-both-screens.md`, `architecture/transport.md`, `decisions/adr-0840-an-agent-updates-an-addon-by-asking-the-hub-to-bring-it-to-the-hubs-version.md`, +14 more, 3 ADRs | 2026-10-16 |
 | `packages/mcp-dev` | 41 | — | `decisions/adr-0836-a-cluster-mutation-from-the-developer-mcp-exists-only-behind-allow-mutations-and-a-dry-run-whose-one-shot-token-is-bound-to-the-exact-arguments.md`, `decisions/adr-0661-model-licences-live-in-the-catalog-and-every-licence-surface-is-generated-from-them.md`, `decisions/adr-0835-hub-credentials-and-tls-trust-live-in-develop-one-chain-pinned-ca-never-a-password.md`, +1 more | — |
 | `packages/addon-provider-bosch/src/home-connect` | 38 | `device-providers` | `addons/addon-provider-bosch-home-connect.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0932-a-bosch-sign-in-is-one-field-and-homecom-is-not-a-home-connect-login.md`, +1 more | 2026-10-26 |
-| `packages/addon-provider-homeassistant` | 37 | `device-providers` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0951-power-and-energy-are-a-feature-of-the-electrical-device-not-a-sensor-beside-it.md`, +5 more | 2026-10-26 |
+| `packages/addon-provider-homeassistant` | 38 | `device-providers` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0951-power-and-energy-are-a-feature-of-the-electrical-device-not-a-sensor-beside-it.md`, +5 more | 2026-10-26 |
 | `packages/develop` | 36 | — | `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `decisions/adr-0835-hub-credentials-and-tls-trust-live-in-develop-one-chain-pinned-ca-never-a-password.md`, `decisions/adr-0884-the-cli-session-is-the-logged-in-user.md`, +2 more | — |
 | `server/backend/src/auth` | 36 | `auth` | `architecture/authentication.md`, `decisions/adr-0858-the-native-app-signs-in-through-dedicated-hub-app-flows-never-the-admin-ui.md`, `decisions/adr-0782-an-oidc-identity-signs-in-only-the-user-who-linked-it-from-their-own-session.md`, +13 more, 2 ADRs | 2026-10-21 |
 | `packages/ui-library/src/hooks` | 35 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +5 more | 2026-11-02 |
@@ -170,6 +170,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-post-analysis/src/durable` | 4 | `post-analysis` | `decisions/adr-0642-a-consumable-is-judged-at-each-rules-threshold-and-tanks-notify.md`, `design/2026-08-13-durable-value-tracking-and-runtime-state.md`, `design/durable-store-convergence.md`, 1 ADR | 2026-10-03 |
 | `packages/system/src/migrations` | 4 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md` | — |
 | `packages/types/src/logging` | 4 | `logging` | `decisions/adr-0248-channels-are-declared-by-addons-values-stay-in-one-document.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0995-a-debug-watch-is-a-hub-held-window-never-a-stored-value.md` _(covers)_ | — |
+| `packages/types/src/migrations` | 4 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0987-a-migration-runs-at-boot-under-its-owner.md` | — |
 | `packages/types/src/running-state` | 4 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0933-a-device-reports-whether-it-is-running-natively-or-from-one-assigned-field.md` | — |
 | `packages/types/src/schemas` | 4 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/ui.md`, `decisions/adr-0894-viewer-settings-have-two-levels-device-and-account-and-a-setting-lives-in-exactly-one.md`, +1 more | 2026-11-02 |
 | `packages/ui-library/src/hotkeys` | 4 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +2 more | 2026-11-02 |
@@ -179,6 +180,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-export-hap/src/migrations` | 3 | `ecosystem-exports` | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md` _(covers)_, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +1 more, 1 ADR | 2026-09-29 |
 | `packages/addon-pipeline-orchestrator/src/migrations` | 3 | — | 1 ADR | — |
 | `packages/addon-pipeline/src/durable` | 3 | `storage` | `decisions/adr-0185-a-forked-addons-settings-row-holds-config-not-a-workload.md`, `design/2026-08-29-recorder-heap-what-is-retained.md` _(covers)_, `design/2026-08-29-recorder-index-at-scale.md` _(covers)_ | 2026-08-30 |
+| `packages/addon-provider-homeassistant/src/migrations` | 3 | `device-providers` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/addon-provider-reolink/src/migrations` | 3 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/addon-training` | 3 | `cloud-training` | — | — |
 | `packages/cli/src/http` | 3 | `tooling` | — | — |
@@ -189,7 +191,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/types/src/device-extension` | 3 | `device-model` | `architecture/device-model.md`, `decisions/adr-0648-a-device-extension-is-a-slot-declared-by-the-cap-that-owns-the-function-and-served-over-its-existing-store.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | 2026-10-26 |
 | `packages/types/src/enums` | 3 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0387-a-new-disk-is-noticed-planned-onto-and-said-out-loud.md` | — |
 | `packages/types/src/helpers` | 3 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | — |
-| `packages/types/src/migrations` | 3 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0987-a-migration-runs-at-boot-under-its-owner.md` | — |
 | `packages/types/src/storage` | 3 | `storage` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0389-one-type-one-physical-root-refused-at-the-door.md` | — |
 | `packages/types/src/time` | 3 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | — |
 | `packages/types/src/util` | 3 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/windows-agent.md`, `design/boot-to-usable-camera.md` _(covers)_ | 2026-10-13 |
@@ -204,7 +205,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-pipeline-orchestrator/src/durable` | 2 | `pipeline-orchestration` | `design/2026-08-13-durable-value-tracking-and-runtime-state.md`, `design/durable-store-convergence.md`, 2 ADRs | 2026-10-03 |
 | `packages/addon-pipeline-orchestrator/src/load-balancing` | 2 | — | `architecture/inference-devices.md`, `decisions/adr-0750-shares-are-automatic-by-default-held-by-placement-and-respected-by-failover.md`, `decisions/adr-0755-shares-and-auto-tune-are-sized-by-capacity-never-by-load.md`, +1 more, 1 ADR | 2026-10-23 |
 | `packages/addon-post-analysis/src/migrations` | 2 | — | — | — |
-| `packages/addon-provider-homeassistant/src/migrations` | 2 | `device-providers` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/cli/src/discovery` | 2 | `tooling` | `decisions/adr-0838-clients-find-a-hub-over-mdns-of-its-https-endpoint-mesh-discovery-stays-retired.md` | — |
 | `packages/system/src/events` | 2 | `api-surface` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md` | — |
 | `packages/system/src/i18n` | 2 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0863-settings-texts-and-user-facing-errors-are-translated-by-the-hub-from-catalogs-the-english-text-always-travels-beside-the-key.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md` | — |
