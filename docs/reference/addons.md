@@ -89,7 +89,7 @@ this column exists to stop.
 | `provider-unifi` | `@camstack/addon-provider-unifi` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
 | `provider-unraid` | `@camstack/addon-provider-unraid` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
 | `provider-velux` | `@camstack/addon-provider-velux` | providers | own runner | `hub-only` | — | multiple | `connection-test` `device-adoption` `device-provider` `integration-instances` |
-| `provider-vesync` | `@camstack/addon-provider-vesync` | providers | own runner | `hub-only` | — | multiple | `device-provider` |
+| `provider-vesync` | `@camstack/addon-provider-vesync` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
 | `provider-wyze` | `@camstack/addon-provider-wyze` | providers | own runner | `hub-only` | — | multiple | `connection-test` `device-adoption` `device-provider` `integration-instances` `stream-params` |
 | `record-entries` | `@camstack/server-framework` | system | own runner | `hub-only` | — | — | `record-entries` |
 | `recorder` | `@camstack/addon-pipeline` | pipeline | own runner | `any-node` | — | — | `device-removal-hook` `load-contribution` `recording` `recording-archive` `recording-export` `storage-evictable` `storage-occupancy` `videoclips` |

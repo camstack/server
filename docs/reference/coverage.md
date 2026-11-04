@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**234 units · 8006 source files · 221 units claimed by at least one document (7962 files).**
+**234 units · 8014 source files · 221 units claimed by at least one document (7970 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -94,6 +94,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-post-analysis/src/shared` | 19 | `post-analysis`, `recognition` | `decisions/adr-0867-the-capture-paths-materialise-no-media-copies-in-the-js-process.md`, `architecture/notifications.md`, `decisions/adr-0209-a-hosted-model-artifact-is-not-verified-until-its-embedding-space-is.md`, +3 more, 1 ADR | 2026-10-07 |
 | `packages/addon-provider-mqtt-ha` | 19 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0831-mqtt-ha-discovery-import-is-its-own-provider.md` | 2026-10-26 |
 | `packages/addon-provider-tuya` | 19 | `device-providers` | `architecture/device-model.md` _(covers)_, 1 ADR | 2026-10-26 |
+| `packages/addon-provider-vesync` | 19 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/cli/src/commands` | 19 | `tooling` | `decisions/adr-0838-clients-find-a-hub-over-mdns-of-its-https-endpoint-mesh-discovery-stays-retired.md`, `decisions/adr-0988-a-terminal-signs-in-by-browser-approval.md`, `architecture/authentication.md`, +3 more | 2026-10-21 |
 | `packages/ui-library/src/lib` | 19 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md`, +5 more, 2 ADRs | 2026-11-02 |
 | `packages/addon-provider-wyze` | 18 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
@@ -125,7 +126,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/types/src/ffmpeg` | 12 | `decode-and-data-planes` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/ffmpeg.md`, `decisions/adr-0527-a-composites-tile-skew-is-a-probe-budget-not-a-clock.md`, +5 more, 3 ADRs | 2026-10-13 |
 | `packages/addon-pipeline-orchestrator/src/camera-sensors` | 11 | `pipeline-orchestration` | `architecture/detection-execution.md` _(covers)_, `decisions/adr-0673-a-camera-sensor-has-a-mode-and-one-bridge-emits-the-cameras-effective-onboard-motion.md`, `decisions/adr-0696-a-cameras-motion-slice-means-motion-and-only-the-orchestrator-writes-it.md`, +1 more, 1 ADR | 2026-10-24 |
 | `packages/addon-pipeline-orchestrator/src/widgets` | 11 | `pipeline-orchestration` | `decisions/adr-0931-a-packages-rule-can-open-a-candidate-from-a-scene-difference-and-confirm-it-with-the-llm.md`, 1 ADR | — |
-| `packages/addon-provider-vesync` | 11 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/types` | 11 | `capabilities`, `decode-and-data-planes`, `shared-types`, `transport` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/cloud-training.md`, `decisions/adr-0267-the-token-lifetime-has-one-default-and-is-validated-where-it-is-signed.md`, +2 more, 1 ADR | 2026-10-14 |
 | `packages/types/src/expression` | 11 | `automations` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `design/2026-08-08-automation-scripts-custom-devices.md`, `design/2026-08-09-automation-recipe-phase6-design.md`, +2 more | — |
 | `packages/addon-export-hap/src/multi-tier` | 10 | `ecosystem-exports` | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md` _(covers)_, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +2 more, 1 ADR | 2026-09-29 |

@@ -158,7 +158,7 @@ Singleton or collection providers, addressed without a device.
 | `data-store-provider` | 18 | — | — | — | ✓ | `sqlite-settings` |
 | `database-snapshot` | 2 | — | — | — | ✓ | `sqlite-settings` |
 | `decoder` | 2 | — | — | — | — | `decoder-nodeav` |
-| `device-adoption` | 8 | ✓ | — | — | — | `import-alexa` `matter-broker` `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-ecowitt` `provider-enpal` `provider-esphome` `provider-homeassistant` `provider-homematic` `provider-mqtt-ha` `provider-petkit` `provider-rademacher` `provider-reolink` `provider-tuya` `provider-unifi` `provider-unraid` `provider-velux` `provider-wyze` |
+| `device-adoption` | 8 | ✓ | — | — | — | `import-alexa` `matter-broker` `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-ecowitt` `provider-enpal` `provider-esphome` `provider-homeassistant` `provider-homematic` `provider-mqtt-ha` `provider-petkit` `provider-rademacher` `provider-reolink` `provider-tuya` `provider-unifi` `provider-unraid` `provider-velux` `provider-vesync` `provider-wyze` |
 | `device-credentials` | 8 | — | — | — | — | `local-auth` |
 | `device-export` | 13 | ✓ | — | — | — | `export-alexa` `export-google` `export-hap` `homeassistant-export` |
 | `device-history` | 13 | — | — | — | — | `device-history` |
@@ -172,7 +172,7 @@ Singleton or collection providers, addressed without a device.
 | `failure-contribution` | 1 | — | — | — | ✓ | `pipeline-runner` `pipeline-analytics` `provider-hikvision` `provider-reolink` |
 | `fan-presets` | 4 | — | — | — | — | `core-blocks` |
 | `filesystem-browse` | 3 | — | — | — | ✓ | `filesystem-storage` |
-| `integration-instances` | 9 | — | — | — | — | `cloudflare-tunnel` `cloudflare-turn` `export-alexa` `export-google` `export-hap` `google-services` `import-alexa` `matter-broker` `mqtt-broker` `provider-amcrest` `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-ecowitt` `provider-enpal` `provider-esphome` `provider-gree` `provider-hikvision` `provider-homeassistant` `homeassistant-export` `provider-homematic` `provider-mqtt-ha` `provider-onvif` `provider-petkit` `provider-rademacher` `provider-reolink` `provider-rtsp` `provider-tuya` `provider-unifi` `provider-unraid` `provider-velux` `provider-wyze` `smtp-nodemailer` `static-turn` `training-modal` `loki-logging` |
+| `integration-instances` | 9 | — | — | — | — | `cloudflare-tunnel` `cloudflare-turn` `export-alexa` `export-hap` `google-services` `import-alexa` `matter-broker` `mqtt-broker` `provider-amcrest` `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-ecowitt` `provider-enpal` `provider-esphome` `provider-gree` `provider-hikvision` `provider-homeassistant` `provider-homematic` `provider-mqtt-ha` `provider-onvif` `provider-petkit` `provider-rademacher` `provider-reolink` `provider-rtsp` `provider-tuya` `provider-unifi` `provider-unraid` `provider-velux` `provider-vesync` `provider-wyze` `smtp-nodemailer` `static-turn` `training-modal` `loki-logging` |
 | `integrations` | 11 | — | — | — | — | — |
 | `keychain` | 7 | — | — | — | ✓ | `keychain` |
 | `keychain-admin` | 13 | — | — | — | — | `keychain` |
