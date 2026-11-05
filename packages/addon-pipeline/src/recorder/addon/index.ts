@@ -3439,7 +3439,12 @@ export default class RecorderV2Addon extends BaseAddon<RecorderV2Config> {
    * `this.config` by `resolveConfig()` and take effect on addon restart
    * (read once in `onInitialize`).
    */
-  protected override globalSettingsSchema(): ConfigUISchema | null {
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return ['recording']
+  }
+
+  protected override async clusterSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    if (cap !== 'recording') return null
     return this.schema({
       sections: [
         {

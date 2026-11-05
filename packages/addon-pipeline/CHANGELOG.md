@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Audio analyzer, pipeline runner and stream broker declare their settings through the scoped hooks; the settings forms and stored values are unchanged.
+- Recorder node and hostname settings are declared on the cluster hook; the form and stored values are unchanged.
 
 ## [1.2.640] - 2026-11-03
 
