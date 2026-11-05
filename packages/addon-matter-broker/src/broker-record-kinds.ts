@@ -1,4 +1,4 @@
-import { defineEntryKind, entryBody } from '@camstack/types'
+import { declareBrokerLinkKind, defineEntryKind, entryBody } from '@camstack/types'
 import { z } from 'zod'
 import { matterConnectionSchema } from './config.js'
 
@@ -6,6 +6,7 @@ export const MATTER_BROKERS_OWNER = 'matter-broker'
 
 export const MatterBrokerBodySchema = entryBody({
   ...matterConnectionSchema.shape,
+  /** Retired (D1011): the link lives on the integration's `connections` record. Only the migration reads it. */
   integrationId: z.string().optional(),
   enabled: z.boolean().optional(),
 })
@@ -17,4 +18,10 @@ export const matterBrokersEntryKind = defineEntryKind('brokers', {
   writeTrigger: 'an operator adds, edits or removes a Matter fabric broker',
   // The nested shape's secrets: a declared secret path never stops being secret.
   retiredSecretPaths: ['connection.threadDataset', 'connection.wifiPassword'],
+})
+
+/** A Matter integration: the link to the fabric (broker) it imports devices from. */
+export const matterConnectionsEntryKind = declareBrokerLinkKind({
+  title: 'Matter integrations',
+  writeTrigger: 'an operator links a Matter integration to a Matter fabric',
 })

@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The integration form is declared as the instance form (the connection form); fabrics and their stored values are unchanged.
+- A Matter fabric is referenced by id from its integration and owns nothing of it; deleting a fabric still in use is refused with the list of users
 
 ## [0.2.158] - 2026-11-05
 

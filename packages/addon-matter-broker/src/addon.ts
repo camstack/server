@@ -6,7 +6,10 @@ import {
   deviceAdoptionCapability,
   DeviceType,
   errMsg,
+  brokerIdOf,
   EventCategory,
+  brokerLinkUserFinder,
+  type BrokerLinkBody,
   flattenPortsOver,
   integrationInstancesCapability,
   type ConfigUISchema,
@@ -18,7 +21,6 @@ import {
   type IntegrationInstanceRef,
   type ProviderRegistration,
   type RecordIntegrationInstances,
-  type SystemEvent,
 } from '@camstack/types'
 import { buildConnectionFormSchema, type MatterAddonConfig } from './config.js'
 import { MatterBrokerRegistry } from './matter-broker-registry.js'
@@ -31,9 +33,9 @@ import { matterCommands, matterNodes } from './matter-gateway.js'
 import type { MatterAttributeReport, MatterNodeSnapshot } from './matter-controller.js'
 import { mapMatterEndpointToCamStack } from './matter-cluster-mapping.js'
 import { MatterNodeDevice, type MatterEndpointEntry } from './devices/matter-node-device.js'
-import { matterBrokersEntryKind, type MatterBrokerBody } from './broker-record-kinds.js'
+import { matterBrokersEntryKind, matterConnectionsEntryKind } from './broker-record-kinds.js'
 import { buildMatterInstances } from './matter-instances.js'
-import { ADDON_MIGRATIONS } from './migrations/index.js'
+import { ADDON_MIGRATIONS, matterBrokerLinkPorts } from './migrations/index.js'
 import { MatterBrokerStore } from './matter-broker-store.js'
 import type { MatterBrokerEntry } from './config.js'
 
@@ -64,7 +66,7 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
 
   private registry: MatterBrokerRegistry | null = null
   private brokerStore: MatterBrokerStore | null = null
-  private instances: RecordIntegrationInstances<MatterBrokerBody> | null = null
+  private instances: RecordIntegrationInstances<BrokerLinkBody> | null = null
   private activeBrokers: readonly MatterBrokerEntry[] = []
 
   constructor() {
@@ -78,21 +80,20 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
     if (records === undefined) {
       throw new Error('matter-broker: ctx.records is required (hub-only addon)')
     }
-    await records.declare({ brokers: matterBrokersEntryKind })
-    this.brokerStore = MatterBrokerStore.of(records)
-    this.instances = buildMatterInstances(records, {
-      mintId: () => this.requireRegistry().allocateId(),
-      infoOf: (id) => this.registry?.get(id) ?? null,
-      onChanged: (id) => this.syncBrokerRuntime(id),
+    await records.declare({
+      brokers: matterBrokersEntryKind,
+      connections: matterConnectionsEntryKind,
     })
+    this.brokerStore = MatterBrokerStore.of(records)
+    this.instances = buildMatterInstances(records)
     // The stored fabric records move to the flat shape BEFORE anything reads them.
     const secrets = this.ctx.secrets
     if (secrets === undefined) throw new Error('matter-broker: ctx.secrets is required')
     await this.runMigrations(
-      defineAddonMigrations(
-        ADDON_MIGRATIONS,
-        flattenPortsOver(records.kind(matterBrokersEntryKind)),
-      ),
+      defineAddonMigrations(ADDON_MIGRATIONS, {
+        ...flattenPortsOver(records.kind(matterBrokersEntryKind)),
+        ...matterBrokerLinkPorts(records, (message) => this.ctx.logger.warn(message)),
+      }),
     )
     this.activeBrokers = await this.loadPersistedBrokers()
 
@@ -124,9 +125,6 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
       meta: { brokerCount: this.activeBrokers.length },
     })
 
-    await this.reconcileIntegrationsToBrokers()
-    this.subscribeIntegrationLifecycle()
-
     return [
       ...regs,
       { capability: brokerCapability, provider: this.buildBrokerProvider() },
@@ -147,42 +145,9 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
     return this.brokerStore
   }
 
-  private requireInstances(): RecordIntegrationInstances<MatterBrokerBody> {
+  private requireInstances(): RecordIntegrationInstances<BrokerLinkBody> {
     if (this.instances === null) throw new Error('matter-broker: instances not ready')
     return this.instances
-  }
-
-  /**
-   * Bring the runtime in line with one record after the instances page changed it: a removed
-   * record stops its controller and cascades its devices, an off record only stops the
-   * controller, a live one re-applies its settings or starts under the record's own id.
-   */
-  private async syncBrokerRuntime(id: string): Promise<void> {
-    const reg = this.requireRegistry()
-    const entry = await this.requireBrokerStore().getById(id)
-    this.activeBrokers = await this.loadPersistedBrokers()
-    if (entry === null) {
-      await reg.removeEntry(id)
-      await this.cascadeRemoveDevicesForBroker(id)
-      return
-    }
-    if (entry.enabled === false) {
-      await reg.removeEntry(id)
-      return
-    }
-    try {
-      if (reg.get(id) !== null) await reg.updateEntry(id, entry.connection)
-      else {
-        await reg.createEntry(entry.name, entry.connection, {
-          id,
-          ...(entry.integrationId !== undefined ? { integrationId: entry.integrationId } : {}),
-        })
-      }
-    } catch (err) {
-      this.ctx.logger.warn('matter instance: could not start the fabric', {
-        meta: { brokerId: id, error: errMsg(err) },
-      })
-    }
   }
 
   private async persistBrokerEntries(entries: readonly MatterBrokerEntry[]): Promise<void> {
@@ -325,6 +290,7 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
       registry: this.requireRegistry(),
       getBrokers: () => this.activeBrokers,
       persistBrokers: (brokers) => this.persistBrokerEntries(brokers),
+      brokerUsers: [brokerLinkUserFinder(this.requireInstances())],
       cascadeRemoveDevices: (brokerId) => this.cascadeRemoveDevicesForBroker(brokerId),
       logger: this.ctx.logger,
     })
@@ -343,55 +309,6 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
     })
   }
 
-  // ── integration → broker reconcile (Approach A) ────────────────────────
-
-  private async reconcileIntegrationsToBrokers(): Promise<void> {
-    try {
-      const all = await this.ctx.api.integrations.list.query()
-      const mine = all.filter((i) => i.addonId === this.ctx.id)
-      const surviving = new Set(mine.map((i) => i.id))
-
-      for (const broker of this.activeBrokers) {
-        const integrationId = broker.integrationId
-        if (integrationId === undefined || !surviving.has(integrationId)) continue
-        this.requireRegistry().linkIntegration(integrationId, broker.id)
-      }
-
-      const toRemove = this.activeBrokers
-        .filter((b) => b.integrationId !== undefined && !surviving.has(b.integrationId))
-        .map((b) => b.id)
-      if (toRemove.length === 0) return
-
-      for (const id of toRemove) {
-        try {
-          await this.requireRegistry().removeEntry(id)
-          await this.cascadeRemoveDevicesForBroker(id)
-        } catch (err) {
-          this.ctx.logger.warn('Matter integration→broker: broker cleanup failed', {
-            meta: { brokerId: id, error: errMsg(err) },
-          })
-        }
-      }
-      const nextBrokers = this.activeBrokers.filter((b) => !toRemove.includes(b.id))
-      await this.persistBrokerEntries(nextBrokers)
-    } catch (err) {
-      this.ctx.logger.warn('Matter integration→broker reconcile failed', {
-        meta: { error: errMsg(err) },
-      })
-    }
-  }
-
-  private subscribeIntegrationLifecycle(): void {
-    const handler = (event: SystemEvent): void => {
-      const addonId = event.data['addonId']
-      if (typeof addonId === 'string' && addonId !== this.ctx.id) return
-      void this.reconcileIntegrationsToBrokers()
-    }
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationEnabled }, handler)
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDisabled }, handler)
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, handler)
-  }
-
   // ── device-adoption cap provider ───────────────────────────────────────
 
   private buildAdoptionProvider(): IDeviceAdoptionProvider {
@@ -406,11 +323,9 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
       },
       logger: this.ctx.logger,
       getBrokerIdForIntegration: async (id) => {
-        const broker = this.activeBrokers.find((entry) => entry.integrationId === id)
-        if (broker === undefined) {
-          throw new Error(`integration ${id} has no linked brokerId`)
-        }
-        return broker.id
+        const brokerId = await brokerIdOf(this.requireInstances(), id)
+        if (brokerId === undefined) throw new Error(`integration ${id} has no broker`)
+        return brokerId
       },
       listAdoptedMatter: async () => {
         const reg = this.ctx.kernel.deviceRegistry

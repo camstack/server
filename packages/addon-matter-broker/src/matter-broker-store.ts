@@ -16,7 +16,6 @@ function rowToEntry(id: string, data: MatterBrokerBody): MatterBrokerEntry | nul
       wifiPassword: data.wifiPassword,
       reconcileIntervalMs: data.reconcileIntervalMs,
     },
-    integrationId: data.integrationId,
     enabled: data.enabled,
   })
   return parsed.success ? parsed.data : null
@@ -61,11 +60,10 @@ export class MatterBrokerStore {
       if (!nextIds.has(row.id)) await this.kind.delete(row.id)
     }
     for (const entry of entries) {
-      const { id, name, connection, integrationId, enabled } = entry
+      const { id, name, connection, enabled } = entry
       const body = {
         name,
         ...connection,
-        ...(integrationId === undefined ? {} : { integrationId }),
         ...(enabled === undefined ? {} : { enabled }),
       }
       const parsed = matterBrokersEntryKind.schema.safeParse(body)

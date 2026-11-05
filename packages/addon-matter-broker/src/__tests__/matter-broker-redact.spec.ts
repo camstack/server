@@ -43,6 +43,7 @@ describe('Matter broker settings redact fabric secrets', () => {
       },
       getBrokers: () => [ENTRY],
       persistBrokers: async () => undefined,
+      brokerUsers: [],
       cascadeRemoveDevices: async () => undefined,
       logger: silentLogger(),
     })

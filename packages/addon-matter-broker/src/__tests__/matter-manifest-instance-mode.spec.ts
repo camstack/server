@@ -6,7 +6,7 @@
 import { readFileSync } from 'node:fs'
 import { makeInMemoryRecords } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import { matterBrokersEntryKind } from '../broker-record-kinds.js'
+import { matterConnectionsEntryKind } from '../broker-record-kinds.js'
 import { buildMatterInstances } from '../matter-instances.js'
 
 interface Manifest {
@@ -19,12 +19,8 @@ describe('matter instance mode', () => {
       readFileSync(new URL('../../package.json', import.meta.url), 'utf8'),
     )
     const world = makeInMemoryRecords('matter-broker')
-    await world.records.declare({ brokers: matterBrokersEntryKind })
-    const instances = buildMatterInstances(world.records, {
-      mintId: () => 'matter_001',
-      infoOf: () => null,
-      onChanged: async () => undefined,
-    })
+    await world.records.declare({ connections: matterConnectionsEntryKind })
+    const instances = buildMatterInstances(world.records)
 
     const described = await instances.describe()
 

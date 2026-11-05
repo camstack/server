@@ -1,4 +1,10 @@
-import { errMsg, type IBrokerProvider, type IScopedLogger } from '@camstack/types'
+import {
+  assertBrokerUnused,
+  type BrokerUserFinder,
+  errMsg,
+  type IBrokerProvider,
+  type IScopedLogger,
+} from '@camstack/types'
 import {
   buildConnectionFormSchema,
   mergeMatterSecrets,
@@ -27,6 +33,8 @@ export interface MatterBrokerProviderDeps {
   >
   readonly getBrokers: () => readonly MatterBrokerEntry[]
   readonly persistBrokers: (brokers: readonly MatterBrokerEntry[]) => Promise<void>
+  /** Everything that still points at a broker; a removal is refused while any user remains. */
+  readonly brokerUsers: readonly BrokerUserFinder[]
   readonly cascadeRemoveDevices: (brokerId: string) => Promise<void>
   readonly logger: IScopedLogger
 }
@@ -40,7 +48,15 @@ export interface MatterBrokerProviderDeps {
  * preserved on an empty round-trip. Fabric keys stay in matter.js storage.
  */
 export function buildMatterBrokerProvider(deps: MatterBrokerProviderDeps): IBrokerProvider {
-  const { ownerAddonId, registry, getBrokers, persistBrokers, cascadeRemoveDevices, logger } = deps
+  const {
+    ownerAddonId,
+    registry,
+    getBrokers,
+    persistBrokers,
+    brokerUsers,
+    cascadeRemoveDevices,
+    logger,
+  } = deps
 
   const owns = (id: string): boolean => getBrokers().some((b) => b.id === id)
 
@@ -73,6 +89,7 @@ export function buildMatterBrokerProvider(deps: MatterBrokerProviderDeps): IBrok
 
     remove: async ({ id }) => {
       if (!owns(id)) return
+      await assertBrokerUnused(id, brokerUsers)
       await registry.removeEntry(id)
       await cascadeRemoveDevices(id).catch((err: unknown) => {
         logger.warn('matter: broker cascade-remove threw', {

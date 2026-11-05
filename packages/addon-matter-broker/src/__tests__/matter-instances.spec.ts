@@ -1,13 +1,16 @@
 import { makeInMemoryRecords } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import { matterBrokersEntryKind } from '../broker-record-kinds.js'
+import { matterBrokersEntryKind, matterConnectionsEntryKind } from '../broker-record-kinds.js'
 import { buildMatterInstances } from '../matter-instances.js'
 
-async function setup(status: 'connected' | 'disconnected' = 'connected') {
+async function setup() {
   const world = makeInMemoryRecords('matter-broker')
-  await world.records.declare({ brokers: matterBrokersEntryKind })
-  const handle = world.records.kind(matterBrokersEntryKind)
-  await handle.put(
+  await world.records.declare({
+    brokers: matterBrokersEntryKind,
+    connections: matterConnectionsEntryKind,
+  })
+  const brokers = world.records.kind(matterBrokersEntryKind)
+  await brokers.put(
     {
       id: 'matter_003',
       data: {
@@ -16,80 +19,38 @@ async function setup(status: 'connected' | 'disconnected' = 'connected') {
         wifiSsid: 'home-net',
         wifiPassword: 'pw',
         reconcileIntervalMs: 300_000,
-        integrationId: 'int-keep-me',
       },
     },
     { ifRev: 0 },
   )
-  const changed: string[] = []
-  const instances = buildMatterInstances(world.records, {
-    mintId: () => 'matter_004',
-    infoOf: (id) =>
-      id === 'matter_003'
-        ? {
-            id,
-            name: 'Hub fabric',
-            kind: 'matter',
-            status,
-            info: {},
-            lastCheckedAt: 5,
-            error: status === 'connected' ? null : 'controller stopped',
-          }
-        : null,
-    onChanged: async (id) => {
-      changed.push(id)
-    },
-  })
-  return { instances, handle, changed }
+  return { instances: buildMatterInstances(world.records), brokers }
 }
 
-describe('Matter fabrics as integration instances', () => {
-  it('lists the existing fabric under its id, flat, with no sign-in', async () => {
+describe('Matter integrations as integration instances', () => {
+  it('creating an integration writes its record under the registry id and no broker row', async () => {
+    const { instances, brokers } = await setup()
+    await instances.createInstance({ id: 'int_0040', name: 'Matter home' })
+    expect((await instances.getInstance({ id: 'int_0040' }))?.name).toBe('Matter home')
+    expect(await brokers.get('int_0040')).toBeNull()
+  })
+
+  it('brings devices and its form is a fabric picker with no connection field', async () => {
     const { instances } = await setup()
-    const [one] = await instances.listInstances()
-    expect(one).toMatchObject({
-      id: 'matter_003',
-      kind: 'matter',
-      configured: true,
-      status: { state: 'ok' },
-    })
-    expect(one?.formValues['wifiSsid']).toBe('home-net')
-    expect(one?.formValues['wifiPassword']).not.toBe('pw')
-    const description = await instances.describe()
-    expect(description).toMatchObject({ allowRestoreId: true, mintsId: true })
-    expect(description.kinds?.[0]?.signIn).toBeUndefined()
-    expect(description.kinds?.[0]?.connectPath).toBeUndefined()
-  })
-
-  it('an edit keeps both secrets and the integration link; create mints matter_NNN; restore keeps the old id', async () => {
-    const { instances, handle, changed } = await setup()
-    await instances.updateInstance({
-      id: 'matter_003',
-      values: { wifiSsid: 'other', wifiPassword: '', threadDataset: '' },
-    })
-    expect(await instances.getResolved('matter_003')).toMatchObject({
-      wifiSsid: 'other',
-      wifiPassword: 'pw',
-      threadDataset: '0e08aa',
-      integrationId: 'int-keep-me',
-    })
-    expect((await instances.createInstance({ name: 'Second' })).id).toBe('matter_004')
-    await instances.createInstance({ id: 'matter_001', name: 'Back' })
-    expect((await handle.query({ limit: 10 })).records.map((r) => r.id).sort()).toEqual([
-      'matter_001',
-      'matter_003',
-      'matter_004',
+    expect(await instances.describe()).toMatchObject({ role: 'devices' })
+    const form = await instances.instanceFormSchema({ id: null })
+    expect(form.sections.flatMap((s) => s.fields.map((f) => ('key' in f ? f.key : '')))).toEqual([
+      'brokerId',
     ])
-    expect(changed).toEqual(['matter_003', 'matter_004', 'matter_001'])
   })
 
-  it('tests a saved fabric by its live status', async () => {
-    const { instances } = await setup('disconnected')
-    expect((await instances.getInstance({ id: 'matter_003' }))?.status).toMatchObject({
-      state: 'error',
-    })
-    expect(await instances.testInstance({ id: 'matter_003', values: {} })).toMatchObject({
-      success: false,
+  it('links to a fabric by id and leaves the fabric record alone', async () => {
+    const { instances, brokers } = await setup()
+    await instances.createInstance({ id: 'int_0040', name: 'Matter home' })
+    await instances.updateInstance({ id: 'int_0040', values: { brokerId: 'matter_003' } })
+    expect(await instances.getResolved('int_0040')).toMatchObject({ brokerId: 'matter_003' })
+    expect((await brokers.getResolved('matter_003'))?.data).toMatchObject({
+      wifiSsid: 'home-net',
+      wifiPassword: 'pw',
     })
   })
 })

@@ -37,7 +37,6 @@ export const MatterBrokerEntrySchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
   connection: matterConnectionSchema,
-  integrationId: z.string().optional(),
   /** Absent means on; the instances page switches a fabric off without deleting it. */
   enabled: z.boolean().optional(),
 })
