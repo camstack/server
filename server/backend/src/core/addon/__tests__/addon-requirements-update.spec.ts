@@ -1,6 +1,12 @@
 import type { IScopedLogger } from '@camstack/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { ConfigService } from '../../config/config.service'
+import { EventBusService } from '../../events/event-bus.service'
+import { LoggingService } from '../../logging/logging.service'
+import { NotificationServiceWrapper } from '../../notification/notification-wrapper.service'
+import { ToastServiceWrapper } from '../../notification/toast-wrapper.service'
 import { AddonPackageService } from '../addon-package.service.js'
+import { AddonRegistryService } from '../addon-registry.service.js'
 
 vi.mock('../../lifecycle/lifecycle-runner.singleton.js', () => ({
   getLifecycleRunner: () => ({ startJob: vi.fn() }),
@@ -8,20 +14,36 @@ vi.mock('../../lifecycle/lifecycle-runner.singleton.js', () => ({
 
 const emit = vi.fn()
 
+/** A class instance with only the members the spec sets: no constructor, no cast. */
+function stubOf<T extends object>(ctor: { readonly prototype: T }, members: object): T {
+  const instance: T = Object.create(ctor.prototype)
+  for (const [key, value] of Object.entries(members)) {
+    Object.defineProperty(instance, key, { value, writable: true, configurable: true })
+  }
+  return instance
+}
+
 function logger(): IScopedLogger {
   const noop = (): void => {}
-  return { info: noop, warn: noop, error: noop, debug: noop } as unknown as IScopedLogger
+  const sink: IScopedLogger = {
+    info: noop,
+    warn: noop,
+    error: noop,
+    debug: noop,
+    child: () => sink,
+    withTags: () => sink,
+  }
+  return sink
 }
 
 function build(serverVersion: string | null): AddonPackageService {
-  const stub = { emit }
   return new AddonPackageService(
-    { createLogger: () => logger() } as never,
-    stub as never,
-    stub as never,
-    stub as never,
-    stub as never,
-    stub as never,
+    stubOf(LoggingService, { createLogger: () => logger() }),
+    stubOf(EventBusService, { emit }),
+    stubOf(ConfigService, { emit }),
+    stubOf(AddonRegistryService, { emit }),
+    stubOf(NotificationServiceWrapper, { emit }),
+    stubOf(ToastServiceWrapper, { emit }),
     undefined,
     () => serverVersion,
   )
@@ -29,7 +51,7 @@ function build(serverVersion: string | null): AddonPackageService {
 
 /** A registry whose every version document declares `camstack.requires.server`. */
 function registryRequiring(server: string, latest = '1.3.0'): typeof fetch {
-  return (async () =>
+  return async () =>
     new Response(
       JSON.stringify({
         name: '@camstack/addon-x',
@@ -37,7 +59,7 @@ function registryRequiring(server: string, latest = '1.3.0'): typeof fetch {
         camstack: { requires: { server } },
       }),
       { status: 200 },
-    )) as typeof fetch
+    )
 }
 
 describe('addon requirements (D989)', () => {
@@ -67,16 +89,16 @@ describe('addon requirements (D989)', () => {
 
   it('updatePackage refuses when the registry document for the target cannot be read', async () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(
-      (async () => new Response('unavailable', { status: 503 })) as typeof fetch,
+      async () => new Response('unavailable', { status: 503 }),
     )
     const result = await build('1.2.0').updatePackage('@camstack/addon-x', '1.3.0')
     expect(result.success).toBe(false)
     expect(result.error).toContain('could not be read')
     expect(result.error).toContain('503')
 
-    vi.spyOn(globalThis, 'fetch').mockImplementation((async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
       throw new Error('socket hang up')
-    }) as typeof fetch)
+    })
     const thrown = await build('1.2.0').updatePackage('@camstack/addon-x', '1.3.0')
     expect(thrown.success).toBe(false)
     expect(thrown.error).toContain('socket hang up')

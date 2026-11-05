@@ -221,11 +221,11 @@ describe('dev closure stamps requires.addons from the workspace (planning#447, D
     writeFixtureWorkspace(FIXTURE)
     const pkgDir = path.join(tmp, 'server/backend')
     const file = path.join(pkgDir, 'package.json')
-    const raw: unknown = JSON.parse(fs.readFileSync(file, 'utf-8'))
+    const raw: Record<string, unknown> = JSON.parse(fs.readFileSync(file, 'utf-8'))
     fs.writeFileSync(
       file,
       JSON.stringify({
-        ...(raw as Record<string, unknown>),
+        ...raw,
         camstack: {
           requires: { addons: { '@camstack/old': '>=1.0.0' }, wrapper: { image: '>=1.2.0' } },
         },
