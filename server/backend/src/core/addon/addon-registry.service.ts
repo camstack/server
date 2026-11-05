@@ -10,6 +10,11 @@ import { randomUUID } from 'node:crypto'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
+import type { GroupCandidate } from '../../agent/agent-group-runner.js'
+import { readPackageRequires, type StaleGateContext } from '../../agent/stale-addon-gate.js'
+import { spawnableAddonIds } from './hub-spawn-gate.js'
+import { readRunningServerAddonMinimums, readRunningServerVersion } from './addon-requirements.js'
+import { readInstalledAddonVersions } from './installed-addon-versions.js'
 import type { DataPlaneSink, RegisteredChild } from '@camstack/server/system'
 import {
   AddonDepsManager,
@@ -1146,7 +1151,7 @@ export class AddonRegistryService {
         this.logger.info('Spawning isolated infrastructure builtins', {
           meta: { addonIds: isolatedInfraIds },
         })
-        await spawnRunnerPlan(this.buildAddonGroupPlan(isolatedInfraIds))
+        await spawnRunnerPlan(this.buildSpawnPlan(isolatedInfraIds))
       },
       waitForDataStoreProvider: async () => {
         if (isolatedInfraIds.length === 0) return
@@ -1201,9 +1206,7 @@ export class AddonRegistryService {
         }
       },
       spawnForkedAddons: async () => {
-        await spawnRunnerPlan(
-          this.buildAddonGroupPlan(allIds.filter((id) => !isolatedBuiltins.has(id))),
-        )
+        await spawnRunnerPlan(this.buildSpawnPlan(allIds.filter((id) => !isolatedBuiltins.has(id))))
       },
       bootInProcessConsumers: async () => {
         // Pass 2 — remaining core builtins, in capability-dependency order.
@@ -1263,7 +1266,7 @@ export class AddonRegistryService {
         this.logger.info('Spawning isolated system builtins', {
           meta: { addonIds: isolatedConsumerIds },
         })
-        await spawnRunnerPlan(this.buildAddonGroupPlan(isolatedConsumerIds))
+        await spawnRunnerPlan(this.buildSpawnPlan(isolatedConsumerIds))
       },
     })
 
@@ -3868,6 +3871,49 @@ export class AddonRegistryService {
    * Read-only. Used by the bootstrap to plan spawns up-front and by
    * diagnostics that want to render the current topology.
    */
+  /**
+   * The plan the hub actually SPAWNS: `buildAddonGroupPlan` over the ids whose
+   * package passes the stale gate (planning#447). An addon below the running
+   * server's `requires.addons`, or needing a newer server, stays unspawned and
+   * is logged with both versions; the post-swap required-addon update brings it
+   * current and a reload spawns it then.
+   */
+  buildSpawnPlan(addonIds: readonly string[]): RunnerPlan {
+    const ready = spawnableAddonIds({
+      addonIds,
+      candidateOf: (id) => this.staleCandidateOf(id),
+      context: this.staleGateContext(),
+      log: (line) => this.logger.warn(line),
+    })
+    return this.buildAddonGroupPlan(ready)
+  }
+
+  /** Reads the gate's facts from disk; a spec replaces it. */
+  private staleGateContext: () => StaleGateContext = () => {
+    const dataDir = path.resolve(process.env.CAMSTACK_DATA ?? 'camstack-data')
+    const addonsDir = process.env.CAMSTACK_ADDONS_DIR ?? path.resolve(dataDir, 'addons')
+    return {
+      serverVersion: readRunningServerVersion(),
+      serverRequiresAddons: readRunningServerAddonMinimums(),
+      installedVersions: readInstalledAddonVersions(addonsDir),
+      requiresOfDir: readPackageRequires,
+    }
+  }
+
+  private staleCandidateOf(addonId: string): GroupCandidate | undefined {
+    const entry = this.addonEntries.get(addonId)
+    if (!entry?.declaration || !entry.addonDir) return undefined
+    return {
+      groupId: resolveRunnerId(entry.declaration, addonId),
+      addonId,
+      addonDir: entry.addonDir,
+      version: entry.declaration.version ?? entry.packageVersion,
+      packageName: entry.packageName,
+      packageVersion: entry.packageVersion,
+      capabilities: [],
+    }
+  }
+
   buildAddonGroupPlan(addonIds: readonly string[]): RunnerPlan {
     const plan = new Map<string, RunnerAddonPlacement[]>()
     for (const id of addonIds) {

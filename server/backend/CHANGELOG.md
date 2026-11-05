@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Generated tRPC router exposes pipelineAnalytics.getMediaLocationCensus (admin read)
+- The hub no longer spawns an addon whose package is older than the running server requires; it is held back and logged until the required-addon update lands
 
 ## [1.2.779] - 2026-11-05
 
