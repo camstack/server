@@ -2477,7 +2477,7 @@
         },
         {
           "name": "externalProbe",
-          "type": "{ status: 'probing' | 'ok' | 'error'; result?: FieldProbeResult }",
+          "type": "{ status: 'probing' | 'ok' | 'error' result?: FieldProbeResult }",
           "optional": true,
           "doc": "External probe result (from \"Test All\" button)"
         },
@@ -6559,7 +6559,7 @@
         },
         {
           "name": "runtimes",
-          "type": "readonly { value: string; label: string; available: boolean }[]",
+          "type": "readonly { value: string label: string available: boolean }[]",
           "optional": false,
           "doc": ""
         },
@@ -10193,6 +10193,12 @@
           "type": "string",
           "optional": true,
           "doc": "Classes of the wrapper that carries the chevron (default `relative w-full`)."
+        },
+        {
+          "name": "bare",
+          "type": "boolean",
+          "optional": true,
+          "doc": "No field chrome: no border, a transparent background and no chevron. For a dropdown that sits inside a control that already draws the box (a"
         }
       ]
     },
@@ -11672,7 +11678,7 @@
         },
         {
           "name": "pipelineMetrics",
-          "type": "{ phase: string; detectionFps: number; avgInferenceMs: number } | null",
+          "type": "{ phase: string detectionFps: number avgInferenceMs: number } | null",
           "optional": true,
           "doc": "Pipeline metrics from useDeviceWebrtc. If provided, overrides phase and adds detection fps."
         },

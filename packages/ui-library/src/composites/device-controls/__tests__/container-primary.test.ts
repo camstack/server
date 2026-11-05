@@ -35,7 +35,12 @@ describe('childEntityId', () => {
 
 describe('containerChildToRef', () => {
   it('projects a raw child row onto the resolver ChildRef shape', () => {
-    expect(containerChildToRef(lock)).toEqual({ id: 9, entityId: 'lock.front', type: 'lock' })
+    expect(containerChildToRef(lock)).toEqual({
+      id: 9,
+      entityId: 'lock.front',
+      stableId: 'st-lock',
+      type: 'lock',
+    })
   })
 })
 
@@ -115,5 +120,29 @@ describe('resolveContainerPrimary', () => {
     it('falls back to priority default when the entityId override matches no child', () => {
       expect(resolveContainerPrimary(children, null, 'cover.ghost')?.id).toBe(9)
     })
+  })
+})
+
+describe('resolveContainerPrimary — a pick persisted by stableId', () => {
+  // An ESPHome container: every child carries a sourceInfo.id that differs from
+  // its stableId, and the picker persists the stableId. The IR transmitter is
+  // far below the default (a switch outranks it).
+  const sw: ContainerChild = {
+    id: 1,
+    stableId: 'esp-switch',
+    type: 'switch',
+    sourceInfo: { id: 'switch.relay' },
+  }
+  const ir: ContainerChild = {
+    id: 2,
+    stableId: 'esp-ir',
+    type: 'infrared',
+    sourceInfo: { id: 'infrared.ir_tx' },
+  }
+  it('resolves the child whose stableId was stored', () => {
+    expect(resolveContainerPrimary([sw, ir], null, 'esp-ir')?.id).toBe(2)
+  })
+  it('still resolves a legacy pick stored as sourceInfo.id', () => {
+    expect(resolveContainerPrimary([sw, ir], null, 'infrared.ir_tx')?.id).toBe(2)
   })
 })

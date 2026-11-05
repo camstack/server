@@ -61,6 +61,7 @@ export function containerChildToRef(child: ContainerChild): ChildRef {
   return {
     id: child.id,
     entityId: childEntityId(child),
+    stableId: child.stableId,
     type: child.type,
     ...(child.role !== undefined && child.role !== null ? { role: child.role } : {}),
     ...(child.name !== undefined ? { name: child.name } : {}),

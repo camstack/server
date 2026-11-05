@@ -18,6 +18,12 @@ export const PRIORITY: readonly string[] = CONTAINER_CHILD_PRIORITY
 export interface ChildRef {
   readonly id: number
   readonly entityId: string
+  /**
+   * The child's own `stableId` — the key a pick is persisted under. Distinct
+   * from `entityId` whenever the integration populates `sourceInfo.id`
+   * (ESPHome children do), so it must travel separately.
+   */
+  readonly stableId?: string | undefined
   readonly type: string
   /** `DeviceRole`, ranked ABOVE `type` — see `CONTAINER_CHILD_ROLE_PRIORITY`. */
   readonly role?: string | undefined
@@ -29,9 +35,9 @@ export interface ChildRef {
  * Resolve a container's primary child: the operator's pick when it still
  * matches a live child, else the highest-priority type.
  *
- * `entityId` here is `sourceInfo?.id ?? stableId` (see `containerChildToRef`).
- * The shared resolver matches its canonical `stableId` key first and accepts
- * that legacy value too, so a pick stored under either keeps resolving.
+ * `entityId` here is `sourceInfo?.id ?? stableId` (see `containerChildToRef`);
+ * `stableId` is the child's own. The shared resolver matches the canonical
+ * `stableId` key first and accepts the `entityId` as the legacy value, so a pick stored under either keeps resolving.
  */
 export function resolvePrimaryChild(
   children: readonly ChildRef[],
@@ -41,7 +47,8 @@ export function resolvePrimaryChild(
   const picked = resolveContainerPrimaryChild(
     children.map((c) => ({
       id: c.id,
-      stableId: c.entityId,
+      stableId: c.stableId ?? c.entityId,
+      entityId: c.entityId,
       type: c.type,
       ...(c.role !== undefined ? { role: c.role } : {}),
       ...(c.name !== undefined ? { name: c.name } : {}),
