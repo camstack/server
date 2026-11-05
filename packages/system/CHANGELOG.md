@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Device history retention settings are declared on the cluster hook; the form and stored values are unchanged.
 - Native metrics sampling settings are declared on the cluster hook; the form and stored values are unchanged.
 - Local network settings are declared only on the per-node settings hook; the form and stored values are unchanged.
+- Adding or creating a device passes the integration it belongs to on to the provider.
 
 ### Removed
 

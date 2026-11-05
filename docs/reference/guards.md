@@ -4,12 +4,12 @@
 
 # Guards
 
-216 repository guards: 211 in `scripts/`,
+217 repository guards: 212 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (206)
+## Enforced by CI checks (207)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -124,6 +124,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-no-credential-urls-in-fixtures.ts` | Credential-URL fixture guard — a RECORDED cap-output fixture must never carry a live camera credential. |
 | `scripts/check-no-detached-child-spawn.ts` | Guard (D668): no addon or server code spawns a child that LEAVES its runner's process group. |
 | `scripts/check-no-device-links.ts` | Wiring stays deleted — a cross-device derivation produces a DEVICE, never a field on somebody else's device. |
+| `scripts/check-no-devices-in-integration-form.ts` | an integration's settings form never edits its devices. |
 | `scripts/check-no-dts-in-src.sh` | — |
 | `scripts/check-no-dynamic-eval.ts` | Stage X security guard — fail the build if ANY production source file uses a dynamic code-execution primitive. This is the enforce-by-construction backstop for the safe expression engine (spec §4 rule 1): the engine exists precisely so n… |
 | `scripts/check-no-glyph-chevrons.ts` | No text-glyph disclosure markers (▸ ▾ ▶ ▼) in UI source. |

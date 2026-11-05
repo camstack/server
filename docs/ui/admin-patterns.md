@@ -581,6 +581,17 @@ components: a kind's interactive sign-in is its `signIn.basePath` on
 the schema's (`arrangeBrokerSchema`: required fields first; defaulted and
 sign-in-filled fields under a collapsed Advanced).
 
+## An integration adds a device from ONE modal ([D1011](../decisions/adr-1011-a-device-is-added-from-one-add-device-modal-never-through-an-integration-form.md))
+
+The integration page has one "Add device" button and `AddDeviceModal`. Its tabs
+are "Found on the network" and "Enter parameters"; the manual tab is drawn only
+when `useManualCreationAvailability` answers `available` (the provider declared
+a creation type and a form), and a single remaining flow is not drawn as a tab.
+The network list is `mergeNetworkCandidates` over the adoption candidates, a
+scan scoped to the integration and the passive proposals: one row per device. A
+row with `needsParams` opens the creation form prefilled before it is adopted.
+Never add a device through an integration's settings form.
+
 ## A collection of connections is one `InstancesTable`
 
 Need → component: **a collection of connections** (log destinations, SMTP relays, TURN

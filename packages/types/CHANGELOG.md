@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A device provider can say which parameters a discovered device still needs, and receives the integration a device is added to.
+
 ### Changed
 
 - Vendor login proxy: drop Subresource Integrity pins from proxied pages so rewritten scripts and styles are not refused

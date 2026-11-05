@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The integration page has one Add device button: boards and devices found on the network, a scan scoped to the integration and the manual form live in one modal.
+
 ## [1.2.592] - 2026-11-05
 
 ### Changed
