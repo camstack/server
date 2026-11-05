@@ -1428,15 +1428,13 @@ export class AgentRegistryService {
         planned.targets,
         this.nodeServerVersions.get(agentId) ?? null,
         requiresOf,
+        live,
       )
       for (const held of split.held) {
-        this.logger?.warn(
-          'convergence: delivery held, the node server is older than the addon needs',
-          {
-            tags: { nodeId: agentId },
-            meta: { package: held.target.name, version: held.target.version, reason: held.reason },
-          },
-        )
+        this.logger?.warn('convergence: delivery held, the node is older than the addon needs', {
+          tags: { nodeId: agentId },
+          meta: { package: held.target.name, version: held.target.version, reason: held.reason },
+        })
       }
       if (split.held.length > 0) {
         planned = { ...planned, targets: split.deliver }
