@@ -55,6 +55,7 @@ describe('integration examples', () => {
     ['service-integration', 'integration-service-cloudflare', 'integration-service-example'],
     ['exporter', 'exporter-ha-export', 'exporter-example'],
   ])('%s points at the in-repo implementation and the public example', (kind, inRepo, pub) => {
+    if (root === null) throw new Error('workspace root not found')
     const hits = findExample(root, kind)
     const ids = hits.map((h) => h.example.id)
     expect(ids).toContain(inRepo)
