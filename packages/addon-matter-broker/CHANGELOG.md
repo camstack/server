@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Matter integration form is declared on the integration form hook; no visible change
+
 ## [0.2.158] - 2026-11-05
 
 ### Changed
