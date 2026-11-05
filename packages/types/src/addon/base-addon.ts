@@ -1,7 +1,5 @@
 import type { ZodType } from 'zod'
-import type { IntegrationInstanceRef } from './integration-instance-ref.js'
 import { EventCategory } from '../enums/event-category.js'
-import { AddonMigrationsBlockedError } from './migrations-blocked-error.js'
 import type {
   AddonContext,
   AddonInitResult,
@@ -20,12 +18,17 @@ import { hydrateSchema } from '../interfaces/config-ui.js'
 import { emitReadiness } from '../interfaces/event-bus.js'
 import { SECRET_CLEAR } from '../keychain/secret-marker.js'
 import {
+  type AddonMigration,
+  type AddonMigrationRunOptions,
   type AddonMigrationRunReport,
   type BoundAddonMigration,
+  defineAddonMigrations,
   runAddonMigrations,
-  type AddonMigrationRunOptions,
 } from '../migrations/addon-migration.js'
+import type { MigrationApiV1 } from '../migrations/api/migration-api.v1.js'
 import { createDurableState, type DurableState } from './durable-state.js'
+import type { IntegrationInstanceRef } from './integration-instance-ref.js'
+import { AddonMigrationsBlockedError } from './migrations-blocked-error.js'
 import { normalizeNodeId, projectStore, readNodeValue, scopePatch } from './per-node-store.js'
 import { SCOPED_SETTINGS_SCOPES, type ScopedSettingsScope } from './scoped-settings.js'
 import { createSecretAwareContext, type SecretAwareSettingsHandle } from './secret-aware-context.js'
@@ -99,6 +102,35 @@ interface TypedConfigUISchema<TConfig extends object> extends Omit<ConfigUISchem
 }
 
 // ── BaseAddon ───────────────────────────────────────────────────────────
+
+/** One catalogue with its ports binder, ready for {@link BaseAddon.runMigrationSets}. */
+export interface MigrationSet {
+  bind(api: MigrationApiV1): readonly BoundAddonMigration[]
+}
+
+/**
+ * Pair a catalogue with the function that builds its ports FROM THE MIGRATION API. The one
+ * place a catalogue is bound: a migration reaches nothing a ports binder cannot reach
+ * through `api` (guard `check-migration-ports-surface`).
+ */
+export function migrationSet<TPorts>(
+  catalogue: readonly AddonMigration<TPorts>[],
+  bindPorts: (api: MigrationApiV1) => TPorts,
+): MigrationSet {
+  return { bind: (api) => defineAddonMigrations(catalogue, bindPorts(api)) }
+}
+
+function catalogueOf<TPorts>(
+  list: readonly (BoundAddonMigration | AddonMigration<TPorts>)[],
+): readonly AddonMigration<TPorts>[] {
+  return list.filter((entry): entry is AddonMigration<TPorts> => !('execute' in entry))
+}
+
+function boundOf<TPorts>(
+  list: readonly (BoundAddonMigration | AddonMigration<TPorts>)[],
+): readonly BoundAddonMigration[] {
+  return list.filter((entry): entry is BoundAddonMigration => 'execute' in entry)
+}
 
 /**
  * Base class for CamStack addons. Eliminates settings boilerplate:
@@ -310,7 +342,47 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
    * `{ only: [ids] }` — never a filtered catalogue (the engine would judge the
    * omitted applied ids "newer").
    */
-  protected async runMigrations(
+  protected runMigrations(
+    migrations: readonly BoundAddonMigration[],
+    options?: AddonMigrationRunOptions,
+  ): Promise<AddonMigrationRunReport>
+  protected runMigrations<TPorts>(
+    catalogue: readonly AddonMigration<TPorts>[],
+    bindPorts: (api: MigrationApiV1) => TPorts,
+    options?: AddonMigrationRunOptions,
+  ): Promise<AddonMigrationRunReport>
+  protected async runMigrations<TPorts>(
+    first: readonly (BoundAddonMigration | AddonMigration<TPorts>)[],
+    second?: AddonMigrationRunOptions | ((api: MigrationApiV1) => TPorts),
+    third?: AddonMigrationRunOptions,
+  ): Promise<AddonMigrationRunReport> {
+    if (typeof second === 'function') {
+      // Catalogue form: the ports come from the migration API and from nothing else.
+      return this.runMigrationSets([migrationSet(catalogueOf<TPorts>(first), second)], third)
+    }
+    return this.runBound(boundOf(first), second)
+  }
+
+  /**
+   * Several catalogues of ONE owner in one declaration (the engine replaces an owner's
+   * catalogue on every declare, so two calls would each judge the other's ids "newer").
+   * Build each entry with `migrationSet(catalogue, (api) => ports)`.
+   */
+  protected async runMigrationSets(
+    sets: readonly MigrationSet[],
+    options?: AddonMigrationRunOptions,
+  ): Promise<AddonMigrationRunReport> {
+    const api = this.ctx.migrationApi
+    if (api === undefined) {
+      throw new Error(`${this.ctx.id}: the migration API is not available on this context`)
+    }
+    return this.runBound(
+      sets.flatMap((set) => set.bind(api)),
+      options,
+    )
+  }
+
+  private async runBound(
     migrations: readonly BoundAddonMigration[],
     options?: AddonMigrationRunOptions,
   ): Promise<AddonMigrationRunReport> {

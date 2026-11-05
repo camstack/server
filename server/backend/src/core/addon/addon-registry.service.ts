@@ -52,6 +52,7 @@ import {
   validateProviderRegistrations,
   waitUntilReady,
   asBrokerLike,
+  createMigrationApiOverContext,
 } from '@camstack/server/system'
 import type {
   AddonContext,
@@ -3630,6 +3631,8 @@ export class AddonRegistryService {
       eventBus: this.eventBusService,
     })
 
+    const records = this.recordsForOwner(addonId, secrets)
+
     const ctx: InternalAddonContext & {
       integrationRegistry?: unknown
       capabilities: import('@camstack/types').CapabilitiesAccess
@@ -3737,7 +3740,16 @@ export class AddonRegistryService {
       // (no wire, no stamp): the same single place identity is trusted as for
       // the keychain. `ctx.records` is the owner's own door; a builtin that
       // acts for another owner (the entries service) builds one with `recordsForOwner`.
-      records: this.recordsForOwner(addonId, secrets),
+      records,
+      // The one surface a migration may reach (planning#447), over this context's own handles.
+      migrationApi: createMigrationApiOverContext({
+        nodeId: this.broker.nodeID,
+        logger,
+        api: () => registry.getAddonApi(addonId),
+        records,
+        secrets,
+        settings: settingsView,
+      }),
       useCapability<T = unknown>(capName: string, scope: ReadinessScope = { type: 'global' }) {
         return getOrCreateHandle<T>(capName, scope, 15_000)
       },

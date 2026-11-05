@@ -4,7 +4,7 @@
 
 # Guards
 
-221 repository guards: 216 in `scripts/`,
+222 repository guards: 217 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
@@ -242,7 +242,7 @@ violation the guard was written for, so a broken guard cannot pass in silence.
 | `packages/addon-pipeline/src/__tests__/guards/per-macro-slider-reaches-the-pool.guard.ts` | A per-macro confidence slider must be able to LOWER the detector. |
 | `server/backend/src/__tests__/guards/core-router-classification.guard.ts` | GUARD: every hand-written CORE (non-cap) tRPC router is explicitly classified, and its source agrees with the classification. |
 
-## Available but not wired into CI (5)
+## Available but not wired into CI (6)
 
 Run manually, from a hook, or via another script. If one of these encodes a
 rule that matters, wiring it into `checks.yml` is a one-line change.
@@ -251,6 +251,7 @@ rule that matters, wiring it into `checks.yml` is a one-line change.
 | --- | --- |
 | `scripts/check-capability-activation-single-authority.ts` | Capability activation has ONE authority: the addon manifest's `autoActivate`. |
 | `scripts/check-hosted-model-revisions.ts` | Hosted-revision guard — every artefact on the CamStack model mirror has a revision, and that revision is the sha256 the mirror holds for its weight file (D743, D744). |
+| `scripts/check-migration-api-append-only.ts` | GUARD: the migration API (`MigrationApiV1`) is append-only (planning#447). |
 | `scripts/check-public-docs-staleness.ts` | Public-docs staleness reminder — lists public docs pages whose described server code changed after they were verified. |
 | `scripts/check-runner-dist-barrel-free.ts` | Runner-footprint guard on the BUILT output (D28) — the twin of `check-runner-barrel-free.ts`, which reads SOURCE. |
 | `scripts/check-trainer-vendor.ts` | The trainer's vendored code must be byte-identical to its source. |

@@ -25,6 +25,8 @@ export interface FakeAddonContextOptions {
   readonly settings?: FakeSettings
   /** A wired `ctx.api` (a tRPC client with a scripted link); unwired by default. */
   readonly api?: AddonContext['api']
+  /** A wired `ctx.migrationApi`; absent by default, like a context built without a settings file. */
+  readonly migrationApi?: AddonContext['migrationApi']
 }
 
 function unused(name: string): () => never {
@@ -119,5 +121,6 @@ export function fakeAddonContext(options: FakeAddonContextOptions = {}): AddonCo
     acquireCapability: unused('acquireCapability'),
     onCapabilityStateChange: unused('onCapabilityStateChange'),
     addDisposer: () => () => undefined,
+    ...(options.migrationApi === undefined ? {} : { migrationApi: options.migrationApi }),
   }
 }

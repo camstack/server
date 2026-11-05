@@ -31,6 +31,7 @@ import {
   scopeKey,
 } from '@camstack/types/addon'
 import { CapabilityHandle } from '../capability-handle.js'
+import { createMigrationApiOverContext } from './migration-api-facade.js'
 import { recordsTransportOf } from './records-api-transport.js'
 import { createBrokerDeviceManagerApi } from './device-cap-proxy.js'
 import { DeviceRegistry } from '../device-registry.js'
@@ -737,6 +738,13 @@ async function buildAddonContext(
     eventBus: scopedEventBus,
   })
 
+  const records = createRecordsAccess({
+    owner: addonId,
+    transport: recordsTransportOf(api),
+    secrets,
+    logger: scopedLogger,
+  })
+
   const context: InternalAddonContext = {
     id: addonId,
     logger: scopedLogger,
@@ -756,11 +764,15 @@ async function buildAddonContext(
     secrets,
     // This addon's record kinds (D881). Same identity model as `secrets`: the
     // calls carry no owner, the transport stamps who is calling.
-    records: createRecordsAccess({
-      owner: addonId,
-      transport: recordsTransportOf(api),
-      secrets,
+    records,
+    // The one surface a migration may reach (planning#447), over the handles above.
+    migrationApi: createMigrationApiOverContext({
+      nodeId,
       logger: scopedLogger,
+      api: () => api,
+      records,
+      secrets,
+      settings: settingsView,
     }),
     kernel: (() => {
       // stream-probe routing differs by mode:

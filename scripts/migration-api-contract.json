@@ -142,6 +142,18 @@
         "bootId": {
           "required": true
         },
+        "migrationApi": {
+          "required": false
+        },
+        "migrationApi.methods": {
+          "required": true
+        },
+        "migrationApi.methods[]": {
+          "required": false
+        },
+        "migrationApi.version": {
+          "required": true
+        },
         "snapshot": {
           "required": true,
           "enum": [
@@ -180,7 +192,8 @@
         }
       },
       "behaviours": [
-        "ledger.declare.answers-steps-in-engine-order"
+        "ledger.declare.answers-steps-in-engine-order",
+        "ledger.declare.answers-the-migration-api"
       ]
     },
     "ledger.finish": {

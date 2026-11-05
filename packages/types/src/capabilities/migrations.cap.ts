@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { MigrationApiInfoSchema } from '../migrations/api/migration-api.v1.schema.js'
 import {
   MigrationDryRunResultSchema,
   MigrationLedgerEntrySchema,
@@ -8,8 +9,8 @@ import {
   MigrationPendingEntrySchema,
   MigrationStatusSchema,
 } from '../migrations/migration.js'
-import { DataStoreDatabaseSchema } from './settings-store.cap.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
+import { DataStoreDatabaseSchema } from './settings-store.cap.js'
 
 /**
  * migrations — the ledger and the controls of the boot-time migration engine
@@ -87,6 +88,8 @@ export const migrationsCapability = {
         bootId: z.string(),
         snapshot: z.enum(['none', 'written', 'refused']),
         steps: z.array(MigrationOwnerStepSchema),
+        /** The migration API this engine serves (additive: a server that predates it omits it). */
+        migrationApi: MigrationApiInfoSchema.optional(),
       }),
       { kind: 'mutation', auth: 'admin' },
     ),

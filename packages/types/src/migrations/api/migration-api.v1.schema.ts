@@ -62,6 +62,12 @@ const MigrationIntegrationSchema = z.object({
   originStableId: z.string().optional(),
 })
 
+/** What the engine says about the migration API it serves: lets an addon notice an older server. */
+export const MigrationApiInfoSchema = z.object({
+  version: z.number().int(),
+  methods: z.array(z.string()),
+})
+
 const LogInput = z.object({ message: z.string(), meta: Rows.optional() })
 
 export const MIGRATION_API_V1_METHODS = {
@@ -71,8 +77,13 @@ export const MIGRATION_API_V1_METHODS = {
       bootId: z.string(),
       snapshot: z.enum(['none', 'written', 'refused']),
       steps: z.array(MigrationOwnerStepSchema),
+      /** The migration API the engine serves; absent from a server that predates it. */
+      migrationApi: MigrationApiInfoSchema.optional(),
     }),
-    behaviours: ['ledger.declare.answers-steps-in-engine-order'],
+    behaviours: [
+      'ledger.declare.answers-steps-in-engine-order',
+      'ledger.declare.answers-the-migration-api',
+    ],
   },
   'ledger.start': {
     input: z.object({ id: z.string().min(1) }),

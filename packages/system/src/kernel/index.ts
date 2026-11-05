@@ -240,6 +240,14 @@ export {
 } from './moleculer/addon-context-factory.js'
 export { asBrokerLike } from './moleculer/event-bus.js'
 export type { BrokerLike } from './moleculer/event-bus.js'
+export {
+  createMigrationApi,
+  createMigrationApiOverContext,
+} from './moleculer/migration-api-facade.js'
+export type {
+  MigrationApiBacking,
+  MigrationApiContextDeps,
+} from './moleculer/migration-api-facade.js'
 export type { MoleculerEventStats } from './moleculer/addon-context-factory.js'
 // The REGIME the cross-node counters were produced under. A suppressed count
 // means "nothing was dropped" under `filter` and "nothing WOULD have been

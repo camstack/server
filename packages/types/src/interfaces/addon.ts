@@ -1,21 +1,21 @@
 import type { z } from 'zod'
+import type { IntegrationInstanceRef } from '../addon/integration-instance-ref.js'
+import type { PackageRequires } from '../addon/package-requires.js'
+import type { ScopedSettingsScope } from '../addon/scoped-settings.js'
 import type { CapabilityDefinition, InferProvider } from '../capabilities/capability-definition.js'
 import type { CustomActionCaller, CustomActionsSpec } from '../capabilities/custom-actions.js'
+import type { SecretsAccess } from '../keychain/secrets-access.js'
+import type { DebugEmitter } from '../logging/debug-watch.js'
+import type { RecordsAccess } from '../records/records-access.js'
 import type { PipelineSlot } from '../types/pipeline.js'
 import type { AddonDataPlane } from './addon-data-plane.js'
-import type { CoralInfo } from './platform.js'
 import type { AddonPeerBytes } from './addon-peer-bytes.js'
-import type { SecretsAccess } from '../keychain/secrets-access.js'
-import type { RecordsAccess } from '../records/records-access.js'
-import type { IntegrationInstanceRef } from '../addon/integration-instance-ref.js'
-import type { ScopedSettingsScope } from '../addon/scoped-settings.js'
-import type { PackageRequires } from '../addon/package-requires.js'
 import type { CapabilityDeclaration } from './capability.js'
 import type { ConfigUISchema, ConfigUISchemaWithValues, FieldProbeResult } from './config-ui.js'
 import type { IEventBus, ReadinessScope } from './event-bus.js'
 import type { ICapabilityRegistry } from './kernel-abstractions.js'
 import type { IScopedLogger } from './logging.js'
-import type { DebugEmitter } from '../logging/debug-watch.js'
+import type { CoralInfo } from './platform.js'
 import type { ICapabilityHandle } from './readiness.js'
 import type {
   StorageLocationDeclaration,
@@ -853,6 +853,14 @@ export interface AddonContext<TConfig = Record<string, unknown>> {
    * kernel that predates records.
    */
   readonly records?: RecordsAccess
+
+  /**
+   * The ONLY surface a migration body may reach (planning#447): a versioned, append-only
+   * facade over this context's ledger, legacy rows, records, settings, keychain and
+   * integration list. `BaseAddon.runMigrations` hands it to the ports binder; an addon
+   * never reads it elsewhere. Absent in isolation (tests, tooling).
+   */
+  readonly migrationApi?: import('../migrations/api/migration-api.v1.js').MigrationApiV1
 
   /**
    * Runtime accessor for the capability registry — exposed to addons that

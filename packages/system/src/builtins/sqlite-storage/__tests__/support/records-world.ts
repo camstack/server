@@ -34,6 +34,34 @@ export class FakeFile {
   }
 }
 
+/** The in-process transport of `owner` over a provider: the caller is stated, never claimed. */
+export function stampedRecordsTransport(
+  provider: IRecordsProvider,
+  owner: string,
+): RecordsTransport {
+  const as = <I extends object>(input: I): I & { readonly callerAddonId: string } =>
+    Object.assign({}, input, { callerAddonId: owner })
+  return {
+    declareKinds: (i) => provider.declareKinds(as(i)),
+    get: (i) => provider.get(as(i)),
+    getMany: (i) => provider.getMany(as(i)),
+    secretRefs: (i) => provider.secretRefs(as(i)),
+    put: (i) => provider.put(as(i)),
+    putMany: (i) => provider.putMany(as(i)),
+    patch: (i) => provider.patch(as(i)),
+    delete: (i) => provider.delete(as(i)),
+    deleteMany: (i) => provider.deleteMany(as(i)),
+    query: (i) => provider.query(as(i)),
+    count: (i) => provider.count(as(i)),
+    histogram: (i) => provider.histogram(as(i)),
+    aggregate: (i) => provider.aggregate(as(i)),
+    deleteWhere: (i) => provider.deleteWhere(as(i)),
+    transact: (i) => provider.transact(as(i)),
+    deleteDevice: (i) => provider.deleteDevice(as(i)),
+    allocateId: (i) => provider.allocateId(as(i)),
+  }
+}
+
 export interface RecordsWorld {
   readonly provider: RecordsProvider
   readonly settings: FakeFile
@@ -52,30 +80,7 @@ export function makeRecordsWorld(): RecordsWorld {
   // The provider needs only these two members of the router and of a file.
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- documented type boundary: a two-method stand-in for the router in a spec
   const provider = new RecordsProvider(router as unknown as PlacementRouter, silentLogger())
-  const as = <I extends object>(owner: string, input: I): I & { readonly callerAddonId: string } =>
-    Object.assign({}, input, { callerAddonId: owner })
-  const transportFor = (owner: string): RecordsTransport => {
-    const p: IRecordsProvider = provider
-    return {
-      declareKinds: (i) => p.declareKinds(as(owner, i)),
-      get: (i) => p.get(as(owner, i)),
-      getMany: (i) => p.getMany(as(owner, i)),
-      secretRefs: (i) => p.secretRefs(as(owner, i)),
-      put: (i) => p.put(as(owner, i)),
-      putMany: (i) => p.putMany(as(owner, i)),
-      patch: (i) => p.patch(as(owner, i)),
-      delete: (i) => p.delete(as(owner, i)),
-      deleteMany: (i) => p.deleteMany(as(owner, i)),
-      query: (i) => p.query(as(owner, i)),
-      count: (i) => p.count(as(owner, i)),
-      histogram: (i) => p.histogram(as(owner, i)),
-      aggregate: (i) => p.aggregate(as(owner, i)),
-      deleteWhere: (i) => p.deleteWhere(as(owner, i)),
-      transact: (i) => p.transact(as(owner, i)),
-      deleteDevice: (i) => p.deleteDevice(as(owner, i)),
-      allocateId: (i) => p.allocateId(as(owner, i)),
-    }
-  }
+  const transportFor = (owner: string): RecordsTransport => stampedRecordsTransport(provider, owner)
   return { provider, settings, events, transportFor }
 }
 

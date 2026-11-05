@@ -2,18 +2,19 @@
  * The `migrations` provider (D987): a thin face over the {@link MigrationEngine}.
  * The engine is the authority; this only shapes its answers to the cap.
  */
-import type {
-  IMigrationsProvider,
-  MigrationDryRunResult,
-  MigrationLedgerEntry,
-  MigrationMeta,
-  MigrationOwnerResult,
-  MigrationOwnerStep,
-  MigrationPendingEntry,
-  MigrationStatus,
-  DataStoreDatabase,
+import {
+  type DataStoreDatabase,
+  type IMigrationsProvider,
+  MIGRATION_API_V1_METHODS,
+  MIGRATION_API_VERSION,
+  type MigrationDryRunResult,
+  type MigrationLedgerEntry,
+  type MigrationMeta,
+  type MigrationOwnerResult,
+  type MigrationOwnerStep,
+  type MigrationPendingEntry,
+  type MigrationStatus,
 } from '@camstack/types'
-import type { MigrationEngine } from './migration-engine.js'
 import {
   clearLegacyIntegrationRows,
   deleteLegacyIntegrationRowKeys,
@@ -21,6 +22,7 @@ import {
   patchLegacyIntegrationRows,
   readLegacyIntegrationRows,
 } from './legacy-integration-rows-door.js'
+import type { MigrationEngine } from './migration-engine.js'
 import type { MigrationDatabase } from './migration-types.js'
 
 /**
@@ -100,10 +102,16 @@ export class MigrationsProvider implements IMigrationsProvider {
     bootId: string
     snapshot: 'none' | 'written' | 'refused'
     steps: MigrationOwnerStep[]
+    migrationApi: { version: number; methods: string[] }
   }> {
-    return this.engine
-      .declareOwner(input.owner, input.metas, callerOf(input))
-      .then((out) => ({ ...out, steps: [...out.steps] }))
+    return this.engine.declareOwner(input.owner, input.metas, callerOf(input)).then((out) => ({
+      ...out,
+      steps: [...out.steps],
+      migrationApi: {
+        version: MIGRATION_API_VERSION,
+        methods: Object.keys(MIGRATION_API_V1_METHODS),
+      },
+    }))
   }
 
   startMigration(input: { id: string }): Promise<{

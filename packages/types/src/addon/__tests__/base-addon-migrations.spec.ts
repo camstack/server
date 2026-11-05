@@ -9,6 +9,7 @@ import { observable } from '@trpc/server/observable'
 import { describe, expect, it } from 'vitest'
 import type { AppRouter } from '../../generated/addon-api.js'
 import { type AddonMigration, defineAddonMigrations } from '../../migrations/addon-migration.js'
+import type { MigrationApiV1 } from '../../migrations/api/migration-api.v1.js'
 import type { MigrationMeta } from '../../migrations/migration.js'
 import { BaseAddon } from '../base-addon.js'
 import { fakeAddonContext } from '../fake-addon-context.js'
@@ -148,5 +149,78 @@ describe('BaseAddon.runMigrations', () => {
     const addon = await probeWith('applied', calls)
     expect((await addon.migrate([])).declared).toBe(false)
     expect(calls).toEqual([])
+  })
+})
+
+/** A migration API whose every method is a stub: the seam only needs the object's identity. */
+function stubMigrationApi(): MigrationApiV1 {
+  const none = async (): Promise<never> => {
+    throw new Error('not part of this test')
+  }
+  return {
+    version: 1,
+    ledger: { declare: none, start: none, finish: none },
+    legacyRows: { read: none, clear: none, patch: none, deleteKeys: none },
+    records: {
+      kind: () => ({
+        get: none,
+        getResolved: none,
+        put: none,
+        putMany: none,
+        patch: none,
+        delete: none,
+        query: none,
+        deleteWhere: none,
+      }),
+    },
+    settings: { read: none, write: none, deleteKeys: none },
+    secrets: { resolve: none, put: none, delete: none },
+    integrations: { list: none, get: none },
+    node: { localNodeId: none },
+    log: { info: none, warn: none },
+  }
+}
+
+class CatalogueProbe extends BaseAddon {
+  protected async onInitialize() {
+    return []
+  }
+  migrate(entries: readonly AddonMigration<{ readonly api: MigrationApiV1 }>[]) {
+    return this.runMigrations(entries, (api) => ({ api }))
+  }
+}
+
+describe('BaseAddon.runMigrations, catalogue form', () => {
+  it('builds the ports from ctx.migrationApi and from nothing else', async () => {
+    const api = stubMigrationApi()
+    const addon = new CatalogueProbe({})
+    await addon.initialize(
+      fakeAddonContext({
+        migrationApi: api,
+        api: createTRPCClient<AppRouter>({ links: [scriptedHub([], 'applied')] }),
+      }),
+    )
+    const seen: MigrationApiV1[] = []
+    const report = await addon.migrate([
+      {
+        meta: meta('ported', 'block-owner'),
+        procedure: async (ports) => {
+          seen.push(ports.api)
+          return { outcome: 'done', summary: {} }
+        },
+      },
+    ])
+    expect(report.applied).toEqual(['probe/2026-11-01-ported'])
+    expect(seen).toEqual([api])
+  })
+
+  it('refuses to run when the context carries no migration API', async () => {
+    const addon = new CatalogueProbe({})
+    await addon.initialize(
+      fakeAddonContext({
+        api: createTRPCClient<AppRouter>({ links: [scriptedHub([], 'applied')] }),
+      }),
+    )
+    await expect(addon.migrate([])).rejects.toThrow(/migration API is not available/)
   })
 })
