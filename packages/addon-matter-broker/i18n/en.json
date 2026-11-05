@@ -1,7 +1,4 @@
 {
-  "globalSettings.s_matter-fabric.title": "Matter fabric",
-  "globalSettings.s_matter-fabric.description": "Matter fabrics are managed in the External systems → Brokers tab.",
-  "globalSettings.s_matter-fabric.fabricHelp.label": "Fabrics are managed separately",
   "connection.s_matter-fabric.title": "Matter fabric",
   "connection.s_matter-fabric.description": "CamStack owns a Matter fabric on this hub. Add wireless onboarding credentials only if you will commission Thread or BLE-Wi-Fi devices. On-network (Ethernet/Wi-Fi) Matter devices need none of these.",
   "connection.s_matter-fabric.threadDataset.label": "Thread operational dataset (hex, optional)",

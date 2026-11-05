@@ -15,11 +15,12 @@ import {
   type IBrokerProvider,
   type IDevice,
   type IDeviceAdoptionProvider,
+  type IntegrationInstanceRef,
   type ProviderRegistration,
   type RecordIntegrationInstances,
   type SystemEvent,
 } from '@camstack/types'
-import { type MatterAddonConfig } from './config.js'
+import { buildConnectionFormSchema, type MatterAddonConfig } from './config.js'
 import { MatterBrokerRegistry } from './matter-broker-registry.js'
 import { sameConnection } from './matter-integration-manager.js'
 import { buildMatterBrokerProvider } from './matter-broker-provider.js'
@@ -449,33 +450,13 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
     })
   }
 
-  // ── Settings UI (informational only) ───────────────────────────────────
+  // ── Instance form ──────────────────────────────────────────────────────
 
-  protected globalSettingsSchema(): ConfigUISchema {
-    return this.schema({
-      sections: [
-        {
-          id: 'matter-fabric',
-          title: 'Matter fabric',
-          titleKey: 'matter-broker:globalSettings.s_matter-fabric.title',
-          description: 'Matter fabrics are managed in the External systems → Brokers tab.',
-          descriptionKey: 'matter-broker:globalSettings.s_matter-fabric.description',
-          columns: 1,
-          fields: [
-            {
-              type: 'info' as const,
-              key: 'fabricHelp',
-              label: 'Fabrics are managed separately',
-              labelKey: 'matter-broker:globalSettings.s_matter-fabric.fabricHelp.label',
-              content:
-                'This integration links to a Matter fabric broker. Add, edit, or remove ' +
-                'fabrics from External systems → Brokers, then commission devices into the ' +
-                'fabric. The integration only stores a reference to its broker.',
-            },
-          ],
-        },
-      ],
-    })
+  /** The connection form a record carries; the values live on the record, never in `addon-settings`. */
+  protected override async integrationFormSchema(
+    _instance: IntegrationInstanceRef,
+  ): Promise<ConfigUISchema | null> {
+    return buildConnectionFormSchema()
   }
 
   // ── Manual creation: not supported (nodes are commissioned + adopted) ──

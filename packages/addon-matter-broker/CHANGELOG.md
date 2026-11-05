@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The Matter manifest declares multiple instances, as the integration already allowed.
 
+- The integration form is declared as the instance form (the connection form); fabrics and their stored values are unchanged.
+
 ## [0.2.157] - 2026-11-05
 
 ### Changed
