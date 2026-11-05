@@ -1,4 +1,5 @@
 import type {
+  ConfigUISchema,
   DecoderHwAccelConfig,
   IDecoderCapProvider,
   ProviderRegistration,
@@ -40,7 +41,13 @@ export default class DecoderNodeAvAddon
     super(DEFAULT_DECODER_HWACCEL_CONFIG)
   }
 
-  protected globalSettingsSchema() {
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return ['decoder']
+  }
+
+  /** The hwaccel choice is per node: hardware differs, so it is stored as `hwaccel@<nodeId>`. */
+  protected override async nodeSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    if (cap !== 'decoder') return null
     return this.schema({
       sections: [
         {
