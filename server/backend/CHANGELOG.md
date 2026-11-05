@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.772] - 2026-11-05
+
 ### Fixed
 
 - A container with an empty TZ no longer reports the invalid zone Etc/Unknown: the site location falls back to UTC and the starter ignores an empty TZ
