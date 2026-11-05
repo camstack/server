@@ -13,10 +13,17 @@ import {
 } from '../face-settings.js'
 import PipelineAnalyticsAddon, { stripGlobalOnlyFields } from '../index.js'
 
-// Subclass to expose the protected globalSettingsSchema for schema-section tests.
+// Subclass to expose the protected scoped hooks for schema-section tests.
 class TestableAddon extends PipelineAnalyticsAddon {
-  getSchema(cap?: string) {
-    return this.globalSettingsSchema(cap)
+  /** The whole analytics form: every scoped declaration, or one capability's. */
+  async getSchema(cap?: string) {
+    const caps = cap === undefined ? ['pipeline-analytics', 'face-gallery'] : [cap]
+    const sections = (
+      await Promise.all(
+        caps.flatMap((name) => [this.clusterSettingsSchema(name), this.deviceDefaultsSchema(name)]),
+      )
+    ).flatMap((schema) => schema?.sections ?? [])
+    return { sections }
   }
 }
 
@@ -129,11 +136,11 @@ describe('resolveFaceSettings', () => {
   })
 })
 
-describe('globalSettingsSchema — face-recognition section', () => {
-  it('includes a face-recognition section with an enabled field', () => {
+describe('scoped settings — face-recognition section', () => {
+  it('includes a face-recognition section with an enabled field', async () => {
     const addon = new TestableAddon()
-    const schema = addon.getSchema()
-    const section = schema?.sections.find((s) => s.id === 'face-recognition')
+    const schema = await addon.getSchema()
+    const section = schema.sections.find((s) => s.id === 'face-recognition')
     expect(section).toBeDefined()
     const enabledField = section?.fields?.find(
       (f: { key: string }) => f.key === 'faceRecognitionEnabled',
@@ -146,35 +153,35 @@ describe('globalSettingsSchema — face-recognition section', () => {
     })
   })
 
-  it('face-recognition section fields cover all FACE_DEFAULTS keys', () => {
+  it('face-recognition section fields cover all FACE_DEFAULTS keys', async () => {
     const addon = new TestableAddon()
-    const schema = addon.getSchema()
-    const section = schema?.sections.find((s) => s.id === 'face-recognition')
+    const schema = await addon.getSchema()
+    const section = schema.sections.find((s) => s.id === 'face-recognition')
     const keys = section?.fields?.map((f: { key: string }) => f.key) ?? []
     for (const k of Object.keys(FACE_DEFAULTS) as (keyof typeof FACE_DEFAULTS)[]) {
       expect(keys).toContain(k)
     }
   })
 
-  it('cap face-gallery returns ONLY the face-recognition section — Pipeline Cluster Settings asks by cap', () => {
+  it('cap face-gallery returns ONLY the face-recognition section — Pipeline Cluster Settings asks by cap', async () => {
     const addon = new TestableAddon()
-    const scoped = addon.getSchema('face-gallery')
-    expect(scoped?.sections.map((s) => s.id)).toEqual(['face-recognition'])
-    const unscoped = addon.getSchema()
-    expect(unscoped?.sections.map((s) => s.id)).toContain('retention')
-    expect(unscoped?.sections.map((s) => s.id)).toContain('face-recognition')
+    const scoped = await addon.getSchema('face-gallery')
+    expect(scoped.sections.map((s) => s.id)).toEqual(['face-recognition'])
+    const unscoped = await addon.getSchema()
+    expect(unscoped.sections.map((s) => s.id)).toContain('retention')
+    expect(unscoped.sections.map((s) => s.id)).toContain('face-recognition')
   })
 
-  it('an unrelated cap returns no sections so this addon does not appear on the wrong page', () => {
+  it('an unrelated cap returns no sections so this addon does not appear on the wrong page', async () => {
     const addon = new TestableAddon()
-    expect(addon.getSchema('network-access')?.sections).toEqual([])
+    expect((await addon.getSchema('network-access')).sections).toEqual([])
   })
 })
 
 describe('stripGlobalOnlyFields — global-only `enabled` is removed from per-device sections', () => {
-  it('drops the face-recognition `enabled` field but keeps the tuning knobs', () => {
+  it('drops the face-recognition `enabled` field but keeps the tuning knobs', async () => {
     const addon = new TestableAddon()
-    const sections = addon.getSchema()?.sections ?? []
+    const sections = (await addon.getSchema()).sections
     const stripped = stripGlobalOnlyFields(sections)
     const face = stripped.find((s) => s.id === 'face-recognition')
     const keys = face?.fields?.map((f: { key?: string }) => f.key) ?? []
@@ -189,18 +196,18 @@ describe('stripGlobalOnlyFields — global-only `enabled` is removed from per-de
     expect(keys).not.toContain('bufferRetentionDays')
   })
 
-  it('leaves sections without global-only fields untouched', () => {
+  it('leaves sections without global-only fields untouched', async () => {
     const addon = new TestableAddon()
-    const sections = addon.getSchema()?.sections ?? []
+    const sections = (await addon.getSchema()).sections
     const stripped = stripGlobalOnlyFields(sections)
     const tracking = stripped.find((s) => s.id === 'tracking')
     const original = sections.find((s) => s.id === 'tracking')
     expect(tracking?.fields?.length).toBe(original?.fields?.length)
   })
 
-  it('the cluster-post-processing section is global-only (present globally, dropped per-device)', () => {
+  it('the cluster-post-processing section is global-only (present globally, dropped per-device)', async () => {
     const addon = new TestableAddon()
-    const sections = addon.getSchema()?.sections ?? []
+    const sections = (await addon.getSchema()).sections
     // Present on the global settings page, with the node field.
     const global = sections.find((s) => s.id === 'cluster-post-processing')
     expect(global).toBeDefined()
@@ -233,7 +240,7 @@ describe('defaults match the values actually running', () => {
     expect(FACE_DEFAULTS.similarityThreshold).toBe(0.45)
   })
 
-  it('margin defaults to the retuned 0.12, not the dead 0.15', () => {
+  it('margin defaults to the retuned 0.12, not the dead 0.15', async () => {
     expect(FACE_DEFAULTS.margin).toBe(0.12)
   })
 })
@@ -247,7 +254,7 @@ describe('defaults match the values actually running', () => {
  * silently, for anybody.
  */
 describe('deriveSuggestionMinCosine — the band cannot invert', () => {
-  it('is 80% of the assignment threshold', () => {
+  it('is 80% of the assignment threshold', async () => {
     expect(SUGGESTION_BAND_FACTOR).toBe(0.8)
     // The live hub, 2026-09-26: threshold 0.40 ⇒ suggestions from 0.32.
     expect(deriveSuggestionMinCosine(0.4)).toBe(0.32)
@@ -257,7 +264,7 @@ describe('deriveSuggestionMinCosine — the band cannot invert', () => {
     expect(deriveSuggestionMinCosine(FACE_DEFAULTS.similarityThreshold)).toBe(0.36)
   })
 
-  it('never returns float noise (0.8 × 0.45 is 0.36000000000000004 in IEEE754)', () => {
+  it('never returns float noise (0.8 × 0.45 is 0.36000000000000004 in IEEE754)', async () => {
     expect(deriveSuggestionMinCosine(0.45)).not.toBe(0.45 * 0.8)
     expect(deriveSuggestionMinCosine(0.625)).toBe(0.5)
   })
@@ -268,7 +275,7 @@ describe('deriveSuggestionMinCosine — the band cannot invert', () => {
    * without an error anywhere. Derivation makes it unreachable BY CONSTRUCTION
    * — so it is pinned over the whole domain, not at a few sample points.
    */
-  it('the suggestion floor is BELOW the assignment threshold for every threshold', () => {
+  it('the suggestion floor is BELOW the assignment threshold for every threshold', async () => {
     const thresholds: number[] = []
     for (let i = 0; i <= 1000; i++) thresholds.push(i / 1000)
     // Thresholds small enough that rounding to 4 decimals would REACH them
@@ -291,7 +298,7 @@ describe('deriveSuggestionMinCosine — the band cannot invert', () => {
  * store as one either, where a future reader could resurrect it.
  */
 describe('planStoredSuggestionPurge — the stale value leaves the store', () => {
-  it('plans an UNSET for a blob that carries the retired key', () => {
+  it('plans an UNSET for a blob that carries the retired key', async () => {
     const plan = planStoredSuggestionPurge({
       similarityThreshold: 0.45,
       suggestionMinCosine: 0.33,
@@ -306,7 +313,7 @@ describe('planStoredSuggestionPurge — the stale value leaves the store', () =>
     expect(Object.keys(plan?.patch ?? {})).toEqual(['suggestionMinCosine'])
   })
 
-  it('is a no-op once the key is gone (absence IS the migration marker)', () => {
+  it('is a no-op once the key is gone (absence IS the migration marker)', async () => {
     expect(planStoredSuggestionPurge({})).toBeNull()
     expect(planStoredSuggestionPurge({ similarityThreshold: 0.45 })).toBeNull()
   })
@@ -318,18 +325,18 @@ describe('planStoredSuggestionPurge — the stale value leaves the store', () =>
  * BAND broke (D222).
  */
 describe('deriveSuggestedBufferCap — the suggested tier is bounded and derived', () => {
-  it('is larger than the ordinary cap at the shipped default', () => {
+  it('is larger than the ordinary cap at the shipped default', async () => {
     const cap = deriveSuggestedBufferCap(FACE_DEFAULTS.bufferMaxPerDevice)
     expect(cap).toBe(FACE_DEFAULTS.bufferMaxPerDevice * SUGGESTED_BUFFER_CAP_FACTOR)
     expect(cap).toBeGreaterThan(FACE_DEFAULTS.bufferMaxPerDevice)
   })
 
-  it('TRACKS the operator knob rather than fighting it', () => {
+  it('TRACKS the operator knob rather than fighting it', async () => {
     expect(deriveSuggestedBufferCap(10)).toBeGreaterThan(deriveSuggestedBufferCap(5))
     expect(deriveSuggestedBufferCap(200)).toBe(800)
   })
 
-  it('BOUNDS: total over the domain, never Infinity and never below the ordinary cap', () => {
+  it('BOUNDS: total over the domain, never Infinity and never below the ordinary cap', async () => {
     const caps = [0, 1, 7, 50, 137, 1_000, 10_000]
     for (const max of caps) {
       const derived = deriveSuggestedBufferCap(max)
@@ -339,11 +346,11 @@ describe('deriveSuggestedBufferCap — the suggested tier is bounded and derived
     }
   })
 
-  it('0 turns the buffer off entirely — one switch, not two', () => {
+  it('0 turns the buffer off entirely — one switch, not two', async () => {
     expect(deriveSuggestedBufferCap(0)).toBe(0)
   })
 
-  it('a non-finite or negative cap can never become an unbounded tier', () => {
+  it('a non-finite or negative cap can never become an unbounded tier', async () => {
     expect(deriveSuggestedBufferCap(Number.POSITIVE_INFINITY)).toBe(0)
     expect(deriveSuggestedBufferCap(Number.NaN)).toBe(0)
     expect(deriveSuggestedBufferCap(-5)).toBe(0)
@@ -378,7 +385,7 @@ describe('the buffer cap in force comes from the operator, not the constant', ()
  * carried an interim `0.85` written by hand on 2026-09-27.
  */
 describe('planStoredMinFaceConfidencePurge — the retired bar leaves the store', () => {
-  it('plans an UNSET for a blob that carries it, reporting what it was', () => {
+  it('plans an UNSET for a blob that carries it, reporting what it was', async () => {
     const plan = planStoredMinFaceConfidencePurge({
       similarityThreshold: 0.45,
       minFaceConfidence: 0.85,
@@ -390,12 +397,12 @@ describe('planStoredMinFaceConfidencePurge — the retired bar leaves the store'
     expect(Object.keys(plan?.patch ?? {})).toEqual(['minFaceConfidence'])
   })
 
-  it('is a no-op once the key is gone', () => {
+  it('is a no-op once the key is gone', async () => {
     expect(planStoredMinFaceConfidencePurge({})).toBeNull()
     expect(planStoredMinFaceConfidencePurge({ similarityThreshold: 0.45 })).toBeNull()
   })
 
-  it('a stored value no longer reaches the resolved settings', () => {
+  it('a stored value no longer reaches the resolved settings', async () => {
     expect(Object.keys(resolveFaceSettings({ minFaceConfidence: 0.85 }))).not.toContain(
       'minFaceConfidence',
     )

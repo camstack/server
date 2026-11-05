@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Fixed: the face-recognition switch and the parked-object suppression switch shared one setting, so turning one on or off flipped the other; each now has its own setting, and your current choice is carried into both
+- The analytics settings are now declared per capability (face recognition under face-gallery, the rest under pipeline-analytics); the form you see is unchanged
 
 ## [1.2.669] - 2026-11-05
 

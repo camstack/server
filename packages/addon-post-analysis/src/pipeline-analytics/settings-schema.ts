@@ -124,8 +124,6 @@ export function retagRetentionSection<T extends { readonly id?: string; readonly
  */
 export const SUGGESTION_THRESHOLD_READOUT_KEY = 'suggestionThresholdReadout'
 
-/** `getGlobalSettings({ cap })` scope for the face matching form. */
-const FACE_GALLERY_SETTINGS_CAP = 'face-gallery'
 const FACE_RECOGNITION_SECTION_ID = 'face-recognition'
 
 /** Percent, at most one decimal, without a trailing `.0`. Cosines here are
@@ -233,7 +231,7 @@ export function stripDeviceOnlyFields<
  * in `BaseAddon.schema()`; the general sections below are followed by the
  * detection-knob sections in the original order.
  */
-export function buildGlobalSettingsSchema(cap?: string): ConfigUISchema {
+export function buildGlobalSettingsSchema(): ConfigUISchema {
   const generalSections: readonly ConfigSection[] = [
     {
       id: 'cluster-post-processing',
@@ -1039,26 +1037,36 @@ export function buildGlobalSettingsSchema(cap?: string): ConfigUISchema {
       ],
     },
   ]
-  return scopeGlobalSettingsToCap(
-    { sections: [...generalSections, ...buildDetectionSettingsSections()] },
-    cap,
-  )
+  return { sections: [...generalSections, ...buildDetectionSettingsSections()] }
+}
+
+/** The face matching form: the cluster form of `face-gallery`. */
+export function buildFaceClusterSchema(): ConfigUISchema {
+  return {
+    sections: buildGlobalSettingsSchema().sections.filter(
+      (section) => section.id === FACE_RECOGNITION_SECTION_ID,
+    ),
+  }
+}
+
+/** The cluster-wide knobs of `pipeline-analytics`: the sections a camera never overrides. */
+export function buildAnalyticsClusterSchema(): ConfigUISchema {
+  return {
+    sections: buildGlobalSettingsSchema().sections.filter((section) =>
+      GLOBAL_ONLY_SECTIONS.has(section.id),
+    ),
+  }
 }
 
 /**
- * The `cap` argument on `getGlobalSettings` is how a page asks for ONE
- * capability's knobs instead of the addon's whole form. Pipeline → Cluster
- * → Settings asks for `face-gallery`; System → Settings omits `cap` and
- * still gets every section. An unknown cap is empty so this addon cannot
- * appear on a page that meant someone else.
+ * The fleet defaults of `pipeline-analytics`: every knob a camera can override on its own form,
+ * the face section excluded (it is the cluster form of `face-gallery`).
  */
-function scopeGlobalSettingsToCap(schema: ConfigUISchema, cap?: string): ConfigUISchema {
-  if (cap === undefined || cap === '') return schema
-  if (cap === FACE_GALLERY_SETTINGS_CAP) {
-    return {
-      ...schema,
-      sections: schema.sections.filter((s) => s.id === FACE_RECOGNITION_SECTION_ID),
-    }
+export function buildAnalyticsDeviceDefaultsSchema(): ConfigUISchema {
+  return {
+    sections: buildGlobalSettingsSchema().sections.filter(
+      (section) =>
+        section.id !== FACE_RECOGNITION_SECTION_ID && !GLOBAL_ONLY_SECTIONS.has(section.id),
+    ),
   }
-  return { ...schema, sections: [] }
 }

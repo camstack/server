@@ -18,6 +18,7 @@ import type {
   ClearTrackRelationInput,
   ClearTrackRelationResult,
   ConfigSectionWithValues,
+  ConfigUISchema,
   ConfigUISchemaWithValues,
   DetailStepAnnounce,
   DetectionSource,
@@ -1071,6 +1072,9 @@ const LEVEL_SEED_WINDOW_MS = 48 * 3_600_000
 
 import { SyntheticTrackMaterializer } from './services/synthetic-track.js'
 import {
+  buildAnalyticsClusterSchema,
+  buildAnalyticsDeviceDefaultsSchema,
+  buildFaceClusterSchema,
   buildGlobalSettingsSchema,
   EMBEDDING_ENABLED_DEFAULT,
   formatSuggestionThresholdReadout,
@@ -15753,13 +15757,29 @@ export default class PipelineAnalyticsAddon
   // device panel). A missing device override falls back to the global
   // default — same pattern pipeline-orchestrator uses.
 
-  protected globalSettingsSchema(cap?: string) {
-    // S5 (refactor spec 2026-07-22): the ~950-line settings-form literal moved
-    // VERBATIM to `settings-schema.ts` — pure move, byte-identical schema.
-    // `cap` scopes the form: Pipeline Cluster Settings asks for `face-gallery`
-    // and gets only Face recognition; omitting it (System → Settings) is the
-    // full schema.
-    return this.schema(buildGlobalSettingsSchema(cap))
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return ['pipeline-analytics', 'face-gallery']
+  }
+
+  /**
+   * D986 M4. The face matching form is the cluster form of `face-gallery`; the cluster-wide knobs
+   * (post-processing node, index maintenance, device alerts, prune windows) are the cluster form
+   * of `pipeline-analytics`. A page asks for ONE capability's form, and System → Settings asks for
+   * all of them. The schemas are static; the only live value (the derived suggestion floor) is
+   * injected into the hydrate blob by `getGlobalSettings`.
+   */
+  protected override async clusterSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    if (cap === 'face-gallery') return this.schema(buildFaceClusterSchema())
+    if (cap === 'pipeline-analytics') return this.schema(buildAnalyticsClusterSchema())
+    return null
+  }
+
+  /** The knobs a camera can override: stored as the fleet default, resolved per camera. */
+  protected override async deviceDefaultsSchema(cap: string): Promise<ConfigUISchema | null> {
+    if (cap === 'pipeline-analytics') {
+      return this.schema(buildAnalyticsDeviceDefaultsSchema())
+    }
+    return null
   }
 
   /**
@@ -15774,11 +15794,11 @@ export default class PipelineAnalyticsAddon
    * implies and has nothing to contradict it with. Everything else about this
    * call is `BaseAddon`'s.
    *
-   * (Fix round, L3.) `globalSettingsSchema()` is reused, untouched, by
+   * (Fix round, L3.) `buildGlobalSettingsSchema()` is reused, untouched, by
    * `getDeviceSettingsContribution` below to build the PER-DEVICE form —
    * `trackingTape` must stay there. So the strip happens here, on the result
    * THIS method actually hands to the global settings page, never inside
-   * `globalSettingsSchema()` itself, which would also remove it from the
+   * `buildGlobalSettingsSchema()` itself, which would also remove it from the
    * per-device form that shares the same base sections.
    */
   override async getGlobalSettings(
@@ -15808,7 +15828,7 @@ export default class PipelineAnalyticsAddon
     // side gate keeps the policy with the addon owning the cap; the
     // admin-ui no longer needs the `device-section-policy` allow-list.
     if (!(await this.isCameraDevice(input.deviceId))) return null
-    const schema = this.globalSettingsSchema()
+    const schema = buildGlobalSettingsSchema()
     const raw = await this.readDeviceBlob(input.deviceId)
     // Re-home every section into the `Analytics` top-tab (see
     // `toAnalyticsDeviceSections`) so the analytics knobs surface as their
