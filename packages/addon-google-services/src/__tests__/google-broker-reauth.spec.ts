@@ -120,9 +120,7 @@ describe('a dead refresh token is reported as needing a new sign-in', () => {
     await expect(call(addon, 'ensureAccessToken', 'google_001')).rejects.toThrow(/invalid_grant/)
 
     expect(registry.isConnected('google_001')).toBe(false)
-    const info = registry.toBrokerInfo(registry.getEntry('google_001')!, 'google-services')
-    expect(info.status).toBe('auth-failed')
-    expect(info.error).toMatch(/sign in again/i)
+    expect(registry.needsReauth('google_001')).toBe(true)
     expect(registry.connectedSize()).toBe(0)
   })
 

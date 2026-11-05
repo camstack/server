@@ -11,6 +11,7 @@ import {
   EventCategory,
   brokerIdOf,
   brokerLinkUserFinder,
+  guardBrokerDelete,
   type BrokerLinkBody,
   type BrokerUserFinder,
   defaultIntegrationApiOver,
@@ -308,7 +309,7 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
             role: 'services',
             signIn: { basePath: ALEXA_SIGN_IN_PATH, methods: ['device-code', 'proxy'] },
           },
-          provider: this.accountInstances.toProvider(),
+          provider: guardBrokerDelete(this.accountInstances.toProvider(), () => this.brokerUsers()),
         },
         {
           kind: {
@@ -609,13 +610,8 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
 
   private buildBrokerProvider(): IBrokerProvider {
     return buildAlexaBrokerProvider({
-      ownerAddonId: this.ctx.id,
       registry: this.requireRegistry(),
       getBrokers: () => this.activeBrokers,
-      persistBrokers: (brokers) => this.persistBrokerEntries(brokers),
-      brokerUsers: this.brokerUsers(),
-      cascadeRemoveDevices: (brokerId) => this.cascadeRemoveDevicesForBroker(brokerId),
-      logger: this.ctx.logger,
     })
   }
 

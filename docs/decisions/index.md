@@ -4,7 +4,7 @@
 
 # Decisions
 
-975 architecture decision records. One file per decision, never
+976 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -990,6 +990,7 @@ that rots.
 | D1010 | [The Amazon sign-in and renewal are in-house — the Alexa addon runs no sign-in library](adr-1010-the-amazon-sign-in-and-renewal-are-in-house-the-alexa-addon-has-no-sign-in-library.md) | ✅ accepted | 2026-11-05 |
 | D1011 | [A device is added from one Add device modal, never through an integration's settings form](adr-1011-a-device-is-added-from-one-add-device-modal-never-through-an-integration-form.md) | ✅ accepted | 2026-11-05 |
 | D1012 | [A broker is referenced by id and owns nothing of its users](adr-1012-a-broker-is-referenced-by-id-and-owns-nothing-of-its-users.md) | ✅ accepted (supersedes D950 (the integrationId foreign key on a broker), D1007 (the registry id as a broker key)) | 2026-11-05 |
+| D1013 | [One instance model — every configured thing is a record kind served by integration-instances; function caps are runtime-only](adr-1013-one-instance-model.md) | ✅ accepted (supersedes D996 (the "not on Integrations" clause and body `enabled` as a second switch; "the instance id IS the registry id"), D1007 (the registry as a second on/off switch), D1009 (the `role 'services'` exemption from the one list), D1012 (the broker-specific `declareBrokerLinkKind` / `BrokerInUseError`, "edited only on the Brokers page"), D950 (a broker dialog and picker of its own; sign-in declared on `broker.listProviders`), D978 (superseded by D1011 for add-device; its board list stays)) | 2026-11-05 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

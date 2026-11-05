@@ -10,13 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Matter fabrics are served as instances next to the integrations, so the Brokers section reads them from the shared instances list
+- Deleting a Matter fabric is refused while an integration still uses it, on the instances page
+- A Matter fabric is referenced by id from its integration and owns nothing of it; deleting a fabric still in use is refused with the list of users
 
 ## [0.2.159] - 2026-11-05
 
 ### Changed
 
 - The integration form is declared as the instance form (the connection form); fabrics and their stored values are unchanged.
-- A Matter fabric is referenced by id from its integration and owns nothing of it; deleting a fabric still in use is refused with the list of users
 
 ## [0.2.158] - 2026-11-05
 

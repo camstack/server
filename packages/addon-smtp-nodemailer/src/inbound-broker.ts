@@ -6,29 +6,25 @@
  * the RCPT allowlist. Messages are published as `broker.message` events and kept in a bounded ring
  * so a consumer that lost an event replays the gap by RPC (events are telemetry, D8).
  */
-import { randomBytes, randomUUID } from 'node:crypto'
-import { createServer } from 'node:net'
+import { randomUUID } from 'node:crypto'
 import {
-  type BrokerInfo,
+  type UnifiedBrokerStatus,
   type ConfigUISchema,
   type IBrokerProvider,
   type RecordKindHandle,
   RecordSecretUnavailableError,
-  SMTP_INBOUND_KIND,
   SMTP_RECIPIENT_CLAIMED,
   SmtpInboundFilterSchema,
   type SmtpInboundMessage,
-  SmtpInboundSettingsSchema,
   parseSmtpSinceKey,
-  assertBrokerUnused,
   type BrokerUserFinder,
 } from '@camstack/types'
 import type { ListenerFactory, ListenerSpec } from './inbound-listener.js'
 import { type DraftMessage, MessageRing } from './inbound-ring.js'
-import { type MailboxBody, MailboxBodySchema } from './mailbox-record-kinds.js'
+import type { MailboxBody } from './mailbox-record-kinds.js'
 
 /** The cap's broker status (the bare `BrokerState` name is another type in `@camstack/types`). */
-type BrokerState = BrokerInfo['status']
+type BrokerState = UnifiedBrokerStatus
 
 export interface MessageEmission {
   readonly brokerId: string
@@ -66,7 +62,6 @@ const MAX_REBIND_ATTEMPTS = 6
 export const NO_INTERNAL_HOST_REASON =
   'The hub has no internal address. Flag one as "Internal" under System → Network; cameras need it to reach this mailbox.'
 
-const KIND_LABEL = 'Inbound mailbox (SMTP)'
 const PAGE = 500
 
 /** The hostname of a role's resolved base URL (`http://192.0.2.10:4480` → `192.0.2.10`). */
@@ -351,33 +346,6 @@ export class SmtpInboundBroker {
 
   // ── the cap provider ──────────────────────────────────────────────────────
 
-  private async exists(id: string): Promise<boolean> {
-    return (await this.deps.handle.get(id)) !== null
-  }
-
-  private async info(id: string): Promise<BrokerInfo | null> {
-    const row = await this.deps.handle.get(id)
-    if (row === null) return null
-    const runtime = this.runtimes.get(id)
-    return {
-      id,
-      addonId: this.deps.addonId,
-      name: row.data.name,
-      kind: SMTP_INBOUND_KIND,
-      status: runtime?.status ?? 'disconnected',
-      info: {
-        port: row.data.port,
-        domain: row.data.domain,
-        recipients:
-          runtime === undefined
-            ? 0
-            : [...runtime.subscriptions.values()].reduce((n, s) => n + s.recipients.size, 0),
-      },
-      lastCheckedAt: runtime?.checkedAt ?? null,
-      error: runtime?.error ?? null,
-    }
-  }
-
   private async subscribe(
     brokerId: string,
     filter: Readonly<Record<string, unknown>>,
@@ -412,85 +380,12 @@ export class SmtpInboundBroker {
     }
   }
 
+  /**
+   * The `broker` cap is the bus only (D1013): the mailboxes themselves are the `mailboxes` kind of
+   * the addon's `integration-instances` provider (`mailbox-instances.ts`).
+   */
   provider(): IBrokerProvider {
-    const owns = (id: string): Promise<boolean> => this.exists(id)
     return {
-      list: async ({ kind }) => {
-        if (kind !== undefined && kind !== SMTP_INBOUND_KIND) return []
-        const page = await this.deps.handle.query({ limit: PAGE })
-        const infos = await Promise.all(page.records.map((r) => this.info(r.id)))
-        return infos.flatMap((i) => (i === null ? [] : [i]))
-      },
-      get: async ({ id }) => this.info(id),
-      listProviders: async () => [
-        {
-          addonId: this.deps.addonId,
-          kinds: [{ kind: SMTP_INBOUND_KIND, label: KIND_LABEL }],
-        },
-      ],
-      add: async ({ kind, name, id, settings }) => {
-        if (kind !== SMTP_INBOUND_KIND) {
-          throw new Error(
-            `smtp-nodemailer: only kind '${SMTP_INBOUND_KIND}' is handled here (got '${kind}')`,
-          )
-        }
-        const parsed = SmtpInboundSettingsSchema.parse(settings)
-        const brokerId = id ?? `smtp-inbound-${randomUUID().slice(0, 8)}`
-        if (await this.exists(brokerId))
-          throw new Error(`broker id '${brokerId}' is already in use`)
-        const body: MailboxBody = MailboxBodySchema.parse({
-          name,
-          port: parsed.port,
-          bindHost: parsed.bindHost,
-          domain: parsed.domain,
-          requireAuth: parsed.requireAuth,
-          username:
-            parsed.username.length > 0
-              ? parsed.username
-              : `camstack-${randomBytes(4).toString('hex')}`,
-          password:
-            parsed.password.length > 0 ? parsed.password : randomBytes(18).toString('base64url'),
-          starttls: parsed.starttls,
-          maxMessageBytes: parsed.maxMessageBytes,
-        })
-        await this.deps.handle.put({ id: brokerId, data: body }, { ifRev: 0 })
-        await this.reconcile(brokerId)
-        return { id: brokerId }
-      },
-      remove: async ({ id }) => {
-        if (!(await owns(id))) return
-        await assertBrokerUnused(id, [this.subscriberUsers()])
-        await this.deps.handle.delete(id)
-        await this.reconcile(id)
-      },
-      testConnection: async ({ id }) => {
-        if (!(await owns(id))) return { ok: false, error: 'unknown broker' }
-        const runtime = this.runtimes.get(id)
-        if (runtime?.status === 'connected') return { ok: true, latencyMs: 0 }
-        return {
-          ok: false,
-          error: runtime?.error ?? 'The mailbox is not listening',
-        }
-      },
-      getSettings: async ({ id }) => {
-        const row = await this.deps.handle.get(id)
-        if (row === null) return null
-        const { name: _name, password: _password, ...settings } = row.data
-        return settings
-      },
-      setSettings: async ({ id, settings }) => {
-        const row = await this.deps.handle.getResolved(id)
-        if (row === null) return
-        const parsed = SmtpInboundSettingsSchema.partial().parse(settings)
-        const next = MailboxBodySchema.parse({
-          ...row.data,
-          ...Object.fromEntries(
-            Object.entries(parsed).filter(([, v]) => v !== undefined && v !== ''),
-          ),
-        })
-        await this.deps.handle.put({ id, data: next })
-        await this.reconcile(id)
-      },
       getBrokerConfig: async ({ id }) => {
         let row: Awaited<ReturnType<InboundBrokerDeps['handle']['getResolved']>>
         try {
@@ -515,14 +410,6 @@ export class SmtpInboundBroker {
           password: row.data.password ?? '',
           starttls: row.data.starttls,
         }
-      },
-      getSettingsSchema: async ({ kind }) =>
-        kind === SMTP_INBOUND_KIND ? mailboxSettingsSchema() : null,
-      testSettings: async ({ kind, settings }) => {
-        if (kind !== SMTP_INBOUND_KIND) return { ok: false, error: `unsupported kind: ${kind}` }
-        const parsed = SmtpInboundSettingsSchema.safeParse(settings)
-        if (!parsed.success) return { ok: false, error: parsed.error.message }
-        return probeBind(parsed.data.port, parsed.data.bindHost)
       },
       publish: async () => {
         throw new Error('smtp-inbound: a mailbox only receives — publish is not supported')
@@ -550,21 +437,6 @@ export class SmtpInboundBroker {
       },
     }
   }
-}
-
-/** A bind probe: can this port be taken on this host right now? */
-function probeBind(
-  port: number,
-  host: string,
-): Promise<{ ok: true; latencyMs: number } | { ok: false; error: string }> {
-  const started = Date.now()
-  return new Promise((resolve) => {
-    const probe = createServer()
-    probe.once('error', (err: Error) => resolve({ ok: false, error: err.message }))
-    probe.listen(port, host, () => {
-      probe.close(() => resolve({ ok: true, latencyMs: Date.now() - started }))
-    })
-  })
 }
 
 export function mailboxSettingsSchema(): ConfigUISchema {

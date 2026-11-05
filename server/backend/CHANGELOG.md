@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Rebuilt against updated dependencies.
 - A provider's instances can be listed per section (the kinds that name a function), and an integration is listed for its devices as soon as one of its kinds brings devices
+- The broker routes drop list, get, add, remove, test and settings: a broker is an instance served by integration-instances
 
 ## [1.2.777] - 2026-11-05
 

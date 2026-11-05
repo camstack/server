@@ -8,7 +8,7 @@
  * barrel (`ALL_CAPABILITY_DEFINITIONS`), which would cost ~144MB RSS per
  * forked runner. See docs/decisions/adr-0028.md.
  *
- * Coverage: 31 collection caps, 54 array methods.
+ * Coverage: 30 collection caps, 52 array methods.
  */
 export const COLLECTION_ARRAY_METHODS: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
@@ -17,7 +17,6 @@ export const COLLECTION_ARRAY_METHODS: Readonly<Record<string, readonly string[]
   "addon-routes": ["getRoutes"],
   "addon-widgets-source": ["listWidgets"],
   "board-key-source": ["listSources"],
-  "broker": ["list", "listProviders"],
   "calendar-source": ["listCalendars", "listEvents"],
   "custom-model-registry": ["listModels"],
   "data-store-provider": ["histogram", "query"],

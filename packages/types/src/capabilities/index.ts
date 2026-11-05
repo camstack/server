@@ -126,24 +126,16 @@ export {
   type IBackupProvider,
   LocationStatSchema,
 } from './backup.cap.js'
-// Unified broker registry cap — Phase E2a foundation. Long-term
-// replaces `mqtt-broker` (kept alongside for now during HA work).
+// The `broker` cap: the pub/sub bus of a connection. Creating, listing and testing a broker is
+// `integration-instances` (D1013).
 export {
-  BrokerAddInputSchema,
   BrokerGetStateInputSchema,
-  type BrokerInfo,
-  type BrokerInfo as UnifiedBrokerInfo,
-  BrokerInfoSchema,
-  BrokerInfoSchema as UnifiedBrokerInfoSchema,
-  type BrokerProviderInfo,
-  BrokerProviderInfoSchema,
   BrokerPublishInputSchema,
   BrokerRegistryStatusSchema,
   type BrokerStatus as UnifiedBrokerStatus,
   BrokerStatusEnum,
   BrokerSubscribeInputSchema,
   BrokerSubscribeResultSchema,
-  BrokerTestConnectionResultSchema,
   BrokerUnsubscribeInputSchema,
   brokerCapability,
   type IBrokerProvider,

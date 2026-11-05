@@ -2,10 +2,8 @@
  * Google broker registry — N Google accounts under kind `google`.
  * No live WS; "connected" means a refresh token exists for the broker id.
  */
-import type { BrokerInfo } from '@camstack/types'
 import { z } from 'zod'
 import {
-  GOOGLE_BROKER_KIND,
   GoogleBrokerEntrySchema,
   LegacyGoogleFlatConfigSchema,
   type GoogleBrokerEntry,
@@ -176,7 +174,7 @@ export function parseStampedCalendarId(
 
 /**
  * In-memory index over broker entries + oauth accounts. The addon owns
- * persistence; this class only allocates ids and builds BrokerInfo rows.
+ * persistence; this class only allocates ids and tracks the OAuth state.
  */
 export class GoogleBrokerRegistry {
   private nextIdCounter = 1
@@ -297,36 +295,6 @@ export class GoogleBrokerRegistry {
   replaceEntries(entries: readonly GoogleBrokerEntry[]): void {
     this.entries = entries.map((e) => GoogleBrokerEntrySchema.parse(e))
     this.seedCounterFromEntries(this.entries)
-  }
-
-  toBrokerInfo(entry: GoogleBrokerEntry, addonId: string): BrokerInfo {
-    const oauth = this.oauthById.get(entry.id)
-    const connected = this.isConnected(entry.id)
-    const reauth = this.needsReauth(entry.id)
-    return {
-      id: entry.id,
-      addonId,
-      name: entry.name,
-      kind: GOOGLE_BROKER_KIND,
-      status: connected ? 'connected' : reauth ? 'auth-failed' : 'disconnected',
-      info: {
-        accountEmail: oauth?.accountEmail ?? '',
-        hasClient: entry.clientId.length > 0,
-      },
-      lastCheckedAt: connected ? Date.now() : null,
-      error: connected
-        ? null
-        : reauth
-          ? 'Google session expired — sign in again'
-          : entry.clientId.length === 0
-            ? 'Configure Client ID / secret, then Connect Google'
-            : 'Not connected — open Connect Google on this broker',
-    }
-  }
-
-  listBrokerInfos(addonId: string, kind?: string): BrokerInfo[] {
-    if (kind !== undefined && kind !== GOOGLE_BROKER_KIND) return []
-    return this.entries.map((e) => this.toBrokerInfo(e, addonId))
   }
 
   size(): number {

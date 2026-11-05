@@ -4,10 +4,9 @@ import {
   parseStampedCalendarId,
   stampCalendarId,
 } from '../google-broker-registry.js'
-import { GOOGLE_BROKER_KIND } from '../google-types.js'
 
 describe('GoogleBrokerRegistry', () => {
-  it('listProviders shape: listBrokerInfos stamps kind google and connected only with refresh', () => {
+  it('an account counts as connected only while it holds a refresh token', () => {
     const reg = new GoogleBrokerRegistry()
     reg.seedFrom(
       [
@@ -23,10 +22,7 @@ describe('GoogleBrokerRegistry', () => {
       ],
       [],
     )
-    const disconnected = reg.listBrokerInfos('google-services')
-    expect(disconnected).toHaveLength(1)
-    expect(disconnected[0]!.kind).toBe(GOOGLE_BROKER_KIND)
-    expect(disconnected[0]!.status).toBe('disconnected')
+    expect(reg.isConnected('google_001')).toBe(false)
 
     reg.setOauth({
       id: 'google_001',
@@ -35,12 +31,11 @@ describe('GoogleBrokerRegistry', () => {
       accessExpiresAt: Date.now() + 60_000,
       accountEmail: 'a@example.com',
     })
-    const connected = reg.listBrokerInfos('google-services')
-    expect(connected[0]!.status).toBe('connected')
-    expect(connected[0]!.info['accountEmail']).toBe('a@example.com')
+    expect(reg.isConnected('google_001')).toBe(true)
+    expect(reg.getOauth('google_001')?.accountEmail).toBe('a@example.com')
 
     reg.removeOauth('google_001')
-    expect(reg.listBrokerInfos('google-services')[0]!.status).toBe('disconnected')
+    expect(reg.isConnected('google_001')).toBe(false)
   })
 
   it('allocateId progresses google_001, google_002', () => {

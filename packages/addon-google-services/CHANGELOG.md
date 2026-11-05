@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Google accounts declare the function they serve on their instance kind
+- Google accounts are managed only on the instances page; the broker CRUD is gone
 
 ## [0.2.38] - 2026-11-04
 

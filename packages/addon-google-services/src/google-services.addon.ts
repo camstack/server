@@ -37,10 +37,7 @@ import {
   migrateLegacyToBrokers,
   stampCalendarId,
 } from './google-broker-registry.js'
-import {
-  buildGoogleBrokerSettingsSchema,
-  buildGoogleFeatureSettingsSchema,
-} from './google-broker-settings-schema.js'
+import { buildGoogleFeatureSettingsSchema } from './google-broker-settings-schema.js'
 import { createGoogleCalendarApi, createGoogleCalendarSource } from './google-calendar-source.js'
 import { createGmailSmtpProvider } from './google-gmail-smtp.js'
 import {
@@ -54,14 +51,13 @@ import {
   exchangeCode,
   needsRefresh,
   probeGoogleOauthClient,
+  type GoogleClientProbeResult,
   refreshAccessToken,
 } from './google-oauth.js'
 import type { GoogleSettingsCap } from './google-settings-copy.js'
 import {
   DEFAULT_GOOGLE_CONFIG,
   DEFAULT_OAUTH_STATE,
-  GOOGLE_BROKER_KIND,
-  GOOGLE_BROKER_KIND_LABEL,
   GOOGLE_CALENDAR_LIST_URL,
   GOOGLE_USERINFO_URL,
   GoogleOauthAccountsStateSchema,
@@ -279,7 +275,6 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
   private buildInstances(
     records: Pick<RecordsAccess, 'kind' | 'owner'>,
   ): RecordIntegrationInstances<GoogleBrokerBody> {
-    const brokerProvider = this.buildBrokerProvider()
     return buildGoogleInstances(records, {
       connectPath: `/addon/${ADDON_ID}${START_PATH}?brokerId={{brokerId}}`,
       disconnectPath: `/addon/${ADDON_ID}${DISCONNECT_PATH}?brokerId={{brokerId}}`,
@@ -297,18 +292,16 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
         this.registry.seedFrom(this.activeBrokers, accounts)
         await this.persistOauthAccounts()
       },
-      testSaved: async (id) => brokerProvider.testConnection({ id }),
-      testClient: async (clientId, clientSecret) =>
-        brokerProvider.testSettings({
-          kind: GOOGLE_BROKER_KIND,
-          settings: { clientId, clientSecret },
-        }),
+      testSaved: (id) => this.probeSavedAccount(id),
+      testClient: (clientId, clientSecret) => this.probeOauthClient(clientId, clientSecret),
     })
   }
 
+  /**
+   * The `broker` cap is the bus only (D1013): the accounts are the `integration-instances`
+   * provider; calendar and mail go through their own caps, so publish and subscribe are refused.
+   */
   private buildBrokerProvider(): IBrokerProvider {
-    const ownerAddonId = this.ctx.id
-    const owns = (id: string): boolean => this.registry.getEntry(id) !== null
     const notSupported = async (): Promise<never> => {
       throw new Error(
         'google-services broker: publish/subscribe/getState are not supported — use calendar-source / smtp-provider',
@@ -316,120 +309,6 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
     }
 
     return {
-      list: async ({ kind }) => this.registry.listBrokerInfos(ownerAddonId, kind),
-      get: async ({ id }) => {
-        const entry = this.registry.getEntry(id)
-        return entry ? this.registry.toBrokerInfo(entry, ownerAddonId) : null
-      },
-      listProviders: async () => [
-        {
-          addonId: ownerAddonId,
-          kinds: [
-            {
-              kind: GOOGLE_BROKER_KIND,
-              label: GOOGLE_BROKER_KIND_LABEL,
-              // Admin-ui fills {{brokerId}} and opens in a popup (?popup=1).
-              interactiveConnectPath: `/addon/${ADDON_ID}${START_PATH}?brokerId={{brokerId}}`,
-              interactiveDisconnectPath: `/addon/${ADDON_ID}${DISCONNECT_PATH}?brokerId={{brokerId}}`,
-            },
-          ],
-        },
-      ],
-      add: async ({ kind, name, settings, id }) => {
-        if (kind !== GOOGLE_BROKER_KIND) {
-          throw new Error(
-            `google-services: only kind '${GOOGLE_BROKER_KIND}' is handled here (got '${kind}')`,
-          )
-        }
-        const entry = this.registry.createEntry(name, settings, id !== undefined ? { id } : {})
-        await this.persistBrokers()
-        return { id: entry.id }
-      },
-      remove: async ({ id }) => {
-        if (!owns(id)) return
-        this.registry.removeEntry(id)
-        await this.persistBrokers()
-        await this.persistOauthAccounts()
-      },
-      testConnection: async ({ id }) => {
-        if (!owns(id)) return { ok: false, error: 'unknown broker' }
-        const entry = this.registry.getEntry(id)
-        if (entry === null) return { ok: false, error: 'unknown broker' }
-        if (!entry.clientId || !entry.clientSecret) {
-          return { ok: false, error: 'Configure Client ID and Client secret first' }
-        }
-        let redirectUri: string
-        try {
-          redirectUri = await this.resolveRedirectUri()
-        } catch (err) {
-          return { ok: false, error: err instanceof Error ? err.message : String(err) }
-        }
-        if (!this.registry.isConnected(id)) {
-          // Not signed in yet — still prove the OAuth client is real.
-          return probeGoogleOauthClient({
-            clientId: entry.clientId,
-            clientSecret: entry.clientSecret,
-            redirectUri,
-          })
-        }
-        try {
-          const started = Date.now()
-          // Always refresh on Test — a stale/empty access token still leaves
-          // isConnected true (refresh present) and userinfo then 401s with
-          // "missing required authentication credential".
-          // Probe Calendar (granted by calendar.readonly). Do NOT use userinfo
-          // here: tokens minted before userinfo.email was in GOOGLE_OAUTH_SCOPES
-          // 401 on userinfo with "missing required authentication credential".
-          const token = await this.ensureAccessToken(id, { forceRefresh: true })
-          if (token.trim().length === 0) {
-            return {
-              ok: false,
-              error: 'No access token after refresh — Sign out and Sign in again',
-            }
-          }
-          let res = await fetch(GOOGLE_CALENDAR_LIST_URL, {
-            headers: { Authorization: `Bearer ${token}` },
-          })
-          if (res.status === 401) {
-            const retryToken = await this.ensureAccessToken(id, { forceRefresh: true })
-            res = await fetch(GOOGLE_CALENDAR_LIST_URL, {
-              headers: { Authorization: `Bearer ${retryToken}` },
-            })
-          }
-          if (!res.ok) {
-            const text = await res.text()
-            return {
-              ok: false,
-              error: `Google Calendar probe failed (${res.status}): ${text.slice(0, 200)}`,
-            }
-          }
-          // Best-effort email fill when the token already has userinfo.email.
-          const email = await this.fetchAccountEmail(token)
-          if (email.length > 0) {
-            const oauth = this.registry.getOauth(id)
-            if (oauth !== null && oauth.accountEmail !== email) {
-              this.registry.setOauth({ ...oauth, accountEmail: email })
-              await this.persistOauthAccounts()
-            }
-          }
-          return { ok: true, latencyMs: Date.now() - started }
-        } catch (err) {
-          return { ok: false, error: err instanceof Error ? err.message : String(err) }
-        }
-      },
-      getSettings: async ({ id }) => {
-        const entry = this.registry.getEntry(id)
-        if (entry === null) return null
-        return {
-          ...brokerEntryToSettings(entry),
-          _calendarCatalog: await this.loadStampedCalendarCatalog(id),
-        }
-      },
-      setSettings: async ({ id, settings }) => {
-        if (!owns(id)) return
-        this.registry.updateEntry(id, settings)
-        await this.persistBrokers()
-      },
       getBrokerConfig: async ({ id }) => {
         const entry = this.registry.getEntry(id)
         if (entry === null) return null
@@ -441,29 +320,6 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
           connected: this.registry.isConnected(id),
         }
       },
-      getSettingsSchema: async ({ kind }) => {
-        if (kind !== GOOGLE_BROKER_KIND) return null
-        return buildGoogleBrokerSettingsSchema(this.publicOrigin)
-      },
-      testSettings: async ({ kind, settings }) => {
-        if (kind !== GOOGLE_BROKER_KIND) return { ok: false, error: `unsupported kind: ${kind}` }
-        try {
-          const parsed = z
-            .object({
-              clientId: z.string().min(1),
-              clientSecret: z.string().min(1).meta({ secret: true }),
-            })
-            .parse(settings)
-          const redirectUri = await this.resolveRedirectUri()
-          return probeGoogleOauthClient({
-            clientId: parsed.clientId,
-            clientSecret: parsed.clientSecret,
-            redirectUri,
-          })
-        } catch (err) {
-          return { ok: false, error: err instanceof Error ? err.message : String(err) }
-        }
-      },
       publish: notSupported,
       subscribe: notSupported,
       unsubscribe: notSupported,
@@ -472,6 +328,96 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
         brokerCount: this.registry.size(),
         connectedCount: this.registry.connectedSize(),
       }),
+    }
+  }
+
+  /** Probe a saved account: the OAuth client, then (when signed in) a Calendar call. */
+  private async probeSavedAccount(id: string): Promise<GoogleClientProbeResult> {
+    const entry = this.registry.getEntry(id)
+    if (entry === null) return { ok: false, error: 'unknown broker' }
+    if (!entry.clientId || !entry.clientSecret) {
+      return { ok: false, error: 'Configure Client ID and Client secret first' }
+    }
+    let redirectUri: string
+    try {
+      redirectUri = await this.resolveRedirectUri()
+    } catch (err) {
+      return { ok: false, error: err instanceof Error ? err.message : String(err) }
+    }
+    if (!this.registry.isConnected(id)) {
+      // Not signed in yet — still prove the OAuth client is real.
+      return probeGoogleOauthClient({
+        clientId: entry.clientId,
+        clientSecret: entry.clientSecret,
+        redirectUri,
+      })
+    }
+    try {
+      const started = Date.now()
+      // Always refresh on Test — a stale/empty access token still leaves
+      // isConnected true (refresh present) and userinfo then 401s with
+      // "missing required authentication credential".
+      // Probe Calendar (granted by calendar.readonly). Do NOT use userinfo
+      // here: tokens minted before userinfo.email was in GOOGLE_OAUTH_SCOPES
+      // 401 on userinfo with "missing required authentication credential".
+      const token = await this.ensureAccessToken(id, { forceRefresh: true })
+      if (token.trim().length === 0) {
+        return {
+          ok: false,
+          error: 'No access token after refresh — Sign out and Sign in again',
+        }
+      }
+      let res = await fetch(GOOGLE_CALENDAR_LIST_URL, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (res.status === 401) {
+        const retryToken = await this.ensureAccessToken(id, { forceRefresh: true })
+        res = await fetch(GOOGLE_CALENDAR_LIST_URL, {
+          headers: { Authorization: `Bearer ${retryToken}` },
+        })
+      }
+      if (!res.ok) {
+        const text = await res.text()
+        return {
+          ok: false,
+          error: `Google Calendar probe failed (${res.status}): ${text.slice(0, 200)}`,
+        }
+      }
+      // Best-effort email fill when the token already has userinfo.email.
+      const email = await this.fetchAccountEmail(token)
+      if (email.length > 0) {
+        const oauth = this.registry.getOauth(id)
+        if (oauth !== null && oauth.accountEmail !== email) {
+          this.registry.setOauth({ ...oauth, accountEmail: email })
+          await this.persistOauthAccounts()
+        }
+      }
+      return { ok: true, latencyMs: Date.now() - started }
+    } catch (err) {
+      return { ok: false, error: err instanceof Error ? err.message : String(err) }
+    }
+  }
+
+  /** Probe an OAuth client that is not saved yet. */
+  private async probeOauthClient(
+    clientId: string,
+    clientSecret: string,
+  ): Promise<GoogleClientProbeResult> {
+    try {
+      const parsed = z
+        .object({
+          clientId: z.string().min(1),
+          clientSecret: z.string().min(1).meta({ secret: true }),
+        })
+        .parse({ clientId, clientSecret })
+      const redirectUri = await this.resolveRedirectUri()
+      return probeGoogleOauthClient({
+        clientId: parsed.clientId,
+        clientSecret: parsed.clientSecret,
+        redirectUri,
+      })
+    } catch (err) {
+      return { ok: false, error: err instanceof Error ? err.message : String(err) }
     }
   }
 

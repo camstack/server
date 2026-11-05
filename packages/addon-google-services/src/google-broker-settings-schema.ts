@@ -1,7 +1,7 @@
 /**
  * Per-kind broker creation/edit form for kind=`google`.
- * Account linking (Sign in) is driven by `listProviders.interactiveConnectPath`
- * in BrokerManager — not a hard-coded Connect link in this form.
+ * Account linking (Sign in) is driven by the kind's `connectPath`
+ * on the instances page — not a hard-coded Connect link in this form.
  */
 import {
   GOOGLE_CONSOLE_APIS_URL,
@@ -34,7 +34,7 @@ export function googleBrokerSetupHtml(publicOrigin: string | null): string {
   ].join('')
 }
 
-/** @deprecated Kept for specs that still assert Connect HTML shape; prefer Sign in via listProviders. */
+/** @deprecated Kept for specs that still assert Connect HTML shape; prefer Sign in via the kind's connectPath. */
 export function googleBrokerConnectHtml(publicOrigin: string | null): string {
   const redirect = escapeHtml(redirectUriDisplay(publicOrigin))
   return [

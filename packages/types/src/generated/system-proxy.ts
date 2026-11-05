@@ -90,7 +90,7 @@ export interface SystemProxy {
   readonly audioCodec: Pick<InferProvider<typeof audioCodecCapability>, 'listSupportedCodecs' | 'canHandle' | 'createDecodeSession' | 'createEncodeSession' | 'closeSession' | 'pushEncodedFrame' | 'pullPcm' | 'pushPcm' | 'pullEncoded' | 'flushEncode' | 'listActiveSessions'>
   readonly backup: Pick<InferProvider<typeof backupCapability>, 'listDestinations' | 'trigger' | 'listRuns' | 'cancel' | 'list' | 'listLocations' | 'getEntries' | 'restore' | 'getEncryption' | 'setupEncryption' | 'disableEncryption' | 'checkBackupKey' | 'delete' | 'listArchives' | 'upsertDestinationPolicy' | 'previewSchedule' | 'listSchedules' | 'listAvailableDatabases' | 'upsertSchedule' | 'deleteSchedule'>
   readonly boardKeySource: Pick<InferProvider<typeof boardKeySourceCapability>, 'listSources' | 'listBoards' | 'getBoardKey'>
-  readonly broker: Pick<InferProvider<typeof brokerCapability>, 'list' | 'get' | 'listProviders' | 'add' | 'remove' | 'testConnection' | 'getSettings' | 'setSettings' | 'getBrokerConfig' | 'getSettingsSchema' | 'testSettings' | 'publish' | 'subscribe' | 'unsubscribe' | 'getState' | 'getStatus'>
+  readonly broker: Pick<InferProvider<typeof brokerCapability>, 'getBrokerConfig' | 'publish' | 'subscribe' | 'unsubscribe' | 'getState' | 'getStatus'>
   readonly calendars: Pick<InferProvider<typeof calendarsCapability>, 'listCalendars' | 'listEvents' | 'getPreferences' | 'setCalendarPreference'>
   readonly connectionTest: Pick<InferProvider<typeof connectionTestCapability>, 'testSettings' | 'describeTest'>
   readonly coreBlocks: Pick<InferProvider<typeof coreBlocksCapability>, 'list' | 'get' | 'create' | 'update' | 'delete' | 'setEnabled' | 'restart' | 'compile' | 'getBlockSettings' | 'updateBlockSettings' | 'migrateRawSecrets' | 'getTypeDefs' | 'createComposition' | 'updateComposition' | 'getComposition' | 'listCompositions' | 'getCustomization' | 'listComposableCaps' | 'validateComposition' | 'reportAutomationRun' | 'getAutomationRunState' | 'getTraces'>
@@ -292,17 +292,7 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
   }
 
   const brokerInterface = {
-    list: (input?: unknown) => dispatch('broker', 'list', 'query', input),
-    get: (input?: unknown) => dispatch('broker', 'get', 'query', input),
-    listProviders: (input?: unknown) => dispatch('broker', 'listProviders', 'query', input),
-    add: (input?: unknown) => dispatch('broker', 'add', 'mutation', input),
-    remove: (input?: unknown) => dispatch('broker', 'remove', 'mutation', input),
-    testConnection: (input?: unknown) => dispatch('broker', 'testConnection', 'mutation', input),
-    getSettings: (input?: unknown) => dispatch('broker', 'getSettings', 'query', input),
-    setSettings: (input?: unknown) => dispatch('broker', 'setSettings', 'mutation', input),
     getBrokerConfig: (input?: unknown) => dispatch('broker', 'getBrokerConfig', 'query', input),
-    getSettingsSchema: (input?: unknown) => dispatch('broker', 'getSettingsSchema', 'query', input),
-    testSettings: (input?: unknown) => dispatch('broker', 'testSettings', 'mutation', input),
     publish: (input?: unknown) => dispatch('broker', 'publish', 'mutation', input),
     subscribe: (input?: unknown) => dispatch('broker', 'subscribe', 'mutation', input),
     unsubscribe: (input?: unknown) => dispatch('broker', 'unsubscribe', 'mutation', input),

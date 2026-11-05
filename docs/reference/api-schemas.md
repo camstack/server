@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1046 shared schemas.**
+**1041 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -560,13 +560,6 @@ Enum: `"unknown-source" \| "not-admin" \| "no-builder" \| "no-ingress-url" \| "u
 - `level`: `number`
 - `lastChangedAt`: `number`
 
-### `BrokerAddInputSchema`
-
-- `kind`: `string`
-- `name`: `string`
-- `id?`: `string`
-- `settings`: `Record<string, unknown>`
-
 ### `BrokerAudioClientSchema`
 
 - `tag`: `string`
@@ -604,22 +597,6 @@ Enum: `"alexa" \| "homekit" \| "webrtc-browser" \| "webrtc-mobile" \| "webrtc-wh
 
 - `brokerId`: `string`
 - `key`: `string`
-
-### `BrokerInfoSchema`
-
-- `id`: `string`
-- `addonId`: `string`
-- `name`: `string`
-- `kind`: `string`
-- `status`: `BrokerStatusEnum`
-- `info`: `Record<string, unknown>`
-- `lastCheckedAt`: `number \| null`
-- `error`: `string \| null`
-
-### `BrokerProviderInfoSchema`
-
-- `addonId`: `string`
-- `kinds`: `({ kind: string; label: string; interactiveConnectPath?: string; interactiveDisconnectPath?: string; signIn?: { basePath: string; methods?: ("device-code" \| "proxy")[] } })[]`
 
 ### `BrokerPublishInputSchema`
 
@@ -663,10 +640,6 @@ Enum: `"alexa" \| "homekit" \| "webrtc-browser" \| "webrtc-mobile" \| "webrtc-wh
 - `audioMuted?`: `boolean`
 - `audioMutedDropped?`: `number`
 
-### `BrokerStatusEnum`
-
-Enum: `"connected" \| "disconnected" \| "connecting" \| "auth-failed" \| "unreachable" \| "error"`
-
 ### `BrokerStatusSchema`
 
 Enum: `"idle" \| "connecting" \| "streaming" \| "error" \| "stopped"`
@@ -679,11 +652,6 @@ Enum: `"idle" \| "connecting" \| "streaming" \| "error" \| "stopped"`
 ### `BrokerSubscribeResultSchema`
 
 - `subscriptionId`: `string`
-
-### `BrokerTestConnectionResultSchema`
-
-- `{ ok: true; latencyMs: number }`
-- `{ ok: false; error: string }`
 
 ### `BrokerUnsubscribeInputSchema`
 

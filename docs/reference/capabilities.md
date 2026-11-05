@@ -148,7 +148,7 @@ Singleton or collection providers, addressed without a device.
 | `auth-provider` | 4 | — | — | — | ✓ | `auth-oidc` `local-auth` |
 | `backup` | 20 | — | — | — | — | `backup-orchestrator` |
 | `board-key-source` | 3 | — | — | — | — | `provider-homeassistant` |
-| `broker` | 16 | ✓ | — | — | — | `google-services` `import-alexa` `matter-broker` `mqtt-broker` `provider-homeassistant` `smtp-nodemailer` |
+| `broker` | 6 | ✓ | — | — | — | `google-services` `import-alexa` `matter-broker` `mqtt-broker` `provider-homeassistant` `smtp-nodemailer` |
 | `calendar-source` | 2 | — | — | — | ✓ | `google-services` `provider-homeassistant` `waste-collections` |
 | `calendars` | 4 | — | — | — | — | `calendars` |
 | `composer` | 2 | — | — | — | ✓ | `composer` |

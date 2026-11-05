@@ -306,7 +306,7 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
     if (!selectedAddonId) return
     try {
       // A device-adoption integration stores ONLY the broker reference;
-      // the broker (registered via `broker.add`) owns the connection
+      // the broker (an `account` instance of `integration-instances`) owns the connection
       // identity/credentials. No provider credentials live on the
       // integration record (Approach A).
       const result = await addProviderMutation.mutateAsync({

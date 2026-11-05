@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**203 capabilities · 1507 methods.**
+**203 capabilities · 1497 methods.**
 
 ## Method index
 
@@ -151,17 +151,7 @@
 | `brightness.getStatus` | query | protected | brightness (auto) |
 | `brightness.setBrightness` | mutation | protected | brightness |
 | `broker.getStatus` | query | protected | broker |
-| `broker.list` | query | protected | broker |
-| `broker.get` | query | protected | broker |
-| `broker.listProviders` | query | admin | broker |
-| `broker.add` | mutation | admin | broker |
-| `broker.remove` | mutation | admin | broker |
-| `broker.testConnection` | mutation | admin | broker |
-| `broker.getSettings` | query | admin | broker |
-| `broker.setSettings` | mutation | admin | broker |
 | `broker.getBrokerConfig` | query | admin | broker |
-| `broker.getSettingsSchema` | query | admin | broker |
-| `broker.testSettings` | mutation | admin | broker |
 | `broker.publish` | mutation | admin | broker |
 | `broker.subscribe` | mutation | admin | broker |
 | `broker.unsubscribe` | mutation | admin | broker |
@@ -1937,7 +1927,7 @@
 
 ### `broker` → `broker.*`
 
-- **Source:** `packages/types/src/capabilities/broker.cap.ts:251`
+- **Source:** `packages/types/src/capabilities/broker.cap.ts:78`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection` · providerKind: `broker`
 - **Archetypes:** status(poll)
 - **Provider interface:** `IBrokerProvider`
@@ -1945,17 +1935,7 @@
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | getStatus | `broker.getStatus` | query | protected | `void` | `BrokerRegistryStatusSchema` |
-| list | `broker.list` | query | protected | `{ kind?: string }` | `BrokerInfoSchema[]` |
-| get | `broker.get` | query | protected | `{ id: string }` | `BrokerInfoSchema \| null` |
-| listProviders | `broker.listProviders` | query | admin | `void` | `BrokerProviderInfoSchema[]` |
-| add | `broker.add` | mutation | admin | `BrokerAddInputSchema` | `{ id: string }` |
-| remove | `broker.remove` | mutation | admin | `{ id: string }` | `void` |
-| testConnection | `broker.testConnection` | mutation | admin | `{ id: string }` | `BrokerTestConnectionResultSchema` |
-| getSettings | `broker.getSettings` | query | admin | `{ id: string }` | `Record<string, unknown> \| null` |
-| setSettings | `broker.setSettings` | mutation | admin | `{ id: string; settings: Record<string, unknown> }` | `void` |
 | getBrokerConfig | `broker.getBrokerConfig` | query | admin | `{ id: string }` | `Record<string, unknown> \| null` |
-| getSettingsSchema | `broker.getSettingsSchema` | query | admin | `{ kind: string }` | `unknown \| null` |
-| testSettings | `broker.testSettings` | mutation | admin | `{ kind: string; settings: Record<string, unknown> }` | `{ ok: true; latencyMs?: number } \| { ok: false; error: string }` |
 | publish | `broker.publish` | mutation | admin | `BrokerPublishInputSchema` | `unknown` |
 | subscribe | `broker.subscribe` | mutation | admin | `BrokerSubscribeInputSchema` | `BrokerSubscribeResultSchema` |
 | unsubscribe | `broker.unsubscribe` | mutation | admin | `BrokerUnsubscribeInputSchema` | `void` |

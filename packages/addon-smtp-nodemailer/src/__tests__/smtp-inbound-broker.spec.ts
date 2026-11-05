@@ -18,7 +18,8 @@ import {
   smtpServerFactory,
 } from '../inbound-listener.js'
 import { SmtpInboundBroker } from '../inbound-broker.js'
-import { mailboxesKind } from '../mailbox-record-kinds.js'
+import { buildMailboxInstances, newMailboxBody } from '../mailbox-instances.js'
+import { type MailboxBody, mailboxesKind } from '../mailbox-record-kinds.js'
 
 interface FakeListener {
   readonly spec: ListenerSpec
@@ -83,16 +84,22 @@ async function build(opts: {
     ...(opts.rebindDelayMs === undefined ? {} : { rebindDelayMs: opts.rebindDelayMs }),
   })
   if (opts.quiet !== true) broker.announce()
-  return { broker, provider: broker.provider(), messages, statuses, world }
+  const instances = buildMailboxInstances(world.records, { inbound: broker })
+  return { broker, provider: broker.provider(), instances, messages, statuses, world }
 }
 
-const add = (p: ReturnType<SmtpInboundBroker['provider']>, id = SMTP_INBOUND_DEFAULT_ID) =>
-  p.add({
-    kind: 'smtp-inbound',
-    name: 'Camera mailbox',
-    id,
-    settings: { port: 2525 },
-  })
+type Built = Awaited<ReturnType<typeof build>>
+
+/** What the instances page does on create: write the record, then bring the listener in line. */
+const add = async (
+  ctx: Pick<Built, 'broker' | 'world'>,
+  settings: Partial<MailboxBody> = {},
+  id = SMTP_INBOUND_DEFAULT_ID,
+) => {
+  const body: MailboxBody = { ...newMailboxBody('Camera mailbox'), ...settings }
+  await ctx.world.records.kind(mailboxesKind).put({ id, data: body }, { ifRev: 0 })
+  await ctx.broker.reconcileMailbox(id)
+}
 
 describe('smtp-inbound broker', () => {
   it('binds nothing while no mailbox record exists', async () => {
@@ -102,21 +109,21 @@ describe('smtp-inbound broker', () => {
     expect(made).toHaveLength(0)
   })
 
-  it('binds one listener for a record, at boot and at add, and none after remove', async () => {
+  it('binds one listener for a record, at boot and at add, and none after delete', async () => {
     const { factory, made } = fakeListeners()
-    const { broker, provider } = await build({ factory })
-    await broker.start()
-    await add(provider)
+    const ctx = await build({ factory })
+    await ctx.broker.start()
+    await add(ctx)
     expect(made).toHaveLength(1)
     expect(made[0]?.started).toBe(true)
-    await provider.remove({ id: SMTP_INBOUND_DEFAULT_ID })
+    await ctx.instances.deleteInstance({ id: SMTP_INBOUND_DEFAULT_ID })
     expect(made[0]?.stopped).toBe(true)
   })
 
   it('a record present at boot is bound by start()', async () => {
     const f1 = fakeListeners()
     const first = await build({ factory: f1.factory })
-    await add(first.provider)
+    await add(first)
     const f2 = fakeListeners()
     const second = new SmtpInboundBroker({
       addonId: 'smtp-nodemailer',
@@ -132,46 +139,20 @@ describe('smtp-inbound broker', () => {
     expect(f2.made[0]?.started).toBe(true)
   })
 
-  it('refuses an id that is already in use and mints the credentials once', async () => {
+  it('mints the credentials once, when the instance is created', async () => {
     const { factory } = fakeListeners()
-    const { provider } = await build({ factory })
-    await add(provider)
-    await expect(add(provider)).rejects.toThrow(/already in use/)
-    const config = SmtpInboundConfigSchema.parse(
-      await provider.getBrokerConfig({ id: SMTP_INBOUND_DEFAULT_ID }),
-    )
+    const ctx = await build({ factory })
+    const { id } = await ctx.instances.createInstance({ name: 'Camera mailbox' })
+    const config = SmtpInboundConfigSchema.parse(await ctx.provider.getBrokerConfig({ id }))
     expect(config.username).toMatch(/^camstack-/)
     expect(config.password.length).toBeGreaterThan(12)
   })
 
-  it('keeps the credentials it was given (a migration must not rotate them)', async () => {
-    const { factory } = fakeListeners()
-    const { provider } = await build({ factory })
-    await provider.add({
-      kind: 'smtp-inbound',
-      name: 'm',
-      id: SMTP_INBOUND_DEFAULT_ID,
-      settings: {
-        port: 2525,
-        username: 'old-user',
-        password: 'old-pass',
-        domain: 'cams.lan',
-      },
-    })
-    const config = SmtpInboundConfigSchema.parse(
-      await provider.getBrokerConfig({ id: SMTP_INBOUND_DEFAULT_ID }),
-    )
-    expect([config.username, config.password, config.domain]).toEqual([
-      'old-user',
-      'old-pass',
-      'cams.lan',
-    ])
-  })
-
   it('the RCPT allowlist is the union of the subscriptions', async () => {
     const { factory, made } = fakeListeners()
-    const { provider } = await build({ factory })
-    await add(provider)
+    const ctx = await build({ factory })
+    const { provider } = ctx
+    await add(ctx)
     const deps = made[0]?.deps
     expect(deps?.isAllowed('cam-A')).toBe(false)
     await provider.subscribe({
@@ -189,8 +170,9 @@ describe('smtp-inbound broker', () => {
 
   it('a recipient claimed by another subscriber is a typed error; the same subscriber may redeclare', async () => {
     const { factory, made } = fakeListeners()
-    const { provider } = await build({ factory })
-    await add(provider)
+    const ctx = await build({ factory })
+    const { provider } = ctx
+    await add(ctx)
     const sub = (subscriberId: string, recipients: string[]) =>
       provider.subscribe({
         brokerId: SMTP_INBOUND_DEFAULT_ID,
@@ -207,8 +189,9 @@ describe('smtp-inbound broker', () => {
 
   it('getState since:<seq> returns the gap, and the bus carries the same seq', async () => {
     const { factory, made } = fakeListeners()
-    const { provider, messages } = await build({ factory })
-    await add(provider)
+    const ctx = await build({ factory })
+    const { provider, messages } = ctx
+    await add(ctx)
     const { subscriptionId } = await provider.subscribe({
       brokerId: SMTP_INBOUND_DEFAULT_ID,
       filter: { recipients: ['cam-A'], subscriberId: 'one' },
@@ -251,7 +234,7 @@ describe('smtp-inbound broker', () => {
       factory: fakeListeners().factory,
       host: '192.0.2.10',
     })
-    await add(set.provider)
+    await add(set)
     const ok = SmtpInboundConfigSchema.parse(
       await set.provider.getBrokerConfig({ id: SMTP_INBOUND_DEFAULT_ID }),
     )
@@ -259,7 +242,7 @@ describe('smtp-inbound broker', () => {
     expect(ok.hostReason).toBeNull()
 
     const unset = await build({ factory: fakeListeners().factory, host: null })
-    await add(unset.provider)
+    await add(unset)
     const none = SmtpInboundConfigSchema.parse(
       await unset.provider.getBrokerConfig({ id: SMTP_INBOUND_DEFAULT_ID }),
     )
@@ -269,21 +252,23 @@ describe('smtp-inbound broker', () => {
 
   it('a bind failure keeps the record and reports the error text', async () => {
     const { factory } = fakeListeners('listen EADDRINUSE: address already in use :::2525')
-    const { provider, statuses } = await build({ factory })
-    await add(provider)
-    const info = await provider.get({ id: SMTP_INBOUND_DEFAULT_ID })
-    expect(info?.status).toBe('error')
-    expect(info?.error).toMatch(/EADDRINUSE/)
+    const ctx = await build({ factory })
+    await add(ctx)
+    const runtime = ctx.broker.runtimeOf(SMTP_INBOUND_DEFAULT_ID)
+    const { statuses } = ctx
+    expect(runtime?.status).toBe('error')
+    expect(runtime?.error).toMatch(/EADDRINUSE/)
     expect(statuses.at(-1)?.status).toBe('error')
   })
 
   it('records the status but emits nothing before announce(): the addon is not reachable yet', async () => {
     const { factory } = fakeListeners()
-    const { broker, provider, statuses } = await build({
+    const ctx = await build({
       factory,
       quiet: true,
     })
-    await add(provider)
+    const { broker, statuses } = ctx
+    await add(ctx)
     expect(statuses).toEqual([])
     broker.announce()
     expect(statuses).toEqual([{ brokerId: SMTP_INBOUND_DEFAULT_ID, status: 'connected' }])
@@ -298,10 +283,10 @@ describe('smtp-inbound broker', () => {
       },
       stop: async () => undefined,
     })
-    const { provider } = await build({ factory, rebindDelayMs: 5 })
-    await add(provider)
-    await vi.waitFor(async () =>
-      expect((await provider.get({ id: SMTP_INBOUND_DEFAULT_ID }))?.status).toBe('connected'),
+    const ctx = await build({ factory, rebindDelayMs: 5 })
+    await add(ctx)
+    await vi.waitFor(() =>
+      expect(ctx.broker.runtimeOf(SMTP_INBOUND_DEFAULT_ID)?.status).toBe('connected'),
     )
     expect(attempts).toBe(3)
   })
@@ -315,8 +300,8 @@ describe('smtp-inbound broker', () => {
       },
       stop: async () => undefined,
     })
-    const { provider } = await build({ factory, rebindDelayMs: 1 })
-    await add(provider)
+    const ctx = await build({ factory, rebindDelayMs: 1 })
+    await add(ctx)
     await new Promise((r) => setTimeout(r, 120))
     const settled = attempts
     expect(settled).toBe(7)
@@ -327,7 +312,7 @@ describe('smtp-inbound broker', () => {
   it('a mailbox whose password could not be read at start is applied when the keychain unlocks', async () => {
     let locked = true
     const { factory, made } = fakeListeners()
-    const { broker, provider } = await build({
+    const ctx = await build({
       factory,
       wrapHandle: (inner) => ({
         get: (id) => inner.get(id),
@@ -340,7 +325,8 @@ describe('smtp-inbound broker', () => {
         },
       }),
     })
-    await add(provider).catch(() => undefined)
+    await add(ctx).catch(() => undefined)
+    const { broker } = ctx
     await broker.start()
     expect(made).toHaveLength(0)
     locked = false
@@ -349,9 +335,8 @@ describe('smtp-inbound broker', () => {
     expect(made[0]?.started).toBe(true)
   })
 
-  it('an unknown broker id answers null / throws, never another mailbox', async () => {
+  it('an unknown broker id answers null, never another mailbox', async () => {
     const { provider } = await build({ factory: fakeListeners().factory })
-    expect(await provider.get({ id: 'nope' })).toBeNull()
     expect(await provider.getBrokerConfig({ id: 'nope' })).toBeNull()
   })
 })
@@ -380,12 +365,7 @@ describe('smtp-inbound over a real SMTP session', () => {
     const port = await freePort()
     const ctx = await build({ factory: smtpServerFactory })
     brokers.push(ctx.broker)
-    await ctx.provider.add({
-      kind: 'smtp-inbound',
-      name: 'm',
-      id: SMTP_INBOUND_DEFAULT_ID,
-      settings: { port, bindHost: '127.0.0.1', username: 'u', password: 'p' },
-    })
+    await add(ctx, { port, bindHost: '127.0.0.1', username: 'u', password: 'p' })
     await ctx.provider.subscribe({
       brokerId: SMTP_INBOUND_DEFAULT_ID,
       filter: { recipients: ['cam-A'], subscriberId: 'one' },
@@ -426,17 +406,12 @@ describe('smtp-inbound over a real SMTP session', () => {
     const port = await freePort()
     const ctx = await build({ factory: smtpServerFactory })
     brokers.push(ctx.broker)
-    await ctx.provider.add({
-      kind: 'smtp-inbound',
-      name: 'm',
-      id: SMTP_INBOUND_DEFAULT_ID,
-      settings: {
-        port,
-        bindHost: '127.0.0.1',
-        username: 'u',
-        password: 'p',
-        maxMessageBytes: 2000,
-      },
+    await add(ctx, {
+      port,
+      bindHost: '127.0.0.1',
+      username: 'u',
+      password: 'p',
+      maxMessageBytes: 2000,
     })
     await ctx.provider.subscribe({
       brokerId: SMTP_INBOUND_DEFAULT_ID,
@@ -481,13 +456,15 @@ describe('smtp-inbound over a real SMTP session', () => {
 
   it('refuses removing a mailbox a subscriber still reads, naming it', async () => {
     const { factory, made } = fakeListeners()
-    const { provider } = await build({ factory })
-    await add(provider)
-    await provider.subscribe({
+    const ctx = await build({ factory })
+    await add(ctx)
+    await ctx.provider.subscribe({
       brokerId: SMTP_INBOUND_DEFAULT_ID,
       filter: { recipients: ['cam-A'], subscriberId: 'reolink-garden' },
     })
-    const err = await provider.remove({ id: SMTP_INBOUND_DEFAULT_ID }).catch((e: unknown) => e)
+    const err = await ctx.instances
+      .deleteInstance({ id: SMTP_INBOUND_DEFAULT_ID })
+      .catch((e: unknown) => e)
     expect(err).toBeInstanceOf(BrokerInUseError)
     if (!(err instanceof BrokerInUseError)) throw err
     expect(err.users).toEqual([{ kind: 'subscriber', id: 'reolink-garden' }])

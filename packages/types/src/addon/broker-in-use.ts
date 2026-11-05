@@ -4,6 +4,8 @@
  * what to unlink first and nothing is left pointing at a broker that no longer exists.
  */
 
+import type { IIntegrationInstancesProvider } from '../capabilities/integration-instances.cap.js'
+
 /** One thing that still points at a broker. */
 export interface BrokerUser {
   /** What it is: `integration`, `notification-target`, ... */
@@ -67,5 +69,23 @@ export function fieldUserFinder(spec: {
           id: row.id,
           ...(row.name !== undefined ? { name: row.name } : {}),
         })),
+  }
+}
+
+/**
+ * An account provider whose `deleteInstance` is refused while anything still uses the account
+ * (D1012). The account is an `integration-instances` kind (D1013), so the refusal lives on the
+ * delete the instances page calls, not on a separate broker cap.
+ */
+export function guardBrokerDelete(
+  base: IIntegrationInstancesProvider,
+  users: () => readonly BrokerUserFinder[],
+): IIntegrationInstancesProvider {
+  return {
+    ...base,
+    deleteInstance: async (input) => {
+      await assertBrokerUnused(input.id, users())
+      return base.deleteInstance(input)
+    },
   }
 }

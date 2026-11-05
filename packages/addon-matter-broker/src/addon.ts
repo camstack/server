@@ -11,6 +11,7 @@ import {
   type IIntegrationInstancesProvider,
   EventCategory,
   brokerLinkUserFinder,
+  guardBrokerDelete,
   type BrokerLinkBody,
   flattenPortsOver,
   integrationInstancesCapability,
@@ -176,7 +177,9 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
             brokerKind: 'matter',
             role: 'services',
           },
-          provider: this.accountInstances.toProvider(),
+          provider: guardBrokerDelete(this.accountInstances.toProvider(), () => [
+            brokerLinkUserFinder(this.requireInstances()),
+          ]),
         },
         {
           kind: {
@@ -362,13 +365,8 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
 
   private buildBrokerProvider(): IBrokerProvider {
     return buildMatterBrokerProvider({
-      ownerAddonId: this.ctx.id,
       registry: this.requireRegistry(),
       getBrokers: () => this.activeBrokers,
-      persistBrokers: (brokers) => this.persistBrokerEntries(brokers),
-      brokerUsers: [brokerLinkUserFinder(this.requireInstances())],
-      cascadeRemoveDevices: (brokerId) => this.cascadeRemoveDevicesForBroker(brokerId),
-      logger: this.ctx.logger,
     })
   }
 

@@ -4,12 +4,12 @@
 
 # Guards
 
-220 repository guards: 215 in `scripts/`,
+221 repository guards: 216 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (210)
+## Enforced by CI checks (211)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -32,6 +32,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-admin-link-builder-is-the-only-url-source.ts` | Admin-link URL guard — **`buildDeviceAdminUrl` is the only place a `device-admin-link` URL is assembled.** ## The failure this catches Every provider that can answer `device-admin-link` holds the device's host in the same object as its p… |
 | `scripts/check-age-keyed-retention.ts` | Retention guard — there is exactly ONE age-keyed sweep, and it is over TRACKS. |
 | `scripts/check-authored-fields-reachable.ts` | Authored-field guard — **a field an operator is meant to set has a control that sets it, or it does not exist.** ## The failure this catches `RecordingTriggers.sensorDeviceIds` shipped on 2026-08 with a schema, a recorder that listened o… |
+| `scripts/check-broker-cap-is-bus-only.ts` | The `broker` capability is the message bus only (D1013). |
 | `scripts/check-cap-history-declared.ts` | Cap history guard (D850) — a value is recorded as long-term history because its own capability said so, in a diff someone reviewed. |
 | `scripts/check-cap-mount-codegen-agrees.ts` | Cap mount agreement guard — the type-only codegen mount and the runtime builder must tell the same story about every cap. |
 | `scripts/check-cap-name-kebab.ts` | Cap-name guard — **a capability name is kebab-case, because the transport recovers it from the router key with a string transform.** ## The failure this catches A forked addon calls `ctx.api.<routerKey>.<method>()`. The router key is `ke… |

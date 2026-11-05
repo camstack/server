@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Alexa accounts are served as instances next to the integrations, so the Brokers section reads them from the shared instances list
+- Deleting an Alexa account is refused while an integration or an Echo target still uses it, on the instances page
+- An Alexa integration now only names the Alexa account it uses; the account and its sign-in are edited on the Brokers page, and an account still used by an integration or an Echo target cannot be removed
 
 ## [0.2.189] - 2026-11-05
 
@@ -18,7 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The integration form is declared as the instance form (the connection form); accounts and their stored values are unchanged.
 - The Alexa account form no longer shows the cookie blob and refresh token; they stay set by the sign-in and a form save cannot overwrite them
 - Echo volume and play commands no longer arrive minutes late: commands go ahead of polls, a repeated volume change keeps only the newest, a call that cannot start in time is dropped, and Amazon back-off is logged
-- An Alexa integration now only names the Alexa account it uses; the account and its sign-in are edited on the Brokers page, and an account still used by an integration or an Echo target cannot be removed
 
 ## [0.2.188] - 2026-11-05
 

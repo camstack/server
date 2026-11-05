@@ -30,15 +30,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Customize cardinalities, event shapes, apply authorities and stored link kinds are now one exported list each
 - integration-instances kinds now name the function they serve (functionCap, role, canTest) and one provider can compose several record kinds
+- The broker capability is now the message bus only (publish, subscribe, unsubscribe, getState, getBrokerConfig, getStatus); brokers are listed, created, edited, tested and removed as instances of their addon's integration-instances provider
+- A broker listed through another addon's rows can be checked for users with fieldUserFinder
+- A broker-backed service now binds to its broker through one shared primitive (broker link kind, form and users query); removing a broker still in use is refused with a typed error naming its users
+- The integration role `both` is removed; an addon with a connection and device integrations declares the connection as a broker and its integration as `devices`
 
 ## [1.2.505] - 2026-11-05
 
 ### Changed
 
 - An integration instance is reachable by its Integrations-page id as well as its record id, so the Config form shows and saves the stored record of an account whose record id differs
-- A broker-backed service now binds to its broker through one shared primitive (broker link kind, form and users query); removing a broker still in use is refused with a typed error naming its users
-- The integration role `both` is removed; an addon with a connection and device integrations declares the connection as a broker and its integration as `devices`
-- A broker listed through another addon's rows can be checked for users with fieldUserFinder
 
 ## [1.2.504] - 2026-11-05
 

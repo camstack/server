@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
-import { errMsg, type BrokerInfo, type IScopedLogger } from '@camstack/types'
+import { errMsg, type UnifiedBrokerStatus, type IScopedLogger } from '@camstack/types'
 
-type BrokerStatus = BrokerInfo['status']
+type BrokerStatus = UnifiedBrokerStatus
 import { sameConnection, type EspBrokerEntry, type EspConnection } from './config.js'
 import { reconnectDelayMs } from './esphome-backoff.js'
 import { espLinkHub, type EspLinkHub } from './esphome-link-hub.js'

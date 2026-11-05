@@ -7,7 +7,7 @@
  *   `{ type: 'camstack:broker-oauth', ok: boolean, brokerId?: string, error?: string }`
  *
  * Admin-ui never branches on kind/addonId — it only opens whatever path
- * `broker.listProviders` returned for that kind.
+ * the instance kind's `connectPath` / `signIn` declared.
  */
 import { hubPath } from './mount'
 import { openSsoPopup, withPopupFlag } from './sso-popup'

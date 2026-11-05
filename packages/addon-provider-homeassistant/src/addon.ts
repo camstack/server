@@ -16,7 +16,7 @@ import {
   integrationInstancesCapability,
   type IntegrationInstanceRef,
   type RecordIntegrationInstances,
-  assertBrokerUnused,
+  guardBrokerDelete,
   brokerIdOf,
   brokerLinkUserFinder,
   resolveBrokerId,
@@ -46,7 +46,6 @@ import { HaEventBusDevice } from './devices/ha-event-bus-device.js'
 import { cascadeRemoveDevicesForBroker } from './ha-broker-device-cascade.js'
 import { markBrokerDevicesOffline } from './ha-broker-offline.js'
 import { entryToSettings, type HaBrokerEntry, HaBrokerRegistry } from './ha-broker-registry.js'
-import { haBrokerSettingsSchema } from './ha-broker-settings-schema.js'
 import { haDeviceToCandidate } from './ha-candidate-mapper.js'
 import type { HaContainerEntityConfig } from './ha-container-reconcile.js'
 import {
@@ -435,8 +434,8 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
   // ── Settings UI (External systems → integration settings panel) ────
   //
   // Approach A: an integration record carries ONLY a `{brokerId}` link;
-  // it never stores credentials. Brokers are created/edited via the
-  // `broker.add` cap from the wizard (External systems → Brokers), NOT
+  // it never stores credentials. Brokers are created/edited as
+  // `account` instances of `integration-instances` (External systems → Brokers), NOT
   // by cramming a creation form into the integration settings. So this
   // schema is purely informational — there are no editable fields.
 
@@ -491,9 +490,8 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
    * array. Called by BaseAddon after every `updateGlobalSettings` /
    * `updateAddonSettings` — covers BOTH paths that mutate the array:
    *
-   *   1. `broker.add` / `broker.remove` / `broker.setSettings` cap
-   *      methods: the registry is mutated IN-PLACE first (the cap
-   *      provider does it), then `updateGlobalSettings` lands the
+   *   1. the account instances (create / update / delete): the registry is
+   *      mutated IN-PLACE first (`syncBrokerRuntime`), then `updateGlobalSettings` lands the
    *      persistence. This reconcile becomes a no-op (the registry
    *      already reflects the new state).
    *   2. UI form save (External systems → Brokers → HA settings → save):
@@ -595,7 +593,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
             brokerKind: HA_KIND,
             role: 'services',
           },
-          provider: this.accountInstances.toProvider(),
+          provider: guardBrokerDelete(this.accountInstances.toProvider(), () => this.brokerUsers()),
         },
         {
           kind: {
@@ -681,111 +679,16 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
     return [brokerLinkUserFinder(this.requireInstances())]
   }
 
+  /**
+   * The `broker` cap is the bus only (D1013): the connections themselves are the `account` kind of
+   * the `integration-instances` provider. Id-keyed calls answer null for a foreign id.
+   */
   private buildBrokerProvider(): IBrokerProvider {
-    // The owning addon id — stamped onto every BrokerInfo this provider
-    // returns so the admin UI threads it back as the `{ addonId }`
-    // system-collection selector, routing id-keyed calls to THIS
-    // provider instead of defaulting to the first-registered one.
-    const ownerAddonId = this.ctx.id
-    // True when this provider's registry owns the given id. Id-keyed
-    // methods return null / no-op for foreign ids (NOT throw) so the
-    // no-addonId collection fallback (which targets the first provider)
-    // degrades gracefully instead of surfacing a wrong-provider error.
-    const owns = (id: string): boolean => this.activeBrokers.some((b) => b.id === id)
-
     return {
-      list: async ({ kind }) => {
-        if (kind && kind !== HA_KIND) return []
-        return this.requireRegistry()
-          .list()
-          .map((info) => ({ ...info, addonId: ownerAddonId }))
-      },
-      get: async ({ id }) => {
-        const info = this.requireRegistry().get(id)
-        return info ? { ...info, addonId: ownerAddonId } : null
-      },
-      listProviders: async () => [
-        { addonId: ownerAddonId, kinds: [{ kind: HA_KIND, label: 'Home Assistant' }] },
-      ],
-      add: async ({ kind, name, settings, id }) => {
-        if (kind !== HA_KIND) {
-          throw new Error(
-            `provider-homeassistant: only kind '${HA_KIND}' is handled here (got '${kind}')`,
-          )
-        }
-        // `id` present = restoring a broker that was lost, under its ORIGINAL
-        // id, so its devices reconnect instead of needing re-discovery. The
-        // registry refuses an id that is still in use.
-        const entry = await this.requireRegistry().createEntry(
-          name,
-          settings,
-          id !== undefined ? { id } : {},
-        )
-        if (id !== undefined) {
-          this.ctx.logger.info('broker restored under an adopted id', {
-            meta: { brokerId: entry.id, name },
-          })
-        }
-        await this.persistBrokerEntries([...this.activeBrokers, entry])
-        return { id: entry.id }
-      },
-      remove: async ({ id }) => {
-        // No-op for ids this provider does not own — the collection
-        // fallback may route a foreign id here.
-        if (!owns(id)) return
-        await assertBrokerUnused(id, this.brokerUsers())
-        await this.requireRegistry().removeEntry(id)
-        // Cascade-delete all adopted devices whose source brokerId matches.
-        // devices.remove cascades to children and emits device.unregistered per removed device.
-        const reg = this.ctx.kernel.deviceRegistry
-        const devices = this.ctx.kernel.devices
-        if (reg && devices) {
-          await cascadeRemoveDevicesForBroker({
-            reg,
-            devices,
-            addonId: this.ctx.id,
-            brokerId: id,
-            logger: this.ctx.logger,
-          })
-        }
-        const nextBrokers = this.activeBrokers.filter((b) => b.id !== id)
-        await this.persistBrokerEntries(nextBrokers)
-      },
-      testConnection: async ({ id }) => {
-        if (!owns(id)) return { ok: false, error: 'unknown broker' }
-        const info = this.requireRegistry().get(id)
-        if (!info) return { ok: false, error: 'unknown broker' }
-        if (info.status === 'connected') {
-          return {
-            ok: true,
-            latencyMs: info.lastCheckedAt ? Math.max(0, Date.now() - info.lastCheckedAt) : 0,
-          }
-        }
-        return { ok: false, error: info.error ?? `status: ${info.status}` }
-      },
-      getSettings: async ({ id }) => {
-        const entry = this.activeBrokers.find((b) => b.id === id)
-        if (!entry) return null
-        return entryToSettings(entry)
-      },
-      setSettings: async ({ id, settings }) => {
-        if (!owns(id)) return
-        const entry = await this.requireRegistry().updateEntry(id, settings)
-        const next = this.activeBrokers.map((b) => (b.id === id ? entry : b))
-        await this.persistBrokerEntries(next)
-      },
       getBrokerConfig: async ({ id }) => {
         const entry = this.activeBrokers.find((b) => b.id === id)
         if (!entry) return null
         return entryToSettings(entry)
-      },
-      getSettingsSchema: async ({ kind }) => {
-        if (kind !== HA_KIND) return null
-        return haBrokerSettingsSchema
-      },
-      testSettings: async ({ kind, settings }) => {
-        if (kind !== HA_KIND) return { ok: false, error: `unsupported kind: ${kind}` }
-        return this.requireRegistry().testSettings(settings)
       },
       publish: async ({ brokerId, target, payload }) => {
         return this.requireRegistry().publish(brokerId, coerceHaTarget(target), payload)

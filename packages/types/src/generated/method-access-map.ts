@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1507 method paths across 203 capabilities.
+ * Coverage: 1497 method paths across 203 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -159,21 +159,11 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'boardKeySource.listSources': { capName: "board-key-source", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'brightness.getStatus': { capName: "brightness", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'brightness.setBrightness': { capName: "brightness", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
-  'broker.add': { capName: "broker", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
-  'broker.get': { capName: "broker", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'broker.getBrokerConfig': { capName: "broker", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
-  'broker.getSettings': { capName: "broker", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
-  'broker.getSettingsSchema': { capName: "broker", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'broker.getState': { capName: "broker", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'broker.getStatus': { capName: "broker", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
-  'broker.list': { capName: "broker", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
-  'broker.listProviders': { capName: "broker", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'broker.publish': { capName: "broker", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
-  'broker.remove': { capName: "broker", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
-  'broker.setSettings': { capName: "broker", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'broker.subscribe': { capName: "broker", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
-  'broker.testConnection': { capName: "broker", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
-  'broker.testSettings': { capName: "broker", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'broker.unsubscribe': { capName: "broker", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'button.press': { capName: "button", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'calendars.getPreferences': { capName: "calendars", capScope: "system", addonId: null, access: "view", role: "admin" } as const,

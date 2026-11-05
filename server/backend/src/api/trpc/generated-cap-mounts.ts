@@ -667,16 +667,7 @@ export function mountAllCaps(services: MountAllCapsServices) {
         return reg.getProviderByAddonId<InferProvider<typeof brokerCapability>>('broker', addonId)
       }
       const entries = reg.getCollectionEntries<InferProvider<typeof brokerCapability>>('broker')
-      if (entries.length === 0) return null
-      const providers = entries.map(([, p]) => p)
-      const first = providers[0]!
-      return {
-        ...first,
-        list: concatCollection(providers, 'list') as InferProvider<typeof brokerCapability>['list'],
-        listProviders: concatCollection(providers, 'listProviders') as InferProvider<
-          typeof brokerCapability
-        >['listProviders'],
-      }
+      return entries[0]?.[1] ?? null
     }, remoteCapProxy),
     button: createCapRouter_button(
       (_ctx) => requireDeviceScoped(reg, 'button') as InferProvider<typeof buttonCapability> | null,

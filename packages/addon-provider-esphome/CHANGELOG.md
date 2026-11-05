@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Boards are added from the integration page (found on the network, or by entering the host); the integration settings no longer list boards, and an encrypted board asks for its API encryption key only.
+- Internal: the registry status type no longer depends on the retired broker row type
 
 ## [0.1.12] - 2026-11-05
 

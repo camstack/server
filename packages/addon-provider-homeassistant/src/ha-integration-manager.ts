@@ -259,7 +259,7 @@ export class HaIntegrationManager {
     })
     // Kick off the initial connect WITHOUT blocking. An unreachable / dead
     // host makes the underlying WS connect hang on the OS TCP timeout (tens
-    // of seconds); awaiting it here would (a) hang `broker.add` so the wizard
+    // of seconds); awaiting it here would (a) hang the account create so the wizard
     // spinner traps the operator with no error and no way out, and (b) block
     // `HaBrokerRegistry.restore()` on addon boot — the whole addon then can't
     // return its cap providers, so list / delete calls to it time out (a dead

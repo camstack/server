@@ -429,6 +429,15 @@ returns `null` and no surface is offered.
 Reolink was the reference consumer until D999 moved its webhook to the data
 plane; no addon declares integration sections today.
 
+### Every configured thing is an instance of its owner's `integration-instances`
+
+A broker, an SMTP relay or mailbox, a connection, an export target is not edited through a cap of
+its own: it is an instance of a kind the owning addon declares in `describe().kinds[]`, each kind
+naming the `functionCap` it serves. A page section (Brokers, SMTP relays, Integrations) is the
+client-side filter on that `functionCap`, and the sign-in and connect buttons come from the kind's
+`signIn` / `connectPath` ([D1013](../decisions/adr-1013-one-instance-model.md)). The `broker` cap
+is the message bus only.
+
 ### One form per integration instance
 
 An addon whose instances differ in kind (Reolink: the default integration versus an

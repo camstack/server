@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Home Assistant connections are served as instances next to the integrations, so the Brokers section reads them from the shared instances list
+- Deleting a Home Assistant connection is refused while an integration still uses it, on the instances page
+- A Home Assistant integration names its connection by id on its own record; the connection owns nothing of its integration and deleting one still in use is refused with the list of users
 
 ## [1.2.663] - 2026-11-05
 
@@ -22,7 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The integration form is declared as the instance form; brokers and their stored values are unchanged.
-- A Home Assistant integration names its connection by id on its own record; the connection owns nothing of its integration and deleting one still in use is refused with the list of users
 
 ## [1.2.661] - 2026-11-05
 
