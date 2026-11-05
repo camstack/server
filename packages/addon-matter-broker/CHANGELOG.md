@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Matter manifest declares multiple instances, as the integration already allowed.
+
 ## [0.2.157] - 2026-11-05
 
 ### Changed

@@ -57,8 +57,8 @@ export type MatterBrokerListItem = MatterBrokerInfo
  * Manages N live Matter fabric connections ("brokers"), each backed by a
  * {@link MatterIntegrationManager}. Allocates stable ids (`matter_001`, …), CRUD,
  * an integration FK index, lifecycle helpers. Mirrors the Ecowitt / Dreame
- * registry. Because `instanceMode` is `unique`, the common case is exactly one
- * fabric, but the namespace tolerates multiple.
+ * registry. The integration is `instanceMode: multiple`: the common case is one
+ * fabric, and an operator may add more.
  */
 export class MatterBrokerRegistry {
   readonly #logger: IScopedLogger

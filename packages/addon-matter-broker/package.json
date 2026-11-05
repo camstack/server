@@ -43,7 +43,7 @@
         "entry": "./dist/addon.js",
         "icon": "assets/icon.svg",
         "color": "#3b6ea5",
-        "instanceMode": "unique",
+        "instanceMode": "multiple",
         "brokerKind": "matter",
         "execution": {
           "placement": "hub-only"
