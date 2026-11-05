@@ -14,7 +14,7 @@ async function setup(status: 'connected' | 'disconnected' = 'connected') {
         name: 'Home',
         amazonDomain: 'amazon.it',
         cookie: 'cookie',
-        refreshToken: '',
+        refreshToken: 'refresh',
         macDms: 'mac',
         pollIntervalMs: 60_000,
         integrationId: 'int-keep-me',
@@ -84,6 +84,20 @@ describe('Alexa accounts as integration instances', () => {
       'alexa_004',
     ])
     expect(changed).toEqual(['alexa_003', 'alexa_004', 'alexa_001'])
+  })
+
+  it('saving exactly the form fields keeps the stored cookie and refresh token', async () => {
+    const { instances } = await setup()
+    await instances.updateInstance({
+      id: 'alexa_003',
+      values: { amazonDomain: 'amazon.de', pollIntervalMs: 120_000 },
+    })
+    expect(await instances.getResolved('alexa_003')).toMatchObject({
+      amazonDomain: 'amazon.de',
+      pollIntervalMs: 120_000,
+      cookie: 'cookie',
+      refreshToken: 'refresh',
+    })
   })
 
   it('reports an expired sign-in as an error and tests a saved account by its live status', async () => {

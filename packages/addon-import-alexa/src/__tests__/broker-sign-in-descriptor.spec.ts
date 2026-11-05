@@ -72,10 +72,9 @@ describe('Alexa broker kind descriptor', () => {
     for (const domain of Object.values(byCountry ?? {})) expect(options).toContain(domain)
   })
 
-  it('flags the credentials the sign-in fills', () => {
-    const filled = fields()
-      .filter((f) => 'filledBySignIn' in f && f.filledBySignIn === true)
-      .map((f) => ('key' in f ? f.key : ''))
-    expect(filled).toEqual(['cookie', 'refreshToken'])
+  it('does not offer the credentials the sign-in fills as form fields', () => {
+    const keys = fields().map((f) => ('key' in f ? f.key : ''))
+    expect(keys).not.toContain('cookie')
+    expect(keys).not.toContain('refreshToken')
   })
 })

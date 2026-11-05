@@ -159,7 +159,12 @@ const AMAZON_DOMAIN_BY_COUNTRY: Readonly<Record<string, AmazonDomain>> = {
   MX: 'amazon.com.mx',
 }
 
-/** Hand-written connection form for the broker/integration creation UI. */
+/**
+ * The connection form: what the operator chooses (region, poll cadence). The cookie blob and the
+ * refresh token are login STATE minted by the in-house sign-in; they live on the record as
+ * keychain secrets, are written by that flow and are never part of this form, so a form save
+ * cannot overwrite or clear them.
+ */
 export function buildConnectionFormSchema(): ConfigUISchema {
   return {
     sections: [
@@ -180,22 +185,6 @@ export function buildConnectionFormSchema(): ConfigUISchema {
             options: AMAZON_DOMAINS.map((value) => ({ value, label: value })),
             default: 'amazon.com',
             defaultByCountry: AMAZON_DOMAIN_BY_COUNTRY,
-          },
-          {
-            type: 'password',
-            key: 'cookie',
-            label: 'Cookie blob (filled by the sign-in)',
-            labelKey: 'import-alexa:connection.s_alexa-account.cookie.label',
-            showToggle: true,
-            filledBySignIn: true,
-          },
-          {
-            type: 'password',
-            key: 'refreshToken',
-            label: 'Refresh token (alternative to the sign-in)',
-            labelKey: 'import-alexa:connection.s_alexa-account.refreshToken.label',
-            showToggle: true,
-            filledBySignIn: true,
           },
           {
             type: 'number',

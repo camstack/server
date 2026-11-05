@@ -17,13 +17,13 @@ class Probe extends AlexaImportAddon {
 }
 
 describe('the Alexa import integration form', () => {
-  it('is the connection form, with the keys the record carries', async () => {
+  it('is the connection form: region and poll interval, never the sign-in cookie or refresh token', async () => {
     const form = await new Probe().formFor()
     if (form === null) throw new Error('no instance form declared')
     const keys = form.sections
       .flatMap((section) => section.fields)
       .flatMap((field) => ('key' in field ? [field.key] : []))
-    expect(keys.sort()).toEqual(['amazonDomain', 'cookie', 'pollIntervalMs', 'refreshToken'])
+    expect(keys.sort()).toEqual(['amazonDomain', 'pollIntervalMs'])
   })
 
   it('is no longer the addon-settings global schema', () => {

@@ -9,7 +9,6 @@ import {
   type IntegrationTestConnectionResult,
   type RecordsAccess,
   RecordIntegrationInstances,
-  REDACTED_SECRET,
 } from '@camstack/types'
 import { alexaBrokersEntryKind, type AlexaBrokerBody } from './broker-record-kinds.js'
 import { buildConnectionFormSchema } from './config.js'
@@ -81,17 +80,6 @@ export function buildAlexaInstances(
     configured: isAlexaBodyConfigured,
     onChanged: deps.onChanged,
     test: async ({ id, values }): Promise<IntegrationTestConnectionResult> => {
-      const typed = ['cookie', 'refreshToken'].some((key) => {
-        const v = values[key]
-        return typeof v === 'string' && v.length > 0 && v !== REDACTED_SECRET
-      })
-      if (typed) {
-        return {
-          success: true,
-          status: 'inconclusive',
-          error: 'Save the account to check the sign-in',
-        }
-      }
       const info = id === null ? null : deps.infoOf(id)
       if (info === null) {
         return { success: false, status: 'inconclusive', error: 'Not connected: sign in first' }
