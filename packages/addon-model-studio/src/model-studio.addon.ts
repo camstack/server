@@ -20,6 +20,7 @@ import type {
 import {
   addonPagesSourceCapability,
   BaseAddon,
+  type ConfigUISchema,
   nodePin,
   CustomModelDescriptorSchema,
   customModelRegistryCapability,
@@ -251,7 +252,12 @@ export class ModelStudioAddon extends BaseAddon<ModelStudioConfig> {
     super({ plusCatalogPlusApiKey: '' })
   }
 
-  protected globalSettingsSchema() {
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return ['custom-model-registry']
+  }
+
+  protected override async clusterSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    if (cap !== 'custom-model-registry') return null
     return this.schema({
       sections: [
         {

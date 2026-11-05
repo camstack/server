@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Model Studio catalog API key is declared on the cluster hook; the form and stored value are unchanged.
+
 ## [1.1.341] - 2026-11-02
 
 ### Changed
