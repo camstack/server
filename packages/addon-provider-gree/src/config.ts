@@ -73,6 +73,28 @@ export function settingsToGreeConfig(settings: unknown): GreeConfig {
   return greeConfigSchema.parse(settings ?? {})
 }
 
+/**
+ * The connection an operator edit produces: the current one overlaid by a whole
+ * `connection` blob (the discovery follow step) and/or the `host` /
+ * `broadcastAddr` fields of the device settings form. Returns null when the
+ * patch touches none of them. Re-parsed so defaults and bounds apply.
+ */
+export function mergeConnectionPatch(
+  current: GreeConfig,
+  patch: Record<string, unknown>,
+): GreeConfig | null {
+  const blob = patch['connection']
+  const host = patch['host']
+  const broadcastAddr = patch['broadcastAddr']
+  if (blob === undefined && host === undefined && broadcastAddr === undefined) return null
+  return greeConfigSchema.parse({
+    ...current,
+    ...(typeof blob === 'object' && blob !== null ? blob : {}),
+    ...(typeof host === 'string' ? { host: host.trim() } : {}),
+    ...(typeof broadcastAddr === 'string' ? { broadcastAddr: broadcastAddr.trim() } : {}),
+  })
+}
+
 // ---------------------------------------------------------------------------
 // Air-conditioner device persisted config (standalone mode)
 // ---------------------------------------------------------------------------
@@ -177,7 +199,10 @@ export function buildConnectionFormSchema(): ConfigUISchema {
             label: 'Encryption',
             labelKey: 'provider-gree:connection.s_advanced.encryption.label',
             default: 'auto',
-            options: GREE_ENCRYPTION_MODES.map((m) => ({ value: m, label: m.toUpperCase() })),
+            options: GREE_ENCRYPTION_MODES.map((m) => ({
+              value: m,
+              label: m.toUpperCase(),
+            })),
           },
         ],
       },

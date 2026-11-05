@@ -21,12 +21,11 @@ import { buildConnectionFormSchema, type GreeConfig, settingsToGreeConfig } from
 import { buildGreeInstances, greeConnectionsEntryKind, greeRecordKinds } from './gree-instances.js'
 import { GreeContainerDevice } from './devices/gree-container-device.js'
 import { greeConnections, macKey } from './gree-gateway.js'
-import { GREE_DISCOVERY_MODES, scanGreeSubnets } from './gree-subnet-scan.js'
-import {
-  bindOnce,
-  discoverGreeDevices,
-  GreeIntegrationManager,
-} from './gree-integration-manager.js'
+import { GREE_DISCOVERY_MODES } from './gree-subnet-scan.js'
+import { buildGreeProposals } from './gree-discovery.js'
+import { planMacFollow } from './gree-mac-follow.js'
+import { greeScanScope, sweepGreeSubnets } from './gree-sweep.js'
+import { bindOnce, GreeIntegrationManager } from './gree-integration-manager.js'
 
 /**
  * Gree air-conditioner device-provider addon — `mode: standalone` (the Reolink /
@@ -74,7 +73,10 @@ export class GreeProviderAddon extends BaseDeviceProvider {
     await records.declare(greeRecordKinds)
     await this.runMigrations(
       defineAddonMigrations(
-        defaultIntegrationMigrations({ addonId: this.addonId, date: GREE_MIGRATIONS_DATE }),
+        defaultIntegrationMigrations({
+          addonId: this.addonId,
+          date: GREE_MIGRATIONS_DATE,
+        }),
         defaultIntegrationPortsOver({
           api: defaultIntegrationApiOver(this.ctx.api),
           secrets: this.ctx.secrets ?? null,
@@ -114,33 +116,61 @@ export class GreeProviderAddon extends BaseDeviceProvider {
     const subnets = Array.isArray(rawSubnets)
       ? rawSubnets.filter((s): s is string => typeof s === 'string')
       : []
-    const responders = await scanGreeSubnets({
+    if (subnets.length > 0) greeScanScope.set(subnets)
+    const responders = await sweepGreeSubnets({
       subnets,
-      sweep: (broadcastAddress) => discoverGreeDevices({ broadcastAddress }),
-      onError: (target, error) => {
-        this.ctx.logger.warn('Gree subnet sweep failed — skipping', {
-          meta: { target, error: errMsg(error) },
-        })
-      },
+      logger: this.ctx.logger,
     })
     this.ctx.logger.info('Gree discovery complete', {
       meta: { count: responders.length, subnets: subnets.length },
     })
-    return responders.map((d) => {
-      const displayName = d.name.length > 0 ? d.name : d.mac
-      return {
-        // Match generateStableId so a re-scan of an already-added AC is detected
-        // as adopted and re-adding reuses its persisted row.
-        stableId: `gree:${macKey(d.mac)}`,
-        type: DeviceType.Container,
-        suggestedName: displayName,
-        prefilledConfig: {
-          name: displayName,
-          host: d.ip,
-          ...(d.model !== undefined ? { model: d.model } : {}),
-        },
+    const acs = await this.adoptedAcs()
+    await this.followMovedAcs(responders, acs)
+    const adopted = new Map(
+      acs.map((ac) => [macKey(ac.getGreeMac()), { deviceId: ac.id, name: ac.name }] as const),
+    )
+    return buildGreeProposals(responders, adopted)
+  }
+
+  private async adoptedAcs(): Promise<readonly GreeContainerDevice[]> {
+    const all = (await this.ctx.kernel.devices?.getAll()) ?? []
+    return all.filter((d): d is GreeContainerDevice => d instanceof GreeContainerDevice)
+  }
+
+  /**
+   * The MAC is the identity, the address only where the AC lives now: an adopted
+   * AC that answered from another IP is re-pointed there, keeping its ids.
+   */
+  private async followMovedAcs(
+    responders: readonly { readonly mac: string; readonly ip: string }[],
+    acs: readonly GreeContainerDevice[],
+  ): Promise<void> {
+    const moves = planMacFollow(
+      responders,
+      acs.map((ac) => ({
+        deviceId: ac.id,
+        mac: ac.getGreeMac(),
+        host: ac.getHost(),
+      })),
+    )
+    for (const move of moves) {
+      const ac = acs.find((a) => a.id === move.deviceId)
+      if (ac === undefined) continue
+      this.ctx.logger.warn('Gree AC moved', {
+        tags: { deviceId: move.deviceId },
+        meta: { mac: move.mac, oldIp: move.oldIp, newIp: move.newIp },
+      })
+      try {
+        await ac.applySettingsPatch({
+          connection: { ...ac.getConnection(), host: move.newIp },
+        })
+      } catch (err) {
+        this.ctx.logger.warn('Gree AC moved — applying the new address failed', {
+          tags: { deviceId: move.deviceId },
+          meta: { newIp: move.newIp, error: errMsg(err) },
+        })
       }
-    })
+    }
   }
 
   override async adoptDiscoveredDevice(input: {
@@ -207,6 +237,11 @@ export class GreeProviderAddon extends BaseDeviceProvider {
       onDisconnected: () => undefined,
       surfaceSink: greeConnections,
       expectMac: bound.mac,
+      fallbackSweep: () =>
+        sweepGreeSubnets({
+          subnets: greeScanScope.get(),
+          logger: this.ctx.logger,
+        }),
     })
     try {
       await manager.start()

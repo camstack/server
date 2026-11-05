@@ -47,37 +47,157 @@ export function cidrToBroadcast(cidr: string): string | null {
   ].join('.')
 }
 
-/** One library sweep of ONE directed broadcast address. */
+/** An IPv4 address as an unsigned 32-bit integer. */
+function ipv4ToInt(ip: readonly [number, number, number, number]): number {
+  return ((ip[0] << 24) | (ip[1] << 16) | (ip[2] << 8) | ip[3]) >>> 0
+}
+
+function intToIpv4(value: number): string {
+  return [(value >>> 24) & 0xff, (value >>> 16) & 0xff, (value >>> 8) & 0xff, value & 0xff].join(
+    '.',
+  )
+}
+
+/** The inclusive address range of an IPv4 CIDR, or null when it is not one. */
+function cidrRange(cidr: string): {
+  readonly first: number
+  readonly last: number
+  readonly prefix: number
+} | null {
+  const slash = cidr.indexOf('/')
+  if (slash < 0) return null
+  const ip = parseIpv4(cidr.slice(0, slash))
+  const prefixToken = cidr.slice(slash + 1)
+  if (ip === null || !/^\d{1,2}$/.test(prefixToken)) return null
+  const prefix = Number(prefixToken)
+  if (prefix > 32) return null
+  const hostMask = prefix === 0 ? 0xffffffff : (0xffffffff >>> prefix) >>> 0
+  const base = ipv4ToInt(ip)
+  return {
+    first: (base & ~hostMask) >>> 0,
+    last: (base | hostMask) >>> 0,
+    prefix,
+  }
+}
+
+/** Largest subnet the addon unicasts across: a /24 (254 hosts). A bigger one is refused. */
+export const GREE_UNICAST_MAX_HOSTS = 254
+/** Unicast probes in flight at once. */
+export const GREE_UNICAST_CONCURRENCY = 32
+
+/** A configured subnet the sweep will not probe, with the reason to log. */
+export interface GreeRefusedSubnet {
+  readonly subnet: string
+  readonly reason: string
+}
+
+/** What one sweep sends: directed broadcasts everywhere, plus a unicast per host of each routed subnet. */
+export interface GreeSweepPlan {
+  readonly broadcasts: readonly string[]
+  readonly unicast: readonly string[]
+  readonly refused: readonly GreeRefusedSubnet[]
+}
+
+/**
+ * Plan a sweep. A directed broadcast is always sent. A subnet this node is NOT
+ * attached to (no local address inside it) is routed: routers drop directed
+ * broadcasts, so every host of it is also probed by unicast. Pure.
+ */
+export function planGreeSweep(input: {
+  readonly subnets: readonly string[]
+  readonly localAddresses: readonly string[]
+}): GreeSweepPlan {
+  const locals = new Set<number>()
+  for (const address of input.localAddresses) {
+    const parsed = parseIpv4(address)
+    if (parsed !== null) locals.add(ipv4ToInt(parsed))
+  }
+  const broadcasts = new Set<string>()
+  const unicast = new Set<string>()
+  const refused: GreeRefusedSubnet[] = []
+  for (const subnet of new Set(input.subnets)) {
+    const range = cidrRange(subnet)
+    const broadcast = cidrToBroadcast(subnet)
+    if (range === null || broadcast === null) {
+      refused.push({ subnet, reason: 'not an IPv4 CIDR' })
+      continue
+    }
+    broadcasts.add(broadcast)
+    const onLink = [...locals].some((l) => l >= range.first && l <= range.last)
+    if (onLink) continue
+    const firstHost = range.prefix >= 31 ? range.first : range.first + 1
+    const lastHost = range.prefix >= 31 ? range.last : range.last - 1
+    if (lastHost - firstHost + 1 > GREE_UNICAST_MAX_HOSTS) {
+      refused.push({
+        subnet,
+        reason: `routed subnet larger than a /24 (${GREE_UNICAST_MAX_HOSTS} hosts) — broadcast only`,
+      })
+      continue
+    }
+    for (let host = firstHost; host <= lastHost; host += 1) unicast.add(intToIpv4(host))
+  }
+  return { broadcasts: [...broadcasts], unicast: [...unicast], refused }
+}
+
+/** One library sweep of ONE address (a directed broadcast, or a single host for a unicast probe). */
 export type GreeSweep = (broadcastAddress: string) => Promise<readonly DiscoveredDevice[]>
+
+/** Run `task` over `items` with at most `limit` in flight. */
+async function mapBounded<T, R>(
+  items: readonly T[],
+  limit: number,
+  task: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const out: R[] = new Array<R>(items.length)
+  let next = 0
+  const worker = async (): Promise<void> => {
+    while (next < items.length) {
+      const index = next
+      next += 1
+      const item = items[index]
+      if (item !== undefined) out[index] = await task(item)
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker))
+  return out
+}
 
 /**
  * Gree's scan is an encrypted UDP exchange that only its library speaks, so the
  * engine cannot run it: this addon sweeps the directed broadcast of every
- * subnet the engine covered and merges the responders by MAC. A sweep that
- * fails is reported and skipped, never fatal.
+ * subnet the engine covered and merges the responders by MAC. When
+ * `localAddresses` is given, a subnet this node is not attached to is also
+ * unicast host by host (`sweep` aimed at one IP), bounded. A sweep that fails
+ * is reported and skipped, never fatal.
  */
 export async function scanGreeSubnets(input: {
   readonly subnets: readonly string[]
   readonly sweep: GreeSweep
+  /** This node's own IPv4 addresses; omitted = no unicast probing. */
+  readonly localAddresses?: readonly string[]
   readonly onError?: (broadcastAddress: string, error: unknown) => void
+  readonly onRefused?: (refused: GreeRefusedSubnet) => void
 }): Promise<readonly DiscoveredDevice[]> {
-  const targets = [
-    ...new Set(
-      input.subnets.map((subnet) => cidrToBroadcast(subnet)).filter((t): t is string => t !== null),
-    ),
-  ]
-  const settled = await Promise.all(
-    targets.map(async (target) => {
-      try {
-        return await input.sweep(target)
-      } catch (error) {
-        input.onError?.(target, error)
-        return []
-      }
-    }),
-  )
+  const plan = planGreeSweep({
+    subnets: input.subnets,
+    localAddresses: input.localAddresses ?? [],
+  })
+  for (const refused of plan.refused) input.onRefused?.(refused)
+  const probe = async (target: string): Promise<readonly DiscoveredDevice[]> => {
+    try {
+      return await input.sweep(target)
+    } catch (error) {
+      input.onError?.(target, error)
+      return []
+    }
+  }
+  const unicast = input.localAddresses === undefined ? [] : plan.unicast
+  const [broadcastBatches, unicastBatches] = await Promise.all([
+    Promise.all(plan.broadcasts.map(probe)),
+    mapBounded(unicast, GREE_UNICAST_CONCURRENCY, probe),
+  ])
   const merged = new Map<string, DiscoveredDevice>()
-  for (const batch of settled) {
+  for (const batch of [...broadcastBatches, ...unicastBatches]) {
     for (const device of batch) {
       const key = device.mac.trim().toLowerCase()
       if (!merged.has(key)) merged.set(key, device)

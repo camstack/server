@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**234 units · 8042 source files · 221 units claimed by at least one document (7998 files).**
+**234 units · 8044 source files · 221 units claimed by at least one document (8000 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -112,6 +112,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/system/src/tls` | 15 | `remote-access` | `decisions/adr-0227-the-hub-reissues-its-certificate-only-when-it-cannot-do-its-job.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +5 more | — |
 | `packages/types/src/addon` | 15 | `kernel`, `secrets` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/secrets-keychain.md`, `decisions/adr-0787-a-secret-field-stores-a-keychain-marker-and-the-value-lives-in-the-keychain.md`, +10 more | 2026-10-18 |
 | `packages/addon-export-hap` | 14 | `ecosystem-exports` | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md`, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +6 more, 1 ADR | 2026-09-29 |
+| `packages/addon-provider-gree` | 14 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/node-root` | 14 | `kernel` | `architecture/update-and-release.md`, `design/2026-09-10-wrapper-identity-and-update.md` _(covers)_, `decisions/adr-0187-an-update-notification-names-one-node-and-both-versions.md`, +9 more, 4 ADRs | 2026-10-27 |
 | `packages/types/src/catalogs` | 14 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0939-the-display-palette-is-one-hub-capability.md`, `decisions/adr-0715-a-root-detector-that-declares-a-step-fills-it-and-tier-1-has-one-writer-per-effect.md`, +7 more, 1 ADR | — |
 | `packages/addon-model-studio` | 13 | `tooling` | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, `decisions/adr-0661-model-licences-live-in-the-catalog-and-every-licence-surface-is-generated-from-them.md`, +1 more | — |
@@ -122,7 +123,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/ui-library/src/contexts` | 13 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +3 more | 2026-11-02 |
 | `packages/addon-model-studio/src/tabs` | 12 | `tooling` | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, `decisions/adr-0746-installed-lists-files-per-model-and-format-and-in-use-means-resident-in-a-pool.md` | — |
 | `packages/addon-mqtt-broker` | 12 | `ecosystem-exports` | `decisions/adr-0831-mqtt-ha-discovery-import-is-its-own-provider.md`, `decisions/adr-0797-no-secret-reaches-a-node-through-its-environment-the-hub-keeps-its-own-in-the-keychain.md` | — |
-| `packages/addon-provider-gree` | 12 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/types/src/ffmpeg` | 12 | `decode-and-data-planes` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/ffmpeg.md`, `decisions/adr-0527-a-composites-tile-skew-is-a-probe-budget-not-a-clock.md`, +5 more, 3 ADRs | 2026-10-13 |
 | `packages/addon-pipeline-orchestrator/src/camera-sensors` | 11 | `pipeline-orchestration` | `architecture/detection-execution.md` _(covers)_, `decisions/adr-0673-a-camera-sensor-has-a-mode-and-one-bridge-emits-the-cameras-effective-onboard-motion.md`, `decisions/adr-0696-a-cameras-motion-slice-means-motion-and-only-the-orchestrator-writes-it.md`, +1 more, 1 ADR | 2026-10-24 |
 | `packages/addon-pipeline-orchestrator/src/widgets` | 11 | `pipeline-orchestration` | `decisions/adr-0931-a-packages-rule-can-open-a-candidate-from-a-scene-difference-and-confirm-it-with-the-llm.md`, 1 ADR | — |

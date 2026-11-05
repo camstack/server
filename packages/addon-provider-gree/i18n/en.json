@@ -13,5 +13,13 @@
   "fields.enabledFanModes.description": "Fan speeds shown in the control UI. Empty = all.",
   "fields.exposeVerticalSwing.label": "Vertical swing",
   "settingsUI.exposeHorizontalSwing.label": "Horizontal swing",
-  "schema.s_exposure.title": "Exposed controls"
+  "schema.s_exposure.title": "Exposed controls",
+  "container": {
+    "s_connection": {
+      "title": "Connection"
+    },
+    "host": {
+      "description": "Where the air conditioner answers. Changing it reconnects; the device and its history stay."
+    }
+  }
 }

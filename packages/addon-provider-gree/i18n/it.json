@@ -13,5 +13,13 @@
   "fields.enabledFanModes.description": "Velocità della ventola mostrate nell'interfaccia di controllo. Vuoto = tutte.",
   "fields.exposeVerticalSwing.label": "Oscillazione verticale",
   "settingsUI.exposeHorizontalSwing.label": "Oscillazione orizzontale",
-  "schema.s_exposure.title": "Comandi esposti"
+  "schema.s_exposure.title": "Comandi esposti",
+  "container": {
+    "s_connection": {
+      "title": "Connessione"
+    },
+    "host": {
+      "description": "Dove risponde il condizionatore. Cambiarlo riconnette; il dispositivo e il suo storico restano."
+    }
+  }
 }

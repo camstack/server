@@ -1,4 +1,4 @@
-import { DeviceType, type DiscoveredChildDevice } from '@camstack/types'
+import { DeviceType, type DiscoveredChildDevice, type DiscoveryCandidate } from '@camstack/types'
 
 /**
  * Minimal structural subset of a Gree discovery row the discovery code needs.
@@ -48,4 +48,47 @@ export function buildGreeCandidates(input: BuildGreeCandidatesInput): Discovered
     })
   }
   return out
+}
+
+/** A responder with the address it answered from — what an adoption proposal carries. */
+export interface GreeResponder extends GreeDiscoverable {
+  readonly ip: string
+}
+
+/** An adopted AC, by MAC, as the proposals recognise it. */
+export interface GreeAdoptedAc {
+  readonly deviceId: number
+  readonly name: string
+}
+
+/**
+ * Adoption proposals for the "Scan network" modal: one Container per responder,
+ * carrying the IP it answered from (so an AC on a routed subnet is adopted by
+ * that address) and recognising an AC already owned by its MAC. Pure.
+ */
+export function buildGreeProposals(
+  responders: readonly GreeResponder[],
+  adopted: ReadonlyMap<string, GreeAdoptedAc>,
+): readonly DiscoveryCandidate[] {
+  return responders.map((d): DiscoveryCandidate => {
+    const displayName = d.name.length > 0 ? d.name : d.mac
+    const owned = adopted.get(macKey(d.mac))
+    return {
+      stableId: `gree:${macKey(d.mac)}`,
+      type: DeviceType.Container,
+      suggestedName: displayName,
+      prefilledConfig: {
+        name: displayName,
+        host: d.ip,
+        ...(d.model !== undefined ? { model: d.model } : {}),
+      },
+      ...(owned !== undefined
+        ? {
+            alreadyOnboarded: true,
+            onboardedDeviceId: owned.deviceId,
+            onboardedName: owned.name,
+          }
+        : {}),
+    }
+  })
 }

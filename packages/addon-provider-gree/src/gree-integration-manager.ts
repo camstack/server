@@ -67,7 +67,26 @@ export interface GreeIntegrationManagerOptions {
   readonly deviceId?: number
   /** Timer seam for the retry loop (tests inject a manual clock). */
   readonly scheduler?: GreeRetryScheduler
+  /**
+   * Looks for the AC on the configured scan subnets (broadcast + unicast sweep).
+   * Used once {@link REBIND_FALLBACK_AFTER} re-binds at the host have failed.
+   */
+  readonly fallbackSweep?: () => Promise<readonly DiscoveredDevice[]>
+  /** The AC answered from a new address; the owner persists the returned connection. */
+  readonly onMoved?: (move: GreeMoved) => void
 }
+
+/** An AC found at a new address by the subnet fallback. */
+export interface GreeMoved {
+  readonly mac: string
+  readonly oldIp: string
+  readonly newIp: string
+  /** The connection the manager now dials (host replaced, stale broadcast target cleared). */
+  readonly connection: GreeConfig
+}
+
+/** Failed re-binds at the configured host before the next one also sweeps the scan subnets. */
+export const REBIND_FALLBACK_AFTER = 3
 
 /** Schedules one delayed callback; the returned function cancels it. */
 export interface GreeRetryScheduler {
@@ -140,6 +159,9 @@ export class GreeIntegrationManager {
   #cancelTimer: (() => void) | null = null
   #disposers: Array<() => void> = []
   #consecutiveFailures = 0
+  #failedBinds = 0
+  readonly #fallbackSweep: (() => Promise<readonly DiscoveredDevice[]>) | null
+  #onMoved: ((move: GreeMoved) => void) | null
 
   constructor(options: GreeIntegrationManagerOptions & { readonly expectMac?: string }) {
     this.#id = options.id
@@ -153,7 +175,14 @@ export class GreeIntegrationManager {
     this.#makeFacade = options.makeFacade ?? defaultFacade
     this.#deviceId = options.deviceId
     this.#scheduler = options.scheduler ?? defaultScheduler
+    this.#fallbackSweep = options.fallbackSweep ?? null
+    this.#onMoved = options.onMoved ?? null
     this.#expectMac = options.expectMac !== undefined ? macKey(options.expectMac) : null
+  }
+
+  /** The device that owns this manager takes the persistence of an address change. */
+  attachOwner(onMoved: (move: GreeMoved) => void): void {
+    this.#onMoved = onMoved
   }
 
   /** The connection settings the manager is currently configured with. */
@@ -195,6 +224,7 @@ export class GreeIntegrationManager {
     }
     this.#active = true
     this.#retryAttempt = 0
+    this.#failedBinds = 0
     await this.#attemptBind()
   }
 
@@ -285,7 +315,10 @@ export class GreeIntegrationManager {
     const sliceMs = Math.max(MIN_DISCOVER_SLICE_MS, Math.floor(windowMs / DISCOVER_SENDS))
     const byMac = new Map<string, DiscoveredDevice>()
     for (let i = 0; i < DISCOVER_SENDS; i += 1) {
-      for (const dev of await facade.discover({ ...opts, timeoutMs: sliceMs })) {
+      for (const dev of await facade.discover({
+        ...opts,
+        timeoutMs: sliceMs,
+      })) {
         byMac.set(macKey(dev.mac), dev)
       }
       const all = [...byMac.values()]
@@ -303,14 +336,25 @@ export class GreeIntegrationManager {
     this.#facade = facade
 
     try {
-      const discovered = await this.#scan(facade)
+      let discovered = await this.#scan(facade)
       if (generation !== this.#generation) return
-      const matched = this.#selectResponders(discovered)
+      let matched = this.#selectResponders(discovered)
+      if (matched.length === 0 && this.#failedBinds >= REBIND_FALLBACK_AFTER) {
+        const swept = await this.#sweepForMove()
+        if (generation !== this.#generation) return
+        discovered = [...discovered, ...swept]
+        matched = this.#selectResponders(discovered)
+        this.#followMove(matched)
+      }
       const handles = new Map<string, AcDevice>()
 
       for (const dev of matched) {
         try {
-          const ac = await facade.createAc({ ip: dev.ip, port: dev.port, mac: dev.mac })
+          const ac = await facade.createAc({
+            ip: dev.ip,
+            port: dev.port,
+            mac: dev.mac,
+          })
           if (generation !== this.#generation) return
           if (this.#pollIntervalMs > 0) ac.startPolling(this.#pollIntervalMs)
           handles.set(macKey(dev.mac), ac)
@@ -332,6 +376,7 @@ export class GreeIntegrationManager {
       this.#lastCheckedAt = Date.now()
       if (handles.size > 0) {
         this.#retryAttempt = 0
+        this.#failedBinds = 0
         this.#watchHandles(handles)
         this.#onConnected(this.#id)
         this.#logger.info('GreeIntegrationManager: connected', {
@@ -349,6 +394,7 @@ export class GreeIntegrationManager {
             nextRetryMs: retryDelayMs(this.#retryAttempt),
           },
         })
+        this.#failedBinds += 1
         this.#onDisconnected(this.#id)
         this.#scheduleRetry()
       }
@@ -360,15 +406,63 @@ export class GreeIntegrationManager {
           ? 'device bind failed — check the AC is reachable'
           : errMsg(err)
       this.#lastCheckedAt = Date.now()
+      this.#failedBinds += 1
       this.#surfaceSink.set(this.#id, null)
       this.#onDisconnected(this.#id)
       this.#logger.warn('GreeIntegrationManager: scan failed — will retry', {
         tags: this.#tags(),
-        meta: { error: this.#error, nextRetryMs: retryDelayMs(this.#retryAttempt) },
+        meta: {
+          error: this.#error,
+          nextRetryMs: retryDelayMs(this.#retryAttempt),
+        },
       })
       this.#scheduleRetry()
       throw err
     }
+  }
+
+  /** Sweep the configured scan subnets for the expected MAC; a failed sweep finds nothing. */
+  async #sweepForMove(): Promise<readonly DiscoveredDevice[]> {
+    if (this.#fallbackSweep === null) return []
+    this.#logger.info('GreeIntegrationManager: AC not at its host — sweeping the scan subnets', {
+      tags: this.#tags(),
+      meta: {
+        expectMac: this.#expectMac,
+        host: this.#connection.host,
+        failedBinds: this.#failedBinds,
+      },
+    })
+    try {
+      return await this.#fallbackSweep()
+    } catch (err: unknown) {
+      this.#logger.warn('GreeIntegrationManager: subnet fallback sweep failed', {
+        tags: this.#tags(),
+        meta: { error: errMsg(err) },
+      })
+      return []
+    }
+  }
+
+  /** The fallback found the AC at another address: dial it there and tell the owner. */
+  #followMove(matched: readonly DiscoveredDevice[]): void {
+    const found = matched[0]
+    const oldIp = this.#connection.host.trim()
+    if (found === undefined || found.ip === oldIp) return
+    this.#connection = {
+      ...this.#connection,
+      host: found.ip,
+      broadcastAddr: '',
+    }
+    this.#logger.warn('Gree AC moved', {
+      tags: this.#tags(),
+      meta: { mac: found.mac, oldIp, newIp: found.ip },
+    })
+    this.#onMoved?.({
+      mac: found.mac,
+      oldIp,
+      newIp: found.ip,
+      connection: this.#connection,
+    })
   }
 
   /** Subscribe to each bound AC's health events; an `error` listener must exist
@@ -497,7 +591,9 @@ export async function discoverGreeDevices(input: {
   const facade = (input.makeFacade ?? defaultFacade)(connection)
   try {
     const broadcast = resolveBroadcastTarget(connection)
-    const opts: { broadcastAddr?: string; timeoutMs?: number } = { timeoutMs: connection.timeoutMs }
+    const opts: { broadcastAddr?: string; timeoutMs?: number } = {
+      timeoutMs: connection.timeoutMs,
+    }
     if (broadcast.length > 0) opts.broadcastAddr = broadcast
     return await facade.discover(opts)
   } finally {
@@ -533,7 +629,11 @@ export async function bindOnce(input: {
 
     // Bind to prove reachability + correct cipher; discard the handle (the live
     // per-device manager re-binds on activate).
-    const ac = await facade.createAc({ ip: target.ip, port: target.port, mac: target.mac })
+    const ac = await facade.createAc({
+      ip: target.ip,
+      port: target.port,
+      mac: target.mac,
+    })
     try {
       ac.stopPolling()
     } catch {
@@ -551,7 +651,9 @@ export async function bindOnce(input: {
       err instanceof GreeAuthError
         ? 'device bind failed — check the AC is reachable and the encryption mode'
         : errMsg(err)
-    logger.warn('gree bindOnce failed', { meta: { host: connection.host, error: message } })
+    logger.warn('gree bindOnce failed', {
+      meta: { host: connection.host, error: message },
+    })
     throw new Error(message)
   } finally {
     try {

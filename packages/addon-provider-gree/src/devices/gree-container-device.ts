@@ -4,13 +4,17 @@ import {
   DeviceType,
   errMsg,
   type AccessoryChildSpec,
+  type ConfigUISchema,
+  type ConfigUISchemaWithValues,
+  hydrateSchema,
   type DeviceContext,
   type IDevice,
 } from '@camstack/types'
 import { DEFAULT_AC_CAPABILITIES, type AcCapabilities } from '@apocaliss92/nodegree'
-import { greeAcDeviceSchema, type GreeConfig } from '../config.js'
+import { greeAcDeviceSchema, type GreeConfig, mergeConnectionPatch } from '../config.js'
 import { greeConnections } from '../gree-gateway.js'
-import { GreeIntegrationManager } from '../gree-integration-manager.js'
+import { GreeIntegrationManager, type GreeMoved } from '../gree-integration-manager.js'
+import { greeScanScope, sweepGreeSubnets } from '../gree-sweep.js'
 import { GreeAcDevice } from './gree-ac-device.js'
 import { GreeToggleDevice, type GreeToggleKind } from './gree-toggle-device.js'
 
@@ -56,6 +60,70 @@ export class GreeContainerDevice extends BaseDevice<typeof greeAcDeviceSchema> {
    *  binds once at create time) — mirrors `EcowittGatewayDevice.adoptManager`. */
   adoptManager(manager: GreeIntegrationManager): void {
     this.manager = manager
+    manager.attachOwner((move) => void this.persistMove(move))
+  }
+
+  /** The fallback sweep found the AC at a new address: keep it (the manager already dials it). */
+  private async persistMove(move: GreeMoved): Promise<void> {
+    this.connection = move.connection
+    await this.config
+      .setAll({ connection: move.connection, greeIp: move.newIp })
+      .catch((err: unknown) => {
+        this.ctx.logger.warn('Gree AC: could not persist the new address', {
+          tags: { deviceId: this.id },
+          meta: { newIp: move.newIp, error: errMsg(err) },
+        })
+      })
+  }
+
+  /** The connection as the discovery follow step and the settings form read it. */
+  getHost(): string {
+    return this.connection.host
+  }
+
+  getConnection(): GreeConfig {
+    return this.connection
+  }
+
+  getGreeMac(): string {
+    return this.greeMac
+  }
+
+  /** Operator-editable address of the AC (the rest of the UDP tuning stays in the creation form). */
+  override getSettingsUISchema(): ConfigUISchemaWithValues {
+    const schema: ConfigUISchema = {
+      sections: [
+        {
+          id: 'connection',
+          title: 'Connection',
+          titleKey: 'provider-gree:container.s_connection.title',
+          columns: 1,
+          fields: [
+            {
+              type: 'text',
+              key: 'host',
+              label: 'IP address',
+              labelKey: 'provider-gree:connection.s_identity.host.label',
+              description:
+                'Where the air conditioner answers. Changing it reconnects; the device and its history stay.',
+              descriptionKey: 'provider-gree:container.host.description',
+              placeholder: '192.168.10.50',
+            },
+            {
+              type: 'text',
+              key: 'broadcastAddr',
+              label: 'Broadcast address (optional)',
+              labelKey: 'provider-gree:connection.s_advanced.broadcastAddr.label',
+              placeholder: '192.168.10.255',
+            },
+          ],
+        },
+      ],
+    }
+    return hydrateSchema(schema, {
+      host: this.connection.host,
+      broadcastAddr: this.connection.broadcastAddr,
+    })
   }
 
   override async onActivate(): Promise<void> {
@@ -66,6 +134,7 @@ export class GreeContainerDevice extends BaseDevice<typeof greeAcDeviceSchema> {
     if (this.manager === null) {
       void this.ensureManager().catch((err) => {
         this.ctx.logger.warn('Gree AC initial bind failed', {
+          tags: { deviceId: this.id },
           meta: { greeMac: this.greeMac, error: errMsg(err) },
         })
       })
@@ -80,6 +149,7 @@ export class GreeContainerDevice extends BaseDevice<typeof greeAcDeviceSchema> {
         await mgr.stop()
       } catch (err) {
         this.ctx.logger.warn('Gree AC: client stop failed', {
+          tags: { deviceId: this.id },
           meta: { greeMac: this.greeMac, error: errMsg(err) },
         })
       }
@@ -87,11 +157,16 @@ export class GreeContainerDevice extends BaseDevice<typeof greeAcDeviceSchema> {
   }
 
   override async applySettingsPatch(patch: Record<string, unknown>): Promise<void> {
-    // Only the nested `connection` blob is operator-editable here; a change
-    // rebuilds the bound client. Re-parse through the schema so defaults apply.
-    if (!('connection' in patch)) return
-    const parsed = greeAcDeviceSchema.shape.connection.parse(patch['connection'])
-    await this.config.setAll({ connection: parsed })
+    // The connection is operator-editable: the whole `connection` blob (the
+    // discovery follow step) or the `host` / `broadcastAddr` fields of the
+    // settings form. A change rebuilds the bound client; ids and children stay.
+    // Re-parse through the schema so defaults apply.
+    const parsed = mergeConnectionPatch(this.connection, patch)
+    if (parsed === null) return
+    await this.config.setAll({
+      connection: parsed,
+      ...(parsed.host.length > 0 ? { greeIp: parsed.host } : {}),
+    })
     this.connection = parsed
     const mgr = this.manager
     if (mgr) {
@@ -99,12 +174,14 @@ export class GreeContainerDevice extends BaseDevice<typeof greeAcDeviceSchema> {
         await mgr.applyConnection(parsed)
       } catch (err) {
         this.ctx.logger.warn('Gree AC: applyConnection failed', {
+          tags: { deviceId: this.id },
           meta: { greeMac: this.greeMac, error: errMsg(err) },
         })
       }
     } else {
       await this.ensureManager().catch((err) => {
         this.ctx.logger.warn('Gree AC re-bind after settings change failed', {
+          tags: { deviceId: this.id },
           meta: { greeMac: this.greeMac, error: errMsg(err) },
         })
       })
@@ -124,6 +201,12 @@ export class GreeContainerDevice extends BaseDevice<typeof greeAcDeviceSchema> {
       onDisconnected: () => this.setAcOnline(false),
       surfaceSink: greeConnections,
       expectMac: this.greeMac,
+      fallbackSweep: () =>
+        sweepGreeSubnets({
+          subnets: greeScanScope.get(),
+          logger: this.ctx.logger,
+        }),
+      onMoved: (move) => void this.persistMove(move),
     })
     this.manager = mgr
     await mgr.start()
@@ -181,8 +264,18 @@ export class GreeContainerDevice extends BaseDevice<typeof greeAcDeviceSchema> {
     const wanted: readonly GreeToggleDescriptor[] = [
       { toggle: 'light', suffix: 'light', label: 'Light', present: true },
       { toggle: 'xfan', suffix: 'xfan', label: 'X-Fan', present: caps.xfan },
-      { toggle: 'health', suffix: 'health', label: 'Health', present: caps.health },
-      { toggle: 'freshAir', suffix: 'freshair', label: 'Fresh Air', present: caps.freshAir },
+      {
+        toggle: 'health',
+        suffix: 'health',
+        label: 'Health',
+        present: caps.health,
+      },
+      {
+        toggle: 'freshAir',
+        suffix: 'freshair',
+        label: 'Fresh Air',
+        present: caps.freshAir,
+      },
     ]
 
     return wanted
