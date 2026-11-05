@@ -1848,7 +1848,7 @@
     "updateAll": "Aggiorna tutti i nodi",
     "updateAllHint": "In sequenza: prima gli agent, l'hub per ultimo — i nodi già aggiornati vengono saltati.",
     "confirmUpdateAllTitle": "Aggiorna tutti i nodi",
-    "confirmUpdateAllBody": "Aggiorna in sequenza ogni nodo online all'ultima versione pubblicata — prima gli agent, l'hub per ultimo. Ogni nodo installa il suo pacchetto radice (solo se più recente di quello in esecuzione) e riparte in prova con rollback automatico; i nodi già aggiornati vengono saltati. L'hub riparte per ultimo, quindi questa pagina si riconnetterà successivamente.",
+    "confirmUpdateAllBody": "Aggiorna e riavvia ogni nodo online: prima l'hub, poi gli agent quando l'hub esegue la nuova versione. I nodi già aggiornati vengono saltati; questa pagina si riconnette quando l'hub torna online.",
     "confirmUpdateAllAction": "Aggiorna tutti e riavvia",
     "awaitingConfirmationWarning": "Questo nodo è ripartito su {{version}} e sta confermando lo stato di boot — evita di riavviarlo ora. Aggiornamento e rollback sono temporaneamente non disponibili finché il boot in prova non viene confermato; un riavvio manuale in questa finestra causerebbe il rollback automatico dell'aggiornamento.",
     "stateCorruptWarning": "Il file di stato server-root su questo nodo è corrotto — il nodo è partito dal seed dell'immagine e le versioni installate nella data directory vengono ignorate. Applicare un aggiornamento riscriverà il file di stato.",

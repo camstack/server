@@ -143,6 +143,32 @@ describe('updateAllNodes', () => {
     expect(reports[1]?.detail).toMatch(/Hub/)
   })
 
+  it('updates the agents when the hub is already on the target', async () => {
+    const seen: string[] = []
+    const seams = makeSeams({
+      apply: async (routing) => {
+        const id = routing.nodeId ?? 'hub'
+        seen.push(id)
+        if (id === 'hub') {
+          return {
+            accepted: false,
+            targetVersion: '1.2.205',
+            restarting: false,
+            message: 'Refused: @camstack/server@1.2.205 is already running.',
+            outcome: 'already-current',
+            reason: 'already-running',
+          }
+        }
+        return accepted('1.2.205')
+      },
+    })
+
+    const reports = await updateAllNodes([HUB, AGENT_A, AGENT_B], seams)
+
+    expect(seen).toEqual(['hub', 'agent-a', 'agent-b'])
+    expect(reports.map((r) => r.outcome)).toEqual(['refused', 'applied', 'applied'])
+  })
+
   it('stops after a hub that never settles on the target', async () => {
     const seen: string[] = []
     const seams = makeSeams({

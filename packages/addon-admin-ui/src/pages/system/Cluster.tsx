@@ -179,7 +179,7 @@ export function ClusterPage() {
       title: t('serverManagement.confirmUpdateAllTitle', 'Update all nodes'),
       message: t(
         'serverManagement.confirmUpdateAllBody',
-        'Update and restart every online node, agents first, hub last. Up-to-date nodes are skipped; this page reconnects when the hub comes back.',
+        'Update and restart every online node, hub first, then the agents once the hub runs the new version. Up-to-date nodes are skipped; this page reconnects when the hub comes back.',
       ),
       confirmLabel: t('serverManagement.confirmUpdateAllAction', 'Update all & restart'),
       variant: 'warning',

@@ -238,8 +238,10 @@ export async function updateAllNodes(
       continue
     }
     let report: NodeUpdateReport
+    let alreadyCurrent = false
     try {
       const result = await seams.apply(routingFor(node))
+      alreadyCurrent = result.outcome === 'already-current' || result.reason === 'already-running'
       report = {
         nodeId: node.id,
         nodeName: node.name,
@@ -252,7 +254,11 @@ export async function updateAllNodes(
     reports.push(report)
     if (node.isHub) {
       const isLast = reports.length === nodes.length
-      if (report.outcome !== 'applied') {
+      // A hub that is already on the target needs nothing and blocks nothing:
+      // the agents are the part still behind.
+      if (alreadyCurrent) {
+        // continue with the agents
+      } else if (report.outcome !== 'applied') {
         blockedBy = { hub: node, why: report.outcome }
       } else if (!isLast && !(await hubSettled(seams))) {
         blockedBy = { hub: node, why: i18n.t('helpers.clusterUpdateAll.hubNotSettled') }
