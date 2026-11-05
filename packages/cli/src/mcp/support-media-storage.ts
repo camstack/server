@@ -256,38 +256,35 @@ interface EveryLocationCensus {
   readonly byLocation: ReadonlyMap<string, { readonly rows: number; readonly bytes: number }>
   readonly totalRows: number | null
   readonly unstampedRows: number
-  /** `null` unless EVERY id the hub lists was asked and answered. */
+  /** `null` unless EVERY id the hub lists was asked and answered, and the count held. */
   readonly unlistedRows: number | null
   readonly unlistedUnknownReason: string | null
 }
 
-/**
- * Ask the census for EVERY location id the hub lists, in chunks the method
- * accepts. "A row names a location that no longer exists" is the total minus the
- * rows of every known location minus the unstamped ones, so it is only true when
- * no known location was left out of the ask: a partial ask would call a row on a
- * live location "gone". When a chunk fails or the ids exceed the call budget the
- * answer is unknown, with the reason.
- */
-async function countEveryLocation(
+interface CensusPass {
+  readonly byLocation: Map<string, { rows: number; bytes: number }>
+  readonly totalRows: number | null
+  readonly unstampedRows: number
+  /** The server's own `unlisted` of the one call; only meaningful for a single chunk. */
+  readonly serverUnlisted: number | null
+  readonly reason: string | null
+  readonly answered: number
+}
+
+/** One full read of every chunk. `total` and `unstamped` come from the SAME (first) answer. */
+async function censusPass(
   client: HubClient,
-  ids: readonly string[],
+  chunks: readonly (readonly string[])[],
   unavailable: { [part: string]: string },
-): Promise<EveryLocationCensus | null> {
-  const chunks: string[][] = []
-  for (let i = 0; i < ids.length; i += CENSUS_IDS_PER_CALL)
-    chunks.push(ids.slice(i, i + CENSUS_IDS_PER_CALL))
-  if (chunks.length === 0) chunks.push([])
-  const asked = chunks.slice(0, CENSUS_MAX_CALLS)
+  overBudget: string | null,
+): Promise<CensusPass> {
   const byLocation = new Map<string, { rows: number; bytes: number }>()
   let totalRows: number | null = null
   let unstampedRows = 0
-  let reason: string | null =
-    chunks.length > asked.length
-      ? `${String(ids.length)} locations exceed the ${String(CENSUS_MAX_CALLS * CENSUS_IDS_PER_CALL)} one report asks about`
-      : null
+  let serverUnlisted: number | null = null
+  let reason = overBudget
   let answered = 0
-  for (const chunk of asked) {
+  for (const chunk of chunks) {
     const read = await readQuery(
       client,
       'pipelineAnalytics.getMediaLocationCensus',
@@ -302,20 +299,85 @@ async function countEveryLocation(
     answered += 1
     for (const l of read.value.locations)
       byLocation.set(l.locationId, { rows: l.rows, bytes: l.bytes })
-    totalRows ??= read.value.total.rows
-    unstampedRows = read.value.unstamped.rows
+    if (totalRows === null) {
+      totalRows = read.value.total.rows
+      unstampedRows = read.value.unstamped.rows
+      serverUnlisted = read.value.unlisted.rows
+    }
   }
-  if (answered === 0) return null
-  let known = 0
-  for (const v of byLocation.values()) known += v.rows
-  const complete = reason === null && byLocation.size === ids.length
+  return { byLocation, totalRows, unstampedRows, serverUnlisted, reason, answered }
+}
+
+const sumRows = (m: ReadonlyMap<string, { readonly rows: number }>): number => {
+  let n = 0
+  for (const v of m.values()) n += v.rows
+  return n
+}
+
+/**
+ * Ask the census for EVERY location id the hub lists, in chunks the method
+ * accepts. "A row names a location that no longer exists" is only true when no
+ * known location was left out of the ask, so a failed chunk or too many ids
+ * make it unknown, with the reason.
+ *
+ * One chunk: the server's own `unlisted`, one consistent read. Several chunks:
+ * the chunks are read at different times, so retention running in between can
+ * fake a remainder; a non-zero count is raised only when a SECOND full read
+ * confirms it (D49), otherwise it is unknown.
+ */
+async function countEveryLocation(
+  client: HubClient,
+  ids: readonly string[],
+  unavailable: { [part: string]: string },
+): Promise<EveryLocationCensus | null> {
+  const chunks: string[][] = []
+  for (let i = 0; i < ids.length; i += CENSUS_IDS_PER_CALL)
+    chunks.push(ids.slice(i, i + CENSUS_IDS_PER_CALL))
+  if (chunks.length === 0) chunks.push([])
+  const asked = chunks.slice(0, CENSUS_MAX_CALLS)
+  const overBudget =
+    chunks.length > asked.length
+      ? `${String(ids.length)} locations exceed the ${String(CENSUS_MAX_CALLS * CENSUS_IDS_PER_CALL)} one report asks about`
+      : null
+  const first = await censusPass(client, asked, unavailable, overBudget)
+  if (first.answered === 0) return null
+  const complete = first.reason === null && first.byLocation.size === ids.length
+  const base = {
+    byLocation: first.byLocation,
+    totalRows: first.totalRows,
+    unstampedRows: first.unstampedRows,
+  }
+  if (!complete) {
+    return {
+      ...base,
+      unlistedRows: null,
+      unlistedUnknownReason: first.reason ?? 'a location was not counted',
+    }
+  }
+  if (asked.length === 1) {
+    return { ...base, unlistedRows: first.serverUnlisted, unlistedUnknownReason: null }
+  }
+  const candidate =
+    first.totalRows === null
+      ? null
+      : Math.max(0, first.totalRows - sumRows(first.byLocation) - first.unstampedRows)
+  if (candidate === null) {
+    return { ...base, unlistedRows: null, unlistedUnknownReason: 'no total was read' }
+  }
+  if (candidate === 0) return { ...base, unlistedRows: 0, unlistedUnknownReason: null }
+  const second = await censusPass(client, asked, unavailable, overBudget)
+  const confirmed =
+    second.reason === null && second.totalRows !== null && second.byLocation.size === ids.length
+      ? Math.max(0, second.totalRows - sumRows(second.byLocation) - second.unstampedRows)
+      : 0
+  if (confirmed > 0) {
+    return { ...base, unlistedRows: confirmed, unlistedUnknownReason: null }
+  }
   return {
-    byLocation,
-    totalRows,
-    unstampedRows,
-    unlistedRows:
-      complete && totalRows !== null ? Math.max(0, totalRows - known - unstampedRows) : null,
-    unlistedUnknownReason: complete ? null : (reason ?? 'a location was not counted'),
+    ...base,
+    unlistedRows: null,
+    unlistedUnknownReason:
+      'the chunks were read at different times and a second read did not confirm the remainder',
   }
 }
 

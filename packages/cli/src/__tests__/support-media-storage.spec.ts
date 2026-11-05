@@ -232,6 +232,47 @@ describe('media_storage_check', () => {
     expect(out.census?.unlistedRows).toBeNull()
   })
 
+  it('confirms a remainder that a second full read still sees', async () => {
+    const ids = Array.from({ length: 60 }, (_, i) => `eventMedia:l${String(i)}`)
+    const answer = censusOver({ 'eventMedia:l1': 5, 'gone:x': 9 })
+    const h = fakeHub({
+      'storage.listLocations': ids.map((id) => loc(id)),
+      'pipelineAnalytics.getMediaLocationCensus': answer,
+      'deviceManager.listAll': [],
+    })
+    const out = await mediaStorageCheck(h.ctx)
+    if (out.status !== 'ok') throw new Error('expected ok')
+    expect(out.findings.find((f) => f.code === 'location-gone')).toMatchObject({ rows: 9 })
+    // two full passes of two chunks
+    expect(h.calls.filter((c) => c.path.endsWith('getMediaLocationCensus'))).toHaveLength(4)
+  })
+
+  it('a remainder that vanishes on the second read is unknown, not gone', async () => {
+    const ids = Array.from({ length: 60 }, (_, i) => `eventMedia:l${String(i)}`)
+    let n = 0
+    const h = fakeHub({
+      'storage.listLocations': ids.map((id) => loc(id)),
+      'pipelineAnalytics.getMediaLocationCensus': (input: CensusInput) => {
+        n += 1
+        // Pass 1 sees 10 phantom rows (retention moved the total between chunks);
+        // pass 2 (calls 3, 4) is consistent.
+        const total = n <= 2 ? 10 : 0
+        return {
+          locations: input.locationIds.map((id) => ({ locationId: id, rows: 0, bytes: 0 })),
+          unstamped: { rows: 0, bytes: 0 },
+          unlisted: { rows: 0, bytes: 0 },
+          total: { rows: total, bytes: 0 },
+        }
+      },
+      'deviceManager.listAll': [],
+    })
+    const out = await mediaStorageCheck(h.ctx)
+    if (out.status !== 'ok') throw new Error('expected ok')
+    const codes = out.findings.map((f) => f.code)
+    expect(codes).not.toContain('location-gone')
+    expect(codes).toContain('location-gone-unknown')
+  })
+
   it('a location being drained has its own finding', async () => {
     const h = fakeHub({
       'storage.listLocations': [loc('eventMedia:d', { mode: 'drain' })],
@@ -280,6 +321,8 @@ describe('media_storage_check', () => {
     expect(maskPath('/mnt/user/appdata/camstack/events')).toBe('/mnt/…/events')
     expect(maskPath('/data/events')).toBe('/data/…')
     expect(maskPath('/data')).toBe('/data')
+    expect(maskPath('bob-private/cams/events')).toBe('…/events')
+    expect(maskPath('events')).toBe('…/events')
     expect(maskPath('\\\\nas\\share\\cams\\events')).toBe('\\\\[host]\\share\\…\\events')
     expect(maskPath('//user:pw@nas/share/events')).toBe('[remote url]')
     expect(maskPath('s3://bucket.example.com/x')).toBe('[remote url]')

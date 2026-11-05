@@ -33,6 +33,8 @@ export function maskPath(raw: string): string {
   const segments = rest.split(/[\\/]/).filter((s) => s !== '')
   const first = segments[0]
   if (first === undefined) return prefix === '' ? '' : prefix
+  // A relative path has no mount shape to keep: its first segment is just a name.
+  if (prefix === '') return `…${sep}${segments[segments.length - 1] ?? first}`
   if (segments.length === 1) return `${prefix}${first}`
   if (segments.length === 2) return `${prefix}${first}${sep}…`
   return `${prefix}${first}${sep}…${sep}${segments[segments.length - 1] ?? ''}`
