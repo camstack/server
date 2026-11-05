@@ -1,7 +1,4 @@
 {
-  "globalSettings.s_alexa-account.title": "Account Amazon Alexa",
-  "globalSettings.s_alexa-account.description": "Gli account Alexa si gestiscono nella scheda Sistemi esterni → Broker.",
-  "globalSettings.s_alexa-account.accountHelp.label": "Gli account si gestiscono separatamente",
   "connection.s_alexa-account.title": "Account Amazon Alexa",
   "connection.s_alexa-account.description": "Collega un account Amazon tramite il client Alexa non ufficiale. Fornisci un cookie catturato OPPURE un refresh token. NOTA: è un'integrazione non ufficiale — Amazon può modificarla o interromperla senza preavviso, e potrebbe violare i termini di servizio Amazon. Lo stato viene interrogato, non inviato.",
   "connection.s_alexa-account.amazonDomain.label": "Dominio Amazon (regione)",

@@ -20,6 +20,7 @@ import {
   type IBrokerProvider,
   type IDevice,
   type IDeviceAdoptionProvider,
+  type IntegrationInstanceRef,
   type RecordsAccess,
   type RecordIntegrationInstances,
   notificationOutputCapability,
@@ -27,7 +28,12 @@ import {
   VENDOR_LOGIN_PROXY_PREFIX,
   VendorLoginProxy,
 } from '@camstack/types'
-import { settingsToAlexaConnection, type AlexaAddonConfig, type AlexaConnection } from './config.js'
+import {
+  buildConnectionFormSchema,
+  settingsToAlexaConnection,
+  type AlexaAddonConfig,
+  type AlexaConnection,
+} from './config.js'
 import { AlexaDeviceCodeManager } from './alexa-device-code-manager.js'
 import { AlexaProxyLoginManager } from './alexa-proxy-login-manager.js'
 import { buildAlexaLoginRoutes } from './alexa-login-routes.js'
@@ -762,34 +768,13 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
     })
   }
 
-  // ── Settings UI (informational only) ───────────────────────────────────
+  // ── Instance form ──────────────────────────────────────────────────────
 
-  protected globalSettingsSchema(): ConfigUISchema {
-    return this.schema({
-      sections: [
-        {
-          id: 'alexa-account',
-          title: 'Amazon Alexa account',
-          titleKey: 'import-alexa:globalSettings.s_alexa-account.title',
-          description: 'Alexa accounts are managed in the External systems → Brokers tab.',
-          descriptionKey: 'import-alexa:globalSettings.s_alexa-account.description',
-          columns: 1,
-          fields: [
-            {
-              type: 'info' as const,
-              key: 'accountHelp',
-              label: 'Accounts are managed separately',
-              labelKey: 'import-alexa:globalSettings.s_alexa-account.accountHelp.label',
-              content:
-                'This integration links to an Amazon Alexa account broker. Add, edit, or remove ' +
-                'accounts from External systems → Brokers, then adopt the imported devices. The ' +
-                'integration only stores a reference to its broker. NOTE: this is an unofficial ' +
-                'integration that Amazon can change or break without notice.',
-            },
-          ],
-        },
-      ],
-    })
+  /** The connection form a record carries; the values live on the record, never in `addon-settings`. */
+  protected override async integrationFormSchema(
+    _instance: IntegrationInstanceRef,
+  ): Promise<ConfigUISchema | null> {
+    return buildConnectionFormSchema()
   }
 
   // ── Manual creation: not supported (appliances are imported + adopted) ──

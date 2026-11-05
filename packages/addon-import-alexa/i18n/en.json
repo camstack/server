@@ -1,7 +1,4 @@
 {
-  "globalSettings.s_alexa-account.title": "Amazon Alexa account",
-  "globalSettings.s_alexa-account.description": "Alexa accounts are managed in the External systems → Brokers tab.",
-  "globalSettings.s_alexa-account.accountHelp.label": "Accounts are managed separately",
   "connection.s_alexa-account.title": "Amazon Alexa account",
   "connection.s_alexa-account.description": "Link an Amazon account via the unofficial Alexa client. Supply a captured cookie OR a refresh token. NOTE: this is an unofficial integration — Amazon can change or break it without notice, and it may violate Amazon ToS. State is polled, not pushed.",
   "connection.s_alexa-account.amazonDomain.label": "Amazon domain (region)",
