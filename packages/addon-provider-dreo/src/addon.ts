@@ -110,6 +110,7 @@ export class DreoProviderAddon extends BaseDeviceProvider {
     )
     this.instances = buildDreoInstances(records, {
       onChanged: () => this.reconcileIntegrations(),
+      tester: this.buildConnectionTestProvider(),
     })
 
     dreoSession.bind({

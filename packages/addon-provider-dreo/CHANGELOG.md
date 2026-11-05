@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Dreo: the Test button on an account integration now signs in to the Dreo cloud, using the saved password when it is not retyped
+
 ## [0.2.156] - 2026-11-05
 
 ### Changed

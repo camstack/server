@@ -6,6 +6,9 @@
 import {
   defineEntryKind,
   entryBody,
+  type IConnectionTestProvider,
+  type IntegrationTestConnectionResult,
+  REDACTED_SECRET,
   type RecordsAccess,
   RecordIntegrationInstances,
 } from '@camstack/types'
@@ -29,8 +32,12 @@ export const dreoRecordKinds = { connections: dreoConnectionsEntryKind } as cons
 
 export function buildDreoInstances(
   records: Pick<RecordsAccess, 'kind' | 'owner'>,
-  deps: { readonly onChanged: () => Promise<void> },
+  deps: {
+    readonly onChanged: () => Promise<void>
+    readonly tester: Pick<IConnectionTestProvider, 'testSettings'>
+  },
 ): RecordIntegrationInstances<DreoConnectionBody> {
+  const handle = records.kind(dreoConnectionsEntryKind)
   return new RecordIntegrationInstances<DreoConnectionBody>(records, dreoConnectionsEntryKind, {
     description: {
       role: 'devices',
@@ -43,6 +50,28 @@ export function buildDreoInstances(
     initialBody: (name): DreoConnectionBody => ({ name }),
     configured: (body) => (body.email ?? '').length > 0 && body.password !== undefined,
     onChanged: () => deps.onChanged(),
+    test: async ({ id, values }): Promise<IntegrationTestConnectionResult> => {
+      // The stored account under the edited form; a saved password is never retyped, the form
+      // hands back its redacted view, so the keychain value stands in.
+      const stored = id === null ? null : ((await handle.getResolved(id))?.data ?? null)
+      const typed = values['password']
+      const password =
+        typeof typed === 'string' && typed !== '' && typed !== REDACTED_SECRET
+          ? typed
+          : (stored?.password ?? '')
+      const outcome = await deps.tester.testSettings({
+        settings: { ...stored, ...values, password },
+      })
+      if (outcome.outcome === 'validated') {
+        return {
+          success: true,
+          status: 'validated',
+          ...(outcome.latencyMs !== undefined ? { latencyMs: outcome.latencyMs } : {}),
+          ...(outcome.detail !== undefined ? { detail: outcome.detail } : {}),
+        }
+      }
+      return { success: false, status: outcome.outcome, error: outcome.error }
+    },
   })
 }
 

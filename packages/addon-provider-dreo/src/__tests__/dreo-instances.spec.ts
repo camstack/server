@@ -62,7 +62,10 @@ async function world() {
     }),
   )
   if (migration === undefined) throw new Error('no migration')
-  const instances = buildDreoInstances(mem.records, { onChanged: async () => undefined })
+  const instances = buildDreoInstances(mem.records, {
+    onChanged: async () => undefined,
+    tester: { testSettings: async () => ({ outcome: 'validated' }) },
+  })
   return { mem, rows, cleared, migration, instances }
 }
 
