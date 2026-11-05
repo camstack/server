@@ -14,7 +14,6 @@ import {
   LogStream,
   OptionSelect,
   Switch,
-  useAddonSettingsGetIntegrationFormSchema,
   useAddonSettingsGetIntegrationSettings,
   useAddonsRestartAddon,
   useDeviceManagerDisable,
@@ -30,7 +29,7 @@ import {
   useSystem,
   Button,
 } from '@camstack/ui-library'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft,
   Loader2,
@@ -237,16 +236,16 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
     )
   }, [searchParams, fabReady, setSearchParams])
 
-  // The form of THIS instance: the addon's per-instance schema when it has one (a hub's
-  // connection only), else its global schema. Waits for the mode so the instance is complete.
-  const { data: configSchema } = useAddonSettingsGetIntegrationFormSchema(
-    {
-      addonId: integration?.addonId ?? '',
-      nodeId: 'hub',
-      instance: { integrationId: integration?.id ?? null, mode: integrationMode ?? 'standalone' },
-    },
-    { enabled: !!integration?.addonId && integrationMode !== null },
-  )
+  // The form of THIS instance is the instance record's own schema. Nothing else is offered.
+  const { data: configSchema } = useQuery({
+    queryKey: ['integration-instance-form', integration?.addonId, integration?.id],
+    enabled: !!integration?.addonId && !!integration?.id,
+    queryFn: () =>
+      system.trpcClient.integrationInstances.instanceFormSchema.query({
+        addonId: integration?.addonId ?? '',
+        id: integration?.id ?? '',
+      }),
+  })
 
   const hasConfig =
     configSchema != null &&
@@ -260,16 +259,9 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
    * allow-list of provider names in the admin UI: the provider declares, the
    * page obeys.
    *
-   * `mode === 'account'` is refused, and the refusal is not cosmetic. An
-   * account integration's Config modal renders the addon's schema through
-   * `ProviderConfigForm` and saves it with `integrations.setSettings` — a
-   * different store from `addonSettings.updateGlobalSettings`, and genuinely a
-   * different table (`integration_settings` rows vs the addon's blob).
-   * Rendering both on one page would put two controls with one label writing
-   * two places: the defect this mechanism exists to prevent, reproduced by the
-   * mechanism itself. `standalone` and `broker` have no such overlap — the
-   * former has no integration-level config at all, the latter's modal only
-   * re-links a broker.
+   * `mode === 'account'` is refused. An account integration's configuration is
+   * the instance record, edited from the Config button. Rendering the addon's
+   * cluster sections beside that form would put two controls with one label.
    */
   const { data: integrationSettings } = useAddonSettingsGetIntegrationSettings(
     { addonId: integration?.addonId ?? '', nodeId: 'hub' },
@@ -744,7 +736,6 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
           mode={integrationMode}
           brokerKind={integrationBrokerKind}
           canTest={integrationCanTest}
-          trpc={system.trpcClient}
           onClose={() => setShowConfig(false)}
         />
       )}

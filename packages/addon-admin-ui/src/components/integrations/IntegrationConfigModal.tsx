@@ -1,25 +1,21 @@
-import { useMemo, type ComponentProps } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
+import { hydrateSchema, type ConfigUISchema } from '@camstack/types'
 import {
-  AddonGlobalSettingsForm,
+  Button,
+  ConfigFormBuilder,
   Dialog,
   DialogBody,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  useAddonSettingsGetIntegrationFormSchema,
-  useIntegrationsGetSettings,
-  useIntegrationsSetSettings,
+  useSystem,
 } from '@camstack/ui-library'
-import type { ConfigField, ConfigUISchema, ConfigUISchemaWithValues } from '../../types/config-ui'
 
 import { pushToast } from '../ui/toast-bus'
-import { BrokerStep } from './BrokerStep'
-import { ProviderConfigForm } from './ProviderConfigForm'
-
-type GlobalSettingsTrpc = ComponentProps<typeof AddonGlobalSettingsForm>['trpc']
+import { diffInstanceValues } from '../instances/instances-model'
 
 type IntegrationWizardMode = 'standalone' | 'account' | 'broker'
 
@@ -28,142 +24,70 @@ interface IntegrationConfigModalProps {
   readonly addonId: string
   readonly name: string
   /**
-   * Cap kind from available-types. Kept for callers; the editor shape is
-   * driven by wizard `mode`, not by this.
+   * Cap kind from available-types. Kept for callers; the form is the instance
+   * schema, not this kind.
    */
   readonly kind: 'device-adoption' | 'device-provider'
-  /** Locked wizard mode — same source as IntegrationDetail / create wizard. */
+  /** Locked wizard mode — kept for callers. The form does not branch on it. */
   readonly mode: IntegrationWizardMode
-  /** Broker kind for a `broker` integration (e.g. `home-assistant`). */
+  /** Broker kind for a `broker` integration. Kept for callers. */
   readonly brokerKind: string | null
-  /** Whether the addon declares `connection-test` (`getAvailableTypes.canTest`). */
   readonly canTest?: boolean
-  readonly trpc: GlobalSettingsTrpc
   readonly onClose: () => void
 }
 
-function collectFieldKeys(fields: readonly ConfigField[]): string[] {
-  const keys: string[] = []
-  for (const field of fields) {
-    if (field.type === 'group') {
-      keys.push(...collectFieldKeys(field.fields))
-      continue
-    }
-    if ('key' in field && typeof field.key === 'string') keys.push(field.key)
-  }
-  return keys
+function isConfigSchema(value: unknown): value is ConfigUISchema {
+  if (typeof value !== 'object' || value === null || !('sections' in value)) return false
+  return Array.isArray(Reflect.get(value, 'sections'))
 }
 
-function pickSchemaValues(
-  schema: ConfigUISchema | null,
-  settings: Record<string, unknown>,
-): Record<string, unknown> {
-  if (!schema) return {}
-  const keys = new Set(schema.sections.flatMap((s) => collectFieldKeys(s.fields)))
-  const picked: Record<string, unknown> = {}
-  for (const key of keys) {
-    if (Object.prototype.hasOwnProperty.call(settings, key)) {
-      picked[key] = settings[key]
-    }
-  }
-  return picked
-}
-
-function stripValuesFromSchema(schema: ConfigUISchemaWithValues): ConfigUISchema {
-  return {
-    ...(schema.tabs ? { tabs: schema.tabs } : {}),
-    sections: schema.sections.map((s) => ({
-      ...s,
-      fields: s.fields.map((field) => {
-        if ('value' in field) {
-          const { value: _value, ...rest } = field
-          void _value
-          return rest
-        }
-        return field
-      }),
-    })),
-  } as ConfigUISchema
+function formValuesOf(value: unknown): Record<string, unknown> {
+  if (typeof value !== 'object' || value === null || !('formValues' in value)) return {}
+  const raw: unknown = Reflect.get(value, 'formValues')
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return {}
+  return { ...raw }
 }
 
 /**
- * Edit an integration's configuration. Branched on wizard `mode` (the same
- * locked model the create wizard uses), never on cap `kind`:
- *
- *  - `broker`     → re-link the integration to a broker (`BrokerStep`).
- *  - `account`    → the SAME credential form as create (`ProviderConfigForm`),
- *                   hydrated from `integrations.getSettings` and saved back
- *                   through `integrations.setSettings` (restarts the addon).
- *  - `standalone` → addon's global settings form (per-device connection).
+ * Edit one integration. The only form is that instance's `formSchema(id)`
+ * (`integration-instances.instanceFormSchema`); a save writes the instance record.
  */
 export function IntegrationConfigModal({
   integrationId,
   addonId,
   name,
   kind: _kind,
-  mode,
-  brokerKind,
-  canTest = false,
-  trpc,
+  mode: _mode,
+  brokerKind: _brokerKind,
+  canTest: _canTest = false,
   onClose,
 }: IntegrationConfigModalProps) {
   void _kind
+  void _mode
+  void _brokerKind
+  void _canTest
   const { t } = useTranslation()
+  const system = useSystem()
   const queryClient = useQueryClient()
-
-  const needsIntegrationSettings = mode === 'account' || mode === 'broker'
-
-  const { data: settings, isLoading: settingsLoading } = useIntegrationsGetSettings(
-    { id: integrationId },
-    { enabled: needsIntegrationSettings },
-  )
-  const currentBrokerId = useMemo<string | null>(() => {
-    const raw = settings?.['brokerId']
-    return typeof raw === 'string' ? raw : null
-  }, [settings])
-
-  const { data: schemaWithValues, isLoading: schemaLoading } =
-    useAddonSettingsGetIntegrationFormSchema(
-      { addonId, nodeId: 'hub', instance: { integrationId, mode } },
-      { enabled: mode === 'account' },
-    )
-  const configSchema = useMemo<ConfigUISchema | null>(
-    () =>
-      schemaWithValues ? stripValuesFromSchema(schemaWithValues as ConfigUISchemaWithValues) : null,
-    [schemaWithValues],
-  )
-
-  const setSettings = useIntegrationsSetSettings()
-
-  const persistSettings = (next: Record<string, unknown>, secretKeys?: readonly string[]): void => {
-    setSettings.mutate(
-      { id: integrationId, settings: next, ...(secretKeys ? { secretKeys: [...secretKeys] } : {}) },
-      {
-        onSuccess: () => {
-          void queryClient.invalidateQueries()
-          pushToast({
-            title: t('integrations.saved', { defaultValue: 'Configuration saved' }),
-            message: name,
-            severity: 'info',
-          })
-          onClose()
-        },
-        onError: (err) => {
-          pushToast({
-            title: t('integrations.saveFailed', {
-              defaultValue: 'Could not save the configuration',
-            }),
-            message: `${name}: ${err.message}`,
-            severity: 'critical',
-          })
-        },
-      },
-    )
-  }
-
-  const relink = (brokerId: string): void => {
-    persistSettings({ brokerId })
-  }
+  const schemaQuery = useQuery({
+    queryKey: ['integration-instance-form', addonId, integrationId],
+    queryFn: () =>
+      system.trpcClient.integrationInstances.instanceFormSchema.query({
+        addonId,
+        id: integrationId,
+      }),
+  })
+  const instanceQuery = useQuery({
+    queryKey: ['integration-instance', addonId, integrationId],
+    queryFn: () =>
+      system.trpcClient.integrationInstances.getInstance.query({
+        addonId,
+        id: integrationId,
+      }),
+  })
+  const stored = formValuesOf(instanceQuery.data)
+  const schema = isConfigSchema(schemaQuery.data) ? schemaQuery.data : null
+  const loaded = schemaQuery.isSuccess && instanceQuery.isSuccess
 
   return (
     <Dialog open onOpenChange={(next) => !next && onClose()}>
@@ -174,70 +98,106 @@ export function IntegrationConfigModal({
           </DialogTitle>
         </DialogHeader>
         <DialogBody>
-          {mode === 'broker' ? (
-            brokerKind ? (
-              <div className="space-y-3">
-                <p className="text-[11px] text-foreground-subtle">
-                  {t('integrations.relinkBrokerHelp', {
-                    defaultValue:
-                      'Choose the broker this integration connects through. Picking a different broker re-points it and restarts the addon.',
-                  })}
-                </p>
-                {currentBrokerId && (
-                  <p className="text-[11px] text-foreground">
-                    {t('integrations.currentBroker', { defaultValue: 'Current broker' })}:{' '}
-                    <span className="font-mono text-foreground-subtle">{currentBrokerId}</span>
-                  </p>
-                )}
-                {setSettings.isPending ? (
-                  <div className="flex items-center gap-2 text-[11px] text-foreground-subtle">
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                    {t('integrations.saving', { defaultValue: 'Saving…' })}
-                  </div>
-                ) : (
-                  <BrokerStep kind={brokerKind} onResolved={relink} onBack={onClose} />
-                )}
-                {setSettings.isError && (
-                  <p className="text-[11px] text-danger">
-                    {t('integrations.relinkFailed', {
-                      defaultValue: 'Failed to update broker link.',
-                    })}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <p className="text-[11px] text-danger">
-                {t('integrations.noBrokerKind', {
-                  defaultValue:
-                    'This integration declares device-adoption but its addon manifest has no brokerKind.',
-                })}
-              </p>
-            )
-          ) : mode === 'account' ? (
-            settingsLoading || schemaLoading ? (
-              <div className="flex items-center gap-2 text-[11px] text-foreground-subtle">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                {t('integrations.loading', { defaultValue: 'Loading…' })}
-              </div>
-            ) : (
-              <ProviderConfigForm
-                addonId={addonId}
-                configSchema={configSchema}
-                canTest={canTest}
-                initialName={name}
-                initialConfig={pickSchemaValues(configSchema, settings ?? {})}
-                submitLabel={t('integrations.save', { defaultValue: 'Save' })}
-                hideName
-                saving={setSettings.isPending}
-                onSave={({ config, secretKeys }) => persistSettings(config, secretKeys)}
-                onBack={onClose}
-              />
-            )
+          {schemaQuery.isError || instanceQuery.isError ? (
+            <p className="text-[11px] text-danger">
+              {t('integrations.loadFailed', {
+                defaultValue: 'Could not load this integration.',
+              })}
+            </p>
+          ) : !loaded ? (
+            <div className="flex items-center gap-2 text-[11px] text-foreground-subtle">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              {t('integrations.loading', { defaultValue: 'Loading…' })}
+            </div>
+          ) : schema === null ? (
+            <p className="text-[11px] text-foreground-muted">
+              {t('integrations.noInstanceForm', {
+                defaultValue: 'This integration has no configuration form.',
+              })}
+            </p>
           ) : (
-            <AddonGlobalSettingsForm trpc={trpc} addonId={addonId} nodeId="hub" title={name} />
+            <InstanceConfigFields
+              addonId={addonId}
+              integrationId={integrationId}
+              name={name}
+              schema={schema}
+              stored={stored}
+              onClose={onClose}
+              onSaved={() => {
+                void queryClient.invalidateQueries()
+              }}
+            />
           )}
         </DialogBody>
       </DialogContent>
     </Dialog>
+  )
+}
+
+interface InstanceConfigFieldsProps {
+  readonly addonId: string
+  readonly integrationId: string
+  readonly name: string
+  readonly schema: ConfigUISchema
+  readonly stored: Readonly<Record<string, unknown>>
+  readonly onClose: () => void
+  readonly onSaved: () => void
+}
+
+function InstanceConfigFields({
+  addonId,
+  integrationId,
+  name,
+  schema,
+  stored,
+  onClose,
+  onSaved,
+}: InstanceConfigFieldsProps) {
+  const { t } = useTranslation()
+  const system = useSystem()
+  const [values, setValues] = useState<Record<string, unknown>>({ ...stored })
+  const hydrated = hydrateSchema(schema, { ...stored })
+  const save = useMutation({
+    mutationFn: async () => {
+      const patch = diffInstanceValues(stored, values)
+      await system.trpcClient.integrationInstances.updateInstance.mutate({
+        addonId,
+        id: integrationId,
+        values: patch,
+      })
+    },
+    onSuccess: () => {
+      onSaved()
+      pushToast({
+        title: t('integrations.saved', { defaultValue: 'Configuration saved' }),
+        message: name,
+        severity: 'info',
+      })
+      onClose()
+    },
+    onError: (err: Error) => {
+      pushToast({
+        title: t('integrations.saveFailed', {
+          defaultValue: 'Could not save the configuration',
+        }),
+        message: `${name}: ${err.message}`,
+        severity: 'critical',
+      })
+    },
+  })
+
+  return (
+    <div className="space-y-3">
+      <ConfigFormBuilder schema={hydrated} values={values} onChange={setValues} />
+      <div className="flex justify-end gap-2">
+        <Button size="sm" variant="outline" type="button" onClick={onClose}>
+          {t('common.cancel', { defaultValue: 'Cancel' })}
+        </Button>
+        <Button size="sm" type="button" disabled={save.isPending} onClick={() => save.mutate()}>
+          {save.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
+          {t('integrations.save', { defaultValue: 'Save' })}
+        </Button>
+      </div>
+    </div>
   )
 }

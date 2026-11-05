@@ -4,12 +4,12 @@
 
 # Guards
 
-215 repository guards: 210 in `scripts/`,
+216 repository guards: 211 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (205)
+## Enforced by CI checks (206)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -131,6 +131,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-no-heap-dump-command.ts` | There is NO operator-triggerable heap dump. Twice is enough. |
 | `scripts/check-no-hero-self-drawn-power.ts` | No device-controls hero card draws the device's electrical draw itself (D1004). |
 | `scripts/check-no-hub-address-env.ts` | No runtime code reads the hub's address from the environment. |
+| `scripts/check-no-integration-settings.ts` | The legacy integration settings store stays deleted (planning#416, D1007). |
 | `scripts/check-no-legacy-token-prefix.ts` | No source names a pre-D892 opaque token format (D895). |
 | `scripts/check-no-legacy-tracker.ts` | The old tracker stays deleted (D683). |
 | `scripts/check-no-literal-addon-process-mode.ts` | Addon-process guard (D877) - `addons.list` never reports a LITERAL process mode. |

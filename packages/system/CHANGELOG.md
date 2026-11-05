@@ -40,6 +40,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Loki log destinations can now be several: every enabled destination receives the logs
 - The sqlite registry can clear an integration's legacy settings rows and answer the keychain refs they held, for the rows-to-record migration
 
+### Removed
+
+- Drop the legacy integration settings table once every owning addon's copy migration is applied
+
 ### Fixed
 
 - Releasing a device from an integration now removes its child devices too; before, the parents went and their children stayed behind pointing at a deleted device.

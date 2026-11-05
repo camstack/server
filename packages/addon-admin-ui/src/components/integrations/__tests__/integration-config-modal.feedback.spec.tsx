@@ -1,20 +1,27 @@
 /**
- * Saving an integration's configuration must say what is happening: the Save
- * button is pending while the mutation runs, a success toast follows, and a
- * failure is toasted with the server's message (and the dialog stays open).
+ * Saving an integration's instance says what is happening: Save is pending
+ * while the write runs, a success toast follows, and a failure is toasted
+ * with the server's message.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
-interface SetSettingsOptions {
-  readonly onSuccess?: () => void
-  readonly onError?: (err: Error) => void
-}
-
-const mutationState = { isPending: false, isError: false }
-const mockMutate = vi.fn()
-const mockPushToast = vi.fn()
+const schemaQuery = vi.hoisted(() =>
+  vi.fn(async () => ({
+    sections: [
+      {
+        id: 'conn',
+        title: 'Connection',
+        columns: 1,
+        fields: [{ type: 'text', key: 'host', label: 'Host' }],
+      },
+    ],
+  })),
+)
+const instanceQuery = vi.hoisted(() => vi.fn(async () => ({ formValues: { host: '10.0.0.5' } })))
+const updateInstance = vi.hoisted(() => vi.fn())
+const mockPushToast = vi.hoisted(() => vi.fn())
 
 vi.mock('../../ui/toast-bus', () => ({
   pushToast: (toast: unknown) => mockPushToast(toast),
@@ -25,40 +32,21 @@ vi.mock('@camstack/ui-library', async () => {
     await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
   return {
     ...actual,
-    useIntegrationsGetSettings: () => ({ data: { host: '10.0.0.5' }, isLoading: false }),
-    useIntegrationsSetSettings: () => ({
-      mutate: mockMutate,
-      isPending: mutationState.isPending,
-      isError: mutationState.isError,
-    }),
-    useAddonSettingsGetIntegrationFormSchema: () => ({
-      data: {
-        sections: [
-          {
-            id: 'conn',
-            title: 'Connection',
-            columns: 1,
-            fields: [{ type: 'text', key: 'host', label: 'Host', required: true }],
-          },
-        ],
+    useSystem: () => ({
+      trpcClient: {
+        integrationInstances: {
+          instanceFormSchema: { query: schemaQuery },
+          getInstance: { query: instanceQuery },
+          updateInstance: { mutate: updateInstance },
+        },
       },
-      isLoading: false,
     }),
-    useIntegrationsTestConnection: () => ({ mutate: vi.fn(), isPending: false }),
-    useAddonsCustom: () => ({ mutateAsync: vi.fn(), isPending: false }),
   }
 })
 
 import { IntegrationConfigModal } from '../IntegrationConfigModal'
 
-const noopTrpc = {
-  addonSettings: {
-    getGlobalSettings: { query: vi.fn(async () => null) },
-    updateGlobalSettings: { mutate: vi.fn(async () => undefined) },
-  },
-}
-
-function mount(onClose: () => void = () => {}): void {
+function mount(): void {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
     <QueryClientProvider client={client}>
@@ -70,54 +58,57 @@ function mount(onClose: () => void = () => {}): void {
         mode="account"
         brokerKind={null}
         canTest={false}
-        trpc={noopTrpc}
-        onClose={onClose}
+        onClose={() => {}}
       />
     </QueryClientProvider>,
   )
 }
 
+async function editAndSave(): Promise<void> {
+  const host = await screen.findByDisplayValue('10.0.0.5')
+  fireEvent.change(host, { target: { value: '10.0.0.6' } })
+  fireEvent.click(screen.getByRole('button', { name: /^save$/i }))
+}
+
 describe('IntegrationConfigModal save feedback', () => {
   beforeEach(() => {
-    mutationState.isPending = false
-    mutationState.isError = false
-    mockMutate.mockReset()
+    updateInstance.mockReset()
     mockPushToast.mockReset()
   })
 
-  it('disables Save and says it is saving while the mutation runs', () => {
-    mutationState.isPending = true
+  it('disables Save and says it is saving while the mutation runs', async () => {
+    let finish: (value: { revision: number }) => void = () => {}
+    updateInstance.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve
+        }),
+    )
     mount()
-    const button = screen.getByRole('button', { name: /saving/i })
-    expect((button as HTMLButtonElement).disabled).toBe(true)
+    await editAndSave()
+    const saving = await screen.findByRole('button', { name: /^save$/i })
+    if (!(saving instanceof HTMLButtonElement)) throw new Error('Save is not a button')
+    expect(saving.disabled).toBe(true)
+    finish({ revision: 2 })
+    await waitFor(() => {
+      expect(mockPushToast).toHaveBeenCalledWith(
+        expect.objectContaining({ severity: 'info', title: 'Configuration saved' }),
+      )
+    })
   })
 
-  it('toasts success and closes when the save lands', () => {
-    const onClose = vi.fn()
-    mockMutate.mockImplementation((_input: unknown, options: SetSettingsOptions) =>
-      options.onSuccess?.(),
-    )
-    mount(onClose)
-    fireEvent.click(screen.getByRole('button', { name: /^save$/i }))
-    expect(mockPushToast).toHaveBeenCalledWith(
-      expect.objectContaining({ severity: 'info', message: 'Homematic' }),
-    )
-    expect(onClose).toHaveBeenCalled()
-  })
-
-  it('toasts the error message and stays open when the save fails', () => {
-    const onClose = vi.fn()
-    mockMutate.mockImplementation((_input: unknown, options: SetSettingsOptions) =>
-      options.onError?.(new Error('CCU refused the credentials')),
-    )
-    mount(onClose)
-    fireEvent.click(screen.getByRole('button', { name: /^save$/i }))
-    expect(mockPushToast).toHaveBeenCalledWith(
-      expect.objectContaining({
-        severity: 'critical',
-        message: expect.stringContaining('CCU refused the credentials'),
-      }),
-    )
-    expect(onClose).not.toHaveBeenCalled()
+  it('toasts the server message and keeps the dialog open when the save fails', async () => {
+    updateInstance.mockRejectedValue(new Error('hub refused'))
+    mount()
+    await editAndSave()
+    await waitFor(() => {
+      expect(mockPushToast).toHaveBeenCalledWith(
+        expect.objectContaining({
+          severity: 'critical',
+          message: 'Homematic: hub refused',
+        }),
+      )
+    })
+    expect(screen.getByRole('dialog')).toBeTruthy()
   })
 })

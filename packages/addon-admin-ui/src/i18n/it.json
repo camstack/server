@@ -1590,6 +1590,7 @@
     "configComingSoon": "Config coming soon.",
     "providerConfig": "Provider Config",
     "editConfig": "Modifica configurazione",
+    "noInstanceForm": "Questa integrazione non ha un modulo di configurazione.",
     "relinkBrokerHelp": "Scegli il broker tramite cui questa integrazione si connette. Selezionando un broker diverso la si ricollega e riavvia l’addon.",
     "currentBroker": "Broker attuale",
     "relinkFailed": "Aggiornamento del collegamento al broker non riuscito.",

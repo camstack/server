@@ -584,17 +584,10 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
       const mine = all.filter((i) => i.addonId === this.ctx.id)
       const surviving = new Set(mine.map((i) => i.id))
 
-      for (const integration of mine) {
-        const settings = await this.ctx.api.integrations.getSettings.query({ id: integration.id })
-        const brokerId = typeof settings['brokerId'] === 'string' ? settings['brokerId'] : undefined
-        if (brokerId === undefined) continue
-        if (!this.activeBrokers.some((b) => b.id === brokerId)) {
-          this.ctx.logger.warn('Alexa integration→broker: linked broker not found', {
-            meta: { integrationId: integration.id, brokerId },
-          })
-          continue
-        }
-        this.requireRegistry().linkIntegration(integration.id, brokerId)
+      for (const broker of this.activeBrokers) {
+        const integrationId = broker.integrationId
+        if (integrationId === undefined || !surviving.has(integrationId)) continue
+        this.requireRegistry().linkIntegration(integrationId, broker.id)
       }
 
       const toRemove = this.activeBrokers
@@ -647,12 +640,11 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
       },
       logger: this.ctx.logger,
       getBrokerIdForIntegration: async (id) => {
-        const settings = await this.ctx.api.integrations.getSettings.query({ id })
-        const brokerId = settings['brokerId']
-        if (typeof brokerId !== 'string') {
+        const broker = this.activeBrokers.find((entry) => entry.integrationId === id)
+        if (broker === undefined) {
           throw new Error(`integration ${id} has no linked brokerId`)
         }
-        return brokerId
+        return broker.id
       },
       listAdoptedAlexa: async () => {
         const reg = this.ctx.kernel.deviceRegistry

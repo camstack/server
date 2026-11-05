@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A Matter integration links to its fabric through the fabric record
+
 ## [0.2.156] - 2026-11-04
 
 ### Changed
