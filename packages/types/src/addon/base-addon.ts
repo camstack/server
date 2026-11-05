@@ -27,7 +27,7 @@ import {
 } from '../migrations/addon-migration.js'
 import { createDurableState, type DurableState } from './durable-state.js'
 import { normalizeNodeId, projectStore, readNodeValue, scopePatch } from './per-node-store.js'
-import type { ScopedSettingsScope } from './scoped-settings.js'
+import { SCOPED_SETTINGS_SCOPES, type ScopedSettingsScope } from './scoped-settings.js'
 import { createSecretAwareContext, type SecretAwareSettingsHandle } from './secret-aware-context.js'
 import { mergeSecretStatePaths, type SecretTree, secretTreeFromSchema } from './secret-paths.js'
 import {
@@ -43,7 +43,10 @@ export interface DeclaredSettingsKeys {
 
 export interface UnsetSettingsKeysOutcome {
   readonly removed: readonly string[]
-  readonly refused: ReadonlyArray<{ readonly key: string; readonly reason: string }>
+  readonly refused: ReadonlyArray<{
+    readonly key: string
+    readonly reason: string
+  }>
   readonly secretsCleared: number
 }
 
@@ -182,6 +185,13 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
   protected readonly secretStatePaths: readonly string[] = []
 
   private _addonSecretTree: SecretTree | null = null
+  /**
+   * D986 M4: the scoped schemas this addon declared, resolved once per capability
+   * (`loadScopedSchemas`) so the sync readers (`perNodeKeys`, the secret tree, the restart check)
+   * see them. Empty until loaded: the readers then fall back to {@link globalSettingsSchema}.
+   */
+  private readonly _scopedByCap = new Map<string, readonly LoadedScopedSchema[]>()
+  private _nodeKeysByCap = new Map<string, ReadonlySet<string>>()
   private _deviceSecretTree: SecretTree | null = null
   /** Refs the last resolved config pointed at — a change to one re-resolves. */
   private _configSecretRefs: ReadonlySet<string> = new Set()
@@ -267,6 +277,7 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
       this._ctx = context
       this._secretSettings = null
     }
+    await this.loadScopedSchemas()
     await this.resolveConfig()
     if (secrets !== undefined) {
       this._secretChangeUnsub = secrets.onChange((ref) => {
@@ -279,6 +290,7 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     const providers: readonly ProviderRegistration[] =
       normalized && 'providers' in normalized && normalized.providers ? normalized.providers : []
     this._registeredCapNames = providers.map((p) => p.capability.name)
+    await this.loadScopedSchemas()
     return normalized
   }
 
@@ -413,6 +425,17 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
   }
 
   // ── Settings schemas (override to provide UI) ─────────────────────────
+
+  /**
+   * The capability names whose scoped settings schemas ({@link clusterSettingsSchema},
+   * {@link nodeSettingsSchema}, {@link deviceDefaultsSchema}) this addon declares. Read BEFORE
+   * `onInitialize`, when the providers it registers are not known yet: the first config resolve
+   * must already know which keys are per node. Names the providers register at init are added
+   * once known.
+   */
+  protected scopedSettingsCapabilities(): readonly string[] {
+    return []
+  }
 
   /** Override to provide global-level settings UI schema. */
   protected globalSettingsSchema(_cap?: string): ConfigUISchema | null {
@@ -617,7 +640,9 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     }
     if (sections.length === 0) return null
     const projected = await this.readRawProjectedStore(nodeId)
-    return hydrateSchema({ ...schema, sections }, projected, { inlineSecretsAsViews: true })
+    return hydrateSchema({ ...schema, sections }, projected, {
+      inlineSecretsAsViews: true,
+    })
   }
 
   /**
@@ -643,6 +668,7 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     nodeId?: string,
     cap?: string,
   ): Promise<Record<string, unknown>> {
+    await this.loadScopedSchemas(cap)
     const raw = (await this._ctx?.settings?.readAddonStore()) ?? {}
     return this.projectForNode(raw, nodeId, cap)
   }
@@ -662,6 +688,7 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     nodeId?: string,
     cap?: string,
   ): Promise<Record<string, unknown>> {
+    await this.loadScopedSchemas(cap)
     const raw = (await this.rawSettings()?.readAddonStore()) ?? {}
     return this.projectForNode(raw, nodeId, cap)
   }
@@ -711,7 +738,11 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
       }
     }
     if (result.kind === 'failed') {
-      return { kind: 'unreadable', reason: 'store-read-failed', error: result.error }
+      return {
+        kind: 'unreadable',
+        reason: 'store-read-failed',
+        error: result.error,
+      }
     }
     if (result.kind === 'missing' || !Object.prototype.hasOwnProperty.call(result.value, key)) {
       return { kind: 'absent' }
@@ -782,6 +813,7 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     barePatch: Record<string, unknown>,
     nodeId?: string,
   ): Promise<void> {
+    await this.loadScopedSchemas()
     const keys = this.perNodeKeys()
     const localNode = normalizeNodeId(this._ctx?.kernel?.localNodeId)
     const target = normalizeNodeId(nodeId ?? this._ctx?.kernel?.localNodeId)
@@ -803,7 +835,11 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     await this.resolveConfig()
     await this.onConfigChanged()
     this.emitLifecycle(EventCategory.AddonUpdated, { level: 'global' })
-    this.maybeAutoRestart(Object.keys(barePatch), this.globalSettingsSchema())
+    const legacy = this.globalSettingsSchema()
+    this.maybeAutoRestart(Object.keys(barePatch), [
+      ...(legacy === null ? [] : [legacy]),
+      ...this.loadedScopedSchemas().map((entry) => entry.schema),
+    ])
   }
 
   /**
@@ -812,17 +848,61 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
    * declarations). Empty set ⇒ every per-node code path is bypassed and the
    * settings API behaves exactly like the legacy node-agnostic one.
    */
-  private readonly _perNodeKeysCache = new Map<string, ReadonlySet<string>>()
+  /**
+   * Load the scoped schemas of every capability this addon declares (the override and the
+   * providers registered at init, plus `extraCap`) that is not loaded yet, then drop what was
+   * derived from the previous set. Idempotent.
+   */
+  private async loadScopedSchemas(extraCap?: string): Promise<void> {
+    const caps = new Set<string>([
+      ...this.scopedSettingsCapabilities(),
+      ...this._registeredCapNames,
+      ...(extraCap === undefined ? [] : [extraCap]),
+    ])
+    let added = false
+    for (const cap of caps) {
+      if (this._scopedByCap.has(cap)) continue
+      const loaded: LoadedScopedSchema[] = []
+      for (const scope of SCOPED_SETTINGS_SCOPES) {
+        const schema = await this.getScopedSettingsSchema(scope, cap)
+        if (schema !== null) loaded.push({ scope, schema })
+      }
+      this._scopedByCap.set(cap, loaded)
+      added = true
+    }
+    if (!added) return
+    this._nodeKeysByCap = new Map()
+    this._addonSecretTree = null
+  }
 
+  /** Every loaded scoped schema of `cap`, or of every loaded capability. */
+  private loadedScopedSchemas(cap?: string): readonly LoadedScopedSchema[] {
+    if (cap !== undefined) return this._scopedByCap.get(cap) ?? []
+    return [...this._scopedByCap.values()].flat()
+  }
+
+  /**
+   * The field keys that are stored per node: every field of a {@link nodeSettingsSchema}, plus
+   * the fields the legacy {@link globalSettingsSchema} still marks `perNode: true`. Derived once
+   * per `cap` argument and memoized (schemas are static declarations). Empty set ⇒ every
+   * per-node code path is bypassed and the settings API behaves like the node-agnostic one.
+   * Call {@link loadScopedSchemas} first (the async seams do).
+   */
   private perNodeKeys(cap?: string): ReadonlySet<string> {
     const cacheKey = cap ?? ''
-    const cached = this._perNodeKeysCache.get(cacheKey)
+    const cached = this._nodeKeysByCap.get(cacheKey)
     if (cached) return cached
-    const schema = this.globalSettingsSchema(cap)
-    const keys: ReadonlySet<string> = new Set(
-      schema ? schema.sections.flatMap((section) => collectPerNodeFieldKeys(section.fields)) : [],
+    const legacy = this.globalSettingsSchema(cap)
+    const keys = new Set<string>(
+      legacy ? legacy.sections.flatMap((section) => collectPerNodeFieldKeys(section.fields)) : [],
     )
-    this._perNodeKeysCache.set(cacheKey, keys)
+    for (const { scope, schema } of this.loadedScopedSchemas(cap)) {
+      if (scope !== 'node') continue
+      for (const section of schema.sections) {
+        for (const key of collectValueFieldKeys(section.fields)) keys.add(key)
+      }
+    }
+    this._nodeKeysByCap.set(cacheKey, keys)
     return keys
   }
 
@@ -833,14 +913,15 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
    * time to return its response before the addon is torn down and
    * re-initialised by `AddonRegistryService.restartAddon`.
    */
-  private maybeAutoRestart(patchKeys: readonly string[], schema: ConfigUISchema | null): void {
-    if (!schema) return
+  private maybeAutoRestart(patchKeys: readonly string[], schemas: readonly ConfigUISchema[]): void {
     const restartKeys = new Set<string>()
-    for (const section of schema.sections) {
-      for (const field of section.fields) {
-        if (field.type === 'separator' || field.type === 'info') continue
-        if ((field as { readonly requiresRestart?: boolean }).requiresRestart) {
-          restartKeys.add((field as { readonly key: string }).key)
+    for (const schema of schemas) {
+      for (const section of schema.sections) {
+        for (const field of section.fields) {
+          if (field.type === 'separator' || field.type === 'info') continue
+          if ((field as { readonly requiresRestart?: boolean }).requiresRestart) {
+            restartKeys.add((field as { readonly key: string }).key)
+          }
         }
       }
     }
@@ -855,7 +936,9 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
         .mutate({ addonId })
         .then(() => {
           ctx.logger.info('addon auto-restart triggered by restart-required setting change', {
-            meta: { changedFields: patchKeys.filter((k) => restartKeys.has(k)) },
+            meta: {
+              changedFields: patchKeys.filter((k) => restartKeys.has(k)),
+            },
           })
         })
         .catch((err: unknown) => {
@@ -952,7 +1035,11 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
       ctx.eventBus.emit({
         id: `${ctx.id}-${Date.now()}`,
         timestamp: new Date(),
-        source: { type: 'addon', id: ctx.id, nodeId: ctx.kernel.localNodeId ?? 'hub' },
+        source: {
+          type: 'addon',
+          id: ctx.id,
+          nodeId: ctx.kernel.localNodeId ?? 'hub',
+        },
         category,
         // Always carry `addonId` in the payload (the lifecycle event
         // contract declares it) so consumers — e.g. the alerts builder —
@@ -1103,6 +1190,7 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
    * here, in the addon's own process, so the hub keeps no copy of it.
    */
   async getDeclaredSettingsKeys(): Promise<DeclaredSettingsKeys> {
+    await this.loadScopedSchemas()
     return { keys: [...this.declaredKeySet()].toSorted() }
   }
 
@@ -1111,6 +1199,11 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     const schema = this.globalSettingsSchema()
     if (schema) {
       for (const section of schema.sections) {
+        for (const key of collectFieldKeys(section.fields)) keys.add(key)
+      }
+    }
+    for (const { schema: scoped } of this.loadedScopedSchemas()) {
+      for (const section of scoped.sections) {
         for (const key of collectFieldKeys(section.fields)) keys.add(key)
       }
     }
@@ -1142,7 +1235,11 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
       stored = await raw.readAddonStore()
     } catch (error) {
       const reason = `store unreadable: ${error instanceof Error ? error.message : 'unknown'}`
-      return { removed: [], refused: keys.map((key) => ({ key, reason })), secretsCleared: 0 }
+      return {
+        removed: [],
+        refused: keys.map((key) => ({ key, reason })),
+        secretsCleared: 0,
+      }
     }
     const declared = this.declaredKeySet()
     const removed: string[] = []
@@ -1194,7 +1291,14 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
       onParseError: (k, e) =>
         this._ctx?.logger?.warn?.(
           `durable-state: stored device ${deviceId} "${k}" failed validation — using fallback`,
-          { meta: { addonId: this._ctx?.id, deviceId, key: k, error: String(e) } },
+          {
+            meta: {
+              addonId: this._ctx?.id,
+              deviceId,
+              key: k,
+              error: String(e),
+            },
+          },
         ),
     })
   }
@@ -1203,10 +1307,13 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
 
   /** The addon store's secret tree: schema fields by TYPE, plus `secretStatePaths`. */
   private addonSecretTree(): SecretTree {
-    this._addonSecretTree ??= mergeSecretStatePaths(
-      secretTreeFromSchema(this.globalSettingsSchema()),
-      this.secretStatePaths,
-    )
+    if (this._addonSecretTree === null) {
+      const tree = new Map(secretTreeFromSchema(this.globalSettingsSchema()))
+      for (const { schema } of this.loadedScopedSchemas()) {
+        for (const [key, node] of secretTreeFromSchema(schema)) tree.set(key, node)
+      }
+      this._addonSecretTree = mergeSecretStatePaths(tree, this.secretStatePaths)
+    }
     return this._addonSecretTree
   }
 
@@ -1255,7 +1362,12 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
       this._unresolvedSecrets = unresolved
       if (unresolved.length > 0) {
         this._ctx?.logger?.error?.('secret unavailable — running without it, will retry', {
-          meta: { secrets: unresolved.map((u) => ({ ref: u.ref, reason: u.reason })) },
+          meta: {
+            secrets: unresolved.map((u) => ({
+              ref: u.ref,
+              reason: u.reason,
+            })),
+          },
         })
         if (unresolved.some((u) => u.reason !== 'missing' && u.reason !== 'forbidden')) {
           this.scheduleSecretReresolve(this._secretRetryDelayMs)
@@ -1285,7 +1397,9 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     for (const u of fresh) this._loggedUnresolvedReads.add(u.ref)
     this._ctx?.logger?.warn?.(
       'settings read: a stored secret is unavailable — it reads as its marker, not as a value',
-      { meta: { secrets: fresh.map((u) => ({ ref: u.ref, reason: u.reason })) } },
+      {
+        meta: { secrets: fresh.map((u) => ({ ref: u.ref, reason: u.reason })) },
+      },
     )
   }
 
@@ -1352,7 +1466,9 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     this._ctx?.logger?.warn?.(
       'readAddonStore: settings-store unavailable after retries — using defaults',
       {
-        meta: { error: lastErr instanceof Error ? lastErr.message : String(lastErr) },
+        meta: {
+          error: lastErr instanceof Error ? lastErr.message : String(lastErr),
+        },
       },
     )
     return {}
@@ -1479,6 +1595,30 @@ function dropPerNodeFields(fields: readonly ConfigField[]): ConfigField[] {
     kept.push(field)
   }
   return kept
+}
+
+/** One scoped schema a capability declared, with the scope it was declared for. */
+interface LoadedScopedSchema {
+  readonly scope: ScopedSettingsScope
+  readonly schema: ConfigUISchema
+}
+
+/** The keys of the value-holding fields, recursing into layout containers. */
+function collectValueFieldKeys(fields: readonly ConfigField[]): readonly string[] {
+  const collected: string[] = []
+  for (const field of fields) {
+    if (field.type === 'group') {
+      collected.push(...collectValueFieldKeys(field.fields))
+      continue
+    }
+    if (field.type === 'sub-tabs') {
+      for (const tab of field.tabs) collected.push(...collectValueFieldKeys(tab.fields))
+      continue
+    }
+    if (field.type === 'separator' || field.type === 'info') continue
+    if ('key' in field && typeof field.key === 'string') collected.push(field.key)
+  }
+  return collected
 }
 
 function collectFieldKeys(fields: readonly ConfigField[]): readonly string[] {

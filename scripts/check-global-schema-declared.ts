@@ -1,7 +1,8 @@
 #!/usr/bin/env tsx
 /**
  * An addon that SERVES a global form with a secret field DECLARES that form
- * through `globalSettingsSchema()` (D787).
+ * through `globalSettingsSchema()` or a scoped hook (`clusterSettingsSchema`,
+ * `nodeSettingsSchema`, `deviceDefaultsSchema`) (D787, D986).
  *
  * ## The failure this catches
  *
@@ -42,6 +43,14 @@ export interface Finding {
 export function findingId(f: Finding): string {
   return `${f.file}#${f.className}`
 }
+
+/** The hooks that declare an addon's form shape, and so its secret tree (D986). */
+export const SCHEMA_HOOKS: readonly string[] = [
+  'globalSettingsSchema',
+  'clusterSettingsSchema',
+  'nodeSettingsSchema',
+  'deviceDefaultsSchema',
+]
 
 export const ALLOWLIST: ReadonlyMap<string, string> = new Map<string, string>([])
 
@@ -154,7 +163,7 @@ export function findUndeclaredGlobalSchemas(
         (m): m is ts.MethodDeclaration =>
           ts.isMethodDeclaration(m) && memberName(m) === 'getGlobalSettings',
       )
-      const declares = n.members.some((m) => memberName(m) === 'globalSettingsSchema')
+      const declares = n.members.some((m) => SCHEMA_HOOKS.includes(memberName(m) ?? ''))
       if (getter && !declares && overrideReachesSecret(getter, n, imports, read)) {
         out.push({ file, className: n.name.text })
       }

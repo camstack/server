@@ -33,6 +33,22 @@ describe('check-global-schema-declared rules', () => {
     ).toEqual(['A'])
   })
 
+  it.each([
+    'clusterSettingsSchema',
+    'nodeSettingsSchema',
+    'deviceDefaultsSchema',
+  ])('accepts a secret declared on %s (D986)', (hook) => {
+    expect(
+      scan(`
+        class A extends BaseAddon {
+          protected async ${hook}(cap) { return { sections: [{ id: 's', fields: [{ type: 'password', key: 'pw' }] }] } }
+          async getGlobalSettings() {
+            return hydrateSchema({ sections: [{ id: 's', fields: [{ type: 'password', key: 'pw' }] }] }, {})
+          }
+        }`),
+    ).toEqual([])
+  })
+
   it('flags a secret reached through a same-class builder method (the onvif shape)', () => {
     expect(
       scan(`
