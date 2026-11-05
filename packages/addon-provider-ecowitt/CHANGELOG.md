@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.157] - 2026-11-05
+
 ### Changed
 
 - Internal: the connection form comment names the instance form; no behaviour change.

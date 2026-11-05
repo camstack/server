@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.131] - 2026-11-05
+
 ### Changed
 
 - The Modal provider no longer declares an empty settings form; accounts are managed as records.

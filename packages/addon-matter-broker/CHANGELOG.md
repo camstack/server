@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.159] - 2026-11-05
+
 ### Changed
 
 - The integration form is declared as the instance form (the connection form); fabrics and their stored values are unchanged.

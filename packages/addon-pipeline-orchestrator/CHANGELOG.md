@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.662] - 2026-11-05
+
 ### Changed
 
 - Pipeline orchestrator cluster settings are declared on the cluster scope of its capability; stored values unchanged

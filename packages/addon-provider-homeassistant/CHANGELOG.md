@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.662] - 2026-11-05
+
 ### Changed
 
 - The integration form is declared as the instance form; brokers and their stored values are unchanged.
