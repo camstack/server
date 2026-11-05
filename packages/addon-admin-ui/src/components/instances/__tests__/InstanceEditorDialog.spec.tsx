@@ -7,7 +7,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import '../../brokers/__tests__/setup'
-import { buildConnectionFormSchema } from '../../../../../addon-import-alexa/src/config'
 
 const FORM = {
   sections: [
@@ -40,7 +39,7 @@ vi.mock('@camstack/ui-library', async () => {
     useSystem: () => ({
       trpcClient: {
         integrationInstances: {
-          instanceFormSchema: { query: async () => buildConnectionFormSchema() },
+          instanceFormSchema: { query: async () => FORM },
           updateInstance: { mutate: async () => ({}) },
         },
       },
@@ -68,6 +67,7 @@ function renderDialog() {
         addonId="import-alexa"
         providerName="Alexa"
         description={{
+          role: 'both',
           instanceMode: 'multiple',
           kind: 'account',
           canTest: false,
