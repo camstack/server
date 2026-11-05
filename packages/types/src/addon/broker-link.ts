@@ -1,5 +1,5 @@
 /**
- * The generic binding of a service to a broker (D1011). A service (an integration today; a
+ * The generic binding of a service to a broker (D1012). A service (an integration today; a
  * notifier target, a calendar source or an exporter later) names the broker it runs through by id
  * and keeps only its OWN link settings: never a copy of the broker's host, sign-in or secrets,
  * which stay with the broker and are edited on the Brokers page.

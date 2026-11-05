@@ -1,5 +1,5 @@
 /**
- * The integration link moves OFF the broker record (D1011): every broker row that names an
+ * The integration link moves OFF the broker record (D1012): every broker row that names an
  * integration becomes a `connections` record keyed by that integration id, then the field is
  * cleared on the broker. The fixture marks a field the migration does not know (`calendarIds`)
  * and a secret-free name, to prove the broker row survives the move intact.

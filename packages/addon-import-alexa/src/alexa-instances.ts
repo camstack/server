@@ -1,5 +1,5 @@
 /**
- * The Alexa integrations as `integration-instances` (D1011): one `connections` record per
+ * The Alexa integrations as `integration-instances` (D1012): one `connections` record per
  * integration, keyed by the registry id, whose body is the link to an Alexa account (a `brokers`
  * record, edited on the Brokers page). The account's sign-in and secrets are never copied here.
  */

@@ -6,7 +6,7 @@
  * 1. An addon entry that declares `device-provider` or `device-adoption` AND `integration-instances`
  *    (it has migrated) must also carry what an instance needs in its own source: a record kind
  *    (`defineEntryKind` / `defineRecordKinds`) and the `role` its `describe()` answers
- *    (`devices`, `services` or `both`). Without a role the Integrations page cannot tell what the
+ *    (`devices` or `services`). Without a role the Integrations page cannot tell what the
  *    instances are for, and without a kind there is no record to read.
  * 2. An entry that declares a device marker and NOT `integration-instances` is still on the legacy
  *    leftover rows. Those entries are the committed list
@@ -17,6 +17,12 @@
  * 3. An addon entry that declares `device-export` (D1009: an export target is an integration
  *    instance, every exporter is multi-instance) must declare `integration-instances` and carry
  *    `instanceMode: 'multiple'` in its own source, never `'single'`.
+ *
+ * 4. An addon entry that declares a device marker, `broker` AND `integration-instances` (D1012: a
+ *    broker is referenced by id and owns nothing of its users) must declare its integration kind
+ *    through the generic primitive `declareBrokerLinkKind`. Its record carries a broker id and may
+ *    carry link fields; a link field is never a secret, and never a field of the broker's own
+ *    connection form (the broker owns those).
  *
  * Textual: the source is read, not run. Specs, `__tests__`, `dist` and generated code are skipped.
  *
@@ -45,8 +51,10 @@ export interface Violation {
   readonly message: string
 }
 
+/** `buildBrokerLinkInstances` answers role `devices` itself, so an addon on it states none. */
+const LINK_INSTANCES_RE = /\bbuildBrokerLinkInstances\s*[(<]/
 const KIND_RE = /\b(?:defineEntryKind|defineRecordKinds)\s*[(<]/
-const ROLE_RE = /\brole:\s*['"](?:devices|services|both)['"]/
+const ROLE_RE = /\brole:\s*['"](?:devices|services)['"]/
 
 export function findViolations(
   entries: readonly DeviceAddonEntry[],
@@ -68,10 +76,10 @@ export function findViolations(
           message: `declares ${INSTANCES_CAP} but its source defines no record kind (defineEntryKind / defineRecordKinds)`,
         })
       }
-      if (!ROLE_RE.test(source)) {
+      if (!ROLE_RE.test(source) && !LINK_INSTANCES_RE.test(source)) {
         out.push({
           addon: entry.id,
-          message: `declares ${INSTANCES_CAP} but no describe() answers a role ('devices' | 'services' | 'both')`,
+          message: `declares ${INSTANCES_CAP} but no describe() answers a role ('devices' | 'services')`,
         })
       }
       if (listed.has(entry.id)) {
@@ -119,6 +127,57 @@ export function findExporterViolations(
       out.push({
         addon: entry.id,
         message: `provides ${EXPORT_CAP} but does not declare instanceMode: 'multiple': every exporter is multi-instance (D1009)`,
+      })
+    }
+  }
+  return out
+}
+
+const BROKER_CAP = 'broker'
+const LINK_CALL_RE = /\bdeclareBrokerLinkKind\s*[(<]/
+const SECRET_FIELD_RE = /\b(?:password|secret|token|apiKey)\b|\.meta\(/i
+
+/** The text of the first `declareBrokerLinkKind(...)` call, parentheses balanced. */
+function linkCallText(source: string): string {
+  const at = source.search(LINK_CALL_RE)
+  if (at < 0) return ''
+  const open = source.indexOf('(', at)
+  let depth = 0
+  for (let i = open; i < source.length; i += 1) {
+    if (source[i] === '(') depth += 1
+    else if (source[i] === ')') {
+      depth -= 1
+      if (depth === 0) return source.slice(open, i + 1)
+    }
+  }
+  return source.slice(open)
+}
+
+/** D1012: a broker-backed integration names its broker by id, through the generic primitive. */
+export function findBrokerLinkViolations(
+  entries: readonly DeviceAddonEntry[],
+  sourceOf: (pkg: string) => string,
+): Violation[] {
+  const out: Violation[] = []
+  for (const entry of entries) {
+    const backed =
+      entry.capabilities.some((c) => DEVICE_MARKERS.has(c)) &&
+      entry.capabilities.includes(BROKER_CAP) &&
+      entry.capabilities.includes(INSTANCES_CAP)
+    if (!backed) continue
+    const source = sourceOf(entry.pkg)
+    if (!LINK_CALL_RE.test(source)) {
+      out.push({
+        addon: entry.id,
+        message: `brings devices through a broker and does not declare its integration kind with declareBrokerLinkKind: an integration names its broker by id and owns none of its settings (D1012)`,
+      })
+      continue
+    }
+    const call = linkCallText(source)
+    if (SECRET_FIELD_RE.test(call)) {
+      out.push({
+        addon: entry.id,
+        message: `its declareBrokerLinkKind link carries a password or secret field: credentials belong to the broker, never to its users (D1012)`,
       })
     }
   }
@@ -210,6 +269,7 @@ function main(): void {
   const violations = [
     ...findViolations(entries, readBaseline(), sourceOf),
     ...findExporterViolations(entries, sourceOf),
+    ...findBrokerLinkViolations(entries, sourceOf),
   ]
   if (violations.length === 0) {
     const devices = entries.filter((e) => e.capabilities.some((c) => DEVICE_MARKERS.has(c)))

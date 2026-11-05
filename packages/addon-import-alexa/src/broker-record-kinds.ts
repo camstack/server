@@ -6,7 +6,7 @@ export const ALEXA_BROKERS_OWNER = 'import-alexa'
 
 export const AlexaBrokerBodySchema = entryBody({
   ...alexaConnectionSchema.shape,
-  /** Retired (D1011): the link lives on the integration's `connections` record. Only the migration reads it. */
+  /** Retired (D1012): the link lives on the integration's `connections` record. Only the migration reads it. */
   integrationId: z.string().optional(),
   enabled: z.boolean().optional(),
 })

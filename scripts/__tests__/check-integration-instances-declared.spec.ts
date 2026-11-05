@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   type DeviceAddonEntry,
+  findBrokerLinkViolations,
   findExporterViolations,
   findViolations,
 } from '../check-integration-instances-declared.js'
@@ -110,5 +111,51 @@ describe('exporters are multi-instance (D1009)', () => {
       () => '',
     )
     expect(found.map((v) => v.addon)).toEqual(['export-silent'])
+  })
+})
+
+describe('broker-backed integrations go through the generic primitive (D1012)', () => {
+  const backed = entry('acct', ['device-adoption', 'broker', 'integration-instances'])
+  const GOOD = `
+    export const kind = declareBrokerLinkKind({ title: 'x', writeTrigger: 'y', linkFields: { filter: z.string().optional() } })
+  `
+
+  it('passes an addon that declares its integration kind through declareBrokerLinkKind', () => {
+    expect(findBrokerLinkViolations([backed], () => GOOD)).toEqual([])
+  })
+
+  it('ignores an addon that is not both a broker and an integration with devices', () => {
+    expect(
+      findBrokerLinkViolations(
+        [
+          entry('plain-broker', ['broker', 'integration-instances']),
+          entry('devices-only', ['device-adoption', 'integration-instances']),
+        ],
+        () => '',
+      ),
+    ).toEqual([])
+  })
+
+  it('accepts the role a buildBrokerLinkInstances integration answers on its own', () => {
+    expect(
+      findViolations(
+        [backed],
+        [],
+        () => 'declareBrokerLinkKind({}) buildBrokerLinkInstances(records, {}) defineEntryKind(',
+      ),
+    ).toEqual([])
+  })
+
+  it('refuses a broker-backed integration that does not use the primitive', () => {
+    const found = findBrokerLinkViolations([backed], () => "defineEntryKind('brokers', {})")
+    expect(found).toEqual([
+      { addon: 'acct', message: expect.stringMatching(/declareBrokerLinkKind/) },
+    ])
+  })
+
+  it('refuses a link field that is a password or any secret', () => {
+    const secret = `declareBrokerLinkKind({ title: 'x', writeTrigger: 'y', linkFields: { password: z.string().meta({ secret: true }) } })`
+    const found = findBrokerLinkViolations([backed], () => secret)
+    expect(found.map((v) => v.message)).toEqual([expect.stringMatching(/password|secret/)])
   })
 })

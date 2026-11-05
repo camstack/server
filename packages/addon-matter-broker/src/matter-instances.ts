@@ -1,5 +1,5 @@
 /**
- * The Matter integrations as `integration-instances` (D1011): one `connections` record per
+ * The Matter integrations as `integration-instances` (D1012): one `connections` record per
  * integration, keyed by the registry id, whose body is the link to a Matter fabric (a `brokers`
  * record, edited on the Brokers page).
  */

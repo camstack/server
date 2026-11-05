@@ -4,7 +4,7 @@
 
 # Decisions
 
-974 architecture decision records. One file per decision, never
+975 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -989,6 +989,7 @@ that rots.
 | D1009 | [An export target is an integration instance, and every exporter is multi-instance](adr-1009-an-export-target-is-an-integration-instance-and-every-exporter-is-multi-instance.md) | ✅ accepted (supersedes the "an exporter keeps its configuration in addon-level settings" part of D986 for the four exporters) | 2026-11-05 |
 | D1010 | [The Amazon sign-in and renewal are in-house — the Alexa addon runs no sign-in library](adr-1010-the-amazon-sign-in-and-renewal-are-in-house-the-alexa-addon-has-no-sign-in-library.md) | ✅ accepted | 2026-11-05 |
 | D1011 | [A device is added from one Add device modal, never through an integration's settings form](adr-1011-a-device-is-added-from-one-add-device-modal-never-through-an-integration-form.md) | ✅ accepted | 2026-11-05 |
+| D1012 | [A broker is referenced by id and owns nothing of its users](adr-1012-a-broker-is-referenced-by-id-and-owns-nothing-of-its-users.md) | ✅ accepted (supersedes D950 (the integrationId foreign key on a broker), D1007 (the registry id as a broker key)) | 2026-11-05 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

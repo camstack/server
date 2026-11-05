@@ -6,7 +6,7 @@ export const MATTER_BROKERS_OWNER = 'matter-broker'
 
 export const MatterBrokerBodySchema = entryBody({
   ...matterConnectionSchema.shape,
-  /** Retired (D1011): the link lives on the integration's `connections` record. Only the migration reads it. */
+  /** Retired (D1012): the link lives on the integration's `connections` record. Only the migration reads it. */
   integrationId: z.string().optional(),
   enabled: z.boolean().optional(),
 })

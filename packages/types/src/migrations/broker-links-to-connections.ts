@@ -1,5 +1,5 @@
 /**
- * The integration link moves OFF the broker (D1011). A broker record used to name the registry
+ * The integration link moves OFF the broker (D1012). A broker record used to name the registry
  * integration it served (`integrationId`); the integration now has a record of its own,
  * `connections`, keyed by that id, whose body names the broker. For every broker row with a link:
  *

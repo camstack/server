@@ -1,5 +1,5 @@
 /**
- * A broker is referenced by id and owns nothing of its users (D1011). Removing one that is still
+ * A broker is referenced by id and owns nothing of its users (D1012). Removing one that is still
  * referenced is refused with a {@link BrokerInUseError} naming every user, so the operator sees
  * what to unlink first and nothing is left pointing at a broker that no longer exists.
  */

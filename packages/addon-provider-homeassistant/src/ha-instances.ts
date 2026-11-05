@@ -1,5 +1,5 @@
 /**
- * The Home Assistant integrations as `integration-instances` (D1011): one `connections` record
+ * The Home Assistant integrations as `integration-instances` (D1012): one `connections` record
  * per integration, keyed by the registry id, whose body is the link to a Home Assistant connection
  * (a `brokers` record, edited on the Brokers page).
  */
