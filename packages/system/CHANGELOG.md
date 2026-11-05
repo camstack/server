@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The sqlite registry can clear an integration's legacy settings rows and answer the keychain refs they held, for the rows-to-record migration
 - Local network names its node-settings capability up front, so its per-node values resolve at boot.
 - Alert center settings are declared on the cluster hook; the form and stored values are unchanged.
+- Console logging level is declared on the cluster hook; the form and stored value are unchanged.
 
 ### Removed
 

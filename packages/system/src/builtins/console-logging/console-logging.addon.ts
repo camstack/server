@@ -40,7 +40,12 @@ export class ConsoleLoggingAddon extends BaseAddon<ConsoleConfig> {
     return this.destination
   }
 
-  protected globalSettingsSchema(): ConfigUISchema {
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return ['log-destination']
+  }
+
+  protected override async clusterSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    if (cap !== 'log-destination') return null
     return this.schema({
       sections: [
         {
