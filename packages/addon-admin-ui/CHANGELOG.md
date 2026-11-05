@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.589] - 2026-11-05
+
 ### Changed
 
 - Connection lists (Brokers, Exporters, Email, TURN, Remote Access, Logging, Training) show one row of provider pills with no All pill; Add moves to the page header

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.386] - 2026-11-05
+
 ### Changed
 
 - PageShell exposes PageHeaderActions so a page body can place its Add button in the page header
