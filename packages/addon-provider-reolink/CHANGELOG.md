@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- A deleted camera stops its timers at once instead of polling until the worker restarts
+
 ## [1.2.227] - 2026-11-05
 
 ### Changed
