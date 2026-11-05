@@ -1,4 +1,9 @@
 import type { AddonMigration, FlattenRowPorts } from '@camstack/types'
+import {
+  INTEGRATION_ROWS_TO_RECORD_ID,
+  moveAlexaIntegrationRows,
+  type AlexaIntegrationRowsPorts,
+} from './integration-rows-to-record.js'
 import { FLATTEN_BROKER_RECORDS_ID, flattenBrokerRecords } from './flatten-broker-records.js'
 import {
   stripEchoTargetVolumeAndMode,
@@ -7,9 +12,15 @@ import {
 
 export type { EchoTargetMigrationPorts } from './strip-echo-target-volume-and-mode.js'
 export { FLATTEN_BROKER_RECORDS_ID } from './flatten-broker-records.js'
+export {
+  INTEGRATION_ROWS_TO_RECORD_ID,
+  alexaIntegrationRowsPorts,
+} from './integration-rows-to-record.js'
 
 /** What the catalogue's migrations read and write through. */
-export type AlexaMigrationPorts = EchoTargetMigrationPorts & FlattenRowPorts
+export type AlexaMigrationPorts = EchoTargetMigrationPorts &
+  FlattenRowPorts &
+  AlexaIntegrationRowsPorts
 
 /** The `import-alexa` catalogue (D987): offered to the engine when the addon initialises. */
 export const ADDON_MIGRATIONS: readonly AddonMigration<AlexaMigrationPorts>[] = [
@@ -45,5 +56,22 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<AlexaMigrationPorts>[] = 
       fixtureMark: 'the integration link and the amazon domain of each account',
     },
     procedure: flattenBrokerRecords,
+  },
+  {
+    meta: {
+      id: INTEGRATION_ROWS_TO_RECORD_ID,
+      owner: 'import-alexa',
+      level: 'addon-state',
+      seq: 3,
+      dependsOn: [FLATTEN_BROKER_RECORDS_ID],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'block-owner',
+      bodyKind: 'procedure',
+      description:
+        'Stamp the integration link from the legacy brokerId row onto its broker record when the broker has none, then clear the legacy integration settings rows',
+      fixtureMark: 'the name of the broker and the integration it already names',
+    },
+    procedure: moveAlexaIntegrationRows,
   },
 ]

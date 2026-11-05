@@ -9,6 +9,7 @@ import {
   DeviceType,
   errMsg,
   EventCategory,
+  defaultIntegrationApiOver,
   flattenPortsOver,
   integrationInstancesCapability,
   type AddonDataPlaneHandle,
@@ -58,6 +59,7 @@ import {
   ADDON_MIGRATIONS,
   FLATTEN_BROKER_RECORDS_ID,
   type AlexaMigrationPorts,
+  alexaIntegrationRowsPorts,
 } from './migrations/index.js'
 import { speakIconRoutes } from './speak/icon-routes.js'
 import { RecordsSpeakSessionStore } from './speak/session-store.js'
@@ -273,6 +275,12 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
         })
       },
       ...flattenPortsOver(records.kind(alexaBrokersEntryKind)),
+      ...alexaIntegrationRowsPorts({
+        api: defaultIntegrationApiOver(this.ctx.api),
+        records,
+        secrets,
+        warn: (message) => this.ctx.logger.warn(message),
+      }),
     }
   }
 

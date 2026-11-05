@@ -21,6 +21,14 @@ const NO_FLATTEN_PORTS: FlattenRowPorts = {
   readResolved: async () => ({}),
   patch: async () => undefined,
 }
+const NO_ROWS_PORTS = {
+  listIntegrations: async () => [],
+  readIntegrationRows: async () => ({}),
+  clearIntegrationRows: async () => undefined,
+  warn: () => undefined,
+  readBrokerLink: async () => null,
+  stampBrokerLink: async () => undefined,
+}
 const MARK = 'kitchen echo, kept as written'
 
 const silentLogger: IScopedLogger = {
@@ -86,7 +94,7 @@ async function boot(store: ReturnType<typeof storeWith>, host: AddonMigrationHos
     host,
     defineAddonMigrations(
       ADDON_MIGRATIONS.filter((m) => m.meta.id === MIGRATION_ID),
-      { ...store.ports, ...NO_FLATTEN_PORTS },
+      { ...store.ports, ...NO_FLATTEN_PORTS, ...NO_ROWS_PORTS },
     ),
     silentLogger,
   )
