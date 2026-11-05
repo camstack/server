@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.186] - 2026-11-05
+
 ### Changed
 
 - An Alexa integration links to its account through the account record

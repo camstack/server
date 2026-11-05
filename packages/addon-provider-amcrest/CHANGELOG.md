@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.166] - 2026-11-05
+
 ### Changed
 
 - Copying an integration into its record reads the leftover rows through the migration-only door and resolves their secrets in this addon

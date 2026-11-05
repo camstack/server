@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.223] - 2026-11-05
+
 ### Changed
 
 - camstack develop scaffold addon accepts --kind device-integration, service-integration and exporter
