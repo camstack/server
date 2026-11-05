@@ -417,10 +417,37 @@ run yet - wait ~60 s - or when the node runs another version). "Online with its 
 not enough: on 2026-10-17 a hub was online on the new version with 28 addons refused and
 19 dead for four hours.
 
-**"Update all nodes"** (Cluster page) sequences online nodes **agents first, hub
-last**, one at a time — the hub hosts the routing to every agent, so restarting it
-first would cut the calls that kick the agents. Up-to-date nodes are refused
-server-side.
+**One update order: hub first, then the addons it requires, then the agents.**
+"Update all nodes" (Cluster page) and `ops-update-apply` (CLI) both put the hub
+first, one node at a time, and the Cluster page waits until the hub reports it
+RUNS the target before touching an agent. If the hub step is refused, fails or
+does not settle, the agents are listed `skipped` and name that step; between
+agents one outcome never stops the next. Up-to-date nodes are refused
+server-side. The hub goes first because every other judgement is made against
+it: an agent's server and addons are checked against what the hub requires, and
+the hub is what delivers an agent its addons.
+
+**Every path that changes an installed version enforces `camstack.requires`**
+(D989). Hub: the runner plan defers an addon whose installed version is stale
+against the server (`hub-spawn-gate`), `updatePackage` refuses on an unreadable
+registry `requires`, the upload route answers 409 with the unmet list, and the
+first-boot installer holds an addon the running server would reject. Agent: the
+reconcile (`delivery-requirements.ts`) judges `server-too-old` and
+`addon-too-old` from the live roster. Starter: a closure whose server is below
+the starter's hosted range boots the baked seed and logs both versions.
+`camstack deploy --closure` stamps `requires.addons` from the workspace, so a
+dev closure is judged like a published one. Every deferred or refused addon
+logs a line naming both versions.
+
+**Co-update after a server swap.** When a new server boots with addons below its
+`requires.addons`, they are updated AUTOMATICALLY once `SystemAddonsReady`
+fires, even with auto-update off (`core/updates/required-addon-update.ts`). A
+failure raises an alert through the alerts provider (resolved when a later run
+succeeds) and boot continues. `applyServerUpdate`'s `requiredAddonUpdates` stays
+a report.
+
+**Rollback is per addon only.** There is no server rollback; a multi-step chain
+stops at the failed step and names it.
 
 **`applyServerUpdate` never updates the IMAGE.** The container image (starter,
 entrypoint, boot seed) only changes on a container recreate, so `runningVersion`
