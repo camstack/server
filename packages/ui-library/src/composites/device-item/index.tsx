@@ -9,7 +9,9 @@
  */
 import { useUiText } from '../../contexts/ui-text'
 import { type KeyboardEvent, type ReactNode, useState } from 'react'
+import { AlertCircle, Loader2 } from 'lucide-react'
 import type { UseDeviceProxyTrpc } from '../../hooks/use-device-proxy'
+import type { RowOperationState } from '../../hooks/use-row-operations'
 import { cn } from '../../lib/cn'
 import {
   COLUMN_BREAKPOINT_CLASS,
@@ -163,6 +165,7 @@ export function DeviceItem(props: DeviceItemProps): ReactNode {
         className={className}
         renderRowAction={renderRowAction ?? null}
         onDelete={onDelete ?? null}
+        operation={props.operation ?? null}
         selection={selection}
         showTypeCell={props.showTypeCell ?? true}
         showManufacturerCell={props.showManufacturerCell ?? true}
@@ -435,6 +438,8 @@ interface DeviceItemTableRowProps {
   /** Built-in confirmed delete handler — when non-null, the merged cell
    *  renders a red trash button that confirms before invoking it. */
   readonly onDelete: ((device: DeviceItemDevice) => void) | null
+  /** A removal (or other operation) in flight on this row. */
+  readonly operation: RowOperationState | null
   readonly selection?: {
     readonly selected: boolean
     readonly onToggle: () => void
@@ -479,6 +484,7 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
     className,
     renderRowAction,
     onDelete,
+    operation,
     selection,
     showTypeCell,
     showManufacturerCell,
@@ -500,10 +506,15 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
     nameParent !== undefined ? { parent: nameParent } : undefined,
   )
 
+  const pending = operation?.kind === 'pending'
+  const failure = operation?.kind === 'failed' ? operation.message : null
+
   return (
     <tr
-      onClick={onRowClick}
-      {...(rowSelects
+      onClick={pending ? undefined : onRowClick}
+      aria-busy={pending ? true : undefined}
+      data-row-operation={operation?.kind}
+      {...(rowSelects && !pending
         ? {
             role: 'button' as const,
             'aria-pressed': rowSelected,
@@ -532,6 +543,10 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
         // the `<tr>`; the sticky NAME cell mirrors the same token below so the
         // pinned column doesn't show a plain stripe over the highlighted row.
         rowSelected && 'bg-primary/10',
+        // A removal in flight: dimmed and inert until the hub has finished; a
+        // failed one is restored with the danger tint and its message below.
+        pending && 'opacity-60 pointer-events-none',
+        failure !== null && 'bg-danger/5',
         className,
       )}
     >
@@ -685,22 +700,46 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
           sequence with the trailing affordances instead of overflowing a fixed
           box; `justify-end` flushes the cluster right. */}
       <td className="px-2 py-1.5 align-middle text-right whitespace-nowrap">
-        <span className="inline-flex items-center justify-end gap-1.5">
-          <DeviceItemActions trpc={trpc} device={device} flags={flags} controlPlacement="table" />
-          <DeviceItemPreview
-            trpc={trpc}
-            device={device}
-            status={displayStatus}
-            enabled={showSnapshot && isCamera}
-            showStatusPills
-          />
-          <DeviceQuickDetailAction deviceId={device.id} />
-          {renderRowAction && (
-            <span onClick={(e) => e.stopPropagation()}>{renderRowAction(device)}</span>
-          )}
-          {onDelete && <DeviceDeleteAction device={device} onDelete={onDelete} />}
-          <StatusDot status={displayStatus} />
-        </span>
+        {pending ? (
+          <span
+            role="status"
+            className="inline-flex h-6 items-center justify-end gap-1.5 text-xs text-foreground-subtle"
+          >
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            {t('uiLibrary.deviceItem.removing', 'Removing…')}
+          </span>
+        ) : (
+          <span className="inline-flex items-center justify-end gap-1.5">
+            {failure !== null && (
+              <span
+                role="alert"
+                title={failure}
+                className="inline-flex max-w-[16rem] items-center gap-1 truncate text-danger"
+              >
+                <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">
+                  {t('uiLibrary.deviceItem.removeFailed', 'Removal failed: {{message}}', {
+                    message: failure,
+                  })}
+                </span>
+              </span>
+            )}
+            <DeviceItemActions trpc={trpc} device={device} flags={flags} controlPlacement="table" />
+            <DeviceItemPreview
+              trpc={trpc}
+              device={device}
+              status={displayStatus}
+              enabled={showSnapshot && isCamera}
+              showStatusPills
+            />
+            <DeviceQuickDetailAction deviceId={device.id} />
+            {renderRowAction && (
+              <span onClick={(e) => e.stopPropagation()}>{renderRowAction(device)}</span>
+            )}
+            {onDelete && <DeviceDeleteAction device={device} onDelete={onDelete} />}
+            <StatusDot status={displayStatus} />
+          </span>
+        )}
       </td>
     </tr>
   )

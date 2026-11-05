@@ -3065,6 +3065,12 @@
           "doc": "Per-row className resolver (e.g. status-coloured backgrounds)."
         },
         {
+          "name": "rowState",
+          "type": "(row: T, rowIndex: number) => RowOperationState | undefined",
+          "optional": true,
+          "doc": "Per-row operation in flight (`useRowOperations().stateOf(key)`): `pending` dims the row, marks it `aria-busy` and withholds `onRowClick`; `f"
+        },
+        {
           "name": "maxBodyHeight",
           "type": "string",
           "optional": true,
@@ -5058,6 +5064,13 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "errorMessageOf",
+      "kind": "function",
+      "area": "hooks",
+      "file": "packages/ui-library/src/hooks/use-row-operations.ts",
+      "summary": "useRowOperations — the per-row \"an operation is in flight\" state of a table."
     },
     {
       "name": "EVENT_KIND_ICONS",
@@ -12876,6 +12889,13 @@
       "summary": "The host's open callback, or null when no provider is mounted."
     },
     {
+      "name": "useDeviceRemoval",
+      "kind": "hook",
+      "area": "hooks",
+      "file": "packages/ui-library/src/hooks/use-device-removal.ts",
+      "summary": "useDeviceRemoval — the shared pending state of a confirmed device delete."
+    },
+    {
       "name": "useDeviceRuns",
       "kind": "hook",
       "area": "composites",
@@ -13182,6 +13202,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-item/role-display-defaults-context.tsx",
       "summary": "The defaults published by the nearest provider — an empty record outside one, never `undefined`, so a caller can index it without a guard."
+    },
+    {
+      "name": "useRowOperations",
+      "kind": "hook",
+      "area": "hooks",
+      "file": "packages/ui-library/src/hooks/use-row-operations.ts",
+      "summary": "useRowOperations — the per-row \"an operation is in flight\" state of a table."
     },
     {
       "name": "useScrubController",

@@ -10,6 +10,7 @@ import {
   DEVICE_LIST_PAGE_SIZE_OPTIONS,
 } from '../../hooks/use-device-list-page-size'
 import type { UseDeviceProxyTrpc } from '../../hooks/use-device-proxy'
+import type { RowOperationState } from '../../hooks/use-row-operations'
 import type { DeviceItemDevice, DeviceItemParent } from '../device-item/helpers'
 import { effectiveType } from '../device-item/helpers'
 import { ContainerChildrenProvider } from '../device-item'
@@ -114,6 +115,13 @@ export interface DeviceListDeviceProps {
    */
   readonly onDeleteDevice?: (device: DeviceItemDevice) => void
   /**
+   * The state of a removal in flight, per row (`useDeviceRemoval().rowOperation`).
+   * `pending` shows the row dimmed with "Removing…" and its actions disabled until
+   * the removal has completed; `failed` restores it with the error inline.
+   * Omitted ⇒ rows render exactly as before.
+   */
+  readonly rowOperation?: (device: DeviceItemDevice) => RowOperationState | undefined
+  /**
    * When `true`, renders a leading checkbox on each top-level row
    * (accessory sub-rows are excluded — same gate as `renderRowAction`).
    * Selection state may be controlled via `selectedIds`; when omitted
@@ -170,6 +178,7 @@ export function DeviceModeList(props: DeviceListDeviceProps): ReactNode {
     lsKey = urlScope === 'root' ? 'devices' : 'integrations:nested',
     renderRowAction,
     onDeleteDevice,
+    rowOperation,
     selectable = false,
     selectedIds,
     onSelectionChange,
@@ -474,6 +483,7 @@ export function DeviceModeList(props: DeviceListDeviceProps): ReactNode {
             onNavigate={onNavigate ?? null}
             renderRowAction={renderRowAction ?? null}
             onDeleteDevice={onDeleteDevice ?? null}
+            rowOperation={rowOperation ?? null}
             selectable={showCheckboxes}
             rowClickSelects={rowClickSelects}
             activeSelected={activeSelected}

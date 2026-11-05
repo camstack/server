@@ -2,6 +2,7 @@ import { useUiText } from '../../contexts/ui-text'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { type ReactNode, useMemo, useState } from 'react'
 import type { UseDeviceProxyTrpc } from '../../hooks/use-device-proxy'
+import type { RowOperationState } from '../../hooks/use-row-operations'
 import { cn } from '../../lib/cn'
 import { DeviceItem } from '../device-item'
 import { groupChildrenByLayout } from '../device-item/child-layout'
@@ -54,6 +55,8 @@ interface TableLayoutProps extends DeviceRowsProps {
    *  top-level rows carry it (accessory sub-rows are excluded — same gate
    *  as `renderRowAction`). */
   readonly onDeleteDevice: ((device: DeviceItemDevice) => void) | null
+  /** Per-row operation in flight (a removal): pending dims + disables the row. */
+  readonly rowOperation: ((device: DeviceItemDevice) => RowOperationState | undefined) | null
   /** Parent rows the OPERATOR opened. Only the chevron writes it — a search
    *  never does (it narrows the rows; it does not open them). */
   readonly expandedParents: ReadonlySet<number>
@@ -99,6 +102,7 @@ export function TableLayout({
   onNavigate,
   renderRowAction,
   onDeleteDevice,
+  rowOperation,
   selectable,
   rowClickSelects,
   activeSelected,
@@ -251,6 +255,7 @@ export function TableLayout({
                 onNavigate={onNavigate ?? null}
                 renderRowAction={renderRowAction ?? null}
                 onDeleteDevice={onDeleteDevice}
+                operation={rowOperation?.(d)}
                 selection={selection}
                 rowClickSelects={rowClickSelects}
               />
@@ -288,6 +293,7 @@ interface TableRowGroupProps {
   readonly renderRowAction: ((device: DeviceItemDevice) => ReactNode) | null
   /** Built-in confirmed delete — only the top-level parent row carries it. */
   readonly onDeleteDevice: ((device: DeviceItemDevice) => void) | null
+  readonly operation: RowOperationState | undefined
   readonly selection?: RowSelection
   /** Batch mode active — the parent row's click toggles selection. */
   readonly rowClickSelects: boolean
@@ -309,6 +315,7 @@ function TableRowGroup({
   onNavigate,
   renderRowAction,
   onDeleteDevice,
+  operation,
   selection,
   rowClickSelects,
 }: TableRowGroupProps): ReactNode {
@@ -382,6 +389,7 @@ function TableRowGroup({
         indentLevel={indentLevel}
         renderRowAction={renderRowAction ?? undefined}
         onDelete={onDeleteDevice ?? undefined}
+        {...(operation !== undefined ? { operation } : {})}
         selection={selection}
         rowClickSelects={rowClickSelects}
         showTypeCell={showType}

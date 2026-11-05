@@ -63,6 +63,10 @@ export type {
 } from './use-device-webrtc'
 export { useDeviceWebrtc } from './use-device-webrtc'
 export { useDevice, useDevices } from './use-devices'
+export type { DeviceRemoval, UseDeviceRemovalOptions } from './use-device-removal'
+export { useDeviceRemoval } from './use-device-removal'
+export type { RowOperationState, UseRowOperationsResult } from './use-row-operations'
+export { errorMessageOf, useRowOperations } from './use-row-operations'
 export type {
   DoorbellPressEvent,
   UseDoorbellEventsOptions,

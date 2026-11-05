@@ -46,6 +46,7 @@
  * the operator moves through the rows.
  */
 import { Fragment, type JSX, type ReactNode, useMemo, useState } from 'react'
+import type { RowOperationState } from '../hooks/use-row-operations'
 import { DataTablePager } from './data-table-pager'
 import {
   type DataTablePaginationLabels,
@@ -121,6 +122,12 @@ export interface DataTableProps<T> {
   readonly bordered?: boolean
   /** Per-row className resolver (e.g. status-coloured backgrounds). */
   readonly rowClassName?: (row: T, rowIndex: number) => string | undefined
+  /**
+   * Per-row operation in flight (`useRowOperations().stateOf(key)`): `pending`
+   * dims the row, marks it `aria-busy` and withholds `onRowClick`; `failed`
+   * tints it and exposes the message as its title. Absent = idle rows.
+   */
+  readonly rowState?: (row: T, rowIndex: number) => RowOperationState | undefined
   /**
    * Tailwind `max-h-*` class capping the table. The rows then scroll INSIDE
    * this container and the column header is pinned to its top; the page around
@@ -208,6 +215,7 @@ export function DataTable<T>({
   className,
   bordered = true,
   rowClassName,
+  rowState,
   maxBodyHeight,
   fill = false,
   defaultSort,
@@ -353,7 +361,9 @@ export function DataTable<T>({
           {pageRows.map((row, rowIndex) => {
             const key = rowKey ? rowKey(row, rowIndex) : rowIndex
             const extra = rowClassName?.(row, rowIndex) ?? ''
-            const interactive = onRowClick !== undefined
+            const operation = rowState?.(row, rowIndex)
+            const pending = operation?.kind === 'pending'
+            const interactive = onRowClick !== undefined && !pending
             const detail =
               renderExpanded !== undefined && isExpanded?.(row) === true
                 ? renderExpanded(row, rowIndex)
@@ -361,9 +371,13 @@ export function DataTable<T>({
             return (
               <Fragment key={key}>
                 <tr
-                  onClick={interactive ? () => onRowClick(row, rowIndex) : undefined}
+                  onClick={interactive ? () => onRowClick?.(row, rowIndex) : undefined}
+                  aria-busy={pending ? true : undefined}
+                  title={operation?.kind === 'failed' ? operation.message : undefined}
                   className={[
                     interactive ? 'cursor-pointer hover:bg-primary/5' : 'hover:bg-primary/5',
+                    pending ? 'opacity-60 pointer-events-none' : '',
+                    operation?.kind === 'failed' ? 'bg-danger/5' : '',
                     extra,
                   ]
                     .filter(Boolean)

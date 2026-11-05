@@ -16,6 +16,7 @@
  *   - `shortStableId` — display-token for stableId tail.
  */
 
+import type { RowOperationState } from '../../hooks/use-row-operations'
 import {
   type ChildLayout,
   type DeviceDisplayOverride,
@@ -223,6 +224,13 @@ export interface DeviceItemProps {
    * No effect on `view='card'` (card delete is a deliberate follow-up).
    */
   readonly onDelete?: (device: DeviceItemDevice) => void
+  /**
+   * An operation in flight on this row (table view). `pending` dims the row,
+   * swaps its actions for a "Removing…" indicator and withholds the row click;
+   * `failed` keeps the row interactive and shows the error inline. Comes from
+   * `useDeviceRemoval().rowOperation`.
+   */
+  readonly operation?: RowOperationState
   /**
    * When provided, renders a leading checkbox for row selection.
    * Only passed to top-level rows (accessory sub-rows omit it).
