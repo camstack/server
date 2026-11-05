@@ -24,6 +24,21 @@ NP_COMMANDS = {
 }
 RATE_LIMITED = "rate-limited"
 
+# alexapy retries a 429 or a connection error by itself for 90-120 s per call and the
+# decorator takes no per-call limit. A command is not worth that: cancelling the call
+# from outside ends the retries, so the operator gets an answer while it still matters.
+COMMAND_TIMEOUT_S = 10.0
+
+
+async def run_command(call, what: str):
+    """Run one command coroutine, giving up after COMMAND_TIMEOUT_S (alexapy's retries are cancelled)."""
+    try:
+        return await asyncio.wait_for(call, timeout=COMMAND_TIMEOUT_S)
+    except asyncio.TimeoutError as err:
+        raise RuntimeError(
+            f"amazon did not accept {what} within {COMMAND_TIMEOUT_S:.0f} s (rate limit or connection retries)"
+        ) from err
+
 
 class RateLimitedError(Exception):
     """Amazon answered 429. It is a refusal to retry later, never an empty answer."""
@@ -267,7 +282,7 @@ class AlexaPyGateway:
         device_type = self._device_type_of(serial)
         async with self._lock(serial):
             try:
-                await self._api_for(serial, device_type).set_media({"type": body})
+                await run_command(self._api_for(serial, device_type).set_media({"type": body}), "the media command")
             except Exception as err:  # noqa: BLE001 — typed below
                 if is_rate_limited(err):
                     raise RateLimitedError("amazon rate limit (429) on a media command") from err
@@ -283,7 +298,7 @@ class AlexaPyGateway:
         _AlexaLogin, AlexaAPI = _import_alexapy()
         async with self._lock(serial):
             try:
-                await AlexaAPI(None, login).run_behavior(node, queue_delay=0)
+                await run_command(AlexaAPI(None, login).run_behavior(node, queue_delay=0), "the volume")
             except Exception as err:  # noqa: BLE001 — typed below
                 if is_rate_limited(err):
                     raise RateLimitedError("amazon rate limit (429) on the volume") from err

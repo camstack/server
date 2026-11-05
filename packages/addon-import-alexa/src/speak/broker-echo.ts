@@ -7,7 +7,7 @@ import type { IScopedLogger } from '@camstack/types'
 import { type BrokerSeed, regionOfDomain } from './broker-seed.js'
 import type { SpeakSessionStore } from './session-store.js'
 import { scrubSecrets, withSpeakSecretFiles } from './secret-file.js'
-import type { AlexaWorker } from './worker-client.js'
+import type { AlexaWorker, WorkerRequestOptions } from './worker-client.js'
 import { ECHO_RATE_BACKOFF_BASE_MS, ECHO_RATE_BACKOFF_MAX_MS } from './constants.js'
 import {
   type DeviceVolume,
@@ -41,6 +41,10 @@ export interface BrokerEchoDeps {
   readonly sessions: SpeakSessionStore
   readonly logger: IScopedLogger
   readonly now?: () => number
+}
+
+function withDevice(deviceId: number | undefined): WorkerRequestOptions {
+  return deviceId === undefined ? {} : { deviceId }
 }
 
 export class BrokerEcho {
@@ -110,7 +114,10 @@ export class BrokerEcho {
       }
       secrets = seed === null ? [] : [seed.refreshToken]
       worker.noteSecrets(secrets)
-      let outcome = parseLoginResult({ status: 'failed', error: 'worker gave no answer' })
+      let outcome = parseLoginResult({
+        status: 'failed',
+        error: 'worker gave no answer',
+      })
       const held = await withSpeakSecretFiles(
         { refreshToken: seed?.refreshToken ?? '', sessionB64: stored },
         async (paths) => {
@@ -206,27 +213,30 @@ export class BrokerEcho {
   }
 
   /** The raw player state of one Echo. Throws on any failure, a 429 included: never an empty answer. */
-  async playerState(serial: string, deviceType: string): Promise<PlayerInfo> {
+  async playerState(serial: string, deviceType: string, deviceId?: number): Promise<PlayerInfo> {
     await this.requireReady()
     return this.limited(async () =>
       parsePlayerState(
-        await this.deps.worker.request({
-          op: 'player_state',
-          serial,
-          deviceType,
-        }),
+        await this.deps.worker.request(
+          { op: 'player_state', serial, deviceType },
+          withDevice(deviceId),
+        ),
       ),
     )
   }
 
-  async npCommand(serial: string, command: NpCommand): Promise<void> {
+  async npCommand(serial: string, command: NpCommand, deviceId?: number): Promise<void> {
     await this.requireReady()
-    await this.limited(() => this.deps.worker.request({ op: 'np_command', serial, command }))
+    await this.limited(() =>
+      this.deps.worker.request({ op: 'np_command', serial, command }, withDevice(deviceId)),
+    )
   }
 
-  async setVolume(serial: string, level: number): Promise<void> {
+  async setVolume(serial: string, level: number, deviceId?: number): Promise<void> {
     await this.requireReady()
-    await this.limited(() => this.deps.worker.request({ op: 'set_volume', serial, level }))
+    await this.limited(() =>
+      this.deps.worker.request({ op: 'set_volume', serial, level }, withDevice(deviceId)),
+    )
   }
 
   /** Do Not Disturb of every device of the account, by serial, in one call. */
@@ -245,9 +255,11 @@ export class BrokerEcho {
     )
   }
 
-  async setDnd(serial: string, enabled: boolean): Promise<void> {
+  async setDnd(serial: string, enabled: boolean, deviceId?: number): Promise<void> {
     await this.requireReady()
-    await this.limited(() => this.deps.worker.request({ op: 'set_dnd', serial, enabled }))
+    await this.limited(() =>
+      this.deps.worker.request({ op: 'set_dnd', serial, enabled }, withDevice(deviceId)),
+    )
   }
 
   private async requireReady(): Promise<void> {
@@ -259,7 +271,11 @@ export class BrokerEcho {
     try {
       return parseSessionStatus(await this.deps.worker.request({ op: 'session_status' }))
     } catch {
-      return { loggedIn: this.currentState === 'ready', ageSec: 0, lastSuccessAt: null }
+      return {
+        loggedIn: this.currentState === 'ready',
+        ageSec: 0,
+        lastSuccessAt: null,
+      }
     }
   }
 

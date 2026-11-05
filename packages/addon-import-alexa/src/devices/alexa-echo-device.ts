@@ -62,6 +62,10 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
   private failureLogged = false
   private volumeFailureLogged = false
   private health: EchoPollHealth = 'ok'
+  /** The last level this device asked Amazon for, and when; a step starts from it until a read is newer. */
+  private lastSet: { readonly level: number; readonly at: number } | null = null
+  /** When the read that produced the current media-player slice began. */
+  private polledFrom = 0
 
   constructor(ctx: DeviceContext) {
     const persisted = alexaEchoDeviceSchema.parse(ctx.persistedConfig ?? {})
@@ -142,7 +146,9 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
     const deviceType =
       this.amazonDeviceType !== '' ? this.amazonDeviceType : (listed?.deviceType ?? '')
     try {
-      const info = await session.playerState(this.serial, deviceType)
+      const readStartedAt = Date.now()
+      const info = await session.playerState(this.serial, deviceType, this.id)
+      this.polledFrom = readStartedAt
       const now = Date.now()
       const fromPlayer = mapPlayerInfoToStatus(info, { online: true, now })
       this.runtimeState.setCapState('media-player', await this.completeVolume(fromPlayer))
@@ -225,17 +231,27 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
   }
 
   private async command(command: NpCommand): Promise<void> {
-    await this.session().npCommand(this.serial, command)
+    await this.session().npCommand(this.serial, command, this.id)
     this.rereadSoon()
   }
 
-  /** Amazon has no step command: move from the last known level, refuse when there is none. */
-  private async stepVolume(delta: number): Promise<void> {
-    const level = this.runtimeState.getCapState<MediaPlayerStatus>('media-player')?.volumeLevel
-    if (level === null || level === undefined) throw new Error('the Echo volume is not known yet')
-    const next = Math.max(0, Math.min(100, level + delta))
-    await this.session().setVolume(this.serial, next)
+  private async sendVolume(level: number): Promise<void> {
+    this.lastSet = { level, at: Date.now() }
+    await this.session().setVolume(this.serial, level, this.id)
     this.rereadSoon()
+  }
+
+  /**
+   * Amazon has no step command: move from the level we last SET when no read since
+   * is newer (a polled level lags the command), else the polled one; refuse when
+   * there is none.
+   */
+  private async stepVolume(delta: number): Promise<void> {
+    const polled = this.runtimeState.getCapState<MediaPlayerStatus>('media-player')?.volumeLevel
+    const set = this.lastSet
+    const level = set !== null && set.at >= this.polledFrom ? set.level : polled
+    if (level === null || level === undefined) throw new Error('the Echo volume is not known yet')
+    await this.sendVolume(Math.max(0, Math.min(100, level + delta)))
   }
 
   private registerMediaPlayer(): void {
@@ -247,10 +263,7 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
       pause: () => this.command('pause'),
       next: () => this.command('next'),
       previous: () => this.command('previous'),
-      setVolume: async ({ volumeLevel }) => {
-        await this.session().setVolume(this.serial, Math.round(volumeLevel))
-        this.rereadSoon()
-      },
+      setVolume: async ({ volumeLevel }) => this.sendVolume(Math.round(volumeLevel)),
       stop: async () => unsupported('stop'),
       turnOn: async () => unsupported('power'),
       turnOff: async () => unsupported('power'),
@@ -273,7 +286,7 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
       getStatus: async () =>
         this.runtimeState.getCapState<DoNotDisturbStatus>('do-not-disturb') ?? COLD_DND,
       setEnabled: async ({ enabled }) => {
-        await this.session().setDnd(this.serial, enabled)
+        await this.session().setDnd(this.serial, enabled, this.id)
         this.runtimeState.setCapState('do-not-disturb', {
           enabled,
           lastChangedAt: Date.now(),

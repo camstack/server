@@ -193,7 +193,7 @@ describe('AlexaEchoDevice', () => {
     }
     s.playerState.mockClear()
     await player.pause({ deviceId: 7 })
-    expect(s.npCommand).toHaveBeenCalledWith('S1', 'pause')
+    expect(s.npCommand).toHaveBeenCalledWith('S1', 'pause', expect.any(Number))
     await vi.advanceTimersByTimeAsync(1_400)
     expect(s.playerState).not.toHaveBeenCalled()
     await vi.advanceTimersByTimeAsync(200)
@@ -210,7 +210,7 @@ describe('AlexaEchoDevice', () => {
       seek(i: { deviceId: number; position: number }): Promise<void>
     }
     await player.setVolume({ deviceId: 7, volumeLevel: 41.6 })
-    expect(s.setVolume).toHaveBeenCalledWith('S1', 42)
+    expect(s.setVolume).toHaveBeenCalledWith('S1', 42, expect.any(Number))
     await expect(player.seek({ deviceId: 7, position: 1 })).rejects.toThrow('not available')
     expect(device.features).toHaveLength(3)
     await device.removeDevice()
@@ -224,7 +224,7 @@ describe('AlexaEchoDevice', () => {
       setEnabled(i: { deviceId: number; enabled: boolean }): Promise<void>
     }
     await dnd.setEnabled({ deviceId: 7, enabled: false })
-    expect(s.setDnd).toHaveBeenCalledWith('S1', false)
+    expect(s.setDnd).toHaveBeenCalledWith('S1', false, expect.any(Number))
     expect(slice(device, 'do-not-disturb')).toMatchObject({ enabled: false })
     await device.removeDevice()
   })
@@ -247,7 +247,10 @@ describe('AlexaEchoDevice', () => {
       const s = session({ playerState: vi.fn(idle) })
       alexaEchoSessions.setResolver(() => s)
       const { device } = await build()
-      expect(slice(device, 'media-player')).toMatchObject({ volumeLevel: 46, isMuted: false })
+      expect(slice(device, 'media-player')).toMatchObject({
+        volumeLevel: 46,
+        isMuted: false,
+      })
       await device.removeDevice()
     })
 
@@ -278,7 +281,10 @@ describe('AlexaEchoDevice', () => {
       const { device, logs } = await build()
       await vi.advanceTimersByTimeAsync(30_000)
       await vi.advanceTimersByTimeAsync(30_000)
-      expect(slice(device, 'media-player')).toMatchObject({ volumeLevel: null, isMuted: null })
+      expect(slice(device, 'media-player')).toMatchObject({
+        volumeLevel: null,
+        isMuted: null,
+      })
       const warns = logs.filter((l) => l.level === 'warn' && l.message.includes('volume list'))
       expect(warns).toHaveLength(1)
       expect(warns[0]?.extras).toMatchObject({ tags: { deviceId: 7 } })
@@ -291,8 +297,13 @@ describe('AlexaEchoDevice', () => {
       const a = await build('S1')
       const b = await build('S2')
       expect(s.deviceVolumes).toHaveBeenCalledTimes(1)
-      expect(slice(a.device, 'media-player')).toMatchObject({ volumeLevel: 46 })
-      expect(slice(b.device, 'media-player')).toMatchObject({ volumeLevel: 20, isMuted: true })
+      expect(slice(a.device, 'media-player')).toMatchObject({
+        volumeLevel: 46,
+      })
+      expect(slice(b.device, 'media-player')).toMatchObject({
+        volumeLevel: 20,
+        isMuted: true,
+      })
       await a.device.removeDevice()
       await b.device.removeDevice()
     })
@@ -306,9 +317,14 @@ describe('AlexaEchoDevice', () => {
         volumeDown(i: { deviceId: number }): Promise<void>
       }
       await player.volumeUp({ deviceId: 7 })
-      expect(s.setVolume).toHaveBeenLastCalledWith('S1', 56)
+      expect(s.setVolume).toHaveBeenLastCalledWith('S1', 56, expect.any(Number))
+      // The poll still says 46; the second step starts from the 56 we just set.
+      await player.volumeUp({ deviceId: 7 })
+      expect(s.setVolume).toHaveBeenLastCalledWith('S1', 66, expect.any(Number))
+      await vi.advanceTimersByTimeAsync(2_000)
+      // A read newer than the last set wins again (the fake still reports 46).
       await player.volumeDown({ deviceId: 7 })
-      expect(s.setVolume).toHaveBeenLastCalledWith('S1', 36)
+      expect(s.setVolume).toHaveBeenLastCalledWith('S1', 36, expect.any(Number))
       await device.removeDevice()
     })
   })

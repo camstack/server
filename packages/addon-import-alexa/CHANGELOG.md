@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The integration form is declared as the instance form (the connection form); accounts and their stored values are unchanged.
 - The Alexa account form no longer shows the cookie blob and refresh token; they stay set by the sign-in and a form save cannot overwrite them
 
+- Echo volume and play commands no longer arrive minutes late: commands go ahead of polls, a repeated volume change keeps only the newest, a call that cannot start in time is dropped, and Amazon back-off is logged
+
 ## [0.2.188] - 2026-11-05
 
 ### Changed

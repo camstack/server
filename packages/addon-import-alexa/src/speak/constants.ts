@@ -38,3 +38,15 @@ export const ECHO_REREAD_MS = 1_500
 /** After a 429 the account is left alone for this long, doubling up to the cap. */
 export const ECHO_RATE_BACKOFF_BASE_MS = 30_000
 export const ECHO_RATE_BACKOFF_MAX_MS = 5 * 60_000
+
+/**
+ * A command (volume, play, Do Not Disturb) that has not started within this, or not
+ * finished, is answered with an error instead of running minutes late.
+ */
+export const ECHO_COMMAND_DEADLINE_MS = 12_000
+
+/** A poll read is stale after this; it is dropped from the queue rather than sent late. */
+export const ECHO_READ_DEADLINE_MS = 25_000
+
+/** A worker call whose enqueue-to-answer time passes this is logged at warn. */
+export const WORKER_SLOW_REQUEST_MS = 5_000

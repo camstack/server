@@ -11,6 +11,8 @@ import json
 import sys
 import traceback
 
+from alexa_logging import configure_logging
+
 
 async def serve() -> None:
     # Imported here so `python -m unittest` of the protocol does not need alexapy.
@@ -43,6 +45,7 @@ async def serve() -> None:
 
 
 def main() -> None:
+    configure_logging()
     asyncio.run(serve())
 
 
