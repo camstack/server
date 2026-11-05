@@ -17,7 +17,7 @@ import {
   type MigrationApiV1,
   type RecordsAccess,
 } from '@camstack/types'
-import type Database from 'better-sqlite3'
+import Database from 'better-sqlite3'
 import { z } from 'zod'
 import {
   createMigrationApi,
@@ -52,6 +52,8 @@ export interface MigrationWorldOptions {
   /** The hub catalogue the engine knows (empty for a spec that only exercises an addon's). */
   readonly hubCatalogue?: readonly HubMigration[]
   readonly installed?: readonly InstalledPackage[]
+  /** Write the legacy data into the settings file BEFORE it opens, so the hub catalogue meets it. */
+  readonly seedBefore?: (db: Database.Database) => void
 }
 
 export interface MigrationWorld {
@@ -59,6 +61,8 @@ export interface MigrationWorld {
   readonly db: Database.Database
   readonly lines: LoggedLine[]
   readonly engine: MigrationEngine
+  /** Run the hub catalogue over the open file once more (a second boot of the same code). */
+  rerunHubCatalogue(): Promise<void>
   readonly provider: MigrationsProvider
   /** Register an integration row so the legacy-rows door knows its owner. */
   addIntegration(row: { id: string; addonId: string; name?: string }): void
@@ -117,15 +121,26 @@ export async function makeMigrationWorld(
         workerExecArgv: EXEC_ARGV,
       }),
   })
+  if (options.seedBefore !== undefined) {
+    const seed = new Database(h.pathOf('settings'))
+    try {
+      options.seedBefore(seed)
+    } finally {
+      seed.close()
+    }
+  }
+  let rerun: () => Promise<void> = async () => undefined
   const file = await openOwnedSqliteFile(h.specOf('settings'), {
     ...h.deps,
     migrationCatalogue: catalogue,
     afterOpen: async (opened) => {
-      await engine.runFile({
-        databaseId: opened.databaseId,
-        livePath: opened.livePath,
-        call: (op, input) => opened.migrate(op, input),
-      })
+      rerun = () =>
+        engine.runFile({
+          databaseId: opened.databaseId,
+          livePath: opened.livePath,
+          call: (op, input) => opened.migrate(op, input),
+        })
+      await rerun()
     },
   })
   if (!(file instanceof InlineOwnedFile)) throw new Error('settings is served inline')
@@ -178,6 +193,7 @@ export async function makeMigrationWorld(
     lines: h.lines,
     recordsFor,
     engine,
+    rerunHubCatalogue: () => rerun(),
     provider,
     keychain,
     addIntegration: (row) => {

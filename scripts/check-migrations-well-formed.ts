@@ -175,6 +175,48 @@ export function catalogueEntryFiles(srcDir: string): readonly string[] {
   return found
 }
 
+/**
+ * A catalogue is replayed over real SQLite (`migration-catalogue-replay.spec.ts`) from a seed
+ * written by hand next to it: `<dir>/migrations/__fixtures__/seed.ts` (the hub keeps its own). A
+ * catalogue whose addon still binds ctx-bound ports is named in the shrink-only pending list and
+ * is excused; the day it is converted its seed is due.
+ */
+export function seedProblems(
+  catalogueEntries: readonly string[],
+  pending: readonly string[],
+  exists: (file: string) => boolean,
+): readonly string[] {
+  return catalogueEntries.flatMap((entry) => {
+    const migrationsDir = path.posix.dirname(entry)
+    const addonDir = path.posix.dirname(migrationsDir)
+    if (pending.some((file) => file.startsWith(`${addonDir}/`))) return []
+    const seed = `${migrationsDir}/__fixtures__/seed.ts`
+    return exists(seed)
+      ? []
+      : [`${migrationsDir}: no replay seed (write ${seed}, or the catalogue is not on the API yet)`]
+  })
+}
+
+function pendingList(): readonly string[] {
+  const raw: unknown = JSON.parse(
+    readFileSync(path.join(ROOT, 'scripts/migration-ports-surface-pending.json'), 'utf8'),
+  )
+  return Array.isArray(raw) ? raw.filter((e): e is string => typeof e === 'string') : []
+}
+
+function seedCheck(): readonly string[] {
+  const packages = path.join(ROOT, 'packages')
+  const entries = readdirSync(packages)
+    .filter((name) => name.startsWith('addon-'))
+    .flatMap((name) => catalogueEntryFiles(path.join(packages, name, 'src')))
+    .map((file) => path.relative(ROOT, file).split(path.sep).join('/'))
+  const hubSeed = 'packages/system/src/migrations/hub/__fixtures__/seed.ts'
+  return [
+    ...seedProblems(entries, pendingList(), (file) => existsSync(path.join(ROOT, file))),
+    ...(existsSync(path.join(ROOT, hubSeed)) ? [] : [`hub: no replay seed (${hubSeed})`]),
+  ]
+}
+
 async function addonShapes(): Promise<readonly CatalogueShape[]> {
   const packages = path.join(ROOT, 'packages')
   const shapes: CatalogueShape[] = []
@@ -212,6 +254,7 @@ async function main(): Promise<number> {
   const problems = [
     ...migrationCatalogueProblems(merged),
     ...catalogues.flatMap((catalogue) => migrationShapeProblems(catalogue)),
+    ...seedCheck(),
   ]
   if (problems.length === 0) {
     console.log(

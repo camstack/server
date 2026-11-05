@@ -6,6 +6,7 @@ import {
   catalogueEntryFiles,
   migrationCatalogueProblems,
   migrationShapeProblems,
+  seedProblems,
   type CatalogueShape,
 } from '../check-migrations-well-formed.js'
 
@@ -134,5 +135,24 @@ describe('catalogueEntryFiles', () => {
     expect(catalogueEntryFiles(src).map((file) => path.relative(src, file))).toContain(
       'turn/migrations/index.ts',
     )
+  })
+})
+
+describe('seedProblems', () => {
+  const entry = 'packages/addon-provider-x/src/migrations/index.ts'
+  const seed = 'packages/addon-provider-x/src/migrations/__fixtures__/seed.ts'
+
+  it('asks a catalogue that is not pending for its seed', () => {
+    expect(seedProblems([entry], [], () => false)).toHaveLength(1)
+    expect(seedProblems([entry], [], (file) => file === seed)).toEqual([])
+  })
+
+  it('excuses a catalogue whose addon is still pending, at any depth of the bundle', () => {
+    const pending = ['packages/addon-provider-x/src/x.addon.ts']
+    expect(seedProblems([entry], pending, () => false)).toEqual([])
+    const nested = 'packages/addon-cloudflare/src/turn/migrations/index.ts'
+    expect(
+      seedProblems([nested], ['packages/addon-cloudflare/src/tunnel/t.addon.ts'], () => false),
+    ).toHaveLength(1)
   })
 })

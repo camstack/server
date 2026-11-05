@@ -331,6 +331,8 @@ jobs:
             scripts/check-helper-kinds-are-aggregators.ts \
             scripts/check-single-composition-creator.ts \
             scripts/check-migrations-well-formed.ts \
+            scripts/check-migration-api-append-only.ts \
+            scripts/check-migration-ports-surface.ts \
             scripts/check-no-camera-model-layer.ts \
             scripts/check-no-hub-address-env.ts \
             scripts/check-no-native-form-controls.ts \
