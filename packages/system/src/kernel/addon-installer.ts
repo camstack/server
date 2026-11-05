@@ -146,13 +146,27 @@ export interface AddonInstallerConfig {
     packageName: string,
     spec: string,
   ) => Promise<PackageRequires | undefined>
+  /**
+   * Stable versions of a package, newest first. Used to fall back to the newest
+   * version this server can host when `latest` needs a newer one. Production
+   * leaves it unset and asks the registry through the install's own doors.
+   */
+  readonly listVersions?: (packageName: string) => Promise<readonly string[]>
 }
 
 /** How long a boot-time `dist-tags.latest` read may take before it is "unreadable". */
 const REGISTRY_LATEST_TIMEOUT_MS = 15_000
 
+/** How many of the newest registry versions are probed for one this server can host. */
+const FALLBACK_VERSION_PROBES = 25
+
+type RequirementVerdict =
+  | { readonly kind: 'ok' }
+  | { readonly kind: 'older'; readonly version: string }
+  | { readonly kind: 'hold'; readonly code: HeldInstallCode; readonly reason: string }
+
 import type { InstalledPackage, IScopedLogger, PackageRequires } from '@camstack/types'
-import { describeUnmet, errMsg, PackageRequiresSchema, unmetRequirements } from '@camstack/types'
+import { describeUnmet, errMsg, unmetRequirements } from '@camstack/types'
 import { AddonManifest } from './addon-manifest.js'
 import {
   ADDON_VERSION_REASON_REGISTRY_LATEST,
@@ -170,6 +184,12 @@ import {
 import { ensureAddonNativePrebuilds } from './deps/ensure-addon-natives.js'
 import { copyBundledNativeModules, installManifestNativeDeps } from './deps/manifest-native-deps.js'
 import { runNpm } from './deps/npm-command.js'
+import { clearHeldInstall, recordHeldInstall, type HeldInstallCode } from './held-installs.js'
+import {
+  createRequiresRegistry,
+  RegistryReadError,
+  type RequiresRegistry,
+} from './requires-registry.js'
 
 export type { InstalledPackage }
 
@@ -279,6 +299,8 @@ export class AddonInstaller {
   private readonly resolveLatestVersionOverride: AddonInstallerConfig['resolveLatestVersion']
   private readonly serverVersion: string | null | undefined
   private readonly resolveRequiresOverride: AddonInstallerConfig['resolveRequires']
+  private readonly listVersionsOverride: AddonInstallerConfig['listVersions']
+  private requiresRegistryCache: RequiresRegistry | null = null
   /**
    * Central manifest of installed addons. Tracks version + source +
    * timestamps + last-backup pointer per package, written atomically
@@ -306,6 +328,7 @@ export class AddonInstaller {
     this.resolveLatestVersionOverride = config.resolveLatestVersion
     this.serverVersion = config.serverVersion
     this.resolveRequiresOverride = config.resolveRequires
+    this.listVersionsOverride = config.listVersions
   }
 
   /**
@@ -536,13 +559,22 @@ export class AddonInstaller {
           this.logger.info(`${packageName} — not found locally, trying npm`)
         }
 
-        // A first install at `latest` is judged BEFORE it lands: an addon that needs
-        // a newer server than this one is held back, not installed to crash-loop.
-        const held = await this.holdForRequirements(packageName, 'latest')
-        if (held !== null) {
-          this.logger.warn(`${packageName} — not installed at boot: ${held}`, {
-            meta: { spec: 'latest', reason: held },
+        // A first install at `latest` is judged BEFORE it lands: when `latest` needs a newer
+        // server than this one, the newest version this server CAN host is installed instead;
+        // with none, the install is held, recorded, and raised as an alert once the hub is up.
+        const verdict = await this.judgeRequirements(packageName, 'latest')
+        if (verdict.kind === 'hold') {
+          this.logger.warn(`${packageName} — not installed at boot: ${verdict.reason}`, {
+            meta: { spec: 'latest', code: verdict.code, reason: verdict.reason },
           })
+          continue
+        }
+        if (verdict.kind === 'older') {
+          this.logger.warn(
+            `${packageName} — latest needs a newer server than ${this.serverVersion ?? 'unknown'}; installing ${verdict.version}, the newest this server can host`,
+            { meta: { spec: 'latest', version: verdict.version } },
+          )
+          await this.installFromNpm(packageName, verdict.version)
           continue
         }
         await this.installFromNpm(packageName)
@@ -578,11 +610,12 @@ export class AddonInstaller {
       )
       return
     }
-    const held = await this.holdForRequirements(packageName, decision.to)
-    if (held !== null) {
-      this.logger.warn(`${packageName} — not moved ${decision.from} → ${decision.to}: ${held}`, {
-        meta: { from: decision.from, to: decision.to, reason: held },
-      })
+    const verdict = await this.judgeRequirements(packageName, decision.to)
+    if (verdict.kind === 'hold') {
+      this.logger.warn(
+        `${packageName} — not moved ${decision.from} → ${decision.to}: ${verdict.reason}`,
+        { meta: { from: decision.from, to: decision.to, reason: verdict.reason } },
+      )
       return
     }
     this.logger.info(
@@ -601,42 +634,88 @@ export class AddonInstaller {
   }
 
   /**
-   * Why `packageName@spec` must not be installed on this server, or `null` when
-   * it may (or when no server version was configured: no gate). Judges only the
-   * server minimum; `requires.addons` binds the server's own update, not an addon's.
+   * Whether `packageName@spec` may be installed on this server (no gate when no
+   * server version was configured). Judges only the server minimum;
+   * `requires.addons` binds the server's own update, not an addon's.
+   *
+   *  - `ok`    — install it as asked.
+   *  - `older` — `spec` is `latest` and needs a newer server; `version` is the newest
+   *              registry version whose `requires` this server meets.
+   *  - `hold`  — do not install; `code` says whether the minimum is unmet and nothing
+   *              older fits, or the registry could not be read (an auth failure of our
+   *              own is a failed read, never an unmet minimum). Recorded for the alert.
    */
-  private async holdForRequirements(packageName: string, spec: string): Promise<string | null> {
-    if (this.serverVersion === undefined) return null
-    let requires: PackageRequires | undefined
-    try {
-      requires = await this.readRequires(packageName, spec)
-    } catch (err) {
-      return `its requirements could not be read (${errMsg(err)}); a failed read is not a pass`
+  private async judgeRequirements(packageName: string, spec: string): Promise<RequirementVerdict> {
+    if (this.serverVersion === undefined) return { kind: 'ok' }
+    const serverVersion = this.serverVersion
+    const unmetOf = (requires: PackageRequires | undefined): string | null => {
+      const unmet = unmetRequirements(requires, {
+        server: serverVersion,
+        addons: {},
+        wrapper: null,
+      }).filter((u) => u.kind === 'server-too-old')
+      return unmet.length === 0 ? null : unmet.map(describeUnmet).join('; ')
     }
-    const unmet = unmetRequirements(requires, {
-      server: this.serverVersion,
-      addons: {},
-      wrapper: null,
-    }).filter((u) => u.kind === 'server-too-old')
-    return unmet.length === 0 ? null : unmet.map(describeUnmet).join('; ')
+    const hold = (code: HeldInstallCode, reason: string): RequirementVerdict => {
+      recordHeldInstall({ packageName, spec, code, reason, serverVersion })
+      return { kind: 'hold', code, reason }
+    }
+    let unmet: string | null
+    try {
+      unmet = unmetOf(await this.readRequires(packageName, spec))
+    } catch (err) {
+      return hold('registry-unreadable', this.unreadableReason(err))
+    }
+    if (unmet === null) {
+      clearHeldInstall(packageName)
+      return { kind: 'ok' }
+    }
+    if (spec !== 'latest') return hold('requirements-unmet', unmet)
+    try {
+      const versions = (await this.listVersions(packageName)).slice(0, FALLBACK_VERSION_PROBES)
+      for (const version of versions) {
+        if (unmetOf(await this.readRequires(packageName, version)) === null) {
+          clearHeldInstall(packageName)
+          return { kind: 'older', version }
+        }
+      }
+    } catch (err) {
+      return hold('registry-unreadable', this.unreadableReason(err))
+    }
+    return hold(
+      'no-compatible-version',
+      `latest ${unmet}, and no registry version of ${packageName} fits server ${serverVersion}`,
+    )
   }
 
-  private async readRequires(
-    packageName: string,
-    spec: string,
-  ): Promise<PackageRequires | undefined> {
+  private unreadableReason(err: unknown): string {
+    const detail = err instanceof RegistryReadError ? `${err.kind}: ${err.message}` : errMsg(err)
+    return `its requirements could not be read (${detail}); a failed read is not a pass`
+  }
+
+  private requiresRegistry(): RequiresRegistry {
+    this.requiresRegistryCache ??= createRequiresRegistry({
+      registry: this.registry,
+      fetchJson: (url) => fetch(url, { signal: AbortSignal.timeout(REGISTRY_LATEST_TIMEOUT_MS) }),
+      npmView: async (args) =>
+        (
+          await runNpm(
+            [...args, ...(this.registry ? ['--registry', this.registry] : [])],
+            this.npmRunOptions(os.tmpdir(), 60_000),
+          )
+        ).stdout,
+    })
+    return this.requiresRegistryCache
+  }
+
+  private readRequires(packageName: string, spec: string): Promise<PackageRequires | undefined> {
     if (this.resolveRequiresOverride) return this.resolveRequiresOverride(packageName, spec)
-    const registry = (this.registry ?? 'https://registry.npmjs.org').replace(/\/+$/, '')
-    const url = `${registry}/${encodeURIComponent(packageName).replace(/^%40/, '@')}/${encodeURIComponent(spec)}`
-    const res = await fetch(url, { signal: AbortSignal.timeout(REGISTRY_LATEST_TIMEOUT_MS) })
-    if (!res.ok) throw new Error(`the registry answered ${res.status}`)
-    const doc: unknown = await res.json()
-    if (typeof doc !== 'object' || doc === null)
-      throw new Error('the registry document is not an object')
-    const camstack: unknown = Reflect.get(doc, 'camstack')
-    if (typeof camstack !== 'object' || camstack === null) return undefined
-    const parsed = PackageRequiresSchema.safeParse(Reflect.get(camstack, 'requires'))
-    return parsed.success ? parsed.data : undefined
+    return this.requiresRegistry().requiresOf(packageName, spec)
+  }
+
+  private listVersions(packageName: string): Promise<readonly string[]> {
+    if (this.listVersionsOverride) return this.listVersionsOverride(packageName)
+    return this.requiresRegistry().versions(packageName)
   }
 
   /** `dist-tags.latest`, or `null` when the registry cannot be read. */

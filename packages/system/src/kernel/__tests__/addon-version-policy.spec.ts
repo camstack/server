@@ -8,6 +8,8 @@ import * as path from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { IScopedLogger, LogExtras } from '@camstack/types'
 import { AddonInstaller } from '../addon-installer.js'
+import { clearHeldInstall, listHeldInstalls } from '../held-installs.js'
+import { RegistryReadError } from '../requires-registry.js'
 import {
   ADDON_VERSION_REASON_HUB,
   ADDON_VERSION_REASON_REGISTRY_LATEST,
@@ -230,5 +232,73 @@ describe('ensureRequiredPackages holds a version the running server cannot host 
     const apply = vi.spyOn(installer, 'applyUpdate')
     await installer.ensureRequiredPackages(['@camstack/addon-pipeline'])
     expect(apply).not.toHaveBeenCalled()
+  })
+})
+
+describe('first boot falls back to the newest version this server can host (planning#447)', () => {
+  type Minimum = `>=${string}`
+  const requiresOfVersion =
+    (table: Readonly<Record<string, Minimum>>) => async (_name: string, spec: string) => {
+      const range = table[spec]
+      return range === undefined ? undefined : { server: range }
+    }
+  const dirFor = (): string => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'camstack-fallback-'))
+    tmpDirs.push(dir)
+    return dir
+  }
+
+  it('installs the newest older version whose requires the server meets, not latest', async () => {
+    clearHeldInstall('@camstack/addon-pipeline')
+    const installer = new AddonInstaller({
+      addonsDir: dirFor(),
+      serverVersion: '1.2.0',
+      resolveRequires: requiresOfVersion({
+        latest: '>=9.0.0',
+        '3.0.0': '>=9.0.0',
+        '2.0.0': '>=1.2.0',
+      }),
+      listVersions: async () => ['3.0.0', '2.0.0', '1.0.0'],
+    })
+    const install = vi
+      .spyOn(installer, 'installFromNpm')
+      .mockResolvedValue({ name: '@camstack/addon-pipeline', version: '2.0.0' })
+    await installer.ensureRequiredPackages(['@camstack/addon-pipeline'])
+    expect(install).toHaveBeenCalledWith('@camstack/addon-pipeline', '2.0.0')
+    expect(listHeldInstalls()).toEqual([])
+  })
+
+  it('holds with a typed reason and records it for the alert when no version fits', async () => {
+    clearHeldInstall('@camstack/addon-pipeline')
+    const installer = new AddonInstaller({
+      addonsDir: dirFor(),
+      serverVersion: '1.2.0',
+      resolveRequires: async () => ({ server: '>=9.0.0' }),
+      listVersions: async () => ['3.0.0', '2.0.0'],
+    })
+    const install = vi.spyOn(installer, 'installFromNpm')
+    await installer.ensureRequiredPackages(['@camstack/addon-pipeline'])
+    expect(install).not.toHaveBeenCalled()
+    const held = listHeldInstalls()
+    expect(held).toHaveLength(1)
+    expect(held[0]?.code).toBe('no-compatible-version')
+    expect(held[0]?.reason).toContain('1.2.0')
+    expect(held[0]?.reason).toContain('9.0.0')
+  })
+
+  it('records an auth failure of its own as an unreadable registry, never as an unmet minimum', async () => {
+    clearHeldInstall('@camstack/addon-pipeline')
+    const installer = new AddonInstaller({
+      addonsDir: dirFor(),
+      serverVersion: '1.2.0',
+      resolveRequires: async () => {
+        throw new RegistryReadError('auth', 'npm error code E401')
+      },
+    })
+    const install = vi.spyOn(installer, 'installFromNpm')
+    await installer.ensureRequiredPackages(['@camstack/addon-pipeline'])
+    expect(install).not.toHaveBeenCalled()
+    expect(listHeldInstalls()[0]?.code).toBe('registry-unreadable')
+    expect(listHeldInstalls()[0]?.reason).toContain('auth')
   })
 })

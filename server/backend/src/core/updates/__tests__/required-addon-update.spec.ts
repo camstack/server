@@ -2,6 +2,8 @@ import type { Alert, IScopedLogger } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   addonsBelowMinimum,
+  heldInstallAlertId,
+  raiseHeldInstallAlerts,
   requiredAddonAlertId,
   runRequiredAddonUpdates,
 } from '../required-addon-update.js'
@@ -82,5 +84,46 @@ describe('runRequiredAddonUpdates (planning#447)', () => {
     })
     expect(report.failed.map((f) => f.reason)).toEqual(['boom'])
     expect(report.updated).toEqual(['@camstack/addon-unreadable'])
+  })
+})
+
+describe('raiseHeldInstallAlerts', () => {
+  it('raises one critical alert per install the boot installer held back, naming the reason', async () => {
+    const emit = vi.fn(async (_alert: Alert) => undefined)
+    await raiseHeldInstallAlerts({
+      held: [
+        {
+          packageName: '@camstack/addon-x',
+          spec: 'latest',
+          code: 'no-compatible-version',
+          reason: 'latest requires server >= 9.0.0, running 1.2.0, and no registry version fits',
+        },
+      ],
+      getAlerts: () => ({ emit, update: async () => undefined }),
+      logger: logger(),
+      now: () => 5,
+    })
+    expect(emit).toHaveBeenCalledTimes(1)
+    const alert = emit.mock.calls[0]?.[0]
+    expect(alert?.id).toBe(heldInstallAlertId('@camstack/addon-x'))
+    expect(alert?.severity).toBe('critical')
+    expect(alert?.message).toContain('9.0.0')
+  })
+
+  it('says so in the log when there is no alerts provider, and raises nothing', async () => {
+    const sink = logger()
+    await raiseHeldInstallAlerts({
+      held: [
+        {
+          packageName: '@camstack/addon-x',
+          spec: 'latest',
+          code: 'registry-unreadable',
+          reason: 'r',
+        },
+      ],
+      getAlerts: () => undefined,
+      logger: sink,
+    })
+    expect(sink.warn).toHaveBeenCalled()
   })
 })

@@ -169,3 +169,60 @@ async function resolveAlert(deps: RequiredAddonUpdateDeps, name: string): Promis
     })
   }
 }
+
+export function heldInstallAlertId(packageName: string): string {
+  return `install-held:${packageName}`
+}
+
+/** One install the boot installer refused (`HeldInstall` of `@camstack/server/system`). */
+export interface HeldInstallReport {
+  readonly packageName: string
+  readonly spec: string
+  readonly code: 'no-compatible-version' | 'registry-unreadable' | 'requirements-unmet'
+  readonly reason: string
+}
+
+export const HELD_INSTALL_CATEGORY = 'addon.install-held'
+
+/**
+ * The boot installer cannot raise an alert (it runs before any service); the
+ * installs it held back are raised here, once the alerts provider is up.
+ */
+export async function raiseHeldInstallAlerts(input: {
+  readonly held: readonly HeldInstallReport[]
+  readonly getAlerts: () => RequiredAddonAlertsPort | undefined
+  readonly logger: IScopedLogger
+  readonly now?: () => number
+}): Promise<void> {
+  if (input.held.length === 0) return
+  const alerts = input.getAlerts()
+  const now = (input.now ?? Date.now)()
+  for (const h of input.held) {
+    if (alerts === undefined) {
+      input.logger.warn('A held install could not be raised — alerts capability missing', {
+        meta: { name: h.packageName, code: h.code, reason: h.reason },
+      })
+      continue
+    }
+    const alert: Alert = {
+      id: heldInstallAlertId(h.packageName),
+      category: HELD_INSTALL_CATEGORY,
+      severity: 'critical',
+      title: `${h.packageName} was not installed`,
+      message: `The boot installer did not install ${h.packageName} (${h.spec}): ${h.reason}. The addon is missing until a compatible version can be installed.`,
+      status: 'active',
+      read: false,
+      createdAt: now,
+      updatedAt: now,
+      source: { type: 'addon', id: h.packageName },
+      metadata: { packageName: h.packageName, code: h.code },
+    }
+    try {
+      await alerts.emit(alert)
+    } catch (error: unknown) {
+      input.logger.warn('Held install alert emit failed', {
+        meta: { name: h.packageName, error: errMsg(error) },
+      })
+    }
+  }
+}

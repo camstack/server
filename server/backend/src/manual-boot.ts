@@ -12,6 +12,7 @@ import * as path from 'node:path'
 import {
   AddonDepsManager,
   ConsoleDestination,
+  listHeldInstalls,
   setHuggingFaceReachabilityObserver,
 } from '@camstack/server/system'
 import type { ILocalNetworkProvider, ISettingsStoreProvider } from '@camstack/types'
@@ -72,7 +73,10 @@ import {
   fetchAgentInstalledPackages,
 } from './core/updates/agent-installed-packages.js'
 import { RegistryReachabilityTracker } from './core/updates/registry-reachability.js'
-import { runRequiredAddonUpdates } from './core/updates/required-addon-update.js'
+import {
+  raiseHeldInstallAlerts,
+  runRequiredAddonUpdates,
+} from './core/updates/required-addon-update.js'
 import { readRunningServerAddonMinimums } from './core/addon/addon-requirements.js'
 import { readInstalledAddonVersions } from './core/addon/installed-addon-versions.js'
 import { UpdateCheckScheduler } from './core/updates/update-check-scheduler.js'
@@ -564,6 +568,18 @@ export async function bootManual(opts: BootOptions): Promise<BootedApp> {
   // are up, with auto-update on or off (planning#447). A failure is an alert and
   // the boot goes on; agents follow through the registration reconcile (D840).
   eventBusService.subscribe({ category: EventCategory.SystemAddonsReady }, () => {
+    // Installs the boot installer held back (no version fits this server, or the registry could
+    // not be read) are alerts too: the installer ran before any service existed.
+    void raiseHeldInstallAlerts({
+      held: listHeldInstalls(),
+      getAlerts: () =>
+        addonRegistryService.getCapabilityRegistry().getSingleton('alerts') ?? undefined,
+      logger: updateCheckLogger,
+    }).catch((err: unknown) =>
+      updateCheckLogger.warn('Held install alerts failed', {
+        meta: { error: err instanceof Error ? err.message : String(err) },
+      }),
+    )
     void runRequiredAddonUpdates({
       minimums: readRunningServerAddonMinimums(),
       installed: () =>

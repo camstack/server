@@ -4,6 +4,10 @@ export { AddonLoader } from './addon-loader.js'
 export { AddonEngineManager } from './addon-engine-manager.js'
 export type { AddonInstallerConfig, InstalledPackage } from './addon-installer.js'
 export { AddonInstaller } from './addon-installer.js'
+export type { HeldInstall, HeldInstallCode } from './held-installs.js'
+export { clearHeldInstall, listHeldInstalls, recordHeldInstall } from './held-installs.js'
+export type { RequiresRegistry } from './requires-registry.js'
+export { createRequiresRegistry, RegistryReadError } from './requires-registry.js'
 export type { AddonVersionMove, AddonVersionReason } from './addon-version-policy.js'
 export {
   ADDON_VERSION_REASON_HUB,
