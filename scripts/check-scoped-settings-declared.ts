@@ -27,6 +27,11 @@
  * A schema built from a helper imported from another file is invisible here, and the way to keep it
  * checked is to name the keys in the file that declares the hook.
  *
+ * 4. **The addon names those caps up front.** The first config resolve runs before the providers
+ *    register, so `scopedSettingsCapabilities()` must list every cap a hook answers for; a cap
+ *    left out resolves its node keys from the bare key and builds its secret tree without the
+ *    scoped schemas at boot.
+ *
  * Usage: npx tsx scripts/check-scoped-settings-declared.ts
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs'
@@ -137,6 +142,15 @@ function declarationsIn(content: string): HookDeclaration[] {
   return out
 }
 
+/** The cap literals `scopedSettingsCapabilities()` returns, or `null` when the file has no such method. */
+function namedCapabilities(content: string): ReadonlySet<string> | null {
+  const clean = withoutComments(content)
+  const match = /\bscopedSettingsCapabilities\s*\(\s*\)\s*(?::\s*[^{;=]+)?\{/.exec(clean)
+  if (match === null) return null
+  const body = block(clean, match.index + match[0].length - 1)
+  return new Set(literalsOf(body, /['"]([^'"]+)['"]/g))
+}
+
 /** The package directory (`packages/<name>`) a source path belongs to, or `null`. */
 function packageOf(rel: string): string | null {
   const parts = rel.split('/')
@@ -156,6 +170,16 @@ export function findScopedSettingsFindings(
     const declared = declarationsIn(content).filter((d) => !d.declaresNothing)
     if (declared.length === 0) continue
     const provided = manifestCaps.get(packageOf(rel) ?? '') ?? new Set<string>()
+    const named = namedCapabilities(content)
+    const needed = new Set(declared.flatMap((d) => d.caps))
+    for (const cap of needed) {
+      if (named === null || !named.has(cap)) {
+        findings.push({
+          file: rel,
+          message: `scopedSettingsCapabilities() does not name capability "${cap}", which a settings hook answers for: the first config resolve would miss its node keys and secrets`,
+        })
+      }
+    }
     const keyScopes = new Map<string, Set<string>>()
     for (const decl of declared) {
       if (decl.caps.length === 0) {

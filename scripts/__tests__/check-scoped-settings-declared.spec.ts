@@ -14,6 +14,9 @@ const messages = (content: string): string[] =>
 
 const GOOD = `
 class X extends BaseAddon {
+  protected override scopedSettingsCapabilities() {
+    return ['detector', 'recorder']
+  }
   protected override async clusterSettingsSchema(cap: string) {
     if (cap === 'detector') return { sections: [{ id: 'a', title: 'A', fields: [{ type: 'text', key: 'threshold', label: 'T' }] }] }
     return null
@@ -34,6 +37,13 @@ const DEFAULTS = { sections: [{ id: 'd', title: 'D', fields: [{ type: 'number', 
 `
 
 describe('check-scoped-settings-declared', () => {
+  it('flags a hook cap that scopedSettingsCapabilities() does not name', () => {
+    const bad = GOOD.replace("return ['detector', 'recorder']", "return ['detector']")
+    expect(messages(bad).join('\n')).toContain('does not name capability "recorder"')
+    const none = GOOD.replace(/protected override scopedSettingsCapabilities\(\) \{[^}]*\}/, '')
+    expect(messages(none).join('\n')).toContain('does not name capability "detector"')
+  })
+
   it('accepts disjoint scopes over provided capabilities, including a same-file helper', () => {
     expect(messages(GOOD)).toEqual([])
   })
