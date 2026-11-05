@@ -33,7 +33,7 @@ type TabId = 'network' | 'manual'
 interface AddDeviceModalProps {
   readonly addonId: string
   readonly integrationId: string
-  /** `device-adoption` integrations list their candidates through the adopt job surface. */
+  /** `device-adoption` integrations without a scan list their candidates through the adopt job surface. */
   readonly kind: 'device-adoption' | 'device-provider'
   /** The provider supports a network scan. */
   readonly canScan: boolean
@@ -56,8 +56,11 @@ export function AddDeviceModal({
   const [picked, setPicked] = useState<TabId | null>(null)
   const active: TabId = picked ?? (hasNetwork ? 'network' : 'manual')
 
+  // An adoption integration WITHOUT a scan lists its candidates through the adopt
+  // job surface. One WITH a scan uses the merged list: the panel already reads the
+  // adoption provider's candidates, so a board both sources saw is one row.
   const network =
-    kind === 'device-adoption' ? (
+    kind === 'device-adoption' && !canScan ? (
       <AdoptDevicesPanel addonId={addonId} integrationId={integrationId} onClose={onClose} />
     ) : (
       <NetworkCandidatesPanel

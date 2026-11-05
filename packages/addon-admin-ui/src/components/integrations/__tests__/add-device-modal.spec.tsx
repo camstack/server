@@ -21,7 +21,11 @@ const state = vi.hoisted(() => ({
         id: 's',
         fields: [
           { type: 'text', key: 'host', label: 'Host', required: true },
-          { type: 'password', key: 'encryptionKey', label: 'API encryption key' },
+          {
+            type: 'password',
+            key: 'encryptionKey',
+            label: 'API encryption key',
+          },
         ],
       },
     ],
@@ -62,40 +66,71 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
       isSuccess: true,
     }),
     useDeviceManagerTestCreationField: () => ({ mutateAsync: vi.fn() }),
-    useDeviceManagerCreateDevice: () => ({ mutateAsync: vi.fn(), isPending: false }),
-    useDeviceManagerAdoptDevice: () => ({ mutateAsync: state.adopt, isPending: false }),
-    useDeviceManagerAdoptionStartJob: () => ({ mutateAsync: vi.fn(), isPending: false }),
+    useDeviceManagerCreateDevice: () => ({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    }),
+    useDeviceManagerAdoptDevice: () => ({
+      mutateAsync: state.adopt,
+      isPending: false,
+    }),
+    useDeviceManagerAdoptionStartJob: () => ({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    }),
     useDeviceManagerDiscoverProvider: () => ({
       mutate: vi.fn(),
       isPending: false,
       isError: false,
       data: { candidates: state.scan },
     }),
-    useDeviceManagerProviderDiscoveryParamsSchema: () => ({ data: null, isLoading: false }),
-    useDeviceManagerListDiscoveryProposals: () => ({ data: { proposals: state.proposals } }),
+    useDeviceManagerProviderDiscoveryParamsSchema: () => ({
+      data: null,
+      isLoading: false,
+    }),
+    useDeviceManagerListDiscoveryProposals: () => ({
+      data: { proposals: state.proposals },
+    }),
     useDeviceManagerAdoptionListCandidates: () => ({
       data: { candidates: state.adoption },
       isError: false,
     }),
+    useDeviceManagerAdoptionListCandidateFilters: () => ({ data: { filters: [] }, isError: false }),
+    useIntegrationsGetAvailableTypes: () => ({ data: [] }),
+    useDeviceManagerAdoptionRefresh: () => ({ mutateAsync: vi.fn(), isPending: false }),
     useDeviceManagerListAll: () => ({ data: [], isLoading: false }),
-    useLocalNetworkGetScanSubnets: () => ({ data: { subnets: [] }, refetch: vi.fn() }),
-    useLocalNetworkSetScanSubnets: () => ({ mutateAsync: vi.fn(), isPending: false }),
+    useLocalNetworkGetScanSubnets: () => ({
+      data: { subnets: [] },
+      refetch: vi.fn(),
+    }),
+    useLocalNetworkSetScanSubnets: () => ({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    }),
     LogStream: () => null,
   }
 })
 
 import { AddDeviceModal } from '../AddDeviceModal'
 
-function renderModal(integrationId = 'int_1') {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+function renderModal(
+  props: {
+    kind?: 'device-adoption' | 'device-provider'
+    canScan?: boolean
+    integrationId?: string
+  } = {},
+) {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
   return render(
     <QueryClientProvider client={client}>
       <MemoryRouter>
         <AddDeviceModal
           addonId="provider-esphome"
-          integrationId={integrationId}
-          kind="device-provider"
-          canScan
+          integrationId={props.integrationId ?? 'int_1'}
+          kind={props.kind ?? 'device-provider'}
+          canScan={props.canScan ?? true}
           onClose={vi.fn()}
         />
       </MemoryRouter>
@@ -112,7 +147,11 @@ describe('AddDeviceModal', () => {
           id: 's',
           fields: [
             { type: 'text', key: 'host', label: 'Host', required: true },
-            { type: 'password', key: 'encryptionKey', label: 'API encryption key' },
+            {
+              type: 'password',
+              key: 'encryptionKey',
+              label: 'API encryption key',
+            },
           ],
         },
       ],
@@ -140,10 +179,10 @@ describe('AddDeviceModal', () => {
 
   it('hides the manual tab for the integration the provider refuses it for, keeps it for another', () => {
     state.hubIntegrations = ['int_hub']
-    const hub = renderModal('int_hub')
+    const hub = renderModal({ integrationId: 'int_hub' })
     expect(screen.queryByRole('tab', { name: 'Enter parameters' })).toBeNull()
     hub.unmount()
-    renderModal('int_default')
+    renderModal({ integrationId: 'int_default' })
     expect(screen.getByRole('tab', { name: 'Enter parameters' })).toBeTruthy()
   })
 
@@ -156,7 +195,11 @@ describe('AddDeviceModal', () => {
   it('lists a device once when the scan, a proposal and the adoption list all saw it', () => {
     state.scan = [hit('esp-attic', '192.0.2.10')]
     state.proposals = [
-      { id: 'p1', addonId: 'provider-esphome', candidate: hit('esp-attic', '192.0.2.10') },
+      {
+        id: 'p1',
+        addonId: 'provider-esphome',
+        candidate: hit('esp-attic', '192.0.2.10'),
+      },
     ]
     state.adoption = [
       {
@@ -171,8 +214,52 @@ describe('AddDeviceModal', () => {
     expect(screen.getAllByTestId(/^network-row-/)).toHaveLength(1)
   })
 
+  it('an adoption integration that can scan offers the scan and lists a shared board once', () => {
+    state.scan = [hit('esp-attic', '192.0.2.10')]
+    state.adoption = [
+      {
+        childNativeId: 'esp-attic',
+        name: 'attic',
+        alreadyAdopted: false,
+        type: 'container',
+        children: [],
+      },
+      {
+        childNativeId: 'esp-cellar',
+        name: 'cellar',
+        alreadyAdopted: false,
+        type: 'container',
+        children: [],
+      },
+    ]
+    renderModal({ kind: 'device-adoption', canScan: true })
+    expect(screen.getByRole('button', { name: /scan now/i })).toBeTruthy()
+    expect(screen.getAllByTestId(/^network-row-/)).toHaveLength(2)
+  })
+
+  it('an adoption integration without a scan keeps the adoption list and no scan', () => {
+    state.adoption = [
+      {
+        childNativeId: 'esp-cellar',
+        name: 'cellar',
+        alreadyAdopted: false,
+        type: 'container',
+        children: [],
+      },
+    ]
+    renderModal({ kind: 'device-adoption', canScan: false })
+    expect(screen.queryByRole('button', { name: /scan now/i })).toBeNull()
+    expect(screen.queryAllByTestId(/^network-row-/)).toHaveLength(0)
+  })
+
   it('ignores a proposal that belongs to another integration', () => {
-    state.proposals = [{ id: 'p1', addonId: 'provider-gree', candidate: hit('ac', '192.0.2.20') }]
+    state.proposals = [
+      {
+        id: 'p1',
+        addonId: 'provider-gree',
+        candidate: hit('ac', '192.0.2.20'),
+      },
+    ]
     renderModal()
     expect(screen.queryAllByTestId(/^network-row-/)).toHaveLength(0)
   })
@@ -197,7 +284,9 @@ describe('AddDeviceModal', () => {
 
     const input = document.querySelector<HTMLInputElement>('input[type="password"]')
     expect(input).not.toBeNull()
-    fireEvent.change(input as HTMLInputElement, { target: { value: 'SECRET' } })
+    fireEvent.change(input as HTMLInputElement, {
+      target: { value: 'SECRET' },
+    })
     fireEvent.click(screen.getByRole('button', { name: /^add$/i }))
 
     await waitFor(() => expect(state.adopt).toHaveBeenCalledTimes(1))

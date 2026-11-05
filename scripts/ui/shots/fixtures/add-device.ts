@@ -1,6 +1,6 @@
 /**
  * Integration detail with the unified Add device modal open (`?add=1`): a
- * device-provider integration with a network-found list (one board that needs
+ * device-adoption integration that also supports a scan, with a network-found list (one board that needs
  * its encryption key) and a manual creation form. Invented data only.
  */
 import { defineFixtures } from './_define'
@@ -64,7 +64,7 @@ export default defineFixtures({
         instanceMode: 'multiple',
         mode: 'standalone',
         discoveryMode: 'manual',
-        kind: 'device-provider',
+        kind: 'device-adoption',
         brokerKind: null,
         supportsLocationImport: false,
         canTest: false,
@@ -79,11 +79,35 @@ export default defineFixtures({
     'deviceManager.listDiscoveryProposals': { proposals: PROPOSALS },
     'deviceManager.providerDiscoveryParamsSchema': null,
     'deviceManager.adoptionListCandidates': {
-      candidates: [],
-      totalCount: 0,
+      candidates: [
+        {
+          childNativeId: 'esphome-porch-light',
+          name: 'porch-light',
+          type: 'container',
+          status: 'online',
+          metadata: {},
+          alreadyAdopted: false,
+          adoptedDeviceId: null,
+          capabilities: [],
+          children: [],
+        },
+        {
+          childNativeId: 'esphome-cellar-fan',
+          name: 'cellar-fan',
+          type: 'container',
+          status: 'online',
+          metadata: {},
+          alreadyAdopted: false,
+          adoptedDeviceId: null,
+          capabilities: [],
+          children: [],
+        },
+      ],
+      totalCount: 2,
       page: 1,
       pageSize: 500,
     },
+    'deviceManager.adoptionListCandidateFilters': { filters: [] },
     'deviceManager.providerCreationType': { deviceType: 'container' },
     'deviceManager.getCreationSchema': {
       sections: [

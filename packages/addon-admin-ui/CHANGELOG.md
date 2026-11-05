@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The Customize tab shows every extension slot a device hosts from the slot table, not from a camera check
 - Add device hides the Enter parameters tab when the provider refuses manual creation for that integration
+- The Add device modal of an integration that adopts devices and can also scan the network now offers the scan next to its candidates, one row per device.
 
 ## [1.2.593] - 2026-11-05
 
