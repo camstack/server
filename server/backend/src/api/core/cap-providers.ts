@@ -24,7 +24,7 @@
  * nodes,integrations,addons}.router.ts`.
  */
 
-import { bringsDevices, resolveIntegrationRole } from './integration-role.js'
+import { bringsDevices, describedRoleOf, resolveIntegrationRole } from './integration-role.js'
 import { findInstancesProvider } from '../../core/addon/integration-instances-provider.js'
 import { randomUUID } from 'node:crypto'
 import * as os from 'node:os'
@@ -1245,7 +1245,7 @@ async function hidesFromIntegrations(ar: AddonRegistryService, addonId: string):
   return !bringsDevices(
     resolveIntegrationRole({
       integrationRole: declared,
-      describedRole: described?.role,
+      describedRole: describedRoleOf(described),
       capabilities: addon.manifest.capabilities,
     }),
   )

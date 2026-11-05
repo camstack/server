@@ -1,4 +1,8 @@
-import type { AddonDeclaration, IntegrationRole } from '@camstack/types'
+import type {
+  AddonDeclaration,
+  IntegrationInstanceDescription,
+  IntegrationRole,
+} from '@camstack/types'
 
 const INSTANCES_CAP = 'integration-instances'
 
@@ -28,4 +32,18 @@ export function resolveIntegrationRole(source: IntegrationRoleSource): Integrati
 /** True when the entry's devices belong on the Integrations page. */
 export function bringsDevices(role: IntegrationRole): boolean {
   return role === 'devices'
+}
+
+/**
+ * The role a provider's description stands for: `devices` as soon as ONE of its kinds brings
+ * devices (a kind without its own `role` takes the provider's), otherwise the provider's `role`.
+ */
+export function describedRoleOf(
+  description: Pick<IntegrationInstanceDescription, 'role' | 'kinds'> | null,
+): IntegrationRole | undefined {
+  if (description === null) return undefined
+  const kinds = description.kinds ?? []
+  return kinds.some((kind) => (kind.role ?? description.role) === 'devices')
+    ? 'devices'
+    : description.role
 }

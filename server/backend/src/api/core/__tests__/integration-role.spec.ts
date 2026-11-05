@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, existsSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { bringsDevices, resolveIntegrationRole } from '../integration-role.js'
+import { bringsDevices, describedRoleOf, resolveIntegrationRole } from '../integration-role.js'
 import { INTEGRATION_CAP_MARKERS } from '../cap-providers.js'
 
 describe('resolveIntegrationRole', () => {
@@ -22,6 +22,24 @@ describe('resolveIntegrationRole', () => {
     expect(role).toBe('devices')
     expect(bringsDevices(role)).toBe(true)
     expect(bringsDevices('services')).toBe(false)
+  })
+})
+
+describe('describedRoleOf', () => {
+  it('is devices as soon as one kind brings devices, whatever the provider role', () => {
+    const kinds = [
+      { id: 'account', label: 'A', functionCap: 'broker', role: 'services' as const },
+      { id: 'integration', label: 'I', functionCap: 'device-provider', role: 'devices' as const },
+    ]
+    expect(describedRoleOf({ role: 'services', kinds })).toBe('devices')
+    expect(describedRoleOf({ role: 'services', kinds: [kinds[0]!] })).toBe('services')
+  })
+
+  it('a kind without a role takes the provider role, and no kinds is the provider role', () => {
+    const kind = { id: 'k', label: 'K', functionCap: 'broker' }
+    expect(describedRoleOf({ role: 'devices', kinds: [kind] })).toBe('devices')
+    expect(describedRoleOf({ role: 'services' })).toBe('services')
+    expect(describedRoleOf(null)).toBeUndefined()
   })
 })
 

@@ -36,6 +36,16 @@ export const IntegrationInstanceModeSchema = z.enum(['single', 'multiple'])
 export type IntegrationInstanceMode = z.infer<typeof IntegrationInstanceModeSchema>
 
 /**
+ * What the addon's instances ARE for the Integrations page (planning#416). `devices`: each
+ * instance is an integration that brings devices (the registry owns its on/off switch);
+ * `services`: a connection configured from the addon's own function page, never listed on
+ * Integrations.
+ * It is the same vocabulary as the manifest's `integrationRole`, which stays as an override.
+ */
+export const IntegrationInstanceRoleSchema = z.enum(['devices', 'services'])
+export type IntegrationInstanceRole = z.infer<typeof IntegrationInstanceRoleSchema>
+
+/**
  * One kind of instance a provider can create (an adapter, an account type). The sign-in and
  * connect fields follow the `broker` contract (`broker.cap.ts`): `signIn.basePath` is a
  * hub-relative route set speaking the sign-in contract, `connectPath` / `disconnectPath` open an
@@ -46,6 +56,16 @@ export const IntegrationInstanceKindSchema = z.object({
   /** Stable id of the kind, sent back as `createInstance.kind`. */
   id: z.string().min(1),
   label: z.string().min(1),
+  /**
+   * The function capability this kind is configured for (`broker`, `smtp-provider`,
+   * `device-provider`, ...). A page section is the kinds whose `functionCap` it names (D1013); a
+   * provider with more than one section must name it on every kind.
+   */
+  functionCap: z.string().min(1),
+  /** What instances of this kind are for the Integrations page; absent takes the provider's `role`. */
+  role: IntegrationInstanceRoleSchema.optional(),
+  /** `testInstance` really probes the remote for this kind; absent takes the provider's `canTest`. */
+  canTest: z.boolean().optional(),
   /** The kind signs in through a server-held interactive session. */
   signIn: z
     .object({
@@ -59,16 +79,6 @@ export const IntegrationInstanceKindSchema = z.object({
   disconnectPath: z.string().min(1).optional(),
 })
 export type IntegrationInstanceKind = z.infer<typeof IntegrationInstanceKindSchema>
-
-/**
- * What the addon's instances ARE for the Integrations page (planning#416). `devices`: each
- * instance is an integration that brings devices (the registry owns its on/off switch);
- * `services`: a connection configured from the addon's own function page, never listed on
- * Integrations.
- * It is the same vocabulary as the manifest's `integrationRole`, which stays as an override.
- */
-export const IntegrationInstanceRoleSchema = z.enum(['devices', 'services'])
-export type IntegrationInstanceRole = z.infer<typeof IntegrationInstanceRoleSchema>
 
 /**
  * How devices of an instance are found. `none`: the operator adds them by hand; `lan`: the addon
@@ -155,7 +165,11 @@ export const integrationInstancesCapability = {
     describe: method(z.void(), IntegrationInstanceDescriptionSchema, { auth: 'admin' }),
     /** The form; `id: null` is the create form. */
     instanceFormSchema: method(
-      z.object({ id: IntegrationInstanceIdSchema.nullable() }),
+      z.object({
+        id: IntegrationInstanceIdSchema.nullable(),
+        /** The kind of the create form (`id: null`) of a provider with several. */
+        kind: z.string().min(1).optional(),
+      }),
       ConfigSchemaPassthrough,
       { auth: 'admin' },
     ),
@@ -176,6 +190,8 @@ export const integrationInstancesCapability = {
         id: IntegrationInstanceIdSchema.optional(),
         name: z.string().min(1),
         kind: z.string().min(1).optional(),
+        /** Form values written with the record (a link picked in the create dialog). */
+        values: z.record(z.string(), z.unknown()).optional(),
       }),
       z.object({ id: z.string() }),
       { kind: 'mutation', auth: 'admin' },
@@ -203,6 +219,8 @@ export const integrationInstancesCapability = {
       z.object({
         id: IntegrationInstanceIdSchema.nullable(),
         values: z.record(z.string(), z.unknown()),
+        /** The kind to test when `id` is null and the provider has several. */
+        kind: z.string().min(1).optional(),
       }),
       TestConnectionResultSchema,
       { kind: 'mutation', auth: 'admin' },

@@ -11,6 +11,8 @@ import {
   defineAddonMigrations,
   flattenPortsOver,
   type RecordsAccess,
+  composeInstanceKinds,
+  type IIntegrationInstancesProvider,
   integrationInstancesCapability,
   type IntegrationInstanceRef,
   type RecordIntegrationInstances,
@@ -78,9 +80,11 @@ import {
   type NotifyServiceData,
 } from './ha-notification-output.js'
 import { HaBrokerStore } from './ha-broker-store.js'
-import { haBrokersEntryKind } from './broker-record-kinds.js'
+import { type HaBrokerBody, haBrokersEntryKind } from './broker-record-kinds.js'
+import { buildHaAccountInstances } from './ha-account-instances.js'
 import { buildHaInstances } from './ha-instances.js'
 import { haBrokerLinkPorts } from './migrations/index.js'
+import { listHaCalendarCatalog } from './ha-calendar-source.js'
 import { haAllRecordKinds } from './record-kinds.js'
 import { createHaBoardKeyProvider, HaBoardKeySource } from './ha-board-key-source.js'
 import { haInstanceRecordPortsOver } from './ha-instance-settings.js'
@@ -186,6 +190,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
   private registry: HaBrokerRegistry | null = null
   private brokerStore: HaBrokerStore | null = null
   private instances: RecordIntegrationInstances<BrokerLinkBody> | null = null
+  private accountInstances: RecordIntegrationInstances<HaBrokerBody> | null = null
   /** Runtime broker rows (records when B2 is live, else settings). */
   private activeBrokers: readonly HaBrokerEntry[] = []
   /** Periodic re-sync sweep handle (cleared on shutdown). */
@@ -232,6 +237,13 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
     await records.declare(haAllRecordKinds)
     this.brokerStore = HaBrokerStore.of(records)
     this.instances = buildHaInstances(records)
+    this.accountInstances = buildHaAccountInstances(records, {
+      mintId: () => this.requireRegistry().allocateId(),
+      infoOf: (id) => this.registry?.get(id) ?? null,
+      calendarOptions: (id) => (this.registry ? listHaCalendarCatalog(this.registry, id) : []),
+      onChanged: (id) => this.syncBrokerRuntime(id),
+      probe: (settings) => this.requireRegistry().testSettings(settings),
+    })
     // The stored broker records move to the flat shape, and every integration link onto its own
     // `connections` record, BEFORE anything reads them (a rewrite of a broker drops the old link).
     await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, this.flattenPorts(records)))
@@ -276,7 +288,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
       { capability: brokerCapability, provider: this.buildBrokerProvider() },
       {
         capability: integrationInstancesCapability,
-        provider: this.requireInstances().toProvider(),
+        provider: this.buildInstancesProvider(),
       },
       { capability: deviceAdoptionCapability, provider: this.buildAdoptionProvider() },
       {
@@ -566,6 +578,81 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
   private requireInstances(): RecordIntegrationInstances<BrokerLinkBody> {
     if (this.instances === null) throw new Error('provider-homeassistant: instances not ready')
     return this.instances
+  }
+
+  /** One provider over the two record kinds: the connection (broker) and the integrations using it. */
+  private buildInstancesProvider(): IIntegrationInstancesProvider {
+    if (this.accountInstances === null) {
+      throw new Error('provider-homeassistant: connection instances not ready')
+    }
+    return composeInstanceKinds(
+      [
+        {
+          kind: {
+            id: 'account',
+            label: 'Home Assistant connection',
+            functionCap: 'broker',
+            role: 'services',
+          },
+          provider: this.accountInstances.toProvider(),
+        },
+        {
+          kind: {
+            id: 'integration',
+            label: 'Home Assistant',
+            functionCap: 'device-provider',
+            role: 'devices',
+          },
+          provider: this.requireInstances().toProvider(),
+        },
+      ],
+      {
+        role: 'devices',
+        instanceMode: 'multiple',
+        kind: 'account',
+        canTest: true,
+        allowRestoreId: true,
+      },
+    )
+  }
+
+  /**
+   * After a connection record changed (created, edited, switched, deleted) the runtime follows it:
+   * a missing record removes the manager and its adopted devices, an off or unfilled one stops the
+   * manager but keeps the devices, a filled one starts or re-authenticates it.
+   */
+  private async syncBrokerRuntime(id: string): Promise<void> {
+    const reg = this.requireRegistry()
+    const entry = await this.requireBrokerStore().getById(id)
+    this.activeBrokers = await this.loadPersistedBrokers()
+    if (entry === null) {
+      await reg.removeEntry(id)
+      const deviceRegistry = this.ctx.kernel.deviceRegistry
+      const devices = this.ctx.kernel.devices
+      if (deviceRegistry && devices) {
+        await cascadeRemoveDevicesForBroker({
+          reg: deviceRegistry,
+          devices,
+          addonId: this.ctx.id,
+          brokerId: id,
+          logger: this.ctx.logger,
+        })
+      }
+      return
+    }
+    const settings = entry.enabled === false ? null : entryToSettings(entry)
+    if (settings === null) {
+      await reg.removeEntry(id)
+      return
+    }
+    try {
+      if (reg.get(id) !== null) await reg.updateEntry(id, settings)
+      else await reg.createEntry(entry.name, settings, { id })
+    } catch (err) {
+      this.ctx.logger.warn('ha instance: could not start the broker', {
+        meta: { brokerId: id, error: errMsg(err) },
+      })
+    }
   }
 
   private async brokerIdForIntegration(integrationId: string): Promise<string> {

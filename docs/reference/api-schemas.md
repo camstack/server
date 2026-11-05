@@ -2790,6 +2790,9 @@ Enum: `"not-electron" \| "no-app-state" \| "app-state-stale" \| "not-downloaded"
 
 - `id`: `string`
 - `label`: `string`
+- `functionCap`: `string`
+- `role?`: `IntegrationInstanceRoleSchema`
+- `canTest?`: `boolean`
 - `signIn?`: `{ basePath: string; methods?: ("device-code" \| "proxy")[] }`
 - `connectPath?`: `string`
 - `disconnectPath?`: `string`

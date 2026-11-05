@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Rebuilt against updated dependencies.
+- A provider's instances can be listed per section (the kinds that name a function), and an integration is listed for its devices as soon as one of its kinds brings devices
 
 ## [1.2.777] - 2026-11-05
 

@@ -2970,7 +2970,7 @@
 
 ### `integration-instances` → `integrationInstances.*`
 
-- **Source:** `packages/types/src/capabilities/integration-instances.cap.ts:150`
+- **Source:** `packages/types/src/capabilities/integration-instances.cap.ts:160`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection`
 - **Archetypes:** —
 - **Provider interface:** `IIntegrationInstancesProvider`
@@ -2978,14 +2978,14 @@
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | describe | `integrationInstances.describe` | query | admin | `void` | `IntegrationInstanceDescriptionSchema` |
-| instanceFormSchema | `integrationInstances.instanceFormSchema` | query | admin | `{ id: string \| null }` | `<custom>` |
+| instanceFormSchema | `integrationInstances.instanceFormSchema` | query | admin | `{ id: string \| null; kind?: string }` | `<custom>` |
 | listInstances | `integrationInstances.listInstances` | query | admin | `void` | `IntegrationInstanceSchema[]` |
 | getInstance | `integrationInstances.getInstance` | query | admin | `{ id: string }` | `IntegrationInstanceSchema \| null` |
-| createInstance | `integrationInstances.createInstance` | mutation | admin | `{ id?: string; name: string; kind?: string }` | `{ id: string }` |
+| createInstance | `integrationInstances.createInstance` | mutation | admin | `{ id?: string; name: string; kind?: string; values?: Record<string, unknown> }` | `{ id: string }` |
 | updateInstance | `integrationInstances.updateInstance` | mutation | admin | `IntegrationInstancePatchSchema` | `{ ok: true }` |
 | setInstanceEnabled | `integrationInstances.setInstanceEnabled` | mutation | admin | `{ id: string; enabled: boolean }` | `{ ok: true }` |
 | deleteInstance | `integrationInstances.deleteInstance` | mutation | admin | `{ id: string }` | `{ ok: true }` |
-| testInstance | `integrationInstances.testInstance` | mutation | admin | `{ id: string \| null; values: Record<string, unknown> }` | `TestConnectionResultSchema` |
+| testInstance | `integrationInstances.testInstance` | mutation | admin | `{ id: string \| null; values: Record<string, unknown>; kind?: string }` | `TestConnectionResultSchema` |
 
 ### `integrations` → `integrations.*`
 

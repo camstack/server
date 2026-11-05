@@ -93,6 +93,12 @@ export type {
   ResolvedSecretsState,
 } from './addon/record-integration-instances.js'
 export { RecordIntegrationInstances } from './addon/record-integration-instances.js'
+export {
+  composeInstanceKinds,
+  UnknownInstanceError,
+  UnknownInstanceKindError,
+} from './addon/compose-instance-kinds.js'
+export type { InstanceKindPart } from './addon/compose-instance-kinds.js'
 export type { DurableState, DurableStateDeps } from './addon/durable-state.js'
 export { createDurableState } from './addon/durable-state.js'
 // Re-export `IAuthProvider` from the cap definition — single source of

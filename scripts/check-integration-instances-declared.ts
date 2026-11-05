@@ -32,7 +32,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const DEVICE_MARKERS: ReadonlySet<string> = new Set(['device-provider', 'device-adoption'])
 const INSTANCES_CAP = 'integration-instances'
 const EXPORT_CAP = 'device-export'
@@ -195,7 +195,7 @@ const SKIP_DIRS = new Set([
 const SOURCE_RE = /\.(?:ts|tsx|mts|cts)$/
 const NON_RUNTIME_RE = /\.(?:spec|test|d)\.(?:ts|tsx|mts|cts)$/
 
-function walk(dir: string, out: string[]): void {
+export function walk(dir: string, out: string[]): void {
   let names: string[]
   try {
     names = readdirSync(dir)
@@ -210,7 +210,7 @@ function walk(dir: string, out: string[]): void {
   }
 }
 
-function readEntries(): DeviceAddonEntry[] {
+export function readEntries(): DeviceAddonEntry[] {
   const entries: DeviceAddonEntry[] = []
   for (const pkg of readdirSync(path.join(ROOT, 'packages'))) {
     let manifest: unknown

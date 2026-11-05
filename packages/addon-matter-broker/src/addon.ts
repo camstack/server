@@ -7,6 +7,8 @@ import {
   DeviceType,
   errMsg,
   brokerIdOf,
+  composeInstanceKinds,
+  type IIntegrationInstancesProvider,
   EventCategory,
   brokerLinkUserFinder,
   type BrokerLinkBody,
@@ -33,7 +35,12 @@ import { matterCommands, matterNodes } from './matter-gateway.js'
 import type { MatterAttributeReport, MatterNodeSnapshot } from './matter-controller.js'
 import { mapMatterEndpointToCamStack } from './matter-cluster-mapping.js'
 import { MatterNodeDevice, type MatterEndpointEntry } from './devices/matter-node-device.js'
-import { matterBrokersEntryKind, matterConnectionsEntryKind } from './broker-record-kinds.js'
+import {
+  type MatterBrokerBody,
+  matterBrokersEntryKind,
+  matterConnectionsEntryKind,
+} from './broker-record-kinds.js'
+import { buildMatterAccountInstances } from './matter-account-instances.js'
 import { buildMatterInstances } from './matter-instances.js'
 import { ADDON_MIGRATIONS, matterBrokerLinkPorts } from './migrations/index.js'
 import { MatterBrokerStore } from './matter-broker-store.js'
@@ -67,6 +74,7 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
   private registry: MatterBrokerRegistry | null = null
   private brokerStore: MatterBrokerStore | null = null
   private instances: RecordIntegrationInstances<BrokerLinkBody> | null = null
+  private accountInstances: RecordIntegrationInstances<MatterBrokerBody> | null = null
   private activeBrokers: readonly MatterBrokerEntry[] = []
 
   constructor() {
@@ -86,6 +94,11 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
     })
     this.brokerStore = MatterBrokerStore.of(records)
     this.instances = buildMatterInstances(records)
+    this.accountInstances = buildMatterAccountInstances(records, {
+      mintId: () => this.requireRegistry().allocateId(),
+      infoOf: (id) => this.registry?.get(id) ?? null,
+      onChanged: (id) => this.syncBrokerRuntime(id),
+    })
     // The stored fabric records move to the flat shape BEFORE anything reads them.
     const secrets = this.ctx.secrets
     if (secrets === undefined) throw new Error('matter-broker: ctx.secrets is required')
@@ -130,7 +143,7 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
       { capability: brokerCapability, provider: this.buildBrokerProvider() },
       {
         capability: integrationInstancesCapability,
-        provider: this.requireInstances().toProvider(),
+        provider: this.buildInstancesProvider(),
       },
       { capability: deviceAdoptionCapability, provider: this.buildAdoptionProvider() },
     ]
@@ -148,6 +161,63 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
   private requireInstances(): RecordIntegrationInstances<BrokerLinkBody> {
     if (this.instances === null) throw new Error('matter-broker: instances not ready')
     return this.instances
+  }
+
+  /** One provider over the two record kinds: the fabric (broker) and the integrations using it. */
+  private buildInstancesProvider(): IIntegrationInstancesProvider {
+    if (this.accountInstances === null) throw new Error('matter-broker: fabric instances not ready')
+    return composeInstanceKinds(
+      [
+        {
+          kind: { id: 'account', label: 'Matter fabric', functionCap: 'broker', role: 'services' },
+          provider: this.accountInstances.toProvider(),
+        },
+        {
+          kind: {
+            id: 'integration',
+            label: 'Matter',
+            functionCap: 'device-provider',
+            role: 'devices',
+          },
+          provider: this.requireInstances().toProvider(),
+        },
+      ],
+      {
+        role: 'devices',
+        instanceMode: 'multiple',
+        kind: 'account',
+        canTest: true,
+        allowRestoreId: true,
+      },
+    )
+  }
+
+  /**
+   * Bring the runtime in line with one fabric record after the instances page changed it: a
+   * removed record stops its controller and cascades its devices, an off record only stops the
+   * controller, a live one re-applies its settings or starts under the record's own id.
+   */
+  private async syncBrokerRuntime(id: string): Promise<void> {
+    const reg = this.requireRegistry()
+    const entry = await this.requireBrokerStore().getById(id)
+    this.activeBrokers = await this.loadPersistedBrokers()
+    if (entry === null) {
+      await reg.removeEntry(id)
+      await this.cascadeRemoveDevicesForBroker(id)
+      return
+    }
+    if (entry.enabled === false) {
+      await reg.removeEntry(id)
+      return
+    }
+    try {
+      if (reg.get(id) !== null) await reg.updateEntry(id, entry.connection)
+      else await reg.createEntry(entry.name, entry.connection, { id })
+    } catch (err) {
+      this.ctx.logger.warn('matter instance: could not start the fabric', {
+        meta: { brokerId: id, error: errMsg(err) },
+      })
+    }
   }
 
   private async persistBrokerEntries(entries: readonly MatterBrokerEntry[]): Promise<void> {

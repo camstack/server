@@ -75,6 +75,7 @@ function renderDialog() {
             {
               id: 'alexa',
               label: 'Alexa',
+              functionCap: 'broker',
               signIn: { basePath: '/addon/import-alexa/login', methods: ['device-code'] },
             },
           ],

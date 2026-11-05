@@ -174,6 +174,22 @@ export class SmtpInboundBroker {
 
   // ── record -> listener ────────────────────────────────────────────────────
 
+  /** Bring the listener in line with the record after the instances page changed it. */
+  reconcileMailbox(id: string): Promise<void> {
+    return this.reconcile(id)
+  }
+
+  /** The runtime's view of one mailbox; null while it has no listener. */
+  runtimeOf(id: string): {
+    readonly status: BrokerState
+    readonly error: string | null
+    readonly checkedAt: number
+  } | null {
+    const runtime = this.runtimes.get(id)
+    if (runtime === undefined) return null
+    return { status: runtime.status, error: runtime.error, checkedAt: runtime.checkedAt }
+  }
+
   private reconcile(id: string): Promise<void> {
     const next = (this.chains.get(id) ?? Promise.resolve()).then(() => this.applyRecord(id))
     this.chains.set(
@@ -386,7 +402,7 @@ export class SmtpInboundBroker {
   }
 
   /** The subscribers (camera email push) that still read one mailbox. */
-  private subscriberUsers(): BrokerUserFinder {
+  subscriberUsers(): BrokerUserFinder {
     return {
       find: async (brokerId) =>
         [...(this.runtimes.get(brokerId)?.subscriptions.values() ?? [])].map((sub) => ({
@@ -551,7 +567,7 @@ function probeBind(
   })
 }
 
-function mailboxSettingsSchema(): ConfigUISchema {
+export function mailboxSettingsSchema(): ConfigUISchema {
   return {
     sections: [
       {

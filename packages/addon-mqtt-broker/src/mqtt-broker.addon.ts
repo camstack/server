@@ -344,8 +344,15 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
     this.clientStore = MqttClientStore.of(records)
     this.aclStore = MqttAclStore.of(records)
     this.instances = new RecordIntegrationInstances(records, mqttBrokersEntryKind, {
-      description: { role: 'services', instanceMode: 'multiple', kind: 'brokers', canTest: false },
+      description: {
+        role: 'services',
+        instanceMode: 'multiple',
+        kind: 'brokers',
+        canTest: false,
+        kinds: [{ id: 'mqtt', label: 'MQTT broker', functionCap: 'broker' }],
+      },
       formSchema: () => this.brokerForm(),
+      kindOf: () => 'mqtt',
       initialBody: (name): MqttBrokerBody => ({ name, url: 'mqtt://' }),
       configured: (body) => body.url.trim().length > 0 && body.url.trim() !== 'mqtt://',
       onChanged: async () => {

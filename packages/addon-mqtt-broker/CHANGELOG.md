@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - An MQTT broker can be edited in place (address, user, password, client id prefix) and removing one that an MQTT Discovery integration still names is refused with the list of integrations
+- MQTT brokers declare the function they serve on their instance kind
 
 ## [1.2.151] - 2026-11-05
 

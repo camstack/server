@@ -34,8 +34,18 @@ async function setup(withMint: boolean) {
       canTest: false,
       allowRestoreId: true,
       kinds: [
-        { id: 'a', label: 'Adapter A', connectPath: '/addon/x/connect/{{brokerId}}' },
-        { id: 'b', label: 'Adapter B', signIn: { basePath: '/addon/x/sign-in' } },
+        {
+          id: 'a',
+          label: 'Adapter A',
+          functionCap: 'broker',
+          connectPath: '/addon/x/connect/{{brokerId}}',
+        },
+        {
+          id: 'b',
+          label: 'Adapter B',
+          functionCap: 'broker',
+          signIn: { basePath: '/addon/x/sign-in' },
+        },
       ],
     },
     formSchema: () => ({ sections: [] }),
@@ -68,7 +78,7 @@ describe('integration-instances additive fields (P2)', () => {
         kind: 'x',
         canTest: true,
         allowRestoreId: true,
-        kinds: [{ id: 'a', label: 'A' }],
+        kinds: [{ id: 'a', label: 'A', functionCap: 'broker' }],
       }).success,
     ).toBe(true)
     const parsed = IntegrationInstanceSchema.parse({

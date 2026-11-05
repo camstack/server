@@ -194,10 +194,11 @@ describe('InstancesTable', () => {
       h.descriptionExtra = {
         'smtp-nodemailer': {
           kinds: [
-            { id: 'k1', label: 'Kind one' },
+            { id: 'k1', label: 'Kind one', functionCap: 'broker' },
             {
               id: 'k2',
               label: 'Kind two',
+              functionCap: 'broker',
               connectPath: '/addon/x/connect/{{brokerId}}',
             },
           ],

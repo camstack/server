@@ -15,6 +15,8 @@ import {
   type BrokerUserFinder,
   defaultIntegrationApiOver,
   flattenPortsOver,
+  composeInstanceKinds,
+  type IIntegrationInstancesProvider,
   integrationInstancesCapability,
   type AddonDataPlaneHandle,
   type AddonInitResult,
@@ -54,7 +56,12 @@ import { mapAlexaCapabilitiesToCamStack } from './alexa-domain-mapping.js'
 import { AlexaDevice } from './devices/alexa-device.js'
 import { AlexaEchoDevice } from './devices/alexa-echo-device.js'
 import { alexaEchoSessions } from './alexa-echo-sessions.js'
-import { alexaBrokersEntryKind, alexaRecordKinds } from './broker-record-kinds.js'
+import {
+  type AlexaBrokerBody,
+  alexaBrokersEntryKind,
+  alexaRecordKinds,
+} from './broker-record-kinds.js'
+import { ALEXA_SIGN_IN_PATH, buildAlexaAccountInstances } from './alexa-account-instances.js'
 import { buildAlexaInstances } from './alexa-instances.js'
 import { AlexaBrokerStore } from './alexa-broker-store.js'
 import { readEchoTargets, type AlexaBrokerEntry } from './config.js'
@@ -123,6 +130,7 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
   private loginProxy: VendorLoginProxy | null = null
   private brokerStore: AlexaBrokerStore | null = null
   private instances: RecordIntegrationInstances<BrokerLinkBody> | null = null
+  private accountInstances: RecordIntegrationInstances<AlexaBrokerBody> | null = null
   private activeBrokers: readonly AlexaBrokerEntry[] = []
   private speak: AlexaSpeakController | null = null
 
@@ -140,6 +148,11 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
     await records.declare(alexaRecordKinds)
     this.brokerStore = AlexaBrokerStore.of(records)
     this.instances = buildAlexaInstances(records)
+    this.accountInstances = buildAlexaAccountInstances(records, {
+      mintId: () => this.requireRegistry().allocateId(),
+      infoOf: (id) => this.registry?.get(id) ?? null,
+      onChanged: (id) => this.syncBrokerRuntime(id),
+    })
     // The stored broker records move to the flat shape, and the integration link off them, BEFORE
     // anything reads or rewrites them (a rewrite would drop the retired link).
     await this.runMigrations(
@@ -247,7 +260,7 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
         { capability: brokerCapability, provider: this.buildBrokerProvider() },
         {
           capability: integrationInstancesCapability,
-          provider: this.requireInstances().toProvider(),
+          provider: this.buildInstancesProvider(),
         },
         { capability: deviceAdoptionCapability, provider: this.buildAdoptionProvider() },
         {
@@ -278,6 +291,81 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
         warn: (message) => this.ctx.logger.warn(message),
       }),
     }
+  }
+
+  /** One provider over the two record kinds: the account (broker) and the integrations using it. */
+  private buildInstancesProvider(): IIntegrationInstancesProvider {
+    if (this.accountInstances === null) throw new Error('import-alexa: account instances not ready')
+    return composeInstanceKinds(
+      [
+        {
+          kind: {
+            id: 'account',
+            label: 'Alexa account',
+            functionCap: 'broker',
+            role: 'services',
+            signIn: { basePath: ALEXA_SIGN_IN_PATH, methods: ['device-code', 'proxy'] },
+          },
+          provider: this.accountInstances.toProvider(),
+        },
+        {
+          kind: {
+            id: 'integration',
+            label: 'Alexa',
+            functionCap: 'device-provider',
+            role: 'devices',
+          },
+          provider: this.requireInstances().toProvider(),
+        },
+      ],
+      {
+        role: 'devices',
+        instanceMode: 'multiple',
+        kind: 'account',
+        canTest: true,
+        allowRestoreId: true,
+      },
+    )
+  }
+
+  /**
+   * Bring the runtime in line with one account record after the instances page changed it: a
+   * removed record stops its manager and cascades its devices, an off record only stops the
+   * manager, a live one re-applies its connection or starts under the record's own id.
+   */
+  private async syncBrokerRuntime(id: string): Promise<void> {
+    const reg = this.requireRegistry()
+    const entry = await this.requireBrokerStore().getById(id)
+    this.activeBrokers = await this.loadPersistedBrokers()
+    if (entry === null) {
+      await reg.removeEntry(id)
+      await this.cascadeRemoveDevicesForBroker(id)
+      void this.speak?.brokersChanged()
+      return
+    }
+    const configured =
+      entry.connection.cookie.length > 0 || entry.connection.refreshToken.length > 0
+    if (entry.enabled === false || !configured) {
+      await reg.removeEntry(id)
+      void this.speak?.brokersChanged()
+      return
+    }
+    try {
+      if (reg.get(id) !== null) {
+        // A record write that changed nothing the client uses (a renewed registration the
+        // client already holds) must not restart the account.
+        if (!sameConnection(entry.connection, reg.getConnection(id))) {
+          await reg.updateEntry(id, entry.connection)
+        }
+      } else {
+        await reg.createEntry(entry.name, entry.connection, { id })
+      }
+    } catch (err) {
+      this.ctx.logger.warn('alexa instance: could not start the account', {
+        meta: { brokerId: id, error: errMsg(err) },
+      })
+    }
+    void this.speak?.brokersChanged()
   }
 
   private requireBrokerStore(): AlexaBrokerStore {

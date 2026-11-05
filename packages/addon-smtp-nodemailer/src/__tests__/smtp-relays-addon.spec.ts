@@ -104,7 +104,7 @@ describe('SmtpNodemailerAddon — relays are integration instances (D996)', () =
   it('a relay created through the cap serves at once, a deleted one stops', async () => {
     const w = await boot()
     addons.push(w.addon)
-    await w.instances.createInstance({ id: 'int_0003', name: 'c' })
+    await w.instances.createInstance({ id: 'int_0003', name: 'c', kind: 'relays' })
     await w.instances.updateInstance({
       id: 'int_0003',
       values: { host: 'smtp.c.test', fromAddress: 'c@example.com' },

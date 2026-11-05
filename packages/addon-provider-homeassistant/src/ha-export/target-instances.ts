@@ -42,7 +42,7 @@ export function openTargetInstances(
       instanceMode: 'multiple',
       kind: 'target',
       canTest: false,
-      kinds: [{ id: HA_TARGET_KIND, label: 'Home Assistant' }],
+      kinds: [{ id: HA_TARGET_KIND, label: 'Home Assistant', functionCap: 'device-export' }],
     },
     formSchema: () => buildTargetForm(),
     initialBody: (name): HaExportTargetBody => newTargetBody(name),

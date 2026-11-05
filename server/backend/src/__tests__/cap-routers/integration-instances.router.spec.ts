@@ -14,7 +14,9 @@ function makeProvider(): IIntegrationInstancesProvider {
       kind: 'target',
       canTest: true,
       allowRestoreId: true,
-      kinds: [{ id: 'a', label: 'A', signIn: { basePath: '/addon/x/sign-in' } }],
+      kinds: [
+        { id: 'a', label: 'A', functionCap: 'broker', signIn: { basePath: '/addon/x/sign-in' } },
+      ],
     })),
     instanceFormSchema: vi.fn(async () => ({ sections: [] })),
     listInstances: vi.fn(async () => [

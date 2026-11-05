@@ -28,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Vendor login proxy: drop Subresource Integrity pins from proxied pages so rewritten scripts and styles are not refused
 
+- Customize cardinalities, event shapes, apply authorities and stored link kinds are now one exported list each
+- integration-instances kinds now name the function they serve (functionCap, role, canTest) and one provider can compose several record kinds
+
 ## [1.2.505] - 2026-11-05
 
 ### Changed

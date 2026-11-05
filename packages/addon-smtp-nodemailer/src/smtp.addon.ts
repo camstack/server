@@ -35,6 +35,7 @@ import {
   createEvent,
   defineAddonMigrations,
   hydrateSchema,
+  composeInstanceKinds,
   integrationInstancesCapability,
   isSecretFieldView,
   isSecretMarker,
@@ -47,6 +48,7 @@ import {
 } from './migrations/index.js'
 import { SmtpInboundBroker, hostFromRole } from './inbound-broker.js'
 import { type ListenerFactory, smtpServerFactory } from './inbound-listener.js'
+import { buildMailboxInstances, MAILBOX_INSTANCE_KIND } from './mailbox-instances.js'
 import { mailboxesKind } from './mailbox-record-kinds.js'
 import {
   RelayPool,
@@ -163,7 +165,29 @@ export class SmtpNodemailerAddon extends BaseAddon<SmtpAddonConfig> {
       { capability: smtpProviderCapability, provider },
       {
         capability: integrationInstancesCapability,
-        provider: this.instances.toProvider(),
+        provider: composeInstanceKinds(
+          [
+            {
+              kind: {
+                id: 'relays',
+                label: 'SMTP relay',
+                functionCap: 'smtp-provider',
+                role: 'services',
+              },
+              provider: this.instances.toProvider(),
+            },
+            {
+              kind: {
+                id: MAILBOX_INSTANCE_KIND,
+                label: 'Inbound mailbox (SMTP)',
+                functionCap: 'broker',
+                role: 'services',
+              },
+              provider: buildMailboxInstances(records, { inbound }),
+            },
+          ],
+          { role: 'services', instanceMode: 'multiple', kind: 'relays', canTest: true },
+        ),
       },
       { capability: brokerCapability, provider: inbound.provider() },
     ]

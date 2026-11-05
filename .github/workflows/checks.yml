@@ -284,6 +284,7 @@ jobs:
             scripts/check-records-no-unindexed-where.ts \
             scripts/check-device-settings-standard.ts \
             scripts/check-integration-instances-declared.ts \
+            scripts/check-instances-kinds-declared.ts \
             scripts/check-no-integration-settings.ts \
             scripts/check-hub-settings-ready-before-forks.ts \
             scripts/check-export-coverage.ts \

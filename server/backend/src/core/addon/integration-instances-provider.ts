@@ -1,4 +1,8 @@
-import type { IIntegrationInstancesProvider } from '@camstack/types'
+import type {
+  IIntegrationInstancesProvider,
+  IntegrationInstance,
+  IntegrationInstanceKind,
+} from '@camstack/types'
 
 /** Structural check for an addon's `integration-instances` provider. */
 export function isIntegrationInstancesProvider(
@@ -29,4 +33,33 @@ export function findInstancesProvider(
 ): IIntegrationInstancesProvider | null {
   const provider = registry.getProviderByAddon('integration-instances', addonId)
   return isIntegrationInstancesProvider(provider) ? provider : null
+}
+
+/**
+ * The kinds of the provider that are configured for `functionCap` (a page section is the kinds
+ * whose `functionCap` it names, D1013). A provider that declares no kinds has no sections.
+ */
+export async function kindsFor(
+  provider: IIntegrationInstancesProvider,
+  functionCap: string,
+): Promise<readonly IntegrationInstanceKind[]> {
+  const description = await provider.describe()
+  return (description.kinds ?? []).filter((kind) => kind.functionCap === functionCap)
+}
+
+/**
+ * The provider's instances of one section: those whose `kind` is one of `kindsFor(functionCap)`.
+ * A provider with no kinds is a single-section holder and answers every instance.
+ */
+export async function instancesOfSection(
+  provider: IIntegrationInstancesProvider,
+  functionCap: string,
+): Promise<readonly IntegrationInstance[]> {
+  const description = await provider.describe()
+  const all = await provider.listInstances()
+  if (description.kinds === undefined || description.kinds.length === 0) return all
+  const ids = new Set(
+    description.kinds.filter((kind) => kind.functionCap === functionCap).map((kind) => kind.id),
+  )
+  return all.filter((instance) => instance.kind !== undefined && ids.has(instance.kind))
 }

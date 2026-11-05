@@ -354,10 +354,11 @@ describe('kinds, status label and last check', () => {
       kind: 'target',
       canTest: true,
       kinds: [
-        { id: 'a', label: 'Adapter A' },
+        { id: 'a', label: 'Adapter A', functionCap: 'broker' },
         {
           id: 'b',
           label: 'Adapter B',
+          functionCap: 'broker',
           connectPath: '/c/{{brokerId}}',
           disconnectPath: '/d/{{brokerId}}',
         },
@@ -396,7 +397,12 @@ describe('kinds, status label and last check', () => {
   it('asks for a kind only when there is a choice', () => {
     expect(needsKindPicker(kinds.description)).toBe(true)
     expect(needsKindPicker(smtp.description)).toBe(false)
-    expect(needsKindPicker({ ...smtp.description, kinds: [{ id: 'a', label: 'A' }] })).toBe(false)
+    expect(
+      needsKindPicker({
+        ...smtp.description,
+        kinds: [{ id: 'a', label: 'A', functionCap: 'broker' }],
+      }),
+    ).toBe(false)
     expect(findKind(kinds.description, 'a')?.label).toBe('Adapter A')
     expect(findKind(kinds.description, undefined)).toBeUndefined()
   })
