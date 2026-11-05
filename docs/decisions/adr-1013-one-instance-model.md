@@ -58,6 +58,17 @@ D987. A cap change force-publishes `@camstack/system`, and the removal commits a
 the UI that used it. Until steps 3 to 8 of the epic land, the superseded clauses stay in force for
 the families not yet moved.
 
+What an operator can do now: add, edit, test, switch off and delete every broker kind from the
+Connectivity page (Alexa, Matter, Home Assistant, Google, MQTT, the inbound mailboxes), test an
+MQTT broker or a mailbox port before saving it, create an ONBOARD MQTT broker (a CamStack `aedes`
+server on this hub, with an auto-allocated or typed port and optional anonymous access) and delete
+it to stop its server. Removing a broker something still uses is refused, naming the users; a
+registry that cannot be read refuses too, and an absent MQTT Discovery addon means no users.
+Pickers offer only brokers that can carry traffic (on, configured, not failing) and keep an
+already chosen one visible with its state. What no longer exists is the `broker.list`, `add`,
+`remove`, `test*`, `getSettingsSchema` and `signIn` calls themselves: a script that used them
+reads and writes `integration-instances` instead, pinned to the owning addon.
+
 ## Enforcement
 
 `scripts/check-broker-cap-is-bus-only.ts` (the broker cap is exactly the bus; no `BrokerInfo`; no

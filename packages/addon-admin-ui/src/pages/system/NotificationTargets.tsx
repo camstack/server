@@ -34,6 +34,7 @@ import {
   ErrorBox,
   ItemFormDialog,
   Select,
+  selectableBrokers,
   Switch,
   useBrokerInstances,
   useDiscoveredOptions,
@@ -650,7 +651,7 @@ function TargetForm({
   useEffect(() => {
     if (!isCreate || defaultKeys.brokerKey === null || defaultKeys.brokerKind === null) return
     const brokerId = defaultBrokerId(
-      brokerList.data,
+      brokerList.data === undefined ? undefined : selectableBrokers(brokerList.data, null),
       defaultKeys.brokerKind,
       values[defaultKeys.brokerKey],
     )

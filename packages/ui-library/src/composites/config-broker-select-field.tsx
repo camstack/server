@@ -5,7 +5,7 @@
  */
 import type { JSX } from 'react'
 import type { ConfigBrokerSelectField } from '@camstack/types'
-import { useBrokerInstances } from '../hooks/use-broker-instances'
+import { selectableBrokers, useBrokerInstances } from '../hooks/use-broker-instances'
 import { useBrokerPickerSlot } from '../contexts/broker-picker-slot'
 import { useUiText } from '../contexts/ui-text'
 import { Select } from '../primitives/select'
@@ -45,7 +45,7 @@ function PlainBrokerSelect({
 }): JSX.Element {
   const t = useUiText()
   const query = useBrokerInstances({ kind })
-  const rows = toRows(query.data).filter((row) => row.kind === kind)
+  const rows = toRows(selectableBrokers(query.data ?? [], value)).filter((row) => row.kind === kind)
   return (
     <Select
       id={controlId}

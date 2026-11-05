@@ -12,8 +12,8 @@ import { HaAuthConfigSchema, type HaAuthConfig } from './ha-types.js'
 
 /** Discriminated result of a pre-creation broker handshake probe. The
  *  success branch may carry the connect latency; the failure branch
- *  always carries a human-readable error. Mirrors the `broker.testSettings`
- *  cap output. */
+ *  always carries a human-readable error. The instance test
+ *  (`testInstance`) maps it to its own result. */
 export type HaTestSettingsResult = { ok: true; latencyMs?: number } | { ok: false; error: string }
 
 /** Hard ceiling on a throwaway handshake so a UI spinner can't hang on
@@ -46,7 +46,7 @@ export const HaBrokerEntrySchema = z.object({
 export type HaBrokerEntry = z.infer<typeof HaBrokerEntrySchema>
 
 /**
- * Validates a `broker.add` `settings` payload for the HA kind. Accepts:
+ * Validates the account form's values for the HA kind. Accepts:
  *  - `{ baseUrl, accessToken }` → long-lived auth
  *  - `{ supervisorToken }` → supervisor auth (typically env-driven, but
  *    persisting allows the addon to keep working after the env var

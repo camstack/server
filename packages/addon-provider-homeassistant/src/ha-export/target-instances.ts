@@ -25,7 +25,7 @@ export type TargetChange = 'created' | 'updated' | 'enabled' | 'deleted'
 export interface TargetInstanceDeps {
   /** The loaded records; read per call, it does not exist before the boot read. */
   readonly book: () => ExportTargets
-  /** Whether the hub knows this Home Assistant connection (as of the last `broker.list`). */
+  /** Whether the hub knows this Home Assistant connection (as of the last read of the account instances). */
   readonly connectionExists: (connectionId: string) => boolean
   readonly health: (id: string, body: HaExportTargetBody) => IntegrationInstanceStatus
   /** Runs after every change, once the records are reloaded by the caller. */

@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An MQTT broker can be edited in place (address, user, password, client id prefix) and removing one that an MQTT Discovery integration still names is refused with the list of integrations
 - MQTT brokers declare the function they serve on their instance kind
 - MQTT brokers are managed only on the instances page; deleting one an MQTT Discovery integration still names is refused
+- Creating an onboard MQTT broker works again from the Add broker dialog: tick Run an onboard broker, pick a port or leave it blank, and the broker starts on this hub; deleting it stops it, and a broker can be tested before it is saved.
 
 ## [1.2.151] - 2026-11-05
 

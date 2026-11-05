@@ -7,7 +7,7 @@ import {
 
 /**
  * Remove every adopted Alexa device whose persisted config carries
- * `{ system: 'alexa', brokerId }`. Used on broker.remove and integration delete.
+ * `{ system: 'alexa', brokerId }`. Used when an account instance is deleted and when an integration is deleted.
  * Alexa appliances are flat (standalone) devices, so this removes top-level
  * devices directly. Best-effort per device; returns the count removed. Mirrors
  * the Ecowitt cascade helper.

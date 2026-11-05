@@ -66,6 +66,8 @@ export interface HaInstanceRecord {
   readonly id: string
   readonly name: string
   readonly kind?: string
+  /** The connection's own switch; absent means on. */
+  readonly enabled?: boolean | undefined
 }
 
 /** `ctx.api.integrationInstances.listInstances.query` narrowed to what this module needs. */
@@ -88,14 +90,17 @@ export async function listHomeAssistantBrokers(
 ): Promise<readonly HaBroker[]> {
   try {
     const records = await query({ addonId: HA_PROVIDER_ADDON_ID })
-    return records
-      .filter((record) => record.kind === HA_ACCOUNT_INSTANCE_KIND)
-      .map((record) => ({
-        id: record.id,
-        name: record.name,
-        kind: HA_BROKER_KIND,
-        addonId: HA_PROVIDER_ADDON_ID,
-      }))
+    return (
+      records
+        // An off connection is not a connection the export can push through.
+        .filter((record) => record.kind === HA_ACCOUNT_INSTANCE_KIND && record.enabled !== false)
+        .map((record) => ({
+          id: record.id,
+          name: record.name,
+          kind: HA_BROKER_KIND,
+          addonId: HA_PROVIDER_ADDON_ID,
+        }))
+    )
   } catch (err) {
     onUnavailable?.(err)
     return []

@@ -122,7 +122,7 @@ export function diffOnboardRuntimes(
   return { toStart, toStop, toRespawn }
 }
 
-/** Result of building an onboard entry from `broker.add` settings. */
+/** Result of building an onboard entry from the create form's values. */
 export interface BuiltOnboardEntry {
   readonly id: string
   readonly name: string
@@ -153,7 +153,7 @@ export function readOnboardPort(settings: Record<string, unknown>): number | nul
 }
 
 /**
- * Build an onboard {@link BuiltOnboardEntry} from `broker.add` settings.
+ * Build an onboard {@link BuiltOnboardEntry} from the create form's values.
  * Pure — the port is pre-resolved by the caller (auto-allocation is a
  * side-effecting concern kept out of this helper), so the helper performs no
  * I/O of its own.

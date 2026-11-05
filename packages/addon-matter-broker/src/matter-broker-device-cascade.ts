@@ -7,8 +7,8 @@ import {
 
 /**
  * Remove every adopted Matter PARENT device (children cascade via the kernel)
- * whose persisted config carries `{ system: 'matter', brokerId }`. Used on
- * broker.remove and integration delete. Best-effort per device; returns the
+ * whose persisted config carries `{ system: 'matter', brokerId }`. Used when a
+ * fabric instance is deleted and when an integration is deleted. Best-effort per device; returns the
  * count removed. Mirrors the Ecowitt cascade helper.
  */
 export async function cascadeRemoveDevicesForBroker(input: {

@@ -289,6 +289,7 @@ describe('BrokerPicker — Create new… stacks the broker dialog over the calle
         kind: 'mqtt',
         state: 'ok',
         stateLabel: null,
+        usable: true,
       },
       {
         id: 'ha_1',
@@ -297,6 +298,7 @@ describe('BrokerPicker — Create new… stacks the broker dialog over the calle
         kind: 'home-assistant',
         state: 'ok',
         stateLabel: null,
+        usable: true,
       },
     ]
     const onChange = vi.fn()

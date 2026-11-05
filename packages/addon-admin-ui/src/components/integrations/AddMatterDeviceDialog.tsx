@@ -17,6 +17,7 @@ import {
   Input,
   Label,
   useBrokerGetState,
+  selectableBrokers,
   useBrokerInstances,
   useBrokerPublish,
 } from '@camstack/ui-library'
@@ -91,8 +92,10 @@ export function AddMatterDeviceDialog({
   const brokers = useBrokerInstances({ kind: MATTER_BROKER_KIND })
   // One fabric is used as is; none or several are chosen (or created) in a BrokerPicker.
   const [pickedBrokerId, setPickedBrokerId] = useState<string | null>(null)
-  const brokerCount = brokers.data?.length ?? 0
-  const brokerId = pickedBrokerId ?? brokers.data?.[0]?.id ?? null
+  // A fabric that is off, unconfigured or failing is not offered, unless it is the one picked.
+  const usableBrokers = selectableBrokers(brokers.data ?? [], pickedBrokerId)
+  const brokerCount = usableBrokers.length
+  const brokerId = pickedBrokerId ?? usableBrokers[0]?.id ?? null
   const publish = useBrokerPublish()
   const [code, setCode] = useState('')
   const [view, setView] = useState<CommissionView>({

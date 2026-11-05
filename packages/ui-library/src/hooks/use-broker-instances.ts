@@ -25,6 +25,22 @@ export interface BrokerInstance {
   readonly addonId: string
   readonly state: 'ok' | 'off' | 'error' | 'unknown'
   readonly stateLabel: string | null
+  /**
+   * Whether it can carry traffic now: switched on, configured (signed in) and not failing. A
+   * picker offers only these, plus the one already chosen (see {@link selectableBrokers}).
+   */
+  readonly usable: boolean
+}
+
+/**
+ * The brokers a picker offers: the usable ones, plus the CURRENTLY chosen one whatever its state,
+ * so an existing pick stays visible with its state instead of vanishing from the list.
+ */
+export function selectableBrokers(
+  brokers: readonly BrokerInstance[],
+  selectedId: string | null | undefined,
+): readonly BrokerInstance[] {
+  return brokers.filter((b) => b.usable || b.id === selectedId)
 }
 
 export interface BrokerHolderData {
@@ -35,8 +51,9 @@ export interface BrokerHolderData {
 
 /**
  * The brokers of one holder: instances whose kind is a `broker` kind, optionally of one registry
- * kind. A holder without `kinds` serves one section and is read as all brokers when it is the
- * broker provider (its registry kind is the description `kind`).
+ * kind. The kinds are the holder's own declaration (D1013, `check-instances-kinds-declared`): a
+ * holder without `kinds` declares no broker kind, so it holds no broker. An instance of a kind
+ * that is not a `broker` kind is a device integration, never a broker.
  */
 export function brokerInstancesOf(
   holder: BrokerHolderData,
@@ -56,6 +73,11 @@ export function brokerInstancesOf(
       addonId: holder.addonId,
       state: instance.status?.state ?? 'unknown',
       stateLabel: instance.status?.label ?? null,
+      usable:
+        instance.enabled !== false &&
+        instance.configured &&
+        instance.status?.state !== 'off' &&
+        instance.status?.state !== 'error',
     })
   }
   return out

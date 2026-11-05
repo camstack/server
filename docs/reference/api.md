@@ -2095,7 +2095,7 @@
 
 ### `connection-test` → `connectionTest.*`
 
-- **Source:** `packages/types/src/capabilities/connection-test.cap.ts:93`
+- **Source:** `packages/types/src/capabilities/connection-test.cap.ts:92`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection`
 - **Archetypes:** —
 - **Provider interface:** `IConnectionTestProvider`

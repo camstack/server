@@ -3,7 +3,7 @@
  * of its kind once the list ANSWERED, only while nothing is chosen.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import './setup'
 
 interface ListState {
@@ -40,6 +40,14 @@ const row = (id: string, kind: string) => ({
   addonId: 'a',
   state: 'ok',
   stateLabel: null,
+  usable: true,
+})
+
+const unusable = (id: string, kind: string) => ({
+  ...row(id, kind),
+  state: 'error',
+  stateLabel: 'Sign in again',
+  usable: false,
 })
 
 describe('BrokerPicker default selection', () => {
@@ -65,6 +73,29 @@ describe('BrokerPicker default selection', () => {
     rerender(<BrokerPicker kind="alexa" value="a1" onChange={onChange} />)
     listState = { data: [], isLoading: false, isError: false }
     rerender(<BrokerPicker kind="alexa" value={null} onChange={onChange} />)
+    expect(onChange).not.toHaveBeenCalled()
+  })
+
+  it('offers only usable brokers and never pre-selects an unusable one', () => {
+    listState = {
+      data: [unusable('a0', 'alexa'), row('a1', 'alexa')],
+      isLoading: false,
+      isError: false,
+    }
+    render(<BrokerPicker kind="alexa" value={null} onChange={onChange} />)
+    expect(onChange).toHaveBeenCalledExactlyOnceWith('a1')
+    expect(screen.queryByText('a0')).toBeNull()
+  })
+
+  it('keeps the broker already chosen visible with its state when it became unusable', () => {
+    listState = {
+      data: [unusable('a0', 'alexa'), row('a1', 'alexa')],
+      isLoading: false,
+      isError: false,
+    }
+    render(<BrokerPicker kind="alexa" value="a0" onChange={onChange} />)
+    expect(screen.getByText('a0')).toBeTruthy()
+    expect(screen.getByText('Sign in again')).toBeTruthy()
     expect(onChange).not.toHaveBeenCalled()
   })
 })

@@ -67,8 +67,7 @@ export const ConnectionTestOutcomeSchema = z.discriminatedUnion('outcome', [
        *  ("3 devices visible on this account"). */
       detail: z.string().optional(),
     })
-    // `.strict()` so a stray `error` can never ride along on a success —
-    // the same guard `broker.testSettings` carries.
+    // `.strict()` so a stray `error` can never ride along on a success.
     .strict(),
   z.object({ outcome: z.literal('rejected'), error: z.string() }).strict(),
   z.object({ outcome: z.literal('inconclusive'), error: z.string() }).strict(),

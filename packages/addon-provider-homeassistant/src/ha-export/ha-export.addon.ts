@@ -265,7 +265,7 @@ interface ExportedDevice {
 export class HaExportAddon extends BaseAddon<HaExportConfig> {
   private links = new Map<string, BrokerLink>()
   private instances: RecordIntegrationInstances<HaExportTargetBody> | null = null
-  /** The Home Assistant connections (broker ids) the last `broker.list` answered. */
+  /** The Home Assistant connections (broker ids) the last read of the account instances answered. */
   private connections: ReadonlySet<string> = new Set()
   /** deviceKey → the device it addresses. Rebuilt on every reconcile. */
   private exported = new Map<string, ExportedDevice>()
@@ -2421,7 +2421,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
     /**
      * NEVER treat an empty enumeration as "the connections are gone".
      *
-     * `broker.list` is a fan-out union, so it answers `[]` for the whole window in which
+     * Reading the account instances answers `[]` (a refused pinned read) for the whole window in which
      * `provider-homeassistant` has not finished registering. An empty list there means "I do not
      * know yet", never "the operator deleted their instance". A target whose connection is not in
      * the list is UNCONFIGURED for this pass: it pushes nothing, and its devices stay in its

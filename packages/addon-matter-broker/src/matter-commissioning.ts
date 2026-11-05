@@ -51,7 +51,7 @@ export function parsePairingCode(raw: string): ParsedPairingCode {
   return { kind: 'manual', normalized: digits }
 }
 
-/** True when a code parses cleanly (no throw). Convenience for `testSettings`. */
+/** True when a code parses cleanly (no throw). Convenience for validating the pasted code. */
 export function isValidPairingCode(raw: string): boolean {
   try {
     parsePairingCode(raw)

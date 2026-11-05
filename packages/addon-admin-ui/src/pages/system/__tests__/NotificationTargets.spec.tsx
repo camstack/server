@@ -498,7 +498,7 @@ describe('NotificationTargets page', () => {
     }
 
     it('selects the first broker once the list answered, and names the target after the device', async () => {
-      mockBrokers = [{ id: 'b-1', kind: 'ha', name: 'One' }]
+      mockBrokers = [{ id: 'b-1', kind: 'ha', name: 'One', usable: true }]
       mockDiscovered = [{ value: 'mobile_app_pixel_7', label: 'Pixel 7' }]
       await openForm()
       await waitFor(() =>
@@ -506,11 +506,22 @@ describe('NotificationTargets page', () => {
       )
     })
 
+    it('never defaults to a broker that cannot carry traffic', async () => {
+      mockBrokers = [
+        { id: 'b-off', kind: 'ha', name: 'Off', usable: false },
+        { id: 'b-2', kind: 'ha', name: 'Two', usable: true },
+      ]
+      await openForm()
+      await waitFor(() =>
+        expect(screen.getByTestId('stub-values').textContent).toContain('"brokerId":"b-2"'),
+      )
+    })
+
     const nameInput = (): HTMLInputElement =>
       screen.getByText('Name').closest('div')?.querySelector('input') as HTMLInputElement
 
     it('names the target "<notifier> — <device>" and stops once the operator typed a name', async () => {
-      mockBrokers = [{ id: 'b-1', kind: 'ha', name: 'One' }]
+      mockBrokers = [{ id: 'b-1', kind: 'ha', name: 'One', usable: true }]
       mockDiscovered = [{ value: 'mobile_app_pixel_7', label: 'Pixel 7' }]
       await openForm()
       fireEvent.click(screen.getByText('pick device'))

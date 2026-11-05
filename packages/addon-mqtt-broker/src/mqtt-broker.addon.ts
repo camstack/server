@@ -48,15 +48,13 @@ import {
   defineAddonMigrations,
   EventCategory,
   integrationInstancesCapability,
-  type ListedFieldRow,
   type IBrokerProvider,
+  type IIntegrationInstancesProvider,
   type IMqttBrokerProvider,
   type MqttBrokerInfo,
   type MqttBrokerLiveStatus,
   mqttBrokerCapability,
   type ProviderRegistration,
-  RecordIntegrationInstances,
-  guardBrokerDelete,
 } from '@camstack/types'
 
 type BrokerStatus = MqttBrokerLiveStatus
@@ -87,7 +85,8 @@ import {
   resolveStoredPassword,
   retiredCiphertextPaths,
 } from './retired-ciphertext.js'
-import { type MqttBrokerBody, mqttBrokersEntryKind } from './broker-record-kinds.js'
+import { mqttBrokersEntryKind } from './broker-record-kinds.js'
+import { buildMqttBrokerInstances } from './mqtt-broker-instances.js'
 import {
   ADDON_MIGRATIONS,
   type MqttBrokerMigrationPorts,
@@ -95,7 +94,7 @@ import {
 } from './migrations/index.js'
 import { mqttAclEntryKind, mqttClientEntryKind } from './mqtt-entry-record-kinds.js'
 import { MqttBrokerStore } from './mqtt-broker-store.js'
-import { MQTT_HA_ADDON_ID, mqttBrokerUsers } from './mqtt-broker-users.js'
+import { listMqttHaInstancesOver } from './mqtt-broker-users.js'
 import type { MqttExternalBrokerEntry } from './mqtt-external-broker-entry.js'
 import {
   MqttAclStore,
@@ -183,7 +182,7 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
   private onboardRuntimes = new Map<string, EmbeddedRuntime>()
   private probeCache: BrokerProbeCache | null = null
   private brokerStore: MqttBrokerStore | null = null
-  private instances: RecordIntegrationInstances<MqttBrokerBody> | null = null
+  private brokerInstances: IIntegrationInstancesProvider | null = null
   private clientStore: MqttClientStore | null = null
   private aclStore: MqttAclStore | null = null
   /** The external broker rows: the `brokers` records, secrets resolved. */
@@ -256,18 +255,12 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
     this.brokerStore = MqttBrokerStore.of(records)
     this.clientStore = MqttClientStore.of(records)
     this.aclStore = MqttAclStore.of(records)
-    this.instances = new RecordIntegrationInstances(records, mqttBrokersEntryKind, {
-      description: {
-        role: 'services',
-        instanceMode: 'multiple',
-        kind: 'brokers',
-        canTest: false,
-        kinds: [{ id: 'mqtt', label: 'MQTT broker', functionCap: 'broker', brokerKind: 'mqtt' }],
-      },
-      formSchema: () => this.brokerForm(),
-      kindOf: () => 'mqtt',
-      initialBody: (name): MqttBrokerBody => ({ name, url: 'mqtt://' }),
-      configured: (body) => body.url.trim().length > 0 && body.url.trim() !== 'mqtt://',
+    this.brokerInstances = buildMqttBrokerInstances(records, {
+      formSchema: (id, onboard) => this.brokerForm(id, onboard),
+      listMqttHaInstances: () => listMqttHaInstancesOver(this.ctx.api),
+      freePort: () => findFreePort(),
+      probe: (cfg) => this.probeMqtt(cfg),
+      onboardListening: (id) => this.onboardRuntimes.has(id),
       onChanged: async () => {
         await this.refreshExternalBrokers()
       },
@@ -347,15 +340,15 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
     // long-term path is to deprecate the legacy cap once every
     // consumer has migrated to the unified surface.
     const unifiedProvider = this.buildUnifiedBrokerProvider()
+    const brokerInstances = this.brokerInstances
+    if (brokerInstances === null) throw new Error('mqtt-broker: the broker instances are not built')
 
     return [
       { capability: mqttBrokerCapability, provider },
       { capability: brokerCapability, provider: unifiedProvider },
       {
         capability: integrationInstancesCapability,
-        provider: guardBrokerDelete(this.instances.toProvider(), () =>
-          mqttBrokerUsers(() => this.listMqttHaInstances()),
-        ),
+        provider: brokerInstances,
       },
     ]
   }
@@ -568,11 +561,6 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
     return { id }
   }
 
-  /** The integrations of the MQTT Discovery addon, which name their broker by id. */
-  private async listMqttHaInstances(): Promise<readonly ListedFieldRow[]> {
-    return this.ctx.api.integrationInstances.listInstances.query({ addonId: MQTT_HA_ADDON_ID })
-  }
-
   private async removeBroker(id: string): Promise<void> {
     // External entry (includes onboard entries)
     const removed = this.activeExternalBrokers.find((b) => b.id === id)
@@ -619,7 +607,7 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
    * One-shot connectivity probe against an MQTT endpoint built from a
    * flat config (`{url, username?, password?}`). Shared by the
    * id-keyed `testConnection` (existing broker) and the pre-creation
-   * `testSettings` (throwaway settings the operator hasn't saved yet).
+   * the instance test (`testInstance`) of a broker not saved yet (the typed values).
    * Never throws — every failure resolves to `{ ok: false, error }`.
    */
   private async probeMqtt(cfg: {
@@ -1145,43 +1133,104 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
 
   // ── Instance form ─────────────────────────────────────────────────
 
-  private brokerForm() {
+  /**
+   * The broker form. The create form (`id` null) offers "run an onboard broker" (CamStack hosts an
+   * `aedes` server on this hub: a port, anonymous access) or an external URL; an existing onboard
+   * broker edits only its credentials, since its address is the one it was given.
+   */
+  private brokerForm(id: string | null, onboard: boolean) {
+    const credentials = [
+      {
+        type: 'text' as const,
+        key: 'username',
+        label: 'Username',
+        labelKey: 'mqtt-broker:fullSettings.brokers.username.label',
+      },
+      {
+        type: 'password' as const,
+        key: 'password',
+        label: 'Password',
+        labelKey: 'mqtt-broker:fullSettings.brokers.password.label',
+        showToggle: true,
+      },
+    ]
+    if (onboard) {
+      return this.schema({
+        sections: [
+          {
+            id: 'broker',
+            title: 'Onboard broker',
+            description:
+              'A CamStack-hosted broker on this hub. Its port was chosen when it was created.',
+            columns: 1,
+            fields: credentials,
+          },
+        ],
+      })
+    }
+    const creating = id === null
+    const external = { field: 'onboard', equals: false } as const
     return this.schema({
       sections: [
         {
           id: 'broker',
-          title: 'External broker',
-          description:
-            'A broker running outside CamStack (mosquitto, EMQX, HiveMQ, cloud bridges, …). The password is kept in the keychain.',
+          title: creating ? 'MQTT broker' : 'External broker',
+          description: creating
+            ? 'Run a broker on this hub, or connect to one running outside CamStack (mosquitto, EMQX, HiveMQ, cloud bridges, …). The password is kept in the keychain.'
+            : 'A broker running outside CamStack (mosquitto, EMQX, HiveMQ, cloud bridges, …). The password is kept in the keychain.',
           columns: 1,
           fields: [
+            ...(creating
+              ? [
+                  {
+                    type: 'boolean' as const,
+                    key: 'onboard',
+                    label: 'Run an onboard broker',
+                    labelKey: 'mqtt-broker:fullSettings.brokers.onboard.label',
+                    description:
+                      'Spin up a CamStack-hosted aedes broker on this hub instead of connecting to an external one. Each onboard broker gets its own dedicated server + port.',
+                    descriptionKey: 'mqtt-broker:fullSettings.brokers.onboard.description',
+                    default: false,
+                  },
+                  {
+                    type: 'number' as const,
+                    key: 'port',
+                    label: 'Port',
+                    labelKey: 'mqtt-broker:fullSettings.brokers.port.label',
+                    placeholder: '(auto)',
+                    description:
+                      'TCP port for the onboard broker. Leave blank to auto-allocate a free port.',
+                    descriptionKey: 'mqtt-broker:fullSettings.brokers.port.description',
+                    showWhen: { field: 'onboard', equals: true },
+                  },
+                  {
+                    type: 'boolean' as const,
+                    key: 'allowAnonymous',
+                    label: 'Allow anonymous',
+                    labelKey: 'mqtt-broker:fullSettings.brokers.allowAnonymous.label',
+                    description: 'Permit clients to connect without a username/password.',
+                    descriptionKey: 'mqtt-broker:fullSettings.brokers.allowAnonymous.description',
+                    default: false,
+                    showWhen: { field: 'onboard', equals: true },
+                  },
+                ]
+              : []),
             {
-              type: 'text',
+              type: 'text' as const,
               key: 'url',
               label: 'Broker URL',
               labelKey: 'mqtt-broker:fullSettings.brokers.url.label',
               description: 'mqtt://, mqtts://, ws://, wss://',
               descriptionKey: 'mqtt-broker:fullSettings.brokers.url.description',
-              required: true,
+              ...(creating ? { showWhen: external } : { required: true }),
             },
+            ...credentials,
             {
-              type: 'text',
-              key: 'username',
-              label: 'Username',
-              labelKey: 'mqtt-broker:fullSettings.brokers.username.label',
-            },
-            {
-              type: 'password',
-              key: 'password',
-              label: 'Password',
-              labelKey: 'mqtt-broker:fullSettings.brokers.password.label',
-              showToggle: true,
-            },
-            {
-              type: 'text',
+              type: 'text' as const,
               key: 'clientIdPrefix',
               label: 'Client id prefix',
               labelKey: 'mqtt-broker:fullSettings.brokers.clientIdPrefix.label',
+              ...(creating ? { showWhen: external } : {}),
             },
           ],
         },
@@ -1516,6 +1565,27 @@ interface OnboardExternalBrokerEntry extends ExternalBrokerEntry {
 /** Narrow an {@link ExternalBrokerEntry} to one with an onboard descriptor. */
 function hasOnboard(entry: ExternalBrokerEntry): entry is OnboardExternalBrokerEntry {
   return entry.onboard !== undefined
+}
+
+/**
+ * Bind a `net` server to port 0 to discover a free ephemeral TCP port, then
+ * close it and return the number. The caller binds the real `aedes` server
+ * immediately after, so the small TOCTOU window is acceptable here.
+ */
+async function findFreePort(): Promise<number> {
+  return await new Promise<number>((resolve, reject) => {
+    const probe = createServer()
+    probe.once('error', (err) => reject(err))
+    probe.listen(0, () => {
+      const address = probe.address()
+      if (address === null || typeof address === 'string') {
+        probe.close(() => reject(new Error('mqtt-broker: could not allocate a free port')))
+        return
+      }
+      const port = address.port
+      probe.close(() => resolve(port))
+    })
+  })
 }
 
 export default MqttBrokerAddon

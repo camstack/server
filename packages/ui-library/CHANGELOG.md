@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A confirmed device delete now shows the row as Removing… with its actions disabled until the hub has finished, then drops it; a failure restores the row with the error
 - Broker pickers now list brokers from the one instance model
 - Generated broker hooks follow the bus-only broker capability
+- Broker pickers offer only brokers that are on, configured and working, and keep the chosen one visible with its state.
 
 ## [1.2.386] - 2026-11-05
 

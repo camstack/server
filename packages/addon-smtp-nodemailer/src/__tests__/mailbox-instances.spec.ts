@@ -1,4 +1,5 @@
 import { BrokerInUseError, makeInMemoryRecords } from '@camstack/types'
+import { createServer } from 'node:net'
 import { describe, expect, it } from 'vitest'
 import { buildMailboxInstances } from '../mailbox-instances.js'
 import { mailboxesKind } from '../mailbox-record-kinds.js'
@@ -44,5 +45,27 @@ describe('inbound mailboxes as integration instances', () => {
     await free.provider.deleteInstance({ id: made.id })
     expect(await free.provider.getInstance({ id: made.id })).toBeNull()
     expect(free.reconciled).toEqual([made.id, made.id])
+  })
+
+  it('before the mailbox exists, tests whether the port can be taken', async () => {
+    const { provider } = await setup()
+    const taken = createServer()
+    await new Promise<void>((resolve) => taken.listen(0, '127.0.0.1', resolve))
+    const address = taken.address()
+    if (address === null || typeof address === 'string') throw new Error('no port')
+    try {
+      const busy = await provider.testInstance?.({
+        id: null,
+        values: { port: address.port, bindHost: '127.0.0.1' },
+      })
+      expect(busy).toMatchObject({ success: false, status: 'rejected' })
+    } finally {
+      await new Promise<void>((resolve) => taken.close(() => resolve()))
+    }
+    const free = await provider.testInstance?.({
+      id: null,
+      values: { port: address.port, bindHost: '127.0.0.1' },
+    })
+    expect(free).toMatchObject({ success: true, status: 'validated' })
   })
 })

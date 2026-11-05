@@ -9,7 +9,7 @@ import { readHaSource } from './ha-device-source.js'
 /**
  * Remove every adopted HA PARENT device (children cascade via the kernel)
  * whose persisted `source.brokerId` matches `brokerId`. Used when a broker is
- * removed directly (broker.remove) AND when its spawning integration is
+ * removed directly (its account instance is deleted) AND when its spawning integration is
  * deleted (integration.deleted reconcile) — both must take the devices down.
  * Best-effort per device: a failed remove is logged, not thrown.
  *

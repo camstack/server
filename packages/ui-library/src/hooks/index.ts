@@ -97,4 +97,4 @@ export type {
   BrokerInstance,
   UseBrokerInstancesResult,
 } from './use-broker-instances'
-export { brokerInstancesOf, useBrokerInstances } from './use-broker-instances'
+export { brokerInstancesOf, selectableBrokers, useBrokerInstances } from './use-broker-instances'

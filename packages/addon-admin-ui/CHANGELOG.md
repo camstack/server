@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The Customize tab shows every extension slot a device hosts from the slot table, not from a camera check
 - Creating a broker from a picker or the wizard uses the same instance dialog as the function page
+- Broker pickers (Matter commissioning, notification targets, broker create) offer only brokers that are on, configured and working, and keep the chosen one visible with its state.
 
 ## [1.2.592] - 2026-11-05
 

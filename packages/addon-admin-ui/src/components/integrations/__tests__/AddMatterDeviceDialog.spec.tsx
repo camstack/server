@@ -21,9 +21,9 @@ interface ReportedPhase {
 }
 
 const harness = vi.hoisted(() => {
-  const box: { state: ReportedPhase | null; brokers: { id: string }[] } = {
+  const box: { state: ReportedPhase | null; brokers: { id: string; usable: boolean }[] } = {
     state: null,
-    brokers: [{ id: 'matter_001' }],
+    brokers: [{ id: 'matter_001', usable: true }],
   }
   return { publish: vi.fn(), box }
 })
@@ -80,6 +80,25 @@ describe('AddMatterDeviceDialog', () => {
       },
       expect.any(Object),
     )
+  })
+
+  it('commissions through the usable fabric, not an unusable one listed first', () => {
+    harness.publish.mockReset()
+    harness.publish.mockImplementation(() => undefined)
+    harness.box.brokers = [
+      { id: 'matter_off', usable: false },
+      { id: 'matter_001', usable: true },
+    ]
+    try {
+      render(renderDialog())
+      pasteAndSubmit('34970112332')
+      expect(harness.publish).toHaveBeenCalledWith(
+        expect.objectContaining({ brokerId: 'matter_001' }),
+        expect.any(Object),
+      )
+    } finally {
+      harness.box.brokers = [{ id: 'matter_001', usable: true }]
+    }
   })
 
   it('names an expired code, a missing device and a rejected code', () => {

@@ -61,4 +61,12 @@ describe('listHomeAssistantBrokers', () => {
     await expect(listHomeAssistantBrokers(cap.query, onUnavailable)).resolves.toEqual([])
     expect(onUnavailable).toHaveBeenCalledTimes(1)
   })
+
+  it('ignores a connection that is switched off', async () => {
+    const off: HaInstanceRecord = { ...ACCOUNT, id: 'ha_002', enabled: false }
+    const on: HaInstanceRecord = { ...ACCOUNT, id: 'ha_003', enabled: true }
+    const query: InstanceListQuery = async () => [off, on, ACCOUNT]
+    const brokers = await listHomeAssistantBrokers(query)
+    expect(brokers.map((b) => b.id)).toEqual(['ha_003', 'ha_001'])
+  })
 })

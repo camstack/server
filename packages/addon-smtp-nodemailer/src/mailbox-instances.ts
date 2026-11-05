@@ -15,6 +15,7 @@ import {
   type RecordsAccess,
   SmtpInboundSettingsSchema,
 } from '@camstack/types'
+import { probeBind } from './bind-probe.js'
 import { mailboxSettingsSchema, type SmtpInboundBroker } from './inbound-broker.js'
 import { type MailboxBody, MailboxBodySchema, mailboxesKind } from './mailbox-record-kinds.js'
 
@@ -70,8 +71,19 @@ export function buildMailboxInstances(
       }
     },
     onChanged: (id) => deps.inbound.reconcileMailbox(id),
-    test: async ({ id }): Promise<IntegrationTestConnectionResult> => {
-      const runtime = id === null ? null : deps.inbound.runtimeOf(id)
+    test: async ({ id, values }): Promise<IntegrationTestConnectionResult> => {
+      // Before the mailbox exists the question is "can this port be taken?" (the create form).
+      if (id === null) {
+        const parsed = SmtpInboundSettingsSchema.safeParse(values)
+        if (!parsed.success) {
+          return { success: false, status: 'rejected', error: parsed.error.message }
+        }
+        const bound = await probeBind(parsed.data.port, parsed.data.bindHost)
+        return bound.ok
+          ? { success: true, status: 'validated', latencyMs: bound.latencyMs }
+          : { success: false, status: 'rejected', error: bound.error }
+      }
+      const runtime = deps.inbound.runtimeOf(id)
       return runtime?.status === 'connected'
         ? { success: true, status: 'validated' }
         : {

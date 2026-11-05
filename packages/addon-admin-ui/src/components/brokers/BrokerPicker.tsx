@@ -14,6 +14,7 @@ import {
   Badge,
   Button,
   ErrorBox,
+  selectableBrokers,
   useBrokerInstances,
   type BrokerInstance,
 } from '@camstack/ui-library'
@@ -39,7 +40,8 @@ export function BrokerPicker({ kind, value, onChange }: BrokerPickerProps) {
   const { t } = useTranslation()
   const [creating, setCreating] = useState(false)
   const listQuery = useBrokerInstances({ kind })
-  const brokers = listQuery.data ?? []
+  // Only brokers that can carry traffic, plus the one already chosen (kept visible with its state).
+  const brokers = selectableBrokers(listQuery.data ?? [], value)
 
   // Nothing chosen yet: pre-select the first broker of the kind, but only once
   // the list ANSWERED — still loading or failed must never read as "no broker".

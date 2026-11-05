@@ -1569,7 +1569,7 @@
       "kind": "function",
       "area": "hooks",
       "file": "packages/ui-library/src/hooks/use-broker-instances.ts",
-      "summary": "The brokers of one holder: instances whose kind is a `broker` kind, optionally of one registry kind. A holder without `kinds` serves one section and is read as all brokers when it is the broker provider (its registry …"
+      "summary": "The brokers of one holder: instances whose kind is a `broker` kind, optionally of one registry kind. The kinds are the holder's own declaration (D1013, `check-instances-kinds-declared`): a holder without `kinds` decla…"
     },
     {
       "name": "BrokerPickerSlotProvider",
@@ -10221,6 +10221,13 @@
           "doc": "No field chrome: no border, a transparent background and no chevron. For a dropdown that sits inside a control that already draws the box (a"
         }
       ]
+    },
+    {
+      "name": "selectableBrokers",
+      "kind": "function",
+      "area": "hooks",
+      "file": "packages/ui-library/src/hooks/use-broker-instances.ts",
+      "summary": "The brokers a picker offers: the usable ones, plus the CURRENTLY chosen one whatever its state, so an existing pick stays visible with its state instead of vanishing from the list."
     },
     {
       "name": "SelectedChip",

@@ -23,6 +23,7 @@ vi.mock('@camstack/ui-library', async () => {
       kind: 'home-assistant',
       state: 'ok',
       stateLabel: null,
+      usable: true,
     },
     {
       id: 'mqtt_001',
@@ -31,6 +32,7 @@ vi.mock('@camstack/ui-library', async () => {
       kind: 'mqtt',
       state: 'ok',
       stateLabel: null,
+      usable: true,
     },
   ]
   return {

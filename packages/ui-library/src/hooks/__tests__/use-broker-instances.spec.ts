@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import type { IntegrationInstance, IntegrationInstanceDescription } from '@camstack/types'
-import { brokerInstancesOf, type BrokerHolderData } from '../use-broker-instances'
+import {
+  brokerInstancesOf,
+  selectableBrokers,
+  type BrokerHolderData,
+} from '../use-broker-instances'
 
 const description: IntegrationInstanceDescription = {
   role: 'devices',
@@ -41,5 +45,39 @@ describe('brokerInstancesOf', () => {
       instances: [instance('m', 'mqtt')],
     }
     expect(brokerInstancesOf(plain, 'mqtt').map((b) => b.id)).toEqual(['m'])
+  })
+  it('a holder that declares no kinds holds no broker', () => {
+    const bare: BrokerHolderData = {
+      ...holder,
+      description: { role: 'services', instanceMode: 'multiple', kind: 'brokers', canTest: true },
+    }
+    expect(brokerInstancesOf(bare)).toEqual([])
+  })
+})
+
+describe('selectableBrokers', () => {
+  const states: readonly IntegrationInstance[] = [
+    instance('ok', 'account'),
+    { ...instance('off', 'account'), enabled: false },
+    { ...instance('raw', 'account'), configured: false },
+    { ...instance('bad', 'account'), status: { state: 'error', label: 'Sign in again' } },
+  ]
+  const brokers = brokerInstancesOf({ ...holder, instances: states })
+
+  it('marks disabled, unconfigured and failing brokers unusable', () => {
+    expect(brokers.map((b) => [b.id, b.usable])).toEqual([
+      ['ok', true],
+      ['off', false],
+      ['raw', false],
+      ['bad', false],
+    ])
+  })
+  it('offers only the usable ones when nothing is chosen', () => {
+    expect(selectableBrokers(brokers, null).map((b) => b.id)).toEqual(['ok'])
+  })
+  it('keeps the chosen broker visible with its state even when unusable', () => {
+    const shown = selectableBrokers(brokers, 'bad')
+    expect(shown.map((b) => b.id)).toEqual(['ok', 'bad'])
+    expect(shown[1]?.stateLabel).toBe('Sign in again')
   })
 })

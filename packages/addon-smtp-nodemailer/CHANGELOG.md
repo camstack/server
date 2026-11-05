@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SMTP relays and inbound mailboxes are served as instances of one provider
 - Inbound mailboxes are managed only on the instances page; the broker CRUD is gone
 - Removing an inbound mailbox that a camera email push still reads is refused with the list of subscribers
+- Testing a new inbound mailbox before it is created checks that its port can be taken again.
 
 ## [1.2.148] - 2026-11-05
 
