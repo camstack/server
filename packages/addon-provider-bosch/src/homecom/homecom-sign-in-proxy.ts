@@ -10,8 +10,13 @@ import {
 } from './homecom-sign-in.js'
 import type { FetchFn } from './homecom-api-client.js'
 
-/** SingleKey ID serves the whole HomeCom login. (Not verified against the live pages: no vendor credentials.) */
-export const HOMECOM_LOGIN_HOSTS: readonly string[] = ['singlekey-id.com']
+/**
+ * SingleKey ID serves the HomeCom login page; its scripts and styles come from `cdn.singlekey-id.com`
+ * as `type=module` + `crossorigin` files, which the CDN does not CORS-enable for another origin —
+ * served from the hub origin through the proxy they load, loaded directly they are refused and the
+ * page has no script (only the email field, no way to continue).
+ */
+export const HOMECOM_LOGIN_HOSTS: readonly string[] = ['singlekey-id.com', 'cdn.singlekey-id.com']
 
 export const HOMECOM_APP_SCHEME = HOMECOM_REDIRECT_URI.slice(
   0,

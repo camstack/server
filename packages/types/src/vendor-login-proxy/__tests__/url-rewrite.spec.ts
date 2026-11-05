@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import {
   filterForwardedCookies,
@@ -151,5 +152,38 @@ describe('allow-list', () => {
     const evil = parseProxyPath('/ATTEMPT12/auth.vendor.test//evil.test/x')
     expect(evil).not.toBeNull()
     expect(upstreamUrlFor(AUTH, evil!)?.host).toBe('auth.vendor.test')
+  })
+})
+
+describe('a vendor login page with scripts (SingleKey ID shape)', () => {
+  const CDN: LoginProxyUpstream = { host: 'cdn.singlekey-id.com', scheme: 'https' }
+  const SK: LoginProxyUpstream = { host: 'singlekey-id.com', scheme: 'https' }
+  const skRoute: LoginProxyRoute = {
+    basePath: '/addon/demo/vendor-login/ATTEMPT12',
+    upstreams: [SK, CDN],
+  }
+  const html = readFileSync(new URL('./fixtures/singlekey-login.html', import.meta.url), 'utf8')
+  const out = rewriteBody(html, 'html', SK, skRoute)
+
+  it('serves every module script and stylesheet from the proxy, not from the CDN host', () => {
+    expect(out).toContain(
+      'src="/addon/demo/vendor-login/ATTEMPT12/cdn.singlekey-id.com/scripts/base.St7i9rboucg.mjs"',
+    )
+    expect(out).toContain(
+      'src="/addon/demo/vendor-login/ATTEMPT12/cdn.singlekey-id.com/scripts/htmx.vKLXhxuqYbA.mjs"',
+    )
+    expect(out).not.toMatch(/https:\/\/cdn\.singlekey-id\.com/)
+  })
+
+  it('drops integrity: the proxy may legitimately change the bytes the hash covers', () => {
+    expect(out).not.toMatch(/\bintegrity\s*=/i)
+    expect(out).toContain('crossorigin="anonymous"')
+  })
+
+  it('keeps inline scripts and form actions working', () => {
+    expect(out).toContain('window.pageConfig')
+    expect(out).toContain(
+      'action="/addon/demo/vendor-login/ATTEMPT12/singlekey-id.com/en-gb/login?f=TRIMMED"',
+    )
   })
 })

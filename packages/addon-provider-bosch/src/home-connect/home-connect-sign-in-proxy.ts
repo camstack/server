@@ -16,11 +16,13 @@ import {
 /**
  * Home Connect signs in through its own identity pages, which end on `hcauth://auth/prod?...`
  * — an address no browser can open. These are the hosts those pages are served from; the
- * proxy reaches nothing else. (Not verified against the live pages: no vendor credentials.)
+ * proxy reaches nothing else. The authorize call redirects to SingleKey ID, whose page loads its
+ * scripts from `cdn.singlekey-id.com` (see `HOMECOM_LOGIN_HOSTS`).
  */
 export const HOME_CONNECT_LOGIN_HOSTS: readonly string[] = [
   'api.home-connect.com',
   'singlekey-id.com',
+  'cdn.singlekey-id.com',
 ]
 
 export const HOME_CONNECT_APP_SCHEME = HOME_CONNECT_REDIRECT_URI.slice(

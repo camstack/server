@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Vendor login proxy: drop Subresource Integrity pins from proxied pages so rewritten scripts and styles are not refused
+
 ## [1.2.505] - 2026-11-05
 
 ### Changed

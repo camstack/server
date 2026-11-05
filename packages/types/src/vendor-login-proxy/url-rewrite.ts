@@ -124,6 +124,16 @@ export function rewriteLocation(
 /** Characters that may precede a URL that STARTS a value (never `=`, `?`, `&`, `%3D`). */
 const VALUE_START = String.raw`(?<=^|["'(\s>,\[{])`
 
+/**
+ * Subresource Integrity pins the bytes of a script or stylesheet. The proxy rewrites vendor
+ * URLs inside those bytes (and re-serves them from another origin), so the hash can no longer
+ * match and the browser refuses the file: the page renders with no script at all. The hub
+ * already drops the CSP that would have enforced the same pin; the attribute goes with it.
+ */
+function stripIntegrity(html: string): string {
+  return html.replace(/\s+integrity\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+}
+
 export type BodyKind = 'html' | 'css' | 'other'
 
 /**
@@ -150,6 +160,7 @@ export function rewriteBody(
     )
     out = out.replace(escaped, escapedBase)
   }
+  if (kind === 'html') out = stripIntegrity(out)
   const current = `${route.basePath}/${currentUpstream.host}/`
   // A reference already under the proxy mount (just rewritten above) is not root-relative to the vendor.
   const notMounted = `(?!/)(?!${escapeRegex(route.basePath.slice(1))}/)`
