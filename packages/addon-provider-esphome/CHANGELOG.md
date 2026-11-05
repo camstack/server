@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.11] - 2026-11-05
+
 ### Fixed
 
 - A board that connects while its devices are still being restored no longer tries to register each control twice, and a repeated entity stays one device.

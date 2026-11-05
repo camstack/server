@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.193] - 2026-11-05
+
 ### Changed
 
 - HomeKit export now runs several bridges: add one per household, each with its own read-only setup code and a Regenerate action that unpairs its controllers; the existing bridge keeps its pairing

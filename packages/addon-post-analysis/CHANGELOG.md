@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.668] - 2026-11-05
+
 ### Changed
 
 - The finish notification's cycle facts match a run that ended up to 30 minutes before the announcement

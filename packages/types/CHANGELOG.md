@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.500] - 2026-11-05
+
 ### Changed
 
 - An appliance run now ends at its last real active instant and a short anti-crease pulse no longer keeps a run alive; the running-threshold proposal ignores pulses, bounds pauses and reports pulses found
