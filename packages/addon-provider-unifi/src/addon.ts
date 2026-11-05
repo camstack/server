@@ -16,8 +16,7 @@ import {
   type RecordIntegrationInstances,
   type SystemEvent,
   collectOwnerIntegrationIds,
-  defaultIntegrationApiOver,
-  defineAddonMigrations,
+  rowsDepsOver,
 } from '@camstack/types'
 import { UNIFI_SYSTEM } from './config.js'
 import { UnifiFeatureDevice } from './devices/unifi-feature-device.js'
@@ -88,23 +87,15 @@ export class UnifiProviderAddon extends BaseDeviceProvider {
       throw new Error('provider-unifi: ctx.records is required (hub-only addon)')
     await records.declare(unifiRecordKinds)
     await this.runMigrations(
-      defineAddonMigrations(
-        [
-          integrationRowsMigration({
-            addonId: this.addonId,
-            date: UNIFI_MIGRATIONS_DATE,
-            kind: unifiConnectionsEntryKind,
-            fixtureMark: 'host',
-          }),
-        ],
-        integrationRowsPortsOver({
-          api: defaultIntegrationApiOver(this.ctx.api),
-          secrets: this.ctx.secrets ?? null,
-          records,
+      [
+        integrationRowsMigration({
+          addonId: this.addonId,
+          date: UNIFI_MIGRATIONS_DATE,
           kind: unifiConnectionsEntryKind,
-          warn: (message) => this.ctx.logger.warn(message),
+          fixtureMark: 'host',
         }),
-      ),
+      ],
+      (api) => integrationRowsPortsOver({ ...rowsDepsOver(api), kind: unifiConnectionsEntryKind }),
     )
     this.instances = buildUnifiInstances(records, {
       onChanged: () => this.reconcileIntegrations(),

@@ -4,8 +4,6 @@ import {
   type ConfigUISchema,
   type CreateDeviceSpec,
   connectionTestCapability,
-  defaultIntegrationApiOver,
-  defineAddonMigrations,
   integrationInstancesCapability,
   type DeviceConstructor,
   type DeviceSummary,
@@ -21,6 +19,7 @@ import {
   type IDeviceAdoptionProvider,
   type RecordIntegrationInstances,
   type SystemEvent,
+  rowsDepsOver,
 } from '@camstack/types'
 import { boschShcActions } from './custom-actions.js'
 import {
@@ -83,17 +82,7 @@ export class BoschShcProviderAddon extends BaseDeviceProvider {
       throw new Error('bosch-shc: ctx.records is required (hub-only addon)')
     await records.declare(shcRecordKinds)
     // Before the provider registers: while it is registered the hub answers from the record.
-    await this.runMigrations(
-      defineAddonMigrations(
-        SHC_MIGRATIONS,
-        shcRowsPorts({
-          api: defaultIntegrationApiOver(this.ctx.api),
-          secrets: this.ctx.secrets ?? null,
-          records,
-          warn: (message) => this.ctx.logger.warn(message),
-        }),
-      ),
-    )
+    await this.runMigrations(SHC_MIGRATIONS, (api) => shcRowsPorts({ ...rowsDepsOver(api) }))
     const built = buildShcInstances(records, {
       onChanged: () => this.reconcileIntegrations(),
       tester: this.buildConnectionTestProvider(),

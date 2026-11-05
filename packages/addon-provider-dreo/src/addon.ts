@@ -18,8 +18,7 @@ import {
   type RecordIntegrationInstances,
   type SystemEvent,
   collectOwnerIntegrationIds,
-  defaultIntegrationApiOver,
-  defineAddonMigrations,
+  rowsDepsOver,
 } from '@camstack/types'
 import { DreoReconciler, type IntegrationLifecycleKind } from './dreo-reconciler.js'
 import { DreoContainerDevice } from './devices/dreo-container-device.js'
@@ -90,23 +89,15 @@ export class DreoProviderAddon extends BaseDeviceProvider {
       throw new Error('provider-dreo: ctx.records is required (hub-only addon)')
     await records.declare(dreoRecordKinds)
     await this.runMigrations(
-      defineAddonMigrations(
-        [
-          integrationRowsMigration({
-            addonId: this.addonId,
-            date: DREO_MIGRATIONS_DATE,
-            kind: dreoConnectionsEntryKind,
-            fixtureMark: 'email',
-          }),
-        ],
-        integrationRowsPortsOver({
-          api: defaultIntegrationApiOver(this.ctx.api),
-          secrets: this.ctx.secrets ?? null,
-          records,
+      [
+        integrationRowsMigration({
+          addonId: this.addonId,
+          date: DREO_MIGRATIONS_DATE,
           kind: dreoConnectionsEntryKind,
-          warn: (message) => this.ctx.logger.warn(message),
+          fixtureMark: 'email',
         }),
-      ),
+      ],
+      (api) => integrationRowsPortsOver({ ...rowsDepsOver(api), kind: dreoConnectionsEntryKind }),
     )
     this.instances = buildDreoInstances(records, {
       onChanged: () => this.reconcileIntegrations(),

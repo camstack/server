@@ -13,10 +13,8 @@ import type {
 import {
   BaseDeviceProvider,
   clipEventLabelDepsFromApi,
-  defaultIntegrationApiOver,
   defaultIntegrationMigrations,
   defaultIntegrationPortsOver,
-  defineAddonMigrations,
   DeviceType,
   failureContributionCapability,
   integrationInstancesCapability,
@@ -25,6 +23,7 @@ import {
   videoclipsCapability,
   widenDeviceConstructor,
   withClipEventLabels,
+  defaultIntegrationDepsOver,
 } from '@camstack/types'
 import { type ClipService, createClipService } from './clips/clip-service.js'
 import { HIKVISION_ADDON_ID, HikvisionCamera, hikvisionCameraSchema } from './hikvision-camera.js'
@@ -276,18 +275,12 @@ export class HikvisionProviderAddon extends BaseDeviceProvider {
       throw new Error('provider-hikvision: ctx.records is required (hub-only addon)')
     await records.declare(hikvisionRecordKinds)
     await this.runMigrations(
-      defineAddonMigrations(
-        defaultIntegrationMigrations({ addonId: this.addonId, date: HIKVISION_MIGRATIONS_DATE }),
+      defaultIntegrationMigrations({ addonId: this.addonId, date: HIKVISION_MIGRATIONS_DATE }),
+      (api) =>
         defaultIntegrationPortsOver({
-          api: defaultIntegrationApiOver(this.ctx.api),
-          secrets: this.ctx.secrets ?? null,
-          records,
+          ...defaultIntegrationDepsOver(api),
           kind: hikvisionConnectionsEntryKind,
-          info: (message) => this.ctx.logger.info(message),
-          warn: (message) => this.ctx.logger.warn(message),
-          warnDevice: (message, deviceId) => this.ctx.logger.warn(message, { tags: { deviceId } }),
         }),
-      ),
     )
 
     // The broker PULLS each camera's `stream-catalog` cap to (re)build

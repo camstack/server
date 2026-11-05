@@ -1,8 +1,6 @@
-import { userError } from '@camstack/types'
+import { userError, rowsDepsOver } from '@camstack/types'
 import {
   BaseDeviceProvider,
-  defaultIntegrationApiOver,
-  defineAddonMigrations,
   integrationInstancesCapability,
   integrationRowsMigration,
   integrationRowsPortsOver,
@@ -118,23 +116,15 @@ export class WyzeProviderAddon extends BaseDeviceProvider {
       throw new Error('provider-wyze: ctx.records is required (hub-only addon)')
     await records.declare(wyzeRecordKinds)
     await this.runMigrations(
-      defineAddonMigrations(
-        [
-          integrationRowsMigration({
-            addonId: this.addonId,
-            date: WYZE_MIGRATIONS_DATE,
-            kind: wyzeConnectionsEntryKind,
-            fixtureMark: 'email',
-          }),
-        ],
-        integrationRowsPortsOver({
-          api: defaultIntegrationApiOver(this.ctx.api),
-          secrets: this.ctx.secrets ?? null,
-          records,
+      [
+        integrationRowsMigration({
+          addonId: this.addonId,
+          date: WYZE_MIGRATIONS_DATE,
           kind: wyzeConnectionsEntryKind,
-          warn: (message) => this.ctx.logger.warn(message),
+          fixtureMark: 'email',
         }),
-      ),
+      ],
+      (api) => integrationRowsPortsOver({ ...rowsDepsOver(api), kind: wyzeConnectionsEntryKind }),
     )
     this.instances = buildWyzeInstances(records, {
       onChanged: () => this.reconcileIntegrations(),

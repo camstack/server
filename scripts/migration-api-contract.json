@@ -519,6 +519,12 @@
         },
         "meta{}": {
           "required": false
+        },
+        "tags": {
+          "required": false
+        },
+        "tags.deviceId": {
+          "required": false
         }
       },
       "output": {},
@@ -535,6 +541,12 @@
           "required": false
         },
         "meta{}": {
+          "required": false
+        },
+        "tags": {
+          "required": false
+        },
+        "tags.deviceId": {
           "required": false
         }
       },

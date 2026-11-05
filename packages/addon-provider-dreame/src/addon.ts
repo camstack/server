@@ -3,8 +3,6 @@ import {
   BaseDeviceProvider,
   type ConfigUISchema,
   type CreateDeviceSpec,
-  defaultIntegrationApiOver,
-  defineAddonMigrations,
   integrationInstancesCapability,
   type AddonInitResult,
   type RecordIntegrationInstances,
@@ -20,6 +18,7 @@ import {
   type SystemEvent,
   userError,
   collectOwnerIntegrationIds,
+  rowsDepsOver,
 } from '@camstack/types'
 import { DreameReconciler, type IntegrationLifecycleKind } from './dreame-reconciler.js'
 import { toNodreameOptions } from './config.js'
@@ -87,17 +86,7 @@ export class DreameProviderAddon extends BaseDeviceProvider {
       throw new Error('provider-dreame: ctx.records is required (hub-only addon)')
     await records.declare(dreameRecordKinds)
     // Before the provider registers: while it is registered the hub answers from the record.
-    await this.runMigrations(
-      defineAddonMigrations(
-        DREAME_MIGRATIONS,
-        dreameRowsPorts({
-          api: defaultIntegrationApiOver(this.ctx.api),
-          secrets: this.ctx.secrets ?? null,
-          records,
-          warn: (message) => this.ctx.logger.warn(message),
-        }),
-      ),
-    )
+    await this.runMigrations(DREAME_MIGRATIONS, (api) => dreameRowsPorts({ ...rowsDepsOver(api) }))
     const instances = buildDreameInstances(records, {
       onChanged: () => this.reconcileIntegrations(),
       tester: this.buildConnectionTestProvider(),

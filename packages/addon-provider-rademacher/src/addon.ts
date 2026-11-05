@@ -4,8 +4,6 @@ import {
   BaseDeviceProvider,
   type ConfigUISchema,
   type CreateDeviceSpec,
-  defaultIntegrationApiOver,
-  defineAddonMigrations,
   integrationInstancesCapability,
   connectionTestCapability,
   type DeviceConstructor,
@@ -19,6 +17,7 @@ import {
   type SystemEvent,
   collectOwnerIntegrationIds,
   type RecordIntegrationInstances,
+  rowsDepsOver,
 } from '@camstack/types'
 import type { RademacherConnectionBody } from './rademacher-instances.js'
 import { RademacherReconciler, type IntegrationLifecycleKind } from './rademacher-reconciler.js'
@@ -72,16 +71,8 @@ export class RademacherProviderAddon extends BaseDeviceProvider {
       throw new Error('provider-rademacher: ctx.records is required (hub-only addon)')
     await records.declare(rademacherRecordKinds)
     // Before the provider registers: while it is registered the hub answers from the record.
-    await this.runMigrations(
-      defineAddonMigrations(
-        RADEMACHER_MIGRATIONS,
-        rademacherRowsPorts({
-          api: defaultIntegrationApiOver(this.ctx.api),
-          secrets: this.ctx.secrets ?? null,
-          records,
-          warn: (message) => this.ctx.logger.warn(message),
-        }),
-      ),
+    await this.runMigrations(RADEMACHER_MIGRATIONS, (api) =>
+      rademacherRowsPorts({ ...rowsDepsOver(api) }),
     )
     const instances = buildRademacherInstances(records, {
       onChanged: () => this.reconcileIntegrations(),

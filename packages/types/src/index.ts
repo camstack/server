@@ -27,7 +27,13 @@ export {
   AddonMigrationsBlockedError,
   findMigrationsBlocked,
 } from './addon/migrations-blocked-error.js'
-export { BaseAddon, classifyStoreError, normalizeAddonInitResult } from './addon/base-addon.js'
+export {
+  BaseAddon,
+  classifyStoreError,
+  migrationSet,
+  normalizeAddonInitResult,
+} from './addon/base-addon.js'
+export type { MigrationSet } from './addon/base-addon.js'
 export { normalizeNodeId } from './addon/per-node-store.js'
 export {
   nodeIdOfScopedKey,
@@ -2447,3 +2453,4 @@ export {
 } from './migrations/broker-links-to-connections.js'
 export * from './migrations/api/migration-api.v1.js'
 export * from './migrations/api/migration-api.v1.schema.js'
+export * from './migrations/api/migration-api-ports.js'

@@ -7,14 +7,13 @@ import {
   type AddonInitResult,
   type ConfigUISchema,
   type CreateDeviceSpec,
-  defaultIntegrationApiOver,
-  defineAddonMigrations,
   integrationInstancesCapability,
   type RecordIntegrationInstances,
   type DeviceConstructor,
   type IDevice,
   type IDeviceAdoptionProvider,
   type SystemEvent,
+  rowsDepsOver,
 } from '@camstack/types'
 import {
   buildMqttHaInstances,
@@ -90,17 +89,7 @@ export class MqttHaProviderAddon extends BaseDeviceProvider<MqttHaProviderConfig
       throw new Error('provider-mqtt-ha: ctx.records is required (hub-only addon)')
     await records.declare(mqttHaRecordKinds)
     // Before the provider registers: while it is registered the hub answers from the record.
-    await this.runMigrations(
-      defineAddonMigrations(
-        MQTT_HA_MIGRATIONS,
-        mqttHaRowsPorts({
-          api: defaultIntegrationApiOver(this.ctx.api),
-          secrets: this.ctx.secrets ?? null,
-          records,
-          warn: (message) => this.ctx.logger.warn(message),
-        }),
-      ),
-    )
+    await this.runMigrations(MQTT_HA_MIGRATIONS, (api) => mqttHaRowsPorts({ ...rowsDepsOver(api) }))
     const instances = buildMqttHaInstances(records, {
       onChanged: () => this.reconcileIntegrationsToBrokers(),
     })

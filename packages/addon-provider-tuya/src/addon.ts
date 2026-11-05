@@ -5,8 +5,6 @@ import {
   type ConfigUISchema,
   type CreateDeviceSpec,
   connectionTestCapability,
-  defaultIntegrationApiOver,
-  defineAddonMigrations,
   type DeviceConstructor,
   DeviceType,
   deviceAdoptionCapability,
@@ -20,6 +18,7 @@ import {
   integrationRowsPortsOver,
   type RecordIntegrationInstances,
   type SystemEvent,
+  rowsDepsOver,
 } from '@camstack/types'
 import { toTuyaCloudOptions } from './config.js'
 import { TuyaKettleContainerDevice } from './devices/tuya-kettle-container-device.js'
@@ -81,23 +80,15 @@ export class TuyaProviderAddon extends BaseDeviceProvider {
       throw new Error('provider-tuya: ctx.records is required (hub-only addon)')
     await records.declare(tuyaRecordKinds)
     await this.runMigrations(
-      defineAddonMigrations(
-        [
-          integrationRowsMigration({
-            addonId: this.addonId,
-            date: TUYA_MIGRATIONS_DATE,
-            kind: tuyaConnectionsEntryKind,
-            fixtureMark: 'accessId',
-          }),
-        ],
-        integrationRowsPortsOver({
-          api: defaultIntegrationApiOver(this.ctx.api),
-          secrets: this.ctx.secrets ?? null,
-          records,
+      [
+        integrationRowsMigration({
+          addonId: this.addonId,
+          date: TUYA_MIGRATIONS_DATE,
           kind: tuyaConnectionsEntryKind,
-          warn: (message) => this.ctx.logger.warn(message),
+          fixtureMark: 'accessId',
         }),
-      ),
+      ],
+      (api) => integrationRowsPortsOver({ ...rowsDepsOver(api), kind: tuyaConnectionsEntryKind }),
     )
     this.instances = buildTuyaInstances(records, { onChanged: () => this.reconcileIntegrations() })
 

@@ -16,7 +16,6 @@
 import { z } from 'zod'
 import type { SecretsAccess } from '../keychain/secrets-access.js'
 import type { DefinedRecordKind } from '../records/record-kind.js'
-import type { RecordsAccess } from '../records/records-access.js'
 import { type AddonMigration, type AddonProcedureMigration } from './addon-migration.js'
 import {
   type ClaimDevice,
@@ -25,6 +24,7 @@ import {
 } from './claim-devices-to-default-integration.js'
 import {
   type IntegrationRowsApi,
+  type RowsRecordsDoor,
   integrationRowsPortsOverApi,
 } from './integration-rows-api-ports.js'
 import {
@@ -45,13 +45,13 @@ export interface DefaultIntegrationApi extends IntegrationRowsApi {
 export function defaultIntegrationPortsOver(deps: {
   readonly api: DefaultIntegrationApi
   /** The addon's records door and the kind its integrations are records of. */
-  readonly records: Pick<RecordsAccess, 'kind'>
+  readonly records: RowsRecordsDoor
   readonly kind: DefinedRecordKind
   readonly info: (message: string) => void
   readonly warn: (message: string) => void
   readonly warnDevice: (message: string, deviceId: number) => void
   /** The owning addon's keychain handle. The door returns markers; this resolves them. */
-  readonly secrets?: SecretsAccess | null
+  readonly secrets?: Pick<SecretsAccess, 'resolve' | 'delete'> | null
 }): DefaultIntegrationPorts {
   const rows = integrationRowsPortsOverApi({
     api: deps.api,

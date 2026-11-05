@@ -1,10 +1,8 @@
-import { userError } from '@camstack/types'
+import { userError, defaultIntegrationDepsOver } from '@camstack/types'
 import {
   type AddonInitResult,
-  defaultIntegrationApiOver,
   defaultIntegrationMigrations,
   defaultIntegrationPortsOver,
-  defineAddonMigrations,
   integrationInstancesCapability,
 } from '@camstack/types'
 import { buildRtspInstances, rtspConnectionsEntryKind, rtspRecordKinds } from './rtsp-instances.js'
@@ -158,22 +156,17 @@ export class RtspProviderAddon extends BaseDeviceProvider {
     if (records === undefined)
       throw new Error('provider-rtsp: ctx.records is required (hub-only addon)')
     await records.declare(rtspRecordKinds)
-    const defaultIntegration = defineAddonMigrations(
+    await this.runMigrations(
       defaultIntegrationMigrations({
         addonId: this.addonId,
         date: '2026-11-04',
       }),
-      defaultIntegrationPortsOver({
-        api: defaultIntegrationApiOver(this.ctx.api),
-        secrets: this.ctx.secrets ?? null,
-        records,
-        kind: rtspConnectionsEntryKind,
-        info: (message) => this.ctx.logger.info(message),
-        warn: (message) => this.ctx.logger.warn(message),
-        warnDevice: (message, deviceId) => this.ctx.logger.warn(message, { tags: { deviceId } }),
-      }),
+      (api) =>
+        defaultIntegrationPortsOver({
+          ...defaultIntegrationDepsOver(api),
+          kind: rtspConnectionsEntryKind,
+        }),
     )
-    await this.runMigrations(defaultIntegration)
     // NOTE: `device.online` is NO LONGER mirrored from stream-broker health.
     // `online` must reflect CONTROL-PLANE reachability — an on-demand RTSP
     // camera with no consumer attached is reachable yet has no active stream,

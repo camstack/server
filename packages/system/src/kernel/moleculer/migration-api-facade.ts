@@ -197,12 +197,18 @@ export function createMigrationApi(backing: MigrationApiBacking): MigrationApiV1
     },
     node: { localNodeId: async () => ({ nodeId: backing.nodeId }) },
     log: {
-      info: async ({ message, meta }) => {
-        logger.info(message, meta === undefined ? undefined : { meta })
+      info: async ({ message, meta, tags }) => {
+        logger.info(message, {
+          ...(meta === undefined ? {} : { meta }),
+          ...(tags === undefined ? {} : { tags }),
+        })
         return {}
       },
-      warn: async ({ message, meta }) => {
-        logger.warn(message, meta === undefined ? undefined : { meta })
+      warn: async ({ message, meta, tags }) => {
+        logger.warn(message, {
+          ...(meta === undefined ? {} : { meta }),
+          ...(tags === undefined ? {} : { tags }),
+        })
         return {}
       },
     },

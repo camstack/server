@@ -366,7 +366,7 @@ export function isSecretRefOwnedBy(ref: string, owner: string): boolean {
  */
 export async function resolveSecretMarkers<T>(
   value: T,
-  secrets: SecretsAccess,
+  secrets: Pick<SecretsAccess, 'resolve'>,
   options: ResolveSecretMarkersOptions = {},
 ): Promise<ResolvedSecrets<T>> {
   const keepMarker = options.unresolved === 'keep-marker'

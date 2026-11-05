@@ -9,8 +9,25 @@
 import { collectSecretMarkerRefs, resolveSecretMarkers } from '../addon/secret-settings-view.js'
 import type { SecretsAccess } from '../keychain/secrets-access.js'
 import { RevConflictError } from '../records/errors.js'
-import type { RecordKindHandle } from '../records/records-access.js'
+import type { DefinedRecordKind } from '../records/record-kind.js'
+import type { z } from 'zod'
 import type { IntegrationRowsPorts, RowsMigrationLog } from './integration-rows-to-record.js'
+
+/** The four record calls the move makes on its kind. A records handle satisfies it as it is. */
+export interface RowsRecordHandle<T> {
+  get(id: string): Promise<{ readonly data: T } | null>
+  getResolved(id: string): Promise<{ readonly data: T } | null>
+  put(
+    input: { readonly id: string; readonly data: T },
+    opts?: { readonly ifRev?: number },
+  ): Promise<unknown>
+  delete(id: string): Promise<unknown>
+}
+
+/** What `ctx.records` offers the move: bind a kind. `RecordsAccess` and the migration API satisfy it. */
+export interface RowsRecordsDoor {
+  kind<S extends z.ZodType>(definition: DefinedRecordKind<S>): RowsRecordHandle<z.infer<S>>
+}
 
 /** The slice of `ctx.api` the move needs: the registry list, and the migration-only door. */
 export interface IntegrationRowsApi {
@@ -30,7 +47,7 @@ export interface IntegrationRowsApi {
 
 async function resolvedRows(
   stored: Readonly<Record<string, unknown>>,
-  secrets: SecretsAccess | null,
+  secrets: Pick<SecretsAccess, 'resolve'> | null,
 ): Promise<Readonly<Record<string, unknown>>> {
   if (secrets === null) return stored
   const { value, unresolved } = await resolveSecretMarkers(stored, secrets)
@@ -42,10 +59,10 @@ async function resolvedRows(
 
 export function integrationRowsPortsOverApi(deps: {
   readonly api: IntegrationRowsApi
-  readonly records: RecordKindHandle<Record<string, unknown>>
+  readonly records: RowsRecordHandle<Record<string, unknown>>
   readonly log: RowsMigrationLog
   /** The owning addon's keychain handle. Null leaves markers unresolved. */
-  readonly secrets?: SecretsAccess | null
+  readonly secrets?: Pick<SecretsAccess, 'resolve' | 'delete'> | null
 }): IntegrationRowsPorts {
   const secrets = deps.secrets ?? null
   return {

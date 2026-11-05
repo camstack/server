@@ -78,7 +78,12 @@ export const MigrationApiInfoSchema = z.object({
   methods: z.array(z.string()),
 })
 
-const LogInput = z.object({ message: z.string(), meta: Rows.optional() })
+const LogInput = z.object({
+  message: z.string(),
+  meta: Rows.optional(),
+  /** Grouping tags of the line; a line about a device carries `{ deviceId }`. */
+  tags: z.object({ deviceId: z.number().int().optional() }).optional(),
+})
 
 export const MIGRATION_API_V1_METHODS = {
   'ledger.declare': {

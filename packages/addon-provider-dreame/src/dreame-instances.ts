@@ -10,6 +10,7 @@ import {
   entryBody,
   type IConnectionTestProvider,
   type IntegrationRowsApi,
+  type RowsRecordsDoor,
   type SecretsAccess,
   type IntegrationRowsPorts,
   type IntegrationTestConnectionResult,
@@ -109,9 +110,9 @@ export const DREAME_MIGRATIONS: readonly AddonMigration<IntegrationRowsPorts>[] 
 /** The hub side and the records side of the move, over `ctx.api` and `ctx.records`. */
 export function dreameRowsPorts(deps: {
   readonly api: IntegrationRowsApi
-  readonly records: Pick<RecordsAccess, 'kind'>
+  readonly records: RowsRecordsDoor
   readonly warn: (message: string) => void
-  readonly secrets?: SecretsAccess | null
+  readonly secrets?: Pick<SecretsAccess, 'resolve' | 'delete'> | null
 }): IntegrationRowsPorts {
   return integrationRowsPortsOverApi({
     api: deps.api,

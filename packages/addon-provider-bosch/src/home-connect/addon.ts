@@ -5,8 +5,6 @@ import {
   type ConfigUISchema,
   type CreateDeviceSpec,
   connectionTestCapability,
-  defaultIntegrationApiOver,
-  defineAddonMigrations,
   integrationInstancesCapability,
   type DeviceConstructor,
   DeviceType,
@@ -20,6 +18,7 @@ import {
   type SystemEvent,
   VENDOR_LOGIN_PROXY_PREFIX,
   VendorLoginProxy,
+  rowsDepsOver,
 } from '@camstack/types'
 import { homeConnectActions } from './custom-actions.js'
 import { trackHomeConnectContainers } from './home-connect-container-tracker.js'
@@ -87,16 +86,8 @@ export class BoschHomeConnectProviderAddon extends BaseDeviceProvider {
       throw new Error('bosch-home-connect: ctx.records is required (hub-only addon)')
     await records.declare(homeConnectRecordKinds)
     // Before the provider registers: while it is registered the hub answers from the record.
-    await this.runMigrations(
-      defineAddonMigrations(
-        HOME_CONNECT_MIGRATIONS,
-        homeConnectRowsPorts({
-          api: defaultIntegrationApiOver(this.ctx.api),
-          secrets: this.ctx.secrets ?? null,
-          records,
-          warn: (message) => this.ctx.logger.warn(message),
-        }),
-      ),
+    await this.runMigrations(HOME_CONNECT_MIGRATIONS, (api) =>
+      homeConnectRowsPorts({ ...rowsDepsOver(api) }),
     )
     const built = buildHomeConnectInstances(records, {
       onChanged: () => this.reconcileIntegrations(),

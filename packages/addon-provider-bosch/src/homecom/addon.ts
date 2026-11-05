@@ -5,8 +5,6 @@ import {
   type ConfigUISchema,
   type CreateDeviceSpec,
   connectionTestCapability,
-  defaultIntegrationApiOver,
-  defineAddonMigrations,
   integrationInstancesCapability,
   type DeviceConstructor,
   DeviceType,
@@ -19,6 +17,7 @@ import {
   type SystemEvent,
   VENDOR_LOGIN_PROXY_PREFIX,
   VendorLoginProxy,
+  rowsDepsOver,
 } from '@camstack/types'
 import { cascadeRemoveDevicesForIntegration } from '../shared/account-integration-cascade.js'
 import { setIntegrationDevicesOnline } from '../shared/account-integration-offline.js'
@@ -69,16 +68,8 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
       throw new Error('bosch-homecom: ctx.records is required (hub-only addon)')
     await records.declare(homeComRecordKinds)
     // Before the provider registers: while it is registered the hub answers from the record.
-    await this.runMigrations(
-      defineAddonMigrations(
-        HOMECOM_MIGRATIONS,
-        homeComRowsPorts({
-          api: defaultIntegrationApiOver(this.ctx.api),
-          secrets: this.ctx.secrets ?? null,
-          records,
-          warn: (message) => this.ctx.logger.warn(message),
-        }),
-      ),
+    await this.runMigrations(HOMECOM_MIGRATIONS, (api) =>
+      homeComRowsPorts({ ...rowsDepsOver(api) }),
     )
     const built = buildHomeComInstances(records, {
       onChanged: () => this.reconcileIntegrations(),

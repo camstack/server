@@ -18,12 +18,11 @@ import {
   type IDeviceAdoptionProvider,
   type SystemEvent,
   collectOwnerIntegrationIds,
-  defaultIntegrationApiOver,
-  defineAddonMigrations,
   integrationInstancesCapability,
   integrationRowsMigration,
   integrationRowsPortsOver,
   type RecordIntegrationInstances,
+  rowsDepsOver,
 } from '@camstack/types'
 import { VeluxReconciler, type IntegrationLifecycleKind } from './velux-reconciler.js'
 import { veluxActions } from './custom-actions.js'
@@ -94,23 +93,15 @@ export class VeluxProviderAddon extends BaseDeviceProvider {
       throw new Error('provider-velux: ctx.records is required (hub-only addon)')
     await records.declare(veluxRecordKinds)
     await this.runMigrations(
-      defineAddonMigrations(
-        [
-          integrationRowsMigration({
-            addonId: this.addonId,
-            date: VELUX_MIGRATIONS_DATE,
-            kind: veluxConnectionsEntryKind,
-            fixtureMark: 'host',
-          }),
-        ],
-        integrationRowsPortsOver({
-          api: defaultIntegrationApiOver(this.ctx.api),
-          secrets: this.ctx.secrets ?? null,
-          records,
+      [
+        integrationRowsMigration({
+          addonId: this.addonId,
+          date: VELUX_MIGRATIONS_DATE,
           kind: veluxConnectionsEntryKind,
-          warn: (message) => this.ctx.logger.warn(message),
+          fixtureMark: 'host',
         }),
-      ),
+      ],
+      (api) => integrationRowsPortsOver({ ...rowsDepsOver(api), kind: veluxConnectionsEntryKind }),
     )
     this.instances = buildVeluxInstances(records, {
       onChanged: () => this.reconcileIntegrations(),

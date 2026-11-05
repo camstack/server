@@ -1,10 +1,8 @@
 import {
   type AddonInitResult,
   BaseDeviceProvider,
-  defaultIntegrationApiOver,
   defaultIntegrationMigrations,
   defaultIntegrationPortsOver,
-  defineAddonMigrations,
   integrationInstancesCapability,
   userError,
   type ConfigUISchema,
@@ -16,6 +14,7 @@ import {
   type DiscoveryMode,
   errMsg,
   type IDevice,
+  defaultIntegrationDepsOver,
 } from '@camstack/types'
 import { buildConnectionFormSchema, type GreeConfig, settingsToGreeConfig } from './config.js'
 import {
@@ -79,21 +78,15 @@ export class GreeProviderAddon extends BaseDeviceProvider {
     await records.declare(greeRecordKinds)
     this.instances = buildGreeInstances(records)
     await this.runMigrations(
-      defineAddonMigrations(
-        defaultIntegrationMigrations({
-          addonId: this.addonId,
-          date: GREE_MIGRATIONS_DATE,
-        }),
+      defaultIntegrationMigrations({
+        addonId: this.addonId,
+        date: GREE_MIGRATIONS_DATE,
+      }),
+      (api) =>
         defaultIntegrationPortsOver({
-          api: defaultIntegrationApiOver(this.ctx.api),
-          secrets: this.ctx.secrets ?? null,
-          records,
+          ...defaultIntegrationDepsOver(api),
           kind: greeConnectionsEntryKind,
-          info: (message) => this.ctx.logger.info(message),
-          warn: (message) => this.ctx.logger.warn(message),
-          warnDevice: (message, deviceId) => this.ctx.logger.warn(message, { tags: { deviceId } }),
         }),
-      ),
     )
     return {
       providers: [

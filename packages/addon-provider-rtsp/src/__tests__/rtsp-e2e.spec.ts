@@ -10,7 +10,13 @@
  */
 
 import { describe, it, expect, afterEach, vi } from 'vitest'
-import type { AddonContext, IScopedLogger, IEventBus, SavedDevice } from '@camstack/types'
+import type {
+  AddonContext,
+  IScopedLogger,
+  IEventBus,
+  MigrationApiV1,
+  SavedDevice,
+} from '@camstack/types'
 import { DeviceType, streamCatalogCapability } from '@camstack/types'
 import type { DeviceManagerApi, InferNativeProvider } from '@camstack/types'
 
@@ -163,6 +169,35 @@ const fakeKernelStreamProbe: import('@camstack/types').IKernelStreamProbe = {
   },
 }
 
+/** The hub engine has nothing to run for this catalogue, so no port is ever called. */
+function unusedMigrationApi(): MigrationApiV1 {
+  const none = async (): Promise<never> => {
+    throw new Error('the migration API is not used by this suite')
+  }
+  const handle = {
+    get: none,
+    getResolved: none,
+    put: none,
+    putMany: none,
+    patch: none,
+    delete: none,
+    query: none,
+    deleteWhere: none,
+  }
+  return {
+    version: 1,
+    ledger: { declare: none, start: none, finish: none },
+    legacyRows: { read: none, clear: none, patch: none, deleteKeys: none },
+    records: { kind: () => handle },
+    settings: { read: none, write: none, deleteKeys: none },
+    secrets: { resolve: none, put: none, delete: none },
+    integrations: { list: none, get: none },
+    devices: { list: none, get: none, setIntegrationId: none },
+    node: { localNodeId: none },
+    log: { info: none, warn: none },
+  }
+}
+
 function makeAddonContext(
   addonId: string,
   devicesApi: DeviceManagerApi,
@@ -187,6 +222,7 @@ function makeAddonContext(
       registeredProviders[name] = provider
     },
     settings: undefined,
+    migrationApi: unusedMigrationApi(),
     // The records door of a hub-only addon: the integration kind is declared, nothing is stored.
     records: { declare: async () => undefined, kind: () => ({}), owner: () => ({}) },
   } as unknown as AddonContext

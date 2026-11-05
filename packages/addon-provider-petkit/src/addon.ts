@@ -3,8 +3,6 @@ import {
   BaseDeviceProvider,
   type ConfigUISchema,
   type CreateDeviceSpec,
-  defaultIntegrationApiOver,
-  defineAddonMigrations,
   integrationInstancesCapability,
   type AddonInitResult,
   type RecordIntegrationInstances,
@@ -19,6 +17,7 @@ import {
   type IDeviceAdoptionProvider,
   type SystemEvent,
   collectOwnerIntegrationIds,
+  rowsDepsOver,
 } from '@camstack/types'
 import { PetkitReconciler, type IntegrationLifecycleKind } from './petkit-reconciler.js'
 import { toNodepetkitOptions, toPetkitCredentials } from './config.js'
@@ -74,17 +73,7 @@ export class PetkitProviderAddon extends BaseDeviceProvider {
       throw new Error('provider-petkit: ctx.records is required (hub-only addon)')
     await records.declare(petkitRecordKinds)
     // Before the provider registers: while it is registered the hub answers from the record.
-    await this.runMigrations(
-      defineAddonMigrations(
-        PETKIT_MIGRATIONS,
-        petkitRowsPorts({
-          api: defaultIntegrationApiOver(this.ctx.api),
-          secrets: this.ctx.secrets ?? null,
-          records,
-          warn: (message) => this.ctx.logger.warn(message),
-        }),
-      ),
-    )
+    await this.runMigrations(PETKIT_MIGRATIONS, (api) => petkitRowsPorts({ ...rowsDepsOver(api) }))
     const instances = buildPetkitInstances(records, {
       onChanged: () => this.reconcileIntegrations(),
       tester: this.buildConnectionTestProvider(),

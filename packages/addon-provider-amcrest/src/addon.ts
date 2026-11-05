@@ -1,10 +1,9 @@
 import {
   type AddonInitResult,
-  defaultIntegrationApiOver,
   defaultIntegrationMigrations,
   defaultIntegrationPortsOver,
-  defineAddonMigrations,
   integrationInstancesCapability,
+  defaultIntegrationDepsOver,
 } from '@camstack/types'
 import {
   buildAmcrestInstances,
@@ -243,22 +242,17 @@ export class AmcrestProviderAddon extends BaseDeviceProvider {
     if (records === undefined)
       throw new Error('provider-amcrest: ctx.records is required (hub-only addon)')
     await records.declare(amcrestRecordKinds)
-    const defaultIntegration = defineAddonMigrations(
+    await this.runMigrations(
       defaultIntegrationMigrations({
         addonId: this.addonId,
         date: '2026-11-04',
       }),
-      defaultIntegrationPortsOver({
-        api: defaultIntegrationApiOver(this.ctx.api),
-        secrets: this.ctx.secrets ?? null,
-        records,
-        kind: amcrestConnectionsEntryKind,
-        info: (message) => this.ctx.logger.info(message),
-        warn: (message) => this.ctx.logger.warn(message),
-        warnDevice: (message, deviceId) => this.ctx.logger.warn(message, { tags: { deviceId } }),
-      }),
+      (api) =>
+        defaultIntegrationPortsOver({
+          ...defaultIntegrationDepsOver(api),
+          kind: amcrestConnectionsEntryKind,
+        }),
     )
-    await this.runMigrations(defaultIntegration)
 
     // NOTE: `device.online` is NO LONGER mirrored from the stream broker's
     // `camera-streams` health. `online` must reflect CONTROL-PLANE

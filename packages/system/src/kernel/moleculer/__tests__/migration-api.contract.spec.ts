@@ -443,5 +443,8 @@ describe('MigrationApiV1.integrations, node, log', () => {
   it('log.warn.writes-a-line', async () => {
     await api().log.warn({ message: 'hello warn', meta: { n: 1 } })
     expect(world.lines.some((l) => l.level === 'warn' && l.message === 'hello warn')).toBe(true)
+    await api().log.warn({ message: 'about a device', tags: { deviceId: 7 } })
+    const tagged = world.lines.find((l) => l.message === 'about a device')
+    expect(tagged?.extras?.tags?.['deviceId']).toBe(7)
   })
 })

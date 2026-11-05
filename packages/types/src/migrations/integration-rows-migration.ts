@@ -13,10 +13,10 @@ import { z } from 'zod'
 import type { SecretsAccess } from '../keychain/secrets-access.js'
 import { isSecretMarkerLike } from '../keychain/secret-marker.js'
 import type { DefinedRecordKind } from '../records/record-kind.js'
-import type { RecordsAccess } from '../records/records-access.js'
 import type { AddonProcedureMigration } from './addon-migration.js'
 import {
   type IntegrationRowsApi,
+  type RowsRecordsDoor,
   integrationRowsPortsOverApi,
 } from './integration-rows-api-ports.js'
 import {
@@ -104,11 +104,11 @@ export function integrationRowsMigration<S extends z.ZodObject>(spec: {
 /** The hub and records sides of {@link integrationRowsMigration}. */
 export function integrationRowsPortsOver(deps: {
   readonly api: IntegrationRowsApi
-  readonly records: Pick<RecordsAccess, 'kind'>
+  readonly records: RowsRecordsDoor
   readonly kind: DefinedRecordKind
   readonly warn: (message: string) => void
   /** The owning addon's keychain handle. The door returns markers; this resolves them. */
-  readonly secrets?: SecretsAccess | null
+  readonly secrets?: Pick<SecretsAccess, 'resolve' | 'delete'> | null
 }): IntegrationRowsPorts {
   return integrationRowsPortsOverApi({
     api: deps.api,

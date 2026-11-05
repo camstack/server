@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A stable, append-only migration API (MigrationApiV1) that addon migrations call, so an old migration keeps running after a version-jump upgrade
 - Migrations: ctx.migrationApi, a stable append-only migration API (V1), and runMigrations(catalogue, bindPorts)
 - Migration API V1 gains a devices namespace (scoped list, get, setIntegrationId)
+- Adapters that bind a catalogue's ports over the migration API (secrets, records, integration rows, default integration)
 
 ## [1.2.507] - 2026-11-05
 

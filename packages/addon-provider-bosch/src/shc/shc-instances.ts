@@ -10,6 +10,7 @@ import {
   entryBody,
   type IConnectionTestProvider,
   type IntegrationRowsApi,
+  type RowsRecordsDoor,
   type IntegrationRowsPorts,
   RecordIntegrationInstances,
   type RecordsAccess,
@@ -89,9 +90,9 @@ export const SHC_MIGRATIONS: readonly AddonMigration<IntegrationRowsPorts>[] = [
 
 export function shcRowsPorts(deps: {
   readonly api: IntegrationRowsApi
-  readonly records: Pick<RecordsAccess, 'kind'>
+  readonly records: RowsRecordsDoor
   readonly warn: (message: string) => void
-  readonly secrets?: SecretsAccess | null
+  readonly secrets?: Pick<SecretsAccess, 'resolve' | 'delete'> | null
 }): IntegrationRowsPorts {
   return boschRowsPorts({ ...deps, kind: shcConnectionsEntryKind })
 }

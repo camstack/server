@@ -16,8 +16,7 @@ import {
   type RecordIntegrationInstances,
   type SystemEvent,
   collectOwnerIntegrationIds,
-  defaultIntegrationApiOver,
-  defineAddonMigrations,
+  rowsDepsOver,
 } from '@camstack/types'
 import { UNRAID_SYSTEM } from './config.js'
 import { UnraidEntityDevice } from './devices/unraid-entity-device.js'
@@ -86,23 +85,15 @@ export class UnraidProviderAddon extends BaseDeviceProvider {
       throw new Error('provider-unraid: ctx.records is required (hub-only addon)')
     await records.declare(unraidRecordKinds)
     await this.runMigrations(
-      defineAddonMigrations(
-        [
-          integrationRowsMigration({
-            addonId: this.addonId,
-            date: UNRAID_MIGRATIONS_DATE,
-            kind: unraidConnectionsEntryKind,
-            fixtureMark: 'host',
-          }),
-        ],
-        integrationRowsPortsOver({
-          api: defaultIntegrationApiOver(this.ctx.api),
-          secrets: this.ctx.secrets ?? null,
-          records,
+      [
+        integrationRowsMigration({
+          addonId: this.addonId,
+          date: UNRAID_MIGRATIONS_DATE,
           kind: unraidConnectionsEntryKind,
-          warn: (message) => this.ctx.logger.warn(message),
+          fixtureMark: 'host',
         }),
-      ),
+      ],
+      (api) => integrationRowsPortsOver({ ...rowsDepsOver(api), kind: unraidConnectionsEntryKind }),
     )
     this.instances = buildUnraidInstances(records, {
       onChanged: () => this.reconcileIntegrations(),
