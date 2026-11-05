@@ -1,17 +1,15 @@
 /**
- * OIDC client secret after D830: Settings schema is blurb-only (`fields: []`);
- * rows live in `oidc-connections` with `formValues.clientSecret` as a keychain
+ * OIDC client secret after D830: the addon declares no Settings form at all
+ * (D986 M4 dropped the blurb-only one); rows live in `oidc-connections` with `formValues.clientSecret` as a keychain
  * view. The value stays on the hub — never in the global settings form, never
  * as plaintext on the connection list.
  *
- * Driven through the REAL auth-oidc settings schema, the REAL connection form
- * schema + `clientSecretView` (same path `listConnections` uses), and the REAL
- * non-admin redactor.
+ * Driven through the REAL auth-oidc addon, the REAL connection form schema +
+ * `clientSecretView` (same path `listConnections` uses).
  */
 import { AuthOidcAddon } from '@camstack/addon-auth/oidc'
 import {
   type ConfigUISchema,
-  hydrateSchema,
   makeSecretMarker,
   type SecretsAccess,
   toSecretFieldView,
@@ -19,51 +17,23 @@ import {
 import { describe, expect, it } from 'vitest'
 import { OIDC_CONNECTION_FORM_SCHEMA } from '../../../../../../packages/addon-auth/src/oidc/oidc-connection-schema.js'
 import { clientSecretView } from '../../../../../../packages/addon-auth/src/oidc/oidc-connections.js'
-import { NON_ADMIN_CONFIG_REDACTED_METHODS } from '../device-config-secret-redaction.js'
 
 class OidcSchemaProbe extends AuthOidcAddon {
-  settingsSchema(): ConfigUISchema {
-    const schema = this.globalSettingsSchema()
-    if (schema === null) throw new Error('auth-oidc declares no settings schema')
-    return schema
+  settingsSchema(): ConfigUISchema | null {
+    return this.globalSettingsSchema()
   }
 }
 
 const REF = 'secret://auth-oidc/global/providers[authentik].clientSecret'
 
-const ROW = {
-  id: 'authentik',
-  displayName: 'Authentik',
-  icon: 'shield-check',
-  issuerUrl: 'https://auth.example.com/application/o/camstack/',
-  clientId: 'camstack',
-}
-
-/** What the store holds after the keychain: a marker, never the value. */
-const STORED = { providers: [{ ...ROW, clientSecret: makeSecretMarker(REF) }] }
 /** A pre-keychain blob, before the operator's one-off migration. */
 // Assembled at runtime so check-no-client-secrets never sees a literal (D753).
 const INLINE_SECRET = ['real', 'authentik', 'client', 'secret'].join('-')
-const STORED_INLINE = {
-  providers: [{ ...ROW, clientSecret: INLINE_SECRET }],
-}
-
-function redactForNonAdmin(data: unknown): string {
-  const redact = NON_ADMIN_CONFIG_REDACTED_METHODS.get('addonSettings.getGlobalSettings')
-  if (redact === undefined) throw new Error('addonSettings.getGlobalSettings is not redacted')
-  return JSON.stringify(redact(data))
-}
-
 describe('auth-oidc client secret (DataTable + connection form)', () => {
   const probe = new OidcSchemaProbe()
 
-  it('Settings schema carries no providers array — secrets are not in the form', () => {
-    const schema = probe.settingsSchema()
-    const fields = schema.sections.flatMap((s) => s.fields)
-    expect(fields).toEqual([])
-    const hydrated = hydrateSchema(schema, STORED)
-    expect(JSON.stringify(hydrated)).not.toContain('Authentik')
-    expect(JSON.stringify(hydrated)).not.toContain(REF)
+  it('declares no Settings form — the client secret has no global field to land in', () => {
+    expect(probe.settingsSchema()).toBeNull()
   })
 
   it('the connection form declares a password clientSecret (keychain path)', () => {
@@ -97,12 +67,5 @@ describe('auth-oidc client secret (DataTable + connection form)', () => {
       set: true,
       inline: true,
     })
-  })
-
-  it('a non-admin never reads inline secrets from Settings — the blurb alone remains', () => {
-    const out = redactForNonAdmin(hydrateSchema(probe.settingsSchema(), STORED_INLINE))
-    expect(out).not.toContain(INLINE_SECRET)
-    expect(out).toContain('OpenID Connect')
-    expect(out).not.toContain('Authentik')
   })
 })
