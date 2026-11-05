@@ -159,6 +159,56 @@ function readClosureVersion(closureDir: string, spec: RootPackageSpec): string |
   return null
 }
 
+/** Newest server version this data root has ever booted (`<rootDir>/last-booted.json`). */
+export const LAST_BOOTED_FILE = 'last-booted.json'
+
+export function readLastBooted(rootDir: string): string | null {
+  try {
+    const raw: unknown = JSON.parse(fs.readFileSync(path.join(rootDir, LAST_BOOTED_FILE), 'utf-8'))
+    if (typeof raw === 'object' && raw !== null) {
+      const version = (raw as Record<string, unknown>)['version']
+      if (typeof version === 'string') return version
+    }
+  } catch {
+    /* missing or corrupt — nothing recorded */
+  }
+  return null
+}
+
+/** Record a booted version, never lowering the high-water mark. Best effort. */
+function recordLastBooted(rootDir: string, version: string): void {
+  const previous = readLastBooted(rootDir)
+  if (previous !== null && compareSemver(previous, version) >= 0) return
+  try {
+    const target = path.join(rootDir, LAST_BOOTED_FILE)
+    const tmp = `${target}.tmp`
+    fs.mkdirSync(rootDir, { recursive: true })
+    fs.writeFileSync(tmp, JSON.stringify({ version }), 'utf-8')
+    fs.renameSync(tmp, target)
+  } catch (err) {
+    console.warn(`[starter] could not record the booted version: ${String(err)}`)
+  }
+}
+
+/** Version of the baked seed, found by walking up from its entry; null when unknown. */
+function readSeedVersion(seedEntry: string, spec: RootPackageSpec): string | null {
+  let dir = path.dirname(seedEntry)
+  for (let i = 0; i < 5; i++) {
+    try {
+      const raw: unknown = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf-8'))
+      if (typeof raw === 'object' && raw !== null) {
+        const rec = raw as Record<string, unknown>
+        if (rec['name'] === spec.packageName && typeof rec['version'] === 'string')
+          return rec['version']
+      }
+    } catch {
+      /* keep walking */
+    }
+    dir = path.dirname(dir)
+  }
+  return null
+}
+
 /**
  * A container started with `TZ=` (set, EMPTY) makes ICU answer `Etc/Unknown`,
  * a zone `Intl.DateTimeFormat` then throws on. Drop the empty value so this
@@ -242,6 +292,25 @@ export function runNodeStarter(options: NodeStarterOptions): void {
         `${STARTER_HOSTS_SERVER_MIN} this starter hosts — booting the baked seed; update the app or the container image`,
     )
   }
+  // The baked seed is the only thing left to boot, and it can be OLDER than a
+  // server this data root already ran (its database and settings were migrated by
+  // that one). Booting it silently is a downgrade nobody chose: refuse, loudly.
+  if (outOfRange) {
+    const lastBooted = readLastBooted(rootDir)
+    const seedVersion = readSeedVersion(options.seedEntry, options.spec)
+    if (
+      lastBooted !== null &&
+      (seedVersion === null || compareSemver(seedVersion, lastBooted) < 0)
+    ) {
+      const message =
+        `[starter] REFUSING to boot the baked seed ${seedVersion ?? '(version unknown)'}: this data ` +
+        `root last ran ${lastBooted} and the single copy on disk is ${activeVersion ?? 'unreadable'}. ` +
+        `Restore the ${lastBooted} closure, or update the app / container image to ${lastBooted} or newer. ` +
+        `${options.envNames.killSwitch}=off boots the baked seed anyway.`
+      console.error(message)
+      throw new Error(message)
+    }
+  }
   const plan: BootPlan = outOfRange
     ? { kind: 'baked', reason: 'the single copy is outside the range this starter hosts' }
     : planBoot(invalid === null)
@@ -258,7 +327,10 @@ export function runNodeStarter(options: NodeStarterOptions): void {
     // from it, so the runners resolve `@camstack/{system,types,…}` + native
     // prebuilds from the SAME copy hub-main loaded (no separate /data/framework).
     env[options.envNames.activeRoot] = activeRootDir
-    if (version !== null) env[options.envNames.activeVersion] = version
+    if (version !== null) {
+      env[options.envNames.activeVersion] = version
+      recordLastBooted(rootDir, version)
+    }
     registerResolver(activeRootDir)
     options.loadEntry(entry)
     return

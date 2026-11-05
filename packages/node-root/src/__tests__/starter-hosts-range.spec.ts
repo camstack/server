@@ -16,7 +16,7 @@ import {
   stagingDirPath,
   writePendingRootSwap,
 } from '../root-single-copy.js'
-import { runNodeStarter, STARTER_HOSTS_SERVER_MIN } from '../starter-core.js'
+import { readLastBooted, runNodeStarter, STARTER_HOSTS_SERVER_MIN } from '../starter-core.js'
 
 const NOW = 1_700_000_000_000
 let tmp: string
@@ -157,5 +157,56 @@ describe('a starter checks the range at boot for a closure already on disk (plan
     closure(currentDir(serverRootDir(dataDir)), STARTER_HOSTS_SERVER_MIN)
     const r = boot(dataDir)
     expect(r.env['B']).toBe('data-root')
+  })
+
+  function seed(version: string): void {
+    const imageDir = path.join(tmp, 'image')
+    fs.mkdirSync(imageDir, { recursive: true })
+    fs.writeFileSync(
+      path.join(imageDir, 'package.json'),
+      JSON.stringify({ name: '@camstack/server', version }),
+    )
+  }
+
+  it('refuses the older baked seed when the data root last ran a newer server', () => {
+    const dataDir = path.join(tmp, 'data')
+    seed('1.2.610')
+    closure(currentDir(serverRootDir(dataDir)), '1.2.600')
+    fs.writeFileSync(
+      path.join(serverRootDir(dataDir), 'last-booted.json'),
+      JSON.stringify({ version: '1.2.900' }),
+    )
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    try {
+      expect(() => boot(dataDir)).toThrow(/REFUSING.*1\.2\.900/)
+      expect(String(err.mock.calls[0]?.[0])).toContain('1.2.900')
+    } finally {
+      err.mockRestore()
+      warn.mockRestore()
+    }
+  })
+
+  it('still boots the seed when it is not older than what the data root ran', () => {
+    const dataDir = path.join(tmp, 'data')
+    seed('1.2.950')
+    closure(currentDir(serverRootDir(dataDir)), '1.2.600')
+    fs.writeFileSync(
+      path.join(serverRootDir(dataDir), 'last-booted.json'),
+      JSON.stringify({ version: '1.2.900' }),
+    )
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    try {
+      expect(boot(dataDir).env['B']).toBe('baked')
+    } finally {
+      warn.mockRestore()
+    }
+  })
+
+  it('records the version of a closure it boots', () => {
+    const dataDir = path.join(tmp, 'data')
+    closure(currentDir(serverRootDir(dataDir)), STARTER_HOSTS_SERVER_MIN)
+    boot(dataDir)
+    expect(readLastBooted(serverRootDir(dataDir))).toBe(STARTER_HOSTS_SERVER_MIN)
   })
 })
