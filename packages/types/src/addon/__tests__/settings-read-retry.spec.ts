@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { BaseAddon, classifyStoreError } from '../base-addon.js'
-import { fakeAddonContext } from './fake-addon-context.js'
+import { fakeAddonContext } from '../fake-addon-context.js'
 import type { AddonContext } from '../../interfaces/addon.js'
 
 /**

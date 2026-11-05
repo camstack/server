@@ -80,7 +80,6 @@
     "publish:npm": "npm publish --access public"
   },
   "devDependencies": {
-    "@trpc/client": "^11.16.0",
     "@trpc/server": "^11.16.0",
     "tsup": "^8.0.0",
     "typescript": "~6.0.3",
@@ -88,6 +87,7 @@
     "vitest": "^3.0.0"
   },
   "dependencies": {
+    "@trpc/client": "^11.16.0",
     "zod": "^4.3.6"
   },
   "nx": {

@@ -3,6 +3,7 @@ import {
   method,
   optionalMethod,
   type CapabilityDefinition,
+  type DeviceSettingsContribution,
   type InferProvider,
 } from './capability-definition.js'
 
@@ -172,12 +173,12 @@ export const deviceExportCapability = {
   providerKind: 'device-export',
   status: { schema: DeviceExportStatusSchema, kind: 'poll' },
   /**
-   * Each export provider contributes its own per-device "Export" panel
-   * (enabled toggle, preferred stream, addon-specific knobs like the
-   * HA-MQTT discovery prefix). The three framework methods
-   * `getDeviceSettingsContribution` / `getDeviceLiveContribution` /
-   * `applyDeviceSettingsPatch` are auto-injected on the provider
-   * interface and routed to the device-details aggregator.
+   * Each export provider MAY contribute its own per-device "Export" panel
+   * (enabled toggle, preferred stream, addon-specific knobs). The three
+   * framework methods are mounted on the cap router when present.
+   * `IDeviceExportProvider` leaves them optional: an exporter with no
+   * per-device panel omits them (a `deviceConfig` cap's UI is derived and
+   * never hand-written — D14 — and an exporter is not one of those).
    */
   exposesDeviceSettings: true,
   methods: {
@@ -212,7 +213,15 @@ export const deviceExportCapability = {
   },
 } as const satisfies CapabilityDefinition
 
-export type IDeviceExportProvider = InferProvider<typeof deviceExportCapability>
+type DeviceExportInferred = InferProvider<typeof deviceExportCapability>
+
+/**
+ * Author-facing provider. The router still mounts the three contribution
+ * methods (`exposesDeviceSettings`), but a provider that has no per-device
+ * panel omits them. Addons that implement the methods stay assignable.
+ */
+export type IDeviceExportProvider = Omit<DeviceExportInferred, keyof DeviceSettingsContribution> &
+  Partial<Pick<DeviceExportInferred, keyof DeviceSettingsContribution>>
 
 export {
   InstancePinSchema,

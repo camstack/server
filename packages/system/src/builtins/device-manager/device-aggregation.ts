@@ -221,13 +221,16 @@ export async function getDeviceAggregate(
         entry.providerAddonId,
       )
       if (!provider) return null
+      const read = provider[method]
+      // Omitted on purpose: the provider registered without a per-device panel.
+      if (typeof read !== 'function') return null
       return await resolveContribution(deps, {
         deviceId,
         kind,
         capName: entry.capName,
         addonId: entry.providerAddonId,
         call: async () => {
-          const contribution = await provider[method]({ deviceId })
+          const contribution = await read({ deviceId })
           return contribution ? toWireShape(contribution) : null
         },
       })
@@ -297,6 +300,9 @@ export async function collectSystemDeviceContributions(
             addonId,
           )
           if (!provider) return null
+          const read = provider[method]
+          // Omitted on purpose: the provider registered without a per-device panel.
+          if (typeof read !== 'function') return null
           // Same budget, same cache, same two log lines as the binding-driven
           // half above: a system cap holds per-device panels too, and a slow
           // one stalls the identical page.
@@ -306,7 +312,7 @@ export async function collectSystemDeviceContributions(
             capName: info.name,
             addonId,
             call: async () => {
-              const contribution = await provider[method]({ deviceId })
+              const contribution = await read({ deviceId })
               return contribution ? toWireShape(contribution) : null
             },
           })

@@ -11,7 +11,7 @@ import type { AppRouter } from '../../generated/addon-api.js'
 import { type AddonMigration, defineAddonMigrations } from '../../migrations/addon-migration.js'
 import type { MigrationMeta } from '../../migrations/migration.js'
 import { BaseAddon } from '../base-addon.js'
-import { fakeAddonContext } from './fake-addon-context.js'
+import { fakeAddonContext } from '../fake-addon-context.js'
 
 const meta = (slug: string, onFailure: MigrationMeta['onFailure']): MigrationMeta => ({
   id: `probe/2026-11-01-${slug}`,

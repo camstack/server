@@ -430,15 +430,11 @@ export class CapabilityRegistry {
       )
     }
 
-    // Contract enforcement: capabilities declared with
-    // `exposesDeviceSettings: true` automatically gain the three
-    // `DeviceSettingsContribution` methods in their method surface
-    // (via `expandCapMethods`). Every provider registered for such a
-    // cap MUST implement all three — otherwise aggregator call sites
-    // would need defensive `typeof` gates that silently skip the
-    // broken provider, hiding the section from the aggregate. Fail
-    // fast here instead so the bug surfaces the moment the addon
-    // registers rather than the moment a user opens device-details.
+    // `exposesDeviceSettings` mounts the three contribution methods on the
+    // router. A provider may omit them: an exporter with no per-device panel
+    // (D14 — that panel is not a hand-written deviceConfig form) registers
+    // without them, and the aggregator skips the missing read. Say so once
+    // here; a per-poll log would fire for every device.
     if (state.definition.exposesDeviceSettings) {
       const required = [
         'getDeviceSettingsContribution',
@@ -448,10 +444,12 @@ export class CapabilityRegistry {
       const shape = provider as Record<string, unknown>
       const missing = required.filter((m) => typeof shape[m] !== 'function')
       if (missing.length > 0) {
-        throw new Error(
-          `CapabilityRegistry: provider "${addonId}" for capability "${capabilityName}" declares ` +
-            `exposesDeviceSettings: true but is missing DeviceSettingsContribution method(s): ` +
-            `${missing.join(', ')}. Implement them on the provider (or drop the flag from the cap def).`,
+        this.logger.info(
+          'provider omits device-settings contribution methods — no per-device panel from this addon',
+          {
+            tags: { addonId },
+            meta: { capability: capabilityName, missing: missing.join(', ') },
+          },
         )
       }
     }

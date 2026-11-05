@@ -87,11 +87,17 @@ export {
   sessionLostAlertId,
 } from './addon/session-health.js'
 export type {
+  InstanceChange,
   RecordIntegrationInstancesHooks,
   ResolvedInstance,
   ResolvedSecretsState,
 } from './addon/record-integration-instances.js'
 export { RecordIntegrationInstances } from './addon/record-integration-instances.js'
+export {
+  fakeAddonContext,
+  type FakeAddonContextOptions,
+  type FakeSettings,
+} from './addon/fake-addon-context.js'
 export type { DurableState, DurableStateDeps } from './addon/durable-state.js'
 export { createDurableState } from './addon/durable-state.js'
 // Re-export `IAuthProvider` from the cap definition — single source of

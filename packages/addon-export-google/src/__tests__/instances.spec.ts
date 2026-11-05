@@ -224,14 +224,18 @@ describe('export-google multi-instance', () => {
     const w = await boot()
     addons.push(w.addon)
     const created = await w.instances.createInstance({ name: 'Second' })
-    const schema = await w.deviceExport.getDeviceSettingsContribution({ deviceId: 101 })
+    const contribute = w.deviceExport.getDeviceSettingsContribution
+    if (contribute === undefined) throw new Error('export provider has no settings contribution')
+    const schema = await contribute({ deviceId: 101 })
     const keys = (schema?.sections ?? []).flatMap((s) =>
       s.fields.flatMap((f) => (f.type === 'boolean' ? [f.key] : [])),
     )
     expect(keys.sort()).toEqual(
       [`google:${GOOGLE_INSTANCE_ID}:101:enabled`, `google:${created.id}:101:enabled`].sort(),
     )
-    await w.deviceExport.applyDeviceSettingsPatch({
+    const applyPatch = w.deviceExport.applyDeviceSettingsPatch
+    if (applyPatch === undefined) throw new Error('export provider has no settings patch')
+    await applyPatch({
       deviceId: 101,
       patch: { [`google:${created.id}:101:enabled`]: true },
     })

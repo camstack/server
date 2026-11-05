@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**234 units · 8044 source files · 221 units claimed by at least one document (8000 files).**
+**234 units · 8045 source files · 221 units claimed by at least one document (8001 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -108,9 +108,9 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-agent-ui` | 16 | `admin-ui` | `decisions/adr-0839-the-agent-finds-hubs-the-way-the-cli-does-one-shared-mdns-browse-in-develop.md`, `decisions/adr-0841-the-agent-ui-lists-addons-and-their-runners-as-one-joined-list.md` | — |
 | `packages/addon-post-analysis/src/embedding-encoder` | 16 | `recognition` | `decisions/adr-0649-a-clip-model-carries-its-feature-space-contract-and-gets-its-own-index.md`, `decisions/adr-0177-a-python-pool-is-bounded-by-its-own-watchdog-not-the-kernel.md`, `decisions/adr-0209-a-hosted-model-artifact-is-not-verified-until-its-embedding-space-is.md`, +3 more | 2026-10-01 |
 | `packages/addon-remote-storage` | 16 | `storage` | `decisions/adr-0384-never-ran-must-never-look-like-ran.md`, `decisions/adr-0298-a-storage-kind-declares-how-it-reaches-its-bytes-and-a-provider-that-cannot-is-refused.md` | — |
+| `packages/types/src/addon` | 16 | `kernel`, `secrets` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/secrets-keychain.md`, `decisions/adr-0787-a-secret-field-stores-a-keychain-marker-and-the-value-lives-in-the-keychain.md`, +10 more | 2026-10-18 |
 | `packages/addon-training/src/orchestrator` | 15 | `cloud-training` | `architecture/cloud-training.md`, `decisions/adr-0805-cloud-training-is-one-orchestrator-over-a-provider-collection-and-never-registers-on-its-own.md`, `decisions/adr-0824-a-training-job-selects-frames-live-and-addresses-a-provider-by-entry-id.md`, +2 more | 2026-10-14 |
 | `packages/system/src/tls` | 15 | `remote-access` | `decisions/adr-0227-the-hub-reissues-its-certificate-only-when-it-cannot-do-its-job.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +5 more | — |
-| `packages/types/src/addon` | 15 | `kernel`, `secrets` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/secrets-keychain.md`, `decisions/adr-0787-a-secret-field-stores-a-keychain-marker-and-the-value-lives-in-the-keychain.md`, +10 more | 2026-10-18 |
 | `packages/addon-export-hap` | 14 | `ecosystem-exports` | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md`, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +6 more, 1 ADR | 2026-09-29 |
 | `packages/addon-provider-gree` | 14 | `device-providers` | `architecture/device-model.md` _(covers)_ | 2026-10-26 |
 | `packages/node-root` | 14 | `kernel` | `architecture/update-and-release.md`, `design/2026-09-10-wrapper-identity-and-update.md` _(covers)_, `decisions/adr-0187-an-update-notification-names-one-node-and-both-versions.md`, +9 more, 4 ADRs | 2026-10-27 |

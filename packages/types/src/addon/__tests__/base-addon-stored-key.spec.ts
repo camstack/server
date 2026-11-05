@@ -10,7 +10,7 @@
 import { describe, expect, it } from 'vitest'
 import type { AddonStoreRead } from '../../interfaces/addon.js'
 import { BaseAddon } from '../base-addon.js'
-import { fakeAddonContext } from './fake-addon-context.js'
+import { fakeAddonContext } from '../fake-addon-context.js'
 
 class TestAddon extends BaseAddon {
   protected async onInitialize() {

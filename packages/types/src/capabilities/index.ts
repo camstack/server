@@ -577,6 +577,7 @@ export {
   EXPORT_INSTANCE_UNKNOWN,
   ExportInstanceSchema,
   ExportInstanceUnknownError,
+  statusInstanceOf,
   statusInstanceOf as deviceExportStatusInstanceOf,
   InstancePinSchema as DeviceExportInstancePinSchema,
   deviceExportCapability,

@@ -444,3 +444,21 @@ describe('CapabilityRegistry — waitForProvider', () => {
     expect(r2).toBe(provider)
   })
 })
+
+describe('CapabilityRegistry — optional device-settings contribution', () => {
+  it('registers an exposesDeviceSettings provider that omits the three methods', () => {
+    const logger = createMockLogger()
+    const registry = new CapabilityRegistry(logger)
+    registry.declareCapability({
+      name: 'device-export',
+      scope: 'system',
+      mode: 'collection',
+      exposesDeviceSettings: true,
+      methods: {},
+    })
+    const provider = { getStatus: async () => null }
+    expect(() => registry.registerProvider('device-export', 'export-demo', provider)).not.toThrow()
+    expect(registry.getProviderByAddon('device-export', 'export-demo')).toBe(provider)
+    expect(logger.info).toHaveBeenCalled()
+  })
+})

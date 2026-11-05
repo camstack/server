@@ -8,7 +8,7 @@ import { EventCategory } from '../../enums/event-category.js'
 import type { AddonContext } from '../../interfaces/addon.js'
 import type { EventFilter, SystemEvent } from '../../interfaces/event-bus.js'
 import { createSecretsAccess, type KeychainTransport } from '../../keychain/secrets-access.js'
-import { fakeAddonContext } from './fake-addon-context.js'
+import { fakeAddonContext } from '../fake-addon-context.js'
 
 export interface KeychainWorld {
   store: Record<string, unknown>

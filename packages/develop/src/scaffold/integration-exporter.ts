@@ -247,9 +247,6 @@ export class <%= className %>Addon extends BaseAddon<Readonly<Record<string, nev
         this.setMembership(instanceId, deviceId, true),
       unexposeDevice: async ({ instanceId, deviceId }) =>
         this.setMembership(instanceId, deviceId, false),
-      getDeviceSettingsContribution: async () => null,
-      getDeviceLiveContribution: async () => null,
-      applyDeviceSettingsPatch: async () => ({ success: true as const }),
     }
   }
 

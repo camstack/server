@@ -9,7 +9,7 @@ import { clearKnownSecrets } from '../../keychain/known-secrets.js'
 import { isSecretMarker, makeSecretMarker } from '../../keychain/secret-marker.js'
 import { createSecretsAccess, type KeychainTransport } from '../../keychain/secrets-access.js'
 import { BaseAddon } from '../base-addon.js'
-import { fakeAddonContext } from './fake-addon-context.js'
+import { fakeAddonContext } from '../fake-addon-context.js'
 
 /**
  * The §6.9-style canaries that hold WITHOUT any migration code (D787):

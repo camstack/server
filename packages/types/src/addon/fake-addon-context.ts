@@ -8,8 +8,8 @@
  * `as`, and any call names itself in the error.
  */
 import { createTRPCClient, type TRPCLink } from '@trpc/client'
-import type { AppRouter } from '../../generated/addon-api.js'
-import type { AddonContext } from '../../interfaces/addon.js'
+import type { AppRouter } from '../generated/addon-api.js'
+import type { AddonContext } from '../interfaces/addon.js'
 
 type SettingsView = NonNullable<AddonContext['settings']>
 
