@@ -50,6 +50,7 @@ describe('Alexa broker kind descriptor', () => {
         connectedCount: () => 0,
       },
       getBrokers: () => [],
+      brokerUsers: [],
       persistBrokers: async () => undefined,
       cascadeRemoveDevices: async () => undefined,
       logger: logger(),

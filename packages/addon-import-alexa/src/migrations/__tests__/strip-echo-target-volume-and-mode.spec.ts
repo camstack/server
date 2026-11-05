@@ -28,6 +28,10 @@ const NO_ROWS_PORTS = {
   warn: () => undefined,
   readBrokerLink: async () => null,
   stampBrokerLink: async () => undefined,
+  listBrokers: async () => [],
+  readConnection: async () => null,
+  putConnection: async () => undefined,
+  clearBrokerLink: async () => undefined,
 }
 const MARK = 'kitchen echo, kept as written'
 

@@ -1,4 +1,4 @@
-import { defineEntryKind, entryBody } from '@camstack/types'
+import { declareBrokerLinkKind, defineEntryKind, entryBody } from '@camstack/types'
 import { z } from 'zod'
 import { alexaConnectionSchema } from './config.js'
 
@@ -6,6 +6,7 @@ export const ALEXA_BROKERS_OWNER = 'import-alexa'
 
 export const AlexaBrokerBodySchema = entryBody({
   ...alexaConnectionSchema.shape,
+  /** Retired (D1011): the link lives on the integration's `connections` record. Only the migration reads it. */
   integrationId: z.string().optional(),
   enabled: z.boolean().optional(),
 })
@@ -35,8 +36,15 @@ export const alexaSpeakSessionsEntryKind = defineEntryKind('speak-sessions', {
   writeTrigger: 'an Echo worker signs in as an Alexa account broker',
 })
 
+/** An Alexa integration: the link to the Alexa account (broker) it imports devices from. */
+export const alexaConnectionsEntryKind = declareBrokerLinkKind({
+  title: 'Alexa integrations',
+  writeTrigger: 'an operator links an Alexa integration to an Alexa account',
+})
+
 /** Every kind this addon declares, keyed by its name: `records.declare` refuses any other key. */
 export const alexaRecordKinds = {
   brokers: alexaBrokersEntryKind,
+  connections: alexaConnectionsEntryKind,
   'speak-sessions': alexaSpeakSessionsEntryKind,
 } as const

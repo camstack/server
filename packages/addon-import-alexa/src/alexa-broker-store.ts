@@ -17,7 +17,6 @@ function rowToEntry(id: string, data: AlexaBrokerBody): AlexaBrokerEntry | null 
       macDms: data.macDms,
       pollIntervalMs: data.pollIntervalMs,
     },
-    integrationId: data.integrationId,
     enabled: data.enabled,
   })
   return parsed.success ? parsed.data : null
@@ -62,11 +61,10 @@ export class AlexaBrokerStore {
       if (!nextIds.has(row.id)) await this.kind.delete(row.id)
     }
     for (const entry of entries) {
-      const { id, name, connection, integrationId, enabled } = entry
+      const { id, name, connection, enabled } = entry
       const body = {
         name,
         ...connection,
-        ...(integrationId === undefined ? {} : { integrationId }),
         ...(enabled === undefined ? {} : { enabled }),
       }
       const parsed = alexaBrokersEntryKind.schema.safeParse(body)

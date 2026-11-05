@@ -35,7 +35,6 @@
     "addons": [
       {
         "id": "import-alexa",
-        "integrationRole": "both",
         "category": "providers",
         "name": "Alexa",
         "version": "0.1.0",

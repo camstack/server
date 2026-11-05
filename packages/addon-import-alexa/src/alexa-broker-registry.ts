@@ -68,7 +68,6 @@ export class AlexaBrokerRegistry {
   readonly #makeManager: ManagerFactory
 
   readonly #managers: Map<string, ManagerLike> = new Map()
-  readonly #integrationToBroker: Map<string, string> = new Map()
   #nextId = 1
 
   constructor(logger: IScopedLogger, deps: AlexaBrokerRegistryDeps = {}) {
@@ -131,7 +130,6 @@ export class AlexaBrokerRegistry {
       }),
     )
     this.#managers.clear()
-    this.#integrationToBroker.clear()
   }
 
   setOnBrokerConnected(cb: (brokerId: string) => void): void {
@@ -157,7 +155,7 @@ export class AlexaBrokerRegistry {
   async createEntry(
     name: string,
     connection: AlexaConnection,
-    opts: { readonly integrationId?: string; readonly id?: string } = {},
+    opts: { readonly id?: string } = {},
   ): Promise<AlexaBrokerEntry> {
     const id = opts.id ?? this.#allocateId()
     if (opts.id !== undefined) this.#seedCounter(opts.id)
@@ -165,19 +163,14 @@ export class AlexaBrokerRegistry {
       id,
       name,
       connection,
-      ...(opts.integrationId !== undefined ? { integrationId: opts.integrationId } : {}),
     }
     await this.#startManager(entry)
-    if (opts.integrationId !== undefined) this.#integrationToBroker.set(opts.integrationId, id)
     return entry
   }
 
   async removeEntry(id: string): Promise<void> {
     const mgr = this.#managers.get(id)
     if (!mgr) return
-    for (const [integrationId, brokerId] of this.#integrationToBroker.entries()) {
-      if (brokerId === id) this.#integrationToBroker.delete(integrationId)
-    }
     this.#managers.delete(id)
     try {
       await mgr.stop()
@@ -203,12 +196,6 @@ export class AlexaBrokerRegistry {
     const mgr = this.#managers.get(brokerId)
     if (!mgr) throw new Error(`AlexaBrokerRegistry: unknown broker id "${brokerId}"`)
     await mgr.sendCommand(command)
-  }
-
-  // ── Integration index ─────────────────────────────────────────────────────
-
-  linkIntegration(integrationId: string, brokerId: string): void {
-    this.#integrationToBroker.set(integrationId, brokerId)
   }
 
   // ── Read helpers ──────────────────────────────────────────────────────────
@@ -240,12 +227,7 @@ export class AlexaBrokerRegistry {
   // ── Private helpers ─────────────────────────────────────────────────────
 
   async #startManager(entry: AlexaBrokerEntry): Promise<void> {
-    if (this.#managers.has(entry.id)) {
-      if (entry.integrationId !== undefined) {
-        this.#integrationToBroker.set(entry.integrationId, entry.id)
-      }
-      return
-    }
+    if (this.#managers.has(entry.id)) return
     const mgr = this.#makeManager({
       id: entry.id,
       name: entry.name,
@@ -260,9 +242,6 @@ export class AlexaBrokerRegistry {
         this.#onStatesPolled(id, values),
     })
     this.#managers.set(entry.id, mgr)
-    if (entry.integrationId !== undefined) {
-      this.#integrationToBroker.set(entry.integrationId, entry.id)
-    }
     await mgr.start()
   }
 

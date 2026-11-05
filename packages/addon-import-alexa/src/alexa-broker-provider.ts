@@ -1,4 +1,10 @@
-import { errMsg, type IBrokerProvider, type IScopedLogger } from '@camstack/types'
+import {
+  assertBrokerUnused,
+  type BrokerUserFinder,
+  errMsg,
+  type IBrokerProvider,
+  type IScopedLogger,
+} from '@camstack/types'
 import { buildConnectionFormSchema, settingsToAlexaConnection } from './config.js'
 import type { AlexaBrokerEntry } from './config.js'
 import type { AlexaBrokerRegistry } from './alexa-broker-registry.js'
@@ -12,6 +18,8 @@ export interface AlexaBrokerProviderDeps {
   >
   readonly getBrokers: () => readonly AlexaBrokerEntry[]
   readonly persistBrokers: (brokers: readonly AlexaBrokerEntry[]) => Promise<void>
+  /** Everything that still points at a broker; a removal is refused while any user remains. */
+  readonly brokerUsers: readonly BrokerUserFinder[]
   readonly cascadeRemoveDevices: (brokerId: string) => Promise<void>
   readonly logger: IScopedLogger
 }
@@ -23,7 +31,15 @@ export interface AlexaBrokerProviderDeps {
  * poll-based (no pub/sub) — `publish`/`subscribe`/`getState` are no-ops.
  */
 export function buildAlexaBrokerProvider(deps: AlexaBrokerProviderDeps): IBrokerProvider {
-  const { ownerAddonId, registry, getBrokers, persistBrokers, cascadeRemoveDevices, logger } = deps
+  const {
+    ownerAddonId,
+    registry,
+    getBrokers,
+    persistBrokers,
+    brokerUsers,
+    cascadeRemoveDevices,
+    logger,
+  } = deps
 
   const owns = (id: string): boolean => getBrokers().some((b) => b.id === id)
 
@@ -71,6 +87,7 @@ export function buildAlexaBrokerProvider(deps: AlexaBrokerProviderDeps): IBroker
 
     remove: async ({ id }) => {
       if (!owns(id)) return
+      await assertBrokerUnused(id, brokerUsers)
       await registry.removeEntry(id)
       await cascadeRemoveDevices(id).catch((err: unknown) => {
         logger.warn('alexa: broker cascade-remove threw', {

@@ -9,6 +9,10 @@ import {
   DeviceType,
   errMsg,
   EventCategory,
+  brokerIdOf,
+  brokerLinkUserFinder,
+  type BrokerLinkBody,
+  type BrokerUserFinder,
   defaultIntegrationApiOver,
   flattenPortsOver,
   integrationInstancesCapability,
@@ -24,7 +28,6 @@ import {
   type RecordsAccess,
   type RecordIntegrationInstances,
   notificationOutputCapability,
-  type SystemEvent,
   VENDOR_LOGIN_PROXY_PREFIX,
   VendorLoginProxy,
 } from '@camstack/types'
@@ -51,7 +54,6 @@ import { mapAlexaCapabilitiesToCamStack } from './alexa-domain-mapping.js'
 import { AlexaDevice } from './devices/alexa-device.js'
 import { AlexaEchoDevice } from './devices/alexa-echo-device.js'
 import { alexaEchoSessions } from './alexa-echo-sessions.js'
-import type { AlexaBrokerBody } from './broker-record-kinds.js'
 import { alexaBrokersEntryKind, alexaRecordKinds } from './broker-record-kinds.js'
 import { buildAlexaInstances } from './alexa-instances.js'
 import { AlexaBrokerStore } from './alexa-broker-store.js'
@@ -60,9 +62,10 @@ import { readBrokerSeed } from './speak/broker-seed.js'
 import { AlexaSpeakController } from './speak/controller.js'
 import {
   ADDON_MIGRATIONS,
-  FLATTEN_BROKER_RECORDS_ID,
+  BROKER_RECORD_MIGRATION_IDS,
   type AlexaMigrationPorts,
   alexaIntegrationRowsPorts,
+  alexaBrokerLinkPorts,
 } from './migrations/index.js'
 import { speakIconRoutes } from './speak/icon-routes.js'
 import { RecordsSpeakSessionStore } from './speak/session-store.js'
@@ -119,7 +122,7 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
   private loginPlane: AddonDataPlaneHandle | null = null
   private loginProxy: VendorLoginProxy | null = null
   private brokerStore: AlexaBrokerStore | null = null
-  private instances: RecordIntegrationInstances<AlexaBrokerBody> | null = null
+  private instances: RecordIntegrationInstances<BrokerLinkBody> | null = null
   private activeBrokers: readonly AlexaBrokerEntry[] = []
   private speak: AlexaSpeakController | null = null
 
@@ -136,17 +139,12 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
     }
     await records.declare(alexaRecordKinds)
     this.brokerStore = AlexaBrokerStore.of(records)
-    this.instances = buildAlexaInstances(records, {
-      mintId: () => this.requireRegistry().allocateId(),
-      infoOf: (id) => this.registry?.get(id) ?? null,
-      onChanged: (id) => this.syncBrokerRuntime(id),
-    })
-    // The stored broker records move to the flat shape BEFORE anything reads them.
+    this.instances = buildAlexaInstances(records)
+    // The stored broker records move to the flat shape, and the integration link off them, BEFORE
+    // anything reads or rewrites them (a rewrite would drop the retired link).
     await this.runMigrations(
       defineAddonMigrations(ADDON_MIGRATIONS, this.migrationPorts(records)),
-      {
-        only: [FLATTEN_BROKER_RECORDS_ID],
-      },
+      { only: BROKER_RECORD_MIGRATION_IDS },
     )
     this.activeBrokers = await this.loadPersistedBrokers()
     await this.adoptSessionFiles()
@@ -196,9 +194,6 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
       meta: { brokerCount: this.activeBrokers.length },
     })
 
-    await this.reconcileIntegrationsToBrokers()
-    this.subscribeIntegrationLifecycle()
-
     const loginRoutes = [
       ...buildAlexaLoginRoutes({
         logger: this.ctx.logger,
@@ -213,7 +208,7 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
       defineAddonMigrations(ADDON_MIGRATIONS, this.migrationPorts(records)),
       {
         only: ADDON_MIGRATIONS.map((m) => m.meta.id).filter(
-          (id) => id !== FLATTEN_BROKER_RECORDS_ID,
+          (id) => !BROKER_RECORD_MIGRATION_IDS.includes(id),
         ),
       },
     )
@@ -275,6 +270,7 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
         })
       },
       ...flattenPortsOver(records.kind(alexaBrokersEntryKind)),
+      ...alexaBrokerLinkPorts(records, (message) => this.ctx.logger.warn(message)),
       ...alexaIntegrationRowsPorts({
         api: defaultIntegrationApiOver(this.ctx.api),
         records,
@@ -284,55 +280,12 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
     }
   }
 
-  /**
-   * Bring the runtime in line with one record after the instances page changed it: a removed
-   * record stops its manager and cascades its devices, an off record only stops the manager, a
-   * live one re-applies its connection or starts under the record's own id.
-   */
-  private async syncBrokerRuntime(id: string): Promise<void> {
-    const reg = this.requireRegistry()
-    const entry = await this.requireBrokerStore().getById(id)
-    this.activeBrokers = await this.loadPersistedBrokers()
-    if (entry === null) {
-      await reg.removeEntry(id)
-      await this.cascadeRemoveDevicesForBroker(id)
-      void this.speak?.brokersChanged()
-      return
-    }
-    const configured =
-      entry.connection.cookie.length > 0 || entry.connection.refreshToken.length > 0
-    if (entry.enabled === false || !configured) {
-      await reg.removeEntry(id)
-      void this.speak?.brokersChanged()
-      return
-    }
-    try {
-      if (reg.get(id) !== null) {
-        // A record write that changed nothing the client uses (a renewed registration the
-        // client already holds) must not restart the account.
-        if (!sameConnection(entry.connection, reg.getConnection(id))) {
-          await reg.updateEntry(id, entry.connection)
-        }
-      } else {
-        await reg.createEntry(entry.name, entry.connection, {
-          id,
-          ...(entry.integrationId !== undefined ? { integrationId: entry.integrationId } : {}),
-        })
-      }
-    } catch (err) {
-      this.ctx.logger.warn('alexa instance: could not start the account', {
-        meta: { brokerId: id, error: errMsg(err) },
-      })
-    }
-    void this.speak?.brokersChanged()
-  }
-
   private requireBrokerStore(): AlexaBrokerStore {
     if (this.brokerStore === null) throw new Error('import-alexa: broker store not ready')
     return this.brokerStore
   }
 
-  private requireInstances(): RecordIntegrationInstances<AlexaBrokerBody> {
+  private requireInstances(): RecordIntegrationInstances<BrokerLinkBody> {
     if (this.instances === null) throw new Error('import-alexa: instances not ready')
     return this.instances
   }
@@ -570,6 +523,7 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
       registry: this.requireRegistry(),
       getBrokers: () => this.activeBrokers,
       persistBrokers: (brokers) => this.persistBrokerEntries(brokers),
+      brokerUsers: this.brokerUsers(),
       cascadeRemoveDevices: (brokerId) => this.cascadeRemoveDevicesForBroker(brokerId),
       logger: this.ctx.logger,
     })
@@ -622,6 +576,23 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
     return { brokerId: entry.id }
   }
 
+  /** Who still points at an Alexa account: its integrations and the Echo targets that speak through it. */
+  private brokerUsers(): readonly BrokerUserFinder[] {
+    return [
+      brokerLinkUserFinder(this.requireInstances()),
+      {
+        find: async (brokerId) =>
+          readEchoTargets(this.config)
+            .filter((target) => target.brokerId === brokerId)
+            .map((target) => ({
+              kind: 'notification-target',
+              id: target.id,
+              name: target.name,
+            })),
+      },
+    ]
+  }
+
   private async cascadeRemoveDevicesForBroker(brokerId: string): Promise<void> {
     const reg = this.ctx.kernel.deviceRegistry
     const devices = this.ctx.kernel.devices
@@ -633,55 +604,6 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
       brokerId,
       logger: this.ctx.logger,
     })
-  }
-
-  // ── integration → broker reconcile (Approach A) ────────────────────────
-
-  private async reconcileIntegrationsToBrokers(): Promise<void> {
-    try {
-      const all = await this.ctx.api.integrations.list.query()
-      const mine = all.filter((i) => i.addonId === this.ctx.id)
-      const surviving = new Set(mine.map((i) => i.id))
-
-      for (const broker of this.activeBrokers) {
-        const integrationId = broker.integrationId
-        if (integrationId === undefined || !surviving.has(integrationId)) continue
-        this.requireRegistry().linkIntegration(integrationId, broker.id)
-      }
-
-      const toRemove = this.activeBrokers
-        .filter((b) => b.integrationId !== undefined && !surviving.has(b.integrationId))
-        .map((b) => b.id)
-      if (toRemove.length === 0) return
-
-      for (const id of toRemove) {
-        try {
-          await this.requireRegistry().removeEntry(id)
-          await this.cascadeRemoveDevicesForBroker(id)
-        } catch (err) {
-          this.ctx.logger.warn('Alexa integration→broker: broker cleanup failed', {
-            meta: { brokerId: id, error: errMsg(err) },
-          })
-        }
-      }
-      const nextBrokers = this.activeBrokers.filter((b) => !toRemove.includes(b.id))
-      await this.persistBrokerEntries(nextBrokers)
-    } catch (err) {
-      this.ctx.logger.warn('Alexa integration→broker reconcile failed', {
-        meta: { error: errMsg(err) },
-      })
-    }
-  }
-
-  private subscribeIntegrationLifecycle(): void {
-    const handler = (event: SystemEvent): void => {
-      const addonId = event.data['addonId']
-      if (typeof addonId === 'string' && addonId !== this.ctx.id) return
-      void this.reconcileIntegrationsToBrokers()
-    }
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationEnabled }, handler)
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDisabled }, handler)
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, handler)
   }
 
   // ── device-adoption cap provider ───────────────────────────────────────
@@ -699,11 +621,9 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
       },
       logger: this.ctx.logger,
       getBrokerIdForIntegration: async (id) => {
-        const broker = this.activeBrokers.find((entry) => entry.integrationId === id)
-        if (broker === undefined) {
-          throw new Error(`integration ${id} has no linked brokerId`)
-        }
-        return broker.id
+        const brokerId = await brokerIdOf(this.requireInstances(), id)
+        if (brokerId === undefined) throw new Error(`integration ${id} has no broker`)
+        return brokerId
       },
       listAdoptedAlexa: async () => {
         const reg = this.ctx.kernel.deviceRegistry

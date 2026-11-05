@@ -1,15 +1,18 @@
 import { makeInMemoryRecords } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { buildAlexaInstances } from '../alexa-instances.js'
-import { alexaBrokersEntryKind } from '../broker-record-kinds.js'
+import { alexaBrokersEntryKind, alexaConnectionsEntryKind } from '../broker-record-kinds.js'
 
-async function setup(status: 'connected' | 'disconnected' = 'connected') {
+async function setup() {
   const world = makeInMemoryRecords('import-alexa')
-  await world.records.declare({ brokers: alexaBrokersEntryKind })
-  const handle = world.records.kind(alexaBrokersEntryKind)
-  await handle.put(
+  await world.records.declare({
+    brokers: alexaBrokersEntryKind,
+    connections: alexaConnectionsEntryKind,
+  })
+  const brokers = world.records.kind(alexaBrokersEntryKind)
+  await brokers.put(
     {
-      id: 'alexa_003',
+      id: 'alexa_002',
       data: {
         name: 'Home',
         amazonDomain: 'amazon.it',
@@ -17,96 +20,47 @@ async function setup(status: 'connected' | 'disconnected' = 'connected') {
         refreshToken: 'refresh',
         macDms: 'mac',
         pollIntervalMs: 60_000,
-        integrationId: 'int-keep-me',
       },
     },
     { ifRev: 0 },
   )
-  const changed: string[] = []
-  const instances = buildAlexaInstances(world.records, {
-    mintId: () => 'alexa_004',
-    infoOf: (id) =>
-      id === 'alexa_003'
-        ? {
-            id,
-            name: 'Home',
-            kind: 'alexa',
-            status,
-            info: {},
-            lastCheckedAt: 5,
-            error: status === 'connected' ? null : 'expired',
-          }
-        : null,
-    onChanged: async (id) => {
-      changed.push(id)
-    },
-  })
-  return { instances, handle, changed }
+  return {
+    instances: buildAlexaInstances(world.records),
+    brokers,
+    connections: world.records.kind(alexaConnectionsEntryKind),
+  }
 }
 
-describe('Alexa accounts as integration instances', () => {
-  it('lists the existing account under its id and maps the sign-in to the existing routes', async () => {
+describe('Alexa integrations as integration instances', () => {
+  it('creating an integration writes ITS record under the registry id and no broker row', async () => {
+    const { instances, brokers, connections } = await setup()
+    await instances.createInstance({ id: 'int_0036', name: 'Alexa home' })
+    expect((await connections.get('int_0036'))?.data.name).toBe('Alexa home')
+    expect(await brokers.get('int_0036')).toBeNull()
+    expect((await brokers.query({ limit: 10 })).records.map((r) => r.id)).toEqual(['alexa_002'])
+  })
+
+  it('is an integration that brings devices and its form is a broker picker, no connection fields', async () => {
     const { instances } = await setup()
-    const [one] = await instances.listInstances()
-    expect(one).toMatchObject({
-      id: 'alexa_003',
-      kind: 'alexa',
-      configured: true,
-      status: { state: 'ok', label: 'Connected' },
-    })
-    expect(one?.formValues['amazonDomain']).toBe('amazon.it')
-    expect(one?.formValues['cookie']).not.toBe('cookie')
-    const description = await instances.describe()
-    expect(description).toMatchObject({ allowRestoreId: true, mintsId: true })
-    expect(description.kinds?.[0]?.signIn).toEqual({
-      basePath: '/addon/import-alexa/login',
-      methods: ['device-code', 'proxy'],
+    expect(await instances.describe()).toMatchObject({ role: 'devices' })
+    const form = await instances.instanceFormSchema({ id: null })
+    const keys = form.sections.flatMap((s) => s.fields.map((f) => ('key' in f ? f.key : '')))
+    expect(keys).toEqual(['brokerId'])
+    expect(form.sections[0]?.fields[0]).toMatchObject({
+      type: 'broker-select',
+      brokerKind: 'alexa',
     })
   })
 
-  it('an edit keeps the cookie, the macDms and the integration link; create mints alexa_NNN; restore keeps the old id', async () => {
-    const { instances, handle, changed } = await setup()
-    await instances.updateInstance({
-      id: 'alexa_003',
-      values: { amazonDomain: 'amazon.de', cookie: '' },
-    })
-    expect(await instances.getResolved('alexa_003')).toMatchObject({
-      amazonDomain: 'amazon.de',
-      cookie: 'cookie',
-      macDms: 'mac',
-      integrationId: 'int-keep-me',
-    })
-    expect((await instances.createInstance({ name: 'Second' })).id).toBe('alexa_004')
-    await instances.createInstance({ id: 'alexa_001', name: 'Back' })
-    expect((await handle.query({ limit: 10 })).records.map((r) => r.id).sort()).toEqual([
-      'alexa_001',
-      'alexa_003',
-      'alexa_004',
-    ])
-    expect(changed).toEqual(['alexa_003', 'alexa_004', 'alexa_001'])
-  })
-
-  it('saving exactly the form fields keeps the stored cookie and refresh token', async () => {
-    const { instances } = await setup()
-    await instances.updateInstance({
-      id: 'alexa_003',
-      values: { amazonDomain: 'amazon.de', pollIntervalMs: 120_000 },
-    })
-    expect(await instances.getResolved('alexa_003')).toMatchObject({
-      amazonDomain: 'amazon.de',
-      pollIntervalMs: 120_000,
-      cookie: 'cookie',
-      refreshToken: 'refresh',
-    })
-  })
-
-  it('reports an expired sign-in as an error and tests a saved account by its live status', async () => {
-    const { instances } = await setup('disconnected')
-    expect((await instances.getInstance({ id: 'alexa_003' }))?.status).toMatchObject({
-      state: 'error',
-    })
-    expect(await instances.testInstance({ id: 'alexa_003', values: {} })).toMatchObject({
-      success: false,
+  it('links to a broker by id and never touches the broker record', async () => {
+    const { instances, brokers } = await setup()
+    await instances.createInstance({ id: 'int_0036', name: 'Alexa home' })
+    expect((await instances.listInstances())[0]).toMatchObject({ configured: false })
+    await instances.updateInstance({ id: 'int_0036', values: { brokerId: 'alexa_002' } })
+    expect(await instances.getResolved('int_0036')).toMatchObject({ brokerId: 'alexa_002' })
+    expect((await instances.listInstances())[0]).toMatchObject({ configured: true })
+    expect(await brokers.getResolved('alexa_002')).toMatchObject({
+      data: { cookie: 'cookie', macDms: 'mac' },
     })
   })
 })

@@ -1,4 +1,9 @@
-import type { AddonMigration, FlattenRowPorts } from '@camstack/types'
+import {
+  type AddonMigration,
+  type BrokerLinkPorts,
+  type FlattenRowPorts,
+  moveBrokerLinksToConnections,
+} from '@camstack/types'
 import {
   INTEGRATION_ROWS_TO_RECORD_ID,
   moveAlexaIntegrationRows,
@@ -6,12 +11,17 @@ import {
 } from './integration-rows-to-record.js'
 import { FLATTEN_BROKER_RECORDS_ID, flattenBrokerRecords } from './flatten-broker-records.js'
 import {
+  alexaBrokerLinkPorts,
+  BROKER_LINKS_TO_CONNECTIONS_ID,
+} from './broker-links-to-connections.js'
+import {
   stripEchoTargetVolumeAndMode,
   type EchoTargetMigrationPorts,
 } from './strip-echo-target-volume-and-mode.js'
 
 export type { EchoTargetMigrationPorts } from './strip-echo-target-volume-and-mode.js'
 export { FLATTEN_BROKER_RECORDS_ID } from './flatten-broker-records.js'
+export { alexaBrokerLinkPorts, BROKER_LINKS_TO_CONNECTIONS_ID }
 export {
   INTEGRATION_ROWS_TO_RECORD_ID,
   alexaIntegrationRowsPorts,
@@ -20,7 +30,8 @@ export {
 /** What the catalogue's migrations read and write through. */
 export type AlexaMigrationPorts = EchoTargetMigrationPorts &
   FlattenRowPorts &
-  AlexaIntegrationRowsPorts
+  AlexaIntegrationRowsPorts &
+  BrokerLinkPorts
 
 /** The `import-alexa` catalogue (D987): offered to the engine when the addon initialises. */
 export const ADDON_MIGRATIONS: readonly AddonMigration<AlexaMigrationPorts>[] = [
@@ -74,4 +85,28 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<AlexaMigrationPorts>[] = 
     },
     procedure: moveAlexaIntegrationRows,
   },
+  {
+    meta: {
+      id: BROKER_LINKS_TO_CONNECTIONS_ID,
+      owner: 'import-alexa',
+      level: 'addon-state',
+      seq: 4,
+      dependsOn: [INTEGRATION_ROWS_TO_RECORD_ID],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'block-owner',
+      bodyKind: 'procedure',
+      description:
+        'Write each integration a connections record naming its Alexa account (keyed by the integration id), then clear the integration link on the account; stray registry-keyed account rows are counted and logged, never deleted',
+      fixtureMark: 'the name and the extra field of the account that keeps its record',
+    },
+    procedure: moveBrokerLinksToConnections,
+  },
+]
+
+/** The migrations that rewrite the broker records: they run BEFORE anything reads or persists one. */
+export const BROKER_RECORD_MIGRATION_IDS: readonly string[] = [
+  FLATTEN_BROKER_RECORDS_ID,
+  INTEGRATION_ROWS_TO_RECORD_ID,
+  BROKER_LINKS_TO_CONNECTIONS_ID,
 ]

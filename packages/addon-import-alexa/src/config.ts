@@ -66,7 +66,6 @@ export const AlexaBrokerEntrySchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
   connection: alexaConnectionSchema,
-  integrationId: z.string().optional(),
   /** Absent means on; the instances page switches a connection off without deleting it. */
   enabled: z.boolean().optional(),
 })
