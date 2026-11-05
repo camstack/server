@@ -32,8 +32,11 @@ const SKIP_DIRS = new Set(['node_modules', 'dist', 'generated', '.git', 'coverag
 function allowed(rel: string): boolean {
   if (rel === path.join('scripts', 'check-no-integration-settings.ts')) return true
   if (rel.includes(`${path.sep}migrations${path.sep}`)) return true
-  if (rel.startsWith(`docs${path.sep}`)) return true
-  if (rel.includes(`${path.sep}generated${path.sep}`)) return true
+  if (rel.startsWith(path.join('docs', 'decisions') + path.sep)) return true
+  if (rel.startsWith(path.join('docs', 'architecture') + path.sep)) return true
+  if (rel.startsWith(path.join('docs', 'design') + path.sep)) return true
+  // The drop's own spec has to name the store it proves is gone.
+  if (rel.endsWith('migration-drop-integration-settings.spec.ts')) return true
   return false
 }
 
@@ -95,13 +98,13 @@ function main(): void {
   const violations = integrationSettingsViolations(files)
   if (violations.length > 0) {
     console.error(
-      `check-no-integration-settings: ${violations.length} reference(s) outside migrations and docs`,
+      `check-no-integration-settings: ${violations.length} reference(s) outside migrations, the drop spec, and history docs`,
     )
     for (const line of violations) console.error(`  ${line}`)
     process.exit(1)
   }
   console.log(
-    'check-no-integration-settings: no legacy integration settings store outside migrations and docs',
+    'check-no-integration-settings: no legacy integration settings store outside migrations, the drop spec, and history docs',
   )
 }
 

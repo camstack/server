@@ -1,13 +1,14 @@
 /**
- * The OLD home of a Home Assistant instance's values: the `integration_settings` rows of its
- * integration (D985), read and written through the hub's `integrations` capability. Since
- * planning#416 the instance's own record holds them (`../ha-instance-settings.ts`) and nothing at
- * runtime reads these rows; this module is for the migrations alone, which still resolve the
- * broker an integration links (`brokerId`) and move what sits beside it onto the record.
+ * The OLD home of a Home Assistant instance's values: the leftover rows of its integration,
+ * read through the migration-only door (`migrations.readLegacyIntegrationRows` and the two
+ * writes beside it). Since planning#416 the instance's own record holds them and nothing at
+ * runtime reads these rows; this module is for the migrations alone.
  *
- * A write MERGES into what is stored (the registry replaces the whole record) and passes
- * `skipRestart`, which the hub honours only for the integration's own addon.
+ * A patch upserts only the keys it names. It does not rewrite the other rows, so a secret
+ * marker stays a marker. A missing store answers as "nothing written" and the copy is a no-op.
  */
+import { collectSecretMarkerRefs, type SecretsAccess } from '@camstack/types'
+
 /** The addon id the integrations of a Home Assistant instance carry. */
 export const HA_PROVIDER_ADDON_ID = 'provider-homeassistant'
 
@@ -18,20 +19,25 @@ export interface HaInstanceRow {
   readonly settings: Readonly<Record<string, unknown>>
 }
 
-/** The slice of `ctx.api.integrations` this module calls. */
-export interface HaIntegrationsApi {
+/** The migration-only door plus the registry list, as a tRPC client exposes them. */
+export interface HaLegacyRowsApi {
   readonly list: {
     query(): Promise<readonly { readonly id: string; readonly addonId: string }[]>
   }
-  readonly getSettings: {
-    query(input: { id: string }): Promise<Readonly<Record<string, unknown>>>
+  readonly readLegacyIntegrationRows: {
+    query(input: { integrationId: string }): Promise<Readonly<Record<string, unknown>>>
   }
-  readonly setSettings: {
+  readonly patchLegacyIntegrationRows: {
     mutate(input: {
-      id: string
-      settings: Record<string, unknown>
-      skipRestart?: boolean
-    }): Promise<{ readonly success: boolean }>
+      integrationId: string
+      patch: Record<string, unknown>
+    }): Promise<{ readonly written: boolean }>
+  }
+  readonly deleteLegacyIntegrationRowKeys: {
+    mutate(input: { integrationId: string; keys: readonly string[] }): Promise<{
+      readonly present: boolean
+      readonly removed: Readonly<Record<string, unknown>>
+    }>
   }
 }
 
@@ -40,8 +46,8 @@ export interface HaInstanceSettingsPorts {
   /** Every Home Assistant integration with its stored settings. Throws when it cannot be read. */
   listInstances(): Promise<readonly HaInstanceRow[]>
   /**
-   * Merge `patch` into one integration's settings. `false` when the integration is gone (a
-   * deleted instance is skipped, never recreated); throws when the write fails.
+   * Merge `patch` into one integration's settings. `false` when the integration is gone or the
+   * store is already dropped (a deleted instance is skipped, never recreated).
    */
   patchInstanceSettings(
     integrationId: string,
@@ -53,18 +59,34 @@ export interface HaInstanceSettingsPorts {
 export interface HaInstanceClearPorts extends HaInstanceSettingsPorts {
   /**
    * Remove `keys` from one integration's settings, leaving every other key. `false` when the
-   * integration is gone; throws when the write fails.
+   * integration is gone or the store is already dropped.
    */
   clearInstanceSettingsKeys(integrationId: string, keys: readonly string[]): Promise<boolean>
 }
 
-export function haInstanceSettingsPortsOver(api: HaIntegrationsApi): HaInstanceClearPorts {
+function refsOfKeys(
+  stored: Readonly<Record<string, unknown>>,
+  keys: readonly string[],
+): readonly string[] {
+  const picked: Record<string, unknown> = {}
+  for (const key of keys) {
+    if (Object.prototype.hasOwnProperty.call(stored, key)) picked[key] = stored[key]
+  }
+  return collectSecretMarkerRefs(picked)
+}
+
+export function haInstanceSettingsPortsOver(
+  api: HaLegacyRowsApi,
+  secrets: SecretsAccess | null = null,
+): HaInstanceClearPorts {
   const listInstances = async (): Promise<readonly HaInstanceRow[]> => {
     const all = await api.list.query()
     const rows: HaInstanceRow[] = []
     for (const integration of all) {
       if (integration.addonId !== HA_PROVIDER_ADDON_ID) continue
-      const settings = await api.getSettings.query({ id: integration.id })
+      const settings = await api.readLegacyIntegrationRows.query({
+        integrationId: integration.id,
+      })
       const brokerId = settings['brokerId']
       rows.push({
         integrationId: integration.id,
@@ -74,34 +96,27 @@ export function haInstanceSettingsPortsOver(api: HaIntegrationsApi): HaInstanceC
     }
     return rows
   }
+  const owns = async (integrationId: string): Promise<boolean> => {
+    const all = await api.list.query()
+    return all.some((i) => i.id === integrationId && i.addonId === HA_PROVIDER_ADDON_ID)
+  }
   return {
     listInstances,
     patchInstanceSettings: async (integrationId, patch) => {
-      const all = await api.list.query()
-      if (!all.some((i) => i.id === integrationId && i.addonId === HA_PROVIDER_ADDON_ID)) {
-        return false
-      }
-      const stored = await api.getSettings.query({ id: integrationId })
-      await api.setSettings.mutate({
-        id: integrationId,
-        settings: { ...stored, ...patch },
-        skipRestart: true,
+      if (!(await owns(integrationId))) return false
+      const result = await api.patchLegacyIntegrationRows.mutate({
+        integrationId,
+        patch: { ...patch },
       })
-      return true
+      return result.written
     },
     clearInstanceSettingsKeys: async (integrationId, keys) => {
-      const all = await api.list.query()
-      if (!all.some((i) => i.id === integrationId && i.addonId === HA_PROVIDER_ADDON_ID)) {
-        return false
-      }
-      const stored = await api.getSettings.query({ id: integrationId })
-      const drop = new Set(keys)
-      await api.setSettings.mutate({
-        id: integrationId,
-        settings: Object.fromEntries(Object.entries(stored).filter(([key]) => !drop.has(key))),
-        skipRestart: true,
-      })
-      return true
+      if (!(await owns(integrationId))) return false
+      const stored = await api.readLegacyIntegrationRows.query({ integrationId })
+      const refs = refsOfKeys(stored, keys)
+      if (refs.length > 0 && secrets !== null) await secrets.delete(refs)
+      const result = await api.deleteLegacyIntegrationRowKeys.mutate({ integrationId, keys })
+      return result.present
     },
   }
 }

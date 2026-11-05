@@ -392,6 +392,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
         haExportMigrationPorts({
           readStored: async () => this.resolveGlobalStore(),
           api: this.ctx.api,
+          secrets: this.ctx.secrets ?? null,
           links: legacyLinks,
           targets: targetsHandle,
           clearSettingKeys: async (keys) => {

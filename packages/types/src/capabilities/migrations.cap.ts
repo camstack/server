@@ -118,6 +118,58 @@ export const migrationsCapability = {
       }),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /**
+     * Migration-only. The stored rows of one integration, markers included, on
+     * the settings connection. Empty when the store is gone — a copy migration
+     * on a node that already dropped it is a no-op. Deleted with the last copy
+     * migration. Not a settings API.
+     */
+    readLegacyIntegrationRows: method(
+      z.object({ integrationId: z.string().min(1) }),
+      z.record(z.string(), z.unknown()),
+      { auth: 'admin' },
+    ),
+    /**
+     * Migration-only. Delete that integration's rows. The caller releases the
+     * keychain values first. `secrets` is how many marker refs the rows held.
+     * A missing store deletes nothing. Deleted with the last copy migration.
+     */
+    clearLegacyIntegrationRows: method(
+      z.object({ integrationId: z.string().min(1) }),
+      z.object({
+        rows: z.number().int().nonnegative(),
+        secrets: z.number().int().nonnegative(),
+      }),
+      { kind: 'mutation', auth: 'admin' },
+    ),
+    /**
+     * Migration-only. Upsert the given keys and leave every other key as stored.
+     * `written` is false when the store is gone. Deleted with the last copy migration.
+     */
+    patchLegacyIntegrationRows: method(
+      z.object({
+        integrationId: z.string().min(1),
+        patch: z.record(z.string(), z.unknown()),
+      }),
+      z.object({ written: z.boolean() }),
+      { kind: 'mutation', auth: 'admin' },
+    ),
+    /**
+     * Migration-only. Remove the named keys. `present` is false when the store
+     * is gone; `removed` is what those keys held (markers included). Deleted
+     * with the last copy migration.
+     */
+    deleteLegacyIntegrationRowKeys: method(
+      z.object({
+        integrationId: z.string().min(1),
+        keys: z.array(z.string().min(1)),
+      }),
+      z.object({
+        present: z.boolean(),
+        removed: z.record(z.string(), z.unknown()),
+      }),
+      { kind: 'mutation', auth: 'admin' },
+    ),
   },
 } as const satisfies CapabilityDefinition
 

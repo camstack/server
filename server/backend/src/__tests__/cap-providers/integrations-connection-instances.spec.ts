@@ -60,9 +60,6 @@ function harness(
     deleteIntegration: vi.fn(async (id: string) => {
       stored.delete(id)
     }),
-    getIntegrationSettings: vi.fn(async () => ({})),
-    setIntegrationSettings: vi.fn(async () => undefined),
-    setIntegrationSetting: vi.fn(async () => undefined),
   }
   const instances = {
     describe: vi.fn(async () => ({
@@ -199,48 +196,6 @@ describe('integrations over an integration-instances provider', () => {
     expect(type).toMatchObject({ addonId: 'reolink', kind: 'device-provider' })
   })
 
-  it('setSettings writes the instance record and never integration-settings', async () => {
-    const h = harness()
-    await h.provider.create({ addonId: ADDON_ID, name: 'Loki' })
-    h.registry.setIntegrationSettings.mockClear()
-    h.registry.setIntegrationSetting.mockClear()
-    await h.provider.setSettings({
-      id: 'int_0001',
-      settings: { url: 'http://x' },
-    })
-    expect(h.instances.updateInstance).toHaveBeenLastCalledWith({
-      id: 'int_0001',
-      values: { url: 'http://x' },
-    })
-    expect(h.registry.setIntegrationSettings).not.toHaveBeenCalled()
-    expect(h.registry.setIntegrationSetting).not.toHaveBeenCalled()
-    expect(h.restartAddon).not.toHaveBeenCalled()
-  })
-
-  it('getSettings reads the instance form values, secrets as views', async () => {
-    const h = harness()
-    await h.provider.create({ addonId: ADDON_ID, name: 'Loki' })
-    const settings = await h.provider.getSettings({ id: 'int_0001' })
-    expect(settings).toMatchObject({
-      url: 'http://loki:3100',
-      password: { set: true },
-    })
-    expect(h.registry.getIntegrationSettings).not.toHaveBeenCalled()
-  })
-
-  it('getSettings of a legacy row no instance record answers for reads the row itself, not {}', async () => {
-    const h = harness()
-    await h.provider.create({ addonId: ADDON_ID, name: 'Loki' })
-    h.instances.getInstance.mockResolvedValueOnce(null)
-    h.registry.getIntegrationSettings.mockResolvedValueOnce({
-      brokerId: 'ha_001',
-      exportTo: true,
-      mediaRole: 'publicEndpoint',
-    })
-    const settings = await h.provider.getSettings({ id: 'int_0001' })
-    expect(settings).toMatchObject({ brokerId: 'ha_001', exportTo: true })
-  })
-
   it('create inserts the registry row, then the record with the typed settings, no restart', async () => {
     const h = harness()
     const created = await h.provider.create({
@@ -257,7 +212,6 @@ describe('integrations over an integration-instances provider', () => {
       id: 'int_0001',
       values: { url: 'http://x' },
     })
-    expect(h.registry.setIntegrationSettings).not.toHaveBeenCalled()
     expect(h.restartAddon).not.toHaveBeenCalled()
   })
 
@@ -330,15 +284,19 @@ describe('integrations over an integration-instances provider', () => {
     expect(result).toMatchObject({ success: true, status: 'validated' })
   })
 
-  it('without a provider the legacy integration-settings path is unchanged', async () => {
+  it('without an instances provider, settings on create are dropped and the addon is not restarted', async () => {
     const h = harness({ withProvider: false })
-    await h.provider.create({ addonId: ADDON_ID, name: 'Loki' })
-    await h.provider.setSettings({
-      id: 'int_0001',
+    await h.provider.create({
+      addonId: ADDON_ID,
+      name: 'Loki',
       settings: { url: 'http://x' },
     })
-    expect(h.registry.setIntegrationSettings).toHaveBeenCalled()
     expect(h.instances.updateInstance).not.toHaveBeenCalled()
+    expect(h.restartAddon).not.toHaveBeenCalled()
+    expect(h.log.warn).toHaveBeenCalledWith(
+      expect.stringContaining('settings dropped'),
+      expect.anything(),
+    )
   })
 })
 

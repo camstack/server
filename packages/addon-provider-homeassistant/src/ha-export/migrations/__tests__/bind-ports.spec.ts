@@ -23,8 +23,13 @@ async function bind() {
     api: {
       integrations: {
         list: { query: async () => [] },
-        getSettings: { query: async () => ({}) },
-        setSettings: { mutate: async () => ({ success: true }) },
+      },
+      migrations: {
+        readLegacyIntegrationRows: { query: async () => ({}) },
+        patchLegacyIntegrationRows: { mutate: async () => ({ written: false }) },
+        deleteLegacyIntegrationRowKeys: {
+          mutate: async () => ({ present: false, removed: {} }),
+        },
       },
     },
     links,

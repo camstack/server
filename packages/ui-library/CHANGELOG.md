@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- The generated client no longer offers the retired per-integration settings methods
+
 ## [1.2.384] - 2026-11-05
 
 ### Changed

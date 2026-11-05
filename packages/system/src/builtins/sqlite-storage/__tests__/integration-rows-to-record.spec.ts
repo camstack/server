@@ -21,6 +21,11 @@ import { z } from 'zod'
 import { integrationRegistryRecordKinds } from '../integration-record-kinds.js'
 import { IntegrationRegistry } from '../integration-registry.js'
 import { integrationRowsPortsOver } from '../integration-rows-ports.js'
+import {
+  ensureLegacyIntegrationRowsTable,
+  patchLegacyIntegrationRows,
+  readLegacyIntegrationRows,
+} from '../migrations/legacy-integration-rows-door.js'
 import { makeFakeKeychain, makeRecordsWorld } from './support/records-world.js'
 
 const ADDON = 'spec-bosch'
@@ -65,6 +70,7 @@ const legacyStore = {
 async function setup() {
   const world = makeRecordsWorld()
   await world.provider.init()
+  ensureLegacyIntegrationRowsTable(world.settings.db)
   const keychain = makeFakeKeychain()
   const registryRecords = createRecordsAccess({
     owner: 'integration-registry',
@@ -91,9 +97,14 @@ async function setup() {
   const warnings: string[] = []
   // The migration reads through its OWN handle, a cold cache like a fresh boot: the writer's
   // handle above already holds every value it put.
+  const door = world.settings.db
   const ports = integrationRowsPortsOver({
-    registry,
+    db: door,
     secrets: createSecretsAccess({ owner: ADDON, transport: keychain }),
+    listIntegrations: async (addonId) =>
+      (await registry.listIntegrations())
+        .filter((i) => i.addonId === addonId)
+        .map((i) => ({ id: i.id, name: i.name })),
     records: addonRecords.kind({
       name: 'accounts',
       declaration: kinds.accounts.declaration,
@@ -105,20 +116,24 @@ async function setup() {
   const putSecretRow = async (integrationId: string, key: string, value: string) => {
     const ref = secrets.ref({ kind: 'integration', integrationId }, key)
     await secrets.put(ref, value)
-    await registry.setIntegrationSetting(integrationId, key, makeSecretMarker(ref))
+    patchLegacyIntegrationRows(door, integrationId, { [key]: makeSecretMarker(ref) })
   }
   const legacyRows = async (integrationId: string): Promise<void> => {
-    await registry.setIntegrationSetting(integrationId, 'region', 'eu')
-    await registry.setIntegrationSetting(integrationId, 'pollSeconds', 30)
-    await registry.setIntegrationSetting(integrationId, 'unknownLegacyKey', 'ignored')
+    patchLegacyIntegrationRows(door, integrationId, {
+      region: 'eu',
+      pollSeconds: 30,
+      unknownLegacyKey: 'ignored',
+    })
     await putSecretRow(integrationId, 'password', CANARY_PASSWORD)
     const fridge = secrets.ref({ kind: 'integration', integrationId }, 'applianceSecrets.fridge')
     const oven = secrets.ref({ kind: 'integration', integrationId }, 'applianceSecrets.oven')
     await secrets.put(fridge, CANARY_FRIDGE)
     await secrets.put(oven, CANARY_OVEN)
-    await registry.setIntegrationSetting(integrationId, 'applianceSecrets', {
-      fridge: makeSecretMarker(fridge),
-      oven: makeSecretMarker(oven),
+    patchLegacyIntegrationRows(door, integrationId, {
+      applianceSecrets: {
+        fridge: makeSecretMarker(fridge),
+        oven: makeSecretMarker(oven),
+      },
     })
   }
   return { world, keychain, registry, ports, handle, warnings, legacyRows, secrets }
@@ -165,7 +180,7 @@ describe('moveIntegrationRowsToRecords', () => {
       password: CANARY_PASSWORD,
       applianceSecrets: { fridge: CANARY_FRIDGE, oven: CANARY_OVEN },
     })
-    expect(await t.registry.getIntegrationSettings(a.id)).toEqual({})
+    expect(await readLegacyIntegrationRows(t.world.settings.db, a.id)).toEqual({})
     // the plaintext lives only in the keychain: never in a row of the engine
     expect(sqliteText(t.world)).not.toContain(CANARY_PASSWORD)
     expect(sqliteText(t.world)).not.toContain(CANARY_FRIDGE)
@@ -196,7 +211,7 @@ describe('moveIntegrationRowsToRecords', () => {
     )
     t.keychain.locked = false
     expect(await t.handle.get(a.id)).toBeNull()
-    const rows = await t.registry.getIntegrationSettings(a.id)
+    const rows = await readLegacyIntegrationRows(t.world.settings.db, a.id)
     expect(isSecretMarker(rows['password'])).toBe(true)
     // and the next pass, with the keychain open, succeeds
     expect((await moveIntegrationRowsToRecords(t.ports, spec)).outcome).toBe('done')
@@ -218,7 +233,9 @@ describe('moveIntegrationRowsToRecords', () => {
       /applianceSecrets\{oven\} did not read back/,
     )
     expect(await t.handle.get(a.id)).toBeNull()
-    expect(isSecretMarker((await t.registry.getIntegrationSettings(a.id))['password'])).toBe(true)
+    expect(
+      isSecretMarker((await readLegacyIntegrationRows(t.world.settings.db, a.id))['password']),
+    ).toBe(true)
   })
 
   it('an existing record that holds no password keeps the rows and says so', async () => {
@@ -229,7 +246,9 @@ describe('moveIntegrationRowsToRecords', () => {
     const result = await moveIntegrationRowsToRecords(t.ports, spec)
     expect(result.summary).toMatchObject({ kept: 1 })
     expect((await t.handle.get(a.id))?.data.region).toBe('us')
-    expect(isSecretMarker((await t.registry.getIntegrationSettings(a.id))['password'])).toBe(true)
+    expect(
+      isSecretMarker((await readLegacyIntegrationRows(t.world.settings.db, a.id))['password']),
+    ).toBe(true)
     expect(t.warnings.join('\n')).toMatch(/password/)
     expect(t.warnings.join('\n')).not.toContain(CANARY_PASSWORD)
   })

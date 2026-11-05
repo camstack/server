@@ -21,7 +21,6 @@ function harness(instanceMode: 'unique' | 'multiple', existing: readonly Integra
       integration('int_new', input.addonId),
     ),
     getIntegration: vi.fn(),
-    setIntegrationSettings: vi.fn(),
   }
   const log = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
   const addonReg = {
@@ -53,7 +52,7 @@ describe('integrations.create and instanceMode', () => {
   it('refuses a second instance of a unique addon with a typed CONFLICT', async () => {
     const h = harness('unique', [integration('int_0001', 'provider-x')])
     const err = await h.provider
-      .create({ addonId: 'provider-x', name: 'Second', skipRestart: true })
+      .create({ addonId: 'provider-x', name: 'Second' })
       .catch((e: unknown) => e)
     expect(err).toBeInstanceOf(TRPCError)
     expect(err instanceof TRPCError ? err.code : null).toBe('CONFLICT')
@@ -62,7 +61,7 @@ describe('integrations.create and instanceMode', () => {
 
   it('allows the first instance of a unique addon', async () => {
     const h = harness('unique', [])
-    await h.provider.create({ addonId: 'provider-x', name: 'First', skipRestart: true })
+    await h.provider.create({ addonId: 'provider-x', name: 'First' })
     expect(h.registry.createIntegration).toHaveBeenCalledTimes(1)
   })
 
@@ -72,7 +71,6 @@ describe('integrations.create and instanceMode', () => {
       addonId: 'provider-x',
       name: 'Hub B',
       originStableId: 'mac-aabbccddeeff',
-      skipRestart: true,
     })
     expect(h.registry.createIntegration).toHaveBeenCalledWith(
       expect.objectContaining({ originStableId: 'mac-aabbccddeeff' }),

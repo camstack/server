@@ -9,7 +9,7 @@
  *    (`devices`, `services` or `both`). Without a role the Integrations page cannot tell what the
  *    instances are for, and without a kind there is no record to read.
  * 2. An entry that declares a device marker and NOT `integration-instances` is still on the legacy
- *    `integration_settings` rows. Those entries are the committed list
+ *    leftover rows. Those entries are the committed list
  *    `scripts/integration-instances-baseline.json` (`onRows`), and it only SHRINKS: a new device
  *    addon starts on records (declare the cap), and an addon that migrated, or went away, leaves
  *    the list in the same change.

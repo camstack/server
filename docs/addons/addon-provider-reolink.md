@@ -132,7 +132,7 @@ nobody offline.
   60 s pass or an integration lifecycle event); there is no settings-changed event.
 - A hub integration's form (the create wizard, and the edit page of a migrated or
   hub-born instance) is the connection only — host, port, rtspPort, username,
-  password, plus the hub debug section — through `integrationSettingsSchema`. The
+  password, plus the hub debug section — through `integrationFormSchema`. The
   default integration keeps the full global schema (clips). An
   instance that cannot be read falls back to the full schema.
 

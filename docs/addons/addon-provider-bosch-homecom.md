@@ -50,15 +50,14 @@ SingleKey rotates the refresh token on every use. The client reports each rotati
 (`onTokensRotated`) **before** the new access token is used. A data call that is answered `401`
 refreshes once (the SingleKey `refresh_token` grant) and retries that call. A second `401`, or a
 refresh the token endpoint refuses, is `HomeComAuthError` and the manager asks the operator to sign
-in again. The addon writes the pair through
-`integrations.setSettings` (one write, serialised per integration, `token` + `refresh` named as secret
-keys). If the stored secrets cannot be read back (the keychain is locked) nothing is written — the
-hub refuses an overwrite of a secret the addon could not read — and a line says so, without values.
-A restart therefore never presents a spent refresh token.
+in again. The addon writes the pair onto the instance record (one write, serialised per
+integration, `token` + `refresh` kept in the keychain). If the stored secrets cannot be read back
+(the keychain is locked) nothing is written — the hub refuses an overwrite of a secret the addon
+could not read — and a line says so, without values. A restart therefore never presents a spent
+refresh token.
 
-The hub restarts an addon after a settings write, so a rotation (roughly once per access-token life)
-is followed by a restart of this addon. The manager keeps the rotated pair in memory too, so the
-settings echo of that write is not seen as a changed connection.
+A rotation does not respawn the addon. The manager keeps the rotated pair in memory too, so the
+echo of that write is not seen as a changed connection.
 
 ## Gateways
 

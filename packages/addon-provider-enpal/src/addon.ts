@@ -85,6 +85,7 @@ export class EnpalProviderAddon extends BaseDeviceProvider {
         ],
         integrationRowsPortsOver({
           api: defaultIntegrationApiOver(this.ctx.api),
+          secrets: this.ctx.secrets ?? null,
           records,
           kind: enpalConnectionsEntryKind,
           warn: (message) => this.ctx.logger.warn(message),

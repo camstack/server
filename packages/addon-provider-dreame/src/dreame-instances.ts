@@ -10,6 +10,7 @@ import {
   entryBody,
   type IConnectionTestProvider,
   type IntegrationRowsApi,
+  type SecretsAccess,
   type IntegrationRowsPorts,
   type IntegrationTestConnectionResult,
   integrationRowsPortsOverApi,
@@ -110,9 +111,11 @@ export function dreameRowsPorts(deps: {
   readonly api: IntegrationRowsApi
   readonly records: Pick<RecordsAccess, 'kind'>
   readonly warn: (message: string) => void
+  readonly secrets?: SecretsAccess | null
 }): IntegrationRowsPorts {
   return integrationRowsPortsOverApi({
     api: deps.api,
+    ...(deps.secrets !== undefined ? { secrets: deps.secrets } : {}),
     records: deps.records.kind({
       name: dreameConnectionsEntryKind.name,
       declaration: dreameConnectionsEntryKind.declaration,

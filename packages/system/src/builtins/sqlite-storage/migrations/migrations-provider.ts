@@ -14,6 +14,23 @@ import type {
   DataStoreDatabase,
 } from '@camstack/types'
 import type { MigrationEngine } from './migration-engine.js'
+import {
+  clearLegacyIntegrationRows,
+  deleteLegacyIntegrationRowKeys,
+  legacyIntegrationAddonId,
+  patchLegacyIntegrationRows,
+  readLegacyIntegrationRows,
+} from './legacy-integration-rows-door.js'
+import type { MigrationDatabase } from './migration-types.js'
+
+/**
+ * The settings connection and the runner lookup the legacy-row methods need.
+ * Absent in specs that never call them.
+ */
+export interface LegacyIntegrationRowsDoor {
+  readonly database: () => MigrationDatabase | null
+  readonly runnerIdOf: (owner: string) => string
+}
 
 /**
  * The addon the transport stamped on the call (`callerAddonId`, never in an input
@@ -25,7 +42,35 @@ function callerOf(input: object): string | null {
 }
 
 export class MigrationsProvider implements IMigrationsProvider {
-  constructor(private readonly engine: MigrationEngine) {}
+  constructor(
+    private readonly engine: MigrationEngine,
+    private readonly legacyRows: LegacyIntegrationRowsDoor | null = null,
+  ) {}
+
+  private settingsDatabase(): MigrationDatabase {
+    const db = this.legacyRows?.database() ?? null
+    if (db === null) {
+      throw new Error('legacy integration rows: the settings database is not open')
+    }
+    return db
+  }
+
+  /**
+   * The integration's own addon, or the runner that hosts it. An integration
+   * that is already gone has nothing to refuse.
+   */
+  private assertLegacyCaller(integrationId: string, caller: string | null): MigrationDatabase {
+    const db = this.settingsDatabase()
+    const owner = legacyIntegrationAddonId(db, integrationId)
+    if (owner === null) return db
+    const runner = this.legacyRows?.runnerIdOf(owner) ?? owner
+    if (caller === null || (caller !== owner && caller !== runner)) {
+      throw new Error(
+        `legacy integration rows of "${integrationId}" are migration-only — caller "${caller ?? ''}" is not "${owner}"`,
+      )
+    }
+    return db
+  }
 
   async listLedger(): Promise<{ entries: MigrationLedgerEntry[] }> {
     return { entries: [...(await this.engine.listLedger())] }
@@ -79,5 +124,34 @@ export class MigrationsProvider implements IMigrationsProvider {
   }): Promise<{ scheduled: boolean; held: string[]; restartRequired: boolean }> {
     const { held } = await this.engine.restorePreMigration(input.database, input.snapshotId)
     return { scheduled: true, held: [...held], restartRequired: true }
+  }
+
+  readLegacyIntegrationRows(input: { integrationId: string }): Promise<Record<string, unknown>> {
+    const db = this.assertLegacyCaller(input.integrationId, callerOf(input))
+    return Promise.resolve({ ...readLegacyIntegrationRows(db, input.integrationId) })
+  }
+
+  clearLegacyIntegrationRows(input: {
+    integrationId: string
+  }): Promise<{ rows: number; secrets: number }> {
+    const db = this.assertLegacyCaller(input.integrationId, callerOf(input))
+    return Promise.resolve(clearLegacyIntegrationRows(db, input.integrationId))
+  }
+
+  patchLegacyIntegrationRows(input: {
+    integrationId: string
+    patch: Record<string, unknown>
+  }): Promise<{ written: boolean }> {
+    const db = this.assertLegacyCaller(input.integrationId, callerOf(input))
+    return Promise.resolve(patchLegacyIntegrationRows(db, input.integrationId, input.patch))
+  }
+
+  deleteLegacyIntegrationRowKeys(input: {
+    integrationId: string
+    keys: string[]
+  }): Promise<{ present: boolean; removed: Record<string, unknown> }> {
+    const db = this.assertLegacyCaller(input.integrationId, callerOf(input))
+    const deleted = deleteLegacyIntegrationRowKeys(db, input.integrationId, input.keys)
+    return Promise.resolve({ present: deleted.present, removed: { ...deleted.removed } })
   }
 }

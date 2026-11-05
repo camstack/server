@@ -35,10 +35,10 @@ async function world(rows: Record<string, Record<string, unknown>>) {
   const warnings: string[] = []
   const api = {
     list: async () => [...names].map(([id, name]) => ({ id, addonId: ADDON, name })),
-    getSettings: async ({ id }: { id: string }) => ({
+    readLegacyIntegrationRows: async ({ integrationId: id }: { integrationId: string }) => ({
       ...store.get(id),
     }),
-    clearSettings: async ({ id }: { id: string }) => {
+    clearLegacyIntegrationRows: async ({ integrationId: id }: { integrationId: string }) => {
       cleared.push(id)
       store.set(id, {})
     },

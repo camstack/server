@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- The hub no longer keeps a second settings store: create writes the instance record, and settings with no instance provider are dropped
+
 ## [1.2.769] - 2026-11-05
 
 ### Changed

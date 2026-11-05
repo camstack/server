@@ -30,8 +30,8 @@ async function world() {
   await mem.records.declare(mqttHaRecordKinds)
   const api: IntegrationRowsApi = {
     list: async () => [NEW_SPELLING, OLD_SPELLING],
-    getSettings: async ({ id }) => ({ ...rows.get(id) }),
-    clearSettings: async ({ id }) => {
+    readLegacyIntegrationRows: async ({ integrationId: id }) => ({ ...rows.get(id) }),
+    clearLegacyIntegrationRows: async ({ integrationId: id }) => {
       rows.set(id, {})
     },
   }

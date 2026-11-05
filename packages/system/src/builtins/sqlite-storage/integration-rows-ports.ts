@@ -1,8 +1,8 @@
 /**
- * The system-side ports of `moveIntegrationRowsToRecords` (planning#416): the legacy
- * `integration_settings` rows are read through the registry and their secrets resolved through the
- * integration's OWNER keychain door (never exposed further), and cleared together with their
- * keychain values. The addon's own record kind is reached through its records handle.
+ * The system-side ports of `moveIntegrationRowsToRecords` (planning#416). The leftover rows are
+ * read on the settings connection by the migration-only door, and their secrets are resolved
+ * through the integration's OWNER keychain handle (never exposed further) and cleared together
+ * with the rows. The addon's own record kind is reached through its records handle.
  */
 import {
   type IntegrationRowsPorts,
@@ -13,55 +13,44 @@ import {
   type SecretsAccess,
   collectSecretMarkerRefs,
 } from '@camstack/types'
-import type { IntegrationRegistry } from './integration-registry.js'
+import {
+  clearLegacyIntegrationRows,
+  readLegacyIntegrationRows,
+} from './migrations/legacy-integration-rows-door.js'
+import type { MigrationDatabase } from './migrations/migration-types.js'
 
 export interface IntegrationRowsPortsDeps {
-  readonly registry: Pick<
-    IntegrationRegistry,
-    'listIntegrations' | 'getIntegrationSettings' | 'clearIntegrationSettings'
-  >
+  readonly db: MigrationDatabase
   /** The OWNER addon's keychain handle, or null when there is no keychain. */
   readonly secrets: SecretsAccess | null
   readonly records: RecordKindHandle<Record<string, unknown>>
   readonly log: RowsMigrationLog
-}
-
-export interface ClearIntegrationRowsDeps {
-  readonly registry: Pick<
-    IntegrationRegistry,
-    'getIntegrationSettings' | 'clearIntegrationSettings'
-  >
-  /** The OWNER addon's keychain handle, or null when there is no keychain. */
-  readonly secrets: SecretsAccess | null
+  readonly listIntegrations: (
+    addonId: string,
+  ) => Promise<readonly { readonly id: string; readonly name: string }[]>
 }
 
 /**
- * The hub-side "clear rows" operation: delete one integration's legacy setting rows AND the
- * keychain values they pointed at (values first, so a failed delete leaves the rows to retry). The integration itself stays. A rerun on cleared rows is a
- * no-op. Counts only; never a value.
+ * Delete one integration's leftover rows AND the keychain values they pointed at (values first,
+ * so a failed delete leaves the rows to retry). A missing store is a no-op. Counts only.
  */
 export async function clearIntegrationRows(
-  deps: ClearIntegrationRowsDeps,
+  db: MigrationDatabase,
+  secrets: SecretsAccess | null,
   integrationId: string,
 ): Promise<{ readonly rows: number; readonly secrets: number }> {
-  // The values go FIRST: while the rows still point at them a failed delete is retried by the
-  // next run; clearing the rows first would orphan whatever the delete left behind.
-  const stored = await deps.registry.getIntegrationSettings(integrationId)
+  const stored = readLegacyIntegrationRows(db, integrationId)
   const refs = collectSecretMarkerRefs(stored)
-  if (refs.length > 0 && deps.secrets !== null) await deps.secrets.delete(refs)
-  await deps.registry.clearIntegrationSettings(integrationId)
-  return { rows: Object.keys(stored).length, secrets: refs.length }
+  if (refs.length > 0 && secrets !== null) await secrets.delete(refs)
+  return clearLegacyIntegrationRows(db, integrationId)
 }
 
 export function integrationRowsPortsOver(deps: IntegrationRowsPortsDeps): IntegrationRowsPorts {
   return {
     warn: (message) => deps.log.warn(message),
-    listIntegrations: async (addonId) =>
-      (await deps.registry.listIntegrations())
-        .filter((i) => i.addonId === addonId)
-        .map((i) => ({ id: i.id, name: i.name })),
+    listIntegrations: (addonId) => deps.listIntegrations(addonId),
     readRows: async (integrationId) => {
-      const stored = await deps.registry.getIntegrationSettings(integrationId)
+      const stored = readLegacyIntegrationRows(deps.db, integrationId)
       if (deps.secrets === null) return stored
       const { value, unresolved } = await resolveSecretMarkers(stored, deps.secrets)
       if (unresolved.length > 0) {
@@ -84,7 +73,7 @@ export function integrationRowsPortsOver(deps: IntegrationRowsPortsDeps): Integr
       await deps.records.delete(id)
     },
     clearRows: async (integrationId) => {
-      await clearIntegrationRows(deps, integrationId)
+      await clearIntegrationRows(deps.db, deps.secrets, integrationId)
     },
   }
 }

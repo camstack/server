@@ -97,6 +97,7 @@ export class UnraidProviderAddon extends BaseDeviceProvider {
         ],
         integrationRowsPortsOver({
           api: defaultIntegrationApiOver(this.ctx.api),
+          secrets: this.ctx.secrets ?? null,
           records,
           kind: unraidConnectionsEntryKind,
           warn: (message) => this.ctx.logger.warn(message),

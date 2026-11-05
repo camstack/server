@@ -94,6 +94,7 @@ export class ESPHomeProviderAddon extends BaseDeviceProvider<EspAddonConfig> {
       defineAddonMigrations([ESPHOME_ROWS_TO_RECORD_MIGRATION], {
         ...integrationRowsPortsOverApi({
           api: defaultIntegrationApiOver(this.ctx.api),
+          secrets: this.ctx.secrets ?? null,
           records: records.kind({
             name: espConnectionsEntryKind.name,
             declaration: espConnectionsEntryKind.declaration,

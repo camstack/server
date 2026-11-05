@@ -1023,6 +1023,7 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     // from the record, not from the rows.
     const integrationPorts = defaultIntegrationPortsOver({
       api: defaultIntegrationApiOver(this.ctx.api),
+      secrets: this.ctx.secrets ?? null,
       records,
       kind: reolinkConnectionsEntryKind,
       info: (message) => this.ctx.logger.info(message),

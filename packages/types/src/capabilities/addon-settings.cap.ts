@@ -124,8 +124,8 @@ export const addonSettingsCapability = {
 
     // The form of ONE integration instance — the create wizard (`integrationId: null`) and the
     // edit page both ask here instead of `getGlobalSettings`. An addon with a per-instance schema
-    // (`BaseAddon.integrationSettingsSchema`) answers with it; every other addon answers with its
-    // global schema, exactly as before. Read-only: the values come from `integrations.getSettings`.
+    // (`BaseAddon.integrationFormSchema`) answers with it; every other addon answers with its
+    // global schema, exactly as before. Read-only: the values come from the instance record.
     getIntegrationFormSchema: method(
       z.object({
         addonId: z.string(),

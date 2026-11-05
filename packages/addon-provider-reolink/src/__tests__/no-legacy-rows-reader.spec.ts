@@ -1,6 +1,6 @@
 /**
  * After the rows-to-record move (planning#416, D1007) nothing in this addon's runtime reads or
- * writes the legacy `integration_settings` rows: the connection comes from the integration's
+ * writes the legacy integration rows: the connection comes from the integration's
  * record only. A reader put back (a fallback, an alias, a dual read) fails here.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs'
@@ -13,7 +13,7 @@ const SRC = fileURLToPath(new URL('..', import.meta.url))
 const LEGACY_READS = [
   /integrations\.(getSettings|setSettings|clearSettings)\b/,
   /\bgetIntegrationSettings\b/,
-  /\b(protected|override)\s+(override\s+)?(async\s+)?integrationSettingsSchema\b/,
+  /\b(protected|override)\s+(override\s+)?(async\s+)?integrationFormSchema\b/,
 ]
 
 function runtimeFiles(dir: string): string[] {

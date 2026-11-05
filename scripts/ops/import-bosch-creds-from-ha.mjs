@@ -27,13 +27,11 @@
 //   camstack-import.json           CamStack-oriented plan (paths, not inline PEM)
 //
 // Apply-hub (when camstack-import.json marks readyToApply):
-//   integrations.create + integrations.setSettings via scripts/hub/hub.mjs
+//   integrations.create (settings on the create) via scripts/hub/hub.mjs
 //
 // Coordinator manual apply (.50 example):
 //   node scripts/hub/hub.mjs --server 192.0.2.20 POST integrations.create \
-//     '{"addonId":"bosch-shc","name":"Bosch SHC (from HA)"}'
-//   node scripts/hub/hub.mjs --server 192.0.2.20 POST integrations.setSettings \
-//     '{"id":"<integrationId>","settings":{...},"secretKeys":["..."]}'
+//     '{"addonId":"bosch-shc","name":"Bosch SHC (from HA)","settings":{...}}'
 //
 // Requires: ~/.claude/homelab/bin/hl (or HL_BIN), virsh + qemu-guest-agent on Unraid.
 import { execFileSync } from 'node:child_process'
@@ -271,13 +269,12 @@ export function buildCamstackImport(entries, ctx) {
     outDir: ctx.outDir,
     readyToApply: false,
     readyToApplyReason:
-      'Bosch provider addons are account-mode scaffolds without a finalized integration settings schema; use extract output to wire integrations.create/setSettings once schema lands.',
+      'Bosch provider addons are account-mode scaffolds without a finalized integration settings schema; use extract output to wire integrations.create once schema lands.',
     integrations,
     hubApplyExample: {
       server: '192.0.2.20',
       steps: [
-        'POST integrations.create {"addonId":"bosch-shc","name":"..."}',
-        'POST integrations.setSettings {"id":"<id>","settings":{...},"secretKeys":[...]}',
+        'POST integrations.create {"addonId":"bosch-shc","name":"...","settings":{}}',
         'Repeat per integration; PEM paths in settings should be absolute paths on the hub host only after copying scratchpad/pem there securely.',
       ],
     },
@@ -684,7 +681,11 @@ function cmdApplyHub(args) {
       server,
       'POST',
       'integrations.create',
-      { addonId: item.camstackAddonId, name: item.suggestedIntegrationName },
+      {
+        addonId: item.camstackAddonId,
+        name: item.suggestedIntegrationName,
+        settings: item.settings,
+      },
       dryRun,
     )
     const integrationId = created?.id
@@ -692,17 +693,6 @@ function cmdApplyHub(args) {
       console.error(`integrations.create failed for ${item.camstackAddonId}`)
       return 2
     }
-    hubCall(
-      server,
-      'POST',
-      'integrations.setSettings',
-      {
-        id: integrationId ?? '<integration-id>',
-        settings: item.settings,
-        secretKeys: item.secretKeys,
-      },
-      dryRun,
-    )
     if (!dryRun) console.log(`applied ${item.camstackAddonId} integration id=${integrationId}`)
   }
   return 0

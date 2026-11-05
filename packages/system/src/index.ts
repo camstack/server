@@ -529,7 +529,6 @@ export type { IntegrationRecordStores } from './builtins/sqlite-storage/integrat
 export {
   integrationRegistryRecordKinds,
   INTEGRATIONS_LEGACY,
-  INTEGRATION_SETTINGS_LEGACY,
 } from './builtins/sqlite-storage/integration-record-kinds.js'
 export {
   clusterAgentRecordKinds,

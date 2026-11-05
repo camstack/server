@@ -92,6 +92,7 @@ export class TuyaProviderAddon extends BaseDeviceProvider {
         ],
         integrationRowsPortsOver({
           api: defaultIntegrationApiOver(this.ctx.api),
+          secrets: this.ctx.secrets ?? null,
           records,
           kind: tuyaConnectionsEntryKind,
           warn: (message) => this.ctx.logger.warn(message),

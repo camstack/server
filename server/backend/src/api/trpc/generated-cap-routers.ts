@@ -8387,45 +8387,6 @@ export function createCapRouter_integrations(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.delete(methodInput as any)
       }),
-    getSettings: adminProcedure
-      .input(integrationsCapability.methods.getSettings.input.loose())
-      .output(integrationsCapability.methods.getSettings.output)
-      .query(async ({ input, ctx }) => {
-        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider('integrations', nodeId, () => getProvider(ctx), createRemoteProxy)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.getSettings(methodInput as any)
-      }),
-    setSettings: adminProcedure
-      .input(integrationsCapability.methods.setSettings.input.loose())
-      .output(integrationsCapability.methods.setSettings.output)
-      .mutation(async ({ input, ctx }) => {
-        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider('integrations', nodeId, () => getProvider(ctx), createRemoteProxy)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.setSettings(methodInput as any)
-      }),
-    clearSettings: adminProcedure
-      .input(integrationsCapability.methods.clearSettings.input.loose())
-      .output(integrationsCapability.methods.clearSettings.output)
-      .mutation(async ({ input, ctx }) => {
-        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider('integrations', nodeId, () => getProvider(ctx), createRemoteProxy)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.clearSettings(methodInput as any)
-      }),
     getAvailableTypes: adminProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(integrationsCapability.methods.getAvailableTypes.output)
@@ -10380,6 +10341,58 @@ export function createCapRouter_migrations(
         const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.finishMigration(methodInput as any)
+      }),
+    readLegacyIntegrationRows: adminProcedure
+      .input(migrationsCapability.methods.readLegacyIntegrationRows.input.loose())
+      .output(migrationsCapability.methods.readLegacyIntegrationRows.output)
+      .query(async ({ input, ctx }) => {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
+        const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.readLegacyIntegrationRows(methodInput as any)
+      }),
+    clearLegacyIntegrationRows: adminProcedure
+      .input(migrationsCapability.methods.clearLegacyIntegrationRows.input.loose())
+      .output(migrationsCapability.methods.clearLegacyIntegrationRows.output)
+      .mutation(async ({ input, ctx }) => {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
+        const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.clearLegacyIntegrationRows(methodInput as any)
+      }),
+    patchLegacyIntegrationRows: adminProcedure
+      .input(migrationsCapability.methods.patchLegacyIntegrationRows.input.loose())
+      .output(migrationsCapability.methods.patchLegacyIntegrationRows.output)
+      .mutation(async ({ input, ctx }) => {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
+        const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.patchLegacyIntegrationRows(methodInput as any)
+      }),
+    deleteLegacyIntegrationRowKeys: adminProcedure
+      .input(migrationsCapability.methods.deleteLegacyIntegrationRowKeys.input.loose())
+      .output(migrationsCapability.methods.deleteLegacyIntegrationRowKeys.output)
+      .mutation(async ({ input, ctx }) => {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
+        const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.deleteLegacyIntegrationRowKeys(methodInput as any)
       }),
   })
 }

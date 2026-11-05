@@ -9,6 +9,7 @@ import {
   defineEntryKind,
   entryBody,
   type IntegrationRowsApi,
+  type SecretsAccess,
   type IntegrationRowsPorts,
   type IntegrationTestConnectionResult,
   type IConnectionTestProvider,
@@ -115,9 +116,11 @@ export function rademacherRowsPorts(deps: {
   readonly api: IntegrationRowsApi
   readonly records: Pick<RecordsAccess, 'kind'>
   readonly warn: (message: string) => void
+  readonly secrets?: SecretsAccess | null
 }): IntegrationRowsPorts {
   return integrationRowsPortsOverApi({
     api: deps.api,
+    ...(deps.secrets !== undefined ? { secrets: deps.secrets } : {}),
     records: deps.records.kind({
       name: rademacherConnectionsEntryKind.name,
       declaration: rademacherConnectionsEntryKind.declaration,

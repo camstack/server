@@ -173,7 +173,7 @@ Singleton or collection providers, addressed without a device.
 | `fan-presets` | 4 | — | — | — | — | `core-blocks` |
 | `filesystem-browse` | 3 | — | — | — | ✓ | `filesystem-storage` |
 | `integration-instances` | 9 | — | — | — | — | `cloudflare-tunnel` `cloudflare-turn` `export-alexa` `export-google` `export-hap` `google-services` `import-alexa` `matter-broker` `mqtt-broker` `provider-amcrest` `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-ecowitt` `provider-enpal` `provider-esphome` `provider-gree` `provider-hikvision` `provider-homeassistant` `homeassistant-export` `provider-homematic` `provider-mqtt-ha` `provider-onvif` `provider-petkit` `provider-rademacher` `provider-reolink` `provider-rtsp` `provider-tuya` `provider-unifi` `provider-unraid` `provider-velux` `provider-vesync` `provider-wyze` `smtp-nodemailer` `static-turn` `training-modal` `loki-logging` |
-| `integrations` | 11 | — | — | — | — | — |
+| `integrations` | 8 | — | — | — | — | — |
 | `keychain` | 7 | — | — | — | ✓ | `keychain` |
 | `keychain-admin` | 13 | — | — | — | — | `keychain` |
 | `llm` | 22 | — | — | — | — | `ai` |
@@ -185,7 +185,7 @@ Singleton or collection providers, addressed without a device.
 | `login-method` | 1 | — | — | — | ✓ | `auth-oidc` `auth-webauthn` |
 | `mesh-network` | 7 | — | — | — | — | `tailscale-client` |
 | `metrics-provider` | 11 | — | — | — | — | `metrics-native` |
-| `migrations` | 9 | — | — | — | ✓ | `sqlite-settings` |
+| `migrations` | 13 | — | — | — | ✓ | `sqlite-settings` |
 | `model-convert` | 1 | — | — | — | ✓ | `model-studio` |
 | `model-distributor` | 1 | — | — | — | ✓ | — |
 | `mqtt-broker` | 8 | ✓ | — | — | — | `mqtt-broker` |

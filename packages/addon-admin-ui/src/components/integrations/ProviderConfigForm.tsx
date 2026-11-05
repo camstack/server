@@ -16,7 +16,7 @@ interface ProviderConfigFormProps {
   canTest?: boolean
   /** Hydrate the name field (edit-config). Wizard leaves this unset. */
   initialName?: string
-  /** Hydrate the schema fields from `integrations.getSettings` (edit-config). */
+  /** Hydrate the schema fields from the instance record (edit-config). */
   initialConfig?: Record<string, unknown>
   /** Primary-button label. Wizard keeps the default ("Next"). */
   submitLabel?: string

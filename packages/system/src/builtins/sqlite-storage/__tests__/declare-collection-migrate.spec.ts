@@ -1,6 +1,6 @@
 /**
  * `declareCollection` against a collection that already exists on disk — the
- * shape B2 leaves behind for the keyless tables (`integration_settings`,
+ * shape B2 leaves behind for the keyless tables (`keyless_rows`,
  * `device_settings_kv`).
  *
  * Those two were created by the pre-B2 `ensureTable` path with NO primary-key
@@ -37,7 +37,7 @@ async function backend(): Promise<{ b: SqliteSettingsBackend; dbPath: string }> 
   return { b, dbPath: path.join(dir, 'test.db') }
 }
 
-/** Exactly `INTEGRATION_SETTINGS_COLUMNS` — no primary key of its own. */
+/** A keyless collection — no primary key of its own. */
 const KEYLESS: readonly CollectionColumn[] = [
   { name: 'integration_id', type: 'TEXT', notNull: true },
   { name: 'key', type: 'TEXT', notNull: true },
@@ -48,9 +48,9 @@ const KEYLESS: readonly CollectionColumn[] = [
 describe('declareCollection over a pre-existing collection', () => {
   it('re-declaring the same keyless shape on a later boot preserves every row', async () => {
     const { b, dbPath } = await backend()
-    await b.declareCollection({ collection: 'integration_settings', columns: KEYLESS })
+    await b.declareCollection({ collection: 'keyless_rows', columns: KEYLESS })
     await b.insert({
-      collection: 'integration_settings',
+      collection: 'keyless_rows',
       record: {
         id: 'int_0009:host',
         data: {
@@ -65,9 +65,9 @@ describe('declareCollection over a pre-existing collection', () => {
     // The deploy: a fresh process declares the identical shape.
     const b2 = new SqliteSettingsBackend(dbPath)
     await b2.initialize()
-    await b2.declareCollection({ collection: 'integration_settings', columns: KEYLESS })
+    await b2.declareCollection({ collection: 'keyless_rows', columns: KEYLESS })
 
-    const rows = await b2.query({ collection: 'integration_settings' })
+    const rows = await b2.query({ collection: 'keyless_rows' })
     expect(rows).toHaveLength(1)
     expect(rows[0]!.id).toBe('int_0009:host')
     expect(rows[0]!.data['key']).toBe('host')

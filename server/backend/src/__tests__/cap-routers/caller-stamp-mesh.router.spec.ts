@@ -24,14 +24,14 @@ function generatedIntegrationsRouter(spy: ReturnType<typeof vi.fn>): CreateCalle
 }
 
 describe('caller stamp survives mesh / core-cap bridge context', () => {
-  it('integrations.getSettings (runtime builder): transport stamp reaches the provider', async () => {
+  it('integrations.get (runtime builder): transport stamp reaches the provider', async () => {
     const spy = vi.fn(async (_input: unknown) => ({}))
     const provider = new Proxy({}, { get: () => spy })
     const router = buildCapRouterForTest('integrations', () => provider)
     const meshCtx = createMeshTrpcContext('mesh')
     expect(meshCtx.req).toBeUndefined()
 
-    await invokeProcedure(router, 'getSettings', meshCtx, {
+    await invokeProcedure(router, 'get', meshCtx, {
       id: 'int_0001',
       callerAddonId: MESH_CALLER,
     })
@@ -43,12 +43,12 @@ describe('caller stamp survives mesh / core-cap bridge context', () => {
     })
   })
 
-  it('integrations.getSettings (generated mount): mesh keeps stamp; HTTP strips spoof', async () => {
+  it('integrations.get (generated mount): mesh keeps stamp; HTTP strips spoof', async () => {
     const spy = vi.fn(async (_input: unknown) => ({}))
     const router = generatedIntegrationsRouter(spy)
 
     const meshCtx = createMeshTrpcContext('mesh')
-    await invokeProcedure(router, 'getSettings', meshCtx, {
+    await invokeProcedure(router, 'get', meshCtx, {
       id: 'int_0001',
       callerAddonId: MESH_CALLER,
     })
@@ -58,7 +58,7 @@ describe('caller stamp survives mesh / core-cap bridge context', () => {
     })
 
     spy.mockClear()
-    await invokeProcedure(router, 'getSettings', makeCtx('admin'), {
+    await invokeProcedure(router, 'get', makeCtx('admin'), {
       id: 'int_0001',
       callerAddonId: MESH_CALLER,
     })

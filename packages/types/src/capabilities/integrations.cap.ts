@@ -135,10 +135,6 @@ const CreateIntegrationInputSchema = z.object({
   /** `stableId` of the discovery candidate the form was seeded from (D984). */
   originStableId: z.string().optional(),
   settings: z.record(z.string(), z.unknown()).optional(),
-  /** Keys of `settings` the form's schema declares secret (by type) — kept in
-   *  the keychain, not the table (D787). */
-  secretKeys: z.array(z.string()).optional(),
-  skipRestart: z.boolean().optional(),
 })
 
 const UpdateIntegrationInputSchema = z.object({
@@ -173,31 +169,6 @@ export const integrationsCapability = {
       kind: 'mutation',
       auth: 'admin',
     }),
-    getSettings: method(z.object({ id: z.string() }), z.record(z.string(), z.unknown()), {
-      auth: 'admin',
-    }),
-    setSettings: method(
-      z.object({
-        id: z.string(),
-        settings: z.record(z.string(), z.unknown()),
-        /** Keys the form's schema declares secret (by type) — keychain-stored (D787). */
-        secretKeys: z.array(z.string()).optional(),
-        /** The integration's own addon applies the change in-process and asks the hub not to respawn it. */
-        skipRestart: z.boolean().optional(),
-      }),
-      z.object({ success: z.boolean() }),
-      { kind: 'mutation', auth: 'admin' },
-    ),
-    /**
-     * Delete the integration's LEGACY setting rows and their keychain values, once the owning addon
-     * moved them into its own record and read the record back (D1007). Only the integration's own
-     * addon may call it; the integration itself stays. Answers counts, never a value.
-     */
-    clearSettings: method(
-      z.object({ id: z.string() }),
-      z.object({ rows: z.number().int().nonnegative(), secrets: z.number().int().nonnegative() }),
-      { kind: 'mutation', auth: 'admin' },
-    ),
     getAvailableTypes: method(z.void(), z.array(AvailableIntegrationTypeSchema), { auth: 'admin' }),
     testConnection: method(
       z.object({

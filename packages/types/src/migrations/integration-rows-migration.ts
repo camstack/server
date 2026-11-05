@@ -10,6 +10,7 @@
  * `integration-instances` provider, and nothing reads the old rows afterwards.
  */
 import { z } from 'zod'
+import type { SecretsAccess } from '../keychain/secrets-access.js'
 import { isSecretMarkerLike } from '../keychain/secret-marker.js'
 import type { DefinedRecordKind } from '../records/record-kind.js'
 import type { RecordsAccess } from '../records/records-access.js'
@@ -106,9 +107,12 @@ export function integrationRowsPortsOver(deps: {
   readonly records: Pick<RecordsAccess, 'kind'>
   readonly kind: DefinedRecordKind
   readonly warn: (message: string) => void
+  /** The owning addon's keychain handle. The door returns markers; this resolves them. */
+  readonly secrets?: SecretsAccess | null
 }): IntegrationRowsPorts {
   return integrationRowsPortsOverApi({
     api: deps.api,
+    ...(deps.secrets !== undefined ? { secrets: deps.secrets } : {}),
     // The move reads and writes the body as it is stored, so the handle takes any object.
     records: deps.records.kind({
       name: deps.kind.name,

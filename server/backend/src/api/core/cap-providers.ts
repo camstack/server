@@ -26,7 +26,6 @@
 
 import { bringsDevices, resolveIntegrationRole } from './integration-role.js'
 import { findInstancesProvider } from '../../core/addon/integration-instances-provider.js'
-import { readIntegrationSettings, writeIntegrationSettings } from './integration-secrets'
 import { randomUUID } from 'node:crypto'
 import * as os from 'node:os'
 import type {
@@ -42,13 +41,10 @@ import {
   getLoggingGate,
   getProcessNodeMeshTransport,
   IntegrationRegistry,
-  clearIntegrationRows,
   type BrokerLike,
 } from '@camstack/server/system'
 import type {
-  SecretsAccess,
   AgentListItem,
-  IAddonSettingsProvider,
   CapabilityMethodAuth,
   IAddonsProvider,
   IAnalysisDataPersistence,
@@ -70,7 +66,7 @@ import type {
   Toast,
   TopologyNode,
 } from '@camstack/types'
-import { collectKeychainStoredKeys, EventCategory, errMsg } from '@camstack/types'
+import { EventCategory, errMsg } from '@camstack/types'
 import { TRPCError } from '@trpc/server'
 import { planDeleteTimeStamps } from '../../boot/integration-id-backfill'
 import type { AddonPackageService } from '../../core/addon/addon-package.service'
@@ -1001,47 +997,6 @@ interface IntegrationWithProcessState extends Integration {
   readonly processState: string
 }
 
-/**
- * The keychain handle a hub door uses for an integration's addon (D787), or
- * `null` when this registry predates the keychain (a test double, an older
- * kernel) — the door then stores the settings as it always did.
- */
-function ownerSecrets(ar: AddonRegistryService, owner: string): SecretsAccess | null {
-  return typeof ar.secretsForOwner === 'function' ? ar.secretsForOwner(owner) : null
-}
-
-/**
- * The integration settings keys the addon's own form stores in the keychain
- * (by schema type, D783) — so the admin read can withhold a plaintext under one
- * of them. Empty when the schema cannot be read (logged): markers are still
- * withheld, and a coerced marker is caught without a schema.
- */
-async function integrationSecretKeys(
-  ar: AddonRegistryService,
-  addonId: string,
-  logger: IScopedLogger,
-): Promise<ReadonlySet<string>> {
-  try {
-    const provider = ar
-      .getCapabilityRegistry()
-      .getSingleton<IAddonSettingsProvider>('addon-settings')
-    const schema = await provider?.getGlobalSettings({
-      addonId,
-      nodeId: 'hub',
-    })
-    return collectKeychainStoredKeys(schema ?? null)
-  } catch (err) {
-    logger.warn(
-      'integration settings: addon schema unreadable — plaintext secrets not detectable',
-      {
-        tags: { addonId },
-        meta: { phase: 'getSettings', error: errMsg(err) },
-      },
-    )
-    return new Set()
-  }
-}
-
 function requireIntegrationRegistry(ar: AddonRegistryService): IIntegrationRegistry {
   const reg = ar.getIntegrationRegistry()
   if (!reg) throw new Error('IntegrationRegistry not available')
@@ -1353,9 +1308,7 @@ export function buildIntegrationsProvider(
     getByAddonId: async (input) =>
       requireIntegrationRegistry(ar).getIntegrationByAddonId(input.addonId),
     create: async (input) => {
-      const { skipRestart, secretKeys, settings, ...rest } = input
-      // Settings are written AFTER the row exists: a secret's ref is scoped
-      // to the integration id (D787).
+      const { settings, ...rest } = input
       const payload = rest
       const reg = requireIntegrationRegistry(ar)
 
@@ -1471,44 +1424,15 @@ export function buildIntegrationsProvider(
         return integration
       }
       if (settings !== undefined && Object.keys(settings).length > 0) {
-        await writeIntegrationSettings(
-          {
-            registry: reg,
-            secrets: ownerSecrets(ar, integration.addonId),
-            onOrphaned: (refs) =>
-              logger.warn('dropped keychain refs could not be deleted', {
-                meta: { refs: [...refs] },
-              }),
-          },
-          {
-            integrationId: integration.id,
-            settings,
-            secretKeys: secretKeys ?? [],
-            operatorWrite: true,
-          },
-        )
+        logger.warn('settings dropped — the addon has no instance record to store them', {
+          tags: { integrationId: integration.id, addonId: integration.addonId },
+          meta: { phase: 'create', keys: Object.keys(settings) },
+        })
       }
       logger.info('persisted', {
         tags: { integrationId: integration.id, addonId: integration.addonId },
         meta: { phase: 'create' },
       })
-
-      const hasSettings = settings != null && Object.keys(settings).length > 0
-      if (!skipRestart && hasSettings) {
-        logger.info('settings present — restarting addon', {
-          tags: { addonId: input.addonId },
-          meta: { phase: 'create' },
-        })
-        await ar.restartAddon(input.addonId)
-        logger.info('addon restart complete', {
-          tags: { addonId: input.addonId },
-          meta: { phase: 'create' },
-        })
-      } else {
-        logger.info('skipping restart (no settings or skipRestart=true)', {
-          meta: { phase: 'create' },
-        })
-      }
       return integration
     },
     update: async (input) => {
@@ -1722,152 +1646,6 @@ export function buildIntegrationsProvider(
       })
 
       return { success: true, deletedId: input.id }
-    },
-    getSettings: async (input) => {
-      const reg = requireIntegrationRegistry(ar)
-      const integration = await reg.getIntegration(input.id)
-      if (!integration) throw new Error(`Integration "${input.id}" not found`)
-      const instances = getInstancesProvider(ar, integration.addonId)
-      if (instances !== null) {
-        const instance = await instances.getInstance({ id: input.id })
-        if (instance !== null && instance !== undefined) return instance.formValues
-        // No instance record carries this id: it is a legacy row the addon has not moved yet
-        // (its migration reads it here), so answer the row, never an empty object (D1007).
-      }
-      // The integration's own addon (the caller the transport stamped) reads
-      // its secrets resolved; anyone else — the admin form — reads "set"
-      // views, never a value (D787, D789).
-      const caller: unknown = Reflect.get(input, 'callerAddonId')
-      const forOwner =
-        typeof caller === 'string' &&
-        (caller === integration.addonId || ar.runnerIdFor(integration.addonId) === caller)
-      // The schema is asked only for the admin read: the owner reads this at
-      // its own boot, and asking it for its schema then would call back into it.
-      const secretKeys = forOwner
-        ? undefined
-        : await integrationSecretKeys(ar, integration.addonId, logger)
-      return readIntegrationSettings(
-        {
-          registry: reg,
-          secrets: forOwner ? ownerSecrets(ar, integration.addonId) : null,
-        },
-        {
-          integrationId: input.id,
-          forOwner,
-          ...(secretKeys !== undefined ? { secretKeys } : {}),
-          onSuspectSecret: (suspect) =>
-            logger.error(
-              suspect.kind === 'coerced-marker'
-                ? 'integration secret is "[object Object]" — a keychain marker was coerced to text; the addon is sending it as the credential; re-type it'
-                : 'integration secret stored as PLAINTEXT under a keychain-declared key — withheld from the form; re-type it to move it into the keychain',
-              {
-                tags: { integrationId: input.id, addonId: integration.addonId },
-                meta: {
-                  phase: 'getSettings',
-                  key: suspect.key,
-                  kind: suspect.kind,
-                  forOwner,
-                },
-              },
-            ),
-        },
-      )
-    },
-    setSettings: async (input) => {
-      const reg = requireIntegrationRegistry(ar)
-      const integration = await reg.getIntegration(input.id)
-      if (!integration) {
-        logger.warn('not found', {
-          tags: { integrationId: input.id },
-          meta: { phase: 'setSettings' },
-        })
-        throw new Error(`Integration "${input.id}" not found`)
-      }
-      const settingsKeys = Object.keys(input.settings)
-      logger.info('request', {
-        tags: { integrationId: input.id, addonId: integration.addonId },
-        meta: { phase: 'setSettings', keys: settingsKeys },
-      })
-      const instances = getInstancesProvider(ar, integration.addonId)
-      if (instances !== null) {
-        // The addon re-applies the change itself (its `onChanged`): no respawn.
-        await instances.updateInstance({
-          id: input.id,
-          values: input.settings,
-        })
-        logger.info('persisted as an instance record (no restart)', {
-          tags: { integrationId: input.id, addonId: integration.addonId },
-          meta: { phase: 'setSettings' },
-        })
-        return { success: true }
-      }
-      await writeIntegrationSettings(
-        {
-          registry: reg,
-          secrets: ownerSecrets(ar, integration.addonId),
-          onOrphaned: (refs) =>
-            logger.warn('dropped keychain refs could not be deleted', {
-              meta: { refs: [...refs] },
-            }),
-        },
-        {
-          integrationId: input.id,
-          settings: input.settings,
-          secretKeys: input.secretKeys ?? [],
-          // The integration's own addon writing back is not the operator.
-          operatorWrite: typeof Reflect.get(input, 'callerAddonId') !== 'string',
-        },
-      )
-
-      // Only the integration's own addon may skip the respawn: it reconciles
-      // the change in-process, so an unrelated caller cannot leave an addon
-      // running on settings it never reloaded.
-      const callerAddon: unknown = Reflect.get(input, 'callerAddonId')
-      if (
-        input.skipRestart === true &&
-        typeof callerAddon === 'string' &&
-        (callerAddon === integration.addonId || ar.runnerIdFor(integration.addonId) === callerAddon)
-      ) {
-        logger.info('persisted — the owner applies it in-process, no restart', {
-          tags: { addonId: integration.addonId },
-          meta: { phase: 'setSettings' },
-        })
-        return { success: true }
-      }
-      logger.info('persisted — restarting addon', {
-        tags: { addonId: integration.addonId },
-        meta: { phase: 'setSettings' },
-      })
-      await ar.restartAddon(integration.addonId)
-      logger.info('addon restart complete', {
-        tags: { addonId: integration.addonId },
-        meta: { phase: 'setSettings' },
-      })
-      return { success: true }
-    },
-    clearSettings: async (input) => {
-      const reg = requireIntegrationRegistry(ar)
-      const integration = await reg.getIntegration(input.id)
-      if (!integration) throw new Error(`Integration "${input.id}" not found`)
-      // Only the integration's own addon clears its rows, after it moved them (D1007).
-      const caller: unknown = Reflect.get(input, 'callerAddonId')
-      const isOwner =
-        typeof caller === 'string' &&
-        (caller === integration.addonId || ar.runnerIdFor(integration.addonId) === caller)
-      if (!isOwner) {
-        throw new Error(
-          `Integration "${input.id}" settings can be cleared only by its own addon (${integration.addonId})`,
-        )
-      }
-      const cleared = await clearIntegrationRows(
-        { registry: reg, secrets: ownerSecrets(ar, integration.addonId) },
-        input.id,
-      )
-      logger.info('legacy settings cleared', {
-        tags: { integrationId: input.id, addonId: integration.addonId },
-        meta: { phase: 'clearSettings', ...cleared },
-      })
-      return cleared
     },
     getAvailableTypes: async () => {
       const reg = requireIntegrationRegistry(ar)

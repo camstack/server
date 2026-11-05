@@ -92,6 +92,7 @@ export class DreameProviderAddon extends BaseDeviceProvider {
         DREAME_MIGRATIONS,
         dreameRowsPorts({
           api: defaultIntegrationApiOver(this.ctx.api),
+          secrets: this.ctx.secrets ?? null,
           records,
           warn: (message) => this.ctx.logger.warn(message),
         }),

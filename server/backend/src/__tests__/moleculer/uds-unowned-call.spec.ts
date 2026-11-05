@@ -59,14 +59,14 @@ function hubBrokerFake(): ServiceBroker {
     {
       name: '$core-caps',
       nodeID: 'hub',
-      actions: { 'system.info': {}, 'integrations.getSettings': {} },
+      actions: { 'system.info': {}, 'integrations.get': {} },
     },
   ]
   const broker = {
     nodeID: 'hub',
     call: vi.fn(async (action: string, params: unknown) => {
       if (action === '$core-caps.system.info') return { uptimeSec: 99, params }
-      if (action === '$core-caps.integrations.getSettings') return { settings: true, params }
+      if (action === '$core-caps.integrations.get') return { settings: true, params }
       throw Object.assign(new Error(`Service not found: ${action}`), { type: 'SERVICE_NOT_FOUND' })
     }),
     waitForServices: vi.fn(async () => undefined),
@@ -175,8 +175,8 @@ describe('hub onUnownedCall wiring (F0)', () => {
     expect(broker.call).toHaveBeenCalledWith('$core-caps.system.info', undefined, undefined)
   })
 
-  it('broker-fallback: stamps callerAddonId into args for $core-caps (integrations.getSettings)', async () => {
-    // D787 forOwner on integrations.getSettings reads Reflect.get(input, 'callerAddonId').
+  it('broker-fallback: stamps callerAddonId into args for $core-caps (integrations.get)', async () => {
+    // D787 owner checks read Reflect.get(input, 'callerAddonId').
     // server-provided caps miss the hub-in-process stamp path and used to forward
     // only { id } — every account-mode provider then saw opaque secret views.
     const broker = hubBrokerFake()
@@ -195,7 +195,7 @@ describe('hub onUnownedCall wiring (F0)', () => {
 
     const result = await handler({
       capName: 'integrations',
-      method: 'getSettings',
+      method: 'get',
       args: { id: 'int_0009' },
       callerAddonId: 'provider-dreame',
     })
@@ -204,7 +204,7 @@ describe('hub onUnownedCall wiring (F0)', () => {
       params: { id: 'int_0009', callerAddonId: 'provider-dreame' },
     })
     expect(broker.call).toHaveBeenCalledWith(
-      '$core-caps.integrations.getSettings',
+      '$core-caps.integrations.get',
       { id: 'int_0009', callerAddonId: 'provider-dreame' },
       undefined,
     )

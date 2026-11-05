@@ -280,6 +280,7 @@ export class HikvisionProviderAddon extends BaseDeviceProvider {
         defaultIntegrationMigrations({ addonId: this.addonId, date: HIKVISION_MIGRATIONS_DATE }),
         defaultIntegrationPortsOver({
           api: defaultIntegrationApiOver(this.ctx.api),
+          secrets: this.ctx.secrets ?? null,
           records,
           kind: hikvisionConnectionsEntryKind,
           info: (message) => this.ctx.logger.info(message),

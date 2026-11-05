@@ -77,6 +77,7 @@ export class GreeProviderAddon extends BaseDeviceProvider {
         defaultIntegrationMigrations({ addonId: this.addonId, date: GREE_MIGRATIONS_DATE }),
         defaultIntegrationPortsOver({
           api: defaultIntegrationApiOver(this.ctx.api),
+          secrets: this.ctx.secrets ?? null,
           records,
           kind: greeConnectionsEntryKind,
           info: (message) => this.ctx.logger.info(message),

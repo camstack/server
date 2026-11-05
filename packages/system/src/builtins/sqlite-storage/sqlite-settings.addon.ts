@@ -143,6 +143,10 @@ export class SqliteSettingsAddon extends BaseAddon {
     this.ctx.logger.info('DB path resolved', { meta: { pathSource, dbPath: settingsPath } })
     this.ctx.logger.info('DB file status', { meta: { dbExists } })
 
+    const runnerIdOf = runnerResolverFor(
+      this.ctx.kernel?.runnerIdForAddon,
+      path.join(this.ctx.nodeDataDir ?? path.resolve(dir, '..', '..'), 'addons'),
+    )
     const engine = new MigrationEngine({
       logger: this.ctx.logger.child('Migrations'),
       catalogue: HUB_MIGRATIONS,
@@ -151,10 +155,7 @@ export class SqliteSettingsAddon extends BaseAddon {
         new SqliteSnapshotter({ livePath, logger: this.ctx.logger.child('PreMigrationSnapshot') }),
       announce: (kind, ids) => this.announceMigrations(kind, ids),
       // Forked here, so no kernel resolver: read the hosting runner from the installed manifests.
-      runnerIdOf: runnerResolverFor(
-        this.ctx.kernel?.runnerIdForAddon,
-        path.join(this.ctx.nodeDataDir ?? path.resolve(dir, '..', '..'), 'addons'),
-      ),
+      runnerIdOf,
       scheduleRestore: (request) =>
         scheduleMigrationRestore(path.resolve(dir, '..', '..'), request),
     })
@@ -237,7 +238,13 @@ export class SqliteSettingsAddon extends BaseAddon {
           async () => router.openFiles().filter((file) => file.databaseId !== 'settings'),
         ),
       },
-      { capability: migrationsCapability, provider: new MigrationsProvider(engine) },
+      {
+        capability: migrationsCapability,
+        provider: new MigrationsProvider(engine, {
+          database: () => settings.backend.getDatabase(),
+          runnerIdOf,
+        }),
+      },
     ]
     return {
       providers,

@@ -1,6 +1,6 @@
 /**
  * `BaseAddon.getIntegrationFormSchema` — the form one integration INSTANCE renders. The addon's
- * `integrationSettingsSchema(instance)` hook wins when it returns a schema; `null` (the default)
+ * `integrationFormSchema(instance)` hook wins when it returns a schema; `null` (the default)
  * falls back to the global schema, which is what the wizard and the edit page always showed.
  */
 import { describe, expect, it, vi } from 'vitest'
@@ -46,7 +46,7 @@ class Plain extends BaseAddon<{ globalKey: string }> {
 
 class Scoping extends Plain {
   readonly seen: IntegrationInstanceRef[] = []
-  protected override async integrationSettingsSchema(instance: IntegrationInstanceRef) {
+  protected override async integrationFormSchema(instance: IntegrationInstanceRef) {
     this.seen.push(instance)
     return instance.integrationId === 'hub-1' ? SCOPED : null
   }

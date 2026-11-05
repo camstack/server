@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1505 method paths across 203 capabilities.
+ * Coverage: 1506 method paths across 203 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -545,15 +545,12 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'integrationInstances.setInstanceEnabled': { capName: "integration-instances", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'integrationInstances.testInstance': { capName: "integration-instances", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'integrationInstances.updateInstance': { capName: "integration-instances", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
-  'integrations.clearSettings': { capName: "integrations", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'integrations.create': { capName: "integrations", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'integrations.delete': { capName: "integrations", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'integrations.get': { capName: "integrations", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'integrations.getAvailableTypes': { capName: "integrations", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'integrations.getByAddonId': { capName: "integrations", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
-  'integrations.getSettings': { capName: "integrations", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'integrations.list': { capName: "integrations", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
-  'integrations.setSettings': { capName: "integrations", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'integrations.testConnection': { capName: "integrations", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'integrations.update': { capName: "integrations", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'intercom.endTalkSession': { capName: "intercom", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
@@ -696,12 +693,16 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'metricsProvider.getProcessStats': { capName: "metrics-provider", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'metricsProvider.listAddonInstances': { capName: "metrics-provider", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'metricsProvider.listNodeProcesses': { capName: "metrics-provider", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'migrations.clearLegacyIntegrationRows': { capName: "migrations", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'migrations.declareOwner': { capName: "migrations", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'migrations.deleteLegacyIntegrationRowKeys': { capName: "migrations", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'migrations.dryRun': { capName: "migrations", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'migrations.finishMigration': { capName: "migrations", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'migrations.listLedger': { capName: "migrations", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'migrations.listPending': { capName: "migrations", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'migrations.markFailed': { capName: "migrations", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'migrations.patchLegacyIntegrationRows': { capName: "migrations", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'migrations.readLegacyIntegrationRows': { capName: "migrations", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'migrations.restorePreMigration': { capName: "migrations", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'migrations.retry': { capName: "migrations", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'migrations.startMigration': { capName: "migrations", capScope: "system", addonId: null, access: "create", role: "admin" } as const,

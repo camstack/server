@@ -250,6 +250,7 @@ export class AmcrestProviderAddon extends BaseDeviceProvider {
       }),
       defaultIntegrationPortsOver({
         api: defaultIntegrationApiOver(this.ctx.api),
+        secrets: this.ctx.secrets ?? null,
         records,
         kind: amcrestConnectionsEntryKind,
         info: (message) => this.ctx.logger.info(message),

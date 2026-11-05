@@ -58,47 +58,15 @@ describe('IntegrationRegistry over the collection surface', () => {
     expect(updated?.info).toEqual({ k: 'v' })
   })
 
-  it('stores integration settings of every value type', async () => {
-    const created = await registry.createIntegration({
-      addonId: 'provider-dreame',
-      name: 'Dreame',
-      settings: {
-        username: 'u',
-        pollIntervalMs: 30000,
-        secure: true,
-        // A `json` setting: the column value starts with `{`, which the
-        // surface parses on the way back out.
-        options: { region: 'eu', retries: 3 },
-      },
-    })
-
-    const settings = await registry.getIntegrationSettings(created.id)
-    expect(settings['username']).toBe('u')
-    expect(settings['pollIntervalMs']).toBe(30000)
-    expect(settings['secure']).toBe(true)
-    expect(settings['options']).toEqual({ region: 'eu', retries: 3 })
-  })
-
-  it('overwrites a setting rather than accumulating rows', async () => {
-    const created = await registry.createIntegration({ addonId: 'a', name: 'A' })
-    await registry.setIntegrationSetting(created.id, 'host', '10.0.0.1')
-    await registry.setIntegrationSetting(created.id, 'host', '10.0.0.2')
-    const settings = await registry.getIntegrationSettings(created.id)
-    expect(settings['host']).toBe('10.0.0.2')
-    expect(Object.keys(settings)).toEqual(['host'])
-  })
-
-  it('deleting an integration removes its settings', async () => {
+  it('deleting an integration removes the row', async () => {
     const int = await registry.createIntegration({
       addonId: 'a',
       name: 'A',
-      settings: { host: 'h' },
     })
 
     await registry.deleteIntegration(int.id)
 
     expect(await registry.getIntegration(int.id)).toBeNull()
-    expect(await registry.getIntegrationSettings(int.id)).toEqual({})
   })
 
   describe('a FIXED integration', () => {

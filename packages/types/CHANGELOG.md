@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- The per-integration settings methods are removed; leftover rows are read only by the migration door
+
 ## [1.2.500] - 2026-11-05
 
 ### Changed

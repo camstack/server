@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**203 capabilities · 1505 methods.**
+**203 capabilities · 1506 methods.**
 
 ## Method index
 
@@ -542,9 +542,6 @@
 | `integrations.create` | mutation | admin | integrations |
 | `integrations.update` | mutation | admin | integrations |
 | `integrations.delete` | mutation | admin | integrations |
-| `integrations.getSettings` | query | admin | integrations |
-| `integrations.setSettings` | mutation | admin | integrations |
-| `integrations.clearSettings` | mutation | admin | integrations |
 | `integrations.getAvailableTypes` | query | admin | integrations |
 | `integrations.testConnection` | mutation | admin | integrations |
 | `intercom.getStatus` | query | protected | intercom (auto) |
@@ -696,6 +693,10 @@
 | `migrations.declareOwner` | mutation | admin | migrations |
 | `migrations.startMigration` | mutation | admin | migrations |
 | `migrations.finishMigration` | mutation | admin | migrations |
+| `migrations.readLegacyIntegrationRows` | query | admin | migrations |
+| `migrations.clearLegacyIntegrationRows` | mutation | admin | migrations |
+| `migrations.patchLegacyIntegrationRows` | mutation | admin | migrations |
+| `migrations.deleteLegacyIntegrationRowKeys` | mutation | admin | migrations |
 | `modelConvert.convert` | mutation | admin | model-convert |
 | `modelDistributor.distributeModel` | mutation | admin | model-distributor |
 | `motion.getStatus` | query | protected | motion (auto) |
@@ -2987,7 +2988,7 @@
 
 ### `integrations` → `integrations.*`
 
-- **Source:** `packages/types/src/capabilities/integrations.cap.ts:156`
+- **Source:** `packages/types/src/capabilities/integrations.cap.ts:152`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `server-provided`
 - **Archetypes:** —
 - **Provider interface:** `IIntegrationsProvider`
@@ -3000,9 +3001,6 @@
 | create | `integrations.create` | mutation | admin | `CreateIntegrationInputSchema` | `IntegrationLiteSchema` |
 | update | `integrations.update` | mutation | admin | `UpdateIntegrationInputSchema` | `IntegrationLiteSchema` |
 | delete | `integrations.delete` | mutation | admin | `{ id: string }` | `DeleteIntegrationResultSchema` |
-| getSettings | `integrations.getSettings` | query | admin | `{ id: string }` | `Record<string, unknown>` |
-| setSettings | `integrations.setSettings` | mutation | admin | `{ id: string; settings: Record<string, unknown>; secretKeys?: string[]; skipRestart?: boolean }` | `{ success: boolean }` |
-| clearSettings | `integrations.clearSettings` | mutation | admin | `{ id: string }` | `{ rows: number; secrets: number }` |
 | getAvailableTypes | `integrations.getAvailableTypes` | query | admin | `void` | `AvailableIntegrationTypeSchema[]` |
 | testConnection | `integrations.testConnection` | mutation | admin | `{ addonId: string; settings: Record<string, unknown> }` | `TestConnectionResultSchema` |
 
@@ -3340,6 +3338,10 @@
 | declareOwner | `migrations.declareOwner` | mutation | admin | `{ owner: string; metas: ({ id: string; owner: string; level: "hub-store" \| "addon-state" \| "node-config" \| "viewer" \| "addon-internal"; seq: number; dependsOn: string[]; store: "settings" \| "events" \| "history" \| "node-local" \| "addon-files"; scope: "cluster" \| "per-node"; onFailure: "block-owner" \| "tolerate"; bodyKind: "sql" \| "plan" \| "procedure"; description: string; fixtureMark: string })[] }` | `{ bootId: string; snapshot: "none" \| "written" \| "refused"; steps: ({ id: string; action: "run" \| "skip"; state: "pending" \| "applied" \| "failed" \| "blocked" \| "running" \| "held" \| "skipped-newer" })[] }` |
 | startMigration | `migrations.startMigration` | mutation | admin | `{ id: string }` | `{ proceed: boolean; state: "pending" \| "applied" \| "failed" \| "blocked" \| "running" \| "held" \| "skipped-newer"; reason: string \| null }` |
 | finishMigration | `migrations.finishMigration` | mutation | admin | `{ id: string; result: { kind: "plan"; plan: { edits: ({ op: "setKeys"; scope: string; values: Record<string, unknown>; precondition?: string } \| { op: "deleteKeys"; scope: string; keys: string[]; precondition?: string } \| { op: "putRow"; table: string; key: Record<string, unknown>; row: Record<string, unknown>; precondition?: string } \| { op: "deleteRow"; table: string; key: Record<string, unknown>; precondition?: string } \| { op: "upsertRecord"; kind: string; recordKey: string; value: unknown; precondition?: string } \| { op: "deleteRecord"; kind: string; recordKey: string; precondition?: string })[] } } \| { kind: "procedure"; result: { outcome: "done" \| "already-done"; summary: Record<string, unknown> } } \| { kind: "failed"; error: string } }` | `{ status: "applied" \| "failed" \| "blocked" \| "running" \| "held" \| "skipped-newer"; error: string \| null; rowsChanged: number }` |
+| readLegacyIntegrationRows | `migrations.readLegacyIntegrationRows` | query | admin | `{ integrationId: string }` | `Record<string, unknown>` |
+| clearLegacyIntegrationRows | `migrations.clearLegacyIntegrationRows` | mutation | admin | `{ integrationId: string }` | `{ rows: number; secrets: number }` |
+| patchLegacyIntegrationRows | `migrations.patchLegacyIntegrationRows` | mutation | admin | `{ integrationId: string; patch: Record<string, unknown> }` | `{ written: boolean }` |
+| deleteLegacyIntegrationRowKeys | `migrations.deleteLegacyIntegrationRowKeys` | mutation | admin | `{ integrationId: string; keys: string[] }` | `{ present: boolean; removed: Record<string, unknown> }` |
 
 ### `model-convert` → `modelConvert.*`
 

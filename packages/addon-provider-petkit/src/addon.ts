@@ -79,6 +79,7 @@ export class PetkitProviderAddon extends BaseDeviceProvider {
         PETKIT_MIGRATIONS,
         petkitRowsPorts({
           api: defaultIntegrationApiOver(this.ctx.api),
+          secrets: this.ctx.secrets ?? null,
           records,
           warn: (message) => this.ctx.logger.warn(message),
         }),

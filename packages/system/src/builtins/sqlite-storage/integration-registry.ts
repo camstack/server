@@ -8,55 +8,16 @@ import type {
   RecordKindHandle,
   RecordsAccess,
 } from '@camstack/types'
-import { bareAddonId, collectSecretMarkerRefs, parseJsonObject } from '@camstack/types'
+import { bareAddonId, parseJsonObject } from '@camstack/types'
 import { readAllRows } from '../../records/read-all-rows.js'
 import {
   INTEGRATIONS_LEGACY,
-  INTEGRATION_SETTINGS_LEGACY,
   integrationRegistryRecordKinds,
   type IntegrationBody,
-  type IntegrationSettingBody,
 } from './integration-record-kinds.js'
 
 export interface IntegrationRecordStores {
   readonly integrations: RecordKindHandle<IntegrationBody>
-  readonly settings: RecordKindHandle<IntegrationSettingBody>
-}
-
-function serializeSetting(value: unknown): { value: string; valueType: string } {
-  if (typeof value === 'number') return { value: String(value), valueType: 'number' }
-  if (typeof value === 'boolean') return { value: String(value), valueType: 'boolean' }
-  if (typeof value === 'string') return { value, valueType: 'string' }
-  return { value: JSON.stringify(value), valueType: 'json' }
-}
-
-/**
- * Decode a settings row back to its value.
- *
- * `raw` is `unknown`, not `string`, on purpose: the collection surface parses
- * any TEXT column whose value starts with `{` or `[`, so a `json` setting
- * arrives here ALREADY an object. Coercing it with `String(...)` first — which
- * is what a straight port of the `table*` version did — produced the literal
- * `"[object Object]"`.
- */
-function deserializeSetting(raw: unknown, valueType: string): unknown {
-  if (valueType === 'json') {
-    if (typeof raw !== 'string') return raw
-    try {
-      return JSON.parse(raw)
-    } catch {
-      return raw
-    }
-  }
-  const value = String(raw)
-  switch (valueType) {
-    case 'number':
-      return Number(value)
-    case 'boolean':
-      return value === 'true'
-    default:
-      return value
-  }
 }
 
 /**
@@ -110,13 +71,6 @@ const INTEGRATIONS_INDEXES: readonly CollectionIndex[] = [
   { name: 'idx_integrations_addon', columns: ['addon_id'] },
 ]
 
-const INTEGRATION_SETTINGS_COLUMNS: readonly CollectionColumn[] = [
-  { name: 'integration_id', type: 'TEXT', notNull: true },
-  { name: 'key', type: 'TEXT', notNull: true },
-  { name: 'value', type: 'TEXT', notNull: true },
-  { name: 'value_type', type: 'TEXT', notNull: true, defaultValue: 'string' },
-]
-
 /**
  * @durable class=config owner=integration-registry
  *   write="`createIntegration` — an operator adds a provider, or an addon declares
@@ -126,18 +80,11 @@ const INTEGRATION_SETTINGS_COLUMNS: readonly CollectionColumn[] = [
  *     surviving row at boot, so wiping the table restarts numbering."
  */
 const INTEGRATIONS = INTEGRATIONS_LEGACY
-/**
- * @durable class=config owner=integration-registry
- *   write="`setIntegrationSetting` — one row per (integration_id, key), deleted and
- *     re-inserted on every write; this is the operator's per-integration intent"
- *   retention="cascade only — `deleteIntegration` removes the parent's rows. There
- *     is no sweep, so a key an addon stops declaring stays on disk forever."
- */
-const INTEGRATION_SETTINGS = INTEGRATION_SETTINGS_LEGACY
 
 /**
  * The persisted INTEGRATIONS — one row per provider instance an operator (or a
- * declaring addon) added, plus that instance's settings.
+ * declaring addon) added. The instance's configuration lives on the addon's own
+ * record, not here.
  *
  * It had a device half once: `devices` + `device_settings_kv`, `dev_NNNN` ids,
  * `createDevice` / `listCameras` / `setDeviceSetting`. It was removed on
@@ -174,7 +121,6 @@ export class IntegrationRegistry implements IIntegrationRegistry {
   static recordStoresOf(records: Pick<RecordsAccess, 'kind'>): IntegrationRecordStores {
     return {
       integrations: records.kind(integrationRegistryRecordKinds.integrations),
-      settings: records.kind(integrationRegistryRecordKinds['integration-settings']),
     }
   }
 
@@ -184,10 +130,6 @@ export class IntegrationRegistry implements IIntegrationRegistry {
         collection: INTEGRATIONS,
         columns: INTEGRATIONS_COLUMNS,
         indexes: INTEGRATIONS_INDEXES,
-      })
-      await this.store.declareCollection({
-        collection: INTEGRATION_SETTINGS,
-        columns: INTEGRATION_SETTINGS_COLUMNS,
       })
     }
     await this.resumeCounter()
@@ -252,10 +194,6 @@ export class IntegrationRegistry implements IIntegrationRegistry {
           },
         },
       })
-    }
-
-    if (input.settings) {
-      await this.setIntegrationSettings(id, input.settings)
     }
 
     return {
@@ -368,111 +306,13 @@ export class IntegrationRegistry implements IIntegrationRegistry {
         `integration "${id}" is fixed — it belongs to the addon that declared it and cannot be deleted`,
       )
     }
-    const settingsKind = this.recordStores?.settings
     const integrationsKind = this.recordStores?.integrations
-    if (settingsKind !== undefined && integrationsKind !== undefined) {
-      for (const row of await readAllRows(settingsKind)) {
-        if (row.data.integrationId === id) await settingsKind.delete(row.id)
-      }
+    if (integrationsKind !== undefined) {
       await integrationsKind.delete(id)
       return true
     }
-    await this.store.deleteWhere({
-      collection: INTEGRATION_SETTINGS,
-      filter: { where: { integration_id: id } },
-    })
     await this.store.deleteWhere({ collection: INTEGRATIONS, filter: { where: { id } } })
     return true
-  }
-
-  // --- Integration Settings ---
-
-  async getIntegrationSettings(integrationId: string): Promise<Record<string, unknown>> {
-    const result: Record<string, unknown> = {}
-    const kind = this.recordStores?.settings
-    if (kind !== undefined) {
-      for (const row of await readAllRows(kind)) {
-        if (row.data.integrationId !== integrationId) continue
-        result[row.data.key] = deserializeSetting(row.data.value, row.data.valueType)
-      }
-      return result
-    }
-    const rows = await this.store.query({
-      collection: INTEGRATION_SETTINGS,
-      filter: { where: { integration_id: integrationId } },
-    })
-    for (const row of rows) {
-      result[String(row.data['key'])] = deserializeSetting(
-        row.data['value'],
-        String(row.data['value_type']),
-      )
-    }
-    return result
-  }
-
-  /**
-   * Delete every legacy setting row of an integration and answer the keychain refs the rows
-   * carried, so the caller (the rows-to-record migration) releases them after the rows are gone.
-   * The integration itself stays.
-   */
-  async clearIntegrationSettings(integrationId: string): Promise<readonly string[]> {
-    const stored = await this.getIntegrationSettings(integrationId)
-    const refs = collectSecretMarkerRefs(stored)
-    const kind = this.recordStores?.settings
-    if (kind !== undefined) {
-      for (const row of await readAllRows(kind)) {
-        if (row.data.integrationId === integrationId) await kind.delete(row.id)
-      }
-      return refs
-    }
-    await this.store.deleteWhere({
-      collection: INTEGRATION_SETTINGS,
-      filter: { where: { integration_id: integrationId } },
-    })
-    return refs
-  }
-
-  async setIntegrationSetting(integrationId: string, key: string, value: unknown): Promise<void> {
-    const s = serializeSetting(value)
-    const rowId = `${integrationId}:${key}`
-    const kind = this.recordStores?.settings
-    if (kind !== undefined) {
-      await kind.put({
-        id: rowId,
-        data: {
-          integrationId,
-          key,
-          value: s.value,
-          valueType: s.valueType,
-        },
-      })
-      return
-    }
-    await this.store.deleteWhere({
-      collection: INTEGRATION_SETTINGS,
-      filter: { where: { integration_id: integrationId, key } },
-    })
-    await this.store.insert({
-      collection: INTEGRATION_SETTINGS,
-      record: {
-        id: rowId,
-        data: {
-          integration_id: integrationId,
-          key,
-          value: s.value,
-          value_type: s.valueType,
-        },
-      },
-    })
-  }
-
-  async setIntegrationSettings(
-    integrationId: string,
-    settings: Record<string, unknown>,
-  ): Promise<void> {
-    for (const [key, value] of Object.entries(settings)) {
-      await this.setIntegrationSetting(integrationId, key, value)
-    }
   }
 
   // --- Mappers ---

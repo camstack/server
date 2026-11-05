@@ -46,7 +46,7 @@ const FORBIDDEN: readonly {
   },
   {
     what: 'the integrations capability',
-    pattern: /\bapi\.integrations\b|integration_settings/,
+    pattern: /\bapi\.integrations\b/,
   },
   {
     what: 'the retired ha-export-links kind',

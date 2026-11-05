@@ -1,12 +1,14 @@
 /**
  * Record kinds owned by integration-registry (phase 4).
+ *
+ * An integration's configuration is the addon's own instance record. This owner
+ * keeps only the registry row (id, addon, name, enabled, info).
  */
 import { defineRecordKinds, type DefinedRecordKind } from '@camstack/types'
 import { z } from 'zod'
 import type { IsolatedRecordKinds } from '../records-isolated.js'
 
 export const INTEGRATIONS_LEGACY = 'integrations'
-export const INTEGRATION_SETTINGS_LEGACY = 'integration_settings'
 
 export type IntegrationBody = {
   readonly addonId: string
@@ -28,21 +30,6 @@ const _integrationBody: z.ZodType<IntegrationBody> = z.object({
 })
 export const IntegrationBodySchema: z.ZodType<IntegrationBody> = _integrationBody
 
-export type IntegrationSettingBody = {
-  readonly integrationId: string
-  readonly key: string
-  readonly value: string
-  readonly valueType: string
-}
-const _integrationSettingBody: z.ZodType<IntegrationSettingBody> = z.object({
-  integrationId: z.string(),
-  key: z.string(),
-  value: z.string(),
-  valueType: z.string(),
-})
-export const IntegrationSettingBodySchema: z.ZodType<IntegrationSettingBody> =
-  _integrationSettingBody
-
 const _integrationRegistryRecordKinds = defineRecordKinds({
   integrations: {
     schema: IntegrationBodySchema,
@@ -53,20 +40,10 @@ const _integrationRegistryRecordKinds = defineRecordKinds({
     indexes: [{ name: 'addon_id', fields: ['addonId'] }],
     retention: { none: 'deleteIntegration only' },
   },
-  'integration-settings': {
-    schema: IntegrationSettingBodySchema,
-    class: 'config',
-    writeTrigger: 'setIntegrationSetting — one row per (integrationId, key)',
-    device: 'none',
-    at: 'none',
-    indexes: [{ name: 'integration_id', fields: ['integrationId'] }],
-    retention: { none: 'cascade on deleteIntegration' },
-  },
 }) satisfies IsolatedRecordKinds
 
 export type IntegrationRegistryRecordKindsMap = {
   readonly integrations: DefinedRecordKind<z.ZodType<IntegrationBody>>
-  readonly 'integration-settings': DefinedRecordKind<z.ZodType<IntegrationSettingBody>>
 }
 
 export const integrationRegistryRecordKinds: IntegrationRegistryRecordKindsMap =
@@ -74,6 +51,3 @@ export const integrationRegistryRecordKinds: IntegrationRegistryRecordKindsMap =
 
 export const integrationsRecordKind: DefinedRecordKind<z.ZodType<IntegrationBody>> =
   _integrationRegistryRecordKinds.integrations
-
-export const integrationSettingsRecordKind: DefinedRecordKind<z.ZodType<IntegrationSettingBody>> =
-  _integrationRegistryRecordKinds['integration-settings']

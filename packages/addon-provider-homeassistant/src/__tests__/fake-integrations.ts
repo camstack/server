@@ -1,11 +1,11 @@
-/** An in-memory `integrations` api: the slice `haInstanceSettingsPortsOver` calls. */
+/** An in-memory migration door: the slice `haInstanceSettingsPortsOver` calls. */
 import {
   HA_PROVIDER_ADDON_ID,
-  type HaIntegrationsApi,
+  type HaLegacyRowsApi,
 } from '../migrations/legacy-integration-rows.js'
 
 export interface FakeIntegrations {
-  readonly api: HaIntegrationsApi
+  readonly api: HaLegacyRowsApi
   readonly settingsOf: (id: string) => Record<string, unknown> | undefined
   readonly remove: (id: string) => void
   readonly writes: () => number
@@ -20,13 +20,32 @@ export function fakeIntegrations(
   return {
     api: {
       list: { query: async () => [...store.keys()].map((id) => ({ id, addonId })) },
-      getSettings: { query: async ({ id }) => ({ ...store.get(id) }) },
-      setSettings: {
-        mutate: async ({ id, settings }) => {
-          if (!store.has(id)) return { success: false }
-          store.set(id, { ...settings })
+      readLegacyIntegrationRows: {
+        query: async ({ integrationId }) => ({ ...store.get(integrationId) }),
+      },
+      patchLegacyIntegrationRows: {
+        mutate: async ({ integrationId, patch }) => {
+          const current = store.get(integrationId)
+          if (current === undefined) return { written: false }
+          store.set(integrationId, { ...current, ...patch })
           writes += 1
-          return { success: true }
+          return { written: true }
+        },
+      },
+      deleteLegacyIntegrationRowKeys: {
+        mutate: async ({ integrationId, keys }) => {
+          const current = store.get(integrationId)
+          if (current === undefined) return { present: false, removed: {} }
+          const drop = new Set(keys)
+          const removed: Record<string, unknown> = {}
+          const next: Record<string, unknown> = {}
+          for (const [key, value] of Object.entries(current)) {
+            if (drop.has(key)) removed[key] = value
+            else next[key] = value
+          }
+          store.set(integrationId, next)
+          writes += 1
+          return { present: true, removed }
         },
       },
     },

@@ -206,7 +206,15 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
     return {
       readStored: (key) => this.readStoredGlobalKey(key),
       // The old rows: read by the migrations only (planning#416).
-      ...haInstanceSettingsPortsOver(this.ctx.api.integrations),
+      ...haInstanceSettingsPortsOver(
+        {
+          list: this.ctx.api.integrations.list,
+          readLegacyIntegrationRows: this.ctx.api.migrations.readLegacyIntegrationRows,
+          patchLegacyIntegrationRows: this.ctx.api.migrations.patchLegacyIntegrationRows,
+          deleteLegacyIntegrationRowKeys: this.ctx.api.migrations.deleteLegacyIntegrationRowKeys,
+        },
+        this.ctx.secrets ?? null,
+      ),
       ...haInstanceRecordPortsOver(records.kind(haBrokersEntryKind)),
       ...flattenPortsOver(records.kind(haBrokersEntryKind)),
     }

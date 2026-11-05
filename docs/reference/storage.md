@@ -173,7 +173,7 @@ there is".
 | `DEVICE_CREDENTIALS_COLLECTION` | `packages/system/src/builtins/local-auth/auth-schema.ts` |
 | `AUTH_AUDIT_COLLECTION` | `packages/system/src/builtins/local-auth/auth-schema.ts` |
 | `INTEGRATIONS` | `packages/system/src/builtins/sqlite-storage/integration-registry.ts` |
-| `INTEGRATION_SETTINGS` | `packages/system/src/builtins/sqlite-storage/integration-registry.ts` |
+| `${SETTINGS_TABLE}` | `packages/system/src/builtins/sqlite-storage/migrations/legacy-integration-rows-door.ts` |
 | `${LEDGER_TABLE}` | `packages/system/src/builtins/sqlite-storage/migrations/migration-pass.ts` |
 | `${scoped}` | `packages/system/src/builtins/sqlite-storage/sqlite-settings-backend.ts` |
 | `${SqliteSettingsBackend.DECLARATIONS_TABLE}` | `packages/system/src/builtins/sqlite-storage/sqlite-settings-backend.ts` |

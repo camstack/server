@@ -117,6 +117,7 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
         [HOMEMATIC_ROWS_TO_RECORD_MIGRATION],
         integrationRowsPortsOverApi({
           api: defaultIntegrationApiOver(this.ctx.api),
+          secrets: this.ctx.secrets ?? null,
           records: records.kind({
             name: homematicConnectionsEntryKind.name,
             declaration: homematicConnectionsEntryKind.declaration,

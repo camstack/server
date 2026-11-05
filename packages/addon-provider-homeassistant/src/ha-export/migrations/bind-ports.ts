@@ -3,9 +3,9 @@
  * `integrations` capability (the old home of the two flags, read by the migrations only), the
  * retired `ha-export-links` kind and the `ha-export-targets` kind the links move into.
  */
-import { RevConflictError, type RecordKindHandle } from '@camstack/types'
+import { RevConflictError, type RecordKindHandle, type SecretsAccess } from '@camstack/types'
 import {
-  type HaIntegrationsApi,
+  type HaLegacyRowsApi,
   haInstanceSettingsPortsOver,
 } from '../../migrations/legacy-integration-rows.js'
 import { type HaExportTargetBody, readAllTargets } from '../target-records.js'
@@ -14,8 +14,15 @@ import type { HaExportMigrationPorts } from './index.js'
 
 export interface HaExportMigrationDeps {
   readonly readStored: () => Promise<Readonly<Record<string, unknown>>>
-  /** The hub api; only its `integrations` capability is read, and only by the migrations. */
-  readonly api: { readonly integrations: HaIntegrationsApi }
+  /** The registry list and the migration-only door. Nothing else on the hub api is read. */
+  readonly api: {
+    readonly integrations: { readonly list: HaLegacyRowsApi['list'] }
+    readonly migrations: Pick<
+      HaLegacyRowsApi,
+      'readLegacyIntegrationRows' | 'patchLegacyIntegrationRows' | 'deleteLegacyIntegrationRowKeys'
+    >
+  }
+  readonly secrets?: SecretsAccess | null
   /** The retired link records, declared for the migrations. */
   readonly links: RecordKindHandle<HaExportLinksBody>
   readonly targets: RecordKindHandle<HaExportTargetBody>
@@ -27,7 +34,15 @@ export interface HaExportMigrationDeps {
 export function haExportMigrationPorts(deps: HaExportMigrationDeps): HaExportMigrationPorts {
   return {
     readStored: deps.readStored,
-    ...haInstanceSettingsPortsOver(deps.api.integrations),
+    ...haInstanceSettingsPortsOver(
+      {
+        list: deps.api.integrations.list,
+        readLegacyIntegrationRows: deps.api.migrations.readLegacyIntegrationRows,
+        patchLegacyIntegrationRows: deps.api.migrations.patchLegacyIntegrationRows,
+        deleteLegacyIntegrationRowKeys: deps.api.migrations.deleteLegacyIntegrationRowKeys,
+      },
+      deps.secrets ?? null,
+    ),
     warn: deps.warn,
     putLinks: async (brokerId, body) => {
       if ((await deps.links.get(brokerId)) !== null) return 'exists'

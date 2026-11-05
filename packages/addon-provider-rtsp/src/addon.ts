@@ -165,6 +165,7 @@ export class RtspProviderAddon extends BaseDeviceProvider {
       }),
       defaultIntegrationPortsOver({
         api: defaultIntegrationApiOver(this.ctx.api),
+        secrets: this.ctx.secrets ?? null,
         records,
         kind: rtspConnectionsEntryKind,
         info: (message) => this.ctx.logger.info(message),

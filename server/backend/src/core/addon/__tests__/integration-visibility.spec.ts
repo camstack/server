@@ -60,10 +60,6 @@ function harness(rows: readonly Integration[]): Harness {
     listIntegrations: async () => rows,
     updateIntegration: unused('updateIntegration'),
     deleteIntegration: unused('deleteIntegration'),
-    getIntegrationSettings: unused('getIntegrationSettings'),
-    setIntegrationSetting: unused('setIntegrationSetting'),
-    setIntegrationSettings: unused('setIntegrationSettings'),
-    clearIntegrationSettings: unused('clearIntegrationSettings'),
   }
   const spy: LoggerSpy = {
     debug: vi.fn(),

@@ -8,7 +8,6 @@ import {
   defineRecordKinds,
   integrationRowsPortsOverApi,
   moveIntegrationRowsToRecords,
-  resolveSecretMarkers,
   createSecretsAccess,
   isSecretMarker,
   makeSecretMarker,
@@ -19,6 +18,12 @@ import { z } from 'zod'
 import { integrationRegistryRecordKinds } from '../integration-record-kinds.js'
 import { IntegrationRegistry } from '../integration-registry.js'
 import { clearIntegrationRows } from '../integration-rows-ports.js'
+import {
+  clearLegacyIntegrationRows,
+  ensureLegacyIntegrationRowsTable,
+  patchLegacyIntegrationRows,
+  readLegacyIntegrationRows,
+} from '../migrations/legacy-integration-rows-door.js'
 import { makeFakeKeychain, makeRecordsWorld } from './support/records-world.js'
 
 const ADDON = 'spec-clear'
@@ -39,6 +44,7 @@ const legacyStore = {
 async function setup() {
   const world = makeRecordsWorld()
   await world.provider.init()
+  ensureLegacyIntegrationRowsTable(world.settings.db)
   const keychain = makeFakeKeychain()
   const registryRecords = createRecordsAccess({
     owner: 'integration-registry',
@@ -54,13 +60,16 @@ async function setup() {
   )
   await registry.initialize()
   const secrets = createSecretsAccess({ owner: ADDON, transport: keychain })
+  const db = world.settings.db
   const fill = async (integrationId: string): Promise<void> => {
-    await registry.setIntegrationSetting(integrationId, 'region', 'eu')
     const ref = secrets.ref({ kind: 'integration', integrationId }, 'password')
     await secrets.put(ref, CANARY)
-    await registry.setIntegrationSetting(integrationId, 'password', makeSecretMarker(ref))
+    patchLegacyIntegrationRows(db, integrationId, {
+      region: 'eu',
+      password: makeSecretMarker(ref),
+    })
   }
-  return { registry, secrets, keychain, fill }
+  return { registry, secrets, keychain, fill, db }
 }
 
 describe('clearIntegrationRows', () => {
@@ -72,12 +81,12 @@ describe('clearIntegrationRows', () => {
     await t.fill(b.id)
     expect(t.keychain.values.size).toBe(2)
 
-    const result = await clearIntegrationRows({ registry: t.registry, secrets: t.secrets }, a.id)
+    const result = await clearIntegrationRows(t.db, t.secrets, a.id)
 
     expect(result).toEqual({ rows: 2, secrets: 1 })
-    expect(await t.registry.getIntegrationSettings(a.id)).toEqual({})
+    expect(readLegacyIntegrationRows(t.db, a.id)).toEqual({})
     expect(t.keychain.values.size).toBe(1)
-    const other = await t.registry.getIntegrationSettings(b.id)
+    const other = readLegacyIntegrationRows(t.db, b.id)
     expect(other['region']).toBe('eu')
     expect(isSecretMarker(other['password'])).toBe(true)
     // the integration itself stays
@@ -88,8 +97,8 @@ describe('clearIntegrationRows', () => {
     const t = await setup()
     const a = await t.registry.createIntegration({ addonId: ADDON, name: 'A' })
     await t.fill(a.id)
-    await clearIntegrationRows({ registry: t.registry, secrets: t.secrets }, a.id)
-    const again = await clearIntegrationRows({ registry: t.registry, secrets: t.secrets }, a.id)
+    await clearIntegrationRows(t.db, t.secrets, a.id)
+    const again = await clearIntegrationRows(t.db, t.secrets, a.id)
     expect(again).toEqual({ rows: 0, secrets: 0 })
   })
 })
@@ -100,14 +109,12 @@ describe('clearIntegrationRows ordering', () => {
     const a = await t.registry.createIntegration({ addonId: ADDON, name: 'A' })
     await t.fill(a.id)
     const failing = { ...t.secrets, delete: async () => Promise.reject(new Error('keychain down')) }
-    await expect(
-      clearIntegrationRows({ registry: t.registry, secrets: failing }, a.id),
-    ).rejects.toThrow(/keychain down/)
+    await expect(clearIntegrationRows(t.db, failing, a.id)).rejects.toThrow(/keychain down/)
     // the rows still point at the value
-    expect(Object.keys(await t.registry.getIntegrationSettings(a.id))).toContain('password')
+    expect(Object.keys(readLegacyIntegrationRows(t.db, a.id))).toContain('password')
     expect(t.keychain.values.size).toBe(1)
 
-    const retry = await clearIntegrationRows({ registry: t.registry, secrets: t.secrets }, a.id)
+    const retry = await clearIntegrationRows(t.db, t.secrets, a.id)
     expect(retry).toEqual({ rows: 2, secrets: 1 })
     expect(t.keychain.values.size).toBe(0)
   })
@@ -141,13 +148,14 @@ describe('the addon-side ports over the hub API', () => {
     await t.fill(a.id)
     const api = {
       list: () => t.registry.listIntegrations(),
-      getSettings: async ({ id }: { id: string }) =>
-        (await resolveSecretMarkers(await t.registry.getIntegrationSettings(id), t.secrets)).value,
-      clearSettings: ({ id }: { id: string }) =>
-        clearIntegrationRows({ registry: t.registry, secrets: t.secrets }, id),
+      readLegacyIntegrationRows: async ({ integrationId }: { integrationId: string }) =>
+        readLegacyIntegrationRows(t.db, integrationId),
+      clearLegacyIntegrationRows: async ({ integrationId }: { integrationId: string }) =>
+        clearLegacyIntegrationRows(t.db, integrationId),
     }
     const ports = integrationRowsPortsOverApi({
       api,
+      secrets: t.secrets,
       records: addonRecords.kind({
         name: 'accounts',
         declaration: kinds.accounts.declaration,
@@ -171,6 +179,6 @@ describe('the addon-side ports over the hub API', () => {
       region: 'eu',
       password: CANARY,
     })
-    expect(await t.registry.getIntegrationSettings(a.id)).toEqual({})
+    expect(readLegacyIntegrationRows(t.db, a.id)).toEqual({})
   })
 })

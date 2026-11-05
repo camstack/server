@@ -33,8 +33,10 @@ async function world() {
   const cleared: string[] = []
   const api = {
     list: async () => [{ id: 'int_0001', addonId: ADDON, name: 'Home' }],
-    getSettings: async ({ id }: { id: string }) => ({ ...rows.get(id) }),
-    clearSettings: async ({ id }: { id: string }) => {
+    readLegacyIntegrationRows: async ({ integrationId: id }: { integrationId: string }) => ({
+      ...rows.get(id),
+    }),
+    clearLegacyIntegrationRows: async ({ integrationId: id }: { integrationId: string }) => {
       cleared.push(id)
       rows.set(id, {})
     },

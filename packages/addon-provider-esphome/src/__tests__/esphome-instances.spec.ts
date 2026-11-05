@@ -96,8 +96,8 @@ async function setup(legacy: readonly EspBrokerEntry[] = [LEGACY, ORPHAN]) {
   const warnings: string[] = []
   const api: IntegrationRowsApi = {
     list: async () => INTEGRATIONS.map((i) => ({ ...i })),
-    getSettings: async ({ id }) => structuredClone(rows.get(id) ?? {}),
-    clearSettings: async ({ id }) => {
+    readLegacyIntegrationRows: async ({ integrationId: id }) => structuredClone(rows.get(id) ?? {}),
+    clearLegacyIntegrationRows: async ({ integrationId: id }) => {
       rows.set(id, {})
       for (const entry of rowKeychain) if (entry.startsWith(`${id}/`)) rowKeychain.delete(entry)
     },

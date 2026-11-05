@@ -1408,8 +1408,6 @@ Enum: `"open" \| "opening" \| "closing" \| "closed" \| "stopped"`
 - `info?`: `Record<string, unknown>`
 - `originStableId?`: `string`
 - `settings?`: `Record<string, unknown>`
-- `secretKeys?`: `string[]`
-- `skipRestart?`: `boolean`
 
 ### `CreateUserInputSchema`
 

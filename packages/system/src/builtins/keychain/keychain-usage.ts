@@ -10,6 +10,7 @@
  * the page (D315: absence is claimed only from a query that answered).
  */
 import { type KeychainSecretUsage, parseSecretRef, type SecretScope } from '@camstack/types'
+import { LEGACY_INTEGRATION_ROWS_TABLE } from '../sqlite-storage/migrations/legacy-integration-rows-door.js'
 import type { KeychainDoor, KeychainSecretRow } from './keychain-store.js'
 import {
   PROCESS_HELD_SECRET_REFS,
@@ -106,11 +107,19 @@ async function blobsFor(
       return [legacyBlob, ...own, ...connection]
     }
     case 'integration': {
-      const rows = await door.query({
-        collection: 'integration_settings',
-        filter: { where: { integration_id: scope.integrationId }, limit: 2_000 },
-      })
-      return rows.map((r) => r.data)
+      // The leftover rows, while the store still exists. A dropped store answers empty:
+      // those refs are orphans (the copy released the ones the record still needs).
+      try {
+        const rows = await door.query({
+          collection: LEGACY_INTEGRATION_ROWS_TABLE,
+          filter: { where: { integration_id: scope.integrationId }, limit: 2_000 },
+        })
+        return rows.map((r) => r.data)
+      } catch (err) {
+        const message = err instanceof Error ? err.message : ''
+        if (message.includes('no such table') || message.includes('not found')) return []
+        return null
+      }
     }
     case 'row':
       return [await door.get({ collection: scope.collection, key: scope.rowId })]

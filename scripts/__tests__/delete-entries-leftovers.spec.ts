@@ -46,8 +46,11 @@ function fakeHub(): FakeHub {
       if (route === 'integrations.get') {
         return { id: DREAME_INTEGRATION_ID, addonId: hub.integrationAddonId }
       }
-      if (route === 'integrations.getSettings') {
-        return { password: hub.settingsPassword, username: 'u' }
+      if (route === 'records.get') {
+        return {
+          id: DREAME_INTEGRATION_ID,
+          data: { password: hub.settingsPassword, username: 'u' },
+        }
       }
       if (route === 'settingsStore.get') {
         const key = (input as { key: string }).key

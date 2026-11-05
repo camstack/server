@@ -690,8 +690,8 @@ export function createParentUnownedCallHandler(
       // resolvable device-owner). Any deviceId the child needs is already
       // carried inside `input.args` (where the child placed it). The UDS
       // stamp lives on CapCallInput, not in args — merge it here so
-      // server-provided doors that owner-check (`integrations.getSettings`,
-      // D787) see the same caller the hub-in-process branch would have stamped.
+      // server-provided doors that owner-check (D787) see the same caller the
+      // hub-in-process branch would have stamped.
       return await brokerCallForCap(
         deps.broker,
         input.capName,

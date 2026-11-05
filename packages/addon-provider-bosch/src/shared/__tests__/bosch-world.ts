@@ -29,8 +29,8 @@ export async function boschWorld(spec: WorldSpec) {
   await spec.declare(mem.records)
   const api: IntegrationRowsApi = {
     list: async () => [spec.integration],
-    getSettings: async ({ id }) => ({ ...rows.get(id) }),
-    clearSettings: async ({ id }) => {
+    readLegacyIntegrationRows: async ({ integrationId: id }) => ({ ...rows.get(id) }),
+    clearLegacyIntegrationRows: async ({ integrationId: id }) => {
       rows.set(id, {})
     },
   }

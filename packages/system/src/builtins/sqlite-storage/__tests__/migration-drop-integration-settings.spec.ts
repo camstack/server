@@ -5,12 +5,14 @@
  * after a drop changes nothing.
  */
 import { fileURLToPath } from 'node:url'
+import { moveIntegrationRowsToRecords } from '@camstack/types'
 import Database from 'better-sqlite3'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   DROP_INTEGRATION_SETTINGS_MIGRATION,
   DROP_INTEGRATION_SETTINGS_MIGRATION_ID,
 } from '../../../migrations/hub/2026-11-05-drop-integration-settings.js'
+import { readLegacyIntegrationRows } from '../migrations/legacy-integration-rows-door.js'
 import { ensureLedger } from '../migrations/migration-pass.js'
 import { RECORDS_SCHEMA_SQL } from '../records/records-sql.js'
 import { MigrationEngine } from '../migrations/migration-engine.js'
@@ -244,4 +246,59 @@ describe('hub migration: drop integration_settings', () => {
       db.close()
     }
   }, 60_000)
+
+  it('after the drop the door is empty and a copy migration rerun is a no-op', async () => {
+    seed(true, 0)
+    await runPass('boot-1')
+    expect(ledger()?.status).toBe('applied')
+    const db = new Database(h.pathOf('settings'))
+    try {
+      expect(readLegacyIntegrationRows(db, 'int_0001')).toEqual({})
+      let cleared = 0
+      const result = await moveIntegrationRowsToRecords(
+        {
+          warn: () => undefined,
+          listIntegrations: async () => [{ id: 'int_0001', name: 'Wyze' }],
+          readRows: async (id) => readLegacyIntegrationRows(db, id),
+          putRecord: async () => 'exists',
+          readRecord: async () => ({ name: 'Wyze' }),
+          deleteRecord: async () => undefined,
+          clearRows: async () => {
+            cleared += 1
+          },
+        },
+        {
+          addonId: MIGRATED,
+          secretPaths: [],
+          bodyFrom: (_values, _log, integration) => ({ name: integration.name }),
+        },
+      )
+      expect(result.outcome).toBe('already-done')
+      expect(cleared).toBe(0)
+    } finally {
+      db.close()
+    }
+  }, 60_000)
+
+  it('a row whose integration is already gone does not block the drop', async () => {
+    seed(true, 0)
+    const db = new Database(h.pathOf('settings'))
+    db.prepare(
+      'INSERT INTO integration_settings (id, integration_id, key, value, value_type) VALUES (?, ?, ?, ?, ?)',
+    ).run('int_9999:host', 'int_9999', 'host', 'gone', 'string')
+    db.close()
+    await runPass('boot-1')
+    expect(ledger()?.status).toBe('applied')
+    expect(tableExists()).toBe(false)
+  }, 60_000)
+
+  it('a database that never had the store answers with no rows', () => {
+    h = makeHarness()
+    const db = new Database(h.pathOf('settings'))
+    try {
+      expect(readLegacyIntegrationRows(db, 'int_0001')).toEqual({})
+    } finally {
+      db.close()
+    }
+  })
 })

@@ -176,6 +176,29 @@ function bump(counts: Map<string, number>, addonId: string | null): void {
   counts.set(key, (counts.get(key) ?? 0) + 1)
 }
 
+/**
+ * `true` when the integration row is still there, `false` when both stores exist and the id
+ * is in neither (an orphan the registry no longer cascades), `null` when there is no
+ * integrations store to ask — those rows stay unknown and block the drop.
+ */
+function integrationRowPresent(db: MigrationDatabase, integrationId: string): boolean | null {
+  const kindId = kindIdOf(db, INTEGRATIONS_KIND)
+  const records = kindId !== null && hasTable(db, 'records')
+  const table = hasTable(db, INTEGRATIONS_TABLE)
+  if (!records && !table) return null
+  if (records && kindId !== null) {
+    const row = db
+      .prepare('SELECT 1 AS ok FROM records WHERE kind_id = ? AND id = ?')
+      .get(kindId, integrationId)
+    if (row !== undefined) return true
+  }
+  if (table) {
+    const row = db.prepare('SELECT 1 AS ok FROM integrations WHERE id = ?').get(integrationId)
+    if (row !== undefined) return true
+  }
+  return false
+}
+
 /** Rows of the legacy store, counted per owning addon. An unresolved owner is `(unknown)`. */
 export function legacyIntegrationSettingsByAddon(
   db: MigrationDatabase,
@@ -190,8 +213,14 @@ export function legacyIntegrationSettingsByAddon(
     cache.set(integrationId, addon)
     return addon
   }
-  for (const integrationId of physicalIntegrationIds(db)) bump(counts, ownerOf(integrationId))
-  for (const integrationId of recordIntegrationIds(db)) bump(counts, ownerOf(integrationId))
+  for (const integrationId of physicalIntegrationIds(db)) {
+    if (integrationRowPresent(db, integrationId) === false) continue
+    bump(counts, ownerOf(integrationId))
+  }
+  for (const integrationId of recordIntegrationIds(db)) {
+    if (integrationRowPresent(db, integrationId) === false) continue
+    bump(counts, ownerOf(integrationId))
+  }
   return [...counts.entries()].map(([addonId, rowCount]) => ({ addonId, rowCount }))
 }
 

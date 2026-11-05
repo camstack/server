@@ -10,6 +10,7 @@ import {
   type IConnectionTestProvider,
   type IIntegrationInstancesProvider,
   type IntegrationRowsApi,
+  type SecretsAccess,
   type IntegrationRowsPorts,
   type IntegrationTestConnectionResult,
   type RowsIntegration,
@@ -71,9 +72,11 @@ export function boschRowsPorts(deps: {
   readonly records: Pick<RecordsAccess, 'kind'>
   readonly kind: BoschEntryKind
   readonly warn: (message: string) => void
+  readonly secrets?: SecretsAccess | null
 }): IntegrationRowsPorts {
   return integrationRowsPortsOverApi({
     api: deps.api,
+    ...(deps.secrets !== undefined ? { secrets: deps.secrets } : {}),
     records: deps.records.kind({
       name: deps.kind.name,
       // The declaration is the kind's own; the move reads and writes untyped bodies.

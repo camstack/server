@@ -143,6 +143,7 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
     }
     const rowsPorts = integrationRowsPortsOverApi({
       api: defaultIntegrationApiOver(this.ctx.api),
+      secrets: this.ctx.secrets ?? null,
       records: records.kind({
         name: ecowittConnectionsEntryKind.name,
         declaration: ecowittConnectionsEntryKind.declaration,

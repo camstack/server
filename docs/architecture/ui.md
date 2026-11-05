@@ -432,7 +432,7 @@ plane; no addon declares integration sections today.
 ### One form per integration instance
 
 An addon whose instances differ in kind (Reolink: the default integration versus an
-NVR / Home Hub) overrides `BaseAddon.integrationSettingsSchema(instance)` and returns
+NVR / Home Hub) overrides `BaseAddon.integrationFormSchema(instance)` and returns
 the schema for that instance, or `null` for its global schema. `instance` is an
 `IntegrationInstanceRef` (`integrationId`, `null` in the create wizard, plus `mode`
 and an optional `candidateStableId`). `addonSettings.getIntegrationFormSchema` serves

@@ -37,8 +37,8 @@ async function world() {
   await mem.records.declare(dreameRecordKinds)
   const api: IntegrationRowsApi = {
     list: async () => [INTEGRATION],
-    getSettings: async ({ id }) => ({ ...rows.get(id) }),
-    clearSettings: async ({ id }) => {
+    readLegacyIntegrationRows: async ({ integrationId: id }) => ({ ...rows.get(id) }),
+    clearLegacyIntegrationRows: async ({ integrationId: id }) => {
       rows.set(id, {})
     },
   }

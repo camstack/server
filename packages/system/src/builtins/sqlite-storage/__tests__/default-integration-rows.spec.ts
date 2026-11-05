@@ -10,14 +10,18 @@ import {
   defineEntryKind,
   entryBody,
   defaultIntegrationPortsOver,
-  resolveSecretMarkers,
   createSecretsAccess,
   type ISettingsStoreProvider,
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { integrationRegistryRecordKinds } from '../integration-record-kinds.js'
 import { IntegrationRegistry } from '../integration-registry.js'
-import { clearIntegrationRows } from '../integration-rows-ports.js'
+import {
+  clearLegacyIntegrationRows,
+  ensureLegacyIntegrationRowsTable,
+  patchLegacyIntegrationRows,
+  readLegacyIntegrationRows,
+} from '../migrations/legacy-integration-rows-door.js'
 import { makeFakeKeychain, makeRecordsWorld } from './support/records-world.js'
 
 const ADDON = 'provider-spec-default'
@@ -38,6 +42,7 @@ const legacyStore = {
 async function setup() {
   const world = makeRecordsWorld()
   await world.provider.init()
+  ensureLegacyIntegrationRowsTable(world.settings.db)
   const keychain = makeFakeKeychain()
   const registryRecords = createRecordsAccess({
     owner: 'integration-registry',
@@ -53,7 +58,7 @@ async function setup() {
   )
   await registry.initialize()
   const secrets = createSecretsAccess({ owner: ADDON, transport: keychain })
-  return { registry, secrets, keychain }
+  return { registry, secrets, keychain, db: world.settings.db }
 }
 
 const kind = defineEntryKind('connections', {
@@ -75,12 +80,13 @@ async function setupWorld() {
   const warnings: string[] = []
   const api = {
     list: async () => t.registry.listIntegrations(),
-    getSettings: async ({ id }: { id: string }) =>
-      (await resolveSecretMarkers(await t.registry.getIntegrationSettings(id), t.secrets)).value,
-    clearSettings: ({ id }: { id: string }) =>
-      clearIntegrationRows({ registry: t.registry, secrets: t.secrets }, id),
+    readLegacyIntegrationRows: async ({ integrationId }: { integrationId: string }) =>
+      readLegacyIntegrationRows(t.db, integrationId),
+    clearLegacyIntegrationRows: async ({ integrationId }: { integrationId: string }) =>
+      clearLegacyIntegrationRows(t.db, integrationId),
   }
   const ports = defaultIntegrationPortsOver({
+    secrets: t.secrets,
     api: {
       ...api,
       listDevices: async () => [],
@@ -111,7 +117,7 @@ describe('defaultIntegrationMigrations: integration rows to record', () => {
     const a = await w.t.registry.createIntegration({ addonId: ADDON, name: 'Default' })
     const b = await w.t.registry.createIntegration({ addonId: ADDON, name: 'Second' })
     const other = await w.t.registry.createIntegration({ addonId: 'another-addon', name: 'X' })
-    await w.t.registry.setIntegrationSetting(a.id, 'unknownLegacyKey', MARK)
+    patchLegacyIntegrationRows(w.t.db, a.id, { unknownLegacyKey: MARK })
 
     const first = await w.run()
 
@@ -120,7 +126,7 @@ describe('defaultIntegrationMigrations: integration rows to record', () => {
     expect((await handle.get(a.id))?.data).toEqual({ name: 'Default' })
     expect((await handle.get(b.id))?.data).toEqual({ name: 'Second' })
     expect(await handle.get(other.id)).toBeNull()
-    expect(await w.t.registry.getIntegrationSettings(a.id)).toEqual({})
+    expect(readLegacyIntegrationRows(w.t.db, a.id)).toEqual({})
     expect(w.warnings.join('\n')).toContain('unknownLegacyKey')
     expect(w.warnings.join('\n')).not.toContain(MARK)
 

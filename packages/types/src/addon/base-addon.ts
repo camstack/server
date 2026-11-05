@@ -522,10 +522,9 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
    *
    * Override it only when an `instanceMode: multiple` addon's instances differ: an NVR integration
    * needs its connection fields, the default integration the addon's own sections. It is the
-   * SHAPE of the form only — the values live in `integrations.getSettings`, and the write path is
-   * unchanged (`integrations.setSettings` for an account integration).
+   * SHAPE of the form only — the values live on the instance record.
    */
-  protected async integrationSettingsSchema(
+  protected async integrationFormSchema(
     _instance: IntegrationInstanceRef,
   ): Promise<ConfigUISchema | null> {
     return null
@@ -587,7 +586,7 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     instance: IntegrationInstanceRef,
     nodeId?: string,
   ): Promise<ConfigUISchemaWithValues | null> {
-    const scoped = await this.integrationSettingsSchema(instance)
+    const scoped = await this.integrationFormSchema(instance)
     if (scoped === null) return this.getGlobalSettings(undefined, undefined, nodeId)
     return hydrateSchema(scoped, {}, { inlineSecretsAsViews: true })
   }

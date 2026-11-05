@@ -100,6 +100,7 @@ export class DreoProviderAddon extends BaseDeviceProvider {
         ],
         integrationRowsPortsOver({
           api: defaultIntegrationApiOver(this.ctx.api),
+          secrets: this.ctx.secrets ?? null,
           records,
           kind: dreoConnectionsEntryKind,
           warn: (message) => this.ctx.logger.warn(message),

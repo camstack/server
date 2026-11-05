@@ -94,6 +94,7 @@ export class MqttHaProviderAddon extends BaseDeviceProvider<MqttHaProviderConfig
         MQTT_HA_MIGRATIONS,
         mqttHaRowsPorts({
           api: defaultIntegrationApiOver(this.ctx.api),
+          secrets: this.ctx.secrets ?? null,
           records,
           warn: (message) => this.ctx.logger.warn(message),
         }),

@@ -12,7 +12,7 @@
 // paths, which store a sent secret in the keychain and leave a marker:
 //   addon settings    addonSettings.updateGlobalSettings
 //   device configs    deviceManager.persistConfig      (unstamped = operator)
-//   integrations      integrations.setSettings         (unstamped = operator)
+//   integrations      instance record (copy migration) (unstamped = operator)
 //
 // Steps (run in this order; each is safe to re-run):
 //   plan       (default) dry run — the inline secrets that WOULD move, by path.
@@ -406,22 +406,9 @@ async function inventory(call) {
       deviceItems.push({ deviceId: d.id, addonId: d.addonId, paths, config: d.config, found })
   }
 
-  const integrations = (await call(GET, 'integrations.list')) ?? []
+  // An integration's secrets live on its instance record. This script no longer
+  // reads or writes them; the addon's copy migration already moved them.
   const integrationItems = []
-  for (const i of integrations) {
-    let schema
-    try {
-      schema = await call(GET, 'addonSettings.getGlobalSettings', { addonId: i.addonId })
-    } catch {
-      continue
-    }
-    const keys = secretPathsFromSchema(schema).filter((p) => !p.includes('['))
-    if (keys.length === 0) continue
-    const settings = (await call(GET, 'integrations.getSettings', { id: i.id })) ?? {}
-    const found = inlineSecrets(settings, keys)
-    if (found.length > 0)
-      integrationItems.push({ integrationId: i.id, addonId: i.addonId, settings, keys, found })
-  }
 
   const staleRows = []
   for (const key of STALE_SYSTEM_ROWS) {
@@ -593,15 +580,8 @@ async function main() {
       console.log(`moved    device ${d.deviceId}: ${d.found.map((f) => f.path).join(', ')}`)
     }
     for (const i of inv.integrationItems) {
-      await call(POST, 'integrations.setSettings', {
-        id: i.integrationId,
-        settings: migrationPatch(i.settings, i.found),
-        secretKeys: i.keys,
-      })
-      moved += i.found.length
-      console.log(
-        `moved    integration ${i.integrationId}: ${i.found.map((f) => f.path).join(', ')}`,
-      )
+      console.log(`skipped  integration ${i.integrationId}: its record already holds the secret`)
+      void i
     }
     for (const key of inv.staleRows) {
       await call(POST, 'settingsStore.delete', { collection: 'system-settings', key })

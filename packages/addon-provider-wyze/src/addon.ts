@@ -128,6 +128,7 @@ export class WyzeProviderAddon extends BaseDeviceProvider {
         ],
         integrationRowsPortsOver({
           api: defaultIntegrationApiOver(this.ctx.api),
+          secrets: this.ctx.secrets ?? null,
           records,
           kind: wyzeConnectionsEntryKind,
           warn: (message) => this.ctx.logger.warn(message),

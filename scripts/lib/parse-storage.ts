@@ -16,7 +16,7 @@
  *
  * There used to be a fifth: `ensureTable()`, a second table-shaped API on the
  * same backend that created typed tables without `declareCollection`. Seven
- * live tables (`devices`, `integrations`, `integration_settings`,
+ * live tables (`devices`, `integrations`, the retired per-integration rows,
  * `device_settings_kv`, `storage_locations`, `backup_schedules`,
  * `backup_destination_policies`) were invisible to this map until it was
  * matched separately. B2 moved all seven onto `declareCollection` and deleted

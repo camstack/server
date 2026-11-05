@@ -1,6 +1,6 @@
 /**
  * An in-memory stand-in for the two stores `moveIntegrationRowsToRecords` crosses: the legacy
- * `integration_settings` rows (secrets in a per-integration keychain) and the addon's records
+ * leftover integration rows (secrets in a per-integration keychain) and the addon's records
  * (secret leaves in a per-record keychain). The secrets are really moved: a record read gives a
  * secret back only if THAT record's keychain entry holds it, so a body copied from another
  * integration's rows cannot pass the read-back.

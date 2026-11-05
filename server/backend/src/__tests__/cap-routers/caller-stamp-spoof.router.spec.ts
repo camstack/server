@@ -33,8 +33,8 @@ describe('caller stamp cannot be supplied over the mount', () => {
     expect(seen).not.toHaveProperty('callerAddonId')
   })
 
-  it("integrations: a spoofed callerAddonId never reaches getSettings (it would unlock the owner's resolved secrets)", async () => {
-    const seen = await seenByProvider('integrations', 'getSettings', { id: 'int_0001' })
+  it('integrations: a spoofed callerAddonId never reaches get', async () => {
+    const seen = await seenByProvider('integrations', 'get', { id: 'int_0001' })
     expect(seen).toEqual({ id: 'int_0001' })
   })
 

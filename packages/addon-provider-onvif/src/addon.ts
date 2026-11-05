@@ -75,6 +75,7 @@ export class OnvifProviderAddon extends BaseDeviceProvider<OnvifGlobalConfig> {
         }),
         defaultIntegrationPortsOver({
           api: defaultIntegrationApiOver(this.ctx.api),
+          secrets: this.ctx.secrets ?? null,
           records,
           kind: onvifConnectionsEntryKind,
           info: (message) => this.ctx.logger.info(message),

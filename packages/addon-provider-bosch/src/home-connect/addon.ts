@@ -92,6 +92,7 @@ export class BoschHomeConnectProviderAddon extends BaseDeviceProvider {
         HOME_CONNECT_MIGRATIONS,
         homeConnectRowsPorts({
           api: defaultIntegrationApiOver(this.ctx.api),
+          secrets: this.ctx.secrets ?? null,
           records,
           warn: (message) => this.ctx.logger.warn(message),
         }),

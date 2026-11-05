@@ -75,11 +75,12 @@ export async function verifyDreamePasswordMarker(
   if (addonId !== 'provider-dreame') {
     return { ok: false, reason: `integration ${integrationId} is not provider-dreame` }
   }
-  const settings = await hub.query('integrations.getSettings', { id: integrationId })
-  if (!isRecord(settings)) {
-    return { ok: false, reason: 'integration settings did not answer' }
+  const record = await hub.query('records.get', { kind: 'connections', id: integrationId })
+  const data = isRecord(record) ? record['data'] : null
+  if (!isRecord(data)) {
+    return { ok: false, reason: 'integration record did not answer' }
   }
-  const password = settings['password']
+  const password = data['password']
   const ref = markerRef(password)
   if (ref === null) {
     return { ok: false, reason: 'integration password is not a keychain marker' }

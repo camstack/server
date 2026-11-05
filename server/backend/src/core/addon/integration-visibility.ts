@@ -113,11 +113,5 @@ export function createFilteredIntegrationRegistry(
     },
     updateIntegration: (id, updates) => raw.updateIntegration(id, updates),
     deleteIntegration: (id) => raw.deleteIntegration(id),
-
-    // Integration settings: passthrough (already gated by getIntegration)
-    getIntegrationSettings: (id) => raw.getIntegrationSettings(id),
-    setIntegrationSetting: (id, key, value) => raw.setIntegrationSetting(id, key, value),
-    setIntegrationSettings: (id, settings) => raw.setIntegrationSettings(id, settings),
-    clearIntegrationSettings: (id) => raw.clearIntegrationSettings(id),
   }
 }

@@ -22,7 +22,6 @@ export interface CreateIntegrationInput {
   readonly enabled?: boolean
   readonly info?: Record<string, unknown>
   readonly originStableId?: string | undefined
-  readonly settings?: Record<string, unknown>
 }
 
 /**
@@ -48,11 +47,4 @@ export interface IIntegrationRegistry {
     updates: Partial<Pick<Integration, 'name' | 'enabled' | 'info'>>,
   ): Promise<Integration | null>
   deleteIntegration(id: string): Promise<boolean>
-
-  // Integration settings
-  getIntegrationSettings(integrationId: string): Promise<Record<string, unknown>>
-  setIntegrationSetting(integrationId: string, key: string, value: unknown): Promise<void>
-  setIntegrationSettings(integrationId: string, settings: Record<string, unknown>): Promise<void>
-  /** Delete every setting row of an integration; answers the keychain refs the rows carried. */
-  clearIntegrationSettings(integrationId: string): Promise<readonly string[]>
 }

@@ -180,6 +180,7 @@ export class VeSyncProviderAddon extends BaseDeviceProvider {
     const records = this.requireRecords()
     const rowsPorts = integrationRowsPortsOver({
       api: defaultIntegrationApiOver(this.ctx.api),
+      secrets: this.ctx.secrets ?? null,
       records,
       kind: vesyncConnectionsEntryKind,
       warn: (message) => this.ctx.logger.warn(message),

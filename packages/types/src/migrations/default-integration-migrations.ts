@@ -10,11 +10,11 @@
  *  2. `claim-devices` (tolerate): `claimDevicesToDefaultIntegration`; with no integration to claim
  *     to it fails and is retried on the next boot.
  *
- * Both run in the addon process through the hub API (`ctx.api`), BEFORE the addon registers its
- * `integration-instances` provider: while a provider is registered the hub answers `getSettings`
- * from the record, not from the rows.
+ * Both run in the addon process through the hub API (`ctx.api`). The leftover rows are read
+ * through the migration-only door, which answers empty once the store is gone.
  */
 import { z } from 'zod'
+import type { SecretsAccess } from '../keychain/secrets-access.js'
 import type { DefinedRecordKind } from '../records/record-kind.js'
 import type { RecordsAccess } from '../records/records-access.js'
 import { type AddonMigration, type AddonProcedureMigration } from './addon-migration.js'
@@ -50,9 +50,12 @@ export function defaultIntegrationPortsOver(deps: {
   readonly info: (message: string) => void
   readonly warn: (message: string) => void
   readonly warnDevice: (message: string, deviceId: number) => void
+  /** The owning addon's keychain handle. The door returns markers; this resolves them. */
+  readonly secrets?: SecretsAccess | null
 }): DefaultIntegrationPorts {
   const rows = integrationRowsPortsOverApi({
     api: deps.api,
+    ...(deps.secrets !== undefined ? { secrets: deps.secrets } : {}),
     // The move reads and writes the body as it is stored, so the handle takes any object.
     records: deps.records.kind({
       name: deps.kind.name,
@@ -210,10 +213,14 @@ export interface DefaultIntegrationHubApi {
         }[]
       >
     }
-    readonly getSettings: {
-      query(input: { id: string }): Promise<Readonly<Record<string, unknown>>>
+  }
+  readonly migrations: {
+    readonly readLegacyIntegrationRows: {
+      query(input: { integrationId: string }): Promise<Readonly<Record<string, unknown>>>
     }
-    readonly clearSettings: { mutate(input: { id: string }): Promise<unknown> }
+    readonly clearLegacyIntegrationRows: {
+      mutate(input: { integrationId: string }): Promise<unknown>
+    }
   }
   readonly deviceManager: {
     readonly listAll: {
@@ -234,8 +241,8 @@ export interface DefaultIntegrationHubApi {
 export function defaultIntegrationApiOver(api: DefaultIntegrationHubApi): DefaultIntegrationApi {
   return {
     list: () => api.integrations.list.query(),
-    getSettings: (input) => api.integrations.getSettings.query(input),
-    clearSettings: (input) => api.integrations.clearSettings.mutate(input),
+    readLegacyIntegrationRows: (input) => api.migrations.readLegacyIntegrationRows.query(input),
+    clearLegacyIntegrationRows: (input) => api.migrations.clearLegacyIntegrationRows.mutate(input),
     listDevices: (addonId) => api.deviceManager.listAll.query({ addonId, projection: 'slim' }),
     setDeviceIntegrationId: async (deviceId, integrationId) => {
       await api.deviceManager.setIntegrationId.mutate({

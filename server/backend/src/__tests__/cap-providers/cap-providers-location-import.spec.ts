@@ -25,8 +25,6 @@ function makeIntegrationRegistry() {
     createIntegration: vi.fn(),
     updateIntegration: vi.fn(),
     getIntegrationByAddonId: vi.fn(),
-    getIntegrationSettings: vi.fn(),
-    setIntegrationSettings: vi.fn(),
   }
 }
 
