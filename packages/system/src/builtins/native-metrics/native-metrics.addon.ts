@@ -849,7 +849,12 @@ export default class NativeMetricsAddon extends BaseAddon<NativeMetricsConfig> {
    * counts the cluster is actually reporting — so an operator raising the
    * retention sees what it costs BEFORE applying it, not afterwards.
    */
-  protected globalSettingsSchema(): ConfigUISchema {
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return ['metrics-provider']
+  }
+
+  protected override async clusterSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    if (cap !== 'metrics-provider') return null
     const projection = projectLoadSeriesCost({
       config: this.loadConfig,
       observedProcessRows: this.observedFleetRows(),
