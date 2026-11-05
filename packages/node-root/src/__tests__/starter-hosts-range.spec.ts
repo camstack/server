@@ -6,7 +6,7 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { HUB_ROOT_SPEC } from '../root-package-spec.js'
 import { rootPackageDir, serverRootDir, validateClosureDir } from '../root-state.js'
 import {
@@ -16,7 +16,7 @@ import {
   stagingDirPath,
   writePendingRootSwap,
 } from '../root-single-copy.js'
-import { STARTER_HOSTS_SERVER_MIN } from '../starter-core.js'
+import { runNodeStarter, STARTER_HOSTS_SERVER_MIN } from '../starter-core.js'
 
 const NOW = 1_700_000_000_000
 let tmp: string
@@ -105,5 +105,57 @@ describe('STARTER_HOSTS_SERVER_MIN', () => {
         ? (pkg as { camstack?: { requires?: { server?: string } } }).camstack?.requires
         : undefined
     expect(requires?.server).toBe(`>=${STARTER_HOSTS_SERVER_MIN}`)
+  })
+})
+
+describe('a starter checks the range at boot for a closure already on disk (planning#447)', () => {
+  const noopEnv = { bootMode: 'B', activeRoot: 'R', activeVersion: 'V', killSwitch: 'K' } as const
+
+  function boot(dataDir: string): { loaded: string[]; env: NodeJS.ProcessEnv } {
+    const loaded: string[] = []
+    const env: NodeJS.ProcessEnv = {}
+    const starterDir = path.join(tmp, 'image', 'dist')
+    fs.mkdirSync(starterDir, { recursive: true })
+    const seedEntry = path.join(starterDir, 'launcher.js')
+    fs.writeFileSync(seedEntry, '// seed')
+    runNodeStarter({
+      spec: HUB_ROOT_SPEC,
+      envNames: noopEnv,
+      dataDir,
+      seedEntry,
+      starterDir,
+      loadEntry: (p) => loaded.push(p),
+      now: () => NOW,
+      nodeMajor: 24,
+      registerResolver: () => {},
+      env,
+    })
+    return { loaded, env }
+  }
+
+  it('boots the baked seed, not a closure below the range, and says why', () => {
+    const dataDir = path.join(tmp, 'data')
+    closure(currentDir(serverRootDir(dataDir)), '1.2.600')
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    try {
+      const r = boot(dataDir)
+      expect(r.env['B']).toBe('baked')
+      expect(r.loaded).toHaveLength(1)
+      expect(r.loaded[0]).toContain('launcher.js')
+      const said = warn.mock.calls.map((c) => String(c[0])).join('\n')
+      expect(said).toContain('1.2.600')
+      expect(said).toContain(STARTER_HOSTS_SERVER_MIN)
+      // The closure stays on disk: an app update that raises the range can host it again.
+      expect(fs.existsSync(currentDir(serverRootDir(dataDir)))).toBe(true)
+    } finally {
+      warn.mockRestore()
+    }
+  })
+
+  it('boots a closure inside the range', () => {
+    const dataDir = path.join(tmp, 'data')
+    closure(currentDir(serverRootDir(dataDir)), STARTER_HOSTS_SERVER_MIN)
+    const r = boot(dataDir)
+    expect(r.env['B']).toBe('data-root')
   })
 })

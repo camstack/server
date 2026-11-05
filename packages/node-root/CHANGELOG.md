@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The starter checks the server range it hosts at boot too: a closure below it is not booted, the baked seed is, and the log says why
+
 ## [1.0.0] - 2026-10-27
 
 ### Added

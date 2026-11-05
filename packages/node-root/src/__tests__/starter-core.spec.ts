@@ -122,21 +122,21 @@ describe('runNodeStarter (single-copy model)', () => {
       JSON.stringify({ name: 'ws', workspaces: ['packages/*'] }),
       'utf-8',
     )
-    scaffoldCurrent(HUB_ROOT_SPEC, '1.1.51')
+    scaffoldCurrent(HUB_ROOT_SPEC, '1.2.751')
     const r = run()
     expect(r.loaded).toEqual([seedEntry])
     expect(r.env[ENV_NAMES.bootMode]).toBe('workspace')
   })
 
   it('honors the kill switch (<killSwitch>=off boots the seed)', () => {
-    scaffoldCurrent(HUB_ROOT_SPEC, '1.1.51')
+    scaffoldCurrent(HUB_ROOT_SPEC, '1.2.751')
     const r = run({ env: { [ENV_NAMES.killSwitch]: 'off' } })
     expect(r.loaded).toEqual([seedEntry])
     expect(r.env[ENV_NAMES.bootMode]).toBe('baked')
   })
 
   it('boots the single current copy and exports the active-root markers', () => {
-    scaffoldCurrent(HUB_ROOT_SPEC, '1.1.51')
+    scaffoldCurrent(HUB_ROOT_SPEC, '1.2.751')
     const r = run()
     const cDir = currentDir(serverRootDir(dataDir))
     expect(r.loaded).toEqual([rootEntryPath(cDir, HUB_ROOT_SPEC)])
@@ -144,15 +144,15 @@ describe('runNodeStarter (single-copy model)', () => {
     // activeRoot IS the single copy — the node entry derives the framework dir
     // (forked-runner resolver + NODE_PATH) from it.
     expect(r.env[ENV_NAMES.activeRoot]).toBe(cDir)
-    expect(r.env[ENV_NAMES.activeVersion]).toBe('1.1.51')
+    expect(r.env[ENV_NAMES.activeVersion]).toBe('1.2.751')
     expect(r.resolved).toEqual([cDir])
   })
 
   it('migrates a legacy versions/<X> layout to the single copy, then boots it', () => {
-    scaffoldLegacyVersion(HUB_ROOT_SPEC, '1.1.50')
+    scaffoldLegacyVersion(HUB_ROOT_SPEC, '1.2.750')
     writeServerRootState(serverRootDir(dataDir), {
       schemaVersion: 1,
-      currentVersion: '1.1.50',
+      currentVersion: '1.2.750',
       previousVersion: null,
       pendingBoot: null,
       rolledBack: null,
@@ -160,9 +160,9 @@ describe('runNodeStarter (single-copy model)', () => {
     const r = run()
     const cDir = currentDir(serverRootDir(dataDir))
     expect(r.loaded).toEqual([rootEntryPath(cDir, HUB_ROOT_SPEC)])
-    expect(r.env[ENV_NAMES.activeVersion]).toBe('1.1.50')
+    expect(r.env[ENV_NAMES.activeVersion]).toBe('1.2.750')
     // Legacy layout retired.
-    expect(fs.existsSync(versionDir(serverRootDir(dataDir), '1.1.50'))).toBe(false)
+    expect(fs.existsSync(versionDir(serverRootDir(dataDir), '1.2.750'))).toBe(false)
   })
 
   it('applies a staged pending swap at boot, then boots the swapped copy', () => {
@@ -208,7 +208,7 @@ describe('runNodeStarter (single-copy model)', () => {
   })
 
   it('boots an alternate spec entry (dist/cli.js) — proves full spec parameterization', () => {
-    scaffoldCurrent(ALT_ROOT_SPEC, '1.1.40')
+    scaffoldCurrent(ALT_ROOT_SPEC, '1.2.740')
     const r = run({ spec: ALT_ROOT_SPEC })
     const cDir = currentDir(serverRootDir(dataDir))
     expect(r.loaded).toEqual([rootEntryPath(cDir, ALT_ROOT_SPEC)])

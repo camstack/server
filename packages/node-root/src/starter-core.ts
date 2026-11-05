@@ -25,7 +25,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { planBoot } from './boot-plan.js'
+import { type BootPlan, planBoot } from './boot-plan.js'
 import type { RootPackageSpec } from './root-package-spec.js'
 import { rootPackageDir, serverRootDir, validateClosureDir } from './root-state.js'
 import {
@@ -34,6 +34,7 @@ import {
   currentEntryPath,
   migrateToSingleCopy,
 } from './root-single-copy.js'
+import { compareSemver } from './semver-compare.js'
 import { detectWorkspaceRoot } from './workspace-detect.js'
 
 /**
@@ -226,7 +227,24 @@ export function runNodeStarter(options: NodeStarterOptions): void {
   if (invalid !== null && fs.existsSync(activeRootDir)) {
     console.warn(`[starter] single copy invalid: ${invalid}`)
   }
-  const plan = planBoot(invalid === null)
+  // D989 at BOOT: the range this starter hosts is judged for a closure already on
+  // disk too, not only for a staged one. There is no N-1 copy, so the previous
+  // server a refusal can fall back to is the baked seed; the closure stays on disk
+  // for an app update that raises the range. An unreadable version cannot be shown
+  // to be in range.
+  const activeVersion = invalid === null ? readClosureVersion(activeRootDir, options.spec) : null
+  const outOfRange =
+    invalid === null &&
+    (activeVersion === null || compareSemver(activeVersion, STARTER_HOSTS_SERVER_MIN) < 0)
+  if (outOfRange) {
+    console.warn(
+      `[starter] single copy ${activeVersion ?? 'with an unreadable version'} is below the ` +
+        `${STARTER_HOSTS_SERVER_MIN} this starter hosts — booting the baked seed; update the app or the container image`,
+    )
+  }
+  const plan: BootPlan = outOfRange
+    ? { kind: 'baked', reason: 'the single copy is outside the range this starter hosts' }
+    : planBoot(invalid === null)
 
   if (plan.kind === 'current') {
     const version = readClosureVersion(activeRootDir, options.spec)
