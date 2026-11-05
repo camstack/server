@@ -1,12 +1,13 @@
 /**
- * D950: ONE dialog creates or edits a broker for every caller. `BrokerEditorDialog` is a thin
- * wrapper over the instances editor, and `BrokerPicker` ("Create new…") and the wizard's broker
- * step open it stacked over their caller. Fakes stand in for the `broker` list hooks and the
- * `integration-instances` client; the specs pin
+ * D950 / D1013: ONE dialog creates an instance for every caller. `InstanceCreateDialog` is a thin
+ * wrapper over the instances editor narrowed to one function's kinds, and `BrokerPicker`
+ * ("Create new…") and the wizard's broker step open it stacked over their caller. Fakes stand in
+ * for the provider listing and the `integration-instances` client; the specs pin
  *   - every kind's create path through the same dialog, routed to its owning provider,
- *   - `onSaved(id)` with the id the provider minted (and the stored id on edit),
+ *   - `onSaved(id)` with the id the provider minted,
  *   - the stacked-modal return (new broker preselected, caller state kept, cancel),
- *   - a kind that declares a sign-in offers it in the same dialog.
+ *   - a kind that declares a sign-in offers it in the same dialog,
+ *   - a dual addon offers only the kinds of the function asked for.
  */
 import { useState, type ReactElement } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -19,7 +20,7 @@ const h = vi.hoisted(() => ({
   update: vi.fn(),
   nextId: 'new_1',
   brokers: [] as Array<Record<string, unknown>>,
-  providers: [] as Array<Record<string, unknown>>,
+  providers: [] as Array<{ addonId: string }>,
   descriptions: {} as Record<string, Record<string, unknown>>,
   instances: {} as Record<string, Record<string, unknown>>,
 }))
@@ -40,12 +41,17 @@ vi.mock('@camstack/ui-library', async () => {
     await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
   return {
     ...actual,
-    useBrokerList: (input: { kind?: string }) => ({
+    useBrokerInstances: (input: { kind?: string }) => ({
       data: h.brokers.filter((b) => input.kind === undefined || b.kind === input.kind),
       isLoading: false,
       isError: false,
+      isSuccess: true,
+      error: null,
     }),
-    useBrokerListProviders: () => ({ data: h.providers, isLoading: false }),
+    useAddonsListCapabilityProviders: () => ({
+      data: h.providers.map((p) => ({ ...p, mode: 'collection', isActive: true })),
+      isLoading: false,
+    }),
     useSystem: () => ({
       trpcClient: {
         integrationInstances: {
@@ -73,7 +79,7 @@ vi.mock('@camstack/ui-library', async () => {
   }
 })
 
-import { BrokerEditorDialog } from '../BrokerEditorDialog'
+import { InstanceCreateDialog } from '../../instances/InstanceCreateDialog'
 import { BrokerPicker } from '../BrokerPicker'
 
 const KINDS: ReadonlyArray<readonly [string, string, string]> = [
@@ -95,7 +101,7 @@ beforeEach(() => {
   h.nextId = 'new_1'
   h.brokers = []
   h.instances = {}
-  h.providers = KINDS.map(([kind, addonId, label]) => ({ addonId, kinds: [{ kind, label }] }))
+  h.providers = KINDS.map(([, addonId]) => ({ addonId }))
   h.descriptions = Object.fromEntries(
     KINDS.map(([kind, addonId, label]) => [
       addonId,
@@ -104,7 +110,7 @@ beforeEach(() => {
         kind: 'account',
         canTest: true,
         mintsId: true,
-        kinds: [{ id: kind, label }],
+        kinds: [{ id: kind, label, functionCap: 'broker' }],
       },
     ]),
   )
@@ -114,10 +120,17 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-describe('BrokerEditorDialog — create, every kind through the same dialog', () => {
+describe('InstanceCreateDialog — create, every kind through the same dialog', () => {
   it.each(KINDS)('%s is created through its owning provider', async (kind, addonId, label) => {
     const onSaved = vi.fn()
-    renderWithClient(<BrokerEditorDialog kind={kind} onClose={() => {}} onSaved={onSaved} />)
+    renderWithClient(
+      <InstanceCreateDialog
+        functionCap="broker"
+        kind={kind}
+        onClose={() => {}}
+        onSaved={onSaved}
+      />,
+    )
 
     fireEvent.change(await screen.findByPlaceholderText('broker host'), {
       target: { value: 'broker.local' },
@@ -135,7 +148,12 @@ describe('BrokerEditorDialog — create, every kind through the same dialog', ()
   it('a provider scoped by addonId creates there even when the kind is not given', async () => {
     const onSaved = vi.fn()
     renderWithClient(
-      <BrokerEditorDialog addonId="mqtt-broker" onClose={() => {}} onSaved={onSaved} />,
+      <InstanceCreateDialog
+        functionCap="broker"
+        addonId="mqtt-broker"
+        onClose={() => {}}
+        onSaved={onSaved}
+      />,
     )
     await screen.findByPlaceholderText('broker host')
     fireEvent.click(screen.getByRole('button', { name: /^create$/i }))
@@ -144,49 +162,9 @@ describe('BrokerEditorDialog — create, every kind through the same dialog', ()
   })
 })
 
-describe('BrokerEditorDialog — edit', () => {
-  it('saves the stored record back through its owner and reports its id', async () => {
-    const onSaved = vi.fn()
-    h.instances = {
-      mq_1: {
-        id: 'mq_1',
-        name: 'Casa',
-        kind: 'mqtt',
-        enabled: true,
-        configured: true,
-        status: { state: 'ok', label: 'Connected' },
-        formValues: { host: 'old.local' },
-      },
-    }
-    const broker = {
-      id: 'mq_1',
-      addonId: 'mqtt-broker',
-      name: 'Casa',
-      kind: 'mqtt',
-      status: 'connected',
-      info: {},
-      lastCheckedAt: null,
-      error: null,
-    } as const
-    renderWithClient(<BrokerEditorDialog broker={broker} onClose={() => {}} onSaved={onSaved} />)
-    const host = (await screen.findByPlaceholderText('broker host')) as HTMLInputElement
-    await waitFor(() => expect(host.value).toBe('old.local'))
-    fireEvent.change(host, { target: { value: 'new.local' } })
-    fireEvent.click(screen.getByRole('button', { name: /save changes/i }))
-    await waitFor(() => expect(onSaved).toHaveBeenCalledWith('mq_1'))
-    expect(h.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        addonId: 'mqtt-broker',
-        id: 'mq_1',
-        values: { host: 'new.local' },
-      }),
-    )
-  })
-})
-
-describe('BrokerEditorDialog — a kind that declares a sign-in', () => {
+describe('InstanceCreateDialog — a kind that declares a sign-in', () => {
   it('offers it inside the same dialog', async () => {
-    h.providers = [{ addonId: 'import-alexa', kinds: [{ kind: 'alexa', label: 'Alexa' }] }]
+    h.providers = [{ addonId: 'import-alexa' }]
     h.descriptions = {
       'import-alexa': {
         instanceMode: 'multiple',
@@ -197,14 +175,56 @@ describe('BrokerEditorDialog — a kind that declares a sign-in', () => {
           {
             id: 'alexa',
             label: 'Alexa',
+            functionCap: 'broker',
             signIn: { basePath: '/addon/import-alexa/login', methods: ['device-code', 'proxy'] },
           },
         ],
       },
     }
-    renderWithClient(<BrokerEditorDialog kind="alexa" onClose={() => {}} onSaved={() => {}} />)
+    renderWithClient(
+      <InstanceCreateDialog
+        functionCap="broker"
+        kind="alexa"
+        onClose={() => {}}
+        onSaved={() => {}}
+      />,
+    )
     expect(await screen.findByRole('tab', { name: /device code/i })).toBeTruthy()
     expect(screen.getAllByRole('dialog')).toHaveLength(1)
+  })
+})
+
+describe('InstanceCreateDialog — a dual addon offers only the kinds of the function asked for', () => {
+  it('creates the broker kind without asking for the device-provider one', async () => {
+    h.providers = [{ addonId: 'matter-broker' }]
+    h.descriptions = {
+      'matter-broker': {
+        instanceMode: 'multiple',
+        kind: 'account',
+        canTest: true,
+        mintsId: true,
+        kinds: [
+          { id: 'account', label: 'Matter fabric', functionCap: 'broker', brokerKind: 'matter' },
+          { id: 'integration', label: 'Matter devices', functionCap: 'device-provider' },
+        ],
+      },
+    }
+    renderWithClient(
+      <InstanceCreateDialog
+        functionCap="broker"
+        kind="matter"
+        onClose={() => {}}
+        onSaved={() => {}}
+      />,
+    )
+    await screen.findByPlaceholderText('broker host')
+    expect(screen.queryByText('Matter devices')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: /^create$/i }))
+    await waitFor(() =>
+      expect(h.create).toHaveBeenCalledWith(
+        expect.objectContaining({ addonId: 'matter-broker', kind: 'account' }),
+      ),
+    )
   })
 })
 
@@ -262,13 +282,21 @@ describe('BrokerPicker — Create new… stacks the broker dialog over the calle
 
   it('lists the brokers of the kind and selects one', () => {
     h.brokers = [
-      { id: 'mq_1', addonId: 'mqtt-broker', name: 'Mosquitto', kind: 'mqtt', status: 'connected' },
+      {
+        id: 'mq_1',
+        addonId: 'mqtt-broker',
+        name: 'Mosquitto',
+        kind: 'mqtt',
+        state: 'ok',
+        stateLabel: null,
+      },
       {
         id: 'ha_1',
         addonId: 'provider-homeassistant',
         name: 'Home',
         kind: 'home-assistant',
-        status: 'connected',
+        state: 'ok',
+        stateLabel: null,
       },
     ]
     const onChange = vi.fn()

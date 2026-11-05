@@ -33,10 +33,12 @@ vi.mock('@camstack/ui-library', async () => {
     await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
   return {
     ...actual,
-    useBrokerList: () => ({
+    useBrokerInstances: () => ({
       data: harness.box.brokers,
       isSuccess: true,
-      isPending: false,
+      isLoading: false,
+      isError: false,
+      error: null,
     }),
     useBrokerPublish: () => ({ mutate: harness.publish, isPending: false }),
     useBrokerGetState: () => ({ data: harness.box.state }),

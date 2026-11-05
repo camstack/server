@@ -1,6 +1,6 @@
 /**
  * `BrokerPicker` — pick an existing broker of one `kind`, or create one without
- * leaving the dialog that needs it. "Create new…" opens `BrokerEditorDialog`
+ * leaving the dialog that needs it. "Create new…" opens `InstanceCreateDialog`
  * stacked over the caller (the caller's state is untouched underneath); on
  * success the new broker is selected, on cancel nothing changes.
  *
@@ -10,17 +10,19 @@
 import { useEffect, useState } from 'react'
 import { Loader2, Plus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Badge, Button, ErrorBox, useBrokerList } from '@camstack/ui-library'
-import type { UnifiedBrokerStatus } from '@camstack/types'
-import { BrokerEditorDialog } from './BrokerEditorDialog'
-import { asBrokerList } from './broker-kinds'
+import {
+  Badge,
+  Button,
+  ErrorBox,
+  useBrokerInstances,
+  type BrokerInstance,
+} from '@camstack/ui-library'
+import { InstanceCreateDialog } from '../instances/InstanceCreateDialog'
 
-const STATUS_VARIANT: Record<UnifiedBrokerStatus, 'success' | 'warning' | 'default' | 'danger'> = {
-  connected: 'success',
-  connecting: 'warning',
-  disconnected: 'default',
-  'auth-failed': 'danger',
-  unreachable: 'danger',
+const STATE_VARIANT: Record<BrokerInstance['state'], 'success' | 'default' | 'danger'> = {
+  ok: 'success',
+  off: 'default',
+  unknown: 'default',
   // i18n-ignore: tone token, not display text
   error: 'danger',
 }
@@ -36,9 +38,8 @@ export interface BrokerPickerProps {
 export function BrokerPicker({ kind, value, onChange }: BrokerPickerProps) {
   const { t } = useTranslation()
   const [creating, setCreating] = useState(false)
-  const listQuery = useBrokerList({ kind })
-  // Re-filter client side so a stale or unfiltered cache never leaks a foreign kind.
-  const brokers = asBrokerList(listQuery.data).filter((b) => b.kind === kind)
+  const listQuery = useBrokerInstances({ kind })
+  const brokers = listQuery.data ?? []
 
   // Nothing chosen yet: pre-select the first broker of the kind, but only once
   // the list ANSWERED — still loading or failed must never read as "no broker".
@@ -58,8 +59,7 @@ export function BrokerPicker({ kind, value, onChange }: BrokerPickerProps) {
       {listQuery.isError && (
         <ErrorBox
           message={t('brokers.picker.loadFailed', {
-            message:
-              listQuery.error instanceof Error ? listQuery.error.message : t('common.unknownError'),
+            message: listQuery.error?.message ?? t('common.unknownError'),
           })}
         />
       )}
@@ -81,8 +81,8 @@ export function BrokerPicker({ kind, value, onChange }: BrokerPickerProps) {
           }`}
         >
           <span className="text-xs font-semibold text-foreground">{b.name}</span>
-          <Badge variant={STATUS_VARIANT[b.status]} className="text-[10px]">
-            {b.status}
+          <Badge variant={STATE_VARIANT[b.state]} className="text-[10px]">
+            {b.stateLabel ?? b.state}
           </Badge>
         </button>
       ))}
@@ -90,7 +90,8 @@ export function BrokerPicker({ kind, value, onChange }: BrokerPickerProps) {
         <Plus className="h-3.5 w-3.5" /> {t('brokers.picker.createNew')}
       </Button>
       {creating && (
-        <BrokerEditorDialog
+        <InstanceCreateDialog
+          functionCap="broker"
           kind={kind}
           onClose={() => setCreating(false)}
           onSaved={(id) => {

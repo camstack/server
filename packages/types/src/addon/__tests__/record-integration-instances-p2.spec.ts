@@ -136,3 +136,16 @@ describe('integration-instances additive fields (P2)', () => {
     expect(d.kinds?.map((k) => k.id)).toEqual(['a', 'b'])
   })
 })
+
+describe('createInstance writes the form values sent with it', () => {
+  it('stores the values on the new record, so a link picked in the dialog survives', async () => {
+    const { instances } = await setup(true)
+    const { id } = await instances.createInstance({
+      name: 'X',
+      kind: 'a',
+      values: { adapter: 'b' },
+    })
+    const row = await instances.getInstance({ id })
+    expect(row?.kind).toBe('b')
+  })
+})

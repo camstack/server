@@ -3,7 +3,7 @@
  * plus a confirm button: pick a broker of the required kind, or "Create new…"
  * (the shared dialog, stacked over the wizard) and come back with it selected.
  * Either way the step resolves to one `brokerId`. The create / sign-in
- * behaviour itself is pinned in `brokers/__tests__/broker-editor-flow.spec.tsx`.
+ * behaviour itself is pinned in `brokers/__tests__/instance-create-flow.spec.tsx`.
  */
 import { describe, it, expect, vi } from 'vitest'
 import '../../brokers/__tests__/setup'
@@ -21,30 +21,33 @@ vi.mock('@camstack/ui-library', async () => {
       addonId: 'provider-homeassistant',
       name: 'Home',
       kind: 'home-assistant',
-      status: 'connected',
+      state: 'ok',
+      stateLabel: null,
     },
     {
       id: 'mqtt_001',
       addonId: 'mqtt-broker',
       name: 'Mosquitto',
       kind: 'mqtt',
-      status: 'connected',
+      state: 'ok',
+      stateLabel: null,
     },
   ]
   return {
     ...actual,
-    useBrokerList: (input: { kind?: string }) => ({
+    useBrokerInstances: (input: { kind?: string }) => ({
       data: brokers.filter((b) => input.kind === undefined || b.kind === input.kind),
       isLoading: false,
+      isError: false,
+      isSuccess: true,
+      error: null,
     }),
-    useBrokerListProviders: () => ({
+    useAddonsListCapabilityProviders: () => ({
       data: [
-        {
-          addonId: 'provider-homeassistant',
-          kinds: [{ kind: 'home-assistant', label: 'Home Assistant' }],
-        },
-        { addonId: 'mqtt-broker', kinds: [{ kind: 'mqtt', label: 'MQTT' }] },
+        { addonId: 'provider-homeassistant', mode: 'collection', isActive: true },
+        { addonId: 'mqtt-broker', mode: 'collection', isActive: true },
       ],
+      isLoading: false,
     }),
     useSystem: () => ({
       trpcClient: {
@@ -55,7 +58,7 @@ vi.mock('@camstack/ui-library', async () => {
               kind: 'connection',
               canTest: false,
               mintsId: true,
-              kinds: [{ id: 'home-assistant', label: 'Home Assistant' }],
+              kinds: [{ id: 'home-assistant', label: 'Home Assistant', functionCap: 'broker' }],
             }),
           },
           getInstance: { query: async () => null },

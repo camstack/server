@@ -16,12 +16,20 @@ let listState: ListState
 vi.mock('@camstack/ui-library', async () => {
   const actual =
     await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
-  return { ...actual, useBrokerList: () => listState }
+  return {
+    ...actual,
+    useBrokerInstances: (input: { kind?: string }) => ({
+      ...listState,
+      data: Array.isArray(listState.data)
+        ? listState.data.filter((b: { kind: string }) => b.kind === input.kind)
+        : listState.data,
+    }),
+  }
 })
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }))
-vi.mock('../BrokerEditorDialog', () => ({ BrokerEditorDialog: () => null }))
+vi.mock('../../instances/InstanceCreateDialog', () => ({ InstanceCreateDialog: () => null }))
 
 import { BrokerPicker } from '../BrokerPicker'
 
@@ -30,10 +38,8 @@ const row = (id: string, kind: string) => ({
   kind,
   name: id,
   addonId: 'a',
-  status: 'connected',
-  info: {},
-  lastCheckedAt: null,
-  error: null,
+  state: 'ok',
+  stateLabel: null,
 })
 
 describe('BrokerPicker default selection', () => {

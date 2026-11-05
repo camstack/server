@@ -592,6 +592,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
             id: 'account',
             label: 'Home Assistant connection',
             functionCap: 'broker',
+            brokerKind: HA_KIND,
             role: 'services',
           },
           provider: this.accountInstances.toProvider(),

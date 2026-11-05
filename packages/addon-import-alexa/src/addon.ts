@@ -74,6 +74,7 @@ import {
   alexaIntegrationRowsPorts,
   alexaBrokerLinkPorts,
 } from './migrations/index.js'
+import { ALEXA_BROKER_KIND } from './speak/constants.js'
 import { speakIconRoutes } from './speak/icon-routes.js'
 import { RecordsSpeakSessionStore } from './speak/session-store.js'
 
@@ -303,6 +304,7 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
             id: 'account',
             label: 'Alexa account',
             functionCap: 'broker',
+            brokerKind: ALEXA_BROKER_KIND,
             role: 'services',
             signIn: { basePath: ALEXA_SIGN_IN_PATH, methods: ['device-code', 'proxy'] },
           },

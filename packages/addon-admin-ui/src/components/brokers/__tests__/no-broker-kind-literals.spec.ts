@@ -11,12 +11,13 @@ import { describe, expect, it } from 'vitest'
 const here = dirname(fileURLToPath(import.meta.url))
 const brokers = join(here, '..')
 const integrations = join(here, '..', '..', 'integrations')
+const instances = join(here, '..', '..', 'instances')
 
 const FILES: readonly string[] = [
-  join(brokers, 'BrokerEditorDialog.tsx'),
+  join(instances, 'InstanceCreateDialog.tsx'),
   join(brokers, 'BrokerPicker.tsx'),
   join(brokers, 'BrokerSignInPanel.tsx'),
-  join(brokers, 'broker-kinds.ts'),
+  join(instances, 'instance-kinds.ts'),
   join(integrations, 'BrokerStep.tsx'),
 ]
 

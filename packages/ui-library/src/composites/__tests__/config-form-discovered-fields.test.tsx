@@ -30,14 +30,17 @@ let candidates: readonly Candidate[] = []
 let failure: Error | null = null
 let loading = false
 
-vi.mock('../../generated/system-hooks', () => ({
-  useBrokerList: () => ({
+vi.mock('../../hooks/use-broker-instances', () => ({
+  useBrokerInstances: (input: { kind?: string }) => ({
     data: [
-      { id: 'b1', name: 'Home HA', kind: 'home-assistant', status: 'connected' },
-      { id: 'b2', name: 'Other', kind: 'another-kind', status: 'connected' },
-    ],
+      { id: 'b1', name: 'Home HA', kind: 'home-assistant', state: 'ok' },
+      { id: 'b2', name: 'Other', kind: 'another-kind', state: 'ok' },
+    ].filter((b) => input.kind === undefined || b.kind === input.kind),
     isLoading: false,
   }),
+}))
+
+vi.mock('../../generated/system-hooks', () => ({
   useNotificationOutputDiscoverTargets: (
     input: DiscoverInput,
     options: { readonly enabled: boolean },

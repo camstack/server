@@ -51,6 +51,13 @@ const HA = (id: string): BrokerRow => ({
   addonId: 'provider-homeassistant',
 })
 
+/** What `integration-instances` answers for the connections the fake holds. */
+const instancesOf = (brokers: readonly BrokerRow[]) => ({
+  listInstances: {
+    query: async () => brokers.map((b) => ({ id: b.id, name: b.name, kind: 'account' })),
+  },
+})
+
 async function harness(brokers: readonly BrokerRow[]) {
   const addon = new HaExportAddon()
   const lines: Logged[] = []
@@ -70,8 +77,8 @@ async function harness(brokers: readonly BrokerRow[]) {
   Reflect.set(addon, '_ctx', {
     logger: loggerInto(lines),
     api: {
+      integrationInstances: instancesOf(brokers),
       broker: {
-        list: { query: async () => brokers },
         getBrokerConfig: {
           query: async (input: unknown) => {
             configReads.push(input)
@@ -141,8 +148,8 @@ describe('an export target and its connection', () => {
     Reflect.set(h.addon, '_ctx', {
       ...Reflect.get(h.addon, '_ctx'),
       api: {
+        integrationInstances: instancesOf([HA('ha_001')]),
         broker: {
-          list: { query: async () => [HA('ha_001')] },
           getBrokerConfig: {
             query: async () => ({
               baseUrl: 'http://192.0.2.5:8123',

@@ -63,6 +63,7 @@ export function buildGoogleInstances(
           id: GOOGLE_BROKER_KIND,
           label: GOOGLE_BROKER_KIND_LABEL,
           functionCap: 'broker',
+          brokerKind: GOOGLE_BROKER_KIND,
           connectPath: deps.connectPath,
           disconnectPath: deps.disconnectPath,
         },

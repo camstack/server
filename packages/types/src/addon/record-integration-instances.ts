@@ -251,12 +251,21 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
   }
 
   /** Insert ONE row (`ifRev: 0`: an existing id is refused, never overwritten). */
-  createInstance: IIntegrationInstancesProvider['createInstance'] = async ({ id, name, kind }) => {
+  createInstance: IIntegrationInstancesProvider['createInstance'] = async ({
+    id,
+    name,
+    kind,
+    values,
+  }) => {
     const minted = id ?? this.hooks.mintId?.({ name, ...(kind !== undefined ? { kind } : {}) })
     if (minted === undefined) {
       throw new Error('createInstance needs an id: this provider does not mint one')
     }
     await this.handle.put({ id: minted, data: this.hooks.initialBody(name, kind) }, { ifRev: 0 })
+    // Form values sent with the create (a link picked in the dialog, settings a migration carries)
+    // are written under the same secret rules as an update, before the addon is told.
+    const patch = this.patchOf(values ?? {})
+    if (Object.keys(patch).length > 0) await this.handle.patch(minted, patch)
     await this.hooks.onChanged?.(minted, 'created')
     return { id: minted }
   }
@@ -266,6 +275,15 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
     name,
     values,
   }) => {
+    const patch = this.patchOf(values)
+    if (name !== undefined) patch[this.nameField] = name
+    await this.handle.patch(id, patch)
+    await this.hooks.onChanged?.(id, 'updated')
+    return { ok: true as const }
+  }
+
+  /** The record patch a form `values` object means: secrets kept, cleared or replaced. */
+  private patchOf(values: Readonly<Record<string, unknown>>): Record<string, unknown> {
     const patch: Record<string, unknown> = {}
     for (const [key, value] of Object.entries(values)) {
       if (value === undefined) continue
@@ -286,10 +304,7 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
       }
       // else: omitted / '' / redaction token / the view handed out - KEEP.
     }
-    if (name !== undefined) patch[this.nameField] = name
-    await this.handle.patch(id, patch)
-    await this.hooks.onChanged?.(id, 'updated')
-    return { ok: true as const }
+    return patch
   }
 
   /** The switch lives in the record body; the addon is told so it applies it (D996). */

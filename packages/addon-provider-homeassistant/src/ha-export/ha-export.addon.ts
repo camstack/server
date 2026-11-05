@@ -2404,16 +2404,19 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
    * Resolve every Home Assistant broker, and open a push client for the
    * ones the operator ticked.
    *
-   * Credentials come through the `broker` cap — the sanctioned no-import
-   * path — and EVERY call carries the owning `addonId`: `broker` is a
-   * COLLECTION cap, so an unpinned call is answered by the
-   * first-registered provider (Homematic, on the operator's hub), which
-   * knows nothing about `ha_*`. `broker-source.ts` holds the pin and the
-   * reasoning.
+   * The connections are read from the provider's `integration-instances`
+   * (a COLLECTION cap, so the call carries the owning `addonId`); credentials
+   * and pub/sub still come through the `broker` cap, every call pinned the
+   * same way. `ha-broker-source.ts` holds the pin and the reasoning.
    */
   private async refreshBrokers(): Promise<void> {
-    const haBrokers = await listHomeAssistantBrokers((input) =>
-      this.ctx.api.broker.list.query(input),
+    const haBrokers = await listHomeAssistantBrokers(
+      (input) => this.ctx.api.integrationInstances.listInstances.query(input),
+      (err) =>
+        this.ctx.logger.warn(
+          'ha-export: the Home Assistant connections could not be read yet; treated as unknown',
+          { meta: { error: errMsg(err) } },
+        ),
     )
     /**
      * NEVER treat an empty enumeration as "the connections are gone".

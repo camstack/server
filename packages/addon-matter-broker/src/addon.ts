@@ -169,7 +169,13 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
     return composeInstanceKinds(
       [
         {
-          kind: { id: 'account', label: 'Matter fabric', functionCap: 'broker', role: 'services' },
+          kind: {
+            id: 'account',
+            label: 'Matter fabric',
+            functionCap: 'broker',
+            brokerKind: 'matter',
+            role: 'services',
+          },
           provider: this.accountInstances.toProvider(),
         },
         {

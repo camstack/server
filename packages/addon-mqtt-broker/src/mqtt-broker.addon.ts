@@ -349,7 +349,7 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
         instanceMode: 'multiple',
         kind: 'brokers',
         canTest: false,
-        kinds: [{ id: 'mqtt', label: 'MQTT broker', functionCap: 'broker' }],
+        kinds: [{ id: 'mqtt', label: 'MQTT broker', functionCap: 'broker', brokerKind: 'mqtt' }],
       },
       formSchema: () => this.brokerForm(),
       kindOf: () => 'mqtt',

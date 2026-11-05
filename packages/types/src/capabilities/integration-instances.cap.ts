@@ -62,6 +62,12 @@ export const IntegrationInstanceKindSchema = z.object({
    * provider with more than one section must name it on every kind.
    */
   functionCap: z.string().min(1),
+  /**
+   * For `functionCap: 'broker'`: the registry kind of the broker an instance of this kind is
+   * (`matter`, `home-assistant`, ...). A caller that needs a broker of one kind (a link field)
+   * finds the instances whose kind names it; absent takes the kind `id`.
+   */
+  brokerKind: z.string().min(1).optional(),
   /** What instances of this kind are for the Integrations page; absent takes the provider's `role`. */
   role: IntegrationInstanceRoleSchema.optional(),
   /** `testInstance` really probes the remote for this kind; absent takes the provider's `canTest`. */

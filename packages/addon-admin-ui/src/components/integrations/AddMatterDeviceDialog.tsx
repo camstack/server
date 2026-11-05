@@ -17,7 +17,7 @@ import {
   Input,
   Label,
   useBrokerGetState,
-  useBrokerList,
+  useBrokerInstances,
   useBrokerPublish,
 } from '@camstack/ui-library'
 import { Loader2 } from 'lucide-react'
@@ -88,7 +88,7 @@ export function AddMatterDeviceDialog({
   onCommissioned,
 }: AddMatterDeviceDialogProps): ReactElement {
   const { t } = useTranslation()
-  const brokers = useBrokerList({ kind: MATTER_BROKER_KIND })
+  const brokers = useBrokerInstances({ kind: MATTER_BROKER_KIND })
   // One fabric is used as is; none or several are chosen (or created) in a BrokerPicker.
   const [pickedBrokerId, setPickedBrokerId] = useState<string | null>(null)
   const brokerCount = brokers.data?.length ?? 0

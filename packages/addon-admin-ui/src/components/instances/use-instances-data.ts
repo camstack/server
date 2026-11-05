@@ -15,6 +15,7 @@ import {
   type HolderData,
   type PanelRow,
   type PanelState,
+  sectionHolder,
 } from './instances-model'
 
 const POLL_INTERVAL_MS = 5_000
@@ -90,9 +91,14 @@ export function useInstancesData(functionCap: string): InstancesData {
 
   const state = deriveState([functionQuery, holdersQuery, ...holderQueries])
 
+  // A page section is a filter on `kinds[].functionCap` (D1013): the holder as THIS section sees it.
   const holders = useMemo<readonly HolderData[]>(
-    () => holderQueries.flatMap((q) => (q.data === undefined ? [] : [q.data])),
-    [holderQueries],
+    () =>
+      holderQueries.flatMap((q) => {
+        const holder = q.data === undefined ? null : sectionHolder(q.data, functionCap)
+        return holder === null ? [] : [holder]
+      }),
+    [holderQueries, functionCap],
   )
   const displayNames = useMemo(
     () => buildAddonDisplayNameMap(addonsQuery.data ?? []),

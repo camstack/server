@@ -92,3 +92,9 @@ export {
 // `useToastOnToast` and `useAddonPagesListPages` are now codegen'd
 // in `../generated/system-hooks.ts` (the latter after the addon-pages
 // split into source-collection + singleton aggregator caps).
+export type {
+  BrokerHolderData,
+  BrokerInstance,
+  UseBrokerInstancesResult,
+} from './use-broker-instances'
+export { brokerInstancesOf, useBrokerInstances } from './use-broker-instances'

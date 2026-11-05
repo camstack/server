@@ -118,6 +118,41 @@ export function findKind(
   return kindId === undefined ? undefined : description.kinds?.find((k) => k.id === kindId)
 }
 
+/**
+ * The description narrowed to the kinds a page section configures (D1013): those whose
+ * `functionCap` is the section's. A description with no kinds serves every section it appears in.
+ * Null when it declares kinds and none belongs to the section.
+ */
+export function sectionDescription(
+  description: IntegrationInstanceDescription,
+  functionCap: string,
+  kindId?: string,
+): IntegrationInstanceDescription | null {
+  const kinds = description.kinds
+  if (kinds === undefined || kinds.length === 0) return description
+  const own = kinds.filter(
+    (k) => k.functionCap === functionCap && (kindId === undefined || k.id === kindId),
+  )
+  return own.length === 0 ? null : { ...description, kinds: own }
+}
+
+/**
+ * A holder as one section sees it: the narrowed description and only the instances of its kinds.
+ * Null when the provider has nothing in this section.
+ */
+export function sectionHolder(holder: HolderData, functionCap: string): HolderData | null {
+  const description = sectionDescription(holder.description, functionCap)
+  if (description === null) return null
+  const kinds = description.kinds
+  if (holder.description.kinds === undefined || kinds === undefined) return holder
+  const ids = new Set(kinds.map((k) => k.id))
+  return {
+    ...holder,
+    description,
+    instances: holder.instances.filter((i) => i.kind === undefined || ids.has(i.kind)),
+  }
+}
+
 /** Whether Add must ask which kind: only when the provider offers a real choice. */
 export function needsKindPicker(description: IntegrationInstanceDescription): boolean {
   return (description.kinds?.length ?? 0) > 1

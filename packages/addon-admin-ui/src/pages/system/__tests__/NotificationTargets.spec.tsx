@@ -65,7 +65,7 @@ vi.mock('@camstack/ui-library', async () => {
   const real = await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
   return {
     ...real,
-    useBrokerList: () => ({ data: mockBrokers }),
+    useBrokerInstances: () => ({ data: mockBrokers }),
     useDiscoveredOptions: () => ({
       ready: true,
       settled: true,
@@ -107,14 +107,12 @@ vi.mock('@camstack/ui-library', async () => {
         },
         addons: {
           list: {
-            query: vi
-              .fn()
-              .mockResolvedValue([
-                {
-                  manifest: { id: 'notifiers', name: 'Push Notifiers', packageDisplayName: 'Core' },
-                },
-                { manifest: { id: 'homeassistant', name: 'Home Assistant Bridge' } },
-              ]),
+            query: vi.fn().mockResolvedValue([
+              {
+                manifest: { id: 'notifiers', name: 'Push Notifiers', packageDisplayName: 'Core' },
+              },
+              { manifest: { id: 'homeassistant', name: 'Home Assistant Bridge' } },
+            ]),
           },
         },
         userManagement: {

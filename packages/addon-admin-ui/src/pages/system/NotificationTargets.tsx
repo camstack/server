@@ -35,7 +35,7 @@ import {
   ItemFormDialog,
   Select,
   Switch,
-  useBrokerList,
+  useBrokerInstances,
   useDiscoveredOptions,
   useItemFormUrl,
   useSystem,
@@ -641,7 +641,7 @@ function TargetForm({
 
   // New target only: first broker pre-selected, name derived from the device.
   const defaultKeys = useMemo(() => targetFormDefaultKeys(kind.configSchema), [kind.configSchema])
-  const brokerList = useBrokerList(
+  const brokerList = useBrokerInstances(
     { kind: defaultKeys.brokerKind ?? '' },
     { enabled: isCreate && defaultKeys.brokerKind !== null },
   )

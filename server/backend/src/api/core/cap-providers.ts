@@ -48,7 +48,6 @@ import type {
   CapabilityMethodAuth,
   IAddonsProvider,
   IAnalysisDataPersistence,
-  IBrokerProvider,
   IConnectionTestProvider,
   IDeviceProvider,
   IIntegrationRegistry,
@@ -1061,26 +1060,16 @@ function getConnectionTestProvider(
   return isConnectionTestProvider(provider) ? provider : null
 }
 
-function isBrokerProvider(value: unknown): value is IBrokerProvider {
-  return (
-    value !== null &&
-    typeof value === 'object' &&
-    typeof Reflect.get(value, 'testConnection') === 'function'
-  )
-}
-
 /**
  * Does this addon declare a pre-creation test at all? Drives
  * `getAvailableTypes().canTest`, so the wizard can say "this one cannot be
  * tested" instead of offering a button that always answers the same nonsense.
  *
- * Broker-mode addons count: their connection identity is the broker, and the
- * broker cap owns a real `testConnection`.
+ * A broker-mode addon declares its test through `integration-instances` (`describe().canTest`,
+ * read by the caller), never through the broker cap.
  */
-function declaresConnectionTest(ar: AddonRegistryService, addonId: string, mode: string): boolean {
-  if (getConnectionTestProvider(ar, addonId) !== null) return true
-  if (mode !== 'broker') return false
-  return isBrokerProvider(ar.getCapabilityRegistry().getProviderByAddon('broker', addonId))
+function declaresConnectionTest(ar: AddonRegistryService, addonId: string): boolean {
+  return getConnectionTestProvider(ar, addonId) !== null
 }
 
 /**
@@ -1170,25 +1159,24 @@ async function runConnectionTest(
   //    settings NAME a broker, not because nothing else matched.
   const brokerId = settings['brokerId']
   if (typeof brokerId === 'string' && brokerId.length > 0) {
-    const brokerProvider = ar
-      .getCapabilityRegistry()
-      .getProviderByAddonId<IBrokerProvider>('broker', addonId)
-    if (!brokerProvider) {
+    const brokerInstances = getInstancesProvider(ar, addonId)
+    if (brokerInstances === null || brokerInstances.testInstance === undefined) {
       return {
         status: 'inconclusive',
-        error: `Broker provider for addon '${addonId}' is not available`,
+        error: `Instances provider for addon '${addonId}' is not available`,
         testedBy: null,
       }
     }
     try {
-      const result = await brokerProvider.testConnection({ id: brokerId })
-      return result.ok
-        ? {
-            status: 'validated',
-            latencyMs: result.latencyMs,
-            testedBy: addonId,
-          }
-        : { status: 'rejected', error: result.error, testedBy: addonId }
+      const result = await brokerInstances.testInstance({ id: brokerId, values: {} })
+      const status = result.status ?? (result.success ? 'validated' : 'rejected')
+      return {
+        status,
+        testedBy: addonId,
+        ...(result.error !== undefined ? { error: result.error } : {}),
+        ...(result.latencyMs !== undefined ? { latencyMs: result.latencyMs } : {}),
+        ...(result.detail !== undefined ? { detail: result.detail } : {}),
+      }
     } catch (err) {
       logger.warn('broker connection test could not run', {
         tags: { addonId },
@@ -1743,7 +1731,7 @@ export function buildIntegrationsProvider(
             kind,
             brokerKind,
             supportsLocationImport,
-            canTest: described?.canTest === true || declaresConnectionTest(ar, m.id, mode),
+            canTest: described?.canTest === true || declaresConnectionTest(ar, m.id),
             existingInstances: existing.map((i) => ({
               id: i.id,
               name: i.name,

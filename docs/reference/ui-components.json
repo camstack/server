@@ -1565,6 +1565,13 @@
       "summary": ""
     },
     {
+      "name": "brokerInstancesOf",
+      "kind": "function",
+      "area": "hooks",
+      "file": "packages/ui-library/src/hooks/use-broker-instances.ts",
+      "summary": "The brokers of one holder: instances whose kind is a `broker` kind, optionally of one registry kind. A holder without `kinds` serves one section and is read as all brokers when it is the broker provider (its registry …"
+    },
+    {
       "name": "BrokerPickerSlotProvider",
       "kind": "component",
       "area": "contexts",
@@ -12705,6 +12712,13 @@
       "area": "contexts",
       "file": "packages/ui-library/src/contexts/widget-registry.tsx",
       "summary": "Returns every contributed widget — host pickers (dashboard add-widget modal, settings UI palette) consume this to enumerate the registry. Filter on the call site by `metadata.hosts.includes()`."
+    },
+    {
+      "name": "useBrokerInstances",
+      "kind": "hook",
+      "area": "hooks",
+      "file": "packages/ui-library/src/hooks/use-broker-instances.ts",
+      "summary": "The brokers an operator can pick, read from the ONE instance model (D1013): every provider of `integration-instances` that also serves the `broker` function describes its kinds, and the instances of a kind whose `func…"
     },
     {
       "name": "useBrokerPickerSlot",

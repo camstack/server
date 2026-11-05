@@ -29,9 +29,10 @@
  * ── The rule this leaves behind ────────────────────────────────────────────
  * Pin a call that NAMES a resource (`{ id }`, `{ brokerId }`) — only one
  * provider can answer it and a wrong answer is `null`, indistinguishable from
- * "no such resource". Do NOT pin an enumeration: its contract is already the
- * union, and a pin converts a provider's absence from "returns fewer rows" into
- * "throws". `scripts/check-collection-cap-pin.ts` enforces exactly that split.
+ * "no such resource". The connections themselves are an enumeration of ONE
+ * provider's records (`integration-instances` has no union), so that read is pinned
+ * and its refusal while the provider boots is handled by `listHomeAssistantBrokers`.
+ * `scripts/check-collection-cap-pin.ts` enforces the split.
  *
  * ── The other half of the lesson: never pin a cap you provide yourself ─────
  * The provider half's own `broker.*` calls (subscribe / getState / publish)
@@ -46,10 +47,13 @@
 /** The addon that owns the import direction, and every `ha_*` broker. */
 export const HA_PROVIDER_ADDON_ID = 'provider-homeassistant'
 
-/** The `BrokerInfo.kind` tag the Home Assistant provider stamps. */
+/** The registry kind of a Home Assistant connection (`kind.brokerKind` of its account kind). */
 export const HA_BROKER_KIND = 'home-assistant'
 
-/** The subset of `BrokerInfo` the export half consumes. */
+/** The kind id of a Home Assistant connection among the provider's `integration-instances`. */
+export const HA_ACCOUNT_INSTANCE_KIND = 'account'
+
+/** A Home Assistant connection as the export half consumes it. */
 export interface HaBroker {
   readonly id: string
   readonly name: string
@@ -57,23 +61,43 @@ export interface HaBroker {
   readonly addonId: string
 }
 
-/** `ctx.api.broker.list.query` narrowed to what this module needs. */
-export type BrokerListQuery = (input: {
+/** The part of an `integration-instances` record this module reads. */
+export interface HaInstanceRecord {
+  readonly id: string
+  readonly name: string
   readonly kind?: string
-  readonly addonId?: string
-}) => Promise<readonly HaBroker[]>
+}
+
+/** `ctx.api.integrationInstances.listInstances.query` narrowed to what this module needs. */
+export type InstanceListQuery = (input: {
+  readonly addonId: string
+}) => Promise<readonly HaInstanceRecord[]>
 
 /**
- * Every Home Assistant broker currently registered, cluster-wide.
+ * Every Home Assistant connection currently held, read from the provider's own
+ * `integration-instances` (the connection is an instance of its `account` kind, D1013).
  *
- * Unpinned by design (see the module docblock) and filtered by `kind`, which is
- * the contract check that matters: whatever mix of providers answered the
- * union, only `home-assistant` brokers are ever exported to over Home
- * Assistant's transport.
+ * The collection cap is pinned to the owning addon (an enumeration of ONE provider's records),
+ * and the pin REFUSES while that provider is still registering. A refusal is "I do not know
+ * yet", never "the operator deleted their instance": it answers an empty list and is reported
+ * to `onUnavailable`, and the next reconcile repairs it (D49).
  */
 export async function listHomeAssistantBrokers(
-  query: BrokerListQuery,
+  query: InstanceListQuery,
+  onUnavailable?: (error: unknown) => void,
 ): Promise<readonly HaBroker[]> {
-  const brokers = await query({})
-  return brokers.filter((broker) => broker.kind === HA_BROKER_KIND)
+  try {
+    const records = await query({ addonId: HA_PROVIDER_ADDON_ID })
+    return records
+      .filter((record) => record.kind === HA_ACCOUNT_INSTANCE_KIND)
+      .map((record) => ({
+        id: record.id,
+        name: record.name,
+        kind: HA_BROKER_KIND,
+        addonId: HA_PROVIDER_ADDON_ID,
+      }))
+  } catch (err) {
+    onUnavailable?.(err)
+    return []
+  }
 }

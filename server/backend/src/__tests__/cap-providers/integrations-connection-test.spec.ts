@@ -77,6 +77,8 @@ function makeConnectionTestProvider(mode: 'real' | 'throws' = 'real') {
 interface HarnessOptions {
   /** Register a `connection-test` provider for ADDON_ID. */
   readonly connectionTest?: ReturnType<typeof makeConnectionTestProvider> | null
+  /** Register an `integration-instances` provider for ADDON_ID. */
+  readonly instances?: unknown
 }
 
 function makeHarness(opts: HarnessOptions = {}) {
@@ -94,9 +96,10 @@ function makeHarness(opts: HarnessOptions = {}) {
     ]),
     restartAddon: vi.fn(async () => undefined),
     getCapabilityRegistry: vi.fn(() => ({
-      getProviderByAddon: vi.fn((cap: string, addonId: string) =>
-        cap === 'connection-test' && addonId === ADDON_ID ? connectionTest : null,
-      ),
+      getProviderByAddon: vi.fn((cap: string, addonId: string) => {
+        if (cap === 'integration-instances' && addonId === ADDON_ID) return opts.instances ?? null
+        return cap === 'connection-test' && addonId === ADDON_ID ? connectionTest : null
+      }),
       getProviderByAddonId: vi.fn((cap: string, addonId: string) =>
         cap === 'connection-test' && addonId === ADDON_ID ? connectionTest : null,
       ),
@@ -152,6 +155,38 @@ describe('integrations.testConnection routes to the provider-DECLARED test', () 
     expect(result.status).toBe('inconclusive')
     expect(result.success).toBe(false)
     expect(result.error).toContain('socket hang up')
+  })
+})
+
+describe('integrations.testConnection of a settings blob that NAMES a broker', () => {
+  it('tests the broker through integration-instances.testInstance by id', async () => {
+    const testInstance = vi.fn(async () => ({ success: false, error: 'bridge unreachable' }))
+    const h = makeHarness({
+      instances: {
+        describe: async () => ({ canTest: false }),
+        createInstance: async () => ({ id: 'x' }),
+        getInstance: async () => null,
+        testInstance,
+      },
+    })
+
+    const result = await h.provider.testConnection({
+      addonId: ADDON_ID,
+      settings: { brokerId: 'brk_1' },
+    })
+
+    expect(testInstance).toHaveBeenCalledWith({ id: 'brk_1', values: {} })
+    expect(result.status).toBe('rejected')
+    expect(result.error).toContain('bridge unreachable')
+  })
+
+  it('is INCONCLUSIVE when the addon has no instances provider', async () => {
+    const h = makeHarness()
+    const result = await h.provider.testConnection({
+      addonId: ADDON_ID,
+      settings: { brokerId: 'brk_1' },
+    })
+    expect(result.status).toBe('inconclusive')
   })
 })
 

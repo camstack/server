@@ -65,18 +65,34 @@ export interface BrokerPort {
   getState(id: string, key: string): Promise<unknown>
 }
 
-/** The real port: `ctx.api.broker`, every call routed to the addon that owns the kind. */
+/**
+ * The real port: the mailboxes are `integration-instances` of the SMTP addon (the kind of its
+ * `broker` section, found from its description, D1013); pub/sub goes through `ctx.api.broker`.
+ * Every call is routed to the addon that owns the kind.
+ */
 export function createBrokerPort(api: AddonContext['api']): BrokerPort {
   const route = { addonId: SMTP_BROKER_ADDON_ID }
+  const mailboxKind = async (): Promise<string> => {
+    const description = await api.integrationInstances.describe.query(route)
+    const kind = description.kinds?.find(
+      (k) => k.functionCap === 'broker' && (k.brokerKind ?? k.id) === SMTP_INBOUND_KIND,
+    )
+    if (kind === undefined) throw new Error('the SMTP addon declares no mailbox kind')
+    return kind.id
+  }
   return {
-    list: async () => api.broker.list.query({ kind: SMTP_INBOUND_KIND }),
+    list: async () => {
+      const kind = await mailboxKind()
+      const all = await api.integrationInstances.listInstances.query(route)
+      return all.filter((instance) => instance.kind === kind)
+    },
     add: async ({ id, name, settings }) =>
-      api.broker.add.mutate({
-        kind: SMTP_INBOUND_KIND,
-        name,
-        id,
-        settings: { ...settings },
+      api.integrationInstances.createInstance.mutate({
         ...route,
+        id,
+        name,
+        kind: await mailboxKind(),
+        values: { ...settings },
       }),
     getBrokerConfig: async (id) => api.broker.getBrokerConfig.query({ id, ...route }),
     subscribe: async (brokerId, recipients) =>
