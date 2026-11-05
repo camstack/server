@@ -6275,7 +6275,10 @@
       "noneDescription": "Install an integration first, then add devices from it.",
       "setUp": "Set up"
     },
-    "browseIntegrations": "Browse integrations"
+    "browseIntegrations": "Browse integrations",
+    "removeFailed": {
+      "title": "Could not remove the device"
+    }
   },
   "embedPlayerPage": {
     "embedConfigError": "Embed config error:",
@@ -7247,7 +7250,9 @@
       "close": "Close"
     },
     "deviceItem": {
-      "select": "Select {{name}}"
+      "select": "Select {{name}}",
+      "removing": "Removing…",
+      "removeFailed": "Removal failed: {{message}}"
     },
     "agentStepEditor": {
       "clusterHint": "Admission knobs for this step live in Pipeline → Cluster → Settings → Enrichment models. They apply to every camera — a per-device copy would fill the shared index from two policies.",

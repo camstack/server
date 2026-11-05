@@ -49,6 +49,9 @@ export function resolveFixture(path: string, input: unknown, mutation: boolean):
     if (value !== null && typeof value === 'object' && '__error' in value) {
       return { found: true, error: String((value as { __error: unknown }).__error) }
     }
+    if (value !== null && typeof value === 'object' && '__hang' in value) {
+      return { found: true, hang: true }
+    }
     return { found: true, value }
   }
   return { found: false, value: mutation ? { ok: true } : null }

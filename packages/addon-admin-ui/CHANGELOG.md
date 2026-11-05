@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The integration page has one Add device button: boards and devices found on the network, a scan scoped to the integration and the manual form live in one modal.
 
+- Deleting a device in the Devices and integration tables shows a Removing… row until the removal has completed, and reports a failure with a toast
+
 ## [1.2.592] - 2026-11-05
 
 ### Changed

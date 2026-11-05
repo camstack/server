@@ -27,12 +27,12 @@ import {
   useDeviceManagerDisable,
   useDeviceManagerEnable,
   useDeviceManagerListAll,
-  useDeviceManagerRemove,
   useIntegrationsList,
   useSystem,
 } from '@camstack/ui-library'
 
 import { useEventInvalidation } from '../hooks/useEventInvalidation'
+import { useAdminDeviceRemoval } from '../hooks/useAdminDeviceRemoval'
 import { ProviderIcon } from '../components/shared/ProviderIcon'
 import { deviceIntegrationIcon } from '../components/shared/device-integration-icon'
 import { AdminPage } from '../components/AdminPage'
@@ -89,11 +89,9 @@ export function DevicesPage(): ReactNode {
   // per-device surfaces use. Each invalidates the deviceManager query slice on
   // success so the list re-fetches with the updated disabled/removed state.
   // Mirrors the IntegrationDetail page's pattern.
-  const removeMutation = useDeviceManagerRemove({
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [['deviceManager']] })
-    },
-  })
+  // Removal is tracked per device until the hub has finished the cascade and the
+  // list has dropped the row — see `useAdminDeviceRemoval`.
+  const removal = useAdminDeviceRemoval()
   const disableMutation = useDeviceManagerDisable({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [['deviceManager']] })
@@ -209,8 +207,9 @@ export function DevicesPage(): ReactNode {
         resolveIntegrationIcon={deviceIntegrationIcon}
         resolveParent={resolveParent}
         onNavigate={onNavigate}
+        rowOperation={removal.rowOperation}
         batchActions={{
-          remove: removeMutation.mutate,
+          remove: removal.remove,
           disable: disableMutation.mutate,
           enable: enableMutation.mutate,
         }}

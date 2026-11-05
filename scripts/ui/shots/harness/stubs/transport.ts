@@ -26,6 +26,7 @@ const fakeLink: TRPCLink<never> =
       window.__uiShotsCalls.push(`${mutation ? 'mut:' : ''}${op.path}`)
       const r = resolveFixture(op.path, op.input, mutation)
       if (!r.found && !mutation) window.__uiShotsMissing.add(op.path)
+      if (r.hang === true) return () => undefined
       const timer = setTimeout(() => {
         if (r.error !== undefined) {
           observer.error({

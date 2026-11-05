@@ -6350,7 +6350,10 @@
       "noneDescription": "Installa prima un'integrazione, poi aggiungi i dispositivi da essa.",
       "setUp": "Configura"
     },
-    "browseIntegrations": "Sfoglia integrazioni"
+    "browseIntegrations": "Sfoglia integrazioni",
+    "removeFailed": {
+      "title": "Impossibile rimuovere il dispositivo"
+    }
   },
   "embedPlayerPage": {
     "embedConfigError": "Errore di configurazione dell'embed:",
@@ -7269,7 +7272,9 @@
       "close": "Chiudi"
     },
     "deviceItem": {
-      "select": "Seleziona {{name}}"
+      "select": "Seleziona {{name}}",
+      "removing": "Rimozione…",
+      "removeFailed": "Rimozione non riuscita: {{message}}"
     },
     "agentStepEditor": {
       "clusterHint": "I parametri di ammissione di questo step si trovano in Pipeline → Cluster → Impostazioni → Modelli di arricchimento. Valgono per tutte le telecamere: una copia per dispositivo riempirebbe l'indice condiviso con due criteri.",

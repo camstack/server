@@ -20,7 +20,6 @@ import {
   useDeviceManagerDiscoveryProviders,
   useDeviceManagerEnable,
   useDeviceManagerListAll,
-  useDeviceManagerRemove,
   useIntegrationsDelete,
   useIntegrationsGet,
   useIntegrationsGetAvailableTypes,
@@ -44,6 +43,7 @@ import { type ReactElement, useCallback, useEffect, useMemo, useState } from 're
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { AddDeviceModal } from '../components/integrations/AddDeviceModal'
+import { useAdminDeviceRemoval } from '../hooks/useAdminDeviceRemoval'
 import { AddMatterDeviceDialog } from '../components/integrations/AddMatterDeviceDialog'
 import { IntegrationConfigModal } from '../components/integrations/IntegrationConfigModal'
 import type { IntegrationFormSeed } from '../components/integrations/integration-setup-seed'
@@ -336,11 +336,9 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
   // Per-device and batch device mutations — mirrors DeviceDetail's pattern.
   // All three invalidate the deviceManager query slice on success so the
   // list re-fetches with updated state.
-  const removeMutation = useDeviceManagerRemove({
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [['deviceManager']] })
-    },
-  })
+  // Removal is tracked per device until the hub has finished the cascade and the
+  // list has dropped the row — see `useAdminDeviceRemoval`.
+  const removal = useAdminDeviceRemoval()
   const disableMutation = useDeviceManagerDisable({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [['deviceManager']] })
@@ -649,8 +647,9 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
         resolveIntegrationIcon={deviceIntegrationIcon}
         resolveParent={resolveParent}
         onNavigate={onDeviceNavigate}
+        rowOperation={removal.rowOperation}
         batchActions={{
-          remove: removeMutation.mutate,
+          remove: removal.remove,
           disable: disableMutation.mutate,
           enable: enableMutation.mutate,
         }}
@@ -663,7 +662,7 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
         // reads as a bug rather than as the refusal it is.
         {...(isFixed
           ? {}
-          : { onDeleteDevice: (d: { id: number }) => removeMutation.mutate({ deviceId: d.id }) })}
+          : { onDeleteDevice: (d: { id: number }) => removal.remove({ deviceId: d.id }) })}
       />
 
       {showAddDevice && integrationId && isMatter && !adoptAfterCommission && (

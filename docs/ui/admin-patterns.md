@@ -8,6 +8,8 @@ applies-to:
   - packages/addon-admin-ui/src/lib/node-url-selection.ts
   - packages/addon-admin-ui/src/pages/system/Cluster.tsx
   - packages/ui-library/src/composites/node-picker.tsx
+  - packages/ui-library/src/hooks/use-device-removal.ts
+  - packages/addon-admin-ui/src/hooks/useAdminDeviceRemoval.ts
   - packages/ui-library/src/composites/charts/time-series-model.ts
   - packages/ui-library/src/composites/charts/chart-scale.ts
   - packages/ui-library/src/composites/device-history/DeviceHistoryView.tsx
@@ -85,6 +87,20 @@ below for the whole contract.
 **A managed list** is a `DataTable` — never a stack of Cards for named
 items the operator compares by column. `DeviceList` is the only other table
 (device rows); do not invent a third.
+
+**A confirmed delete shows its progress.** A row whose delete the operator
+confirmed stays on screen until the work has really finished: dimmed, with
+"Removing…" and its actions withheld; it then leaves with the list, and a
+failure restores it with the error (inline and as a toast). Every devices table
+gets this from ONE hook — `useAdminDeviceRemoval()` in admin-ui (the real
+`deviceManager.remove`, the list refetch, the failure toast) over
+`useDeviceRemoval` / `useRowOperations` in the library — passed as
+`<DeviceList rowOperation={removal.rowOperation} batchActions={{ remove:
+removal.remove, … }}>`. `DataTable` takes the same state through `rowState`.
+The completion signal is the mutation settling, which `deviceManager.remove`
+does only after the hub's cascade (descendants, live teardown, the row DELETE,
+the per-store cleanup) — never a timer. A new table that deletes devices wires
+this hook; it does not track pending ids itself.
 
 ```tsx
 const filter = useDataTableFilter(rows, {

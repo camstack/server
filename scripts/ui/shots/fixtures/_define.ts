@@ -5,7 +5,8 @@
  * export `defineFixtures({ area, description, handlers })`. A handler key is
  * a tRPC path (`auth.listSessions`) for a query, or `mut:<path>` for a
  * mutation; the value is the answer, or a function of the call input. Return
- * `{ __error: 'message' }` to make the call fail. Files starting with `_` are
+ * `{ __error: 'message' }` to make the call fail, `{ __hang: true }` to leave it
+ * unanswered (an operation still in flight). Files starting with `_` are
  * helpers, not areas. `shell.ts` (the app frame: nav, topology, addons,
  * capabilities) is always loaded after the selected areas.
  *
@@ -27,6 +28,8 @@ export interface Resolved {
   readonly found: boolean
   readonly value?: unknown
   readonly error?: string
+  /** The call never answers — a request still in flight (`{ __hang: true }`). */
+  readonly hang?: boolean
 }
 
 export function defineFixtures(area: FixtureArea): FixtureArea {
