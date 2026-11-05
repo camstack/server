@@ -34,6 +34,8 @@ export const greeScanScope = new GreeScanScope()
 /** Sweep `subnets` (broadcast + unicast on routed ones) with the nodegree scan, logging what is refused or fails. */
 export async function sweepGreeSubnets(input: {
   readonly subnets: readonly string[]
+  /** Operator-listed extra subnets of the integrations (`sweepSubnets`). */
+  readonly extraSubnets?: readonly string[]
   readonly logger: IScopedLogger
   readonly sweep?: GreeSweep
   readonly localAddresses?: readonly string[]
@@ -41,6 +43,7 @@ export async function sweepGreeSubnets(input: {
   const failed: string[] = []
   const found = await scanGreeSubnets({
     subnets: input.subnets,
+    ...(input.extraSubnets !== undefined ? { extraSubnets: input.extraSubnets } : {}),
     localAddresses: input.localAddresses ?? localIpv4Addresses(),
     sweep: input.sweep ?? ((broadcastAddress) => discoverGreeDevices({ broadcastAddress })),
     onError: (target) => failed.push(target),

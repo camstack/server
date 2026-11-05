@@ -91,6 +91,11 @@ export interface GreeRefusedSubnet {
   readonly reason: string
 }
 
+/** True for a `/24` IPv4 CIDR (`192.168.20.0/24`): the only shape the operator may list as an extra sweep subnet. */
+export function isGreeSweepCidr(value: string): boolean {
+  return value.endsWith('/24') && cidrRange(value) !== null
+}
+
 /** What one sweep sends: directed broadcasts everywhere, plus a unicast per host of each routed subnet. */
 export interface GreeSweepPlan {
   readonly broadcasts: readonly string[]
@@ -101,10 +106,13 @@ export interface GreeSweepPlan {
 /**
  * Plan a sweep. A directed broadcast is always sent. A subnet this node is NOT
  * attached to (no local address inside it) is routed: routers drop directed
- * broadcasts, so every host of it is also probed by unicast. Pure.
+ * broadcasts, so every host of it is also probed by unicast. `extraSubnets` are the
+ * operator-listed subnets of the integration: swept like any other, and a value that
+ * is not a /24 CIDR is refused. Pure.
  */
 export function planGreeSweep(input: {
   readonly subnets: readonly string[]
+  readonly extraSubnets?: readonly string[]
   readonly localAddresses: readonly string[]
 }): GreeSweepPlan {
   const locals = new Set<number>()
@@ -115,7 +123,12 @@ export function planGreeSweep(input: {
   const broadcasts = new Set<string>()
   const unicast = new Set<string>()
   const refused: GreeRefusedSubnet[] = []
-  for (const subnet of new Set(input.subnets)) {
+  const extra = new Set(input.extraSubnets ?? [])
+  for (const subnet of extra) {
+    if (!isGreeSweepCidr(subnet)) refused.push({ subnet, reason: 'not a /24 IPv4 CIDR' })
+  }
+  const wanted = new Set([...input.subnets, ...[...extra].filter(isGreeSweepCidr)])
+  for (const subnet of wanted) {
     const range = cidrRange(subnet)
     const broadcast = cidrToBroadcast(subnet)
     if (range === null || broadcast === null) {
@@ -172,6 +185,8 @@ async function mapBounded<T, R>(
  */
 export async function scanGreeSubnets(input: {
   readonly subnets: readonly string[]
+  /** Operator-listed extra subnets (the integration's setting). */
+  readonly extraSubnets?: readonly string[]
   readonly sweep: GreeSweep
   /** This node's own IPv4 addresses; omitted = no unicast probing. */
   readonly localAddresses?: readonly string[]
@@ -180,6 +195,7 @@ export async function scanGreeSubnets(input: {
 }): Promise<readonly DiscoveredDevice[]> {
   const plan = planGreeSweep({
     subnets: input.subnets,
+    ...(input.extraSubnets !== undefined ? { extraSubnets: input.extraSubnets } : {}),
     localAddresses: input.localAddresses ?? [],
   })
   for (const refused of plan.refused) input.onRefused?.(refused)

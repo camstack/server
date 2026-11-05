@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Gree integrations can list extra /24 subnets to sweep for air conditioners, beyond the hub's own networks.
+
 ## [0.2.151] - 2026-11-05
 
 ### Changed

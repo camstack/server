@@ -18,7 +18,12 @@ import {
   type IDevice,
 } from '@camstack/types'
 import { buildConnectionFormSchema, type GreeConfig, settingsToGreeConfig } from './config.js'
-import { buildGreeInstances, greeConnectionsEntryKind, greeRecordKinds } from './gree-instances.js'
+import {
+  buildGreeInstances,
+  extraSweepSubnetsOf,
+  greeConnectionsEntryKind,
+  greeRecordKinds,
+} from './gree-instances.js'
 import { GreeContainerDevice } from './devices/gree-container-device.js'
 import { greeConnections, macKey } from './gree-gateway.js'
 import { GREE_DISCOVERY_MODES } from './gree-subnet-scan.js'
@@ -52,6 +57,7 @@ const GREE_MIGRATIONS_DATE = '2026-11-04'
 export class GreeProviderAddon extends BaseDeviceProvider {
   protected readonly addonId = 'provider-gree'
   protected readonly providerName = 'Gree'
+  private instances: ReturnType<typeof buildGreeInstances> | undefined
   protected readonly deviceClasses: Partial<Record<DeviceType, DeviceConstructor<IDevice>>> = {
     [DeviceType.Container]: GreeContainerDevice,
   }
@@ -71,6 +77,7 @@ export class GreeProviderAddon extends BaseDeviceProvider {
     if (records === undefined)
       throw new Error('provider-gree: ctx.records is required (hub-only addon)')
     await records.declare(greeRecordKinds)
+    this.instances = buildGreeInstances(records)
     await this.runMigrations(
       defineAddonMigrations(
         defaultIntegrationMigrations({
@@ -93,7 +100,7 @@ export class GreeProviderAddon extends BaseDeviceProvider {
         ...regs,
         {
           capability: integrationInstancesCapability,
-          provider: buildGreeInstances(records).toProvider(),
+          provider: this.instances.toProvider(),
         },
       ],
     }
@@ -119,6 +126,7 @@ export class GreeProviderAddon extends BaseDeviceProvider {
     if (subnets.length > 0) greeScanScope.set(subnets)
     const responders = await sweepGreeSubnets({
       subnets,
+      extraSubnets: await this.extraSubnets(),
       logger: this.ctx.logger,
     })
     this.ctx.logger.info('Gree discovery complete', {
@@ -130,6 +138,19 @@ export class GreeProviderAddon extends BaseDeviceProvider {
       acs.map((ac) => [macKey(ac.getGreeMac()), { deviceId: ac.id, name: ac.name }] as const),
     )
     return buildGreeProposals(responders, adopted)
+  }
+
+  /** The extra /24 subnets the integrations list for discovery. Unreadable records sweep nothing extra. */
+  private async extraSubnets(): Promise<readonly string[]> {
+    if (this.instances === undefined) return []
+    try {
+      return extraSweepSubnetsOf(await this.instances.listResolved())
+    } catch (err) {
+      this.ctx.logger.warn('Gree extra sweep subnets unreadable — skipped', {
+        meta: { error: errMsg(err) },
+      })
+      return []
+    }
   }
 
   private async adoptedAcs(): Promise<readonly GreeContainerDevice[]> {
@@ -237,9 +258,10 @@ export class GreeProviderAddon extends BaseDeviceProvider {
       onDisconnected: () => undefined,
       surfaceSink: greeConnections,
       expectMac: bound.mac,
-      fallbackSweep: () =>
+      fallbackSweep: async () =>
         sweepGreeSubnets({
           subnets: greeScanScope.get(),
+          extraSubnets: await this.extraSubnets(),
           logger: this.ctx.logger,
         }),
     })

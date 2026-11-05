@@ -21,5 +21,8 @@
     "host": {
       "description": "Dove risponde il condizionatore. Cambiarlo riconnette; il dispositivo e il suo storico restano."
     }
-  }
+  },
+  "instance.s_discovery.title": "Rilevamento",
+  "instance.s_discovery.sweepSubnets.label": "Sottoreti aggiuntive da scansionare",
+  "instance.s_discovery.sweepSubnets.description": "Sottoreti /24 aggiuntive in cui cercare i condizionatori, una per voce in formato CIDR (ad esempio 192.168.20.0/24). Le sottoreti di questo hub e dei condizionatori noti vengono sempre cercate."
 }
