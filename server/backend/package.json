@@ -1,6 +1,6 @@
 {
   "name": "@camstack/server",
-  "version": "1.2.777",
+  "version": "1.2.778",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -66,24 +66,11 @@
     ],
     "requires": {
       "addons": {
-        "@camstack/addon-admin-ui": ">=1.2.592",
-        "@camstack/addon-auth": ">=1.2.176",
-        "@camstack/addon-decoder-nodeav": ">=1.2.146",
-        "@camstack/addon-import-alexa": ">=0.2.189",
-        "@camstack/addon-matter-broker": ">=0.2.159",
-        "@camstack/addon-pipeline": ">=1.2.642",
-        "@camstack/addon-pipeline-orchestrator": ">=1.2.662",
-        "@camstack/addon-provider-dreo": ">=0.2.157",
-        "@camstack/addon-provider-ecowitt": ">=0.2.157",
-        "@camstack/addon-provider-enpal": ">=0.1.10",
-        "@camstack/addon-provider-homeassistant": ">=1.2.662",
-        "@camstack/addon-provider-mqtt-ha": ">=0.1.38",
-        "@camstack/addon-provider-unifi": ">=0.2.157",
-        "@camstack/addon-provider-unraid": ">=0.2.158",
-        "@camstack/addon-provider-wyze": ">=0.2.164",
-        "@camstack/addon-smtp-nodemailer": ">=1.2.148",
-        "@camstack/addon-terminal": ">=0.1.159",
-        "@camstack/addon-training": ">=0.1.131"
+        "@camstack/addon-admin-ui": ">=1.2.593",
+        "@camstack/addon-agent-ui": ">=1.2.329",
+        "@camstack/addon-post-analysis": ">=1.2.670",
+        "@camstack/addon-provider-bosch": ">=0.1.38",
+        "@camstack/addon-provider-esphome": ">=0.1.13"
       },
       "wrapper": {
         "desktop": ">=0.0.1",

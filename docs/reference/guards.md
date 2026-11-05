@@ -4,12 +4,12 @@
 
 # Guards
 
-217 repository guards: 212 in `scripts/`,
+218 repository guards: 213 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (207)
+## Enforced by CI checks (208)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 

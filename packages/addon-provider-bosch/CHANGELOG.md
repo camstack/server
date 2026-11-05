@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.38] - 2026-11-05
+
 ### Changed
 
 - Bosch sign-in through the hub: proxy the SingleKey ID script host so the login page shows its password step instead of only the email field

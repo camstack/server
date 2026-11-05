@@ -7,10 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.387] - 2026-11-05
+
 ### Changed
 
 - Choosing a primary child on a container whose children carry a source id (ESPHome) now sticks: the picked child is shown and used. Every dropdown in the library is now the shared Select.
-
 - A confirmed device delete now shows the row as Removing… with its actions disabled until the hub has finished, then drops it; a failure restores the row with the error
 
 ## [1.2.386] - 2026-11-05
