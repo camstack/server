@@ -69,7 +69,7 @@ const FIXTURES: readonly Fixture[] = [
     pkg: '@camstack/addon-store',
     version: '1.0.0',
     packageJson: { camstack: { requires: { server: FAR_FUTURE_SERVER } } },
-    capabilities: [{ name: 'data-store-provider', mode: 'singleton' }],
+    capabilities: [{ name: 'data-store-provider' }],
   },
 ]
 

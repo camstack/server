@@ -56,8 +56,12 @@ async function world() {
       h.provider.setIntegrationId({ deviceId, integrationId }),
     readIntegrationId: async (deviceId) =>
       (await h.provider.getDevice({ deviceId }))?.integrationId ?? null,
-    info: (m) => infoLog.push(m),
-    warnDevice: (m, deviceId) => warnings.push({ message: m, deviceId }),
+    info: (m) => {
+      infoLog.push(m)
+    },
+    warnDevice: (m, deviceId) => {
+      warnings.push({ message: m, deviceId })
+    },
   }
   return { h, make, ports, infoLog, warnings }
 }

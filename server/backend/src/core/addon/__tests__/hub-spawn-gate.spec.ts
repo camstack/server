@@ -35,7 +35,10 @@ describe('spawnableAddonIds (planning#447)', () => {
         },
         requiresOfDir: (dir) => (dir.endsWith('addon-newer') ? { server: '>=9.0.0' } : undefined),
       },
-      log: (l) => lines.push(l),
+      infraCapabilities: new Set<string>(),
+      log: (l) => {
+        lines.push(l)
+      },
     })
     expect(ids).toEqual(['ok', 'ghost'])
     expect(lines).toHaveLength(2)
