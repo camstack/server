@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.151] - 2026-11-05
+
 ### Changed
 
 - Gree ACs on another VLAN are now found by a unicast sweep, followed by MAC when their IP changes, and the AC's IP/broadcast address is editable in its device settings
