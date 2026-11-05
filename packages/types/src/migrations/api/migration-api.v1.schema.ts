@@ -22,7 +22,9 @@ import {
   MigrationStatusSchema,
 } from '../migration.js'
 
-export const MIGRATION_API_VERSION = 1 as const
+import { MIGRATION_API_VERSION } from './migration-api-version.js'
+
+export { MIGRATION_API_VERSION }
 
 /** One method of the contract: its input, its output and the behaviours a spec must prove. */
 export interface MigrationApiMethodSpec {

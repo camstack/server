@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**239 units · 8109 source files · 233 units claimed by at least one document (8079 files).**
+**239 units · 8110 source files · 233 units claimed by at least one document (8080 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -116,12 +116,12 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-provider-gree` | 14 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-10-26 |
 | `packages/node-root` | 14 | `kernel` | `architecture/update-and-release.md`, `design/2026-09-10-wrapper-identity-and-update.md` _(covers)_, `decisions/adr-0187-an-update-notification-names-one-node-and-both-versions.md`, +9 more, 4 ADRs | 2026-10-27 |
 | `packages/types/src/catalogs` | 14 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0939-the-display-palette-is-one-hub-capability.md`, `decisions/adr-0715-a-root-detector-that-declares-a-step-fills-it-and-tier-1-has-one-writer-per-effect.md`, +7 more, 1 ADR | — |
+| `packages/types/src/migrations` | 14 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0987-a-migration-runs-at-boot-under-its-owner.md`, `decisions/adr-1014-the-migration-api-is-append-only.md`, +2 more | — |
 | `packages/addon-import-alexa/src/speak` | 13 | `ecosystem-exports` | `addons/addon-import-alexa.md` _(covers)_, `decisions/adr-0947-echo-speech-uses-a-long-lived-alexapy-worker.md`, `decisions/adr-0949-echo-speech-signs-in-as-an-import-broker.md`, +4 more | — |
 | `packages/addon-model-studio` | 13 | `tooling` | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, +2 more | — |
 | `packages/addon-tailscale` | 13 | `remote-access` | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0783-secrets-are-declared-by-schema-type-and-never-travel-on-argv-env-or-logs.md` | — |
 | `packages/addon-training/src/providers` | 13 | `cloud-training` | `architecture/cloud-training.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0828-training-provider-entries-are-edited-via-updateentry-not-settings-array.md`, +3 more | 2026-10-14 |
 | `packages/mcp-develop` | 13 | — | `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `decisions/adr-0849-retrain-annotations-keep-their-origin.md` | — |
-| `packages/types/src/migrations` | 13 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0987-a-migration-runs-at-boot-under-its-owner.md`, `decisions/adr-1014-the-migration-api-is-append-only.md`, +2 more | — |
 | `packages/types/src/records` | 13 | — | `architecture/records.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0881-records-are-the-third-storage-api-and-a-secret-field-is-a-feature-of-the-kind.md`, +2 more | 2026-10-22 |
 | `packages/ui-library/src/contexts` | 13 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +3 more | 2026-11-02 |
 | `packages/addon-model-studio/src/tabs` | 12 | `tooling` | `decisions/adr-1013-one-instance-model.md`, `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, +1 more | — |

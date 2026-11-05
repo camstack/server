@@ -11,12 +11,12 @@ import {
   type AddonContext,
   type AddonMigrationHost,
   type IScopedLogger,
-  MIGRATION_API_VERSION,
   type MigrationApiV1,
   type MigrationRecordsKindV1,
   type RecordsAccess,
   type SecretsAccess,
 } from '@camstack/types'
+import { MIGRATION_API_VERSION } from '@camstack/types/addon'
 import type { z } from 'zod'
 
 /** The migration-only door for the pre-records integration rows. */
