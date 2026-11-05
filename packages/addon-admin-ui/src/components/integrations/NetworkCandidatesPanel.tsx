@@ -42,6 +42,12 @@ interface NetworkCandidatesPanelProps {
   readonly onClose: () => void
   /** A candidate flagged `setupIntegration` opens the integration form instead. */
   readonly onSetupIntegration?: (seed: IntegrationFormSeed) => void
+  /**
+   * The adopt surface is drawn right below this one: only what the scan and
+   * passive discovery found is listed here, and a device the adoption list
+   * already holds is left to it, so it is shown once.
+   */
+  readonly alongsideAdoption?: boolean
 }
 
 type ScanData = NonNullable<ReturnType<typeof useDeviceManagerDiscoverProvider>['data']>
@@ -70,6 +76,7 @@ export function NetworkCandidatesPanel({
   integrationId,
   onClose,
   onSetupIntegration,
+  alongsideAdoption = false,
 }: NetworkCandidatesPanelProps): ReactElement {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
@@ -110,6 +117,15 @@ export function NetworkCandidatesPanel({
       existingStableIds: new Set((allDevices ?? []).map((d) => d.stableId)),
     })
   }, [adoptionQuery.data, proposalsQuery.data, scan.data, allDevices, addonId])
+
+  const visibleRows = useMemo(
+    () => (alongsideAdoption ? rows.filter((r) => !r.sources.includes('adoption')) : rows),
+    [rows, alongsideAdoption],
+  )
+  const inAdoptionList =
+    rows.length - visibleRows.length > 0 && alongsideAdoption
+      ? rows.filter((r) => r.sources.includes('adoption') && r.hit !== null).length
+      : 0
 
   const depthOf = useCallback(
     (row: Row): number => {
@@ -202,70 +218,84 @@ export function NetworkCandidatesPanel({
         found={paramsFor.hit.prefilledConfig}
         busy={busy.has(paramsFor.key)}
         error={error}
+        embedded={alongsideAdoption}
         onBack={() => setParamsFor(null)}
         onSubmit={(values) => void addRow(paramsFor, values)}
       />
     )
   }
 
-  const empty = rows.length === 0
+  const empty = visibleRows.length === 0
+  const content = (
+    <>
+      <ScanSubnetEditor />
+      {scanParamsSchema && (
+        <FormBuilder schema={scanParamsSchema} values={scanParams} onChange={setScanParams} />
+      )}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs text-foreground-subtle">
+          {scan.isPending
+            ? t('integrations.addDeviceModal.scanning', 'Scanning the local network…')
+            : visibleRows.length > 0
+              ? t('integrations.addDeviceModal.found', {
+                  defaultValue_one: '{{count}} device found',
+                  defaultValue_other: '{{count}} devices found',
+                  count: visibleRows.length,
+                })
+              : ''}
+          {!scan.isPending && inAdoptionList > 0
+            ? ` · ${t('integrations.addDeviceModal.inListBelow', {
+                defaultValue_one: '{{count}} already in the list below.',
+                defaultValue_other: '{{count}} already in the list below.',
+                count: inAdoptionList,
+              })}`
+            : ''}
+        </p>
+        <Button variant="outline" size="sm" onClick={runScan} disabled={scan.isPending}>
+          {scan.isPending ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Radar className="h-3.5 w-3.5" />
+          )}
+          {t('integrations.addDeviceModal.scanNow', 'Scan now')}
+        </Button>
+      </div>
+      {scan.isError && (
+        <ErrorLine
+          text={t('integrations.addDeviceModal.scanFailed', 'The scan failed. Try again.')}
+        />
+      )}
+      {error !== null && <ErrorLine text={error} />}
+      {empty && !scan.isPending && (
+        <p className="py-6 text-center text-xs text-foreground-subtle">
+          {scan.data
+            ? t('integrations.addDeviceModal.nothingFound', 'No devices responded to the scan.')
+            : t('integrations.addDeviceModal.scanHint', 'Scan the network to find devices to add.')}
+        </p>
+      )}
+      <div
+        className={alongsideAdoption ? 'max-h-48 space-y-1.5 overflow-y-auto' : 'space-y-1.5'}
+        data-testid="network-candidates"
+      >
+        {visibleRows.map((row) => (
+          <CandidateRow
+            key={row.key}
+            row={row}
+            depth={depthOf(row)}
+            busy={busy.has(row.key)}
+            added={added.has(row.key)}
+            onPick={pick}
+          />
+        ))}
+      </div>
+    </>
+  )
+  if (alongsideAdoption) {
+    return <div className="shrink-0 space-y-3 border-b border-border pb-3">{content}</div>
+  }
   return (
     <>
-      <DialogBody className="space-y-3">
-        <ScanSubnetEditor />
-        {scanParamsSchema && (
-          <FormBuilder schema={scanParamsSchema} values={scanParams} onChange={setScanParams} />
-        )}
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs text-foreground-subtle">
-            {scan.isPending
-              ? t('integrations.addDeviceModal.scanning', 'Scanning the local network…')
-              : rows.length > 0
-                ? t('integrations.addDeviceModal.found', {
-                    defaultValue_one: '{{count}} device found',
-                    defaultValue_other: '{{count}} devices found',
-                    count: rows.length,
-                  })
-                : ''}
-          </p>
-          <Button variant="outline" size="sm" onClick={runScan} disabled={scan.isPending}>
-            {scan.isPending ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Radar className="h-3.5 w-3.5" />
-            )}
-            {t('integrations.addDeviceModal.scanNow', 'Scan now')}
-          </Button>
-        </div>
-        {scan.isError && (
-          <ErrorLine
-            text={t('integrations.addDeviceModal.scanFailed', 'The scan failed. Try again.')}
-          />
-        )}
-        {error !== null && <ErrorLine text={error} />}
-        {empty && !scan.isPending && (
-          <p className="py-6 text-center text-xs text-foreground-subtle">
-            {scan.data
-              ? t('integrations.addDeviceModal.nothingFound', 'No devices responded to the scan.')
-              : t(
-                  'integrations.addDeviceModal.scanHint',
-                  'Scan the network to find devices to add.',
-                )}
-          </p>
-        )}
-        <div className="space-y-1.5" data-testid="network-candidates">
-          {rows.map((row) => (
-            <CandidateRow
-              key={row.key}
-              row={row}
-              depth={depthOf(row)}
-              busy={busy.has(row.key)}
-              added={added.has(row.key)}
-              onPick={pick}
-            />
-          ))}
-        </div>
-      </DialogBody>
+      <DialogBody className="space-y-3">{content}</DialogBody>
       <DialogFooter>
         <Button variant="outline" size="sm" onClick={onClose}>
           {t('integrations.close', 'Close')}
@@ -361,6 +391,7 @@ function CandidateParamsStep({
   error,
   onBack,
   onSubmit,
+  embedded,
 }: {
   readonly addonId: string
   readonly row: Row
@@ -369,6 +400,8 @@ function CandidateParamsStep({
   readonly error: string | null
   readonly onBack: () => void
   readonly onSubmit: (values: Record<string, unknown>) => void
+  /** Drawn above the adopt surface: no dialog body or footer of its own. */
+  readonly embedded: boolean
 }): ReactElement {
   const { t } = useTranslation()
   const typeQuery = useDeviceManagerProviderCreationType({ addonId })
@@ -380,35 +413,49 @@ function CandidateParamsStep({
   const schema = (schemaQuery.data ?? null) as ConfigUISchema | null
   const [values, setValues] = useState<Record<string, unknown> | null>(null)
   const current = values ?? seedValues(schema, found)
+  const body = (
+    <>
+      <Button variant="ghost" size="sm" onClick={onBack}>
+        <ArrowLeft className="h-3.5 w-3.5" />
+        {t('integrations.addDeviceModal.back', 'Back to the list')}
+      </Button>
+      <p className="text-xs font-medium text-foreground">{row.name}</p>
+      {schema === null ? (
+        <Loader2 className="mx-auto h-5 w-5 animate-spin text-primary" />
+      ) : (
+        <FormBuilder schema={schema} values={current} onChange={setValues} />
+      )}
+      {error !== null && <ErrorLine text={error} />}
+    </>
+  )
+  const footer = (
+    <>
+      <Button variant="outline" size="sm" onClick={onBack}>
+        {t('integrations.cancel', 'Cancel')}
+      </Button>
+      <Button
+        variant="primary"
+        size="sm"
+        onClick={() => onSubmit(current)}
+        disabled={busy || schema === null}
+      >
+        {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+        {t('common.add', 'Add')}
+      </Button>
+    </>
+  )
+  if (embedded) {
+    return (
+      <div className="shrink-0 space-y-3 border-b border-border pb-3">
+        {body}
+        <div className="flex justify-end gap-2">{footer}</div>
+      </div>
+    )
+  }
   return (
     <>
-      <DialogBody className="space-y-3">
-        <Button variant="ghost" size="sm" onClick={onBack}>
-          <ArrowLeft className="h-3.5 w-3.5" />
-          {t('integrations.addDeviceModal.back', 'Back to the list')}
-        </Button>
-        <p className="text-xs font-medium text-foreground">{row.name}</p>
-        {schema === null ? (
-          <Loader2 className="mx-auto h-5 w-5 animate-spin text-primary" />
-        ) : (
-          <FormBuilder schema={schema} values={current} onChange={setValues} />
-        )}
-        {error !== null && <ErrorLine text={error} />}
-      </DialogBody>
-      <DialogFooter>
-        <Button variant="outline" size="sm" onClick={onBack}>
-          {t('integrations.cancel', 'Cancel')}
-        </Button>
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={() => onSubmit(current)}
-          disabled={busy || schema === null}
-        >
-          {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-          {t('common.add', 'Add')}
-        </Button>
-      </DialogFooter>
+      <DialogBody className="space-y-3">{body}</DialogBody>
+      <DialogFooter>{footer}</DialogFooter>
     </>
   )
 }

@@ -35,8 +35,8 @@ interface AddDeviceModalProps {
   readonly integrationId: string
   /** `device-adoption` integrations without a scan list their candidates through the adopt job surface. */
   readonly kind: 'device-adoption' | 'device-provider'
-  /** The provider supports a network scan. */
-  readonly canScan: boolean
+  /** The provider supports a network scan; `null` while that is still being asked. */
+  readonly canScan: boolean | null
   readonly onClose: () => void
   readonly onSetupIntegration?: (seed: IntegrationFormSeed) => void
 }
@@ -51,25 +51,41 @@ export function AddDeviceModal({
 }: AddDeviceModalProps): ReactElement {
   const { t } = useTranslation()
   const manual = useManualCreationAvailability(addonId, integrationId)
-  const hasNetwork = kind === 'device-adoption' || canScan
+  const scanPending = kind === 'device-adoption' && canScan === null
+  const hasNetwork = kind === 'device-adoption' || canScan === true
   const hasManual = manual === 'available'
   const [picked, setPicked] = useState<TabId | null>(null)
   const active: TabId = picked ?? (hasNetwork ? 'network' : 'manual')
 
-  // An adoption integration WITHOUT a scan lists its candidates through the adopt
-  // job surface. One WITH a scan uses the merged list: the panel already reads the
-  // adoption provider's candidates, so a board both sources saw is one row.
-  const network =
-    kind === 'device-adoption' && !canScan ? (
+  // An adoption integration lists its candidates through the adopt surface, whole.
+  // When the provider can also scan, the scan block is drawn above it and leaves
+  // out what the adoption list already holds. Neither is drawn before the answer
+  // is known, so the surface never remounts after the first paint.
+  const network = scanPending ? (
+    <DialogBody>
+      <Loader2 className="mx-auto h-5 w-5 animate-spin text-primary" />
+    </DialogBody>
+  ) : kind === 'device-adoption' ? (
+    <>
+      {canScan === true && (
+        <NetworkCandidatesPanel
+          addonId={addonId}
+          integrationId={integrationId}
+          onClose={onClose}
+          alongsideAdoption
+          {...(onSetupIntegration ? { onSetupIntegration } : {})}
+        />
+      )}
       <AdoptDevicesPanel addonId={addonId} integrationId={integrationId} onClose={onClose} />
-    ) : (
-      <NetworkCandidatesPanel
-        addonId={addonId}
-        integrationId={integrationId}
-        onClose={onClose}
-        {...(onSetupIntegration ? { onSetupIntegration } : {})}
-      />
-    )
+    </>
+  ) : (
+    <NetworkCandidatesPanel
+      addonId={addonId}
+      integrationId={integrationId}
+      onClose={onClose}
+      {...(onSetupIntegration ? { onSetupIntegration } : {})}
+    />
+  )
   const form = <AddDeviceForm integrationId={integrationId} addonId={addonId} onClose={onClose} />
 
   const body = (): ReactElement => {

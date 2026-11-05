@@ -97,7 +97,11 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     }),
     useDeviceManagerAdoptionListCandidateFilters: () => ({ data: { filters: [] }, isError: false }),
     useIntegrationsGetAvailableTypes: () => ({ data: [] }),
-    useDeviceManagerAdoptionRefresh: () => ({ mutateAsync: vi.fn(), isPending: false }),
+    useDeviceManagerAdoptionRefresh: () => ({
+      mutate: vi.fn(),
+      mutateAsync: vi.fn(),
+      isPending: false,
+    }),
     useDeviceManagerListAll: () => ({ data: [], isLoading: false }),
     useLocalNetworkGetScanSubnets: () => ({
       data: { subnets: [] },
@@ -113,30 +117,44 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
 
 import { AddDeviceModal } from '../AddDeviceModal'
 
-function renderModal(
-  props: {
-    kind?: 'device-adoption' | 'device-provider'
-    canScan?: boolean
-    integrationId?: string
-  } = {},
-) {
+type ModalProps = {
+  kind?: 'device-adoption' | 'device-provider'
+  canScan?: boolean | null
+  integrationId?: string
+}
+
+function modalTree(props: ModalProps) {
+  return (
+    <MemoryRouter>
+      <AddDeviceModal
+        addonId="provider-esphome"
+        integrationId={props.integrationId ?? 'int_1'}
+        kind={props.kind ?? 'device-provider'}
+        canScan={props.canScan === undefined ? true : props.canScan}
+        onClose={vi.fn()}
+      />
+    </MemoryRouter>
+  )
+}
+
+function renderModal(props: ModalProps = {}) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
-  return render(
-    <QueryClientProvider client={client}>
-      <MemoryRouter>
-        <AddDeviceModal
-          addonId="provider-esphome"
-          integrationId={props.integrationId ?? 'int_1'}
-          kind={props.kind ?? 'device-provider'}
-          canScan={props.canScan ?? true}
-          onClose={vi.fn()}
-        />
-      </MemoryRouter>
-    </QueryClientProvider>,
+  const wrap = (p: ModalProps) => (
+    <QueryClientProvider client={client}>{modalTree(p)}</QueryClientProvider>
   )
+  const utils = render(wrap(props))
+  return { ...utils, update: (next: ModalProps) => utils.rerender(wrap(next)) }
 }
+
+const adoptionEntry = (id: string, name: string) => ({
+  childNativeId: id,
+  name,
+  alreadyAdopted: false,
+  type: 'container',
+  children: [],
+})
 
 describe('AddDeviceModal', () => {
   beforeEach(() => {
@@ -214,40 +232,52 @@ describe('AddDeviceModal', () => {
     expect(screen.getAllByTestId(/^network-row-/)).toHaveLength(1)
   })
 
-  it('an adoption integration that can scan offers the scan and lists a shared board once', () => {
-    state.scan = [hit('esp-attic', '192.0.2.10')]
-    state.adoption = [
-      {
-        childNativeId: 'esp-attic',
-        name: 'attic',
-        alreadyAdopted: false,
-        type: 'container',
-        children: [],
-      },
-      {
-        childNativeId: 'esp-cellar',
-        name: 'cellar',
-        alreadyAdopted: false,
-        type: 'container',
-        children: [],
-      },
-    ]
+  it('an adoption integration that can scan keeps the whole adopt surface and adds the scan', () => {
+    state.adoption = [adoptionEntry('esp-cellar', 'cellar')]
     renderModal({ kind: 'device-adoption', canScan: true })
     expect(screen.getByRole('button', { name: /scan now/i })).toBeTruthy()
-    expect(screen.getAllByTestId(/^network-row-/)).toHaveLength(2)
+    expect(screen.getByPlaceholderText(/search candidates/i)).toBeTruthy()
+    expect(screen.getByRole('button', { name: /refresh/i })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /add selected/i })).toBeTruthy()
+  })
+
+  it('a scan hit the adoption list already holds is not listed twice', () => {
+    state.scan = [hit('esp-attic', '192.0.2.10'), hit('esp-new', '192.0.2.12')]
+    state.adoption = [adoptionEntry('esp-attic', 'attic')]
+    renderModal({ kind: 'device-adoption', canScan: true })
+    const rows = screen.getAllByTestId(/^network-row-/)
+    expect(rows).toHaveLength(1)
+    expect(rows[0]?.getAttribute('data-testid')).toBe('network-row-esp-new')
+    expect(screen.getByText(/1 already in the list below/i)).toBeTruthy()
+  })
+
+  it('a scanned board that fails to add says so and never reads as added', async () => {
+    state.scan = [hit('esp-new', '192.0.2.12')]
+    state.adopt.mockRejectedValueOnce(new Error('board refused the key'))
+    renderModal({ kind: 'device-adoption', canScan: true })
+    fireEvent.click(screen.getByRole('button', { name: /^add$/i }))
+    await waitFor(() => expect(screen.getByText('board refused the key')).toBeTruthy())
+    expect(screen.queryByText(/^added$/i)).toBeNull()
+    expect(state.adopt.mock.calls[0]?.[0]).toMatchObject({ integrationId: 'int_1' })
+  })
+
+  it('draws neither surface until the scan answer is in, so nothing remounts', () => {
+    state.adoption = [adoptionEntry('esp-cellar', 'cellar')]
+    const view = renderModal({ kind: 'device-adoption', canScan: null })
+    expect(screen.queryByPlaceholderText(/search candidates/i)).toBeNull()
+    expect(screen.queryByRole('button', { name: /scan now/i })).toBeNull()
+    view.update({ kind: 'device-adoption', canScan: true })
+    expect(screen.getByPlaceholderText(/search candidates/i)).toBeTruthy()
+    const search = screen.getByPlaceholderText(/search candidates/i)
+    view.update({ kind: 'device-adoption', canScan: true })
+    expect(screen.getByPlaceholderText(/search candidates/i)).toBe(search)
+    expect(screen.getByRole('button', { name: /scan now/i })).toBeTruthy()
   })
 
   it('an adoption integration without a scan keeps the adoption list and no scan', () => {
-    state.adoption = [
-      {
-        childNativeId: 'esp-cellar',
-        name: 'cellar',
-        alreadyAdopted: false,
-        type: 'container',
-        children: [],
-      },
-    ]
+    state.adoption = [adoptionEntry('esp-cellar', 'cellar')]
     renderModal({ kind: 'device-adoption', canScan: false })
+    expect(screen.getByPlaceholderText(/search candidates/i)).toBeTruthy()
     expect(screen.queryByRole('button', { name: /scan now/i })).toBeNull()
     expect(screen.queryAllByTestId(/^network-row-/)).toHaveLength(0)
   })

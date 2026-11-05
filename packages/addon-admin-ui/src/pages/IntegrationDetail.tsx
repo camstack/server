@@ -156,10 +156,15 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
   }, [availableTypes, integration?.addonId, typesReady])
   // Whether THIS integration's provider supports a network scan — gates the
   // per-integration "Scan network" button (with the extra-param form).
-  const { data: discoveryProvidersData } = useDeviceManagerDiscoveryProviders({})
+  // `null` until the answer is in: the Add device modal draws nothing that depends on it before.
+  const { data: discoveryProvidersData, isPending: discoveryPending } =
+    useDeviceManagerDiscoveryProviders({})
   const canScan = useMemo(
-    () => (discoveryProvidersData?.providers ?? []).some((p) => p.addonId === integration?.addonId),
-    [discoveryProvidersData, integration?.addonId],
+    () =>
+      discoveryPending
+        ? null
+        : (discoveryProvidersData?.providers ?? []).some((p) => p.addonId === integration?.addonId),
+    [discoveryPending, discoveryProvidersData, integration?.addonId],
   )
   // The add-device button stays disabled until the kind resolves, so the
   // operator can never open the wrong dialog during the loading window.
