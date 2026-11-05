@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.187] - 2026-11-05
+
 ### Fixed
 
 - The integration-settings drop no longer refuses on an Alexa account; its legacy broker link is carried onto the broker record first
