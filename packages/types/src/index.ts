@@ -2412,7 +2412,8 @@ export * from './ir/index.js'
 
 export * from './time/index.js'
 export type { BrokerUser, BrokerUserFinder } from './addon/broker-in-use.js'
-export { assertBrokerUnused, BrokerInUseError } from './addon/broker-in-use.js'
+export { assertBrokerUnused, BrokerInUseError, fieldUserFinder } from './addon/broker-in-use.js'
+export type { ListedFieldRow } from './addon/broker-in-use.js'
 export type {
   BrokerLinkBody,
   BrokerLinkFormSpec,

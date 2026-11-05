@@ -48,6 +48,7 @@ import {
   defineAddonMigrations,
   EventCategory,
   integrationInstancesCapability,
+  type ListedFieldRow,
   type IBrokerProvider,
   type IMqttBrokerProvider,
   type MqttBrokerInfo,
@@ -97,6 +98,8 @@ import {
 } from './migrations/index.js'
 import { mqttAclEntryKind, mqttClientEntryKind } from './mqtt-entry-record-kinds.js'
 import { MqttBrokerStore } from './mqtt-broker-store.js'
+import { applyMqttBrokerSettings } from './mqtt-broker-settings.js'
+import { assertMqttBrokerUnused, MQTT_HA_ADDON_ID } from './mqtt-broker-users.js'
 import type { MqttExternalBrokerEntry } from './mqtt-external-broker-entry.js'
 import {
   MqttAclStore,
@@ -517,6 +520,7 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
         // `removeBroker` is already idempotent (no-op on unknown id), so
         // a foreign id routed here via the collection fallback is safe.
         if (!owns(id)) return
+        await assertMqttBrokerUnused(id, () => this.listMqttHaInstances())
         await this.removeBroker(id)
       },
       testConnection: async ({ id }) => {
@@ -528,12 +532,9 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
         const cfg = this.getBrokerConfig(id)
         return cfg
       },
-      setSettings: async () => {
-        // Legacy mqtt-broker cap has no per-broker settings mutation —
-        // brokers are immutable post-add (use remove + add to replace).
-        throw new Error(
-          'mqtt-broker.setSettings: not supported — use remove + add to replace a broker',
-        )
+      setSettings: async ({ id, settings }) => {
+        if (!owns(id)) return
+        await this.updateExternalBroker(id, settings)
       },
       getBrokerConfig: async ({ id }) => {
         if (!owns(id)) return null
@@ -782,6 +783,30 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
       tags: { topic: 'mqtt-broker', phase: 'onboard-started' },
     })
     return { id }
+  }
+
+  /** The integrations of the MQTT Discovery addon, which name their broker by id. */
+  private async listMqttHaInstances(): Promise<readonly ListedFieldRow[]> {
+    return this.ctx.api.integrationInstances.listInstances.query({ addonId: MQTT_HA_ADDON_ID })
+  }
+
+  /** Apply `settings` to one external broker and drop its cached probe so the page shows the change. */
+  private async updateExternalBroker(
+    id: string,
+    settings: Readonly<Record<string, unknown>>,
+  ): Promise<void> {
+    const current = this.activeExternalBrokers.find((b) => b.id === id)
+    if (current === undefined) {
+      throw new Error(
+        `mqtt-broker.setSettings: broker '${id}' is the embedded broker; its settings are on the addon page`,
+      )
+    }
+    const next = applyMqttBrokerSettings(current, settings)
+    await this.persistExternalBrokers(
+      this.activeExternalBrokers.map((b) => (b.id === id ? next : b)),
+    )
+    this.probeCache?.evict(id)
+    this.ctx.logger.info('mqtt broker settings updated', { meta: { id } })
   }
 
   private async removeBroker(id: string): Promise<void> {
