@@ -11,10 +11,7 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import type { GroupCandidate } from '../../agent/agent-group-runner.js'
-import { readPackageRequires, type StaleGateContext } from '../../agent/stale-addon-gate.js'
-import { spawnableAddonIds } from './hub-spawn-gate.js'
-import { readRunningServerAddonMinimums, readRunningServerVersion } from './addon-requirements.js'
-import { readInstalledAddonVersions } from './installed-addon-versions.js'
+import { readHubStaleGateContext, spawnableAddonIds } from './hub-spawn-gate.js'
 import type { DataPlaneSink, RegisteredChild } from '@camstack/server/system'
 import {
   AddonDepsManager,
@@ -2307,9 +2304,10 @@ export class AddonRegistryService {
     const suppressed = new Set<string>([addonId])
     if (this.isForkedAddonEntry(entry)) {
       const runnerId = resolveRunnerId(entry.declaration, addonId)
-      for (const { addonId: siblingId } of this.buildAddonGroupPlan([
-        ...this.addonEntries.keys(),
-      ]).get(runnerId) ?? []) {
+      for (const { addonId: siblingId } of this.buildSpawnPlan(
+        [...this.addonEntries.keys()],
+        () => undefined,
+      ).get(runnerId) ?? []) {
         suppressed.add(siblingId)
       }
     }
@@ -3878,26 +3876,24 @@ export class AddonRegistryService {
    * is logged with both versions; the post-swap required-addon update brings it
    * current and a reload spawns it then.
    */
-  buildSpawnPlan(addonIds: readonly string[]): RunnerPlan {
-    const ready = spawnableAddonIds({
-      addonIds,
-      candidateOf: (id) => this.staleCandidateOf(id),
-      context: this.staleGateContext(),
-      log: (line) => this.logger.warn(line),
-    })
-    return this.buildAddonGroupPlan(ready)
+  buildSpawnPlan(
+    addonIds: readonly string[],
+    log: (line: string) => void = (line) => this.logger.warn(line),
+  ): RunnerPlan {
+    return this.buildAddonGroupPlan(this.spawnableIds(addonIds, log))
   }
 
-  /** Reads the gate's facts from disk; a spec replaces it. */
-  private staleGateContext: () => StaleGateContext = () => {
-    const dataDir = path.resolve(process.env.CAMSTACK_DATA ?? 'camstack-data')
-    const addonsDir = process.env.CAMSTACK_ADDONS_DIR ?? path.resolve(dataDir, 'addons')
-    return {
-      serverVersion: readRunningServerVersion(),
-      serverRequiresAddons: readRunningServerAddonMinimums(),
-      installedVersions: readInstalledAddonVersions(addonsDir),
-      requiresOfDir: readPackageRequires,
-    }
+  private spawnableIds(
+    addonIds: readonly string[],
+    log: (line: string) => void,
+  ): readonly string[] {
+    return spawnableAddonIds({
+      addonIds,
+      candidateOf: (id) => this.staleCandidateOf(id),
+      context: readHubStaleGateContext(),
+      infraCapabilities: new Set(INFRA_CAPABILITIES.map((c) => c.name)),
+      log,
+    })
   }
 
   private staleCandidateOf(addonId: string): GroupCandidate | undefined {
@@ -3910,7 +3906,7 @@ export class AddonRegistryService {
       version: entry.declaration.version ?? entry.packageVersion,
       packageName: entry.packageName,
       packageVersion: entry.packageVersion,
-      capabilities: [],
+      capabilities: entry.declaredCapabilities,
     }
   }
 
@@ -4121,9 +4117,20 @@ export class AddonRegistryService {
       throw new Error(`ensureForkedRunner("${addonId}") requires an on-disk forked addon`)
     }
     const runnerId = resolveRunnerId(entry.declaration, addonId)
-    const roster = this.buildAddonGroupPlan([...this.addonEntries.keys()]).get(runnerId) ?? [
-      { addonId, addonDir: entry.addonDir },
-    ]
+    // The same gate as the boot plan: a restart, a hot-install or a retry must not spawn an addon
+    // the running server cannot host, nor carry a held-back sibling into its runner.
+    const held: string[] = []
+    if (this.spawnableIds([addonId], (line) => held.push(line)).length === 0) {
+      const reason = held.join('; ')
+      this.logger.warn('ensureForkedRunner: addon is held back by the stale gate, not spawned', {
+        tags: { addonId },
+        meta: { reason },
+      })
+      throw new Error(`addon "${addonId}" is held back until its package is reconciled: ${reason}`)
+    }
+    const roster = this.buildSpawnPlan([...this.addonEntries.keys()], () => undefined).get(
+      runnerId,
+    ) ?? [{ addonId, addonDir: entry.addonDir }]
 
     // Claim before the queue so a member that arrives while this one is
     // waiting is visible to the fork that has not started yet. Solo runners

@@ -1556,13 +1556,14 @@ function spawnableCandidates(
   log: (line: string) => void,
 ): readonly GroupCandidate[] {
   if (candidates.length === 0) return candidates
-  const { ready, deferred } = gateStaleCandidates(candidates, {
+  const { ready, deferred, unjudged } = gateStaleCandidates(candidates, {
     serverVersion: readRunningServerVersion(),
     serverRequiresAddons: readRunningServerAddonMinimums(),
     installedVersions: readInstalledAddonVersions(addonsDir),
     requiresOfDir: readPackageRequires,
   })
   for (const d of deferred) log(`[Agent] ${d.reason}`)
+  for (const line of unjudged) log(`[Agent] ${line}`)
   return ready
 }
 

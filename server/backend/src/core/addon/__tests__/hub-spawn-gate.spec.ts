@@ -42,4 +42,29 @@ describe('spawnableAddonIds (planning#447)', () => {
     expect(lines[0]).toContain('1.0.0')
     expect(lines[0]).toContain('2.0.0')
   })
+
+  it('spawns a stale infrastructure provider anyway, loudly, so the node keeps its storage', () => {
+    const lines: string[] = []
+    const store: GroupCandidate = {
+      ...candidate('store', '@camstack/addon-store', '1.0.0'),
+      capabilities: [{ name: 'data-store-provider' }],
+    }
+    const ids = spawnableAddonIds({
+      addonIds: ['store', 'ml'],
+      candidateOf: (id) => (id === 'store' ? store : byId[id]),
+      context: {
+        serverVersion: '1.2.721',
+        serverRequiresAddons: {
+          '@camstack/addon-store': '>=2.0.0',
+          '@camstack/addon-ml': '>=2.0.0',
+        },
+        installedVersions: { '@camstack/addon-store': '1.0.0', '@camstack/addon-ml': '1.0.0' },
+        requiresOfDir: () => undefined,
+      },
+      infraCapabilities: new Set(['data-store-provider']),
+      log: (l) => lines.push(l),
+    })
+    expect(ids).toEqual(['store'])
+    expect(lines.some((l) => l.includes('SPAWNED ANYWAY') && l.includes('1.0.0'))).toBe(true)
+  })
 })

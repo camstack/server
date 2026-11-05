@@ -9,6 +9,9 @@
  * swap is already on disk). An in-flight fork does not.
  */
 import type { AddonDeclaration, IScopedLogger, LogExtras } from '@camstack/types'
+import * as fs from 'node:fs'
+import * as os from 'node:os'
+import * as path from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
 import { AddonRegistryService } from '../addon-registry.service.js'
 
@@ -52,7 +55,7 @@ function harness(): {
   readonly restarts: number
 } {
   const disk: Record<string, string> = {
-    [HA]: '1.2.658',
+    [HA]: '1.2.700',
     [GOOGLE]: '0.1.125',
   }
   const state: {
@@ -119,10 +122,16 @@ function harness(): {
     {} as never,
   )
   const entries = Reflect.get(registry, 'addonEntries') as Map<string, Record<string, unknown>>
+  // The hub's spawn gate reads each addon's package.json, so the addons have a real one.
+  const addonsRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'grouped-respawn-'))
+  process.env.CAMSTACK_ADDONS_DIR = addonsRoot
   for (const [id, pkg, version] of [
     [HA, '@camstack/addon-provider-homeassistant', disk[HA]],
     [GOOGLE, '@camstack/addon-export-google', disk[GOOGLE]],
   ] as const) {
+    const addonDir = path.join(addonsRoot, pkg)
+    fs.mkdirSync(addonDir, { recursive: true })
+    fs.writeFileSync(path.join(addonDir, 'package.json'), JSON.stringify({ name: pkg, version }))
     entries.set(id, {
       addon: { manifest: { id, name: id } },
       initialized: true,
@@ -130,7 +139,7 @@ function harness(): {
       packageName: pkg,
       packageVersion: version,
       declaredCapabilities: [],
-      addonDir: `/data/addons/${pkg}`,
+      addonDir,
       declaration: declaration(id),
     })
   }
@@ -173,12 +182,12 @@ function restartedLine(info: InfoMock, version: string): string | undefined {
 describe('grouped runner updates in quick succession', () => {
   it('respawns again when a second member is swapped after the first respawn returned', async () => {
     const h = harness()
-    h.disk[HA] = '1.2.659'
+    h.disk[HA] = '1.2.701'
     const ha = Reflect.get(h.registry, 'addonEntries') as Map<string, { packageVersion: string }>
-    ha.get(HA)!.packageVersion = '1.2.659'
+    ha.get(HA)!.packageVersion = '1.2.701'
     const first = await h.registry.restartAddon(HA)
     expect(first.success).toBe(true)
-    expect(h.process.loaded[HA]).toBe('1.2.659')
+    expect(h.process.loaded[HA]).toBe('1.2.701')
     expect(h.process.pid).not.toBe(1948)
 
     // Still inside the old 10s coalesce window — the bug dropped this swap.
@@ -198,12 +207,12 @@ describe('grouped runner updates in quick succession', () => {
 
   it('does not let an in-flight fork satisfy a swap that landed after the fork started', async () => {
     const h = harness()
-    h.disk[HA] = '1.2.659'
+    h.disk[HA] = '1.2.701'
     const entries = Reflect.get(h.registry, 'addonEntries') as Map<
       string,
       { packageVersion: string }
     >
-    entries.get(HA)!.packageVersion = '1.2.659'
+    entries.get(HA)!.packageVersion = '1.2.701'
     h.holdNextRestart = true
 
     const first = h.registry.restartAddon(HA)
