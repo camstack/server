@@ -12,6 +12,7 @@ import {
   type AddonApi,
   type AddonDataPlaneHandle,
   BaseAddon,
+  type ConfigUISchema,
   type ManagedModelRef,
   type MediaFileKind,
   type ModelCatalogEntry,
@@ -82,7 +83,12 @@ export class AiAddon extends BaseAddon<AiConfig> {
     })
   }
 
-  protected globalSettingsSchema() {
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return ['llm']
+  }
+
+  protected override async clusterSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    if (cap !== 'llm') return null
     return this.schema({
       sections: [
         {
