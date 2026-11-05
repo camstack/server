@@ -76,7 +76,7 @@ export class LoadShedController {
    * `0` = DISABLED by default — see the original field doc: a single slow
    * camera (e.g. an on-motion camera idling at <1 fps between motion events)
    * must NOT be detached or block new dispatches. `public` — also read by
-   * `index.ts`'s `globalSettingsSchema()` to seed the operator-facing form
+   * `index.ts`'s `clusterSettingsSchema()` to seed the operator-facing form
    * field default (mirrors the original `PipelineOrchestratorAddon.DEFAULT_FPS_MIN_THRESHOLD`
    * cross-reference).
    */

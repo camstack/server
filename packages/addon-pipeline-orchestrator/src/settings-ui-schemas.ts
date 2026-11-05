@@ -3,7 +3,7 @@
  * `applyRuntimeSettings`, extracted verbatim from `index.ts` (S2 refactor
  * step — zero behavior change).
  *
- * `globalSettingsSchema` / `deviceSettingsSchema` / `applyRuntimeSettings`
+ * `clusterSettingsSchema` / `deviceSettingsSchema` / `applyRuntimeSettings`
  * stay on the class as thin delegates: they gather the `this`-scoped inputs
  * (node-id lists, private-static defaults) these builders can't reach
  * directly and pass them in explicitly, so the section-building logic is a

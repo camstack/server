@@ -76,6 +76,7 @@ import type {
   CameraStatus,
   CameraSwitchGroup,
   CameraSwitchId,
+  ConfigUISchema,
   ConfigUISchemaWithValues,
   DeviceStepConfig,
   InferenceDeviceDescriptor,
@@ -3339,8 +3340,16 @@ export default class PipelineOrchestratorAddon
   // of either schema — those keys are operational state, not user-facing
   // settings.
 
-  /** Build the addon-level schema (cluster roles + balancer + failover). */
-  protected globalSettingsSchema() {
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return ['pipeline-orchestrator']
+  }
+
+  /**
+   * The cluster form (cluster roles, load balancer, cluster step models, detail crop, face
+   * rescore, native lease, failover): every key is cluster-wide, stored `pipeline-orchestrator.<key>`.
+   */
+  protected override async clusterSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    if (cap !== 'pipeline-orchestrator') return null
     return this.schema({
       sections: buildGlobalSettingsSections({
         fpsMinThresholdDefault: LoadShedController.DEFAULT_FPS_MIN_THRESHOLD,
