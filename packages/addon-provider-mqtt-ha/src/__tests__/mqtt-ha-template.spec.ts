@@ -40,4 +40,17 @@ describe('renderTemplate', () => {
   it('exposes the raw payload as `value`', () => {
     expect(renderTemplate('{{ value }}', 'online')).toBe('online')
   })
+
+  it('renders a Velux switch if-block to ON or OFF', () => {
+    const template = '{% if "state" in value_json %}{{ value_json["state"] }}{% endif %}'
+    expect(renderTemplate(template, '{"state":"ON","linkquality":40}')).toBe('ON')
+    expect(renderTemplate(template, '{"state":"OFF"}')).toBe('OFF')
+    expect(renderTemplate(template, '{"linkquality":40}')).toBeNull()
+  })
+
+  it('renders an if/else/endif comparison to ON or OFF', () => {
+    const template = '{% if value_json.position > 0 %}ON{% else %}OFF{% endif %}'
+    expect(renderTemplate(template, '{"position":40}')).toBe('ON')
+    expect(renderTemplate(template, '{"position":0}')).toBe('OFF')
+  })
 })

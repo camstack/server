@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - MQTT discovery sensors get a device role, so their state shows instead of waiting for a temperature.
+- MQTT discovery switches whose state template is an if-block, such as a Velux plug, report on and off.
 
 ## [0.1.37] - 2026-11-05
 
