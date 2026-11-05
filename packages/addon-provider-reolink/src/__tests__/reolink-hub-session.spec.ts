@@ -141,13 +141,14 @@ function makeSession(
   api: HubApiPort,
   children: () => readonly HubChildHandle[],
   now: () => number = Date.now,
+  logger: IScopedLogger = silentLogger(),
 ) {
   const connect = vi.fn(async () => api)
   const onConnectionChange = vi.fn()
   const session = new ReolinkHubSession<HubApiPort>({
     integrationId: 'int-1',
     name: 'Home Hub',
-    logger: silentLogger(),
+    logger,
     connection: CONNECTION,
     connect,
     children,
@@ -333,6 +334,22 @@ describe('ReolinkHubSession reconcile', () => {
     const { session } = makeSession(fake.api, () => [lost])
     await session.refresh()
     expect(lost.repaired).toEqual([3])
+  })
+
+  it('applies a channel MOVE, by identity, and logs it against the device', async () => {
+    const fake = fakeApi([{ channel: 5, uid: 'UID9', online: true }])
+    const moved = fakeChild(9, 2, 'int-1-cam-UID9')
+    const warn = vi.fn()
+    const log: IScopedLogger = { ...silentLogger(), warn }
+    const { session } = makeSession(fake.api, () => [moved], Date.now, log)
+    await session.refresh()
+    expect(moved.repaired).toEqual([5])
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('repaired a child channel'),
+      expect.objectContaining({
+        tags: expect.objectContaining({ deviceId: 9 }),
+      }),
+    )
   })
 
   it('re-reads on a timer every minute', () => {

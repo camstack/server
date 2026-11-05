@@ -773,6 +773,10 @@ export function toDiscoveredGateway(input: {
 
 /** Anything a child needs from its integration's session. */
 export interface HubSessionHandle {
+  /** The integration's display name. */
+  readonly name: string
+  /** The hub's last good channel list. */
+  channelSnapshot(): HubChannelSnapshot
   getApi(): Promise<ReolinkBaichuanApi>
   /** The hub's own socket is up. */
   readonly isOnline: boolean

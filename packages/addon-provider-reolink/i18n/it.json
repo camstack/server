@@ -204,5 +204,17 @@
   "connection.s_hub-debug.debugSocketLogs.label": "Categorie di trace del socket",
   "connection.s_hub-debug.debugSocketLogs.description": "Ogni area aumenta il volume dei log.",
   "connection.s_hub-debug.debugSocketLogs.o_traceEvents.label": "Eventi (cmd 33 — push AlarmEventList)",
-  "connection.s_connection.rtspPort.label": "Porta RTSP"
+  "connection.s_connection.rtspPort.label": "Porta RTSP",
+  "schema": {
+    "s_hub": {
+      "title": "Hub",
+      "description": "Questa telecamera è collegata tramite il suo NVR / Home Hub. Indirizzo e credenziali appartengono a quell'integrazione; il canale resta allineato all'hub in automatico.",
+      "hubName": {
+        "label": "Collegata a"
+      },
+      "channel": {
+        "label": "Canale dell'hub"
+      }
+    }
+  }
 }

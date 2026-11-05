@@ -204,5 +204,17 @@
   "connection.s_hub-debug.debugSocketLogs.label": "Socket trace categories",
   "connection.s_hub-debug.debugSocketLogs.description": "Each area adds log volume.",
   "connection.s_hub-debug.debugSocketLogs.o_traceEvents.label": "Events (cmd 33 — AlarmEventList push)",
-  "connection.s_connection.rtspPort.label": "RTSP port"
+  "connection.s_connection.rtspPort.label": "RTSP port",
+  "schema": {
+    "s_hub": {
+      "title": "Hub",
+      "description": "This camera is connected through its NVR / Home Hub. Address and credentials belong to that integration; the channel is kept in line with the hub automatically.",
+      "hubName": {
+        "label": "Connected to"
+      },
+      "channel": {
+        "label": "Hub channel"
+      }
+    }
+  }
 }

@@ -129,6 +129,12 @@ import {
   type HubSessionHandle,
   reolinkHubSessions,
 } from './reolink-hub-session.js'
+import {
+  applyHubChildSections,
+  EMPTY_HUB_CHANNEL_SNAPSHOT,
+  HubChildPatchRefusedError,
+  judgeHubChildPatch,
+} from './hub-child-settings.js'
 import { decideSleepCommit, type SleepCommitSource } from './sleep-state-decision.js'
 import { buildSnapshotFreshnessSection, stampSnapshotFreshness } from './snapshot-freshness.js'
 import { decideSnapshotCameraAccess } from './snapshot-wake-gate.js'
@@ -227,7 +233,12 @@ function privacyShapeToRect(shape: PrivacyMaskShape): {
   const ys = shape.points.map((p) => p.y)
   const minX = Math.min(...xs)
   const minY = Math.min(...ys)
-  return { x: minX, y: minY, width: Math.max(...xs) - minX, height: Math.max(...ys) - minY }
+  return {
+    x: minX,
+    y: minY,
+    width: Math.max(...xs) - minX,
+    height: Math.max(...ys) - minY,
+  }
 }
 
 /**
@@ -427,15 +438,18 @@ interface AudioCodecRouterShape {
     }) => Promise<void>
   }
   pullPcm: {
-    query: (input: {
-      sessionId: string
-      nodeId?: string
-      maxCount: number
-    }) => Promise<
-      readonly { data: Uint8Array; sampleRate: number; channels: number; pts: number }[]
+    query: (input: { sessionId: string; nodeId?: string; maxCount: number }) => Promise<
+      readonly {
+        data: Uint8Array
+        sampleRate: number
+        channels: number
+        pts: number
+      }[]
     >
   }
-  closeSession: { mutate: (input: { sessionId: string; nodeId?: string }) => Promise<void> }
+  closeSession: {
+    mutate: (input: { sessionId: string; nodeId?: string }) => Promise<void>
+  }
 }
 
 export {
@@ -1006,6 +1020,19 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     return this.hubIntegrationId() !== null && typeof this.config.get('channel') === 'number'
   }
 
+  /**
+   * The host this camera is reached at: the integration's for a hub child (the stored per-camera
+   * `host` of a child is never read), the camera's own otherwise. `null` when there is none.
+   */
+  private connectionHost(): string | null {
+    if (this.isHubChild()) {
+      const host = this.hubSession()?.relayEndpoint().host
+      return host !== undefined && host.length > 0 ? host : null
+    }
+    const host = this.config.get('host')
+    return typeof host === 'string' && host.length > 0 ? host : null
+  }
+
   /** The integration (one NVR / Home Hub, D985) this camera was adopted from, or `null`. */
   private hubIntegrationId(): string | null {
     const id = this.config.get('integrationId')
@@ -1231,7 +1258,9 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
           const osd = await api.getOsd(this.getChannel(), { timeoutMs: 4000 })
           const snapshot = projectOsdSnapshot(osd, Date.now())
           const previous = this.config.get('deviceCache') ?? {}
-          await this.config.setAll({ deviceCache: { ...previous, osdSnapshot: snapshot } })
+          await this.config.setAll({
+            deviceCache: { ...previous, osdSnapshot: snapshot },
+          })
         } catch (err) {
           this.ctx.logger.info('reolink osd setOverlay: post-write re-read failed', {
             tags: { deviceId: this.id },
@@ -1293,7 +1322,10 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       this.networkLinkFailureWarned = true
       this.ctx.logger[level]('network link read failed — keeping the last slice', {
         tags: { deviceId: this.id },
-        meta: { reason, error: err instanceof Error ? err.message : String(err) },
+        meta: {
+          reason,
+          error: err instanceof Error ? err.message : String(err),
+        },
       })
     }
   }
@@ -1450,7 +1482,9 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     // the whole probe.
     if (want('ai')) {
       try {
-        const detectTypes = await api.getAiDetectTypes(channel, { timeoutMs: 1500 })
+        const detectTypes = await api.getAiDetectTypes(channel, {
+          timeoutMs: 1500,
+        })
         if (detectTypes && detectTypes.length > 0) {
           cacheUpdate.aiDetectTypes = detectTypes
           const aiSnap: Record<
@@ -1797,7 +1831,10 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
             supported: true,
           }
         } else {
-          cacheUpdate.pirSnapshot = { reduceFalseAlarm: null, supported: false }
+          cacheUpdate.pirSnapshot = {
+            reduceFalseAlarm: null,
+            supported: false,
+          }
         }
       } catch (err) {
         this.ctx.logger.debug('reolink getPirInfo probe failed', {
@@ -2061,7 +2098,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       // A hub child's stills go through the HUB's host, which is what makes
       // one lane per hub the right bound: the hub refuses concurrent
       // CoverPreviews across its children, not per channel.
-      hostKey: String(this.config.get('host') ?? `device-${this.id}`),
+      hostKey: this.connectionHost() ?? `device-${this.id}`,
       getApi: () => this.ensureApi(),
     }
   }
@@ -2175,7 +2212,9 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       meta: { timeoutMs },
     })
     this.ctx.eventBus.emit(
-      createEvent(EventCategory.BatteryOnWakeStarted, this.eventSource(), { deviceId: this.id }),
+      createEvent(EventCategory.BatteryOnWakeStarted, this.eventSource(), {
+        deviceId: this.id,
+      }),
     )
     const channel = this.getChannel()
     try {
@@ -2301,7 +2340,10 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         attachmentType,
         triggerTypes: triggers,
         ...(params.authUsername !== undefined && params.authPassword !== undefined
-          ? { authUsername: params.authUsername, authPassword: params.authPassword }
+          ? {
+              authUsername: params.authUsername,
+              authPassword: params.authPassword,
+            }
           : {}),
         runTest: false,
       },
@@ -2378,7 +2420,9 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     } catch {
       /* best-effort — same as reolink_aio after SET */
     }
-    await this.config.setAll({ webhookUrlGeneration: BAICHUAN_WEBHOOK_URL_GENERATION })
+    await this.config.setAll({
+      webhookUrlGeneration: BAICHUAN_WEBHOOK_URL_GENERATION,
+    })
     this.ctx.logger.info('baichuan-webhook: camera auto-configure applied', {
       tags: { deviceId: this.id },
       meta: { url: params.url },
@@ -2543,16 +2587,29 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         if (deviceId !== this.id) {
           throw new Error(`ReolinkCamera: deviceId mismatch, expected ${this.id}, got ${deviceId}`)
         }
-        const host = this.config.get('host') ?? ''
-        const built = buildDeviceAdminUrl({ host, port: null, scheme: 'http', path: '/' })
+        const host = this.connectionHost() ?? ''
+        const built = buildDeviceAdminUrl({
+          host,
+          port: null,
+          scheme: 'http',
+          path: '/',
+        })
         if (!built.ok) {
           this.ctx.logger.debug('reolink admin link unavailable', {
             tags: { deviceId: this.id },
-            meta: { reason: built.reason, transport: this.config.get('transport') ?? 'tcp' },
+            meta: {
+              reason: built.reason,
+              transport: this.config.get('transport') ?? 'tcp',
+            },
           })
           return null
         }
-        return { url: built.url, label: 'Web UI', target: 'device' as const, host }
+        return {
+          url: built.url,
+          label: 'Web UI',
+          target: 'device' as const,
+          host,
+        }
       },
     }
     this.ctx.registerNativeCap(deviceAdminLinkCapability, adminLinkProvider)
@@ -2634,7 +2691,9 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     // `applySettingsPatch`.
     this.registerDeviceAction(
       'refresh-settings',
-      deviceCustomAction(z.unknown(), RefreshSettingsResultSchema, { kind: 'mutation' }),
+      deviceCustomAction(z.unknown(), RefreshSettingsResultSchema, {
+        kind: 'mutation',
+      }),
       async () => {
         // The operator's "go and ask it now".
         //
@@ -2815,7 +2874,10 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    * request and let both await its result — saves a doubled wake on
    * battery cams and halves load for regular ones.
    */
-  private snapshotInFlight: Promise<{ base64: string; contentType: string } | null> | null = null
+  private snapshotInFlight: Promise<{
+    base64: string
+    contentType: string
+  } | null> | null = null
 
   /**
    * Map a nodelink `BatteryInfo` push payload into the camstack
@@ -2970,7 +3032,9 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
             } else {
               let state: string | null = null
               try {
-                state = api.getSleepStatus({ channel: this.getChannel() }).state
+                state = api.getSleepStatus({
+                  channel: this.getChannel(),
+                }).state
               } catch {
                 state = null
               }
@@ -2993,7 +3057,10 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
               'battery wakeForStream: wake confirmed — driving wake transition',
               {
                 tags: { deviceId: this.id },
-                meta: { confirmMs: Date.now() - startedAt, source: confirmSource },
+                meta: {
+                  confirmMs: Date.now() - startedAt,
+                  source: confirmSource,
+                },
               },
             )
             void this.onWakeTransition(confirmSource).catch(() => {
@@ -3006,7 +3073,10 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
             // window we already know will not produce a stream.
             this.ctx.logger.warn(
               'battery wakeForStream: ACK received but no awake evidence inside the confirm window',
-              { tags: { deviceId: this.id }, meta: { confirmTimeoutMs: CONFIRM_TIMEOUT_MS } },
+              {
+                tags: { deviceId: this.id },
+                meta: { confirmTimeoutMs: CONFIRM_TIMEOUT_MS },
+              },
             )
             this.emitWakeSettled()
             return { awoke: false, durationMs: Date.now() - startedAt }
@@ -3282,7 +3352,9 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       await sleep(5_000)
       try {
         const parentApi = await parent.getApi()
-        const summary = await parentApi.getNvrChannelsSummary({ channels: [this.getChannel()] })
+        const summary = await parentApi.getNvrChannelsSummary({
+          channels: [this.getChannel()],
+        })
         const entry = summary.devices.find((d) => d.channel === this.getChannel())
         if (entry?.sleeping === false) {
           if (this.commitSleepState(false, 'hub-summary')) {
@@ -3689,7 +3761,10 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       // schedule slots are preserved (Reolink drops slots not sent back).
       const task = await api.getEmailTask(channel).catch(() => null)
       if (task) {
-        await api.setEmailTask(channel, { ...task, enable: fields.emailScheduleEnabled ? 1 : 0 })
+        await api.setEmailTask(channel, {
+          ...task,
+          enable: fields.emailScheduleEnabled ? 1 : 0,
+        })
       }
     }
     // Realign the snapshot (and therefore the form) with the camera.
@@ -3735,7 +3810,10 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     // paths (contact-expiry, aux align) back off behind this wake — the
     // cooldown never gates this path, it only records it.
     if (access.stampCooldown) this.markWakeIssued()
-    const promise = (async (): Promise<{ base64: string; contentType: string } | null> => {
+    const promise = (async (): Promise<{
+      base64: string
+      contentType: string
+    } | null> => {
       let api: ReolinkBaichuanApi
       try {
         api = await this.ensureApi()
@@ -3771,7 +3849,10 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         // believed awake), so drive the explicit wake: the login alone does
         // not reliably bring the video subsystem up.
         try {
-          await api.wakeUp(this.getChannel(), { waitAfterWakeMs: 1500, attempts: 2 })
+          await api.wakeUp(this.getChannel(), {
+            waitAfterWakeMs: 1500,
+            attempts: 2,
+          })
         } catch (err) {
           this.ctx.logger.debug('snapshot: pre-wake failed (will still try getSnapshot)', {
             tags: { deviceId: this.id },
@@ -3781,7 +3862,10 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       }
 
       const tryOnce = async (timeoutMs: number): Promise<Buffer | null> => {
-        const buf = await api.getSnapshot(this.getChannel(), { streamType: 'main', timeoutMs })
+        const buf = await api.getSnapshot(this.getChannel(), {
+          streamType: 'main',
+          timeoutMs,
+        })
         return buf && buf.length > 0 ? buf : null
       }
 
@@ -4018,7 +4102,10 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
             deviceTag: `camera-${this.id}`,
             channel: this.getChannel(),
             api,
-            logger: this.ctx.logger.withTags({ deviceId: this.id, scope: 'intercom' }),
+            logger: this.ctx.logger.withTags({
+              deviceId: this.id,
+              scope: 'intercom',
+            }),
             audioCodec,
             peerFactory: ({ logger }) => new WeriftIntercomPeer({ logger }),
             // Battery-cam pre-wake. Skip the wake on
@@ -4030,7 +4117,9 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
                 }
               : undefined,
             ...(this.config.get('intercomBlocksPerPayload') !== undefined
-              ? { blocksPerPayload: this.config.get('intercomBlocksPerPayload') }
+              ? {
+                  blocksPerPayload: this.config.get('intercomBlocksPerPayload'),
+                }
               : {}),
             ...(this.config.get('intercomMaxBacklogMs') !== undefined
               ? { maxBacklogMs: this.config.get('intercomMaxBacklogMs') }
@@ -4099,7 +4188,10 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         const session = new ReolinkIntercomSession({
           channel: this.getChannel(),
           api,
-          logger: this.ctx.logger.withTags({ deviceId: this.id, scope: 'intercom-raw' }),
+          logger: this.ctx.logger.withTags({
+            deviceId: this.id,
+            scope: 'intercom-raw',
+          }),
           deviceTag: `camera-${this.id}`,
           ...(this.config.get('intercomBlocksPerPayload') !== undefined
             ? { blocksPerPayload: this.config.get('intercomBlocksPerPayload') }
@@ -4247,7 +4339,10 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
                 targetFormat: 's16le',
                 tag: `reolink-intercom:${this.id}:${active.id}`,
               })
-              active.opusDecode = { sessionId: created.sessionId, nodeId: created.nodeId }
+              active.opusDecode = {
+                sessionId: created.sessionId,
+                nodeId: created.nodeId,
+              }
               this.ctx.logger.info('intercom: opus decode session opened', {
                 tags: { deviceId: this.id },
                 meta: {
@@ -4327,13 +4422,19 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         await active.session.stop().catch((err: unknown) => {
           this.ctx.logger.debug('intercom talk session stop error (continuing)', {
             tags: { deviceId: this.id },
-            meta: { sessionId: active.id, error: err instanceof Error ? err.message : String(err) },
+            meta: {
+              sessionId: active.id,
+              error: err instanceof Error ? err.message : String(err),
+            },
           })
         })
         this.publishIntercomState(false)
         this.ctx.logger.info('intercom talk session closed', {
           tags: { deviceId: this.id },
-          meta: { sessionId: active.id, lastSequenceNumber: active.lastSequenceNumber },
+          meta: {
+            sessionId: active.id,
+            lastSequenceNumber: active.lastSequenceNumber,
+          },
         })
       },
     }
@@ -4378,7 +4479,13 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     )
       return undefined
 
-    const config: StreamParamsStatus['main'] = { width, height, codec, framerate, bitrate }
+    const config: StreamParamsStatus['main'] = {
+      width,
+      height,
+      codec,
+      framerate,
+      bitrate,
+    }
 
     // Optional fields — present only on firmwares that report them.
     const rawEncoderProfile = typeof s.encoderProfile === 'string' ? s.encoderProfile : undefined
@@ -4429,7 +4536,10 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       for (const b of res.bitrateOptions) bitrateSet.add(b)
     }
 
-    const resolutions = s.resolutions.map((r) => ({ width: r.width, height: r.height }))
+    const resolutions = s.resolutions.map((r) => ({
+      width: r.width,
+      height: r.height,
+    }))
     const codecs = Array.from(codecSet)
     const framerates = Array.from(framerateSet).toSorted((a, b) => a - b)
     const bitrates = Array.from(bitrateSet).toSorted((a, b) => a - b)
@@ -4620,7 +4730,10 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     } catch (err) {
       this.ctx.logger.debug('cap options persist failed', {
         tags: { deviceId: this.id },
-        meta: { capName, error: err instanceof Error ? err.message : String(err) },
+        meta: {
+          capName,
+          error: err instanceof Error ? err.message : String(err),
+        },
       })
     }
   }
@@ -4764,7 +4877,10 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       } catch (err) {
         this.ctx.logger.debug('wake warm-up: cap refresh failed — retrying on next wake', {
           tags: { deviceId: this.id },
-          meta: { capName, error: err instanceof Error ? err.message : String(err) },
+          meta: {
+            capName,
+            error: err instanceof Error ? err.message : String(err),
+          },
         })
       }
     }
@@ -4796,14 +4912,19 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       api: {
         getSnapshot: (input) => this.ctx.api.snapshot.getSnapshot.query(input),
         getSnapshotOverview: (input) =>
-          this.ctx.api.snapshot.getSnapshotOverview.query({ deviceIds: [...input.deviceIds] }),
+          this.ctx.api.snapshot.getSnapshotOverview.query({
+            deviceIds: [...input.deviceIds],
+          }),
       },
     })
   }
 
   private async warmSnapshotOnWake(): Promise<void> {
     try {
-      await this.ctx.api.snapshot.getSnapshot.query({ deviceId: this.id, force: true })
+      await this.ctx.api.snapshot.getSnapshot.query({
+        deviceId: this.id,
+        force: true,
+      })
       this.ctx.logger.debug('wake warm-up: snapshot cache refreshed', {
         tags: { deviceId: this.id },
       })
@@ -4953,7 +5074,9 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         // resolution may have changed). Lossy by design — the broker's poll
         // reconcile is the backstop.
         this.ctx.eventBus.emit(
-          createEvent(EventCategory.StreamParamsChanged, this.eventSource(), { deviceId: this.id }),
+          createEvent(EventCategory.StreamParamsChanged, this.eventSource(), {
+            deviceId: this.id,
+          }),
         )
       },
     }
@@ -5265,12 +5388,18 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    * input here".
    */
   private async readStreamAudioProfiles(): Promise<
-    ReadonlyArray<{ readonly streamKey: ReolinkAudioStreamKey; readonly audioEnabled: boolean }>
+    ReadonlyArray<{
+      readonly streamKey: ReolinkAudioStreamKey
+      readonly audioEnabled: boolean
+    }>
   > {
     const api = await this.ensureApi()
     const compression = (await api.getEnc(this.getChannel()))?.body?.Compression
     if (!compression) return []
-    const out: Array<{ streamKey: ReolinkAudioStreamKey; audioEnabled: boolean }> = []
+    const out: Array<{
+      streamKey: ReolinkAudioStreamKey
+      audioEnabled: boolean
+    }> = []
     for (const streamKey of REOLINK_AUDIO_STREAM_KEYS) {
       const raw = compression[streamKey]?.audio
       if (typeof raw !== 'number') continue
@@ -5314,7 +5443,13 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
             .map((r) => ({
               id: r.id,
               enabled: true,
-              shape: { kind: 'rect', x: r.x, y: r.y, width: r.width, height: r.height },
+              shape: {
+                kind: 'rect',
+                x: r.x,
+                y: r.y,
+                width: r.width,
+                height: r.height,
+              },
             }))
           const next: PrivacyMaskStatus = {
             enabled: zones.enable,
@@ -5382,7 +5517,11 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         // microphone switch — the group would render a control that writes
         // nothing.
         if (deviceId !== this.id)
-          return { maxRegions: 4, supportedShapes: ['rect'], supportsAudioMute: false }
+          return {
+            maxRegions: 4,
+            supportedShapes: ['rect'],
+            supportsAudioMute: false,
+          }
         return this.resolveCapOptions({
           capName: CAP_NAME,
           schema: PrivacyMaskOptionsSchema,
@@ -5544,7 +5683,11 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
             'reolink privacy audio: stream REFUSED the write — reverted, camera still audible',
             {
               tags: { deviceId: this.id },
-              meta: { enabled, refused: refused.join(','), asked: profiles.length },
+              meta: {
+                enabled,
+                refused: refused.join(','),
+                asked: profiles.length,
+              },
             },
           )
           this.cachedStreamDescriptors = undefined
@@ -5556,7 +5699,10 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         }
         this.ctx.logger.info('reolink privacy audio: microphone written', {
           tags: { deviceId: this.id },
-          meta: { enabled, streams: profiles.map((p) => p.streamKey).join(',') },
+          meta: {
+            enabled,
+            streams: profiles.map((p) => p.streamKey).join(','),
+          },
         })
         // The encoder config just changed — the cached stream descriptors
         // carry the audio presence used to build the synthetic SDP.
@@ -5634,7 +5780,10 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     const CAP_NAME = 'recording-onboard' as const
 
     const emptyStatus = (): RecordingOnboardStatus => ({
-      storage: { kind: 'unknown', reason: 'CamStack has not read this camera yet.' },
+      storage: {
+        kind: 'unknown',
+        reason: 'CamStack has not read this camera yet.',
+      },
       tracks: [],
       primaryTrackId: null,
       enabled: null,
@@ -5688,7 +5837,12 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
                 } as const)
               : parseOnboardStorage(hdd)
 
-          const next = buildOnboardStatus({ storage, cfg, schedule, now: Date.now() })
+          const next = buildOnboardStatus({
+            storage,
+            cfg,
+            schedule,
+            now: Date.now(),
+          })
           this.runtimeState.setCapState(CAP_NAME, next)
 
           if (next.recordingToNowhere) {
@@ -5935,7 +6089,9 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
             } catch (err) {
               this.ctx.logger.debug('day-night threshold options probe failed', {
                 tags: { deviceId: this.id },
-                meta: { error: err instanceof Error ? err.message : String(err) },
+                meta: {
+                  error: err instanceof Error ? err.message : String(err),
+                },
               })
             }
 
@@ -6237,7 +6393,11 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
   private registerStreamSignalsCap(): void {
     const signals: readonly StreamSignal[] = [
       { code: 'motion', label: 'Motion (camera)', recommended: true },
-      { code: 'detection', label: 'Object detected (camera)', recommended: true },
+      {
+        code: 'detection',
+        label: 'Object detected (camera)',
+        recommended: true,
+      },
     ]
     const provider: InferNativeProvider<typeof streamSignalsCapability> = {
       listSignals: async () => signals,
@@ -6338,7 +6498,9 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       if (enabled) {
         await this.resubscribeObjectDetections(api, 'cap-enabled').catch((err: unknown) => {
           this.ctx.logger.debug('Reolink objectDetections re-arm on enable failed', {
-            meta: { error: err instanceof Error ? err.message : String(err) },
+            meta: {
+              error: err instanceof Error ? err.message : String(err),
+            },
           })
         })
       } else {
@@ -6400,7 +6562,10 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     // restored from persistence (operator's saved `enabled` toggle) is never
     // clobbered by the cold-start default.
     if (this.runtimeState.getCapState(CAP_NAME) === undefined) {
-      this.runtimeState.setCapState(CAP_NAME, { ...buildEmptyState(), lastFetchedAt: Date.now() })
+      this.runtimeState.setCapState(CAP_NAME, {
+        ...buildEmptyState(),
+        lastFetchedAt: Date.now(),
+      })
       // NAMED, because this branch DESTROYS an operator setting whenever it is
       // reached by a camera that had one. `durability: 'restored'` says the
       // `enabled` toggle survives a restart; when the persisted slice does not
@@ -6426,7 +6591,9 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       // because the `dog_cat` mapping gap had been baked into the row before
       // the map was fixed. Re-derived here, on the cold path, patching only
       // the field that is nobody's decision.
-      this.runtimeState.patchCapState(CAP_NAME, { supportedClasses: buildSupportedClasses() })
+      this.runtimeState.patchCapState(CAP_NAME, {
+        supportedClasses: buildSupportedClasses(),
+      })
     }
 
     this.ctx.logger.info('Reolink native-object-detection cap registered', {
@@ -6946,7 +7113,12 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
           // autofocus comes from the persisted `getAutoFocus` probe
           // (`disable === 0` → autofocus enabled).
           const af = this.config.get('deviceCache')?.autoFocusSnapshot
-          return { pan: null, tilt: null, zoom: null, autofocus: af?.enabled === true }
+          return {
+            pan: null,
+            tilt: null,
+            zoom: null,
+            autofocus: af?.enabled === true,
+          }
         },
         setAutofocus: async ({ deviceId, enabled }) => {
           if (deviceId !== this.id) return
@@ -7106,7 +7278,12 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       }
       this.ctx.logger.debug('Baichuan zoom applied', {
         tags: { deviceId: this.id },
-        meta: { from: range.curPos, to: step.target, minPos: range.minPos, maxPos: range.maxPos },
+        meta: {
+          from: range.curPos,
+          to: step.target,
+          minPos: range.minPos,
+          maxPos: range.maxPos,
+        },
       })
     } catch (err) {
       this.ctx.logger.warn('Baichuan zoom command failed', {
@@ -7251,6 +7428,8 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    * FLV publication for those devices rather than emitting a broken URL.
    */
   private buildFlvUrl(channel: number, profile: ReolinkStreamProfile): string | null {
+    // A hub child never carries its own address or credentials; whatever is stored is ignored.
+    if (this.isHubChild()) return null
     const host = this.config.get('host')
     if (typeof host !== 'string' || host.length === 0) return null
     const user = encodeURIComponent(String(this.config.get('username') ?? ''))
@@ -7710,7 +7889,10 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     } catch (err) {
       this.ctx.logger.warn('publishCameraStream failed', {
         tags: { deviceId: this.id, camStreamId: entry.camStreamId },
-        meta: { kind: entry.kind, error: err instanceof Error ? err.message : String(err) },
+        meta: {
+          kind: entry.kind,
+          error: err instanceof Error ? err.message : String(err),
+        },
       })
     }
   }
@@ -7796,7 +7978,9 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       this.reconnectTimer = null
     }
     this.reachability.dispose()
-    this.ctx.logger.info('Removing Reolink camera', { meta: { stableId: this.stableId } })
+    this.ctx.logger.info('Removing Reolink camera', {
+      meta: { stableId: this.stableId },
+    })
     const ids = [...this.publishedStreamIds]
     await Promise.all(
       ids.map((id) =>
@@ -7911,7 +8095,11 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       return null
     }
 
-    const entry = { camStreamId, profile: this.profileForCamStream(camStreamId), server }
+    const entry = {
+      camStreamId,
+      profile: this.profileForCamStream(camStreamId),
+      server,
+    }
     this.active.set(camStreamId, entry)
 
     // Note: the lib's idle-teardown closes its TCP listener after ~15s with
@@ -8052,7 +8240,10 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
               'Sleep poll inferred sleep but streams are active — ignoring (consumer attached)',
               {
                 tags: { deviceId: this.id },
-                meta: { idleMs: status.idleMs, activeStreams: this.active.size },
+                meta: {
+                  idleMs: status.idleMs,
+                  activeStreams: this.active.size,
+                },
               },
             )
             return
@@ -8071,7 +8262,9 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
           })
         } else if (status.state === 'awake' && this.sleeping) {
           if (!this.commitSleepState(false, 'sleep-poll')) return
-          this.ctx.logger.debug('Sleep poll detected awake', { tags: { deviceId: this.id } })
+          this.ctx.logger.debug('Sleep poll detected awake', {
+            tags: { deviceId: this.id },
+          })
           // Backstop for a missed `awake` push event — drive the
           // same refresh contract the simpleEvent handler uses so
           // both paths converge to identical post-wake state.
@@ -8151,7 +8344,11 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     const refs = [...this.auxAccessoryRefs.values()]
     this.ctx.logger.info('alignAuxDevicesState: refreshing aux accessories from firmware', {
       tags: { deviceId: this.id },
-      meta: { reason, accessoryCount: refs.length, accessories: refs.map((r) => r.kind) },
+      meta: {
+        reason,
+        accessoryCount: refs.length,
+        accessories: refs.map((r) => r.kind),
+      },
     })
     const skipped: string[] = []
     // SERIALIZED on purpose: a battery doorbell speaks Baichuan over a single
@@ -8175,7 +8372,11 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       } catch (err: unknown) {
         this.ctx.logger.warn('alignAuxDevicesState: accessory refresh FAILED', {
           tags: { deviceId: this.id, accessoryDeviceId: ref.id },
-          meta: { reason, kind: ref.kind, error: err instanceof Error ? err.message : String(err) },
+          meta: {
+            reason,
+            kind: ref.kind,
+            error: err instanceof Error ? err.message : String(err),
+          },
         })
       }
     }
@@ -8261,7 +8462,10 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         failed.push(name)
         this.ctx.logger.debug('battery hourly refresh: step threw', {
           tags: { deviceId: this.id },
-          meta: { step: name, error: err instanceof Error ? err.message : String(err) },
+          meta: {
+            step: name,
+            error: err instanceof Error ? err.message : String(err),
+          },
         })
       }
     }
@@ -8388,7 +8592,11 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
   private async onWakeTransition(reason: SleepCommitSource): Promise<void> {
     this.ctx.logger.info('reolink wake transition — refreshing (serialized)', {
       tags: { deviceId: this.id },
-      meta: { reason, auxAccessoryCount: this.auxAccessoryRefs.size, isBattery: this.isBattery },
+      meta: {
+        reason,
+        auxAccessoryCount: this.auxAccessoryRefs.size,
+        isBattery: this.isBattery,
+      },
     })
     // SEQUENTIAL throughout: see alignAuxDevicesState — concurrent Baichuan
     // traffic on the doorbell's single BCUDP stream starves the heavy GetEnc
@@ -8650,12 +8858,18 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     }))
     if (!api.client.isSocketConnected() || !api.client.loggedIn) {
       this.ctx.logger.debug('Reolink simpleEvent subscribe skipped — socket not ready', {
-        meta: { reason, connected: api.client.isSocketConnected(), loggedIn: api.client.loggedIn },
+        meta: {
+          reason,
+          connected: api.client.isSocketConnected(),
+          loggedIn: api.client.loggedIn,
+        },
       })
       return
     }
     await api.onSimpleEvent(this.handleSimpleEventBound)
-    this.ctx.logger.debug('Reolink simpleEvent subscribed', { meta: { reason } })
+    this.ctx.logger.debug('Reolink simpleEvent subscribed', {
+      meta: { reason },
+    })
   }
 
   /**
@@ -8699,7 +8913,10 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     // listeners (same Set-dedup rationale as simpleEvents). offObjectDetections
     // is idempotent — a no-op when nothing is registered.
     try {
-      await api.offObjectDetections(this.handleObjectDetectionsBound, { channel, profile: 'sub' })
+      await api.offObjectDetections(this.handleObjectDetectionsBound, {
+        channel,
+        profile: 'sub',
+      })
     } catch {
       // No prior registration — ignore.
     }
@@ -8748,12 +8965,19 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
 
     if (!api.client.isSocketConnected() || !api.client.loggedIn) {
       this.ctx.logger.debug('Reolink objectDetections subscribe skipped — socket not ready', {
-        meta: { reason, connected: api.client.isSocketConnected(), loggedIn: api.client.loggedIn },
+        meta: {
+          reason,
+          connected: api.client.isSocketConnected(),
+          loggedIn: api.client.loggedIn,
+        },
       })
       return
     }
 
-    await api.onObjectDetections(this.handleObjectDetectionsBound, { channel, profile: 'sub' })
+    await api.onObjectDetections(this.handleObjectDetectionsBound, {
+      channel,
+      profile: 'sub',
+    })
     this.objectDetectionsSubscribed = true
     this.ctx.logger.debug('Reolink objectDetections subscribed (substream armed)', {
       meta: { reason, channel },
@@ -10091,12 +10315,32 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         ...buildBatteryRefreshDeviceSection({ isBattery: this.isBattery }),
       ],
     }
+    const hubChild = this.isHubChild()
+    const hubSession = this.hubSession()
+    const shownSchema: ConfigUISchema = hubChild
+      ? {
+          ...schema,
+          sections: applyHubChildSections(
+            schema.sections,
+            hubSession?.channelSnapshot() ?? EMPTY_HUB_CHANNEL_SNAPSHOT,
+          ),
+        }
+      : schema
     const emailSnap = cache?.emailConfigSnapshot
     const values: Record<string, unknown> = {
-      host: this.config.get('host'),
-      port: this.config.get('port'),
-      username: this.config.get('username'),
-      password: this.config.get('password'),
+      // A hub child's address and credentials are the integration's: never hydrated, so they
+      // can neither be shown nor echoed back into a patch.
+      ...(hubChild
+        ? {
+            hubName: hubSession?.name ?? this.hubIntegrationId() ?? '',
+            channel: this.config.get('channel'),
+          }
+        : {
+            host: this.config.get('host'),
+            port: this.config.get('port'),
+            username: this.config.get('username'),
+            password: this.config.get('password'),
+          }),
       // Email/SMTP — camera-side config, shown live from the snapshot (no
       // local persist). Password is never echoed back (blank = leave as-is).
       emailSmtpServer: emailSnap?.smtpServer ?? '',
@@ -10310,7 +10554,23 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       intercomMaxBacklogMs: this.config.get('intercomMaxBacklogMs') ?? 120,
       intercomGain: this.config.get('intercomGain') ?? 1.0,
     }
-    return hydrateSchema(schema, values)
+    return hydrateSchema(shownSchema, values)
+  }
+
+  /**
+   * A hub child's connection belongs to its integration. A patch touching host / port /
+   * username / password, or naming a channel the hub does not list, is refused with a typed,
+   * logged reason — never silently dropped. The read-only `hubName` echo is not a setting.
+   */
+  private refuseHubChildPatch(patch: Record<string, unknown>): void {
+    const channels = (this.hubSession()?.channelSnapshot().channels ?? []).map((c) => c.channel)
+    const refusal = judgeHubChildPatch(patch, channels)
+    if (refusal === null) return
+    this.ctx.logger.warn('hub child settings patch refused', {
+      tags: { deviceId: this.id },
+      meta: { ...refusal, integrationId: this.hubIntegrationId() },
+    })
+    throw new HubChildPatchRefusedError(refusal)
   }
 
   override async applySettingsPatch(patch: Record<string, unknown>): Promise<void> {
@@ -10323,6 +10583,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     // invalidation: the post-save `osd` slice refresh below re-reads the
     // camera, so the form always shows what the camera actually accepted —
     // a refused or partial `setOsd` is never recorded as fact.
+    if (this.isHubChild()) this.refuseHubChildPatch(patch)
     const {
       emailSmtpServer,
       emailSmtpPort,
@@ -10340,6 +10601,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       osdTimeEnabled,
       osdTimePosition,
       osdWatermark,
+      hubName: _hubName,
       ...rest
     } = patch
     // A camera-owned write must REACH the camera. On a hub child `ensureApi()`
@@ -10480,13 +10742,17 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
           } catch (dstError: unknown) {
             this.ctx.logger.debug('reolink DST push skipped (firmware may lack cmd 107)', {
               tags: { deviceId: this.id },
-              meta: { error: dstError instanceof Error ? dstError.message : String(dstError) },
+              meta: {
+                error: dstError instanceof Error ? dstError.message : String(dstError),
+              },
             })
           }
         } catch (error: unknown) {
           this.ctx.logger.warn('reolink timezone push failed', {
             tags: { deviceId: this.id },
-            meta: { error: error instanceof Error ? error.message : String(error) },
+            meta: {
+              error: error instanceof Error ? error.message : String(error),
+            },
           })
         }
       }
@@ -10627,7 +10893,10 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         await api.setAiDetectionFull(this.getChannel(), aiType, fullPatch)
       } catch (err) {
         this.ctx.logger.warn('ai detection push failed', {
-          meta: { aiType, error: err instanceof Error ? err.message : String(err) },
+          meta: {
+            aiType,
+            error: err instanceof Error ? err.message : String(err),
+          },
         })
       }
     }
@@ -11107,7 +11376,9 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    *  populated during `onProbe()`; falls back to false when the probe
    *  hasn't completed yet. */
   isBatteryCam(): boolean {
-    const fp = this.runtimeState.getCapState<{ flags?: Record<string, unknown> }>('feature-probe')
+    const fp = this.runtimeState.getCapState<{
+      flags?: Record<string, unknown>
+    }>('feature-probe')
     return fp?.flags?.['hasBattery'] === true
   }
 
@@ -11370,8 +11641,18 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    * - 'doorbell', 'daynight', 'other': informational debug log only.
    */
   /** Reusable event-source identity for every emit on this device. */
-  private eventSource(): { type: 'device'; id: number; addonId: string; deviceId: number } {
-    return { type: 'device', id: this.id, addonId: REOLINK_ADDON_ID, deviceId: this.id }
+  private eventSource(): {
+    type: 'device'
+    id: number
+    addonId: string
+    deviceId: number
+  } {
+    return {
+      type: 'device',
+      id: this.id,
+      addonId: REOLINK_ADDON_ID,
+      deviceId: this.id,
+    }
   }
 
   /**
@@ -11520,7 +11801,11 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       if (isNativeObjectClass(aiClass)) {
         void this.runtimeState.patchCapState('native-object-detection', {
           lastByClass: {
-            [aiClass]: { class: aiClass, timestamp: now, confidence: undefined },
+            [aiClass]: {
+              class: aiClass,
+              timestamp: now,
+              confidence: undefined,
+            },
           },
         })
       }
@@ -11589,7 +11874,9 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       {
         const committed = this.commitSleepState(false, 'simple-event')
         if (committed && wasSleeping) {
-          this.ctx.logger.info('Reolink camera woke up', { tags: { deviceId: this.id } })
+          this.ctx.logger.info('Reolink camera woke up', {
+            tags: { deviceId: this.id },
+          })
           this.ctx.eventBus.emit(
             createEvent(EventCategory.DeviceAwake, eventSource, {
               deviceId: this.id,
@@ -11641,7 +11928,11 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
                   profileCount: 0,
                   reason: 'firmware-push',
                 }
-              : { deviceId: this.id, providerId: REOLINK_ADDON_ID, reason: 'firmware-push' },
+              : {
+                  deviceId: this.id,
+                  providerId: REOLINK_ADDON_ID,
+                  reason: 'firmware-push',
+                },
           ),
         )
       }
@@ -11925,7 +12216,9 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       uid: typeof cfgUid === 'string' && cfgUid.length > 0 ? cfgUid : undefined,
       setDeviceCachePatch: async (cachePatch) => {
         const previous = this.config.get('deviceCache') ?? {}
-        await this.config.setAll({ deviceCache: { ...previous, ...cachePatch } })
+        await this.config.setAll({
+          deviceCache: { ...previous, ...cachePatch },
+        })
       },
     })
   }

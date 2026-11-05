@@ -111,6 +111,24 @@ describe('ReolinkHubManager', () => {
     await manager.shutdown()
   })
 
+  it('a changed integration host re-dials the NEW host and every child reaches it', async () => {
+    const { manager, registry, connect } = setup()
+    await manager.reconcile([NVR])
+    const session = registry.get('int-1')
+    if (session === null) throw new Error('session was not published')
+    await session.getApi()
+    expect(connect).toHaveBeenLastCalledWith(expect.objectContaining({ host: '10.0.0.5' }))
+    await manager.reconcile([integration('int-1', 'Hub', { host: '10.0.0.77', password: 'pw' })])
+    await vi.waitFor(() =>
+      expect(connect).toHaveBeenLastCalledWith(expect.objectContaining({ host: '10.0.0.77' })),
+    )
+    // The registry hands every child the SAME session object: its relay endpoint and its api
+    // follow the new address with no per-camera edit.
+    expect(registry.get('int-1')).toBe(session)
+    expect(registry.get('int-1')?.relayEndpoint().host).toBe('10.0.0.77')
+    await manager.shutdown()
+  })
+
   it('closes and unpublishes a session whose integration vanished', async () => {
     const { manager, registry } = setup()
     await manager.reconcile([NVR])

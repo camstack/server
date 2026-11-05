@@ -14,7 +14,10 @@ import { type HubSessionHandle, reolinkHubSessions } from '../reolink-hub-sessio
 
 const INT = 'int-1'
 
-function rig(): { readonly ctx: DeviceContext; readonly providers: Map<string, unknown> } {
+function rig(): {
+  readonly ctx: DeviceContext
+  readonly providers: Map<string, unknown>
+} {
   const providers = new Map<string, unknown>()
   let runtime: IDeviceRuntimeState | null = null
   // A DeviceContext is the kernel's own object; the spec supplies only what the device reads.
@@ -32,7 +35,11 @@ function rig(): { readonly ctx: DeviceContext; readonly providers: Map<string, u
     },
     persistedConfig: { integrationId: INT, nativeId: `${INT}:gateway` },
     initialRuntimeState: {},
-    eventBus: { emit: vi.fn(), subscribe: vi.fn(() => () => {}), getRecent: vi.fn(() => []) },
+    eventBus: {
+      emit: vi.fn(),
+      subscribe: vi.fn(() => () => {}),
+      getRecent: vi.fn(() => []),
+    },
     persistConfig: vi.fn(async () => {}),
     bindRuntimeState: (rs: IDeviceRuntimeState) => {
       runtime = rs
@@ -67,12 +74,23 @@ async function call(
 
 function publish(reboot: () => Promise<void>): void {
   const handle: HubSessionHandle = {
+    name: 'Hub',
+    channelSnapshot: () => ({
+      channels: [],
+      lastRefreshAt: null,
+      lastError: null,
+    }),
     isOnline: true,
     reboot,
     getApi: async () => {
       throw new Error('the gateway never reads the api directly')
     },
-    relayEndpoint: () => ({ host: '10.0.0.5', username: 'admin', password: 'pw', port: 554 }),
+    relayEndpoint: () => ({
+      host: '10.0.0.5',
+      username: 'admin',
+      password: 'pw',
+      port: 554,
+    }),
   }
   reolinkHubSessions.set(INT, handle)
 }
@@ -106,9 +124,15 @@ describe('ReolinkGatewayDevice', () => {
   it('builds the admin link from the hub host and carries no credentials', async () => {
     const { ctx, providers } = rig()
     new ReolinkGatewayDevice(ctx)
-    expect(await call(providers, 'device-admin-link', 'getAdminLink', { deviceId: 7 })).toBeNull()
+    expect(
+      await call(providers, 'device-admin-link', 'getAdminLink', {
+        deviceId: 7,
+      }),
+    ).toBeNull()
     publish(async () => {})
-    const link = await call(providers, 'device-admin-link', 'getAdminLink', { deviceId: 7 })
+    const link = await call(providers, 'device-admin-link', 'getAdminLink', {
+      deviceId: 7,
+    })
     expect(link).toMatchObject({ url: 'https://10.0.0.5/', host: '10.0.0.5' })
     expect(JSON.stringify(link)).not.toContain('pw')
   })

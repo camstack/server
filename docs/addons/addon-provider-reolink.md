@@ -136,6 +136,22 @@ nobody offline.
   default integration keeps the full global schema (clips). An
   instance that cannot be read falls back to the full schema.
 
+### A camera under an NVR: what its settings show and refuse
+
+The address and the credentials of an NVR-adopted camera are the integration's, never its own.
+Its dial path (`ensureApi`, the relay descriptors, the stills lane key, the admin link) reads the
+session / the integration connection only; a stale `host` / `password` still stored on the
+camera is never read, and there is no FLV url of its own. Its settings schema
+(`hub-child-settings.ts`) replaces the Connection section with a **Hub** section: the
+integration name (read-only) and the **channel**, the only editable connection field. The
+Service ports and Time / NTP sections are hidden too, since their writes (`setPortConfig`,
+`setNtp`, `setSystemGeneral`) act on the NVR, not on the channel. A patch touching host / port /
+username / password is refused with a logged typed reason (`HubChildPatchRefusedError`), and a
+channel patch must be an integer the hub lists. The channel is also kept right on its own: every
+channel-list read (first connect, then the 60 s pass) runs `planChannelReconciliation` and applies
+and logs (`tags.deviceId`) any move by camera UID. Editing the hub's host or port on its
+integration redials the one session (`reconfigure`), and every child follows it.
+
 ## Passive contact, and where a standalone camera gets none
 
 `battery.lastContactAt` is stamped ONLY by evidence that cost nothing: an
