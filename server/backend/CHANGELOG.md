@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Deleting a device from the UI now also stops the instance running inside its addon worker (no zombie timers, no stale 'already adopted'); accessories of a hub-child camera inherit the hub's integration
+
 ## [1.2.775] - 2026-11-05
 
 ### Changed

@@ -94,6 +94,20 @@ describe('kernel devices.remove cascades into the subtree', () => {
     expect(tombstoned).toEqual(expect.arrayContaining([parent.id, childA.id, childB.id]))
   })
 
+  it('a HUB-initiated remove (UI delete) drops the worker registry entries of the subtree', async () => {
+    const { dm, registry, parent, childA, childB } = await world()
+
+    // The hub reaches the worker only through each device's `device-ops`; the
+    // worker never calls `devices.remove` itself here.
+    await dm.provider.remove({ deviceId: parent.id })
+
+    for (const d of [parent, childA, childB]) {
+      expect(registry.getById(d.id)).toBeNull()
+      expect(d.removeDevice).toHaveBeenCalledTimes(1)
+    }
+    expect(registry.getAllForAddon(ADDON)).toEqual([])
+  })
+
   it('still removes a persisted-only orphan (no live device in the worker)', async () => {
     const { dm, devices, registry, childA } = await world()
     await devices.decommission(childA.id)

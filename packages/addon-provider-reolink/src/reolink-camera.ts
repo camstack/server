@@ -888,6 +888,8 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    *  Mirrors the reference's `batteryUpdateTimer`: fires every hour,
    *  passively checks sleep state, and short-circuits if sleeping. */
   private batteryUpdateTimer: ReturnType<typeof setInterval> | null = null
+  /** Set by `removeDevice`: nothing may re-arm a timer on a removed camera. */
+  private removed = false
   /** Single-flight gate so two interval fires can't overlap. */
 
   /** Aux accessory references registered by spawned children
@@ -7972,6 +7974,14 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
   }
 
   override async removeDevice(): Promise<void> {
+    // First, synchronously: the broker retraction below is awaited, and a
+    // timer left running meanwhile (or re-armed by a late probe/reconnect)
+    // keeps refreshing a device the hub already deleted.
+    this.removed = true
+    this.stopSleepPoll()
+    this.stopBatteryUpdatePolling()
+    this.stopAlignAuxPolling()
+    this.stopWatchdogs()
     this.detachFromHubSession()
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer)
@@ -8195,6 +8205,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    * `sleeping`/`awake` transition (firmware quirks, NAT timeouts).
    */
   private startSleepPoll(): void {
+    if (this.removed) return
     if (this.sleepPollTimer) return
     if (!this.isBattery) return
     // Hub-child battery cams: skip the poll.
@@ -8391,6 +8402,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
   /** Start periodic align for wired cams. No-op for battery cams (wake
    *  path handles it). Idempotent. */
   private startAlignAuxPolling(): void {
+    if (this.removed) return
     if (this.alignAuxTimer) return
     if (this.isBattery) return
     const POLL_MS = 10_000
@@ -8497,6 +8509,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
   /** Arm the scheduled-refresh check. No-op for wired cams (their state is
    *  kept fresh by the 10 s aux-align poll and push events). Idempotent. */
   private startBatteryUpdatePolling(): void {
+    if (this.removed) return
     if (this.batteryUpdateTimer) return
     if (!this.isBattery) return
     this.batteryUpdateTimer = setInterval(() => {
@@ -8706,6 +8719,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    * with parallel watchdogs after a reconnect cycle.
    */
   private startWatchdogs(): void {
+    if (this.removed) return
     this.stopWatchdogs()
     this.watchdogStartedAt = Date.now()
     this.consecutivePingFailures = 0
@@ -9071,6 +9085,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    *     re-subscribes the moment the socket comes back up.
    */
   private startEventHealthCheck(): void {
+    if (this.removed) return
     this.stopEventHealthCheck()
     this.consecutiveStaleHealthChecks = 0
     this.nextEventHealthCheckAt = 0
@@ -12376,6 +12391,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     // connection.
     this.api = null
 
+    if (this.removed) return
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null
       // Trigger ensureApi indirectly — the next demand event will. We

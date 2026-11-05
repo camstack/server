@@ -439,7 +439,16 @@ function deviceHasStreamSources(
   return typeof Reflect.get(device, 'getStreamSources') === 'function'
 }
 
-export function buildDeviceOpsProvider(device: IDevice): InferProvider<typeof deviceOpsCapability> {
+/**
+ * `afterRemove` is the worker's local teardown (registry entry, native caps,
+ * children). The hub's `remove` reaches a forked worker ONLY through this
+ * provider, so the lifecycle call alone would leave a zombie instance in the
+ * worker (timers running, still listed as adopted). It is idempotent.
+ */
+export function buildDeviceOpsProvider(
+  device: IDevice,
+  afterRemove?: (deviceId: number) => Promise<void>,
+): InferProvider<typeof deviceOpsCapability> {
   const assertMatch = (incoming: number): void => {
     if (incoming !== device.id) {
       throw new Error(`device-ops: deviceId mismatch — expected '${device.id}', got '${incoming}'`)
@@ -466,6 +475,7 @@ export function buildDeviceOpsProvider(device: IDevice): InferProvider<typeof de
     removeDevice: async (input: { deviceId: number }) => {
       assertMatch(input.deviceId)
       await device.removeDevice()
+      await afterRemove?.(device.id)
     },
     getSettingsSchema: async (input: { deviceId: number }) => {
       assertMatch(input.deviceId)
@@ -839,6 +849,14 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
     }
   }
 
+  /** The integration a spawned child inherits: its parent's persisted one, if any. */
+  const resolveParentIntegrationId = async (parentId: number): Promise<string | undefined> => {
+    const parentMeta = (await callDeviceManager(api, 'loadMeta', { deviceId: parentId }).catch(
+      () => null,
+    )) as import('@camstack/types').DeviceMeta | null
+    return parentMeta?.integrationId ?? undefined
+  }
+
   /**
    * Spawn one accessory child device declared by a parent's
    * `getAccessoryChildren()`. Mirrors the standard `create()` flow
@@ -903,13 +921,16 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
     // This runs BEFORE the child constructor below so ctx.deviceMeta already
     // carries the correct values when the constructor reads it.
     const linkDeviceId = spec.meta.linkDeviceId ?? parent.id
+    // A child with no explicit integrationId belongs to its parent's integration
+    // (an explicit spec value wins). Without this it falls to the addon default.
+    const integrationId = spec.meta.integrationId ?? (await resolveParentIntegrationId(parent.id))
     const initialMeta: import('@camstack/types').DeviceManagerApplyInitialMetaInput = {
       deviceId: id,
       linkDeviceId,
       ...(isFirstSpawn && spec.meta.name !== undefined ? { name: spec.meta.name } : {}),
       ...(isFirstSpawn && spec.meta.location !== undefined ? { location: spec.meta.location } : {}),
       ...(spec.meta.type !== undefined ? { type: spec.meta.type } : {}),
-      ...(spec.meta.integrationId !== undefined ? { integrationId: spec.meta.integrationId } : {}),
+      ...(integrationId !== undefined ? { integrationId } : {}),
       ...(spec.meta.role !== undefined ? { role: spec.meta.role } : {}),
     }
     await callDeviceManager(api, 'applyInitialMeta', initialMeta).catch((err: unknown) => {
@@ -1291,7 +1312,9 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
       const ctxForDevice = buildContext(device.stableId, device.id, device.parentDeviceId)
       ctxForDevice.registerNativeCap(
         deviceOpsCapability,
-        buildDeviceOpsProvider(device) as InferProvider<typeof deviceOpsCapability>,
+        buildDeviceOpsProvider(device, (id) => teardownLocal(id, false)) as InferProvider<
+          typeof deviceOpsCapability
+        >,
       )
       try {
         // Config is no longer threaded through `registerDevice` —
