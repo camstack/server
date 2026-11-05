@@ -10165,7 +10165,9 @@
       "unknown": "sconosciuta",
       "landed": "Connessione interrotta; il nodo conferma che l'aggiornamento è andato a buon fine (stato {{state}}, versione in esecuzione {{version}}).",
       "unchanged": "Connessione interrotta e il nodo è tornato invariato (ancora {{version}}, aggiornamento ancora disponibile). Nulla è stato preparato.",
-      "unconfirmed": "Connessione interrotta e il nodo non è stato confermato dopo {{attempts}} tentativi ({{error}}). Potrebbe essere in riavvio: ricontrolla questo nodo."
+      "unconfirmed": "Connessione interrotta e il nodo non è stato confermato dopo {{attempts}} tentativi ({{error}}). Potrebbe essere in riavvio: ricontrolla questo nodo.",
+      "skippedAfterHub": "Non tentato: il passo {{hub}} non è andato a buon fine prima ({{why}}). Gli agent si aggiornano solo dopo che l'hub esegue la nuova versione.",
+      "hubNotSettled": "non è tornato in tempo sulla nuova versione"
     },
     "ssoReturn": {
       "signInFallback": "accesso",

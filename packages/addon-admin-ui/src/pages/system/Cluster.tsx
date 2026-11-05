@@ -85,6 +85,7 @@ const OUTCOME_STYLE: Record<NodeUpdateReport['outcome'], string> = {
   refused: 'border-warning/40 bg-warning/10 text-warning',
   failed: 'border-danger/40 bg-danger/10 text-danger',
   unconfirmed: 'border-warning/40 bg-warning/10 text-warning',
+  skipped: 'border-warning/40 bg-warning/10 text-warning',
 }
 
 export function ClusterPage() {

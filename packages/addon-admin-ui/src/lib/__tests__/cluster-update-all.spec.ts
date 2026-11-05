@@ -65,24 +65,26 @@ function status(over: Partial<ServerPackageStatus>): ServerPackageStatus {
 function makeSeams(over: Partial<UpdateAllSeams>): UpdateAllSeams {
   return {
     apply: vi.fn(async () => accepted('1.2.205')),
-    readStatus: vi.fn(async () => status({})),
+    // The hub reads back as already running the target, so a sequence that
+    // gates on it moves on to the agents.
+    readStatus: vi.fn(async () => status({ updateAvailable: false, runningVersion: '1.2.205' })),
     wait: async () => undefined,
     ...over,
   }
 }
 
 describe('orderForUpdateAll', () => {
-  it('sequences agents first and the hub last', () => {
-    expect(orderForUpdateAll([HUB, AGENT_A, AGENT_B]).map((n) => n.id)).toEqual([
+  it('sequences the hub first and the agents after it', () => {
+    expect(orderForUpdateAll([AGENT_A, HUB, AGENT_B]).map((n) => n.id)).toEqual([
+      'hub',
       'agent-a',
       'agent-b',
-      'hub',
     ])
   })
 })
 
 describe('updateAllNodes', () => {
-  it('reaches the hub even when an agent drops the connection mid-response', async () => {
+  it('reaches the next agent even when one agent drops the connection mid-response', async () => {
     const seen: string[] = []
     const seams = makeSeams({
       apply: async (routing) => {
@@ -95,9 +97,67 @@ describe('updateAllNodes', () => {
       readStatus: async () => status({ runningVersion: '1.2.205', updateAvailable: false }),
     })
 
-    await updateAllNodes([HUB, AGENT_A], seams)
+    await updateAllNodes([HUB, AGENT_A, AGENT_B], seams)
 
-    expect(seen).toEqual(['agent-a', 'hub'])
+    expect(seen).toEqual(['hub', 'agent-a', 'agent-b'])
+  })
+
+  it('does not touch an agent until the hub runs the target', async () => {
+    const seen: string[] = []
+    let reads = 0
+    const seams = makeSeams({
+      apply: async (routing) => {
+        seen.push(routing.nodeId ?? 'hub')
+        return accepted('1.2.205')
+      },
+      // Two reads while the hub restarts, then it answers on the new version.
+      readStatus: async () => {
+        reads += 1
+        if (reads === 1) throw new Error('hub restarting')
+        if (reads === 2)
+          return status({ updateState: 'pending-restart', pendingVersion: '1.2.205' })
+        return status({ updateAvailable: false, runningVersion: '1.2.205' })
+      },
+    })
+
+    const reports = await updateAllNodes([AGENT_A, HUB], seams)
+
+    expect(reads).toBe(3)
+    expect(seen).toEqual(['hub', 'agent-a'])
+    expect(reports.map((r) => r.outcome)).toEqual(['applied', 'applied'])
+  })
+
+  it('stops after a hub that refuses and names the hub step for every agent', async () => {
+    const seen: string[] = []
+    const seams = makeSeams({
+      apply: async (routing) => {
+        seen.push(routing.nodeId ?? 'hub')
+        return refused('Refused: workspace checkout.')
+      },
+    })
+
+    const reports = await updateAllNodes([HUB, AGENT_A, AGENT_B], seams)
+
+    expect(seen).toEqual(['hub'])
+    expect(reports.map((r) => r.outcome)).toEqual(['refused', 'skipped', 'skipped'])
+    expect(reports[1]?.detail).toMatch(/Hub/)
+  })
+
+  it('stops after a hub that never settles on the target', async () => {
+    const seen: string[] = []
+    const seams = makeSeams({
+      apply: async (routing) => {
+        seen.push(routing.nodeId ?? 'hub')
+        return accepted('1.2.205')
+      },
+      readStatus: async () => status({ updateAvailable: true }),
+    })
+
+    const reports = await updateAllNodes([HUB, AGENT_A], seams)
+
+    expect(seen).toEqual(['hub'])
+    expect(reports.map((r) => r.outcome)).toEqual(['applied', 'skipped'])
+    expect(reports[1]?.detail).toMatch(/Hub/)
   })
 
   it('reports a REFUSAL as refused, never as a success', async () => {
@@ -189,8 +249,8 @@ describe('updateAllNodes', () => {
 
     const reports = await updateAllNodes([HUB, AGENT_A, AGENT_B], seams)
 
-    expect(reports.map((r) => r.nodeId)).toEqual(['agent-a', 'agent-b', 'hub'])
-    expect(reports.map((r) => r.outcome)).toEqual(['refused', 'applied', 'applied'])
+    expect(reports.map((r) => r.nodeId)).toEqual(['hub', 'agent-a', 'agent-b'])
+    expect(reports.map((r) => r.outcome)).toEqual(['applied', 'refused', 'applied'])
   })
 
   it('routes the hub unpinned and every agent by nodeId', async () => {
@@ -204,6 +264,6 @@ describe('updateAllNodes', () => {
 
     await updateAllNodes([HUB, AGENT_A], seams)
 
-    expect(routings).toEqual([{ nodeId: 'agent-a' }, {}])
+    expect(routings).toEqual([{}, { nodeId: 'agent-a' }])
   })
 })

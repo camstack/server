@@ -10143,7 +10143,9 @@
       "unknown": "unknown",
       "landed": "Connection dropped, and the node confirms the update landed (state {{state}}, running {{version}}).",
       "unchanged": "Connection dropped and the node came back unchanged (still {{version}}, update still available). Nothing was staged.",
-      "unconfirmed": "Connection dropped and the node could not be confirmed after {{attempts}} attempts ({{error}}). It may be restarting — re-check this node."
+      "unconfirmed": "Connection dropped and the node could not be confirmed after {{attempts}} attempts ({{error}}). It may be restarting — re-check this node.",
+      "skippedAfterHub": "Not attempted: the {{hub}} step did not land first ({{why}}). Agents are updated only after the hub runs the new version.",
+      "hubNotSettled": "it did not come back on the new version in time"
     },
     "ssoReturn": {
       "signInFallback": "sign-in",

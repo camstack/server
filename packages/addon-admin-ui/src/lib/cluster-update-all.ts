@@ -70,8 +70,11 @@ export interface UpdateAllTarget {
  *                    unchanged, so nothing was ever armed.
  *  - `unconfirmed` — the call was dropped and the node could not be read back.
  *                    Not a success and not a failure; the honest third answer.
+ *  - `skipped`     — never attempted: the hub step before it did not land, and
+ *                    `detail` names it. An agent is not updated past a hub that
+ *                    still runs the old server.
  */
-export type NodeUpdateOutcome = 'applied' | 'refused' | 'failed' | 'unconfirmed'
+export type NodeUpdateOutcome = 'applied' | 'refused' | 'failed' | 'unconfirmed' | 'skipped'
 
 export interface NodeUpdateReport {
   readonly nodeId: string
@@ -97,11 +100,21 @@ const CONFIRM_ATTEMPTS = 3
 const CONFIRM_DELAY_MS = 7_000
 
 /**
- * Agents first, hub last: the hub hosts the cap routing to every agent, so
- * restarting it first would strand the rest of the sequence.
+ * How long the hub is given to come back on the target before the agents are
+ * left alone: 36 reads, 5 s apart (~3 min), enough for a container bounce.
+ */
+const HUB_SETTLE_ATTEMPTS = 36
+const HUB_SETTLE_DELAY_MS = 5_000
+
+/**
+ * Hub first, agents after: one update order everywhere (the CLI's
+ * `ops-update-apply` already does it). An agent's server and addons are judged
+ * against what the hub requires, and the hub is what delivers an agent its
+ * addons — an agent updated ahead of the hub is told to wait or ends up on a
+ * server the hub does not yet speak.
  */
 export function orderForUpdateAll(nodes: readonly UpdateAllTarget[]): readonly UpdateAllTarget[] {
-  return [...nodes].sort((a, b) => (a.isHub === b.isHub ? 0 : a.isHub ? 1 : -1))
+  return [...nodes].sort((a, b) => (a.isHub === b.isHub ? 0 : a.isHub ? -1 : 1))
 }
 
 function routingFor(node: UpdateAllTarget): NodeRouting {
@@ -176,26 +189,74 @@ function classifyAnswer(result: ServerUpdateActionResult): NodeUpdateOutcome {
 }
 
 /**
- * Run the sequence. Never throws: every node produces exactly one report, and
- * one node's outcome never stops the next — the hub is LAST, and the whole
- * point of the 2026-09-01 failure is that it must still be reached.
+ * Is the hub RUNNING the target, read from its own status? A read that fails
+ * (the hub is mid-restart) is another attempt, never a pass.
+ */
+async function hubSettled(seams: UpdateAllSeams): Promise<boolean> {
+  for (let attempt = 1; attempt <= HUB_SETTLE_ATTEMPTS; attempt += 1) {
+    try {
+      const status = await seams.readStatus({})
+      if (
+        !status.updateAvailable &&
+        status.updateState === 'idle' &&
+        status.pendingVersion === null
+      ) {
+        return true
+      }
+    } catch {
+      // restarting — read again
+    }
+    if (attempt < HUB_SETTLE_ATTEMPTS) await seams.wait(HUB_SETTLE_DELAY_MS)
+  }
+  return false
+}
+
+function skippedReport(node: UpdateAllTarget, hub: UpdateAllTarget, why: string): NodeUpdateReport {
+  return {
+    nodeId: node.id,
+    nodeName: node.name,
+    outcome: 'skipped',
+    detail: i18n.t('helpers.clusterUpdateAll.skippedAfterHub', { hub: hub.name, why }),
+  }
+}
+
+/**
+ * Run the sequence. Never throws: every node produces exactly one report. The
+ * hub goes FIRST and the agents wait until it runs the target; if the hub
+ * step does not land, the agents are reported `skipped` and name that step.
+ * Between agents, one outcome never stops the next.
  */
 export async function updateAllNodes(
   nodes: readonly UpdateAllTarget[],
   seams: UpdateAllSeams,
 ): Promise<readonly NodeUpdateReport[]> {
   const reports: NodeUpdateReport[] = []
+  let blockedBy: { readonly hub: UpdateAllTarget; readonly why: string } | null = null
   for (const node of orderForUpdateAll(nodes)) {
+    if (blockedBy !== null) {
+      reports.push(skippedReport(node, blockedBy.hub, blockedBy.why))
+      continue
+    }
+    let report: NodeUpdateReport
     try {
       const result = await seams.apply(routingFor(node))
-      reports.push({
+      report = {
         nodeId: node.id,
         nodeName: node.name,
         outcome: classifyAnswer(result),
         detail: result.message,
-      })
+      }
     } catch {
-      reports.push(await confirmDroppedCall(node, seams))
+      report = await confirmDroppedCall(node, seams)
+    }
+    reports.push(report)
+    if (node.isHub) {
+      const isLast = reports.length === nodes.length
+      if (report.outcome !== 'applied') {
+        blockedBy = { hub: node, why: report.outcome }
+      } else if (!isLast && !(await hubSettled(seams))) {
+        blockedBy = { hub: node, why: i18n.t('helpers.clusterUpdateAll.hubNotSettled') }
+      }
     }
   }
   return reports
