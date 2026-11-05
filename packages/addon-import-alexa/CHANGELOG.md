@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.188] - 2026-11-05
+
 ### Changed
 
 - Amazon sign-in and token renewal no longer depend on the alexa-cookie library; existing accounts keep working without signing in again

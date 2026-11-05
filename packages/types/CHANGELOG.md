@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.503] - 2026-11-05
+
 ### Fixed
 
 - Addon authors can import InstanceChange and statusInstanceOf, take fakeAddonContext from @camstack/types/testing (optional @trpc/client peer), and a device-export provider can omit the per-device settings methods.
