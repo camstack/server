@@ -15,6 +15,7 @@
  * the hero card. The hero no longer owns it.
  */
 import type { ReactNode } from 'react'
+import { Select } from '../../primitives/select'
 import { type ContainerChild } from './container-primary'
 
 /** A child row the picker can offer. */
@@ -36,8 +37,7 @@ export interface PrimaryChildPickerProps {
   readonly className?: string
 }
 
-const BASE_SELECT_CLASS =
-  'rounded-md border border-border bg-surface px-1.5 py-0.5 text-[11px] text-foreground'
+const BASE_SELECT_CLASS = 'w-auto text-[11px]'
 
 export function PrimaryChildPicker({
   childrenList,
@@ -47,7 +47,8 @@ export function PrimaryChildPicker({
   className,
 }: PrimaryChildPickerProps): ReactNode {
   return (
-    <select
+    <Select
+      wrapperClassName="inline-block w-auto max-w-full"
       value={selectedId}
       disabled={disabled}
       onChange={(e) => {
@@ -75,6 +76,6 @@ export function PrimaryChildPicker({
           {c.name} ({c.type})
         </option>
       ))}
-    </select>
+    </Select>
   )
 }

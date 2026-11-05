@@ -9,6 +9,7 @@
  * the robot app's joystick. The manual level slider appears only in manual
  * mode, as the cap's own contract asks.
  */
+import { Select } from '../../primitives/select'
 import { type ComponentType, type JSX } from 'react'
 import {
   ArrowUp,
@@ -133,7 +134,9 @@ export function NavigationPanel({ deviceId }: CapSettingsComponentProps): JSX.El
   const t = useUiText()
   const system = useSystem()
   const ready = Number.isFinite(deviceId)
-  const nav = useNavigation(system.trpcClient, ready ? deviceId : 0, { enabled: ready })
+  const nav = useNavigation(system.trpcClient, ready ? deviceId : 0, {
+    enabled: ready,
+  })
 
   if (!ready) {
     return (
@@ -275,7 +278,7 @@ export function NavigationPanel({ deviceId }: CapSettingsComponentProps): JSX.El
           </div>
           {features.lightMode && (
             <div className="flex items-center gap-2">
-              <select
+              <Select
                 aria-label={t('uiLibrary.navigationPanel.lightMode', 'Light mode')}
                 className="rounded-md bg-surface-elevated/40 px-2 py-1 text-[10px] text-foreground"
                 value={status?.lightMode ?? 'auto'}
@@ -287,7 +290,7 @@ export function NavigationPanel({ deviceId }: CapSettingsComponentProps): JSX.El
               >
                 <option value="auto">{t('uiLibrary.navigationPanel.auto', 'Auto')}</option>
                 <option value="manual">{t('uiLibrary.navigationPanel.manual', 'Manual')}</option>
-              </select>
+              </Select>
               {manual && (
                 <input
                   type="range"

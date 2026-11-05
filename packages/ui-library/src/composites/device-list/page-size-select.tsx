@@ -4,6 +4,7 @@
  * One control for both list modes (the device table and the generic table),
  * so the two never drift in look or wording. `PAGE_SIZE_ALL` renders as "All".
  */
+import { Select } from '../../primitives/select'
 import { type ReactNode } from 'react'
 import { defaultUiText, useUiText, type UiTextFn } from '../../contexts/ui-text'
 import { PAGE_SIZE_ALL } from '../../hooks/use-persisted-page-size'
@@ -30,7 +31,7 @@ export function PageSizeSelect({
   return (
     <div className="inline-flex items-center gap-1.5">
       <span aria-hidden="true">{t('uiLibrary.pageSizeSelect.perPage', 'Per page')}</span>
-      <select
+      <Select
         aria-label={ariaLabel}
         value={value}
         onChange={(e) => onChange(Number.parseInt(e.target.value, 10))}
@@ -41,7 +42,7 @@ export function PageSizeSelect({
             {pageSizeLabel(opt, t)}
           </option>
         ))}
-      </select>
+      </Select>
     </div>
   )
 }

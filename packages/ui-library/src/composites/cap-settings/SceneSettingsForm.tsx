@@ -34,6 +34,7 @@
  * caller refetches (D62).
  */
 
+import { Select } from '../../primitives/select'
 import type { SceneCheck, SceneMonitor, SceneUncoveredPolicy } from '@camstack/types'
 import { useEffect, useState, type JSX } from 'react'
 import { UiTrans, useUiText, type UiTextFn } from '../../contexts/ui-text'
@@ -210,7 +211,7 @@ export function SceneSettingsForm({
           <span className={LABEL}>
             {t('uiLibrary.sceneSettingsForm.whenToLook', 'When to look')}
           </span>
-          <select
+          <Select
             value={monitor.triggerMode}
             disabled={disabled}
             className={FIELD}
@@ -233,7 +234,7 @@ export function SceneSettingsForm({
             <option value="on-motion">
               {t('uiLibrary.sceneSettingsForm.triggerOnMotion', 'After motion settles only')}
             </option>
-          </select>
+          </Select>
         </label>
         <p className={TEXT_HINT}>{triggerHint(monitor.triggerMode, t)}</p>
 
@@ -250,7 +251,10 @@ export function SceneSettingsForm({
             className={FIELD}
             onFocus={() => setEditing(true)}
             onChange={(e) =>
-              setDraft((d) => ({ ...d, checkIntervalSec: Number(e.target.value) || 0 }))
+              setDraft((d) => ({
+                ...d,
+                checkIntervalSec: Number(e.target.value) || 0,
+              }))
             }
             onBlur={() => {
               const sec = clamp(draft.checkIntervalSec, MIN_INTERVAL_SEC, MAX_INTERVAL_SEC)
@@ -295,12 +299,16 @@ export function SceneSettingsForm({
                 onChange={(e) => setDraft((d) => ({ ...d, threshold: Number(e.target.value) }))}
                 onMouseUp={() => {
                   if (draft.threshold !== storedThreshold) {
-                    commit({ check: patchCheck({ threshold: draft.threshold }) })
+                    commit({
+                      check: patchCheck({ threshold: draft.threshold }),
+                    })
                   } else setEditing(false)
                 }}
                 onBlur={() => {
                   if (draft.threshold !== storedThreshold) {
-                    commit({ check: patchCheck({ threshold: draft.threshold }) })
+                    commit({
+                      check: patchCheck({ threshold: draft.threshold }),
+                    })
                   } else setEditing(false)
                 }}
               />
@@ -330,7 +338,10 @@ export function SceneSettingsForm({
             className={FIELD}
             onFocus={() => setEditing(true)}
             onChange={(e) =>
-              setDraft((d) => ({ ...d, hysteresisCount: Number(e.target.value) || 1 }))
+              setDraft((d) => ({
+                ...d,
+                hysteresisCount: Number(e.target.value) || 1,
+              }))
             }
             onBlur={() => {
               const n = clamp(draft.hysteresisCount, 1, 10)
@@ -359,7 +370,12 @@ export function SceneSettingsForm({
             disabled={disabled}
             className={FIELD}
             onFocus={() => setEditing(true)}
-            onChange={(e) => setDraft((d) => ({ ...d, quietSeconds: Number(e.target.value) || 0 }))}
+            onChange={(e) =>
+              setDraft((d) => ({
+                ...d,
+                quietSeconds: Number(e.target.value) || 0,
+              }))
+            }
             onBlur={() => {
               const sec = clamp(draft.quietSeconds, 0, 3_600)
               if (sec !== monitor.quietSeconds) commit({ quietSeconds: sec })
@@ -390,7 +406,10 @@ export function SceneSettingsForm({
             className={FIELD}
             onFocus={() => setEditing(true)}
             onChange={(e) =>
-              setDraft((d) => ({ ...d, minObservationSpacingSec: Number(e.target.value) || 0 }))
+              setDraft((d) => ({
+                ...d,
+                minObservationSpacingSec: Number(e.target.value) || 0,
+              }))
             }
             onBlur={() => {
               const sec = clamp(draft.minObservationSpacingSec, 0, 3_600)
@@ -418,7 +437,7 @@ export function SceneSettingsForm({
               'When a light has no reference of its own',
             )}
           </span>
-          <select
+          <Select
             value={monitor.onUncoveredCondition}
             disabled={disabled}
             className={FIELD}
@@ -438,7 +457,7 @@ export function SceneSettingsForm({
                 'Judge against the other light anyway',
               )}
             </option>
-          </select>
+          </Select>
         </label>
         <p className={TEXT_HINT}>{uncoveredHint(monitor.onUncoveredCondition, t)}</p>
       </div>
@@ -452,7 +471,7 @@ export function SceneSettingsForm({
           <span className={LABEL}>
             {t('uiLibrary.sceneSettingsForm.notificationsFollow', 'Notifications follow')}
           </span>
-          <select
+          <Select
             value={monitor.emit}
             disabled={disabled}
             className={FIELD}
@@ -473,7 +492,7 @@ export function SceneSettingsForm({
                 'The live state — follows the region as it changes',
               )}
             </option>
-          </select>
+          </Select>
         </label>
         <p className={TEXT_HINT}>
           {t(
@@ -517,7 +536,12 @@ export function SceneSettingsForm({
             onChange={(e) =>
               commit(
                 e.target.checked
-                  ? { confirm: { ...defaultConfirm(draft.confirmPrompt.trim()), enabled: true } }
+                  ? {
+                      confirm: {
+                        ...defaultConfirm(draft.confirmPrompt.trim()),
+                        enabled: true,
+                      },
+                    }
                   : { confirm: null },
               )
             }
@@ -548,7 +572,10 @@ export function SceneSettingsForm({
               const prompt = draft.confirmPrompt.trim()
               if (prompt.length > 0 && prompt !== monitor.confirm?.prompt) {
                 commit({
-                  confirm: { ...defaultConfirm(prompt), enabled: confirmEnabled },
+                  confirm: {
+                    ...defaultConfirm(prompt),
+                    enabled: confirmEnabled,
+                  },
                 })
               } else setEditing(false)
             }}

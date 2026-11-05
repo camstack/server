@@ -30,6 +30,7 @@
  *   `none`     — Home REFUSES, and the UI says so. A disabled feature must
  *                never look like a broken one (D62).
  */
+import { Select } from '../../primitives/select'
 import { useUiText } from '../../contexts/ui-text'
 import { useState } from 'react'
 import type { UsePTZResult } from '../../hooks/use-ptz'
@@ -73,7 +74,7 @@ export function HomePresetPicker({ controls }: HomePresetPickerProps): React.Rea
           <span className="text-[10px] font-medium text-foreground-subtle">
             {t('uiLibrary.homePresetPicker.label', 'Home preset')}
           </span>
-          <select
+          <Select
             value={homePreset.presetId ?? ''}
             disabled={disabled}
             onChange={(e) => {
@@ -94,7 +95,7 @@ export function HomePresetPicker({ controls }: HomePresetPickerProps): React.Rea
                   : preset.name || preset.id}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
       )}
 

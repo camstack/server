@@ -1,3 +1,4 @@
+import { Select } from '../primitives/select'
 import { useUiText, UiTrans } from '../contexts/ui-text'
 import { MODEL_PROVIDER_IDS, type ModelProviderId, type PipelineAddonSchema } from '@camstack/types'
 import { useEffect, useMemo, useState, type JSX } from 'react'
@@ -117,7 +118,7 @@ export function ModelPicker({
   const ungrouped = scoped.filter((m) => m.group === undefined)
 
   const flatSelect = (opts: readonly ModelOption[], selectPlaceholder?: string) => (
-    <select
+    <Select
       disabled={disabled}
       className="w-full bg-surface border border-border rounded px-2 py-1 text-xs disabled:opacity-50"
       value={opts.some((m) => m.id === value) ? value : ''}
@@ -133,7 +134,7 @@ export function ModelPicker({
           {m.name}
         </option>
       ))}
-    </select>
+    </Select>
   )
 
   return (

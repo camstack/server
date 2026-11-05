@@ -1,3 +1,4 @@
+import { Select } from '../../primitives/select'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Shield, ShieldCheck, ShieldAlert, ShieldOff } from 'lucide-react'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
@@ -373,7 +374,7 @@ export function AlarmInlineControl({ trpc, deviceId, optimistic }: DeviceControl
         <AlarmGlyph icon={config.icon} sizeClass="h-3 w-3" />
         {alarmStateLabel(display.state, t)}
       </span>
-      <select
+      <Select
         aria-label={t('uiLibrary.alarmHeroCard.alarmMode', 'Alarm mode')}
         disabled={busy}
         value={current}
@@ -395,7 +396,7 @@ export function AlarmInlineControl({ trpc, deviceId, optimistic }: DeviceControl
             {armModeLabel(mode, t)}
           </option>
         ))}
-      </select>
+      </Select>
       {error !== null && (
         <span
           data-testid="alarm-inline-error"

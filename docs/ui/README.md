@@ -67,7 +67,7 @@ or `<button>` in `addon-admin-ui` or an addon page is refused by
 `scripts/check-no-native-form-controls.ts` (Checks workflow, pre-commit): use
 `Select` / `OptionSelect` / `Input` / `Checkbox` / `Button`. Existing files are
 pinned in `scripts/native-form-controls-baseline.json`; a file that drops below
-its pin lowers it with `--update`.
+its pin lowers it with `--update`. A raw `<select>` is additionally refused anywhere in `addon-admin-ui` and `ui-library`, with no baseline, by `scripts/check-no-native-select.ts`; only the `Select` primitive writes one. A dropdown inside a control that already draws its box takes `<Select bare>`.
 
 `ui:check` is a developer tool. The pre-commit hook runs it on staged UI files
 and only prints; it is never a CI gate (operator decision, 2026-10-09). The

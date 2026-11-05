@@ -14,6 +14,7 @@
  *     really applied vs what they typed.
  *   - When the firmware ignored a setting, the field stays editable.
  */
+import { Select } from '../../primitives/select'
 import { useUiText } from '../../contexts/ui-text'
 import { useEffect, useState, type JSX } from 'react'
 import { Crosshair, Loader2, AlertCircle } from 'lucide-react'
@@ -117,7 +118,7 @@ export function AutotrackSection({ deviceId }: AutotrackSectionProps): JSX.Eleme
             <span className="text-[10px] font-medium text-foreground-subtle">
               {t('uiLibrary.autotrack.targetType', 'Target type')}
             </span>
-            <select
+            <Select
               value={draft.targetType}
               onFocus={() => setEditing(true)}
               onChange={(e) => setDraft((d) => ({ ...d, targetType: e.target.value }))}
@@ -136,7 +137,7 @@ export function AutotrackSection({ deviceId }: AutotrackSectionProps): JSX.Eleme
                   {opt.label}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
         )}
 
@@ -151,7 +152,10 @@ export function AutotrackSection({ deviceId }: AutotrackSectionProps): JSX.Eleme
             value={draft.stopDelaySeconds}
             onFocus={() => setEditing(true)}
             onChange={(e) =>
-              setDraft((d) => ({ ...d, stopDelaySeconds: Number(e.target.value) || 0 }))
+              setDraft((d) => ({
+                ...d,
+                stopDelaySeconds: Number(e.target.value) || 0,
+              }))
             }
             onBlur={() => {
               setEditing(false)
@@ -176,13 +180,18 @@ export function AutotrackSection({ deviceId }: AutotrackSectionProps): JSX.Eleme
             value={draft.disappearDelaySeconds}
             onFocus={() => setEditing(true)}
             onChange={(e) =>
-              setDraft((d) => ({ ...d, disappearDelaySeconds: Number(e.target.value) || 0 }))
+              setDraft((d) => ({
+                ...d,
+                disappearDelaySeconds: Number(e.target.value) || 0,
+              }))
             }
             onBlur={() => {
               setEditing(false)
               const current = status?.currentSettings?.disappearDelaySeconds ?? 15
               if (draft.disappearDelaySeconds !== current) {
-                void setSettings({ disappearDelaySeconds: draft.disappearDelaySeconds })
+                void setSettings({
+                  disappearDelaySeconds: draft.disappearDelaySeconds,
+                })
               }
             }}
             disabled={isPending}

@@ -1,3 +1,4 @@
+import { Select } from '../../primitives/select'
 import { useUiText, type UiTextFn } from '../../contexts/ui-text'
 import {
   useRef,
@@ -9,7 +10,6 @@ import {
 } from 'react'
 import {
   Ban,
-  ChevronDown,
   Droplets,
   Fan,
   Feather,
@@ -260,8 +260,9 @@ export function AcPanel({ trpc, deviceId, layout, optimistic }: ControlPanelProp
           </>
         )}
 
-        <select
+        <Select
           aria-label={t('uiLibrary.acPanel.mode', 'Mode')}
+          bare
           value={display.mode}
           disabled={busy}
           onChange={(e) => {
@@ -282,7 +283,7 @@ export function AcPanel({ trpc, deviceId, layout, optimistic }: ControlPanelProp
               {modeLabel(t, m)}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
     )
   }
@@ -335,7 +336,10 @@ export function AcPanel({ trpc, deviceId, layout, optimistic }: ControlPanelProp
           <span
             aria-hidden
             className="acv-glow pointer-events-none absolute left-1/2 top-1/2 h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl"
-            style={{ background: accent, animation: 'acv-glow 3.2s ease-in-out infinite' }}
+            style={{
+              background: accent,
+              animation: 'acv-glow 3.2s ease-in-out infinite',
+            }}
           />
         )}
 
@@ -348,7 +352,9 @@ export function AcPanel({ trpc, deviceId, layout, optimistic }: ControlPanelProp
           {modeLabel(t, display.mode)}
           {display.currentTemp !== null && (
             <span className="normal-case text-foreground-subtle">
-              {t('uiLibrary.acPanel.now', '· {{temp}}° now', { temp: display.currentTemp })}
+              {t('uiLibrary.acPanel.now', '· {{temp}}° now', {
+                temp: display.currentTemp,
+              })}
             </span>
           )}
           {display.currentHumidity !== null && (
@@ -444,7 +450,10 @@ export function AcPanel({ trpc, deviceId, layout, optimistic }: ControlPanelProp
             </span>
           }
           value={display.mode}
-          options={display.availableModes.map((m) => ({ value: m, label: modeLabel(t, m) }))}
+          options={display.availableModes.map((m) => ({
+            value: m,
+            label: modeLabel(t, m),
+          }))}
           disabled={busy}
           onChange={(v) => {
             const mode = display.availableModes.find((m) => m === v)
@@ -459,7 +468,10 @@ export function AcPanel({ trpc, deviceId, layout, optimistic }: ControlPanelProp
             label={t('uiLibrary.acPanel.fan', 'Fan')}
             icon={<Wind className="h-4 w-4 text-sky-500" />}
             value={display.fanMode}
-            options={display.availableFanModes.map((f) => ({ value: f, label: fanLabel(f) }))}
+            options={display.availableFanModes.map((f) => ({
+              value: f,
+              label: fanLabel(f),
+            }))}
             disabled={busy}
             onChange={(v) => {
               applyOptimistic({ fanMode: v })
@@ -472,7 +484,10 @@ export function AcPanel({ trpc, deviceId, layout, optimistic }: ControlPanelProp
             label={t('uiLibrary.acPanel.preset', 'Preset')}
             icon={<CurrentPresetIcon className="h-4 w-4 text-emerald-500" />}
             value={display.preset}
-            options={display.availablePresets.map((p) => ({ value: p, label: fanLabel(p) }))}
+            options={display.availablePresets.map((p) => ({
+              value: p,
+              label: fanLabel(p),
+            }))}
             disabled={busy}
             onChange={(v) => {
               applyOptimistic({ preset: v })
@@ -577,23 +592,24 @@ function CompactSelect({
         )}
       >
         <span className="flex shrink-0">{icon}</span>
-        <select
+        <Select
           aria-label={label}
+          bare
+          wrapperClassName="flex-1"
           value={value}
           disabled={disabled}
           onChange={(e) => {
             e.stopPropagation()
             if (!disabled) onChange(e.target.value)
           }}
-          className="min-w-0 flex-1 cursor-pointer appearance-none truncate bg-transparent text-xs font-medium text-foreground outline-none"
+          className="cursor-pointer truncate border-0 bg-transparent px-0 text-xs font-medium focus:ring-0"
         >
           {options.map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}
             </option>
           ))}
-        </select>
-        <ChevronDown className="h-3 w-3 shrink-0 text-foreground-subtle" />
+        </Select>
       </div>
     </div>
   )
@@ -702,10 +718,22 @@ function RangeTrack({
     const current = draft ?? value
     if (event.key === 'ArrowRight' || event.key === 'ArrowUp') {
       event.preventDefault()
-      onCommit(nextClimateTarget(current, 1, { tempStep: step, minTemp: min, maxTemp: max }))
+      onCommit(
+        nextClimateTarget(current, 1, {
+          tempStep: step,
+          minTemp: min,
+          maxTemp: max,
+        }),
+      )
     } else if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') {
       event.preventDefault()
-      onCommit(nextClimateTarget(current, -1, { tempStep: step, minTemp: min, maxTemp: max }))
+      onCommit(
+        nextClimateTarget(current, -1, {
+          tempStep: step,
+          minTemp: min,
+          maxTemp: max,
+        }),
+      )
     } else if (event.key === 'Home') {
       event.preventDefault()
       onCommit(min)
@@ -850,7 +878,10 @@ function FanBlades({
       height={size}
       viewBox="0 0 100 100"
       className="acv-fan"
-      style={{ animation: `acv-spin ${periodSec}s linear infinite`, transformOrigin: '50% 50%' }}
+      style={{
+        animation: `acv-spin ${periodSec}s linear infinite`,
+        transformOrigin: '50% 50%',
+      }}
       aria-hidden
     >
       {[0, 120, 240].map((deg) => (
@@ -887,7 +918,9 @@ function SwingToggle({ axis, on, busy, onToggle }: SwingToggleProps): ReactNode 
   return (
     <button
       type="button"
-      aria-label={t('uiLibrary.acPanel.swingAxis', '{{axis}} swing', { axis: label })}
+      aria-label={t('uiLibrary.acPanel.swingAxis', '{{axis}} swing', {
+        axis: label,
+      })}
       aria-pressed={on}
       disabled={busy}
       onClick={() => {

@@ -21,6 +21,7 @@
  * This is the RAW editor, for TOKENS. People are not edited here: a person
  * is an Admin or a Viewer (D921), set from `/system/identity?tab=users`.
  */
+import { Select } from '../primitives/select'
 import { useMemo, type ReactNode } from 'react'
 import { Plus, X, Eye, Pencil, Trash2 } from 'lucide-react'
 import {
@@ -235,7 +236,11 @@ export function ScopePicker({
         // A fresh device row starts at `ids: []` rather than `all`: an
         // operator who adds a row and forgets to fill it must grant NOTHING,
         // never everything. `validateScopes` refuses the empty list.
-        return { type: 'device', selector: { kind: 'ids', ids: [] }, access: accessArr }
+        return {
+          type: 'device',
+          selector: { kind: 'ids', ids: [] },
+          access: accessArr,
+        }
     }
   }
 
@@ -256,7 +261,11 @@ export function ScopePicker({
         }
         const access = [...(patch.access ?? s.access)]
         if (s.type === 'device') {
-          const base = { type: 'device' as const, selector: patch.selector ?? s.selector, access }
+          const base = {
+            type: 'device' as const,
+            selector: patch.selector ?? s.selector,
+            access,
+          }
           // ABSENCE is a third state — it means "let the matcher derive it"
           // (view inherits, create/delete don't). Defaulting it to `false`
           // while the operator edits an unrelated checkbox would silently
@@ -270,7 +279,11 @@ export function ScopePicker({
           return { type: 'category', target, access }
         }
         if (s.type === 'capability') {
-          return { type: 'capability', target: patch.target ?? s.target, access }
+          return {
+            type: 'capability',
+            target: patch.target ?? s.target,
+            access,
+          }
         }
         return { type: 'addon', target: patch.target ?? s.target, access }
       }),
@@ -297,7 +310,7 @@ export function ScopePicker({
             key={idx}
             className="flex flex-wrap items-start gap-1.5 rounded border border-border bg-surface px-2 py-1.5"
           >
-            <select
+            <Select
               value={row.type}
               onChange={(e) => update(idx, { type: e.target.value as TokenScope['type'] })}
               className="rounded border border-border bg-background px-2 py-1 text-[11px] focus:outline-none focus:ring-1 focus:ring-primary"
@@ -308,7 +321,7 @@ export function ScopePicker({
               <option value="addon">addon</option>
               <option value="device">device</option>
               {/* i18n-ignore-end */}
-            </select>
+            </Select>
 
             {row.type === 'device' ? (
               <div className="min-w-[200px] flex-1 space-y-1.5">
@@ -320,10 +333,12 @@ export function ScopePicker({
                 />
                 <label className="flex flex-wrap items-center gap-1.5 text-[10px] text-foreground-subtle">
                   {t('uiLibrary.scopePicker.linkedDevices', 'Linked devices')}
-                  <select
+                  <Select
                     value={row.includeLinked === undefined ? '' : row.includeLinked ? 'yes' : 'no'}
                     onChange={(e) =>
-                      update(idx, { includeLinked: INCLUDE_LINKED_VALUES[e.target.value] })
+                      update(idx, {
+                        includeLinked: INCLUDE_LINKED_VALUES[e.target.value],
+                      })
                     }
                     className="rounded border border-border bg-background px-1.5 py-0.5 text-[10px] focus:outline-none focus:ring-1 focus:ring-primary"
                   >
@@ -338,17 +353,19 @@ export function ScopePicker({
                     <option value="no">
                       {t('uiLibrary.scopePicker.neverIncluded', 'Never included')}
                     </option>
-                  </select>
+                  </Select>
                 </label>
               </div>
             ) : (
-              <select
+              <Select
                 value={row.target}
                 onChange={(e) => update(idx, { target: e.target.value })}
                 className="flex-1 min-w-[160px] rounded border border-border bg-background px-2 py-1 text-[11px] font-mono focus:outline-none focus:ring-1 focus:ring-primary"
               >
                 <option value="">
-                  {t('uiLibrary.scopePicker.pickType', '— pick {{type}} —', { type: row.type })}
+                  {t('uiLibrary.scopePicker.pickType', '— pick {{type}} —', {
+                    type: row.type,
+                  })}
                 </option>
                 {clampedSingleTargets(row.type, clampToParent, addonChoices, capChoices).map(
                   (t) => (
@@ -357,7 +374,7 @@ export function ScopePicker({
                     </option>
                   ),
                 )}
-              </select>
+              </Select>
             )}
 
             <div className="flex items-center gap-1">

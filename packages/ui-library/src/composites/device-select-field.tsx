@@ -1,3 +1,4 @@
+import { Select } from '../primitives/select'
 import { useUiText } from '../contexts/ui-text'
 import type {
   ConfigDeviceMultiSelectField,
@@ -229,7 +230,7 @@ export function DeviceSelectField({
       required={field.required}
       translationFn={translationFn}
     >
-      <select
+      <Select
         className={INPUT_CLASS}
         value={current}
         disabled={disabled || field.disabled}
@@ -243,7 +244,7 @@ export function DeviceSelectField({
             {opt.label}
           </option>
         ))}
-      </select>
+      </Select>
     </FieldShell>
   )
 }

@@ -5,6 +5,7 @@
  * Renders: colored left border, header with I/O class tags, expandable config
  * (Model → Confidence), children recursively.
  */
+import { Select } from '../primitives/select'
 import { useState, type JSX } from 'react'
 import type { PipelineSlot, PipelineAddonSchema, ConfigField, ConfigOption } from '@camstack/types'
 import { cn } from '../lib/cn'
@@ -203,7 +204,7 @@ function ConfigSelect({
       <label className="block text-[10px] font-medium text-foreground-subtle uppercase tracking-wide mb-1.5">
         {label}
       </label>
-      <select
+      <Select
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
@@ -217,7 +218,7 @@ function ConfigSelect({
             {o.label}
           </option>
         ))}
-      </select>
+      </Select>
     </div>
   )
 }

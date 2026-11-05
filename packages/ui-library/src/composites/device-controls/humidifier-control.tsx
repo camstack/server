@@ -15,6 +15,7 @@
  * `useOptimisticSlice` pattern so the row and hero never diverge.
  * Controls are gated on `available`. The decorative SVG is aria-hidden.
  */
+import { Select } from '../../primitives/select'
 import { useUiText } from '../../contexts/ui-text'
 import { useId, type ReactNode } from 'react'
 import { Power } from 'lucide-react'
@@ -59,14 +60,26 @@ export function humidifierTint(on: boolean, action: string | null): HumidifierTi
     case 'drying':
       return { glow: 'bg-warning/10', accent: 'text-warning', misting: false }
     case 'idle':
-      return { glow: 'bg-transparent', accent: 'text-foreground-subtle', misting: false }
+      return {
+        glow: 'bg-transparent',
+        accent: 'text-foreground-subtle',
+        misting: false,
+      }
     case 'off':
-      return { glow: 'bg-transparent', accent: 'text-foreground-subtle', misting: false }
+      return {
+        glow: 'bg-transparent',
+        accent: 'text-foreground-subtle',
+        misting: false,
+      }
     default:
       // No `action` surface — derive from on/off.
       return on
         ? { glow: 'bg-primary/10', accent: 'text-primary', misting: true }
-        : { glow: 'bg-transparent', accent: 'text-foreground-subtle', misting: false }
+        : {
+            glow: 'bg-transparent',
+            accent: 'text-foreground-subtle',
+            misting: false,
+          }
   }
 }
 
@@ -377,7 +390,7 @@ export function HumidifierHeroCard({ trpc, deviceId, optimistic }: DeviceControl
 
       {/* ── Mode select (only when modes are available) ───────────────── */}
       {display.availableModes.length > 0 && (
-        <select
+        <Select
           aria-label={t('uiLibrary.humidifier.mode', 'Mode')}
           value={display.mode ?? ''}
           disabled={busy}
@@ -399,7 +412,7 @@ export function HumidifierHeroCard({ trpc, deviceId, optimistic }: DeviceControl
               {m}
             </option>
           ))}
-        </select>
+        </Select>
       )}
     </div>
   )

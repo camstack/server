@@ -17,6 +17,13 @@ export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   options?: SelectOption[]
   /** Classes of the wrapper that carries the chevron (default `relative w-full`). */
   wrapperClassName?: string
+  /**
+   * No field chrome: no border, a transparent background and no chevron. For a
+   * dropdown that sits inside a control that already draws the box (a panel
+   * row, a compact inline control) — a second border there reads as a field
+   * inside a field.
+   */
+  bare?: boolean
 }
 
 /**
@@ -37,20 +44,22 @@ export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
  */
 export const Select: ForwardRefExoticComponent<SelectProps & RefAttributes<HTMLSelectElement>> =
   forwardRef<HTMLSelectElement, SelectProps>(
-    ({ className, options, wrapperClassName, disabled, children, ...props }, ref) => {
+    ({ className, options, wrapperClassName, disabled, bare = false, children, ...props }, ref) => {
       return (
-        <div className={cn('relative w-full', wrapperClassName)}>
+        <div className={cn(bare ? 'relative min-w-0' : 'relative w-full', wrapperClassName)}>
           <select
             ref={ref}
             disabled={disabled}
             className={cn(
-              'h-7 w-full px-2.5 text-xs border border-border rounded-md appearance-none pr-7 focus:outline-none focus:ring-1 focus:ring-primary',
+              bare
+                ? 'w-full appearance-none text-xs focus:outline-none'
+                : 'h-7 w-full px-2.5 text-xs border border-border rounded-md appearance-none pr-7 focus:outline-none focus:ring-1 focus:ring-primary',
               'disabled:opacity-50 disabled:cursor-not-allowed',
               className,
               // Last, so twMerge keeps them: the native popup paints from this element,
               // and a caller-supplied bg-* (or a mistyped one) must never leave it
               // transparent.
-              'bg-surface text-foreground',
+              bare ? 'bg-transparent text-foreground' : 'bg-surface text-foreground',
             )}
             {...props}
           >
@@ -63,14 +72,16 @@ export const Select: ForwardRefExoticComponent<SelectProps & RefAttributes<HTMLS
           </select>
           {/* The chevron travels with the field: an arrow at full strength over a
             dimmed control reads as "this one is still clickable". */}
-          <div
-            className={cn(
-              'absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-foreground-muted',
-              disabled === true ? 'opacity-50' : '',
-            )}
-          >
-            <ChevronDown className="h-3.5 w-3.5" />
-          </div>
+          {!bare && (
+            <div
+              className={cn(
+                'absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-foreground-muted',
+                disabled === true ? 'opacity-50' : '',
+              )}
+            >
+              <ChevronDown className="h-3.5 w-3.5" />
+            </div>
+          )}
         </div>
       )
     },

@@ -8,6 +8,7 @@
  * The component is data-agnostic: callers fetch devices/streams/detections using
  * their own hooks and pass the results as props.
  */
+import { Select } from '../primitives/select'
 import { useState, useMemo, useRef, useEffect, useCallback, type ReactNode, type JSX } from 'react'
 import type { CamProfile, WebrtcSessionDebug } from '@camstack/types'
 import type { QualityOption } from './hls-quality'
@@ -154,7 +155,11 @@ export interface StreamPanelProps {
   /** Pipeline phase from useDeviceDetections (e.g. "active", "watching") */
   readonly phase?: string
   /** Pipeline metrics from useDeviceWebrtc. If provided, overrides phase and adds detection fps. */
-  readonly pipelineMetrics?: { phase: string; detectionFps: number; avgInferenceMs: number } | null
+  readonly pipelineMetrics?: {
+    phase: string
+    detectionFps: number
+    avgInferenceMs: number
+  } | null
 
   // --- Detection overlays ---
   /** Detection data from useDeviceDetections hook. If omitted, no overlays. */
@@ -643,7 +648,7 @@ export function StreamPanel({
               is only one option (or none) in either mode. */}
           {!isVod && visibleStreams && visibleStreams.length > 1 && (
             <div className="relative">
-              <select
+              <Select
                 data-testid="stream-profile-select"
                 value={effectiveStreamId}
                 onChange={(e) => handleStreamChange(e.target.value)}
@@ -654,7 +659,7 @@ export function StreamPanel({
                     {s.label}
                   </option>
                 ))}
-              </select>
+              </Select>
               <span className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-foreground-subtle">
                 <svg
                   className="h-2.5 w-2.5"
@@ -672,7 +677,7 @@ export function StreamPanel({
           )}
           {isVod && vodQuality.length > 1 && (
             <div className="relative">
-              <select
+              <Select
                 data-testid="vod-quality-select"
                 value={vodLevel}
                 onChange={(e) => setVodLevel(Number(e.target.value))}
@@ -683,7 +688,7 @@ export function StreamPanel({
                     {opt.label}
                   </option>
                 ))}
-              </select>
+              </Select>
               <span className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-foreground-subtle">
                 <svg
                   className="h-2.5 w-2.5"

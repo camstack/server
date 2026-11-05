@@ -12,6 +12,7 @@
  * box or a zero. It also does not echo a command before the appliance confirms it: the
  * slice moves when the appliance says so.
  */
+import { Select } from '../../primitives/select'
 import { useUiText, defaultUiText, type UiTextFn } from '../../contexts/ui-text'
 import type { ReactNode } from 'react'
 import { AlertTriangle, DoorOpen, Pause, Play, Power, Square, Timer, Waves } from 'lucide-react'
@@ -47,15 +48,30 @@ export function dishwasherOperationMeta(
 ): DishwasherStateMeta {
   switch (operationState) {
     case 'Run':
-      return { label: t('uiLibrary.dishwasher.op.run', 'Running'), tone: 'text-primary' }
+      return {
+        label: t('uiLibrary.dishwasher.op.run', 'Running'),
+        tone: 'text-primary',
+      }
     case 'Pause':
-      return { label: t('uiLibrary.dishwasher.op.pause', 'Paused'), tone: 'text-warning' }
+      return {
+        label: t('uiLibrary.dishwasher.op.pause', 'Paused'),
+        tone: 'text-warning',
+      }
     case 'Finished':
-      return { label: t('uiLibrary.dishwasher.op.finished', 'Finished'), tone: 'text-success' }
+      return {
+        label: t('uiLibrary.dishwasher.op.finished', 'Finished'),
+        tone: 'text-success',
+      }
     case 'Error':
-      return { label: t('uiLibrary.dishwasher.op.error', 'Error'), tone: 'text-danger' }
+      return {
+        label: t('uiLibrary.dishwasher.op.error', 'Error'),
+        tone: 'text-danger',
+      }
     case 'Aborting':
-      return { label: t('uiLibrary.dishwasher.op.aborting', 'Stopping'), tone: 'text-warning' }
+      return {
+        label: t('uiLibrary.dishwasher.op.aborting', 'Stopping'),
+        tone: 'text-warning',
+      }
     case 'ActionRequired':
       return {
         label: t('uiLibrary.dishwasher.op.actionRequired', 'Action required'),
@@ -67,14 +83,20 @@ export function dishwasherOperationMeta(
         tone: 'text-primary',
       }
     case 'Ready':
-      return { label: t('uiLibrary.dishwasher.op.ready', 'Ready'), tone: 'text-foreground' }
+      return {
+        label: t('uiLibrary.dishwasher.op.ready', 'Ready'),
+        tone: 'text-foreground',
+      }
     case 'Inactive':
       return {
         label: t('uiLibrary.dishwasher.op.inactive', 'Inactive'),
         tone: 'text-foreground-subtle',
       }
     case null:
-      return { label: t('uiLibrary.dishwasher.unknown', 'Unknown'), tone: 'text-foreground-subtle' }
+      return {
+        label: t('uiLibrary.dishwasher.unknown', 'Unknown'),
+        tone: 'text-foreground-subtle',
+      }
   }
 }
 
@@ -123,12 +145,18 @@ export function visibleDishwasherEvents(events: readonly string[]): readonly str
 export function formatDuration(seconds: number, t: UiTextFn = defaultUiText): string {
   if (seconds < 60) return t('uiLibrary.dishwasher.durationSeconds', '{{n}} s', { n: seconds })
   const minutes = Math.round(seconds / 60)
-  if (minutes < 60) return t('uiLibrary.dishwasher.durationMinutes', '{{n}} min', { n: minutes })
+  if (minutes < 60)
+    return t('uiLibrary.dishwasher.durationMinutes', '{{n}} min', {
+      n: minutes,
+    })
   const hours = Math.floor(minutes / 60)
   const rest = minutes % 60
   return rest === 0
     ? t('uiLibrary.dishwasher.durationHours', '{{n}} h', { n: hours })
-    : t('uiLibrary.dishwasher.durationHoursMinutes', '{{h}} h {{m}} min', { h: hours, m: rest })
+    : t('uiLibrary.dishwasher.durationHoursMinutes', '{{h}} h {{m}} min', {
+        h: hours,
+        m: rest,
+      })
 }
 
 function useDishwasher(trpc: DeviceControlProps['trpc'], deviceId: number) {
@@ -323,7 +351,9 @@ function DishwasherPanel({
               <div className="h-1.5 flex-1 rounded bg-surface-hover overflow-hidden">
                 <div
                   className="h-full bg-primary transition-[width] duration-500"
-                  style={{ width: `${Math.max(0, Math.min(100, display.progress))}%` }}
+                  style={{
+                    width: `${Math.max(0, Math.min(100, display.progress))}%`,
+                  }}
                 />
               </div>
               <span className="tabular-nums text-xs text-foreground-subtle">
@@ -405,7 +435,7 @@ function DishwasherPanel({
       {programs.length > 0 && (
         <label className="flex items-center gap-2 text-xs text-foreground-subtle">
           <span className="w-16 shrink-0">{t('uiLibrary.dishwasher.program', 'Program')}</span>
-          <select
+          <Select
             aria-label={t('uiLibrary.dishwasher.program', 'Program')}
             value={display.selectedProgram ?? ''}
             disabled={busy}
@@ -425,7 +455,7 @@ function DishwasherPanel({
                 {featureLabel(p)}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
       )}
 

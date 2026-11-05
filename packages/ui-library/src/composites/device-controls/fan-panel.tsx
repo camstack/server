@@ -1,3 +1,4 @@
+import { Select } from '../../primitives/select'
 import { useUiText } from '../../contexts/ui-text'
 import type { ReactNode } from 'react'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
@@ -70,7 +71,7 @@ export function FanPanel({
       )}
       {showPreset && display.availablePresets.length > 0 && (
         <div className="flex items-center gap-2 text-xs text-foreground-subtle">
-          <select
+          <Select
             aria-label={t('uiLibrary.fanPanel.preset', 'Fan preset')}
             value={display.preset}
             disabled={busy}
@@ -91,7 +92,7 @@ export function FanPanel({
                 {p}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
       )}
     </div>

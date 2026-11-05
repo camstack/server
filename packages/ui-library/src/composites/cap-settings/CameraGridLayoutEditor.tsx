@@ -19,6 +19,7 @@
  * the server nothing and it is wrong in exactly the ways the real composition
  * would be wrong.
  */
+import { Select } from '../../primitives/select'
 import { useUiText, type UiTextFn } from '../../contexts/ui-text'
 import { useDeviceLabel } from '../device-name'
 import { useCallback, useEffect, useMemo, useState, type JSX } from 'react'
@@ -411,7 +412,12 @@ export function CameraGridLayoutEditor({ deviceId }: CameraGridLayoutEditorProps
                   {
                     deviceId: first.id,
                     source: FULL_FRAME,
-                    cell: clampNormalizedRect({ x: 0.1, y: 0.1, width: 0.4, height: 0.4 }),
+                    cell: clampNormalizedRect({
+                      x: 0.1,
+                      y: 0.1,
+                      width: 0.4,
+                      height: 0.4,
+                    }),
                   },
                 ],
               })
@@ -618,7 +624,9 @@ function CellInspector({ cell, index, cameras, onChange, onRemove }: CellInspect
     <div className="flex flex-col gap-2 rounded border border-border p-2 text-[10.5px]">
       <div className="flex items-center justify-between">
         <span className="uppercase text-foreground-subtle">
-          {t('uiLibrary.cameraGridLayout.cellN', 'Cell {{index}}', { index: index + 1 })}
+          {t('uiLibrary.cameraGridLayout.cellN', 'Cell {{index}}', {
+            index: index + 1,
+          })}
         </span>
         <button type="button" onClick={onRemove} className="text-danger">
           <Trash2 className="h-3 w-3" />
@@ -628,7 +636,7 @@ function CellInspector({ cell, index, cameras, onChange, onRemove }: CellInspect
         <span className="w-16 text-foreground-subtle">
           {t('uiLibrary.cameraGridLayout.source', 'Source')}
         </span>
-        <select
+        <Select
           value={String(cell.deviceId)}
           onChange={(event) => {
             onChange({ deviceId: Number(event.target.value) })
@@ -640,7 +648,7 @@ function CellInspector({ cell, index, cameras, onChange, onRemove }: CellInspect
               <CameraOptionLabel camera={camera} />
             </option>
           ))}
-        </select>
+        </Select>
       </label>
       {/* The part of the camera this cell shows, dragged on the camera's own
           picture. The numbers below still work and are the way to type an exact
@@ -660,7 +668,9 @@ function CellInspector({ cell, index, cameras, onChange, onRemove }: CellInspect
             label={cropLabel(t, key)}
             value={cell.source[key]}
             onChange={(next) => {
-              onChange({ source: clampNormalizedRect({ ...cell.source, [key]: next }) })
+              onChange({
+                source: clampNormalizedRect({ ...cell.source, [key]: next }),
+              })
             }}
           />
         ))}

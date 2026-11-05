@@ -15,6 +15,7 @@
  * `useOptimisticSlice` pattern. Controls are gated on `available`. The
  * decorative SVG is aria-hidden.
  */
+import { Select } from '../../primitives/select'
 import { useId, type ReactNode } from 'react'
 import { Power } from 'lucide-react'
 import type { WaterHeaterStatus } from '@camstack/types'
@@ -59,7 +60,11 @@ export function waterHeaterTint(phase: WaterHeaterPhase): WaterHeaterTint {
     case 'idle':
       return { glow: 'bg-primary/10', accent: 'text-primary', heating: false }
     case 'off':
-      return { glow: 'bg-transparent', accent: 'text-foreground-subtle', heating: false }
+      return {
+        glow: 'bg-transparent',
+        accent: 'text-foreground-subtle',
+        heating: false,
+      }
   }
 }
 
@@ -98,7 +103,9 @@ export function WaterHeaterInlineControl({
   optimistic,
 }: DeviceControlProps): ReactNode {
   const { cap, slice } = useWaterHeater(trpc, deviceId)
-  const { display } = useOptimisticSlice<WaterHeaterStatus>(slice, { enabled: optimistic ?? true })
+  const { display } = useOptimisticSlice<WaterHeaterStatus>(slice, {
+    enabled: optimistic ?? true,
+  })
 
   if (cap === undefined) return null
   if (display === undefined) return null
@@ -324,7 +331,7 @@ export function WaterHeaterHeroCard({ trpc, deviceId, optimistic }: DeviceContro
 
       {/* ── Operation-mode select ─────────────────────────────────────── */}
       {display.availableModes.length > 0 && (
-        <select
+        <Select
           aria-label={t('uiLibrary.waterHeaterControl.operationMode', 'Operation mode')}
           value={display.operationMode ?? ''}
           disabled={busy}
@@ -346,7 +353,7 @@ export function WaterHeaterHeroCard({ trpc, deviceId, optimistic }: DeviceContro
               {m}
             </option>
           ))}
-        </select>
+        </Select>
       )}
 
       {/* ── Away toggle (only when supported) ─────────────────────────── */}

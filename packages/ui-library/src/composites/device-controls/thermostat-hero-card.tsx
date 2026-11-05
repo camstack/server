@@ -1,3 +1,4 @@
+import { Select } from '../../primitives/select'
 import { useUiText } from '../../contexts/ui-text'
 import type { ReactNode } from 'react'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
@@ -246,7 +247,10 @@ export function ThermostatHeroCard({
                     if (busy || display.targetHigh === null) return
                     const next = Math.min(fractionToTemp(f, min, max), display.targetHigh)
                     applyOptimistic({ targetLow: next })
-                    void cap.setTargetRange({ targetLow: next, targetHigh: display.targetHigh })
+                    void cap.setTargetRange({
+                      targetLow: next,
+                      targetHigh: display.targetHigh,
+                    })
                   }}
                 />
               </div>
@@ -259,7 +263,10 @@ export function ThermostatHeroCard({
                     if (busy || display.targetLow === null) return
                     const next = Math.max(fractionToTemp(f, min, max), display.targetLow)
                     applyOptimistic({ targetHigh: next })
-                    void cap.setTargetRange({ targetLow: display.targetLow, targetHigh: next })
+                    void cap.setTargetRange({
+                      targetLow: display.targetLow,
+                      targetHigh: next,
+                    })
                   }}
                 />
               </div>
@@ -324,7 +331,7 @@ export function ThermostatHeroCard({
       {hasValve ? <HeatingValveReadout trpc={trpc} deviceId={deviceId} layout="full" /> : null}
 
       {/* ── Mode select ──────────────────────────────────────────────────── */}
-      <select
+      <Select
         aria-label={t('uiLibrary.thermostatHeroCard.mode', 'Mode')}
         value={display.mode}
         disabled={busy}
@@ -353,7 +360,7 @@ export function ThermostatHeroCard({
             {m}
           </option>
         ))}
-      </select>
+      </Select>
     </div>
   )
 }

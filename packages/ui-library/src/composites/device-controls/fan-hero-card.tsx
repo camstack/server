@@ -1,3 +1,4 @@
+import { Select } from '../../primitives/select'
 import { useUiText } from '../../contexts/ui-text'
 import type { ReactNode } from 'react'
 import { Fan, RefreshCw } from 'lucide-react'
@@ -63,8 +64,12 @@ export function FanHeroCard({
     slice: (d) => d.state.fanControl,
   })
 
-  const swOpt = useOptimisticSlice<SwitchStatus>(sw.slice, { enabled: optimistic ?? true })
-  const fanOpt = useOptimisticSlice<FanControlStatus>(fan.slice, { enabled: optimistic ?? true })
+  const swOpt = useOptimisticSlice<SwitchStatus>(sw.slice, {
+    enabled: optimistic ?? true,
+  })
+  const fanOpt = useOptimisticSlice<FanControlStatus>(fan.slice, {
+    enabled: optimistic ?? true,
+  })
 
   // Cap-gate on switch — a Fan always exposes on/off.
   if (sw.cap === undefined) return null
@@ -153,7 +158,7 @@ export function FanHeroCard({
         <div className="flex justify-center">
           <label className="flex items-center gap-2 text-xs text-foreground-subtle">
             <span>{t('uiLibrary.fanHeroCard.preset', 'Preset')}</span>
-            <select
+            <Select
               aria-label={t('uiLibrary.fanHeroCard.fanPreset', 'Fan preset')}
               value={activePreset}
               disabled={fanBusy}
@@ -174,7 +179,7 @@ export function FanHeroCard({
                   {p}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
         </div>
       )}

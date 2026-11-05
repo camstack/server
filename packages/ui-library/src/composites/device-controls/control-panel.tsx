@@ -1,3 +1,4 @@
+import { Select } from '../../primitives/select'
 import { useUiText } from '../../contexts/ui-text'
 import { useOptionalSystem } from '../../contexts/system-context.js'
 import { useState, type ReactNode } from 'react'
@@ -253,7 +254,12 @@ function ControlWidget({
       const resolved =
         quantity === undefined
           ? undefined
-          : resolveSensorDisplay({ quantity, display, capName: 'control', unitPreferences })
+          : resolveSensorDisplay({
+              quantity,
+              display,
+              capName: 'control',
+              unitPreferences,
+            })
       const toShown = resolved?.toDisplayValue ?? ((raw: number): number => raw)
       const toBase = resolved?.fromDisplayValue ?? ((shown: number): number => shown)
       const unit = resolved !== undefined && resolved.unit.length > 0 ? resolved.unit : undefined
@@ -276,13 +282,18 @@ function ControlWidget({
     case 'select': {
       const selectValue = String(slice.value)
       return (
-        <select
+        <Select
           aria-label={t('uiLibrary.controlPanel.value', 'Control value')}
+          bare
+          wrapperClassName="w-full"
           disabled={busy}
           value={selectValue}
           onChange={(e) => {
             e.stopPropagation()
-            if (!busy) setValueFn({ control: { kind: 'select', value: e.target.value } })
+            if (!busy)
+              setValueFn({
+                control: { kind: 'select', value: e.target.value },
+              })
           }}
           className={cn(
             // Borderless inside the panel chrome — a second `border-border`
@@ -301,7 +312,7 @@ function ControlWidget({
               {opt}
             </option>
           ))}
-        </select>
+        </Select>
       )
     }
 
@@ -358,7 +369,10 @@ function ControlWidget({
             e.stopPropagation()
             // Emit the input value as-is — the device normalizes HA-native
             // shapes (e.g. appends seconds for `time`).
-            if (!busy) setValueFn({ control: { kind: 'datetime', value: e.target.value } })
+            if (!busy)
+              setValueFn({
+                control: { kind: 'datetime', value: e.target.value },
+              })
           }}
           className={cn(
             'rounded border border-border bg-surface px-1 py-0.5 text-xs',

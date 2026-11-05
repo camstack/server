@@ -106,7 +106,10 @@ interface FormFieldProps {
    */
   onTestField?: (key: string, value: unknown) => Promise<FieldProbeResult>
   /** External probe result (from "Test All" button) */
-  externalProbe?: { status: 'probing' | 'ok' | 'error'; result?: FieldProbeResult }
+  externalProbe?: {
+    status: 'probing' | 'ok' | 'error'
+    result?: FieldProbeResult
+  }
   /**
    * Inline-action callback. Fired by icon buttons on any field
    * (copy-value, regenerate-rtsp-token, …) and by the probe field's
@@ -460,7 +463,12 @@ function SelectField({
   const hasEmptyOption = field.options.some((o) => o.value === '')
   const options = [
     ...(!field.required && !hasEmptyOption
-      ? [{ value: '', label: t('uiLibrary.configFormField.select', '— Select —') }]
+      ? [
+          {
+            value: '',
+            label: t('uiLibrary.configFormField.select', '— Select —'),
+          },
+        ]
       : []),
     ...field.options.map((opt) => ({ value: opt.value, label: opt.label })),
   ]
@@ -984,7 +992,7 @@ export function NodeSelectField({
       span={field.span}
       translationFn={translationFn}
     >
-      <select
+      <Select
         className="w-full px-3 py-2 text-sm bg-background border border-border rounded-lg text-foreground focus:outline-none focus:border-primary/50 disabled:opacity-50"
         value={current}
         onChange={(e) => onChange(e.target.value)}
@@ -1000,7 +1008,7 @@ export function NodeSelectField({
                 })}
           </option>
         ))}
-      </select>
+      </Select>
     </FieldWrapper>
   )
 }
@@ -1168,7 +1176,10 @@ function ProbeField({
   translationFn?: TranslationFn
   onTestField?: (key: string, value: unknown) => Promise<FieldProbeResult>
   onAction?: (action: string, key: string, value?: unknown) => Promise<unknown>
-  externalProbe?: { status: 'probing' | 'ok' | 'error'; result?: FieldProbeResult }
+  externalProbe?: {
+    status: 'probing' | 'ok' | 'error'
+    result?: FieldProbeResult
+  }
 }) {
   const t = useUiText()
   const [localStatus, setLocalStatus] = useState<'idle' | 'probing' | 'ok' | 'error'>('idle')
@@ -1206,7 +1217,10 @@ function ProbeField({
       setLocalResult(safeResult)
       setLocalStatus(safeResult.status === 'ok' ? 'ok' : 'error')
     } catch (err) {
-      setLocalResult({ status: 'error', error: err instanceof Error ? err.message : String(err) })
+      setLocalResult({
+        status: 'error',
+        error: err instanceof Error ? err.message : String(err),
+      })
       setLocalStatus('error')
     }
   }, [onTestField, onAction, field.key, value, hasTestHandler])
@@ -1520,8 +1534,16 @@ function SeparatorField({ span }: { span?: number }) {
 
 const INFO_VARIANT_STYLES: Record<string, { border: string; bg: string; text: string }> = {
   info: { border: 'border-info', bg: 'bg-info/5', text: 'text-info' },
-  warning: { border: 'border-warning', bg: 'bg-warning/5', text: 'text-warning' },
-  success: { border: 'border-success', bg: 'bg-success/5', text: 'text-success' },
+  warning: {
+    border: 'border-warning',
+    bg: 'bg-warning/5',
+    text: 'text-warning',
+  },
+  success: {
+    border: 'border-success',
+    bg: 'bg-success/5',
+    text: 'text-success',
+  },
   danger: { border: 'border-danger', bg: 'bg-danger/5', text: 'text-danger' },
 }
 
@@ -1550,7 +1572,9 @@ function InfoBox({ field }: { field: ConfigInfoField }) {
             // Source is addon-authored copy bundled at build time, not
             // user input; `sanitizeInfoHtml` is the additional safety
             // net (allowlist of tags + href schemes).
-            dangerouslySetInnerHTML={{ __html: sanitizeInfoHtml(field.content) }}
+            dangerouslySetInnerHTML={{
+              __html: sanitizeInfoHtml(field.content),
+            }}
           />
         ) : (
           field.content.length > 0 && (
@@ -1860,7 +1884,9 @@ function EditableArrayField({
         </button>
         {!canAdd && Number.isFinite(maxRows) && (
           <span className="ml-2 text-[10px] text-foreground-subtle">
-            {t('uiLibrary.configFormField.limit', '(limit: {{max}})', { max: maxRows })}
+            {t('uiLibrary.configFormField.limit', '(limit: {{max}})', {
+              max: maxRows,
+            })}
           </span>
         )}
       </div>
@@ -2118,7 +2144,7 @@ function AddonActionSelectField({
             return v === '' || v === undefined
           })
           return (
-            <select
+            <Select
               className="w-full rounded-md border border-border bg-surface px-2 py-1.5 text-xs text-foreground"
               value={typeof value === 'string' ? value : ''}
               disabled={disabled}
@@ -2139,7 +2165,7 @@ function AddonActionSelectField({
                   </option>
                 )
               })}
-            </select>
+            </Select>
           )
         })()
       )}
@@ -2173,7 +2199,10 @@ function AddonActionButtonField({
 }) {
   const t = useUiText()
   const [loading, setLoading] = useState(false)
-  const [status, setStatus] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null)
+  const [status, setStatus] = useState<{
+    kind: 'ok' | 'error'
+    text: string
+  } | null>(null)
   const confirm = useConfirm()
   const prompt = usePrompt()
   // The form's device, for an action that declared it needs one. A device id is
@@ -2240,7 +2269,10 @@ function AddonActionButtonField({
         : 'Done.'
       setStatus({ kind: 'ok', text: successText })
     } catch (err) {
-      setStatus({ kind: 'error', text: err instanceof Error ? err.message : String(err) })
+      setStatus({
+        kind: 'error',
+        text: err instanceof Error ? err.message : String(err),
+      })
     } finally {
       setLoading(false)
     }
@@ -2302,7 +2334,10 @@ function DeviceActionButtonField({
 }) {
   const t = useUiText()
   const [loading, setLoading] = useState(false)
-  const [status, setStatus] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null)
+  const [status, setStatus] = useState<{
+    kind: 'ok' | 'error'
+    text: string
+  } | null>(null)
   const confirm = useConfirm()
 
   const handleClick = async () => {
@@ -2331,7 +2366,10 @@ function DeviceActionButtonField({
         : 'Done.'
       setStatus({ kind: 'ok', text: successText })
     } catch (err) {
-      setStatus({ kind: 'error', text: err instanceof Error ? err.message : String(err) })
+      setStatus({
+        kind: 'error',
+        text: err instanceof Error ? err.message : String(err),
+      })
     } finally {
       setLoading(false)
     }
@@ -2649,7 +2687,11 @@ function MultipleFieldWrapper({
   // delete button "floating" next to the label instead of the input.
   const makeChild = (): ConfigField => {
     const { multiple: _drop, ...rest } = field
-    const overrides = { label: undefined, description: undefined, required: false }
+    const overrides = {
+      label: undefined,
+      description: undefined,
+      required: false,
+    }
     const child: unknown = { ...rest, ...overrides }
     return child as ConfigField
   }

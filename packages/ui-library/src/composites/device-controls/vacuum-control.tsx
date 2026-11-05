@@ -14,6 +14,7 @@
  * Mirrors the cover/update controls' `useDeviceCapability` pattern so the
  * row and hero never diverge. Buttons are gated on `available`.
  */
+import { Select } from '../../primitives/select'
 import { useUiText, defaultUiText, type UiTextFn } from '../../contexts/ui-text'
 import type { CSSProperties, ReactNode } from 'react'
 import { Play, Pause, Square, Home, Megaphone, BatteryMedium, AlertTriangle } from 'lucide-react'
@@ -49,21 +50,45 @@ export function vacuumStateMeta(
 ): VacuumStateMeta {
   switch (state) {
     case 'cleaning':
-      return { label: t('uiLibrary.vacuum.cleaning', 'Cleaning'), tone: 'text-primary' }
+      return {
+        label: t('uiLibrary.vacuum.cleaning', 'Cleaning'),
+        tone: 'text-primary',
+      }
     case 'paused':
-      return { label: t('uiLibrary.vacuum.paused', 'Paused'), tone: 'text-warning' }
+      return {
+        label: t('uiLibrary.vacuum.paused', 'Paused'),
+        tone: 'text-warning',
+      }
     case 'returning':
-      return { label: t('uiLibrary.vacuum.returning', 'Returning'), tone: 'text-primary' }
+      return {
+        label: t('uiLibrary.vacuum.returning', 'Returning'),
+        tone: 'text-primary',
+      }
     case 'docked':
-      return { label: t('uiLibrary.vacuum.docked', 'Docked'), tone: 'text-success' }
+      return {
+        label: t('uiLibrary.vacuum.docked', 'Docked'),
+        tone: 'text-success',
+      }
     case 'drying':
-      return { label: t('uiLibrary.vacuum.drying', 'Drying'), tone: 'text-warning' }
+      return {
+        label: t('uiLibrary.vacuum.drying', 'Drying'),
+        tone: 'text-warning',
+      }
     case 'idle':
-      return { label: t('uiLibrary.vacuum.idle', 'Idle'), tone: 'text-foreground-subtle' }
+      return {
+        label: t('uiLibrary.vacuum.idle', 'Idle'),
+        tone: 'text-foreground-subtle',
+      }
     case 'error':
-      return { label: t('uiLibrary.vacuum.error', 'Error'), tone: 'text-destructive' }
+      return {
+        label: t('uiLibrary.vacuum.error', 'Error'),
+        tone: 'text-destructive',
+      }
     case undefined:
-      return { label: t('uiLibrary.vacuum.unknown', 'Unknown'), tone: 'text-foreground-subtle' }
+      return {
+        label: t('uiLibrary.vacuum.unknown', 'Unknown'),
+        tone: 'text-foreground-subtle',
+      }
   }
 }
 
@@ -131,17 +156,47 @@ interface VacuumGraphicTint {
 function vacuumGraphicTint(state: VacuumState | undefined): VacuumGraphicTint {
   switch (state) {
     case 'cleaning':
-      return { glow: 'bg-primary/15', accent: 'text-primary', docked: false, active: true }
+      return {
+        glow: 'bg-primary/15',
+        accent: 'text-primary',
+        docked: false,
+        active: true,
+      }
     case 'returning':
-      return { glow: 'bg-primary/10', accent: 'text-primary', docked: false, active: true }
+      return {
+        glow: 'bg-primary/10',
+        accent: 'text-primary',
+        docked: false,
+        active: true,
+      }
     case 'docked':
-      return { glow: 'bg-success/10', accent: 'text-success', docked: true, active: false }
+      return {
+        glow: 'bg-success/10',
+        accent: 'text-success',
+        docked: true,
+        active: false,
+      }
     case 'drying':
-      return { glow: 'bg-warning/10', accent: 'text-warning', docked: true, active: false }
+      return {
+        glow: 'bg-warning/10',
+        accent: 'text-warning',
+        docked: true,
+        active: false,
+      }
     case 'paused':
-      return { glow: 'bg-warning/10', accent: 'text-warning', docked: false, active: false }
+      return {
+        glow: 'bg-warning/10',
+        accent: 'text-warning',
+        docked: false,
+        active: false,
+      }
     case 'error':
-      return { glow: 'bg-destructive/10', accent: 'text-destructive', docked: false, active: false }
+      return {
+        glow: 'bg-destructive/10',
+        accent: 'text-destructive',
+        docked: false,
+        active: false,
+      }
     case 'idle':
       return {
         glow: 'bg-transparent',
@@ -487,7 +542,9 @@ export function VacuumHeroCard({ trpc, deviceId }: DeviceControlProps): ReactNod
               <div className="h-1.5 flex-1 rounded bg-surface-hover overflow-hidden">
                 <div
                   className="h-full bg-primary transition-[width] duration-500"
-                  style={{ width: `${Math.max(0, Math.min(100, slice.progress))}%` }}
+                  style={{
+                    width: `${Math.max(0, Math.min(100, slice.progress))}%`,
+                  }}
                 />
               </div>
               <span className="tabular-nums text-xs text-foreground-subtle">
@@ -502,7 +559,9 @@ export function VacuumHeroCard({ trpc, deviceId }: DeviceControlProps): ReactNod
               <AlertTriangle className="h-3.5 w-3.5" />
               <span>
                 {slice.errorLabel ??
-                  t('uiLibrary.vacuum.errorCode', 'Error {{code}}', { code: slice.errorCode })}
+                  t('uiLibrary.vacuum.errorCode', 'Error {{code}}', {
+                    code: slice.errorCode,
+                  })}
               </span>
             </div>
           )}
@@ -557,7 +616,7 @@ export function VacuumHeroCard({ trpc, deviceId }: DeviceControlProps): ReactNod
       {fanSpeeds.length > 0 && (
         <label className="flex items-center gap-2 text-xs text-foreground-subtle">
           <span className="w-16 shrink-0">{t('uiLibrary.vacuum.fanSpeed', 'Fan speed')}</span>
-          <select
+          <Select
             aria-label={t('uiLibrary.vacuum.fanSpeed', 'Fan speed')}
             value={slice?.fanSpeed ?? ''}
             disabled={busy}
@@ -575,7 +634,7 @@ export function VacuumHeroCard({ trpc, deviceId }: DeviceControlProps): ReactNod
                 {s}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
       )}
     </div>

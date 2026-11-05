@@ -1,3 +1,4 @@
+import { Select } from '../primitives/select'
 import { TIMEZONES, findTimezone } from '@camstack/types'
 import type { Timezone, TimezoneDstRule, Weekday } from '@camstack/types'
 import { type JSX } from 'react'
@@ -41,7 +42,7 @@ export function TimezoneSelector({
   }
 
   return (
-    <select
+    <Select
       className={SELECT_CLASS}
       value={value}
       disabled={disabled}
@@ -60,6 +61,6 @@ export function TimezoneSelector({
           ))}
         </optgroup>
       ))}
-    </select>
+    </Select>
   )
 }

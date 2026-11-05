@@ -1,3 +1,4 @@
+import { Select } from '../../primitives/select'
 import { useUiText, type UiTextFn } from '../../contexts/ui-text'
 import type { ReactNode } from 'react'
 import { Pause, Play } from 'lucide-react'
@@ -228,7 +229,7 @@ export function MediaPlayerPanel({
           {display.availableSources.length > 0 && (
             <label className="flex items-center gap-2 text-xs text-foreground-subtle">
               <span>{t('uiLibrary.mediaPlayerPanel.source', 'Source')}</span>
-              <select // ui-check-ok: compact inline control; no library size at this density
+              <Select // ui-check-ok: compact inline control; no library size at this density
                 aria-label={t('uiLibrary.mediaPlayerPanel.source', 'Source')}
                 value={display.source}
                 disabled={busy}
@@ -249,7 +250,7 @@ export function MediaPlayerPanel({
                     {s}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
           )}
 
@@ -283,7 +284,7 @@ export function MediaPlayerPanel({
           {display.repeat !== null && (
             <label className="flex items-center gap-2 text-xs text-foreground-subtle">
               <span>{t('uiLibrary.mediaPlayerPanel.repeat', 'Repeat')}</span>
-              <select // ui-check-ok: compact inline control; no library size at this density
+              <Select // ui-check-ok: compact inline control; no library size at this density
                 aria-label={t('uiLibrary.mediaPlayerPanel.repeat', 'Repeat')}
                 value={display.repeat}
                 disabled={busy}
@@ -301,7 +302,7 @@ export function MediaPlayerPanel({
                     {repeatLabel(t, r)}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
           )}
         </>

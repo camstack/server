@@ -308,6 +308,7 @@ jobs:
             scripts/check-absent-claim-is-answered.ts \
             scripts/check-topology-is-a-diagram-not-a-lookup.ts \
             scripts/check-container-priority-in-sync.ts \
+            scripts/check-no-native-select.ts \
             scripts/check-device-selection-in-sync.ts \
             scripts/check-device-name-rendered-via-component.ts \
             scripts/check-device-name-in-sync.ts \

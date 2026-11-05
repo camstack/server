@@ -1,3 +1,4 @@
+import { Select } from '../../primitives/select'
 import type { ReactNode } from 'react'
 import { useDeviceCapability } from '../../hooks/use-device-capability.js'
 import { useOptimisticSlice } from '../../hooks/use-optimistic-slice.js'
@@ -212,8 +213,9 @@ export function ClimatePanel({
         )}
 
         {/* ── Mode selector: compact dropdown ── */}
-        <select
+        <Select
           aria-label={t('uiLibrary.climatePanel.mode', 'Mode')}
+          bare
           value={display.mode}
           disabled={busy}
           onChange={(e) => {
@@ -234,7 +236,7 @@ export function ClimatePanel({
               {m}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
     )
   }
@@ -382,7 +384,7 @@ export function ClimatePanel({
       {display.availableFanModes.length > 0 && (
         <label className="flex items-center gap-2 text-xs text-foreground-subtle">
           <span>{t('uiLibrary.climatePanel.fan', 'Fan')}</span>
-          <select
+          <Select
             aria-label={t('uiLibrary.climatePanel.fanMode', 'Fan mode')}
             value={display.fanMode}
             disabled={busy}
@@ -403,7 +405,7 @@ export function ClimatePanel({
                 {f}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
       )}
 
@@ -411,7 +413,7 @@ export function ClimatePanel({
       {display.availablePresets.length > 0 && (
         <label className="flex items-center gap-2 text-xs text-foreground-subtle">
           <span>{t('uiLibrary.climatePanel.preset', 'Preset')}</span>
-          <select
+          <Select
             aria-label={t('uiLibrary.climatePanel.preset', 'Preset')}
             value={display.preset}
             disabled={busy}
@@ -432,7 +434,7 @@ export function ClimatePanel({
                 {p}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
       )}
 

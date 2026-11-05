@@ -1,3 +1,4 @@
+import { Select } from '../primitives/select'
 import { useUiText } from '../contexts/ui-text'
 import { type JSX } from 'react'
 /**
@@ -33,7 +34,11 @@ export interface InferenceConfigSelectorProps {
   readonly agentId?: string
 
   // Options
-  readonly runtimes: readonly { value: string; label: string; available: boolean }[]
+  readonly runtimes: readonly {
+    value: string
+    label: string
+    available: boolean
+  }[]
   readonly backends: readonly InferenceBackendOption[]
   readonly models: readonly InferenceModelOption[]
   readonly agents?: readonly InferenceAgentOption[]
@@ -87,7 +92,7 @@ export function InferenceConfigSelector({
           <span className="text-xs font-medium text-foreground-subtle">
             {t('uiLibrary.inferenceConfig.agent', 'Agent')}
           </span>
-          <select
+          <Select
             value={agentId}
             onChange={(e) => onAgentChange?.(e.target.value)}
             className={SELECT_CLASS}
@@ -97,7 +102,7 @@ export function InferenceConfigSelector({
                 {a.name} ({a.status})
               </option>
             ))}
-          </select>
+          </Select>
         </label>
       )}
 
@@ -106,7 +111,7 @@ export function InferenceConfigSelector({
         <span className="text-xs font-medium text-foreground-subtle">
           {t('uiLibrary.inferenceConfig.runtime', 'Runtime')}
         </span>
-        <select
+        <Select
           value={runtime}
           onChange={(e) => {
             if (e.target.value === 'python') onRuntimeChange('python')
@@ -122,7 +127,7 @@ export function InferenceConfigSelector({
                   })}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
 
       {/* Backend */}
@@ -130,7 +135,7 @@ export function InferenceConfigSelector({
         <span className="text-xs font-medium text-foreground-subtle">
           {t('uiLibrary.inferenceConfig.backend', 'Backend')}
         </span>
-        <select
+        <Select
           value={backend}
           onChange={(e) => onBackendChange(e.target.value)}
           className={SELECT_CLASS}
@@ -144,7 +149,7 @@ export function InferenceConfigSelector({
                   })}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
 
       {/* Model */}
@@ -152,7 +157,7 @@ export function InferenceConfigSelector({
         <span className="text-xs font-medium text-foreground-subtle">
           {t('uiLibrary.inferenceConfig.model', 'Model')}
         </span>
-        <select
+        <Select
           value={modelId}
           onChange={(e) => onModelChange(e.target.value)}
           className={SELECT_CLASS}
@@ -169,7 +174,7 @@ export function InferenceConfigSelector({
               </option>
             ))
           )}
-        </select>
+        </Select>
       </label>
     </div>
   )

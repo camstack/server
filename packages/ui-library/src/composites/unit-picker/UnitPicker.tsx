@@ -3,6 +3,7 @@
  * empty dimension disables the control and shows `emptyReason` so the operator
  * never sees a refused conversion as a pickable option.
  */
+import { Select } from '../../primitives/select'
 import { normalizeUnit, type UnitDimension, unitsForDimension } from '@camstack/types'
 import type { ChangeEvent, ReactNode } from 'react'
 
@@ -49,7 +50,7 @@ export function UnitPicker({
 
   return (
     <div className="flex flex-col gap-0.5 min-w-0 w-full">
-      <select
+      <Select
         id={id}
         className={className ?? FIELD_CLASS}
         aria-label={ariaLabel}
@@ -63,7 +64,7 @@ export function UnitPicker({
             {unit}
           </option>
         ))}
-      </select>
+      </Select>
       {isEmpty && emptyReason !== undefined && emptyReason !== '' && (
         <span className="text-[10px] text-foreground-subtle">{emptyReason}</span>
       )}
