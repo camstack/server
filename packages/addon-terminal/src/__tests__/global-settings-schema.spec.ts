@@ -12,7 +12,7 @@
  *     node's stored `<key>@<nodeId>` value silently reverts to the default.
  */
 import type { ConfigField, ConfigUISchema } from '@camstack/types'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
 
 // `./pty.js` loads the `node-pty` native binding at import time, which a unit
 // test has no business doing (and cannot do on every CI arch).
@@ -27,9 +27,15 @@ vi.mock('../pty.js', () => ({
 import { TerminalAddon } from '../addon.js'
 
 class SchemaProbe extends TerminalAddon {
-  schemaForTest(): ConfigUISchema {
-    return this.globalSettingsSchema()
+  caps(): readonly string[] {
+    return this.scopedSettingsCapabilities()
   }
+}
+
+async function nodeSchemaOf(probe: SchemaProbe): Promise<ConfigUISchema> {
+  const schema = await probe.getScopedSettingsSchema('node', 'terminal-session')
+  if (schema === null) throw new Error('terminal-session declares no node schema')
+  return schema
 }
 
 function fieldKeysOf(schema: ConfigUISchema): readonly string[] {
@@ -48,8 +54,19 @@ function sectionFor(schema: ConfigUISchema, id: string) {
   return section
 }
 
-describe('terminal globalSettingsSchema', () => {
-  const schema = new SchemaProbe().schemaForTest()
+describe('terminal node settings schema', () => {
+  let schema: ConfigUISchema
+  beforeAll(async () => {
+    schema = await nodeSchemaOf(new SchemaProbe())
+  })
+
+  it('is declared on the node hook of terminal-session only, named up front', async () => {
+    const probe = new SchemaProbe()
+    expect(probe.caps()).toContain('terminal-session')
+    expect(await probe.getScopedSettingsSchema('cluster', 'terminal-session')).toBeNull()
+    expect(await probe.getScopedSettingsSchema('device-defaults', 'terminal-session')).toBeNull()
+    expect(await probe.getScopedSettingsSchema('node', 'not-a-capability')).toBeNull()
+  })
 
   it('gives every built-in profile its own section', () => {
     expect(schema.sections.map((section) => section.id)).toEqual([

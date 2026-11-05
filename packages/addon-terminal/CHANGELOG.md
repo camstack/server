@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Terminal settings are declared on the per-node settings hook; the form and stored values are unchanged.
+
 ## [0.1.158] - 2026-11-01
 
 ### Changed

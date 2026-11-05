@@ -864,7 +864,13 @@ export class TerminalAddon extends BaseAddon<TerminalAddonConfig> {
     return this.instanceInfo(instance)
   }
 
-  protected globalSettingsSchema(): ConfigUISchema {
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return ['terminal-session']
+  }
+
+  /** Every Terminal setting is per node: stored as `<key>@<nodeId>`, the panel shows the selected node's own. */
+  protected override async nodeSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    if (cap !== 'terminal-session') return null
     return this.schema({
       sections: [
         {
