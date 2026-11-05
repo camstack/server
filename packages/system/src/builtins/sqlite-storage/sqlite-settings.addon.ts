@@ -30,7 +30,10 @@ import {
   openOwnedSqliteFile,
 } from './owned-sqlite-file.js'
 import { DatabaseSnapshotProvider } from './database-snapshot-provider.js'
-import { runnerResolverFor } from './migrations/installed-runner-resolver.js'
+import {
+  installedSiblingResolver,
+  runnerResolverFor,
+} from './migrations/installed-runner-resolver.js'
 import { MigrationEngine, type MigrationFileAccess } from './migrations/migration-engine.js'
 import {
   migrationActions,
@@ -140,19 +143,26 @@ export class SqliteSettingsAddon extends BaseAddon {
         })
       }
     }
-    this.ctx.logger.info('DB path resolved', { meta: { pathSource, dbPath: settingsPath } })
+    this.ctx.logger.info('DB path resolved', {
+      meta: { pathSource, dbPath: settingsPath },
+    })
     this.ctx.logger.info('DB file status', { meta: { dbExists } })
 
-    const runnerIdOf = runnerResolverFor(
-      this.ctx.kernel?.runnerIdForAddon,
-      path.join(this.ctx.nodeDataDir ?? path.resolve(dir, '..', '..'), 'addons'),
+    const installedAddonsDir = path.join(
+      this.ctx.nodeDataDir ?? path.resolve(dir, '..', '..'),
+      'addons',
     )
+    const runnerIdOf = runnerResolverFor(this.ctx.kernel?.runnerIdForAddon, installedAddonsDir)
+    const areSiblings = installedSiblingResolver(installedAddonsDir)
     const engine = new MigrationEngine({
       logger: this.ctx.logger.child('Migrations'),
       catalogue: HUB_MIGRATIONS,
       codeVersion: systemPackageVersion(),
       snapshotterFor: (livePath) =>
-        new SqliteSnapshotter({ livePath, logger: this.ctx.logger.child('PreMigrationSnapshot') }),
+        new SqliteSnapshotter({
+          livePath,
+          logger: this.ctx.logger.child('PreMigrationSnapshot'),
+        }),
       announce: (kind, ids) => this.announceMigrations(kind, ids),
       // Forked here, so no kernel resolver: read the hosting runner from the installed manifests.
       runnerIdOf,
@@ -243,6 +253,7 @@ export class SqliteSettingsAddon extends BaseAddon {
         provider: new MigrationsProvider(engine, {
           database: () => settings.backend.getDatabase(),
           runnerIdOf,
+          areSiblings,
         }),
       },
     ]
@@ -297,7 +308,9 @@ export class SqliteSettingsAddon extends BaseAddon {
         // itself, right after its own `declareCollection`.
       } catch (err) {
         // Never block boot on housekeeping — the keys are dead either way.
-        this.ctx.logger.warn('Retired-key purge failed', { meta: { error: errMsg(err) } })
+        this.ctx.logger.warn('Retired-key purge failed', {
+          meta: { error: errMsg(err) },
+        })
       }
     }
   }
@@ -313,11 +326,15 @@ export class SqliteSettingsAddon extends BaseAddon {
         .sweepExpired()
         .then((deleted) => {
           if (deleted > 0) {
-            this.ctx.logger.info('records: expired rows swept', { meta: { deleted } })
+            this.ctx.logger.info('records: expired rows swept', {
+              meta: { deleted },
+            })
           }
         })
         .catch((err: unknown) => {
-          this.ctx.logger.warn('records: expiry sweep failed', { meta: { error: errMsg(err) } })
+          this.ctx.logger.warn('records: expiry sweep failed', {
+            meta: { error: errMsg(err) },
+          })
         })
     }
     this.sweepStart = setTimeout(() => {

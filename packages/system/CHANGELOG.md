@@ -60,6 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A call from an addon to a system-only method of a device capability (such as the snapshot state read) now reaches the capability's own wrapper instead of the camera's driver
 - Restoring a device no longer reports that a control is already registered when a second reconcile starts before the first has finished.
 - Notification text times no longer fail under a container with an empty TZ; they fall back to UTC
+- Fix: a grouped addon's migrations (Home Assistant export) are no longer refused when they read the legacy rows of their sibling provider; the integrations runner starts again
 
 ## [1.2.537] - 2026-11-01
 

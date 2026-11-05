@@ -65,6 +65,23 @@ function declarationsIn(dir: string): readonly { id: string; decl: Declaration }
   }
 }
 
+/**
+ * Whether two addons are declared by the same installed package. Sibling addons
+ * of one package are one trust unit: they ship together, are versioned together
+ * and one reads the rows the other's package wrote. An addon that is not
+ * installed (a builtin, a stranger) is a sibling of nobody.
+ */
+export function installedSiblingResolver(addonsDir: string): (a: string, b: string) => boolean {
+  return (a, b) => {
+    if (a === b) return true
+    for (const dir of packageDirs(addonsDir)) {
+      const ids = declarationsIn(dir).map((entry) => entry.id)
+      if (ids.includes(a) && ids.includes(b)) return true
+    }
+    return false
+  }
+}
+
 export function installedRunnerResolver(addonsDir: string): (addonId: string) => string {
   return (addonId) => {
     for (const dir of packageDirs(addonsDir)) {

@@ -46,6 +46,7 @@ describe('ctx.records in a grouped runner', () => {
       onUnownedCall: async (input) => {
         calls.push(input)
         if (input.capName === 'records' && input.method === 'declareKinds') return { kinds: [] }
+        if (input.capName === 'migrations') return { entries: [] }
         if (input.capName === 'records') return { rev: 1, releasedRefs: [], secretRefs: [] }
         if (input.capName === 'keychain' && input.method === 'resolve') return {}
         return { version: 1 }
@@ -94,6 +95,13 @@ describe('ctx.records in a grouped runner', () => {
     // The keychain is checked against the runner, so its stamp is unchanged.
     const keychainPut = calls.find((c) => c.capName === 'keychain' && c.method === 'put')
     expect(keychainPut?.callerAddonId).toBe(GROUP)
+  })
+
+  it('stamps a migrations call with the ADDON id, so a sibling is told from its runner (planning#445)', async () => {
+    const ctx = await createUdsAddonContext(client, `hub/${GROUP}`, member, tmpDir)
+    await ctx.api.migrations.listLedger.query({})
+    const call = calls.find((c) => c.capName === 'migrations' && c.method === 'listLedger')
+    expect(call?.callerAddonId).toBe('member-addon')
   })
 
   it('refuses a call that claims an addon the runner does not host', async () => {

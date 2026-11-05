@@ -1,5 +1,5 @@
 /**
- * The addon a grouped child acts for (the records owner).
+ * The addon a grouped child acts for (the records owner, the migration author).
  *
  * A grouped runner is stamped with its GROUP id by the transport, and the group can change when
  * the grouping does; the data of the caps below is keyed by the ADDON, which never changes. The
@@ -8,7 +8,7 @@
  */
 
 /** The caps whose rows and secret refs are keyed by the calling ADDON, not by its runner. */
-export const ADDON_KEYED_CAPS: readonly string[] = ['records']
+export const ADDON_KEYED_CAPS: readonly string[] = ['records', 'migrations']
 
 /** A child claimed an addon its runner does not host. Typed so a caller can tell it from a crash. */
 export class ActingAddonRefusedError extends Error {

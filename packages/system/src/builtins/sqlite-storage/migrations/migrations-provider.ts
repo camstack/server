@@ -30,6 +30,8 @@ import type { MigrationDatabase } from './migration-types.js'
 export interface LegacyIntegrationRowsDoor {
   readonly database: () => MigrationDatabase | null
   readonly runnerIdOf: (owner: string) => string
+  /** Whether two addons are declared by one installed package (one trust unit). */
+  readonly areSiblings?: (a: string, b: string) => boolean
 }
 
 /**
@@ -56,15 +58,17 @@ export class MigrationsProvider implements IMigrationsProvider {
   }
 
   /**
-   * The integration's own addon, or the runner that hosts it. An integration
-   * that is already gone has nothing to refuse.
+   * The integration's own addon, the runner that hosts it, or an addon of the
+   * same package (a sibling is one trust unit, whether or not it shares a runner).
+   * An integration that is already gone has nothing to refuse.
    */
   private assertLegacyCaller(integrationId: string, caller: string | null): MigrationDatabase {
     const db = this.settingsDatabase()
     const owner = legacyIntegrationAddonId(db, integrationId)
     if (owner === null) return db
     const runner = this.legacyRows?.runnerIdOf(owner) ?? owner
-    if (caller === null || (caller !== owner && caller !== runner)) {
+    const sibling = caller !== null && (this.legacyRows?.areSiblings?.(owner, caller) ?? false)
+    if (caller === null || (caller !== owner && caller !== runner && !sibling)) {
       throw new Error(
         `legacy integration rows of "${integrationId}" are migration-only — caller "${caller ?? ''}" is not "${owner}"`,
       )
@@ -118,17 +122,20 @@ export class MigrationsProvider implements IMigrationsProvider {
     return this.engine.finishMigration(input.id, input.result, callerOf(input))
   }
 
-  async restorePreMigration(input: {
-    database: DataStoreDatabase
-    snapshotId: string
-  }): Promise<{ scheduled: boolean; held: string[]; restartRequired: boolean }> {
+  async restorePreMigration(input: { database: DataStoreDatabase; snapshotId: string }): Promise<{
+    scheduled: boolean
+    held: string[]
+    restartRequired: boolean
+  }> {
     const { held } = await this.engine.restorePreMigration(input.database, input.snapshotId)
     return { scheduled: true, held: [...held], restartRequired: true }
   }
 
   readLegacyIntegrationRows(input: { integrationId: string }): Promise<Record<string, unknown>> {
     const db = this.assertLegacyCaller(input.integrationId, callerOf(input))
-    return Promise.resolve({ ...readLegacyIntegrationRows(db, input.integrationId) })
+    return Promise.resolve({
+      ...readLegacyIntegrationRows(db, input.integrationId),
+    })
   }
 
   clearLegacyIntegrationRows(input: {
@@ -152,6 +159,9 @@ export class MigrationsProvider implements IMigrationsProvider {
   }): Promise<{ present: boolean; removed: Record<string, unknown> }> {
     const db = this.assertLegacyCaller(input.integrationId, callerOf(input))
     const deleted = deleteLegacyIntegrationRowKeys(db, input.integrationId, input.keys)
-    return Promise.resolve({ present: deleted.present, removed: { ...deleted.removed } })
+    return Promise.resolve({
+      present: deleted.present,
+      removed: { ...deleted.removed },
+    })
   }
 }

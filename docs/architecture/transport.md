@@ -173,7 +173,7 @@ A provider that must know its caller (today: the keychain, D787) reads
 OVERWRITES whatever the args say, and a call with NO stamp has a claimed
 `callerAddonId` STRIPPED. A session can never supply it either: no input schema
 declares the field, so the tRPC router's parse drops it. A grouped runner is
-stamped with its group id, not the addon id; for the `records` cap alone a
+stamped with its group id, not the addon id; for the addon-keyed caps alone (`records`, `migrations`: `ADDON_KEYED_CAPS`) a
 grouped call carries the addon id it acts for (`actingAddonId`), which the hub
 accepts only when that runner hosts the addon (`ActingAddonRefusedError`
 otherwise), so rows and secret refs are owned by the addon id. This is identity against bugs and
