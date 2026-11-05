@@ -167,3 +167,68 @@ describe('ensureRequiredPackages follows registry latest', () => {
     expect(apply).not.toHaveBeenCalled()
   })
 })
+
+describe('ensureRequiredPackages holds a version the running server cannot host (D989, planning#447)', () => {
+  const needsNewer = async () => ({ server: '>=9.0.0' as const })
+
+  it('does not install a first-boot addon whose latest needs a newer server, and names both versions', async () => {
+    const addonsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'camstack-requires-'))
+    tmpDirs.push(addonsDir)
+    const { logger, lines } = capturingLogger()
+    const installer = new AddonInstaller(
+      { addonsDir, serverVersion: '1.2.0', resolveRequires: needsNewer },
+      logger,
+    )
+    const install = vi.spyOn(installer, 'installFromNpm')
+
+    await installer.ensureRequiredPackages(['@camstack/addon-pipeline'])
+
+    expect(install).not.toHaveBeenCalled()
+    expect(lines.some((l) => l.includes('9.0.0') && l.includes('1.2.0'))).toBe(true)
+  })
+
+  it('holds the install when the requirements cannot be read', async () => {
+    const addonsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'camstack-requires-'))
+    tmpDirs.push(addonsDir)
+    const installer = new AddonInstaller({
+      addonsDir,
+      serverVersion: '1.2.0',
+      resolveRequires: async () => {
+        throw new Error('the registry answered 503')
+      },
+    })
+    const install = vi.spyOn(installer, 'installFromNpm')
+    await installer.ensureRequiredPackages(['@camstack/addon-pipeline'])
+    expect(install).not.toHaveBeenCalled()
+  })
+
+  it('installs when the server meets the minimum', async () => {
+    const addonsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'camstack-requires-'))
+    tmpDirs.push(addonsDir)
+    const installer = new AddonInstaller({
+      addonsDir,
+      serverVersion: '9.0.1',
+      resolveRequires: needsNewer,
+    })
+    const install = vi
+      .spyOn(installer, 'installFromNpm')
+      .mockResolvedValue({ name: '@camstack/addon-pipeline', version: '1.0.0' })
+    await installer.ensureRequiredPackages(['@camstack/addon-pipeline'])
+    expect(install).toHaveBeenCalledWith('@camstack/addon-pipeline')
+  })
+
+  it('does not move an installed copy to a latest that needs a newer server', async () => {
+    const addonsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'camstack-requires-'))
+    tmpDirs.push(addonsDir)
+    installed(addonsDir, '@camstack/addon-pipeline', '1.2.7')
+    const installer = new AddonInstaller({
+      addonsDir,
+      serverVersion: '1.2.0',
+      resolveLatestVersion: async () => '1.3.0',
+      resolveRequires: needsNewer,
+    })
+    const apply = vi.spyOn(installer, 'applyUpdate')
+    await installer.ensureRequiredPackages(['@camstack/addon-pipeline'])
+    expect(apply).not.toHaveBeenCalled()
+  })
+})

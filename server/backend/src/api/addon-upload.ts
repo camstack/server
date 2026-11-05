@@ -2,10 +2,14 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import type { AddonDeploySource } from '@camstack/server/system'
-import type { IScopedLogger } from '@camstack/types'
+import { describeUnmet, type IScopedLogger, type UnmetRequirement } from '@camstack/types'
 import type { FastifyInstance, FastifyReply } from 'fastify'
 import type { AddonPackageService } from '../core/addon/addon-package.service'
 import { isFrameworkPackage } from '../core/addon/addon-package.service.js'
+import {
+  readRunningServerVersion,
+  unmetAddonRequirements,
+} from '../core/addon/addon-requirements.js'
 import type { AddonRegistryService } from '../core/addon/addon-registry.service'
 import type { AddonBridgeService } from '../core/addon-bridge/addon-bridge.service'
 import type { AuthService } from '../core/auth/auth.service'
@@ -19,7 +23,7 @@ import {
 } from './agent-addon-delivery.js'
 import { DeployStageRegistry } from './deploy-stage-registry.js'
 import type { ClusterBaseUrlResolver } from './hub-cluster-url.js'
-import { isTarballFilename, readTarballManifest } from './tarball-manifest.js'
+import { isTarballFilename, readTarballManifest, type TarballManifest } from './tarball-manifest.js'
 import { authorizeUploadRequest } from './upload-auth.js'
 
 const deployStageRegistry = new DeployStageRegistry()
@@ -106,6 +110,8 @@ export function buildHubHttpSource(
 
 /** What the upload route tells the agent registry (D982). */
 export interface UploadConvergence {
+  /** The `@camstack/server` version the node last reported; `null` when it never did. */
+  nodeServerVersion?(nodeId: string): string | null
   noteExplicitDelivery(nodeId: string, packageName: string): Promise<void>
   requestConvergence(trigger: 'hub-change'): Promise<void>
 }
@@ -195,6 +201,25 @@ export async function registerAddonUploadRoute(
       })
     }
 
+    // Gate (D989, planning#447): an archive that needs a newer server or addon than the
+    // target runs is refused BEFORE it is installed or shipped, with the typed reasons.
+    const unmet = unmetForTarget(manifest, nodeId, convergence)
+    if (unmet.length > 0) {
+      const reason = unmet.map(describeUnmet).join('; ')
+      logger.warn('addon upload refused: requirements unmet', {
+        meta: {
+          package: manifest.name,
+          version: manifest.version,
+          target: nodeId ?? 'hub',
+          unmet: reason,
+        },
+      })
+      return reply.status(409).send({
+        error: `Refused: ${manifest.name}@${manifest.version} needs more than ${nodeId && nodeId !== 'hub' ? nodeId : 'the hub'} runs — ${reason}`,
+        unmet,
+      })
+    }
+
     // Branch by deployment target. `nodeId === 'hub'` (or absent) installs on
     // the hub AND broadcasts to every connected agent that can run any of
     // the package's addons (i.e. anything not marked hub-only). Any other
@@ -227,6 +252,32 @@ export async function registerAddonUploadRoute(
       convergence,
     )
   })
+}
+
+/**
+ * What the archive's `requires` asks that its target does not meet. The hub
+ * knows its own server and installed addons; an agent's roster is not known
+ * here, so only the server minimum binds a delivery to it (the reconcile judges
+ * the rest against the live roster).
+ */
+function unmetForTarget(
+  manifest: TarballManifest,
+  nodeId: string | null,
+  convergence: UploadConvergence | undefined,
+): readonly UnmetRequirement[] {
+  if (!nodeId || nodeId === 'hub') {
+    return unmetAddonRequirements(manifest.requires, {
+      serverVersion: readRunningServerVersion(),
+      addonsDir: () => {
+        const dataDir = path.resolve(process.env['CAMSTACK_DATA'] ?? 'camstack-data')
+        return process.env['CAMSTACK_ADDONS_DIR'] ?? path.resolve(dataDir, 'addons')
+      },
+    })
+  }
+  return unmetAddonRequirements(manifest.requires, {
+    serverVersion: convergence?.nodeServerVersion?.(nodeId) ?? null,
+    addonsDir: () => '',
+  }).filter((u) => u.kind === 'server-too-old')
 }
 
 interface AddonExecutionLike {

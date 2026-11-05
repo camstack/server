@@ -127,13 +127,32 @@ export interface AddonInstallerConfig {
    * Production leaves it unset and asks the registry; specs inject it.
    */
   readonly resolveLatestVersion?: (packageName: string) => Promise<string | null>
+  /**
+   * The `@camstack/server` version this process runs. When set, a registry
+   * install at boot (`ensureRequiredPackages`) first reads the target's
+   * `camstack.requires` and holds back a version that needs a newer server
+   * (D989, planning#447): it is NOT installed, the reason names both versions.
+   * An unreadable `requires` document is held too — a failed read is never a
+   * pass. `null` is "the running version could not be read" and passes nothing
+   * that declares a minimum. Unset (specs, legacy callers) means no gate.
+   */
+  readonly serverVersion?: string | null
+  /**
+   * `camstack.requires` of `packageName@spec` (`undefined` = declares none).
+   * Throws when the registry document cannot be read. Production leaves it
+   * unset and asks the registry; specs inject it.
+   */
+  readonly resolveRequires?: (
+    packageName: string,
+    spec: string,
+  ) => Promise<PackageRequires | undefined>
 }
 
 /** How long a boot-time `dist-tags.latest` read may take before it is "unreadable". */
 const REGISTRY_LATEST_TIMEOUT_MS = 15_000
 
-import type { InstalledPackage, IScopedLogger } from '@camstack/types'
-import { errMsg } from '@camstack/types'
+import type { InstalledPackage, IScopedLogger, PackageRequires } from '@camstack/types'
+import { describeUnmet, errMsg, PackageRequiresSchema, unmetRequirements } from '@camstack/types'
 import { AddonManifest } from './addon-manifest.js'
 import {
   ADDON_VERSION_REASON_REGISTRY_LATEST,
@@ -258,6 +277,8 @@ export class AddonInstaller {
   /** Test seam — production resolves via `CAMSTACK_FRAMEWORK_DIR`. */
   private readonly closureNodeModulesDir: string | undefined
   private readonly resolveLatestVersionOverride: AddonInstallerConfig['resolveLatestVersion']
+  private readonly serverVersion: string | null | undefined
+  private readonly resolveRequiresOverride: AddonInstallerConfig['resolveRequires']
   /**
    * Central manifest of installed addons. Tracks version + source +
    * timestamps + last-backup pointer per package, written atomically
@@ -283,6 +304,8 @@ export class AddonInstaller {
     this.isPackageResolvable = config.isPackageResolvable
     this.closureNodeModulesDir = config.closureNodeModulesDir
     this.resolveLatestVersionOverride = config.resolveLatestVersion
+    this.serverVersion = config.serverVersion
+    this.resolveRequiresOverride = config.resolveRequires
   }
 
   /**
@@ -513,6 +536,15 @@ export class AddonInstaller {
           this.logger.info(`${packageName} — not found locally, trying npm`)
         }
 
+        // A first install at `latest` is judged BEFORE it lands: an addon that needs
+        // a newer server than this one is held back, not installed to crash-loop.
+        const held = await this.holdForRequirements(packageName, 'latest')
+        if (held !== null) {
+          this.logger.warn(`${packageName} — not installed at boot: ${held}`, {
+            meta: { spec: 'latest', reason: held },
+          })
+          continue
+        }
         await this.installFromNpm(packageName)
       } catch (err) {
         const msg = errMsg(err)
@@ -546,6 +578,13 @@ export class AddonInstaller {
       )
       return
     }
+    const held = await this.holdForRequirements(packageName, decision.to)
+    if (held !== null) {
+      this.logger.warn(`${packageName} — not moved ${decision.from} → ${decision.to}: ${held}`, {
+        meta: { from: decision.from, to: decision.to, reason: held },
+      })
+      return
+    }
     this.logger.info(
       `${packageName} — moving ${decision.from} → ${decision.to}: ${decision.reason}`,
       {
@@ -559,6 +598,45 @@ export class AddonInstaller {
       })
     }
     await this.applyUpdate(packageName, decision.to)
+  }
+
+  /**
+   * Why `packageName@spec` must not be installed on this server, or `null` when
+   * it may (or when no server version was configured: no gate). Judges only the
+   * server minimum; `requires.addons` binds the server's own update, not an addon's.
+   */
+  private async holdForRequirements(packageName: string, spec: string): Promise<string | null> {
+    if (this.serverVersion === undefined) return null
+    let requires: PackageRequires | undefined
+    try {
+      requires = await this.readRequires(packageName, spec)
+    } catch (err) {
+      return `its requirements could not be read (${errMsg(err)}); a failed read is not a pass`
+    }
+    const unmet = unmetRequirements(requires, {
+      server: this.serverVersion,
+      addons: {},
+      wrapper: null,
+    }).filter((u) => u.kind === 'server-too-old')
+    return unmet.length === 0 ? null : unmet.map(describeUnmet).join('; ')
+  }
+
+  private async readRequires(
+    packageName: string,
+    spec: string,
+  ): Promise<PackageRequires | undefined> {
+    if (this.resolveRequiresOverride) return this.resolveRequiresOverride(packageName, spec)
+    const registry = (this.registry ?? 'https://registry.npmjs.org').replace(/\/+$/, '')
+    const url = `${registry}/${encodeURIComponent(packageName).replace(/^%40/, '@')}/${encodeURIComponent(spec)}`
+    const res = await fetch(url, { signal: AbortSignal.timeout(REGISTRY_LATEST_TIMEOUT_MS) })
+    if (!res.ok) throw new Error(`the registry answered ${res.status}`)
+    const doc: unknown = await res.json()
+    if (typeof doc !== 'object' || doc === null)
+      throw new Error('the registry document is not an object')
+    const camstack: unknown = Reflect.get(doc, 'camstack')
+    if (typeof camstack !== 'object' || camstack === null) return undefined
+    const parsed = PackageRequiresSchema.safeParse(Reflect.get(camstack, 'requires'))
+    return parsed.success ? parsed.data : undefined
   }
 
   /** `dist-tags.latest`, or `null` when the registry cannot be read. */

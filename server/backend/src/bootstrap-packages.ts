@@ -18,6 +18,7 @@
 
 /** The subset of `@camstack/server`'s `package.json` this module reads. */
 export interface ServerBootstrapManifest {
+  readonly version?: string
   readonly dependencies?: Readonly<Record<string, string>>
   readonly camstack?: {
     readonly agentOnlyBootstrapAddons?: readonly string[]

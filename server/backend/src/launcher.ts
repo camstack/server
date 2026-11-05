@@ -192,9 +192,13 @@ async function launch(): Promise<void> {
     bundledAddonsDir = bundledDir
     console.log(`[launcher] Using bundled addons from ${bundledDir}`)
   }
+  // The running server's own version judges a registry install at boot: an addon
+  // that needs a newer server is held back instead of installed to crash (D989).
+  const ownVersion = readOwnManifest()?.version
   const installer = new AddonInstaller({
     addonsDir,
     ...(bundledAddonsDir ? { bundledAddonsDir } : {}),
+    serverVersion: typeof ownVersion === 'string' && ownVersion.length > 0 ? ownVersion : null,
   })
 
   // The first-boot addon set always comes from the package; no config key

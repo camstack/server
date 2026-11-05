@@ -406,6 +406,11 @@ export class AgentRegistryService {
   /** The server version each node last reported on `$agent.status`; `null` = reported none. */
   private readonly nodeServerVersions = new Map<string, string | null>()
 
+  /** The `@camstack/server` version `nodeId` last reported on reconcile; `null` when none. */
+  nodeServerVersion(nodeId: string): string | null {
+    return this.nodeServerVersions.get(nodeId) ?? null
+  }
+
   private convergenceTimer: ReturnType<typeof setInterval> | null = null
   private convergenceRunning = false
   private convergenceRerun: BackfillTrigger | null = null

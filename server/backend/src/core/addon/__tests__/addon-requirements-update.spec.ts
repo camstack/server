@@ -65,6 +65,23 @@ describe('addon requirements (D989)', () => {
     expect(result.unmet?.[0]?.kind).toBe('server-too-old')
   })
 
+  it('updatePackage refuses when the registry document for the target cannot be read', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(
+      (async () => new Response('unavailable', { status: 503 })) as typeof fetch,
+    )
+    const result = await build('1.2.0').updatePackage('@camstack/addon-x', '1.3.0')
+    expect(result.success).toBe(false)
+    expect(result.error).toContain('could not be read')
+    expect(result.error).toContain('503')
+
+    vi.spyOn(globalThis, 'fetch').mockImplementation((async () => {
+      throw new Error('socket hang up')
+    }) as typeof fetch)
+    const thrown = await build('1.2.0').updatePackage('@camstack/addon-x', '1.3.0')
+    expect(thrown.success).toBe(false)
+    expect(thrown.error).toContain('socket hang up')
+  })
+
   it('the update sweep lists a held update as blocked and does not announce it', async () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(registryRequiring('>=1.3.0'))
     const service = build('1.2.0')

@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The hub no longer spawns an addon whose package is older than the running server requires; it is held back and logged until the required-addon update lands
 - After a server update the hub brings every addon below the server's required minimum current on boot, even with auto-update off; a failure raises an alert and boot continues
 - A delivery to an agent is held when its addon minimum is above what the node holds, naming both versions
+- Addon uploads, first-boot installs and registry updates now read the package's requirements and refuse or hold a version the node cannot run, naming both versions; an unreadable requirements document is a refusal
 
 ## [1.2.779] - 2026-11-05
 

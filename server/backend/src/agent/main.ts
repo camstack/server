@@ -236,6 +236,8 @@ async function startAgent(configPath?: string): Promise<void> {
   const installer = new AddonInstaller({
     addonsDir: config.addonsDir,
     ...(bundledDir && fs.existsSync(bundledDir) ? { bundledAddonsDir: bundledDir } : {}),
+    // A registry install at boot is judged against the server this agent runs (D989).
+    serverVersion: readRunningServerVersion(),
   })
   await installer.ensureRequiredPackages(AddonInstaller.AGENT_PACKAGES)
 

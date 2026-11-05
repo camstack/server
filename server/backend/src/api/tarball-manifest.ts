@@ -7,10 +7,13 @@ import { execFileSync } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
+import { type PackageRequires, PackageRequiresSchema } from '@camstack/types'
 
 export interface TarballManifest {
   readonly name: string
   readonly version: string
+  /** `camstack.requires` of the package (D989); `undefined` when it declares none or it is malformed. */
+  readonly requires?: PackageRequires
 }
 
 const TARBALL_EXTENSIONS = ['.tgz', '.tar.gz']
@@ -44,7 +47,16 @@ export function readTarballManifest(buffer: Buffer, filename: string): TarballMa
     if (!parsed || typeof parsed !== 'object') return null
     const pkg = parsed as Record<string, unknown>
     if (typeof pkg['name'] !== 'string' || typeof pkg['version'] !== 'string') return null
-    return { name: pkg['name'], version: pkg['version'] }
+    const camstack: unknown = pkg['camstack']
+    const requires =
+      typeof camstack === 'object' && camstack !== null
+        ? PackageRequiresSchema.safeParse(Reflect.get(camstack, 'requires'))
+        : undefined
+    return {
+      name: pkg['name'],
+      version: pkg['version'],
+      ...(requires?.success ? { requires: requires.data } : {}),
+    }
   } catch {
     return null
   } finally {

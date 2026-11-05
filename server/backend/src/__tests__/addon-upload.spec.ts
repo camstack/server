@@ -41,7 +41,11 @@ import type { MoleculerService } from '../core/moleculer/moleculer.service.js'
  * just that file via `tar -xzO`, so nothing else is needed for the happy
  * path tests. Returns a Buffer.
  */
-function buildValidTarball(manifest: { name: string; version: string }): Buffer {
+function buildValidTarball(manifest: {
+  name: string
+  version: string
+  camstack?: { requires: { server?: string } }
+}): Buffer {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vitest-tarball-'))
   try {
     fs.mkdirSync(path.join(tmpDir, 'package'), { recursive: true })
@@ -749,5 +753,105 @@ describe('POST /api/addons/upload — a nodeId that arrives after the file', () 
       expect.anything(),
       expect.objectContaining({ nodeID: 'agent-onvif' }),
     )
+  })
+})
+
+describe('POST /api/addons/upload — requirements (planning#447, D989)', () => {
+  let fastify: FastifyInstance | null = null
+  afterEach(async () => {
+    if (fastify) await fastify.close()
+    fastify = null
+  })
+
+  const needsServer = buildValidTarball({
+    name: 'addon-x',
+    version: '1.0.0',
+    camstack: { requires: { server: '>=2.0.0' } },
+  })
+
+  async function upload(
+    content: Buffer,
+    nodeId: string | undefined,
+    convergence: { nodeServerVersion(nodeId: string): string | null } | undefined,
+    call: ReturnType<typeof vi.fn>,
+    bridge: AddonBridgeService = makeAddonBridge(),
+  ) {
+    const server = Fastify({ logger: false })
+    await registerAddonUploadRoute(
+      server,
+      bridge,
+      makeAuth('admin'),
+      makeMoleculer(call),
+      makeAddonRegistry(),
+      makeAddonPackageService(),
+      makeLogger(),
+      clusterBaseUrlResolver(() => {
+        const endpoints = [HUB_LAN]
+        return {
+          getAddresses: async () => ({
+            rows: [],
+            roles: resolveHubAddressRoles(endpoints, endpoints, AUTOMATIC_HUB_ADDRESS_FLAGS),
+            appLinkHub: null,
+          }),
+        }
+      }),
+      undefined,
+      convergence === undefined
+        ? undefined
+        : {
+            ...convergence,
+            noteExplicitDelivery: async () => {},
+            requestConvergence: async () => {},
+          },
+    )
+    await server.ready()
+    fastify = server
+    return server.inject({
+      method: 'POST',
+      url: '/api/addons/upload',
+      headers: {
+        'content-type': `multipart/form-data; boundary=${TGZ_BOUNDARY}`,
+        authorization: 'Bearer t',
+      },
+      payload: buildMultipart(TGZ_BOUNDARY, {
+        file: { filename: 'addon-x.tgz', content },
+        ...(nodeId === undefined ? {} : { nodeId, addonId: 'addon-x' }),
+      }),
+    })
+  }
+
+  it('refuses a deploy to an agent whose server is older than the package needs, and ships nothing', async () => {
+    const call = vi.fn()
+    const res = await upload(needsServer, 'agent-a', { nodeServerVersion: () => '1.0.0' }, call)
+    expect(res.statusCode).toBe(409)
+    const body = res.json() as { error: string; unmet: { kind: string; running: string | null }[] }
+    expect(body.unmet).toEqual([{ kind: 'server-too-old', required: '2.0.0', running: '1.0.0' }])
+    expect(body.error).toContain('1.0.0')
+    expect(call).not.toHaveBeenCalled()
+  })
+
+  it('refuses when the node never reported its server version (unjudged is not met)', async () => {
+    const call = vi.fn()
+    const res = await upload(needsServer, 'agent-a', { nodeServerVersion: () => null }, call)
+    expect(res.statusCode).toBe(409)
+    expect(call).not.toHaveBeenCalled()
+  })
+
+  it('delivers to an agent whose server meets the minimum', async () => {
+    const call = vi.fn(async () => ({ success: true, addonId: 'addon-x', path: '/a' }))
+    const res = await upload(needsServer, 'agent-a', { nodeServerVersion: () => '2.0.1' }, call)
+    expect(res.statusCode).toBe(200)
+    expect(call).toHaveBeenCalled()
+  })
+
+  it('refuses an install on the hub whose running server is unreadable or older', async () => {
+    const installFromTgz = vi.fn(async () => ({ name: 'addon-x', version: '1.0.0' }))
+    const bridge = {
+      getInstaller: vi.fn(() => ({ installFromTgz })),
+      reloadPackages: vi.fn(async () => {}),
+    } as unknown as AddonBridgeService
+    const res = await upload(needsServer, undefined, undefined, vi.fn(), bridge)
+    expect(res.statusCode).toBe(409)
+    expect(installFromTgz).not.toHaveBeenCalled()
   })
 })

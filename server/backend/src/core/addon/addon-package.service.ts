@@ -319,6 +319,11 @@ const CORE_MANAGED_PACKAGES: readonly string[] = [SYSTEM_PACKAGE, '@camstack/typ
  */
 const FRAMEWORK_STATUS_PACKAGES: readonly string[] = []
 
+/** What reading one registry version's requirements answered. */
+type FetchedRequires =
+  | { readonly read: true; readonly requires: PackageRequires | undefined }
+  | { readonly read: false; readonly reason: string }
+
 export class AddonPackageService {
   private readonly logger: IScopedLogger
 
@@ -1219,7 +1224,21 @@ export class AddonPackageService {
       if (category === 'addon') {
         // D989: a version that needs a newer server (or addon) than this node
         // runs is refused BEFORE it is installed, naming both versions.
-        const unmet = this.unmetFor(await this.fetchRequires(name, version ?? 'latest'))
+        const target = await this.fetchRequires(name, version ?? 'latest')
+        // A registry document that cannot be read is NOT "declares nothing": the
+        // package may need a newer server, and a failed read is never a pass (D989).
+        if (!target.read) {
+          this.logger.warn('Addon update refused: the target requirements could not be read', {
+            meta: { name, version, reason: target.reason },
+          })
+          return {
+            success: false,
+            version: '',
+            requiresRestart: false,
+            error: `Refused: ${name}${version ? `@${version}` : ''} — its requirements could not be read from the registry (${target.reason}); nothing was installed`,
+          }
+        }
+        const unmet = this.unmetFor(target.requires)
         if (unmet.length > 0) {
           const reason = unmet.map(describeUnmet).join('; ')
           this.logger.warn('Addon update refused: requirements unmet', {
@@ -2312,7 +2331,8 @@ export class AddonPackageService {
         // fall through to the registry
       }
     }
-    return this.fetchRequires(name, version)
+    const target = await this.fetchRequires(name, version)
+    return target.read ? target.requires : undefined
   }
 
   /** What a target's `camstack.requires` asks that this node does not meet (D989). */
@@ -2325,22 +2345,24 @@ export class AddonPackageService {
 
   /**
    * The `camstack.requires` of one registry version. An unreadable answer is
-   * "declares nothing": the install that follows asks the same registry and
-   * fails on its own if it is really down.
+   * reported as such (`read: false`) and never folded into "declares nothing":
+   * the caller that installs refuses, the one that only reports may carry on.
    */
-  private async fetchRequires(name: string, spec: string): Promise<PackageRequires | undefined> {
+  private async fetchRequires(name: string, spec: string): Promise<FetchedRequires> {
     try {
       const url = `${this.resolveRegistryBase()}/${name.replace('/', '%2F')}/${encodeURIComponent(spec)}`
       const response = await fetch(url, {
         signal: AbortSignal.timeout(AddonPackageService.REGISTRY_TIMEOUT_MS),
       })
-      if (!response.ok) return undefined
-      return requiresOfVersionDoc(await fetchJsonObject(response))
+      if (!response.ok) {
+        return { read: false, reason: `the registry answered ${response.status}` }
+      }
+      return { read: true, requires: requiresOfVersionDoc(await fetchJsonObject(response)) }
     } catch (error: unknown) {
       this.logger.warn('Could not read the requirements of the target version', {
         meta: { name, spec, error: errMsg(error) },
       })
-      return undefined
+      return { read: false, reason: errMsg(error) }
     }
   }
 
