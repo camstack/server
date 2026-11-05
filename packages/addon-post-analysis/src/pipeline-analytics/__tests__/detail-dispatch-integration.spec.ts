@@ -46,6 +46,7 @@ import {
   type FakeStorageProvider,
   type FakeDeviceManager,
   type FakeEventBus,
+  FAKE_MIGRATIONS_API,
 } from './test-helpers.js'
 
 const DEVICE_ID = 9
@@ -260,6 +261,7 @@ async function boot(
 
   const api = {
     settingsStore: settings.client,
+    migrations: FAKE_MIGRATIONS_API,
     deviceManager: deviceManager.api.deviceManager,
     pipelineRunner: runner,
     // The vector store is the sqlite-settings BUILTIN in production — a hub

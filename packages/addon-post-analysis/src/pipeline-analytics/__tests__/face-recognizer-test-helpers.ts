@@ -27,7 +27,7 @@ import { makeLogRecorder } from './test-helpers.js'
 
 const ENABLED = {
   ...FACE_DEFAULTS,
-  enabled: true,
+  faceRecognitionEnabled: true,
   confirmFrames: 2,
   minFacePx: 0,
   recognitionMinFacePx: 0,

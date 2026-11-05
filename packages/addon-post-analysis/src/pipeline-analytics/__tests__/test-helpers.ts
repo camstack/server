@@ -1228,6 +1228,26 @@ export function makeFakeStorageProvider(): FakeStorageProvider {
 
 // ── Device-manager stub (getBindings for BindingCache) ──────────────
 
+/**
+ * The migration engine, answering as it does for a catalogue it already applied: the addon's boot
+ * runs its catalogue, and a refused declaration blocks the addon (`block-owner`). The migrations
+ * have their own specs, over real rows.
+ */
+export const FAKE_MIGRATIONS_API = {
+  declareOwner: {
+    mutate: ({ metas }: { readonly metas: readonly { readonly id: string }[] }) =>
+      Promise.resolve({
+        bootId: 'fake-boot',
+        snapshot: 'none' as const,
+        steps: metas.map((meta) => ({
+          id: meta.id,
+          action: 'skip' as const,
+          state: 'applied' as const,
+        })),
+      }),
+  },
+}
+
 /** One entry of the linked set a camera answers with. */
 export interface FakeLinkedDevice {
   readonly deviceId: number
@@ -1449,6 +1469,7 @@ export function makeFakeAddonApi(deps: {
     settingsStore: deps.settingsStore,
     deviceManager: deps.deviceManager,
     deviceHistory,
+    migrations: FAKE_MIGRATIONS_API,
     storageMigration: {
       moverClearance: {
         query: ({ locationIds }: { locationIds: readonly string[] }) =>

@@ -81,7 +81,11 @@ function emitAnnounce(bus: IEventBus, timestamp: number): void {
     frame,
     nodeId: 'hub',
     detailSteps: [
-      { stepId: 'face-detection', inputClasses: ['person'], cadence: { trigger: 'once' } },
+      {
+        stepId: 'face-detection',
+        inputClasses: ['person'],
+        cadence: { trigger: 'once' },
+      },
     ],
   }
   bus.emit(
@@ -149,7 +153,11 @@ describe('the grouped-window inputs are WIRED (D692, H-3)', () => {
       cost: 0.4,
       gapMs: 200,
     })
-    expect(spy).toHaveBeenCalledWith({ deviceId: DEVICE_ID, survivorId: 'S', absorbedId: 'A' })
+    expect(spy).toHaveBeenCalledWith({
+      deviceId: DEVICE_ID,
+      survivorId: 'S',
+      absorbedId: 'A',
+    })
   }, 20_000)
 
   it("the NC's sync alias read answers a fused id from the alias store's RAM (L-1)", async () => {
@@ -201,7 +209,12 @@ describe('the grouped-window inputs are WIRED (D692, H-3)', () => {
       embedding: [1, 0, 0, 0],
       parentBbox: { x: 0, y: 0, w: 100, h: 100 },
       faceBbox: { x: 10, y: 10, w: 50, h: 50 },
-      settings: { ...FACE_DEFAULTS, enabled: true, minFacePx: 0, recognitionMinFacePx: 0 },
+      settings: {
+        ...FACE_DEFAULTS,
+        faceRecognitionEnabled: true,
+        minFacePx: 0,
+        recognitionMinFacePx: 0,
+      },
       cropPadding: 0,
     })
     const ask = (now: number) =>
@@ -211,7 +224,10 @@ describe('the grouped-window inputs are WIRED (D692, H-3)', () => {
         className: 'person',
         now,
       })
-    expect(ask(10_000 + FACE_SETTLE_HOLD_MS - 1)).toEqual({ final: false, awaiting: 'face' })
+    expect(ask(10_000 + FACE_SETTLE_HOLD_MS - 1)).toEqual({
+      final: false,
+      awaiting: 'face',
+    })
     expect(ask(10_000 + FACE_SETTLE_HOLD_MS)).toEqual({ final: true })
   }, 20_000)
 })

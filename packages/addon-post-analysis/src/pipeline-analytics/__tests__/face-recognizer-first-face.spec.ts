@@ -12,11 +12,19 @@ import {
 import { FACE_DEFAULTS } from '../face-settings.js'
 import { makeSilentLogger } from './test-helpers.js'
 
-const SETTINGS = { ...FACE_DEFAULTS, enabled: true, minFacePx: 0, recognitionMinFacePx: 0 }
+const SETTINGS = {
+  ...FACE_DEFAULTS,
+  faceRecognitionEnabled: true,
+  minFacePx: 0,
+  recognitionMinFacePx: 0,
+}
 
 function recognizer(): FaceRecognizer {
   const deps: FaceRecognizerDeps = {
-    identityStore: { loadGallery: async () => [], listIdentities: async () => [] },
+    identityStore: {
+      loadGallery: async () => [],
+      listIdentities: async () => [],
+    },
     faceStore: { insert: async () => {} },
     mediaStore: { put: async () => 1 },
     trackStore: { applyLabelCandidate: async () => null },

@@ -46,7 +46,7 @@ describe('resolveFaceSettings', () => {
 
   it('defaults are the spec values', () => {
     expect(FACE_DEFAULTS).toEqual({
-      enabled: true,
+      faceRecognitionEnabled: true,
       // D651: follows the default model. AuraFace's measured operating point
       // (2026-08-21, inter-identity max 0.361), not ArcFace's 0.55.
       similarityThreshold: 0.45,
@@ -79,7 +79,10 @@ describe('resolveFaceSettings', () => {
   it('suggestionMinCosine is NOT a stored field — a persisted value is inert', () => {
     expect(Object.keys(FACE_DEFAULTS)).not.toContain('suggestionMinCosine')
     // The exact residue the live hub carried on 2026-08-21.
-    const resolved = resolveFaceSettings({ similarityThreshold: 0.45, suggestionMinCosine: 0.33 })
+    const resolved = resolveFaceSettings({
+      similarityThreshold: 0.45,
+      suggestionMinCosine: 0.33,
+    })
     expect(Object.keys(resolved)).not.toContain('suggestionMinCosine')
     // ...and the band it governs is decided by the threshold alone.
     expect(deriveSuggestionMinCosine(resolved.similarityThreshold)).toBe(0.36)
@@ -100,8 +103,11 @@ describe('resolveFaceSettings', () => {
   })
 
   it('honours valid overrides and keeps defaults for the rest', () => {
-    const r = resolveFaceSettings({ enabled: true, similarityThreshold: 0.6 })
-    expect(r.enabled).toBe(true)
+    const r = resolveFaceSettings({
+      faceRecognitionEnabled: true,
+      similarityThreshold: 0.6,
+    })
+    expect(r.faceRecognitionEnabled).toBe(true)
     expect(r.similarityThreshold).toBe(0.6)
     expect(r.margin).toBe(FACE_DEFAULTS.margin)
     expect(r.confirmFrames).toBe(FACE_DEFAULTS.confirmFrames)
@@ -109,13 +115,13 @@ describe('resolveFaceSettings', () => {
 
   it('falls back per-field on invalid values', () => {
     const r = resolveFaceSettings({
-      enabled: 'yes', // wrong type
+      faceRecognitionEnabled: 'yes', // wrong type
       similarityThreshold: 5, // out of [0,1]
       margin: -1, // must be >= 0
       confirmFrames: 1.5, // must be int
       bufferMaxPerDevice: -3, // must be >= 0 int
     })
-    expect(r.enabled).toBe(FACE_DEFAULTS.enabled)
+    expect(r.faceRecognitionEnabled).toBe(FACE_DEFAULTS.faceRecognitionEnabled)
     expect(r.similarityThreshold).toBe(FACE_DEFAULTS.similarityThreshold)
     expect(r.margin).toBe(FACE_DEFAULTS.margin)
     expect(r.confirmFrames).toBe(FACE_DEFAULTS.confirmFrames)
@@ -129,9 +135,15 @@ describe('globalSettingsSchema — face-recognition section', () => {
     const schema = addon.getSchema()
     const section = schema?.sections.find((s) => s.id === 'face-recognition')
     expect(section).toBeDefined()
-    const enabledField = section?.fields?.find((f: { key: string }) => f.key === 'enabled')
+    const enabledField = section?.fields?.find(
+      (f: { key: string }) => f.key === 'faceRecognitionEnabled',
+    )
     expect(enabledField).toBeDefined()
-    expect(enabledField).toMatchObject({ type: 'boolean', key: 'enabled', default: true })
+    expect(enabledField).toMatchObject({
+      type: 'boolean',
+      key: 'faceRecognitionEnabled',
+      default: true,
+    })
   })
 
   it('face-recognition section fields cover all FACE_DEFAULTS keys', () => {
@@ -166,7 +178,7 @@ describe('stripGlobalOnlyFields — global-only `enabled` is removed from per-de
     const stripped = stripGlobalOnlyFields(sections)
     const face = stripped.find((s) => s.id === 'face-recognition')
     const keys = face?.fields?.map((f: { key?: string }) => f.key) ?? []
-    expect(keys).not.toContain('enabled')
+    expect(keys).not.toContain('faceRecognitionEnabled')
     // Per-device tuning survives (hardware affects face capture).
     expect(keys).toContain('similarityThreshold')
     // D662: a face-confidence bar here re-applied SCRFD's 0.5 to YuNet scores.
@@ -280,12 +292,17 @@ describe('deriveSuggestionMinCosine — the band cannot invert', () => {
  */
 describe('planStoredSuggestionPurge — the stale value leaves the store', () => {
   it('plans an UNSET for a blob that carries the retired key', () => {
-    const plan = planStoredSuggestionPurge({ similarityThreshold: 0.45, suggestionMinCosine: 0.33 })
+    const plan = planStoredSuggestionPurge({
+      similarityThreshold: 0.45,
+      suggestionMinCosine: 0.33,
+    })
     expect(plan).not.toBeNull()
     expect(plan?.was).toBe(0.33)
     // `undefined`, never `null`: the settings merge preserves an explicit null
     // as a stored value, which is exactly the residue this removes.
-    expect(plan?.patch).toEqual({ [STORED_SUGGESTION_MIN_COSINE_KEY]: undefined })
+    expect(plan?.patch).toEqual({
+      [STORED_SUGGESTION_MIN_COSINE_KEY]: undefined,
+    })
     expect(Object.keys(plan?.patch ?? {})).toEqual(['suggestionMinCosine'])
   })
 
@@ -367,7 +384,9 @@ describe('planStoredMinFaceConfidencePurge — the retired bar leaves the store'
       minFaceConfidence: 0.85,
     })
     expect(plan?.was).toBe(0.85)
-    expect(plan?.patch).toEqual({ [STORED_MIN_FACE_CONFIDENCE_KEY]: undefined })
+    expect(plan?.patch).toEqual({
+      [STORED_MIN_FACE_CONFIDENCE_KEY]: undefined,
+    })
     expect(Object.keys(plan?.patch ?? {})).toEqual(['minFaceConfidence'])
   })
 

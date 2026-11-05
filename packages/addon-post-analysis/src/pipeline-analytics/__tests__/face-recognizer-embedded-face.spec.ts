@@ -48,7 +48,7 @@ const DEVICE_ID = 101
  */
 const ENABLED: FaceSettings = {
   ...FACE_DEFAULTS,
-  enabled: true,
+  faceRecognitionEnabled: true,
   confirmFrames: 2,
   minFacePx: 0,
   recognitionMinFacePx: 0,

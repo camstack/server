@@ -47,6 +47,7 @@ import {
   makePipelineBootRecords,
   makeSilentLogger,
   type FakeEventBus,
+  FAKE_MIGRATIONS_API,
 } from './test-helpers.js'
 
 const DEVICE_ID = 102
@@ -136,6 +137,7 @@ async function boot(): Promise<BootResult> {
 
   const api = {
     settingsStore: settings.client,
+    migrations: FAKE_MIGRATIONS_API,
     deviceManager: deviceManager.api.deviceManager,
     // Present in production wherever `settingsStore` is — same builtin addon.
     vectorStore: makeFakeVectorStore().client,

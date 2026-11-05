@@ -14,7 +14,7 @@ export const FaceSettingsSchema = z.object({
    * `resolveGlobalFaceEnabled` / `getDeviceSettingsContribution` (the field is
    * stripped from the per-device schema).
    */
-  enabled: z.boolean().default(true),
+  faceRecognitionEnabled: z.boolean().default(true),
   /**
    * Cosine similarity (on L2-normalized embeddings) required to match. A
    * property of ONE model's cosine space: it moves with the default model.
@@ -147,7 +147,7 @@ export function resolveFaceSettings(raw: Record<string, unknown>): FaceSettings 
     return parsed.success ? (parsed.data as FaceSettings[K]) : FACE_DEFAULTS[key]
   }
   return {
-    enabled: pick('enabled'),
+    faceRecognitionEnabled: pick('faceRecognitionEnabled'),
     similarityThreshold: pick('similarityThreshold'),
     margin: pick('margin'),
     minFacePx: pick('minFacePx'),

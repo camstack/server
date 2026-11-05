@@ -49,7 +49,7 @@ function deps(overrides: Partial<FaceRecognizerDeps> = {}): FaceRecognizerDeps {
 // dedicated describe blocks below.
 const ENABLED = {
   ...FACE_DEFAULTS,
-  enabled: true,
+  faceRecognitionEnabled: true,
   confirmFrames: 2,
   minFacePx: 0,
   recognitionMinFacePx: 0,
@@ -75,7 +75,7 @@ describe('FaceRecognizer — match + label propagation', () => {
     rec = new FaceRecognizer(d)
   })
 
-  it('ignores settings.enabled — the per-device gate was removed (master switch is GLOBAL, applied in the orchestrator)', async () => {
+  it('ignores settings.faceRecognitionEnabled — the per-device gate was removed (master switch is GLOBAL, applied in the orchestrator)', async () => {
     vi.mocked(d.identityStore.loadGallery).mockResolvedValue([
       {
         identityId: 'id-alice',
@@ -94,7 +94,7 @@ describe('FaceRecognizer — match + label propagation', () => {
       frameWidth: 100,
       frameHeight: 100,
       tracked: [t],
-      settings: { ...ENABLED, enabled: false },
+      settings: { ...ENABLED, faceRecognitionEnabled: false },
       cropPadding: 0,
     })
     await rec.processFrame({
@@ -103,7 +103,7 @@ describe('FaceRecognizer — match + label propagation', () => {
       frameWidth: 100,
       frameHeight: 100,
       tracked: [t],
-      settings: { ...ENABLED, enabled: false },
+      settings: { ...ENABLED, faceRecognitionEnabled: false },
       cropPadding: 0,
     })
     expect(d.trackStore.applyLabelCandidate).toHaveBeenCalledWith(
@@ -1085,7 +1085,7 @@ describe('FaceRecognizer — recognition floor (recognitionMinFacePx)', () => {
   // 1-sample eligibility so a single enrolled sample is a valid target.
   const RECOG = {
     ...FACE_DEFAULTS,
-    enabled: true,
+    faceRecognitionEnabled: true,
     confirmFrames: 2,
     minFacePx: 30,
     recognitionMinFacePx: 48,
@@ -1283,7 +1283,7 @@ describe('FaceRecognizer — suggested-assignment tier', () => {
   // fires).
   const SUGG = {
     ...FACE_DEFAULTS,
-    enabled: true,
+    faceRecognitionEnabled: true,
     confirmFrames: 2,
     minFacePx: 0,
     recognitionMinFacePx: 48,

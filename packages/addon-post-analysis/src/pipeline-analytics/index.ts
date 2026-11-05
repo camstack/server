@@ -798,7 +798,8 @@ const RETRAIN_EXPORT_MAX = 20_000
 
 import { AnalyticsLtsSeriesSchema, defineAddonMigrations } from '@camstack/types'
 import { ncRecordKinds } from '../notification-center/record-kinds.js'
-import { ADDON_MIGRATIONS, type NcTemplateMigrationPorts } from '../migrations/index.js'
+import { ADDON_MIGRATIONS, type PipelineAnalyticsMigrationPorts } from '../migrations/index.js'
+import { readRawKeys } from '../migrations/split-enabled-key.js'
 import { BUILTIN_CLIP_MODELS } from '../shared/clip/clip-model-registry.js'
 import { encodeClipQuery, pinClipRebuild, resolveClipSearchPlan } from './clip-space-plan.js'
 import {
@@ -3299,9 +3300,9 @@ export default class PipelineAnalyticsAddon
   private get faceGlobalEnabledState(): DurableState<boolean> {
     if (!this._faceGlobalEnabledState) {
       this._faceGlobalEnabledState = this.state<boolean>(
-        'enabled',
-        FaceSettingsSchema.shape.enabled,
-        FACE_DEFAULTS.enabled,
+        'faceRecognitionEnabled',
+        FaceSettingsSchema.shape.faceRecognitionEnabled,
+        FACE_DEFAULTS.faceRecognitionEnabled,
       )
     }
     return this._faceGlobalEnabledState
@@ -3936,10 +3937,21 @@ export default class PipelineAnalyticsAddon
   /** The addon's migration catalogue (D987), bound to the notification kinds. */
   private async runTemplateMigrations(): Promise<void> {
     const records = this.requireRecords()
-    const ports: NcTemplateMigrationPorts = {
+    const settings = this.ctx.settings
+    if (settings === undefined) throw new Error('the per-device settings store is unavailable')
+    const ports: PipelineAnalyticsMigrationPorts = {
       rules: records.kind(ncRecordKinds['rules']),
       timelapseRules: records.kind(ncRecordKinds['timelapse-rules']),
       texts: records.kind(ncRecordKinds.texts),
+      readStored: (keys) => readRawKeys((key) => this.readStoredGlobalKey(key), keys),
+      listDeviceIds: () => settings.listDeviceStoreIds(),
+      readDeviceField: async (deviceIds, field) => {
+        const found = new Map<number, unknown>()
+        for (const [deviceId, blob] of await settings.readDeviceStoreBatch(deviceIds)) {
+          if (field in blob) found.set(deviceId, blob[field])
+        }
+        return found
+      },
     }
     await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, ports))
   }
@@ -7485,7 +7497,7 @@ export default class PipelineAnalyticsAddon
       planeRunsStationary(source) &&
       this.stationaryRegistry &&
       this.stationaryEvidence &&
-      stationarySettings.enabled
+      stationarySettings.stationarySuppressionEnabled
     ) {
       const evidence = this.stationaryEvidence
       for (const t of result.tracked) {
@@ -10868,7 +10880,7 @@ export default class PipelineAnalyticsAddon
             // spawns a normal track); otherwise the per-device suppress/wake
             // IoU sliders drive the partition.
             const s = this.stationarySettingsFromCache(deviceId)
-            if (!s.enabled) {
+            if (!s.stationarySuppressionEnabled) {
               return {
                 suppressedIndices: new Set(),
                 continuableIndices: new Set(),

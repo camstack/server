@@ -214,8 +214,17 @@ export async function bootAnalytics(
       async writeAddonStore(patch: Record<string, unknown>) {
         Object.assign(addonStore, patch)
       },
+      async readAddonStoreResult() {
+        return { kind: 'value' as const, value: { ...addonStore } }
+      },
       async readDeviceStore(id: number) {
         return { ...deviceStore.get(id) }
+      },
+      async listDeviceStoreIds() {
+        return [...deviceStore.keys()]
+      },
+      async readDeviceStoreBatch(ids: readonly number[]) {
+        return new Map(ids.map((id) => [id, { ...deviceStore.get(id) }]))
       },
       async writeDeviceStore(deviceId: number, patch: Record<string, unknown>) {
         deviceStore.set(deviceId, { ...deviceStore.get(deviceId), ...patch })

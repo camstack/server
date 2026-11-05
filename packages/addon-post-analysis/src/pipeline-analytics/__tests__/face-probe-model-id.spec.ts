@@ -54,7 +54,7 @@ function deps(gallery: readonly GallerySample[]) {
 
 const SETTINGS = {
   ...FACE_DEFAULTS,
-  enabled: true,
+  faceRecognitionEnabled: true,
   confirmFrames: 1,
   minFacePx: 0,
   recognitionMinFacePx: 0,

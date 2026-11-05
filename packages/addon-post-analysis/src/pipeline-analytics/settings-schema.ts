@@ -154,7 +154,7 @@ export function formatSuggestionThresholdReadout(similarityThreshold: number): s
  * misleading. Keyed by section id → set of field keys to drop.
  */
 const GLOBAL_ONLY_FIELDS: Readonly<Record<string, ReadonlySet<string>>> = {
-  'face-recognition': new Set(['enabled', SUGGESTION_THRESHOLD_READOUT_KEY]),
+  'face-recognition': new Set(['faceRecognitionEnabled', SUGGESTION_THRESHOLD_READOUT_KEY]),
 }
 
 /**
@@ -921,10 +921,10 @@ export function buildGlobalSettingsSchema(cap?: string): ConfigUISchema {
       fields: [
         {
           type: 'boolean',
-          key: 'enabled',
+          key: 'faceRecognitionEnabled',
           label: 'Face recognition on',
           description: 'Off stops face matching for every camera. On by default.',
-          default: FACE_DEFAULTS.enabled,
+          default: FACE_DEFAULTS.faceRecognitionEnabled,
         },
         {
           type: 'number',

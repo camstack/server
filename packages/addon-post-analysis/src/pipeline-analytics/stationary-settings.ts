@@ -20,7 +20,7 @@ import {
 export const StationarySettingsSchema = z.object({
   /** Master switch. Off ⇒ this camera gathers no evidence and suppresses
    *  nothing (every parked object keeps spawning normal tracks). */
-  enabled: z.boolean().default(true),
+  stationarySuppressionEnabled: z.boolean().default(true),
   /** IoU at/above which a detection is the same parked object, unmoved →
    *  suppress its spawn. `SUPPRESS_IOU`. */
   suppressIou: z.number().min(0.3).max(0.9).default(SUPPRESS_IOU),
@@ -57,7 +57,7 @@ export function resolveStationarySettings(raw: Record<string, unknown>): Station
     return parsed.success ? (parsed.data as StationarySettings[K]) : STATIONARY_DEFAULTS[key]
   }
   return {
-    enabled: pick('enabled'),
+    stationarySuppressionEnabled: pick('stationarySuppressionEnabled'),
     suppressIou: pick('suppressIou'),
     wakeAssocIou: pick('wakeAssocIou'),
     sessionStillnessWindowMs: pick('sessionStillnessWindowMs'),

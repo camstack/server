@@ -78,6 +78,7 @@ export const SPEC_CONFIG_OVERRIDES: Readonly<Record<string, Readonly<Record<stri
   '@camstack/addon-export-hap': { rootDir: '../..' },
   '@camstack/addon-provider-onvif': { rootDir: '../..' },
   '@camstack/addon-pipeline-orchestrator': { rootDir: '../..' },
+  '@camstack/addon-post-analysis': { rootDir: '../..' },
   '@camstack/desktop': { allowJs: true },
 }
 

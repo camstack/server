@@ -4,54 +4,26 @@
  * against a ledger that records what the engine would. Every assertion reads the rows back.
  */
 
-import { RecordsEngine } from '@camstack/server/system'
 import {
   type AddonMigrationHost,
-  createRecordsAccess,
   defineAddonMigrations,
   type MigrationMeta,
   type MigrationOwnerResult,
   NcRuleInputSchema,
   type RecordsAccess,
-  type RecordsTransport,
   runAddonMigrations,
   type TimelapseRuleInput,
   TimelapseRuleInputSchema,
 } from '@camstack/types'
-import Database from 'better-sqlite3'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { ncRecordKinds, RuleBodySchema } from '../../notification-center/record-kinds.js'
+import { RuleBodySchema } from '../../notification-center/record-kinds.js'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { renameDeviceVariable } from '../device-template-var.js'
-import { ADDON_MIGRATIONS, type NcTemplateMigrationPorts } from '../index.js'
+import { ADDON_MIGRATIONS, type PipelineAnalyticsMigrationPorts } from '../index.js'
+import { makeNcWorld } from './support/nc-records-world.js'
 
-const OWNER = 'pipeline-analytics'
 const MIGRATION_ID = 'pipeline-analytics/2026-11-01-template-camera-to-device'
 const MARK = 'garage door, kept as written'
-
-function engineTransport(engine: RecordsEngine): RecordsTransport {
-  const as = <I extends object>(input: I): I & { readonly owner: string } =>
-    Object.assign({}, input, { owner: OWNER })
-  return {
-    declareKinds: (i) => engine.declareKinds(as(i)),
-    get: (i) => engine.get(as(i)),
-    getMany: (i) => engine.getMany(as(i)),
-    secretRefs: (i) => engine.secretRefs(as(i)),
-    put: (i) => engine.put(as(i)),
-    putMany: (i) => engine.putMany(as(i)),
-    patch: (i) => engine.patch(as(i)),
-    delete: (i) => engine.delete(as(i)),
-    deleteMany: (i) => engine.deleteMany(as(i)),
-    query: (i) => engine.query(as(i)),
-    count: (i) => engine.count(as(i)),
-    histogram: (i) => engine.histogram(as(i)),
-    aggregate: (i) => engine.aggregate(as(i)),
-    deleteWhere: (i) => engine.deleteWhere(as(i)),
-    transact: (i) => engine.transact(as(i)),
-    deleteDevice: (i) => engine.deleteDevice(as(i)),
-    allocateId: (i) => engine.allocateId(as(i)),
-  }
-}
 
 /** The ledger the engine keeps for an owner: declared metas, then one outcome per id. */
 function ledgerHost(): {
@@ -95,26 +67,19 @@ function ledgerHost(): {
 
 interface World {
   readonly records: RecordsAccess
-  readonly ports: NcTemplateMigrationPorts
+  readonly ports: PipelineAnalyticsMigrationPorts
 }
 
 async function makeWorld(): Promise<World> {
-  const engine = new RecordsEngine(new Database(':memory:'), {
-    databaseId: 'settings',
-    logger: makeSilentLogger(),
-  })
-  const records = createRecordsAccess({
-    owner: OWNER,
-    transport: engineTransport(engine),
-    secrets: null,
-  })
-  await records.declare(ncRecordKinds)
+  const { records, ncPorts } = await makeNcWorld()
   return {
     records,
     ports: {
-      rules: records.kind(ncRecordKinds['rules']),
-      timelapseRules: records.kind(ncRecordKinds['timelapse-rules']),
-      texts: records.kind(ncRecordKinds.texts),
+      ...ncPorts,
+      // The settings migration of the same catalogue has nothing stored to move here.
+      readStored: async () => ({}),
+      listDeviceIds: async () => [],
+      readDeviceField: async () => new Map(),
     },
   }
 }
@@ -152,7 +117,11 @@ function timelapseBody(extra: Partial<TimelapseRuleInput>) {
 async function runCatalogue(world: World, host: AddonMigrationHost) {
   return runAddonMigrations(
     host,
-    defineAddonMigrations(ADDON_MIGRATIONS, world.ports),
+    // Only the template migration: the settings migration of the catalogue has its own spec.
+    defineAddonMigrations(
+      ADDON_MIGRATIONS.filter((entry) => entry.meta.id === MIGRATION_ID),
+      world.ports,
+    ),
     makeSilentLogger(),
   )
 }

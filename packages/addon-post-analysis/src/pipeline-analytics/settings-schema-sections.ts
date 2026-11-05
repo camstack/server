@@ -456,11 +456,11 @@ export function buildDetectionSettingsSections(): readonly ConfigSection[] {
       fields: [
         {
           type: 'boolean',
-          key: 'enabled',
+          key: 'stationarySuppressionEnabled',
           label: 'Suppress parked objects',
           description:
             'Promote a stopped object to a lightweight registry entry and suppress its detections from re-spawning tracks. Off = every parked object keeps spawning normal tracks on this camera.',
-          default: STATIONARY_DEFAULTS.enabled,
+          default: STATIONARY_DEFAULTS.stationarySuppressionEnabled,
         },
         {
           type: 'slider',
