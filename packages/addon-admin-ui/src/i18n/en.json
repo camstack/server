@@ -1797,7 +1797,9 @@
       "enterDetails": "Enter details",
       "back": "Back to the list",
       "found_one": "{{count}} device found",
-      "found_other": "{{count}} devices found"
+      "found_other": "{{count}} devices found",
+      "inListBelow_one": "{{count}} already in the list below.",
+      "inListBelow_other": "{{count}} already in the list below."
     }
   },
   "ai": {

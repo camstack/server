@@ -118,27 +118,36 @@ export function NetworkCandidatesPanel({
     })
   }, [adoptionQuery.data, proposalsQuery.data, scan.data, allDevices, addonId])
 
+  // Next to the adopt list, a row it already holds is left to it — unless the scan hit
+  // carries what only this block can act on: a parameter to ask for, or an integration to set up.
+  const holdsScanOnlyAction = (r: Row): boolean =>
+    r.hit !== null && (r.needsParams.length > 0 || r.hit.setupIntegration === true)
   const visibleRows = useMemo(
-    () => (alongsideAdoption ? rows.filter((r) => !r.sources.includes('adoption')) : rows),
+    () =>
+      alongsideAdoption
+        ? rows.filter((r) => !r.sources.includes('adoption') || holdsScanOnlyAction(r))
+        : rows,
     [rows, alongsideAdoption],
   )
-  const inAdoptionList =
-    rows.length - visibleRows.length > 0 && alongsideAdoption
-      ? rows.filter((r) => r.sources.includes('adoption') && r.hit !== null).length
-      : 0
+  const inAdoptionList = alongsideAdoption
+    ? rows.filter(
+        (r) => r.sources.includes('adoption') && r.hit !== null && !visibleRows.includes(r),
+      ).length
+    : 0
 
   const depthOf = useCallback(
     (row: Row): number => {
-      const byKey = new Map(rows.map((r) => [r.key, r]))
+      const byKey = new Map(visibleRows.map((r) => [r.key, r]))
       let depth = 0
       let cursor: Row | undefined = row
       while (cursor?.parentKey != null && depth < 8) {
         cursor = byKey.get(cursor.parentKey)
+        if (cursor === undefined) break
         depth += 1
       }
       return depth
     },
-    [rows],
+    [visibleRows],
   )
 
   const runScan = useCallback(() => {

@@ -251,6 +251,15 @@ describe('AddDeviceModal', () => {
     expect(screen.getByText(/1 already in the list below/i)).toBeTruthy()
   })
 
+  it('a board in both lists that needs a key stays in the scan block and asks for it', () => {
+    state.scan = [hit('esp-enc', '192.0.2.13', { needsParams: ['encryptionKey'] })]
+    state.adoption = [adoptionEntry('esp-enc', 'enc')]
+    renderModal({ kind: 'device-adoption', canScan: true })
+    expect(screen.getAllByTestId(/^network-row-/)).toHaveLength(1)
+    fireEvent.click(screen.getByRole('button', { name: /enter details/i }))
+    expect(screen.getByText('API encryption key')).toBeTruthy()
+  })
+
   it('a scanned board that fails to add says so and never reads as added', async () => {
     state.scan = [hit('esp-new', '192.0.2.12')]
     state.adopt.mockRejectedValueOnce(new Error('board refused the key'))
