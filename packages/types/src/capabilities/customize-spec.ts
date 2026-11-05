@@ -8,7 +8,22 @@
 import type { z } from 'zod'
 import type { DeviceType } from '../device/device-type.js'
 
-export type CustomizeCardinality = 'scalar' | 'keyedArray' | 'event' | 'config'
+/**
+ * The one list of how a Customize target is shaped. Admin-ui keys its row kind
+ * and renderer off this list (`Record<CustomizeCardinality, …>`), so a new
+ * cardinality without a renderer is a type error; `check-customize-coverage`
+ * covers what a type cannot see.
+ */
+export const CUSTOMIZE_CARDINALITIES = ['scalar', 'keyedArray', 'event', 'config'] as const
+export type CustomizeCardinality = (typeof CUSTOMIZE_CARDINALITIES)[number]
+
+/** The shapes of an event target; each has its own card in admin-ui. */
+export const CUSTOMIZE_EVENT_SHAPES = ['pulse', 'span'] as const
+export type CustomizeEventShape = (typeof CUSTOMIZE_EVENT_SHAPES)[number]
+
+/** Who applies a stored event or scalar assignment; the table branches on it. */
+export const CUSTOMIZE_APPLY_AUTHORITY_KINDS = ['composition-claim', 'camera-sensors'] as const
+export type CustomizeApplyAuthorityKind = (typeof CUSTOMIZE_APPLY_AUTHORITY_KINDS)[number]
 export type CustomizeValueKind = 'boolean' | 'number' | 'string' | 'enum'
 /**
  * `add`: an extension is offered only when the device lacks the capability (D944).
@@ -153,9 +168,9 @@ export type CustomizeEventEdge = 'rising' | 'button' | 'native-event'
  * composition claim. A span may name an authority that already owns the event.
  */
 export type CustomizeApplyAuthority =
-  | { readonly kind: 'composition-claim' }
+  | { readonly kind: Extract<CustomizeApplyAuthorityKind, 'composition-claim'> }
   | {
-      readonly kind: 'camera-sensors'
+      readonly kind: Extract<CustomizeApplyAuthorityKind, 'camera-sensors'>
       /** The span timeout is this existing pipeline-runner field. */
       readonly timeoutField: 'motionCooldownMs'
     }
@@ -262,7 +277,7 @@ export interface EventCustomizeTargetBase extends CustomizeTargetBase {
  * advances a timestamp and a counter. Presses inside `debounce` are one pulse.
  */
 export interface PulseEventCustomizeTarget extends EventCustomizeTargetBase {
-  readonly shape: 'pulse'
+  readonly shape: Extract<CustomizeEventShape, 'pulse'>
   /** Edges the editor may offer. `defaultEdge` is the one a new pulse starts on. */
   readonly edges: readonly CustomizeEventEdge[]
   readonly defaultEdge: CustomizeEventEdge
@@ -281,7 +296,7 @@ export type CameraSensorCustomizeMode = 'in-addition' | 'confirm' | 'replace'
  * quiet period that is not the timeout.
  */
 export interface SpanEventCustomizeTarget extends EventCustomizeTargetBase {
-  readonly shape: 'span'
+  readonly shape: Extract<CustomizeEventShape, 'span'>
   readonly start: 'rising-edge'
   readonly end: 'falling-edge-or-timeout'
   readonly timeoutMs: number

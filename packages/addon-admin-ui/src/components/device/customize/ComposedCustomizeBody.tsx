@@ -5,7 +5,6 @@ import {
   COMPOSED_DEVICE_STABLE_ID_PREFIX,
   coreBlockComposition,
   type DeviceInfo,
-  DeviceType,
 } from '@camstack/types'
 import {
   Badge,
@@ -18,7 +17,7 @@ import { useTranslation } from 'react-i18next'
 import { skeletonFillStatus } from '../../composition-editor/build-skeleton'
 import { ComposedDeviceEditDialog } from '../../composition-editor/ComposedDeviceEditDialog'
 import { draftFromHelper, isHelperComposition } from '../../composition-editor/helper-form-model'
-import { LinkedDevicesTable } from './kinds/LinkedDevicesTable'
+import { ExtensionSlotSections } from './kinds/ExtensionSlotSections'
 import { CustomizeTable } from './table/CustomizeTable'
 import { HelperSummaryCard } from './HelperSummaryCard'
 import { IdentityRow } from './IdentityRow'
@@ -144,7 +143,7 @@ export function ComposedCustomizeBody({ device }: ComposedCustomizeBodyProps): R
         sensors={cameraSensors}
         defaults={defaultConsumables}
       />
-      {device.type === DeviceType.Camera && <LinkedDevicesTable device={device} />}
+      <ExtensionSlotSections device={device} />
     </div>
   )
 }

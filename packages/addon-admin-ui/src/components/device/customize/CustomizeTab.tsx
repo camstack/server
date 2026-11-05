@@ -24,7 +24,7 @@ import { type CustomizationState, currentComposition } from './customization-rea
 import { IdentityRow } from './IdentityRow'
 import { QuickDetailSaveProvider } from '../quick-detail-save'
 import { CustomizeTable } from './table/CustomizeTable'
-import { LinkedDevicesTable } from './kinds/LinkedDevicesTable'
+import { ExtensionSlotSections } from './kinds/ExtensionSlotSections'
 import { useCustomization } from './use-customization'
 import { useCameraSensors } from './use-camera-sensors-presence'
 import { useCustomizeFacts } from './use-customize-facts'
@@ -120,7 +120,7 @@ function CustomizeBody({ device, target }: CustomizeBodyProps): ReactNode {
         sensors={cameraSensors}
         defaults={defaultConsumables}
       />
-      {device.type === DeviceType.Camera && <LinkedDevicesTable device={device} />}
+      <ExtensionSlotSections device={device} />
     </div>
   )
 }

@@ -1492,10 +1492,17 @@ export {
   problemsBlockSave,
 } from './composition/cards/index.js'
 export type { CompositionFillStatus } from './composition/cards/index.js'
+export {
+  CUSTOMIZE_APPLY_AUTHORITY_KINDS,
+  CUSTOMIZE_CARDINALITIES,
+  CUSTOMIZE_EVENT_SHAPES,
+} from './capabilities/customize-spec.js'
 export type {
   CapabilityCustomizeSpec,
   CapabilityCustomizeTarget,
+  CustomizeApplyAuthorityKind,
   CustomizeCardinality,
+  CustomizeEventShape,
   CustomizeEventEdge,
   EventCustomizeTarget,
   PulseEventCustomizeTarget,

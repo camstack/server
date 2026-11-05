@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 8071 source files · 1266 file(s) in no subsystem.**
+**31 subsystems · 8075 source files · 1266 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -46,14 +46,14 @@ commits. A generated page may not.
 | Update, release, OTA and agent delivery | 70 | `architecture/update-and-release.md`, `decisions/adr-0175-an-update-notification-is-polled-on-its-own-clock-and-remembered-across-restarts.md`, `decisions/adr-0857-an-agents-identity-is-its-mesh-certificate-there-is-no-cluster-secret-and-a-pairing-is-confirmed-on-both-screens.md`, +35 more, 10 ADRs | 2026-10-27 | ✅ |
 | Ecosystem exports — HomeKit, Home Assistant, Alexa, Google Home, Matter, MQTT | 377 | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/ecosystem-export-plan.md` _(covers)_, `design/2026-08-07-alexa-events-and-hksv-assessment.md`, +52 more, 20 ADRs | 2026-10-26 | ⚠️ |
 | Remote access and networking | 73 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0226-the-hub-declares-the-port-it-listens-on.md`, +19 more | 2026-10-21 | ⚠️ |
-| Automations, blocks and declared devices | 186 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +38 more, 1 ADR | 2026-10-26 | ⚠️ |
+| Automations, blocks and declared devices | 187 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +38 more, 1 ADR | 2026-10-26 | ⚠️ |
 | Alerts, liveness and system health | 56 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0850-numeric-history-has-one-mechanism-device-history.md`, +43 more | 2026-10-13 | ⚠️ |
 | Logging and log shipping | 41 | `architecture/logging.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +11 more, 1 ADR | 2026-10-21 | ⚠️ |
 | LLM runtimes and AI actions | 51 | `addons/addon-ai.md` _(covers)_, `design/2026-08-28-tts-stt-capabilities.md` _(covers)_, `decisions/adr-0639-apple-foundation-models-runs-as-a-supervised-child-behind-llm-runtime.md`, +8 more, 1 ADR | 2026-10-18 | ⚠️ |
-| Admin UI and the shared component library | 1432 | `architecture/ui.md`, `ui/conventions.md`, `ui/admin-patterns.md`, +164 more, 15 ADRs | 2026-11-02 | ✅ |
+| Admin UI and the shared component library | 1433 | `architecture/ui.md`, `ui/conventions.md`, `ui/admin-patterns.md`, +164 more, 15 ADRs | 2026-11-02 | ✅ |
 | Device-facing surfaces — snapshots, OSD, terminal, camera grids, autotrack | 111 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0519-a-composite-camera-is-one-child-on-demand-with-normalized-geometry.md`, +18 more, 7 ADRs | 2026-10-04 | ⚠️ |
 | Cloud training | 159 | `architecture/cloud-training.md`, `decisions/adr-0790-a-machine-proposed-retrain-box-is-a-draft-until-the-operator-confirms-it.md`, `decisions/adr-0849-retrain-annotations-keep-their-origin.md`, +16 more, 2 ADRs | 2026-10-14 | ✅ |
-| Benchmarks, model studio and developer tooling | 759 | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, +170 more, 14 ADRs | 2026-11-04 | ⚠️ |
+| Benchmarks, model studio and developer tooling | 761 | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, +170 more, 14 ADRs | 2026-11-04 | ⚠️ |
 
 ## What each subsystem is, and what is uncovered inside it
 
@@ -270,7 +270,7 @@ The operator-authored logic layer — expression blocks, recipes and the devices
 
 - **Owner doc**: — none
 - **Code**: `packages/system/src/builtins/core-blocks/**`, `packages/system/src/builtins/composer/**`, `packages/types/src/expression/**`, `packages/types/src/automation/**`, `packages/types/src/composition/**`
-- **Files**: 186 (186 claimed by some document)
+- **Files**: 187 (187 claimed by some document)
 - **Uncovered**: —
 
 ### ⚠️ Alerts, liveness and system health
@@ -306,7 +306,7 @@ The operator's web console, and the design-system package every CamStack surface
 
 - **Owner doc**: `docs/architecture/ui.md`
 - **Code**: `packages/addon-admin-ui/**`, `packages/addon-agent-ui/**`, `packages/ui-library/**`
-- **Files**: 1432 (1418 claimed by some document)
+- **Files**: 1433 (1419 claimed by some document)
 - **Uncovered**: `packages/addon-agent-ui/src` (13), `packages/addon-agent-ui/src/i18n` (1)
 
 ### ⚠️ Device-facing surfaces — snapshots, OSD, terminal, camera grids, autotrack
@@ -333,8 +333,8 @@ Everything that measures or builds CamStack rather than running it — the bench
 
 - **Owner doc**: `docs/reference/guards.md`
 - **Code**: `packages/addon-benchmark/**`, `packages/addon-model-studio/**`, `packages/cli/**`, `packages/sdk/**`, `packages/desktop/**`, `packages/nx-plugin/**`, `scripts/**`, `e2e/**`, `packages/addon-pipeline/scripts/**`
-- **Files**: 759 (425 claimed by some document)
-- **Uncovered**: `scripts` (171), `scripts/ui/shots/fixtures` (78), `scripts/lib` (14), `packages/cli/src/commands` (13), `e2e/fixtures` (9), `scripts/ui/shots/harness/stubs` (8), +17 more directories
+- **Files**: 761 (425 claimed by some document)
+- **Uncovered**: `scripts` (172), `scripts/ui/shots/fixtures` (78), `scripts/lib` (15), `packages/cli/src/commands` (13), `e2e/fixtures` (9), `scripts/ui/shots/harness/stubs` (8), +17 more directories
 
 ## Claimed by no subsystem
 

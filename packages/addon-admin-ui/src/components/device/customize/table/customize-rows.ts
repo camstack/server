@@ -7,6 +7,7 @@
  */
 import {
   CAP_CUSTOMIZE_CATALOG,
+  type CustomizeCardinality,
   type CustomizeCatalog,
   type CustomizeCatalogTarget,
 } from '@camstack/types'
@@ -36,19 +37,12 @@ export interface CustomizeRowSpec {
   readonly target: CustomizeCatalogTarget
 }
 
-function kindOf(target: CustomizeCatalogTarget): CustomizeRowKind | null {
-  switch (target.cardinality) {
-    case 'scalar':
-      return 'scalar'
-    case 'keyedArray':
-      return 'keyed'
-    case 'event':
-      return 'event'
-    case 'config':
-      return 'config'
-    default:
-      return null
-  }
+/** One row kind per cardinality: a new cardinality without one is a type error. */
+const ROW_KIND_OF_CARDINALITY: Readonly<Record<CustomizeCardinality, CustomizeRowKind>> = {
+  scalar: 'scalar',
+  keyedArray: 'keyed',
+  event: 'event',
+  config: 'config',
 }
 
 function sectionOf(cap: string, kind: CustomizeRowKind): CustomizeSection {
@@ -70,8 +64,7 @@ export function offeredRows(deviceType: string): readonly CustomizeRowSpec[] {
   const rows: CustomizeRowSpec[] = []
   for (const [cap, entry] of Object.entries(catalog)) {
     for (const target of entry.targets) {
-      const kind = kindOf(target)
-      if (kind === null) continue
+      const kind = ROW_KIND_OF_CARDINALITY[target.cardinality]
       if (!(target.deviceTypes as readonly string[]).includes(deviceType)) continue
       rows.push({
         key: `${cap}.${target.id}`,
