@@ -7,10 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.227] - 2026-11-05
+
 ### Changed
 
 - Reolink clip catalog refresh default is declared on the fleet-default hook; the form and stored value are unchanged.
-
 - A camera adopted under an NVR / Home Hub now shows its hub and channel in settings, no longer lets you edit its address or credentials (they belong to the integration), and hides the hub-wide ports and time sections.
 
 ## [1.2.226] - 2026-11-05

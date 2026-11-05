@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.177] - 2026-11-05
+
 ### Changed
 
 - AI chat retention settings are declared on the cluster hook; the form and stored values are unchanged.

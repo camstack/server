@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.504] - 2026-11-05
+
 ### Changed
 
 - Addon settings: the per-node keys, the secret tree and the restart check read the scoped schemas (cluster, node, fleet defaults) of the capabilities an addon declares.

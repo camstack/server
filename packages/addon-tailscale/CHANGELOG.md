@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.150] - 2026-11-05
+
 ### Changed
 
 - Tailscale client and ingress declare their settings through the node hook only; the settings forms and stored values are unchanged.

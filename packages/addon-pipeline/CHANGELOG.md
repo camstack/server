@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.641] - 2026-11-05
+
 ### Changed
 
 - Audio analyzer, pipeline runner and stream broker declare their settings through the scoped hooks; the settings forms and stored values are unchanged.
