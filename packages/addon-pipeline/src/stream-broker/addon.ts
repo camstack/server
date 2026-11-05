@@ -1369,7 +1369,13 @@ export class StreamBrokerAddon extends BaseAddon<StreamBrokerConfig> {
       : null
   }
 
-  protected globalSettingsSchema() {
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return ['stream-broker']
+  }
+
+  /** The cluster-wide knobs; the node facts (port, hwaccel, binary) are {@link nodeSettingsSchema}. */
+  protected async clusterSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    if (cap !== 'stream-broker') return null
     return this.schema({
       sections: [
         {
@@ -1389,7 +1395,6 @@ export class StreamBrokerAddon extends BaseAddon<StreamBrokerConfig> {
               default: DEFAULT_PREBUFFER_SEC,
               unit: 's',
             },
-            ...this.nodeFields(),
             {
               type: 'number',
               key: 'joinBurstMaxSpanMs',

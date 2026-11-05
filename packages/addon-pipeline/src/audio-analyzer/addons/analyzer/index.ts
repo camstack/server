@@ -895,9 +895,8 @@ export class AudioAnalyzerAddon extends BaseAddon<AudioAnalyzerGlobalConfig> {
     return cap === 'audio-analyzer' ? this.nodeSchema() : null
   }
 
-  /** The form the settings API still asks `globalSettingsSchema` for: the same node schema. */
-  protected globalSettingsSchema(): ConfigUISchema {
-    return this.nodeSchema()
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return ['audio-analyzer']
   }
 
   /**
@@ -1034,7 +1033,7 @@ export class AudioAnalyzerAddon extends BaseAddon<AudioAnalyzerGlobalConfig> {
 
     const raw = { ...merged, audioBackend: operatorChoice }
 
-    const schema = this.globalSettingsSchema()
+    const schema = this.nodeSchema()
     const patched: ConfigUISchema = {
       ...schema,
       sections: schema.sections.map((section) => ({

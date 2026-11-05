@@ -7009,9 +7009,8 @@ export default class PipelineRunnerAddon
     return cap === 'pipeline-runner' ? this.nodeSchema() : null
   }
 
-  /** The form the settings API still asks `globalSettingsSchema` for: the same node schema. */
-  protected globalSettingsSchema(): ConfigUISchema {
-    return this.nodeSchema()
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return ['pipeline-runner']
   }
 
   private nodeSchema(): ConfigUISchema {
