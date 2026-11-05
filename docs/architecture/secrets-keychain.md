@@ -16,7 +16,6 @@ covers:
   - packages/types/src/capabilities/keychain.cap.ts
   - packages/types/src/capabilities/keychain-admin.cap.ts
   - packages/system/src/builtins/device-manager/device-config-secrets.ts
-  - server/backend/src/api/core/integration-secrets.ts
   - packages/ui-library/src/composites/config-secret-field.tsx
   - packages/addon-admin-ui/src/pages/system/Secrets.tsx
   - packages/addon-admin-ui/src/components/system/secrets/**

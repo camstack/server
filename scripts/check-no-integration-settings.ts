@@ -9,7 +9,8 @@
  *
  * Usage: npx tsx scripts/check-no-integration-settings.ts
  */
-import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
+import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 
 const ROOT = path.resolve(import.meta.dirname, '..')
@@ -27,8 +28,6 @@ const FORBIDDEN: readonly RegExp[] = [
   /getIntegrationSettings\(integrationId/,
 ]
 
-const SKIP_DIRS = new Set(['node_modules', 'dist', 'generated', '.git', 'coverage', 'scratchpad'])
-
 function allowed(rel: string): boolean {
   if (rel === path.join('scripts', 'check-no-integration-settings.ts')) return true
   if (rel.includes(`${path.sep}migrations${path.sep}`)) return true
@@ -37,33 +36,27 @@ function allowed(rel: string): boolean {
   if (rel.startsWith(path.join('docs', 'design') + path.sep)) return true
   // The drop's own spec has to name the store it proves is gone.
   if (rel.endsWith('migration-drop-integration-settings.spec.ts')) return true
+  // The developer kit teaches that the store is retired, and its specs prove the
+  // scaffolds and the knowledge index say so.
+  if (rel === path.join('packages', 'develop', 'skills', 'camstack-addon.md')) return true
+  if (rel === path.join('packages', 'develop', 'src', 'scaffold', 'addon.ts')) return true
+  if (rel === path.join('packages', 'develop', 'src', '__tests__', 'integration-scaffold.spec.ts'))
+    return true
+  if (rel === path.join('packages', 'mcp-dev', 'src', '__tests__', 'knowledge.spec.ts')) return true
   return false
 }
 
-function filesUnder(dir: string): string[] {
-  let entries: string[]
-  try {
-    entries = readdirSync(dir)
-  } catch {
-    return []
-  }
-  const out: string[] = []
-  for (const name of entries) {
-    if (SKIP_DIRS.has(name)) continue
-    const full = path.join(dir, name)
-    let st: ReturnType<typeof statSync>
-    try {
-      st = statSync(full)
-    } catch {
-      continue
-    }
-    if (st.isDirectory()) {
-      out.push(...filesUnder(full))
-      continue
-    }
-    if (/\.(ts|tsx|js|mjs|yml|yaml|md)$/.test(name)) out.push(full)
-  }
+/** Tracked sources only: build output and local data dirs are not the repo. */
+function trackedFiles(roots: readonly string[]): string[] {
+  const out = execFileSync('git', ['ls-files', '-z', '--', ...roots], {
+    cwd: ROOT,
+    encoding: 'utf8',
+  })
   return out
+    .split('\0')
+    .filter((rel) => rel !== '' && /\.(ts|tsx|js|mjs|yml|yaml|md)$/.test(rel))
+    .filter((rel) => !rel.split('/').some((part) => part === 'generated'))
+    .filter((rel) => existsSync(path.join(ROOT, rel)))
 }
 
 export function integrationSettingsViolations(
@@ -89,12 +82,10 @@ export function integrationSettingsViolations(
 
 function main(): void {
   const roots = ['packages', 'server', 'scripts', '.github']
-  const files = roots.flatMap((root) =>
-    filesUnder(path.join(ROOT, root)).map((full) => ({
-      rel: path.relative(ROOT, full),
-      text: readFileSync(full, 'utf8'),
-    })),
-  )
+  const files = trackedFiles(roots).map((rel) => ({
+    rel: path.normalize(rel),
+    text: readFileSync(path.join(ROOT, rel), 'utf8'),
+  }))
   const violations = integrationSettingsViolations(files)
   if (violations.length > 0) {
     console.error(
