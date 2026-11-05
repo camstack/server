@@ -99,3 +99,48 @@ describe('AlexaIntegrationManager poll failure status', () => {
     await manager.stop()
   })
 })
+
+describe('AlexaIntegrationManager registration persistence', () => {
+  it('forgets the new cookie when the record did not accept it', async () => {
+    const { logger } = makeLogger()
+    let persist: ((registration: never) => Promise<void>) | undefined
+    const manager = new AlexaIntegrationManager({
+      id: 'alexa_001',
+      name: 'Alexa',
+      connection: alexaConnectionSchema.parse({ cookie: 'old', amazonDomain: 'amazon.it' }),
+      logger,
+      onConnected: () => {},
+      onDisconnected: () => {},
+      onAuthFailed: () => {},
+      onAppliancesChanged: () => {},
+      onStatesPolled: () => {},
+      persistRegistration: async () => {
+        throw new Error('store unavailable')
+      },
+      makeClient: (options) => {
+        persist = options.persistRegistration
+        return {
+          connect: async () => {},
+          disconnect: async () => {},
+          isConnected: () => true,
+          listAppliances: async () => [],
+          pollStates: async () => [],
+          sendCommand: async () => {},
+        }
+      },
+    })
+    await manager.start()
+    await expect(
+      persist?.({
+        refreshToken: 'r',
+        loginCookie: 'l',
+        deviceSerial: 's',
+        amazonPage: 'amazon.it',
+        localCookie: 'c',
+        csrf: 'x',
+      } as never),
+    ).rejects.toThrow()
+    expect(manager.getConnection().cookie).toBe('old')
+    await manager.stop()
+  })
+})

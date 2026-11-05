@@ -84,7 +84,7 @@ export const RegisterSuccessSchema = z.object({
       tokens: z.object({
         bearer: z.object({ refresh_token: z.string().min(1).meta({ secret: true }) }),
         website_cookies: z.array(z.object({ Name: z.string(), Value: z.string() })).default([]),
-        mac_dms: z.unknown().optional(),
+        mac_dms: z.unknown().optional().meta({ secret: true }),
       }),
     }),
   }),

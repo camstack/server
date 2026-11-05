@@ -153,4 +153,20 @@ describe('device-code sign-in', () => {
     const err = await failing.manager.start('amazon.com').catch((e: unknown) => String(e))
     expect(`${err}${JSON.stringify(failing.lines)}`).not.toContain(PRIVATE_CODE)
   })
+
+  it('rides out a network blip or a 5xx while polling', async () => {
+    const { manager } = setup({
+      registers: [pending, { status: 503, json: {} }, pending, ok(successBody)],
+    })
+    const started = await manager.start('amazon.it')
+    await settle(manager, started.sessionId)
+    expect(manager.status(started.sessionId)?.phase).toBe('captured')
+  })
+
+  it('gives up after repeated failures', async () => {
+    const { manager } = setup({ registers: [{ status: 503, json: {} }] })
+    const started = await manager.start('amazon.it')
+    await settle(manager, started.sessionId)
+    expect(manager.status(started.sessionId)?.phase).toBe('error')
+  })
 })

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { AmazonAuthRejectedError } from '../amazon-auth/http.js'
-import { completeRegistration } from '../amazon-auth/register-device.js'
+import { RegisterSuccessSchema, completeRegistration } from '../amazon-auth/register-device.js'
 import {
+  AlexaRegistrationSeedSchema,
   REGISTRATION_DATA_VERSION,
   parseRegistration,
   refreshRegistration,
@@ -159,5 +160,49 @@ describe('completing a registration', () => {
       amazon.http,
     )
     expect(blob.amazonPage).toBe('amazon.it')
+  })
+})
+
+describe('cookie values and redirects', () => {
+  it('round-trips a quoted value and an escaped semicolon untouched', async () => {
+    const amazon = fakeAmazon(refreshRoutes())
+    const next = await refreshRegistration(
+      { ...seed, loginCookie: 'frc=F%3BG; map-md="quoted=="; session-id=OLD' },
+      amazon.http,
+    )
+    expect(next.loginCookie).toContain('frc=F%3BG')
+    expect(next.loginCookie).toContain('map-md="quoted=="')
+  })
+
+  it('refuses to carry the cookies to a redirect outside the account domain', async () => {
+    const amazon = fakeAmazon({
+      ...refreshRoutes(),
+      'GET alexa.amazon.it/api/language': {
+        status: 302,
+        location: 'https://evil.example.com/steal',
+      },
+    })
+    await expect(refreshRegistration(seed, amazon.http)).rejects.toThrow()
+    expect(amazon.calls.filter((c) => c.host === 'evil.example.com')).toHaveLength(0)
+  })
+
+  it('follows a redirect inside the account domain', async () => {
+    const amazon = fakeAmazon({
+      ...refreshRoutes(),
+      'GET alexa.amazon.it/api/language': { status: 302, location: 'https://www.amazon.it/hop' },
+      'GET www.amazon.it/hop': { setCookies: ['csrf=FIXTURE-CSRF; Path=/'] },
+    })
+    await expect(refreshRegistration(seed, amazon.http)).resolves.toMatchObject({
+      csrf: 'FIXTURE-CSRF',
+    })
+  })
+})
+
+describe('registration secrecy', () => {
+  it('marks the device key material secret', () => {
+    expect(AlexaRegistrationSeedSchema.shape.macDms.meta()).toMatchObject({ secret: true })
+    expect(
+      RegisterSuccessSchema.shape.response.shape.success.shape.tokens.shape.mac_dms.meta(),
+    ).toMatchObject({ secret: true })
   })
 })

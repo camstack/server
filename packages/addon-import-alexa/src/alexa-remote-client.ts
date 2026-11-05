@@ -105,6 +105,12 @@ export class AlexaHttpError extends Error {
   }
 }
 
+/** How a registration renewal ended. Only `rejected` means the account must sign in again. */
+type RenewOutcome =
+  | { readonly kind: 'renewed' }
+  | { readonly kind: 'rejected' }
+  | { readonly kind: 'transient'; readonly error: Error }
+
 export class AlexaRemoteClient implements AlexaClient {
   #lastHttpStatus: number | null = null
   readonly #options: AlexaClientOptions
@@ -115,6 +121,8 @@ export class AlexaRemoteClient implements AlexaClient {
   #connected = false
   #registration: AlexaRegistration | null = null
   #refreshTimer: NodeJS.Timeout | null = null
+  #renewing: Promise<RenewOutcome> | null = null
+  #persistingTokenDate: number | null = null
   #persistedTokenDate: number | null = null
   /** The last renewal failure that was NOT Amazon refusing the token (the network, a 5xx). */
   #transientRefreshError: Error | null = null
@@ -334,7 +342,10 @@ export class AlexaRemoteClient implements AlexaClient {
           // One renewal per call: a registration Amazon still honours comes back as a fresh cookie.
           if (!renewed) {
             renewed = true
-            if (await this.#renew(op)) continue
+            const outcome = await this.#renew(op)
+            if (outcome.kind === 'renewed') continue
+            // Only Amazon refusing the token means "sign in again"; a network blip is retried later.
+            if (outcome.kind === 'transient') throw outcome.error
           }
           throw new AlexaAuthError(
             status !== null && noBody ? `${message} (HTTP ${status})` : message,
@@ -429,32 +440,53 @@ export class AlexaRemoteClient implements AlexaClient {
     }
   }
 
-  /** Renew the live registration and install it in the library; false when that did not work. */
-  async #renew(reason: string): Promise<boolean> {
+  /**
+   * Renew the live registration and install it in the library. Callers that arrive while a
+   * renewal is running share it: two parallel reads and the timer make ONE Amazon exchange.
+   */
+  #renew(reason: string): Promise<RenewOutcome> {
+    if (this.#renewing !== null) return this.#renewing
+    const running = this.#renewNow(reason).finally(() => {
+      this.#renewing = null
+    })
+    this.#renewing = running
+    return running
+  }
+
+  async #renewNow(reason: string): Promise<RenewOutcome> {
     const remote = this.#remote
     const current = this.#registration
-    if (remote === null || current === null) return false
+    if (remote === null)
+      return { kind: 'transient', error: new Error('the client is disconnected') }
+    if (current === null) return { kind: 'rejected' }
     try {
       const next = await refreshRegistration(current, this.#http, {
         acceptLanguage: alexaRegionOptions(current.amazonPage).acceptLanguage,
       })
-      if (this.#remote !== remote) return false
+      if (this.#remote !== remote) {
+        return {
+          kind: 'transient',
+          error: new Error('the client was restarted during the renewal'),
+        }
+      }
       // `setCookie` installs cookie + csrf and emits `cookie`, which persists the registration.
       remote.setCookie(next)
       this.#logger?.info('AlexaRemoteClient: registration renewed', {
         meta: { brokerId: this.#options.brokerId, reason },
       })
-      return true
+      return { kind: 'renewed' }
     } catch (err: unknown) {
+      const refused = err instanceof AmazonAuthRejectedError
       this.#logger?.warn('AlexaRemoteClient: registration renewal failed', {
         meta: {
           brokerId: this.#options.brokerId,
           reason,
-          rejected: err instanceof AmazonAuthRejectedError,
+          rejected: refused,
           error: errMsg(err),
         },
       })
-      return false
+      if (refused) return { kind: 'rejected' }
+      return { kind: 'transient', error: err instanceof Error ? err : new Error(errMsg(err)) }
     }
   }
 
@@ -483,15 +515,27 @@ export class AlexaRemoteClient implements AlexaClient {
     const registration = parseRegistration(data)
     if (registration === null) return
     this.#registration = registration
-    if (registration.tokenDate === this.#persistedTokenDate) return
-    this.#persistedTokenDate = registration.tokenDate ?? null
+    const date = registration.tokenDate ?? null
+    // A date still being stored, or already stored, is not stored twice; a failed store is retried.
+    if (date === this.#persistedTokenDate || date === this.#persistingTokenDate) return
     const persist = this.#options.persistRegistration
-    if (persist === undefined) return
-    persist(registration).catch((err: unknown) => {
-      this.#logger?.warn('AlexaRemoteClient: failed to persist the renewed registration', {
-        meta: { brokerId: this.#options.brokerId, error: errMsg(err) },
-      })
-    })
+    if (persist === undefined) {
+      this.#persistedTokenDate = date
+      return
+    }
+    this.#persistingTokenDate = date
+    persist(registration).then(
+      () => {
+        this.#persistedTokenDate = date
+        this.#persistingTokenDate = null
+      },
+      (err: unknown) => {
+        this.#persistingTokenDate = null
+        this.#logger?.warn('AlexaRemoteClient: failed to persist the renewed registration', {
+          meta: { brokerId: this.#options.brokerId, error: errMsg(err) },
+        })
+      },
+    )
   }
 
   #requireRemote(): AlexaRemote {

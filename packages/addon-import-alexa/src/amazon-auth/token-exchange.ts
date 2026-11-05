@@ -166,9 +166,15 @@ export async function exchangeForCookies(
   return serializeCookies(jar)
 }
 
+/** The account's own domain or one of its subdomains: the only hosts the cookies may reach. */
+function isAccountHost(hostname: string, amazonPage: string): boolean {
+  return hostname === amazonPage || hostname.endsWith(`.${amazonPage}`)
+}
+
 /** A GET that follows redirects and carries the cookies every hop sets. */
 async function getWithCookies(
   http: AmazonHttp,
+  amazonPage: string,
   start: { readonly host: string; readonly path: string },
   cookie: string,
   headers: Readonly<Record<string, string>>,
@@ -188,6 +194,9 @@ async function getWithCookies(
     if (!isRedirect || hop >= MAX_REDIRECTS || response.location === null)
       return { response, cookie: jar }
     const next = new URL(response.location, `https://${host}`)
+    if (next.protocol !== 'https:' || !isAccountHost(next.hostname, amazonPage)) {
+      throw new Error('refusing to follow a redirect outside the Amazon account domain')
+    }
     host = next.host
     path = `${next.pathname}${next.search}`
   }
@@ -201,13 +210,19 @@ export async function probeCsrf(
   let cookie = input.cookie
   const origin = `https://alexa.${input.amazonPage}`
   for (const path of CSRF_PROBE_PATHS) {
-    const probed = await getWithCookies(http, { host: `alexa.${input.amazonPage}`, path }, cookie, {
-      DNT: '1',
-      'User-Agent': USER_AGENT,
-      Referer: `${origin}/spa/index.html`,
-      Accept: '*/*',
-      Origin: origin,
-    })
+    const probed = await getWithCookies(
+      http,
+      input.amazonPage,
+      { host: `alexa.${input.amazonPage}`, path },
+      cookie,
+      {
+        DNT: '1',
+        'User-Agent': USER_AGENT,
+        Referer: `${origin}/spa/index.html`,
+        Accept: '*/*',
+        Origin: origin,
+      },
+    )
     cookie = probed.cookie
     const csrf = parseCookieHeader(cookie).get('csrf')
     if (csrf !== undefined && csrf.length > 0) return { cookie, csrf }
@@ -229,6 +244,7 @@ export async function lookupMarketplacePage(
   try {
     const { response } = await getWithCookies(
       http,
+      input.amazonPage,
       {
         host: `alexa.${input.amazonPage}`,
         path: `/api/users/me?platform=ios&version=${APP_VERSION}`,

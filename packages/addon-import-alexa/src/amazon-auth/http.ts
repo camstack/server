@@ -31,6 +31,24 @@ export type AmazonHttp = (req: AmazonHttpRequest) => Promise<AmazonHttpResponse>
 
 const REQUEST_TIMEOUT_MS = 20_000
 
+/** No Amazon answer in this flow is larger; a bigger body is cut off rather than buffered. */
+export const MAX_RESPONSE_BYTES = 2 * 1024 * 1024
+
+/** Read a response body as text, rejecting as soon as it grows past {@link MAX_RESPONSE_BYTES}. */
+export function readCappedBody(stream: AsyncIterable<Buffer | string>): Promise<string> {
+  return (async () => {
+    const chunks: Buffer[] = []
+    let total = 0
+    for await (const chunk of stream) {
+      const buffer = typeof chunk === 'string' ? Buffer.from(chunk) : chunk
+      total += buffer.length
+      if (total > MAX_RESPONSE_BYTES) throw new Error('Amazon response too large')
+      chunks.push(buffer)
+    }
+    return Buffer.concat(chunks).toString('utf8')
+  })()
+}
+
 function parseJson(text: string): unknown {
   try {
     return JSON.parse(text)
@@ -46,20 +64,22 @@ export const defaultAmazonHttp: AmazonHttp = (req) =>
     const r = https.request(
       { host: req.host, path: req.path, method: req.method, headers },
       (res) => {
-        const chunks: Buffer[] = []
-        res.on('data', (c: Buffer) => chunks.push(c))
-        res.on('end', () => {
-          const text = Buffer.concat(chunks).toString('utf8')
-          const location = res.headers.location
-          resolve({
-            status: res.statusCode ?? 0,
-            location: typeof location === 'string' ? location : null,
-            setCookies: res.headers['set-cookie'] ?? [],
-            text,
-            json: parseJson(text),
-          })
-        })
-        res.on('error', reject)
+        readCappedBody(res).then(
+          (text) => {
+            const location = res.headers.location
+            resolve({
+              status: res.statusCode ?? 0,
+              location: typeof location === 'string' ? location : null,
+              setCookies: res.headers['set-cookie'] ?? [],
+              text,
+              json: parseJson(text),
+            })
+          },
+          (err: unknown) => {
+            res.destroy()
+            reject(err instanceof Error ? err : new Error(String(err)))
+          },
+        )
       },
     )
     r.setTimeout(REQUEST_TIMEOUT_MS, () => r.destroy(new Error('timeout')))

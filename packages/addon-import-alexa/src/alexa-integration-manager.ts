@@ -294,8 +294,15 @@ export class AlexaIntegrationManager {
    * FIRST, so the record change that follows reads as "same connection" and restarts nothing.
    */
   async #keepRegistration(registration: AlexaRegistration): Promise<void> {
-    this.#connection = { ...this.#connection, cookie: JSON.stringify(registration) }
-    await this.#persistRegistration?.(registration)
+    const before = this.#connection
+    this.#connection = { ...before, cookie: JSON.stringify(registration) }
+    try {
+      await this.#persistRegistration?.(registration)
+    } catch (err: unknown) {
+      // The record never took the new cookie: do not claim it, so the next renewal stores it again.
+      if (this.#connection.cookie === JSON.stringify(registration)) this.#connection = before
+      throw err
+    }
   }
 
   async applyConnection(conn: AlexaConnection): Promise<void> {

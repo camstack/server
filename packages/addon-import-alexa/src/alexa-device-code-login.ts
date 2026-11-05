@@ -34,6 +34,8 @@ import {
 
 const DEFAULT_EXPIRES_S = 600
 const DEFAULT_POLL_S = 5
+/** Consecutive network errors or 5xx answers a poll rides out before the sign-in ends. */
+const MAX_TRANSIENT_FAILURES = 4
 
 const CodepairSchema = z.object({
   public_code: z.string().min(1),
@@ -196,6 +198,7 @@ export class AlexaDeviceCodeSession {
 
   async #pollLoop(publicCode: string, privateCode: string, pollMs: number): Promise<void> {
     const deadline = this.#expiresAt ?? this.#now()
+    let transient = 0
     while (this.#phase === 'awaiting-code') {
       await this.#sleep(pollMs, this.#abort.signal)
       if (this.#phase !== 'awaiting-code') return
@@ -219,11 +222,19 @@ export class AlexaDeviceCodeSession {
           this.#http,
         )
       } catch (err: unknown) {
+        transient += 1
+        if (transient < MAX_TRANSIENT_FAILURES) continue
         this.#fail(`register request failed (${errMsg(err)})`)
         return
       }
       if (this.#phase !== 'awaiting-code') return
       if (outcome.kind === 'refused') {
+        if (outcome.status >= 500) {
+          transient += 1
+          if (transient < MAX_TRANSIENT_FAILURES) continue
+        } else {
+          transient = 0
+        }
         // HTTP 401 until the operator confirmed the code.
         if (outcome.status === 401) continue
         this.#fail(`Amazon refused the registration: HTTP ${outcome.status}, error ${outcome.code}`)

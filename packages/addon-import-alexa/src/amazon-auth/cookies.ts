@@ -14,17 +14,7 @@ export function isAmazonCookieName(name: string): boolean {
   return AMAZON_COOKIE_NAME.test(name)
 }
 
-function decodeValue(raw: string): string {
-  const unquoted =
-    raw.length >= 2 && raw.startsWith('"') && raw.endsWith('"') ? raw.slice(1, -1) : raw
-  try {
-    return decodeURIComponent(unquoted)
-  } catch {
-    return unquoted
-  }
-}
-
-/** A `Cookie` header as an ordered name to value map (values unquoted and decoded). */
+/** A `Cookie` header as an ordered name to value map (values kept exactly as sent, so a re-serialised header round-trips). */
 export function parseCookieHeader(header: string): Map<string, string> {
   const out = new Map<string, string>()
   for (const part of header.split(';')) {
@@ -32,7 +22,7 @@ export function parseCookieHeader(header: string): Map<string, string> {
     if (eq <= 0) continue
     const name = part.slice(0, eq).trim()
     if (name.length === 0 || out.has(name)) continue
-    out.set(name, decodeValue(part.slice(eq + 1).trim()))
+    out.set(name, part.slice(eq + 1).trim())
   }
   return out
 }

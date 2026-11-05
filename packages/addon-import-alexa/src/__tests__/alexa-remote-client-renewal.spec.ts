@@ -16,8 +16,14 @@ interface Registration {
 const lib: {
   initOptions: Record<string, unknown> | null
   query: (callback: (err?: Error, body?: unknown) => void) => void
+  devices: (callback: (err?: Error, body?: unknown) => void) => void
   stopped: number
-} = { initOptions: null, query: (cb) => cb(undefined, {}), stopped: 0 }
+} = {
+  initOptions: null,
+  query: (cb) => cb(undefined, {}),
+  devices: (cb) => cb(undefined, []),
+  stopped: 0,
+}
 
 // The library calls its `alexaCookie` adapter when a stored registration is older than 24 h,
 // exactly as alexa-remote2 8.1.1 does; `alexa-cookie2` itself must never load.
@@ -62,6 +68,12 @@ vi.mock('alexa-remote2', () => {
     ): void {
       lib.query(callback)
     }
+    getSmarthomeDevicesV2(callback: (err?: Error, body?: unknown) => void): void {
+      lib.devices(callback)
+    }
+    getSmarthomeEntities(callback: (err?: Error, body?: unknown) => void): void {
+      lib.devices(callback)
+    }
     stop(): void {
       lib.stopped += 1
     }
@@ -91,14 +103,22 @@ function blob(tokenDate: number): AlexaRegistration {
   }
 }
 
-function make(opts: { tokenDate: number; routes?: AmazonRoutes; refreshIntervalMs?: number }) {
+function make(opts: {
+  tokenDate: number
+  routes?: AmazonRoutes
+  refreshIntervalMs?: number
+  failPersist?: number
+}) {
   const amazon = fakeAmazon(opts.routes ?? refreshRoutes())
   const persisted: AlexaRegistration[] = []
+  let attempts = 0
   const client = new AlexaRemoteClient({
     brokerId: 'alexa_001',
     credentials: { cookie: JSON.stringify(blob(opts.tokenDate)), amazonDomain: 'amazon.it' },
     http: amazon.http,
     persistRegistration: async (registration) => {
+      attempts += 1
+      if (attempts <= (opts.failPersist ?? 0)) throw new Error('store unavailable')
       persisted.push(registration)
     },
     ...(opts.refreshIntervalMs === undefined ? {} : { refreshIntervalMs: opts.refreshIntervalMs }),
@@ -109,6 +129,7 @@ function make(opts: { tokenDate: number; routes?: AmazonRoutes; refreshIntervalM
 afterEach(() => {
   vi.useRealTimers()
   lib.query = (cb) => cb(undefined, {})
+  lib.devices = (cb) => cb(undefined, [])
   lib.initOptions = null
   lib.stopped = 0
 })
@@ -207,5 +228,55 @@ describe('registration renewal in the remote client', () => {
     await client.disconnect()
     await vi.advanceTimersByTimeAsync(10 * 24 * HOUR)
     expect(amazon.callsTo('POST api.amazon.it/auth/token')).toHaveLength(1)
+  })
+
+  it('a transient failure while renewing a dead session is not an AlexaAuthError', async () => {
+    vi.useFakeTimers({ now: NOW })
+    const { client } = make({
+      tokenDate: NOW - HOUR,
+      routes: { 'POST api.amazon.it/auth/token': { status: 503, json: {} } },
+    })
+    await client.connect()
+    lib.query = (cb) => cb(new Error('Unauthorized'))
+    const err = await client.pollStates(['a1']).catch((e: unknown) => e)
+    expect(err).toBeInstanceOf(Error)
+    expect(err).not.toBeInstanceOf(AlexaAuthError)
+    await client.disconnect()
+  })
+
+  it('parallel dead-session calls share one renewal', async () => {
+    vi.useFakeTimers({ now: NOW })
+    const { client, amazon } = make({ tokenDate: NOW - HOUR })
+    await client.connect()
+    let first = true
+    lib.devices = (cb) => {
+      if (first) cb(new Error('Unauthorized'))
+      else cb(undefined, [])
+    }
+    // both reads (devices and entities) hit the dead session at the same time
+    const listing = client.listAppliances()
+    first = false
+    await listing.catch(() => undefined)
+    expect(amazon.callsTo('POST api.amazon.it/auth/token').length).toBeLessThanOrEqual(1)
+    await client.disconnect()
+  })
+
+  it('keeps trying to store a registration the record has not accepted yet', async () => {
+    vi.useFakeTimers({ now: NOW })
+    const { client, persisted } = make({ tokenDate: NOW - 25 * HOUR, failPersist: 2 })
+    await client.connect()
+    expect(persisted).toHaveLength(0)
+    lib.query = (() => {
+      let n = 0
+      return (cb: (err?: Error, body?: unknown) => void) => {
+        n += 1
+        if (n === 1) cb(new Error('Unauthorized'))
+        else cb(undefined, {})
+      }
+    })()
+    // the dead-session renewal yields the same tokenDate (the clock is frozen)
+    await client.pollStates(['a1'])
+    expect(persisted).toHaveLength(1)
+    await client.disconnect()
   })
 })

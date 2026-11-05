@@ -27,7 +27,7 @@ export const AlexaRegistrationSeedSchema = z.looseObject({
   deviceId: z.string().optional(),
   frc: z.string().optional(),
   'map-md': z.string().optional(),
-  macDms: z.unknown().optional(),
+  macDms: z.unknown().optional().meta({ secret: true }),
   deviceAppName: z.string().optional(),
   accessToken: z.string().optional().meta({ secret: true }),
   tokenDate: z.number().optional(),
