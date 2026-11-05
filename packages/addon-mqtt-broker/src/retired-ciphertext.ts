@@ -100,7 +100,8 @@ export function resolveStoredPassword(
 
 interface StoredPasswords {
   readonly brokers: readonly { readonly id: string; readonly password?: string }[]
-  readonly embeddedPassword: string
+  /** Absent once the legacy embedded broker is an onboard record. */
+  readonly embeddedPassword?: string
 }
 
 /** The field paths that still hold a retired ciphertext, keychain-ref style. */
@@ -111,6 +112,8 @@ export function retiredCiphertextPaths(config: StoredPasswords): readonly string
       out.push(`brokers[${b.id}].password`)
     }
   }
-  if (config.embeddedPassword.startsWith(RETIRED_CIPHERTEXT_PREFIX)) out.push('embeddedPassword')
+  if (config.embeddedPassword?.startsWith(RETIRED_CIPHERTEXT_PREFIX) === true) {
+    out.push('embeddedPassword')
+  }
   return out
 }

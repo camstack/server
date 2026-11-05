@@ -60,7 +60,7 @@ migrates once on boot to `google_001`.
 
 `invalid_grant` on a refresh sets `needsReauth` on that account's durable
 state (`oauthAccounts`). While it is set the broker is NOT connected:
-`isConnected` is false, `broker.list` reports `auth-failed` ("Google session
+`isConnected` is false, the broker instance's status reports `error` ("Google session
 expired — sign in again"), the Sign in button shows, feature caps skip the
 account, and `ensureAccessToken` fails fast without asking Google again. The
 critical alert ("Google needs a new sign-in", action `navigation: 'server'` —

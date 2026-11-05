@@ -26,11 +26,14 @@ import {
   type Harness,
 } from '../../../../system/src/builtins/sqlite-storage/__tests__/support/owned-files-harness.js'
 import { mqttBrokersEntryKind } from '../../broker-record-kinds.js'
+import { LEGACY_EMBEDDED_KEYS } from '../embedded-to-onboard.js'
 import {
   ADDON_MIGRATIONS,
   BROKERS_TO_RECORDS_ID,
   DROP_BROKERS_KEY_ID,
-  type MqttBrokerMigrationPorts,
+  DROP_EMBEDDED_KEYS_ID,
+  EMBEDDED_TO_ONBOARD_ID,
+  type EmbeddedMigrationPorts,
 } from '../index.js'
 
 const SNAPSHOT_WORKER = fileURLToPath(
@@ -162,7 +165,7 @@ async function boot(options: Options = {}) {
       { ifRev: 0 },
     )
   }
-  const ports: MqttBrokerMigrationPorts = {
+  const ports: EmbeddedMigrationPorts = {
     readRawBrokers: async () => storedBrokers(),
     readRecords: async () => {
       const page = await handle.query({ limit: 100 })
@@ -172,6 +175,33 @@ async function boot(options: Options = {}) {
           { hasPassword: (r.data.password ?? '').length > 0 },
         ]),
       )
+    },
+    readLegacyEmbedded: async () => {
+      const raw = (key: string): unknown => {
+        const data = rows()[`${ADDON}.${key}`]
+        return data === undefined ? undefined : JSON.parse(data).value
+      }
+      if (raw('embeddedEnabled') !== true) return null
+      const port = raw('embeddedPort')
+      const username = raw('embeddedUsername')
+      const password = raw('embeddedPassword')
+      return {
+        id: typeof raw('embeddedId') === 'string' ? String(raw('embeddedId')) : 'embedded',
+        port: typeof port === 'number' ? port : 1883,
+        allowAnonymous: raw('embeddedAllowAnonymous') === true,
+        ...(typeof username === 'string' ? { username } : {}),
+        ...(typeof password === 'string' ? { password } : {}),
+      }
+    },
+    readRawEmbeddedKeys: async () =>
+      Object.fromEntries(
+        LEGACY_EMBEDDED_KEYS.flatMap((key) => {
+          const data = rows()[`${ADDON}.${key}`]
+          return data === undefined ? [] : [[key, JSON.parse(data).value]]
+        }),
+      ),
+    putOnboardRecord: async (id, body) => {
+      await handle.put({ id, data: mqttBrokersEntryKind.schema.parse(body) }, { ifRev: 0 })
     },
     warn: (message) => {
       warnings.push(message)
@@ -189,17 +219,23 @@ async function boot(options: Options = {}) {
 
 describe('mqtt-broker migrations on real SQLite', () => {
   it('drops the legacy key once every broker is a record; records, other keys and other addons stay', async () => {
-    seed({ brokers: LEGACY_BROKERS, embeddedPort: 1884, unrelatedMark: 'keep-me' })
+    seed({
+      brokers: LEGACY_BROKERS,
+      embeddedClients: [{ username: 'kept' }],
+      unrelatedMark: 'keep-me',
+    })
     const w = await boot()
     const report = await w.runCatalogue()
     expect(report.failed ?? []).toEqual([])
     expect(ledger()).toEqual({
       [BROKERS_TO_RECORDS_ID]: 'applied',
       [DROP_BROKERS_KEY_ID]: 'applied',
+      [EMBEDDED_TO_ONBOARD_ID]: 'applied',
+      [DROP_EMBEDDED_KEYS_ID]: 'applied',
     })
     const after = rows()
     expect(Object.keys(after).sort()).toEqual(
-      ['other-addon.brokers', `${ADDON}.embeddedPort`, `${ADDON}.unrelatedMark`].sort(),
+      ['other-addon.brokers', `${ADDON}.embeddedClients`, `${ADDON}.unrelatedMark`].sort(),
     )
     expect(after[`${ADDON}.unrelatedMark`]).toBe(wrapper(ADDON, 'unrelatedMark', 'keep-me'))
     expect(after['other-addon.brokers']).toBe(wrapper('other-addon', 'brokers', ['keep-me']))
@@ -207,6 +243,30 @@ describe('mqtt-broker migrations on real SQLite', () => {
       'b-1',
       'b-2',
     ])
+  })
+
+  it('the legacy embedded broker becomes an onboard record under its id and its flat keys go', async () => {
+    seed({
+      embeddedEnabled: true,
+      embeddedId: 'emb-77',
+      embeddedPort: 18_841,
+      embeddedAllowAnonymous: true,
+      embeddedUsername: 'mark-user',
+      embeddedPassword: 'mark-pw',
+      embeddedClients: [{ username: 'kept' }],
+    })
+    const w = await boot({ recordIds: [] })
+    const report = await w.runCatalogue()
+    expect(report.failed ?? []).toEqual([])
+    const row = await w.handle.get('emb-77')
+    expect(row?.data).toMatchObject({
+      url: 'mqtt://127.0.0.1:18841',
+      username: 'mark-user',
+      onboard: { port: 18_841, allowAnonymous: true },
+    })
+    expect(Object.keys(rows()).sort()).toEqual(
+      ['other-addon.brokers', `${ADDON}.embeddedClients`].sort(),
+    )
   })
 
   it('throws, naming the id, when a legacy broker has no record, and deletes nothing', async () => {

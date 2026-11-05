@@ -63,7 +63,12 @@ Connectivity page (Alexa, Matter, Home Assistant, Google, MQTT, the inbound mail
 MQTT broker or a mailbox port before saving it, create an ONBOARD MQTT broker (a CamStack `aedes`
 server on this hub, with an auto-allocated or typed port and optional anonymous access) and delete
 it to stop its server. Removing a broker something still uses is refused, naming the users; a
-registry that cannot be read refuses too, and an absent MQTT Discovery addon means no users.
+registry that cannot be read refuses too, and so does an MQTT Discovery addon that is installed but
+not answering yet (booting or switched off: not-yet-known, D315). Only an addon the registry and the
+roster both answer is not installed means no users. The old single embedded MQTT broker (flat
+`embedded*` settings) is migrated to an onboard broker record under the same id, so it is listed,
+tested, switched off and deleted like every other broker. An MQTT broker reports connected,
+auth-failed, unreachable or TLS error from its probe, and an unreachable one is not offered.
 Pickers offer only brokers that can carry traffic (on, configured, not failing) and keep an
 already chosen one visible with its state. What no longer exists is the `broker.list`, `add`,
 `remove`, `test*`, `getSettingsSchema` and `signIn` calls themselves: a script that used them

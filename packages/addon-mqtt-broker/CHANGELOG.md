@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MQTT brokers declare the function they serve on their instance kind
 - MQTT brokers are managed only on the instances page; deleting one an MQTT Discovery integration still names is refused
 - Creating an onboard MQTT broker works again from the Add broker dialog: tick Run an onboard broker, pick a port or leave it blank, and the broker starts on this hub; deleting it stops it, and a broker can be tested before it is saved.
+- The embedded broker (flat settings) moves to an onboard broker record under the same id: it is listed, tested, switched off and deleted like every other broker, and MQTT brokers now report connected, auth-failed, unreachable or TLS error; a delete is refused while MQTT Discovery is installed but not answering yet
 
 ## [1.2.151] - 2026-11-05
 

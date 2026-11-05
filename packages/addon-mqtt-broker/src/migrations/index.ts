@@ -1,9 +1,10 @@
 import type { AddonMigration } from '@camstack/types'
+import { planDropBrokersKey, verifyBrokersAreRecords } from './brokers-to-records.js'
 import {
-  type MqttBrokerMigrationPorts,
-  planDropBrokersKey,
-  verifyBrokersAreRecords,
-} from './brokers-to-records.js'
+  type EmbeddedMigrationPorts,
+  embeddedToOnboardRecord,
+  planDropEmbeddedKeys,
+} from './embedded-to-onboard.js'
 
 export type {
   MqttBrokerMigrationLog,
@@ -13,6 +14,14 @@ export type {
 
 export const BROKERS_TO_RECORDS_ID = 'mqtt-broker/2026-11-03-brokers-settings-to-records'
 export const DROP_BROKERS_KEY_ID = 'mqtt-broker/2026-11-03-drop-brokers-key'
+export const EMBEDDED_TO_ONBOARD_ID = 'mqtt-broker/2026-11-05-embedded-broker-to-onboard-record'
+export const DROP_EMBEDDED_KEYS_ID = 'mqtt-broker/2026-11-05-drop-embedded-keys'
+
+export type {
+  EmbeddedMigrationPorts,
+  LegacyEmbedded,
+  OnboardRecordBody,
+} from './embedded-to-onboard.js'
 
 const FIXTURE_MARK = 'a setting key the migration does not know'
 
@@ -21,7 +30,7 @@ const FIXTURE_MARK = 'a setting key the migration does not know'
  * entries are `tolerate`: the embedded broker and every record keep working while a legacy key
  * stays where it is.
  */
-export const ADDON_MIGRATIONS: readonly AddonMigration<MqttBrokerMigrationPorts>[] = [
+export const ADDON_MIGRATIONS: readonly AddonMigration<EmbeddedMigrationPorts>[] = [
   {
     meta: {
       id: BROKERS_TO_RECORDS_ID,
@@ -54,5 +63,38 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<MqttBrokerMigrationPorts>
       fixtureMark: FIXTURE_MARK,
     },
     plan: planDropBrokersKey,
+  },
+  {
+    meta: {
+      id: EMBEDDED_TO_ONBOARD_ID,
+      owner: 'mqtt-broker',
+      level: 'addon-state',
+      seq: 3,
+      dependsOn: [DROP_BROKERS_KEY_ID],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'tolerate',
+      bodyKind: 'procedure',
+      description:
+        'The legacy embedded broker (flat embedded* keys) becomes an onboard brokers record under the same id; never overwrites a record',
+      fixtureMark: FIXTURE_MARK,
+    },
+    procedure: embeddedToOnboardRecord,
+  },
+  {
+    meta: {
+      id: DROP_EMBEDDED_KEYS_ID,
+      owner: 'mqtt-broker',
+      level: 'addon-state',
+      seq: 4,
+      dependsOn: [EMBEDDED_TO_ONBOARD_ID],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'tolerate',
+      bodyKind: 'plan',
+      description: 'Delete the flat embedded broker keys once the onboard record holds them',
+      fixtureMark: FIXTURE_MARK,
+    },
+    plan: planDropEmbeddedKeys,
   },
 ]

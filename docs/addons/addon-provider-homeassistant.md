@@ -216,7 +216,7 @@ Named here rather than shipped looking implemented:
   renaming its directory while its entry stayed in `/data/addons/manifest.json`;
   the shared runner then died on `Failed to load "advanced-notifier": No
   package.json at …`, five times, and the crash circuit-breaker stopped
-  respawning it. The Home Assistant provider went with it: `broker.list` lost
+  respawning it. The Home Assistant provider went with it: the broker instance list lost
   `ha_001` for ~2h50m, `notification-output` lost ALL THREE providers, and three
   `restartAddon` calls answered `{success:true}` without ever spawning a process.
   `scripts/check-runner-group-isolation.ts` now refuses the regression.
@@ -227,7 +227,7 @@ Named here rather than shipped looking implemented:
   kind `ha-target`, `target-instances.ts`). `connectionId` is a reference to the
   Home Assistant broker; a target whose connection does not exist is
   *unconfigured*, never unexposed (devices are kept, the boot reconcile starts only
-  after the targets are loaded, and an empty `broker.list` prunes nothing). The
+  after the targets are loaded, and an empty broker instance list prunes nothing). The
   records are loaded once at boot after the migrations, and a failed read stops the
   boot: an empty membership would unexport every device. The old
   `ha-export-links` kind, the `exportTo:` / `mediaRole:` form keys, `knownBrokers`

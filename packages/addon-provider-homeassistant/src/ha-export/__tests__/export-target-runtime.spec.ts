@@ -141,6 +141,36 @@ describe('an export target and its connection', () => {
     expect((await h.handle.get('hae_001'))?.data.devices).toEqual(['10', '11'])
   })
 
+  it('keeps an open link, the enabled targets and the devices when the connection list read is refused', async () => {
+    const h = await harness([HA('ha_001')])
+    await h.call('refreshBrokers')
+    const links: unknown = Reflect.get(h.addon, 'links')
+    if (!(links instanceof Map)) throw new Error('no links')
+    expect([...links.keys()]).toEqual(['hae_001'])
+    // The provider is restarting: the pinned read is refused, which is "not known", never "gone".
+    Reflect.set(h.addon, '_ctx', {
+      ...Reflect.get(h.addon, '_ctx'),
+      api: {
+        ...Reflect.get(Reflect.get(h.addon, '_ctx'), 'api'),
+        integrationInstances: {
+          listInstances: {
+            query: async () => {
+              throw new Error('Capability "integration-instances" has no provider with addonId')
+            },
+          },
+        },
+      },
+    })
+    await h.call('refreshBrokers')
+    expect([...links.keys()]).toEqual(['hae_001'])
+    expect(Reflect.get(h.addon, 'enabled')).toEqual(['hae_001'])
+    expect(h.lines.some((l) => l.level === 'info' && /stopped exporting/.test(l.message))).toBe(
+      false,
+    )
+    expect((await h.handle.get('hae_001'))?.data.devices).toEqual(['10', '11'])
+    await h.dispose()
+  })
+
   it('resumes the same devices when the connection appears', async () => {
     const h = await harness([HA('ha_other')])
     await h.call('refreshBrokers')

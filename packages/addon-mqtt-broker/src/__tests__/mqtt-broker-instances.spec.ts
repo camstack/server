@@ -1,8 +1,16 @@
 import { BrokerInUseError, type InstanceChange, makeInMemoryRecords } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { mqttBrokersEntryKind } from '../broker-record-kinds.js'
-import { buildMqttBrokerInstances, type MqttProbeResult } from '../mqtt-broker-instances.js'
-import { listMqttHaInstancesOver, type MqttHaListApi } from '../mqtt-broker-users.js'
+import {
+  buildMqttBrokerInstances,
+  type MqttLiveState,
+  type MqttProbeResult,
+} from '../mqtt-broker-instances.js'
+import {
+  listMqttHaInstancesOver,
+  MqttDiscoveryNotReadyError,
+  type MqttHaListApi,
+} from '../mqtt-broker-users.js'
 
 type Listed = Awaited<ReturnType<MqttHaListApi['integrationInstances']['listInstances']['query']>>
 
@@ -11,6 +19,9 @@ interface WorldOptions {
   readonly providers?: readonly string[] | null
   readonly rows?: Listed
   readonly listFails?: boolean
+  /** Whether the addon roster lists MQTT Discovery as installed. */
+  readonly installed?: boolean
+  readonly live?: Readonly<Record<string, MqttLiveState>>
   readonly listening?: ReadonlySet<string>
 }
 
@@ -27,6 +38,12 @@ async function setup(options: WorldOptions = {}) {
           options.providers === null
             ? null
             : { providers: options.providers ?? ['provider-mqtt-ha', 'mqtt-broker'] },
+      },
+    },
+    addons: {
+      list: {
+        query: async () =>
+          options.installed === true ? [{ manifest: { id: 'provider-mqtt-ha' } }] : [],
       },
     },
     integrationInstances: {
@@ -47,6 +64,7 @@ async function setup(options: WorldOptions = {}) {
       return { ok: true, latencyMs: 4 }
     },
     onboardListening: (id) => options.listening?.has(id) === true,
+    liveState: (id) => options.live?.[id] ?? { onboard: null },
     onChanged: async (id, change) => {
       changes.push([id, change])
     },
@@ -132,17 +150,27 @@ describe('deleting an MQTT broker (production wiring)', () => {
     expect(await records.get('B')).toBeNull()
   })
 
+  it('is refused, with a reason, while MQTT Discovery is installed but has not registered yet', async () => {
+    const { provider, records } = await setup({ providers: ['mqtt-broker'], installed: true })
+    await records.put({ id: 'B', data: { name: 'B', url: 'mqtt://x:1883' } }, { ifRev: 0 })
+    const err = await provider.deleteInstance({ id: 'B' }).catch((e: unknown) => e)
+    expect(err).toBeInstanceOf(MqttDiscoveryNotReadyError)
+    expect(String(err)).toContain('not answering yet')
+    expect(await records.get('B')).not.toBeNull()
+  })
+
+  it('is refused when the registry answers nothing at all', async () => {
+    const { provider, records } = await setup({ providers: null })
+    await records.put({ id: 'B', data: { name: 'B', url: 'mqtt://x:1883' } }, { ifRev: 0 })
+    await expect(provider.deleteInstance({ id: 'B' })).rejects.toThrow('did not answer')
+    expect(await records.get('B')).not.toBeNull()
+  })
+
   it('is refused when the read fails, and the broker stays', async () => {
     const { provider, records } = await setup({ listFails: true })
     await records.put({ id: 'B', data: { name: 'B', url: 'mqtt://x:1883' } }, { ifRev: 0 })
     await expect(provider.deleteInstance({ id: 'B' })).rejects.toThrow('registry read failed')
     expect(await records.get('B')).not.toBeNull()
-  })
-
-  it('is refused when the registry does not answer and the read fails', async () => {
-    const { provider, records } = await setup({ providers: null, listFails: true })
-    await records.put({ id: 'B', data: { name: 'B', url: 'mqtt://x:1883' } }, { ifRev: 0 })
-    await expect(provider.deleteInstance({ id: 'B' })).rejects.toThrow('registry read failed')
   })
 })
 
@@ -178,5 +206,76 @@ describe('testing an MQTT broker', () => {
       success: false,
       status: 'rejected',
     })
+  })
+})
+
+describe('the health of an MQTT broker instance', () => {
+  const put = (records: Awaited<ReturnType<typeof setup>>['records'], id: string, data = {}) =>
+    records.put({ id, data: { name: id, url: 'mqtt://x:1883', ...data } }, { ifRev: 0 })
+  const statusOf = async (provider: Awaited<ReturnType<typeof setup>>['provider'], id: string) =>
+    (await provider.listInstances()).find((i) => i.id === id)
+
+  it('reports an unreachable broker as an error with the probe words, so it is not usable', async () => {
+    const { provider, records } = await setup({
+      live: {
+        U: {
+          onboard: null,
+          probe: {
+            status: 'unreachable',
+            latencyMs: null,
+            error: 'ECONNREFUSED',
+            lastCheckedAt: 77,
+          },
+        },
+      },
+    })
+    await put(records, 'U')
+    const row = await statusOf(provider, 'U')
+    expect(row?.status).toEqual({ state: 'error', label: 'Unreachable', detail: 'ECONNREFUSED' })
+    expect(row?.lastCheckedAt).toBe(77)
+  })
+
+  it('reports connected with the latency, auth-failed and tls-error by name', async () => {
+    const probe = (
+      status: 'connected' | 'auth-failed' | 'tls-error',
+      latencyMs: number | null,
+    ) => ({
+      onboard: null,
+      probe: { status, latencyMs, lastCheckedAt: 5 },
+    })
+    const { provider, records } = await setup({
+      live: {
+        C: probe('connected', 12),
+        A: probe('auth-failed', null),
+        T: probe('tls-error', null),
+      },
+    })
+    for (const id of ['C', 'A', 'T']) await put(records, id)
+    expect((await statusOf(provider, 'C'))?.status).toEqual({
+      state: 'ok',
+      label: 'Connected',
+      detail: '12 ms',
+    })
+    expect((await statusOf(provider, 'A'))?.status?.label).toBe('Authentication failed')
+    expect((await statusOf(provider, 'T'))?.status?.label).toBe('TLS error')
+  })
+
+  it('says "not checked yet" before the first probe, an onboard server by its clients, a switched-off one as off', async () => {
+    const { provider, records } = await setup({
+      live: { O: { onboard: { connectedClients: 3 } } },
+    })
+    await put(records, 'N')
+    await put(records, 'O', { onboard: { port: 1884, allowAnonymous: false } })
+    await put(records, 'X', { enabled: false })
+    expect((await statusOf(provider, 'N'))?.status).toEqual({
+      state: 'unknown',
+      label: 'Not checked yet',
+    })
+    expect((await statusOf(provider, 'O'))?.status).toEqual({
+      state: 'ok',
+      label: 'Listening',
+      detail: '3 connected clients',
+    })
+    expect((await statusOf(provider, 'X'))?.status?.state).toBe('off')
   })
 })

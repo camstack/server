@@ -28,15 +28,7 @@ describe('the MQTT broker scoped settings', () => {
     const addon = new Probe()
     expect(addon.caps()).toContain('mqtt-broker')
     expect(keysOf(await addon.getScopedSettingsSchema('cluster', 'mqtt-broker'))).toEqual(
-      [
-        'embeddedEnabled',
-        'embeddedPort',
-        'embeddedAllowAnonymous',
-        'embeddedUsername',
-        'embeddedPassword',
-        'embeddedClients',
-        'embeddedAcl',
-      ].sort(),
+      ['embeddedClients', 'embeddedAcl'].sort(),
     )
     expect(await addon.getScopedSettingsSchema('cluster', 'not-a-capability')).toBeNull()
   })

@@ -8,7 +8,8 @@ import { type CapabilityDefinition, type InferProvider, method } from './capabil
  * ── Why this cap exists ─────────────────────────────────────────────────────
  *
  * Before it, `integrations.testConnection` had exactly two behaviours: a broker
- * branch (`settings.brokerId` → `broker.testConnection`) and a DEFAULT branch
+ * branch (`settings.brokerId`, which went to the retired broker test call; a broker now tests
+ * through `integration-instances.testInstance`) and a DEFAULT branch
  * that probed `settings.main_stream_url ?? settings.url` with ffprobe. Every
  * account-based integration — Dreo, Dreame, Tuya, Petkit, Wyze — fell into that
  * default and was told `{"success":false,"error":"No stream URL provided"}`.

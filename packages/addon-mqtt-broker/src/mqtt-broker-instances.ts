@@ -11,8 +11,10 @@ import {
   guardBrokerDelete,
   type IIntegrationInstancesProvider,
   type InstanceChange,
+  type IntegrationInstanceStatus,
   type IntegrationTestConnectionResult,
   isSecretFieldView,
+  type MqttBrokerLiveStatus,
   type ListedFieldRow,
   REDACTED_SECRET,
   RecordIntegrationInstances,
@@ -33,6 +35,64 @@ export interface MqttProbeResult {
   readonly error?: string
 }
 
+/** What the addon knows about a broker right now: its onboard server, or the last probe. */
+export interface MqttLiveState {
+  /** The onboard `aedes` server of this broker when it is up, else null. */
+  readonly onboard: { readonly connectedClients: number } | null
+  /** The last background probe of an external broker; absent before the first one ran. */
+  readonly probe?: {
+    readonly status: MqttBrokerLiveStatus
+    readonly latencyMs: number | null
+    readonly error?: string
+    readonly lastCheckedAt: number
+  }
+}
+
+const PROBE_LABELS: Readonly<Record<MqttBrokerLiveStatus, string>> = {
+  connected: 'Connected',
+  disconnected: 'Disconnected',
+  'auth-failed': 'Authentication failed',
+  unreachable: 'Unreachable',
+  'tls-error': 'TLS error',
+}
+
+/** The instance's health word: connected / auth-failed / unreachable / tls-error, latency, clients. */
+export function mqttHealthOf(
+  body: MqttBrokerBody,
+  live: MqttLiveState,
+  now: number,
+): { readonly status: IntegrationInstanceStatus; readonly lastCheckedAt?: number } {
+  if (body.enabled === false) return { status: { state: 'off', label: 'Switched off' } }
+  if (body.onboard !== undefined) {
+    return live.onboard === null
+      ? { status: { state: 'error', label: 'Not listening' }, lastCheckedAt: now }
+      : {
+          status: {
+            state: 'ok',
+            label: 'Listening',
+            detail: `${live.onboard.connectedClients} connected clients`,
+          },
+          lastCheckedAt: now,
+        }
+  }
+  const probe = live.probe
+  if (probe === undefined) return { status: { state: 'unknown', label: 'Not checked yet' } }
+  const detail =
+    probe.status === 'connected'
+      ? probe.latencyMs !== null
+        ? `${probe.latencyMs} ms`
+        : undefined
+      : probe.error
+  return {
+    status: {
+      state: probe.status === 'connected' ? 'ok' : 'error',
+      label: PROBE_LABELS[probe.status],
+      ...(detail !== undefined ? { detail } : {}),
+    },
+    lastCheckedAt: probe.lastCheckedAt,
+  }
+}
+
 export interface MqttInstancesDeps {
   /** The form: the create form (`null`), an external broker or an onboard one. */
   readonly formSchema: (id: string | null, onboard: boolean) => ConfigUISchema
@@ -46,6 +106,8 @@ export interface MqttInstancesDeps {
   }) => Promise<MqttProbeResult>
   /** Whether the onboard `aedes` server of this broker is up. */
   readonly onboardListening: (id: string) => boolean
+  /** The live state of a broker, for its health word. */
+  readonly liveState: (id: string) => MqttLiveState
   /** The addon re-applies its runtime (probe cache, onboard servers) from the records. */
   readonly onChanged: (id: string, change: InstanceChange) => Promise<void>
 }
@@ -103,6 +165,7 @@ export function buildMqttBrokerInstances(
       kindOf: () => MQTT_INSTANCE_KIND,
       initialBody: (name): MqttBrokerBody => ({ name, url: 'mqtt://' }),
       configured: (body) => body.url.trim().length > 0 && body.url.trim() !== 'mqtt://',
+      health: (body, id) => mqttHealthOf(body, deps.liveState(id), Date.now()),
       onChanged: deps.onChanged,
       test: async ({ id, values }): Promise<IntegrationTestConnectionResult> => {
         if (id === null && isOnboardRequested(values)) {

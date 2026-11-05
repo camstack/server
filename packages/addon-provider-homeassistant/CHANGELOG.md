@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Deleting a Home Assistant connection is refused while an integration still uses it, on the instances page
 - A Home Assistant integration names its connection by id on its own record; the connection owns nothing of its integration and deleting one still in use is refused with the list of users
 - The Home Assistant export ignores a connection that is switched off, as before.
+- Home Assistant export keeps its links and enabled targets when the connection list cannot be read while the provider restarts
 
 ## [1.2.663] - 2026-11-05
 

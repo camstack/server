@@ -31,13 +31,9 @@
  *
  * Lifecycle:
  *   - External broker entries are persisted in `this.activeExternalBrokers`.
- *   - The embedded broker is persisted as flat `embedded*` config keys
- *     (`embeddedEnabled`, `embeddedPort`, …) so the standard settings
- *     form can drive it; {@link MqttBrokerAddon.deriveEmbeddedEntry}
- *     reassembles them into an `EmbeddedBrokerEntry`.
- *   - On boot we start the embedded broker when `embeddedEnabled`.
- *   - `addBroker` / `removeBroker` / `startEmbeddedBroker` /
- *     `stopEmbeddedBroker` mutate the config and the runtime state.
+ *   - The legacy single embedded broker is an onboard `brokers` record (migrated from the flat
+ *     `embedded*` keys, same id); `startEmbeddedBroker` / `stopEmbeddedBroker` act on that record.
+ *   - `addBroker` / `removeBroker` mutate the records and the runtime state.
  *   - `testConnection` does a one-shot `mqtt.connect` race against a 3s
  *     timeout AND refreshes the probe cache for the broker.
  */
@@ -55,6 +51,8 @@ import {
   type MqttBrokerLiveStatus,
   mqttBrokerCapability,
   type ProviderRegistration,
+  type RecordKindHandle,
+  resolveSecretMarkers,
 } from '@camstack/types'
 
 type BrokerStatus = MqttBrokerLiveStatus
@@ -74,6 +72,7 @@ import mqtt from 'mqtt'
 
 import { BrokerProbeCache } from './broker-probe-cache.js'
 import {
+  buildOnboardEntry,
   diffOnboardRuntimes,
   type OnboardDescriptor,
   onboardToEmbeddedEntry,
@@ -85,13 +84,19 @@ import {
   resolveStoredPassword,
   retiredCiphertextPaths,
 } from './retired-ciphertext.js'
-import { mqttBrokersEntryKind } from './broker-record-kinds.js'
-import { buildMqttBrokerInstances } from './mqtt-broker-instances.js'
+import { type MqttBrokerBody, mqttBrokersEntryKind } from './broker-record-kinds.js'
+import { buildMqttBrokerInstances, type MqttLiveState } from './mqtt-broker-instances.js'
 import {
   ADDON_MIGRATIONS,
-  type MqttBrokerMigrationPorts,
+  type EmbeddedMigrationPorts,
+  type LegacyEmbedded,
   type MqttBrokerRecordState,
 } from './migrations/index.js'
+import {
+  LEGACY_EMBEDDED_FALLBACK_ID,
+  LEGACY_EMBEDDED_KEYS,
+  LEGACY_EMBEDDED_NAME,
+} from './migrations/embedded-to-onboard.js'
 import { mqttAclEntryKind, mqttClientEntryKind } from './mqtt-entry-record-kinds.js'
 import { MqttBrokerStore } from './mqtt-broker-store.js'
 import { listMqttHaInstancesOver } from './mqtt-broker-users.js'
@@ -109,13 +114,10 @@ type AedesInstance = InstanceType<typeof Aedes>
 /** bcrypt cost factor — exported for tests. */
 export const MQTT_EMBEDDED_BCRYPT_ROUNDS = 10
 const PROBE_INTERVAL_MS = 30_000
-const DEFAULT_EMBEDDED_PORT = 1883
 
 /**
- * Internal, fully-resolved embedded-broker descriptor. NOT persisted
- * directly — {@link MqttBrokerAddon.deriveEmbeddedEntry} reassembles it
- * from the flat `embedded*` config keys so the standard settings form
- * can drive each property as an individual field.
+ * Internal, fully-resolved descriptor of an `aedes` server the addon runs for an onboard broker
+ * record. NOT persisted: `onboardSpawnEntry` derives it from the record.
  */
 interface EmbeddedBrokerEntry {
   readonly id: string
@@ -129,37 +131,16 @@ interface EmbeddedBrokerEntry {
 }
 
 /**
- * Persisted addon config.
- *
- * The embedded broker is stored as FLAT keys (`embedded*`) rather than a
- * nested object so every property maps to a single field in
- * `clusterSettingsSchema()` — the standard settings form saves flat
- * config keys, mirroring `addon-export-ha-mqtt`.
+ * Persisted addon config: the embedded broker's per-client credentials and ACL. The broker itself
+ * is an onboard `brokers` record; the flat `embedded*` keys that once described it are migrated
+ * away (`migrations/embedded-to-onboard.ts`).
  */
 interface MqttBrokerConfig {
-  /** Whether the embedded `aedes` broker should be running. */
-  readonly embeddedEnabled: boolean
-  /** Stable id for the embedded broker entry — generated lazily. */
-  readonly embeddedId: string
-  /** TCP port the embedded broker listens on. */
-  readonly embeddedPort: number
-  /** Allow anonymous connect (no username/password). */
-  readonly embeddedAllowAnonymous: boolean
-  /** Legacy shared username — fallback when `embeddedClients` is empty. */
-  readonly embeddedUsername: string
-  /** Legacy shared password — stored in the keychain. */
-  readonly embeddedPassword: string
   readonly embeddedClients: readonly EmbeddedClientEntry[]
   readonly embeddedAcl: readonly EmbeddedAclEntry[]
 }
 
 const DEFAULT_CONFIG: MqttBrokerConfig = {
-  embeddedEnabled: false,
-  embeddedId: '',
-  embeddedPort: DEFAULT_EMBEDDED_PORT,
-  embeddedAllowAnonymous: false,
-  embeddedUsername: '',
-  embeddedPassword: '',
   embeddedClients: [],
   embeddedAcl: [],
 }
@@ -177,8 +158,7 @@ interface EmbeddedRuntime {
 }
 
 export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
-  private embeddedRuntime: EmbeddedRuntime | null = null
-  /** Per-entry onboard `aedes` runtimes, keyed by `ExternalBrokerEntry.id`. */
+  /** Per-record onboard `aedes` runtimes, keyed by `ExternalBrokerEntry.id`. */
   private onboardRuntimes = new Map<string, EmbeddedRuntime>()
   private probeCache: BrokerProbeCache | null = null
   private brokerStore: MqttBrokerStore | null = null
@@ -197,6 +177,25 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
   private requireBrokerStore(): MqttBrokerStore {
     if (this.brokerStore === null) throw new Error('mqtt-broker: the broker records are not open')
     return this.brokerStore
+  }
+
+  /** What the addon knows of a broker right now: its onboard server or its last probe. */
+  private liveState(id: string): MqttLiveState {
+    const running = this.onboardRuntimes.get(id)
+    const probe = this.probeCache?.get(id)
+    return {
+      onboard: running === undefined ? null : { connectedClients: running.aedes.connectedClients },
+      ...(probe !== undefined
+        ? {
+            probe: {
+              status: probe.status,
+              latencyMs: probe.latencyMs,
+              ...(probe.error !== undefined ? { error: probe.error } : {}),
+              lastCheckedAt: probe.lastCheckedAt,
+            },
+          }
+        : {}),
+    }
   }
 
   private async persistExternalBrokers(entries: readonly ExternalBrokerEntry[]): Promise<void> {
@@ -261,6 +260,7 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
       freePort: () => findFreePort(),
       probe: (cfg) => this.probeMqtt(cfg),
       onboardListening: (id) => this.onboardRuntimes.has(id),
+      liveState: (id) => this.liveState(id),
       onChanged: async () => {
         await this.refreshExternalBrokers()
       },
@@ -295,29 +295,11 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
     this.probeCache.setBrokersSource(() => this.collectExternalProbeInputs())
     this.probeCache.start()
 
-    // Restart persisted embedded broker, if enabled.
-    const persistedEmbedded = this.deriveEmbeddedEntry()
-    if (persistedEmbedded) {
-      try {
-        await this.spawnEmbedded(persistedEmbedded)
-        this.ctx.logger.info('embedded mqtt broker restarted', {
-          meta: { port: persistedEmbedded.port },
-          tags: { topic: 'mqtt-broker', phase: 'embedded-restarted' },
-        })
-      } catch (err) {
-        this.ctx.logger.warn('embedded mqtt broker failed to restart', {
-          meta: { error: errMsg(err) },
-          tags: { topic: 'mqtt-broker', phase: 'embedded-restart-failed' },
-        })
-      }
-    }
-
     // Start every persisted onboard broker.
     await this.reconcileOnboardRuntimes()
 
     this.ctx.addDisposer(async () => {
       await this.probeCache?.stop()
-      await this.shutdownEmbedded().catch(() => undefined)
       await this.shutdownAllOnboard()
     })
 
@@ -330,8 +312,8 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
       startEmbeddedBroker: async (input) => this.startEmbeddedBroker(input),
       stopEmbeddedBroker: async ({ id }) => this.stopEmbeddedBroker(id),
       getStatus: async () => ({
-        brokerCount: this.activeExternalBrokers.length + (this.config.embeddedEnabled ? 1 : 0),
-        embeddedRunning: this.embeddedRuntime !== null,
+        brokerCount: this.activeExternalBrokers.length,
+        embeddedRunning: this.onboardRuntimes.size > 0,
       }),
     }
 
@@ -360,14 +342,10 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
    * provider; this one only answers the config read and the status.
    */
   private buildUnifiedBrokerProvider(): IBrokerProvider {
-    // True when this provider owns the given broker id (external or the embedded broker).
+    // True when this provider owns the given broker id (a `brokers` record, onboard or external).
     // `getBrokerConfig` answers null for a foreign id (NOT throw) so the no-addonId collection
     // fallback degrades gracefully when it routes a foreign id to the first provider.
-    const owns = (id: string): boolean => {
-      if (this.activeExternalBrokers.some((b) => b.id === id)) return true
-      const embedded = this.deriveEmbeddedEntry()
-      return embedded !== null && embedded.id === id
-    }
+    const owns = (id: string): boolean => this.activeExternalBrokers.some((b) => b.id === id)
 
     return {
       getBrokerConfig: async ({ id }) => {
@@ -395,7 +373,7 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
       getStatus: async () => {
         const all = await this.listBrokers()
         return {
-          brokerCount: this.activeExternalBrokers.length + (this.config.embeddedEnabled ? 1 : 0),
+          brokerCount: this.activeExternalBrokers.length,
           connectedCount: all.filter((b) => b.status === 'connected').length,
         }
       },
@@ -404,7 +382,6 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
 
   protected async onShutdown(): Promise<void> {
     await this.probeCache?.stop()
-    await this.shutdownEmbedded().catch(() => undefined)
     await this.shutdownAllOnboard()
   }
 
@@ -412,40 +389,10 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
     this.activeExternalBrokers = await this.requireBrokerStore().listResolved()
     await this.syncEmbeddedEntriesFromConfig()
 
-    // Reconcile per-entry onboard brokers first (independent of the legacy
-    // single embedded broker below).
+    // The clients and ACL are shared by every onboard broker: reconcile the servers, then
+    // hot-reload their credentials without dropping every session.
     await this.reconcileOnboardRuntimes()
-
-    // Reconcile the legacy single embedded broker against the new config.
-    const desired = this.deriveEmbeddedEntry()
-    const running = this.embeddedRuntime?.entry ?? null
-
-    if (!desired && running) {
-      await this.shutdownEmbedded()
-      return
-    }
-    if (desired && !running) {
-      await this.spawnEmbedded(desired).catch((err) => {
-        this.ctx.logger.warn('embedded mqtt broker spawn (on config change) failed', {
-          meta: { error: errMsg(err) },
-        })
-      })
-      return
-    }
-    if (desired && running) {
-      if (requiresEmbeddedRespawn(desired, running)) {
-        await this.shutdownEmbedded()
-        await this.spawnEmbedded(desired).catch((err) => {
-          this.ctx.logger.warn('embedded mqtt broker respawn failed', {
-            meta: { error: errMsg(err) },
-          })
-        })
-        return
-      }
-      // Soft reconcile — hot-reload ACL + per-client credentials without
-      // dropping every connected session.
-      this.reconcileEmbeddedClients()
-    }
+    this.reconcileEmbeddedClients()
   }
 
   // ── Registry mutations ──────────────────────────────────────────
@@ -485,22 +432,6 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
       }
       out.push(info)
     }
-    const embedded = this.deriveEmbeddedEntry()
-    if (embedded) {
-      const running = this.embeddedRuntime
-      const status: BrokerStatus = running !== null ? 'connected' : 'disconnected'
-      const info: MqttBrokerInfo = {
-        id: embedded.id,
-        name: embedded.name,
-        url: `mqtt://127.0.0.1:${embedded.port}`,
-        kind: 'embedded',
-        status,
-        latencyMs: null,
-        ...(running ? { connectedClients: running.aedes.connectedClients } : {}),
-        lastCheckedAt: Date.now(),
-      }
-      out.push(info)
-    }
     return out
   }
 
@@ -525,15 +456,6 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
         ...(external.clientIdPrefix !== undefined
           ? { clientIdPrefix: external.clientIdPrefix }
           : {}),
-      }
-    }
-    const embedded = this.deriveEmbeddedEntry()
-    if (embedded && embedded.id === id) {
-      const password = this.storedPassword(embedded.password)
-      return {
-        url: `mqtt://127.0.0.1:${embedded.port}`,
-        ...(embedded.username !== undefined ? { username: embedded.username } : {}),
-        ...(password !== undefined ? { password } : {}),
       }
     }
     throw new Error(`mqtt-broker: broker '${id}' not found`)
@@ -572,14 +494,6 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
         await this.shutdownOnboard(id)
       }
       this.ctx.logger.info('mqtt broker removed', { meta: { id } })
-      return
-    }
-    // Embedded entry — also requires shutdown
-    const embedded = this.deriveEmbeddedEntry()
-    if (embedded && embedded.id === id) {
-      await this.shutdownEmbedded()
-      await this.updateGlobalSettings({ embeddedEnabled: false })
-      this.ctx.logger.info('embedded mqtt broker removed', { meta: { id } })
       return
     }
     // Idempotent — `removeBroker` on a missing id is a no-op
@@ -658,35 +572,53 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
 
   // ── Embedded broker lifecycle ───────────────────────────────────
 
+  /** The `brokers` records, for the two legacy cap methods that create or switch off one. */
+  private brokerRecordHandle(): RecordKindHandle<MqttBrokerBody> {
+    const handle = this.ctx.records?.kind(mqttBrokersEntryKind)
+    if (handle === undefined) throw new Error('mqtt-broker: the broker records are not open')
+    return handle
+  }
+
+  /** Create an ONBOARD broker record; the reconcile then spawns its `aedes` server. */
   private async startEmbeddedBroker(input: {
     port: number
     allowAnonymous: boolean
     username?: string
     password?: string
   }): Promise<{ id: string; url: string }> {
-    if (this.embeddedRuntime) {
-      throw new Error('embedded broker already running — call stopEmbeddedBroker first')
-    }
-    const id = this.config.embeddedId || randomUUID()
-    const entry: EmbeddedBrokerEntry = {
+    const id = randomUUID()
+    const built = buildOnboardEntry({
       id,
-      name: 'Embedded broker',
+      name: LEGACY_EMBEDDED_NAME,
       port: input.port,
-      allowAnonymous: input.allowAnonymous,
-      ...(input.username !== undefined ? { username: input.username } : {}),
-      ...(input.password !== undefined ? { password: input.password } : {}),
-    }
-    await this.spawnEmbedded(entry)
-    await this.updateGlobalSettings({
-      embeddedEnabled: true,
-      embeddedId: id,
-      embeddedPort: input.port,
-      embeddedAllowAnonymous: input.allowAnonymous,
-      embeddedUsername: input.username ?? '',
-      embeddedPassword: input.password ?? '',
+      settings: {
+        allowAnonymous: input.allowAnonymous,
+        ...(input.username !== undefined ? { username: input.username } : {}),
+        ...(input.password !== undefined ? { password: input.password } : {}),
+      },
     })
+    const handle = this.brokerRecordHandle()
+    await handle.put(
+      {
+        id,
+        data: mqttBrokersEntryKind.schema.parse({
+          name: built.name,
+          url: built.url,
+          ...(built.username !== undefined ? { username: built.username } : {}),
+          ...(built.password !== undefined ? { password: built.password } : {}),
+          onboard: built.onboard,
+        }),
+      },
+      { ifRev: 0 },
+    )
+    await this.refreshExternalBrokers()
+    if (!this.onboardRuntimes.has(id)) {
+      await handle.delete(id)
+      await this.refreshExternalBrokers()
+      throw new Error(`embedded broker could not listen on port ${input.port}`)
+    }
     this.ctx.logger.info('embedded mqtt broker started', {
-      meta: { id, port: entry.port },
+      meta: { id, port: input.port },
       tags: { topic: 'mqtt-broker', phase: 'embedded-started' },
     })
     this.ctx.eventBus?.emit({
@@ -696,25 +628,23 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
       category: EventCategory.AddonUpdated,
       data: { addonId: this.ctx.id, action: 'embedded-broker-started' },
     })
-    return { id, url: `mqtt://127.0.0.1:${entry.port}` }
+    return { id, url: built.url }
   }
 
+  /** Switch an onboard broker off (its record stays, so it can be switched on again). */
   private async stopEmbeddedBroker(id: string): Promise<void> {
-    if (!this.embeddedRuntime || this.embeddedRuntime.entry.id !== id) {
-      return // idempotent
-    }
-    await this.shutdownEmbedded()
-    // Persist the disabled state so a later `onConfigChanged` reconcile
-    // (or a hub restart) doesn't immediately respawn the broker.
-    await this.updateGlobalSettings({ embeddedEnabled: false })
+    const handle = this.brokerRecordHandle()
+    const row = await handle.get(id)
+    if (row === null || row.data.onboard === undefined) return // idempotent
+    await handle.patch(id, { enabled: false })
+    await this.refreshExternalBrokers()
     this.ctx.logger.info('embedded mqtt broker stopped', { meta: { id } })
   }
 
   /**
    * Build + listen an `aedes` server for `entry` and RETURN the runtime
-   * without assigning it to any field. Shared by the legacy single
-   * embedded broker ({@link spawnEmbedded}) and the per-entry onboard
-   * brokers ({@link spawnOnboard}).
+   * without assigning it to any field (the onboard brokers keep theirs in
+   * {@link spawnOnboard}).
    */
   private async spawnAedes(entry: EmbeddedBrokerEntry): Promise<EmbeddedRuntime> {
     const aedes: AedesInstance = new Aedes()
@@ -752,17 +682,6 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
     await new Promise<void>((resolve) => {
       aedes.close(() => resolve())
     })
-  }
-
-  private async spawnEmbedded(entry: EmbeddedBrokerEntry): Promise<void> {
-    this.embeddedRuntime = await this.spawnAedes(entry)
-  }
-
-  private async shutdownEmbedded(): Promise<void> {
-    if (!this.embeddedRuntime) return
-    const runtime = this.embeddedRuntime
-    this.embeddedRuntime = null
-    await this.closeRuntime(runtime)
   }
 
   /** Spawn a dedicated onboard `aedes` server for an onboard entry. */
@@ -958,9 +877,10 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
    * (or whose username was removed entirely) get force-closed.
    */
   private reconcileEmbeddedClients(): void {
-    const runtime = this.embeddedRuntime
-    if (!runtime) return
+    for (const runtime of this.onboardRuntimes.values()) this.reconcileRuntimeClients(runtime)
+  }
 
+  private reconcileRuntimeClients(runtime: EmbeddedRuntime): void {
     const prevSnapshot = runtime.credentialsSnapshot
     const nextSnapshot = this.buildCredentialsSnapshot()
 
@@ -1015,27 +935,6 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
       m.set(c.username, c.passwordHash)
     }
     return m
-  }
-
-  /**
-   * Reassemble the internal {@link EmbeddedBrokerEntry} from the flat
-   * `embedded*` config keys the settings form writes. Returns `null`
-   * when the embedded broker is disabled — that's the signal
-   * `onConfigChanged` / `onInitialize` use to decide whether to spawn
-   * or shut down the `aedes` instance.
-   */
-  private deriveEmbeddedEntry(): EmbeddedBrokerEntry | null {
-    if (!this.config.embeddedEnabled) return null
-    const username = this.config.embeddedUsername
-    const password = this.config.embeddedPassword
-    return {
-      id: this.config.embeddedId || 'embedded',
-      name: 'Embedded broker',
-      port: this.config.embeddedPort,
-      allowAnonymous: this.config.embeddedAllowAnonymous,
-      ...(username.length > 0 ? { username } : {}),
-      ...(password.length > 0 ? { password } : {}),
-    }
   }
 
   // ── Probe cache wiring ──────────────────────────────────────────
@@ -1094,7 +993,6 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
   private reportRetiredCiphertext(): void {
     const paths = retiredCiphertextPaths({
       brokers: this.activeExternalBrokers,
-      embeddedPassword: this.config.embeddedPassword,
     })
     if (paths.length === 0) return
     const unreadable: string[] = []
@@ -1103,7 +1001,6 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
         id: `brokers[${b.id}].password`,
         v: b.password,
       })),
-      { id: 'embeddedPassword', v: this.config.embeddedPassword },
     ]
     for (const { id, v } of values) {
       try {
@@ -1239,13 +1136,50 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
   }
 
   /** The ports of the settings migrations: the old `brokers` key in, the records read. */
-  private migrationPorts(): MqttBrokerMigrationPorts {
+  private migrationPorts(): EmbeddedMigrationPorts {
     const handle = this.ctx.records?.kind(mqttBrokersEntryKind)
     if (handle === undefined) throw new Error('records are not available')
     return {
       // The value as stored, markers unresolved: the plan's precondition is that very row.
       readRawBrokers: async (): Promise<unknown> =>
         (await this.ctx.settings?.readAddonStore())?.['brokers'],
+      readLegacyEmbedded: async (): Promise<LegacyEmbedded | null> => {
+        const raw = (await this.ctx.settings?.readAddonStore()) ?? {}
+        if (raw['embeddedEnabled'] !== true) return null
+        // The password as the keychain holds it, then through the retired-codec bridge; an
+        // unreadable value throws, so the migration fails loudly and the keys stay.
+        const secrets = this.ctx.secrets
+        const { value } =
+          secrets === undefined
+            ? { value: raw }
+            : await resolveSecretMarkers(raw, secrets, {
+                unresolved: 'keep-marker',
+                ownedBy: secrets.owner,
+              })
+        const text = (key: string): string | undefined => {
+          const v = value[key]
+          return typeof v === 'string' && v.length > 0 ? v : undefined
+        }
+        const port = value['embeddedPort']
+        const username = text('embeddedUsername')
+        const password = this.storedPassword(text('embeddedPassword'))
+        return {
+          id: text('embeddedId') ?? LEGACY_EMBEDDED_FALLBACK_ID,
+          port: typeof port === 'number' && Number.isInteger(port) ? port : 1883,
+          allowAnonymous: value['embeddedAllowAnonymous'] === true,
+          ...(username !== undefined ? { username } : {}),
+          ...(password !== undefined ? { password } : {}),
+        }
+      },
+      readRawEmbeddedKeys: async (): Promise<Readonly<Record<string, unknown>>> => {
+        const raw = (await this.ctx.settings?.readAddonStore()) ?? {}
+        return Object.fromEntries(
+          LEGACY_EMBEDDED_KEYS.filter((key) => key in raw).map((key) => [key, raw[key]]),
+        )
+      },
+      putOnboardRecord: async (id, body): Promise<void> => {
+        await handle.put({ id, data: mqttBrokersEntryKind.schema.parse(body) }, { ifRev: 0 })
+      },
       readRecords: async (): Promise<ReadonlyMap<string, MqttBrokerRecordState>> => {
         const page = await handle.query({ limit: 1000 })
         return new Map(
@@ -1268,87 +1202,14 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
   }
 
   /**
-   * The embedded broker, its credentials and the ACL. The external brokers are records, listed
+   * The credentials and the ACL of the onboard brokers. The brokers are records, listed
    * on the Brokers page and edited as integration instances (`brokerForm`).
    */
   protected override async clusterSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
-    // `broker` is the scope the Connectivity page asks for; both answer with the embedded form.
+    // `broker` is the scope the Connectivity page asks for; both answer with the credentials and ACL form.
     if (cap !== 'mqtt-broker' && cap !== 'broker') return null
     return this.schema({
       sections: [
-        {
-          id: 'mqtt-broker-embedded',
-          title: 'Embedded broker',
-          titleKey: 'mqtt-broker:fullSettings.s_mqtt-broker-embedded.title',
-          description:
-            'Optional CamStack-hosted aedes broker. Enable it to run a broker on this hub without standing up an external one — its connection details are exposed through the `mqtt-broker` cap like any external entry.',
-          descriptionKey: 'mqtt-broker:fullSettings.s_mqtt-broker-embedded.description',
-          columns: 2,
-          fields: [
-            this.field({
-              type: 'boolean',
-              key: 'embeddedEnabled',
-              label: 'Run embedded broker',
-              labelKey: 'mqtt-broker:fullSettings.s_mqtt-broker-embedded.embeddedEnabled.label',
-              description:
-                'Starts an aedes broker on this hub. Disabling it shuts the broker down and disconnects clients.',
-              descriptionKey:
-                'mqtt-broker:fullSettings.s_mqtt-broker-embedded.embeddedEnabled.description',
-              style: 'switch',
-              default: false,
-            }),
-            this.field({
-              type: 'number',
-              key: 'embeddedPort',
-              label: 'Port',
-              labelKey: 'mqtt-broker:fullSettings.s_mqtt-broker-embedded.embeddedPort.label',
-              description: 'TCP port the embedded broker listens on.',
-              descriptionKey:
-                'mqtt-broker:fullSettings.s_mqtt-broker-embedded.embeddedPort.description',
-              min: 1,
-              max: 65535,
-              default: DEFAULT_EMBEDDED_PORT,
-              showWhen: { field: 'embeddedEnabled', equals: true },
-            }),
-            this.field({
-              type: 'boolean',
-              key: 'embeddedAllowAnonymous',
-              label: 'Allow anonymous',
-              labelKey:
-                'mqtt-broker:fullSettings.s_mqtt-broker-embedded.embeddedAllowAnonymous.label',
-              description: 'Permit clients to connect without a username/password.',
-              descriptionKey:
-                'mqtt-broker:fullSettings.s_mqtt-broker-embedded.embeddedAllowAnonymous.description',
-              style: 'switch',
-              default: false,
-              showWhen: { field: 'embeddedEnabled', equals: true },
-            }),
-            this.field({
-              type: 'text',
-              key: 'embeddedUsername',
-              label: 'Shared username',
-              labelKey: 'mqtt-broker:fullSettings.s_mqtt-broker-embedded.embeddedUsername.label',
-              description:
-                'Legacy single-user fallback — used only when no per-client credentials are configured below.',
-              descriptionKey:
-                'mqtt-broker:fullSettings.s_mqtt-broker-embedded.embeddedUsername.description',
-              default: '',
-              showWhen: { field: 'embeddedEnabled', equals: true },
-            }),
-            this.field({
-              type: 'password',
-              key: 'embeddedPassword',
-              label: 'Shared password',
-              labelKey: 'mqtt-broker:fullSettings.s_mqtt-broker-embedded.embeddedPassword.label',
-              description: 'Kept in the keychain. Paired with the shared username above.',
-              descriptionKey:
-                'mqtt-broker:fullSettings.s_mqtt-broker-embedded.embeddedPassword.description',
-              showToggle: true,
-              default: '',
-              showWhen: { field: 'embeddedEnabled', equals: true },
-            }),
-          ],
-        },
         {
           id: 'mqtt-broker-embedded-clients',
           title: 'Embedded broker — credentials',
@@ -1496,23 +1357,6 @@ function bcryptCompareSafe(plain: string, hash: string): boolean {
   } catch {
     return false
   }
-}
-
-/**
- * Decide whether a config update to the embedded broker requires a full
- * restart (port change) or can be hot-reloaded (credential / ACL change).
- */
-function requiresEmbeddedRespawn(
-  desired: EmbeddedBrokerEntry,
-  running: EmbeddedBrokerEntry,
-): boolean {
-  return (
-    desired.id !== running.id ||
-    desired.port !== running.port ||
-    desired.allowAnonymous !== running.allowAnonymous ||
-    desired.username !== running.username ||
-    desired.password !== running.password
-  )
 }
 
 /**

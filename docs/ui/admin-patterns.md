@@ -593,7 +593,7 @@ Anything that needs a broker mounts `BrokerPicker kind=…` (the existing ones p
 returns with the new broker chosen); Connectivity's Add / Edit open the same
 dialog. Never a second create form, and never `if (kind === …)` in these
 components: a kind's interactive sign-in is its `signIn.basePath` on
-`broker.listProviders` (`BrokerSignInPanel` drives it), and the form layout is
+the `kinds[]` entry of `integration-instances.describe` (`BrokerSignInPanel` drives it), and the form layout is
 the schema's (`arrangeBrokerSchema`: required fields first; defaulted and
 sign-in-filled fields under a collapsed Advanced).
 

@@ -2410,14 +2410,20 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
    * same way. `ha-broker-source.ts` holds the pin and the reasoning.
    */
   private async refreshBrokers(): Promise<void> {
+    let readRefused = false
     const haBrokers = await listHomeAssistantBrokers(
       (input) => this.ctx.api.integrationInstances.listInstances.query(input),
-      (err) =>
+      (err) => {
+        readRefused = true
         this.ctx.logger.warn(
           'ha-export: the Home Assistant connections could not be read yet; treated as unknown',
           { meta: { error: errMsg(err) } },
-        ),
+        )
+      },
     )
+    // A refused read changes nothing (D49): the connections, the enabled targets and every open
+    // link stay as the last pass that DID read them left them; the next pass repairs it.
+    if (readRefused) return
     /**
      * NEVER treat an empty enumeration as "the connections are gone".
      *
