@@ -180,7 +180,7 @@ export function sameConnection(a: UnifiConnectionConfig, b: UnifiConnectionConfi
 }
 
 /**
- * The integration's settings form (`globalSettingsSchema`); the integration carries the
+ * The integration instance form (the `formSchema` of its instances); the integration carries the
  * name. The credentials are `password` fields, keychain secrets.
  */
 export function buildConnectionFormSchema(): ConfigUISchema {

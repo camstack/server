@@ -150,7 +150,7 @@ export function gatewayKeyOf(integration: {
 }
 
 /**
- * The integration's settings form (`globalSettingsSchema`): the connection lives on the
+ * The integration instance form (the `formSchema` of its instances): the connection lives on the
  * INTEGRATION, which carries the name. The `password` field is what puts the value in the keychain.
  */
 export function buildConnectionFormSchema(): ConfigUISchema {

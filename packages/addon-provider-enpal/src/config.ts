@@ -116,7 +116,7 @@ export function sameConnection(a: EnpalConnection, b: EnpalConnection): boolean 
   return JSON.stringify(a) === JSON.stringify(b)
 }
 
-/** The integration's settings form (`globalSettingsSchema`); the integration carries the name. */
+/** The integration instance form (the `formSchema` of its instances); the integration carries the name. */
 export function buildConnectionFormSchema(): ConfigUISchema {
   return {
     sections: [
