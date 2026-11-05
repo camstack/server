@@ -2806,7 +2806,7 @@ Enum: `"single" \| "multiple"`
 
 ### `IntegrationInstanceRoleSchema`
 
-Enum: `"devices" \| "services" \| "both"`
+Enum: `"devices" \| "services"`
 
 ### `IntegrationInstanceSchema`
 

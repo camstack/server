@@ -64,10 +64,10 @@ export type IntegrationInstanceKind = z.infer<typeof IntegrationInstanceKindSche
  * What the addon's instances ARE for the Integrations page (planning#416). `devices`: each
  * instance is an integration that brings devices (the registry owns its on/off switch);
  * `services`: a connection configured from the addon's own function page, never listed on
- * Integrations; `both`: a dual entry listed for its devices that also keeps service connections.
+ * Integrations.
  * It is the same vocabulary as the manifest's `integrationRole`, which stays as an override.
  */
-export const IntegrationInstanceRoleSchema = z.enum(['devices', 'services', 'both'])
+export const IntegrationInstanceRoleSchema = z.enum(['devices', 'services'])
 export type IntegrationInstanceRole = z.infer<typeof IntegrationInstanceRoleSchema>
 
 /**

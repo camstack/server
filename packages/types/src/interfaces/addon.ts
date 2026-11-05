@@ -1177,10 +1177,10 @@ export type IntegrationSection = 'system' | 'providers'
 /**
  * What an addon entry brings to the operator: `devices` (listed on the Integrations page),
  * `services` (connections to a service, configured on the function page through the
- * `integration-instances` cap, never listed), or `both` (a dual entry: its devices are on
- * Integrations, its service instances stay on the function page).
+ * `integration-instances` cap, never listed). An addon with both device integrations and a
+ * connection page declares its connection as a `broker` and its integration as `devices`.
  */
-export type IntegrationRole = 'devices' | 'services' | 'both'
+export type IntegrationRole = 'devices' | 'services'
 
 export interface AddonDeclaration {
   // ── Identity ────────────────────────────────────────────────────────
@@ -1256,9 +1256,8 @@ export interface AddonDeclaration {
    */
   readonly integrationSection?: IntegrationSection
   /**
-   * What this entry brings: devices, service connections, or both. Absent: derived from
-   * what it declares — `integration-instances` means `services`, otherwise `devices`. An
-   * entry that brings both MUST say `both`; the derivation never guesses a dual entry.
+   * What this entry brings: devices or service connections. Absent: derived from
+   * what it declares — `integration-instances` means `services`, otherwise `devices`.
    */
   readonly integrationRole?: IntegrationRole
   /**

@@ -67,7 +67,7 @@ function renderDialog() {
         addonId="import-alexa"
         providerName="Alexa"
         description={{
-          role: 'both',
+          role: 'devices',
           instanceMode: 'multiple',
           kind: 'account',
           canTest: false,

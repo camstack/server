@@ -43,7 +43,7 @@ function harness(
   opts: {
     instanceMode?: 'single' | 'multiple'
     withProvider?: boolean
-    role?: 'devices' | 'services' | 'both'
+    role?: 'devices' | 'services'
     discovery?: { mode: 'none' | 'lan' | 'account'; scopedToInstance: boolean }
   } = {},
 ) {
@@ -142,7 +142,7 @@ describe('integrations over an integration-instances provider', () => {
     })
   })
 
-  it('a dual entry (integrationRole both) is listed on Integrations while its instances stay on the function page', async () => {
+  it('an entry declaring integrationRole devices is listed on Integrations while its instances stay on the function page', async () => {
     const h = harness({ instanceMode: 'single' })
     h.addonReg.listAddons.mockReturnValue([
       {
@@ -150,7 +150,7 @@ describe('integrations over an integration-instances provider', () => {
           id: ADDON_ID,
           name: 'Dual',
           description: 'Services and devices',
-          integrationRole: 'both',
+          integrationRole: 'devices',
           capabilities: [{ name: 'device-provider' }, { name: 'integration-instances' }],
         },
       },
@@ -339,7 +339,7 @@ describe('the provider describes what its instances are (planning#416)', () => {
           id: ADDON_ID,
           name: 'Gizmo',
           description: 'x',
-          integrationRole: 'both',
+          integrationRole: 'devices',
           capabilities: [{ name: 'device-provider' }, { name: 'integration-instances' }],
         },
       },

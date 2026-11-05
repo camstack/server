@@ -1233,7 +1233,7 @@ export const INTEGRATION_CAP_MARKERS = new Set(['device-provider', 'device-adopt
  * An entry that brings only service connections (`integrationRole: 'services'`, or derived
  * from `integration-instances`) is configured from its function page (D996): it is neither
  * an integration type nor a row of the Integrations list. An entry with devices AND
- * `integration-instances` declares its role (`devices` or `both`) and is listed for its devices. Decided from the manifest, so a not-yet-registered provider does
+ * `integration-instances` declares its role (`devices`) and is listed for its devices. Decided from the manifest, so a not-yet-registered provider does
  * not flash a row in. A row it already has stays in the registry and reachable by id.
  */
 async function hidesFromIntegrations(ar: AddonRegistryService, addonId: string): Promise<boolean> {

@@ -58,7 +58,7 @@ describe('describe(): role and discovery', () => {
     expect(
       IntegrationInstanceDescriptionSchema.safeParse({
         ...base,
-        role: 'both',
+        role: 'services',
         discovery: { mode: 'sometimes', scopedToInstance: true },
       }).success,
     ).toBe(false)

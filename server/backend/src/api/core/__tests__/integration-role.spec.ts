@@ -16,10 +16,10 @@ describe('resolveIntegrationRole', () => {
 
   it('an explicit role wins over the derivation', () => {
     const role = resolveIntegrationRole({
-      integrationRole: 'both',
+      integrationRole: 'devices',
       capabilities: ['integration-instances', 'device-provider'],
     })
-    expect(role).toBe('both')
+    expect(role).toBe('devices')
     expect(bringsDevices(role)).toBe(true)
     expect(bringsDevices('services')).toBe(false)
   })
