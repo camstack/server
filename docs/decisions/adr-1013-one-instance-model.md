@@ -84,3 +84,5 @@ then `check-one-row-switch`, `check-one-test-method`, `check-no-settings-fallbac
 `check-collection-crud-is-instances`, `check-one-instances-list` and
 `check-no-addon-level-settings`. Already in force: `check-collection-cap-pin` and
 `check-integration-instances-declared`.
+
+**Migration notes (review 3).** A legacy embedded broker that was STOPPED but had been configured is migrated as a switched-off onboard record (`enabled: false`, same id, port and password through the keychain), then its flat keys are dropped; nothing is lost silently. The Home Assistant `broker-links-to-connections` step is `tolerate`: a link that does not read back stays on the broker, uncleared, and the engine logs the failure, so one unreadable link never blocks every HA integration.

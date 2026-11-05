@@ -3,7 +3,8 @@
  * `embeddedPort`, ...). It is an ONBOARD broker record now, so the instance list, the pickers,
  * the test and the delete all see it (D1013). Two migrations of the catalogue, in this order:
  *
- *  1. `embeddedToOnboardRecord` (procedure): an enabled legacy broker becomes a `brokers` record
+ *  1. `embeddedToOnboardRecord` (procedure): a legacy broker (a stopped one as a switched-off
+ *     record) becomes a `brokers` record
  *     under the SAME id (`embeddedId`, else the `'embedded'` id the old code derived), so a
  *     consumer that stored that id still resolves. It never overwrites a record of that id.
  *  2. `planDropEmbeddedKeys` (plan): the flat keys are deleted from the canonical
@@ -30,9 +31,13 @@ export const LEGACY_EMBEDDED_FALLBACK_ID = 'embedded'
 
 export const LEGACY_EMBEDDED_NAME = 'Embedded broker'
 
-/** An enabled legacy embedded broker, its password resolved. */
+/**
+ * A legacy embedded broker, its password resolved. A STOPPED one (`enabled: false`) that was ever
+ * configured is migrated too, as a switched-off record: its id, port and password are not lost.
+ */
 export interface LegacyEmbedded {
   readonly id: string
+  readonly enabled: boolean
   readonly port: number
   readonly allowAnonymous: boolean
   readonly username?: string
@@ -46,12 +51,15 @@ export interface OnboardRecordBody {
   readonly username?: string
   readonly password?: string
   readonly onboard: { readonly port: number; readonly allowAnonymous: boolean }
+  /** Present (false) only for a broker that was stopped. */
+  readonly enabled?: false
 }
 
 export interface EmbeddedMigrationPorts extends MqttBrokerMigrationPorts {
   /**
-   * The enabled legacy embedded broker with its password resolved, or null when the keys are
-   * absent or the broker was switched off. Throws when its password cannot be read (a retired
+   * The legacy embedded broker with its password resolved, enabled or stopped, or null when
+   * nothing was ever configured (no keys, or only the form's untouched defaults). Throws when its
+   * password cannot be read (a retired
    * `enc:v1` value with no key): the migration then fails and the keys stay.
    */
   readLegacyEmbedded(): Promise<LegacyEmbedded | null>
@@ -68,6 +76,7 @@ export function onboardBodyOf(legacy: LegacyEmbedded): OnboardRecordBody {
     ...(legacy.username !== undefined ? { username: legacy.username } : {}),
     ...(legacy.password !== undefined ? { password: legacy.password } : {}),
     onboard: { port: legacy.port, allowAnonymous: legacy.allowAnonymous },
+    ...(legacy.enabled ? {} : { enabled: false as const }),
   }
 }
 

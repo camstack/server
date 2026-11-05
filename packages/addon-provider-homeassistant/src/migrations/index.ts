@@ -131,10 +131,10 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<HaMigrationPorts>[] = [
       dependsOn: [INSTANCE_SETTINGS_TO_RECORD_ID, CLEAR_INSTANCE_SETTINGS_ROWS_ID],
       store: 'settings',
       scope: 'cluster',
-      onFailure: 'block-owner',
+      onFailure: 'tolerate',
       bodyKind: 'procedure',
       description:
-        'Write each integration a connections record naming its Home Assistant connection (keyed by the integration id), then clear the integration link on the connection; stray registry-keyed connection rows are counted and logged, never deleted',
+        'Write each integration a connections record naming its Home Assistant connection (keyed by the integration id), then clear the integration link on the connection (a link that does not read back stays on the broker, the failure is logged, the addon runs); stray registry-keyed connection rows are counted and logged, never deleted',
       fixtureMark: 'the calendars and the name of the connection that keeps its record',
     },
     procedure: moveBrokerLinksToConnections,

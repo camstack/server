@@ -48,7 +48,13 @@ const wrapper = (addonId: string, key: string, value: unknown): string =>
 
 const MARKER = { $secret: 'keychain-ref-hive' }
 const LEGACY_BROKERS = [
-  { id: 'b-1', name: 'Hive', url: 'mqtt://hive.local:1883', username: 'u', password: MARKER },
+  {
+    id: 'b-1',
+    name: 'Hive',
+    url: 'mqtt://hive.local:1883',
+    username: 'u',
+    password: MARKER,
+  },
   { id: 'b-2', name: 'Plain', url: 'mqtt://plain.local:1883' },
 ]
 
@@ -181,11 +187,19 @@ async function boot(options: Options = {}) {
         const data = rows()[`${ADDON}.${key}`]
         return data === undefined ? undefined : JSON.parse(data).value
       }
-      if (raw('embeddedEnabled') !== true) return null
       const port = raw('embeddedPort')
       const username = raw('embeddedUsername')
       const password = raw('embeddedPassword')
+      const enabled = raw('embeddedEnabled') === true
+      if (
+        !enabled &&
+        raw('embeddedId') === undefined &&
+        username === undefined &&
+        password === undefined
+      )
+        return null
       return {
+        enabled,
         id: typeof raw('embeddedId') === 'string' ? String(raw('embeddedId')) : 'embedded',
         port: typeof port === 'number' ? port : 1883,
         allowAnonymous: raw('embeddedAllowAnonymous') === true,
@@ -269,6 +283,25 @@ describe('mqtt-broker migrations on real SQLite', () => {
     )
   })
 
+  it('a STOPPED legacy embedded broker becomes a switched-off record, not a loss', async () => {
+    seed({
+      embeddedEnabled: false,
+      embeddedId: 'emb-stopped-5',
+      embeddedPort: 18_842,
+      embeddedPassword: 'stopped-pw',
+    })
+    const w = await boot({ recordIds: [] })
+    const report = await w.runCatalogue()
+    expect(report.failed ?? []).toEqual([])
+    const row = await w.handle.get('emb-stopped-5')
+    expect(row?.data).toMatchObject({
+      enabled: false,
+      onboard: { port: 18_842 },
+    })
+    expect(row?.data.password).toBeDefined()
+    expect(Object.keys(rows()).filter((k) => k.includes('.embedded'))).toEqual([])
+  })
+
   it('throws, naming the id, when a legacy broker has no record, and deletes nothing', async () => {
     seed({ brokers: LEGACY_BROKERS })
     const before = rows()
@@ -286,7 +319,16 @@ describe('mqtt-broker migrations on real SQLite', () => {
   })
 
   it('the drop refuses while a legacy password is still an enc:v1 ciphertext', async () => {
-    seed({ brokers: [{ id: 'b-1', name: 'Old', url: 'mqtt://x', password: 'enc:v1:aa:bb:cc' }] })
+    seed({
+      brokers: [
+        {
+          id: 'b-1',
+          name: 'Old',
+          url: 'mqtt://x',
+          password: 'enc:v1:aa:bb:cc',
+        },
+      ],
+    })
     const w = await boot({ recordIds: ['b-1'] })
     expect(await w.execute(DROP_BROKERS_KEY_ID)).toMatchObject({
       kind: 'failed',

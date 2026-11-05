@@ -11,6 +11,7 @@ import {
 
 /** Marked values: each one has to arrive on the record, or the migration lost it. */
 const MARKED: LegacyEmbedded = {
+  enabled: true,
   id: 'emb-legacy-77',
   port: 18_841,
   allowAnonymous: true,
@@ -24,7 +25,10 @@ async function setup(options: { legacy?: LegacyEmbedded | null; existing?: strin
   const handle = world.records.kind(mqttBrokersEntryKind)
   if (options.existing !== undefined) {
     await handle.put(
-      { id: options.existing, data: { name: 'Existing', url: 'mqtt://keep:1883' } },
+      {
+        id: options.existing,
+        data: { name: 'Existing', url: 'mqtt://keep:1883' },
+      },
       { ifRev: 0 },
     )
   }
@@ -45,7 +49,11 @@ async function setup(options: { legacy?: LegacyEmbedded | null; existing?: strin
     readRawEmbeddedKeys: async () =>
       legacy === null
         ? {}
-        : { embeddedEnabled: true, embeddedId: legacy.id, embeddedPort: legacy.port },
+        : {
+            embeddedEnabled: legacy.enabled,
+            embeddedId: legacy.id,
+            embeddedPort: legacy.port,
+          },
     putOnboardRecord: async (id, body) => {
       await handle.put({ id, data: mqttBrokersEntryKind.schema.parse(body) }, { ifRev: 0 })
     },
@@ -59,7 +67,12 @@ async function setup(options: { legacy?: LegacyEmbedded | null; existing?: strin
     if (entry === undefined) throw new Error(`no ${id}`)
     return entry
   }
-  return { handle, warnings, execute: (id: string) => find(id).execute(), ports }
+  return {
+    handle,
+    warnings,
+    execute: (id: string) => find(id).execute(),
+    ports,
+  }
 }
 
 describe('the legacy embedded broker becomes an onboard record', () => {
@@ -104,5 +117,30 @@ describe('the legacy embedded broker becomes an onboard record', () => {
 
     const nothing = await setup({ legacy: null })
     expect((await planDropEmbeddedKeys(nothing.ports)).edits).toEqual([])
+  })
+
+  it('migrates a STOPPED broker as a switched-off record, then drops its keys', async () => {
+    const w = await setup({ legacy: { ...MARKED, enabled: false } })
+    await w.execute(EMBEDDED_TO_ONBOARD_ID)
+    const row = await w.handle.get(MARKED.id)
+    expect(row?.data).toMatchObject({
+      url: 'mqtt://127.0.0.1:18841',
+      username: 'mark-user',
+      enabled: false,
+      onboard: { port: 18_841, allowAnonymous: true },
+    })
+    expect((await w.handle.getResolved(MARKED.id))?.data.password).toBe('mark-password')
+    const plan = await planDropEmbeddedKeys(w.ports)
+    expect(plan.edits).toHaveLength(1)
+    expect(plan.edits[0]).toMatchObject({
+      op: 'deleteKeys',
+      scope: 'addon-settings',
+    })
+  })
+
+  it('an enabled broker carries no enabled flag (it runs)', async () => {
+    const w = await setup()
+    await w.execute(EMBEDDED_TO_ONBOARD_ID)
+    expect((await w.handle.get(MARKED.id))?.data.enabled).toBeUndefined()
   })
 })

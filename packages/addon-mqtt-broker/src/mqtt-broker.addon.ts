@@ -1145,7 +1145,6 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
         (await this.ctx.settings?.readAddonStore())?.['brokers'],
       readLegacyEmbedded: async (): Promise<LegacyEmbedded | null> => {
         const raw = (await this.ctx.settings?.readAddonStore()) ?? {}
-        if (raw['embeddedEnabled'] !== true) return null
         // The password as the keychain holds it, then through the retired-codec bridge; an
         // unreadable value throws, so the migration fails loudly and the keys stay.
         const secrets = this.ctx.secrets
@@ -1163,7 +1162,16 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
         const port = value['embeddedPort']
         const username = text('embeddedUsername')
         const password = this.storedPassword(text('embeddedPassword'))
+        const enabled = value['embeddedEnabled'] === true
+        // A stopped broker that was never started or given credentials is the form's defaults.
+        const configured =
+          enabled ||
+          text('embeddedId') !== undefined ||
+          username !== undefined ||
+          password !== undefined
+        if (!configured) return null
         return {
+          enabled,
           id: text('embeddedId') ?? LEGACY_EMBEDDED_FALLBACK_ID,
           port: typeof port === 'number' && Number.isInteger(port) ? port : 1883,
           allowAnonymous: value['embeddedAllowAnonymous'] === true,
