@@ -714,6 +714,10 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
     return [{ capability: localNetworkCapability, provider }]
   }
 
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return ['local-network']
+  }
+
   protected override async nodeSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
     return cap === 'local-network' ? this.lanSchema() : null
   }
