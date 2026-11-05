@@ -230,6 +230,7 @@ jobs:
             scripts/check-no-bare-ffmpeg.ts \
             scripts/check-no-glyph-chevrons.ts \
             scripts/check-no-hand-rolled-modal.ts \
+            scripts/check-no-devices-in-integration-form.ts \
             scripts/check-addon-id-comparison.ts \
             scripts/check-addon-root-is-the-only-load-path.ts \
             scripts/check-fleet-query-defaults.ts \
