@@ -36,7 +36,7 @@ export const HaBrokerEntrySchema = z.object({
   baseUrl: z.string().optional(),
   accessToken: z.string().optional().meta({ secret: true }),
   supervisorToken: z.string().optional().meta({ secret: true }),
-  /** Optional FK to the integration record that spawned this broker. */
+  /** Retired: the integration names its broker now; only the link migration reads it. */
   integrationId: z.string().optional(),
   /** The instance's own switch (D996); absent means on. */
   enabled: z.boolean().optional(),
@@ -104,11 +104,6 @@ export function authToSettings(auth: HaAuthConfig): Record<string, unknown> {
  */
 export class HaBrokerRegistry {
   private readonly managers = new Map<string, HaIntegrationManager>()
-  /** `integrationId → brokerId` index. Populated when a broker entry
-   *  that carries an `integrationId` FK starts; cleared on removeEntry.
-   *  Drives the generic `device-adoption` cap's integrationId-keyed
-   *  lookups (the cap addresses brokers by their owning integration). */
-  private readonly integrationToBroker = new Map<string, string>()
   /** Running counter for progressive broker ids (`ha_001`, `ha_002`,
    *  …). Seeded from existing entries on restore so the addon never
    *  reuses an id after a restart. */
@@ -229,31 +224,23 @@ export class HaBrokerRegistry {
 
   /** Create a new broker entry. Caller persists `entries()` to addon
    *  globalSettings; this method only starts the manager.
-   *  `integrationId` is supplied by the integration→broker reconciler
-   *  when the entry mirrors an integration record. */
+   */
   async createEntry(
     name: string,
     settings: unknown,
-    options: { integrationId?: string; id?: string } = {},
+    options: { id?: string } = {},
   ): Promise<HaBrokerEntry> {
     const auth = settingsToAuth(settings)
     const entry: HaBrokerEntry = {
       id: options.id !== undefined ? this.adoptId(options.id) : this.allocateId(),
       name,
       ...authToEntryFields(auth),
-      ...(options.integrationId !== undefined ? { integrationId: options.integrationId } : {}),
     }
     await this.startManagerForEntry(entry)
     return entry
   }
 
   async removeEntry(id: string): Promise<void> {
-    // Clear the integration index BEFORE the manager early-return: a broker
-    // linked via `linkIntegration` whose manager never started would otherwise
-    // leak a stale `integrationToBroker` entry forever.
-    for (const [integrationId, brokerId] of this.integrationToBroker) {
-      if (brokerId === id) this.integrationToBroker.delete(integrationId)
-    }
     const mgr = this.managers.get(id)
     if (!mgr) return
     await mgr.stop()
@@ -408,60 +395,9 @@ export class HaBrokerRegistry {
     return this.managers.get(brokerId) ?? null
   }
 
-  /**
-   * Enumerate every active (brokerId, integrationId?, manager) triple.
-   * Used by the device-provider discovery path to fan out
-   * `config/device_registry/list` + `config/entity_registry/list`
-   * calls across every connected broker and collect candidates.
-   *
-   * `integrationId` is present when the broker was linked to a CamStack
-   * integration record via `linkIntegration`; absent when the broker was
-   * added manually (no integration FK).
-   */
-  listManagers(): readonly {
-    brokerId: string
-    integrationId: string | undefined
-    manager: HaIntegrationManager
-  }[] {
-    const out: {
-      brokerId: string
-      integrationId: string | undefined
-      manager: HaIntegrationManager
-    }[] = []
-    // Build a reverse map from brokerId → integrationId (may be undefined)
-    const brokerToIntegration = new Map<string, string>()
-    for (const [integrationId, brokerId] of this.integrationToBroker) {
-      brokerToIntegration.set(brokerId, integrationId)
-    }
-    for (const [brokerId, manager] of this.managers) {
-      out.push({ brokerId, integrationId: brokerToIntegration.get(brokerId), manager })
-    }
-    return out
-  }
-
-  /**
-   * Resolve the broker id for an integration via its `integrationId` FK.
-   * Throws a clear error when no broker is linked — adoption operations
-   * keyed by integrationId need a concrete broker to dial.
-   */
-  getBrokerIdByIntegrationId(integrationId: string): string {
-    const brokerId = this.integrationToBroker.get(integrationId)
-    if (brokerId === undefined) {
-      throw new Error(`ha-broker: no broker linked to integration '${integrationId}'`)
-    }
-    return brokerId
-  }
-
-  /**
-   * Record an `integrationId → brokerId` link. Called by the addon's
-   * integration→broker reconciler when it tags an EXISTING broker (one
-   * that started without an `integrationId` FK on its persisted entry)
-   * to an integration. `createEntry`/`startManagerForEntry` already
-   * index entries that carry the FK at start time, so this only fills
-   * the late-link gap.
-   */
-  linkIntegration(integrationId: string, brokerId: string): void {
-    this.integrationToBroker.set(integrationId, brokerId)
+  /** Every active (brokerId, manager) pair, for the discovery fan-out across brokers. */
+  listManagers(): readonly { brokerId: string; manager: HaIntegrationManager }[] {
+    return [...this.managers].map(([brokerId, manager]) => ({ brokerId, manager }))
   }
 
   // ── Private ───────────────────────────────────────────────────────────
@@ -475,13 +411,9 @@ export class HaBrokerRegistry {
   private async startManagerForEntry(entry: HaBrokerEntry): Promise<void> {
     // A broker is unique per id. If one is already active, KEEP it — its live
     // WS connection + subscription map must not be torn down and replaced by a
-    // duplicate. Only (re)create when the id has no manager yet. We still
-    // (re)assert the integration-index link in case the entry's FK changed.
+    // duplicate. Only (re)create when the id has no manager yet.
     const existing = this.managers.get(entry.id)
     if (existing) {
-      if (entry.integrationId !== undefined) {
-        this.integrationToBroker.set(entry.integrationId, entry.id)
-      }
       this.logger.debug('ha-broker already active — reusing existing connection', {
         meta: { brokerId: entry.id },
       })
@@ -500,9 +432,6 @@ export class HaBrokerRegistry {
       onBusEvent: (brokerId, ev) => this.onBrokerBusEvent?.(brokerId, ev),
     })
     this.managers.set(entry.id, manager)
-    if (entry.integrationId !== undefined) {
-      this.integrationToBroker.set(entry.integrationId, entry.id)
-    }
     await manager.start()
   }
 }

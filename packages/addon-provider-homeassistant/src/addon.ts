@@ -13,7 +13,13 @@ import {
   type RecordsAccess,
   integrationInstancesCapability,
   type IntegrationInstanceRef,
-  RecordIntegrationInstances,
+  type RecordIntegrationInstances,
+  assertBrokerUnused,
+  brokerIdOf,
+  brokerLinkUserFinder,
+  resolveBrokerId,
+  type BrokerLinkBody,
+  type BrokerUserFinder,
   type CreateDeviceSpec,
   type DeviceSummary,
   DeviceType,
@@ -72,20 +78,16 @@ import {
   type NotifyServiceData,
 } from './ha-notification-output.js'
 import { HaBrokerStore } from './ha-broker-store.js'
-import { haBrokersEntryKind, type HaBrokerBody } from './broker-record-kinds.js'
+import { haBrokersEntryKind } from './broker-record-kinds.js'
 import { buildHaInstances } from './ha-instances.js'
+import { haBrokerLinkPorts } from './migrations/index.js'
 import { haAllRecordKinds } from './record-kinds.js'
 import { createHaBoardKeyProvider, HaBoardKeySource } from './ha-board-key-source.js'
 import { haInstanceRecordPortsOver } from './ha-instance-settings.js'
 import { haInstanceSettingsPortsOver } from './migrations/legacy-integration-rows.js'
-import {
-  ADDON_MIGRATIONS,
-  FLATTEN_BROKER_RECORDS_ID,
-  type HaMigrationPorts,
-} from './migrations/index.js'
-import { createHaCalendarSource, listHaCalendarCatalog } from './ha-calendar-source.js'
+import { ADDON_MIGRATIONS, type HaMigrationPorts } from './migrations/index.js'
+import { createHaCalendarSource } from './ha-calendar-source.js'
 import { reconcileBroker } from './ha-reconcile-broker.js'
-import { computeBrokerCleanup } from './ha-reconciler.js'
 import {
   buildStandaloneEntityCandidates,
   buildStandaloneEntityConfig,
@@ -183,7 +185,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
   // ── HA-specific state ─────────────────────────────────────────────────
   private registry: HaBrokerRegistry | null = null
   private brokerStore: HaBrokerStore | null = null
-  private instances: RecordIntegrationInstances<HaBrokerBody> | null = null
+  private instances: RecordIntegrationInstances<BrokerLinkBody> | null = null
   /** Runtime broker rows (records when B2 is live, else settings). */
   private activeBrokers: readonly HaBrokerEntry[] = []
   /** Periodic re-sync sweep handle (cleared on shutdown). */
@@ -218,6 +220,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
       ),
       ...haInstanceRecordPortsOver(records.kind(haBrokersEntryKind)),
       ...flattenPortsOver(records.kind(haBrokersEntryKind)),
+      ...haBrokerLinkPorts(records, (message) => this.ctx.logger.warn(message)),
     }
   }
 
@@ -228,17 +231,10 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
     }
     await records.declare(haAllRecordKinds)
     this.brokerStore = HaBrokerStore.of(records)
-    this.instances = buildHaInstances(records, {
-      mintId: () => this.requireRegistry().allocateId(),
-      infoOf: (id) => this.registry?.get(id) ?? null,
-      calendarOptions: (id) => (this.registry ? listHaCalendarCatalog(this.registry, id) : []),
-      onChanged: (id) => this.syncBrokerRuntime(id),
-      probe: (settings) => this.requireRegistry().testSettings(settings),
-    })
-    // The stored broker records move to the flat shape BEFORE anything reads them.
-    await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, this.flattenPorts(records)), {
-      only: [FLATTEN_BROKER_RECORDS_ID],
-    })
+    this.instances = buildHaInstances(records)
+    // The stored broker records move to the flat shape, and every integration link onto its own
+    // `connections` record, BEFORE anything reads them (a rewrite of a broker drops the old link).
+    await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, this.flattenPorts(records)))
     this.activeBrokers = await this.loadPersistedBrokers()
 
     this.registry = new HaBrokerRegistry(this.ctx.logger, this.ctx.eventBus)
@@ -275,16 +271,6 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
         brokerCount: this.activeBrokers.length,
       },
     })
-
-    // Sync integration records → broker entries (initial reconcile +
-    // event-driven on integration lifecycle changes).
-    // The calendars each instance imports move from the addon's shared set onto its integration
-    // (D985): before the first reconcile reads them.
-    await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, this.flattenPorts(records)), {
-      only: ADDON_MIGRATIONS.map((m) => m.meta.id).filter((id) => id !== FLATTEN_BROKER_RECORDS_ID),
-    })
-    await this.reconcileIntegrationsToBrokers()
-    this.subscribeIntegrationLifecycle()
 
     return [
       { capability: brokerCapability, provider: this.buildBrokerProvider() },
@@ -383,7 +369,9 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
 
   override async discoverDevices(): Promise<readonly DiscoveryCandidate[]> {
     const out: DiscoveryCandidate[] = []
-    for (const { brokerId, integrationId, manager } of this.requireRegistry().listManagers()) {
+    const integrationOf = await this.integrationsByBroker()
+    for (const { brokerId, manager } of this.requireRegistry().listManagers()) {
+      const integrationId = integrationOf.get(brokerId)
       const [devices, entities] = await Promise.all([
         manager.sendMessage<readonly Record<string, unknown>[]>({
           type: 'config/device_registry/list',
@@ -405,6 +393,16 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
     return out
   }
 
+  /** The integration that names each connection, from the `connections` records. */
+  private async integrationsByBroker(): Promise<ReadonlyMap<string, string>> {
+    const out = new Map<string, string>()
+    for (const row of await this.requireInstances().listResolved()) {
+      const brokerId = resolveBrokerId(row.body)
+      if (brokerId !== undefined) out.set(brokerId, row.id)
+    }
+    return out
+  }
+
   override async adoptDiscoveredDevice({
     candidate,
   }: {
@@ -416,108 +414,10 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
     })
   }
 
-  /**
-   * Mirror integration records → broker entries (Approach A).
-   *
-   * Under Approach A an integration record carries ONLY a `{brokerId}`
-   * link to a row in the addon's `config.brokers[]`. Brokers are created
-   * out-of-band via the `broker.add` cap (the wizard UI), NOT by this
-   * reconciler cramming credentials into the integration. So this pass
-   * does exactly two things:
-   *
-   *   - **Link**: for each surviving integration whose settings carry a
-   *     `{brokerId}` pointing at a live broker, record the
-   *     `integrationId → brokerId` link in the registry so the generic
-   *     `device-adoption` cap can resolve the broker.
-   *   - **Cleanup**: drop any broker that was spawned by an integration
-   *     (carries an `integrationId` FK) once no surviving integration
-   *     references it. Manually-created brokers (no FK) are never
-   *     auto-removed.
-   *
-   * Idempotent — runs on boot + on every integration.* event.
-   */
-  /**
-   * Calendars to import, per broker (D985): the integration's own selection, filled by the
-   * reconcile that already reads each integration's settings. A broker whose integration has no
-   * selection yet (the move has not run) uses the legacy shared set, so a boot mid-move never
-   * changes what is imported.
-   */
   /** The calendars one instance imports: its record's set, else the addon default. */
   private calendarIdsOf(brokerId: string): ReadonlySet<string> {
     const own = this.activeBrokers.find((b) => b.id === brokerId)?.calendarIds
     return new Set(own ?? this.config.calendarIds ?? [])
-  }
-
-  private async reconcileIntegrationsToBrokers(): Promise<void> {
-    const api = this.ctx.api.integrations
-    if (!api?.list?.query) return
-    try {
-      const all = await api.list.query()
-      const haIntegrations = all.filter((i) => i.addonId === this.ctx.id)
-      const survivingIntegrationIds = new Set(haIntegrations.map((i) => i.id))
-
-      // ── Link: an integration belongs to the instance record that names it (`integrationId`).
-      for (const integration of haIntegrations) {
-        const matching = this.activeBrokers.find((b) => b.integrationId === integration.id)
-        if (!matching) {
-          this.ctx.logger.warn('integration→broker: no instance record names this integration', {
-            meta: { integrationId: integration.id },
-          })
-          continue
-        }
-        this.requireRegistry().linkIntegration(integration.id, matching.id)
-      }
-
-      // ── Orphans are REPORTED, never removed ────────────────────────
-      //
-      // This pass used to delete every broker whose `integrationId` was not in
-      // `survivingIntegrationIds`, and write the survivors back. On
-      // 2026-08-05 that destroyed the operator's Home Assistant connection: a
-      // reconcile ran while the hub was still restarting, `integrations.list`
-      // answered with an EMPTY array rather than throwing, so no integration
-      // "survived" and every broker was deleted and the empty list persisted.
-      // The doorbell went dead and the config — host AND token — was
-      // unrecoverable, because nothing in this addon can rebuild a broker from
-      // an integration record.
-      //
-      // A guard against an empty list would have been the narrow fix. The
-      // operator's instruction is broader and better: **never delete a broker
-      // automatically.** A stale broker entry costs a row and a log line; a
-      // deleted one costs a credential nobody has a copy of. Removing one is an
-      // operator action, through the integration delete path.
-      const orphans = computeBrokerCleanup(this.activeBrokers, survivingIntegrationIds)
-      this.ctx.logger.info('integration→broker reconcile', {
-        meta: {
-          brokerCount: this.activeBrokers.length,
-          integrationCount: haIntegrations.length,
-          orphans: orphans.length,
-        },
-      })
-      if (orphans.length > 0) {
-        // Named, so an operator who wants them gone knows exactly which.
-        this.ctx.logger.warn('broker entries have no surviving integration — KEPT', {
-          meta: { brokerIds: orphans, integrationCount: haIntegrations.length },
-        })
-      }
-    } catch (err) {
-      this.ctx.logger.warn('integration→broker reconcile failed', {
-        meta: { error: errMsg(err) },
-      })
-    }
-  }
-
-  private subscribeIntegrationLifecycle(): void {
-    const eb = this.ctx.eventBus
-    const handler = (event: { data?: unknown }): void => {
-      const data = event.data as { addonId?: string } | undefined
-      if (data?.addonId !== this.ctx.id) return
-      // Fire-and-forget — reconcile runs the full sync; transient
-      // races resolve on the next event.
-      void this.reconcileIntegrationsToBrokers()
-    }
-    eb.subscribe({ category: 'integration.enabled' }, handler)
-    eb.subscribe({ category: 'integration.disabled' }, handler)
-    eb.subscribe({ category: 'integration.deleted' }, handler)
   }
 
   // ── Settings UI (External systems → integration settings panel) ────
@@ -663,53 +563,17 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
     return this.requireBrokerStore().listResolved()
   }
 
-  private requireInstances(): RecordIntegrationInstances<HaBrokerBody> {
+  private requireInstances(): RecordIntegrationInstances<BrokerLinkBody> {
     if (this.instances === null) throw new Error('provider-homeassistant: instances not ready')
     return this.instances
   }
 
-  /**
-   * After an instance changed (created, edited, switched, deleted) the runtime follows the record:
-   * a missing record removes the manager and its adopted devices, an off or unfilled one stops the
-   * manager but keeps the devices, a filled one starts or re-authenticates it.
-   */
-  private async syncBrokerRuntime(id: string): Promise<void> {
-    const reg = this.requireRegistry()
-    const entry = await this.requireBrokerStore().getById(id)
-    this.activeBrokers = await this.loadPersistedBrokers()
-    if (entry === null) {
-      await reg.removeEntry(id)
-      const deviceRegistry = this.ctx.kernel.deviceRegistry
-      const devices = this.ctx.kernel.devices
-      if (deviceRegistry && devices) {
-        await cascadeRemoveDevicesForBroker({
-          reg: deviceRegistry,
-          devices,
-          addonId: this.ctx.id,
-          brokerId: id,
-          logger: this.ctx.logger,
-        })
-      }
-      return
+  private async brokerIdForIntegration(integrationId: string): Promise<string> {
+    const brokerId = await brokerIdOf(this.requireInstances(), integrationId)
+    if (brokerId === undefined) {
+      throw new Error(`ha-broker: no connection linked to integration '${integrationId}'`)
     }
-    const settings = entry.enabled === false ? null : entryToSettings(entry)
-    if (settings === null) {
-      await reg.removeEntry(id)
-      return
-    }
-    try {
-      if (reg.get(id) !== null) await reg.updateEntry(id, settings)
-      else {
-        await reg.createEntry(entry.name, settings, {
-          id,
-          ...(entry.integrationId !== undefined ? { integrationId: entry.integrationId } : {}),
-        })
-      }
-    } catch (err) {
-      this.ctx.logger.warn('ha instance: could not start the broker', {
-        meta: { brokerId: id, error: errMsg(err) },
-      })
-    }
+    return brokerId
   }
 
   private requireBrokerStore(): HaBrokerStore {
@@ -723,6 +587,11 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
   }
 
   // ── broker cap provider ──────────────────────────────────────────────
+
+  /** Everything that still points at a connection: the integrations that name it. */
+  private brokerUsers(): readonly BrokerUserFinder[] {
+    return [brokerLinkUserFinder(this.requireInstances())]
+  }
 
   private buildBrokerProvider(): IBrokerProvider {
     // The owning addon id — stamped onto every BrokerInfo this provider
@@ -776,6 +645,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
         // No-op for ids this provider does not own — the collection
         // fallback may route a foreign id here.
         if (!owns(id)) return
+        await assertBrokerUnused(id, this.brokerUsers())
         await this.requireRegistry().removeEntry(id)
         // Cascade-delete all adopted devices whose source brokerId matches.
         // devices.remove cascades to children and emits device.unregistered per removed device.
@@ -859,8 +729,8 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
   //   - refresh / getStatus: synthesised from live HA inventory.
 
   private buildAdoptionProvider(): IDeviceAdoptionProvider {
-    const brokerFor = (integrationId: string): string =>
-      this.requireRegistry().getBrokerIdByIntegrationId(integrationId)
+    const brokerFor = (integrationId: string): Promise<string> =>
+      this.brokerIdForIntegration(integrationId)
 
     return {
       getStatus: async () => {
@@ -894,7 +764,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
       },
 
       refresh: async ({ integrationId }) => {
-        const brokerId = brokerFor(integrationId)
+        const brokerId = await brokerFor(integrationId)
         const devices = await this.fetchHaDiscoveredDevices(brokerId)
         const allDevices = await this.ctx.kernel.devices.getAll()
         const adoptedCount = allDevices.filter(
@@ -927,7 +797,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
         if (filter === ADOPTION_FILTER_ENTITIES) {
           return this.listEntityCandidates({ integrationId, page, pageSize, filterText })
         }
-        const brokerId = brokerFor(integrationId)
+        const brokerId = await brokerFor(integrationId)
         const allDevices = await this.ctx.kernel.devices.getAll()
         // Build a set of adopted haDeviceIds for marking candidates.
         const adoptedHaDeviceIds = new Set<string>()
@@ -984,7 +854,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
       },
 
       getCandidate: async ({ integrationId, childNativeId }) => {
-        const brokerId = brokerFor(integrationId)
+        const brokerId = await brokerFor(integrationId)
         const allDevices = await this.ctx.kernel.devices.getAll()
         const adoptedHaDeviceIds = new Set<string>()
         for (const d of allDevices) {
@@ -1012,7 +882,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
             importLocations,
           })
         }
-        const brokerId = brokerFor(integrationId)
+        const brokerId = await brokerFor(integrationId)
         // Fetch inventory once for all child ids to avoid redundant WS calls.
         const haDevices = await this.fetchHaDiscoveredDevices(brokerId)
         const haDeviceMap = new Map(haDevices.map((d) => [d.haDeviceId, d]))
@@ -1227,7 +1097,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
     input: Pick<ListCandidatesInput, 'integrationId' | 'page' | 'pageSize' | 'filterText'>,
   ): Promise<ListCandidatesOutput> {
     const { integrationId, page, pageSize, filterText } = input
-    const brokerId = this.requireRegistry().getBrokerIdByIntegrationId(integrationId)
+    const brokerId = await this.brokerIdForIntegration(integrationId)
     const adoptedEntityIds = await this.collectStandaloneAdoptedEntityIds(brokerId)
     const haDevices = await this.fetchHaDiscoveredDevices(brokerId)
 
@@ -1281,7 +1151,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
     >,
   ): Promise<AdoptResult> {
     const { integrationId, childNativeIds, perCandidate, importLocations } = input
-    const brokerId = this.requireRegistry().getBrokerIdByIntegrationId(integrationId)
+    const brokerId = await this.brokerIdForIntegration(integrationId)
     const haDevices = await this.fetchHaDiscoveredDevices(brokerId)
 
     // Index every mapped entity across all devices by entityId for O(1) lookup.

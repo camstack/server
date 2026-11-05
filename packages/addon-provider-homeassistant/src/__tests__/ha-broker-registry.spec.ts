@@ -146,28 +146,6 @@ describe('HA broker registry — settings <-> auth coercion', () => {
     })
   })
 
-  describe('integration ↔ broker index', () => {
-    it('linkIntegration + getBrokerIdByIntegrationId returns the linked brokerId', () => {
-      const registry = new HaBrokerRegistry(buildNoopLogger(), buildNoopEventBus())
-      registry.linkIntegration('int-1', 'ha_007')
-      expect(registry.getBrokerIdByIntegrationId('int-1')).toBe('ha_007')
-    })
-
-    it('getBrokerIdByIntegrationId throws for an unlinked integrationId', () => {
-      const registry = new HaBrokerRegistry(buildNoopLogger(), buildNoopEventBus())
-      expect(() => registry.getBrokerIdByIntegrationId('nope')).toThrow()
-    })
-
-    it('removeEntry clears the index even when no manager was started', async () => {
-      // Fix-1 scenario: a broker linked via linkIntegration whose manager
-      // never started must not leak a stale integrationToBroker entry.
-      const registry = new HaBrokerRegistry(buildNoopLogger(), buildNoopEventBus())
-      registry.linkIntegration('int-1', 'ha_007')
-      await registry.removeEntry('ha_007')
-      expect(() => registry.getBrokerIdByIntegrationId('int-1')).toThrow()
-    })
-  })
-
   describe('testSettings — invalid settings (no network)', () => {
     it('returns ok:false for empty settings without opening a client', async () => {
       const registry = new HaBrokerRegistry(buildNoopLogger(), buildNoopEventBus())

@@ -120,13 +120,14 @@ function makeHarness(opts: { alreadyRegistered: boolean }): Harness {
   const addon = new HaProviderAddon()
   const internal = addon as unknown as {
     _ctx: AddonContext
-    registry: { getBrokerIdByIntegrationId: (id: string) => string }
+    instances: { getResolved: (id: string) => Promise<{ name: string; brokerId: string }> }
     fetchHaDiscoveredDevices: (brokerId: string) => Promise<readonly HaDiscoveredDevice[]>
     createDevice: typeof createDevice
     buildAdoptionProvider: () => IDeviceAdoptionProvider
   }
   internal._ctx = ctx
-  internal.registry = { getBrokerIdByIntegrationId: () => BROKER_ID }
+  // The integration's `connections` record names its broker by id.
+  internal.instances = { getResolved: async () => ({ name: 'HA', brokerId: BROKER_ID }) }
   internal.fetchHaDiscoveredDevices = vi.fn(async () => [makeHaDevice()])
   internal.createDevice = createDevice
 

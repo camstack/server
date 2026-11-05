@@ -5,6 +5,7 @@
  * values must win, a rerun must write nothing, and the rows are cleared only after the record
  * shows the set.
  */
+import { NO_LINK_PORTS } from '../../__tests__/no-link-ports.js'
 import {
   createRecordsAccess,
   createSecretsAccess,
@@ -72,6 +73,7 @@ async function boot(rows: Record<string, Record<string, unknown>>): Promise<Worl
     ...haInstanceRecordPortsOver(handle),
     ...flattenPortsOver(handle),
     readStored: async () => ({ kind: 'absent' }),
+    ...NO_LINK_PORTS,
   })
   return {
     handle,

@@ -1,4 +1,10 @@
-import type { AddonMigration, FlattenRowPorts } from '@camstack/types'
+import {
+  type AddonMigration,
+  type BrokerLinkPorts,
+  type FlattenRowPorts,
+  moveBrokerLinksToConnections,
+} from '@camstack/types'
+import { BROKER_LINKS_TO_CONNECTIONS_ID, haBrokerLinkPorts } from './broker-links-to-connections.js'
 import { FLATTEN_BROKER_RECORDS_ID, flattenBrokerRecords } from './flatten-broker-records.js'
 import {
   CLEAR_INSTANCE_SETTINGS_ROWS_ID,
@@ -13,6 +19,7 @@ import {
   planDropSharedCalendarIds,
 } from './calendar-ids-to-integration.js'
 
+export { BROKER_LINKS_TO_CONNECTIONS_ID, haBrokerLinkPorts }
 export type { CalendarIdsPorts } from './calendar-ids-to-integration.js'
 export { FLATTEN_BROKER_RECORDS_ID } from './flatten-broker-records.js'
 export {
@@ -21,7 +28,10 @@ export {
 } from './instance-settings-to-record.js'
 
 /** What the catalogue's migrations read and write through. */
-export type HaMigrationPorts = CalendarIdsPorts & FlattenRowPorts & InstanceSettingsPorts
+export type HaMigrationPorts = CalendarIdsPorts &
+  FlattenRowPorts &
+  InstanceSettingsPorts &
+  BrokerLinkPorts
 
 /** The `provider-homeassistant` catalogue (D987): offered to the engine when the addon initialises. */
 export const ADDON_MIGRATIONS: readonly AddonMigration<HaMigrationPorts>[] = [
@@ -111,5 +121,22 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<HaMigrationPorts>[] = [
       fixtureMark: 'a calendar set the instance record holds differently',
     },
     procedure: clearInstanceSettingsRows,
+  },
+  {
+    meta: {
+      id: BROKER_LINKS_TO_CONNECTIONS_ID,
+      owner: 'provider-homeassistant',
+      level: 'addon-state',
+      seq: 6,
+      dependsOn: [INSTANCE_SETTINGS_TO_RECORD_ID, CLEAR_INSTANCE_SETTINGS_ROWS_ID],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'block-owner',
+      bodyKind: 'procedure',
+      description:
+        'Write each integration a connections record naming its Home Assistant connection (keyed by the integration id), then clear the integration link on the connection; stray registry-keyed connection rows are counted and logged, never deleted',
+      fixtureMark: 'the calendars and the name of the connection that keeps its record',
+    },
+    procedure: moveBrokerLinksToConnections,
   },
 ]

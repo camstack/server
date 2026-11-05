@@ -318,17 +318,17 @@ function makeAdoptHarness(opts: {
   } as unknown as AddonContext
 
   const addon = new HaProviderAddon()
-  // Inject ctx + a broker registry stub (the entities path resolves
-  // `getBrokerIdByIntegrationId`; the devices path uses the closure `brokerFor`).
+  // Inject ctx + the integration's connection record (adoption resolves its broker through it).
   const internal = addon as unknown as {
     _ctx: AddonContext
-    registry: { getBrokerIdByIntegrationId: (id: string) => string }
+    instances: { getResolved: (id: string) => Promise<{ name: string; brokerId: string }> }
     fetchHaDiscoveredDevices: (brokerId: string) => Promise<readonly HaDiscoveredDevice[]>
     createDevice: typeof createDevice
     buildAdoptionProvider: () => IDeviceAdoptionProvider
   }
   internal._ctx = ctx
-  internal.registry = { getBrokerIdByIntegrationId: () => BROKER_ID }
+  // The integration's `connections` record names its broker by id.
+  internal.instances = { getResolved: async () => ({ name: 'HA', brokerId: BROKER_ID }) }
   internal.fetchHaDiscoveredDevices = vi.fn(async () => [opts.device])
   internal.createDevice = createDevice
 
