@@ -343,7 +343,12 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
     this.runsProvider = null
   }
 
-  protected globalSettingsSchema(): ConfigUISchema {
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return ['device-history']
+  }
+
+  protected override async clusterSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    if (cap !== 'device-history') return null
     return this.schema({
       sections: [
         {
