@@ -183,6 +183,18 @@ describe('BaseAddon readers of the scoped schemas', () => {
     }
   })
 
+  it('getGlobalSettings serves the scoped sections when no global schema is declared', async () => {
+    const h = makeCtx('node-b')
+    await h.ctx.settings?.writeAddonStore({ 'interfaceName@node-b': 'eth9' })
+    const addon = new ScopedOnlyAddon()
+    await addon.initialize(h.ctx)
+    const form = await addon.getGlobalSettings()
+    const field = form?.sections
+      .flatMap((section) => section.fields)
+      .find((f) => 'key' in f && f.key === 'interfaceName')
+    expect(field && 'value' in field ? field.value : undefined).toBe('eth9')
+  })
+
   it('getDeclaredSettingsKeys lists the scoped fields', async () => {
     const addon = new ScopedOnlyAddon()
     await addon.initialize(makeCtx('node-b').ctx)

@@ -505,7 +505,8 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     cap?: string,
     nodeId?: string,
   ): Promise<ConfigUISchemaWithValues | null> {
-    const schema = this.globalSettingsSchema(cap)
+    await this.loadScopedSchemas(cap)
+    const schema = this.globalSettingsSchema(cap) ?? this.scopedFormSchema(cap)
     if (!schema) return { sections: [] }
     // The form hydrates from the MARKER-bearing store (a marker becomes a
     // "set" view). An override's overlay usually comes from the resolved
@@ -873,6 +874,15 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     if (!added) return
     this._nodeKeysByCap = new Map()
     this._addonSecretTree = null
+  }
+
+  /**
+   * The form the settings API serves while an addon declares no {@link globalSettingsSchema}: the
+   * sections of its scoped schemas, so dropping the old hook does not blank the form.
+   */
+  private scopedFormSchema(cap?: string): ConfigUISchema | null {
+    const sections = this.loadedScopedSchemas(cap).flatMap((entry) => entry.schema.sections)
+    return sections.length === 0 ? null : { sections }
   }
 
   /** Every loaded scoped schema of `cap`, or of every loaded capability. */
