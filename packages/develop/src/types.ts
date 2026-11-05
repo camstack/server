@@ -41,7 +41,10 @@ export interface CapabilitySummary {
 
 export interface ExampleEntry {
   readonly id: string
+  /** Path inside this repository, or inside `repository` when that is set. */
   readonly packageDir: string
+  /** The public repository holding the example (`owner/name`); absent for an in-repo example. */
+  readonly repository?: string
   readonly kind:
     | 'provider'
     | 'notifier'
@@ -49,6 +52,9 @@ export interface ExampleEntry {
     | 'post-analysis'
     | 'model-studio'
     | 'admin-ui'
+    | 'device-integration'
+    | 'service-integration'
+    | 'exporter'
     | 'builtin'
     | 'other'
   readonly demonstrates: string
@@ -73,6 +79,26 @@ export interface ValidationResult {
   readonly findings: readonly ValidationFinding[]
 }
 
+/** Every template flavour `scaffold_addon` offers. */
+export const SCAFFOLD_KINDS = [
+  'empty',
+  'provider',
+  'notifier',
+  'osd',
+  'post-analysis',
+  'model-studio',
+  'admin-ui',
+  'device-integration',
+  'service-integration',
+  'exporter',
+] as const
+
+export type ScaffoldKind = (typeof SCAFFOLD_KINDS)[number]
+
+export function isScaffoldKind(value: string): value is ScaffoldKind {
+  return SCAFFOLD_KINDS.some((kind) => kind === value)
+}
+
 export interface ScaffoldAddonOptions {
   readonly workspaceRoot: string
   readonly name: string
@@ -80,14 +106,7 @@ export interface ScaffoldAddonOptions {
   readonly description?: string
   readonly directory?: string
   /** Template flavour — empty skeleton, or a stub pointing at a core example. */
-  readonly kind?:
-    | 'empty'
-    | 'provider'
-    | 'notifier'
-    | 'osd'
-    | 'post-analysis'
-    | 'model-studio'
-    | 'admin-ui'
+  readonly kind?: ScaffoldKind
   readonly dryRun?: boolean
 }
 
@@ -96,7 +115,10 @@ export interface ScaffoldAddonResult {
   readonly relativeDir: string
   readonly filesWritten: readonly string[]
   /** Every file's content (workspace-relative path), written or not — for a dry-run diff. */
-  readonly contents?: readonly { readonly path: string; readonly content: string }[]
+  readonly contents?: readonly {
+    readonly path: string
+    readonly content: string
+  }[]
   readonly nextSteps: readonly string[]
 }
 

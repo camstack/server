@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- traps_for and read_section now cover the public skill pack sections, including the integration traps; scaffold_addon accepts the integration kinds
+
 ## [0.1.0] - 2026-10-27
 
 ### Added

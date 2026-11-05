@@ -1,3 +1,4 @@
+import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
@@ -43,5 +44,27 @@ describe('catalogue against this workspace', () => {
     const hits = findExample(root, 'device provider camera')
     expect(hits.length).toBeGreaterThan(0)
     expect(hits[0]?.example.kind).toBe('provider')
+  })
+})
+
+describe('integration examples', () => {
+  const root = findWorkspaceRoot(HERE)
+
+  it.each([
+    ['device-integration', 'integration-device-enpal', 'integration-device-example'],
+    ['service-integration', 'integration-service-cloudflare', 'integration-service-example'],
+    ['exporter', 'exporter-ha-export', 'exporter-example'],
+  ])('%s points at the in-repo implementation and the public example', (kind, inRepo, pub) => {
+    const hits = findExample(root, kind)
+    const ids = hits.map((h) => h.example.id)
+    expect(ids).toContain(inRepo)
+    expect(ids).toContain(pub)
+    const publicHit = hits.find((h) => h.example.id === pub)
+    expect(publicHit?.example.repository).toBe('camstack/addon-examples')
+    // A public example is not penalised for being absent from this checkout.
+    expect(publicHit?.rationale).not.toContain('missing')
+    expect(
+      fs.existsSync(path.join(root, hits.find((h) => h.example.id === inRepo)!.example.packageDir)),
+    ).toBe(true)
   })
 })

@@ -17,11 +17,23 @@ crashes) and `docs/architecture/addon-custom-actions.md`.
 ## Tooling (prefer this over hand-copying)
 
 ```bash
-camstack develop scaffold addon <name> [--kind empty|provider|notifier|osd|post-analysis]
+camstack develop scaffold addon <name> [--kind empty|provider|notifier|osd|post-analysis|device-integration|service-integration|exporter]
 camstack develop extend <existing-addon> --entry <new-id>
 camstack develop find-example <topic>
 camstack develop validate <name-or-path>
 ```
+
+The three integration kinds start from a typed instance record
+(`RecordIntegrationInstances`): `device-integration` (role `devices`: connection
++ `password` secret + test, discovery and adoption, the Gateway adopted as a
+SIBLING of the devices, `integrationId` on every device, `device-removal-hook`),
+`service-integration` (role `services`: connection + secret + test, no devices)
+and `exporter` (`device-export` + `integration-instances`, minted ids, exposure
+keyed by instance id, actions as `addon-action-button` in the instance form).
+Real implementations to study: `packages/addon-provider-enpal`,
+`packages/addon-provider-homeassistant/src/ha-export/target-instances.ts`, and
+the public `addon-examples` packages `example-device-integration`,
+`example-service-integration` and `example-exporter`.
 
 Nx equivalent (same idea): `nx g @camstack/nx-plugin:addon <name>`.
 The develop scaffold also writes `vite.config.ts` `entries` — the miss that
@@ -277,6 +289,29 @@ row, **and** vite `entries` key. Prefer:
 ```bash
 camstack develop extend <package> --entry <new-id>
 ```
+
+## Integration traps
+
+An integration is a typed instance record (D1007, D996, D1009). These break it:
+
+- **No addon-level settings for an integration.** No `globalSettingsSchema()`,
+  no `integration_settings` row, no `integrations.getSettings` /
+  `integrations.setSettings` (retired, being deleted). Everything the operator
+  configures is a field of the instance record; a secret is a `password` field
+  (`.meta({ secret: true })` on the kind).
+- **Data changes go through a D987 migration with a read-back.** Move old rows
+  into records with a migration that writes, reads back and marks the field
+  it moved; never keep a dual read path that falls back to the old store.
+- **The Gateway is a sibling, never a parent.** It is its own top-level device
+  carrying the `integrationId`; the equipment it reports is adopted as separate
+  top-level devices, never as its children.
+- **A new exporter must provide `integration-instances`.** Every exporter is
+  multi-instance (`instanceMode: 'multiple'`): a target is an instance with a
+  MINTED id, what is exposed is keyed by that id, and a membership write always
+  names the target.
+- **Per-device settings live only in `ctx.settings.*DeviceStore`;** per-device
+  DATA implements `device-removal-hook`, driven by a tombstone, never by a
+  device being absent from a list.
 
 ## Operator buttons (custom actions)
 

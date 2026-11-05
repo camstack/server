@@ -90,6 +90,88 @@ export const CORE_EXAMPLES: readonly ExampleEntry[] = [
     tags: ['admin-ui', 'pages', 'shell', 'nav'],
   },
   {
+    id: 'integration-device-enpal',
+    packageDir: 'packages/addon-provider-enpal',
+    kind: 'device-integration',
+    demonstrates:
+      'Device integration (role devices): instance record with a secret, discovery and adoption, the Gateway adopted as a SIBLING of the equipment, integrationId on every device.',
+    tags: [
+      'integration',
+      'instance',
+      'records',
+      'secret',
+      'adoption',
+      'gateway',
+      'devices',
+      'enpal',
+    ],
+  },
+  {
+    id: 'integration-device-example',
+    packageDir: 'packages/example-device-integration',
+    repository: 'camstack/addon-examples',
+    kind: 'device-integration',
+    demonstrates:
+      'Public minimal device integration: typed instance record, test, adoption, Gateway sibling, device-removal-hook.',
+    tags: ['integration', 'instance', 'public', 'example', 'devices', 'adoption', 'gateway'],
+  },
+  {
+    id: 'integration-service-cloudflare',
+    packageDir: 'packages/addon-cloudflare',
+    kind: 'service-integration',
+    demonstrates:
+      'Service integrations (role services): a typed connection with a secret and a test, no devices.',
+    tags: ['integration', 'instance', 'services', 'secret', 'test', 'connection'],
+  },
+  {
+    id: 'integration-service-google',
+    packageDir: 'packages/addon-google-services',
+    kind: 'service-integration',
+    demonstrates: 'Service integration records served through integration-instances.',
+    tags: ['integration', 'instance', 'services', 'records', 'google'],
+  },
+  {
+    id: 'integration-service-example',
+    packageDir: 'packages/example-service-integration',
+    repository: 'camstack/addon-examples',
+    kind: 'service-integration',
+    demonstrates:
+      'Public minimal service integration: typed connection, password secret, test, no devices.',
+    tags: ['integration', 'instance', 'public', 'example', 'services', 'secret', 'test'],
+  },
+  {
+    id: 'exporter-ha-export',
+    packageDir: 'packages/addon-provider-homeassistant/src/ha-export',
+    kind: 'exporter',
+    demonstrates:
+      'Exporter: export targets are integration instances with minted ids, exposure keyed by instance id (target-instances.ts).',
+    tags: [
+      'exporter',
+      'export',
+      'device-export',
+      'instance',
+      'target',
+      'multi-instance',
+      'homeassistant',
+    ],
+  },
+  {
+    id: 'exporter-hap',
+    packageDir: 'packages/addon-export-hap',
+    kind: 'exporter',
+    demonstrates: 'Exporter with several bridges, each an integration instance.',
+    tags: ['exporter', 'export', 'device-export', 'instance', 'homekit', 'hap'],
+  },
+  {
+    id: 'exporter-example',
+    packageDir: 'packages/example-exporter',
+    repository: 'camstack/addon-examples',
+    kind: 'exporter',
+    demonstrates:
+      'Public minimal exporter: device-export + integration-instances, minted ids, action button in the instance form.',
+    tags: ['exporter', 'export', 'public', 'example', 'device-export', 'instance', 'target'],
+  },
+  {
     id: 'system-builtins',
     packageDir: 'packages/system',
     kind: 'builtin',

@@ -11,6 +11,7 @@ export type {
   ExtendAddonResult,
   ScaffoldAddonOptions,
   ScaffoldAddonResult,
+  ScaffoldKind,
   ScaffoldCapOptions,
   ScaffoldCapResult,
   SkillInfo,
@@ -18,6 +19,7 @@ export type {
   ValidationResult,
   WorkspacePaths,
 } from './types.js'
+export { SCAFFOLD_KINDS, isScaffoldKind } from './types.js'
 
 export {
   findWorkspaceRoot,

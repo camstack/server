@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { requireWorkspaceRoot } from '@camstack/develop'
+import { readSection } from '../knowledge/read.js'
 import {
   clearKnowledgeCache,
   decisionsForPath,
   getDecision,
   getKnowledgeIndex,
   normalizeAdrId,
+  trapsFor,
 } from '../knowledge/index.js'
 
 describe('knowledge index', () => {
@@ -40,5 +42,28 @@ describe('knowledge index', () => {
     const index = getKnowledgeIndex(root, { memoryRoots: [], skillRoots: [] })
     const hits = decisionsForPath(index, 'packages/types/src/interfaces/addon.ts')
     expect(hits.some((h) => h.id === 'D2')).toBe(true)
+  })
+
+  it('traps_for surfaces the integration traps and read_section returns them whole', () => {
+    clearKnowledgeCache()
+    const index = getKnowledgeIndex(root, { memoryRoots: [], skillRoots: [] })
+    const { skills } = trapsFor(
+      index,
+      'integration globalSettingsSchema integration_settings gateway sibling',
+    )
+    const hit = skills.find((h) => h.id === 'skill:camstack-addon#integration-traps')
+    expect(hit).toBeTruthy()
+    const section = readSection(index, 'skill:camstack-addon#integration-traps')
+    expect(section?.truncated).toBe(false)
+    for (const trap of [
+      'globalSettingsSchema()',
+      'integration_settings',
+      'integrations.getSettings',
+      'D987 migration',
+      'sibling, never a parent',
+      'must provide `integration-instances`',
+    ]) {
+      expect(section?.text, trap).toContain(trap)
+    }
   })
 })

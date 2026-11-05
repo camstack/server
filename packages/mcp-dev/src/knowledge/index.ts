@@ -44,6 +44,7 @@ function buildSignature(workspaceRoot: string, overlay: DevelopOverlay): string 
     path.join(workspaceRoot, 'docs', 'reference', 'guards.md'),
     path.join(workspaceRoot, 'docs', 'subsystems.yaml'),
     path.join(workspaceRoot, 'AGENTS.md'),
+    path.join(workspaceRoot, 'packages', 'develop', 'skills'),
     planningCloneRoot(workspaceRoot),
     ...overlay.memoryRoots,
     ...overlay.skillRoots,
@@ -69,6 +70,7 @@ function buildIndex(workspaceRoot: string, overlay: DevelopOverlay): KnowledgeIn
   docs.push(...loadSubsystems(workspaceRoot))
   docs.push(...loadMemory(overlay.memoryRoots, workspaceRoot))
   docs.push(...loadPrivateSkills(overlay.skillRoots, workspaceRoot))
+  docs.push(...loadPackSkillSections(workspaceRoot))
   docs.push(...planningLoad.docs)
 
   const byId = new Map(docs.map((d) => [d.id, d]))
@@ -265,6 +267,40 @@ function loadMemory(roots: readonly string[], workspaceRoot: string): KnowledgeD
         mtimeMs: fs.statSync(filePath).mtimeMs,
       })
     })
+  }
+  return out
+}
+
+/**
+ * The public skill pack (`packages/develop/skills/*.md`) is the canonical text of the procedures
+ * and their traps; the repository skills only overlay it. Each `## ` section is its own doc, so
+ * `traps_for` finds one trap list and `read_section` returns it whole instead of a truncated file.
+ */
+function loadPackSkillSections(workspaceRoot: string): KnowledgeDoc[] {
+  const dir = path.join(workspaceRoot, 'packages', 'develop', 'skills')
+  if (!fs.existsSync(dir)) return []
+  const out: KnowledgeDoc[] = []
+  for (const name of fs.readdirSync(dir)) {
+    if (!name.endsWith('.md') || name === 'README.md') continue
+    const filePath = path.join(dir, name)
+    const text = readSafe(filePath)
+    if (!text) continue
+    const skillId = name.replace(/\.md$/, '')
+    const mtimeMs = fs.statSync(filePath).mtimeMs
+    for (const section of text.split(/^(?=## )/m)) {
+      const heading = /^## (.+)$/m.exec(section)?.[1]
+      if (heading === undefined) continue
+      out.push({
+        id: `skill:${skillId}#${headingSlug(heading)}`,
+        kind: 'skill',
+        path: filePath,
+        relativePath: path.relative(workspaceRoot, filePath),
+        title: `${skillId} - ${heading}`,
+        body: section.slice(0, 8000),
+        mtimeMs,
+        meta: { section: true },
+      })
+    }
   }
   return out
 }

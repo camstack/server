@@ -68,8 +68,9 @@ function scoreExample(
     }
   }
 
+  // A public example lives in another repository: there is nothing to look for in this checkout.
   const abs = path.join(workspaceRoot, example.packageDir)
-  if (!fs.existsSync(abs)) {
+  if (example.repository === undefined && !fs.existsSync(abs)) {
     score = Math.max(0, score - 2)
     reasons.push('package missing in this checkout')
   }

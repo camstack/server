@@ -17,6 +17,7 @@ import {
   requireWorkspaceRoot,
   scaffoldAddon,
   scaffoldCapStub,
+  SCAFFOLD_KINDS,
   validateAddon,
   whoProvides,
 } from '@camstack/develop'
@@ -113,7 +114,7 @@ export function registerDevelopTools(server: McpServer): void {
       name: z.string(),
       displayName: z.string().optional(),
       description: z.string().optional(),
-      kind: z.enum(['empty', 'provider', 'notifier', 'osd', 'post-analysis']).optional(),
+      kind: z.enum(SCAFFOLD_KINDS).optional(),
       directory: z.string().optional(),
       dryRun: z.boolean().optional(),
     },

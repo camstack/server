@@ -9,6 +9,7 @@ import {
   extendAddon,
   findExample,
   findWorkspaceRoot,
+  isScaffoldKind,
   getCapability,
   listAddonPackages,
   listCapabilities,
@@ -18,6 +19,7 @@ import {
   requireWorkspaceRoot,
   scaffoldAddon,
   scaffoldCapStub,
+  SCAFFOLD_KINDS,
   validateAddon,
   whoProvides,
 } from '@camstack/develop'
@@ -215,9 +217,8 @@ function cmdScaffoldAddon(args: readonly string[]): void {
   if (!name) throw new Error('Usage: camstack develop scaffold addon <name>')
 
   const kindRaw = typeof values.kind === 'string' ? values.kind : 'empty'
-  const allowed = new Set(['empty', 'provider', 'notifier', 'osd', 'post-analysis'])
-  if (!allowed.has(kindRaw)) {
-    throw new Error(`--kind must be one of: ${[...allowed].join(', ')}`)
+  if (!isScaffoldKind(kindRaw)) {
+    throw new Error(`--kind must be one of: ${SCAFFOLD_KINDS.join(', ')}`)
   }
 
   const root = requireWorkspaceRoot()
@@ -226,7 +227,7 @@ function cmdScaffoldAddon(args: readonly string[]): void {
     name,
     ...(typeof values['display-name'] === 'string' ? { displayName: values['display-name'] } : {}),
     ...(typeof values.description === 'string' ? { description: values.description } : {}),
-    kind: kindRaw as 'empty' | 'provider' | 'notifier' | 'osd' | 'post-analysis',
+    kind: kindRaw,
     ...(typeof values.directory === 'string' ? { directory: values.directory } : {}),
     dryRun: values['dry-run'] === true,
   })

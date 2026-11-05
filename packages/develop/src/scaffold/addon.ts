@@ -3,6 +3,14 @@ import * as path from 'node:path'
 import { toClassName, toFileName } from '../naming.js'
 import { CORE_EXAMPLES } from '../examples/catalogue.js'
 import type { ScaffoldAddonOptions, ScaffoldAddonResult } from '../types.js'
+import {
+  DEVICE_ADDON_TS,
+  DEVICE_ADOPTION_TS,
+  DEVICE_DEVICES_TS,
+  DEVICE_INSTANCES_TS,
+} from './integration-device.js'
+import { EXPORTER_ADDON_TS, EXPORTER_INSTANCES_TS } from './integration-exporter.js'
+import { SERVICE_ADDON_TS, SERVICE_INSTANCES_TS } from './integration-service.js'
 import { renderTemplate } from './templates.js'
 
 const KIND_EXAMPLE: Record<NonNullable<ScaffoldAddonOptions['kind']>, string | null> = {
@@ -13,6 +21,99 @@ const KIND_EXAMPLE: Record<NonNullable<ScaffoldAddonOptions['kind']>, string | n
   'post-analysis': 'post-analysis',
   'model-studio': 'model-studio',
   'admin-ui': 'admin-ui',
+  'device-integration': 'provider-enpal',
+  'service-integration': 'integration-service',
+  exporter: 'ha-export',
+}
+
+const INTEGRATION_NOTES: readonly string[] = [
+  'Public examples: `camstack/addon-examples` (`example-device-integration`, `example-service-integration`, `example-exporter`).',
+  '',
+  'Integration rules (D1007, D996, D1009):',
+  '- The integration is a typed instance record served through `integration-instances`; a secret is a `password` field (`.meta({ secret: true })` on the kind).',
+  '- No `globalSettingsSchema()`, no `integration_settings`, no `integrations.getSettings` / `setSettings` (retired).',
+  '- Data changes go through a D987 migration with read-back, never a dual read path.',
+  '- The Gateway is a SIBLING of the devices it brings, never their parent.',
+  '- An exporter provides `integration-instances` and is multi-instance: minted ids, exposure keyed by instance id.',
+  '',
+]
+
+/** What an integration kind changes in the generated package: manifest fields, caps, source files. */
+interface IntegrationKindPlan {
+  /** Manifest fields placed after the addon id. */
+  readonly manifestFields: readonly string[]
+  readonly capabilities: readonly string[]
+  readonly category: string
+  readonly files: readonly {
+    readonly relative: string
+    readonly template: string
+  }[]
+}
+
+function integrationPlan(
+  kind: NonNullable<ScaffoldAddonOptions['kind']>,
+  fileName: string,
+): IntegrationKindPlan | null {
+  switch (kind) {
+    case 'device-integration':
+      return {
+        manifestFields: [
+          '"integrationRole": "devices"',
+          '"instanceMode": "multiple"',
+          '"mode": "account"',
+        ],
+        capabilities: [
+          'device-provider',
+          'integration-instances',
+          'device-adoption',
+          'device-removal-hook',
+        ],
+        category: 'providers',
+        files: [
+          { relative: `src/${fileName}.addon.ts`, template: DEVICE_ADDON_TS },
+          {
+            relative: `src/${fileName}-instances.ts`,
+            template: DEVICE_INSTANCES_TS,
+          },
+          {
+            relative: `src/${fileName}-devices.ts`,
+            template: DEVICE_DEVICES_TS,
+          },
+          {
+            relative: `src/${fileName}-adoption.ts`,
+            template: DEVICE_ADOPTION_TS,
+          },
+        ],
+      }
+    case 'service-integration':
+      return {
+        manifestFields: ['"integrationRole": "services"', '"instanceMode": "multiple"'],
+        capabilities: ['integration-instances'],
+        category: 'messaging',
+        files: [
+          { relative: `src/${fileName}.addon.ts`, template: SERVICE_ADDON_TS },
+          {
+            relative: `src/${fileName}-instances.ts`,
+            template: SERVICE_INSTANCES_TS,
+          },
+        ],
+      }
+    case 'exporter':
+      return {
+        manifestFields: ['"integrationRole": "services"', '"instanceMode": "multiple"'],
+        capabilities: ['device-export', 'integration-instances'],
+        category: 'messaging',
+        files: [
+          { relative: `src/${fileName}.addon.ts`, template: EXPORTER_ADDON_TS },
+          {
+            relative: `src/${fileName}-instances.ts`,
+            template: EXPORTER_INSTANCES_TS,
+          },
+        ],
+      }
+    default:
+      return null
+  }
 }
 
 /**
@@ -41,6 +142,17 @@ export function scaffoldAddon(options: ScaffoldAddonOptions): ScaffoldAddonResul
     projectRoot: path.relative(options.workspaceRoot, projectRoot).replace(/\\/g, '/'),
   }
 
+  const plan = integrationPlan(kind, fileName)
+  vars['extraFields'] = (plan?.manifestFields ?? []).map((f) => `\n        ${f},`).join('')
+  vars['categoryField'] = plan ? `\n        "category": "${plan.category}",` : ''
+  vars['capabilities'] = JSON.stringify(
+    (plan?.capabilities ?? []).map((name) => ({ name })),
+    null,
+    2,
+  )
+    .split('\n')
+    .join('\n        ')
+
   const files: { relative: string; content: string }[] = [
     { relative: 'package.json', content: renderTemplate(PACKAGE_JSON, vars) },
     { relative: 'README.md', content: renderTemplate(README_MD, vars) },
@@ -48,10 +160,17 @@ export function scaffoldAddon(options: ScaffoldAddonOptions): ScaffoldAddonResul
     { relative: 'tsconfig.json', content: renderTemplate(TSCONFIG, vars) },
     { relative: 'vite.config.ts', content: renderTemplate(VITE_CONFIG, vars) },
     { relative: 'src/index.ts', content: renderTemplate(INDEX_TS, vars) },
-    {
-      relative: `src/${fileName}.addon.ts`,
-      content: renderTemplate(ADDON_TS, vars),
-    },
+    ...(plan
+      ? plan.files.map((f) => ({
+          relative: f.relative,
+          content: renderTemplate(f.template, vars),
+        }))
+      : [
+          {
+            relative: `src/${fileName}.addon.ts`,
+            content: renderTemplate(ADDON_TS, vars),
+          },
+        ]),
   ]
 
   const exampleId = KIND_EXAMPLE[kind]
@@ -66,6 +185,7 @@ export function scaffoldAddon(options: ScaffoldAddonOptions): ScaffoldAddonResul
         '',
         `- \`${example.packageDir}\` — ${example.demonstrates}`,
         '',
+        ...(plan ? INTEGRATION_NOTES : []),
         'Rules:',
         '- One addon = one process (shared `execution.group` only when allowed).',
         '- Never import another addon; use `ctx.api`.',
@@ -136,14 +256,14 @@ const PACKAGE_JSON = `{
     "displayName": "<%= displayName %>",
     "addons": [
       {
-        "id": "<%= fileName %>",
+        "id": "<%= fileName %>",<%= extraFields %><%= categoryField %>
         "name": "<%= displayName %>",
         "description": "<%= description %>",
         "entry": "./dist/<%= fileName %>.addon.js",
         "execution": {
           "placement": "hub-only"
         },
-        "capabilities": []
+        "capabilities": <%= capabilities %>
       }
     ]
   },
@@ -243,10 +363,11 @@ const ADDON_TS = `/**
  */
 import { BaseAddon, type ProviderRegistration } from '@camstack/types'
 
-// Operator-visible config fields go here, each with a default below and a
-// field in a \`globalSettingsSchema()\` override. No on/off switch: the
-// capability toggle is an addon's ONE enable (D777). An addon that needs a
-// setting to do anything (a URL, a token) treats the empty value as inert.
+// An addon has no settings page of its own (D1007). What an operator
+// configures is an integration INSTANCE (scaffold kind device-integration,
+// service-integration or exporter); a per-device setting lives in
+// ctx.settings.*DeviceStore. No on/off switch: the capability toggle is an
+// addon's ONE enable (D777).
 type <%= className %>Config = Readonly<Record<string, never>>
 
 const DEFAULTS: <%= className %>Config = {}

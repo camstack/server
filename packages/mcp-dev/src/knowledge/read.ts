@@ -72,6 +72,7 @@ export function nextAdrNumber(decisionsDir: string): NextAdrNumber {
 function fullSectionText(doc: KnowledgeDoc): string {
   if (doc.kind === 'architecture') return architectureSection(doc)
   if (doc.kind === 'guard' || doc.kind === 'subsystem') return doc.body
+  if (doc.kind === 'skill' && doc.meta?.['section'] === true) return doc.body
   return readFile(doc.path) ?? doc.body
 }
 

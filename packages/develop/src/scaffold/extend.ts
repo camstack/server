@@ -171,10 +171,11 @@ const ADDON_TS = `/**
  */
 import { BaseAddon, type ProviderRegistration } from '@camstack/types'
 
-// Operator-visible config fields go here, each with a default below and a
-// field in a \`globalSettingsSchema()\` override. No on/off switch: the
-// capability toggle is an addon's ONE enable (D777). An addon that needs a
-// setting to do anything (a URL, a token) treats the empty value as inert.
+// An addon has no settings page of its own (D1007). What an operator
+// configures is an integration INSTANCE (scaffold kind device-integration,
+// service-integration or exporter); a per-device setting lives in
+// ctx.settings.*DeviceStore. No on/off switch: the capability toggle is an
+// addon's ONE enable (D777).
 type <%= className %>Config = Readonly<Record<string, never>>
 
 const DEFAULTS: <%= className %>Config = {}

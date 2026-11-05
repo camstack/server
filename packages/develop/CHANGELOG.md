@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- scaffold_addon gains device-integration, service-integration and exporter kinds built on typed integration instances; find_example points at the real implementations and the public addon-examples; traps list the integration rules
+
 ## [0.1.44] - 2026-11-01
 
 ### Changed

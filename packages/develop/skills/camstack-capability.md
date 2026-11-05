@@ -32,8 +32,8 @@ closure, and an update of every node before anyone can call it. Check first:
 
 - **Enumerating providers of an existing collection?**
   `addons.listCapabilityProviders({ capName })` works even for `internal` caps.
-- **An addon's own configuration?** `globalSettingsSchema()` plus the existing
-  `addon-settings` cap; the settings panel already renders it.
+- **An addon's own configuration?** An integration INSTANCE record served through
+  `integration-instances` (D1007); an addon has no settings page of its own.
 - **Enable / disable a provider?** `addons.setCapabilityProviderEnabled` (the
   toggle is the ONE enable — D777).
 - **A field on an existing method?** Additive output fields need only the
