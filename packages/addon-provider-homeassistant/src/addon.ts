@@ -12,6 +12,7 @@ import {
   flattenPortsOver,
   type RecordsAccess,
   integrationInstancesCapability,
+  type IntegrationInstanceRef,
   RecordIntegrationInstances,
   type CreateDeviceSpec,
   type DeviceSummary,
@@ -527,7 +528,9 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
   // by cramming a creation form into the integration settings. So this
   // schema is purely informational — there are no editable fields.
 
-  protected globalSettingsSchema(_cap?: string) {
+  protected override async integrationFormSchema(
+    _instance: IntegrationInstanceRef,
+  ): Promise<ConfigUISchema | null> {
     return this.schema({
       sections: [
         {
