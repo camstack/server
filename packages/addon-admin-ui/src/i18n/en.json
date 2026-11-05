@@ -6998,7 +6998,7 @@
     "stateUpToDate": "up to date",
     "stateUpdateAvailable": "update available",
     "updateAll": "Update all nodes",
-    "updateAllHint": "Sequenced agents-first, hub-last — up-to-date nodes are skipped.",
+    "updateAllHint": "Sequenced hub-first, agents after — up-to-date nodes are skipped.",
     "updateTo": "Update to {{version}}",
     "workspaceNote": "Development workspace detected — runtime updates are disabled (the dev loop resolves code from the workspace).",
     "desktopApp": "Desktop app",

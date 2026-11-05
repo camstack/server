@@ -1846,7 +1846,7 @@
     "confirmRestartBody": "Riavviare ora il nodo \"{{node}}\"? Il processo esce e il suo supervisore lo riavvia sulla stessa versione. Le richieste in corso verso questo nodo vengono interrotte.",
     "confirmRestartAction": "Riavvia",
     "updateAll": "Aggiorna tutti i nodi",
-    "updateAllHint": "In sequenza: prima gli agent, l'hub per ultimo — i nodi già aggiornati vengono saltati.",
+    "updateAllHint": "In sequenza: prima l'hub, poi gli agent — i nodi già aggiornati vengono saltati.",
     "confirmUpdateAllTitle": "Aggiorna tutti i nodi",
     "confirmUpdateAllBody": "Aggiorna e riavvia ogni nodo online: prima l'hub, poi gli agent quando l'hub esegue la nuova versione. I nodi già aggiornati vengono saltati; questa pagina si riconnette quando l'hub torna online.",
     "confirmUpdateAllAction": "Aggiorna tutti e riavvia",

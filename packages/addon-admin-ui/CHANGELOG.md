@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Update all nodes now updates the hub first and waits for it to run the new version before touching agents; if the hub step fails the agents are listed as not attempted.
+- The Update all nodes hint now says the hub is updated first, then the agents.
 
 ## [1.2.594] - 2026-11-05
 

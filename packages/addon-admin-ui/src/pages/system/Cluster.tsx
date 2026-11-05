@@ -234,7 +234,7 @@ export function ClusterPage() {
               disabled={updatingAll}
               title={t(
                 'serverManagement.updateAllHint',
-                'Sequenced agents-first, hub-last — up-to-date nodes are skipped.',
+                'Sequenced hub-first, agents after — up-to-date nodes are skipped.',
               )}
               onClick={() => void handleUpdateAll()}
             >
