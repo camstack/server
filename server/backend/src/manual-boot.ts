@@ -72,6 +72,9 @@ import {
   fetchAgentInstalledPackages,
 } from './core/updates/agent-installed-packages.js'
 import { RegistryReachabilityTracker } from './core/updates/registry-reachability.js'
+import { runRequiredAddonUpdates } from './core/updates/required-addon-update.js'
+import { readRunningServerAddonMinimums } from './core/addon/addon-requirements.js'
+import { readInstalledAddonVersions } from './core/addon/installed-addon-versions.js'
 import { UpdateCheckScheduler } from './core/updates/update-check-scheduler.js'
 import { WrapperUpdateChecker } from './core/updates/wrapper-update-checker.js'
 
@@ -557,6 +560,27 @@ export async function bootManual(opts: BootOptions): Promise<BootedApp> {
   })
   addonPackageService.setUpdateCheckRescheduler(() => updateCheckScheduler.reschedule())
   updateCheckScheduler.start()
+  // The running server's `requires.addons` are brought current once the addons
+  // are up, with auto-update on or off (planning#447). A failure is an alert and
+  // the boot goes on; agents follow through the registration reconcile (D840).
+  eventBusService.subscribe({ category: EventCategory.SystemAddonsReady }, () => {
+    void runRequiredAddonUpdates({
+      minimums: readRunningServerAddonMinimums(),
+      installed: () =>
+        readInstalledAddonVersions(
+          process.env.CAMSTACK_ADDONS_DIR ??
+            path.resolve(process.env.CAMSTACK_DATA ?? 'camstack-data', 'addons'),
+        ),
+      updatePackage: (name) => addonPackageService.updatePackage(name),
+      getAlerts: () =>
+        addonRegistryService.getCapabilityRegistry().getSingleton('alerts') ?? undefined,
+      logger: updateCheckLogger,
+    }).catch((err: unknown) =>
+      updateCheckLogger.warn('Required addon update job failed', {
+        meta: { error: err instanceof Error ? err.message : String(err) },
+      }),
+    )
+  })
 
   // ---- Container ---------------------------------------------------------
   const container = new ServiceContainer()
