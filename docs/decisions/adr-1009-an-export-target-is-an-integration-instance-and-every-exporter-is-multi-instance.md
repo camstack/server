@@ -70,8 +70,8 @@ are sent TO.
 
 ## Enforcement
 
-- Not yet guarded: `scripts/check-integration-instances-declared.ts` checks only addons that
-  bring devices. Extending it to every `device-export` provider is the follow-up that makes the
-  last consequence a guard.
+- `scripts/check-integration-instances-declared.ts` also guards the exporters: every addon entry
+  that provides `device-export` must provide `integration-instances` and declare
+  `instanceMode: 'multiple'` in its source (spec `scripts/__tests__/check-integration-instances-declared.spec.ts`).
 - `scripts/check-migrations-well-formed.ts` covers the migrations listed above, and their specs
   run on real SQLite (move, read-back, rerun no-op).

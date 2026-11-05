@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { type DeviceAddonEntry, findViolations } from '../check-integration-instances-declared.js'
+import {
+  type DeviceAddonEntry,
+  findExporterViolations,
+  findViolations,
+} from '../check-integration-instances-declared.js'
 
 const GOOD_SOURCE = `
   const kind = defineEntryKind('accounts', { title: 'x', schema })
@@ -46,7 +50,10 @@ describe('check-integration-instances-declared', () => {
   it('refuses a NEW device addon that is on rows and not in the baseline', () => {
     const found = findViolations([entry('fresh', ['device-provider'])], [], () => '')
     expect(found).toEqual([
-      { addon: 'fresh', message: expect.stringMatching(/does not declare integration-instances/) },
+      {
+        addon: 'fresh',
+        message: expect.stringMatching(/does not declare integration-instances/),
+      },
     ])
   })
 
@@ -64,5 +71,44 @@ describe('check-integration-instances-declared', () => {
 
   it('ignores an entry that brings no devices', () => {
     expect(findViolations([entry('log', ['log-destination'])], [], () => '')).toEqual([])
+  })
+})
+
+describe('exporters are multi-instance (D1009)', () => {
+  const MULTI = "description: { role: 'services', instanceMode: 'multiple' }"
+
+  it('passes an exporter that provides integration-instances with instanceMode multiple', () => {
+    expect(
+      findExporterViolations(
+        [entry('export-ok', ['device-export', 'integration-instances'])],
+        () => MULTI,
+      ),
+    ).toEqual([])
+  })
+
+  it('refuses an exporter without integration-instances, naming the addon', () => {
+    const found = findExporterViolations([entry('export-bare', ['device-export'])], () => MULTI)
+    expect(found).toEqual([
+      {
+        addon: 'export-bare',
+        message: expect.stringMatching(/does not declare integration-instances/),
+      },
+    ])
+  })
+
+  it("refuses an exporter declaring instanceMode 'single'", () => {
+    const found = findExporterViolations(
+      [entry('export-single', ['device-export', 'integration-instances'])],
+      () => "description: { role: 'services', instanceMode: 'single' }",
+    )
+    expect(found.map((v) => v.addon)).toEqual(['export-single'])
+  })
+
+  it('refuses an exporter whose source declares no instanceMode at all', () => {
+    const found = findExporterViolations(
+      [entry('export-silent', ['device-export', 'integration-instances'])],
+      () => '',
+    )
+    expect(found.map((v) => v.addon)).toEqual(['export-silent'])
   })
 })

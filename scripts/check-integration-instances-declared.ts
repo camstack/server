@@ -14,6 +14,10 @@
  *    addon starts on records (declare the cap), and an addon that migrated, or went away, leaves
  *    the list in the same change.
  *
+ * 3. An addon entry that declares `device-export` (D1009: an export target is an integration
+ *    instance, every exporter is multi-instance) must declare `integration-instances` and carry
+ *    `instanceMode: 'multiple'` in its own source, never `'single'`.
+ *
  * Textual: the source is read, not run. Specs, `__tests__`, `dist` and generated code are skipped.
  *
  * Usage: npx tsx scripts/check-integration-instances-declared.ts
@@ -25,6 +29,9 @@ import { fileURLToPath } from 'node:url'
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const DEVICE_MARKERS: ReadonlySet<string> = new Set(['device-provider', 'device-adoption'])
 const INSTANCES_CAP = 'integration-instances'
+const EXPORT_CAP = 'device-export'
+const MULTIPLE_RE = /\binstanceMode:\s*['"]multiple['"]/
+const SINGLE_RE = /\binstanceMode:\s*['"]single['"]/
 
 export interface DeviceAddonEntry {
   readonly id: string
@@ -86,6 +93,32 @@ export function findViolations(
         addon: id,
         message:
           'listed in the onRows baseline but no addon entry with a device marker has this id: remove the line',
+      })
+    }
+  }
+  return out
+}
+
+/** D1009: every `device-export` provider is a multi-instance integration. */
+export function findExporterViolations(
+  entries: readonly DeviceAddonEntry[],
+  sourceOf: (pkg: string) => string,
+): Violation[] {
+  const out: Violation[] = []
+  for (const entry of entries) {
+    if (!entry.capabilities.includes(EXPORT_CAP)) continue
+    if (!entry.capabilities.includes(INSTANCES_CAP)) {
+      out.push({
+        addon: entry.id,
+        message: `provides ${EXPORT_CAP} and does not declare ${INSTANCES_CAP}: an export target is an integration instance (D1009)`,
+      })
+      continue
+    }
+    const source = sourceOf(entry.pkg)
+    if (SINGLE_RE.test(source) || !MULTIPLE_RE.test(source)) {
+      out.push({
+        addon: entry.id,
+        message: `provides ${EXPORT_CAP} but does not declare instanceMode: 'multiple': every exporter is multi-instance (D1009)`,
       })
     }
   }
@@ -174,7 +207,10 @@ function main(): void {
     cache.set(pkg, text)
     return text
   }
-  const violations = findViolations(entries, readBaseline(), sourceOf)
+  const violations = [
+    ...findViolations(entries, readBaseline(), sourceOf),
+    ...findExporterViolations(entries, sourceOf),
+  ]
   if (violations.length === 0) {
     const devices = entries.filter((e) => e.capabilities.some((c) => DEVICE_MARKERS.has(c)))
     console.log(
