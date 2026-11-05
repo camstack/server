@@ -9,15 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- The Matter integration form is declared on the integration form hook; no visible change
+- The integration form is declared as the instance form (the connection form); fabrics and their stored values are unchanged.
 
 ## [0.2.158] - 2026-11-05
 
 ### Changed
 
 - The Matter manifest declares multiple instances, as the integration already allowed.
-
-- The integration form is declared as the instance form (the connection form); fabrics and their stored values are unchanged.
 
 ## [0.2.157] - 2026-11-05
 
