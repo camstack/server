@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The account form is declared as the integration instance form; the form and stored accounts are unchanged.
+
 ## [0.2.163] - 2026-11-05
 
 ### Changed

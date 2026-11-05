@@ -24,6 +24,7 @@ import type {
   IConnectionTestProvider,
   IDevice,
   IDeviceAdoptionProvider,
+  IntegrationInstanceRef,
   RecordIntegrationInstances,
   SavedDevice,
   SystemEvent,
@@ -328,28 +329,27 @@ export class WyzeProviderAddon extends BaseDeviceProvider {
 
   // ── Config form (account credentials, rendered by the wizard) ───────────
   //
-  // `mode: account`: the wizard's config step fetches this schema via
-  // `addonSettings.getGlobalSettings` and renders the account form. The
-  // SUBMITTED values are stored PER-INTEGRATION (`integrations.create({
-  // addonId, name, settings })`) — the addon reads creds from
-  // `integration.settings`, NOT the global store. The global store is only a
-  // schema carrier here.
+  // `mode: account`: the account form is the INSTANCE form (`integrationFormSchema`); the
+  // submitted values are stored on the connection record, and the addon reads credentials from
+  // there, NOT the global store. The global store only ever held leftovers.
   //
-  // The schema is DECLARED (`globalSettingsSchema`), not only served by the
-  // `getGlobalSettings` override: the keychain save path (D787) derives the
-  // addon's secret tree from the declaration. With only the getter override
-  // the tree was empty, so any write of `password` / `apiKey` to this store —
-  // the keychain migration's own operator write included — landed as
-  // plaintext.
+  // The keychain save path (D787) derives the addon's secret tree from declarations. The leftover
+  // `password` / `apiKey` keys are named in `secretStatePaths`: without them the tree is empty, and
+  // any write of them to this store — the keychain migration's own operator write included — lands
+  // as plaintext (`global-credentials-keychain.spec.ts`).
 
-  protected override globalSettingsSchema(): ConfigUISchema {
+  protected override readonly secretStatePaths: readonly string[] = ['password', 'apiKey']
+
+  protected override async integrationFormSchema(
+    _instance: IntegrationInstanceRef,
+  ): Promise<ConfigUISchema | null> {
     return buildSettingsSchema()
   }
 
   override async getGlobalSettings(): Promise<ConfigUISchemaWithValues> {
     // Deliberately empty values: credentials live per integration, and the
     // global store must never surface (or pre-fill) one.
-    return hydrateSchema(this.globalSettingsSchema(), {})
+    return hydrateSchema(buildSettingsSchema(), {})
   }
 
   /**
