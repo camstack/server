@@ -14,7 +14,7 @@ The single root package every node boots. Hub vs agent is `CAMSTACK_ROLE`, not a
 
 | Package | Directory | Version | Reaches a node via | What it is |
 | --- | --- | --- | --- | --- |
-| `@camstack/server` | `server/backend` | 1.2.775 | the update itself | — |
+| `@camstack/server` | `server/backend` | 1.2.776 | the update itself | — |
 
 ## Framework (4)
 
@@ -45,7 +45,7 @@ Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/ad
 | `@camstack/addon-export-hap` | `packages/addon-export-hap` | 1.2.194 | addons dir | HomeKit (HAP) exporter for CamStack devices. Publishes each exposed device as its own HomeKit accessory: cameras and doorbells with SRTP streaming, HomeKit Secure Video, motion, two-way audio, PTZ and battery; switches, lights, locks and sensors through a capability→service table. |
 | `@camstack/addon-google-services` | `packages/addon-google-services` | 0.2.38 | addons dir | Google — Google brokers (OAuth2): Calendar as calendar-source, Gmail send as smtp-provider. |
 | `@camstack/addon-import-alexa` | `packages/addon-import-alexa` | 0.2.188 | addons dir | Alexa device-import provider for CamStack — imports the smart-home devices in a user's Alexa account via the unofficial alexa-remote2 cookie/token client (the inverse of the Alexa exporter) |
-| `@camstack/addon-matter-broker` | `packages/addon-matter-broker` | 0.2.157 | addons dir | Matter broker addon for CamStack — owns a Matter fabric (commissioning + the long-lived controller) via the matter.js controller and brokers commissioned Matter nodes into CamStack |
+| `@camstack/addon-matter-broker` | `packages/addon-matter-broker` | 0.2.158 | addons dir | Matter broker addon for CamStack — owns a Matter fabric (commissioning + the long-lived controller) via the matter.js controller and brokers commissioned Matter nodes into CamStack |
 | `@camstack/addon-model-studio` | `packages/addon-model-studio` | 1.1.342 | addons dir | Custom detection model registry, conversion & distribution for CamStack |
 | `@camstack/addon-mqtt-broker` | `packages/addon-mqtt-broker` | 1.2.151 | addons dir | MQTT broker registry addon for CamStack — manages external broker entries + an optional embedded aedes broker. Consumers spin up their own `mqtt.js` clients via the `mqtt-broker` cap. |
 | `@camstack/addon-notifiers` | `packages/addon-notifiers` | 1.2.628 | addons dir (image-seeded) | System notifiers addon for CamStack — a `notification-output` collection provider hosting per-kind notifier adapters (ntfy, pushover, gotify, telegram, discord, webhook, zentik). |
@@ -56,11 +56,11 @@ Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/ad
 | `@camstack/addon-provider-amcrest` | `packages/addon-provider-amcrest` | 0.2.166 | addons dir | Amcrest/Dahua camera device provider addon for CamStack — Dahua CGI over HTTP(S) with digest auth (snapshot, RTSP catalog, PTZ, image/day-night config) |
 | `@camstack/addon-provider-bosch` | `packages/addon-provider-bosch` | 0.1.37 | addons dir | Bosch smart-home device-provider addons for CamStack — SHC, Home Connect, and HomeCom cloud integrations (scaffold) |
 | `@camstack/addon-provider-dreame` | `packages/addon-provider-dreame` | 0.2.165 | addons dir | Dreame robot-vacuum / lawn-mower device-provider addon for CamStack — wraps the @apocaliss92/nodedreame Dreamehome cloud client |
-| `@camstack/addon-provider-dreo` | `packages/addon-provider-dreo` | 0.2.155 | addons dir | Dreo smart-device (fan / air-circulator / purifier / heater / humidifier) device-provider addon for CamStack — wraps the @apocaliss92/nodedreo Dreo cloud client (REST + WebSocket) |
+| `@camstack/addon-provider-dreo` | `packages/addon-provider-dreo` | 0.2.156 | addons dir | Dreo smart-device (fan / air-circulator / purifier / heater / humidifier) device-provider addon for CamStack — wraps the @apocaliss92/nodedreo Dreo cloud client (REST + WebSocket) |
 | `@camstack/addon-provider-ecowitt` | `packages/addon-provider-ecowitt` | 0.2.156 | addons dir | Ecowitt weather-station device-provider addon for CamStack — wraps the @apocaliss92/nodewitt local-poll / push client |
 | `@camstack/addon-provider-enpal` | `packages/addon-provider-enpal` | 0.1.9 | addons dir | Enpal solar-box device-provider addon for CamStack — PV, battery, grid, house and heat-pump readings from the box's local InfluxDB (device page as fallback) |
 | `@camstack/addon-provider-esphome` | `packages/addon-provider-esphome` | 0.1.12 | addons dir | ESPHome device-provider addon for CamStack: one broker per board, spoken over the native API (Noise) with esphome-client |
-| `@camstack/addon-provider-gree` | `packages/addon-provider-gree` | 0.2.151 | addons dir | Gree air-conditioner device-provider addon for CamStack — wraps the @apocaliss92/nodegree local-UDP client (LAN discovery + AES control), exposing climate-control and fan-control |
+| `@camstack/addon-provider-gree` | `packages/addon-provider-gree` | 0.2.152 | addons dir | Gree air-conditioner device-provider addon for CamStack — wraps the @apocaliss92/nodegree local-UDP client (LAN discovery + AES control), exposing climate-control and fan-control |
 | `@camstack/addon-provider-hikvision` | `packages/addon-provider-hikvision` | 1.2.182 | addons dir | Hikvision camera device provider addon for CamStack — ISAPI over HTTP(S) with digest auth (snapshot, alarm stream, RTSP discovery) |
 | `@camstack/addon-provider-homeassistant` | `packages/addon-provider-homeassistant` | 1.2.661 | addons dir | Home Assistant device provider addon for CamStack |
 | `@camstack/addon-provider-homematic` | `packages/addon-provider-homematic` | 1.2.183 | addons dir | Homematic / HomematicIP (CCU3 / RaspberryMatic) device-provider addon for CamStack — wraps the nodehomematic library |
@@ -68,7 +68,7 @@ Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/ad
 | `@camstack/addon-provider-onvif` | `packages/addon-provider-onvif` | 1.2.155 | addons dir | ONVIF camera device provider addon for CamStack |
 | `@camstack/addon-provider-petkit` | `packages/addon-provider-petkit` | 0.2.160 | addons dir | PetKit smart-feeder device-provider addon for CamStack — wraps the @apocaliss92/nodepetkit PetKit cloud client |
 | `@camstack/addon-provider-rademacher` | `packages/addon-provider-rademacher` | 0.2.159 | addons dir | Rademacher HomePilot device-provider addon for CamStack — wraps the @apocaliss92/noderademacher local-hub client (roller shutters over the cover cap) |
-| `@camstack/addon-provider-reolink` | `packages/addon-provider-reolink` | 1.2.227 | addons dir | Reolink camera device provider addon for CamStack — native Baichuan protocol |
+| `@camstack/addon-provider-reolink` | `packages/addon-provider-reolink` | 1.2.228 | addons dir | Reolink camera device provider addon for CamStack — native Baichuan protocol |
 | `@camstack/addon-provider-rtsp` | `packages/addon-provider-rtsp` | 1.2.151 | addons dir | Generic RTSP camera device provider addon for CamStack |
 | `@camstack/addon-provider-tuya` | `packages/addon-provider-tuya` | 0.2.151 | addons dir | Tuya / Smart Life device-provider addon for CamStack — account-onboarded (Tuya IoT cloud fetch of device localKeys) + LOCAL DP control via the @apocaliss92/nodetuya encrypted-LAN client, exposing switch / water-heater-family kettle entities |
 | `@camstack/addon-provider-unifi` | `packages/addon-provider-unifi` | 0.2.156 | addons dir | UniFi Network controller device-provider addon for CamStack — local-controller infra switches/APs (as containers) + network-client presence. No cameras. |
