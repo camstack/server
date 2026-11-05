@@ -83,6 +83,9 @@ export default defineFixtures({
       page: 1,
       pageSize: 20000,
     },
+    'deviceManager.providerCreationType': { deviceType: null },
+    'integrationInstances.instanceFormSchema': { sections: [] },
+    'preferences.get': null,
     'auth.listLoginMethods': [],
   },
 })

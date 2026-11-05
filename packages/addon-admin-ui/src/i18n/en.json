@@ -1784,6 +1784,20 @@
       "title": "New devices found",
       "dismiss": "Dismiss",
       "adopt": "Adopt"
+    },
+    "addDeviceModal": {
+      "tabNetwork": "Found on the network",
+      "tabManual": "Enter parameters",
+      "scanNow": "Scan now",
+      "scanning": "Scanning the local network…",
+      "scanFailed": "The scan failed. Try again.",
+      "scanHint": "Scan the network to find devices to add.",
+      "nothingFound": "No devices responded to the scan.",
+      "nothingToAdd": "This integration has no way to add a device from here.",
+      "enterDetails": "Enter details",
+      "back": "Back to the list",
+      "found_one": "{{count}} device found",
+      "found_other": "{{count}} devices found"
     }
   },
   "ai": {

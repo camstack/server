@@ -85,6 +85,40 @@ interface AdoptDevicesModalProps {
  * list. "Add selected" commits the preview via `adoptionAdopt`.
  */
 export function AdoptDevicesModal({ addonId, integrationId, onClose }: AdoptDevicesModalProps) {
+  const { t } = useTranslation()
+  return (
+    <Dialog
+      open
+      onOpenChange={(next) => {
+        if (!next) onClose()
+      }}
+    >
+      {/* Fixed height (not max-h) on desktop so the dialog never resizes between
+          the loading / list / empty / error states — the body scrolls instead of
+          the whole modal bouncing. */}
+      <DialogContent width="xl" scroll="body" className="md:h-[85vh]">
+        <DialogHeader>
+          <DialogTitle>
+            {t('integrations.adoptDevices', { defaultValue: 'Adopt devices' })}
+          </DialogTitle>
+          <DialogDescription>
+            {t('integrations.adoptDevicesHint', {
+              defaultValue: 'Preview the candidate devices and add the ones you want.',
+            })}
+          </DialogDescription>
+        </DialogHeader>
+        <AdoptDevicesPanel addonId={addonId} integrationId={integrationId} onClose={onClose} />
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+/**
+ * The adopt surface WITHOUT its dialog frame: location import, the candidate
+ * list, the job progress and the footer. The Add device modal mounts it as a
+ * tab; `AdoptDevicesModal` mounts it alone.
+ */
+export function AdoptDevicesPanel({ addonId, integrationId, onClose }: AdoptDevicesModalProps) {
   const uiText = useUiText()
   const { t } = useTranslation()
 
@@ -344,242 +378,212 @@ export function AdoptDevicesModal({ addonId, integrationId, onClose }: AdoptDevi
   const adoptionDone = jobId !== null && selectedCount === 0 && !adoptMutation.isPending
 
   return (
-    <Dialog
-      open
-      onOpenChange={(next) => {
-        if (!next) onClose()
-      }}
-    >
-      {/* Fixed height (not max-h) on desktop so the dialog never resizes between
-          the loading / list / empty / error states — the body scrolls instead of
-          the whole modal bouncing. */}
-      <DialogContent width="xl" scroll="body" className="md:h-[85vh]">
-        <DialogHeader>
-          <DialogTitle>
-            {t('integrations.adoptDevices', { defaultValue: 'Adopt devices' })}
-          </DialogTitle>
-          <DialogDescription>
-            {t('integrations.adoptDevicesHint', {
-              defaultValue: 'Preview the candidate devices and add the ones you want.',
-            })}
-          </DialogDescription>
-          {supportsLocationImport && (
-            <label className="flex items-center gap-1.5 cursor-pointer text-[11px] text-foreground-subtle hover:text-foreground transition-colors">
-              <Checkbox
-                checked={importLocations}
-                onChange={(e) => setImportLocations(e.target.checked)}
-                className="accent-primary"
-              />
-              {t('integrations.importLocations', {
-                defaultValue: 'Import locations from the integration',
-              })}
-            </label>
-          )}
-        </DialogHeader>
+    <>
+      {supportsLocationImport && (
+        <label className="flex items-center gap-1.5 cursor-pointer text-[11px] text-foreground-subtle hover:text-foreground transition-colors">
+          <Checkbox
+            checked={importLocations}
+            onChange={(e) => setImportLocations(e.target.checked)}
+            className="accent-primary"
+          />
+          {t('integrations.importLocations', {
+            defaultValue: 'Import locations from the integration',
+          })}
+        </label>
+      )}
 
-        {/* Body — the shared <DeviceList> in generic mode owns search +
+      {/* Body — the shared <DeviceList> in generic mode owns search +
             pagination (client-side); the Refresh action sits in its toolbar.
             Selection + per-row controls live in CandidateRow (renderItem). */}
-        <div className="flex-1 min-h-0 flex flex-col gap-2 overflow-hidden">
-          {(warmError ?? listError ?? refreshStatusError) && candidates.length === 0 && (
-            <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 shrink-0">
-              <div className="flex items-start gap-2">
-                <AlertTriangle className="h-3.5 w-3.5 text-destructive mt-0.5 shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-xs font-medium text-destructive">
-                    {t('integrations.adoptRefreshFailed', {
-                      defaultValue: 'Could not discover devices.',
-                    })}
-                  </p>
-                  <p className="text-[11px] text-destructive/90 mt-0.5">
-                    {warmError ?? listError ?? refreshStatusError}
-                  </p>
-                </div>
+      <div className="flex-1 min-h-0 flex flex-col gap-2 overflow-hidden">
+        {(warmError ?? listError ?? refreshStatusError) && candidates.length === 0 && (
+          <div className="rounded-lg border border-danger/30 bg-danger/5 px-4 py-3 shrink-0">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-3.5 w-3.5 text-danger mt-0.5 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-danger">
+                  {t('integrations.adoptRefreshFailed', {
+                    defaultValue: 'Could not discover devices.',
+                  })}
+                </p>
+                <p className="text-[11px] text-danger/90 mt-0.5">
+                  {warmError ?? listError ?? refreshStatusError}
+                </p>
               </div>
             </div>
-          )}
-          {filters.length > 1 && (
-            <FilterSelector
-              filters={filters}
-              activeFilter={activeFilter}
-              onSelect={onSelectFilter}
-            />
-          )}
-          <div className="flex-1 min-h-0">
-            <DeviceList
-              mode="generic"
-              items={treeRows.map((r) => r.candidate)}
-              pageSize={CLIENT_PAGE_SIZE}
-              getKey={(c) => c.childNativeId}
-              getSearchText={candidateSearchText}
-              getFilterType={(c) => c.type}
-              filterOptions={allDeviceTypeFilterOptions(uiText)}
-              filterLabel={t('integrations.adoptColType', { defaultValue: 'Type' })}
-              isLoading={listQuery.isLoading || (isRefreshing && candidates.length === 0)}
-              searchPlaceholder={t('integrations.adoptSearch', {
-                defaultValue: 'Search candidates…',
-              })}
-              emptyLabel={
-                (warmError ?? listError ?? refreshStatusError) && candidates.length === 0
-                  ? ''
-                  : t('integrations.adoptNoCandidates', {
-                      defaultValue: 'No candidate devices found.',
-                    })
-              }
-              toolbar={
-                <Button
-                  variant="unstyled"
-                  type="button"
-                  onClick={doRefresh}
-                  disabled={isRefreshing}
-                  title={t('integrations.adoptRefreshTitle', {
-                    defaultValue: 'Re-scan Home Assistant for devices',
-                  })}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs text-foreground-subtle hover:text-foreground hover:bg-surface-hover transition-colors disabled:opacity-60 shrink-0"
-                >
-                  <RotateCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-                  {t('integrations.adoptRefresh', { defaultValue: 'Refresh' })}
-                </Button>
-              }
-              columns={[
-                {
-                  // Name cell follows the unified generic convention: a
-                  // chevron-in-name-cell expand affordance (left), then the
-                  // candidate name + adopted badge — same shape as the
-                  // integrations list's `name` column. The candidate-specific
-                  // entity count rides next to the chevron.
-                  key: 'name',
-                  header: t('integrations.adoptColName', { defaultValue: 'Name' }),
-                  // `max-w-0` lets the cell shrink to its column so a long name
-                  // truncates instead of pushing the selection column off-screen.
-                  headerClassName: 'w-full sm:w-[55%]',
-                  cellClassName: 'max-w-0',
-                  cell: (c) => (
-                    <CandidateNameCell
+          </div>
+        )}
+        {filters.length > 1 && (
+          <FilterSelector filters={filters} activeFilter={activeFilter} onSelect={onSelectFilter} />
+        )}
+        <div className="flex-1 min-h-0">
+          <DeviceList
+            mode="generic"
+            items={treeRows.map((r) => r.candidate)}
+            pageSize={CLIENT_PAGE_SIZE}
+            getKey={(c) => c.childNativeId}
+            getSearchText={candidateSearchText}
+            getFilterType={(c) => c.type}
+            filterOptions={allDeviceTypeFilterOptions(uiText)}
+            filterLabel={t('integrations.adoptColType', { defaultValue: 'Type' })}
+            isLoading={listQuery.isLoading || (isRefreshing && candidates.length === 0)}
+            searchPlaceholder={t('integrations.adoptSearch', {
+              defaultValue: 'Search candidates…',
+            })}
+            emptyLabel={
+              (warmError ?? listError ?? refreshStatusError) && candidates.length === 0
+                ? ''
+                : t('integrations.adoptNoCandidates', {
+                    defaultValue: 'No candidate devices found.',
+                  })
+            }
+            toolbar={
+              <Button
+                variant="unstyled"
+                type="button"
+                onClick={doRefresh}
+                disabled={isRefreshing}
+                title={t('integrations.adoptRefreshTitle', {
+                  defaultValue: 'Re-scan Home Assistant for devices',
+                })}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs text-foreground-subtle hover:text-foreground hover:bg-surface-hover transition-colors disabled:opacity-60 shrink-0"
+              >
+                <RotateCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                {t('integrations.adoptRefresh', { defaultValue: 'Refresh' })}
+              </Button>
+            }
+            columns={[
+              {
+                // Name cell follows the unified generic convention: a
+                // chevron-in-name-cell expand affordance (left), then the
+                // candidate name + adopted badge — same shape as the
+                // integrations list's `name` column. The candidate-specific
+                // entity count rides next to the chevron.
+                key: 'name',
+                header: t('integrations.adoptColName', { defaultValue: 'Name' }),
+                // `max-w-0` lets the cell shrink to its column so a long name
+                // truncates instead of pushing the selection column off-screen.
+                headerClassName: 'w-full sm:w-[55%]',
+                cellClassName: 'max-w-0',
+                cell: (c) => (
+                  <CandidateNameCell
+                    candidate={c}
+                    depth={depthById.get(c.childNativeId) ?? 0}
+                    // Flat granularities (e.g. entities) have no children to
+                    // expand — render a plain selectable row, no chevron.
+                    expandable={!isFlatFilter}
+                    expanded={expanded.has(c.childNativeId)}
+                    onToggleExpand={() => toggleExpand(c.childNativeId)}
+                    adoptedLabel={t('integrations.adoptAlready', { defaultValue: 'Adopted' })}
+                    typeLabel={deviceTypeMetaOf(c.type, uiText).label}
+                  />
+                ),
+              },
+              {
+                // Type — icon + label from the exhaustive device-type map.
+                key: 'type',
+                header: t('integrations.adoptColType', { defaultValue: 'Type' }),
+                headerClassName: 'w-[30%] hidden sm:table-cell',
+                cellClassName: 'hidden sm:table-cell',
+                cell: (c) => {
+                  const meta = deviceTypeMetaOf(c.type, uiText)
+                  const Icon = meta.icon
+                  return (
+                    <span className="inline-flex items-center gap-1.5 text-[10px] text-foreground-subtle">
+                      <Icon className="h-3.5 w-3.5 shrink-0" />
+                      {meta.label}
+                    </span>
+                  )
+                },
+              },
+              {
+                // Selection — RIGHT, mirroring the integration list's
+                // right-aligned actions cell (`justify-end`).
+                key: 'select',
+                header: '',
+                headerClassName: 'w-10 sm:w-[15%] text-right',
+                cellClassName: 'text-right',
+                cell: (c) => (
+                  <div className="flex items-center justify-end">
+                    <Button
+                      variant="unstyled"
+                      onClick={() => toggleSelect(c)}
+                      disabled={c.alreadyAdopted}
+                      aria-label={
+                        selected.has(c.childNativeId)
+                          ? t('integrations.adoptDevicesModal.deselect', 'Deselect')
+                          : t('integrations.adoptDevicesModal.select', 'Select')
+                      }
+                      className={`inline-flex h-5 w-5 items-center justify-center rounded border ${
+                        selected.has(c.childNativeId)
+                          ? 'border-primary bg-primary'
+                          : 'border-border'
+                      } ${c.alreadyAdopted ? 'cursor-not-allowed opacity-50' : ''}`}
+                    >
+                      {selected.has(c.childNativeId) && (
+                        <Check className="h-3 w-3 text-primary-foreground" />
+                      )}
+                    </Button>
+                  </div>
+                ),
+              },
+            ]}
+            isExpanded={(c) => !isFlatFilter && expanded.has(c.childNativeId)}
+            renderExpanded={
+              isFlatFilter
+                ? undefined
+                : (c) => (
+                    <CandidateEntities
                       candidate={c}
-                      depth={depthById.get(c.childNativeId) ?? 0}
-                      // Flat granularities (e.g. entities) have no children to
-                      // expand — render a plain selectable row, no chevron.
-                      expandable={!isFlatFilter}
-                      expanded={expanded.has(c.childNativeId)}
-                      onToggleExpand={() => toggleExpand(c.childNativeId)}
-                      adoptedLabel={t('integrations.adoptAlready', { defaultValue: 'Adopted' })}
-                      typeLabel={deviceTypeMetaOf(c.type, uiText).label}
+                      hiddenChildIds={overrides.get(c.childNativeId)?.hiddenChildIds ?? new Set()}
+                      onToggleChildHidden={(childId) => toggleChildHidden(c.childNativeId, childId)}
                     />
-                  ),
-                },
-                {
-                  // Type — icon + label from the exhaustive device-type map.
-                  key: 'type',
-                  header: t('integrations.adoptColType', { defaultValue: 'Type' }),
-                  headerClassName: 'w-[30%] hidden sm:table-cell',
-                  cellClassName: 'hidden sm:table-cell',
-                  cell: (c) => {
-                    const meta = deviceTypeMetaOf(c.type, uiText)
-                    const Icon = meta.icon
-                    return (
-                      <span className="inline-flex items-center gap-1.5 text-[10px] text-foreground-subtle">
-                        <Icon className="h-3.5 w-3.5 shrink-0" />
-                        {meta.label}
-                      </span>
-                    )
-                  },
-                },
-                {
-                  // Selection — RIGHT, mirroring the integration list's
-                  // right-aligned actions cell (`justify-end`).
-                  key: 'select',
-                  header: '',
-                  headerClassName: 'w-10 sm:w-[15%] text-right',
-                  cellClassName: 'text-right',
-                  cell: (c) => (
-                    <div className="flex items-center justify-end">
-                      <Button
-                        variant="unstyled"
-                        onClick={() => toggleSelect(c)}
-                        disabled={c.alreadyAdopted}
-                        aria-label={
-                          selected.has(c.childNativeId)
-                            ? t('integrations.adoptDevicesModal.deselect', 'Deselect')
-                            : t('integrations.adoptDevicesModal.select', 'Select')
-                        }
-                        className={`inline-flex h-5 w-5 items-center justify-center rounded border ${
-                          selected.has(c.childNativeId)
-                            ? 'border-primary bg-primary'
-                            : 'border-border'
-                        } ${c.alreadyAdopted ? 'cursor-not-allowed opacity-50' : ''}`}
-                      >
-                        {selected.has(c.childNativeId) && (
-                          <Check className="h-3 w-3 text-primary-foreground" />
-                        )}
-                      </Button>
-                    </div>
-                  ),
-                },
-              ]}
-              isExpanded={(c) => !isFlatFilter && expanded.has(c.childNativeId)}
-              renderExpanded={
-                isFlatFilter
-                  ? undefined
-                  : (c) => (
-                      <CandidateEntities
-                        candidate={c}
-                        hiddenChildIds={overrides.get(c.childNativeId)?.hiddenChildIds ?? new Set()}
-                        onToggleChildHidden={(childId) =>
-                          toggleChildHidden(c.childNativeId, childId)
-                        }
-                      />
-                    )
-              }
-              rowClassName={(c) =>
-                c.alreadyAdopted
-                  ? 'opacity-60'
-                  : selected.has(c.childNativeId)
-                    ? 'bg-primary/5'
-                    : ''
-              }
-            />
+                  )
+            }
+            rowClassName={(c) =>
+              c.alreadyAdopted ? 'opacity-60' : selected.has(c.childNativeId) ? 'bg-primary/5' : ''
+            }
+          />
+        </div>
+      </div>
+
+      {/* Error banner */}
+      {submitError && (
+        <div className="border-t border-danger/30 bg-danger/5 px-3 py-2 shrink-0">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="h-3.5 w-3.5 text-danger mt-0.5 shrink-0" />
+            <p className="text-[11px] text-danger">{submitError}</p>
           </div>
         </div>
+      )}
 
-        {/* Error banner */}
-        {submitError && (
-          <div className="border-t border-destructive/30 bg-destructive/5 px-3 py-2 shrink-0">
-            <div className="flex items-start gap-2">
-              <AlertTriangle className="h-3.5 w-3.5 text-destructive mt-0.5 shrink-0" />
-              <p className="text-[11px] text-destructive">{submitError}</p>
-            </div>
-          </div>
-        )}
+      {jobId !== null && (
+        <AdoptJobProgress
+          addonId={addonId}
+          integrationId={integrationId}
+          jobId={jobId}
+          onFinished={onJobFinished}
+        />
+      )}
 
-        {jobId !== null && (
-          <AdoptJobProgress
-            addonId={addonId}
-            integrationId={integrationId}
-            jobId={jobId}
-            onFinished={onJobFinished}
-          />
-        )}
-
-        <DialogFooter>
-          <Button variant="outline" size="sm" onClick={onClose}>
-            {t('integrations.cancel', { defaultValue: 'Cancel' })}
-          </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={adoptionDone ? onClose : handleAdopt}
-            disabled={!adoptionDone && (selectedCount === 0 || adoptMutation.isPending)}
-          >
-            {adoptMutation.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-            {adoptionDone
-              ? t('integrations.close', { defaultValue: 'Close' })
-              : t('integrations.addSelected', { defaultValue: 'Add selected' })}
-            {!adoptionDone && selectedCount > 0 ? ` (${selectedCount})` : ''}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      <DialogFooter>
+        <Button variant="outline" size="sm" onClick={onClose}>
+          {t('integrations.cancel', { defaultValue: 'Cancel' })}
+        </Button>
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={adoptionDone ? onClose : handleAdopt}
+          disabled={!adoptionDone && (selectedCount === 0 || adoptMutation.isPending)}
+        >
+          {adoptMutation.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+          {adoptionDone
+            ? t('integrations.close', { defaultValue: 'Close' })
+            : t('integrations.addSelected', { defaultValue: 'Add selected' })}
+          {!adoptionDone && selectedCount > 0 ? ` (${selectedCount})` : ''}
+        </Button>
+      </DialogFooter>
+    </>
   )
 }
 

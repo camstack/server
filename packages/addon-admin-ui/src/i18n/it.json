@@ -1784,6 +1784,20 @@
       "title": "Nuovi dispositivi trovati",
       "dismiss": "Ignora",
       "adopt": "Adotta"
+    },
+    "addDeviceModal": {
+      "tabNetwork": "Trovati in rete",
+      "tabManual": "Inserisci i parametri",
+      "scanNow": "Cerca ora",
+      "scanning": "Ricerca nella rete locale…",
+      "scanFailed": "La ricerca non è riuscita. Riprova.",
+      "scanHint": "Cerca nella rete i dispositivi da aggiungere.",
+      "nothingFound": "Nessun dispositivo ha risposto alla ricerca.",
+      "nothingToAdd": "Questa integrazione non può aggiungere dispositivi da qui.",
+      "enterDetails": "Inserisci i dettagli",
+      "back": "Torna all'elenco",
+      "found_one": "{{count}} dispositivo trovato",
+      "found_other": "{{count}} dispositivi trovati"
     }
   },
   "serverManagement": {

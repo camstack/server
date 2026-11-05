@@ -94,6 +94,63 @@ interface AddDeviceDialogProps {
 
 export function AddDeviceDialog({ open, integrationId, addonId, onClose }: AddDeviceDialogProps) {
   const { t } = useTranslation()
+  if (!open) return null
+  return (
+    <Dialog
+      open
+      onOpenChange={(next) => {
+        if (!next) onClose()
+      }}
+    >
+      <DialogContent width="lg" scroll="body">
+        <DialogHeader>
+          <DialogTitle>{t('integrations.addDevice')}</DialogTitle>
+        </DialogHeader>
+        <AddDeviceForm integrationId={integrationId} addonId={addonId} onClose={onClose} />
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+interface AddDeviceFormProps {
+  integrationId: string
+  addonId: string
+  /** Called after Save (not Save and new) and by Cancel. */
+  onClose: () => void
+}
+
+/**
+ * Whether the provider can create a device from typed parameters. `unavailable`
+ * only once the provider ANSWERED that it has no creatable type or no form — a
+ * query still in flight is `loading`, never "no manual flow".
+ */
+export type ManualCreationAvailability = 'loading' | 'available' | 'unavailable'
+
+export function useManualCreationAvailability(addonId: string): ManualCreationAvailability {
+  const typeQuery = useDeviceManagerProviderCreationType({ addonId })
+  const type = typeQuery.data?.deviceType ?? null
+  const schemaQuery = useDeviceManagerGetCreationSchema(
+    { addonId, type: type ?? DeviceType.Camera },
+    { enabled: typeQuery.isSuccess && type !== null },
+  )
+  if (typeQuery.isError) return 'unavailable'
+  if (typeQuery.isLoading) return 'loading'
+  if (type === null) return 'unavailable'
+  if (schemaQuery.isError) return 'unavailable'
+  if (schemaQuery.isLoading || !schemaQuery.isSuccess) return 'loading'
+  const schema = (schemaQuery.data ?? null) as ConfigUISchema | null
+  const hasFields = (schema?.sections ?? []).some((section) => section.fields.length > 0)
+  return hasFields ? 'available' : 'unavailable'
+}
+
+/**
+ * The manual "enter the parameters" flow WITHOUT its dialog frame (body, test
+ * logs, error banner, footer). The Add device modal mounts it as a tab;
+ * `AddDeviceDialog` mounts it alone.
+ */
+export function AddDeviceForm({ integrationId, addonId, onClose }: AddDeviceFormProps) {
+  const { t } = useTranslation()
+  const open = true
   const queryClient = useQueryClient()
 
   const [formValues, setFormValues] = useState<Record<string, unknown>>({})
@@ -210,8 +267,6 @@ export function AddDeviceDialog({ open, integrationId, addonId, onClose }: AddDe
     }
   }
 
-  if (!open) return null
-
   // Gate Save on every `required` field in the schema being non-empty.
   // Server-side validation still runs (and surfaces via `submitError`),
   // but clicking Save with an obviously-empty Password is wasted UX.
@@ -229,155 +284,142 @@ export function AddDeviceDialog({ open, integrationId, addonId, onClose }: AddDe
     (schemaQuery.isSuccess && schema === null)
 
   return (
-    <Dialog
-      open
-      onOpenChange={(next) => {
-        if (!next) onClose()
-      }}
-    >
-      <DialogContent width="lg" scroll="body">
-        <DialogHeader>
-          <DialogTitle>{t('integrations.addDevice')}</DialogTitle>
-        </DialogHeader>
-
-        <DialogBody className="space-y-3">
-          {isBusy ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+    <>
+      <DialogBody className="space-y-3">
+        {isBusy ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+          </div>
+        ) : hasError ? (
+          <div className="flex items-start gap-3 rounded-lg border border-danger/40 bg-danger/10 px-4 py-3">
+            <AlertTriangle className="h-4 w-4 text-danger mt-0.5 shrink-0" />
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-danger">
+                {t('integrations.addDeviceDialog.providerUnavailable', 'Provider unavailable')}
+              </p>
+              <p className="text-xs text-foreground-subtle">
+                <Trans
+                  i18nKey="integrations.addDeviceDialog.notReady"
+                  values={{ addonId }}
+                  components={{ mono: <span className="font-mono" /> }}
+                />
+              </p>
             </div>
-          ) : hasError ? (
-            <div className="flex items-start gap-3 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3">
-              <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
-              <div className="space-y-1">
-                <p className="text-xs font-medium text-destructive">
-                  {t('integrations.addDeviceDialog.providerUnavailable', 'Provider unavailable')}
-                </p>
-                <p className="text-xs text-foreground-subtle">
-                  <Trans
-                    i18nKey="integrations.addDeviceDialog.notReady"
-                    values={{ addonId }}
-                    components={{ mono: <span className="font-mono" /> }}
-                  />
-                </p>
-              </div>
-            </div>
-          ) : (
-            <FormBuilder
-              schema={schema!}
-              values={formValues}
-              onChange={setFormValues}
-              onTestField={onTestField}
-              probeResults={probeResults}
-              onClearProbe={clearProbeResult}
-            />
-          )}
-        </DialogBody>
+          </div>
+        ) : (
+          <FormBuilder
+            schema={schema!}
+            values={formValues}
+            onChange={setFormValues}
+            onTestField={onTestField}
+            probeResults={probeResults}
+            onClearProbe={clearProbeResult}
+          />
+        )}
+      </DialogBody>
 
-        {/* Live test logs — collapsed by default, auto-opens on first
+      {/* Live test logs — collapsed by default, auto-opens on first
             test click. Filtered on (addonId, requestId) so it shows
             ONLY this dialog's probe traffic. Empty until the provider
             tags its probe logger with `requestId` (Reolink does;
             other providers will be added incrementally). */}
-        {!hasError && !isBusy && (
-          <div className="border-t border-border bg-surface/50 shrink-0">
+      {!hasError && !isBusy && (
+        <div className="border-t border-border bg-surface/50 shrink-0">
+          <Button
+            variant="unstyled"
+            type="button"
+            onClick={() => setShowLogs((v) => !v)}
+            className="flex w-full items-center justify-between px-3 py-2 text-[11px] text-foreground-subtle hover:text-foreground hover:bg-surface-hover transition-colors"
+          >
+            <span className="flex items-center gap-2">
+              <ScrollText className="h-3.5 w-3.5" />
+              {t('integrations.addDeviceDialog.testLogs', 'Test logs')}
+              <span className="font-mono text-[9px] opacity-60">{probeRequestId.slice(0, 14)}</span>
+            </span>
+            <ChevronDown
+              className={`h-3.5 w-3.5 transition-transform ${showLogs ? 'rotate-180' : ''}`}
+            />
+          </Button>
+          {showLogs && (
+            <div className="border-t border-border max-h-64 overflow-hidden">
+              <LogStream
+                addonId={addonId}
+                requestId={probeRequestId}
+                limit={50}
+                maxHeight="max-h-64"
+                showFilters={false}
+                showScope={false}
+                className="border-0 rounded-none"
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Validation / submit error banner — visible above the footer
+            so a missing-required field or a server-side reject (e.g.
+            `Password is required`) is impossible to miss. */}
+      {!hasError && !isBusy && (submitError || missingRequired.length > 0) && (
+        <div className="border-t border-danger/30 bg-danger/5 px-3 py-2 shrink-0">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="h-3.5 w-3.5 text-danger mt-0.5 shrink-0" />
+            <p className="text-[11px] text-danger">
+              {submitError
+                ? submitError
+                : t('integrations.addDeviceDialog.required', 'Required: {{value1}}', {
+                    value1: missingRequired.join(', '),
+                  })}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Footer */}
+      <DialogFooter className="justify-between">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="unstyled"
+            onClick={onClose}
+            className="rounded-lg border border-border px-3 py-1.5 text-xs text-foreground-subtle hover:text-foreground transition-colors"
+          >
+            {t('integrations.cancel')}
+          </Button>
+          {!hasError && hasProbeFields && (
             <Button
               variant="unstyled"
               type="button"
-              onClick={() => setShowLogs((v) => !v)}
-              className="flex w-full items-center justify-between px-3 py-2 text-[11px] text-foreground-subtle hover:text-foreground hover:bg-surface-hover transition-colors"
+              onClick={handleTestAll}
+              disabled={testAllStatus === 'testing'}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground-subtle hover:text-foreground hover:bg-surface-hover transition-colors disabled:opacity-50"
             >
-              <span className="flex items-center gap-2">
-                <ScrollText className="h-3.5 w-3.5" />
-                {t('integrations.addDeviceDialog.testLogs', 'Test logs')}
-                <span className="font-mono text-[9px] opacity-60">
-                  {probeRequestId.slice(0, 14)}
-                </span>
-              </span>
-              <ChevronDown
-                className={`h-3.5 w-3.5 transition-transform ${showLogs ? 'rotate-180' : ''}`}
-              />
+              {testAllStatus === 'testing' ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Wifi className="h-3.5 w-3.5" />
+              )}
+              {t('integrations.addDeviceDialog.testAll', 'Test All')}
             </Button>
-            {showLogs && (
-              <div className="border-t border-border max-h-64 overflow-hidden">
-                <LogStream
-                  addonId={addonId}
-                  requestId={probeRequestId}
-                  limit={50}
-                  maxHeight="max-h-64"
-                  showFilters={false}
-                  showScope={false}
-                  className="border-0 rounded-none"
-                />
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Validation / submit error banner — visible above the footer
-            so a missing-required field or a server-side reject (e.g.
-            `Password is required`) is impossible to miss. */}
-        {!hasError && !isBusy && (submitError || missingRequired.length > 0) && (
-          <div className="border-t border-destructive/30 bg-destructive/5 px-3 py-2 shrink-0">
-            <div className="flex items-start gap-2">
-              <AlertTriangle className="h-3.5 w-3.5 text-destructive mt-0.5 shrink-0" />
-              <p className="text-[11px] text-destructive">
-                {submitError
-                  ? submitError
-                  : t('integrations.addDeviceDialog.required', 'Required: {{value1}}', {
-                      value1: missingRequired.join(', '),
-                    })}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Footer */}
-        <DialogFooter className="justify-between">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="unstyled"
-              onClick={onClose}
-              className="rounded-lg border border-border px-3 py-1.5 text-xs text-foreground-subtle hover:text-foreground transition-colors"
-            >
-              {t('integrations.cancel')}
-            </Button>
-            {!hasError && hasProbeFields && (
-              <Button
-                variant="unstyled"
-                type="button"
-                onClick={handleTestAll}
-                disabled={testAllStatus === 'testing'}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground-subtle hover:text-foreground hover:bg-surface-hover transition-colors disabled:opacity-50"
-              >
-                {testAllStatus === 'testing' ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Wifi className="h-3.5 w-3.5" />
-                )}
-                {t('integrations.addDeviceDialog.testAll', 'Test All')}
-              </Button>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="unstyled"
-              onClick={() => handleSave(true)}
-              disabled={hasError || !isFormValid || createMutation.isPending}
-              className="rounded-lg border border-border px-3 py-1.5 text-xs text-foreground hover:bg-surface-hover transition-colors disabled:opacity-50"
-            >
-              {t('integrations.saveAndNew')}
-            </Button>
-            <Button
-              variant="unstyled"
-              onClick={() => handleSave(false)}
-              disabled={hasError || !isFormValid || createMutation.isPending}
-              className="rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground shadow-sm disabled:opacity-50"
-            >
-              {createMutation.isPending ? t('integrations.saving') : t('integrations.save')}
-            </Button>
-          </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="unstyled"
+            onClick={() => handleSave(true)}
+            disabled={hasError || !isFormValid || createMutation.isPending}
+            className="rounded-lg border border-border px-3 py-1.5 text-xs text-foreground hover:bg-surface-hover transition-colors disabled:opacity-50"
+          >
+            {t('integrations.saveAndNew')}
+          </Button>
+          <Button
+            variant="unstyled"
+            onClick={() => handleSave(false)}
+            disabled={hasError || !isFormValid || createMutation.isPending}
+            className="rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground shadow-sm disabled:opacity-50"
+          >
+            {createMutation.isPending ? t('integrations.saving') : t('integrations.save')}
+          </Button>
+        </div>
+      </DialogFooter>
+    </>
   )
 }

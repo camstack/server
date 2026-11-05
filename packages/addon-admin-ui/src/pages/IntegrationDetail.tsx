@@ -34,7 +34,6 @@ import {
   ArrowLeft,
   Loader2,
   Plus,
-  Radar,
   RefreshCw,
   ScrollText,
   SearchX,
@@ -44,12 +43,10 @@ import {
 import { type ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { AddDeviceDialog } from '../components/integrations/AddDeviceDialog'
+import { AddDeviceModal } from '../components/integrations/AddDeviceModal'
 import { AddMatterDeviceDialog } from '../components/integrations/AddMatterDeviceDialog'
-import { AdoptDevicesModal } from '../components/integrations/AdoptDevicesModal'
 import { IntegrationConfigModal } from '../components/integrations/IntegrationConfigModal'
 import type { IntegrationFormSeed } from '../components/integrations/integration-setup-seed'
-import { ScanNetworkModal } from '../components/integrations/ScanNetworkModal'
 import { NodeAddonsSettingsPanel } from '../components/settings/NodeAddonsSettingsPanel'
 import { deviceIntegrationIcon } from '../components/shared/device-integration-icon'
 import { useAddonIconUrl } from '../contexts/addon-icons-context'
@@ -90,10 +87,9 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
   const system = useSystem()
   const [showAddDevice, setShowAddDevice] = useState(false)
   const [adoptAfterCommission, setAdoptAfterCommission] = useState(false)
-  const [showScan, setShowScan] = useState(false)
   const handleSetupIntegration = useCallback(
     (seed: IntegrationFormSeed) => {
-      setShowScan(false)
+      setShowAddDevice(false)
       navigate('/integrations', { state: { integrationSeed: seed } })
     },
     [navigate],
@@ -193,11 +189,7 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
   const isMatter = integrationBrokerKind === 'matter'
   const addDeviceLabel = !fabReady
     ? t('integrations.addDeviceLoading', { defaultValue: 'Loading…' })
-    : isMatter
-      ? t('integrations.addMatter.title', { defaultValue: 'Add Matter device' })
-      : integrationKind === 'device-adoption'
-        ? t('integrations.adoptDevices', { defaultValue: 'Adopt devices' })
-        : t('integrations.addDevice')
+    : t('integrations.addDevice', 'Add device')
 
   const integrationCanTest = useMemo(() => {
     const addonId = integration?.addonId
@@ -483,20 +475,6 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
           {/* Add-device — same primary header button as the Integrations list
               page. Routes to the adopt surface by the addon's declared cap kind
               (see `integrationKind`); disabled until the kind resolves. */}
-          {canScan && (
-            <Button
-              variant="unstyled"
-              onClick={() => setShowScan(true)}
-              className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs font-medium text-foreground-subtle hover:text-foreground hover:bg-surface-hover transition-colors"
-              title={t(
-                'integrationDetail.scanTheNetworkForDevices',
-                'Scan the network for devices (incl. a different subnet)',
-              )}
-            >
-              <Radar className="h-3.5 w-3.5" />
-              {t('integrationDetail.scanNetwork', 'Scan network')}
-            </Button>
-          )}
           {!isFixed && (
             <Button
               variant="unstyled"
@@ -697,35 +675,20 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
 
       {showAddDevice &&
         integrationId &&
-        integrationKind === 'device-adoption' &&
+        integrationKind !== null &&
         (!isMatter || adoptAfterCommission) && (
-          <AdoptDevicesModal
+          <AddDeviceModal
             addonId={integration.addonId}
             integrationId={integrationId}
+            kind={integrationKind}
+            canScan={canScan}
+            onSetupIntegration={handleSetupIntegration}
             onClose={() => {
               setShowAddDevice(false)
               setAdoptAfterCommission(false)
             }}
           />
         )}
-
-      {showAddDevice && integrationId && integrationKind === 'device-provider' && (
-        <AddDeviceDialog
-          open={showAddDevice}
-          integrationId={integrationId}
-          addonId={integration.addonId}
-          onClose={() => setShowAddDevice(false)}
-        />
-      )}
-
-      {showScan && integration && (
-        <ScanNetworkModal
-          open={showScan}
-          scope={{ addonId: integration.addonId, label: integration.name }}
-          onClose={() => setShowScan(false)}
-          onSetupIntegration={handleSetupIntegration}
-        />
-      )}
 
       {showConfig && integrationId && integrationKind !== null && integrationMode !== null && (
         <IntegrationConfigModal
