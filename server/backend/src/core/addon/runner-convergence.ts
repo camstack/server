@@ -30,6 +30,50 @@ export interface RunnerProcessSnapshot {
   readonly addonIds: readonly string[]
 }
 
+/** `$process.list` row plus the pid the lifecycle log has to name. */
+export interface ListedRunner extends RunnerProcessSnapshot {
+  readonly pid: number | null
+}
+
+/** `$process.restart` reply, narrowed off the untyped broker boundary. */
+export interface RestartReply {
+  readonly success: boolean
+  readonly pid: number | null
+  readonly reason: string | null
+}
+
+export function parseListedRunner(value: unknown): ListedRunner | null {
+  if (typeof value !== 'object' || value === null) return null
+  const name = Reflect.get(value, 'name')
+  const addonIds = Reflect.get(value, 'addonIds')
+  const pid = Reflect.get(value, 'pid')
+  if (typeof name !== 'string' || !Array.isArray(addonIds)) return null
+  const ids: string[] = []
+  for (const id of addonIds) {
+    if (typeof id !== 'string') return null
+    ids.push(id)
+  }
+  return { name, addonIds: ids, pid: typeof pid === 'number' ? pid : null }
+}
+
+export function readProcessPid(value: unknown): number | null {
+  if (typeof value !== 'object' || value === null) return null
+  const pid = Reflect.get(value, 'pid')
+  return typeof pid === 'number' ? pid : null
+}
+
+export function readRestartReply(value: unknown): RestartReply {
+  if (typeof value !== 'object' || value === null) {
+    return { success: false, pid: null, reason: null }
+  }
+  const reason = Reflect.get(value, 'reason')
+  return {
+    success: Reflect.get(value, 'success') === true,
+    pid: readProcessPid(value),
+    reason: typeof reason === 'string' ? reason : null,
+  }
+}
+
 /** The action the caller must take on the TARGET runner after stopping stragglers. */
 export type RunnerConvergenceAction = 'spawn' | 'restart' | 'none'
 

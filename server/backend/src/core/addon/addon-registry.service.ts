@@ -118,7 +118,19 @@ import { materializeRoutePath } from './materialize-route-path.js'
 import { resolveBuiltinsDir } from './package-dir-utils'
 import { LEGACY_SYSTEM_PACKAGE_NAME } from '../../legacy-package-names'
 import { decidePrune, prunePlacementLeftovers } from './prune-misplaced-addons.js'
-import { planRunnerConvergence, type RunnerProcessSnapshot } from './runner-convergence'
+import {
+  createGroupRespawnLedger,
+  forkedRunnerOutcome,
+  type ForkedRunnerOutcome,
+  type GroupRespawnLedger,
+} from './group-respawn-ledger'
+import {
+  parseListedRunner,
+  planRunnerConvergence,
+  readProcessPid,
+  readRestartReply,
+  type ListedRunner,
+} from './runner-convergence'
 import { createRunnerSerializer, type RunnerSerializer } from './runner-serialization'
 import { spawnPlanConcurrently } from './runner-spawn-fanout.js'
 import { findInstancesProvider } from './integration-instances-provider.js'
@@ -254,16 +266,6 @@ interface AddonRoutesInvoker {
 function isAddonRoutesInvoker<T extends object>(provider: T): provider is T & AddonRoutesInvoker {
   return typeof Reflect.get(provider, 'invoke') === 'function'
 }
-
-/**
- * Window within which a second `restart:true` respawn of the SAME group runner
- * is coalesced to a no-op (a package reload loops `restartAddon` over every
- * group member — see `recentGroupRespawns`). Chosen comfortably longer than a
- * single group respawn (child fork + init) so all members of one reload pass
- * fall inside it, and short enough that a genuinely independent later restart
- * still respawns.
- */
-const GROUP_RESPAWN_COALESCE_MS = 10_000
 
 const ROUTE_METHODS: readonly import('@camstack/types').IAddonHttpRoute['method'][] = [
   'GET',
@@ -491,16 +493,12 @@ export class AddonRegistryService {
    */
   private readonly restartingAddons = new Map<string, NodeJS.Timeout>()
   /**
-   * `runnerId → last-respawn epoch-ms`, used ONLY to coalesce redundant group
-   * respawns. A package reload loops `restartAddon` over EVERY addon in the
-   * package (`tryReloadPackage`); for a co-location group that maps N members
-   * onto ONE runner, the first member's restart already respawns the whole
-   * group (all members reboot from fresh on-disk code), so the 2nd..Nth
-   * restarts must NOT respawn again — that churns the runner N times and risks
-   * tripping the crash circuit-breaker. Consulted by `ensureForkedRunner`; only
-   * groups (roster > 1) are coalesced, so solo-addon restart stays byte-identical.
+   * Group-runner restart claims. A fork covers only requests that had already
+   * been made when it started, so a second member swapped while — or just
+   * after — a sibling's respawn still gets a process that loaded its code.
+   * Solo runners never enter the ledger (their restart stays one fork).
    */
-  private readonly recentGroupRespawns = new Map<string, number>()
+  private readonly groupRespawns: GroupRespawnLedger = createGroupRespawnLedger()
   private readonly logger: IScopedLogger
   private addonLoader!: AddonLoader
   private healthMonitor!: AddonHealthMonitor
@@ -1823,16 +1821,24 @@ export class AddonRegistryService {
     event: 'started' | 'restarted',
     id: string,
     mode: 'in-process' | 'isolated',
+    pids?: ForkedRunnerOutcome,
   ): void {
     const entry = this.addonEntries.get(id)
     if (!entry) return
     const agentName = process.env.CAMSTACK_AGENT_NAME ?? 'hub'
     const platform = `${os.platform()}/${os.arch()}`
-    const message = `Addon ${event} — v${entry.packageVersion} (${entry.packageName}), ${mode}, ${platform}, agent: ${agentName}`
+    const runnerPid =
+      pids !== undefined && pids.pidAfter !== null
+        ? `, runner pid ${pids.pidBefore ?? 'none'} -> ${pids.pidAfter}`
+        : ''
+    const message = `Addon ${event} — v${entry.packageVersion} (${entry.packageName}), ${mode}, ${platform}, agent: ${agentName}${runnerPid}`
     // Log under AddonRegistry scope
     this.logger.info(message, {
       tags: { addonId: id, agentId: agentName },
-      meta: { phase: 'lifecycle' },
+      meta: {
+        phase: 'lifecycle',
+        ...(pids !== undefined ? { pidBefore: pids.pidBefore, pidAfter: pids.pidAfter } : {}),
+      },
     })
     // Also log under the addon's own tagged logger so it appears in the per-addon
     // log viewer. No scope — brand bracket shows the addon id.
@@ -2335,7 +2341,23 @@ export class AddonRegistryService {
             .map((cap) => cap.name)
             .filter((name) => this.capabilityRegistry.getProviderByAddon(name, addonId) != null),
         )
-        await this.ensureForkedRunner(addonId, { restart: true })
+        const outcome = await this.ensureForkedRunner(addonId, { restart: true })
+        // `Addon restarted — vX` is a claim that a process with that version
+        // is up. The registry row's version was refreshed from disk before
+        // this call, so the line is true only when the runner pid changed
+        // (the new child loads disk at fork). A coalesced no-op used to log
+        // the new version against the previous pid.
+        if (!outcome.live) {
+          this.logger.warn('Addon restart did not start a runner process with the swapped code', {
+            tags: { addonId },
+            meta: {
+              pidBefore: outcome.pidBefore,
+              pidAfter: outcome.pidAfter,
+              version: entry.packageVersion,
+            },
+          })
+          return { success: false, error: 'runner process did not change' }
+        }
 
         // The respawn resolves as soon as the child is up, not when its
         // capabilities are re-registered. Callers (integrations.create, UI forms) may
@@ -2403,7 +2425,7 @@ export class AddonRegistryService {
         // `CustomActionRegistry`, which the process spawn never touches — a
         // hot-update would otherwise silently drop them).
 
-        this.logAddonLifecycle('restarted', addonId, 'isolated')
+        this.logAddonLifecycle('restarted', addonId, 'isolated', outcome)
         this.emitAddonLifecycleEvent('addon.restarted', addonId)
         return { success: true }
       }
@@ -3995,20 +4017,21 @@ export class AddonRegistryService {
 
   /**
    * Snapshot of the live runner subprocesses (`$process.list`), reduced to the
-   * `{ runnerId, addonIds }` shape the convergence planner needs. Returns `[]`
-   * on any broker error so the caller degrades to a fresh spawn rather than
-   * throwing — a missing list can only mean "nothing is running".
+   * `{ runnerId, addonIds, pid }` shape the convergence planner and the
+   * lifecycle log need. Returns `[]` on any broker error so the caller
+   * degrades to a fresh spawn rather than throwing — a missing list can only
+   * mean "nothing is running".
    */
-  private async listRunnerProcesses(): Promise<readonly RunnerProcessSnapshot[]> {
+  private async listRunnerProcesses(): Promise<readonly ListedRunner[]> {
     try {
-      // `$process.*` is an untyped Moleculer infra boundary (returns `unknown`);
-      // the process-service owns the `ProcessInfo` shape. Narrow to the two
-      // fields the planner reads.
-      const procs = (await this.broker.call('$process.list')) as ReadonlyArray<{
-        name: string
-        addonIds: readonly string[]
-      }>
-      return procs.map((p) => ({ name: p.name, addonIds: p.addonIds }))
+      const raw: unknown = await this.broker.call('$process.list')
+      if (!Array.isArray(raw)) return []
+      const rows: ListedRunner[] = []
+      for (const item of raw) {
+        const row = parseListedRunner(item)
+        if (row) rows.push(row)
+      }
+      return rows
     } catch {
       return []
     }
@@ -4026,16 +4049,15 @@ export class AddonRegistryService {
    * via `buildAddonGroupPlan` (the same authority the boot plan uses), then
    * converges the live process topology onto that roster (see
    * `planRunnerConvergence`): stop stale/mismatched runners, then spawn or
-   * restart the group runner. Idempotent — safe to call once per roster member
-   * (the 2nd..Nth calls see the correct topology and no-op). A groupless addon
-   * keys to a size-1 roster whose runner id is its own id, so its behaviour is
-   * byte-identical to the pre-group solo path.
+   * restart the group runner. A groupless addon keys to a size-1 roster whose
+   * runner id is its own id, so its behaviour is byte-identical to the
+   * pre-group solo path.
    *
-   * `opts.restart` respawns the group in place even when the roster already
-   * matches — the deploy hot-reload path, so the child reboots the WHOLE roster
-   * from the freshly-swapped on-disk bundle. This is why updating ONE member of
-   * a group respawns the ENTIRE group (they share a process): the operator's
-   * "update one → respawn the whole group" invariant.
+   * `opts.restart` respawns even when the roster already matches, so the child
+   * loads the on-disk bundle (D5 — no in-process reload). A second member of
+   * the same group shares that fork only when the fork starts AFTER its
+   * request; a fork already in flight, or one that already finished, does not
+   * — the second swap may have landed since. Solo addons always fork.
    */
   /**
    * One converge at a time per runner. See `runner-serialization.ts` for the
@@ -4044,7 +4066,10 @@ export class AddonRegistryService {
    */
   private readonly serializeRunner: RunnerSerializer = createRunnerSerializer()
 
-  private async ensureForkedRunner(addonId: string, opts: { restart: boolean }): Promise<void> {
+  private async ensureForkedRunner(
+    addonId: string,
+    opts: { readonly restart: boolean },
+  ): Promise<ForkedRunnerOutcome> {
     const entry = this.addonEntries.get(addonId)
     if (!entry?.declaration || !entry.addonDir) {
       throw new Error(`ensureForkedRunner("${addonId}") requires an on-disk forked addon`)
@@ -4054,19 +4079,10 @@ export class AddonRegistryService {
       { addonId, addonDir: entry.addonDir },
     ]
 
-    // Coalesce redundant group respawns: a package reload loops `restartAddon`
-    // over every member of a co-location group, but the FIRST member's restart
-    // already respawned the whole runner (every member rebooted from fresh disk
-    // code). For a GROUP (roster > 1) whose runner was respawned inside the
-    // coalesce window, downgrade a restart request to a plain topology check so
-    // the 2nd..Nth members don't churn the runner. Solo addons (roster == 1) are
-    // never coalesced — their behaviour stays byte-identical.
-    const effectiveRestart =
-      opts.restart &&
-      roster.length > 1 &&
-      Date.now() - (this.recentGroupRespawns.get(runnerId) ?? 0) < GROUP_RESPAWN_COALESCE_MS
-        ? false
-        : opts.restart
+    // Claim before the queue so a member that arrives while this one is
+    // waiting is visible to the fork that has not started yet. Solo runners
+    // (roster of one) never claim — each of their restarts forks.
+    const epoch = opts.restart && roster.length > 1 ? this.groupRespawns.claim(runnerId) : 0
 
     // EVERYTHING from here is one atomic unit per runner. The read decides what
     // to stop and what to spawn, so a second converge that reads before this
@@ -4074,12 +4090,14 @@ export class AddonRegistryService {
     // running. `process-service`'s own lock cannot see this: it makes each
     // action atomic, and the unit that matters is the sequence.
     return this.serializeRunner(runnerId, async () => {
+      const covered = epoch > 0 && this.groupRespawns.covered(runnerId, epoch)
       const running = await this.listRunnerProcesses()
+      const pidBefore = running.find((row) => row.name === runnerId)?.pid ?? null
       const plan = planRunnerConvergence(
         runnerId,
         roster.map((r) => r.addonId),
         running,
-        { restart: effectiveRestart },
+        { restart: opts.restart && !covered },
       )
 
       // 1. Tear down every stale/mismatched runner that hosts a roster member.
@@ -4091,25 +4109,23 @@ export class AddonRegistryService {
         })
       }
 
-      // 2. Bring the target runner to the correct roster.
+      // 2. Bring the target runner to the correct roster. The cover snapshot
+      //    is the last synchronous read before the fork, so a swap that lands
+      //    while the child is starting is NOT credited to this process.
+      let pidAfter = pidBefore
       if (plan.action === 'spawn') {
-        await this.broker
-          .call('$process.spawnRunner', { runnerId, addons: roster })
-          .catch((err) => {
-            // A concurrent path may have won the spawn race — treat "already
-            // running" as success (idempotent), rethrow anything else.
-            if (!/already running/i.test(errMsg(err))) throw err
-          })
-        this.recentGroupRespawns.set(runnerId, Date.now())
+        const coverThrough = epoch > 0 ? this.groupRespawns.coverThrough(runnerId) : 0
+        pidAfter = await this.spawnGroupRunner(runnerId, roster, pidBefore)
+        this.noteGroupFork(epoch, runnerId, coverThrough, pidBefore, pidAfter)
       } else if (plan.action === 'restart') {
-        const res = (await this.broker.call('$process.restart', { name: runnerId })) as {
-          success: boolean
-          reason?: string
-        }
+        const coverThrough = epoch > 0 ? this.groupRespawns.coverThrough(runnerId) : 0
+        const raw: unknown = await this.broker.call('$process.restart', { name: runnerId })
+        const res = readRestartReply(raw)
         if (!res.success) {
           throw new Error(`Process restart failed: ${res.reason ?? 'unknown'}`)
         }
-        this.recentGroupRespawns.set(runnerId, Date.now())
+        pidAfter = res.pid
+        this.noteGroupFork(epoch, runnerId, coverThrough, pidBefore, pidAfter)
       }
 
       // 3. Bookkeeping for EVERY roster member. Mark each member initialized so
@@ -4121,7 +4137,43 @@ export class AddonRegistryService {
         const memberEntry = this.addonEntries.get(memberId)
         if (memberEntry) memberEntry.initialized = true
       }
+
+      if (plan.action === 'none' && covered) {
+        const remembered = this.groupRespawns.pids(runnerId)
+        return forkedRunnerOutcome(remembered.pidBefore, remembered.pidAfter)
+      }
+      return forkedRunnerOutcome(pidBefore, pidAfter)
     })
+  }
+
+  // Spawn the roster. A lost race ("already running") is the pid already up.
+  private async spawnGroupRunner(
+    runnerId: string,
+    roster: readonly RunnerAddonPlacement[],
+    pidBefore: number | null,
+  ): Promise<number | null> {
+    try {
+      const spawned: unknown = await this.broker.call('$process.spawnRunner', {
+        runnerId,
+        addons: roster,
+      })
+      return readProcessPid(spawned)
+    } catch (err: unknown) {
+      if (!/already running/i.test(errMsg(err))) throw err
+      const running = await this.listRunnerProcesses()
+      return running.find((row) => row.name === runnerId)?.pid ?? pidBefore
+    }
+  }
+
+  private noteGroupFork(
+    epoch: number,
+    runnerId: string,
+    coverThrough: number,
+    pidBefore: number | null,
+    pidAfter: number | null,
+  ): void {
+    if (epoch === 0) return
+    this.groupRespawns.markForked(runnerId, coverThrough, { pidBefore, pidAfter })
   }
 
   /**

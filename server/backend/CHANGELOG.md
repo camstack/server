@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - An agent-offline alert resolves when that agent is back online, and a system-restarting alert resolves when the restart completed or the node is back, even if the online event was dropped
+- Updating one addon in a shared runner no longer skips the restart when another member of that runner was restarted moments earlier, so the new code actually loads.
 
 ## [1.2.768] - 2026-11-04
 
