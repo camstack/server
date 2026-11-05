@@ -206,7 +206,7 @@ Every durable byte — the SQLite collections, where media lives, what prunes it
 Where every password, token and key lives — encrypted in the hub keychain, a marker in each settings blob, owner-checked by the transport-stamped caller, kept out of logs.
 
 - **Owner doc**: `docs/architecture/secrets-keychain.md`
-- **Code**: `packages/system/src/builtins/keychain/**`, `packages/types/src/keychain/**`, `packages/types/src/addon/secret-*.ts`, `packages/types/src/capabilities/keychain.cap.ts`, `packages/types/src/capabilities/keychain-admin.cap.ts`, `packages/system/src/builtins/device-manager/device-config-secrets.ts`, `packages/system/src/logging/log-redactor.ts`, `server/backend/src/api/core/integration-secrets.ts`, `server/backend/src/boot/platform-keychain-key.ts`, `packages/desktop/src/keychain-platform-key.ts`, `packages/ui-library/src/composites/config-secret-field.tsx`, `packages/addon-admin-ui/src/pages/system/Secrets.tsx`
+- **Code**: `packages/system/src/builtins/keychain/**`, `packages/types/src/keychain/**`, `packages/types/src/addon/secret-*.ts`, `packages/types/src/capabilities/keychain.cap.ts`, `packages/types/src/capabilities/keychain-admin.cap.ts`, `packages/system/src/builtins/device-manager/device-config-secrets.ts`, `packages/system/src/logging/log-redactor.ts`, `server/backend/src/boot/platform-keychain-key.ts`, `packages/desktop/src/keychain-platform-key.ts`, `packages/ui-library/src/composites/config-secret-field.tsx`, `packages/addon-admin-ui/src/pages/system/Secrets.tsx`
 - **Files**: 29 (29 claimed by some document)
 - **Uncovered**: —
 
