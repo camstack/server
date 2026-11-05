@@ -4,12 +4,12 @@
 
 # Guards
 
-222 repository guards: 217 in `scripts/`,
+223 repository guards: 218 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (211)
+## Enforced by CI checks (213)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -111,6 +111,8 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-method-access-map-coverage.ts` | Every tRPC cap path the routers expose must be IN `METHOD_ACCESS_MAP`. |
 | `scripts/check-method-roles.ts` | Method roles (D921): what each cap method is for a VIEWER. |
 | `scripts/check-method-tiers.ts` | GUARD: every cap method's AUTH TIER is pinned in an explicit baseline. |
+| `scripts/check-migration-api-append-only.ts` | GUARD: the migration API (`MigrationApiV1`) is append-only (planning#447). |
+| `scripts/check-migration-ports-surface.ts` | GUARD: a migration reaches the world only through `MigrationApiV1` (planning#447). |
 | `scripts/check-migrations-well-formed.ts` | The migration catalogue is well formed (D987). |
 | `scripts/check-model-notices-shipped.ts` | Model-notice guard: every package that DOWNLOADS model weights, or carries the code that does, ships the third-party model notice, byte-identical to the root copy, and the Docker image bakes it in. |
 | `scripts/check-nc-mirrors-in-sync.ts` | The viewer (`camstack/`) keeps hand MIRRORS of notification-center shapes it cannot import, and nothing kept them equal (final review m4). This makes "they are the same" checkable instead of promised. |
@@ -242,7 +244,7 @@ violation the guard was written for, so a broken guard cannot pass in silence.
 | `packages/addon-pipeline/src/__tests__/guards/per-macro-slider-reaches-the-pool.guard.ts` | A per-macro confidence slider must be able to LOWER the detector. |
 | `server/backend/src/__tests__/guards/core-router-classification.guard.ts` | GUARD: every hand-written CORE (non-cap) tRPC router is explicitly classified, and its source agrees with the classification. |
 
-## Available but not wired into CI (6)
+## Available but not wired into CI (5)
 
 Run manually, from a hook, or via another script. If one of these encodes a
 rule that matters, wiring it into `checks.yml` is a one-line change.
@@ -251,7 +253,6 @@ rule that matters, wiring it into `checks.yml` is a one-line change.
 | --- | --- |
 | `scripts/check-capability-activation-single-authority.ts` | Capability activation has ONE authority: the addon manifest's `autoActivate`. |
 | `scripts/check-hosted-model-revisions.ts` | Hosted-revision guard — every artefact on the CamStack model mirror has a revision, and that revision is the sha256 the mirror holds for its weight file (D743, D744). |
-| `scripts/check-migration-api-append-only.ts` | GUARD: the migration API (`MigrationApiV1`) is append-only (planning#447). |
 | `scripts/check-public-docs-staleness.ts` | Public-docs staleness reminder — lists public docs pages whose described server code changed after they were verified. |
 | `scripts/check-runner-dist-barrel-free.ts` | Runner-footprint guard on the BUILT output (D28) — the twin of `check-runner-barrel-free.ts`, which reads SOURCE. |
 | `scripts/check-trainer-vendor.ts` | The trainer's vendored code must be byte-identical to its source. |

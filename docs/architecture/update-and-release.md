@@ -491,6 +491,19 @@ had no hub to receive a fix from.
   the hub's auto-update settings only pace the hub's notifications and do not reach agents.
 - Containers are in scope: closures are applied in a container by the data-root swap.
 
+## Migrations survive a version jump (D1014)
+
+A node that jumps versions runs every migration it missed on the NEW code, so a migration may use
+only what never changes under it: `ctx.migrationApi` (`MigrationApiV1`, `packages/types/src/migrations/api/`).
+An addon writes `this.runMigrations(CATALOGUE, (api) => ports)`; the hub catalogue is engine-level
+and reads no addon surface. The API is append-only (`check-migration-api-append-only`, pinned in
+`scripts/migration-api-contract.json`); a breaking change is `migration-api.v2` beside v1. A
+migration source reads no `ctx` and imports `@camstack/types`, zod and local files only
+(`check-migration-ports-surface`). A catalogue that still needs something V1 lacks is named in
+`scripts/migration-ports-surface-pending.json`, which only shrinks. The replay spec
+(`migration-catalogue-replay.spec.ts`) runs the hub catalogue over hand-written old-release data
+and the default-integration catalogue through a contract-only Proxy.
+
 ## Being TOLD an update exists
 
 Notification of an available update is a different mechanism from applying one,

@@ -6,6 +6,7 @@
  */
 import type Database from 'better-sqlite3'
 import { integrationRegistryRecordKinds } from '../../../builtins/sqlite-storage/integration-record-kinds.js'
+import { ensureLegacyIntegrationRowsTable } from '../../../builtins/sqlite-storage/migrations/legacy-integration-rows-door.js'
 import {
   declareKind,
   ensureRecordsSchema,
@@ -31,16 +32,7 @@ export function seedHubCatalogue(db: Database.Database): HubSeedMarks {
     JSON.stringify({ addonId: 'detector', key: 'backend@agent-1', value: 'npu', mark: 'node-1' }),
   )
   // the legacy per-integration settings table of the release, empty: nothing left to drop
-  db.exec(`
-    CREATE TABLE integrations (id TEXT PRIMARY KEY, addon_id TEXT NOT NULL, name TEXT NOT NULL);
-    CREATE TABLE integration_settings (
-      id TEXT PRIMARY KEY,
-      integration_id TEXT NOT NULL,
-      key TEXT NOT NULL,
-      value TEXT NOT NULL,
-      value_type TEXT NOT NULL
-    );
-  `)
+  ensureLegacyIntegrationRowsTable(db)
   ensureRecordsSchema(db)
   db.exec(RECORDS_SCHEMA_SQL)
   const declaration = integrationRegistryRecordKinds.integrations.declaration
