@@ -326,7 +326,12 @@ export class AlertCenterAddon extends BaseAddon<AlertCenterConfig> {
     this.unsubscribers = []
   }
 
-  protected globalSettingsSchema(): ConfigUISchema {
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return ['alerts']
+  }
+
+  protected override async clusterSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    if (cap !== 'alerts') return null
     return this.schema({
       sections: [
         {
