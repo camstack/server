@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - An integration instance is reachable by its Integrations-page id as well as its record id, so the Config form shows and saves the stored record of an account whose record id differs
+- A broker-backed service now binds to its broker through one shared primitive (broker link kind, form and users query); removing a broker still in use is refused with a typed error naming its users
 
 ## [1.2.504] - 2026-11-05
 

@@ -2411,3 +2411,25 @@ export {
 export * from './ir/index.js'
 
 export * from './time/index.js'
+export type { BrokerUser, BrokerUserFinder } from './addon/broker-in-use.js'
+export { assertBrokerUnused, BrokerInUseError } from './addon/broker-in-use.js'
+export type {
+  BrokerLinkBody,
+  BrokerLinkFormSpec,
+  BrokerLinkInstancesSpec,
+} from './addon/broker-link.js'
+export {
+  BROKER_LINK_KIND_NAME,
+  BrokerLinkBodySchema,
+  brokerIdOf,
+  brokerLinkUserFinder,
+  buildBrokerLinkForm,
+  buildBrokerLinkInstances,
+  declareBrokerLinkKind,
+  resolveBrokerId,
+} from './addon/broker-link.js'
+export type { BrokerLinkPorts, BrokerLinkRow } from './migrations/broker-links-to-connections.js'
+export {
+  brokerLinkPortsOver,
+  moveBrokerLinksToConnections,
+} from './migrations/broker-links-to-connections.js'

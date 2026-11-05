@@ -31,7 +31,9 @@ import { secretViewsOf } from '../records/secret-views.js'
 const INSTANCES_LIST_MAX = 1000
 
 /** What every instance body carries: an absent `enabled` means on (no data migration). */
-export type InstanceBody = Record<string, unknown> & { readonly enabled?: boolean | undefined }
+export type InstanceBody = Record<string, unknown> & {
+  readonly enabled?: boolean | undefined
+}
 
 /** What the instance went through when `onChanged` runs. */
 export type InstanceChange = 'created' | 'updated' | 'enabled' | 'deleted'
@@ -40,7 +42,7 @@ export interface RecordIntegrationInstancesHooks<TBody extends InstanceBody> {
   /** Includes the optional `kinds` and `allowRestoreId` a provider offers the Add flow. */
   readonly description: IntegrationInstanceDescription
   /** The form; `id: null` is the create form. */
-  formSchema(id: string | null): ConfigUISchema
+  formSchema(id: string | null): ConfigUISchema | Promise<ConfigUISchema>
   /** The body a new instance starts with (of `kind` when the caller picked one). It must satisfy the kind's schema. */
   initialBody(name: string, kind?: string): TBody
   /**
@@ -124,7 +126,10 @@ export interface ResolvedInstance<TBody extends InstanceBody> {
 
 /** Does the kind's body schema carry an `enabled` field? */
 function declaresEnabled(kind: DefinedRecordKind<z.ZodType>): boolean {
-  const json = z.toJSONSchema(kind.schema, { unrepresentable: 'any', io: 'input' })
+  const json = z.toJSONSchema(kind.schema, {
+    unrepresentable: 'any',
+    io: 'input',
+  })
   const properties = Reflect.get(json, 'properties')
   return typeof properties === 'object' && properties !== null && 'enabled' in properties
 }
@@ -164,7 +169,12 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
       const record = await this.handle.getResolved(id)
       return record === null
         ? null
-        : { id, body: record.data, enabled: record.data.enabled !== false, secrets: 'resolved' }
+        : {
+            id,
+            body: record.data,
+            enabled: record.data.enabled !== false,
+            secrets: 'resolved',
+          }
     } catch (err: unknown) {
       if (!(err instanceof RecordSecretUnavailableError)) throw err
       const stored = await this.handle.get(id)
@@ -227,20 +237,8 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
       ? this.hooks.description
       : { ...this.hooks.description, mintsId: true }
 
-  /**
-   * The record an id names. A caller holding the `integrations` registry id (the Integrations
-   * page) reaches a kind whose body links to it through `integrationId`; an id that is itself a
-   * record id answers as it is. An id that names nothing comes back unchanged.
-   */
-  private async resolveRecordId(id: string): Promise<string> {
-    if ((await this.handle.get(id)) !== null) return id
-    const page = await this.handle.query({ limit: INSTANCES_LIST_MAX })
-    const linked = page.records.find((record) => record.data['integrationId'] === id)
-    return linked === undefined ? id : linked.id
-  }
-
   instanceFormSchema: IIntegrationInstancesProvider['instanceFormSchema'] = async ({ id }) =>
-    this.hooks.formSchema(id === null ? null : await this.resolveRecordId(id))
+    this.hooks.formSchema(id)
 
   listInstances: IIntegrationInstancesProvider['listInstances'] = async () => {
     const page = await this.handle.query({ limit: INSTANCES_LIST_MAX })
@@ -248,7 +246,7 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
   }
 
   getInstance: IIntegrationInstancesProvider['getInstance'] = async ({ id }) => {
-    const record = await this.handle.get(await this.resolveRecordId(id))
+    const record = await this.handle.get(id)
     return record === null ? null : this.viewOf(record)
   }
 
@@ -264,11 +262,10 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
   }
 
   updateInstance: IIntegrationInstancesProvider['updateInstance'] = async ({
-    id: askedId,
+    id,
     name,
     values,
   }) => {
-    const id = await this.resolveRecordId(askedId)
     const patch: Record<string, unknown> = {}
     for (const [key, value] of Object.entries(values)) {
       if (value === undefined) continue
@@ -325,9 +322,7 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
         error: 'This integration declares no connection test',
       }
     }
-    return this.hooks.test(
-      input.id === null ? input : { ...input, id: await this.resolveRecordId(input.id) },
-    )
+    return this.hooks.test(input)
   }
 
   /** The flat provider object to hand to `registerProvider`. */
