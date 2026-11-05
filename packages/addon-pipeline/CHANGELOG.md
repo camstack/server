@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Detection pipeline settings are declared by the owning capability (executor knobs per node, substitution readout cluster-wide); stored values unchanged
+
 ## [1.2.641] - 2026-11-05
 
 ### Changed

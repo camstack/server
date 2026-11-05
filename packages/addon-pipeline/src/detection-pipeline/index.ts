@@ -8,6 +8,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import type {
+  ConfigUISchema,
   ConfigUISchemaWithValues,
   ModelCatalogEntry,
   ProviderRegistration,
@@ -38,11 +39,14 @@ import {
   type ProbedHardware,
   type RuntimeEnv,
   type RuntimeId,
-  type RuntimePoolProfile,
   shouldInstallOpenvino,
   shouldInstallWebgpu,
-  tuningFor,
 } from './runtimes.js'
+import {
+  CONCURRENCY_MAX,
+  withBackendTuning,
+  withLiveSubstitutions,
+} from './settings-form-tuning.js'
 
 // ---------------------------------------------------------------------------
 // Embedded Python — file resolution
@@ -84,7 +88,11 @@ function resolveAddonPythonDir(): string {
   )
 }
 
-export type { PoolModelConfig, PostprocessorType, StepDefinition } from '@camstack/types'
+export type {
+  PoolModelConfig,
+  PostprocessorType,
+  StepDefinition,
+} from '@camstack/types'
 export { DetectionPipelineProvider } from './provider.js'
 // Re-export for consumers
 export {
@@ -251,26 +259,6 @@ function toNodePlatform(value: string | undefined): NodeJS.Platform | undefined 
   return value === 'darwin' || value === 'linux' || value === 'win32' ? value : undefined
 }
 
-/**
- * Slider keys on the "Inference executor" section that map 1:1 onto a
- * {@link RuntimePoolProfile} field. Used to inject the node-default runtime's
- * registry value as the field's suggested default in `getGlobalSettings`.
- */
-const PROFILE_SLIDER_KEYS = [
-  'concurrency',
-  'numWorkers',
-  'windowMs',
-  'maxBatchSize',
-  'numStreams',
-  'intraOpThreads',
-] as const
-
-type ProfileSliderKey = (typeof PROFILE_SLIDER_KEYS)[number]
-
-function isProfileSliderKey(key: string): key is ProfileSliderKey {
-  return PROFILE_SLIDER_KEYS.some((k) => k === key)
-}
-
 export default class DetectionPipelineAddon extends BaseAddon<DetectionPipelineConfig> {
   private provider: DetectionPipelineProvider | null = null
 
@@ -287,7 +275,10 @@ export default class DetectionPipelineAddon extends BaseAddon<DetectionPipelineC
    *  the engine inventory is unchanged (no model load/unload), so
    *  we skip the bus emit and let the heartbeat re-emit at
    *  ENGINE_METRICS_HEARTBEAT_MS for liveness. */
-  private lastEmittedEngineSnapshot: { json: string; emittedAt: number } | null = null
+  private lastEmittedEngineSnapshot: {
+    json: string
+    emittedAt: number
+  } | null = null
   /**
    * Last-applied OPERATOR OVERRIDE, taken at the end of `onInitialize` and
    * refreshed at the end of `onConfigChanged`. Lets the change handler diff the
@@ -320,13 +311,18 @@ export default class DetectionPipelineAddon extends BaseAddon<DetectionPipelineC
     super(DEFAULT_CONFIG)
   }
 
-  protected globalSettingsSchema() {
-    // Base (static) schema — the dynamic cascade options are injected
-    // by the `getGlobalSettings()` override below based on the current
-    // runtime + backend values. Keeping a static base lets the
-    // addon-registry introspection machinery (which calls this method
-    // without a live store) still see every field.
-    return this.schema({
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return ['detection-pipeline', 'pipeline-executor']
+  }
+
+  /**
+   * The cluster-wide part of the form: the read-only model-substitution readout. The live value
+   * is injected here, at request time, so the form is true without a `getGlobalSettings` override
+   * for it.
+   */
+  protected override async clusterSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    if (cap !== 'detection-pipeline') return null
+    const schema = this.schema({
       sections: [
         {
           id: 'engine',
@@ -371,6 +367,20 @@ export default class DetectionPipelineAddon extends BaseAddon<DetectionPipelineC
             }),
           ],
         },
+      ],
+    })
+    return withLiveSubstitutions(schema, this.activeModelSubstitutionsText())
+  }
+
+  /**
+   * The per-node part of the form: the Inference-executor knobs. The suggested defaults are the
+   * matrix-tuned row of this node's derived backend; a form opened for ANOTHER node is re-tuned
+   * for that node in {@link getGlobalSettings} (a scoped hook is not told which node asks).
+   */
+  protected override async nodeSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    if (cap !== 'pipeline-executor') return null
+    const schema = this.schema({
+      sections: [
         // Every field in this section is `perNode: true`. The provisioning it
         // overrides is a property of the HOST — a Mac mini's CoreML pools and
         // the hub's OpenVINO pools have nothing in common — and the store this
@@ -401,7 +411,10 @@ export default class DetectionPipelineAddon extends BaseAddon<DetectionPipelineC
               options: [
                 { value: '', label: 'Auto (backend default)' },
                 { value: 'none', label: 'None (one call per frame)' },
-                { value: 'list', label: 'List (per-batch model.predict([list]))' },
+                {
+                  value: 'list',
+                  label: 'List (per-batch model.predict([list]))',
+                },
                 { value: 'window', label: 'Window (cross-camera accumulator)' },
               ],
               default: '',
@@ -459,7 +472,7 @@ export default class DetectionPipelineAddon extends BaseAddon<DetectionPipelineC
                 'Raising this does not help CoreML (it serialises per model ' +
                 'context) — use Pool subprocesses instead. Applies to THIS node only.',
               min: 1,
-              max: 8,
+              max: CONCURRENCY_MAX,
               step: 1,
               default: undefined,
               showValue: true,
@@ -491,6 +504,8 @@ export default class DetectionPipelineAddon extends BaseAddon<DetectionPipelineC
         },
       ],
     })
+    const env = await this.probeHardwareEnv(this.localNodeId())
+    return withBackendTuning(schema, pickBestRuntime(env, null).runtimeId)
   }
 
   /**
@@ -533,53 +548,25 @@ export default class DetectionPipelineAddon extends BaseAddon<DetectionPipelineC
 
     // Live node-local model-substitution readout (a step's chosen model has no
     // build for this node's format → a compatible default is running instead).
-    const substitutions = this.provider?.getActiveModelSubstitutions() ?? []
-    const activeModelSubstitutions =
-      substitutions.length === 0
-        ? ''
-        : substitutions.map((s) => `${s.addonId}: ${s.chosen}→${s.running}`).join(', ')
-
+    const activeModelSubstitutions = this.activeModelSubstitutionsText()
     const raw = { ...merged, activeModelSubstitutions }
 
-    const schema = this.globalSettingsSchema()
-    if (!schema) return { sections: [] }
-
-    // Suggested field defaults = the registry row of the node's DEFAULT runtime.
-    // They are a UI hint only, and only for that one pool: a node runs a pool
-    // per accelerator and each resolves its own runtime's row at build time
-    // (`engine/pool-provisioning.ts`). A value the operator actually sets here
-    // is an override and applies to every pool on the node.
-    // Persisted values still take precedence (hydrateSchema lays raw over defaults).
-    const tuning: RuntimePoolProfile = tuningFor(backend)
-
-    const patched = {
-      ...schema,
-      sections: schema.sections.map((section) => ({
-        ...section,
-        fields: section.fields.map((field) => {
-          if (field.type === 'select') {
-            if (field.key === 'batchMode') {
-              return { ...field, default: tuning.batchMode }
-            }
-          }
-          if (field.type === 'slider' && 'key' in field) {
-            // Per-backend slider max overrides — CoreML serializes per-context
-            // so >4 prepare workers add overhead without throughput. OpenVINO/
-            // ONNX inherit the schema default (32) which is already reasonable.
-            const sliderField = field
-            let patchedField = isProfileSliderKey(sliderField.key)
-              ? { ...sliderField, default: tuning[sliderField.key] }
-              : sliderField
-            if (sliderField.key === 'concurrency' && backend === 'coreml') {
-              patchedField = { ...patchedField, max: 4 }
-            }
-            return patchedField
-          }
-          return field
-        }),
-      })),
-    }
+    // The scoped hooks answer without a node, so the executor form is re-tuned here for the
+    // TARGET node: the suggested defaults are the registry row of its DEFAULT runtime. A UI hint
+    // only, and only for that one pool: a node runs a pool per accelerator and each resolves its
+    // own runtime's row at build time (`engine/pool-provisioning.ts`). A value the operator sets
+    // here is an override and applies to every pool on the node.
+    const cluster = await this.clusterSettingsSchema('detection-pipeline')
+    const executor = await this.nodeSettingsSchema('pipeline-executor')
+    const sections = [...(cluster?.sections ?? []), ...(executor?.sections ?? [])]
+    const patched = withBackendTuning({ sections }, backend)
     return hydrateSchema(patched, raw)
+  }
+
+  /** The live "step: chosen→running" readout of this node's model substitutions, or ''. */
+  private activeModelSubstitutionsText(): string {
+    const substitutions = this.provider?.getActiveModelSubstitutions() ?? []
+    return substitutions.map((s) => `${s.addonId}: ${s.chosen}→${s.running}`).join(', ')
   }
 
   /**
@@ -878,7 +865,9 @@ export default class DetectionPipelineAddon extends BaseAddon<DetectionPipelineC
         // (it is built above), but the field is nullable for the pre-boot
         // window. An empty list is the honest answer for a pool that does not
         // exist yet — not an error, and not a zero-cost claim.
-        provider: { list: async () => (await this.provider?.loadContributions()) ?? [] },
+        provider: {
+          list: async () => (await this.provider?.loadContributions()) ?? [],
+        },
       },
     ]
   }
