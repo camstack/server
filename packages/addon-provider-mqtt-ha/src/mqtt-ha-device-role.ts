@@ -39,13 +39,16 @@ export function deviceRoleForPrimaryCap(cap: MqttHaCap | undefined): DeviceRole 
   }
 }
 
-/** Meta passed to `devices.create` for one adopted plan. */
-export function mqttHaInitialMeta(input: {
+/** What one adopted plan contributes to the device meta row. */
+export interface MqttHaInitialMetaInput {
   readonly deviceType: DeviceType
   readonly name: string
   readonly integrationId: string
   readonly primaryCap: MqttHaCap | undefined
-}): InitialDeviceMeta {
+}
+
+/** Meta passed to `devices.create` for one adopted plan. */
+export function mqttHaInitialMeta(input: MqttHaInitialMetaInput): InitialDeviceMeta {
   const role = deviceRoleForPrimaryCap(input.primaryCap)
   return {
     type: input.deviceType,
