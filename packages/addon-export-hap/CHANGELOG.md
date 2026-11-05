@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- HomeKit export keeps interfaceName on its node hook only; the settings form and stored values are unchanged.
+
 ## [1.2.193] - 2026-11-05
 
 ### Changed

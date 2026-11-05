@@ -1767,21 +1767,8 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     if (report.applied.length > 0) await this.resolveConfig()
   }
 
-  /**
-   * Only the declaration `perNodeKeys()` derives the node-scoped keys from: `interfaceName` is a
-   * fact of one node, and the settings machinery reads a per-node key through this schema. The
-   * editable surfaces are the node form, the device defaults and each bridge's own form.
-   */
-  protected globalSettingsSchema() {
-    return this.schema({
-      sections: [
-        {
-          id: 'export-hap',
-          title: 'HomeKit Export',
-          fields: [this.interfaceNameField()],
-        },
-      ],
-    })
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return ['device-export']
   }
 
   // ── Device-details contribution ─────────────────────────────────
