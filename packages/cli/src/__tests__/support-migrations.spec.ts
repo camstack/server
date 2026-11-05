@@ -145,4 +145,36 @@ describe('migrations_status', () => {
       status: 'refused',
     })
   })
+
+  it('masks paths and credentials in the error and the refused reason of the direct tool', async () => {
+    const h = fakeHub({
+      'migrations.listLedger': {
+        entries: [
+          row(B, 'failed', {
+            error:
+              'ENOENT /mnt/user/appdata/camstack/events/x.db and rtsp://admin:hunter2@10.0.0.5/s and \\\\nas\\share\\cams\\db',
+          }),
+        ],
+      },
+      'migrations.listPending': { pending: [] },
+      'addons.list': [
+        {
+          manifest: { id: 'recorder' },
+          process: {
+            state: 'refused',
+            reason: 'cannot open C:\\Users\\bob\\cams\\db and /data/camstack/x/y.db',
+          },
+        },
+      ],
+    })
+    const out = await migrationsStatus(h.ctx)
+    if (out.status !== 'ok') throw new Error('expected ok')
+    const text = JSON.stringify(out)
+    expect(text).not.toContain('hunter2')
+    expect(text).not.toContain('appdata')
+    expect(text).not.toContain('bob')
+    expect(text).not.toContain('nas')
+    expect(text).not.toContain('camstack/x/y')
+    expect(out.problems?.[0]?.error).toContain('ENOENT')
+  })
 })

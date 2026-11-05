@@ -94,15 +94,21 @@ rows are counted, not listed; a read that failed is `null`, never "none". Hub
 runners only.
 
 `media_storage_check({ cameraOffset?, cameras?, tracksPerCamera? })` answers "empty
-thumbnails": every `eventMedia` / `galleryMedia` location with its mode (D385),
-masked root, volume readability and bytes held (D388), the stored media rows and
-bytes that name it (`pipelineAnalytics.getMediaLocationCensus`: one indexed
-aggregate per location plus the unstamped and total ones, no walk, D447), findings
-for rows on a location that no longer exists, is disabled or read-only, and a
-bounded sample of recent tracks per camera (12 cameras a page, 6 tracks each,
-`nextCameraOffset` to continue) whose thumbnail / keyFrame resolve in the media
-index. Roots are cut to their first two and last segment. Both tools are in the
-`report_issue` recipes below.
+thumbnails": every `eventMedia` / `galleryMedia` location, and any other location a
+media row names, with its mode (D385), masked roots, volume readability and bytes
+held (D388), and the stored media rows and bytes that name it
+(`pipelineAnalytics.getMediaLocationCensus`: one aggregate per location, plus one
+covering-index scan, O(rows), for the total; D447). The tool asks the census for
+EVERY location id the hub lists, in chunks of 50. Findings: rows on a location that
+no longer exists (judged only when every location was asked; a chunk that failed or
+more locations than one report asks about make it `location-gone-unknown`, never a
+problem), rows on a disabled, draining or read-only location, and legacy rows no
+location can claim. A bounded sample of recent tracks per camera (12 cameras a
+page, 6 tracks each, `nextCameraOffset` to continue) shows whose thumbnail /
+keyFrame resolve in the media index. Roots and the migration error / refused-runner
+text are masked in the tool itself (`path-mask.ts`: first and last path segment,
+UNC host, URL and `user:pw@host` gone), not only by `report_issue`. Both tools are
+in the `report_issue` recipes below.
 
 `client_logs({ since?, deviceId?, scope?, level?, user?, platform?, appVersion?, sessionId?, limit? })`
 reads the viewer app's own log by tag; see "The viewer app's own log" in

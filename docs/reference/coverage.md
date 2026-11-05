@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**239 units · 8078 source files · 226 units claimed by at least one document (8033 files).**
+**239 units · 8079 source files · 226 units claimed by at least one document (8034 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -35,7 +35,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-pipeline-orchestrator` | 82 | `pipeline-orchestration`, `zones` | `architecture/inference-devices.md`, `decisions/adr-0650-a-detail-step-the-elected-device-cannot-run-is-delegated-within-the-node.md`, `decisions/adr-0748-a-share-is-a-share-of-parallel-sessions-held-at-each-session-start.md`, +53 more, 13 ADRs | 2026-11-02 |
 | `packages/types/src/interfaces` | 76 | `capabilities` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/ui.md`, `decisions/adr-0385-a-storage-location-has-one-typed-state-interpreted-in-one-place.md`, +42 more, 11 ADRs | 2026-11-02 |
 | `packages/addon-pipeline` | 71 | `detection-execution`, `tooling` | `architecture/detection-execution.md`, `decisions/adr-0742-a-coreml-package-is-loaded-once-in-a-child-before-the-pool-loads-it-and-a-yolo26-coreml-export-is-static.md`, `decisions/adr-0823-onnx-webgpu-holds-one-inference-session-per-os-process.md`, +20 more | 2026-10-24 |
-| `packages/cli/src/mcp` | 68 | `tooling` | `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `architecture/assisted-setup-mcp.md`, `decisions/adr-0975-the-home-assistant-integration-stays-a-custom-repository-and-its-docs-change-only-after-the-core-marketplace-ships.md` _(covers)_, +2 more | 2026-11-04 |
+| `packages/cli/src/mcp` | 69 | `tooling` | `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `architecture/assisted-setup-mcp.md`, `decisions/adr-0975-the-home-assistant-integration-stays-a-custom-repository-and-its-docs-change-only-after-the-core-marketplace-ships.md` _(covers)_, +2 more | 2026-11-04 |
 | `packages/types/src/composition` | 66 | `automations` | `architecture/device-model.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, +16 more | 2026-10-26 |
 | `packages/addon-provider-reolink` | 63 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0847-a-battery-camera-refreshes-everything-it-owns-once-per-window-by-an-awake-moment-or-one-wake.md`, +21 more, 2 ADRs | 2026-10-26 |
 | `hf` | 62 | `cloud-training` | `architecture/cloud-training.md` | 2026-10-14 |

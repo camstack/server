@@ -9,6 +9,14 @@
  * address passes, and names last.
  */
 
+import {
+  maskPath,
+  POSIX_PATH_IN_TEXT,
+  SCHEMELESS_URL_IN_TEXT,
+  UNC_PATH_IN_TEXT,
+  WINDOWS_PATH_IN_TEXT,
+} from './path-mask.js'
+
 export const REDACTION_KINDS = [
   'tokens',
   'secretMarkers',
@@ -21,6 +29,7 @@ export const REDACTION_KINDS = [
   'ipv6',
   'hostnames',
   'homePaths',
+  'paths',
   'names',
 ] as const
 
@@ -143,6 +152,7 @@ function emptyCounts(): { [K in RedactionKind]: number } {
     ipv6: 0,
     hostnames: 0,
     homePaths: 0,
+    paths: 0,
     names: 0,
   }
 }
@@ -215,6 +225,10 @@ export function createRedactor(names: readonly KnownName[] = []): Redactor {
       counts.urls += 1
       return shape
     })
+    out = out.replace(SCHEMELESS_URL_IN_TEXT, () => {
+      counts.rtspCredentials += 1
+      return '[remote url]'
+    })
     out = out.replace(EMAIL, () => {
       counts.emails += 1
       return '[redacted:email]'
@@ -239,6 +253,12 @@ export function createRedactor(names: readonly KnownName[] = []): Redactor {
       counts.homePaths += 1
       return `${root}\\~`
     })
+    for (const shape of [UNC_PATH_IN_TEXT, WINDOWS_PATH_IN_TEXT, POSIX_PATH_IN_TEXT]) {
+      out = out.replace(shape, (path) => {
+        counts.paths += 1
+        return maskPath(path)
+      })
+    }
     out = out.replace(HOSTNAME, (host: string, tld: string) => {
       if (!HOST_TLDS.has(tld.toLowerCase())) return host
       counts.hostnames += 1
@@ -270,6 +290,7 @@ const COUNT_LABELS: readonly {
   { label: 'MACs', kinds: ['macs'] },
   { label: 'hostnames', kinds: ['hostnames'] },
   { label: 'home paths', kinds: ['homePaths'] },
+  { label: 'file paths', kinds: ['paths'] },
   { label: 'device/node names', kinds: ['names'] },
 ]
 

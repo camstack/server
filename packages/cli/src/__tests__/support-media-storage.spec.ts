@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { mediaStorageLines } from '../mcp/report-tool-sections.js'
-import { maskRoot, mediaStorageCheck } from '../mcp/support-media-storage.js'
+import { maskPath } from '../mcp/path-mask.js'
+import { mediaStorageCheck, rootsOf } from '../mcp/support-media-storage.js'
 import { fakeHub, noSessionContext } from './ops-fake-hub.js'
 
 const loc = (id: string, over: object = {}): object => ({
@@ -20,6 +21,37 @@ const loc = (id: string, over: object = {}): object => ({
   ...over,
 })
 
+interface CensusInput {
+  readonly locationIds: readonly string[]
+}
+
+/**
+ * A census answered the way the real store does: per asked id, the NULL group,
+ * the unfiltered total, and "unlisted" = total minus the ASKED ids minus NULL.
+ */
+function censusOver(
+  db: { readonly [locationId: string]: number },
+  unstamped = 0,
+): (input: CensusInput) => object {
+  return (input) => {
+    let total = unstamped
+    for (const n of Object.values(db)) total += n
+    let known = 0
+    const locations = input.locationIds.map((id) => {
+      const rows = db[id] ?? 0
+      known += rows
+      return { locationId: id, rows, bytes: rows * 100 }
+    })
+    const unlisted = Math.max(0, total - known - unstamped)
+    return {
+      locations,
+      unstamped: { rows: unstamped, bytes: unstamped * 100 },
+      unlisted: { rows: unlisted, bytes: unlisted * 100 },
+      total: { rows: total, bytes: total * 100 },
+    }
+  }
+}
+
 const track = (id: string, firstSeen: number): object => ({
   trackId: id,
   className: 'person',
@@ -35,16 +67,10 @@ function hub(media: { [trackId: string]: object[] }) {
       loc('eventMedia:ro', { mode: 'readonly', capacity: null }),
       loc('recordings:default'),
     ],
-    'pipelineAnalytics.getMediaLocationCensus': {
-      locations: [
-        { locationId: 'eventMedia:default', rows: 900, bytes: 4e9 },
-        { locationId: 'eventMedia:old', rows: 120, bytes: 1e9 },
-        { locationId: 'eventMedia:ro', rows: 30, bytes: 1e8 },
-      ],
-      unstamped: { rows: 5, bytes: 1000 },
-      unlisted: { rows: 44, bytes: 5e8 },
-      total: { rows: 1099, bytes: 5.6e9 },
-    },
+    'pipelineAnalytics.getMediaLocationCensus': censusOver(
+      { 'eventMedia:default': 900, 'eventMedia:old': 120, 'eventMedia:ro': 30, 'gone:x': 44 },
+      5,
+    ),
     'deviceManager.listAll': [
       { id: 7, name: 'Garage', disabled: false },
       { id: 8, name: 'Gate', disabled: true },
@@ -80,7 +106,7 @@ describe('media_storage_check', () => {
     expect(out.locations?.find((l) => l.id === 'eventMedia:old')).toMatchObject({
       mode: 'disabled',
       mediaRows: 120,
-      root: '/mnt/user/…/eventMedia-old',
+      roots: ['basePath=/mnt/…/eventMedia-old'],
     })
     expect(out.locations?.find((l) => l.id === 'eventMedia:ro')?.volumeReadable).toBeNull()
     const codes = out.findings.map((f) => f.code)
@@ -135,15 +161,10 @@ describe('media_storage_check', () => {
   it('flags legacy rows that no location can claim', async () => {
     const h = fakeHub({
       'storage.listLocations': [loc('eventMedia:a'), loc('eventMedia:b')],
-      'pipelineAnalytics.getMediaLocationCensus': {
-        locations: [
-          { locationId: 'eventMedia:a', rows: 1, bytes: 1 },
-          { locationId: 'eventMedia:b', rows: 1, bytes: 1 },
-        ],
-        unstamped: { rows: 9, bytes: 9 },
-        unlisted: { rows: 0, bytes: 0 },
-        total: { rows: 11, bytes: 11 },
-      },
+      'pipelineAnalytics.getMediaLocationCensus': censusOver(
+        { 'eventMedia:a': 1, 'eventMedia:b': 1 },
+        9,
+      ),
       'deviceManager.listAll': [],
     })
     const out = await mediaStorageCheck(h.ctx)
@@ -151,10 +172,117 @@ describe('media_storage_check', () => {
     expect(out.findings.map((f) => f.code)).toContain('unstamped-unresolvable')
   })
 
-  it('masks a root to its mount shape', () => {
-    expect(maskRoot('/mnt/user/appdata/camstack/events')).toBe('/mnt/user/…/events')
-    expect(maskRoot('/data/events')).toBe('/data/events')
-    expect(maskRoot('s3://bucket.example.com/x')).toBe('[remote url]')
-    expect(maskRoot(undefined)).toBeNull()
+  it('does not call a row on another live class gone', async () => {
+    const h = fakeHub({
+      'storage.listLocations': [loc('eventMedia:default'), loc('recordings:default')],
+      'pipelineAnalytics.getMediaLocationCensus': censusOver({
+        'eventMedia:default': 10,
+        'recordings:default': 50,
+      }),
+      'deviceManager.listAll': [],
+    })
+    const out = await mediaStorageCheck(h.ctx)
+    if (out.status !== 'ok') throw new Error('expected ok')
+    expect(out.findings.map((f) => f.code)).not.toContain('location-gone')
+    expect(out.census?.unlistedRows).toBe(0)
+    // A location outside the media classes is shown because a row names it.
+    expect(out.locations?.map((l) => l.id)).toContain('recordings:default')
+  })
+
+  it('asks every location in chunks of 50 and finds no false gone over 50 locations', async () => {
+    const ids = Array.from({ length: 120 }, (_, i) => `eventMedia:l${String(i)}`)
+    const db: { [id: string]: number } = {}
+    db['eventMedia:l100'] = 7
+    const asked: number[] = []
+    const answer = censusOver(db)
+    const h = fakeHub({
+      'storage.listLocations': ids.map((id) => loc(id)),
+      'pipelineAnalytics.getMediaLocationCensus': (input: CensusInput) => {
+        asked.push(input.locationIds.length)
+        return answer(input)
+      },
+      'deviceManager.listAll': [],
+    })
+    const out = await mediaStorageCheck(h.ctx)
+    if (out.status !== 'ok') throw new Error('expected ok')
+    expect(asked).toEqual([50, 50, 20])
+    expect(out.findings.map((f) => f.code)).not.toContain('location-gone')
+    expect(out.census?.unlistedRows).toBe(0)
+    expect(out.locations?.find((l) => l.id === 'eventMedia:l100')?.mediaRows).toBe(7)
+  })
+
+  it('a chunk that failed makes gone unknown, never a problem', async () => {
+    const ids = Array.from({ length: 60 }, (_, i) => `eventMedia:l${String(i)}`)
+    const answer = censusOver({ 'eventMedia:l55': 9 })
+    let n = 0
+    const h = fakeHub({
+      'storage.listLocations': ids.map((id) => loc(id)),
+      'pipelineAnalytics.getMediaLocationCensus': (input: CensusInput) => {
+        n += 1
+        if (n === 2) throw new Error('second chunk down')
+        return answer(input)
+      },
+      'deviceManager.listAll': [],
+    })
+    const out = await mediaStorageCheck(h.ctx)
+    if (out.status !== 'ok') throw new Error('expected ok')
+    const codes = out.findings.map((f) => f.code)
+    expect(codes).not.toContain('location-gone')
+    expect(codes).toContain('location-gone-unknown')
+    expect(out.census?.unlistedRows).toBeNull()
+  })
+
+  it('a location being drained has its own finding', async () => {
+    const h = fakeHub({
+      'storage.listLocations': [loc('eventMedia:d', { mode: 'drain' })],
+      'pipelineAnalytics.getMediaLocationCensus': censusOver({ 'eventMedia:d': 12 }),
+      'deviceManager.listAll': [],
+    })
+    const out = await mediaStorageCheck(h.ctx)
+    if (out.status !== 'ok') throw new Error('expected ok')
+    const f = out.findings.find((x) => x.code === 'location-draining')
+    expect(f?.message).toContain('drained')
+    expect(out.findings.map((x) => x.code)).not.toContain('location-readonly')
+  })
+
+  it('an older hub without the census still produces the sample', async () => {
+    const h = fakeHub({
+      'storage.listLocations': [loc('eventMedia:default')],
+      'deviceManager.listAll': [{ id: 7, name: 'Garage', disabled: false }],
+      'pipelineAnalytics.listRecentTracks': { tracks: [track('t1', 1)] },
+      'pipelineAnalytics.listTrackMedia': [m('thumbnail')],
+    })
+    const out = await mediaStorageCheck(h.ctx)
+    if (out.status !== 'ok') throw new Error('expected ok')
+    expect(out.unavailable['census']).toContain('no fake answer')
+    expect(out.census).toBeNull()
+    expect(out.sample?.cameras[0]).toMatchObject({ deviceId: 7, checked: 1 })
+  })
+
+  it('shows every root-bearing key masked and never a credential or host', () => {
+    expect(
+      rootsOf({
+        basePath: '/mnt/user/appdata/camstack/events',
+        rootPath: '\\\\nas\\share\\cams\\events',
+        url: 'https://u:pw@nas.example.com/x',
+        bucket: 'my-bucket',
+        retention: 30,
+      }),
+    ).toEqual([
+      'basePath=/mnt/…/events',
+      'rootPath=\\\\[host]\\share\\…\\events',
+      'url=[remote]',
+      'bucket=[remote]',
+    ])
+  })
+
+  it('masks paths: unix, UNC, scheme-less credentials, short ones', () => {
+    expect(maskPath('/mnt/user/appdata/camstack/events')).toBe('/mnt/…/events')
+    expect(maskPath('/data/events')).toBe('/data/…')
+    expect(maskPath('/data')).toBe('/data')
+    expect(maskPath('\\\\nas\\share\\cams\\events')).toBe('\\\\[host]\\share\\…\\events')
+    expect(maskPath('//user:pw@nas/share/events')).toBe('[remote url]')
+    expect(maskPath('s3://bucket.example.com/x')).toBe('[remote url]')
+    expect(maskPath('C:\\Users\\bob\\cams\\events')).toBe('C:\\Users\\…\\events')
   })
 })

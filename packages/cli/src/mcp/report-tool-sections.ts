@@ -56,12 +56,12 @@ export function mediaStorageLines(r: MediaStorageResult): string[] {
   const out: string[] = []
   if (r.census) {
     out.push(
-      `media rows: ${String(r.census.totalRows)} total, ${String(r.census.unstampedRows)} without a location, ${String(r.census.unlistedRows)} on an unknown location`,
+      `media rows: ${String(r.census.totalRows)} total, ${String(r.census.unstampedRows)} without a location, ${r.census.unlistedRows === null ? 'unknown (not every location could be asked)' : String(r.census.unlistedRows)} on an unknown location`,
     )
   }
   for (const l of r.locations ?? []) {
     out.push(
-      `location ${l.id} class=${l.class} mode=${l.mode}${l.nodeId ? ` node=${l.nodeId}` : ''} root=${l.root ?? 'n/a'} volume=${l.volumeReadable ? 'readable' : 'unknown'} free=${gb(l.freeBytes)} held=${gb(l.heldBytes)} mediaRows=${l.mediaRows === null ? 'unknown' : String(l.mediaRows)}`,
+      `location ${l.id} class=${l.class} mode=${l.mode}${l.nodeId ? ` node=${l.nodeId}` : ''} roots=${l.roots.length === 0 ? 'n/a' : l.roots.join(',')} volume=${l.volumeReadable ? 'readable' : 'unknown'} free=${gb(l.freeBytes)} held=${gb(l.heldBytes)} mediaRows=${l.mediaRows === null ? 'unknown' : String(l.mediaRows)}`,
     )
   }
   for (const f of r.findings) out.push(`${f.severity.toUpperCase()} ${f.code}: ${f.message}`)

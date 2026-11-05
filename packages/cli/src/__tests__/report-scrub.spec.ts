@@ -89,4 +89,15 @@ describe('createRedactor', () => {
     r.scrub('token=csa_abcdefgh1234')
     expect(r.counts().tokens + r.counts().credentials).toBe(1)
   })
+
+  it('masks mount, data, Windows and UNC paths and scheme-less credentials', () => {
+    const r = createRedactor()
+    const out = r.scrub(
+      'a /mnt/user/appdata/camstack/events/x.db b /data/camstack/secret-name/y.db c C:\\Users\\bob\\cams\\db d D:\\nvr\\nvr-private\\2026 e \\\\nas\\share\\cams f //admin:pw@nas/share/x',
+    )
+    for (const leak of ['appdata', 'secret-name', 'bob', 'nvr-private', 'nas', 'admin', 'pw@']) {
+      expect(out).not.toContain(leak)
+    }
+    expect(r.counts().paths).toBeGreaterThanOrEqual(4)
+  })
 })

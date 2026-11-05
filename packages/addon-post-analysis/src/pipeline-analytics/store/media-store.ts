@@ -1688,9 +1688,10 @@ export class MediaStore {
    *
    * Same statements as {@link footprintByLocation} (one aggregate over
    * `idx_media_location_size` per location, one for NULL) plus one unfiltered
-   * aggregate for the total; the unlisted remainder is the difference, so a row
-   * stamped with a deleted location is counted without a distinct walk. A read
-   * that fails THROWS — never a zero.
+   * aggregate for the total (a covering-index scan, O(rows)); the unlisted
+   * remainder is the difference, relative to the ids ASKED, so a row stamped with
+   * a deleted location is counted without a distinct walk only when the caller
+   * asked for every live location. A read that fails THROWS — never a zero.
    */
   async censusByLocation(locationIds: readonly string[]): Promise<MediaLocationCensus> {
     const fields = [{ as: 'bytes', field: 'sizeBytes', op: 'sum' }] as const

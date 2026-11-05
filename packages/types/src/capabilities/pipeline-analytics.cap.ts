@@ -3303,10 +3303,12 @@ export const pipelineAnalyticsCapability = {
     /**
      * Stored media per storage location: rows and bytes stamped with each asked
      * location id, the rows with none, and the rows naming a location that was
-     * not asked about (deleted or unlisted). One indexed aggregate per location
-     * (`idx_media_location_size`) plus the NULL one and one total — never a walk,
-     * so it answers on a hub with a million rows. A failed read throws; it never
-     * reads as zero.
+     * not asked about. One indexed aggregate per location (`idx_media_location_size`,
+     * a covering index) plus the NULL one, and one unfiltered total that is a
+     * covering-index scan: O(rows), cheap per row but not constant, so a hub with
+     * millions of rows pays for it once per call. `unlisted` is relative to the
+     * ids ASKED: it means "gone" only when every location id was asked. A failed
+     * read throws; it never reads as zero.
      */
     getMediaLocationCensus: method(MediaLocationCensusInputSchema, MediaLocationCensusSchema, {
       kind: 'query',

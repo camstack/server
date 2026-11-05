@@ -199,7 +199,10 @@ export type UnstampedEventMediaCount = z.infer<typeof UnstampedEventMediaCountSc
  * resolved to the default `eventMedia` location), and how many name a location
  * that was not asked about (a deleted or never-listed one).
  *
- * One indexed aggregate per asked location plus two (NULL, total): no walk.
+ * One covering-index aggregate per asked location plus the NULL one, and one
+ * unfiltered total that scans the covering index: O(rows), not a walk of the
+ * rows themselves. `unlisted` is total minus the ASKED locations minus NULL, so
+ * it is a deleted location only when every location id was asked.
  * `null` is "could not be measured", never zero.
  */
 export const MediaLocationCensusInputSchema = z.object({

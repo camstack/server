@@ -13,6 +13,7 @@
 import { MigrationLedgerEntrySchema, MigrationPendingEntrySchema } from '@camstack/types'
 import { z } from 'zod'
 import type { McpContext } from './context.js'
+import { createRedactor } from './report-scrub.js'
 import { readQuery, withHub, type NoSessionResult, type RefusedResult } from './ops-hub.js'
 import { adminRefusal } from './setup-assist-common.js'
 
@@ -220,14 +221,29 @@ export async function migrationsStatus(
     if (!ledger.ok) unavailable['ledger'] = ledger.reason
     if (!pending.ok) unavailable['pending'] = pending.reason
     if (!addons.ok) unavailable['addons'] = addons.reason
-    const view =
+    // A migration error or a runner reason is free text from the hub: it can carry
+    // a path, a host or a credential, so it is masked here, not only by report_issue.
+    const { scrub } = createRedactor()
+    const built =
       ledger.ok && pending.ok
         ? buildMigrationsView(ledger.value.entries, pending.value.pending)
         : { counts: null, owners: null, problems: null, problemsTruncated: 0 }
+    const view = {
+      ...built,
+      problems:
+        built.problems?.map((p) => ({
+          ...p,
+          error: p.error === null ? null : scrub(p.error),
+          reason: p.reason === null ? null : scrub(p.reason),
+        })) ?? null,
+    }
     const refusedRunners: RefusedRunner[] | null = addons.ok
       ? addons.value
           .filter((a) => a.process?.state === 'refused')
-          .map((a) => ({ addonId: a.manifest.id, reason: a.process?.reason ?? null }))
+          .map((a) => ({
+            addonId: a.manifest.id,
+            reason: a.process?.reason === undefined ? null : scrub(a.process.reason),
+          }))
       : null
     const notes: string[] = [
       'Hub runners only: an agent node keeps its own runner states (see ops_status).',
