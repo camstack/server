@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Viewer 1.0.683: recent clips retry with backoff before showing an error, and the timeline shows a single fault notice.
+
 ## [1.2.659] - 2026-11-04
 
 ### Changed
