@@ -418,20 +418,6 @@ export class AuthOidcAddon extends BaseAddon<OidcConfig> {
     return out
   }
 
-  protected globalSettingsSchema() {
-    return this.schema({
-      sections: [
-        {
-          id: 'oidc',
-          title: 'OpenID Connect',
-          description:
-            'Manage IdP connections in this page’s Settings table (Add / Edit). Each connection’s redirect URI is `<origin>/addon/auth-oidc/<id>/callback`. Credentials stay in the CamStack keychain.',
-          fields: [],
-        },
-      ],
-    })
-  }
-
   // ── Instance management ──────────────────────────────────────────
 
   private providersConfig(): OidcProvidersConfig {

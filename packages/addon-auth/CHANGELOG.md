@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The OIDC addon no longer declares an empty settings form; connections are managed as records.
+
 ## [1.2.175] - 2026-11-01
 
 ### Changed

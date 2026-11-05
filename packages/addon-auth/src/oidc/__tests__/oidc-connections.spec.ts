@@ -1,6 +1,7 @@
 /**
- * OIDC connection CRUD helpers + settings schema has no editable-array.
+ * OIDC connection CRUD helpers + the addon declares no settings schema.
  */
+import type { ConfigUISchema } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { AuthOidcAddon } from '../auth-oidc.addon.js'
 import {
@@ -48,18 +49,14 @@ describe('oidc-connections helpers', () => {
   })
 })
 
-describe('AuthOidcAddon globalSettingsSchema', () => {
-  it('has no editable-array providers field', () => {
-    const addon = new AuthOidcAddon()
-    const schema = (
-      addon as unknown as {
-        globalSettingsSchema: () => {
-          sections: readonly { fields: readonly { type: string; key?: string }[] }[]
-        }
-      }
-    ).globalSettingsSchema()
-    const fields = schema.sections.flatMap((s) => s.fields)
-    expect(fields.some((f) => f.type === 'editable-array')).toBe(false)
-    expect(fields.some((f) => f.key === 'providers')).toBe(false)
+class Probe extends AuthOidcAddon {
+  globalFormForTest(): ConfigUISchema | null {
+    return this.globalSettingsSchema()
+  }
+}
+
+describe('AuthOidcAddon settings schema', () => {
+  it('declares no global schema: connections are records, not settings fields', () => {
+    expect(new Probe().globalFormForTest()).toBeNull()
   })
 })
