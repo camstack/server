@@ -1,0 +1,14 @@
+{
+  "response": {
+    "success": {
+      "tokens": {
+        "bearer": { "access_token": "FIXTURE-ACCESS-TOKEN", "refresh_token": "FIXTURE-REFRESH-TOKEN", "expires_in": "3600" },
+        "mac_dms": { "device_private_key": "FIXTURE-PRIVATE-KEY", "adp_token": "FIXTURE-ADP-TOKEN" },
+        "website_cookies": [
+          { "Name": "session-id", "Value": "FIXTURE-REGISTER-SESSION" },
+          { "Name": "ubid-acbit", "Value": "FIXTURE-REGISTER-UBID" }
+        ]
+      }
+    }
+  }
+}

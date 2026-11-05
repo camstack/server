@@ -2,10 +2,9 @@ import { describe, it, expect, vi } from 'vitest'
 import type { IScopedLogger } from '@camstack/types'
 import { capturedToCookieString } from '../alexa-proxy-login-manager.js'
 import { buildAlexaLoginRoutes, type AlexaLoginRouteDeps } from '../alexa-login-routes.js'
-import { SECRET_LINE_RE } from '../alexa-proxy-login.js'
 import type { AlexaDeviceCodeManager } from '../alexa-device-code-manager.js'
 import type { AlexaProxyLoginManager } from '../alexa-proxy-login-manager.js'
-import type { AlexaProxyLoginStatus } from '../alexa-proxy-login.js'
+import type { AlexaProxyLoginStatus } from '../alexa-login-status.js'
 
 /** Minimal no-op logger satisfying IScopedLogger for the route handlers. */
 const noopLogger: IScopedLogger = {
@@ -210,21 +209,5 @@ describe('alexa login routes', () => {
     )
     expect(state.status).toBe(400)
     expect(deps.proxyLogin.start).not.toHaveBeenCalled()
-  })
-})
-
-describe('SECRET_LINE_RE (cookie/csrf log-redaction filter)', () => {
-  it('matches lines containing cookie material', () => {
-    expect(SECRET_LINE_RE.test('Alexa-Cookie: Update Cookie session-id=abc123')).toBe(true)
-    expect(SECRET_LINE_RE.test('Set-Cookie: ubid-acbde=123; Path=/')).toBe(true)
-    expect(SECRET_LINE_RE.test('Result: csrf=aabb1122, Cookie=session=xyz')).toBe(true)
-    expect(SECRET_LINE_RE.test('bearer token received')).toBe(true)
-  })
-
-  it('does NOT match innocuous proxy log lines', () => {
-    expect(SECRET_LINE_RE.test('Proxy server listening on port 3456')).toBe(false)
-    expect(SECRET_LINE_RE.test('Please open http://10.0.0.9:3456/ and login')).toBe(false)
-    expect(SECRET_LINE_RE.test('Request: GET /api/bootstrap')).toBe(false)
-    expect(SECRET_LINE_RE.test('Response status 200 OK')).toBe(false)
   })
 })

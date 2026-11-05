@@ -1,14 +1,10 @@
 /**
  * What the Echo worker needs from an import broker to act as the same Amazon
  * account: the refresh token of the broker's own device registration. The
- * broker keeps that registration fresh (it persists `cookieData` after every
- * refresh), so the freshest copy is the persisted session file, then the
- * stored cookie blob, then a bare refresh token. A raw cookie string carries
+ * broker keeps that registration fresh (it stores the renewed blob on its record after every
+ * renewal), so the seed is the stored cookie blob, then a bare refresh token. A raw cookie string carries
  * no refresh token and gives no seed.
  */
-import * as fs from 'node:fs/promises'
-import * as path from 'node:path'
-import { SESSION_FILE } from '../alexa-remote-client.js'
 import type { AlexaBrokerEntry } from '../config.js'
 import type { AlexaRegion } from './constants.js'
 
@@ -50,26 +46,7 @@ export function seedFromRegistration(value: unknown): BrokerSeed | null {
   }
 }
 
-async function readPersistedRegistration(
-  dataDir: string | undefined,
-  brokerId: string,
-): Promise<unknown> {
-  if (dataDir === undefined) return null
-  try {
-    const raw = await fs.readFile(path.join(dataDir, `${brokerId}.${SESSION_FILE}`), 'utf8')
-    const json: unknown = JSON.parse(raw)
-    return isRecord(json) ? json['cookieData'] : null
-  } catch {
-    return null
-  }
-}
-
-export async function readBrokerSeed(
-  dataDir: string | undefined,
-  entry: AlexaBrokerEntry,
-): Promise<BrokerSeed | null> {
-  const persisted = seedFromRegistration(await readPersistedRegistration(dataDir, entry.id))
-  if (persisted !== null) return persisted
+export function readBrokerSeed(entry: AlexaBrokerEntry): BrokerSeed | null {
   const stored = seedFromRegistration(entry.connection.cookie)
   if (stored !== null) return stored
   const bare = entry.connection.refreshToken

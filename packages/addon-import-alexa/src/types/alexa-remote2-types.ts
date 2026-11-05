@@ -50,10 +50,35 @@ declare module 'alexa-remote2' {
      * as options.cookie"). This object-init overload reflects that.
      */
     init(options: AlexaRemoteInitOptions, callback: (err?: Error) => void): void
+
+    /** The registration object installs its `localCookie` + csrf (the shipped type takes a string). */
+    setCookie(registration: object): void
+
+    /**
+     * What the library calls for sign-in and renewal. Unset, it loads `alexa-cookie2` on first
+     * use; the binding assigns {@link AlexaCookieAdapter} so that package is never loaded.
+     */
+    alexaCookie: AlexaCookieAdapter
   }
 }
 
 declare global {
+  /** The four entry points alexa-remote2 uses on its cookie helper. */
+  interface AlexaCookieAdapter {
+    refreshAlexaCookie(
+      options: { readonly formerRegistrationData?: unknown },
+      callback: (err: Error | null, registration: object | null) => void,
+    ): void
+    generateAlexaCookie(
+      email: unknown,
+      password: unknown,
+      options: unknown,
+      callback: (err: Error | null, registration: object | null) => void,
+    ): void
+    stopProxyServer(callback?: () => void): void
+    getDeviceAppName(): string
+  }
+
   /** Correct Alexa Phoenix control parameter shape (`{ action, ...args }`). */
   interface AlexaRemoteControlParameters {
     readonly action: string
@@ -64,15 +89,6 @@ declare global {
    * `init` options we set. `cookie` accepts either a cookie STRING or the
    * persisted `cookieData` registration OBJECT (the lib unpacks both). Kept
    * minimal — only fields the binding sets.
-   *
-   * Proxy-login fields (`proxyOwnIp` / `proxyPort` / `proxyLogLevel`) are set
-   * ONLY when starting an interactive cookie capture (`proxyOnly:true` with NO
-   * `cookie`): alexa-remote2 spins a local Express reverse-proxy to Amazon's
-   * login page, captures the cookie/`cookieData`, and emits the `cookie` event.
-   * `proxyOwnIp` is the address alexa-cookie2 advertises in every Amazon URL it
-   * rewrites (`http://<proxyOwnIp>:<proxyPort>/...`) and checks against the Host header;
-   * the binding sets it to loopback together with `proxyListenBind`, and the hub's
-   * login proxy is the only way a browser reaches it.
    */
   interface AlexaRemoteInitOptions {
     /** Required: unset, the bundled library reads a package.json that is not shipped. */
@@ -80,10 +96,8 @@ declare global {
     readonly cookie?: string | object
     readonly amazonPage?: string
     readonly proxyOnly?: boolean
-    readonly proxyOwnIp?: string
-    readonly proxyListenBind?: string
-    readonly proxyPort?: number
-    readonly proxyLogLevel?: string
+    /** `0` switches the library's own cookie refresh off; renewal is the binding's. */
+    readonly cookieRefreshInterval?: number
     readonly logger?: (...args: unknown[]) => void
   }
 

@@ -73,23 +73,6 @@ export const AlexaBrokerEntrySchema = z.object({
 export type AlexaBrokerEntry = z.infer<typeof AlexaBrokerEntrySchema>
 
 /**
- * Interactive proxy-login settings (addon-global, not per-broker). alexa-remote2
- * spins a local reverse-proxy to Amazon's login page on `127.0.0.1:proxyPort`; the
- * operator never reaches it directly — the hub's login proxy (D955) opens it at
- * `/addon/import-alexa/vendor-login/…` under the hub's own HTTPS origin. The port only has to
- * be free on the hub's loopback.
- */
-export const alexaProxyLoginSchema = z.object({
-  proxyPort: z
-    .preprocess(
-      (v) => (v === '' || v === null ? undefined : v),
-      z.number().int().min(1).max(65535).default(3456),
-    )
-    .describe('Loopback port the local Amazon-login proxy listens on (never exposed)'),
-})
-export type AlexaProxyLogin = z.infer<typeof alexaProxyLoginSchema>
-
-/**
  * The Echo notification targets this addon owns. Speech signs in as an import
  * broker, so a target is only the Echo it speaks on and how.
  */
@@ -118,9 +101,8 @@ export function readEchoTargets(config: { echoTargets?: unknown }): readonly Ale
   })
 }
 
-/** Top-level addon config — broker entries + the proxy-login settings. */
+/** Top-level addon config — the Echo targets this addon owns. */
 export const alexaAddonConfigSchema = z.object({
-  proxyLogin: alexaProxyLoginSchema.default({ proxyPort: 3456 }),
   echoTargets: z.array(alexaEchoTargetSchema).default([]),
 })
 export type AlexaAddonConfig = z.infer<typeof alexaAddonConfigSchema>

@@ -1,5 +1,3 @@
-import { promises as fs } from 'node:fs'
-import path from 'node:path'
 import AlexaRemote from 'alexa-remote2'
 import { errMsg, type IScopedLogger } from '@camstack/types'
 import {
@@ -17,19 +15,31 @@ import {
 } from './alexa-remote-decode.js'
 import { mapCommandToAlexaAction } from './alexa-command-map.js'
 import { ALEXA_API_USER_AGENT_POSTFIX } from './alexa-api-user-agent.js'
+import { alexaRegionOptions } from './alexa-region-options.js'
+import {
+  LEGACY_DEVICE_APP_NAME,
+  REGISTRATION_REFRESH_INTERVAL_MS,
+} from './amazon-auth/constants.js'
+import { AmazonAuthRejectedError, defaultAmazonHttp, type AmazonHttp } from './amazon-auth/http.js'
+import {
+  AlexaRegistrationSeedSchema,
+  parseRegistration,
+  refreshRegistration,
+  type AlexaRegistration,
+} from './amazon-auth/registration.js'
 
 /**
  * Real {@link AlexaClient} backed by `alexa-remote2` (Apollon77's unofficial
  * cookie/token Alexa client). Replaces `StubAlexaClient`.
  *
- * AUTH MODEL (no interactive proxy login inside the hub): the operator supplies
- * a PRE-OBTAINED `cookie` (preferred — the full `cookieData` JSON blob captured
- * by alexa-remote2's standalone proxy login) or a bare `refreshToken`, plus the
- * Amazon domain/region. We pass that straight to `init()` with `proxyOnly:false`
- * so NO proxy server is started. alexa-remote2 auto-refreshes the cookie in the
- * background and emits a `cookie` event; we persist the refreshed
- * `cookieData` to the addon `dataDir` and re-load it on the next `connect()` so
- * the session survives restarts. (See `alexa-remote2` README §"cookie" event.)
+ * AUTH MODEL: the operator signs in once (through the hub login proxy or with a device code),
+ * which yields a registration blob (`amazon-auth/registration.ts`) kept in the broker record's
+ * secret `cookie` field. We hand it to `init()` with `proxyOnly:false`, so no proxy server is
+ * started, and `cookieRefreshInterval: 0`, so the library never refreshes on its own. Renewal is
+ * ours (`refreshRegistration`): when the library finds the tokens older than a day at init (it
+ * calls the adapter assigned to `remote.alexaCookie`), every four days on a timer, and once when
+ * a call is refused. Each renewed registration is handed to `persistRegistration` so the record
+ * carries it across restarts.
  *
  * STATE is POLL-ONLY (Alexa exposes no clean 3rd-party push for smart-home
  * state). `listAppliances` / `pollStates` are wrapped in exponential backoff so a
@@ -41,8 +51,6 @@ import { ALEXA_API_USER_AGENT_POSTFIX } from './alexa-api-user-agent.js'
  * are retried then surfaced as generic errors (→ broker `error`, poll loop
  * keeps running).
  */
-
-export const SESSION_FILE = 'alexa-session.json'
 
 const BACKOFF_BASE_MS = 1_000
 const BACKOFF_MAX_MS = 30_000
@@ -57,15 +65,6 @@ const QUERY_TIMEOUT_MS = 30_000
  * oversized or poisoned id from failing the state of every other appliance.
  */
 export const POLL_CHUNK_SIZE = 50
-
-/**
- * Persisted session blob — alexa-remote2's `cookieData` registration object.
- * Typed `string | object` because the lib accepts either form back as the
- * `cookie` init field (the shipped types mistype `cookieData` as `string`).
- */
-interface PersistedSession {
-  readonly cookieData: string | object
-}
 
 /** Classify a raw lib error as an auth failure (vs transient/rate-limit). */
 function isAuthError(message: string): boolean {
@@ -110,14 +109,21 @@ export class AlexaRemoteClient implements AlexaClient {
   #lastHttpStatus: number | null = null
   readonly #options: AlexaClientOptions
   readonly #logger: IScopedLogger | null
-  readonly #dataDir: string | null
+  readonly #http: AmazonHttp
+  readonly #refreshIntervalMs: number
   #remote: AlexaRemote | null = null
   #connected = false
+  #registration: AlexaRegistration | null = null
+  #refreshTimer: NodeJS.Timeout | null = null
+  #persistedTokenDate: number | null = null
+  /** The last renewal failure that was NOT Amazon refusing the token (the network, a 5xx). */
+  #transientRefreshError: Error | null = null
 
   constructor(options: AlexaClientOptions) {
     this.#options = options
     this.#logger = options.logger ?? null
-    this.#dataDir = options.dataDir ?? null
+    this.#http = options.http ?? defaultAmazonHttp
+    this.#refreshIntervalMs = options.refreshIntervalMs ?? REGISTRATION_REFRESH_INTERVAL_MS
   }
 
   get options(): AlexaClientOptions {
@@ -130,22 +136,23 @@ export class AlexaRemoteClient implements AlexaClient {
 
   async connect(): Promise<void> {
     const remote = new AlexaRemote()
+    remote.alexaCookie = this.#cookieAdapter()
     this.#remote = remote
+    this.#transientRefreshError = null
 
     const initOptions: AlexaRemoteInitOptions = {
       ...(await this.#buildInitOptions()),
       logger: (...args: unknown[]) => this.#captureLibraryLine(args),
     }
 
-    // Persist refreshed sessions: alexa-remote2 emits `cookie` on init + refresh.
-    remote.on('cookie', () => {
-      void this.#persistSession(remote)
-    })
+    // The library emits `cookie` after init and after every registration it renewed.
+    remote.on('cookie', () => this.#adopt(remote))
 
     try {
       await this.#initRemote(remote, initOptions)
     } catch (err: unknown) {
       this.#connected = false
+      if (this.#transientRefreshError !== null) throw this.#transientRefreshError
       const message = errMsg(err)
       if (isAuthError(message)) {
         throw new AlexaAuthError(message)
@@ -157,10 +164,12 @@ export class AlexaRemoteClient implements AlexaClient {
     // and re-initialises or errors when the session is rejected, so success here
     // means authenticated.
     this.#connected = true
-    await this.#persistSession(remote)
+    this.#adopt(remote)
+    this.#armRefreshTimer()
   }
 
   async disconnect(): Promise<void> {
+    this.#clearRefreshTimer()
     const remote = this.#remote
     this.#remote = null
     this.#connected = false
@@ -309,6 +318,7 @@ export class AlexaRemoteClient implements AlexaClient {
 
   async #withBackoff<T>(op: string, run: () => Promise<T>): Promise<T> {
     let lastError: unknown = null
+    let renewed = false
     for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
       try {
         this.#lastHttpStatus = null
@@ -316,14 +326,21 @@ export class AlexaRemoteClient implements AlexaClient {
       } catch (err: unknown) {
         lastError = err
         const message = errMsg(err)
-        if (isAuthError(message)) throw new AlexaAuthError(message)
-        if (message.toLowerCase().includes('no body')) {
-          const status = this.#lastHttpStatus
-          if (status !== null && SESSION_DEAD_STATUSES.has(status)) {
-            throw new AlexaAuthError(`${message} (HTTP ${status})`)
+        const noBody = message.toLowerCase().includes('no body')
+        const status = this.#lastHttpStatus
+        const sessionDead =
+          isAuthError(message) || (noBody && status !== null && SESSION_DEAD_STATUSES.has(status))
+        if (sessionDead) {
+          // One renewal per call: a registration Amazon still honours comes back as a fresh cookie.
+          if (!renewed) {
+            renewed = true
+            if (await this.#renew(op)) continue
           }
-          throw new AlexaHttpError(message, status)
+          throw new AlexaAuthError(
+            status !== null && noBody ? `${message} (HTTP ${status})` : message,
+          )
         }
+        if (noBody) throw new AlexaHttpError(message, status)
         if (!isRateLimitError(message) || attempt === MAX_ATTEMPTS - 1) throw err
         const delay = this.#backoffDelay(attempt)
         this.#logger?.warn('AlexaRemoteClient: rate-limited — backing off', {
@@ -350,77 +367,131 @@ export class AlexaRemoteClient implements AlexaClient {
     const creds = this.#options.credentials
     const amazonPage = creds.amazonDomain.length > 0 ? creds.amazonDomain : 'amazon.com'
 
-    // Most robust re-auth path: a previously-persisted cookieData registration
-    // blob (carries the cookie + refresh material; the lib unpacks it).
-    const persisted = await this.#loadSession()
-    if (persisted !== null) {
-      return {
-        cookie: persisted.cookieData,
-        proxyOnly: false,
-        amazonPage,
-        apiUserAgentPostfix: ALEXA_API_USER_AGENT_POSTFIX,
-      }
-    }
-
-    // Operator-supplied cookie. This may be a raw cookie string OR a JSON
-    // cookieData blob captured by alexa-remote2's standalone proxy login; we
-    // parse JSON when it looks like an object so the lib gets the richer form.
+    // The stored registration blob (JSON object) or a raw cookie string. The library unpacks
+    // either; it refreshes a stale blob through the adapter, and never on a timer of its own.
     if (creds.cookie !== undefined && creds.cookie.length > 0) {
+      this.#registration = parseRegistration(creds.cookie)
+      this.#persistedTokenDate = this.#registration?.tokenDate ?? null
       return {
         cookie: parseCookieMaterial(creds.cookie),
         proxyOnly: false,
+        cookieRefreshInterval: 0,
         amazonPage,
         apiUserAgentPostfix: ALEXA_API_USER_AGENT_POSTFIX,
       }
     }
 
     // A bare refresh token alone cannot bootstrap alexa-remote2's `init` — the
-    // library needs a cookie or the full cookieData registration blob (which
-    // already contains the refresh token). Surface a clear, actionable error.
+    // library needs a cookie or the full registration blob (which already
+    // contains the refresh token). Surface a clear, actionable error.
     if (creds.refreshToken !== undefined && creds.refreshToken.length > 0) {
       throw new AlexaAuthError(
-        'a bare refresh token is not sufficient — supply the full cookie / cookieData blob ' +
-          'captured by the alexa-remote2 proxy login (it embeds the refresh token)',
+        'a bare refresh token is not sufficient — sign in again so the full registration is stored ' +
+          '(it embeds the refresh token)',
       )
     }
-    throw new AlexaAuthError('no cookie or cookieData blob configured for this account')
+    throw new AlexaAuthError('no cookie or registration configured for this account')
   }
 
-  // ── Session persistence ───────────────────────────────────────────────────
+  // ── Registration renewal ─────────────────────────────────────────────────
 
-  #sessionPath(): string | null {
-    if (this.#dataDir === null) return null
-    return path.join(this.#dataDir, `${this.#options.brokerId}.${SESSION_FILE}`)
-  }
-
-  async #loadSession(): Promise<PersistedSession | null> {
-    const file = this.#sessionPath()
-    if (file === null) return null
-    try {
-      const raw = await fs.readFile(file, 'utf8')
-      const json: unknown = JSON.parse(raw)
-      const cookieData = readCookieData(json)
-      return cookieData === null ? null : { cookieData }
-    } catch {
-      return null
+  /** What alexa-remote2 calls instead of loading `alexa-cookie2`: renewal is ours, sign-in is not. */
+  #cookieAdapter(): AlexaCookieAdapter {
+    return {
+      refreshAlexaCookie: (options, callback) => {
+        this.#renewForLibrary(options.formerRegistrationData).then(
+          (registration) => callback(null, registration),
+          (err: unknown) => callback(err instanceof Error ? err : new Error(errMsg(err)), null),
+        )
+      },
+      generateAlexaCookie: (_email, _password, _options, callback) => {
+        callback(new AlexaAuthError('Amazon no longer accepts this sign-in: sign in again'), null)
+      },
+      stopProxyServer: (callback) => callback?.(),
+      getDeviceAppName: () => LEGACY_DEVICE_APP_NAME,
     }
   }
 
-  async #persistSession(remote: AlexaRemote): Promise<void> {
-    const file = this.#sessionPath()
-    if (file === null) return
-    // The shipped types mistype `cookieData` as `string`; at runtime it is the
-    // registration object (or undefined). Widen to `unknown` before narrowing.
-    const cookieData: unknown = remote.cookieData
-    if (cookieData === undefined || cookieData === null) return
+  async #renewForLibrary(former: unknown): Promise<AlexaRegistration> {
+    const seed = AlexaRegistrationSeedSchema.safeParse(former)
+    if (!seed.success) {
+      throw new AmazonAuthRejectedError('the stored registration has no refresh material', 0)
+    }
     try {
-      await fs.mkdir(path.dirname(file), { recursive: true })
-      await fs.writeFile(file, JSON.stringify({ cookieData }), 'utf8')
+      return await refreshRegistration(seed.data, this.#http, {
+        acceptLanguage: alexaRegionOptions(seed.data.amazonPage).acceptLanguage,
+      })
     } catch (err: unknown) {
-      this.#logger?.warn('AlexaRemoteClient: failed to persist session', {
+      if (!(err instanceof AmazonAuthRejectedError)) {
+        this.#transientRefreshError = err instanceof Error ? err : new Error(errMsg(err))
+      }
+      throw err
+    }
+  }
+
+  /** Renew the live registration and install it in the library; false when that did not work. */
+  async #renew(reason: string): Promise<boolean> {
+    const remote = this.#remote
+    const current = this.#registration
+    if (remote === null || current === null) return false
+    try {
+      const next = await refreshRegistration(current, this.#http, {
+        acceptLanguage: alexaRegionOptions(current.amazonPage).acceptLanguage,
+      })
+      if (this.#remote !== remote) return false
+      // `setCookie` installs cookie + csrf and emits `cookie`, which persists the registration.
+      remote.setCookie(next)
+      this.#logger?.info('AlexaRemoteClient: registration renewed', {
+        meta: { brokerId: this.#options.brokerId, reason },
+      })
+      return true
+    } catch (err: unknown) {
+      this.#logger?.warn('AlexaRemoteClient: registration renewal failed', {
+        meta: {
+          brokerId: this.#options.brokerId,
+          reason,
+          rejected: err instanceof AmazonAuthRejectedError,
+          error: errMsg(err),
+        },
+      })
+      return false
+    }
+  }
+
+  #armRefreshTimer(): void {
+    this.#clearRefreshTimer()
+    const timer = setTimeout(() => {
+      this.#refreshTimer = null
+      void this.#renew('scheduled').finally(() => {
+        if (this.#remote !== null) this.#armRefreshTimer()
+      })
+    }, this.#refreshIntervalMs)
+    timer.unref()
+    this.#refreshTimer = timer
+  }
+
+  #clearRefreshTimer(): void {
+    if (this.#refreshTimer === null) return
+    clearTimeout(this.#refreshTimer)
+    this.#refreshTimer = null
+  }
+
+  /** Take the library's current registration and hand a changed one to the record. */
+  #adopt(remote: AlexaRemote): void {
+    // The shipped types mistype `cookieData` as `string`; at runtime it is the registration object.
+    const data: unknown = remote.cookieData
+    const registration = parseRegistration(data)
+    if (registration === null) return
+    this.#registration = registration
+    if (registration.tokenDate === this.#persistedTokenDate) return
+    this.#persistedTokenDate = registration.tokenDate ?? null
+    const persist = this.#options.persistRegistration
+    if (persist === undefined) return
+    persist(registration).catch((err: unknown) => {
+      this.#logger?.warn('AlexaRemoteClient: failed to persist the renewed registration', {
         meta: { brokerId: this.#options.brokerId, error: errMsg(err) },
       })
-    }
+    })
   }
 
   #requireRemote(): AlexaRemote {
@@ -449,18 +520,4 @@ function parseCookieMaterial(raw: string): string | object {
   } catch {
     return raw
   }
-}
-
-/** True when `value` is a non-null, non-array plain object (cast-free guard). */
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
-/** Narrow a loaded JSON file to its `cookieData` (string | object), or null. */
-function readCookieData(json: unknown): string | object | null {
-  if (!isRecord(json)) return null
-  const value = json['cookieData']
-  if (typeof value === 'string') return value
-  if (isRecord(value)) return value
-  return null
 }

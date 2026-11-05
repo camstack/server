@@ -4,7 +4,7 @@ import {
   AlexaDeviceCodeSession,
   type AlexaDeviceCodeSessionOptions,
 } from './alexa-device-code-login.js'
-import type { AlexaCapturedCookie, AlexaProxyLoginStatus } from './alexa-proxy-login.js'
+import type { AlexaCapturedCookie, AlexaProxyLoginStatus } from './alexa-login-status.js'
 
 /** What the wizard needs to show the operator after `POST /login/code/start`. */
 export interface AlexaDeviceCodeStartResult {
@@ -16,8 +16,8 @@ export interface AlexaDeviceCodeStartResult {
 
 export interface AlexaDeviceCodeManagerDeps {
   readonly logger: IScopedLogger
-  /** Test seams (HTTPS, cookie refresh, sleep, clock) forwarded to each session. */
-  readonly session?: Pick<AlexaDeviceCodeSessionOptions, 'http' | 'refresh' | 'sleep' | 'now'>
+  /** Test seams (HTTPS, sleep, clock) forwarded to each session. */
+  readonly session?: Pick<AlexaDeviceCodeSessionOptions, 'http' | 'sleep' | 'now'>
 }
 
 /**

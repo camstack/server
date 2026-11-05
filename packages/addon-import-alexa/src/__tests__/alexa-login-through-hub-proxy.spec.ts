@@ -1,113 +1,71 @@
 import { createServer, type Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { VendorLoginProxy, type IScopedLogger } from '@camstack/types'
-
-interface SeenInit {
-  proxyOwnIp?: string
-  proxyListenBind?: string
-  proxyPort: number
-}
-
-const seen: { init: SeenInit | null; hostMismatches: number } = { init: null, hostMismatches: 0 }
-/** When false the fake never reports the registration as finished (a hung Amazon step). */
-const behaviour = { registers: true, withCode: true }
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { VendorLoginProxy } from '@camstack/types'
+import { AlexaProxyLoginManager } from '../alexa-proxy-login-manager.js'
+import {
+  FIXTURE_SECRETS,
+  fakeAmazon,
+  fixtureJson,
+  fixtureText,
+  refreshRoutes,
+  type AmazonRoutes,
+} from './helpers/amazon-fake.js'
+import { recordingLogger } from './helpers/recording-logger.js'
 
 /**
- * A stand-in for alexa-remote2 + alexa-cookie2: a real HTTP listener on the address the
- * options name, that checks the Host header the way alexa-cookie2 does, emits absolute
- * `http://<proxyOwnIp>:<port>/…` URLs, and ends the login with a 302 to `/cookie-success`
- * while the app registration finishes a moment later (the `cookie` event).
+ * The whole Amazon sign-in, with the hub login proxy in front of a scripted Amazon: the proxy's
+ * `fetchFn` serves the fixture pages as www.amazon.it, a second scripted Amazon answers the
+ * device registration, and the browser side is a plain fetch against the proxy.
  */
-vi.mock('alexa-remote2', () => {
-  class FakeAlexaRemote {
-    cookie: string | undefined
-    cookieData: object | undefined
-    #listener: Server | null = null
-    #onCookie: (() => void) | null = null
-    on(event: string, cb: () => void): this {
-      if (event === 'cookie') this.#onCookie = cb
-      return this
-    }
-    init(opts: SeenInit, cb: (err?: Error) => void): void {
-      seen.init = { ...opts }
-      const own = `${opts.proxyOwnIp}:${opts.proxyPort}`
-      const listener = createServer((req, res) => {
-        if (req.headers.host !== own) {
-          seen.hostMismatches += 1
-          res.writeHead(404)
-          res.end()
-          return
-        }
-        const url = req.url ?? '/'
-        if (url === '/') {
-          res.writeHead(200, { 'content-type': 'text/html' })
-          res.end(`<a href="http://${own}/www.amazon.it/ap/signin">sign in</a>`)
-        } else if (url.startsWith('/www.amazon.it/ap/signin')) {
-          res.writeHead(302, { location: `http://${own}/cookie-success` })
-          res.end()
-          if (behaviour.registers) {
-            setTimeout(() => {
-              this.cookie = 'session-cookie'
-              this.cookieData = { localCookie: 'session-cookie' }
-              this.#onCookie?.()
-            }, 30)
-          }
-        } else if (url.startsWith('/www.amazon.it/ap/final-step')) {
-          // Amazon's final redirect, rewritten by alexa-cookie2 to the loopback address.
-          res.writeHead(302, {
-            location: `http://${own}/www.amazon.it/ap/maplanding?openid.mode=id_res&openid.return_to=https%3A%2F%2Fwww.amazon.it%2Fap%2Fmaplanding&openid.sig=SECRETSIG&serial=${behaviour.withCode ? '&openid.oa2.authorization_code=SECRETCODE' : ''}`,
-          })
-          res.end()
-          if (behaviour.registers) {
-            setTimeout(() => {
-              this.cookie = 'session-cookie'
-              this.cookieData = { localCookie: 'session-cookie' }
-              this.#onCookie?.()
-            }, 30)
-          }
-        } else {
-          res.writeHead(404)
-          res.end()
-        }
-      })
-      this.#listener = listener
-      listener.listen(opts.proxyPort, opts.proxyListenBind, () => {
-        cb(new Error(`Please open http://${own}/ with your browser and login`))
+
+const AMAZON = 'https://www.amazon.it'
+
+function page(body: string, extra: Record<string, string> = {}): Response {
+  return new Response(body, { status: 200, headers: { 'content-type': 'text/html', ...extra } })
+}
+
+function redirect(location: string, cookies: readonly string[] = []): Response {
+  const headers = new Headers({ location })
+  for (const c of cookies) headers.append('set-cookie', c)
+  return new Response(null, { status: 302, headers })
+}
+
+interface Scenario {
+  readonly landing: string
+}
+
+function scriptedAmazon(scenario: Scenario): typeof fetch {
+  return async (input, init) => {
+    const url = new URL(
+      typeof input === 'string' ? input : input instanceof URL ? input.href : input.url,
+    )
+    const method = init?.method ?? 'GET'
+    const key = `${method} ${url.host}${url.pathname}`
+    if (key === 'GET www.amazon.it/ap/signin') {
+      return new Response(fixtureText('ax-claim-form.html'), {
+        status: 200,
+        headers: {
+          'content-type': 'text/html',
+          'set-cookie': 'session-id=FIXTURE-REGISTER-SESSION; Path=/; Secure',
+        },
       })
     }
-    stop(): void {}
-    stopProxyServer(cb?: () => void): void {
-      const listener = this.#listener
-      this.#listener = null
-      if (listener === null) {
-        cb?.()
-        return
-      }
-      listener.close(() => cb?.())
-    }
+    if (key === 'POST www.amazon.it/ap/signin') return redirect(`${AMAZON}/ap/cvf/request`)
+    if (key === 'GET www.amazon.it/ap/cvf/request') return page(fixtureText('cvf.html'))
+    if (key === 'POST www.amazon.it/ap/cvf/verify') return redirect(scenario.landing)
+    return new Response('unrouted', { status: 404 })
   }
-  return { default: FakeAlexaRemote }
-})
+}
 
-import { AlexaProxyLoginManager } from '../alexa-proxy-login-manager.js'
-
-const logger: IScopedLogger = {
-  debug: () => undefined,
-  info: () => undefined,
-  warn: () => undefined,
-  error: () => undefined,
-  child: () => logger,
-} as unknown as IScopedLogger
-
-function freePort(): Promise<number> {
-  return new Promise((resolve) => {
-    const probe = createServer()
-    probe.listen(0, '127.0.0.1', () => {
-      const { port } = probe.address() as AddressInfo
-      probe.close(() => resolve(port))
-    })
-  })
+function registerRoutes(): AmazonRoutes {
+  return {
+    ...refreshRoutes(),
+    'POST api.amazon.it/auth/register': { json: fixtureJson('register-success.json') },
+    'GET alexa.amazon.it/api/users/me?platform=ios&version=2.2.651540.0': {
+      json: fixtureJson('users-me.json'),
+    },
+  }
 }
 
 describe('the Amazon login through the hub login proxy', () => {
@@ -115,117 +73,136 @@ describe('the Amazon login through the hub login proxy', () => {
   let frontPort = 0
   let proxy: VendorLoginProxy
   let manager: AlexaProxyLoginManager
-  let upstreamPort = 0
+  let amazon: ReturnType<typeof fakeAmazon>
+  let log: ReturnType<typeof recordingLogger>
+  let scenario: Scenario
 
-  beforeEach(async () => {
-    seen.init = null
-    seen.hostMismatches = 0
-    behaviour.registers = true
-    behaviour.withCode = true
-    upstreamPort = await freePort()
-    proxy = new VendorLoginProxy({ addonId: 'import-alexa', logger })
+  async function boot(routes: AmazonRoutes, landing: string): Promise<void> {
+    scenario = { landing }
+    amazon = fakeAmazon(routes)
+    log = recordingLogger()
+    proxy = new VendorLoginProxy({
+      addonId: 'import-alexa',
+      logger: log.logger,
+      fetchFn: scriptedAmazon(scenario),
+    })
     front = createServer((req, res) => void proxy.handler(req, res))
     await new Promise<void>((resolve) => front.listen(0, '127.0.0.1', resolve))
     frontPort = (front.address() as AddressInfo).port
     manager = new AlexaProxyLoginManager({
-      logger,
-      getProxyConfig: () => ({ proxyPort: upstreamPort }),
+      logger: log.logger,
       getLoginProxy: () => proxy,
+      http: amazon.http,
+      randomBytes: (size) => Buffer.alloc(size, 3),
     })
-  })
+  }
 
+  beforeEach(() => undefined)
   afterEach(async () => {
     await manager.dispose()
-    front.close()
+    await new Promise<void>((resolve) => front.close(() => resolve()))
   })
 
-  /** Strip the hub mount the way the data plane does. */
   const viaFront = (hubPath: string): string =>
     `http://127.0.0.1:${frontPort}${hubPath.replace('/addon/import-alexa/vendor-login', '')}`
 
-  it('binds alexa-cookie2 to loopback only and hands the browser a hub-relative entry', async () => {
-    const started = await manager.start('amazon.it')
-    expect(seen.init?.proxyOwnIp).toBe('127.0.0.1')
-    expect(seen.init?.proxyListenBind).toBe('127.0.0.1')
-    expect(
-      started.loginUrl.startsWith(`/addon/import-alexa/vendor-login/${started.sessionId}/`),
-    ).toBe(true)
-    expect(started.loginUrl).not.toContain('http')
-    await vi.waitFor(() => expect(manager.status(started.sessionId)?.phase).toBe('awaiting-login'))
-  })
-
-  it('walks the Amazon pages through the hub, captures the cookie and lands on the result page', async () => {
-    const started = await manager.start('amazon.it')
-
-    const first = await fetch(viaFront(started.loginUrl), { redirect: 'manual' })
+  /** Sign in: the entry page, the identifier step, then the final verification post. */
+  async function walkToEnd(loginUrl: string): Promise<string> {
+    const first = await fetch(viaFront(loginUrl), { redirect: 'manual' })
     expect(first.status).toBe(200)
-    const html = await first.text()
-    const link = /href="([^"]+)"/.exec(html)?.[1] ?? ''
-    expect(link.startsWith(`/addon/import-alexa/vendor-login/${started.sessionId}/`)).toBe(true)
-    expect(link).not.toContain('http')
+    const action = /action="([^"]+)"/.exec(await first.text())?.[1] ?? ''
+    expect(action.startsWith('/addon/import-alexa/vendor-login/')).toBe(true)
+    const signIn = await fetch(viaFront(action), {
+      method: 'POST',
+      redirect: 'manual',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: 'email=a%40b.c&password=x',
+    })
+    const cvf = signIn.headers.get('location') ?? ''
+    expect(cvf).toContain('/ap/cvf/request')
+    const form = await fetch(viaFront(cvf), { redirect: 'manual' })
+    const verify = /action="([^"]+)"/.exec(await form.text())?.[1] ?? ''
+    const done = await fetch(viaFront(verify), {
+      method: 'POST',
+      redirect: 'manual',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: 'code=123456',
+    })
+    return done.headers.get('location') ?? ''
+  }
 
-    const last = await fetch(viaFront(link), { redirect: 'manual' })
-    const landing = last.headers.get('location') ?? ''
+  it('walks the sign-in, registers the device and lands on the result page without secrets', async () => {
+    await boot(registerRoutes(), fixtureText('maplanding-with-code.url'))
+    const started = await manager.start('amazon.it')
+    expect(
+      started.loginUrl.startsWith(
+        `/addon/import-alexa/vendor-login/${started.sessionId}/www.amazon.it/ap/signin`,
+      ),
+    ).toBe(true)
+    expect(started.loginUrl.startsWith('/')).toBe(true)
+
+    const landing = await walkToEnd(started.loginUrl)
     expect(landing).toContain('/sso-complete#')
     expect(landing).toContain('status=success')
     expect(landing).toContain('addon=import-alexa')
-    expect(landing).not.toContain('cookie')
-
-    expect(seen.hostMismatches).toBe(0)
-    expect(manager.status(started.sessionId)?.phase).toBe('captured')
-    expect(manager.takeCaptured(started.sessionId)?.cookie).toBe('session-cookie')
-  })
-
-  it("treats Amazon's maplanding redirect as the end of the login and lands on the result page", async () => {
-    const started = await manager.start('amazon.it')
-    const entry = viaFront(started.loginUrl).replace(/\/$/, '')
-    const last = await fetch(`${entry}/www.amazon.it/ap/final-step`, { redirect: 'manual' })
-    const landing = last.headers.get('location') ?? ''
-    expect(landing).toContain('/sso-complete#')
-    expect(landing).toContain('status=success')
+    for (const secret of FIXTURE_SECRETS) expect(landing).not.toContain(secret)
     expect(landing).not.toContain('maplanding')
-    expect(landing).not.toContain('SECRETSIG')
-    expect(landing).not.toContain('SECRETCODE')
-    expect(landing).not.toContain('127.0.0.1')
-    expect(manager.takeCaptured(started.sessionId)?.cookie).toBe('session-cookie')
+
+    expect(manager.status(started.sessionId)?.phase).toBe('captured')
+    const captured = manager.takeCaptured(started.sessionId)
+    expect(captured?.cookie).toContain('csrf=FIXTURE-CSRF')
+    expect(captured?.cookieData).toMatchObject({
+      refreshToken: 'FIXTURE-REFRESH-TOKEN',
+      dataVersion: 2,
+      deviceAppName: 'CamStack',
+    })
+
+    const register = amazon.callsTo('POST api.amazon.it/auth/register')[0]
+    expect(register?.body).toContain('FIXTURE-AUTH-CODE')
+    // the cookie the browser collected rides along as website_cookies
+    expect(register?.body).toContain('FIXTURE-REGISTER-SESSION')
+    for (const secret of FIXTURE_SECRETS) expect(log.dump()).not.toContain(secret)
   })
 
   it('ends at once with no_authorization_code when Amazon landed without the oa2 code', async () => {
-    behaviour.withCode = false
-    behaviour.registers = false
+    await boot(registerRoutes(), fixtureText('maplanding-without-code.url'))
     const started = await manager.start('amazon.it')
-    const entry = viaFront(started.loginUrl).replace(/\/$/, '')
-    const t0 = Date.now()
-    const last = await fetch(`${entry}/www.amazon.it/ap/final-step`, { redirect: 'manual' })
-    const landing = last.headers.get('location') ?? ''
-    expect(Date.now() - t0).toBeLessThan(5_000)
+    const landing = await walkToEnd(started.loginUrl)
     expect(landing).toContain('status=error')
     expect(landing).toContain('reason=no_authorization_code')
-    expect(landing).not.toContain('SECRETSIG')
+    expect(amazon.callsTo('POST api.amazon.it/auth/register')).toHaveLength(0)
+    expect(manager.status(started.sessionId)?.phase).toBe('error')
   })
 
-  it('lands on the result page with a reason when the registration never completes', async () => {
-    behaviour.registers = false
-    const impatient = new AlexaProxyLoginManager({
-      logger,
-      getProxyConfig: () => ({ proxyPort: upstreamPort }),
-      getLoginProxy: () => proxy,
-      captureWaitMs: 150,
-    })
-    try {
-      const started = await impatient.start('amazon.it')
-      const first = await fetch(viaFront(started.loginUrl), { redirect: 'manual' })
-      const link = /href="([^"]+)"/.exec(await first.text())?.[1] ?? ''
-      const landing =
-        (await fetch(viaFront(link), { redirect: 'manual' })).headers.get('location') ?? ''
-      expect(landing).toContain('status=error')
-      expect(landing).toContain('reason=exchange_failed')
-    } finally {
-      await impatient.dispose()
-    }
+  it('lands on the result page with a reason when Amazon refuses the registration', async () => {
+    await boot(
+      {
+        ...registerRoutes(),
+        'POST api.amazon.it/auth/register': { status: 401, json: fixtureJson('register-401.json') },
+      },
+      fixtureText('maplanding-with-code.url'),
+    )
+    const started = await manager.start('amazon.it')
+    const landing = await walkToEnd(started.loginUrl)
+    expect(landing).toContain('status=error')
+    expect(landing).toContain('reason=exchange_failed')
+    expect(landing).not.toContain('FIXTURE-AUTH-CODE')
+    expect(log.dump()).not.toContain('FIXTURE-DO-NOT-ECHO')
+    expect(manager.takeCaptured(started.sessionId)).toBeNull()
+  })
+
+  it('lands with a reason when the registration blob cannot be built', async () => {
+    await boot(
+      { ...registerRoutes(), 'POST api.amazon.it/auth/token': { status: 401, json: {} } },
+      fixtureText('maplanding-with-code.url'),
+    )
+    const started = await manager.start('amazon.it')
+    const landing = await walkToEnd(started.loginUrl)
+    expect(landing).toContain('reason=exchange_failed')
   })
 
   it('refuses a replay of the entry after the attempt was cancelled', async () => {
+    await boot(registerRoutes(), fixtureText('maplanding-with-code.url'))
     const started = await manager.start('amazon.it')
     await manager.cancel(started.sessionId)
     const again = await fetch(viaFront(started.loginUrl), { redirect: 'manual' })
@@ -233,11 +210,8 @@ describe('the Amazon login through the hub login proxy', () => {
   })
 
   it('says so when the hub does not serve the login proxy', async () => {
-    const bare = new AlexaProxyLoginManager({
-      logger,
-      getProxyConfig: () => ({ proxyPort: upstreamPort }),
-      getLoginProxy: () => null,
-    })
+    await boot(registerRoutes(), fixtureText('maplanding-with-code.url'))
+    const bare = new AlexaProxyLoginManager({ logger: log.logger, getLoginProxy: () => null })
     await expect(bare.start('amazon.it')).rejects.toThrow(/hub login proxy is not available/)
   })
 })

@@ -1,4 +1,5 @@
 import { errMsg, type IScopedLogger } from '@camstack/types'
+import type { AlexaRegistration } from './amazon-auth/registration.js'
 import {
   AlexaAuthError,
   createAlexaClient,
@@ -52,8 +53,8 @@ export interface AlexaIntegrationManagerOptions {
   readonly onStatesPolled: (brokerId: string, values: readonly AlexaStateValue[]) => void
   /** Factory seam for testing. */
   readonly makeClient?: AlexaClientFactory
-  /** Addon data dir for the live client's session persistence (optional). */
-  readonly dataDir?: string
+  /** Stores a renewed registration on the broker's record (optional). */
+  readonly persistRegistration?: (registration: AlexaRegistration) => Promise<void>
 }
 
 /**
@@ -79,7 +80,7 @@ export class AlexaIntegrationManager {
   readonly #onAppliancesChanged: (brokerId: string, appliances: readonly AlexaAppliance[]) => void
   readonly #onStatesPolled: (brokerId: string, values: readonly AlexaStateValue[]) => void
   readonly #makeClient: AlexaClientFactory
-  readonly #dataDir: string | undefined
+  readonly #persistRegistration: AlexaIntegrationManagerOptions['persistRegistration']
 
   #client: AlexaClient | null = null
   #pollTimer: ReturnType<typeof setInterval> | null = null
@@ -100,7 +101,7 @@ export class AlexaIntegrationManager {
     this.#onAppliancesChanged = options.onAppliancesChanged
     this.#onStatesPolled = options.onStatesPolled
     this.#makeClient = options.makeClient ?? createAlexaClient
-    this.#dataDir = options.dataDir
+    this.#persistRegistration = options.persistRegistration
   }
 
   /** The connection settings the manager is currently configured with. */
@@ -147,7 +148,9 @@ export class AlexaIntegrationManager {
       credentials: connectionToCredentials(this.#connection),
       brokerId: this.#id,
       logger: this.#logger,
-      ...(this.#dataDir !== undefined ? { dataDir: this.#dataDir } : {}),
+      ...(this.#persistRegistration !== undefined
+        ? { persistRegistration: (registration) => this.#keepRegistration(registration) }
+        : {}),
     })
     this.#client = client
 
@@ -286,6 +289,15 @@ export class AlexaIntegrationManager {
   }
 
   /** Atomically replace the connection: stop, swap config, start fresh. */
+  /**
+   * A renewed registration becomes this account's stored cookie. The live connection is updated
+   * FIRST, so the record change that follows reads as "same connection" and restarts nothing.
+   */
+  async #keepRegistration(registration: AlexaRegistration): Promise<void> {
+    this.#connection = { ...this.#connection, cookie: JSON.stringify(registration) }
+    await this.#persistRegistration?.(registration)
+  }
+
   async applyConnection(conn: AlexaConnection): Promise<void> {
     await this.stop()
     this.#connection = conn

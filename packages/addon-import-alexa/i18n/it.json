@@ -2,9 +2,6 @@
   "globalSettings.s_alexa-account.title": "Account Amazon Alexa",
   "globalSettings.s_alexa-account.description": "Gli account Alexa si gestiscono nella scheda Sistemi esterni → Broker.",
   "globalSettings.s_alexa-account.accountHelp.label": "Gli account si gestiscono separatamente",
-  "globalSettings.s_alexa-proxy-login.title": "Accesso interattivo (proxy)",
-  "globalSettings.s_alexa-proxy-login.description": "Il pulsante «Accedi ad Amazon» nell'onboarding apre un proxy locale che cattura il cookie dopo che hai completato il vero accesso Amazon (incluso il 2FA). Poiché gli URL di Amazon vengono riscritti su questo host:porta esatto, deve essere un indirizzo raggiungibile direttamente: lascia vuoto l'host per rilevare automaticamente l'IP del server e assicurati che la porta sia raggiungibile dal browser da cui accedi.",
-  "globalSettings.s_alexa-proxy-login.proxyLogin_proxyPort.label": "Porta del proxy di accesso",
   "connection.s_alexa-account.title": "Account Amazon Alexa",
   "connection.s_alexa-account.description": "Collega un account Amazon tramite il client Alexa non ufficiale. Fornisci un cookie catturato OPPURE un refresh token. NOTA: è un'integrazione non ufficiale — Amazon può modificarla o interromperla senza preavviso, e potrebbe violare i termini di servizio Amazon. Lo stato viene interrogato, non inviato.",
   "connection.s_alexa-account.amazonDomain.label": "Dominio Amazon (regione)",
@@ -14,13 +11,5 @@
   "echoTarget.s_echo.title": "Echo",
   "echoTarget.s_echo.brokerId.label": "Account Amazon",
   "echoTarget.s_echo.echoId.label": "Echo",
-  "echoTarget.s_echo.respectDnd.label": "Rispetta Non disturbare",
-  "globalSettings": {
-    "s_alexa-proxy-login": {
-      "description": "Il pulsante «Accedi» nell'onboarding apre la vera pagina di accesso Amazon attraverso questo hub (stesso indirizzo e HTTPS di questa pagina) e cattura il cookie dopo che l'hai completato (incluso il 2FA). La porta qui sotto è usata solo sull'hub e non viene mai esposta.",
-      "proxyLogin_proxyPort": {
-        "label": "Porta interna di accesso (loopback)"
-      }
-    }
-  }
+  "echoTarget.s_echo.respectDnd.label": "Rispetta Non disturbare"
 }

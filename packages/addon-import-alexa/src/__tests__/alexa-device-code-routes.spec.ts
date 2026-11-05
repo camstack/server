@@ -4,6 +4,7 @@ import { abortableSleep } from '../alexa-device-code-login.js'
 import { AlexaDeviceCodeManager } from '../alexa-device-code-manager.js'
 import { buildAlexaLoginRoutes } from '../alexa-login-routes.js'
 import type { AlexaProxyLoginManager } from '../alexa-proxy-login-manager.js'
+import { reply as amazonReply } from './helpers/amazon-fake.js'
 
 const logger = {
   debug: () => undefined,
@@ -43,10 +44,11 @@ describe('device-code login routes', () => {
       logger,
       session: {
         http: async (r) =>
-          r.path === '/auth/create/codepair'
-            ? { status: 200, json: { public_code: 'ABCDE', private_code: 'p', expires_in: 600 } }
-            : { status: 401, json: null },
-        refresh: async () => ({}),
+          amazonReply(
+            r.path === '/auth/create/codepair'
+              ? { json: { public_code: 'ABCDE', private_code: 'p', expires_in: 600 } }
+              : { status: 401 },
+          ),
         sleep: (_ms, signal) => abortableSleep(1e9, signal),
         now: () => 1000,
       },

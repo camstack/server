@@ -1,0 +1,14 @@
+<!doctype html>
+<html><head><title>Amazon Sign-In (fixture)</title></head>
+<body>
+<form method="post" name="signIn" action="https://www.amazon.it/ap/signin">
+  <input type="hidden" name="openid.return_to" value="https://www.amazon.it/ap/maplanding">
+  <input type="hidden" name="openid.assoc_handle" value="amzn_dp_project_dee_ios_it">
+  <input type="hidden" name="openid.ns.oa2" value="http://www.amazon.it/ap/ext/oauth/2">
+  <input type="hidden" name="openid.oa2.client_id" value="device:FIXTURE-DEVICE-ID">
+  <input type="hidden" name="openid.oa2.scope" value="device_auth_access">
+  <input type="hidden" name="openid.oa2.code_challenge_method" value="S256">
+  <input name="email" type="email">
+  <input name="password" type="password">
+</form>
+</body></html>

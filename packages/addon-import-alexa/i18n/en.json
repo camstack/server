@@ -2,9 +2,6 @@
   "globalSettings.s_alexa-account.title": "Amazon Alexa account",
   "globalSettings.s_alexa-account.description": "Alexa accounts are managed in the External systems → Brokers tab.",
   "globalSettings.s_alexa-account.accountHelp.label": "Accounts are managed separately",
-  "globalSettings.s_alexa-proxy-login.title": "Interactive login (proxy)",
-  "globalSettings.s_alexa-proxy-login.description": "The \"Login to Amazon\" button in onboarding opens a local proxy that captures the cookie after you complete the real Amazon login (incl. 2FA). Because Amazon URLs are rewritten to this exact host:port, it must be a directly-reachable address — leave the host blank to auto-detect the server IP, and make sure the port is reachable from the browser you log in from.",
-  "globalSettings.s_alexa-proxy-login.proxyLogin_proxyPort.label": "Login proxy port",
   "connection.s_alexa-account.title": "Amazon Alexa account",
   "connection.s_alexa-account.description": "Link an Amazon account via the unofficial Alexa client. Supply a captured cookie OR a refresh token. NOTE: this is an unofficial integration — Amazon can change or break it without notice, and it may violate Amazon ToS. State is polled, not pushed.",
   "connection.s_alexa-account.amazonDomain.label": "Amazon domain (region)",
@@ -14,13 +11,5 @@
   "echoTarget.s_echo.title": "Echo",
   "echoTarget.s_echo.brokerId.label": "Amazon account",
   "echoTarget.s_echo.echoId.label": "Echo",
-  "echoTarget.s_echo.respectDnd.label": "Respect Do Not Disturb",
-  "globalSettings": {
-    "s_alexa-proxy-login": {
-      "description": "The \"Sign in\" button in onboarding opens the real Amazon login page through this hub (same address and HTTPS as this page) and captures the cookie after you complete it (incl. 2FA). The port below is only used on the hub itself and is never exposed.",
-      "proxyLogin_proxyPort": {
-        "label": "Internal login port (loopback)"
-      }
-    }
-  }
+  "echoTarget.s_echo.respectDnd.label": "Respect Do Not Disturb"
 }

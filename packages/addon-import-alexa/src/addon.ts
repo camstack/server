@@ -27,17 +27,14 @@ import {
   VENDOR_LOGIN_PROXY_PREFIX,
   VendorLoginProxy,
 } from '@camstack/types'
-import {
-  alexaProxyLoginSchema,
-  settingsToAlexaConnection,
-  type AlexaAddonConfig,
-  type AlexaConnection,
-} from './config.js'
+import { settingsToAlexaConnection, type AlexaAddonConfig, type AlexaConnection } from './config.js'
 import { AlexaDeviceCodeManager } from './alexa-device-code-manager.js'
 import { AlexaProxyLoginManager } from './alexa-proxy-login-manager.js'
 import { buildAlexaLoginRoutes } from './alexa-login-routes.js'
 import { AlexaBrokerRegistry } from './alexa-broker-registry.js'
 import { sameConnection } from './alexa-integration-manager.js'
+import type { AlexaRegistration } from './amazon-auth/registration.js'
+import { readNewerSession, removeSessionFile } from './session-file-migration.js'
 import { buildAlexaBrokerProvider } from './alexa-broker-provider.js'
 import { buildAlexaAdoptionProvider } from './alexa-adoption-provider.js'
 import { cascadeRemoveDevicesForBroker } from './alexa-broker-device-cascade.js'
@@ -66,7 +63,6 @@ import { RecordsSpeakSessionStore } from './speak/session-store.js'
 
 /** Default config — a fresh install starts with no accounts. */
 const DEFAULTS: AlexaAddonConfig = {
-  proxyLogin: { proxyPort: 3456 },
   echoTargets: [],
 }
 
@@ -147,9 +143,11 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
       },
     )
     this.activeBrokers = await this.loadPersistedBrokers()
+    await this.adoptSessionFiles()
 
     this.registry = new AlexaBrokerRegistry(this.ctx.logger, {
-      dataDir: this.ctx.dataDir,
+      persistRegistration: (brokerId, registration) =>
+        this.persistRenewedRegistration(brokerId, registration),
       onBrokerConnected: (brokerId) => {
         this.ctx.logger.info('Alexa: broker connected', { meta: { brokerId } })
         this.setBrokerDevicesOnline(brokerId, true)
@@ -178,15 +176,11 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
 
     await this.registry.restore(this.activeBrokers)
 
-    // Interactive Amazon login (alexa-remote2 proxy auth mode), driven by the
+    // Interactive Amazon login (through the hub login proxy), driven by the
     // onboarding wizard through the addon-routes control plane below.
     await this.serveLoginProxy()
     this.proxyLogin = new AlexaProxyLoginManager({
       logger: this.ctx.logger,
-      getProxyConfig: () => {
-        const cfg = alexaProxyLoginSchema.parse(this.config.proxyLogin ?? {})
-        return { proxyPort: cfg.proxyPort }
-      },
       getLoginProxy: () => this.loginProxy,
     })
 
@@ -232,7 +226,7 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
         })),
       readSeed: async (brokerId) => {
         const entry = this.activeBrokers.find((row) => row.id === brokerId)
-        return entry === undefined ? null : readBrokerSeed(this.ctx.dataDir, entry)
+        return entry === undefined ? null : readBrokerSeed(entry)
       },
       sessions: RecordsSpeakSessionStore.of(records),
       ensurePython: () => this.ctx.deps.ensurePython(),
@@ -307,8 +301,13 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
       return
     }
     try {
-      if (reg.get(id) !== null) await reg.updateEntry(id, entry.connection)
-      else {
+      if (reg.get(id) !== null) {
+        // A record write that changed nothing the client uses (a renewed registration the
+        // client already holds) must not restart the account.
+        if (!sameConnection(entry.connection, reg.getConnection(id))) {
+          await reg.updateEntry(id, entry.connection)
+        }
+      } else {
         await reg.createEntry(entry.name, entry.connection, {
           id,
           ...(entry.integrationId !== undefined ? { integrationId: entry.integrationId } : {}),
@@ -334,6 +333,52 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
 
   private async loadPersistedBrokers(): Promise<readonly AlexaBrokerEntry[]> {
     return this.requireBrokerStore().listResolved()
+  }
+
+  /**
+   * The session file an earlier version kept beside each record moves into the record (when it
+   * is newer) and is deleted. A failure keeps the file for the next boot.
+   */
+  private async adoptSessionFiles(): Promise<void> {
+    const dataDir = this.ctx.dataDir
+    try {
+      const adopted = new Map<string, string>()
+      for (const entry of this.activeBrokers) {
+        const cookie = await readNewerSession(dataDir, entry)
+        if (cookie !== null) adopted.set(entry.id, cookie)
+      }
+      if (adopted.size > 0) {
+        await this.persistBrokerEntries(
+          this.activeBrokers.map((b) => {
+            const cookie = adopted.get(b.id)
+            return cookie === undefined ? b : { ...b, connection: { ...b.connection, cookie } }
+          }),
+        )
+        this.ctx.logger.info('Alexa: session files moved into the broker records', {
+          meta: { count: adopted.size },
+        })
+      }
+      for (const entry of this.activeBrokers) await removeSessionFile(dataDir, entry.id)
+    } catch (err: unknown) {
+      this.ctx.logger.warn('Alexa: could not move the session files into the records', {
+        meta: { error: errMsg(err) },
+      })
+    }
+  }
+
+  /** Store a registration the client renewed on its broker's record (the secret `cookie` field). */
+  private async persistRenewedRegistration(
+    brokerId: string,
+    registration: AlexaRegistration,
+  ): Promise<void> {
+    const cookie = JSON.stringify(registration)
+    const entry = this.activeBrokers.find((b) => b.id === brokerId)
+    if (entry === undefined || entry.connection.cookie === cookie) return
+    await this.persistBrokerEntries(
+      this.activeBrokers.map((b) =>
+        b.id === brokerId ? { ...b, connection: { ...b.connection, cookie } } : b,
+      ),
+    )
   }
 
   private async persistBrokerEntries(entries: readonly AlexaBrokerEntry[]): Promise<void> {

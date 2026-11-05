@@ -1,0 +1,14 @@
+{
+  "response": {
+    "tokens": {
+      "cookies": {
+        ".amazon.it": [
+          { "Name": "session-id", "Value": "FIXTURE-EXCHANGED-SESSION" },
+          { "Name": "session-token", "Value": "FIXTURE-EXCHANGED-TOKEN" },
+          { "Name": "at-acbit", "Value": "FIXTURE-EXCHANGED-AT" },
+          { "Name": "tracking-junk", "Value": "DROPPED-BY-ALLOW-LIST" }
+        ]
+      }
+    }
+  }
+}

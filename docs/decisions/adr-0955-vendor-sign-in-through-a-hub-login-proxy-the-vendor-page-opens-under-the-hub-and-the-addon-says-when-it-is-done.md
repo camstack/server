@@ -8,7 +8,7 @@ applies-to:
   - packages/addon-provider-bosch/src/shared/login-proxy-sign-in.ts
   - packages/addon-provider-bosch/src/home-connect/home-connect-sign-in-proxy.ts
   - packages/addon-provider-bosch/src/homecom/homecom-sign-in-proxy.ts
-  - packages/addon-import-alexa/src/alexa-proxy-login.ts
+  - packages/addon-import-alexa/src/amazon-auth/**
   - packages/addon-import-alexa/src/alexa-proxy-login-manager.ts
 ---
 

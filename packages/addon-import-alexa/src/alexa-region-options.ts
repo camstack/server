@@ -1,7 +1,6 @@
 /**
- * The region-dependent options alexa-remote2 forwards to alexa-cookie2: the login page
- * host (`baseAmazonPage`), the API host (`amazonPage`) and the languages. Without
- * `baseAmazonPage` alexa-cookie2 opens the `amazon.com` login for every region.
+ * The region-dependent options of an account: the login page host (`baseAmazonPage`),
+ * the API host (`amazonPage`) and the languages.
  */
 export interface AlexaRegionOptions {
   readonly baseAmazonPage: string

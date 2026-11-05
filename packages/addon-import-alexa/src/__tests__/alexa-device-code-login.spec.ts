@@ -1,30 +1,11 @@
-import { describe, it, expect, vi } from 'vitest'
-import type { IScopedLogger } from '@camstack/types'
+import { describe, it, expect } from 'vitest'
 import { AlexaDeviceCodeManager } from '../alexa-device-code-manager.js'
-import type { DeviceCodeHttp, DeviceCodeHttpRequest } from '../alexa-device-code-login.js'
+import { fakeAmazon, fixtureJson, refreshRoutes, type AmazonReply } from './helpers/amazon-fake.js'
+import { recordingLogger } from './helpers/recording-logger.js'
 
 const PRIVATE_CODE = 'PRIVATE-CODE-SECRET'
-const REFRESH_TOKEN = 'REFRESH-TOKEN-SECRET'
-const COOKIE_VALUE = 'COOKIE-VALUE-SECRET'
-
-interface LogLine {
-  readonly message: string
-  readonly meta: unknown
-}
-
-function makeLogger(lines: LogLine[]): IScopedLogger {
-  const record = (message: string, opts?: { meta?: unknown }): void => {
-    lines.push({ message, meta: opts?.meta })
-  }
-  const logger = {
-    debug: record,
-    info: record,
-    warn: record,
-    error: record,
-    child: () => logger,
-  }
-  return logger as unknown as IScopedLogger
-}
+const REFRESH_TOKEN = 'FIXTURE-REFRESH-TOKEN'
+const COOKIE_VALUE = 'FIXTURE-EXCHANGED-SESSION'
 
 const pairBody = {
   public_code: 'ABCDE',
@@ -32,64 +13,48 @@ const pairBody = {
   expires_in: 600,
   polling_interval_in_seconds: 5,
 }
-const successBody = {
-  response: {
-    success: {
-      tokens: {
-        bearer: { refresh_token: REFRESH_TOKEN },
-        website_cookies: [{ Name: 'session-id', Value: COOKIE_VALUE }],
-        mac_dms: { device_private_key: 'k', adp_token: 't' },
-      },
-    },
-  },
+const successBody = fixtureJson('register-success.json')
+const fixtureReply400 = (): AmazonReply => ({
+  status: 400,
+  json: { response: { error: { code: 'InvalidRequest' } } },
+})
+const pending: AmazonReply = {
+  status: 401,
+  json: { response: { error: { code: 'Unauthorized' } } },
 }
-const pending = { status: 401, json: { response: { error: { code: 'Unauthorized' } } } }
+const ok = (json: unknown): AmazonReply => ({ status: 200, json })
 
 /** A scripted Amazon: the codepair answer, then the register answers in order (the last repeats). */
-function fakeHttp(
-  codepair: { status: number; json: unknown },
-  registers: { status: number; json: unknown }[],
-) {
-  const calls: DeviceCodeHttpRequest[] = []
-  let i = 0
-  const http: DeviceCodeHttp = async (req) => {
-    calls.push(req)
-    if (req.path === '/auth/create/codepair') return codepair
-    const r = registers[Math.min(i, registers.length - 1)]!
-    i += 1
-    return r
-  }
-  return { http, calls }
-}
-
-function setup(opts: {
-  codepair?: { status: number; json: unknown }
-  registers: { status: number; json: unknown }[]
-  clock?: { t: number }
-  tick?: number
-}) {
-  const lines: LogLine[] = []
-  const clock = opts.clock ?? { t: 1_000_000 }
-  const { http, calls } = fakeHttp(opts.codepair ?? { status: 200, json: pairBody }, opts.registers)
-  const refresh = vi.fn(async () => ({
-    localCookie: `session-id=${COOKIE_VALUE}; csrf=abc`,
-    csrf: 'csrf-value',
-    refreshToken: REFRESH_TOKEN,
-    loginCookie: 'x',
-    dataVersion: 2,
-  }))
+function setup(opts: { codepair?: AmazonReply; registers: AmazonReply[]; tick?: number }) {
+  const log = recordingLogger()
+  const clock = { t: 1_000_000 }
+  const amazon = fakeAmazon({
+    ...refreshRoutes(),
+    'POST api.amazon.it/auth/create/codepair': opts.codepair ?? ok(pairBody),
+    'POST api.amazon.de/auth/create/codepair': opts.codepair ?? ok(pairBody),
+    'POST api.amazon.fr/auth/create/codepair': opts.codepair ?? ok(pairBody),
+    'POST api.amazon.es/auth/create/codepair': opts.codepair ?? ok(pairBody),
+    'POST api.amazon.com/auth/create/codepair': opts.codepair ?? ok(pairBody),
+    'POST api.amazon.co.uk/auth/create/codepair': opts.codepair ?? ok(pairBody),
+    ...Object.fromEntries(
+      ['it', 'de', 'fr', 'es', 'com', 'co.uk'].map((tld) => [
+        `POST api.amazon.${tld}/auth/register`,
+        (_req: unknown, n: number) =>
+          opts.registers[Math.min(n - 1, opts.registers.length - 1)] ?? pending,
+      ]),
+    ),
+  })
   const manager = new AlexaDeviceCodeManager({
-    logger: makeLogger(lines),
+    logger: log.logger,
     session: {
-      http,
-      refresh,
+      http: amazon.http,
       now: () => clock.t,
       sleep: async (ms) => {
         clock.t += opts.tick ?? ms
       },
     },
   })
-  return { manager, calls, lines, refresh, clock }
+  return { manager, calls: amazon.calls, lines: log.lines, dump: log.dump, amazon }
 }
 
 async function settle(manager: AlexaDeviceCodeManager, sessionId: string): Promise<void> {
@@ -102,8 +67,8 @@ async function settle(manager: AlexaDeviceCodeManager, sessionId: string): Promi
 
 describe('device-code sign-in', () => {
   it('codepair, pending 401, then success: captured with the full cookieData', async () => {
-    const { manager, calls, refresh } = setup({
-      registers: [pending, pending, { status: 200, json: successBody }],
+    const { manager, calls } = setup({
+      registers: [pending, pending, ok(successBody)],
     })
     const started = await manager.start('amazon.it')
     expect(started.userCode).toBe('ABCDE')
@@ -116,15 +81,15 @@ describe('device-code sign-in', () => {
     expect(status?.phase).toBe('captured')
     expect(status?.method).toBe('device-code')
     expect(calls.filter((c) => c.path === '/auth/register')).toHaveLength(3)
-    expect(refresh).toHaveBeenCalledTimes(1)
+    expect(calls.filter((c) => c.path === '/auth/token')).toHaveLength(1)
 
     const captured = manager.takeCaptured(started.sessionId)
     expect(captured?.cookie).toContain('session-id=')
     expect(captured?.cookieData).toMatchObject({
-      csrf: 'csrf-value',
+      csrf: 'FIXTURE-CSRF',
       refreshToken: REFRESH_TOKEN,
       amazonPage: 'amazon.it',
-      macDms: { adp_token: 't' },
+      macDms: { adp_token: 'FIXTURE-ADP-TOKEN' },
       dataVersion: 2,
     })
     expect(captured?.cookieData).toHaveProperty('deviceSerial')
@@ -150,7 +115,7 @@ describe('device-code sign-in', () => {
 
   it('a registration refused with a non-401 error ends in error naming the cause', async () => {
     const { manager } = setup({
-      registers: [{ status: 400, json: { response: { error: { code: 'InvalidRequest' } } } }],
+      registers: [fixtureReply400()],
     })
     const started = await manager.start('amazon.fr')
     await settle(manager, started.sessionId)
@@ -171,13 +136,15 @@ describe('device-code sign-in', () => {
 
   it('never puts the private code, tokens or cookies in status, logs or errors', async () => {
     const { manager, lines } = setup({
-      registers: [pending, { status: 200, json: successBody }],
+      registers: [pending, ok(successBody)],
     })
-    const started = await manager.start('amazon.co.uk')
+    const started = await manager.start('amazon.it')
     await settle(manager, started.sessionId)
     const dump = JSON.stringify([manager.status(started.sessionId), started, lines])
     for (const secret of [PRIVATE_CODE, REFRESH_TOKEN, COOKIE_VALUE])
       expect(dump).not.toContain(secret)
+
+    expect(manager.status(started.sessionId)?.phase).toBe('captured')
 
     const failing = setup({
       codepair: { status: 500, json: { private_code: PRIVATE_CODE, error: 'boom' } },

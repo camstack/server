@@ -8,7 +8,7 @@ import { VendorLoginProxy, type IScopedLogger } from '@camstack/types'
  * for (`openid.ns.oa2`, `openid.oa2.client_id`, `response_type`, `scope`, the PKCE challenge).
  * Every page, form and redirect between the first request and `/ap/maplanding` passes through
  * the hub login proxy, which must hand those values on UNCHANGED. The loopback stand-in below
- * behaves like alexa-cookie2: it emits absolute `http://127.0.0.1:<port>/…` URLs and turns
+ * emits absolute `http://127.0.0.1:<port>/…` URLs and turns
  * them back into Amazon's before a request leaves it.
  */
 

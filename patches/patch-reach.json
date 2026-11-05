@@ -122,23 +122,6 @@
         "`node-turn` in `dependencies` or `peerDependencies`, `dev-only` becomes",
         "a false claim and CI fails."
       ]
-    },
-    {
-      "patch": "alexa-cookie2+5.0.6.patch",
-      "package": "alexa-cookie2",
-      "version": "5.0.6",
-      "reach": "bundled",
-      "bundledInto": [
-        "packages/addon-import-alexa/dist/addon.js",
-        "packages/addon-import-alexa/dist/addon.mjs"
-      ],
-      "markers": ["^upgrade-insecure-requests$"],
-      "why": [
-        "`alexa-cookie2` is inlined into the addon bundle, so the patched login proxy travels",
-        "in `addon.js` / `addon.mjs`. The patch drops Amazon's `upgrade-insecure-requests` CSP",
-        "directive from proxied responses (the proxy is plain http). The marker is the regex",
-        "source of the directive match, a literal a minifier keeps (checked 2026-11-01)."
-      ]
     }
   ]
 }

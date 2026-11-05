@@ -26,6 +26,8 @@
 
 import type { IScopedLogger } from '@camstack/types'
 import { AlexaRemoteClient } from './alexa-remote-client.js'
+import type { AmazonHttp } from './amazon-auth/http.js'
+import type { AlexaRegistration } from './amazon-auth/registration.js'
 
 /** One imported Alexa smart-home appliance (controller-agnostic shape). */
 export interface AlexaAppliance {
@@ -113,11 +115,14 @@ export interface AlexaClientOptions {
   readonly credentials: AlexaCredentials
   readonly brokerId: string
   /**
-   * Addon data directory for persisting the refreshed alexa-remote2 session
-   * (cookieData). When absent the client runs in-memory (no cross-restart
-   * cookie-refresh persistence) — used by tests and the stub.
+   * Called with each registration the client renewed (new token, cookie and csrf), so the broker
+   * record carries it across restarts. Absent in tests and the stub: the client then runs
+   * in-memory.
    */
-  readonly dataDir?: string
+  readonly persistRegistration?: (registration: AlexaRegistration) => Promise<void>
+  /** Test seams: Amazon over https and the renewal period. */
+  readonly http?: AmazonHttp
+  readonly refreshIntervalMs?: number
   /** Scoped logger for backoff / persistence diagnostics (optional). */
   readonly logger?: IScopedLogger
 }

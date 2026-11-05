@@ -5,6 +5,7 @@ import {
   type AlexaClientFactory,
 } from './alexa-integration-manager.js'
 import type { AlexaAppliance, AlexaCommand, AlexaStateValue } from './alexa-client.js'
+import type { AlexaRegistration } from './amazon-auth/registration.js'
 import type { AlexaBrokerEntry, AlexaConnection } from './config.js'
 
 /** Minimal manager surface the registry depends on. */
@@ -42,8 +43,11 @@ export interface AlexaBrokerRegistryDeps {
   readonly makeManager?: ManagerFactory
   /** Client factory passed through to each manager (tests inject a fake). */
   readonly makeClient?: AlexaClientFactory
-  /** Addon data dir for the live client's session persistence (optional). */
-  readonly dataDir?: string
+  /** Stores a renewed registration on the broker's record (optional: tests run in memory). */
+  readonly persistRegistration?: (
+    brokerId: string,
+    registration: AlexaRegistration,
+  ) => Promise<void>
 }
 
 export type AlexaBrokerListItem = AlexaBrokerInfo
@@ -74,6 +78,7 @@ export class AlexaBrokerRegistry {
     this.#onAuthFailed = deps.onAuthFailed ?? (() => undefined)
     this.#onAppliancesChanged = deps.onAppliancesChanged ?? (() => undefined)
     this.#onStatesPolled = deps.onStatesPolled ?? (() => undefined)
+    const persist = deps.persistRegistration ?? (async () => undefined)
     this.#makeManager =
       deps.makeManager ??
       ((opts) =>
@@ -88,7 +93,9 @@ export class AlexaBrokerRegistry {
           onAppliancesChanged: opts.onAppliancesChanged,
           onStatesPolled: opts.onStatesPolled,
           ...(deps.makeClient !== undefined ? { makeClient: deps.makeClient } : {}),
-          ...(deps.dataDir !== undefined ? { dataDir: deps.dataDir } : {}),
+          ...(deps.persistRegistration !== undefined
+            ? { persistRegistration: (reg) => persist(opts.id, reg) }
+            : {}),
         }))
   }
 
