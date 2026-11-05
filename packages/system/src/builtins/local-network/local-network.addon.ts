@@ -722,10 +722,6 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
     return cap === 'local-network' ? this.lanSchema() : null
   }
 
-  protected override globalSettingsSchema(): ConfigUISchema {
-    return this.lanSchema()
-  }
-
   /** How THIS host listens and announces itself: every field is a node setting (D986). */
   private lanSchema(): ConfigUISchema {
     return this.schema({
