@@ -1,6 +1,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import type {
+  ConfigUISchema,
   IAddonModelManager,
   IEmbeddingEncoderProvider,
   ModelCatalogEntry,
@@ -483,7 +484,12 @@ export default class EmbeddingEncoderAddon
 
   // ── Three-level settings API (Phase 3) ──────────────────────────────
 
-  protected globalSettingsSchema() {
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return ['embedding-encoder']
+  }
+
+  protected override async clusterSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    if (cap !== 'embedding-encoder') return null
     return this.schema({
       sections: [
         {
