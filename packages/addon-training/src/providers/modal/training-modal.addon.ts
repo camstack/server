@@ -454,20 +454,6 @@ export class TrainingModalAddon extends BaseAddon<TrainingModalConfig> {
       list: async () => Object.values(await state().get()),
     }
   }
-
-  protected globalSettingsSchema() {
-    return this.schema({
-      sections: [
-        {
-          id: 'providers',
-          title: 'Modal accounts',
-          description:
-            'Create and edit Modal accounts under Training → Providers. Credentials stay in the CamStack keychain.',
-          fields: [],
-        },
-      ],
-    })
-  }
 }
 
 /** @deprecated Use entry settings; kept for type imports in tests. */
