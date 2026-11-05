@@ -227,8 +227,20 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
       ? this.hooks.description
       : { ...this.hooks.description, mintsId: true }
 
+  /**
+   * The record an id names. A caller holding the `integrations` registry id (the Integrations
+   * page) reaches a kind whose body links to it through `integrationId`; an id that is itself a
+   * record id answers as it is. An id that names nothing comes back unchanged.
+   */
+  private async resolveRecordId(id: string): Promise<string> {
+    if ((await this.handle.get(id)) !== null) return id
+    const page = await this.handle.query({ limit: INSTANCES_LIST_MAX })
+    const linked = page.records.find((record) => record.data['integrationId'] === id)
+    return linked === undefined ? id : linked.id
+  }
+
   instanceFormSchema: IIntegrationInstancesProvider['instanceFormSchema'] = async ({ id }) =>
-    this.hooks.formSchema(id)
+    this.hooks.formSchema(id === null ? null : await this.resolveRecordId(id))
 
   listInstances: IIntegrationInstancesProvider['listInstances'] = async () => {
     const page = await this.handle.query({ limit: INSTANCES_LIST_MAX })
@@ -236,7 +248,7 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
   }
 
   getInstance: IIntegrationInstancesProvider['getInstance'] = async ({ id }) => {
-    const record = await this.handle.get(id)
+    const record = await this.handle.get(await this.resolveRecordId(id))
     return record === null ? null : this.viewOf(record)
   }
 
@@ -252,10 +264,11 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
   }
 
   updateInstance: IIntegrationInstancesProvider['updateInstance'] = async ({
-    id,
+    id: askedId,
     name,
     values,
   }) => {
+    const id = await this.resolveRecordId(askedId)
     const patch: Record<string, unknown> = {}
     for (const [key, value] of Object.entries(values)) {
       if (value === undefined) continue
@@ -312,7 +325,9 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
         error: 'This integration declares no connection test',
       }
     }
-    return this.hooks.test(input)
+    return this.hooks.test(
+      input.id === null ? input : { ...input, id: await this.resolveRecordId(input.id) },
+    )
   }
 
   /** The flat provider object to hand to `registerProvider`. */

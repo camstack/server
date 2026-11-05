@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- An integration instance is reachable by its Integrations-page id as well as its record id, so the Config form shows and saves the stored record of an account whose record id differs
+
 ## [1.2.504] - 2026-11-05
 
 ### Changed
