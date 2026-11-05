@@ -971,11 +971,9 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelAddonConfig
     }
     await handle.patch(CLOUDFLARE_TUNNEL_RECORD_ID, fields)
     const node = this.localNode()
-    const rows = Object.fromEntries(
-      Object.entries(origin).map(([key, value]) => [`${key}@${node}`, value]),
-    )
     const before = this.reloads
-    await this.updateGlobalSettings(rows)
+    // Bare keys and the node: the base stores each as `<key>@<node>` (they are the node hook's keys).
+    await this.updateGlobalSettings(origin, node)
     if (this.reloads === before) await this.reload()
   }
 
@@ -1064,6 +1062,10 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelAddonConfig
         await this.clearSecrets(keys)
       },
     }
+  }
+
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return ['network-access']
   }
 
   protected async nodeSettingsSchema(cap: string): Promise<ConfigUISchema | null> {

@@ -149,6 +149,15 @@ describe('BaseAddon readers of the scoped schemas', () => {
     expect(h.store()['interfaceName']).toBeUndefined()
   })
 
+  it('a bare node key written for a sibling node is stored under that node', async () => {
+    const h = makeCtx('node-b')
+    const addon = new ScopedOnlyAddon()
+    await addon.initialize(h.ctx)
+    await addon.updateGlobalSettings({ interfaceName: 'eth1' }, 'node-c')
+    expect(h.store()['interfaceName@node-c']).toBe('eth1')
+    expect(h.store()['interfaceName']).toBeUndefined()
+  })
+
   it('a node field resolves from this node at boot, not from the bare key', async () => {
     const h = makeCtx('node-b')
     await h.ctx.settings?.writeAddonStore({
