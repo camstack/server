@@ -12,10 +12,10 @@ import {
   Badge,
   Button,
   DataTable,
+  PageHeaderActions,
   EmptyState,
   ErrorBox,
   IconButton,
-  SECTION_CARD,
   SectionCard,
   Switch,
   useAddonsSetCapabilityProviderEnabled,
@@ -25,7 +25,7 @@ import {
   type DataColumn,
 } from '@camstack/ui-library'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link2, Link2Off, Loader2, Pencil, Play, Trash2, type LucideIcon } from 'lucide-react'
+import { Link2, Link2Off, Loader2, Pencil, Play, Plus, Trash2, type LucideIcon } from 'lucide-react'
 import { useCallback, useMemo, useState, type ReactElement, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { fillBrokerConnectPath, startServerNavigation } from '../../lib/broker-oauth-popup'
@@ -56,11 +56,12 @@ import {
 import { useSetInstanceEnabled } from './use-set-instance-enabled'
 import { HOLDER_QUERY_KEY, useInstancesData, type InstancesData } from './use-instances-data'
 
+/** The `?<key>=` that holds an open instance in the URL. */
+const EDIT_KEY = 'instance'
+
 export interface InstancesTableProps {
   /** The function capability whose providers are listed (`log-destination`, `smtp-provider`). */
   readonly functionCap: string
-  /** Narrow the table to one provider. */
-  readonly onlyAddonId?: string
   readonly icon: LucideIcon
   readonly title: string
   readonly subtitle: string
@@ -69,14 +70,6 @@ export interface InstancesTableProps {
   readonly addLabel: string
   /** The add-on catalogue link at the right of the sub-header, when the function has providers to install. */
   readonly install?: InstanceInstallLink
-  /** The `?<key>=` that holds an open instance in the URL. Defaults to `instance`. */
-  readonly editKey?: string
-  /**
-   * The table sits inside a page section that already carries the heading and
-   * the addon's Activity (an integration page): draw the card without its own
-   * title strip and without a second Activity panel.
-   */
-  readonly embedded?: boolean
   /**
    * Columns a page adds after On and before the row actions (a count, a link). The table owns
    * the built-in ones; the page owns the cap-specific cell.
@@ -195,7 +188,6 @@ function EnableCell({
 
 export function InstancesTable({
   functionCap,
-  onlyAddonId,
   icon,
   title,
   subtitle,
@@ -203,8 +195,6 @@ export function InstancesTable({
   emptyDescription,
   addLabel,
   install,
-  editKey = 'instance',
-  embedded = false,
   extraColumns,
   lead,
 }: InstancesTableProps): ReactElement {
@@ -212,8 +202,8 @@ export function InstancesTable({
   const system = useSystem()
   const queryClient = useQueryClient()
   const confirm = useConfirm()
-  const data = useInstancesData(functionCap, onlyAddonId)
-  const form = useItemFormUrl({ editKey, newKey: `${editKey}-new` })
+  const data = useInstancesData(functionCap)
+  const form = useItemFormUrl({ editKey: EDIT_KEY, newKey: `${EDIT_KEY}-new` })
   const [testing, setTesting] = useState<string | null>(null)
   const [lastTest, setLastTest] = useState<{
     readonly name: string
@@ -236,7 +226,7 @@ export function InstancesTable({
     () => providerPills(data.functionProviders, data.rows, data.displayNames),
     [data.functionProviders, data.rows, data.displayNames],
   )
-  // A filter whose provider left the list falls back to All.
+  // A filter whose provider left the list falls back to nothing selected (every provider).
   const activeFilter = pills.some((p) => p.addonId === providerFilter) ? providerFilter : null
   const visibleRows = useMemo(() => filterRows(data.rows, activeFilter), [data.rows, activeFilter])
   const nameOf = useCallback(
@@ -554,28 +544,36 @@ export function InstancesTable({
   }
 
   return (
-    <Frame
-      embedded={embedded}
-      headingId={`provider-instances-${functionCap}`}
-      title={title}
-      icon={icon}
-    >
+    <SectionCard headingId={`provider-instances-${functionCap}`} title={title} icon={icon}>
       <p className="px-3 pt-2 text-xs text-foreground-muted">{subtitle}</p>
+      {data.state === 'ready' && addDisabledReason !== undefined && (
+        <p className="px-3 pt-1 text-[11px] text-foreground-subtle">{addDisabledReason}</p>
+      )}
       {data.state === 'ready' && (
-        <InstanceProviderPills
-          pills={pills}
-          total={data.rows.length}
-          selected={activeFilter}
-          onSelect={setProviderFilter}
-          fallbackIcon={icon}
-          {...(install !== undefined ? { install } : {})}
-          addLabel={addLabel}
-          onAdd={onAdd}
-          {...(addDisabledReason !== undefined ? { addDisabledReason } : {})}
-        />
+        <>
+          <PageHeaderActions>
+            <Button
+              size="sm"
+              variant="primary"
+              disabled={addDisabledReason !== undefined}
+              title={addDisabledReason}
+              onClick={onAdd}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              {addLabel}
+            </Button>
+          </PageHeaderActions>
+          <InstanceProviderPills
+            pills={pills}
+            selected={activeFilter}
+            onSelect={setProviderFilter}
+            fallbackIcon={icon}
+            {...(install !== undefined ? { install } : {})}
+          />
+        </>
       )}
       {body}
-      {!embedded && data.state === 'ready' && data.rows.length > 0 && (
+      {data.state === 'ready' && data.rows.length > 0 && (
         <ProviderActivity rows={data.rows} selected={activityAddon} onSelect={setActivityAddon} />
       )}
       {lastTest !== null && (
@@ -606,27 +604,6 @@ export function InstancesTable({
           {...(lead !== undefined ? { lead } : {})}
         />
       )}
-    </Frame>
-  )
-}
-
-function Frame({
-  embedded,
-  headingId,
-  title,
-  icon,
-  children,
-}: {
-  readonly embedded: boolean
-  readonly headingId: string
-  readonly title: string
-  readonly icon: LucideIcon
-  readonly children: ReactNode
-}): ReactElement {
-  if (embedded) return <section className={SECTION_CARD}>{children}</section>
-  return (
-    <SectionCard headingId={headingId} title={title} icon={icon}>
-      {children}
     </SectionCard>
   )
 }

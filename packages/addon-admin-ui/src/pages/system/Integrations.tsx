@@ -21,10 +21,7 @@ import { CAP_PROVIDER_KIND_MAP } from '@camstack/types'
 import type { ProviderKind } from '@camstack/types'
 
 import { AdminSectionedPage } from '../../components/AdminSectionedPage'
-import {
-  AddonIntegrationBody,
-  type IntegrationPanel,
-} from '../../components/integration-hub/AddonIntegrationBody'
+import { AddonIntegrationBody } from '../../components/integration-hub/AddonIntegrationBody'
 import { STATUS_BADGE_CLASS } from '../../components/integration-hub/addon-controls'
 import { IntegrationHub } from '../../components/integration-hub/IntegrationHub'
 import type { IntegrationGroup } from '../../components/integration-hub/types'
@@ -41,18 +38,12 @@ import {
   type ConnectivityRow,
 } from './connectivity-model'
 import { InstancesTable } from '../../components/instances/InstancesTable'
-import {
-  rowHealth,
-  type InstanceRow,
-  type PanelRow,
-} from '../../components/instances/instances-model'
-import { useInstancesData } from '../../components/instances/use-instances-data'
+import type { InstanceRow, PanelRow } from '../../components/instances/instances-model'
 import {
   ExportSetupLead,
   exportedDevicesColumn,
 } from '../../components/integrations/exported-devices'
 import { WasteSettingsSources } from './WasteSettingsSources'
-import i18n from '../../i18n/index'
 import type { TFunction } from 'i18next'
 
 const POLL_INTERVAL_MS = 10_000
@@ -143,6 +134,13 @@ const KINDS: readonly KindDescriptor[] = [
     installLabelKey: 'system.connectivity.brokersInstall',
     emptyTitleKey: 'system.connectivity.brokersEmptyTitle',
     emptyDescriptionKey: 'system.connectivity.brokersEmptyDescription',
+    instances: {
+      functionCap: 'broker',
+      subtitleKey: 'system.connectivity.brokersSubtitle',
+      subtitleDefault: 'The accounts and connections this hub reaches its devices through.',
+      addLabelKey: 'system.connectivity.brokersAdd',
+      addLabelDefault: 'Add connection',
+    },
   },
   {
     sectionId: 'calendars',
@@ -181,14 +179,12 @@ function buildGroup(
             badges={
               <>
                 <ProcessBadge processState={row.processState} />
-                <KindStatusBadge kind={descriptor.kind} addonId={row.addonId} />
               </>
             }
-            panels={panelsFor(descriptor.kind, row.addonId)}
             settingsContent={
               row.addonId === 'waste-collections' ? (
                 <WasteSettingsSources addonId={row.addonId} capName={capName} />
-              ) : descriptor.kind === 'broker' ? null : undefined
+              ) : undefined
             }
           />
         ),
@@ -319,79 +315,12 @@ export function IntegrationsPage(): ReactElement {
   )
 }
 
-/**
- * The panel a kind contributes. A broker's connections sit above the settings.
- * Email / calendars have none beyond the shared settings + activity.
- */
-function panelsFor(kind: ProviderKind, addonId: string): readonly IntegrationPanel[] {
-  if (kind === 'broker') {
-    return [
-      {
-        id: 'connections',
-        title: i18n.t('admin.system.integrations.connections', 'Connections'),
-        icon: Radio,
-        content: (
-          <InstancesTable
-            functionCap="broker"
-            onlyAddonId={addonId}
-            icon={Radio}
-            title={i18n.t('admin.system.integrations.connections', 'Connections')}
-            subtitle={i18n.t(
-              'admin.system.integrations.connectionsSubtitle',
-              'The accounts and connections this integration reaches its devices through.',
-            )}
-            emptyTitle={i18n.t('admin.system.integrations.connectionsEmpty', 'No connections yet')}
-            emptyDescription={i18n.t(
-              'admin.system.integrations.connectionsEmptyHint',
-              'Add one to start bringing its devices in.',
-            )}
-            addLabel={i18n.t('admin.system.integrations.connectionsAdd', 'Add connection')}
-            editKey={`connection-${addonId}`}
-            embedded
-          />
-        ),
-      },
-    ]
-  }
-  return []
-}
-
 function ProcessBadge({ processState }: { readonly processState: string | null }): ReactElement {
   const { state, label } = processPillState(processState)
   const variant = state === 'ok' ? 'success' : state === 'error' ? 'danger' : 'default'
   return (
     <Badge variant={variant} className={`${STATUS_BADGE_CLASS} capitalize`}>
       {label}
-    </Badge>
-  )
-}
-
-function KindStatusBadge({
-  kind,
-  addonId,
-}: {
-  readonly kind: ProviderKind
-  readonly addonId: string
-}): ReactElement | null {
-  if (kind === 'broker') return <BrokerStatusBadge addonId={addonId} />
-  return null
-}
-
-function BrokerStatusBadge({ addonId }: { readonly addonId: string }): ReactElement | null {
-  const { t } = useTranslation()
-  // The same query the Connections table reads: the badge counts what the table lists.
-  const { state, rows } = useInstancesData('broker', addonId)
-  if (state !== 'ready') return null
-  const instances = rows.filter((row) => row.kind === 'instance')
-  const connected = instances.filter((row) => rowHealth(row) === 'ok').length
-  return (
-    <Badge variant="info" className={STATUS_BADGE_CLASS}>
-      {connected > 0
-        ? t('system.connectivity.connectionsConnected', {
-            count: instances.length,
-            connected,
-          })
-        : t('system.connectivity.connections', { count: instances.length })}
     </Badge>
   )
 }

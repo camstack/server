@@ -8008,6 +8008,13 @@
       ]
     },
     {
+      "name": "PageHeaderActions",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/page-shell.tsx",
+      "summary": "Put `children` in the actions area of the enclosing PageShell header, from any depth of the page body (a table that owns its own Add button). Outside a shell with a title row there is no header to join, so it renders …"
+    },
+    {
       "name": "pageRows",
       "kind": "function",
       "area": "composites",

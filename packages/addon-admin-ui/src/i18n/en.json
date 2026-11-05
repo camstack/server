@@ -1259,10 +1259,6 @@
       "calendarsInstall": "Add calendar source",
       "calendarsEmptyTitle": "No calendar sources installed",
       "calendarsEmptyDescription": "Install a calendar-source addon (Google Calendar, waste collections, …) to feed System → Calendars.",
-      "connections_one": "{{count}} connection",
-      "connections_other": "{{count}} connections",
-      "connectionsConnected_one": "{{count}} connection · {{connected}} connected",
-      "connectionsConnected_other": "{{count}} connections · {{connected}} connected",
       "emailSubtitle": "The SMTP relays that notification targets send mail through.",
       "emailAdd": "Add relay",
       "exportersSubtitle": "The ecosystems and hubs this hub publishes its devices to.",
@@ -1271,7 +1267,9 @@
       "devicesNotSortable": "A button that opens the list is not a value to order by.",
       "devicesDialogTitle": "Devices of {{name}}",
       "devicesExported_one": "{{count}} device exported",
-      "devicesExported_other": "{{count}} devices exported"
+      "devicesExported_other": "{{count}} devices exported",
+      "brokersSubtitle": "The accounts and connections this hub reaches its devices through.",
+      "brokersAdd": "Add connection"
     },
     "ai": "AI",
     "calendars": "Calendars",
@@ -6436,12 +6434,7 @@
         "connectivity": "Connectivity",
         "externalSystemsThisHubTalks": "External systems this hub talks to — exporters, email, brokers and calendar sources.",
         "devices": "Devices",
-        "connections": "Connections",
-        "exposed": "{{linkState}} · {{exposedDeviceCount}} exposed",
-        "connectionsSubtitle": "The accounts and connections this integration reaches its devices through.",
-        "connectionsEmpty": "No connections yet",
-        "connectionsEmptyHint": "Add one to start bringing its devices in.",
-        "connectionsAdd": "Add connection"
+        "exposed": "{{linkState}} · {{exposedDeviceCount}} exposed"
       },
       "logs": {
         "viewer": "Viewer",

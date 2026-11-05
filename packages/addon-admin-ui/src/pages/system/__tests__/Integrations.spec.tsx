@@ -146,6 +146,14 @@ describe('Connectivity SectionedPage', () => {
     expect(screen.queryByRole('navigation', { name: /Email integrations/i })).toBeNull()
   })
 
+  it('brokers section is one instances list of the broker cap: a single pill row, no hub pills, no All', () => {
+    renderAt('/system/integrations?tab=brokers')
+    expect(screen.getByTestId('provider-instances').getAttribute('data-cap')).toBe('broker')
+    expect(screen.queryByRole('navigation', { name: /Brokers integrations/i })).toBeNull()
+    expect(screen.queryByTestId('instance-pill-all')).toBeNull()
+    expect(screen.queryByRole('button', { name: /^All\b/ })).toBeNull()
+  })
+
   it('remaps legacy ?tab=device-export to exporters', async () => {
     renderAt('/system/integrations?tab=device-export')
     // replace effect runs after paint

@@ -69,12 +69,12 @@ describe('there is one broker list and one broker dialog', () => {
     expect(listers).toEqual([])
   })
 
-  it('Connectivity mounts the instances table for a broker integration', () => {
+  it('Connectivity lists brokers as one instances table over the broker cap', () => {
     const page = readFileSync(
       join(here, '..', '..', '..', 'pages', 'system', 'Integrations.tsx'),
       'utf8',
     )
-    expect(page).toMatch(/functionCap="broker"[\s\S]*onlyAddonId=\{addonId\}/)
+    expect(page).toMatch(/functionCap: 'broker'/)
     expect(page).not.toMatch(/RecordEntriesPanel/)
   })
 })

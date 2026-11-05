@@ -1259,10 +1259,6 @@
       "calendarsInstall": "Aggiungi fonte di calendario",
       "calendarsEmptyTitle": "Nessuna fonte di calendario installata",
       "calendarsEmptyDescription": "Installa un addon fonte di calendario (Google Calendar, raccolta rifiuti, …) per alimentare Sistema → Calendari.",
-      "connections_one": "{{count}} connessione",
-      "connections_other": "{{count}} connessioni",
-      "connectionsConnected_one": "{{count}} connessione · {{connected}} connessa",
-      "connectionsConnected_other": "{{count}} connessioni · {{connected}} connesse",
       "emailSubtitle": "I relay SMTP attraverso cui le destinazioni di notifica inviano la posta.",
       "emailAdd": "Aggiungi relay",
       "exportersSubtitle": "Gli ecosistemi e gli hub a cui questo hub pubblica i suoi dispositivi.",
@@ -1271,7 +1267,9 @@
       "devicesNotSortable": "Un pulsante che apre l'elenco non è un valore per ordinare.",
       "devicesDialogTitle": "Dispositivi di {{name}}",
       "devicesExported_one": "{{count}} dispositivo esportato",
-      "devicesExported_other": "{{count}} dispositivi esportati"
+      "devicesExported_other": "{{count}} dispositivi esportati",
+      "brokersSubtitle": "Gli account e le connessioni attraverso cui questo hub raggiunge i suoi dispositivi.",
+      "brokersAdd": "Aggiungi connessione"
     },
     "ai": "IA",
     "calendars": "Calendari",
@@ -6511,12 +6509,7 @@
         "connectivity": "Connettività",
         "externalSystemsThisHubTalks": "Sistemi esterni con cui questo hub comunica — exporter, email, broker e sorgenti di calendario.",
         "devices": "Dispositivi",
-        "connections": "Connessioni",
-        "exposed": "{{linkState}} · {{exposedDeviceCount}} esposti",
-        "connectionsSubtitle": "Gli account e le connessioni attraverso cui questa integrazione raggiunge i suoi dispositivi.",
-        "connectionsEmpty": "Nessuna connessione per ora",
-        "connectionsEmptyHint": "Aggiungine una per iniziare a importare i suoi dispositivi.",
-        "connectionsAdd": "Aggiungi connessione"
+        "exposed": "{{linkState}} · {{exposedDeviceCount}} esposti"
       },
       "logs": {
         "viewer": "Visualizzatore",

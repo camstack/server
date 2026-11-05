@@ -124,12 +124,11 @@ vi.mock('../use-set-instance-enabled', () => ({
   }),
 }))
 
-import { ConfirmDialogProvider } from '@camstack/ui-library'
+import { ConfirmDialogProvider, PageShell } from '@camstack/ui-library'
 import { InstancesTable, type InstancesTableProps } from '../InstancesTable'
 
 function renderPanel(
   search = '',
-  embedded = false,
   extra: Partial<Pick<InstancesTableProps, 'extraColumns' | 'lead'>> = {},
 ) {
   // The open dialog lives in the real URL (`useUrlQueryParam` reads `window.location`).
@@ -149,7 +148,6 @@ function renderPanel(
             emptyTitle="Nothing configured"
             emptyDescription="Add one."
             addLabel="Add destination"
-            embedded={embedded}
             {...extra}
           />
         </ConfirmDialogProvider>
@@ -331,14 +329,52 @@ describe('InstancesTable', () => {
       }
     })
 
-    it('a pill filters the table and All restores it', async () => {
+    it('has one pill row and no All pill: nothing selected lists every provider, the active pill deselects', async () => {
       renderPanel()
       expect(await screen.findByText('Loki prod')).toBeTruthy()
-      fireEvent.click(screen.getByTestId('instance-pill-smtp-nodemailer'))
+      expect(screen.getAllByRole('group', { name: 'Filter by provider' })).toHaveLength(1)
+      expect(screen.queryByTestId('instance-pill-all')).toBeNull()
+      expect(screen.queryByRole('button', { name: /^All\b/ })).toBeNull()
+      const pill = screen.getByTestId('instance-pill-smtp-nodemailer')
+      expect(pill.getAttribute('aria-pressed')).toBe('false')
+      fireEvent.click(pill)
       expect(screen.queryByText('Loki prod')).toBeNull()
       expect(screen.getByText('Relay A')).toBeTruthy()
-      fireEvent.click(screen.getByTestId('instance-pill-all'))
+      expect(pill.getAttribute('aria-pressed')).toBe('true')
+      fireEvent.click(pill)
       expect(screen.getByText('Loki prod')).toBeTruthy()
+      expect(pill.getAttribute('aria-pressed')).toBe('false')
+    })
+
+    it('Add sits in the page header, not in the pill row', async () => {
+      window.history.replaceState(null, '', '/')
+      const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      render(
+        <QueryClientProvider client={client}>
+          <MemoryRouter>
+            <ConfirmDialogProvider>
+              <PageShell title="Connectivity">
+                <InstancesTable
+                  functionCap="log-destination"
+                  icon={Mail}
+                  title="Destinations"
+                  subtitle="Every destination."
+                  emptyTitle="Nothing configured"
+                  emptyDescription="Add one."
+                  addLabel="Add destination"
+                />
+              </PageShell>
+            </ConfirmDialogProvider>
+          </MemoryRouter>
+        </QueryClientProvider>,
+      )
+      await screen.findByText('Relay A')
+      const add = screen.getByRole('button', { name: /Add destination/ })
+      const header = screen
+        .getByRole('heading', { name: 'Connectivity' })
+        .closest('div')?.parentElement
+      expect(header?.contains(add)).toBe(true)
+      expect(screen.getByRole('group', { name: 'Filter by provider' }).contains(add)).toBe(false)
     })
 
     it('Add is offered for a multiple provider that already holds two rows, and goes straight to its form', async () => {
@@ -359,8 +395,8 @@ describe('InstancesTable', () => {
       }) as HTMLButtonElement
       expect(add.disabled).toBe(true)
       expect(screen.getByText(/only one instance is allowed/)).toBeTruthy()
-      // A lone provider still has its pill.
-      expect(screen.getByTestId('instance-pill-loki-logging')).toBeTruthy()
+      // A lone provider filters nothing, so no pill row is drawn.
+      expect(screen.queryByTestId('instance-pill-loki-logging')).toBeNull()
     })
 
     it('a single provider with a row is not offered: the only creatable one opens directly', async () => {
@@ -373,7 +409,7 @@ describe('InstancesTable', () => {
     })
   })
 
-  describe('embedded in an integration page', () => {
+  describe('standalone', () => {
     beforeEach(() => {
       h.fn.data = [{ addonId: 'smtp-nodemailer', isActive: true }]
       h.holders.data = [{ addonId: 'smtp-nodemailer', isActive: true }]
@@ -395,13 +431,6 @@ describe('InstancesTable', () => {
       await screen.findByText('Relay A')
       expect(screen.getByRole('heading', { name: 'Destinations' })).toBeTruthy()
       expect(screen.getByRole('heading', { name: 'Activity' })).toBeTruthy()
-    })
-
-    it('draws neither a second title nor a second Activity: the page section owns both', async () => {
-      renderPanel('', true)
-      await screen.findByText('Relay A')
-      expect(screen.queryByRole('heading', { name: 'Destinations' })).toBeNull()
-      expect(screen.queryByRole('heading', { name: 'Activity' })).toBeNull()
     })
   })
 
@@ -618,7 +647,7 @@ describe('InstancesTable extensions', () => {
   })
 
   it('draws extra columns between On and the actions, for instance and fixed rows alike', async () => {
-    renderPanel('', false, {
+    renderPanel('', {
       extraColumns: [
         {
           key: 'devices',
@@ -635,7 +664,7 @@ describe('InstancesTable extensions', () => {
   })
 
   it('shows the lead of an instance at the top of its edit dialog', async () => {
-    renderPanel('?instance=smtp-nodemailer:a', false, {
+    renderPanel('?instance=smtp-nodemailer:a', {
       lead: (row) => <p>{`lead for ${row.id}`}</p>,
     })
     expect(await screen.findByText('lead for a')).toBeTruthy()

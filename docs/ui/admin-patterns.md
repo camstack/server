@@ -589,11 +589,17 @@ servers, tunnels — anything whose provider keeps `integration-instances` recor
 (`functionCap`, `icon`, `title`, `subtitle`, `emptyTitle`, `emptyDescription`, `addLabel`,
 optional `install`); there are no per-cap columns.
 
-- **Sub-header.** `InstanceProviderPills`: "All" first, then one pill per provider that holds
-  records (icon, name, count, a dot for the worst status). A pill FILTERS the table; the install
-  link sits on the right. It is not rendered when there is nothing to choose between.
+- **Pill row.** `InstanceProviderPills`: ONE row, one pill per provider (icon, name, count, a dot
+  for the worst status), no "All" pill. A pill FILTERS the table; nothing selected lists every
+  provider, and clicking the active pill deselects it. The install link ends the row. Not
+  rendered for a single provider with no install link. Never stack it under another pill row
+  (an `IntegrationHub` over the same cap): a kind that is a list of connections declares
+  `instances` in `pages/system/Integrations.tsx` instead.
+- **Add lives in the page header.** The table puts its Add button in the enclosing `PageShell`
+  actions through `PageHeaderActions` (ui-library); standalone it falls back to an inline row.
+  When Add is disabled the reason shows under the subtitle.
 - **Table.** `DataTable`: Name / Provider / Status / On switch / Actions (Test, Edit, Restart,
-  Delete through `useConfirm`). A provider without records is a fixed row under "All".
+  Delete through `useConfirm`). A provider without records is a fixed row when nothing is selected.
 - **Add is always offered for a `multiple` provider, however many rows it holds**; a `single`
   provider only while it has none (`creatableProviders`). A selected pill adds to its own
   provider; otherwise provider picker, then `InstanceEditorDialog` (form, Test, Save).
