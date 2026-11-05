@@ -20,6 +20,8 @@ import {
   type SmtpInboundMessage,
   SmtpInboundSettingsSchema,
   parseSmtpSinceKey,
+  assertBrokerUnused,
+  type BrokerUserFinder,
 } from '@camstack/types'
 import type { ListenerFactory, ListenerSpec } from './inbound-listener.js'
 import { type DraftMessage, MessageRing } from './inbound-ring.js'
@@ -383,6 +385,17 @@ export class SmtpInboundBroker {
     return { subscriptionId: id }
   }
 
+  /** The subscribers (camera email push) that still read one mailbox. */
+  private subscriberUsers(): BrokerUserFinder {
+    return {
+      find: async (brokerId) =>
+        [...(this.runtimes.get(brokerId)?.subscriptions.values() ?? [])].map((sub) => ({
+          kind: 'subscriber',
+          id: sub.subscriberId,
+        })),
+    }
+  }
+
   provider(): IBrokerProvider {
     const owns = (id: string): Promise<boolean> => this.exists(id)
     return {
@@ -430,6 +443,7 @@ export class SmtpInboundBroker {
       },
       remove: async ({ id }) => {
         if (!(await owns(id))) return
+        await assertBrokerUnused(id, [this.subscriberUsers()])
         await this.deps.handle.delete(id)
         await this.reconcile(id)
       },

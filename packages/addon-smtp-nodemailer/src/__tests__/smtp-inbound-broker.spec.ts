@@ -1,5 +1,6 @@
 import { createServer } from 'node:net'
 import {
+  BrokerInUseError,
   SMTP_INBOUND_DEFAULT_ID,
   SMTP_RECIPIENT_CLAIMED,
   RecordSecretUnavailableError,
@@ -476,5 +477,20 @@ describe('smtp-inbound over a real SMTP session', () => {
         text: 't',
       }),
     ).rejects.toBeTruthy()
+  })
+
+  it('refuses removing a mailbox a subscriber still reads, naming it', async () => {
+    const { factory, made } = fakeListeners()
+    const { provider } = await build({ factory })
+    await add(provider)
+    await provider.subscribe({
+      brokerId: SMTP_INBOUND_DEFAULT_ID,
+      filter: { recipients: ['cam-A'], subscriberId: 'reolink-garden' },
+    })
+    const err = await provider.remove({ id: SMTP_INBOUND_DEFAULT_ID }).catch((e: unknown) => e)
+    expect(err).toBeInstanceOf(BrokerInUseError)
+    if (!(err instanceof BrokerInUseError)) throw err
+    expect(err.users).toEqual([{ kind: 'subscriber', id: 'reolink-garden' }])
+    expect(made[0]?.stopped).toBe(false)
   })
 })
