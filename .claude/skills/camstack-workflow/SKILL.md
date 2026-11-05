@@ -40,7 +40,7 @@ the catalog has no cheap model, use `inherit`.
 | Red CI, failing or flaky test, TS7 typecheck over the pins | `camstack-test-fixer` | sonnet | cheapest non-`inherit` |
 | Regenerated docs, `docs:check`, a sessions entry from given facts | `camstack-docs-writer` | haiku | cheapest non-`inherit` |
 | A live symptom whose logs and API dumps would flood the coordinator | `camstack-diagnostician` | opus | `inherit` (chat model) |
-| Code review after a task | `code-reviewer` / Bugbot | (harness default) | `inherit` |
+| Review of every worker's change BEFORE it lands — parity with what existed before, words vs code, specs that discriminate, rules | `camstack-reviewer` | sonnet | `inherit` |
 
 - **Never `general-purpose` for camstack work** — it starts without the
   repo rules. If no agent fits, name the skills it must load first and pass
@@ -189,6 +189,14 @@ top of it:
 
 With superpowers: `superpowers:verification-before-completion`. What counts
 here:
+
+- **A `camstack-reviewer` verdict `LAND`** on the worker's commit range,
+  BEFORE it is merged to main. Brief it with the worktree, the range and one
+  line of purpose — never the plan (it judges the code against what existed
+  before, not against your intent). `FIX FIRST` goes back to the worker. A
+  change that merges or replaces flows also gets its per-case inventory
+  (adoption, adoption + scan, hub, manual, …) checked on the dev hub before it
+  is labelled `status: to test`.
 
 - **Test output** of the suites you touched, run fresh, with the counts.
 - **Build output** of the real build (`camstack-server-change` §2).

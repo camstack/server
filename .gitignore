@@ -82,6 +82,7 @@ hf-models/
 !.claude/agents/camstack-test-fixer.md
 !.claude/agents/camstack-docs-writer.md
 !.claude/agents/camstack-diagnostician.md
+!.claude/agents/camstack-reviewer.md
 
 __pycache__/
 yolo11n-seg_saved_model/
