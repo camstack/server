@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Addon authors can import InstanceChange, statusInstanceOf and fakeAddonContext, and a device-export provider can omit the per-device settings methods.
+- Addon authors can import InstanceChange and statusInstanceOf, take fakeAddonContext from @camstack/types/testing (optional @trpc/client peer), and a device-export provider can omit the per-device settings methods.
 
 ## [1.2.502] - 2026-11-05
 

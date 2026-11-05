@@ -3,20 +3,19 @@
  * (`src/index.ts`, published as `@camstack/types`). They are not reachable
  * through a deep path the package does not export.
  *
+ * `fakeAddonContext` comes from `src/testing.ts` (`@camstack/types/testing`),
+ * never the root entry.
+ *
  * Disarm: drop `statusInstanceOf` from `capabilities/index.ts` — the import
  * below fails. Restore `IDeviceExportProvider` to a plain `InferProvider` —
  * the exporter without the three contribution methods fails to assign.
  */
 import { describe, expect, expectTypeOf, it } from 'vitest'
-import {
-  fakeAddonContext,
-  type IDeviceExportProvider,
-  type InstanceChange,
-  statusInstanceOf,
-} from '../../index.js'
+import { fakeAddonContext } from '../../testing.js'
+import { type IDeviceExportProvider, type InstanceChange, statusInstanceOf } from '../../index.js'
 
 describe('public addon-author surface', () => {
-  it('exports InstanceChange, statusInstanceOf and a typed addon context', async () => {
+  it('exports InstanceChange, statusInstanceOf and a typed addon context from the testing subpath', async () => {
     const change: InstanceChange = 'created'
     expectTypeOf<InstanceChange>().toEqualTypeOf<'created' | 'updated' | 'enabled' | 'deleted'>()
     expect(change).toBe('created')

@@ -54,6 +54,11 @@
       "import": "./dist/client.mjs",
       "require": "./dist/client.js"
     },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "import": "./dist/testing.mjs",
+      "require": "./dist/testing.js"
+    },
     "./catalogs": {
       "types": "./dist/catalogs/index.d.ts",
       "import": "./dist/catalogs/index.mjs",
@@ -80,14 +85,22 @@
     "publish:npm": "npm publish --access public"
   },
   "devDependencies": {
+    "@trpc/client": "^11.16.0",
     "@trpc/server": "^11.16.0",
     "tsup": "^8.0.0",
     "typescript": "~6.0.3",
     "vite": "^8.0.11",
     "vitest": "^3.0.0"
   },
+  "peerDependencies": {
+    "@trpc/client": "^11.16.0"
+  },
+  "peerDependenciesMeta": {
+    "@trpc/client": {
+      "optional": true
+    }
+  },
   "dependencies": {
-    "@trpc/client": "^11.16.0",
     "zod": "^4.3.6"
   },
   "nx": {
