@@ -85,7 +85,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-ffmpeg-primitive.ts` | ffmpeg-primitive guard — refuses a second argv builder, an ffmpeg spawned outside the primitive, and a mutable shared transcode handle. |
 | `scripts/check-field-claims.ts` | GUARD: the per-field claim contract has a closed set of producers (D663). |
 | `scripts/check-fleet-query-defaults.ts` | Fleet-query-defaults guard — enforcement for D274. |
-| `scripts/check-global-schema-declared.ts` | An addon that SERVES a global form with a secret field DECLARES that form through `globalSettingsSchema()` or a scoped hook (`clusterSettingsSchema`, `nodeSettingsSchema`, `deviceDefaultsSchema`) (D787, D986). |
+| `scripts/check-global-schema-declared.ts` | An addon that SERVES a global form with a secret field DECLARES that form through `globalSettingsSchema()`, a scoped hook (`clusterSettingsSchema`, `nodeSettingsSchema`, `deviceDefaultsSchema`) or the instance form (`integrationFormSchem… |
 | `scripts/check-heavy-specs.ts` | Heavy-spec guard — a `*.heavy.spec.*` file is out of every automatic lane and IN the on-demand Checks workflow, never in neither. |
 | `scripts/check-helper-kinds-are-aggregators.ts` | The helper kinds are exactly the aggregators (D1004, D944). |
 | `scripts/check-history-single-mechanism.ts` | D850 P4 — numeric history has one mechanism (device-history). |
