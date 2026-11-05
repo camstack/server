@@ -14,6 +14,7 @@ import {
   RecordIntegrationInstances,
   type RecordKindHandle,
   type RecordsAccess,
+  type SecretsAccess,
   type RowsMigrationLog,
 } from '@camstack/types'
 import { z } from 'zod'
@@ -119,6 +120,7 @@ export function homeComRowsPorts(deps: {
   readonly api: IntegrationRowsApi
   readonly records: Pick<RecordsAccess, 'kind'>
   readonly warn: (message: string) => void
+  readonly secrets?: SecretsAccess | null
 }): IntegrationRowsPorts {
   return boschRowsPorts({ ...deps, kind: homeComConnectionsEntryKind })
 }
