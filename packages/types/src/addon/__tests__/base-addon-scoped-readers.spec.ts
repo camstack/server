@@ -7,7 +7,7 @@ import type { ConfigUISchema } from '../../interfaces/config-ui.js'
 import { isSecretMarker } from '../../keychain/secret-marker.js'
 import { createSecretsAccess, type KeychainTransport } from '../../keychain/secrets-access.js'
 import { BaseAddon } from '../base-addon.js'
-import { fakeAddonContext } from './fake-addon-context.js'
+import { fakeAddonContext } from '../fake-addon-context.js'
 
 /**
  * D986 M4: the three readers of the addon-level schema (`perNodeKeys`, the secret tree, the
