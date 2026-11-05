@@ -72,91 +72,85 @@ export const espBoardRowSchema = z.object({
 
 export type EspBoardRow = z.infer<typeof espBoardRowSchema>
 
-/** The integration form: the boards of ONE integration. */
+/**
+ * The integration form. An ESPHome integration has nothing to configure on the
+ * integration itself: boards are never entered here. They arrive through the
+ * "Add device" dialog of the integration page, which offers the boards found on
+ * the network (asking for the key of an encrypted one) and the manual form below.
+ */
 export function buildIntegrationFormSchema(): ConfigUISchema {
+  return { sections: [] }
+}
+
+/** What the operator is told about the encryption key, on the form that asks for it. */
+export const ESPHOME_KEY_HINT =
+  'Needed only when the board is encrypted, that is when its YAML has api: encryption: key:. Copy the base64 value from there. Leave it empty for an unencrypted board; CamStack then tries to read the key from the ESPHome Builder in Home Assistant.'
+
+/** The board a creation form describes. The key is a keychain secret once saved. */
+export const espBoardCreationSchema = z.object({
+  host: z.string().trim().min(1),
+  port: z.preprocess(
+    (v) => (v === '' || v === null ? undefined : v),
+    z.number().int().min(1).max(65535).default(ESPHOME_DEFAULT_PORT),
+  ),
+  name: z.string().default(''),
+  encryptionKey: z.string().default(''),
+  password: z.string().default(''),
+})
+
+export type EspBoardCreation = z.infer<typeof espBoardCreationSchema>
+
+/** The manual "Enter parameters" form, also the parameter step of a board found on the network. */
+export function buildBoardCreationSchema(): ConfigUISchema {
   return {
     sections: [
       {
-        id: 'boards',
-        title: 'Boards',
-        titleKey: 'provider-esphome:connection.s_boards.title',
-        description:
-          'Every ESPHome board of this integration. The encryption key is the one in the board YAML under api: encryption: key:. Leave it empty for an unencrypted board.',
-        descriptionKey: 'provider-esphome:connection.s_boards.description',
+        id: 'board',
+        title: 'Board',
+        titleKey: 'provider-esphome:creation.title',
         columns: 1,
         fields: [
           {
-            type: 'editable-array',
-            key: 'boards',
-            label: 'Boards',
-            labelKey: 'provider-esphome:connection.s_boards.boards.label',
-            itemIdKey: 'id',
-            minRows: 1,
-            addLabel: 'Add board',
-            rowTitleTemplate: '{name} ({host})',
-            defaultItem: { port: ESPHOME_DEFAULT_PORT },
-            itemFields: [
-              {
-                type: 'text',
-                key: 'host',
-                label: 'Host / IP',
-                labelKey: 'provider-esphome:connection.s_boards.host.label',
-                required: true,
-                placeholder: 'living-room-relay.local',
-              },
-              {
-                type: 'number',
-                key: 'port',
-                label: 'API port',
-                labelKey: 'provider-esphome:connection.s_boards.port.label',
-                min: 1,
-                max: 65535,
-                default: ESPHOME_DEFAULT_PORT,
-              },
-              {
-                type: 'text',
-                key: 'name',
-                label: 'Name',
-                labelKey: 'provider-esphome:connection.s_boards.name.label',
-                placeholder: 'Living room relay',
-              },
-              {
-                type: 'password',
-                key: 'encryptionKey',
-                label: 'Encryption key',
-                labelKey: 'provider-esphome:connection.s_boards.encryptionKey.label',
-                showToggle: true,
-              },
-              {
-                type: 'password',
-                key: 'password',
-                label: 'Legacy API password',
-                labelKey: 'provider-esphome:connection.s_boards.password.label',
-                showToggle: true,
-              },
-              {
-                type: 'text',
-                key: 'id',
-                label: 'Board id',
-                labelKey: 'provider-esphome:connection.s_boards.id.label',
-                description: 'Leave empty: it is generated when the board is saved.',
-                descriptionKey: 'provider-esphome:connection.s_boards.id.description',
-              },
-            ],
+            type: 'text',
+            key: 'host',
+            label: 'Host / IP',
+            labelKey: 'provider-esphome:creation.host.label',
+            required: true,
+            placeholder: 'living-room-relay.local',
           },
           {
-            type: 'addon-action-button',
-            key: 'importKeys',
-            label: 'Import encryption keys',
-            labelKey: 'provider-esphome:connection.s_boards.importKeys.label',
-            description:
-              "Read each board's key from the ESPHome Builder add-on in Home Assistant, using the Home Assistant token already configured. Needs an administrator token. Boards that cannot be read are listed with the reason.",
-            descriptionKey: 'provider-esphome:connection.s_boards.importKeys.description',
-            addonId: 'provider-esphome',
-            action: 'importBoardKeys',
-            buttonLabel: 'Import keys',
-            variant: 'default',
-            successMessage: '{summary}',
+            type: 'number',
+            key: 'port',
+            label: 'API port',
+            labelKey: 'provider-esphome:creation.port.label',
+            min: 1,
+            max: 65535,
+            default: ESPHOME_DEFAULT_PORT,
+          },
+          {
+            type: 'text',
+            key: 'name',
+            label: 'Name',
+            labelKey: 'provider-esphome:creation.name.label',
+            placeholder: 'Living room relay',
+          },
+          {
+            type: 'password',
+            key: 'encryptionKey',
+            label: 'Encryption key',
+            labelKey: 'provider-esphome:creation.encryptionKey.label',
+            description: ESPHOME_KEY_HINT,
+            descriptionKey: 'provider-esphome:creation.encryptionKey.description',
+            showToggle: true,
+          },
+          {
+            type: 'password',
+            key: 'password',
+            label: 'Legacy API password',
+            labelKey: 'provider-esphome:creation.password.label',
+            description: 'Only for a board that predates encryption and has api: password:.',
+            descriptionKey: 'provider-esphome:creation.password.description',
+            showToggle: true,
           },
         ],
       },

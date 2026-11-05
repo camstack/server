@@ -180,3 +180,52 @@ export function summarizeImport(results: readonly BoardKeyImportResult[]): strin
   })
   return `${head}. ${rows.join('; ')}`
 }
+
+/** What the lookup of one board's key answers; a key is only ever present on `found`. */
+export type BoardKeyLookup =
+  | { readonly outcome: 'found'; readonly key: string }
+  | { readonly outcome: 'not-found'; readonly reason: KeyImportReason }
+
+/**
+ * Read the key of a board that is NOT saved yet (a board found on the network)
+ * from the key sources, matching it by name or by host. Nothing is stored here:
+ * the caller saves the key with the board, in one write. A failed read is
+ * `not-found` with its reason, never an empty key.
+ */
+export async function lookupBoardKey(
+  keySources: KeySourceClient,
+  board: { readonly name: string; readonly host: string },
+): Promise<BoardKeyLookup> {
+  let sources: readonly BoardKeySource[] = []
+  try {
+    sources = await keySources.listSources()
+  } catch {
+    return { outcome: 'not-found', reason: 'no-source' }
+  }
+  if (sources.length === 0) return { outcome: 'not-found', reason: 'no-source' }
+  const entry: EspBrokerEntry = {
+    id: '',
+    name: board.name,
+    connection: { host: board.host, port: 0, noisePsk: '', password: '' },
+  }
+  let firstFailure: BoardKeyFailureReason | null = null
+  for (const source of sources) {
+    const result = await keySources.listBoards({ sourceId: source.sourceId })
+    if (!result.ok) {
+      firstFailure ??= result.reason
+      continue
+    }
+    const found = result.boards.filter((c) => matches(entry, c))
+    if (found.length > 1) return { outcome: 'not-found', reason: 'ambiguous' }
+    const [candidate] = found
+    if (candidate === undefined) continue
+    const read = await keySources.getBoardKey({
+      sourceId: source.sourceId,
+      configuration: candidate.configuration,
+    })
+    return read.ok
+      ? { outcome: 'found', key: read.key }
+      : { outcome: 'not-found', reason: read.reason }
+  }
+  return { outcome: 'not-found', reason: firstFailure ?? 'no-match' }
+}

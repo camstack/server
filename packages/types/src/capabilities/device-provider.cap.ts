@@ -152,6 +152,13 @@ const DiscoveryCandidateSchema = z.object({
   parentStableId: z.string().optional(),
   /** `false` = shown for context but not pickable. Default true. */
   selectable: z.boolean().optional(),
+  /**
+   * Keys of the provider's creation form (`getChildCreationSchema`) this candidate
+   * cannot be adopted without — a key for an encrypted board, a pairing code. The
+   * admin asks for exactly these, on the creation form prefilled with
+   * `prefilledConfig`, before it adopts. Absent or empty = adopt as it is.
+   */
+  needsParams: z.array(z.string()).optional(),
 })
 
 /**
@@ -298,7 +305,11 @@ export const deviceProviderCapability = {
       z.object({ deviceType: z.enum(DeviceType).nullable() }),
     ),
     adoptDiscoveredDevice: method(
-      z.object({ candidate: DiscoveryCandidateSchema }),
+      z.object({
+        candidate: DiscoveryCandidateSchema,
+        /** The integration the operator adopts into; a provider with several instances needs it. */
+        integrationId: z.string().optional(),
+      }),
       DeviceSummarySchema,
       { kind: 'mutation', auth: 'admin' },
     ),
@@ -319,6 +330,8 @@ export const deviceProviderCapability = {
       z.object({
         type: z.enum(DeviceType),
         config: z.record(z.string(), z.unknown()),
+        /** The integration the operator adds the device to; a provider with several instances needs it. */
+        integrationId: z.string().optional(),
       }),
       DeviceSummarySchema,
       { kind: 'mutation', auth: 'admin' },

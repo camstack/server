@@ -13,6 +13,7 @@ export type {
 } from './base-device.js'
 export { accessoryChildrenComplete, accessoryChildrenUnknown, BaseDevice } from './base-device.js'
 export type {
+  CreateDeviceOrigin,
   DeviceRestoreReport,
   DeviceSummary,
   DiscoveryCandidate,

@@ -1,34 +1,22 @@
 {
-  "connection": {
-    "s_boards": {
-      "title": "Schede",
-      "description": "Tutte le schede ESPHome di questa integrazione. La chiave di cifratura è quella nello YAML della scheda sotto api: encryption: key:. Lasciala vuota per una scheda non cifrata.",
-      "boards": {
-        "label": "Schede"
-      },
-      "host": {
-        "label": "Host / IP"
-      },
-      "port": {
-        "label": "Porta API"
-      },
-      "name": {
-        "label": "Nome"
-      },
-      "encryptionKey": {
-        "label": "Chiave di cifratura"
-      },
-      "password": {
-        "label": "Password API legacy"
-      },
-      "id": {
-        "label": "ID scheda",
-        "description": "Lascia vuoto: viene generato al salvataggio della scheda."
-      },
-      "importKeys": {
-        "label": "Importa le chiavi di cifratura",
-        "description": "Legge la chiave di ogni scheda dall'add-on ESPHome Builder in Home Assistant, usando il token di Home Assistant già configurato. Serve un token amministratore. Le schede non leggibili sono elencate con il motivo."
-      }
+  "creation": {
+    "title": "Scheda",
+    "host": {
+      "label": "Host / IP"
+    },
+    "port": {
+      "label": "Porta API"
+    },
+    "name": {
+      "label": "Nome"
+    },
+    "encryptionKey": {
+      "label": "Chiave di cifratura",
+      "description": "Serve solo se la scheda è cifrata, cioè se il suo YAML ha api: encryption: key:. Copia da lì il valore base64. Lasciala vuota per una scheda non cifrata; CamStack prova poi a leggere la chiave dall'ESPHome Builder in Home Assistant."
+    },
+    "password": {
+      "label": "Password API legacy",
+      "description": "Solo per una scheda precedente alla cifratura, con api: password:."
     }
   }
 }

@@ -8,8 +8,14 @@ import {
   proposeBoards,
 } from '../esphome-discovery.js'
 
-function boardHit(host: string, instance: string, serviceHost: string, port: number): DiscoveryHit {
-  return { modeIndex: 0, host, port, mdns: { instance, host: serviceHost, port, txt: {} } }
+function boardHit(
+  host: string,
+  instance: string,
+  serviceHost: string,
+  port: number,
+  txt: Record<string, string> = {},
+): DiscoveryHit {
+  return { modeIndex: 0, host, port, mdns: { instance, host: serviceHost, port, txt } }
 }
 
 describe('ESPHome mDNS discovery', () => {
@@ -22,7 +28,9 @@ describe('ESPHome mDNS discovery', () => {
       boardsFromHits([
         boardHit('192.0.2.30', 'kitchen._esphomelib._tcp.local', 'Kitchen.local', 6054),
       ]),
-    ).toEqual([{ host: '192.0.2.30', port: 6054, name: 'kitchen', id: 'kitchen' }])
+    ).toEqual([
+      { host: '192.0.2.30', port: 6054, name: 'kitchen', id: 'kitchen', encrypted: false },
+    ])
   })
 
   it('collects each host once and skips a hit without an mDNS record', () => {
@@ -37,7 +45,7 @@ describe('ESPHome mDNS discovery', () => {
     expect(boardCandidates([hit], [])).toEqual([
       {
         stableId: 'esphome:kitchen',
-        type: DeviceType.Hub,
+        type: DeviceType.Container,
         suggestedName: 'kitchen',
         prefilledConfig: { host: '192.0.2.30', port: 6053 },
         selectable: true,
@@ -46,10 +54,20 @@ describe('ESPHome mDNS discovery', () => {
     expect(boardCandidates([hit], ['192.0.2.30'])).toEqual([])
   })
 
+  it('asks for the key of an encrypted board only', () => {
+    const encrypted = boardHit('192.0.2.40', 'attic', 'attic.local', 6053, {
+      api_encryption: 'Noise_NNpsk0_25519_ChaChaPoly_SHA256',
+    })
+    const plain = boardHit('192.0.2.41', 'shed', 'shed.local', 6053, { mac: 'aabbccddeeff' })
+    const [attic, shed] = boardCandidates([encrypted, plain], [])
+    expect(attic?.needsParams).toEqual(['encryptionKey'])
+    expect(shed?.needsParams).toBeUndefined()
+  })
+
   it('does not propose a board that is already configured', () => {
     const found = [
-      { host: '10.0.0.1', port: 6053, name: 'a', id: 'a' },
-      { host: '10.0.0.2', port: 6053, name: 'b', id: 'b' },
+      { host: '10.0.0.1', port: 6053, name: 'a', id: 'a', encrypted: false },
+      { host: '10.0.0.2', port: 6053, name: 'b', id: 'b', encrypted: false },
     ]
     expect(proposeBoards(found, ['10.0.0.1']).map((b) => b.id)).toEqual(['b'])
     expect(proposeBoards(found, ['B.local']).map((b) => b.id)).toEqual(['a'])

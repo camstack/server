@@ -11,6 +11,7 @@ import {
   integrationRowsPortsOverApi,
   type ConfigUISchema,
   type ConfigUISchemaWithValues,
+  type CreateDeviceOrigin,
   type CreateDeviceSpec,
   type DeviceConstructor,
   type DeviceSummary,
@@ -22,7 +23,13 @@ import {
   type SystemEvent,
 } from '@camstack/types'
 import { z } from 'zod'
-import type { EspAddonConfig } from './config.js'
+import {
+  buildBoardCreationSchema,
+  espBoardCreationSchema,
+  type EspAddonConfig,
+  type EspBoardCreation,
+} from './config.js'
+import { intakeBoard } from './esphome-board-intake.js'
 import { espBrokersEntryKind } from './broker-record-kinds.js'
 import { EspBrokerStore } from './esphome-broker-store.js'
 import { EspBrokerRegistry } from './esphome-registry.js'
@@ -45,7 +52,12 @@ import { EspContainerDevice } from './devices/esp-container-device.js'
 import { EspServiceRunner } from './esphome-services.js'
 import { espIrOverrides, loadIrOverrides } from './esphome-ir-overrides.js'
 import { espServiceActions } from './custom-actions.js'
-import { importBoardKeys, summarizeImport } from './esphome-key-import.js'
+import {
+  importBoardKeys,
+  lookupBoardKey,
+  summarizeImport,
+  type KeySourceClient,
+} from './esphome-key-import.js'
 import type { EspServiceArgValue, EspServiceInfo } from './esphome-link.js'
 
 export { espServiceActions as customActions } from './custom-actions.js'
@@ -156,11 +168,7 @@ export class ESPHomeProviderAddon extends BaseDeviceProvider<EspAddonConfig> {
         importBoardKeys: async (input) => {
           const results = await importBoardKeys({
             boards: this.requireBoards(),
-            keySources: {
-              listSources: () => this.ctx.api.boardKeySource.listSources.query(),
-              listBoards: (i) => this.ctx.api.boardKeySource.listBoards.query(i),
-              getBoardKey: (i) => this.ctx.api.boardKeySource.getBoardKey.query(i),
-            },
+            keySources: this.keySources(),
             logger: this.ctx.logger.child('key-import'),
             ...(input.integrationId !== undefined ? { integrationId: input.integrationId } : {}),
           })
@@ -172,6 +180,15 @@ export class ESPHomeProviderAddon extends BaseDeviceProvider<EspAddonConfig> {
           return { ok: true }
         },
       },
+    }
+  }
+
+  /** The key sources the integration can read a board's encryption key from. */
+  private keySources(): KeySourceClient {
+    return {
+      listSources: () => this.ctx.api.boardKeySource.listSources.query(),
+      listBoards: (i) => this.ctx.api.boardKeySource.listBoards.query(i),
+      getBoardKey: (i) => this.ctx.api.boardKeySource.getBoardKey.query(i),
     }
   }
 
@@ -298,36 +315,61 @@ export class ESPHomeProviderAddon extends BaseDeviceProvider<EspAddonConfig> {
   }
 
   /**
-   * Add a scanned board to an ESPHome integration and adopt it as its own
-   * container. The integration is `candidate.prefilledConfig.integrationId`, or
-   * the only ESPHome integration when the candidate names none.
+   * Add a board found on the network to the integration the operator adopts into
+   * and adopt it as its own container. A board that announced encryption needs its
+   * key: the operator's, else the one the key sources hold, else a refusal that says
+   * where to find it.
    */
   override async adoptDiscoveredDevice(input: {
     candidate: DiscoveryCandidate
+    integrationId?: string
   }): Promise<DeviceSummary> {
     const { candidate } = input
-    const host = candidate.prefilledConfig?.['host']
-    if (typeof host !== 'string' || host.length === 0) {
-      throw new Error('ESPHome scan candidate carries no host')
-    }
-    const port = candidate.prefilledConfig?.['port']
-    const integrationId = await this.targetIntegration(candidate.prefilledConfig?.['integrationId'])
-    const board = await this.addBoardToIntegration(integrationId, {
-      host,
-      ...(typeof port === 'number' ? { port } : {}),
-      name: candidate.suggestedName,
-    })
+    const board = this.boardFromConfig(candidate.prefilledConfig, candidate.suggestedName)
+    const taken = await this.takeBoard(
+      input.integrationId ?? candidate.prefilledConfig?.['integrationId'],
+      board,
+      candidate.needsParams?.includes('encryptionKey') === true,
+    )
     const created = await this.adoptBoardContainer({
-      brokerId: board.id,
-      integrationId,
-      name: board.name,
-      boardName: board.name,
+      brokerId: taken.board.id,
+      integrationId: taken.integrationId,
+      name: taken.board.name,
+      boardName: taken.board.name,
     })
     const device = this.ctx.kernel.deviceRegistry
       ?.getAllForAddon(this.addonId)
       .find((d) => d.id === created.deviceId)
-    if (device === undefined) throw new Error(`ESPHome board ${board.id}: device not registered`)
+    if (device === undefined) {
+      throw new Error(`ESPHome board ${taken.board.id}: device not registered`)
+    }
     return this.toSummary(device)
+  }
+
+  private boardFromConfig(
+    config: Record<string, unknown> | undefined,
+    fallbackName: string,
+  ): EspBoardCreation {
+    const parsed = espBoardCreationSchema.safeParse({
+      ...config,
+      name:
+        typeof config?.['name'] === 'string' && config['name'] !== ''
+          ? config['name']
+          : fallbackName,
+    })
+    if (!parsed.success) throw new Error('ESPHome board needs a host')
+    return parsed.data
+  }
+
+  private takeBoard(integrationId: unknown, board: EspBoardCreation, keyRequired: boolean) {
+    return intakeBoard(
+      {
+        resolveIntegration: (named) => this.targetIntegration(named),
+        lookupKey: (b) => lookupBoardKey(this.keySources(), b),
+        addBoard: (id, input) => this.addBoardToIntegration(id, input),
+      },
+      { integrationId, board, keyRequired },
+    )
   }
 
   /**
@@ -467,18 +509,39 @@ export class ESPHomeProviderAddon extends BaseDeviceProvider<EspAddonConfig> {
   // ── settings / manual creation ──────────────────────────────────────────
 
   override async supportsManualCreation(): Promise<boolean> {
-    return false
+    return true
   }
 
-  protected async onGetCreationSchema(_type: DeviceType): Promise<ConfigUISchema | null> {
-    return null
+  /** A board is a container; the form asks for the connection, and for the key only when it is needed. */
+  protected async onGetCreationSchema(type: DeviceType): Promise<ConfigUISchema | null> {
+    return type === DeviceType.Container ? buildBoardCreationSchema() : null
   }
 
+  /** Save the board in the integration the operator is on, then hand the kernel its container. */
   protected async onCreateDevice(
-    _type: DeviceType,
-    _config: Record<string, unknown>,
+    type: DeviceType,
+    config: Record<string, unknown>,
+    origin?: CreateDeviceOrigin,
   ): Promise<CreateDeviceSpec> {
-    throw new Error('ESPHome devices are adopted from a connected board, not created manually')
+    if (type !== DeviceType.Container) {
+      throw new Error('ESPHome devices are boards: add one as a container')
+    }
+    const parsed = espBoardCreationSchema.safeParse(config)
+    if (!parsed.success) throw new Error('ESPHome board needs a host')
+    const taken = await this.takeBoard(origin?.integrationId, parsed.data, false)
+    return {
+      meta: {
+        type: DeviceType.Container,
+        name: taken.board.name,
+        integrationId: taken.integrationId,
+      },
+      config: {
+        brokerId: taken.board.id,
+        system: 'esphome',
+        integrationId: taken.integrationId,
+        boardName: taken.board.name,
+      },
+    }
   }
 
   // ── helpers ─────────────────────────────────────────────────────────────

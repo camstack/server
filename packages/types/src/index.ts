@@ -1033,6 +1033,7 @@ export {
   BaseDevice,
 } from './device/base-device.js'
 export type {
+  CreateDeviceOrigin,
   DeviceRestoreReport,
   DeviceSummary,
   DiscoveryCandidate,

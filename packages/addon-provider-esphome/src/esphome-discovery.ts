@@ -13,6 +13,8 @@ export interface EspDiscoveredBoard {
   readonly name: string
   /** Stable identity: the board's mDNS hostname without `.local`, else the IP. */
   readonly id: string
+  /** The board announced that its API is encrypted (mDNS TXT `api_encryption`): it needs a key. */
+  readonly encrypted: boolean
 }
 
 export const ESPHOME_MDNS_SERVICE = '_esphomelib._tcp'
@@ -41,6 +43,7 @@ export function boardsFromHits(hits: readonly DiscoveryHit[]): readonly EspDisco
       port,
       name: mdns.instance.split('._')[0] ?? mdns.instance,
       id: mdns.host.length > 0 ? stripLocal(mdns.host) : hit.host,
+      encrypted: (mdns.txt['api_encryption'] ?? '').length > 0,
     })
   }
   return out
@@ -57,16 +60,22 @@ export function proposeBoards(
   return found.filter((board) => !known.has(stripLocal(board.host)) && !known.has(board.id))
 }
 
-/** Candidates for the boards in `hits` that no integration holds yet; each is pickable. */
+/**
+ * Candidates for the boards in `hits` that no integration holds yet; each is pickable.
+ * A board is a container (one device with a child per entity), like the one it becomes
+ * when adopted. An encrypted board asks for its key before it is adopted; an unencrypted
+ * one asks for nothing.
+ */
 export function boardCandidates(
   hits: readonly DiscoveryHit[],
   existingHosts: readonly string[],
 ): readonly DiscoveryCandidate[] {
   return proposeBoards(boardsFromHits(hits), existingHosts).map((board) => ({
     stableId: `esphome:${board.id}`,
-    type: DeviceType.Hub,
+    type: DeviceType.Container,
     suggestedName: board.name,
     prefilledConfig: { host: board.host, port: board.port || ESPHOME_DEFAULT_PORT },
     selectable: true,
+    ...(board.encrypted ? { needsParams: ['encryptionKey'] } : {}),
   }))
 }

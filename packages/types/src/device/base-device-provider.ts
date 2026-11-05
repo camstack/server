@@ -46,6 +46,13 @@ export interface DiscoveryCandidate {
   readonly parentStableId?: string
   /** `false` = shown for context, not pickable. Default true. */
   readonly selectable?: boolean
+  /** Creation-form keys the operator must fill before this candidate can be adopted. */
+  readonly needsParams?: readonly string[]
+}
+
+/** Where an operator's create request came from, for a provider with several integrations. */
+export interface CreateDeviceOrigin {
+  readonly integrationId?: string
 }
 
 export interface DeviceSummary {
@@ -298,7 +305,10 @@ export abstract class BaseDeviceProvider<
     return { deviceType: first ?? null }
   }
 
-  async adoptDiscoveredDevice(_input: { candidate: DiscoveryCandidate }): Promise<DeviceSummary> {
+  async adoptDiscoveredDevice(_input: {
+    candidate: DiscoveryCandidate
+    integrationId?: string
+  }): Promise<DeviceSummary> {
     throw new Error(`${this.providerName} provider does not support discovery-based adoption`)
   }
 
@@ -326,8 +336,11 @@ export abstract class BaseDeviceProvider<
   async createDevice(input: {
     type: DeviceType
     config: Record<string, unknown>
+    integrationId?: string
   }): Promise<DeviceSummary> {
-    const spec = await this.onCreateDevice(input.type, input.config)
+    const spec = await this.onCreateDevice(input.type, input.config, {
+      ...(input.integrationId !== undefined ? { integrationId: input.integrationId } : {}),
+    })
     const Class = this.deviceClasses[spec.meta.type] as DeviceConstructor<IDevice> | undefined
     if (!Class) {
       throw new Error(
@@ -705,6 +718,7 @@ export abstract class BaseDeviceProvider<
   protected abstract onCreateDevice(
     type: DeviceType,
     config: Record<string, unknown>,
+    origin?: CreateDeviceOrigin,
   ): Promise<CreateDeviceSpec>
 
   /**

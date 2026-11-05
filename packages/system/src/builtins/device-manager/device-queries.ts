@@ -1080,6 +1080,7 @@ export async function discoverDevices(
     ...(d.alreadyOnboarded === true ? { alreadyOnboarded: true } : {}),
     ...(d.onboardedDeviceId !== undefined ? { onboardedDeviceId: d.onboardedDeviceId } : {}),
     ...(d.onboardedName !== undefined ? { onboardedName: d.onboardedName } : {}),
+    ...(d.needsParams !== undefined ? { needsParams: [...d.needsParams] } : {}),
   }))
 }
 
@@ -1104,6 +1105,7 @@ export async function adoptDevice(
       candidate: input.candidate as Parameters<
         IDeviceProviderCap['adoptDiscoveredDevice']
       >[0]['candidate'],
+      ...(input.integrationId !== undefined ? { integrationId: input.integrationId } : {}),
     }),
   )
   if (input.integrationId !== undefined) {
@@ -1154,6 +1156,7 @@ export async function createDevice(
     dp.createDevice({
       type: input.type,
       config: input.config,
+      ...(input.integrationId !== undefined ? { integrationId: input.integrationId } : {}),
     }),
   )
   if (input.integrationId !== undefined) {

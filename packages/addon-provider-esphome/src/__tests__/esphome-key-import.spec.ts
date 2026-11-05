@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import type { EspBrokerEntry } from '../config.js'
 import {
   importBoardKeys,
+  lookupBoardKey,
   summarizeImport,
   type KeyImportBoards,
   type KeySourceClient,
@@ -164,5 +165,38 @@ describe('summarizeImport', () => {
       '1 imported, 1 unchanged, 1 not imported. kitchen: imported; attic: unchanged; b3: not imported (not-admin)',
     )
     expect(summarizeImport([])).toBe('No boards to import.')
+  })
+})
+
+describe('lookupBoardKey', () => {
+  it('finds the key of a board that is not saved yet, by its name or host', async () => {
+    const script: SourceScript = {
+      sources: [SOURCE],
+      list: { ha_001: LISTING },
+      keys: { 'ha_001/kitchen.yaml': { ok: true, key: 'KITCHEN-KEY' } },
+    }
+    expect(await lookupBoardKey(client(script), { name: 'kitchen', host: '192.0.2.5' })).toEqual({
+      outcome: 'found',
+      key: 'KITCHEN-KEY',
+    })
+    expect(await lookupBoardKey(client(script), { name: 'x', host: 'kitchen.local' })).toEqual({
+      outcome: 'found',
+      key: 'KITCHEN-KEY',
+    })
+  })
+
+  it('answers not-found with the reason, never an empty key', async () => {
+    expect(
+      await lookupBoardKey(client({ sources: [], list: {}, keys: {} }), {
+        name: 'kitchen',
+        host: 'kitchen.local',
+      }),
+    ).toEqual({ outcome: 'not-found', reason: 'no-source' })
+    expect(
+      await lookupBoardKey(client({ sources: [SOURCE], list: { ha_001: LISTING }, keys: {} }), {
+        name: 'unknown',
+        host: 'unknown.local',
+      }),
+    ).toEqual({ outcome: 'not-found', reason: 'no-match' })
   })
 })

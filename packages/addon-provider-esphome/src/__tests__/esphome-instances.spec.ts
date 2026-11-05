@@ -339,3 +339,22 @@ describe('the board list reads and writes the record', () => {
     ])
   })
 })
+
+describe('an integration whose form no longer lists boards', () => {
+  it('keeps every saved board and its secrets when the instance is renamed', async () => {
+    const w = await setup()
+    await ESPHOME_ROWS_TO_RECORD_MIGRATION.procedure(w.ports)
+    expect(w.instances.instanceFormSchema).toBeDefined()
+    const form = await w.instances.instanceFormSchema({ id: 'int_0042' })
+    expect(form.sections.flatMap((s) => s.fields)).toEqual([])
+
+    await w.instances.updateInstance({
+      id: 'int_0042',
+      name: 'Garage 2',
+      values: {},
+    })
+
+    expect(await boardsOf(w, 'int_0042')).toEqual([board('esp_b1', 'b1'), board('esp_b2', 'b2')])
+    expect(await secretOf(w, 'int_0042', 'esp_b1', 'encryptionKey')).toBe('KEY-b1')
+  })
+})
