@@ -35,6 +35,7 @@ import { pushToast } from '../ui/toast-bus'
 import { HOLDER_QUERY_KEY } from './use-instances-data'
 import {
   diffInstanceValues,
+  effectiveInstanceValues,
   findKind,
   mintInstanceId,
   needsKindPicker,
@@ -285,7 +286,7 @@ export function InstanceEditorDialog({
             {...(kind.signIn.methods !== undefined ? { methods: kind.signIn.methods } : {})}
             name={name}
             {...(instance !== null ? { brokerId: instance.id } : {})}
-            getSettings={() => diffInstanceValues(stored, values)}
+            getSettings={() => effectiveInstanceValues(stored, values)}
             disabled={name.length === 0}
             onSignedIn={(signedInId) => {
               void queryClient.invalidateQueries({

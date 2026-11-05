@@ -4,6 +4,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import {
+  effectiveInstanceValues,
   buildRows,
   creatableProviders,
   deriveState,
@@ -403,5 +404,16 @@ describe('kinds, status label and last check', () => {
   it('shows the label when the provider gave one, else the state', () => {
     expect(statusText({ state: 'ok', label: 'Signed in' })).toBe('Signed in')
     expect(statusText({ state: 'error' })).toBe('error')
+  })
+})
+
+describe('effectiveInstanceValues', () => {
+  it('overlays the edits on the stored record, keeping what was left alone', () => {
+    expect(
+      effectiveInstanceValues(
+        { amazonDomain: 'amazon.it', pollIntervalMs: 60_000 },
+        { pollIntervalMs: 15_000 },
+      ),
+    ).toEqual({ amazonDomain: 'amazon.it', pollIntervalMs: 15_000 })
   })
 })

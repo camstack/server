@@ -270,6 +270,23 @@ export function diffInstanceValues(
   return patch
 }
 
+/**
+ * What a sign-in started from an open form must carry: the stored record overlaid with the
+ * edits. The patch of an edit (`diffInstanceValues`) omits whatever the operator left alone, so
+ * a sign-in that sent it would lose the region the record already holds and the provider would
+ * fall back to its own default. A secret still holds its stored view, which a provider ignores.
+ */
+export function effectiveInstanceValues(
+  stored: Readonly<Record<string, unknown>>,
+  edited: Readonly<Record<string, unknown>>,
+): Record<string, unknown> {
+  const effective: Record<string, unknown> = { ...stored }
+  for (const [key, value] of Object.entries(edited)) {
+    if (value !== undefined) effective[key] = value
+  }
+  return effective
+}
+
 /** A single-instance addon names its record after itself; a multi one gets an opaque id. */
 export function mintInstanceId(
   mode: IntegrationInstanceMode,

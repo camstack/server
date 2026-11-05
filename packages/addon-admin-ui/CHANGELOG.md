@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Signing an existing account in again from its edit dialog now keeps the region already stored on it instead of falling back to the default
+
 ## [1.2.590] - 2026-11-05
 
 ### Changed
