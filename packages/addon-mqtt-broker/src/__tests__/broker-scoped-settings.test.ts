@@ -9,21 +9,20 @@ import { describe, expect, it } from 'vitest'
 
 import { MqttBrokerAddon } from '../mqtt-broker.addon.js'
 
-type SchemaReader = { globalSettingsSchema(cap?: string): { sections: { id: string }[] } | null }
-
-function sectionIds(cap?: string): readonly string[] {
-  const addon = new MqttBrokerAddon() as unknown as SchemaReader
-  return (addon.globalSettingsSchema(cap)?.sections ?? []).map((s) => s.id)
+async function sectionIds(cap?: string): Promise<readonly string[]> {
+  const addon = new MqttBrokerAddon()
+  if (cap === undefined) return (await addon.getGlobalSettings())?.sections.map((s) => s.id) ?? []
+  return (await addon.getScopedSettingsSchema('cluster', cap))?.sections.map((s) => s.id) ?? []
 }
 
 describe('MqttBrokerAddon settings scoped to the broker cap', () => {
-  it('leaves the external brokers to the connections surface', () => {
-    expect(sectionIds('broker')).not.toContain('mqtt-broker-external')
-    expect(sectionIds('broker')).toContain('mqtt-broker-embedded')
+  it('leaves the external brokers to the connections surface', async () => {
+    expect(await sectionIds('broker')).not.toContain('mqtt-broker-external')
+    expect(await sectionIds('broker')).toContain('mqtt-broker-embedded')
   })
 
-  it('draws no editor for the external brokers on the addon’s own page either: they are integration instances', () => {
-    expect(sectionIds()).not.toContain('mqtt-broker-external')
-    expect(sectionIds()).toContain('mqtt-broker-embedded')
+  it('draws no editor for the external brokers on the addon’s own page either: they are integration instances', async () => {
+    expect(await sectionIds()).not.toContain('mqtt-broker-external')
+    expect(await sectionIds()).toContain('mqtt-broker-embedded')
   })
 })

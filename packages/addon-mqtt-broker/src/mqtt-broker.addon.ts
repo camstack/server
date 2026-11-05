@@ -25,7 +25,7 @@
  *   The addon has NO standalone admin page. All configuration — external
  *   broker entries, the embedded `aedes` broker, embedded credentials,
  *   and the topic ACL — is exposed through the standard
- *   `globalSettingsSchema()` and rendered automatically inside the
+ *   `clusterSettingsSchema()` and rendered automatically inside the
  *   Integrations → Brokers tab's docked Settings panel, like every other
  *   integration-type addon.
  *
@@ -44,6 +44,7 @@
 import {
   BaseAddon,
   brokerCapability,
+  type ConfigUISchema,
   defineAddonMigrations,
   EventCategory,
   integrationInstancesCapability,
@@ -217,7 +218,7 @@ interface EmbeddedBrokerEntry {
  *
  * The embedded broker is stored as FLAT keys (`embedded*`) rather than a
  * nested object so every property maps to a single field in
- * `globalSettingsSchema()` — the standard settings form saves flat
+ * `clusterSettingsSchema()` — the standard settings form saves flat
  * config keys, mirroring `addon-export-ha-mqtt`.
  */
 interface MqttBrokerConfig {
@@ -1424,11 +1425,17 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
 
   // ── Settings UI ─────────────────────────────────────────────────
 
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return ['mqtt-broker', 'broker']
+  }
+
   /**
    * The embedded broker, its credentials and the ACL. The external brokers are records, listed
    * on the Brokers page and edited as integration instances (`brokerForm`).
    */
-  protected globalSettingsSchema() {
+  protected override async clusterSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    // `broker` is the scope the Connectivity page asks for; both answer with the embedded form.
+    if (cap !== 'mqtt-broker' && cap !== 'broker') return null
     return this.schema({
       sections: [
         {

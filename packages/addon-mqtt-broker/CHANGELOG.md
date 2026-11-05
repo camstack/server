@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- MQTT embedded broker settings are declared on the cluster hook; the form and stored values are unchanged.
+
 ## [1.2.150] - 2026-11-04
 
 ### Changed
