@@ -377,21 +377,21 @@ describe('buildCapRouters — Task 7.5d: missing provider method fails loud', ()
   it('a collection cap SCALAR method missing on the provider throws', async () => {
     const { services, methodNotFoundCalls } = makeMissingMethodServices()
     const routers = buildCapRouters(makePrimitives({}), services)
-    const router = routers.broker as Record<
+    const router = routers.template as Record<
       string,
       { call: (i: unknown, c: unknown) => unknown | Promise<unknown> }
     >
 
     await expect(router.get!.call({ id: 'ha_001' }, {})).rejects.toThrow(
-      'methodNotFound:broker:get',
+      'methodNotFound:template:get',
     )
-    expect(methodNotFoundCalls).toEqual([{ cap: 'broker', method: 'get' }])
+    expect(methodNotFoundCalls).toEqual([{ cap: 'template', method: 'get' }])
   })
 
   it('a collection cap ARRAY-output method missing on the provider degrades to [] (mirrors child-cap-dispatch.ts)', async () => {
     const { services, methodNotFoundCalls } = makeMissingMethodServices()
     const routers = buildCapRouters(makePrimitives({}), services)
-    const router = routers.broker as Record<
+    const router = routers.template as Record<
       string,
       { call: (i: unknown, c: unknown) => unknown | Promise<unknown> }
     >
@@ -417,12 +417,14 @@ describe('buildCapRouters — Task 7.5d: missing provider method fails loud', ()
       // methodNotFound intentionally omitted
     }
     const routers = buildCapRouters(makePrimitives({}), services)
-    const router = routers.broker as Record<
+    const router = routers.template as Record<
       string,
       { call: (i: unknown, c: unknown) => unknown | Promise<unknown> }
     >
 
-    await expect(router.get!.call({ id: 'ha_001' }, {})).rejects.toThrow(/badRequest:.*broker.*get/)
+    await expect(router.get!.call({ id: 'ha_001' }, {})).rejects.toThrow(
+      /badRequest:.*template.*get/,
+    )
   })
 })
 

@@ -93,7 +93,7 @@ describe('pinnedCollectionCall', () => {
       registry({ 'provider-homeassistant': { list: () => [{ id: 'ha_001' }] } }),
     )
     expect(
-      await pinnedCollectionCall(reg, 'broker', 'list', { addonId: 'provider-homeassistant' }),
+      await pinnedCollectionCall(reg, 'template', 'list', { addonId: 'provider-homeassistant' }),
     ).toBeNull()
   })
 
