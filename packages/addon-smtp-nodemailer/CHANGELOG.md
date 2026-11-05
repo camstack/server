@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The relay form is declared as the integration instance form; the form and stored relays are unchanged.
+
 ## [1.2.147] - 2026-11-04
 
 ### Changed

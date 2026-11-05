@@ -1,8 +1,9 @@
 #!/usr/bin/env tsx
 /**
  * An addon that SERVES a global form with a secret field DECLARES that form
- * through `globalSettingsSchema()` or a scoped hook (`clusterSettingsSchema`,
- * `nodeSettingsSchema`, `deviceDefaultsSchema`) (D787, D986).
+ * through `globalSettingsSchema()`, a scoped hook (`clusterSettingsSchema`,
+ * `nodeSettingsSchema`, `deviceDefaultsSchema`) or the instance form
+ * (`integrationFormSchema`) (D787, D986, D1007).
  *
  * ## The failure this catches
  *
@@ -44,12 +45,17 @@ export function findingId(f: Finding): string {
   return `${f.file}#${f.className}`
 }
 
-/** The hooks that declare an addon's form shape, and so its secret tree (D986). */
+/**
+ * The hooks that declare an addon's form shape, and so its secret tree (D986). The instance form
+ * (`integrationFormSchema`, D1007) counts: its secret lives on the instance record, which stores it
+ * in the keychain, so the form is declared and never written to `addon-settings` as plaintext.
+ */
 export const SCHEMA_HOOKS: readonly string[] = [
   'globalSettingsSchema',
   'clusterSettingsSchema',
   'nodeSettingsSchema',
   'deviceDefaultsSchema',
+  'integrationFormSchema',
 ]
 
 export const ALLOWLIST: ReadonlyMap<string, string> = new Map<string, string>([])

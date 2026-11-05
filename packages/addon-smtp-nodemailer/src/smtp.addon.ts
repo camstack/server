@@ -23,6 +23,7 @@ import {
   type ConfigUISchema,
   type ConfigUISchemaWithValues,
   type IntegrationTestConnectionResult,
+  type IntegrationInstanceRef,
   type ISmtpProvider,
   EventCategory,
   type ProviderRegistration,
@@ -326,7 +327,10 @@ export class SmtpNodemailerAddon extends BaseAddon<SmtpAddonConfig> {
 
   // ── The settings page (Connectivity → Email): the default relay ───────
 
-  protected globalSettingsSchema(): ConfigUISchema {
+  /** The relay form. Its values live on the relay record, never in `addon-settings`. */
+  protected override async integrationFormSchema(
+    _instance: IntegrationInstanceRef,
+  ): Promise<ConfigUISchema | null> {
     return this.relayForm()
   }
 

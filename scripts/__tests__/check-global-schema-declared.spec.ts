@@ -37,7 +37,8 @@ describe('check-global-schema-declared rules', () => {
     'clusterSettingsSchema',
     'nodeSettingsSchema',
     'deviceDefaultsSchema',
-  ])('accepts a secret declared on %s (D986)', (hook) => {
+    'integrationFormSchema',
+  ])('accepts a secret declared on %s (D986, D1007)', (hook) => {
     expect(
       scan(`
         class A extends BaseAddon {
