@@ -37,6 +37,7 @@ import { mqttHaStateGateway } from './mqtt-ha-state-gateway.js'
 import { MqttHaDevice } from './devices/mqtt-ha-device.js'
 import { MqttHaContainerDevice } from './devices/mqtt-ha-container-device.js'
 import type { MqttHaDevicePlan } from './mqtt-ha-domain-mapping.js'
+import { mqttHaInitialMeta } from './mqtt-ha-device-role.js'
 
 type MqttHaProviderConfig = Record<string, never>
 
@@ -301,11 +302,18 @@ export class MqttHaProviderAddon extends BaseDeviceProvider<MqttHaProviderConfig
     const stableId = this.generateStableId(plan.deviceType, config)
     const existing = (await devices.getAll()).find((d) => d.stableId === stableId)
     if (existing) return { deviceId: existing.id }
-    const created = await devices.create(stableId, MqttHaDevice, config, input.parentDeviceId, {
-      type: plan.deviceType,
-      name: input.name,
-      integrationId: input.integrationId,
-    })
+    const created = await devices.create(
+      stableId,
+      MqttHaDevice,
+      config,
+      input.parentDeviceId,
+      mqttHaInitialMeta({
+        deviceType: plan.deviceType,
+        name: input.name,
+        integrationId: input.integrationId,
+        primaryCap: plan.capabilities[0],
+      }),
+    )
     this.ctx.logger.info('mqtt-ha: device adopted', {
       tags: { deviceId: created.id },
       meta: {

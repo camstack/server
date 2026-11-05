@@ -54,6 +54,8 @@ interface Harness {
   readonly emitted: unknown[]
   readonly setSwitch: (on: boolean) => Promise<void>
   readonly state: () => IDeviceRuntimeState
+  readonly setRole: ReturnType<typeof vi.fn>
+  readonly info: ReturnType<typeof vi.fn>
 }
 
 /**
@@ -64,10 +66,13 @@ function build(
   type: DeviceType,
   config: Record<string, unknown>,
   restored: Record<string, unknown> = {},
+  role: string | null = null,
 ): Harness {
   let runtime: IDeviceRuntimeState | null = null
   const emitted: unknown[] = []
   let switchProvider: { setState: (input: { on: boolean }) => Promise<void> } | null = null
+  const setRole = vi.fn(async () => {})
+  const info = vi.fn()
   const ctx = {
     id: 9,
     stableId: 'mqtt:test',
@@ -79,6 +84,7 @@ function build(
       disabled: false,
       addonId: 'provider-mqtt-ha',
       metadata: {},
+      ...(role !== null ? { role } : {}),
     },
     persistedConfig: config,
     initialRuntimeState: restored,
@@ -108,11 +114,12 @@ function build(
       deviceManager: {
         registerDevice: { mutate: vi.fn(async () => ({})) },
         setMetadata: { mutate: vi.fn(async () => {}) },
+        setRole: { mutate: setRole },
       },
     },
     logger: {
       debug: vi.fn(),
-      info: vi.fn(),
+      info,
       warn: vi.fn(),
       error: vi.fn(),
       child: vi.fn(),
@@ -123,6 +130,8 @@ function build(
   return {
     device,
     emitted,
+    setRole,
+    info,
     setSwitch: async (on) => {
       if (switchProvider === null) throw new Error('no switch cap')
       await switchProvider.setState({ on })
@@ -231,5 +240,19 @@ describe('MqttHaDevice on a contact sensor and a remote', () => {
     )
     expect(fired).toHaveLength(1)
     expect(h.state().getCapState('event-emitter')).toMatchObject({ eventCountSinceStart: 1 })
+  })
+
+  it('stamps contact-sensor when a restored contact has no role, and leaves a set role alone', async () => {
+    const missing = build(DeviceType.Sensor, configOf(contactMessages()))
+    await missing.device.onActivate()
+    expect(missing.setRole).toHaveBeenCalledWith({ deviceId: 9, role: 'contact-sensor' })
+    expect(missing.info).toHaveBeenCalledWith(
+      expect.stringContaining('role'),
+      expect.objectContaining({ tags: { deviceId: 9 } }),
+    )
+
+    const kept = build(DeviceType.Sensor, configOf(contactMessages()), {}, 'motion-sensor')
+    await kept.device.onActivate()
+    expect(kept.setRole).not.toHaveBeenCalled()
   })
 })

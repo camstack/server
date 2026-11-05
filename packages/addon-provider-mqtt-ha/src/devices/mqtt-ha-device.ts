@@ -1,6 +1,7 @@
 import {
   BaseDevice,
   EventCategory,
+  errMsg,
   HvacModeSchema,
   ambientLightSensorCapability,
   batteryCapability,
@@ -43,6 +44,7 @@ import {
 } from '../mqtt-ha-entity-codec.js'
 import type { MqttHaEntity } from '../mqtt-ha-discovery-types.js'
 import type { MqttHaCap, MqttHaMeterField } from '../mqtt-ha-domain-mapping.js'
+import { deviceRoleForPrimaryCap, persistedDeviceRole } from '../mqtt-ha-device-role.js'
 import { mqttHaStateGateway } from '../mqtt-ha-state-gateway.js'
 import {
   mqttHaDeviceSchema,
@@ -103,6 +105,7 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
 
   override async onActivate(): Promise<void> {
     await super.onActivate()
+    await this.backfillRole()
     for (const cap of this.model.capabilities) this.registerCap(cap)
     for (const entity of this.model.entities.values()) {
       mqttHaStateGateway.subscribeEntity(this.brokerId, entity.entityKey, (topic, payload) =>
@@ -110,6 +113,31 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
       )
     }
     this.refresh()
+  }
+
+  /**
+   * Devices adopted before roles were stamped keep `role: null`. The hero
+   * then reads them as a temperature sensor. Set the role once; an operator
+   * choice (any non-null role) is left as it is.
+   */
+  private async backfillRole(): Promise<void> {
+    if (persistedDeviceRole(this.ctx.deviceMeta) !== null) return
+    const cap = this.model.capabilities[0]
+    const role = deviceRoleForPrimaryCap(cap)
+    if (role === null) return
+    try {
+      await this.ctx.api.deviceManager.setRole.mutate({ deviceId: this.id, role })
+    } catch (err) {
+      this.ctx.logger.warn('mqtt-ha: device role was not set', {
+        tags: { deviceId: this.id },
+        meta: { error: errMsg(err), role },
+      })
+      return
+    }
+    this.ctx.logger.info('mqtt-ha: device role set from its primary capability', {
+      tags: { deviceId: this.id },
+      meta: { role, cap },
+    })
   }
 
   // ── Inbound ────────────────────────────────────────────────────────────
