@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.771] - 2026-11-05
+
 ### Fixed
 
 - Updating one addon in a shared runner no longer skips the restart when another member of that runner was restarted moments earlier, so the new code actually loads.
