@@ -552,9 +552,8 @@ export class TailscaleIngressAddon extends BaseAddon<TailscaleIngressConfig> {
     return cap === 'network-access' ? this.nodeSchema() : null
   }
 
-  /** The form the settings API still asks `globalSettingsSchema` for: the same node schema. */
-  protected globalSettingsSchema(): ConfigUISchema {
-    return this.nodeSchema()
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return ['network-access']
   }
 
   private nodeSchema(): ConfigUISchema {

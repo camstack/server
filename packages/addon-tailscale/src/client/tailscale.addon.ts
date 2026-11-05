@@ -977,10 +977,8 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
     return cap === 'mesh-network' ? this.nodeSchema() : null
   }
 
-  /** The form the settings API still asks `globalSettingsSchema` for: the same node schema. */
-  protected globalSettingsSchema(cap?: string): ConfigUISchema | null {
-    if (cap === 'network-access') return null
-    return this.nodeSchema()
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return ['mesh-network']
   }
 
   private nodeSchema(): ConfigUISchema {
