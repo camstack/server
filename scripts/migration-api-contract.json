@@ -1,0 +1,879 @@
+{
+  "version": 1,
+  "methods": {
+    "integrations.get": {
+      "input": {
+        "id": {
+          "required": true
+        }
+      },
+      "output": {
+        "addonId": {
+          "required": true
+        },
+        "id": {
+          "required": true
+        },
+        "info": {
+          "required": true
+        },
+        "info{}": {
+          "required": false
+        },
+        "name": {
+          "required": true
+        },
+        "originStableId": {
+          "required": false
+        }
+      },
+      "behaviours": [
+        "integrations.get.null-for-an-unknown-id"
+      ]
+    },
+    "integrations.list": {
+      "input": {},
+      "output": {
+        "integrations": {
+          "required": true
+        },
+        "integrations[]": {
+          "required": false
+        },
+        "integrations[].addonId": {
+          "required": true
+        },
+        "integrations[].id": {
+          "required": true
+        },
+        "integrations[].info": {
+          "required": true
+        },
+        "integrations[].info{}": {
+          "required": false
+        },
+        "integrations[].name": {
+          "required": true
+        },
+        "integrations[].originStableId": {
+          "required": false
+        }
+      },
+      "behaviours": [
+        "integrations.list.lists-every-integration"
+      ]
+    },
+    "ledger.declare": {
+      "input": {
+        "metas": {
+          "required": true
+        },
+        "metas[]": {
+          "required": false
+        },
+        "metas[].bodyKind": {
+          "required": true,
+          "enum": [
+            "plan",
+            "procedure",
+            "sql"
+          ]
+        },
+        "metas[].dependsOn": {
+          "required": true
+        },
+        "metas[].dependsOn[]": {
+          "required": false
+        },
+        "metas[].description": {
+          "required": true
+        },
+        "metas[].fixtureMark": {
+          "required": true
+        },
+        "metas[].id": {
+          "required": true
+        },
+        "metas[].level": {
+          "required": true,
+          "enum": [
+            "addon-internal",
+            "addon-state",
+            "hub-store",
+            "node-config",
+            "viewer"
+          ]
+        },
+        "metas[].onFailure": {
+          "required": true,
+          "enum": [
+            "block-owner",
+            "tolerate"
+          ]
+        },
+        "metas[].owner": {
+          "required": true
+        },
+        "metas[].scope": {
+          "required": true,
+          "enum": [
+            "cluster",
+            "per-node"
+          ]
+        },
+        "metas[].seq": {
+          "required": true
+        },
+        "metas[].store": {
+          "required": true,
+          "enum": [
+            "addon-files",
+            "events",
+            "history",
+            "node-local",
+            "settings"
+          ]
+        },
+        "owner": {
+          "required": true
+        }
+      },
+      "output": {
+        "bootId": {
+          "required": true
+        },
+        "snapshot": {
+          "required": true,
+          "enum": [
+            "none",
+            "refused",
+            "written"
+          ]
+        },
+        "steps": {
+          "required": true
+        },
+        "steps[]": {
+          "required": false
+        },
+        "steps[].action": {
+          "required": true,
+          "enum": [
+            "run",
+            "skip"
+          ]
+        },
+        "steps[].id": {
+          "required": true
+        },
+        "steps[].state": {
+          "required": true,
+          "enum": [
+            "applied",
+            "blocked",
+            "failed",
+            "held",
+            "pending",
+            "running",
+            "skipped-newer"
+          ]
+        }
+      },
+      "behaviours": [
+        "ledger.declare.answers-steps-in-engine-order"
+      ]
+    },
+    "ledger.finish": {
+      "input": {
+        "id": {
+          "required": true
+        },
+        "result": {
+          "required": true
+        },
+        "result.error": {
+          "required": true
+        },
+        "result.kind": {
+          "required": true,
+          "enum": [
+            "failed",
+            "plan",
+            "procedure"
+          ]
+        },
+        "result.plan": {
+          "required": true
+        },
+        "result.plan.edits": {
+          "required": true
+        },
+        "result.plan.edits[]": {
+          "required": false
+        },
+        "result.plan.edits[].key": {
+          "required": true
+        },
+        "result.plan.edits[].key{}": {
+          "required": false
+        },
+        "result.plan.edits[].keys": {
+          "required": true
+        },
+        "result.plan.edits[].keys[]": {
+          "required": false
+        },
+        "result.plan.edits[].kind": {
+          "required": true
+        },
+        "result.plan.edits[].op": {
+          "required": true,
+          "enum": [
+            "deleteKeys",
+            "deleteRecord",
+            "deleteRow",
+            "putRow",
+            "setKeys",
+            "upsertRecord"
+          ]
+        },
+        "result.plan.edits[].precondition": {
+          "required": false
+        },
+        "result.plan.edits[].recordKey": {
+          "required": true
+        },
+        "result.plan.edits[].row": {
+          "required": true
+        },
+        "result.plan.edits[].row{}": {
+          "required": false
+        },
+        "result.plan.edits[].scope": {
+          "required": true
+        },
+        "result.plan.edits[].table": {
+          "required": true
+        },
+        "result.plan.edits[].value": {
+          "required": true
+        },
+        "result.plan.edits[].values": {
+          "required": true
+        },
+        "result.plan.edits[].values{}": {
+          "required": false
+        },
+        "result.result": {
+          "required": true
+        },
+        "result.result.outcome": {
+          "required": true,
+          "enum": [
+            "already-done",
+            "done"
+          ]
+        },
+        "result.result.summary": {
+          "required": true
+        },
+        "result.result.summary{}": {
+          "required": false
+        }
+      },
+      "output": {
+        "error": {
+          "required": true
+        },
+        "rowsChanged": {
+          "required": true
+        },
+        "status": {
+          "required": true,
+          "enum": [
+            "applied",
+            "blocked",
+            "failed",
+            "held",
+            "running",
+            "skipped-newer"
+          ]
+        }
+      },
+      "behaviours": [
+        "ledger.finish.records-the-outcome"
+      ]
+    },
+    "ledger.start": {
+      "input": {
+        "id": {
+          "required": true
+        }
+      },
+      "output": {
+        "proceed": {
+          "required": true
+        },
+        "reason": {
+          "required": true
+        },
+        "state": {
+          "required": true,
+          "enum": [
+            "applied",
+            "blocked",
+            "failed",
+            "held",
+            "pending",
+            "running",
+            "skipped-newer"
+          ]
+        }
+      },
+      "behaviours": [
+        "ledger.start.proceeds-when-predecessors-applied"
+      ]
+    },
+    "legacyRows.clear": {
+      "input": {
+        "integrationId": {
+          "required": true
+        }
+      },
+      "output": {
+        "rows": {
+          "required": true
+        },
+        "secrets": {
+          "required": true
+        }
+      },
+      "behaviours": [
+        "legacyRows.clear.absent-store-is-noop",
+        "legacyRows.clear.deletes-the-rows"
+      ]
+    },
+    "legacyRows.deleteKeys": {
+      "input": {
+        "integrationId": {
+          "required": true
+        },
+        "keys": {
+          "required": true
+        },
+        "keys[]": {
+          "required": false
+        }
+      },
+      "output": {
+        "present": {
+          "required": true
+        },
+        "removed": {
+          "required": true
+        },
+        "removed{}": {
+          "required": false
+        }
+      },
+      "behaviours": [
+        "legacyRows.deleteKeys.absent-store-reports-not-present",
+        "legacyRows.deleteKeys.removes-the-named-keys"
+      ]
+    },
+    "legacyRows.patch": {
+      "input": {
+        "integrationId": {
+          "required": true
+        },
+        "patch": {
+          "required": true
+        },
+        "patch{}": {
+          "required": false
+        }
+      },
+      "output": {
+        "written": {
+          "required": true
+        }
+      },
+      "behaviours": [
+        "legacyRows.patch.absent-store-writes-nothing",
+        "legacyRows.patch.upserts-keys-and-keeps-the-rest"
+      ]
+    },
+    "legacyRows.read": {
+      "input": {
+        "integrationId": {
+          "required": true
+        }
+      },
+      "output": {
+        "{}": {
+          "required": false
+        }
+      },
+      "behaviours": [
+        "legacyRows.caller.sibling-package",
+        "legacyRows.read.absent-store-is-empty",
+        "legacyRows.read.returns-stored-rows"
+      ]
+    },
+    "log.info": {
+      "input": {
+        "message": {
+          "required": true
+        },
+        "meta": {
+          "required": false
+        },
+        "meta{}": {
+          "required": false
+        }
+      },
+      "output": {},
+      "behaviours": [
+        "log.info.writes-a-line"
+      ]
+    },
+    "log.warn": {
+      "input": {
+        "message": {
+          "required": true
+        },
+        "meta": {
+          "required": false
+        },
+        "meta{}": {
+          "required": false
+        }
+      },
+      "output": {},
+      "behaviours": [
+        "log.warn.writes-a-line"
+      ]
+    },
+    "node.localNodeId": {
+      "input": {},
+      "output": {
+        "nodeId": {
+          "required": true
+        }
+      },
+      "behaviours": [
+        "node.localNodeId.names-this-node"
+      ]
+    },
+    "records.delete": {
+      "input": {
+        "id": {
+          "required": true
+        }
+      },
+      "output": {
+        "deleted": {
+          "required": true
+        }
+      },
+      "behaviours": [
+        "records.delete.reports-whether-a-row-went"
+      ]
+    },
+    "records.deleteWhere": {
+      "input": {
+        "atBefore": {
+          "required": false
+        },
+        "deviceId": {
+          "required": false
+        },
+        "where": {
+          "required": false
+        },
+        "where{}": {
+          "required": false
+        },
+        "where{}.gt": {
+          "required": false
+        },
+        "where{}.gte": {
+          "required": false
+        },
+        "where{}.in": {
+          "required": true
+        },
+        "where{}.in[]": {
+          "required": false
+        },
+        "where{}.lt": {
+          "required": false
+        },
+        "where{}.lte": {
+          "required": false
+        }
+      },
+      "output": {
+        "count": {
+          "required": true
+        }
+      },
+      "behaviours": [
+        "records.deleteWhere.deletes-the-matching-rows"
+      ]
+    },
+    "records.get": {
+      "input": {
+        "id": {
+          "required": true
+        }
+      },
+      "output": {
+        "at": {
+          "required": true
+        },
+        "data": {
+          "required": true
+        },
+        "data{}": {
+          "required": false
+        },
+        "deviceId": {
+          "required": true
+        },
+        "expiresAt": {
+          "required": true
+        },
+        "id": {
+          "required": true
+        },
+        "rev": {
+          "required": true
+        },
+        "updatedAt": {
+          "required": true
+        }
+      },
+      "behaviours": [
+        "records.get.returns-the-row-or-null"
+      ]
+    },
+    "records.getResolved": {
+      "input": {
+        "id": {
+          "required": true
+        }
+      },
+      "output": {
+        "at": {
+          "required": true
+        },
+        "data": {
+          "required": true
+        },
+        "data{}": {
+          "required": false
+        },
+        "deviceId": {
+          "required": true
+        },
+        "expiresAt": {
+          "required": true
+        },
+        "id": {
+          "required": true
+        },
+        "rev": {
+          "required": true
+        },
+        "updatedAt": {
+          "required": true
+        }
+      },
+      "behaviours": [
+        "records.getResolved.resolves-secret-fields"
+      ]
+    },
+    "records.patch": {
+      "input": {
+        "id": {
+          "required": true
+        },
+        "ifRev": {
+          "required": false
+        },
+        "partial": {
+          "required": true
+        },
+        "partial{}": {
+          "required": false
+        }
+      },
+      "output": {
+        "rev": {
+          "required": true
+        }
+      },
+      "behaviours": [
+        "records.patch.merges-and-null-removes"
+      ]
+    },
+    "records.put": {
+      "input": {
+        "at": {
+          "required": false
+        },
+        "data": {
+          "required": true
+        },
+        "data{}": {
+          "required": false
+        },
+        "deviceId": {
+          "required": false
+        },
+        "expiresAt": {
+          "required": false
+        },
+        "id": {
+          "required": true
+        },
+        "ifRev": {
+          "required": false
+        }
+      },
+      "output": {
+        "rev": {
+          "required": true
+        }
+      },
+      "behaviours": [
+        "records.put.creates-and-replaces",
+        "records.put.if-rev-conflict-throws"
+      ]
+    },
+    "records.putMany": {
+      "input": {
+        "records": {
+          "required": true
+        },
+        "records[]": {
+          "required": false
+        },
+        "records[].at": {
+          "required": false
+        },
+        "records[].data": {
+          "required": true
+        },
+        "records[].data{}": {
+          "required": false
+        },
+        "records[].deviceId": {
+          "required": false
+        },
+        "records[].expiresAt": {
+          "required": false
+        },
+        "records[].id": {
+          "required": true
+        }
+      },
+      "output": {
+        "count": {
+          "required": true
+        }
+      },
+      "behaviours": [
+        "records.putMany.writes-every-row"
+      ]
+    },
+    "records.query": {
+      "input": {
+        "atFrom": {
+          "required": false
+        },
+        "atTo": {
+          "required": false
+        },
+        "cursor": {
+          "required": false
+        },
+        "deviceId": {
+          "required": false
+        },
+        "limit": {
+          "required": false
+        },
+        "resolveSecrets": {
+          "required": false
+        },
+        "where": {
+          "required": false
+        },
+        "where{}": {
+          "required": false
+        },
+        "where{}.gt": {
+          "required": false
+        },
+        "where{}.gte": {
+          "required": false
+        },
+        "where{}.in": {
+          "required": true
+        },
+        "where{}.in[]": {
+          "required": false
+        },
+        "where{}.lt": {
+          "required": false
+        },
+        "where{}.lte": {
+          "required": false
+        }
+      },
+      "output": {
+        "nextCursor": {
+          "required": true
+        },
+        "records": {
+          "required": true
+        },
+        "records[]": {
+          "required": false
+        },
+        "records[].at": {
+          "required": true
+        },
+        "records[].data": {
+          "required": true
+        },
+        "records[].data{}": {
+          "required": false
+        },
+        "records[].deviceId": {
+          "required": true
+        },
+        "records[].expiresAt": {
+          "required": true
+        },
+        "records[].id": {
+          "required": true
+        },
+        "records[].rev": {
+          "required": true
+        },
+        "records[].updatedAt": {
+          "required": true
+        }
+      },
+      "behaviours": [
+        "records.query.filters-on-a-declared-index",
+        "records.query.pages-with-a-cursor"
+      ]
+    },
+    "secrets.delete": {
+      "input": {
+        "refs": {
+          "required": true
+        },
+        "refs[]": {
+          "required": false
+        }
+      },
+      "output": {
+        "deleted": {
+          "required": true
+        }
+      },
+      "behaviours": [
+        "secrets.delete.ignores-unknown-refs"
+      ]
+    },
+    "secrets.put": {
+      "input": {
+        "ref": {
+          "required": true
+        },
+        "value": {
+          "required": true
+        }
+      },
+      "output": {},
+      "behaviours": [
+        "secrets.put.stores-under-the-owner"
+      ]
+    },
+    "secrets.resolve": {
+      "input": {
+        "refs": {
+          "required": true
+        },
+        "refs[]": {
+          "required": false
+        }
+      },
+      "output": {
+        "values": {
+          "required": true
+        },
+        "values{}": {
+          "required": false
+        }
+      },
+      "behaviours": [
+        "secrets.resolve.answers-null-for-a-missing-ref"
+      ]
+    },
+    "settings.deleteKeys": {
+      "input": {
+        "keys": {
+          "required": true
+        },
+        "keys[]": {
+          "required": false
+        }
+      },
+      "output": {
+        "removed": {
+          "required": true
+        },
+        "removed[]": {
+          "required": false
+        }
+      },
+      "behaviours": [
+        "settings.deleteKeys.removes-only-the-named-keys"
+      ]
+    },
+    "settings.read": {
+      "input": {},
+      "output": {
+        "store": {
+          "required": true
+        },
+        "store{}": {
+          "required": false
+        }
+      },
+      "behaviours": [
+        "settings.read.returns-the-addon-store"
+      ]
+    },
+    "settings.write": {
+      "input": {
+        "patch": {
+          "required": true
+        },
+        "patch{}": {
+          "required": false
+        }
+      },
+      "output": {},
+      "behaviours": [
+        "settings.write.merges-and-keeps-other-keys"
+      ]
+    }
+  }
+}

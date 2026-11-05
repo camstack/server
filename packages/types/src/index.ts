@@ -2445,3 +2445,5 @@ export {
   brokerLinkPortsOver,
   moveBrokerLinksToConnections,
 } from './migrations/broker-links-to-connections.js'
+export * from './migrations/api/migration-api.v1.js'
+export * from './migrations/api/migration-api.v1.schema.js'
