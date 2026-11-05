@@ -86,7 +86,10 @@ describe('a starter refuses a server outside the range it hosts', () => {
   it('swaps a server at the minimum', () => {
     closure(currentDir(rootDir), '1.2.700')
     arm('1.2.650')
-    expect(swap('1.2.650')).toMatchObject({ applied: true, version: '1.2.650' })
+    expect(swap('1.2.650')).toMatchObject({
+      applied: true,
+      version: '1.2.650',
+    })
   })
 
   it('swaps when the starter declares no range (existing behaviour)', () => {
@@ -109,7 +112,12 @@ describe('STARTER_HOSTS_SERVER_MIN', () => {
 })
 
 describe('a starter checks the range at boot for a closure already on disk (planning#447)', () => {
-  const noopEnv = { bootMode: 'B', activeRoot: 'R', activeVersion: 'V', killSwitch: 'K' } as const
+  const noopEnv = {
+    bootMode: 'B',
+    activeRoot: 'R',
+    activeVersion: 'V',
+    killSwitch: 'K',
+  } as const
 
   function boot(dataDir: string): { loaded: string[]; env: NodeJS.ProcessEnv } {
     const loaded: string[] = []
@@ -181,6 +189,45 @@ describe('a starter checks the range at boot for a closure already on disk (plan
     try {
       expect(() => boot(dataDir)).toThrow(/REFUSING.*1\.2\.900/)
       expect(String(err.mock.calls[0]?.[0])).toContain('1.2.900')
+    } finally {
+      err.mockRestore()
+      warn.mockRestore()
+    }
+  })
+
+  it.each([
+    [
+      'absent',
+      (dataDir: string) =>
+        fs.rmSync(currentDir(serverRootDir(dataDir)), {
+          recursive: true,
+          force: true,
+        }),
+      /absent/,
+    ],
+    [
+      'invalid',
+      (dataDir: string) =>
+        fs.rmSync(path.join(currentDir(serverRootDir(dataDir)), 'node_modules'), {
+          recursive: true,
+          force: true,
+        }),
+      /invalid/,
+    ],
+  ])('refuses the older baked seed when the single copy is %s and the data root ran a newer server', (_n, damage, text) => {
+    const dataDir = path.join(tmp, 'data')
+    seed('1.2.610')
+    closure(currentDir(serverRootDir(dataDir)), '1.2.950')
+    damage(dataDir)
+    fs.writeFileSync(
+      path.join(serverRootDir(dataDir), 'last-booted.json'),
+      JSON.stringify({ version: '1.2.900' }),
+    )
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    try {
+      expect(() => boot(dataDir)).toThrow(/REFUSING.*1\.2\.900/)
+      expect(String(err.mock.calls[0]?.[0])).toMatch(text)
     } finally {
       err.mockRestore()
       warn.mockRestore()

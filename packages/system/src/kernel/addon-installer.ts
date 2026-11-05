@@ -163,7 +163,11 @@ const FALLBACK_VERSION_PROBES = 25
 type RequirementVerdict =
   | { readonly kind: 'ok' }
   | { readonly kind: 'older'; readonly version: string }
-  | { readonly kind: 'hold'; readonly code: HeldInstallCode; readonly reason: string }
+  | {
+      readonly kind: 'hold'
+      readonly code: HeldInstallCode
+      readonly reason: string
+    }
 
 import type { InstalledPackage, IScopedLogger, PackageRequires } from '@camstack/types'
 import { describeUnmet, errMsg, unmetRequirements } from '@camstack/types'
@@ -565,7 +569,11 @@ export class AddonInstaller {
         const verdict = await this.judgeRequirements(packageName, 'latest')
         if (verdict.kind === 'hold') {
           this.logger.warn(`${packageName} — not installed at boot: ${verdict.reason}`, {
-            meta: { spec: 'latest', code: verdict.code, reason: verdict.reason },
+            meta: {
+              spec: 'latest',
+              code: verdict.code,
+              reason: verdict.reason,
+            },
           })
           continue
         }
@@ -585,7 +593,9 @@ export class AddonInstaller {
             cause: err,
           })
         }
-        this.logger.error(`Failed to install ${packageName}`, { meta: { error: msg } })
+        this.logger.error(`Failed to install ${packageName}`, {
+          meta: { error: msg },
+        })
       }
     }
   }
@@ -614,7 +624,13 @@ export class AddonInstaller {
     if (verdict.kind === 'hold') {
       this.logger.warn(
         `${packageName} — not moved ${decision.from} → ${decision.to}: ${verdict.reason}`,
-        { meta: { from: decision.from, to: decision.to, reason: verdict.reason } },
+        {
+          meta: {
+            from: decision.from,
+            to: decision.to,
+            reason: verdict.reason,
+          },
+        },
       )
       return
     }
@@ -684,7 +700,7 @@ export class AddonInstaller {
     }
     return hold(
       'no-compatible-version',
-      `latest ${unmet}, and no registry version of ${packageName} fits server ${serverVersion}`,
+      `latest ${unmet}, and no registry version of ${packageName} fits server ${serverVersion ?? 'unknown (its version could not be read; a failed read is not a pass)'}`,
     )
   }
 
@@ -938,7 +954,9 @@ export class AddonInstaller {
       const state = collectAddonTreeState(addonDir)
       for (const link of state.existingLinks) {
         if (isClosureLinkTarget(link.target, closureNodeModules)) {
-          fs.rmSync(path.join(addonDir, 'node_modules', link.name), { force: true })
+          fs.rmSync(path.join(addonDir, 'node_modules', link.name), {
+            force: true,
+          })
         }
       }
     }
@@ -1001,7 +1019,10 @@ export class AddonInstaller {
     // says what it really was, and it is the only way an operator can later
     // tell "I deployed this" from "the server update brought it".
     await fs.promises.writeFile(path.join(targetDir, '.install-source'), 'closure')
-    this.manifest.upsert(result.name, { version: result.version, source: 'closure' })
+    this.manifest.upsert(result.name, {
+      version: result.version,
+      source: 'closure',
+    })
     return result
   }
 
@@ -1146,7 +1167,11 @@ export class AddonInstaller {
         async (httpErr: unknown) => {
           this.logger.warn(
             `Registry HTTP fetch failed for ${packageSpec} — falling back to 'npm pack'`,
-            { meta: { error: httpErr instanceof Error ? httpErr.message : String(httpErr) } },
+            {
+              meta: {
+                error: httpErr instanceof Error ? httpErr.message : String(httpErr),
+              },
+            },
           )
           const args = ['pack', packageSpec, '--pack-destination', tmpDir]
           if (this.registry) args.push('--registry', this.registry)
@@ -2234,7 +2259,9 @@ export class AddonInstaller {
       await runNpm(['run', 'build'], this.npmRunOptions(sourceDir, 180_000))
     } catch (err) {
       const msg = errMsg(err)
-      this.logger.warn(`${packageName} auto-build failed`, { meta: { error: msg } })
+      this.logger.warn(`${packageName} auto-build failed`, {
+        meta: { error: msg },
+      })
     }
   }
 

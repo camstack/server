@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A delivery to an agent is held when its addon minimum is above what the node holds, naming both versions
 - Addon uploads, first-boot installs and registry updates now read the package's requirements and refuse or hold a version the node cannot run, naming both versions; an unreadable requirements document is a refusal
 - First boot installs the newest addon version the running server can host when latest needs a newer server, reads requirements through the same registry and npmrc auth as the install, and raises an alert for an addon it had to hold back.
+- A held addon install raises an alert and resolves it once a later boot installs the package
 
 ## [1.2.779] - 2026-11-05
 

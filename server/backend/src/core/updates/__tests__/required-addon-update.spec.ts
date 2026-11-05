@@ -126,4 +126,31 @@ describe('raiseHeldInstallAlerts', () => {
     })
     expect(sink.warn).toHaveBeenCalled()
   })
+
+  it('resolves the alert of a package a later boot installed (held at boot N, installed at boot N+1)', async () => {
+    const store = new Map<string, Alert>()
+    const port = {
+      emit: vi.fn(async (a: Alert) => void store.set(a.id, a)),
+      update: vi.fn(async (i: { alertId: string; patch: Partial<Alert> }) => {
+        const cur = store.get(i.alertId)
+        if (cur !== undefined) store.set(i.alertId, { ...cur, ...i.patch })
+      }),
+      list: vi.fn(async () => [...store.values()]),
+    }
+    const base = { getAlerts: () => port, logger: logger() }
+    await raiseHeldInstallAlerts({
+      ...base,
+      held: [
+        {
+          packageName: '@camstack/addon-x',
+          spec: 'latest',
+          code: 'no-compatible-version',
+          reason: 'r',
+        },
+      ],
+    })
+    expect(store.get(heldInstallAlertId('@camstack/addon-x'))?.status).toBe('active')
+    await raiseHeldInstallAlerts({ ...base, held: [] })
+    expect(store.get(heldInstallAlertId('@camstack/addon-x'))?.status).toBe('completed')
+  })
 })

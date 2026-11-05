@@ -22,6 +22,8 @@ export const REQUIRED_ADDON_UPDATE_CATEGORY = 'addon.required-update-failed'
 export interface RequiredAddonAlertsPort {
   emit(alert: Alert): Promise<unknown>
   update(input: { readonly alertId: string; readonly patch: Partial<Alert> }): Promise<unknown>
+  /** Optional: lets a boot resolve the held-install alert of a package a later boot installed. */
+  list?(input?: { readonly limit?: number }): Promise<readonly Alert[]>
 }
 
 /** What `AddonPackageService.updatePackage` answers, narrowed to what the job reads. */
@@ -194,9 +196,10 @@ export async function raiseHeldInstallAlerts(input: {
   readonly logger: IScopedLogger
   readonly now?: () => number
 }): Promise<void> {
-  if (input.held.length === 0) return
   const alerts = input.getAlerts()
   const now = (input.now ?? Date.now)()
+  if (alerts !== undefined) await resolveInstalledHeldAlerts(alerts, input.held, input.logger)
+  if (input.held.length === 0) return
   for (const h of input.held) {
     if (alerts === undefined) {
       input.logger.warn('A held install could not be raised — alerts capability missing', {
@@ -224,5 +227,35 @@ export async function raiseHeldInstallAlerts(input: {
         meta: { name: h.packageName, error: errMsg(error) },
       })
     }
+  }
+}
+
+/**
+ * The held list lives in the process, so a boot that installs the package starts with
+ * it empty while the alert of the earlier boot is still active: resolve every active
+ * held-install alert whose package this boot did not hold.
+ */
+async function resolveInstalledHeldAlerts(
+  alerts: RequiredAddonAlertsPort,
+  held: readonly HeldInstallReport[],
+  logger: IScopedLogger,
+): Promise<void> {
+  if (alerts.list === undefined) return
+  const stillHeld = new Set(held.map((h) => h.packageName))
+  try {
+    const existing = await alerts.list({ limit: 500 })
+    for (const alert of existing) {
+      if (alert.category !== HELD_INSTALL_CATEGORY || alert.status !== 'active') continue
+      const name = alert.source?.id
+      if (name === undefined || stillHeld.has(name)) continue
+      await alerts.update({
+        alertId: alert.id,
+        patch: { status: 'completed', read: true },
+      })
+    }
+  } catch (error: unknown) {
+    logger.warn('Held install alert resolve failed', {
+      meta: { error: errMsg(error) },
+    })
   }
 }

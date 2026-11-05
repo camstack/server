@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The starter checks the server range it hosts at boot too: a closure below it is not booted, the baked seed is, and the log says why
 - The starter refuses to boot an older baked seed over a data root that last ran a newer server, and says which version to restore
+- The starter also refuses to boot an older baked seed when the single copy is missing or invalid and this data root already ran a newer server
 
 ## [1.0.0] - 2026-10-27
 

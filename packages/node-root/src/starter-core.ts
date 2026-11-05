@@ -150,7 +150,7 @@ function readClosureVersion(closureDir: string, spec: RootPackageSpec): string |
       fs.readFileSync(path.join(rootPackageDir(closureDir, spec), 'package.json'), 'utf-8'),
     )
     if (typeof raw === 'object' && raw !== null) {
-      const version = (raw as Record<string, unknown>)['version']
+      const version: unknown = Reflect.get(raw, 'version')
       if (typeof version === 'string') return version
     }
   } catch {
@@ -197,9 +197,9 @@ function readSeedVersion(seedEntry: string, spec: RootPackageSpec): string | nul
     try {
       const raw: unknown = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf-8'))
       if (typeof raw === 'object' && raw !== null) {
-        const rec = raw as Record<string, unknown>
-        if (rec['name'] === spec.packageName && typeof rec['version'] === 'string')
-          return rec['version']
+        const name: unknown = Reflect.get(raw, 'name')
+        const version: unknown = Reflect.get(raw, 'version')
+        if (name === spec.packageName && typeof version === 'string') return version
       }
     } catch {
       /* keep walking */
@@ -292,29 +292,38 @@ export function runNodeStarter(options: NodeStarterOptions): void {
         `${STARTER_HOSTS_SERVER_MIN} this starter hosts — booting the baked seed; update the app or the container image`,
     )
   }
-  // The baked seed is the only thing left to boot, and it can be OLDER than a
-  // server this data root already ran (its database and settings were migrated by
-  // that one). Booting it silently is a downgrade nobody chose: refuse, loudly.
-  if (outOfRange) {
+  const plan: BootPlan = outOfRange
+    ? {
+        kind: 'baked',
+        reason: 'the single copy is outside the range this starter hosts',
+      }
+    : planBoot(invalid === null)
+
+  // The baked seed is the only thing left to boot (single copy out of range, absent or
+  // invalid), and it can be OLDER than a server this data root already ran (its database
+  // and settings were migrated by that one). Booting it silently is a downgrade nobody
+  // chose: refuse, loudly. The kill switch above is the escape hatch.
+  if (plan.kind === 'baked') {
     const lastBooted = readLastBooted(rootDir)
     const seedVersion = readSeedVersion(options.seedEntry, options.spec)
     if (
       lastBooted !== null &&
       (seedVersion === null || compareSemver(seedVersion, lastBooted) < 0)
     ) {
+      const copyState = !fs.existsSync(activeRootDir)
+        ? 'absent'
+        : invalid !== null
+          ? `invalid (${invalid})`
+          : (activeVersion ?? 'unreadable')
       const message =
         `[starter] REFUSING to boot the baked seed ${seedVersion ?? '(version unknown)'}: this data ` +
-        `root last ran ${lastBooted} and the single copy on disk is ${activeVersion ?? 'unreadable'}. ` +
+        `root last ran ${lastBooted} and the single copy on disk is ${copyState}. ` +
         `Restore the ${lastBooted} closure, or update the app / container image to ${lastBooted} or newer. ` +
         `${options.envNames.killSwitch}=off boots the baked seed anyway.`
       console.error(message)
       throw new Error(message)
     }
   }
-  const plan: BootPlan = outOfRange
-    ? { kind: 'baked', reason: 'the single copy is outside the range this starter hosts' }
-    : planBoot(invalid === null)
-
   if (plan.kind === 'current') {
     const version = readClosureVersion(activeRootDir, options.spec)
     const entry = currentEntryPath(rootDir, options.spec)
