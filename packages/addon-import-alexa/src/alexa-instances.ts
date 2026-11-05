@@ -79,7 +79,7 @@ export function buildAlexaInstances(
     },
     configured: isAlexaBodyConfigured,
     onChanged: deps.onChanged,
-    test: async ({ id, values }): Promise<IntegrationTestConnectionResult> => {
+    test: async ({ id }): Promise<IntegrationTestConnectionResult> => {
       const info = id === null ? null : deps.infoOf(id)
       if (info === null) {
         return { success: false, status: 'inconclusive', error: 'Not connected: sign in first' }
