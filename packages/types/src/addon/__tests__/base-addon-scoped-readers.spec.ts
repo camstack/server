@@ -204,6 +204,21 @@ describe('BaseAddon readers of the scoped schemas', () => {
     expect(field && 'value' in field ? field.value : undefined).toBe('eth9')
   })
 
+  it('a section declared under two capabilities is served once', async () => {
+    class TwoCaps extends ScopedOnlyAddon {
+      protected override scopedSettingsCapabilities(): readonly string[] {
+        return [CAP, 'other-cap']
+      }
+      protected override async nodeSettingsSchema(): Promise<ConfigUISchema | null> {
+        return nodeSchema
+      }
+    }
+    const addon = new TwoCaps()
+    await addon.initialize(makeCtx('node-b').ctx)
+    const form = await addon.getGlobalSettings()
+    expect(form?.sections.filter((section) => section.id === 'node')).toHaveLength(1)
+  })
+
   it('getDeclaredSettingsKeys lists the scoped fields', async () => {
     const addon = new ScopedOnlyAddon()
     await addon.initialize(makeCtx('node-b').ctx)

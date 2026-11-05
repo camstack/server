@@ -881,8 +881,13 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
    * sections of its scoped schemas, so dropping the old hook does not blank the form.
    */
   private scopedFormSchema(cap?: string): ConfigUISchema | null {
-    const sections = this.loadedScopedSchemas(cap).flatMap((entry) => entry.schema.sections)
-    return sections.length === 0 ? null : { sections }
+    // Two capabilities may answer with the same section: it is one form section, shown once.
+    const byId = new Map<string, ConfigUISchema['sections'][number]>()
+    for (const entry of this.loadedScopedSchemas(cap)) {
+      for (const section of entry.schema.sections)
+        if (!byId.has(section.id)) byId.set(section.id, section)
+    }
+    return byId.size === 0 ? null : { sections: [...byId.values()] }
   }
 
   /** Every loaded scoped schema of `cap`, or of every loaded capability. */
