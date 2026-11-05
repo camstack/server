@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.663] - 2026-11-05
+
 ### Fixed
 
 - Fix: Home Assistant export migrations apply on hubs that still hold legacy integration rows (they were refused by the migrations door)

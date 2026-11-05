@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.594] - 2026-11-05
+
 ### Changed
 
 - The Customize tab shows every extension slot a device hosts from the slot table, not from a camera check

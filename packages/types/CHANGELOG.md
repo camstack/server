@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.507] - 2026-11-05
+
 ### Changed
 
 - Customize cardinalities, event shapes, apply authorities and stored link kinds are now one exported list each
