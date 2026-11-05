@@ -185,6 +185,25 @@ export function discoverServerClosure(workspaceRoot: string): ServerClosure {
 }
 
 /**
+ * What the server of a dev closure requires of addon packages (D989): every
+ * public addon package of the workspace at `>=<its workspace version>`, the
+ * same stamp `scripts/ci/stamp-requires.mjs` writes for a release, so the hub
+ * judges a dev closure exactly like a published one. A package is an addon when
+ * it declares `camstack.addons`.
+ */
+export function workspaceAddonMinimums(workspaceRoot: string): Readonly<Record<string, string>> {
+  const minimums: Record<string, string> = {}
+  for (const pkg of loadWorkspacePackages(workspaceRoot).values()) {
+    const manifest = readPackageManifest(pkg.dir)
+    if (manifest === null || manifest.raw['private'] === true) continue
+    const camstack = manifest.raw['camstack']
+    if (typeof camstack !== 'object' || camstack === null || !('addons' in camstack)) continue
+    minimums[manifest.name] = `>=${manifest.version}`
+  }
+  return minimums
+}
+
+/**
  * Run `fn` while the package's `package.json` carries the uniform dev
  * version (its `version` plus every intra-set `@camstack/*` range across all
  * dependency fields). The ORIGINAL bytes are restored afterwards — success
@@ -196,6 +215,8 @@ export function withDevVersionPackageJson<T>(
   devVersion: string,
   intraSetNames: ReadonlySet<string>,
   fn: () => T,
+  /** Replaces `camstack.requires.addons` for the duration (the server of a dev closure). */
+  requiresAddons?: Readonly<Record<string, string>>,
 ): T {
   const pkgJsonPath = path.join(pkgDir, 'package.json')
   const originalBytes = fs.readFileSync(pkgJsonPath)
@@ -215,6 +236,19 @@ export function withDevVersionPackageJson<T>(
       rewritten[name] = intraSetNames.has(name) ? devVersion : range
     }
     manifest[field] = rewritten
+  }
+  if (requiresAddons !== undefined) {
+    const camstack = manifest['camstack']
+    const base: Record<string, unknown> =
+      typeof camstack === 'object' && camstack !== null && !Array.isArray(camstack)
+        ? { ...camstack }
+        : {}
+    const requires = base['requires']
+    const baseRequires: Record<string, unknown> =
+      typeof requires === 'object' && requires !== null && !Array.isArray(requires)
+        ? { ...requires }
+        : {}
+    manifest['camstack'] = { ...base, requires: { ...baseRequires, addons: requiresAddons } }
   }
   fs.writeFileSync(pkgJsonPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf-8')
   try {

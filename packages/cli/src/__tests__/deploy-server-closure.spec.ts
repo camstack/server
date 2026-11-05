@@ -17,6 +17,7 @@ import {
   computeDevVersion,
   discoverServerClosure,
   withDevVersionPackageJson,
+  workspaceAddonMinimums,
 } from '../commands/server-closure.js'
 
 let tmp: string
@@ -189,5 +190,62 @@ describe('withDevVersionPackageJson — temp-copy rewrite', () => {
       }),
     ).toThrow('pack exploded')
     expect(fs.readFileSync(pkgJsonPath).equals(originalBytes)).toBe(true)
+  })
+})
+
+describe('dev closure stamps requires.addons from the workspace (planning#447, D989)', () => {
+  function writeAddon(relDir: string, manifest: Record<string, unknown>): void {
+    const dir = path.join(tmp, relDir)
+    fs.mkdirSync(dir, { recursive: true })
+    fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify(manifest), 'utf-8')
+  }
+
+  it('workspaceAddonMinimums names every public addon package at its workspace version', () => {
+    writeFixtureWorkspace(FIXTURE)
+    writeAddon('packages/addon-a', {
+      name: '@camstack/addon-a',
+      version: '2.1.0',
+      camstack: { addons: [{ id: 'a' }] },
+    })
+    writeAddon('packages/addon-private', {
+      name: '@camstack/addon-private',
+      version: '9.9.9',
+      private: true,
+      camstack: { addons: [{ id: 'p' }] },
+    })
+    // A library, not an addon: no `camstack.addons`.
+    expect(workspaceAddonMinimums(tmp)).toEqual({ '@camstack/addon-a': '>=2.1.0' })
+  })
+
+  it('the packed server manifest carries them beside what it already requires, and the bytes come back', () => {
+    writeFixtureWorkspace(FIXTURE)
+    const pkgDir = path.join(tmp, 'server/backend')
+    const file = path.join(pkgDir, 'package.json')
+    const raw: unknown = JSON.parse(fs.readFileSync(file, 'utf-8'))
+    fs.writeFileSync(
+      file,
+      JSON.stringify({
+        ...(raw as Record<string, unknown>),
+        camstack: {
+          requires: { addons: { '@camstack/old': '>=1.0.0' }, wrapper: { image: '>=1.2.0' } },
+        },
+      }),
+    )
+    const original = fs.readFileSync(file)
+    let seen: { camstack?: { requires?: unknown } } = {}
+    withDevVersionPackageJson(
+      pkgDir,
+      '1.2.3-dev.1',
+      new Set(),
+      () => {
+        seen = JSON.parse(fs.readFileSync(file, 'utf-8'))
+      },
+      { '@camstack/addon-a': '>=2.1.0' },
+    )
+    expect(seen.camstack?.requires).toEqual({
+      addons: { '@camstack/addon-a': '>=2.1.0' },
+      wrapper: { image: '>=1.2.0' },
+    })
+    expect(fs.readFileSync(file).equals(original)).toBe(true)
   })
 })

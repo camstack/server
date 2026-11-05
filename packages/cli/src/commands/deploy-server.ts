@@ -25,6 +25,7 @@ import {
   computeDevVersion,
   discoverServerClosure,
   withDevVersionPackageJson,
+  workspaceAddonMinimums,
   type ServerClosure,
   type WorkspacePackage,
 } from './server-closure.js'
@@ -139,14 +140,21 @@ function packPackage(
   devVersion: string,
   intraSetNames: ReadonlySet<string>,
   outDir: string,
+  /** Stamped onto the server's `camstack.requires.addons` (D989); `undefined` for every other package. */
+  requiresAddons?: Readonly<Record<string, string>>,
 ): PackedTarball {
-  const output = withDevVersionPackageJson(pkg.dir, devVersion, intraSetNames, () =>
-    execSync(`npm pack --json --pack-destination ${JSON.stringify(outDir)}`, {
-      cwd: pkg.dir,
-      encoding: 'utf8',
-      timeout: PACK_TIMEOUT_MS,
-      stdio: ['ignore', 'pipe', 'pipe'],
-    }).trim(),
+  const output = withDevVersionPackageJson(
+    pkg.dir,
+    devVersion,
+    intraSetNames,
+    () =>
+      execSync(`npm pack --json --pack-destination ${JSON.stringify(outDir)}`, {
+        cwd: pkg.dir,
+        encoding: 'utf8',
+        timeout: PACK_TIMEOUT_MS,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      }).trim(),
+    requiresAddons,
   )
   const filename = toPackFilename(output)
   if (filename === null) {
@@ -579,8 +587,15 @@ export async function deployServer(opts: DeployServerOptions): Promise<void> {
   try {
     console.log(`[camstack] Packing ${closure.packSet.length} packages at ${devVersion}...`)
     const tarballs: PackedTarball[] = []
+    const addonMinimums = workspaceAddonMinimums(workspaceRoot)
     for (const pkg of closure.packSet) {
-      const packed = packPackage(pkg, devVersion, intraSetNames, outDir)
+      const packed = packPackage(
+        pkg,
+        devVersion,
+        intraSetNames,
+        outDir,
+        pkg.name === '@camstack/server' ? addonMinimums : undefined,
+      )
       console.log(`[camstack]   ✓ ${pkg.name} → ${path.basename(packed.tgzPath)}`)
       tarballs.push(packed)
     }

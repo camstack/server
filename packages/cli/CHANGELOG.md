@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - New support tools migrations_status and media_storage_check, and report_issue now includes them: the migration ledger with the failure chain and refused runners, and stored media per storage location with a per-camera thumbnail sample
+- deploy --closure stamps the server's required addon minimums from the workspace so a dev closure is judged like a release
 
 ## [1.2.223] - 2026-11-05
 
