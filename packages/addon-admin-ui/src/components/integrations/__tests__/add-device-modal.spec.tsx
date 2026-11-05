@@ -15,6 +15,8 @@ const state = vi.hoisted(() => ({
   creationType: 'container' as string | null,
   /** Integrations the provider answers "no manual creation" for. */
   hubIntegrations: [] as string[],
+  /** Every creation-type question asked, for the one that matters. */
+  typeAsked: [] as { addonId: string; integrationId?: string }[],
   schema: {
     sections: [
       {
@@ -48,17 +50,20 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@camstack/ui-library')>()
   return {
     ...actual,
-    useDeviceManagerProviderCreationType: (input: { integrationId?: string }) => ({
-      data: {
-        deviceType:
-          input.integrationId !== undefined && state.hubIntegrations.includes(input.integrationId)
-            ? null
-            : state.creationType,
-      },
-      isLoading: false,
-      isError: false,
-      isSuccess: true,
-    }),
+    useDeviceManagerProviderCreationType: (input: { addonId: string; integrationId?: string }) => (
+      state.typeAsked.push(input),
+      {
+        data: {
+          deviceType:
+            input.integrationId !== undefined && state.hubIntegrations.includes(input.integrationId)
+              ? null
+              : state.creationType,
+        },
+        isLoading: false,
+        isError: false,
+        isSuccess: true,
+      }
+    ),
     useDeviceManagerGetCreationSchema: () => ({
       data: state.schema,
       isLoading: false,
@@ -175,6 +180,7 @@ describe('AddDeviceModal', () => {
       ],
     }
     state.hubIntegrations = []
+    state.typeAsked = []
     state.scan = []
     state.proposals = []
     state.adoption = []
@@ -248,7 +254,7 @@ describe('AddDeviceModal', () => {
     const rows = screen.getAllByTestId(/^network-row-/)
     expect(rows).toHaveLength(1)
     expect(rows[0]?.getAttribute('data-testid')).toBe('network-row-esp-new')
-    expect(screen.getByText(/1 already in the list below/i)).toBeTruthy()
+    expect(screen.getByText(/1 also in the adoption list/i)).toBeTruthy()
   })
 
   it('a board in both lists that needs a key stays in the scan block and asks for it', () => {
@@ -258,6 +264,16 @@ describe('AddDeviceModal', () => {
     expect(screen.getAllByTestId(/^network-row-/)).toHaveLength(1)
     fireEvent.click(screen.getByRole('button', { name: /enter details/i }))
     expect(screen.getByText('API encryption key')).toBeTruthy()
+  })
+
+  it('the scan block asks for the creation type of this integration, not the addon', () => {
+    state.hubIntegrations = ['int_hub']
+    state.scan = [hit('esp-enc', '192.0.2.13', { needsParams: ['encryptionKey'] })]
+    renderModal({ kind: 'device-provider', canScan: true, integrationId: 'int_hub' })
+    state.typeAsked = []
+    fireEvent.click(screen.getByRole('button', { name: /enter details/i }))
+    expect(state.typeAsked.length).toBeGreaterThan(0)
+    expect(state.typeAsked.every((q) => q.integrationId === 'int_hub')).toBe(true)
   })
 
   it('a scanned board that fails to add says so and never reads as added', async () => {

@@ -223,6 +223,7 @@ export function NetworkCandidatesPanel({
     return (
       <CandidateParamsStep
         addonId={addonId}
+        integrationId={integrationId}
         row={paramsFor}
         found={paramsFor.hit.prefilledConfig}
         busy={busy.has(paramsFor.key)}
@@ -253,9 +254,9 @@ export function NetworkCandidatesPanel({
                 })
               : ''}
           {!scan.isPending && inAdoptionList > 0
-            ? ` · ${t('integrations.addDeviceModal.inListBelow', {
-                defaultValue_one: '{{count}} already in the list below.',
-                defaultValue_other: '{{count}} already in the list below.',
+            ? ` · ${t('integrations.addDeviceModal.alsoAdopted', {
+                defaultValue_one: '{{count}} also in the adoption list',
+                defaultValue_other: '{{count}} also in the adoption list',
                 count: inAdoptionList,
               })}`
             : ''}
@@ -394,6 +395,7 @@ function CandidateRow({
  */
 function CandidateParamsStep({
   addonId,
+  integrationId,
   row,
   found,
   busy,
@@ -403,6 +405,7 @@ function CandidateParamsStep({
   embedded,
 }: {
   readonly addonId: string
+  readonly integrationId: string
   readonly row: Row
   readonly found: Readonly<Record<string, unknown>>
   readonly busy: boolean
@@ -413,10 +416,10 @@ function CandidateParamsStep({
   readonly embedded: boolean
 }): ReactElement {
   const { t } = useTranslation()
-  const typeQuery = useDeviceManagerProviderCreationType({ addonId })
+  const typeQuery = useDeviceManagerProviderCreationType({ addonId, integrationId })
   const type = typeQuery.data?.deviceType ?? null
   const schemaQuery = useDeviceManagerGetCreationSchema(
-    { addonId, type: type ?? DeviceType.Camera },
+    { addonId, integrationId, type: type ?? DeviceType.Camera },
     { enabled: typeQuery.isSuccess && type !== null },
   )
   const schema = (schemaQuery.data ?? null) as ConfigUISchema | null
