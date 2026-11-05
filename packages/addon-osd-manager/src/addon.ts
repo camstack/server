@@ -222,7 +222,12 @@ export class OsdManagerAddon extends BaseAddon<OsdManagerConfig> {
     this.manager = null
   }
 
-  protected globalSettingsSchema(): ConfigUISchema {
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return ['osd-manager']
+  }
+
+  protected override async clusterSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    if (cap !== 'osd-manager') return null
     return this.schema({
       sections: [
         {
