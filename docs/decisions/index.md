@@ -4,7 +4,7 @@
 
 # Decisions
 
-971 architecture decision records. One file per decision, never
+972 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -986,6 +986,7 @@ that rots.
 | D1006 | [A storage type is pruned only when no INSTALLED package declares it, and a missing writable location is an alert](adr-1006-a-failed-addon-load-never-prunes-its-storage-locations.md) | ✅ accepted | 2026-11-04 |
 | D1007 | [Every integration is a typed instance record; the registry keeps identity and the on/off switch of a device integration](adr-1007-every-integration-is-a-typed-instance-record-the-registry-keeps-identity-and-the-on-off-switch.md) | 💭 proposed (supersedes the "legacy integration_settings rows stay for addons that bring devices" part of D996, and the integrationSettingSections / per-integration settings rows part of D986) | 2026-11-04 |
 | D1008 | [An anti-crease pulse does not re-arm a run, and a run ends at its last real active instant](adr-1008-an-anti-crease-pulse-does-not-re-arm-a-run.md) | ✅ accepted | 2026-11-04 |
+| D1009 | [An export target is an integration instance, and every exporter is multi-instance](adr-1009-an-export-target-is-an-integration-instance-and-every-exporter-is-multi-instance.md) | ✅ accepted (supersedes the "an exporter keeps its configuration in addon-level settings" part of D986 for the four exporters) | 2026-11-05 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next
