@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Migrations: ctx.migrationApi, a stable append-only migration API (V1), and runMigrations(catalogue, bindPorts)
 - Migration API V1 gains a devices namespace (scoped list, get, setIntegrationId)
 - Adapters that bind a catalogue's ports over the migration API (secrets, records, integration rows, default integration)
+- A migration log line is delivered in order and a refused delivery no longer surfaces as an unhandled rejection; runMigrations refuses a mixed array of bound and catalogue entries
 
 ## [1.2.507] - 2026-11-05
 

@@ -44,9 +44,9 @@ export interface ClaimDevicesPorts {
   setIntegrationId(deviceId: number, integrationId: string): Promise<void>
   /** The device's integration id as stored; null when none. */
   readIntegrationId(deviceId: number): Promise<string | null>
-  info(message: string): void
+  info(message: string): void | Promise<void>
   /** A device the claim could not resolve: the line carries `tags: { deviceId }` (D391). */
-  warnDevice(message: string, deviceId: number): void
+  warnDevice(message: string, deviceId: number): void | Promise<void>
 }
 
 export interface ClaimDevicesSpec {
@@ -146,7 +146,7 @@ export async function claimDevicesToDefaultIntegration(
     if (resolve(device, new Set([device.id])) === null) unresolved.add(device.id)
   }
   for (const id of unresolved) {
-    ports.warnDevice(
+    await ports.warnDevice(
       `device ${id} of '${spec.addonId}' carries no integration and its owner chain does not resolve to one: left unstamped`,
       id,
     )
@@ -166,7 +166,7 @@ export async function claimDevicesToDefaultIntegration(
     )
   }
   const claimed = plan.size
-  ports.info(
+  await ports.info(
     `${claimed} device(s) of '${spec.addonId}' claimed to their owner's integration or the default; ${unresolved.size} unresolved, ${reservations.size} reservation(s) skipped`,
   )
   return {

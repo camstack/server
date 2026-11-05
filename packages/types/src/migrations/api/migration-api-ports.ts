@@ -28,7 +28,9 @@ export function secretsOverMigrationApi(api: MigrationApiV1): MigrationSecretsDo
         out[ref] =
           value === null || value === undefined
             ? { kind: 'missing' }
-            : { kind: 'value', value, version: 0 }
+            : // The migration API's resolve returns no version and the result type requires one;
+              // no migration reads it, so 0 stands for "not reported" here.
+              { kind: 'value', value, version: 0 }
       }
       return out
     },
@@ -60,10 +62,31 @@ function integrationRowsApiOver(api: MigrationApiV1): IntegrationRowsApi {
   }
 }
 
-function warnOver(api: MigrationApiV1): (message: string) => void {
-  return (message) => {
-    void api.log.warn({ message })
-  }
+/**
+ * One serial lane per migration API: a log line is delivered after the line before it, so the
+ * order the steps wrote them in is the order the hub reads them in. A delivery that fails
+ * is reported once through the same door; if that fails too nothing is left to tell, and the
+ * line is dropped rather than thrown into a migration step or left as an unhandled rejection.
+ */
+const lanes = new WeakMap<MigrationApiV1, Promise<void>>()
+
+function deliver(api: MigrationApiV1, send: () => Promise<unknown>): Promise<void> {
+  const tail = lanes.get(api) ?? Promise.resolve()
+  const next = tail
+    .then(send)
+    .then(() => undefined)
+    .catch(async (error: unknown) => {
+      const reason = error instanceof Error ? error.message : String(error)
+      await api.log
+        .warn({ message: `a migration log line could not be delivered: ${reason}` })
+        .catch(() => undefined)
+    })
+  lanes.set(api, next)
+  return next
+}
+
+function warnOver(api: MigrationApiV1): (message: string) => Promise<void> {
+  return (message) => deliver(api, () => api.log.warn({ message }))
 }
 
 /** What the rows-to-records move needs, over the migration API. */
@@ -95,11 +118,8 @@ export function defaultIntegrationDepsOver(api: MigrationApiV1) {
   return {
     ...rowsDepsOver(api),
     api: defaultIntegrationApiOver(api),
-    info: (message: string): void => {
-      void api.log.info({ message })
-    },
-    warnDevice: (message: string, deviceId: number): void => {
-      void api.log.warn({ message, tags: { deviceId } })
-    },
+    info: (message: string): Promise<void> => deliver(api, () => api.log.info({ message })),
+    warnDevice: (message: string, deviceId: number): Promise<void> =>
+      deliver(api, () => api.log.warn({ message, tags: { deviceId } })),
   }
 }

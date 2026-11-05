@@ -120,16 +120,29 @@ export function migrationSet<TPorts>(
   return { bind: (api) => defineAddonMigrations(catalogue, bindPorts(api)) }
 }
 
+/** A mixed array is a mistake: the other kind would be dropped without a word. */
+function refuseMixed(form: string, kept: number, dropped: number): void {
+  if (dropped > 0) {
+    throw new Error(
+      `runMigrations(${form}): ${dropped} of ${kept + dropped} entries are of the other kind and would be dropped; pass one kind per call`,
+    )
+  }
+}
+
 function catalogueOf<TPorts>(
   list: readonly (BoundAddonMigration | AddonMigration<TPorts>)[],
 ): readonly AddonMigration<TPorts>[] {
-  return list.filter((entry): entry is AddonMigration<TPorts> => !('execute' in entry))
+  const kept = list.filter((entry): entry is AddonMigration<TPorts> => !('execute' in entry))
+  refuseMixed('catalogue, (api) => ports', kept.length, list.length - kept.length)
+  return kept
 }
 
 function boundOf<TPorts>(
   list: readonly (BoundAddonMigration | AddonMigration<TPorts>)[],
 ): readonly BoundAddonMigration[] {
-  return list.filter((entry): entry is BoundAddonMigration => 'execute' in entry)
+  const kept = list.filter((entry): entry is BoundAddonMigration => 'execute' in entry)
+  refuseMixed('bound migrations', kept.length, list.length - kept.length)
+  return kept
 }
 
 /**

@@ -224,4 +224,30 @@ describe('BaseAddon.runMigrations, catalogue form', () => {
     )
     await expect(addon.migrate([])).rejects.toThrow(/migration API is not available/)
   })
+
+  it('refuses a mixed array instead of silently dropping the other kind', async () => {
+    class MixedProbe extends BaseAddon {
+      protected async onInitialize() {
+        return []
+      }
+      mixed(entries: readonly AddonMigration<Record<string, never>>[]) {
+        return this.runMigrations(entries, (): Record<string, never> => ({}))
+      }
+    }
+    const addon = new MixedProbe({})
+    await addon.initialize(
+      fakeAddonContext({
+        migrationApi: stubMigrationApi(),
+        api: createTRPCClient<AppRouter>({ links: [scriptedHub([], 'applied')] }),
+      }),
+    )
+    const one = {
+      meta: meta('one', 'block-owner'),
+      procedure: async () => ({ outcome: 'done' as const, summary: {} }),
+    }
+    // The overloads keep a mixed array out of typed callers; this entry is a catalogue entry
+    // that also carries a bound entry's `execute`, the shape an untyped caller could build.
+    const two = { ...one, meta: meta('two', 'block-owner'), execute: async () => undefined }
+    await expect(addon.mixed([one, two])).rejects.toThrow(/other kind/)
+  })
 })

@@ -47,9 +47,9 @@ export function defaultIntegrationPortsOver(deps: {
   /** The addon's records door and the kind its integrations are records of. */
   readonly records: RowsRecordsDoor
   readonly kind: DefinedRecordKind
-  readonly info: (message: string) => void
+  readonly info: (message: string) => void | Promise<void>
   readonly warn: (message: string) => void
-  readonly warnDevice: (message: string, deviceId: number) => void
+  readonly warnDevice: (message: string, deviceId: number) => void | Promise<void>
   /** The owning addon's keychain handle. The door returns markers; this resolves them. */
   readonly secrets?: Pick<SecretsAccess, 'resolve' | 'delete'> | null
 }): DefaultIntegrationPorts {
@@ -80,8 +80,8 @@ export function claimDevicesPortsOver(deps: {
     | 'setDeviceIntegrationId'
     | 'readDeviceIntegrationId'
   >
-  readonly info: (message: string) => void
-  readonly warnDevice: (message: string, deviceId: number) => void
+  readonly info: (message: string) => void | Promise<void>
+  readonly warnDevice: (message: string, deviceId: number) => void | Promise<void>
 }): ClaimDevicesPorts {
   return {
     listIntegrations: async (addonId) =>
