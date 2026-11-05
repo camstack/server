@@ -64,4 +64,25 @@ describe('splitByNodeRequirements (D989)', () => {
     ])
     expect(batch.deliver).toEqual([target, inBatch])
   })
+
+  it('does not judge an addon the node will never carry (hub-only, or not in its roster or batch)', async () => {
+    const needsHubOnly = async () => ({ addons: { '@camstack/addon-hub-only': '>=2.0.0' } })
+    const out = await splitByNodeRequirements([target], '1.3.1', needsHubOnly, [
+      { name: '@camstack/addon-other', version: '1.0.0' },
+    ])
+    expect(out.deliver).toEqual([target])
+    expect(out.held).toEqual([])
+  })
+
+  it('does not judge an addon the same pass removes from the node', async () => {
+    const needsY = async () => ({ addons: { '@camstack/addon-y': '>=2.0.0' } })
+    const out = await splitByNodeRequirements(
+      [target],
+      '1.3.1',
+      needsY,
+      [{ name: '@camstack/addon-y', version: '1.0.0' }],
+      new Set(['@camstack/addon-y']),
+    )
+    expect(out.deliver).toEqual([target])
+  })
 })

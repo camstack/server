@@ -1434,6 +1434,7 @@ export class AgentRegistryService {
         this.nodeServerVersions.get(agentId) ?? null,
         requiresOf,
         live,
+        new Set(plan.remove.map((r) => r.name)),
       )
       for (const held of split.held) {
         this.logger?.warn('convergence: delivery held, the node is older than the addon needs', {

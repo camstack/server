@@ -8,7 +8,9 @@
  * been updated. The same holds for `requires.addons`: a version that needs an
  * addon package newer than the node's live roster holds (or than the same batch
  * delivers) waits. A node that does not report its server version cannot be
- * judged, and an unjudged node never passes a declared minimum.
+ * judged, and an unjudged node never passes a declared minimum. Only a package
+the node carries (its roster, or the same batch) is judged against an addon
+minimum: one the node will never install (hub-only) cannot hold a delivery.
  */
 import {
   describeUnmet,
@@ -46,6 +48,8 @@ export async function splitByNodeRequirements<T extends DeliveryTarget>(
   nodeServerVersion: string | null,
   requiresOf: RequiresOf,
   roster: readonly RosterEntry[] = [],
+  /** Packages this pass removes from the node: never judged, they are leaving. */
+  leaving: ReadonlySet<string> = new Set(),
 ): Promise<DeliveryRequirementSplit<T>> {
   // What the node will hold once this batch lands: its live roster, then the batch on top.
   const addons: Record<string, string | null> = {}
@@ -58,7 +62,15 @@ export async function splitByNodeRequirements<T extends DeliveryTarget>(
       server: nodeServerVersion,
       addons,
       wrapper: null,
-    }).filter((u) => u.kind === 'server-too-old' || u.kind === 'addon-too-old')
+    }).filter(
+      (u) =>
+        u.kind === 'server-too-old' ||
+        // Only a package this node carries (its roster, or this batch) can be too old: a hub-only
+        // addon is never delivered here, and a package being removed is leaving.
+        (u.kind === 'addon-too-old' &&
+          Object.hasOwn(addons, u.packageName) &&
+          !leaving.has(u.packageName)),
+    )
     if (unmet.length === 0) {
       deliver.push(target)
       continue
