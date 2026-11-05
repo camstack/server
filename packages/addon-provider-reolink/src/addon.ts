@@ -868,19 +868,19 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
 
   // ── Email-push addon settings ────────────────────────────────────────
 
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return ['videoclips']
+  }
+
   /**
-   * The addon's global settings schema: the clip-catalog refresh default. (The battery push has
-   * no addon-level setting: the mailbox is a broker and the webhook is a plane of the data plane.)
+   * The fleet default of the clip-catalog refresh. (The battery push has no addon-level setting:
+   * the mailbox is a broker and the webhook is a plane of the data plane.) Per-camera overrides
+   * live on the device under the same key and resolve through `resolveClipCatalogRefreshMinutes`
+   * — reset == unset == this value.
    */
-  protected override globalSettingsSchema(): ConfigUISchema {
-    return {
-      sections: [
-        // The clip-catalog refresh DEFAULT. Per-camera overrides live on the
-        // device under the same key and resolve through
-        // `resolveClipCatalogRefreshMinutes` — reset == unset == this value.
-        ...buildClipRefreshSettingsSchema().sections,
-      ],
-    }
+  protected override async deviceDefaultsSchema(cap: string): Promise<ConfigUISchema | null> {
+    if (cap !== 'videoclips') return null
+    return { sections: [...buildClipRefreshSettingsSchema().sections] }
   }
 
   // An integration's connection is its `connections` record (`reolink-instances.ts`): the

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Reolink clip catalog refresh default is declared on the fleet-default hook; the form and stored value are unchanged.
+
 ## [1.2.226] - 2026-11-05
 
 ### Changed

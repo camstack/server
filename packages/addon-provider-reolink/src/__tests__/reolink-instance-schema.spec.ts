@@ -95,10 +95,14 @@ describe('Reolink per-instance integration form', () => {
     expect(keysOf(await schemaFor('int-1', 'unreachable'))).toContain('rtspPort')
   })
 
-  it('the global schema no longer carries the hub connection', () => {
-    const global = ReolinkProviderAddon.prototype['globalSettingsSchema'].call({})
-    expect(keysOf(global)).not.toContain('rtspPort')
-    expect(keysOf(global)).not.toContain('host')
+  it('the addon-level schema no longer carries the hub connection', async () => {
+    const defaults = await new ReolinkProviderAddon().getScopedSettingsSchema(
+      'device-defaults',
+      'videoclips',
+    )
+    expect(keysOf(defaults)).toContain('clipCatalogRefreshMinutes')
+    expect(keysOf(defaults)).not.toContain('rtspPort')
+    expect(keysOf(defaults)).not.toContain('host')
   })
 
   it('isHubIntegration is false for an empty default integration', () => {

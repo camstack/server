@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
 const SRC = fileURLToPath(new URL('..', import.meta.url))
-// The addon-level `globalSettingsSchema` stays: it holds the clip refresh default, not a connection.
+// The addon-level fleet default (`deviceDefaultsSchema`) stays: it holds the clip refresh default, not a connection.
 const LEGACY_READS = [
   /integrations\.(getSettings|setSettings|clearSettings)\b/,
   /\bgetIntegrationSettings\b/,
