@@ -1087,7 +1087,12 @@ export class SnapshotAddon extends BaseAddon<SnapshotAddonConfig> {
     this.ownerCache = null
   }
 
-  protected globalSettingsSchema(): ConfigUISchema {
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return ['snapshot']
+  }
+
+  protected override async clusterSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    if (cap !== 'snapshot') return null
     return this.schema({
       sections: [
         {
