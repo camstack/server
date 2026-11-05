@@ -1490,6 +1490,9 @@ export const deviceManagerCapability = {
       z.object({
         addonId: z.string(),
         type: z.enum(DeviceType),
+        /** The integration the form is for; a provider whose integrations differ (a hub
+         *  integration takes no manual add) answers per integration. Absent = the addon's own. */
+        integrationId: z.string().optional(),
       }),
       z.unknown().nullable(),
     ),
@@ -1716,7 +1719,11 @@ export const deviceManagerCapability = {
     /** The device type a provider creates via manual add (Camera/Container/Hub),
      *  so the Add-Device dialog uses the right type instead of assuming Camera. */
     providerCreationType: method(
-      z.object({ addonId: z.string() }),
+      z.object({
+        addonId: z.string(),
+        /** The integration the Add-Device dialog is open on; absent = the addon's own. */
+        integrationId: z.string().optional(),
+      }),
       z.object({ deviceType: z.enum(DeviceType).nullable() }),
       { auth: 'admin' },
     ),

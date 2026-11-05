@@ -13,6 +13,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const state = vi.hoisted(() => ({
   creationType: 'container' as string | null,
+  /** Integrations the provider answers "no manual creation" for. */
+  hubIntegrations: [] as string[],
   schema: {
     sections: [
       {
@@ -42,8 +44,13 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@camstack/ui-library')>()
   return {
     ...actual,
-    useDeviceManagerProviderCreationType: () => ({
-      data: { deviceType: state.creationType },
+    useDeviceManagerProviderCreationType: (input: { integrationId?: string }) => ({
+      data: {
+        deviceType:
+          input.integrationId !== undefined && state.hubIntegrations.includes(input.integrationId)
+            ? null
+            : state.creationType,
+      },
       isLoading: false,
       isError: false,
       isSuccess: true,
@@ -79,14 +86,14 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
 
 import { AddDeviceModal } from '../AddDeviceModal'
 
-function renderModal() {
+function renderModal(integrationId = 'int_1') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={client}>
       <MemoryRouter>
         <AddDeviceModal
           addonId="provider-esphome"
-          integrationId="int_1"
+          integrationId={integrationId}
           kind="device-provider"
           canScan
           onClose={vi.fn()}
@@ -110,6 +117,7 @@ describe('AddDeviceModal', () => {
         },
       ],
     }
+    state.hubIntegrations = []
     state.scan = []
     state.proposals = []
     state.adoption = []
@@ -128,6 +136,15 @@ describe('AddDeviceModal', () => {
     expect(screen.queryByRole('tab', { name: 'Enter parameters' })).toBeNull()
     expect(screen.queryByRole('tab')).toBeNull()
     expect(screen.getByRole('button', { name: /scan now/i })).toBeTruthy()
+  })
+
+  it('hides the manual tab for the integration the provider refuses it for, keeps it for another', () => {
+    state.hubIntegrations = ['int_hub']
+    const hub = renderModal('int_hub')
+    expect(screen.queryByRole('tab', { name: 'Enter parameters' })).toBeNull()
+    hub.unmount()
+    renderModal('int_default')
+    expect(screen.getByRole('tab', { name: 'Enter parameters' })).toBeTruthy()
   })
 
   it('hides the manual tab when the provider declares a creation type but no field', () => {

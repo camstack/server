@@ -126,11 +126,14 @@ interface AddDeviceFormProps {
  */
 export type ManualCreationAvailability = 'loading' | 'available' | 'unavailable'
 
-export function useManualCreationAvailability(addonId: string): ManualCreationAvailability {
-  const typeQuery = useDeviceManagerProviderCreationType({ addonId })
+export function useManualCreationAvailability(
+  addonId: string,
+  integrationId?: string,
+): ManualCreationAvailability {
+  const typeQuery = useDeviceManagerProviderCreationType({ addonId, integrationId })
   const type = typeQuery.data?.deviceType ?? null
   const schemaQuery = useDeviceManagerGetCreationSchema(
-    { addonId, type: type ?? DeviceType.Camera },
+    { addonId, integrationId, type: type ?? DeviceType.Camera },
     { enabled: typeQuery.isSuccess && type !== null },
   )
   if (typeQuery.isError) return 'unavailable'
@@ -165,11 +168,14 @@ export function AddDeviceForm({ integrationId, addonId, onClose }: AddDeviceForm
   // for Gree, Hub for Ecowitt). Resolve it FIRST so the creation-schema query
   // fires with the right type — hardcoding Camera made non-camera providers
   // ("provider not ready / does not support manual creation") fail.
-  const creationTypeQuery = useDeviceManagerProviderCreationType({ addonId }, { enabled: open })
+  const creationTypeQuery = useDeviceManagerProviderCreationType(
+    { addonId, integrationId },
+    { enabled: open },
+  )
   const creationType = creationTypeQuery.data?.deviceType ?? null
 
   const schemaQuery = useDeviceManagerGetCreationSchema(
-    { addonId, type: creationType ?? DeviceType.Camera },
+    { addonId, integrationId, type: creationType ?? DeviceType.Camera },
     { enabled: open && creationTypeQuery.isSuccess && creationType !== null },
   )
 

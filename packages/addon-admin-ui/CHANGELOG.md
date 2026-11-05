@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Add device hides the Enter parameters tab when the provider refuses manual creation for that integration
+
 ## [1.2.593] - 2026-11-05
 
 ### Changed

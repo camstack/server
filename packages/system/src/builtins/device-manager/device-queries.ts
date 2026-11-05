@@ -1130,7 +1130,10 @@ export async function getCreationSchema(
   const supported = await dp.supportsManualCreation({})
   if (!supported) return null
 
-  const schema = await dp.getChildCreationSchema({ type: input.type })
+  const schema = await dp.getChildCreationSchema({
+    type: input.type,
+    ...(input.integrationId !== undefined ? { integrationId: input.integrationId } : {}),
+  })
   return schema ?? null
 }
 

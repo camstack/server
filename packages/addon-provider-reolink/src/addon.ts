@@ -8,6 +8,7 @@ import type {
   AddonContext,
   AddonInitResult,
   ConfigUISchema,
+  CreationSchemaContext,
   CreateDeviceSpec,
   DeviceConstructor,
   DeviceRestoreReport,
@@ -85,6 +86,7 @@ import {
 } from './migrations/index.js'
 import {
   buildReolinkInstances,
+  integrationIsHub,
   type ReolinkConnectionBody,
   reolinkConnectionsEntryKind,
   reolinkInstancesProvider,
@@ -363,6 +365,7 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
 
   private hubManager: ReolinkHubManager | null = null
   private instances: RecordIntegrationInstances<ReolinkConnectionBody> | null = null
+  private hubIntegrationProbe: ((id: string) => Promise<boolean>) | null = null
   /**
    * The camera mailbox bridge (`email-push-bridge.ts`, D999): battery cameras mail motion to a
    * mailbox of the `smtp-inbound` broker, the bridge turns each message into the camera's
@@ -1054,6 +1057,7 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
       registryEvidenceOf,
     })
     this.instances = instances
+    this.hubIntegrationProbe = (id) => integrationIsHub(instances, { registryEvidenceOf }, id)
     await this.runMigrations([
       ...defineAddonMigrations(REOLINK_MIGRATIONS, this.migrationPorts()),
       ...defineAddonMigrations(REOLINK_INTEGRATION_MIGRATIONS, integrationPorts),
@@ -1530,9 +1534,28 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
 
   // ── Creation ─────────────────────────────────────────────────────────
 
-  protected async onGetCreationSchema(type: DeviceType): Promise<ConfigUISchema | null> {
+  protected async onGetCreationSchema(
+    type: DeviceType,
+    context?: CreationSchemaContext,
+  ): Promise<ConfigUISchema | null> {
     if (type !== DeviceType.Camera) return null
+    if (await this.isHubIntegrationId(context?.integrationId)) return null
     return buildCreationFormSchema()
+  }
+
+  /** A hub integration's devices come from the hub: no manual add by IP for it. */
+  async getManualCreationType(input?: {
+    integrationId?: string | undefined
+  }): Promise<{ deviceType: DeviceType | null }> {
+    if (await this.isHubIntegrationId(input?.integrationId)) return { deviceType: null }
+    return super.getManualCreationType(input)
+  }
+
+  /** `false` for no integration, or one the registry cannot name (the addon's own default). */
+  protected async isHubIntegrationId(id: string | undefined): Promise<boolean> {
+    const probe = this.hubIntegrationProbe
+    if (id === undefined || probe === null) return false
+    return probe(id)
   }
 
   protected async onCreateDevice(

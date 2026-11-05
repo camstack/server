@@ -50,7 +50,7 @@ export function AddDeviceModal({
   onSetupIntegration,
 }: AddDeviceModalProps): ReactElement {
   const { t } = useTranslation()
-  const manual = useManualCreationAvailability(addonId)
+  const manual = useManualCreationAvailability(addonId, integrationId)
   const hasNetwork = kind === 'device-adoption' || canScan
   const hasManual = manual === 'available'
   const [picked, setPicked] = useState<TabId | null>(null)

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Add-Device asks the provider per integration: a Reolink Home Hub / NVR integration no longer offers a manual add by IP
+
 ## [1.2.506] - 2026-11-05
 
 ### Added

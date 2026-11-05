@@ -153,3 +153,24 @@ export function reolinkInstancesProvider(
     },
   }
 }
+
+/**
+ * Whether an integration IS one NVR / Home Hub (its devices come from the hub, so there is no
+ * manual add by IP). An integration the registry cannot name is not a hub for this question.
+ */
+export async function integrationIsHub(
+  instances: Pick<RecordIntegrationInstances<ReolinkConnectionBody>, 'getResolved'>,
+  deps: Pick<ReolinkInstancesDeps, 'registryEvidenceOf'>,
+  id: string,
+): Promise<boolean> {
+  const [evidence, body] = await Promise.all([
+    deps.registryEvidenceOf(id),
+    instances.getResolved(id),
+  ])
+  if (evidence === null) return false
+  return isHubIntegration({
+    originStableId: evidence.originStableId,
+    info: evidence.info,
+    settings: body === null ? {} : hubSettingsOf(body),
+  })
+}

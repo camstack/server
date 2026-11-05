@@ -1034,6 +1034,7 @@ export {
 } from './device/base-device.js'
 export type {
   CreateDeviceOrigin,
+  CreationSchemaContext,
   DeviceRestoreReport,
   DeviceSummary,
   DiscoveryCandidate,

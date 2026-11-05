@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A Reolink Home Hub / NVR integration no longer offers the manual Enter parameters add in Add device
+
 ## [1.2.228] - 2026-11-05
 
 ### Fixed

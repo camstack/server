@@ -20,6 +20,11 @@ import type { SourceInfo } from './source-info.js'
 
 // ── Shared interfaces (previously duplicated in each provider) ──────
 
+/** What a creation-form question is asked about: the integration the dialog is open on, if any. */
+export interface CreationSchemaContext {
+  readonly integrationId?: string | undefined
+}
+
 export interface DiscoveryCandidate {
   readonly stableId: string
   readonly type: DeviceType
@@ -299,7 +304,9 @@ export abstract class BaseDeviceProvider<
    * `deviceClasses` map (first registered type). `null` when manual creation is
    * unsupported. Lets the Add-Device dialog pick the right type per provider.
    */
-  async getManualCreationType(): Promise<{ deviceType: DeviceType | null }> {
+  async getManualCreationType(_input?: {
+    integrationId?: string | undefined
+  }): Promise<{ deviceType: DeviceType | null }> {
     if (!(await this.supportsManualCreation())) return { deviceType: null }
     const first = Object.values(DeviceType).find((t) => this.deviceClasses[t] !== undefined)
     return { deviceType: first ?? null }
@@ -320,8 +327,11 @@ export abstract class BaseDeviceProvider<
     return true
   }
 
-  async getChildCreationSchema(input: { type: DeviceType }): Promise<ConfigUISchema | null> {
-    return this.onGetCreationSchema(input.type)
+  async getChildCreationSchema(input: {
+    type: DeviceType
+    integrationId?: string | undefined
+  }): Promise<ConfigUISchema | null> {
+    return this.onGetCreationSchema(input.type, { integrationId: input.integrationId })
   }
 
   /**
@@ -705,7 +715,10 @@ export abstract class BaseDeviceProvider<
   protected abstract readonly deviceClasses: Partial<Record<DeviceType, DeviceConstructor<IDevice>>>
 
   /** Return the creation form schema for a given device type, or null if unsupported. */
-  protected abstract onGetCreationSchema(type: DeviceType): Promise<ConfigUISchema | null>
+  protected abstract onGetCreationSchema(
+    type: DeviceType,
+    context?: CreationSchemaContext,
+  ): Promise<ConfigUISchema | null>
 
   /**
    * Build the create spec from operator-supplied form values. Returns

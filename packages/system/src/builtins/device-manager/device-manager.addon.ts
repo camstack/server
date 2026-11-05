@@ -957,7 +957,9 @@ export class DeviceManagerAddon extends BaseAddon {
       runDiscoverySweep: () => discoveryProposals.runSweep(),
       providerCreationType: async (input) => {
         const provider = await this.requireDeviceProvider(input.addonId)
-        return provider.getManualCreationType({})
+        return provider.getManualCreationType(
+          input.integrationId !== undefined ? { integrationId: input.integrationId } : {},
+        )
       },
       providerDiscoveryParamsSchema: async (input) => {
         const provider = await this.requireDeviceProvider(input.addonId)

@@ -3090,6 +3090,10 @@ describe('DeviceManagerAddon', () => {
     provider: IDeviceManagerProvider
     settings: ReturnType<typeof makeSettings>
     emitted: unknown[]
+    fakeDeviceProvider: {
+      getChildCreationSchema: ReturnType<typeof vi.fn>
+      getManualCreationType: ReturnType<typeof vi.fn>
+    }
   }> {
     const addon = new DeviceManagerAddon()
     const settings = makeSettings()
@@ -3103,6 +3107,12 @@ describe('DeviceManagerAddon', () => {
 
     const fakeDeviceProvider = {
       supportsManualCreation: vi.fn(async () => true),
+      getChildCreationSchema: vi.fn(async (_input: { type: string; integrationId?: string }) => ({
+        sections: [],
+      })),
+      getManualCreationType: vi.fn(async (_input: { integrationId?: string }) => ({
+        deviceType: 'camera',
+      })),
       supportsDiscovery: vi.fn(async () => true),
       createDevice: vi.fn(
         async ({ type, config }: { type: string; config: Record<string, unknown> }) => {
@@ -3211,8 +3221,37 @@ describe('DeviceManagerAddon', () => {
     const provider = first.provider as IDeviceManagerProvider
     providerRef.current = provider
 
-    return { provider, settings, emitted }
+    return { provider, settings, emitted, fakeDeviceProvider }
   }
+
+  describe('creation questions carry the integration (planning#442)', () => {
+    it('getCreationSchema and providerCreationType pass integrationId to the provider', async () => {
+      const { provider, fakeDeviceProvider } = await setupWithDeviceProvider()
+      await provider.getCreationSchema({
+        addonId: 'provider-rtsp',
+        type: DeviceType.Camera,
+        integrationId: 'int-hub',
+      })
+      await provider.providerCreationType({ addonId: 'provider-rtsp', integrationId: 'int-hub' })
+      expect(fakeDeviceProvider.getChildCreationSchema).toHaveBeenCalledWith({
+        type: DeviceType.Camera,
+        integrationId: 'int-hub',
+      })
+      expect(fakeDeviceProvider.getManualCreationType).toHaveBeenCalledWith({
+        integrationId: 'int-hub',
+      })
+    })
+
+    it('without an integrationId the provider is asked exactly as before', async () => {
+      const { provider, fakeDeviceProvider } = await setupWithDeviceProvider()
+      await provider.getCreationSchema({ addonId: 'provider-rtsp', type: DeviceType.Camera })
+      await provider.providerCreationType({ addonId: 'provider-rtsp' })
+      expect(fakeDeviceProvider.getChildCreationSchema).toHaveBeenCalledWith({
+        type: DeviceType.Camera,
+      })
+      expect(fakeDeviceProvider.getManualCreationType).toHaveBeenCalledWith({})
+    })
+  })
 
   const sampleCandidate = {
     stableId: 'onvif-cam-adopted',

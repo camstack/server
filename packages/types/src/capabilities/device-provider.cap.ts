@@ -301,7 +301,10 @@ export const deviceProviderCapability = {
      * pick the right type instead of assuming Camera.
      */
     getManualCreationType: method(
-      z.object({}),
+      z.object({
+        /** The integration asked about; a provider whose integrations differ answers per one. */
+        integrationId: z.string().optional(),
+      }),
       z.object({ deviceType: z.enum(DeviceType).nullable() }),
     ),
     adoptDiscoveredDevice: method(
@@ -323,7 +326,11 @@ export const deviceProviderCapability = {
      * router type-asserts it at the boundary.
      */
     getChildCreationSchema: method(
-      z.object({ type: z.enum(DeviceType) }),
+      z.object({
+        type: z.enum(DeviceType),
+        /** The integration asked about; a provider whose integrations differ answers per one. */
+        integrationId: z.string().optional(),
+      }),
       CreationSchemaOutputSchema,
     ),
     createDevice: method(
