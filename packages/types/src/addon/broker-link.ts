@@ -23,8 +23,8 @@ import { type InstanceChange, RecordIntegrationInstances } from './record-integr
 /** The record kind an integration is stored under. */
 export const BROKER_LINK_KIND_NAME = 'connections'
 
-/** What every broker-linked record carries; link fields of the service come on top. */
-export const BrokerLinkBodySchema = entryBody({ brokerId: z.string().min(1).optional() })
+/** What every broker-linked record carries; `brokerId` is always present, `''` is a row whose broker is not picked yet; link fields of the service come on top. */
+export const BrokerLinkBodySchema = entryBody({ brokerId: z.string() })
 export type BrokerLinkBody = z.infer<typeof BrokerLinkBodySchema>
 
 type FormSections = ConfigUISchema['sections']
@@ -99,7 +99,7 @@ export async function buildBrokerLinkForm(
 export function resolveBrokerId(record: {
   readonly brokerId?: string | undefined
 }): string | undefined {
-  return record.brokerId
+  return record.brokerId === undefined || record.brokerId === '' ? undefined : record.brokerId
 }
 
 /** The broker an integration links to, from its record. */
@@ -147,7 +147,7 @@ export function buildBrokerLinkInstances<TBody extends BrokerLinkBody>(
       },
       formSchema: async (id) =>
         buildBrokerLinkForm(spec, id === null ? undefined : await brokerIdOf(instances, id)),
-      initialBody: (name) => spec.kind.schema.parse({ name }),
+      initialBody: (name) => spec.kind.schema.parse({ name, brokerId: '' }),
       configured: (body) => resolveBrokerId(body) !== undefined,
       ...(spec.onChanged !== undefined ? { onChanged: spec.onChanged } : {}),
     },
