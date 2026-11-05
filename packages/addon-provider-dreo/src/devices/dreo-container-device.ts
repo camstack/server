@@ -19,7 +19,7 @@ import { dreoChildFactory } from './dreo-child-class-factory.js'
  */
 export const dreoContainerSchema = z.object({
   dreoDeviceId: z.string().min(1).describe('Dreo cloud device id'),
-  brokerId: z.string().min(1).describe('Registry broker id'),
+  brokerId: z.string().min(1).describe('Integration id (persisted under the legacy name brokerId)'),
   model: z.string().min(1).describe('Dreo cloud model string'),
   integrationId: z.string().optional(),
   system: z.literal('dreo').optional(),

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Dreo integration offers the Test action it implements.
+
 ## [0.2.155] - 2026-11-05
 
 ### Changed

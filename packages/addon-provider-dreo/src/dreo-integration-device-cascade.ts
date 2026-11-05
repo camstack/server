@@ -11,8 +11,8 @@ import {
  * Used when an integration is deleted/disabled. Best-effort per device; returns
  * the count removed.
  *
- * NOTE: the persisted config field is still named `brokerId` (unchanged
- * device-side schema) but under the account model it holds the `integrationId`.
+ * NOTE: the persisted config field is named `brokerId` (stored on adopted devices,
+ * so the name stays) but it holds the `integrationId`.
  */
 export async function cascadeRemoveDevicesForIntegration(input: {
   readonly reg: Pick<IDeviceRegistry, 'getAllForAddon'>

@@ -12,7 +12,7 @@ export interface OfflineTarget {
  * Set every Dreo device belonging to `integrationId` to the requested online
  * state. `devices` is the addon-scoped device list; every Dreo top-level
  * Container carries `{ system: 'dreo', brokerId: integrationId }` in its config
- * blob (the `brokerId` field name is unchanged; it now holds the integrationId).
+ * blob (the persisted `brokerId` field holds the integrationId).
  *
  * Churn-free: skips any device already in the target state. Returns the count of
  * devices actually transitioned.

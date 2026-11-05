@@ -43,13 +43,13 @@ import { dreoSession } from './dreo-session.js'
 const DREO_MIGRATIONS_DATE = '2026-11-05'
 
 /**
- * Dreo device-provider addon — `mode: account` (multi-account, broker-less).
+ * Dreo device-provider addon — one integration instance per Dreo account (D1007).
  *
  * Wraps the `@apocaliss92/nodedreo` Dreo cloud client (REST + WebSocket). Each
- * Dreo integration carries its own account credentials in its
- * `integration.settings`; the addon holds one {@link DreoIntegrationManager} per
+ * Dreo integration is a `connections` record carrying its own account
+ * credentials; the addon holds one {@link DreoIntegrationManager} per
  * `integrationId` in {@link DreoClientRegistry} (`Map<integrationId, manager>`).
- * There is NO shared broker. The live connection surface each manager owns
+ * The live connection surface each manager owns
  * (discovery info + per-device handles) is published on the in-process
  * {@link dreoConnections} resolver KEYED BY `integrationId`.
  *
@@ -57,8 +57,9 @@ const DREO_MIGRATIONS_DATE = '2026-11-05'
  * adopts them; each adopted cloud device becomes a {@link DeviceType.Container}
  * parent that fans out a single typed accessory child (fan / purifier / heater /
  * humidifier) and its entity children. The device classes resolve their live
- * handle by the `brokerId` config field — UNCHANGED device-side code; that field
- * now holds the integrationId (see the migration note in the addon docs).
+ * handle by the `brokerId` config field persisted on each adopted device; that
+ * field holds the integrationId (the name predates integration instances and
+ * stays, it is stored).
  *
  * Placement: hub-only — the Dreo cloud is reached over outbound HTTPS + a
  * persistent WebSocket from a single account session; no LAN proximity matters,
@@ -182,8 +183,7 @@ export class DreoProviderAddon extends BaseDeviceProvider {
 
   /**
    * Stable id, integration-scoped so two accounts exposing the same cloud device
-   * id don't collide. `brokerId` in the config is the integrationId (unchanged
-   * field name).
+   * id don't collide. The persisted `brokerId` config field is the integrationId.
    */
   protected override generateStableId(_type: DeviceType, config?: Record<string, unknown>): string {
     const integrationId = String(config?.['brokerId'] ?? 'unknown')
@@ -314,7 +314,7 @@ export class DreoProviderAddon extends BaseDeviceProvider {
       adoptDevice: async ({ dreoDeviceId, integrationId, name, model }) => {
         const devices = this.ctx.kernel.devices
         if (!devices) throw new Error('dreo adopt: kernel.devices unavailable')
-        // `brokerId` holds the integrationId (unchanged device-side field name)
+        // the persisted `brokerId` field holds the integrationId
         // so the device classes resolve their surface via dreoConnections by this id.
         const config = {
           dreoDeviceId,

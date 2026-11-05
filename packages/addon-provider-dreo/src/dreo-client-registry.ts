@@ -1,19 +1,16 @@
 /**
  * Per-integration Dreo connection registry (account mode).
  *
- * Under the LOCKED integration/adoption model (design §7.1), Dreo is a
- * `mode: account` addon: each Dreo integration carries its own Dreo cloud
- * account credentials in its `integration.settings`, and this registry holds one
- * {@link DreoIntegrationManager} per `integrationId`
- * (`Map<integrationId, DreoIntegrationManager>`). Multi-account = multiple
- * integrations; there is NO shared broker.
+ * Each Dreo integration is a `connections` record carrying its own Dreo cloud
+ * account credentials, and this registry holds one {@link DreoIntegrationManager}
+ * per `integrationId` (`Map<integrationId, DreoIntegrationManager>`).
+ * Multi-account = multiple integrations.
  *
  * The live Dreo connection surface each manager owns (discovery info + per-device
  * handles) is published on the in-process {@link dreoConnections} resolver KEYED
  * BY `integrationId` — the manager's id IS the integrationId. Device classes
  * resolve their live handle by the `brokerId` config field they persist, which
- * now holds the integrationId (unchanged device-side code, see the addon
- * migration note). The WebSocket push lifecycle stays entirely inside the manager
+ * holds the integrationId (the name predates integration instances and stays). The WebSocket push lifecycle stays entirely inside the manager
  * + library (no leak): the registry only starts/stops managers.
  */
 
@@ -22,7 +19,7 @@ import { type DreoConfig } from './config.js'
 import {
   DreoIntegrationManager,
   sameConnection,
-  type DreoBrokerInfo,
+  type DreoIntegrationInfo,
 } from './dreo-integration-manager.js'
 import { dreoConnections } from './dreo-gateway.js'
 
@@ -83,7 +80,7 @@ export class DreoClientRegistry {
         new DreoIntegrationManager({
           // The manager id IS the integrationId; the manager publishes its live
           // surface on `dreoConnections` under this key so device classes resolve
-          // their handle by the (unchanged) `brokerId` field = integrationId.
+          // their handle by the persisted `brokerId` field = integrationId.
           id: opts.integrationId,
           name: opts.name,
           connection: opts.connection,
@@ -206,7 +203,7 @@ export class DreoClientRegistry {
   }
 
   /** Immutable status snapshot for an integration's manager. */
-  getInfo(integrationId: string): DreoBrokerInfo | null {
+  getInfo(integrationId: string): DreoIntegrationInfo | null {
     return this.#entries.get(integrationId)?.manager.getInfo() ?? null
   }
 

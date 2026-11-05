@@ -22,15 +22,11 @@ export interface DreoAdoptionRegistry {
 /**
  * `device-adoption` cap provider for the Dreo addon (account mode).
  *
- * Broker-less: candidates + adoption are resolved DIRECTLY by `integrationId` →
- * the per-integration connection surface (published on `dreoConnections` keyed by
- * integrationId). There is no `brokerId` indirection — an adopted device stores
- * its `integrationId` in the (unchanged) `brokerId` config field, which is how
+ * Candidates + adoption are resolved by `integrationId` → the per-integration
+ * connection surface (published on `dreoConnections` keyed by integrationId). An
+ * adopted device stores its `integrationId` in the `brokerId` config field (a name
+ * that predates integration instances and stays, it is persisted), which is how
  * the device classes resolve their live handle.
- *
- * The candidate/adopt OUTPUT shape and the device-class instantiation (Container
- * → fan/purifier/heater/humidifier + children) are IDENTICAL to the broker era —
- * only the connection resolution changed.
  */
 export interface DreoAdoptionProviderDeps {
   readonly registry: DreoAdoptionRegistry
@@ -64,7 +60,7 @@ async function adoptedMapForIntegration(
   const all = await listAdoptedDreo()
   const map = new Map<string, number>()
   for (const device of all) {
-    // `brokerId` now holds the integrationId (unchanged device-side field name).
+    // The persisted `brokerId` field holds the integrationId.
     if (device.config['system'] === 'dreo' && device.config['brokerId'] === integrationId) {
       const dreoId = device.config['dreoDeviceId']
       if (typeof dreoId === 'string') map.set(dreoId, device.id)
@@ -241,7 +237,7 @@ export function buildDreoAdoptionProvider(deps: DreoAdoptionProviderDeps): IDevi
       if (cfg['system'] !== 'dreo') {
         throw new Error(`dreo resync: device ${camDeviceId} is not a Dreo device`)
       }
-      // `brokerId` holds the integrationId (unchanged device-side field name).
+      // The persisted `brokerId` field holds the integrationId.
       const integrationId = String(cfg['brokerId'])
       const dreoDeviceId = String(cfg['dreoDeviceId'])
       if (!hasIntegration(integrationId)) {

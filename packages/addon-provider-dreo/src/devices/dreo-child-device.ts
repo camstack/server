@@ -10,7 +10,7 @@ import { dreoConnections } from '../dreo-gateway.js'
  */
 export const dreoChildSchema = z.object({
   dreoDeviceId: z.string().min(1).describe('Dreo cloud device id'),
-  brokerId: z.string().min(1).describe('Registry broker id'),
+  brokerId: z.string().min(1).describe('Integration id (persisted under the legacy name brokerId)'),
   model: z.string().optional().describe('Dreo cloud model string'),
   system: z.literal('dreo').optional(),
   integrationId: z.string().optional(),
@@ -20,7 +20,7 @@ export type DreoChildConfig = z.infer<typeof dreoChildSchema>
 
 /**
  * Shared base for every Dreo accessory child (fan / purifier / heater /
- * humidifier). Holds the dreoDeviceId + brokerId resolved from config and the
+ * humidifier). Holds the dreoDeviceId + integration id resolved from config and the
  * handle-resolution seam. Concrete subclasses register their cap(s) + attach a
  * `stateChanged` listener that recomputes their cap slices.
  *
@@ -35,8 +35,8 @@ export abstract class DreoChildDevice extends BaseDevice<typeof dreoChildSchema>
 
   /** Dreo cloud device id — dispatch + event-filter key. */
   protected readonly dreoDeviceId: string
-  /** Registry broker id selecting the account connection. */
-  protected readonly brokerId: string
+  /** Integration id selecting the account connection. */
+  protected readonly integrationId: string
   /** Cloud model string (e.g. `DR-HTF008S`). */
   protected readonly model: string | undefined
 
@@ -47,7 +47,7 @@ export abstract class DreoChildDevice extends BaseDevice<typeof dreoChildSchema>
     const persisted = dreoChildSchema.parse(ctx.persistedConfig ?? {})
     super(ctx, dreoChildSchema, { type: ctx.deviceMeta.type })
     this.dreoDeviceId = persisted.dreoDeviceId
-    this.brokerId = persisted.brokerId
+    this.integrationId = persisted.brokerId
     this.model = persisted.model
     this.online = true
     void this.updateSourceInfo({ id: this.dreoDeviceId, system: 'dreo' })
@@ -55,7 +55,7 @@ export abstract class DreoChildDevice extends BaseDevice<typeof dreoChildSchema>
 
   /** Resolve this child's live Dreo device handle, or null when disconnected. */
   protected resolveHandle(): DreoBaseDevice | null {
-    return dreoConnections.getDevice(this.brokerId, this.dreoDeviceId)
+    return dreoConnections.getDevice(this.integrationId, this.dreoDeviceId)
   }
 
   /** Narrow the optional handle to a present one or throw a clear error. */

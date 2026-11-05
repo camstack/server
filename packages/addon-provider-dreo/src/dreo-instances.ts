@@ -37,7 +37,7 @@ export function buildDreoInstances(
       discovery: { mode: 'account', scopedToInstance: true },
       instanceMode: 'multiple',
       kind: 'account',
-      canTest: false,
+      canTest: true,
     },
     formSchema: () => buildConnectionFormSchema(),
     initialBody: (name): DreoConnectionBody => ({ name }),

@@ -53,10 +53,9 @@ export function toDreoConstructorArgs(config: DreoConfig): {
 // Account-mode connection (per-integration settings)
 // ---------------------------------------------------------------------------
 //
-// `mode: account`: there is NO top-level broker array. Each Dreo integration
-// carries its own account credentials in its `integration.settings`; the addon
-// holds one manager per `integrationId` (see `DreoClientRegistry`). The
-// connection schema above IS the integration's settings shape.
+// Each Dreo integration is a `connections` record (D1007) carrying its own account
+// credentials; the addon holds one manager per `integrationId` (see
+// `DreoClientRegistry`). The connection schema above IS the record body's shape.
 
 /**
  * Coerce a loose settings blob (an integration's `settings`) through the
@@ -78,9 +77,9 @@ export function connectionFromSettings(settings: Record<string, unknown>): DreoC
 }
 
 /**
- * Hand-written connection form for the account/integration creation UI — the
- * wizard's `account` config step renders this via `getGlobalSettings`. A flat
- * set of sections the admin UI renders into the "Add Dreo account" modal.
+ * The connection form of a Dreo integration instance, returned by the instances
+ * provider's `formSchema` hook (`buildDreoInstances`). A flat set of sections the
+ * admin UI renders into the "Add Dreo account" modal.
  */
 export function buildConnectionFormSchema(): ConfigUISchema {
   return {

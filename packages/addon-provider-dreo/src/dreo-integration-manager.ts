@@ -10,14 +10,14 @@ import type { DreoConnectionSurface } from './dreo-gateway.js'
 import { dreoSession } from './dreo-session.js'
 
 /** Status of a single Dreo account connection. */
-export type DreoBrokerStatus = 'connected' | 'disconnected' | 'connecting' | 'error'
+export type DreoIntegrationStatus = 'connected' | 'disconnected' | 'connecting' | 'error'
 
 /** Immutable snapshot returned by {@link DreoIntegrationManager.getInfo}. */
-export interface DreoBrokerInfo {
+export interface DreoIntegrationInfo {
   readonly id: string
   readonly name: string
   readonly kind: 'dreo'
-  readonly status: DreoBrokerStatus
+  readonly status: DreoIntegrationStatus
   readonly info: Record<string, unknown>
   readonly lastCheckedAt: number | null
   readonly error: string | null
@@ -40,7 +40,7 @@ export type DreoFacadeFactory = (config: DreoConfig) => DreoFacadeLike
 
 /** Sink the manager publishes its live connection surface to (the resolver). */
 export interface DreoSurfaceSink {
-  set(brokerId: string, surface: DreoConnectionSurface | null): void
+  set(integrationId: string, surface: DreoConnectionSurface | null): void
 }
 
 /** Constructor options for {@link DreoIntegrationManager}. */
@@ -49,8 +49,8 @@ export interface DreoIntegrationManagerOptions {
   readonly name: string
   readonly connection: DreoConfig
   readonly logger: IScopedLogger
-  readonly onConnected: (brokerId: string) => void
-  readonly onDisconnected: (brokerId: string) => void
+  readonly onConnected: (integrationId: string) => void
+  readonly onDisconnected: (integrationId: string) => void
   readonly surfaceSink: DreoSurfaceSink
   /** Factory seam for testing. When omitted, builds a real {@link Nodedreo}. */
   readonly makeFacade?: DreoFacadeFactory
@@ -85,14 +85,14 @@ export class DreoIntegrationManager {
   readonly #name: string
   #connection: DreoConfig
   readonly #logger: IScopedLogger
-  readonly #onConnected: (brokerId: string) => void
-  readonly #onDisconnected: (brokerId: string) => void
+  readonly #onConnected: (integrationId: string) => void
+  readonly #onDisconnected: (integrationId: string) => void
   readonly #surfaceSink: DreoSurfaceSink
   readonly #makeFacade: DreoFacadeFactory
 
   readonly #session: IntegrationSessionSink
   #facade: DreoFacadeLike | null = null
-  #status: DreoBrokerStatus = 'disconnected'
+  #status: DreoIntegrationStatus = 'disconnected'
   #deviceCount = 0
   #lastCheckedAt: number | null = null
   #error: string | null = null
@@ -120,7 +120,7 @@ export class DreoIntegrationManager {
   }
 
   /** Immutable snapshot of current manager state. */
-  getInfo(): DreoBrokerInfo {
+  getInfo(): DreoIntegrationInfo {
     return {
       id: this.#id,
       name: this.#name,
@@ -144,7 +144,7 @@ export class DreoIntegrationManager {
   async start(): Promise<void> {
     if (this.#facade !== null) {
       this.#logger.warn('DreoIntegrationManager: start() called while running — stop first', {
-        tags: { brokerId: this.#id },
+        tags: { integrationId: this.#id },
       })
       return
     }
@@ -168,7 +168,7 @@ export class DreoIntegrationManager {
         } catch (err: unknown) {
           // A single un-instantiable device must not fail the whole account.
           this.#logger.warn('DreoIntegrationManager: createDevice failed', {
-            tags: { brokerId: this.#id },
+            tags: { integrationId: this.#id },
             meta: { deviceId: info.deviceId, model: info.model, error: errMsg(err) },
           })
         }
@@ -184,7 +184,7 @@ export class DreoIntegrationManager {
       void this.#session.ok(this.#id)
       this.#onConnected(this.#id)
       this.#logger.info('DreoIntegrationManager: connected', {
-        tags: { brokerId: this.#id },
+        tags: { integrationId: this.#id },
         meta: { region: this.#connection.region, deviceCount: this.#deviceCount },
       })
     } catch (err: unknown) {
@@ -198,7 +198,7 @@ export class DreoIntegrationManager {
       this.#session.failure(this.#id, err)
       this.#onDisconnected(this.#id)
       this.#logger.warn('DreoIntegrationManager: connect failed', {
-        tags: { brokerId: this.#id },
+        tags: { integrationId: this.#id },
         meta: { error: this.#error },
       })
       throw err
@@ -216,7 +216,7 @@ export class DreoIntegrationManager {
         facade.close()
       } catch (err: unknown) {
         this.#logger.warn('DreoIntegrationManager: facade close failed', {
-          tags: { brokerId: this.#id },
+          tags: { integrationId: this.#id },
           meta: { error: errMsg(err) },
         })
       }
