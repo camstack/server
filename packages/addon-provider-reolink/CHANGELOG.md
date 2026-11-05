@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Cameras whose host reports an unknown time zone (Etc/Unknown) no longer fail the clip catalog refresh; it falls back to the camera's offset or UTC.
+
 ## [1.2.225] - 2026-11-05
 
 ### Changed

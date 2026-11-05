@@ -1,4 +1,5 @@
 import type { EncStreamPatch } from '@apocaliss92/nodelink-js'
+import { resolveClipTimeZoneOnce } from './clips/clip-time-zone.js'
 import { shouldAcceptSleepPushSource } from '@apocaliss92/nodelink-js'
 import {
   ACCESSORY_LABEL,
@@ -2019,6 +2020,8 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     }
   }
 
+  private readonly clipTimeZoneWarned = { done: false }
+
   getClipDeviceRef(): ClipDeviceRef {
     const configUid = this.config.get('uid')
     return {
@@ -2048,7 +2051,13 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       // The camera's wall clock, NAMED rather than inherited. The container's
       // zone is the default because it is what the library would use anyway;
       // naming it is what makes the boot-time assert meaningful (D549 7).
-      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      timeZone: resolveClipTimeZoneOnce(
+        Intl.DateTimeFormat().resolvedOptions().timeZone,
+        reolinkTimeZoneToIana(this.config.get('deviceCache')?.systemGeneralSnapshot?.timeZone),
+        this.ctx.logger,
+        this.id,
+        this.clipTimeZoneWarned,
+      ),
       // A hub child's stills go through the HUB's host, which is what makes
       // one lane per hub the right bound: the hub refuses concurrent
       // CoverPreviews across its children, not per channel.
