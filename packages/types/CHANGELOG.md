@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - pipelineAnalytics.getMediaLocationCensus: stored media rows and bytes per storage location, answered from indexes
 - A stable, append-only migration API (MigrationApiV1) that addon migrations call, so an old migration keeps running after a version-jump upgrade
 - Migrations: ctx.migrationApi, a stable append-only migration API (V1), and runMigrations(catalogue, bindPorts)
+- Migration API V1 gains a devices namespace (scoped list, get, setIntegrationId)
 
 ## [1.2.507] - 2026-11-05
 

@@ -41,7 +41,27 @@ export interface MigrationIntegrationRow {
   readonly originStableId?: string | undefined
 }
 
+/** The device registry slice a migration may touch; `list` is already scoped to one addon. */
+export interface DevicesDoor {
+  list(addonId: string): Promise<
+    readonly {
+      readonly id: number
+      readonly integrationId?: string | null | undefined
+      readonly parentDeviceId?: number | null | undefined
+      readonly type?: string | undefined
+      readonly name?: string | undefined
+      readonly stableId?: string | undefined
+    }[]
+  >
+  get(deviceId: number): Promise<{
+    readonly integrationId?: string | null | undefined
+    readonly config?: Readonly<Record<string, unknown>> | undefined
+  } | null>
+  setIntegrationId(deviceId: number, integrationId: string): Promise<void>
+}
+
 export interface MigrationApiBacking {
+  readonly devices: DevicesDoor
   readonly nodeId: string
   readonly logger: Pick<IScopedLogger, 'info' | 'warn'>
   readonly ledger: AddonMigrationHost
@@ -155,6 +175,26 @@ export function createMigrationApi(backing: MigrationApiBacking): MigrationApiV1
         return found === undefined ? null : toIntegration(found)
       },
     },
+    devices: {
+      list: async ({ addonId, integrationId }) => ({
+        devices: (await backing.devices.list(addonId))
+          .filter((d) => integrationId === undefined || d.integrationId === integrationId)
+          .map((d) => ({ ...d })),
+      }),
+      get: async ({ deviceId }) => {
+        const found = await backing.devices.get(deviceId)
+        if (found === null) return null
+        return {
+          id: deviceId,
+          integrationId: found.integrationId ?? null,
+          hasConfig: Object.keys(found.config ?? {}).length > 0,
+        }
+      },
+      setIntegrationId: async ({ deviceId, integrationId }) => {
+        await backing.devices.setIntegrationId(deviceId, integrationId)
+        return {}
+      },
+    },
     node: { localNodeId: async () => ({ nodeId: backing.nodeId }) },
     log: {
       info: async ({ message, meta }) => {
@@ -214,6 +254,13 @@ export function createMigrationApiOverContext(deps: MigrationApiContextDeps): Mi
       deleteKeys: (input) => migrations().deleteLegacyIntegrationRowKeys.mutate(input),
     },
     listIntegrations: () => deps.api().integrations.list.query(),
+    devices: {
+      list: (addonId) => deps.api().deviceManager.listAll.query({ addonId, projection: 'slim' }),
+      get: (deviceId) => deps.api().deviceManager.getDevice.query({ deviceId }),
+      setIntegrationId: async (deviceId, integrationId) => {
+        await deps.api().deviceManager.setIntegrationId.mutate({ deviceId, integrationId })
+      },
+    },
     records: deps.records,
     secrets: deps.secrets,
     settings: deps.settings,

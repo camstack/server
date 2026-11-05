@@ -18,7 +18,11 @@ import {
   type RecordsAccess,
 } from '@camstack/types'
 import type Database from 'better-sqlite3'
-import { createMigrationApi } from '../../../../kernel/moleculer/migration-api-facade.js'
+import { z } from 'zod'
+import {
+  createMigrationApi,
+  type DevicesDoor,
+} from '../../../../kernel/moleculer/migration-api-facade.js'
 import { createDoorSettingsView } from '../../../../kernel/settings-door-view.js'
 import { createDataStoreDispatch } from '../../../storage-orchestrator/data-store-dispatch.js'
 import type { PlacementRouter } from '../../placement-router.js'
@@ -58,6 +62,15 @@ export interface MigrationWorld {
   readonly provider: MigrationsProvider
   /** Register an integration row so the legacy-rows door knows its owner. */
   addIntegration(row: { id: string; addonId: string; name?: string }): void
+  /** Register a device row (the registry stand-in the devices door reads). */
+  addDevice(row: {
+    id: number
+    addonId: string
+    integrationId?: string
+    parentDeviceId?: number
+    name?: string
+    config?: Record<string, unknown>
+  }): void
   /** The migration API as `owner` sees it. */
   apiFor(owner: string): MigrationApiV1
   /** `ctx.records` of `owner`: declare its kinds here before a migration binds one. */
@@ -121,6 +134,9 @@ export async function makeMigrationWorld(
   db.exec(
     'CREATE TABLE IF NOT EXISTS integrations (id TEXT PRIMARY KEY NOT NULL, addon_id TEXT NOT NULL, name TEXT)',
   )
+  db.exec(
+    "CREATE TABLE IF NOT EXISTS spec_devices (id INTEGER PRIMARY KEY NOT NULL, addon_id TEXT NOT NULL, integration_id TEXT, parent_device_id INTEGER, name TEXT, config TEXT NOT NULL DEFAULT '{}')",
+  )
   const provider = new MigrationsProvider(engine, {
     database: () => db,
     runnerIdOf: installedRunnerResolver(addonsDir),
@@ -171,6 +187,18 @@ export async function makeMigrationWorld(
         row.name ?? row.id,
       )
     },
+    addDevice: (row) => {
+      db.prepare(
+        'INSERT INTO spec_devices (id, addon_id, integration_id, parent_device_id, name, config) VALUES (?, ?, ?, ?, ?, ?)',
+      ).run(
+        row.id,
+        row.addonId,
+        row.integrationId ?? null,
+        row.parentDeviceId ?? null,
+        row.name ?? `device-${row.id}`,
+        JSON.stringify(row.config ?? {}),
+      )
+    },
     hostFor,
     apiFor: (owner) => {
       const secrets = createSecretsAccess({ owner, transport: keychain })
@@ -191,6 +219,7 @@ export async function makeMigrationWorld(
           patch: (i) => legacy.patchLegacyIntegrationRows(stamp(owner, i)),
           deleteKeys: (i) => legacy.deleteLegacyIntegrationRowKeys(stamp(owner, i)),
         },
+        devices: devicesDoor(db),
         listIntegrations: async () =>
           db
             .prepare('SELECT id, addon_id AS addonId, name FROM integrations ORDER BY id')
@@ -219,6 +248,46 @@ export async function makeMigrationWorld(
       await file.stop()
       h.cleanup()
       rmSync(addonsDir, { recursive: true, force: true })
+    },
+  }
+}
+
+const DeviceRowSchema = z.object({
+  id: z.number(),
+  integration_id: z.string().nullable(),
+  parent_device_id: z.number().nullable(),
+  name: z.string(),
+  config: z.string(),
+})
+
+/** The real SQL behind the devices door of the spec world. */
+function devicesDoor(db: Database.Database): DevicesDoor {
+  const rows = (sql: string, ...args: (string | number)[]) =>
+    db
+      .prepare(sql)
+      .all(...args)
+      .map((r) => DeviceRowSchema.parse(r))
+  return {
+    list: async (addonId) =>
+      rows('SELECT * FROM spec_devices WHERE addon_id = ? ORDER BY id', addonId).map((r) => ({
+        id: r.id,
+        integrationId: r.integration_id,
+        parentDeviceId: r.parent_device_id,
+        name: r.name,
+      })),
+    get: async (deviceId) => {
+      const found = rows('SELECT * FROM spec_devices WHERE id = ?', deviceId)[0]
+      if (found === undefined) return null
+      return {
+        integrationId: found.integration_id,
+        config: z.record(z.string(), z.unknown()).parse(JSON.parse(found.config)),
+      }
+    },
+    setIntegrationId: async (deviceId, integrationId) => {
+      db.prepare('UPDATE spec_devices SET integration_id = ? WHERE id = ?').run(
+        integrationId,
+        deviceId,
+      )
     },
   }
 }

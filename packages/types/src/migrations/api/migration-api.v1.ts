@@ -65,7 +65,7 @@ export interface MigrationApiV1 {
     /** Bind one of THIS addon's declared kinds. Not a contract method: it names the handle. */
     kind<S extends z.ZodType>(definition: DefinedRecordKind<S>): MigrationRecordsKindV1<z.infer<S>>
   }
-  /** The addon's own settings store, secret values resolved on read. */
+  /** The addon's own settings store as stored: a secret is a `{ $secret }` marker, resolve it with `secrets.resolve`. */
   readonly settings: {
     read(input: In<'settings.read'>): Promise<Out<'settings.read'>>
     write(input: In<'settings.write'>): Promise<Out<'settings.write'>>
@@ -80,6 +80,14 @@ export interface MigrationApiV1 {
   readonly integrations: {
     list(input: In<'integrations.list'>): Promise<Out<'integrations.list'>>
     get(input: In<'integrations.get'>): Promise<Out<'integrations.get'>>
+  }
+  /** Devices of an addon (never a global walk): list, read the link, set the link. */
+  readonly devices: {
+    list(input: In<'devices.list'>): Promise<Out<'devices.list'>>
+    get(input: In<'devices.get'>): Promise<Out<'devices.get'>>
+    setIntegrationId(
+      input: In<'devices.setIntegrationId'>,
+    ): Promise<Out<'devices.setIntegrationId'>>
   }
   readonly node: {
     localNodeId(input: In<'node.localNodeId'>): Promise<Out<'node.localNodeId'>>

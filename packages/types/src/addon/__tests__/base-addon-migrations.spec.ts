@@ -176,6 +176,7 @@ function stubMigrationApi(): MigrationApiV1 {
     settings: { read: none, write: none, deleteKeys: none },
     secrets: { resolve: none, put: none, delete: none },
     integrations: { list: none, get: none },
+    devices: { list: none, get: none, setIntegrationId: none },
     node: { localNodeId: none },
     log: { info: none, warn: none },
   }

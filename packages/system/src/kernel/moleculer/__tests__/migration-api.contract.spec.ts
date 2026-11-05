@@ -92,6 +92,7 @@ describe('MigrationApiV1: the surface', () => {
       ...Object.keys(a.settings).map((m) => `settings.${m}`),
       ...Object.keys(a.secrets).map((m) => `secrets.${m}`),
       ...Object.keys(a.integrations).map((m) => `integrations.${m}`),
+      ...Object.keys(a.devices).map((m) => `devices.${m}`),
       ...Object.keys(a.node).map((m) => `node.${m}`),
       ...Object.keys(a.log).map((m) => `log.${m}`),
     ]
@@ -370,6 +371,48 @@ describe('MigrationApiV1.secrets', () => {
       deleted: 1,
     })
     expect(world.keychain.values.has(ref(OWNER))).toBe(false)
+  })
+})
+
+describe('MigrationApiV1.devices', () => {
+  beforeEach(() => {
+    world.addDevice({ id: 1, addonId: OWNER, integrationId: INTEGRATION, name: 'one' })
+    world.addDevice({ id: 2, addonId: OWNER, parentDeviceId: 1, name: 'two', config: { k: 1 } })
+    world.addDevice({ id: 3, addonId: FOREIGN, integrationId: 'int_other', name: 'three' })
+  })
+
+  it('devices.list.scoped-to-the-addon', async () => {
+    const out = await api().devices.list({ addonId: OWNER })
+    expect(out.devices.map((d) => d.id)).toEqual([1, 2])
+    expect(out.devices[1]?.parentDeviceId).toBe(1)
+  })
+
+  it('devices.list.filters-by-integration', async () => {
+    const out = await api().devices.list({ addonId: OWNER, integrationId: INTEGRATION })
+    expect(out.devices.map((d) => d.id)).toEqual([1])
+  })
+
+  it('devices.get.null-for-an-unknown-id', async () => {
+    await expect(api().devices.get({ deviceId: 99 })).resolves.toBeNull()
+  })
+
+  it('devices.get.reports-link-and-config', async () => {
+    await expect(api().devices.get({ deviceId: 1 })).resolves.toEqual({
+      id: 1,
+      integrationId: INTEGRATION,
+      hasConfig: false,
+    })
+    await expect(api().devices.get({ deviceId: 2 })).resolves.toEqual({
+      id: 2,
+      integrationId: null,
+      hasConfig: true,
+    })
+  })
+
+  it('devices.setIntegrationId.links-the-device', async () => {
+    await api().devices.setIntegrationId({ deviceId: 2, integrationId: INTEGRATION })
+    expect((await api().devices.get({ deviceId: 2 }))?.integrationId).toBe(INTEGRATION)
+    expect((await api().devices.get({ deviceId: 3 }))?.integrationId).toBe('int_other')
   })
 })
 

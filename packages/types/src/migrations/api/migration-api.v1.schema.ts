@@ -62,6 +62,16 @@ const MigrationIntegrationSchema = z.object({
   originStableId: z.string().optional(),
 })
 
+const MigrationDeviceSchema = z.object({
+  id: z.number().int(),
+  integrationId: z.string().nullable().optional(),
+  /** The owning device; null or absent for a root. */
+  parentDeviceId: z.number().int().nullable().optional(),
+  type: z.string().optional(),
+  name: z.string().optional(),
+  stableId: z.string().optional(),
+})
+
 /** What the engine says about the migration API it serves: lets an addon notice an older server. */
 export const MigrationApiInfoSchema = z.object({
   version: z.number().int(),
@@ -227,6 +237,29 @@ export const MIGRATION_API_V1_METHODS = {
     input: z.object({ id: z.string().min(1) }),
     output: MigrationIntegrationSchema.nullable(),
     behaviours: ['integrations.get.null-for-an-unknown-id'],
+  },
+  'devices.list': {
+    // Always scoped: a migration never walks every device of the cluster.
+    input: z.object({ addonId: z.string().min(1), integrationId: z.string().min(1).optional() }),
+    output: z.object({ devices: z.array(MigrationDeviceSchema) }),
+    behaviours: ['devices.list.scoped-to-the-addon', 'devices.list.filters-by-integration'],
+  },
+  'devices.get': {
+    input: z.object({ deviceId: z.number().int() }),
+    output: z
+      .object({
+        id: z.number().int(),
+        integrationId: z.string().nullable(),
+        /** Whether the device carries any stored config; its content is not offered. */
+        hasConfig: z.boolean(),
+      })
+      .nullable(),
+    behaviours: ['devices.get.null-for-an-unknown-id', 'devices.get.reports-link-and-config'],
+  },
+  'devices.setIntegrationId': {
+    input: z.object({ deviceId: z.number().int(), integrationId: z.string().min(1) }),
+    output: z.object({}),
+    behaviours: ['devices.setIntegrationId.links-the-device'],
   },
   'node.localNodeId': {
     input: z.object({}),

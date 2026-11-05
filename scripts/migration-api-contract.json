@@ -1,6 +1,82 @@
 {
   "version": 1,
   "methods": {
+    "devices.get": {
+      "input": {
+        "deviceId": {
+          "required": true
+        }
+      },
+      "output": {
+        "hasConfig": {
+          "required": true
+        },
+        "id": {
+          "required": true
+        },
+        "integrationId": {
+          "required": true
+        }
+      },
+      "behaviours": [
+        "devices.get.null-for-an-unknown-id",
+        "devices.get.reports-link-and-config"
+      ]
+    },
+    "devices.list": {
+      "input": {
+        "addonId": {
+          "required": true
+        },
+        "integrationId": {
+          "required": false
+        }
+      },
+      "output": {
+        "devices": {
+          "required": true
+        },
+        "devices[]": {
+          "required": false
+        },
+        "devices[].id": {
+          "required": true
+        },
+        "devices[].integrationId": {
+          "required": false
+        },
+        "devices[].name": {
+          "required": false
+        },
+        "devices[].parentDeviceId": {
+          "required": false
+        },
+        "devices[].stableId": {
+          "required": false
+        },
+        "devices[].type": {
+          "required": false
+        }
+      },
+      "behaviours": [
+        "devices.list.filters-by-integration",
+        "devices.list.scoped-to-the-addon"
+      ]
+    },
+    "devices.setIntegrationId": {
+      "input": {
+        "deviceId": {
+          "required": true
+        },
+        "integrationId": {
+          "required": true
+        }
+      },
+      "output": {},
+      "behaviours": [
+        "devices.setIntegrationId.links-the-device"
+      ]
+    },
     "integrations.get": {
       "input": {
         "id": {
