@@ -7,11 +7,7 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { createRecordsAccess } from '@camstack/types'
-import type { ISettingsStoreProvider } from '@camstack/types'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { integrationRegistryRecordKinds } from '../integration-record-kinds.js'
-import { IntegrationRegistry } from '../integration-registry.js'
 import {
   installedRunnerResolver,
   installedSiblingResolver,
@@ -23,23 +19,14 @@ import {
 import { MigrationsProvider } from '../migrations/migrations-provider.js'
 import { MigrationEngine } from '../migrations/migration-engine.js'
 import { recordingLogger } from './support/owned-files-harness.js'
+import { SqliteSnapshotter } from '../sqlite-snapshotter.js'
 import { makeRecordsWorld } from './support/records-world.js'
 
 const OWNER = 'provider-homeassistant'
 const SIBLING = 'homeassistant-export'
 const FOREIGN_SAME_RUNNER = 'other-grouped-addon'
 
-const noopStore = {
-  declareCollection: async () => {},
-  query: async () => [],
-  insert: async () => {},
-  updateWhere: async () => {},
-  deleteWhere: async () => {},
-  get: async () => null,
-  set: async () => {},
-  delete: async () => {},
-  update: async () => {},
-}
+const INTEGRATION = 'int_0006'
 
 describe('legacy integration rows: who may read them', () => {
   let addonsDir: string
@@ -70,49 +57,50 @@ describe('legacy integration rows: who may read them', () => {
 
   async function boot(): Promise<{
     read: (caller: string | null) => Promise<unknown>
+    writes: Record<'patch' | 'deleteKeys' | 'clear', (caller: string | null) => Promise<unknown>>
   }> {
     const world = makeRecordsWorld()
     await world.provider.init()
     ensureLegacyIntegrationRowsTable(world.settings.db)
-    const registryRecords = createRecordsAccess({
-      owner: 'integration-registry',
-      transport: world.transportFor('integration-registry'),
-      secrets: null,
-    })
-    await registryRecords.declare(integrationRegistryRecordKinds)
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- documented type boundary: a no-op legacy store; the records stores serve every call
-    const store = noopStore as unknown as ISettingsStoreProvider
-    const registry = new IntegrationRegistry(
-      store,
-      IntegrationRegistry.recordStoresOf(registryRecords),
+    const db = world.settings.db
+    db.exec(
+      'CREATE TABLE IF NOT EXISTS integrations (id TEXT PRIMARY KEY NOT NULL, addon_id TEXT NOT NULL)',
     )
-    await registry.initialize()
-    const integration = await registry.createIntegration({
-      addonId: OWNER,
-      name: 'Home',
-    })
-    patchLegacyIntegrationRows(world.settings.db, integration.id, {
-      url: 'http://ha.example.com',
-    })
+    db.prepare('INSERT INTO integrations (id, addon_id) VALUES (?, ?)').run(INTEGRATION, OWNER)
+    patchLegacyIntegrationRows(db, INTEGRATION, { url: 'http://ha.example.com', keep: 1 })
     const engine = new MigrationEngine({
       logger: recordingLogger([], 'Migrations'),
       catalogue: [],
       codeVersion: '1.0.0',
-      snapshotterFor: () => ({
-        writePreMigration: async () => ({ outcome: 'skipped' }) as never,
-      }),
+      snapshotterFor: (livePath) =>
+        new SqliteSnapshotter({ livePath, logger: recordingLogger([], 'Snapshot') }),
     })
     const provider = new MigrationsProvider(engine, {
       database: () => world.settings.db,
       runnerIdOf: installedRunnerResolver(addonsDir),
       areSiblings: installedSiblingResolver(addonsDir),
     })
+    const stamp = (caller: string | null): { callerAddonId?: string } =>
+      caller === null ? {} : { callerAddonId: caller }
     return {
       read: async (caller) =>
-        provider.readLegacyIntegrationRows({
-          integrationId: integration.id,
-          ...(caller === null ? {} : { callerAddonId: caller }),
-        }),
+        provider.readLegacyIntegrationRows({ integrationId: INTEGRATION, ...stamp(caller) }),
+      writes: {
+        patch: async (caller) =>
+          provider.patchLegacyIntegrationRows({
+            integrationId: INTEGRATION,
+            patch: { touched: true },
+            ...stamp(caller),
+          }),
+        deleteKeys: async (caller) =>
+          provider.deleteLegacyIntegrationRowKeys({
+            integrationId: INTEGRATION,
+            keys: ['keep'],
+            ...stamp(caller),
+          }),
+        clear: async (caller) =>
+          provider.clearLegacyIntegrationRows({ integrationId: INTEGRATION, ...stamp(caller) }),
+      },
     }
   }
 
@@ -120,9 +108,11 @@ describe('legacy integration rows: who may read them', () => {
     const { read } = await boot()
     await expect(read(OWNER)).resolves.toEqual({
       url: 'http://ha.example.com',
+      keep: 1,
     })
     await expect(read(SIBLING)).resolves.toEqual({
       url: 'http://ha.example.com',
+      keep: 1,
     })
   })
 
@@ -131,5 +121,20 @@ describe('legacy integration rows: who may read them', () => {
     await expect(read(FOREIGN_SAME_RUNNER)).rejects.toThrow(/migration-only/)
     await expect(read('stranger')).rejects.toThrow(/migration-only/)
     await expect(read(null)).rejects.toThrow(/migration-only/)
+  })
+
+  it.each([
+    'patch',
+    'deleteKeys',
+    'clear',
+  ] as const)('the write op %s: a sibling is allowed, a foreign addon and an unstamped call are refused', async (op) => {
+    const { writes, read } = await boot()
+    await expect(writes[op](FOREIGN_SAME_RUNNER)).rejects.toThrow(/migration-only/)
+    await expect(writes[op]('stranger')).rejects.toThrow(/migration-only/)
+    await expect(writes[op](null)).rejects.toThrow(/migration-only/)
+    // refused means untouched
+    await expect(read(OWNER)).resolves.toEqual({ url: 'http://ha.example.com', keep: 1 })
+    await expect(writes[op](SIBLING)).resolves.toBeDefined()
+    expect(await read(OWNER)).not.toEqual({ url: 'http://ha.example.com', keep: 1 })
   })
 })
