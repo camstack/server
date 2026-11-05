@@ -16,6 +16,8 @@ import {
   supportBenchmarkStatus,
 } from './support-benchmark.js'
 import { supportDiagnoseCamera } from './support-camera.js'
+import { mediaStorageCheck } from './support-media-storage.js'
+import { migrationsStatus } from './support-migrations.js'
 import { defaultSupportDeps, type SupportDeps } from './support-deps.js'
 import { REPORT_ISSUE_TOOL, ReportKindSchema, reportIssue } from './report-issue.js'
 import {
@@ -123,6 +125,29 @@ export function registerSupportTools(
           ...(brand !== undefined ? { brand } : {}),
           ...(model !== undefined ? { model } : {}),
           ...(deviceId !== undefined ? { deviceId } : {}),
+        }),
+      ),
+  )
+  server.tool(
+    'migrations_status',
+    'The boot-time migration ledger of this hub, per owner: applied / failed / blocked / held / pending counts, the error text of every failed migration, what each failed one blocks (the dependency chain) and which addon runners are parked refused because every addon in them is blocked ("no addon of this runner could start"). Read-only; applied rows are counted, not listed. Needs an admin `camstack login`.',
+    {},
+    async (): Promise<ToolTextResult> => text(await migrationsStatus(ctx)),
+  )
+  server.tool(
+    'media_storage_check',
+    'Empty thumbnails or missing media: per storage location that can hold event media (class, mode, masked root, volume readable, bytes held) how many stored media rows and bytes name it, findings for rows on a location that no longer exists, is disabled or is read-only, and a bounded sample per camera of recent tracks whose thumbnail / keyFrame resolve in the media index or are missing. Paginated by cameraOffset. Read-only, indexed counts only. Needs an admin `camstack login`.',
+    {
+      cameraOffset: z.number().int().min(0).optional(),
+      cameras: z.number().int().min(1).max(12).optional(),
+      tracksPerCamera: z.number().int().min(1).max(6).optional(),
+    },
+    async ({ cameraOffset, cameras, tracksPerCamera }): Promise<ToolTextResult> =>
+      text(
+        await mediaStorageCheck(ctx, {
+          ...(cameraOffset !== undefined ? { cameraOffset } : {}),
+          ...(cameras !== undefined ? { cameras } : {}),
+          ...(tracksPerCamera !== undefined ? { tracksPerCamera } : {}),
         }),
       ),
   )

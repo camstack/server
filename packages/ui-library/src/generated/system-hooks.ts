@@ -2354,6 +2354,9 @@ export const usePipelineAnalyticsRelocateMedia: typeof trpc.pipelineAnalytics.re
 /** Generated alias around `trpc.pipelineAnalytics.countUnstampedEventMedia.useQuery`. */
 export const usePipelineAnalyticsCountUnstampedEventMedia: typeof trpc.pipelineAnalytics.countUnstampedEventMedia.useQuery = /*#__PURE__*/ alias(() => trpc.pipelineAnalytics.countUnstampedEventMedia.useQuery)
 
+/** Generated alias around `trpc.pipelineAnalytics.getMediaLocationCensus.useQuery`. */
+export const usePipelineAnalyticsGetMediaLocationCensus: typeof trpc.pipelineAnalytics.getMediaLocationCensus.useQuery = /*#__PURE__*/ alias(() => trpc.pipelineAnalytics.getMediaLocationCensus.useQuery)
+
 /** Generated alias around `trpc.pipelineAnalytics.countRelocatableMedia.useQuery`. */
 export const usePipelineAnalyticsCountRelocatableMedia: typeof trpc.pipelineAnalytics.countRelocatableMedia.useQuery = /*#__PURE__*/ alias(() => trpc.pipelineAnalytics.countRelocatableMedia.useQuery)
 

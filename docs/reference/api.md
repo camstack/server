@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**203 capabilities · 1506 methods.**
+**203 capabilities · 1507 methods.**
 
 ## Method index
 
@@ -890,6 +890,7 @@
 | `pipelineAnalytics.cancelStorageMigrationMove` | mutation | admin | pipeline-analytics |
 | `pipelineAnalytics.relocateMedia` | mutation | admin | pipeline-analytics |
 | `pipelineAnalytics.countUnstampedEventMedia` | query | admin | pipeline-analytics |
+| `pipelineAnalytics.getMediaLocationCensus` | query | admin | pipeline-analytics |
 | `pipelineAnalytics.countRelocatableMedia` | query | admin | pipeline-analytics |
 | `pipelineAnalytics.listRelocateMediaJobs` | query | admin | pipeline-analytics |
 | `pipelineAnalytics.cancelRelocateMedia` | mutation | admin | pipeline-analytics |
@@ -3763,7 +3764,7 @@
 
 ### `pipeline-analytics` → `pipelineAnalytics.*`
 
-- **Source:** `packages/types/src/capabilities/pipeline-analytics.cap.ts:2711`
+- **Source:** `packages/types/src/capabilities/pipeline-analytics.cap.ts:2713`
 - **Meta:** scope: `device` · mode: `singleton` · mount: `device-scoped` · deviceTypes: `camera`
 - **Archetypes:** exposesDeviceSettings · wrapper(defaultActive)
 - **Provider interface:** `IPipelineAnalyticsProvider`
@@ -3814,6 +3815,7 @@
 | cancelStorageMigrationMove | `pipelineAnalytics.cancelStorageMigrationMove` | mutation | admin | `{ jobId: string }` | `{ cancelled: boolean }` |
 | relocateMedia | `pipelineAnalytics.relocateMedia` | mutation | admin | `{ toLocationId: string; fromLocationId?: string; throttleMbps?: number; mode?: "move" \| "seal" \| "gallery" }` | `{ jobId: string }` |
 | countUnstampedEventMedia | `pipelineAnalytics.countUnstampedEventMedia` | query | admin | `{}` | `{ media: { present: boolean; rows: number \| null }; retrainFrames: { present: boolean; rows: number \| null }; anyPresent: boolean; total: number \| null } \| null` |
+| getMediaLocationCensus | `pipelineAnalytics.getMediaLocationCensus` | query | admin | `{ locationIds: string[] }` | `{ locations: ({ locationId: string; rows: number; bytes: number })[]; unstamped: { rows: number; bytes: number }; unlisted: { rows: number; bytes: number }; total: { rows: number; bytes: number } }` |
 | countRelocatableMedia | `pipelineAnalytics.countRelocatableMedia` | query | admin | `{ toLocationId: string; fromLocationId?: string; mode?: "move" \| "seal" \| "gallery" }` | `{ rows: number } \| null` |
 | listRelocateMediaJobs | `pipelineAnalytics.listRelocateMediaJobs` | query | admin | `{}` | `({ jobId: string; state: "queued" \| "running" \| "done" \| "failed" \| "cancelled"; fromLocationId: string; toLocationId: string; deviceId: number \| null; entities: string[]; filesMoved: number; bytesMoved: number; filesTotal: number \| null; rowsReconciled?: number; rowsForgotten?: number; startedAt: number; finishedAt: number \| null; error: string \| null })[]` |
 | cancelRelocateMedia | `pipelineAnalytics.cancelRelocateMedia` | mutation | admin | `{ jobId: string }` | `{ cancelled: boolean }` |

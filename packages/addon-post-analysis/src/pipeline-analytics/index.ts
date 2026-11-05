@@ -619,6 +619,8 @@ import type {
   TrackFlagsPatch,
   TrainingExportSummary,
   UnstampedEventMediaCount,
+  MediaLocationCensus,
+  MediaLocationCensusInput,
   Zone,
   ZoneRule,
 } from '@camstack/types'
@@ -15405,6 +15407,11 @@ export default class PipelineAnalyticsAddon
       meta: { jobId, mode: input.mode ?? 'move', to: input.toLocationId },
     })
     return { jobId }
+  }
+
+  /** Stored media per storage location (see the cap): indexed aggregates, no walk. */
+  async getMediaLocationCensus(input: MediaLocationCensusInput): Promise<MediaLocationCensus> {
+    return this.requireMediaStore().censusByLocation(input.locationIds)
   }
 
   /**

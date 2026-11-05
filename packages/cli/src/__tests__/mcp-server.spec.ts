@@ -172,6 +172,8 @@ describe('camstack mcp — toolset selection', () => {
         'setup_install_guide',
         'setup_login',
         'setup_login_wait',
+        'media_storage_check',
+        'migrations_status',
         'report_issue',
         'setup_wizard',
         'support_benchmark_run',

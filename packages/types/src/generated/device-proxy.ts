@@ -894,6 +894,7 @@ export function createDeviceProxy(
     cancelStorageMigrationMove: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'cancelStorageMigrationMove', 'mutation', input),
     relocateMedia: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'relocateMedia', 'mutation', input),
     countUnstampedEventMedia: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'countUnstampedEventMedia', 'query', input),
+    getMediaLocationCensus: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getMediaLocationCensus', 'query', input),
     countRelocatableMedia: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'countRelocatableMedia', 'query', input),
     listRelocateMediaJobs: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listRelocateMediaJobs', 'query', input),
     cancelRelocateMedia: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'cancelRelocateMedia', 'mutation', input),

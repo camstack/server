@@ -193,6 +193,34 @@ export const UnstampedEventMediaCountSchema = z
   })
   .nullable()
 export type UnstampedEventMediaCount = z.infer<typeof UnstampedEventMediaCountSchema>
+/**
+ * Where the stored event media sits, per storage location: how many media rows
+ * and how many bytes carry each location id, how many carry none (legacy,
+ * resolved to the default `eventMedia` location), and how many name a location
+ * that was not asked about (a deleted or never-listed one).
+ *
+ * One indexed aggregate per asked location plus two (NULL, total): no walk.
+ * `null` is "could not be measured", never zero.
+ */
+export const MediaLocationCensusInputSchema = z.object({
+  locationIds: z.array(z.string().min(1)).max(50).readonly(),
+})
+export type MediaLocationCensusInput = z.infer<typeof MediaLocationCensusInputSchema>
+
+export const MediaLocationCensusRowSchema = z.object({
+  locationId: z.string(),
+  rows: z.number().int().nonnegative(),
+  bytes: z.number().nonnegative(),
+})
+export const MediaLocationCensusSchema = z.object({
+  locations: z.array(MediaLocationCensusRowSchema).readonly(),
+  unstamped: z.object({ rows: z.number().int().nonnegative(), bytes: z.number().nonnegative() }),
+  /** Rows stamped with a location id that was not in the asked list. */
+  unlisted: z.object({ rows: z.number().int().nonnegative(), bytes: z.number().nonnegative() }),
+  total: z.object({ rows: z.number().int().nonnegative(), bytes: z.number().nonnegative() }),
+})
+export type MediaLocationCensus = z.infer<typeof MediaLocationCensusSchema>
+
 export const StorageMigrationMediaMoveInputSchema = RelocateMediaInputSchema.extend({
   leaseId: z.string().min(1),
 })

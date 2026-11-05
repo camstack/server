@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Stored media can be counted per storage location (rows, bytes, unstamped, unknown location) for the support report
+
 ## [1.2.670] - 2026-11-05
 
 ### Changed

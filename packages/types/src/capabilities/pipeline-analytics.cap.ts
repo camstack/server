@@ -22,6 +22,8 @@ import {
   StorageMigrationLeaseInputSchema,
   StorageMigrationMediaMoveInputSchema,
   UnstampedEventMediaCountSchema,
+  MediaLocationCensusInputSchema,
+  MediaLocationCensusSchema,
 } from '../interfaces/relocate.js'
 import { EventOwnerTypeSchema, MediaPresenceOwnerKindSchema } from '../media/media-owner-key.js'
 import { MotionTriggeredBySchema } from '../pipeline/camera-sensors.js'
@@ -3296,6 +3298,18 @@ export const pipelineAnalyticsCapability = {
      * unreadable collection must not read as a sealed one.
      */
     countUnstampedEventMedia: method(z.object({}), UnstampedEventMediaCountSchema, {
+      auth: 'admin',
+    }),
+    /**
+     * Stored media per storage location: rows and bytes stamped with each asked
+     * location id, the rows with none, and the rows naming a location that was
+     * not asked about (deleted or unlisted). One indexed aggregate per location
+     * (`idx_media_location_size`) plus the NULL one and one total — never a walk,
+     * so it answers on a hub with a million rows. A failed read throws; it never
+     * reads as zero.
+     */
+    getMediaLocationCensus: method(MediaLocationCensusInputSchema, MediaLocationCensusSchema, {
+      kind: 'query',
       auth: 'admin',
     }),
     /**

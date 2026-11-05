@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- New support tools migrations_status and media_storage_check, and report_issue now includes them: the migration ledger with the failure chain and refused runners, and stored media per storage location with a per-camera thumbnail sample
+
 ## [1.2.223] - 2026-11-05
 
 ### Changed

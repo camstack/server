@@ -13,6 +13,7 @@ import type { McpContext } from './context.js'
 import { readViewerLines, VIEWER_LEVELS } from './client-logs.js'
 import { debugReport, type DebugIssue } from './debug-report.js'
 import { groupEntries } from './ops-logs.js'
+import { toolLines, type ReportTool } from './report-tool-sections.js'
 import { makeTierQuery, FETCH_LIMIT, type LogEntry, type LogLevel } from './ops-logs.js'
 
 export const REPORT_KINDS = [
@@ -59,7 +60,25 @@ export interface DebugReportSource {
   readonly issue: DebugIssue
 }
 
-export type LogSource = HubLogSource | ViewerLogSource | DebugReportSource
+/** A support read tool rendered as report lines (migration ledger, media vs storage). */
+export interface ToolSource {
+  readonly type: 'tool'
+  readonly title: string
+  readonly tool: ReportTool
+}
+
+export type LogSource = HubLogSource | ViewerLogSource | DebugReportSource | ToolSource
+
+const MIGRATIONS: ToolSource = {
+  type: 'tool',
+  title: 'Migrations (migrations_status)',
+  tool: 'migrations-status',
+}
+const MEDIA_STORAGE: ToolSource = {
+  type: 'tool',
+  title: 'Stored media vs storage locations (media_storage_check)',
+  tool: 'media-storage',
+}
 
 export const RECIPES: { readonly [K in ReportKind]: readonly LogSource[] } = {
   streams: [
@@ -83,6 +102,8 @@ export const RECIPES: { readonly [K in ReportKind]: readonly LogSource[] } = {
       perDevice: true,
     },
     { type: 'debug-report', title: 'Track media (debug_report media)', issue: 'media' },
+    MEDIA_STORAGE,
+    MIGRATIONS,
   ],
   ui: [
     { type: 'viewer', title: 'Viewer, all scopes', level: 'warn' },
@@ -155,6 +176,8 @@ export const RECIPES: { readonly [K in ReportKind]: readonly LogSource[] } = {
       level: 'warn',
       perDevice: false,
     },
+    MEDIA_STORAGE,
+    MIGRATIONS,
   ],
   integration: [
     {
@@ -171,10 +194,13 @@ export const RECIPES: { readonly [K in ReportKind]: readonly LogSource[] } = {
       level: 'warn',
       perDevice: false,
     },
+    MIGRATIONS,
   ],
   other: [
     { type: 'hub', title: 'Hub errors', addonIds: [], level: 'error', perDevice: true },
     { type: 'viewer', title: 'Viewer, all scopes', level: 'error' },
+    MIGRATIONS,
+    MEDIA_STORAGE,
   ],
 }
 
@@ -359,7 +385,10 @@ export async function collectLogs(
   for (const src of RECIPES[args.kind]) {
     if (src.type === 'hub') sections.push(await hubSection(client, src, args, window))
     else if (src.type === 'debug-report') sections.push(await debugSection(ctx, src, args))
-    else {
+    else if (src.type === 'tool') {
+      const t = await toolLines(ctx, src.tool)
+      sections.push(section(src.title, `support tool ${src.tool}`, t.lines, t.note))
+    } else {
       const v = await viewerSection(client, src, args, window)
       sections.push(v.section)
       viewerAppVersion ??= v.appVersion

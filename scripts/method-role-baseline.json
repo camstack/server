@@ -860,6 +860,7 @@
   "pipelineAnalytics.getEventStoreFootprint": "admin",
   "pipelineAnalytics.getKeyEvents": "viewer",
   "pipelineAnalytics.getKeyEventsBatch": "viewer",
+  "pipelineAnalytics.getMediaLocationCensus": "admin",
   "pipelineAnalytics.getMediaReclaimStatus": "admin",
   "pipelineAnalytics.getMotionEvents": "viewer",
   "pipelineAnalytics.getObjectEmbeddingRebuildStatus": "viewer",

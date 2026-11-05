@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Generated capability hooks include pipelineAnalytics.getMediaLocationCensus
+
 ## [1.2.387] - 2026-11-05
 
 ### Changed

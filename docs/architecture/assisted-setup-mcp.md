@@ -85,6 +85,25 @@ presence per kind and the thumbnail URL the viewer requests, and the viewer's ow
 lines. A missing thumbnail or keyFrame is flagged only for a closed track. Ask:
 "Camera 12 stutters in the live view, what do you see?"
 
+`migrations_status()` reads the boot-time migration ledger (`migrations.listLedger`,
+`listPending`) and the addon roster: counts per owner (applied / failed / blocked /
+held / pending), the error text of every failed migration, what each failed one
+blocks (the transitive `dependsOn` chain), and the runners parked `refused` with
+"no addon of this runner could start" (`addons.list` `process.state`, D877). Applied
+rows are counted, not listed; a read that failed is `null`, never "none". Hub
+runners only.
+
+`media_storage_check({ cameraOffset?, cameras?, tracksPerCamera? })` answers "empty
+thumbnails": every `eventMedia` / `galleryMedia` location with its mode (D385),
+masked root, volume readability and bytes held (D388), the stored media rows and
+bytes that name it (`pipelineAnalytics.getMediaLocationCensus`: one indexed
+aggregate per location plus the unstamped and total ones, no walk, D447), findings
+for rows on a location that no longer exists, is disabled or read-only, and a
+bounded sample of recent tracks per camera (12 cameras a page, 6 tracks each,
+`nextCameraOffset` to continue) whose thumbnail / keyFrame resolve in the media
+index. Roots are cut to their first two and last segment. Both tools are in the
+`report_issue` recipes below.
+
 `client_logs({ since?, deviceId?, scope?, level?, user?, platform?, appVersion?, sessionId?, limit? })`
 reads the viewer app's own log by tag; see "The viewer app's own log" in
 [logging.md](logging.md). Ask: "What did the phone app log when I opened the
@@ -102,14 +121,14 @@ It picks the logs (`report-recipes.ts`, data a spec asserts):
 | kind | Logs read |
 | --- | --- |
 | `streams` | `debug_report` stream state, stream-broker warnings (this device), viewer `live` scope |
-| `media-thumbnails` | viewer `events:media` scope, pipeline-analytics warnings (this device), `debug_report` issue `media` (track media only) |
+| `media-thumbnails` | viewer `events:media` scope, pipeline-analytics warnings (this device), `debug_report` issue `media` (track media only), `media_storage_check`, `migrations_status` |
 | `ui` | viewer warnings, admin-ui and local-auth warnings, device view |
 | `notifications` | notifiers and smtp warnings, the `matched NO rule` lines |
 | `remote-access` | tunnel, cloudflare/static TURN, tailscale, remote-access orchestrator, webrtc warnings; viewer `live` |
 | `pipeline-detection` | `debug_report` detections, orchestrator / detection-pipeline / runner warnings |
-| `recording-storage` | recorder, storage orchestrator, filesystem and remote-storage warnings |
-| `integration` | HomeKit, Alexa, Google, Matter, Home Assistant warnings |
-| `other` | hub errors, viewer errors |
+| `recording-storage` | recorder, storage orchestrator, filesystem and remote-storage warnings, `media_storage_check`, `migrations_status` |
+| `integration` | HomeKit, Alexa, Google, Matter, Home Assistant warnings, `migrations_status` |
+| `other` | hub errors, viewer errors, `migrations_status`, `media_storage_check` |
 
 An addon identical on several nodes is one table row listing them. Each section holds at most 20 lines of 240 characters, repeats folded with a count.
 

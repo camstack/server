@@ -13115,6 +13115,20 @@ export function createCapRouter_pipelineAnalytics(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.countUnstampedEventMedia(methodInput as any)
       }),
+    getMediaLocationCensus: adminProcedure
+      .input(pipelineAnalyticsCapability.methods.getMediaLocationCensus.input.loose())
+      .output(pipelineAnalyticsCapability.methods.getMediaLocationCensus.output)
+      .query(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider(
+          'pipeline-analytics',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.getMediaLocationCensus(methodInput as any)
+      }),
     countRelocatableMedia: adminProcedure
       .input(pipelineAnalyticsCapability.methods.countRelocatableMedia.input.loose())
       .output(pipelineAnalyticsCapability.methods.countRelocatableMedia.output)

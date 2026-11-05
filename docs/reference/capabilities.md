@@ -89,7 +89,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `osd` | 2 | ✓ | — | — | — | — |
 | `pet-feeder` | 11 | ✓ | ✓ | 6 series | — | `provider-petkit` |
 | `pet-fountain` | 3 | ✓ | ✓ | 4 series | — | — |
-| `pipeline-analytics` | 88 | — | — | — | — | `pipeline-analytics` |
+| `pipeline-analytics` | 89 | — | — | — | — | `pipeline-analytics` |
 | `power-meter` | 1 | ✓ | ✓ | 6 series | — | — |
 | `power-source` | 4 | — | ✓ | none | — | `core-blocks` |
 | `presence` | 1 | ✓ | ✓ | none | — | — |

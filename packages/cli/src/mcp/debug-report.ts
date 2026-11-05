@@ -175,12 +175,13 @@ export function viewerThumbUrl(
   return { path, absolute: link.base === null ? null : `${link.base}${path}` }
 }
 
-async function tracksSection(
+export async function tracksSection(
   client: HubClient,
   deviceId: number,
   window: { sinceMs: number; untilMs: number },
   link: LinkBase,
   unavailable: { [part: string]: string },
+  limit: number = TRACK_LIMIT,
 ): Promise<TracksSection | null> {
   const page = await readQuery(
     client,
@@ -189,7 +190,7 @@ async function tracksSection(
       deviceIds: [deviceId],
       since: window.sinceMs,
       until: window.untilMs,
-      limit: TRACK_LIMIT,
+      limit,
       projection: 'slim',
     },
     SlimTracksSchema,
@@ -198,9 +199,7 @@ async function tracksSection(
     unavailable['tracks'] = page.reason
     return null
   }
-  const recent = page.value.tracks
-    .toSorted((a, b) => b.firstSeen - a.firstSeen)
-    .slice(0, TRACK_LIMIT)
+  const recent = page.value.tracks.toSorted((a, b) => b.firstSeen - a.firstSeen).slice(0, limit)
   const items = await mapLimit(recent, READ_CONCURRENCY, async (t): Promise<TrackMediaView> => {
     const media = await readQuery(
       client,

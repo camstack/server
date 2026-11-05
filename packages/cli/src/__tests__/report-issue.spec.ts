@@ -282,6 +282,70 @@ describe('report_issue: the recipe per kind', () => {
     expect(r.some((s) => s.type === 'hub' && s.addonIds.includes('pipeline-analytics'))).toBe(true)
   })
 
+  it('carries the migration ledger and the stored-media check where they explain the symptom', () => {
+    const toolsOf = (k: (typeof REPORT_KINDS)[number]): string[] =>
+      RECIPES[k].flatMap((s) => (s.type === 'tool' ? [s.tool] : []))
+    for (const k of ['media-thumbnails', 'recording-storage', 'other'] as const) {
+      expect(toolsOf(k)).toEqual(expect.arrayContaining(['migrations-status', 'media-storage']))
+    }
+    expect(toolsOf('integration')).toEqual(['migrations-status'])
+    expect(toolsOf('streams')).toEqual([])
+  })
+
+  it('renders both sections in the media-thumbnails draft, scrubbed', async () => {
+    const { ctx } = ctxOf({
+      'migrations.listLedger': {
+        entries: [
+          {
+            id: 'recorder/2026-02-01-second',
+            database: 'settings',
+            owner: 'recorder',
+            level: 'addon-state',
+            seq: 1,
+            status: 'failed',
+            attempts: 2,
+            appliedAt: null,
+            codeVersion: null,
+            planSummary: null,
+            progress: null,
+            error: 'cannot open /home/jane/camstack/events.db for hub.mydomain.com',
+            reason: null,
+            nodeId: null,
+            bootId: null,
+          },
+        ],
+      },
+      'migrations.listPending': { pending: [] },
+      'addons.list': [],
+      'storage.listLocations': [
+        {
+          id: 'eventMedia:default',
+          type: 'eventMedia',
+          displayName: 'Events',
+          providerId: 'filesystem-storage',
+          config: { basePath: '/home/jane/camstack/events' },
+          isSystem: false,
+          mode: 'disabled',
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      ],
+      'pipelineAnalytics.getMediaLocationCensus': {
+        locations: [{ locationId: 'eventMedia:default', rows: 12, bytes: 99 }],
+        unstamped: { rows: 0, bytes: 0 },
+        unlisted: { rows: 0, bytes: 0 },
+        total: { rows: 12, bytes: 99 },
+      },
+    })
+    const d = dry(await reportIssue(ctx, fakeGh().deps, ARGS, undefined, NOW))
+    expect(d.markdown).toContain('### Migrations (migrations_status)')
+    expect(d.markdown).toContain('failed recorder/2026-02-01-second')
+    expect(d.markdown).toContain('### Stored media vs storage locations (media_storage_check)')
+    expect(d.markdown).toContain('location-disabled')
+    expect(d.markdown).not.toContain('jane')
+    expect(d.markdown).not.toContain('hub.mydomain.com')
+  })
+
   it('remote-access reads tunnel, turn and webrtc', () => {
     const hubs = RECIPES['remote-access'].flatMap((s) => (s.type === 'hub' ? s.addonIds : []))
     for (const id of ['cloudflare-tunnel', 'cloudflare-turn', 'static-turn', 'webrtc-native']) {

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Generated tRPC router exposes pipelineAnalytics.getMediaLocationCensus (admin read)
+
 ## [1.2.779] - 2026-11-05
 
 ### Changed

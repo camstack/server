@@ -36,6 +36,7 @@ import type {
   MediaFileBytes,
   MediaFileKind,
   MediaFileRef,
+  MediaLocationCensus,
   SettingsStoreClient,
 } from '@camstack/types'
 import { EVENT_OWNER_TYPES, MediaFileKindEnum } from '@camstack/types'
@@ -1679,6 +1680,54 @@ export class MediaStore {
       filter: { where: { locationId: null } },
     })
     return { byLocation, legacyNullBytes: legacy.count === 0 ? 0 : (legacy.values['bytes'] ?? 0) }
+  }
+
+  /**
+   * Rows and bytes per asked storage location, the unstamped (NULL) rows, the
+   * rows naming a location that was NOT asked about, and the total.
+   *
+   * Same statements as {@link footprintByLocation} (one aggregate over
+   * `idx_media_location_size` per location, one for NULL) plus one unfiltered
+   * aggregate for the total; the unlisted remainder is the difference, so a row
+   * stamped with a deleted location is counted without a distinct walk. A read
+   * that fails THROWS — never a zero.
+   */
+  async censusByLocation(locationIds: readonly string[]): Promise<MediaLocationCensus> {
+    const fields = [{ as: 'bytes', field: 'sizeBytes', op: 'sum' }] as const
+    const locations: { locationId: string; rows: number; bytes: number }[] = []
+    let knownRows = 0
+    let knownBytes = 0
+    for (const locationId of locationIds) {
+      const agg = await this.store.aggregate.query({
+        collection: MEDIA_COLLECTION,
+        fields: [...fields],
+        filter: { where: { locationId } },
+      })
+      const bytes = agg.values['bytes'] ?? 0
+      locations.push({ locationId, rows: agg.count, bytes })
+      knownRows += agg.count
+      knownBytes += bytes
+    }
+    const nullAgg = await this.store.aggregate.query({
+      collection: MEDIA_COLLECTION,
+      fields: [...fields],
+      filter: { where: { locationId: null } },
+    })
+    const totalAgg = await this.store.aggregate.query({
+      collection: MEDIA_COLLECTION,
+      fields: [...fields],
+    })
+    const nullBytes = nullAgg.values['bytes'] ?? 0
+    const totalBytes = totalAgg.values['bytes'] ?? 0
+    return {
+      locations,
+      unstamped: { rows: nullAgg.count, bytes: nullBytes },
+      unlisted: {
+        rows: Math.max(0, totalAgg.count - knownRows - nullAgg.count),
+        bytes: Math.max(0, totalBytes - knownBytes - nullBytes),
+      },
+      total: { rows: totalAgg.count, bytes: totalBytes },
+    }
   }
 
   /**

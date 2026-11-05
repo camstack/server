@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1506 method paths across 203 capabilities.
+ * Coverage: 1507 method paths across 203 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -883,6 +883,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'pipelineAnalytics.getEventStoreFootprint': { capName: "pipeline-analytics", capScope: "device", addonId: null, access: "view", role: "admin" } as const,
   'pipelineAnalytics.getKeyEvents': { capName: "pipeline-analytics", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'pipelineAnalytics.getKeyEventsBatch': { capName: "pipeline-analytics", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
+  'pipelineAnalytics.getMediaLocationCensus': { capName: "pipeline-analytics", capScope: "device", addonId: null, access: "view", role: "admin" } as const,
   'pipelineAnalytics.getMediaReclaimStatus': { capName: "pipeline-analytics", capScope: "device", addonId: null, access: "view", role: "admin" } as const,
   'pipelineAnalytics.getMotionEvents': { capName: "pipeline-analytics", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'pipelineAnalytics.getObjectEmbeddingRebuildStatus': { capName: "pipeline-analytics", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
