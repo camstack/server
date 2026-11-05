@@ -1,7 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   GEO_IP_ENDPOINTS,
   geolocatePublicIp,
+  hubTimeZone,
   isUsableCoordinate,
   parseGeoIpPayload,
   type SettingsStoreGateway,
@@ -263,5 +264,23 @@ describe('toStatus — the site time zone', () => {
     )
     expect(located.timeZone).toBe('Europe/Rome')
     expect(located.location?.latitude).toBe(41.9)
+  })
+})
+
+describe('hubTimeZone under an empty TZ', () => {
+  const original = process.env['TZ']
+  afterEach(() => {
+    if (original === undefined) delete process.env['TZ']
+    else process.env['TZ'] = original
+  })
+
+  it('never reports Etc/Unknown: the status carries a zone Intl accepts', () => {
+    process.env['TZ'] = ''
+    // The premise: this runtime really answers the unusable zone.
+    expect(Intl.DateTimeFormat().resolvedOptions().timeZone).toBe('Etc/Unknown')
+    const zone = hubTimeZone()
+    expect(zone).toBe('UTC')
+    expect(toStatus(null).timeZone).toBe('UTC')
+    expect(() => new Intl.DateTimeFormat('en-US', { timeZone: zone })).not.toThrow()
   })
 })

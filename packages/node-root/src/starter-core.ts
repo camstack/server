@@ -159,12 +159,23 @@ function readClosureVersion(closureDir: string, spec: RootPackageSpec): string |
 }
 
 /**
+ * A container started with `TZ=` (set, EMPTY) makes ICU answer `Etc/Unknown`,
+ * a zone `Intl.DateTimeFormat` then throws on. Drop the empty value so this
+ * process and every child it forks fall back to the system zone; a non-empty
+ * `TZ` is kept as is.
+ */
+export function dropEmptyTimeZone(env: NodeJS.ProcessEnv): void {
+  if (env['TZ'] === '') delete env['TZ']
+}
+
+/**
  * Run the shared starter flow. Never throws for boot-plan reasons — every
  * failure path degrades to the baked seed. (A `loadEntry` throw propagates:
  * that is the caller's fatal handler's job.)
  */
 export function runNodeStarter(options: NodeStarterOptions): void {
   const env = options.env ?? process.env
+  dropEmptyTimeZone(env)
   const now = options.now ?? Date.now
   const registerResolver = options.registerResolver ?? registerActiveRootResolver
   const nodeMajor =

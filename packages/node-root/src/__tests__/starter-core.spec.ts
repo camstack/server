@@ -226,3 +226,15 @@ describe('isHostExternal', () => {
     expect(isHostExternal('fastify')).toBe(false)
   })
 })
+
+describe('TZ in the node environment', () => {
+  it('drops an EMPTY TZ so no node process reads Etc/Unknown', () => {
+    const { env } = run({ env: { TZ: '' } })
+    expect('TZ' in env).toBe(false)
+  })
+
+  it('keeps a non-empty TZ untouched', () => {
+    const { env } = run({ env: { TZ: 'Europe/Rome' } })
+    expect(env['TZ']).toBe('Europe/Rome')
+  })
+})

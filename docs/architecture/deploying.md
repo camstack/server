@@ -130,6 +130,10 @@ in the public docs. Both are maintained by hand, and nothing in this repo checks
 them ([D717](../decisions/adr-0717-the-unraid-templates-and-the-compose-example-are-maintained-outside-this-repo.md)).
 A change to the container contract updates both in the same piece of work.
 
+`TZ` sets the hub's default time zone (the site location's zone, notification
+text times). An empty `TZ=` is ignored by the starter and the node falls back to
+the system zone; a zone the runtime cannot resolve reads as `UTC`.
+
 ## The hub's address
 
 There is no variable for it. The hub's address is what the `local-network`

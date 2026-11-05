@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Added a validated process time zone helper (an empty TZ no longer yields Etc/Unknown)
+
 ## [1.2.501] - 2026-11-05
 
 ### Removed

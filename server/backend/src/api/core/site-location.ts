@@ -46,7 +46,7 @@
  */
 
 import type { IScopedLogger } from '@camstack/types'
-import { errMsg, type SiteLocationStatus } from '@camstack/types'
+import { errMsg, processTimeZoneOr, type SiteLocationStatus } from '@camstack/types'
 
 /** The `system-settings` row this module owns. */
 export const SITE_LOCATION_KEY = 'site-location'
@@ -124,10 +124,12 @@ export function isUsableCoordinate(lat: unknown, lng: unknown): boolean {
   return lat !== 0 || lng !== 0
 }
 
-/** The hub's own IANA zone, `UTC` when the runtime cannot name one. */
-export function hubTimeZone(): string {
-  const zone = Intl.DateTimeFormat().resolvedOptions().timeZone
-  return typeof zone === 'string' && zone.length > 0 ? zone : 'UTC'
+/**
+ * The hub's own IANA zone, `UTC` when the runtime cannot name a usable one
+ * (a container with an empty `TZ` reports `Etc/Unknown`).
+ */
+export function hubTimeZone(logger?: IScopedLogger): string {
+  return processTimeZoneOr('UTC', logger)
 }
 
 /** Project a stored row onto the wire shape. */
@@ -344,11 +346,11 @@ export class SiteLocationService {
   async get(): Promise<SiteLocationStatus> {
     const record = await this.read()
     if (record !== null && isUsableCoordinate(record.latitude, record.longitude)) {
-      return toStatus(record)
+      return toStatus(record, hubTimeZone(this.deps.logger))
     }
     if (record !== null && typeof record.derivationAttemptedAt === 'number') {
       // Spent. `detectSiteLocation` is the only way back.
-      return toStatus(record)
+      return toStatus(record, hubTimeZone(this.deps.logger))
     }
 
     const existing = SiteLocationService.inFlight
@@ -404,7 +406,7 @@ export class SiteLocationService {
         meta: { error: errMsg(err) },
       })
     }
-    return toStatus(failure)
+    return toStatus(failure, hubTimeZone(this.deps.logger))
   }
 
   private async persist(
@@ -420,7 +422,7 @@ export class SiteLocationService {
       derivationAttemptedAt: this.now(),
     }
     await this.write(record)
-    return toStatus(record)
+    return toStatus(record, hubTimeZone(this.deps.logger))
   }
 
   /** Operator input. Clears the value when `input` is `null`. */
@@ -430,7 +432,7 @@ export class SiteLocationService {
       // not "guess again". Detect is the button for that.
       const cleared: SiteLocationRecord = { derivationAttemptedAt: this.now() }
       await this.write(cleared)
-      return toStatus(cleared)
+      return toStatus(cleared, hubTimeZone(this.deps.logger))
     }
     return this.persist({ latitude: input.latitude, longitude: input.longitude }, 'operator-set')
   }
@@ -450,7 +452,7 @@ export class SiteLocationService {
       isUsableCoordinate(record.latitude, record.longitude)
     ) {
       this.deps.logger?.info('site location detect skipped — an operator-set value already exists')
-      return toStatus(record)
+      return toStatus(record, hubTimeZone(this.deps.logger))
     }
     return this.derive()
   }

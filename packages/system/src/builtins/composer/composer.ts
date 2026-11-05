@@ -71,6 +71,7 @@ import {
   type IScopedLogger,
   type LogTags,
   type UnreleasedClaim,
+  processTimeZoneOr,
 } from '@camstack/types'
 import type { DeviceStateChangedData } from '../shared/device-state-changed.js'
 import { ClaimGate, type ClaimKey } from './claim-gate.js'
@@ -224,6 +225,14 @@ interface RuntimeRebuild {
   readonly reset: ReadonlySet<string>
   /** Runtimes this apply stopped. Quiesced before a confirmed release, so an in-flight claim cannot land after it. */
   readonly stopped: readonly CompositionRuntime[]
+}
+
+/** The configured zone, else the process zone when usable, else `UTC` (an empty `TZ` reads `Etc/Unknown`). */
+export function resolveComposerTimeZone(
+  configured: string | undefined,
+  logger: IScopedLogger,
+): string {
+  return configured ?? processTimeZoneOr('UTC', logger)
 }
 
 export class Composer {
@@ -419,7 +428,7 @@ export class Composer {
     if (read === undefined || retention === undefined) return null
     return new HistoryHelpers({
       now: deps.now,
-      timeZone: deps.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+      timeZone: resolveComposerTimeZone(deps.timeZone, deps.logger),
       logger: deps.logger.child('history'),
       query: read,
       retention,

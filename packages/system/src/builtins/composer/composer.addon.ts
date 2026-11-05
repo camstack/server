@@ -29,6 +29,7 @@ import {
   kebabToCamel,
   type ProviderRegistration,
   resolveMutate,
+  processTimeZoneOr,
 } from '@camstack/types'
 import { isRecord, parseDeviceStateChanged } from '../shared/device-state-changed.js'
 import { normalizedNativeOwner } from '../core-blocks/composition-sources.js'
@@ -221,7 +222,7 @@ export class ComposerAddon extends BaseAddon<Record<string, never>> {
         const quantity = found?.sourceInfo?.quantity
         return isReadingQuantity(quantity) ? quantity : null
       },
-      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      timeZone: processTimeZoneOr('UTC', logger),
       describeTarget: readBoundCaps,
       grafts,
       now: () => Date.now(),

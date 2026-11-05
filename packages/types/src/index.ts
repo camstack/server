@@ -2346,6 +2346,12 @@ export { evaluateZoneRules, type ZoneRuleEvalResult } from './utils/zone-rule-ev
 
 // Client-side helpers
 export { bindAddonActions } from './helpers/bind-addon-actions.js'
+export {
+  isUsableTimeZone,
+  processTimeZoneOr,
+  usableProcessTimeZone,
+  type ProcessTimeZoneProbe,
+} from './helpers/process-time-zone.js'
 export type {
   DeviceOption,
   InferenceDeviceDescriptor,
