@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-agent-ui",
-  "version": "1.2.330",
+  "version": "1.2.331",
   "description": "Agent UI — lightweight status dashboard served by every agent node",
   "keywords": [
     "camstack",
@@ -57,7 +57,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.780"
+      "server": ">=1.2.782"
     }
   },
   "dependencies": {},

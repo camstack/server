@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.389] - 2026-11-06
+
 ### Changed
 
 - Settings forms draw an instance picker for fields that link to an instance of any function (instance-select)

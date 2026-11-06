@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.509] - 2026-11-06
+
 ### Changed
 
 - Instances can now declare links to other instances (declareLinkKind, linkField, instance-select) and a delete of an instance that is still linked is refused with the users named

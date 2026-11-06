@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.782] - 2026-11-06
+
 ### Changed
 
 - The hub refuses to delete an instance that another instance still links to, and lists what uses it
