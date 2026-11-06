@@ -5,6 +5,8 @@ import { buildCandidateTree, type CandidateNode } from './scan-candidate-tree'
 export interface CandidateRow {
   readonly candidate: DiscoveredChildDevice
   readonly depth: number
+  /** The container this candidate sits under; absent at the top level. */
+  readonly parentName?: string
 }
 
 type Node = CandidateNode<DiscoveredChildDevice & { readonly stableId: string }>
@@ -19,12 +21,19 @@ export function orderCandidatesAsTree(
 ): readonly CandidateRow[] {
   const keyed = candidates.map((c) => ({ ...c, stableId: c.childNativeId }))
   const byId = new Map(candidates.map((c) => [c.childNativeId, c]))
-  const walk = (nodes: readonly Node[], depth: number): CandidateRow[] =>
+  const walk = (nodes: readonly Node[], depth: number, parentName?: string): CandidateRow[] =>
     nodes.flatMap((n) => {
       const original = byId.get(n.candidate.childNativeId)
       return original === undefined
         ? []
-        : [{ candidate: original, depth }, ...walk(n.children, depth + 1)]
+        : [
+            {
+              candidate: original,
+              depth,
+              ...(parentName !== undefined ? { parentName } : {}),
+            },
+            ...walk(n.children, depth + 1, original.name),
+          ]
     })
   return walk(buildCandidateTree(keyed), 0)
 }

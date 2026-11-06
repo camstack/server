@@ -17,11 +17,12 @@ const candidate = (over: Partial<DiscoveredChildDevice>): DiscoveredChildDevice 
   ...over,
 })
 
-function renderCell(c: DiscoveredChildDevice): void {
+function renderCell(c: DiscoveredChildDevice, containerName?: string): void {
   render(
     <CandidateNameCell
       candidate={c}
       depth={0}
+      {...(containerName !== undefined ? { containerName } : {})}
       expandable={false}
       expanded={false}
       onToggleExpand={vi.fn()}
@@ -49,5 +50,32 @@ describe('CandidateNameCell', () => {
   it('renders no subtitle when there is nothing to tell the row apart', () => {
     renderCell(candidate({ childNativeId: '' }))
     expect(screen.queryByTestId('candidate-subtitle')).toBeNull()
+  })
+
+  it('draws no leading dash, with or without a chevron slot', () => {
+    const { container } = render(
+      <CandidateNameCell
+        candidate={candidate({})}
+        depth={0}
+        expandable
+        expanded={false}
+        onToggleExpand={vi.fn()}
+        adoptedLabel="Adopted"
+        typeLabel="Speaker"
+      />,
+    )
+    expect(container.textContent).not.toMatch(/[—–-]/)
+    renderCell(candidate({}))
+    expect(screen.getAllByTestId('candidate-name')).toHaveLength(2)
+  })
+
+  it('names the container a child sits under on a secondary line', () => {
+    renderCell(candidate({}), 'Hue Bridge')
+    expect(screen.getByTestId('candidate-container').textContent).toBe('in Hue Bridge')
+  })
+
+  it('names no container for a top-level row', () => {
+    renderCell(candidate({}))
+    expect(screen.queryByTestId('candidate-container')).toBeNull()
   })
 })

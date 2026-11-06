@@ -20,14 +20,12 @@ import { DeviceExportStatusSchema } from '@camstack/types'
 import { useState, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
-import { useNavigate } from 'react-router-dom'
 import type { PanelRow } from '../instances/instances-model'
 
 const POLL_INTERVAL_MS = 10_000
 
 function ExportedDevicesCell({ row }: { readonly row: PanelRow }): ReactElement | null {
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const instanceId = row.kind === 'instance' ? row.id : undefined
   const { data } = useDeviceExportGetStatus(
@@ -49,7 +47,7 @@ function ExportedDevicesCell({ row }: { readonly row: PanelRow }): ReactElement 
       </Button>
       {open && (
         <Dialog open onOpenChange={setOpen}>
-          <DialogContent width="xl" scroll="body">
+          <DialogContent width="full" scroll="body">
             <DialogHeader>
               <DialogTitle>
                 {t('system.connectivity.devicesDialogTitle', 'Devices of {{name}}', {
@@ -63,14 +61,9 @@ function ExportedDevicesCell({ row }: { readonly row: PanelRow }): ReactElement 
                   addonId={row.addonId}
                   instance={{ instanceId, name: row.name, enabled: true }}
                   showSetup={false}
-                  onOpenDevice={(id) => navigate(`/devices/${id}`)}
                 />
               ) : (
-                <DeviceExportPanel
-                  addonId={row.addonId}
-                  showSetup={false}
-                  onOpenDevice={(id) => navigate(`/devices/${id}`)}
-                />
+                <DeviceExportPanel addonId={row.addonId} showSetup={false} />
               )}
             </DialogBody>
           </DialogContent>

@@ -14,7 +14,7 @@ const HOME = {
   info: {},
 }
 
-function candidate(id: string, name: string, type: string, adopted = false) {
+function candidate(id: string, name: string, type: string, adopted = false, parent?: string) {
   return {
     childNativeId: id,
     name,
@@ -25,11 +25,13 @@ function candidate(id: string, name: string, type: string, adopted = false) {
     adoptedDeviceId: adopted ? 7 : null,
     capabilities: [],
     children: [],
+    ...(parent !== undefined ? { parentStableId: parent } : {}),
   }
 }
 
 const CANDIDATES = [
-  candidate('dev:1', 'Kitchen Light', 'light'),
+  candidate('dev:0', 'Hue Bridge', 'hub'),
+  candidate('dev:1', 'Kitchen Light', 'light', false, 'dev:0'),
   candidate(
     'dev:2',
     'Upstairs hallway motion and temperature sensor near the guest bedroom door (north wing, second floor)',

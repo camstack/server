@@ -38,6 +38,13 @@ describe('orderCandidatesAsTree', () => {
 })
 
 describe('candidateDistinguisher', () => {
+  it('carries the container name of a nested row, and none for a top-level one', () => {
+    const gw = cand('gw', 'Hub', { type: DeviceType.Gateway })
+    const a = cand('rad:1', 'Shutter', { parentStableId: 'gw' })
+    const rows = orderCandidatesAsTree([a, gw])
+    expect(rows.map((r) => r.parentName)).toEqual([undefined, 'Hub'])
+  })
+
   it('joins model and the native id tail', () => {
     expect(
       candidateDistinguisher(cand('rademacher:i1:cover:77', 'S', { metadata: { model: 'M1' } })),

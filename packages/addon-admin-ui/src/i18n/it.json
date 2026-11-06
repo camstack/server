@@ -1614,7 +1614,8 @@
       "hideChild": "Nascondi figlio",
       "showAfterAdopt": "Mostra dopo l'adozione",
       "hideAfterAdopt": "Nascondi dopo l'adozione",
-      "defaultFilter": "Dispositivi"
+      "defaultFilter": "Dispositivi",
+      "inContainer": "in {{name}}"
     },
     "alexaLoginStep": {
       "loginProxyReturnedAnError": "Il proxy di accesso ha restituito un errore",

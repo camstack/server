@@ -1614,7 +1614,8 @@
       "hideChild": "Hide child",
       "showAfterAdopt": "Show after adopt",
       "hideAfterAdopt": "Hide after adopt",
-      "defaultFilter": "Devices"
+      "defaultFilter": "Devices",
+      "inContainer": "in {{name}}"
     },
     "alexaLoginStep": {
       "loginProxyReturnedAnError": "Login proxy returned an error",

@@ -229,6 +229,10 @@ export function AdoptDevicesPanel({ addonId, integrationId, onClose }: AdoptDevi
     () => new Map(treeRows.map((r) => [r.candidate.childNativeId, r.depth])),
     [treeRows],
   )
+  const parentNameById = useMemo(
+    () => new Map(treeRows.map((r) => [r.candidate.childNativeId, r.parentName])),
+    [treeRows],
+  )
 
   // A failed candidate fetch falls back to `[]`; without this the empty
   // state would mask the fetch failure. Carry the error so the body renders
@@ -469,6 +473,9 @@ export function AdoptDevicesPanel({ addonId, integrationId, onClose }: AdoptDevi
                   <CandidateNameCell
                     candidate={c}
                     depth={depthById.get(c.childNativeId) ?? 0}
+                    {...(parentNameById.get(c.childNativeId) !== undefined
+                      ? { containerName: parentNameById.get(c.childNativeId) }
+                      : {})}
                     // Flat granularities (e.g. entities) have no children to
                     // expand — render a plain selectable row, no chevron.
                     expandable={!isFlatFilter}
@@ -635,6 +642,8 @@ export interface CandidateNameCellProps {
   candidate: DiscoveredChildDevice
   // Nesting level under a parent candidate (0 = top level).
   depth: number
+  // The container the candidate sits under, named on a secondary line ("in <name>").
+  containerName?: string
   // Whether the current granularity supports an expansion tree. Flat
   // granularities (entities) never render the chevron.
   expandable: boolean
@@ -655,6 +664,7 @@ export interface CandidateNameCellProps {
 export function CandidateNameCell({
   candidate,
   depth,
+  containerName,
   expandable,
   expanded,
   onToggleExpand,
@@ -686,11 +696,10 @@ export function CandidateNameCell({
           )}
           {count}
         </Button>
-      ) : (
-        <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center text-foreground-subtle/40">
-          —
-        </span>
-      )}
+      ) : expandable ? (
+        // Keeps names aligned with the rows that carry a chevron.
+        <span className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
+      ) : null}
       <div className="min-w-0 flex-1">
         <div className="truncate text-xs font-medium text-foreground" data-testid="candidate-name">
           {candidate.name}
@@ -702,6 +711,16 @@ export function CandidateNameCell({
             data-testid="candidate-subtitle"
           >
             {distinguisher}
+          </div>
+        )}
+        {containerName !== undefined && (
+          <div
+            className="truncate text-[10px] text-foreground-subtle"
+            data-testid="candidate-container"
+          >
+            {t('integrations.adoptDevicesModal.inContainer', 'in {{name}}', {
+              name: containerName,
+            })}
           </div>
         )}
         {/* The Type column is hidden on a phone: its label rides under the name. */}

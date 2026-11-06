@@ -3,7 +3,7 @@
  * devices in a dialog. An unanswered status draws nothing (never "0 exported"), and a fixed row
  * (a provider that keeps no records yet) still gets the button for the whole addon.
  */
-import { render, screen, fireEvent } from '@testing-library/react'
+import { cleanup, render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { PanelRow } from '../../instances/instances-model'
@@ -11,6 +11,7 @@ import type { PanelRow } from '../../instances/instances-model'
 const h = vi.hoisted(() => ({
   status: undefined as unknown,
   statusInputs: [] as unknown[],
+  panelProps: [] as Array<Record<string, unknown>>,
 }))
 
 vi.mock('@camstack/ui-library', async () => {
@@ -22,12 +23,14 @@ vi.mock('@camstack/ui-library', async () => {
       h.statusInputs.push(input)
       return { data: h.status }
     },
-    DeviceExportInstancePanel: ({ instance }: { instance: { instanceId: string } }) => (
-      <div data-testid="instance-panel">{instance.instanceId}</div>
-    ),
-    DeviceExportPanel: ({ addonId }: { addonId: string }) => (
-      <div data-testid="addon-panel">{addonId}</div>
-    ),
+    DeviceExportInstancePanel: (props: { instance: { instanceId: string } }) => {
+      h.panelProps.push(props)
+      return <div data-testid="instance-panel">{props.instance.instanceId}</div>
+    },
+    DeviceExportPanel: (props: { addonId: string }) => {
+      h.panelProps.push(props)
+      return <div data-testid="addon-panel">{props.addonId}</div>
+    },
   }
 })
 
@@ -57,6 +60,12 @@ const FIXED_ROW: PanelRow = {
   isActive: true,
 }
 
+function cleanupPanelAndOpenFixed(): void {
+  cleanup()
+  cell(FIXED_ROW)
+  fireEvent.click(screen.getByRole('button', { name: '16 devices exported' }))
+}
+
 function cell(row: PanelRow) {
   const column = exportedDevicesColumn(t)
   return render(<MemoryRouter>{column.render(row, 0)}</MemoryRouter>)
@@ -65,6 +74,7 @@ function cell(row: PanelRow) {
 beforeEach(() => {
   h.status = { linkState: 'linked', exposedDeviceCount: 16 }
   h.statusInputs = []
+  h.panelProps = []
 })
 
 describe('exportedDevicesColumn', () => {
@@ -89,6 +99,14 @@ describe('exportedDevicesColumn', () => {
     expect(h.statusInputs[0]).toEqual({ addonId: 'export-alexa' })
     fireEvent.click(screen.getByRole('button', { name: '16 devices exported' }))
     expect(screen.getByTestId('addon-panel').textContent).toBe('export-alexa')
+  })
+
+  it('opens the list without a way to leave for a device page: a row click navigates nowhere', () => {
+    cell(INSTANCE_ROW)
+    fireEvent.click(screen.getByRole('button', { name: '16 devices exported' }))
+    cleanupPanelAndOpenFixed()
+    for (const props of h.panelProps) expect(props.onOpenDevice).toBeUndefined()
+    expect(h.panelProps.length).toBeGreaterThan(0)
   })
 
   it('draws nothing while the status has not answered', () => {
