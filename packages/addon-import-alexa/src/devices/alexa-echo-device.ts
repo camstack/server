@@ -62,10 +62,9 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
   private failureLogged = false
   private volumeFailureLogged = false
   private health: EchoPollHealth = 'ok'
-  /** The last level this device asked Amazon for, and when; a step starts from it until a read is newer. */
-  private lastSet: { readonly level: number; readonly at: number } | null = null
-  /** When the read that produced the current media-player slice began. */
-  private polledFrom = 0
+  /** When this device last wrote its volume / Do Not Disturb optimistically; a read that began earlier must not overwrite it. */
+  private volumeSetAt = 0
+  private dndSetAt = 0
 
   constructor(ctx: DeviceContext) {
     const persisted = alexaEchoDeviceSchema.parse(ctx.persistedConfig ?? {})
@@ -130,6 +129,7 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
   }
 
   private async readOnce(): Promise<void> {
+    const readStartedAt = Date.now()
     const session = alexaEchoSessions.get(this.brokerId)
     if (session === null || session.state !== 'ready') return
     if (session.rateLimitedUntil !== null) {
@@ -146,19 +146,18 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
     const deviceType =
       this.amazonDeviceType !== '' ? this.amazonDeviceType : (listed?.deviceType ?? '')
     try {
-      const readStartedAt = Date.now()
       const info = await session.playerState(this.serial, deviceType, this.id)
-      this.polledFrom = readStartedAt
       const now = Date.now()
       const fromPlayer = mapPlayerInfoToStatus(info, { online: true, now })
-      this.runtimeState.setCapState('media-player', await this.completeVolume(fromPlayer))
+      const read = await this.completeVolume(fromPlayer)
+      this.runtimeState.setCapState('media-player', this.keepNewerVolume(read, readStartedAt))
       this.markOnline(true)
       this.noteRecovered()
     } catch (err: unknown) {
       this.noteReadFailure(err)
       return
     }
-    await this.readDoNotDisturb()
+    await this.readDoNotDisturb(readStartedAt)
   }
 
   /**
@@ -189,11 +188,23 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
     }
   }
 
-  private async readDoNotDisturb(): Promise<void> {
+  /**
+   * A read that began before this device last set its volume carries the level from
+   * before the set: keep the level the operator chose (and its mute), take the rest.
+   */
+  private keepNewerVolume(read: MediaPlayerStatus, readStartedAt: number): MediaPlayerStatus {
+    if (this.volumeSetAt < readStartedAt) return read
+    const current = this.runtimeState.getCapState<MediaPlayerStatus>('media-player')
+    if (current === undefined) return read
+    return { ...read, volumeLevel: current.volumeLevel, isMuted: current.isMuted }
+  }
+
+  private async readDoNotDisturb(readStartedAt: number): Promise<void> {
     try {
       const all = await alexaEchoSessions.dnd(this.brokerId, Date.now())
       const enabled = all.get(this.serial)
       if (enabled === undefined) return
+      if (this.dndSetAt >= readStartedAt) return
       this.runtimeState.setCapState('do-not-disturb', {
         enabled,
         lastChangedAt: Date.now(),
@@ -235,21 +246,49 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
     this.rereadSoon()
   }
 
+  /**
+   * The slice shows the new level at once; Amazon is told next. A refusal puts the
+   * previous level back (new stamp), says so, and rethrows (RateLimitedError included).
+   */
   private async sendVolume(level: number): Promise<void> {
-    this.lastSet = { level, at: Date.now() }
-    await this.session().setVolume(this.serial, level, this.id)
-    this.rereadSoon()
+    const previous =
+      this.runtimeState.getCapState<MediaPlayerStatus>('media-player') ?? emptyEchoStatus('idle', 0)
+    const setAt = Date.now()
+    this.volumeSetAt = setAt
+    this.runtimeState.setCapState('media-player', {
+      ...previous,
+      volumeLevel: level,
+      lastChangedAt: setAt,
+    })
+    alexaEchoSessions.invalidateVolumes(this.brokerId)
+    try {
+      await this.session().setVolume(this.serial, level, this.id)
+    } catch (err: unknown) {
+      const current =
+        this.runtimeState.getCapState<MediaPlayerStatus>('media-player') ?? previous
+      this.runtimeState.setCapState('media-player', {
+        ...current,
+        volumeLevel: previous.volumeLevel,
+        lastChangedAt: Date.now(),
+      })
+      this.ctx.logger.warn('alexa echo: Amazon refused the volume, back to the previous level', {
+        tags: { deviceId: this.id },
+        meta: {
+          from: previous.volumeLevel,
+          to: level,
+          error: err instanceof Error ? err.message : String(err),
+        },
+      })
+      throw err
+    }
   }
 
   /**
-   * Amazon has no step command: move from the level we last SET when no read since
-   * is newer (a polled level lags the command), else the polled one; refuse when
-   * there is none.
+   * Amazon has no step command: move from the level in the slice (it already holds
+   * the last level we set); refuse when there is none.
    */
   private async stepVolume(delta: number): Promise<void> {
-    const polled = this.runtimeState.getCapState<MediaPlayerStatus>('media-player')?.volumeLevel
-    const set = this.lastSet
-    const level = set !== null && set.at >= this.polledFrom ? set.level : polled
+    const level = this.runtimeState.getCapState<MediaPlayerStatus>('media-player')?.volumeLevel
     if (level === null || level === undefined) throw new Error('the Echo volume is not known yet')
     await this.sendVolume(Math.max(0, Math.min(100, level + delta)))
   }
@@ -281,17 +320,38 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
     this.ctx.registerNativeCap(mediaPlayerCapability, provider)
   }
 
+  /** Optimistic like the volume: the slice flips at once, a refusal flips it back and rethrows. */
+  private async sendDnd(enabled: boolean): Promise<void> {
+    const previous =
+      this.runtimeState.getCapState<DoNotDisturbStatus>('do-not-disturb') ?? COLD_DND
+    const setAt = Date.now()
+    this.dndSetAt = setAt
+    this.runtimeState.setCapState('do-not-disturb', { enabled, lastChangedAt: setAt })
+    alexaEchoSessions.invalidateDnd(this.brokerId)
+    try {
+      await this.session().setDnd(this.serial, enabled, this.id)
+    } catch (err: unknown) {
+      this.runtimeState.setCapState('do-not-disturb', {
+        enabled: previous.enabled,
+        lastChangedAt: Date.now(),
+      })
+      this.ctx.logger.warn('alexa echo: Amazon refused Do Not Disturb, back to the previous state', {
+        tags: { deviceId: this.id },
+        meta: {
+          from: previous.enabled,
+          to: enabled,
+          error: err instanceof Error ? err.message : String(err),
+        },
+      })
+      throw err
+    }
+  }
+
   private registerDoNotDisturb(): void {
     const provider: InferNativeProvider<typeof doNotDisturbCapability> = {
       getStatus: async () =>
         this.runtimeState.getCapState<DoNotDisturbStatus>('do-not-disturb') ?? COLD_DND,
-      setEnabled: async ({ enabled }) => {
-        await this.session().setDnd(this.serial, enabled, this.id)
-        this.runtimeState.setCapState('do-not-disturb', {
-          enabled,
-          lastChangedAt: Date.now(),
-        })
-      },
+      setEnabled: async ({ enabled }) => this.sendDnd(enabled),
     }
     this.ctx.registerNativeCap(doNotDisturbCapability, provider)
   }

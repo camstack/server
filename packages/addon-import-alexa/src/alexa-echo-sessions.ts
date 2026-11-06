@@ -79,6 +79,16 @@ export class EchoSessionRegistry {
     return pending
   }
 
+  /** Forget the shared volume list: a list fetched before a set must not answer a poll after it. */
+  invalidateVolumes(brokerId: string): void {
+    this.#volumes.delete(brokerId)
+  }
+
+  /** Forget the shared Do Not Disturb list, for the same reason. */
+  invalidateDnd(brokerId: string): void {
+    this.#dnd.delete(brokerId)
+  }
+
   clear(): void {
     this.#resolve = null
     this.#dnd.clear()

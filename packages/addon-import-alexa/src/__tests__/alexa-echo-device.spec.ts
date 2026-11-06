@@ -321,10 +321,157 @@ describe('AlexaEchoDevice', () => {
       // The poll still says 46; the second step starts from the 56 we just set.
       await player.volumeUp({ deviceId: 7 })
       expect(s.setVolume).toHaveBeenLastCalledWith('S1', 66, expect.any(Number))
-      await vi.advanceTimersByTimeAsync(2_000)
-      // A read newer than the last set wins again (the fake still reports 46).
+      await vi.advanceTimersByTimeAsync(30_000)
+      // A read that began after the last set wins again (the fake still reports 46).
       await player.volumeDown({ deviceId: 7 })
       expect(s.setVolume).toHaveBeenLastCalledWith('S1', 36, expect.any(Number))
+      await device.removeDevice()
+    })
+  })
+
+  describe('optimistic volume and Do Not Disturb', () => {
+    type Player = {
+      setVolume(i: { deviceId: number; volumeLevel: number }): Promise<void>
+      volumeUp(i: { deviceId: number }): Promise<void>
+    }
+    type Dnd = { setEnabled(i: { deviceId: number; enabled: boolean }): Promise<void> }
+
+    function deferred(): {
+      promise: Promise<undefined>
+      resolve: () => void
+      reject: (e: Error) => void
+    } {
+      let resolve: () => void = () => undefined
+      let reject: (e: Error) => void = () => undefined
+      const promise = new Promise<undefined>((res, rej) => {
+        resolve = () => res(undefined)
+        reject = rej
+      })
+      return { promise, resolve, reject }
+    }
+
+    it('the slice shows the new level BEFORE Amazon answers', async () => {
+      const s = session()
+      const gate = deferred()
+      s.setVolume.mockReturnValue(gate.promise)
+      alexaEchoSessions.setResolver(() => s)
+      const { device, providers } = await build()
+      const player = providers.get('media-player') as Player
+      const pending = player.setVolume({ deviceId: 7, volumeLevel: 80 })
+      await vi.advanceTimersByTimeAsync(0)
+      expect(slice(device, 'media-player')).toMatchObject({ volumeLevel: 80, state: 'playing' })
+      gate.resolve()
+      await pending
+      expect(slice(device, 'media-player')).toMatchObject({ volumeLevel: 80 })
+      await device.removeDevice()
+    })
+
+    it('a refused set restores the previous slice with a new stamp, warns with the deviceId and rethrows', async () => {
+      const s = session()
+      alexaEchoSessions.setResolver(() => s)
+      const { device, providers, logs } = await build()
+      const player = providers.get('media-player') as Player
+      const before = slice(device, 'media-player')
+      await vi.advanceTimersByTimeAsync(5_000)
+      s.setVolume.mockRejectedValue(new RateLimitedError('429'))
+      await expect(player.setVolume({ deviceId: 7, volumeLevel: 80 })).rejects.toBeInstanceOf(
+        RateLimitedError,
+      )
+      const after = slice(device, 'media-player')
+      expect(after).toMatchObject({ volumeLevel: before?.['volumeLevel'], state: 'playing' })
+      expect(after?.['lastChangedAt']).toBeGreaterThan(Number(before?.['lastChangedAt']))
+      const warn = logs.find((l) => l.level === 'warn' && l.message.includes('volume'))
+      expect(warn?.extras).toMatchObject({
+        tags: { deviceId: 7 },
+        meta: { from: before?.['volumeLevel'], to: 80 },
+      })
+      await device.removeDevice()
+    })
+
+    it('a volume set is not followed by a re-read, a transport command still is', async () => {
+      const s = session()
+      alexaEchoSessions.setResolver(() => s)
+      const { device, providers } = await build()
+      const player = providers.get('media-player') as Player
+      s.playerState.mockClear()
+      await player.setVolume({ deviceId: 7, volumeLevel: 30 })
+      await vi.advanceTimersByTimeAsync(2_000)
+      expect(s.playerState).not.toHaveBeenCalled()
+      await device.removeDevice()
+    })
+
+    it('a poll that began before the set cannot overwrite the new level', async () => {
+      const s = session()
+      alexaEchoSessions.setResolver(() => s)
+      const { device, providers } = await build()
+      const player = providers.get('media-player') as Player
+      let release: (info: PlayerInfo) => void = () => undefined
+      s.playerState.mockImplementationOnce(
+        () =>
+          new Promise<PlayerInfo>((res) => {
+            release = res
+          }),
+      )
+      const polling = device.poll()
+      await vi.advanceTimersByTimeAsync(10)
+      await player.setVolume({ deviceId: 7, volumeLevel: 80 })
+      release({ state: 'PLAYING', volume: { volume: 40 } })
+      await polling
+      expect(slice(device, 'media-player')).toMatchObject({ volumeLevel: 80 })
+      // The next poll began after the set: Amazon's answer is the truth again.
+      await vi.advanceTimersByTimeAsync(30_000)
+      expect(slice(device, 'media-player')).toMatchObject({ volumeLevel: 40 })
+      await device.removeDevice()
+    })
+
+    it('a set drops the shared volume list so the next poll does not reuse an older one', async () => {
+      const s = session({ playerState: vi.fn(async (): Promise<PlayerInfo> => ({ state: 'IDLE' })) })
+      alexaEchoSessions.setResolver(() => s)
+      const { device, providers } = await build()
+      const player = providers.get('media-player') as Player
+      expect(s.deviceVolumes).toHaveBeenCalledTimes(1)
+      await player.setVolume({ deviceId: 7, volumeLevel: 80 })
+      await device.poll()
+      expect(s.deviceVolumes).toHaveBeenCalledTimes(2)
+      await device.removeDevice()
+    })
+
+    it('Do Not Disturb flips in the slice before Amazon answers and reverts on failure', async () => {
+      const s = session()
+      alexaEchoSessions.setResolver(() => s)
+      const { device, providers, logs } = await build()
+      const dnd = providers.get('do-not-disturb') as Dnd
+      const gate = deferred()
+      s.setDnd.mockReturnValue(gate.promise)
+      const pending = dnd.setEnabled({ deviceId: 7, enabled: false })
+      pending.catch(() => undefined)
+      await vi.advanceTimersByTimeAsync(0)
+      expect(slice(device, 'do-not-disturb')).toMatchObject({ enabled: false })
+      gate.reject(new Error('refused'))
+      await expect(pending).rejects.toThrow('refused')
+      expect(slice(device, 'do-not-disturb')).toMatchObject({ enabled: true })
+      const warn = logs.find((l) => l.level === 'warn' && l.message.includes('Do Not Disturb'))
+      expect(warn?.extras).toMatchObject({ tags: { deviceId: 7 }, meta: { from: true, to: false } })
+      await device.removeDevice()
+    })
+
+    it('a Do Not Disturb read that began before the set cannot undo it', async () => {
+      const s = session()
+      alexaEchoSessions.setResolver(() => s)
+      const { device, providers } = await build()
+      const dnd = providers.get('do-not-disturb') as Dnd
+      let release: (m: ReadonlyMap<string, boolean>) => void = () => undefined
+      s.dndState.mockImplementationOnce(
+        () =>
+          new Promise<ReadonlyMap<string, boolean>>((res) => {
+            release = res
+          }),
+      )
+      await vi.advanceTimersByTimeAsync(30_000)
+      await dnd.setEnabled({ deviceId: 7, enabled: false })
+      release(new Map([['S1', true]]))
+      await vi.advanceTimersByTimeAsync(0)
+      expect(slice(device, 'do-not-disturb')).toMatchObject({ enabled: false })
       await device.removeDevice()
     })
   })
