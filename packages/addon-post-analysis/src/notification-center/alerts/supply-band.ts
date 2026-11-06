@@ -11,11 +11,16 @@
  * ## The verdict is the provider's
  *
  * The item's `status` is the device's own sensor (`ok` | `low` | `full`),
- * and it is the ONLY thing judged. The hub has no threshold for a fill level:
- * the rule for thresholds is that they belong to whoever generates the event,
- * and an item that says `low` has already decided. An item that reports only a
- * `level` is therefore not judged at all (`null`) rather than judged against a
- * number the hub would have to invent.
+ * and it is judged first. The rule for thresholds is that they belong to whoever
+ * generates the event, and an item that says `low` has already decided.
+ *
+ * ## A supply with a level and no status is judged from the level
+ *
+ * A tank can report a fill percentage and nothing else (a fountain's water
+ * level). For a `supply` item with a `level` and no `status`, 0 is empty and
+ * anything at or below {@link NC_SUPPLY_LOW_PERCENT} is low, so every device
+ * gets the same verdict from the same number ({@link supplyStatusFromLevel}).
+ * A waste item with only a level is still not judged.
  *
  * ## `null` is the third answer, and it is not `normal`
  *
@@ -36,6 +41,24 @@ export type NcNamedSupplyKey = (typeof NC_NAMED_SUPPLY_KEYS)[number]
 
 export function isNamedSupplyKey(key: string): key is NcNamedSupplyKey {
   return NC_NAMED_SUPPLY_KEYS.some((k) => k === key)
+}
+
+/**
+ * The fill percentage at or below which a supply that reports only a level is
+ * low. One number for every device; an item that reports its own `status`
+ * never reaches it.
+ */
+export const NC_SUPPLY_LOW_PERCENT = 10
+
+/**
+ * The verdict of a supply item that carries a level and no status: 0 is
+ * `empty`, at or below {@link NC_SUPPLY_LOW_PERCENT} is `low`, else `ok`.
+ * `null` when the level is unknown (D393) — never read as 0.
+ */
+export function supplyStatusFromLevel(level: number | null): 'ok' | 'low' | 'empty' | null {
+  if (level === null) return null
+  if (level <= 0) return 'empty'
+  return level <= NC_SUPPLY_LOW_PERCENT ? 'low' : 'ok'
 }
 
 /** One provider-judged supply/waste item, as the band derivation reads it. */

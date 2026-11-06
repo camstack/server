@@ -68,6 +68,7 @@ import {
   NC_SUPPLY_HOLD_MS,
   type NcSupplyBand,
   type NcSupplyReading,
+  supplyStatusFromLevel,
 } from './supply-band.js'
 import {
   alertRecordId,
@@ -836,6 +837,13 @@ function tagsOf(subject: string): NcAlertLogTags {
   return deviceId !== undefined ? { tags: { deviceId } } : {}
 }
 
+/** A supply with a level and no status: the band comes from the level (supply-band.ts). */
+function supplyReadingFromLevel(base: NcSupplyReading): NcSupplyReading {
+  const verdict = supplyStatusFromLevel(base.level)
+  if (verdict === null) return base
+  return { ...base, status: verdict === 'ok' ? 'ok' : 'low' }
+}
+
 function providerSupplyReading(item: NcConsumableSliceItem): NcSupplyReading {
   const base: NcSupplyReading = {
     key: item.key,
@@ -854,7 +862,7 @@ function providerSupplyReading(item: NcConsumableSliceItem): NcSupplyReading {
       case 'full':
         return { ...base, status: 'ok' }
       default:
-        return base
+        return status === null ? supplyReadingFromLevel(base) : base
     }
   }
   if (item.kind === 'waste') {

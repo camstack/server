@@ -18,7 +18,12 @@ import type { NcAlertRow } from '../alert-episode.js'
 import { type NcDeviceAlertSettings, NcDeviceAlerts } from '../device-alerts.js'
 import { legacyConsumableSubject } from '../consumable-subject.js'
 import { parseConsumableSliceItem, type NcConsumableSliceItem } from '../consumable-routing.js'
-import { deriveSupplyBand, NC_SUPPLY_HOLD_MS } from '../supply-band.js'
+import {
+  deriveSupplyBand,
+  NC_SUPPLY_HOLD_MS,
+  NC_SUPPLY_LOW_PERCENT,
+  supplyStatusFromLevel,
+} from '../supply-band.js'
 
 const MIN = 60_000
 const VACUUM = 4385
@@ -96,6 +101,21 @@ function sliceItem(
     status,
     kind,
     form,
+  })
+}
+
+function levelItem(
+  key: string,
+  level: number | null,
+  kind: 'supply' | 'waste' = 'supply',
+): NcConsumableSliceItem {
+  return parseConsumableSliceItem({
+    key,
+    label: key,
+    level,
+    status: null,
+    kind,
+    form: 'tank',
   })
 }
 
@@ -409,5 +429,60 @@ describe('a provider-verdict episode is not a 15 % threshold row', () => {
     expect(body('salt')).toBe('system.device-consumable-low.body.product')
     expect(body('dustBin')).toBe('system.device-consumable-low.body.bin')
     expect(body('rinseAid')).toBe('system.device-consumable-low.body.tank')
+  })
+})
+
+describe('a supply with a level and no status is judged from the level', () => {
+  it('0 is empty, the threshold is low, above it is ok, unknown is not judged', () => {
+    expect(supplyStatusFromLevel(0)).toBe('empty')
+    expect(supplyStatusFromLevel(NC_SUPPLY_LOW_PERCENT)).toBe('low')
+    expect(supplyStatusFromLevel(NC_SUPPLY_LOW_PERCENT + 1)).toBe('ok')
+    expect(supplyStatusFromLevel(null)).toBeNull()
+  })
+
+  it('RAISES low on a level-only tank at the threshold and at empty', async () => {
+    const h = harness()
+    observeHeld(h, levelItem('water', NC_SUPPLY_LOW_PERCENT))
+    observeHeld(h, levelItem('reserve', 0))
+    await settle()
+    expect(kinds(h)).toEqual(['device-consumable-low', 'device-consumable-low'])
+    expect(h.sent[0]?.subject.systemEvent?.subject).toBe(episodeSubject('water'))
+  })
+
+  it('a level above the threshold seeds silently, and a refill CLEARS the episode', async () => {
+    const h = harness()
+    observeHeld(h, levelItem('water', 80))
+    await settle()
+    expect(h.sent).toHaveLength(0)
+    observeHeld(h, levelItem('water', 5))
+    observeHeld(h, levelItem('water', 95))
+    await settle()
+    expect(kinds(h)).toEqual(['device-consumable-low', 'device-consumable-normal'])
+  })
+
+  it('an unknown level changes nothing, and a level-only waste item is still not judged', async () => {
+    const h = harness()
+    observeHeld(h, levelItem('water', null))
+    observeHeld(h, levelItem('bin', 99, 'waste'))
+    await settle()
+    expect(h.sent).toHaveLength(0)
+    expect(h.rows.has(episodeSubject('water'))).toBe(false)
+  })
+
+  it('a status the provider gave wins over the level', async () => {
+    const h = harness()
+    observeHeld(
+      h,
+      parseConsumableSliceItem({
+        key: 'water',
+        label: 'water',
+        level: 3,
+        status: 'ok',
+        kind: 'supply',
+        form: 'tank',
+      }),
+    )
+    await settle()
+    expect(h.sent).toHaveLength(0)
   })
 })
