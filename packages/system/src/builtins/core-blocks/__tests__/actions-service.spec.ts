@@ -8,7 +8,7 @@ import {
   createRecordsAccess,
   IDLE_ACTION_STATUS,
 } from '@camstack/types'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { makeRecordsWorld } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { ActionsService, type ActionSources } from '../actions-service.js'
@@ -52,6 +52,8 @@ async function world(options?: {
   }) => Promise<void>
   readonly sourceRun?: () => Promise<void>
   readonly directory?: DeviceDirectory
+  readonly maxRunMs?: number
+  readonly stopGraceMs?: number
 }) {
   const w = makeRecordsWorld()
   await w.provider.init()
@@ -100,6 +102,8 @@ async function world(options?: {
     logger: log.logger,
     now: () => (clock += 10),
     newRunId: () => `run-${(runs += 1)}`,
+    ...(options?.maxRunMs === undefined ? {} : { maxRunMs: options.maxRunMs }),
+    ...(options?.stopGraceMs === undefined ? {} : { stopGraceMs: options.stopGraceMs }),
   })
   return { service, store, ledger, calls, sourceRuns, events, log, records }
 }
@@ -524,5 +528,80 @@ describe('actions — D983 targets', () => {
     })
     expect(stored?.data.steps[0]).not.toHaveProperty('deviceId')
     expect(await w.service.migrateTargets()).toBe(0)
+  })
+})
+
+describe('actions — the run ceiling', () => {
+  const WAIT_STEPS = (seconds: number): ActionStep[] => [{ kind: 'wait', seconds }]
+
+  it('a waited run longer than the 60 s transport default ends with its real outcome', async () => {
+    vi.useFakeTimers()
+    try {
+      const w = await world()
+      const { action } = await w.service.create({
+        action: { name: 'Long', steps: [...WAIT_STEPS(120), STEP(1)] },
+      })
+      const run = w.service.run({ actionId: action.id, wait: true, caller: ADMIN })
+      await vi.advanceTimersByTimeAsync(121_000)
+      await expect(run).resolves.toMatchObject({ outcome: 'ran' })
+      expect(w.calls.map((c) => c.deviceId)).toEqual([1])
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('a run past the ceiling is stopped, reported timed-out, never ran, and logged', async () => {
+    const w = await world({ maxRunMs: 60 })
+    // written past create's own check, as an action stored under an older ceiling would be
+    const action = await w.store.create({
+      name: 'Endless',
+      steps: [STEP(1), ...WAIT_STEPS(30), STEP(2)],
+    })
+    const result = await w.service.run({ actionId: action.id, wait: true, caller: ADMIN })
+    expect(result.outcome).toBe('timed-out')
+    expect(result.message).toMatch(/limit/)
+    expect(w.calls.map((c) => c.deviceId)).toEqual([1])
+    const { traces } = await w.service.getTraces({ actionId: action.id })
+    expect(traces[0]?.outcome).toBe('failed')
+    const logged = w.log.lines.find((l) => l.message.includes('time limit'))
+    expect(logged?.extras?.meta).toMatchObject({ actionId: action.id })
+    // the action is free again: a second run is accepted, not refused as overlapping
+    const again = await w.service.run({ actionId: action.id, caller: ADMIN })
+    expect(again.outcome).toBe('started')
+  })
+
+  it('an addon run that ignores the stop is still answered once the grace has passed', async () => {
+    const w = await world({
+      addonActions: [addonEntry('ha:script')],
+      maxRunMs: 30,
+      stopGraceMs: 30,
+      sourceRun: () => new Promise<void>(() => undefined),
+    })
+    const result = await w.service.run({ actionId: 'ha:script', wait: true, caller: ADMIN })
+    expect(result.outcome).toBe('timed-out')
+  })
+
+  it('create refuses an action whose waits alone exceed the ceiling', async () => {
+    const w = await world({ maxRunMs: 500_000 })
+    await expect(
+      w.service.create({
+        action: { name: 'Too long', steps: [...WAIT_STEPS(300), ...WAIT_STEPS(300)] },
+      }),
+    ).rejects.toThrow(/\[invalid-steps\].*limit|\[invalid-steps\].*at most/)
+    await expect(
+      w.service.create({ action: { name: 'Fits', steps: WAIT_STEPS(300) } }),
+    ).resolves.toBeDefined()
+  })
+
+  it('update refuses it too, and keeps the stored action', async () => {
+    const w = await world({ maxRunMs: 500_000 })
+    const { action } = await w.service.create({ action: { name: 'Fits', steps: WAIT_STEPS(300) } })
+    await expect(
+      w.service.update({
+        actionId: action.id,
+        action: { steps: [...WAIT_STEPS(300), ...WAIT_STEPS(300)] },
+      }),
+    ).rejects.toThrow(/\[invalid-steps\]/)
+    expect((await w.store.get(action.id))?.steps).toHaveLength(1)
   })
 })

@@ -2052,6 +2052,12 @@ export {
 } from './action-source.cap.js'
 export { type ISchedulersProvider, schedulersCapability } from './schedulers.cap.js'
 export {
+  ACTION_RUN_MAX_MS,
+  ACTION_RUN_TIMEOUT_MS,
+  ACTION_RUN_TRANSPORT_MARGIN_MS,
+  actionWaitTotalMs,
+} from './actions-timeouts.js'
+export {
   type ActionLinks,
   ActionLinksSchema,
   actionsCapability,

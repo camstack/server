@@ -52,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A composed pet fountain serves its tank as a Water consumable even without a maintenance entity
 - A stored pet-fountain composition loses the drink counters and the Clear daily count forward on the next start
 - The migration API reports each integration's stored switch so a disabled integration stays disabled
+- A waited action call (an automation step) now lasts as long as the run instead of failing after 60 seconds; a run over 60 minutes is stopped and reported timed-out.
 
 ### Removed
 

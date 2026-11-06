@@ -28,6 +28,8 @@ import {
   ActionError,
   type ActionLinks,
   type ActionRunChanged,
+  ACTION_RUN_MAX_MS,
+  actionWaitTotalMs,
   type ActionRunResult,
   type ActionVariableValue,
   addonIdOfActionId,
@@ -83,11 +85,20 @@ export interface ActionsServiceDeps {
   readonly newRunId?: () => string
   /** What the caps say about quantity params; the generated registry by default. */
   readonly units?: UnitResolver
+  /** The longest a run may last; `ACTION_RUN_MAX_MS` by default (a test injects a short one). */
+  readonly maxRunMs?: number
+  /** How long a stopped run is given to wind down before its call is answered anyway. */
+  readonly stopGraceMs?: number
 }
+
+/** After a timeout stops a run, the call is answered once the run ended or this long passed. */
+const STOP_GRACE_MS = 10_000
 
 /** A run in flight: the stop flag and whatever sleeps it can wake. */
 class RunToken {
   aborted = false
+  /** Set by the ceiling, so a stopped run is told apart from one the operator stopped. */
+  timedOut = false
   private readonly wakers = new Set<() => void>()
 
   sleep(ms: number): Promise<void> {
@@ -123,6 +134,10 @@ function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err)
 }
 
+function spanLabel(ms: number): string {
+  return ms < 120_000 ? `${Math.round(ms / 1000)} seconds` : `${Math.round(ms / 60_000)} minutes`
+}
+
 export class ActionsService implements IActionsProvider {
   private readonly store: ActionsStore
   private readonly ledger: RunsLedger
@@ -135,6 +150,8 @@ export class ActionsService implements IActionsProvider {
   private readonly units: UnitResolver
   private readonly targets: ActionTargetResolver
   private readonly running = new Map<string, RunningRun>()
+  private readonly maxRunMs: number
+  private readonly stopGraceMs: number
 
   constructor(deps: ActionsServiceDeps) {
     this.store = deps.store
@@ -145,6 +162,8 @@ export class ActionsService implements IActionsProvider {
     this.logger = deps.logger
     this.now = deps.now ?? Date.now
     this.newRunId = deps.newRunId ?? randomUUID
+    this.maxRunMs = deps.maxRunMs ?? ACTION_RUN_MAX_MS
+    this.stopGraceMs = deps.stopGraceMs ?? STOP_GRACE_MS
     this.units = deps.units ?? capUnitResolver(ALL_CAPABILITY_DEFINITIONS)
     this.targets = new ActionTargetResolver(deps.directory, deps.logger)
   }
@@ -346,9 +365,10 @@ export class ActionsService implements IActionsProvider {
     let outcome: AutomationRunOutcome = 'failed'
     let steps: readonly AutomationStepTrace[] = []
     let message: string | undefined
+    const deadline = this.armDeadline(entry.id, runId, token)
     try {
       const runnable = this.runnableFor(entry, values, token)
-      const result = await runSteps(runnable, {
+      const running = runSteps(runnable, {
         pathPrefix: 'steps',
         isAborted: () => token.aborted,
         abortReason: 'the run was stopped',
@@ -360,15 +380,23 @@ export class ActionsService implements IActionsProvider {
           })
         },
       })
-      steps = result.steps
-      outcome = result.failed ? 'failed' : result.aborted ? 'aborted' : 'ran'
-      message = result.steps.find((s) => s.outcome === 'error')?.message
+      const result = await Promise.race([running, deadline.expired])
+      if (result !== 'expired') {
+        steps = result.steps
+        outcome = result.failed ? 'failed' : result.aborted ? 'aborted' : 'ran'
+        message = result.steps.find((s) => s.outcome === 'error')?.message
+      }
+      if (token.timedOut) {
+        outcome = 'failed'
+        message = this.timeoutMessage()
+      }
     } catch (err: unknown) {
       message = errorMessage(err)
       this.logger.error('action run crashed', {
         meta: { actionId: entry.id, runId, error: message },
       })
     }
+    deadline.disarm()
     const endedAt = this.now()
     const trace: AutomationRunTrace = {
       runId,
@@ -391,7 +419,52 @@ export class ActionsService implements IActionsProvider {
       lastRunAt: startedAt,
       lastError: outcome === 'failed' ? (message ?? 'the run failed') : null,
     })
-    return { runId, outcome, ...(message === undefined ? {} : { message }) }
+    return {
+      runId,
+      outcome: token.timedOut ? 'timed-out' : outcome,
+      ...(message === undefined ? {} : { message }),
+    }
+  }
+
+  private timeoutMessage(): string {
+    return `the run reached the ${spanLabel(this.maxRunMs)} limit and was stopped`
+  }
+
+  /**
+   * The run's ceiling. At `maxRunMs` the run is stopped through the same path
+   * an operator's stop takes; a run that does not wind down within the grace
+   * (an addon script that ignores the stop) is answered `expired` anyway, so a
+   * waiting caller is never held past the limit.
+   */
+  private armDeadline(
+    actionId: string,
+    runId: string,
+    token: RunToken,
+  ): { readonly expired: Promise<'expired'>; disarm(): void } {
+    let grace: ReturnType<typeof setTimeout> | null = null
+    let expire: (value: 'expired') => void = () => undefined
+    const expired = new Promise<'expired'>((resolve) => {
+      expire = resolve
+    })
+    const limit = setTimeout(() => {
+      token.timedOut = true
+      this.logger.error('action run reached its time limit — stopping it', {
+        meta: { actionId, runId, maxRunMs: this.maxRunMs },
+      })
+      void this.stop({ actionId }).catch((err: unknown) => {
+        this.logger.warn('stopping a timed-out action run failed', {
+          meta: { actionId, runId, error: errorMessage(err) },
+        })
+      })
+      grace = setTimeout(() => expire('expired'), this.stopGraceMs)
+    }, this.maxRunMs)
+    return {
+      expired,
+      disarm: () => {
+        clearTimeout(limit)
+        if (grace !== null) clearTimeout(grace)
+      },
+    }
   }
 
   private runnableFor(
@@ -460,6 +533,7 @@ export class ActionsService implements IActionsProvider {
     action: ActionEntry
     warnings?: UnitWarning[]
   }> {
+    this.requireWithinCeiling(input.action.steps, input.action.name)
     const { steps, warnings } = this.normalizeSteps(input.action.steps, input.action.name)
     const action = await this.store.create({ ...input.action, steps })
     this.logger.info('internal action created', {
@@ -476,6 +550,7 @@ export class ActionsService implements IActionsProvider {
     const existing = await this.store.get(input.actionId)
     if (existing === null) throw new ActionError('not-found', `no action "${input.actionId}"`)
     const patch = input.action
+    this.requireWithinCeiling(patch.steps ?? existing.steps ?? [], patch.name ?? existing.name)
     const { steps, warnings } = this.normalizeSteps(
       patch.steps ?? existing.steps ?? [],
       patch.name ?? existing.name,
@@ -489,6 +564,17 @@ export class ActionsService implements IActionsProvider {
     })
     this.logger.info('internal action updated', { meta: { actionId: action.id } })
     return { action, ...(warnings.length > 0 ? { warnings } : {}) }
+  }
+
+  /** An action whose waits alone exceed the run ceiling could never finish: refuse the save. */
+  private requireWithinCeiling(steps: ActionInput['steps'], actionName: string): void {
+    const total = actionWaitTotalMs(steps)
+    if (total <= this.maxRunMs) return
+    const message = `the wait steps add up to ${spanLabel(total)}; an action may run at most ${spanLabel(this.maxRunMs)}`
+    this.logger.warn('action save refused — it could never finish within the run limit', {
+      meta: { action: actionName, waitTotalMs: total, maxRunMs: this.maxRunMs },
+    })
+    throw new ActionError('invalid-steps', message)
   }
 
   /**

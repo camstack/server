@@ -9,6 +9,7 @@ import {
 } from '../automation/action.js'
 import { UnitWarningSchema } from '../automation/normalize-units.js'
 import { AutomationRunTraceSchema } from '../automation/trace.js'
+import { ACTION_RUN_TIMEOUT_MS } from './actions-timeouts.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
 
 /**
@@ -28,6 +29,12 @@ import { type CapabilityDefinition, type InferProvider, method } from './capabil
  * gate sees it) and the provider refuses an action that camera does not link.
  * An admin, and an in-process caller (an automation block), may run any action.
  * Every refusal is typed (`[not-linked] …`) and logged.
+ *
+ * **A run lasts at most `ACTION_RUN_MAX_MS` (60 min).** The provider stops a
+ * run that reaches it and answers `timed-out` (never `ran`); an action whose
+ * `wait` steps alone add up to more is refused at create/update
+ * (`[invalid-steps]`). `run` declares a `timeoutMs` above that ceiling, so a
+ * waited call (an automation step) is never cut by the 60 s transport default.
  *
  * A second `run` of an action that is already running is REFUSED — traced and
  * logged — never queued.
@@ -63,7 +70,9 @@ export const actionsCapability = {
     /**
      * Start an action. `wait` holds the call until the run ended (an automation
      * step does); without it the call returns `started`. A non-admin names the
-     * camera (`deviceId`) that links the action.
+     * camera (`deviceId`) that links the action. A waited call stays open for
+     * the whole run, so it declares `ACTION_RUN_TIMEOUT_MS` (above the ceiling
+     * the provider enforces) instead of the 60 s transport default.
      */
     run: method(
       z.object({
@@ -74,7 +83,13 @@ export const actionsCapability = {
         deviceId: z.number().int().nonnegative().optional(),
       }),
       ActionRunResultSchema,
-      { role: 'viewer', auth: 'protected', kind: 'mutation', caller: 'required' },
+      {
+        role: 'viewer',
+        auth: 'protected',
+        kind: 'mutation',
+        caller: 'required',
+        timeoutMs: ACTION_RUN_TIMEOUT_MS,
+      },
     ),
     stop: method(ActionIdInput, z.void(), { kind: 'mutation', auth: 'admin' }),
     getTraces: method(ActionIdInput, z.object({ traces: z.array(AutomationRunTraceSchema) }), {

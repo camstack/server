@@ -3,6 +3,7 @@ import type {
   IReadinessRegistryRecord,
   SystemEvent,
 } from '@camstack/types'
+import { CAP_METHOD_TIMEOUTS_MS } from '@camstack/types/addon'
 import { stampCallerAddonId } from './cap-route-resolver.js'
 import { liftRoutingHints } from './cap-routing-hints.js'
 import type {
@@ -42,6 +43,13 @@ export interface LocalChildClientOptions {
   readonly caps: readonly ChildCapDescriptor[]
   /** Invoked for each parent→child cap call; returns the cap method's result. */
   readonly dispatch: (call: CapCallInput) => Promise<unknown>
+  /**
+   * The `timeoutMs` a cap method declares, for the calls THIS child sends out.
+   * The request timer runs on the child's own socket, which has no cap
+   * definitions, so the declared bound has to be looked up here. Omitted ⇒ the
+   * generated table of declared timeouts (`CAP_METHOD_TIMEOUTS_MS`).
+   */
+  readonly capTimeoutMs?: (capName: string, method: string) => number | undefined
 }
 
 /** Handler invoked for each parent→child addon-level call (`routes` / `custom`). */
@@ -468,7 +476,10 @@ export class LocalChildClient {
         ...(Object.keys(hints).length > 0 ? { hints } : {}),
         ...routing,
       }
-      const reply = await this.channel.request(msg, { payload: packPayload(input.args) })
+      const reply = await this.channel.request(msg, {
+        payload: packPayload(input.args),
+        ...this.outboundBound(input),
+      })
       return reply instanceof PayloadReply ? unpackPayload(reply.payload) : reply
     }
     const msg: CapCallOutMessage = {
@@ -478,7 +489,16 @@ export class LocalChildClient {
       args: input.args,
       ...routing,
     }
-    return this.channel.request(msg)
+    return this.channel.request(msg, this.outboundBound(input))
+  }
+
+  /** The method's declared `timeoutMs`, as per-request options (none ⇒ the channel default). */
+  private outboundBound(input: ChildCallOutInput): { timeoutMs?: number } {
+    const resolve =
+      this.options.capTimeoutMs ??
+      ((capName: string, method: string) => CAP_METHOD_TIMEOUTS_MS[capName]?.[method])
+    const declared = resolve(input.capName, input.method)
+    return typeof declared === 'number' ? { timeoutMs: declared } : {}
   }
 
   /** Disconnect from the parent. Safe to call before `start()` (no-op) and idempotent. */

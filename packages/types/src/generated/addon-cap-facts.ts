@@ -5,7 +5,7 @@
  * `ALL_CAPABILITY_DEFINITIONS` (the whole Zod schema graph, ~+100 MB heap per
  * runner). See docs/decisions/adr-0028.md.
  *
- * Coverage: 1 advance-derived caps, 82 caps with 373 state leaves.
+ * Coverage: 1 advance-derived caps, 82 caps with 373 state leaves, 15 caps with a declared method timeout.
  */
 
 /** A bindable scalar in a capability's runtime state. */
@@ -312,4 +312,25 @@ export const CAP_STATE_LEAVES: Readonly<Record<string, readonly CapStateLeaf[]>>
   "water-heater": [{"path":"currentTemp","valueType":"number"}, {"path":"targetTemp","valueType":"number"}, {"path":"operationMode","valueType":"string"}, {"path":"away","valueType":"boolean"}, {"path":"minTemp","valueType":"number"}, {"path":"maxTemp","valueType":"number"}],
   "weather": [{"path":"condition","valueType":"string"}, {"path":"temperature","valueType":"number"}, {"path":"humidity","valueType":"number"}, {"path":"pressure","valueType":"number"}, {"path":"windSpeed","valueType":"number"}, {"path":"windBearing","valueType":"number"}],
   "zone-analytics": [{"path":"ts","valueType":"number"}, {"path":"frameWidth","valueType":"number"}, {"path":"frameHeight","valueType":"number"}, {"path":"frame.totalObjects","valueType":"number"}, {"path":"frame.standingObjects","valueType":"number"}, {"path":"frame.transientObjects","valueType":"number"}, {"path":"unzoned.totalObjects","valueType":"number"}, {"path":"unzoned.standingObjects","valueType":"number"}, {"path":"unzoned.transientObjects","valueType":"number"}],
+})
+
+/** cap name -> method -> the `timeoutMs` its definition declares (absent: the transport default). */
+export const CAP_METHOD_TIMEOUTS_MS: Readonly<
+  Record<string, Readonly<Record<string, number>>>
+> = Object.freeze({
+  "actions": { "run": 3630000 },
+  "audio-analyzer": { "classify": 30000 },
+  "custom-model-registry": { "importModelBundle": 1800000 },
+  "database-snapshot": { "writeSnapshot": 1800000 },
+  "device-manager": { "migrateDevice": 720000, "runDiscoverySweep": 120000 },
+  "device-provider": { "reloadDevice": 180000 },
+  "llm": { "generate": 600000, "generateVision": 600000, "testProfile": 600000 },
+  "llm-runtime": { "complete": 600000, "completeApple": 600000, "ensureStarted": 600000, "installModel": 3600000 },
+  "local-network": { "scanNetwork": 90000 },
+  "model-convert": { "convert": 600000 },
+  "pipeline-analytics": { "addRetrainFrameFromRecording": 60000, "offerRetrainArchive": 120000, "proposeRetrainAnnotationsWithLlm": 180000, "resolveRetrainTrainingCorpus": 60000, "writeRetrainArchive": 3600000 },
+  "server-management": { "applyServerUpdate": 960000 },
+  "terminal-session": { "pullOutput": 15000 },
+  "training": { "canaryResult": 120000, "cancelJob": 120000, "planJob": 60000, "registerResult": 1800000, "rollbackCanary": 120000, "startJob": 120000, "startJobBatch": 120000 },
+  "training-provider": { "cancelJob": 60000, "cleanupJob": 300000, "getJob": 60000, "listJobEvents": 60000, "listJobs": 120000, "offerArtifact": 300000, "readResult": 300000, "submitJob": 1800000, "uploadDataset": 7200000, "validateCredentials": 30000 },
 })

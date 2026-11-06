@@ -218,8 +218,15 @@ export const ActionRunOriginSchema = z.object({
 })
 export type ActionRunOrigin = z.infer<typeof ActionRunOriginSchema>
 
-/** `started` = the caller did not ask to wait. */
-export const ActionRunOutcomeSchema = z.union([AutomationRunOutcomeSchema, z.literal('started')])
+/**
+ * `started` = the caller did not ask to wait. `timed-out` = the run reached the
+ * ceiling (`ACTION_RUN_MAX_MS`) and was stopped; it is never a `ran`.
+ */
+export const ActionRunOutcomeSchema = z.union([
+  AutomationRunOutcomeSchema,
+  z.literal('started'),
+  z.literal('timed-out'),
+])
 export type ActionRunOutcome = z.infer<typeof ActionRunOutcomeSchema>
 
 export const ActionRunResultSchema = z.object({

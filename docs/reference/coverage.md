@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**239 units · 8124 source files · 233 units claimed by at least one document (8094 files).**
+**239 units · 8125 source files · 233 units claimed by at least one document (8095 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -24,7 +24,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-post-analysis/src/pipeline-analytics` | 473 | `post-analysis`, `recognition` | `architecture/post-analysis.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +171 more, 27 ADRs | 2026-10-14 |
 | `packages/system/src/builtins` | 463 | `alerts-and-health`, `auth`, `automations`, `device-model`, `device-surfaces`, `logging`, `remote-access`, `secrets`, `storage` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, +184 more, 21 ADRs | 2026-11-02 |
 | `packages/ui-library/src/composites` | 365 | `admin-ui`, `secrets` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +54 more, 3 ADRs | 2026-11-02 |
-| `packages/types/src/capabilities` | 231 | `capabilities`, `cloud-training`, `secrets` | `architecture/capabilities.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +213 more, 41 ADRs | 2026-10-26 |
+| `packages/types/src/capabilities` | 232 | `capabilities`, `cloud-training`, `secrets` | `architecture/capabilities.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +213 more, 41 ADRs | 2026-10-26 |
 | `packages/addon-post-analysis/src/notification-center` | 214 | `notification-center` | `architecture/notifications.md`, `decisions/adr-0701-an-alarm-rule-gated-on-armed-auto-triggers-the-panel-and-post-siren-policy-lives-per-mode.md`, `decisions/adr-1013-one-instance-model.md`, +85 more, 27 ADRs | 2026-10-07 |
 | `packages/addon-admin-ui/src/pages` | 204 | `admin-ui`, `secrets` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +55 more, 8 ADRs | 2026-11-02 |
 | `packages/addon-pipeline/src/stream-broker` | 188 | `recorder`, `stream-broker` | `architecture/data-planes.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-29-media-plane-memory-comparison.md` _(covers)_, +60 more, 21 ADRs | 2026-10-21 |

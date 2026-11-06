@@ -111,7 +111,11 @@ export {
 // Schema-free capability facts for addon SERVER code (codegen'd): an addon that
 // reached for `ALL_CAPABILITY_DEFINITIONS` inlined every cap's Zod schema and paid
 // ~+100 MB of heap per runner for two lookups.
-export { CAP_ADVANCE_FIELDS, CAP_STATE_LEAVES } from './generated/addon-cap-facts.js'
+export {
+  CAP_ADVANCE_FIELDS,
+  CAP_METHOD_TIMEOUTS_MS,
+  CAP_STATE_LEAVES,
+} from './generated/addon-cap-facts.js'
 export type { CapStateLeaf } from './generated/addon-cap-facts.js'
 export { createDeviceProxy } from './generated/device-proxy.js'
 export { createEventBusSliceSource } from './device/device-state-handle.js'

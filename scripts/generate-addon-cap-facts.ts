@@ -18,7 +18,12 @@
  *     runtime state (`stateLeavesOf`, the Zod introspection the OSD source
  *     picker used to run per request). Consumer: `addon-osd-manager`.
  *
- * Both are computed by running the REAL code over `ALL_CAPABILITY_DEFINITIONS`
+ *   - `CAP_METHOD_TIMEOUTS_MS`  cap name -> method -> the declared `timeoutMs`.
+ *     A forked addon's outbound `ctx.api` call is bounded on the CHILD's socket,
+ *     which has no cap definitions; without this table every call it makes ends
+ *     at the 60 s socket default whatever the method declared.
+ *
+ * All are computed by running the REAL code over `ALL_CAPABILITY_DEFINITIONS`
  * here, so they cannot drift from the cap definitions;
  * `packages/types/src/__tests__/addon-cap-facts.spec.ts` proves equality.
  *
@@ -40,6 +45,7 @@ const OUTPUT = path.join(ROOT, 'packages/types/src/generated/addon-cap-facts.ts'
 function main(): void {
   const advance: Array<readonly [string, string]> = []
   const leaves: Array<readonly [string, string]> = []
+  const timeouts: Array<readonly [string, string]> = []
   let leafCount = 0
   const names = [...ALL_CAPABILITY_DEFINITIONS]
     .map((def) => def.name)
@@ -48,6 +54,11 @@ function main(): void {
     const field = Object.values(def.events ?? {}).find((event) => event.fromState?.on === 'advance')
       ?.fromState?.field
     if (field !== undefined) advance.push([def.name, field])
+    const declared = Object.entries(def.methods ?? {})
+      .filter(([, m]) => typeof m.timeoutMs === 'number')
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([name, m]) => `${JSON.stringify(name)}: ${m.timeoutMs}`)
+    if (declared.length > 0) timeouts.push([def.name, `{ ${declared.join(', ')} }`])
     const found = stateLeavesOf(def)
     if (found.length === 0) continue
     leafCount += found.length
@@ -68,7 +79,7 @@ function main(): void {
  * \`ALL_CAPABILITY_DEFINITIONS\` (the whole Zod schema graph, ~+100 MB heap per
  * runner). See docs/decisions/adr-0028.md.
  *
- * Coverage: ${advance.length} advance-derived caps, ${leaves.length} caps with ${leafCount} state leaves.
+ * Coverage: ${advance.length} advance-derived caps, ${leaves.length} caps with ${leafCount} state leaves, ${timeouts.length} caps with a declared method timeout.
  */
 
 /** A bindable scalar in a capability's runtime state. */
@@ -92,6 +103,13 @@ ${names.map((name) => `  ${JSON.stringify(name)},`).join('\n')}
 /** cap name -> the bindable leaves of its runtime state (absent: none). */
 export const CAP_STATE_LEAVES: Readonly<Record<string, readonly CapStateLeaf[]>> = Object.freeze({
 ${leaves.map(([cap, rows]) => `  ${JSON.stringify(cap)}: ${rows},`).join('\n')}
+})
+
+/** cap name -> method -> the \`timeoutMs\` its definition declares (absent: the transport default). */
+export const CAP_METHOD_TIMEOUTS_MS: Readonly<
+  Record<string, Readonly<Record<string, number>>>
+> = Object.freeze({
+${timeouts.map(([cap, rows]) => `  ${JSON.stringify(cap)}: ${rows},`).join('\n')}
 })
 `
   writeIfChanged(OUTPUT, content)
