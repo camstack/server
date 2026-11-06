@@ -289,6 +289,10 @@ jobs:
             scripts/check-one-test-method.ts \
             scripts/check-instance-refs-use-link-primitive.ts \
             scripts/check-broker-cap-is-bus-only.ts \
+            scripts/check-collection-crud-is-instances.ts \
+            scripts/check-no-settings-fallback-for-kinds.ts \
+            scripts/check-one-instances-list.ts \
+            scripts/check-no-addon-level-settings.ts \
             scripts/check-no-integration-settings.ts \
             scripts/check-hub-settings-ready-before-forks.ts \
             scripts/check-export-coverage.ts \

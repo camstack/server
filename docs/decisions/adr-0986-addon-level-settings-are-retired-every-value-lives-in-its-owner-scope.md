@@ -165,8 +165,10 @@ replaces §6: receivers are not a builtin phase.
 
 ## Enforcement
 
-- `scripts/check-no-global-settings-schema.ts` (new, wired in checks.yml): refuses `globalSettingsSchema`, <!-- drift-ok: new guard, lands with this decision -->
-  `integrationSettingSections`, `getGlobalSettings` and `updateGlobalSettings` in non-test source. <!-- drift-ok: new guard, lands with this decision -->
+- `scripts/check-no-addon-level-settings.ts` (wired in checks.yml): refuses `globalSettingsSchema`,
+  `integrationSettingSections`, `getGlobalSettings`, `updateGlobalSettings` and `getIntegrationSettings` in
+  non-test source. Every site that exists today is in `scripts/no-addon-level-settings-baseline.json`, in the
+  family whose packet moves it; the baseline only shrinks and M5 empties it.
 - `scripts/check-scoped-settings-declared.ts` (new): every scoped schema names a cap the addon's manifest <!-- drift-ok: new guard, lands with this decision -->
   provides; the scopes of one addon declare disjoint keys; a schema key never contains `@`.
 - `scripts/check-device-settings-standard.ts` extended: an addon-settings value that is a map keyed by a

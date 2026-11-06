@@ -1,0 +1,78 @@
+{
+  "_why": "Every site today that keeps a settings-store / legacy path beside a record kind (planning#440 step 5). A family is a contiguous block that its packet deletes with the site; `permanent` is not an instance family and stays. The list only shrinks.",
+  "families": {
+    "registry": {
+      "packages/system/src/builtins/sqlite-storage/integration-record-kinds.ts:INTEGRATIONS_LEGACY": "the legacy `integrations` table beside the integration records; P5 deletes the dual storage (recordStores === undefined branches, INTEGRATIONS_LEGACY)",
+      "packages/system/src/builtins/sqlite-storage/integration-registry.ts:INTEGRATIONS_LEGACY": "the legacy `integrations` table beside the integration records; P5 deletes the dual storage (recordStores === undefined branches, INTEGRATIONS_LEGACY)",
+      "packages/system/src/builtins/sqlite-storage/integration-registry.ts:declareCollection": "the legacy `integrations` table beside the integration records; P5 deletes the dual storage (recordStores === undefined branches, INTEGRATIONS_LEGACY)",
+      "packages/system/src/index.ts:INTEGRATIONS_LEGACY": "the legacy `integrations` table beside the integration records; P5 deletes the dual storage (recordStores === undefined branches, INTEGRATIONS_LEGACY)"
+    },
+    "storage": {
+      "packages/system/src/builtins/storage-orchestrator/drain-state-store.ts:declareCollection": "the legacy storage_locations / drain-state collection beside the location records; P5 deletes the collection path, P6d moves the locations",
+      "packages/system/src/builtins/storage-orchestrator/location-store.ts:LegacyStorageLocationDefaultSchema": "the legacy storage_locations / drain-state collection beside the location records; P5 deletes the collection path, P6d moves the locations",
+      "packages/system/src/builtins/storage-orchestrator/location-store.ts:declareCollection": "the legacy storage_locations / drain-state collection beside the location records; P5 deletes the collection path, P6d moves the locations",
+      "packages/system/src/builtins/storage-orchestrator/record-kinds.ts:STORAGE_DRAIN_STATE_LEGACY": "the legacy storage_locations / drain-state collection beside the location records; P5 deletes the collection path, P6d moves the locations",
+      "packages/system/src/index.ts:STORAGE_DRAIN_STATE_LEGACY": "the legacy storage_locations / drain-state collection beside the location records; P5 deletes the collection path, P6d moves the locations",
+      "packages/types/src/index.ts:LegacyStorageLocationDefaultSchema": "the legacy storage_locations / drain-state collection beside the location records; P5 deletes the collection path, P6d moves the locations",
+      "packages/types/src/interfaces/storage-location.ts:LegacyStorageLocationDefaultSchema": "the legacy storage_locations / drain-state collection beside the location records; P5 deletes the collection path, P6d moves the locations"
+    },
+    "google": {
+      "packages/addon-google-services/src/google-broker-registry.ts:LegacyGoogleFlatConfigSchema": "legacy flat-config / oauth state and config.brokers seeding beside the broker records; P5 deletes them after the google-services migration",
+      "packages/addon-google-services/src/google-services.addon.ts:LegacyOauthStateSchema": "legacy flat-config / oauth state and config.brokers seeding beside the broker records; P5 deletes them after the google-services migration",
+      "packages/addon-google-services/src/google-services.addon.ts:replaceAll-config": "legacy flat-config / oauth state and config.brokers seeding beside the broker records; P5 deletes them after the google-services migration",
+      "packages/addon-google-services/src/google-types.ts:LegacyGoogleFlatConfigSchema": "legacy flat-config / oauth state and config.brokers seeding beside the broker records; P5 deletes them after the google-services migration"
+    },
+    "waste": {
+      "packages/addon-waste-collections/src/waste-collections.addon.ts:replaceAll-config": "seeds the source store from config.sources on boot beside the source records; P6e folds it into a migration"
+    },
+    "llm": {
+      "packages/addon-ai/src/defaults-store.ts:DEFAULTS_COLLECTION": "legacy settings-store collection name of the llm profiles, kept for the adoption mapper; P6b folds the migration and deletes it",
+      "packages/addon-ai/src/profile-store.ts:META_COLLECTION": "legacy settings-store collection name of the llm profiles, kept for the adoption mapper; P6b folds the migration and deletes it",
+      "packages/addon-ai/src/profile-store.ts:PROFILES_COLLECTION": "legacy settings-store collection name of the llm profiles, kept for the adoption mapper; P6b folds the migration and deletes it",
+      "packages/addon-ai/src/test-chat/chat-store.ts:CHATS_COLLECTION": "legacy settings-store collection name of the llm profiles, kept for the adoption mapper; P6b folds the migration and deletes it",
+      "packages/addon-ai/src/usage/usage-store.ts:USAGE_COLLECTION": "legacy settings-store collection name of the llm profiles, kept for the adoption mapper; P6b folds the migration and deletes it"
+    },
+    "notifiers": {
+      "packages/addon-notifiers/src/target-store.ts:TARGETS_COLLECTION": "legacy settings-store collection of notification targets, kept for the adoption mapper; P6a drops it with the targets migration",
+      "packages/addon-provider-homeassistant/src/ha-notification-output.ts:HA_TARGETS_COLLECTION": "legacy settings-store collection of notification targets, kept for the adoption mapper; P6a drops it with the targets migration"
+    },
+    "recorder": {
+      "packages/addon-pipeline/src/recorder/addon/export-store.ts:RECORDING_EXPORTS_LEGACY_COLLECTION": "legacy recorder collection name kept beside the record kind; P5 deletes it",
+      "packages/addon-pipeline/src/recorder/addon/ops-log-store.ts:RECORDING_OPS_LOG_LEGACY_COLLECTION": "legacy recorder collection name kept beside the record kind; P5 deletes it",
+      "packages/addon-pipeline/src/recorder/addon/record-kinds.ts:RECORDING_EXPORTS_LEGACY_COLLECTION": "legacy recorder collection name kept beside the record kind; P5 deletes it",
+      "packages/addon-pipeline/src/recorder/addon/record-kinds.ts:RECORDING_OPS_LOG_LEGACY_COLLECTION": "legacy recorder collection name kept beside the record kind; P5 deletes it"
+    },
+    "mqtt": {
+      "packages/addon-mqtt-broker/src/mqtt-broker.addon.ts:replaceAll-config": "seeds the embedded clients / acl store from config on boot when it is empty; not an instance family yet, folds in with the mqtt broker instances"
+    },
+    "vestigial-names": {
+      "packages/addon-pipeline-orchestrator/src/record-kinds.ts:NODE_BENCHMARK_MODE_COLLECTION": "a `*_COLLECTION` constant documented as the legacy name, kept for an adoption mapper that has run; not an instance family, delete with the next cleanup of that store",
+      "packages/addon-pipeline-orchestrator/src/record-kinds.ts:NODE_BENCHMARK_RESULTS_COLLECTION": "a `*_COLLECTION` constant documented as the legacy name, kept for an adoption mapper that has run; not an instance family, delete with the next cleanup of that store",
+      "packages/addon-pipeline-orchestrator/src/record-kinds.ts:NODE_BENCHMARK_RUNS_COLLECTION": "a `*_COLLECTION` constant documented as the legacy name, kept for an adoption mapper that has run; not an instance family, delete with the next cleanup of that store",
+      "packages/addon-pipeline-orchestrator/src/record-kinds.ts:NODE_STRESS_MOVES_COLLECTION": "a `*_COLLECTION` constant documented as the legacy name, kept for an adoption mapper that has run; not an instance family, delete with the next cleanup of that store",
+      "packages/addon-post-analysis/src/notification-center/record-kinds.ts:NC_CALENDAR_EVENTS_RULES_COLLECTION": "a `*_COLLECTION` constant documented as the legacy name, kept for an adoption mapper that has run; not an instance family, delete with the next cleanup of that store",
+      "packages/addon-post-analysis/src/notification-center/record-kinds.ts:NC_RULES_COLLECTION": "a `*_COLLECTION` constant documented as the legacy name, kept for an adoption mapper that has run; not an instance family, delete with the next cleanup of that store",
+      "packages/addon-post-analysis/src/notification-center/record-kinds.ts:NC_RULE_AI_COLLECTION": "a `*_COLLECTION` constant documented as the legacy name, kept for an adoption mapper that has run; not an instance family, delete with the next cleanup of that store",
+      "packages/addon-post-analysis/src/notification-center/record-kinds.ts:NC_SEQUENCES_COLLECTION": "a `*_COLLECTION` constant documented as the legacy name, kept for an adoption mapper that has run; not an instance family, delete with the next cleanup of that store",
+      "packages/addon-post-analysis/src/notification-center/record-kinds.ts:NC_SUMMARY_RULES_COLLECTION": "a `*_COLLECTION` constant documented as the legacy name, kept for an adoption mapper that has run; not an instance family, delete with the next cleanup of that store",
+      "packages/addon-post-analysis/src/notification-center/record-kinds.ts:NC_TEXTS_COLLECTION": "a `*_COLLECTION` constant documented as the legacy name, kept for an adoption mapper that has run; not an instance family, delete with the next cleanup of that store",
+      "packages/addon-post-analysis/src/notification-center/record-kinds.ts:NC_TIMELAPSE_RULES_COLLECTION": "a `*_COLLECTION` constant documented as the legacy name, kept for an adoption mapper that has run; not an instance family, delete with the next cleanup of that store",
+      "packages/addon-post-analysis/src/pipeline-analytics/scene/scene-store.ts:SCENE_COLLECTION": "a `*_COLLECTION` constant documented as the legacy name, kept for an adoption mapper that has run; not an instance family, delete with the next cleanup of that store",
+      "packages/addon-post-analysis/src/pipeline-analytics/store/face-rescore-state-store.ts:FACE_RESCORE_STATE_COLLECTION": "a `*_COLLECTION` constant documented as the legacy name, kept for an adoption mapper that has run; not an instance family, delete with the next cleanup of that store",
+      "packages/addon-post-analysis/src/pipeline-analytics/store/label-tier-migration.ts:MIGRATION_MARKER_COLLECTION": "a `*_COLLECTION` constant documented as the legacy name, kept for an adoption mapper that has run; not an instance family, delete with the next cleanup of that store",
+      "packages/addon-post-analysis/src/pipeline-analytics/store/sweep-cursor-store.ts:SWEEP_CURSOR_COLLECTION": "a `*_COLLECTION` constant documented as the legacy name, kept for an adoption mapper that has run; not an instance family, delete with the next cleanup of that store",
+      "packages/addon-training/src/orchestrator/stores.ts:TRAINING_JOBS_COLLECTION": "a `*_COLLECTION` constant documented as the legacy name, kept for an adoption mapper that has run; not an instance family, delete with the next cleanup of that store",
+      "packages/system/src/builtins/alerts/record-kinds.ts:ALERTS_COLLECTION": "a `*_COLLECTION` constant documented as the legacy name, kept for an adoption mapper that has run; not an instance family, delete with the next cleanup of that store",
+      "packages/system/src/builtins/calendars/record-kinds.ts:CALENDARS_USER_PREFS_COLLECTION": "a `*_COLLECTION` constant documented as the legacy name, kept for an adoption mapper that has run; not an instance family, delete with the next cleanup of that store"
+    },
+    "permanent": {
+      "packages/addon-pipeline/src/stream-broker/rtmp/flv-parser.ts:H265_LEGACY": "an RTMP codec id, not storage",
+      "packages/system/src/builtins/keychain/keychain-store.ts:declareCollection": "the keychain owns physical secret tables next to its record kinds; not a configured-thing family",
+      "packages/system/src/builtins/local-auth/local-auth.addon.ts:LOCAL_AUTH_RECORDS_LEGACY_COLLECTIONS": "collections the local-auth record import skips; not an instance family",
+      "packages/system/src/builtins/local-auth/record-kinds.ts:LOCAL_AUTH_RECORDS_LEGACY_COLLECTIONS": "collections the local-auth record import skips; not an instance family",
+      "packages/system/src/builtins/sqlite-storage/sqlite-settings-backend.ts:LEGACY_SCOPED_KV_COLLECTIONS": "the scoped key-value collections of the settings backend; not an instance family",
+      "server/backend/src/api/core/site-location.ts:LEGACY_ADDON_COLLECTION": "one-time read of the site coordinates an old addon store held; not an instance family",
+      "server/backend/src/core/auth/record-kinds.ts:SHARE_VIEW_TOKENS_LEGACY": "pre-D892 share-link rows nothing reads; not an instance family"
+    }
+  }
+}

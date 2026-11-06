@@ -1,0 +1,75 @@
+{
+  "_why": "Every file that names an addon-level settings hook today (planning#440 step 8, D986). P8 (M5) empties it; the google, waste, tailscale and training blocks go with their own packets. The list only shrinks.",
+  "families": {
+    "google": {
+      "packages/addon-google-services/src/google-services.addon.ts:addon-level-settings": "the broker settings form and the addon blob; P5 deletes the legacy blob, P8 deletes globalSettingsSchema [updateGlobalSettings, globalSettingsSchema, getGlobalSettings]"
+    },
+    "waste": {
+      "packages/addon-waste-collections/src/waste-collections.addon.ts:addon-level-settings": "the addon blob and the settings button; P6e moves the sources, P8 turns the button into a page action [updateGlobalSettings, globalSettingsSchema]"
+    },
+    "tailscale": {
+      "packages/addon-tailscale/src/client/tailscale.addon.ts:addon-level-settings": "writes the addon blob (authKey, hostname); P6f moves them to the tailnet instance [updateGlobalSettings]"
+    },
+    "training": {
+      "packages/addon-training/src/providers/modal/training-modal.addon.ts:addon-level-settings": "writes the addon blob; P6g/P8 move the credentials to the instance and the rest to cluster scope [updateGlobalSettings]"
+    },
+    "m5-declarers": {
+      "packages/addon-auth/src/webauthn/auth-webauthn.addon.ts:addon-level-settings": "declares the addon-level settings form; P8 moves it to cluster / node scope (D986 declarer list) [globalSettingsSchema, getGlobalSettings]",
+      "packages/system/src/builtins/camera-grid/addon.ts:addon-level-settings": "declares the addon-level settings form; P8 moves it to cluster / node scope (D986 declarer list) [updateGlobalSettings, globalSettingsSchema, integrationSettingSections]",
+      "packages/system/src/builtins/core-blocks/block-package.ts:addon-level-settings": "declares the addon-level settings form; P8 moves it to cluster / node scope (D986 declarer list) [globalSettingsSchema]",
+      "packages/system/src/builtins/winston-logging/winston-logging.addon.ts:addon-level-settings": "declares the addon-level settings form; P8 moves it to cluster / node scope (D986 declarer list) [globalSettingsSchema]"
+    },
+    "m5-addon-blobs": {
+      "packages/addon-admin-ui/src/components/pipeline/placement-board/board-model.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings]",
+      "packages/addon-admin-ui/src/components/pipeline/tabs/ClusterEventsTab.tsx:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings]",
+      "packages/addon-admin-ui/src/components/pipeline/tabs/ClusterRecordingTab.tsx:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings]",
+      "packages/addon-cloudflare/src/tunnel/cloudflare-tunnel.addon.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings]",
+      "packages/addon-decoder-nodeav/src/addon/index.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings]",
+      "packages/addon-export-alexa/src/export-alexa.addon.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings]",
+      "packages/addon-export-hap/src/hap-export.addon.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings]",
+      "packages/addon-import-alexa/src/addon.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings]",
+      "packages/addon-model-studio/src/ui/api.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings, getGlobalSettings]",
+      "packages/addon-pipeline-orchestrator/src/device-config-contributions.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings]",
+      "packages/addon-pipeline-orchestrator/src/index.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings]",
+      "packages/addon-pipeline-orchestrator/src/removed-model-pin-reset.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings]",
+      "packages/addon-pipeline/src/audio-analyzer/addons/analyzer/index.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings, updateGlobalSettings]",
+      "packages/addon-pipeline/src/detection-pipeline/index.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings]",
+      "packages/addon-pipeline/src/pipeline-runner/crop-convention-source.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings]",
+      "packages/addon-pipeline/src/pipeline-runner/native-lease-settings-source.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings]",
+      "packages/addon-pipeline/src/shared/cluster-model-source.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings]",
+      "packages/addon-post-analysis/src/pipeline-analytics/cluster-model-pin.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings]",
+      "packages/addon-post-analysis/src/pipeline-analytics/face-rescore-wiring.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings]",
+      "packages/addon-post-analysis/src/pipeline-analytics/index.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings, getGlobalSettings]",
+      "packages/addon-post-analysis/src/pipeline-analytics/retention/retired-settings-purge.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings]",
+      "packages/addon-provider-homeassistant/src/ha-export/ha-export.addon.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings]",
+      "packages/addon-provider-wyze/src/addon.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings]",
+      "packages/addon-smtp-nodemailer/src/smtp.addon.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings, updateGlobalSettings]",
+      "packages/addon-terminal/src/addon.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings]",
+      "packages/system/src/builtins/autotrack/autotrack.addon.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings]",
+      "packages/system/src/builtins/local-network/local-network.addon.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings]",
+      "packages/system/src/builtins/loki-logging/loki-logging.addon.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings]",
+      "packages/system/src/builtins/remote-access-orchestrator/remote-access-orchestrator.addon.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings]",
+      "packages/system/src/builtins/system-config/system-config.addon.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings, updateGlobalSettings]"
+    },
+    "m5-framework": {
+      "packages/addon-admin-ui/src/components/settings/NodeAddonsSettingsPanel.tsx:addon-level-settings": "the carrier of the addon-level hooks (base class, cap, router, forwarding, UI form); P8 deletes it (D986) [getIntegrationSettings, getGlobalSettings]",
+      "packages/system/src/kernel/moleculer/addon-service-factory.ts:addon-level-settings": "the carrier of the addon-level hooks (base class, cap, router, forwarding, UI form); P8 deletes it (D986) [getGlobalSettings, updateGlobalSettings]",
+      "packages/system/src/kernel/moleculer/child-addon-call-dispatch.ts:addon-level-settings": "the carrier of the addon-level hooks (base class, cap, router, forwarding, UI form); P8 deletes it (D986) [getGlobalSettings, updateGlobalSettings, getIntegrationSettings]",
+      "packages/system/src/kernel/transport/child-cap-protocol.ts:addon-level-settings": "the carrier of the addon-level hooks (base class, cap, router, forwarding, UI form); P8 deletes it (D986) [getGlobalSettings, updateGlobalSettings, getIntegrationSettings]",
+      "packages/types/src/addon/base-addon.ts:addon-level-settings": "the carrier of the addon-level hooks (base class, cap, router, forwarding, UI form); P8 deletes it (D986) [globalSettingsSchema, integrationSettingSections, getGlobalSettings, getIntegrationSettings, updateGlobalSettings]",
+      "packages/types/src/capabilities/addon-settings.cap.ts:addon-level-settings": "the carrier of the addon-level hooks (base class, cap, router, forwarding, UI form); P8 deletes it (D986) [getGlobalSettings, updateGlobalSettings, getIntegrationSettings]",
+      "packages/types/src/interfaces/addon.ts:addon-level-settings": "the carrier of the addon-level hooks (base class, cap, router, forwarding, UI form); P8 deletes it (D986) [getGlobalSettings, updateGlobalSettings, getIntegrationSettings]",
+      "packages/ui-library/src/composites/addon-global-settings-form.tsx:addon-level-settings": "the carrier of the addon-level hooks (base class, cap, router, forwarding, UI form); P8 deletes it (D986) [getGlobalSettings, updateGlobalSettings]",
+      "server/backend/src/api/trpc/device-config-secret-redaction.ts:addon-level-settings": "the carrier of the addon-level hooks (base class, cap, router, forwarding, UI form); P8 deletes it (D986) [getGlobalSettings, getIntegrationSettings]",
+      "server/backend/src/api/trpc/localized-schema-paths.ts:addon-level-settings": "the carrier of the addon-level hooks (base class, cap, router, forwarding, UI form); P8 deletes it (D986) [getGlobalSettings, getIntegrationSettings]",
+      "server/backend/src/core/addon/addon-settings-provider.ts:addon-level-settings": "the carrier of the addon-level hooks (base class, cap, router, forwarding, UI form); P8 deletes it (D986) [getGlobalSettings, updateGlobalSettings, getIntegrationSettings]"
+    },
+    "m5-tooling": {
+      "packages/cli/src/mcp/configure-network.ts:addon-level-settings": "a scaffold, plan or tool that still teaches or reads the addon-level hooks; P8 rewrites it for the scoped schemas (D986) [getGlobalSettings, updateGlobalSettings]",
+      "packages/cli/src/mcp/report-environment.ts:addon-level-settings": "a scaffold, plan or tool that still teaches or reads the addon-level hooks; P8 rewrites it for the scoped schemas (D986) [getGlobalSettings]",
+      "packages/develop/src/scaffold/addon.ts:addon-level-settings": "a scaffold, plan or tool that still teaches or reads the addon-level hooks; P8 rewrites it for the scoped schemas (D986) [globalSettingsSchema]",
+      "packages/mcp-dev/src/caps/plan.ts:addon-level-settings": "a scaffold, plan or tool that still teaches or reads the addon-level hooks; P8 rewrites it for the scoped schemas (D986) [globalSettingsSchema]",
+      "packages/mcp-dev/src/ops/censuses.ts:addon-level-settings": "a scaffold, plan or tool that still teaches or reads the addon-level hooks; P8 rewrites it for the scoped schemas (D986) [getGlobalSettings]"
+    }
+  }
+}

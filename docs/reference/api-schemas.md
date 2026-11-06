@@ -1361,6 +1361,7 @@ Enum: `"open" \| "opening" \| "closing" \| "closed" \| "stopped"`
 - `info?`: `Record<string, unknown>`
 - `originStableId?`: `string`
 - `settings?`: `Record<string, unknown>`
+- `kind?`: `string`
 
 ### `CreateUserInputSchema`
 

@@ -1,0 +1,67 @@
+{
+  "_why": "Methods that read as the CRUD of a collection of configured things (planning#440 step 6, D1013). Each family is a contiguous block that its packet deletes with the methods; `permanent` matches by name but is a runtime read or another kind of thing. The list only shrinks.",
+  "families": {
+    "notifiers": {
+      "notification-output.cap.ts:listTargetKinds": "kind catalogue of notification targets; folds into integration-instances kinds in P6a",
+      "notification-output.cap.ts:listTargets": "target list; becomes the instances of function cap notification-output (P6a)",
+      "notification-output.cap.ts:getTarget": "target read; folds into integration-instances (P6a)",
+      "notification-output.cap.ts:upsertTarget": "target write; folds into integration-instances upsertInstance (P6a)",
+      "notification-output.cap.ts:deleteTarget": "target delete; folds into integration-instances deleteInstance (P6a)",
+      "notification-output.cap.ts:discoverTargets": "form helper that scans for targets to offer in the create form; stays as a helper (D981), P6a decides",
+      "notification-output.cap.ts:probeTargetConfig": "form helper that probes a draft target config; stays as a helper (D981), P6a decides"
+    },
+    "llm": {
+      "llm.cap.ts:listProfileKinds": "kind catalogue of llm profiles; folds into integration-instances kinds in P6b",
+      "llm.cap.ts:listProfiles": "profile list; becomes the instances of function cap llm (P6b)",
+      "llm.cap.ts:upsertProfile": "profile write; folds into integration-instances upsertInstance (P6b)",
+      "llm.cap.ts:deleteProfile": "profile delete; folds into integration-instances deleteInstance (P6b)"
+    },
+    "oidc": {
+      "oidc-connections.cap.ts:connectionFormSchema": "connection form; becomes instanceFormSchema (P6c)",
+      "oidc-connections.cap.ts:listConnections": "connection list; becomes the instances of function cap login-method (P6c)",
+      "oidc-connections.cap.ts:createConnection": "connection create; folds into upsertInstance with a typed id (P6c)",
+      "oidc-connections.cap.ts:updateConnection": "connection update; folds into upsertInstance (P6c)",
+      "oidc-connections.cap.ts:deleteConnection": "connection delete; folds into deleteInstance (P6c)"
+    },
+    "storage": {
+      "storage.cap.ts:upsertLocation": "location write; folds into integration-instances upsertInstance (P6d)",
+      "storage.cap.ts:deleteLocation": "location delete; folds into deleteInstance, occupancy refusal kept (P6d)",
+      "storage.cap.ts:listProviders": "provider catalogue for the location form; becomes the instance kinds (P6d)"
+    },
+    "training": {
+      "training-provider.cap.ts:describeTypes": "type catalogue of training provider entries; kinds of integration-instances (P6g)",
+      "training-provider.cap.ts:listEntries": "entry list; the modal addon already serves integration-instances (P6g)",
+      "training-provider.cap.ts:createEntry": "entry create; folds into upsertInstance (P6g)",
+      "training-provider.cap.ts:updateEntry": "entry update; folds into upsertInstance (P6g)",
+      "training-provider.cap.ts:deleteEntry": "entry delete; folds into deleteInstance (P6g)"
+    },
+    "waste": {
+      "packages/addon-waste-collections/src/custom-actions.ts:listSources": "custom-action source list; becomes the instances of function cap calendar-source (P6e)",
+      "packages/addon-waste-collections/src/custom-actions.ts:serviceFormSchema": "country/service form; becomes instanceFormSchema with optionsFrom (P6e)",
+      "packages/addon-waste-collections/src/custom-actions.ts:createSource": "custom-action source create; folds into upsertInstance (P6e)",
+      "packages/addon-waste-collections/src/custom-actions.ts:updateSource": "custom-action source update; folds into upsertInstance (P6e)",
+      "packages/addon-waste-collections/src/custom-actions.ts:deleteSource": "custom-action source delete; folds into deleteInstance (P6e)"
+    },
+    "addon-settings": {
+      "addon-settings.cap.ts:getIntegrationFormSchema": "form of the addon-level integration settings; retired with the addon-level settings (M5, D986, P8)"
+    },
+    "permanent": {
+      "storage.cap.ts:listLocations": "runtime read of the locations with occupancy and state, not the CRUD of the configured rows",
+      "storage.cap.ts:listLocationDeclarations": "runtime read of the locations a node declares (describe()), feeds the instance kinds",
+      "storage.cap.ts:listDrainProgress": "runtime read of the drain progress of a location, not configuration",
+      "backup.cap.ts:listLocations": "size and file counts of the state subsections a backup can include, not configured locations",
+      "backup.cap.ts:getEntries": "lists the entries of a backup archive, not configured things",
+      "board-key-source.cap.ts:listSources": "lists the registered providers of board keys (a collection cap read), not configured instances",
+      "device-extension.cap.ts:listSources": "per-device read of the slot owners (D554), not configured instances",
+      "device-manager.cap.ts:listLocations": "the site locations (rooms) devices sit in, not an integration family",
+      "device-manager.cap.ts:addLocation": "creates a site location (a room), not an integration instance",
+      "device-manager.cap.ts:removeLocation": "removes a site location (a room), not an integration instance",
+      "record-entries.cap.ts:listEntryKinds": "generic record browser over any record kind, not one instance family",
+      "record-entries.cap.ts:listEntries": "generic record browser over any record kind, not one instance family",
+      "record-entries.cap.ts:deleteEntry": "generic record browser over any record kind, not one instance family",
+      "recording.cap.ts:listSources": "per-device read of the recordable sources of a camera, not configured instances",
+      "videoclips.cap.ts:listSources": "per-device read of the clip sources of a camera, not configured instances",
+      "terminal-session.cap.ts:listProfiles": "the pre-declared terminal profiles an operator may open, a fixed catalogue; terminal sessions have their own typed cap"
+    }
+  }
+}

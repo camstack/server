@@ -841,7 +841,7 @@ later through `retired-settings-keys.ts` (D986 consequences). Lowest risk first;
 | 7 | `homeassistant-export/<d>-per-broker-flags-to-integration`, `provider-homeassistant/<d>-calendar-ids-to-integration`, `google-services/<d>-broker-fields-to-integration` | moves broker-keyed and shared-across-brokers values to each instance (`calendarIds`, `fromAddress`, `fromName`, `exportTo`, `mediaRole`) | the multi-instance bug of D986; a shared value is copied to every instance, so it is the first mover that can change what an operator sees |
 | 8 | `smtp-nodemailer/<d>-relay-to-integration`, `mqtt-broker/<d>-brokers-to-integrations`, `export-alexa/<d>-settings-to-integration` and `-ledgers-to-integration` | moves a service instance to a D996 `integration-instances` record; secrets change keychain scope | needs the D996 cap on each owner; secret moves are procedures, never plans |
 | 9 | `cloudflare-tunnel/<d>-tunnel-account-to-integration` | account fields and the API token to a D996 record | last of the moves: it holds the remote-access path, and a failed move would cut the tunnel; keep `onFailure: block-owner` |
-| 10 | Hook removal and guard | no data: delete `globalSettingsSchema` from each carrier, then land `check-no-global-settings-schema` | after every mover has run on the hub; the connection-form carriers (96 integration rows) need only this |
+| 10 | Hook removal and guard | no data: delete `globalSettingsSchema` from each carrier, then land `check-no-addon-level-settings` | after every mover has run on the hub; the connection-form carriers (96 integration rows) need only this |
 
 Fleet defaults, cluster fields and `system-config` have no mover.
 

@@ -4,12 +4,12 @@
 
 # Guards
 
-226 repository guards: 221 in `scripts/`,
+230 repository guards: 225 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (216)
+## Enforced by CI checks (220)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -52,6 +52,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-closure-shipped-deps.ts` | A package the server closure ships must not be silently re-copied into an addon — and a runtime-dependency declaration that installs nothing is rot. |
 | `scripts/check-cluster-model-scope.ts` | Model-scope guard — the catalog and the cluster registry name the SAME steps. |
 | `scripts/check-collection-cap-pin.ts` | Collection-cap pin guard — a call that NAMES a resource must say whose. |
+| `scripts/check-collection-crud-is-instances.ts` | One CRUD for a collection of configured things (planning#440 step 6, D1013). |
 | `scripts/check-collection-database-placement.ts` | D851 / LTS P5 — `declareCollection.database` must agree with `@durable database=`, and operator `config` tables must stay on `settings`. |
 | `scripts/check-collection-declarations.ts` | Settings-store collection guard — fail the build if any package accesses a KV collection through the `settings-store` cap WITHOUT declaring it first. |
 | `scripts/check-collection-namespacing.ts` | Collection-namespacing guard — an addon may not take a BARE collection name. |
@@ -121,6 +122,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-nc-simulate-mirror.ts` | NC simulate-payload mirror guard — what the admin UI SENDS is what the server ACCEPTS. |
 | `scripts/check-nc-system-filter-scope.ts` | System-event filter-scope guard — the ENGINE narrows exactly what the EDITOR says it narrows. |
 | `scripts/check-nc-text-catalog.ts` | Notification-Center text-catalog guard — the shipped locales must agree. |
+| `scripts/check-no-addon-level-settings.ts` | No addon-level settings (planning#440 step 8 / M5, D986). |
 | `scripts/check-no-array-event-subscribe.ts` | Event-subscribe guard — no ARRAY category filter in a `.subscribe(...)` call. |
 | `scripts/check-no-bare-ffmpeg.ts` | No bare `ffmpeg` / `ffprobe` in runtime source — the enforcement D540 lacked. |
 | `scripts/check-no-camera-model-layer.ts` | A model is chosen by the accelerator that runs it; a camera only turns steps on or off (D927). |
@@ -149,6 +151,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-no-raw-secrets-in-collections.ts` | A credential never sits in plain text in a persisted row (D879). |
 | `scripts/check-no-retired-fanout-heap-env.ts` | No runtime code reads the retired heap-snapshot or event-fanout mode envs. |
 | `scripts/check-no-service-account-keys.ts` | Credential guard — no Google service-account key, and no private key of any kind, may be committed to this repository. |
+| `scripts/check-no-settings-fallback-for-kinds.ts` | A record kind has ONE store (planning#440 step 5, D1013). |
 | `scripts/check-no-state-unit-sibling.ts` | D944 §4 — device state has no root `unit` / `precision` / `*Unit` sibling, and every device-native numeric reading names a quantity (or is listed in the debt file until it is classified). |
 | `scripts/check-no-system-package.ts` | The old system package is gone: its source ships as `@camstack/server/system`. |
 | `scripts/check-no-third-party-products.ts` | Third-party product names — name the mechanism. |
@@ -157,6 +160,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-npm-orphan-packages.ts` | A published package whose source left the workspace must be DEPRECATED, not merely forgotten. |
 | `scripts/check-object-media-scope-required.ts` | an `object` media read MUST require NcEventMediaScope. |
 | `scripts/check-onboard-motion-emitters.ts` | GUARD: only the camera-sensors bridge, the device-activity source and the runner's analyzer emit `MotionOnMotionChanged` (D673), and only the orchestrator writes a camera's `motion` runtime slice (D696). The rules live in `onboard-motion… |
+| `scripts/check-one-instances-list.ts` | One list of configured things (planning#440 step 6, D1013). |
 | `scripts/check-one-row-switch.ts` | One switch per instance (planning#440 step 3, D996, D1007). |
 | `scripts/check-one-test-method.ts` | One connection test (planning#440 step 4, D1016). |
 | `scripts/check-orphan-reclaimers.ts` | Orphan-reclaimer guard — **every collection the audit WALKS declares how its rows are deleted.** ## The failure this catches The audit's reclaim was one `if` for media and a raw `settingsStore.delete` for everything else. The raw delete … |
