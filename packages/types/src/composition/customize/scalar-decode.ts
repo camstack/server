@@ -129,6 +129,7 @@ function readValue(
         threshold: dwell.threshold,
         startDwellMs: dwell.startDwellMs,
         stopDwellMs: dwell.stopDwellMs,
+        minSamples: dwell.minSamples,
       },
       'number',
       cap,

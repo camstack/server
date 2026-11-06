@@ -25,6 +25,7 @@ import { DeviceType } from '../device/device-type.js'
 import { evaluateDwell, type ExpressionEvalHooks } from '../expression/builtins.js'
 import type { DwellCallState } from '../expression/expression-source.js'
 import {
+  RUNNING_POWER_MIN_SAMPLES,
   RUNNING_POWER_START_DELAY_MS,
   RUNNING_POWER_STOP_DELAY_MS,
   RUNNING_POWER_THRESHOLD_WATTS,
@@ -431,7 +432,15 @@ function runDwell(
   let openAt: number | null = null
   const evaluate = (active: boolean, at: number, timer: boolean): void => {
     deadline = null
-    const answer = evaluateDwell(active, startMs, stopMs, call, at, timer ? timerHooks : hooks)
+    const answer = evaluateDwell(
+      active,
+      startMs,
+      stopMs,
+      RUNNING_POWER_MIN_SAMPLES,
+      call,
+      at,
+      timer ? timerHooks : hooks,
+    )
     if (answer === true && openAt === null) openAt = at
     if (answer !== true && openAt !== null) {
       intervals.push({ start: openAt, end: at })

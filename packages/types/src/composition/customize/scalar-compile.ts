@@ -19,6 +19,7 @@ import type {
   CompositionFromSource,
   CompositionSourceRef,
 } from '../composition.js'
+import { RUNNING_POWER_MIN_SAMPLES } from '../../running-state/defaults.js'
 import { expression, fromRead, literal } from './field-source.js'
 import type { CustomizeTransformDraft, ScalarOverrideDraft } from './override-draft.js'
 import {
@@ -146,7 +147,8 @@ function compileValue(input: ScalarCompileInput): CustomizeRoundTrip<Composition
     if (input.sourceValueKind !== 'boolean') return fail('source-kind')
     return { ok: true, value: expression('!x', { x: read }) }
   }
-  if (transform.kind === 'threshold') return thresholdValue(transform, read)
+  if (transform.kind === 'threshold')
+    return thresholdValue(transform, read, transform.minSamples ?? evidenceSamples(input))
   if (transform.kind === 'linear') return linearValue(transform, read, input.sourceValueKind)
   return fail('transform')
 }
@@ -159,9 +161,23 @@ function identityValue(
   return read
 }
 
+/**
+ * Only a POWER reading that drives `running-state.running` asks for sample
+ * evidence: a standby plug sends one blip and goes quiet, and the timer over
+ * that held value must not start a run. Any other threshold (a temperature, a
+ * level, a binary contact) confirms on time alone, as it always did.
+ */
+function evidenceSamples(input: ScalarCompileInput): number {
+  const { cap, targetId, source } = input.draft
+  const isRunningPower =
+    cap === 'running-state' && targetId === 'running' && source.cap === 'power-meter'
+  return isRunningPower ? RUNNING_POWER_MIN_SAMPLES : 1
+}
+
 function thresholdValue(
   transform: Extract<CustomizeTransformDraft, { kind: 'threshold' }>,
   read: CompositionFromSource,
+  minSamples: number,
 ): CustomizeRoundTrip<CompositionFieldSource> {
   const threshold = unsignedToken(transform.threshold)
   if (threshold === null) return fail('threshold')
@@ -170,7 +186,9 @@ function thresholdValue(
   if (start === null || stop === null) return fail('dwell')
   return {
     ok: true,
-    value: expression(dwellExpr(transform.comparison, threshold, start, stop), { x: read }),
+    value: expression(dwellExpr(transform.comparison, threshold, start, stop, minSamples), {
+      x: read,
+    }),
   }
 }
 

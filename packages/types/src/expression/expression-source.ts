@@ -186,6 +186,7 @@ export function evaluateStatefulExpressionCall(
         invocation.args[0],
         invocation.args[1],
         invocation.args[2],
+        invocation.args[3],
         call,
         env.nowMs,
         hooks,

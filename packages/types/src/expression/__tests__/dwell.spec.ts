@@ -14,46 +14,59 @@ function dwellAt(
   memory = createStatefulExpressionMemory(),
   currentOutput: boolean | null = null,
   timerDriven = false,
+  minSamples: number | null = null,
 ) {
   const deadlines: number[] = []
-  const result = evaluateExpressionSource(`dwell(active, ${ON}, ${OFF})`, { active }, nowMs, {
-    invokeStateful: (invocation) =>
-      evaluateStatefulExpressionCall(
-        invocation,
-        memory,
-        { currentOutput, startedAtMs: 0, nowMs },
-        { noteDeadline: (at) => deadlines.push(at), ...(timerDriven ? { timerDriven } : {}) },
-      ),
-  })
+  const result = evaluateExpressionSource(
+    `dwell(active, ${ON}, ${OFF}${minSamples === null ? '' : `, ${minSamples}`})`,
+    { active },
+    nowMs,
+    {
+      invokeStateful: (invocation) =>
+        evaluateStatefulExpressionCall(
+          invocation,
+          memory,
+          { currentOutput, startedAtMs: 0, nowMs },
+          { noteDeadline: (at) => deadlines.push(at), ...(timerDriven ? { timerDriven } : {}) },
+        ),
+    },
+  )
   if (!result.ok) throw new Error(result.error)
   return { value: result.value, deadlines, memory }
 }
 
 describe('dwell builtin', () => {
-  it('a single isolated sample never starts: the timer over the held value does not confirm', () => {
+  it('without minSamples a single-event boolean confirms on the deadline timer, as before', () => {
+    // a door contact: one `open` report, then silence; the 30 s timer must confirm it.
+    const memory = createStatefulExpressionMemory()
+    dwellAt(0, true, memory, false)
+    expect(dwellAt(ON, true, memory, false, true).value).toBe(true)
+  })
+
+  it('minSamples 2: a single isolated sample never starts: the timer over the held value does not confirm', () => {
     const memory = createStatefulExpressionMemory()
     // 7.44 W standby blip, then silence; the timer fires at +30 s on the held value.
-    dwellAt(0, true, memory, false)
-    const fired = dwellAt(ON, true, memory, false, true)
+    dwellAt(0, true, memory, false, false, 2)
+    const fired = dwellAt(ON, true, memory, false, true, 2)
     expect(fired.value).toBe(false)
     // the next report (1.13 W) lands later: no start, ever.
-    expect(dwellAt(ON + 1_000, false, memory, false).value).toBe(false)
-    expect(dwellAt(ON + 600_000, false, memory, false, true).value).toBe(false)
+    expect(dwellAt(ON + 1_000, false, memory, false, false, 2).value).toBe(false)
+    expect(dwellAt(ON + 600_000, false, memory, false, true, 2).value).toBe(false)
   })
 
   it('a second satisfying sample after the delay confirms, anchored at the first', () => {
     const memory = createStatefulExpressionMemory()
-    dwellAt(0, true, memory, false)
-    expect(dwellAt(ON, true, memory, false, true).value).toBe(false)
-    const { value } = dwellAt(ON + 5_000, true, memory, false)
+    dwellAt(0, true, memory, false, false, 2)
+    expect(dwellAt(ON, true, memory, false, true, 2).value).toBe(false)
+    const { value } = dwellAt(ON + 5_000, true, memory, false, false, 2)
     expect(value).toBe(true)
   })
 
   it('with nothing restored, a single sample stays unknown instead of confirming ON', () => {
     const memory = createStatefulExpressionMemory()
-    dwellAt(0, true, memory)
-    expect(dwellAt(ON, true, memory, null, true).value).toBeNull()
-    expect(dwellAt(ON + 2_000, true, memory).value).toBe(true)
+    dwellAt(0, true, memory, null, false, 2)
+    expect(dwellAt(ON, true, memory, null, true, 2).value).toBeNull()
+    expect(dwellAt(ON + 2_000, true, memory, null, false, 2).value).toBe(true)
   })
 
   it('a held value still ends a run: the OFF side is not gated on a second sample', () => {

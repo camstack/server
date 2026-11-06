@@ -5,6 +5,7 @@
 import type { CompositionFieldSource, CompositionFieldsFeature } from '../../composition.js'
 import type { CompositionSourceRef } from '../../composition.js'
 import {
+  RUNNING_POWER_MIN_SAMPLES,
   RUNNING_POWER_START_DELAY_MS,
   RUNNING_POWER_STOP_DELAY_MS,
   RUNNING_POWER_THRESHOLD_WATTS,
@@ -226,7 +227,7 @@ const cases: readonly CustomizeStoredCase[] = [
       DISHWASHER,
       runningFeature(
         expression(
-          `dwell(x >= ${RUNNING_POWER_THRESHOLD_WATTS}, ${RUNNING_POWER_START_DELAY_MS}, ${RUNNING_POWER_STOP_DELAY_MS})`,
+          `dwell(x >= ${RUNNING_POWER_THRESHOLD_WATTS}, ${RUNNING_POWER_START_DELAY_MS}, ${RUNNING_POWER_STOP_DELAY_MS}, ${RUNNING_POWER_MIN_SAMPLES})`,
           { x: powerRead },
         ),
         expression('latchedAt(running)', {

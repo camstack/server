@@ -6,7 +6,7 @@ import type { CompositionFieldSource } from '../composition.js'
 
 const UNSIGNED = /^\d+(?:\.\d+)?$/
 const SIGNED = /^-?\d+(?:\.\d+)?$/
-const DWELL = /^dwell\(x (>=|<=) (\d+(?:\.\d+)?), (\d+(?:\.\d+)?), (\d+(?:\.\d+)?)\)$/
+const DWELL = /^dwell\(x (>=|<=) (\d+(?:\.\d+)?), (\d+(?:\.\d+)?), (\d+(?:\.\d+)?)(?:, (\d+))?\)$/
 const LINEAR_CLAMP =
   /^clamp\((x|number\(x\)) \* (-?\d+(?:\.\d+)?) \+ (-?\d+(?:\.\d+)?), (-?\d+(?:\.\d+)?), (-?\d+(?:\.\d+)?)\)$/
 const LINEAR_BARE = /^(x|number\(x\)) \* (-?\d+(?:\.\d+)?) \+ (-?\d+(?:\.\d+)?)$/
@@ -48,9 +48,11 @@ export function dwellExpr(
   threshold: string,
   start: string,
   stop: string,
+  minSamples = 1,
 ): string {
   const op = comparison === 'gte' ? '>=' : '<='
-  return `dwell(x ${op} ${threshold}, ${start}, ${stop})`
+  const evidence = minSamples > 1 ? `, ${minSamples}` : ''
+  return `dwell(x ${op} ${threshold}, ${start}, ${stop}${evidence})`
 }
 
 export function linearExpr(
@@ -70,6 +72,8 @@ export interface ParsedDwell {
   readonly threshold: number
   readonly startDwellMs: number
   readonly stopDwellMs: number
+  /** The 4th argument; 1 when absent. */
+  readonly minSamples: number
 }
 
 export function parseDwell(expr: string): ParsedDwell | null {
@@ -86,7 +90,9 @@ export function parseDwell(expr: string): ParsedDwell | null {
     return null
   }
   const comparison = match[1] === '<=' ? 'lte' : 'gte'
-  return { comparison, threshold, startDwellMs, stopDwellMs }
+  const minSamples = match[5] === undefined ? 1 : Number(match[5])
+  if (!Number.isInteger(minSamples) || minSamples < 1) return null
+  return { comparison, threshold, startDwellMs, stopDwellMs, minSamples }
 }
 
 export interface ParsedLinear {

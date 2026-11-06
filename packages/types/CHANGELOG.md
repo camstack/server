@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Notification templates: the {{graceMin}} variable is gone (a planned-update offline is now worded without a grace)
 - addon-crash-loop notification templates can use {{cause}}
-- A start dwell now needs a second sample that still satisfies it, so one isolated standby reading no longer starts a running state when the timer fires over the held value.
+- A running-state power threshold now needs a second power sample above the threshold (dwell's new optional 4th argument minSamples), so one isolated standby reading no longer starts a run when the timer fires over the held value.
 
 ## [1.2.510] - 2026-11-06
 

@@ -159,7 +159,48 @@ describe('scalar compiler', () => {
     expect(compiled.ok).toBe(true)
     if (!compiled.ok) return
     const running = compiled.value.fields['running']
-    expect(running?.kind === 'expression' ? running.expr : '').toBe('dwell(x <= 5, 30000, 180000)')
+    expect(running?.kind === 'expression' ? running.expr : '').toBe(
+      'dwell(x <= 5, 30000, 180000, 2)',
+    )
+  })
+
+  it('a stored 3-argument running dwell (time only) still decodes and recompiles unchanged', () => {
+    const base = compileInput('running-power')
+    const timeOnly = compileScalarOverride({
+      ...base,
+      draft: {
+        ...base.draft,
+        transform: {
+          kind: 'threshold',
+          comparison: 'gte',
+          threshold: 5,
+          startDwellMs: 30_000,
+          stopDwellMs: 600_000,
+          minSamples: 1,
+        },
+      },
+    })
+    expect(timeOnly.ok).toBe(true)
+    if (!timeOnly.ok) return
+    const running = timeOnly.value.fields['running']
+    expect(running?.kind === 'expression' ? running.expr : '').toBe('dwell(x >= 5, 30000, 600000)')
+    const decoded = decodeScalarOverride({
+      feature: timeOnly.value,
+      device: base.device,
+      cap: 'running-state',
+      targetId: 'running',
+    })
+    expect(decoded).not.toBeNull()
+    if (decoded === null) return
+    const again = compileScalarOverride({
+      draft: decoded.draft,
+      device: base.device,
+      apply: decoded.apply,
+      sourceValueKind: decoded.sourceValueKind,
+      changedAtField: decoded.changedAtField,
+      sourceUnit: decoded.sourceUnit,
+    })
+    expect(again.ok && again.value).toEqual(timeOnly.value)
   })
 
   it('refuses a bad threshold, dwell, scale, clamp, unit, transform and enum by name', () => {

@@ -122,6 +122,19 @@ transition, not at its confirmation (D1008).
 - Automations phrase `running.started` and `running.finished`. A dropped
   event is recovered by reading the slice, not by replaying.
 
+## Sample evidence is opt-in
+
+`dwell(active, onForMs, offForMs[, minSamples])` confirms on time alone by
+default, because a single-event binary sensor (a door contact, a leak sensor)
+reports once and then goes quiet. With `minSamples` above 1, an ON also needs
+that many source readings that satisfy the condition: a deadline timer firing
+over one held value never starts a run. The OFF side never asks for samples,
+since a finished run looks like a plug that reports the drop once and goes
+silent. Only a power reading that drives `running-state.running` compiles with
+`minSamples: 2` (`RUNNING_POWER_MIN_SAMPLES`), after a standby plug's single
+5-9 W blip started four fake washer cycles; the threshold proposer replays with
+the same value. A hand-written expression opts in by adding the 4th argument.
+
 ## Enforcement
 
 Specs on the pure mappers (each operation state, including unknown → null),

@@ -214,14 +214,15 @@ function asNonNegativeMs(value: unknown, name: string, index: number): number {
 }
 
 /**
- * `dwell(active, onForMs, offForMs)`: unknown until a delay elapses, then holds
+ * `dwell(active, onForMs, offForMs[, minSamples])`: unknown until a delay elapses, then holds
  * the latched boolean through gaps shorter than the opposing delay (D933). A new
  * call state seeded with the restored output starts latched on it, so it is never
  * unknown after a boot.
  *
- * A flip to ON needs EVIDENCE, not only time: at least two input samples that
- * satisfy the condition (the one that opened the pending transition and a later
- * one, both from source readings), so a deadline timer firing over one held
+ * With `minSamples` above 1 (opt-in; default 1 = time only, as a single-event
+ * binary sensor needs) a flip to ON needs EVIDENCE, not only time: at least that
+ * many input samples that satisfy the condition (the one that opened the pending transition and later
+ * ones, all from source readings), so a deadline timer firing over one held
  * value never starts a run. A standby plug reports one 5-9 W sample and then
  * stays silent; the held value used to confirm a start 30 s later. A flip to OFF
  * is deliberately NOT symmetric: a quiet sensor is how a finished run looks (the
@@ -233,6 +234,7 @@ export function evaluateDwell(
   activeRaw: unknown,
   onForMsRaw: unknown,
   offForMsRaw: unknown,
+  minSamplesRaw: unknown,
   call: DwellCallState,
   nowMs: number,
   hooks?: ExpressionEvalHooks,
@@ -240,6 +242,7 @@ export function evaluateDwell(
   const active = asBoolean(activeRaw, 'dwell', 0)
   const onForMs = asNonNegativeMs(onForMsRaw, 'dwell', 1)
   const offForMs = asNonNegativeMs(offForMsRaw, 'dwell', 2)
+  const minSamples = minSamplesRaw === undefined ? 1 : asMinSamples(minSamplesRaw)
 
   call.transition = null
   if (call.latched === null) {
@@ -249,7 +252,7 @@ export function evaluateDwell(
     }
     if (hooks?.timerDriven !== true) call.pendingSamples += 1
     const delay = active ? onForMs : offForMs
-    const sustained = !active || delay === 0 || call.pendingSamples >= MIN_CONFIRMING_SAMPLES
+    const sustained = !active || delay === 0 || minSamples <= 1 || call.pendingSamples >= minSamples
     if (nowMs - call.seenSince >= delay && sustained) {
       call.latched = active
       call.pendingSamples = 0
@@ -268,15 +271,20 @@ export function evaluateDwell(
   }
   if (hooks?.timerDriven !== true) call.pendingSamples += 1
   const delay = active ? onForMs : offForMs
-  const sustained = !active || delay === 0 || call.pendingSamples >= MIN_CONFIRMING_SAMPLES
+  const sustained = !active || delay === 0 || minSamples <= 1 || call.pendingSamples >= minSamples
   if (nowMs - call.pendingSince >= delay && sustained) return flip(call, active, call.pendingSince)
   // Time is up but the evidence is one sample: only the next reading can confirm, not a timer.
   if (nowMs - call.pendingSince < delay) hooks?.noteDeadline?.(call.pendingSince + delay)
   return call.latched
 }
 
-/** Input samples an ON needs inside its dwell: the opener and one later reading. */
-const MIN_CONFIRMING_SAMPLES = 2
+function asMinSamples(value: unknown): number {
+  const n = asFiniteNumber(value, 'dwell', 3)
+  if (!Number.isInteger(n) || n < 1) {
+    throw new ExpressionEvalError('dwell: minSamples must be a whole number of at least 1')
+  }
+  return n
+}
 
 function flip(call: DwellCallState, to: boolean, startedAt: number): boolean {
   const transition: DwellTransition = { value: to, startedAt }
@@ -601,7 +609,7 @@ const table: Record<string, ExpressionBuiltin> = {
   },
   dwell: {
     minArgs: 3,
-    maxArgs: 3,
+    maxArgs: 4,
     apply: () => {
       throw new ExpressionEvalError('dwell: stateful evaluation context is required')
     },

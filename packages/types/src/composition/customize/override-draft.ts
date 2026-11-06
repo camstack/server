@@ -20,6 +20,8 @@ export const ThresholdTransformDraftSchema = z.object({
   threshold: z.number(),
   startDwellMs: z.number().nonnegative(),
   stopDwellMs: z.number().nonnegative(),
+  /** Samples a start needs; absent = the compiler's default for the source (2 for running power, else 1). */
+  minSamples: z.number().int().min(1).optional(),
 })
 export const LinearTransformDraftSchema = z.object({
   kind: z.literal('linear'),
