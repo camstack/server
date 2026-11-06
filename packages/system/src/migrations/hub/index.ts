@@ -11,6 +11,7 @@ import { ADDON_SETTINGS_NODE_ID_MIGRATION } from './2026-11-02-addon-settings-no
 import { INTEGRATION_ADDON_ID_BARE_MIGRATION } from './2026-11-02-integration-addon-id-bare.js'
 import { RECORDS_OWNER_GROUP_TO_ADDON_MIGRATION } from './2026-11-02-records-owner-group-to-addon.js'
 import { DROP_INTEGRATION_SETTINGS_MIGRATION } from './2026-11-05-drop-integration-settings.js'
+import { ADDON_SETTINGS_BARE_ROWS_MIGRATION } from './2026-11-06-addon-settings-bare-rows.js'
 import { DROP_LEGACY_INTEGRATIONS_AND_STORAGE_LOCATIONS_MIGRATION } from './2026-11-06-drop-legacy-integrations-and-storage-locations.js'
 
 export const HUB_MIGRATIONS: readonly HubMigration[] = [
@@ -19,4 +20,5 @@ export const HUB_MIGRATIONS: readonly HubMigration[] = [
   RECORDS_OWNER_GROUP_TO_ADDON_MIGRATION,
   DROP_INTEGRATION_SETTINGS_MIGRATION,
   DROP_LEGACY_INTEGRATIONS_AND_STORAGE_LOCATIONS_MIGRATION,
+  ADDON_SETTINGS_BARE_ROWS_MIGRATION,
 ]
