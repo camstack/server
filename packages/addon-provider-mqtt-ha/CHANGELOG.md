@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.40] - 2026-11-06
+
 ### Changed
 
 - MQTT Discovery integrations link to an MQTT broker through the shared instance link: the broker picker is the instance picker, deleting a linked broker is refused, and integrations with no broker are flagged unconfigured
