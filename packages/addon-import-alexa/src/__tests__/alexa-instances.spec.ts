@@ -40,16 +40,20 @@ describe('Alexa integrations as integration instances', () => {
     expect((await brokers.query({ limit: 10 })).records.map((r) => r.id)).toEqual(['alexa_002'])
   })
 
-  it('is an integration that brings devices and its form is a broker picker, no connection fields', async () => {
+  it('is an integration that brings devices and its form is an instance picker, no connection fields', async () => {
     const { instances } = await setup()
     expect(await instances.describe()).toMatchObject({ role: 'devices' })
     const form = await instances.instanceFormSchema({ id: null })
     const keys = form.sections.flatMap((s) => s.fields.map((f) => ('key' in f ? f.key : '')))
     expect(keys).toEqual(['brokerId'])
     expect(form.sections[0]?.fields[0]).toMatchObject({
-      type: 'broker-select',
-      brokerKind: 'alexa',
+      type: 'instance-select',
+      functionCap: 'broker',
+      kind: 'alexa',
     })
+    expect((await instances.describe()).links).toEqual([
+      { kind: 'connections', field: 'brokerId', to: { cap: 'broker', kind: 'alexa' } },
+    ])
   })
 
   it('links to a broker by id and never touches the broker record', async () => {

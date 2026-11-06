@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Dialogs can fill the whole page with width="full".
 - Pet fountain card: the Water drunk grid and the Clear daily count button are removed
+- The instance picker slot receives disabled and required, so an optional link keeps an empty choice
+- Removed the broker-select field type; every broker link is now an instance-select field on the one link primitive
 
 ## [1.2.390] - 2026-11-06
 

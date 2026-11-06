@@ -17,7 +17,7 @@ import {
   SmtpInboundFilterSchema,
   type SmtpInboundMessage,
   parseSmtpSinceKey,
-  type BrokerUserFinder,
+  type InstanceUserFinder,
 } from '@camstack/types'
 import type { ListenerFactory, ListenerSpec } from './inbound-listener.js'
 import { type DraftMessage, MessageRing } from './inbound-ring.js'
@@ -370,7 +370,7 @@ export class SmtpInboundBroker {
   }
 
   /** The subscribers (camera email push) that still read one mailbox. */
-  subscriberUsers(): BrokerUserFinder {
+  subscriberUsers(): InstanceUserFinder {
     return {
       find: async (brokerId) =>
         [...(this.runtimes.get(brokerId)?.subscriptions.values() ?? [])].map((sub) => ({

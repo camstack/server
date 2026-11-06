@@ -13,7 +13,13 @@ const SCHEMA: ConfigUISchema = {
       id: 'c',
       title: 'C',
       fields: [
-        { type: 'broker-select', key: 'brokerId', label: 'Broker', brokerKind: 'ha' },
+        {
+          type: 'instance-select',
+          key: 'brokerId',
+          label: 'Broker',
+          functionCap: 'broker',
+          kind: 'ha',
+        },
         {
           type: 'select',
           key: 'service',

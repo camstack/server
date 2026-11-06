@@ -1,6 +1,7 @@
-import { declareBrokerLinkKind, defineEntryKind, entryBody } from '@camstack/types'
+import { declareLinkKind, defineEntryKind, entryBody } from '@camstack/types'
 import { z } from 'zod'
 import { alexaConnectionSchema } from './config.js'
+import { ALEXA_ACCOUNT_LINK } from './speak/constants.js'
 
 export const ALEXA_BROKERS_OWNER = 'import-alexa'
 
@@ -37,10 +38,14 @@ export const alexaSpeakSessionsEntryKind = defineEntryKind('speak-sessions', {
 })
 
 /** An Alexa integration: the link to the Alexa account (broker) it imports devices from. */
-export const alexaConnectionsEntryKind = declareBrokerLinkKind({
+export const alexaConnectionsEntryKind = declareLinkKind({
+  name: 'connections',
+  links: { brokerId: ALEXA_ACCOUNT_LINK },
   title: 'Alexa integrations',
   writeTrigger: 'an operator links an Alexa integration to an Alexa account',
 })
+
+export type AlexaConnectionBody = z.infer<typeof alexaConnectionsEntryKind.schema>
 
 /** Every kind this addon declares, keyed by its name: `records.declare` refuses any other key. */
 export const alexaRecordKinds = {

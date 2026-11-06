@@ -1,4 +1,4 @@
-import { BrokerInUseError, type InstanceChange, makeInMemoryRecords } from '@camstack/types'
+import { InstanceInUseError, type InstanceChange, makeInMemoryRecords } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { mqttBrokersEntryKind } from '../broker-record-kinds.js'
 import {
@@ -139,7 +139,7 @@ describe('deleting an MQTT broker (production wiring)', () => {
   it('is refused while an MQTT Discovery integration names it', async () => {
     const { provider, records } = await setup({ rows: named })
     await records.put({ id: 'B', data: { name: 'B', url: 'mqtt://x:1883' } }, { ifRev: 0 })
-    await expect(provider.deleteInstance({ id: 'B' })).rejects.toBeInstanceOf(BrokerInUseError)
+    await expect(provider.deleteInstance({ id: 'B' })).rejects.toBeInstanceOf(InstanceInUseError)
     expect(await records.get('B')).not.toBeNull()
   })
 

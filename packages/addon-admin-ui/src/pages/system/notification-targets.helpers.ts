@@ -357,17 +357,14 @@ export interface TargetFormDefaultKeys {
   readonly deviceField: ConfigSelectField | null
 }
 
-/** Walk a kind's schema for its broker link (`broker-select` or an `instance-select` over the `broker` cap) and its discovered `select`. */
+/** Walk a kind's schema for its broker link (an `instance-select` over the `broker` cap) and its discovered `select`. */
 export function targetFormDefaultKeys(schema: ConfigUISchema): TargetFormDefaultKeys {
   let brokerKey: string | null = null
   let brokerKind: string | null = null
   let deviceField: ConfigSelectField | null = null
   const walk = (fields: readonly ConfigField[]): void => {
     for (const field of fields) {
-      if (field.type === 'broker-select' && brokerKey === null) {
-        brokerKey = field.key
-        brokerKind = field.brokerKind
-      } else if (
+      if (
         field.type === 'instance-select' &&
         field.functionCap === 'broker' &&
         field.kind !== undefined &&

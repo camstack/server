@@ -1,6 +1,6 @@
 import { createServer } from 'node:net'
 import {
-  BrokerInUseError,
+  InstanceInUseError,
   SMTP_INBOUND_DEFAULT_ID,
   SMTP_RECIPIENT_CLAIMED,
   RecordSecretUnavailableError,
@@ -465,8 +465,8 @@ describe('smtp-inbound over a real SMTP session', () => {
     const err = await ctx.instances
       .deleteInstance({ id: SMTP_INBOUND_DEFAULT_ID })
       .catch((e: unknown) => e)
-    expect(err).toBeInstanceOf(BrokerInUseError)
-    if (!(err instanceof BrokerInUseError)) throw err
+    expect(err).toBeInstanceOf(InstanceInUseError)
+    if (!(err instanceof InstanceInUseError)) throw err
     expect(err.users).toEqual([{ kind: 'subscriber', id: 'reolink-garden' }])
     expect(made[0]?.stopped).toBe(false)
   })

@@ -1,4 +1,4 @@
-import { BrokerInUseError, makeInMemoryRecords } from '@camstack/types'
+import { InstanceInUseError, makeInMemoryRecords } from '@camstack/types'
 import { createServer } from 'node:net'
 import { describe, expect, it } from 'vitest'
 import { buildMailboxInstances } from '../mailbox-instances.js'
@@ -37,7 +37,7 @@ describe('inbound mailboxes as integration instances', () => {
   it('refuses removing a mailbox a subscriber still reads, and removes an unused one', async () => {
     const used = await setup(['reolink-1'])
     const { id } = await used.provider.createInstance({ name: 'Used' })
-    await expect(used.provider.deleteInstance({ id })).rejects.toBeInstanceOf(BrokerInUseError)
+    await expect(used.provider.deleteInstance({ id })).rejects.toBeInstanceOf(InstanceInUseError)
     expect(await used.provider.getInstance({ id })).not.toBeNull()
 
     const free = await setup()

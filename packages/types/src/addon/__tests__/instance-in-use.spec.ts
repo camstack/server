@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import { assertInstanceUnused, fieldUserFinder, InstanceInUseError } from '../instance-in-use.js'
-import { BrokerInUseError, assertBrokerUnused } from '../broker-in-use.js'
 
 const rows = [
   { id: 'a', name: 'A', formValues: { link: 'inst_1' } },
@@ -30,9 +29,15 @@ describe('instance in use', () => {
     await expect(assertInstanceUnused('inst_9', [finder])).resolves.toBeUndefined()
   })
 
-  it('keeps the broker names as the same primitive', async () => {
-    const finder = fieldUserFinder({ kind: 'thing', field: 'link', list: async () => rows })
-    await expect(assertBrokerUnused('inst_1', [finder])).rejects.toBeInstanceOf(BrokerInUseError)
-    expect(new BrokerInUseError('x', [])).toBeInstanceOf(InstanceInUseError)
+  it('refuses with the message and the name callers saw from the broker-named error', async () => {
+    const err = await assertInstanceUnused('alexa_002', [
+      { find: async () => [{ kind: 'integration', id: 'int_0035', name: 'Home' }] },
+      { find: async () => [{ kind: 'notification-target', id: 'alexa_002:echo1' }] },
+    ]).catch((e: unknown) => e)
+    if (!(err instanceof InstanceInUseError)) throw new Error('unreachable')
+    expect(err.name).toBe('InstanceInUseError')
+    expect(err.message).toBe(
+      "instance 'alexa_002' is still in use by integration 'Home' (int_0035), notification-target 'alexa_002:echo1' (alexa_002:echo1); unlink them first",
+    )
   })
 })

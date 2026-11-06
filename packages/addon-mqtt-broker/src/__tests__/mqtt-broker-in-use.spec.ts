@@ -1,4 +1,4 @@
-import { BrokerInUseError } from '@camstack/types'
+import { InstanceInUseError } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { assertMqttBrokerUnused } from '../mqtt-broker-users.js'
 
@@ -10,8 +10,8 @@ const listed = async () => [
 describe('removing an MQTT broker', () => {
   it('is refused while an MQTT Discovery integration names it, and names that integration', async () => {
     const err = await assertMqttBrokerUnused('b1', listed).catch((e: unknown) => e)
-    expect(err).toBeInstanceOf(BrokerInUseError)
-    if (!(err instanceof BrokerInUseError)) throw err
+    expect(err).toBeInstanceOf(InstanceInUseError)
+    if (!(err instanceof InstanceInUseError)) throw err
     expect(err.users.map((u) => u.id)).toEqual(['int_0070'])
   })
 

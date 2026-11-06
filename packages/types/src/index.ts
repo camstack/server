@@ -2426,6 +2426,7 @@ export * from './time/index.js'
 export type { InstanceUser, InstanceUserFinder } from './addon/instance-in-use.js'
 export {
   assertInstanceUnused,
+  fieldUserFinder,
   guardInstanceDelete,
   InstanceInUseError,
 } from './addon/instance-in-use.js'
@@ -2441,33 +2442,13 @@ export {
   declareLinkKind,
   linkField,
   linkFieldDescriptor,
+  linkedId,
+  linkedIdOf,
   linksOfKind,
   linkUserFinder,
   optionalLinkField,
 } from './addon/instance-link.js'
-export type { BrokerUser, BrokerUserFinder } from './addon/broker-in-use.js'
-export {
-  assertBrokerUnused,
-  BrokerInUseError,
-  fieldUserFinder,
-  guardBrokerDelete,
-} from './addon/broker-in-use.js'
 export type { ListedFieldRow } from './addon/instance-in-use.js'
-export type {
-  BrokerLinkBody,
-  BrokerLinkFormSpec,
-  BrokerLinkInstancesSpec,
-} from './addon/broker-link.js'
-export {
-  BROKER_LINK_KIND_NAME,
-  BrokerLinkBodySchema,
-  brokerIdOf,
-  brokerLinkUserFinder,
-  buildBrokerLinkForm,
-  buildBrokerLinkInstances,
-  declareBrokerLinkKind,
-  resolveBrokerId,
-} from './addon/broker-link.js'
 export type { BrokerLinkPorts, BrokerLinkRow } from './migrations/broker-links-to-connections.js'
 export type {
   AccountCalendarRow,

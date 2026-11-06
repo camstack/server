@@ -1,4 +1,4 @@
-import { declareBrokerLinkKind, defineEntryKind, entryBody } from '@camstack/types'
+import { declareLinkKind, defineEntryKind, entryBody } from '@camstack/types'
 import { z } from 'zod'
 import { matterConnectionSchema } from './config.js'
 
@@ -21,7 +21,10 @@ export const matterBrokersEntryKind = defineEntryKind('brokers', {
 })
 
 /** A Matter integration: the link to the fabric (broker) it imports devices from. */
-export const matterConnectionsEntryKind = declareBrokerLinkKind({
+export const matterConnectionsEntryKind = declareLinkKind({
+  name: 'connections',
+  links: { brokerId: { cap: 'broker', kind: 'matter' } },
   title: 'Matter integrations',
   writeTrigger: 'an operator links a Matter integration to a Matter fabric',
 })
+export type MatterConnectionBody = z.infer<typeof matterConnectionsEntryKind.schema>

@@ -2610,7 +2610,7 @@ filter uses) instead of this narrower, caps-scoped read.
 ## Notifier credentials — who can reach them ([D634](../decisions/adr-0634-notifier-credentials-are-admin-only-and-a-stored-secret-never-follows-a-new-destination.md), 2026-09-25; hydrate 2026-10-04)
 
 A target's form discovers its own options ([D981](../decisions/adr-0981-a-notification-target-picks-a-broker-and-fetches-its-own-options-inside-its-form-there-is-no-mass-discovery.md)).
-A broker kind declares a `broker-select` field (existing brokers plus "Create
+A broker kind declares an `instance-select` field (existing brokers plus "Create
 new...") and a `select` with `discoverOptions: { kind, dependsOn }`; the form
 calls `discoverTargets` only once every `dependsOn` field has a value, and
 falls back to free text with a loading, empty or error line. There is no

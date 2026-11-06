@@ -4,21 +4,23 @@
  * record, edited on the Brokers page). The account's sign-in and secrets are never copied here.
  */
 import {
-  type BrokerLinkBody,
-  buildBrokerLinkInstances,
+  buildLinkedInstances,
   type RecordIntegrationInstances,
   type RecordsAccess,
 } from '@camstack/types'
-import { alexaConnectionsEntryKind } from './broker-record-kinds.js'
-import { ALEXA_BROKER_KIND } from './speak/constants.js'
+import { type AlexaConnectionBody, alexaConnectionsEntryKind } from './broker-record-kinds.js'
 
 export function buildAlexaInstances(
   records: Pick<RecordsAccess, 'kind' | 'owner'>,
-): RecordIntegrationInstances<BrokerLinkBody> {
-  return buildBrokerLinkInstances(records, {
+): RecordIntegrationInstances<AlexaConnectionBody> {
+  return buildLinkedInstances(records, {
     kind: alexaConnectionsEntryKind,
-    brokerKind: ALEXA_BROKER_KIND,
-    brokerLabel: 'Alexa account',
-    onChanged: () => undefined,
+    description: {
+      role: 'devices',
+      instanceMode: 'multiple',
+      kind: 'connection',
+      canTest: false,
+    },
+    labels: { brokerId: { label: 'Alexa account' } },
   })
 }

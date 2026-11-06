@@ -4,7 +4,7 @@
  * The body is FLAT (planning#408 P3): the form the instances page edits is the stored shape,
  * with the two tokens at the top level where the records door keeps them in the keychain.
  */
-import { declareBrokerLinkKind, declareLinkKind, defineEntryKind, entryBody } from '@camstack/types'
+import { declareLinkKind, defineEntryKind, entryBody } from '@camstack/types'
 import { z } from 'zod'
 import { HaBrokerEntrySchema } from './ha-broker-registry.js'
 
@@ -31,10 +31,13 @@ export const haBrokersEntryKind = defineEntryKind(HA_BROKERS_KIND, {
 })
 
 /** One Home Assistant integration: the connection it imports from, named by id. */
-export const haConnectionsEntryKind = declareBrokerLinkKind({
+export const haConnectionsEntryKind = declareLinkKind({
+  name: 'connections',
+  links: { brokerId: { cap: 'broker', kind: 'home-assistant' } },
   title: 'Home Assistant integrations',
   writeTrigger: 'an operator creates, edits or removes a Home Assistant integration',
 })
+export type HaConnectionBody = z.infer<typeof haConnectionsEntryKind.schema>
 
 /**
  * One calendar a Home Assistant connection imports (D1013): a record that LINKS to the connection

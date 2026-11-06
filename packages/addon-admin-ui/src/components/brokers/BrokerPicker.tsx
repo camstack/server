@@ -34,9 +34,21 @@ export interface BrokerPickerProps {
   /** Selected broker id, or null. */
   readonly value: string | null
   readonly onChange: (brokerId: string | null) => void
+  /** An optional link: nothing is pre-selected and an empty choice clears the pick. */
+  readonly optional?: boolean
+  /** The words of the empty choice of an optional link, already translated. */
+  readonly noneLabel?: string
+  readonly disabled?: boolean
 }
 
-export function BrokerPicker({ kind, value, onChange }: BrokerPickerProps) {
+export function BrokerPicker({
+  kind,
+  value,
+  onChange,
+  optional = false,
+  noneLabel,
+  disabled = false,
+}: BrokerPickerProps) {
   const { t } = useTranslation()
   const [creating, setCreating] = useState(false)
   const listQuery = useBrokerInstances({ kind })
@@ -48,8 +60,8 @@ export function BrokerPicker({ kind, value, onChange }: BrokerPickerProps) {
   const firstId = brokers[0]?.id ?? null
   const answered = !listQuery.isLoading && !listQuery.isError && listQuery.data !== undefined
   useEffect(() => {
-    if (answered && value === null && firstId !== null) onChange(firstId)
-  }, [answered, value, firstId, onChange])
+    if (!optional && !disabled && answered && value === null && firstId !== null) onChange(firstId)
+  }, [optional, disabled, answered, value, firstId, onChange])
 
   return (
     <div className="space-y-2">
@@ -70,11 +82,27 @@ export function BrokerPicker({ kind, value, onChange }: BrokerPickerProps) {
           {t('brokers.picker.none')}
         </p>
       )}
+      {optional && (
+        <button // ui-check-ok: a selectable card (aria-pressed), not an action button
+          type="button"
+          aria-pressed={value === null}
+          disabled={disabled}
+          onClick={() => onChange(null)}
+          className={`flex w-full items-center rounded-lg border bg-surface p-3 text-left text-xs text-foreground-subtle transition-colors ${
+            value === null
+              ? 'border-primary ring-1 ring-primary'
+              : 'border-border hover:border-foreground-subtle/30'
+          }`}
+        >
+          {noneLabel ?? t('brokers.picker.noneChoice')}
+        </button>
+      )}
       {brokers.map((b) => (
         <button // ui-check-ok: a selectable card (aria-pressed), not an action button
           key={b.id}
           type="button"
           aria-pressed={value === b.id}
+          disabled={disabled}
           onClick={() => onChange(b.id)}
           className={`flex w-full items-center justify-between gap-3 rounded-lg border bg-surface p-3 text-left transition-colors ${
             value === b.id
@@ -88,7 +116,7 @@ export function BrokerPicker({ kind, value, onChange }: BrokerPickerProps) {
           </Badge>
         </button>
       ))}
-      <Button variant="outline" size="sm" onClick={() => setCreating(true)}>
+      <Button variant="outline" size="sm" disabled={disabled} onClick={() => setCreating(true)}>
         <Plus className="h-3.5 w-3.5" /> {t('brokers.picker.createNew')}
       </Button>
       {creating && (

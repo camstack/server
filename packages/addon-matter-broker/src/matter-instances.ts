@@ -4,22 +4,25 @@
  * record, edited on the Brokers page).
  */
 import {
-  type BrokerLinkBody,
-  buildBrokerLinkInstances,
+  buildLinkedInstances,
   type RecordIntegrationInstances,
   type RecordsAccess,
 } from '@camstack/types'
-import { matterConnectionsEntryKind } from './broker-record-kinds.js'
+import { type MatterConnectionBody, matterConnectionsEntryKind } from './broker-record-kinds.js'
 
 export const MATTER_BROKER_KIND = 'matter'
 
 export function buildMatterInstances(
   records: Pick<RecordsAccess, 'kind' | 'owner'>,
-): RecordIntegrationInstances<BrokerLinkBody> {
-  return buildBrokerLinkInstances(records, {
+): RecordIntegrationInstances<MatterConnectionBody> {
+  return buildLinkedInstances(records, {
     kind: matterConnectionsEntryKind,
-    brokerKind: MATTER_BROKER_KIND,
-    brokerLabel: 'Matter fabric',
-    onChanged: () => undefined,
+    description: {
+      role: 'devices',
+      instanceMode: 'multiple',
+      kind: 'connection',
+      canTest: false,
+    },
+    labels: { brokerId: { label: 'Matter fabric' } },
   })
 }

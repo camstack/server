@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { defineEntryKind, entryBody } from '../../records/entry-kind.js'
 import { makeInMemoryRecords } from '../../records/in-memory-records.js'
-import { declareBrokerLinkKind } from '../../addon/broker-link.js'
+import { declareLinkKind } from '../../addon/instance-link.js'
 import {
   brokerLinkPortsOver,
   moveBrokerLinksToConnections,
@@ -21,7 +21,9 @@ const brokersKind = defineEntryKind('brokers', {
     calendarIds: z.array(z.string()).optional(),
   }),
 })
-const connectionsKind = declareBrokerLinkKind({
+const connectionsKind = declareLinkKind({
+  name: 'connections',
+  links: { brokerId: { cap: 'broker', kind: 'x' } },
   title: 'Integrations',
   writeTrigger: 'an operator links an integration to a broker',
 })

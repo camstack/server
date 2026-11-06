@@ -12,9 +12,14 @@
  * leftover of an old create bug: they are counted and named, never deleted. Idempotent.
  */
 import type { RecordKindHandle } from '../records/records-access.js'
-import type { BrokerLinkBody } from '../addon/broker-link.js'
 import type { MigrationProcedureResult } from './migration.js'
 import type { RowsMigrationLog } from './integration-rows-to-record.js'
+
+/** The body of a `connections` record this migration writes: the link, nothing else. */
+export interface BrokerLinkBody {
+  readonly name: string
+  readonly brokerId: string
+}
 
 const BROKER_ROWS_MAX = 1000
 const STRAY_REGISTRY_ID = /^int_\d+$/

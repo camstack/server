@@ -8,7 +8,7 @@
 import { randomUUID } from 'node:crypto'
 import {
   type ConfigUISchema,
-  guardBrokerDelete,
+  guardInstanceDelete,
   type IIntegrationInstancesProvider,
   type InstanceChange,
   type IntegrationInstanceStatus,
@@ -248,5 +248,5 @@ export function buildMqttBrokerInstances(
       })
     },
   }
-  return guardBrokerDelete(withOnboard, () => mqttBrokerUsers(deps.listMqttHaInstances))
+  return guardInstanceDelete(withOnboard, () => mqttBrokerUsers(deps.listMqttHaInstances))
 }

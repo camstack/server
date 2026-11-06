@@ -215,7 +215,6 @@ export type ConfigField =
   | ConfigDeviceMultiSelectField
   | ConfigNotificationTargetSelectField
   | ConfigNotificationTargetMultiSelectField
-  | ConfigBrokerSelectField
   | ConfigInstanceSelectField
   | ConfigWidgetField
   | ConfigAddonActionSelectField
@@ -715,17 +714,6 @@ export interface ConfigDeviceMultiSelectField extends ConfigFieldBase {
  */
 export interface ConfigNotificationTargetSelectField extends ConfigFieldBase {
   type: 'notification-target-select'
-}
-
-/**
- * Pick an existing broker of one kind, or create one in place. Stored value is
- * the broker id string. The host mounts the picker (it owns the sign-in
- * dialogs); without one the field lists the brokers without "Create new".
- */
-export interface ConfigBrokerSelectField extends ConfigFieldBase {
-  type: 'broker-select'
-  /** The broker kind to list and to create. */
-  brokerKind: string
 }
 
 /**
@@ -1407,7 +1395,6 @@ export type ConfigFieldWithValue =
   | (ConfigDeviceMultiSelectField & { readonly value: unknown })
   | (ConfigNotificationTargetSelectField & { readonly value: unknown })
   | (ConfigNotificationTargetMultiSelectField & { readonly value: unknown })
-  | (ConfigBrokerSelectField & { readonly value: unknown })
   | (ConfigInstanceSelectField & { readonly value: unknown })
   | ConfigWidgetField // widgets manage their own state; no form value
   | (ConfigAddonActionSelectField & { readonly value: unknown })

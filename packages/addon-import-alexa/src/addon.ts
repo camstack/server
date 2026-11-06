@@ -9,11 +9,10 @@ import {
   DeviceType,
   errMsg,
   EventCategory,
-  brokerIdOf,
-  brokerLinkUserFinder,
-  guardBrokerDelete,
-  type BrokerLinkBody,
-  type BrokerUserFinder,
+  linkedIdOf,
+  linkUserFinder,
+  guardInstanceDelete,
+  type InstanceUserFinder,
   defaultIntegrationApiOver,
   flattenPortsOver,
   composeInstanceKinds,
@@ -59,6 +58,7 @@ import { AlexaEchoDevice } from './devices/alexa-echo-device.js'
 import { alexaEchoSessions } from './alexa-echo-sessions.js'
 import {
   type AlexaBrokerBody,
+  type AlexaConnectionBody,
   alexaBrokersEntryKind,
   alexaRecordKinds,
 } from './broker-record-kinds.js'
@@ -131,7 +131,7 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
   private loginPlane: AddonDataPlaneHandle | null = null
   private loginProxy: VendorLoginProxy | null = null
   private brokerStore: AlexaBrokerStore | null = null
-  private instances: RecordIntegrationInstances<BrokerLinkBody> | null = null
+  private instances: RecordIntegrationInstances<AlexaConnectionBody> | null = null
   private accountInstances: RecordIntegrationInstances<AlexaBrokerBody> | null = null
   private activeBrokers: readonly AlexaBrokerEntry[] = []
   private speak: AlexaSpeakController | null = null
@@ -309,7 +309,9 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
             role: 'services',
             signIn: { basePath: ALEXA_SIGN_IN_PATH, methods: ['device-code', 'proxy'] },
           },
-          provider: guardBrokerDelete(this.accountInstances.toProvider(), () => this.brokerUsers()),
+          provider: guardInstanceDelete(this.accountInstances.toProvider(), () =>
+            this.brokerUsers(),
+          ),
         },
         {
           kind: {
@@ -376,7 +378,7 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
     return this.brokerStore
   }
 
-  private requireInstances(): RecordIntegrationInstances<BrokerLinkBody> {
+  private requireInstances(): RecordIntegrationInstances<AlexaConnectionBody> {
     if (this.instances === null) throw new Error('import-alexa: instances not ready')
     return this.instances
   }
@@ -663,9 +665,9 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
   }
 
   /** Who still points at an Alexa account: its integrations and the Echo targets that speak through it. */
-  private brokerUsers(): readonly BrokerUserFinder[] {
+  private brokerUsers(): readonly InstanceUserFinder[] {
     return [
-      brokerLinkUserFinder(this.requireInstances()),
+      linkUserFinder(this.requireInstances(), 'brokerId'),
       {
         find: async (brokerId) =>
           readEchoTargets(this.config)
@@ -707,7 +709,7 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
       },
       logger: this.ctx.logger,
       getBrokerIdForIntegration: async (id) => {
-        const brokerId = await brokerIdOf(this.requireInstances(), id)
+        const brokerId = await linkedIdOf(this.requireInstances(), id, 'brokerId')
         if (brokerId === undefined) throw new Error(`integration ${id} has no broker`)
         return brokerId
       },

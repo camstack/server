@@ -6,13 +6,12 @@ import {
   deviceAdoptionCapability,
   DeviceType,
   errMsg,
-  brokerIdOf,
+  linkedIdOf,
   composeInstanceKinds,
   type IIntegrationInstancesProvider,
   EventCategory,
-  brokerLinkUserFinder,
-  guardBrokerDelete,
-  type BrokerLinkBody,
+  linkUserFinder,
+  guardInstanceDelete,
   flattenPortsOver,
   integrationInstancesCapability,
   type ConfigUISchema,
@@ -38,6 +37,7 @@ import { mapMatterEndpointToCamStack } from './matter-cluster-mapping.js'
 import { MatterNodeDevice, type MatterEndpointEntry } from './devices/matter-node-device.js'
 import {
   type MatterBrokerBody,
+  type MatterConnectionBody,
   matterBrokersEntryKind,
   matterConnectionsEntryKind,
 } from './broker-record-kinds.js'
@@ -74,7 +74,7 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
 
   private registry: MatterBrokerRegistry | null = null
   private brokerStore: MatterBrokerStore | null = null
-  private instances: RecordIntegrationInstances<BrokerLinkBody> | null = null
+  private instances: RecordIntegrationInstances<MatterConnectionBody> | null = null
   private accountInstances: RecordIntegrationInstances<MatterBrokerBody> | null = null
   private activeBrokers: readonly MatterBrokerEntry[] = []
 
@@ -159,7 +159,7 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
     return this.brokerStore
   }
 
-  private requireInstances(): RecordIntegrationInstances<BrokerLinkBody> {
+  private requireInstances(): RecordIntegrationInstances<MatterConnectionBody> {
     if (this.instances === null) throw new Error('matter-broker: instances not ready')
     return this.instances
   }
@@ -177,8 +177,8 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
             brokerKind: 'matter',
             role: 'services',
           },
-          provider: guardBrokerDelete(this.accountInstances.toProvider(), () => [
-            brokerLinkUserFinder(this.requireInstances()),
+          provider: guardInstanceDelete(this.accountInstances.toProvider(), () => [
+            linkUserFinder(this.requireInstances(), 'brokerId'),
           ]),
         },
         {
@@ -397,7 +397,7 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
       },
       logger: this.ctx.logger,
       getBrokerIdForIntegration: async (id) => {
-        const brokerId = await brokerIdOf(this.requireInstances(), id)
+        const brokerId = await linkedIdOf(this.requireInstances(), id, 'brokerId')
         if (brokerId === undefined) throw new Error(`integration ${id} has no broker`)
         return brokerId
       },

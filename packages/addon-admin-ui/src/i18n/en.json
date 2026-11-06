@@ -5567,7 +5567,8 @@
       "loading": "Loading brokers…",
       "loadFailed": "Failed to load brokers: {{message}}",
       "none": "No broker yet. Create one to continue.",
-      "createNew": "Create new…"
+      "createNew": "Create new…",
+      "noneChoice": "None"
     }
   },
   "integrationHub": {

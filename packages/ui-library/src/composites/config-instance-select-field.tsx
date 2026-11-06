@@ -79,6 +79,8 @@ export function ConfigInstanceSelectControl({
         functionCap={field.functionCap}
         {...(field.kind !== undefined ? { kind: field.kind } : {})}
         {...(noneLabel !== undefined ? { noneLabel } : {})}
+        required={field.required !== false}
+        disabled={disabled === true || field.disabled === true}
         value={current === '' ? null : current}
         onChange={(instanceId) => onChange(instanceId ?? '')}
       />

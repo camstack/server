@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /// <reference types="@testing-library/jest-dom" />
 /**
- * `broker-select` and a `select` that discovers its options.
+ * `instance-select` over a broker and a `select` that discovers its options.
  *
  * Disarm: make the select fetch without waiting for `dependsOn` (drop `ready`
  * from `enabled`) and "does not fetch until the broker is picked" fails; render
@@ -30,18 +30,35 @@ let candidates: readonly Candidate[] = []
 let failure: Error | null = null
 let loading = false
 
-vi.mock('../../hooks/use-broker-instances', async () => {
-  const actual = await vi.importActual<typeof import('../../hooks/use-broker-instances')>(
-    '../../hooks/use-broker-instances',
-  )
+vi.mock('../../hooks/use-instances-of-cap', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../hooks/use-instances-of-cap')>()
   return {
     ...actual,
-    useBrokerInstances: (input: { kind?: string }) => ({
+    useInstancesOfCap: (filter: { functionCap: string; kind?: string }) => ({
       data: [
-        { id: 'b1', name: 'Home HA', kind: 'home-assistant', state: 'ok', usable: true },
-        { id: 'b2', name: 'Other', kind: 'another-kind', state: 'ok', usable: true },
-      ].filter((b) => input.kind === undefined || b.kind === input.kind),
+        {
+          id: 'b1',
+          name: 'Home HA',
+          kind: 'home-assistant',
+          addonId: 'a',
+          state: 'ok',
+          stateLabel: null,
+          usable: true,
+        },
+        {
+          id: 'b2',
+          name: 'Other',
+          kind: 'another-kind',
+          addonId: 'a',
+          state: 'ok',
+          stateLabel: null,
+          usable: true,
+        },
+      ].filter((b) => filter.kind === undefined || b.kind === filter.kind),
       isLoading: false,
+      isError: false,
+      isSuccess: true,
+      error: null,
     }),
   }
 })
@@ -63,13 +80,14 @@ vi.mock('../../generated/system-hooks', () => ({
 }))
 
 const { FormField } = await import('../config-form-field')
-const { BrokerPickerSlotProvider } = await import('../../contexts/broker-picker-slot')
+const { InstancePickerSlotProvider } = await import('../../contexts/instance-picker-slot')
 
 const brokerField: ConfigField = {
-  type: 'broker-select',
+  type: 'instance-select',
   key: 'brokerId',
   label: 'Broker',
-  brokerKind: 'home-assistant',
+  functionCap: 'broker',
+  kind: 'home-assistant',
 }
 const serviceField: ConfigField = {
   type: 'select',
@@ -92,20 +110,20 @@ function Form({ initial = {} }: { readonly initial?: Record<string, unknown> }) 
   )
 }
 
-describe('broker-select', () => {
+describe('instance-select over a broker', () => {
   it('mounts the host picker with the field kind', () => {
     const Picker = ({
       kind,
       onChange,
     }: {
-      kind: string
+      kind?: string
       value: string | null
       onChange: (id: string | null) => void
     }) => <button type="button" onClick={() => onChange('b9')}>{`picker:${kind}`}</button>
     render(
-      <BrokerPickerSlotProvider picker={Picker}>
+      <InstancePickerSlotProvider picker={Picker}>
         <Form />
-      </BrokerPickerSlotProvider>,
+      </InstancePickerSlotProvider>,
     )
     fireEvent.click(screen.getByText('picker:home-assistant'))
     expect(screen.getByTestId('values').textContent).toContain('"brokerId":"b9"')

@@ -5,8 +5,8 @@ status: accepted
 date: 2026-11-05
 supersedes: D950 (the integrationId foreign key on a broker), D1007 (the registry id as a broker key)
 applies-to:
-  - packages/types/src/addon/broker-link.ts
-  - packages/types/src/addon/broker-in-use.ts
+  - packages/types/src/addon/instance-link.ts
+  - packages/types/src/addon/instance-in-use.ts
   - packages/types/src/migrations/broker-links-to-connections.ts
   - packages/addon-import-alexa/src/**
   - packages/addon-matter-broker/src/**

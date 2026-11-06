@@ -15,6 +15,10 @@ export interface InstancePickerSlotProps {
   readonly kind?: string
   /** The words of the empty choice, when the link is optional. */
   readonly noneLabel?: string
+  /** False for an optional link: the picker offers an empty choice and never picks for the operator. */
+  readonly required?: boolean
+  /** The field is read-only: the picker cannot be used. */
+  readonly disabled?: boolean
   readonly value: string | null
   readonly onChange: (instanceId: string | null) => void
 }

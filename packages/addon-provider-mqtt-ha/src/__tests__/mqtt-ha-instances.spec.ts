@@ -83,7 +83,7 @@ describe('mqtt-ha integration rows move to a record', () => {
 const UNLINKED = { id: 'int_0003', addonId: 'provider-mqtt-ha', name: 'Tasmota' }
 
 describe('the broker link is a required instance link (D1013)', () => {
-  it('describe() declares the link and the form draws an instance-select, never a broker-select', async () => {
+  it('describe() declares the link and the form draws an instance-select, no other picker', async () => {
     const w = await world()
     expect((await w.instances.describe()).links).toEqual([
       { kind: 'connections', field: 'mqttBrokerId', to: { cap: 'broker', kind: 'mqtt' } },
@@ -95,7 +95,6 @@ describe('the broker link is a required instance link (D1013)', () => {
       functionCap: 'broker',
       kind: 'mqtt',
     })
-    expect(fields.some((f) => f.type === 'broker-select')).toBe(false)
   })
 
   it('backfills the key on a record that has none, keeps every other field, warns, never deletes', async () => {

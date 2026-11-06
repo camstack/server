@@ -4,22 +4,25 @@
  * (a `brokers` record, edited on the Brokers page).
  */
 import {
-  type BrokerLinkBody,
-  buildBrokerLinkInstances,
+  buildLinkedInstances,
   type RecordIntegrationInstances,
   type RecordsAccess,
 } from '@camstack/types'
-import { haConnectionsEntryKind } from './broker-record-kinds.js'
+import { type HaConnectionBody, haConnectionsEntryKind } from './broker-record-kinds.js'
 
 export const HA_BROKER_KIND = 'home-assistant'
 
 export function buildHaInstances(
   records: Pick<RecordsAccess, 'kind' | 'owner'>,
-): RecordIntegrationInstances<BrokerLinkBody> {
-  return buildBrokerLinkInstances(records, {
+): RecordIntegrationInstances<HaConnectionBody> {
+  return buildLinkedInstances(records, {
     kind: haConnectionsEntryKind,
-    brokerKind: HA_BROKER_KIND,
-    brokerLabel: 'Home Assistant connection',
-    onChanged: () => undefined,
+    description: {
+      role: 'devices',
+      instanceMode: 'multiple',
+      kind: 'connection',
+      canTest: false,
+    },
+    labels: { brokerId: { label: 'Home Assistant connection' } },
   })
 }

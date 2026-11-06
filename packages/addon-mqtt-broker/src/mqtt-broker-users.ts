@@ -1,6 +1,6 @@
 import {
-  assertBrokerUnused,
-  type BrokerUserFinder,
+  assertInstanceUnused,
+  type InstanceUserFinder,
   fieldUserFinder,
   type ListedFieldRow,
 } from '@camstack/types'
@@ -12,7 +12,7 @@ export const MQTT_HA_BROKER_FIELD = 'mqttBrokerId'
 /** The finders for everything that still points at an MQTT broker. */
 export function mqttBrokerUsers(
   listMqttHaInstances: () => Promise<readonly ListedFieldRow[]>,
-): readonly BrokerUserFinder[] {
+): readonly InstanceUserFinder[] {
   return [
     fieldUserFinder({
       kind: 'integration',
@@ -27,7 +27,7 @@ export function assertMqttBrokerUnused(
   brokerId: string,
   listMqttHaInstances: () => Promise<readonly ListedFieldRow[]>,
 ): Promise<void> {
-  return assertBrokerUnused(brokerId, mqttBrokerUsers(listMqttHaInstances))
+  return assertInstanceUnused(brokerId, mqttBrokerUsers(listMqttHaInstances))
 }
 
 /** The calls `listMqttHaInstancesOver` makes, narrowed from `ctx.api`. */

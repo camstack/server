@@ -3,7 +3,7 @@
  * of its kind once the list ANSWERED, only while nothing is chosen.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import './setup'
 
 interface ListState {
@@ -97,5 +97,26 @@ describe('BrokerPicker default selection', () => {
     expect(screen.getByText('a0')).toBeTruthy()
     expect(screen.getByText('Sign in again')).toBeTruthy()
     expect(onChange).not.toHaveBeenCalled()
+  })
+
+  it('an optional link is never pre-selected and offers an empty choice that clears it', () => {
+    listState = { data: [row('a1', 'alexa')], isLoading: false, isError: false }
+    render(<BrokerPicker kind="alexa" value="a1" optional onChange={onChange} />)
+    expect(onChange).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByText('brokers.picker.noneChoice'))
+    expect(onChange).toHaveBeenCalledExactlyOnceWith(null)
+  })
+
+  it('an optional link with nothing chosen stays empty although a broker exists', () => {
+    listState = { data: [row('a1', 'alexa')], isLoading: false, isError: false }
+    render(<BrokerPicker kind="alexa" value={null} optional onChange={onChange} />)
+    expect(onChange).not.toHaveBeenCalled()
+  })
+
+  it('a disabled picker cannot be used', () => {
+    listState = { data: [row('a1', 'alexa')], isLoading: false, isError: false }
+    render(<BrokerPicker kind="alexa" value={null} disabled onChange={onChange} />)
+    for (const button of screen.getAllByRole('button'))
+      expect(button).toHaveProperty('disabled', true)
   })
 })

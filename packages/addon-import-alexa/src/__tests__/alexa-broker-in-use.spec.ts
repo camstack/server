@@ -1,7 +1,7 @@
 import {
-  BrokerInUseError,
-  brokerLinkUserFinder,
-  guardBrokerDelete,
+  InstanceInUseError,
+  linkUserFinder,
+  guardInstanceDelete,
   makeInMemoryRecords,
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
@@ -24,8 +24,8 @@ async function setup() {
       changed.push(id)
     },
   })
-  const provider = guardBrokerDelete(accounts.toProvider(), () => [
-    brokerLinkUserFinder(instances),
+  const provider = guardInstanceDelete(accounts.toProvider(), () => [
+    linkUserFinder(instances, 'brokerId'),
     {
       find: async (brokerId) =>
         brokerId === 'alexa_002' ? [{ kind: 'notification-target', id: 'echo-kitchen' }] : [],
@@ -54,8 +54,8 @@ describe('deleting an Alexa account', () => {
     await instances.createInstance({ id: 'int_0036', name: 'Alexa home' })
     await instances.updateInstance({ id: 'int_0036', values: { brokerId: 'alexa_002' } })
     const err = await provider.deleteInstance({ id: 'alexa_002' }).catch((e: unknown) => e)
-    expect(err).toBeInstanceOf(BrokerInUseError)
-    if (!(err instanceof BrokerInUseError)) throw err
+    expect(err).toBeInstanceOf(InstanceInUseError)
+    if (!(err instanceof InstanceInUseError)) throw err
     expect(err.users.map((u) => u.id).sort()).toEqual(['echo-kitchen', 'int_0036'])
     expect((await provider.listInstances()).map((i) => i.id)).toContain('alexa_002')
   })

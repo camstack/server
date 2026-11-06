@@ -101,9 +101,19 @@ export function declareLinkKind<
 }
 
 /** The id a record holds in a link field; undefined while it names none. */
-function linkedId(body: InstanceBody, field: string): string | undefined {
+export function linkedId(body: InstanceBody, field: string): string | undefined {
   const value = body[field]
   return typeof value === 'string' && value !== '' ? value : undefined
+}
+
+/** The instance an integration's record links to through `field`; undefined while it names none. */
+export async function linkedIdOf<TBody extends InstanceBody>(
+  instances: Pick<RecordIntegrationInstances<TBody>, 'getResolved'>,
+  integrationId: string,
+  field: string,
+): Promise<string | undefined> {
+  const body = await instances.getResolved(integrationId)
+  return body === null ? undefined : linkedId(body, field)
 }
 
 /** Every record of the kind whose `field` names `instanceId`, as users of that instance. */

@@ -5642,7 +5642,8 @@
       "loading": "Caricamento dei broker…",
       "loadFailed": "Impossibile caricare i broker: {{message}}",
       "none": "Nessun broker ancora. Creane uno per continuare.",
-      "createNew": "Crea nuovo…"
+      "createNew": "Crea nuovo…",
+      "noneChoice": "Nessuno"
     }
   },
   "integrationHub": {

@@ -1572,13 +1572,6 @@
       "summary": "The brokers of one holder: instances whose kind is a `broker` kind, optionally of one registry kind. The kinds are the holder's own declaration (D1013, `check-instances-kinds-declared`): a holder without `kinds` decla…"
     },
     {
-      "name": "BrokerPickerSlotProvider",
-      "kind": "component",
-      "area": "contexts",
-      "file": "packages/ui-library/src/contexts/broker-picker-slot.tsx",
-      "summary": "The broker picker a host mounts for `broker-select` fields."
-    },
-    {
       "name": "BTN_COMPACT",
       "kind": "constant",
       "area": "lib",
@@ -12784,13 +12777,6 @@
       "area": "hooks",
       "file": "packages/ui-library/src/hooks/use-broker-instances.ts",
       "summary": "The brokers an operator can pick, read from the ONE instance model (D1013): every provider of `integration-instances` that also serves the `broker` function describes its kinds, and the instances of a kind whose `func…"
-    },
-    {
-      "name": "useBrokerPickerSlot",
-      "kind": "hook",
-      "area": "contexts",
-      "file": "packages/ui-library/src/contexts/broker-picker-slot.tsx",
-      "summary": "The broker picker a host mounts for `broker-select` fields."
     },
     {
       "name": "useCapabilityPresence",

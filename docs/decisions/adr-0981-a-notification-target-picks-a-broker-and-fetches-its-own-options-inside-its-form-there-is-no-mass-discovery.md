@@ -6,9 +6,9 @@ date: 2026-10-30
 supersedes: D950 (the "broker picker inside the schema-driven config UI" rejection)
 applies-to:
   - packages/types/src/interfaces/config-ui.ts
-  - packages/ui-library/src/composites/config-broker-select-field.tsx
+  - packages/ui-library/src/composites/config-instance-select-field.tsx
   - packages/ui-library/src/composites/config-discovered-select-field.tsx
-  - packages/ui-library/src/contexts/broker-picker-slot.tsx
+  - packages/ui-library/src/contexts/instance-picker-slot.ts
   - packages/addon-admin-ui/src/pages/system/NotificationTargets.tsx
   - packages/addon-provider-homeassistant/src/ha-notification-output.ts
   - packages/addon-import-alexa/src/speak/provider.ts

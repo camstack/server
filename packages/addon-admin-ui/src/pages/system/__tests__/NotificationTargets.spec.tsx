@@ -76,7 +76,7 @@ vi.mock('@camstack/ui-library', async () => {
     // mount; a kind that has them gets a stub, every other form the real builder.
     ConfigFormBuilder: (props: React.ComponentProps<typeof real.ConfigFormBuilder>) => {
       const hasBroker = props.schema.sections.some((section) =>
-        section.fields.some((field) => field.type === 'broker-select'),
+        section.fields.some((field) => field.type === 'instance-select'),
       )
       return hasBroker ? (
         <>
@@ -473,7 +473,13 @@ describe('NotificationTargets page', () => {
             id: 'c',
             title: 'C',
             fields: [
-              { type: 'broker-select', key: 'brokerId', label: 'Broker', brokerKind: 'ha' },
+              {
+                type: 'instance-select',
+                key: 'brokerId',
+                label: 'Broker',
+                functionCap: 'broker',
+                kind: 'ha',
+              },
               {
                 type: 'select',
                 key: 'service',

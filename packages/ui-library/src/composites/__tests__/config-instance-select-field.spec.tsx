@@ -88,4 +88,33 @@ describe('instance-select field', () => {
     expect(screen.getByText('host picker')).toBeTruthy()
     expect(seen[0]).toMatchObject({ functionCap: 'broker', kind: 'mqtt', value: 'good' })
   })
+
+  it('hands the host picker disabled and required, which an optional link turns off', () => {
+    const seen: { disabled?: boolean; required?: boolean }[] = []
+    const picker = (props: { disabled?: boolean; required?: boolean }) => {
+      seen.push(props)
+      return <span>host picker</span>
+    }
+    render(
+      <InstancePickerSlotProvider picker={picker}>
+        <FormField
+          field={{ ...FIELD, required: false, disabled: true }}
+          values={{ brokerId: '' }}
+          onChange={vi.fn()}
+        />
+      </InstancePickerSlotProvider>,
+    )
+    expect(seen[0]).toMatchObject({ disabled: true, required: false })
+    seen.length = 0
+    render(
+      <InstancePickerSlotProvider picker={picker}>
+        <FormField
+          field={{ ...FIELD, required: true }}
+          values={{ brokerId: '' }}
+          onChange={vi.fn()}
+        />
+      </InstancePickerSlotProvider>,
+    )
+    expect(seen[0]).toMatchObject({ required: true })
+  })
 })

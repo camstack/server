@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The exported-devices list opens full page and a row click no longer leaves for the device; Add device rows lose the leading dash and name the container they sit in.
 - Fountain wizard no longer asks for the drink counters; a consumables list the card cannot edit shows Custom instead of Unreadable
+- The broker picker of an instance link honours a disabled field and offers an empty choice for an optional link
+- Removed the broker-select field type; every broker link is now an instance-select field on the one link primitive
 
 ## [1.2.597] - 2026-11-06
 

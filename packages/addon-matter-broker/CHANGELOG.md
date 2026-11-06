@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Removed the broker-select field type; every broker link is now an instance-select field on the one link primitive
+- Removed the deprecated broker-named in-use helpers; a delete refused for a linked instance is the one InstanceInUseError
+
 ## [0.2.160] - 2026-11-06
 
 ### Changed

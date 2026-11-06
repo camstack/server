@@ -16,12 +16,11 @@ import {
   integrationInstancesCapability,
   type IntegrationInstanceRef,
   type RecordIntegrationInstances,
-  guardBrokerDelete,
-  brokerIdOf,
-  brokerLinkUserFinder,
-  resolveBrokerId,
-  type BrokerLinkBody,
-  type BrokerUserFinder,
+  guardInstanceDelete,
+  linkedId,
+  linkedIdOf,
+  linkUserFinder,
+  type InstanceUserFinder,
   type CreateDeviceSpec,
   type DeviceSummary,
   DeviceType,
@@ -82,6 +81,7 @@ import { HaBrokerStore } from './ha-broker-store.js'
 import {
   type HaBrokerBody,
   type HaCalendarBody,
+  type HaConnectionBody,
   haBrokersEntryKind,
   haCalendarsEntryKind,
 } from './broker-record-kinds.js'
@@ -190,7 +190,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
   // ── HA-specific state ─────────────────────────────────────────────────
   private registry: HaBrokerRegistry | null = null
   private brokerStore: HaBrokerStore | null = null
-  private instances: RecordIntegrationInstances<BrokerLinkBody> | null = null
+  private instances: RecordIntegrationInstances<HaConnectionBody> | null = null
   private accountInstances: RecordIntegrationInstances<HaBrokerBody> | null = null
   private calendarInstances: RecordIntegrationInstances<HaCalendarBody> | null = null
   /** `connection id → entity ids` its calendar records import. */
@@ -427,7 +427,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
   private async integrationsByBroker(): Promise<ReadonlyMap<string, string>> {
     const out = new Map<string, string>()
     for (const row of await this.requireInstances().listResolved()) {
-      const brokerId = resolveBrokerId(row.body)
+      const brokerId = linkedId(row.body, 'brokerId')
       if (brokerId !== undefined) out.set(brokerId, row.id)
     }
     return out
@@ -597,7 +597,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
     return this.requireBrokerStore().listResolved()
   }
 
-  private requireInstances(): RecordIntegrationInstances<BrokerLinkBody> {
+  private requireInstances(): RecordIntegrationInstances<HaConnectionBody> {
     if (this.instances === null) throw new Error('provider-homeassistant: instances not ready')
     return this.instances
   }
@@ -619,7 +619,9 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
             brokerKind: HA_KIND,
             role: 'services',
           },
-          provider: guardBrokerDelete(this.accountInstances.toProvider(), () => this.brokerUsers()),
+          provider: guardInstanceDelete(this.accountInstances.toProvider(), () =>
+            this.brokerUsers(),
+          ),
         },
         {
           kind: {
@@ -690,7 +692,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
   }
 
   private async brokerIdForIntegration(integrationId: string): Promise<string> {
-    const brokerId = await brokerIdOf(this.requireInstances(), integrationId)
+    const brokerId = await linkedIdOf(this.requireInstances(), integrationId, 'brokerId')
     if (brokerId === undefined) {
       throw new Error(`ha-broker: no connection linked to integration '${integrationId}'`)
     }
@@ -710,8 +712,8 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
   // ── broker cap provider ──────────────────────────────────────────────
 
   /** Everything that still points at a connection: the integrations that name it. */
-  private brokerUsers(): readonly BrokerUserFinder[] {
-    return [brokerLinkUserFinder(this.requireInstances())]
+  private brokerUsers(): readonly InstanceUserFinder[] {
+    return [linkUserFinder(this.requireInstances(), 'brokerId')]
   }
 
   /**

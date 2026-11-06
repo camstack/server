@@ -6,8 +6,8 @@
  */
 import { randomBytes, randomUUID } from 'node:crypto'
 import {
-  assertBrokerUnused,
-  type BrokerUserFinder,
+  assertInstanceUnused,
+  type InstanceUserFinder,
   type IntegrationInstanceStatus,
   type IntegrationTestConnectionResult,
   type IIntegrationInstancesProvider,
@@ -56,7 +56,7 @@ export function buildMailboxInstances(
   records: Pick<RecordsAccess, 'kind' | 'owner'>,
   deps: MailboxInstancesDeps,
 ): IIntegrationInstancesProvider {
-  const users: BrokerUserFinder = deps.inbound.subscriberUsers()
+  const users: InstanceUserFinder = deps.inbound.subscriberUsers()
   const instances = new RecordIntegrationInstances<MailboxBody>(records, mailboxesKind, {
     description: { role: 'services', instanceMode: 'multiple', kind: 'mailbox', canTest: true },
     formSchema: () => mailboxSettingsSchema(),
@@ -97,7 +97,7 @@ export function buildMailboxInstances(
   return {
     ...base,
     deleteInstance: async (input) => {
-      await assertBrokerUnused(input.id, [users])
+      await assertInstanceUnused(input.id, [users])
       return base.deleteInstance(input)
     },
   }
