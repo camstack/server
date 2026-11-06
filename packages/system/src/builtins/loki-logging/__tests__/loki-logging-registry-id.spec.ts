@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { LokiLoggingAddon } from '../loki-logging.addon.js'
 import { lokiDestinationsKind } from '../loki-record-kinds.js'
 import { IntegrationRegistry } from '../../sqlite-storage/integration-registry.js'
-import { SqliteSettingsBackend } from '../../sqlite-storage/sqlite-settings-backend.js'
+import { integrationRegistryRecordKinds } from '../../sqlite-storage/integration-record-kinds.js'
 import { CONNECTION_TO_RECORDS_ID, REGISTRY_TOGGLE_TO_RECORD_ID } from '../migrations/index.js'
 import { RETIREMENT_MARKER_KEY } from '../retire-enabled-flag.js'
 
@@ -239,9 +239,11 @@ describe('LokiLoggingAddon — a hub-resident ctx.id finds its integration row',
   })
 
   it('addon:loki-logging reuses the existing row and creates no duplicate', async () => {
-    const backend = new SqliteSettingsBackend(':memory:')
-    await backend.initialize()
-    const integrations = new IntegrationRegistry(backend)
+    const registryRecords = makeInMemoryRecords('integration-registry').records
+    await registryRecords.declare(integrationRegistryRecordKinds)
+    const integrations = new IntegrationRegistry(
+      IntegrationRegistry.recordStoresOf(registryRecords),
+    )
     await integrations.initialize()
     const existing = await integrations.createIntegration({ addonId: BARE_ID, name: 'Loki' })
     const w = await boot({

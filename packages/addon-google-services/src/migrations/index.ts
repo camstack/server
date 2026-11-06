@@ -9,11 +9,15 @@ import {
   copyCalendarIdsToBrokers,
   planDropSharedCalendarIds,
 } from './calendar-ids-to-brokers.js'
+import { planDropConfigBrokersAndLegacyOauth } from './drop-config-brokers-and-legacy-oauth.js'
 
 export type { CalendarIdsPorts } from './calendar-ids-to-brokers.js'
 
 export const CALENDAR_IDS_TO_RECORDS_ID =
   'google-services/2026-11-07-calendar-ids-to-calendar-records'
+
+export const DROP_CONFIG_BROKERS_AND_LEGACY_OAUTH_ID =
+  'google-services/2026-11-06-drop-config-brokers-and-legacy-oauth'
 
 /** What the catalogue's migrations read and write through. */
 export type GoogleMigrationPorts = CalendarIdsPorts & CalendarRecordPorts
@@ -76,5 +80,22 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<GoogleMigrationPorts>[] =
           return parsed?.brokerId === accountId ? parsed.googleCalendarId : null
         },
       }),
+  },
+  {
+    meta: {
+      id: DROP_CONFIG_BROKERS_AND_LEGACY_OAUTH_ID,
+      owner: 'google-services',
+      level: 'addon-state',
+      seq: 4,
+      dependsOn: [CALENDAR_IDS_TO_RECORDS_ID],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'tolerate',
+      bodyKind: 'plan',
+      description:
+        'Delete the addon-level brokers setting once the brokers records exist, and the singleton oauth state once it holds no token',
+      fixtureMark: 'the brokers setting kept when its records are missing',
+    },
+    plan: planDropConfigBrokersAndLegacyOauth,
   },
 ]

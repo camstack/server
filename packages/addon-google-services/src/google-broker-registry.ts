@@ -5,23 +5,11 @@
 import { z } from 'zod'
 import {
   GoogleBrokerEntrySchema,
-  LegacyGoogleFlatConfigSchema,
   type GoogleBrokerEntry,
   type GoogleOauthAccount,
   type GoogleOauthAccountInput,
   GoogleOauthAccountSchema,
-  type GoogleOauthState,
-  type GoogleServicesConfig,
 } from './google-types.js'
-
-interface LegacyFlatSlice {
-  readonly clientId?: string
-  readonly clientSecret?: string
-  readonly calendarFilter?: string
-  readonly fromAddress?: string
-  readonly fromName?: string
-  readonly brokers?: readonly GoogleBrokerEntry[]
-}
 
 const GoogleAddSettingsSchema = z.object({
   clientId: z.string().min(1),
@@ -52,68 +40,6 @@ export function brokerEntryToSettings(entry: GoogleBrokerEntry): Record<string, 
     fromAddress: entry.fromAddress,
     fromName: entry.fromName,
   }
-}
-
-export interface MigrateLegacyResult {
-  readonly brokers: readonly GoogleBrokerEntry[]
-  readonly oauthAccounts: readonly GoogleOauthAccount[]
-  readonly didMigrate: boolean
-}
-
-/**
- * One-shot: flat singleton config + legacy `oauth` state → `google_001`.
- * Idempotent when `brokers` already present.
- */
-export function migrateLegacyToBrokers(
-  rawConfig: unknown,
-  legacyOauth: GoogleOauthState | null,
-): MigrateLegacyResult {
-  const loose = LegacyGoogleFlatConfigSchema.safeParse(rawConfig)
-  const flat: LegacyFlatSlice = loose.success ? loose.data : {}
-  const existingBrokers = flat.brokers ?? []
-  if (existingBrokers.length > 0) {
-    return {
-      brokers: existingBrokers.map((b) => GoogleBrokerEntrySchema.parse(b)),
-      oauthAccounts: [],
-      didMigrate: false,
-    }
-  }
-
-  const hasClient = (flat.clientId ?? '').length > 0 || (flat.clientSecret ?? '').length > 0
-  const hasOauth = legacyOauth !== null && legacyOauth.refreshToken.length > 0
-  if (!hasClient && !hasOauth) {
-    return { brokers: [], oauthAccounts: [], didMigrate: false }
-  }
-
-  const id = 'google_001'
-  const email = legacyOauth?.accountEmail?.trim() ?? ''
-  const name = email.length > 0 ? email : 'Google account'
-  const entry: GoogleBrokerEntry = GoogleBrokerEntrySchema.parse({
-    id,
-    name,
-    clientId: flat.clientId ?? '',
-    clientSecret: flat.clientSecret ?? '',
-    calendarFilter: flat.calendarFilter ?? '',
-    fromAddress: flat.fromAddress ?? '',
-    fromName: flat.fromName ?? '',
-  })
-
-  const oauthAccounts: GoogleOauthAccount[] =
-    legacyOauth !== null &&
-    (legacyOauth.refreshToken.length > 0 || legacyOauth.accessToken.length > 0)
-      ? [
-          {
-            id,
-            refreshToken: legacyOauth.refreshToken,
-            accessToken: legacyOauth.accessToken,
-            accessExpiresAt: legacyOauth.accessExpiresAt,
-            accountEmail: legacyOauth.accountEmail,
-            needsReauth: false,
-          },
-        ]
-      : []
-
-  return { brokers: [entry], oauthAccounts, didMigrate: true }
 }
 
 /** Local calendar id stamped as `brokerId:googleCalendarId`. */
@@ -260,10 +186,6 @@ export class GoogleBrokerRegistry {
 
   connectedSize(): number {
     return this.entries.filter((e) => this.isConnected(e.id)).length
-  }
-
-  toConfig(): GoogleServicesConfig {
-    return { brokers: [...this.entries] }
   }
 
   private seedCounterFromEntries(entries: readonly GoogleBrokerEntry[]): void {

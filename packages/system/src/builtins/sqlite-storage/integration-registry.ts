@@ -1,20 +1,13 @@
 import type {
-  CollectionColumn,
-  CollectionIndex,
   CreateIntegrationInput,
   IIntegrationRegistry,
   Integration,
-  ISettingsStoreProvider,
   RecordKindHandle,
   RecordsAccess,
 } from '@camstack/types'
 import { bareAddonId, parseJsonObject } from '@camstack/types'
 import { readAllRows } from '../../records/read-all-rows.js'
-import {
-  INTEGRATIONS_LEGACY,
-  integrationRegistryRecordKinds,
-  type IntegrationBody,
-} from './integration-record-kinds.js'
+import { integrationRegistryRecordKinds, type IntegrationBody } from './integration-record-kinds.js'
 
 export interface IntegrationRecordStores {
   readonly integrations: RecordKindHandle<IntegrationBody>
@@ -43,43 +36,6 @@ let integrationCounter = 0
 function nextIntegrationId(): string {
   return `int_${String(++integrationCounter).padStart(4, '0')}`
 }
-
-// ── Collections ───────────────────────────────────────────────────────
-//
-// The names stay the BARE table names: these tables are not namespaced on
-// disk, and prefixing them would move the operator's data rather than read it.
-//
-// `info` is declared `JSON`, not `TEXT`. The surface owns the serialisation
-// for that type — callers hand it an object and get an object back — where the
-// `table*` version stringified by hand on the way in and re-parsed on the way
-// out. Keeping the hand-rolled string with a `TEXT` column would silently lose
-// the blob: `query` JSON-parses any TEXT column starting with `{`, so the
-// mapper's `typeof row.info === 'string'` test would fail and yield `{}`.
-
-const INTEGRATIONS_COLUMNS: readonly CollectionColumn[] = [
-  { name: 'id', type: 'TEXT', primaryKey: true },
-  { name: 'addon_id', type: 'TEXT', notNull: true },
-  { name: 'name', type: 'TEXT', notNull: true },
-  { name: 'enabled', type: 'INTEGER', notNull: true, defaultValue: 1 },
-  { name: 'info', type: 'JSON', notNull: true, defaultValue: '{}' },
-  { name: 'origin_stable_id', type: 'TEXT' },
-  { name: 'created_at', type: 'INTEGER', notNull: true },
-  { name: 'updated_at', type: 'INTEGER', notNull: true },
-]
-
-const INTEGRATIONS_INDEXES: readonly CollectionIndex[] = [
-  { name: 'idx_integrations_addon', columns: ['addon_id'] },
-]
-
-/**
- * @durable class=config owner=integration-registry
- *   write="`createIntegration` — an operator adds a provider, or an addon declares
- *     a FIXED one (`info.fixed`); `updateIntegration` rewrites name/enabled/info"
- *   retention="`deleteIntegration` only, and a fixed integration refuses to be
- *     deleted. Nothing ages out. The `int_NNNN` counter resumes from the highest
- *     surviving row at boot, so wiping the table restarts numbering."
- */
-const INTEGRATIONS = INTEGRATIONS_LEGACY
 
 /**
  * The persisted INTEGRATIONS — one row per provider instance an operator (or a
@@ -110,11 +66,9 @@ function mapIntegrationBody(id: string, body: IntegrationBody): Integration {
 }
 
 export class IntegrationRegistry implements IIntegrationRegistry {
-  private readonly store: ISettingsStoreProvider
-  private readonly recordStores: IntegrationRecordStores | undefined
+  private readonly recordStores: IntegrationRecordStores
 
-  constructor(backend: ISettingsStoreProvider, recordStores?: IntegrationRecordStores) {
-    this.store = backend
+  constructor(recordStores: IntegrationRecordStores) {
     this.recordStores = recordStores
   }
 
@@ -125,34 +79,15 @@ export class IntegrationRegistry implements IIntegrationRegistry {
   }
 
   async initialize(): Promise<void> {
-    if (this.recordStores === undefined) {
-      await this.store.declareCollection({
-        collection: INTEGRATIONS,
-        columns: INTEGRATIONS_COLUMNS,
-        indexes: INTEGRATIONS_INDEXES,
-      })
-    }
     await this.resumeCounter()
   }
 
   private async resumeCounter(): Promise<void> {
-    const kind = this.recordStores?.integrations
-    if (kind !== undefined) {
-      const rows = await readAllRows(kind, { order: 'id' })
-      rows.sort((a, b) => b.id.localeCompare(a.id))
-      const top = rows[0]
-      if (top !== undefined) {
-        const num = parseInt(top.id.replace('int_', ''), 10)
-        if (!isNaN(num)) integrationCounter = num
-      }
-      return
-    }
-    const ints = await this.store.query({
-      collection: INTEGRATIONS,
-      filter: { orderBy: { field: 'id', direction: 'desc' }, limit: 1 },
-    })
-    if (ints[0]) {
-      const num = parseInt(ints[0].id.replace('int_', ''), 10)
+    const rows = await readAllRows(this.recordStores.integrations, { order: 'id' })
+    rows.sort((a, b) => b.id.localeCompare(a.id))
+    const top = rows[0]
+    if (top !== undefined) {
+      const num = parseInt(top.id.replace('int_', ''), 10)
       if (!isNaN(num)) integrationCounter = num
     }
   }
@@ -175,79 +110,26 @@ export class IntegrationRegistry implements IIntegrationRegistry {
       createdAt: now,
       updatedAt: now,
     }
-    const kind = this.recordStores?.integrations
-    if (kind !== undefined) {
-      await kind.put({ id, data: body })
-    } else {
-      await this.store.insert({
-        collection: INTEGRATIONS,
-        record: {
-          id,
-          data: {
-            addon_id: input.addonId,
-            name: input.name,
-            enabled: enabled ? 1 : 0,
-            info,
-            origin_stable_id: input.originStableId ?? null,
-            created_at: now,
-            updated_at: now,
-          },
-        },
-      })
-    }
-
-    return {
-      id,
-      addonId: input.addonId,
-      name: input.name,
-      enabled,
-      info,
-      ...(input.originStableId !== undefined ? { originStableId: input.originStableId } : {}),
-      createdAt: now,
-      updatedAt: now,
-    }
+    await this.recordStores.integrations.put({ id, data: body })
+    return mapIntegrationBody(id, body)
   }
 
   async getIntegration(id: string): Promise<Integration | null> {
-    const kind = this.recordStores?.integrations
-    if (kind !== undefined) {
-      const row = await kind.get(id)
-      return row === null ? null : mapIntegrationBody(row.id, row.data)
-    }
-    const rows = await this.store.query({
-      collection: INTEGRATIONS,
-      filter: { where: { id }, limit: 1 },
-    })
-    return rows[0] ? this.mapIntegration(rows[0].data) : null
+    const row = await this.recordStores.integrations.get(id)
+    return row === null ? null : mapIntegrationBody(row.id, row.data)
   }
 
   async getIntegrationByAddonId(rawAddonId: string): Promise<Integration | null> {
     const addonId = bareAddonId(rawAddonId)
-    const kind = this.recordStores?.integrations
-    if (kind !== undefined) {
-      const page = await kind.query({ where: { addonId }, limit: 1 })
-      const row = page.records[0]
-      return row === undefined ? null : mapIntegrationBody(row.id, row.data)
-    }
-    const rows = await this.store.query({
-      collection: INTEGRATIONS,
-      filter: { where: { addon_id: addonId }, limit: 1 },
-    })
-    return rows[0] ? this.mapIntegration(rows[0].data) : null
+    const page = await this.recordStores.integrations.query({ where: { addonId }, limit: 1 })
+    const row = page.records[0]
+    return row === undefined ? null : mapIntegrationBody(row.id, row.data)
   }
 
   async listIntegrations(): Promise<readonly Integration[]> {
-    const kind = this.recordStores?.integrations
-    if (kind !== undefined) {
-      const rows = await readAllRows(kind)
-      rows.sort((a, b) => a.data.createdAt - b.data.createdAt)
-      return rows.map((r) => mapIntegrationBody(r.id, r.data))
-    }
-    const rows = await this.store.query({
-      collection: INTEGRATIONS,
-      filter: { orderBy: { field: 'created_at', direction: 'asc' } },
-    })
-    return rows.map((r) => this.mapIntegration(r.data))
+    const rows = await readAllRows(this.recordStores.integrations)
+    rows.sort((a, b) => a.data.createdAt - b.data.createdAt)
+    return rows.map((r) => mapIntegrationBody(r.id, r.data))
   }
 
   async updateIntegration(
@@ -255,31 +137,17 @@ export class IntegrationRegistry implements IIntegrationRegistry {
     updates: Partial<Pick<Integration, 'name' | 'enabled' | 'info'>>,
   ): Promise<Integration | null> {
     const now = Math.floor(Date.now() / 1000)
-    const kind = this.recordStores?.integrations
-    if (kind !== undefined) {
-      const existing = await kind.get(id)
-      if (existing === null) return null
-      const next: IntegrationBody = {
-        ...existing.data,
-        updatedAt: now,
-        ...(updates.name !== undefined ? { name: updates.name } : {}),
-        ...(updates.enabled !== undefined ? { enabled: updates.enabled } : {}),
-        ...(updates.info !== undefined ? { info: updates.info } : {}),
-      }
-      await kind.put({ id, data: next })
-      return mapIntegrationBody(id, next)
+    const existing = await this.recordStores.integrations.get(id)
+    if (existing === null) return null
+    const next: IntegrationBody = {
+      ...existing.data,
+      updatedAt: now,
+      ...(updates.name !== undefined ? { name: updates.name } : {}),
+      ...(updates.enabled !== undefined ? { enabled: updates.enabled } : {}),
+      ...(updates.info !== undefined ? { info: updates.info } : {}),
     }
-    const updateRow: Record<string, unknown> = { updated_at: now }
-    if (updates.name !== undefined) updateRow['name'] = updates.name
-    if (updates.enabled !== undefined) updateRow['enabled'] = updates.enabled ? 1 : 0
-    if (updates.info !== undefined) updateRow['info'] = updates.info
-
-    await this.store.updateWhere({
-      collection: INTEGRATIONS,
-      filter: { where: { id } },
-      data: updateRow,
-    })
-    return this.getIntegration(id)
+    await this.recordStores.integrations.put({ id, data: next })
+    return mapIntegrationBody(id, next)
   }
 
   /**
@@ -306,29 +174,7 @@ export class IntegrationRegistry implements IIntegrationRegistry {
         `integration "${id}" is fixed — it belongs to the addon that declared it and cannot be deleted`,
       )
     }
-    const integrationsKind = this.recordStores?.integrations
-    if (integrationsKind !== undefined) {
-      await integrationsKind.delete(id)
-      return true
-    }
-    await this.store.deleteWhere({ collection: INTEGRATIONS, filter: { where: { id } } })
+    await this.recordStores.integrations.delete(id)
     return true
-  }
-
-  // --- Mappers ---
-
-  private mapIntegration(row: Record<string, unknown>): Integration {
-    return {
-      id: String(row['id']),
-      addonId: String(row['addon_id']),
-      name: String(row['name']),
-      enabled: row['enabled'] === 1,
-      info: readInfo(row['info']),
-      ...(typeof row['origin_stable_id'] === 'string'
-        ? { originStableId: row['origin_stable_id'] }
-        : {}),
-      createdAt: Number(row['created_at']),
-      updatedAt: Number(row['updated_at']),
-    }
   }
 }

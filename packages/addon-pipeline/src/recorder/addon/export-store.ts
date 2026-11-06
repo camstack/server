@@ -39,9 +39,6 @@ import { ExportRecordSchema } from '@camstack/types'
 import type { ExportRecord, RecordKindHandle, RecordsAccess } from '@camstack/types'
 import { recorderRecordKinds } from './record-kinds.js'
 
-// Re-export for callers that need the legacy name for docs / adoption scripts.
-export { RECORDING_EXPORTS_LEGACY_COLLECTION as RECORDING_EXPORTS_COLLECTION } from './record-kinds.js'
-
 /**
  * The storage class export MP4s live in: `artifacts`, SHARED with the
  * notification-center's artifact shelf (operator 2026-09-04: one generic

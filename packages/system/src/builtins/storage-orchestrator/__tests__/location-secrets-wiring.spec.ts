@@ -26,6 +26,7 @@
  */
 import type {
   AddonContext,
+  RecordsAccess,
   IScopedLogger,
   ISettingsStoreProvider,
   IStorageCapProvider,
@@ -36,6 +37,7 @@ import type {
 import { REDACTED_SECRET, storageCapability } from '@camstack/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { StorageOrchestratorAddon } from '../storage-orchestrator.addon.js'
+import { seededLocationRecords } from './support/seeded-location-records.js'
 
 /** Fixture password. Never a real one — see the file docblock. */
 const REAL_PASSWORD = 'fixture-not-a-real-password'
@@ -111,7 +113,7 @@ function makeProvider(): FakeProvider {
   return { impl: impl as unknown as IStorageProviderImpl, seenConfigs }
 }
 
-/** In-memory `data-store-provider` engine — the four methods the store uses. */
+/** A `data-store-provider` engine: its presence is the orchestrator's readiness gate; the locations live in records. */
 function makeEngine(seed: readonly SettingsRecord[]): ISettingsStoreProvider {
   const rows = new Map<string, SettingsRecord>(seed.map((r) => [r.id, r]))
   const engine = {
@@ -134,7 +136,7 @@ interface Harness {
   readonly addon: StorageOrchestratorAddon
   readonly storage: IStorageCapProvider
   readonly provider: FakeProvider
-  readonly engine: ISettingsStoreProvider
+  readonly records: RecordsAccess
 }
 
 /**
@@ -144,12 +146,13 @@ interface Harness {
  */
 async function boot(options: {
   readonly seedRows?: readonly SettingsRecord[]
-  /** Reuse a previous boot's engine so what was PERSISTED is what is re-read. */
-  readonly engine?: ISettingsStoreProvider
+  /** Reuse a previous boot's records so what was PERSISTED is what is re-read. */
+  readonly records?: RecordsAccess
   readonly providerRegistered: boolean
 }): Promise<Harness> {
   const provider = makeProvider()
-  const engine = options.engine ?? makeEngine(options.seedRows ?? [])
+  const engine = makeEngine([])
+  const records = options.records ?? (await seededLocationRecords(options.seedRows ?? []))
   const collections: Record<string, readonly unknown[]> = {
     'storage-provider': options.providerRegistered ? [provider.impl] : [],
     'data-store-provider': [engine],
@@ -158,6 +161,7 @@ async function boot(options: {
   const ctx = {
     logger: makeLogger(),
     nodeDataDir: '/tmp/camstack-test-data',
+    records,
     kernel: {
       localNodeId: 'hub',
       capabilityRegistry: {
@@ -177,10 +181,10 @@ async function boot(options: {
   const entry = registrations?.find((r) => r.capability.name === storageCapability.name)
   if (!entry) throw new Error('storage capability was not registered')
   // Documented type boundary: the registration erases the provider type.
-  return { addon, storage: entry.provider as IStorageCapProvider, provider, engine }
+  return { addon, storage: entry.provider as IStorageCapProvider, provider, records }
 }
 
-/** The row a previous boot persisted, as `location-store.ts` writes it. */
+/** The row a previous boot persisted, in the shape the seed helper turns into a location body. */
 function storedRow(
   config: Readonly<Record<string, unknown>>,
   overrides: { readonly id?: string; readonly providerId?: string } = {},
@@ -480,10 +484,10 @@ describe('a location whose provider has not registered', () => {
 
     // Once the runner comes back the share must still authenticate — asserted
     // against the row THIS degraded save persisted, re-read through the same
-    // engine. Seeding a fresh row here would prove nothing.
-    const engine = harness.engine
+    // records. Seeding a fresh row here would prove nothing.
+    const records = harness.records
     await harness.addon.shutdown()
-    harness = await boot({ engine, providerRegistered: true })
+    harness = await boot({ records, providerRegistered: true })
     const revived = (await harness.storage.listLocations({})).find((l) => l.id === LOCATION_ID)
     expect(revived?.displayName).toBe('Renamed while the provider was down')
     const result = await harness.storage.testLocation({ id: LOCATION_ID })

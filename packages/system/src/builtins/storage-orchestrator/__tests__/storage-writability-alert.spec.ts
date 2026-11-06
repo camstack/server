@@ -31,6 +31,7 @@ import type {
 import { EventCategory, storageCapability } from '@camstack/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { StorageOrchestratorAddon } from '../storage-orchestrator.addon.js'
+import { seededLocationRecords, type SeedLocationRow } from './support/seeded-location-records.js'
 
 const PROVIDER_ID = 'filesystem-storage'
 
@@ -68,8 +69,8 @@ function makeProvider(): IStorageProviderImpl {
   return impl as unknown as IStorageProviderImpl
 }
 
-function makeEngine(preloaded: readonly { id: string; data: unknown }[]): ISettingsStoreProvider {
-  const rows = new Map<string, unknown>(preloaded.map((r) => [r.id, r]))
+function makeEngine(): ISettingsStoreProvider {
+  const rows = new Map<string, unknown>()
   const engine = {
     declareCollection: async () => {},
     query: async () => [...rows.values()],
@@ -94,10 +95,7 @@ interface Harness {
 }
 
 /** Boot the real addon. `withBus: false` reproduces a host that injects none. */
-async function boot(
-  withBus: boolean,
-  preloaded: readonly { id: string; data: unknown }[],
-): Promise<Harness> {
+async function boot(withBus: boolean, preloaded: readonly SeedLocationRow[]): Promise<Harness> {
   const emitted: SystemEvent[] = []
   const bus = {
     emit: (event: SystemEvent) => {
@@ -108,12 +106,13 @@ async function boot(
   const logger = makeLogger()
   const collections: Record<string, readonly unknown[]> = {
     'storage-provider': [makeProvider()],
-    'data-store-provider': [makeEngine(preloaded)],
+    'data-store-provider': [makeEngine()],
     'storage-evictable': [],
   }
   const ctx = {
     logger,
     nodeDataDir: '/tmp/camstack-test-data',
+    records: await seededLocationRecords(preloaded),
     // Documented type boundary: only `emit` and `subscribe` are reached.
     ...(withBus ? { eventBus: bus as unknown as IEventBus } : {}),
     kernel: {

@@ -131,8 +131,8 @@ describe('storage-orchestrator — records path', () => {
     })
     await records.declare(storageOrchestratorRecordKinds)
     const locations = new SqliteLocationStore(
-      legacy as unknown as ISettingsStoreProvider,
       SqliteLocationStore.recordStoresOf(records),
+      SqliteLocationStore.seedMarkersOf(records),
     )
     const drain = new SqliteDrainStateStore(
       legacy as unknown as ISettingsStoreProvider,
@@ -164,16 +164,6 @@ describe('storage-orchestrator — records path', () => {
   })
 
   it('throws when records-path upsert body fails schema validation', async () => {
-    const legacy = {
-      declareCollection: async () => {},
-      query: async () => [],
-      insert: async () => {},
-      deleteWhere: async () => {},
-      set: async () => {},
-      get: async () => null,
-      update: async () => {},
-      delete: async () => {},
-    }
     const world = makeRecordsWorld()
     await world.provider.init()
     const records = createRecordsAccess({
@@ -184,8 +174,8 @@ describe('storage-orchestrator — records path', () => {
     await records.declare(storageOrchestratorRecordKinds)
     const locationsKind = SqliteLocationStore.recordStoresOf(records)
     const locations = new SqliteLocationStore(
-      legacy as unknown as ISettingsStoreProvider,
       locationsKind,
+      SqliteLocationStore.seedMarkersOf(records),
     )
     const putSpy = vi.spyOn(locationsKind, 'put')
     await expect(

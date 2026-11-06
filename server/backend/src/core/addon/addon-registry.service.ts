@@ -1727,7 +1727,7 @@ export class AddonRegistryService {
     this.credentialTokenService = service
   }
 
-  private async wireHubMainOrphanRecords(store: ISettingsStoreProvider): Promise<void> {
+  private async wireHubMainOrphanRecords(): Promise<void> {
     const recordsCap = this.capabilityRegistry.getSingleton<IRecordsProvider>('records')
     if (recordsCap === null || recordsCap === undefined) return
 
@@ -1737,7 +1737,6 @@ export class AddonRegistryService {
     )
     await integrationRecords.declare(integrationRegistryRecordKinds)
     this.integrationRegistry = new IntegrationRegistry(
-      store,
       IntegrationRegistry.recordStoresOf(integrationRecords),
     )
     await this.integrationRegistry.initialize()
@@ -3191,15 +3190,9 @@ export class AddonRegistryService {
             },
             store,
           )
-          void this.wireHubMainOrphanRecords(store).catch((err: unknown) => {
+          void this.wireHubMainOrphanRecords().catch((err: unknown) => {
             this.logger.warn('hub-main records wiring failed (best-effort)', {
               meta: { error: errMsg(err) },
-            })
-            this.integrationRegistry = new IntegrationRegistry(store)
-            void this.integrationRegistry.initialize().then(() => {
-              this.logger.info('IntegrationRegistry initialized (legacy)', {
-                meta: { phase: 'v2' },
-              })
             })
           })
           this.loadCollectionPreferences()

@@ -11,7 +11,6 @@ import {
   createSecretsAccess,
   isSecretMarker,
   makeSecretMarker,
-  type ISettingsStoreProvider,
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
@@ -29,18 +28,6 @@ import { makeFakeKeychain, makeRecordsWorld } from './support/records-world.js'
 const ADDON = 'spec-clear'
 const CANARY = 'pw-CANARY-clear-9d'
 
-const legacyStore = {
-  declareCollection: async () => {},
-  query: async () => [],
-  insert: async () => {},
-  updateWhere: async () => {},
-  deleteWhere: async () => {},
-  get: async () => null,
-  set: async () => {},
-  delete: async () => {},
-  update: async () => {},
-}
-
 async function setup() {
   const world = makeRecordsWorld()
   await world.provider.init()
@@ -52,12 +39,7 @@ async function setup() {
     secrets: null,
   })
   await registryRecords.declare(integrationRegistryRecordKinds)
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- documented type boundary: a no-op legacy store; the records stores serve every call
-  const store = legacyStore as unknown as ISettingsStoreProvider
-  const registry = new IntegrationRegistry(
-    store,
-    IntegrationRegistry.recordStoresOf(registryRecords),
-  )
+  const registry = new IntegrationRegistry(IntegrationRegistry.recordStoresOf(registryRecords))
   await registry.initialize()
   const secrets = createSecretsAccess({ owner: ADDON, transport: keychain })
   const db = world.settings.db

@@ -1,4 +1,4 @@
-import { createRecordsAccess, type ISettingsStoreProvider } from '@camstack/types'
+import { createRecordsAccess } from '@camstack/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { IntegrationRegistry } from '../integration-registry.js'
 import { integrationRegistryRecordKinds } from '../integration-record-kinds.js'
@@ -15,22 +15,8 @@ describe('IntegrationRegistry over ctx.records', () => {
       transport: world.transportFor('integration-registry'),
       secrets: null,
     })
-    const legacy = {
-      declareCollection: async () => {},
-      query: async () => [],
-      insert: async () => {},
-      updateWhere: async () => {},
-      deleteWhere: async () => {},
-      get: async () => null,
-      set: async () => {},
-      delete: async () => {},
-      update: async () => {},
-    }
     await records.declare(integrationRegistryRecordKinds)
-    registry = new IntegrationRegistry(
-      legacy as unknown as ISettingsStoreProvider,
-      IntegrationRegistry.recordStoresOf(records),
-    )
+    registry = new IntegrationRegistry(IntegrationRegistry.recordStoresOf(records))
     await registry.initialize()
   })
 

@@ -526,10 +526,7 @@ export type {
 export { IntegrationRegistry } from './builtins/sqlite-storage/integration-registry.js'
 export { clearIntegrationRows } from './builtins/sqlite-storage/integration-rows-ports.js'
 export type { IntegrationRecordStores } from './builtins/sqlite-storage/integration-registry.js'
-export {
-  integrationRegistryRecordKinds,
-  INTEGRATIONS_LEGACY,
-} from './builtins/sqlite-storage/integration-record-kinds.js'
+export { integrationRegistryRecordKinds } from './builtins/sqlite-storage/integration-record-kinds.js'
 export {
   clusterAgentRecordKinds,
   clusterNodeHistoryRecordKind,
@@ -541,10 +538,7 @@ export type {
   ClusterNodeHistoryBody,
   ClusterNodeTombstoneBody,
 } from './builtins/cluster-agent/record-kinds.js'
-export {
-  storageOrchestratorRecordKinds,
-  STORAGE_DRAIN_STATE_LEGACY,
-} from './builtins/storage-orchestrator/record-kinds.js'
+export { storageOrchestratorRecordKinds } from './builtins/storage-orchestrator/record-kinds.js'
 export {
   backupOrchestratorRecordKinds,
   backupRecordStoresOf,

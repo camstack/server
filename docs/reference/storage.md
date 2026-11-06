@@ -56,7 +56,6 @@ columns and indexes. These are the typed, domain-owned tables.
 | `records` | `packages/system/src/builtins/sqlite-storage/records/records-sql.ts` |
 | `scoped_tokens` | `packages/system/src/builtins/local-auth/auth-schema.ts` |
 | `storage_drain_state` | `packages/system/src/builtins/storage-orchestrator/drain-state-store.ts` |
-| `storage_locations` | `packages/system/src/builtins/storage-orchestrator/location-store.ts` |
 | `user_external_identities` | `packages/system/src/builtins/local-auth/auth-schema.ts` |
 | `user_totp` | `packages/system/src/builtins/local-auth/auth-schema.ts` |
 | `users` | `packages/system/src/builtins/local-auth/auth-schema.ts` |
@@ -149,7 +148,6 @@ committed.
 | `records` | `ledger` | `records` | every ctx.records write of an owning addon: one row per record of any declared kind, keyed (kind_id, id) | per kind, declared with the kind: an engine ttl, a row bound, the owner's own sweep, or none - the reason is shown in System -> Data |
 | `scoped_tokens` | `config` | `local-auth` | none since D895 — the pre-D892 scoped-token rows are kept on disk, read by nothing (a scoped token is a `credential-tokens` row) | the operator drops the table by hand |
 | `storage_drain_state` | `config` | `storage-orchestrator` | one row per location the operator has switched to `drain`, rewritten on every pressure sweep (60 s) while it drains | the row is deleted the moment the location leaves `drain` mode. Bounded by the number of disks a human is retiring at once. |
-| `storage_locations` | `config` | `storage-orchestrator` | an operator creates or edits a location (basePath, minFreePercent, enabled, node pin); plus the boot reconcile — declared defaults seeded on a fresh install, and in-memory-only locations backfilled when the store is late-wired | none — a row goes only when the operator deletes the location, or when the declaration pass prunes one whose declaring addon is gone. Bounded by the storage targets a human configures. |
 | `user_external_identities` | `config` | `local-auth` | `ExternalIdentityManager.link` when a signed-in user completes a link flow; `unlink` from the profile or the Users page | `unlink` deletes one row; deleting the user deletes all of its rows (`deleteUser` → `removeAllForUser`). A row whose provider instance was renamed or removed stays, inert, until someone unlinks it. |
 | `user_totp` | `config` | `local-auth` | `setup` inserts a keychain marker for the user's seed (D878; deleting any pending row first); `confirm` flips `confirmedAt` once a valid code proves possession | `disable` deletes the row, and `setup` deletes before re-inserting. Nothing else prunes — deleting a USER does not cascade here, so their enrollment row outlives the account. |
 | `users` | `config` | `local-auth` | an operator creates a user, or `ensureAdminExists` seeds the configured admin on first boot (or resets its password on the operator's one-shot RESET_ADMIN_PASSWORD trigger); updated on scope, isAdmin and password edits | none — a row goes only when an operator deletes the user. A `declareCollection` that adds a PK/UNIQUE/NOT-NULL-without-default column REBUILDS the table: every account is wiped and only the configured admin comes back on the next boot. |
@@ -172,7 +170,6 @@ there is".
 | `ADMIN_TOKENS_COLLECTION` | `packages/system/src/builtins/local-auth/auth-schema.ts` |
 | `DEVICE_CREDENTIALS_COLLECTION` | `packages/system/src/builtins/local-auth/auth-schema.ts` |
 | `AUTH_AUDIT_COLLECTION` | `packages/system/src/builtins/local-auth/auth-schema.ts` |
-| `INTEGRATIONS` | `packages/system/src/builtins/sqlite-storage/integration-registry.ts` |
 | `${SETTINGS_TABLE}` | `packages/system/src/builtins/sqlite-storage/migrations/legacy-integration-rows-door.ts` |
 | `${LEDGER_TABLE}` | `packages/system/src/builtins/sqlite-storage/migrations/migration-pass.ts` |
 | `${scoped}` | `packages/system/src/builtins/sqlite-storage/sqlite-settings-backend.ts` |

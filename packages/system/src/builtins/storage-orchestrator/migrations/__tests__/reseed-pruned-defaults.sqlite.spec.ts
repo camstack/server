@@ -7,7 +7,7 @@
  * refuses to delete or disable the last enabled location of a type, so an operator cannot
  * produce "marker, zero rows" through the UI.
  */
-import type { ISettingsStoreProvider, StorageLocationDeclaration } from '@camstack/types'
+import type { StorageLocationDeclaration } from '@camstack/types'
 import { createRecordsAccess, defineAddonMigrations } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeRecordsWorld } from '../../../sqlite-storage/__tests__/support/records-world.js'
@@ -30,7 +30,6 @@ const LOGS: StorageLocationDeclaration = {
   cardinality: 'single',
   access: 'local-path',
 }
-const NOT_USED = {} as unknown as ISettingsStoreProvider
 
 const registry = (declared: readonly StorageLocationDeclaration[]) => ({
   cardinalityOf: (id: string) => declared.find((d) => d.id === id)?.cardinality ?? null,
@@ -48,7 +47,6 @@ async function boot(declared: readonly StorageLocationDeclaration[]) {
   })
   await records.declare(storageOrchestratorRecordKinds)
   const store = new SqliteLocationStore(
-    NOT_USED,
     SqliteLocationStore.recordStoresOf(records),
     SqliteLocationStore.seedMarkersOf(records),
   )

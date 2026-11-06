@@ -32,11 +32,7 @@ import {
 } from '@camstack/types'
 import { randomBytes } from 'node:crypto'
 import { z } from 'zod'
-import {
-  GoogleBrokerRegistry,
-  brokerEntryToSettings,
-  migrateLegacyToBrokers,
-} from './google-broker-registry.js'
+import { GoogleBrokerRegistry, brokerEntryToSettings } from './google-broker-registry.js'
 import { buildGoogleFeatureSettingsSchema } from './google-broker-settings-schema.js'
 import { createGoogleCalendarApi, createGoogleCalendarSource } from './google-calendar-source.js'
 import { createGmailSmtpProvider } from './google-gmail-smtp.js'
@@ -100,20 +96,10 @@ const CALLBACK_PATH = '/oauth/callback'
 const START_PATH = '/oauth/start'
 const DISCONNECT_PATH = '/oauth/disconnect'
 
-const LegacyOauthStateSchema = z.object({
-  refreshToken: z.string().default('').meta({ secret: true }),
-  accessToken: z.string().default('').meta({ secret: true }),
-  accessExpiresAt: z.number().default(0),
-  accountEmail: z.string().default(''),
-})
-
 export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
   protected override readonly secretStatePaths = [
     'oauthAccounts.accounts[id].refreshToken',
     'oauthAccounts.accounts[id].accessToken',
-    // Legacy singleton oauth blob — kept until migrate clears it.
-    'oauth.refreshToken',
-    'oauth.accessToken',
   ]
 
   private oauthAccountsHandle: DurableState<GoogleOauthAccountsState> | null = null
@@ -136,51 +122,7 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
     this.oauthAccountsHandle = this.state('oauthAccounts', GoogleOauthAccountsStateSchema, {
       accounts: [],
     })
-    let oauthAccounts = await this.oauthAccountsHandle.get()
-
-    const legacyHandle = this.state('oauth', LegacyOauthStateSchema, { ...DEFAULT_OAUTH_STATE })
-    const legacyOauth = await legacyHandle.get()
-
-    const migrated = migrateLegacyToBrokers(this.config, legacyOauth)
-    if (migrated.didMigrate) {
-      await this.updateGlobalSettings({
-        brokers: [...migrated.brokers],
-        clientId: undefined,
-        clientSecret: undefined,
-        calendarFilter: undefined,
-        fromAddress: undefined,
-        fromName: undefined,
-      })
-      if (migrated.oauthAccounts.length > 0) {
-        oauthAccounts = { accounts: [...migrated.oauthAccounts] }
-        await this.oauthAccountsHandle.set(oauthAccounts)
-      }
-      await legacyHandle.set({ ...DEFAULT_OAUTH_STATE })
-      this.ctx.logger.info('google-services: migrated singleton OAuth to broker google_001', {
-        meta: { brokerId: 'google_001', accountEmail: legacyOauth.accountEmail || undefined },
-      })
-    } else if (
-      oauthAccounts.accounts.length === 0 &&
-      legacyOauth.refreshToken.length > 0 &&
-      this.config.brokers.length > 0
-    ) {
-      // Brokers already present but tokens still on legacy blob (partial upgrade).
-      const primary = this.config.brokers[0]!
-      oauthAccounts = {
-        accounts: [
-          {
-            id: primary.id,
-            refreshToken: legacyOauth.refreshToken,
-            accessToken: legacyOauth.accessToken,
-            accessExpiresAt: legacyOauth.accessExpiresAt,
-            accountEmail: legacyOauth.accountEmail,
-            needsReauth: false,
-          },
-        ],
-      }
-      await this.oauthAccountsHandle.set(oauthAccounts)
-      await legacyHandle.set({ ...DEFAULT_OAUTH_STATE })
-    }
+    const oauthAccounts = await this.oauthAccountsHandle.get()
 
     const records = this.ctx.records
     if (records === undefined) {
@@ -194,10 +136,6 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
       onChanged: () => this.refreshCalendarSelection(),
     })
     this.activeBrokers = await this.loadPersistedBrokers()
-    if ((await this.brokerStore.listResolved()).length === 0 && this.config.brokers.length > 0) {
-      await this.brokerStore.replaceAll(this.config.brokers)
-      this.activeBrokers = await this.loadPersistedBrokers()
-    }
     await this.migrateCalendarIds(records)
     await this.refreshCalendarSelection()
 
@@ -698,22 +636,15 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
 
   private async loadPersistedBrokers(): Promise<readonly GoogleBrokerEntry[]> {
     const store = this.brokerStore
-    if (store !== null) {
-      const fromRecords = await store.listResolved()
-      if (fromRecords.length > 0) return fromRecords
-    }
-    return this.config.brokers
+    return store === null ? [] : store.listResolved()
   }
 
   private async persistBrokers(): Promise<void> {
     const entries = [...this.registry.listEntries()]
     this.activeBrokers = entries
     const store = this.brokerStore
-    if (store !== null) {
-      await store.replaceAll(entries)
-      return
-    }
-    await this.updateGlobalSettings({ brokers: entries })
+    if (store === null) throw new Error('google-services: the brokers store is not ready')
+    await store.replaceAll(entries)
   }
 
   private async persistOauthAccounts(): Promise<void> {

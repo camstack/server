@@ -8,8 +8,6 @@ import { defineRecordKinds, type DefinedRecordKind } from '@camstack/types'
 import { z } from 'zod'
 import type { IsolatedRecordKinds } from '../records-isolated.js'
 
-export const INTEGRATIONS_LEGACY = 'integrations'
-
 export type IntegrationBody = {
   readonly addonId: string
   readonly name: string

@@ -62,7 +62,7 @@ import { z } from 'zod'
 import { buildStorageLocationRegistry } from '../../kernel/storage-location-registry.js'
 import { ADDON_MIGRATIONS } from './migrations/index.js'
 import { LocationRepointer, type RepointTarget } from './location-repointer.js'
-import { STORAGE_LOCATIONS } from './location-store.js'
+import { STORAGE_LOCATIONS_SECRET_SCOPE } from './location-store.js'
 import { canProbeOccupancyLocally, resolveRefusalFor } from './access-guards.js'
 import { createDataStoreDispatch } from './data-store-dispatch.js'
 import type { DrainProgress } from './drain-ratchet.js'
@@ -846,7 +846,10 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
       }
       return null
     }
-    return new SqliteLocationStore(engine, this.locationsKind, this.seedMarkersKind)
+    // The engine's presence is only the readiness gate; the locations live in
+    // the record kinds, which the hub always has and an agent never does.
+    if (this.locationsKind === null || this.seedMarkersKind === null) return null
+    return new SqliteLocationStore(this.locationsKind, this.seedMarkersKind)
   }
 
   /**
@@ -1298,7 +1301,7 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
       secrets,
       patch: { ...config },
       stored: { ...stored },
-      scope: { kind: 'row', collection: STORAGE_LOCATIONS, rowId: locationId },
+      scope: { kind: 'row', collection: STORAGE_LOCATIONS_SECRET_SCOPE, rowId: locationId },
     })
     // The row is REPLACED by `upsertLocation`, not merged: a key the save path
     // kept must be carried over from the stored config.

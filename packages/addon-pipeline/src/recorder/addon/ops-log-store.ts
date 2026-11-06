@@ -35,9 +35,6 @@ import type {
 } from '@camstack/types'
 import { recorderRecordKinds } from './record-kinds.js'
 
-// Re-export for callers that need the legacy name for docs / adoption scripts.
-export { RECORDING_OPS_LOG_LEGACY_COLLECTION as RECORDING_OPS_LOG_COLLECTION } from './record-kinds.js'
-
 /** Row-per-operation handle over the `recorder` / `ops-log` record kind. */
 export type RecordingOpsLogState = RecordKindHandle<OpsLogEntry>
 

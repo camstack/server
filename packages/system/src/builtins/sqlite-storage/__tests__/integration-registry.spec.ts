@@ -1,26 +1,26 @@
 /**
- * IntegrationRegistry round-trip over the REAL engine.
- *
- * Deliberately not a fake: this file exists because B2 moved the registry from
- * the `table*` bypass onto the collection surface, and the two surfaces differ
- * in ways no hand-written fake reproduces — `query` reassembles typed columns
- * and JSON-PARSES any TEXT column whose value starts with `{` or `[`, where
- * `tableQuery` handed back the raw string. A fake that returns what the mapper
- * expects proves nothing; an in-memory `SqliteSettingsBackend` is the same code
- * the hub runs.
+ * IntegrationRegistry round-trip over its record kind on the REAL records provider
+ * (SQLite), so a body that does not survive serialisation fails here.
  */
+import { createRecordsAccess } from '@camstack/types'
 import { beforeEach, describe, expect, it } from 'vitest'
+import { integrationRegistryRecordKinds } from '../integration-record-kinds.js'
 import { IntegrationRegistry } from '../integration-registry.js'
-import { SqliteSettingsBackend } from '../sqlite-settings-backend.js'
+import { makeRecordsWorld } from './support/records-world.js'
 
-describe('IntegrationRegistry over the collection surface', () => {
-  let backend: SqliteSettingsBackend
+describe('IntegrationRegistry over its record kind', () => {
   let registry: IntegrationRegistry
 
   beforeEach(async () => {
-    backend = new SqliteSettingsBackend(':memory:')
-    await backend.initialize()
-    registry = new IntegrationRegistry(backend)
+    const world = makeRecordsWorld()
+    await world.provider.init()
+    const records = createRecordsAccess({
+      owner: 'integration-registry',
+      transport: world.transportFor('integration-registry'),
+      secrets: null,
+    })
+    await records.declare(integrationRegistryRecordKinds)
+    registry = new IntegrationRegistry(IntegrationRegistry.recordStoresOf(records))
     await registry.initialize()
   })
 

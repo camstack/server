@@ -18,25 +18,14 @@ export const GoogleBrokerEntrySchema = z.object({
 })
 export type GoogleBrokerEntry = z.infer<typeof GoogleBrokerEntrySchema>
 
-export const GoogleServicesConfigSchema = z.object({
-  brokers: z.array(GoogleBrokerEntrySchema).default([]),
-  /** @deprecated Pre-broker singleton — cleared after migrateLegacyToBrokers. */
-  clientId: z.string().optional(),
-  /** @deprecated Pre-broker singleton — cleared after migrateLegacyToBrokers. */
-  clientSecret: z.string().optional().meta({ secret: true }),
-  /** @deprecated Pre-broker singleton — cleared after migrateLegacyToBrokers. */
-  calendarFilter: z.string().optional(),
-  /** @deprecated Pre-broker singleton — cleared after migrateLegacyToBrokers. */
-  fromAddress: z.string().optional(),
-  /** @deprecated Pre-broker singleton — cleared after migrateLegacyToBrokers. */
-  fromName: z.string().optional(),
-})
+/**
+ * The addon keeps no addon-level settings: every account is a `brokers` record and its tokens
+ * live in the durable `oauthAccounts` state.
+ */
+export const GoogleServicesConfigSchema = z.object({})
 export type GoogleServicesConfig = z.infer<typeof GoogleServicesConfigSchema>
 
 export const DEFAULT_GOOGLE_CONFIG: GoogleServicesConfig = GoogleServicesConfigSchema.parse({})
-
-/** Flat pre-broker config (singleton). Parsed only for one-shot migration. */
-export const LegacyGoogleFlatConfigSchema = GoogleServicesConfigSchema
 
 export interface GoogleOauthState {
   refreshToken: string

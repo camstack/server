@@ -24,7 +24,6 @@ export {
   GOOGLE_CONSOLE_CREDENTIALS_URL,
 } from './google-settings-copy.js'
 export {
-  migrateLegacyToBrokers,
   GoogleBrokerRegistry,
   stampCalendarId,
   parseStampedCalendarId,

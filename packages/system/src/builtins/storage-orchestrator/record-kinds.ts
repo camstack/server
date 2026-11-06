@@ -10,8 +10,6 @@ import {
 import { z } from 'zod'
 import type { IsolatedRecordKinds } from '../records-isolated.js'
 
-export const STORAGE_DRAIN_STATE_LEGACY = 'storage_drain_state'
-
 export type StorageLocationBody = {
   readonly type: z.infer<typeof StorageLocationTypeSchema>
   readonly displayName: string

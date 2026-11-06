@@ -16,11 +16,6 @@
  */
 import { defineRecordKinds, ExportRecordSchema, OpsLogEntrySchema } from '@camstack/types'
 
-/** Legacy RowMapStore collection name — kept for the adoption mapper and docs. */
-export const RECORDING_EXPORTS_LEGACY_COLLECTION = 'recorder:exports'
-/** Legacy RowMapStore collection name — kept for the adoption mapper and docs. */
-export const RECORDING_OPS_LOG_LEGACY_COLLECTION = 'recorder:ops-log'
-
 export const recorderRecordKinds = defineRecordKinds({
   /**
    * One row per export job, inserted by `createExport` and updated as the
