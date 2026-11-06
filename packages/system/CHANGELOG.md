@@ -50,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Migrations: the hub answers the migration API version on declareOwner and the facade over records, settings, secrets and legacy rows is built into every addon context
 - Crash and refusal alerts name the core block or addon, and the crash-loop alert includes the last error.
 - A composed pet fountain serves its tank as a Water consumable even without a maintenance entity
+- A stored pet-fountain composition loses the drink counters and the Clear daily count forward on the next start
 
 ### Removed
 
