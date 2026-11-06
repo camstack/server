@@ -15,6 +15,7 @@ const BASE: MediaPlayerStatus = {
   duration: null,
   shuffle: null,
   repeat: null,
+  positionUpdatedAt: null,
   lastChangedAt: 0,
 }
 

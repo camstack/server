@@ -253,6 +253,7 @@ export class RemoteService implements IRemoteProvider {
       duration: null,
       shuffle: null,
       repeat: null,
+      positionUpdatedAt: null,
       lastChangedAt: input.changedAt,
     }
   }

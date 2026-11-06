@@ -272,6 +272,8 @@ describe('HA actuator caps — Phase C3', () => {
         ...sample,
         stateSource: 'reported',
         assumedFields: [],
+        // A slice written before the field existed has no position read time.
+        positionUpdatedAt: null,
       })
     })
 
@@ -293,6 +295,8 @@ describe('HA actuator caps — Phase C3', () => {
         ...sample,
         stateSource: 'reported',
         assumedFields: [],
+        // A slice written before the field existed has no position read time.
+        positionUpdatedAt: null,
       })
       expect(MediaPlayerStatusSchema.parse({ ...sample, stateSource: 'assumed' }).stateSource).toBe(
         'assumed',

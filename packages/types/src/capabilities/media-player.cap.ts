@@ -98,6 +98,9 @@ export const MediaPlayerStatusSchema = z.object({
   /** Repeat mode. Null when no repeat surface.
    *  Pair with `DeviceFeature.MediaPlayerRepeat`. */
   repeat: MediaPlayerRepeatSchema.nullable(),
+  /** Ms epoch when `position` was read from the device. Null when the driver
+   *  does not say; a UI that advances the position while playing counts from it. */
+  positionUpdatedAt: z.number().nullable().default(null),
   /** Ms epoch when the slice was last updated. */
   lastChangedAt: z.number(),
 })

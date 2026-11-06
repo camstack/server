@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The migration API reports each integration's stored switch so a disabled integration stays disabled
 - A waited action call (an automation step) now lasts as long as the run instead of failing after 60 seconds; a run over 60 minutes is stopped and reported timed-out.
 - Cap calls from forked addons now honour each method's declared timeout instead of a flat 60 s; the three bounds under 60 s are terminal-session.pullOutput (15 s), audio-analyzer.classify (30 s) and training-provider.validateCredentials (30 s).
+- The media-player remote status carries positionUpdatedAt (null).
 
 ### Removed
 

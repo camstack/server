@@ -43,6 +43,7 @@ function nativeStatus(state: MediaPlayerStatus['state']): MediaPlayerStatus {
     duration: null,
     shuffle: null,
     repeat: null,
+    positionUpdatedAt: null,
     lastChangedAt: 1,
   }
 }

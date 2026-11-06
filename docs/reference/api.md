@@ -3222,7 +3222,7 @@
 
 ### `media-player` → `mediaPlayer.*`
 
-- **Source:** `packages/types/src/capabilities/media-player.cap.ts:118`
+- **Source:** `packages/types/src/capabilities/media-player.cap.ts:121`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `media-player`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IMediaPlayerProvider`

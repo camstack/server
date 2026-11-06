@@ -26,6 +26,7 @@ const COLD_START: MediaPlayerStatus = {
   duration: null,
   shuffle: null,
   repeat: null,
+  positionUpdatedAt: null,
   lastChangedAt: 0,
 }
 
@@ -62,6 +63,7 @@ export class HaMediaPlayerDevice extends HaBaseChildDevice {
       duration: readDurationMs(attrs, 'media_duration'),
       shuffle: readBooleanAttr(attrs, 'shuffle'),
       repeat: readRepeat(attrs['repeat']),
+      positionUpdatedAt: null,
       lastChangedAt,
     }
     this.runtimeState.setCapState('media-player', slice)

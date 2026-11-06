@@ -3579,6 +3579,7 @@ Enum: `"reported" \| "assumed"`
 - `duration`: `number \| null`
 - `shuffle`: `boolean \| null`
 - `repeat`: `MediaPlayerRepeatSchema \| null`
+- `positionUpdatedAt?`: `number \| null = null`
 - `lastChangedAt`: `number`
 
 ### `MeshLeafInfoSchema`

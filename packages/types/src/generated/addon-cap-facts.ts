@@ -5,7 +5,7 @@
  * `ALL_CAPABILITY_DEFINITIONS` (the whole Zod schema graph, ~+100 MB heap per
  * runner). See docs/decisions/adr-0028.md.
  *
- * Coverage: 1 advance-derived caps, 82 caps with 373 state leaves, 15 caps with a declared method timeout.
+ * Coverage: 1 advance-derived caps, 82 caps with 374 state leaves, 15 caps with a declared method timeout.
  */
 
 /** A bindable scalar in a capability's runtime state. */
@@ -272,7 +272,7 @@ export const CAP_STATE_LEAVES: Readonly<Record<string, readonly CapStateLeaf[]>>
   "intercom": [{"path":"talking","valueType":"boolean"}, {"path":"lastSessionAt","valueType":"number"}, {"path":"ability.sampleRate","valueType":"number"}, {"path":"ability.duplex","valueType":"enum","enumValues":["half","full"]}, {"path":"ability.maxBacklogMs","valueType":"number"}],
   "lawn-mower-control": [{"path":"activity","valueType":"enum","enumValues":["idle","mowing","paused","docked","error"]}, {"path":"batteryLevel","valueType":"number"}, {"path":"progress","valueType":"number"}, {"path":"currentCode","valueType":"number"}, {"path":"currentCodeLabel","valueType":"string"}, {"path":"severity","valueType":"enum","enumValues":["info","warning","error"]}],
   "lock-control": [{"path":"state","valueType":"enum","enumValues":["locked","unlocked","locking","unlocking","jammed","door-open"]}],
-  "media-player": [{"path":"state","valueType":"enum","enumValues":["off","on","idle","playing","paused","buffering","standby"]}, {"path":"stateSource","valueType":"enum","enumValues":["reported","assumed"]}, {"path":"volumeLevel","valueType":"number"}, {"path":"isMuted","valueType":"boolean"}, {"path":"source","valueType":"string"}, {"path":"currentMedia.type","valueType":"string"}, {"path":"currentMedia.title","valueType":"string"}, {"path":"currentMedia.artist","valueType":"string"}, {"path":"currentMedia.album","valueType":"string"}, {"path":"currentMedia.imageUrl","valueType":"string"}, {"path":"position","valueType":"number"}, {"path":"duration","valueType":"number"}, {"path":"shuffle","valueType":"boolean"}, {"path":"repeat","valueType":"enum","enumValues":["off","all","one"]}],
+  "media-player": [{"path":"state","valueType":"enum","enumValues":["off","on","idle","playing","paused","buffering","standby"]}, {"path":"stateSource","valueType":"enum","enumValues":["reported","assumed"]}, {"path":"volumeLevel","valueType":"number"}, {"path":"isMuted","valueType":"boolean"}, {"path":"source","valueType":"string"}, {"path":"currentMedia.type","valueType":"string"}, {"path":"currentMedia.title","valueType":"string"}, {"path":"currentMedia.artist","valueType":"string"}, {"path":"currentMedia.album","valueType":"string"}, {"path":"currentMedia.imageUrl","valueType":"string"}, {"path":"position","valueType":"number"}, {"path":"duration","valueType":"number"}, {"path":"shuffle","valueType":"boolean"}, {"path":"repeat","valueType":"enum","enumValues":["off","all","one"]}, {"path":"positionUpdatedAt","valueType":"number"}],
   "meter": [{"path":"value","valueType":"number"}],
   "motion": [{"path":"detected","valueType":"boolean"}, {"path":"lastDetectedAt","valueType":"number"}, {"path":"autoClearAfterMs","valueType":"number"}],
   "motion-trigger": [{"path":"enabled","valueType":"boolean"}],
