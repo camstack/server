@@ -81,7 +81,7 @@ const logger = {
   withTags: vi.fn().mockReturnThis(),
 } as unknown as IScopedLogger
 
-async function boot() {
+async function boot(apiExtra: Record<string, unknown> = {}) {
   const store = createStore()
   const { bus, fire, episodes } = createBus()
   const addon = new AlertCenterAddon()
@@ -89,6 +89,7 @@ async function boot() {
     api: {
       settingsStore: store.api,
       capabilities: { getCapability: { query: async () => null } },
+      ...apiExtra,
     },
     eventBus: bus,
     logger,
@@ -227,5 +228,52 @@ describe('runner alerts and their episodes (D877)', () => {
     running('b')
     await settle()
     expect((await addon.listAlerts())[0]?.status).toBe('dismissed')
+  })
+
+  it('names a core block by its block name, and an addon by its manifest name', async () => {
+    const blockId = 'f179fe24-9e90-4854-9287-42a4460439cd'
+    const { addon, fire } = await boot({
+      coreBlocks: {
+        get: { query: async () => ({ block: { name: 'Programmazione TV' } }) },
+      },
+      addons: {
+        list: {
+          query: async () => [{ manifest: { id: 'reolink', name: 'Reolink' } }],
+        },
+      },
+    })
+    fire('addon.runner-failed', {
+      runnerId: `core-block-${blockId}`,
+      nodeId: 'hub',
+      addonIds: [`core-block-${blockId}`],
+      crashesInWindow: 5,
+    })
+    refuse(fire, 'reolink')
+    await settle()
+    const alerts = await addon.listAlerts()
+    const block = alerts.find((a) => a.id === `runner:hub:core-block-${blockId}`)
+    expect(block?.message).toContain('Core block "Programmazione TV"')
+    expect(alerts.find((a) => a.id === 'runner:hub:reolink')?.message).toContain('Addon "Reolink"')
+  })
+
+  it('a failed or slow name lookup never blocks the alert: it names the id', async () => {
+    const { addon, fire } = await boot({
+      coreBlocks: {
+        get: {
+          query: async () => {
+            throw new Error('registry down')
+          },
+        },
+      },
+    })
+    fire('addon.runner-failed', {
+      runnerId: 'core-block-abc',
+      nodeId: 'hub',
+      addonIds: ['core-block-abc'],
+    })
+    await settle()
+    const [alert] = await addon.listAlerts()
+    expect(alert?.message).toContain('"core-block-abc"')
+    expect(alert?.message).not.toContain('Core block')
   })
 })

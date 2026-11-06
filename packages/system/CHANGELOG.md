@@ -48,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Local network settings are declared only on the per-node settings hook; the form and stored values are unchanged.
 - Adding or creating a device passes the integration it belongs to on to the provider.
 - Migrations: the hub answers the migration API version on declareOwner and the facade over records, settings, secrets and legacy rows is built into every addon context
+- Crash and refusal alerts name the core block or addon, and the crash-loop alert includes the last error.
 
 ### Removed
 

@@ -35,7 +35,11 @@ describe('one alert per runner (D877)', () => {
     let record = foldRunnerEvent(
       null,
       'addon.runner-refused',
-      { runnerId: 'auth', reason: 'legacy blobs', remedy: 'Run the migration.' },
+      {
+        runnerId: 'auth',
+        reason: 'legacy blobs',
+        remedy: 'Run the migration.',
+      },
       KEY,
       1000,
     )
@@ -67,5 +71,59 @@ describe('one alert per runner (D877)', () => {
       runnerId: 'r',
     })
     expect(runnerKeyOf('addon.runner-failed', {}, undefined)).toBeNull()
+  })
+})
+
+describe('runner alert names the runner (display name)', () => {
+  const base: RunnerAlertRecord = {
+    nodeId: 'hub',
+    runnerId: 'core-block-abc',
+    state: 'failed',
+    since: 1,
+    count: 7,
+    addonIds: ['core-block-abc'],
+    crashesInWindow: 5,
+    lastError: 'Init failed: fetch failed',
+  }
+  const named = { ...base, displayName: 'Programmazione TV' }
+
+  it('failed: names the block, keeps the id and carries the last error', () => {
+    expect(renderRunnerAlert(named).message).toBe(
+      'Core block "Programmazione TV" (core-block-abc) gave up after 5 crashes: Init failed: fetch failed - 7 events',
+    )
+  })
+
+  it('failed without a name falls back to the id and still carries the last error', () => {
+    expect(renderRunnerAlert(base).message).toBe(
+      'Runner "core-block-abc" gave up after 5 crashes: Init failed: fetch failed - 7 events',
+    )
+  })
+
+  it('refused: named, and id fallback', () => {
+    const refused: RunnerAlertRecord = {
+      ...base,
+      runnerId: 'reolink',
+      state: 'refused',
+      reason: 'bad',
+    }
+    expect(renderRunnerAlert({ ...refused, displayName: 'Reolink' }).message).toBe(
+      'Addon "Reolink" (reolink): refused - bad',
+    )
+    expect(renderRunnerAlert(refused).message).toBe('reolink: refused - bad')
+  })
+
+  it('crashed: named, and id fallback', () => {
+    const crashed: RunnerAlertRecord = {
+      ...base,
+      runnerId: 'reolink',
+      state: 'crashed',
+      count: 1,
+    }
+    expect(renderRunnerAlert({ ...crashed, displayName: 'Reolink' }).message).toBe(
+      'Addon "Reolink" (reolink) crashed: Init failed: fetch failed',
+    )
+    expect(renderRunnerAlert(crashed).message).toBe(
+      'Addon "reolink" crashed: Init failed: fetch failed',
+    )
   })
 })

@@ -14,6 +14,7 @@
  * a fresh one.
  */
 import type { AlertSeverity } from '@camstack/types'
+import { CORE_BLOCK_ADDON_PREFIX } from '@camstack/types'
 
 export type RunnerAlertState = 'crashed' | 'failed' | 'refused'
 
@@ -26,6 +27,8 @@ export interface RunnerAlertRecord {
   /** Events folded into this record. */
   readonly count: number
   readonly addonIds: readonly string[]
+  /** Human name of the runner (a core block's name, an addon's manifest name); absent = unknown, the id is shown. */
+  readonly displayName?: string
   /** Last error text a plain crash carried. */
   readonly lastError?: string
   /** Refusal: the addon's own words, and what the operator does. */
@@ -144,33 +147,46 @@ export interface RenderedRunnerAlert {
   readonly message: string
 }
 
+/** `Core block "TV" (core-block-x)`, `Addon "Reolink" (reolink)`; the bare id when no name is known. */
+function runnerLabel(record: RunnerAlertRecord): string {
+  const { displayName, runnerId } = record
+  if (displayName === undefined) return `"${runnerId}"`
+  const kind = runnerId.startsWith(CORE_BLOCK_ADDON_PREFIX) ? 'Core block' : 'Addon'
+  return `${kind} "${displayName}" (${runnerId})`
+}
+
 export function renderRunnerAlert(record: RunnerAlertRecord): RenderedRunnerAlert {
-  const where = record.nodeId === 'hub' ? record.runnerId : `${record.runnerId} on ${record.nodeId}`
+  const named = record.displayName !== undefined
+  const on = record.nodeId === 'hub' ? '' : ` on ${record.nodeId}`
+  const label = `${runnerLabel(record)}${on}`
   switch (record.state) {
     case 'refused':
       return {
         severity: 'critical',
         title: 'Addon refused to start',
         message:
-          `${where}: refused - ${record.reason ?? 'no reason reported'}` +
+          `${named ? label : `${record.runnerId}${on}`}: refused - ${record.reason ?? 'no reason reported'}` +
           `${record.remedy !== undefined ? ` ${record.remedy}` : ''}`,
       }
-    case 'failed':
+    case 'failed': {
+      const others = record.addonIds.filter((id) => id !== record.runnerId)
       return {
         severity: 'critical',
         title: 'Addon crash loop',
         message:
-          `Runner "${where}" gave up` +
+          `${named ? label : `Runner ${label}`} gave up` +
           `${record.crashesInWindow !== undefined ? ` after ${String(record.crashesInWindow)} crashes` : ''}` +
-          `${record.addonIds.length > 0 ? ` (addons: ${record.addonIds.join(', ')})` : ''}` +
+          `${record.lastError !== undefined ? `: ${record.lastError}` : ''}` +
+          `${others.length > 0 ? ` (addons: ${others.join(', ')})` : ''}` +
           ` - ${String(record.count)} events`,
       }
+    }
     case 'crashed':
       return {
         severity: 'error',
         title: 'Addon crashed',
         message:
-          `Addon "${where}" crashed${record.lastError !== undefined ? `: ${record.lastError}` : ''}` +
+          `${named ? label : `Addon ${label}`} crashed${record.lastError !== undefined ? `: ${record.lastError}` : ''}` +
           `${record.count > 1 ? ` (${String(record.count)} events)` : ''}`,
       }
   }
