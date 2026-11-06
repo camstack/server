@@ -3,6 +3,7 @@
  * provider that answers `deviceType: null` (schema query disabled) used to
  * spin forever, and a failed query looked like loading.
  */
+import type { ComponentProps } from 'react'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import '../../../i18n'
@@ -21,7 +22,7 @@ vi.mock('../../form-builder/FormBuilder', () => ({ FormBuilder: () => <div>form<
 
 import { CandidateParamsStep } from '../NetworkCandidatesPanel'
 
-const row = {
+const row: ComponentProps<typeof CandidateParamsStep>['row'] = {
   key: 'k',
   name: 'Cam',
   address: null,
@@ -33,7 +34,7 @@ const row = {
   addedName: null,
   needsParams: [],
   parentKey: null,
-} as never
+}
 
 function renderStep(onBack = vi.fn()) {
   return render(
@@ -81,5 +82,23 @@ describe('CandidateParamsStep states', () => {
     expect(screen.getByText('type boom')).toBeTruthy()
     expect(container.querySelector('.animate-spin')).toBeNull()
     expect(addButton().disabled).toBe(true)
+  })
+
+  it('schema query fails while the type is known: the error line, Add disabled', () => {
+    q.type = { isSuccess: true, data: { deviceType: 'camera' }, error: null }
+    q.schema = { data: undefined, error: new Error('schema boom') }
+    const { container } = renderStep()
+    expect(screen.getByText('schema boom')).toBeTruthy()
+    expect(container.querySelector('.animate-spin')).toBeNull()
+    expect(addButton().disabled).toBe(true)
+  })
+
+  it('schema arrives: the form shows and Add is enabled', () => {
+    q.type = { isSuccess: true, data: { deviceType: 'camera' }, error: null }
+    q.schema = { data: { sections: [] }, error: null }
+    const { container } = renderStep()
+    expect(screen.getByText('form')).toBeTruthy()
+    expect(container.querySelector('.animate-spin')).toBeNull()
+    expect(addButton().disabled).toBe(false)
   })
 })
