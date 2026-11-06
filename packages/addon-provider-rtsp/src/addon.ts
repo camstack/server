@@ -11,19 +11,16 @@ import type {
   CreateDeviceSpec,
   DeviceConstructor,
   FieldProbeResult,
-  IConnectionTestProvider,
   IDevice,
   StreamQuality,
 } from '@camstack/types'
 import {
   BaseDeviceProvider,
   classifyStreams,
-  connectionTestCapability,
   DeviceType,
   maskUrlCredentials,
 } from '@camstack/types'
 import { RtspCamera, type RtspStreamEntry, rtspCameraSchema } from './rtsp-camera.js'
-import { buildRtspConnectionTestProvider } from './rtsp-connection-test.js'
 
 function getString(obj: Record<string, unknown>, key: string): string {
   const v = obj[key]
@@ -182,25 +179,12 @@ export class RtspProviderAddon extends BaseDeviceProvider {
     return {
       providers: [
         ...regs,
-        { capability: connectionTestCapability, provider: this.buildConnectionTestProvider() },
         {
           capability: integrationInstancesCapability,
           provider: buildRtspInstances(records).toProvider(),
         },
       ],
     }
-  }
-
-  /**
-   * The stream-URL probe, DECLARED. It used to be the backend's default branch
-   * for every integration in the system; it now answers only for this addon,
-   * and only when the settings actually carry a URL.
-   */
-  private buildConnectionTestProvider(): IConnectionTestProvider {
-    return buildRtspConnectionTestProvider({
-      getStreamProbe: () => this.ctx.kernel.streamProbe ?? null,
-      logger: this.ctx.logger,
-    })
   }
 
   // ── Creation ─────────────────────────────────────────────────────────

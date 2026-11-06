@@ -1,6 +1,7 @@
-import { defaultIntegrationMigrations } from '@camstack/types'
+import { defaultIntegrationMigrations, makeInMemoryRecords } from '@camstack/types'
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { rtspConnectionsEntryKind, rtspRecordKinds } from '../rtsp-instances.js'
+import { buildRtspInstances, rtspConnectionsEntryKind, rtspRecordKinds } from '../rtsp-instances.js'
 
 /**
  * Rtsp integrations are name-only `connections` records (D1007): the kind accepts a name and
@@ -24,5 +25,24 @@ describe('rtsp integration instances', () => {
     ])
     expect(catalogue.map((m) => m.meta.onFailure)).toEqual(['block-owner', 'tolerate'])
     expect(catalogue.every((m) => m.meta.bodyKind === 'procedure' && 'procedure' in m)).toBe(true)
+  })
+})
+
+describe('rtsp integration test', () => {
+  it('declares no test: an RTSP integration carries no URL, the stream probe belongs to camera creation', async () => {
+    const mem = makeInMemoryRecords('provider-rtsp')
+    await mem.records.declare(rtspRecordKinds)
+    const instances = buildRtspInstances(mem.records)
+    expect((await instances.describe()).canTest).toBe(false)
+    const result = await instances.testInstance({ id: null, values: {} })
+    expect(result.success).toBe(false)
+    expect(result.status).toBe('unsupported')
+  })
+})
+
+describe('rtsp registers no second connection test', () => {
+  it('the addon answers a test through integration-instances only', () => {
+    const addon = readFileSync(new URL('../addon.ts', import.meta.url), 'utf8')
+    expect(addon).not.toMatch(/connectionTestCapability|ConnectionTestProvider/)
   })
 })

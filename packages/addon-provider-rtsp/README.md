@@ -9,7 +9,7 @@ Package `@camstack/addon-provider-rtsp` on npm.
 ## What it provides
 
 - **RTSP** (`provider-rtsp`): Direct connection to cameras via RTSP URL. Category: providers.
-  - Capabilities: `device-provider`, `connection-test`.
+  - Capabilities: `device-provider`, `integration-instances`.
 
 ## Configuration
 

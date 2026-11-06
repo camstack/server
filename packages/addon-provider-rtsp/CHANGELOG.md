@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Switching the integration on or off now applies at once and a disabled integration stays disabled after the update
+- The RTSP integration no longer registers a separate connection test; a camera's stream URL is still probed when the camera is created.
 
 ## [1.2.152] - 2026-11-06
 
