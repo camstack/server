@@ -70,4 +70,30 @@ describe('spawnableAddonIds (planning#447)', () => {
     expect(ids).toEqual(['store'])
     expect(lines.some((l) => l.includes('SPAWNED ANYWAY') && l.includes('1.0.0'))).toBe(true)
   })
+
+  it('reports each really held-back addon with its reason, and not a spawned infra provider', () => {
+    const deferred: Array<[string, string]> = []
+    const store: GroupCandidate = {
+      ...candidate('store', '@camstack/addon-store', '1.0.0'),
+      capabilities: [{ name: 'data-store-provider' }],
+    }
+    spawnableAddonIds({
+      addonIds: ['store', 'ml'],
+      candidateOf: (id) => (id === 'store' ? store : byId[id]),
+      context: {
+        serverVersion: '1.2.721',
+        serverRequiresAddons: {
+          '@camstack/addon-store': '>=2.0.0',
+          '@camstack/addon-ml': '>=2.0.0',
+        },
+        installedVersions: { '@camstack/addon-store': '1.0.0', '@camstack/addon-ml': '1.0.0' },
+        requiresOfDir: () => undefined,
+      },
+      infraCapabilities: new Set(['data-store-provider']),
+      log: () => undefined,
+      onDeferred: (id, reason) => deferred.push([id, reason]),
+    })
+    expect(deferred.map(([id]) => id)).toEqual(['ml'])
+    expect(deferred[0]?.[1]).toContain('2.0.0')
+  })
 })

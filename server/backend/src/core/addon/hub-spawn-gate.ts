@@ -30,6 +30,8 @@ export interface HubSpawnGateInput {
    */
   readonly infraCapabilities: ReadonlySet<string>
   readonly log: (line: string) => void
+  /** Called for every addon the gate really holds back (not an infra provider), with its reason. */
+  readonly onDeferred?: (addonId: string, reason: string) => void
 }
 
 /** The ids of `addonIds` that may be spawned; every held-back one is logged. */
@@ -57,6 +59,7 @@ export function spawnableAddonIds(input: HubSpawnGateInput): readonly string[] {
       )
     } else {
       input.log(d.reason)
+      input.onDeferred?.(d.candidate.addonId, d.reason)
     }
   }
   // An id the registry cannot describe is not this gate's to judge: keep it, the plan drops it as before.

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- An addon held back until its package is updated after a server update is no longer reported as failed to initialize.
+
 ## [1.2.787] - 2026-11-06
 
 ### Changed

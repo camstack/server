@@ -11,6 +11,7 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import type { GroupCandidate } from '../../agent/agent-group-runner.js'
+import { recordBootHealth } from './boot-health-snapshot.js'
 import { readHubStaleGateContext, spawnableAddonIds } from './hub-spawn-gate.js'
 import type { DataPlaneSink, RegisteredChild } from '@camstack/server/system'
 import {
@@ -472,6 +473,8 @@ function isDeviceScopedCapName(capName: string): boolean {
 
 export class AddonRegistryService {
   private readonly addonEntries = new Map<string, AddonEntry>()
+  /** Addons the hub spawn gate holds back (id -> reason): neither started nor failed. */
+  private readonly heldBackAddons = new Map<string, string>()
   private readonly capabilityRegistry: CapabilityRegistry
   /** Single router for addon-level calls (routes / custom / settings). */
   private addonCallGateway!: AddonCallGateway
@@ -1283,22 +1286,16 @@ export class AddonRegistryService {
     // either initialized (record success) or failed init (record
     // failure with the captured error). Pre-load failures were already
     // recorded above from `addonLoader.listLoadFailures()`.
-    for (const [id, entry] of this.addonEntries.entries()) {
-      if (entry.initialized) {
-        this.healthMonitor.recordSuccess(entry.packageName, id)
-      } else {
-        // Init failed (caught by either Phase 1 or Phase 2 catch
-        // blocks above). The catch handlers don't carry the error
-        // forward to here, so we synthesize a generic one — the real
-        // error is in the addon log. Operators see the alert + can
-        // open the per-addon logs to investigate.
-        this.healthMonitor.recordFailure(
-          entry.packageName,
-          new Error(`Addon "${id}" failed to initialize — see addon logs for details`),
-          id,
-        )
-      }
-    }
+    recordBootHealth({
+      entries: this.addonEntries.entries(),
+      heldBack: this.heldBackAddons,
+      monitor: this.healthMonitor,
+      logHeldBack: (addonId, reason) =>
+        this.logger.info('Addon held back by the stale gate, not recorded as an init failure', {
+          tags: { addonId },
+          meta: { reason },
+        }),
+    })
 
     // Start the kernel-level retry tick (30s). Fires immediately
     // on the first interval boundary; the 5-min boot grace window
@@ -3913,12 +3910,14 @@ export class AddonRegistryService {
     addonIds: readonly string[],
     log: (line: string) => void,
   ): readonly string[] {
+    for (const id of addonIds) this.heldBackAddons.delete(id)
     return spawnableAddonIds({
       addonIds,
       candidateOf: (id) => this.staleCandidateOf(id),
       context: readHubStaleGateContext(),
       infraCapabilities: new Set(INFRA_CAPABILITIES.map((c) => c.name)),
       log,
+      onDeferred: (addonId, reason) => this.heldBackAddons.set(addonId, reason),
     })
   }
 
