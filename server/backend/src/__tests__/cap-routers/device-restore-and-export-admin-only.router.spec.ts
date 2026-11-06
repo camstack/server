@@ -65,7 +65,6 @@ const CASES: ReadonlyArray<{
       'getBrokerConfig',
       'addBroker',
       'removeBroker',
-      'testConnection',
       'startEmbeddedBroker',
       'stopEmbeddedBroker',
     ],

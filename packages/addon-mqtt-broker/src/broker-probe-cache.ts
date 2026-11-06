@@ -92,7 +92,7 @@ export class BrokerProbeCache {
     }
   }
 
-  /** Force a refresh (used by `testConnection` and the page's Refresh button). */
+  /** Force a refresh (used by the page's Refresh button). */
   async probeNow(id: string): Promise<ProbeResult | undefined> {
     const broker = this.getBrokers().find((b) => b.id === id)
     if (!broker) return undefined

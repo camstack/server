@@ -97,11 +97,6 @@ const AddBrokerResultSchema = z.object({
 
 const IdInputSchema = z.object({ id: z.string() })
 
-const TestResultSchema = z.discriminatedUnion('ok', [
-  z.object({ ok: z.literal(true), latencyMs: z.number() }),
-  z.object({ ok: z.literal(false), error: z.string() }),
-])
-
 const StartEmbeddedInputSchema = z.object({
   port: z.number().int().min(1).max(65535).default(1883),
   /** Allow anonymous connect (no username/password). Default: false. */
@@ -142,7 +137,6 @@ export const mqttBrokerCapability = {
       auth: 'admin',
     }),
     removeBroker: method(IdInputSchema, z.void(), { kind: 'mutation', auth: 'admin' }),
-    testConnection: method(IdInputSchema, TestResultSchema, { kind: 'mutation', auth: 'admin' }),
     startEmbeddedBroker: method(StartEmbeddedInputSchema, StartEmbeddedResultSchema, {
       kind: 'mutation',
       auth: 'admin',

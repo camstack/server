@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An integration whose switch could not be carried into its record now keeps its addon from starting (retry the migration, then restart) instead of coming up switched on
 - An action run now has a 60-minute ceiling: a longer run is stopped and reported timed-out, and an action whose waits add up to more is refused when saved.
 - The media-player status gains positionUpdatedAt, the time the playback position was read (null when the driver does not say).
+- mqtt-broker no longer has testConnection; use integration-instances.testInstance.
 
 ## [1.2.511] - 2026-11-06
 

@@ -1841,9 +1841,6 @@ export const useMqttBrokerAddBroker: typeof trpc.mqttBroker.addBroker.useMutatio
 /** Generated alias around `trpc.mqttBroker.removeBroker.useMutation`. */
 export const useMqttBrokerRemoveBroker: typeof trpc.mqttBroker.removeBroker.useMutation = /*#__PURE__*/ alias(() => trpc.mqttBroker.removeBroker.useMutation)
 
-/** Generated alias around `trpc.mqttBroker.testConnection.useMutation`. */
-export const useMqttBrokerTestConnection: typeof trpc.mqttBroker.testConnection.useMutation = /*#__PURE__*/ alias(() => trpc.mqttBroker.testConnection.useMutation)
-
 /** Generated alias around `trpc.mqttBroker.startEmbeddedBroker.useMutation`. */
 export const useMqttBrokerStartEmbeddedBroker: typeof trpc.mqttBroker.startEmbeddedBroker.useMutation = /*#__PURE__*/ alias(() => trpc.mqttBroker.startEmbeddedBroker.useMutation)
 

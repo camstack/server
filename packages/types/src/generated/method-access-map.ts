@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1496 method paths across 203 capabilities.
+ * Coverage: 1495 method paths across 203 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -718,7 +718,6 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'mqttBroker.removeBroker': { capName: "mqtt-broker", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'mqttBroker.startEmbeddedBroker': { capName: "mqtt-broker", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'mqttBroker.stopEmbeddedBroker': { capName: "mqtt-broker", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
-  'mqttBroker.testConnection': { capName: "mqtt-broker", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'nativeObjectDetection.getOptions': { capName: "native-object-detection", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'nativeObjectDetection.getStatus': { capName: "native-object-detection", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'nativeObjectDetection.setEnabled': { capName: "native-object-detection", capScope: "device", addonId: null, access: "create", role: "admin" } as const,

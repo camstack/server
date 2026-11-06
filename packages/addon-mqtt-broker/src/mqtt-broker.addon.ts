@@ -34,8 +34,8 @@
  *   - The legacy single embedded broker is an onboard `brokers` record (migrated from the flat
  *     `embedded*` keys, same id); `startEmbeddedBroker` / `stopEmbeddedBroker` act on that record.
  *   - `addBroker` / `removeBroker` mutate the records and the runtime state.
- *   - `testConnection` does a one-shot `mqtt.connect` race against a 3s
- *     timeout AND refreshes the probe cache for the broker.
+ *   - The instance test (`integration-instances.testInstance`) does a one-shot `mqtt.connect`
+ *     race against a 3s timeout.
  */
 import {
   BaseAddon,
@@ -309,7 +309,6 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
       getBrokerConfig: async ({ id }) => this.getBrokerConfig(id),
       addBroker: async (input) => this.addBroker(input),
       removeBroker: async ({ id }) => this.removeBroker(id),
-      testConnection: async ({ id }) => this.testConnection(id),
       startEmbeddedBroker: async (input) => this.startEmbeddedBroker(input),
       stopEmbeddedBroker: async ({ id }) => this.stopEmbeddedBroker(id),
       getStatus: async () => ({
@@ -500,29 +499,10 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
     // Idempotent — `removeBroker` on a missing id is a no-op
   }
 
-  private async testConnection(
-    id: string,
-  ): Promise<{ ok: true; latencyMs: number } | { ok: false; error: string }> {
-    let cfg: { url: string; username?: string; password?: string }
-    try {
-      cfg = this.getBrokerConfig(id)
-    } catch (err) {
-      return { ok: false, error: errMsg(err) }
-    }
-
-    // Refresh the live probe cache as a side effect so the page table
-    // reflects the latest result immediately after the operator clicks
-    // "Test connection".
-    void this.probeCache?.probeNow(id).catch(() => undefined)
-
-    return this.probeMqtt(cfg)
-  }
-
   /**
    * One-shot connectivity probe against an MQTT endpoint built from a
-   * flat config (`{url, username?, password?}`). Shared by the
-   * id-keyed `testConnection` (existing broker) and the pre-creation
-   * the instance test (`testInstance`) of a broker not saved yet (the typed values).
+   * flat config (`{url, username?, password?}`), used by the instance test
+   * (`integration-instances.testInstance`), stored or draft.
    * Never throws — every failure resolves to `{ ok: false, error }`.
    */
   private async probeMqtt(cfg: {

@@ -112,7 +112,7 @@ export interface SystemProxy {
   readonly localNetwork: Pick<InferProvider<typeof localNetworkCapability>, 'list' | 'getPreferred' | 'getConnectionEndpoints' | 'getNotificationEndpoint' | 'setNotificationEndpoint' | 'getViewerEndpoints' | 'setViewerEndpoints' | 'getAddresses' | 'addCustomAddress' | 'removeCustomAddress' | 'setAddressRole' | 'getHubAddresses' | 'getAllowedAddresses' | 'setAllowedAddresses' | 'resetAllowlistToBestMatch' | 'getTlsStatus' | 'regenerateCertificate' | 'uploadCertificate' | 'downloadCa' | 'useStoredUploadedCertificate' | 'scanNetwork' | 'getScanSubnets' | 'setScanSubnets' | 'revertToGeneratedCertificate'>
   readonly meshNetwork: Pick<InferProvider<typeof meshNetworkCapability>, 'getStatus' | 'join' | 'startLogin' | 'leave' | 'logout' | 'listPeers' | 'testConnection'>
   readonly metricsProvider: Pick<InferProvider<typeof metricsProviderCapability>, 'collectSnapshot' | 'getCached' | 'getCurrent' | 'getDiskSpace' | 'getGpuInfo' | 'getCpuTemperature' | 'getProcessStats' | 'listAddonInstances' | 'getAddonStats' | 'listNodeProcesses' | 'getLoadSeries'>
-  readonly mqttBroker: Pick<InferProvider<typeof mqttBrokerCapability>, 'listBrokers' | 'getBrokerConfig' | 'addBroker' | 'removeBroker' | 'testConnection' | 'startEmbeddedBroker' | 'stopEmbeddedBroker' | 'getStatus'>
+  readonly mqttBroker: Pick<InferProvider<typeof mqttBrokerCapability>, 'listBrokers' | 'getBrokerConfig' | 'addBroker' | 'removeBroker' | 'startEmbeddedBroker' | 'stopEmbeddedBroker' | 'getStatus'>
   readonly networkAccess: Pick<InferProvider<typeof networkAccessCapability>, 'start' | 'stop' | 'getEndpoint' | 'getStatus' | 'listEndpoints'>
   readonly networkQuality: Pick<InferProvider<typeof networkQualityCapability>, 'getAllStats'>
   readonly nodes: Pick<InferProvider<typeof nodesCapability>, 'topology' | 'directory' | 'deployAddon' | 'undeployAddon' | 'restartAddon' | 'restartProcess' | 'restartNode' | 'shutdownNode' | 'renameNode' | 'clusterAddonStatus' | 'getCapUsageGraph' | 'getNodeAddons' | 'setProcessLogLevel' | 'executeQuery'>
@@ -622,7 +622,6 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     getBrokerConfig: (input?: unknown) => dispatch('mqttBroker', 'getBrokerConfig', 'query', input),
     addBroker: (input?: unknown) => dispatch('mqttBroker', 'addBroker', 'mutation', input),
     removeBroker: (input?: unknown) => dispatch('mqttBroker', 'removeBroker', 'mutation', input),
-    testConnection: (input?: unknown) => dispatch('mqttBroker', 'testConnection', 'mutation', input),
     startEmbeddedBroker: (input?: unknown) => dispatch('mqttBroker', 'startEmbeddedBroker', 'mutation', input),
     stopEmbeddedBroker: (input?: unknown) => dispatch('mqttBroker', 'stopEmbeddedBroker', 'mutation', input),
     getStatus: (input?: unknown) => dispatch('mqttBroker', 'getStatus', 'query', input),
