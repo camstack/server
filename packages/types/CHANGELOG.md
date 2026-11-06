@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Pet fountain: the tank is also a Water consumable derived from its level; the drink counters and Clear daily count are removed
+- optionalLinkField declares an instance link that may stay empty
+- Removed the broker-select field type; every broker link is now an instance-select field on the one link primitive
+- Removed the deprecated broker-named in-use helpers; a delete refused for a linked instance is the one InstanceInUseError
+
 ## [1.2.511] - 2026-11-06
 
 ### Changed
@@ -14,10 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Notification templates: the {{graceMin}} variable is gone (a planned-update offline is now worded without a grace)
 - addon-crash-loop notification templates can use {{cause}}
 - A running-state power threshold now needs a second power sample above the threshold (dwell's new optional 4th argument minSamples), so one isolated standby reading no longer starts a run when the timer fires over the held value.
-- Pet fountain: the tank is also a Water consumable derived from its level; the drink counters and Clear daily count are removed
-- optionalLinkField declares an instance link that may stay empty
-- Removed the broker-select field type; every broker link is now an instance-select field on the one link primitive
-- Removed the deprecated broker-named in-use helpers; a delete refused for a linked instance is the one InstanceInUseError
 
 ## [1.2.510] - 2026-11-06
 
