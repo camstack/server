@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The exported-devices list opens full page and a row click no longer leaves for the device; Add device rows lose the leading dash and name the container they sit in.
+- Fountain wizard no longer asks for the drink counters; a consumables list the card cannot edit shows Custom instead of Unreadable
 
 ## [1.2.597] - 2026-11-06
 

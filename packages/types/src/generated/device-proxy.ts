@@ -849,7 +849,6 @@ export function createDeviceProxy(
 
   const petFountainInterface = {
     setPump: (input?: unknown) => dispatch('pet-fountain', 'petFountain', 'setPump', 'mutation', input),
-    resetDailyConsumption: (input?: unknown) => dispatch('pet-fountain', 'petFountain', 'resetDailyConsumption', 'mutation', input),
     getStatus: (input?: unknown) => dispatch('pet-fountain', 'petFountain', 'getStatus', 'query', input),
   }
 

@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**203 capabilities · 1497 methods.**
+**203 capabilities · 1496 methods.**
 
 ## Method index
 
@@ -836,7 +836,6 @@
 | `petFeeder.setVolume` | mutation | protected | pet-feeder |
 | `petFountain.getStatus` | query | protected | pet-fountain (auto) |
 | `petFountain.setPump` | mutation | protected | pet-fountain |
-| `petFountain.resetDailyConsumption` | mutation | protected | pet-fountain |
 | `pipelineAnalytics.getDeviceSettingsContribution` | query | protected | pipeline-analytics (auto) |
 | `pipelineAnalytics.getDeviceLiveContribution` | query | protected | pipeline-analytics (auto) |
 | `pipelineAnalytics.applyDeviceSettingsPatch` | mutation | admin | pipeline-analytics (auto) |
@@ -3730,7 +3729,7 @@
 
 ### `pet-fountain` → `petFountain.*`
 
-- **Source:** `packages/types/src/capabilities/pet-fountain.cap.ts:58`
+- **Source:** `packages/types/src/capabilities/pet-fountain.cap.ts:77`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `pet-fountain`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IPetFountainProvider`
@@ -3740,7 +3739,6 @@
 |---|---|---|---|---|---|
 | getStatus _(auto)_ | `petFountain.getStatus` | query | protected | `{ deviceId: number }` | `PetFountainStatusSchema` |
 | setPump | `petFountain.setPump` | mutation | protected | `{ deviceId: number; on: boolean }` | `void` |
-| resetDailyConsumption | `petFountain.resetDailyConsumption` | mutation | protected | `{ deviceId: number }` | `void` |
 
 ### `pipeline-analytics` → `pipelineAnalytics.*`
 

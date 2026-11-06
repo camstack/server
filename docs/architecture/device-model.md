@@ -582,6 +582,33 @@ runner (a group of one) for every declarative composition. Existing devices are 
 - **Rolling back below D659 erases compositions**: an older build strips
   `source` and rewrites the row. Export them first.
 
+### A consumable derived from the device's own cap: a fountain's water
+
+A consumable that is the SAME fact as a cap field is never bound a second time.
+A pet fountain reports its tank on `pet-fountain` (`waterLevel` %, `waterVolume`,
+`empty`); the `water` item of its `consumables` slice (kind `supply`, form
+`tank`, not resettable) is derived from those fields by `petFountainWaterItem`
+(`packages/types/src/capabilities/pet-fountain.cap.ts`): `level` is `waterLevel`,
+and only a fountain that reports no level takes its verdict from `empty`. An
+unreadable level is `null`, never 0 (D393). The pet feeder does the same for
+its tank (`petkit-feeder-consumables.ts`).
+
+For a composed fountain the derivation is in one place, `ComposedDevice`
+(`writeSlice`): every `consumables` write of the composition gets the `water`
+item appended to the composition's own items (a composition that names its own
+`water` item keeps it), and every `pet-fountain` write re-publishes the
+consumables. The device serves the `consumables` cap even when the composition
+has no maintenance entity, so a fountain built from three entities still has its
+tank in the Consumables section. Nothing is bound for it, and the operator picks
+no entity for it. The drink counters (`lastDrink`, `todayDrink`, ...) and
+`resetDailyConsumption` left the cap; core-blocks migration seq 3 drops them
+from stored blocks.
+
+A stored consumables list the Customize card cannot re-read (an item that
+assigns two fields, an expression, a `reset` forward) shows the badge `Custom`,
+not `Unreadable`: it works, the card just cannot edit it
+(`projectKeyedArrayAssignment`).
+
 ### Power and energy belong to the electrical device (D951)
 
 [D951](../decisions/adr-0951-power-and-energy-are-a-feature-of-the-electrical-device-not-a-sensor-beside-it.md).

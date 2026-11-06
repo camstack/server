@@ -5040,10 +5040,6 @@ Enum: `"f32le" \| "s16le"`
 - `waterVolume`: `number \| null`
 - `empty`: `boolean \| null`
 - `pumpRunning`: `boolean \| null`
-- `lastDrink`: `number \| null`
-- `currentHourDrink`: `number \| null`
-- `last24hDrink`: `number \| null`
-- `todayDrink`: `number \| null`
 - `error`: `string \| null`
 - `lastFetchedAt`: `number`
 

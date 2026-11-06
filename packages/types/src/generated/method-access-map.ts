@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1497 method paths across 203 capabilities.
+ * Coverage: 1496 method paths across 203 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -844,7 +844,6 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'petFeeder.setIndicatorLight': { capName: "pet-feeder", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'petFeeder.setVolume': { capName: "pet-feeder", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'petFountain.getStatus': { capName: "pet-fountain", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
-  'petFountain.resetDailyConsumption': { capName: "pet-fountain", capScope: "device", addonId: null, access: "delete", role: "viewer" } as const,
   'petFountain.setPump': { capName: "pet-fountain", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'pipelineAnalytics.addRetrainFrameFromRecording': { capName: "pipeline-analytics", capScope: "device", addonId: null, access: "create", role: "feature:retrain" } as const,
   'pipelineAnalytics.addRetrainFramesToCollection': { capName: "pipeline-analytics", capScope: "device", addonId: null, access: "create", role: "feature:retrain" } as const,

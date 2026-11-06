@@ -674,16 +674,6 @@ export const APPLIANCE_CAP_VOCABULARY: CapVocabularySlice<ApplianceCap> = {
         icon: 'square',
         args: { on: false },
       },
-      {
-        id: 'petFountain.resetDailyConsumption',
-        method: 'resetDailyConsumption',
-        label: t('Clear daily consumption', 'Azzera il consumo giornaliero'),
-        phrase: t(
-          'Clear the daily water consumption of {device}',
-          'Azzera il consumo giornaliero di acqua di {device}',
-        ),
-        icon: 'rotate-ccw',
-      },
     ],
     state: [
       {

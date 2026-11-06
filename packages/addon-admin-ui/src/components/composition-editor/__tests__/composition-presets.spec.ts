@@ -52,10 +52,6 @@ describe('the preset registry', () => {
       'waterLevel',
       'waterVolume',
       'pump',
-      'lastDrink',
-      'currentHourDrink',
-      'last24hDrink',
-      'clearDaily',
     ])
   })
 
@@ -72,13 +68,6 @@ describe('the preset registry', () => {
       pumpOffMinutes: ref('number.off'),
     }
     expect(fountain.build(all)?.features.map((f) => f.cap)).toEqual(['pet-fountain', 'pump-cycle'])
-  })
-
-  it('treats today as an optional single slot: absent builds, present is bound', () => {
-    expect(fountain.build(allPicks())).not.toBeNull()
-    const withToday = fountain.build({ ...allPicks(), todayDrink: ref('sensor.today') })
-    expect(JSON.stringify(withToday)).toContain('sensor.today')
-    expect(JSON.stringify(fountain.build(allPicks()))).not.toContain('sensor.today')
   })
 
   it('treats each maintenance cadence as a pair: one half alone builds nothing, both add an item', () => {

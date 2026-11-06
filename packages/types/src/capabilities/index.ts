@@ -2792,9 +2792,11 @@ export {
 } from './pet-feeder.cap.js'
 export {
   type IPetFountainProvider,
+  PET_FOUNTAIN_WATER_KEY,
   type PetFountainStatus,
   PetFountainStatusSchema,
   petFountainCapability,
+  petFountainWaterItem,
 } from './pet-fountain.cap.js'
 export {
   type IPumpCycleProvider,

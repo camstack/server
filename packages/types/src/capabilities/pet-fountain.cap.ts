@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import type { ConsumableItem } from './consumables.cap.js'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 
 /**
@@ -37,14 +38,6 @@ export const PetFountainStatusSchema = z.object({
   empty: z.boolean().nullable(),
   /** True while the pump is running. Null while unknown. */
   pumpRunning: z.boolean().nullable(),
-  /** Water drunk in the last drink, in litres. */
-  lastDrink: z.number().min(0).nullable().meta(readingMeta('volume')),
-  /** Water drunk in the current hour, in litres. */
-  currentHourDrink: z.number().min(0).nullable().meta(readingMeta('volume')),
-  /** Water drunk over the last 24 hours (rolling), in litres. */
-  last24hDrink: z.number().min(0).nullable().meta(readingMeta('volume')),
-  /** Water drunk since local midnight, in litres. Null when the fountain has no such sensor. */
-  todayDrink: z.number().min(0).nullable().meta(readingMeta('volume')),
   /** Decoded fault message. Null means healthy; a non-null string is an active fault. */
   error: z.string().nullable(),
   /** Ms epoch when the slice was last refreshed. */
@@ -52,6 +45,32 @@ export const PetFountainStatusSchema = z.object({
 })
 
 export type PetFountainStatus = z.infer<typeof PetFountainStatusSchema>
+
+/** The key of the `consumables` item derived from the tank. */
+export const PET_FOUNTAIN_WATER_KEY = 'water'
+
+/**
+ * The fountain's tank as a `consumables` item: a `supply` drawn as a `tank`.
+ * The level is the fountain's `waterLevel`; the verdict is left to whoever
+ * reads a level (the notification centre judges a level-only supply). Only a fountain that reports no level falls back to its `empty`
+ * flag — a measurement that failed is `null`, never 0 (D393).
+ */
+export function petFountainWaterItem(
+  status: Pick<PetFountainStatus, 'waterLevel' | 'empty'>,
+): ConsumableItem {
+  const verdict =
+    status.waterLevel !== null || status.empty === null ? null : status.empty ? 'empty' : 'ok'
+  return {
+    key: PET_FOUNTAIN_WATER_KEY,
+    label: 'Water',
+    level: status.waterLevel,
+    status: verdict,
+    kind: 'supply',
+    form: 'tank',
+    lastResetAt: null,
+    resettable: false,
+  }
+}
 
 const DeviceIdSchema = z.number().int().nonnegative()
 
@@ -64,11 +83,6 @@ export const petFountainCapability = {
   methods: {
     /** Start or stop the pump. */
     setPump: method(z.object({ deviceId: DeviceIdSchema, on: z.boolean() }), z.void(), {
-      kind: 'mutation',
-      auth: 'protected',
-    }),
-    /** Clear the rolling daily consumption counters on the device. */
-    resetDailyConsumption: method(z.object({ deviceId: DeviceIdSchema }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
     }),
@@ -92,8 +106,6 @@ export const petFountainCapability = {
     fields: {
       waterLevel: { kind: 'gauge', unit: '%', deadband: 1 },
       waterVolume: { kind: 'gauge', unit: 'L' },
-      todayDrink: { kind: 'gauge', unit: 'L' },
-      last24hDrink: { kind: 'gauge', unit: 'L' },
     },
   },
 } as const satisfies CapabilityDefinition

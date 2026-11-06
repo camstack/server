@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
+  PET_FOUNTAIN_WATER_KEY,
   PetFountainStatusSchema,
   petFountainCapability,
+  petFountainWaterItem,
   type PetFountainStatus,
 } from '../src/capabilities/pet-fountain.cap.js'
 import { builtCapabilityBlockers } from '../src/composition/composable-caps.js'
@@ -12,10 +14,6 @@ const FULL: PetFountainStatus = {
   waterVolume: 1.2,
   empty: false,
   pumpRunning: true,
-  lastDrink: 0.03,
-  currentHourDrink: 0.1,
-  last24hDrink: 0.8,
-  todayDrink: 0.5,
   error: null,
   lastFetchedAt: 1234,
 }
@@ -25,10 +23,6 @@ const UNKNOWN: PetFountainStatus = {
   waterVolume: null,
   empty: null,
   pumpRunning: null,
-  lastDrink: null,
-  currentHourDrink: null,
-  last24hDrink: null,
-  todayDrink: null,
   error: null,
   lastFetchedAt: 1,
 }
@@ -54,24 +48,21 @@ describe('petFountainCapability', () => {
     expect({
       waterLevel: quantityOf('waterLevel'),
       waterVolume: quantityOf('waterVolume'),
-      lastDrink: quantityOf('lastDrink'),
-      currentHourDrink: quantityOf('currentHourDrink'),
-      last24hDrink: quantityOf('last24hDrink'),
-      todayDrink: quantityOf('todayDrink'),
     }).toEqual({
       waterLevel: 'percentage',
       waterVolume: 'volume',
-      lastDrink: 'volume',
-      currentHourDrink: 'volume',
-      last24hDrink: 'volume',
-      todayDrink: 'volume',
     })
   })
 
-  it('serves the two model-independent methods, all mutations (the duty cycle is pump-cycle)', () => {
-    expect(Object.keys(petFountainCapability.methods).toSorted()).toEqual([
-      'resetDailyConsumption',
-      'setPump',
+  it('serves one model-independent method, a mutation (the duty cycle is pump-cycle)', () => {
+    expect(Object.keys(petFountainCapability.methods)).toEqual(['setPump'])
+    expect(Object.keys(PetFountainStatusSchema.shape).toSorted()).toEqual([
+      'empty',
+      'error',
+      'lastFetchedAt',
+      'pumpRunning',
+      'waterLevel',
+      'waterVolume',
     ])
     expect(Object.keys(PetFountainStatusSchema.shape)).not.toContain('pumpIntervalEnabled')
     for (const m of Object.values(petFountainCapability.methods)) expect(m.kind).toBe('mutation')
@@ -81,5 +72,31 @@ describe('petFountainCapability', () => {
     expect(builtCapabilityBlockers(petFountainCapability, DeviceType.PetFountain)).toEqual([
       'has-commands',
     ])
+  })
+})
+
+describe('petFountainWaterItem', () => {
+  it('is a supply tank whose level is the fountain level, with no verdict of its own', () => {
+    expect(petFountainWaterItem({ waterLevel: 64, empty: false })).toEqual({
+      key: PET_FOUNTAIN_WATER_KEY,
+      label: 'Water',
+      level: 64,
+      status: null,
+      kind: 'supply',
+      form: 'tank',
+      lastResetAt: null,
+      resettable: false,
+    })
+  })
+
+  it('judges from empty only when there is no level, and says nothing when both are unknown', () => {
+    expect(petFountainWaterItem({ waterLevel: null, empty: true }).status).toBe('empty')
+    expect(petFountainWaterItem({ waterLevel: null, empty: false }).status).toBe('ok')
+    expect(petFountainWaterItem({ waterLevel: null, empty: null })).toMatchObject({
+      level: null,
+      status: null,
+    })
+    // A level beats the flag: a 0 level is judged from the level, not from `empty`.
+    expect(petFountainWaterItem({ waterLevel: 0, empty: false }).status).toBeNull()
   })
 })

@@ -2,22 +2,21 @@
  * Pet-fountain controls for a `DeviceType.PetFountain` device.
  *
  * Reads the `pet-fountain` cap status slice (water level and volume, empty,
- * pump, the water drunk) and renders:
+ * pump) and renders:
  *   - PetFountainInlineControl (device-list row): the tank level and a pump
  *     on/off toggle.
  *   - PetFountainHeroCard (device-detail hero): the tank gauge with the level
- *     and the volume first, what the pet drank today / in 24 h / this hour /
- *     last time and the pump switch. The pump's duty-cycle switch and run /
+ *     and the volume first and the pump switch. The pump's duty-cycle switch and run /
  *     rest minutes belong to the optional `pump-cycle` cap: that section is
- *     drawn only on a fountain that composes it (planning#366). The filter,
- *     the cleaning and the water change are consumables: the page's
- *     Consumables section draws them, never this card (D915).
+ *     drawn only on a fountain that composes it (planning#366). The tank
+ *     (also a `water` consumable), the filter, the cleaning and the water
+ *     change are consumables: the page's Consumables section draws them (D915).
  *
  * Every reading may be unknown (`null`) and is drawn as a dash, never as
  * zero. Stored volumes are litres and durations seconds (D944); the card
  * shows millilitres and minutes. Actions are gated on `available`.
  */
-import { AlertTriangle, Droplet, Droplets, Eraser, Pause, Play, Timer } from 'lucide-react'
+import { AlertTriangle, Droplet, Droplets, Pause, Play, Timer } from 'lucide-react'
 import type { ReactNode } from 'react'
 import {
   DeviceType,
@@ -152,24 +151,6 @@ export function PetFountainPanel({
         </div>
       )}
 
-      <Section label={t('uiLibrary.petFountain.consumption', 'Water drunk')}>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <Stat label={t('uiLibrary.petFountain.today', 'Today')} value={display.todayDrink} />
-          <Stat
-            label={t('uiLibrary.petFountain.last24h', 'Last 24 h')}
-            value={display.last24hDrink}
-          />
-          <Stat
-            label={t('uiLibrary.petFountain.thisHour', 'This hour')}
-            value={display.currentHourDrink}
-          />
-          <Stat
-            label={t('uiLibrary.petFountain.lastDrink', 'Last drink')}
-            value={display.lastDrink}
-          />
-        </div>
-      </Section>
-
       <Section label={t('uiLibrary.petFountain.pumpSection', 'Controls')}>
         <div className="flex flex-col gap-2">
           <SwitchRow
@@ -186,16 +167,6 @@ export function PetFountainPanel({
       {PUMP_LIMIT !== undefined && (
         <TimedRunControl trpc={trpc} deviceId={deviceId} limit={PUMP_LIMIT} />
       )}
-
-      <Button
-        variant="outline"
-        size="sm"
-        disabled={busy}
-        onClick={() => void cap.resetDailyConsumption({})}
-      >
-        <Eraser className="h-4 w-4" aria-hidden />
-        {t('uiLibrary.petFountain.clearDaily', 'Clear daily count')}
-      </Button>
     </div>
   )
 }
@@ -406,23 +377,6 @@ function Section({
         {label}
       </span>
       {children}
-    </div>
-  )
-}
-
-function Stat({
-  label,
-  value,
-}: {
-  readonly label: string
-  readonly value: number | null
-}): ReactNode {
-  return (
-    <div className="flex flex-col rounded-lg border border-border-subtle bg-background-elevated px-3 py-2">
-      <span className="text-[11px] text-foreground-subtle">{label}</span>
-      <span className="text-sm font-semibold tabular-nums text-foreground">
-        {millilitres(value)}
-      </span>
     </div>
   )
 }

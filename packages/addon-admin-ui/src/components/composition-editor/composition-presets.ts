@@ -57,12 +57,7 @@ const PET_FOUNTAIN: CompositionPreset = {
     slot('waterLevel', 'enum-sensor'),
     slot('waterVolume', 'enum-sensor'),
     slot('pump', 'switch'),
-    slot('lastDrink', 'enum-sensor'),
-    slot('currentHourDrink', 'enum-sensor'),
-    slot('last24hDrink', 'enum-sensor'),
-    slot('clearDaily', 'button'),
     // What a model may have on top: each group is picked whole or not at all.
-    slot('todayDrink', 'enum-sensor', 'today'),
     slot('pumpInterval', 'switch', 'cycle'),
     slot('pumpOnMinutes', 'control', 'cycle'),
     slot('pumpOffMinutes', 'control', 'cycle'),
@@ -77,21 +72,7 @@ const PET_FOUNTAIN: CompositionPreset = {
     const waterLevel = pick(picks, 'waterLevel')
     const waterVolume = pick(picks, 'waterVolume')
     const pump = pick(picks, 'pump')
-    const lastDrink = pick(picks, 'lastDrink')
-    const currentHourDrink = pick(picks, 'currentHourDrink')
-    const last24hDrink = pick(picks, 'last24hDrink')
-    const clearDaily = pick(picks, 'clearDaily')
-    if (
-      waterLevel === undefined ||
-      waterVolume === undefined ||
-      pump === undefined ||
-      lastDrink === undefined ||
-      currentHourDrink === undefined ||
-      last24hDrink === undefined ||
-      clearDaily === undefined
-    ) {
-      return null
-    }
+    if (waterLevel === undefined || waterVolume === undefined || pump === undefined) return null
     const pumpCycle = cycleOf(picks)
     const filter = cadenceOf(picks, 'filterDaysRemaining', 'filterChanged')
     const cleaning = cadenceOf(picks, 'cleaningDaysRemaining', 'cleaningDone')
@@ -105,16 +86,10 @@ const PET_FOUNTAIN: CompositionPreset = {
     ) {
       return null
     }
-    const todayDrink = pick(picks, 'todayDrink')
     return petFountainFromEntitiesComposition({
       waterLevel,
       waterVolume,
       pump,
-      lastDrink,
-      currentHourDrink,
-      last24hDrink,
-      clearDaily,
-      ...(todayDrink === undefined ? {} : { todayDrink }),
       ...(pumpCycle === null ? {} : { pumpCycle }),
       ...(filter === null ? {} : { filter }),
       ...(cleaning === null ? {} : { cleaning }),

@@ -45,11 +45,6 @@ const KITCHEN_ENTITIES = [
   entity(304, 'Pump cycle', 'switch.fountain_cycle', 'switch', 300, 'Kitchen'),
   entity(305, 'Pump on minutes', 'number.fountain_on_minutes', 'sensor', 300, 'Kitchen'),
   entity(306, 'Pump off minutes', 'number.fountain_off_minutes', 'sensor', 300, 'Kitchen'),
-  entity(307, 'Last drink', 'sensor.fountain_last_drink', 'sensor', 300, 'Kitchen'),
-  entity(308, 'Drink this hour', 'sensor.fountain_hour_drink', 'sensor', 300, 'Kitchen'),
-  entity(309, 'Drink 24 h', 'sensor.fountain_24h_drink', 'sensor', 300, 'Kitchen'),
-  entity(310, 'Drink today', 'sensor.fountain_today_drink', 'sensor', 300, 'Kitchen'),
-  entity(311, 'Clear daily counters', 'button.fountain_clear_daily', 'sensor', 300, 'Kitchen'),
   entity(312, 'Filter days left', 'sensor.fountain_filter_days', 'sensor', 300, 'Kitchen'),
   entity(313, 'Filter changed', 'button.fountain_filter_changed', 'sensor', 300, 'Kitchen'),
 ]
@@ -71,11 +66,6 @@ const composition = petFountainFromEntitiesComposition({
     onMinutes: ref('number.fountain_on_minutes'),
     offMinutes: ref('number.fountain_off_minutes'),
   },
-  lastDrink: ref('sensor.fountain_last_drink'),
-  currentHourDrink: ref('sensor.fountain_hour_drink'),
-  last24hDrink: ref('sensor.fountain_24h_drink'),
-  todayDrink: ref('sensor.fountain_today_drink'),
-  clearDaily: ref('button.fountain_clear_daily'),
   filter: {
     daysRemaining: ref('sensor.fountain_filter_days'),
     changed: ref('button.fountain_filter_changed'),

@@ -2211,6 +2211,12 @@ that: it opened at 25 and has nothing left to raise.
   product, bin). Removed `device-tank-*` kinds are not parsed anymore ([D935](../decisions/adr-0935-the-device-tank-kinds-leave-the-schema.md)).
   A leftover `tank:<deviceId>:<key>` alert is not a battery: it is skipped, and
   closed when that key is seen as a consumable or by one boot sweep (D934).
+  A `supply` item that carries a `level` and no `status` is judged from the
+  level: 0 is empty, at or below `NC_SUPPLY_LOW_PERCENT` (10) is low, above is
+  ok, an unknown level judges nothing (`supplyStatusFromLevel`,
+  `supply-band.ts`). It applies to every device; an item that reports its own
+  `status` is never judged from its level, and a `waste` item with only a level
+  is still not judged. A fountain's `water` tank is such an item.
 - **Held back from the served template catalog.** The installed viewers parse
   `getTemplateCatalog` as a whole, with a strict kind enum, so
   `servedTemplateVars()` drops `NC_TEMPLATE_HELD_BACK_SYSTEM_EVENT_KINDS` until

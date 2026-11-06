@@ -37,11 +37,6 @@ const SOURCES = {
     onMinutes: ref('number.on'),
     offMinutes: ref('number.off'),
   },
-  lastDrink: ref('sensor.last'),
-  currentHourDrink: ref('sensor.hour'),
-  last24hDrink: ref('sensor.day'),
-  todayDrink: ref('sensor.today'),
-  clearDaily: ref('button.clear'),
   filter: { daysRemaining: ref('sensor.filter'), changed: ref('button.filter') },
 }
 
@@ -67,7 +62,7 @@ const PRESS = (stableId: string): CompositionForwardCommand => ({
 describe('commandRows', () => {
   it('lists every method the built cap serves, in the cap order, with its stored forward', () => {
     const rows = commandRows(def('pet-fountain'), featureOf('pet-fountain'))
-    expect(rows.map((r) => r.method)).toEqual(['setPump', 'resetDailyConsumption'])
+    expect(rows.map((r) => r.method)).toEqual(['setPump'])
     expect(rows.every((r) => r.command !== null && !r.orphan)).toBe(true)
   })
 
@@ -109,11 +104,11 @@ describe('commandRows', () => {
 
 describe('withRowCommand', () => {
   it('sets one method command and keeps every other', () => {
-    const feature = featureOf('pet-fountain')
-    const rows = commandRows(def('pet-fountain'), feature)
+    const feature = featureOf('pump-cycle')
+    const rows = commandRows(def('pump-cycle'), feature)
     const next = withRowCommand(feature, rows[1]!, PRESS('button.other'))
-    expect(next.commands?.['resetDailyConsumption']).toEqual(PRESS('button.other'))
-    expect(next.commands?.['setPump']).toEqual(feature.commands?.['setPump'])
+    expect(next.commands?.['setOnMinutes']).toEqual(PRESS('button.other'))
+    expect(next.commands?.['setEnabled']).toEqual(feature.commands?.['setEnabled'])
     expect(Object.keys(next.commands ?? {})).toEqual(Object.keys(feature.commands ?? {}))
     expect(next.fields).toBe(feature.fields)
   })

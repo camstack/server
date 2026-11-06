@@ -12327,15 +12327,6 @@ export function createCapRouter_petFountain(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setPump(methodInput as any)
       }),
-    resetDailyConsumption: protectedProcedure
-      .input(petFountainCapability.methods.resetDailyConsumption.input.loose())
-      .output(petFountainCapability.methods.resetDailyConsumption.output)
-      .mutation(async ({ input, ctx }) => {
-        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider('pet-fountain', nodeId, () => getProvider(ctx), createRemoteProxy)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.resetDailyConsumption(methodInput as any)
-      }),
   })
 }
 

@@ -27,6 +27,9 @@ import {
   type CapabilityDefinition,
   climateControlCapability,
   colorCapability,
+  type ConsumableItem,
+  ConsumableItemSchema,
+  consumablesCapability,
   coverCapability,
   type DeviceConstructor,
   type DeviceContext,
@@ -41,6 +44,10 @@ import {
   lockControlCapability,
   mediaPlayerCapability,
   motionCapability,
+  PET_FOUNTAIN_WATER_KEY,
+  petFountainCapability,
+  PetFountainStatusSchema,
+  petFountainWaterItem,
   type ReadingQuantity,
   switchCapability,
   valveCapability,
@@ -66,6 +73,14 @@ const GROUP_COMMAND_TYPES: ReadonlySet<DeviceType> = new Set([
 function present(args: Readonly<Record<string, unknown>>): Readonly<Record<string, unknown>> {
   return Object.fromEntries(Object.entries(args).filter(([, value]) => value !== undefined))
 }
+
+/** What the derived water item reads from the `pet-fountain` slice, and the clock it is stamped with. */
+const TANK_READING = PetFountainStatusSchema.pick({
+  waterLevel: true,
+  empty: true,
+  lastFetchedAt: true,
+})
+type TankReading = z.infer<typeof TANK_READING>
 
 const COMPOSED_DEVICE_CONFIG_SCHEMA: z.ZodObject<Record<string, never>> = z.object({})
 
@@ -110,6 +125,10 @@ export class ComposedDevice
 {
   private sharedFeatures: readonly DeviceFeature[] = []
   private extraCaps: ReadonlySet<string> = new Set()
+  /** Whether this device's tank is also a `water` consumable (derived, never bound). */
+  private readonly derivesWater: boolean
+  /** The `consumables` items the composition last wrote — the derived water item is added to these. */
+  private composedItems: readonly ConsumableItem[] = []
 
   get features(): readonly DeviceFeature[] {
     return this.sharedFeatures
@@ -117,6 +136,7 @@ export class ComposedDevice
 
   constructor(ctx: DeviceContext, type: DeviceType, caps: readonly CapabilityDefinition[]) {
     super(ctx, COMPOSED_DEVICE_CONFIG_SCHEMA, { type })
+    this.derivesWater = type === DeviceType.PetFountain
     // Motion's `isDetected` is a slice answer (D944): the group reads `detected`.
     // Switch fans a command out. Every other composed cap stays an empty native;
     // `getStatus` is the kernel default over the runtime slice.
@@ -139,6 +159,13 @@ export class ComposedDevice
       ctx.registerNativeCap(cap, this.commandProvider(cap))
     }
     if (GROUP_COMMAND_TYPES.has(type)) ctx.registerNativeCap(groupCommandsCapability, {})
+    // The tank is a consumable of every fountain, even one built without a
+    // maintenance entity: the cap exists so the derived item has somewhere to live.
+    if (this.derivesWater && !caps.some((cap) => cap.name === consumablesCapability.name)) {
+      ctx.registerNativeCap(consumablesCapability, {
+        reset: (input) => this.dispatch('consumables', 'reset', commandInput(input)),
+      })
+    }
     // NOT presumed reachable: available only once the runtime has seeded every cap.
     this.markOnline(false)
   }
@@ -332,21 +359,72 @@ export class ComposedDevice
   }
 
   seed(capName: string, slice: SlicePatch): WriteOutcome {
+    return this.writeSlice('seed', capName, slice)
+  }
+
+  patch(capName: string, patch: SlicePatch): WriteOutcome {
+    return this.writeSlice('patch', capName, patch)
+  }
+
+  private writeSlice(op: 'seed' | 'patch', capName: string, slice: SlicePatch): WriteOutcome {
+    const own = this.writeCap(
+      op,
+      capName,
+      this.derivesWater ? this.withWater(capName, slice) : slice,
+    )
+    if (!own.ok || !this.derivesWater || capName !== petFountainCapability.name) return own
+    return this.refreshWater()
+  }
+
+  private writeCap(op: 'seed' | 'patch', capName: string, slice: SlicePatch): WriteOutcome {
     try {
-      this.runtimeState.setCapState(capName, { ...slice })
+      if (op === 'seed') this.runtimeState.setCapState(capName, { ...slice })
+      else this.runtimeState.patchCapState(capName, { ...slice })
       return { ok: true }
     } catch (err: unknown) {
       return { ok: false, error: errMsg(err) }
     }
   }
 
-  patch(capName: string, patch: SlicePatch): WriteOutcome {
-    try {
-      this.runtimeState.patchCapState(capName, { ...patch })
-      return { ok: true }
-    } catch (err: unknown) {
-      return { ok: false, error: errMsg(err) }
+  /**
+   * The ONE place a fountain's tank becomes a consumable: the composition's own
+   * `consumables` items plus a `water` item derived from the `pet-fountain` slice
+   * (`petFountainWaterItem`). A composition that names its own `water` item keeps it.
+   */
+  private withWater(capName: string, slice: SlicePatch): SlicePatch {
+    if (capName !== consumablesCapability.name) return slice
+    const parsed = ConsumableItemSchema.array().safeParse(slice['items'])
+    if (parsed.success) this.composedItems = parsed.data
+    return { ...slice, items: this.itemsWithWater() }
+  }
+
+  private fountainTank(): TankReading | null {
+    const tank = TANK_READING.safeParse(this.runtimeState.getCapState(petFountainCapability.name))
+    return tank.success ? tank.data : null
+  }
+
+  private itemsWithWater(): readonly ConsumableItem[] {
+    const tank = this.fountainTank()
+    if (tank === null || this.composedItems.some((item) => item.key === PET_FOUNTAIN_WATER_KEY)) {
+      return this.composedItems
     }
+    return [...this.composedItems, petFountainWaterItem(tank)]
+  }
+
+  /** The fountain slice moved: re-publish the consumables with the new water item. */
+  private refreshWater(): WriteOutcome {
+    const tank = this.fountainTank()
+    if (tank === null) return { ok: true }
+    const known = this.runtimeState.getCapState(consumablesCapability.name)
+    const items = this.itemsWithWater()
+    if (known !== undefined && JSON.stringify(known['items']) === JSON.stringify(items)) {
+      return { ok: true }
+    }
+    return this.writeCap(known === undefined ? 'seed' : 'patch', consumablesCapability.name, {
+      items,
+      lastChangedAt: tank.lastFetchedAt,
+      lastFetchedAt: tank.lastFetchedAt,
+    })
   }
 
   setAvailable(available: boolean): void {

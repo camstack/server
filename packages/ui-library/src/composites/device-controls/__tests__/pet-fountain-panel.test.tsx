@@ -27,10 +27,6 @@ function fountain(pumpRunning: boolean | null) {
     waterVolume: 1.3,
     empty: false,
     pumpRunning,
-    lastDrink: null,
-    currentHourDrink: null,
-    last24hDrink: null,
-    todayDrink: null,
     error: null,
     lastFetchedAt: 1,
   }

@@ -38,11 +38,6 @@ const SOURCES: PetFountainEntitySources = {
     onMinutes: ref('on_minutes'),
     offMinutes: ref('off_minutes'),
   },
-  lastDrink: ref('last_drink'),
-  currentHourDrink: ref('hour_drink'),
-  last24hDrink: ref('day_drink'),
-  todayDrink: ref('today_drink'),
-  clearDaily: ref('clear_daily'),
   filter: { daysRemaining: ref('filter_days'), changed: ref('filter_changed') },
   cleaning: { daysRemaining: ref('cleaning_days'), changed: ref('cleaning_done') },
   waterChange: { daysRemaining: ref('water_days'), changed: ref('water_changed') },
@@ -55,11 +50,6 @@ const CAPS_BY_SOURCE: Readonly<Record<string, string>> = {
   [ref('interval').stableId]: 'switch',
   [ref('on_minutes').stableId]: 'control',
   [ref('off_minutes').stableId]: 'control',
-  [SOURCES.lastDrink.stableId]: 'enum-sensor',
-  [SOURCES.currentHourDrink.stableId]: 'enum-sensor',
-  [SOURCES.last24hDrink.stableId]: 'enum-sensor',
-  [ref('today_drink').stableId]: 'enum-sensor',
-  [SOURCES.clearDaily.stableId]: 'button',
   [ref('filter_days').stableId]: 'enum-sensor',
   [ref('filter_changed').stableId]: 'button',
   [ref('cleaning_days').stableId]: 'enum-sensor',
@@ -145,14 +135,21 @@ describe('petFountainFromEntitiesComposition', () => {
     )
   })
 
-  it('serves every pet-fountain method with a forward to its entity', () => {
+  it('serves the pet-fountain method with a forward to its entity, and no drink counters', () => {
     const commands = commandsOf(SOURCES, 'pet-fountain')
-    expect(Object.keys(commands).toSorted()).toEqual(['resetDailyConsumption', 'setPump'])
-    expect(commands['resetDailyConsumption']).toMatchObject({
-      source: SOURCES.clearDaily,
-      cap: 'button',
-      method: 'press',
-    })
+    expect(Object.keys(commands)).toEqual(['setPump'])
+    const feature = petFountainFromEntitiesComposition(SOURCES).features.find(
+      (f) => f.kind === 'fields' && f.cap === 'pet-fountain',
+    )
+    const fields = feature?.kind === 'fields' ? Object.keys(feature.fields) : []
+    expect(fields.toSorted()).toEqual([
+      'empty',
+      'error',
+      'lastFetchedAt',
+      'pumpRunning',
+      'waterLevel',
+      'waterVolume',
+    ])
   })
 
   it('serves every pump-cycle method with a forward to its entity', () => {
@@ -183,10 +180,7 @@ describe('petFountainFromEntitiesComposition', () => {
       ref('interval').stableId,
     )
     expect(validate(withoutCycle).problems).toEqual([])
-    expect(Object.keys(commandsOf(withoutCycle, 'pet-fountain')).toSorted()).toEqual([
-      'resetDailyConsumption',
-      'setPump',
-    ])
+    expect(Object.keys(commandsOf(withoutCycle, 'pet-fountain'))).toEqual(['setPump'])
   })
 
   it('makes every maintenance cadence a resettable consumables item forwarding to its button', () => {
@@ -215,18 +209,8 @@ describe('petFountainFromEntitiesComposition', () => {
     )
   })
 
-  it('reads today as unknown, and binds no entity, when the fountain has no today sensor', () => {
-    const { todayDrink: _t, ...withoutToday } = SOURCES
-    const composition = petFountainFromEntitiesComposition(withoutToday)
-    expect(compositionSourceRefs(composition).map((r) => r.stableId)).not.toContain(
-      ref('today_drink').stableId,
-    )
-    expect(evaluate('todayDrink', {}, withoutToday).value).toBeNull()
-    expect(validate(withoutToday).problems).toEqual([])
-  })
-
   it('converts millilitres to litres (D944)', () => {
-    expect(evaluate('todayDrink', { [ref('today_drink').stableId]: '420' })).toMatchObject({
+    expect(evaluate('waterVolume', { [SOURCES.waterVolume.stableId]: '420' })).toMatchObject({
       value: 0.42,
     })
   })

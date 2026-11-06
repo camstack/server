@@ -6,7 +6,7 @@
  * and — on some models — a pump duty cycle (a switch and two number boxes) and
  * maintenance pairs (days left + a "done" button). This preset names the
  * `pet-fountain` cap's fields over the entities every fountain has, forwards its
- * two methods to ONE entity method each, and adds what a model has on top: the
+ * method to ONE entity method, and adds what a model has on top: the
  * `pump-cycle` cap when the cycle entities are given (planning#366), and one
  * resettable `consumables` item per maintenance pair (filter, cleaning, water
  * change). Nothing optional is required: a fountain without a cycle is built
@@ -54,16 +54,6 @@ export interface PetFountainEntitySources {
   readonly waterVolume: CompositionSourceRef
   /** `switch`: the pump. */
   readonly pump: CompositionSourceRef
-  /** `enum-sensor.value`: the last drink, millilitres as text. */
-  readonly lastDrink: CompositionSourceRef
-  /** `enum-sensor.value`: this hour's drinking, millilitres as text. */
-  readonly currentHourDrink: CompositionSourceRef
-  /** `enum-sensor.value`: the rolling 24 h drinking, millilitres as text. */
-  readonly last24hDrink: CompositionSourceRef
-  /** `button`: clears the rolling daily counters. */
-  readonly clearDaily: CompositionSourceRef
-  /** `enum-sensor.value`: today's drinking, millilitres as text. Absent: today reads unknown. */
-  readonly todayDrink?: CompositionSourceRef
   /** Present when the pump has a duty cycle; adds the `pump-cycle` cap. */
   readonly pumpCycle?: PetFountainPumpCycleSources
   /** Present when the fountain has a filter entity pair; adds a `filter` consumable. */
@@ -186,22 +176,11 @@ export function petFountainFromEntitiesComposition(sources: PetFountainEntitySou
             'number(l) == null ? null : number(l) <= 0',
           ),
           pumpRunning: from(sources.pump, 'switch', 'on'),
-          lastDrink: millilitresAsLitres(sources.lastDrink),
-          currentHourDrink: millilitresAsLitres(sources.currentHourDrink),
-          last24hDrink: millilitresAsLitres(sources.last24hDrink),
-          todayDrink:
-            sources.todayDrink === undefined ? UNKNOWN : millilitresAsLitres(sources.todayDrink),
           error: UNKNOWN,
           lastFetchedAt: NOW,
         },
         commands: {
           setPump: { kind: 'forward', source: sources.pump, cap: 'switch', method: 'setState' },
-          resetDailyConsumption: {
-            kind: 'forward',
-            source: sources.clearDaily,
-            cap: 'button',
-            method: 'press',
-          },
         },
       },
       ...(sources.pumpCycle === undefined ? [] : [pumpCycleFeature(sources.pumpCycle)]),

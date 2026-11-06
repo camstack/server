@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Dialogs can fill the whole page with width="full".
+- Pet fountain card: the Water drunk grid and the Clear daily count button are removed
 
 ## [1.2.390] - 2026-11-06
 

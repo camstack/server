@@ -355,17 +355,23 @@ const PET_FOUNTAIN = {
   waterVolume: 1.3,
   empty: false,
   pumpRunning: true,
-  lastDrink: 0.032,
-  currentHourDrink: 0.085,
-  last24hDrink: 0.61,
-  todayDrink: 0.42,
   error: null,
   lastFetchedAt: NOW,
 }
 
-/** The fountain's filter: a wear part, resettable through the forwarded button. */
+/** The fountain's tank (derived from its level) and filter (a wear part, resettable through the forwarded button). */
 const FOUNTAIN_CONSUMABLES = {
   items: [
+    {
+      key: 'water',
+      label: 'Water',
+      level: 64,
+      status: null,
+      kind: 'supply',
+      form: 'tank',
+      lastResetAt: null,
+      resettable: false,
+    },
     {
       key: 'filter',
       label: 'Filter',

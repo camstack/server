@@ -2198,9 +2198,6 @@ export const usePetFeederGetStatus: typeof trpc.petFeeder.getStatus.useQuery = /
 /** Generated alias around `trpc.petFountain.setPump.useMutation`. */
 export const usePetFountainSetPump: typeof trpc.petFountain.setPump.useMutation = /*#__PURE__*/ alias(() => trpc.petFountain.setPump.useMutation)
 
-/** Generated alias around `trpc.petFountain.resetDailyConsumption.useMutation`. */
-export const usePetFountainResetDailyConsumption: typeof trpc.petFountain.resetDailyConsumption.useMutation = /*#__PURE__*/ alias(() => trpc.petFountain.resetDailyConsumption.useMutation)
-
 /** Generated alias around `trpc.petFountain.getStatus.useQuery`. */
 export const usePetFountainGetStatus: typeof trpc.petFountain.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.petFountain.getStatus.useQuery)
 

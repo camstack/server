@@ -34,11 +34,6 @@ const FOUNTAIN: Composition = petFountainFromEntitiesComposition({
     onMinutes: ref('number.on'),
     offMinutes: ref('number.off'),
   },
-  lastDrink: ref('sensor.last'),
-  currentHourDrink: ref('sensor.hour'),
-  last24hDrink: ref('sensor.day'),
-  todayDrink: ref('sensor.today'),
-  clearDaily: ref('button.clear'),
   filter: { daysRemaining: ref('sensor.filter'), changed: ref('button.filter') },
 })
 
@@ -60,7 +55,7 @@ describe('a stored composition with commands, opened and saved untouched', () =>
       Object.keys(
         FOUNTAIN.features.flatMap((f) => (f.kind === 'fields' ? [f] : []))[0]?.commands ?? {},
       ),
-    ).toHaveLength(2)
+    ).toHaveLength(1)
     expect(Object.keys(commandsOf(FOUNTAIN, 'pump-cycle') ?? {})).toHaveLength(3)
     expect(resetOf(FOUNTAIN)).toMatchObject({ kind: 'forward', cap: 'button', method: 'press' })
   })

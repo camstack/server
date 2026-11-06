@@ -821,7 +821,6 @@
   "petFeeder.setIndicatorLight": "viewer",
   "petFeeder.setVolume": "viewer",
   "petFountain.getStatus": "viewer",
-  "petFountain.resetDailyConsumption": "viewer",
   "petFountain.setPump": "viewer",
   "pipelineAnalytics.addRetrainFrameFromRecording": "feature:retrain",
   "pipelineAnalytics.addRetrainFramesToCollection": "feature:retrain",
