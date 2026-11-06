@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Add device: a candidate whose integration cannot create a device now says so, and a failed lookup shows its error, instead of an endless spinner.
+
 ## [1.2.595] - 2026-11-06
 
 ### Changed

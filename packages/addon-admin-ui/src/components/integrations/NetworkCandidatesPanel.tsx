@@ -393,7 +393,7 @@ function CandidateRow({
  * prefilled with what was found. The provider decides whether what was typed is
  * enough and refuses with the reason when it is not.
  */
-function CandidateParamsStep({
+export function CandidateParamsStep({
   addonId,
   integrationId,
   row,
@@ -425,6 +425,25 @@ function CandidateParamsStep({
   const schema = (schemaQuery.data ?? null) as ConfigUISchema | null
   const [values, setValues] = useState<Record<string, unknown> | null>(null)
   const current = values ?? seedValues(schema, found)
+  // Pending, answered with no creation type, and failed are three different
+  // states: only the first one is a spinner.
+  const failure = typeQuery.error ?? schemaQuery.error
+  const noType = typeQuery.isSuccess && type === null
+  const ready = schema !== null
+  const stateBody = ready ? (
+    <FormBuilder schema={schema} values={current} onChange={setValues} />
+  ) : failure ? (
+    <ErrorLine text={errorText(failure)} />
+  ) : noType ? (
+    <p className="text-xs text-foreground-muted">
+      {t(
+        'integrations.addDeviceModal.noCreationType',
+        'This integration cannot create a device from this candidate.',
+      )}
+    </p>
+  ) : (
+    <Loader2 className="mx-auto h-5 w-5 animate-spin text-primary" />
+  )
   const body = (
     <>
       <Button variant="ghost" size="sm" onClick={onBack}>
@@ -432,11 +451,7 @@ function CandidateParamsStep({
         {t('integrations.addDeviceModal.back', 'Back to the list')}
       </Button>
       <p className="text-xs font-medium text-foreground">{row.name}</p>
-      {schema === null ? (
-        <Loader2 className="mx-auto h-5 w-5 animate-spin text-primary" />
-      ) : (
-        <FormBuilder schema={schema} values={current} onChange={setValues} />
-      )}
+      {stateBody}
       {error !== null && <ErrorLine text={error} />}
     </>
   )
@@ -449,7 +464,7 @@ function CandidateParamsStep({
         variant="primary"
         size="sm"
         onClick={() => onSubmit(current)}
-        disabled={busy || schema === null}
+        disabled={busy || !ready}
       >
         {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
         {t('common.add', 'Add')}

@@ -1799,7 +1799,8 @@
       "found_one": "{{count}} device found",
       "found_other": "{{count}} devices found",
       "alsoAdopted_one": "{{count}} also in the adoption list",
-      "alsoAdopted_other": "{{count}} also in the adoption list"
+      "alsoAdopted_other": "{{count}} also in the adoption list",
+      "noCreationType": "This integration cannot create a device from this candidate."
     }
   },
   "ai": {

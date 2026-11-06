@@ -1799,7 +1799,8 @@
       "found_one": "{{count}} dispositivo trovato",
       "found_other": "{{count}} dispositivi trovati",
       "alsoAdopted_one": "{{count}} anche nell'elenco di adozione",
-      "alsoAdopted_other": "{{count}} anche nell'elenco di adozione"
+      "alsoAdopted_other": "{{count}} anche nell'elenco di adozione",
+      "noCreationType": "Questa integrazione non può creare un dispositivo da questo candidato."
     }
   },
   "serverManagement": {
