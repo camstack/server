@@ -14,6 +14,8 @@ interface ProviderConfigFormProps {
    *  Test button is disabled and says why — a button that can only ever answer
    *  "cannot be tested" is worse than no button. */
   canTest?: boolean
+  /** The instance kind the draft is tested as, for a provider with several kinds. */
+  instanceKind?: string
   /** Hydrate the name field (edit-config). Wizard leaves this unset. */
   initialName?: string
   /** Hydrate the schema fields from the instance record (edit-config). */
@@ -44,6 +46,7 @@ export function ProviderConfigForm({
   addonId,
   configSchema,
   canTest = true,
+  instanceKind,
   initialName,
   initialConfig,
   submitLabel,
@@ -134,7 +137,12 @@ export function ProviderConfigForm({
               const stored = omitTransientConfig(configSchema, next)
               setConfig(stored)
               setTestResult(null)
-              testMutation.mutate({ addonId, id: null, values: stored })
+              testMutation.mutate({
+                addonId,
+                id: null,
+                values: stored,
+                ...(instanceKind !== undefined ? { kind: instanceKind } : {}),
+              })
             }
             return result
           }}
@@ -165,6 +173,7 @@ export function ProviderConfigForm({
                 addonId,
                 id: null,
                 values: omitTransientConfig(configSchema, config),
+                ...(instanceKind !== undefined ? { kind: instanceKind } : {}),
               })
             }
             disabled={testMutation.isPending || !canTest}

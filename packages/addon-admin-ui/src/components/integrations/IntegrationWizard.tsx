@@ -14,6 +14,7 @@ import {
   useDeviceManagerAdoptDevice,
   useDeviceManagerDiscoverDevices,
   useDeviceManagerDiscoveryProviders,
+  useIntegrationInstancesDescribe,
   useIntegrationsCreate,
   useIntegrationsGetAvailableTypes,
   Button,
@@ -120,6 +121,16 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
       enabled: open && step === 'config',
     },
   )
+  // The kind a draft is created and tested as: the provider's only testable kind. A provider with
+  // several testable kinds names none here, and the server answers with the kinds to choose from.
+  const instancesDescription = useIntegrationInstancesDescribe(
+    { addonId: selectedAddonId ?? '' },
+    { enabled: open && step === 'config' && selectedAddonId !== null },
+  )
+  const testableKinds = (instancesDescription.data?.kinds ?? []).filter(
+    (kind) => kind.canTest !== false,
+  )
+  const instanceKind = testableKinds.length === 1 ? testableKinds[0]?.id : undefined
   const canScan =
     selectedAddonId !== null &&
     (discoveryProviders.data?.providers ?? []).some((p) => p.addonId === selectedAddonId)
@@ -284,6 +295,7 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
         name: data.name,
         settings: data.config,
         secretKeys: [...data.secretKeys],
+        ...(instanceKind !== undefined ? { kind: instanceKind } : {}),
         ...(seed !== null && seed.addonId === selectedAddonId && seed.originStableId !== undefined
           ? { originStableId: seed.originStableId }
           : {}),
@@ -444,6 +456,7 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
                 addonId={selectedAddonId}
                 configSchema={(configSchema ?? null) as ConfigUISchema | null}
                 canTest={canTest}
+                {...(instanceKind !== undefined ? { instanceKind } : {})}
                 initialName={
                   pendingName.length > 0 && Object.keys(formSeed).length > 0
                     ? pendingName

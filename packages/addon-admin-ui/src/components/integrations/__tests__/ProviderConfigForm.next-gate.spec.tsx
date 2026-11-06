@@ -101,6 +101,25 @@ describe('ProviderConfigForm Next gate', () => {
     })
   })
 
+  it('tests the draft as the kind being created', () => {
+    renderForm(
+      <ProviderConfigForm
+        addonId="home-assistant"
+        canTest
+        instanceKind="account"
+        configSchema={{
+          sections: [
+            { id: 'c', title: 'C', fields: [{ type: 'text', key: 'host', label: 'Host' }] },
+          ],
+        }}
+        onSave={vi.fn()}
+        onBack={() => {}}
+      />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Test connection' }))
+    expect(testMutate).toHaveBeenCalledWith(expect.objectContaining({ id: null, kind: 'account' }))
+  })
+
   it('keeps Next disabled and shows the verdict when the test is rejected', () => {
     testVerdict.current = { success: false, status: 'rejected' }
     renderForm(

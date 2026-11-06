@@ -57,6 +57,22 @@ export function composeInstanceKinds(
     return part
   }
 
+  /**
+   * The part a DRAFT test runs on. A named kind is that kind; an unnamed one is the provider's only
+   * testable kind. Several testable kinds and none named is a typed refusal that lists them, never a throw.
+   */
+  const draftPart = (kindId: string | undefined): InstanceKindPart | { readonly error: string } => {
+    if (kindId !== undefined) {
+      const named = parts.find((candidate) => candidate.kind.id === kindId)
+      return named ?? { error: `Unknown instance kind '${kindId}'` }
+    }
+    const testable = parts.filter((part) => part.kind.canTest !== false)
+    const only = testable.length === 1 ? testable[0] : parts.length === 1 ? parts[0] : undefined
+    if (only !== undefined) return only
+    const names = (testable.length > 0 ? testable : parts).map((part) => part.kind.id).join(', ')
+    return { error: `This provider has several kinds: name one of ${names}` }
+  }
+
   const holderOf = async (id: string): Promise<InstanceKindPart> => {
     for (const part of parts) {
       if ((await part.provider.getInstance({ id })) !== null) return part
@@ -106,8 +122,11 @@ export function composeInstanceKinds(
       (await holderOf(input.id)).provider.setInstanceEnabled(input),
     deleteInstance: async (input) => (await holderOf(input.id)).provider.deleteInstance(input),
     testInstance: async (input) => {
-      const part = input.id === null ? byKind(input.kind) : await holderOf(input.id)
-      const test = part.provider.testInstance
+      const resolved = input.id === null ? draftPart(input.kind) : await holderOf(input.id)
+      if ('error' in resolved) {
+        return { success: false, status: 'inconclusive', error: resolved.error }
+      }
+      const test = resolved.provider.testInstance
       if (test === undefined) {
         return {
           success: false,

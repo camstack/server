@@ -202,6 +202,25 @@ describe('integrations.getAvailableTypes().canTest follows describe().canTest pe
   })
 })
 
+describe('integrations.create on a provider with several kinds', () => {
+  it('tests the draft as the kind being created and creates that kind', async () => {
+    const instances = makeInstances({ canTest: true })
+    const h = makeHarness({ instances })
+    await h.provider.create({
+      addonId: ADDON_ID,
+      name: 'Multi',
+      kind: 'calendar',
+      settings: { ...GOOD },
+    })
+    expect(instances.testInstance).toHaveBeenCalledWith(
+      expect.objectContaining({ id: null, kind: 'calendar' }),
+    )
+    expect(instances.createInstance).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: 'calendar' }),
+    )
+  })
+})
+
 describe('integrations.create over a settings blob that NAMES a broker', () => {
   it('tests the broker on the addon that OWNS it, not on the consumer', async () => {
     const consumer = makeInstances({ canTest: false })

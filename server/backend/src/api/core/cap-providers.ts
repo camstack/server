@@ -1034,12 +1034,12 @@ async function findBrokerOwner(
   ar: AddonRegistryService,
   addonId: string,
   brokerId: string,
-): Promise<IIntegrationInstancesProvider | null> {
+): Promise<{ readonly addonId: string; readonly provider: IIntegrationInstancesProvider } | null> {
   for (const candidateId of [BROKER_OWNER_ADDON_ID, addonId]) {
     const candidate = getInstancesProvider(ar, candidateId)
     if (candidate === null || candidate.testInstance === undefined) continue
     const rows = await candidate.listInstances()
-    if (rows.some((row) => row.id === brokerId)) return candidate
+    if (rows.some((row) => row.id === brokerId)) return { addonId: candidateId, provider: candidate }
   }
   return null
 }
@@ -1067,18 +1067,27 @@ async function testBeforeCreate(
   addonId: string,
   settings: Record<string, unknown>,
   logger: IScopedLogger,
+  kind: string | undefined,
 ): Promise<ConnectionTestVerdict> {
   // 0. An addon that keeps its connection as typed instances tests it there.
   const instances = getInstancesProvider(ar, addonId)
-  if (
-    instances !== null &&
-    instances.testInstance !== undefined &&
-    (await instances.describe()).canTest
-  ) {
+  let declaresTest = false
+  if (instances !== null && instances.testInstance !== undefined) {
+    try {
+      declaresTest = (await instances.describe()).canTest
+    } catch (err) {
+      logger.warn('could not read whether the integration declares a test', {
+        tags: { addonId },
+        meta: { phase: 'test', error: errMsg(err) },
+      })
+    }
+  }
+  if (instances !== null && instances.testInstance !== undefined && declaresTest) {
     try {
       const result = await instances.testInstance({
         id: null,
         values: settings,
+        ...(kind !== undefined ? { kind } : {}),
       })
       const status = result.status ?? (result.success ? 'validated' : 'rejected')
       return {
@@ -1107,20 +1116,24 @@ async function testBeforeCreate(
   //    settings NAME a broker, not because nothing else matched.
   const brokerId = settings['brokerId']
   if (typeof brokerId === 'string' && brokerId.length > 0) {
-    const brokerInstances = await findBrokerOwner(ar, addonId, brokerId)
-    if (brokerInstances === null || brokerInstances.testInstance === undefined) {
-      return {
-        status: 'inconclusive',
-        error: `No instances provider that owns broker '${brokerId}' is available`,
-        testedBy: null,
-      }
-    }
     try {
-      const result = await brokerInstances.testInstance({ id: brokerId, values: {} })
+      const owner = await findBrokerOwner(ar, addonId, brokerId)
+      if (owner === null || owner.provider.testInstance === undefined) {
+        logger.warn('no instances provider owns the broker a create names', {
+          tags: { addonId },
+          meta: { phase: 'test', brokerId },
+        })
+        return {
+          status: 'inconclusive',
+          error: `No instances provider that owns broker '${brokerId}' is available`,
+          testedBy: null,
+        }
+      }
+      const result = await owner.provider.testInstance({ id: brokerId, values: {} })
       const status = result.status ?? (result.success ? 'validated' : 'rejected')
       return {
         status,
-        testedBy: addonId,
+        testedBy: owner.addonId,
         ...(result.error !== undefined ? { error: result.error } : {}),
         ...(result.latencyMs !== undefined ? { latencyMs: result.latencyMs } : {}),
         ...(result.detail !== undefined ? { detail: result.detail } : {}),
@@ -1324,7 +1337,7 @@ export function buildIntegrationsProvider(
       // those would make every integration lacking the hook uncreatable, and
       // would fail a good create on a flaky network. They pass, and they SAY SO
       // in the log: silence here would read as "validated".
-      const verdict = await testBeforeCreate(ar, input.addonId, settings ?? {}, logger)
+      const verdict = await testBeforeCreate(ar, input.addonId, settings ?? {}, logger, input.kind)
       if (verdict.status === 'rejected') {
         logger.warn('rejected — connection test refused the settings', {
           tags: { addonId: input.addonId },
@@ -1363,6 +1376,7 @@ export function buildIntegrationsProvider(
           await instances.createInstance({
             id: integration.id,
             name: integration.name,
+            ...(input.kind !== undefined ? { kind: input.kind } : {}),
           })
           if (settings !== undefined && Object.keys(settings).length > 0) {
             await instances.updateInstance({

@@ -135,6 +135,8 @@ const CreateIntegrationInputSchema = z.object({
   /** `stableId` of the discovery candidate the form was seeded from (D984). */
   originStableId: z.string().optional(),
   settings: z.record(z.string(), z.unknown()).optional(),
+  /** The instance kind being created, for a provider with several; omitted = its only testable kind. */
+  kind: z.string().min(1).optional(),
 })
 
 const UpdateIntegrationInputSchema = z.object({

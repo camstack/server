@@ -133,14 +133,42 @@ describe('composeInstanceKinds', () => {
     )
   })
 
-  it('a null-id test names its kind', async () => {
+  it('a null-id test names its kind; with several testable kinds and none named it refuses, listing them', async () => {
     const { composed } = await setup()
     expect(await composed.testInstance?.({ id: null, kind: 'account', values: {} })).toMatchObject({
       success: true,
     })
-    await expect(composed.testInstance?.({ id: null, values: {} })).rejects.toBeInstanceOf(
-      UnknownInstanceKindError,
+    const refused = await composed.testInstance?.({ id: null, values: {} })
+    expect(refused).toMatchObject({ success: false, status: 'inconclusive' })
+    expect(refused?.error).toContain('account, integration')
+  })
+
+  it('a null-id test with no kind runs on the only testable kind', async () => {
+    const world = makeInMemoryRecords('spec-addon')
+    await world.records.declare({ accounts, connections })
+    const composed = composeInstanceKinds(
+      [
+        {
+          kind: { id: 'account', label: 'Account', functionCap: 'broker', role: 'services' },
+          provider: part(world, accounts, 'acc').toProvider(),
+        },
+        {
+          kind: {
+            id: 'calendar',
+            label: 'Calendar',
+            functionCap: 'device-provider',
+            role: 'devices',
+            canTest: false,
+          },
+          provider: part(world, connections, 'con').toProvider(),
+        },
+      ],
+      { role: 'devices', instanceMode: 'multiple', kind: 'account', canTest: true },
     )
+    expect(await composed.testInstance?.({ id: null, values: {} })).toMatchObject({
+      success: true,
+      status: 'validated',
+    })
   })
 })
 
