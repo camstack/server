@@ -73,7 +73,7 @@ export const TrainingProviderTypeSchema = z.object({
   label: z.string(),
   /** Path under the addon package (e.g. `assets/training-modal/icon.svg`). */
   iconAsset: z.string(),
-  /** Owning `training-provider` addon — collection selector for createEntry. */
+  /** Owning `training-provider` addon. */
   addonId: z.string(),
   /**
    * Fields for one entry of this type (credentials + defaults). Absent on a
@@ -128,36 +128,6 @@ export const TrainingProviderDescriptorSchema = z.object({
   formValues: z.record(z.string(), z.unknown()).optional(),
 })
 export type TrainingProviderDescriptor = z.infer<typeof TrainingProviderDescriptorSchema>
-
-/**
- * Patch one entry's name, credentials and defaults. Pin with owning `{ addonId }`.
- * An omitted or empty `tokenSecret` means KEEP the stored secret (D787).
- * `{ $secretClear: true }` clears it.
- */
-export const TrainingProviderUpdateEntryInputSchema = z.object({
-  entryId: z.string().min(1),
-  name: z.string().min(1),
-  tokenId: z.string().optional(),
-  tokenSecret: z.union([z.string(), z.object({ $secretClear: z.literal(true) })]).optional(),
-  environment: z.string().optional(),
-  gpuType: z.string().optional(),
-  region: z.string().optional(),
-  costCapUsd: z.number().nonnegative().optional(),
-  maxRuntimeSec: z.number().int().positive().optional(),
-  failedDatasetGraceHours: z.number().nonnegative().optional(),
-})
-export type TrainingProviderUpdateEntryInput = z.infer<
-  typeof TrainingProviderUpdateEntryInputSchema
->
-
-export const TrainingCredentialCheckSchema = z.object({
-  ok: z.boolean(),
-  /** Workspace / account name, when the provider says. */
-  account: z.string().optional(),
-  reason: z.enum(['missing', 'invalid', 'forbidden', 'network', 'quota']).optional(),
-  detail: z.string().optional(),
-})
-export type TrainingCredentialCheck = z.infer<typeof TrainingCredentialCheckSchema>
 
 export const ProviderJobStateSchema = z.enum([
   'pending',
