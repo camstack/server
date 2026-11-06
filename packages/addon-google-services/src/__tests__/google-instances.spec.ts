@@ -1,7 +1,7 @@
 import { makeInMemoryRecords } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { googleBrokersEntryKind } from '../broker-record-kinds.js'
-import { buildGoogleInstances } from '../google-instances.js'
+import { buildGoogleInstances, googleAccountKind } from '../google-instances.js'
 
 async function setup(session: 'connected' | 'reauth' | 'none' = 'none') {
   const world = makeInMemoryRecords('google-services')
@@ -18,7 +18,6 @@ async function setup(session: 'connected' | 'reauth' | 'none' = 'none') {
         calendarFilter: 'keep-me',
         fromAddress: 'a@example.com',
         fromName: '',
-        calendarIds: ['google_007:cal'],
       },
     },
     { ifRev: 0 },
@@ -56,7 +55,12 @@ describe('Google accounts as integration instances', () => {
     expect(one?.formValues['fromAddress']).toBe('a@example.com')
     const description = await instances.describe()
     expect(description).toMatchObject({ allowRestoreId: true, mintsId: true })
-    expect(description.kinds?.[0]?.connectPath).toContain('{{brokerId}}')
+    expect(
+      googleAccountKind({ connectPath: '/c?b={{brokerId}}', disconnectPath: '/d' }),
+    ).toMatchObject({
+      functionCap: 'broker',
+      brokerKind: 'google',
+    })
   })
 
   it('reports a session that needs a new sign-in, and an account never signed in', async () => {
@@ -78,7 +82,6 @@ describe('Google accounts as integration instances', () => {
       clientId: 'cid2',
       clientSecret: 'sec',
       calendarFilter: 'keep-me',
-      calendarIds: ['google_007:cal'],
     })
     const minted = await instances.createInstance({ name: 'Work' })
     expect(minted.id).toBe('google_008')

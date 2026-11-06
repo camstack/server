@@ -14,7 +14,9 @@ import {
   brokerCapability,
   buildAddonRouteProvider,
   calendarSourceCapability,
+  composeInstanceKinds,
   defineAddonMigrations,
+  type IIntegrationInstancesProvider,
   integrationInstancesCapability,
   RecordIntegrationInstances,
   smtpProviderCapability,
@@ -33,9 +35,7 @@ import { z } from 'zod'
 import {
   GoogleBrokerRegistry,
   brokerEntryToSettings,
-  calendarIdsOfEntry,
   migrateLegacyToBrokers,
-  stampCalendarId,
 } from './google-broker-registry.js'
 import { buildGoogleFeatureSettingsSchema } from './google-broker-settings-schema.js'
 import { createGoogleCalendarApi, createGoogleCalendarSource } from './google-calendar-source.js'
@@ -67,10 +67,21 @@ import {
   type GoogleServicesConfig,
 } from './google-types.js'
 import { pickOauthRedirectOrigin } from './oauth-redirect-origin.js'
-import { type GoogleBrokerBody, googleBrokersEntryKind } from './broker-record-kinds.js'
-import { buildGoogleInstances } from './google-instances.js'
-import { ADDON_MIGRATIONS } from './migrations/index.js'
-import { calendarIdsPortsOver } from './migrations/ports.js'
+import {
+  type GoogleBrokerBody,
+  type GoogleCalendarBody,
+  googleBrokersEntryKind,
+  googleCalendarsEntryKind,
+} from './broker-record-kinds.js'
+import {
+  buildGoogleCalendarInstances,
+  GOOGLE_CALENDAR_INSTANCE_KIND,
+  type GoogleCalendarOption,
+  selectedStampedIds,
+} from './google-calendar-instances.js'
+import { buildGoogleInstances, googleAccountKind } from './google-instances.js'
+import { ADDON_MIGRATIONS, type GoogleMigrationPorts } from './migrations/index.js'
+import { calendarIdsPortsOver, calendarRecordPortsOver } from './migrations/ports.js'
 import { GoogleBrokerStore } from './google-broker-store.js'
 import type { GoogleBrokerEntry } from './google-types.js'
 
@@ -109,6 +120,9 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
   private registry = new GoogleBrokerRegistry()
   private brokerStore: GoogleBrokerStore | null = null
   private instances: RecordIntegrationInstances<GoogleBrokerBody> | null = null
+  private calendarInstances: RecordIntegrationInstances<GoogleCalendarBody> | null = null
+  /** The stamped calendar ids each account imports, from the `calendars` records. */
+  private calendarSelection: ReadonlyMap<string, ReadonlySet<string>> = new Map()
   private activeBrokers: readonly GoogleBrokerEntry[] = []
   /** CSRF state → { brokerId, issuedAt } for the in-flight OAuth consents. */
   private pendingStates = new Map<string, { brokerId: string; issuedAt: number }>()
@@ -172,15 +186,20 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
     if (records === undefined) {
       throw new Error('google-services: ctx.records is required (hub-only addon)')
     }
-    await records.declare({ brokers: googleBrokersEntryKind })
+    await records.declare({ brokers: googleBrokersEntryKind, calendars: googleCalendarsEntryKind })
     this.brokerStore = GoogleBrokerStore.of(records)
     this.instances = this.buildInstances(records)
+    this.calendarInstances = buildGoogleCalendarInstances(records, {
+      catalog: (accountId) => this.loadCalendarCatalog(accountId),
+      onChanged: () => this.refreshCalendarSelection(),
+    })
     this.activeBrokers = await this.loadPersistedBrokers()
     if ((await this.brokerStore.listResolved()).length === 0 && this.config.brokers.length > 0) {
       await this.brokerStore.replaceAll(this.config.brokers)
       this.activeBrokers = await this.loadPersistedBrokers()
     }
     await this.migrateCalendarIds(records)
+    await this.refreshCalendarSelection()
 
     this.registry.seedFrom(this.activeBrokers, oauthAccounts.accounts)
     await this.refreshPublicOrigin()
@@ -193,7 +212,7 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
           connected: this.registry.isConnected(entry.id),
           api: createGoogleCalendarApi(() => this.ensureAccessToken(entry.id)),
         })),
-      selectedCalendarIds: (brokerId) => this.calendarIdsOf(brokerId),
+      selectedCalendarIds: (brokerId) => this.calendarSelection.get(brokerId) ?? new Set(),
     })
 
     const smtpProvider: ISmtpProvider = createGmailSmtpProvider({
@@ -250,7 +269,7 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
         { capability: brokerCapability, provider: this.buildBrokerProvider() },
         {
           capability: integrationInstancesCapability,
-          provider: this.requireInstances().toProvider(),
+          provider: this.buildInstancesProvider(),
         },
         { capability: calendarSourceCapability, provider: calendarProvider },
         { capability: smtpProviderCapability, provider: smtpProvider },
@@ -269,6 +288,49 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
     if (this.instances === null)
       throw new Error('google-services: instances used before initialize')
     return this.instances
+  }
+
+  /** One provider over the two record kinds: the Google accounts and the calendars they import. */
+  private buildInstancesProvider(): IIntegrationInstancesProvider {
+    const calendars = this.calendarInstances
+    if (calendars === null) throw new Error('google-services: instances used before initialize')
+    return composeInstanceKinds(
+      [
+        {
+          kind: {
+            ...googleAccountKind({
+              connectPath: `/addon/${ADDON_ID}${START_PATH}?brokerId={{brokerId}}`,
+              disconnectPath: `/addon/${ADDON_ID}${DISCONNECT_PATH}?brokerId={{brokerId}}`,
+            }),
+            functionCap: 'broker',
+          },
+          provider: this.requireInstances().toProvider(),
+        },
+        {
+          kind: {
+            id: GOOGLE_CALENDAR_INSTANCE_KIND,
+            label: 'Google calendar',
+            functionCap: 'calendar-source',
+            role: 'services',
+          },
+          provider: calendars.toProvider(),
+        },
+      ],
+      {
+        role: 'services',
+        instanceMode: 'multiple',
+        kind: 'account',
+        canTest: true,
+        allowRestoreId: true,
+      },
+    )
+  }
+
+  /** Re-read which calendars each account imports from the records. */
+  private async refreshCalendarSelection(): Promise<void> {
+    const calendars = this.calendarInstances
+    if (calendars === null) return
+    this.calendarSelection = selectedStampedIds(await calendars.listResolved())
   }
 
   /** The accounts as `integration-instances`, over the same `brokers` records (planning#408 P3). */
@@ -315,7 +377,6 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
         const oauth = this.registry.getOauth(id)
         return {
           ...brokerEntryToSettings(entry),
-          _calendarCatalog: await this.loadStampedCalendarCatalog(id),
           accountEmail: oauth?.accountEmail ?? '',
           connected: this.registry.isConnected(id),
         }
@@ -613,18 +674,25 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
   }
 
   /**
-   * The shared calendar set becomes each broker's own (D985, D987). Brokers are reloaded once the
-   * copy landed, so the registry is seeded with the sets the migration wrote.
+   * The shared calendar set becomes each broker's own (D985, D987), then each broker's set becomes
+   * `calendars` records linked to the account (D1013). Brokers are reloaded once a migration
+   * landed, so the registry is seeded with what it wrote.
    */
   private async migrateCalendarIds(records: Pick<RecordsAccess, 'kind'>): Promise<void> {
-    const report = await this.runMigrations(
-      defineAddonMigrations(
-        ADDON_MIGRATIONS,
-        calendarIdsPortsOver(records.kind(googleBrokersEntryKind), (key) =>
-          this.readStoredGlobalKey(key),
-        ),
-      ),
-    )
+    const brokers = records.kind({
+      name: googleBrokersEntryKind.name,
+      declaration: googleBrokersEntryKind.declaration,
+      schema: z.record(z.string(), z.unknown()),
+    })
+    const ports: GoogleMigrationPorts = {
+      ...calendarIdsPortsOver(brokers, (key) => this.readStoredGlobalKey(key)),
+      ...calendarRecordPortsOver({
+        brokers,
+        calendars: records.kind(googleCalendarsEntryKind),
+        warn: (message) => this.ctx.logger.warn(message),
+      }),
+    }
+    const report = await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, ports))
     if (report.applied.length > 0) this.activeBrokers = await this.loadPersistedBrokers()
   }
 
@@ -653,35 +721,28 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
     await this.oauthAccountsHandle.set({ accounts: [...this.registry.listOauthAccounts()] })
   }
 
-  /** Stamped catalog for Connectivity → Calendars (`optionsFrom`). */
-  private async loadStampedCalendarCatalog(
-    onlyBrokerId?: string,
-  ): Promise<readonly { readonly value: string; readonly label: string }[]> {
-    const out: { value: string; label: string }[] = []
-    for (const entry of this.registry.listEntries()) {
-      if (onlyBrokerId !== undefined && entry.id !== onlyBrokerId) continue
-      if (!this.registry.isConnected(entry.id)) continue
-      try {
-        const api = createGoogleCalendarApi(() => this.ensureAccessToken(entry.id))
-        const list = await api.listCalendars()
-        const accountLabel = this.registry.getOauth(entry.id)?.accountEmail || entry.name
-        for (const c of list) {
-          const summary = c.summary.trim().length > 0 ? c.summary : c.id
-          out.push({
-            value: stampCalendarId(entry.id, c.id),
-            label: `${summary} (${accountLabel})`,
-          })
-        }
-      } catch (err) {
-        this.ctx.logger.warn('google calendar catalog failed', {
-          meta: {
-            brokerId: entry.id,
-            error: err instanceof Error ? err.message : String(err),
-          },
-        })
-      }
+  /** The calendars one signed-in account lists, by their own id (the picker of a calendar record). */
+  private async loadCalendarCatalog(accountId: string): Promise<readonly GoogleCalendarOption[]> {
+    const entry = this.registry.getEntry(accountId)
+    if (entry === null || !this.registry.isConnected(entry.id)) return []
+    try {
+      const api = createGoogleCalendarApi(() => this.ensureAccessToken(entry.id))
+      const accountLabel = this.registry.getOauth(entry.id)?.accountEmail || entry.name
+      return (await api.listCalendars())
+        .map((c) => ({
+          value: c.id,
+          label: `${c.summary.trim().length > 0 ? c.summary : c.id} (${accountLabel})`,
+        }))
+        .toSorted((a, b) => a.label.localeCompare(b.label))
+    } catch (err) {
+      this.ctx.logger.warn('google calendar catalog failed', {
+        meta: {
+          brokerId: entry.id,
+          error: err instanceof Error ? err.message : String(err),
+        },
+      })
+      return []
     }
-    return out.toSorted((a, b) => a.label.localeCompare(b.label))
   }
 
   private async emitGoogleBrokerReconnectAlert(
@@ -844,15 +905,6 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
   ) {
     await this.refreshPublicOrigin()
     return super.getGlobalSettings(overlay, cap, nodeId)
-  }
-
-  /**
-   * The stamped calendar ids ONE broker imports. A broker the migration has not reached yet
-   * (no `calendarIds` of its own) reads the shared setting older versions wrote, so the move
-   * never changes what is imported mid-way.
-   */
-  private calendarIdsOf(brokerId: string): ReadonlySet<string> {
-    return calendarIdsOfEntry(this.registry.getEntry(brokerId), this.config.calendarIds ?? [])
   }
 }
 

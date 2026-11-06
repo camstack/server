@@ -5,7 +5,7 @@
  * values must win, a rerun must write nothing, and the rows are cleared only after the record
  * shows the set.
  */
-import { NO_LINK_PORTS } from '../../__tests__/no-link-ports.js'
+import { NO_CALENDAR_PORTS, NO_LINK_PORTS } from '../../__tests__/no-link-ports.js'
 import {
   createRecordsAccess,
   createSecretsAccess,
@@ -19,12 +19,9 @@ import {
   makeFakeKeychain,
   makeRecordsWorld,
 } from '../../../../system/src/builtins/sqlite-storage/__tests__/support/records-world.js'
+import { rawBrokers } from '../../__tests__/raw-brokers.js'
 import { fakeIntegrations, type FakeIntegrations } from '../../__tests__/fake-integrations.js'
-import {
-  type HaBrokerBody,
-  HA_BROKERS_OWNER,
-  haBrokersEntryKind,
-} from '../../broker-record-kinds.js'
+import { HA_BROKERS_OWNER, haBrokersEntryKind } from '../../broker-record-kinds.js'
 import { haInstanceRecordPortsOver } from '../../ha-instance-settings.js'
 import { haInstanceSettingsPortsOver } from '../legacy-integration-rows.js'
 import {
@@ -36,7 +33,7 @@ import {
 const MARK = 'calendar.MARK-family'
 
 interface World {
-  readonly handle: RecordKindHandle<HaBrokerBody>
+  readonly handle: RecordKindHandle<Record<string, unknown>>
   readonly integrations: FakeIntegrations
   readonly run: (id: string) => Promise<MigrationOwnerResult>
 }
@@ -50,7 +47,7 @@ async function boot(rows: Record<string, Record<string, unknown>>): Promise<Worl
     secrets: createSecretsAccess({ owner: HA_BROKERS_OWNER, transport: makeFakeKeychain() }),
   })
   await access.declare({ brokers: haBrokersEntryKind })
-  const handle = access.kind(haBrokersEntryKind)
+  const handle = rawBrokers(access)
   await handle.put(
     { id: 'ha_001', data: { name: 'Broker one', authKind: 'supervisor', supervisorToken: 's1' } },
     { ifRev: 0 },
@@ -74,6 +71,7 @@ async function boot(rows: Record<string, Record<string, unknown>>): Promise<Worl
     ...flattenPortsOver(handle),
     readStored: async () => ({ kind: 'absent' }),
     ...NO_LINK_PORTS,
+    ...NO_CALENDAR_PORTS,
   })
   return {
     handle,
@@ -98,11 +96,11 @@ describe('HA instance settings -> instance record on real SQLite', () => {
   it('a marked calendar survives onto the record; the record wins where it holds a value', async () => {
     await w.run(INSTANCE_SETTINGS_TO_RECORD_ID)
     const one = await w.handle.get('ha_001')
-    expect(one?.data.calendarIds).toEqual([MARK, 'calendar.work'])
-    expect(one?.data.integrationId).toBe('int_1')
+    expect(one?.data['calendarIds']).toEqual([MARK, 'calendar.work'])
+    expect(one?.data['integrationId']).toBe('int_1')
     const two = await w.handle.get('ha_002')
-    expect(two?.data.calendarIds).toEqual(['calendar.own'])
-    expect(two?.data.integrationId).toBe('int_2')
+    expect(two?.data['calendarIds']).toEqual(['calendar.own'])
+    expect(two?.data['integrationId']).toBe('int_2')
   })
 
   it('a second run changes nothing', async () => {
@@ -148,6 +146,6 @@ describe('HA instance settings -> instance record on real SQLite', () => {
       kind: 'failed',
       error: expect.stringMatching(/both link broker/),
     })
-    expect((await dup.handle.get('ha_001'))?.data.calendarIds).toBeUndefined()
+    expect((await dup.handle.get('ha_001'))?.data['calendarIds']).toBeUndefined()
   })
 })

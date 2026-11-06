@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - An instance-select field can word its empty choice (noneLabel)
 - linkFieldDescriptor takes required: false for an optional link
+- Calendars are instance records linked to their account; a composed instances provider now reports the links of every kind
 
 ## [1.2.509] - 2026-11-06
 

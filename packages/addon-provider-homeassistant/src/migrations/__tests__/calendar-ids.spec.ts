@@ -5,7 +5,7 @@
  */
 import type { FlattenRowPorts } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import { NO_LINK_PORTS } from '../../__tests__/no-link-ports.js'
+import { NO_CALENDAR_PORTS, NO_LINK_PORTS } from '../../__tests__/no-link-ports.js'
 import { fakeIntegrations } from '../../__tests__/fake-integrations.js'
 import { settingsFixture } from '../../__tests__/settings-fixture.js'
 import { haInstanceSettingsPortsOver } from '../legacy-integration-rows.js'
@@ -38,6 +38,7 @@ function start(
       patchInstance: async () => false,
       ...NO_FLATTEN_PORTS,
       ...NO_LINK_PORTS,
+      ...NO_CALENDAR_PORTS,
     }),
     stored,
     'keep-me',

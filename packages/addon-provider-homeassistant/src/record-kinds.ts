@@ -11,7 +11,11 @@
  */
 import { z } from 'zod'
 import { defineRecordKinds, TargetSchema } from '@camstack/types'
-import { haBrokersEntryKind, haConnectionsEntryKind } from './broker-record-kinds.js'
+import {
+  haBrokersEntryKind,
+  haCalendarsEntryKind,
+  haConnectionsEntryKind,
+} from './broker-record-kinds.js'
 
 /**
  * Body of one stored HA notification target. The record id IS the target id
@@ -48,4 +52,5 @@ export const haAllRecordKinds = {
   ...haRecordKinds,
   [haBrokersEntryKind.name]: haBrokersEntryKind,
   [haConnectionsEntryKind.name]: haConnectionsEntryKind,
+  [haCalendarsEntryKind.name]: haCalendarsEntryKind,
 } as const

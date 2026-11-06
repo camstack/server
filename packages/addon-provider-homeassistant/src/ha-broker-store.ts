@@ -18,7 +18,6 @@ function rowToEntry(id: string, data: HaBrokerBody): HaBrokerEntry | null {
     accessToken: data.accessToken,
     supervisorToken: data.supervisorToken,
     enabled: data.enabled,
-    calendarIds: data.calendarIds,
   })
   return parsed.success ? parsed.data : null
 }

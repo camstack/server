@@ -92,30 +92,6 @@ export function buildGoogleBrokerSettingsSchema(publicOrigin: string | null) {
         ],
       },
       {
-        id: 'google-calendars-import',
-        title: 'Calendars to import',
-        titleKey: 'google-services:googleBrokerSettings.s_google-calendars-import.title',
-        description:
-          'Nothing selected = no calendars imported from this account. Options appear once the account is signed in.',
-        descriptionKey:
-          'google-services:googleBrokerSettings.s_google-calendars-import.description',
-        columns: 1,
-        fields: [
-          {
-            type: 'multiselect' as const,
-            key: 'calendarIds',
-            label: 'Calendars',
-            labelKey:
-              'google-services:googleBrokerSettings.s_google-calendars-import.calendarIds.label',
-            options: [] as const,
-            optionsFrom: '_calendarCatalog',
-            description: 'The calendars of this Google account that CamStack imports.',
-            descriptionKey:
-              'google-services:googleBrokerSettings.s_google-calendars-import.calendarIds.description',
-          },
-        ],
-      },
-      {
         id: 'gmail-send',
         title: 'Gmail send',
         titleKey: 'google-services:googleBrokerSettings.s_gmail-send.title',
@@ -168,7 +144,7 @@ export function buildGoogleFeatureSettingsSchema(
               format: 'html' as const,
               content: [
                 '<p>Link a Google account under Connectivity → <strong>Brokers</strong> ',
-                '(Client ID / secret + Sign in). Pick the calendars to import on each broker. ',
+                '(Client ID / secret + Sign in), then add a calendar under Connectivity → <strong>Calendars</strong>. ',
                 `OAuth redirect URI: <code>${redirect}</code>.</p>`,
               ].join(''),
             },

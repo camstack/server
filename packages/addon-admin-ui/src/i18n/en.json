@@ -1269,7 +1269,9 @@
       "devicesExported_one": "{{count}} device exported",
       "devicesExported_other": "{{count}} devices exported",
       "brokersSubtitle": "The accounts and connections this hub reaches its devices through.",
-      "brokersAdd": "Add connection"
+      "brokersAdd": "Add connection",
+      "calendarsSubtitle": "The calendars this hub reads events from.",
+      "calendarsAdd": "Add calendar"
     },
     "ai": "AI",
     "calendars": "Calendars",

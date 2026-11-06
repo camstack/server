@@ -4,7 +4,7 @@
  * legacy kind declaration, so the keychain holds the nested refs exactly as an old hub does, then
  * the flat kind is declared and the migration runs. The keychain is the spec keychain (no hub).
  */
-import { NO_LINK_PORTS } from '../../__tests__/no-link-ports.js'
+import { NO_CALENDAR_PORTS, NO_LINK_PORTS } from '../../__tests__/no-link-ports.js'
 import { fileURLToPath } from 'node:url'
 import {
   type AddonMigrationHost,
@@ -180,6 +180,7 @@ async function boot() {
       patchInstance: async () => false,
       readStored: async () => ({ kind: 'absent' }),
       ...NO_LINK_PORTS,
+      ...NO_CALENDAR_PORTS,
     })
   return { keychain, handle, ports, host, bind }
 }

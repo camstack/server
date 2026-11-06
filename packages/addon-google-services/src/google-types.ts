@@ -8,30 +8,18 @@ export const GoogleBrokerEntrySchema = z.object({
   clientId: z.string().default(''),
   clientSecret: z.string().default('').meta({ secret: true }),
   /**
-   * @deprecated Per-broker filter; import selection lives on addon
-   * `calendarIds` (Connectivity → Calendars). Kept for migrate only.
+   * @deprecated Per-broker filter; the calendars an account imports are `calendars` records
+   * (Connectivity → Calendars). Kept for migrate only.
    */
   calendarFilter: z.string().default(''),
   /** Default From for Gmail send — usually the connected account email. */
   fromAddress: z.string().default(''),
   fromName: z.string().default(''),
-  /**
-   * The stamped calendar ids (`<brokerId>:<googleCalendarId>`) this broker imports. `undefined`
-   * means "not moved here yet": the reader falls back to the shared `calendarIds` setting of
-   * the addon until the migration copied it. Empty = import none.
-   */
-  calendarIds: z.array(z.string()).optional(),
 })
 export type GoogleBrokerEntry = z.infer<typeof GoogleBrokerEntrySchema>
 
 export const GoogleServicesConfigSchema = z.object({
   brokers: z.array(GoogleBrokerEntrySchema).default([]),
-  /**
-   * @deprecated The shared set (`brokerId:googleCalendarId`). Each broker owns its own
-   * `calendarIds` now; this key is read only while a broker has none, and the migration
-   * `google-services/2026-11-03-drop-shared-calendar-ids` deletes it.
-   */
-  calendarIds: z.array(z.string()).default([]),
   /** @deprecated Pre-broker singleton — cleared after migrateLegacyToBrokers. */
   clientId: z.string().optional(),
   /** @deprecated Pre-broker singleton — cleared after migrateLegacyToBrokers. */

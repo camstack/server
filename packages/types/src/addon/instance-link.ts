@@ -130,6 +130,13 @@ export interface LinkedInstancesSpec<TBody extends InstanceBody> {
   readonly linkSections?: FormSections
   /** Settings whose options come from the CHOSEN link (the first link field); called once it names one. */
   readonly dynamicSections?: (linkedInstanceId: string) => Promise<FormSections>
+  /**
+   * A rule the instance must ALSO meet to count as configured (the links are always required):
+   * a field of the kind's own that has no sensible empty value.
+   */
+  readonly alsoConfigured?: (body: TBody) => boolean
+  /** The id of a new instance when the caller sent none; absent refuses such a create. */
+  readonly mintId?: (input: { readonly name: string; readonly kind?: string }) => string
   /** Runs after a create / update / delete, in the process that serves the instance. */
   readonly onChanged?: (id: string, change: InstanceChange) => void | Promise<void>
 }
@@ -147,7 +154,11 @@ export function buildLinkedInstances<TBody extends InstanceBody>(
     {
       description: {
         ...spec.description,
-        links: links.map((link) => ({ kind: kindId, field: link.field, to: link.to })),
+        links: links.map((link) => ({
+          kind: kindId,
+          field: link.field,
+          to: link.to,
+        })),
       },
       formSchema: async (id) => {
         const first = links[0]
@@ -183,7 +194,10 @@ export function buildLinkedInstances<TBody extends InstanceBody>(
           name,
           ...Object.fromEntries(links.map((link) => [link.field, ''])),
         }),
-      configured: (body) => links.every((link) => linkedId(body, link.field) !== undefined),
+      configured: (body) =>
+        links.every((link) => linkedId(body, link.field) !== undefined) &&
+        (spec.alsoConfigured?.(body) ?? true),
+      ...(spec.mintId !== undefined ? { mintId: spec.mintId } : {}),
       ...(spec.onChanged !== undefined ? { onChanged: spec.onChanged } : {}),
     },
   )

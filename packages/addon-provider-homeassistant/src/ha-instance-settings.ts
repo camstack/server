@@ -6,7 +6,9 @@
  * (`migrations/legacy-integration-rows.ts`).
  */
 import type { RecordKindHandle } from '@camstack/types'
-import type { HaBrokerBody } from './broker-record-kinds.js'
+
+/** A broker record as stored: the migrations see fields the current schema no longer names. */
+export type RawHaBrokerBody = Record<string, unknown>
 
 /** What an instance carries beside its connection. */
 export type HaInstanceValues = {
@@ -24,15 +26,19 @@ export interface HaInstanceRecordPorts {
   patchInstance(brokerId: string, patch: HaInstanceValues): Promise<boolean>
 }
 
-function valuesOf(body: HaBrokerBody): HaInstanceValues {
+function valuesOf(body: RawHaBrokerBody): HaInstanceValues {
+  const integrationId = body['integrationId']
+  const calendarIds = body['calendarIds']
   return {
-    ...(body.integrationId !== undefined ? { integrationId: body.integrationId } : {}),
-    ...(body.calendarIds !== undefined ? { calendarIds: body.calendarIds } : {}),
+    ...(typeof integrationId === 'string' ? { integrationId } : {}),
+    ...(Array.isArray(calendarIds)
+      ? { calendarIds: calendarIds.filter((id): id is string => typeof id === 'string') }
+      : {}),
   }
 }
 
 export function haInstanceRecordPortsOver(
-  kind: Pick<RecordKindHandle<HaBrokerBody>, 'get' | 'patch'>,
+  kind: Pick<RecordKindHandle<RawHaBrokerBody>, 'get' | 'patch'>,
 ): HaInstanceRecordPorts {
   return {
     readInstance: async (brokerId) => {

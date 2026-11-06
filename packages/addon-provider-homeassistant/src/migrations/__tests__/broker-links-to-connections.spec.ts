@@ -9,6 +9,8 @@ import {
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { haBrokersEntryKind, haConnectionsEntryKind } from '../../broker-record-kinds.js'
+import { NO_CALENDAR_PORTS } from '../../__tests__/no-link-ports.js'
+import { rawBrokers } from '../../__tests__/raw-brokers.js'
 import {
   BROKER_LINKS_TO_CONNECTIONS_ID,
   haBrokerLinkPorts,
@@ -26,7 +28,7 @@ describe('Home Assistant broker links to connections', () => {
       brokers: haBrokersEntryKind,
       connections: haConnectionsEntryKind,
     })
-    const brokers = world.records.kind(haBrokersEntryKind)
+    const brokers = rawBrokers(world.records)
     await brokers.put(
       {
         id: 'ha_003',
@@ -53,14 +55,16 @@ describe('Home Assistant broker links to connections', () => {
       accessToken: 'tok',
       calendarIds: ['calendar.marked'],
     })
-    expect(kept?.data.integrationId).toBeUndefined()
+    expect(kept?.data['integrationId']).toBeUndefined()
     expect((await moveBrokerLinksToConnections(ports)).outcome).toBe('already-done')
   })
 
   it('runs after the instance-settings move that writes the link', () => {
     const ids = ADDON_MIGRATIONS.map((m) => m.meta.id)
-    expect(ids.at(-1)).toBe('provider-homeassistant/2026-11-05-broker-links-to-connections')
-    expect(ids.indexOf(INSTANCE_SETTINGS_TO_RECORD_ID)).toBeLessThan(ids.length - 1)
+    expect(ids.indexOf(BROKER_LINKS_TO_CONNECTIONS_ID)).toBe(ids.length - 2)
+    expect(ids.indexOf(INSTANCE_SETTINGS_TO_RECORD_ID)).toBeLessThan(
+      ids.indexOf(BROKER_LINKS_TO_CONNECTIONS_ID),
+    )
   })
 
   it('a link that does not read back stays on the broker, is reported, and does not block the addon', async () => {
@@ -89,6 +93,7 @@ describe('Home Assistant broker links to connections', () => {
     }
     const ports: HaMigrationPorts = {
       ...real,
+      ...NO_CALENDAR_PORTS,
       readConnection: async () => null,
       readStored: notInThisRun,
       listInstances: notInThisRun,

@@ -5,6 +5,7 @@
  * status is the registry's answer and a change re-seeds the registry.
  */
 import {
+  type IntegrationInstanceKind,
   type IntegrationTestConnectionResult,
   type RecordsAccess,
   RecordIntegrationInstances,
@@ -48,6 +49,20 @@ function asTestResult(r: {
     : { success: false, status: 'rejected', error: r.error ?? 'Google rejected the check' }
 }
 
+/** The `account` kind of the composed provider: where the OAuth sign-in starts and ends. */
+export function googleAccountKind(
+  deps: Pick<GoogleInstancesDeps, 'connectPath' | 'disconnectPath'>,
+): IntegrationInstanceKind {
+  return {
+    id: GOOGLE_BROKER_KIND,
+    label: GOOGLE_BROKER_KIND_LABEL,
+    functionCap: 'broker',
+    brokerKind: GOOGLE_BROKER_KIND,
+    connectPath: deps.connectPath,
+    disconnectPath: deps.disconnectPath,
+  }
+}
+
 export function buildGoogleInstances(
   records: Pick<RecordsAccess, 'kind' | 'owner'>,
   deps: GoogleInstancesDeps,
@@ -58,23 +73,10 @@ export function buildGoogleInstances(
       instanceMode: 'multiple',
       kind: 'account',
       canTest: true,
-      kinds: [
-        {
-          id: GOOGLE_BROKER_KIND,
-          label: GOOGLE_BROKER_KIND_LABEL,
-          functionCap: 'broker',
-          brokerKind: GOOGLE_BROKER_KIND,
-          connectPath: deps.connectPath,
-          disconnectPath: deps.disconnectPath,
-        },
-      ],
       allowRestoreId: true,
     },
-    // The calendars to import are chosen on the integration, not on the account (D985).
-    formSchema: () => {
-      const full = buildGoogleBrokerSettingsSchema(deps.publicOrigin())
-      return { ...full, sections: full.sections.filter((s) => s.id !== 'google-calendars-import') }
-    },
+    // The calendars an account imports are `calendars` records of their own (D1013).
+    formSchema: () => buildGoogleBrokerSettingsSchema(deps.publicOrigin()),
     initialBody: (name): GoogleBrokerBody => ({
       name,
       clientId: '',
@@ -82,7 +84,6 @@ export function buildGoogleInstances(
       calendarFilter: '',
       fromAddress: '',
       fromName: '',
-      calendarIds: [],
     }),
     mintId: deps.mintId,
     kindOf: () => GOOGLE_BROKER_KIND,

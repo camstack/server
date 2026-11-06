@@ -1,6 +1,7 @@
 import { makeInMemoryRecords } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { haBrokersEntryKind, haConnectionsEntryKind } from '../broker-record-kinds.js'
+import { rawBrokers } from './raw-brokers.js'
 import { buildHaInstances } from '../ha-instances.js'
 
 async function setup() {
@@ -9,7 +10,7 @@ async function setup() {
     brokers: haBrokersEntryKind,
     connections: haConnectionsEntryKind,
   })
-  const brokers = world.records.kind(haBrokersEntryKind)
+  const brokers = rawBrokers(world.records)
   await brokers.put(
     {
       id: 'ha_007',

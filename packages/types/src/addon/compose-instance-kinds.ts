@@ -70,7 +70,17 @@ export function composeInstanceKinds(
   })
 
   return {
-    describe: async () => ({ ...base, kinds: parts.map((part) => part.kind) }),
+    describe: async () => {
+      // Every part answers the links its own kind declares; the composed provider answers them all.
+      const links = (
+        await Promise.all(parts.map(async (part) => (await part.provider.describe()).links ?? []))
+      ).flat()
+      return {
+        ...base,
+        kinds: parts.map((part) => part.kind),
+        ...(links.length > 0 ? { links } : {}),
+      }
+    },
     instanceFormSchema: async ({ id, kind }) => {
       const part = id === null ? byKind(kind) : await holderOf(id)
       return part.provider.instanceFormSchema({ id })
@@ -99,7 +109,11 @@ export function composeInstanceKinds(
       const part = input.id === null ? byKind(input.kind) : await holderOf(input.id)
       const test = part.provider.testInstance
       if (test === undefined) {
-        return { success: false, status: 'inconclusive', error: 'This kind cannot be tested' }
+        return {
+          success: false,
+          status: 'inconclusive',
+          error: 'This kind cannot be tested',
+        }
       }
       return test(input)
     },

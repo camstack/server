@@ -150,6 +150,13 @@ const KINDS: readonly KindDescriptor[] = [
     installLabelKey: 'system.connectivity.calendarsInstall',
     emptyTitleKey: 'system.connectivity.calendarsEmptyTitle',
     emptyDescriptionKey: 'system.connectivity.calendarsEmptyDescription',
+    instances: {
+      functionCap: 'calendar-source',
+      subtitleKey: 'system.connectivity.calendarsSubtitle',
+      subtitleDefault: 'The calendars this hub reads events from.',
+      addLabelKey: 'system.connectivity.calendarsAdd',
+      addLabelDefault: 'Add calendar',
+    },
   },
 ]
 

@@ -1,11 +1,6 @@
 {
   "_comment": "Sites that still reference another instance without declareLinkKind / linkField, or still use the broker-select type (D1013 rule 5). The list only shrinks: steps B2-B8 remove each entry with the migration of its site; scripts/check-instance-refs-use-link-primitive.ts refuses a new site and a stale entry.",
   "entries": [
-    "addon-google-services:google-broker-registry.ts:calendarIds",
-    "addon-google-services:google-broker-settings-schema.ts:calendarIds",
-    "addon-google-services:google-types.ts:calendarIds",
-    "addon-provider-homeassistant:ha-broker-registry.ts:calendarIds",
-    "addon-provider-homeassistant:ha-broker-settings-schema.ts:calendarIds",
     "broker-select:packages/types/src/addon/broker-link.ts",
     "broker-select:packages/types/src/interfaces/config-ui.ts"
   ]

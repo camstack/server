@@ -46,16 +46,7 @@ export class GoogleBrokerStore {
       if (!nextIds.has(row.id)) await this.kind.delete(row.id)
     }
     for (const entry of entries) {
-      const {
-        id,
-        name,
-        clientId,
-        clientSecret,
-        calendarFilter,
-        fromAddress,
-        fromName,
-        calendarIds,
-      } = entry
+      const { id, name, clientId, clientSecret, calendarFilter, fromAddress, fromName } = entry
       const body = {
         name,
         clientId,
@@ -63,7 +54,6 @@ export class GoogleBrokerStore {
         calendarFilter,
         fromAddress,
         fromName,
-        ...(calendarIds !== undefined ? { calendarIds } : {}),
       }
       const parsed = googleBrokersEntryKind.schema.safeParse(body)
       if (!parsed.success) throw new Error(`invalid Google broker '${id}': ${parsed.error.message}`)

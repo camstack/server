@@ -40,8 +40,6 @@ export const HaBrokerEntrySchema = z.object({
   integrationId: z.string().optional(),
   /** The instance's own switch (D996); absent means on. */
   enabled: z.boolean().optional(),
-  /** The `calendar.*` entity ids this instance imports (planning#416); absent means the addon default. */
-  calendarIds: z.array(z.string()).optional(),
 })
 export type HaBrokerEntry = z.infer<typeof HaBrokerEntrySchema>
 

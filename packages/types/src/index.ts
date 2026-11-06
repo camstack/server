@@ -2468,6 +2468,16 @@ export {
   resolveBrokerId,
 } from './addon/broker-link.js'
 export type { BrokerLinkPorts, BrokerLinkRow } from './migrations/broker-links-to-connections.js'
+export type {
+  AccountCalendarRow,
+  CalendarIdsSpec,
+  CalendarRecordBody,
+  CalendarRecordPorts,
+} from './migrations/calendar-ids-to-records.js'
+export {
+  calendarRecordId,
+  moveCalendarIdsToRecords,
+} from './migrations/calendar-ids-to-records.js'
 export {
   brokerLinkPortsOver,
   moveBrokerLinksToConnections,

@@ -132,12 +132,12 @@ describe('Connectivity SectionedPage', () => {
     }
   })
 
-  it('calendars section lists google-services and waste-collections', () => {
+  it('calendars section is one instances list of the calendar-source cap, not a pill hub', () => {
     renderAt('/system/integrations?tab=calendars')
-    const pills = screen.getByRole('navigation', { name: /Calendars integrations/i })
-    expect(within(pills).getByText('Google')).toBeTruthy()
-    expect(within(pills).getByText('Waste')).toBeTruthy()
-    expect(within(pills).queryByText('Alexa')).toBeNull()
+    expect(screen.getByTestId('provider-instances').getAttribute('data-cap')).toBe(
+      'calendar-source',
+    )
+    expect(screen.queryByRole('navigation', { name: /Calendars integrations/i })).toBeNull()
   })
 
   it('email section is the provider-instances list of smtp-provider, not a pill hub', () => {

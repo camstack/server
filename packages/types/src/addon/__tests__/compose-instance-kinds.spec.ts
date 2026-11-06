@@ -7,9 +7,13 @@ import {
   UnknownInstanceError,
   UnknownInstanceKindError,
 } from '../compose-instance-kinds.js'
+import { buildLinkedInstances, declareLinkKind } from '../instance-link.js'
 import { RecordIntegrationInstances } from '../record-integration-instances.js'
 
-const BodySchema = z.object({ name: z.string().min(1), enabled: z.boolean().optional() })
+const BodySchema = z.object({
+  name: z.string().min(1),
+  enabled: z.boolean().optional(),
+})
 type Body = z.infer<typeof BodySchema>
 
 const accounts = defineEntryKind('accounts', {
@@ -30,12 +34,21 @@ function part(
 ): RecordIntegrationInstances<Body> {
   let counter = 0
   return new RecordIntegrationInstances<Body>(world.records, entryKind, {
-    description: { role: 'services', instanceMode: 'multiple', kind: prefix, canTest: false },
+    description: {
+      role: 'services',
+      instanceMode: 'multiple',
+      kind: prefix,
+      canTest: false,
+    },
     formSchema: async () => ({ sections: [] }),
     initialBody: (name) => ({ name }),
     mintId: () => `${prefix}-${++counter}`,
     configured: () => true,
-    test: async ({ id }) => ({ success: true, status: 'validated', error: `probed ${id}` }),
+    test: async ({ id }) => ({
+      success: true,
+      status: 'validated',
+      error: `probed ${id}`,
+    }),
   })
 }
 
@@ -47,7 +60,12 @@ async function setup() {
   const composed = composeInstanceKinds(
     [
       {
-        kind: { id: 'account', label: 'Account', functionCap: 'broker', role: 'services' },
+        kind: {
+          id: 'account',
+          label: 'Account',
+          functionCap: 'broker',
+          role: 'services',
+        },
         provider: account.toProvider(),
       },
       {
@@ -60,7 +78,12 @@ async function setup() {
         provider: connection.toProvider(),
       },
     ],
-    { role: 'devices', instanceMode: 'multiple', kind: 'account', canTest: true },
+    {
+      role: 'devices',
+      instanceMode: 'multiple',
+      kind: 'account',
+      canTest: true,
+    },
   )
   return { composed }
 }
@@ -118,5 +141,71 @@ describe('composeInstanceKinds', () => {
     await expect(composed.testInstance?.({ id: null, values: {} })).rejects.toBeInstanceOf(
       UnknownInstanceKindError,
     )
+  })
+})
+
+describe('composeInstanceKinds links', () => {
+  const calendars = declareLinkKind({
+    name: 'calendars',
+    title: 'Calendars',
+    writeTrigger: 'test',
+    links: { accountId: { cap: 'broker', kind: 'google' } },
+    fields: { calendarId: z.string().default('') },
+  })
+
+  it('answers the links the kind of a part declares, and is configured only with its own field', async () => {
+    const world = makeInMemoryRecords('spec-addon')
+    await world.records.declare({ accounts, calendars })
+    const linked = buildLinkedInstances(world.records, {
+      kind: calendars,
+      instanceKind: 'calendar',
+      description: {
+        role: 'services',
+        instanceMode: 'multiple',
+        kind: 'calendar',
+        canTest: false,
+      },
+      alsoConfigured: (body) => body.calendarId !== '',
+    })
+    const composed = composeInstanceKinds(
+      [
+        {
+          kind: { id: 'account', label: 'Account', functionCap: 'broker' },
+          provider: part(world, accounts, 'acc').toProvider(),
+        },
+        {
+          kind: {
+            id: 'calendar',
+            label: 'Calendar',
+            functionCap: 'calendar-source',
+          },
+          provider: linked.toProvider(),
+        },
+      ],
+      {
+        role: 'services',
+        instanceMode: 'multiple',
+        kind: 'account',
+        canTest: false,
+      },
+    )
+    expect((await composed.describe()).links).toEqual([
+      {
+        kind: 'calendar',
+        field: 'accountId',
+        to: { cap: 'broker', kind: 'google' },
+      },
+    ])
+    await linked.createInstance({ id: 'cal_1', name: 'Work' })
+    await linked.updateInstance({
+      id: 'cal_1',
+      values: { accountId: 'google_001' },
+    })
+    expect((await linked.getInstance({ id: 'cal_1' }))?.configured).toBe(false)
+    await linked.updateInstance({
+      id: 'cal_1',
+      values: { calendarId: 'work@example.com' },
+    })
+    expect((await linked.getInstance({ id: 'cal_1' }))?.configured).toBe(true)
   })
 })

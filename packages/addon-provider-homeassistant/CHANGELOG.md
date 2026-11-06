@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Export targets pick their Home Assistant connection through the shared instance picker, and the hub refuses to delete a connection a target still uses
+- Home Assistant calendars are now their own instances under Connectivity → Calendars; the connection's calendar list is migrated into them
 
 ## [1.2.664] - 2026-11-06
 

@@ -23,11 +23,12 @@ import { useQuery } from '@tanstack/react-query'
 import { Server } from 'lucide-react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { RUNTIME_NODES_KEY,
+import {
+  RUNTIME_NODES_KEY,
   runtimeNodeFeatures,
   runtimeStateLabelKey,
   runtimeStateTone,
- } from './ai-page.helpers'
+} from './ai-page.helpers'
 import i18n from '../../i18n/index'
 
 const REFETCH_MS = 5_000
@@ -61,9 +62,7 @@ export function AiRuntimesPage() {
         nowrap: true,
         render: (n) => (
           <span className="flex items-center gap-1.5">
-            <Badge variant={runtimeStateTone(n)}>
-              {t(runtimeStateLabelKey(n))}
-            </Badge>
+            <Badge variant={runtimeStateTone(n)}>{t(runtimeStateLabelKey(n))}</Badge>
             {n.status?.downloadProgress !== undefined && (
               <Badge variant="info">{`${String(Math.round(n.status.downloadProgress * 100))}%`}</Badge>
             )}

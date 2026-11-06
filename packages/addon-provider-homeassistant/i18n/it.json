@@ -1,7 +1,4 @@
 {
-  "globalSettings.s_ha-calendars-import.title": "Calendari da importare",
-  "globalSettings.s_ha-calendars-import.calendarIds.label": "Calendari",
-  "globalSettings.s_ha-calendars-import.calendarIds.description": "Rilevati dai broker HA collegati. Seleziona almeno un calendario da importare; lascia vuoto per non importarne nessuno.",
   "globalSettings.s_ha-broker.title": "Broker Home Assistant",
   "globalSettings.s_ha-broker.brokerHelp.label": "I broker si gestiscono separatamente",
   "haBrokerSettings.s_ha-broker-credentials.title": "Connessione a Home Assistant",

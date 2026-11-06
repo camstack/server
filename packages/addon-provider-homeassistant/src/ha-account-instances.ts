@@ -11,7 +11,7 @@ import {
   REDACTED_SECRET,
 } from '@camstack/types'
 import { type HaBrokerBody, haBrokersEntryKind } from './broker-record-kinds.js'
-import { haBrokerSettingsSchema, haCalendarsSection } from './ha-broker-settings-schema.js'
+import { haBrokerSettingsSchema } from './ha-broker-settings-schema.js'
 import type { HaBrokerInfo } from './ha-integration-manager.js'
 
 export const HA_ACCOUNT_KIND = 'account'
@@ -20,10 +20,6 @@ export interface HaInstancesDeps {
   readonly mintId: () => string
   /** The runtime's view of one broker; null while it has no manager. */
   readonly infoOf: (id: string) => HaBrokerInfo | null
-  /** The `calendar.*` entities one broker offers; empty while it is not connected. */
-  readonly calendarOptions: (
-    id: string,
-  ) => readonly { readonly value: string; readonly label: string }[]
   /** Bring the runtime in line with the records after a change. */
   readonly onChanged: (id: string) => Promise<void>
   /** Throwaway handshake with the typed settings. */
@@ -61,12 +57,7 @@ export function buildHaAccountInstances(
       canTest: true,
       allowRestoreId: true,
     },
-    formSchema: (id) => {
-      const options = id === null ? [] : deps.calendarOptions(id)
-      return options.length === 0
-        ? haBrokerSettingsSchema
-        : { sections: [...haBrokerSettingsSchema.sections, haCalendarsSection(options)] }
-    },
+    formSchema: () => haBrokerSettingsSchema,
     initialBody: (name): HaBrokerBody => ({ name, authKind: 'long-lived' }),
     mintId: () => deps.mintId(),
     kindOf: () => HA_ACCOUNT_KIND,

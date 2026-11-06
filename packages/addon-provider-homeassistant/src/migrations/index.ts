@@ -1,8 +1,10 @@
 import {
   type AddonMigration,
   type BrokerLinkPorts,
+  type CalendarRecordPorts,
   type FlattenRowPorts,
   moveBrokerLinksToConnections,
+  moveCalendarIdsToRecords,
 } from '@camstack/types'
 import { BROKER_LINKS_TO_CONNECTIONS_ID, haBrokerLinkPorts } from './broker-links-to-connections.js'
 import { FLATTEN_BROKER_RECORDS_ID, flattenBrokerRecords } from './flatten-broker-records.js'
@@ -19,6 +21,9 @@ import {
   planDropSharedCalendarIds,
 } from './calendar-ids-to-integration.js'
 
+export const CALENDAR_IDS_TO_RECORDS_ID =
+  'provider-homeassistant/2026-11-07-calendar-ids-to-calendar-records'
+
 export { BROKER_LINKS_TO_CONNECTIONS_ID, haBrokerLinkPorts }
 export type { CalendarIdsPorts } from './calendar-ids-to-integration.js'
 export { FLATTEN_BROKER_RECORDS_ID } from './flatten-broker-records.js'
@@ -31,7 +36,8 @@ export {
 export type HaMigrationPorts = CalendarIdsPorts &
   FlattenRowPorts &
   InstanceSettingsPorts &
-  BrokerLinkPorts
+  BrokerLinkPorts &
+  CalendarRecordPorts
 
 /** The `provider-homeassistant` catalogue (D987): offered to the engine when the addon initialises. */
 export const ADDON_MIGRATIONS: readonly AddonMigration<HaMigrationPorts>[] = [
@@ -138,5 +144,27 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<HaMigrationPorts>[] = [
       fixtureMark: 'the calendars and the name of the connection that keeps its record',
     },
     procedure: moveBrokerLinksToConnections,
+  },
+  {
+    meta: {
+      id: CALENDAR_IDS_TO_RECORDS_ID,
+      owner: 'provider-homeassistant',
+      level: 'addon-state',
+      seq: 7,
+      dependsOn: [
+        BROKER_LINKS_TO_CONNECTIONS_ID,
+        INSTANCE_SETTINGS_TO_RECORD_ID,
+        CLEAR_INSTANCE_SETTINGS_ROWS_ID,
+      ],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'tolerate',
+      bodyKind: 'procedure',
+      description:
+        'Write one calendar record per calendar a Home Assistant connection imports (linked to the connection), read each back, then clear the calendar array of the connection row',
+      fixtureMark: 'the name of the connection that keeps its calendars',
+    },
+    procedure: (ports) =>
+      moveCalendarIdsToRecords(ports, { calendarIdOf: (_accountId, entry) => entry }),
   },
 ]

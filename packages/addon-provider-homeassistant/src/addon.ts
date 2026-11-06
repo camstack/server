@@ -40,7 +40,7 @@ import {
   type SavedDevice,
   publicEndpointReaderFrom,
 } from '@camstack/types'
-import type { z } from 'zod'
+import { z } from 'zod'
 import { HaContainerDevice } from './devices/ha-container-device.js'
 import { HaEventBusDevice } from './devices/ha-event-bus-device.js'
 import { cascadeRemoveDevicesForBroker } from './ha-broker-device-cascade.js'
@@ -79,7 +79,12 @@ import {
   type NotifyServiceData,
 } from './ha-notification-output.js'
 import { HaBrokerStore } from './ha-broker-store.js'
-import { type HaBrokerBody, haBrokersEntryKind } from './broker-record-kinds.js'
+import {
+  type HaBrokerBody,
+  type HaCalendarBody,
+  haBrokersEntryKind,
+  haCalendarsEntryKind,
+} from './broker-record-kinds.js'
 import { buildHaAccountInstances } from './ha-account-instances.js'
 import { buildHaInstances } from './ha-instances.js'
 import { haBrokerLinkPorts } from './migrations/index.js'
@@ -87,6 +92,8 @@ import { listHaCalendarCatalog } from './ha-calendar-source.js'
 import { haAllRecordKinds } from './record-kinds.js'
 import { createHaBoardKeyProvider, HaBoardKeySource } from './ha-board-key-source.js'
 import { haInstanceRecordPortsOver } from './ha-instance-settings.js'
+import { haCalendarRecordPortsOver } from './migrations/calendar-ports.js'
+import { buildHaCalendarInstances, selectedEntityIds } from './ha-calendar-instances.js'
 import { haInstanceSettingsPortsOver } from './migrations/legacy-integration-rows.js'
 import { ADDON_MIGRATIONS, type HaMigrationPorts } from './migrations/index.js'
 import { createHaCalendarSource } from './ha-calendar-source.js'
@@ -115,15 +122,10 @@ type AdoptedEntry = AdoptResult['adopted'][number]
 
 const HA_KIND = 'home-assistant'
 
-interface HaProviderConfig {
-  /**
-   * HA `calendar.*` entity ids to expose via calendar-source. Empty = all
-   * (legacy). Edited under Connectivity → Calendars → Home Assistant.
-   */
-  readonly calendarIds: readonly string[]
-}
+/** The addon keeps no settings of its own: every fact lives on a record. */
+type HaProviderConfig = Record<string, never>
 
-const DEFAULT_CONFIG: HaProviderConfig = { calendarIds: [] }
+const DEFAULT_CONFIG: HaProviderConfig = {}
 
 /**
  * Home Assistant provider addon.
@@ -190,6 +192,9 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
   private brokerStore: HaBrokerStore | null = null
   private instances: RecordIntegrationInstances<BrokerLinkBody> | null = null
   private accountInstances: RecordIntegrationInstances<HaBrokerBody> | null = null
+  private calendarInstances: RecordIntegrationInstances<HaCalendarBody> | null = null
+  /** `connection id → entity ids` its calendar records import. */
+  private calendarSelection: ReadonlyMap<string, ReadonlySet<string>> = new Map()
   /** Runtime broker rows (records when B2 is live, else settings). */
   private activeBrokers: readonly HaBrokerEntry[] = []
   /** Periodic re-sync sweep handle (cleared on shutdown). */
@@ -208,6 +213,11 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
   }
 
   private flattenPorts(records: RecordsAccess): HaMigrationPorts {
+    const brokers = records.kind({
+      name: haBrokersEntryKind.name,
+      declaration: haBrokersEntryKind.declaration,
+      schema: z.record(z.string(), z.unknown()),
+    })
     const secrets = this.ctx.secrets
     if (secrets === undefined) throw new Error('provider-homeassistant: ctx.secrets is required')
     return {
@@ -222,8 +232,13 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
         },
         this.ctx.secrets ?? null,
       ),
-      ...haInstanceRecordPortsOver(records.kind(haBrokersEntryKind)),
-      ...flattenPortsOver(records.kind(haBrokersEntryKind)),
+      ...haInstanceRecordPortsOver(brokers),
+      ...flattenPortsOver(brokers),
+      ...haCalendarRecordPortsOver({
+        brokers,
+        calendars: records.kind(haCalendarsEntryKind),
+        warn: (message) => this.ctx.logger.warn(message),
+      }),
       ...haBrokerLinkPorts(records, (message) => this.ctx.logger.warn(message)),
     }
   }
@@ -239,13 +254,17 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
     this.accountInstances = buildHaAccountInstances(records, {
       mintId: () => this.requireRegistry().allocateId(),
       infoOf: (id) => this.registry?.get(id) ?? null,
-      calendarOptions: (id) => (this.registry ? listHaCalendarCatalog(this.registry, id) : []),
       onChanged: (id) => this.syncBrokerRuntime(id),
       probe: (settings) => this.requireRegistry().testSettings(settings),
+    })
+    this.calendarInstances = buildHaCalendarInstances(records, {
+      catalog: (id) => (this.registry ? listHaCalendarCatalog(this.registry, id) : []),
+      onChanged: () => this.refreshCalendarSelection(),
     })
     // The stored broker records move to the flat shape, and every integration link onto its own
     // `connections` record, BEFORE anything reads them (a rewrite of a broker drops the old link).
     await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, this.flattenPorts(records)))
+    await this.refreshCalendarSelection()
     this.activeBrokers = await this.loadPersistedBrokers()
 
     this.registry = new HaBrokerRegistry(this.ctx.logger, this.ctx.eventBus)
@@ -425,10 +444,15 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
     })
   }
 
-  /** The calendars one instance imports: its record's set, else the addon default. */
+  /** The calendars one connection imports, from its calendar records. */
   private calendarIdsOf(brokerId: string): ReadonlySet<string> {
-    const own = this.activeBrokers.find((b) => b.id === brokerId)?.calendarIds
-    return new Set(own ?? this.config.calendarIds ?? [])
+    return this.calendarSelection.get(brokerId) ?? new Set()
+  }
+
+  private async refreshCalendarSelection(): Promise<void> {
+    const calendars = this.calendarInstances
+    if (calendars === null) return
+    this.calendarSelection = selectedEntityIds(await calendars.listResolved())
   }
 
   // ── Settings UI (External systems → integration settings panel) ────
@@ -583,6 +607,8 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
     if (this.accountInstances === null) {
       throw new Error('provider-homeassistant: connection instances not ready')
     }
+    const calendars = this.calendarInstances
+    if (calendars === null) throw new Error('provider-homeassistant: calendar instances not ready')
     return composeInstanceKinds(
       [
         {
@@ -603,6 +629,15 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
             role: 'devices',
           },
           provider: this.requireInstances().toProvider(),
+        },
+        {
+          kind: {
+            id: 'calendar',
+            label: 'Home Assistant calendar',
+            functionCap: 'calendar-source',
+            role: 'services',
+          },
+          provider: calendars.toProvider(),
         },
       ],
       {

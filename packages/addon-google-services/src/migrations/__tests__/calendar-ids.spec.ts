@@ -4,17 +4,30 @@
  * `brokers` record kind (in-memory records engine) for the broker rows, through the production
  * port binding.
  */
-import { makeInMemoryRecords, type RecordKindHandle } from '@camstack/types'
+import {
+  type CalendarRecordPorts,
+  makeInMemoryRecords,
+  type RecordKindHandle,
+} from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import { googleBrokersEntryKind, type GoogleBrokerBody } from '../../broker-record-kinds.js'
+import { z } from 'zod'
+import { googleBrokersEntryKind } from '../../broker-record-kinds.js'
 import { settingsFixture } from '../../__tests__/settings-fixture.js'
-import { ADDON_MIGRATIONS } from '../index.js'
+import { ADDON_MIGRATIONS, type GoogleMigrationPorts } from '../index.js'
 import { calendarIdsPortsOver } from '../ports.js'
 
 const COPY = 'google-services/2026-11-03-calendar-ids-to-brokers'
 const DROP = 'google-services/2026-11-03-drop-shared-calendar-ids'
+const NO_RECORD_PORTS: CalendarRecordPorts = {
+  warn: () => undefined,
+  listAccounts: async () => [],
+  readCalendar: async () => null,
+  putCalendar: async () => undefined,
+  clearCalendarIds: async () => undefined,
+}
 const SHARED = ['google_001:work@g', 'google_002:home@g']
-const body = (name: string, extra: Partial<GoogleBrokerBody> = {}): GoogleBrokerBody => ({
+type Body = Record<string, unknown>
+const body = (name: string, extra: Body = {}): Body => ({
   name,
   clientId: `${name}-client`,
   clientSecret: `${name}-secret`,
@@ -24,26 +37,39 @@ const body = (name: string, extra: Partial<GoogleBrokerBody> = {}): GoogleBroker
   ...extra,
 })
 
+const stringsOf = (value: unknown): readonly string[] | undefined =>
+  Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === 'string')
+    : undefined
+
 async function start(
   stored: Record<string, unknown> = { calendarIds: SHARED, other: { mark: 'survive' } },
-  brokers: Record<string, GoogleBrokerBody> = {
+  brokers: Record<string, Body> = {
     google_001: body('A'),
     google_002: body('B'),
   },
 ) {
   const world = makeInMemoryRecords('google-services')
   await world.records.declare({ brokers: googleBrokersEntryKind })
-  const kind: RecordKindHandle<GoogleBrokerBody> = world.records.kind(googleBrokersEntryKind)
+  // The brokers as stored: the shared set and the per-broker array are fields the kind no longer names.
+  const kind: RecordKindHandle<Body> = world.records.kind({
+    name: googleBrokersEntryKind.name,
+    declaration: googleBrokersEntryKind.declaration,
+    schema: z.record(z.string(), z.unknown()),
+  })
   for (const [id, data] of Object.entries(brokers)) await kind.put({ id, data })
   const f = settingsFixture(
     'google-services',
-    ADDON_MIGRATIONS,
-    (readStored) => calendarIdsPortsOver(kind, readStored),
+    ADDON_MIGRATIONS.filter((m) => m.meta.id === COPY || m.meta.id === DROP),
+    (readStored): GoogleMigrationPorts => ({
+      ...calendarIdsPortsOver(kind, readStored),
+      ...NO_RECORD_PORTS,
+    }),
     stored,
     'keep-me',
   )
   const idsOf = async (id: string): Promise<readonly string[] | undefined> =>
-    (await kind.get(id))?.data.calendarIds
+    stringsOf((await kind.get(id))?.data['calendarIds'])
   return { f, kind, idsOf }
 }
 

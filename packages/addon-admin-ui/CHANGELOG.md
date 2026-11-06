@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Instance pickers of settings forms use the broker picker (default pick, create in place) for broker links, and notification targets keep their first-broker default and device-based name
+- Connectivity → Calendars is a list of calendar instances with an Add calendar action
 
 ## [1.2.596] - 2026-11-06
 

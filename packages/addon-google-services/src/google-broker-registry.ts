@@ -26,9 +26,7 @@ interface LegacyFlatSlice {
 const GoogleAddSettingsSchema = z.object({
   clientId: z.string().min(1),
   clientSecret: z.string().min(1).meta({ secret: true }),
-  /** Selected Google calendar ids; empty = import all. */
-  calendarIds: z.array(z.string()).optional(),
-  /** @deprecated Prefer calendarIds — still accepted on save. */
+  /** @deprecated Calendars are `calendars` records now — still accepted on save. */
   calendarFilter: z.string().optional(),
   fromAddress: z.string().optional(),
   fromName: z.string().optional(),
@@ -36,29 +34,14 @@ const GoogleAddSettingsSchema = z.object({
 
 export type GoogleAddSettings = z.infer<typeof GoogleAddSettingsSchema>
 
-/** Persist UI calendarIds (or legacy filter string) as comma-separated filter. */
-export function calendarIdsToFilter(settings: {
-  readonly calendarIds?: readonly string[]
-  readonly calendarFilter?: string
-}): string {
-  if (settings.calendarIds !== undefined) {
-    return settings.calendarIds
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0)
-      .join(',')
-  }
-  return settings.calendarFilter ?? ''
-}
-
 export function settingsToBrokerFields(settings: unknown): Omit<GoogleBrokerEntry, 'id' | 'name'> {
   const parsed = GoogleAddSettingsSchema.parse(settings)
   return {
     clientId: parsed.clientId,
     clientSecret: parsed.clientSecret,
-    calendarFilter: calendarIdsToFilter(parsed),
+    calendarFilter: parsed.calendarFilter ?? '',
     fromAddress: parsed.fromAddress ?? '',
     fromName: parsed.fromName ?? '',
-    ...(parsed.calendarIds !== undefined ? { calendarIds: [...parsed.calendarIds] } : {}),
   }
 }
 
@@ -66,7 +49,6 @@ export function brokerEntryToSettings(entry: GoogleBrokerEntry): Record<string, 
   return {
     clientId: entry.clientId,
     clientSecret: entry.clientSecret,
-    calendarIds: [...(entry.calendarIds ?? parseCalendarFilter(entry.calendarFilter))],
     fromAddress: entry.fromAddress,
     fromName: entry.fromName,
   }
@@ -132,28 +114,6 @@ export function migrateLegacyToBrokers(
       : []
 
   return { brokers: [entry], oauthAccounts, didMigrate: true }
-}
-
-/**
- * The stamped calendar ids one broker imports: its own set, or — while the migration has not
- * reached it — the shared setting older versions wrote, so the move never changes what is imported.
- */
-export function calendarIdsOfEntry(
-  entry: Pick<GoogleBrokerEntry, 'calendarIds'> | null,
-  shared: readonly string[],
-): ReadonlySet<string> {
-  return new Set(entry?.calendarIds ?? shared)
-}
-
-export function parseCalendarFilter(raw: string): Set<string> {
-  const trimmed = raw.trim()
-  if (!trimmed) return new Set()
-  return new Set(
-    trimmed
-      .split(',')
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0),
-  )
 }
 
 /** Local calendar id stamped as `brokerId:googleCalendarId`. */
@@ -263,8 +223,7 @@ export class GoogleBrokerRegistry {
   ): GoogleBrokerEntry {
     const fields = settingsToBrokerFields(settings)
     const id = opts.id !== undefined ? this.adoptId(opts.id) : this.allocateId()
-    // A broker made now owns its calendar set from the start: empty, never the shared one.
-    const entry = GoogleBrokerEntrySchema.parse({ id, name, calendarIds: [], ...fields })
+    const entry = GoogleBrokerEntrySchema.parse({ id, name, ...fields })
     this.entries = [...this.entries, entry]
     return entry
   }
@@ -277,8 +236,6 @@ export class GoogleBrokerRegistry {
     const next = GoogleBrokerEntrySchema.parse({
       id: prev.id,
       name: prev.name,
-      // A form that does not carry the calendars leaves them as they were.
-      ...(prev.calendarIds !== undefined ? { calendarIds: prev.calendarIds } : {}),
       ...fields,
     })
     this.entries = this.entries.map((e, i) => (i === idx ? next : e))
@@ -305,8 +262,8 @@ export class GoogleBrokerRegistry {
     return this.entries.filter((e) => this.isConnected(e.id)).length
   }
 
-  toConfig(calendarIds: readonly string[] = []): GoogleServicesConfig {
-    return { brokers: [...this.entries], calendarIds: [...calendarIds] }
+  toConfig(): GoogleServicesConfig {
+    return { brokers: [...this.entries] }
   }
 
   private seedCounterFromEntries(entries: readonly GoogleBrokerEntry[]): void {

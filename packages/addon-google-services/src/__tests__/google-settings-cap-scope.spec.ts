@@ -68,14 +68,10 @@ describe('google broker Setup HTML', () => {
   it('broker schema includes setup-intro + oauth client (no Connect link field)', () => {
     const schema = buildGoogleBrokerSettingsSchema('https://hub.example')
     expect(schema.sections.map((s) => s.id)).toEqual(
-      expect.arrayContaining([
-        'setup-intro',
-        'google-oauth-client',
-        'google-calendars-import',
-        'gmail-send',
-      ]),
+      expect.arrayContaining(['setup-intro', 'google-oauth-client', 'gmail-send']),
     )
     expect(schema.sections.map((s) => s.id)).not.toContain('google-calendar')
+    expect(schema.sections.map((s) => s.id)).not.toContain('google-calendars-import')
     const keys = schema.sections.flatMap((s) =>
       s.fields.map((f) => ('key' in f ? f.key : undefined)),
     )
