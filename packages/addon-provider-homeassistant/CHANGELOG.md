@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.664] - 2026-11-06
+
 ### Changed
 
 - Home Assistant connections are served as instances next to the integrations, so the Brokers section reads them from the shared instances list

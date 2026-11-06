@@ -7,13 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.595] - 2026-11-06
+
 ### Changed
 
 - The Customize tab shows every extension slot a device hosts from the slot table, not from a camera check
 - The Add device modal of an integration that adopts devices and can also scan the network now keeps its full adopt list and adds the network scan above it; a board found by both is listed once, and the modal waits for the scan answer before drawing either.
 - Creating a broker from a picker or the wizard uses the same instance dialog as the function page
 - Broker pickers (Matter commissioning, notification targets, broker create) offer only brokers that are on, configured and working, and keep the chosen one visible with its state.
-
 - Update all nodes now updates the hub first and waits for it to run the new version before touching agents; if the hub step fails the agents are listed as not attempted.
 - The Update all nodes hint now says the hub is updated first, then the agents.
 

@@ -7,12 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.388] - 2026-11-06
+
 ### Changed
 
 - Broker pickers now list brokers from the one instance model
 - Generated broker hooks follow the bus-only broker capability
 - Broker pickers offer only brokers that are on, configured and working, and keep the chosen one visible with its state.
-
 - Generated capability hooks include pipelineAnalytics.getMediaLocationCensus
 
 ## [1.2.387] - 2026-11-05

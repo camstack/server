@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.508] - 2026-11-06
+
 ### Changed
 
 - Customize cardinalities, event shapes, apply authorities and stored link kinds are now one exported list each
@@ -15,7 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A broker listed through another addon's rows can be checked for users with fieldUserFinder
 - A broker-backed service now binds to its broker through one shared primitive (broker link kind, form and users query); removing a broker still in use is refused with a typed error naming its users
 - The integration role `both` is removed; an addon with a connection and device integrations declares the connection as a broker and its integration as `devices`
-
 - pipelineAnalytics.getMediaLocationCensus: stored media rows and bytes per storage location, answered from indexes
 - A stable, append-only migration API (MigrationApiV1) that addon migrations call, so an old migration keeps running after a version-jump upgrade
 - Migrations: ctx.migrationApi, a stable append-only migration API (V1), and runMigrations(catalogue, bindPorts)

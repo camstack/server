@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.159] - 2026-11-06
+
 ### Changed
 
 - Its data migrations now run through the stable migration API, so an old migration keeps working after a version jump

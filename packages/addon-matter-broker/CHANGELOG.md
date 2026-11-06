@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.160] - 2026-11-06
+
 ### Changed
 
 - Matter fabrics are served as instances next to the integrations, so the Brokers section reads them from the shared instances list

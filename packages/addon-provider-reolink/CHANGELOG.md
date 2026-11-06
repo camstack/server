@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.230] - 2026-11-06
+
 ### Changed
 
 - The email-push mailbox is created and read through the SMTP addon's instances

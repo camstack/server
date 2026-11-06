@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.14] - 2026-11-06
+
 ### Changed
 
 - Internal: the registry status type no longer depends on the retired broker row type
