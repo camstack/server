@@ -4603,7 +4603,7 @@
       "props": [
         {
           "name": "width",
-          "type": "'sm' | 'md' | 'lg' | 'xl'",
+          "type": "'sm' | 'md' | 'lg' | 'xl' | 'full'",
           "optional": true,
           "doc": ""
         },

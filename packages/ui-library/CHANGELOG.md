@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Dialogs can fill the whole page with width="full".
+
 ## [1.2.390] - 2026-11-06
 
 ### Changed

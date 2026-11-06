@@ -384,3 +384,30 @@ describe('DialogContent inherited white-space', () => {
     expect(hasUnconditionalClass(getDialog().className, 'whitespace-normal')).toBe(true)
   })
 })
+
+describe('DialogContent width="full"', () => {
+  it('fills the viewport at every breakpoint: no centring, no cap, no radius', () => {
+    render(
+      <Dialog open onOpenChange={() => {}}>
+        <DialogContent width="full" scroll="body">
+          <DialogHeader>
+            <DialogTitle>t</DialogTitle>
+          </DialogHeader>
+          <DialogBody>b</DialogBody>
+        </DialogContent>
+      </Dialog>,
+    )
+    const cls = getDialog().className
+    for (const c of [
+      'w-screen',
+      'h-dvh',
+      'max-w-none',
+      'rounded-none',
+      'md:h-dvh',
+      'md:max-w-none',
+    ]) {
+      expect(cls.split(/\s+/)).toContain(c)
+    }
+    expect(cls.split(/\s+/)).not.toContain('md:h-auto')
+  })
+})

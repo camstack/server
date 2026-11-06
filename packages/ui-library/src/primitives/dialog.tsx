@@ -114,6 +114,8 @@ const contentVariants = cva(
         lg: 'max-w-lg',
         /** Wide editors (scripts, long forms). */
         xl: 'max-w-4xl',
+        /** Full page: the dialog fills the viewport (picker modals over a long list). */
+        full: 'max-w-none',
       },
       /**
        * WHICH box scrolls when the content is taller than the height cap.
@@ -227,13 +229,23 @@ const contentVariants = cva(
         class:
           'h-[calc(100dvh-2rem-2*max(env(safe-area-inset-top),env(safe-area-inset-bottom)))] md:h-auto',
       },
+      /*
+       * `width="full"` is a full-page dialog on every viewport and either
+       * placement: it is declared LAST so it wins over the placement and
+       * scroll classes (twMerge keeps the later conflicting class).
+       */
+      {
+        width: 'full',
+        class:
+          'left-0 top-0 right-auto bottom-auto translate-x-0 translate-y-0 w-screen max-w-none h-dvh max-h-none rounded-none border-0 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(1rem+env(safe-area-inset-bottom))] md:left-0 md:top-0 md:translate-x-0 md:translate-y-0 md:w-screen md:max-w-none md:h-dvh md:max-h-none md:rounded-none md:pb-[calc(1rem+env(safe-area-inset-bottom))]',
+      },
     ],
     defaultVariants: { width: 'md', placement: 'center', scroll: 'content' },
   },
 )
 
 export interface DialogContentProps extends DialogHTMLAttributes<HTMLDialogElement> {
-  width?: 'sm' | 'md' | 'lg' | 'xl'
+  width?: 'sm' | 'md' | 'lg' | 'xl' | 'full'
   scroll?: 'content' | 'body'
   placement?: 'center' | 'sheet-on-mobile'
 }
