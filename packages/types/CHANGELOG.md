@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.512] - 2026-11-06
+
 ### Changed
 
 - Pet fountain: the tank is also a Water consumable derived from its level; the drink counters and Clear daily count are removed

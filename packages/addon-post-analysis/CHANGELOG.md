@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.674] - 2026-11-06
+
 ### Changed
 
 - A supply that reports only a fill level now raises low at 10% or less and empty at 0

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.786] - 2026-11-06
+
 ### Changed
 
 - Pet fountain tRPC routes lose the drink counters and the Clear daily count call

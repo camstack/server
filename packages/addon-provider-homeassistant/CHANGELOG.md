@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.667] - 2026-11-06
+
 ### Changed
 
 - Removed the broker-select field type; every broker link is now an instance-select field on the one link primitive

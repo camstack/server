@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.47] - 2026-11-06
+
 ### Changed
 
 - Reads the instance switch through the shared isInstanceEnabled helper; behaviour unchanged

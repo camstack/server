@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.599] - 2026-11-06
+
 ### Changed
 
 - Fountain wizard no longer asks for the drink counters; a consumables list the card cannot edit shows Custom instead of Unreadable
