@@ -7,6 +7,9 @@
 import {
   defineEntryKind,
   entryBody,
+  type IConnectionTestProvider,
+  type IntegrationTestConnectionResult,
+  REDACTED_SECRET,
   type RecordsAccess,
   RecordIntegrationInstances,
 } from '@camstack/types'
@@ -41,21 +44,53 @@ export function credentialsFromBody(body: WyzeConnectionBody): WyzeCredentials |
 
 export function buildWyzeInstances(
   records: Pick<RecordsAccess, 'kind' | 'owner'>,
-  deps: { readonly onChanged: () => Promise<void> },
+  deps: {
+    readonly onChanged: () => Promise<void>
+    readonly tester: Pick<IConnectionTestProvider, 'testSettings'>
+  },
 ): RecordIntegrationInstances<WyzeConnectionBody> {
+  const handle = records.kind(wyzeConnectionsEntryKind)
   return new RecordIntegrationInstances<WyzeConnectionBody>(records, wyzeConnectionsEntryKind, {
     description: {
       role: 'devices',
       discovery: { mode: 'account', scopedToInstance: true },
       instanceMode: 'multiple',
       kind: 'account',
-      canTest: false,
+      canTest: true,
     },
     formSchema: () => buildSettingsSchema(),
     initialBody: (name): WyzeConnectionBody => ({ name }),
     configured: (body) =>
       (body.email ?? '').length > 0 && body.password !== undefined && body.apiKey !== undefined,
     onChanged: () => deps.onChanged(),
+    test: async ({ id, values }): Promise<IntegrationTestConnectionResult> => {
+      // The stored account under the edited form; a saved password or API key is never retyped,
+      // the form hands back its redacted view, so the keychain value stands in.
+      const stored = id === null ? null : ((await handle.getResolved(id))?.data ?? null)
+      const retyped = (key: 'password' | 'apiKey'): string => {
+        const typed = values[key]
+        return typeof typed === 'string' && typed !== '' && typed !== REDACTED_SECRET
+          ? typed
+          : (stored?.[key] ?? '')
+      }
+      const outcome = await deps.tester.testSettings({
+        settings: {
+          ...stored,
+          ...values,
+          password: retyped('password'),
+          apiKey: retyped('apiKey'),
+        },
+      })
+      if (outcome.outcome === 'validated') {
+        return {
+          success: true,
+          status: 'validated',
+          ...(outcome.latencyMs !== undefined ? { latencyMs: outcome.latencyMs } : {}),
+          ...(outcome.detail !== undefined ? { detail: outcome.detail } : {}),
+        }
+      }
+      return { success: false, status: outcome.outcome, error: outcome.error }
+    },
   })
 }
 

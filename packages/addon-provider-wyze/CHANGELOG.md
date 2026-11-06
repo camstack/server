@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Switching the integration on or off now applies at once and a disabled integration stays disabled after the update
+- Test on a Wyze integration signs in with the account, API key and Key ID, on a saved integration or an unsaved form.
 
 ## [0.2.165] - 2026-11-06
 

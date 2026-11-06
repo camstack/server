@@ -132,6 +132,7 @@ export class WyzeProviderAddon extends BaseDeviceProvider {
     )
     this.instances = buildWyzeInstances(records, {
       onChanged: () => this.reconcileIntegrations(),
+      tester: this.buildConnectionTestProvider(),
     })
 
     this.clients = new WyzeClientRegistry({
