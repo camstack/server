@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- An instance-select field can word its empty choice (noneLabel)
+
 ## [1.2.509] - 2026-11-06
 
 ### Changed

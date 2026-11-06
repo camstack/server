@@ -79,6 +79,16 @@ describe('the instance link primitive', () => {
     await expect(assertInstanceUnused('b_9', [finder])).resolves.toBeUndefined()
   })
 
+  it('linkFieldDescriptor carries the none label of an optional link', () => {
+    expect(
+      linkFieldDescriptor(
+        'k',
+        { cap: 'smtp-provider' },
+        { label: 'L', noneLabel: 'Default relay' },
+      ),
+    ).toMatchObject({ noneLabel: 'Default relay' })
+  })
+
   it('linkFieldDescriptor builds a required instance-select', () => {
     expect(
       linkFieldDescriptor('brokerId', { cap: 'broker', kind: 'mqtt' }, { label: 'Broker' }),

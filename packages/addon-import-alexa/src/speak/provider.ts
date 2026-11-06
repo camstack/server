@@ -11,6 +11,7 @@ import {
   type DiscoveredTarget,
   type INotificationOutputProvider,
   type IScopedLogger,
+  linkFieldDescriptor,
   type Notification,
   type ProbeTargetConfigResult,
   type SendResult,
@@ -18,7 +19,7 @@ import {
   type TargetKind,
 } from '@camstack/types'
 import {
-  ALEXA_BROKER_KIND,
+  ALEXA_ACCOUNT_LINK,
   ALEXA_SPEAK_ADDON_ID,
   ALEXA_SPEAK_ICON_URL,
   ALEXA_SPEAK_KIND,
@@ -138,11 +139,8 @@ export function echoOptionLabel(device: EchoDevice): string {
 function configSchema(): ConfigUISchema {
   const accountFields: ConfigField[] = [
     {
-      type: 'broker-select',
-      key: 'brokerId',
-      label: 'Amazon account',
+      ...linkFieldDescriptor('brokerId', ALEXA_ACCOUNT_LINK, { label: 'Amazon account' }),
       labelKey: 'import-alexa:echoTarget.s_echo.brokerId.label',
-      brokerKind: ALEXA_BROKER_KIND,
     },
     {
       type: 'select',

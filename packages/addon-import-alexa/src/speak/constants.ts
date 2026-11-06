@@ -1,9 +1,14 @@
+import type { LinkTarget } from '@camstack/types'
+
 /** Echo speech limits and the worker restart bound (same window as CrashSupervisor). */
 
 export const ALEXA_SPEAK_ADDON_ID = 'import-alexa'
 export const ALEXA_SPEAK_KIND = 'alexa-echo'
 /** The kind of the Amazon-account broker the Echoes are read from. */
 export const ALEXA_BROKER_KIND = 'alexa'
+
+/** The Amazon account an Echo target speaks through. */
+export const ALEXA_ACCOUNT_LINK: LinkTarget = { cap: 'broker', kind: ALEXA_BROKER_KIND }
 
 /** What an Echo will read in one turn. Longer text is cut, and the cut is reported. */
 export const SPEECH_MAX_CHARS = 450

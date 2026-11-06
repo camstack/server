@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Echo notification targets pick their Amazon account through the shared instance picker
+
 ## [0.2.190] - 2026-11-06
 
 ### Changed

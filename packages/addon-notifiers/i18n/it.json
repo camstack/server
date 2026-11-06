@@ -126,7 +126,8 @@
     "s_email": {
       "smtpInstanceId": {
         "label": "Relay (facoltativo)",
-        "description": "Fissa questo target a un relay del provider. Lascia il relay predefinito per usare il primo configurato."
+        "description": "Fissa questo target a un relay del provider. Lascia il relay predefinito per usare il primo configurato.",
+        "none": "Relay predefinito"
       }
     }
   }

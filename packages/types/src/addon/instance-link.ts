@@ -28,6 +28,8 @@ type FormSections = ConfigUISchema['sections']
 export interface LinkLabels {
   readonly label: string
   readonly description?: string
+  /** The words of the empty choice of an optional link. */
+  readonly noneLabel?: string
 }
 
 /** The `instance-select` field of a link, keyed like the body field it fills. */
@@ -42,6 +44,7 @@ export function linkFieldDescriptor(
     label: labels.label,
     ...(labels.description !== undefined ? { description: labels.description } : {}),
     required: true,
+    ...(labels.noneLabel !== undefined ? { noneLabel: labels.noneLabel } : {}),
     functionCap: target.cap,
     ...(target.kind !== undefined ? { kind: target.kind } : {}),
   }

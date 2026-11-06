@@ -34,6 +34,7 @@ import {
   errMsg,
   type INotificationOutputProvider,
   type IScopedLogger,
+  linkFieldDescriptor,
   type Notification,
   type NotificationActionIcon,
   type PreparedNotification,
@@ -68,13 +69,16 @@ function haConfigSchema(): ConfigUISchema {
         titleKey: 'provider-homeassistant:haConfig.s_connection.title',
         fields: [
           {
-            type: 'broker-select',
-            key: 'brokerId',
-            label: 'Broker',
+            ...linkFieldDescriptor(
+              'brokerId',
+              { cap: 'broker', kind: HA_BROKER_KIND },
+              {
+                label: 'Broker',
+                description: 'The Home Assistant connection the notification goes through.',
+              },
+            ),
             labelKey: 'provider-homeassistant:haConfig.s_connection.brokerId.label',
-            description: 'The Home Assistant connection the notification goes through.',
             descriptionKey: 'provider-homeassistant:haConfig.s_connection.brokerId.description',
-            brokerKind: HA_BROKER_KIND,
           },
           {
             type: 'select',

@@ -739,6 +739,9 @@ export interface ConfigInstanceSelectField extends ConfigFieldBase {
   functionCap: string
   /** One kind of that cap (`mqtt`, `home-assistant`); absent lists every kind. */
   kind?: string
+  /** The words of the empty choice of an optional link ("Default relay"); absent shows "Select". */
+  noneLabel?: string
+  noneLabelKey?: string
 }
 
 /**

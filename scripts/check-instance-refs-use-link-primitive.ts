@@ -59,6 +59,14 @@ export const NOT_AN_INSTANCE_REF_SITES: ReadonlyMap<string, string> = new Map([
     'addon-provider-reolink:email-push-bridge.ts:brokerId',
     'an event-schema field and private plumbing of the single default mailbox, not a stored link',
   ],
+  [
+    'addon-import-alexa:alexa-login-routes.ts:brokerId',
+    'a route body parameter and the id the commit returns, not a stored link',
+  ],
+  [
+    'addon-provider-homeassistant:ha-device-source.ts:brokerId',
+    'the provenance an adoption writes on the device it created, never picked by an operator',
+  ],
 ])
 /** A zod field (`brokerId: z.`) or a form field descriptor (`key: 'brokerId'`). */
 const REF_DECL_RE = new RegExp(

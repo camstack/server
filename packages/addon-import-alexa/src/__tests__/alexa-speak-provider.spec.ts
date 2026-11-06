@@ -254,9 +254,9 @@ describe('the Alexa target kind', () => {
     expect(kind?.iconMediaType).toBe('image/svg+xml')
   })
 
-  it('picks the Amazon account with a broker-select, whatever the number of accounts', () => {
+  it('picks the Amazon account with an instance-select over the alexa broker kind', () => {
     const account = fieldsOf().find((field) => 'key' in field && field.key === 'brokerId')
-    expect(account).toMatchObject({ type: 'broker-select', brokerKind: 'alexa' })
+    expect(account).toMatchObject({ type: 'instance-select', functionCap: 'broker', kind: 'alexa' })
   })
 
   it('loads the Echoes from the chosen account instead of a baked-in list', () => {

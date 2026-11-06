@@ -4,15 +4,8 @@
     "addon-google-services:google-broker-registry.ts:calendarIds",
     "addon-google-services:google-broker-settings-schema.ts:calendarIds",
     "addon-google-services:google-types.ts:calendarIds",
-    "addon-import-alexa:alexa-login-routes.ts:brokerId",
-    "addon-import-alexa:config.ts:brokerId",
-    "addon-import-alexa:speak/provider.ts:brokerId",
     "addon-provider-homeassistant:ha-broker-registry.ts:calendarIds",
     "addon-provider-homeassistant:ha-broker-settings-schema.ts:calendarIds",
-    "addon-provider-homeassistant:ha-device-source.ts:brokerId",
-    "addon-provider-homeassistant:ha-notification-output.ts:brokerId",
-    "broker-select:packages/addon-import-alexa/src/speak/provider.ts",
-    "broker-select:packages/addon-provider-homeassistant/src/ha-notification-output.ts",
     "broker-select:packages/types/src/addon/broker-link.ts",
     "broker-select:packages/types/src/interfaces/config-ui.ts"
   ]

@@ -57,6 +57,17 @@ describe('instance-select field', () => {
     expect(onChange).toHaveBeenCalledWith('brokerId', 'good')
   })
 
+  it('words the empty choice of an optional link with the field noneLabel', () => {
+    render(
+      <FormField
+        field={{ ...FIELD, noneLabel: 'Default relay' }}
+        values={{ brokerId: '' }}
+        onChange={vi.fn()}
+      />,
+    )
+    expect(screen.getAllByRole('option').map((o) => o.textContent)).toContain('Default relay')
+  })
+
   it('keeps the chosen instance visible even when it is not usable', () => {
     render(<FormField field={FIELD} values={{ brokerId: 'bad' }} onChange={vi.fn()} />)
     expect(screen.getAllByRole('option').map((o) => o.textContent)).toContain('name-bad')

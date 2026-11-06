@@ -126,7 +126,8 @@
     "s_email": {
       "smtpInstanceId": {
         "label": "Relay (optional)",
-        "description": "Pin this target to one relay of the provider. Leave on the default relay to use the first configured one."
+        "description": "Pin this target to one relay of the provider. Leave on the default relay to use the first configured one.",
+        "none": "Default relay"
       }
     }
   }

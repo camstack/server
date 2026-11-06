@@ -15,6 +15,7 @@ describe('email descriptor relay pin', () => {
       type: 'instance-select',
       functionCap: 'smtp-provider',
       required: false,
+      noneLabel: 'Default relay',
     })
   })
 })

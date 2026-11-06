@@ -40,7 +40,9 @@ function PlainInstanceSelect({
           value: '',
           label: query.isLoading
             ? t('uiLibrary.configFormField.loadingOptions', 'Loading options…')
-            : t('uiLibrary.configFormField.select', '— Select —'),
+            : field.noneLabel !== undefined
+              ? t(field.noneLabelKey ?? 'uiLibrary.configFormField.select', field.noneLabel)
+              : t('uiLibrary.configFormField.select', '— Select —'),
         },
         ...rows.map((row) => ({ value: row.id, label: row.name })),
       ]}
@@ -68,6 +70,7 @@ export function ConfigInstanceSelectControl({
       <Picker
         functionCap={field.functionCap}
         {...(field.kind !== undefined ? { kind: field.kind } : {})}
+        {...(field.noneLabel !== undefined ? { noneLabel: field.noneLabel } : {})}
         value={current === '' ? null : current}
         onChange={(instanceId) => onChange(instanceId ?? '')}
       />

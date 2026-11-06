@@ -58,7 +58,7 @@ describe('check-instance-refs-use-link-primitive', () => {
   })
 
   it('rule 2 exempts a named non-link site, and only that file and key', () => {
-    expect(NOT_AN_INSTANCE_REF_SITES.size).toBe(4)
+    expect(NOT_AN_INSTANCE_REF_SITES.size).toBe(6)
     const body = `x = z.object({ accountId: z.string() })`
     expect(
       siteViolations([file('packages/addon-cloudflare/src/tunnel/cloudflare-actions.ts', body)]),

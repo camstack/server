@@ -1,6 +1,7 @@
 import { z } from 'zod'
-import type { ConfigUISchema } from '@camstack/types'
+import { type ConfigUISchema, linkField } from '@camstack/types'
 import type { AlexaCredentials } from './alexa-client.js'
+import { ALEXA_ACCOUNT_LINK } from './speak/constants.js'
 
 /**
  * Alexa account connection settings for ONE broker (= one Amazon account).
@@ -80,7 +81,7 @@ export const alexaEchoTargetSchema = z.object({
   name: z.string(),
   enabled: z.boolean(),
   /** The broker (Amazon account) the Echo belongs to; '' until one is chosen. */
-  brokerId: z.string().default(''),
+  brokerId: linkField(ALEXA_ACCOUNT_LINK).default(''),
   echoId: z.string(),
   respectDnd: z.boolean(),
 })

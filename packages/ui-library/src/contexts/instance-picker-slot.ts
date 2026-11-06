@@ -13,6 +13,8 @@ export interface InstancePickerSlotProps {
   readonly functionCap: string
   /** One kind of that cap; absent lists every kind. */
   readonly kind?: string
+  /** The words of the empty choice, when the link is optional. */
+  readonly noneLabel?: string
   readonly value: string | null
   readonly onChange: (instanceId: string | null) => void
 }

@@ -8,11 +8,12 @@ const fields = homeassistantTargetKind('provider-homeassistant').configSchema.se
 )
 
 describe('the homeassistant target schema', () => {
-  it('asks for the broker first, as a broker-select of the Home Assistant kind', () => {
+  it('asks for the broker first, as an instance-select of the Home Assistant broker kind', () => {
     expect(fields[0]).toMatchObject({
-      type: 'broker-select',
+      type: 'instance-select',
       key: 'brokerId',
-      brokerKind: HA_BROKER_KIND,
+      functionCap: 'broker',
+      kind: HA_BROKER_KIND,
     })
   })
 
