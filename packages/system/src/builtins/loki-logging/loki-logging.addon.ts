@@ -33,6 +33,7 @@ import {
   RecordIntegrationInstances,
   RevConflictError,
   bareAddonId,
+  isInstanceEnabled,
   isSameAddonId,
 } from '@camstack/types'
 import type { LokiConfig } from './loki-destination.js'
@@ -504,7 +505,7 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
     // on the record (D996, `setInstanceEnabled`); the registry toggle (D777) is no longer the
     // operator's switch and is left on.
     return {
-      enabled: body.enabled !== false,
+      enabled: isInstanceEnabled(body),
       url: body.url,
       job: body.job,
       node: this.ctx.kernel.localNodeId ?? 'hub',

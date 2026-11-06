@@ -1,4 +1,4 @@
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger, isInstanceEnabled } from '@camstack/types'
 import {
   MatterIntegrationManager,
   type MatterBrokerInfo,
@@ -101,7 +101,7 @@ export class MatterBrokerRegistry {
   async restore(entries: readonly MatterBrokerEntry[]): Promise<void> {
     for (const entry of entries) this.#seedCounter(entry.id)
     for (const entry of entries) {
-      if (entry.enabled === false) continue
+      if (!isInstanceEnabled(entry)) continue
       try {
         await this.#startManager(entry)
       } catch (err: unknown) {

@@ -36,6 +36,17 @@ export type InstanceBody = Record<string, unknown> & {
   readonly enabled?: boolean | undefined
 }
 
+/**
+ * The ONE reader of an instance's switch (D996): an absent field means on, so a row written
+ * before the field existed needs no migration. Every consumer of an instance body asks this.
+ */
+export function isInstanceEnabled(body: { readonly enabled?: boolean | undefined }): boolean {
+  return body.enabled !== false
+}
+
+/** The body key of the switch; only {@link RecordIntegrationInstances.setInstanceEnabled} writes it. */
+const SWITCH_KEY = 'enabled'
+
 /** What the instance went through when `onChanged` runs. */
 export type InstanceChange = 'created' | 'updated' | 'enabled' | 'deleted'
 
@@ -173,7 +184,7 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
         : {
             id,
             body: record.data,
-            enabled: record.data.enabled !== false,
+            enabled: isInstanceEnabled(record.data),
             secrets: 'resolved',
           }
     } catch (err: unknown) {
@@ -188,7 +199,7 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
       return {
         id,
         body: open as TBody,
-        enabled: stored.data.enabled !== false,
+        enabled: isInstanceEnabled(stored.data),
         secrets: 'unavailable',
       }
     }
@@ -225,7 +236,7 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
       id: record.id,
       name: typeof rawName === 'string' ? rawName : record.id,
       configured: this.hooks.configured(record.data),
-      ...(this.registryOwnsEnabled ? {} : { enabled: record.data.enabled !== false }),
+      ...(this.registryOwnsEnabled ? {} : { enabled: isInstanceEnabled(record.data) }),
       formValues: shown,
       ...(kind !== undefined ? { kind } : {}),
       ...(health?.status !== undefined ? { status: health.status } : {}),
@@ -302,6 +313,9 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
     const patch: Record<string, unknown> = {}
     for (const [key, value] of Object.entries(values)) {
       if (value === undefined) continue
+      // The switch is a row control: the form shows the whole body back, a stale copy of it
+      // must never move it (D62, D996).
+      if (key === SWITCH_KEY) continue
       if (this.secretMaps.has(key)) {
         const entries = secretMapPatch(value)
         if (entries !== null) patch[key] = entries
@@ -332,7 +346,7 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
         `instance "${id}": the integrations registry owns the on/off switch of this addon; set it with integrations.update`,
       )
     }
-    await this.handle.patch(id, { enabled })
+    await this.handle.patch(id, { [SWITCH_KEY]: enabled })
     await this.hooks.onChanged?.(id, 'enabled')
     return { ok: true as const }
   }

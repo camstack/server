@@ -32,6 +32,7 @@ import {
   notificationOutputCapability,
   VENDOR_LOGIN_PROXY_PREFIX,
   VendorLoginProxy,
+  isInstanceEnabled,
 } from '@camstack/types'
 import {
   buildConnectionFormSchema,
@@ -350,7 +351,7 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
     }
     const configured =
       entry.connection.cookie.length > 0 || entry.connection.refreshToken.length > 0
-    if (entry.enabled === false || !configured) {
+    if (!isInstanceEnabled(entry) || !configured) {
       await reg.removeEntry(id)
       void this.speak?.brokersChanged()
       return
@@ -460,7 +461,7 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
     }
 
     for (const entry of persisted) {
-      if (entry.enabled === false) continue
+      if (!isInstanceEnabled(entry)) continue
       if (entry.id && liveIds.has(entry.id)) {
         if (sameConnection(entry.connection, reg.getConnection(entry.id))) continue
         try {

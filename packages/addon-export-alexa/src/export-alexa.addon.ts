@@ -48,6 +48,7 @@ import {
   type RecordKindHandle,
   RecordIntegrationInstances,
   RevConflictError,
+  isInstanceEnabled,
 } from '@camstack/types'
 
 import { createHubAccessGate } from './access/hub-access-source.js'
@@ -260,7 +261,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       }),
       mintId: () => `alexa-skill-${randomUUID().slice(0, 8)}`,
       health: (body, id) => {
-        if (body.enabled === false) return { status: { state: 'off', label: 'Off' } }
+        if (!isInstanceEnabled(body)) return { status: { state: 'off', label: 'Off' } }
         const runtime = this.runtimes.get(id)
         if (runtime === undefined) return { status: { state: 'unknown' } }
         const linked = runtime.ledgers().linkedAccounts.length

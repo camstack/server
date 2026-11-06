@@ -184,6 +184,19 @@ describe('RecordIntegrationInstances', () => {
     expect((await instances.getInstance({ id: 'int_1' }))?.enabled).toBe(true)
   })
 
+  it('updateInstance and createInstance never write the switch: only setInstanceEnabled does', async () => {
+    const { instances } = await setup()
+    await instances.createInstance({ id: 'int_1', name: 'A', values: { enabled: false } })
+    expect((await instances.getInstance({ id: 'int_1' }))?.enabled).toBe(true)
+    await instances.setInstanceEnabled({ id: 'int_1', enabled: false })
+    // The form hands back the whole body it was shown, `enabled` included; a stale copy of it
+    // must not flip a switch the operator moved meanwhile.
+    await instances.updateInstance({ id: 'int_1', values: { url: 'http://b', enabled: true } })
+    const after = await instances.getInstance({ id: 'int_1' })
+    expect(after?.enabled).toBe(false)
+    expect(after?.formValues).toMatchObject({ url: 'http://b' })
+  })
+
   it('a row written without the field reads as enabled', async () => {
     const { world, instances } = await setup()
     await world.records

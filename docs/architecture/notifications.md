@@ -2624,6 +2624,8 @@ where they were typed:
 - **Only an admin reaches a target through the cap.** `notificationOutput`
   `listTargets` / `getTarget` / `discoverTargets` / `send` / `testTarget` /
   `upsertTarget` / `deleteTarget` / `setTargetEnabled` are `auth: 'admin'`,
+  (a target is not an integration-instance record, so `setTargetEnabled` is its own switch until it
+  becomes one; `check-one-row-switch` baselines it),
   and so is every `settingsStore` method — the targets live verbatim in
   `notifiers:notification-targets`, and that door has no idea who is asking.
   A non-admin manages ITS OWN targets through the owner-checked `nc.*` bridge

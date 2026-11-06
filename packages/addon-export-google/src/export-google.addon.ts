@@ -61,6 +61,7 @@ import {
   type ProviderRegistration,
   RecordIntegrationInstances,
   RevConflictError,
+  isInstanceEnabled,
 } from '@camstack/types'
 
 import { ActionSceneExports } from './action-scenes.js'
@@ -161,7 +162,7 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
       initialBody: (name): GoogleHomeBody => ({ name }),
       mintId: () => `google-home-${randomUUID().slice(0, 8)}`,
       health: (body, id) => {
-        if (body.enabled === false) return { status: { state: 'off', label: 'Off' } }
+        if (!isInstanceEnabled(body)) return { status: { state: 'off', label: 'Off' } }
         const linked = registry.peek(id)?.linkedAccounts.length
         if (linked === undefined) return { status: { state: 'unknown' } }
         return linked > 0
@@ -375,7 +376,7 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
         (await this.requireRegistry().list()).map((row) => ({
           instanceId: row.id,
           name: row.body.name,
-          enabled: row.body.enabled !== false,
+          enabled: isInstanceEnabled(row.body),
           kind: 'google-home',
         })),
       listSupportedDeviceKinds: async ({ instanceId }) => {
@@ -521,7 +522,7 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
     if (descriptors.length === 0) return null
 
     const registry = this.requireRegistry()
-    const rows = (await registry.list()).filter((row) => row.body.enabled !== false)
+    const rows = (await registry.list()).filter((row) => isInstanceEnabled(row.body))
     const sections: ConfigSectionWithValues[] = []
     for (const row of rows) {
       const instance = await registry.get(row.id)

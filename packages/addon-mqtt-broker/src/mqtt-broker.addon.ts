@@ -53,6 +53,7 @@ import {
   type ProviderRegistration,
   type RecordKindHandle,
   resolveSecretMarkers,
+  isInstanceEnabled,
 } from '@camstack/types'
 
 type BrokerStatus = MqttBrokerLiveStatus
@@ -443,7 +444,7 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
   } {
     const external = this.activeExternalBrokers.find((b) => b.id === id)
     if (external) {
-      if (external.enabled === false) {
+      if (!isInstanceEnabled(external)) {
         throw new Error(`mqtt-broker: broker '${id}' is switched off`)
       }
       // Throws for an enc:v1 leftover that cannot be decrypted — never
@@ -731,7 +732,7 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
   private async reconcileOnboardRuntimes(): Promise<void> {
     const desiredEntries = this.activeExternalBrokers
       .filter(hasOnboard)
-      .filter((b) => b.enabled !== false)
+      .filter((b) => isInstanceEnabled(b))
     const desired = desiredEntries.map((b) => ({ id: b.id, port: b.onboard.port }))
     const runningIds = [...this.onboardRuntimes.keys()]
     const portById = new Map<string, number>()
@@ -949,7 +950,7 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
     // status comes from the runtime map, not the external probe loop.
     const out: { id: string; url: string; username?: string; password?: string }[] = []
     for (const b of this.activeExternalBrokers) {
-      if (b.onboard !== undefined || b.enabled === false) continue
+      if (b.onboard !== undefined || !isInstanceEnabled(b)) continue
       let password: string | undefined
       try {
         password = this.storedPassword(b.password)

@@ -19,6 +19,7 @@ import {
   REDACTED_SECRET,
   RecordIntegrationInstances,
   type RecordsAccess,
+  isInstanceEnabled,
 } from '@camstack/types'
 import { type MqttBrokerBody, mqttBrokersEntryKind } from './broker-record-kinds.js'
 import { mqttBrokerUsers } from './mqtt-broker-users.js'
@@ -62,7 +63,7 @@ export function mqttHealthOf(
   live: MqttLiveState,
   now: number,
 ): { readonly status: IntegrationInstanceStatus; readonly lastCheckedAt?: number } {
-  if (body.enabled === false) return { status: { state: 'off', label: 'Switched off' } }
+  if (!isInstanceEnabled(body)) return { status: { state: 'off', label: 'Switched off' } }
   if (body.onboard !== undefined) {
     return live.onboard === null
       ? { status: { state: 'error', label: 'Not listening' }, lastCheckedAt: now }
