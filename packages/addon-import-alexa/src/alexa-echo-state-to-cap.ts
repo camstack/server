@@ -29,6 +29,7 @@ export function emptyEchoStatus(state: MediaPlayerState, now: number): MediaPlay
     duration: null,
     shuffle: null,
     repeat: null,
+    positionUpdatedAt: null,
     lastChangedAt: now,
   }
 }
@@ -73,12 +74,26 @@ function repeatOf(value: string | null | undefined): MediaPlayerRepeat | null {
   return null
 }
 
+/** The streaming service playing: its display name, else its raw name; empty when Amazon names none. */
+function sourceOf(info: PlayerInfo): string {
+  return nonEmpty(info.provider?.providerDisplayName) ?? nonEmpty(info.provider?.providerName) ?? ''
+}
+
+/**
+ * What is playing. Amazon puts the title in `infoText.title`, but a radio station
+ * often names itself only in the first sub text, and some players send artwork and
+ * a provider with no text at all: each still counts as now playing. Nothing at all
+ * (no text, no artwork) is null.
+ */
 function currentMediaOf(info: PlayerInfo): MediaPlayerStatus['currentMedia'] {
-  const title = nonEmpty(info.infoText?.title)
-  if (title === null) return null
-  const artist = nonEmpty(info.infoText?.subText1)
-  const album = nonEmpty(info.infoText?.subText2)
+  const first = nonEmpty(info.infoText?.title)
+  const second = nonEmpty(info.infoText?.subText1)
   const imageUrl = nonEmpty(info.mainArt?.url)
+  const album = nonEmpty(info.infoText?.subText2)
+  const title = first ?? second ?? (imageUrl !== null ? sourceOf(info) : '')
+  if (first === null && second === null && imageUrl === null) return null
+  // With a real title the first sub text is the artist; promoted to the title it is not repeated.
+  const artist = first !== null ? second : null
   return {
     type: 'unknown',
     title,
@@ -91,12 +106,15 @@ function currentMediaOf(info: PlayerInfo): MediaPlayerStatus['currentMedia'] {
 export function mapPlayerInfoToStatus(info: PlayerInfo, input: EchoStatusInput): MediaPlayerStatus {
   if (!input.online) return emptyEchoStatus('off', input.now)
   const length = secondsToMs(info.progress?.mediaLength)
+  const position = secondsToMs(info.progress?.mediaProgress)
   return {
     ...emptyEchoStatus(mapEchoPlaybackState(info.state), input.now),
     volumeLevel: percent(info.volume?.volume),
     isMuted: typeof info.volume?.muted === 'boolean' ? info.volume.muted : null,
+    source: sourceOf(info),
     currentMedia: currentMediaOf(info),
-    position: secondsToMs(info.progress?.mediaProgress),
+    position,
+    positionUpdatedAt: position === null ? null : input.now,
     // A live stream reports a length of 0: no duration, not a zero-length track.
     duration: length === 0 ? null : length,
     shuffle: shuffleOf(info.transport?.shuffle),

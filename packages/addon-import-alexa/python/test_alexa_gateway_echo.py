@@ -134,6 +134,20 @@ class EchoMediaTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             run(gateway.np_command("s1", "rewind"))
 
+    def test_np_command_shuffle_and_repeat_post_the_boolean_string_bodies(self) -> None:
+        gateway, calls = install_fake()
+        for name in ("shuffle-on", "shuffle-off", "repeat-on", "repeat-off"):
+            run(gateway.np_command("s1", name))
+        self.assertEqual(
+            [data for _, data in calls["media"]],
+            [
+                {"type": "ShuffleCommand", "shuffle": "true"},
+                {"type": "ShuffleCommand", "shuffle": "false"},
+                {"type": "RepeatCommand", "repeat": "true"},
+                {"type": "RepeatCommand", "repeat": "false"},
+            ],
+        )
+
     def test_set_volume_posts_the_volume_behaviour_clamped(self) -> None:
         gateway, calls = install_fake()
         run(gateway.set_volume("s1", 140))

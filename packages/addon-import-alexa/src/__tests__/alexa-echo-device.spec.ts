@@ -1,4 +1,4 @@
-import { DeviceType } from '@camstack/types'
+import { DeviceFeature, DeviceType } from '@camstack/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { alexaEchoSessions, type EchoSession } from '../alexa-echo-sessions.js'
 import { AlexaEchoDevice } from '../devices/alexa-echo-device.js'
@@ -212,7 +212,37 @@ describe('AlexaEchoDevice', () => {
     await player.setVolume({ deviceId: 7, volumeLevel: 41.6 })
     expect(s.setVolume).toHaveBeenCalledWith('S1', 42, expect.any(Number))
     await expect(player.seek({ deviceId: 7, position: 1 })).rejects.toThrow('not available')
-    expect(device.features).toHaveLength(3)
+    expect(device.features).toEqual([
+      DeviceFeature.MediaPlayerVolume,
+      DeviceFeature.MediaPlayerNext,
+      DeviceFeature.MediaPlayerPrevious,
+      DeviceFeature.MediaPlayerShuffle,
+      DeviceFeature.MediaPlayerRepeat,
+    ])
+    await device.removeDevice()
+  })
+
+  it('shuffle and repeat go to Amazon as on/off commands; repeat one is refused by name', async () => {
+    const s = session()
+    alexaEchoSessions.setResolver(() => s)
+    const { device, providers } = await build()
+    const player = providers.get('media-player') as {
+      setShuffle(i: { deviceId: number; shuffle: boolean }): Promise<void>
+      setRepeat(i: { deviceId: number; repeat: 'off' | 'all' | 'one' }): Promise<void>
+    }
+    await player.setShuffle({ deviceId: 7, shuffle: true })
+    expect(s.npCommand).toHaveBeenLastCalledWith('S1', 'shuffle-on', expect.any(Number))
+    await player.setShuffle({ deviceId: 7, shuffle: false })
+    expect(s.npCommand).toHaveBeenLastCalledWith('S1', 'shuffle-off', expect.any(Number))
+    await player.setRepeat({ deviceId: 7, repeat: 'all' })
+    expect(s.npCommand).toHaveBeenLastCalledWith('S1', 'repeat-on', expect.any(Number))
+    await player.setRepeat({ deviceId: 7, repeat: 'off' })
+    expect(s.npCommand).toHaveBeenLastCalledWith('S1', 'repeat-off', expect.any(Number))
+    s.npCommand.mockClear()
+    await expect(player.setRepeat({ deviceId: 7, repeat: 'one' })).rejects.toThrow(
+      'repeat one is not available on an Echo',
+    )
+    expect(s.npCommand).not.toHaveBeenCalled()
     await device.removeDevice()
   })
 

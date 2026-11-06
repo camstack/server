@@ -15,12 +15,17 @@ from alexa_sequences import EchoTarget, build_volume_node
 REGIONS = ("NA", "EU", "FE")
 REGION_LOCALE = {"NA": "en-US", "EU": "en-GB", "FE": "ja-JP"}
 
-# The `/api/np/command` bodies. Only these four are offered.
+# The `/api/np/command` bodies. Amazon's shuffle and repeat are booleans sent as the
+# strings "true" / "false"; there is no repeat-one.
 NP_COMMANDS = {
-    "play": "PlayCommand",
-    "pause": "PauseCommand",
-    "next": "NextCommand",
-    "previous": "PreviousCommand",
+    "play": {"type": "PlayCommand"},
+    "pause": {"type": "PauseCommand"},
+    "next": {"type": "NextCommand"},
+    "previous": {"type": "PreviousCommand"},
+    "shuffle-on": {"type": "ShuffleCommand", "shuffle": "true"},
+    "shuffle-off": {"type": "ShuffleCommand", "shuffle": "false"},
+    "repeat-on": {"type": "RepeatCommand", "repeat": "true"},
+    "repeat-off": {"type": "RepeatCommand", "repeat": "false"},
 }
 RATE_LIMITED = "rate-limited"
 
@@ -282,7 +287,7 @@ class AlexaPyGateway:
         device_type = self._device_type_of(serial)
         async with self._lock(serial):
             try:
-                await run_command(self._api_for(serial, device_type).set_media({"type": body}), "the media command")
+                await run_command(self._api_for(serial, device_type).set_media(dict(body)), "the media command")
             except Exception as err:  # noqa: BLE001 — typed below
                 if is_rate_limited(err):
                     raise RateLimitedError("amazon rate limit (429) on a media command") from err

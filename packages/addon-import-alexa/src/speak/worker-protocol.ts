@@ -60,7 +60,17 @@ export class RateLimitedError extends Error {
   }
 }
 
-export const NP_COMMANDS = ['play', 'pause', 'next', 'previous'] as const
+/** Amazon's shuffle and repeat are booleans: there is no repeat-one command. */
+export const NP_COMMANDS = [
+  'play',
+  'pause',
+  'next',
+  'previous',
+  'shuffle-on',
+  'shuffle-off',
+  'repeat-on',
+  'repeat-off',
+] as const
 export type NpCommand = (typeof NP_COMMANDS)[number]
 
 export type WorkerRequest =
@@ -145,28 +155,37 @@ export function parseSessionStatus(result: unknown): SessionStatus {
 }
 
 /**
+ * A reading Amazon sent in a shape we did not expect is a reading we do not have
+ * (null), never a reason to discard the rest of the player: one odd field used to
+ * fail the whole read and the Echo kept showing nothing.
+ */
+const text = z.string().nullish().catch(null)
+const flag = z.boolean().nullish().catch(null)
+const count = z.number().nullish().catch(null)
+
+/**
  * The raw `playerInfo` of `/api/np/player`. Amazon omits what it does not know,
  * so every field is nullable; the mapping to the media-player cap turns a missing
- * value into null, never into 0 (D393).
+ * value into null, never into 0 (D393). Every block and every leaf is read on its
+ * own: a block of the wrong type is null, the others still count.
  */
 export const PlayerInfoSchema = z.object({
-  state: z.string().nullish(),
-  volume: z.object({ volume: z.number().nullish(), muted: z.boolean().nullish() }).nullish(),
+  state: text,
+  volume: z.object({ volume: count, muted: flag }).nullish().catch(null),
   infoText: z
-    .object({
-      title: z.string().nullish(),
-      subText1: z.string().nullish(),
-      subText2: z.string().nullish(),
-    })
-    .nullish(),
-  mainArt: z.object({ url: z.string().nullish() }).nullish(),
+    .object({ title: text, subText1: text, subText2: text })
+    .nullish()
+    .catch(null),
+  mainArt: z.object({ url: text }).nullish().catch(null),
   progress: z
-    .object({
-      mediaLength: z.number().nullish(),
-      mediaProgress: z.number().nullish(),
-    })
-    .nullish(),
-  transport: z.object({ shuffle: z.string().nullish(), repeat: z.string().nullish() }).nullish(),
+    .object({ mediaLength: count, mediaProgress: count })
+    .nullish()
+    .catch(null),
+  provider: z
+    .object({ providerName: text, providerDisplayName: text })
+    .nullish()
+    .catch(null),
+  transport: z.object({ shuffle: text, repeat: text }).nullish().catch(null),
 })
 export type PlayerInfo = z.infer<typeof PlayerInfoSchema>
 

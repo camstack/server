@@ -51,6 +51,8 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
     DeviceFeature.MediaPlayerVolume,
     DeviceFeature.MediaPlayerNext,
     DeviceFeature.MediaPlayerPrevious,
+    DeviceFeature.MediaPlayerShuffle,
+    DeviceFeature.MediaPlayerRepeat,
   ]
 
   private readonly brokerId: string
@@ -312,8 +314,12 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
       channelDown: async () => unsupported('channel steps'),
       seek: async () => unsupported('seek'),
       setMute: async () => unsupported('mute'),
-      setShuffle: async () => unsupported('shuffle'),
-      setRepeat: async () => unsupported('repeat'),
+      setShuffle: ({ shuffle }) => this.command(shuffle ? 'shuffle-on' : 'shuffle-off'),
+      setRepeat: async ({ repeat }) => {
+        // Amazon's repeat is a boolean: it repeats the queue, never one track.
+        if (repeat === 'one') unsupported('repeat one')
+        await this.command(repeat === 'all' ? 'repeat-on' : 'repeat-off')
+      },
       selectSource: async () => unsupported('source selection'),
       playMedia: async () => unsupported('playing media'),
     }
