@@ -4,7 +4,7 @@
  * changed. Every dependency is read through the deps object.
  */
 
-import type { CameraOccupancySnapshot, IScopedLogger, TargetKind } from '@camstack/types'
+import type { CameraOccupancySnapshot, IScopedLogger } from '@camstack/types'
 import {
   errMsg,
   isDeviceScopedCap,
@@ -24,6 +24,7 @@ import type {
   NcTargetRef,
 } from '../../notification-center/dispatcher.js'
 import { NotificationCenter } from '../../notification-center/index.js'
+import { instanceSourceOverApi, type NcKindBudgets, readNcTargets } from './nc-target-instances.js'
 import { buildRecordedGifPorts, deriveRecordedGif } from '../../notification-center/recorded-gif.js'
 import {
   NC_TRACKS_AT_INSTANT_LIMIT,
@@ -617,44 +618,16 @@ export class BuildNotificationCenter extends BuildNotificationCenterBase {
             artifactId: null,
           },
         listTargets: async (): Promise<readonly NcTargetRef[]> => {
-          const targets = await api.notificationOutput.listTargets.query({})
-          // The KIND catalog, alongside the targets and on the same TTL (the
-          // dispatcher caches the answer whole). It carries `caps.bodyMaxLen`,
-          // which is the ONLY thing a kind declares about how much text it can
-          // take — the number the degrade engine truncates on, and therefore
-          // the only honest source for the AI narration's default word cap.
-          // A catalog that throws costs the DEFAULT, never the targets: an
-          // absent budget reads as unknown and falls back to a push-shaped cap.
+          // The targets are the instances of `notification-output` (epic #440, step 6); a rule's
+          // `targetId` is the instance id. The KIND catalog rides alongside on the same TTL (the
+          // dispatcher caches the answer whole). It carries `caps.bodyMaxLen`, the ONLY thing a kind
+          // declares about how much text it can take: the number the degrade engine truncates on,
+          // and so the only honest source for the AI narration's default word cap. A catalog that
+          // throws costs the DEFAULT, never the targets: an absent budget reads as unknown.
           const kinds = await api.notificationOutput.listTargetKinds
             .query({})
-            .catch((): readonly TargetKind[] => [])
-          const bodyMaxLenByKind = new Map(kinds.map((k) => [k.kind, k.caps.bodyMaxLen]))
-          // The button budget of each kind: 0 means the verdict choices travel
-          // as links in the body, not as buttons.
-          const maxActionsByKind = new Map(kinds.map((k) => [k.kind, k.caps.actions]))
-          // What each kind lets a rule set at send time (D938).
-          const deliveryParamsByKind = new Map(kinds.map((k) => [k.kind, k.deliveryParams]))
-          return targets.map((t) => {
-            // Personal-target owner rides INSIDE the open config blob (the
-            // nc.upsertMyTarget convention) — surfaced for rule→user fan-out.
-            const owner = (t.config as Record<string, unknown>)['ownerUserId']
-            const bodyMaxLen = bodyMaxLenByKind.get(t.kind)
-            const maxActions = maxActionsByKind.get(t.kind)
-            const deliveryParams = deliveryParamsByKind.get(t.kind)
-            return {
-              id: t.id,
-              addonId: t.addonId,
-              name: t.name,
-              kind: t.kind,
-              enabled: t.enabled,
-              ...(typeof owner === 'string' && owner.length > 0 ? { ownerUserId: owner } : {}),
-              ...(typeof bodyMaxLen === 'number' ? { bodyMaxLen } : {}),
-              ...(typeof maxActions === 'number' ? { maxActions } : {}),
-              ...(deliveryParams !== undefined && deliveryParams.length > 0
-                ? { deliveryParams }
-                : {}),
-            }
-          })
+            .catch((): readonly NcKindBudgets[] => [])
+          return readNcTargets(instanceSourceOverApi(api), kinds)
         },
         // `addonId` is threaded top-level so the collection router routes
         // the send to the ONE provider owning the target (same convention

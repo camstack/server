@@ -115,9 +115,14 @@ const okResponse: HttpResponseLike = {
 
 const okSender: HttpSender = async () => okResponse
 
-async function makeProvider(adapters: readonly NotifierAdapter[], httpSend: HttpSender = okSender) {
-  const world = await makeNotifiersRecords()
-  const store = TargetStore.of(world.records)
+async function makeProvider(
+  adapters: readonly NotifierAdapter[],
+  httpSend: HttpSender = okSender,
+  storedOnly: readonly TargetKind[] = [],
+) {
+  const descriptors = [...adapters.map((adapter) => adapter.descriptor), ...storedOnly]
+  const world = await makeNotifiersRecords(descriptors)
+  const store = TargetStore.of(world.records, descriptors)
   const provider = createNotificationOutputProvider({ store, adapters, httpSend })
   return { provider, store }
 }
@@ -316,8 +321,8 @@ describe('send', () => {
   })
 
   it('kind with no adapter yields an error, not a throw', async () => {
-    const { provider } = await makeProvider([])
-    // Persist a target of an unknown kind directly, then attempt send.
+    const { provider } = await makeProvider([], okSender, [okAdapter('ghost').descriptor])
+    // Persist a target whose adapter is gone, then attempt send.
     await provider.upsertTarget({ target: target({ kind: 'ghost' }) })
     const result = await provider.send({ targetId: 't1', notification: NOTIFICATION })
     expect(result.success).toBe(false)
@@ -567,11 +572,12 @@ describe('relative attachment urls (test-panel samples)', () => {
 
   it('hands the adapter an absolute url on the public endpoint', async () => {
     const seen: PreparedAttachment[] = []
-    const world = await makeNotifiersRecords()
-    const store = TargetStore.of(world.records)
+    const img = imageAdapter(seen)
+    const world = await makeNotifiersRecords([img.descriptor])
+    const store = TargetStore.of(world.records, [img.descriptor])
     const provider = createNotificationOutputProvider({
       store,
-      adapters: [imageAdapter(seen)],
+      adapters: [img],
       httpSend: okSender,
       readPublicEndpoint: async () => ({ kind: 'resolved', origin: 'https://hub.example.com' }),
     })

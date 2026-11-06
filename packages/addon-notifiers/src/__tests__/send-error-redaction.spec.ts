@@ -77,7 +77,8 @@ const TARGET: Target = {
 
 async function sendThrough(adapter: NotifierAdapter, httpSend: HttpSender) {
   const lines: LoggedLine[] = []
-  const store = TargetStore.of((await makeNotifiersRecords()).records)
+  const descriptors = [adapter.descriptor]
+  const store = TargetStore.of((await makeNotifiersRecords(descriptors)).records, descriptors)
   const provider = createNotificationOutputProvider({
     store,
     adapters: [adapter],

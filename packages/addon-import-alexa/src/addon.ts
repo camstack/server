@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import {
   addonRoutesCapability,
   BaseDeviceProvider,
@@ -16,6 +17,7 @@ import {
   defaultIntegrationApiOver,
   flattenPortsOver,
   composeInstanceKinds,
+  notificationTargetParts,
   type IIntegrationInstancesProvider,
   integrationInstancesCapability,
   type AddonDataPlaneHandle,
@@ -68,6 +70,15 @@ import { buildAlexaInstances } from './alexa-instances.js'
 import { AlexaBrokerStore } from './alexa-broker-store.js'
 import { readEchoTargets, type AlexaBrokerEntry } from './config.js'
 import { readBrokerSeed } from './speak/broker-seed.js'
+import {
+  alexaNotifyRecordKinds,
+  echoRecordPortsOver,
+  echoRowOf,
+  type EchoTargetStore,
+  echoTargetStoreOver,
+  persistEchoRows,
+} from './speak/echo-store.js'
+import { alexaTargetKind } from './speak/provider.js'
 import { AlexaSpeakController } from './speak/controller.js'
 import {
   ADDON_MIGRATIONS,
@@ -136,6 +147,7 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
   private accountInstances: RecordIntegrationInstances<AlexaBrokerBody> | null = null
   private activeBrokers: readonly AlexaBrokerEntry[] = []
   private speak: AlexaSpeakController | null = null
+  private echoStore: EchoTargetStore | null = null
 
   constructor() {
     super({ ...DEFAULTS })
@@ -148,7 +160,7 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
     if (records === undefined) {
       throw new Error('import-alexa: ctx.records is required (hub-only addon)')
     }
-    await records.declare(alexaRecordKinds)
+    await records.declare({ ...alexaRecordKinds, ...alexaNotifyRecordKinds })
     this.brokerStore = AlexaBrokerStore.of(records)
     this.instances = buildAlexaInstances(records)
     this.accountInstances = buildAlexaAccountInstances(records, {
@@ -229,12 +241,13 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
       },
     )
 
+    const echoStore = echoTargetStoreOver(records)
+    this.echoStore = echoStore
+    const storedEchoes = (await echoStore.list()).map(echoRowOf)
     const speak = new AlexaSpeakController({
       logger: this.ctx.logger.child('speak'),
-      readConfig: () => this.config,
-      writeTargets: async (next) => {
-        await this.updateGlobalSettings({ echoTargets: [...next] })
-      },
+      readConfig: () => ({ echoTargets: storedEchoes }),
+      writeTargets: (next) => persistEchoRows(echoStore, next),
       listBrokers: () =>
         this.activeBrokers.map((entry) => ({
           id: entry.id,
@@ -288,6 +301,7 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
       },
       ...flattenPortsOver(records.kind(alexaBrokersEntryKind)),
       ...alexaBrokerLinkPorts(records, (message) => this.ctx.logger.warn(message)),
+      ...echoRecordPortsOver(records),
       ...alexaIntegrationRowsPorts({
         api: defaultIntegrationApiOver(this.ctx.api),
         records,
@@ -300,6 +314,8 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
   /** One provider over the two record kinds: the account (broker) and the integrations using it. */
   private buildInstancesProvider(): IIntegrationInstancesProvider {
     if (this.accountInstances === null) throw new Error('import-alexa: account instances not ready')
+    const records = this.ctx.records
+    if (records === undefined) throw new Error('import-alexa: ctx.records is required')
     return composeInstanceKinds(
       [
         {
@@ -324,6 +340,12 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
           },
           provider: this.requireInstances().toProvider(),
         },
+        ...notificationTargetParts(records, {
+          descriptors: [alexaTargetKind()],
+          kinds: alexaNotifyRecordKinds,
+          mintId: () => randomUUID(),
+          canProbe: () => false,
+        }),
       ],
       {
         role: 'devices',
@@ -672,7 +694,7 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
       linkUserFinder(this.requireInstances(), 'brokerId'),
       {
         find: async (brokerId) =>
-          readEchoTargets(this.config)
+          (this.echoStore === null ? [] : (await this.echoStore.list()).map(echoRowOf))
             .filter((target) => target.brokerId === brokerId)
             .map((target) => ({
               kind: 'notification-target',

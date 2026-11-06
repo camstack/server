@@ -11,10 +11,6 @@
     "google": {
     },
     "llm": {},
-    "notifiers": {
-      "packages/addon-notifiers/src/target-store.ts:TARGETS_COLLECTION": "legacy settings-store collection of notification targets, kept for the adoption mapper; P6a drops it with the targets migration",
-      "packages/addon-provider-homeassistant/src/ha-notification-output.ts:HA_TARGETS_COLLECTION": "legacy settings-store collection of notification targets, kept for the adoption mapper; P6a drops it with the targets migration"
-    },
     "recorder": {
     },
     "mqtt": {

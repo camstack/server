@@ -37,4 +37,4 @@ export type {
 } from './provider.js'
 export { createNotificationOutputProvider, NOTIFIERS_ADDON_ID } from './provider.js'
 export { mergeSecrets, passwordFieldKeys, REDACTED_MARKER, redactForRead } from './secrets.js'
-export { TARGETS_COLLECTION, TargetStore } from './target-store.js'
+export { TargetStore } from './target-store.js'

@@ -110,6 +110,8 @@ export {
   UnknownInstanceKindError,
 } from './addon/compose-instance-kinds.js'
 export type { InstanceKindPart } from './addon/compose-instance-kinds.js'
+export * from './addon/notification-targets.js'
+export * from './addon/instances-of-cap.js'
 export type { DurableState, DurableStateDeps } from './addon/durable-state.js'
 export { createDurableState } from './addon/durable-state.js'
 // Re-export `IAuthProvider` from the cap definition — single source of

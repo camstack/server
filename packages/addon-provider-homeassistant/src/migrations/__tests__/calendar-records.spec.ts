@@ -11,7 +11,7 @@ import {
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { haBrokersEntryKind, haCalendarsEntryKind } from '../../broker-record-kinds.js'
-import { NO_LINK_PORTS } from '../../__tests__/no-link-ports.js'
+import { NO_LINK_PORTS, NO_NOTIFY_PORTS } from '../../__tests__/no-link-ports.js'
 import { rawBrokers } from '../../__tests__/raw-brokers.js'
 import { settingsFixture } from '../../__tests__/settings-fixture.js'
 import { ADDON_MIGRATIONS, CALENDAR_IDS_TO_RECORDS_ID } from '../index.js'
@@ -61,6 +61,7 @@ async function start(
       patchInstance: async () => false,
       ...NO_FLATTEN_PORTS,
       ...NO_LINK_PORTS,
+      ...NO_NOTIFY_PORTS,
       ...wrap(
         haCalendarRecordPortsOver({
           brokers: raw,

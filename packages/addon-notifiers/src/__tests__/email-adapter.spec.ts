@@ -24,7 +24,9 @@ describe('email notifier adapter', () => {
   it('sendDirect calls smtp sendEmail with to + subject + text + smtpAddonId', async () => {
     const sendEmail = vi.fn(async (_input: EmailSendInput) => ({ messageId: 'm-1' }))
     const adapter = createEmailAdapter({ sendEmail })
-    const store = TargetStore.of((await makeNotifiersRecords()).records)
+    const store = TargetStore.of((await makeNotifiersRecords([adapter.descriptor])).records, [
+      adapter.descriptor,
+    ])
     const provider = createNotificationOutputProvider({
       store,
       adapters: [adapter],
@@ -56,7 +58,9 @@ describe('email notifier adapter', () => {
   it('forwards a pinned relay as instanceId and omits it when the target pins none', async () => {
     const sendEmail = vi.fn(async (_input: EmailSendInput) => ({ messageId: 'm-1' }))
     const adapter = createEmailAdapter({ sendEmail })
-    const store = TargetStore.of((await makeNotifiersRecords()).records)
+    const store = TargetStore.of((await makeNotifiersRecords([adapter.descriptor])).records, [
+      adapter.descriptor,
+    ])
     const provider = createNotificationOutputProvider({ store, adapters: [adapter] })
     const sample = { body: 'Hello', title: 'CamStack', format: 'text', priority: 3 } as const
     for (const [id, config] of [
@@ -83,7 +87,9 @@ describe('email notifier adapter', () => {
       return { messageId: 'other-relay' }
     })
     const adapter = createEmailAdapter({ sendEmail })
-    const store = TargetStore.of((await makeNotifiersRecords()).records)
+    const store = TargetStore.of((await makeNotifiersRecords([adapter.descriptor])).records, [
+      adapter.descriptor,
+    ])
     const provider = createNotificationOutputProvider({ store, adapters: [adapter] })
     await provider.upsertTarget({
       target: {
@@ -113,7 +119,9 @@ describe('email notifier adapter', () => {
         throw new Error('No Google broker connected')
       },
     })
-    const store = TargetStore.of((await makeNotifiersRecords()).records)
+    const store = TargetStore.of((await makeNotifiersRecords([adapter.descriptor])).records, [
+      adapter.descriptor,
+    ])
     const provider = createNotificationOutputProvider({ store, adapters: [adapter] })
     await provider.upsertTarget({
       target: {
@@ -180,7 +188,9 @@ describe('email notifier adapter', () => {
         ]
       },
     })
-    const store = TargetStore.of((await makeNotifiersRecords()).records)
+    const store = TargetStore.of((await makeNotifiersRecords([adapter.descriptor])).records, [
+      adapter.descriptor,
+    ])
     const provider = createNotificationOutputProvider({
       store,
       adapters: [adapter],

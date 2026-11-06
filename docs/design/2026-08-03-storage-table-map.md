@@ -251,7 +251,7 @@ Two of the S2 sites are also the only ones whose collection name is
 `this.collection`. **[source]** both resolve to a literal in production, because
 the parameter has a default and no production construction site overrides it:
 
-- `packages/addon-notifiers/src/target-store.ts:74` — default
+- `packages/addon-notifiers/src/target-store.ts:74` — default <!-- drift-ok -->
   `TARGETS_COLLECTION` (`:17` = `'notification-targets'`); only construction
   site `packages/addon-notifiers/src/addon.ts:63` passes no second argument.
 - `packages/addon-provider-homeassistant/src/ha-notification-output.ts:305` —
@@ -879,7 +879,7 @@ Two stale comments to delete while here: `packages/addon-post-analysis/src/pipel
 
 ### 3.31 `notification-targets` — 1 row [measured]
 
-- **Creation** — **S2 positional port**, `packages/addon-notifiers/src/target-store.ts:83`, forwarded to tRPC at `packages/addon-notifiers/src/settings-store-port.ts:32`. Name is `this.collection`, which **[source]** always resolves to the literal `'notification-targets'` (§1.2).
+- **Creation** — **S2 positional port**, `packages/addon-notifiers/src/target-store.ts:83`, forwarded to tRPC at `packages/addon-notifiers/src/settings-store-port.ts:32`. Name is `this.collection`, which **[source]** always resolves to the literal `'notification-targets'` (§1.2). <!-- drift-ok -->
 - **Columns [measured]** — `(id TEXT PK NOT NULL, data TEXT NOT NULL)`. The declaration supplies only `[{name:'data', type:'TEXT', notNull:true}]` (`target-store.ts:35`); the backend contributes the `id` PK (`sqlite-settings-backend.ts:722`), and the single `data` column is what routes this table through the KV branch (`:406`). **No secondary index.**
 - **Blob — `data`, enumerated [source]** by `targetToData` `target-store.ts:60`: `name`, `kind`, `addonId`, `enabled`, `config`. Validated on read by `TargetSchema` (`packages/types/src/capabilities/notification-output.cap.ts:203`). **`config` is an open `Record<string, unknown>`** (`:209`) holding per-backend credentials — its inner shape is **UNDETERMINED** as a fixed field set, by design. **[measured]** the live row: `{name:'Zentik', kind:'zentik', addonId:'notifiers', enabled:true, config:{authMode, ownerUserId, magicCode}}`.
 - **Queried** — **there is exactly one read primitive and it takes no filter.** `SettingsStorePort.query(collection)` (`target-store.ts:45`) is implemented as `settingsStore.query.query({ collection })` with **no `filter` argument** (`packages/addon-notifiers/src/settings-store-port.ts:16`). So every read is a bare `SELECT id, data` — full scan, no WHERE, no ORDER BY, no LIMIT:
@@ -1544,8 +1544,8 @@ Ordered. Each item names its evidence.
 
 ### 7.2 Phase 1 — one declaration path · **smaller than budgeted**
 
-- [ ] **Hoist the two `this.collection` names to module constants** at `packages/addon-notifiers/src/target-store.ts:83` and `packages/addon-provider-homeassistant/src/ha-notification-output.ts:314`. Both already resolve to a literal (§1.2); this removes the last statically unresolvable names and empties §5 of the generated map.
-- [ ] **Collapse the remaining identical `SettingsStorePort` interfaces** (`packages/addon-notifiers/src/target-store.ts:44`, `packages/addon-provider-homeassistant/src/ha-notification-output.ts:275`) into one — addon-ai dropped its port when usage moved to `ctx.records`. **The in-memory doubles still silently discard the column list** (`packages/addon-notifiers/src/settings-store-port.ts:63`, `packages/addon-provider-homeassistant/src/ha-notification-output.ts:404`) — the exact "green suite hides a live bug" mechanism.
+- [ ] **Hoist the two `this.collection` names to module constants** at `packages/addon-notifiers/src/target-store.ts:83` and `packages/addon-provider-homeassistant/src/ha-notification-output.ts:314`. Both already resolve to a literal (§1.2); this removes the last statically unresolvable names and empties §5 of the generated map. <!-- drift-ok -->
+- [ ] **Collapse the remaining identical `SettingsStorePort` interfaces** (`packages/addon-notifiers/src/target-store.ts:44`, `packages/addon-provider-homeassistant/src/ha-notification-output.ts:275`) into one — addon-ai dropped its port when usage moved to `ctx.records`. **The in-memory doubles still silently discard the column list** (`packages/addon-notifiers/src/settings-store-port.ts:63`, `packages/addon-provider-homeassistant/src/ha-notification-output.ts:404`) — the exact "green suite hides a live bug" mechanism. <!-- drift-ok -->
 - [ ] **Give the port a `filter` parameter.** `packages/addon-notifiers/src/settings-store-port.ts:16` is why a PK lookup on `notification-targets` is a full scan (§3.31).
 - [ ] Decide S1 (`server/backend/src/core/agent/cluster-node-history-store.ts:119`): route through the cap, or document it as the bootstrap exception.
 

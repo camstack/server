@@ -21,10 +21,18 @@ import {
   planDropSharedCalendarIds,
 } from './calendar-ids-to-integration.js'
 
+import {
+  HA_NOTIFY_TARGETS_TO_BODY_ID,
+  type HaNotifyPorts,
+  moveHaNotifyTargets,
+} from './notify-targets-to-body.js'
+
 export const CALENDAR_IDS_TO_RECORDS_ID =
   'provider-homeassistant/2026-11-07-calendar-ids-to-calendar-records'
 
 export { BROKER_LINKS_TO_CONNECTIONS_ID, haBrokerLinkPorts }
+export { HA_NOTIFY_TARGETS_TO_BODY_ID, haNotifyPortsOver } from './notify-targets-to-body.js'
+export type { HaNotifyPorts } from './notify-targets-to-body.js'
 export type { CalendarIdsPorts } from './calendar-ids-to-integration.js'
 export { FLATTEN_BROKER_RECORDS_ID } from './flatten-broker-records.js'
 export {
@@ -37,7 +45,8 @@ export type HaMigrationPorts = CalendarIdsPorts &
   FlattenRowPorts &
   InstanceSettingsPorts &
   BrokerLinkPorts &
-  CalendarRecordPorts
+  CalendarRecordPorts &
+  HaNotifyPorts
 
 /** The `provider-homeassistant` catalogue (D987): offered to the engine when the addon initialises. */
 export const ADDON_MIGRATIONS: readonly AddonMigration<HaMigrationPorts>[] = [
@@ -166,5 +175,22 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<HaMigrationPorts>[] = [
     },
     procedure: (ports) =>
       moveCalendarIdsToRecords(ports, { calendarIdOf: (_accountId, entry) => entry }),
+  },
+  {
+    meta: {
+      id: HA_NOTIFY_TARGETS_TO_BODY_ID,
+      owner: 'provider-homeassistant',
+      level: 'addon-state',
+      seq: 8,
+      dependsOn: [],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'block-owner',
+      bodyKind: 'procedure',
+      description:
+        'Move each Home Assistant notify target to the notify-homeassistant record, the config flat in the body, the same id and the same switch; read back before the old row goes',
+      fixtureMark: 'the switch (off) and the id of a Home Assistant notify target',
+    },
+    procedure: moveHaNotifyTargets,
   },
 ]

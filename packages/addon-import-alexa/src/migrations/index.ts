@@ -19,6 +19,14 @@ import {
   type EchoTargetMigrationPorts,
 } from './strip-echo-target-volume-and-mode.js'
 
+import {
+  ECHO_TARGETS_TO_RECORDS_ID,
+  type EchoRecordPorts,
+  moveEchoTargetsToRecords,
+} from './echo-targets-to-records.js'
+
+export { ECHO_TARGETS_TO_RECORDS_ID } from './echo-targets-to-records.js'
+export type { EchoRecordPorts } from './echo-targets-to-records.js'
 export type { EchoTargetMigrationPorts } from './strip-echo-target-volume-and-mode.js'
 export { FLATTEN_BROKER_RECORDS_ID } from './flatten-broker-records.js'
 export { alexaBrokerLinkPorts, BROKER_LINKS_TO_CONNECTIONS_ID }
@@ -31,7 +39,8 @@ export {
 export type AlexaMigrationPorts = EchoTargetMigrationPorts &
   FlattenRowPorts &
   AlexaIntegrationRowsPorts &
-  BrokerLinkPorts
+  BrokerLinkPorts &
+  EchoRecordPorts
 
 /** The `import-alexa` catalogue (D987): offered to the engine when the addon initialises. */
 export const ADDON_MIGRATIONS: readonly AddonMigration<AlexaMigrationPorts>[] = [
@@ -101,6 +110,23 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<AlexaMigrationPorts>[] = 
       fixtureMark: 'the name and the extra field of the account that keeps its record',
     },
     procedure: moveBrokerLinksToConnections,
+  },
+  {
+    meta: {
+      id: ECHO_TARGETS_TO_RECORDS_ID,
+      owner: 'import-alexa',
+      level: 'addon-state',
+      seq: 5,
+      dependsOn: ['import-alexa/2026-11-01-strip-echo-target-volume-and-mode'],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'block-owner',
+      bodyKind: 'procedure',
+      description:
+        'Move each Echo target from the echoTargets setting to a notify-alexa-echo record under the same id, the switch carried, read back before the setting is cleared; a record that exists is never overwritten',
+      fixtureMark: 'the switch (off) and the id of an Echo target',
+    },
+    procedure: moveEchoTargetsToRecords,
   },
 ]
 

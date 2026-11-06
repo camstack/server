@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import {
   AdoptionAdoptInputSchema,
   AdoptionAdoptResultSchema,
@@ -12,6 +13,7 @@ import {
   flattenPortsOver,
   type RecordsAccess,
   composeInstanceKinds,
+  notificationTargetParts,
   type IIntegrationInstancesProvider,
   integrationInstancesCapability,
   type IntegrationInstanceRef,
@@ -76,6 +78,8 @@ import {
 import {
   createHaNotificationOutputProvider,
   HaTargetStore,
+  haNotifyRecordKinds,
+  homeassistantTargetKind,
   type NotifyServiceData,
 } from './ha-notification-output.js'
 import { HaBrokerStore } from './ha-broker-store.js'
@@ -96,7 +100,7 @@ import { haInstanceRecordPortsOver } from './ha-instance-settings.js'
 import { haCalendarRecordPortsOver } from './migrations/calendar-ports.js'
 import { buildHaCalendarInstances, selectedEntityIds } from './ha-calendar-instances.js'
 import { haInstanceSettingsPortsOver } from './migrations/legacy-integration-rows.js'
-import { ADDON_MIGRATIONS, type HaMigrationPorts } from './migrations/index.js'
+import { ADDON_MIGRATIONS, haNotifyPortsOver, type HaMigrationPorts } from './migrations/index.js'
 import { createHaCalendarSource } from './ha-calendar-source.js'
 import { reconcileBroker } from './ha-reconcile-broker.js'
 import {
@@ -241,6 +245,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
         warn: (message) => this.ctx.logger.warn(message),
       }),
       ...haBrokerLinkPorts(records, (message) => this.ctx.logger.warn(message)),
+      ...haNotifyPortsOver(records),
     }
   }
 
@@ -249,7 +254,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
     if (records === undefined) {
       throw new Error('provider-homeassistant: ctx.records is required (hub-only addon)')
     }
-    await records.declare(haAllRecordKinds)
+    await records.declare({ ...haAllRecordKinds, ...haNotifyRecordKinds })
     this.brokerStore = HaBrokerStore.of(records)
     this.instances = buildHaInstances(records)
     this.accountInstances = buildHaAccountInstances(records, {
@@ -610,6 +615,8 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
     }
     const calendars = this.calendarInstances
     if (calendars === null) throw new Error('provider-homeassistant: calendar instances not ready')
+    const records = this.ctx.records
+    if (records === undefined) throw new Error('provider-homeassistant: ctx.records is required')
     return composeInstanceKinds(
       [
         {
@@ -642,6 +649,12 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
           },
           provider: calendars.toProvider(),
         },
+        ...notificationTargetParts(records, {
+          descriptors: [homeassistantTargetKind(this.ctx.id)],
+          kinds: haNotifyRecordKinds,
+          mintId: () => randomUUID(),
+          canProbe: () => false,
+        }),
       ],
       {
         role: 'devices',

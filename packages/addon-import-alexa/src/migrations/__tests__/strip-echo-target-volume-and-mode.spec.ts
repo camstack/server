@@ -32,6 +32,9 @@ const NO_ROWS_PORTS = {
   readConnection: async () => null,
   putConnection: async () => undefined,
   clearBrokerLink: async () => undefined,
+  readEchoRecord: async () => null,
+  writeEchoRecord: async () => undefined,
+  dropEchoRecord: async () => undefined,
 }
 const MARK = 'kitchen echo, kept as written'
 

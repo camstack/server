@@ -9,12 +9,18 @@
  * `buildNotifierAdapters` (`adapters/registry.ts`); email uses `sendDirect` →
  * `smtp-provider`.
  */
+import { randomUUID } from 'node:crypto'
 import {
   addonRoutesCapability,
   buildAddonRouteProvider,
   type AddonInitResult,
   BaseAddon,
+  buildNotificationTargetInstances,
+  defineAddonMigrations,
+  integrationInstancesCapability,
   notificationOutputCapability,
+  secretKeysOf,
+  targetRowPortsOver,
   publicEndpointReaderFrom,
 } from '@camstack/types'
 import type { EmailSmtpClient, SmtpProviderOption } from './adapters/email.js'
@@ -23,7 +29,8 @@ import { iconMediaTypeFor, iconRoutes, iconUrlFor } from './icon-routes.js'
 import { sampleRoutes } from './sample-routes.js'
 import { makeNcTargetHandlers, ncTargetActions, type NcTargetActions } from './nc-target-actions.js'
 import { createNotificationOutputProvider, NOTIFIERS_ADDON_ID } from './provider.js'
-import { notifiersRecordKinds } from './record-kinds.js'
+import { ADDON_MIGRATIONS, oldTargetKinds, OLD_TARGETS_KIND } from './migrations/index.js'
+import { notifierDescriptors, notifiersRecordKinds } from './record-kinds.js'
 import { TargetStore } from './target-store.js'
 
 /** The notifiers addon has no global settings today — targets are managed via cap CRUD. */
@@ -42,8 +49,22 @@ export class NotifiersAddon extends BaseAddon<NotifiersConfig> {
       throw new Error('notifiers (hub) needs ctx.records — check execution.placement')
     }
     // Declare notification-targets BEFORE first store access.
-    await records.declare(notifiersRecordKinds)
+    await records.declare({ ...notifiersRecordKinds, ...oldTargetKinds })
     const store = TargetStore.of(records)
+    const descriptors = notifierDescriptors()
+    // The old single kind is flattened into the per-kind records BEFORE anything reads a target.
+    await this.runMigrations(
+      defineAddonMigrations(ADDON_MIGRATIONS, {
+        rows: targetRowPortsOver({
+          oldKind: records.kind(oldTargetKinds[OLD_TARGETS_KIND]),
+          store,
+        }),
+        secretKeysOf: (kind) => {
+          const descriptor = descriptors.find((candidate) => candidate.kind === kind)
+          return descriptor === undefined ? [] : secretKeysOf(descriptor)
+        },
+      }),
+    )
 
     const listProviders = async (): Promise<readonly SmtpProviderOption[]> => {
       if (api === undefined) return []
@@ -156,9 +177,24 @@ export class NotifiersAddon extends BaseAddon<NotifiersConfig> {
       meta: { adapterCount: adapters.length },
     })
 
+    const instances = buildNotificationTargetInstances(records, {
+      descriptors,
+      kinds: notifiersRecordKinds,
+      mintId: () => randomUUID(),
+      canProbe: (kind) =>
+        adapters.some((adapter) => adapter.descriptor.kind === kind && adapter.probe !== undefined),
+      probe: (input) =>
+        provider.probeTargetConfig({
+          kind: input.kind,
+          config: { ...input.config },
+          ...(input.targetId !== undefined ? { targetId: input.targetId } : {}),
+        }),
+    })
+
     return {
       providers: [
         { capability: notificationOutputCapability, provider },
+        { capability: integrationInstancesCapability, provider: instances },
         { capability: addonRoutesCapability, provider: routeProvider },
       ],
       customActions: ncTargetActions,

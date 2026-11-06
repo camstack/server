@@ -40,23 +40,22 @@ import {
   type PreparedNotification,
   prepareNotification,
   type PublicEndpointReader,
-  type RecordKindHandle,
   type RecordsAccess,
   resolveAttachmentUrls,
   type ResolvedLevel,
   type SendResult,
   type Target,
   type TargetKind,
-  TargetSchema,
+  NotificationTargetStore,
+  notificationTargetKinds,
 } from '@camstack/types'
 import { HA_BROKER_KIND } from './ha-broker-source.js'
-import { haRecordKinds, type HaTargetBody } from './record-kinds.js'
 
 /** The single kind this provider contributes to the shared catalog. */
 export const HA_NOTIFICATION_KIND = 'homeassistant'
 
-/** addonId-namespaced settings-store collection holding HA notify targets. */
-export const HA_TARGETS_COLLECTION = 'provider-homeassistant:ha-notification-targets'
+/** The owning addon id: stamped on every target this provider stores. */
+export const HA_ADDON_ID = 'provider-homeassistant'
 
 // ── Descriptor ───────────────────────────────────────────────────────
 
@@ -366,66 +365,22 @@ export function mobileAppDeviceNames(registry: unknown): Map<string, string> {
   return names
 }
 
-// ── Target persistence (records, local copy) ─────────────────────────
+// ── Target persistence (one record kind, the instances of `notification-output`) ──
+
+/** The record kind a Home Assistant notify target is stored in: its body is the kind's own form. */
+export const haNotifyRecordKinds = notificationTargetKinds([homeassistantTargetKind(HA_ADDON_ID)])
 
 /**
- * CRUD over the `ha-notification-targets` record kind.
- *
- * `HaTargetStore.of(records)` is the production factory; the test helper
- * (`makeFakeHaRecords`) supplies a fake transport so nothing hits SQLite.
- * No `init()` method: kinds are declared at addon boot via
- * `ctx.records.declare(haRecordKinds)`.
+ * CRUD over the `notify-homeassistant` record kind, as `Target`s. `HaTargetStore.of(records)` is the
+ * production factory; kinds are declared at addon boot via `ctx.records.declare(haNotifyRecordKinds)`.
  */
-export class HaTargetStore {
-  private readonly kind: RecordKindHandle<HaTargetBody>
-
-  constructor(kind: RecordKindHandle<HaTargetBody>) {
-    this.kind = kind
-  }
-
-  /** Factory: build from a declared `RecordsAccess` (after `ctx.records.declare`). */
-  static of(records: Pick<RecordsAccess, 'kind'>): HaTargetStore {
-    return new HaTargetStore(records.kind(haRecordKinds['ha-notification-targets']))
-  }
-
-  async list(): Promise<Target[]> {
-    const page = await this.kind.query({ limit: 1000 })
-    const out: Target[] = []
-    for (const record of page.records) {
-      const parsed = TargetSchema.safeParse({ id: record.id, ...record.data })
-      if (parsed.success) out.push(parsed.data)
-    }
-    return out
-  }
-
-  async getById(id: string): Promise<Target | null> {
-    const row = await this.kind.get(id)
-    if (row === null) return null
-    const parsed = TargetSchema.safeParse({ id: row.id, ...row.data })
-    return parsed.success ? parsed.data : null
-  }
-
-  async upsert(target: Target): Promise<void> {
-    const { id, ...rest } = target
-    // Validate: kind must be 'homeassistant' (the schema literal narrows it).
-    const parsed = haRecordKinds['ha-notification-targets'].schema.safeParse(rest)
-    if (!parsed.success) {
-      throw new Error(`invalid HA target '${id}': ${parsed.error.message}`)
-    }
-    await this.kind.put({ id, data: parsed.data })
-  }
-
-  async delete(id: string): Promise<void> {
-    await this.kind.delete(id)
-  }
-
-  async setEnabled(id: string, enabled: boolean): Promise<Target | null> {
-    const target = await this.getById(id)
-    if (target === null) return null
-    const next: Target = { ...target, enabled }
-    await this.upsert(next)
-    return next
-  }
+export type HaTargetStore = NotificationTargetStore
+export const HaTargetStore = {
+  of(records: Pick<RecordsAccess, 'kind'>): HaTargetStore {
+    return NotificationTargetStore.of(records, HA_ADDON_ID, haNotifyRecordKinds, [
+      homeassistantTargetKind(HA_ADDON_ID),
+    ])
+  },
 }
 
 // ── Provider ─────────────────────────────────────────────────────────
