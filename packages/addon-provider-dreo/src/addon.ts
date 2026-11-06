@@ -88,6 +88,10 @@ export class DreoProviderAddon extends BaseDeviceProvider {
     if (records === undefined)
       throw new Error('provider-dreo: ctx.records is required (hub-only addon)')
     await records.declare(dreoRecordKinds)
+    this.declareRegistrySwitch({
+      kind: dreoConnectionsEntryKind,
+      initialBody: (name) => ({ name }),
+    })
     await this.runMigrations(
       [
         integrationRowsMigration({
@@ -235,8 +239,9 @@ export class DreoProviderAddon extends BaseDeviceProvider {
           typeof integrationId === 'string' ? integrationId : null,
         )
       }
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationEnabled }, on('enabled'))
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDisabled }, on('disabled'))
+    this.requireInstances().onSwitched((id, enabled) => {
+      void this.reconciler().onLifecycle(enabled ? 'enabled' : 'disabled', id)
+    })
     this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, on('deleted'))
   }
 

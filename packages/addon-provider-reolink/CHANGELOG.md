@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A Reolink integration whose cameras mail the camera mailbox now links to it, so deleting the mailbox while it is in use is refused and the link shows in the instance model
+- Switching the integration on or off now applies at once and a disabled integration stays disabled after the update
 
 ## [1.2.230] - 2026-11-06
 

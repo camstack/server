@@ -22,6 +22,7 @@ import {
   mqttHaBrokerIdOf,
   mqttHaRecordKinds,
   mqttHaRowsPorts,
+  mqttHaConnectionsEntryKind,
 } from './mqtt-ha-instances.js'
 import { buildMqttHaAdoptionProvider } from './mqtt-ha-adoption-provider.js'
 import { buildMqttHaDeviceStableId, buildMqttHaStableId } from './mqtt-ha-discovery-parser.js'
@@ -89,6 +90,10 @@ export class MqttHaProviderAddon extends BaseDeviceProvider<MqttHaProviderConfig
       throw new Error('provider-mqtt-ha: ctx.records is required (hub-only addon)')
     await records.declare(mqttHaRecordKinds)
     // Before the provider registers: while it is registered the hub answers from the record.
+    this.declareRegistrySwitch({
+      kind: mqttHaConnectionsEntryKind,
+      initialBody: (name) => ({ name, mqttBrokerId: '' }),
+    })
     await this.runMigrations(MQTT_HA_MIGRATIONS, (api) => mqttHaRowsPorts({ ...rowsDepsOver(api) }))
     const instances = buildMqttHaInstances(records, {
       onChanged: () => this.reconcileIntegrationsToBrokers(),
@@ -254,8 +259,9 @@ export class MqttHaProviderAddon extends BaseDeviceProvider<MqttHaProviderConfig
       if (typeof addonId === 'string' && addonId !== this.ctx.id) return
       void this.reconcileIntegrationsToBrokers()
     }
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationEnabled }, handler)
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDisabled }, handler)
+    this.requireInstances().onSwitched(() => {
+      void this.reconcileIntegrationsToBrokers()
+    })
     this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, handler)
   }
 

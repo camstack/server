@@ -1,4 +1,5 @@
 import type { CoverDevice } from '@apocaliss92/noderademacher'
+import { rademacherConnectionsEntryKind } from './rademacher-instances.js'
 import {
   type AddonInitResult,
   BaseDeviceProvider,
@@ -71,6 +72,10 @@ export class RademacherProviderAddon extends BaseDeviceProvider {
       throw new Error('provider-rademacher: ctx.records is required (hub-only addon)')
     await records.declare(rademacherRecordKinds)
     // Before the provider registers: while it is registered the hub answers from the record.
+    this.declareRegistrySwitch({
+      kind: rademacherConnectionsEntryKind,
+      initialBody: (name) => ({ name }),
+    })
     await this.runMigrations(RADEMACHER_MIGRATIONS, (api) =>
       rademacherRowsPorts({ ...rowsDepsOver(api) }),
     )
@@ -200,8 +205,9 @@ export class RademacherProviderAddon extends BaseDeviceProvider {
           typeof integrationId === 'string' ? integrationId : null,
         )
       }
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationEnabled }, on('enabled'))
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDisabled }, on('disabled'))
+    this.requireInstances().onSwitched((id, enabled) => {
+      void this.reconciler().onLifecycle(enabled ? 'enabled' : 'disabled', id)
+    })
     this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, on('deleted'))
   }
 

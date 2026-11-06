@@ -242,6 +242,10 @@ export class AmcrestProviderAddon extends BaseDeviceProvider {
     if (records === undefined)
       throw new Error('provider-amcrest: ctx.records is required (hub-only addon)')
     await records.declare(amcrestRecordKinds)
+    this.declareRegistrySwitch({
+      kind: amcrestConnectionsEntryKind,
+      initialBody: (name) => ({ name }),
+    })
     await this.runMigrations(
       defaultIntegrationMigrations({
         addonId: this.addonId,

@@ -28,6 +28,7 @@ import {
   type PetkitConnectionBody,
   petkitRecordKinds,
   petkitRowsPorts,
+  petkitConnectionsEntryKind,
 } from './petkit-instances.js'
 import { PetkitFeederDevice } from './devices/petkit-feeder-device.js'
 import { buildPetkitAdoptionProvider } from './petkit-adoption-provider.js'
@@ -73,6 +74,10 @@ export class PetkitProviderAddon extends BaseDeviceProvider {
       throw new Error('provider-petkit: ctx.records is required (hub-only addon)')
     await records.declare(petkitRecordKinds)
     // Before the provider registers: while it is registered the hub answers from the record.
+    this.declareRegistrySwitch({
+      kind: petkitConnectionsEntryKind,
+      initialBody: (name) => ({ name }),
+    })
     await this.runMigrations(PETKIT_MIGRATIONS, (api) => petkitRowsPorts({ ...rowsDepsOver(api) }))
     const instances = buildPetkitInstances(records, {
       onChanged: () => this.reconcileIntegrations(),
@@ -214,8 +219,9 @@ export class PetkitProviderAddon extends BaseDeviceProvider {
           typeof integrationId === 'string' ? integrationId : null,
         )
       }
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationEnabled }, on('enabled'))
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDisabled }, on('disabled'))
+    this.requireInstances().onSwitched((id, enabled) => {
+      void this.reconciler().onLifecycle(enabled ? 'enabled' : 'disabled', id)
+    })
     this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, on('deleted'))
   }
 

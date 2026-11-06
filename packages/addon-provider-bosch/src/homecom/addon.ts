@@ -39,6 +39,7 @@ import {
   homeComRecordKinds,
   homeComRowsPorts,
   homeComStoredOf,
+  homeComConnectionsEntryKind,
 } from './homecom-instances.js'
 import { homeComConnections } from './homecom-gateway.js'
 import { HomeComClimateDevice } from './devices/homecom-climate-device.js'
@@ -68,6 +69,10 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
       throw new Error('bosch-homecom: ctx.records is required (hub-only addon)')
     await records.declare(homeComRecordKinds)
     // Before the provider registers: while it is registered the hub answers from the record.
+    this.declareRegistrySwitch({
+      kind: homeComConnectionsEntryKind,
+      initialBody: (name) => ({ name }),
+    })
     await this.runMigrations(HOMECOM_MIGRATIONS, (api) =>
       homeComRowsPorts({ ...rowsDepsOver(api) }),
     )
@@ -233,8 +238,9 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
       if (typeof addonId === 'string' && addonId !== this.ctx.id) return
       void this.reconcileIntegrations()
     }
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationEnabled }, handler)
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDisabled }, handler)
+    this.requireInstances().instances.onSwitched(() => {
+      void this.reconcileIntegrations()
+    })
     this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, handler)
   }
 

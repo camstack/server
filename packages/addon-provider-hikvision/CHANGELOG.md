@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Switching the integration on or off now applies at once and a disabled integration stays disabled after the update
+
 ## [1.2.183] - 2026-11-06
 
 ### Changed

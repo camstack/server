@@ -72,6 +72,10 @@ export class EnpalProviderAddon extends BaseDeviceProvider {
     if (records === undefined)
       throw new Error('provider-enpal: ctx.records is required (hub-only addon)')
     await records.declare(enpalRecordKinds)
+    this.declareRegistrySwitch({
+      kind: enpalConnectionsEntryKind,
+      initialBody: (name) => ({ name }),
+    })
     await this.runMigrations(
       [
         integrationRowsMigration({
@@ -186,8 +190,9 @@ export class EnpalProviderAddon extends BaseDeviceProvider {
           typeof integrationId === 'string' ? integrationId : null,
         )
       }
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationEnabled }, on('enabled'))
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDisabled }, on('disabled'))
+    this.requireInstances().onSwitched((id, enabled) => {
+      void this.reconciler().onLifecycle(enabled ? 'enabled' : 'disabled', id)
+    })
     this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, on('deleted'))
   }
 

@@ -79,6 +79,10 @@ export class TuyaProviderAddon extends BaseDeviceProvider {
     if (records === undefined)
       throw new Error('provider-tuya: ctx.records is required (hub-only addon)')
     await records.declare(tuyaRecordKinds)
+    this.declareRegistrySwitch({
+      kind: tuyaConnectionsEntryKind,
+      initialBody: (name) => ({ name }),
+    })
     await this.runMigrations(
       [
         integrationRowsMigration({
@@ -198,8 +202,9 @@ export class TuyaProviderAddon extends BaseDeviceProvider {
       if (typeof addonId === 'string' && addonId !== this.ctx.id) return
       void this.reconcileIntegrations()
     }
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationEnabled }, handler)
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDisabled }, handler)
+    this.requireInstances().onSwitched(() => {
+      void this.reconcileIntegrations()
+    })
     this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, handler)
   }
 

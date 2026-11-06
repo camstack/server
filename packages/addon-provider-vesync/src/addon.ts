@@ -79,6 +79,10 @@ export class VeSyncProviderAddon extends BaseDeviceProvider {
     // Rows move before the instances provider registers. The hub migration needs the
     // persisted devices and runs from `onRestoreDevices`. The whole catalogue is declared
     // either way; `only` names the phase.
+    this.declareRegistrySwitch({
+      kind: vesyncConnectionsEntryKind,
+      initialBody: (name) => ({ name }),
+    })
     await this.runMigrations(
       this.migrationCatalogue(this.buildMigrationPorts([], async () => undefined)),
       { only: [VESYNC_ROWS_TO_RECORD_ID] },
@@ -346,8 +350,10 @@ export class VeSyncProviderAddon extends BaseDeviceProvider {
         if (typeof integrationId !== 'string') return
         void this.dropIntegration(integrationId)
       }
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationEnabled }, on('enabled'))
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDisabled }, on('disabled'))
+    this.requireInstances().onSwitched((id, enabled) => {
+      if (enabled) void this.reconcileIntegrations()
+      else void this.dropIntegration(id)
+    })
     this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, on('deleted'))
   }
 

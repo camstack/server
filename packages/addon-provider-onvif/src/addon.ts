@@ -61,6 +61,10 @@ export class OnvifProviderAddon extends BaseDeviceProvider<OnvifGlobalConfig> {
   private async migrateSettings(records: RecordsAccess): Promise<void> {
     // The WHOLE catalogue in one declaration (#417): the two earlier migrations, then the
     // integration rows move into a record and the cameras carrying no integration are claimed (D1007).
+    this.declareRegistrySwitch({
+      kind: onvifConnectionsEntryKind,
+      initialBody: (name) => ({ name }),
+    })
     await this.runMigrations([
       ...defineAddonMigrations(ADDON_MIGRATIONS, {
         readStored: (keys) =>

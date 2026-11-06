@@ -156,6 +156,10 @@ export class RtspProviderAddon extends BaseDeviceProvider {
     if (records === undefined)
       throw new Error('provider-rtsp: ctx.records is required (hub-only addon)')
     await records.declare(rtspRecordKinds)
+    this.declareRegistrySwitch({
+      kind: rtspConnectionsEntryKind,
+      initialBody: (name) => ({ name }),
+    })
     await this.runMigrations(
       defaultIntegrationMigrations({
         addonId: this.addonId,

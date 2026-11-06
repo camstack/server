@@ -77,6 +77,10 @@ export class GreeProviderAddon extends BaseDeviceProvider {
       throw new Error('provider-gree: ctx.records is required (hub-only addon)')
     await records.declare(greeRecordKinds)
     this.instances = buildGreeInstances(records)
+    this.declareRegistrySwitch({
+      kind: greeConnectionsEntryKind,
+      initialBody: (name) => ({ name }),
+    })
     await this.runMigrations(
       defaultIntegrationMigrations({
         addonId: this.addonId,

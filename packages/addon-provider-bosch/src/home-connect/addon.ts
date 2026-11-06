@@ -57,6 +57,7 @@ import {
   homeConnectRecordKinds,
   homeConnectRowsPorts,
   homeConnectStoredOf,
+  homeConnectConnectionsEntryKind,
 } from './home-connect-instances.js'
 
 export class BoschHomeConnectProviderAddon extends BaseDeviceProvider {
@@ -86,6 +87,10 @@ export class BoschHomeConnectProviderAddon extends BaseDeviceProvider {
       throw new Error('bosch-home-connect: ctx.records is required (hub-only addon)')
     await records.declare(homeConnectRecordKinds)
     // Before the provider registers: while it is registered the hub answers from the record.
+    this.declareRegistrySwitch({
+      kind: homeConnectConnectionsEntryKind,
+      initialBody: (name) => ({ name }),
+    })
     await this.runMigrations(HOME_CONNECT_MIGRATIONS, (api) =>
       homeConnectRowsPorts({ ...rowsDepsOver(api) }),
     )
@@ -301,8 +306,9 @@ export class BoschHomeConnectProviderAddon extends BaseDeviceProvider {
       if (typeof addonId === 'string' && addonId !== this.ctx.id) return
       void this.reconcileIntegrations()
     }
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationEnabled }, handler)
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDisabled }, handler)
+    this.requireInstances().instances.onSwitched(() => {
+      void this.reconcileIntegrations()
+    })
     this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, handler)
   }
 

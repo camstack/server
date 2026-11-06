@@ -29,6 +29,7 @@ import {
   type DreameConnectionBody,
   dreameRecordKinds,
   dreameRowsPorts,
+  dreameConnectionsEntryKind,
 } from './dreame-instances.js'
 import { DreameContainerDevice } from './devices/dreame-container-device.js'
 import { buildDreameAdoptionProvider } from './dreame-adoption-provider.js'
@@ -86,6 +87,10 @@ export class DreameProviderAddon extends BaseDeviceProvider {
       throw new Error('provider-dreame: ctx.records is required (hub-only addon)')
     await records.declare(dreameRecordKinds)
     // Before the provider registers: while it is registered the hub answers from the record.
+    this.declareRegistrySwitch({
+      kind: dreameConnectionsEntryKind,
+      initialBody: (name) => ({ name }),
+    })
     await this.runMigrations(DREAME_MIGRATIONS, (api) => dreameRowsPorts({ ...rowsDepsOver(api) }))
     const instances = buildDreameInstances(records, {
       onChanged: () => this.reconcileIntegrations(),
@@ -284,8 +289,9 @@ export class DreameProviderAddon extends BaseDeviceProvider {
           typeof integrationId === 'string' ? integrationId : null,
         )
       }
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationEnabled }, on('enabled'))
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDisabled }, on('disabled'))
+    this.requireInstances().onSwitched((id, enabled) => {
+      void this.reconciler().onLifecycle(enabled ? 'enabled' : 'disabled', id)
+    })
     this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, on('deleted'))
   }
 

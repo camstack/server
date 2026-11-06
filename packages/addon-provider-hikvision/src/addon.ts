@@ -274,6 +274,10 @@ export class HikvisionProviderAddon extends BaseDeviceProvider {
     if (records === undefined)
       throw new Error('provider-hikvision: ctx.records is required (hub-only addon)')
     await records.declare(hikvisionRecordKinds)
+    this.declareRegistrySwitch({
+      kind: hikvisionConnectionsEntryKind,
+      initialBody: (name) => ({ name }),
+    })
     await this.runMigrations(
       defaultIntegrationMigrations({ addonId: this.addonId, date: HIKVISION_MIGRATIONS_DATE }),
       (api) =>

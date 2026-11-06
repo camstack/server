@@ -102,6 +102,7 @@ export class ESPHomeProviderAddon extends BaseDeviceProvider<EspAddonConfig> {
     })
     // The rows move BEFORE the instances provider registers (below): while it is registered the
     // hub answers from the record, not from the rows.
+    this.declareRegistrySwitch({ kind: espConnectionsEntryKind, initialBody: (name) => ({ name }) })
     await this.runMigrations(
       defineAddonMigrations([ESPHOME_ROWS_TO_RECORD_MIGRATION], {
         ...integrationRowsPortsOverApi({
@@ -501,8 +502,7 @@ export class ESPHomeProviderAddon extends BaseDeviceProvider<EspAddonConfig> {
           })
         })
     }
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationEnabled }, handler)
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDisabled }, handler)
+    // A switch needs no subscription here: `onChanged(id, 'enabled')` of the instances above reconciles.
     this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, handler)
   }
 

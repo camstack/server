@@ -711,8 +711,9 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
       if (typeof addonId === 'string' && addonId !== this.ctx.id) return
       void this.reconcileIntegrations()
     }
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationEnabled }, handler)
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDisabled }, handler)
+    this.instances?.onSwitched(() => {
+      void this.reconcileIntegrations()
+    })
     this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, handler)
   }
 
@@ -1068,6 +1069,10 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     })
     this.instances = instances
     this.hubIntegrationProbe = (id) => integrationIsHub(instances, { registryEvidenceOf }, id)
+    this.declareRegistrySwitch({
+      kind: reolinkConnectionsEntryKind,
+      initialBody: (name) => ({ name }),
+    })
     await this.runMigrations([
       ...defineAddonMigrations(REOLINK_MIGRATIONS, this.migrationPorts()),
       ...defineAddonMigrations(REOLINK_INTEGRATION_MIGRATIONS, integrationPorts),

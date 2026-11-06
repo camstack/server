@@ -108,6 +108,10 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
     // The rows move BEFORE the instances provider registers (below): while it is registered the
     // hub answers from the record, not from the rows. The hub-device migration of the same
     // catalogue needs the persisted devices and runs from `onRestoreDevices`.
+    this.declareRegistrySwitch({
+      kind: ecowittConnectionsEntryKind,
+      initialBody: (name) => ({ name }),
+    })
     await this.runMigrations(
       this.migrationCatalogue(this.buildMigrationPorts([], async () => undefined)),
       { only: [ECOWITT_ROWS_TO_RECORD_ID] },
@@ -305,8 +309,9 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
           typeof integrationId === 'string' ? integrationId : null,
         )
       }
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationEnabled }, on('enabled'))
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDisabled }, on('disabled'))
+    this.requireInstances().onSwitched((id, enabled) => {
+      void this.reconciler().onLifecycle(enabled ? 'enabled' : 'disabled', id)
+    })
     this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, on('deleted'))
   }
 

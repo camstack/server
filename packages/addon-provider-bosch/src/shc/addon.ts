@@ -29,6 +29,7 @@ import {
   shcRecordKinds,
   shcRowsPorts,
   type ShcConnectionBody,
+  shcConnectionsEntryKind,
 } from './shc-instances.js'
 import { registerShcClient } from './shc-register.js'
 import {
@@ -82,6 +83,7 @@ export class BoschShcProviderAddon extends BaseDeviceProvider {
       throw new Error('bosch-shc: ctx.records is required (hub-only addon)')
     await records.declare(shcRecordKinds)
     // Before the provider registers: while it is registered the hub answers from the record.
+    this.declareRegistrySwitch({ kind: shcConnectionsEntryKind, initialBody: (name) => ({ name }) })
     await this.runMigrations(SHC_MIGRATIONS, (api) => shcRowsPorts({ ...rowsDepsOver(api) }))
     const built = buildShcInstances(records, {
       onChanged: () => this.reconcileIntegrations(),
@@ -291,8 +293,9 @@ export class BoschShcProviderAddon extends BaseDeviceProvider {
       if (typeof addonId === 'string' && addonId !== this.ctx.id) return
       void this.reconcileIntegrations()
     }
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationEnabled }, handler)
-    this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDisabled }, handler)
+    this.requireInstances().onSwitched(() => {
+      void this.reconcileIntegrations()
+    })
     this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, handler)
   }
 
