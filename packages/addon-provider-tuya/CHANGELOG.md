@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Test on a Tuya integration checks the Access ID, secret and region against the Tuya cloud, on a saved integration or an unsaved form.
+
 ## [0.2.153] - 2026-11-06
 
 ### Changed
 
 - Switching the integration on or off now applies at once and a disabled integration stays disabled after the update
-- Test on a Tuya integration checks the Access ID, secret and region against the Tuya cloud, on a saved integration or an unsaved form.
 
 ## [0.2.152] - 2026-11-06
 

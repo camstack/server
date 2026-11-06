@@ -7,13 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The separate broker connection test is gone; a broker is tested from its instance row.
+
 ## [1.2.153] - 2026-11-06
 
 ### Changed
 
 - Removed the deprecated broker-named in-use helpers; a delete refused for a linked instance is the one InstanceInUseError
 - Reads the instance switch through the shared isInstanceEnabled helper; behaviour unchanged
-- The separate broker connection test is gone; a broker is tested from its instance row.
 
 ## [1.2.152] - 2026-11-06
 

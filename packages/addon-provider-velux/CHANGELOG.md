@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Test on a Velux gateway integration logs in to the KLF-200 with the host and password, on a saved integration or an unsaved form.
+
 ## [0.2.161] - 2026-11-06
 
 ### Changed
 
 - Switching the integration on or off now applies at once and a disabled integration stays disabled after the update
-- Test on a Velux gateway integration logs in to the KLF-200 with the host and password, on a saved integration or an unsaved form.
 
 ## [0.2.160] - 2026-11-06
 

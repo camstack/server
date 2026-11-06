@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The separate connection-test capability is gone; the integration's own Test button now checks the saved or drafted settings
+
 ## [0.2.167] - 2026-11-06
 
 ### Changed
 
 - Switching the integration on or off now applies at once and a disabled integration stays disabled after the update
-- The separate connection-test capability is gone; the integration's own Test button now checks the saved or drafted settings
 
 ## [0.2.166] - 2026-11-06
 
