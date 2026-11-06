@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed the broker-select field type; every broker link is now an instance-select field on the one link primitive
 - Device control cards roll a slider or switch back when the device refuses the change, and keep the new value while a slow device is still answering
 - The media-player card shows title, artist and album, artwork, source and a progress bar whenever the device reports them, plus shuffle and repeat it can only read
+- A refused device command now shows the reason and puts the control back; an unanswered command stops pinning its value after 30 seconds
 
 ## [1.2.391] - 2026-11-06
 

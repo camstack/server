@@ -33,7 +33,9 @@ import {
   deriveMediaPlayerView,
   isPositionTicking,
   projectedPositionMs,
+  seekPatch,
   type NowPlayingView,
+  type PositionStampedStatus,
   type PowerView,
 } from './media-player-view'
 
@@ -344,7 +346,7 @@ export function MediaPlayerHeroCard({
     slice: (d) => d.state.mediaPlayer,
   })
 
-  const { display, applyOptimisticAction } = useOptimisticSlice<MediaPlayerStatus>(slice, {
+  const { display, applyOptimisticAction } = useOptimisticSlice<PositionStampedStatus>(slice, {
     enabled: optimistic ?? true,
   })
 
@@ -475,7 +477,7 @@ export function MediaPlayerHeroCard({
               onChange={(e) => {
                 if (busy) return
                 const positionMs = Number(e.target.value)
-                applyOptimisticAction({ position: positionMs }, () =>
+                applyOptimisticAction(seekPatch(status, positionMs, Date.now()), () =>
                   cap.seek({ position: positionMs }),
                 )
               }}

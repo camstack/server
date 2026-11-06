@@ -1,6 +1,11 @@
 import { DeviceFeature, type MediaPlayerStatus } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import { deriveMediaPlayerView, projectedPositionMs } from '../media-player-view'
+import {
+  deriveMediaPlayerView,
+  projectedPositionMs,
+  seekPatch,
+  type PositionStampedStatus,
+} from '../media-player-view'
 
 const BASE: MediaPlayerStatus = {
   state: 'off',
@@ -272,5 +277,18 @@ describe('now playing and projected position', () => {
     expect(projectedPositionMs(stamped, 1_000_000)).toBe(100_000)
     expect(projectedPositionMs({ ...stamped, state: 'paused' }, 6_000)).toBe(10_000)
     expect(projectedPositionMs(base, 6_000)).toBe(10_000)
+  })
+})
+
+describe('seekPatch', () => {
+  const base = { position: 10_000, state: 'playing' } as unknown as PositionStampedStatus
+  it('stamps positionUpdatedAt when the status carries one', () => {
+    expect(seekPatch({ ...base, positionUpdatedAt: 5 }, 60_000, 99)).toEqual({
+      position: 60_000,
+      positionUpdatedAt: 99,
+    })
+  })
+  it('leaves an unstamped status alone', () => {
+    expect(seekPatch(base, 60_000, 99)).toEqual({ position: 60_000 })
   })
 })

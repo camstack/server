@@ -306,8 +306,7 @@ function useAutomationControl(
     busy,
     setEnabled: (next) => {
       if (cap === undefined || busy) return
-      if (next) applyOptimisticAction({ enabled: next }, () => cap.enable({}))
-      else void cap.disable({})
+      applyOptimisticAction({ enabled: next }, () => (next ? cap.enable({}) : cap.disable({})))
     },
     trigger: () => {
       if (cap === undefined || busy) return

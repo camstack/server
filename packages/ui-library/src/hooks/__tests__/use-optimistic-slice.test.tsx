@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
-import { useOptimisticSlice } from '../use-optimistic-slice'
+import { useOptimisticSlice, COMMAND_CEILING_MS } from '../use-optimistic-slice'
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -216,5 +216,52 @@ describe('useOptimisticSlice — applyOptimisticAction', () => {
       finish()
     })
     expect(result.current.display).toBe(current)
+  })
+})
+
+describe('useOptimisticSlice — settle guarantees', () => {
+  const slice: MockSlice = { on: false, lastChangedAt: 1000 }
+
+  it('a command that never settles still hands the display back at the ceiling', async () => {
+    const { result } = renderHook(() => useOptimisticSlice(slice))
+    await act(async () => {
+      result.current.applyOptimisticAction({ on: true }, () => new Promise<void>(() => {}))
+    })
+    expect(result.current.display?.on).toBe(true)
+    act(() => {
+      vi.advanceTimersByTime(COMMAND_CEILING_MS + 1)
+    })
+    expect(result.current.display).toBe(slice)
+  })
+
+  it('a refusal without a handler is reported, never swallowed', async () => {
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const { result } = renderHook(() => useOptimisticSlice(slice))
+    await act(async () => {
+      result.current.applyOptimisticAction({ on: true }, () =>
+        Promise.reject(new Error('device asleep')),
+      )
+    })
+    expect(logged).toHaveBeenCalledWith('Optimistic command refused:', 'device asleep')
+    logged.mockRestore()
+  })
+
+  it('an earlier refusal does not clear the value a newer command owns', async () => {
+    let refuseFirst: (e: Error) => void = () => {}
+    const first = new Promise<void>((_, reject) => {
+      refuseFirst = reject
+    })
+    const second = new Promise<void>(() => {})
+    const onError = vi.fn()
+    const { result } = renderHook(() => useOptimisticSlice(slice))
+    await act(async () => {
+      result.current.applyOptimisticAction({ on: true }, () => first, onError)
+      result.current.applyOptimisticAction({ on: false, lastChangedAt: 1 }, () => second, onError)
+    })
+    await act(async () => {
+      refuseFirst(new Error('refused'))
+    })
+    expect(onError).toHaveBeenCalledTimes(1)
+    expect(result.current.display?.lastChangedAt).toBe(1)
   })
 })

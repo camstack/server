@@ -155,6 +155,11 @@ export function useAlert(): (options: AlertOptions) => Promise<void> {
   return useDialogContext().alert
 }
 
+/** `useAlert`, or undefined where no `ConfirmDialogProvider` is mounted (a hook that reports but must not require one). */
+export function useAlertIfAvailable(): ((options: AlertOptions) => Promise<void>) | undefined {
+  return useContext(ConfirmContext)?.alert
+}
+
 /** One text input with OK/Cancel. Replaces `window.prompt`. */
 export function usePrompt(): (options: PromptOptions) => Promise<string | null> {
   return useDialogContext().prompt

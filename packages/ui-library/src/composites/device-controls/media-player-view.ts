@@ -56,8 +56,10 @@ export interface NowPlayingView {
 }
 
 /**
- * A status that may carry the instant its `position` was read (ms epoch). Absent on a
- * device that does not stamp it: the position then stays where it was reported.
+ * A status that may carry the instant its `position` was read (ms epoch). The field is
+ * added to the media-player cap on branch alexa-echo-p0p1 (commit c91f746b4); until that
+ * lands the type here reads it optionally, and a status without it keeps the position
+ * where it was reported.
  */
 export type PositionStampedStatus = MediaPlayerStatus & {
   readonly positionUpdatedAt?: number | null
@@ -72,6 +74,21 @@ export function projectedPositionMs(status: PositionStampedStatus, nowMs: number
   return status.duration !== null && status.duration > 0
     ? Math.min(advanced, status.duration)
     : advanced
+}
+
+/**
+ * The optimistic patch for a seek. A status that carries `positionUpdatedAt` is stamped
+ * too: the projection advances from the stamp, so leaving the old one would show a
+ * position past the target.
+ */
+export function seekPatch(
+  status: PositionStampedStatus,
+  positionMs: number,
+  nowMs: number,
+): Partial<PositionStampedStatus> {
+  return typeof status.positionUpdatedAt === 'number'
+    ? { position: positionMs, positionUpdatedAt: nowMs }
+    : { position: positionMs }
 }
 
 /** True when the status carries a stamp the position can be advanced from. */

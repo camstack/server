@@ -16,14 +16,16 @@
  *       the field is present, OR a new object reference after the override was set.
  *   (b) A safety-net timeout (`timeoutMs`, default 4000ms) elapses without a push,
  *       so stale optimistic state is never stuck indefinitely. For a command run
- *       through `applyOptimisticAction` the net only starts once the command has
- *       SETTLED: a slow device never loses the new value while its answer is
- *       still pending, and a refused command rolls back at once.
+ *       through `applyOptimisticAction` the net is `COMMAND_CEILING_MS` while the
+ *       command is pending (a slow device keeps its new value), `timeoutMs` once it
+ *       settled, and a refused command rolls back at once and reports the error.
  *
  * With `enabled: false` the hook is a passthrough: `display === realSlice` and
  * `applyOptimistic` is a no-op.
  */
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { useAlertIfAvailable } from '../composites/confirm-dialog'
+import { useUiText } from '../contexts/ui-text'
 
 export interface UseOptimisticSliceOptions {
   readonly enabled?: boolean
@@ -57,6 +59,12 @@ export interface UseOptimisticSliceResult<T> {
 }
 
 const DEFAULT_TIMEOUT_MS = 4000
+
+/**
+ * The longest a command may stay unanswered before its optimistic value is dropped: a
+ * device that never answers (asleep, off the mesh) must not pin a value nothing confirms.
+ */
+export const COMMAND_CEILING_MS = 30_000
 
 /**
  * Extract a reconciliation "version" from a slice.
@@ -101,6 +109,14 @@ export function useOptimisticSlice<T extends object>(
   // Commands run through applyOptimisticAction that have not settled yet.
   const pendingRef = useRef(0)
 
+  // The newest command issued through applyOptimisticAction; only it may roll back.
+  const latestCallRef = useRef(0)
+
+  // Default refusal report: the shared alert dialog, one at a time per hook.
+  const t = useUiText()
+  const alert = useAlertIfAvailable()
+  const alertOpenRef = useRef(false)
+
   // The latest real slice, readable from a settled promise.
   const realSliceRef = useRef<T | undefined>(realSlice)
   realSliceRef.current = realSlice
@@ -140,7 +156,7 @@ export function useOptimisticSlice<T extends object>(
   }, [])
 
   const applyPatch = useCallback(
-    (patch: Partial<T>, armSafetyNet: boolean): void => {
+    (patch: Partial<T>, netMs: number): void => {
       if (!enabled) return
       // Cancel any pending fallback timeout from a previous optimistic patch.
       if (timeoutRef.current !== undefined) {
@@ -161,31 +177,51 @@ export function useOptimisticSlice<T extends object>(
       // Capture the version of the real slice at the time of the apply.
       versionAtApplyRef.current = extractVersion(realSlice)
       overrideActiveRef.current = true
-      // Fallback: clear after timeoutMs even if no push arrives. (applyOptimisticAction
-      // holds the net until its command settles.)
-      if (armSafetyNet) timeoutRef.current = setTimeout(clearOverride, timeoutMs)
+      // Fallback: clear after netMs even if no push arrives.
+      timeoutRef.current = setTimeout(clearOverride, netMs)
     },
-    [enabled, realSlice, clearOverride, timeoutMs],
+    [enabled, realSlice, clearOverride],
   )
 
   const applyOptimistic = useCallback(
-    (patch: Partial<T>): void => applyPatch(patch, true),
-    [applyPatch],
+    (patch: Partial<T>): void => applyPatch(patch, timeoutMs),
+    [applyPatch, timeoutMs],
+  )
+
+  const reportRefusal = useCallback(
+    (error: unknown): void => {
+      const message = error instanceof Error ? error.message : String(error)
+      if (alert === undefined) {
+        console.error('Optimistic command refused:', message)
+        return
+      }
+      if (alertOpenRef.current) return
+      alertOpenRef.current = true
+      void alert({
+        title: t('uiLibrary.optimistic.refusedTitle', 'The device refused the change'),
+        message,
+        variant: 'danger',
+      }).finally(() => {
+        alertOpenRef.current = false
+      })
+    },
+    [alert, t],
   )
 
   const applyOptimisticAction = useCallback(
     (
       patch: Partial<T>,
       run: () => PromiseLike<unknown> | undefined,
-      onError?: (error: unknown) => void,
+      onError: (error: unknown) => void = reportRefusal,
     ): void => {
       // A synchronous throw is a refusal like any other.
       const started = new Promise<unknown>((resolve) => resolve(run()))
       if (!enabled) {
-        started.catch((err: unknown) => onError?.(err))
+        started.catch((err: unknown) => onError(err))
         return
       }
-      applyPatch(patch, false)
+      const call = ++latestCallRef.current
+      applyPatch(patch, COMMAND_CEILING_MS)
       pendingRef.current += 1
       started.then(
         () => {
@@ -201,13 +237,15 @@ export function useOptimisticSlice<T extends object>(
           timeoutRef.current = setTimeout(clearOverride, timeoutMs)
         },
         (err: unknown) => {
-          // The server refused: never keep showing a state it did not produce.
-          clearOverride()
-          onError?.(err)
+          // The server refused: never keep showing a state it did not produce — unless a
+          // newer command owns the display now (it is judged by its own outcome).
+          if (call === latestCallRef.current) clearOverride()
+          else pendingRef.current = Math.max(0, pendingRef.current - 1)
+          onError(err)
         },
       )
     },
-    [enabled, applyPatch, clearOverride, timeoutMs],
+    [enabled, applyPatch, clearOverride, timeoutMs, reportRefusal],
   )
 
   if (!enabled) {
@@ -219,8 +257,8 @@ export function useOptimisticSlice<T extends object>(
       rollback: () => {
         /* no-op — no override was ever applied */
       },
-      applyOptimisticAction: (_patch, run, onError) => {
-        new Promise((resolve) => resolve(run())).catch((err: unknown) => onError?.(err))
+      applyOptimisticAction: (_patch, run, onError = reportRefusal) => {
+        new Promise((resolve) => resolve(run())).catch((err: unknown) => onError(err))
       },
     }
   }
