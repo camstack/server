@@ -16,6 +16,7 @@ import { createLlmInstances } from '../instances.js'
 import { AI_KIND_DESCRIPTORS } from '../kinds/descriptors.js'
 import { ProfileStore } from '../profile-store.js'
 import { createLlmProvider } from '../provider.js'
+import { resolveProfile } from '../resolve-profile.js'
 import { REDACTED_MARKER } from '../secrets.js'
 import type { UsageRecorder } from '../usage/usage-port.js'
 import { makeAiRecords } from './support/fake-records.js'
@@ -58,7 +59,7 @@ async function world(
   const instances = createLlmInstances({
     store,
     llm,
-    owner: 'ai',
+    records: w.records,
     ...(testBudgetMs !== undefined ? { testBudgetMs } : {}),
   })
   return { w, store, instances }
@@ -171,6 +172,23 @@ describe('llm profiles as integration-instances', () => {
     await instances.deleteInstance({ id: 'a' })
     expect(rawRow(w, 'a')).toBeUndefined()
     expect(w.keychain.values.size).toBe(0)
+  })
+
+  it('the switch flips the field profile resolution reads, and never invents a profile', async () => {
+    const { store, instances } = await world()
+    await createKeyed(instances)
+    const resolve = async () =>
+      resolveProfile(await store.list(), [], { profileId: 'a', consumer: 'spec', purpose: 'text' })
+    expect((await resolve()).ok).toBe(true)
+    await instances.setInstanceEnabled({ id: 'a', enabled: false })
+    expect((await store.getById('a'))?.enabled).toBe(false)
+    expect((await resolve()).ok).toBe(false)
+    await instances.setInstanceEnabled({ id: 'a', enabled: true })
+    expect((await resolve()).ok).toBe(true)
+    await expect(instances.setInstanceEnabled({ id: 'ghost', enabled: true })).rejects.toThrow(
+      /not found/,
+    )
+    expect(await store.getById('ghost')).toBeNull()
   })
 
   it('a create with no values is a disabled draft, and the form follows the stored kind', async () => {

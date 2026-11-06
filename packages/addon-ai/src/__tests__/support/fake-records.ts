@@ -19,15 +19,15 @@ import {
   isSecretMarker,
   mapSecretLeaves,
   REDACTED_SECRET,
-  recordSecretRef,
   REMOVE_LEAF,
   type RecordKindDeclaration,
   type RecordsAccess,
   type RecordsTransport,
   type RecordView,
+  recordSecretRef,
 } from '@camstack/types'
 import { aiRecordKinds } from '../../record-kinds.js'
-import { makeFakeKeychain, type FakeKeychain } from './fake-keychain.js'
+import { type FakeKeychain, makeFakeKeychain } from './fake-keychain.js'
 
 interface StoredRow {
   readonly id: string
@@ -219,7 +219,13 @@ export function makeFakeRecords(
       for (const record of records) released.push(...write(kind, record).released)
       return { count: records.length, releasedRefs: released }
     },
-    patch: async () => unimplemented('patch'),
+    patch: async ({ kind, id, data }) => {
+      const prev = table(kind).get(id)
+      if (prev === undefined) throw new Error(`${kind}/${id}: no such row`)
+      // A shallow merge: the switch is the only patch the AI specs make, and it touches no secret.
+      const { rev, released } = write(kind, { id, data: { ...prev.data, ...data } })
+      return { rev, releasedRefs: released }
+    },
     delete: async ({ kind, id }) => {
       const row = table(kind).get(id)
       if (row === undefined) return { deleted: false, secretRefs: [] }

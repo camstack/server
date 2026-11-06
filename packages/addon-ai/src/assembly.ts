@@ -7,28 +7,28 @@
  */
 import {
   type ILlmProvider,
-  integrationInstancesCapability,
   type ILlmRuntimeProvider,
   type IScopedLogger,
+  integrationInstancesCapability,
   llmCapability,
-  nodeRemovalHookCapability,
   llmRuntimeCapability,
   type ManagedModelRef,
+  nodeRemovalHookCapability,
   type ProviderRegistration,
   type RecordsAccess,
 } from '@camstack/types'
+import { AppleNodeMirror } from './apple-node-mirror.js'
 import { createLlmClient, type LlmClient } from './client/llm-client.js'
 import { DefaultsStore } from './defaults-store.js'
-import { ProfileStore } from './profile-store.js'
-import { createNodeRemovalHook } from './node-removal.js'
 import { createLlmInstances } from './instances.js'
+import { createNodeRemovalHook } from './node-removal.js'
+import { ProfileStore } from './profile-store.js'
 import { createLlmProvider } from './provider.js'
 import type { AppleFmBackend } from './runtime/apple/afm-backend.js'
 import type { LlamaSupervisor } from './runtime/llama-supervisor.js'
 import { LLM_MODEL_CATALOG } from './runtime/llm-model-catalog.js'
 import { createDefaultModelOps } from './runtime/model-ops.js'
 import { createLlmRuntimeProvider } from './runtime/runtime-provider.js'
-import { AppleNodeMirror } from './apple-node-mirror.js'
 import { createRuntimeClient, type RuntimeApi } from './runtime-client.js'
 import { ChatStore } from './test-chat/chat-store.js'
 import type { UsageRecorder } from './usage/usage-port.js'
@@ -123,7 +123,7 @@ export async function assembleAi(deps: AiAssemblyDeps): Promise<AiAssembly> {
     provider: createLlmInstances({
       store,
       llm: llmProvider,
-      owner: records.owner,
+      records,
     }),
   })
   registrations.push({

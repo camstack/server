@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Waste sources: credentials saved as plain text before the keychain move are re-saved through it, an unconverted source is named in the log and kept served from the old setting until the migration lands, and Test connection asks to configure a source that lacks required arguments
 - Waste sources: a credential an older version saved as plain text is moved into the keychain from the record itself, sources not yet migrated are served beside the records while writes keep landing in records, and a redacted credential is never sent to a service
 - Waste sources: plain-text credentials are moved into the keychain before the secret kind is declared and retried on the next start if that fails, and deleting a source also removes its row from the old sources setting
+- A waste source's on/off switch now goes through the shared instance switch; the stored enabled flag and every reader are unchanged
 
 ## [0.1.33] - 2026-11-01
 

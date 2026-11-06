@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - LLM profiles are now instances of the llm function cap (their kinds, test and key handling served through integration-instances); a one-time migration moves leftover flat profile rows and plaintext keys into the keychain
+- An LLM profile's on/off switch now goes through the shared instance switch, so it changes only the enabled flag and works while the keychain is locked
 
 ## [0.4.177] - 2026-11-05
 

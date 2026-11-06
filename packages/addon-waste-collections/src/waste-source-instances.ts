@@ -18,6 +18,7 @@ import {
   isSecretClear,
   isSecretFieldView,
   REDACTED_SECRET,
+  RecordIntegrationInstances,
   type RecordKindHandle,
   type RecordRow,
   type RecordsAccess,
@@ -220,6 +221,8 @@ function scrubbed(message: string, args: Readonly<Record<string, unknown>>): str
 export class WasteSourceInstances {
   private readonly handle: RecordKindHandle<WasteSourceBody>
   private readonly store: WasteSourceStore
+  /** The one switch (D996): the record body's `enabled`, written by the shared helper only. */
+  private readonly rowSwitch: RecordIntegrationInstances<WasteSourceBody>
 
   constructor(
     private readonly records: Pick<RecordsAccess, 'kind' | 'owner'>,
@@ -227,6 +230,16 @@ export class WasteSourceInstances {
   ) {
     this.handle = records.kind(wasteSourceEntryKind)
     this.store = new WasteSourceStore(this.handle)
+    this.rowSwitch = new RecordIntegrationInstances(records, wasteSourceEntryKind, {
+      description: DESCRIPTION,
+      formSchema: () => createFormSchema(),
+      initialBody: (id) => {
+        // A source is created by `createInstance` (service picked); the switch never invents one.
+        throw new Error(`source '${id}' not found`)
+      },
+      configured: () => true,
+      onChanged: (id, change) => deps.onChanged(id, change),
+    })
   }
 
   private viewOf(record: RecordRow<WasteSourceBody>): IntegrationInstance {
@@ -320,16 +333,6 @@ export class WasteSourceInstances {
     }
     if (Object.keys(patch).length > 0) await this.handle.patch(id, patch)
     await this.deps.onChanged(id, 'updated')
-    return { ok: true as const }
-  }
-
-  setInstanceEnabled: IIntegrationInstancesProvider['setInstanceEnabled'] = async ({
-    id,
-    enabled,
-  }) => {
-    if ((await this.handle.get(id)) === null) throw new Error(`source '${id}' not found`)
-    await this.handle.patch(id, { enabled })
-    await this.deps.onChanged(id, 'enabled')
     return { ok: true as const }
   }
 
@@ -440,7 +443,7 @@ export class WasteSourceInstances {
       getInstance: this.getInstance,
       createInstance: this.createInstance,
       updateInstance: this.updateInstance,
-      setInstanceEnabled: this.setInstanceEnabled,
+      setInstanceEnabled: this.rowSwitch.setInstanceEnabled,
       deleteInstance: this.deleteInstance,
       testInstance: this.testInstance,
     }

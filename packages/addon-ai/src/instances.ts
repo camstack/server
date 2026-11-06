@@ -18,9 +18,10 @@ import {
   type ConfigField,
   type ConfigUISchema,
   type IIntegrationInstancesProvider,
-  type IntegrationInstance,
-  type IntegrationTestConnectionResult,
   type ILlmProvider,
+  type IntegrationInstance,
+  type IntegrationInstanceDescription,
+  type IntegrationTestConnectionResult,
   isInstanceEnabled,
   isSecretClear,
   isSecretFieldView,
@@ -29,7 +30,9 @@ import {
   type LlmProfileField,
   LlmProfileSchema,
   LlmTimeoutDefaults,
+  RecordIntegrationInstances,
   type RecordRow,
+  type RecordsAccess,
   secretViewsOf,
 } from '@camstack/types'
 import { AI_KIND_DESCRIPTORS, descriptorOf, type KindDescriptor } from './kinds/descriptors.js'
@@ -52,8 +55,8 @@ const TEST_BUDGET_MS = 50_000
 export interface LlmInstancesDeps {
   readonly store: ProfileStore
   readonly llm: Pick<ILlmProvider, 'upsertProfile' | 'testProfile'>
-  /** The records owner of the `llm-profiles` kind; the keychain refs of its secrets are bound to it. */
-  readonly owner: string
+  /** The hub's records door: its owner binds the keychain refs of the profile secrets; its `llm-profiles` kind carries the switch. */
+  readonly records: Pick<RecordsAccess, 'kind' | 'owner'>
   readonly testBudgetMs?: number
 }
 
@@ -377,9 +380,33 @@ function testOutcome(result: LlmGenerateResult): IntegrationTestConnectionResult
   }
 }
 
+const LLM_DESCRIPTION: IntegrationInstanceDescription = {
+  role: 'services',
+  instanceMode: 'multiple',
+  kind: 'llm-profile',
+  canTest: true,
+  mintsId: true,
+  kinds: AI_KIND_DESCRIPTORS.map((d) => ({
+    id: d.kind,
+    label: d.label,
+    functionCap: LLM_FUNCTION_CAP,
+    canTest: true,
+  })),
+}
+
 export function createLlmInstances(deps: LlmInstancesDeps): IIntegrationInstancesProvider {
-  const { store, llm, owner } = deps
+  const { store, llm } = deps
+  const owner = deps.records.owner
   const budgetMs = deps.testBudgetMs ?? TEST_BUDGET_MS
+
+  const rowSwitch = new RecordIntegrationInstances(deps.records, aiRecordKinds['llm-profiles'], {
+    description: LLM_DESCRIPTION,
+    formSchema: () => formSchemaOf(requireDescriptor(DEFAULT_KIND)),
+    initialBody: (id) => {
+      throw new Error(`profile "${id}" not found`)
+    },
+    configured: (body) => validateProviderConfig(body.kind, body.providerConfig).ok,
+  })
 
   async function requireProfile(id: string): Promise<LlmProfile> {
     const profile = await store.getById(id)
@@ -394,19 +421,7 @@ export function createLlmInstances(deps: LlmInstancesDeps): IIntegrationInstance
   }
 
   return {
-    describe: async () => ({
-      role: 'services',
-      instanceMode: 'multiple',
-      kind: 'llm-profile',
-      canTest: true,
-      mintsId: true,
-      kinds: AI_KIND_DESCRIPTORS.map((d) => ({
-        id: d.kind,
-        label: d.label,
-        functionCap: LLM_FUNCTION_CAP,
-        canTest: true,
-      })),
-    }),
+    describe: async () => LLM_DESCRIPTION,
 
     instanceFormSchema: async ({ id, kind }) => {
       const stored = id === null ? null : await store.getById(id)
@@ -449,16 +464,10 @@ export function createLlmInstances(deps: LlmInstancesDeps): IIntegrationInstance
       return { ok: true as const }
     },
 
-    setInstanceEnabled: async ({ id, enabled }) => {
-      const existing = await requireProfile(id)
-      // Straight to the store: a blank draft is switched, not validated; a key the keychain
-      // cannot serve right now is kept as it is.
-      await store.upsert(
-        { ...existing, enabled },
-        { keepStoredKey: store.lockedReason(id) !== null },
-      )
-      return { ok: true as const }
-    },
+    // The one switch (D996): the record body's `enabled`, written by the shared helper. It
+    // patches that field alone, so a blank draft is switched without validation and a key the
+    // keychain cannot serve right now is untouched.
+    setInstanceEnabled: rowSwitch.setInstanceEnabled,
 
     deleteInstance: async ({ id }) => {
       await store.delete(id)

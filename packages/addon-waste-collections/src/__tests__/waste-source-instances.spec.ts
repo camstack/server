@@ -12,6 +12,7 @@ import {
   WasteSourceInstances,
 } from '../waste-source-instances.js'
 import { wasteSourceEntryKind } from '../waste-source-record-kinds.js'
+import { WasteSourceStore } from '../waste-source-store.js'
 
 const SERVICE = 'recyclesmart_com--recyclesmart'
 const COUNTRY = 'australia'
@@ -147,7 +148,7 @@ describe('waste-source instances', () => {
       name: 'Home',
       values: CREATE_VALUES,
     })
-    await instances.setInstanceEnabled({ id, enabled: false })
+    await instances.toProvider().setInstanceEnabled({ id, enabled: false })
     expect((await instances.getInstance({ id }))?.enabled).toBe(false)
     expect((await raw.get(id))?.data.enabled).toBe(false)
     await expect(
@@ -157,6 +158,26 @@ describe('waste-source instances', () => {
     await instances.deleteInstance({ id })
     expect(await raw.get(id)).toBeNull()
     expect(changes).toEqual([`created:${id}`, `enabled:${id}`, `deleted:${id}`])
+  })
+
+  it('the switch flips the one field the calendar readers use, and never invents a source', async () => {
+    const world = makeInMemoryRecords('waste-collections')
+    await world.records.declare({ 'waste-source': wasteSourceEntryKind })
+    const instances = new WasteSourceInstances(world.records, {
+      onChanged: async () => {},
+      fetchDeps: () => null,
+    })
+    const setEnabled = instances.toProvider().setInstanceEnabled
+    const reader = WasteSourceStore.of(world.records)
+    const { id } = await instances.createInstance({ name: 'Home', values: CREATE_VALUES })
+    expect((await reader.readResolved(id))?.enabled).toBe(true)
+    await setEnabled({ id, enabled: false })
+    expect((await reader.readResolved(id))?.enabled).toBe(false)
+    expect((await reader.listResolved()).map((s) => s.enabled)).toEqual([false])
+    await setEnabled({ id, enabled: true })
+    expect((await reader.readResolved(id))?.enabled).toBe(true)
+    await expect(setEnabled({ id: 'ghost', enabled: false })).rejects.toThrow(/not found/)
+    expect(await reader.listIds()).toEqual([id])
   })
 
   it('create refuses without a service', async () => {
