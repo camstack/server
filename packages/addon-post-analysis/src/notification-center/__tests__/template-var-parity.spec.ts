@@ -598,6 +598,7 @@ const SYSTEM_SAMPLES: readonly SystemSample[] = [
         runnerId: 'recorder',
         crashesInWindow: 3,
         addonIds: ['recorder'],
+        lastError: 'Init failed for "recorder": disk full',
       }),
   },
   {
