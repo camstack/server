@@ -117,6 +117,8 @@ export interface EvaluateCompositionFieldInput {
     readonly startedAtMs: number
     /** Scope structural AST paths to their owning output field. */
     readonly callPathPrefix?: string
+    /** The pass was fired by a deadline timer: the readings are held values, not new samples. */
+    readonly timerDriven?: boolean
   }
 }
 
@@ -213,6 +215,7 @@ function expressionOutcome(
   const deadlines: number[] = []
   const hooks: ExpressionEvalHooks = {
     noteDeadline: (at) => deadlines.push(at),
+    ...(stateful?.timerDriven === true ? { timerDriven: true } : {}),
     // G3: the unit table every other unit consumer uses, keyed by the spellings
     // `normalizeUnit` produces — so a hand-written "F" / "celsius" converts. A
     // refused pair is `null` here, which the builtin turns into a NAMED

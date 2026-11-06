@@ -414,6 +414,7 @@ function runDwell(
   const call: DwellCallState = {
     kind: 'dwell',
     pendingSince: null,
+    pendingSamples: 0,
     returnSince: null,
     latched: null,
     seenSince: null,
@@ -425,11 +426,12 @@ function runDwell(
       deadline = deadline === null ? at : Math.min(deadline, at)
     },
   }
+  const timerHooks: ExpressionEvalHooks = { ...hooks, timerDriven: true }
   const intervals: Span[] = []
   let openAt: number | null = null
-  const evaluate = (active: boolean, at: number): void => {
+  const evaluate = (active: boolean, at: number, timer: boolean): void => {
     deadline = null
-    const answer = evaluateDwell(active, startMs, stopMs, call, at, hooks)
+    const answer = evaluateDwell(active, startMs, stopMs, call, at, timer ? timerHooks : hooks)
     if (answer === true && openAt === null) openAt = at
     if (answer !== true && openAt !== null) {
       intervals.push({ start: openAt, end: at })
@@ -438,9 +440,9 @@ function runDwell(
   }
   segments.forEach((segment, i) => {
     const active = segment.value >= threshold
-    evaluate(active, segment.start)
+    evaluate(active, segment.start, false)
     const next = segments[i + 1]?.start ?? to
-    while (deadline !== null && deadline <= next) evaluate(active, deadline)
+    while (deadline !== null && deadline <= next) evaluate(active, deadline, true)
   })
   if (openAt !== null) intervals.push({ start: openAt, end: to })
   return intervals

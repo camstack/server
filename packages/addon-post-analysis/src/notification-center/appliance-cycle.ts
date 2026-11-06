@@ -22,7 +22,16 @@ export interface NcApplianceCycleFacts {
   readonly durationMs: number | null
   /** kWh used over the cycle; `null` when the device has no meter or the read failed. */
   readonly energyKwh: number | null
+  /**
+   * Set only from a CLOSED run record that says this was not a real cycle: the
+   * finish notification is dropped (and logged). Absent when the run is unknown
+   * or still open - a missing or failed read never silences a notification (D49).
+   */
+  readonly notReal?: NcNotRealCycleReason
 }
+
+/** Why a closed run is not a cycle worth announcing. */
+export type NcNotRealCycleReason = 'aborted' | 'below-energy-floor' | 'below-duration-floor'
 
 export interface NcApplianceCycleQuery {
   /** The appliance itself (the sensor), never a camera linked to it. */

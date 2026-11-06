@@ -49,6 +49,13 @@ export interface ExpressionEvalHooks {
    * instant. That is a deadline, never a poll (D659).
    */
   readonly noteDeadline?: (at: number) => void
+  /**
+   * This evaluation was fired by a deadline timer, not by a source reading: the
+   * inputs are the HELD values, no new sample arrived. `dwell` never confirms an
+   * ON on such an evaluation (a single isolated sample must not become a start
+   * just because time passed).
+   */
+  readonly timerDriven?: boolean
 }
 
 export interface ExpressionBuiltin {
@@ -211,6 +218,16 @@ function asNonNegativeMs(value: unknown, name: string, index: number): number {
  * the latched boolean through gaps shorter than the opposing delay (D933). A new
  * call state seeded with the restored output starts latched on it, so it is never
  * unknown after a boot.
+ *
+ * A flip to ON needs EVIDENCE, not only time: at least two input samples that
+ * satisfy the condition (the one that opened the pending transition and a later
+ * one, both from source readings), so a deadline timer firing over one held
+ * value never starts a run. A standby plug reports one 5-9 W sample and then
+ * stays silent; the held value used to confirm a start 30 s later. A flip to OFF
+ * is deliberately NOT symmetric: a quiet sensor is how a finished run looks (the
+ * plug reports the drop once and goes silent), so the held "off" value must still
+ * confirm after `offForMs`. A zero ON delay asks for no persistence, so one
+ * sample is enough.
  */
 export function evaluateDwell(
   activeRaw: unknown,
@@ -226,30 +243,46 @@ export function evaluateDwell(
 
   call.transition = null
   if (call.latched === null) {
-    if (call.seenSince === null) call.seenSince = nowMs
+    if (call.seenSince === null) {
+      call.seenSince = nowMs
+      call.pendingSamples = 0
+    }
+    if (hooks?.timerDriven !== true) call.pendingSamples += 1
     const delay = active ? onForMs : offForMs
-    if (nowMs - call.seenSince >= delay) {
+    const sustained = !active || delay === 0 || call.pendingSamples >= MIN_CONFIRMING_SAMPLES
+    if (nowMs - call.seenSince >= delay && sustained) {
       call.latched = active
+      call.pendingSamples = 0
       return call.latched
     }
-    hooks?.noteDeadline?.(call.seenSince + delay)
+    if (nowMs - call.seenSince < delay) hooks?.noteDeadline?.(call.seenSince + delay)
     return null
   }
 
   if (active === call.latched) return holdAgainstReturn(call, active, onForMs, nowMs, hooks)
 
   call.returnSince = null
-  if (call.pendingSince === null) call.pendingSince = nowMs
+  if (call.pendingSince === null) {
+    call.pendingSince = nowMs
+    call.pendingSamples = 0
+  }
+  if (hooks?.timerDriven !== true) call.pendingSamples += 1
   const delay = active ? onForMs : offForMs
-  if (nowMs - call.pendingSince >= delay) return flip(call, active, call.pendingSince)
-  hooks?.noteDeadline?.(call.pendingSince + delay)
+  const sustained = !active || delay === 0 || call.pendingSamples >= MIN_CONFIRMING_SAMPLES
+  if (nowMs - call.pendingSince >= delay && sustained) return flip(call, active, call.pendingSince)
+  // Time is up but the evidence is one sample: only the next reading can confirm, not a timer.
+  if (nowMs - call.pendingSince < delay) hooks?.noteDeadline?.(call.pendingSince + delay)
   return call.latched
 }
+
+/** Input samples an ON needs inside its dwell: the opener and one later reading. */
+const MIN_CONFIRMING_SAMPLES = 2
 
 function flip(call: DwellCallState, to: boolean, startedAt: number): boolean {
   const transition: DwellTransition = { value: to, startedAt }
   call.latched = to
   call.pendingSince = null
+  call.pendingSamples = 0
   call.returnSince = null
   call.transition = transition
   return to

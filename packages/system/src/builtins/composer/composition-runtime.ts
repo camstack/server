@@ -448,6 +448,7 @@ export class CompositionRuntime {
         return role === 'derived' || role === 'accumulator'
       }),
       now,
+      trigger === 'deadline',
     )
     const followers = [...this.records.values()]
       .filter((r) =>

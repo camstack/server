@@ -24,6 +24,7 @@ import type { DeviceRun } from '@camstack/types'
 import {
   NC_UNKNOWN_CYCLE_FACTS,
   type NcApplianceCycleFacts,
+  type NcNotRealCycleReason,
   type NcResolveApplianceCycleFacts,
 } from './appliance-cycle.js'
 
@@ -38,6 +39,15 @@ export const CYCLE_RUN_MATCH_MS: number = 10 * 60_000
  */
 export const CYCLE_RUN_END_LAG_MS: number = 30 * 60_000
 
+/**
+ * A cycle below these is a plug blip or a door-open flicker, not a wash: real
+ * cycles measured 0.34-1.4 kWh over 43-133 min, the fake ones 0.0001 kWh. 2 Wh
+ * and 3 min sit far below any real program and far above a standby sample.
+ * The energy floor applies only when the energy is KNOWN (null is never 0, D393).
+ */
+export const CYCLE_MIN_ENERGY_KWH = 0.002
+export const CYCLE_MIN_DURATION_MS: number = 3 * 60_000
+
 export interface ApplianceCycleRunsPorts {
   /** The newest run of the device (open or closed), or `null` when it has none. */
   readonly newestRun: (deviceId: number) => Promise<DeviceRun | null>
@@ -48,7 +58,18 @@ function factsOfClosed(run: DeviceRun, finishedAtMs: number): NcApplianceCycleFa
   if (run.endedAt === null) return NC_UNKNOWN_CYCLE_FACTS
   const lag = finishedAtMs - run.endedAt
   if (lag > CYCLE_RUN_END_LAG_MS || -lag > CYCLE_RUN_MATCH_MS) return NC_UNKNOWN_CYCLE_FACTS
-  return { durationMs: run.durationMs, energyKwh: run.detail.energyKwh }
+  const facts = { durationMs: run.durationMs, energyKwh: run.detail.energyKwh }
+  const notReal = notRealReason(run)
+  return notReal === null ? facts : { ...facts, notReal }
+}
+
+function notRealReason(run: DeviceRun): NcNotRealCycleReason | null {
+  if (run.outcome === 'aborted') return 'aborted'
+  const energy = run.detail.energyKwh
+  if (energy !== null && energy < CYCLE_MIN_ENERGY_KWH) return 'below-energy-floor'
+  if (run.durationMs !== null && run.durationMs < CYCLE_MIN_DURATION_MS)
+    return 'below-duration-floor'
+  return null
 }
 
 export function applianceCycleFactsFromRuns(

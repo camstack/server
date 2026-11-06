@@ -55,6 +55,8 @@ export interface CountCallState {
 export interface DwellCallState {
   readonly kind: 'dwell'
   pendingSince: number | null
+  /** Input samples seen on the pending side since `pendingSince` (a deadline timer is not one). */
+  pendingSamples: number
   /**
    * Epoch ms a return to the LATCHED side began during a pending transition.
    * The pending transition survives it until the return has held that side's
@@ -172,6 +174,7 @@ export function evaluateStatefulExpressionCall(
           : {
               kind: 'dwell',
               pendingSince: null,
+              pendingSamples: 0,
               returnSince: null,
               transition: null,
               // A boot restores the last answer: hold it, never read as unknown (D933).

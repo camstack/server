@@ -135,12 +135,13 @@ export function evaluateWithOwnReaders(
   host: EvaluationHost,
   keys: readonly string[],
   now: number,
+  timerDriven = false,
 ): EvaluationDelta {
   const changed = new Set<string>()
   const valueCaps = new Set<string>()
   let round = orderForEvaluation(keys, host.records())
   for (let hop = 0; round.length > 0 && hop <= host.records().size; hop++) {
-    const delta = evaluateFields(host, round, now)
+    const delta = evaluateFields(host, round, now, timerDriven)
     for (const k of delta.keys) changed.add(k)
     for (const c of delta.valueCaps) valueCaps.add(c)
     const readers = [...host.records().values()]
@@ -163,6 +164,7 @@ export function evaluateFields(
   host: EvaluationHost,
   keys: readonly string[],
   now: number,
+  timerDriven = false,
 ): EvaluationDelta {
   const changed = new Set<string>()
   const valueCaps = new Set<string>()
@@ -196,6 +198,7 @@ export function evaluateFields(
           expressionMemory: candidateMemory,
           startedAtMs: host.startedAtMs,
           callPathPrefix: fieldKey(record.plan),
+          ...(timerDriven ? { timerDriven: true } : {}),
         },
       })
       const expressionSucceeded = evaluatedOutcome.state !== 'unavailable'

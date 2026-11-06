@@ -1130,7 +1130,30 @@ export class NcDispatcher {
         return { ok: true }
       }
     }
-    const built = await this.buildNotification(entry, target)
+    // A finished cycle whose closed run says it was not a real one (aborted,
+    // a standby blip) is not announced. Judged on the durable run record; an
+    // unreadable or still-open run never silences (D49) - the facts come back
+    // without `notReal` and the notification goes out as before.
+    const cycleFacts = await this.applianceCycleFacts(entry)
+    if (cycleFacts.notReal !== undefined) {
+      this.deps.logger.info(
+        'notification dropped: the finished appliance cycle was not a real run',
+        {
+          tags: { deviceId: entry.payload.subject.applianceCycle?.deviceId ?? entry.deviceId },
+          meta: {
+            reason: cycleFacts.notReal,
+            ruleId: entry.ruleId,
+            targetId: target.id,
+            eventId: entry.recordId,
+            durationMs: cycleFacts.durationMs,
+            energyKwh: cycleFacts.energyKwh,
+          },
+        },
+      )
+      this.releaseCooldown(entry)
+      return { ok: true }
+    }
+    const built = await this.buildNotification(entry, target, cycleFacts)
     const artifactIds = built.artifactIds
     // AI CONFIRM — the last gate, and the only one that runs on the finished
     // notification: it judges the image this send is about to carry.
@@ -2068,6 +2091,7 @@ export class NcDispatcher {
   private async buildNotification(
     entry: NcOutboxEntry,
     target: NcTargetRef,
+    cycleFacts: NcApplianceCycleFacts,
   ): Promise<NcBuiltNotification> {
     const subject = entry.payload.subject
     const systemEvent = subject.systemEvent
@@ -2083,7 +2107,6 @@ export class NcDispatcher {
         : alarmSource?.zones !== undefined && alarmSource.zones.length > 0
           ? await resolveZoneLabels(this.deps.getZoneNames, alarmSource.deviceId, alarmSource.zones)
           : []
-    const cycleFacts = await this.applianceCycleFacts(entry)
     const vars = buildTemplateVars(this.texts, entry, deviceName, zoneLabels, undefined, cycleFacts)
     this.warnDeprecatedVars(entry)
     this.warnCycleSummaryDropped(entry)
