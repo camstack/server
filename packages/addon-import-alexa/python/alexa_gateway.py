@@ -10,6 +10,7 @@ import time
 from pathlib import Path
 from types import SimpleNamespace
 
+from alexa_push import Emit, PushChannel
 from alexa_sequences import EchoTarget, build_volume_node
 
 REGIONS = ("NA", "EU", "FE")
@@ -121,7 +122,9 @@ VOLUMES_PATH = "/api/devices/deviceType/dsn/audio/v1/allDeviceVolumes"
 class AlexaPyGateway:
     """Holds one AlexaLogin for the life of the process (one process per broker)."""
 
-    def __init__(self) -> None:
+    def __init__(self, emit: Emit | None = None) -> None:
+        self._emit = emit
+        self._push: PushChannel | None = None
         self._login = None
         self._devices: list[dict] = []
         self._logged_in = False
@@ -211,7 +214,19 @@ class AlexaPyGateway:
                 }
         await login.login(cookies=cookies)
         await self._persist_session()
-        return self._status_result()
+        result = self._status_result()
+        if result["status"] == "ok":
+            self._start_push(login)
+        return result
+
+    def _start_push(self, login) -> None:
+        """Open the push channel on this session; a new sign-in replaces the old channel."""
+        if self._emit is None:
+            return
+        if self._push is not None:
+            self._push.stop()
+        self._push = PushChannel(login, self._emit)
+        self._push.start()
 
     async def devices(self) -> dict:
         login = self._require_login()

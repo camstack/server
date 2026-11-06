@@ -34,8 +34,17 @@ export type AlexaRegion = (typeof ALEXA_REGIONS)[number]
 export const SPEAK_MODES = ['speak', 'announce'] as const
 export type SpeakMode = (typeof SPEAK_MODES)[number]
 
-/** How often an adopted Echo's player state is read (a push channel is a later phase). */
+/** How often an adopted Echo's player state is read while the push channel is down. */
 export const ECHO_POLL_MS = 30_000
+
+/**
+ * The same read while the push channel is up: a safety net for a missed event, not the
+ * way changes arrive. Back to `ECHO_POLL_MS` the moment the channel goes down.
+ */
+export const ECHO_POLL_PUSH_HEALTHY_MS = 5 * 60_000
+
+/** Push events for one Echo inside this window are one read, not one per event. */
+export const ECHO_PUSH_READ_GAP_MS = 2_000
 
 /** One more read after a command, once Amazon has had time to apply it. */
 export const ECHO_REREAD_MS = 1_500

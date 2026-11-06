@@ -5,6 +5,7 @@
  * which the addon wires to the speak controller (same pattern as
  * {@link AlexaCommandSink}).
  */
+import type { EchoPushSink, PushChannelState } from './speak/echo-push.js'
 import type { BrokerEcho } from './speak/broker-echo.js'
 import type { DeviceVolume } from './speak/worker-protocol.js'
 
@@ -38,7 +39,14 @@ interface SharedVolumes {
   readonly pending: Promise<ReadonlyMap<string, DeviceVolume>>
 }
 
-export class EchoSessionRegistry {
+export type EchoPushListener = () => void
+export type EchoChannelListener = (state: PushChannelState) => void
+
+export class EchoSessionRegistry implements EchoPushSink {
+  readonly #channels = new Map<string, PushChannelState>()
+  readonly #pushListeners = new Map<string, Set<EchoPushListener>>()
+  readonly #channelListeners = new Map<string, Set<EchoChannelListener>>()
+
   #resolve: ((brokerId: string) => EchoSession | null) | null = null
   readonly #dnd = new Map<string, SharedDnd>()
   readonly #volumes = new Map<string, SharedVolumes>()
@@ -89,10 +97,48 @@ export class EchoSessionRegistry {
     this.#dnd.delete(brokerId)
   }
 
+  /** Whether the account's push channel is open; `down` when nothing was ever reported. */
+  pushChannel(brokerId: string): PushChannelState {
+    return this.#channels.get(brokerId) ?? 'down'
+  }
+
+  channel(brokerId: string, state: PushChannelState): void {
+    if (this.pushChannel(brokerId) === state) return
+    this.#channels.set(brokerId, state)
+    for (const listener of [...(this.#channelListeners.get(brokerId) ?? [])]) listener(state)
+  }
+
+  event(brokerId: string, serial: string): void {
+    for (const listener of [...(this.#pushListeners.get(`${brokerId}\u0000${serial}`) ?? [])]) listener()
+  }
+
+  /** Called when Amazon pushes something about this Echo. Returns the unsubscribe. */
+  onEcho(brokerId: string, serial: string, listener: EchoPushListener): () => void {
+    return subscribe(this.#pushListeners, `${brokerId}\u0000${serial}`, listener)
+  }
+
+  /** Called when the account's channel goes up or down. Returns the unsubscribe. */
+  onChannel(brokerId: string, listener: EchoChannelListener): () => void {
+    return subscribe(this.#channelListeners, brokerId, listener)
+  }
+
   clear(): void {
+    this.#channels.clear()
+    this.#pushListeners.clear()
+    this.#channelListeners.clear()
     this.#resolve = null
     this.#dnd.clear()
     this.#volumes.clear()
+  }
+}
+
+function subscribe<T>(map: Map<string, Set<T>>, key: string, listener: T): () => void {
+  const set = map.get(key) ?? new Set<T>()
+  set.add(listener)
+  map.set(key, set)
+  return () => {
+    set.delete(listener)
+    if (set.size === 0 && map.get(key) === set) map.delete(key)
   }
 }
 

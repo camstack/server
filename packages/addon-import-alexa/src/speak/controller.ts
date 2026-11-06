@@ -21,6 +21,7 @@ import {
 } from './provider.js'
 import { resolveAlexaWorkerScript } from './python-paths.js'
 import type { SpeakSessionStore } from './session-store.js'
+import type { EchoPushSink } from './echo-push.js'
 import { startAlexaWorker, type AlexaWorker } from './worker-client.js'
 import type { TargetDelivery } from './worker-protocol.js'
 
@@ -44,6 +45,8 @@ export interface AlexaSpeakHost {
   /** Tests inject a fake worker; production starts the Python one. */
   readonly startWorker?: (brokerId: string, pythonPath: string) => AlexaWorker
   readonly now?: () => number
+  /** Receives each account's push channel state and events (the Echo devices subscribe there). */
+  readonly push?: EchoPushSink
 }
 
 function targetsFrom(rows: readonly AlexaEchoTarget[]): readonly Target[] {
@@ -189,6 +192,7 @@ export class AlexaSpeakController {
           sessions: this.host.sessions,
           logger: this.host.logger,
           now: this.now,
+          ...(this.host.push === undefined ? {} : { push: this.host.push }),
         }),
       )
     }

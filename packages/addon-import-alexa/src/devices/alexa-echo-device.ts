@@ -16,7 +16,12 @@ import {
   mapPlayerInfoToStatus,
   withListedVolume,
 } from '../alexa-echo-state-to-cap.js'
-import { ECHO_POLL_MS, ECHO_REREAD_MS } from '../speak/constants.js'
+import {
+  ECHO_POLL_MS,
+  ECHO_POLL_PUSH_HEALTHY_MS,
+  ECHO_PUSH_READ_GAP_MS,
+  ECHO_REREAD_MS,
+} from '../speak/constants.js'
 import { RateLimitedError, type NpCommand } from '../speak/worker-protocol.js'
 
 /**
@@ -60,6 +65,10 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
   private readonly amazonDeviceType: string
   private timer: ReturnType<typeof setInterval> | null = null
   private rereadTimer: ReturnType<typeof setTimeout> | null = null
+  private pushReadTimer: ReturnType<typeof setTimeout> | null = null
+  private lastPushReadAt = 0
+  private repollAfter = false
+  private unsubscribers: Array<() => void> = []
   private polling = false
   private failureLogged = false
   private volumeFailureLogged = false
@@ -94,15 +103,63 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
     this.runtimeState.setCapState('media-player', emptyEchoStatus('off', 0))
     this.runtimeState.setCapState('do-not-disturb', COLD_DND)
     void this.poll()
-    this.timer = setInterval(() => void this.poll(), ECHO_POLL_MS)
+    this.armPollTimer()
+    this.unsubscribers = [
+      alexaEchoSessions.onEcho(this.brokerId, this.serial, () => this.onPushEvent()),
+      alexaEchoSessions.onChannel(this.brokerId, (state) => this.onChannel(state)),
+    ]
+  }
+
+  /** The poll pace now: slow while the push channel is up, normal when it is down. */
+  get pollIntervalMs(): number {
+    return alexaEchoSessions.pushChannel(this.brokerId) === 'up'
+      ? ECHO_POLL_PUSH_HEALTHY_MS
+      : ECHO_POLL_MS
+  }
+
+  private armPollTimer(): void {
+    if (this.timer !== null) clearInterval(this.timer)
+    this.timer = setInterval(() => void this.poll(), this.pollIntervalMs)
     this.timer.unref()
+  }
+
+  private onChannel(state: 'up' | 'down'): void {
+    this.armPollTimer()
+    this.ctx.logger.info('alexa echo: push channel changed, poll pace follows', {
+      tags: { deviceId: this.id },
+      meta: { channel: state, pollMs: this.pollIntervalMs },
+    })
+    // Events sent while the channel was down are lost: read once on every change.
+    void this.poll()
+  }
+
+  /**
+   * Amazon pushed a change for this Echo: read it once, no sooner than the gap after the
+   * last push read. The read is the ordinary one, so the optimistic-set guard applies as
+   * it does to a poll: a read that began before a set never undoes it.
+   */
+  private onPushEvent(): void {
+    if (this.pushReadTimer !== null) return
+    const wait = Math.max(0, this.lastPushReadAt + ECHO_PUSH_READ_GAP_MS - Date.now())
+    this.pushReadTimer = setTimeout(() => {
+      this.pushReadTimer = null
+      this.lastPushReadAt = Date.now()
+      // A read already in flight may have begun before this change: read again after it.
+      if (this.polling) this.repollAfter = true
+      else void this.poll()
+    }, wait)
+    this.pushReadTimer.unref()
   }
 
   override async removeDevice(): Promise<void> {
     if (this.timer !== null) clearInterval(this.timer)
     if (this.rereadTimer !== null) clearTimeout(this.rereadTimer)
+    if (this.pushReadTimer !== null) clearTimeout(this.pushReadTimer)
+    for (const off of this.unsubscribers) off()
+    this.unsubscribers = []
     this.timer = null
     this.rereadTimer = null
+    this.pushReadTimer = null
     await super.removeDevice()
   }
 
@@ -133,6 +190,10 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
       await this.readOnce()
     } finally {
       this.polling = false
+    }
+    if (this.repollAfter) {
+      this.repollAfter = false
+      await this.poll()
     }
   }
 

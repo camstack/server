@@ -94,6 +94,7 @@ function harness(options: {
         failed: false,
         crashesInWindow: 0,
         noteSecrets() {},
+        onPush() {},
         stop() {},
         async request(request: WorkerRequest) {
           if (request.op === 'login_broker') {
@@ -192,6 +193,7 @@ describe('speak is bound to a broker', () => {
           failed: false,
           crashesInWindow: 0,
           noteSecrets() {},
+        onPush() {},
           stop() {},
           async request(request) {
             if (request.op === 'login_broker') {

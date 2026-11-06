@@ -49,6 +49,53 @@ const WorkerErrSchema = z.object({
 export const WorkerLineSchema = z.union([WorkerOkSchema, WorkerErrSchema])
 export type WorkerLine = z.infer<typeof WorkerLineSchema>
 
+/**
+ * Unsolicited lines: the worker's push channel (Amazon's HTTP/2 stream). They carry no
+ * `id`. Only the event name and the Echo's serial cross the pipe; the addon re-reads
+ * the Echo, so nothing Amazon put in a payload is trusted or forwarded.
+ */
+export const WorkerPushChannelSchema = z.object({
+  push: z.literal('channel'),
+  state: z.enum(['up', 'down']),
+  reason: z.string().default(''),
+  /** How long until the worker opens the channel again; 0 when it is up. */
+  retryInMs: z.number().int().nonnegative().default(0),
+})
+export type WorkerPushChannel = z.infer<typeof WorkerPushChannelSchema>
+
+export const WorkerPushEventSchema = z.object({
+  push: z.literal('event'),
+  command: z.string().min(1),
+  /** The Echo the event is about; null when Amazon named none. */
+  serial: z.string().min(1).nullable(),
+})
+export type WorkerPushEvent = z.infer<typeof WorkerPushEventSchema>
+
+export const WorkerPushSchema = z.discriminatedUnion('push', [
+  WorkerPushChannelSchema,
+  WorkerPushEventSchema,
+])
+export type WorkerPush = z.infer<typeof WorkerPushSchema>
+
+/** Push events that change what an Echo's slice shows: the addon reads that Echo once. */
+export const PUSH_READ_COMMANDS: ReadonlySet<string> = new Set([
+  'PUSH_AUDIO_PLAYER_STATE',
+  'PUSH_MEDIA_CHANGE',
+  'PUSH_VOLUME_CHANGE',
+  'PUSH_DOPPLER_CONNECTION_CHANGE',
+])
+
+/**
+ * Push events Amazon sends that the slice does not need: progress ticks every few
+ * seconds while playing (the position is derived from `positionUpdatedAt`), and the
+ * notification / equalizer changes touch nothing the media-player shows.
+ */
+export const PUSH_IGNORED_COMMANDS: ReadonlySet<string> = new Set([
+  'PUSH_MEDIA_PROGRESS_CHANGE',
+  'PUSH_NOTIFICATION_CHANGE',
+  'PUSH_EQUALIZER_STATE_CHANGE',
+])
+
 export const RATE_LIMITED_CODE = 'rate-limited'
 
 /** Amazon answered 429. Never an empty answer: the caller backs off and keeps what it had. */

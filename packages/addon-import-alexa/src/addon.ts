@@ -247,6 +247,7 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
       },
       sessions: RecordsSpeakSessionStore.of(records),
       ensurePython: () => this.ctx.deps.ensurePython(),
+      push: alexaEchoSessions,
     })
     this.speak = speak
     alexaEchoSessions.setResolver((brokerId) => speak.echoFor(brokerId))

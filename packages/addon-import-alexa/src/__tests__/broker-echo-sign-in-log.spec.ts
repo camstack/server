@@ -16,6 +16,7 @@ function setup(seed: { refreshToken: string; deviceAppName: string } | null) {
   const worker: AlexaWorker = {
     request: vi.fn(async () => ({ status: 'ok' })),
     noteSecrets: vi.fn(),
+    onPush: vi.fn(),
     stop: vi.fn(),
     failed: false,
   } as unknown as AlexaWorker

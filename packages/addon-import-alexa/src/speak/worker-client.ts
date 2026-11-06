@@ -19,6 +19,8 @@ import {
   RateLimitedError,
   type WorkerLine,
   WorkerLineSchema,
+  type WorkerPush,
+  WorkerPushSchema,
   type WorkerRequest,
   requestLine,
 } from './worker-protocol.js'
@@ -73,6 +75,8 @@ export interface AlexaWorker {
    * a queued read is shared with an identical one, and a command goes ahead of queued reads.
    */
   request(request: WorkerRequest, options?: WorkerRequestOptions): Promise<unknown>
+  /** Unsolicited lines from the worker (the push channel). A worker that exits reports its channel `down`. */
+  onPush(listener: (push: WorkerPush) => void): void
   /** Secrets currently in play, so a child traceback cannot be logged raw. */
   noteSecrets(secrets: readonly string[]): void
   stop(): void
@@ -230,6 +234,19 @@ export function startAlexaWorker(deps: AlexaWorkerDeps): AlexaWorker {
   let secrets: readonly string[] = []
   let pending: Entry | null = null
   const queue: Entry[] = []
+  const pushListeners: Array<(push: WorkerPush) => void> = []
+
+  function deliverPush(push: WorkerPush): void {
+    for (const listener of pushListeners) {
+      try {
+        listener(push)
+      } catch (err) {
+        logger.warn('alexa worker push listener failed', {
+          meta: { error: err instanceof Error ? err.message : String(err) },
+        })
+      }
+    }
+  }
 
   function scrub(text: string): string {
     return scrubSecrets(text, secrets)
@@ -316,6 +333,15 @@ export function startAlexaWorker(deps: AlexaWorkerDeps): AlexaWorker {
       })
       return
     }
+    if (typeof parsed === 'object' && parsed !== null && 'push' in parsed) {
+      const push = WorkerPushSchema.safeParse(parsed)
+      if (push.success) deliverPush(push.data)
+      else
+        logger.warn('alexa worker push line failed schema', {
+          meta: { error: push.error.message },
+        })
+      return
+    }
     const checked = WorkerLineSchema.safeParse(parsed)
     if (!checked.success) {
       logger.warn('alexa worker line failed schema', {
@@ -346,6 +372,8 @@ export function startAlexaWorker(deps: AlexaWorkerDeps): AlexaWorker {
 
   function onExit(code: number | null): void {
     child = null
+    // A dead worker has no channel; the addon goes back to polling at once.
+    deliverPush({ push: 'channel', state: 'down', reason: 'worker exited', retryInMs: 0 })
     if (stopped) {
       failPending(new Error('alexa worker stopped'))
       return
@@ -469,6 +497,9 @@ export function startAlexaWorker(deps: AlexaWorkerDeps): AlexaWorker {
 
   return {
     request,
+    onPush(listener): void {
+      pushListeners.push(listener)
+    },
     noteSecrets(next: readonly string[]): void {
       secrets = [...next]
     },

@@ -14,12 +14,18 @@ import traceback
 from alexa_logging import configure_logging
 
 
+def emit(line: dict) -> None:
+    """An unsolicited line (a push event). Same thread as the responses, so lines never interleave."""
+    sys.stdout.write(json.dumps(line) + "\n")
+    sys.stdout.flush()
+
+
 async def serve() -> None:
     # Imported here so `python -m unittest` of the protocol does not need alexapy.
     from alexa_gateway import AlexaPyGateway
     from alexa_protocol import Session
 
-    session = Session(AlexaPyGateway())
+    session = Session(AlexaPyGateway(emit))
     loop = asyncio.get_running_loop()
     reader = asyncio.StreamReader()
     protocol = asyncio.StreamReaderProtocol(reader)

@@ -4,6 +4,7 @@
  * never types a second Amazon password; nothing here prompts for a code.
  */
 import type { IScopedLogger } from '@camstack/types'
+import type { EchoPushSink, PushChannelState } from './echo-push.js'
 import { type BrokerSeed, regionOfDomain } from './broker-seed.js'
 import type { SpeakSessionStore } from './session-store.js'
 import { scrubSecrets, withSpeakSecretFiles } from './secret-file.js'
@@ -24,6 +25,9 @@ import {
   parseLoginResult,
   parsePlayerState,
   parseSessionStatus,
+  PUSH_IGNORED_COMMANDS,
+  PUSH_READ_COMMANDS,
+  type WorkerPush,
 } from './worker-protocol.js'
 
 /**
@@ -41,6 +45,8 @@ export interface BrokerEchoDeps {
   readonly sessions: SpeakSessionStore
   readonly logger: IScopedLogger
   readonly now?: () => number
+  /** Where the account's push channel is reported; without it the channel is not used. */
+  readonly push?: EchoPushSink
 }
 
 function withDevice(deviceId: number | undefined): WorkerRequestOptions {
@@ -53,8 +59,68 @@ export class BrokerEcho {
   private currentDevices: readonly EchoDevice[] = []
   private backoffMs = 0
   private limitedUntil = 0
+  private channelState: PushChannelState = 'down'
+  private channelWasUp = false
+  private readonly unknownPushLogged = new Set<string>()
 
-  constructor(private readonly deps: BrokerEchoDeps) {}
+  constructor(private readonly deps: BrokerEchoDeps) {
+    deps.worker.onPush((push) => this.onPush(push))
+  }
+
+  /** Whether Amazon's push channel is open for this account right now. */
+  get pushChannel(): PushChannelState {
+    return this.channelState
+  }
+
+  private onPush(push: WorkerPush): void {
+    const tags = { tags: { brokerId: this.deps.brokerId } }
+    if (push.push === 'channel') {
+      if (push.state === this.channelState) {
+        if (push.state === 'down') {
+          this.deps.logger.debug('alexa echo: push channel still down', {
+            ...tags,
+            meta: { reason: push.reason, retryInMs: push.retryInMs },
+          })
+        }
+        return
+      }
+      this.channelState = push.state
+      if (push.state === 'up') {
+        this.deps.logger.info(
+          this.channelWasUp
+            ? 'alexa echo: push channel reconnected, polling slows down'
+            : 'alexa echo: push channel connected, polling slows down',
+          tags,
+        )
+        this.channelWasUp = true
+      } else {
+        this.deps.logger.warn('alexa echo: push channel down, polling at the normal pace', {
+          ...tags,
+          meta: { reason: push.reason, retryInMs: push.retryInMs },
+        })
+      }
+      this.deps.push?.channel(this.deps.brokerId, push.state)
+      return
+    }
+    if (PUSH_READ_COMMANDS.has(push.command)) {
+      if (push.serial === null) {
+        this.deps.logger.debug('alexa echo: push event without an Echo, ignored', {
+          ...tags,
+          meta: { command: push.command },
+        })
+        return
+      }
+      this.deps.push?.event(this.deps.brokerId, push.serial)
+      return
+    }
+    if (PUSH_IGNORED_COMMANDS.has(push.command)) return
+    if (this.unknownPushLogged.has(push.command)) return
+    this.unknownPushLogged.add(push.command)
+    this.deps.logger.info('alexa echo: unknown push event, ignored (logged once)', {
+      ...tags,
+      meta: { command: push.command },
+    })
+  }
 
   get id(): string {
     return this.deps.brokerId

@@ -19,6 +19,7 @@ function setup(onRequest: (request: WorkerRequest) => unknown) {
       return onRequest(request)
     }),
     noteSecrets: vi.fn(),
+    onPush: vi.fn(),
     stop: vi.fn(),
     failed: false,
   } as unknown as AlexaWorker
