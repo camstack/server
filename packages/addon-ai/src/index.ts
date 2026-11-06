@@ -35,7 +35,6 @@ export {
 export { createRuntimeClient, type RuntimeApi } from './runtime-client.js'
 export { aiRecordKinds, USAGE_RETENTION_MS } from './record-kinds.js'
 export {
-  CHATS_COLLECTION,
   ChatStore,
   chatsRowId,
   titleFromFirstUserMessage,
@@ -84,4 +83,4 @@ export {
   type TestChatStreamDeps,
 } from './test-chat/run-stream.js'
 export type { BudgetGate, UsageFilter, UsageRecorder, UsageRowInput } from './usage/usage-port.js'
-export { USAGE_COLLECTION, UsageStore } from './usage/usage-store.js'
+export { UsageStore } from './usage/usage-store.js'

@@ -13,13 +13,7 @@
     "waste": {
       "packages/addon-waste-collections/src/waste-collections.addon.ts:replaceAll-config": "seeds the source store from config.sources on boot beside the source records; P6e folds it into a migration"
     },
-    "llm": {
-      "packages/addon-ai/src/defaults-store.ts:DEFAULTS_COLLECTION": "legacy settings-store collection name of the llm profiles, kept for the adoption mapper; P6b folds the migration and deletes it",
-      "packages/addon-ai/src/profile-store.ts:META_COLLECTION": "legacy settings-store collection name of the llm profiles, kept for the adoption mapper; P6b folds the migration and deletes it",
-      "packages/addon-ai/src/profile-store.ts:PROFILES_COLLECTION": "legacy settings-store collection name of the llm profiles, kept for the adoption mapper; P6b folds the migration and deletes it",
-      "packages/addon-ai/src/test-chat/chat-store.ts:CHATS_COLLECTION": "legacy settings-store collection name of the llm profiles, kept for the adoption mapper; P6b folds the migration and deletes it",
-      "packages/addon-ai/src/usage/usage-store.ts:USAGE_COLLECTION": "legacy settings-store collection name of the llm profiles, kept for the adoption mapper; P6b folds the migration and deletes it"
-    },
+    "llm": {},
     "notifiers": {
       "packages/addon-notifiers/src/target-store.ts:TARGETS_COLLECTION": "legacy settings-store collection of notification targets, kept for the adoption mapper; P6a drops it with the targets migration",
       "packages/addon-provider-homeassistant/src/ha-notification-output.ts:HA_TARGETS_COLLECTION": "legacy settings-store collection of notification targets, kept for the adoption mapper; P6a drops it with the targets migration"

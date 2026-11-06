@@ -18,9 +18,6 @@ import type { TestChatAttachment, TestChatImageRef } from './contract.js'
 
 export type { StoredChatMessage, StoredConversation }
 
-/** Legacy collection name — kept for the adoption mapper / docs. */
-export const CHATS_COLLECTION = 'ai:chats'
-
 const TITLE_MAX_CHARS = 80
 
 export function chatsRowId(userId: string, conversationId: string): string {

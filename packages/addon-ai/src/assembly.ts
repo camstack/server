@@ -7,6 +7,7 @@
  */
 import {
   type ILlmProvider,
+  integrationInstancesCapability,
   type ILlmRuntimeProvider,
   type IScopedLogger,
   llmCapability,
@@ -20,6 +21,7 @@ import { createLlmClient, type LlmClient } from './client/llm-client.js'
 import { DefaultsStore } from './defaults-store.js'
 import { ProfileStore } from './profile-store.js'
 import { createNodeRemovalHook } from './node-removal.js'
+import { createLlmInstances } from './instances.js'
 import { createLlmProvider } from './provider.js'
 import type { AppleFmBackend } from './runtime/apple/afm-backend.js'
 import type { LlamaSupervisor } from './runtime/llama-supervisor.js'
@@ -37,7 +39,7 @@ export interface AiAssemblyDeps {
   readonly logger: IScopedLogger
   readonly modelsDir: string
   /** The hub's `ctx.records`, with the AI kinds already declared. Required on the hub; agents carry none. */
-  readonly records?: Pick<RecordsAccess, 'kind'>
+  readonly records?: Pick<RecordsAccess, 'kind' | 'owner'>
   readonly supervisor: LlamaSupervisor
   readonly ensureBinary: () => Promise<string>
   /** Overridable so a test can assert the request BODY the library emits. */
@@ -87,12 +89,10 @@ export async function assembleAi(deps: AiAssemblyDeps): Promise<AiAssembly> {
   const records = deps.records
   if (records === undefined) throw new Error('addon-ai (hub) needs ctx.records')
   const { UsageStore } = await import('./usage/usage-store.js')
-  const store = ProfileStore.of(records, deps.logger.child('llm-profiles'))
+  const store = ProfileStore.of(records)
   const defaults = DefaultsStore.of(records)
   const usage = UsageStore.of(records, deps.logger.child('llm-usage'))
   const chats = ChatStore.of(records, Date.now)
-  // D893: flat rows → providerConfig before anything reads them for real.
-  await store.migrateLegacyRows()
   await store.ensureSeeded()
 
   const runtimeClient =
@@ -101,7 +101,10 @@ export async function assembleAi(deps: AiAssemblyDeps): Promise<AiAssembly> {
   // readers (serve-and-revalidate), never awaited on a generation's path.
   const appleNodes =
     runtimeClient !== undefined
-      ? new AppleNodeMirror({ source: runtimeClient, logger: deps.logger.child('apple-nodes') })
+      ? new AppleNodeMirror({
+          source: runtimeClient,
+          logger: deps.logger.child('apple-nodes'),
+        })
       : undefined
   const llmProvider = createLlmProvider({
     store,
@@ -116,8 +119,19 @@ export async function assembleAi(deps: AiAssemblyDeps): Promise<AiAssembly> {
   })
   registrations.push({ capability: llmCapability, provider: llmProvider })
   registrations.push({
+    capability: integrationInstancesCapability,
+    provider: createLlmInstances({
+      store,
+      llm: llmProvider,
+      owner: records.owner,
+    }),
+  })
+  registrations.push({
     capability: nodeRemovalHookCapability,
-    provider: createNodeRemovalHook({ store, logger: deps.logger.child('node-removal') }),
+    provider: createNodeRemovalHook({
+      store,
+      logger: deps.logger.child('node-removal'),
+    }),
   })
 
   return {

@@ -47,6 +47,9 @@
             "name": "llm"
           },
           {
+            "name": "integration-instances"
+          },
+          {
             "name": "llm-runtime"
           },
           {

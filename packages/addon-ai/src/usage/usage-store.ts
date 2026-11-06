@@ -15,9 +15,6 @@ import { aiRecordKinds, UsageBodySchema, type UsageBody } from '../record-kinds.
 import { readAllRows } from '../record-pages.js'
 import type { UsageFilter, UsageRecorder, UsageRowInput } from './usage-port.js'
 
-/** Legacy collection name — kept for the adoption mapper / docs. */
-export const USAGE_COLLECTION = 'ai:usage'
-
 function dayKey(ts: number): string {
   return new Date(ts).toISOString().slice(0, 10)
 }

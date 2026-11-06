@@ -16,10 +16,9 @@
  * reported by `lockedReason`, so a call fails explicitly instead of going out
  * unauthenticated. Invalid rows are dropped on read (`LlmProfileSchema.safeParse`).
  * A row still in the flat pre-D893 shape is read through `migrateProfileBody`
- * and rewritten by `migrateLegacyRows` (boot).
+ * and rewritten by the `ai/2026-11-06-profile-raw-keys-to-keychain` migration.
  */
 import {
-  type IScopedLogger,
   type LlmProfile,
   LlmProfileSchema,
   type RawSecretMigrationReport,
@@ -34,9 +33,6 @@ import { migrateProfileBody } from './profile-migration.js'
 import { aiRecordKinds, type LlmMetaBody, type LlmProfileBody } from './record-kinds.js'
 import { readAllRows } from './record-pages.js'
 
-/** Legacy collection names — kept for the adoption mappers / docs. */
-export const PROFILES_COLLECTION = 'ai:llm-profiles'
-export const META_COLLECTION = 'ai:llm-meta'
 export const SEED_PROFILE_ID = 'seed-ollama-lan'
 const SEED_MARKER_ID = 'seededDefaults'
 
@@ -111,14 +107,12 @@ export class ProfileStore {
   constructor(
     private readonly profiles: RecordKindHandle<LlmProfileBody>,
     private readonly meta: RecordKindHandle<LlmMetaBody>,
-    private readonly logger?: IScopedLogger,
   ) {}
 
-  static of(records: Pick<RecordsAccess, 'kind'>, logger?: IScopedLogger): ProfileStore {
+  static of(records: Pick<RecordsAccess, 'kind'>): ProfileStore {
     return new ProfileStore(
       records.kind(aiRecordKinds['llm-profiles']),
       records.kind(aiRecordKinds['llm-meta']),
-      logger,
     )
   }
 
@@ -183,6 +177,11 @@ export class ProfileStore {
     })
   }
 
+  /** Every row as the records door shows it: the key slot holds the redaction token, never a value. */
+  async rows(): Promise<RecordRow<LlmProfileBody>[]> {
+    return readAllRows(this.profiles)
+  }
+
   async getById(id: string): Promise<LlmProfile | null> {
     const row = await this.profiles.get(id)
     if (row === null) return null
@@ -226,47 +225,6 @@ export class ProfileStore {
   async delete(id: string): Promise<void> {
     await this.profiles.delete(id)
     this.locked.delete(id)
-  }
-
-  /**
-   * Rewrite every row still in the flat pre-D893 shape (boot, idempotent).
-   *
-   * The body is read UNRESOLVED and written back with its secret slot as the
-   * redaction token, which the facade answers by keeping the stored marker: a
-   * key is never read, copied or re-written to do this, so a locked keychain
-   * does not stop it. Returns how many rows were rewritten.
-   */
-  async migrateLegacyRows(): Promise<number> {
-    const rows = await readAllRows(this.profiles)
-    let migrated = 0
-    for (const row of rows) {
-      const { body, changed } = migrateProfileBody({ ...row.data })
-      if (!changed) continue
-      const kind = typeof body.kind === 'string' ? body.kind : ''
-      const [config] = splitSecret(kind, providerConfigOf(body))
-      const parsed = LlmProfileSchema.omit({ id: true }).safeParse({
-        ...withoutKey(body),
-        providerConfig: config,
-      })
-      if (!parsed.success) {
-        // Left exactly as it was: the read path still migrates it on the fly,
-        // and a row nothing can parse is dropped on read either way.
-        this.logger?.warn('addon-ai: a flat LLM profile row does not parse; left as is', {
-          meta: { profileId: row.id, error: parsed.error.message },
-        })
-        continue
-      }
-      const data: LlmProfileBody =
-        row.data.apiKey !== undefined ? { ...parsed.data, apiKey: REDACTED_SECRET } : parsed.data
-      await this.profiles.put({ id: row.id, data })
-      migrated += 1
-    }
-    if (migrated > 0) {
-      this.logger?.info('addon-ai: LLM profiles moved to providerConfig', {
-        meta: { migrated, rows: rows.length },
-      })
-    }
-    return migrated
   }
 
   /**

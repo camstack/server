@@ -44,6 +44,7 @@ describe('assembleAi', () => {
     const world = await makeAiRecords()
     const assembly = await assembleAi({ ...baseDeps(true), records: world.records })
     expect(assembly.registrations.map((r) => r.capability.name).sort()).toEqual([
+      'integration-instances',
       'llm',
       'llm-runtime',
       'node-removal-hook',

@@ -13,9 +13,6 @@ import {
 import { aiRecordKinds } from './record-kinds.js'
 import { readAllRows } from './record-pages.js'
 
-/** Legacy collection name — kept for the adoption mapper / docs. */
-export const DEFAULTS_COLLECTION = 'ai:llm-defaults'
-
 function selectorKey(selector: LlmDefaultSelector): string {
   return 'consumer' in selector ? `consumer:${selector.consumer}` : `purpose:${selector.purpose}`
 }

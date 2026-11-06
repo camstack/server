@@ -12,6 +12,7 @@ import {
   type AddonApi,
   type AddonDataPlaneHandle,
   BaseAddon,
+  defineAddonMigrations,
   type ConfigUISchema,
   type ManagedModelRef,
   type MediaFileKind,
@@ -27,7 +28,9 @@ import { AppleFmHelper } from './runtime/apple/afm-helper.js'
 import { LlamaSupervisor } from './runtime/llama-supervisor.js'
 import { entryForRef } from './runtime/llm-model-catalog.js'
 import type { RuntimeApi } from './runtime-client.js'
-import { aiRecordKinds } from './record-kinds.js'
+import { ADDON_MIGRATIONS } from './migrations/index.js'
+import { readAllRows } from './record-pages.js'
+import { aiRecordKinds, LlmProfileBodySchema } from './record-kinds.js'
 import type { ChatRetention } from './test-chat/chat-store.js'
 import { TEST_CHAT_CONSUMER, TEST_CHAT_PREFIX } from './test-chat/contract.js'
 import type { TrackMediaRow } from './test-chat/media.js'
@@ -137,6 +140,23 @@ export class AiAddon extends BaseAddon<AiConfig> {
     if (isHub) {
       if (records === undefined) throw new Error('addon-ai needs ctx.records')
       await records.declare(aiRecordKinds)
+      // Flat rows and a stray plaintext key are normalised before anything reads a profile (D987).
+      const profiles = records.kind(aiRecordKinds['llm-profiles'])
+      await this.runMigrations(
+        defineAddonMigrations(ADDON_MIGRATIONS, {
+          listRows: async () =>
+            (await readAllRows(profiles)).map((row) => ({
+              id: row.id,
+              data: row.data,
+            })),
+          putRow: async (id, data) => {
+            await profiles.put({ id, data: LlmProfileBodySchema.parse(data) })
+          },
+          warn: (message) => {
+            logger.warn(message)
+          },
+        }),
+      )
     }
 
     const appleLogger = logger.child('apple-fm')
@@ -296,7 +316,11 @@ export class AiAddon extends BaseAddon<AiConfig> {
         kinds: readonly MediaFileKind[],
         deviceId: number,
       ): Promise<readonly TrackMediaRow[]> =>
-        api.pipelineAnalytics.getTrackMedia.query({ trackId, kinds: [...kinds], deviceId }),
+        api.pipelineAnalytics.getTrackMedia.query({
+          trackId,
+          kinds: [...kinds],
+          deviceId,
+        }),
       recordUsage: (row) => usage.record(row),
       logger,
       now: () => Date.now(),
@@ -354,10 +378,16 @@ export class AiAddon extends BaseAddon<AiConfig> {
         continue
       }
       try {
-        await provider.startRuntime({ addonId: profile.addonId, profileId: profile.id })
+        await provider.startRuntime({
+          addonId: profile.addonId,
+          profileId: profile.id,
+        })
       } catch (err) {
         this.ctx.logger.warn('addon-ai: autoStart failed', {
-          meta: { profileId: profile.id, error: err instanceof Error ? err.message : String(err) },
+          meta: {
+            profileId: profile.id,
+            error: err instanceof Error ? err.message : String(err),
+          },
         })
       }
     }
