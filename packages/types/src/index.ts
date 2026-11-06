@@ -250,11 +250,7 @@ export * from './interfaces/birth-decision-ledger.js'
 export * from './interfaces/debug-note-archive.js'
 export * from './interfaces/track-relations.js'
 export type * from './interfaces/detection-addon.js'
-export type {
-  DeviceEvent,
-  DeviceMetadata,
-  DeviceState,
-} from './interfaces/device.js'
+export type { DeviceEvent, DeviceMetadata, DeviceState } from './interfaces/device.js'
 export {
   autoAssignProfiles,
   classifyStream,
@@ -264,11 +260,7 @@ export {
   toStreamSourceEntry,
 } from './interfaces/device-capabilities/camera.js'
 export type * from './interfaces/device-capabilities/index.js'
-export type {
-  IDeviceProvider,
-  LiveEvent,
-  ProviderStatus,
-} from './interfaces/device-provider.js'
+export type { IDeviceProvider, LiveEvent, ProviderStatus } from './interfaces/device-provider.js'
 export type * from './interfaces/embedding-encoder.js'
 export type * from './interfaces/engine-slots.js'
 export type * from './interfaces/event-bus.js'
@@ -379,11 +371,7 @@ export {
 } from './interfaces/storage-location-mode.js'
 export * from './interfaces/stream-broker.js'
 export type * from './interfaces/task-handler.js'
-export type {
-  Timezone,
-  TimezoneDstRule,
-  Weekday,
-} from './interfaces/timezones.js'
+export type { Timezone, TimezoneDstRule, Weekday } from './interfaces/timezones.js'
 export { findTimezone, TIMEZONES } from './interfaces/timezones.js'
 export type {
   LogChannelDescriptor,
@@ -426,10 +414,7 @@ export type {
   LogChannelsProviderHandle,
   LogChannelsProviderOptions,
 } from './logging/log-channel-provider.js'
-export {
-  createLogChannelsProvider,
-  LOG_CHANNEL_TICK_MS,
-} from './logging/log-channel-provider.js'
+export { createLogChannelsProvider, LOG_CHANNEL_TICK_MS } from './logging/log-channel-provider.js'
 export type {
   FailureCounterSample,
   FailureObservation,
@@ -645,10 +630,7 @@ export {
   parseAppFlowRequest,
   parseAppPageLang,
 } from './auth/app-flow.js'
-export {
-  SSO_STATE_COOKIE,
-  SSO_STATE_COOKIE_MAX_AGE_SEC,
-} from './auth/sso-state.js'
+export { SSO_STATE_COOKIE, SSO_STATE_COOKIE_MAX_AGE_SEC } from './auth/sso-state.js'
 export {
   buildDeviceEnrollmentLink,
   buildDeviceSignatureMessage,
@@ -1073,25 +1055,16 @@ export type {
   DiscoveryCandidate,
   FieldProbeResult,
 } from './device/base-device-provider.js'
-export {
-  BaseDeviceProvider,
-  toDeviceSummary,
-} from './device/base-device-provider.js'
+export { BaseDeviceProvider, toDeviceSummary } from './device/base-device-provider.js'
 // The ONE derivation of "asleep vs gone" for a battery device (D173).
-export type {
-  BatteryPresence,
-  BatteryPresenceInput,
-} from './device/battery-presence.js'
+export type { BatteryPresence, BatteryPresenceInput } from './device/battery-presence.js'
 export {
   BATTERY_UNREACHABLE_AFTER_MS,
   deriveBatteryPresence,
   isBatteryPresenceFault,
 } from './device/battery-presence.js'
 // Camera device interface + stream sources
-export type {
-  ICameraDevice,
-  StreamSourceEntry,
-} from './device/camera-device.js'
+export type { ICameraDevice, StreamSourceEntry } from './device/camera-device.js'
 export {
   CONTAINER_CHILD_PRIORITY,
   type ContainerChildRef,
@@ -1123,16 +1096,10 @@ export type {
   ExposeBlockDevicesInput,
   ReconcileBlockDevicesInput,
 } from './device/block-declared-devices.js'
-export {
-  exposeBlockDevices,
-  reconcileBlockDevices,
-} from './device/block-declared-devices.js'
+export { exposeBlockDevices, reconcileBlockDevices } from './device/block-declared-devices.js'
 // Device interface (canonical — new architecture)
 export type { IDevice } from './device/device.js'
-export type {
-  DeviceBinding,
-  DeviceBindingEntry,
-} from './device/device-binding.js'
+export type { DeviceBinding, DeviceBindingEntry } from './device/device-binding.js'
 // Device config + base class
 export { DeviceConfig } from './device/device-config.js'
 // Device context
@@ -1166,10 +1133,7 @@ export {
   SENSOR_FEATURES,
   SENSOR_MAP,
 } from './device/device-control-resolution.js'
-export type {
-  DeviceDoAction,
-  DeviceDoOpenArg,
-} from './device/device-do-actions.js'
+export type { DeviceDoAction, DeviceDoOpenArg } from './device/device-do-actions.js'
 export {
   actionsForBoundCaps,
   actionsForDevice,
@@ -1283,12 +1247,7 @@ export {
 } from './device/device-state-handle.js'
 // ── Device architecture ──────────────────────────────────────────────
 // DeviceType (enum), DeviceFeature, ChargingStatus, DeviceRole
-export {
-  ChargingStatus,
-  DeviceFeature,
-  DeviceRole,
-  DeviceType,
-} from './device/device-type.js'
+export { ChargingStatus, DeviceFeature, DeviceRole, DeviceType } from './device/device-type.js'
 export {
   APPLIANCE_EXPORT,
   type ApplianceExportDecision,
@@ -1396,11 +1355,7 @@ export { SystemMirror } from './device/system-mirror.js'
 export type { DeviceConfigEntry } from './device/zod-to-config-ui.js'
 // Zod → ConfigUISchema converter
 export { zodEntriesToConfigUI } from './device/zod-to-config-ui.js'
-export {
-  collectZodSecretPaths,
-  isZodSecret,
-  SECRET_META,
-} from './device/zod-secret.js'
+export { collectZodSecretPaths, isZodSecret, SECRET_META } from './device/zod-secret.js'
 // Enums
 export {
   EventCategory,
@@ -1479,16 +1434,10 @@ export {
   validateExpressionSource,
 } from './expression/index.js'
 export type { AddonApi, AppRouter } from './generated/addon-api.js'
-export type {
-  CapNameWithStatus,
-  CapStatusTypeMap,
-} from './generated/cap-status-types.js'
+export type { CapNameWithStatus, CapStatusTypeMap } from './generated/cap-status-types.js'
 // ── Generated capability status map (codegen) ────────────────────────
 export { CAP_NAMES_WITH_STATUS } from './generated/cap-status-types.js'
-export type {
-  CapabilityName,
-  CapabilityRouterMap,
-} from './generated/capability-router-map.js'
+export type { CapabilityName, CapabilityRouterMap } from './generated/capability-router-map.js'
 // ── Generated capability router map (codegen) ────────────────────────
 export {
   ALL_CAPABILITY_DEFINITIONS,
@@ -1497,10 +1446,7 @@ export {
 } from './generated/capability-router-map.js'
 export type { DeviceProxy } from './generated/device-proxy.js'
 export { createDeviceProxy } from './generated/device-proxy.js'
-export {
-  DEVICE_SCOPED_CAPS,
-  isDeviceScopedCap,
-} from './generated/device-scoped-caps.js'
+export { DEVICE_SCOPED_CAPS, isDeviceScopedCap } from './generated/device-scoped-caps.js'
 export type { MethodAccessRecord } from './generated/method-access-map.js'
 // ── Generated method access map (codegen) ────────────────────────────
 export {
@@ -1510,10 +1456,7 @@ export {
   SYSTEM_CAP_NAMES,
 } from './generated/method-access-map.js'
 // ── Generated method device selectors (codegen) ──────────────────────
-export type {
-  DeviceRefField,
-  DeviceRefForm,
-} from './generated/method-device-selectors.js'
+export type { DeviceRefField, DeviceRefForm } from './generated/method-device-selectors.js'
 export {
   METHOD_DEVICE_SELECTORS,
   SYSTEM_SCOPE_DEVICE_METHODS,
@@ -1662,10 +1605,7 @@ export {
   type KeyedArrayAssignmentProjection,
   type KeyedArrayStatusInput,
 } from './composition/customize/keyed-array-status.js'
-export type {
-  ScopePresetId,
-  ScopePresetSpec,
-} from './generated/scope-presets.js'
+export type { ScopePresetId, ScopePresetSpec } from './generated/scope-presets.js'
 export { SCOPE_PRESETS } from './generated/scope-presets.js'
 export type { SystemProxy } from './generated/system-proxy.js'
 export { createSystemProxy } from './generated/system-proxy.js'
@@ -1755,10 +1695,7 @@ export {
   type ResolveAttachmentUrlsDeps,
   resolveAttachmentUrls,
 } from './notification/attachment-url.js'
-export {
-  deliveryParamsDeclaredBy,
-  resolveDeliveryParams,
-} from './notification/delivery-params.js'
+export { deliveryParamsDeclaredBy, resolveDeliveryParams } from './notification/delivery-params.js'
 export {
   htmlToText,
   markdownToHtmlLite,
@@ -2029,11 +1966,7 @@ export type {
   TimelapseTemplate,
 } from './notification/timelapse-rule.js'
 // The ONE dictionary of state-word labels both rule editors render (R7, D690).
-export type {
-  StateLabel,
-  StateLabelKey,
-  StateLabelLocale,
-} from './i18n/state-labels.js'
+export type { StateLabel, StateLabelKey, StateLabelLocale } from './i18n/state-labels.js'
 export {
   isStateLabelKey,
   STATE_LABEL_KEYS,
@@ -2175,10 +2108,7 @@ export {
 } from './pipeline/step-format-runnable.js'
 // Model ids deleted from a step's catalog, and the stored-pin reset's one
 // question about them (D725) — see `pipeline/removed-model-ids.ts`.
-export {
-  isRemovedModelId,
-  REMOVED_MODEL_IDS,
-} from './pipeline/removed-model-ids.js'
+export { isRemovedModelId, REMOVED_MODEL_IDS } from './pipeline/removed-model-ids.js'
 // A setting stored with the model it was made for, applied only while that
 // model runs (D738) — see `pipeline/model-bound-settings.ts`.
 export {
@@ -2334,10 +2264,7 @@ export { DEVICE_TYPE_INFO, type DeviceTypeInfo } from './types/device-type.js'
 // Unit conversion table (pure) — shared by the render path + expression engine.
 export * from './units/index.js'
 export { BOOT_RECOVERY_BACKOFF_MS } from './util/boot-recovery-backoff.js'
-export {
-  bestLocationMatch,
-  locationSimilarity,
-} from './util/location-match.js'
+export { bestLocationMatch, locationSimilarity } from './util/location-match.js'
 export { bareAddonId, isSameAddonId } from './utils/addon-id.js'
 export {
   BackgroundRunRegistry,
@@ -2415,11 +2342,7 @@ export {
   resetPoolBaseline,
   resolvePoolMemoryPolicy,
 } from './utils/pool-memory-watchdog.js'
-export {
-  cellsToRects,
-  type NormRect,
-  rectsToCells,
-} from './utils/privacy-grid-raster.js'
+export { cellsToRects, type NormRect, rectsToCells } from './utils/privacy-grid-raster.js'
 export { RingBuffer } from './utils/ring-buffer.js'
 export type { InferenceStepResult } from './utils/run-inference-step.js'
 export { runInferenceStep } from './utils/run-inference-step.js'
@@ -2439,10 +2362,7 @@ export {
   encodeVectorBase64,
   vectorDimFromBase64,
 } from './utils/vector-codec.js'
-export {
-  evaluateZoneRules,
-  type ZoneRuleEvalResult,
-} from './utils/zone-rule-eval.js'
+export { evaluateZoneRules, type ZoneRuleEvalResult } from './utils/zone-rule-eval.js'
 // `canonicalHash` is intentionally NOT exported here — it imports
 // `node:crypto`, which Vite externalises in browser bundles and crashes
 // at runtime when an admin-UI module transitively pulls it in. Server-
@@ -2463,10 +2383,7 @@ export type {
   RuntimeId,
 } from './inference/runtime-capabilities.js'
 export type { CoralUnitAddress } from './inference/coral-units.js'
-export {
-  coralUsableUnits,
-  edgetpuDelegateDevice,
-} from './inference/coral-units.js'
+export { coralUsableUnits, edgetpuDelegateDevice } from './inference/coral-units.js'
 // Inference — hardware-driven runtime capability rules (SSOT)
 export {
   defaultDeviceFor,
@@ -2509,10 +2426,7 @@ export {
 export * from './ir/index.js'
 
 export * from './time/index.js'
-export type {
-  InstanceUser,
-  InstanceUserFinder,
-} from './addon/instance-in-use.js'
+export type { InstanceUser, InstanceUserFinder } from './addon/instance-in-use.js'
 export {
   assertInstanceUnused,
   fieldUserFinder,

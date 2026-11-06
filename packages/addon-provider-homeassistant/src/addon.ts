@@ -38,6 +38,7 @@ import {
   type ProviderRegistration,
   type SavedDevice,
   publicEndpointReaderFrom,
+  isInstanceEnabled,
 } from '@camstack/types'
 import { z } from 'zod'
 import { HaContainerDevice } from './devices/ha-container-device.js'
@@ -676,7 +677,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
       }
       return
     }
-    const settings = entry.enabled === false ? null : entryToSettings(entry)
+    const settings = !isInstanceEnabled(entry) ? null : entryToSettings(entry)
     if (settings === null) {
       await reg.removeEntry(id)
       return

@@ -8,7 +8,7 @@
  */
 import nodemailer from 'nodemailer'
 import type SMTPTransport from 'nodemailer/lib/smtp-transport/index.js'
-import { userError } from '@camstack/types'
+import { userError, isInstanceEnabled } from '@camstack/types'
 import type { SmtpRelayBody } from './relay-record-kinds.js'
 
 /** The part of a nodemailer transporter the pool uses; tests supply a fake of exactly this. */
@@ -77,7 +77,7 @@ export function buildTransportOptions(body: Readonly<SmtpRelayBody>): SMTPTransp
 
 /** An absent `enabled` means on (D996). */
 function isOn(body: Readonly<SmtpRelayBody>): boolean {
-  return body.enabled !== false
+  return isInstanceEnabled(body)
 }
 
 function coerceAddress(entry: string | { readonly address: string }): string {

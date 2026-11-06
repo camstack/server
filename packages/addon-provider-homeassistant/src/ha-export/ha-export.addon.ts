@@ -56,6 +56,7 @@ import {
   nodePin,
   oauthIntegrationCapability,
   type ProviderRegistration,
+  isInstanceEnabled,
 } from '@camstack/types'
 import { z } from 'zod'
 import { HA_PROVIDER_ADDON_ID, listHomeAssistantBrokers } from '../ha-broker-source.js'
@@ -2662,7 +2663,7 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
 
   /** The Status column of the instances table: why a target is, or is not, pushing. */
   private targetHealth(id: string, body: HaExportTargetBody): IntegrationInstanceStatus {
-    if (body.enabled === false) return { state: 'off', label: 'Off' }
+    if (!isInstanceEnabled(body)) return { state: 'off', label: 'Off' }
     if (!this.connectionExists(body.connectionId)) {
       return {
         state: 'error',

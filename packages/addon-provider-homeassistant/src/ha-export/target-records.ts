@@ -17,6 +17,7 @@ import {
   linkField,
   type LinkTarget,
   type RecordKindHandle,
+  isInstanceEnabled,
 } from '@camstack/types'
 import { z } from 'zod'
 import { HA_MEDIA_ROLES, type HaMediaRole } from './media-url.js'
@@ -158,7 +159,7 @@ export class ExportTargets {
   /** The target's own switch; an absent field means on. */
   isEnabled(id: string): boolean {
     const row = this.rows.get(id)
-    return row !== undefined && row.enabled !== false
+    return row !== undefined && isInstanceEnabled(row)
   }
 
   connectionId(id: string): string {
@@ -172,7 +173,7 @@ export class ExportTargets {
   /** The cadence of the quickest enabled target (the addon runs one timer); the default when none. */
   reconcileIntervalSec(): number {
     const seconds = [...this.rows.values()]
-      .filter((row) => row.enabled !== false)
+      .filter((row) => isInstanceEnabled(row))
       .map((row) => row.reconcileIntervalSec)
     if (seconds.length === 0) return DEFAULT_RECONCILE_INTERVAL_SEC
     return Math.max(MIN_RECONCILE_INTERVAL_SEC, Math.min(...seconds))
