@@ -94,6 +94,38 @@ describe('instance links guard', () => {
     expect(deleted).toEqual([])
   })
 
+  it('refuses to delete an MQTT broker an MQTT Discovery connection links, as provider-mqtt-ha declares it', async () => {
+    const deleted: string[] = []
+    const brokers = provider(
+      {
+        kind: 'brokers',
+        kinds: [{ id: 'mqtt', label: 'MQTT broker', functionCap: 'broker', brokerKind: 'mqtt' }],
+      },
+      [row('mq1', 'mqtt', {})],
+      deleted,
+    )
+    const connections = provider(
+      {
+        kind: 'connection',
+        links: [
+          { kind: 'connections', field: 'mqttBrokerId', to: { cap: 'broker', kind: 'mqtt' } },
+        ],
+      },
+      [row('ha1', undefined, { mqttBrokerId: 'mq1' }), row('ha2', undefined, { mqttBrokerId: '' })],
+    )
+    const index = new InstanceLinksIndex(() => [
+      { addonId: 'mqtt-broker', provider: brokers },
+      { addonId: 'provider-mqtt-ha', provider: connections },
+    ])
+    const err = await guardInstanceDeletes(brokers, index)
+      .deleteInstance({ id: 'mq1' })
+      .catch((e: unknown) => e)
+    expect(err).toBeInstanceOf(InstanceInUseError)
+    if (!(err instanceof InstanceInUseError)) throw new Error('unreachable')
+    expect(err.users).toEqual([{ kind: 'connections', id: 'ha1', name: 'n-ha1' }])
+    expect(deleted).toEqual([])
+  })
+
   it('deletes an instance nothing links, and one whose kind the link does not name', async () => {
     const { deleted, guarded } = world()
     // b2 is held by c2, but that link names kind `mqtt`, and b2 is `smtp-inbound`.

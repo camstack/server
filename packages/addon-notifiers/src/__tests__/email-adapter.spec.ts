@@ -6,6 +6,19 @@ import { makeNotifiersRecords } from './fake-records.js'
 import { TargetStore } from '../target-store.js'
 import { iconUrlFor } from '../icon-routes.js'
 
+describe('email descriptor relay pin', () => {
+  it('is an optional instance-select over smtp-provider, not a hand-rolled select', () => {
+    const fields = buildEmailDescriptor([]).configSchema.sections.flatMap(
+      (section) => section.fields,
+    )
+    expect(fields.find((f) => f.key === 'smtpInstanceId')).toMatchObject({
+      type: 'instance-select',
+      functionCap: 'smtp-provider',
+      required: false,
+    })
+  })
+})
+
 describe('email notifier adapter', () => {
   it('sendDirect calls smtp sendEmail with to + subject + text + smtpAddonId', async () => {
     const sendEmail = vi.fn(async (_input: EmailSendInput) => ({ messageId: 'm-1' }))
@@ -202,20 +215,6 @@ describe('email notifier adapter', () => {
 })
 
 describe('email notifier relay picker', () => {
-  it('the relay field is a select discovered from the chosen provider, with a default-relay choice', () => {
-    const fields = buildEmailDescriptor().configSchema.sections.flatMap((s) => s.fields)
-    const relay = fields.find((f) => 'key' in f && f.key === 'smtpInstanceId')
-    expect(relay).toMatchObject({
-      type: 'select',
-      discoverOptions: {
-        kind: 'email',
-        dependsOn: ['smtpAddonId'],
-        noneLabel: 'Default relay',
-        missingLabel: 'missing relay',
-      },
-    })
-  })
-
   it('discover lists the relays of the chosen provider by name', async () => {
     const listRelays = vi.fn(async (_addonId: string) => [
       { id: 'relay-1a2b3c4d', name: 'Office relay' },

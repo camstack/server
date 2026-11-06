@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The email target's relay pin is an instance picker over the email providers' relays
+
 ## [1.2.628] - 2026-11-02
 
 ### Changed

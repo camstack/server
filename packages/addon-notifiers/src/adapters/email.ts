@@ -1,4 +1,4 @@
-import { userError } from '@camstack/types'
+import { linkFieldDescriptor, userError } from '@camstack/types'
 /**
  * Email notifier — delivers through a ready `smtp-provider` (Google Gmail API
  * or nodemailer SMTP). Not HTTP: the provider calls {@link sendDirect}.
@@ -108,20 +108,17 @@ export function buildEmailDescriptor(providers: readonly SmtpProviderOption[] = 
               options,
             },
             {
-              type: 'select',
-              key: 'smtpInstanceId',
-              label: 'Relay (optional)',
+              ...linkFieldDescriptor(
+                'smtpInstanceId',
+                { cap: 'smtp-provider' },
+                { label: 'Relay (optional)' },
+              ),
               labelKey: 'notifiers:emailDescriptor.s_email.smtpInstanceId.label',
               description:
                 'Pin this target to one relay of the provider. Leave on the default relay to use the first configured one.',
               descriptionKey: 'notifiers:emailDescriptor.s_email.smtpInstanceId.description',
-              options: [],
-              discoverOptions: {
-                kind: EMAIL_KIND,
-                dependsOn: ['smtpAddonId'],
-                noneLabel: 'Default relay',
-                missingLabel: 'missing relay',
-              },
+              // The pin is optional: an empty link uses the first configured relay.
+              required: false,
             },
             {
               type: 'text',

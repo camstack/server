@@ -7,13 +7,14 @@
 import {
   type AddonMigration,
   type ConfigUISchema,
-  defineEntryKind,
-  entryBody,
+  declareLinkKind,
   type IntegrationRowsApi,
   type RowsRecordsDoor,
   type SecretsAccess,
   type IntegrationRowsPorts,
   integrationRowsPortsOverApi,
+  linkFieldDescriptor,
+  type MigrationProcedureResult,
   moveIntegrationRowsToRecords,
   RecordIntegrationInstances,
   type RecordsAccess,
@@ -21,9 +22,13 @@ import {
 } from '@camstack/types'
 import { z } from 'zod'
 
-export const mqttHaConnectionsEntryKind = defineEntryKind('connections', {
+/** The one link of an integration: to an `mqtt` broker instance, REQUIRED (D1013); `''` while unlinked. */
+export const MQTT_BROKER_LINK_FIELD = 'mqttBrokerId'
+
+export const mqttHaConnectionsEntryKind = declareLinkKind({
+  name: 'connections',
   title: 'MQTT Discovery integrations',
-  schema: entryBody({ mqttBrokerId: z.string().min(1).optional() }),
+  links: { mqttBrokerId: { cap: 'broker', kind: 'mqtt' } },
   writeTrigger: 'an operator links an MQTT Discovery integration to an MQTT broker',
 })
 export type MqttHaConnectionBody = z.infer<typeof mqttHaConnectionsEntryKind.schema>
@@ -45,11 +50,12 @@ export function buildMqttHaConnectionForm(): ConfigUISchema {
         columns: 1,
         fields: [
           {
-            type: 'broker-select',
-            key: 'mqttBrokerId',
-            label: 'MQTT broker',
+            ...linkFieldDescriptor(
+              MQTT_BROKER_LINK_FIELD,
+              { cap: 'broker', kind: 'mqtt' },
+              { label: 'MQTT broker' },
+            ),
             labelKey: 'provider-mqtt-ha:globalSettings.s_mqtt-ha-broker-link.mqttBrokerId.label',
-            brokerKind: 'mqtt',
           },
           {
             type: 'info',
@@ -84,13 +90,49 @@ export function mqttHaBodyFromRows(
     )
   }
   const mqttBrokerId = text(values['mqttBrokerId']) ?? text(values['brokerId'])
-  return { name: integration.name, ...(mqttBrokerId !== undefined ? { mqttBrokerId } : {}) }
+  return { name: integration.name, mqttBrokerId: mqttBrokerId ?? '' }
 }
 
 export const MQTT_HA_ROWS_TO_RECORD_ID = 'provider-mqtt-ha/2026-11-05-integration-rows-to-record'
+export const MQTT_HA_LINK_REQUIRED_ID = 'provider-mqtt-ha/2026-11-07-mqtt-link-required'
+
+/** What the link backfill found in one integration record. */
+export type MqttLinkState = 'filled' | 'linked' | 'unlinked' | 'no-record'
+
+/** The rows move's ports plus the one the link backfill needs. */
+export interface MqttHaMigrationPorts extends IntegrationRowsPorts {
+  /**
+   * Give a record that has no `mqttBrokerId` key the empty link, keeping every other field, and
+   * read it back. `linked` / `unlinked` say what an untouched record holds.
+   */
+  ensureLinkField(id: string): Promise<MqttLinkState>
+}
+
+/**
+ * The link became a REQUIRED string (`''` while unlinked): a record written before that has no key.
+ * Give it one; an integration with no broker stays unconfigured and is counted in a warning. Never
+ * deletes, never invents a broker.
+ */
+export async function backfillMqttLinks(
+  ports: MqttHaMigrationPorts,
+): Promise<MigrationProcedureResult> {
+  const integrations = await ports.listIntegrations('provider-mqtt-ha')
+  const counts = { filled: 0, linked: 0, unlinked: 0, 'no-record': 0 }
+  for (const integration of integrations) counts[await ports.ensureLinkField(integration.id)] += 1
+  const unconfigured = counts.filled + counts.unlinked
+  if (unconfigured > 0) {
+    ports.warn(
+      `${unconfigured} MQTT Discovery integration(s) link to no MQTT broker and stay unconfigured until one is picked`,
+    )
+  }
+  return {
+    outcome: counts.filled > 0 ? 'done' : 'already-done',
+    summary: { ...counts },
+  }
+}
 
 /** The whole `provider-mqtt-ha` catalogue (D987): offered to the engine at `onInitialize`. */
-export const MQTT_HA_MIGRATIONS: readonly AddonMigration<IntegrationRowsPorts>[] = [
+export const MQTT_HA_MIGRATIONS: readonly AddonMigration<MqttHaMigrationPorts>[] = [
   {
     meta: {
       id: MQTT_HA_ROWS_TO_RECORD_ID,
@@ -113,6 +155,23 @@ export const MQTT_HA_MIGRATIONS: readonly AddonMigration<IntegrationRowsPorts>[]
         bodyFrom: mqttHaBodyFromRows,
       }),
   },
+  {
+    meta: {
+      id: MQTT_HA_LINK_REQUIRED_ID,
+      owner: 'provider-mqtt-ha',
+      level: 'addon-state',
+      seq: 2,
+      dependsOn: [MQTT_HA_ROWS_TO_RECORD_ID],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'tolerate',
+      bodyKind: 'procedure',
+      description:
+        'The broker link of an MQTT Discovery integration is a required instance link: give a record that has no `mqttBrokerId` key the empty link, and warn about the integrations that link to no broker',
+      fixtureMark: 'a record field the migration does not know',
+    },
+    procedure: (ports) => backfillMqttLinks(ports),
+  },
 ]
 
 /** The hub side and the records side of the move, over `ctx.api` and `ctx.records`. */
@@ -121,17 +180,33 @@ export function mqttHaRowsPorts(deps: {
   readonly records: RowsRecordsDoor
   readonly warn: (message: string) => void
   readonly secrets?: Pick<SecretsAccess, 'resolve' | 'delete'> | null
-}): IntegrationRowsPorts {
-  return integrationRowsPortsOverApi({
+}): MqttHaMigrationPorts {
+  const handle = deps.records.kind({
+    name: mqttHaConnectionsEntryKind.name,
+    declaration: mqttHaConnectionsEntryKind.declaration,
+    schema: z.record(z.string(), z.unknown()),
+  })
+  const base = integrationRowsPortsOverApi({
     api: deps.api,
     ...(deps.secrets !== undefined ? { secrets: deps.secrets } : {}),
-    records: deps.records.kind({
-      name: mqttHaConnectionsEntryKind.name,
-      declaration: mqttHaConnectionsEntryKind.declaration,
-      schema: z.record(z.string(), z.unknown()),
-    }),
+    records: handle,
     log: { warn: deps.warn },
   })
+  return {
+    ...base,
+    ensureLinkField: async (id) => {
+      const stored = await handle.get(id)
+      if (stored === null) return 'no-record'
+      const current = stored.data[MQTT_BROKER_LINK_FIELD]
+      if (typeof current === 'string') return current === '' ? 'unlinked' : 'linked'
+      await handle.put({ id, data: { ...stored.data, [MQTT_BROKER_LINK_FIELD]: '' } })
+      const back = await handle.get(id)
+      if (typeof back?.data[MQTT_BROKER_LINK_FIELD] !== 'string') {
+        throw new Error(`integration '${id}': the link field did not read back after the write`)
+      }
+      return 'filled'
+    },
+  }
 }
 
 /** The broker an integration links to, from its record; undefined while it links to none. */
@@ -139,7 +214,8 @@ export async function mqttHaBrokerIdOf(
   instances: Pick<RecordIntegrationInstances<MqttHaConnectionBody>, 'getResolved'>,
   id: string,
 ): Promise<string | undefined> {
-  return (await instances.getResolved(id))?.mqttBrokerId
+  const linked = (await instances.getResolved(id))?.mqttBrokerId
+  return linked === undefined || linked === '' ? undefined : linked
 }
 
 export interface MqttHaInstancesDeps {
@@ -159,8 +235,8 @@ export function buildMqttHaInstances(
       canTest: false,
     },
     formSchema: () => buildMqttHaConnectionForm(),
-    initialBody: (name): MqttHaConnectionBody => ({ name }),
-    configured: (body) => body.mqttBrokerId !== undefined,
+    initialBody: (name): MqttHaConnectionBody => ({ name, mqttBrokerId: '' }),
+    configured: (body) => body.mqttBrokerId !== '',
     onChanged: async (_id, change) => {
       if (change !== 'deleted') await deps.onChanged()
     },

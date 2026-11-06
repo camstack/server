@@ -3,6 +3,7 @@ import {
   capViolations,
   collectionCapsOf,
   judge,
+  NOT_AN_INSTANCE_REF_SITES,
   siteViolations,
   type SourceFile,
 } from '../check-instance-refs-use-link-primitive.js'
@@ -48,6 +49,33 @@ describe('check-instance-refs-use-link-primitive', () => {
     ).toEqual([])
     expect(
       siteViolations([file('packages/addon-x/src/t.ts', `x = z.object({ name: z.string() })`)]),
+    ).toEqual([])
+  })
+
+  it('rule 2 accepts linkFieldDescriptor as the primitive too', () => {
+    const src = `import { linkFieldDescriptor } from '@camstack/types'\n{ key: 'smtpInstanceId' }`
+    expect(siteViolations([file('packages/addon-x/src/e.ts', src)])).toEqual([])
+  })
+
+  it('rule 2 exempts a named non-link site, and only that file and key', () => {
+    expect(NOT_AN_INSTANCE_REF_SITES.size).toBe(3)
+    const body = `x = z.object({ accountId: z.string() })`
+    expect(
+      siteViolations([file('packages/addon-cloudflare/src/tunnel/cloudflare-actions.ts', body)]),
+    ).toEqual([])
+    // the same key in another file of the same addon is still a violation
+    expect(
+      siteViolations([file('packages/addon-cloudflare/src/tunnel/other.ts', body)]).map(
+        (v) => v.id,
+      ),
+    ).toEqual(['addon-cloudflare:tunnel/other.ts:accountId'])
+    expect(
+      siteViolations([
+        file(
+          'packages/addon-terminal/src/terminal-camera-device.ts',
+          `z.object({ instanceId: z.string() })`,
+        ),
+      ]),
     ).toEqual([])
   })
 

@@ -38,6 +38,24 @@ const NOT_AN_INSTANCE_REF: ReadonlySet<string> = new Set([
   // A Cloudflare tenant id typed by the operator, not the id of a CamStack instance.
   'customAccountId',
 ])
+/**
+ * Sites (`<package>:<path under src>:<key>`) whose key matches the shape and never will be a link to
+ * another CamStack instance. Each carries its reason.
+ */
+export const NOT_AN_INSTANCE_REF_SITES: ReadonlyMap<string, string> = new Map([
+  [
+    'addon-cloudflare:tunnel/cloudflare-actions.ts:accountId',
+    'a Cloudflare account id typed or discovered at the Cloudflare API, not a CamStack instance',
+  ],
+  [
+    'addon-provider-vesync:config.ts:accountId',
+    'the VeSync cloud account id the vendor returns at sign-in, not a CamStack instance',
+  ],
+  [
+    'addon-terminal:terminal-camera-device.ts:instanceId',
+    'the terminal session instance a terminal camera device attaches to, not an integration instance',
+  ],
+])
 /** A zod field (`brokerId: z.`) or a form field descriptor (`key: 'brokerId'`). */
 const REF_DECL_RE = new RegExp(
   String.raw`(?:^|[\s,{(])(${REF_KEY})\??\s*:\s*z\s*\.|\bkey:\s*['"](${REF_KEY})['"]`,
@@ -46,7 +64,7 @@ const REF_DECL_RE = new RegExp(
 /** Device classes and custom actions hold an owner id or an action input, not a link. */
 const NOT_A_LINK_PATH_RE = /(?:^|\/)devices\/|(?:^|\/)custom-actions\.ts$/
 const PRIMITIVE_IMPORT_RE =
-  /import\s*(?:type\s*)?\{[^}]*\b(?:declareLinkKind|linkField)\b[^}]*\}\s*from\s*['"]@camstack\/types['"]/
+  /import\s*(?:type\s*)?\{[^}]*\b(?:declareLinkKind|linkField|linkFieldDescriptor)\b[^}]*\}\s*from\s*['"]@camstack\/types['"]/
 const DECLARE_LINK_KIND_RE = /\bdeclareLinkKind\s*[(<]/g
 const CAP_LITERAL_RE = /\bcap:\s*['"]([^'"]+)['"]/g
 
@@ -96,6 +114,7 @@ export function siteViolations(files: readonly SourceFile[]): Violation[] {
       if (key !== undefined && !NOT_AN_INSTANCE_REF.has(key)) keys.add(key)
     }
     for (const key of keys) {
+      if (NOT_AN_INSTANCE_REF_SITES.has(`${addon[1]}:${addon[2] ?? ''}:${key}`)) continue
       out.push({
         id: `${addon[1]}:${addon[2] ?? ''}:${key}`,
         message: `${file.path}: '${key}' references another instance without declareLinkKind / linkField from @camstack/types`,
