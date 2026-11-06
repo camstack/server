@@ -109,6 +109,7 @@ export class VeluxProviderAddon extends BaseDeviceProvider {
     )
     this.instances = buildVeluxInstances(records, {
       onChanged: () => this.reconcileIntegrations(),
+      tester: this.buildConnectionTestProvider(),
     })
 
     // The library writes its own diagnostics to the console; keep them on our logger.

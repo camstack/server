@@ -6,6 +6,9 @@
 import {
   defineEntryKind,
   entryBody,
+  type IConnectionTestProvider,
+  type IntegrationTestConnectionResult,
+  REDACTED_SECRET,
   type RecordsAccess,
   RecordIntegrationInstances,
 } from '@camstack/types'
@@ -31,20 +34,46 @@ export const veluxRecordKinds = { connections: veluxConnectionsEntryKind } as co
 
 export function buildVeluxInstances(
   records: Pick<RecordsAccess, 'kind' | 'owner'>,
-  deps: { readonly onChanged: () => Promise<void> },
+  deps: {
+    readonly onChanged: () => Promise<void>
+    readonly tester: Pick<IConnectionTestProvider, 'testSettings'>
+  },
 ): RecordIntegrationInstances<VeluxConnectionBody> {
+  const handle = records.kind(veluxConnectionsEntryKind)
   return new RecordIntegrationInstances<VeluxConnectionBody>(records, veluxConnectionsEntryKind, {
     description: {
       role: 'devices',
       discovery: { mode: 'account', scopedToInstance: true },
       instanceMode: 'multiple',
       kind: 'server',
-      canTest: false,
+      canTest: true,
     },
     formSchema: () => buildConnectionFormSchema(),
     initialBody: (name): VeluxConnectionBody => ({ name }),
     configured: (body) => (body.host ?? '').length > 0 && body.password !== undefined,
     onChanged: () => deps.onChanged(),
+    test: async ({ id, values }): Promise<IntegrationTestConnectionResult> => {
+      // The stored gateway under the edited form; a saved password is never retyped, the form
+      // hands back its redacted view, so the keychain value stands in.
+      const stored = id === null ? null : ((await handle.getResolved(id))?.data ?? null)
+      const typed = values['password']
+      const password =
+        typeof typed === 'string' && typed !== '' && typed !== REDACTED_SECRET
+          ? typed
+          : (stored?.password ?? '')
+      const outcome = await deps.tester.testSettings({
+        settings: { ...stored, ...values, password },
+      })
+      if (outcome.outcome === 'validated') {
+        return {
+          success: true,
+          status: 'validated',
+          ...(outcome.latencyMs !== undefined ? { latencyMs: outcome.latencyMs } : {}),
+          ...(outcome.detail !== undefined ? { detail: outcome.detail } : {}),
+        }
+      }
+      return { success: false, status: outcome.outcome, error: outcome.error }
+    },
   })
 }
 

@@ -9,7 +9,10 @@ import {
   integrationRowsPortsOver,
   makeInMemoryRecords,
 } from '@camstack/types'
-import { describe, expect, it } from 'vitest'
+import { REDACTED_SECRET } from '@camstack/types'
+import { describe, expect, it, vi } from 'vitest'
+import { VeluxLoginRefusedError } from '../velux-client-contract.js'
+import { buildVeluxConnectionTestProvider } from '../velux-connection-test.js'
 import {
   buildVeluxInstances,
   veluxConnectionOf,
@@ -61,8 +64,17 @@ async function world() {
     }),
   )
   if (migration === undefined) throw new Error('no migration')
-  const instances = buildVeluxInstances(mem.records, { onChanged: async () => undefined })
-  return { mem, rows, cleared, migration, instances }
+  // A gateway that accepts exactly one password; records every login it was asked for.
+  const seen: Array<{ host: string; password: string }> = []
+  const probe = async (input: { host: string; password: string }) => {
+    seen.push(input)
+    if (input.password !== SECRET) throw new VeluxLoginRefusedError()
+    return { firmware: '2.0.0.71' }
+  }
+  const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
+  const tester = buildVeluxConnectionTestProvider({ logger: logger as never, probe })
+  const instances = buildVeluxInstances(mem.records, { onChanged: async () => undefined, tester })
+  return { mem, rows, cleared, migration, instances, seen }
 }
 
 describe('velux integration instances', () => {
@@ -87,5 +99,33 @@ describe('velux integration instances', () => {
     await w.instances.createInstance({ id: 'int_0009', name: 'Empty' })
     expect(await veluxConnectionOf(w.instances, 'int_0009')).toBeNull()
     expect(await veluxConnectionOf(w.instances, 'int_0404')).toBeNull()
+  })
+})
+
+describe('velux testInstance', () => {
+  it('offers the Test action', async () => {
+    const w = await world()
+    expect((await w.instances.describe()).canTest).toBe(true)
+  })
+
+  it('a stored instance is tested with its keychain password when the form does not retype it', async () => {
+    const w = await world()
+    await w.migration.execute()
+    const result = await w.instances.testInstance({
+      id: 'int_0001',
+      values: { host: MARK_HOST, password: REDACTED_SECRET },
+    })
+    expect(result).toMatchObject({ success: true, status: 'validated' })
+    expect(w.seen.at(-1)).toEqual({ host: MARK_HOST, password: SECRET })
+  })
+
+  it('a draft with a wrong password is rejected', async () => {
+    const w = await world()
+    const result = await w.instances.testInstance({
+      id: null,
+      values: { host: MARK_HOST, password: 'wrong' },
+    })
+    expect(result).toMatchObject({ success: false, status: 'rejected' })
+    expect(w.seen.at(-1)).toEqual({ host: MARK_HOST, password: 'wrong' })
   })
 })
