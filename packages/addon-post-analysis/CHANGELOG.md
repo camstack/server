@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.673] - 2026-11-06
+
 ### Changed
 
 - A node going offline for a planned update is now notified ("restarting for an update") instead of silenced, so its back-online always has its offline, even across a notification-center restart

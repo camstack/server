@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.598] - 2026-11-06
+
 ### Changed
 
 - The exported-devices list opens full page and a row click no longer leaves for the device; Add device rows lose the leading dash and name the container they sit in.

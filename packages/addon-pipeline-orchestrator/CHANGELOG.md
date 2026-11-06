@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.663] - 2026-11-06
+
 ### Changed
 
 - The viewer web app is 1.0.685: notification targets pick their connection from a list.

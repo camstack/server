@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.511] - 2026-11-06
+
 ### Changed
 
 - Notification templates: the {{graceMin}} variable is gone (a planned-update offline is now worded without a grace)
