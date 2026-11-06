@@ -61,9 +61,6 @@
           },
           {
             "name": "stream-params"
-          },
-          {
-            "name": "connection-test"
           }
         ]
       }

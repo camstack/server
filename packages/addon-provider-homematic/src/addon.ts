@@ -5,7 +5,6 @@ import {
   bestLocationMatch,
   type ConfigUISchema,
   type CreateDeviceSpec,
-  connectionTestCapability,
   type DeviceConstructor,
   type DeviceSummary,
   DeviceType,
@@ -16,7 +15,7 @@ import {
   EventCategory,
   errMsg,
   type IAddonPageProvider,
-  type IConnectionTestProvider,
+  type IConnectionProbe,
   type IDevice,
   type IDeviceAdoptionProvider,
   type SavedDevice,
@@ -162,10 +161,6 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
         {
           capability: deviceAdoptionCapability,
           provider: this.buildAdoptionProvider(),
-        },
-        {
-          capability: connectionTestCapability,
-          provider: this.buildConnectionTestProvider(),
         },
         {
           capability: addonPagesSourceCapability,
@@ -464,7 +459,7 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
     })
   }
 
-  private buildConnectionTestProvider(): IConnectionTestProvider {
+  private buildConnectionTestProvider(): IConnectionProbe {
     return buildHomematicConnectionTestProvider({ logger: this.ctx.logger })
   }
 

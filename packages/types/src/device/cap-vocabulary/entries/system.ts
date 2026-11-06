@@ -44,7 +44,6 @@ export const SYSTEM_CAP_VOCABULARY: CapVocabularySlice<SystemVocabCapName> = {
   'calendar-source': system(INTERNAL),
   calendars: system('calendars feed schedules and conditions, not device actions'),
   composer: system('device composition — an authoring tool, not an action'),
-  'connection-test': system(INTERNAL),
   'core-blocks': system(INTERNAL),
   'custom-model-registry': system(ML),
   'data-store-provider': system(INTERNAL),

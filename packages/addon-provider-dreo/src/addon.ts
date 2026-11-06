@@ -3,13 +3,12 @@ import {
   BaseDeviceProvider,
   type ConfigUISchema,
   type CreateDeviceSpec,
-  connectionTestCapability,
   type DeviceConstructor,
   DeviceType,
   deviceAdoptionCapability,
   EventCategory,
   errMsg,
-  type IConnectionTestProvider,
+  type IConnectionProbe,
   type IDevice,
   type IDeviceAdoptionProvider,
   integrationInstancesCapability,
@@ -139,10 +138,6 @@ export class DreoProviderAddon extends BaseDeviceProvider {
         {
           capability: deviceAdoptionCapability,
           provider: this.buildAdoptionProvider(),
-        },
-        {
-          capability: connectionTestCapability,
-          provider: this.buildConnectionTestProvider(),
         },
         {
           capability: integrationInstancesCapability,
@@ -281,7 +276,7 @@ export class DreoProviderAddon extends BaseDeviceProvider {
    * BEFORE any integration for this addon exists, so it depends on nothing in
    * {@link DreoClientRegistry} and opens its own throwaway session.
    */
-  private buildConnectionTestProvider(): IConnectionTestProvider {
+  private buildConnectionTestProvider(): IConnectionProbe {
     return buildDreoConnectionTestProvider({
       makeFacade: defaultFacade,
       logger: this.ctx.logger,

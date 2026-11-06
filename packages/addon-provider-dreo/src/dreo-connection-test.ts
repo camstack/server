@@ -1,5 +1,5 @@
 import { DreoAuthError } from '@apocaliss92/nodedreo'
-import { errMsg, type IConnectionTestProvider, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IConnectionProbe, type IScopedLogger } from '@camstack/types'
 import { dreoConfigSchema } from './config.js'
 import type { DreoFacadeFactory } from './dreo-integration-manager.js'
 
@@ -27,16 +27,12 @@ export interface DreoConnectionTestDeps {
 }
 
 /** Human description of what pressing Test actually does. */
-const TEST_LABEL = 'Signs in to the Dreo cloud with these account credentials'
-
 export function buildDreoConnectionTestProvider(
   deps: DreoConnectionTestDeps,
-): IConnectionTestProvider {
+): IConnectionProbe {
   const { makeFacade, logger } = deps
 
   return {
-    describeTest: async () => ({ label: TEST_LABEL }),
-
     testSettings: async ({ settings }) => {
       // A malformed form is a REJECTION we can observe locally — the operator
       // left a required field empty, and no round trip is going to fix that.

@@ -48,7 +48,6 @@ import type {
   CapabilityMethodAuth,
   IAddonsProvider,
   IAnalysisDataPersistence,
-  IConnectionTestProvider,
   IDeviceProvider,
   IIntegrationRegistry,
   IIntegrationInstancesProvider,
@@ -1017,22 +1016,11 @@ function getDeviceProvider(ar: AddonRegistryService, addonId: string): IDevicePr
 
 // ── pre-creation connection test ────────────────────────────────────
 //
-// An integration's credentials must be answerable BEFORE the integration row
-// exists — that is the whole point. Until 2026-08-09 this surface had a broker
-// branch and then a DEFAULT branch that probed `settings.main_stream_url ??
-// settings.url` with ffprobe, so every account integration (Dreo, Dreame, Tuya,
-// Petkit, Wyze) was told `{"success":false,"error":"No stream URL provided"}`.
-// The Test button had therefore NEVER worked for an account integration, and
-// `integrations.create` had nothing to gate on: an operator who typed the wrong
-// Dreo password got an integration anyway, which then failed silently at
-// reconcile.
-//
-// The routing below is EXPLICIT and ordered — there is no default branch. The
-// framework never guesses a test from the shape of the settings; a provider
-// DECLARES its test by registering the `connection-test` cap. A stream-URL
-// probe is one provider's implementation of that cap (see
-// `addon-provider-rtsp`), not the universal fallback. An addon that declares
-// nothing is a KNOWN `unsupported`, never a silent pass.
+// `integrations.create` gates on the instance's own test (D1016): an integration whose instances
+// declare a Test (`describe().canTest`) is asked through `integration-instances.testInstance`
+// with the draft values; one that declares none is a KNOWN `unsupported`, never a silent pass.
+// There is no default branch and the framework never guesses a test from the shape of the
+// settings.
 
 /** What a pre-creation test concluded, and who concluded it. */
 interface ConnectionTestVerdict {
@@ -1044,43 +1032,15 @@ interface ConnectionTestVerdict {
   readonly testedBy: string | null
 }
 
-function isConnectionTestProvider(value: unknown): value is IConnectionTestProvider {
-  return (
-    value !== null &&
-    typeof value === 'object' &&
-    typeof Reflect.get(value, 'testSettings') === 'function'
-  )
-}
-
-function getConnectionTestProvider(
-  ar: AddonRegistryService,
-  addonId: string,
-): IConnectionTestProvider | null {
-  const provider = ar.getCapabilityRegistry().getProviderByAddon('connection-test', addonId)
-  return isConnectionTestProvider(provider) ? provider : null
-}
-
 /**
- * Does this addon declare a pre-creation test at all? Drives
- * `getAvailableTypes().canTest`, so the wizard can say "this one cannot be
- * tested" instead of offering a button that always answers the same nonsense.
- *
- * A broker-mode addon declares its test through `integration-instances` (`describe().canTest`,
- * read by the caller), never through the broker cap.
- */
-function declaresConnectionTest(ar: AddonRegistryService, addonId: string): boolean {
-  return getConnectionTestProvider(ar, addonId) !== null
-}
-
-/**
- * Run the DECLARED pre-creation test for `(addonId, settings)`.
+ * Run the pre-creation test for `(addonId, settings)` through `testInstance`, the one test method.
  *
  * Never throws: a test that blows up is `inconclusive`, which is emphatically
  * NOT `rejected`. A timeout must not read as a refusal — it would block a
  * perfectly good create on a flaky network, and the operator would have no way
  * to tell the two apart.
  */
-async function runConnectionTest(
+async function testBeforeCreate(
   ar: AddonRegistryService,
   addonId: string,
   settings: Record<string, unknown>,
@@ -1119,41 +1079,7 @@ async function runConnectionTest(
     }
   }
 
-  // 1. The provider's own declared test — the primary path.
-  const tester = getConnectionTestProvider(ar, addonId)
-  if (tester) {
-    try {
-      const outcome = await tester.testSettings({ settings })
-      if (outcome.outcome === 'validated') {
-        return {
-          status: 'validated',
-          testedBy: addonId,
-          ...(outcome.latencyMs !== undefined ? { latencyMs: outcome.latencyMs } : {}),
-          ...(outcome.detail !== undefined ? { detail: outcome.detail } : {}),
-        }
-      }
-      if (outcome.outcome === 'rejected') {
-        return { status: 'rejected', error: outcome.error, testedBy: addonId }
-      }
-      return {
-        status: 'inconclusive',
-        error: outcome.error,
-        testedBy: addonId,
-      }
-    } catch (err) {
-      logger.warn('connection test could not run', {
-        tags: { addonId },
-        meta: { phase: 'test', error: errMsg(err) },
-      })
-      return {
-        status: 'inconclusive',
-        error: `Connection test could not run: ${errMsg(err)}`,
-        testedBy: addonId,
-      }
-    }
-  }
-
-  // 2. Broker-backed integrations carry their connection identity as a
+  // 1. Broker-backed integrations carry their connection identity as a
   //    `brokerId`; the broker already owns the real semantic check (HA opens a
   //    temporary WS handshake, MQTT pings the bridge). Reached because the
   //    settings NAME a broker, not because nothing else matched.
@@ -1190,7 +1116,7 @@ async function runConnectionTest(
     }
   }
 
-  // 3. Nothing declared. Say so plainly — this must never render as a pass,
+  // 2. Nothing declared. Say so plainly — this must never render as a pass,
   //    and must never render as a failure we did not observe.
   return {
     status: 'unsupported',
@@ -1376,7 +1302,7 @@ export function buildIntegrationsProvider(
       // those would make every integration lacking the hook uncreatable, and
       // would fail a good create on a flaky network. They pass, and they SAY SO
       // in the log: silence here would read as "validated".
-      const verdict = await runConnectionTest(ar, input.addonId, settings ?? {}, logger)
+      const verdict = await testBeforeCreate(ar, input.addonId, settings ?? {}, logger)
       if (verdict.status === 'rejected') {
         logger.warn('rejected — connection test refused the settings', {
           tags: { addonId: input.addonId },
@@ -1773,7 +1699,7 @@ export function buildIntegrationsProvider(
             kind,
             brokerKind,
             supportsLocationImport,
-            canTest: described?.canTest === true || declaresConnectionTest(ar, m.id),
+            canTest: described?.canTest === true,
             existingInstances: existing.map((i) => ({
               id: i.id,
               name: i.name,
@@ -1782,30 +1708,6 @@ export function buildIntegrationsProvider(
           }
         }),
       )
-    },
-    testConnection: async (input) => {
-      // The Test button. Routes to the DECLARED test (see `runConnectionTest`)
-      // and reports the tri-state verbatim: `success` is true ONLY for
-      // `validated`, so a test that never ran can never render as a tick — and
-      // `status` lets the UI show "could not be validated" in its own colour
-      // instead of a red failure nobody observed.
-      const verdict = await runConnectionTest(ar, input.addonId, input.settings, logger)
-      logger.info('connection test', {
-        tags: { addonId: input.addonId },
-        meta: {
-          phase: 'test',
-          status: verdict.status,
-          testedBy: verdict.testedBy,
-        },
-      })
-      return {
-        success: verdict.status === 'validated',
-        status: verdict.status,
-        testedBy: verdict.testedBy,
-        ...(verdict.error !== undefined ? { error: verdict.error } : {}),
-        ...(verdict.latencyMs !== undefined ? { latencyMs: verdict.latencyMs } : {}),
-        ...(verdict.detail !== undefined ? { detail: verdict.detail } : {}),
-      }
     },
   }
 }

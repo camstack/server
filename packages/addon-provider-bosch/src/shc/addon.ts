@@ -3,7 +3,6 @@ import {
   BaseDeviceProvider,
   type ConfigUISchema,
   type CreateDeviceSpec,
-  connectionTestCapability,
   integrationInstancesCapability,
   type DeviceConstructor,
   type DeviceSummary,
@@ -14,7 +13,7 @@ import {
   deviceAdoptionCapability,
   EventCategory,
   errMsg,
-  type IConnectionTestProvider,
+  type IConnectionProbe,
   type IDevice,
   type IDeviceAdoptionProvider,
   type RecordIntegrationInstances,
@@ -108,10 +107,6 @@ export class BoschShcProviderAddon extends BaseDeviceProvider {
         {
           capability: deviceAdoptionCapability,
           provider: this.buildAdoptionProvider(),
-        },
-        {
-          capability: connectionTestCapability,
-          provider: this.buildConnectionTestProvider(),
         },
         {
           capability: integrationInstancesCapability,
@@ -312,7 +307,7 @@ export class BoschShcProviderAddon extends BaseDeviceProvider {
     })
   }
 
-  private buildConnectionTestProvider(): IConnectionTestProvider {
+  private buildConnectionTestProvider(): IConnectionProbe {
     return buildShcConnectionTestProvider({ logger: this.ctx.logger })
   }
 

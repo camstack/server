@@ -8,7 +8,7 @@ import {
   type AddonMigration,
   defineEntryKind,
   entryBody,
-  type IConnectionTestProvider,
+  type IConnectionProbe,
   type IntegrationRowsApi,
   type RowsRecordsDoor,
   type SecretsAccess,
@@ -147,7 +147,7 @@ export interface DreameInstancesDeps {
   /** Bring the runtime in line with the records after a change. */
   readonly onChanged: () => Promise<void>
   /** The addon's own credential check (the `connection-test` provider). */
-  readonly tester: IConnectionTestProvider
+  readonly tester: IConnectionProbe
 }
 
 function typedPassword(value: unknown): string | undefined {

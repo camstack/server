@@ -11,7 +11,6 @@ import { ProviderConfigForm } from '../ProviderConfigForm'
 
 vi.mock('@camstack/ui-library', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@camstack/ui-library')>()),
-  useIntegrationsTestConnection: () => ({ mutate: vi.fn(), isPending: false }),
   useAddonsCustom: () => ({ mutateAsync: vi.fn() }),
 }))
 
@@ -32,7 +31,6 @@ function renderForm(addonId: string, configSchema: ConfigUISchema): void {
     <ConfirmDialogProvider>
       <ProviderConfigForm
         addonId={addonId}
-        canTest={false}
         configSchema={configSchema}
         onSave={vi.fn()}
         onBack={() => {}}
@@ -47,8 +45,7 @@ describe('ProviderConfigForm — integration name', () => {
       <ConfirmDialogProvider>
         <ProviderConfigForm
           addonId="provider-rtsp"
-          canTest={false}
-          configSchema={schema('rtsp', 'Host')}
+            configSchema={schema('rtsp', 'Host')}
           onSave={vi.fn()}
           onBack={() => {}}
         />

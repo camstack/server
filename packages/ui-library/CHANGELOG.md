@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The media-player card shows title, artist and album, artwork, source and a progress bar whenever the device reports them, plus shuffle and repeat it can only read
 - A refused device command now shows the reason and puts the control back; an unanswered command stops pinning its value after 30 seconds
 - Removed the generated useMqttBrokerTestConnection hook.
+- Regenerated cap vocabulary without the connection-test capability
 
 ## [1.2.391] - 2026-11-06
 

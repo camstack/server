@@ -518,12 +518,6 @@ export const useColorSetColor: typeof trpc.color.setColor.useMutation = /*#__PUR
 /** Generated alias around `trpc.color.getStatus.useQuery`. */
 export const useColorGetStatus: typeof trpc.color.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.color.getStatus.useQuery)
 
-/** Generated alias around `trpc.connectionTest.testSettings.useMutation`. */
-export const useConnectionTestTestSettings: typeof trpc.connectionTest.testSettings.useMutation = /*#__PURE__*/ alias(() => trpc.connectionTest.testSettings.useMutation)
-
-/** Generated alias around `trpc.connectionTest.describeTest.useQuery`. */
-export const useConnectionTestDescribeTest: typeof trpc.connectionTest.describeTest.useQuery = /*#__PURE__*/ alias(() => trpc.connectionTest.describeTest.useQuery)
-
 /** Generated alias around `trpc.connectivity.getStatus.useQuery`. */
 export const useConnectivityGetStatus: typeof trpc.connectivity.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.connectivity.getStatus.useQuery)
 
@@ -1444,9 +1438,6 @@ export const useIntegrationsDelete: typeof trpc.integrations.delete.useMutation 
 
 /** Generated alias around `trpc.integrations.getAvailableTypes.useQuery`. */
 export const useIntegrationsGetAvailableTypes: typeof trpc.integrations.getAvailableTypes.useQuery = /*#__PURE__*/ alias(() => trpc.integrations.getAvailableTypes.useQuery)
-
-/** Generated alias around `trpc.integrations.testConnection.useMutation`. */
-export const useIntegrationsTestConnection: typeof trpc.integrations.testConnection.useMutation = /*#__PURE__*/ alias(() => trpc.integrations.testConnection.useMutation)
 
 /** Generated alias around `trpc.intercom.startSession.useMutation`. */
 export const useIntercomStartSession: typeof trpc.intercom.startSession.useMutation = /*#__PURE__*/ alias(() => trpc.intercom.startSession.useMutation)

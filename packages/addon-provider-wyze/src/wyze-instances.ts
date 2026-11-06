@@ -7,7 +7,7 @@
 import {
   defineEntryKind,
   entryBody,
-  type IConnectionTestProvider,
+  type IConnectionProbe,
   type IntegrationTestConnectionResult,
   REDACTED_SECRET,
   type RecordsAccess,
@@ -46,7 +46,7 @@ export function buildWyzeInstances(
   records: Pick<RecordsAccess, 'kind' | 'owner'>,
   deps: {
     readonly onChanged: () => Promise<void>
-    readonly tester: Pick<IConnectionTestProvider, 'testSettings'>
+    readonly tester: Pick<IConnectionProbe, 'testSettings'>
   },
 ): RecordIntegrationInstances<WyzeConnectionBody> {
   const handle = records.kind(wyzeConnectionsEntryKind)

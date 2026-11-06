@@ -271,19 +271,6 @@ describe('integrations over an integration-instances provider', () => {
     expect(h.registry.deleteIntegration).toHaveBeenCalledWith('int_0001')
   })
 
-  it('testConnection goes to testInstance', async () => {
-    const h = harness()
-    const result = await h.provider.testConnection({
-      addonId: ADDON_ID,
-      settings: { url: 'http://x' },
-    })
-    expect(h.instances.testInstance).toHaveBeenCalledWith({
-      id: null,
-      values: { url: 'http://x' },
-    })
-    expect(result).toMatchObject({ success: true, status: 'validated' })
-  })
-
   it('without an instances provider, settings on create are dropped and the addon is not restarted', async () => {
     const h = harness({ withProvider: false })
     await h.provider.create({

@@ -1,5 +1,5 @@
 import { DreameAuthError } from '@apocaliss92/nodedreame'
-import { errMsg, type IConnectionTestProvider, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IConnectionProbe, type IScopedLogger } from '@camstack/types'
 import { dreameConfigSchema } from './config.js'
 import type { DreameFacadeFactory } from './dreame-integration-manager.js'
 
@@ -20,16 +20,12 @@ export interface DreameConnectionTestDeps {
   readonly logger: IScopedLogger
 }
 
-const TEST_LABEL = 'Signs in to the Dreame cloud with these account credentials'
-
 export function buildDreameConnectionTestProvider(
   deps: DreameConnectionTestDeps,
-): IConnectionTestProvider {
+): IConnectionProbe {
   const { makeFacade, logger } = deps
 
   return {
-    describeTest: async () => ({ label: TEST_LABEL }),
-
     testSettings: async ({ settings }) => {
       const parsed = dreameConfigSchema.safeParse(settings)
       if (!parsed.success) {

@@ -9,7 +9,7 @@ Package `@camstack/addon-provider-wyze` on npm.
 ## What it provides
 
 - **Wyze** (`provider-wyze`): Adopt Wyze cameras over the local P2P/DTLS protocol via Wyze-cloud discovery — H264/H265 + audio into the stream-broker, snapshot, motion and two-way audio. Category: providers.
-  - Capabilities: `device-provider`, `device-adoption`, `stream-params`, `connection-test`.
+  - Capabilities: `device-provider`, `device-adoption`, `stream-params`.
 
 ## Configuration
 

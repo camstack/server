@@ -4,14 +4,13 @@ import {
   BaseDeviceProvider,
   type ConfigUISchema,
   type CreateDeviceSpec,
-  connectionTestCapability,
   integrationInstancesCapability,
   type DeviceConstructor,
   DeviceType,
   deviceAdoptionCapability,
   EventCategory,
   errMsg,
-  type IConnectionTestProvider,
+  type IConnectionProbe,
   type IDevice,
   type IDeviceAdoptionProvider,
   type SystemEvent,
@@ -107,10 +106,6 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
         {
           capability: deviceAdoptionCapability,
           provider: this.buildAdoptionProvider(),
-        },
-        {
-          capability: connectionTestCapability,
-          provider: this.buildConnectionTestProvider(),
         },
         { capability: integrationInstancesCapability, provider: built.provider },
       ],
@@ -244,7 +239,7 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
     this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, handler)
   }
 
-  private buildConnectionTestProvider(): IConnectionTestProvider {
+  private buildConnectionTestProvider(): IConnectionProbe {
     return buildHomeComConnectionTestProvider({ logger: this.ctx.logger })
   }
 

@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1495 method paths across 203 capabilities.
+ * Coverage: 1492 method paths across 202 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -201,8 +201,6 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'color.setColor': { capName: "color", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'composer.applyBlocks': { capName: "composer", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'composer.getStates': { capName: "composer", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
-  'connectionTest.describeTest': { capName: "connection-test", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
-  'connectionTest.testSettings': { capName: "connection-test", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'connectivity.getStatus': { capName: "connectivity", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'consumables.getStatus': { capName: "consumables", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'consumables.reset': { capName: "consumables", capScope: "device", addonId: null, access: "delete", role: "admin" } as const,
@@ -541,7 +539,6 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'integrations.getAvailableTypes': { capName: "integrations", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'integrations.getByAddonId': { capName: "integrations", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'integrations.list': { capName: "integrations", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
-  'integrations.testConnection': { capName: "integrations", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'integrations.update': { capName: "integrations", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'intercom.endTalkSession': { capName: "intercom", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'intercom.getStatus': { capName: "intercom", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
@@ -1559,7 +1556,6 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "climate-control",
   "color",
   "composer",
-  "connection-test",
   "connectivity",
   "consumables",
   "contact",
@@ -1854,7 +1850,6 @@ export const SYSTEM_CAP_NAMES: readonly string[] = [
   "calendar-source",
   "calendars",
   "composer",
-  "connection-test",
   "core-blocks",
   "custom-model-registry",
   "data-store-provider",

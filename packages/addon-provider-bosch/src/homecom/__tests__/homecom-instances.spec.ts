@@ -37,7 +37,6 @@ const world = () =>
   })
 
 const tester = {
-  describeTest: async () => ({ label: 'x' }),
   testSettings: async () => ({ outcome: 'validated' as const }),
 }
 

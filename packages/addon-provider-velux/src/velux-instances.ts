@@ -6,7 +6,7 @@
 import {
   defineEntryKind,
   entryBody,
-  type IConnectionTestProvider,
+  type IConnectionProbe,
   type IntegrationTestConnectionResult,
   REDACTED_SECRET,
   type RecordsAccess,
@@ -36,7 +36,7 @@ export function buildVeluxInstances(
   records: Pick<RecordsAccess, 'kind' | 'owner'>,
   deps: {
     readonly onChanged: () => Promise<void>
-    readonly tester: Pick<IConnectionTestProvider, 'testSettings'>
+    readonly tester: Pick<IConnectionProbe, 'testSettings'>
   },
 ): RecordIntegrationInstances<VeluxConnectionBody> {
   const handle = records.kind(veluxConnectionsEntryKind)

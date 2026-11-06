@@ -9,7 +9,7 @@ Package `@camstack/addon-provider-dreo` on npm.
 ## What it provides
 
 - **Dreo** (`provider-dreo`): Adopt Dreo fans, air circulators, purifiers, heaters and humidifiers via the Dreo cloud. Category: providers.
-  - Capabilities: `device-provider`, `device-adoption`, `connection-test`.
+  - Capabilities: `device-provider`, `device-adoption`.
 
 ## Configuration
 

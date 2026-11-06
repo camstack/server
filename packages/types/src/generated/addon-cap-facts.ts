@@ -61,7 +61,6 @@ export const CAP_NAMES: readonly string[] = Object.freeze([
   "climate-control",
   "color",
   "composer",
-  "connection-test",
   "connectivity",
   "consumables",
   "contact",

@@ -87,7 +87,6 @@ describe('petkit integration rows move to a record', () => {
     const instances = buildPetkitInstances(w.mem.records, {
       onChanged: async () => undefined,
       tester: {
-        describeTest: async () => ({ label: 'x' }),
         testSettings: async () => ({ outcome: 'validated' }),
       },
     })

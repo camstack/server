@@ -2248,16 +2248,6 @@ export {
   colorCapability,
   type IColorProvider,
 } from './color.cap.js'
-// Pre-creation credential validation, declared by the integration provider.
-export {
-  CONNECTION_TEST_TIMEOUT_MS,
-  ConnectionTestDescriptorSchema,
-  ConnectionTestInputSchema,
-  type ConnectionTestOutcome,
-  ConnectionTestOutcomeSchema,
-  connectionTestCapability,
-  type IConnectionTestProvider,
-} from './connection-test.cap.js'
 export {
   type ConnectivityStatus,
   ConnectivityStatusSchema,
@@ -3427,7 +3417,6 @@ import type { carbonMonoxideCapability } from './carbon-monoxide.cap.js'
 import type { climateControlCapability } from './climate-control.cap.js'
 import type { colorCapability } from './color.cap.js'
 import type { composerCapability } from './composer.cap.js'
-import type { connectionTestCapability } from './connection-test.cap.js'
 import type { connectivityCapability } from './connectivity.cap.js'
 import type { consumablesCapability } from './consumables.cap.js'
 import type { contactCapability } from './contact.cap.js'
@@ -3677,7 +3666,6 @@ type AnyCapability =
   | typeof ptzAutotrackCapability
   | typeof navigationCapability
   | typeof consumablesCapability
-  | typeof connectionTestCapability
   | typeof runningStateCapability
   | typeof rebootCapability
   | typeof deviceDiscoveryCapability

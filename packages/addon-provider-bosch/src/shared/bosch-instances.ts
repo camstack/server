@@ -7,7 +7,7 @@
 import {
   type AddonMigration,
   type DefinedRecordKind,
-  type IConnectionTestProvider,
+  type IConnectionProbe,
   type IIntegrationInstancesProvider,
   type IntegrationRowsApi,
   type RowsRecordsDoor,
@@ -96,7 +96,7 @@ function typedSecret(value: unknown): string | undefined {
  * as its view, so it is read from the saved record; one that cannot be read is simply absent.
  */
 export async function testBoschInstance(input: {
-  readonly tester: IConnectionTestProvider
+  readonly tester: IConnectionProbe
   readonly handle: Pick<RecordKindHandle<Record<string, unknown>>, 'getResolved'>
   readonly secretKeys: readonly string[]
   readonly id: string | null

@@ -3,7 +3,7 @@ import {
   errMsg,
   isSecretMarker,
   type ConnectionTestOutcome,
-  type IConnectionTestProvider,
+  type IConnectionProbe,
   type IScopedLogger,
 } from '@camstack/types'
 import { KlfProbeTimeoutError, type KlfProbeResult, probeKlfGateway } from './klf-probe.js'
@@ -11,8 +11,6 @@ import { VeluxLoginRefusedError } from './velux-client-contract.js'
 
 /** Sessions the KLF-200 accepts at once, per its API specification. */
 export const KLF_MAX_SESSIONS = 2
-
-const TEST_LABEL = 'Logs in to the gateway with this password, then closes the session'
 
 export interface VeluxConnectionTestDeps {
   readonly logger: IScopedLogger
@@ -79,7 +77,7 @@ export function classifyProbeFailure(err: unknown): { kind: ProbeFailureKind; te
 
 export function buildVeluxConnectionTestProvider(
   deps: VeluxConnectionTestDeps,
-): IConnectionTestProvider {
+): IConnectionProbe {
   const {
     logger,
     probe = probeKlfGateway,
@@ -168,8 +166,6 @@ export function buildVeluxConnectionTestProvider(
   }
 
   return {
-    describeTest: async () => ({ label: TEST_LABEL }),
-
     testSettings: async ({ settings }) => {
       const host = readString(settings, 'host')
       if (host === null) {

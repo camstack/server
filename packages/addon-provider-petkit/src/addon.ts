@@ -6,13 +6,12 @@ import {
   integrationInstancesCapability,
   type AddonInitResult,
   type RecordIntegrationInstances,
-  connectionTestCapability,
   type DeviceConstructor,
   DeviceType,
   deviceAdoptionCapability,
   EventCategory,
   errMsg,
-  type IConnectionTestProvider,
+  type IConnectionProbe,
   type IDevice,
   type IDeviceAdoptionProvider,
   type SystemEvent,
@@ -115,10 +114,6 @@ export class PetkitProviderAddon extends BaseDeviceProvider {
           provider: this.buildAdoptionProvider(),
         },
         {
-          capability: connectionTestCapability,
-          provider: this.buildConnectionTestProvider(),
-        },
-        {
           capability: integrationInstancesCapability,
           provider: instances.toProvider(),
         },
@@ -131,7 +126,7 @@ export class PetkitProviderAddon extends BaseDeviceProvider {
    * BEFORE any integration for this addon exists, so it depends on no live
    * client and opens its own throwaway session.
    */
-  private buildConnectionTestProvider(): IConnectionTestProvider {
+  private buildConnectionTestProvider(): IConnectionProbe {
     return buildPetkitConnectionTestProvider({
       makeFacade: (config) =>
         new Nodepetkit(toPetkitCredentials(config), toNodepetkitOptions(config)),

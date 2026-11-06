@@ -7,11 +7,9 @@ import {
 import {
   type ConnectionTestOutcome,
   errMsg,
-  type IConnectionTestProvider,
+  type IConnectionProbe,
   type IScopedLogger,
 } from '@camstack/types'
-
-const TEST_LABEL = 'Logs in to the hub with this password, reads its identity, then disconnects'
 
 /** What a successful probe learned about the hub. */
 export interface RademacherProbeResult {
@@ -61,12 +59,10 @@ export function classifyProbeFailure(err: unknown): { kind: ProbeFailureKind; te
 
 export function buildRademacherConnectionTestProvider(
   deps: RademacherConnectionTestDeps,
-): IConnectionTestProvider {
+): IConnectionProbe {
   const { logger, probe = probeRademacherHub } = deps
 
   return {
-    describeTest: async () => ({ label: TEST_LABEL }),
-
     testSettings: async ({ settings }): Promise<ConnectionTestOutcome> => {
       const host = readString(settings, 'host')
       if (host === null) {

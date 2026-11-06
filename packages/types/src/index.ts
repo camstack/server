@@ -98,6 +98,8 @@ export type {
   ResolvedInstance,
   ResolvedSecretsState,
 } from './addon/record-integration-instances.js'
+export { CONNECTION_TEST_TIMEOUT_MS } from './addon/connection-probe.js'
+export type { ConnectionTestOutcome, IConnectionProbe } from './addon/connection-probe.js'
 export {
   RecordIntegrationInstances,
   isInstanceEnabled,

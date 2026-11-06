@@ -1,25 +1,19 @@
-import type { Integration } from '@camstack/types'
+import type { Integration, IntegrationTestConnectionResult } from '@camstack/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { buildIntegrationsProvider } from '../../api/core/cap-providers'
 
 /**
- * Pre-creation credential validation for EVERY integration.
+ * Pre-creation credential validation for EVERY integration (D1016).
  *
- * The defect this pins: `integrations.testConnection` had a broker branch and
- * then a DEFAULT branch that probed `settings.main_stream_url ?? settings.url`.
- * Every account-based integration (Dreo, Dreame, Tuya, …) fell into that
- * default and got back `{"success":false,"error":"No stream URL provided"}` —
- * nonsense that neither validated nor refused anything. `integrations.create`
- * had nothing to gate on, so an integration with a WRONG PASSWORD was created
- * happily and only failed later, invisibly, at reconcile time.
- *
- * The contract these tests pin:
- *   - the test is DECLARED BY THE PROVIDER (`connection-test` cap), never
- *     inferred from the shape of the settings;
- *   - `create` refuses when the provider REJECTED the settings;
- *   - "could not be validated" is a DIFFERENT answer from "validated", and
- *     from "rejected" — an unrunnable test never reports a failure it did not
- *     observe, and never silently passes for one it did not run.
+ * The one test is `integration-instances.testInstance`; there is no second cap and no
+ * `integrations.testConnection`. The contract these tests pin:
+ *   - the test is DECLARED BY THE ADDON's instances (`describe().canTest`), never inferred
+ *     from the shape of the settings;
+ *   - `create` refuses when the instance REJECTED the settings;
+ *   - "could not be validated" is a DIFFERENT answer from "validated", and from "rejected" — an
+ *     unrunnable test never reports a failure it did not observe, and never silently passes
+ *     for one it did not run;
+ *   - `getAvailableTypes().canTest` follows `describe().canTest` per kind.
  */
 
 const ADDON_ID = 'provider-fake-cloud'
@@ -54,36 +48,47 @@ function makeIntegrationRegistry() {
   }
 }
 
-type Outcome =
-  | { outcome: 'validated'; latencyMs?: number; detail?: string }
-  | { outcome: 'rejected'; error: string }
-  | { outcome: 'inconclusive'; error: string }
-
-/** A `connection-test` provider that signs in for real (well — realistically). */
-function makeConnectionTestProvider(mode: 'real' | 'throws' = 'real') {
+/** An instances provider whose test signs in for real (well, realistically). */
+function makeInstances(opts: { canTest: boolean; mode?: 'real' | 'throws' }) {
   return {
-    testSettings: vi.fn(
-      async ({ settings }: { settings: Record<string, unknown> }): Promise<Outcome> => {
-        if (mode === 'throws') throw new Error('socket hang up')
-        if (settings['password'] === GOOD.password && settings['email'] === GOOD.email) {
-          return { outcome: 'validated', latencyMs: 42 }
+    describe: vi.fn(async () => ({
+      instanceMode: 'multiple',
+      kind: 'account',
+      canTest: opts.canTest,
+    })),
+    createInstance: vi.fn(async (input: { id: string }) => ({ id: input.id })),
+    updateInstance: vi.fn(async () => ({ ok: true as const })),
+    deleteInstance: vi.fn(async () => ({ ok: true as const })),
+    getInstance: vi.fn(async () => null),
+    listInstances: vi.fn(async () => []),
+    testInstance: vi.fn(
+      async ({
+        values,
+      }: {
+        id: string | null
+        values: Record<string, unknown>
+      }): Promise<IntegrationTestConnectionResult> => {
+        if (opts.mode === 'throws') throw new Error('socket hang up')
+        if (values['password'] === GOOD.password && values['email'] === GOOD.email) {
+          return { success: true, status: 'validated', latencyMs: 42 }
         }
-        return { outcome: 'rejected', error: 'Fake Cloud rejected these credentials' }
+        return {
+          success: false,
+          status: 'rejected',
+          error: 'Fake Cloud rejected these credentials',
+        }
       },
     ),
   }
 }
 
 interface HarnessOptions {
-  /** Register a `connection-test` provider for ADDON_ID. */
-  readonly connectionTest?: ReturnType<typeof makeConnectionTestProvider> | null
   /** Register an `integration-instances` provider for ADDON_ID. */
   readonly instances?: unknown
 }
 
 function makeHarness(opts: HarnessOptions = {}) {
   const integrationReg = makeIntegrationRegistry()
-  const connectionTest = opts.connectionTest ?? null
   const log = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
   const addonReg = {
     getIntegrationRegistry: vi.fn(() => integrationReg),
@@ -96,12 +101,8 @@ function makeHarness(opts: HarnessOptions = {}) {
     ]),
     restartAddon: vi.fn(async () => undefined),
     getCapabilityRegistry: vi.fn(() => ({
-      getProviderByAddon: vi.fn((cap: string, addonId: string) => {
-        if (cap === 'integration-instances' && addonId === ADDON_ID) return opts.instances ?? null
-        return cap === 'connection-test' && addonId === ADDON_ID ? connectionTest : null
-      }),
-      getProviderByAddonId: vi.fn((cap: string, addonId: string) =>
-        cap === 'connection-test' && addonId === ADDON_ID ? connectionTest : null,
+      getProviderByAddon: vi.fn((cap: string, addonId: string) =>
+        cap === 'integration-instances' && addonId === ADDON_ID ? (opts.instances ?? null) : null,
       ),
       getSingleton: vi.fn(() => null),
     })),
@@ -112,89 +113,14 @@ function makeHarness(opts: HarnessOptions = {}) {
     { createLogger: vi.fn(() => log) } as never,
     null,
   )
-  return { provider, integrationReg, log, connectionTest }
+  return { provider, integrationReg, log }
 }
 
-describe('integrations.testConnection routes to the provider-DECLARED test', () => {
-  it('REJECTS wrong credentials with the provider message — never "No stream URL provided"', async () => {
-    const h = makeHarness({ connectionTest: makeConnectionTestProvider() })
-
-    const result = await h.provider.testConnection({ addonId: ADDON_ID, settings: { ...BAD } })
-
-    expect(result.success).toBe(false)
-    expect(result.status).toBe('rejected')
-    expect(result.error).toContain('rejected these credentials')
-    expect(result.error).not.toContain('stream URL')
-  })
-
-  it('VALIDATES correct credentials', async () => {
-    const h = makeHarness({ connectionTest: makeConnectionTestProvider() })
-
-    const result = await h.provider.testConnection({ addonId: ADDON_ID, settings: { ...GOOD } })
-
-    expect(result.success).toBe(true)
-    expect(result.status).toBe('validated')
-  })
-
-  it('says UNSUPPORTED — not failed — when the provider declares no test', async () => {
-    const h = makeHarness({ connectionTest: null })
-
-    const result = await h.provider.testConnection({ addonId: ADDON_ID, settings: { ...BAD } })
-
-    // Never reports a failure it did not observe.
-    expect(result.status).toBe('unsupported')
-    expect(result.success).toBe(false)
-    expect(result.error).toMatch(/cannot be tested|no connection test/i)
-  })
-
-  it('says INCONCLUSIVE — not rejected — when a declared test cannot complete', async () => {
-    const h = makeHarness({ connectionTest: makeConnectionTestProvider('throws') })
-
-    const result = await h.provider.testConnection({ addonId: ADDON_ID, settings: { ...BAD } })
-
-    expect(result.status).toBe('inconclusive')
-    expect(result.success).toBe(false)
-    expect(result.error).toContain('socket hang up')
-  })
-})
-
-describe('integrations.testConnection of a settings blob that NAMES a broker', () => {
-  it('tests the broker through integration-instances.testInstance by id', async () => {
-    const testInstance = vi.fn(async () => ({ success: false, error: 'bridge unreachable' }))
-    const h = makeHarness({
-      instances: {
-        describe: async () => ({ canTest: false }),
-        createInstance: async () => ({ id: 'x' }),
-        getInstance: async () => null,
-        testInstance,
-      },
-    })
-
-    const result = await h.provider.testConnection({
-      addonId: ADDON_ID,
-      settings: { brokerId: 'brk_1' },
-    })
-
-    expect(testInstance).toHaveBeenCalledWith({ id: 'brk_1', values: {} })
-    expect(result.status).toBe('rejected')
-    expect(result.error).toContain('bridge unreachable')
-  })
-
-  it('is INCONCLUSIVE when the addon has no instances provider', async () => {
-    const h = makeHarness()
-    const result = await h.provider.testConnection({
-      addonId: ADDON_ID,
-      settings: { brokerId: 'brk_1' },
-    })
-    expect(result.status).toBe('inconclusive')
-  })
-})
-
-describe('integrations.create is GATED on the declared test', () => {
+describe('integrations.create is GATED on the instance test', () => {
   let h: ReturnType<typeof makeHarness>
 
   beforeEach(() => {
-    h = makeHarness({ connectionTest: makeConnectionTestProvider() })
+    h = makeHarness({ instances: makeInstances({ canTest: true }) })
   })
 
   it('REFUSES to create when the provider rejected the credentials', async () => {
@@ -222,7 +148,7 @@ describe('integrations.create is GATED on the declared test', () => {
   })
 
   it('CREATES — and says so — when no test is declared', async () => {
-    const bare = makeHarness({ connectionTest: null })
+    const bare = makeHarness({ instances: makeInstances({ canTest: false }) })
 
     await bare.provider.create({ addonId: ADDON_ID, name: 'Untestable', settings: { ...BAD } })
 
@@ -236,10 +162,51 @@ describe('integrations.create is GATED on the declared test', () => {
   })
 
   it('CREATES when a declared test could not complete — a timeout is not a refusal', async () => {
-    const flaky = makeHarness({ connectionTest: makeConnectionTestProvider('throws') })
+    const flaky = makeHarness({ instances: makeInstances({ canTest: true, mode: 'throws' }) })
 
     await flaky.provider.create({ addonId: ADDON_ID, name: 'Flaky', settings: { ...GOOD } })
 
     expect(flaky.integrationReg.createIntegration).toHaveBeenCalledOnce()
+  })
+})
+
+describe('integrations.getAvailableTypes().canTest follows describe().canTest per kind', () => {
+  it('is true for an instance kind that declares a test', async () => {
+    const h = makeHarness({ instances: makeInstances({ canTest: true }) })
+    expect((await h.provider.getAvailableTypes())[0]).toMatchObject({
+      addonId: ADDON_ID,
+      canTest: true,
+    })
+  })
+
+  it('is false for an instance kind that declares none', async () => {
+    const h = makeHarness({ instances: makeInstances({ canTest: false }) })
+    expect((await h.provider.getAvailableTypes())[0]).toMatchObject({
+      addonId: ADDON_ID,
+      canTest: false,
+    })
+  })
+
+  it('is false for an addon with no instances provider (a registered probe elsewhere changes nothing)', async () => {
+    const h = makeHarness()
+    expect((await h.provider.getAvailableTypes())[0]).toMatchObject({
+      addonId: ADDON_ID,
+      canTest: false,
+    })
+  })
+})
+
+describe('integrations.create over a settings blob that NAMES a broker', () => {
+  it('tests the broker through integration-instances.testInstance by id', async () => {
+    const instances = makeInstances({ canTest: false })
+    instances.testInstance.mockResolvedValueOnce({ success: false, error: 'bridge unreachable' })
+    const h = makeHarness({ instances })
+
+    await expect(
+      h.provider.create({ addonId: ADDON_ID, name: 'Broker', settings: { brokerId: 'brk_1' } }),
+    ).rejects.toThrow(/bridge unreachable/)
+
+    expect(instances.testInstance).toHaveBeenCalledWith({ id: 'brk_1', values: {} })
+    expect(h.integrationReg.createIntegration).not.toHaveBeenCalled()
   })
 })

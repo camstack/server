@@ -6,13 +6,12 @@ import {
   integrationInstancesCapability,
   type AddonInitResult,
   type RecordIntegrationInstances,
-  connectionTestCapability,
   type DeviceConstructor,
   DeviceType,
   deviceAdoptionCapability,
   EventCategory,
   errMsg,
-  type IConnectionTestProvider,
+  type IConnectionProbe,
   type IDevice,
   type IDeviceAdoptionProvider,
   type SystemEvent,
@@ -131,10 +130,6 @@ export class DreameProviderAddon extends BaseDeviceProvider {
           provider: this.buildAdoptionProvider(),
         },
         {
-          capability: connectionTestCapability,
-          provider: this.buildConnectionTestProvider(),
-        },
-        {
           capability: integrationInstancesCapability,
           provider: instances.toProvider(),
         },
@@ -147,7 +142,7 @@ export class DreameProviderAddon extends BaseDeviceProvider {
    * BEFORE any integration for this addon exists, so it depends on no live
    * client and opens its own throwaway session.
    */
-  private buildConnectionTestProvider(): IConnectionTestProvider {
+  private buildConnectionTestProvider(): IConnectionProbe {
     return buildDreameConnectionTestProvider({
       makeFacade: (config) => new Nodreame(toNodreameOptions(config)),
       logger: this.ctx.logger,

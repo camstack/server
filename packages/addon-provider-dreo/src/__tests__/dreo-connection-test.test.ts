@@ -84,9 +84,4 @@ describe('Dreo connection-test — pre-creation credential validation', () => {
     expect(outcome.outcome).toBe('inconclusive')
     expect(h.close).toHaveBeenCalled()
   })
-
-  it('describes what the test does, so the UI need not guess', async () => {
-    const h = build()
-    expect((await h.provider.describeTest()).label).toMatch(/Dreo/)
-  })
 })

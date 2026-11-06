@@ -9,7 +9,7 @@ Package `@camstack/addon-provider-tuya` on npm.
 ## What it provides
 
 - **Tuya** (`provider-tuya`): Adopt Tuya / Smart Life devices — account-onboarded (Tuya IoT cloud fetches each device's localKey) then controlled LOCALLY over the encrypted LAN protocol (switches + kettle). Category: providers.
-  - Capabilities: `device-provider`, `device-adoption`, `connection-test`.
+  - Capabilities: `device-provider`, `device-adoption`.
 
 ## Configuration
 

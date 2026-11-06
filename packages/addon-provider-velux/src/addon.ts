@@ -3,7 +3,6 @@ import {
   BaseDeviceProvider,
   type ConfigUISchema,
   type CreateDeviceSpec,
-  connectionTestCapability,
   type DeviceConstructor,
   type DeviceSummary,
   DeviceType,
@@ -13,7 +12,7 @@ import {
   deviceAdoptionCapability,
   EventCategory,
   errMsg,
-  type IConnectionTestProvider,
+  type IConnectionProbe,
   type IDevice,
   type IDeviceAdoptionProvider,
   type SystemEvent,
@@ -137,10 +136,6 @@ export class VeluxProviderAddon extends BaseDeviceProvider {
         {
           capability: deviceAdoptionCapability,
           provider: this.buildAdoptionProvider(),
-        },
-        {
-          capability: connectionTestCapability,
-          provider: this.buildConnectionTestProvider(),
         },
         {
           capability: integrationInstancesCapability,
@@ -406,7 +401,7 @@ export class VeluxProviderAddon extends BaseDeviceProvider {
     }
   }
 
-  private buildConnectionTestProvider(): IConnectionTestProvider {
+  private buildConnectionTestProvider(): IConnectionProbe {
     return buildVeluxConnectionTestProvider({
       logger: this.ctx.logger,
       liveSessions: (host) => this.clients?.liveSessions(host) ?? 0,

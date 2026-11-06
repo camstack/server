@@ -58,7 +58,6 @@ describe('bosch-shc integration rows move to a record', () => {
     const { instances } = buildShcInstances(w.mem.records, {
       onChanged: async () => undefined,
       tester: {
-        describeTest: async () => ({ label: 'x' }),
         testSettings: async () => ({ outcome: 'validated' }),
       },
     })
@@ -77,7 +76,6 @@ describe('bosch-shc integration rows move to a record', () => {
     const { provider } = buildShcInstances(w.mem.records, {
       onChanged: async () => undefined,
       tester: {
-        describeTest: async () => ({ label: 'x' }),
         testSettings: async () => ({ outcome: 'validated' }),
       },
     })

@@ -143,11 +143,4 @@ describe('Wyze connection-test — pre-creation credential validation', () => {
     if (outcome.outcome !== 'inconclusive') throw new Error('unreachable')
     expect(outcome.error).toMatch(/reach|connect/i)
   })
-
-  it('describes what the test does so the UI need not guess', async () => {
-    const { provider } = build()
-    const desc = await provider.describeTest()
-    expect(desc.label).toMatch(/Wyze/i)
-    expect(desc.label.length).toBeGreaterThan(20)
-  })
 })

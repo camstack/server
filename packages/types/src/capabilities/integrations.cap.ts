@@ -81,10 +81,9 @@ const AvailableIntegrationTypeSchema = z.object({
    *  locations" checkbox. Provider-declared in the addon manifest. */
   supportsLocationImport: z.boolean(),
   /**
-   * True when this integration DECLARES a pre-creation test (the
-   * `connection-test` cap, or a broker whose settings it stores). Drives the
-   * Test button: an integration that cannot be tested must say so up front
-   * rather than offering a button that always answers the same nonsense.
+   * True when this integration's instances declare a Test (`integration-instances.describe().canTest`,
+   * D1016). An integration that cannot be tested must say so up front rather than offering a
+   * button that always answers the same nonsense.
    */
   canTest: z.boolean(),
   existingInstances: z.array(z.object({ id: z.string(), name: z.string() })),
@@ -176,14 +175,6 @@ export const integrationsCapability = {
       auth: 'admin',
     }),
     getAvailableTypes: method(z.void(), z.array(AvailableIntegrationTypeSchema), { auth: 'admin' }),
-    testConnection: method(
-      z.object({
-        addonId: z.string(),
-        settings: z.record(z.string(), z.unknown()),
-      }),
-      TestConnectionResultSchema,
-      { kind: 'mutation', auth: 'admin' },
-    ),
   },
   /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */
   mount: { kind: 'server-provided' },

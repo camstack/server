@@ -1,4 +1,4 @@
-import { errMsg, type IConnectionTestProvider, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IConnectionProbe, type IScopedLogger } from '@camstack/types'
 import { connectionFromSettings } from './config.js'
 import { fetchHomeConnectAccount, type LoginFetch } from './home-connect-login.js'
 
@@ -11,16 +11,12 @@ export interface HomeConnectConnectionTestDeps {
   readonly logger: IScopedLogger
 }
 
-const TEST_LABEL = 'Checks the Home Connect account token and lists appliances'
-
 export function buildHomeConnectConnectionTestProvider(
   deps: HomeConnectConnectionTestDeps,
-): IConnectionTestProvider {
+): IConnectionProbe {
   const { logger } = deps
 
   return {
-    describeTest: async () => ({ label: TEST_LABEL }),
-
     testSettings: async ({ settings }) => {
       const parsed = connectionFromSettings(
         typeof settings === 'object' && settings !== null

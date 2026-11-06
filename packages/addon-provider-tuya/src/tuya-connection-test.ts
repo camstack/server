@@ -1,5 +1,5 @@
 import { TuyaCloudError } from '@apocaliss92/nodetuya'
-import { errMsg, type IConnectionTestProvider, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IConnectionProbe, type IScopedLogger } from '@camstack/types'
 import { tuyaConfigSchema } from './config.js'
 import type { TuyaCloudFactory } from './tuya-integration-manager.js'
 
@@ -22,16 +22,12 @@ export interface TuyaConnectionTestDeps {
   readonly logger: IScopedLogger
 }
 
-const TEST_LABEL = 'Calls the Tuya IoT cloud with this access id, secret and region'
-
 export function buildTuyaConnectionTestProvider(
   deps: TuyaConnectionTestDeps,
-): IConnectionTestProvider {
+): IConnectionProbe {
   const { makeCloud, logger } = deps
 
   return {
-    describeTest: async () => ({ label: TEST_LABEL }),
-
     testSettings: async ({ settings }) => {
       const parsed = tuyaConfigSchema.safeParse(settings)
       if (!parsed.success) {

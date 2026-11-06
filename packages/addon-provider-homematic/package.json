@@ -60,9 +60,6 @@
             "name": "device-adoption"
           },
           {
-            "name": "connection-test"
-          },
-          {
             "name": "addon-pages-source"
           }
         ],

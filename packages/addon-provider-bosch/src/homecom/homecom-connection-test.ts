@@ -1,4 +1,4 @@
-import { errMsg, type IConnectionTestProvider, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IConnectionProbe, type IScopedLogger } from '@camstack/types'
 import { homeComConfigSchema, type HomeComConfig } from './config.js'
 import { unsupportedDeviceTypeMessage } from './homecom-device-type.js'
 import {
@@ -13,7 +13,6 @@ export interface HomeComConnectionTestDeps {
   readonly makeClient?: (config: HomeComConfig, gatewayId: string) => HomeComApiClient
 }
 
-const TEST_LABEL = 'Lists the account gateways and reads the gateway clock'
 const NO_GATEWAY = 'This Bosch account has no HomeCom gateway.'
 
 function signInIncomplete(paths: readonly string[]): string {
@@ -32,7 +31,7 @@ function listFailureMessage(err: unknown): string | null {
 
 export function buildHomeComConnectionTestProvider(
   deps: HomeComConnectionTestDeps,
-): IConnectionTestProvider {
+): IConnectionProbe {
   const { logger } = deps
   const makeClient =
     deps.makeClient ??
@@ -40,8 +39,6 @@ export function buildHomeComConnectionTestProvider(
       createHomeComApiClient(config, gatewayId, { refreshOnUnauthorized: false }))
 
   return {
-    describeTest: async () => ({ label: TEST_LABEL }),
-
     testSettings: async ({ settings }) => {
       const parsed = homeComConfigSchema.safeParse(settings)
       if (!parsed.success) {

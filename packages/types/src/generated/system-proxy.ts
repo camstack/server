@@ -18,7 +18,6 @@ import type { backupCapability } from '../capabilities/backup.cap.js'
 import type { boardKeySourceCapability } from '../capabilities/board-key-source.cap.js'
 import type { brokerCapability } from '../capabilities/broker.cap.js'
 import type { calendarsCapability } from '../capabilities/calendars.cap.js'
-import type { connectionTestCapability } from '../capabilities/connection-test.cap.js'
 import type { coreBlocksCapability } from '../capabilities/core-blocks.cap.js'
 import type { decoderCapability } from '../capabilities/decoder.cap.js'
 import type { deviceAdoptionCapability } from '../capabilities/device-adoption.cap.js'
@@ -92,7 +91,6 @@ export interface SystemProxy {
   readonly boardKeySource: Pick<InferProvider<typeof boardKeySourceCapability>, 'listSources' | 'listBoards' | 'getBoardKey'>
   readonly broker: Pick<InferProvider<typeof brokerCapability>, 'getBrokerConfig' | 'publish' | 'subscribe' | 'unsubscribe' | 'getState' | 'getStatus'>
   readonly calendars: Pick<InferProvider<typeof calendarsCapability>, 'listCalendars' | 'listEvents' | 'getPreferences' | 'setCalendarPreference'>
-  readonly connectionTest: Pick<InferProvider<typeof connectionTestCapability>, 'testSettings' | 'describeTest'>
   readonly coreBlocks: Pick<InferProvider<typeof coreBlocksCapability>, 'list' | 'get' | 'create' | 'update' | 'delete' | 'setEnabled' | 'restart' | 'compile' | 'getBlockSettings' | 'updateBlockSettings' | 'migrateRawSecrets' | 'getTypeDefs' | 'createComposition' | 'updateComposition' | 'getComposition' | 'listCompositions' | 'getCustomization' | 'listComposableCaps' | 'validateComposition' | 'reportAutomationRun' | 'getAutomationRunState' | 'getTraces'>
   readonly decoder: Pick<InferProvider<typeof decoderCapability>, 'getInfo' | 'reprobeHwaccel'>
   readonly deviceAdoption: Pick<InferProvider<typeof deviceAdoptionCapability>, 'listCandidateFilters' | 'listCandidates' | 'getCandidate' | 'refresh' | 'adopt' | 'release' | 'resync'>
@@ -106,7 +104,7 @@ export interface SystemProxy {
   readonly faceGallery: Pick<InferProvider<typeof faceGalleryCapability>, 'listIdentities' | 'createIdentity' | 'renameIdentity' | 'deleteIdentity' | 'listIdentitySamples' | 'auditIdentitySamples' | 'removeSample' | 'getFaceMedia' | 'assignFace' | 'unassignFace' | 'deleteFace' | 'assignFaces' | 'unassignFaces' | 'suggestFaceClusters'>
   readonly fanPresets: Pick<InferProvider<typeof fanPresetsCapability>, 'getPresets' | 'setPresets' | 'applyPreset' | 'capturePreset'>
   readonly integrationInstances: Pick<InferProvider<typeof integrationInstancesCapability>, 'describe' | 'instanceFormSchema' | 'listInstances' | 'getInstance' | 'createInstance' | 'updateInstance' | 'setInstanceEnabled' | 'deleteInstance' | 'testInstance'>
-  readonly integrations: Pick<InferProvider<typeof integrationsCapability>, 'list' | 'get' | 'getByAddonId' | 'create' | 'update' | 'delete' | 'getAvailableTypes' | 'testConnection'>
+  readonly integrations: Pick<InferProvider<typeof integrationsCapability>, 'list' | 'get' | 'getByAddonId' | 'create' | 'update' | 'delete' | 'getAvailableTypes'>
   readonly keychainAdmin: Pick<InferProvider<typeof keychainAdminCapability>, 'status' | 'listSecrets' | 'listAudit' | 'reveal' | 'setSystemSecret' | 'importSecret' | 'deleteOrphans' | 'rotateMasterKey' | 'purgeRetiredKeys' | 'downloadRecoveryKey' | 'resetKeychain' | 'resetReport' | 'acknowledgeReset'>
   readonly llm: Pick<InferProvider<typeof llmCapability>, 'generate' | 'generateVision' | 'cancel' | 'listProfileKinds' | 'listProfiles' | 'upsertProfile' | 'migrateRawSecrets' | 'deleteProfile' | 'testProfile' | 'listModels' | 'getDefaults' | 'setDefault' | 'getUsage' | 'listModelCatalog' | 'listRuntimeNodes' | 'listNodeModels' | 'resolveModelRef' | 'installModel' | 'deleteModel' | 'getRuntimeStatus' | 'startRuntime' | 'stopRuntime'>
   readonly localNetwork: Pick<InferProvider<typeof localNetworkCapability>, 'list' | 'getPreferred' | 'getConnectionEndpoints' | 'getNotificationEndpoint' | 'setNotificationEndpoint' | 'getViewerEndpoints' | 'setViewerEndpoints' | 'getAddresses' | 'addCustomAddress' | 'removeCustomAddress' | 'setAddressRole' | 'getHubAddresses' | 'getAllowedAddresses' | 'setAllowedAddresses' | 'resetAllowlistToBestMatch' | 'getTlsStatus' | 'regenerateCertificate' | 'uploadCertificate' | 'downloadCa' | 'useStoredUploadedCertificate' | 'scanNetwork' | 'getScanSubnets' | 'setScanSubnets' | 'revertToGeneratedCertificate'>
@@ -305,11 +303,6 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     listEvents: (input?: unknown) => dispatch('calendars', 'listEvents', 'query', input),
     getPreferences: (input?: unknown) => dispatch('calendars', 'getPreferences', 'query', input),
     setCalendarPreference: (input?: unknown) => dispatch('calendars', 'setCalendarPreference', 'mutation', input),
-  }
-
-  const connectionTestInterface = {
-    testSettings: (input?: unknown) => dispatch('connectionTest', 'testSettings', 'mutation', input),
-    describeTest: (input?: unknown) => dispatch('connectionTest', 'describeTest', 'query', input),
   }
 
   const coreBlocksInterface = {
@@ -522,7 +515,6 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     update: (input?: unknown) => dispatch('integrations', 'update', 'mutation', input),
     delete: (input?: unknown) => dispatch('integrations', 'delete', 'mutation', input),
     getAvailableTypes: (input?: unknown) => dispatch('integrations', 'getAvailableTypes', 'query', input),
-    testConnection: (input?: unknown) => dispatch('integrations', 'testConnection', 'mutation', input),
   }
 
   const keychainAdminInterface = {
@@ -1106,7 +1098,6 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     boardKeySource: boardKeySourceInterface,
     broker: brokerInterface,
     calendars: calendarsInterface,
-    connectionTest: connectionTestInterface,
     coreBlocks: coreBlocksInterface,
     decoder: decoderInterface,
     deviceAdoption: deviceAdoptionInterface,

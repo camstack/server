@@ -6,7 +6,6 @@ import {
   integrationRowsPortsOver,
   DeviceType,
   EventCategory,
-  connectionTestCapability,
   deviceAdoptionCapability,
   errMsg,
   hydrateSchema,
@@ -19,7 +18,7 @@ import type {
   ConfigUISchemaWithValues,
   CreateDeviceSpec,
   DeviceConstructor,
-  IConnectionTestProvider,
+  IConnectionProbe,
   IDevice,
   IDeviceAdoptionProvider,
   IntegrationInstanceRef,
@@ -170,7 +169,6 @@ export class WyzeProviderAddon extends BaseDeviceProvider {
       providers: [
         ...regs,
         { capability: deviceAdoptionCapability, provider: this.buildAdoptionProvider() },
-        { capability: connectionTestCapability, provider: this.buildConnectionTestProvider() },
         {
           capability: integrationInstancesCapability,
           provider: this.requireInstances().toProvider(),
@@ -270,7 +268,7 @@ export class WyzeProviderAddon extends BaseDeviceProvider {
    * BEFORE any integration for this addon exists, so it depends on nothing in
    * {@link WyzeClientRegistry} and opens its own throwaway session (no disk I/O).
    */
-  private buildConnectionTestProvider(): IConnectionTestProvider {
+  private buildConnectionTestProvider(): IConnectionProbe {
     return buildWyzeConnectionTestProvider({
       makeCloud: defaultWyzeCloudFacadeFactory,
       logger: this.ctx.logger,

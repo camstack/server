@@ -7,7 +7,7 @@
 import {
   defineEntryKind,
   entryBody,
-  type IConnectionTestProvider,
+  type IConnectionProbe,
   type IntegrationTestConnectionResult,
   REDACTED_SECRET,
   type RecordsAccess,
@@ -76,7 +76,7 @@ export interface HomematicInstancesDeps {
   /** Bring the live CCU sessions in line with the records after a change. */
   readonly onChanged: () => Promise<void>
   /** The CCU probe the Test action runs. */
-  readonly tester: Pick<IConnectionTestProvider, 'testSettings'>
+  readonly tester: Pick<IConnectionProbe, 'testSettings'>
 }
 
 export function buildHomematicInstances(

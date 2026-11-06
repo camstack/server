@@ -1,13 +1,10 @@
 import {
   type ConnectionTestOutcome,
   errMsg,
-  type IConnectionTestProvider,
+  type IConnectionProbe,
   type IScopedLogger,
 } from '@camstack/types'
 import { connectionFromSettings, enabledInterfaces } from './config.js'
-
-const TEST_LABEL =
-  'Asks each enabled XML-RPC interface of the CCU for its methods, and signs in to the WebUI when credentials are set'
 
 /** How long one request to the CCU may take before the test gives up on it. */
 const PROBE_TIMEOUT_MS = 5_000
@@ -209,12 +206,10 @@ function describeSuccess(result: CcuProbeResult): string {
 
 export function buildHomematicConnectionTestProvider(
   deps: HomematicConnectionTestDeps,
-): IConnectionTestProvider {
+): IConnectionProbe {
   const { logger, probe = probeCcu } = deps
 
   return {
-    describeTest: async () => ({ label: TEST_LABEL }),
-
     testSettings: async ({ settings }): Promise<ConnectionTestOutcome> => {
       const host = readHost(settings)
       if (host === null) {

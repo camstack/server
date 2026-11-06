@@ -9,7 +9,7 @@ Package `@camstack/addon-provider-petkit` on npm.
 ## What it provides
 
 - **PetKit** (`provider-petkit`): Adopt PetKit smart feeders via the PetKit cloud account. Category: providers.
-  - Capabilities: `device-provider`, `device-adoption`, `pet-feeder`, `connection-test`.
+  - Capabilities: `device-provider`, `device-adoption`, `pet-feeder`.
 
 ## Configuration
 

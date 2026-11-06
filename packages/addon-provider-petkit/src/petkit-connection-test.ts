@@ -1,5 +1,5 @@
 import { PetkitAuthError } from '@apocaliss92/nodepetkit'
-import { errMsg, type IConnectionTestProvider, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IConnectionProbe, type IScopedLogger } from '@camstack/types'
 import { petkitConfigSchema } from './config.js'
 import type { PetkitFacadeFactory } from './petkit-integration-manager.js'
 
@@ -18,16 +18,12 @@ export interface PetkitConnectionTestDeps {
   readonly logger: IScopedLogger
 }
 
-const TEST_LABEL = 'Signs in to the PetKit cloud with these account credentials'
-
 export function buildPetkitConnectionTestProvider(
   deps: PetkitConnectionTestDeps,
-): IConnectionTestProvider {
+): IConnectionProbe {
   const { makeFacade, logger } = deps
 
   return {
-    describeTest: async () => ({ label: TEST_LABEL }),
-
     testSettings: async ({ settings }) => {
       const parsed = petkitConfigSchema.safeParse(settings)
       if (!parsed.success) {

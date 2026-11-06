@@ -9,7 +9,7 @@ import {
   type AddonMigration,
   defineEntryKind,
   entryBody,
-  type IConnectionTestProvider,
+  type IConnectionProbe,
   type IntegrationRowsApi,
   type RowsRecordsDoor,
   type IntegrationRowsPorts,
@@ -203,7 +203,7 @@ export async function homeConnectConnectionOf(
 
 export interface HomeConnectInstancesDeps {
   readonly onChanged: () => Promise<void>
-  readonly tester: IConnectionTestProvider
+  readonly tester: IConnectionProbe
 }
 
 export interface HomeConnectInstances {

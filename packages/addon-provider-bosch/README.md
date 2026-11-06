@@ -9,11 +9,11 @@ Package `@camstack/addon-provider-bosch` on npm.
 ## What it provides
 
 - **Bosch Smart Home** (`bosch-shc`): Adopt Bosch Smart Home Controller (SHC) devices via account onboarding — scaffold. Category: providers.
-  - Capabilities: `device-provider`, `device-adoption`, `connection-test`.
+  - Capabilities: `device-provider`, `device-adoption`.
 - **Bosch Home Connect** (`bosch-home-connect`): Adopt Bosch Home Connect appliances via account onboarding — scaffold. Category: providers.
-  - Capabilities: `device-provider`, `device-adoption`, `connection-test`, `dishwasher`, `consumables`, `running-state`.
+  - Capabilities: `device-provider`, `device-adoption`, `dishwasher`, `consumables`, `running-state`.
 - **Bosch HomeCom** (`bosch-homecom`): Adopt Bosch HomeCom climate and water-heating devices via account onboarding — scaffold. Category: providers.
-  - Capabilities: `device-provider`, `device-adoption`, `connection-test`, `climate-control`, `water-heater`.
+  - Capabilities: `device-provider`, `device-adoption`, `climate-control`, `water-heater`.
 
 ## Requirements
 

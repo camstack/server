@@ -59,9 +59,6 @@
           },
           {
             "name": "device-adoption"
-          },
-          {
-            "name": "connection-test"
           }
         ]
       }

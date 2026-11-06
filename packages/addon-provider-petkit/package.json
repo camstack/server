@@ -62,9 +62,6 @@
             "name": "consumables"
           },
           {
-            "name": "connection-test"
-          },
-          {
             "name": "integration-instances"
           }
         ]

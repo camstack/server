@@ -13,7 +13,7 @@ import {
   type SecretsAccess,
   type IntegrationRowsPorts,
   type IntegrationTestConnectionResult,
-  type IConnectionTestProvider,
+  type IConnectionProbe,
   integrationRowsPortsOverApi,
   moveIntegrationRowsToRecords,
   REDACTED_SECRET,
@@ -135,7 +135,7 @@ export interface RademacherInstancesDeps {
   /** Bring the runtime in line with the records after a change. */
   readonly onChanged: () => Promise<void>
   /** The addon's own connection probe (the `connection-test` provider). */
-  readonly tester: IConnectionTestProvider
+  readonly tester: IConnectionProbe
 }
 
 /**

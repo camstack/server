@@ -1,6 +1,6 @@
 import { WyzeCloud } from '@apocaliss92/wyze-bridge-js'
 import type { WyzeCamera } from '@apocaliss92/wyze-bridge-js'
-import { errMsg, type IConnectionTestProvider, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IConnectionProbe, type IScopedLogger } from '@camstack/types'
 import { z } from 'zod'
 import type { WyzeCredentials } from './cloud-client.js'
 import { classifyCloudError } from './error-classifier.js'
@@ -76,16 +76,12 @@ export interface WyzeConnectionTestDeps {
   readonly logger: IScopedLogger
 }
 
-const TEST_LABEL = 'Signs in to the Wyze cloud with these account credentials'
-
 export function buildWyzeConnectionTestProvider(
   deps: WyzeConnectionTestDeps,
-): IConnectionTestProvider {
+): IConnectionProbe {
   const { makeCloud, logger } = deps
 
   return {
-    describeTest: async () => ({ label: TEST_LABEL }),
-
     testSettings: async ({ settings }) => {
       // A malformed form is a local rejection — no round trip will fix a
       // missing required field.
