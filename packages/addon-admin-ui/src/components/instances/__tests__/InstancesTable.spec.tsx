@@ -112,29 +112,6 @@ vi.mock('@camstack/ui-library', async () => {
           deleteInstance: { mutate: h.remove },
         },
         notificationOutput: { listTargets: { query: async () => h.targets } },
-        addonSettings: {
-          getGlobalSettings: {
-            query: async () => ({
-              sections: [
-                {
-                  id: 'main',
-                  title: 'Main',
-                  fields: [
-                    { type: 'text', key: 'clusterKey', label: 'Cluster field', value: 'c1' },
-                    {
-                      type: 'text',
-                      key: 'nodeKey',
-                      label: 'Node field',
-                      value: 'n1',
-                      perNode: true,
-                    },
-                  ],
-                },
-              ],
-            }),
-          },
-          updateGlobalSettings: { mutate: async () => ({}) },
-        },
       },
     }),
   }
@@ -765,19 +742,13 @@ describe('InstancesTable slots', () => {
     it('without a rule the id stays minted and no Id field is drawn', async () => {
       renderPanel('?instance=smtp-nodemailer:%2B')
       expect(await screen.findByText('Add SMTP')).toBeTruthy()
-      expect(screen.queryByLabelText(/^Id/)).toBeNull()
+      expect(screen.queryByText(/^Id\b/)).toBeNull()
     })
 
     it('does not offer the field when editing an existing record', async () => {
       renderPanel('?instance=smtp-nodemailer:a', { typedId: () => rule })
       expect(await screen.findByText('Edit Relay A')).toBeTruthy()
-      expect(screen.queryByLabelText(/^Id/)).toBeNull()
+      expect(screen.queryByText(/^Id\b/)).toBeNull()
     })
-  })
-
-  it('opens a fixed row in the scoped settings form, cluster fields only', async () => {
-    renderPanel('?instance=loki-logging')
-    expect(await screen.findByDisplayValue('c1')).toBeTruthy()
-    expect(screen.queryByDisplayValue('n1')).toBeNull()
   })
 })

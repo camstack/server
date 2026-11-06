@@ -69,7 +69,9 @@ export function AddDeviceModal({
   const hasNetwork = kind === 'device-adoption' || canScan === true
   const hasManual = manual === 'available'
   const [picked, setPicked] = useState<TabId | null>(null)
-  const active: TabId = picked ?? (hasNetwork ? 'network' : hasManual ? 'manual' : 'pairing')
+  // A pairing integration opens on its pairing tab: that is where its devices come from first.
+  const active: TabId =
+    picked ?? (pairing !== undefined ? 'pairing' : hasNetwork ? 'network' : 'manual')
   const tabCount = [hasNetwork, hasManual, pairing !== undefined].filter(Boolean).length
 
   // An adoption integration lists its candidates through the adopt surface, whole.
@@ -122,10 +124,16 @@ export function AddDeviceModal({
           </TabsList>
           {hasNetwork && <TabsContent value="network">{network}</TabsContent>}
           {hasManual && <TabsContent value="manual">{form}</TabsContent>}
+          {/* Hidden, not unmounted: a commission in flight survives a tab switch. */}
           {pairing !== undefined && (
-            <TabsContent value="pairing">
+            <div
+              role="tabpanel"
+              id="tabpanel-pairing"
+              hidden={active !== 'pairing'}
+              className="pt-3"
+            >
               {pairing.render({ onPaired: () => setPicked('network') })}
-            </TabsContent>
+            </div>
           )}
         </Tabs>
       )

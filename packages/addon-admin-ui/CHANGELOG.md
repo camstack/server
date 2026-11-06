@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Picking a source in Customize uses the shared device-to-value picker: devices and values that do not fit are no longer listed, and a transform plus a preview sit beside the pick
 - Customize: Fill from device proposes a fitting value per field, and the picker offers only values whose unit fits (a minutes value is no longer offered for a percent level); fits as is / convertible wording
 - Customize: a source in another unit than a consumable level (hours, minutes) is offered as convertible and the operator enters the scale; a battery percent fits as is
-- Instances tables take row actions and an operator-typed id on create, fixed rows open the scoped settings form, and the Matter pairing code is a tab of the Add device modal
+- Instances tables take row actions and an operator-typed id on create, and the Matter pairing code is a tab of the Add device modal
 
 ## [1.2.599] - 2026-11-06
 

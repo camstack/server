@@ -105,12 +105,6 @@ interface AddonGlobalSettingsFormProps {
     patch: Record<string, unknown>,
     effective: Record<string, unknown>,
   ) => void
-  /**
-   * Narrow every schema the form receives before it is drawn (e.g. a cluster-only surface drops
-   * the per-node fields). Applied to the first read and to the re-read after a save, so the
-   * form never shows a field the surface is not entitled to. Keep the reference stable.
-   */
-  readonly narrowSchema?: (schema: ConfigUISchemaWithValues) => ConfigUISchemaWithValues
 }
 
 function isValueBearingField(f: ConfigField): boolean {
@@ -167,7 +161,6 @@ export function AddonGlobalSettingsForm({
   defaultOpen,
   mode,
   onOverrideChange,
-  narrowSchema,
 }: AddonGlobalSettingsFormProps): JSX.Element | null {
   const t = useUiText()
   const effectiveMode = mode ?? 'persist'
@@ -211,9 +204,8 @@ export function AddonGlobalSettingsForm({
         : undefined
     trpc.addonSettings.getGlobalSettings
       .query({ addonId, nodeId, ...(overlay ? { overlay } : {}) })
-      .then((raw) => {
+      .then((res) => {
         if (cancelled) return
-        const res = raw !== null && narrowSchema !== undefined ? narrowSchema(raw) : raw
         // `res` is null when the addon can't serve settings right now
         // (mid-restart). Keep the last-known schema rather than blanking the
         // form — a refreshToken-driven refetch must not clobber a good view
@@ -240,7 +232,7 @@ export function AddonGlobalSettingsForm({
     // toggles overlay passthrough. Left `overrideValues` itself out
     // of deps on purpose (it's object-identity-unstable; the stable
     // string form is the signal).
-  }, [trpc, addonId, nodeId, refreshToken, effectiveMode, overlayKey, narrowSchema])
+  }, [trpc, addonId, nodeId, refreshToken, effectiveMode, overlayKey])
 
   const values = useMemo(() => extractValues(hydrated), [hydrated])
   const sectionKey = sectionIds?.join('\u0000')
@@ -301,9 +293,7 @@ export function AddonGlobalSettingsForm({
       // A newer keystroke bumps `persistSeq` — discard this refetch so it
       // cannot rewind the optimistic paint mid-edit.
       const next = await trpc.addonSettings.getGlobalSettings.query({ addonId, nodeId })
-      if (next && seq === persistSeq.current) {
-        setHydrated(narrowSchema !== undefined ? narrowSchema(next) : next)
-      }
+      if (next && seq === persistSeq.current) setHydrated(next)
       if (seq === persistSeq.current) onAfterChange?.()
     } catch (err: unknown) {
       if (seq === persistSeq.current) {

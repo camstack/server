@@ -120,12 +120,13 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   }
 })
 
-import { AddDeviceModal } from '../AddDeviceModal'
+import { AddDeviceModal, type PairingTab } from '../AddDeviceModal'
 
 type ModalProps = {
   kind?: 'device-adoption' | 'device-provider'
   canScan?: boolean | null
   integrationId?: string
+  pairing?: PairingTab
 }
 
 function modalTree(props: ModalProps) {
@@ -137,6 +138,7 @@ function modalTree(props: ModalProps) {
         kind={props.kind ?? 'device-provider'}
         canScan={props.canScan === undefined ? true : props.canScan}
         onClose={vi.fn()}
+        {...(props.pairing !== undefined ? { pairing: props.pairing } : {})}
       />
     </MemoryRouter>
   )
@@ -191,6 +193,40 @@ describe('AddDeviceModal', () => {
     renderModal()
     expect(screen.getByRole('tab', { name: 'Found on the network' })).toBeTruthy()
     expect(screen.getByRole('tab', { name: 'Enter parameters' })).toBeTruthy()
+  })
+
+  describe('pairing tab', () => {
+    const pairing: PairingTab = {
+      label: 'Pairing code',
+      render: ({ onPaired }) => (
+        <div>
+          <input aria-label="code" />
+          <button type="button" onClick={onPaired}>
+            paired
+          </button>
+        </div>
+      ),
+    }
+
+    it('opens on the pairing tab', () => {
+      renderModal({ kind: 'device-adoption', canScan: false, pairing })
+      expect(screen.getByRole('tab', { name: 'Pairing code' }).getAttribute('aria-selected')).toBe(
+        'true',
+      )
+      expect(screen.getByLabelText('code')).toBeTruthy()
+    })
+
+    it('keeps what was typed across a tab switch, and moves to the network once paired', () => {
+      renderModal({ kind: 'device-adoption', canScan: false, pairing })
+      fireEvent.change(screen.getByLabelText('code'), { target: { value: '1234' } })
+      fireEvent.click(screen.getByRole('tab', { name: 'Found on the network' }))
+      fireEvent.click(screen.getByRole('tab', { name: 'Pairing code' }))
+      expect((screen.getByLabelText('code') as HTMLInputElement).value).toBe('1234')
+      fireEvent.click(screen.getByRole('button', { name: 'paired' }))
+      expect(
+        screen.getByRole('tab', { name: 'Found on the network' }).getAttribute('aria-selected'),
+      ).toBe('true')
+    })
   })
 
   it('hides the manual tab when the provider declares no creation type', () => {
