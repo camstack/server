@@ -708,6 +708,19 @@ export const NC_TEMPLATE_VARS: readonly NcTemplateVarDescriptor[] = [
     systemEventKinds: ['addon-crash-loop'],
   },
   {
+    // The runner's own last error (event-intake.ts, `lastError` of the crash
+    // payload). Blank when the payload carried none: that row uses the body
+    // without a cause.
+    name: 'cause',
+    label: 'Cause',
+    example: 'Cannot find module',
+    group: 'system',
+    families: ['rule'],
+    fields: [...RULE_TEXT],
+    kinds: ['system'],
+    systemEventKinds: ['addon-crash-loop'],
+  },
+  {
     name: 'minutes',
     label: 'Minutes',
     example: '12',
