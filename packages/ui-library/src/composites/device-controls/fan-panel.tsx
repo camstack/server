@@ -33,7 +33,7 @@ export function FanPanel({
         | undefined,
     slice: (d) => d.state.fanControl,
   })
-  const { display, applyOptimistic } = useOptimisticSlice<FanControlStatus>(slice, {
+  const { display, applyOptimisticAction } = useOptimisticSlice<FanControlStatus>(slice, {
     enabled: optimistic ?? true,
   })
   if (display === undefined) return null
@@ -62,8 +62,8 @@ export function FanPanel({
             onChange={(e) => {
               const raw = Number(e.target.value)
               const pct = Math.min(100, Math.max(0, Math.round(raw / step) * step))
-              applyOptimistic({ speed: pct })
-              if (!busy) void cap?.setPercentage({ speed: pct })
+              if (!busy)
+                applyOptimisticAction({ speed: pct }, () => cap?.setPercentage({ speed: pct }))
             }}
           />
           <span className="tabular-nums w-8 text-right">{display.speed ?? '—'}%</span>
@@ -78,8 +78,7 @@ export function FanPanel({
             onChange={(e) => {
               const preset = e.target.value
               if (!busy && preset) {
-                applyOptimistic({ preset })
-                void cap?.setPreset({ preset })
+                applyOptimisticAction({ preset }, () => cap?.setPreset({ preset }))
               }
             }}
             className="bg-surface border border-border rounded px-1 py-0.5"

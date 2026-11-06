@@ -309,7 +309,7 @@ export function CoverHeroCard({
     slice: (d) => d.state.cover,
   })
 
-  const { display, applyOptimistic } = useOptimisticSlice<CoverStatus>(slice, {
+  const { display, applyOptimisticAction } = useOptimisticSlice<CoverStatus>(slice, {
     enabled: optimistic ?? true,
   })
 
@@ -336,14 +336,13 @@ export function CoverHeroCard({
     patch?: Partial<CoverStatus>,
   ): void => {
     if (busy || !fn) return
-    if (patch !== undefined) applyOptimistic(patch)
-    void fn({})
+    if (patch !== undefined) applyOptimisticAction(patch, () => fn({}))
+    else void fn({})
   }
 
   const handleSetPosition = (pos: number): void => {
     if (busy) return
-    applyOptimistic({ position: pos })
-    void cap?.setPosition({ position: pos })
+    applyOptimisticAction({ position: pos }, () => cap?.setPosition({ position: pos }))
   }
 
   return (
@@ -469,8 +468,10 @@ export function CoverHeroCard({
             className="flex-1"
             onChange={(e) => {
               const tp = Number(e.target.value)
-              applyOptimistic({ tiltPosition: tp })
-              if (!busy) void cap?.setTiltPosition({ tiltPosition: tp })
+              if (!busy)
+                applyOptimisticAction({ tiltPosition: tp }, () =>
+                  cap?.setTiltPosition({ tiltPosition: tp }),
+                )
             }}
           />
           <span className="w-8 text-right tabular-nums">{display?.tiltPosition ?? '—'}%</span>

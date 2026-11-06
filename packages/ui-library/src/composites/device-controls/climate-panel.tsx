@@ -138,7 +138,7 @@ export function ClimatePanel({
     slice: (d) => d.state.climateControl,
   })
 
-  const { display, applyOptimistic } = useOptimisticSlice<ClimateControlStatus>(slice, {
+  const { display, applyOptimisticAction } = useOptimisticSlice<ClimateControlStatus>(slice, {
     enabled: optimistic ?? true,
   })
 
@@ -179,8 +179,7 @@ export function ClimatePanel({
                 e.stopPropagation()
                 if (!busy && display.target !== null) {
                   const next = nextClimateTarget(display.target, -1, display)
-                  applyOptimistic({ target: next })
-                  void cap.setTarget({ target: next })
+                  applyOptimisticAction({ target: next }, () => cap.setTarget({ target: next }))
                 }
               }}
               className={cn(
@@ -198,8 +197,7 @@ export function ClimatePanel({
                 e.stopPropagation()
                 if (!busy && display.target !== null) {
                   const next = nextClimateTarget(display.target, 1, display)
-                  applyOptimistic({ target: next })
-                  void cap.setTarget({ target: next })
+                  applyOptimisticAction({ target: next }, () => cap.setTarget({ target: next }))
                 }
               }}
               className={cn(
@@ -222,8 +220,7 @@ export function ClimatePanel({
             e.stopPropagation()
             const mode = e.target.value as HvacMode
             if (!busy) {
-              applyOptimistic({ mode })
-              void cap.setMode({ mode })
+              applyOptimisticAction({ mode }, () => cap.setMode({ mode }))
             }
           }}
           className={cn(
@@ -273,8 +270,7 @@ export function ClimatePanel({
                 e.stopPropagation()
                 if (!busy && display.target !== null) {
                   const next = nextClimateTarget(display.target, -1, display)
-                  applyOptimistic({ target: next })
-                  void cap.setTarget({ target: next })
+                  applyOptimisticAction({ target: next }, () => cap.setTarget({ target: next }))
                 }
               }}
               className={cn(
@@ -292,8 +288,7 @@ export function ClimatePanel({
                 e.stopPropagation()
                 if (!busy && display.target !== null) {
                   const next = nextClimateTarget(display.target, 1, display)
-                  applyOptimistic({ target: next })
-                  void cap.setTarget({ target: next })
+                  applyOptimisticAction({ target: next }, () => cap.setTarget({ target: next }))
                 }
               }}
               className={cn(
@@ -318,8 +313,7 @@ export function ClimatePanel({
             onClick={(e) => {
               e.stopPropagation()
               if (!busy) {
-                applyOptimistic({ mode: m })
-                void cap.setMode({ mode: m })
+                applyOptimisticAction({ mode: m }, () => cap.setMode({ mode: m }))
               }
             }}
             className={cn(
@@ -351,8 +345,9 @@ export function ClimatePanel({
                 if (!busy) {
                   const targetLow = Number(e.target.value)
                   const targetHigh = display.targetHigh ?? targetLow
-                  applyOptimistic({ targetLow })
-                  void cap.setTargetRange({ targetLow, targetHigh })
+                  applyOptimisticAction({ targetLow }, () =>
+                    cap.setTargetRange({ targetLow, targetHigh }),
+                  )
                 }
               }}
               className="w-14 rounded border border-border bg-surface px-1 py-0.5 tabular-nums"
@@ -370,8 +365,9 @@ export function ClimatePanel({
                 if (!busy) {
                   const targetHigh = Number(e.target.value)
                   const targetLow = display.targetLow ?? targetHigh
-                  applyOptimistic({ targetHigh })
-                  void cap.setTargetRange({ targetLow, targetHigh })
+                  applyOptimisticAction({ targetHigh }, () =>
+                    cap.setTargetRange({ targetLow, targetHigh }),
+                  )
                 }
               }}
               className="w-14 rounded border border-border bg-surface px-1 py-0.5 tabular-nums"
@@ -391,8 +387,7 @@ export function ClimatePanel({
             onChange={(e) => {
               const fanMode = e.target.value
               if (!busy && fanMode) {
-                applyOptimistic({ fanMode })
-                void cap.setFanMode({ fanMode })
+                applyOptimisticAction({ fanMode }, () => cap.setFanMode({ fanMode }))
               }
             }}
             className="rounded border border-border bg-surface px-1 py-0.5"
@@ -420,8 +415,7 @@ export function ClimatePanel({
             onChange={(e) => {
               const preset = e.target.value
               if (!busy && preset) {
-                applyOptimistic({ preset })
-                void cap.setPreset({ preset })
+                applyOptimisticAction({ preset }, () => cap.setPreset({ preset }))
               }
             }}
             className="rounded border border-border bg-surface px-1 py-0.5"
@@ -452,8 +446,10 @@ export function ClimatePanel({
             disabled={busy}
             onChange={(e) => {
               const targetHumidity = Number(e.target.value)
-              applyOptimistic({ targetHumidity })
-              if (!busy) void cap.setTargetHumidity({ targetHumidity })
+              if (!busy)
+                applyOptimisticAction({ targetHumidity }, () =>
+                  cap.setTargetHumidity({ targetHumidity }),
+                )
             }}
           />
           <span className="tabular-nums w-8 text-right">{display.targetHumidity}%</span>

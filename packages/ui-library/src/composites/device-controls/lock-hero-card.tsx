@@ -200,7 +200,7 @@ export function LockHeroCard({
     slice: (d) => d.state.lockControl,
   })
 
-  const { display, applyOptimistic } = useOptimisticSlice<LockControlStatus>(slice, {
+  const { display, applyOptimisticAction } = useOptimisticSlice<LockControlStatus>(slice, {
     enabled: optimistic ?? true,
   })
   const door = useLockDoorSensor(trpc, deviceId)
@@ -225,11 +225,9 @@ export function LockHeroCard({
   const handleToggle = (): void => {
     if (busy || doorBlocksLock) return
     if (locked) {
-      applyOptimistic({ state: 'unlocking' })
-      void cap.unlock({})
+      applyOptimisticAction({ state: 'unlocking' }, () => cap.unlock({}))
     } else {
-      applyOptimistic({ state: 'locking' })
-      void cap.lock({})
+      applyOptimisticAction({ state: 'locking' }, () => cap.lock({}))
     }
   }
 

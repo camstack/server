@@ -74,7 +74,7 @@ export function MediaPlayerPanel({
     slice: (d) => d.state.mediaPlayer,
   })
 
-  const { display, applyOptimistic } = useOptimisticSlice<MediaPlayerStatus>(slice, {
+  const { display, applyOptimisticAction } = useOptimisticSlice<MediaPlayerStatus>(slice, {
     enabled: optimistic ?? true,
   })
 
@@ -118,11 +118,9 @@ export function MediaPlayerPanel({
             e.stopPropagation()
             if (busy) return
             if (action === 'play') {
-              applyOptimistic({ state: 'playing' })
-              void cap?.play({})
+              applyOptimisticAction({ state: 'playing' }, () => cap?.play({}))
             } else {
-              applyOptimistic({ state: 'paused' })
-              void cap?.pause({})
+              applyOptimisticAction({ state: 'paused' }, () => cap?.pause({}))
             }
           }}
           className={cn(
@@ -185,8 +183,8 @@ export function MediaPlayerPanel({
                 disabled={busy}
                 onChange={(e) => {
                   const volumeLevel = Number(e.target.value)
-                  applyOptimistic({ volumeLevel })
-                  if (!busy) void cap?.setVolume({ volumeLevel })
+                  if (!busy)
+                    applyOptimisticAction({ volumeLevel }, () => cap?.setVolume({ volumeLevel }))
                 }}
               />
               <span className="tabular-nums w-8 text-right">
@@ -209,8 +207,7 @@ export function MediaPlayerPanel({
                 e.stopPropagation()
                 if (!busy) {
                   const muted = display.isMuted === null ? true : !display.isMuted
-                  applyOptimistic({ isMuted: muted })
-                  void cap?.setMute({ muted })
+                  applyOptimisticAction({ isMuted: muted }, () => cap?.setMute({ muted }))
                 }
               }}
               className={cn(
@@ -236,8 +233,7 @@ export function MediaPlayerPanel({
                 onChange={(e) => {
                   const source = e.target.value
                   if (!busy && source) {
-                    applyOptimistic({ source })
-                    void cap?.selectSource({ source })
+                    applyOptimisticAction({ source }, () => cap?.selectSource({ source }))
                   }
                 }}
                 className="rounded border border-border bg-surface px-1 py-0.5"
@@ -264,8 +260,7 @@ export function MediaPlayerPanel({
                 e.stopPropagation()
                 if (!busy && display.shuffle !== null) {
                   const shuffle = !display.shuffle
-                  applyOptimistic({ shuffle })
-                  void cap?.setShuffle({ shuffle })
+                  applyOptimisticAction({ shuffle }, () => cap?.setShuffle({ shuffle }))
                 }
               }}
               className={cn(
@@ -291,8 +286,7 @@ export function MediaPlayerPanel({
                 onChange={(e) => {
                   const v = e.target.value
                   if (!busy && isRepeat(v)) {
-                    applyOptimistic({ repeat: v })
-                    void cap?.setRepeat({ repeat: v })
+                    applyOptimisticAction({ repeat: v }, () => cap?.setRepeat({ repeat: v }))
                   }
                 }}
                 className="rounded border border-border bg-surface px-1 py-0.5"

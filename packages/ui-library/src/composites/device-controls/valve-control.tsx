@@ -135,7 +135,7 @@ function ValveCtrlButton({
 export function ValveInlineControl({ trpc, deviceId, optimistic }: DeviceControlProps): ReactNode {
   const t = useUiText()
   const { cap, slice, available } = useValve(trpc, deviceId)
-  const { display, applyOptimistic } = useOptimisticSlice<ValveStatus>(slice, {
+  const { display, applyOptimisticAction } = useOptimisticSlice<ValveStatus>(slice, {
     enabled: optimistic ?? true,
   })
 
@@ -151,8 +151,8 @@ export function ValveInlineControl({ trpc, deviceId, optimistic }: DeviceControl
     patch?: Partial<ValveStatus>,
   ): void => {
     if (busy || !fn) return
-    if (patch !== undefined) applyOptimistic(patch)
-    void fn({})
+    if (patch !== undefined) applyOptimisticAction(patch, () => fn({}))
+    else void fn({})
   }
 
   return (
@@ -542,7 +542,7 @@ export function ValveHeroCard({
 }: DeviceControlProps): ReactNode {
   const t = useUiText()
   const { cap, slice, available } = useValve(trpc, deviceId)
-  const { display, applyOptimistic } = useOptimisticSlice<ValveStatus>(slice, {
+  const { display, applyOptimisticAction } = useOptimisticSlice<ValveStatus>(slice, {
     enabled: optimistic ?? true,
   })
 
@@ -562,14 +562,13 @@ export function ValveHeroCard({
     patch?: Partial<ValveStatus>,
   ): void => {
     if (busy || !fn) return
-    if (patch !== undefined) applyOptimistic(patch)
-    void fn({})
+    if (patch !== undefined) applyOptimisticAction(patch, () => fn({}))
+    else void fn({})
   }
 
   const handleSetPosition = (pos: number): void => {
     if (busy) return
-    applyOptimistic({ position: pos })
-    void cap.setPosition({ position: pos })
+    applyOptimisticAction({ position: pos }, () => cap.setPosition({ position: pos }))
   }
 
   return (

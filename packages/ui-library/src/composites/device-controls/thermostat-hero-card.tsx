@@ -175,9 +175,12 @@ export function ThermostatHeroCard({
     slice: (d) => d.state.heatingValve,
   })
 
-  const { display, applyOptimistic } = useOptimisticSlice<ClimateControlStatus>(climate.slice, {
-    enabled: optimistic ?? true,
-  })
+  const { display, applyOptimisticAction } = useOptimisticSlice<ClimateControlStatus>(
+    climate.slice,
+    {
+      enabled: optimistic ?? true,
+    },
+  )
 
   const hasClimate = climate.cap !== undefined && display !== undefined
   const hasValve = valve.cap !== undefined
@@ -245,12 +248,11 @@ export function ThermostatHeroCard({
                   knobTopPx={THERMOSTAT_KNOB_TOP_PX}
                   onDragFraction={(f) => {
                     if (busy || display.targetHigh === null) return
-                    const next = Math.min(fractionToTemp(f, min, max), display.targetHigh)
-                    applyOptimistic({ targetLow: next })
-                    void cap.setTargetRange({
-                      targetLow: next,
-                      targetHigh: display.targetHigh,
-                    })
+                    const targetHigh = display.targetHigh
+                    const next = Math.min(fractionToTemp(f, min, max), targetHigh)
+                    applyOptimisticAction({ targetLow: next }, () =>
+                      cap.setTargetRange({ targetLow: next, targetHigh }),
+                    )
                   }}
                 />
               </div>
@@ -261,12 +263,11 @@ export function ThermostatHeroCard({
                   knobTopPx={THERMOSTAT_KNOB_TOP_PX}
                   onDragFraction={(f) => {
                     if (busy || display.targetLow === null) return
-                    const next = Math.max(fractionToTemp(f, min, max), display.targetLow)
-                    applyOptimistic({ targetHigh: next })
-                    void cap.setTargetRange({
-                      targetLow: display.targetLow,
-                      targetHigh: next,
-                    })
+                    const targetLow = display.targetLow
+                    const next = Math.max(fractionToTemp(f, min, max), targetLow)
+                    applyOptimisticAction({ targetHigh: next }, () =>
+                      cap.setTargetRange({ targetLow, targetHigh: next }),
+                    )
                   }}
                 />
               </div>
@@ -280,8 +281,7 @@ export function ThermostatHeroCard({
                 onDragFraction={(f) => {
                   if (busy) return
                   const next = fractionToTemp(f, min, max)
-                  applyOptimistic({ target: next })
-                  void cap.setTarget({ target: next })
+                  applyOptimisticAction({ target: next }, () => cap.setTarget({ target: next }))
                 }}
               />
             </div>
@@ -320,8 +320,7 @@ export function ThermostatHeroCard({
               onDelta={(d) => {
                 if (busy || display.target === null) return
                 const next = display.target + d
-                applyOptimistic({ target: next })
-                void cap.setTarget({ target: next })
+                applyOptimisticAction({ target: next }, () => cap.setTarget({ target: next }))
               }}
             />
           </div>
@@ -341,13 +340,8 @@ export function ThermostatHeroCard({
           // Using a validated cast via the cap method which validates server-side.
           const mode = e.target.value
           if (!busy && mode) {
-            // applyOptimistic accepts Partial<ClimateControlStatus> — mode is a valid key
-            applyOptimistic({
-              mode: display.availableModes.find((m) => m === mode) ?? display.mode,
-            })
-            void cap.setMode({
-              mode: display.availableModes.find((m) => m === mode) ?? display.mode,
-            })
+            const next = display.availableModes.find((m) => m === mode) ?? display.mode
+            applyOptimisticAction({ mode: next }, () => cap.setMode({ mode: next }))
           }
         }}
         className={cn(

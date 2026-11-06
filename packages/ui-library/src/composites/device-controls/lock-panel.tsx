@@ -48,9 +48,10 @@ export function LockPanel({
     cap: (d) => d.lockControl as LockControlCap | undefined,
     slice: (d) => d.state.lockControl,
   })
-  const { display, applyOptimistic } = useOptimisticSlice<LockControlStatus>(slice, {
-    enabled: optimistic ?? true,
-  })
+  const { display, applyOptimistic, applyOptimisticAction, rollback } =
+    useOptimisticSlice<LockControlStatus>(slice, {
+      enabled: optimistic ?? true,
+    })
   const [pending, setPending] = useState<PendingAction>(null)
   const [running, setRunning] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -67,13 +68,11 @@ export function LockPanel({
   const requiresConfirm = layout === 'compact'
 
   const doLock = (): void => {
-    applyOptimistic({ state: 'locking' })
-    void cap?.lock({})
+    applyOptimisticAction({ state: 'locking' }, () => cap?.lock({}))
   }
 
   const doUnlock = (): void => {
-    applyOptimistic({ state: 'unlocking' })
-    void cap?.unlock({})
+    applyOptimisticAction({ state: 'unlocking' }, () => cap?.unlock({}))
   }
 
   const doOpen = (): void => {
@@ -125,6 +124,7 @@ export function LockPanel({
       }
       setPending(null)
     } catch (err) {
+      rollback()
       setError(errorMessage(err))
     } finally {
       setRunning(false)

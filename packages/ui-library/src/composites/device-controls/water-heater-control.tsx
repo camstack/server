@@ -254,7 +254,7 @@ function WaterHeaterGraphic({ fillPct, tint }: WaterHeaterGraphicProps): ReactNo
 export function WaterHeaterHeroCard({ trpc, deviceId, optimistic }: DeviceControlProps): ReactNode {
   const t = useUiText()
   const { cap, slice, available } = useWaterHeater(trpc, deviceId)
-  const { display, applyOptimistic } = useOptimisticSlice<WaterHeaterStatus>(slice, {
+  const { display, applyOptimisticAction } = useOptimisticSlice<WaterHeaterStatus>(slice, {
     enabled: optimistic ?? true,
   })
 
@@ -287,14 +287,12 @@ export function WaterHeaterHeroCard({ trpc, deviceId, optimistic }: DeviceContro
   const stepTarget = (delta: 1 | -1): void => {
     if (busy || target === null) return
     const next = clamp(target + delta)
-    applyOptimistic({ targetTemp: next })
-    void cap.setTargetTemp({ temp: next })
+    applyOptimisticAction({ targetTemp: next }, () => cap.setTargetTemp({ temp: next }))
   }
 
   const toggleAway = (): void => {
     if (busy || display.away === null) return
-    applyOptimistic({ away: !display.away })
-    void cap.setAway({ on: !display.away })
+    applyOptimisticAction({ away: !display.away }, () => cap.setAway({ on: !display.away }))
   }
 
   return (
@@ -339,8 +337,7 @@ export function WaterHeaterHeroCard({ trpc, deviceId, optimistic }: DeviceContro
             e.stopPropagation()
             const mode = display.availableModes.find((m) => m === e.target.value)
             if (!busy && mode !== undefined) {
-              applyOptimistic({ operationMode: mode })
-              void cap.setOperationMode({ mode })
+              applyOptimisticAction({ operationMode: mode }, () => cap.setOperationMode({ mode }))
             }
           }}
           className={cn(

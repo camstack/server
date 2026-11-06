@@ -188,9 +188,10 @@ export function AcPanel({ trpc, deviceId, layout, optimistic }: ControlPanelProp
     slice: (d) => d.state.climateControl,
   })
 
-  const { display, applyOptimistic } = useOptimisticSlice<ClimateControlStatus>(slice, {
-    enabled: optimistic ?? true,
-  })
+  const { display, applyOptimistic, applyOptimisticAction } =
+    useOptimisticSlice<ClimateControlStatus>(slice, {
+      enabled: optimistic ?? true,
+    })
 
   if (cap === undefined) return null
   if (display === undefined) return null
@@ -227,8 +228,7 @@ export function AcPanel({ trpc, deviceId, layout, optimistic }: ControlPanelProp
                 e.stopPropagation()
                 if (!busy && display.target !== null) {
                   const next = nextClimateTarget(display.target, -1, display)
-                  applyOptimistic({ target: next })
-                  void cap.setTarget({ target: next })
+                  applyOptimisticAction({ target: next }, () => cap.setTarget({ target: next }))
                 }
               }}
               className={cn(
@@ -246,8 +246,7 @@ export function AcPanel({ trpc, deviceId, layout, optimistic }: ControlPanelProp
                 e.stopPropagation()
                 if (!busy && display.target !== null) {
                   const next = nextClimateTarget(display.target, 1, display)
-                  applyOptimistic({ target: next })
-                  void cap.setTarget({ target: next })
+                  applyOptimisticAction({ target: next }, () => cap.setTarget({ target: next }))
                 }
               }}
               className={cn(
@@ -269,8 +268,7 @@ export function AcPanel({ trpc, deviceId, layout, optimistic }: ControlPanelProp
             e.stopPropagation()
             const mode = display.availableModes.find((m) => m === e.target.value)
             if (!busy && mode) {
-              applyOptimistic({ mode })
-              void cap.setMode({ mode })
+              applyOptimisticAction({ mode }, () => cap.setMode({ mode }))
             }
           }}
           className={cn(
@@ -376,8 +374,7 @@ export function AcPanel({ trpc, deviceId, layout, optimistic }: ControlPanelProp
                 onClick={() => {
                   if (busy || display.target === null) return
                   const next = nextClimateTarget(display.target, -1, display)
-                  applyOptimistic({ target: next })
-                  void cap.setTarget({ target: next })
+                  applyOptimisticAction({ target: next }, () => cap.setTarget({ target: next }))
                 }}
               />
               <div className="flex items-baseline gap-0.5">
@@ -399,8 +396,7 @@ export function AcPanel({ trpc, deviceId, layout, optimistic }: ControlPanelProp
                 onClick={() => {
                   if (busy || display.target === null) return
                   const next = nextClimateTarget(display.target, 1, display)
-                  applyOptimistic({ target: next })
-                  void cap.setTarget({ target: next })
+                  applyOptimisticAction({ target: next }, () => cap.setTarget({ target: next }))
                 }}
               />
             </div>
@@ -418,8 +414,7 @@ export function AcPanel({ trpc, deviceId, layout, optimistic }: ControlPanelProp
                     applyOptimistic({ target: next })
                   }}
                   onCommit={(next) => {
-                    applyOptimistic({ target: next })
-                    void cap.setTarget({ target: next })
+                    applyOptimisticAction({ target: next }, () => cap.setTarget({ target: next }))
                   }}
                 />
               </div>
@@ -458,8 +453,7 @@ export function AcPanel({ trpc, deviceId, layout, optimistic }: ControlPanelProp
           onChange={(v) => {
             const mode = display.availableModes.find((m) => m === v)
             if (mode) {
-              applyOptimistic({ mode })
-              void cap.setMode({ mode })
+              applyOptimisticAction({ mode }, () => cap.setMode({ mode }))
             }
           }}
         />
@@ -474,8 +468,7 @@ export function AcPanel({ trpc, deviceId, layout, optimistic }: ControlPanelProp
             }))}
             disabled={busy}
             onChange={(v) => {
-              applyOptimistic({ fanMode: v })
-              void cap.setFanMode({ fanMode: v })
+              applyOptimisticAction({ fanMode: v }, () => cap.setFanMode({ fanMode: v }))
             }}
           />
         )}
@@ -490,8 +483,7 @@ export function AcPanel({ trpc, deviceId, layout, optimistic }: ControlPanelProp
             }))}
             disabled={busy}
             onChange={(v) => {
-              applyOptimistic({ preset: v })
-              void cap.setPreset({ preset: v })
+              applyOptimisticAction({ preset: v }, () => cap.setPreset({ preset: v }))
             }}
           />
         )}
@@ -507,8 +499,9 @@ export function AcPanel({ trpc, deviceId, layout, optimistic }: ControlPanelProp
                 on={display.swingVertical ?? false}
                 busy={busy}
                 onToggle={(next) => {
-                  applyOptimistic({ swingVertical: next })
-                  void cap.setSwingVertical({ on: next })
+                  applyOptimisticAction({ swingVertical: next }, () =>
+                    cap.setSwingVertical({ on: next }),
+                  )
                 }}
               />
             )}
@@ -518,8 +511,9 @@ export function AcPanel({ trpc, deviceId, layout, optimistic }: ControlPanelProp
                 on={display.swingHorizontal ?? false}
                 busy={busy}
                 onToggle={(next) => {
-                  applyOptimistic({ swingHorizontal: next })
-                  void cap.setSwingHorizontal({ on: next })
+                  applyOptimisticAction({ swingHorizontal: next }, () =>
+                    cap.setSwingHorizontal({ on: next }),
+                  )
                 }}
               />
             )}

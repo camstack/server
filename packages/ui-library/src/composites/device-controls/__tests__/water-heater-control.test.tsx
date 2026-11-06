@@ -19,7 +19,11 @@ vi.mock('../../../hooks/use-device-capability', () => ({
 }))
 
 vi.mock('../../../hooks/use-optimistic-slice', () => ({
-  useOptimisticSlice: (slice: unknown) => ({ display: slice, applyOptimistic: vi.fn() }),
+  useOptimisticSlice: (slice: unknown) => ({
+    display: slice,
+    applyOptimistic: vi.fn(),
+    applyOptimisticAction: (_patch: unknown, run: () => unknown) => void run(),
+  }),
 }))
 
 const trpc = {} as never

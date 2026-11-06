@@ -49,14 +49,14 @@ function useHeater({ trpc, deviceId, optimistic }: DeviceControlProps) {
     cap: (d) => d.timedRun,
     slice: (d) => d.state.timedRun,
   })
-  const { display, applyOptimistic } = useOptimisticSlice<SwitchStatus>(slice, {
+  const { display, applyOptimisticAction } = useOptimisticSlice<SwitchStatus>(slice, {
     enabled: optimistic ?? true,
   })
   return {
     cap,
     display,
     available,
-    applyOptimistic,
+    applyOptimisticAction,
     running: running.slice,
     timer,
   }
@@ -64,7 +64,7 @@ function useHeater({ trpc, deviceId, optimistic }: DeviceControlProps) {
 
 export function HeaterInlineControl(props: DeviceControlProps): ReactNode {
   const t = useUiText()
-  const { cap, display, available, applyOptimistic, timer } = useHeater(props)
+  const { cap, display, available, applyOptimisticAction, timer } = useHeater(props)
   if (cap === undefined || display === undefined) return null
   const on = display.on === true
   const quickMinutes =
@@ -80,8 +80,7 @@ export function HeaterInlineControl(props: DeviceControlProps): ReactNode {
           disabled={!available}
           aria-label={t('uiLibrary.heater.power', 'Heater')}
           onCheckedChange={(next) => {
-            applyOptimistic({ on: next })
-            void cap.setState({ on: next })
+            applyOptimisticAction({ on: next }, () => cap.setState({ on: next }))
           }}
         />
       </span>
@@ -104,7 +103,7 @@ export function HeaterInlineControl(props: DeviceControlProps): ReactNode {
 
 export function HeaterHeroCard(props: DeviceControlProps): ReactNode {
   const t = useUiText()
-  const { cap, display, available, applyOptimistic, running, timer } = useHeater(props)
+  const { cap, display, available, applyOptimisticAction, running, timer } = useHeater(props)
   if (cap === undefined || display === undefined) return null
   const on = display.on === true
   const heating = running?.running ?? on
@@ -142,8 +141,7 @@ export function HeaterHeroCard(props: DeviceControlProps): ReactNode {
           checked={on}
           disabled={!available}
           onCheckedChange={(next) => {
-            applyOptimistic({ on: next })
-            void cap.setState({ on: next })
+            applyOptimisticAction({ on: next }, () => cap.setState({ on: next }))
           }}
         />
       </label>

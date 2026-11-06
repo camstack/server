@@ -17,7 +17,7 @@ export function SwitchPanel({ trpc, deviceId, optimistic }: ControlPanelProps): 
     cap: (d) => d.switch as { setState: (i: { on: boolean }) => Promise<void> } | undefined,
     slice: (d) => d.state.switch,
   })
-  const { display, applyOptimistic } = useOptimisticSlice<SwitchStatus>(slice, {
+  const { display, applyOptimistic, rollback } = useOptimisticSlice<SwitchStatus>(slice, {
     enabled: optimistic ?? true,
   })
   const [pending, setPending] = useState(false)
@@ -32,6 +32,9 @@ export function SwitchPanel({ trpc, deviceId, optimistic }: ControlPanelProps): 
     setPending(true)
     try {
       await cap.setState({ on: next })
+    } catch {
+      // Refused: the switch returns to what the device last reported.
+      rollback()
     } finally {
       setPending(false)
     }

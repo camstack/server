@@ -14,8 +14,11 @@
  * Reconciliation — the override is cleared when:
  *   (a) The real slice advances: detected by a change in `slice.lastChangedAt` if
  *       the field is present, OR a new object reference after the override was set.
- *   (b) A fallback timeout (`timeoutMs`, default 4000ms) elapses without a push,
- *       so stale optimistic state is never stuck indefinitely.
+ *   (b) A safety-net timeout (`timeoutMs`, default 4000ms) elapses without a push,
+ *       so stale optimistic state is never stuck indefinitely. For a command run
+ *       through `applyOptimisticAction` the net only starts once the command has
+ *       SETTLED: a slow device never loses the new value while its answer is
+ *       still pending, and a refused command rolls back at once.
  *
  * With `enabled: false` the hook is a passthrough: `display === realSlice` and
  * `applyOptimistic` is a no-op.
@@ -39,6 +42,18 @@ export interface UseOptimisticSliceResult<T> {
    * server never produced.
    */
   readonly rollback: () => void
+  /**
+   * Apply `patch` and run the command it anticipates. A command that throws or
+   * rejects rolls the display back to the real slice and reports the error to
+   * `onError` (when given); one that succeeds keeps the new value until the real
+   * slice agrees (or the safety net elapses). Prefer this to a bare
+   * `applyOptimistic` followed by a discarded `void cap.x()`.
+   */
+  readonly applyOptimisticAction: (
+    patch: Partial<T>,
+    run: () => PromiseLike<unknown> | undefined,
+    onError?: (error: unknown) => void,
+  ) => void
 }
 
 const DEFAULT_TIMEOUT_MS = 4000
@@ -83,6 +98,13 @@ export function useOptimisticSlice<T extends object>(
   // (not just from `undefined` on mount).
   const overrideActiveRef = useRef(false)
 
+  // Commands run through applyOptimisticAction that have not settled yet.
+  const pendingRef = useRef(0)
+
+  // The latest real slice, readable from a settled promise.
+  const realSliceRef = useRef<T | undefined>(realSlice)
+  realSliceRef.current = realSlice
+
   // Timeout handle for the fallback clear.
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
@@ -94,12 +116,14 @@ export function useOptimisticSlice<T extends object>(
     overrideRef.current = undefined
     overrideActiveRef.current = false
     versionAtApplyRef.current = undefined
+    pendingRef.current = 0
     setOverride(undefined)
   }, [])
 
   // Reconcile: when the real slice advances, clear the override.
   useEffect(() => {
-    if (!enabled || !overrideActiveRef.current) return
+    // While a command is in flight the override stays: its outcome decides.
+    if (!enabled || !overrideActiveRef.current || pendingRef.current > 0) return
     const currentVersion = extractVersion(realSlice)
     const capturedVersion = versionAtApplyRef.current
     // The slice advanced if the version is defined and different from the snapshot.
@@ -115,8 +139,8 @@ export function useOptimisticSlice<T extends object>(
     }
   }, [])
 
-  const applyOptimistic = useCallback(
-    (patch: Partial<T>): void => {
+  const applyPatch = useCallback(
+    (patch: Partial<T>, armSafetyNet: boolean): void => {
       if (!enabled) return
       // Cancel any pending fallback timeout from a previous optimistic patch.
       if (timeoutRef.current !== undefined) {
@@ -137,10 +161,53 @@ export function useOptimisticSlice<T extends object>(
       // Capture the version of the real slice at the time of the apply.
       versionAtApplyRef.current = extractVersion(realSlice)
       overrideActiveRef.current = true
-      // Fallback: clear after timeoutMs even if no push arrives.
-      timeoutRef.current = setTimeout(clearOverride, timeoutMs)
+      // Fallback: clear after timeoutMs even if no push arrives. (applyOptimisticAction
+      // holds the net until its command settles.)
+      if (armSafetyNet) timeoutRef.current = setTimeout(clearOverride, timeoutMs)
     },
     [enabled, realSlice, clearOverride, timeoutMs],
+  )
+
+  const applyOptimistic = useCallback(
+    (patch: Partial<T>): void => applyPatch(patch, true),
+    [applyPatch],
+  )
+
+  const applyOptimisticAction = useCallback(
+    (
+      patch: Partial<T>,
+      run: () => PromiseLike<unknown> | undefined,
+      onError?: (error: unknown) => void,
+    ): void => {
+      // A synchronous throw is a refusal like any other.
+      const started = new Promise<unknown>((resolve) => resolve(run()))
+      if (!enabled) {
+        started.catch((err: unknown) => onError?.(err))
+        return
+      }
+      applyPatch(patch, false)
+      pendingRef.current += 1
+      started.then(
+        () => {
+          pendingRef.current = Math.max(0, pendingRef.current - 1)
+          if (pendingRef.current > 0 || !overrideActiveRef.current) return
+          // The slice may have caught up while the command was in flight.
+          const current = extractVersion(realSliceRef.current)
+          if (current !== undefined && current !== versionAtApplyRef.current) {
+            clearOverride()
+            return
+          }
+          if (timeoutRef.current !== undefined) clearTimeout(timeoutRef.current)
+          timeoutRef.current = setTimeout(clearOverride, timeoutMs)
+        },
+        (err: unknown) => {
+          // The server refused: never keep showing a state it did not produce.
+          clearOverride()
+          onError?.(err)
+        },
+      )
+    },
+    [enabled, applyPatch, clearOverride, timeoutMs],
   )
 
   if (!enabled) {
@@ -152,6 +219,9 @@ export function useOptimisticSlice<T extends object>(
       rollback: () => {
         /* no-op — no override was ever applied */
       },
+      applyOptimisticAction: (_patch, run, onError) => {
+        new Promise((resolve) => resolve(run())).catch((err: unknown) => onError?.(err))
+      },
     }
   }
 
@@ -159,5 +229,6 @@ export function useOptimisticSlice<T extends object>(
     display: override !== undefined ? override : realSlice,
     applyOptimistic,
     rollback: clearOverride,
+    applyOptimisticAction,
   }
 }

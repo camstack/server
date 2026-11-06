@@ -133,7 +133,7 @@ function useScriptControl(
     cap: (d) => d.scriptRunner as ScriptRunnerCap | undefined,
     slice: (d) => d.state.scriptRunner,
   })
-  const { display, applyOptimistic } = useOptimisticSlice<ScriptRunnerStatus>(slice, {
+  const { display, applyOptimisticAction } = useOptimisticSlice<ScriptRunnerStatus>(slice, {
     enabled: optimistic ?? true,
   })
   const busy = !available
@@ -146,13 +146,11 @@ function useScriptControl(
     running,
     run: () => {
       if (cap === undefined || busy || running) return
-      applyOptimistic({ isRunning: true })
-      void cap.run({})
+      applyOptimisticAction({ isRunning: true }, () => cap.run({}))
     },
     stop: () => {
       if (cap === undefined || busy || !running) return
-      applyOptimistic({ isRunning: false })
-      void cap.stop({})
+      applyOptimisticAction({ isRunning: false }, () => cap.stop({}))
     },
   }
 }
@@ -297,7 +295,7 @@ function useAutomationControl(
     cap: (d) => d.automationControl as AutomationControlCap | undefined,
     slice: (d) => d.state.automationControl,
   })
-  const { display, applyOptimistic } = useOptimisticSlice<AutomationControlStatus>(slice, {
+  const { display, applyOptimisticAction } = useOptimisticSlice<AutomationControlStatus>(slice, {
     enabled: optimistic ?? true,
   })
   const busy = !available
@@ -308,8 +306,7 @@ function useAutomationControl(
     busy,
     setEnabled: (next) => {
       if (cap === undefined || busy) return
-      applyOptimistic({ enabled: next })
-      if (next) void cap.enable({})
+      if (next) applyOptimisticAction({ enabled: next }, () => cap.enable({}))
       else void cap.disable({})
     },
     trigger: () => {

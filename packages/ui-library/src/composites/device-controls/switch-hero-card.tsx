@@ -33,7 +33,7 @@ export function SwitchHeroCard({ trpc, deviceId, optimistic }: DeviceControlProp
     slice: (d) => d.state.switch,
   })
 
-  const { display, applyOptimistic } = useOptimisticSlice<SwitchStatus>(slice, {
+  const { display, applyOptimisticAction } = useOptimisticSlice<SwitchStatus>(slice, {
     enabled: optimistic ?? true,
   })
 
@@ -46,8 +46,7 @@ export function SwitchHeroCard({ trpc, deviceId, optimistic }: DeviceControlProp
   const handleToggle = (): void => {
     if (busy) return
     const next = !on
-    applyOptimistic({ on: next })
-    void cap.setState({ on: next })
+    applyOptimisticAction({ on: next }, () => cap.setState({ on: next }))
   }
 
   return (

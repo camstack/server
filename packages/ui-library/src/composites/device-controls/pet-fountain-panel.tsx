@@ -71,7 +71,7 @@ export function PetFountainPanel({
     cap: (d) => d.petFountain,
     slice: (d) => d.state.petFountain,
   })
-  const { display, applyOptimistic } = useOptimisticSlice<PetFountainStatus>(slice, {
+  const { display, applyOptimisticAction } = useOptimisticSlice<PetFountainStatus>(slice, {
     enabled: optimistic ?? true,
   })
 
@@ -82,8 +82,7 @@ export function PetFountainPanel({
   const pumpOn = display.pumpRunning === true
   const level = display.waterLevel
   const setPump = (on: boolean): void => {
-    applyOptimistic({ pumpRunning: on })
-    void cap.setPump({ on })
+    applyOptimisticAction({ pumpRunning: on }, () => cap.setPump({ on }))
   }
 
   if (layout === 'compact') {
@@ -192,7 +191,7 @@ function PumpCycleSection({
     cap: (d) => d.pumpCycle,
     slice: (d) => d.state.pumpCycle,
   })
-  const { display, applyOptimistic } = useOptimisticSlice<PumpCycleStatus>(slice, {
+  const { display, applyOptimisticAction } = useOptimisticSlice<PumpCycleStatus>(slice, {
     enabled: optimistic ?? true,
   })
   if (cap === undefined || display === undefined) return null
@@ -206,8 +205,7 @@ function PumpCycleSection({
         checked={intervalOn}
         disabled={busy}
         onChange={(on) => {
-          applyOptimistic({ enabled: on })
-          void cap.setEnabled({ on })
+          applyOptimisticAction({ enabled: on }, () => cap.setEnabled({ on }))
         }}
       />
       {intervalOn && (
@@ -217,8 +215,9 @@ function PumpCycleSection({
             minutes={minutesOf(display.onTime)}
             disabled={busy}
             onChange={(minutes) => {
-              applyOptimistic({ onTime: minutes * SECONDS_PER_MINUTE })
-              void cap.setOnMinutes({ minutes })
+              applyOptimisticAction({ onTime: minutes * SECONDS_PER_MINUTE }, () =>
+                cap.setOnMinutes({ minutes }),
+              )
             }}
           />
           <MinutesStepper
@@ -226,8 +225,9 @@ function PumpCycleSection({
             minutes={minutesOf(display.offTime)}
             disabled={busy}
             onChange={(minutes) => {
-              applyOptimistic({ offTime: minutes * SECONDS_PER_MINUTE })
-              void cap.setOffMinutes({ minutes })
+              applyOptimisticAction({ offTime: minutes * SECONDS_PER_MINUTE }, () =>
+                cap.setOffMinutes({ minutes }),
+              )
             }}
           />
         </div>

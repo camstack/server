@@ -97,15 +97,15 @@ export function FanHeroCard({
   const handleToggle = (): void => {
     if (swBusy) return
     const next = !on
-    swOpt.applyOptimistic({ on: next })
-    void sw.cap?.setState({ on: next })
+    swOpt.applyOptimisticAction({ on: next }, () => sw.cap?.setState({ on: next }))
   }
 
   const handleOscillate = (): void => {
     if (fanBusy) return
     const next = !oscillating
-    fanOpt.applyOptimistic({ oscillating: next })
-    void fan.cap?.setOscillating({ oscillating: next })
+    fanOpt.applyOptimisticAction({ oscillating: next }, () =>
+      fan.cap?.setOscillating({ oscillating: next }),
+    )
   }
 
   /** Drag the speed gauge: arc fraction → step-snapped 0..100 percentage. */
@@ -116,14 +116,12 @@ export function FanHeroCard({
     const step =
       slice.percentageStep !== undefined && slice.percentageStep > 0 ? slice.percentageStep : 1
     const pct = Math.min(100, Math.max(0, Math.round((f * 100) / step) * step))
-    fanOpt.applyOptimistic({ speed: pct })
-    void fan.cap?.setPercentage({ speed: pct })
+    fanOpt.applyOptimisticAction({ speed: pct }, () => fan.cap?.setPercentage({ speed: pct }))
   }
 
   const handlePreset = (preset: string): void => {
     if (fanBusy || preset === '') return
-    fanOpt.applyOptimistic({ preset })
-    void fan.cap?.setPreset({ preset })
+    fanOpt.applyOptimisticAction({ preset }, () => fan.cap?.setPreset({ preset }))
   }
 
   return (

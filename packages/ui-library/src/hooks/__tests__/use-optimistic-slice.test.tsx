@@ -141,3 +141,80 @@ describe('useOptimisticSlice', () => {
     expect(result.current.display?.b).toBe(20)
   })
 })
+
+describe('useOptimisticSlice — applyOptimisticAction', () => {
+  const slice: MockSlice = { on: false, lastChangedAt: 1000 }
+
+  it('rolls back at once and reports the error when the command is refused', async () => {
+    const onError = vi.fn()
+    const { result } = renderHook(() => useOptimisticSlice(slice))
+    await act(async () => {
+      result.current.applyOptimisticAction(
+        { on: true },
+        () => Promise.reject(new Error('refused')),
+        onError,
+      )
+    })
+    expect(result.current.display).toBe(slice)
+    expect(onError).toHaveBeenCalledOnce()
+  })
+
+  it('treats a synchronous throw as a refusal', async () => {
+    const { result } = renderHook(() => useOptimisticSlice(slice))
+    await act(async () => {
+      result.current.applyOptimisticAction({ on: true }, () => {
+        throw new Error('boom')
+      })
+    })
+    expect(result.current.display).toBe(slice)
+  })
+
+  it('keeps the new value after a successful command', async () => {
+    const { result } = renderHook(() => useOptimisticSlice(slice))
+    await act(async () => {
+      result.current.applyOptimisticAction({ on: true }, () => Promise.resolve())
+    })
+    expect(result.current.display?.on).toBe(true)
+  })
+
+  it('does not drop the value on the timer while the command is still pending', async () => {
+    let finish: () => void = () => undefined
+    const pending = new Promise<void>((resolve) => {
+      finish = resolve
+    })
+    const { result } = renderHook(() => useOptimisticSlice(slice, { timeoutMs: 4000 }))
+    await act(async () => {
+      result.current.applyOptimisticAction({ on: true }, () => pending)
+    })
+    act(() => {
+      vi.advanceTimersByTime(10_000)
+    })
+    expect(result.current.display?.on).toBe(true)
+    await act(async () => {
+      finish()
+    })
+    // The safety net starts once the command settled.
+    act(() => {
+      vi.advanceTimersByTime(4000)
+    })
+    expect(result.current.display).toBe(slice)
+  })
+
+  it('clears the override when the slice caught up while the command was pending', async () => {
+    let finish: () => void = () => undefined
+    const pending = new Promise<void>((resolve) => {
+      finish = resolve
+    })
+    let current: MockSlice = slice
+    const { result, rerender } = renderHook(() => useOptimisticSlice(current))
+    await act(async () => {
+      result.current.applyOptimisticAction({ on: true }, () => pending)
+    })
+    current = { on: true, lastChangedAt: 2000 }
+    rerender()
+    await act(async () => {
+      finish()
+    })
+    expect(result.current.display).toBe(current)
+  })
+})

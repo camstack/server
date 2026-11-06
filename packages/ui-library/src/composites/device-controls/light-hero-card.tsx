@@ -113,8 +113,7 @@ export function LightHeroCard({
   const handleToggle = (): void => {
     if (swBusy) return
     const next = !on
-    swOpt.applyOptimistic({ on: next })
-    void sw.cap?.setState({ on: next })
+    swOpt.applyOptimisticAction({ on: next }, () => sw.cap?.setState({ on: next }))
   }
 
   return (
@@ -148,8 +147,10 @@ export function LightHeroCard({
               disabled={brightBusy || !on}
               onChange={(e) => {
                 const pct = Number(e.target.value)
-                brightOpt.applyOptimistic({ level: pct })
-                if (!brightBusy) void bright.cap?.setBrightness({ level: pct })
+                if (!brightBusy)
+                  brightOpt.applyOptimisticAction({ level: pct }, () =>
+                    bright.cap?.setBrightness({ level: pct }),
+                  )
               }}
             />
             <span className="tabular-nums w-9 text-right">{percentage}%</span>
@@ -184,9 +185,10 @@ export function LightHeroCard({
               disabled={ctBusy || !on}
               onChange={(e) => {
                 const mireds = Number(e.target.value)
-                colorOpt.applyOptimistic({ mode: 'mired', colorTemperature: mireds })
                 if (!ctBusy)
-                  void color.cap?.setColor({ color: { mode: 'mired', colorTemperature: mireds } })
+                  colorOpt.applyOptimisticAction({ mode: 'mired', colorTemperature: mireds }, () =>
+                    color.cap?.setColor({ color: { mode: 'mired', colorTemperature: mireds } }),
+                  )
               }}
             />
             <div className="pointer-events-none mt-1">

@@ -105,7 +105,7 @@ export function HumidifierInlineControl({
 }: DeviceControlProps): ReactNode {
   const t = useUiText()
   const { cap, slice, available } = useHumidifier(trpc, deviceId)
-  const { display, applyOptimistic } = useOptimisticSlice<HumidifierStatus>(slice, {
+  const { display, applyOptimisticAction } = useOptimisticSlice<HumidifierStatus>(slice, {
     enabled: optimistic ?? true,
   })
 
@@ -116,8 +116,7 @@ export function HumidifierInlineControl({
 
   const toggle = (): void => {
     if (busy) return
-    applyOptimistic({ on: !on })
-    void cap.setOn({ on: !on })
+    applyOptimisticAction({ on: !on }, () => cap.setOn({ on: !on }))
   }
 
   return (
@@ -288,7 +287,7 @@ function HumidifierGraphic({ fillPct, tint }: HumidifierGraphicProps): ReactNode
 export function HumidifierHeroCard({ trpc, deviceId, optimistic }: DeviceControlProps): ReactNode {
   const t = useUiText()
   const { cap, slice, available } = useHumidifier(trpc, deviceId)
-  const { display, applyOptimistic } = useOptimisticSlice<HumidifierStatus>(slice, {
+  const { display, applyOptimisticAction } = useOptimisticSlice<HumidifierStatus>(slice, {
     enabled: optimistic ?? true,
   })
 
@@ -306,14 +305,12 @@ export function HumidifierHeroCard({ trpc, deviceId, optimistic }: DeviceControl
 
   const toggle = (): void => {
     if (busy) return
-    applyOptimistic({ on: !display.on })
-    void cap.setOn({ on: !display.on })
+    applyOptimisticAction({ on: !display.on }, () => cap.setOn({ on: !display.on }))
   }
 
   const setTarget = (humidity: number): void => {
     if (busy) return
-    applyOptimistic({ targetHumidity: humidity })
-    void cap.setTargetHumidity({ humidity })
+    applyOptimisticAction({ targetHumidity: humidity }, () => cap.setTargetHumidity({ humidity }))
   }
 
   return (
@@ -398,8 +395,7 @@ export function HumidifierHeroCard({ trpc, deviceId, optimistic }: DeviceControl
             e.stopPropagation()
             const mode = display.availableModes.find((m) => m === e.target.value)
             if (!busy && mode !== undefined) {
-              applyOptimistic({ mode })
-              void cap.setMode({ mode })
+              applyOptimisticAction({ mode }, () => cap.setMode({ mode }))
             }
           }}
           className={cn(

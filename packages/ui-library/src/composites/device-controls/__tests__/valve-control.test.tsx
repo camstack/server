@@ -22,7 +22,11 @@ vi.mock('../../../hooks/use-device-capability', () => ({
 
 // Pass the slice straight through so display === slice (no optimistic override).
 vi.mock('../../../hooks/use-optimistic-slice', () => ({
-  useOptimisticSlice: (slice: unknown) => ({ display: slice, applyOptimistic: vi.fn() }),
+  useOptimisticSlice: (slice: unknown) => ({
+    display: slice,
+    applyOptimistic: vi.fn(),
+    applyOptimisticAction: (_patch: unknown, run: () => unknown) => void run(),
+  }),
 }))
 
 const trpc = {} as never

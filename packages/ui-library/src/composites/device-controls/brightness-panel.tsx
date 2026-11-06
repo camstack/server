@@ -23,7 +23,7 @@ export function BrightnessPanel({
       d.brightness as { setBrightness: (i: { level: number }) => Promise<void> } | undefined,
     slice: (d) => d.state.brightness,
   })
-  const { display, applyOptimistic } = useOptimisticSlice<BrightnessStatus>(slice, {
+  const { display, applyOptimisticAction } = useOptimisticSlice<BrightnessStatus>(slice, {
     enabled: optimistic ?? true,
   })
   if (display === undefined) return null
@@ -47,8 +47,7 @@ export function BrightnessPanel({
         disabled={busy}
         onChange={(e) => {
           const pct = Number(e.target.value)
-          applyOptimistic({ level: pct })
-          if (!busy) void cap?.setBrightness({ level: pct })
+          if (!busy) applyOptimisticAction({ level: pct }, () => cap?.setBrightness({ level: pct }))
         }}
       />
       <span className="tabular-nums w-8 text-right">{display.level}%</span>

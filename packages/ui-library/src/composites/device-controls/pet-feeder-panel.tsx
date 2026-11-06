@@ -132,7 +132,7 @@ export function PetFeederPanel({
     slice: (d) => d.state.petFeeder,
   })
 
-  const { display, applyOptimistic } = useOptimisticSlice<PetFeederStatus>(slice, {
+  const { display, applyOptimisticAction } = useOptimisticSlice<PetFeederStatus>(slice, {
     enabled: optimistic ?? true,
   })
 
@@ -210,8 +210,7 @@ export function PetFeederPanel({
           onClick={(e) => {
             e.stopPropagation()
             if (busy || display.feeding) return
-            applyOptimistic({ feeding: true })
-            void cap.feed({ grams: DEFAULT_PORTION })
+            applyOptimisticAction({ feeding: true }, () => cap.feed({ grams: DEFAULT_PORTION }))
           }}
           className={cn(
             'inline-flex items-center gap-1 rounded-md border border-border bg-surface px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-surface-hover',
@@ -228,8 +227,7 @@ export function PetFeederPanel({
   // ── Full layout (hero card) ──────────────────────────────────────────────────
   const feedSingle = (grams: number): void => {
     if (busy || display.feeding) return
-    applyOptimistic({ feeding: true })
-    void cap.feed({ grams: clampPortion(grams) })
+    applyOptimisticAction({ feeding: true }, () => cap.feed({ grams: clampPortion(grams) }))
   }
 
   return (
@@ -319,8 +317,9 @@ export function PetFeederPanel({
             onGrams={setHopper1}
             onFeed={() => {
               if (busy || display.feeding) return
-              applyOptimistic({ feeding: true })
-              void cap.feed({ hopper1: clampPortion(hopper1) })
+              applyOptimisticAction({ feeding: true }, () =>
+                cap.feed({ hopper1: clampPortion(hopper1) }),
+              )
             }}
           />
           <HopperFeed
@@ -330,8 +329,9 @@ export function PetFeederPanel({
             onGrams={setHopper2}
             onFeed={() => {
               if (busy || display.feeding) return
-              applyOptimistic({ feeding: true })
-              void cap.feed({ hopper2: clampPortion(hopper2) })
+              applyOptimisticAction({ feeding: true }, () =>
+                cap.feed({ hopper2: clampPortion(hopper2) }),
+              )
             }}
           />
         </div>
@@ -367,8 +367,7 @@ export function PetFeederPanel({
           type="button"
           disabled={busy}
           onClick={() => {
-            applyOptimistic({ feeding: false })
-            void cap.cancelFeed({})
+            applyOptimisticAction({ feeding: false }, () => cap.cancelFeed({}))
           }}
           className={cn(
             'flex items-center justify-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-2 py-1.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20',
@@ -389,8 +388,7 @@ export function PetFeederPanel({
             on={display.childLock}
             busy={busy}
             onToggle={(next) => {
-              applyOptimistic({ childLock: next })
-              void cap.setChildLock({ on: next })
+              applyOptimisticAction({ childLock: next }, () => cap.setChildLock({ on: next }))
             }}
           />
           <SettingToggle
@@ -399,8 +397,9 @@ export function PetFeederPanel({
             on={display.indicatorLight}
             busy={busy}
             onToggle={(next) => {
-              applyOptimistic({ indicatorLight: next })
-              void cap.setIndicatorLight({ on: next })
+              applyOptimisticAction({ indicatorLight: next }, () =>
+                cap.setIndicatorLight({ on: next }),
+              )
             }}
           />
           <SettingToggle
@@ -409,8 +408,7 @@ export function PetFeederPanel({
             on={display.feedSound}
             busy={busy}
             onToggle={(next) => {
-              applyOptimistic({ feedSound: next })
-              void cap.setFeedSound({ on: next })
+              applyOptimisticAction({ feedSound: next }, () => cap.setFeedSound({ on: next }))
             }}
           />
         </div>
@@ -426,8 +424,7 @@ export function PetFeederPanel({
             repeat={false}
             onStep={() => {
               const next = Math.max(0, display.volume - 1)
-              applyOptimistic({ volume: next })
-              void cap.setVolume({ level: next })
+              applyOptimisticAction({ volume: next }, () => cap.setVolume({ level: next }))
             }}
           />
           <span className="w-6 text-center text-lg font-semibold tabular-nums text-foreground">
@@ -440,8 +437,7 @@ export function PetFeederPanel({
             repeat={false}
             onStep={() => {
               const next = Math.min(VOLUME_MAX, display.volume + 1)
-              applyOptimistic({ volume: next })
-              void cap.setVolume({ level: next })
+              applyOptimisticAction({ volume: next }, () => cap.setVolume({ level: next }))
             }}
           />
         </div>

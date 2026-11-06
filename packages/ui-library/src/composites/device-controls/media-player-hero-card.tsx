@@ -292,7 +292,7 @@ export function MediaPlayerHeroCard({
     slice: (d) => d.state.mediaPlayer,
   })
 
-  const { display, applyOptimistic } = useOptimisticSlice<MediaPlayerStatus>(slice, {
+  const { display, applyOptimisticAction } = useOptimisticSlice<MediaPlayerStatus>(slice, {
     enabled: optimistic ?? true,
   })
 
@@ -314,11 +314,9 @@ export function MediaPlayerHeroCard({
   const switchPower = (): void => {
     if (busy) return
     if (view.power === 'on') {
-      applyOptimistic({ state: 'off' })
-      void cap.turnOff({})
+      applyOptimisticAction({ state: 'off' }, () => cap.turnOff({}))
     } else {
-      applyOptimistic({ state: 'on' })
-      void cap.turnOn({})
+      applyOptimisticAction({ state: 'on' }, () => cap.turnOn({}))
     }
   }
   const powerLabel = powerLabelOf(view.power, t)
@@ -326,11 +324,9 @@ export function MediaPlayerHeroCard({
   const handleToggle = (): void => {
     if (busy) return
     if (action === 'play') {
-      applyOptimistic({ state: 'playing' })
-      void cap.play({})
+      applyOptimisticAction({ state: 'playing' }, () => cap.play({}))
     } else {
-      applyOptimistic({ state: 'paused' })
-      void cap.pause({})
+      applyOptimisticAction({ state: 'paused' }, () => cap.pause({}))
     }
   }
 
@@ -389,8 +385,9 @@ export function MediaPlayerHeroCard({
             options={view.source.options.map((o) => ({ value: o, label: o }))}
             onChange={(e) => {
               if (busy) return
-              applyOptimistic({ source: e.target.value })
-              void cap.selectSource({ source: e.target.value })
+              applyOptimisticAction({ source: e.target.value }, () =>
+                cap.selectSource({ source: e.target.value }),
+              )
             }}
           />
         </div>
@@ -413,8 +410,9 @@ export function MediaPlayerHeroCard({
               onChange={(e) => {
                 if (busy) return
                 const positionMs = Number(e.target.value)
-                applyOptimistic({ position: positionMs })
-                void cap.seek({ position: positionMs })
+                applyOptimisticAction({ position: positionMs }, () =>
+                  cap.seek({ position: positionMs }),
+                )
               }}
             />
             <div className="pointer-events-none">
@@ -500,8 +498,7 @@ export function MediaPlayerHeroCard({
                 if (busy) return
                 const muted =
                   status?.isMuted === null || status === undefined ? true : !status.isMuted
-                applyOptimistic({ isMuted: muted })
-                void cap.setMute({ muted })
+                applyOptimisticAction({ isMuted: muted }, () => cap.setMute({ muted }))
               }}
               className={cn(
                 'inline-flex h-7 w-7 items-center justify-center rounded text-foreground-subtle hover:text-foreground hover:bg-surface-hover transition-colors',
@@ -529,8 +526,9 @@ export function MediaPlayerHeroCard({
               onChange={(e) => {
                 if (busy) return
                 const next = Number(e.target.value)
-                applyOptimistic({ volumeLevel: next })
-                void cap.setVolume({ volumeLevel: next })
+                applyOptimisticAction({ volumeLevel: next }, () =>
+                  cap.setVolume({ volumeLevel: next }),
+                )
               }}
             />
             <div className="pointer-events-none">
@@ -585,8 +583,7 @@ export function MediaPlayerHeroCard({
               active={status.shuffle}
               onPress={() => {
                 const shuffle = !status.shuffle
-                applyOptimistic({ shuffle })
-                void cap.setShuffle({ shuffle })
+                applyOptimisticAction({ shuffle }, () => cap.setShuffle({ shuffle }))
               }}
             >
               <Shuffle className="h-4 w-4" aria-hidden="true" />
@@ -600,8 +597,7 @@ export function MediaPlayerHeroCard({
               onPress={() => {
                 if (status.repeat === null) return
                 const repeat = NEXT_REPEAT[status.repeat]
-                applyOptimistic({ repeat })
-                void cap.setRepeat({ repeat })
+                applyOptimisticAction({ repeat }, () => cap.setRepeat({ repeat }))
               }}
             >
               {status.repeat === 'one' ? (

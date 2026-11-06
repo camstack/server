@@ -126,7 +126,7 @@ export function CoverInlineControl({ trpc, deviceId, optimistic }: DeviceControl
     slice: (d) => d.state.cover,
   })
 
-  const { display, applyOptimistic } = useOptimisticSlice<CoverStatus>(slice, {
+  const { display, applyOptimisticAction } = useOptimisticSlice<CoverStatus>(slice, {
     enabled: optimistic ?? true,
   })
 
@@ -148,8 +148,8 @@ export function CoverInlineControl({ trpc, deviceId, optimistic }: DeviceControl
     patch?: Partial<CoverStatus>,
   ): void => {
     if (busy || !fn) return
-    if (patch !== undefined) applyOptimistic(patch)
-    void fn({})
+    if (patch !== undefined) applyOptimisticAction(patch, () => fn({}))
+    else void fn({})
   }
 
   return (

@@ -406,7 +406,7 @@ export function ControlPanel({
     slice: (d) => d.state.control,
   })
 
-  const { display, applyOptimistic } = useOptimisticSlice<ControlStatus>(slice, {
+  const { display, applyOptimisticAction } = useOptimisticSlice<ControlStatus>(slice, {
     enabled: optimistic ?? true,
   })
 
@@ -420,8 +420,7 @@ export function ControlPanel({
   const setValueFn: SetValueFn = (input) => {
     if (!busy && cap) {
       // Apply optimistic patch — the value field maps to control.value
-      applyOptimistic({ value: input.control.value })
-      void cap.setValue(input)
+      applyOptimisticAction({ value: input.control.value }, () => cap.setValue(input))
     }
   }
 
