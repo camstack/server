@@ -61,6 +61,7 @@ export class BrokerEcho {
   private limitedUntil = 0
   private channelState: PushChannelState = 'down'
   private channelWasUp = false
+  private secrets: readonly string[] = []
   private readonly unknownPushLogged = new Set<string>()
 
   constructor(private readonly deps: BrokerEchoDeps) {
@@ -72,6 +73,11 @@ export class BrokerEcho {
     return this.channelState
   }
 
+  /** A reason is text from the library: capped, then scrubbed of the secrets in play. */
+  private safeReason(reason: string): string {
+    return scrubSecrets(reason.slice(0, 200), this.secrets)
+  }
+
   private onPush(push: WorkerPush): void {
     const tags = { tags: { brokerId: this.deps.brokerId } }
     if (push.push === 'channel') {
@@ -79,7 +85,7 @@ export class BrokerEcho {
         if (push.state === 'down') {
           this.deps.logger.debug('alexa echo: push channel still down', {
             ...tags,
-            meta: { reason: push.reason, retryInMs: push.retryInMs },
+            meta: { reason: this.safeReason(push.reason), retryInMs: push.retryInMs },
           })
         }
         return
@@ -96,7 +102,7 @@ export class BrokerEcho {
       } else {
         this.deps.logger.warn('alexa echo: push channel down, polling at the normal pace', {
           ...tags,
-          meta: { reason: push.reason, retryInMs: push.retryInMs },
+          meta: { reason: this.safeReason(push.reason), retryInMs: push.retryInMs },
         })
       }
       this.deps.push?.channel(this.deps.brokerId, push.state)
@@ -153,6 +159,11 @@ export class BrokerEcho {
 
   stop(): void {
     this.deps.worker.stop()
+    // Do not rely on a down line arriving from a worker that is gone.
+    if (this.channelState === 'up') {
+      this.channelState = 'down'
+      this.deps.push?.channel(this.deps.brokerId, 'down')
+    }
   }
 
   /** Sign the worker in as the broker's account. Never throws; the outcome is `state`. */
@@ -180,6 +191,7 @@ export class BrokerEcho {
       }
       secrets = seed === null ? [] : [seed.refreshToken]
       worker.noteSecrets(secrets)
+      this.secrets = secrets
       let outcome = parseLoginResult({
         status: 'failed',
         error: 'worker gave no answer',

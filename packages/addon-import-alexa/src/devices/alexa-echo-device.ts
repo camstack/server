@@ -125,7 +125,7 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
 
   private onChannel(state: 'up' | 'down'): void {
     this.armPollTimer()
-    this.ctx.logger.info('alexa echo: push channel changed, poll pace follows', {
+    this.ctx.logger.debug('alexa echo: push channel changed, poll pace follows', {
       tags: { deviceId: this.id },
       meta: { channel: state, pollMs: this.pollIntervalMs },
     })

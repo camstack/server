@@ -115,6 +115,66 @@ class ChannelTests(unittest.TestCase):
         self.assertEqual(lines[3]["retryInMs"], 10_000)
 
 
+class FlapClient:
+    """Opens and closes at once, or returns without doing either."""
+
+    mode = "flap"
+    made = 0
+    hold = 0.0
+    now = [0.0]
+
+    def __init__(self, login, msg_cb, open_cb, close_cb, error_cb) -> None:
+        self.open_cb, self.close_cb = open_cb, close_cb
+        FlapClient.made += 1
+
+    async def async_run(self) -> None:
+        if FlapClient.mode == "flap":
+            await self.open_cb()
+            FlapClient.now[0] += FlapClient.hold  # how long the stream stayed up
+            await self.close_cb()
+        # mode "silent": returns with neither open nor close
+
+    def on_close(self, _reason=None) -> None:
+        pass
+
+
+class BackoffTests(unittest.TestCase):
+    def run_channel(self, mode: str, hold: float, passes: int = 40) -> tuple[list[dict], list[float]]:
+        FlapClient.mode, FlapClient.made, FlapClient.hold = mode, 0, hold
+        FlapClient.now = now = [0.0]
+        lines: list[dict] = []
+        sleeps: list[float] = []
+
+        async def fake_sleep(seconds: float) -> None:
+            sleeps.append(seconds)
+            await asyncio.sleep(0)
+
+        async def scenario() -> None:
+            channel = PushChannel(object(), lines.append, FlapClient, fake_sleep, lambda: now[0])
+            channel.start()
+            for _ in range(passes):
+                await asyncio.sleep(0)
+            channel.stop()
+
+        asyncio.run(scenario())
+        return lines, sleeps
+
+    def test_a_stream_that_opens_and_closes_at_once_keeps_backing_off(self) -> None:
+        _, sleeps = self.run_channel("flap", hold=0.0)
+        self.assertEqual(sleeps[:5], [5, 10, 20, 40, 80])
+
+    def test_the_backoff_starts_over_only_after_a_stable_stretch(self) -> None:
+        _, sleeps = self.run_channel("flap", hold=alexa_push.STABLE_UP_S + 1)
+        self.assertEqual(sleeps[:3], [5, 5, 5])
+
+    def test_a_client_that_returns_without_opening_is_retried_and_reported_down(self) -> None:
+        lines, sleeps = self.run_channel("silent", hold=0.0)
+        self.assertGreaterEqual(FlapClient.made, 2)
+        self.assertEqual(sleeps[:2], [5, 10])
+        self.assertEqual(lines[0]["state"], "down")
+        self.assertEqual(lines[0]["reason"], "stream ended before opening")
+
+
 class GatewayPushTests(unittest.TestCase):
     def tearDown(self) -> None:
         remove_fake_alexapy()

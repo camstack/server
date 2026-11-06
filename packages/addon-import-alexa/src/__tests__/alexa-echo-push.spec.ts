@@ -83,11 +83,11 @@ describe('worker client: push lines', () => {
 describe('BrokerEcho: push lines', () => {
   function setup() {
     let listener: (push: WorkerPush) => void = () => undefined
-    const logs: Array<{ level: string; message: string }> = []
+    const logs: Array<{ level: string; message: string; extras: unknown }> = []
     const at =
       (level: string) =>
-      (message: string): void => {
-        logs.push({ level, message })
+      (message: string, extras?: unknown): void => {
+        logs.push({ level, message, extras })
       }
     const logger = {
       debug: at('debug'),
@@ -96,7 +96,9 @@ describe('BrokerEcho: push lines', () => {
       error: at('error'),
     } as unknown as IScopedLogger
     const worker = {
-      request: vi.fn(),
+      request: vi.fn(async (r: { op: string }) =>
+        r.op === 'login_broker' ? { status: 'ok' } : { devices: [] },
+      ),
       noteSecrets: vi.fn(),
       onPush: (fn: (push: WorkerPush) => void) => void (listener = fn),
       stop: vi.fn(),
@@ -108,7 +110,7 @@ describe('BrokerEcho: push lines', () => {
       brokerName: 'Home',
       domain: 'amazon.it',
       worker,
-      readSeed: async () => null,
+      readSeed: async () => ({ refreshToken: 'SECRET-TOKEN', deviceAppName: 'a' }),
       sessions: { get: async () => '', put: async () => {}, delete: async () => {} },
       logger,
       push: sink,
@@ -134,6 +136,30 @@ describe('BrokerEcho: push lines', () => {
     ])
   })
 
+  it('a forwarded reason is capped and scrubbed of the secrets in play before it is logged', async () => {
+    const { echo, logs, push } = setup()
+    await echo.signIn()
+    push({ push: 'channel', state: 'up', reason: '', retryInMs: 0 })
+    push({
+      push: 'channel',
+      state: 'down',
+      reason: `bad token SECRET-TOKEN ${'x'.repeat(400)}`,
+      retryInMs: 5000,
+    })
+    const line = logs.find((l) => l.message.includes('push channel down'))
+    const reason = String((line?.extras as { meta: { reason: string } }).meta.reason)
+    expect(reason).not.toContain('SECRET-TOKEN')
+    expect(reason.length).toBeLessThanOrEqual(200)
+  })
+
+  it('stopping an account with an open channel reports it down without a line from the worker', () => {
+    const { echo, sink, push } = setup()
+    push({ push: 'channel', state: 'up', reason: '', retryInMs: 0 })
+    echo.stop()
+    expect(sink.channel.mock.calls.at(-1)).toEqual(['b', 'down'])
+    expect(echo.pushChannel).toBe('down')
+  })
+
   it('a reading event reaches the sink; an ignored one does not; an unknown one is logged once', () => {
     const { sink, logs, push } = setup()
     push({ push: 'event', command: 'PUSH_VOLUME_CHANGE', serial: 'S1' })
@@ -149,6 +175,8 @@ describe('AlexaEchoDevice: push', () => {
   interface Fake extends EchoSession {
     playerState: ReturnType<typeof vi.fn>
     setVolume: ReturnType<typeof vi.fn>
+    deviceVolumes: ReturnType<typeof vi.fn>
+    dndState: ReturnType<typeof vi.fn>
   }
   function session(volume: () => number | Promise<number>): Fake {
     return {
@@ -211,6 +239,35 @@ describe('AlexaEchoDevice: push', () => {
     alexaEchoSessions.event('b', 'S1')
     await vi.advanceTimersByTimeAsync(ECHO_PUSH_READ_GAP_MS)
     expect(volumeOf(device)).toBe(65)
+    await device.removeDevice()
+  })
+
+  it('a push read is fresh: the shared volume and Do Not Disturb lists a poll just fetched are dropped', async () => {
+    const s = session(() => 40)
+    alexaEchoSessions.setResolver(() => s)
+    const { device } = await build()
+    await alexaEchoSessions.volumes('b', Date.now())
+    await alexaEchoSessions.dnd('b', Date.now())
+    s.deviceVolumes.mockClear()
+    s.dndState.mockClear()
+    await alexaEchoSessions.volumes('b', Date.now())
+    expect(s.deviceVolumes).not.toHaveBeenCalled() // warm: shared
+    alexaEchoSessions.event('b', 'OTHER-DOT')
+    await alexaEchoSessions.volumes('b', Date.now())
+    await alexaEchoSessions.dnd('b', Date.now())
+    expect(s.deviceVolumes).toHaveBeenCalledTimes(1)
+    expect(s.dndState).toHaveBeenCalledTimes(1)
+    await device.removeDevice()
+  })
+
+  it('a channel change is logged for the device at debug, not info', async () => {
+    const s = session(() => 40)
+    alexaEchoSessions.setResolver(() => s)
+    const { device, logs } = await build()
+    alexaEchoSessions.channel('b', 'up')
+    await vi.advanceTimersByTimeAsync(0)
+    const line = logs.find((l) => l.message.includes('push channel changed'))
+    expect(line?.level).toBe('debug')
     await device.removeDevice()
   })
 

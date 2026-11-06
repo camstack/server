@@ -17,10 +17,14 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import json
+import time
 from typing import Any, Awaitable, Callable
 
 RECONNECT_BASE_S = 5
 RECONNECT_MAX_S = 300
+# A stream must stay up this long before the backoff starts over; one that opens and
+# closes at once keeps doubling instead of flapping every few seconds.
+STABLE_UP_S = 60
 
 Emit = Callable[[dict], None]
 ClientFactory = Callable[..., Any]
@@ -90,11 +94,13 @@ class PushChannel:
         emit: Emit,
         client_factory: ClientFactory | None = None,
         sleep: Sleep = asyncio.sleep,
+        clock: Callable[[], float] = time.monotonic,
     ) -> None:
         self._login = login
         self._emit = emit
         self._factory = client_factory
         self._sleep = sleep
+        self._clock = clock
         self._stopped = False
         self._up = False
         self._task: asyncio.Task | None = None
@@ -122,14 +128,15 @@ class PushChannel:
         while not self._stopped:
             closed = asyncio.Event()
             reason = "closed"
+            opened_at: float | None = None
 
             async def on_message(message: object) -> None:
                 for event in parse_push_message(message):
                     self._emit(event)
 
             async def on_open() -> None:
-                nonlocal attempt
-                attempt = 0
+                nonlocal opened_at
+                opened_at = self._clock()
                 self._up = True
                 self._emit({"push": "channel", "state": "up", "reason": "connected", "retryInMs": 0})
 
@@ -144,7 +151,11 @@ class PushChannel:
             try:
                 client = (self._factory or default_client_factory)(self._login, on_message, on_open, on_close, on_error)
                 await client.async_run()
-                await closed.wait()
+                if opened_at is None and not closed.is_set():
+                    # Returned without opening or closing: that is a failed attempt, not a wait.
+                    reason = "stream ended before opening"
+                else:
+                    await closed.wait()
             except asyncio.CancelledError:
                 raise
             except Exception as err:  # noqa: BLE001 — a failed connect is a retry, never a crash
@@ -153,6 +164,8 @@ class PushChannel:
                 if client is not None:
                     with contextlib.suppress(Exception):
                         client.on_close("channel ended")
+            if opened_at is not None and self._clock() - opened_at >= STABLE_UP_S:
+                attempt = 0
             delay = reconnect_delay_s(attempt)
             attempt += 1
             if not self._up:

@@ -109,6 +109,9 @@ export class EchoSessionRegistry implements EchoPushSink {
   }
 
   event(brokerId: string, serial: string): void {
+    // The push read must not be served from the shared lists a poll fetched moments ago.
+    this.invalidateVolumes(brokerId)
+    this.invalidateDnd(brokerId)
     for (const listener of [...(this.#pushListeners.get(`${brokerId}\u0000${serial}`) ?? [])]) listener()
   }
 
