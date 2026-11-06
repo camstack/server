@@ -1,0 +1,29 @@
+{
+  "_comment": "Sites that still reference another instance without declareLinkKind / linkField, or still use the broker-select type (D1013 rule 5). The list only shrinks: steps B2-B8 remove each entry with the migration of its site; scripts/check-instance-refs-use-link-primitive.ts refuses a new site and a stale entry.",
+  "entries": [
+    "addon-cloudflare:tunnel/cloudflare-actions.ts:accountId",
+    "addon-google-services:google-broker-registry.ts:calendarIds",
+    "addon-google-services:google-broker-settings-schema.ts:calendarIds",
+    "addon-google-services:google-types.ts:calendarIds",
+    "addon-import-alexa:alexa-login-routes.ts:brokerId",
+    "addon-import-alexa:config.ts:brokerId",
+    "addon-import-alexa:speak/provider.ts:brokerId",
+    "addon-notifiers:adapters/email.ts:smtpInstanceId",
+    "addon-provider-homeassistant:ha-broker-registry.ts:calendarIds",
+    "addon-provider-homeassistant:ha-broker-settings-schema.ts:calendarIds",
+    "addon-provider-homeassistant:ha-device-source.ts:brokerId",
+    "addon-provider-homeassistant:ha-export/target-form.ts:connectionId",
+    "addon-provider-homeassistant:ha-export/target-records.ts:connectionId",
+    "addon-provider-homeassistant:ha-notification-output.ts:brokerId",
+    "addon-provider-mqtt-ha:mqtt-ha-instances.ts:mqttBrokerId",
+    "addon-provider-reolink:email-push-bridge.ts:brokerId",
+    "addon-provider-vesync:config.ts:accountId",
+    "addon-terminal:terminal-camera-device.ts:instanceId",
+    "broker-select:packages/addon-import-alexa/src/speak/provider.ts",
+    "broker-select:packages/addon-provider-homeassistant/src/ha-export/target-form.ts",
+    "broker-select:packages/addon-provider-homeassistant/src/ha-notification-output.ts",
+    "broker-select:packages/addon-provider-mqtt-ha/src/mqtt-ha-instances.ts",
+    "broker-select:packages/types/src/addon/broker-link.ts",
+    "broker-select:packages/types/src/interfaces/config-ui.ts"
+  ]
+}
