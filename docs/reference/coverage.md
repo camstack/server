@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**239 units · 8149 source files · 233 units claimed by at least one document (8119 files).**
+**239 units · 8152 source files · 233 units claimed by at least one document (8122 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -44,10 +44,10 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-provider-homematic` | 59 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0626-a-parameter-carried-by-two-channels-is-read-from-the-status-one.md`, +1 more | 2026-10-26 |
 | `packages/addon-training/src/page` | 59 | `cloud-training` | `architecture/cloud-training.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0790-a-machine-proposed-retrain-box-is-a-draft-until-the-operator-confirms-it.md`, +3 more, 1 ADR | 2026-10-14 |
 | `packages/addon-pipeline/src/pipeline-runner` | 58 | `pipeline-orchestration`, `zones` | `architecture/data-planes.md`, `architecture/detection-execution.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, +43 more, 14 ADRs | 2026-10-24 |
+| `packages/addon-ai` | 54 | `ai` | `addons/addon-ai.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-28-tts-stt-capabilities.md` _(covers)_, +9 more, 1 ADR | 2026-10-18 |
 | `packages/addon-provider-dreame` | 53 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0424-a-publisher-that-owns-a-feed-reports-its-death-a-dead-session-is-closed-never-re-published.md`, +5 more, 2 ADRs | 2026-10-26 |
 | `packages/addon-provider-hikvision` | 52 | `device-providers` | `addons/addon-provider-hikvision.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, +13 more, 2 ADRs | 2026-10-26 |
 | `packages/types/src/device` | 52 | `device-model` | `architecture/device-model.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0920-a-devices-vocabulary-is-one-cap-keyed-map-outside-the-caps.md`, +26 more, 1 ADR | 2026-11-02 |
-| `packages/addon-ai` | 51 | `ai` | `addons/addon-ai.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-28-tts-stt-capabilities.md` _(covers)_, +9 more, 1 ADR | 2026-10-18 |
 | `packages/addon-pipeline/src/session-decode` | 49 | `decode-and-data-planes` | `decisions/adr-1013-one-instance-model.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-28-faces-plates-frame-locality.md` _(covers)_, +14 more, 4 ADRs | 2026-08-29 |
 | `packages/desktop` | 46 | `secrets`, `tooling` | `decisions/adr-0943-the-product-release-is-not-the-npm-version.md`, `decisions/adr-0402-a-certificate-bypass-is-scoped-to-the-role-that-needs-it.md`, `decisions/adr-0846-the-windows-agent-service-is-a-pinned-winsw-around-a-supervisor-and-never-runs-user-writable-code.md`, +8 more | 2026-10-27 |
 | `packages/addon-import-alexa` | 44 | `ecosystem-exports` | `addons/addon-import-alexa.md` _(covers)_, `decisions/adr-1012-a-broker-is-referenced-by-id-and-owns-nothing-of-its-users.md`, `decisions/adr-1013-one-instance-model.md`, +5 more | — |
