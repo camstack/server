@@ -302,3 +302,60 @@ describe('AddonHealthMonitor', () => {
     })
   })
 })
+
+describe('AddonHealthMonitor held-back addons', () => {
+  const FAST = { gracePeriodMs: 0, tickIntervalMs: 30_000, retryIntervalsMs: [30_000, 60_000] }
+
+  it('retries a held-back addon on the backoff and emits no failure or alert', async () => {
+    const { bus, events } = makeBus()
+    const retryFn = vi.fn(async () => {})
+    const m = new AddonHealthMonitor({ eventBus: bus, logger: noopLogger, retryFn, now: clock, ...FAST })
+    m.recordHeldBack('@camstack/addon-x', 'installed 0.1.40, requires >= 0.1.41', 'x')
+    expect(m.getHealth('@camstack/addon-x')?.heldBack).toBe(true)
+    now += 31_000
+    await m.tick()
+    expect(retryFn).toHaveBeenCalledTimes(1)
+    expect(events.map((e) => e.category)).not.toContain(EventCategory.AddonLoadFailed)
+    expect(events.map((e) => e.category)).not.toContain(EventCategory.AddonRetryScheduled)
+    // the retry found the gate open: success the normal way
+    expect(m.getHealth('@camstack/addon-x')?.phase).toBe('healthy')
+    expect(m.getHealth('@camstack/addon-x')?.heldBack).toBe(false)
+  })
+
+  it('a retry the gate still refuses stays a quiet held-back retry, not a failure', async () => {
+    const { bus, events } = makeBus()
+    const retryFn = vi.fn(async () => {
+      throw new Error('addon "x" is held back until its package is reconciled')
+    })
+    const m = new AddonHealthMonitor({
+      eventBus: bus,
+      logger: noopLogger,
+      retryFn,
+      now: clock,
+      isHeldBack: (id) => id === 'x',
+      ...FAST,
+    })
+    m.recordHeldBack('@camstack/addon-x', 'reason', 'x')
+    now += 31_000
+    await m.tick()
+    expect(m.getHealth('@camstack/addon-x')?.heldBack).toBe(true)
+    expect(m.getHealth('@camstack/addon-x')?.retryCount).toBe(2)
+    expect(events.map((e) => e.category)).not.toContain(EventCategory.AddonLoadFailed)
+    now += 61_000
+    await m.tick()
+    expect(retryFn).toHaveBeenCalledTimes(2)
+  })
+
+  it('a genuine failure once the gate is open is an ordinary alerting failure', async () => {
+    const { bus, events } = makeBus()
+    const retryFn = vi.fn(async () => {
+      throw new Error('boom')
+    })
+    const m = new AddonHealthMonitor({ eventBus: bus, logger: noopLogger, retryFn, now: clock, ...FAST })
+    m.recordHeldBack('@camstack/addon-x', 'reason', 'x')
+    now += 31_000
+    await m.tick()
+    expect(m.getHealth('@camstack/addon-x')?.heldBack).toBe(false)
+    expect(events.map((e) => e.category)).toContain(EventCategory.AddonLoadFailed)
+  })
+})

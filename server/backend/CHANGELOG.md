@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - An addon held back until its package is updated after a server update is no longer reported as failed to initialize.
+- A held-back addon is retried quietly until its package is current, without a failure alert.
 
 ## [1.2.787] - 2026-11-06
 

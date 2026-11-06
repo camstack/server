@@ -71,6 +71,12 @@ export interface AddonHealthState {
   alertEmitted: boolean
   /** True if a retry attempt is currently in flight. */
   retrying: boolean
+  /**
+   * True while the hub spawn gate holds the addon back (its package is below what
+   * the running server requires). Retried on the same backoff, but never a
+   * failure: no alert, no failure event.
+   */
+  heldBack: boolean
 }
 
 export interface AddonHealthSnapshot {
@@ -84,6 +90,7 @@ export interface AddonHealthSnapshot {
   readonly nextRetryAt: number | null
   readonly alertEmitted: boolean
   readonly retrying: boolean
+  readonly heldBack: boolean
   /** Whether the boot grace window is still open (suppresses alerts). */
   readonly inGracePeriod: boolean
 }
@@ -98,6 +105,11 @@ export interface AddonHealthMonitorOptions {
    * success; throws on failure (the monitor records the new error).
    */
   readonly retryFn: (packageName: string) => Promise<void>
+  /**
+   * Whether the spawn gate currently holds this addon back. A failure recorded for
+   * a held-back addon (a retry the gate refused) stays a quiet retry, not an alert.
+   */
+  readonly isHeldBack?: (addonId: string) => boolean
   /** Override for tests. Defaults to `HEALTH_MONITOR_TICK_MS`. */
   readonly tickIntervalMs?: number
   /** Override for tests. Defaults to `HEALTH_MONITOR_GRACE_PERIOD_MS`. */
@@ -118,6 +130,7 @@ export class AddonHealthMonitor {
   private readonly logger: IScopedLogger
   private readonly retryFn: (packageName: string) => Promise<void>
   private readonly now: () => number
+  private readonly isHeldBack: (addonId: string) => boolean
   private timer: NodeJS.Timeout | null = null
   private graceEmittedFor = false
 
@@ -126,6 +139,7 @@ export class AddonHealthMonitor {
     this.logger = opts.logger
     this.retryFn = opts.retryFn
     this.now = opts.now ?? (() => Date.now())
+    this.isHeldBack = opts.isHeldBack ?? (() => false)
     this.tickIntervalMs = opts.tickIntervalMs ?? HEALTH_MONITOR_TICK_MS
     this.gracePeriodMs = opts.gracePeriodMs ?? HEALTH_MONITOR_GRACE_PERIOD_MS
     this.retryIntervalsMs = opts.retryIntervalsMs ?? HEALTH_MONITOR_RETRY_INTERVALS_MS
@@ -157,6 +171,7 @@ export class AddonHealthMonitor {
       nextRetryAt: null,
       alertEmitted: false,
       retrying: false,
+      heldBack: false,
     })
 
     if (wasAlerting) {
@@ -175,6 +190,11 @@ export class AddonHealthMonitor {
    */
   recordFailure(packageName: string, err: unknown, addonId?: string): void {
     const existing = this.state.get(packageName)
+    const id = addonId ?? existing?.addonId
+    if (id !== undefined && this.isHeldBack(id)) {
+      this.recordHeldBack(packageName, errMsg(err), id)
+      return
+    }
     const t = this.now()
     const retryCount = (existing?.retryCount ?? 0) + 1
     const intervalIdx = Math.min(retryCount - 1, this.retryIntervalsMs.length - 1)
@@ -197,6 +217,7 @@ export class AddonHealthMonitor {
       nextRetryAt,
       alertEmitted: existing?.alertEmitted ?? false,
       retrying: false,
+      heldBack: false,
     }
     this.state.set(packageName, next)
 
@@ -232,6 +253,37 @@ export class AddonHealthMonitor {
         nextRetryAt,
       })
     }
+  }
+
+  /**
+   * The spawn gate holds this addon back (its package is not yet at the version the
+   * server requires). Not a failure: the same retry backoff is armed, so the addon
+   * is reloaded once its package is current, but no failure is logged as a warning
+   * and no `AddonLoadFailed` / `AddonRetryScheduled` event is emitted. A retry that
+   * finds the gate open records success the normal way.
+   */
+  recordHeldBack(packageName: string, reason: string, addonId?: string): void {
+    const existing = this.state.get(packageName)
+    const t = this.now()
+    const retryCount = (existing?.retryCount ?? 0) + 1
+    const interval = this.retryIntervalsMs[Math.min(retryCount - 1, this.retryIntervalsMs.length - 1)]!
+    const nextRetryAt = t + interval
+    this.state.set(packageName, {
+      packageName,
+      addonId: addonId ?? existing?.addonId,
+      phase: 'failed',
+      retryCount,
+      firstFailureAt: existing?.firstFailureAt ?? t,
+      lastAttemptAt: t,
+      lastError: { message: reason },
+      nextRetryAt,
+      alertEmitted: false,
+      retrying: false,
+      heldBack: true,
+    })
+    this.logger.info('Addon held back by the stale gate, retry armed', {
+      meta: { packageName, addonId: addonId ?? existing?.addonId, retryCount, nextRetryAt, reason },
+    })
   }
 
   /**
@@ -320,7 +372,7 @@ export class AddonHealthMonitor {
     if (!this.inGracePeriod() && !this.graceEmittedFor) {
       this.graceEmittedFor = true
       for (const s of this.state.values()) {
-        if (s.phase === 'failed' && !s.alertEmitted && s.lastError) {
+        if (s.phase === 'failed' && !s.heldBack && !s.alertEmitted && s.lastError) {
           s.alertEmitted = true
           this.emit(EventCategory.AddonLoadFailed, {
             packageName: s.packageName,

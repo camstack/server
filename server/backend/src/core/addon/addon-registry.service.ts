@@ -11,7 +11,7 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import type { GroupCandidate } from '../../agent/agent-group-runner.js'
-import { recordBootHealth } from './boot-health-snapshot.js'
+import { HeldBackAddons, recordBootHealth } from './boot-health-snapshot.js'
 import { readHubStaleGateContext, spawnableAddonIds } from './hub-spawn-gate.js'
 import type { DataPlaneSink, RegisteredChild } from '@camstack/server/system'
 import {
@@ -474,7 +474,7 @@ function isDeviceScopedCapName(capName: string): boolean {
 export class AddonRegistryService {
   private readonly addonEntries = new Map<string, AddonEntry>()
   /** Addons the hub spawn gate holds back (id -> reason): neither started nor failed. */
-  private readonly heldBackAddons = new Map<string, string>()
+  private readonly heldBackAddons = new HeldBackAddons()
   private readonly capabilityRegistry: CapabilityRegistry
   /** Single router for addon-level calls (routes / custom / settings). */
   private addonCallGateway!: AddonCallGateway
@@ -650,6 +650,7 @@ export class AddonRegistryService {
       eventBus: this.eventBusService as import('@camstack/types').IEventBus,
       logger: this.loggingService.createLogger('AddonHealthMonitor'),
       retryFn: (packageName) => this.tryReloadPackage(packageName),
+      isHeldBack: (addonId) => this.heldBackAddons.has(addonId),
     })
 
     // Create capability registry with config reader for singleton preferences
@@ -1288,13 +1289,8 @@ export class AddonRegistryService {
     // recorded above from `addonLoader.listLoadFailures()`.
     recordBootHealth({
       entries: this.addonEntries.entries(),
-      heldBack: this.heldBackAddons,
+      heldBack: this.heldBackAddons.asMap(),
       monitor: this.healthMonitor,
-      logHeldBack: (addonId, reason) =>
-        this.logger.info('Addon held back by the stale gate, not recorded as an init failure', {
-          tags: { addonId },
-          meta: { reason },
-        }),
     })
 
     // Start the kernel-level retry tick (30s). Fires immediately
@@ -3910,15 +3906,16 @@ export class AddonRegistryService {
     addonIds: readonly string[],
     log: (line: string) => void,
   ): readonly string[] {
-    for (const id of addonIds) this.heldBackAddons.delete(id)
-    return spawnableAddonIds({
-      addonIds,
-      candidateOf: (id) => this.staleCandidateOf(id),
-      context: readHubStaleGateContext(),
-      infraCapabilities: new Set(INFRA_CAPABILITIES.map((c) => c.name)),
-      log,
-      onDeferred: (addonId, reason) => this.heldBackAddons.set(addonId, reason),
-    })
+    return this.heldBackAddons.track(addonIds, (onDeferred) =>
+      spawnableAddonIds({
+        addonIds,
+        candidateOf: (id) => this.staleCandidateOf(id),
+        context: readHubStaleGateContext(),
+        infraCapabilities: new Set(INFRA_CAPABILITIES.map((c) => c.name)),
+        log,
+        onDeferred,
+      }),
+    )
   }
 
   private staleCandidateOf(addonId: string): GroupCandidate | undefined {
