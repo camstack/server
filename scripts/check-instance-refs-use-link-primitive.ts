@@ -55,6 +55,10 @@ export const NOT_AN_INSTANCE_REF_SITES: ReadonlyMap<string, string> = new Map([
     'addon-terminal:terminal-camera-device.ts:instanceId',
     'the terminal session instance a terminal camera device attaches to, not an integration instance',
   ],
+  [
+    'addon-provider-reolink:email-push-bridge.ts:brokerId',
+    'an event-schema field and private plumbing of the single default mailbox, not a stored link',
+  ],
 ])
 /** A zod field (`brokerId: z.`) or a form field descriptor (`key: 'brokerId'`). */
 const REF_DECL_RE = new RegExp(
@@ -114,9 +118,10 @@ export function siteViolations(files: readonly SourceFile[]): Violation[] {
       if (key !== undefined && !NOT_AN_INSTANCE_REF.has(key)) keys.add(key)
     }
     for (const key of keys) {
-      if (NOT_AN_INSTANCE_REF_SITES.has(`${addon[1]}:${addon[2] ?? ''}:${key}`)) continue
+      const id = `${addon[1]}:${addon[2] ?? ''}:${key}`
+      if (NOT_AN_INSTANCE_REF_SITES.has(id)) continue
       out.push({
-        id: `${addon[1]}:${addon[2] ?? ''}:${key}`,
+        id,
         message: `${file.path}: '${key}' references another instance without declareLinkKind / linkField from @camstack/types`,
       })
     }

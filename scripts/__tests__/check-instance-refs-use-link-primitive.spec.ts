@@ -58,7 +58,7 @@ describe('check-instance-refs-use-link-primitive', () => {
   })
 
   it('rule 2 exempts a named non-link site, and only that file and key', () => {
-    expect(NOT_AN_INSTANCE_REF_SITES.size).toBe(3)
+    expect(NOT_AN_INSTANCE_REF_SITES.size).toBe(4)
     const body = `x = z.object({ accountId: z.string() })`
     expect(
       siteViolations([file('packages/addon-cloudflare/src/tunnel/cloudflare-actions.ts', body)]),
@@ -77,6 +77,16 @@ describe('check-instance-refs-use-link-primitive', () => {
         ),
       ]),
     ).toEqual([])
+  })
+
+  it('exempts one file+key (reolink mailbox plumbing) but the same key elsewhere still counts', () => {
+    const body = `z.object({ brokerId: z.string() })`
+    expect(
+      siteViolations([file('packages/addon-provider-reolink/src/email-push-bridge.ts', body)]),
+    ).toEqual([])
+    expect(
+      siteViolations([file('packages/addon-provider-reolink/src/other.ts', body)]).map((v) => v.id),
+    ).toEqual(['addon-provider-reolink:other.ts:brokerId'])
   })
 
   it('rule 3: the baseline shrinks only — a new site is fresh, an entry without a site is stale', () => {
