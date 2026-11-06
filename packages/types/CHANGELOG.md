@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Customize cardinalities, event shapes, apply authorities and stored link kinds are now one exported list each
+- integration-instances kinds now name the function they serve (functionCap, role, canTest) and one provider can compose several record kinds
+- The broker capability is now the message bus only (publish, subscribe, unsubscribe, getState, getBrokerConfig, getStatus); brokers are listed, created, edited, tested and removed as instances of their addon's integration-instances provider
+- A broker listed through another addon's rows can be checked for users with fieldUserFinder
+- A broker-backed service now binds to its broker through one shared primitive (broker link kind, form and users query); removing a broker still in use is refused with a typed error naming its users
+- The integration role `both` is removed; an addon with a connection and device integrations declares the connection as a broker and its integration as `devices`
+
 - pipelineAnalytics.getMediaLocationCensus: stored media rows and bytes per storage location, answered from indexes
 - A stable, append-only migration API (MigrationApiV1) that addon migrations call, so an old migration keeps running after a version-jump upgrade
 - Migrations: ctx.migrationApi, a stable append-only migration API (V1), and runMigrations(catalogue, bindPorts)
@@ -20,7 +27,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Customize cardinalities, event shapes, apply authorities and stored link kinds are now one exported list each
 - Add-Device asks the provider per integration: a Reolink Home Hub / NVR integration no longer offers a manual add by IP
 
 ## [1.2.506] - 2026-11-05
@@ -33,12 +39,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Vendor login proxy: drop Subresource Integrity pins from proxied pages so rewritten scripts and styles are not refused
 
-- Customize cardinalities, event shapes, apply authorities and stored link kinds are now one exported list each
-- integration-instances kinds now name the function they serve (functionCap, role, canTest) and one provider can compose several record kinds
-- The broker capability is now the message bus only (publish, subscribe, unsubscribe, getState, getBrokerConfig, getStatus); brokers are listed, created, edited, tested and removed as instances of their addon's integration-instances provider
-- A broker listed through another addon's rows can be checked for users with fieldUserFinder
-- A broker-backed service now binds to its broker through one shared primitive (broker link kind, form and users query); removing a broker still in use is refused with a typed error naming its users
-- The integration role `both` is removed; an addon with a connection and device integrations declares the connection as a broker and its integration as `devices`
 
 ## [1.2.505] - 2026-11-05
 

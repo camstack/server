@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The Customize tab shows every extension slot a device hosts from the slot table, not from a camera check
+- The Add device modal of an integration that adopts devices and can also scan the network now keeps its full adopt list and adds the network scan above it; a board found by both is listed once, and the modal waits for the scan answer before drawing either.
+- Creating a broker from a picker or the wizard uses the same instance dialog as the function page
+- Broker pickers (Matter commissioning, notification targets, broker create) offer only brokers that are on, configured and working, and keep the chosen one visible with its state.
+
 - Update all nodes now updates the hub first and waits for it to run the new version before touching agents; if the hub step fails the agents are listed as not attempted.
 - The Update all nodes hint now says the hub is updated first, then the agents.
 
@@ -16,9 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- The Customize tab shows every extension slot a device hosts from the slot table, not from a camera check
 - Add device hides the Enter parameters tab when the provider refuses manual creation for that integration
-- The Add device modal of an integration that adopts devices and can also scan the network now keeps its full adopt list and adds the network scan above it; a board found by both is listed once, and the modal waits for the scan answer before drawing either.
 
 ## [1.2.593] - 2026-11-05
 
@@ -27,9 +30,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The integration page has one Add device button: boards and devices found on the network, a scan scoped to the integration and the manual form live in one modal.
 - Deleting a device in the Devices and integration tables shows a Removing… row until the removal has completed, and reports a failure with a toast
 
-- The Customize tab shows every extension slot a device hosts from the slot table, not from a camera check
-- Creating a broker from a picker or the wizard uses the same instance dialog as the function page
-- Broker pickers (Matter commissioning, notification targets, broker create) offer only brokers that are on, configured and working, and keep the chosen one visible with its state.
 
 ## [1.2.592] - 2026-11-05
 
