@@ -1,6 +1,6 @@
 /**
  * The export targets as `integration-instances`: ids are minted, the form carries the connection
- * as a `broker-select` of the Home Assistant kind, and a target without an existing connection is
+ * as an `instance-select` of the Home Assistant kind (D1013 link), and a target without an existing connection is
  * UNCONFIGURED, not removed. Disarm: drop `mintId` from the hooks and "mints hae_001" fails;
  * make `configured` answer true for an empty connection and "unconfigured" fails; have
  * `deleteInstance` skip `onChanged` and "reloads" fails.
@@ -114,12 +114,13 @@ describe('export target instances', () => {
 })
 
 describe('the target form', () => {
-  it('picks the Home Assistant connection with a broker-select and keeps the cadence in Advanced', () => {
+  it('picks the Home Assistant connection with an instance-select and keeps the cadence in Advanced', () => {
     const form = buildTargetForm()
     const fields = form.sections.flatMap((section) => section.fields)
     expect(fields.find((f) => 'key' in f && f.key === 'connectionId')).toMatchObject({
-      type: 'broker-select',
-      brokerKind: 'home-assistant',
+      type: 'instance-select',
+      functionCap: 'broker',
+      kind: 'home-assistant',
     })
     expect(fields.map((f) => ('key' in f ? f.key : null))).toEqual([
       'name',
@@ -137,5 +138,39 @@ describe('the target form', () => {
     ])
     const role = fields.find((f) => 'key' in f && f.key === 'mediaRole')
     expect(role?.type === 'select' ? role.default : null).toBe('publicEndpoint')
+  })
+})
+
+describe('the connection link (D1013)', () => {
+  it('declares connectionId as a link to a Home Assistant broker, for the hub delete guard', async () => {
+    const { provider } = await harness()
+    expect((await provider.describe()).links).toEqual([
+      {
+        kind: 'ha-export-targets',
+        field: 'connectionId',
+        to: { cap: 'broker', kind: 'home-assistant' },
+      },
+    ])
+  })
+
+  it('keeps a target shaped like the live hae_001: link intact, marked field survives, configured', async () => {
+    const { handle, provider } = await harness(['ha_001'])
+    await handle.put({
+      id: 'hae_001',
+      data: {
+        name: 'Home',
+        connectionId: 'ha_001',
+        mediaRole: 'internal',
+        reconcileIntervalSec: 120,
+        devices: ['cam-1', 'cam-2'],
+        enabled: true,
+      },
+    })
+    const view = await provider.getInstance({ id: 'hae_001' })
+    expect(view).toMatchObject({
+      configured: true,
+      formValues: { connectionId: 'ha_001', mediaRole: 'internal', reconcileIntervalSec: 120 },
+    })
+    expect((await handle.get('hae_001'))?.data.devices).toEqual(['cam-1', 'cam-2'])
   })
 })

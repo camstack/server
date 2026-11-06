@@ -4,8 +4,8 @@
  * re-announces. The devices exported to it are not a form field: they are chosen per device or
  * in the Devices dialog of the target.
  */
-import type { ConfigUISchema } from '@camstack/types'
-import { MIN_RECONCILE_INTERVAL_SEC } from './target-records.js'
+import { type ConfigUISchema, linkFieldDescriptor } from '@camstack/types'
+import { HA_CONNECTION_LINK, MIN_RECONCILE_INTERVAL_SEC } from './target-records.js'
 
 const NS = 'provider-homeassistant:globalSettings'
 
@@ -28,13 +28,12 @@ export function buildTargetForm(): ConfigUISchema {
             labelKey: `${NS}.s_ha-export-target.name.label`,
           },
           {
-            type: 'broker-select',
-            key: 'connectionId',
-            label: 'Home Assistant connection',
+            ...linkFieldDescriptor('connectionId', HA_CONNECTION_LINK, {
+              label: 'Home Assistant connection',
+              description: 'The Home Assistant instance this target pushes to.',
+            }),
             labelKey: `${NS}.s_ha-export-target.connectionId.label`,
-            description: 'The Home Assistant instance this target pushes to.',
             descriptionKey: `${NS}.s_ha-export-target.connectionId.description`,
-            brokerKind: 'home-assistant',
           },
           {
             type: 'select',

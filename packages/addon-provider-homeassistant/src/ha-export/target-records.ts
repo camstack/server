@@ -11,10 +11,19 @@
  * `patch` (a merge), so neither overwrites the other, and the in-memory copy here is the
  * synchronous read the event path needs, reloaded after every change.
  */
-import { type DefinedRecordKind, defineEntryKind, type RecordKindHandle } from '@camstack/types'
+import {
+  type DefinedRecordKind,
+  defineEntryKind,
+  linkField,
+  type LinkTarget,
+  type RecordKindHandle,
+} from '@camstack/types'
 import { z } from 'zod'
 import { HA_MEDIA_ROLES, type HaMediaRole } from './media-url.js'
 import type { ExportMembership } from './membership.js'
+
+/** What `connectionId` links to: a Home Assistant connection, a `broker` instance of the `home-assistant` kind. */
+export const HA_CONNECTION_LINK: LinkTarget = { cap: 'broker', kind: 'home-assistant' }
 
 export const HA_EXPORT_TARGETS_KIND_NAME = 'ha-export-targets'
 export const HA_TARGET_KIND = 'ha-target'
@@ -37,7 +46,8 @@ export type HaExportTargetBody = {
 /** The schema is checked against the interface by its annotation: a drifted field fails the typecheck. */
 export const HaExportTargetBodySchema: z.ZodType<HaExportTargetBody> = z.object({
   name: z.string().min(1),
-  connectionId: z.string(),
+  // A link (D1013); '' stays valid: a target not yet pointed at a connection is unconfigured.
+  connectionId: linkField(HA_CONNECTION_LINK),
   mediaRole: z.enum(HA_MEDIA_ROLES),
   reconcileIntervalSec: z.number(),
   devices: z.array(z.string()),

@@ -10,12 +10,9 @@
     "addon-provider-homeassistant:ha-broker-registry.ts:calendarIds",
     "addon-provider-homeassistant:ha-broker-settings-schema.ts:calendarIds",
     "addon-provider-homeassistant:ha-device-source.ts:brokerId",
-    "addon-provider-homeassistant:ha-export/target-form.ts:connectionId",
-    "addon-provider-homeassistant:ha-export/target-records.ts:connectionId",
     "addon-provider-homeassistant:ha-notification-output.ts:brokerId",
     "addon-provider-reolink:email-push-bridge.ts:brokerId",
     "broker-select:packages/addon-import-alexa/src/speak/provider.ts",
-    "broker-select:packages/addon-provider-homeassistant/src/ha-export/target-form.ts",
     "broker-select:packages/addon-provider-homeassistant/src/ha-notification-output.ts",
     "broker-select:packages/types/src/addon/broker-link.ts",
     "broker-select:packages/types/src/interfaces/config-ui.ts"
