@@ -10,9 +10,6 @@
     },
     "google": {
     },
-    "waste": {
-      "packages/addon-waste-collections/src/waste-collections.addon.ts:replaceAll-config": "seeds the source store from config.sources on boot beside the source records; P6e folds it into a migration"
-    },
     "llm": {},
     "notifiers": {
       "packages/addon-notifiers/src/target-store.ts:TARGETS_COLLECTION": "legacy settings-store collection of notification targets, kept for the adoption mapper; P6a drops it with the targets migration",

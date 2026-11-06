@@ -109,7 +109,7 @@ this column exists to stop.
 | `terminal` | `@camstack/addon-terminal` | system | own runner | `any-node` | — | unique | `terminal-session` |
 | `training` | `@camstack/addon-training` | system | own runner | `hub-only` | — | — | `addon-pages-source` `training` |
 | `training-modal` | `@camstack/addon-training` | system | own runner | `hub-only` | — | — | `integration-instances` `training-provider` |
-| `waste-collections` | `@camstack/addon-waste-collections` | messaging | own runner | `hub-only` | `integrations` | — | `calendar-source` |
+| `waste-collections` | `@camstack/addon-waste-collections` | messaging | own runner | `hub-only` | `integrations` | — | `calendar-source` `integration-instances` |
 | `webdav-storage` | `@camstack/addon-remote-storage` | system | own runner | `any-node` | `remote-storage` | unique | `storage-provider` |
 | `winston-logging` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `log-destination` |
 

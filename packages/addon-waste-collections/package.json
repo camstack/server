@@ -45,6 +45,9 @@
         "capabilities": [
           {
             "name": "calendar-source"
+          },
+          {
+            "name": "integration-instances"
           }
         ],
         "python": {

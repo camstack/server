@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Waste collection sources are now instances: add, edit, switch, test and delete them through the instances API (country, then service); credentials live in the keychain, and sources kept in the old settings are copied over once at startup
+
 ## [0.1.33] - 2026-11-01
 
 ### Changed

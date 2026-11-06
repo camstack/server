@@ -11,6 +11,22 @@ import {
   type WasteFetchResult,
 } from './waste-types.js'
 
+/** The fetch did not finish in time: nothing is known about the source. */
+export class WasteFetchTimeoutError extends Error {
+  constructor(timeoutMs: number, source: string) {
+    super(`waste fetch timed out after ${timeoutMs}ms (${source})`)
+    this.name = 'WasteFetchTimeoutError'
+  }
+}
+
+/** The provider ran and answered that it cannot serve these arguments (`{ ok: false }`). */
+export class WasteProviderRejectedError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'WasteProviderRejectedError'
+  }
+}
+
 export interface FetchSourceDeps {
   readonly pythonPath: string
   /** Absolute path to `python/fetch_source.py`. */
@@ -48,7 +64,7 @@ export async function fetchWasteSource(
     let stderr = ''
     const timer = setTimeout(() => {
       child.kill('SIGKILL')
-      reject(new Error(`waste fetch timed out after ${timeoutMs}ms (${input.source})`))
+      reject(new WasteFetchTimeoutError(timeoutMs, input.source))
     }, timeoutMs)
 
     child.stdout.on('data', (chunk: Buffer) => {
@@ -90,7 +106,7 @@ export async function fetchWasteSource(
       }
       if (!checked.data.ok) {
         const detail = stderr.trim() ? ` — ${stderr.trim().slice(0, 500)}` : ''
-        reject(new Error(`${checked.data.error}${detail}`))
+        reject(new WasteProviderRejectedError(`${checked.data.error}${detail}`))
         return
       }
       if (code !== 0) {

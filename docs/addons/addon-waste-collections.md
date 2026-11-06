@@ -23,11 +23,16 @@ source becomes one `calendar-source` calendar (all-day events). See [D827](../de
 ## Operator setup
 
 1. Install / deploy the addon on the hub (needs embedded Python).
-2. Connectivity → Calendars → waste-collections → **Settings**: Add source.
-   Pick **Country** → **Service** (e.g. Germany → AWA/ZEW); the form shows
-   only that service’s fields (`ort`, `strasse`, …). Storage is still
-   `module` + `argsJson` under the hood. CRUD via custom actions
-   (`listCountries` / `listServices` / `serviceFormSchema` / `createSource`…).
+2. Each source is an `integration-instances` instance of kind `waste-source`
+   (function cap `calendar-source`), one `waste-source` record each. Add one
+   by picking a **Country**, then a **Service** (the create form shows that
+   country's services); the edit form is the fields of that service
+   (`ort`, `strasse`, …). A credential argument (`password`, `api_key`,
+   `token`, …) is a keychain marker bound to the row (D880). **Test** runs one
+   fetch: `validated` with collections, `rejected` when the provider refuses
+   the arguments, `inconclusive` for a timeout, a missing Python or an empty
+   answer. The old custom actions (`listSources` / `createSource` / …) still
+   answer until the admin page moves to the instances table.
 3. **Fetch now** (same Settings Refresh section) or wait for the daily refresh.
 4. Open System → Calendars — events appear under
    `waste-collections:<id>`.
@@ -48,4 +53,7 @@ source becomes one `calendar-source` calendar (all-day events). See [D827](../de
 - Missing Python → empty calendars + warn; do not crash-loop.
 - A failed fetch keeps the prior cache for that source and logs the error
   (never silent `[]` from the bridge on failure).
-- `argsJson` must be a JSON **object**; arrays/scalars throw on fetch.
+- Sources kept in the old `sources` setting (typed `args`, or a free `argsJson`
+  object string) are copied into records once at startup by the migration
+  `waste-collections/2026-11-06-sources-from-settings-and-argsjson` (D987); an
+  existing record is never overwritten and the setting itself is left in place.

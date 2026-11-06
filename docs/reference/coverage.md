@@ -14,11 +14,11 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**239 units · 8156 source files · 233 units claimed by at least one document (8126 files).**
+**240 units · 8159 source files · 234 units claimed by at least one document (8129 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
-| `packages/addon-waste-collections` | 1029 | — | `addons/addon-waste-collections.md` _(covers)_, `decisions/adr-0827-waste-schedules-use-vendored-hacs-python-core-full-catalog.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-10-18 |
+| `packages/addon-waste-collections` | 1030 | — | `addons/addon-waste-collections.md` _(covers)_, `decisions/adr-0827-waste-schedules-use-vendored-hacs-python-core-full-catalog.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-10-18 |
 | `packages/addon-admin-ui/src/components` | 631 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +83 more, 4 ADRs | 2026-11-02 |
 | `scripts` | 518 | `tooling` | `architecture/benchmark.md` _(covers)_, `architecture/notifications.md`, `architecture/capabilities.md`, +144 more, 14 ADRs | 2026-11-02 |
 | `packages/addon-post-analysis/src/pipeline-analytics` | 473 | `post-analysis`, `recognition` | `architecture/post-analysis.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +171 more, 27 ADRs | 2026-10-14 |
@@ -209,6 +209,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-pipeline-orchestrator/src/camera-status` | 2 | `pipeline-orchestration` | `decisions/adr-0758-a-camera-status-block-carries-only-counters-something-feeds.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0322-a-poll-asks-each-question-once-and-a-batch-answers-for-every-id.md`, 1 ADR | — |
 | `packages/addon-pipeline-orchestrator/src/durable` | 2 | `pipeline-orchestration` | `decisions/adr-1013-one-instance-model.md`, `design/2026-08-13-durable-value-tracking-and-runtime-state.md`, `design/durable-store-convergence.md`, 2 ADRs | 2026-10-03 |
 | `packages/addon-pipeline-orchestrator/src/load-balancing` | 2 | — | `architecture/inference-devices.md`, `decisions/adr-0750-shares-are-automatic-by-default-held-by-placement-and-respected-by-failover.md`, `decisions/adr-0755-shares-and-auto-tune-are-sized-by-capacity-never-by-load.md`, +2 more, 1 ADR | 2026-10-23 |
+| `packages/addon-waste-collections/src/migrations` | 2 | — | `addons/addon-waste-collections.md` _(covers)_, `decisions/adr-0827-waste-schedules-use-vendored-hacs-python-core-full-catalog.md`, `decisions/adr-1013-one-instance-model.md` | — |
 | `packages/cli/src/discovery` | 2 | `tooling` | `decisions/adr-0838-clients-find-a-hub-over-mdns-of-its-https-endpoint-mesh-discovery-stays-retired.md` | — |
 | `packages/system/src/events` | 2 | `api-surface` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md` | — |
 | `packages/system/src/i18n` | 2 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0863-settings-texts-and-user-facing-errors-are-translated-by-the-hub-from-catalogs-the-english-text-always-travels-beside-the-key.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md` | — |

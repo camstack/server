@@ -5,7 +5,10 @@
 import {
   BaseAddon,
   calendarSourceCapability,
+  defineAddonMigrations,
+  integrationInstancesCapability,
   type AddonInitResult,
+  type InstanceChange,
   type ICalendarSourceProvider,
   type ProviderRegistration,
   type RawSecretMigrationReport,
@@ -15,6 +18,7 @@ import { join } from 'node:path'
 import { wasteCollectionsActions } from './custom-actions.js'
 import { fetchWasteSource } from './fetch-source.js'
 import { resolveFetchScript } from './python-paths.js'
+import { ADDON_MIGRATIONS } from './migrations/index.js'
 import { createWasteCalendarSource } from './waste-calendar-source.js'
 import {
   findCatalogService,
@@ -43,6 +47,7 @@ import {
   type WasteSourceConfig,
 } from './waste-types.js'
 import { wasteSourceEntryKind } from './waste-source-record-kinds.js'
+import { WasteSourceInstances } from './waste-source-instances.js'
 import { WasteSourceStore } from './waste-source-store.js'
 
 export { wasteCollectionsActions as customActions } from './custom-actions.js'
@@ -79,12 +84,17 @@ export class WasteCollectionsAddon extends BaseAddon<WasteConfig> {
       throw new Error('waste-collections: ctx.records is required (hub-only addon)')
     }
     await records.declare({ 'waste-source': wasteSourceEntryKind })
-    this.sourceStore = WasteSourceStore.of(records)
-    this.activeSources = await this.loadPersistedSources()
-    if ((await this.sourceStore.listResolved()).length === 0 && this.config.sources.length > 0) {
-      await this.sourceStore.replaceAll(this.parseConfigSources(this.config.sources))
-      this.activeSources = await this.loadPersistedSources()
-    }
+    const store = WasteSourceStore.of(records)
+    this.sourceStore = store
+    await this.migrateLegacySources(store)
+    this.activeSources = await store.listResolved()
+    const instances = new WasteSourceInstances(records, {
+      onChanged: (id, change) => this.onInstanceChanged(id, change),
+      fetchDeps: () =>
+        this.pythonPath === null
+          ? null
+          : { pythonPath: this.pythonPath, scriptPath: this.scriptPath },
+    })
 
     try {
       this.pythonPath = await this.ctx.deps.ensurePython()
@@ -128,7 +138,13 @@ export class WasteCollectionsAddon extends BaseAddon<WasteConfig> {
     })
 
     return {
-      providers: [{ capability: calendarSourceCapability, provider }],
+      providers: [
+        { capability: calendarSourceCapability, provider },
+        {
+          capability: integrationInstancesCapability,
+          provider: instances.toProvider(),
+        },
+      ],
       customActions: wasteCollectionsActions,
       actionHandlers: {
         fetchNow: async (input) => this.fetchNow(input),
@@ -155,6 +171,18 @@ export class WasteCollectionsAddon extends BaseAddon<WasteConfig> {
   }
 
   protected override async onConfigChanged(): Promise<void> {
+    await this.reloadSources('config-changed')
+  }
+
+  /** An instance was created, edited, switched or deleted: re-read the records and refresh. */
+  private async onInstanceChanged(id: string, change: InstanceChange): Promise<void> {
+    this.ctx.logger.info('waste source instance changed', {
+      meta: { sourceId: id, change },
+    })
+    await this.reloadSources(`instance-${change}`)
+  }
+
+  private async reloadSources(reason: string): Promise<void> {
     this.activeSources = await this.loadPersistedSources()
     // Drop cache rows for removed sources; refresh newly enabled ones.
     const ids = new Set(this.configuredSources().map((s) => s.id))
@@ -162,7 +190,31 @@ export class WasteCollectionsAddon extends BaseAddon<WasteConfig> {
       if (!ids.has(key)) this.cache.delete(key)
     }
     this.persistCache()
-    void this.refreshAll('config-changed')
+    void this.refreshAll(reason)
+  }
+
+  /**
+   * The sources a pre-record install kept in the settings become records (D987). A step that
+   * fails leaves the settings where they are and is logged by id: the sources stay unavailable
+   * until it lands, never half-copied.
+   */
+  private async migrateLegacySources(store: WasteSourceStore): Promise<void> {
+    const report = await this.runMigrations(
+      defineAddonMigrations(ADDON_MIGRATIONS, {
+        readStored: (key) => this.readStoredGlobalKey(key),
+        listSourceIds: () => store.listIds(),
+        putSource: async (source) => {
+          await store.putIfAbsent(source)
+        },
+        readSource: (id) => store.readResolved(id),
+      }),
+    )
+    if (report.failed.length > 0) {
+      this.ctx.logger.error(
+        'waste-collections: legacy sources were NOT copied into records - they stay unavailable until the migration lands',
+        { meta: { failed: report.failed } },
+      )
+    }
   }
 
   // ── Custom actions ────────────────────────────────────────────────
@@ -192,11 +244,10 @@ export class WasteCollectionsAddon extends BaseAddon<WasteConfig> {
   }
 
   private async loadPersistedSources(): Promise<readonly WasteSourceConfig[]> {
+    // Records are the truth once the store exists: an emptied store is empty, never a reason to
+    // read the legacy settings back (they would resurrect what the operator deleted).
     const store = this.sourceStore
-    if (store !== null) {
-      const fromRecords = await store.listResolved()
-      if (fromRecords.length > 0) return fromRecords
-    }
+    if (store !== null) return store.listResolved()
     return this.parseConfigSources(this.config.sources)
   }
 
@@ -211,7 +262,7 @@ export class WasteCollectionsAddon extends BaseAddon<WasteConfig> {
   }
 
   configuredSources(): readonly WasteSourceConfig[] {
-    if (this.activeSources.length > 0) return this.activeSources
+    if (this.activeSources.length > 0 || this.sourceStore !== null) return this.activeSources
     return this.parseConfigSources(this.config.sources)
   }
 
@@ -516,7 +567,11 @@ export class WasteCollectionsAddon extends BaseAddon<WasteConfig> {
         const entries = await this.fetchOne(s)
         this.cache.set(s.id, entries)
         this.ctx.logger.info('waste source refreshed', {
-          meta: { sourceId: s.id, module: s.module, entryCount: entries.length },
+          meta: {
+            sourceId: s.id,
+            module: s.module,
+            entryCount: entries.length,
+          },
         })
       } catch (err) {
         this.ctx.logger.warn('waste source refresh failed — keeping prior cache', {
