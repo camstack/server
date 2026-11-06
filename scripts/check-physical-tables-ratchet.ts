@@ -60,7 +60,6 @@ export const ALLOWED_TABLES: readonly string[] = [
   'pipeline-analytics:tracks',
   'records',
   'scoped_tokens',
-  'storage_drain_state',
   'system-settings',
   'user_external_identities',
   'user_totp',

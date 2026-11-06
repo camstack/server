@@ -10,17 +10,20 @@ import {
   planDropSharedCalendarIds,
 } from './calendar-ids-to-brokers.js'
 import { planDropConfigBrokersAndLegacyOauth } from './drop-config-brokers-and-legacy-oauth.js'
+import { copyLegacyBrokersToRecords, type LegacyBrokerPorts } from './legacy-brokers-to-records.js'
 
 export type { CalendarIdsPorts } from './calendar-ids-to-brokers.js'
 
 export const CALENDAR_IDS_TO_RECORDS_ID =
   'google-services/2026-11-07-calendar-ids-to-calendar-records'
 
+export const LEGACY_BROKERS_TO_RECORDS_ID = 'google-services/2026-11-06-legacy-brokers-to-records'
+
 export const DROP_CONFIG_BROKERS_AND_LEGACY_OAUTH_ID =
   'google-services/2026-11-06-drop-config-brokers-and-legacy-oauth'
 
 /** What the catalogue's migrations read and write through. */
-export type GoogleMigrationPorts = CalendarIdsPorts & CalendarRecordPorts
+export type GoogleMigrationPorts = CalendarIdsPorts & CalendarRecordPorts & LegacyBrokerPorts
 
 /** The `google-services` catalogue (D987): offered to the engine when the addon initialises. */
 export const ADDON_MIGRATIONS: readonly AddonMigration<GoogleMigrationPorts>[] = [
@@ -83,11 +86,28 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<GoogleMigrationPorts>[] =
   },
   {
     meta: {
-      id: DROP_CONFIG_BROKERS_AND_LEGACY_OAUTH_ID,
+      id: LEGACY_BROKERS_TO_RECORDS_ID,
       owner: 'google-services',
       level: 'addon-state',
       seq: 4,
       dependsOn: [CALENDAR_IDS_TO_RECORDS_ID],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'tolerate',
+      bodyKind: 'procedure',
+      description:
+        'Copy the addon-level brokers setting or the flat singleton client, and the legacy oauth token, into broker records and oauthAccounts, each read back',
+      fixtureMark: 'the client secret of a flat singleton, read back from its record',
+    },
+    procedure: copyLegacyBrokersToRecords,
+  },
+  {
+    meta: {
+      id: DROP_CONFIG_BROKERS_AND_LEGACY_OAUTH_ID,
+      owner: 'google-services',
+      level: 'addon-state',
+      seq: 5,
+      dependsOn: [LEGACY_BROKERS_TO_RECORDS_ID],
       store: 'settings',
       scope: 'cluster',
       onFailure: 'tolerate',

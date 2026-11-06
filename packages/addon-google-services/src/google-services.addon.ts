@@ -77,6 +77,10 @@ import {
 } from './google-calendar-instances.js'
 import { buildGoogleInstances, googleAccountKind } from './google-instances.js'
 import { ADDON_MIGRATIONS, type GoogleMigrationPorts } from './migrations/index.js'
+import {
+  type LegacyBrokerPorts,
+  leftoverLegacyKeys,
+} from './migrations/legacy-brokers-to-records.js'
 import { calendarIdsPortsOver, calendarRecordPortsOver } from './migrations/ports.js'
 import { GoogleBrokerStore } from './google-broker-store.js'
 import type { GoogleBrokerEntry } from './google-types.js'
@@ -122,7 +126,6 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
     this.oauthAccountsHandle = this.state('oauthAccounts', GoogleOauthAccountsStateSchema, {
       accounts: [],
     })
-    const oauthAccounts = await this.oauthAccountsHandle.get()
 
     const records = this.ctx.records
     if (records === undefined) {
@@ -139,6 +142,7 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
     await this.migrateCalendarIds(records)
     await this.refreshCalendarSelection()
 
+    const oauthAccounts = await this.oauthAccountsHandle.get()
     this.registry.seedFrom(this.activeBrokers, oauthAccounts.accounts)
     await this.refreshPublicOrigin()
 
@@ -629,9 +633,52 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
         calendars: records.kind(googleCalendarsEntryKind),
         warn: (message) => this.ctx.logger.warn(message),
       }),
+      ...this.legacyBrokerPorts(),
     }
     const report = await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, ports))
     if (report.applied.length > 0) this.activeBrokers = await this.loadPersistedBrokers()
+    if (this.activeBrokers.length === 0) {
+      const left = await leftoverLegacyKeys(ports)
+      if (left.length > 0) {
+        this.ctx.logger.error(
+          'google-services: legacy account data was NOT copied into broker records — Google stays unavailable until it is',
+          { meta: { leftoverKeys: left, failed: report.failed } },
+        )
+      }
+    }
+  }
+
+  /** The legacy-broker migration's writes: a broker record and an `oauthAccounts` entry, each read back. */
+  private legacyBrokerPorts(): LegacyBrokerPorts {
+    return {
+      putBroker: async (entry) => {
+        const store = this.brokerStore
+        if (store === null) throw new Error('google-services: the brokers store is not ready')
+        await store.putOne(entry)
+      },
+      readBroker: async (id) => {
+        const store = this.brokerStore
+        if (store === null) throw new Error('google-services: the brokers store is not ready')
+        const found = (await store.listResolved()).find((b) => b.id === id)
+        return found === undefined ? null : found
+      },
+      listOauthAccountIds: async () => {
+        const handle = this.oauthAccountsHandle
+        if (handle === null) return []
+        return (await handle.get()).accounts.map((a) => a.id)
+      },
+      putOauthAccount: async (account) => {
+        const handle = this.oauthAccountsHandle
+        if (handle === null) throw new Error('google-services: oauthAccounts is not ready')
+        const current = await handle.get()
+        await handle.set({ accounts: [...current.accounts, account] })
+      },
+      readOauthAccount: async (id) => {
+        const handle = this.oauthAccountsHandle
+        if (handle === null) return null
+        return (await handle.get()).accounts.find((a) => a.id === id) ?? null
+      },
+    }
   }
 
   private async loadPersistedBrokers(): Promise<readonly GoogleBrokerEntry[]> {

@@ -108,20 +108,7 @@ function makeInMemoryEngine(): ISettingsStoreProvider {
 }
 
 describe('storage-orchestrator — records path', () => {
-  it('does not declare legacy storage_locations or storage_drain_state', async () => {
-    const declared: string[] = []
-    const legacy = {
-      declareCollection: async ({ collection }: { collection: string }) => {
-        declared.push(collection)
-      },
-      query: async () => [],
-      insert: async () => {},
-      deleteWhere: async () => {},
-      set: async () => {},
-      get: async () => null,
-      update: async () => {},
-      delete: async () => {},
-    }
+  it('round-trips locations and drain state through records', async () => {
     const world = makeRecordsWorld()
     await world.provider.init()
     const records = createRecordsAccess({
@@ -134,10 +121,7 @@ describe('storage-orchestrator — records path', () => {
       SqliteLocationStore.recordStoresOf(records),
       SqliteLocationStore.seedMarkersOf(records),
     )
-    const drain = new SqliteDrainStateStore(
-      legacy as unknown as ISettingsStoreProvider,
-      SqliteDrainStateStore.recordStoresOf(records),
-    )
+    const drain = new SqliteDrainStateStore(SqliteDrainStateStore.recordStoresOf(records))
     await locations.upsert({
       id: 'recordings:default',
       type: 'recordings',
@@ -158,7 +142,6 @@ describe('storage-orchestrator — records path', () => {
       observedGrowthBytes: 0,
       observedElapsedMs: 0,
     })
-    expect(declared).toEqual([])
     expect((await locations.loadAll())[0]?.id).toBe('recordings:default')
     expect((await drain.load())[0]?.locationId).toBe('recordings:default')
   })
@@ -194,16 +177,6 @@ describe('storage-orchestrator — records path', () => {
   })
 
   it('throws when records-path save body fails schema validation', async () => {
-    const legacy = {
-      declareCollection: async () => {},
-      query: async () => [],
-      insert: async () => {},
-      deleteWhere: async () => {},
-      set: async () => {},
-      get: async () => null,
-      update: async () => {},
-      delete: async () => {},
-    }
     const world = makeRecordsWorld()
     await world.provider.init()
     const records = createRecordsAccess({
@@ -213,7 +186,7 @@ describe('storage-orchestrator — records path', () => {
     })
     await records.declare(storageOrchestratorRecordKinds)
     const drainKind = SqliteDrainStateStore.recordStoresOf(records)
-    const drain = new SqliteDrainStateStore(legacy as unknown as ISettingsStoreProvider, drainKind)
+    const drain = new SqliteDrainStateStore(drainKind)
     const putSpy = vi.spyOn(drainKind, 'put')
     const badState = {
       locationId: 'recordings:default',

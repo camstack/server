@@ -1110,11 +1110,8 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
    *  late-wiring window as the location table — on an agent it is never. */
   private resolveDrainStore(): SqliteDrainStateStore | null {
     if (this.drainStore) return this.drainStore
-    const engine = this.ctx.kernel.capabilityRegistry?.getCollection<ISettingsStoreProvider>(
-      DATA_STORE_PROVIDER_CAP_NAME,
-    )[0]
-    if (!engine) return null
-    this.drainStore = new SqliteDrainStateStore(engine, this.drainStateKind)
+    if (this.drainStateKind === null) return null
+    this.drainStore = new SqliteDrainStateStore(this.drainStateKind)
     return this.drainStore
   }
 

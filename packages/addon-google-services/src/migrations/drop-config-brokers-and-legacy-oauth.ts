@@ -20,6 +20,8 @@ import {
 
 export const BROKERS_KEY = 'brokers'
 export const LEGACY_OAUTH_KEY = 'oauth'
+/** The flat singleton client the boot migration used to clear. */
+const FLAT_KEYS = ['clientId', 'clientSecret', 'calendarFilter', 'fromAddress', 'fromName']
 const OAUTH_ACCOUNTS_KEY = 'oauthAccounts'
 
 function present(answer: StoredKeyRead, key: string): { readonly value: unknown } | null {
@@ -58,6 +60,11 @@ export async function planDropConfigBrokersAndLegacyOauth(
   if (brokers !== null) {
     const listed = Array.isArray(brokers.value) && brokers.value.length > 0
     if (!listed || (await ports.listBrokers()).length > 0) take(BROKERS_KEY, brokers.value)
+  }
+
+  for (const key of FLAT_KEYS) {
+    const flat = present(await ports.readStored(key), key)
+    if (flat !== null && (await ports.listBrokers()).length > 0) take(key, flat.value)
   }
 
   const oauth = present(await ports.readStored(LEGACY_OAUTH_KEY), LEGACY_OAUTH_KEY)

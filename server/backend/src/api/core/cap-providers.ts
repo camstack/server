@@ -995,9 +995,14 @@ interface IntegrationWithProcessState extends Integration {
   readonly processState: string
 }
 
-function requireIntegrationRegistry(ar: AddonRegistryService): IIntegrationRegistry {
+export function requireIntegrationRegistry(ar: AddonRegistryService): IIntegrationRegistry {
   const reg = ar.getIntegrationRegistry()
-  if (!reg) throw new Error('IntegrationRegistry not available')
+  if (!reg) {
+    const reason = ar.getIntegrationRegistryUnavailableReason()
+    throw new Error(
+      `IntegrationRegistry not available: ${reason ?? 'its records are still being wired'}`,
+    )
+  }
   return reg
 }
 
@@ -1039,7 +1044,8 @@ async function findBrokerOwner(
     const candidate = getInstancesProvider(ar, candidateId)
     if (candidate === null || candidate.testInstance === undefined) continue
     const rows = await candidate.listInstances()
-    if (rows.some((row) => row.id === brokerId)) return { addonId: candidateId, provider: candidate }
+    if (rows.some((row) => row.id === brokerId))
+      return { addonId: candidateId, provider: candidate }
   }
   return null
 }

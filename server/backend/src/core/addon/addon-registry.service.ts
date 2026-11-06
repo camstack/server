@@ -585,6 +585,8 @@ export class AddonRegistryService {
   private activeStorageProvider: INewStorageProvider | null = null
   private activeSettingsBackend: ISettingsBackend | null = null
   private integrationRegistry: import('@camstack/server/system').IntegrationRegistry | null = null
+  /** Why the integration registry is unset (records wiring failed or the records cap is absent). */
+  private integrationRegistryUnavailable: string | null = null
   private clusterNodeHistoryStore: ClusterNodeHistoryStore | null = null
   private nodeTombstoneStore: NodeTombstoneStore | null = null
   private clusterAgentRecords: RecordsAccess | null = null
@@ -1729,7 +1731,13 @@ export class AddonRegistryService {
 
   private async wireHubMainOrphanRecords(): Promise<void> {
     const recordsCap = this.capabilityRegistry.getSingleton<IRecordsProvider>('records')
-    if (recordsCap === null || recordsCap === undefined) return
+    if (recordsCap === null || recordsCap === undefined) {
+      this.integrationRegistryUnavailable = 'the records capability has no provider'
+      this.logger.error('IntegrationRegistry not wired: the records capability has no provider', {
+        meta: { reason: this.integrationRegistryUnavailable },
+      })
+      return
+    }
 
     const integrationRecords = this.recordsForOwner(
       'integration-registry',
@@ -1775,6 +1783,11 @@ export class AddonRegistryService {
    * (where the addon is not currently installed). Orphaned data stays in DB
    * and reconnects automatically when the addon is reinstalled.
    */
+  /** Why {@link getIntegrationRegistry} answers null, or null when it has not failed. */
+  getIntegrationRegistryUnavailableReason(): string | null {
+    return this.integrationRegistryUnavailable
+  }
+
   getIntegrationRegistry(): import('@camstack/types').IIntegrationRegistry | null {
     if (!this.integrationRegistry) return null
     return this.createFilteredRegistry(this.integrationRegistry)
@@ -3191,9 +3204,11 @@ export class AddonRegistryService {
             store,
           )
           void this.wireHubMainOrphanRecords().catch((err: unknown) => {
-            this.logger.warn('hub-main records wiring failed (best-effort)', {
-              meta: { error: errMsg(err) },
-            })
+            this.integrationRegistryUnavailable = `records wiring failed: ${errMsg(err)}`
+            this.logger.error(
+              'hub-main records wiring failed — the integration registry stays unset',
+              { meta: { error: errMsg(err) } },
+            )
           })
           this.loadCollectionPreferences()
           // DeviceStore/ConfigStore are owned by the `device-persistence`

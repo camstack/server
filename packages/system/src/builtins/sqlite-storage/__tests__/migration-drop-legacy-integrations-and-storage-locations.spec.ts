@@ -54,6 +54,7 @@ function seed(opts: { readonly records: boolean; readonly legacyRows: boolean })
   db.exec(`
     CREATE TABLE integrations (id TEXT PRIMARY KEY, addon_id TEXT NOT NULL, name TEXT NOT NULL);
     CREATE TABLE storage_locations (id TEXT PRIMARY KEY, type TEXT NOT NULL, display_name TEXT NOT NULL);
+    CREATE TABLE storage_drain_state (location_id TEXT PRIMARY KEY, started_at_ms INTEGER NOT NULL);
     CREATE TABLE _collection_declarations (name TEXT PRIMARY KEY NOT NULL, decl TEXT NOT NULL);
     CREATE TABLE "addon-settings" (id TEXT PRIMARY KEY, data TEXT NOT NULL);
   `)
@@ -61,6 +62,7 @@ function seed(opts: { readonly records: boolean; readonly legacyRows: boolean })
   const insertDecl = db.prepare('INSERT INTO _collection_declarations (name, decl) VALUES (?, ?)')
   insertDecl.run('integrations', '{}')
   insertDecl.run('storage_locations', '{}')
+  insertDecl.run('storage_drain_state', '{}')
   insertDecl.run('addon-settings', '{}')
   if (opts.legacyRows) {
     const insertInt = db.prepare('INSERT INTO integrations (id, addon_id, name) VALUES (?, ?, ?)')
@@ -70,6 +72,10 @@ function seed(opts: { readonly records: boolean; readonly legacyRows: boolean })
     )
     insertLoc.run('recordings:default', 'recordings', 'recordings:default')
     insertLoc.run('recordings:old', 'recordings', 'old disk')
+    db.prepare('INSERT INTO storage_drain_state (location_id, started_at_ms) VALUES (?, ?)').run(
+      'recordings:old',
+      77,
+    )
   }
   const kind = db.prepare(
     `INSERT INTO _record_kinds (kind_id, owner, kind, database, manifest_hash, declaration, state) VALUES (?, ?, ?, 'settings', 'x', ?, 'declared')`,
@@ -81,6 +87,7 @@ function seed(opts: { readonly records: boolean; readonly legacyRows: boolean })
   })
   kind.run(1, 'integration-registry', 'integrations', declaration)
   kind.run(2, 'storage-orchestrator', 'locations', declaration)
+  kind.run(3, 'storage-orchestrator', 'drain-state', declaration)
   if (opts.records) {
     const insertRecord = db.prepare(
       'INSERT INTO records (kind_id, id, updated_at, data) VALUES (?, ?, 1, ?)',
@@ -90,6 +97,11 @@ function seed(opts: { readonly records: boolean; readonly legacyRows: boolean })
     }
     insertRecord.run(2, 'recordings:default', RECOVERY_LOCATION)
     insertRecord.run(2, 'recordings:old', DRAIN_LOCATION)
+    insertRecord.run(
+      3,
+      'recordings:old',
+      JSON.stringify({ locationId: 'recordings:old', startedAtMs: 77 }),
+    )
   }
   db.close()
 }
@@ -188,6 +200,7 @@ describe('hub migration: drop the legacy integrations and storage_locations tabl
     expect(ledger()?.status).toBe('applied')
     expect(tableExists('integrations')).toBe(false)
     expect(tableExists('storage_locations')).toBe(false)
+    expect(tableExists('storage_drain_state')).toBe(false)
     expect(declared('integrations')).toBe(false)
     expect(declared('storage_locations')).toBe(false)
     expect(declared('addon-settings')).toBe(true)
@@ -203,11 +216,46 @@ describe('hub migration: drop the legacy integrations and storage_locations tabl
     const row = ledger()
     expect(row?.status).toBe('failed')
     expect(row?.error).toContain('integrations')
-    expect(row?.error).toContain('3 row(s)')
+    expect(row?.error).toContain('3 row(s) without a record: int_0001, int_0002, int_0003')
     expect(row?.error).toContain('storage_locations')
-    expect(row?.error).toContain('2 row(s)')
+    expect(row?.error).toContain('2 row(s) without a record')
+    expect(row?.error).toContain(
+      "'storage_drain_state' (1 row(s) without a record: recordings:old)",
+    )
+    expect(legacyCount('storage_drain_state')).toBe(1)
     expect(legacyCount('integrations')).toBe(3)
     expect(legacyCount('storage_locations')).toBe(2)
+    expect(declared('integrations')).toBe(true)
+    expect(
+      h.lines.some(
+        (l) =>
+          l.level === 'error' &&
+          l.message === 'migration failed' &&
+          JSON.stringify(l.extras).includes('int_0001'),
+      ),
+    ).toBe(true)
+  }, 60_000)
+
+  it('refuses a PARTIAL copy: 5 legacy rows, 1 record, table intact, missing ids named', async () => {
+    seed({ records: false, legacyRows: false })
+    const db = new Database(h.pathOf('settings'))
+    try {
+      const ins = db.prepare('INSERT INTO integrations (id, addon_id, name) VALUES (?, ?, ?)')
+      for (const n of [1, 2, 3, 4, 5]) ins.run(`int_000${n}`, 'provider-x', `I${n}`)
+      db.prepare('INSERT INTO records (kind_id, id, updated_at, data) VALUES (1, ?, 1, ?)').run(
+        'int_0001',
+        JSON.stringify({ addonId: 'provider-x', name: 'I1' }),
+      )
+    } finally {
+      db.close()
+    }
+    await runPass('boot-1')
+    const row = ledger()
+    expect(row?.status).toBe('failed')
+    expect(row?.error).toContain(
+      '4 row(s) without a record: int_0002, int_0003, int_0004, int_0005',
+    )
+    expect(legacyCount('integrations')).toBe(5)
     expect(declared('integrations')).toBe(true)
   }, 60_000)
 

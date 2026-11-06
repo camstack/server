@@ -39,6 +39,20 @@ export class GoogleBrokerStore {
     return out
   }
 
+  async putOne(entry: GoogleBrokerEntry): Promise<void> {
+    const { id, name, clientId, clientSecret, calendarFilter, fromAddress, fromName } = entry
+    const parsed = googleBrokersEntryKind.schema.safeParse({
+      name,
+      clientId,
+      clientSecret,
+      calendarFilter,
+      fromAddress,
+      fromName,
+    })
+    if (!parsed.success) throw new Error(`invalid Google broker '${id}': ${parsed.error.message}`)
+    await this.kind.put({ id, data: parsed.data })
+  }
+
   async replaceAll(entries: readonly GoogleBrokerEntry[]): Promise<void> {
     const page = await this.kind.query({ limit: 1000 })
     const nextIds = new Set(entries.map((e) => e.id))
