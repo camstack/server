@@ -36,8 +36,7 @@ export interface DeviceValueSource {
   readonly groups: readonly DeviceValueGroup[]
 }
 
-function text(value: unknown, answered: boolean): string {
-  if (!answered) return '…'
+function text(value: unknown): string {
   if (value === undefined) return '—'
   if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
     return String(value)
@@ -85,24 +84,24 @@ export function useDeviceValueSource(options: DeviceValueSourceOptions): DeviceV
   }, [all.data, holders.data, capFilter, excludeIds])
 
   const groups = useMemo((): readonly DeviceValueGroup[] => {
-    if (wireable.data === undefined) return []
-    const answered = snapshot.status === 'success'
+    // A unit is read from the snapshot: judge the values only once it answered (D315).
+    if (wireable.data === undefined || snapshot.status !== 'success') return []
     return wireable.data.caps
       .map((entry) => {
-        const unitRaw = answered ? readField(snapshot.data[entry.cap], 'unit') : undefined
+        const unitRaw = readField(snapshot.data[entry.cap], 'unit')
         const unit = typeof unitRaw === 'string' && unitRaw !== '' ? unitRaw : null
         const rows = entry.fields
           .filter((f) => f.item !== true)
           .flatMap((f) => {
             const fitText = fit({ cap: entry.cap, path: f.path, kind: f.kind, unit })
             if (fitText === null) return []
-            const value = answered ? readField(snapshot.data[entry.cap], f.path) : undefined
+            const value = readField(snapshot.data[entry.cap], f.path)
             return [
               {
                 cap: entry.cap,
                 path: f.path,
                 label: fieldLabel(entry.cap, f.path),
-                valueText: text(value, answered),
+                valueText: text(value),
                 fitText,
               },
             ]
@@ -119,6 +118,10 @@ export function useDeviceValueSource(options: DeviceValueSourceOptions): DeviceV
         ? 'answered'
         : 'pending'
   const valuesState: DeviceValuesState =
-    wireable.status === 'error' ? 'failed' : wireable.status === 'success' ? 'ready' : 'loading'
+    wireable.status === 'error' || snapshot.status === 'error'
+      ? 'failed'
+      : wireable.status === 'success' && snapshot.status === 'success'
+        ? 'ready'
+        : 'loading'
   return { devices, listState, valuesState, groups }
 }

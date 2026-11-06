@@ -2756,8 +2756,8 @@
     },
     "sourceSelector": {
       "pickDevice": "Pick the source for {{title}}",
-      "direct": "direct",
-      "withConversion": "with {{name}}",
+      "direct": "fits as is",
+      "withConversion": "convertible, {{name}}",
       "backToDevices": "Back to devices",
       "noDevice": "Pick a device on the left.",
       "noStateField": "This device has no on/off reading this extension can use.",
@@ -2855,7 +2855,14 @@
         "level": "Level",
         "status": "State",
         "remaining": "Remaining"
-      }
+      },
+      "fillTitle": "Fill {{cap}} from a device",
+      "fillHeading": "Device the values come from",
+      "fillBack": "Back to the devices",
+      "fillNoDevice": "Pick a device to see what it can fill.",
+      "fillNothing": "Nothing on this device fits.",
+      "fillSkip": "Leave empty",
+      "fillApply": "Apply"
     }
   },
   "compositionEditor": {

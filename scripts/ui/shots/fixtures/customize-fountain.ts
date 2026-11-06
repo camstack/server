@@ -47,27 +47,60 @@ const PLUG = {
   metadata: {},
 }
 
-const get = (name: string): ((i: never) => unknown) => {
-  const h = base[name]
-  return typeof h === 'function' ? (h as (i: never) => unknown) : () => h
+interface ListedBlocks {
+  readonly blocks: readonly {
+    readonly source: { readonly composition: { readonly features: unknown[] } }
+  }[]
 }
+
+function isListedBlocks(value: unknown): value is ListedBlocks {
+  return (
+    typeof value === 'object' && value !== null && 'blocks' in value && Array.isArray(value.blocks)
+  )
+}
+
+const listed = base['coreBlocks.list']
+if (!isListedBlocks(listed)) throw new Error('fixture base has no coreBlocks.list')
+const SOURCE_BLOCK = listed.blocks[0]
+// The fountain also carries a temperature-sensor cap with nothing bound yet: its field is "to fill".
+const BLOCK = {
+  ...SOURCE_BLOCK,
+  source: {
+    ...SOURCE_BLOCK?.source,
+    composition: {
+      ...SOURCE_BLOCK?.source.composition,
+      features: [
+        ...(SOURCE_BLOCK?.source.composition.features ?? []),
+        { kind: 'fields', cap: 'temperature-sensor', fields: {} },
+      ],
+    },
+  },
+}
+const VIEW = {
+  block: BLOCK,
+  state: { kind: 'answered', state: { blockId: 'blk-fountain', deviceId: 900 } },
+}
+
+const get = (name: string): ((i: unknown) => unknown) => {
+  const h = base[name]
+  return typeof h === 'function' ? (i: unknown) => Reflect.apply(h, undefined, [i]) : () => h
+}
+
+const baseListed = base['deviceManager.listAll']
+const baseDevices: readonly unknown[] = Array.isArray(baseListed) ? baseListed : []
 
 export default defineFixtures({
   area: 'customize-fountain',
   description: 'Customize tab of a built pet fountain and of a provider plug',
   handlers: {
     ...base,
-    'deviceManager.listAll': [
-      ...(base['deviceManager.listAll'] as unknown[]),
-      FOUNTAIN_DEVICE,
-      PLUG,
-    ],
+    'deviceManager.listAll': [...baseDevices, FOUNTAIN_DEVICE, PLUG],
     'deviceManager.getDevice': (i: { deviceId: number }) =>
       i.deviceId === 900
         ? FOUNTAIN_DEVICE
         : i.deviceId === 410
           ? PLUG
-          : (get('deviceManager.getDevice') as (x: unknown) => unknown)(i),
+          : get('deviceManager.getDevice')(i),
     'deviceManager.getDeviceAggregate': (i: { deviceId: number }) => ({
       settings: { tabs: [], sections: [] },
       live: { sections: [] },
@@ -82,20 +115,23 @@ export default defineFixtures({
     'alerts.list': [],
     'deviceManager.listPersistedByAddon': (input: { addonId?: string }) =>
       input.addonId === 'composer' ? [FOUNTAIN_DEVICE] : [],
+    'coreBlocks.list': { blocks: [BLOCK] },
+    'coreBlocks.listCompositions': { state: 'loaded', views: [VIEW] },
     'coreBlocks.getComposition': (input: { blockId?: string }) =>
-      (get('coreBlocks.getComposition') as (x: unknown) => unknown)(input),
+      input.blockId === 'blk-fountain'
+        ? { state: 'loaded', view: VIEW }
+        : { state: 'loaded', view: null },
     'coreBlocks.getCustomization': { state: 'loaded', view: null },
     'coreBlocks.listComposableCaps': {
       caps: [{ cap: 'consumables' }, { cap: 'power-source' }, { cap: 'running-state' }],
     },
     'deviceManager.getBindings': (i: { deviceId?: number }) =>
-      i.deviceId === 900
-        ? { entries: [] }
-        : (get('deviceManager.getBindings') as (x: unknown) => unknown)(i),
+      i.deviceId === 900 ? { entries: [] } : get('deviceManager.getBindings')(i),
     'deviceManager.listDeviceIdsByCaps': (i: { capNames?: readonly string[] }) => {
       const cap = i.capNames?.[0] ?? ''
-      if (cap === 'battery' || cap === 'numeric-sensor') return [305]
-      return (get('deviceManager.listDeviceIdsByCaps') as (x: unknown) => unknown)(i)
+      if (cap === 'battery' || cap === 'numeric-sensor' || cap === 'temperature-sensor')
+        return [305]
+      return get('deviceManager.listDeviceIdsByCaps')(i)
     },
     'deviceManager.getWireableFields': (i: { deviceId: number }) => {
       if (i.deviceId === 301 || i.deviceId === 302) {
@@ -109,6 +145,7 @@ export default defineFixtures({
           caps: [
             { cap: 'control', fields: [{ path: 'value', kind: 'number' }] },
             { cap: 'battery', fields: [{ path: 'level', kind: 'number' }] },
+            { cap: 'temperature-sensor', fields: [{ path: 'temperature', kind: 'number' }] },
           ],
         }
       }
@@ -124,7 +161,11 @@ export default defineFixtures({
             consumables: { items: [{ key: 'filter', status: 'ok', remaining: 20 }] },
           }
         : i.deviceId === 305
-          ? { control: { value: 12 }, battery: { level: 64, unit: '%' } }
+          ? {
+              control: { value: 12, unit: 'h' },
+              battery: { level: 64 },
+              'temperature-sensor': { temperature: 21.5, unit: '°C' },
+            }
           : i.deviceId === 301
             ? { 'enum-sensor': { value: '0' } }
             : {},

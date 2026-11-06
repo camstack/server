@@ -8,6 +8,7 @@ import {
   type CustomizeCatalogTransform,
   type ScalarCompileInput,
   compileScalarOverride,
+  tryConvertUnit,
 } from '@camstack/types'
 import type { ScalarFieldFit, ScalarTransformKind } from './scalar-fit'
 export type ScalarTransformDraft = ScalarCompileInput['draft']['transform']
@@ -22,9 +23,10 @@ export interface ScalarFormSource {
   readonly changedAtField: string | null
 }
 
-export type ScalarControl = 'none' | 'invert' | 'threshold' | 'choice'
+export type ScalarControl = 'none' | 'invert' | 'threshold' | 'choice' | 'linear'
 
 export function scalarControl(transforms: readonly ScalarTransformKind[]): ScalarControl {
+  if (transforms.length === 1 && transforms[0] === 'linear') return 'linear'
   if (transforms.length === 1 && transforms[0] === 'threshold') return 'threshold'
   if (transforms.length === 1 && transforms[0] === 'invert') return 'invert'
   if (
@@ -37,7 +39,33 @@ export function scalarControl(transforms: readonly ScalarTransformKind[]): Scala
   return 'none'
 }
 
+/**
+ * The linear draft for a source in another unit. The same dimension gets the computed factor
+ * (and offset); another dimension has no known factor, so the scale starts UNSET (NaN, which
+ * does not compile) and the operator must enter it.
+ */
+function conversionDraft(
+  fit: ScalarFieldFit,
+  conversion: { readonly from: string; readonly to: string },
+): ScalarTransformDraft {
+  const declared = declaredOf(fit.declared, 'linear')
+  const base = declared === null ? null : draftFromDeclared(declared)
+  const clamp =
+    base !== null && base.kind === 'linear' && base.clampMin !== undefined
+      ? { clampMin: base.clampMin, clampMax: base.clampMax }
+      : {}
+  const at0 = tryConvertUnit(0, conversion.from, conversion.to)
+  const at1 = tryConvertUnit(1, conversion.from, conversion.to)
+  if (at0 === undefined || at1 === undefined) {
+    return { kind: 'linear', scale: Number.NaN, offset: 0, ...clamp }
+  }
+  return { kind: 'linear', scale: at1 - at0, offset: at0, ...clamp }
+}
+
 export function defaultScalarTransform(fit: ScalarFieldFit): ScalarTransformDraft {
+  if (fit.conversion !== undefined && fit.transforms.includes('linear')) {
+    return conversionDraft(fit, fit.conversion)
+  }
   if (fit.transforms.includes('identity')) return { kind: 'identity' }
   if (fit.transforms.includes('threshold')) {
     const declared = declaredOf(fit.declared, 'threshold')

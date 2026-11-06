@@ -2831,8 +2831,8 @@
     },
     "sourceSelector": {
       "pickDevice": "Scegli la sorgente per {{title}}",
-      "direct": "diretto",
-      "withConversion": "con {{name}}",
+      "direct": "va bene così",
+      "withConversion": "convertibile, {{name}}",
       "backToDevices": "Torna ai dispositivi",
       "noDevice": "Scegli un dispositivo a sinistra.",
       "noStateField": "Questo dispositivo non ha una lettura acceso/spento che questa estensione possa usare.",
@@ -2930,7 +2930,14 @@
         "level": "Livello",
         "status": "Stato",
         "remaining": "Rimanente"
-      }
+      },
+      "fillTitle": "Compila {{cap}} da un dispositivo",
+      "fillHeading": "Dispositivo da cui prendere i valori",
+      "fillBack": "Torna ai dispositivi",
+      "fillNoDevice": "Scegli un dispositivo per vedere cosa può compilare.",
+      "fillNothing": "Nulla su questo dispositivo è adatto.",
+      "fillSkip": "Lascia vuoto",
+      "fillApply": "Applica"
     }
   },
   "compositionEditor": {

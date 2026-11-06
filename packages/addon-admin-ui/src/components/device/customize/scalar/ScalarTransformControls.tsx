@@ -204,7 +204,7 @@ function NumberField({ label, value, onChange }: NumberFieldProps): ReactNode {
       {label}
       <Input
         type="number"
-        value={Number.isFinite(value) ? value : 0}
+        value={Number.isFinite(value) ? value : ''}
         onChange={(event) => {
           const next = Number(event.target.value)
           if (Number.isFinite(next)) onChange(next)

@@ -188,32 +188,47 @@ export interface CapActionsProps {
   readonly cap: string
   readonly title: string
   readonly handle: CustomizationHandle
+  /** Set when the cap has fields still to fill: opens "Fill from device…". */
+  readonly onFill?: () => void
 }
 
-/** A cap's header line: the whole group can be removed. */
-export function CapActionsCell({ cap, title, handle }: CapActionsProps): ReactNode {
+/** A cap's header line: fill what is empty from one device, or remove the whole group. */
+export function CapActionsCell({ cap, title, handle, onFill }: CapActionsProps): ReactNode {
   const { t } = useTranslation()
   const confirmRemove = useConfirmRemove()
   const current = currentComposition(handle.state)
   if (current === null) return null
   return (
-    <IconButton
-      variant="ghost"
-      size="sm"
-      icon={Trash2}
-      aria-label={`${t('customize.table.remove')} ${title}`}
-      data-testid={`customize-remove-offcatalog.${cap}`}
-      disabled={handle.saving}
-      onClick={() => {
-        const next = withoutFeature(current, cap)
-        void confirmRemove(
-          t('customize.fieldsCard.removeWhat', { cap: title }),
-          next === null,
-        ).then((ok) => {
-          if (ok) void handle.save(next)
-        })
-      }}
-    />
+    <div className="flex items-center justify-end gap-1">
+      {onFill !== undefined && (
+        <Button
+          variant="ghost"
+          size="sm"
+          data-testid={`customize-fill-${cap}`}
+          disabled={handle.saving}
+          onClick={onFill}
+        >
+          {t('customize.table.fillFromDevice')}
+        </Button>
+      )}
+      <IconButton
+        variant="ghost"
+        size="sm"
+        icon={Trash2}
+        aria-label={`${t('customize.table.remove')} ${title}`}
+        data-testid={`customize-remove-offcatalog.${cap}`}
+        disabled={handle.saving}
+        onClick={() => {
+          const next = withoutFeature(current, cap)
+          void confirmRemove(
+            t('customize.fieldsCard.removeWhat', { cap: title }),
+            next === null,
+          ).then((ok) => {
+            if (ok) void handle.save(next)
+          })
+        }}
+      />
+    </div>
   )
 }
 

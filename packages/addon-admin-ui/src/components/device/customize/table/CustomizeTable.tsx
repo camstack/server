@@ -42,6 +42,7 @@ import {
 import { ConfigSourceCell, ConfigValueCell } from './ConfigRowCells'
 import { EventSourceCell, EventValueCell } from './EventRowCells'
 import { catalogCoveredCaps, offCatalogCards } from './extra-rows'
+import { FillFromDeviceDialog } from './FillFromDeviceDialog'
 import {
   CapActionsCell,
   capGroupTitle,
@@ -231,6 +232,9 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
   const openField = groups
     .flatMap((group) => [...group.rows, ...group.advanced])
     .find((row) => row.key === open)
+  const fillRows = (cap: string): readonly FieldRow[] =>
+    (groups.find((group) => group.cap === cap)?.rows ?? []).filter((row) => row.entry === null)
+  const fillGroup = groups.find((group) => `fill:${group.cap}` === open)
   const scalarProps = (
     spec: CustomizeRowSpec,
   ): { cap: string; target: CustomizeRowSpec['target'] } => ({
@@ -355,6 +359,9 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
               cap={line.cap}
               title={capGroupTitle(i18n.language, line.cap)}
               handle={handle}
+              onFill={
+                fillRows(line.cap).length === 0 ? undefined : () => setOpen(`fill:${line.cap}`)
+              }
             />
           )
         }
@@ -465,6 +472,19 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
           device={device}
           handle={handle}
           names={sources.names}
+          onClose={() => setOpen(null)}
+        />
+      )}
+      {fillGroup !== undefined && (
+        <FillFromDeviceDialog
+          key={fillGroup.cap}
+          cap={fillGroup.cap}
+          title={t('customize.table.fillTitle', {
+            cap: capGroupTitle(i18n.language, fillGroup.cap),
+          })}
+          rows={fillRows(fillGroup.cap)}
+          device={device}
+          handle={handle}
           onClose={() => setOpen(null)}
         />
       )}

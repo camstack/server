@@ -18,7 +18,7 @@ import { type ReactNode, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { SuggestedDevices } from '../assignments/SuggestedDevices'
 import { useCapIndex } from '../assignments/use-cap-index'
-import { keyedFieldFit } from '../keyed/keyed-fit'
+import { keyedFieldFit, keyedFieldOffers } from '../keyed/keyed-fit'
 import type { Known } from '../known'
 import { ScalarTransformControls } from '../scalar/ScalarTransformControls'
 import { fieldUnit, type ScalarFieldFit, scalarFieldFit } from '../scalar/scalar-fit'
@@ -402,9 +402,7 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
           ? ''
           : t('customize.sourceSelector.backToDevice', { name: props.device.name })
       }
-      valuesState={
-        wireable.status === 'pending' ? 'loading' : wireable.status === 'error' ? 'failed' : 'ready'
-      }
+      valuesState={valuesStateOf(wireable.status, snapshot.status)}
       groups={groups.map((group) => ({
         cap: group.cap,
         title: group.title,
@@ -458,17 +456,7 @@ function fieldFitForRow(
   path: string,
 ): ScalarFieldFit | null {
   if (props.kind === 'keyed') {
-    const offers = catalog.caps.flatMap((entry) =>
-      entry.fields
-        .filter((f) => f.item !== true)
-        .map((f) => ({
-          cap: entry.cap,
-          path: f.path,
-          kind: f.kind,
-          unit: readUnit(snapshot, entry.cap),
-          enumValues: f.enumValues ?? [],
-        })),
-    )
+    const offers = keyedFieldOffers(catalog, snapshot)
     const offer = offers.find((row) => row.cap === cap && row.path === path)
     if (offer === undefined) return null
     const verdict = keyedFieldFit(
@@ -510,6 +498,18 @@ function fieldFit(
   if (props.kind === 'formula' || props.kind === 'event') return null
   if (props.device === null || props.field === null) return null
   return fieldFitForRow(props, catalog, snapshot, props.field.cap, props.field.path)
+}
+
+/**
+ * A unit comes from the snapshot, so a value is judged only once both reads answered: an unread
+ * snapshot is loading, a failed one is failed — never "no value fits" (D315).
+ */
+function valuesStateOf(
+  wireable: 'pending' | 'error' | 'success',
+  snapshot: 'pending' | 'error' | 'success',
+): 'loading' | 'failed' | 'ready' {
+  if (wireable === 'error' || snapshot === 'error') return 'failed'
+  return wireable === 'success' && snapshot === 'success' ? 'ready' : 'loading'
 }
 
 function readUnit(snapshot: DeviceSnapshot | null, cap: string): string | null {

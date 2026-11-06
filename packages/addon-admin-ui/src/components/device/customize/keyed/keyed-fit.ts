@@ -2,7 +2,12 @@
  * Which source fields one keyed-array item field can read (D936).
  */
 import {
+  baseUnitOf,
   CAP_CUSTOMIZE_CATALOG,
+  ConsumableItemSchema,
+  isReadingQuantity,
+  unitDimension,
+  type UnitDimension,
   type CustomizeCatalogField,
   type CustomizeCatalogSource,
   type CustomizeCatalogTarget,
@@ -10,6 +15,7 @@ import {
 import type { DeviceSnapshot, WireableCatalog } from '../source-picker-model'
 import { readPath } from '../source-picker-model'
 import {
+  fieldUnit,
   type ScalarFieldFit,
   type ScalarFieldOffer,
   type ScalarFitReason,
@@ -51,17 +57,54 @@ export function keyedFieldOffers(
   snapshot: DeviceSnapshot | null,
 ): readonly KeyedFieldOffer[] {
   return catalog.caps.flatMap((cap) => {
-    const unit = capUnit(snapshot, cap.cap)
+    const slice = capUnit(snapshot, cap.cap)
     return cap.fields
       .filter((field) => field.item !== true)
       .map((field) => ({
         cap: cap.cap,
         path: field.path,
         kind: field.kind,
-        unit,
+        unit: fieldUnit(slice, cap.cap, field.path),
         enumValues: field.enumValues ?? [],
       }))
   })
+}
+
+const KEYED_ITEM_SHAPES: Readonly<Record<string, Readonly<Record<string, { meta(): unknown }>>>> = {
+  consumables: ConsumableItemSchema.shape,
+}
+
+/** The unit a keyed item field is stored in, from its reading quantity (D944 base units). */
+export function keyedTargetUnit(cap: string, fieldPath: string): string | null {
+  const field = Object.hasOwn(KEYED_ITEM_SHAPES, cap)
+    ? KEYED_ITEM_SHAPES[cap]?.[fieldPath]
+    : undefined
+  const meta = field?.meta()
+  if (typeof meta !== 'object' || meta === null || !('quantity' in meta)) return null
+  const quantity = meta.quantity
+  return isReadingQuantity(quantity) ? (baseUnitOf(quantity) ?? null) : null
+}
+
+/**
+ * The ONLY pairs where a number of another dimension may reach a field: target dimension ->
+ * source dimensions. A remaining-time reading (hours, minutes) feeds a percent item level
+ * through a linear scale the operator enters (the documented consumables case). Every other
+ * pair of dimensions is incompatible and never offered.
+ */
+export const CROSS_DIMENSION_SCALES: Readonly<Record<string, readonly UnitDimension[]>> = {
+  percentage: ['duration'],
+}
+
+/** Whether a number in `from` may reach a field stored in `to` through a linear scale. */
+export function unitConvertible(from: string, to: string): boolean {
+  const source = unitDimension(from)
+  const target = unitDimension(to)
+  if (source === undefined || target === undefined) return false
+  if (source === target) return true
+  return (
+    Object.hasOwn(CROSS_DIMENSION_SCALES, target) &&
+    (CROSS_DIMENSION_SCALES[target] ?? []).includes(source)
+  )
 }
 
 function capUnit(snapshot: DeviceSnapshot | null, cap: string): string | null {
@@ -107,6 +150,22 @@ export function keyedFieldFit(
   if (transforms.length === 0 || offer.kind !== 'number') {
     return { ok: false, reason: 'kind' } // i18n-ignore: fit reason code
   }
+  const targetUnit = keyedTargetUnit(cap, fieldPath)
+  if (
+    targetUnit !== null &&
+    offer.unit !== null &&
+    offer.unit !== targetUnit &&
+    !unitConvertible(offer.unit, targetUnit)
+  ) {
+    return { ok: false, reason: 'unit' } // i18n-ignore: fit reason code
+  }
+  const conversion =
+    targetUnit !== null &&
+    offer.unit !== null &&
+    offer.unit !== targetUnit &&
+    transforms.includes('linear')
+      ? { from: offer.unit, to: targetUnit }
+      : null
   return {
     ok: true,
     mode: 'scalar',
@@ -114,8 +173,9 @@ export function keyedFieldFit(
       ok: true,
       valueKind: 'number',
       sourceUnit: source.requiredUnit ?? null,
-      transforms,
+      transforms: conversion === null ? transforms : ['linear'],
       declared: source.transforms,
+      ...(conversion === null ? {} : { conversion }),
     },
   }
 }

@@ -48,7 +48,21 @@ function props(over: Partial<DeviceValueFieldProps> = {}): DeviceValueFieldProps
 
 function Stateful({ extra }: { readonly extra: Partial<DeviceValueFieldProps> }) {
   const [deviceId, setDeviceId] = useState<number | null>(null)
-  return <DeviceValueField {...props({ deviceId, onDeviceChange: setDeviceId, ...extra })} />
+  const [value, setValue] = useState<DeviceValueFieldProps['value']>(null)
+  return (
+    <DeviceValueField
+      {...props({
+        ...extra,
+        deviceId,
+        onDeviceChange: setDeviceId,
+        value,
+        onValueChange: (pick) => {
+          setValue(pick)
+          extra.onValueChange?.(pick)
+        },
+      })}
+    />
+  )
 }
 
 describe('DeviceValueField', () => {
@@ -75,6 +89,16 @@ describe('DeviceValueField', () => {
     expect(root.getAttribute('data-step')).toBe('values')
     rerender(<Stateful key="plain" extra={{}} />)
     fireEvent.click(screen.getByRole('button', { name: 'Porch meter' }))
+    fireEvent.click(screen.getByTestId('device-value-power-meter.power'))
+    expect(screen.getByTestId('device-value-field').getAttribute('data-step')).toBe('values')
+  })
+
+  it('does not open the preview step while the pick has not been taken as the value', () => {
+    render(
+      <DeviceValueField
+        {...props({ deviceId: 1, transform: <i>t</i>, onValueChange: () => undefined })}
+      />,
+    )
     fireEvent.click(screen.getByTestId('device-value-power-meter.power'))
     expect(screen.getByTestId('device-value-field').getAttribute('data-step')).toBe('values')
   })

@@ -17,7 +17,9 @@ import {
 import { sourceFor } from '../source-for'
 import { vocabularyCapTitle, vocabularyFieldLabel } from '../vocabulary-field-label'
 import { declarationSourceForField, type ScalarFieldOffer } from '../scalar/scalar-fit'
-import { keyedTargetFields } from '../keyed/keyed-fit'
+import { keyedTargetFields, keyedTargetUnit, unitConvertible } from '../keyed/keyed-fit'
+
+export { keyedTargetUnit }
 
 export interface SourceDestination {
   readonly cap: string
@@ -119,6 +121,23 @@ function catalogSourceForKeyed(
   return null
 }
 
+/**
+ * A number reaching a field with a known unit: the same unit fits as is (null, the catalog
+ * judges on); an unknown unit or a pair of dimensions not allowed by CROSS_DIMENSION_SCALES is
+ * never offered; the same dimension is convertible with a computed factor, and an allowed
+ * cross-dimension pair (hours for a percent level) is convertible with a scale the operator enters.
+ */
+export function judgeNumberUnit(
+  targetUnit: string,
+  field: SourceWireableField,
+): SourceCompatibility | null {
+  if (field.kind !== 'number') return null
+  if (field.unit === null) return { kind: 'incompatible', reason: 'unit-unknown' }
+  if (field.unit === targetUnit) return null
+  if (!unitConvertible(field.unit, targetUnit)) return { kind: 'incompatible', reason: 'unit' }
+  return { kind: 'conversion', name: 'scale' }
+}
+
 function isScalarTransform(kind: string): kind is ScalarTransform {
   return kind === 'identity' || kind === 'invert' || kind === 'threshold' || kind === 'linear'
 }
@@ -188,6 +207,12 @@ export function judgeSourceCompatibility(
     ? catalogSourceForKeyed(sources, field)
     : declarationSourceForField(sources, offerFromField(field))
   if (source === null) return { kind: 'incompatible', reason: 'kind' }
+  const targetUnit =
+    keyed && destination.fieldPath !== undefined
+      ? keyedTargetUnit(destination.cap, destination.fieldPath)
+      : null
+  const unitVerdict = targetUnit === null ? null : judgeNumberUnit(targetUnit, field)
+  if (unitVerdict !== null) return unitVerdict
   return compatibilityFromSource(source, field)
 }
 

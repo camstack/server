@@ -90,7 +90,7 @@ function stepClass(step: DeviceValueStep, own: DeviceValueStep): string | undefi
  */
 export function DeviceValueField(props: DeviceValueFieldProps): ReactNode {
   const t = useUiText()
-  const [step, setStep] = useState<DeviceValueStep>(initialStep(props.deviceId !== null))
+  const [requested, setStep] = useState<DeviceValueStep>(initialStep(props.deviceId !== null))
   const testId = props.testId ?? 'device-value-field'
   const pickDevice = (ids: readonly number[]): void => {
     const id = ids[0] ?? null
@@ -100,11 +100,13 @@ export function DeviceValueField(props: DeviceValueFieldProps): ReactNode {
   const hasPreviewContent = props.transform != null || props.preview != null
   const pickValue = (pick: DeviceValuePick): void => {
     props.onValueChange(pick)
-    // No transform and no preview to show: the pick is the last step, stay on the values.
-    if (hasPreviewContent) setStep(stepAfterValue())
+    setStep(stepAfterValue())
   }
   const showPreview =
     hasPreviewContent && (props.value !== null || props.alwaysShowPreview === true)
+  // The preview step exists only once there is something to preview: the transform and the
+  // "would read" line appear with the pick, so the step is judged at render, not at click.
+  const step: DeviceValueStep = requested === 'preview' && !showPreview ? 'values' : requested
   return (
     <div
       data-testid={testId}

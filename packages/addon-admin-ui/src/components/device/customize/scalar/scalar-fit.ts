@@ -36,6 +36,11 @@ export interface ScalarFieldFit {
   readonly transforms: readonly ScalarTransformKind[]
   /** Declared parameters for those transforms. The form copies defaults from here. */
   readonly declared: readonly CustomizeCatalogTransform[]
+  /**
+   * Set when the source reads in another unit than the field is stored in: the only way
+   * through is a linear scale, never a pass-through.
+   */
+  readonly conversion?: { readonly from: string; readonly to: string }
 }
 
 export type ScalarFieldVerdict =
