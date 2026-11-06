@@ -162,6 +162,8 @@ export async function aggregateCollectionCall(
   if (!reg) return null
   if (!isGlobalCollection(reg, capName)) return null
   if (!COLLECTION_ARRAY_METHODS.get(capName)?.includes(method)) return null
+  // A pinned call is `pinnedCollectionCall`'s, never the union's.
+  if (addonPinOf(reg, capName, method, args) !== null) return null
   if (reg.getCollectionEntries(capName).length === 0) return null
   const aggregate = resolveCollectionProvider(reg, capName, undefined)
   const fn = aggregate?.[method]
@@ -265,7 +267,14 @@ export async function pinnedDeviceCollectionCall(
  * DELIBERATELY BOGUS addonId — refused if the selector routes, answered `null`
  * if it is discarded. It came back `null`.
  *
- * Not an array method (that contract is the union) and not a non-collection cap
+ * An ARRAY method pins too, exactly as the tRPC mount does
+ * ({@link resolveCollectionProvider}: "addonId set → that addon's provider
+ * directly"): without a selector its contract is the fan-out union, WITH one it
+ * is that provider's own rows. The child→parent path used to answer the union
+ * for a pinned array call, so a forked export asking
+ * `integrationInstances.listInstances({ addonId })` got every integration's
+ * instances back and took another integration's `account` row for its broker.
+ * Not a non-collection cap
  * (there `addonId` is provider DATA: `addons.getLogs({addonId})` names the addon
  * whose logs you want, it does not name a provider).
  */
@@ -277,7 +286,6 @@ export function addonPinOf(
 ): string | null {
   if (!reg) return null
   if (!isGlobalCollection(reg, capName)) return null
-  if (COLLECTION_ARRAY_METHODS.get(capName)?.includes(method) === true) return null
   if (args === null || typeof args !== 'object' || Array.isArray(args)) return null
   const addonId = (args as Record<string, unknown>)['addonId']
   return typeof addonId === 'string' && addonId.length > 0 ? addonId : null

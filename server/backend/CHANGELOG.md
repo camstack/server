@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A runner that hosts its own provider of a collection capability no longer answers a call pinned to another addon, which left the Home Assistant export target Unconfigured
+- A forked addon asking a collection capability's list method with an explicit addonId now gets only that addon's rows, not every provider's, so the Home Assistant export no longer mistakes another integration's account for its broker
 
 ## [1.2.780] - 2026-11-06
 

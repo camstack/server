@@ -83,20 +83,6 @@ describe('pinnedCollectionCall', () => {
     ).toBeNull()
   })
 
-  /**
-   * An enumeration keeps the fan-out union. Pinning one is what turned a
-   * provider's absence from "returns fewer rows" into BAD_REQUEST and took the
-   * operator from "one Home Assistant instance" to "no instance at all".
-   */
-  it('never claims an array method — that contract is the union', async () => {
-    const reg = asRegistry(
-      registry({ 'provider-homeassistant': { list: () => [{ id: 'ha_001' }] } }),
-    )
-    expect(
-      await pinnedCollectionCall(reg, 'template', 'list', { addonId: 'provider-homeassistant' }),
-    ).toBeNull()
-  })
-
   it('never claims a non-collection cap — addonId there is provider DATA', async () => {
     const reg = asRegistry(registry({ x: { getLogs: () => ['line'] } }, 'singleton'))
     expect(await pinnedCollectionCall(reg, 'addons', 'getLogs', { addonId: 'x' })).toBeNull()
