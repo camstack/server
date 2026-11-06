@@ -9508,6 +9508,9 @@
     },
     "powerMeterLine": {
       "energy": "Energia"
+    },
+    "optimistic": {
+      "refusedTitle": "Il dispositivo ha rifiutato la modifica"
     }
   },
   "helpers": {

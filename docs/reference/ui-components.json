@@ -5762,7 +5762,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-controls/atoms.tsx",
-      "summary": "Horizontal track with a white grip thumb at `fraction` (0..1). For seek/volume/brightness.",
+      "summary": "Horizontal track with a white grip thumb at `fraction` (0..1). For seek/volume/brightness; `readOnly` draws the fill alone (a progress indication).",
       "props": [
         {
           "name": "fraction",
@@ -5775,6 +5775,12 @@
           "type": "string",
           "optional": true,
           "doc": ""
+        },
+        {
+          "name": "readOnly",
+          "type": "boolean",
+          "optional": true,
+          "doc": "A progress indication nothing can be dragged on: no grip thumb."
         }
       ]
     },
@@ -12763,6 +12769,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/confirm-dialog.tsx",
       "summary": "An error/notice with a single acknowledge. Replaces `window.alert`."
+    },
+    {
+      "name": "useAlertIfAvailable",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/confirm-dialog.tsx",
+      "summary": "`useAlert`, or undefined where no `ConfirmDialogProvider` is mounted (a hook that reports but must not require one)."
     },
     {
       "name": "useAllWidgets",

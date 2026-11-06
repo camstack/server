@@ -254,6 +254,7 @@ describe('now playing and projected position', () => {
     duration: 100_000,
     shuffle: null,
     repeat: null,
+    positionUpdatedAt: null,
     lastChangedAt: 0,
   }
 
