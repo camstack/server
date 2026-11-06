@@ -55,7 +55,7 @@ function instancesProvider(entries: readonly { id: string; enabled?: boolean }[]
     createInstance: vi.fn(),
     getInstance: vi.fn(),
     listInstances: vi.fn(async () =>
-      entries.map((e) => ({ id: e.id, name: e.id, configured: true, formValues: {}, ...e })),
+      entries.map((e) => ({ name: e.id, configured: true, formValues: {}, ...e })),
     ),
   }
 }
