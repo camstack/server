@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pet fountain card: the Water drunk grid and the Clear daily count button are removed
 - The instance picker slot receives disabled and required, so an optional link keeps an empty choice
 - Removed the broker-select field type; every broker link is now an instance-select field on the one link primitive
+- Device control cards roll a slider or switch back when the device refuses the change, and keep the new value while a slow device is still answering
+- The media-player card shows title, artist and album, artwork, source and a progress bar whenever the device reports them, plus shuffle and repeat it can only read
 
 ## [1.2.391] - 2026-11-06
 

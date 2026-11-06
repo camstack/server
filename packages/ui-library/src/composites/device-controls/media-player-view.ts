@@ -43,6 +43,47 @@ export interface MediaPlayerExtras {
   readonly running?: boolean | null | undefined
 }
 
+/** What is playing, drawn whenever the device reports it — independent of the power reading. */
+export interface NowPlayingView {
+  readonly title: string | null
+  /** Artist and album joined, as far as the device reports them. */
+  readonly subtitle: string | null
+  readonly artworkUrl: string | null
+  /** The active source as plain text (`Spotify`); null when none is reported. */
+  readonly source: string | null
+  /** Position and duration in ms, both known and the duration positive; null otherwise. */
+  readonly progress: { readonly positionMs: number; readonly durationMs: number } | null
+}
+
+/**
+ * A status that may carry the instant its `position` was read (ms epoch). Absent on a
+ * device that does not stamp it: the position then stays where it was reported.
+ */
+export type PositionStampedStatus = MediaPlayerStatus & {
+  readonly positionUpdatedAt?: number | null
+}
+
+/** The position to show at `nowMs`: the reported one, advanced while playing when it is stamped. */
+export function projectedPositionMs(status: PositionStampedStatus, nowMs: number): number | null {
+  if (status.position === null) return null
+  const stamp = status.positionUpdatedAt
+  if (status.state !== 'playing' || typeof stamp !== 'number') return status.position
+  const advanced = status.position + Math.max(0, nowMs - stamp)
+  return status.duration !== null && status.duration > 0
+    ? Math.min(advanced, status.duration)
+    : advanced
+}
+
+/** True when the status carries a stamp the position can be advanced from. */
+export function isPositionTicking(status: PositionStampedStatus | undefined): boolean {
+  return (
+    status !== undefined &&
+    status.state === 'playing' &&
+    status.position !== null &&
+    typeof status.positionUpdatedAt === 'number'
+  )
+}
+
 export interface MediaPlayerView {
   readonly power: PowerView
   /** The `running-state` cap's reading; `unknown` when the cap is absent or has no answer. */
@@ -68,6 +109,11 @@ export interface MediaPlayerView {
   readonly sourceAssumed: boolean
   readonly shuffle: boolean
   readonly repeat: boolean
+  /** The device reports a shuffle / repeat value it cannot be told to change: drawn, not pressable. */
+  readonly shuffleReadOnly: boolean
+  readonly repeatReadOnly: boolean
+  /** Title, artist, artwork, source and progress of what plays; null when the device reports none. */
+  readonly nowPlaying: NowPlayingView | null
 }
 
 const NO_TRANSPORT: TransportView = { playPause: false, previous: false, next: false, stop: false }
@@ -131,6 +177,33 @@ const UNKNOWN_VIEW: MediaPlayerView = {
   sourceAssumed: false,
   shuffle: false,
   repeat: false,
+  shuffleReadOnly: false,
+  repeatReadOnly: false,
+  nowPlaying: null,
+}
+
+function nowPlayingOf(status: MediaPlayerStatus | undefined): NowPlayingView | null {
+  if (status === undefined) return null
+  const media = status.currentMedia
+  const title = media?.title.trim() ?? ''
+  const subtitle = [media?.artist, media?.album]
+    .map((part) => part?.trim() ?? '')
+    .filter((part) => part !== '')
+    .join(' · ')
+  const artworkUrl = artworkOf(status)
+  const source = typeof status.source === 'string' ? status.source.trim() : ''
+  const hasDuration = status.position !== null && status.duration !== null && status.duration > 0
+  if (title === '' && subtitle === '' && artworkUrl === null) return null
+  return {
+    title: title === '' ? null : title,
+    subtitle: subtitle === '' ? null : subtitle,
+    artworkUrl,
+    source: source === '' ? null : source,
+    progress:
+      hasDuration && status.position !== null && status.duration !== null
+        ? { positionMs: status.position, durationMs: status.duration }
+        : null,
+  }
 }
 
 function readingOf(running: boolean | null | undefined): RunningReading {
@@ -143,6 +216,27 @@ export function deriveMediaPlayerView(
   status: MediaPlayerStatus | undefined,
   features: readonly string[] | undefined,
   extras: MediaPlayerExtras = {},
+): MediaPlayerView {
+  const view = derivePowerGatedView(status, features, extras)
+  // What plays is data the device reported: it is never hidden behind the power reading.
+  return {
+    ...view,
+    nowPlaying: nowPlayingOf(status),
+    shuffleReadOnly:
+      status !== undefined &&
+      status.shuffle !== null &&
+      !(features?.includes(DeviceFeature.MediaPlayerShuffle) ?? false),
+    repeatReadOnly:
+      status !== undefined &&
+      status.repeat !== null &&
+      !(features?.includes(DeviceFeature.MediaPlayerRepeat) ?? false),
+  }
+}
+
+function derivePowerGatedView(
+  status: MediaPlayerStatus | undefined,
+  features: readonly string[] | undefined,
+  extras: MediaPlayerExtras,
 ): MediaPlayerView {
   const runningReading = readingOf(extras.running)
   const view = deriveFromStatus(status, features)

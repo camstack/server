@@ -1,6 +1,6 @@
 import { DeviceFeature, type MediaPlayerStatus } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import { deriveMediaPlayerView } from '../media-player-view'
+import { deriveMediaPlayerView, projectedPositionMs } from '../media-player-view'
 
 const BASE: MediaPlayerStatus = {
   state: 'off',
@@ -232,5 +232,45 @@ describe('sibling reading: running-state', () => {
     const stateless = JSON.parse('{"stateSource":"reported","assumedFields":[]}')
     expect(deriveMediaPlayerView(stateless, ALL, { running: true }).power).toBe('on')
     expect(deriveMediaPlayerView(stateless, ALL, { running: false }).power).toBe('off')
+  })
+})
+
+describe('now playing and projected position', () => {
+  const base: MediaPlayerStatus = {
+    state: 'playing',
+    stateSource: 'reported',
+    assumedFields: [],
+    volumeLevel: null,
+    isMuted: null,
+    source: 'Spotify',
+    availableSources: [],
+    currentMedia: { type: 'music', title: 'Song', artist: 'Band', album: 'Record' },
+    position: 10_000,
+    duration: 100_000,
+    shuffle: null,
+    repeat: null,
+    lastChangedAt: 0,
+  }
+
+  it('is derived from the status whatever the power reading says', () => {
+    const view = deriveMediaPlayerView({ ...base, state: 'standby' }, [])
+    expect(view.nowPlaying).toMatchObject({
+      title: 'Song',
+      subtitle: 'Band · Record',
+      source: 'Spotify',
+      progress: { positionMs: 10_000, durationMs: 100_000 },
+    })
+  })
+
+  it('is null when the device reports no media', () => {
+    expect(deriveMediaPlayerView({ ...base, currentMedia: null }, []).nowPlaying).toBeNull()
+  })
+
+  it('advances a stamped position only while playing, and clamps to the duration', () => {
+    const stamped = { ...base, positionUpdatedAt: 1_000 }
+    expect(projectedPositionMs(stamped, 6_000)).toBe(15_000)
+    expect(projectedPositionMs(stamped, 1_000_000)).toBe(100_000)
+    expect(projectedPositionMs({ ...stamped, state: 'paused' }, 6_000)).toBe(10_000)
+    expect(projectedPositionMs(base, 6_000)).toBe(10_000)
   })
 })

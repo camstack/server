@@ -271,23 +271,28 @@ export function ArcKnob({ fraction, color, knobTopPx, onDragFraction }: ArcKnobP
 interface GripTrackProps {
   readonly fraction: number
   readonly color?: string
+  /** A progress indication nothing can be dragged on: no grip thumb. */
+  readonly readOnly?: boolean
 }
 
 /**
- * Horizontal track with a white grip thumb at `fraction` (0..1). For seek/volume/brightness.
+ * Horizontal track with a white grip thumb at `fraction` (0..1). For seek/volume/brightness;
+ * `readOnly` draws the fill alone (a progress indication).
  * @remarks display-only indicator; interactive drag is deferred to a later task.
  */
-export function GripTrack({ fraction, color }: GripTrackProps): ReactNode {
+export function GripTrack({ fraction, color, readOnly }: GripTrackProps): ReactNode {
   return (
     <div className="relative h-2 w-full rounded-full bg-border">
       <div
         className="absolute left-0 top-0 h-2 rounded-full"
         style={{ width: `${fraction * 100}%`, background: color ?? 'var(--color-primary)' }}
       />
-      <div
-        className="absolute -top-1 h-4 w-4 rounded-full bg-white shadow"
-        style={{ left: `calc(${fraction * 100}% - 8px)` }}
-      />
+      {readOnly !== true && (
+        <div
+          className="absolute -top-1 h-4 w-4 rounded-full bg-white shadow"
+          style={{ left: `calc(${fraction * 100}% - 8px)` }}
+        />
+      )}
     </div>
   )
 }

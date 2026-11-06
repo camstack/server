@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { DeviceFeature } from '@camstack/types'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { MediaPlayerHeroCard } from '../media-player-hero-card'
 
@@ -197,5 +197,108 @@ describe('MediaPlayerHeroCard — only what is known', () => {
     expect(screen.getByTestId('media-hero').getAttribute('data-power')).toBe('off')
     expect(screen.queryByText('Not running')).toBeNull()
     mockSlices = {}
+  })
+})
+
+const PLAYING = {
+  ...infrared,
+  state: 'playing' as const,
+  stateSource: 'reported' as const,
+  assumedFields: [],
+  volumeLevel: 40,
+  isMuted: false,
+}
+
+function renderPlaying(extra: Record<string, unknown> = {}, features = FEATURES): void {
+  mockSlices = {}
+  mockResult = { cap, slice: { ...PLAYING, ...extra }, available: true }
+  render(<MediaPlayerHeroCard trpc={{} as never} deviceId={1} features={features} />)
+}
+
+function volumeInput(): HTMLInputElement {
+  return screen.getByLabelText('Volume') as HTMLInputElement
+}
+
+describe('MediaPlayerHeroCard — optimistic controls', () => {
+  it('a refused volume change rolls the slider back to the reported level', async () => {
+    cap.setVolume.mockReset()
+    cap.setVolume.mockRejectedValueOnce(new Error('refused'))
+    renderPlaying()
+    await act(async () => {
+      fireEvent.change(volumeInput(), { target: { value: '70' } })
+    })
+    expect(cap.setVolume).toHaveBeenCalledWith({ volumeLevel: 70 })
+    expect(volumeInput().value).toBe('40')
+  })
+
+  it('an accepted volume change keeps the new value', async () => {
+    cap.setVolume.mockReset()
+    cap.setVolume.mockResolvedValueOnce(undefined)
+    renderPlaying()
+    await act(async () => {
+      fireEvent.change(volumeInput(), { target: { value: '70' } })
+    })
+    expect(volumeInput().value).toBe('70')
+  })
+})
+
+describe('MediaPlayerHeroCard — now playing', () => {
+  const MEDIA = {
+    title: 'Song',
+    artist: 'Band',
+    album: 'Record',
+    imageUrl: 'https://img.example/a.jpg',
+  }
+
+  it('draws title, artist and album, artwork, source and progress', () => {
+    renderPlaying({ currentMedia: MEDIA, source: 'Spotify', position: 65_000, duration: 200_000 })
+    expect(screen.getByTestId('media-title').textContent).toBe('Song')
+    expect(screen.getByTestId('media-subtitle').textContent).toBe('Band · Record')
+    expect(screen.getByTestId('media-artwork-img').getAttribute('src')).toBe(MEDIA.imageUrl)
+    expect(screen.getByTestId('media-source').textContent).toBe('Spotify')
+    const progress = screen.getByTestId('media-progress')
+    expect(progress.textContent).toContain('1:05')
+    expect(progress.textContent).toContain('3:20')
+    // Not seekable here: a progress indication, no slider.
+    expect(screen.queryByTestId('media-seek')).toBeNull()
+  })
+
+  it('draws no progress while the position is unknown', () => {
+    renderPlaying({ currentMedia: MEDIA, position: null, duration: 200_000 })
+    expect(screen.queryByTestId('media-progress')).toBeNull()
+  })
+
+  it('shows what plays when the provider reports the device as off, without any controls', () => {
+    renderPlaying({ state: 'standby', currentMedia: MEDIA, source: 'Spotify' })
+    expect(screen.getByTestId('media-title').textContent).toBe('Song')
+    expect(screen.queryByTestId('media-volume')).toBeNull()
+  })
+
+  it('advances a stamped position while playing and holds an unstamped one', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(100_000)
+    renderPlaying({
+      currentMedia: MEDIA,
+      position: 10_000,
+      duration: 200_000,
+      positionUpdatedAt: 100_000,
+    })
+    act(() => {
+      vi.advanceTimersByTime(5000)
+    })
+    expect(screen.getByTestId('media-progress').textContent).toContain('0:15')
+    vi.useRealTimers()
+  })
+
+  it('draws a shuffle / repeat value the device reports but cannot change as a flag, not a button', () => {
+    renderPlaying({ currentMedia: MEDIA, shuffle: true, repeat: 'all' })
+    expect(screen.getByTestId('media-shuffle-flag').getAttribute('data-active')).toBe('true')
+    expect(screen.getByTestId('media-repeat-flag')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Shuffle' })).toBeNull()
+  })
+
+  it('draws the idle fixture with nothing playing', () => {
+    renderPlaying({ state: 'idle', currentMedia: null, source: '' })
+    expect(screen.queryByTestId('media-now-playing')).toBeNull()
   })
 })

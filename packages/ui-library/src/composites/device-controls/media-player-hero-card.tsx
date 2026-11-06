@@ -29,7 +29,13 @@ import type {
 import type { DeviceControlProps } from './control-registry'
 import { GripTrack } from './atoms'
 import { MEDIA_HERO_KEYFRAMES, PowerOrb, RunningIndicator } from './media-player-hero-parts'
-import { deriveMediaPlayerView, type PowerView } from './media-player-view'
+import {
+  deriveMediaPlayerView,
+  isPositionTicking,
+  projectedPositionMs,
+  type NowPlayingView,
+  type PowerView,
+} from './media-player-view'
 
 // ── Cap surface ───────────────────────────────────────────────────────────────
 // Named cap type; the accessor performs the documented cap-access boundary
@@ -84,12 +90,6 @@ const NEXT_REPEAT: Readonly<Record<MediaPlayerRepeat, MediaPlayerRepeat>> = {
 
 // ── Now-playing block ─────────────────────────────────────────────────────────
 
-interface NowPlayingProps {
-  readonly title: string | null
-  readonly subtitle: string | null
-  readonly artworkUrl: string | null
-}
-
 /** The artwork of what is playing; a change cross-fades from the previous cover. */
 function Artwork({ url }: { readonly url: string | null }): ReactNode {
   const [shown, setShown] = useState<string | null>(url)
@@ -136,19 +136,45 @@ function Artwork({ url }: { readonly url: string | null }): ReactNode {
   )
 }
 
-function NowPlaying({ title, subtitle, artworkUrl }: NowPlayingProps): ReactNode {
+interface NowPlayingProps {
+  readonly media: NowPlayingView
+  /** Position to draw in ms (advanced locally when the status is stamped); null = unknown. */
+  readonly positionMs: number | null
+}
+
+function NowPlaying({ media, positionMs }: NowPlayingProps): ReactNode {
   const t = useUiText()
+  const progress = media.progress
   return (
-    <div className="flex flex-col items-center gap-2 text-center">
-      {artworkUrl !== null ? (
-        <Artwork url={artworkUrl} />
+    <div className="flex flex-col items-center gap-2 text-center" data-testid="media-now-playing">
+      {media.artworkUrl !== null ? (
+        <Artwork url={media.artworkUrl} />
       ) : (
         <Music className="h-6 w-6 text-foreground-subtle" aria-hidden="true" />
       )}
-      <span className="text-base font-semibold text-foreground line-clamp-1">
-        {title ?? t('uiLibrary.mediaPlayerHero.nothing', 'Nothing playing')}
+      <span
+        className="text-base font-semibold text-foreground line-clamp-1"
+        data-testid="media-title"
+      >
+        {media.title ?? t('uiLibrary.mediaPlayerHero.nothing', 'Nothing playing')}
       </span>
-      {subtitle && <span className="text-xs text-foreground-subtle line-clamp-1">{subtitle}</span>}
+      {media.subtitle !== null && (
+        <span className="text-xs text-foreground-subtle line-clamp-1" data-testid="media-subtitle">
+          {media.subtitle}
+        </span>
+      )}
+      {progress !== null && (
+        <div className="flex w-full flex-col gap-1" data-testid="media-progress">
+          <GripTrack
+            readOnly
+            fraction={progressFraction(positionMs ?? progress.positionMs, progress.durationMs)}
+          />
+          <div className="flex justify-between text-[11px] tabular-nums text-foreground-subtle">
+            <span>{formatClock(positionMs ?? progress.positionMs)}</span>
+            <span>{formatClock(progress.durationMs)}</span>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -257,6 +283,32 @@ function TransportButton({
   )
 }
 
+interface ModeFlagProps {
+  readonly label: string
+  readonly active: boolean
+  readonly testId: string
+  readonly children: ReactNode
+}
+
+/** A shuffle / repeat value the device reports but cannot be told to change: drawn, not pressable. */
+function ModeFlag({ label, active, testId, children }: ModeFlagProps): ReactNode {
+  return (
+    <span
+      role="img"
+      aria-label={label}
+      title={label}
+      data-testid={testId}
+      data-active={active}
+      className={cn(
+        'inline-flex h-8 w-8 items-center justify-center rounded-full',
+        active ? 'bg-primary/15 text-primary' : 'text-foreground-subtle',
+      )}
+    >
+      {children}
+    </span>
+  )
+}
+
 // ── MediaPlayerHeroCard ─────────────────────────────────────────────────────
 
 /**
@@ -296,6 +348,16 @@ export function MediaPlayerHeroCard({
     enabled: optimistic ?? true,
   })
 
+  // While the device reports a stamped position the progress advances locally, once a second.
+  const ticking = isPositionTicking(display)
+  const [nowMs, setNowMs] = useState(() => Date.now())
+  useEffect(() => {
+    if (!ticking) return
+    setNowMs(Date.now())
+    const timer = setInterval(() => setNowMs(Date.now()), 1000)
+    return () => clearInterval(timer)
+  }, [ticking])
+
   // A sibling `running-state` cap on the same device (an infrared TV composed with it) can
   // settle the power guess; the running line and the draw are the device page's hero line
   // and the power-meter hero widget (D1004), not this card's.
@@ -330,14 +392,19 @@ export function MediaPlayerHeroCard({
     }
   }
 
-  const title = status?.currentMedia?.title ?? null
-  const subtitle = status?.currentMedia?.artist ?? status?.currentMedia?.album ?? null
-  const hasNowPlaying = powered && (title !== null || subtitle !== null || view.artworkUrl !== null)
+  // What plays is shown whenever the device reports it, whatever the power reading says.
+  const nowPlaying = view.nowPlaying
+  const positionMs = status === undefined ? null : projectedPositionMs(status, nowMs)
   const assumedAny =
     view.stateAssumed || view.volumeAssumed || view.muteAssumed || view.sourceAssumed
   // A source that cannot be switched is plain text on the state line; a picker replaces it.
+  const sourcePicker = powered && view.source !== null && view.source.selectable
   const sourceText =
-    powered && view.source !== null && !view.source.selectable ? view.source.current : ''
+    !sourcePicker && view.power !== 'off' && view.power !== 'standby'
+      ? typeof status?.source === 'string'
+        ? status.source.trim()
+        : ''
+      : ''
   const volumeLevel = status?.volumeLevel ?? null
 
   return (
@@ -367,12 +434,10 @@ export function MediaPlayerHeroCard({
           running={<RunningIndicator running={view.running} />}
         />
       </div>
-      {hasNowPlaying && (
-        <NowPlaying title={title} subtitle={subtitle} artworkUrl={view.artworkUrl} />
-      )}
+      {nowPlaying !== null && <NowPlaying media={nowPlaying} positionMs={positionMs} />}
 
       {/* ── Source picker ───────────────────────────────────────────────────── */}
-      {powered && view.source !== null && view.source.selectable && (
+      {sourcePicker && view.source !== null && (
         <div data-testid="media-source-select" className="flex items-center gap-2">
           <span className="text-xs text-foreground-subtle">
             {t('uiLibrary.mediaPlayerHero.source', 'Source')}
@@ -405,7 +470,7 @@ export function MediaPlayerHeroCard({
               max={status.duration ?? 0}
               step={1000}
               className="absolute inset-0 h-4 w-full cursor-pointer opacity-0"
-              value={status.position ?? 0}
+              value={positionMs ?? 0}
               disabled={busy}
               onChange={(e) => {
                 if (busy) return
@@ -416,11 +481,11 @@ export function MediaPlayerHeroCard({
               }}
             />
             <div className="pointer-events-none">
-              <GripTrack fraction={progressFraction(status.position, status.duration)} />
+              <GripTrack fraction={progressFraction(positionMs, status.duration)} />
             </div>
           </label>
           <div className="flex justify-between text-[11px] tabular-nums text-foreground-subtle">
-            <span>{formatClock(status.position)}</span>
+            <span>{formatClock(positionMs)}</span>
             <span>{formatClock(status.duration)}</span>
           </div>
         </div>
@@ -574,41 +639,66 @@ export function MediaPlayerHeroCard({
       )}
 
       {/* ── Shuffle / repeat ────────────────────────────────────────────────── */}
-      {powered && status !== undefined && (view.shuffle || view.repeat) && (
-        <div className="flex items-center justify-center gap-2" data-testid="media-modes">
-          {view.shuffle && status.shuffle !== null && (
-            <TransportButton
-              label={t('uiLibrary.mediaPlayerHero.shuffle', 'Shuffle')}
-              busy={busy}
-              active={status.shuffle}
-              onPress={() => {
-                const shuffle = !status.shuffle
-                applyOptimisticAction({ shuffle }, () => cap.setShuffle({ shuffle }))
-              }}
-            >
-              <Shuffle className="h-4 w-4" aria-hidden="true" />
-            </TransportButton>
-          )}
-          {view.repeat && status.repeat !== null && (
-            <TransportButton
-              label={t('uiLibrary.mediaPlayerHero.repeat', 'Repeat')}
-              busy={busy}
-              active={status.repeat !== 'off'}
-              onPress={() => {
-                if (status.repeat === null) return
-                const repeat = NEXT_REPEAT[status.repeat]
-                applyOptimisticAction({ repeat }, () => cap.setRepeat({ repeat }))
-              }}
-            >
-              {status.repeat === 'one' ? (
-                <Repeat1 className="h-4 w-4" aria-hidden="true" />
-              ) : (
-                <Repeat className="h-4 w-4" aria-hidden="true" />
-              )}
-            </TransportButton>
-          )}
-        </div>
-      )}
+      {status !== undefined &&
+        ((powered && (view.shuffle || view.repeat)) ||
+          view.shuffleReadOnly ||
+          view.repeatReadOnly) && (
+          <div className="flex items-center justify-center gap-2" data-testid="media-modes">
+            {view.shuffleReadOnly && status.shuffle !== null && (
+              <ModeFlag
+                label={t('uiLibrary.mediaPlayerHero.shuffle', 'Shuffle')}
+                active={status.shuffle}
+                testId="media-shuffle-flag"
+              >
+                <Shuffle className="h-4 w-4" aria-hidden="true" />
+              </ModeFlag>
+            )}
+            {view.repeatReadOnly && status.repeat !== null && (
+              <ModeFlag
+                label={t('uiLibrary.mediaPlayerHero.repeat', 'Repeat')}
+                active={status.repeat !== 'off'}
+                testId="media-repeat-flag"
+              >
+                {status.repeat === 'one' ? (
+                  <Repeat1 className="h-4 w-4" aria-hidden="true" />
+                ) : (
+                  <Repeat className="h-4 w-4" aria-hidden="true" />
+                )}
+              </ModeFlag>
+            )}
+            {powered && view.shuffle && status.shuffle !== null && (
+              <TransportButton
+                label={t('uiLibrary.mediaPlayerHero.shuffle', 'Shuffle')}
+                busy={busy}
+                active={status.shuffle}
+                onPress={() => {
+                  const shuffle = !status.shuffle
+                  applyOptimisticAction({ shuffle }, () => cap.setShuffle({ shuffle }))
+                }}
+              >
+                <Shuffle className="h-4 w-4" aria-hidden="true" />
+              </TransportButton>
+            )}
+            {powered && view.repeat && status.repeat !== null && (
+              <TransportButton
+                label={t('uiLibrary.mediaPlayerHero.repeat', 'Repeat')}
+                busy={busy}
+                active={status.repeat !== 'off'}
+                onPress={() => {
+                  if (status.repeat === null) return
+                  const repeat = NEXT_REPEAT[status.repeat]
+                  applyOptimisticAction({ repeat }, () => cap.setRepeat({ repeat }))
+                }}
+              >
+                {status.repeat === 'one' ? (
+                  <Repeat1 className="h-4 w-4" aria-hidden="true" />
+                ) : (
+                  <Repeat className="h-4 w-4" aria-hidden="true" />
+                )}
+              </TransportButton>
+            )}
+          </div>
+        )}
     </div>
   )
 }
