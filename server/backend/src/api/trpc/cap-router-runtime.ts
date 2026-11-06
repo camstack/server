@@ -281,7 +281,7 @@ export async function pinnedDeviceCollectionCall(
 export function addonPinOf(
   reg: CapabilityRegistry | null,
   capName: string,
-  method: string,
+  _method: string,
   args: unknown,
 ): string | null {
   if (!reg) return null
