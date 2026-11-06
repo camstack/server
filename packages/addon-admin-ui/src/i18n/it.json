@@ -2799,7 +2799,8 @@
         "native": "Nativo",
         "assigned": "{{count}} assegnati",
         "pending": "Verifica",
-        "unknown": "Illeggibile"
+        "unknown": "Illeggibile",
+        "custom": "Personalizzato"
       },
       "duplicateKey": "Esiste già un elemento con chiave \"{{key}}\"."
     },

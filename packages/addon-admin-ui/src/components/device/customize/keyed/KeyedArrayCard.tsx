@@ -350,6 +350,7 @@ function badgeLabel(t: TFunction, text: string, count: number): string {
   if (text === 'Native') return t('customize.keyed.badge.native')
   if (text === 'pending') return t('customize.keyed.badge.pending')
   if (text === 'unknown') return t('customize.keyed.badge.unknown')
+  if (text === 'custom') return t('customize.keyed.badge.custom')
   if (text.endsWith('assigned')) return t('customize.keyed.badge.assigned', { count })
   return text
 }

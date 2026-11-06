@@ -2724,7 +2724,8 @@
         "native": "Native",
         "assigned": "{{count}} assigned",
         "pending": "Checking",
-        "unknown": "Unreadable"
+        "unknown": "Unreadable",
+        "custom": "Custom"
       },
       "duplicateKey": "An item with key \"{{key}}\" already exists."
     },

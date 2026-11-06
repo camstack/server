@@ -33,13 +33,8 @@ export function projectKeyedArrayAssignment(
   if (input.stored.value === null) return native(input.targetId)
   const read = readKeyedArrayItems(input.stored.value, input.cap, input.targetId)
   const count = read?.items.filter((item) => item.recognized).length ?? 0
-  if (read === null || !read.canonical || count === 0) {
-    return {
-      text: 'unknown',
-      assignedCount: 0,
-      status: status(input.targetId, true, 'assigned', 'unavailable', 'not-canonical'),
-    }
-  }
+  const readable = read !== null && read.canonical && read.items.every((item) => item.recognized)
+  if (!readable || count === 0) return custom(input.targetId)
   return projectDecoded(input, count)
 }
 
@@ -79,6 +74,19 @@ function projectDecoded(
     text,
     assignedCount: count,
     status: status(input.targetId, true, 'assigned', 'active', null),
+  }
+}
+
+/**
+ * A stored list this card did not write, or wrote only in part (an item that
+ * assigns two fields, an expression, a reset). It is working, so it is never
+ * `unknown`; the card just cannot edit it.
+ */
+function custom(targetId: string): KeyedArrayAssignmentProjection {
+  return {
+    text: 'custom',
+    assignedCount: 0,
+    status: status(targetId, true, 'assigned', 'active', 'not-canonical'),
   }
 }
 

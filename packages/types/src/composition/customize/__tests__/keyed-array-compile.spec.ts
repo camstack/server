@@ -229,4 +229,102 @@ describe('keyed-array compiler', () => {
     expect(pending.text).toBe('pending')
     expect(pending.status.state).toBe('unavailable')
   })
+
+  describe('a stored list the card cannot re-read', () => {
+    const FILTER_DAYS = { d: fromRead(METER, 'enum-sensor', 'value') }
+    const filterFeature: CompositionFieldsFeature = {
+      kind: 'fields',
+      cap: 'consumables',
+      fields: { lastChangedAt: literal('now'), lastFetchedAt: literal('now') },
+      items: {
+        filter: {
+          label: 'Filter',
+          fields: {
+            'remaining.value': { kind: 'expression', expr: 'number(d)', bindings: FILTER_DAYS },
+            'remaining.kind': literal('"duration"'),
+            status: {
+              kind: 'expression',
+              expr: 'number(d) == null ? null : (number(d) <= 0 ? "replace" : "ok")',
+              bindings: FILTER_DAYS,
+            },
+          },
+          reset: { kind: 'forward', source: METER, cap: 'button', method: 'press' },
+        },
+      },
+    }
+
+    function project(feature: CompositionFieldsFeature) {
+      return projectKeyedArrayAssignment({
+        cap: 'consumables',
+        targetId: 'items',
+        device: DEVICE,
+        stored: { kind: 'known', value: feature },
+        sourcePresence: 'present',
+        sourceUnknownReason: null,
+      })
+    }
+
+    it('is custom, never unknown: two assigned fields and a reset are a working list', () => {
+      const projected = project(filterFeature)
+      expect(projected.text).toBe('custom')
+      expect(projected.status).toEqual({
+        targetId: 'items',
+        configured: true,
+        source: 'assigned',
+        state: 'active',
+        reason: 'not-canonical',
+      })
+    })
+
+    it('stays custom when one of two items is not readable', () => {
+      const compiled = compile([levelItem('food', 'Food')])
+      expect(compiled.ok).toBe(true)
+      if (!compiled.ok || compiled.value.items === undefined) return
+      const mixed: CompositionFieldsFeature = {
+        ...compiled.value,
+        items: { ...compiled.value.items, ...filterFeature.items },
+      }
+      expect(project(mixed).text).toBe('custom')
+    })
+
+    it('still reads a dishwasher status item and a Dreame linear level item', () => {
+      const dishwasher = compile([
+        {
+          ...levelItem('salt', 'Salt'),
+          draft: {
+            ...levelItem('salt', 'Salt').draft,
+            fieldPath: 'status',
+            source: { ...METER, cap: 'enum-sensor', fieldPath: 'value' },
+            transform: { kind: 'enum-map', mapping: { on: 'low', off: 'ok' } },
+          },
+          sourceValueKind: 'enum',
+          literals: [
+            { path: 'kind', value: 'supply' },
+            { path: 'form', value: 'product' },
+          ],
+        },
+      ])
+      const dreame = compile([
+        {
+          ...levelItem('main-brush', 'Main brush'),
+          draft: {
+            ...levelItem('main-brush', 'Main brush').draft,
+            transform: { kind: 'linear', scale: 0.3333, offset: 0, clampMin: 0, clampMax: 100 },
+          },
+        },
+      ])
+      for (const compiled of [dishwasher, dreame]) {
+        expect(compiled.ok).toBe(true)
+        if (!compiled.ok) return
+        expect(project(compiled.value).text).toBe('1 assigned')
+        const decoded = decodeKeyedArrayOverride({
+          feature: compiled.value,
+          device: DEVICE,
+          cap: 'consumables',
+          targetId: 'items',
+        })
+        expect(decoded?.items).toHaveLength(1)
+      }
+    })
+  })
 })
