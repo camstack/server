@@ -12,7 +12,6 @@ import type {
   ITrainingCloudProvider,
   ProviderJobState,
   ProviderJobStatus,
-  TrainingCredentialCheck,
   TrainingLogLine,
   TrainingProviderDescriptor,
   TrainingProviderEntry,
@@ -142,38 +141,6 @@ export class FakeTrainingProvider implements ITrainingCloudProvider {
       addonId: this.addonId,
       configured: entry.configured,
     }))
-
-  readonly createEntry = async (input: { typeId: string; name: string }) => {
-    if (input.typeId !== FAKE_TYPE_ID) throw new Error(`unknown type "${input.typeId}"`)
-    const entryId = `fake-${String(this.entries.length + 1)}`
-    this.entries.push({ entryId, name: input.name, configured: false })
-    return { entryId }
-  }
-
-  readonly updateEntry = async (input: { entryId: string; name: string }) => {
-    const entry = this.entries.find((e) => e.entryId === input.entryId)
-    if (entry === undefined) throw new Error(`unknown entry "${input.entryId}"`)
-    entry.name = input.name
-    entry.configured = true
-    return { ok: true as const }
-  }
-
-  readonly deleteEntry = async (input: { entryId: string }) => {
-    const before = this.entries.length
-    this.entries = this.entries.filter((e) => e.entryId !== input.entryId)
-    if (this.entries.length === before) throw new Error(`unknown entry "${input.entryId}"`)
-    return { ok: true as const }
-  }
-
-  readonly validateCredentials = async (input: {
-    entryId: string
-  }): Promise<TrainingCredentialCheck> => {
-    const entry = this.entries.find((e) => e.entryId === input.entryId)
-    if (entry === undefined) return { ok: false, reason: 'missing', detail: 'unknown entry' }
-    return entry.configured
-      ? { ok: true, account: 'fake-workspace' }
-      : { ok: false, reason: 'missing' }
-  }
 
   readonly estimateJob = async (input: { gpuSecondsLow: number; gpuSecondsHigh: number }) => ({
     usdLow: (input.gpuSecondsLow / 3600) * 0.8,

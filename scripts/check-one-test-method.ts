@@ -45,7 +45,6 @@ export const PENDING: Readonly<Record<string, string>> = {
   'storage-provider.cap.ts:testLocation': 'folds in at step 5/6 (storage locations become instances)',
   'llm.cap.ts:testProfile': 'folds in at step 5/6 (llm profiles become instances)',
   'mesh-network.cap.ts:testConnection': 'folds in at step 5/6 (tailscale becomes an instance)',
-  'training-provider.cap.ts:validateCredentials': 'folds in at step 5/6 (training providers become instances)',
 }
 
 export interface SourceFile {

@@ -226,7 +226,7 @@ Singleton or collection providers, addressed without a device.
 | `terminal-session` | 14 | — | — | — | — | `terminal` |
 | `toast` | 1 | — | — | — | — | — |
 | `training` | 13 | — | — | — | — | `training` |
-| `training-provider` | 17 | — | — | — | ✓ | `training-modal` |
+| `training-provider` | 13 | — | — | — | ✓ | `training-modal` |
 | `turn-provider` | 1 | — | — | — | — | `cloudflare-turn` `static-turn` |
 | `user-management` | 23 | — | — | — | — | `local-auth` |
 | `user-passkeys` | 10 | — | — | — | ✓ | `auth-webauthn` |

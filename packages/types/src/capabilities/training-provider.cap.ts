@@ -230,43 +230,6 @@ export const trainingProviderCapability = {
       auth: 'admin',
     }),
 
-    /**
-     * Create an entry under this provider type. Pin with `{ addonId }` of the
-     * type's owning addon (from describeTypes).
-     */
-    createEntry: method(
-      z.object({ typeId: z.string().min(1), name: z.string().min(1) }),
-      z.object({ entryId: z.string() }),
-      { kind: 'mutation', auth: 'admin' },
-    ),
-
-    /** Delete an entry. Pin with the owning `{ addonId }`. */
-    deleteEntry: method(
-      z.object({ entryId: z.string().min(1) }),
-      z.object({ ok: z.literal(true) }),
-      { kind: 'mutation', auth: 'admin' },
-    ),
-
-    /**
-     * Update one entry (name, credentials, defaults). Pin with owning
-     * `{ addonId }`. Empty/omitted `tokenSecret` keeps the stored secret.
-     */
-    updateEntry: method(TrainingProviderUpdateEntryInputSchema, z.object({ ok: z.literal(true) }), {
-      kind: 'mutation',
-      auth: 'admin',
-    }),
-
-    /** Call the provider with the entry's stored credentials. Never returns them. */
-    validateCredentials: method(
-      z.object({ entryId: z.string().min(1) }),
-      TrainingCredentialCheckSchema,
-      {
-        kind: 'mutation',
-        auth: 'admin',
-        timeoutMs: 30_000,
-      },
-    ),
-
     /** USD range for a run of `gpuSeconds` on `gpuType` in `region`. */
     estimateJob: method(
       z.object({

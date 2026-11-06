@@ -331,5 +331,5 @@ export const CAP_METHOD_TIMEOUTS_MS: Readonly<
   "server-management": { "applyServerUpdate": 960000 },
   "terminal-session": { "pullOutput": 15000 },
   "training": { "canaryResult": 120000, "cancelJob": 120000, "planJob": 60000, "registerResult": 1800000, "rollbackCanary": 120000, "startJob": 120000, "startJobBatch": 120000 },
-  "training-provider": { "cancelJob": 60000, "cleanupJob": 300000, "getJob": 60000, "listJobEvents": 60000, "listJobs": 120000, "offerArtifact": 300000, "readResult": 300000, "submitJob": 1800000, "uploadDataset": 7200000, "validateCredentials": 30000 },
+  "training-provider": { "cancelJob": 60000, "cleanupJob": 300000, "getJob": 60000, "listJobEvents": 60000, "listJobs": 120000, "offerArtifact": 300000, "readResult": 300000, "submitJob": 1800000, "uploadDataset": 7200000 },
 })

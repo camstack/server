@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1492 method paths across 202 capabilities.
+ * Coverage: 1488 method paths across 202 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -1405,8 +1405,6 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'training.startJobBatch': { capName: "training", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'trainingProvider.cancelJob': { capName: "training-provider", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'trainingProvider.cleanupJob': { capName: "training-provider", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
-  'trainingProvider.createEntry': { capName: "training-provider", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
-  'trainingProvider.deleteEntry': { capName: "training-provider", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'trainingProvider.describe': { capName: "training-provider", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'trainingProvider.describeTypes': { capName: "training-provider", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'trainingProvider.estimateJob': { capName: "training-provider", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
@@ -1417,9 +1415,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'trainingProvider.offerArtifact': { capName: "training-provider", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'trainingProvider.readResult': { capName: "training-provider", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'trainingProvider.submitJob': { capName: "training-provider", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
-  'trainingProvider.updateEntry': { capName: "training-provider", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'trainingProvider.uploadDataset': { capName: "training-provider", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
-  'trainingProvider.validateCredentials': { capName: "training-provider", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'turnProvider.getTurnServers': { capName: "turn-provider", capScope: "system", addonId: null, access: "view", role: "viewer" } as const,
   'update.getStatus': { capName: "update", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'update.installUpdate': { capName: "update", capScope: "device", addonId: null, access: "create", role: "admin" } as const,

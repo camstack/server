@@ -30,10 +30,7 @@
     },
     "training": {
       "training-provider.cap.ts:describeTypes": "type catalogue of training provider entries; kinds of integration-instances (P6g)",
-      "training-provider.cap.ts:listEntries": "entry list; the modal addon already serves integration-instances (P6g)",
-      "training-provider.cap.ts:createEntry": "entry create; folds into upsertInstance (P6g)",
-      "training-provider.cap.ts:updateEntry": "entry update; folds into upsertInstance (P6g)",
-      "training-provider.cap.ts:deleteEntry": "entry delete; folds into deleteInstance (P6g)"
+      "training-provider.cap.ts:listEntries": "entry list; still read by the training orchestrator (api-ports addonForEntry), not by any page (P6g)"
     },
     "waste": {
       "packages/addon-waste-collections/src/custom-actions.ts:listSources": "custom-action source list; becomes the instances of function cap calendar-source (P6e)",

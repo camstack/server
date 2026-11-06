@@ -30,33 +30,10 @@ export function providerPort(api: AddonApi): ProviderPort {
     return entry.addonId
   }
 
-  const addonForType = async (typeId: string): Promise<string> => {
-    const types = await p.describeTypes.query({})
-    const type = types.find((t) => t.typeId === typeId)
-    if (type === undefined) throw new Error(`unknown training provider type "${typeId}"`)
-    return type.addonId
-  }
-
   return {
     describe: () => p.describe.query({}),
     describeTypes: () => p.describeTypes.query({}),
     listEntries: () => p.listEntries.query({}),
-    createEntry: async (i) => {
-      const addonId = await addonForType(i.typeId)
-      return p.createEntry.mutate({ ...i, addonId })
-    },
-    updateEntry: async (i) => {
-      const addonId = await addonForEntry(i.entryId)
-      return p.updateEntry.mutate({ ...i, addonId })
-    },
-    deleteEntry: async (i) => {
-      const addonId = await addonForEntry(i.entryId)
-      return p.deleteEntry.mutate({ ...i, addonId })
-    },
-    validateCredentials: async (i) => {
-      const addonId = await addonForEntry(i.entryId)
-      return p.validateCredentials.mutate({ ...i, addonId })
-    },
     estimateJob: async (i) => {
       const addonId = await addonForEntry(i.entryId)
       return p.estimateJob.query({ ...i, addonId })

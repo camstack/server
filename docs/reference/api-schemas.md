@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1039 shared schemas.**
+**1037 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -7161,13 +7161,6 @@ Enum: `"new" \| "entered" \| "left" \| "moving" \| "idle"`
 - `collectionIds`: `string[]`
 - `workState?`: `"complete" \| "annotated_or_complete" \| "any_annotated" = "complete"`
 
-### `TrainingCredentialCheckSchema`
-
-- `ok`: `boolean`
-- `account?`: `string`
-- `reason?`: `"missing" \| "invalid" \| "forbidden" \| "network" \| "quota"`
-- `detail?`: `string`
-
 ### `TrainingExportDeviceTotalsSchema`
 
 - `deviceId`: `number`
@@ -7307,19 +7300,6 @@ Enum: `"quick" \| "standard" \| "thorough"`
 - `iconAsset`: `string`
 - `addonId`: `string`
 - `configSchema?`: `unknown`
-
-### `TrainingProviderUpdateEntryInputSchema`
-
-- `entryId`: `string`
-- `name`: `string`
-- `tokenId?`: `string`
-- `tokenSecret?`: `string \| { $secretClear: true }`
-- `environment?`: `string`
-- `gpuType?`: `string`
-- `region?`: `string`
-- `costCapUsd?`: `number`
-- `maxRuntimeSec?`: `number`
-- `failedDatasetGraceHours?`: `number`
 
 ### `TrainingRefusalReasonSchema`
 

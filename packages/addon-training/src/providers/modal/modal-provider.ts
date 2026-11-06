@@ -21,22 +21,18 @@ import type {
   ITrainingCloudProvider,
   PeerBytesTicket,
   ProviderJobStatus,
-  SecretClearInstruction,
   SecretFieldView,
-  TrainingCredentialCheck,
   TrainingLogLine,
   TrainingProviderDescriptor,
   TrainingProviderEntry,
   TrainingProviderType,
 } from '@camstack/types'
-import { isSecretClear } from '@camstack/types'
 import { parseTrainerDockerfile, trainerDockerfileUrl } from './dockerfile.js'
 import { MODAL_ENTRY_CONFIG_SCHEMA } from './modal-entry-schema.js'
 import { MODAL_ICON_ASSET, MODAL_TYPE_ID, type ModalEntryRecord } from './modal-entries.js'
 import {
   MODAL_CACHE_VOLUME,
   MODAL_TOOLS_IMAGE,
-  ModalAuthError,
   type ModalGateway,
   type ModalSandbox,
 } from './modal-gateway.js'
@@ -77,23 +73,6 @@ export interface ModalProviderDeps {
   readonly entry: (entryId: string) => ModalEntryRecord | null
   /** `null` while the entry has no token. */
   readonly gateway: (entryId: string) => ModalGateway | null
-  readonly createEntry: (input: { typeId: string; name: string }) => Promise<{ entryId: string }>
-  readonly updateEntry: (
-    entryId: string,
-    patch: {
-      name: string
-      tokenId?: string
-      tokenSecret?: string
-      clearTokenSecret?: boolean
-      environment?: string
-      gpuType?: string
-      region?: string
-      costCapUsd?: number
-      maxRuntimeHours?: number
-      failedDatasetGraceHours?: number
-    },
-  ) => Promise<void>
-  readonly deleteEntry: (entryId: string) => Promise<void>
   /** Keychain views for each entry id — never plaintext (D787 / D789). */
   readonly secretViews: () => Promise<ReadonlyMap<string, SecretFieldView | null>>
   readonly ledger: ModalJobLedger
@@ -149,69 +128,6 @@ export class ModalTrainingProvider implements ITrainingCloudProvider {
       addonId: this.deps.addonId,
       configured: this.entryConfigured(entry),
     }))
-
-  readonly createEntry = async (input: { typeId: string; name: string }) =>
-    this.deps.createEntry(input)
-
-  readonly updateEntry = async (input: {
-    entryId: string
-    name: string
-    tokenId?: string
-    tokenSecret?: string | SecretClearInstruction
-    environment?: string
-    gpuType?: string
-    region?: string
-    costCapUsd?: number
-    maxRuntimeSec?: number
-    failedDatasetGraceHours?: number
-  }) => {
-    const secret =
-      input.tokenSecret === undefined
-        ? {}
-        : isSecretClear(input.tokenSecret)
-          ? { clearTokenSecret: true as const }
-          : input.tokenSecret === ''
-            ? {}
-            : { tokenSecret: input.tokenSecret }
-    await this.deps.updateEntry(input.entryId, {
-      name: input.name,
-      ...(input.tokenId !== undefined ? { tokenId: input.tokenId } : {}),
-      ...secret,
-      ...(input.environment !== undefined ? { environment: input.environment } : {}),
-      ...(input.gpuType !== undefined ? { gpuType: input.gpuType } : {}),
-      ...(input.region !== undefined ? { region: input.region } : {}),
-      ...(input.costCapUsd !== undefined ? { costCapUsd: input.costCapUsd } : {}),
-      ...(input.maxRuntimeSec !== undefined ? { maxRuntimeHours: input.maxRuntimeSec / 3600 } : {}),
-      ...(input.failedDatasetGraceHours !== undefined
-        ? { failedDatasetGraceHours: input.failedDatasetGraceHours }
-        : {}),
-    })
-    return { ok: true as const }
-  }
-
-  readonly deleteEntry = async (input: { entryId: string }) => {
-    await this.deps.deleteEntry(input.entryId)
-    return { ok: true as const }
-  }
-
-  readonly validateCredentials = async (input: {
-    entryId: string
-  }): Promise<TrainingCredentialCheck> => {
-    if (this.deps.entry(input.entryId) === null) {
-      return { ok: false, reason: 'missing', detail: 'unknown entry' }
-    }
-    const gateway = this.deps.gateway(input.entryId)
-    if (gateway === null)
-      return { ok: false, reason: 'missing', detail: 'enter a Modal token id and secret' }
-    try {
-      const { environment } = await gateway.checkAuth()
-      return { ok: true, account: environment }
-    } catch (err: unknown) {
-      if (err instanceof ModalAuthError)
-        return { ok: false, reason: err.reason, detail: err.message }
-      return { ok: false, reason: 'network', detail: errText(err) }
-    }
-  }
 
   readonly estimateJob = async (input: {
     gpuType: string

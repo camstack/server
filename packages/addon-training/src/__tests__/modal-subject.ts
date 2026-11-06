@@ -4,7 +4,7 @@
  */
 import type { ITrainingCloudProvider } from '@camstack/types'
 import { MemoryPeerBytes } from '../providers/fake/memory-peer-bytes.js'
-import { DEFAULT_MODAL_ENTRY_NAME, MODAL_TYPE_ID } from '../providers/modal/modal-entries.js'
+import { DEFAULT_MODAL_ENTRY_NAME } from '../providers/modal/modal-entries.js'
 import {
   type ModalJobLedger,
   type ModalJobRecord,
@@ -68,50 +68,6 @@ export function modalSubject(): Subject & { gateway: FakeModalGateway } {
     listEntries: () => entries,
     entry: (entryId) => entries.find((e) => e.id === entryId) ?? null,
     gateway: (entryId) => (entryId === MODAL_ENTRY_ID ? gateway : null),
-    createEntry: async (input) => {
-      if (input.typeId !== MODAL_TYPE_ID) throw new Error('unknown type')
-      const id = `modal-${String(entries.length + 1)}`
-      entries = [
-        ...entries,
-        {
-          ...entry,
-          id,
-          name: input.name,
-          tokenId: '',
-          tokenSecret: '',
-        },
-      ]
-      return { entryId: id }
-    },
-    updateEntry: async (entryId, patch) => {
-      entries = entries.map((e) =>
-        e.id === entryId
-          ? {
-              ...e,
-              name: patch.name,
-              ...(patch.tokenId !== undefined ? { tokenId: patch.tokenId } : {}),
-              ...(patch.clearTokenSecret === true
-                ? { tokenSecret: '' }
-                : patch.tokenSecret !== undefined && patch.tokenSecret !== ''
-                  ? { tokenSecret: patch.tokenSecret }
-                  : {}),
-              ...(patch.environment !== undefined ? { environment: patch.environment } : {}),
-              ...(patch.gpuType !== undefined ? { gpuType: patch.gpuType } : {}),
-              ...(patch.region !== undefined ? { region: patch.region } : {}),
-              ...(patch.costCapUsd !== undefined ? { costCapUsd: patch.costCapUsd } : {}),
-              ...(patch.maxRuntimeHours !== undefined
-                ? { maxRuntimeHours: patch.maxRuntimeHours }
-                : {}),
-              ...(patch.failedDatasetGraceHours !== undefined
-                ? { failedDatasetGraceHours: patch.failedDatasetGraceHours }
-                : {}),
-            }
-          : e,
-      )
-    },
-    deleteEntry: async (entryId) => {
-      entries = entries.filter((e) => e.id !== entryId)
-    },
     secretViews: async () => {
       const map = new Map<string, import('@camstack/types').SecretFieldView | null>()
       for (const e of entries) {

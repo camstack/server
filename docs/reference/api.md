@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**202 capabilities · 1492 methods.**
+**202 capabilities · 1488 methods.**
 
 ## Method index
 
@@ -1397,10 +1397,6 @@
 | `trainingProvider.describe` | query | admin | training-provider |
 | `trainingProvider.describeTypes` | query | admin | training-provider |
 | `trainingProvider.listEntries` | query | admin | training-provider |
-| `trainingProvider.createEntry` | mutation | admin | training-provider |
-| `trainingProvider.deleteEntry` | mutation | admin | training-provider |
-| `trainingProvider.updateEntry` | mutation | admin | training-provider |
-| `trainingProvider.validateCredentials` | mutation | admin | training-provider |
 | `trainingProvider.estimateJob` | query | admin | training-provider |
 | `trainingProvider.uploadDataset` | mutation | admin | training-provider |
 | `trainingProvider.submitJob` | mutation | admin | training-provider |
@@ -4848,10 +4844,6 @@
 | describe | `trainingProvider.describe` | query | admin | `{}` | `TrainingProviderDescriptorSchema[]` |
 | describeTypes | `trainingProvider.describeTypes` | query | admin | `{}` | `TrainingProviderTypeSchema[]` |
 | listEntries | `trainingProvider.listEntries` | query | admin | `{}` | `TrainingProviderEntrySchema[]` |
-| createEntry | `trainingProvider.createEntry` | mutation | admin | `{ typeId: string; name: string }` | `{ entryId: string }` |
-| deleteEntry | `trainingProvider.deleteEntry` | mutation | admin | `{ entryId: string }` | `{ ok: true }` |
-| updateEntry | `trainingProvider.updateEntry` | mutation | admin | `TrainingProviderUpdateEntryInputSchema` | `{ ok: true }` |
-| validateCredentials | `trainingProvider.validateCredentials` | mutation | admin | `{ entryId: string }` | `TrainingCredentialCheckSchema` |
 | estimateJob | `trainingProvider.estimateJob` | query | admin | `{ entryId: string; gpuType: string; region: string; datasetBytes: number; gpuSecondsLow: number; gpuSecondsHigh: number }` | `{ usdLow: number; usdHigh: number; notes: string[] }` |
 | uploadDataset | `trainingProvider.uploadDataset` | mutation | admin | `{ entryId: string; jobKey: string; ticket: { url: string; hostNodeId: string; expiresAtMs: number; declaredBytes: number \| null } }` | `{ bytes: number; sha256: string }` |
 | submitJob | `trainingProvider.submitJob` | mutation | admin | `{ entryId: string; jobKey: string; trainer: TrainerSourceRefSchema; jobSpecJson: string; gpuType: string; region: string; maxRuntimeSec: number }` | `ProviderJobStatusSchema` |

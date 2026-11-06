@@ -174,27 +174,6 @@ export class TrainingModalAddon extends BaseAddon<TrainingModalConfig> {
       listEntries: () => [...this.accounts.values()].filter((a) => a.enabled).map((a) => a.entry),
       entry: (entryId) => this.accounts.get(entryId)?.entry ?? null,
       gateway: (entryId) => this.gatewayFor(entryId),
-      createEntry: async (input) => {
-        if (input.typeId !== 'modal') throw new Error('cannot create entry: unknown-type')
-        return { entryId: (await instances.createInstance({ name: input.name })).id }
-      },
-      updateEntry: async (entryId, patch) => {
-        const { clearTokenSecret, tokenSecret, ...rest } = patch
-        await instances.updateInstance({
-          id: entryId,
-          values: {
-            ...rest,
-            ...(clearTokenSecret === true
-              ? { tokenSecret: SECRET_CLEAR }
-              : tokenSecret !== undefined
-                ? { tokenSecret }
-                : {}),
-          },
-        })
-      },
-      deleteEntry: async (entryId) => {
-        await instances.deleteInstance({ id: entryId })
-      },
       secretViews: () => this.readEntrySecretViews(),
       ledger: this.ledger(),
       peer,

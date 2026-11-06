@@ -6,8 +6,12 @@
  * `entryId`.
  */
 import { describe, expect, it } from 'vitest'
-import type { ITrainingCloudProvider, TrainingProviderDescriptor } from '@camstack/types'
-import { buildCapRouterForTest, checkAuthMatrix, invokeProcedure, makeCtx } from './harness.js'
+import {
+  trainingProviderCapability,
+  type ITrainingCloudProvider,
+  type TrainingProviderDescriptor,
+} from '@camstack/types'
+import { buildCapRouterForTest, checkAuthMatrix } from './harness.js'
 
 function descriptor(addonId: string): TrainingProviderDescriptor {
   return {
@@ -54,7 +58,6 @@ function makeProvider(addonId: string): Partial<ITrainingCloudProvider> {
         configured: false,
       },
     ],
-    validateCredentials: async () => ({ ok: true, account: addonId }),
   }
 }
 
@@ -68,21 +71,16 @@ function routerAvailable(): boolean {
 }
 
 describe.skipIf(!routerAvailable())('training-provider router', () => {
-  it('answers validateCredentials from the provider it was routed to', async () => {
-    const router = buildCapRouterForTest('training-provider', () => makeProvider('training-modal'))
-    const outcome = await invokeProcedure(router, 'validateCredentials', makeCtx('admin'), {
-      addonId: 'training-modal',
-      entryId: 'training-modal-default',
-    })
-    expect(outcome.ok).toBe(true)
-    if (outcome.ok) expect(outcome.value).toEqual({ ok: true, account: 'training-modal' })
+  it('declares no credential check or entry CRUD: an account is an integration instance', () => {
+    const names = Object.keys(trainingProviderCapability.methods)
+    for (const gone of ['validateCredentials', 'createEntry', 'updateEntry', 'deleteEntry'])
+      expect(names).not.toContain(gone)
   })
 
-  it('gates describe and validateCredentials behind admin', async () => {
+  it('gates describe behind admin', async () => {
     const router = buildCapRouterForTest('training-provider', () => makeProvider('training-modal'))
     for (const [procedure, input] of [
       ['describe', {}],
-      ['validateCredentials', { addonId: 'training-modal', entryId: 'training-modal-default' }],
     ] as const) {
       const matrix = await checkAuthMatrix(router, procedure, 'admin', input)
       for (const row of matrix) expect(row.outcome.ok).toBe(row.allowed)

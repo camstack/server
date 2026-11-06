@@ -8,7 +8,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import { parseTrainerDockerfile } from '../providers/modal/dockerfile.js'
-import { MODAL_CACHE_VOLUME, ModalAuthError } from '../providers/modal/modal-gateway.js'
+import { MODAL_CACHE_VOLUME } from '../providers/modal/modal-gateway.js'
 import { modalSubject } from './modal-subject.js'
 
 const JOB = '33333333-3333-4333-8333-333333333333'
@@ -78,16 +78,6 @@ describe('Modal provider', () => {
     expect(spec?.env?.['CAMSTACK_JOB_JSON']).toBe('{"jobKey":"x"}')
     expect(JSON.stringify(spec)).not.toMatch(/as-y|ak-x/)
     expect(spec?.image.kind === 'recipe' && spec.image.recipe.commands[1]).toContain('ebeed67a')
-  })
-
-  it('classifies a rejected token as invalid', async () => {
-    const s = modalSubject()
-    s.gateway.authError = new ModalAuthError('invalid', 'token rejected')
-    expect(await s.provider.validateCredentials({ entryId: s.entryId })).toEqual({
-      ok: false,
-      reason: 'invalid',
-      detail: 'token rejected',
-    })
   })
 
   it('deletes only the job volume, never the shared cache', async () => {
