@@ -1765,7 +1765,8 @@
         "commissioning": "Adding it to CamStack",
         "done": "Added"
       },
-      "broker": "Matter fabric"
+      "broker": "Matter fabric",
+      "tab": "Pairing code"
     },
     "addonCard": {
       "summary": "{{integrations}} · {{devices}}",
@@ -11714,7 +11715,10 @@
     "originalId": "Original id",
     "connect": "Connect account",
     "connectRow": "Connect {{name}}",
-    "disconnectRow": "Disconnect {{name}}"
+    "disconnectRow": "Disconnect {{name}}",
+    "typedId": "Id",
+    "typedIdHint": "Chosen once; it cannot be changed after the record is created.",
+    "typedIdInvalid": "Lowercase letters, digits and dashes, starting with a letter or digit (up to 64)."
   },
   "instances": {
     "colStatus": "Status",

@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - One device-to-value picker (DeviceValueField) lists only devices and values that fit, in three steps on a phone, with a token-chip adapter
 - DeviceValueField opens the preview step on a phone only once there is a value to preview
 - The device value picker waits for the device state before judging which values fit, and shows loading or failed instead of no value
+- AddonGlobalSettingsForm can narrow the schema it draws (narrowSchema)
 
 ## [1.2.392] - 2026-11-06
 

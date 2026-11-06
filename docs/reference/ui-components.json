@@ -757,6 +757,12 @@
           "type": "( patch: Record<string, unknown>, effective: Record<string, unknown>, ) => void",
           "optional": true,
           "doc": "Called on every edit when `mode: 'override'`. `patch` is the sparse diff vs the persisted baseline (only the fields the operator touched). `"
+        },
+        {
+          "name": "narrowSchema",
+          "type": "(schema: ConfigUISchemaWithValues) => ConfigUISchemaWithValues",
+          "optional": true,
+          "doc": "Narrow every schema the form receives before it is drawn (e.g. a cluster-only surface drops the per-node fields). Applied to the first read "
         }
       ]
     },

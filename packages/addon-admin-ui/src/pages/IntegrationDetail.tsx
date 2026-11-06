@@ -45,7 +45,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { AddDeviceModal } from '../components/integrations/AddDeviceModal'
 import { useAdminDeviceRemoval } from '../hooks/useAdminDeviceRemoval'
-import { AddMatterDeviceDialog } from '../components/integrations/AddMatterDeviceDialog'
+import { MatterPairingPanel } from '../components/integrations/MatterPairingPanel'
 import { IntegrationConfigModal } from '../components/integrations/IntegrationConfigModal'
 import type { IntegrationFormSeed } from '../components/integrations/integration-setup-seed'
 import { NodeAddonsSettingsPanel } from '../components/settings/NodeAddonsSettingsPanel'
@@ -87,7 +87,6 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
   const [searchParams, setSearchParams] = useSearchParams()
   const system = useSystem()
   const [showAddDevice, setShowAddDevice] = useState(false)
-  const [adoptAfterCommission, setAdoptAfterCommission] = useState(false)
   const handleSetupIntegration = useCallback(
     (seed: IntegrationFormSeed) => {
       setShowAddDevice(false)
@@ -190,8 +189,8 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
     const entry = (availableTypes ?? []).find((a) => a.addonId === addonId)
     return entry?.brokerKind ?? null
   }, [availableTypes, integration?.addonId, typesReady])
-  // Matter commissions a shared device (pairing code) before the operator
-  // adopts the node. Other device-adoption integrations go straight to adopt.
+  // Matter adds a pairing-code tab to the Add device modal: the operator commissions a shared
+  // device there, then adopts the node from "Found on the network".
   const isMatter = integrationBrokerKind === 'matter'
   const addDeviceLabel = !fabReady
     ? t('integrations.addDeviceLoading', { defaultValue: 'Loading…' })
@@ -222,7 +221,6 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
   useEffect(() => {
     if (searchParams.get('add') !== '1') return
     if (!fabReady) return
-    setAdoptAfterCommission(false)
     setShowAddDevice(true)
     setSearchParams(
       (prev) => {
@@ -494,7 +492,6 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
             <Button
               variant="unstyled"
               onClick={() => {
-                setAdoptAfterCommission(false)
                 setShowAddDevice(true)
               }}
               disabled={!fabReady}
@@ -682,29 +679,29 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
           : { onDeleteDevice: (d: { id: number }) => removal.remove({ deviceId: d.id }) })}
       />
 
-      {showAddDevice && integrationId && isMatter && !adoptAfterCommission && (
-        <AddMatterDeviceDialog
+      {showAddDevice && integrationId && integrationKind !== null && (
+        <AddDeviceModal
+          addonId={integration.addonId}
+          integrationId={integrationId}
+          kind={integrationKind}
+          canScan={canScan}
+          onSetupIntegration={handleSetupIntegration}
+          {...(isMatter
+            ? {
+                pairing: {
+                  label: t('integrations.addMatter.tab', 'Pairing code'),
+                  render: ({ onPaired }) => (
+                    <MatterPairingPanel
+                      onClose={() => setShowAddDevice(false)}
+                      onCommissioned={onPaired}
+                    />
+                  ),
+                },
+              }
+            : {})}
           onClose={() => setShowAddDevice(false)}
-          onCommissioned={() => setAdoptAfterCommission(true)}
         />
       )}
-
-      {showAddDevice &&
-        integrationId &&
-        integrationKind !== null &&
-        (!isMatter || adoptAfterCommission) && (
-          <AddDeviceModal
-            addonId={integration.addonId}
-            integrationId={integrationId}
-            kind={integrationKind}
-            canScan={canScan}
-            onSetupIntegration={handleSetupIntegration}
-            onClose={() => {
-              setShowAddDevice(false)
-              setAdoptAfterCommission(false)
-            }}
-          />
-        )}
 
       {showConfig && integrationId && integrationKind !== null && integrationMode !== null && (
         <IntegrationConfigModal

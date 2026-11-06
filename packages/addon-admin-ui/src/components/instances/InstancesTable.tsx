@@ -29,7 +29,6 @@ import { Link2, Link2Off, Loader2, Pencil, Play, Plus, Trash2, type LucideIcon }
 import { useCallback, useMemo, useState, type ReactElement, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { fillBrokerConnectPath, startServerNavigation } from '../../lib/broker-oauth-popup'
-import { AddonSettingsModal } from '../settings/AddonSettingsModal'
 import {
   TestVerdictBanner,
   toTestVerdict,
@@ -38,6 +37,7 @@ import {
 import { pushToast } from '../ui/toast-bus'
 import { RestartButton } from '../integration-hub/addon-controls'
 import { IntegrationActivity } from '../integration-hub/IntegrationActivity'
+import { FixedRowSettingsDialog } from './FixedRowSettingsDialog'
 import { InstanceEditorDialog } from './InstanceEditorDialog'
 import { InstanceProviderPills, type InstanceInstallLink } from './InstanceProviderPills'
 import { ProviderPickerDialog } from './ProviderPickerDialog'
@@ -52,6 +52,7 @@ import {
   targetsPinning,
   type InstanceRow,
   type PanelRow,
+  type TypedIdRuleFor,
 } from './instances-model'
 import { useSetInstanceEnabled } from './use-set-instance-enabled'
 import { HOLDER_QUERY_KEY, useInstancesData, type InstancesData } from './use-instances-data'
@@ -77,6 +78,13 @@ export interface InstancesTableProps {
   readonly extraColumns?: readonly DataColumn<PanelRow>[]
   /** A block at the top of an instance's edit dialog (setup, pairing). Called per record. */
   readonly lead?: (row: InstanceRow) => ReactNode
+  /**
+   * Controls a page adds to an instance row's action cell, before Edit (a join, a drain, a
+   * re-pair). Called per instance row; a fixed row has none.
+   */
+  readonly rowActions?: (row: InstanceRow) => ReactNode
+  /** The kinds whose new record is named by the operator, not minted (an immutable typed id). */
+  readonly typedId?: TypedIdRuleFor
 }
 
 /** The badge tooltip: the provider's detail and, when known, when the remote was last probed. */
@@ -197,6 +205,8 @@ export function InstancesTable({
   install,
   extraColumns,
   lead,
+  rowActions,
+  typedId,
 }: InstancesTableProps): ReactElement {
   const { t } = useTranslation()
   const system = useSystem()
@@ -439,6 +449,7 @@ export function InstancesTable({
                 onClick={() => void runTest(row)}
               />
             )}
+            {row.kind === 'instance' && rowActions?.(row)}
             <IconButton
               icon={Pencil}
               variant="ghost"
@@ -479,6 +490,7 @@ export function InstancesTable({
       form,
       functionCap,
       pinningCount,
+      rowActions,
       runDelete,
       runLink,
       runTest,
@@ -602,6 +614,7 @@ export function InstancesTable({
           nameOf={nameOf}
           onClose={form.close}
           {...(lead !== undefined ? { lead } : {})}
+          {...(typedId !== undefined ? { typedId } : {})}
         />
       )}
     </SectionCard>
@@ -664,22 +677,19 @@ function EditDialog({
   nameOf,
   onClose,
   lead,
+  typedId,
 }: {
   readonly refValue: string
   readonly data: InstancesData
   readonly nameOf: (addonId: string) => string
   readonly onClose: () => void
   readonly lead?: (row: InstanceRow) => ReactNode
+  readonly typedId?: TypedIdRuleFor
 }): ReactElement | null {
   const ref = parseEditRef(refValue)
   if (ref.kind === 'fixed') {
     return (
-      <AddonSettingsModal
-        addonId={ref.addonId}
-        title={nameOf(ref.addonId)}
-        fieldScope="cluster"
-        onClose={onClose}
-      />
+      <FixedRowSettingsDialog addonId={ref.addonId} title={nameOf(ref.addonId)} onClose={onClose} />
     )
   }
   const holder = data.holders.find((h) => h.addonId === ref.addonId)
@@ -700,6 +710,7 @@ function EditDialog({
       description={holder.description}
       instance={instance}
       onClose={onClose}
+      {...(typedId !== undefined ? { typedId } : {})}
     />
   )
 }

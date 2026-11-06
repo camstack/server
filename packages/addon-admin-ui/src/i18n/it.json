@@ -1765,7 +1765,8 @@
         "commissioning": "Aggiunta a CamStack",
         "done": "Aggiunto"
       },
-      "broker": "Fabric Matter"
+      "broker": "Fabric Matter",
+      "tab": "Codice di abbinamento"
     },
     "addonCard": {
       "summary": "{{integrations}} · {{devices}}",
@@ -11736,7 +11737,10 @@
     "originalId": "Id originale",
     "connect": "Collega account",
     "connectRow": "Collega {{name}}",
-    "disconnectRow": "Scollega {{name}}"
+    "disconnectRow": "Scollega {{name}}",
+    "typedId": "Id",
+    "typedIdHint": "Scelto una sola volta; non si può cambiare dopo la creazione.",
+    "typedIdInvalid": "Lettere minuscole, cifre e trattini, a partire da una lettera o cifra (massimo 64)."
   },
   "instances": {
     "colStatus": "Stato",

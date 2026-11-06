@@ -3,11 +3,12 @@
  * commissioning failures. The broker hooks are stubbed; the dialog itself
  * decides what to show.
  */
+import { Dialog, DialogContent } from '@camstack/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { describe, expect, it, vi } from 'vitest'
-import { AddMatterDeviceDialog } from '../AddMatterDeviceDialog'
+import { MatterPairingPanel } from '../MatterPairingPanel'
 
 interface MutateOptions {
   readonly onSuccess?: () => void
@@ -49,7 +50,11 @@ function renderDialog(onCommissioned: () => void = vi.fn()): ReactElement {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return (
     <QueryClientProvider client={client}>
-      <AddMatterDeviceDialog onClose={vi.fn()} onCommissioned={onCommissioned} />
+      <Dialog open>
+        <DialogContent>
+          <MatterPairingPanel onClose={vi.fn()} onCommissioned={onCommissioned} />
+        </DialogContent>
+      </Dialog>
     </QueryClientProvider>
   )
 }
@@ -59,10 +64,9 @@ function pasteAndSubmit(code: string): void {
   fireEvent.click(screen.getByRole('button', { name: 'Add device' }))
 }
 
-describe('AddMatterDeviceDialog', () => {
+describe('MatterPairingPanel', () => {
   it('asks for a pairing code and refuses to submit an empty one', () => {
     render(renderDialog())
-    expect(screen.getByText('Add Matter device')).toBeTruthy()
     expect(screen.getByLabelText('Pairing code')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Add device' }).hasAttribute('disabled')).toBe(true)
   })

@@ -34,18 +34,21 @@ import {
 import { pushToast } from '../ui/toast-bus'
 import { HOLDER_QUERY_KEY } from './use-instances-data'
 import {
+  checkTypedId,
   diffInstanceValues,
   effectiveInstanceValues,
   findKind,
   mintInstanceId,
   needsKindPicker,
   randomHex8,
+  type TypedIdRuleFor,
 } from './instances-model'
 
 const IDENTITY_NAME = 'name'
 const IDENTITY_KIND = 'kind'
 const IDENTITY_RESTORE = 'restore'
 const IDENTITY_RESTORE_ID = 'restoreId'
+const IDENTITY_TYPED_ID = 'typedId'
 
 export interface InstanceEditorDialogProps {
   readonly addonId: string
@@ -58,6 +61,11 @@ export interface InstanceEditorDialogProps {
   readonly onSaved?: (id: string) => void
   /** A block shown above the form (setup, pairing) — only for a record that exists. */
   readonly lead?: ReactNode
+  /**
+   * The kinds that ask the operator for the new record's id. Absent (or undefined for the kind
+   * being created) means the provider or the UI mints it.
+   */
+  readonly typedId?: TypedIdRuleFor
 }
 
 const NO_VALUES: Readonly<Record<string, unknown>> = {}
@@ -70,6 +78,7 @@ export function InstanceEditorDialog({
   onClose,
   onSaved,
   lead,
+  typedId,
 }: InstanceEditorDialogProps): ReactElement {
   const { t } = useTranslation()
   const system = useSystem()
@@ -83,6 +92,7 @@ export function InstanceEditorDialog({
     [IDENTITY_KIND]: instance?.kind ?? kinds[0]?.id ?? '',
     [IDENTITY_RESTORE]: false,
     [IDENTITY_RESTORE_ID]: '',
+    [IDENTITY_TYPED_ID]: '',
   })
   const textOf = (key: string): string => {
     const v = identity[key]
@@ -97,6 +107,14 @@ export function InstanceEditorDialog({
   const canRestore =
     instance === null && description.allowRestoreId === true && kind?.signIn === undefined
   const restoreMissing = canRestore && restoring && restoreId === ''
+  // The operator names the record only on create, and not when a sign-in mints it or a restore
+  // brings the old id back.
+  const idRule =
+    instance === null && kind?.signIn === undefined && !(canRestore && restoring)
+      ? typedId?.(kindId === '' ? undefined : kindId)
+      : undefined
+  const typed = textOf(IDENTITY_TYPED_ID)
+  const typedState = idRule === undefined ? 'ok' : checkTypedId(idRule, typed)
   const [values, setValues] = useState<Record<string, unknown>>({ ...stored })
   const [error, setError] = useState<string | null>(null)
   const identitySchema = useMemo<ConfigUISchema>(
@@ -126,6 +144,26 @@ export function InstanceEditorDialog({
               label: t('providerInstances.colName', 'Name'),
               required: true,
             },
+            ...(idRule !== undefined
+              ? [
+                  {
+                    type: 'text' as const,
+                    key: IDENTITY_TYPED_ID,
+                    label: t('providerInstances.typedId', 'Id'),
+                    required: true,
+                    description:
+                      typedState === 'invalid'
+                        ? t(
+                            'providerInstances.typedIdInvalid',
+                            'Lowercase letters, digits and dashes, starting with a letter or digit (up to 64).',
+                          )
+                        : t(
+                            'providerInstances.typedIdHint',
+                            'Chosen once; it cannot be changed after the record is created.',
+                          ),
+                  },
+                ]
+              : []),
             ...(canRestore
               ? [
                   {
@@ -150,7 +188,7 @@ export function InstanceEditorDialog({
         },
       ],
     }),
-    [canRestore, description, instance, kinds, t],
+    [canRestore, description, idRule, instance, kinds, t, typedState],
   )
   const [verdict, setVerdict] = useState<TestVerdict | null>(null)
 
@@ -176,9 +214,11 @@ export function InstanceEditorDialog({
         const chosen =
           canRestore && restoring
             ? restoreId
-            : description.mintsId === true
-              ? undefined
-              : mintInstanceId(description.instanceMode, addonId, randomHex8)
+            : idRule !== undefined
+              ? typed
+              : description.mintsId === true
+                ? undefined
+                : mintInstanceId(description.instanceMode, addonId, randomHex8)
         const created = await client.createInstance.mutate({
           addonId,
           name,
@@ -263,7 +303,13 @@ export function InstanceEditorDialog({
           <Button
             size="sm"
             type="button"
-            disabled={save.isPending || hydrated === null || name.length === 0 || restoreMissing}
+            disabled={
+              save.isPending ||
+              hydrated === null ||
+              name.length === 0 ||
+              restoreMissing ||
+              typedState !== 'ok'
+            }
             onClick={() => {
               setError(null)
               save.mutate()

@@ -112,6 +112,29 @@ vi.mock('@camstack/ui-library', async () => {
           deleteInstance: { mutate: h.remove },
         },
         notificationOutput: { listTargets: { query: async () => h.targets } },
+        addonSettings: {
+          getGlobalSettings: {
+            query: async () => ({
+              sections: [
+                {
+                  id: 'main',
+                  title: 'Main',
+                  fields: [
+                    { type: 'text', key: 'clusterKey', label: 'Cluster field', value: 'c1' },
+                    {
+                      type: 'text',
+                      key: 'nodeKey',
+                      label: 'Node field',
+                      value: 'n1',
+                      perNode: true,
+                    },
+                  ],
+                },
+              ],
+            }),
+          },
+          updateGlobalSettings: { mutate: async () => ({}) },
+        },
       },
     }),
   }
@@ -129,7 +152,9 @@ import { InstancesTable, type InstancesTableProps } from '../InstancesTable'
 
 function renderPanel(
   search = '',
-  extra: Partial<Pick<InstancesTableProps, 'extraColumns' | 'lead'>> = {},
+  extra: Partial<
+    Pick<InstancesTableProps, 'extraColumns' | 'lead' | 'rowActions' | 'typedId'>
+  > = {},
 ) {
   // The open dialog lives in the real URL (`useUrlQueryParam` reads `window.location`).
   window.history.replaceState(null, '', `/${search}`)
@@ -675,5 +700,84 @@ describe('InstancesTable extensions', () => {
     renderPanel('?instance=smtp-nodemailer:a')
     expect(await screen.findByText('Edit Relay A')).toBeTruthy()
     expect(screen.queryByText(/lead for/)).toBeNull()
+  })
+})
+
+describe('InstancesTable slots', () => {
+  beforeEach(() => {
+    h.fn.data = [
+      { addonId: 'smtp-nodemailer', isActive: true },
+      { addonId: 'loki-logging', isActive: true },
+    ]
+    h.holders.data = [{ addonId: 'smtp-nodemailer', isActive: true }]
+    h.records = {
+      'smtp-nodemailer': [
+        { id: 'a', name: 'Relay A', configured: true, enabled: true, formValues: {} },
+      ],
+    }
+  })
+
+  it('draws rowActions on instance rows only, before Edit', async () => {
+    renderPanel('', {
+      rowActions: (row) => <button type="button">{`join ${row.id}`}</button>,
+    })
+    const join = await screen.findByRole('button', { name: 'join a' })
+    const edit = screen.getByRole('button', { name: 'Edit Relay A' })
+    expect(join.compareDocumentPosition(edit) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    // The fixed Loki row gets none.
+    expect(screen.getAllByRole('button', { name: /^join / })).toHaveLength(1)
+  })
+
+  it('draws no rowActions control when the prop is absent', async () => {
+    renderPanel()
+    expect(await screen.findByText('Relay A')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /^join / })).toBeNull()
+  })
+
+  describe('operator-typed id on create', () => {
+    const rule = { pattern: /^[a-z0-9][a-z0-9-]{0,63}$/ }
+    // The form builder's labels are not bound to their controls: step from the label to its input.
+    const idInput = async (): Promise<HTMLInputElement> => {
+      const label = await screen.findByText(/^Id\b/)
+      const input = label.parentElement?.querySelector('input')
+      if (!input) throw new Error('no input beside the Id label')
+      return input
+    }
+
+    it('asks for an id, blocks Create until it is valid and sends it as the record id', async () => {
+      renderPanel('?instance=smtp-nodemailer:%2B', { typedId: () => rule })
+      const id = await idInput()
+      const create = await screen.findByRole('button', { name: 'Create' })
+      expect((create as HTMLButtonElement).disabled).toBe(true)
+      fireEvent.change(id, { target: { value: 'Bad Id!' } })
+      expect((create as HTMLButtonElement).disabled).toBe(true)
+      expect(screen.getByText(/Lowercase letters, digits and dashes/)).toBeTruthy()
+      fireEvent.change(id, { target: { value: 'office-sso' } })
+      await waitFor(() => expect((create as HTMLButtonElement).disabled).toBe(false))
+      fireEvent.click(create)
+      await waitFor(() => expect(h.create).toHaveBeenCalledTimes(1))
+      expect(h.create.mock.calls[0]?.[0]).toMatchObject({
+        addonId: 'smtp-nodemailer',
+        id: 'office-sso',
+      })
+    })
+
+    it('without a rule the id stays minted and no Id field is drawn', async () => {
+      renderPanel('?instance=smtp-nodemailer:%2B')
+      expect(await screen.findByText('Add SMTP')).toBeTruthy()
+      expect(screen.queryByLabelText(/^Id/)).toBeNull()
+    })
+
+    it('does not offer the field when editing an existing record', async () => {
+      renderPanel('?instance=smtp-nodemailer:a', { typedId: () => rule })
+      expect(await screen.findByText('Edit Relay A')).toBeTruthy()
+      expect(screen.queryByLabelText(/^Id/)).toBeNull()
+    })
+  })
+
+  it('opens a fixed row in the scoped settings form, cluster fields only', async () => {
+    renderPanel('?instance=loki-logging')
+    expect(await screen.findByDisplayValue('c1')).toBeTruthy()
+    expect(screen.queryByDisplayValue('n1')).toBeNull()
   })
 })

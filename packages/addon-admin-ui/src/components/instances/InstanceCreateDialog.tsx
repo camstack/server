@@ -23,7 +23,7 @@ import {
   useSystem,
 } from '@camstack/ui-library'
 import { InstanceEditorDialog } from './InstanceEditorDialog'
-import { sectionDescription } from './instances-model'
+import { sectionDescription, type TypedIdRuleFor } from './instances-model'
 import { useInstanceKinds } from './instance-kinds'
 
 export interface InstanceCreateDialogProps {
@@ -35,6 +35,8 @@ export interface InstanceCreateDialogProps {
   readonly onClose: () => void
   /** The instance exists: created or signed in. */
   readonly onSaved: (id: string) => void
+  /** The kinds whose id the operator types (see `InstanceEditorDialog`). */
+  readonly typedId?: TypedIdRuleFor
 }
 
 function Placeholder({
@@ -62,6 +64,7 @@ export function InstanceCreateDialog({
   addonId,
   onClose,
   onSaved,
+  typedId,
 }: InstanceCreateDialogProps) {
   const { t } = useTranslation()
   const system = useSystem()
@@ -117,6 +120,7 @@ export function InstanceCreateDialog({
       description={loaded.data}
       instance={null}
       onClose={onClose}
+      {...(typedId !== undefined ? { typedId } : {})}
       onSaved={(id) => {
         void queryClient.invalidateQueries()
         onSaved(id)

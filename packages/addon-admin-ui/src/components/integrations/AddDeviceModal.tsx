@@ -28,7 +28,14 @@ import { AdoptDevicesPanel } from './AdoptDevicesModal'
 import { NetworkCandidatesPanel } from './NetworkCandidatesPanel'
 import type { IntegrationFormSeed } from './integration-setup-seed'
 
-type TabId = 'network' | 'manual'
+type TabId = 'network' | 'manual' | 'pairing'
+
+/** A pairing tab an integration adds beside the network and manual ones (a Matter share code). */
+export interface PairingTab {
+  readonly label: string
+  /** Drawn inside the tab; `onPaired` moves the operator to "Found on the network" to adopt. */
+  readonly render: (api: { readonly onPaired: () => void }) => ReactElement
+}
 
 interface AddDeviceModalProps {
   readonly addonId: string
@@ -38,7 +45,13 @@ interface AddDeviceModalProps {
   /** The provider supports a network scan; `null` while that is still being asked. */
   readonly canScan: boolean | null
   readonly onClose: () => void
+  /** The integration commissions devices from a pairing code: one more tab. */
+  readonly pairing?: PairingTab
   readonly onSetupIntegration?: (seed: IntegrationFormSeed) => void
+}
+
+function toTabId(value: string): TabId {
+  return value === 'manual' ? 'manual' : value === 'pairing' ? 'pairing' : 'network'
 }
 
 export function AddDeviceModal({
@@ -47,6 +60,7 @@ export function AddDeviceModal({
   kind,
   canScan,
   onClose,
+  pairing,
   onSetupIntegration,
 }: AddDeviceModalProps): ReactElement {
   const { t } = useTranslation()
@@ -55,7 +69,8 @@ export function AddDeviceModal({
   const hasNetwork = kind === 'device-adoption' || canScan === true
   const hasManual = manual === 'available'
   const [picked, setPicked] = useState<TabId | null>(null)
-  const active: TabId = picked ?? (hasNetwork ? 'network' : 'manual')
+  const active: TabId = picked ?? (hasNetwork ? 'network' : hasManual ? 'manual' : 'pairing')
+  const tabCount = [hasNetwork, hasManual, pairing !== undefined].filter(Boolean).length
 
   // An adoption integration lists its candidates through the adopt surface, whole.
   // When the provider can also scan, the scan block is drawn above it and leaves
@@ -89,24 +104,34 @@ export function AddDeviceModal({
   const form = <AddDeviceForm integrationId={integrationId} addonId={addonId} onClose={onClose} />
 
   const body = (): ReactElement => {
-    if (hasNetwork && hasManual) {
+    if (tabCount > 1) {
       return (
-        <Tabs
-          value={active}
-          onValueChange={(v) => setPicked(v === 'manual' ? 'manual' : 'network')}
-        >
+        <Tabs value={active} onValueChange={(v) => setPicked(toTabId(v))}>
           <TabsList>
-            <TabsTrigger value="network">
-              {t('integrations.addDeviceModal.tabNetwork', 'Found on the network')}
-            </TabsTrigger>
-            <TabsTrigger value="manual">
-              {t('integrations.addDeviceModal.tabManual', 'Enter parameters')}
-            </TabsTrigger>
+            {hasNetwork && (
+              <TabsTrigger value="network">
+                {t('integrations.addDeviceModal.tabNetwork', 'Found on the network')}
+              </TabsTrigger>
+            )}
+            {hasManual && (
+              <TabsTrigger value="manual">
+                {t('integrations.addDeviceModal.tabManual', 'Enter parameters')}
+              </TabsTrigger>
+            )}
+            {pairing !== undefined && <TabsTrigger value="pairing">{pairing.label}</TabsTrigger>}
           </TabsList>
-          <TabsContent value="network">{network}</TabsContent>
-          <TabsContent value="manual">{form}</TabsContent>
+          {hasNetwork && <TabsContent value="network">{network}</TabsContent>}
+          {hasManual && <TabsContent value="manual">{form}</TabsContent>}
+          {pairing !== undefined && (
+            <TabsContent value="pairing">
+              {pairing.render({ onPaired: () => setPicked('network') })}
+            </TabsContent>
+          )}
         </Tabs>
       )
+    }
+    if (pairing !== undefined && !hasNetwork && !hasManual) {
+      return pairing.render({ onPaired: () => setPicked('network') })
     }
     if (hasNetwork) return network
     if (hasManual) return form

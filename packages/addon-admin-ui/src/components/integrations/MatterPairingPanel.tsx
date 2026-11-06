@@ -1,18 +1,15 @@
 /**
- * Add a Matter device that is already on the network (Home Assistant "Share
- * device", or the Aqara app). The operator pastes the manual code or the
- * `MT:` payload. Progress is the broker's commissioning phase.
+ * The pairing-code tab of the Add device modal (D1011) for a Matter fabric: a device that is
+ * already on the network (Home Assistant "Share device", or the Aqara app). The operator pastes
+ * the manual code or the `MT:` payload. Progress is the broker's commissioning phase. The modal
+ * owns the dialog; this is the body and footer of its tab.
  */
 import { useEffect, useState, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Button,
-  Dialog,
   DialogBody,
-  DialogContent,
   DialogFooter,
-  DialogHeader,
-  DialogTitle,
   ErrorBox,
   Input,
   Label,
@@ -42,7 +39,7 @@ interface FailureCopy {
   readonly defaultValue: string
 }
 
-interface AddMatterDeviceDialogProps {
+interface MatterPairingPanelProps {
   readonly onClose: () => void
   readonly onCommissioned: () => void
 }
@@ -84,10 +81,10 @@ function failureCopy(failure: string | null, message: string | null): FailureCop
   }
 }
 
-export function AddMatterDeviceDialog({
+export function MatterPairingPanel({
   onClose,
   onCommissioned,
-}: AddMatterDeviceDialogProps): ReactElement {
+}: MatterPairingPanelProps): ReactElement {
   const { t } = useTranslation()
   const brokers = useBrokerInstances({ kind: MATTER_BROKER_KIND })
   // One fabric is used as is; none or several are chosen (or created) in a BrokerPicker.
@@ -152,115 +149,102 @@ export function AddMatterDeviceDialog({
   const noBroker = brokersReady && brokerId === null
 
   return (
-    <Dialog open onOpenChange={(next) => !next && onClose()}>
-      <DialogContent width="md" placement="sheet-on-mobile" scroll="body">
-        <DialogHeader>
-          <DialogTitle>
-            {t('integrations.addMatter.title', {
-              defaultValue: 'Add Matter device',
+    <>
+      <DialogBody className="space-y-4">
+        <p className="text-xs text-foreground-subtle">
+          {t('integrations.addMatter.help', {
+            defaultValue:
+              'In Home Assistant, open the device and choose Share device. Paste the numeric code or the MT: code here. The device stays in Home Assistant.',
+          })}
+        </p>
+        {(noBroker || brokerCount > 1) && !busy && view.phase !== 'done' && (
+          <div className="space-y-1.5">
+            <Label>
+              {t('integrations.addMatter.broker', {
+                defaultValue: 'Matter fabric',
+              })}
+            </Label>
+            <BrokerPicker kind={MATTER_BROKER_KIND} value={brokerId} onChange={setPickedBrokerId} />
+          </div>
+        )}
+        {!noBroker && (
+          <div className="space-y-1.5">
+            <Label htmlFor="matter-pairing-code">
+              {t('integrations.addMatter.code', {
+                defaultValue: 'Pairing code',
+              })}
+            </Label>
+            <Input
+              id="matter-pairing-code"
+              value={code}
+              autoComplete="off"
+              spellCheck={false}
+              placeholder="34970112332"
+              disabled={busy || view.phase === 'done'}
+              onChange={(event) => setCode(event.target.value)}
+            />
+          </div>
+        )}
+        {view.phase !== 'idle' && (
+          <ol
+            className="space-y-1"
+            aria-label={t('integrations.addMatter.progress', {
+              defaultValue: 'Commissioning progress',
             })}
-          </DialogTitle>
-        </DialogHeader>
-        <DialogBody className="space-y-4">
-          <p className="text-xs text-foreground-subtle">
-            {t('integrations.addMatter.help', {
-              defaultValue:
-                'In Home Assistant, open the device and choose Share device. Paste the numeric code or the MT: code here. The device stays in Home Assistant.',
-            })}
-          </p>
-          {(noBroker || brokerCount > 1) && !busy && view.phase !== 'done' && (
-            <div className="space-y-1.5">
-              <Label>
-                {t('integrations.addMatter.broker', {
-                  defaultValue: 'Matter fabric',
-                })}
-              </Label>
-              <BrokerPicker
-                kind={MATTER_BROKER_KIND}
-                value={brokerId}
-                onChange={setPickedBrokerId}
-              />
-            </div>
-          )}
-          {!noBroker && (
-            <div className="space-y-1.5">
-              <Label htmlFor="matter-pairing-code">
-                {t('integrations.addMatter.code', {
-                  defaultValue: 'Pairing code',
-                })}
-              </Label>
-              <Input
-                id="matter-pairing-code"
-                value={code}
-                autoComplete="off"
-                spellCheck={false}
-                placeholder="34970112332"
-                disabled={busy || view.phase === 'done'}
-                onChange={(event) => setCode(event.target.value)}
-              />
-            </div>
-          )}
-          {view.phase !== 'idle' && (
-            <ol
-              className="space-y-1"
-              aria-label={t('integrations.addMatter.progress', {
-                defaultValue: 'Commissioning progress',
-              })}
-            >
-              {PHASES.map((phase) => {
-                const current = view.phase === phase
-                return (
-                  <li
-                    key={phase}
-                    className={`text-xs ${current ? 'text-foreground font-medium' : 'text-foreground-subtle'}`}
-                  >
-                    {current && busy ? (
-                      <Loader2 className="mr-1 inline h-3 w-3 animate-spin" />
-                    ) : null}
-                    {t(`integrations.addMatter.phase.${phase}`, {
-                      defaultValue:
-                        phase === 'discovering'
-                          ? 'Discovering'
-                          : phase === 'pase'
-                            ? 'PASE'
-                            : phase === 'commissioning'
-                              ? 'Commissioning'
-                              : 'Done',
-                    })}
-                  </li>
-                )
-              })}
-            </ol>
-          )}
-          {failure !== null && <ErrorBox message={failure} />}
-        </DialogBody>
-        <DialogFooter>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            {t('common.close', { defaultValue: 'Close' })}
-          </Button>
-          {view.phase === 'done' ? (
-            <Button size="sm" onClick={onCommissioned}>
-              {t('integrations.adoptDevices', {
-                defaultValue: 'Adopt devices',
-              })}
-            </Button>
-          ) : (
-            <Button
-              size="sm"
-              disabled={busy || noBroker || code.trim().length === 0}
-              onClick={submit}
-            >
-              {busy
-                ? t('integrations.addMatter.working', {
-                    defaultValue: 'Adding…',
-                  })
-                : t('integrations.addMatter.submit', {
-                    defaultValue: 'Add device',
+          >
+            {PHASES.map((phase) => {
+              const current = view.phase === phase
+              return (
+                <li
+                  key={phase}
+                  className={`text-xs ${current ? 'text-foreground font-medium' : 'text-foreground-subtle'}`}
+                >
+                  {current && busy ? (
+                    <Loader2 className="mr-1 inline h-3 w-3 animate-spin" />
+                  ) : null}
+                  {t(`integrations.addMatter.phase.${phase}`, {
+                    defaultValue:
+                      phase === 'discovering'
+                        ? 'Discovering'
+                        : phase === 'pase'
+                          ? 'PASE'
+                          : phase === 'commissioning'
+                            ? 'Commissioning'
+                            : 'Done',
                   })}
-            </Button>
-          )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+                </li>
+              )
+            })}
+          </ol>
+        )}
+        {failure !== null && <ErrorBox message={failure} />}
+      </DialogBody>
+      <DialogFooter>
+        <Button variant="ghost" size="sm" onClick={onClose}>
+          {t('common.close', { defaultValue: 'Close' })}
+        </Button>
+        {view.phase === 'done' ? (
+          <Button size="sm" onClick={onCommissioned}>
+            {t('integrations.adoptDevices', {
+              defaultValue: 'Adopt devices',
+            })}
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            disabled={busy || noBroker || code.trim().length === 0}
+            onClick={submit}
+          >
+            {busy
+              ? t('integrations.addMatter.working', {
+                  defaultValue: 'Adding…',
+                })
+              : t('integrations.addMatter.submit', {
+                  defaultValue: 'Add device',
+                })}
+          </Button>
+        )}
+      </DialogFooter>
+    </>
   )
 }

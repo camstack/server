@@ -376,3 +376,24 @@ export function targetsPinning(
 ): readonly string[] {
   return targets.filter((t) => t.config['smtpInstanceId'] === instanceId).map((t) => t.name)
 }
+
+/**
+ * An id the operator types when a record is created (a provider's immutable, human-chosen key:
+ * a login method's slug). The caller declares it per kind; the editor validates it live and
+ * sends it as `createInstance.id`. It cannot be changed afterwards.
+ */
+export interface TypedIdRule {
+  readonly pattern: RegExp
+}
+
+/** The id shape the server's instance records accept from an operator: a short lowercase slug. */
+export const INSTANCE_ID_PATTERN = /^[a-z0-9][a-z0-9-]{0,63}$/
+
+/** The rule for the kind being created, or undefined when the kind mints its own id. */
+export type TypedIdRuleFor = (kindId: string | undefined) => TypedIdRule | undefined
+
+/** `empty` is not an error (nothing typed yet) but blocks Create; `invalid` is shown to the operator. */
+export function checkTypedId(rule: TypedIdRule, typed: string): 'ok' | 'empty' | 'invalid' {
+  if (typed === '') return 'empty'
+  return rule.pattern.test(typed) ? 'ok' : 'invalid'
+}
