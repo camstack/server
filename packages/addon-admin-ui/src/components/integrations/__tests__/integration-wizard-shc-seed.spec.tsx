@@ -52,13 +52,20 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   return {
     ...actual,
     useAddonSettingsGetIntegrationFormSchema: () => ({ data: schema }),
-    useDeviceManagerAdoptDevice: () => ({ mutateAsync: vi.fn(), isPending: false }),
+    useDeviceManagerAdoptDevice: () => ({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    }),
     useDeviceManagerDiscoverDevices: () => ({
       mutate: vi.fn(),
       isPending: false,
       data: undefined,
     }),
-    useIntegrationsCreate: () => ({ mutateAsync: vi.fn(), isPending: false, error: null }),
+    useIntegrationsCreate: () => ({
+      mutateAsync: vi.fn(),
+      isPending: false,
+      error: null,
+    }),
     useDeviceManagerDiscoveryProviders: () => ({ data: { providers: [] } }),
     useIntegrationsGetAvailableTypes: () => ({
       data: [
@@ -70,7 +77,23 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
       ],
     }),
     useAddonsCustom: () => ({ mutateAsync: vi.fn(async () => ({ ok: true })) }),
-    useIntegrationInstancesTestInstance: () => ({ mutate: vi.fn(), isPending: false }),
+    // One testable kind: the wizard creates and tests a draft as that kind.
+    useIntegrationInstancesDescribe: () => ({
+      data: {
+        kinds: [
+          {
+            id: 'default',
+            label: 'Default',
+            functionCap: 'device-provider',
+            canTest: true,
+          },
+        ],
+      },
+    }),
+    useIntegrationInstancesTestInstance: () => ({
+      mutate: vi.fn(),
+      isPending: false,
+    }),
   }
 })
 
@@ -78,7 +101,9 @@ import { ConfirmDialogProvider } from '@camstack/ui-library'
 import { IntegrationWizard } from '../IntegrationWizard'
 
 function renderWizard(): ReactElement {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
   return (
     <QueryClientProvider client={client}>
       <MemoryRouter>

@@ -25,22 +25,58 @@ const providers = vi.hoisted(() => {
   }
   return {
     list: [
-      { ...base, addonId: 'provider-a', name: 'Alpha', mode: 'standalone' as const },
-      { ...base, addonId: 'provider-b', name: 'Beta', mode: 'account' as const },
+      {
+        ...base,
+        addonId: 'provider-a',
+        name: 'Alpha',
+        mode: 'standalone' as const,
+      },
+      {
+        ...base,
+        addonId: 'provider-b',
+        name: 'Beta',
+        mode: 'account' as const,
+      },
     ],
   }
 })
 
 vi.mock('@camstack/ui-library', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@camstack/ui-library')>()),
-  useIntegrationsGetAvailableTypes: () => ({ data: providers.list, isLoading: false }),
+  useIntegrationsGetAvailableTypes: () => ({
+    data: providers.list,
+    isLoading: false,
+  }),
   useAddonsList: () => ({ data: [] }),
   useAddonSettingsGetIntegrationFormSchema: () => ({ data: { sections: [] } }),
-  useDeviceManagerAdoptDevice: () => ({ mutateAsync: vi.fn(), isPending: false }),
-  useDeviceManagerDiscoverDevices: () => ({ mutate: vi.fn(), isPending: false, data: undefined }),
+  useDeviceManagerAdoptDevice: () => ({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  }),
+  useDeviceManagerDiscoverDevices: () => ({
+    mutate: vi.fn(),
+    isPending: false,
+    data: undefined,
+  }),
   useDeviceManagerDiscoveryProviders: () => ({ data: { providers: [] } }),
   useAddonsCustom: () => ({ mutateAsync: vi.fn() }),
-  useIntegrationInstancesTestInstance: () => ({ mutate: vi.fn(), isPending: false }),
+  // One testable kind: the wizard creates and tests a draft as that kind.
+  useIntegrationInstancesDescribe: () => ({
+    data: {
+      kinds: [
+        {
+          id: 'default',
+          label: 'Default',
+          functionCap: 'device-provider',
+          canTest: true,
+        },
+      ],
+    },
+  }),
+  useIntegrationInstancesTestInstance: () => ({
+    mutate: vi.fn(),
+    isPending: false,
+  }),
   useIntegrationsCreate: () => {
     const [error, setError] = useState<Error | null>(null)
     return {
@@ -61,7 +97,9 @@ import { IntegrationWizard } from '../IntegrationWizard'
 
 describe('IntegrationWizard create error', () => {
   it('does not carry a failed create of one provider into the next provider picked', async () => {
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
     render(
       <QueryClientProvider client={client}>
         <MemoryRouter>
