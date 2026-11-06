@@ -261,6 +261,8 @@ describe('core-blocks migration: appliance and heater helpers become plain Custo
       threshold: 7,
       startDwellMs: 41_000,
       stopDwellMs: 437_000,
+      // A running read off a power meter needs two samples to start (ADR-0933).
+      minSamples: 2,
     })
     expect(running.draft.source).toMatchObject({
       ...WASHER_METER.source,
@@ -320,6 +322,7 @@ describe('core-blocks migration: appliance and heater helpers become plain Custo
       threshold: 77,
       startDwellMs: 13_000,
       stopDwellMs: 71_000,
+      minSamples: 2,
     })
     expect(featureOf(composition, 'power-meter').fields['power']).toMatchObject({
       source: HEATER_METER.source,
