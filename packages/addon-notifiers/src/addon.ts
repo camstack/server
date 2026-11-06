@@ -20,6 +20,7 @@ import {
   integrationInstancesCapability,
   notificationOutputCapability,
   secretKeysOf,
+  legacyTargetsOver,
   targetRowPortsOver,
   publicEndpointReaderFrom,
 } from '@camstack/types'
@@ -50,15 +51,17 @@ export class NotifiersAddon extends BaseAddon<NotifiersConfig> {
     }
     // Declare notification-targets BEFORE first store access.
     await records.declare({ ...notifiersRecordKinds, ...oldTargetKinds })
-    const store = TargetStore.of(records)
     const descriptors = notifierDescriptors()
+    // A target the migration could not move stays in the retired kind, and the store keeps serving it.
+    const legacy = legacyTargetsOver(
+      records.kind(oldTargetKinds[OLD_TARGETS_KIND]),
+      this.ctx.logger,
+    )
+    const store = TargetStore.of(records, descriptors, { logger: this.ctx.logger, legacy })
     // The old single kind is flattened into the per-kind records BEFORE anything reads a target.
     await this.runMigrations(
       defineAddonMigrations(ADDON_MIGRATIONS, {
-        rows: targetRowPortsOver({
-          oldKind: records.kind(oldTargetKinds[OLD_TARGETS_KIND]),
-          store,
-        }),
+        rows: targetRowPortsOver({ legacy, store, logger: this.ctx.logger }),
         secretKeysOf: (kind) => {
           const descriptor = descriptors.find((candidate) => candidate.kind === kind)
           return descriptor === undefined ? [] : secretKeysOf(descriptor)

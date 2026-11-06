@@ -4,8 +4,9 @@
  * send still goes to `notificationOutput.send({ addonId, targetId })`, so a rule saved before this
  * change keeps resolving.
  *
- * A provider that could not be read is an error, never an empty list: the dispatcher caches the answer
- * whole, and a target missing from it reads as "this rule's target was deleted" (D315, D49).
+ * A provider that could not be read is never an empty list (D315, D49): its holder is NAMED in the
+ * answer, so one broken holder cannot stall delivery to the healthy ones, and a target missing from a
+ * partial answer is transient (retried), never "deleted". Nothing readable at all is an error.
  */
 import {
   type IntegrationInstance,
@@ -14,7 +15,7 @@ import {
   instancesOfCap,
   type TargetKind,
 } from '@camstack/types'
-import type { NcTargetRef } from '../../notification-center/dispatcher.js'
+import type { NcTargetRef, NcUnreadableHolder } from '../../notification-center/dispatcher.js'
 
 const NOTIFICATION_OUTPUT = 'notification-output'
 const INTEGRATION_INSTANCES = 'integration-instances'
@@ -57,19 +58,25 @@ export function instanceSourceOverApi(api: NcInstanceApi): InstanceSource {
   }
 }
 
-/** Every target as the dispatcher sees it, with the budgets its KIND declares. */
+/** The readable targets, and the holders that could not be read. */
+export interface NcTargetRead {
+  readonly targets: readonly NcTargetRef[]
+  readonly unreadable: readonly NcUnreadableHolder[]
+}
+
+/** Every readable target as the dispatcher sees it, with the budgets its KIND declares. */
 export async function readNcTargets(
   source: InstanceSource,
   kinds: readonly NcKindBudgets[],
-): Promise<readonly NcTargetRef[]> {
+): Promise<NcTargetRead> {
   const { instances, unreadable } = await instancesOfCap(source, NOTIFICATION_OUTPUT)
-  if (unreadable.length > 0) {
+  if (instances.length === 0 && unreadable.length > 0) {
     throw new Error(
       `notification targets unreadable from ${unreadable.map((u) => `${u.addonId} (${u.error})`).join(', ')}`,
     )
   }
   const byKind = new Map(kinds.map((kind) => [kind.kind, kind]))
-  return instances.map(({ addonId, kind, instance }): NcTargetRef => {
+  const targets = instances.map(({ addonId, kind, instance }): NcTargetRef => {
     const declared = byKind.get(kind.id)
     const owner = instance.formValues['ownerUserId']
     const deliveryParams = declared?.deliveryParams
@@ -85,4 +92,5 @@ export async function readNcTargets(
       ...(deliveryParams !== undefined && deliveryParams.length > 0 ? { deliveryParams } : {}),
     }
   })
+  return { targets, unreadable: unreadable.map((u) => ({ addonId: u.addonId, error: u.error })) }
 }

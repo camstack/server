@@ -120,10 +120,10 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<AlexaMigrationPorts>[] = 
       dependsOn: ['import-alexa/2026-11-01-strip-echo-target-volume-and-mode'],
       store: 'settings',
       scope: 'cluster',
-      onFailure: 'block-owner',
+      onFailure: 'tolerate',
       bodyKind: 'procedure',
       description:
-        'Move each Echo target from the echoTargets setting to a notify-alexa-echo record under the same id, the switch carried, read back before the setting is cleared; a record that exists is never overwritten',
+        'Move each Echo target from the echoTargets setting to a notify-alexa-echo record under the same id, the switch carried, read back before its row leaves the setting; a row that fails stays in the setting and is still served; a record that exists is never overwritten',
       fixtureMark: 'the switch (off) and the id of an Echo target',
     },
     procedure: moveEchoTargetsToRecords,

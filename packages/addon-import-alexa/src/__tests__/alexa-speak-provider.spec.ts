@@ -62,8 +62,9 @@ function ports(): AlexaSpeakPorts {
     brokers: () => [],
     now: () => 0,
     logger: logger(),
-    loadTargets: () => [],
-    saveTargets: () => {},
+    loadTargets: async () => [],
+    putTarget: async () => {},
+    removeTarget: async () => {},
     speak: async () => [],
   }
 }
@@ -77,8 +78,9 @@ describe('alexa notification provider', () => {
       brokers: () => [broker('b1', 'Home', devices)],
       now: () => now,
       logger: logger(),
-      loadTargets: () => [target()],
-      saveTargets: () => {},
+      loadTargets: async () => [target()],
+      putTarget: async () => {},
+      removeTarget: async () => {},
       speak: async (command) => {
         spoken.push(command)
         if (command.text.includes('down')) throw new Error('session down')
@@ -153,7 +155,7 @@ describe('alexa notification provider', () => {
     const provider = createAlexaNotificationProvider({
       ...ports(),
       brokers: () => [broker('b1', 'Home', [echo(), echo({ id: 'echo-2', name: 'Hall' })])],
-      loadTargets: () => [target({ brokerId: 'b1', echoId: 'echo-1' })],
+      loadTargets: async () => [target({ brokerId: 'b1', echoId: 'echo-1' })],
     })
     const found = await provider.discoverTargets({ kind: ALEXA_SPEAK_KIND })
     expect(found.map((row) => row.config['echoId'])).toEqual(['echo-2'])
@@ -163,7 +165,7 @@ describe('alexa notification provider', () => {
     const provider = createAlexaNotificationProvider({
       ...ports(),
       brokers: () => [broker('b1', 'Home', [echo()]), broker('b2', 'Office', [echo()])],
-      loadTargets: () => [target({ brokerId: 'b1', echoId: 'echo-1' })],
+      loadTargets: async () => [target({ brokerId: 'b1', echoId: 'echo-1' })],
     })
     const found = await provider.discoverTargets({ kind: ALEXA_SPEAK_KIND })
     expect(found.map((row) => row.config['brokerId'])).toEqual(['b2'])
@@ -205,8 +207,9 @@ describe('Alexa quiet vs announce is decided per notification', () => {
         return now
       },
       logger: log,
-      loadTargets: () => [target(config)],
-      saveTargets: () => {},
+      loadTargets: async () => [target(config)],
+      putTarget: async () => {},
+      removeTarget: async () => {},
       speak: async (command) => {
         spoken.push(command)
         return [{ targetId: command.targets[0] ?? '', ok: true }]
@@ -278,7 +281,7 @@ describe('the Alexa target kind', () => {
         ]),
         broker('b2', 'Office', [echo({ id: 'office-echo', name: 'Office echo' })]),
       ],
-      loadTargets: () => [target({ brokerId: 'b1', echoId: 'echo-1' })],
+      loadTargets: async () => [target({ brokerId: 'b1', echoId: 'echo-1' })],
     })
     const found = await provider.discoverTargets({
       kind: ALEXA_SPEAK_KIND,
@@ -291,14 +294,16 @@ describe('the Alexa target kind', () => {
   })
 
   it('pins the account on save, so a second account added later does not move the target', async () => {
-    const saved: Target[][] = []
+    const saved: Target[] = []
     const provider = createAlexaNotificationProvider({
       ...ports(),
       brokers: () => [broker('b1', 'Home', [echo()])],
-      saveTargets: (next) => saved.push([...next]),
+      putTarget: async (next) => {
+        saved.push(next)
+      },
     })
     await provider.upsertTarget({ target: { ...target({ echoId: 'echo-1' }) } })
-    expect(saved[0]?.[0]?.config['brokerId']).toBe('b1')
+    expect(saved[0]?.config['brokerId']).toBe('b1')
   })
 
   it('refuses to save a target with no Echo, or with no account when several are linked', async () => {
@@ -322,7 +327,7 @@ describe('the Alexa target kind', () => {
         broker('b1', 'Home', [echo()]),
         broker('b2', 'Office', [echo({ id: 'echo-9' })]),
       ],
-      loadTargets: () => [target({ brokerId: 'b2', echoId: 'echo-9' })],
+      loadTargets: async () => [target({ brokerId: 'b2', echoId: 'echo-9' })],
       speak: async (command) => {
         spoken.push(command)
         return [{ targetId: command.targets[0] ?? '', ok: true }]
@@ -337,7 +342,7 @@ describe('the Alexa target kind', () => {
     const provider = createAlexaNotificationProvider({
       ...ports(),
       brokers: () => [broker('b1', 'Home', []), broker('b2', 'Office', [])],
-      loadTargets: () => [target({ echoId: 'unknown' })],
+      loadTargets: async () => [target({ echoId: 'unknown' })],
     })
     const sent = await provider.send({ targetId: 't1', notification: note('hello') })
     expect(sent.success).toBe(false)

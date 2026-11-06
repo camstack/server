@@ -414,7 +414,19 @@ export async function resolveUserTargets(
       owned.set(t.ownerUserId, list)
     }
     host.ownedTargetsCache = owned
-    host.ownedTargetsAt = now
+    const unreadable = host.deps.dispatcher.unreadableTargetHolders?.() ?? []
+    if (unreadable.length > 0) {
+      // A partial catalog is used for this fan-out but not remembered: the next one reads again.
+      for (const holder of unreadable) {
+        host.logger.warn('owned targets read from a partial catalog: a holder is unreadable', {
+          tags: { deviceId },
+          meta: { addonId: holder.addonId, error: holder.error },
+        })
+      }
+      host.ownedTargetsAt = Number.NEGATIVE_INFINITY
+    } else {
+      host.ownedTargetsAt = now
+    }
   }
   if (!host.deviceRouteCache.has(deviceId)) {
     host.deviceRouteCache.set(deviceId, await getDeviceRoute(deviceId))

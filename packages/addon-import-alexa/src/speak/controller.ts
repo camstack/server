@@ -5,15 +5,9 @@
  * broker, and never again here.
  */
 import type { IScopedLogger, Target } from '@camstack/types'
-import { type AlexaEchoTarget, readEchoTargets } from '../config.js'
 import { BrokerEcho } from './broker-echo.js'
 import type { BrokerSeed } from './broker-seed.js'
-import {
-  ALEXA_SPEAK_ADDON_ID,
-  ALEXA_SPEAK_KIND,
-  DEVICE_REFRESH_MS,
-  type SpeakMode,
-} from './constants.js'
+import { DEVICE_REFRESH_MS, type SpeakMode } from './constants.js'
 import {
   createAlexaNotificationProvider,
   type AlexaNotificationProvider,
@@ -34,8 +28,11 @@ export interface SpeakBrokerRef {
 
 export interface AlexaSpeakHost {
   readonly logger: IScopedLogger
-  readonly readConfig: () => { echoTargets?: unknown }
-  readonly writeTargets: (targets: readonly AlexaEchoTarget[]) => Promise<void>
+  /** The Echo targets now. Read on every use: an instance may have created, switched or deleted one. */
+  readonly readTargets: () => Promise<readonly Target[]>
+  /** Write the one target that changed. */
+  readonly putTarget: (target: Target) => Promise<void>
+  readonly removeTarget: (targetId: string) => Promise<void>
   /** The brokers right now. Read on every use: accounts come and go. */
   readonly listBrokers: () => readonly SpeakBrokerRef[]
   /** The broker's current refresh token, or null when it holds none. */
@@ -49,35 +46,8 @@ export interface AlexaSpeakHost {
   readonly push?: EchoPushSink
 }
 
-function targetsFrom(rows: readonly AlexaEchoTarget[]): readonly Target[] {
-  return rows.map((row) => ({
-    id: row.id,
-    name: row.name,
-    kind: ALEXA_SPEAK_KIND,
-    addonId: ALEXA_SPEAK_ADDON_ID,
-    enabled: row.enabled,
-    config: {
-      ...(row.brokerId.length > 0 ? { brokerId: row.brokerId } : {}),
-      echoId: row.echoId,
-      respectDnd: row.respectDnd,
-    },
-  }))
-}
-
-function rowsFrom(targets: readonly Target[]): readonly AlexaEchoTarget[] {
-  return targets.map((target) => ({
-    id: target.id,
-    name: target.name,
-    enabled: target.enabled,
-    brokerId: typeof target.config['brokerId'] === 'string' ? target.config['brokerId'] : '',
-    echoId: typeof target.config['echoId'] === 'string' ? target.config['echoId'] : '',
-    respectDnd: target.config['respectDnd'] !== false,
-  }))
-}
-
 export class AlexaSpeakController {
   readonly provider: AlexaNotificationProvider
-  private rows: readonly AlexaEchoTarget[]
   private pythonPath: string | null = null
   private readonly echoes = new Map<string, BrokerEcho>()
   private timer: ReturnType<typeof setInterval> | null = null
@@ -86,16 +56,13 @@ export class AlexaSpeakController {
 
   constructor(private readonly host: AlexaSpeakHost) {
     this.now = host.now ?? (() => Date.now())
-    this.rows = readEchoTargets(host.readConfig())
     this.provider = createAlexaNotificationProvider({
       brokers: () => this.brokerViews(),
       now: this.now,
       logger: host.logger,
-      loadTargets: () => targetsFrom(this.rows),
-      saveTargets: (targets) => {
-        this.rows = rowsFrom(targets)
-        void this.persist()
-      },
+      loadTargets: () => host.readTargets(),
+      putTarget: (target) => host.putTarget(target),
+      removeTarget: (targetId) => host.removeTarget(targetId),
       speak: (command) => this.utter(command.brokerId, command.mode, command.targets, command.text),
     })
   }
@@ -141,16 +108,6 @@ export class AlexaSpeakController {
         rateLimitedUntil: echo?.rateLimitedUntil ?? null,
       }
     })
-  }
-
-  private async persist(): Promise<void> {
-    try {
-      await this.host.writeTargets(this.rows)
-    } catch (err: unknown) {
-      this.host.logger.warn('alexa speak: could not store targets', {
-        meta: { error: err instanceof Error ? err.message : String(err) },
-      })
-    }
   }
 
   private makeWorker(brokerId: string, pythonPath: string): AlexaWorker {

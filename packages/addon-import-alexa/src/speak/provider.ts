@@ -69,8 +69,11 @@ export interface AlexaSpeakPorts {
   readonly speak: (command: SpeakCommand) => Promise<readonly TargetDelivery[]>
   readonly now: () => number
   readonly logger: IScopedLogger
-  readonly loadTargets: () => readonly Target[]
-  readonly saveTargets: (targets: readonly Target[]) => void
+  /** The targets now, read from the records on every use: an instance may have changed them. */
+  readonly loadTargets: () => Promise<readonly Target[]>
+  /** Write the one target that changed; never a replace-all from memory. */
+  readonly putTarget: (target: Target) => Promise<void>
+  readonly removeTarget: (targetId: string) => Promise<void>
 }
 
 export interface AlexaNotificationProvider extends INotificationOutputProvider {
@@ -228,7 +231,6 @@ function discoveredFrom(broker: SpeakBrokerView, device: EchoDevice): Discovered
 
 export function createAlexaNotificationProvider(ports: AlexaSpeakPorts): AlexaNotificationProvider {
   const logger = ports.logger ?? quietLogger()
-  let targets: readonly Target[] = ports.loadTargets()
   let ledger: SpeechLedger = emptySpeechLedger()
   let deliveries: readonly DeliveryRecord[] = []
 
@@ -248,11 +250,6 @@ export function createAlexaNotificationProvider(ports: AlexaSpeakPorts): AlexaNo
     const echoId = readString(config, 'echoId')
     const owners = all.filter((broker) => broker.devices.some((device) => device.id === echoId))
     return owners.length === 1 ? owners[0] : undefined
-  }
-
-  function persist(next: readonly Target[]): void {
-    targets = next
-    ports.saveTargets(next)
   }
 
   async function deliver(target: Target, notification: Notification): Promise<SendResult> {
@@ -356,10 +353,10 @@ export function createAlexaNotificationProvider(ports: AlexaSpeakPorts): AlexaNo
       return [alexaTargetKind()]
     },
     async listTargets() {
-      return [...targets]
+      return [...(await ports.loadTargets())]
     },
     async getTarget(input) {
-      const found = targets.find((target) => target.id === input.targetId)
+      const found = (await ports.loadTargets()).find((target) => target.id === input.targetId)
       if (found === undefined) throw new Error(`target not found: ${input.targetId}`)
       return found
     },
@@ -385,7 +382,7 @@ export function createAlexaNotificationProvider(ports: AlexaSpeakPorts): AlexaNo
       }
       // Otherwise one proposal per Echo that no saved target already speaks on.
       const taken = new Set(
-        targets.flatMap((row) => {
+        (await ports.loadTargets()).flatMap((row) => {
           const owner = brokerFor(row.config)
           return owner === undefined ? [] : [`${owner.id}/${readString(row.config, 'echoId')}`]
         }),
@@ -411,14 +408,14 @@ export function createAlexaNotificationProvider(ports: AlexaSpeakPorts): AlexaNo
       return result
     },
     async send(input) {
-      const target = targets.find((row) => row.id === input.targetId)
+      const target = (await ports.loadTargets()).find((row) => row.id === input.targetId)
       if (target === undefined)
         return { success: false, error: `target not found: ${input.targetId}` }
       if (!target.enabled) return { success: false, error: 'target disabled' }
       return deliver(target, input.notification)
     },
     async testTarget(input) {
-      const found = targets.find((row) => row.id === input.targetId)
+      const found = (await ports.loadTargets()).find((row) => row.id === input.targetId)
       if (found === undefined)
         return { success: false, error: `target not found: ${input.targetId}` }
       if (!found.enabled) return { success: false, error: 'target disabled' }
@@ -450,19 +447,15 @@ export function createAlexaNotificationProvider(ports: AlexaSpeakPorts): AlexaNo
         addonId: ALEXA_SPEAK_ADDON_ID,
         kind: ALEXA_SPEAK_KIND,
       }
-      const rest = targets.filter((row) => row.id !== target.id)
-      persist([...rest, target])
+      await ports.putTarget(target)
       return target
     },
     async deleteTarget(input) {
-      persist(targets.filter((row) => row.id !== input.targetId))
+      await ports.removeTarget(input.targetId)
     },
     async setTargetEnabled(input) {
-      persist(
-        targets.map((row) =>
-          row.id === input.targetId ? { ...row, enabled: input.enabled } : row,
-        ),
-      )
+      const found = (await ports.loadTargets()).find((row) => row.id === input.targetId)
+      if (found !== undefined) await ports.putTarget({ ...found, enabled: input.enabled })
     },
   }
 }

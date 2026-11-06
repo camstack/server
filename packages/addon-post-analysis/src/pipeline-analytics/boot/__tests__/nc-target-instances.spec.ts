@@ -1,8 +1,9 @@
 /**
  * The dispatcher's targets are the instances of `notification-output`. A Telegram target with a token
  * that is SWITCHED OFF still resolves by the id a rule names (the dispatcher decides what to do with a
- * disabled target), carries its kind's budgets, and a provider that cannot be read is an error, never
- * an empty list (D315, D49).
+ * disabled target), carries its kind's budgets, and a provider that cannot be read is named, never an
+ * empty list (D315, D49): the readable targets are still delivered, and a target of the unreadable
+ * holder is retried as transient.
  */
 import {
   buildNotificationTargetInstances,
@@ -12,6 +13,9 @@ import {
   type TargetKind,
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
+import { NcDispatcher } from '../../../notification-center/dispatcher.js'
+import type { NcOutboxEntry } from '../../../notification-center/outbox.js'
+import { makeSilentLogger } from '../../__tests__/test-helpers.js'
 import { instanceSourceOverApi, type NcInstanceApi, readNcTargets } from '../nc-target-instances.js'
 
 const TELEGRAM: TargetKind = {
@@ -45,7 +49,8 @@ const TELEGRAM: TargetKind = {
   },
 }
 
-async function api(broken = false) {
+/** The cluster as the hub answers: `notifiers` serves a Telegram target; `import-alexa` can be down. */
+async function api(alexaDown = false) {
   const memory = makeInMemoryRecords('notifiers')
   const kinds = notificationTargetKinds([TELEGRAM])
   await memory.records.declare(kinds)
@@ -64,19 +69,22 @@ async function api(broken = false) {
     mintId: () => 'minted',
     canProbe: () => false,
   })
+  const holders = alexaDown ? ['notifiers', 'import-alexa'] : ['notifiers']
   const fake: NcInstanceApi = {
     capabilities: {
       getCapability: {
         query: async ({ name }) => ({
           providers:
-            name === 'integration-instances' || name === 'notification-output' ? ['notifiers'] : [],
+            name === 'integration-instances' || name === 'notification-output' ? holders : [],
         }),
       },
     },
     integrationInstances: {
       describe: {
-        query: async () =>
-          broken ? Promise.reject(new Error('holder down')) : provider.describe(),
+        query: async ({ addonId }) =>
+          addonId === 'import-alexa'
+            ? Promise.reject(new Error('holder down'))
+            : provider.describe(),
       },
       listInstances: { query: async () => provider.listInstances() },
     },
@@ -84,10 +92,42 @@ async function api(broken = false) {
   return fake
 }
 
+function entry(targetId: string): NcOutboxEntry {
+  return {
+    id: `rule-1:trk-1:${targetId}`,
+    ruleId: 'rule-1',
+    targetId,
+    deviceId: 102,
+    recordKind: 'object-event',
+    recordId: 'ev-1',
+    trackId: 'trk-1',
+    status: 'pending',
+    attempts: 0,
+    nextAttemptAt: 0,
+    createdAt: 100,
+    updatedAt: 100,
+    payload: {
+      ruleName: 'Parking',
+      delivery: 'immediate',
+      priority: 3,
+      media: 'none',
+      subject: {
+        deviceId: 102,
+        trackId: 'trk-1',
+        eventId: 'ev-1',
+        className: 'vehicle',
+        zones: [],
+        timestamp: 1_753_000_000_000,
+      },
+    },
+  }
+}
+
 describe('readNcTargets', () => {
   it('resolves a switched-off Telegram target by its id, with the budgets of its kind and its owner', async () => {
-    const targets = await readNcTargets(instanceSourceOverApi(await api()), [TELEGRAM])
-    expect(targets).toEqual([
+    const read = await readNcTargets(instanceSourceOverApi(await api()), [TELEGRAM])
+    expect(read.unreadable).toEqual([])
+    expect(read.targets).toEqual([
       {
         id: 'tg-1',
         addonId: 'notifiers',
@@ -101,15 +141,73 @@ describe('readNcTargets', () => {
     ])
   })
 
-  it('throws when a provider cannot be read instead of answering with no targets', async () => {
-    await expect(readNcTargets(instanceSourceOverApi(await api(true)), [TELEGRAM])).rejects.toThrow(
-      /notifiers \(holder down\)/,
+  it('names the holder that cannot be read and still returns the readable targets', async () => {
+    const read = await readNcTargets(instanceSourceOverApi(await api(true)), [TELEGRAM])
+    expect(read.targets.map((t) => t.id)).toEqual(['tg-1'])
+    expect(read.unreadable).toEqual([{ addonId: 'import-alexa', error: 'holder down' }])
+  })
+
+  it('throws only when NOTHING was readable', async () => {
+    const api = {
+      capabilities: {
+        getCapability: {
+          query: async () => ({ providers: ['import-alexa'] }),
+        },
+      },
+      integrationInstances: {
+        describe: { query: () => Promise.reject(new Error('holder down')) },
+        listInstances: { query: async () => [] },
+      },
+    } satisfies NcInstanceApi
+    await expect(readNcTargets(instanceSourceOverApi(api), [TELEGRAM])).rejects.toThrow(
+      /import-alexa \(holder down\)/,
     )
   })
 
   it('omits the budgets when the kind catalog did not answer', async () => {
-    const targets = await readNcTargets(instanceSourceOverApi(await api()), [])
-    expect(targets[0]).not.toHaveProperty('bodyMaxLen')
-    expect(targets[0]).toMatchObject({ id: 'tg-1', enabled: false })
+    const read = await readNcTargets(instanceSourceOverApi(await api()), [])
+    expect(read.targets[0]).not.toHaveProperty('bodyMaxLen')
+    expect(read.targets[0]).toMatchObject({ id: 'tg-1', enabled: false })
+  })
+})
+
+describe('the dispatcher over a catalog with one unreadable holder', () => {
+  async function dispatcherOver(alexaDown: boolean) {
+    const fake = await api(alexaDown)
+    let unreadable: readonly { addonId: string; error: string }[] = []
+    const sends: string[] = []
+    const dispatcher = new NcDispatcher({
+      logger: makeSilentLogger(),
+      listTargets: async () => {
+        const read = await readNcTargets(instanceSourceOverApi(fake), [TELEGRAM])
+        unreadable = read.unreadable
+        return read.targets.map((t) => ({ ...t, enabled: true }))
+      },
+      unreadableTargetHolders: () => unreadable,
+      send: async (input) => {
+        sends.push(input.targetId)
+        return { success: true }
+      },
+      getMediaForOwner: async () => [],
+      getDeviceName: async () => 'Parking',
+      now: () => 1_753_000_001_000,
+      sleep: async () => undefined,
+    })
+    return { dispatcher, sends }
+  }
+
+  it('delivers to the healthy target while the alexa target is retried as transient', async () => {
+    const h = await dispatcherOver(true)
+    const delivered = await h.dispatcher.deliver(entry('tg-1'))
+    expect(delivered.ok).toBe(true)
+    expect(h.sends).toEqual(['tg-1'])
+    await expect(h.dispatcher.deliver(entry('alexa-echo-1'))).rejects.toThrow(/transient/)
+    expect(h.sends).toEqual(['tg-1'])
+  })
+
+  it('a target absent from a WHOLE catalog is still a permanent failure', async () => {
+    const h = await dispatcherOver(false)
+    const result = await h.dispatcher.deliver(entry('alexa-echo-1'))
+    expect(result.ok).toBe(false)
   })
 })

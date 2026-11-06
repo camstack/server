@@ -22,6 +22,7 @@ import type {
   NcEventMediaRequest,
   NcSendInput,
   NcTargetRef,
+  NcUnreadableHolder,
 } from '../../notification-center/dispatcher.js'
 import { NotificationCenter } from '../../notification-center/index.js'
 import { instanceSourceOverApi, type NcKindBudgets, readNcTargets } from './nc-target-instances.js'
@@ -63,6 +64,8 @@ export class BuildNotificationCenter extends BuildNotificationCenterBase {
     // `readDeviceStore` per row. On this hub that was 967 per-device settings
     // reads a minute, forever, to build a map of 967 strings.
     let deviceFactsAt = 0
+    // The target holders the last catalog read could not read: that catalog is partial.
+    let unreadableHolders: readonly NcUnreadableHolder[] = []
     let deviceNames = new Map<number, string>()
     // Only cameras the operator gave a location — absent entry means "none".
     let deviceLocations = new Map<number, string>()
@@ -627,8 +630,11 @@ export class BuildNotificationCenter extends BuildNotificationCenterBase {
           const kinds = await api.notificationOutput.listTargetKinds
             .query({})
             .catch((): readonly NcKindBudgets[] => [])
-          return readNcTargets(instanceSourceOverApi(api), kinds)
+          const read = await readNcTargets(instanceSourceOverApi(api), kinds)
+          unreadableHolders = read.unreadable
+          return read.targets
         },
+        unreadableTargetHolders: () => unreadableHolders,
         // `addonId` is threaded top-level so the collection router routes
         // the send to the ONE provider owning the target (same convention
         // as the admin-ui test panel).

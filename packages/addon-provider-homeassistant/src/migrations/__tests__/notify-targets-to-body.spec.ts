@@ -15,7 +15,11 @@ import {
 import { describe, expect, it } from 'vitest'
 import { haNotifyRecordKinds, HaTargetStore } from '../../ha-notification-output.js'
 import { haRecordKinds } from '../../record-kinds.js'
-import { haNotifyPortsOver } from '../notify-targets-to-body.js'
+import {
+  haLegacyTargetsOver,
+  type HaNotifyPorts,
+  haNotifyPortsOver,
+} from '../notify-targets-to-body.js'
 import { ADDON_MIGRATIONS, HA_NOTIFY_TARGETS_TO_BODY_ID } from '../index.js'
 
 const silentLogger: IScopedLogger = {
@@ -69,14 +73,20 @@ async function world() {
     ...haNotifyRecordKinds,
     'ha-notification-targets': OLD,
   })
-  const store = HaTargetStore.of(memory.records)
   const oldKind = memory.records.kind(OLD)
-  const run = (host: AddonMigrationHost) =>
+  const store = HaTargetStore.of(memory.records, {
+    logger: silentLogger,
+    legacy: haLegacyTargetsOver(memory.records, silentLogger),
+  })
+  const run = (
+    host: AddonMigrationHost,
+    wrap: (ports: HaNotifyPorts) => HaNotifyPorts = (p) => p,
+  ) =>
     runAddonMigrations(
       host,
       defineAddonMigrations(
         ADDON_MIGRATIONS.filter((m) => m.meta.id === HA_NOTIFY_TARGETS_TO_BODY_ID),
-        Object.assign(Object.create(null), haNotifyPortsOver(memory.records)),
+        Object.assign(Object.create(null), wrap(haNotifyPortsOver(memory.records, silentLogger))),
       ),
       silentLogger,
     )
@@ -118,5 +128,46 @@ describe('homeassistant notify-targets-to-body', () => {
     expect(second.outcomes.get(HA_NOTIFY_TARGETS_TO_BODY_ID)).toMatchObject({
       result: { outcome: 'already-done' },
     })
+  })
+
+  it('one target that fails to move stays in the old kind and is still served; the other moves', async () => {
+    const w = await world()
+    for (const [id, enabled] of [
+      ['ha-bad', false],
+      ['ha-good', true],
+    ] as const) {
+      await w.oldKind.put({
+        id,
+        data: {
+          name: id,
+          kind: 'homeassistant',
+          addonId: 'provider-homeassistant',
+          enabled,
+          config: { brokerId: 'ha_001', service: `notify_${id}` },
+        },
+      })
+    }
+    const { host, outcomes } = ledgerHost()
+    const result = await w.run(host, (ports) => ({
+      notifyRows: {
+        ...ports.notifyRows,
+        writeNew: async (kind, id, body) => {
+          if (id === 'ha-bad') throw new Error('records engine refused')
+          await ports.notifyRows.writeNew(kind, id, body)
+        },
+      },
+    }))
+    expect(result.failed).toEqual([])
+    expect(outcomes.get(HA_NOTIFY_TARGETS_TO_BODY_ID)).toMatchObject({
+      result: { outcome: 'done', summary: { converted: 1, skipped: 1 } },
+    })
+    expect(await w.oldKind.get('ha-good')).toBeNull()
+    expect(await w.oldKind.get('ha-bad')).not.toBeNull()
+    expect(await w.store.getById('ha-bad')).toMatchObject({
+      id: 'ha-bad',
+      enabled: false,
+      config: { service: 'notify_ha-bad' },
+    })
+    expect((await w.store.list()).map((t) => t.id).sort()).toEqual(['ha-bad', 'ha-good'])
   })
 })

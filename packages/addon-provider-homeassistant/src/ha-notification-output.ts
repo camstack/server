@@ -47,6 +47,7 @@ import {
   type Target,
   type TargetKind,
   NotificationTargetStore,
+  type NotificationTargetStoreOptions,
   notificationTargetKinds,
 } from '@camstack/types'
 import { HA_BROKER_KIND } from './ha-broker-source.js'
@@ -376,10 +377,18 @@ export const haNotifyRecordKinds = notificationTargetKinds([homeassistantTargetK
  */
 export type HaTargetStore = NotificationTargetStore
 export const HaTargetStore = {
-  of(records: Pick<RecordsAccess, 'kind'>): HaTargetStore {
-    return NotificationTargetStore.of(records, HA_ADDON_ID, haNotifyRecordKinds, [
-      homeassistantTargetKind(HA_ADDON_ID),
-    ])
+  /** `options.legacy` is the retired kind a skipped row still lives in: the store keeps serving it. */
+  of(
+    records: Pick<RecordsAccess, 'kind'>,
+    options: NotificationTargetStoreOptions = {},
+  ): HaTargetStore {
+    return NotificationTargetStore.of(
+      records,
+      HA_ADDON_ID,
+      haNotifyRecordKinds,
+      [homeassistantTargetKind(HA_ADDON_ID)],
+      options,
+    )
   },
 }
 

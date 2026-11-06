@@ -100,7 +100,12 @@ import { haInstanceRecordPortsOver } from './ha-instance-settings.js'
 import { haCalendarRecordPortsOver } from './migrations/calendar-ports.js'
 import { buildHaCalendarInstances, selectedEntityIds } from './ha-calendar-instances.js'
 import { haInstanceSettingsPortsOver } from './migrations/legacy-integration-rows.js'
-import { ADDON_MIGRATIONS, haNotifyPortsOver, type HaMigrationPorts } from './migrations/index.js'
+import {
+  ADDON_MIGRATIONS,
+  haLegacyTargetsOver,
+  haNotifyPortsOver,
+  type HaMigrationPorts,
+} from './migrations/index.js'
 import { createHaCalendarSource } from './ha-calendar-source.js'
 import { reconcileBroker } from './ha-reconcile-broker.js'
 import {
@@ -245,7 +250,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
         warn: (message) => this.ctx.logger.warn(message),
       }),
       ...haBrokerLinkPorts(records, (message) => this.ctx.logger.warn(message)),
-      ...haNotifyPortsOver(records),
+      ...haNotifyPortsOver(records, this.ctx.logger),
     }
   }
 
@@ -372,7 +377,10 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
       throw new Error('ha notification-output: ctx.records is required (hub-only addon)')
     }
     // Declare ha-notification-targets BEFORE first store access.
-    const store = HaTargetStore.of(records)
+    const store = HaTargetStore.of(records, {
+      logger: this.ctx.logger,
+      legacy: haLegacyTargetsOver(records, this.ctx.logger),
+    })
     return createHaNotificationOutputProvider({
       addonId: this.ctx.id,
       iconUrl: HA_NOTIFICATION_ICON_URL,

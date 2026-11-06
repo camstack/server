@@ -8,6 +8,7 @@
  */
 import {
   NotificationTargetStore,
+  type NotificationTargetStoreOptions,
   notificationTargetKinds,
   type RecordsAccess,
   type TargetKind,
@@ -21,12 +22,14 @@ export const TargetStore = {
   of(
     records: Pick<RecordsAccess, 'kind'>,
     descriptors: readonly TargetKind[] = notifierDescriptors(),
+    options: NotificationTargetStoreOptions = {},
   ): TargetStore {
     return NotificationTargetStore.of(
       records,
       'notifiers',
       notificationTargetKinds(descriptors),
       descriptors,
+      options,
     )
   },
 }

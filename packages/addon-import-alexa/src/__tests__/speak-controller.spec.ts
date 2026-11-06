@@ -1,8 +1,12 @@
 import * as fs from 'node:fs/promises'
-import type { IScopedLogger } from '@camstack/types'
+import { type IScopedLogger, makeInMemoryRecords, type Target } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import type { AlexaEchoTarget } from '../config.js'
-import { AlexaSpeakController, type SpeakBrokerRef } from '../speak/controller.js'
+import {
+  AlexaSpeakController,
+  type AlexaSpeakHost,
+  type SpeakBrokerRef,
+} from '../speak/controller.js'
+import { alexaNotifyRecordKinds, echoTargetStoreOver } from '../speak/echo-store.js'
 import type { SpeakSessionStore } from '../speak/session-store.js'
 import type { AlexaWorker } from '../speak/worker-client.js'
 import type { WorkerRequest } from '../speak/worker-protocol.js'
@@ -49,12 +53,56 @@ interface LoginSeen {
   readonly deviceAppName: string
 }
 
+type AlexaTargetPorts = Pick<AlexaSpeakHost, 'readTargets' | 'putTarget' | 'removeTarget'>
+
+function mapTargets(initial: readonly Target[]): AlexaTargetPorts {
+  const rows = new Map(initial.map((target) => [target.id, target]))
+  return {
+    readTargets: async () => [...rows.values()],
+    putTarget: async (target) => {
+      rows.set(target.id, target)
+    },
+    removeTarget: async (id) => {
+      rows.delete(id)
+    },
+  }
+}
+
+/** The ports over the real records, the way the addon wires them. */
+async function recordTargets(): Promise<{
+  readonly ports: AlexaTargetPorts
+  readonly store: ReturnType<typeof echoTargetStoreOver>
+}> {
+  const memory = makeInMemoryRecords('import-alexa')
+  await memory.records.declare(alexaNotifyRecordKinds)
+  const store = echoTargetStoreOver(memory.records)
+  return {
+    store,
+    ports: {
+      readTargets: () => store.list(),
+      putTarget: (target) => store.upsert(target),
+      removeTarget: (id) => store.delete(id),
+    },
+  }
+}
+
+function echoTarget(id: string, enabled: boolean): Target {
+  return {
+    id,
+    name: id,
+    kind: 'alexa-echo',
+    addonId: 'import-alexa',
+    enabled,
+    config: { brokerId: 'alexa_001', echoId: 'echo-of-alexa_001', respectDnd: false },
+  }
+}
+
 interface Harness {
   readonly controller: AlexaSpeakController
   readonly logins: LoginSeen[]
   readonly spawned: string[]
+  readonly spoken: string[]
   readonly sessions: ReturnType<typeof memorySessions>
-  readonly written: (readonly AlexaEchoTarget[])[]
 }
 
 const REFRESH: Record<string, string> = {
@@ -64,21 +112,19 @@ const REFRESH: Record<string, string> = {
 
 function harness(options: {
   readonly brokers: readonly SpeakBrokerRef[]
-  readonly echoTargets?: readonly AlexaEchoTarget[]
+  readonly targets?: AlexaTargetPorts
   readonly sessions?: Record<string, string>
   readonly seeds?: Record<string, string | null>
 }): Harness {
   const sessions = memorySessions(options.sessions)
   const logins: LoginSeen[] = []
   const spawned: string[] = []
-  const written: (readonly AlexaEchoTarget[])[] = []
+  const spoken: string[] = []
+  const targets = options.targets ?? mapTargets([])
   const seeds = options.seeds ?? REFRESH
   const controller = new AlexaSpeakController({
     logger: logger(),
-    readConfig: () => ({ echoTargets: options.echoTargets ?? [] }),
-    writeTargets: async (next) => {
-      written.push(next)
-    },
+    ...targets,
     listBrokers: () => options.brokers,
     readSeed: async (brokerId) => {
       const token = seeds[brokerId]
@@ -113,6 +159,10 @@ function harness(options: {
             await fs.writeFile(request.sessionPath, `jar-written-for-${brokerId}`)
             return { status: 'ok' }
           }
+          if (request.op === 'speak' || request.op === 'announce') {
+            spoken.push(request.targets.join(','))
+            return { outcomes: request.targets.map((targetId) => ({ targetId, ok: true })) }
+          }
           if (request.op === 'devices') {
             return {
               devices: [
@@ -133,7 +183,7 @@ function harness(options: {
       }
     },
   })
-  return { controller, logins, spawned, sessions, written }
+  return { controller, logins, spawned, spoken, sessions }
 }
 
 const ONE: readonly SpeakBrokerRef[] = [
@@ -181,8 +231,7 @@ describe('speak is bound to a broker', () => {
     const h = harness({ brokers: ONE })
     const controller = new AlexaSpeakController({
       logger: logger(),
-      readConfig: () => ({ echoTargets: [] }),
-      writeTargets: async () => {},
+      ...mapTargets([]),
       listBrokers: () => brokers,
       readSeed: async (id) => ({ refreshToken: `t-${id}`, deviceAppName: 'a' }),
       sessions: h.sessions,
@@ -193,7 +242,7 @@ describe('speak is bound to a broker', () => {
           failed: false,
           crashesInWindow: 0,
           noteSecrets() {},
-        onPush() {},
+          onPush() {},
           stop() {},
           async request(request) {
             if (request.op === 'login_broker') {
@@ -218,32 +267,65 @@ describe('speak is bound to a broker', () => {
 })
 
 describe('stored Echo targets', () => {
-  it('are served as targets of the Alexa kind, every field but the retired mode and volume kept', async () => {
-    // The row as an older version stored it: still carries a mode and a volume.
-    const stored = {
-      id: 't-kitchen',
-      name: 'Kitchen',
-      enabled: false,
-      brokerId: 'alexa_001',
-      echoId: 'echo-k',
-      mode: 'announce',
-      volume: 63,
-      respectDnd: false,
-    }
-    const h = harness({ brokers: ONE, echoTargets: [stored] })
+  it('are served as targets of the Alexa kind, with their switch and account', async () => {
+    const stored = echoTarget('t-kitchen', false)
+    const h = harness({ brokers: ONE, targets: mapTargets([stored]) })
     const [row] = await h.controller.provider.listTargets({})
     expect(row).toMatchObject({
       id: 't-kitchen',
       enabled: false,
-      config: {
-        brokerId: 'alexa_001',
-        echoId: 'echo-k',
-        respectDnd: false,
-      },
+      config: { brokerId: 'alexa_001', echoId: 'echo-of-alexa_001', respectDnd: false },
     })
-    // A volume stored by an older version is not served: nothing sets a volume any more.
-    expect(row?.config).not.toHaveProperty('volume')
-    // A mode stored by an older version is not served: it no longer decides anything.
-    expect(row?.config).not.toHaveProperty('mode')
+  })
+})
+
+describe('the records are the one source of the Echo targets', () => {
+  const NOTIFICATION = { body: 'hello', title: 'CamStack', format: 'text', priority: 3 } as const
+
+  it('lists and sends to a target an instance created after start, without a restart', async () => {
+    const { ports, store } = await recordTargets()
+    const h = harness({ brokers: ONE, targets: ports })
+    await h.controller.start()
+    expect(await h.controller.provider.listTargets({})).toEqual([])
+    await store.upsert(echoTarget('t-new', true))
+    const listed = await h.controller.provider.listTargets({})
+    expect(listed.map((row) => row.id)).toEqual(['t-new'])
+    const sent = await h.controller.provider.send({
+      targetId: 't-new',
+      notification: NOTIFICATION,
+    })
+    expect(sent.success).toBe(true)
+    expect(h.spoken).toEqual(['echo-of-alexa_001'])
+    h.controller.stop()
+  })
+
+  it('does not speak on a target an instance switched off', async () => {
+    const { ports, store } = await recordTargets()
+    await store.upsert(echoTarget('t-off', true))
+    const h = harness({ brokers: ONE, targets: ports })
+    await h.controller.start()
+    await store.setEnabled('t-off', false)
+    const sent = await h.controller.provider.send({
+      targetId: 't-off',
+      notification: NOTIFICATION,
+    })
+    expect(sent).toMatchObject({ success: false, error: 'target disabled' })
+    expect(h.spoken).toEqual([])
+    h.controller.stop()
+  })
+
+  it('a legacy save keeps the target an instance created, and drops none', async () => {
+    const { ports, store } = await recordTargets()
+    const h = harness({ brokers: ONE, targets: ports })
+    await h.controller.start()
+    await store.upsert(echoTarget('t-instance', true))
+    await h.controller.provider.upsertTarget({ target: echoTarget('t-legacy', true) })
+    expect((await store.list()).map((row) => row.id).sort()).toEqual(['t-instance', 't-legacy'])
+    await h.controller.provider.setTargetEnabled({ targetId: 't-legacy', enabled: false })
+    expect((await store.list()).map((row) => [row.id, row.enabled]).sort()).toEqual([
+      ['t-instance', true],
+      ['t-legacy', false],
+    ])
+    h.controller.stop()
   })
 })

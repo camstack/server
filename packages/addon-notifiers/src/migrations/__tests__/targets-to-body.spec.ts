@@ -13,7 +13,9 @@ import {
   type MigrationOwnerResult,
   runAddonMigrations,
   secretKeysOf,
+  legacyTargetsOver,
   targetRowPortsOver,
+  type TargetRowPorts,
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { notifierDescriptors, notifiersRecordKinds } from '../../record-kinds.js'
@@ -68,14 +70,21 @@ const TOKEN = 'tg-token-MARK-8f31'
 async function world() {
   const memory = makeInMemoryRecords('notifiers')
   await memory.records.declare({ ...notifiersRecordKinds, ...oldTargetKinds })
-  const store = TargetStore.of(memory.records)
   const oldKind = memory.records.kind(oldTargetKinds[OLD_TARGETS_KIND])
+  const legacy = legacyTargetsOver(oldKind, silentLogger)
+  const store = TargetStore.of(memory.records, notifierDescriptors(), {
+    logger: silentLogger,
+    legacy,
+  })
   const descriptors = notifierDescriptors()
-  const run = (host: AddonMigrationHost) =>
+  const run = (
+    host: AddonMigrationHost,
+    wrap: (rows: TargetRowPorts) => TargetRowPorts = (rows) => rows,
+  ) =>
     runAddonMigrations(
       host,
       defineAddonMigrations(ADDON_MIGRATIONS, {
-        rows: targetRowPortsOver({ oldKind, store }),
+        rows: wrap(targetRowPortsOver({ legacy, store, logger: silentLogger })),
         secretKeysOf: (kind) => {
           const descriptor = descriptors.find((candidate) => candidate.kind === kind)
           return descriptor === undefined ? [] : secretKeysOf(descriptor)
@@ -137,5 +146,49 @@ describe('notifiers targets-to-body', () => {
       },
     })
     expect(await w.oldKind.get('x-1')).not.toBeNull()
+  })
+
+  it('one target whose token will not read back stays in the old kind and is still served; the other moves', async () => {
+    const w = await world()
+    await w.oldKind.put({
+      id: 'tg-bad',
+      data: {
+        name: 'Broken',
+        kind: 'telegram',
+        addonId: 'notifiers',
+        enabled: false,
+        config: { botToken: TOKEN, chatId: '1' },
+      },
+    })
+    await w.oldKind.put({
+      id: 'tg-good',
+      data: {
+        name: 'Fine',
+        kind: 'telegram',
+        addonId: 'notifiers',
+        enabled: true,
+        config: { botToken: `${TOKEN}-2`, chatId: '2' },
+      },
+    })
+    const { host, outcomes } = ledgerHost()
+    const result = await w.run(host, (rows) => ({
+      ...rows,
+      readNew: async (kind, id) =>
+        id === 'tg-bad' ? { name: 'Broken', botToken: 'unreadable' } : rows.readNew(kind, id),
+    }))
+    expect(result.failed).toEqual([])
+    expect(outcomes.get(TARGETS_TO_BODY_ID)).toMatchObject({
+      result: { outcome: 'done', summary: { converted: 1, skipped: 1 } },
+    })
+    // The good one moved, the bad one is untouched in the old kind and the store still serves it.
+    expect(await w.oldKind.get('tg-good')).toBeNull()
+    expect(await w.oldKind.get('tg-bad')).not.toBeNull()
+    expect((await w.store.getById('tg-good'))?.config['botToken']).toBe(`${TOKEN}-2`)
+    expect(await w.store.getById('tg-bad')).toMatchObject({
+      id: 'tg-bad',
+      enabled: false,
+      config: { botToken: TOKEN, chatId: '1' },
+    })
+    expect((await w.store.list()).map((t) => t.id).sort()).toEqual(['tg-bad', 'tg-good'])
   })
 })

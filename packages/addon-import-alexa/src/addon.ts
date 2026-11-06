@@ -69,14 +69,16 @@ import { ALEXA_SIGN_IN_PATH, buildAlexaAccountInstances } from './alexa-account-
 import { buildAlexaInstances } from './alexa-instances.js'
 import { AlexaBrokerStore } from './alexa-broker-store.js'
 import { readEchoTargets, type AlexaBrokerEntry } from './config.js'
+import type { EchoSettingPorts } from './migrations/echo-targets-to-records.js'
 import { readBrokerSeed } from './speak/broker-seed.js'
 import {
   alexaNotifyRecordKinds,
   echoRecordPortsOver,
+  echoTargetProbe,
   echoRowOf,
   type EchoTargetStore,
   echoTargetStoreOver,
-  persistEchoRows,
+  legacyEchoTargetsOver,
 } from './speak/echo-store.js'
 import { alexaTargetKind } from './speak/provider.js'
 import { AlexaSpeakController } from './speak/controller.js'
@@ -241,13 +243,17 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
       },
     )
 
-    const echoStore = echoTargetStoreOver(records)
+    // An Echo the migration could not move stays in the setting, and the store keeps serving it.
+    const echoStore = echoTargetStoreOver(records, {
+      logger: this.ctx.logger,
+      legacy: legacyEchoTargetsOver(this.echoSettingPorts()),
+    })
     this.echoStore = echoStore
-    const storedEchoes = (await echoStore.list()).map(echoRowOf)
     const speak = new AlexaSpeakController({
       logger: this.ctx.logger.child('speak'),
-      readConfig: () => ({ echoTargets: storedEchoes }),
-      writeTargets: (next) => persistEchoRows(echoStore, next),
+      readTargets: () => echoStore.list(),
+      putTarget: (target) => echoStore.upsert(target),
+      removeTarget: (targetId) => echoStore.delete(targetId),
       listBrokers: () =>
         this.activeBrokers.map((entry) => ({
           id: entry.id,
@@ -289,9 +295,8 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
     }
   }
 
-  private migrationPorts(records: RecordsAccess): AlexaMigrationPorts {
-    const secrets = this.ctx.secrets
-    if (secrets === undefined) throw new Error('import-alexa: ctx.secrets is required')
+  /** The `echoTargets` setting, read and written as the migration and the legacy store see it. */
+  private echoSettingPorts(): EchoSettingPorts {
     return {
       readRows: () => (Array.isArray(this.config.echoTargets) ? this.config.echoTargets : []),
       writeRows: async (rows) => {
@@ -299,9 +304,17 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
           echoTargets: [...readEchoTargets({ echoTargets: rows })],
         })
       },
+    }
+  }
+
+  private migrationPorts(records: RecordsAccess): AlexaMigrationPorts {
+    const secrets = this.ctx.secrets
+    if (secrets === undefined) throw new Error('import-alexa: ctx.secrets is required')
+    return {
+      ...this.echoSettingPorts(),
       ...flattenPortsOver(records.kind(alexaBrokersEntryKind)),
       ...alexaBrokerLinkPorts(records, (message) => this.ctx.logger.warn(message)),
-      ...echoRecordPortsOver(records),
+      ...echoRecordPortsOver(records, this.ctx.logger),
       ...alexaIntegrationRowsPorts({
         api: defaultIntegrationApiOver(this.ctx.api),
         records,
@@ -344,7 +357,8 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
           descriptors: [alexaTargetKind()],
           kinds: alexaNotifyRecordKinds,
           mintId: () => randomUUID(),
-          canProbe: () => false,
+          probe: echoTargetProbe(() => this.speak),
+          canProbe: () => true,
         }),
       ],
       {

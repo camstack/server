@@ -25,6 +25,7 @@ import {
   TargetSchema,
 } from '../capabilities/notification-output.cap.js'
 import type { ConfigField, ConfigUISchema } from '../interfaces/config-ui.js'
+import type { IScopedLogger } from '../interfaces/logging.js'
 import type { MigrationProcedureResult } from '../migrations/migration.js'
 import { defineEntryKind } from '../records/entry-kind.js'
 import type { DefinedRecordKind } from '../records/record-kind.js'
@@ -177,6 +178,33 @@ export function targetOfRecord(
   return parsed.success ? parsed.data : null
 }
 
+/**
+ * Where a target that could not be moved still lives (its legacy source). The facade serves such a row
+ * as long as the new records do not hold its id, so a row the migration skipped never goes dark, and a
+ * write of that id moves it (the legacy row is dropped last).
+ */
+export interface LegacyTargets {
+  list(): Promise<readonly OldTargetRow[]>
+  delete(id: string): Promise<void>
+}
+
+/** What a store takes beyond its kinds. */
+export interface NotificationTargetStoreOptions {
+  readonly logger?: IScopedLogger
+  readonly legacy?: LegacyTargets
+}
+
+function targetOfOld(addonId: string, row: OldTargetRow): Target {
+  return {
+    id: row.id,
+    name: row.name,
+    kind: row.kind,
+    addonId,
+    enabled: row.enabled,
+    config: { ...row.config },
+  }
+}
+
 interface KindHandle {
   readonly kind: string
   readonly handle: RecordKindHandle<InstanceBody>
@@ -192,6 +220,7 @@ export class NotificationTargetStore {
   private constructor(
     private readonly addonId: string,
     private readonly handles: readonly KindHandle[],
+    private readonly options: NotificationTargetStoreOptions,
   ) {}
 
   static of(
@@ -199,6 +228,7 @@ export class NotificationTargetStore {
     addonId: string,
     kinds: Readonly<Record<string, NotificationTargetRecordKind>>,
     descriptors: readonly TargetKind[],
+    options: NotificationTargetStoreOptions = {},
   ): NotificationTargetStore {
     const handles: KindHandle[] = []
     for (const descriptor of descriptors) {
@@ -206,7 +236,7 @@ export class NotificationTargetStore {
       if (defined === undefined) continue
       handles.push({ kind: descriptor.kind, handle: records.kind(defined) })
     }
-    return new NotificationTargetStore(addonId, handles)
+    return new NotificationTargetStore(addonId, handles, options)
   }
 
   /** The record handle of each kind, for the migration ports. */
@@ -220,10 +250,32 @@ export class NotificationTargetStore {
       const page = await handle.query({ limit: TARGETS_LIST_MAX })
       for (const record of page.records) {
         const target = targetOfRecord(this.addonId, kind, record.id, record.data)
-        if (target !== null) out.push(target)
+        if (target !== null) {
+          out.push(target)
+          continue
+        }
+        // A row that is no target is named, never dropped silently: it would read as deleted.
+        this.options.logger?.warn(
+          'notification target record is not a valid target; left out of the list',
+          {
+            meta: { targetId: record.id, kind },
+          },
+        )
       }
     }
+    const held = new Set(out.map((target) => target.id))
+    for (const row of await this.legacyRows()) {
+      if (!held.has(row.id)) out.push(targetOfOld(this.addonId, row))
+    }
     return out
+  }
+
+  /** The legacy rows of a kind this provider serves (the others are not ours to show). */
+  private async legacyRows(): Promise<readonly OldTargetRow[]> {
+    const legacy = this.options.legacy
+    if (legacy === undefined) return []
+    const served = new Set(this.handles.map((entry) => entry.kind))
+    return (await legacy.list()).filter((row) => served.has(row.kind))
   }
 
   async getById(id: string): Promise<Target | null> {
@@ -231,7 +283,8 @@ export class NotificationTargetStore {
       const row = await handle.getResolved(id)
       if (row !== null) return targetOfRecord(this.addonId, kind, row.id, row.data)
     }
-    return null
+    const old = (await this.legacyRows()).find((row) => row.id === id)
+    return old === undefined ? null : targetOfOld(this.addonId, old)
   }
 
   /** Insert or replace by id; a target whose kind changed leaves the record of its old kind. */
@@ -243,10 +296,13 @@ export class NotificationTargetStore {
     for (const other of this.handles) {
       if (other !== own) await other.handle.delete(target.id)
     }
+    // The record now holds the id: the legacy row of it is moved, so it goes, last.
+    await this.options.legacy?.delete(target.id)
   }
 
   async delete(id: string): Promise<void> {
     for (const { handle } of this.handles) await handle.delete(id)
+    await this.options.legacy?.delete(id)
   }
 
   /** Flip the switch on an existing target; null when it does not exist. */
@@ -257,7 +313,12 @@ export class NotificationTargetStore {
       const row = await handle.get(id)
       return row === null ? null : targetOfRecord(this.addonId, kind, row.id, row.data)
     }
-    return null
+    // Only the legacy source has it: flipping the switch moves the row to its record.
+    const old = (await this.legacyRows()).find((row) => row.id === id)
+    if (old === undefined) return null
+    const moved = { ...targetOfOld(this.addonId, old), enabled }
+    await this.upsert(moved)
+    return moved
   }
 }
 
@@ -401,6 +462,8 @@ export interface TargetRowPorts {
   dropNew(kind: string, id: string): Promise<void>
   /** Drop the old row, last. */
   dropOld(id: string): Promise<void>
+  /** A row left where it was (its legacy source keeps serving it), with the reason. */
+  skipped(row: { readonly id: string; readonly kind: string; readonly reason: string }): void
 }
 
 /** The secret keys of a kind's body: the descriptor's `password` fields (top level). */
@@ -414,11 +477,12 @@ export function secretKeysOf(descriptor: TargetKind): readonly string[] {
 
 /**
  * Move every old row to the record of its kind under the SAME id: the config flat beside the name and
- * the switch, each secret written to the keychain by the door and READ BACK before the old row goes. A
- * row whose read-back differs is undone and the migration throws naming the row (the owner is blocked,
- * nothing is lost: the old row is still there). A row of a kind this provider does not serve is left
- * alone. Idempotent: no old rows is `already-done`, and a row the new kind already holds equal is only
- * dropped from the old kind.
+ * the switch, each secret written to the keychain by the door and READ BACK before the old row goes.
+ * One bad row never aborts the others: a row whose write or read-back fails (or disagrees) is undone,
+ * reported through `skipped` with its id and reason, and its old row stays where it was, still served
+ * by the facade. A row of a kind this provider does not serve is left alone the same way. Idempotent:
+ * no old rows is `already-done`, and a row the new kind already holds equal is only dropped from the
+ * old kind.
  */
 export async function moveTargetRows(
   ports: TargetRowPorts,
@@ -431,24 +495,16 @@ export async function moveTargetRows(
   for (const row of rows) {
     if (!ports.hasKind(row.kind)) {
       skipped += 1
+      ports.skipped({ id: row.id, kind: row.kind, reason: 'this provider does not serve the kind' })
       continue
     }
-    const body = targetBody(row)
-    await ports.writeNew(row.kind, row.id, body)
-    const back = await ports.readNew(row.kind, row.id)
-    const wrong = secretKeysByKind(row.kind).filter((key) => {
-      const sent = body[key]
-      const got = back?.[key]
-      return (typeof sent === 'string' ? sent : '') !== (typeof got === 'string' ? got : '')
-    })
-    if (back === null || wrong.length > 0) {
-      await ports.dropNew(row.kind, row.id)
-      throw new Error(
-        `target '${row.id}': ${back === null ? 'the new record is missing' : `${wrong.join(', ')} did not read back`} - the old row is unchanged`,
-      )
+    const reason = await moveOne(ports, row, secretKeysByKind(row.kind))
+    if (reason === null) {
+      converted += 1
+    } else {
+      skipped += 1
+      ports.skipped({ id: row.id, kind: row.kind, reason })
     }
-    await ports.dropOld(row.id)
-    converted += 1
   }
   return {
     outcome: converted > 0 ? 'done' : 'already-done',
@@ -456,23 +512,69 @@ export async function moveTargetRows(
   }
 }
 
+/** Move one row; the reason it stayed, or null when it moved. Never throws: the row stays on failure. */
+async function moveOne(
+  ports: TargetRowPorts,
+  row: OldTargetRow,
+  secretKeys: readonly string[],
+): Promise<string | null> {
+  const body = targetBody(row)
+  try {
+    await ports.writeNew(row.kind, row.id, body)
+    const back = await ports.readNew(row.kind, row.id)
+    const wrong = secretKeys.filter((key) => {
+      const sent = body[key]
+      const got = back?.[key]
+      return (typeof sent === 'string' ? sent : '') !== (typeof got === 'string' ? got : '')
+    })
+    if (back !== null && wrong.length === 0) {
+      await ports.dropOld(row.id)
+      return null
+    }
+    await ports.dropNew(row.kind, row.id)
+    return back === null ? 'the new record is missing' : `${wrong.join(', ')} did not read back`
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : String(err)
+    await ports.dropNew(row.kind, row.id).catch(() => undefined)
+    return reason
+  }
+}
+
 /** The body of a row of the retired single kind (`{ name, kind, addonId, enabled, config }`, no id). */
 export const OldTargetBodySchema = TargetSchema.omit({ id: true })
 
+/** The legacy source that is the retired single kind: its valid rows, an invalid one named and left. */
+export function legacyTargetsOver(
+  oldKind: RecordKindHandle<z.infer<typeof OldTargetBodySchema>>,
+  logger: IScopedLogger,
+): LegacyTargets {
+  return {
+    list: async () => {
+      const page = await oldKind.query({ limit: TARGETS_LIST_MAX })
+      return page.records.flatMap((record) => {
+        const parsed = OldTargetBodySchema.safeParse(record.data)
+        if (parsed.success) return [{ id: record.id, ...parsed.data }]
+        logger.warn('legacy notification target is not a valid target; left in place', {
+          meta: { targetId: record.id, error: parsed.error.message },
+        })
+        return []
+      })
+    },
+    delete: async (id) => {
+      await oldKind.delete(id)
+    },
+  }
+}
+
 /** The ports over the records: the retired kind in, the per-kind records out. */
 export function targetRowPortsOver(deps: {
-  readonly oldKind: RecordKindHandle<z.infer<typeof OldTargetBodySchema>>
+  readonly legacy: LegacyTargets
   readonly store: NotificationTargetStore
+  readonly logger: IScopedLogger
 }): TargetRowPorts {
   const handles = deps.store.handlesByKind()
   return {
-    listOld: async () => {
-      const page = await deps.oldKind.query({ limit: TARGETS_LIST_MAX })
-      return page.records.flatMap((record) => {
-        const parsed = OldTargetBodySchema.safeParse(record.data)
-        return parsed.success ? [{ id: record.id, ...parsed.data }] : []
-      })
-    },
+    listOld: () => deps.legacy.list(),
     hasKind: (kind) => handles.has(kind),
     readNew: async (kind, id) => (await handles.get(kind)?.getResolved(id))?.data ?? null,
     writeNew: async (kind, id, body) => {
@@ -481,8 +583,11 @@ export function targetRowPortsOver(deps: {
     dropNew: async (kind, id) => {
       await handles.get(kind)?.delete(id)
     },
-    dropOld: async (id) => {
-      await deps.oldKind.delete(id)
+    dropOld: (id) => deps.legacy.delete(id),
+    skipped: (row) => {
+      deps.logger.warn('notification target left in its legacy store; it keeps being served', {
+        meta: { targetId: row.id, kind: row.kind, reason: row.reason },
+      })
     },
   }
 }

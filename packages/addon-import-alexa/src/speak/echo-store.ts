@@ -1,16 +1,20 @@
 /**
  * The Echo targets as records: one `notify-alexa-echo` record per target (an instance of the function
- * cap `notification-output`), the id the one a notification rule names. The controller keeps its own
- * rows in memory; this file is how they load from and persist to the records.
+ * cap `notification-output`), the id the one a notification rule names. The records are the one source:
+ * the controller reads them on every use and writes only the row it changes.
  */
 import {
+  type IScopedLogger,
+  type LegacyTargets,
   NotificationTargetStore,
+  type NotificationTargetInstancesSpec,
+  type NotificationTargetStoreOptions,
   notificationTargetKinds,
   type RecordsAccess,
   type Target,
 } from '@camstack/types'
-import type { AlexaEchoTarget } from '../config.js'
-import type { EchoRecordPorts } from '../migrations/echo-targets-to-records.js'
+import { type AlexaEchoTarget, alexaEchoTargetSchema, readEchoTargets } from '../config.js'
+import type { EchoRecordPorts, EchoSettingPorts } from '../migrations/echo-targets-to-records.js'
 import { alexaTargetKind } from './provider.js'
 import { ALEXA_SPEAK_ADDON_ID } from './constants.js'
 
@@ -18,13 +22,47 @@ export const alexaNotifyRecordKinds = notificationTargetKinds([alexaTargetKind()
 
 export type EchoTargetStore = NotificationTargetStore
 
-export function echoTargetStoreOver(records: Pick<RecordsAccess, 'kind'>): EchoTargetStore {
-  return NotificationTargetStore.of(records, ALEXA_SPEAK_ADDON_ID, alexaNotifyRecordKinds, [
-    alexaTargetKind(),
-  ])
+export function echoTargetStoreOver(
+  records: Pick<RecordsAccess, 'kind'>,
+  options: NotificationTargetStoreOptions = {},
+): EchoTargetStore {
+  return NotificationTargetStore.of(
+    records,
+    ALEXA_SPEAK_ADDON_ID,
+    alexaNotifyRecordKinds,
+    [alexaTargetKind()],
+    options,
+  )
 }
 
-/** The row a stored target is for the controller: the account link is '' until one is chosen. */
+/** The `echoTargets` setting as the legacy source: a row the migration left there is still served. */
+export function legacyEchoTargetsOver(
+  setting: Pick<EchoSettingPorts, 'readRows' | 'writeRows'>,
+): LegacyTargets {
+  return {
+    list: async () =>
+      readEchoTargets({ echoTargets: setting.readRows() }).map((row) => ({
+        id: row.id,
+        name: row.name,
+        kind: alexaTargetKind().kind,
+        enabled: row.enabled,
+        config: {
+          ...(row.brokerId.length > 0 ? { brokerId: row.brokerId } : {}),
+          echoId: row.echoId,
+          respectDnd: row.respectDnd,
+        },
+      })),
+    delete: async (id) => {
+      const rest = setting.readRows().filter((row) => {
+        const parsed = alexaEchoTargetSchema.safeParse(row)
+        return !(parsed.success && parsed.data.id === id)
+      })
+      if (rest.length !== setting.readRows().length) await setting.writeRows(rest)
+    },
+  }
+}
+
+/** The row a stored target is for the settings page: the account link is '' until one is chosen. */
 export function echoRowOf(target: Target): AlexaEchoTarget {
   return {
     id: target.id,
@@ -36,41 +74,11 @@ export function echoRowOf(target: Target): AlexaEchoTarget {
   }
 }
 
-function targetOfRow(row: AlexaEchoTarget): Target {
-  return {
-    id: row.id,
-    name: row.name,
-    kind: alexaTargetKind().kind,
-    addonId: ALEXA_SPEAK_ADDON_ID,
-    enabled: row.enabled,
-    config: {
-      ...(row.brokerId.length > 0 ? { brokerId: row.brokerId } : {}),
-      echoId: row.echoId,
-      respectDnd: row.respectDnd,
-    },
-  }
-}
-
-/** Make the records say `next`: a row that changed is written, a row that went is deleted. */
-export async function persistEchoRows(
-  store: EchoTargetStore,
-  next: readonly AlexaEchoTarget[],
-): Promise<void> {
-  const stored = new Map((await store.list()).map((target) => [target.id, echoRowOf(target)]))
-  for (const row of next) {
-    const before = stored.get(row.id)
-    if (before === undefined || JSON.stringify(before) !== JSON.stringify(row)) {
-      await store.upsert(targetOfRow(row))
-    }
-  }
-  const keep = new Set(next.map((row) => row.id))
-  for (const id of stored.keys()) {
-    if (!keep.has(id)) await store.delete(id)
-  }
-}
-
 /** The migration's ports over the `notify-alexa-echo` record kind. */
-export function echoRecordPortsOver(records: Pick<RecordsAccess, 'kind'>): EchoRecordPorts {
+export function echoRecordPortsOver(
+  records: Pick<RecordsAccess, 'kind'>,
+  logger: IScopedLogger,
+): EchoRecordPorts {
   const handle = echoTargetStoreOver(records).handlesByKind().get(alexaTargetKind().kind)
   if (handle === undefined)
     throw new Error('import-alexa: the Echo target record kind is not declared')
@@ -82,5 +90,37 @@ export function echoRecordPortsOver(records: Pick<RecordsAccess, 'kind'>): EchoR
     dropEchoRecord: async (id) => {
       await handle.delete(id)
     },
+    echoSkipped: (row) => {
+      logger.warn('Echo target left in the echoTargets setting; it keeps being served', {
+        meta: { targetId: row.id, reason: row.reason },
+      })
+    },
+  }
+}
+
+/** The slice of the speech controller the Echo probe asks. */
+export interface EchoProbeSource {
+  readonly provider: {
+    probeTargetConfig(input: {
+      readonly kind: string
+      readonly config: Readonly<Record<string, unknown>>
+    }): ReturnType<NonNullable<NotificationTargetInstancesSpec['probe']>>
+  }
+}
+
+/**
+ * The Echo instance's test: the old probe (is the Amazon account of the target signed in on its
+ * broker?) as the tri-state of `testInstance`. Speech not running yet answers `inconclusive` through
+ * the same mapping (a failure with no HTTP status), never `unsupported`.
+ */
+export function echoTargetProbe(
+  speak: () => EchoProbeSource | null,
+): NonNullable<NotificationTargetInstancesSpec['probe']> {
+  return async (input) => {
+    const source = speak()
+    if (source === null) {
+      return { ok: false, resolvedUrl: 'alexa://session', error: 'Echo speech is not running' }
+    }
+    return source.provider.probeTargetConfig({ kind: input.kind, config: input.config })
   }
 }

@@ -28,5 +28,6 @@ export const NO_NOTIFY_PORTS: HaNotifyPorts = {
     writeNew: async () => undefined,
     dropNew: async () => undefined,
     dropOld: async () => undefined,
+    skipped: () => undefined,
   },
 }

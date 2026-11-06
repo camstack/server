@@ -12,7 +12,12 @@ import {
   runAddonMigrations,
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import { alexaNotifyRecordKinds, echoRecordPortsOver } from '../../speak/echo-store.js'
+import {
+  alexaNotifyRecordKinds,
+  echoRecordPortsOver,
+  echoTargetStoreOver,
+  legacyEchoTargetsOver,
+} from '../../speak/echo-store.js'
 import { ADDON_MIGRATIONS, ECHO_TARGETS_TO_RECORDS_ID } from '../index.js'
 import type { AlexaMigrationPorts } from '../index.js'
 
@@ -63,7 +68,7 @@ async function world(initialRows: readonly unknown[]) {
   const memory = makeInMemoryRecords('import-alexa')
   await memory.records.declare(alexaNotifyRecordKinds)
   const setting = { rows: initialRows }
-  const echo = echoRecordPortsOver(memory.records)
+  const echo = echoRecordPortsOver(memory.records, silentLogger)
   const ports: Pick<AlexaMigrationPorts, 'readRows' | 'writeRows'> & typeof echo = {
     readRows: () => setting.rows,
     writeRows: async (rows) => {
@@ -146,14 +151,36 @@ describe('echo-targets-to-records', () => {
     expect(w.setting.rows).toHaveLength(2)
   })
 
-  it('a record that does not read back is undone and the setting is unchanged', async () => {
-    const w = await world([OFF_ECHO])
-    // A store that accepts the write but reads nothing back.
-    const lying = { ...w.ports, readEchoRecord: async () => null }
-    const { host } = ledgerHost()
+  it('a row that does not read back is undone and stays in the setting, served from there; the other moves', async () => {
+    const hall = { ...OFF_ECHO, id: 'echo-hall', name: 'Hall', enabled: true }
+    const w = await world([OFF_ECHO, hall])
+    // A store that accepts the write of one row but reads nothing back for it.
+    const lying = {
+      ...w.ports,
+      readEchoRecord: async (id: string) =>
+        id === 'echo-kitchen' ? null : w.echo.readEchoRecord(id),
+    }
+    const { host, outcomes } = ledgerHost()
     const report = await w.run(host, lying)
-    expect(report.failed.length).toBe(1)
+    expect(report.failed).toEqual([])
+    expect(outcomes.get(ECHO_TARGETS_TO_RECORDS_ID)).toMatchObject({
+      result: { outcome: 'done', summary: { converted: 1, skipped: 1 } },
+    })
+    // The bad row: no record, still in the setting, and the Echo store serves it from there.
+    expect(w.memory.tables.get('notify-alexa-echo')?.has('echo-kitchen')).toBe(false)
     expect(w.setting.rows).toEqual([OFF_ECHO])
-    expect(w.memory.tables.get('notify-alexa-echo')?.size ?? 0).toBe(0)
+    const store = echoTargetStoreOver(w.memory.records, {
+      legacy: legacyEchoTargetsOver({
+        readRows: () => w.setting.rows,
+        writeRows: w.ports.writeRows,
+      }),
+    })
+    expect(await store.getById('echo-kitchen')).toMatchObject({
+      enabled: false,
+      name: 'Kitchen echo',
+    })
+    expect((await store.list()).map((t) => t.id).sort()).toEqual(['echo-hall', 'echo-kitchen'])
+    // The good row moved.
+    expect(await w.echo.readEchoRecord('echo-hall')).toMatchObject({ enabled: true })
   })
 })

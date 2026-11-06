@@ -3,12 +3,14 @@
  * `integration-instances` provider, and the D987 procedure that flattens the old `config` blob.
  */
 import { beforeEach, describe, expect, it } from 'vitest'
+import type { IScopedLogger } from '../../interfaces/logging.js'
 import { recordSecretRef } from '../../records/secret-paths.js'
 import type { TargetKind } from '../../capabilities/notification-output.cap.js'
 import { defineRecordKinds } from '../../records/record-kind.js'
 import { makeInMemoryRecords } from '../../records/in-memory-records.js'
 import {
   buildNotificationTargetInstances,
+  legacyTargetsOver,
   moveTargetRows,
   NotificationTargetStore,
   notificationTargetKinds,
@@ -74,16 +76,36 @@ const LEGACY = defineRecordKinds({
   },
 })['notification-targets']
 
+function recordingLogger(): { readonly logger: IScopedLogger; readonly warns: string[] } {
+  const warns: string[] = []
+  const logger: IScopedLogger = {
+    debug: () => undefined,
+    info: () => undefined,
+    warn: (message, context) => {
+      warns.push(`${message} ${JSON.stringify(context?.meta ?? {})}`)
+    },
+    error: () => undefined,
+    child: () => logger,
+    withTags: () => logger,
+  }
+  return { logger, warns }
+}
+
 async function world() {
   const memory = makeInMemoryRecords(OWNER)
   const kinds = notificationTargetKinds(DESCRIPTORS)
   await memory.records.declare({ ...kinds, 'notification-targets': LEGACY })
-  const store = NotificationTargetStore.of(memory.records, OWNER, kinds, DESCRIPTORS)
+  const { logger, warns } = recordingLogger()
   const oldKind = memory.records.kind(LEGACY)
-  const ports = targetRowPortsOver({ oldKind, store })
+  const legacy = legacyTargetsOver(oldKind, logger)
+  const store = NotificationTargetStore.of(memory.records, OWNER, kinds, DESCRIPTORS, {
+    logger,
+    legacy,
+  })
+  const ports = targetRowPortsOver({ legacy, store, logger })
   const secretKeys = (kind: string): readonly string[] =>
     secretKeysOf(DESCRIPTORS.find((d) => d.kind === kind) ?? TELEGRAM)
-  return { memory, kinds, store, oldKind, ports, secretKeys }
+  return { memory, kinds, store, oldKind, ports, secretKeys, warns }
 }
 type World = Awaited<ReturnType<typeof world>>
 
@@ -173,14 +195,64 @@ describe('notification targets over per-kind records', () => {
     )
   })
 
-  it('a secret that does not read back undoes the row and throws, the old row stays', async () => {
+  it('one row whose secret does not read back stays served from legacy while the others move', async () => {
     const lying = {
       ...w.ports,
-      readNew: async () => ({ name: 'Phone', botToken: 'something-else' }),
+      readNew: async (kind: string, id: string) =>
+        id === 'tg-1' ? { name: 'Phone', botToken: 'something-else' } : w.ports.readNew(kind, id),
     }
-    await expect(moveTargetRows(lying, w.secretKeys)).rejects.toThrow(/tg-1.*botToken/)
-    expect(await w.oldKind.get('tg-1')).not.toBeNull()
+    expect(await moveTargetRows(lying, w.secretKeys)).toMatchObject({
+      outcome: 'done',
+      summary: { converted: 1, skipped: 2 },
+    })
+    // The bad row: its new record is undone, its legacy row is still there and the facade serves it.
     expect(await w.memory.records.kind(w.kinds['notify-telegram']!).get('tg-1')).toBeNull()
+    expect(await w.oldKind.get('tg-1')).not.toBeNull()
+    expect(await w.store.getById('tg-1')).toMatchObject({
+      id: 'tg-1',
+      enabled: false,
+      config: { botToken: 'tok-secret', chatId: '42' },
+    })
+    expect((await w.store.list()).map((t) => t.id).sort()).toEqual(['tg-1', 'wh-1'])
+    // The good row moved.
+    expect(await w.oldKind.get('wh-1')).toBeNull()
+    expect(await w.memory.records.kind(w.kinds['notify-webhook']!).get('wh-1')).not.toBeNull()
+    // The skip is on the record, with the id and the reason.
+    expect(w.warns.some((line) => line.includes('tg-1') && line.includes('botToken'))).toBe(true)
+  })
+
+  it('a row whose write throws is skipped, the others still move', async () => {
+    const failing = {
+      ...w.ports,
+      writeNew: async (kind: string, id: string, body: Parameters<typeof w.ports.writeNew>[2]) => {
+        if (id === 'wh-1') throw new Error('keychain locked')
+        await w.ports.writeNew(kind, id, body)
+      },
+    }
+    expect(await moveTargetRows(failing, w.secretKeys)).toMatchObject({
+      summary: { converted: 1, skipped: 2 },
+    })
+    expect(await w.oldKind.get('wh-1')).not.toBeNull()
+    expect(w.warns.some((line) => line.includes('wh-1') && line.includes('keychain locked'))).toBe(
+      true,
+    )
+    expect(await w.store.getById('wh-1')).toMatchObject({ id: 'wh-1', kind: 'webhook' })
+  })
+
+  it('a write to the facade moves a legacy-served row and drops the legacy row', async () => {
+    const lying = { ...w.ports, readNew: async () => null }
+    await moveTargetRows(lying, w.secretKeys)
+    expect(await w.oldKind.get('tg-1')).not.toBeNull()
+    const flipped = await w.store.setEnabled('tg-1', true)
+    expect(flipped).toMatchObject({ id: 'tg-1', enabled: true })
+    expect(await w.oldKind.get('tg-1')).toBeNull()
+    expect(await w.memory.records.kind(w.kinds['notify-telegram']!).get('tg-1')).not.toBeNull()
+  })
+
+  it('a record that is no valid target is named in the log, not dropped silently', async () => {
+    w.memory.seed('notify-telegram', { id: 'bad-1', data: { name: 5 } })
+    expect((await w.store.list()).map((t) => t.id)).not.toContain('bad-1')
+    expect(w.warns.some((line) => line.includes('bad-1') && line.includes('telegram'))).toBe(true)
   })
 
   it('a failed read of the old rows writes nothing', async () => {

@@ -278,7 +278,16 @@ export async function validateTargetRefs(
     return
   }
   const known = new Set(targets.map((t) => t.id))
+  const unreadable = host.deps.dispatcher.unreadableTargetHolders?.() ?? []
   for (const id of targetIds) {
-    if (!known.has(id)) throw new Error(`unknown notification target: ${id}`)
+    if (known.has(id)) continue
+    // Absent from a PARTIAL catalog is not evidence: the unreadable holder may own it.
+    if (unreadable.length > 0) {
+      host.logger.warn('rule target not checked: a target holder is unreadable', {
+        meta: { targetId: id, holders: unreadable.map((u) => u.addonId) },
+      })
+      continue
+    }
+    throw new Error(`unknown notification target: ${id}`)
   }
 }

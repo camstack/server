@@ -31,7 +31,11 @@ export const CALENDAR_IDS_TO_RECORDS_ID =
   'provider-homeassistant/2026-11-07-calendar-ids-to-calendar-records'
 
 export { BROKER_LINKS_TO_CONNECTIONS_ID, haBrokerLinkPorts }
-export { HA_NOTIFY_TARGETS_TO_BODY_ID, haNotifyPortsOver } from './notify-targets-to-body.js'
+export {
+  HA_NOTIFY_TARGETS_TO_BODY_ID,
+  haLegacyTargetsOver,
+  haNotifyPortsOver,
+} from './notify-targets-to-body.js'
 export type { HaNotifyPorts } from './notify-targets-to-body.js'
 export type { CalendarIdsPorts } from './calendar-ids-to-integration.js'
 export { FLATTEN_BROKER_RECORDS_ID } from './flatten-broker-records.js'
@@ -185,10 +189,10 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<HaMigrationPorts>[] = [
       dependsOn: [],
       store: 'settings',
       scope: 'cluster',
-      onFailure: 'block-owner',
+      onFailure: 'tolerate',
       bodyKind: 'procedure',
       description:
-        'Move each Home Assistant notify target to the notify-homeassistant record, the config flat in the body, the same id and the same switch; read back before the old row goes',
+        'Move each Home Assistant notify target to the notify-homeassistant record, the config flat in the body, the same id and the same switch; read back before the old row goes; a row that fails stays in the old kind and is still served',
       fixtureMark: 'the switch (off) and the id of a Home Assistant notify target',
     },
     procedure: moveHaNotifyTargets,

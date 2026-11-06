@@ -171,6 +171,12 @@ export interface NcEventMedia {
   readonly gif: Uint8Array | null
 }
 
+/** A target holder the last catalog read could not read: its targets are unknown, not deleted. */
+export interface NcUnreadableHolder {
+  readonly addonId: string
+  readonly error: string
+}
+
 /** The slice of a `notification-output` Target the dispatcher needs. */
 export interface NcTargetRef {
   readonly id: string
@@ -486,6 +492,12 @@ export interface NcDispatcherDeps {
   readonly paintClass?: (kind: string) => string
   /** `notification-output.listTargets` (cluster catalog, concat-fanned). */
   readonly listTargets: () => Promise<readonly NcTargetRef[]>
+  /**
+   * The holders the LAST `listTargets` could not read. The catalog is then partial: a target missing
+   * from it may live there, so it is transient (retried) and never "deleted", while the targets of
+   * the healthy holders are delivered as usual. Absent: the catalog is always whole.
+   */
+  readonly unreadableTargetHolders?: () => readonly NcUnreadableHolder[]
   /**
    * How many seconds THIS camera's clip ring is holding — the retention its own
    * notification rules asked for (`clip-retention-ask.ts`).
@@ -1896,7 +1908,23 @@ export class NcDispatcher {
     this.targetCache = new Map(targets.map((t) => [t.id, t]))
     this.targetCacheAt = this.now()
     this.targetCacheGeneration += 1
-    return this.targetCache.get(targetId) ?? null
+    const found = this.targetCache.get(targetId) ?? null
+    const unreadable = this.deps.unreadableTargetHolders?.() ?? []
+    if (found === null && unreadable.length > 0) {
+      // Absent from a PARTIAL catalog is not absent: the holder that could not be read may own it.
+      for (const holder of unreadable) {
+        this.deps.logger.warn(
+          'target not found while a holder is unreadable — treating as transient',
+          {
+            meta: { targetId, addonId: holder.addonId, error: holder.error },
+          },
+        )
+      }
+      throw new Error(
+        `target ${targetId} not found in a partial catalog (transient): unreadable ${unreadable.map((u) => u.addonId).join(', ')}`,
+      )
+    }
+    return found
   }
 
   /**
