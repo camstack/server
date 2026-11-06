@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.41] - 2026-11-06
+
 ### Changed
 
 - The addon-level brokers setting and legacy single-account oauth state are removed once broker records and oauthAccounts hold them

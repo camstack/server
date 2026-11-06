@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.160] - 2026-11-06
+
 ### Changed
 
 - The separate connection-test capability is gone; the integration's own Test button now checks the saved or drafted settings

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.154] - 2026-11-06
+
 ### Changed
 
 - The RTSP integration no longer registers a separate connection test; a camera's stream URL is still probed when the camera is created.

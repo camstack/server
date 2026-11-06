@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.600] - 2026-11-06
+
 ### Changed
 
 - The new-integration form tests the draft through the integration's own Test (one test method for every integration)

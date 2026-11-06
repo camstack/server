@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.151] - 2026-11-06
+
 ### Changed
 
 - The Tailscale pre-auth key and hostname are now a Tailnet instance (migrated from the node settings on first boot); testing a tailnet reports validated, rejected or inconclusive.

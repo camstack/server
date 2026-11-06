@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.787] - 2026-11-06
+
 ### Changed
 
 - Integration creation is gated by the instance test; integrations.testConnection is removed

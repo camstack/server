@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.132] - 2026-11-06
+
 ### Changed
 
 - The training-provider capability no longer exposes validateCredentials, createEntry, updateEntry or deleteEntry; a Modal account is created, edited, tested and removed as an integration instance.

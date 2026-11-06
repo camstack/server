@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.167] - 2026-11-06
+
 ### Changed
 
 - Test on a Wyze integration signs in with the account, API key and Key ID, on a saved integration or an unsaved form.
