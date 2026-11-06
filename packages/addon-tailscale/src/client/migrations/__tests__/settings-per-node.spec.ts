@@ -6,7 +6,7 @@
 import { isSecretMarker, isSecretRefOwnedBy, makeSecretMarker } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { perNodeFixture } from '../../../__tests__/per-node-fixture.js'
-import { ADDON_MIGRATIONS } from '../index.js'
+import { SETTINGS_PER_NODE_MIGRATION } from '../index.js'
 import { CLIENT_ADDON_ID, CLIENT_SETTING_KEYS } from '../settings-per-node.js'
 
 const REF = 'secret://tailscale-client/global/authKey'
@@ -27,7 +27,7 @@ const BARE: Record<string, unknown> = {
 const rowId = (key: string): string => `${CLIENT_ADDON_ID}.${key}`
 
 const start = (bare: Record<string, unknown> = BARE) =>
-  perNodeFixture(CLIENT_ADDON_ID, ADDON_MIGRATIONS, bare, NEIGHBOUR)
+  perNodeFixture(CLIENT_ADDON_ID, [SETTINGS_PER_NODE_MIGRATION], bare, NEIGHBOUR)
 
 describe('tailscale-client/2026-11-03-settings-per-node', () => {
   it('copies every field to its hub node row, carrying nodeId, and keeps the bare rows', async () => {

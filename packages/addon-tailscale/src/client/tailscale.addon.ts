@@ -29,6 +29,7 @@
 import type {
   ConfigUISchema,
   IMeshNetworkProvider,
+  IntegrationTestConnectionResult,
   MeshPeer,
   MeshStatus,
   NetworkAccessStatus,
@@ -40,12 +41,31 @@ import {
   BOOT_RECOVERY_BACKOFF_MS,
   defineAddonMigrations,
   EventCategory,
+  integrationInstancesCapability,
+  isSecretFieldView,
+  isSecretMarker,
   meshNetworkCapability,
   networkAccessCapability,
+  RecordIntegrationInstances,
+  REDACTED_SECRET,
+  RevConflictError,
+  SECRET_CLEAR,
 } from '@camstack/types'
 
 import { readRawKeys } from '../settings-per-node.js'
-import { ADDON_MIGRATIONS } from './migrations/index.js'
+import {
+  ADDON_MIGRATIONS,
+  type ClientCataloguePorts,
+  type TailnetRecordState,
+} from './migrations/index.js'
+import { effectiveCredentials, type TailnetCredentials } from './tailnet-credentials.js'
+import { probeTailnet, toTestResult } from './tailnet-probe.js'
+import {
+  TAILNET_DEFAULT_BODY,
+  TAILNET_RECORD_ID,
+  type TailnetBody,
+  tailnetKind,
+} from './tailnet-record-kinds.js'
 import { TailscaleCli, TailscaleCliError, type TailscaleStatusJson } from './tailscale-cli.js'
 import { TailscaledDaemon } from './tailscaled-daemon.js'
 
@@ -156,6 +176,9 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
    */
   private onboardError: string | null = null
 
+  /** The `tailnet` instance (D996, epic #440 step 6): the pre-auth key and hostname live here. */
+  private instances: RecordIntegrationInstances<TailnetBody> | null = null
+
   constructor() {
     super({
       authKey: '',
@@ -172,6 +195,32 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
   }
 
   protected async onInitialize(): Promise<ProviderRegistration[]> {
+    const records = this.ctx.records
+    if (records === undefined) {
+      throw new Error('tailscale-client needs ctx.records — check execution.placement (hub-only)')
+    }
+    await records.declare({ [tailnetKind.name]: tailnetKind })
+    this.instances = new RecordIntegrationInstances(records, tailnetKind, {
+      description: {
+        role: 'services',
+        instanceMode: 'single',
+        kind: 'tailnet',
+        canTest: true,
+        kinds: [
+          {
+            id: 'tailnet',
+            label: 'Tailnet',
+            functionCap: 'mesh-network',
+            canTest: true,
+          },
+        ],
+      },
+      formSchema: () => this.tailnetForm(),
+      initialBody: (name) => ({ ...TAILNET_DEFAULT_BODY, name }),
+      mintId: () => TAILNET_RECORD_ID,
+      configured: () => true,
+      test: (input) => this.probeInstance(input.id, input.values),
+    })
     await this.migrateSettings()
     const cliLogger = this.ctx.logger.child('tailscale-cli')
 
@@ -298,6 +347,10 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
     return [
       { capability: meshNetworkCapability, provider: meshProvider },
       { capability: networkAccessCapability, provider: networkAccessProvider },
+      {
+        capability: integrationInstancesCapability,
+        provider: this.instances.toProvider(),
+      },
     ]
   }
 
@@ -609,9 +662,10 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
       authKey: input.authKey,
       ...(input.hostname ? { hostname: input.hostname } : {}),
     })
-    await this.updateGlobalSettings({
+    // The key that joined is the one the next boot rejoins with: it lives on the instance.
+    await this.saveTailnet({
       authKey: input.authKey,
-      hostname: input.hostname ?? this.config.hostname,
+      hostname: input.hostname ?? (await this.credentials()).hostname,
     })
     // Manual join succeeded — reset the auto-rejoin backoff so a later
     // controlled-leave + key-rotation doesn't have to wait an hour.
@@ -643,11 +697,8 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
       // Persist the optional hostname override so it survives the
       // browser round-trip if the user reloads admin UI before the
       // daemon reports joined.
-      if (input.hostname && input.hostname !== this.config.hostname) {
-        await this.updateGlobalSettings({
-          authKey: this.config.authKey,
-          hostname: input.hostname,
-        })
+      if (input.hostname && input.hostname !== (await this.credentials()).hostname) {
+        await this.saveTailnet({ hostname: input.hostname })
       }
       this.ctx.logger.info('tailscale: login URL ready', {
         tags: { topic: 'tailscale', phase: 'login-url' },
@@ -693,6 +744,12 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
       // '' keeps a keychain secret (D787); forgetting the key is explicit.
       await this.clearSecrets(['authKey'])
     }
+    if ((await this.readTailnet()) !== null) {
+      await this.instances?.updateInstance({
+        id: TAILNET_RECORD_ID,
+        values: { authKey: SECRET_CLEAR },
+      })
+    }
     return { loggedOut: true as const }
   }
 
@@ -705,52 +762,57 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
     daemonVersion?: string
     error?: string
   }> {
-    let daemonVersion: string | undefined
-    try {
-      daemonVersion = await this.requireCli().version()
-    } catch (err) {
-      return {
-        ok: false,
-        error: `tailscaled CLI not reachable: ${err instanceof Error ? err.message : String(err)}. Install Tailscale on the host.`,
-      }
-    }
-
-    let tenant: string | undefined
-    try {
-      const status = await this.requireCli().status()
-      if (status.MagicDNSSuffix) {
-        tenant = status.MagicDNSSuffix
-      }
-    } catch {
-      /* ignore — daemon may not yet be running */
-    }
-
-    if (authKey !== undefined) {
-      const trimmed = authKey.trim()
-      if (!trimmed) {
-        return {
-          ok: false,
-          ...(tenant ? { tenant } : {}),
-          ...(daemonVersion ? { daemonVersion } : {}),
-          error: 'Auth key is empty.',
-        }
-      }
-      if (!trimmed.startsWith('tskey-auth-') && !trimmed.startsWith('tskey-client-')) {
-        return {
-          ok: false,
-          ...(tenant ? { tenant } : {}),
-          ...(daemonVersion ? { daemonVersion } : {}),
-          error:
-            'Auth key does not look like a Tailscale key (expected prefix `tskey-auth-` or `tskey-client-`).',
-        }
-      }
-    }
-
+    const probe = await probeTailnet(this.probeCli(), authKey)
     return {
-      ok: true,
-      ...(tenant ? { tenant } : {}),
-      ...(daemonVersion ? { daemonVersion } : {}),
+      ok: probe.ok,
+      ...(probe.tenant ? { tenant: probe.tenant } : {}),
+      ...(probe.daemonVersion ? { daemonVersion: probe.daemonVersion } : {}),
+      ...(probe.error ? { error: probe.error } : {}),
     }
+  }
+
+  /** The CLI as the probe sees it; a degraded addon reads as an unreachable CLI. */
+  private probeCli(): {
+    version(): Promise<string>
+    status(): Promise<TailscaleStatusJson>
+  } {
+    return {
+      version: () => this.requireCli().version(),
+      status: () => this.requireCli().status(),
+    }
+  }
+
+  /**
+   * `testInstance`: the form's values, falling back to the stored key. The key typed in the form
+   * is used; a redaction token or a secret view means "the stored one". It is never logged and no
+   * field of the answer carries it.
+   */
+  private async probeInstance(
+    id: string | null,
+    values: Readonly<Record<string, unknown>>,
+  ): Promise<IntegrationTestConnectionResult> {
+    const started = Date.now()
+    let stored: TailnetBody | null = null
+    if (id !== null && this.instances !== null) {
+      try {
+        stored = await this.instances.getResolved(id)
+      } catch (err: unknown) {
+        return {
+          success: false,
+          status: 'inconclusive',
+          error: `the stored tailnet could not be read: ${err instanceof Error ? err.message : String(err)}`,
+        }
+      }
+    }
+    const typed = values['authKey']
+    const fresh =
+      typeof typed === 'string' &&
+      typed.trim() !== '' &&
+      typed !== REDACTED_SECRET &&
+      !isSecretFieldView(typed)
+    const authKey = fresh ? typed : stored?.authKey
+    const probe = await probeTailnet(this.probeCli(), authKey)
+    return toTestResult(probe, Date.now() - started)
   }
 
   private async listPeers(): Promise<{ peers: readonly MeshPeer[] }> {
@@ -864,7 +926,8 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
       this.scheduleNextAutoRejoin()
       return
     }
-    if (!this.config.authKey) {
+    const credentials = await this.credentials()
+    if (!credentials.authKey) {
       // Nothing to rejoin with. The operator either hasn't pasted a key
       // yet OR is using the browser-redirect flow — both are valid.
       return
@@ -906,8 +969,8 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
     })
     try {
       await this.requireCli().up({
-        authKey: this.config.authKey,
-        ...(this.config.hostname ? { hostname: this.config.hostname } : {}),
+        authKey: credentials.authKey,
+        ...(credentials.hostname ? { hostname: credentials.hostname } : {}),
       })
       this.ctx.logger.info('auto-rejoin: succeeded', {
         tags: { topic: 'tailscale', phase: 'auto-rejoin-ok' },
@@ -961,12 +1024,118 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
    */
   private async migrateSettings(): Promise<void> {
     const report = await this.runMigrations(
-      defineAddonMigrations(ADDON_MIGRATIONS, {
-        readStored: (keys) =>
-          readRawKeys((key) => this.readStoredGlobalKey(key), 'tailscale-client', keys),
-      }),
+      defineAddonMigrations(ADDON_MIGRATIONS, this.migrationPorts()),
     )
     if (report.applied.length > 0) await this.resolveConfig()
+  }
+
+  /** The ports of the catalogue: the settings in, the `tailnet` record out. */
+  private migrationPorts(): ClientCataloguePorts {
+    const records = this.ctx.records
+    if (records === undefined) throw new Error('records are not available')
+    const handle = records.kind(tailnetKind)
+    return {
+      readStored: (keys) =>
+        readRawKeys((key) => this.readStoredGlobalKey(key), 'tailscale-client', keys),
+      readHub: async (): Promise<Readonly<Record<string, unknown>>> => {
+        const stored = await this.resolveGlobalStore()
+        if (isSecretMarker(stored['authKey'])) {
+          throw new Error('the old Tailscale pre-auth key could not be resolved')
+        }
+        return stored
+      },
+      warn: (message: string) => {
+        this.ctx.logger.warn(message)
+      },
+      readRecord: async (): Promise<TailnetRecordState | null> => {
+        const row = await handle.getResolved(TAILNET_RECORD_ID)
+        if (row === null) return null
+        return {
+          hostname: row.data.hostname,
+          hasAuthKey: (row.data.authKey ?? '').length > 0,
+        }
+      },
+      putRecord: async (body: TailnetBody): Promise<'created' | 'exists'> => {
+        if ((await handle.get(TAILNET_RECORD_ID)) !== null) return 'exists'
+        try {
+          await handle.put({ id: TAILNET_RECORD_ID, data: body }, { ifRev: 0 })
+        } catch (err: unknown) {
+          if (err instanceof RevConflictError) return 'exists'
+          throw err
+        }
+        return 'created'
+      },
+      clearOldAuthKey: async () => {
+        await this.clearSecrets(['authKey'])
+      },
+    }
+  }
+
+  // ── The tailnet instance ──────────────────────────────────────────
+
+  /** The stored tailnet, secrets resolved; null when absent or unreadable (a failed read acts on nothing). */
+  private async readTailnet() {
+    if (this.instances === null) return null
+    try {
+      return await this.instances.readResolved(TAILNET_RECORD_ID)
+    } catch (err: unknown) {
+      this.ctx.logger.warn('tailscale: the tailnet record could not be read', {
+        meta: { error: err instanceof Error ? err.message : String(err) },
+        tags: { topic: 'tailscale', phase: 'records-read-failed' },
+      })
+      return null
+    }
+  }
+
+  /** What the client joins with: the instance, the node settings only before it exists. */
+  private async credentials(): Promise<TailnetCredentials> {
+    return effectiveCredentials(await this.readTailnet(), {
+      authKey: this.config.authKey,
+      hostname: this.config.hostname,
+    })
+  }
+
+  /** Write the fields that changed onto the instance, creating it on first use. */
+  private async saveTailnet(values: { authKey?: string; hostname?: string }): Promise<void> {
+    if (this.instances === null) return
+    if ((await this.readTailnet()) === null) {
+      await this.instances.createInstance({
+        id: TAILNET_RECORD_ID,
+        name: 'Tailscale',
+        values,
+      })
+      return
+    }
+    await this.instances.updateInstance({ id: TAILNET_RECORD_ID, values })
+  }
+
+  private tailnetForm(): ConfigUISchema {
+    return this.schema({
+      sections: [
+        {
+          id: 'tailnet',
+          title: 'Tailnet',
+          description:
+            'The pre-auth key and hostname this hub joins the tailnet with. Routing, tags, SSH and the daemon source are per-node settings.',
+          fields: [
+            {
+              type: 'password',
+              key: 'authKey',
+              label: 'Pre-auth key',
+              description:
+                'tskey-auth-* token from the Tailscale admin console. Leave empty when using the browser-redirect flow.',
+              showToggle: true,
+            },
+            {
+              type: 'text',
+              key: 'hostname',
+              label: 'Hostname',
+              description: 'Hostname advertised in the tailnet. Empty = use the OS hostname.',
+            },
+          ],
+        },
+      ],
+    })
   }
 
   /**
@@ -1216,13 +1385,17 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
    * intent silently.
    */
   protected async onConfigChanged(): Promise<void> {
+    // The first config resolve of a boot (and a migration's settings write) lands before the CLI
+    // exists; there is no daemon to apply anything to yet, and nothing to warn about.
+    if (this.cli === null && this.onboardError === null) return
     try {
+      const { hostname } = await this.credentials()
       await this.requireCli().setPrefs({
         acceptRoutes: this.config.acceptRoutes,
         acceptDns: this.config.acceptDns,
         shieldsUp: this.config.shieldsUp,
         ssh: this.config.ssh,
-        ...(this.config.hostname ? { hostname: this.config.hostname } : {}),
+        ...(hostname ? { hostname } : {}),
         advertisedRoutes: this.config.advertisedRoutes
           .split(',')
           .map((s) => s.trim())

@@ -58,6 +58,9 @@
           },
           {
             "name": "network-access"
+          },
+          {
+            "name": "integration-instances"
           }
         ],
         "icon": "assets/client-icon.svg",

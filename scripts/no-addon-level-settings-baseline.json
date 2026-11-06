@@ -7,9 +7,6 @@
     "waste": {
       "packages/addon-waste-collections/src/waste-collections.addon.ts:addon-level-settings": "the addon blob and the settings button; P6e moves the sources, P8 turns the button into a page action [updateGlobalSettings, globalSettingsSchema]"
     },
-    "tailscale": {
-      "packages/addon-tailscale/src/client/tailscale.addon.ts:addon-level-settings": "writes the addon blob (authKey, hostname); P6f moves them to the tailnet instance [updateGlobalSettings]"
-    },
     "training": {
       "packages/addon-training/src/providers/modal/training-modal.addon.ts:addon-level-settings": "writes the addon blob; P6g/P8 move the credentials to the instance and the rest to cluster scope [updateGlobalSettings]"
     },

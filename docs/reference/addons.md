@@ -104,7 +104,7 @@ this column exists to stop.
 | `storage-orchestrator` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `settings-store` `storage` `storage-migration` |
 | `stream-broker` | `@camstack/addon-pipeline` | pipeline | own runner | `any-node` | — | — | `addon-widgets-source` `camera-streams` `device-removal-hook` `load-contribution` `log-channels` `stream-broker` `webrtc-session` |
 | `system-config` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | — |
-| `tailscale-client` | `@camstack/addon-tailscale` | networking | own runner | `hub-only` | `net-access` | — | `mesh-network` `network-access` |
+| `tailscale-client` | `@camstack/addon-tailscale` | networking | own runner | `hub-only` | `net-access` | — | `integration-instances` `mesh-network` `network-access` |
 | `tailscale-ingress` | `@camstack/addon-tailscale` | networking | own runner | `hub-only` | `net-access` | — | `network-access` |
 | `terminal` | `@camstack/addon-terminal` | system | own runner | `any-node` | — | unique | `terminal-session` |
 | `training` | `@camstack/addon-training` | system | own runner | `hub-only` | — | — | `addon-pages-source` `training` |
