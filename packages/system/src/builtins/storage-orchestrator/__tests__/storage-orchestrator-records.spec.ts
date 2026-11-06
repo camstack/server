@@ -6,9 +6,17 @@ import type {
   RecordsAccess,
   StorageLocationDeclaration,
 } from '@camstack/types'
-import { createRecordsAccess, normalizeNodeId, storageCapability } from '@camstack/types'
+import {
+  createRecordsAccess,
+  createSecretsAccess,
+  normalizeNodeId,
+  storageCapability,
+} from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
-import { makeRecordsWorld } from '../../sqlite-storage/__tests__/support/records-world.js'
+import {
+  makeFakeKeychain,
+  makeRecordsWorld,
+} from '../../sqlite-storage/__tests__/support/records-world.js'
 import { SqliteDrainStateStore } from '../drain-state-store.js'
 import { SqliteLocationStore } from '../location-store.js'
 import { storageOrchestratorRecordKinds } from '../record-kinds.js'
@@ -16,7 +24,12 @@ import { StorageOrchestratorAddon } from '../storage-orchestrator.addon.js'
 
 const PROVIDER_ID = 'filesystem-storage'
 const DECLARATIONS: readonly StorageLocationDeclaration[] = [
-  { id: 'recordings', displayName: 'Recordings', cardinality: 'multi', access: 'local-path' },
+  {
+    id: 'recordings',
+    displayName: 'Recordings',
+    cardinality: 'multi',
+    access: 'local-path',
+  },
 ]
 
 function makeLogger(): IScopedLogger {
@@ -63,7 +76,9 @@ async function bootOrchestrator(options: {
   const collections: Record<string, readonly unknown[]> = {
     'storage-provider': [makeProvider()],
     ...(options.dataStoreEngine !== null
-      ? { 'data-store-provider': [options.dataStoreEngine ?? makeInMemoryEngine()] }
+      ? {
+          'data-store-provider': [options.dataStoreEngine ?? makeInMemoryEngine()],
+        }
       : {}),
     'storage-evictable': [],
   }
@@ -114,7 +129,10 @@ describe('storage-orchestrator — records path', () => {
     const records = createRecordsAccess({
       owner: 'storage-orchestrator',
       transport: world.transportFor('storage-orchestrator'),
-      secrets: null,
+      secrets: createSecretsAccess({
+        owner: 'storage-orchestrator',
+        transport: makeFakeKeychain(),
+      }),
     })
     await records.declare(storageOrchestratorRecordKinds)
     const locations = new SqliteLocationStore(
@@ -152,7 +170,10 @@ describe('storage-orchestrator — records path', () => {
     const records = createRecordsAccess({
       owner: 'storage-orchestrator',
       transport: world.transportFor('storage-orchestrator'),
-      secrets: null,
+      secrets: createSecretsAccess({
+        owner: 'storage-orchestrator',
+        transport: makeFakeKeychain(),
+      }),
     })
     await records.declare(storageOrchestratorRecordKinds)
     const locationsKind = SqliteLocationStore.recordStoresOf(records)
@@ -182,7 +203,10 @@ describe('storage-orchestrator — records path', () => {
     const records = createRecordsAccess({
       owner: 'storage-orchestrator',
       transport: world.transportFor('storage-orchestrator'),
-      secrets: null,
+      secrets: createSecretsAccess({
+        owner: 'storage-orchestrator',
+        transport: makeFakeKeychain(),
+      }),
     })
     await records.declare(storageOrchestratorRecordKinds)
     const drainKind = SqliteDrainStateStore.recordStoresOf(records)
@@ -220,7 +244,10 @@ describe('storage-orchestrator — records declare on boot', () => {
     const records = createRecordsAccess({
       owner: 'storage-orchestrator',
       transport: world.transportFor('storage-orchestrator'),
-      secrets: null,
+      secrets: createSecretsAccess({
+        owner: 'storage-orchestrator',
+        transport: makeFakeKeychain(),
+      }),
     })
     const declareSpy = vi.spyOn(records, 'declare')
     await bootOrchestrator({ localNodeId: 'hub', records })
@@ -234,10 +261,16 @@ describe('storage-orchestrator — records declare on boot', () => {
     const records = createRecordsAccess({
       owner: 'storage-orchestrator',
       transport: world.transportFor('storage-orchestrator'),
-      secrets: null,
+      secrets: createSecretsAccess({
+        owner: 'storage-orchestrator',
+        transport: makeFakeKeychain(),
+      }),
     })
     const declareSpy = vi.spyOn(records, 'declare')
-    await bootOrchestrator({ localNodeId: 'hub/storage-orchestrator', records })
+    await bootOrchestrator({
+      localNodeId: 'hub/storage-orchestrator',
+      records,
+    })
     expect(normalizeNodeId('hub/storage-orchestrator')).toBe('hub')
     expect(declareSpy).toHaveBeenCalledOnce()
   })

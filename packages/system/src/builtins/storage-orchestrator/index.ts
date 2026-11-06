@@ -13,5 +13,12 @@ export {
   StorageOrchestratorAddon,
   StorageOrchestratorAddon as default,
 } from './storage-orchestrator.addon.js'
-export type { ListLocationsFilter, StorageProviderLookup } from './storage-orchestrator.service.js'
+export type {
+  ListLocationsFilter,
+  StorageProviderLookup,
+} from './storage-orchestrator.service.js'
 export { StorageOrchestratorService } from './storage-orchestrator.service.js'
+export {
+  storageOrchestratorActions,
+  storageOrchestratorActions as customActions,
+} from './custom-actions.js'

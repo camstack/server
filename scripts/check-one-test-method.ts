@@ -24,25 +24,30 @@ import { fileURLToPath } from 'node:url'
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
-const METHOD_RE = /^\s{2,4}((?:test\w*|validate\w*Credentials))\s*:\s*(?:optionalMethod|method)\s*\(/
+const METHOD_RE =
+  /^\s{2,4}((?:test\w*|validate\w*Credentials))\s*:\s*(?:optionalMethod|method)\s*\(/
 const ALLOWED = 'integration-instances.cap.ts:testInstance'
 
 /** Key: `<cap file>:<method>`. Value: why it is not a connection test of an instance. */
 export const PERMANENT: Readonly<Record<string, string>> = {
-  'notification-output.cap.ts:testTarget': 'sends a test notification to one target, not a settings check',
+  'notification-output.cap.ts:testTarget':
+    'sends a test notification to one target, not a settings check',
   'notification-rules.cap.ts:testRule': 'dry-runs a notification rule against an event',
   'user-management.cap.ts:validateCredentials': 'a user login, not an integration',
   'auth-provider.cap.ts:validateCredentials': 'a user login through an auth provider',
-  'device-manager.cap.ts:testCreationField': 'probes one creation-form field of a device that does not exist yet',
+  'device-manager.cap.ts:testCreationField':
+    'probes one creation-form field of a device that does not exist yet',
   'device-manager.cap.ts:testField': 'probes one field of an existing device',
-  'device-provider.cap.ts:testCreationField': 'probes one creation-form field of a device that does not exist yet',
+  'storage-provider.cap.ts:testLocation':
+    'the provider-level probe of one config that the storage instances call, not an instance test',
+  'device-provider.cap.ts:testCreationField':
+    'probes one creation-form field of a device that does not exist yet',
 }
 
 /** Folds into `testInstance` at step 5/6 of planning#440; delete the entry then. */
 export const PENDING: Readonly<Record<string, string>> = {
   'storage.cap.ts:testLocation': 'folds in at step 5/6 (storage locations become instances)',
   'storage.cap.ts:testConfig': 'folds in at step 5/6 (storage wizard preflight)',
-  'storage-provider.cap.ts:testLocation': 'folds in at step 5/6 (storage locations become instances)',
   'llm.cap.ts:testProfile': 'folds in at step 5/6 (llm profiles become instances)',
   'mesh-network.cap.ts:testConnection': 'folds in at step 5/6 (tailscale becomes an instance)',
 }
@@ -98,10 +103,16 @@ export function findViolations(
 }
 
 function main(): number {
-  const files = execFileSync('git', ['ls-files', '*.cap.ts'], { cwd: ROOT, encoding: 'utf8' })
+  const files = execFileSync('git', ['ls-files', '*.cap.ts'], {
+    cwd: ROOT,
+    encoding: 'utf8',
+  })
     .split('\n')
     .filter((f) => f !== '')
-  const caps: SourceFile[] = files.map((f) => ({ path: f, text: readFileSync(path.join(ROOT, f), 'utf8') }))
+  const caps: SourceFile[] = files.map((f) => ({
+    path: f,
+    text: readFileSync(path.join(ROOT, f), 'utf8'),
+  }))
   const violations = findViolations(caps)
   for (const v of violations) console.error(`check-one-test-method: ${v.where}: ${v.message}`)
   if (violations.length === 0) console.log('check-one-test-method: OK')

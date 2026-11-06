@@ -22,6 +22,12 @@ export type StorageLocationBody = {
   readonly enabled?: boolean
   readonly mode?: z.infer<typeof StorageLocationModeSchema>
   readonly isDefault?: boolean
+  /**
+   * The provider's credentials by config key (`password`, `privateKey`, ...), kept in the keychain
+   * and bound to THIS row: the records door stores the value and deleting the row deletes it.
+   * A location read back puts each one into `config` as a marker (`location-secret-refs.ts`).
+   */
+  readonly secrets?: Record<string, string>
 }
 const _storageLocationBody: z.ZodType<StorageLocationBody> = z.object({
   type: StorageLocationTypeSchema,
@@ -35,11 +41,14 @@ const _storageLocationBody: z.ZodType<StorageLocationBody> = z.object({
   enabled: z.boolean().optional(),
   mode: StorageLocationModeSchema.optional(),
   isDefault: z.boolean().optional(),
+  secrets: z.record(z.string(), z.string().meta({ secret: true })).optional(),
 })
 export const StorageLocationBodySchema: z.ZodType<StorageLocationBody> = _storageLocationBody
 
 export type StorageSeedMarkerBody = { readonly seededAt: number }
-const _storageSeedMarkerBody: z.ZodType<StorageSeedMarkerBody> = z.object({ seededAt: z.number() })
+const _storageSeedMarkerBody: z.ZodType<StorageSeedMarkerBody> = z.object({
+  seededAt: z.number(),
+})
 export const StorageSeedMarkerBodySchema: z.ZodType<StorageSeedMarkerBody> = _storageSeedMarkerBody
 
 export type StorageDrainStateBody = {

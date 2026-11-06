@@ -25,6 +25,7 @@ import { randomUUID } from 'node:crypto'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import type {
+  AddonInitResult,
   IDataStoreProvider,
   IEventBus,
   ISettingsStoreProvider,
@@ -45,6 +46,7 @@ import {
   EventCategory,
   evictionPolicyOfLocation,
   gbToBytes,
+  integrationInstancesCapability,
   isSecretMarker,
   mayReadLocation,
   mayWriteToLocation,
@@ -52,17 +54,20 @@ import {
   resolveSecretMarkers,
   StorageCleanupJobSchema,
   StorageMigrationJobSchema,
-  secretTreeFromPaths,
   settingsStoreCapability,
   storageCapability,
   storageMigrationCapability,
-  transformSecretWrite,
 } from '@camstack/types'
 import { z } from 'zod'
 import { buildStorageLocationRegistry } from '../../kernel/storage-location-registry.js'
-import { ADDON_MIGRATIONS } from './migrations/index.js'
+import {
+  ADDON_MIGRATIONS,
+  LOCATION_SECRETS_TO_RECORD_ID,
+  RESEED_PRUNED_DEFAULTS_ID,
+  type StorageCataloguePorts,
+} from './migrations/index.js'
+import { locationSecretPortsOver } from './migrations/location-secret-ports.js'
 import { LocationRepointer, type RepointTarget } from './location-repointer.js'
-import { STORAGE_LOCATIONS_SECRET_SCOPE } from './location-store.js'
 import { canProbeOccupancyLocally, resolveRefusalFor } from './access-guards.js'
 import { createDataStoreDispatch } from './data-store-dispatch.js'
 import type { DrainProgress } from './drain-ratchet.js'
@@ -82,7 +87,14 @@ import {
   secretKeysForConfig,
   secretKeysOfProviderInfo,
 } from './location-secrets.js'
-import { type ILocationStore, SqliteLocationStore } from './location-store.js'
+import {
+  type ILocationStore,
+  LocationSecretStaging,
+  SqliteLocationStore,
+} from './location-store.js'
+import { locationSecretMarker } from './location-secret-refs.js'
+import { forceDeleteLocationInput, storageOrchestratorActions } from './custom-actions.js'
+import { StorageLocationInstances } from './location-instances.js'
 import { storageOrchestratorRecordKinds } from './record-kinds.js'
 import type {
   StorageDrainStateBody,
@@ -116,6 +128,9 @@ const STORAGE_OCCUPANCY_CAP_NAME = 'storage-occupancy'
  * before `nodeId` existed.
  */
 const HUB_NODE_ID = 'hub'
+
+/** How long a save waits for its credential to reach the record before it answers anyway. */
+const SECRET_PERSIST_WAIT_MS = 5_000
 /** How often the pressure manager re-evaluates free space per location. */
 const PRESSURE_SWEEP_INTERVAL_MS = 60_000
 
@@ -188,6 +203,9 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
    */
   private readonly secretKeysByProvider: Map<string, ReadonlySet<string>> = new Map()
 
+  /** Credentials of a save on their way to the location's record (`LocationSecretStaging`). */
+  private readonly secretStaging = new LocationSecretStaging()
+
   /**
    * Disposers run on `onShutdown` — currently the eventBus subscription
    * for `capability:provider-registered` events used by the lazy seed
@@ -200,7 +218,7 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
     super({})
   }
 
-  protected async onInitialize(): Promise<ProviderRegistration[]> {
+  protected async onInitialize(): Promise<AddonInitResult<typeof storageOrchestratorActions>> {
     const localNodeId = normalizeNodeId(this.ctx.kernel.localNodeId)
     const records = localNodeId === HUB_NODE_ID ? this.ctx.records : undefined
     if (records !== undefined) {
@@ -304,49 +322,8 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
       listLocationDeclarations: async () => service.listDeclarations(),
       // A pure read of what the last pressure sweep computed (D386).
       listDrainProgress: async () => this.drainProgress(),
-      upsertLocation: async (input) => {
-        // The sentinel travelling back in means "keep the stored secret" —
-        // the wizard round-trips a redacted config whenever the operator edits
-        // anything else about a location.
-        const stored = service.getLocationById(input.id)
-        // The key set is derived from the STORED config, which is what was
-        // redacted on the way out — deriving it from the incoming one would
-        // ask which keys the caller thinks are secret.
-        const config = restoreRedactedSecrets(
-          input.config,
-          stored?.config,
-          this.secretKeysFor(input.providerId, stored?.config ?? {}),
-        )
-        // The provider's declared secrets are kept in the keychain, never in
-        // the location row (D787); a marker is what the row holds.
-        const keychained = await this.keepSecretsInKeychain(
-          input.id,
-          input.providerId,
-          config,
-          stored?.config ?? {},
-        )
-        const next = keychained === input.config ? input : { ...input, config: keychained }
-        // A SINGLETON that changes root carries its bytes with it. It has no
-        // second instance to drain into — the cardinality guard inside
-        // `upsertLocation` refuses to create one — so this edit IS the
-        // migration, and the only alternative to moving the data is stranding
-        // it. On 2026-09-08 the `artifacts` root moved and 320 enrolled gallery
-        // blobs stayed behind, invisible until every face in Review answered
-        // 404 and a reconcile was one boot from calling them deleted.
-        //
-        // `multi` kinds are untouched: recordings and friends move through the
-        // migration coordinator, explicitly armed, and that stays the only way.
-        const saved = await this.upsertCarryingData(stored, next, () =>
-          service.upsertLocation(next),
-        )
-        this.announceLocationsChanged(saved.id, saved.type, 'upsert')
-        return this.redacted(saved)
-      },
-      deleteLocation: async ({ id, force }) => {
-        const doomed = service.getLocationById(id)
-        await service.deleteLocation(id, { force: force === true })
-        this.announceLocationsChanged(id, doomed?.type ?? '', 'delete')
-      },
+      upsertLocation: async (input) => this.redacted(await this.saveLocation(input)),
+      deleteLocation: async ({ id, force }) => this.removeLocation(id, force === true),
       testLocation: async ({ id }) => {
         const loc = service.getLocationById(id)
         if (!loc) return { ok: false, error: `Location "${id}" not found` }
@@ -355,7 +332,10 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
           const live = await this.withResolvedSecrets(loc)
           return p.testLocation({ config: live.config })
         } catch (err) {
-          return { ok: false, error: err instanceof Error ? err.message : String(err) }
+          return {
+            ok: false,
+            error: err instanceof Error ? err.message : String(err),
+          }
         }
       },
 
@@ -367,7 +347,10 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
       listProviders: async () => {
         return collectProviderInfos(getProviders(), (_provider, err, index) => {
           this.ctx.logger.warn('storage-orchestrator: getProviderInfo failed', {
-            meta: { providerIndex: index, error: err instanceof Error ? err.message : String(err) },
+            meta: {
+              providerIndex: index,
+              error: err instanceof Error ? err.message : String(err),
+            },
           })
         })
       },
@@ -396,10 +379,16 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
             if (info.providerId !== providerId) continue
             return p.testLocation({ config: resolved })
           } catch (err) {
-            return { ok: false, error: err instanceof Error ? err.message : String(err) }
+            return {
+              ok: false,
+              error: err instanceof Error ? err.message : String(err),
+            }
           }
         }
-        return { ok: false, error: `No storage-provider registered for providerId "${providerId}"` }
+        return {
+          ok: false,
+          error: `No storage-provider registered for providerId "${providerId}"`,
+        }
       },
 
       // ── Small-file primitives — every method resolves the ref then
@@ -536,7 +525,9 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
           // already been resumed, so there is none to present.
           startDrain: (input) => this.ctx.api.recordingArchive.relocateFootage.mutate(input),
           getMove: (jobId) =>
-            this.ctx.api.recordingArchive.getStorageMigrationMoveStatus.query({ jobId }),
+            this.ctx.api.recordingArchive.getStorageMigrationMoveStatus.query({
+              jobId,
+            }),
           // Every mover the recorder knows about, not just this migration's:
           // a drain armed straight against `relocateFootage` is exactly the
           // thing `storageMigration.movers` exists to make visible.
@@ -563,7 +554,9 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
           startDrain: (input) => this.ctx.api.pipelineAnalytics.relocateMedia.mutate(input),
           countUnstamped: () => this.ctx.api.pipelineAnalytics.countUnstampedEventMedia.query({}),
           getMove: (jobId) =>
-            this.ctx.api.pipelineAnalytics.getStorageMigrationMoveStatus.query({ jobId }),
+            this.ctx.api.pipelineAnalytics.getStorageMigrationMoveStatus.query({
+              jobId,
+            }),
           listMovers: () => this.ctx.api.pipelineAnalytics.listRelocateMediaJobs.query({}),
           residue: (input) => this.ctx.api.pipelineAnalytics.countRelocatableMedia.query(input),
           cancelMove: async (jobId) =>
@@ -636,7 +629,9 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
           return parseOrphanStatus(raw)
         },
         startDebugMedia: () =>
-          this.ctx.api.pipelineAnalytics.reclaimDebugMedia.mutate({ mode: 'reclaim' }),
+          this.ctx.api.pipelineAnalytics.reclaimDebugMedia.mutate({
+            mode: 'reclaim',
+          }),
         debugMediaStatus: () => this.ctx.api.pipelineAnalytics.getMediaReclaimStatus.query({}),
         walkLedger: (input) =>
           this.ctx.api.recordingArchive.reconcileLedgerAgainstDisk.mutate(input),
@@ -648,7 +643,9 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
       plan: (input) => migration.plan(input),
       start: async (input) => ({ jobId: await migration.start(input) }),
       status: ({ jobId }) => migration.status(jobId),
-      cancel: async ({ jobId }) => ({ cancelled: await migration.cancel(jobId) }),
+      cancel: async ({ jobId }) => ({
+        cancelled: await migration.cancel(jobId),
+      }),
       movers: () => migration.movers(),
       moverClearance: async ({ locationIds }) => {
         const verdict = await this.requireRepointer().clearance(locationIds)
@@ -660,7 +657,9 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
       drain: async (input) => ({ jobId: await migration.drain(input) }),
       cleanupStart: async (input) => ({ jobId: await cleanup.start(input) }),
       cleanupStatus: ({ jobId }) => cleanup.status(jobId),
-      cleanupCancel: async ({ jobId }) => ({ cancelled: await cleanup.cancel(jobId) }),
+      cleanupCancel: async ({ jobId }) => ({
+        cancelled: await cleanup.cancel(jobId),
+      }),
       history: () => migration.history(),
     }
 
@@ -729,7 +728,10 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
     this.locationHistory = new LocationHistoryRecorder({
       deviceHistory: {
         declareSeries: (input) => this.ctx.api.deviceHistory.declareSeries.mutate(input),
-        record: (input) => this.ctx.api.deviceHistory.record.mutate({ points: [...input.points] }),
+        record: (input) =>
+          this.ctx.api.deviceHistory.record.mutate({
+            points: [...input.points],
+          }),
       },
       logger: this.ctx.logger,
     })
@@ -739,7 +741,44 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
     }, PRESSURE_SWEEP_INTERVAL_MS)
 
     this.ctx.logger.info('Storage orchestrator initialized')
-    return [
+    // The hub owns the locations (its records kind); a node without one serves no instances.
+    const instances =
+      this.locationsKind === null
+        ? null
+        : new StorageLocationInstances({
+            locations: () => service.listLocations(),
+            declarations: () => service.listDeclarations(),
+            providers: () =>
+              collectProviderInfos(getProviders(), (_provider, err, index) => {
+                this.ctx.logger.warn('storage-orchestrator: getProviderInfo failed', {
+                  meta: {
+                    providerIndex: index,
+                    error: err instanceof Error ? err.message : String(err),
+                  },
+                })
+              }),
+            save: async (input, clear) => this.redacted(await this.saveLocation(input, clear)),
+            remove: (id) => this.removeLocation(id, false),
+            probe: async (providerId, config) => {
+              const live = await this.resolvedConfig(`probe:${providerId}`, config)
+              const info = await Promise.all(
+                getProviders().map(async (p) => ({
+                  p,
+                  info: await p.getProviderInfo(),
+                })),
+              )
+              const match = info.find((entry) => entry.info.providerId === providerId)
+              if (match === undefined) {
+                return {
+                  ok: false,
+                  error: `No storage-provider registered for providerId "${providerId}"`,
+                }
+              }
+              return match.p.testLocation({ config: live })
+            },
+            secretKeys: (providerId, config) => this.secretKeysFor(providerId, config),
+          })
+    const registrations: ProviderRegistration[] = [
       { capability: storageCapability, provider },
       { capability: storageMigrationCapability, provider: migrationProvider },
       // The data door (D44). One addon owns both storage surfaces —
@@ -751,7 +790,36 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
         capability: settingsStoreCapability,
         provider: createDataStoreDispatch(getEngines, () => this.hubSettingsForward()),
       },
+      ...(instances === null
+        ? []
+        : [
+            {
+              capability: integrationInstancesCapability,
+              provider: instances.toProvider(),
+            },
+          ]),
     ]
+    return {
+      providers: registrations,
+      customActions: storageOrchestratorActions,
+      actionHandlers: {
+        // D49: destructive, so it is its own action; the occupancy check is skipped by name.
+        forceDeleteLocation: async (input: unknown) => {
+          const { id } = forceDeleteLocationInput.parse(input)
+          await this.removeLocation(id, true)
+          return { ok: true as const }
+        },
+      },
+    }
+  }
+
+  /** Delete a location; the occupancy refusal stands unless `force` was stated. */
+  private async removeLocation(id: string, force: boolean): Promise<void> {
+    const service = this.service
+    if (service === null) throw new Error('storage-orchestrator is not initialised')
+    const doomed = service.getLocationById(id)
+    await service.deleteLocation(id, { force })
+    this.announceLocationsChanged(id, doomed?.type ?? '', 'delete')
   }
 
   /**
@@ -849,7 +917,7 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
     // The engine's presence is only the readiness gate; the locations live in
     // the record kinds, which the hub always has and an agent never does.
     if (this.locationsKind === null || this.seedMarkersKind === null) return null
-    return new SqliteLocationStore(this.locationsKind, this.seedMarkersKind)
+    return new SqliteLocationStore(this.locationsKind, this.seedMarkersKind, this.secretStaging)
   }
 
   /**
@@ -1009,7 +1077,9 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
             ? {
                 freeBytes: capacity.availableBytes,
                 ...(floorPercent !== undefined
-                  ? { floorBytes: Math.round((capacity.totalBytes * floorPercent) / 100) }
+                  ? {
+                      floorBytes: Math.round((capacity.totalBytes * floorPercent) / 100),
+                    }
                   : {}),
               }
             : {}),
@@ -1258,62 +1328,137 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
    * ref; the provider then fails its own connection, by name.
    */
   private async withResolvedSecrets(location: StorageLocation): Promise<StorageLocation> {
+    const config = await this.resolvedConfig(location.id, location.config)
+    return config === location.config ? location : { ...location, config }
+  }
+
+  /** `config` with every keychain marker resolved; the same object when it holds none. */
+  private async resolvedConfig(
+    locationId: string,
+    config: Readonly<Record<string, unknown>>,
+  ): Promise<Readonly<Record<string, unknown>>> {
     const secrets = this.ctx.secrets
-    if (secrets === undefined) return location
-    const { value, unresolved } = await resolveSecretMarkers(location.config, secrets)
+    if (secrets === undefined) return config
+    const { value, unresolved } = await resolveSecretMarkers(config, secrets)
     if (unresolved.length > 0) {
       this.ctx.logger.error('storage location secret unavailable', {
         meta: {
-          locationId: location.id,
+          locationId,
           secrets: unresolved.map((u) => ({ ref: u.ref, reason: u.reason })),
         },
       })
     }
-    return value === location.config ? location : { ...location, config: value }
+    return value
   }
 
   /**
-   * Strip the provider's DECLARED secrets (its form schema, by type) out of a
-   * location config into the keychain, under `row/storage_locations/<id>`.
-   * A provider that has not registered declares nothing: only keys that
-   * already hold a marker are handled then — a new plaintext is never guessed
-   * at, it stays as sent until the provider is back and the location is saved.
+   * Save one location the way every door does (the legacy `upsertLocation` and the instance
+   * provider): the sentinel travelling back in means "keep the stored secret", the provider's
+   * declared credentials are staged for the location's own record (D787, never the row's
+   * `config`), a SINGLETON that changes root carries its bytes, and the change is announced.
+   * Returns the saved location with its markers; the callers redact it.
    */
-  private async keepSecretsInKeychain(
+  async saveLocation(
+    input: Omit<StorageLocation, 'createdAt' | 'updatedAt'>,
+    clearSecrets: readonly string[] = [],
+  ): Promise<StorageLocation> {
+    const service = this.service
+    if (service === null) throw new Error('storage-orchestrator is not initialised')
+    // The wizard round-trips a redacted config whenever the operator edits anything else about a
+    // location. The key set is derived from the STORED config, which is what was redacted on the
+    // way out; deriving it from the incoming one would ask which keys the caller thinks are secret.
+    const stored = service.getLocationById(input.id)
+    const restored = restoreRedactedSecrets(
+      input.config,
+      stored?.config,
+      this.secretKeysFor(input.providerId, stored?.config ?? {}),
+    )
+    const prepared = this.prepareLocationSecrets(
+      input.id,
+      input.providerId,
+      restored,
+      stored?.config ?? {},
+      clearSecrets,
+    )
+    const next = prepared.config === input.config ? input : { ...input, config: prepared.config }
+    this.secretStaging.stage(input.id, prepared.staged)
+    try {
+      // A SINGLETON that changes root carries its bytes with it. It has no second instance to
+      // drain into (the cardinality guard inside `upsertLocation` refuses to create one), so this
+      // edit IS the migration, and the only alternative to moving the data is stranding it. On
+      // 2026-09-08 the `artifacts` root moved and 320 enrolled gallery blobs stayed behind,
+      // invisible until every face in Review answered 404 and a reconcile was one boot from
+      // calling them deleted. `multi` kinds move through the migration coordinator, explicitly
+      // armed, and that stays the only way.
+      const saved = await this.upsertCarryingData(stored, next, () => service.upsertLocation(next))
+      // The credential is in the keychain before the caller can use the location.
+      await this.persistedWithin(input.id)
+      this.announceLocationsChanged(saved.id, saved.type, 'upsert')
+      return saved
+    } catch (err: unknown) {
+      this.secretStaging.discard(input.id)
+      throw err
+    }
+  }
+
+  /** The record write of a save that staged a credential is awaited, bounded: a hung store must not hang the save. */
+  private async persistedWithin(id: string): Promise<void> {
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const bound = new Promise<void>((resolve) => {
+      timer = setTimeout(resolve, SECRET_PERSIST_WAIT_MS)
+    })
+    try {
+      await Promise.race([this.secretStaging.settled(id), bound])
+    } finally {
+      if (timer !== undefined) clearTimeout(timer)
+    }
+  }
+
+  /**
+   * Split the credentials of an incoming config from the rest (D787). A declared secret key with a
+   * new value is STAGED (the records door stores it with the row) and the location carries the
+   * marker of its own record; a key that is absent, empty or already a marker keeps what is stored;
+   * `clear` removes it. A provider that has not registered declares nothing: a new plaintext is
+   * never guessed at, it stays as sent until the provider is back and the location is saved.
+   */
+  private prepareLocationSecrets(
     locationId: string,
     providerId: string,
     config: Readonly<Record<string, unknown>>,
     stored: Readonly<Record<string, unknown>>,
-  ): Promise<Readonly<Record<string, unknown>>> {
-    const secrets = this.ctx.secrets
-    if (secrets === undefined) return config
+    clear: readonly string[],
+  ): {
+    readonly config: Readonly<Record<string, unknown>>
+    readonly staged: Readonly<Record<string, string | null>>
+  } {
+    if (this.ctx.secrets === undefined) return { config, staged: {} }
     const declared = this.declaredSecretKeys(providerId) ?? new Set<string>()
-    const markerKeys = Object.entries(stored)
-      .filter(([, v]) => isSecretMarker(v))
-      .map(([k]) => k)
-    const tree = secretTreeFromPaths([...new Set([...declared, ...markerKeys])])
-    if (tree.size === 0) return config
-    const result = await transformSecretWrite({
-      tree,
-      secrets,
-      patch: { ...config },
-      stored: { ...stored },
-      scope: { kind: 'row', collection: STORAGE_LOCATIONS_SECRET_SCOPE, rowId: locationId },
-    })
-    // The row is REPLACED by `upsertLocation`, not merged: a key the save path
-    // kept must be carried over from the stored config.
-    const merged: Record<string, unknown> = { ...result.patch }
-    for (const key of tree.keys()) {
-      if (!(key in merged) && key in stored) merged[key] = stored[key]
-    }
-    void result.afterWrite().then(({ orphaned }) => {
-      if (orphaned.length > 0) {
-        this.ctx.logger.warn('storage location: dropped keychain refs could not be deleted', {
-          meta: { locationId, refs: [...orphaned] },
-        })
+    const out: Record<string, unknown> = { ...config }
+    const staged: Record<string, string | null> = {}
+    for (const key of new Set([...declared, ...clear])) {
+      if (clear.includes(key)) {
+        delete out[key]
+        staged[key] = null
+        continue
       }
-    })
-    return merged
+      const value = out[key]
+      if (typeof value === 'string' && value.length > 0) {
+        staged[key] = value
+        out[key] = locationSecretMarker(locationId, key)
+      } else if (value === undefined || value === '') {
+        if (isSecretMarker(stored[key])) out[key] = stored[key]
+        else delete out[key]
+      }
+    }
+    // A marker the stored row holds under a key nobody declares (its provider is gone) is kept.
+    for (const [key, value] of Object.entries(stored)) {
+      if (isSecretMarker(value) && !(key in out) && !clear.includes(key)) out[key] = value
+    }
+    const changed =
+      Object.keys(staged).length > 0 ||
+      Object.keys(out).length !== Object.keys(config).length ||
+      Object.entries(out).some(([key, value]) => config[key] !== value)
+    return { config: changed ? out : config, staged }
   }
 
   private redacted(location: StorageLocation): StorageLocation {
@@ -1335,7 +1480,11 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
     const refusal = resolveRefusalFor(location, this.providerIsNodeLocal(location))
     if (refusal === null) return
     this.ctx.logger.warn('storage-orchestrator: REFUSED resolve() on a remote-backed location', {
-      meta: { id: location.id, type: location.type, providerId: location.providerId },
+      meta: {
+        id: location.id,
+        type: location.type,
+        providerId: location.providerId,
+      },
     })
     throw new Error(refusal)
   }
@@ -1371,7 +1520,10 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
       return null
     }
     this.clearCapacityUnknown(loc.id, result.path)
-    return { totalBytes: result.totalBytes, availableBytes: result.availableBytes }
+    return {
+      totalBytes: result.totalBytes,
+      availableBytes: result.availableBytes,
+    }
   }
 
   /** locationId → the last unmeasurable reason logged for it. */
@@ -1492,7 +1644,10 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
     if (owner !== (this.service?.getLocalNodeId() ?? HUB_NODE_ID)) return 'unknown'
     const basePath = this.locationBasePath(location.id)
     if (basePath === null) return 'unknown'
-    const occupancy = await probeLocalDirectoryOccupancy({ type: location.type, basePath })
+    const occupancy = await probeLocalDirectoryOccupancy({
+      type: location.type,
+      basePath,
+    })
     if (occupancy === 'unknown') {
       this.ctx.logger.warn('storage-orchestrator: could not read a location root to check it', {
         meta: { id: location.id, basePath, type: location.type },
@@ -1579,6 +1734,7 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
    */
   private async seedFromDeclarations(): Promise<void> {
     if (!this.service) return
+    await this.moveLocationSecrets()
     // Refresh the node-local snapshot first so the upsert guard fired by
     // `seedDefaults` + the post-seed backfill classify providers correctly.
     await this.refreshNodeLocalCache()
@@ -1644,9 +1800,8 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
     this.reseedRepairRunning = true
     try {
       await this.runMigrations(
-        defineAddonMigrations(ADDON_MIGRATIONS, {
-          reseed: () => service.reseedPrunedDefaults(seedInput),
-        }),
+        defineAddonMigrations(ADDON_MIGRATIONS, this.cataloguePorts(service, seedInput)),
+        { only: [RESEED_PRUNED_DEFAULTS_ID] },
       )
       this.reseedRepairDone = true
     } catch (err) {
@@ -1655,6 +1810,61 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
       })
     } finally {
       this.reseedRepairRunning = false
+    }
+  }
+
+  /**
+   * Every port of the catalogue, bound once. The reseed port only answers inside the seed pass
+   * (it needs the declarations); the credential ports need the hub's records and keychain, so
+   * a node without them runs neither step.
+   */
+  private cataloguePorts(
+    service: StorageOrchestratorService,
+    seedInput: SeedDefaultsInput | null,
+  ): StorageCataloguePorts {
+    const locations = this.locationsKind
+    const secrets = this.ctx.secrets
+    if (locations === null || secrets === undefined) {
+      throw new Error(
+        'storage-orchestrator: the credential move needs the records and the keychain',
+      )
+    }
+    return {
+      reseed: () => (seedInput === null ? [] : service.reseedPrunedDefaults(seedInput)),
+      ...locationSecretPortsOver({
+        locations,
+        secrets,
+        refreshLocations: () => service.refreshConfigsFromStore(),
+      }),
+    }
+  }
+
+  private secretsMoveDone = false
+  private secretsMoveRunning = false
+
+  /**
+   * D987: move the credentials of every location from the per-row keychain refs into the
+   * location's own record. Runs once the persisted rows are loaded; a refusal (keychain locked,
+   * a value gone) leaves every row as it was and the next seed pass asks again.
+   */
+  private async moveLocationSecrets(): Promise<void> {
+    const service = this.service
+    if (!service || this.secretsMoveDone || this.secretsMoveRunning) return
+    if (!service.hasStore() || this.locationsKind === null || this.ctx.secrets === undefined) return
+    this.secretsMoveRunning = true
+    try {
+      await this.runMigrations(
+        defineAddonMigrations(ADDON_MIGRATIONS, this.cataloguePorts(service, null)),
+        { only: [LOCATION_SECRETS_TO_RECORD_ID] },
+      )
+      this.secretsMoveDone = true
+    } catch (err) {
+      this.ctx.logger.error(
+        'storage-orchestrator: the location credentials were NOT moved to their records; they stay where they were',
+        { meta: { error: err instanceof Error ? err.message : String(err) } },
+      )
+    } finally {
+      this.secretsMoveRunning = false
     }
   }
 
@@ -1686,7 +1896,10 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
     const providers = reg.getCollection<IStorageProviderImpl>(STORAGE_PROVIDER_CAP_NAME)
     const infos = await collectProviderInfos(providers, (_p, err, index) => {
       this.ctx.logger.warn('storage-orchestrator: getProviderInfo failed (nodeLocal cache)', {
-        meta: { providerIndex: index, error: err instanceof Error ? err.message : String(err) },
+        meta: {
+          providerIndex: index,
+          error: err instanceof Error ? err.message : String(err),
+        },
       })
     })
     for (const info of infos) {
@@ -1696,7 +1909,10 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
   }
 }
 
-function parseStarted(raw: unknown): { started: boolean; alreadyRunning: boolean } {
+function parseStarted(raw: unknown): {
+  started: boolean
+  alreadyRunning: boolean
+} {
   if (raw !== null && typeof raw === 'object') {
     const o = raw as Record<string, unknown>
     if (typeof o['started'] === 'boolean' && typeof o['alreadyRunning'] === 'boolean') {

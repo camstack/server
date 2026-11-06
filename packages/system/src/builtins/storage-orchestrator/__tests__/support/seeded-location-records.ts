@@ -3,8 +3,11 @@
  * locations a previous boot persisted. A row is given in the legacy column spelling
  * (`display_name`, `provider_id`, ...) the specs were written in and lands as a location body.
  */
-import { createRecordsAccess, type RecordsAccess } from '@camstack/types'
-import { makeRecordsWorld } from '../../../sqlite-storage/__tests__/support/records-world.js'
+import { createRecordsAccess, createSecretsAccess, type RecordsAccess } from '@camstack/types'
+import {
+  makeFakeKeychain,
+  makeRecordsWorld,
+} from '../../../sqlite-storage/__tests__/support/records-world.js'
 import { SqliteLocationStore } from '../../location-store.js'
 import { storageOrchestratorRecordKinds } from '../../record-kinds.js'
 
@@ -21,7 +24,10 @@ export async function seededLocationRecords(
   const records = createRecordsAccess({
     owner: 'storage-orchestrator',
     transport: world.transportFor('storage-orchestrator'),
-    secrets: null,
+    secrets: createSecretsAccess({
+      owner: 'storage-orchestrator',
+      transport: makeFakeKeychain(),
+    }),
   })
   await records.declare(storageOrchestratorRecordKinds)
   const kind = SqliteLocationStore.recordStoresOf(records)

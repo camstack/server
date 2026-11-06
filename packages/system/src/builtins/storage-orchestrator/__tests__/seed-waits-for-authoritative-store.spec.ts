@@ -13,19 +13,31 @@ import type {
   StorageLocation,
   StorageLocationDeclaration,
 } from '@camstack/types'
-import { createRecordsAccess } from '@camstack/types'
+import { createRecordsAccess, createSecretsAccess } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
-import { makeRecordsWorld } from '../../sqlite-storage/__tests__/support/records-world.js'
+import {
+  makeFakeKeychain,
+  makeRecordsWorld,
+} from '../../sqlite-storage/__tests__/support/records-world.js'
 import type { ILocationStore } from '../location-store.js'
 import { storageOrchestratorRecordKinds } from '../record-kinds.js'
 import { StorageOrchestratorAddon } from '../storage-orchestrator.addon.js'
 import { StorageOrchestratorService } from '../storage-orchestrator.service.js'
 
-const logger = { info: vi.fn(), warn: vi.fn(), debug: vi.fn(), error: vi.fn() } as never
+const logger = {
+  info: vi.fn(),
+  warn: vi.fn(),
+  debug: vi.fn(),
+  error: vi.fn(),
+} as never
 const DECLS = [{ id: 'recordings', displayName: 'R', cardinality: 'multi' }] as const
 
 function seed(svc: StorageOrchestratorService) {
-  svc.setRegistry({ cardinalityOf: () => 'multi', accessOf: () => 'local-path', list: () => [] })
+  svc.setRegistry({
+    cardinalityOf: () => 'multi',
+    accessOf: () => 'local-path',
+    list: () => [],
+  })
   return svc.seedDefaults({
     providerId: 'filesystem-storage',
     basePath: '/data',
@@ -106,7 +118,10 @@ describe('(a) the hub does not wire persistence or seed while the kind cannot be
     const records = createRecordsAccess({
       owner: 'storage-orchestrator',
       transport: world.transportFor('storage-orchestrator'),
-      secrets: null,
+      secrets: createSecretsAccess({
+        owner: 'storage-orchestrator',
+        transport: makeFakeKeychain(),
+      }),
     })
     const realDeclare = records.declare.bind(records)
     const declare = vi.spyOn(records, 'declare').mockImplementation(async (kinds) => {
@@ -144,7 +159,12 @@ describe('(a) the hub does not wire persistence or seed while the kind cannot be
     log.withTags.mockReturnValue(log)
     const listeners: Array<(e: { data: unknown }) => void> = []
     const decls: readonly StorageLocationDeclaration[] = [
-      { id: 'recordings', displayName: 'R', cardinality: 'multi', access: 'local-path' },
+      {
+        id: 'recordings',
+        displayName: 'R',
+        cardinality: 'multi',
+        access: 'local-path',
+      },
     ]
     const ctx = {
       logger: log as unknown as IScopedLogger,

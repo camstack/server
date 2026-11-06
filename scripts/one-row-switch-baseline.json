@@ -10,6 +10,7 @@
     "terminal-session.cap.ts:setInstanceEnabled": "terminal sessions serve their own typed cap (terminal-session), a sibling of integration-instances"
   },
   "setInstanceEnabledImplementations": {
+    "packages/system/src/builtins/storage-orchestrator/location-instances.ts": "a storage location keeps ONE typed state, mode, read only through storage-location-mode.ts (D385/D386); the row switch writes that state, never a second enabled field",
     "packages/addon-terminal/src/addon.ts": "the terminal-session provider of the row above",
     "packages/addon-terminal/src/terminal-session-manager.ts": "the terminal-session provider of the row above"
   },

@@ -303,7 +303,10 @@ export class StorageOrchestratorService {
     seeded.add(type)
     void store.markTypeSeeded(type).catch((err) => {
       this.logger.error('storage-orchestrator: persisting the seed memory failed', {
-        meta: { type, error: err instanceof Error ? err.message : String(err) },
+        meta: {
+          type,
+          error: err instanceof Error ? err.message : String(err),
+        },
       })
     })
   }
@@ -314,7 +317,10 @@ export class StorageOrchestratorService {
     if (seeded === null || !seeded.delete(type) || !store?.unmarkTypeSeeded) return
     void store.unmarkTypeSeeded(type).catch((err) => {
       this.logger.error('storage-orchestrator: forgetting the seed memory failed', {
-        meta: { type, error: err instanceof Error ? err.message : String(err) },
+        meta: {
+          type,
+          error: err instanceof Error ? err.message : String(err),
+        },
       })
     })
   }
@@ -469,7 +475,10 @@ export class StorageOrchestratorService {
     if (!store) return
     void store.upsert(withStamp).catch((err) => {
       this.logger.error('storage-orchestrator: state-model migration persist failed', {
-        meta: { id: withStamp.id, error: err instanceof Error ? err.message : String(err) },
+        meta: {
+          id: withStamp.id,
+          error: err instanceof Error ? err.message : String(err),
+        },
       })
     })
   }
@@ -715,7 +724,13 @@ export class StorageOrchestratorService {
     if (registry === null) {
       this.logger.debug(
         'storage-orchestrator: no location declarations loaded — access constraint not evaluated',
-        { meta: { id: input.id, type: input.type, providerId: input.providerId } },
+        {
+          meta: {
+            id: input.id,
+            type: input.type,
+            providerId: input.providerId,
+          },
+        },
       )
       return
     }
@@ -727,13 +742,25 @@ export class StorageOrchestratorService {
     if (nodeLocal === undefined) {
       this.logger.debug(
         'storage-orchestrator: provider not yet classified — allowing a local-path upsert',
-        { meta: { id: input.id, type: input.type, providerId: input.providerId, access } },
+        {
+          meta: {
+            id: input.id,
+            type: input.type,
+            providerId: input.providerId,
+            access,
+          },
+        },
       )
       return
     }
 
     this.logger.warn('storage-orchestrator: REFUSED a remote provider for a local-path kind', {
-      meta: { id: input.id, type: input.type, providerId: input.providerId, access },
+      meta: {
+        id: input.id,
+        type: input.type,
+        providerId: input.providerId,
+        access,
+      },
     })
     throw new Error(
       `Storage kind "${input.type}" is declared access "local-path": the service that owns it ` +
@@ -911,7 +938,10 @@ export class StorageOrchestratorService {
       return await probe(location)
     } catch (err) {
       this.logger.warn('storage-orchestrator: occupancy probe failed', {
-        meta: { id: location.id, error: err instanceof Error ? err.message : String(err) },
+        meta: {
+          id: location.id,
+          error: err instanceof Error ? err.message : String(err),
+        },
       })
       return 'unknown'
     }
@@ -988,12 +1018,19 @@ export class StorageOrchestratorService {
         const store = this.locationStore
         void store.delete(id).catch((err) => {
           this.logger.error('storage-orchestrator: prune persistence failed', {
-            meta: { id, error: err instanceof Error ? err.message : String(err) },
+            meta: {
+              id,
+              error: err instanceof Error ? err.message : String(err),
+            },
           })
         })
       }
       this.logger.info('storage-orchestrator: pruned stale seeded location', {
-        meta: { id, type: loc.type, reason: 'no-installed-package-declares-type' },
+        meta: {
+          id,
+          type: loc.type,
+          reason: 'no-installed-package-declares-type',
+        },
       })
     }
   }
@@ -1295,6 +1332,28 @@ export class StorageOrchestratorService {
       )
     }
     return deferredProvider ? { added, deferred: 'provider-unclassified' } : { added }
+  }
+
+  /**
+   * Re-read the `config` of every location the store holds and replace the in-memory one where it
+   * differs. The credential migration moves a location's secrets into its record, which changes
+   * the markers its config carries; the in-memory copy would otherwise keep pointing at keychain
+   * values the migration released. Only `config` is taken: the rest of a location is what this
+   * process already decided. Returns the ids refreshed.
+   */
+  async refreshConfigsFromStore(): Promise<readonly string[]> {
+    const store = this.locationStore
+    if (store === null) return []
+    const rows = await store.loadAll()
+    const refreshed: string[] = []
+    for (const row of rows) {
+      const live = this.locations.get(row.id)
+      if (live === undefined) continue
+      if (JSON.stringify(live.config) === JSON.stringify(row.config)) continue
+      this.locations.set(row.id, { ...live, config: row.config })
+      refreshed.push(row.id)
+    }
+    return refreshed
   }
 
   /**

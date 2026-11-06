@@ -8,13 +8,16 @@
  * produce "marker, zero rows" through the UI.
  */
 import type { StorageLocationDeclaration } from '@camstack/types'
-import { createRecordsAccess, defineAddonMigrations } from '@camstack/types'
+import { createRecordsAccess, createSecretsAccess, defineAddonMigrations } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
-import { makeRecordsWorld } from '../../../sqlite-storage/__tests__/support/records-world.js'
+import {
+  makeFakeKeychain,
+  makeRecordsWorld,
+} from '../../../sqlite-storage/__tests__/support/records-world.js'
 import { SqliteLocationStore } from '../../location-store.js'
 import { storageOrchestratorRecordKinds } from '../../record-kinds.js'
 import { StorageOrchestratorService } from '../../storage-orchestrator.service.js'
-import { ADDON_MIGRATIONS } from '../index.js'
+import { ADDON_MIGRATIONS, RESEED_PRUNED_DEFAULTS_MIGRATION } from '../index.js'
 
 const logger = { info: vi.fn(), warn: vi.fn(), debug: vi.fn(), error: vi.fn() }
 const RECORDINGS: StorageLocationDeclaration = {
@@ -43,7 +46,10 @@ async function boot(declared: readonly StorageLocationDeclaration[]) {
   const records = createRecordsAccess({
     owner: 'storage-orchestrator',
     transport: world.transportFor('storage-orchestrator'),
-    secrets: null,
+    secrets: createSecretsAccess({
+      owner: 'storage-orchestrator',
+      transport: makeFakeKeychain(),
+    }),
   })
   await records.declare(storageOrchestratorRecordKinds)
   const store = new SqliteLocationStore(
@@ -64,7 +70,7 @@ async function boot(declared: readonly StorageLocationDeclaration[]) {
     return svc
   }
   const run = (svc: StorageOrchestratorService) => {
-    const entry = ADDON_MIGRATIONS[0]
+    const entry = RESEED_PRUNED_DEFAULTS_MIGRATION
     if (entry === undefined || !('procedure' in entry)) throw new Error('procedure entry missing')
     return entry.procedure({ reseed: () => svc.reseedPrunedDefaults(input) })
   }
@@ -113,7 +119,10 @@ describe('reseed-pruned-defaults (real SQLite)', () => {
     svc.seedDefaults(input)
     await expect(svc.deleteLocation('recordings:default')).rejects.toThrow(/only location/)
     expect(() =>
-      svc.upsertLocation({ ...svc.getLocationById('recordings:default')!, enabled: false }),
+      svc.upsertLocation({
+        ...svc.getLocationById('recordings:default')!,
+        enabled: false,
+      }),
     ).toThrow(/last enabled location/)
     expect(svc.getLocationById('recordings:default')).toBeDefined()
   })
@@ -132,7 +141,9 @@ describe('reseed-pruned-defaults (real SQLite)', () => {
   })
 
   it('is offered through the ledger catalogue as tolerate', () => {
-    const bound = defineAddonMigrations(ADDON_MIGRATIONS, { reseed: () => [] })
+    const bound = defineAddonMigrations([RESEED_PRUNED_DEFAULTS_MIGRATION], {
+      reseed: () => [],
+    })
     expect(bound).toHaveLength(1)
     expect(ADDON_MIGRATIONS[0]!.meta.onFailure).toBe('tolerate')
   })

@@ -13,6 +13,8 @@ import type {
   RecordsAccess,
   StorageLocation,
 } from '@camstack/types'
+import { REDACTED_SECRET } from '@camstack/types'
+import { isOwnLocationMarker, locationSecretMarker } from './location-secret-refs.js'
 import { readAllRows } from '../../records/read-all-rows.js'
 import {
   storageOrchestratorRecordKinds,
@@ -68,6 +70,53 @@ export interface ILocationStore {
 export const STORAGE_LOCATIONS_SECRET_SCOPE = 'storage_locations'
 
 /**
+ * Credentials a save carries, by config key, until the store writes the row: a value sets the
+ * credential, `null` removes it. The service persists without waiting (`upsert` is fire and
+ * forget), so the plaintext cannot ride on the location itself; it is staged here, one shot per
+ * location id, and `SqliteLocationStore.upsert` hands it to the records door with the row.
+ */
+export class LocationSecretStaging {
+  private readonly staged = new Map<string, Readonly<Record<string, string | null>>>()
+  private readonly waiting = new Map<string, () => void>()
+  private readonly settledBy = new Map<string, Promise<void>>()
+
+  stage(id: string, secrets: Readonly<Record<string, string | null>>): void {
+    if (Object.keys(secrets).length === 0) return
+    this.staged.set(id, secrets)
+    this.settledBy.set(
+      id,
+      new Promise<void>((resolve) => {
+        this.waiting.set(id, resolve)
+      }),
+    )
+  }
+
+  /** The staged credentials of `id`, once; a save that was refused discards them instead. */
+  take(id: string): Readonly<Record<string, string | null>> {
+    const secrets = this.staged.get(id) ?? {}
+    this.staged.delete(id)
+    return secrets
+  }
+
+  /** The row of `id` is written (or the write failed): whoever waits for the credential may go on. */
+  written(id: string): void {
+    this.waiting.get(id)?.()
+    this.waiting.delete(id)
+    this.settledBy.delete(id)
+  }
+
+  discard(id: string): void {
+    this.staged.delete(id)
+    this.written(id)
+  }
+
+  /** Resolves when the staged credentials of `id` are written; at once when none are staged. */
+  settled(id: string): Promise<void> {
+    return this.settledBy.get(id) ?? Promise.resolve()
+  }
+}
+
+/**
  * `ILocationStore` on the storage-orchestrator's own record kinds (`locations`
  * and `seed-markers`).
  */
@@ -75,6 +124,7 @@ export class SqliteLocationStore implements ILocationStore {
   constructor(
     private readonly locationsKind: RecordKindHandle<StorageLocationBody>,
     private readonly seedMarkersKind: RecordKindHandle<StorageSeedMarkerBody>,
+    readonly staging: LocationSecretStaging = new LocationSecretStaging(),
   ) {}
 
   static seedMarkersOf(
@@ -88,7 +138,10 @@ export class SqliteLocationStore implements ILocationStore {
   }
 
   async markTypeSeeded(type: string): Promise<void> {
-    await this.seedMarkersKind.put({ id: type, data: { seededAt: Date.now() } })
+    await this.seedMarkersKind.put({
+      id: type,
+      data: { seededAt: Date.now() },
+    })
   }
 
   async unmarkTypeSeeded(type: string): Promise<void> {
@@ -113,8 +166,16 @@ export class SqliteLocationStore implements ILocationStore {
   }
 
   async upsert(loc: StorageLocation): Promise<void> {
-    const data = storageOrchestratorRecordKinds.locations.schema.parse(locationToBody(loc))
-    await this.locationsKind.put({ id: loc.id, data })
+    // Taken before the first await: the save that staged it is the one that persists it.
+    const staged = this.staging.take(loc.id)
+    try {
+      const data = storageOrchestratorRecordKinds.locations.schema.parse(
+        locationToBody(loc, staged),
+      )
+      await this.locationsKind.put({ id: loc.id, data })
+    } finally {
+      this.staging.written(loc.id)
+    }
   }
 
   async delete(id: string): Promise<void> {
@@ -122,12 +183,32 @@ export class SqliteLocationStore implements ILocationStore {
   }
 }
 
-export function locationToBody(loc: StorageLocation): StorageLocationBody {
+/**
+ * The body a location is stored as. A credential the location keeps in its own record (the marker
+ * of `location-secret-refs.ts`) leaves `config` for `secrets`, where the records door keeps the
+ * value and the redaction token means "keep what is stored"; `staged` sets or removes one. Any
+ * other marker (a legacy ref the migration has not moved yet) stays in `config` untouched.
+ */
+export function locationToBody(
+  loc: StorageLocation,
+  staged: Readonly<Record<string, string | null>> = {},
+): StorageLocationBody {
+  const config: Record<string, unknown> = {}
+  const secrets: Record<string, string> = {}
+  for (const [key, value] of Object.entries(loc.config)) {
+    if (isOwnLocationMarker(loc.id, key, value)) secrets[key] = REDACTED_SECRET
+    else config[key] = value
+  }
+  for (const [key, value] of Object.entries(staged)) {
+    if (value === null) delete secrets[key]
+    else secrets[key] = value
+  }
   return {
     type: loc.type,
     displayName: loc.displayName,
     providerId: loc.providerId,
-    config: { ...loc.config },
+    config,
+    ...(Object.keys(secrets).length > 0 ? { secrets } : {}),
     isSystem: loc.isSystem,
     createdAt: loc.createdAt,
     updatedAt: loc.updatedAt,
@@ -148,11 +229,18 @@ export function bodyToPersistedLocation(
     type: parsedType.data,
     displayName: body.displayName,
     providerId: body.providerId,
-    config: { ...body.config },
+    config: {
+      ...body.config,
+      ...Object.fromEntries(
+        Object.keys(body.secrets ?? {}).map((key) => [key, locationSecretMarker(id, key)]),
+      ),
+    },
     ...(body.nodeId !== undefined ? { nodeId: body.nodeId } : {}),
     ...(body.enabled !== undefined ? { enabled: body.enabled } : {}),
     ...(body.mode !== undefined ? { mode: body.mode } : {}),
-    ...LegacyStorageLocationDefaultSchema.parse({ isDefault: body.isDefault ?? false }),
+    ...LegacyStorageLocationDefaultSchema.parse({
+      isDefault: body.isDefault ?? false,
+    }),
     isSystem: body.isSystem,
     createdAt: body.createdAt,
     updatedAt: body.updatedAt,

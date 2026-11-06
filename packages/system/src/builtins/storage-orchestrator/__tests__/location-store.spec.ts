@@ -4,9 +4,12 @@
  * `config` comes back without any reserved key.
  */
 
-import { createRecordsAccess, type StorageLocation } from '@camstack/types'
+import { createRecordsAccess, createSecretsAccess, type StorageLocation } from '@camstack/types'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { makeRecordsWorld } from '../../sqlite-storage/__tests__/support/records-world.js'
+import {
+  makeFakeKeychain,
+  makeRecordsWorld,
+} from '../../sqlite-storage/__tests__/support/records-world.js'
 import { SqliteLocationStore } from '../location-store.js'
 import { storageOrchestratorRecordKinds } from '../record-kinds.js'
 
@@ -40,7 +43,10 @@ describe('SqliteLocationStore on the locations record kind', () => {
     const records = createRecordsAccess({
       owner: 'storage-orchestrator',
       transport: world.transportFor('storage-orchestrator'),
-      secrets: null,
+      secrets: createSecretsAccess({
+        owner: 'storage-orchestrator',
+        transport: makeFakeKeychain(),
+      }),
     })
     await records.declare(storageOrchestratorRecordKinds)
     store = new SqliteLocationStore(
@@ -97,7 +103,11 @@ describe('SqliteLocationStore on the locations record kind', () => {
 
   it('preserves the remaining fields through the round trip', async () => {
     await store.upsert({
-      ...makeLocation({ id: 'logs:default', type: 'logs', providerId: 'filesystem-storage' }),
+      ...makeLocation({
+        id: 'logs:default',
+        type: 'logs',
+        providerId: 'filesystem-storage',
+      }),
       displayName: 'Logs',
       isSystem: true,
     })
@@ -111,7 +121,11 @@ describe('SqliteLocationStore on the locations record kind', () => {
 
   it('delete removes the row', async () => {
     await store.upsert(
-      makeLocation({ id: 'logs:default', type: 'logs', providerId: 'filesystem-storage' }),
+      makeLocation({
+        id: 'logs:default',
+        type: 'logs',
+        providerId: 'filesystem-storage',
+      }),
     )
     expect((await store.loadAll()).length).toBe(1)
     await store.delete('logs:default')
@@ -120,11 +134,19 @@ describe('SqliteLocationStore on the locations record kind', () => {
 
   it('round-trips enabled:false and enabled:true', async () => {
     await store.upsert({
-      ...makeLocation({ id: 'recordings:nas', type: 'recordings', providerId: 'fs' }),
+      ...makeLocation({
+        id: 'recordings:nas',
+        type: 'recordings',
+        providerId: 'fs',
+      }),
       enabled: false,
     })
     await store.upsert({
-      ...makeLocation({ id: 'recordings:ssd', type: 'recordings', providerId: 'fs' }),
+      ...makeLocation({
+        id: 'recordings:ssd',
+        type: 'recordings',
+        providerId: 'fs',
+      }),
       enabled: true,
     })
     const byId = new Map((await store.loadAll()).map((l) => [l.id, l]))
@@ -134,7 +156,11 @@ describe('SqliteLocationStore on the locations record kind', () => {
 
   it('round-trips the typed mode', async () => {
     await store.upsert({
-      ...makeLocation({ id: 'recordings:old', type: 'recordings', providerId: 'fs' }),
+      ...makeLocation({
+        id: 'recordings:old',
+        type: 'recordings',
+        providerId: 'fs',
+      }),
       mode: 'drain',
     })
     const [read] = await store.loadAll()
@@ -143,7 +169,11 @@ describe('SqliteLocationStore on the locations record kind', () => {
 
   it('a row persisted WITHOUT the flag reads back with enabled undefined - absent means active', async () => {
     await store.upsert(
-      makeLocation({ id: 'recordings:legacy', type: 'recordings', providerId: 'fs' }),
+      makeLocation({
+        id: 'recordings:legacy',
+        type: 'recordings',
+        providerId: 'fs',
+      }),
     )
     const [read] = await store.loadAll()
     expect(read?.enabled).toBeUndefined()

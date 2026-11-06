@@ -101,7 +101,7 @@ this column exists to stop.
 | `snapshot` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `snapshot` |
 | `sqlite-settings` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `data-store-provider` `database-snapshot` `migrations` `records` `storage-admin` `vector-store` |
 | `static-turn` | `@camstack/addon-static-turn` | networking | own runner | `hub-only` | `net-access` | — | `integration-instances` `turn-provider` |
-| `storage-orchestrator` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `settings-store` `storage` `storage-migration` |
+| `storage-orchestrator` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `integration-instances` `settings-store` `storage` `storage-migration` |
 | `stream-broker` | `@camstack/addon-pipeline` | pipeline | own runner | `any-node` | — | — | `addon-widgets-source` `camera-streams` `device-removal-hook` `load-contribution` `log-channels` `stream-broker` `webrtc-session` |
 | `system-config` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | — |
 | `tailscale-client` | `@camstack/addon-tailscale` | networking | own runner | `hub-only` | `net-access` | — | `integration-instances` `mesh-network` `network-access` |
