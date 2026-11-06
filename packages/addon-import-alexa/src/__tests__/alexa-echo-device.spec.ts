@@ -466,6 +466,107 @@ describe('AlexaEchoDevice', () => {
       await device.removeDevice()
     })
 
+    it('overlapping sets: the earlier one refused never writes over the later one', async () => {
+      const s = session()
+      alexaEchoSessions.setResolver(() => s)
+      const { device, providers } = await build()
+      const player = providers.get('media-player') as Player
+      const a = deferred()
+      const b = deferred()
+      s.setVolume.mockReturnValueOnce(a.promise).mockReturnValueOnce(b.promise)
+      const first = player.setVolume({ deviceId: 7, volumeLevel: 50 })
+      first.catch(() => undefined)
+      const second = player.setVolume({ deviceId: 7, volumeLevel: 60 })
+      await vi.advanceTimersByTimeAsync(0)
+      a.reject(new Error('refused'))
+      await expect(first).rejects.toThrow('refused')
+      expect(slice(device, 'media-player')).toMatchObject({ volumeLevel: 60 })
+      b.resolve()
+      await second
+      expect(slice(device, 'media-player')).toMatchObject({ volumeLevel: 60 })
+      await device.removeDevice()
+    })
+
+    it('overlapping sets: the later one refused goes back to the level Amazon took, not to one it did not', async () => {
+      const s = session()
+      alexaEchoSessions.setResolver(() => s)
+      const { device, providers } = await build()
+      const player = providers.get('media-player') as Player
+      const a = deferred()
+      const b = deferred()
+      s.setVolume.mockReturnValueOnce(a.promise).mockReturnValueOnce(b.promise)
+      const first = player.setVolume({ deviceId: 7, volumeLevel: 50 })
+      const second = player.setVolume({ deviceId: 7, volumeLevel: 60 })
+      second.catch(() => undefined)
+      await vi.advanceTimersByTimeAsync(0)
+      // The first set is accepted, the second refused: 50 is what Amazon has.
+      a.resolve()
+      await first
+      b.reject(new Error('refused'))
+      await expect(second).rejects.toThrow('refused')
+      expect(slice(device, 'media-player')).toMatchObject({ volumeLevel: 50 })
+      await device.removeDevice()
+    })
+
+    it('overlapping sets both refused: back to the level of the last read, never an untaken 50', async () => {
+      const s = session()
+      alexaEchoSessions.setResolver(() => s)
+      const { device, providers } = await build()
+      const player = providers.get('media-player') as Player
+      const a = deferred()
+      const b = deferred()
+      s.setVolume.mockReturnValueOnce(a.promise).mockReturnValueOnce(b.promise)
+      const first = player.setVolume({ deviceId: 7, volumeLevel: 50 })
+      first.catch(() => undefined)
+      const second = player.setVolume({ deviceId: 7, volumeLevel: 60 })
+      second.catch(() => undefined)
+      await vi.advanceTimersByTimeAsync(0)
+      a.reject(new Error('refused'))
+      await first.catch(() => undefined)
+      b.reject(new Error('refused'))
+      await second.catch(() => undefined)
+      expect(slice(device, 'media-player')).toMatchObject({ volumeLevel: 40 })
+      await device.removeDevice()
+    })
+
+    it('a cold slice gets no invented state, before or after a refused set', async () => {
+      const s = session({ state: 'connecting' as never })
+      alexaEchoSessions.setResolver(() => s)
+      const { device, providers } = await build()
+      const player = providers.get('media-player') as Player
+      expect(slice(device, 'media-player')).toMatchObject({ state: 'off', volumeLevel: null })
+      s.setVolume.mockRejectedValue(new Error('refused'))
+      await expect(player.setVolume({ deviceId: 7, volumeLevel: 30 })).rejects.toThrow('refused')
+      expect(slice(device, 'media-player')).toMatchObject({ state: 'off', volumeLevel: null })
+      // With no slice at all, nothing is written for the cap: no state is made up.
+      const written = vi.spyOn(device.runtimeState, 'setCapState')
+      vi.spyOn(device.runtimeState, 'getCapState').mockReturnValue(undefined)
+      await expect(player.setVolume({ deviceId: 7, volumeLevel: 30 })).rejects.toThrow('refused')
+      expect(written.mock.calls.filter(([cap]) => cap === 'media-player')).toHaveLength(0)
+      await device.removeDevice()
+    })
+
+    it('overlapping Do Not Disturb sets follow the same rules', async () => {
+      const s = session()
+      alexaEchoSessions.setResolver(() => s)
+      const { device, providers } = await build()
+      const dnd = providers.get('do-not-disturb') as Dnd
+      const a = deferred()
+      const b = deferred()
+      s.setDnd.mockReturnValueOnce(a.promise).mockReturnValueOnce(b.promise)
+      const first = dnd.setEnabled({ deviceId: 7, enabled: true })
+      first.catch(() => undefined)
+      const second = dnd.setEnabled({ deviceId: 7, enabled: false })
+      await vi.advanceTimersByTimeAsync(0)
+      a.reject(new Error('refused'))
+      await first.catch(() => undefined)
+      expect(slice(device, 'do-not-disturb')).toMatchObject({ enabled: false })
+      b.resolve()
+      await second
+      expect(slice(device, 'do-not-disturb')).toMatchObject({ enabled: false })
+      await device.removeDevice()
+    })
+
     it('Do Not Disturb flips in the slice before Amazon answers and reverts on failure', async () => {
       const s = session()
       alexaEchoSessions.setResolver(() => s)

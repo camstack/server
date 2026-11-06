@@ -189,10 +189,30 @@ export const PlayerInfoSchema = z.object({
 })
 export type PlayerInfo = z.infer<typeof PlayerInfoSchema>
 
+/** The playback states Amazon is known to send. */
+const KNOWN_PLAYER_STATES: ReadonlySet<string> = new Set(['PLAYING', 'PAUSED', 'BUFFERING', 'IDLE'])
+
+/**
+ * A lenient read must not turn garbage into a healthy idle player: when Amazon sent a
+ * state we do not recognise (or of the wrong type) and not one block survived, the read
+ * is a failure, exactly as before the leniency. A body that says nothing (`{}`, null
+ * state) stays an idle player.
+ */
 export function parsePlayerState(result: unknown): PlayerInfo {
   const parsed = z.object({ playerInfo: PlayerInfoSchema.nullish() }).safeParse(result)
   if (!parsed.success) throw new Error('worker returned an unexpected player state')
-  return parsed.data.playerInfo ?? {}
+  const info = parsed.data.playerInfo ?? {}
+  const raw = z.object({ playerInfo: z.object({ state: z.unknown() }).nullish() }).safeParse(result)
+  const rawState = raw.success ? raw.data.playerInfo?.state : undefined
+  const saidSomething = rawState !== undefined && rawState !== null
+  const knownState = typeof info.state === 'string' && KNOWN_PLAYER_STATES.has(info.state)
+  const noBlock = [info.volume, info.infoText, info.mainArt, info.progress, info.provider, info.transport].every(
+    (block) => block === null || block === undefined,
+  )
+  if (saidSomething && !knownState && noBlock) {
+    throw new Error('worker returned an unreadable player state')
+  }
+  return info
 }
 
 export const DndEntrySchema = z.object({

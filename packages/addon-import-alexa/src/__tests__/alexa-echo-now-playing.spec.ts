@@ -99,6 +99,24 @@ const artOnly = {
 }
 
 describe('now playing from a real Echo body', () => {
+  it('artwork with no text and no provider name is no media, not an empty title', () => {
+    expect(
+      slice({ playerInfo: { mainArt: { url: 'https://example.com/c.jpg' }, state: 'PLAYING' } })
+        .currentMedia,
+    ).toBeNull()
+  })
+
+  it('an unrecognised or wrong-typed state with nothing else is an unreadable read, not an idle player', () => {
+    expect(() => parsePlayerState({ playerInfo: { state: 7 } })).toThrow()
+    expect(() => parsePlayerState({ playerInfo: { state: 'WEIRD' } })).toThrow()
+    expect(parsePlayerState({ playerInfo: {} })).toEqual({})
+    expect(parsePlayerState({ playerInfo: { state: 'IDLE' } }).state).toBe('IDLE')
+    expect(parsePlayerState({ playerInfo: { state: 'WEIRD', volume: { volume: 3 } } }).state).toBe(
+      'WEIRD',
+    )
+  })
+
+
   it('Amazon Music: title, artist, album, artwork, source, position and its read time', () => {
     expect(slice(amazonMusic)).toMatchObject({
       state: 'playing',

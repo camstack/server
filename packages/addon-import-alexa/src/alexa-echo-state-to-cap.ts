@@ -82,16 +82,17 @@ function sourceOf(info: PlayerInfo): string {
 /**
  * What is playing. Amazon puts the title in `infoText.title`, but a radio station
  * often names itself only in the first sub text, and some players send artwork and
- * a provider with no text at all: each still counts as now playing. Nothing at all
- * (no text, no artwork) is null.
+ * a provider with no text at all: each still counts as now playing. Nothing to
+ * title it by (no text, and artwork with no provider name) is null.
  */
 function currentMediaOf(info: PlayerInfo): MediaPlayerStatus['currentMedia'] {
   const first = nonEmpty(info.infoText?.title)
   const second = nonEmpty(info.infoText?.subText1)
   const imageUrl = nonEmpty(info.mainArt?.url)
   const album = nonEmpty(info.infoText?.subText2)
-  const title = first ?? second ?? (imageUrl !== null ? sourceOf(info) : '')
-  if (first === null && second === null && imageUrl === null) return null
+  const title = first ?? second ?? (imageUrl !== null ? nonEmpty(sourceOf(info)) : null)
+  // Artwork with nothing to call it by cannot be titled: no media rather than an empty title.
+  if (title === null) return null
   // With a real title the first sub text is the artist; promoted to the title it is not repeated.
   const artist = first !== null ? second : null
   return {

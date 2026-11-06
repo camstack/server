@@ -67,6 +67,12 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
   /** When this device last wrote its volume / Do Not Disturb optimistically; a read that began earlier must not overwrite it. */
   private volumeSetAt = 0
   private dndSetAt = 0
+  /** Counts this device's sets; a refused set reverts only while it is still the latest. */
+  private volumeSeq = 0
+  private dndSeq = 0
+  /** The level Amazon last took (a good set, or a read newer than every set); undefined until one is known. */
+  private volumeSettled: number | null | undefined = undefined
+  private dndSettled: boolean | null | undefined = undefined
 
   constructor(ctx: DeviceContext) {
     const persisted = alexaEchoDeviceSchema.parse(ctx.persistedConfig ?? {})
@@ -152,7 +158,9 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
       const now = Date.now()
       const fromPlayer = mapPlayerInfoToStatus(info, { online: true, now })
       const read = await this.completeVolume(fromPlayer)
-      this.runtimeState.setCapState('media-player', this.keepNewerVolume(read, readStartedAt))
+      const kept = this.keepNewerVolume(read, readStartedAt)
+      if (kept === read) this.volumeSettled = read.volumeLevel
+      this.runtimeState.setCapState('media-player', kept)
       this.markOnline(true)
       this.noteRecovered()
     } catch (err: unknown) {
@@ -207,6 +215,7 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
       const enabled = all.get(this.serial)
       if (enabled === undefined) return
       if (this.dndSetAt >= readStartedAt) return
+      this.dndSettled = enabled
       this.runtimeState.setCapState('do-not-disturb', {
         enabled,
         lastChangedAt: Date.now(),
@@ -249,35 +258,48 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
   }
 
   /**
-   * The slice shows the new level at once; Amazon is told next. A refusal puts the
-   * previous level back (new stamp), says so, and rethrows (RateLimitedError included).
+   * The slice shows the new level at once; Amazon is told next. On a refusal the
+   * slice goes back to the level Amazon last took (a good set, else the last read,
+   * else what the slice held), with a new stamp, and the error is rethrown
+   * (RateLimitedError included) after a warning. Only the LATEST set reverts: when
+   * a newer set has superseded this one, that set owns the slice, so an earlier
+   * refusal never writes over it, and a later refusal falls back to what Amazon
+   * actually took, never to a level it did not. A cold slice (no read yet) gets no
+   * optimistic write, so no state is invented.
    */
   private async sendVolume(level: number): Promise<void> {
-    const previous =
-      this.runtimeState.getCapState<MediaPlayerStatus>('media-player') ?? emptyEchoStatus('idle', 0)
+    const previous = this.runtimeState.getCapState<MediaPlayerStatus>('media-player')
     const setAt = Date.now()
+    const seq = ++this.volumeSeq
     this.volumeSetAt = setAt
-    this.runtimeState.setCapState('media-player', {
-      ...previous,
-      volumeLevel: level,
-      lastChangedAt: setAt,
-    })
+    if (previous !== undefined) {
+      this.runtimeState.setCapState('media-player', {
+        ...previous,
+        volumeLevel: level,
+        lastChangedAt: setAt,
+      })
+    }
     alexaEchoSessions.invalidateVolumes(this.brokerId)
     try {
       await this.session().setVolume(this.serial, level, this.id)
+      this.volumeSettled = level
     } catch (err: unknown) {
-      const current =
-        this.runtimeState.getCapState<MediaPlayerStatus>('media-player') ?? previous
-      this.runtimeState.setCapState('media-player', {
-        ...current,
-        volumeLevel: previous.volumeLevel,
-        lastChangedAt: Date.now(),
-      })
+      const back =
+        this.volumeSettled !== undefined ? this.volumeSettled : (previous?.volumeLevel ?? null)
+      const current = this.runtimeState.getCapState<MediaPlayerStatus>('media-player')
+      if (seq === this.volumeSeq && current !== undefined) {
+        this.runtimeState.setCapState('media-player', {
+          ...current,
+          volumeLevel: back,
+          lastChangedAt: Date.now(),
+        })
+      }
       this.ctx.logger.warn('alexa echo: Amazon refused the volume, back to the previous level', {
         tags: { deviceId: this.id },
         meta: {
-          from: previous.volumeLevel,
+          from: back,
           to: level,
+          superseded: seq !== this.volumeSeq,
           error: err instanceof Error ? err.message : String(err),
         },
       })
@@ -326,26 +348,32 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
     this.ctx.registerNativeCap(mediaPlayerCapability, provider)
   }
 
-  /** Optimistic like the volume: the slice flips at once, a refusal flips it back and rethrows. */
+  /** Optimistic like the volume, with the same rules: only the latest refused set reverts, to what Amazon last took. */
   private async sendDnd(enabled: boolean): Promise<void> {
     const previous =
       this.runtimeState.getCapState<DoNotDisturbStatus>('do-not-disturb') ?? COLD_DND
     const setAt = Date.now()
+    const seq = ++this.dndSeq
     this.dndSetAt = setAt
     this.runtimeState.setCapState('do-not-disturb', { enabled, lastChangedAt: setAt })
     alexaEchoSessions.invalidateDnd(this.brokerId)
     try {
       await this.session().setDnd(this.serial, enabled, this.id)
+      this.dndSettled = enabled
     } catch (err: unknown) {
-      this.runtimeState.setCapState('do-not-disturb', {
-        enabled: previous.enabled,
-        lastChangedAt: Date.now(),
-      })
+      const back = this.dndSettled !== undefined ? this.dndSettled : previous.enabled
+      if (seq === this.dndSeq) {
+        this.runtimeState.setCapState('do-not-disturb', {
+          enabled: back,
+          lastChangedAt: Date.now(),
+        })
+      }
       this.ctx.logger.warn('alexa echo: Amazon refused Do Not Disturb, back to the previous state', {
         tags: { deviceId: this.id },
         meta: {
-          from: previous.enabled,
+          from: back,
           to: enabled,
+          superseded: seq !== this.dndSeq,
           error: err instanceof Error ? err.message : String(err),
         },
       })
