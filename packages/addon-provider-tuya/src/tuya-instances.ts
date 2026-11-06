@@ -6,6 +6,9 @@
 import {
   defineEntryKind,
   entryBody,
+  type IConnectionTestProvider,
+  type IntegrationTestConnectionResult,
+  REDACTED_SECRET,
   type RecordsAccess,
   RecordIntegrationInstances,
 } from '@camstack/types'
@@ -34,20 +37,46 @@ export const tuyaRecordKinds = { connections: tuyaConnectionsEntryKind } as cons
 
 export function buildTuyaInstances(
   records: Pick<RecordsAccess, 'kind' | 'owner'>,
-  deps: { readonly onChanged: () => Promise<void> },
+  deps: {
+    readonly onChanged: () => Promise<void>
+    readonly tester: Pick<IConnectionTestProvider, 'testSettings'>
+  },
 ): RecordIntegrationInstances<TuyaConnectionBody> {
+  const handle = records.kind(tuyaConnectionsEntryKind)
   return new RecordIntegrationInstances<TuyaConnectionBody>(records, tuyaConnectionsEntryKind, {
     description: {
       role: 'devices',
       discovery: { mode: 'account', scopedToInstance: true },
       instanceMode: 'multiple',
       kind: 'account',
-      canTest: false,
+      canTest: true,
     },
     formSchema: () => buildConnectionFormSchema(),
     initialBody: (name): TuyaConnectionBody => ({ name }),
     configured: (body) => (body.accessId ?? '').length > 0 && body.accessSecret !== undefined,
     onChanged: () => deps.onChanged(),
+    test: async ({ id, values }): Promise<IntegrationTestConnectionResult> => {
+      // The stored project under the edited form; a saved secret is never retyped, the form
+      // hands back its redacted view, so the keychain value stands in.
+      const stored = id === null ? null : ((await handle.getResolved(id))?.data ?? null)
+      const typed = values['accessSecret']
+      const accessSecret =
+        typeof typed === 'string' && typed !== '' && typed !== REDACTED_SECRET
+          ? typed
+          : (stored?.accessSecret ?? '')
+      const outcome = await deps.tester.testSettings({
+        settings: { ...stored, ...values, accessSecret },
+      })
+      if (outcome.outcome === 'validated') {
+        return {
+          success: true,
+          status: 'validated',
+          ...(outcome.latencyMs !== undefined ? { latencyMs: outcome.latencyMs } : {}),
+          ...(outcome.detail !== undefined ? { detail: outcome.detail } : {}),
+        }
+      }
+      return { success: false, status: outcome.outcome, error: outcome.error }
+    },
   })
 }
 

@@ -94,7 +94,10 @@ export class TuyaProviderAddon extends BaseDeviceProvider {
       ],
       (api) => integrationRowsPortsOver({ ...rowsDepsOver(api), kind: tuyaConnectionsEntryKind }),
     )
-    this.instances = buildTuyaInstances(records, { onChanged: () => this.reconcileIntegrations() })
+    this.instances = buildTuyaInstances(records, {
+      onChanged: () => this.reconcileIntegrations(),
+      tester: this.buildConnectionTestProvider(),
+    })
 
     this.clients = new TuyaClientRegistry(this.ctx.logger, tuyaConnections)
     this.clients.setOnConnected((integrationId) => {
