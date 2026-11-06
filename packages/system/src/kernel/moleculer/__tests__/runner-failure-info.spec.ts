@@ -23,6 +23,11 @@ describe('runner failure info', () => {
     expect(cause?.text).toBe('fetch failed')
   })
 
+  it('a credential in the stderr cause is redacted before it travels', () => {
+    const cause = lastCauseAfterChunk(undefined, 'Error: spawn failed --token abc123secret\n')
+    expect(cause?.text).not.toContain('abc123secret')
+  })
+
   it('without an Init failed line the last stderr line is the cause', () => {
     expect(
       lastCauseAfterChunk({ text: 'old', fromInit: false }, 'a\nTypeError: boom\n')?.text,

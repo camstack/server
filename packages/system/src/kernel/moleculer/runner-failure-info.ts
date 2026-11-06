@@ -7,6 +7,7 @@
  */
 import * as fs from 'node:fs'
 import * as path from 'node:path'
+import { redactLogText } from '../../logging/log-redactor.js'
 
 /** Opening words of the breaker's own `addon.crashed` text. It describes the breaker, never the cause. */
 export const CRASH_BREAKER_ERROR_PREFIX = 'Crash circuit-breaker tripped'
@@ -38,7 +39,9 @@ export function lastCauseAfterChunk(
     const text = causeOfStderrLine(line)
     if (text === undefined) continue
     const fromInit = INIT_FAILED.test(line.trim())
-    if (fromInit || cause === undefined || !cause.fromInit) cause = { text, fromInit }
+    // The cause travels into alerts and notifications: never a credential.
+    if (fromInit || cause === undefined || !cause.fromInit)
+      cause = { text: redactLogText(text), fromInit }
   }
   return cause
 }
