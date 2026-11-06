@@ -372,6 +372,14 @@ export type {
   AddonHealthSnapshot,
   AddonHealthMonitorOptions,
 } from './addon-health-monitor.js'
+export {
+  UnsupportedAddonTracker,
+  UNSUPPORTED_ADDON_SETTLE_MS,
+} from './unsupported-addon-tracker.js'
+export type {
+  UnsupportedAddonFacts,
+  UnsupportedAddonTrackerOptions,
+} from './unsupported-addon-tracker.js'
 export type { HubServiceDeps } from './moleculer/hub-service.js'
 export {
   createBrokerDeviceManagerApi,

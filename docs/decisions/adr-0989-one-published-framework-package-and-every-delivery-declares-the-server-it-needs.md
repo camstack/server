@@ -45,6 +45,9 @@ server version has a declaring delivery HELD, not sent.
 One version scale for the framework. A held update is visible, never silent. The
 agent roster path is not requirement-gated. Wrapper minimums start permissive.
 
+The spawn-time hold-back built on these requirements was replaced by a running
+addon plus an operator alert ([D1017](adr-1017-an-addon-below-the-servers-minimum-runs-and-the-operator-is-alerted.md)).
+
 ## Enforcement
 
 `check-no-system-package.ts` (no published system package, no old import),

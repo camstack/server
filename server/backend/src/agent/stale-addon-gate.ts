@@ -1,25 +1,25 @@
 /**
- * The boot gate for an addon whose package is stale (#346).
+ * The support judgement for an addon whose package may be stale (#346, D989).
  *
- * After `applyServerUpdate` an agent restarts with the addons already on disk.
- * An addon built for the previous framework imports a package the new server no
- * longer carries and crash-loops until the hub's reconcile (D982) replaces it,
- * which can trip the D6 breaker long before the new bytes arrive. The gate
- * decides, from facts both packages declare (D989), that an addon cannot run on
- * this server yet and leaves it unspawned: the hub's registration reconcile
- * delivers the right version, and the deploy's reload spawns it then.
+ * After `applyServerUpdate` a node restarts with the addons already on disk. An
+ * addon built for the previous framework may be BELOW what the new server
+ * requires. It is still started - a held-back addon is invisible and loses its
+ * function silently, and the `CrashSupervisor` (D6) bounds a crash loop - but
+ * the operator is told: `judgeSupport` produces the facts of the alert (addon,
+ * installed version, required minimum, server version) and the caller hands them
+ * to the `UnsupportedAddonTracker`. The reconcile (D982) still moves the package
+ * toward the required version.
  *
- * Stale means either:
+ * Unsupported means either:
  *   - the RUNNING server requires a newer version of this addon's package
  *     (`requires.addons` of the server), or
  *   - the addon's own `requires.server` is above the running server.
  *
- * A fact that cannot be read is UNKNOWN, never a pass. A package whose own
+ * A fact that cannot be read is UNKNOWN: no alert, the addon runs, and it is
+ * reported in `unjudged` so the caller logs it. That covers a package whose own
  * `requires` cannot be read (missing, malformed or schema-invalid package.json)
- * is deferred with the reason. A running server version that cannot be read
- * leaves the addon's own `requires.server` unjudged: it is spawned (every addon
- * held would leave the node empty) but reported in `unjudged`, so the caller
- * logs it. The addon-minimum check does not need the version and still runs.
+ * and a running server version that cannot be read (the addon's own
+ * `requires.server` is then unjudged; the addon-minimum check still runs).
  */
 import * as fs from 'node:fs'
 import * as path from 'node:path'
@@ -30,6 +30,7 @@ import {
   type PackageRequires,
   type UnmetRequirement,
 } from '@camstack/types'
+import type { UnsupportedAddonFacts, UnsupportedAddonTracker } from '@camstack/server/system'
 import type { GroupCandidate } from './agent-group-runner.js'
 
 /** What the gate needs to know about the node. */
@@ -55,26 +56,25 @@ export function isUnreadableRequires(
   return value !== undefined && 'unreadable' in value
 }
 
-export interface DeferredCandidate {
+export interface UnsupportedCandidate {
   readonly candidate: GroupCandidate
   readonly unmet: readonly UnmetRequirement[]
   /** One line naming the addon and both versions of every unmet requirement. */
   readonly reason: string
 }
 
-export interface StaleGateResult {
-  readonly ready: readonly GroupCandidate[]
-  readonly deferred: readonly DeferredCandidate[]
-  /** Addons spawned although a fact needed to judge them was unknown; one line each. */
+export interface SupportJudgement {
+  /** Candidates below their minimum: they run, and the operator is alerted. */
+  readonly unsupported: readonly UnsupportedCandidate[]
+  /** Candidates run although a fact needed to judge them was unknown; one line each. */
   readonly unjudged: readonly string[]
 }
 
-export function gateStaleCandidates(
+export function judgeSupport(
   candidates: readonly GroupCandidate[],
   context: StaleGateContext,
-): StaleGateResult {
-  const ready: GroupCandidate[] = []
-  const deferred: DeferredCandidate[] = []
+): SupportJudgement {
+  const unsupported: UnsupportedCandidate[] = []
   const unjudged: string[] = []
   for (const candidate of candidates) {
     const minimum = context.serverRequiresAddons[candidate.packageName]
@@ -85,17 +85,15 @@ export function gateStaleCandidates(
     const read = context.requiresOfDir(candidate.addonDir)
     const label = `addon "${candidate.addonId}" (${candidate.packageName}@${candidate.packageVersion})`
     if (isUnreadableRequires(read)) {
-      deferred.push({
-        candidate,
-        unmet: fromServer,
-        reason: `${label} deferred: its package requirements could not be read (${read.unreadable})`,
-      })
+      unjudged.push(
+        `${label} runs unjudged: its package requirements could not be read (${read.unreadable})`,
+      )
       continue
     }
     const own = read
     if (context.serverVersion === null && own?.server !== undefined) {
       unjudged.push(
-        `${label} spawned unjudged: it requires server ${own.server} and the running server version is unknown`,
+        `${label} runs unjudged: it requires server ${own.server} and the running server version is unknown`,
       )
     }
     const fromAddon =
@@ -107,17 +105,56 @@ export function gateStaleCandidates(
             wrapper: null,
           })
     const unmet = [...fromServer, ...fromAddon]
-    if (unmet.length === 0) {
-      ready.push(candidate)
-      continue
-    }
-    deferred.push({
-      candidate,
-      unmet,
-      reason: `${label} deferred until its package is reconciled: ${unmet.map(describeUnmet).join('; ')}`,
-    })
+    if (unmet.length > 0) unsupported.push(unsupportedOf(candidate, label, unmet))
   }
-  return { ready, deferred, unjudged }
+  return { unsupported, unjudged }
+}
+
+function unsupportedOf(
+  candidate: GroupCandidate,
+  label: string,
+  unmet: readonly UnmetRequirement[],
+): UnsupportedCandidate {
+  return {
+    candidate,
+    unmet,
+    reason: `${label} runs below what this server requires: ${unmet.map(describeUnmet).join('; ')}`,
+  }
+}
+
+/** The tracker's facts for one unsupported candidate. */
+export function supportFactsOf(
+  entry: UnsupportedCandidate,
+  serverVersion: string | null,
+): UnsupportedAddonFacts {
+  const addonMinimum = entry.unmet.find((u) => u.kind === 'addon-too-old')
+  return {
+    packageName: entry.candidate.packageName,
+    addonId: entry.candidate.addonId,
+    installedVersion: entry.candidate.packageVersion,
+    serverVersion,
+    requiredMinimum: addonMinimum === undefined ? null : addonMinimum.required,
+    unmet: entry.unmet.map(describeUnmet),
+  }
+}
+
+/**
+ * Judge `candidates`, log what could not be judged and what runs unsupported, and
+ * hand the verdict to the tracker. EVERY candidate is spawned by the caller.
+ */
+export function reportSupport(
+  candidates: readonly GroupCandidate[],
+  context: StaleGateContext,
+  tracker: UnsupportedAddonTracker,
+  log: (line: string) => void,
+): void {
+  const { unsupported, unjudged } = judgeSupport(candidates, context)
+  for (const line of unjudged) log(line)
+  for (const entry of unsupported) log(entry.reason)
+  tracker.observe(
+    candidates.map((c) => c.packageName),
+    unsupported.map((entry) => supportFactsOf(entry, context.serverVersion)),
+  )
 }
 
 /**

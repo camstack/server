@@ -16,6 +16,7 @@ import {
   AddonInstaller,
   AddonLoader,
   AGENT_READINESS_SERVICE_NAME,
+  UnsupportedAddonTracker,
   buildNodeManifest,
   CapabilityRegistry,
   createAddonContext,
@@ -113,7 +114,7 @@ import {
   readPackageManifestAddons,
   registerGroupRunnerProviders,
 } from './agent-group-runner.js'
-import { gateStaleCandidates, readPackageRequires } from './stale-addon-gate.js'
+import { readPackageRequires, reportSupport } from './stale-addon-gate.js'
 import {
   readRunningServerAddonMinimums,
   readRunningServerVersion,
@@ -1541,25 +1542,36 @@ async function bootCoreAddons(
 // ---------------------------------------------------------------------------
 
 /**
- * Hold back the candidates whose package is stale for THIS server (#346) and name
- * each one. They stay unspawned; the hub's registration reconcile delivers the
- * right version and the deploy's reload spawns it.
+ * Judge the candidates whose package may be below what THIS server requires
+ * (#346) and report it. Every candidate is spawned: an unsupported addon runs
+ * and raises the operator alert (D1017); the hub's registration reconcile
+ * delivers the right version and the deploy's reload re-judges it.
  */
-function spawnableCandidates(
+let unsupportedAddonTracker: UnsupportedAddonTracker | null = null
+
+function reportCandidateSupport(
+  broker: ServiceBroker,
   candidates: readonly GroupCandidate[],
   addonsDir: string,
   log: (line: string) => void,
-): readonly GroupCandidate[] {
-  if (candidates.length === 0) return candidates
-  const { ready, deferred, unjudged } = gateStaleCandidates(candidates, {
-    serverVersion: readRunningServerVersion(),
-    serverRequiresAddons: readRunningServerAddonMinimums(),
-    installedVersions: readInstalledAddonVersions(addonsDir),
-    requiresOfDir: readPackageRequires,
+): void {
+  if (candidates.length === 0) return
+  unsupportedAddonTracker ??= new UnsupportedAddonTracker({
+    eventBus: getBrokerEventBus(broker),
+    nodeId: broker.nodeID,
+    log,
   })
-  for (const d of deferred) log(`[Agent] ${d.reason}`)
-  for (const line of unjudged) log(`[Agent] ${line}`)
-  return ready
+  reportSupport(
+    candidates,
+    {
+      serverVersion: readRunningServerVersion(),
+      serverRequiresAddons: readRunningServerAddonMinimums(),
+      installedVersions: readInstalledAddonVersions(addonsDir),
+      requiresOfDir: readPackageRequires,
+    },
+    unsupportedAddonTracker,
+    (line) => log(`[Agent] ${line}`),
+  )
 }
 
 async function loadClusterCapableAddons(
@@ -1618,12 +1630,10 @@ async function loadClusterCapableAddons(
     }
   }
 
-  const spawnableGroupCandidates = spawnableCandidates(allGroupCandidates, config.addonsDir, (l) =>
-    console.warn(l),
-  )
-  if (spawnableGroupCandidates.length > 0) {
+  reportCandidateSupport(broker, allGroupCandidates, config.addonsDir, (l) => console.warn(l))
+  if (allGroupCandidates.length > 0) {
     const grouped = new Map<string, GroupCandidate[]>()
-    for (const c of spawnableGroupCandidates) {
+    for (const c of allGroupCandidates) {
       const arr = grouped.get(c.groupId) ?? []
       arr.push(c)
       grouped.set(c.groupId, arr)
@@ -1748,7 +1758,8 @@ async function loadDeployedAddons(
     return
   }
   const grouped = new Map<string, GroupCandidate[]>()
-  for (const c of spawnableCandidates(groupCandidates, addonsDir, (l) => console.warn(l))) {
+  reportCandidateSupport(broker, groupCandidates, addonsDir, (l) => console.warn(l))
+  for (const c of groupCandidates) {
     const arr = grouped.get(c.groupId) ?? []
     arr.push(c)
     grouped.set(c.groupId, arr)

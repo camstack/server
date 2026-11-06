@@ -2,11 +2,14 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { describe, it, expect } from 'vitest'
-import type { PackageRequires } from '@camstack/types'
+import { EventCategory, type PackageRequires } from '@camstack/types'
+import { UnsupportedAddonTracker } from '@camstack/server/system'
 import {
-  gateStaleCandidates,
+  judgeSupport,
   isUnreadableRequires,
   readPackageRequires,
+  reportSupport,
+  supportFactsOf,
   type StaleGateContext,
 } from '../stale-addon-gate.js'
 import type { GroupCandidate } from '../agent-group-runner.js'
@@ -33,38 +36,42 @@ function context(overrides: Partial<StaleGateContext>): StaleGateContext {
   }
 }
 
-describe('gateStaleCandidates (#346)', () => {
-  it('does not spawn an addon below the minimum the running server requires', () => {
+describe('judgeSupport (#346, D1017)', () => {
+  it('reports an addon below the minimum the running server requires, with both versions', () => {
     const ml = candidate('ml', '@camstack/addon-ml', '1.0.0')
-    const result = gateStaleCandidates(
+    const result = judgeSupport(
       [ml],
       context({
         serverRequiresAddons: { '@camstack/addon-ml': '>=2.0.0' },
         installedVersions: { '@camstack/addon-ml': '1.0.0' },
       }),
     )
-    expect(result.ready).toEqual([])
-    expect(result.deferred).toHaveLength(1)
-    expect(result.deferred[0]?.reason).toContain('ml')
-    expect(result.deferred[0]?.reason).toContain('1.0.0')
-    expect(result.deferred[0]?.reason).toContain('2.0.0')
+    expect(result.unsupported).toHaveLength(1)
+    expect(result.unsupported[0]?.reason).toContain('ml')
+    expect(result.unsupported[0]?.reason).toContain('1.0.0')
+    expect(result.unsupported[0]?.reason).toContain('2.0.0')
+    expect(supportFactsOf(result.unsupported[0]!, '1.2.721')).toMatchObject({
+      packageName: '@camstack/addon-ml',
+      installedVersion: '1.0.0',
+      requiredMinimum: '2.0.0',
+      serverVersion: '1.2.721',
+    })
   })
 
-  it('does not spawn an addon whose own requires.server the server does not satisfy', () => {
+  it('reports an addon whose own requires.server the server does not satisfy', () => {
     const own: PackageRequires = { server: '>=1.3.0' }
-    const result = gateStaleCandidates(
+    const result = judgeSupport(
       [candidate('enc', '@camstack/addon-enc', '3.0.0')],
       context({ requiresOfDir: () => own }),
     )
-    expect(result.ready).toEqual([])
-    expect(result.deferred[0]?.reason).toContain('1.3.0')
-    expect(result.deferred[0]?.reason).toContain('1.2.721')
+    expect(result.unsupported[0]?.reason).toContain('1.3.0')
+    expect(result.unsupported[0]?.reason).toContain('1.2.721')
   })
 
-  it('spawns an addon that meets both sides, and splits a mixed set', () => {
+  it('reports only the unsupported addon of a mixed set', () => {
     const fine = candidate('ok', '@camstack/addon-ok', '2.0.0')
     const stale = candidate('ml', '@camstack/addon-ml', '1.0.0')
-    const result = gateStaleCandidates(
+    const result = judgeSupport(
       [fine, stale],
       context({
         serverRequiresAddons: { '@camstack/addon-ml': '>=2.0.0', '@camstack/addon-ok': '>=2.0.0' },
@@ -72,41 +79,75 @@ describe('gateStaleCandidates (#346)', () => {
         requiresOfDir: () => ({ server: '>=1.2.0' }),
       }),
     )
-    expect(result.ready).toEqual([fine])
-    expect(result.deferred.map((d) => d.candidate.addonId)).toEqual(['ml'])
+    expect(result.unsupported.map((d) => d.candidate.addonId)).toEqual(['ml'])
   })
 
-  it('an unreadable server version does not defer on the addon own requires.server', () => {
-    const result = gateStaleCandidates(
+  it('an unreadable server version does not judge the addon own requires.server', () => {
+    const result = judgeSupport(
       [candidate('enc', '@camstack/addon-enc', '3.0.0')],
       context({ serverVersion: null, requiresOfDir: () => ({ server: '>=1.3.0' }) }),
     )
-    expect(result.ready).toHaveLength(1)
+    expect(result.unsupported).toEqual([])
   })
 })
 
-describe('an unknown fact is never a pass', () => {
-  it('defers an addon whose package requires could not be read, naming why', () => {
+describe('an unknown fact raises no alert', () => {
+  it('leaves an addon whose package requires could not be read unjudged, naming why', () => {
     const x = candidate('x', '@camstack/addon-x', '1.0.0')
-    const result = gateStaleCandidates(
+    const result = judgeSupport(
       [x],
       context({ requiresOfDir: () => ({ unreadable: 'package.json is not valid JSON' }) }),
     )
-    expect(result.ready).toEqual([])
-    expect(result.deferred[0]?.reason).toContain('not valid JSON')
-    expect(result.deferred[0]?.reason).toContain('1.0.0')
+    expect(result.unsupported).toEqual([])
+    expect(result.unjudged[0]).toContain('not valid JSON')
+    expect(result.unjudged[0]).toContain('1.0.0')
   })
 
   it('reports an addon it could not judge because the running server version is unknown', () => {
     const x = candidate('x', '@camstack/addon-x', '1.0.0')
-    const result = gateStaleCandidates(
+    const result = judgeSupport(
       [x],
       context({ serverVersion: null, requiresOfDir: () => ({ server: '>=1.3.0' }) }),
     )
-    expect(result.ready).toEqual([x])
+    expect(result.unsupported).toEqual([])
     expect(result.unjudged).toHaveLength(1)
     expect(result.unjudged[0]).toContain('addon-x')
     expect(result.unjudged[0]).toContain('1.3.0')
+  })
+})
+
+describe('reportSupport on an agent (D1017)', () => {
+  it('raises the alert once for an addon below the minimum and resolves it after an update', () => {
+    const events: Array<{ category: string; data: Record<string, unknown> }> = []
+    const tracker = new UnsupportedAddonTracker({
+      eventBus: { emit: (e) => void events.push({ category: e.category, data: e.data }) },
+      nodeId: 'agent-1',
+      log: () => undefined,
+      settleMs: 0,
+    })
+    const ml = candidate('ml', '@camstack/addon-ml', '1.0.0')
+    const run = (installed: string): void =>
+      reportSupport(
+        [ml],
+        context({
+          serverRequiresAddons: { '@camstack/addon-ml': '>=2.0.0' },
+          installedVersions: { '@camstack/addon-ml': installed },
+        }),
+        tracker,
+        () => undefined,
+      )
+    run('1.0.0')
+    run('1.0.0')
+    run('2.0.0')
+    expect(events.map((e) => e.category)).toEqual([
+      EventCategory.AddonUnsupportedVersion,
+      EventCategory.AddonUnsupportedResolved,
+    ])
+    expect(events[0]?.data).toMatchObject({
+      nodeId: 'agent-1',
+      installedVersion: '1.0.0',
+      requiredMinimum: '2.0.0',
+    })
   })
 })
 

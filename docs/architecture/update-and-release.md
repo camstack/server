@@ -428,16 +428,20 @@ it: an agent's server and addons are checked against what the hub requires, and
 the hub is what delivers an agent its addons.
 
 **Every path that changes an installed version enforces `camstack.requires`**
-(D989). Hub: the runner plan defers an addon whose installed version is stale
-against the server (`hub-spawn-gate`), `updatePackage` refuses on an unreadable
+(D989). Hub: an addon whose installed version is below what the server requires
+is STILL spawned and raises one operator alert naming both versions, cleared when
+the package is updated (`hub-addon-support`, `UnsupportedAddonTracker`,
+[D1017](../decisions/adr-1017-an-addon-below-the-servers-minimum-runs-and-the-operator-is-alerted.md));
+`updatePackage` refuses on an unreadable
 registry `requires`, the upload route answers 409 with the unmet list, and the
 first-boot installer holds an addon the running server would reject. Agent: the
 reconcile (`delivery-requirements.ts`) judges `server-too-old` and
 `addon-too-old` from the live roster. Starter: a closure whose server is below
 the starter's hosted range boots the baked seed and logs both versions.
 `camstack deploy --closure` stamps `requires.addons` from the workspace, so a
-dev closure is judged like a published one. Every deferred or refused addon
-logs a line naming both versions.
+dev closure is judged like a published one. Every unsupported or refused addon
+logs a line naming both versions. The agent judges its own addons the same way
+(`stale-addon-gate`) and spawns them all.
 
 **Co-update after a server swap.** When a new server boots with addons below its
 `requires.addons`, they are updated AUTOMATICALLY once `SystemAddonsReady`

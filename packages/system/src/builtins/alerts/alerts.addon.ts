@@ -82,6 +82,8 @@ const CATEGORY_MAPPINGS: Readonly<Record<string, CategoryMapping>> = {
 
   // ── Addon / node health (stable-id merge paths) ───────────────────
   'addon.load-failed': { severity: 'error', titleTemplate: 'Addon failed to load' },
+  // An addon RUNS below the version the server requires (D1017): visible, never held back.
+  'addon.unsupported-version': { severity: 'warning', titleTemplate: 'Addon version unsupported' },
   'system.liveness-failed': { severity: 'error', titleTemplate: 'Node liveness' },
 
   // ── Streams — only real outages (`stale-timeout`); see handler ────
@@ -106,6 +108,7 @@ const SILENT_TRACKED_CATEGORIES: readonly string[] = [
   // A runner reaching `running` closes its runner alert (D877).
   'process.state-changed',
   'addon.load-recovered',
+  'addon.unsupported-resolved',
   'system.liveness-recovered',
   'stream.online',
   // A repaired rule closes its broken-rule card (D905).
@@ -133,6 +136,9 @@ function streamIdsOf(listed: unknown, fallback: string | undefined): readonly st
   }
   return fallback !== undefined ? [fallback] : []
 }
+
+/** Stable-id prefix of the unsupported-addon-version card (D1017). */
+const ADDON_UNSUPPORTED_ALERT_PREFIX = 'addon-unsupported:'
 
 const TRACKED_CATEGORIES = [...Object.keys(CATEGORY_MAPPINGS), ...SILENT_TRACKED_CATEGORIES]
 
@@ -470,6 +476,14 @@ export class AlertCenterAddon extends BaseAddon<AlertCenterConfig> {
       }
       if (category === EventCategory.AddonLoadRecovered) {
         await this.handleAddonLoadRecovered(event)
+        return
+      }
+      if (category === EventCategory.AddonUnsupportedVersion) {
+        await this.handleAddonUnsupportedVersion(event)
+        return
+      }
+      if (category === EventCategory.AddonUnsupportedResolved) {
+        await this.handleAddonUnsupportedResolved(event)
         return
       }
       if (category === EventCategory.SystemLivenessFailed) {
@@ -930,6 +944,67 @@ export class AlertCenterAddon extends BaseAddon<AlertCenterConfig> {
       this.ctx.logger?.debug('AddonLoadRecovered: dismiss failed (likely already dismissed)', {
         meta: { stableId, error: errMsg(err) },
       })
+    }
+  }
+
+  /**
+   * AddonUnsupportedVersion — an addon RUNS although its installed package is
+   * below what the server requires (D1017). One card per node and package, keyed
+   * `addon-unsupported:<nodeId>:<packageName>` so the resolve edge dismisses it.
+   */
+  private async handleAddonUnsupportedVersion(event: SystemEvent): Promise<void> {
+    const data = event.data
+    const packageName = typeof data['packageName'] === 'string' ? data['packageName'] : ''
+    if (packageName.length === 0) return
+    const addonId = typeof data['addonId'] === 'string' ? data['addonId'] : packageName
+    const nodeId = typeof data['nodeId'] === 'string' ? data['nodeId'] : 'hub'
+    const installed =
+      typeof data['installedVersion'] === 'string' ? data['installedVersion'] : 'unknown'
+    const minimum = typeof data['requiredMinimum'] === 'string' ? data['requiredMinimum'] : null
+    const server = typeof data['serverVersion'] === 'string' ? data['serverVersion'] : 'unknown'
+    const unmet = Array.isArray(data['unmet'])
+      ? data['unmet'].filter((line): line is string => typeof line === 'string')
+      : []
+    const required = minimum === null ? unmet.join('; ') : `requires >= ${minimum}`
+    const alert: Alert = {
+      id: `${ADDON_UNSUPPORTED_ALERT_PREFIX}${nodeId}:${packageName}`,
+      category: EventCategory.AddonUnsupportedVersion,
+      severity: 'warning',
+      title: `Addon version unsupported: ${addonId}`,
+      message: `${addonId} on ${nodeId} runs ${installed}, but server ${server} ${required}. It keeps running; update the package.`,
+      status: 'active',
+      read: false,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      source: { type: 'addon', id: packageName },
+      metadata: {
+        packageName,
+        addonId,
+        nodeId,
+        installedVersion: installed,
+        requiredMinimum: minimum,
+        serverVersion: server,
+        unmet,
+      },
+    }
+    await this.emitAlert(alert)
+  }
+
+  /** The package reached a supported version — drop its unsupported-version card. */
+  private async handleAddonUnsupportedResolved(event: SystemEvent): Promise<void> {
+    const packageName = event.data['packageName']
+    if (typeof packageName !== 'string' || packageName.length === 0) return
+    const nodeId = typeof event.data['nodeId'] === 'string' ? event.data['nodeId'] : 'hub'
+    const stableId = `${ADDON_UNSUPPORTED_ALERT_PREFIX}${nodeId}:${packageName}`
+    try {
+      await this.dismiss(stableId)
+    } catch (err) {
+      this.ctx.logger?.debug(
+        'AddonUnsupportedResolved: dismiss failed (likely already dismissed)',
+        {
+          meta: { stableId, error: errMsg(err) },
+        },
+      )
     }
   }
 

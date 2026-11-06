@@ -752,6 +752,45 @@ describe('AlertCenterAddon', () => {
     })
   })
 
+  describe('event handling — an addon running below the server minimum (D1017)', () => {
+    it('one card per node and package naming both versions, dismissed by the resolve edge', async () => {
+      eventBus._fire(
+        'addon.unsupported-version',
+        makeSystemEvent('addon.unsupported-version', {
+          packageName: '@camstack/addon-net-access',
+          addonId: 'net-access',
+          nodeId: 'hub',
+          installedVersion: '1.0.0',
+          requiredMinimum: '2.0.0',
+          serverVersion: '1.2.721',
+          unmet: ['requires @camstack/addon-net-access >= 2.0.0, installed 1.0.0'],
+        }),
+      )
+      await vi.waitFor(async () => {
+        expect(await addon.listAlerts()).toHaveLength(1)
+      })
+      const [card] = await addon.listAlerts()
+      expect(card?.id).toBe('addon-unsupported:hub:@camstack/addon-net-access')
+      expect(card?.severity).toBe('warning')
+      expect(card?.message).toContain('1.0.0')
+      expect(card?.message).toContain('2.0.0')
+      expect(card?.message).toContain('1.2.721')
+
+      eventBus._fire(
+        'addon.unsupported-resolved',
+        makeSystemEvent('addon.unsupported-resolved', {
+          packageName: '@camstack/addon-net-access',
+          addonId: 'net-access',
+          nodeId: 'hub',
+        }),
+      )
+      await vi.waitFor(async () => {
+        const [closed] = await addon.listAlerts()
+        expect(closed?.status).toBe('dismissed')
+      })
+    })
+  })
+
   describe('event handling — stream offline / online', () => {
     it('ignores stream.offline when reason is not stale-timeout', async () => {
       eventBus._fire(

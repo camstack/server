@@ -4,7 +4,7 @@
 
 # Decisions
 
-979 architecture decision records. One file per decision, never
+980 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -994,6 +994,7 @@ that rots.
 | D1014 | [The migration API is append-only - a migration reaches the world through MigrationApiV1 and nothing else](adr-1014-the-migration-api-is-append-only.md) | ✅ accepted | 2026-11-05 |
 | D1015 | [One switch, one store - an instance is on or off in its record body, for every role](adr-1015-one-switch-one-store-an-instance-is-on-or-off-in-its-record-body.md) | 💭 proposed (supersedes D1007 (the clause "the registry owns `enabled` for `role: devices`", and `setInstanceEnabled` refusing a devices addon)) | 2026-11-06 |
 | D1016 | [One test - integration-instances.testInstance is the only way to test a connection or credentials](adr-1016-one-test-integration-instances-test-instance-is-the-only-connection-test.md) | ✅ accepted (supersedes D0100 (the `connection-test` cap), D886 (the test clause of the adoption wizard)) | 2026-11-06 |
+| D1017 | [An addon below the server's minimum runs, and the operator is alerted](adr-1017-an-addon-below-the-servers-minimum-runs-and-the-operator-is-alerted.md) | ✅ accepted (supersedes D989 (its spawn hold-back only; the single framework package and the delivery requirements stand)) | 2026-11-07 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

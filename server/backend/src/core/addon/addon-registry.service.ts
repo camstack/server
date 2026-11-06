@@ -11,8 +11,8 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import type { GroupCandidate } from '../../agent/agent-group-runner.js'
-import { HeldBackAddons, recordBootHealth } from './boot-health-snapshot.js'
-import { readHubStaleGateContext, spawnableAddonIds } from './hub-spawn-gate.js'
+import { recordBootHealth } from './boot-health-snapshot.js'
+import { readHubStaleGateContext, reportHubAddonSupport } from './hub-addon-support.js'
 import type { DataPlaneSink, RegisteredChild } from '@camstack/server/system'
 import {
   AddonDepsManager,
@@ -21,6 +21,7 @@ import {
   AddonLoader,
   AddonRouteRegistry,
   type AddonSettingsView,
+  UnsupportedAddonTracker,
   adaptBrokerToCluster,
   addonSettingsCapability,
   brokerTransportLink,
@@ -473,8 +474,6 @@ function isDeviceScopedCapName(capName: string): boolean {
 
 export class AddonRegistryService {
   private readonly addonEntries = new Map<string, AddonEntry>()
-  /** Addons the hub spawn gate holds back (id -> reason): neither started nor failed. */
-  private readonly heldBackAddons = new HeldBackAddons()
   private readonly capabilityRegistry: CapabilityRegistry
   /** Single router for addon-level calls (routes / custom / settings). */
   private addonCallGateway!: AddonCallGateway
@@ -509,6 +508,8 @@ export class AddonRegistryService {
   private readonly logger: IScopedLogger
   private addonLoader!: AddonLoader
   private healthMonitor!: AddonHealthMonitor
+  /** Raises and clears the alert for an addon that runs below the server's minimum (D1017). */
+  private readonly unsupportedAddons: UnsupportedAddonTracker
   private addonRouteRegistry: AddonRouteRegistry | null = null
   private dataPlaneRegistry: DataPlaneRegistry | null = null
 
@@ -650,7 +651,11 @@ export class AddonRegistryService {
       eventBus: this.eventBusService as import('@camstack/types').IEventBus,
       logger: this.loggingService.createLogger('AddonHealthMonitor'),
       retryFn: (packageName) => this.tryReloadPackage(packageName),
-      isHeldBack: (addonId) => this.heldBackAddons.has(addonId),
+    })
+    this.unsupportedAddons = new UnsupportedAddonTracker({
+      eventBus: this.eventBusService,
+      nodeId: 'hub',
+      log: (line) => this.logger.warn(line),
     })
 
     // Create capability registry with config reader for singleton preferences
@@ -1289,7 +1294,6 @@ export class AddonRegistryService {
     // recorded above from `addonLoader.listLoadFailures()`.
     recordBootHealth({
       entries: this.addonEntries.entries(),
-      heldBack: this.heldBackAddons.asMap(),
       monitor: this.healthMonitor,
     })
 
@@ -3889,33 +3893,24 @@ export class AddonRegistryService {
    * diagnostics that want to render the current topology.
    */
   /**
-   * The plan the hub actually SPAWNS: `buildAddonGroupPlan` over the ids whose
-   * package passes the stale gate (planning#447). An addon below the running
-   * server's `requires.addons`, or needing a newer server, stays unspawned and
-   * is logged with both versions; the post-swap required-addon update brings it
-   * current and a reload spawns it then.
+   * The plan the hub SPAWNS: `buildAddonGroupPlan` over `addonIds`, after the
+   * support judgement of each one. An addon below the running server's
+   * `requires.addons`, or needing a newer server, is NOT left out: it runs, and
+   * the tracker raises (once) or clears the operator alert with both versions
+   * (D1017). The post-swap required-addon update brings the package current.
    */
   buildSpawnPlan(
     addonIds: readonly string[],
     log: (line: string) => void = (line) => this.logger.warn(line),
   ): RunnerPlan {
-    return this.buildAddonGroupPlan(this.spawnableIds(addonIds, log))
-  }
-
-  private spawnableIds(
-    addonIds: readonly string[],
-    log: (line: string) => void,
-  ): readonly string[] {
-    return this.heldBackAddons.track(addonIds, (onDeferred) =>
-      spawnableAddonIds({
-        addonIds,
-        candidateOf: (id) => this.staleCandidateOf(id),
-        context: readHubStaleGateContext(),
-        infraCapabilities: new Set(INFRA_CAPABILITIES.map((c) => c.name)),
-        log,
-        onDeferred,
-      }),
-    )
+    reportHubAddonSupport({
+      addonIds,
+      candidateOf: (id) => this.staleCandidateOf(id),
+      context: readHubStaleGateContext(),
+      tracker: this.unsupportedAddons,
+      log,
+    })
+    return this.buildAddonGroupPlan(addonIds)
   }
 
   private staleCandidateOf(addonId: string): GroupCandidate | undefined {
@@ -4139,17 +4134,6 @@ export class AddonRegistryService {
       throw new Error(`ensureForkedRunner("${addonId}") requires an on-disk forked addon`)
     }
     const runnerId = resolveRunnerId(entry.declaration, addonId)
-    // The same gate as the boot plan: a restart, a hot-install or a retry must not spawn an addon
-    // the running server cannot host, nor carry a held-back sibling into its runner.
-    const held: string[] = []
-    if (this.spawnableIds([addonId], (line) => held.push(line)).length === 0) {
-      const reason = held.join('; ')
-      this.logger.warn('ensureForkedRunner: addon is held back by the stale gate, not spawned', {
-        tags: { addonId },
-        meta: { reason },
-      })
-      throw new Error(`addon "${addonId}" is held back until its package is reconciled: ${reason}`)
-    }
     const roster = this.buildSpawnPlan([...this.addonEntries.keys()], () => undefined).get(
       runnerId,
     ) ?? [{ addonId, addonDir: entry.addonDir }]

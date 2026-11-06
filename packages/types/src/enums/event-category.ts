@@ -122,6 +122,23 @@ export enum EventCategory {
    */
   AddonLoadRecovered = 'addon.load-recovered',
   /**
+   * An addon is RUNNING although its installed package is below what the
+   * running server requires (`camstack.requires.addons` of the server, or the
+   * addon's own `requires.server`). Raised once per streak by the unsupported-
+   * addon tracker, on the hub and on agents; AlertCenter turns it into one
+   * operator alert per node and package. The addon is never held back for it.
+   *
+   * Payload: `{ packageName, addonId, nodeId, installedVersion, requiredMinimum, serverVersion, unmet }`.
+   */
+  AddonUnsupportedVersion = 'addon.unsupported-version',
+  /**
+   * The package of an {@link AddonUnsupportedVersion} alert reached a supported
+   * version (or was removed). AlertCenter dismisses the matching alert.
+   *
+   * Payload: `{ packageName, addonId, nodeId }`.
+   */
+  AddonUnsupportedResolved = 'addon.unsupported-resolved',
+  /**
    * Monitor scheduled the next retry for a failed addon. Transient —
    * surfaced to the UI for live-updating the "next retry in Ns"
    * countdown on the Addons page row, NOT persisted as an alert.

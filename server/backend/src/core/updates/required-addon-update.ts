@@ -2,15 +2,15 @@
  * The post-swap required-addon update (planning#447, D989).
  *
  * A server closure declares the oldest addon packages it works with
- * (`camstack.requires.addons`). After the swap the hub holds back an addon below
- * that minimum (`core/addon/hub-spawn-gate.ts`) so it cannot crash-loop; this
- * job is what brings it current. It runs on every boot, whether or not the
+ * (`camstack.requires.addons`). After the swap an addon below that minimum still
+ * runs and raises the unsupported-version alert (`core/addon/hub-addon-support.ts`,
+ * D1017); this job is what brings it current. It runs on every boot, whether or not the
  * operator enabled auto-update: the minimum is a fact the server needs, not a
  * preference. Agents follow by the registration reconcile (D840), never from
  * here.
  *
- * A failed update raises ONE alert per package and the boot goes on: the held
- * addon stays unspawned and logged, the rest of the node is up. A package that
+ * A failed update raises ONE alert per package and the boot goes on: the addon
+ * keeps running below the minimum, with its unsupported-version alert. A package that
  * recovers (a later boot succeeds) resolves its alert.
  */
 import type { Alert, IScopedLogger } from '@camstack/types'
@@ -122,7 +122,7 @@ export async function runRequiredAddonUpdates(
     }
     const reason = outcome.error ?? 'the update did not succeed'
     failed.push({ name: item.name, reason })
-    deps.logger.warn('Required addon update failed — the addon stays held back', {
+    deps.logger.warn('Required addon update failed — the addon keeps running below the minimum', {
       meta: {
         name: item.name,
         installed: item.installed,

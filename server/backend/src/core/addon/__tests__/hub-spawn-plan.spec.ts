@@ -1,7 +1,9 @@
 /**
- * The hub spawns only addons the stale gate passes (planning#447), on EVERY
- * path that brings a runner up — the boot plan, a restart, a hot-install —
- * reading the real addons directory and the real package.json files.
+ * The hub spawns EVERY addon, below its minimum or not (D1017), on every path
+ * that brings a runner up - the boot plan, a restart, a hot-install - reading the
+ * real addons directory and the real package.json files. An addon below the
+ * minimum raises the unsupported-version alert once, and clears it when its
+ * package is updated.
  */
 import * as fs from 'node:fs'
 import * as os from 'node:os'
@@ -11,7 +13,13 @@ import {
   type CapabilityDeclaration,
   type IScopedLogger,
 } from '@camstack/types'
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import { EventCategory } from '@camstack/types'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { UNSUPPORTED_ADDON_SETTLE_MS } from '@camstack/server/system'
+import {
+  evaluateRunnerBootCheck,
+  isRunnerBootCheckDegraded,
+} from '../../runner-health/runner-boot-check.js'
 import { CapabilityService } from '../../capability/capability.service'
 import { ConfigService } from '../../config/config.service'
 import { EventBusService } from '../../events/event-bus.service'
@@ -97,20 +105,25 @@ afterAll(() => {
   fs.rmSync(addonsRoot, { recursive: true, force: true })
 })
 
+interface Emitted {
+  readonly category: string
+  readonly data: Record<string, unknown>
+}
+
 function build(): {
   readonly registry: AddonRegistryService
-  readonly warn: ReturnType<typeof vi.fn>
+  readonly emitted: Emitted[]
   readonly calls: { readonly action: string; readonly params: unknown }[]
 } {
-  const warn = vi.fn()
   const sink: IScopedLogger = {
     info: vi.fn(),
-    warn,
+    warn: vi.fn(),
     error: vi.fn(),
     debug: vi.fn(),
     child: () => sink,
     withTags: () => sink,
   }
+  const emitted: Emitted[] = []
   const calls: { action: string; params: unknown }[] = []
   const broker = {
     nodeID: 'hub',
@@ -123,7 +136,10 @@ function build(): {
   }
   const registry = new AddonRegistryService(
     stubOf(LoggingService, { createLogger: () => sink }),
-    stubOf(EventBusService, { emit: () => undefined, subscribe: () => () => undefined }),
+    stubOf(EventBusService, {
+      emit: (e: Emitted) => void emitted.push({ category: e.category, data: e.data }),
+      subscribe: () => () => undefined,
+    }),
     stubOf(ConfigService, { get: () => undefined }),
     stubOf(StorageService, {}),
     stubOf(CapabilityService, { setRegistry: () => undefined }),
@@ -148,49 +164,92 @@ function build(): {
       declaration,
     })
   }
-  return { registry, warn, calls }
+  return { registry, emitted, calls }
 }
 
-describe('the hub spawn gate reads the real package files', () => {
-  it('leaves out an addon needing a newer server and one whose package.json is unreadable', () => {
-    const { registry, warn } = build()
-    const plan = registry.buildSpawnPlan(['old', 'fresh', 'broken'])
-    expect([...(plan.get(GROUP)?.map((a) => a.addonId) ?? [])]).toEqual(['fresh'])
-    const lines = warn.mock.calls.map((c) => String(c[0]))
-    expect(lines.some((l) => l.includes('addon-old') && l.includes('9999.0.0'))).toBe(true)
-    expect(lines.some((l) => l.includes('addon-broken') && l.includes('could not be read'))).toBe(
-      true,
-    )
+const rosterOf = (plan: ReturnType<AddonRegistryService['buildSpawnPlan']>): readonly string[] =>
+  (plan.get(GROUP) ?? []).map((a) => a.addonId)
+
+const unsupportedOf = (emitted: readonly Emitted[]): readonly Emitted[] =>
+  emitted.filter((e) => e.category === EventCategory.AddonUnsupportedVersion)
+
+beforeEach(() => {
+  vi.useFakeTimers()
+})
+
+afterEach(() => {
+  vi.useRealTimers()
+})
+
+describe('the hub spawns every addon and alerts for the unsupported ones', () => {
+  it('spawns an addon needing a newer server, an unreadable package and an infra provider alike', () => {
+    const { registry } = build()
+    const plan = registry.buildSpawnPlan(['old', 'fresh', 'broken', 'store'])
+    expect([...rosterOf(plan)].sort()).toEqual(['broken', 'fresh', 'old', 'store'])
   })
 
-  it('still spawns a stale infrastructure provider, and says so loudly', () => {
-    const { registry, warn } = build()
-    const plan = registry.buildSpawnPlan(['store'])
-    expect([...(plan.get(GROUP)?.map((a) => a.addonId) ?? [])]).toEqual(['store'])
-    expect(warn.mock.calls.some((c) => String(c[0]).includes('SPAWNED ANYWAY'))).toBe(true)
+  it('raises ONE alert per unsupported addon, infra and non-infra alike, with the versions; none for an unreadable package', () => {
+    const { registry, emitted } = build()
+    registry.buildSpawnPlan(['old', 'fresh', 'broken', 'store'])
+    registry.buildSpawnPlan(['old', 'fresh', 'broken', 'store'])
+    vi.advanceTimersByTime(UNSUPPORTED_ADDON_SETTLE_MS)
+    const raised = unsupportedOf(emitted)
+    expect(raised.map((e) => e.data['addonId']).sort()).toEqual(['old', 'store'])
+    const old = raised.find((e) => e.data['addonId'] === 'old')
+    expect(old?.data).toMatchObject({
+      packageName: '@camstack/addon-old',
+      installedVersion: '1.0.0',
+      nodeId: 'hub',
+    })
+    expect(String(old?.data['unmet'])).toContain('9999.0.0')
+  })
+
+  it('emits the recovery once the package on disk is supported, and the alert is not raised again', () => {
+    const { registry, emitted } = build()
+    registry.buildSpawnPlan(['old'])
+    vi.advanceTimersByTime(UNSUPPORTED_ADDON_SETTLE_MS)
+    const file = path.join(addonsRoot, '@camstack/addon-old', 'package.json')
+    const before = fs.readFileSync(file, 'utf-8')
+    try {
+      fs.writeFileSync(file, JSON.stringify({ name: '@camstack/addon-old', version: '2.0.0' }))
+      registry.buildSpawnPlan(['old'])
+      registry.buildSpawnPlan(['old'])
+    } finally {
+      fs.writeFileSync(file, before)
+    }
+    const alerts = emitted.filter((e) => e.category.startsWith('addon.unsupported-'))
+    expect(alerts.map((e) => e.category)).toEqual([
+      EventCategory.AddonUnsupportedVersion,
+      EventCategory.AddonUnsupportedResolved,
+    ])
+    expect(alerts[1]?.data).toMatchObject({ packageName: '@camstack/addon-old', nodeId: 'hub' })
+  })
+
+  it('a runner that hosts an unsupported addon counts as running in the boot check, not as failed', () => {
+    const { registry } = build()
+    registry.buildSpawnPlan(['old', 'fresh'])
+    const check = evaluateRunnerBootCheck({
+      planned: registry.plannedRunnerIds(),
+      processes: [{ name: GROUP, addonIds: ['old', 'fresh', 'broken', 'store'], state: 'running' }],
+      now: 0,
+    })
+    expect(check.failed).toEqual([])
+    expect(check.running).toBe(1)
+    expect(isRunnerBootCheckDegraded(check)).toBe(false)
   })
 })
 
-describe('ensureForkedRunner uses the same gate (restart, hot-install, retry)', () => {
-  it('refuses to spawn a held-back addon and names the versions', async () => {
-    const { registry, calls } = build()
-    const ensure = (id: string) =>
-      Reflect.apply(Reflect.get(registry, 'ensureForkedRunner'), registry, [id, { restart: false }])
-    await expect(ensure('old')).rejects.toThrow(/held back.*9999\.0\.0/)
-    expect(calls.filter((c) => c.action === '$process.spawnRunner')).toEqual([])
-  })
-
-  it('leaves held-back siblings (not infrastructure) out of the roster it spawns', async () => {
+describe('ensureForkedRunner spawns an unsupported addon (restart, hot-install, retry)', () => {
+  it('spawns the runner of an addon below the minimum, with it in the roster', async () => {
     const { registry, calls } = build()
     await Reflect.apply(Reflect.get(registry, 'ensureForkedRunner'), registry, [
-      'fresh',
+      'old',
       { restart: false },
     ])
     const spawn = calls.find((c) => c.action === '$process.spawnRunner')
     const roster: unknown = spawn === undefined ? null : Reflect.get(Object(spawn.params), 'addons')
-    expect(Array.isArray(roster) ? roster.map((r) => Reflect.get(r, 'addonId')) : roster).toEqual([
-      'fresh',
-      'store',
-    ])
+    expect(
+      Array.isArray(roster) ? roster.map((r) => Reflect.get(r, 'addonId')).sort() : roster,
+    ).toEqual(['broken', 'fresh', 'old', 'store'])
   })
 })
