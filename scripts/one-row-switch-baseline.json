@@ -15,6 +15,6 @@
   },
   "notes": {
     "fixedBuiltinException": "integrations.update({enabled}) is still accepted for rows with info.fixed (alarm panel, camera-grid, core-blocks, terminal): they have no instance record, and the admin-ui shows their toggle. Narrow exception pending the operator answer; every other row is switched through integration-instances.setInstanceEnabled.",
-    "step5Todo": "planning#440 step 5: drop the registry `enabled` column and the stored-flag fallback in projectSwitches (cap-providers.ts) and in the registry-switch-to-body migration read."
+    "step5Todo": "planning#440 step 5: drop the registry `enabled` column and the stored-flag fallback in projectSwitches (cap-providers.ts) and in the registry-switch-to-body migration read. Also: while an addon is down the projection shows the stale stored registry flag; with the column gone a down addon must read as unknown, not as a stale value (D315, D393)."
   }
 }

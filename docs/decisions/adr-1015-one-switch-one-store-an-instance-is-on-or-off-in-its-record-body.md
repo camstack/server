@@ -48,6 +48,10 @@ a rerun does nothing.
   or an addon that failed to answer (logged). Step 5 removes the column and the fallback.
 - The hub emits no `integration.enabled` telemetry for an instance switch any more; the admin-ui
   invalidates its own queries. Nothing durable depended on the event.
+- The switch migration is `block-owner`: a body without `enabled` reads as on, so an addon whose
+  move did not apply (a failed read, an engine that refused the catalogue) does not initialise
+  until `migrations.retry` and a restart. Failing closed is chosen over a registry fallback in the
+  reader, which would need the very registry flag that is unreachable when the move fails.
 - A context without the migration API skips the switch migration with a warning.
 
 ## Enforcement

@@ -16,6 +16,7 @@ type SettingsView = NonNullable<AddonContext['settings']>
 /** The settings members a test usually wires; the rest throw by name. */
 export interface FakeSettings {
   readonly readAddonStore?: SettingsView['readAddonStore']
+  readonly listDeviceStoreIds?: SettingsView['listDeviceStoreIds']
   readonly readAddonStoreResult?: NonNullable<SettingsView['readAddonStoreResult']>
 }
 
@@ -79,7 +80,7 @@ function fakeSettings(overrides: FakeSettings): SettingsView {
     ...(readAddonStoreResult !== undefined ? { readAddonStoreResult } : {}),
     writeAddonStore: unused('settings.writeAddonStore'),
     readDeviceStoreBatch: unused('settings.readDeviceStoreBatch'),
-    listDeviceStoreIds: unused('settings.listDeviceStoreIds'),
+    listDeviceStoreIds: overrides.listDeviceStoreIds ?? unused('settings.listDeviceStoreIds'),
     readDeviceStore: unused('settings.readDeviceStore'),
     writeDeviceStore: unused('settings.writeDeviceStore'),
     clearDeviceStore: unused('settings.clearDeviceStore'),

@@ -11,7 +11,9 @@ import type { AppRouter } from '../../generated/addon-api.js'
 import { type AddonMigration, defineAddonMigrations } from '../../migrations/addon-migration.js'
 import type { MigrationApiV1 } from '../../migrations/api/migration-api.v1.js'
 import type { MigrationMeta } from '../../migrations/migration.js'
+import { defineEntryKind, entryBody } from '../../records/entry-kind.js'
 import { BaseAddon } from '../base-addon.js'
+import { AddonMigrationsBlockedError } from '../migrations-blocked-error.js'
 import { fakeAddonContext } from '../fake-addon-context.js'
 
 const meta = (slug: string, onFailure: MigrationMeta['onFailure']): MigrationMeta => ({
@@ -249,5 +251,101 @@ describe('BaseAddon.runMigrations, catalogue form', () => {
     // that also carries a bound entry's `execute`, the shape an untyped caller could build.
     const two = { ...one, meta: meta('two', 'block-owner'), execute: async () => undefined }
     await expect(addon.mixed([one, two])).rejects.toThrow(/other kind/)
+  })
+})
+
+/** A hub that runs the step and judges it from what the addon REPORTED: a failed body fails the step. */
+function judgingHub(calls: string[], refuseDeclare: boolean): TRPCLink<AppRouter> {
+  return () =>
+    ({ op }) =>
+      observable((observer) => {
+        calls.push(op.path)
+        if (refuseDeclare && op.path === 'migrations.declareOwner') {
+          observer.error(TRPCClientError.from(new Error('declare refused')))
+          return
+        }
+        const answer =
+          op.path === 'migrations.declareOwner'
+            ? {
+                bootId: 'b1',
+                snapshot: 'written',
+                steps: [{ id: stepId(op.input), action: 'run', state: 'pending' }],
+              }
+            : op.path === 'migrations.startMigration'
+              ? { proceed: true, state: 'pending', reason: null }
+              : reportedFailure(op.input)
+                ? { status: 'failed', error: 'reported', rowsChanged: 0 }
+                : { status: 'applied', error: null, rowsChanged: 0 }
+        observer.next({ result: { data: answer } })
+        observer.complete()
+      })
+}
+
+function reportedFailure(input: unknown): boolean {
+  return (
+    typeof input === 'object' &&
+    input !== null &&
+    'result' in input &&
+    typeof input.result === 'object' &&
+    input.result !== null &&
+    'kind' in input.result &&
+    input.result.kind === 'failed'
+  )
+}
+
+const switchKind = defineEntryKind('connections', {
+  title: 'Probe integrations',
+  schema: entryBody({}),
+})
+
+class SwitchProbe extends BaseAddon {
+  protected async onInitialize() {
+    return []
+  }
+  migrate() {
+    this.declareRegistrySwitch({ kind: switchKind, initialBody: (name) => ({ name }) })
+    return this.runMigrations([])
+  }
+}
+
+describe('BaseAddon one-switch migration (epic #440 step 3)', () => {
+  // A registry-disabled instance reads as ON when its body has no `enabled`, so an addon whose
+  // switch migration did not apply must not come up: it fails closed, loudly, instead of serving.
+  it('does not initialise when the registry rows could not be read (a failing port)', async () => {
+    const addon = new SwitchProbe({})
+    await addon.initialize(
+      fakeAddonContext({
+        migrationApi: stubMigrationApi(), // integrations.list throws
+        api: createTRPCClient<AppRouter>({ links: [judgingHub([], false)] }),
+      }),
+    )
+    await expect(addon.migrate()).rejects.toBeInstanceOf(AddonMigrationsBlockedError)
+  })
+
+  it('does not initialise when the engine refuses the catalogue', async () => {
+    const addon = new SwitchProbe({})
+    await addon.initialize(
+      fakeAddonContext({
+        migrationApi: stubMigrationApi(),
+        api: createTRPCClient<AppRouter>({ links: [judgingHub([], true)] }),
+      }),
+    )
+    await expect(addon.migrate()).rejects.toBeInstanceOf(AddonMigrationsBlockedError)
+  })
+
+  it('initialises once the switch migration applied (no registry rows to move)', async () => {
+    const api = stubMigrationApi()
+    const addon = new SwitchProbe({})
+    await addon.initialize(
+      fakeAddonContext({
+        migrationApi: {
+          ...api,
+          integrations: { ...api.integrations, list: async () => ({ integrations: [] }) },
+        },
+        api: createTRPCClient<AppRouter>({ links: [judgingHub([], false)] }),
+      }),
+    )
+    const report = await addon.migrate()
+    expect(report.applied).toHaveLength(1)
   })
 })

@@ -104,7 +104,10 @@ export function registrySwitchToBodyMigration(spec: {
       dependsOn: [],
       store: 'settings',
       scope: 'cluster',
-      onFailure: 'tolerate',
+      // Fail closed: a body without `enabled` reads as ON, so an addon whose switch did not move
+      // would bring a registry-disabled instance up. `block-owner` keeps the addon from
+      // initialising until the move applied (migrations.retry, then a restart).
+      onFailure: 'block-owner',
       bodyKind: 'procedure',
       description:
         'Move the registry enabled flag of every switched-off integration into its instance record body, creating the record when there is none',
