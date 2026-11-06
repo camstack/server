@@ -669,19 +669,6 @@ export const NC_TEMPLATE_VARS: readonly NcTemplateVarDescriptor[] = [
     systemEventKinds: ['node-online', 'node-offline'],
   },
   {
-    // Offline only, and only on the wording for an agent that went down while a
-    // planned update was running (system-events.ts `withPlannedUpdateWording`):
-    // the grace the update was given, in minutes. Blank on every other row.
-    name: 'graceMin',
-    label: 'Update grace (minutes)',
-    example: '10',
-    group: 'system',
-    families: ['rule'],
-    fields: [...RULE_TEXT],
-    kinds: ['system'],
-    systemEventKinds: ['node-offline'],
-  },
-  {
     // Recovery only: how long the node was offline ("44 min"). Blank when the
     // outage start is unknown (the offline state was only seeded at boot).
     name: 'offlineFor',

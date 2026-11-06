@@ -568,14 +568,14 @@ const SYSTEM_SAMPLES: readonly SystemSample[] = [
   },
   {
     // What the node hold-off hands the rule engine for an offline of a node
-    // that announced an update and did not come back: `{{graceMin}}`.
+    // that announced an update (delivered at once).
     name: 'agent.offline (during a planned update)',
     build: () => {
       const incoming = fromBus('agent.offline', { agentId: 'agent-a' })
       const system = incoming?.subject.systemEvent
       return incoming === null || system === undefined
         ? null
-        : withPlannedUpdateWording(incoming, system, 10)
+        : withPlannedUpdateWording(incoming, system)
     },
   },
   {

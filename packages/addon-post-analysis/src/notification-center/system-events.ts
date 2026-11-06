@@ -217,7 +217,7 @@ export function onSystemEvent(host: SystemEventsHost, event: SystemEvent): void 
   // matches it — it is what makes a late `node-updating` stale (D723).
   if (system !== undefined) host.updateLandings.observe(system, host.now())
   // An announcement opens the node's planned-update window (see
-  // `planned-update-window.ts`): its offline is held for the whole window.
+  // `planned-update-window.ts`): its offline is worded as an update.
   if (system !== undefined) host.plannedUpdates.observe(system, host.now())
   const observation = system !== undefined ? ledgeredLiveness(system) : null
   if (observation !== null) {
@@ -299,9 +299,10 @@ function dropSwitchedOff(
 }
 /**
  * Arm a node liveness flip. An OFFLINE of a node that announced an update is
- * held for the whole planned-update window and worded as such if it is still
- * sent; the node's return inside the window is logged and sends nothing (the
- * hold-off sees the state bounce back to the one last notified).
+ * delivered AT ONCE, worded "restarting for an update": the operator is told,
+ * and the node's return is then always the second half of a pair — even when
+ * this process restarts in between and has only the ledger to go on. Every
+ * other flip waits on the hold-off.
  */
 function armNodeLiveness(
   host: SystemEventsHost,
@@ -311,29 +312,16 @@ function armNodeLiveness(
   system: NcSystemEventSubject,
 ): void {
   const nodeId = system.nodeId
-  const now = host.now()
-  if (nodeId === undefined) {
-    holdoff.arm(subject, incoming)
+  if (
+    nodeId !== undefined &&
+    system.kind === 'node-offline' &&
+    host.plannedUpdates.isPlanned(nodeId, host.now())
+  ) {
+    host.logger.info(`node ${nodeId}: offline notified: restarting for an update`, {
+      meta: { nodeId },
+    })
+    holdoff.arm(subject, withPlannedUpdateWording(incoming, system), 0)
     return
-  }
-  const window = host.plannedUpdates
-  if (system.kind === 'node-offline' && window.isPlanned(nodeId, now)) {
-    window.hold(nodeId, now)
-    holdoff.arm(
-      subject,
-      withPlannedUpdateWording(incoming, system, window.graceMinutes),
-      window.windowMs,
-    )
-    return
-  }
-  if (system.kind === 'node-online') {
-    const backAfterSec = window.release(nodeId, now)
-    if (backAfterSec !== null) {
-      host.logger.info(
-        `node ${nodeId}: offline suppressed: planned update, back after ${backAfterSec}s`,
-        { meta: { nodeId, backAfterSec } },
-      )
-    }
   }
   holdoff.arm(subject, incoming)
 }
@@ -341,7 +329,6 @@ function armNodeLiveness(
 export function withPlannedUpdateWording(
   incoming: NcIncomingEvent,
   system: NcSystemEventSubject,
-  graceMin: number,
 ): NcIncomingEvent {
   return {
     ...incoming,
@@ -350,7 +337,6 @@ export function withPlannedUpdateWording(
       systemEvent: {
         ...system,
         bodyKey: 'system.node-offline.body.agent.updating',
-        textParams: { ...system.textParams, graceMin: String(graceMin) },
       },
     },
   }

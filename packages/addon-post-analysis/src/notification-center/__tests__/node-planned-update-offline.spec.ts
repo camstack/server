@@ -1,10 +1,12 @@
 /**
- * A NODE THAT ANNOUNCED AN UPDATE IS NOT PAGED FOR GOING OFFLINE (planned-update grace).
+ * A NODE THAT ANNOUNCED AN UPDATE IS TOLD ABOUT, NEVER SILENCED.
  *
  * The announcement (`system.restarting`, kinds `node-updating` / `node-restarting`)
- * opens a window; an offline inside it is held up to PLANNED_UPDATE_OFFLINE_GRACE_MS.
- * Back inside the window: nothing. Not back: one offline whose wording says so.
- * No announcement, or one older than the window: the 60 s behaviour, unchanged.
+ * opens a window; an offline inside it is delivered AT ONCE worded "restarting
+ * for an update", so the later "back online" always has its offline. A
+ * notification-center restart between the two must not change that: the fresh
+ * process is seeded from the ledger with `offline`. No announcement, or one
+ * older than the window: the 60 s hold-off, unchanged.
  */
 import type { InMemoryRecords } from '@camstack/types'
 import { ncTable, makeNcRecords } from './support/nc-test-deps.js'
@@ -37,7 +39,7 @@ afterEach(async () => {
   vi.useRealTimers()
 })
 
-async function startCenter(world: InMemoryRecords): Promise<NotificationCenter> {
+async function startCenter(world: InMemoryRecords, withRule = true): Promise<NotificationCenter> {
   const center = new NotificationCenter({
     deviceSettings: makeFakeDeviceSettings(),
     records: world.records,
@@ -62,6 +64,7 @@ async function startCenter(world: InMemoryRecords): Promise<NotificationCenter> 
   })
   centers.push(center)
   await center.start({ evaluation: true })
+  if (!withRule) return center
   await center.buildProvider().createRule({
     caller: { userId: 'admin', isAdmin: true },
     rule: NcRuleInputSchema.parse({
@@ -121,55 +124,87 @@ async function seededCenter(): Promise<InMemoryRecords> {
   return world
 }
 
-describe('planned-update offline grace, wired', () => {
-  it('held, then back online inside the window: nothing is sent', async () => {
+describe('planned-update offline, wired', () => {
+  it('the offline is notified at once with the update wording', async () => {
     const world = await seededCenter()
     const center = centers[0]
     center?.onSystemEvent(announceUpdate())
     center?.onSystemEvent(agent(false, 'shutdown'))
-    await vi.advanceTimersByTimeAsync(NODE_LIVENESS_HOLDOFF_MS * 3)
-    expect(ncTable(world, 'outbox')?.size ?? 0).toBe(0)
-    await vi.advanceTimersByTimeAsync(2 * 60_000)
-    center?.onSystemEvent(agent(true))
-    await vi.advanceTimersByTimeAsync(PLANNED_UPDATE_OFFLINE_GRACE_MS * 2)
-    expect(ncTable(world, 'outbox')?.size ?? 0).toBe(0)
-  })
-
-  it('held, never back: ONE offline at the end of the window, worded as an update', async () => {
-    const world = await seededCenter()
-    const center = centers[0]
-    center?.onSystemEvent(announceUpdate())
-    center?.onSystemEvent(agent(false, 'shutdown'))
-    await vi.advanceTimersByTimeAsync(PLANNED_UPDATE_OFFLINE_GRACE_MS - 1_000)
-    expect(ncTable(world, 'outbox')?.size ?? 0).toBe(0)
-    await vi.advanceTimersByTimeAsync(1_000)
+    await vi.advanceTimersByTimeAsync(0)
     await vi.waitFor(() => {
       expect(ncTable(world, 'outbox')?.size).toBe(1)
     })
     const [offline] = frozen(world)
     expect(offline?.kind).toBe('node-offline')
     expect(offline?.bodyKey).toBe('system.node-offline.body.agent.updating')
-    expect(offline?.textParams?.['graceMin']).toBe('10')
     expect(offline?.textParams?.['nodeName']).toBe('Unraid piccolo')
+  })
+
+  it('back after the update: the online follows its offline', async () => {
+    const world = await seededCenter()
+    const center = centers[0]
+    center?.onSystemEvent(announceUpdate())
+    center?.onSystemEvent(agent(false, 'shutdown'))
+    await vi.advanceTimersByTimeAsync(2 * 60_000)
+    center?.onSystemEvent(agent(true))
+    await vi.advanceTimersByTimeAsync(NODE_LIVENESS_HOLDOFF_MS)
+    await vi.waitFor(() => {
+      expect(ncTable(world, 'outbox')?.size).toBe(2)
+    })
+    expect(
+      frozen(world)
+        .map((e) => e.kind)
+        .sort(),
+    ).toEqual(['node-offline', 'node-online'])
+  })
+
+  it('a notification-center restart between offline and online: the online is still sent once', async () => {
+    const world = await seededCenter()
+    const first = centers[0]
+    first?.onSystemEvent(announceUpdate())
+    first?.onSystemEvent(agent(false, 'shutdown'))
+    await vi.advanceTimersByTimeAsync(0)
+    await vi.waitFor(() => {
+      expect(ncTable(world, 'outbox')?.size).toBe(1)
+    })
+    expect(frozen(world)[0]?.bodyKey).toBe('system.node-offline.body.agent.updating')
+    await first?.stop()
+    // The new process: no window, no hold-off memory — only the ledger.
+    const second = await startCenter(world, false)
+    await vi.advanceTimersByTimeAsync(2 * 60_000)
+    second.onSystemEvent(agent(true))
+    await vi.advanceTimersByTimeAsync(NODE_LIVENESS_HOLDOFF_MS)
+    await vi.waitFor(() => {
+      expect(ncTable(world, 'outbox')?.size).toBe(2)
+    })
+    expect(
+      frozen(world)
+        .map((e) => e.kind)
+        .sort(),
+    ).toEqual(['node-offline', 'node-online'])
   })
 
   it('no announcement: the offline goes out at the normal hold-off', async () => {
     const world = await seededCenter()
     centers[0]?.onSystemEvent(agent(false, 'shutdown'))
-    await vi.advanceTimersByTimeAsync(NODE_LIVENESS_HOLDOFF_MS)
+    await vi.advanceTimersByTimeAsync(NODE_LIVENESS_HOLDOFF_MS - 1_000)
+    expect(ncTable(world, 'outbox')?.size ?? 0).toBe(0)
+    await vi.advanceTimersByTimeAsync(1_000)
     await vi.waitFor(() => {
       expect(ncTable(world, 'outbox')?.size).toBe(1)
     })
     expect(frozen(world)[0]?.bodyKey).toBe('system.node-offline.body.agent.shutdown')
   })
 
-  it('a stale announcement (older than the window) does not suppress', async () => {
+  it('a stale announcement (older than the window) keeps the hold-off', async () => {
     const world = await seededCenter()
     const center = centers[0]
     center?.onSystemEvent(announceUpdate())
     await vi.advanceTimersByTimeAsync(PLANNED_UPDATE_OFFLINE_GRACE_MS + 1_000)
     center?.onSystemEvent(agent(false, 'shutdown'))
-    await vi.advanceTimersByTimeAsync(NODE_LIVENESS_HOLDOFF_MS)
+    await vi.advanceTimersByTimeAsync(NODE_LIVENESS_HOLDOFF_MS - 1_000)
+    expect(ncTable(world, 'outbox')?.size ?? 0).toBe(0)
+    await vi.advanceTimersByTimeAsync(1_000)
     await vi.waitFor(() => {
       expect(ncTable(world, 'outbox')?.size).toBe(1)
     })
