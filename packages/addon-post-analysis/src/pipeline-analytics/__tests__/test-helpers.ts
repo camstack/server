@@ -1393,6 +1393,10 @@ export function makeFakeAddonApi(deps: {
    * cap provider, whose referential check reads the live target catalog.
    */
   readonly notificationOutput?: unknown
+  /** Omit to boot WITHOUT `capabilities` / `integrationInstances`: the notification
+   *  targets are instances of `notification-output`, read through both (#440 step 6). */
+  readonly capabilities?: unknown
+  readonly integrationInstances?: unknown
   /** Omit for the default no-op device-history door (D850). */
   readonly deviceHistory?: AddonApi['deviceHistory']
   /**
@@ -1488,6 +1492,10 @@ export function makeFakeAddonApi(deps: {
     ...(deps.integrations !== undefined ? { integrations: deps.integrations } : {}),
     ...(deps.notificationOutput !== undefined
       ? { notificationOutput: deps.notificationOutput }
+      : {}),
+    ...(deps.capabilities !== undefined ? { capabilities: deps.capabilities } : {}),
+    ...(deps.integrationInstances !== undefined
+      ? { integrationInstances: deps.integrationInstances }
       : {}),
   } as unknown as AddonApi
 }

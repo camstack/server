@@ -119,8 +119,12 @@ export interface BootAnalyticsOptions {
   readonly parking?: FakePipelineRunnerOptions
   /** `deviceManager.listDeviceIdsByCaps`. Omitted ⇒ absent from the fake. */
   readonly listDeviceIdsByCaps?: (capNames: readonly string[]) => Promise<readonly number[]>
-  /** `api.notificationOutput`: the target catalog a rule save checks its targets against. */
+  /** `api.notificationOutput`: the target KIND catalog the dispatcher reads budgets from. */
   readonly notificationOutput?: unknown
+  /** `api.capabilities`: who provides `notification-output` and `integration-instances`. */
+  readonly capabilities?: unknown
+  /** `api.integrationInstances`: the targets themselves, as instances of `notification-output`. */
+  readonly integrationInstances?: unknown
 }
 
 export async function bootAnalytics(
@@ -148,6 +152,10 @@ export async function bootAnalytics(
     ...(options.integrations !== undefined ? { integrations: options.integrations } : {}),
     ...(options.notificationOutput !== undefined
       ? { notificationOutput: options.notificationOutput }
+      : {}),
+    ...(options.capabilities !== undefined ? { capabilities: options.capabilities } : {}),
+    ...(options.integrationInstances !== undefined
+      ? { integrationInstances: options.integrationInstances }
       : {}),
     ...(options.pipelineExecutor !== undefined
       ? { pipelineExecutor: options.pipelineExecutor }

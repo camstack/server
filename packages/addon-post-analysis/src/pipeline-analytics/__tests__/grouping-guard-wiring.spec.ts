@@ -78,21 +78,26 @@ function bridge(booted: Booted): RuleSaver {
   }
 }
 
-/** The target catalog a cap-provider save checks `target-1` against. */
-const NOTIFICATION_OUTPUT = {
-  listTargets: {
+/** The target catalog a cap-provider save checks `target-1` against: one `notifiers` instance of a
+ *  `notification-output` kind, read the way the hub serves it (#440 step 6). */
+const NOTIFICATION_OUTPUT = { listTargetKinds: { query: async () => [] } }
+const CAPABILITIES = {
+  getCapability: {
+    query: async ({ name }: { name: string }) => ({
+      providers:
+        name === 'notification-output' || name === 'integration-instances' ? ['notifiers'] : [],
+    }),
+  },
+}
+const INTEGRATION_INSTANCES = {
+  describe: {
+    query: async () => ({ kinds: [{ id: 'zentik', functionCap: 'notification-output' }] }),
+  },
+  listInstances: {
     query: async () => [
-      {
-        id: 'target-1',
-        addonId: 'notifiers',
-        name: 'phone',
-        kind: 'zentik',
-        enabled: true,
-        config: {},
-      },
+      { id: 'target-1', kind: 'zentik', name: 'phone', enabled: true, formValues: {} },
     ],
   },
-  listTargetKinds: { query: async () => [] },
 }
 
 const booted: Booted[] = []
@@ -100,6 +105,8 @@ const booted: Booted[] = []
 async function boot(): Promise<Booted> {
   const b = await bootAnalytics(101, async () => null, {
     notificationOutput: NOTIFICATION_OUTPUT,
+    capabilities: CAPABILITIES,
+    integrationInstances: INTEGRATION_INSTANCES,
   })
   booted.push(b)
   return b
