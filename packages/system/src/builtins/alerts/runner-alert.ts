@@ -15,6 +15,7 @@
  */
 import type { AlertSeverity } from '@camstack/types'
 import { CORE_BLOCK_ADDON_PREFIX } from '@camstack/types'
+import { CRASH_BREAKER_ERROR_PREFIX } from '../../kernel/moleculer/runner-failure-info.js'
 
 export type RunnerAlertState = 'crashed' | 'failed' | 'refused'
 
@@ -29,13 +30,16 @@ export interface RunnerAlertRecord {
   readonly addonIds: readonly string[]
   /** Human name of the runner (a core block's name, an addon's manifest name); absent = unknown, the id is shown. */
   readonly displayName?: string
-  /** Last error text a plain crash carried. */
+  /** The real cause: the runner's own last stderr line, else a crash event's error (never the breaker's own text). */
   readonly lastError?: string
   /** Refusal: the addon's own words, and what the operator does. */
   readonly reason?: string
   readonly remedy?: string
   /** Breaker: crashes inside the window. */
   readonly crashesInWindow?: number
+  /** How the last process left, when the hub saw it. */
+  readonly exitCode?: number
+  readonly signal?: string
 }
 
 export type RunnerAlertCategory =
@@ -103,11 +107,14 @@ export function foldRunnerEvent(
     addonIds: [],
   }
   const addonIds = [...new Set([...base.addonIds, ...strList(data, 'addonIds')])]
+  const displayName = base.displayName ?? str(data, 'displayName')
+  const named = displayName !== undefined ? { displayName } : {}
   const count = base.count + 1
   switch (category) {
     case 'addon.runner-refused':
       return {
         ...base,
+        ...named,
         state: 'refused',
         count,
         addonIds,
@@ -116,13 +123,20 @@ export function foldRunnerEvent(
       }
     case 'addon.runner-failed': {
       // A refusal is the more specific truth and is never downgraded.
-      if (base.state === 'refused') return { ...base, count, addonIds }
+      if (base.state === 'refused') return { ...base, ...named, count, addonIds }
       const crashes = data['crashesInWindow']
+      const cause = str(data, 'lastError')
+      const exitCode = data['exitCode']
+      const signal = str(data, 'signal')
       return {
         ...base,
+        ...named,
         state: 'failed',
         count,
         addonIds,
+        ...(cause !== undefined ? { lastError: cause } : {}),
+        ...(typeof exitCode === 'number' ? { exitCode } : {}),
+        ...(signal !== undefined ? { signal } : {}),
         ...(typeof crashes === 'number' ? { crashesInWindow: crashes } : {}),
       }
     }
@@ -131,13 +145,17 @@ export function foldRunnerEvent(
       const addonId = str(data, 'addonId')
       return {
         ...base,
+        ...named,
         count,
         addonIds: addonId !== undefined ? [...new Set([...addonIds, addonId])] : addonIds,
-        ...(error !== undefined ? { lastError: error } : {}),
+        // The breaker's own sentence describes the breaker, not the cause.
+        ...(error !== undefined && !error.startsWith(CRASH_BREAKER_ERROR_PREFIX)
+          ? { lastError: error }
+          : {}),
       }
     }
     case 'process.crashed':
-      return { ...base, count, addonIds }
+      return { ...base, ...named, count, addonIds }
   }
 }
 
@@ -153,6 +171,14 @@ function runnerLabel(record: RunnerAlertRecord): string {
   if (displayName === undefined) return `"${runnerId}"`
   const kind = runnerId.startsWith(CORE_BLOCK_ADDON_PREFIX) ? 'Core block' : 'Addon'
   return `${kind} "${displayName}" (${runnerId})`
+}
+
+/** `: <cause>`; with no cause known, how the process left (`: exit code 1`), else nothing. */
+function failureCause(record: RunnerAlertRecord): string {
+  if (record.lastError !== undefined) return `: ${record.lastError}`
+  if (record.signal !== undefined) return `: killed by ${record.signal}`
+  if (record.exitCode !== undefined) return `: exit code ${String(record.exitCode)}`
+  return ''
 }
 
 export function renderRunnerAlert(record: RunnerAlertRecord): RenderedRunnerAlert {
@@ -176,7 +202,7 @@ export function renderRunnerAlert(record: RunnerAlertRecord): RenderedRunnerAler
         message:
           `${named ? label : `Runner ${label}`} gave up` +
           `${record.crashesInWindow !== undefined ? ` after ${String(record.crashesInWindow)} crashes` : ''}` +
-          `${record.lastError !== undefined ? `: ${record.lastError}` : ''}` +
+          `${failureCause(record)}` +
           `${others.length > 0 ? ` (addons: ${others.join(', ')})` : ''}` +
           ` - ${String(record.count)} events`,
       }

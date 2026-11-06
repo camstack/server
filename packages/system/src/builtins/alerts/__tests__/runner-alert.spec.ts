@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { CRASH_BREAKER_ERROR_PREFIX } from '../../../kernel/moleculer/runner-failure-info.js'
 import {
   foldRunnerEvent,
   renderRunnerAlert,
@@ -125,5 +126,58 @@ describe('runner alert names the runner (display name)', () => {
     expect(renderRunnerAlert(crashed).message).toBe(
       'Addon "reolink" crashed: Init failed: fetch failed',
     )
+  })
+})
+
+describe('the crash-loop cause is the real one, never the breaker boilerplate', () => {
+  const key = { nodeId: 'hub', runnerId: 'core-block-abc' }
+  const breaker = `${CRASH_BREAKER_ERROR_PREFIX} after 5 crashes in 60000ms`
+
+  it('the breaker addon.crashed text, which production emits right after runner-failed, is not the cause', () => {
+    let record = foldRunnerEvent(
+      null,
+      'addon.runner-failed',
+      {
+        runnerId: 'core-block-abc',
+        addonIds: ['core-block-abc'],
+        crashesInWindow: 5,
+        displayName: 'Programmazione TV',
+        lastError: 'fetch failed',
+        exitCode: 1,
+      },
+      key,
+      1,
+    )
+    record = foldRunnerEvent(
+      record,
+      'addon.crashed',
+      { addonId: 'core-block-abc', error: breaker },
+      key,
+      1,
+    )
+    expect(record.lastError).toBe('fetch failed')
+    expect(renderRunnerAlert(record).message).toBe(
+      'Core block "Programmazione TV" (core-block-abc) gave up after 5 crashes: fetch failed - 2 events',
+    )
+  })
+
+  it('with no stderr cause it shows the exit code and drops the boilerplate', () => {
+    let record = foldRunnerEvent(
+      null,
+      'addon.runner-failed',
+      { runnerId: 'core-block-abc', addonIds: ['core-block-abc'], crashesInWindow: 5, exitCode: 1 },
+      key,
+      1,
+    )
+    record = foldRunnerEvent(
+      record,
+      'addon.crashed',
+      { addonId: 'core-block-abc', error: breaker },
+      key,
+      1,
+    )
+    const message = renderRunnerAlert(record).message
+    expect(message).toContain(': exit code 1')
+    expect(message).not.toContain('circuit-breaker')
   })
 })

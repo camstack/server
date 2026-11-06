@@ -125,6 +125,7 @@
   "system.node-inference-unavailable.body": "Node {{nodeId}} can no longer run inference — every enabled device is unavailable ({{devices}}). It will not receive cameras until one returns.",
   "system.addon-crash-loop.title": "Addon crash-loop — {{nodeId}}",
   "system.addon-crash-loop.body": "The {{addons}} addon on node {{nodeId}} crashed {{count}} times in a row and will NOT be restarted. Everything it provides is offline until it is repaired.",
+  "system.addon-crash-loop.bodyCause": "The {{addons}} addon on node {{nodeId}} crashed {{count}} times in a row and will NOT be restarted. Cause: {{cause}}. Everything it provides is offline until it is repaired.",
   "system.detection-blind.title": "Detecting nothing — {{deviceName}}",
   "system.detection-blind.body": {
     "one": "Camera {{deviceName}} moved for {{minutes}} minute over {{sessions}} sessions and the detector produced nothing at all, not even a weak candidate",

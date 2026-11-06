@@ -84,4 +84,31 @@ describe('a runner the crash circuit-breaker gave up on', () => {
       expect(body).not.toContain('{{')
     }
   })
+
+  it('names the block and carries the real cause from the payload', () => {
+    const named: SystemEvent = {
+      ...RUNNER_FAILED,
+      data: {
+        ...RUNNER_FAILED.data,
+        runnerId: 'core-block-abc',
+        addonIds: ['core-block-abc'],
+        displayName: 'Programmazione TV',
+        lastError: 'fetch failed',
+      },
+    }
+    const params = incomingFromSystemEvent(named, NO_DEVICES)?.subject.systemEvent
+    expect(params).toMatchObject({
+      bodyKey: 'system.addon-crash-loop.bodyCause',
+      textParams: { addons: 'Programmazione TV', cause: 'fetch failed' },
+    })
+    for (const language of NC_LANGUAGES) {
+      const body = new NcTextCatalog({ language }).text({
+        key: 'system.addon-crash-loop.bodyCause',
+        vars: { nodeId: 'hub', addons: 'Programmazione TV', count: '5', cause: 'fetch failed' },
+      })
+      expect(body).toContain('Programmazione TV')
+      expect(body).toContain('fetch failed')
+      expect(body).not.toContain('{{')
+    }
+  })
 })

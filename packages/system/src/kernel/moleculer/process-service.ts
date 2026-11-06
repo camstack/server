@@ -15,6 +15,12 @@ import { CrashSupervisor } from './crash-supervisor.js'
 import { getBrokerEventBus } from './event-bus.js'
 import { FailedRunnerRetryLedger, readRunnerPackageVersions } from './failed-runner-retry.js'
 import {
+  CRASH_BREAKER_ERROR_PREFIX,
+  lastCauseAfterChunk,
+  readRunnerDisplayName,
+  type RunnerCause,
+} from './runner-failure-info.js'
+import {
   invalidateHeapProfiles,
   isHeavyRunner,
   type RunnerAddonSpec,
@@ -130,11 +136,25 @@ interface SpawnedProcess {
    * refusal and then died of something else did not refuse).
    */
   announcedRefusal: RunnerRefusalReport | null
+  /** The runner's own last stderr cause (an `Init failed` line outranks later noise); carried on the give-up event. */
+  lastCause: RunnerCause | undefined
   child: ChildProcess
   /** The runner leads its own process group (POSIX, D668); its pgid is its `pid`. */
   readonly ownsGroup: boolean
   /** The reap of this runner's group, once started. Memoized: every exit path shares it. */
   groupReap: Promise<void> | null
+}
+
+/** `{ displayName }` from the runner's package manifests, or nothing when it names none. */
+function runnerDisplayNameField(
+  entry: { readonly runnerAddons: readonly { readonly addonDir: string }[] },
+  runnerId: string,
+): { readonly displayName?: string } {
+  const displayName = readRunnerDisplayName(
+    entry.runnerAddons.map((a) => a.addonDir),
+    runnerId,
+  )
+  return displayName === undefined ? {} : { displayName }
 }
 
 interface ProcessInfo {
@@ -475,6 +495,7 @@ function createProcessService(
       state: 'starting',
       refusal: null,
       announcedRefusal: null,
+      lastCause: undefined,
       child,
       ownsGroup,
       groupReap: null,
@@ -506,7 +527,9 @@ function createProcessService(
 
     child.stderr?.on('data', (data: Buffer) => {
       // Only forward stderr (crash traces, unhandled rejections)
-      process.stderr.write(`[${runnerId}] ${data.toString()}`)
+      const text = data.toString()
+      entry.lastCause = lastCauseAfterChunk(entry.lastCause, text)
+      process.stderr.write(`[${runnerId}] ${text}`)
     })
 
     // Handle exit — D6 crash circuit-breaker. Each unexpected exit is
@@ -573,6 +596,7 @@ function createProcessService(
           runnerId,
           nodeId: parentNodeId,
           addonIds: entry.runnerAddons.map((addon) => addon.addonId),
+          ...runnerDisplayNameField(entry, runnerId),
           code: refusal.code,
           reason: refusal.reason,
           remedy: refusal.remedy,
@@ -641,6 +665,8 @@ function createProcessService(
           addonIds: entry.runnerAddons.map((addon) => addon.addonId),
           crashesInWindow: decision.crashesInWindow,
           windowMs: CRASH_WINDOW_MS,
+          ...runnerDisplayNameField(entry, runnerId),
+          ...(entry.lastCause !== undefined ? { lastError: entry.lastCause.text } : {}),
           ...(code !== null ? { exitCode: code } : {}),
           ...(signal !== null ? { signal } : {}),
         })
@@ -650,7 +676,7 @@ function createProcessService(
         for (const addon of entry.runnerAddons) {
           emitRunnerEvent(EventCategory.AddonCrashed, addon.addonId, {
             addonId: addon.addonId,
-            error: `Crash circuit-breaker tripped after ${decision.crashesInWindow} crashes in ${CRASH_WINDOW_MS}ms`,
+            error: `${CRASH_BREAKER_ERROR_PREFIX} after ${decision.crashesInWindow} crashes in ${CRASH_WINDOW_MS}ms`,
           })
         }
         return

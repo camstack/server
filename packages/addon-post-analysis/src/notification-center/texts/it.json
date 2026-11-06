@@ -125,6 +125,7 @@
   "system.node-inference-unavailable.body": "Il nodo {{nodeId}} non può più eseguire inferenza — tutti i dispositivi abilitati non sono disponibili ({{devices}}). Non riceverà camere finché uno non torna disponibile.",
   "system.addon-crash-loop.title": "Crash-loop addon — {{nodeId}}",
   "system.addon-crash-loop.body": "L'addon {{addons}} sul nodo {{nodeId}} è andato in crash {{count}} volte di seguito e NON verrà riavviato. Tutto ciò che fornisce resta offline finché non viene riparato.",
+  "system.addon-crash-loop.bodyCause": "L'addon {{addons}} sul nodo {{nodeId}} è andato in crash {{count}} volte di seguito e NON verrà riavviato. Causa: {{cause}}. Tutto ciò che fornisce resta offline finché non viene riparato.",
   "system.recording-stalled.title": "Registrazione ferma — {{deviceName}}",
   "system.recording-stalled.body": {
     "one": "La camera {{deviceName}} non scrive un segmento da {{minutes}} minuto",

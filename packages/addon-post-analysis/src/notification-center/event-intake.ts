@@ -1240,6 +1240,10 @@ export function incomingFromSystemEvent(
       if (nodeId === undefined || runnerId === undefined || crashes === undefined) return null
       const ids = data['addonIds']
       const addons = Array.isArray(ids) ? ids.filter((id) => typeof id === 'string') : []
+      // The runner's own name (a core block's, an addon's manifest) and its real
+      // cause ride the payload: the id alone does not say which block died.
+      const displayName = stringField(data, 'displayName')
+      const cause = stringField(data, 'lastError')
       return systemSubject({
         facts,
         kind: 'addon-crash-loop',
@@ -1249,13 +1253,17 @@ export function incomingFromSystemEvent(
         // going away — one would suppress the other.
         subject: `addon-crash:${nodeId}:${runnerId}`,
         titleKey: 'system.addon-crash-loop.title',
-        bodyKey: 'system.addon-crash-loop.body',
+        bodyKey:
+          cause !== undefined
+            ? 'system.addon-crash-loop.bodyCause'
+            : 'system.addon-crash-loop.body',
         textParams: {
           nodeId,
           // The runner id when the payload named no addons: a sentence with a
           // hole in it is how "La camera è offline" shipped.
-          addons: addons.length > 0 ? addons.join(', ') : runnerId,
+          addons: displayName ?? (addons.length > 0 ? addons.join(', ') : runnerId),
           count: String(crashes),
+          ...(cause !== undefined ? { cause } : {}),
         },
         nodeId,
       })

@@ -52,55 +52,28 @@ interface CategoryMapping {
 const CATEGORY_MAPPINGS: Readonly<Record<string, CategoryMapping>> = {
   // ── Crashes / hard faults ─────────────────────────────────────────
   'addon.crashed': { severity: 'error', titleTemplate: 'Addon crashed' },
-  'addon.runner-failed': {
-    severity: 'error',
-    titleTemplate: 'Addon crash loop',
-  },
-  'addon.runner-refused': {
-    severity: 'error',
-    titleTemplate: 'Addon refused to start',
-  },
-  'system.runner-check': {
-    severity: 'error',
-    titleTemplate: 'Runners degraded',
-  },
+  'addon.runner-failed': { severity: 'error', titleTemplate: 'Addon crash loop' },
+  'addon.runner-refused': { severity: 'error', titleTemplate: 'Addon refused to start' },
+  'system.runner-check': { severity: 'error', titleTemplate: 'Runners degraded' },
   'addon.error': { severity: 'error', titleTemplate: 'Addon error' },
   'process.crashed': { severity: 'error', titleTemplate: 'Process crashed' },
   'recording.error': { severity: 'error', titleTemplate: 'Recording error' },
-  'recording.storage.critical': {
-    severity: 'warning',
-    titleTemplate: 'Storage critical',
-  },
-  'notification.failed': {
-    severity: 'error',
-    titleTemplate: 'Notification failed',
-  },
+  'recording.storage.critical': { severity: 'warning', titleTemplate: 'Storage critical' },
+  'notification.failed': { severity: 'error', titleTemplate: 'Notification failed' },
 
   // ── Cluster — disconnect only (connect is expected) ───────────────
   'agent.offline': { severity: 'warning', titleTemplate: 'Agent disconnected' },
 
   // ── Node / package updates ────────────────────────────────────────
-  'system.restarting': {
-    severity: 'warning',
-    titleTemplate: 'System restarting',
-  },
-  'system.restart-completed': {
-    severity: 'info',
-    titleTemplate: 'Node updated',
-  },
+  'system.restarting': { severity: 'warning', titleTemplate: 'System restarting' },
+  'system.restart-completed': { severity: 'info', titleTemplate: 'Node updated' },
   'update.available': { severity: 'info', titleTemplate: 'Update available' },
   // The hub's own certificate changed — anyone who trusted the previous
   // one by hand has to act. Never silent.
-  'system.tls-cert-changed': {
-    severity: 'warning',
-    titleTemplate: 'TLS certificate changed',
-  },
+  'system.tls-cert-changed': { severity: 'warning', titleTemplate: 'TLS certificate changed' },
 
   // ── Device remove (add is expected operator work) ─────────────────
-  'device.unregistered': {
-    severity: 'warning',
-    titleTemplate: 'Device unregistered',
-  },
+  'device.unregistered': { severity: 'warning', titleTemplate: 'Device unregistered' },
 
   // ── Package management (version-bearing `addon.updated` only) ─────
   'addon.installed': { severity: 'info', titleTemplate: 'Addon installed' },
@@ -108,32 +81,20 @@ const CATEGORY_MAPPINGS: Readonly<Record<string, CategoryMapping>> = {
   'addon.uninstalled': { severity: 'info', titleTemplate: 'Addon uninstalled' },
 
   // ── Addon / node health (stable-id merge paths) ───────────────────
-  'addon.load-failed': {
-    severity: 'error',
-    titleTemplate: 'Addon failed to load',
-  },
-  'system.liveness-failed': {
-    severity: 'error',
-    titleTemplate: 'Node liveness',
-  },
+  'addon.load-failed': { severity: 'error', titleTemplate: 'Addon failed to load' },
+  'system.liveness-failed': { severity: 'error', titleTemplate: 'Node liveness' },
 
   // ── Streams — only real outages (`stale-timeout`); see handler ────
   'stream.offline': { severity: 'warning', titleTemplate: 'Stream offline' },
 
   // ── A notification rule that cannot work (D905) — one card per rule ──
-  'notification.rule-broken': {
-    severity: 'warning',
-    titleTemplate: 'Notification rule broken',
-  },
+  'notification.rule-broken': { severity: 'warning', titleTemplate: 'Notification rule broken' },
 
   // ── Backup restore (completed backups are routine) ────────────────
   'backup.restored': { severity: 'info', titleTemplate: 'Backup restored' },
 
   // ── Model downloads (in-progress merging path) ────────────────────
-  'model.download.progress': {
-    severity: 'info',
-    titleTemplate: 'Model download',
-  },
+  'model.download.progress': { severity: 'info', titleTemplate: 'Model download' },
 }
 
 /**
@@ -189,8 +150,6 @@ const TRACKED_CATEGORIES = [...Object.keys(CATEGORY_MAPPINGS), ...SILENT_TRACKED
  * per minute still get through, but strict enough that a reconnect loop
  * firing every second gets muted.
  */
-/** Upper bound on the name lookup of a runner alert; past it the alert names the id. */
-const RUNNER_NAME_LOOKUP_MS = 1500
 const RATE_LIMIT_WINDOW_MS = 60_000
 const RATE_LIMIT_MAX_PER_SOURCE = 5
 
@@ -224,6 +183,8 @@ function parseRunnerRecord(value: unknown): RunnerAlertRecord | null {
     count: rec['count'],
     addonIds: rec['addonIds'].filter((x): x is string => typeof x === 'string'),
     ...(typeof rec['displayName'] === 'string' ? { displayName: rec['displayName'] } : {}),
+    ...(typeof rec['exitCode'] === 'number' ? { exitCode: rec['exitCode'] } : {}),
+    ...(typeof rec['signal'] === 'string' ? { signal: rec['signal'] } : {}),
     ...(typeof rec['lastError'] === 'string' ? { lastError: rec['lastError'] } : {}),
     ...(typeof rec['reason'] === 'string' ? { reason: rec['reason'] } : {}),
     ...(typeof rec['remedy'] === 'string' ? { remedy: rec['remedy'] } : {}),
@@ -239,6 +200,9 @@ function parseAlert(record: { id: string; data: Record<string, unknown> }): Aler
 }
 
 // ── Alert Center Addon ─────────────────────────────────────────────
+
+/** Upper bound on the name lookup of a runner alert; past it the alert names the id. */
+const RUNNER_NAME_LOOKUP_MS = 1500
 
 interface AlertCenterConfig {
   readonly maxAlerts: number
@@ -597,9 +561,7 @@ export class AlertCenterAddon extends BaseAddon<AlertCenterConfig> {
 
       await this.emitAlert(alert)
     } catch (err) {
-      this.ctx.logger?.warn('Failed to handle event', {
-        meta: { category, error: errMsg(err) },
-      })
+      this.ctx.logger?.warn('Failed to handle event', { meta: { category, error: errMsg(err) } })
     }
   }
 
@@ -658,11 +620,7 @@ export class AlertCenterAddon extends BaseAddon<AlertCenterConfig> {
     }
     await this.persistAlert(alert)
     if (previous === null) this.emitAlertCreatedEvent(alert)
-    else
-      this.emitAlertUpdatedEvent(alertId, {
-        message: alert.message,
-        title: alert.title,
-      })
+    else this.emitAlertUpdatedEvent(alertId, { message: alert.message, title: alert.title })
     await this.enforceMaxAlerts()
   }
 
@@ -826,10 +784,7 @@ export class AlertCenterAddon extends BaseAddon<AlertCenterConfig> {
           message: `Model "${modelId}" download completed`,
           updatedAt: now,
         })
-        this.emitAlertUpdatedEvent(stableId, {
-          status: 'completed',
-          progress: 100,
-        })
+        this.emitAlertUpdatedEvent(stableId, { status: 'completed', progress: 100 })
       } else if (progress < 0) {
         await this.mergeUpdate(stableId, {
           status: 'failed' satisfies AlertStatus,
@@ -889,11 +844,7 @@ export class AlertCenterAddon extends BaseAddon<AlertCenterConfig> {
 
     if (!entry || now - entry.firstAt > RATE_LIMIT_WINDOW_MS) {
       // First event of a new window — always allow, start the counter.
-      this.rateLimitCounters.set(key, {
-        firstAt: now,
-        count: 1,
-        suppressedLogged: false,
-      })
+      this.rateLimitCounters.set(key, { firstAt: now, count: 1, suppressedLogged: false })
       return false
     }
 
@@ -1106,13 +1057,7 @@ export class AlertCenterAddon extends BaseAddon<AlertCenterConfig> {
       createdAt: Date.now(),
       updatedAt: Date.now(),
       source: { type: 'addon', id: 'notification-center' },
-      metadata: {
-        ruleId,
-        ruleName,
-        reason,
-        offendingIds,
-        reasons: event.data['reasons'],
-      },
+      metadata: { ruleId, ruleName, reason, offendingIds, reasons: event.data['reasons'] },
     }
     await this.emitAlert(alert)
   }
@@ -1282,9 +1227,7 @@ export class AlertCenterAddon extends BaseAddon<AlertCenterConfig> {
 
   private async resolveDeviceName(deviceId: number): Promise<string | undefined> {
     try {
-      const device = await this.ctx.api.deviceManager.getDevice.query({
-        deviceId,
-      })
+      const device = await this.ctx.api.deviceManager.getDevice.query({ deviceId })
       if (device !== null && typeof device.name === 'string' && device.name.trim().length > 0) {
         return device.name.trim()
       }
