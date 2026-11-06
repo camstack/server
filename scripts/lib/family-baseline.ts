@@ -11,6 +11,7 @@
  *   in the same change that fixed the site.
  * - NO REASON: an entry whose reason is empty.
  */
+import { execFileSync } from 'node:child_process'
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -89,13 +90,39 @@ export function compareToBaseline(
   return out
 }
 
+let ignoredDirs: ReadonlySet<string> | null = null
+
+/** Directories git ignores under ROOT (runtime data dirs such as `camstack-agent-*`), so a
+ * local deployed copy of an addon is never scanned as source. */
+function gitIgnoredDirs(): ReadonlySet<string> {
+  if (ignoredDirs !== null) return ignoredDirs
+  try {
+    const listed = execFileSync(
+      'git',
+      ['ls-files', '--others', '--ignored', '--exclude-standard', '--directory'],
+      { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 },
+    )
+    ignoredDirs = new Set(
+      listed
+        .split('\n')
+        .filter((line) => line.endsWith('/'))
+        .map((line) => path.join(ROOT, line.slice(0, -1))),
+    )
+  } catch {
+    ignoredDirs = new Set()
+  }
+  return ignoredDirs
+}
+
 export function walk(dir: string, accept: (file: string) => boolean, out: string[] = []): string[] {
+  const ignored = gitIgnoredDirs()
   for (const name of readdirSync(dir)) {
     if (name === 'node_modules' || name === 'dist' || name === '__tests__' || name === 'generated')
       continue
     const full = path.join(dir, name)
-    if (statSync(full).isDirectory()) walk(full, accept, out)
-    else if (accept(full)) out.push(full)
+    if (statSync(full).isDirectory()) {
+      if (!ignored.has(full)) walk(full, accept, out)
+    } else if (accept(full)) out.push(full)
   }
   return out
 }

@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The new-integration form tests the draft through the integration's own Test (one test method for every integration)
+- Customize lists a built device one row per field, grouped by capability, with the state of each source (to fill, bound, not answering, missing), clocks under Advanced, and a keyed item such as a filter as a small form
+- Picking a source in Customize uses the shared device-to-value picker: devices and values that do not fit are no longer listed, and a transform plus a preview sit beside the pick
+- Customize: Fill from device proposes a fitting value per field, and the picker offers only values whose unit fits (a minutes value is no longer offered for a percent level); fits as is / convertible wording
+- Customize: a source in another unit than a consumable level (hours, minutes) is offered as convertible and the operator enters the scale; a battery percent fits as is
 
 ## [1.2.599] - 2026-11-06
 
@@ -19,10 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The broker picker of an instance link honours a disabled field and offers an empty choice for an optional link
 - Removed the broker-select field type; every broker link is now an instance-select field on the one link primitive
 - The integration on/off toggle switches the instance through integration-instances
-- Customize lists a built device one row per field, grouped by capability, with the state of each source (to fill, bound, not answering, missing), clocks under Advanced, and a keyed item such as a filter as a small form
-- Picking a source in Customize uses the shared device-to-value picker: devices and values that do not fit are no longer listed, and a transform plus a preview sit beside the pick
-- Customize: Fill from device proposes a fitting value per field, and the picker offers only values whose unit fits (a minutes value is no longer offered for a percent level); fits as is / convertible wording
-- Customize: a source in another unit than a consumable level (hours, minutes) is offered as convertible and the operator enters the scale; a battery percent fits as is
 
 ## [1.2.598] - 2026-11-06
 
