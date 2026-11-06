@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The broker picker of an instance link honours a disabled field and offers an empty choice for an optional link
 - Removed the broker-select field type; every broker link is now an instance-select field on the one link primitive
 - The integration on/off toggle switches the instance through integration-instances
+- Customize lists a built device one row per field, grouped by capability, with the state of each source (to fill, bound, not answering, missing), clocks under Advanced, and a keyed item such as a filter as a small form
 
 ## [1.2.598] - 2026-11-06
 

@@ -10,6 +10,7 @@ import { type DeviceInfo, DeviceType } from '@camstack/types'
 import {
   DataTable,
   type DataColumn,
+  Button,
   Dropdown,
   DropdownContent,
   DropdownItem,
@@ -42,13 +43,22 @@ import { ConfigSourceCell, ConfigValueCell } from './ConfigRowCells'
 import { EventSourceCell, EventValueCell } from './EventRowCells'
 import { catalogCoveredCaps, offCatalogCards } from './extra-rows'
 import {
-  ExtraActionsCell,
-  type ExtraRow,
-  ExtraRowDialog,
-  OffCatalogSourceCell,
-  OffCatalogValueCell,
-  offCatalogTitle,
+  CapActionsCell,
+  capGroupTitle,
+  FieldActionsCell,
+  FieldRowDialog,
+  FieldSourceCell,
+  FieldValueCell,
+  fieldRowTitle,
 } from './ExtraRowCells'
+import {
+  type FieldGroup,
+  type FieldRow,
+  fieldGroups,
+  fieldRowState,
+  itemFieldRows,
+} from './field-rows'
+import { useFieldSources } from './use-field-sources'
 import { KeyedValueCell } from './KeyedValueCell'
 import {
   isLinkedActionLine,
@@ -77,13 +87,17 @@ export interface CustomizeTableProps {
   readonly defaults: Known<readonly DefaultConsumable[]>
 }
 
-/** The catalog sections, then field groups the catalog does not know. */
-type TableSection = CustomizeSection | 'offCatalog'
-
+/** One line of the table: a catalog section, a catalog row, or the per-field rows of a cap. */
 type TableLine =
-  | { readonly kind: 'section'; readonly section: TableSection }
+  | { readonly kind: 'section'; readonly section: CustomizeSection }
   | { readonly kind: 'row'; readonly plan: CustomizeRowPlan }
-  | { readonly kind: 'extra'; readonly row: ExtraRow }
+  | { readonly kind: 'capSection'; readonly cap: string }
+  | { readonly kind: 'field'; readonly row: FieldRow }
+  | {
+      readonly kind: 'advanced'
+      readonly cap: string
+      readonly rows: readonly FieldRow[]
+    }
   | LinkedActionTableLine
 
 function lineKey(line: TableLine): string {
@@ -92,8 +106,12 @@ function lineKey(line: TableLine): string {
       return `section:${line.section}`
     case 'row':
       return line.plan.spec.key
-    case 'extra':
-      return line.row.key
+    case 'capSection':
+      return `capSection:${line.cap}`
+    case 'field':
+      return `field:${line.row.key}`
+    case 'advanced':
+      return `advanced:${line.cap}`
     case 'actionSection':
       return 'action-section'
     case 'actionPending':
@@ -109,23 +127,36 @@ function lineKey(line: TableLine): string {
 
 function buildLines(
   active: readonly CustomizeRowPlan[],
-  extras: readonly ExtraRow[],
+  groups: readonly FieldGroup[],
+  advancedOpen: ReadonlySet<string>,
+  itemLines: (cap: string) => readonly TableLine[],
   actions: readonly LinkedActionTableLine[],
 ): readonly TableLine[] {
   const catalog = activeSections(active).flatMap((section) => [
     { kind: 'section' as const, section },
     ...active
       .filter((plan) => plan.spec.section === section)
-      .map((plan) => ({ kind: 'row' as const, plan })),
+      .flatMap((plan): TableLine[] => [
+        { kind: 'row' as const, plan },
+        ...(plan.spec.kind === 'keyed' ? itemLines(plan.spec.cap) : []),
+      ]),
   ])
-  const offCatalog = extras.filter((row) => row.kind === 'offCatalog')
-  const rest =
-    offCatalog.length === 0
+  const rest: TableLine[] = groups.flatMap((group): TableLine[] => [
+    { kind: 'capSection', cap: group.cap },
+    ...group.rows.map((row): TableLine => ({ kind: 'field', row })),
+    ...(group.advanced.length === 0
       ? []
       : [
-          { kind: 'section' as const, section: 'offCatalog' as const },
-          ...offCatalog.map((row) => ({ kind: 'extra' as const, row })),
-        ]
+          {
+            kind: 'advanced',
+            cap: group.cap,
+            rows: group.advanced,
+          } satisfies TableLine,
+        ]),
+    ...(advancedOpen.has(group.cap)
+      ? group.advanced.map((row): TableLine => ({ kind: 'field', row }))
+      : []),
+  ])
   return [...catalog, ...rest, ...actions]
 }
 
@@ -172,22 +203,34 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
     () => offCatalogCards(current, catalogCoveredCaps(device.type)),
     [current, device.type],
   )
-  const extras: readonly ExtraRow[] = offCatalog.map((card) => ({
-    kind: 'offCatalog' as const,
-    key: `offcatalog.${card.cap}`,
-    card,
-  }))
+  const groups = useMemo(() => fieldGroups(offCatalog), [offCatalog])
+  const sources = useFieldSources(groups.length > 0)
+  const [advancedOpen, setAdvancedOpen] = useState<ReadonlySet<string>>(new Set())
+  const toggleAdvanced = (cap: string): void =>
+    setAdvancedOpen((prev) => {
+      const next = new Set(prev)
+      if (!next.delete(cap)) next.add(cap)
+      return next
+    })
   const split = splitRows(planRows(specs, facts, isLinked))
   const actionLines = actions === null ? [] : linkedActionTableLines(actions)
-  if (specs.length === 0 && extras.length === 0 && actionLines.length === 0) return null
+  if (specs.length === 0 && groups.length === 0 && actionLines.length === 0) return null
   const titleOf = (spec: CustomizeRowSpec): string =>
     spec.kind === 'scalar'
       ? scalarRowTitle(t, i18n.language, spec.cap, spec.target)
       : t(`customize.table.caps.${spec.cap}`)
   const openPlan = [...split.active, ...split.addable].find((plan) => plan.spec.key === open)
-  const lines = buildLines(split.active, extras, actionLines)
-  const openExtra = extras.find((row) => row.key === open)
-  const extraTitle = (row: ExtraRow): string => offCatalogTitle(i18n.language, row.card)
+  const lines = buildLines(
+    split.active,
+    groups,
+    advancedOpen,
+    (cap) =>
+      itemFieldRows(featureOf(current, cap)).map((row): TableLine => ({ kind: 'field', row })),
+    actionLines,
+  )
+  const openField = groups
+    .flatMap((group) => [...group.rows, ...group.advanced])
+    .find((row) => row.key === open)
   const scalarProps = (
     spec: CustomizeRowSpec,
   ): { cap: string; target: CustomizeRowSpec['target'] } => ({
@@ -203,13 +246,32 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
       nowrap: false,
       render: (line) => {
         if (isLinkedActionLine(line)) return <LinkedActionItem line={line} />
-        return line.kind === 'section' ? (
-          <span className="text-[11px] font-medium uppercase tracking-wide text-foreground-muted">
-            {t(`customize.table.section.${line.section}`)}
-          </span>
-        ) : (
+        if (line.kind === 'section' || line.kind === 'capSection') {
+          return (
+            <span className="text-[11px] font-medium uppercase tracking-wide text-foreground-muted">
+              {line.kind === 'section'
+                ? t(`customize.table.section.${line.section}`)
+                : capGroupTitle(i18n.language, line.cap)}
+            </span>
+          )
+        }
+        if (line.kind === 'advanced') {
+          return (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="whitespace-nowrap"
+              data-testid={`customize-advanced-${line.cap}`}
+              aria-expanded={advancedOpen.has(line.cap)}
+              onClick={() => toggleAdvanced(line.cap)}
+            >
+              {t('customize.table.advanced', { count: line.rows.length })}
+            </Button>
+          )
+        }
+        return (
           <span className="text-xs text-foreground">
-            {line.kind === 'row' ? titleOf(line.plan.spec) : extraTitle(line.row)}
+            {line.kind === 'row' ? titleOf(line.plan.spec) : fieldRowTitle(i18n.language, line.row)}
           </span>
         )
       },
@@ -220,9 +282,17 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
       notSortableReason: t('customize.table.col.value'),
       render: (line) => {
         if (isLinkedActionLine(line)) return <LinkedActionValue line={line} />
-        if (line.kind === 'section') return null
-        if (line.kind === 'extra')
-          return <OffCatalogValueCell device={device} card={line.row.card} />
+        if (line.kind === 'section' || line.kind === 'capSection' || line.kind === 'advanced')
+          return null
+        if (line.kind === 'field') {
+          return (
+            <FieldValueCell
+              device={device}
+              row={line.row}
+              state={fieldRowState(line.row, sources.presence)}
+            />
+          )
+        }
         const { spec } = line.plan
         if (spec.kind === 'scalar') {
           return <ScalarValueCell device={device} handle={handle} {...scalarProps(spec)} />
@@ -247,8 +317,17 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
       nowrap: false,
       render: (line) => {
         if (isLinkedActionLine(line)) return <LinkedActionSource line={line} />
-        if (line.kind === 'section') return null
-        if (line.kind === 'extra') return <OffCatalogSourceCell card={line.row.card} />
+        if (line.kind === 'section' || line.kind === 'capSection' || line.kind === 'advanced')
+          return null
+        if (line.kind === 'field') {
+          return (
+            <FieldSourceCell
+              row={line.row}
+              state={fieldRowState(line.row, sources.presence)}
+              names={sources.names}
+            />
+          )
+        }
         const { spec } = line.plan
         if (spec.kind === 'event') {
           return (
@@ -269,14 +348,24 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
         if (isLinkedActionLine(line)) {
           return actions === null ? null : <LinkedActionButtons line={line} state={actions} />
         }
-        if (line.kind === 'section') return null
-        if (line.kind === 'extra') {
+        if (line.kind === 'section' || line.kind === 'advanced') return null
+        if (line.kind === 'capSection') {
           return (
-            <ExtraActionsCell
-              row={line.row}
-              title={extraTitle(line.row)}
+            <CapActionsCell
+              cap={line.cap}
+              title={capGroupTitle(i18n.language, line.cap)}
               handle={handle}
-              onEdit={() => setOpen(line.row.key)}
+            />
+          )
+        }
+        if (line.kind === 'field') {
+          return (
+            <FieldActionsCell
+              row={line.row}
+              title={fieldRowTitle(i18n.language, line.row)}
+              onEdit={() =>
+                setOpen(line.row.item === null ? line.row.key : `${line.row.cap}.items`)
+              }
             />
           )
         }
@@ -343,7 +432,7 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
             bordered={false}
             minWidthPx={320}
             rowClassName={(line) =>
-              line.kind === 'section' || line.kind === 'actionSection'
+              line.kind === 'section' || line.kind === 'capSection' || line.kind === 'actionSection'
                 ? 'bg-surface-hover'
                 : undefined
             }
@@ -368,13 +457,14 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
             onError={setError}
           />
         )}
-      {openExtra !== undefined && (
-        <ExtraRowDialog
-          key={openExtra.key}
-          row={openExtra}
-          title={extraTitle(openExtra)}
+      {openField !== undefined && (
+        <FieldRowDialog
+          key={openField.key}
+          row={openField}
+          title={fieldRowTitle(i18n.language, openField)}
           device={device}
           handle={handle}
+          names={sources.names}
           onClose={() => setOpen(null)}
         />
       )}

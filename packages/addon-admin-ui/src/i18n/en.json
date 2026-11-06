@@ -2838,7 +2838,24 @@
       "fieldsCount_other": "{{count}} fields",
       "listCount_one": "{{count}} item",
       "listCount_other": "{{count}} items",
-      "listNone": "None"
+      "listNone": "None",
+      "fieldState": {
+        "toFill": "To fill",
+        "checking": "Checking…",
+        "bound": "Bound",
+        "notAnswering": "Source not answering",
+        "missing": "Source missing"
+      },
+      "advanced_one": "Advanced · {{count}} field",
+      "advanced_other": "Advanced · {{count}} fields",
+      "bind": "Bind",
+      "fillFromDevice": "Fill from device…",
+      "itemField": "{{item}} · {{field}}",
+      "itemLeaf": {
+        "level": "Level",
+        "status": "State",
+        "remaining": "Remaining"
+      }
     }
   },
   "compositionEditor": {

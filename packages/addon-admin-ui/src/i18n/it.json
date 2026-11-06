@@ -2913,7 +2913,24 @@
       "fieldsCount_other": "{{count}} campi",
       "listCount_one": "{{count}} elemento",
       "listCount_other": "{{count}} elementi",
-      "listNone": "Nessuno"
+      "listNone": "Nessuno",
+      "fieldState": {
+        "toFill": "Da compilare",
+        "checking": "Controllo…",
+        "bound": "Collegato",
+        "notAnswering": "Sorgente che non risponde",
+        "missing": "Sorgente mancante"
+      },
+      "advanced_one": "Avanzate · {{count}} campo",
+      "advanced_other": "Avanzate · {{count}} campi",
+      "bind": "Collega",
+      "fillFromDevice": "Compila da dispositivo…",
+      "itemField": "{{item}} · {{field}}",
+      "itemLeaf": {
+        "level": "Livello",
+        "status": "Stato",
+        "remaining": "Rimanente"
+      }
     }
   },
   "compositionEditor": {

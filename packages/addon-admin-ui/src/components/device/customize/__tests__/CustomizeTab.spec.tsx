@@ -701,9 +701,10 @@ describe('CustomizeTab — a composed device', () => {
                     cap: 'temperature-sensor',
                     fields: {
                       celsius: {
-                        kind: 'expression',
-                        expr: 'null',
-                        bindings: {},
+                        kind: 'from',
+                        source: { addonId: 'provider-homeassistant', stableId: 'gone' },
+                        cap: 'temperature-sensor',
+                        fieldPath: 'celsius',
                       },
                     },
                   },
@@ -716,12 +717,16 @@ describe('CustomizeTab — a composed device', () => {
       },
       refetch: vi.fn(async () => undefined),
     }
+    fleet.current = { status: 'success', data: [] }
     renderTab()
     expect(screen.queryByRole('link', { name: 'Edit its composition' })).toBeNull()
-    // The field group the catalog has no row for is a row of the one table, not a card below it.
+    // A field group the catalog has no row for is one ROW PER FIELD of the one table, not a card
+    // below it and not one blob row: the cap is the section, the field is the row.
     const table = screen.getByTestId('customize-table')
-    expect(within(table).getByText('Other fields')).toBeTruthy()
-    expect(within(table).getByTestId('customize-manage-offcatalog.temperature-sensor')).toBeTruthy()
+    expect(within(table).getByTestId('customize-manage-temperature-sensor.celsius')).toBeTruthy()
+    expect(within(table).queryByTestId('customize-manage-offcatalog.temperature-sensor')).toBeNull()
+    // Its source is not in the fleet: the row says so instead of reading as bound.
+    expect(within(table).getByTestId('field-state-missing')).toBeTruthy()
     expect(screen.queryByTestId('fields-card-temperature-sensor')).toBeNull()
   })
 })
