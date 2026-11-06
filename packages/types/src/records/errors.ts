@@ -30,10 +30,37 @@ export type RecordsErrorCode = (typeof RECORDS_ERROR_CODES)[number]
 
 const PREFIX = 'records/'
 
+/**
+ * Cross-realm brand. An addon bundles its own copy of this module (D15) while
+ * `ctx.records` is the HOST's door, so an error thrown by the host is an
+ * instance of the host's classes, not of the addon's. The brand plus the code
+ * make `instanceof` answer by identity of the failure, not of the copy.
+ */
+const RECORDS_ERROR_BRAND = Symbol.for('camstack.records-error')
+
+function carriesBrand(value: unknown): value is { readonly code?: unknown } {
+  return typeof value === 'object' && value !== null && Reflect.get(value, RECORDS_ERROR_BRAND) === true
+}
+
 /** The base of every records failure. `detail` is the human part of the message. */
 export class RecordsError extends Error {
+  /** The code a subclass stands for; the base stands for every code. */
+  static readonly code: RecordsErrorCode | undefined = undefined
+
+  /**
+   * `instanceof` across copies of this module: any branded error is a
+   * `RecordsError`, and is an instance of a subclass only when its code is the
+   * subclass's code. Same-copy answers are unchanged.
+   */
+  static [Symbol.hasInstance](value: unknown): boolean {
+    if (Function.prototype[Symbol.hasInstance].call(this, value)) return true
+    if (!carriesBrand(value)) return false
+    return this.code === undefined || value.code === this.code
+  }
+
   readonly code: RecordsErrorCode
   readonly detail: string
+  readonly [RECORDS_ERROR_BRAND] = true
 
   constructor(code: RecordsErrorCode, detail: string) {
     super(`${PREFIX}${code}: ${detail}`)
@@ -45,108 +72,122 @@ export class RecordsError extends Error {
 
 /** A write guarded by `ifRev` found another revision (or an existing row for `ifRev: 0`). */
 export class RevConflictError extends RecordsError {
+  static readonly code = 'rev-conflict' as const
   constructor(detail: string) {
-    super('rev-conflict', detail)
+    super(RevConflictError.code, detail)
     this.name = 'RevConflictError'
   }
 }
 
 /** `data` exceeds the kind's `maxDataBytes`. Bytes are never record fields (D613). */
 export class RecordTooLargeError extends RecordsError {
+  static readonly code = 'too-large' as const
   constructor(detail: string) {
-    super('too-large', detail)
+    super(RecordTooLargeError.code, detail)
     this.name = 'RecordTooLargeError'
   }
 }
 
 /** A filter, order or aggregate names a field no declared index serves. */
 export class UnindexedFilterError extends RecordsError {
+  static readonly code = 'unindexed-filter' as const
   constructor(detail: string) {
-    super('unindexed-filter', detail)
+    super(UnindexedFilterError.code, detail)
     this.name = 'UnindexedFilterError'
   }
 }
 
 /** A bulk delete with no predicate at all. */
 export class FilterRequiredError extends RecordsError {
+  static readonly code = 'filter-required' as const
   constructor(detail: string) {
-    super('filter-required', detail)
+    super(FilterRequiredError.code, detail)
     this.name = 'FilterRequiredError'
   }
 }
 
 /** The caller declared no such kind (another addon's kind is indistinguishable from none). */
 export class UnknownRecordKindError extends RecordsError {
+  static readonly code = 'unknown-kind' as const
   constructor(detail: string) {
-    super('unknown-kind', detail)
+    super(UnknownRecordKindError.code, detail)
     this.name = 'UnknownRecordKindError'
   }
 }
 
 export class RecordNotFoundError extends RecordsError {
+  static readonly code = 'not-found' as const
   constructor(detail: string) {
-    super('not-found', detail)
+    super(RecordNotFoundError.code, detail)
     this.name = 'RecordNotFoundError'
   }
 }
 
 /** A unique index refused the write. */
 export class RecordUniqueViolationError extends RecordsError {
+  static readonly code = 'unique-violation' as const
   constructor(detail: string) {
-    super('unique-violation', detail)
+    super(RecordUniqueViolationError.code, detail)
     this.name = 'RecordUniqueViolationError'
   }
 }
 
 /** A secret field held a plain string where only a keychain marker may be stored. */
 export class PlaintextSecretError extends RecordsError {
+  static readonly code = 'plaintext-secret' as const
   constructor(detail: string) {
-    super('plaintext-secret', detail)
+    super(PlaintextSecretError.code, detail)
     this.name = 'PlaintextSecretError'
   }
 }
 
 /** A marker whose ref is not the row's own (the D878 rule). */
 export class ForeignSecretMarkerError extends RecordsError {
+  static readonly code = 'foreign-marker' as const
   constructor(detail: string) {
-    super('foreign-marker', detail)
+    super(ForeignSecretMarkerError.code, detail)
     this.name = 'ForeignSecretMarkerError'
   }
 }
 
 /** The keychain could not store or serve a value: explicit, never an empty string. */
 export class RecordSecretUnavailableError extends RecordsError {
+  static readonly code = 'secret-unavailable' as const
   constructor(detail: string) {
-    super('secret-unavailable', detail)
+    super(RecordSecretUnavailableError.code, detail)
     this.name = 'RecordSecretUnavailableError'
   }
 }
 
 export class InvalidRecordError extends RecordsError {
+  static readonly code = 'invalid-record' as const
   constructor(detail: string) {
-    super('invalid-record', detail)
+    super(InvalidRecordError.code, detail)
     this.name = 'InvalidRecordError'
   }
 }
 
 /** A kind declaration the engine refuses (non-additive change, bad shape, wrong file). */
 export class DeclarationRefusedError extends RecordsError {
+  static readonly code = 'declaration-refused' as const
   constructor(detail: string) {
-    super('declaration-refused', detail)
+    super(DeclarationRefusedError.code, detail)
     this.name = 'DeclarationRefusedError'
   }
 }
 
 export class NoCallerError extends RecordsError {
+  static readonly code = 'no-caller' as const
   constructor(detail: string) {
-    super('no-caller', detail)
+    super(NoCallerError.code, detail)
     this.name = 'NoCallerError'
   }
 }
 
 export class BatchTooLargeError extends RecordsError {
+  static readonly code = 'batch-too-large' as const
   constructor(detail: string) {
-    super('batch-too-large', detail)
+    super(BatchTooLargeError.code, detail)
     this.name = 'BatchTooLargeError'
   }
 }
@@ -157,8 +198,9 @@ export class BatchTooLargeError extends RecordsError {
  * which rule (`cross-file`, `cross-family`, `no-family`); it is never a silent split.
  */
 export class TransactRefusedError extends RecordsError {
+  static readonly code = 'transact-refused' as const
   constructor(detail: string) {
-    super('transact-refused', detail)
+    super(TransactRefusedError.code, detail)
     this.name = 'TransactRefusedError'
   }
 }
