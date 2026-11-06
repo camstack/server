@@ -84,8 +84,8 @@ and **three-valued in effect**: `true`, `false`, and *absent* — absent means
 active, and the difference is load-bearing
 (`storage-orchestrator.service.ts:1082`): stamping a legacy flagless row on an
 unrelated edit would rewrite an implicit contract. Persisted inside the
-location's config JSON under `__enabled`
-(`packages/system/src/builtins/storage-orchestrator/location-store.ts:178`).
+location's config JSON under `__enabled` (the legacy `storage_locations`
+path of `location-store.ts`, deleted in #440 step 5).
 
 **Every place a write target is chosen, with a verdict** (repo-wide audit,
 2026-08-30 — this is the "is `enabled` honoured everywhere?" question, answered
