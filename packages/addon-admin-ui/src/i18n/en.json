@@ -2756,7 +2756,6 @@
     },
     "sourceSelector": {
       "pickDevice": "Pick the source for {{title}}",
-      "notCompatibleDevices": "{{count}} not compatible",
       "direct": "direct",
       "withConversion": "with {{name}}",
       "backToDevices": "Back to devices",
@@ -2765,7 +2764,8 @@
       "backToDevice": "Back to {{name}}",
       "done": "Done",
       "pickedCount_one": "{{count}} selected",
-      "pickedCount_other": "{{count}} selected"
+      "pickedCount_other": "{{count}} selected",
+      "sourceReads": "Reads {{value}} now"
     },
     "linkedActions": {
       "title": "Linked actions",
@@ -9503,6 +9503,18 @@
     },
     "powerMeterLine": {
       "energy": "Energy"
+    },
+    "deviceValueField": {
+      "preview": "Preview",
+      "loading": "Reading the values…",
+      "failed": "The values could not be read.",
+      "tokenTitle": "Insert a device value",
+      "pickDevice": "Pick a device",
+      "back": "Back",
+      "noDevice": "Pick a device to see its values.",
+      "noValues": "This device has no value that fits.",
+      "cancel": "Cancel",
+      "use": "Use this value"
     },
     "optimistic": {
       "refusedTitle": "The device refused the change"

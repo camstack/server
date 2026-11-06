@@ -266,6 +266,7 @@ function ItemForm(props: KeyedArrayItemDialogProps & { readonly heading: string 
           }}
           onFieldChange={applyFieldPick}
           onTransformChange={setTransform}
+          preview={preview === null ? undefined : <ScalarPreviewLine preview={preview} />}
         />
         {fit?.ok === true && fit.mode === 'enum' && selected !== null && (
           <EnumMapRows
@@ -275,7 +276,6 @@ function ItemForm(props: KeyedArrayItemDialogProps & { readonly heading: string 
             onChange={setMapping}
           />
         )}
-        {preview !== null && <ScalarPreviewLine preview={preview} />}
       </DialogBody>
       <DialogFooter className="flex flex-wrap gap-2">
         <Button variant="ghost" onClick={props.onClose}>

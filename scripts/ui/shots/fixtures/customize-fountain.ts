@@ -92,6 +92,11 @@ export default defineFixtures({
       i.deviceId === 900
         ? { entries: [] }
         : (get('deviceManager.getBindings') as (x: unknown) => unknown)(i),
+    'deviceManager.listDeviceIdsByCaps': (i: { capNames?: readonly string[] }) => {
+      const cap = i.capNames?.[0] ?? ''
+      if (cap === 'battery' || cap === 'numeric-sensor') return [305]
+      return (get('deviceManager.listDeviceIdsByCaps') as (x: unknown) => unknown)(i)
+    },
     'deviceManager.getWireableFields': (i: { deviceId: number }) => {
       if (i.deviceId === 301 || i.deviceId === 302) {
         return { caps: [{ cap: 'enum-sensor', fields: [{ path: 'value', kind: 'string' }] }] }
@@ -100,7 +105,12 @@ export default defineFixtures({
         return { caps: [{ cap: 'switch', fields: [{ path: 'on', kind: 'boolean' }] }] }
       }
       if (i.deviceId === 305 || i.deviceId === 306) {
-        return { caps: [{ cap: 'control', fields: [{ path: 'value', kind: 'number' }] }] }
+        return {
+          caps: [
+            { cap: 'control', fields: [{ path: 'value', kind: 'number' }] },
+            { cap: 'battery', fields: [{ path: 'level', kind: 'number' }] },
+          ],
+        }
       }
       if (i.deviceId === 312) {
         return { caps: [{ cap: 'enum-sensor', fields: [{ path: 'value', kind: 'string' }] }] }
@@ -113,9 +123,11 @@ export default defineFixtures({
             'pet-fountain': { waterLevel: 0, empty: true, pumpRunning: true },
             consumables: { items: [{ key: 'filter', status: 'ok', remaining: 20 }] },
           }
-        : i.deviceId === 301
-          ? { 'enum-sensor': { value: '0' } }
-          : {},
+        : i.deviceId === 305
+          ? { control: { value: 12 }, battery: { level: 64, unit: '%' } }
+          : i.deviceId === 301
+            ? { 'enum-sensor': { value: '0' } }
+            : {},
     'deviceState.getCapSlice': (i: { deviceId: number; capName: string }) =>
       i.deviceId === 900 && i.capName === 'pet-fountain'
         ? { waterLevel: 0, empty: true, pumpRunning: true, lastFetchedAt: 1_700_000_000_000 }

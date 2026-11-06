@@ -80,6 +80,8 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@camstack/ui-library')>()
   return {
     ...actual,
+    DeviceValueField: (await import('../../__tests__/device-value-field-stub'))
+      .DeviceValueFieldStub,
     useDeviceManagerListAll: () => ({ status: 'success', data: [HOST, SENSOR, PARENT] }),
     useDeviceManagerGetWireableFields: ({ deviceId }: { deviceId: number }) =>
       deviceId === 301

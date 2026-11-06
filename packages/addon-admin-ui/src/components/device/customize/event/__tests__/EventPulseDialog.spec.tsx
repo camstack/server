@@ -59,6 +59,8 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@camstack/ui-library')>()
   return {
     ...actual,
+    DeviceValueField: (await import('../../__tests__/device-value-field-stub'))
+      .DeviceValueFieldStub,
     useDeviceManagerListAll: () => ({ status: 'success', data: [HOST, SWITCH, LIGHT] }),
     useDeviceManagerGetWireableFields: ({ deviceId }: { deviceId: number }) =>
       deviceId === 201
@@ -96,7 +98,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
 const { EventPulseDialog } = await import('../EventPulseDialog')
 
 describe('EventPulseDialog', () => {
-  it('hides incompatible devices behind disclosure and adds a switch source', () => {
+  it('lists no incompatible device and adds a switch source', () => {
     render(
       <EventPulseDialog
         open
@@ -118,9 +120,8 @@ describe('EventPulseDialog', () => {
     )
     expect(screen.getByRole('heading', { name: 'Add Doorbell' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: /^Garage light/ })).toBeNull()
-    expect(screen.getByTestId('source-incompatible-devices')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: /1 not compatible/i }))
-    expect(screen.getByText('Garage light')).toBeTruthy()
+    expect(screen.queryByTestId('source-incompatible-devices')).toBeNull()
+    expect(screen.queryByText('Garage light')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: /^Porch switch/ }))
     expect(screen.queryByTestId('source-value-switch.on')).toBeNull()
     expect(screen.getByTestId('source-declared-field').textContent).toMatch(/on/i)

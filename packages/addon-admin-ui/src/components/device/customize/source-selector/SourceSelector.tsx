@@ -8,16 +8,13 @@ import {
   Button,
   type DeviceListState,
   DeviceName,
-  DevicePicker,
-  ErrorBox,
+  DeviceValueField,
   Input,
   useDeviceManagerGetWireableFields,
   useDeviceManagerListAll,
   useDeviceStateGetSnapshot,
-  Radio,
 } from '@camstack/ui-library'
-import { ChevronDown } from 'lucide-react'
-import { type ReactNode, useEffect, useMemo, useState } from 'react'
+import { type ReactNode, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { SuggestedDevices } from '../assignments/SuggestedDevices'
 import { useCapIndex } from '../assignments/use-cap-index'
@@ -37,7 +34,6 @@ type DeviceSnapshot = Readonly<Record<string, Readonly<Record<string, unknown>>>
 import { ModeLine } from '../event/event-mode-line'
 import { vocabularyCapTitle, vocabularyFieldLabel } from '../vocabulary-field-label'
 import { SourceSelectorMembers, type SourceSelectorMembersProps } from './SourceSelectorMembers'
-import { SourceSelectorColumns } from './source-selector-columns'
 import {
   type EventPickedRow,
   removeEventPick,
@@ -57,12 +53,6 @@ import {
 } from './source-selector-model'
 import { compatiblePickerItems } from './source-selector-parent-detail'
 import { siblingSuggestions } from './source-selector-siblings'
-import {
-  reconcileSingleStep,
-  type SourceSelectorStep,
-  stepAfterBack,
-  stepAfterDevicePick,
-} from './source-selector-steps'
 
 export type { EventPickedRow }
 
@@ -79,6 +69,8 @@ export interface SourceSelectorScalarProps {
   readonly device: PickerDevice | null
   readonly field: SourceFieldPick | null
   readonly transform: ScalarTransformDraft
+  /** The host's pre-save "would read" line (the transform applied); absent shows what the source reads now. */
+  readonly preview?: ReactNode
   readonly onDeviceChange: (device: PickerDevice | null) => void
   readonly onFieldChange: (field: SourceFieldPick | null) => void
   readonly onTransformChange: (next: ScalarTransformDraft) => void
@@ -93,6 +85,7 @@ export interface SourceSelectorKeyedProps {
   readonly field: SourceFieldPick | null
   readonly fieldPath: string
   readonly transform: ScalarTransformDraft
+  readonly preview?: ReactNode
   readonly onDeviceChange: (device: PickerDevice | null) => void
   readonly onFieldChange: (field: SourceFieldPick | null) => void
   readonly onTransformChange: (next: ScalarTransformDraft) => void
@@ -107,6 +100,7 @@ export interface SourceSelectorFormulaProps {
   readonly field: SourceFieldPick | null
   readonly onDeviceChange: (device: PickerDevice | null) => void
   readonly onFieldChange: (field: SourceFieldPick | null) => void
+  readonly preview?: ReactNode
   /** A surface's own validity rule on the device list (keep it referentially stable). */
   readonly deviceFilter?: (device: PickerDevice) => boolean
   /** The host gives a definite height (a fill dialog): both columns take it and scroll on their own. */
@@ -196,17 +190,6 @@ export function SourceSelector(props: SourceSelectorProps): ReactNode {
 
 function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
   const { t, i18n } = useTranslation()
-  const [step, setStep] = useState<SourceSelectorStep>('devices')
-  const [seenDevice, setSeenDevice] = useState(false)
-  const reconciled = reconcileSingleStep(props.device !== null, {
-    seenDevice,
-    step,
-  })
-  if (reconciled !== null) {
-    setSeenDevice(reconciled.seenDevice)
-    setStep(reconciled.step)
-  }
-  const [incompatibleOpen, setIncompatibleOpen] = useState(false)
   const devices = useDeviceManagerListAll({ projection: 'slim' })
   const deviceFilter = props.kind === 'formula' ? props.deviceFilter : undefined
   const fleet = useMemo(() => {
@@ -216,12 +199,9 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
   }, [devices.status, devices.data, deviceFilter])
   const indexCaps = useMemo(() => indexCapsForDestination(props.destination), [props.destination])
   const capIndex = useCapIndex(indexCaps, props.enabled)
-  const { compatible, incompatible } = useMemo(() => {
+  const { compatible } = useMemo(() => {
     if (capIndex.kind !== 'known') {
-      return {
-        compatible: [] as SourceCandidateDevice[],
-        incompatible: [] as SourceCandidateDevice[],
-      }
+      return { compatible: [] as SourceCandidateDevice[] }
     }
     return partitionSourceDevices(
       toCandidates(fleet, capIndex.value),
@@ -256,23 +236,19 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
     props.kind === 'event' ? props.devicePickerTestId : 'source-selector-device-picker'
   const { groups } = groupSourceValues(fields, props.destination, i18n.language)
   const fit = fieldFit(props, catalog, snapshot.status === 'success' ? snapshot.data : null)
-  const pickDevice = (ids: readonly number[]): void => {
-    const id = ids[0]
-    if (id === undefined) {
+  const pickDevice = (id: number | null): void => {
+    if (id === null) {
       props.onDeviceChange(null)
       if (props.kind !== 'event') props.onFieldChange(null)
-      setStep(stepAfterBack())
       return
     }
     // The picker reports the current row again when the list re-renders.
     // Clearing the field then drops a radio the operator just chose.
-    // Tapping the current row still opens the values, so Back can return.
     if (props.device?.id !== id) {
       const next = fleet.find((row) => row.id === id) ?? null
       props.onDeviceChange(next)
       if (props.kind !== 'event') props.onFieldChange(null)
     }
-    setStep(stepAfterDevicePick('single'))
   }
   const declared = props.kind === 'event' ? (fields[0] ?? null) : null
   const eventBinding = props.kind === 'event' ? props : null
@@ -289,79 +265,6 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
   }, [eventBinding, declared])
   const compatibleDeviceItems = useMemo(() => compatiblePickerItems(compatible), [compatible])
   const fillHeight = props.kind === 'formula' && props.fillHeight === true
-  const deviceColumn = (
-    <div
-      className={
-        fillHeight
-          ? 'flex min-h-0 flex-1 flex-col gap-2'
-          : 'flex max-h-72 min-h-0 flex-col gap-2 overflow-y-auto sm:max-h-[min(24rem,60vh)]'
-      }
-    >
-      <h3 className="text-[11px] font-medium text-foreground-muted">
-        {t('customize.sourceSelector.pickDevice', {
-          title: props.destination.title,
-        })}
-      </h3>
-      {devices.status === 'error' ? (
-        <ErrorBox
-          title={t('customize.picker.devicesFailed')}
-          message={devices.error?.message ?? ''}
-        />
-      ) : (
-        <>
-          {siblings !== null && (
-            <SuggestedDevices
-              location={siblings.container}
-              devices={siblings.devices.map((row) => ({
-                id: row.id,
-                name: row.name,
-                container: null,
-                detail: null,
-              }))}
-              action="use"
-              onPick={(id) => pickDevice([id])}
-            />
-          )}
-          <DevicePicker
-            devices={compatibleDeviceItems}
-            listState={listState}
-            value={props.device === null ? [] : [props.device.id]}
-            selection="single"
-            groupBy="location"
-            onChange={pickDevice}
-            noun="device"
-            showAll
-            fillHeight={fillHeight}
-            testId={devicePickerTestId}
-          />
-        </>
-      )}
-      {incompatible.length > 0 && (
-        <div data-testid="source-incompatible-devices">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-auto w-full justify-start gap-1 px-0 text-[11px] text-foreground-muted"
-            onClick={() => setIncompatibleOpen((open) => !open)}
-          >
-            <ChevronDown
-              className={`size-3 transition-transform ${incompatibleOpen ? 'rotate-180' : ''}`}
-            />
-            {t('customize.sourceSelector.notCompatibleDevices', {
-              count: incompatible.length,
-            })}
-          </Button>
-          {incompatibleOpen && (
-            <ul className="mt-1 flex flex-col gap-0.5 pl-4 text-[11px] text-foreground-subtle">
-              {incompatible.map((row) => (
-                <li key={row.id}>{row.name}</li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
-    </div>
-  )
   const pickedList =
     props.kind === 'event' && props.picked.length > 0 ? (
       <ul data-testid="source-picked-list" className="flex flex-col gap-2">
@@ -434,128 +337,115 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
       </div>
     ) : null
 
-  const valueColumn = (
-    <div className="flex min-h-0 flex-col gap-2">
-      {pickedList}
-      {props.device !== null && (
-        <DeviceName
-          device={props.device}
-          form="full"
-          className="text-[11px] font-medium text-foreground"
-        />
-      )}
-      {props.device === null ? (
-        <p className="text-[11px] text-foreground-subtle">
-          {t('customize.sourceSelector.noDevice')}
-        </p>
-      ) : wireable.status === 'pending' ? (
-        <p role="status" className="text-[11px] text-foreground-subtle">
-          {t('customize.picker.loadingFields')}
-        </p>
-      ) : wireable.status === 'error' ? (
-        <ErrorBox
-          title={t('customize.picker.fieldsFailed')}
-          message={wireable.error?.message ?? ''}
-        />
-      ) : (
-        <div className="flex flex-col gap-3">
-          {props.kind === 'event' ? (
-            <DeclaredEventFields
-              fields={declared === null ? [] : [declared]}
-              language={i18n.language}
-              emptyLabel={t('customize.sourceSelector.noStateField')}
-            />
-          ) : null}
-          {props.kind !== 'event' &&
-            groups.map((group) => (
-              <section key={group.cap} aria-label={group.title}>
-                <h4 className="text-[10px] font-medium uppercase tracking-wide text-foreground-muted">
-                  {group.title}
-                </h4>
-                <ul className="mt-1 flex flex-col gap-1">
-                  {group.rows.map((row) => {
-                    const selected = props.field?.cap === row.cap && props.field.path === row.path
-                    return (
-                      <li key={`${row.cap}.${row.path}`}>
-                        <label className="flex flex-wrap items-center gap-2 text-[11px] text-foreground">
-                          <Radio
-                            name="source-value"
-                            checked={selected}
-                            data-testid={`source-value-${row.cap}.${row.path}`}
-                            onChange={() => {
-                              props.onFieldChange({
-                                cap: row.cap,
-                                path: row.path,
-                              })
-                              if (props.kind === 'formula') return
-                              const nextFit = fieldFitForRow(
-                                props,
-                                catalog,
-                                snapshot.status === 'success' ? snapshot.data : null,
-                                row.cap,
-                                row.path,
-                              )
-                              if (nextFit !== null && nextFit.ok) {
-                                props.onTransformChange(defaultScalarTransform(nextFit))
-                              }
-                            }}
-                          />
-                          <span>{row.label}</span>
-                          <span className="text-foreground-muted">{row.currentText}</span>
-                          <span className="text-foreground-subtle">
-                            {compatibilityLabel(row.compatibility, t)}
-                          </span>
-                        </label>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </section>
-            ))}
-        </div>
-      )}
-      {props.kind === 'scalar' && fit !== null && fit.ok && (
-        <ScalarTransformControls
-          control={scalarControl(fit.transforms)}
-          transforms={fit.transforms}
-          declared={fit.declared}
-          unit={fit.sourceUnit}
-          value={props.transform}
-          onChange={props.onTransformChange}
-        />
-      )}
-      {props.kind === 'keyed' && fit !== null && fit.ok && props.field !== null && (
-        <ScalarTransformControls
-          control={scalarControl(fit.transforms)}
-          transforms={fit.transforms}
-          declared={fit.declared}
-          unit={fit.sourceUnit}
-          value={props.transform}
-          onChange={props.onTransformChange}
-        />
-      )}
-      {eventParams}
-    </div>
-  )
-  const back =
-    props.device === null
-      ? null
-      : {
-          label: <DeviceName device={props.device} form="compact" />,
-          ariaLabel: t('customize.sourceSelector.backToDevice', {
-            name: props.device.name,
-          }),
-        }
+  const selectedFit =
+    props.kind === 'scalar' || props.kind === 'keyed' ? (fit !== null && fit.ok ? fit : null) : null
+  const transformControls =
+    selectedFit !== null && (props.kind === 'scalar' || props.kind === 'keyed') ? (
+      <ScalarTransformControls
+        control={scalarControl(selectedFit.transforms)}
+        transforms={selectedFit.transforms}
+        declared={selectedFit.declared}
+        unit={selectedFit.sourceUnit}
+        value={props.transform}
+        onChange={props.onTransformChange}
+      />
+    ) : null
+  const transform =
+    transformControls === null && eventParams === null ? undefined : (
+      <>
+        {transformControls}
+        {eventParams}
+      </>
+    )
+  const chosen = props.kind === 'event' ? null : props.field
+  const chosenRow = groups
+    .flatMap((g) => g.rows)
+    .find((r) => r.cap === chosen?.cap && r.path === chosen.path)
+  const preview =
+    props.kind !== 'event' && props.preview !== undefined ? (
+      props.preview
+    ) : chosenRow === undefined ? undefined : (
+      <p data-testid="source-preview-reads" className="text-[11px] text-foreground-muted">
+        {t('customize.sourceSelector.sourceReads', { value: chosenRow.currentText })}
+      </p>
+    )
   return (
-    <SourceSelectorColumns
-      step={step}
-      devices={deviceColumn}
-      values={valueColumn}
-      back={back}
-      onBack={() => setStep(stepAfterBack())}
-      done={null}
-      onDone={() => undefined}
+    <DeviceValueField
+      testId="source-selector"
+      deviceListTestId={devicePickerTestId}
       fillHeight={fillHeight}
+      heading={t('customize.sourceSelector.pickDevice', { title: props.destination.title })}
+      devices={compatibleDeviceItems}
+      listState={listState}
+      suggestions={
+        devices.status !== 'error' && siblings !== null ? (
+          <SuggestedDevices
+            location={siblings.container}
+            devices={siblings.devices.map((row) => ({
+              id: row.id,
+              name: row.name,
+              container: null,
+              detail: null,
+            }))}
+            action="use"
+            onPick={(id) => pickDevice(id)}
+          />
+        ) : undefined
+      }
+      deviceId={props.device?.id ?? null}
+      onDeviceChange={pickDevice}
+      deviceLabel={
+        props.device === null ? null : <DeviceName device={props.device} form="compact" />
+      }
+      backLabel={
+        props.device === null
+          ? ''
+          : t('customize.sourceSelector.backToDevice', { name: props.device.name })
+      }
+      valuesState={
+        wireable.status === 'pending' ? 'loading' : wireable.status === 'error' ? 'failed' : 'ready'
+      }
+      groups={groups.map((group) => ({
+        cap: group.cap,
+        title: group.title,
+        rows: group.rows.map((row) => ({
+          cap: row.cap,
+          path: row.path,
+          label: row.label,
+          valueText: row.currentText,
+          fitText: compatibilityLabel(row.compatibility, t),
+        })),
+      }))}
+      rowTestId={(row) => `source-value-${row.cap}.${row.path}`}
+      value={chosen}
+      onValueChange={(pick) => {
+        if (props.kind === 'event') return
+        props.onFieldChange(pick)
+        if (props.kind === 'formula') return
+        const nextFit = fieldFitForRow(
+          props,
+          catalog,
+          snapshot.status === 'success' ? snapshot.data : null,
+          pick.cap,
+          pick.path,
+        )
+        if (nextFit !== null && nextFit.ok) props.onTransformChange(defaultScalarTransform(nextFit))
+      }}
+      valuesBefore={pickedList}
+      valuesOverride={
+        props.kind === 'event' ? (
+          <DeclaredEventFields
+            fields={declared === null ? [] : [declared]}
+            language={i18n.language}
+            emptyLabel={t('customize.sourceSelector.noStateField')}
+          />
+        ) : undefined
+      }
+      transform={transform}
+      alwaysShowPreview={props.kind === 'event'}
+      preview={preview}
+      noDeviceText={t('customize.sourceSelector.noDevice')}
+      noValuesText={t('customize.sourceSelector.noStateField')}
     />
   )
 }

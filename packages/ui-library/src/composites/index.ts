@@ -634,3 +634,4 @@ export {
   type TimelineSliderProps,
   type TimelineTone,
 } from './timeline-slider'
+export * from './device-value-field/index.js'

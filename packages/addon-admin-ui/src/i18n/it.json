@@ -2831,7 +2831,6 @@
     },
     "sourceSelector": {
       "pickDevice": "Scegli la sorgente per {{title}}",
-      "notCompatibleDevices": "{{count}} non compatibili",
       "direct": "diretto",
       "withConversion": "con {{name}}",
       "backToDevices": "Torna ai dispositivi",
@@ -2840,7 +2839,8 @@
       "backToDevice": "Torna a {{name}}",
       "done": "Fatto",
       "pickedCount_one": "{{count}} selezionato",
-      "pickedCount_other": "{{count}} selezionati"
+      "pickedCount_other": "{{count}} selezionati",
+      "sourceReads": "Legge {{value}} adesso"
     },
     "linkedActions": {
       "title": "Azioni collegate",
@@ -9525,6 +9525,18 @@
     },
     "powerMeterLine": {
       "energy": "Energia"
+    },
+    "deviceValueField": {
+      "preview": "Anteprima",
+      "loading": "Lettura dei valori…",
+      "failed": "Impossibile leggere i valori.",
+      "tokenTitle": "Inserisci un valore di un dispositivo",
+      "pickDevice": "Scegli un dispositivo",
+      "back": "Indietro",
+      "noDevice": "Scegli un dispositivo per vedere i suoi valori.",
+      "noValues": "Questo dispositivo non ha valori adatti.",
+      "cancel": "Annulla",
+      "use": "Usa questo valore"
     },
     "optimistic": {
       "refusedTitle": "Il dispositivo ha rifiutato la modifica"

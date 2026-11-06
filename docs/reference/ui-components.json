@@ -583,7 +583,13 @@
       "need": "Pick the device and value that feed a Customize extension, or the members of a group helper",
       "admin": "`SourceSelector` (`components/device/customize/source-selector/SourceSelector.tsx`)",
       "viewer": "—",
-      "notes": "Left column = ui-library `DevicePicker`. `kind: 'members'` is the multi-select a group helper asks for (`SourcePickRequest`: one device type, the catalog fields, direct matches only). Behaviour params for an extension still come from the customize catalog (D944)"
+      "notes": "Wraps `DeviceValueField`. `kind: 'members'` is the multi-select a group helper asks for (`SourcePickRequest`: one device type, the catalog fields, direct matches only). Behaviour params for an extension still come from the customize catalog (D944)"
+    },
+    {
+      "need": "Pick ONE device value (device, then cap, then field; only what fits)",
+      "admin": "`DeviceValueField` + `useDeviceValueSource`; as a `{{dev:<stableId>/<cap>.<field>}}` chip, `DeviceValueTokenField`",
+      "viewer": "`DevicePicker`, a second value list",
+      "notes": "Never lists an incompatible device or value. Three steps on a phone. Adapters add what the pick means (a transform and a preview, or a token)"
     },
     {
       "need": "Pick a timezone / icon / unit / model",
@@ -4526,6 +4532,232 @@
       "summary": "Runtime-string-safe lookup: device data crosses process / network boundaries as plain strings, so an unrecognised value falls back to the `Generic` meta instead of throwing."
     },
     {
+      "name": "DeviceValueField",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-value-field/device-value-field.tsx",
+      "summary": "The ONE device → value picker: a device list, the values that fit, and what the pick will read. Two columns from `sm`; on a phone three steps (devices, values, preview). A value or device that does not fit is never of…",
+      "props": [
+        {
+          "name": "devices",
+          "type": "readonly PickerItem<number>[]",
+          "optional": false,
+          "doc": "Only the devices that offer a fitting value: an incompatible device is not listed."
+        },
+        {
+          "name": "listState",
+          "type": "DeviceListState",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "suggestions",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "Above the device list: same-room suggestions."
+        },
+        {
+          "name": "deviceId",
+          "type": "number | null",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onDeviceChange",
+          "type": "(id: number | null) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "deviceLabel",
+          "type": "ReactNode",
+          "optional": false,
+          "doc": "The picked device's name, for the values heading and the way back."
+        },
+        {
+          "name": "valuesState",
+          "type": "DeviceValuesState",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "groups",
+          "type": "readonly DeviceValueGroup[]",
+          "optional": false,
+          "doc": "Only fitting values; empty groups are not drawn."
+        },
+        {
+          "name": "value",
+          "type": "DeviceValuePick | null",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onValueChange",
+          "type": "(pick: DeviceValuePick) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "valuesOverride",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "Replaces the value list (a declared, not chosen, value)."
+        },
+        {
+          "name": "valuesBefore",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "Above the value list (what is already picked)."
+        },
+        {
+          "name": "transform",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "Transform (as is / scale / threshold / map) and its parameters."
+        },
+        {
+          "name": "preview",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "The pre-save \"would read\" line."
+        },
+        {
+          "name": "alwaysShowPreview",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Show the transform/preview region before a value is chosen (a declared value is never chosen)."
+        },
+        {
+          "name": "heading",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "backLabel",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "noDeviceText",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "noValuesText",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "rowTestId",
+          "type": "(row: DeviceValueRow) => string",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "deviceListTestId",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "testId",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "fillHeight",
+          "type": "boolean",
+          "optional": true,
+          "doc": "The host gives a definite height: the columns scroll on their own."
+        }
+      ]
+    },
+    {
+      "name": "deviceValueInitialStep",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-value-field/device-value-steps.ts",
+      "summary": "A dialog that opens on a stored pick shows its values, not the empty list."
+    },
+    {
+      "name": "deviceValueStepAfterDevice",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-value-field/device-value-steps.ts",
+      "summary": "Choosing a device opens its values; clearing it returns to the list."
+    },
+    {
+      "name": "deviceValueStepAfterValue",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-value-field/device-value-steps.ts",
+      "summary": "Choosing a value opens the preview (transform and \"would read\")."
+    },
+    {
+      "name": "deviceValueStepBack",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-value-field/device-value-steps.ts",
+      "summary": "Back goes one step towards the device list and stops there."
+    },
+    {
+      "name": "DeviceValueTokenField",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-value-field/device-value-token-field.tsx",
+      "summary": "The template-token adapter of the device → value picker: pick a device, then one of its fitting values, and get the token a template writes. Picking only; a template engine renders the token elsewhere.",
+      "props": [
+        {
+          "name": "stableIdOf",
+          "type": "(deviceId: number) => string | null",
+          "optional": false,
+          "doc": "Resolves the picked device's `stableId` once the operator confirms."
+        },
+        {
+          "name": "capNames",
+          "type": "readonly string[]",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "fit",
+          "type": "(field: DeviceValueCandidate) => string | null",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "capTitle",
+          "type": "(cap: string) => string",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "fieldLabel",
+          "type": "(cap: string, path: string) => string",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "onPick",
+          "type": "(token: string, ref: DeviceValueRef) => void",
+          "optional": false,
+          "doc": "Receives the token text (`{{dev:<stableId>/<cap>.<fieldPath>}}`) and what it points at."
+        },
+        {
+          "name": "trigger",
+          "type": "ReactNode",
+          "optional": false,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "DevShell",
       "kind": "component",
       "area": "composites",
@@ -5573,6 +5805,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-name/format-device-name.ts",
       "summary": "The label for `form`. A top-level device keeps its stored name. A child uses the noun: `compact` may stand in for the container when this child is what the container is, `full` always names both unless they fold toget…"
+    },
+    {
+      "name": "formatDeviceValueToken",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-value-field/device-value-token.ts",
+      "summary": "The template token a device value is written as: `{{dev:<stableId>/<cap>.<fieldPath>}}`. The token chip adapter of the device → value picker writes it; reading it back is what the chip needs to show its label. Renderi…"
     },
     {
       "name": "formatLastSeen",
@@ -8268,6 +8507,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/consumable-level-badge.tsx",
       "summary": "A value read from a slice as a level; anything that is not a member is unknown."
+    },
+    {
+      "name": "parseDeviceValueToken",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-value-field/device-value-token.ts",
+      "summary": "null = not a device token (never a guess at a near miss)."
     },
     {
       "name": "parseIceCandidate",
@@ -13021,6 +13267,13 @@
       "area": "hooks",
       "file": "packages/ui-library/src/hooks/use-device-proxy.ts",
       "summary": "Companion hook — reads a `SliceHandle` reactively, returning the current value and re-rendering on every push from the kernel mirror. Pass `dev?.state.battery` etc. as the handle."
+    },
+    {
+      "name": "useDeviceValueSource",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-value-field/use-device-value-source.ts",
+      "summary": "The data half of the device → value picker: the fleet, and the picked device's fitting values."
     },
     {
       "name": "useDeviceWebrtc",

@@ -58,6 +58,8 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@camstack/ui-library')>()
   return {
     ...actual,
+    DeviceValueField: (await import('../../__tests__/device-value-field-stub'))
+      .DeviceValueFieldStub,
     useCoreBlocksProposeRunningThreshold: () => proposalResult.current,
     useDeviceManagerListAll: () => ({ status: 'success', data: [HOST, METER, GARAGE] }),
     useDeviceManagerGetWireableFields: ({ deviceId }: { deviceId: number }) =>
@@ -133,7 +135,7 @@ describe('ScalarOverrideDialog', () => {
     )
     expect(screen.queryByText(/Suggested ·/)).toBeNull()
     expect(screen.getAllByRole('button', { name: /Porch power meter/ })).toHaveLength(1)
-    expect(screen.getByTestId('source-incompatible-devices')).toBeTruthy()
+    expect(screen.queryByTestId('source-incompatible-devices')).toBeNull()
     expect(screen.getByTestId('source-selector')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
     fireEvent.click(screen.getByRole('button', { name: /Porch power meter/ }))

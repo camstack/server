@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Device control cards roll a slider or switch back when the device refuses the change, and keep the new value while a slow device is still answering
 - The media-player card shows title, artist and album, artwork, source and a progress bar whenever the device reports them, plus shuffle and repeat it can only read
 - A refused device command now shows the reason and puts the control back; an unanswered command stops pinning its value after 30 seconds
+- One device-to-value picker (DeviceValueField) lists only devices and values that fit, in three steps on a phone, with a token-chip adapter
 
 ## [1.2.391] - 2026-11-06
 
