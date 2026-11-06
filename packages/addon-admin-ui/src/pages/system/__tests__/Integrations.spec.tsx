@@ -11,6 +11,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { StaticAddonIconsProvider } from '../../../contexts/addon-icons-context'
 
 const fixtures = vi.hoisted(() => ({
+  holders: [] as string[],
   addons: [] as Array<{
     manifest: {
       id: string
@@ -27,6 +28,9 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   return {
     ...real,
     useAddonsList: () => ({ data: fixtures.addons, isLoading: false }),
+    useAddonsListCapabilityProviders: () => ({
+      data: fixtures.holders.map((addonId) => ({ addonId })),
+    }),
     useBrokerGetStatus: () => ({ data: undefined }),
     useDeviceExportGetStatus: () => ({ data: undefined }),
     useAddonsRestartAddon: () => ({ mutateAsync: vi.fn(), isPending: false }),
@@ -46,6 +50,10 @@ vi.mock('../../../components/instances/InstancesTable', () => ({
   InstancesTable: ({ functionCap }: { functionCap: string }) => (
     <div data-testid="provider-instances" data-cap={functionCap} />
   ),
+}))
+
+vi.mock('../../../components/integration-hub/AddonIntegrationBody', () => ({
+  AddonIntegrationBody: ({ addonId }: { addonId: string }) => <div>{`body ${addonId}`}</div>,
 }))
 
 vi.mock('../../../components/brokers/BrokerManager', () => ({
@@ -77,6 +85,7 @@ function renderAt(url: string) {
 }
 
 beforeEach(() => {
+  fixtures.holders = []
   fixtures.addons = [
     {
       manifest: {
@@ -132,12 +141,15 @@ describe('Connectivity SectionedPage', () => {
     }
   })
 
-  it('calendars section is one instances list of the calendar-source cap, not a pill hub', () => {
+  it('calendars section is the calendar-source instances list plus the pill of every provider without an instance model', () => {
+    fixtures.holders = ['google-services']
     renderAt('/system/integrations?tab=calendars')
     expect(screen.getByTestId('provider-instances').getAttribute('data-cap')).toBe(
       'calendar-source',
     )
-    expect(screen.queryByRole('navigation', { name: /Calendars integrations/i })).toBeNull()
+    const pills = screen.getByRole('navigation', { name: /Calendars integrations/i })
+    expect(within(pills).getByText('Waste')).toBeTruthy()
+    expect(within(pills).queryByText('Google')).toBeNull()
   })
 
   it('email section is the provider-instances list of smtp-provider, not a pill hub', () => {

@@ -16,7 +16,12 @@ import { Calendar, Mail, Plug, Radio, Share2, type LucideIcon } from 'lucide-rea
 import { useEffect, useMemo, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
-import { Badge, useAddonsList, type DataColumn } from '@camstack/ui-library'
+import {
+  Badge,
+  useAddonsList,
+  useAddonsListCapabilityProviders,
+  type DataColumn,
+} from '@camstack/ui-library'
 import { CAP_PROVIDER_KIND_MAP } from '@camstack/types'
 import type { ProviderKind } from '@camstack/types'
 
@@ -69,6 +74,11 @@ interface InstancesDescriptor {
   readonly subtitleDefault: string
   readonly addLabelKey: string
   readonly addLabelDefault: string
+  /**
+   * Providers of the kind that keep no instance records stay reachable as the pills they always
+   * were, beside the list (a source with its own settings panel, such as waste collections).
+   */
+  readonly keepProviderPills?: boolean
   /** Columns the kind adds to the shared table (after On). */
   readonly extraColumns?: (t: TFunction) => readonly DataColumn<PanelRow>[]
   /** A block at the top of an instance's edit dialog. */
@@ -156,6 +166,7 @@ const KINDS: readonly KindDescriptor[] = [
       subtitleDefault: 'The calendars this hub reads events from.',
       addLabelKey: 'system.connectivity.calendarsAdd',
       addLabelDefault: 'Add calendar',
+      keepProviderPills: true,
     },
   },
 ]
@@ -207,6 +218,45 @@ function buildGroup(
       label: t(descriptor.installLabelKey),
     },
   }
+}
+
+/** The providers of the kind that hold `integration-instances` records. */
+function useInstanceHolderIds(): ReadonlySet<string> | null {
+  const query = useAddonsListCapabilityProviders(
+    { capName: 'integration-instances' },
+    { refetchInterval: POLL_INTERVAL_MS },
+  )
+  return useMemo(
+    () => (query.data === undefined ? null : new Set(query.data.map((p) => p.addonId))),
+    [query.data],
+  )
+}
+
+/** The instances list, and under it the pills of the providers that have no instance model. */
+function InstancesKindSection({
+  descriptor,
+  instances,
+  rows,
+  isLoading,
+}: {
+  readonly descriptor: KindDescriptor
+  readonly instances: ReactElement
+  readonly rows: readonly ConnectivityRow[]
+  readonly isLoading: boolean
+}): ReactElement {
+  const holders = useInstanceHolderIds()
+  const pillRows = useMemo(
+    () => (holders === null ? [] : rows.filter((row) => !holders.has(row.addonId))),
+    [holders, rows],
+  )
+  return (
+    <>
+      {instances}
+      {pillRows.length > 0 && (
+        <ConnectivityKindHub descriptor={descriptor} rows={pillRows} isLoading={isLoading} />
+      )}
+    </>
+  )
 }
 
 function ConnectivityKindHub({
@@ -275,35 +325,48 @@ export function IntegrationsPage(): ReactElement {
 
   const sections = useMemo(
     () =>
-      KINDS.map((descriptor) => ({
-        id: descriptor.sectionId,
-        label: t(descriptor.labelKey),
-        ownedParams: INTEGRATION_HUB_OWNED_PARAMS,
-        content:
-          descriptor.instances !== undefined ? (
+      KINDS.map((descriptor) => {
+        const spec = descriptor.instances
+        const table =
+          spec === undefined ? null : (
             <InstancesTable
-              functionCap={descriptor.instances.functionCap}
+              functionCap={spec.functionCap}
               icon={descriptor.icon}
               title={t(descriptor.labelKey)}
-              subtitle={t(descriptor.instances.subtitleKey, descriptor.instances.subtitleDefault)}
+              subtitle={t(spec.subtitleKey, spec.subtitleDefault)}
               emptyTitle={t(descriptor.emptyTitleKey)}
               emptyDescription={t(descriptor.emptyDescriptionKey)}
-              addLabel={t(descriptor.instances.addLabelKey, descriptor.instances.addLabelDefault)}
-              {...(descriptor.instances.extraColumns !== undefined
-                ? { extraColumns: descriptor.instances.extraColumns(t) }
-                : {})}
-              {...(descriptor.instances.lead !== undefined
-                ? { lead: descriptor.instances.lead }
-                : {})}
+              addLabel={t(spec.addLabelKey, spec.addLabelDefault)}
+              {...(spec.extraColumns !== undefined ? { extraColumns: spec.extraColumns(t) } : {})}
+              {...(spec.lead !== undefined ? { lead: spec.lead } : {})}
             />
-          ) : (
-            <ConnectivityKindHub
-              descriptor={descriptor}
-              rows={rows}
-              isLoading={addonsQuery.isLoading}
-            />
-          ),
-      })),
+          )
+        const hub = (
+          <ConnectivityKindHub
+            descriptor={descriptor}
+            rows={rows}
+            isLoading={addonsQuery.isLoading}
+          />
+        )
+        return {
+          id: descriptor.sectionId,
+          label: t(descriptor.labelKey),
+          ownedParams: INTEGRATION_HUB_OWNED_PARAMS,
+          content:
+            table === null ? (
+              hub
+            ) : spec?.keepProviderPills === true ? (
+              <InstancesKindSection
+                descriptor={descriptor}
+                instances={table}
+                rows={rows}
+                isLoading={addonsQuery.isLoading}
+              />
+            ) : (
+              table
+            ),
+        }
+      }),
     [addonsQuery.isLoading, rows, t],
   )
 
