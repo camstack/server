@@ -4834,7 +4834,7 @@
 
 ### `training-provider` → `trainingProvider.*`
 
-- **Source:** `packages/types/src/capabilities/training-provider.cap.ts:212`
+- **Source:** `packages/types/src/capabilities/training-provider.cap.ts:182`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection`
 - **Archetypes:** internal
 - **Provider interface:** `ITrainingCloudProvider`
