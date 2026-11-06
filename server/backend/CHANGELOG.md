@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.789] - 2026-11-06
+
 ### Changed
 
 - Settings rows stored as a bare value (such as an empty brokers list) are rewritten into the standard form at boot, so the Google services cleanup migration can finally apply
