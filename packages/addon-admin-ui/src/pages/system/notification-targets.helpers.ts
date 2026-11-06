@@ -357,7 +357,7 @@ export interface TargetFormDefaultKeys {
   readonly deviceField: ConfigSelectField | null
 }
 
-/** Walk a kind's schema for its `broker-select` and its discovered `select`. */
+/** Walk a kind's schema for its broker link (`broker-select` or an `instance-select` over the `broker` cap) and its discovered `select`. */
 export function targetFormDefaultKeys(schema: ConfigUISchema): TargetFormDefaultKeys {
   let brokerKey: string | null = null
   let brokerKind: string | null = null
@@ -367,6 +367,14 @@ export function targetFormDefaultKeys(schema: ConfigUISchema): TargetFormDefault
       if (field.type === 'broker-select' && brokerKey === null) {
         brokerKey = field.key
         brokerKind = field.brokerKind
+      } else if (
+        field.type === 'instance-select' &&
+        field.functionCap === 'broker' &&
+        field.kind !== undefined &&
+        brokerKey === null
+      ) {
+        brokerKey = field.key
+        brokerKind = field.kind
       } else if (
         field.type === 'select' &&
         field.discoverOptions !== undefined &&

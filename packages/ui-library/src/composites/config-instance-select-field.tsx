@@ -10,24 +10,29 @@ import { useUiText } from '../contexts/ui-text'
 import { selectableInstances, useInstancesOfCap } from '../hooks/use-instances-of-cap'
 import { Select } from '../primitives/select'
 
-function PlainInstanceSelect({
-  field,
-  value,
-  onChange,
-  disabled,
-  controlId,
-}: {
-  readonly field: ConfigInstanceSelectField
+export interface InstancePlainSelectProps {
+  readonly functionCap: string
+  readonly kind?: string
   readonly value: string
   readonly onChange: (instanceId: string) => void
+  /** The words of the empty choice, already translated. */
+  readonly noneLabel?: string
   readonly disabled?: boolean
   readonly controlId: string
-}): JSX.Element {
+}
+
+/** A plain select over the existing instances of one function cap; it never picks for the operator. */
+export function InstancePlainSelect({
+  functionCap,
+  kind,
+  value,
+  onChange,
+  noneLabel,
+  disabled,
+  controlId,
+}: InstancePlainSelectProps): JSX.Element {
   const t = useUiText()
-  const query = useInstancesOfCap({
-    functionCap: field.functionCap,
-    ...(field.kind !== undefined ? { kind: field.kind } : {}),
-  })
+  const query = useInstancesOfCap({ functionCap, ...(kind !== undefined ? { kind } : {}) })
   const rows = selectableInstances(query.data ?? [], value)
   return (
     <Select
@@ -40,9 +45,7 @@ function PlainInstanceSelect({
           value: '',
           label: query.isLoading
             ? t('uiLibrary.configFormField.loadingOptions', 'Loading options…')
-            : field.noneLabel !== undefined
-              ? t(field.noneLabelKey ?? 'uiLibrary.configFormField.select', field.noneLabel)
-              : t('uiLibrary.configFormField.select', '— Select —'),
+            : (noneLabel ?? t('uiLibrary.configFormField.select', '— Select —')),
         },
         ...rows.map((row) => ({ value: row.id, label: row.name })),
       ]}
@@ -63,22 +66,29 @@ export function ConfigInstanceSelectControl({
   readonly disabled?: boolean
   readonly controlId: string
 }): JSX.Element {
+  const t = useUiText()
   const Picker = useInstancePickerSlot()
   const current = typeof value === 'string' ? value : ''
+  const noneLabel =
+    field.noneLabel === undefined
+      ? undefined
+      : t(field.noneLabelKey ?? 'uiLibrary.configFormField.select', field.noneLabel)
   if (Picker !== null) {
     return (
       <Picker
         functionCap={field.functionCap}
         {...(field.kind !== undefined ? { kind: field.kind } : {})}
-        {...(field.noneLabel !== undefined ? { noneLabel: field.noneLabel } : {})}
+        {...(noneLabel !== undefined ? { noneLabel } : {})}
         value={current === '' ? null : current}
         onChange={(instanceId) => onChange(instanceId ?? '')}
       />
     )
   }
   return (
-    <PlainInstanceSelect
-      field={field}
+    <InstancePlainSelect
+      functionCap={field.functionCap}
+      {...(field.kind !== undefined ? { kind: field.kind } : {})}
+      {...(noneLabel !== undefined ? { noneLabel } : {})}
       value={current}
       onChange={onChange}
       disabled={disabled || field.disabled}

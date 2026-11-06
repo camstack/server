@@ -111,7 +111,7 @@ export function buildEmailDescriptor(providers: readonly SmtpProviderOption[] = 
               ...linkFieldDescriptor(
                 'smtpInstanceId',
                 { cap: 'smtp-provider' },
-                { label: 'Relay (optional)', noneLabel: 'Default relay' },
+                { label: 'Relay (optional)', noneLabel: 'Default relay', required: false },
               ),
               labelKey: 'notifiers:emailDescriptor.s_email.smtpInstanceId.label',
               description:
@@ -119,7 +119,6 @@ export function buildEmailDescriptor(providers: readonly SmtpProviderOption[] = 
               descriptionKey: 'notifiers:emailDescriptor.s_email.smtpInstanceId.description',
               // The pin is optional: an empty link uses the first configured relay.
               noneLabelKey: 'notifiers:emailDescriptor.s_email.smtpInstanceId.none',
-              required: false,
             },
             {
               type: 'text',

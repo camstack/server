@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The instance picker shows the field's own wording for its empty choice (noneLabel)
+- The plain instance select is exported (InstancePlainSelect) for hosts that mount their own instance picker
 
 ## [1.2.389] - 2026-11-06
 

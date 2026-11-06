@@ -6715,6 +6715,57 @@
       "summary": "The instance picker a host mounts for `instance-select` fields (D1013 rule 5)."
     },
     {
+      "name": "InstancePlainSelect",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/config-instance-select-field.tsx",
+      "summary": "A plain select over the existing instances of one function cap; it never picks for the operator.",
+      "props": [
+        {
+          "name": "functionCap",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "kind",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "value",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onChange",
+          "type": "(instanceId: string) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "noneLabel",
+          "type": "string",
+          "optional": true,
+          "doc": "The words of the empty choice, already translated."
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "controlId",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "isAbsentProvider",
       "kind": "function",
       "area": "lib",

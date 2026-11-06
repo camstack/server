@@ -30,6 +30,8 @@ export interface LinkLabels {
   readonly description?: string
   /** The words of the empty choice of an optional link. */
   readonly noneLabel?: string
+  /** False for an optional link (an empty choice is valid); defaults to true. */
+  readonly required?: boolean
 }
 
 /** The `instance-select` field of a link, keyed like the body field it fills. */
@@ -43,7 +45,7 @@ export function linkFieldDescriptor(
     key,
     label: labels.label,
     ...(labels.description !== undefined ? { description: labels.description } : {}),
-    required: true,
+    required: labels.required ?? true,
     ...(labels.noneLabel !== undefined ? { noneLabel: labels.noneLabel } : {}),
     functionCap: target.cap,
     ...(target.kind !== undefined ? { kind: target.kind } : {}),

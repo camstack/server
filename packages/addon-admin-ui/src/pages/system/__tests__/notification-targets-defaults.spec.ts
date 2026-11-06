@@ -32,6 +32,32 @@ const BROKERS = [
   { id: 'b-2', kind: 'ha', name: 'Two' },
 ]
 
+describe('targetFormDefaultKeys over an instance-select', () => {
+  it('reads a broker link as the broker field, and ignores a link to another cap', () => {
+    const schema: ConfigUISchema = {
+      sections: [
+        {
+          id: 'c',
+          title: 'C',
+          fields: [
+            { type: 'instance-select', key: 'relayId', label: 'R', functionCap: 'smtp-provider' },
+            {
+              type: 'instance-select',
+              key: 'brokerId',
+              label: 'Broker',
+              functionCap: 'broker',
+              kind: 'ha',
+            },
+          ],
+        },
+      ],
+    }
+    const keys = targetFormDefaultKeys(schema)
+    expect(keys.brokerKey).toBe('brokerId')
+    expect(keys.brokerKind).toBe('ha')
+  })
+})
+
 describe('targetFormDefaultKeys', () => {
   it('finds the broker field and the discovered field', () => {
     const keys = targetFormDefaultKeys(SCHEMA)

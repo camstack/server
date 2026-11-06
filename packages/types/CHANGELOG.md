@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - An instance-select field can word its empty choice (noneLabel)
+- linkFieldDescriptor takes required: false for an optional link
 
 ## [1.2.509] - 2026-11-06
 
