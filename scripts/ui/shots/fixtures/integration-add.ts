@@ -20,12 +20,17 @@ interface ProviderTile {
   readonly kind: 'device-provider'
   readonly brokerKind: null
   readonly supportsLocationImport: false
-  readonly canTest: false
+  readonly canTest: boolean
   readonly canAdd: true
   readonly existingInstances: readonly []
 }
 
-function tile(addonId: string, name: string, mode: 'account' | 'standalone'): ProviderTile {
+function tile(
+  addonId: string,
+  name: string,
+  mode: 'account' | 'standalone',
+  canTest = false,
+): ProviderTile {
   return {
     addonId,
     name,
@@ -38,7 +43,7 @@ function tile(addonId: string, name: string, mode: 'account' | 'standalone'): Pr
     kind: 'device-provider',
     brokerKind: null,
     supportsLocationImport: false,
-    canTest: false,
+    canTest,
     canAdd: true,
     existingInstances: [],
   }
@@ -122,7 +127,7 @@ export default defineFixtures({
       tile('bosch-homecom', 'Bosch HomeCom', 'account'),
       tile('provider-wyze', 'Wyze', 'account'),
       tile('provider-rtsp', 'RTSP', 'account'),
-      tile('provider-dreo', 'Dreo', 'account'),
+      tile('provider-dreo', 'Dreo', 'account', true),
       tile('provider-tuya', 'Tuya', 'account'),
       tile('provider-dreame', 'Dreame', 'account'),
       tile('cloudflare-tunnel', 'Cloudflare', 'account'),
@@ -130,6 +135,7 @@ export default defineFixtures({
       tile('provider-reolink', 'Reolink', 'standalone'),
     ],
     'integrations.list': [],
+    'addons.listInstallations': { installations: [], unreachable: [] },
     'auth.listLoginMethods': [],
     'addonSettings.getGlobalSettings': (input: unknown) => {
       const addonId =
@@ -152,6 +158,11 @@ export default defineFixtures({
         return { zones: [{ id: 'zone-1', name: 'example.com' }] }
       }
       return { ok: true }
+    },
+    'mut:integrationInstances.testInstance': {
+      success: false,
+      status: 'rejected',
+      error: 'Dreo sign-in was refused (invalid credentials)',
     },
     'mut:integrations.create': { id: 'int-new', name: 'New' },
   },

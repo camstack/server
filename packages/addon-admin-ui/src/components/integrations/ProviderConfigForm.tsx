@@ -1,14 +1,19 @@
 import { collectKeychainStoredKeys, omitTransientConfig } from '@camstack/types'
-import { Button, useAddonsCustom, Input } from '@camstack/ui-library'
+import { Button, useAddonsCustom, useIntegrationInstancesTestInstance, Input } from '@camstack/ui-library'
 import { Radar } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ConfigUISchema } from '../../types/config-ui'
 import { FormBuilder } from '../form-builder/FormBuilder'
+import { TestVerdictBanner, toTestVerdict, type TestVerdict } from './connection-test-verdict'
 
 interface ProviderConfigFormProps {
   addonId: string
   configSchema: ConfigUISchema | null
+  /** True when the integration DECLARES a pre-creation test. When false the
+   *  Test button is disabled and says why — a button that can only ever answer
+   *  "cannot be tested" is worse than no button. */
+  canTest?: boolean
   /** Hydrate the name field (edit-config). Wizard leaves this unset. */
   initialName?: string
   /** Hydrate the schema fields from the instance record (edit-config). */
@@ -38,6 +43,7 @@ interface ProviderConfigFormProps {
 export function ProviderConfigForm({
   addonId,
   configSchema,
+  canTest = true,
   initialName,
   initialConfig,
   submitLabel,
@@ -50,11 +56,19 @@ export function ProviderConfigForm({
   const { t } = useTranslation()
   const [name, setName] = useState(initialName ?? '')
   const [config, setConfig] = useState<Record<string, unknown>>(initialConfig ?? {})
+  const [testResult, setTestResult] = useState<TestVerdict | null>(null)
+
+  const testMutation = useIntegrationInstancesTestInstance({
+    onSuccess: (result) => setTestResult(toTestVerdict(result)),
+    // A transport failure of the CALL is not a verdict on the credentials.
+    onError: (err) => setTestResult({ status: 'inconclusive', error: String(err) }),
+  })
 
   const addonsCustom = useAddonsCustom()
 
+  const connectionValidated = !canTest || testResult?.status === 'validated'
   const nameMissing = !hideName && name.trim().length === 0
-  const canGoNext = !nameMissing
+  const canGoNext = !nameMissing && connectionValidated
 
   return (
     <div className="space-y-4">
@@ -98,6 +112,7 @@ export function ProviderConfigForm({
           values={config}
           onChange={(next) => {
             setConfig(next)
+            setTestResult(null)
           }}
           onAction={async (action, _key, params) => {
             const result = await addonsCustom.mutateAsync({
@@ -105,7 +120,7 @@ export function ProviderConfigForm({
               action,
               input: params ?? {},
             })
-            if (result !== null && typeof result === 'object') {
+            if (canTest && result !== null && typeof result === 'object') {
               const record = result as Record<string, unknown>
               const completesLogin =
                 typeof record['token'] === 'string' ||
@@ -118,11 +133,15 @@ export function ProviderConfigForm({
               }
               const stored = omitTransientConfig(configSchema, next)
               setConfig(stored)
+              setTestResult(null)
+              testMutation.mutate({ addonId, id: null, values: stored })
             }
             return result
           }}
         />
       )}
+
+      {testResult && <TestVerdictBanner verdict={testResult} />}
 
       <div className="flex items-center justify-between pt-2">
         <Button
@@ -139,8 +158,29 @@ export function ProviderConfigForm({
               {t('integrations.scanFromForm', 'Scan the network')}
             </Button>
           )}
-          {/* The server tests the connection inside `integrations.create`
-              (`integration-instances.testInstance`) and refuses a rejected one. */}
+          <Button
+            variant="unstyled"
+            onClick={() =>
+              testMutation.mutate({
+                addonId,
+                id: null,
+                values: omitTransientConfig(configSchema, config),
+              })
+            }
+            disabled={testMutation.isPending || !canTest}
+            title={
+              canTest
+                ? undefined
+                : t('integrations.connectionUntestable', {
+                    defaultValue: 'This integration cannot be tested before it is created.',
+                  })
+            }
+            className="rounded-lg border border-border px-3 py-1.5 text-xs text-foreground hover:bg-surface-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {testMutation.isPending ? t('integrations.testing') : t('integrations.testConnection')}
+          </Button>
+          {/* Next requires a validated connection test when the addon declares
+              one. The server still re-runs the test inside `integrations.create`. */}
           <div className="flex flex-col items-end gap-1">
             {nameMissing && (
               <p data-testid="integration-name-submit-error" className="text-xs text-danger">

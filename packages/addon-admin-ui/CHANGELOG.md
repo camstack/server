@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The broker picker of an instance link honours a disabled field and offers an empty choice for an optional link
 - Removed the broker-select field type; every broker link is now an instance-select field on the one link primitive
 - The integration on/off toggle switches the instance through integration-instances
-- The provider form no longer has its own Test button; testing happens on the integration instance
+- The new-integration form tests the draft through the integration's own Test (one test method for every integration)
 
 ## [1.2.598] - 2026-11-06
 

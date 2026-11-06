@@ -104,6 +104,10 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
   // Local picker-level error (e.g. a device-adoption addon with no broker
   // kind in its manifest). Surfaced near the picker; cleared on re-select.
   const [pickerError, setPickerError] = useState<string | null>(null)
+  // Whether the picked integration declares a pre-creation test. Drives the
+  // config step's Test button: an integration with no declared test must say so
+  // rather than offering a button that can only answer "cannot be tested".
+  const [canTest, setCanTest] = useState<boolean>(false)
   const [formSeed, setFormSeed] = useState<Readonly<Record<string, unknown>>>({})
   const [appliedSeed, setAppliedSeed] = useState('')
   // The config step's own Scan: a pick refills the form it was opened from.
@@ -178,6 +182,7 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
     if (!open || seed === null) return
     const match = availableTypes.data?.find((row) => row.addonId === seed.addonId)
     if (!match) return
+    setCanTest(match.canTest)
     setDiscoveryMode(match.discoveryMode)
   }, [open, seed, availableTypes.data])
 
@@ -199,11 +204,12 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
     _kind: 'device-adoption' | 'device-provider',
     providerBrokerKind: string | null,
     mode: 'standalone' | 'account' | 'broker',
-    _providerCanTest: boolean,
+    providerCanTest: boolean,
   ) {
     if (addProviderMutation.isPending) return
 
     setSelectedAddonId(addonId)
+    setCanTest(providerCanTest)
     setDiscoveryMode(providerDiscoveryMode)
     setPendingName(displayName)
     setPickerError(null)
@@ -354,6 +360,7 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
     setCreatedIntegrationId(null)
     setPickerError(null)
     addProviderMutation.reset()
+    setCanTest(false)
     setFormSeed({})
     setAppliedSeed('')
   }
@@ -436,6 +443,7 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
                 key={`${seedIdentity.length > 0 ? seedIdentity : selectedAddonId}:${scanFills}`}
                 addonId={selectedAddonId}
                 configSchema={(configSchema ?? null) as ConfigUISchema | null}
+                canTest={canTest}
                 initialName={
                   pendingName.length > 0 && Object.keys(formSeed).length > 0
                     ? pendingName

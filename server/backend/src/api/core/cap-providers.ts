@@ -1022,6 +1022,28 @@ function getDeviceProvider(ar: AddonRegistryService, addonId: string): IDevicePr
 // There is no default branch and the framework never guesses a test from the shape of the
 // settings.
 
+/** The addon that keeps the MQTT brokers: the instance a `brokerId` names lives there, not in the consumer. */
+const BROKER_OWNER_ADDON_ID = 'mqtt-broker'
+
+/**
+ * The instances provider that owns the broker a settings blob NAMES. The consumer (`addonId`) holds a
+ * link to a broker, not the broker, so the broker addon is asked first and the consumer's own provider
+ * only when it lists that id itself.
+ */
+async function findBrokerOwner(
+  ar: AddonRegistryService,
+  addonId: string,
+  brokerId: string,
+): Promise<IIntegrationInstancesProvider | null> {
+  for (const candidateId of [BROKER_OWNER_ADDON_ID, addonId]) {
+    const candidate = getInstancesProvider(ar, candidateId)
+    if (candidate === null || candidate.testInstance === undefined) continue
+    const rows = await candidate.listInstances()
+    if (rows.some((row) => row.id === brokerId)) return candidate
+  }
+  return null
+}
+
 /** What a pre-creation test concluded, and who concluded it. */
 interface ConnectionTestVerdict {
   readonly status: IntegrationTestConnectionStatus
@@ -1085,11 +1107,11 @@ async function testBeforeCreate(
   //    settings NAME a broker, not because nothing else matched.
   const brokerId = settings['brokerId']
   if (typeof brokerId === 'string' && brokerId.length > 0) {
-    const brokerInstances = getInstancesProvider(ar, addonId)
+    const brokerInstances = await findBrokerOwner(ar, addonId, brokerId)
     if (brokerInstances === null || brokerInstances.testInstance === undefined) {
       return {
         status: 'inconclusive',
-        error: `Instances provider for addon '${addonId}' is not available`,
+        error: `No instances provider that owns broker '${brokerId}' is available`,
         testedBy: null,
       }
     }

@@ -70,7 +70,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
       ],
     }),
     useAddonsCustom: () => ({ mutateAsync: vi.fn(async () => ({ ok: true })) }),
-    useIntegrationsTestConnection: () => ({ mutate: vi.fn(), isPending: false }),
+    useIntegrationInstancesTestInstance: () => ({ mutate: vi.fn(), isPending: false }),
   }
 })
 

@@ -85,6 +85,8 @@ function makeInstances(opts: { canTest: boolean; mode?: 'real' | 'throws' }) {
 interface HarnessOptions {
   /** Register an `integration-instances` provider for ADDON_ID. */
   readonly instances?: unknown
+  /** Register the `mqtt-broker` addon's provider, the owner of every `brokerId`. */
+  readonly brokerInstances?: unknown
 }
 
 function makeHarness(opts: HarnessOptions = {}) {
@@ -102,7 +104,11 @@ function makeHarness(opts: HarnessOptions = {}) {
     restartAddon: vi.fn(async () => undefined),
     getCapabilityRegistry: vi.fn(() => ({
       getProviderByAddon: vi.fn((cap: string, addonId: string) =>
-        cap === 'integration-instances' && addonId === ADDON_ID ? (opts.instances ?? null) : null,
+        cap === 'integration-instances' && addonId === ADDON_ID
+          ? (opts.instances ?? null)
+          : cap === 'integration-instances' && addonId === 'mqtt-broker'
+            ? (opts.brokerInstances ?? null)
+            : null,
       ),
       getSingleton: vi.fn(() => null),
     })),
@@ -197,16 +203,27 @@ describe('integrations.getAvailableTypes().canTest follows describe().canTest pe
 })
 
 describe('integrations.create over a settings blob that NAMES a broker', () => {
-  it('tests the broker through integration-instances.testInstance by id', async () => {
-    const instances = makeInstances({ canTest: false })
-    instances.testInstance.mockResolvedValueOnce({ success: false, error: 'bridge unreachable' })
-    const h = makeHarness({ instances })
+  it('tests the broker on the addon that OWNS it, not on the consumer', async () => {
+    const consumer = makeInstances({ canTest: false })
+    const broker = makeInstances({ canTest: true })
+    broker.listInstances.mockResolvedValue([{ id: 'brk_1' }] as never)
+    broker.testInstance.mockResolvedValueOnce({ success: false, error: 'bridge unreachable' })
+    const h = makeHarness({ instances: consumer, brokerInstances: broker })
 
     await expect(
-      h.provider.create({ addonId: ADDON_ID, name: 'Broker', settings: { brokerId: 'brk_1' } }),
+      h.provider.create({ addonId: ADDON_ID, name: 'Link', settings: { brokerId: 'brk_1' } }),
     ).rejects.toThrow(/bridge unreachable/)
 
-    expect(instances.testInstance).toHaveBeenCalledWith({ id: 'brk_1', values: {} })
+    expect(broker.testInstance).toHaveBeenCalledWith({ id: 'brk_1', values: {} })
+    expect(consumer.testInstance).not.toHaveBeenCalled()
     expect(h.integrationReg.createIntegration).not.toHaveBeenCalled()
+  })
+
+  it('is inconclusive (not a refusal) when no provider owns that broker', async () => {
+    const consumer = makeInstances({ canTest: false })
+    const h = makeHarness({ instances: consumer })
+    await h.provider.create({ addonId: ADDON_ID, name: 'Link', settings: { brokerId: 'ghost' } })
+    expect(consumer.testInstance).not.toHaveBeenCalled()
+    expect(h.integrationReg.createIntegration).toHaveBeenCalled()
   })
 })

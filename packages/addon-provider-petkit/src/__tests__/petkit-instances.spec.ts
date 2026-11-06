@@ -99,4 +99,30 @@ describe('petkit integration rows move to a record', () => {
     })
     expect(await petkitConnectionOf(instances, 'int_9999')).toBeNull()
   })
+
+  it('the test hook answers for a draft: the probe verdict, tri-state', async () => {
+    const w = await world()
+    const seen: Record<string, unknown>[] = []
+    const build = (outcome: { outcome: 'validated' } | { outcome: 'rejected'; error: string }) =>
+      buildPetkitInstances(w.mem.records, {
+        onChanged: async () => undefined,
+        tester: {
+          testSettings: async ({ settings }) => {
+            seen.push(settings)
+            return outcome
+          },
+        },
+      })
+    const ok = await build({ outcome: 'validated' }).testInstance?.({
+      id: null,
+      values: { email: 'a@example.com', password: 'typed-pw' },
+    })
+    expect(ok).toMatchObject({ success: true, status: 'validated' })
+    expect(seen[0]).toMatchObject({ password: 'typed-pw' })
+    const bad = await build({ outcome: 'rejected', error: 'nope' }).testInstance?.({
+      id: null,
+      values: { email: 'a@example.com', password: 'x' },
+    })
+    expect(bad).toMatchObject({ success: false, status: 'rejected', error: 'nope' })
+  })
 })

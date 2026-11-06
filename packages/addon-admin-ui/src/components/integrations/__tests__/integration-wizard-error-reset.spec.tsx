@@ -40,7 +40,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => ({
   useDeviceManagerDiscoverDevices: () => ({ mutate: vi.fn(), isPending: false, data: undefined }),
   useDeviceManagerDiscoveryProviders: () => ({ data: { providers: [] } }),
   useAddonsCustom: () => ({ mutateAsync: vi.fn() }),
-  useIntegrationsTestConnection: () => ({ mutate: vi.fn(), isPending: false }),
+  useIntegrationInstancesTestInstance: () => ({ mutate: vi.fn(), isPending: false }),
   useIntegrationsCreate: () => {
     const [error, setError] = useState<Error | null>(null)
     return {

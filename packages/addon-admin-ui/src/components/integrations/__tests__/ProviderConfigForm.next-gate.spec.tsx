@@ -3,10 +3,21 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { ConfirmDialogProvider } from '@camstack/ui-library'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+const testMutate = vi.hoisted(() => vi.fn())
+const testVerdict = vi.hoisted(() => ({ current: { success: true, status: 'validated' } }))
 const customMutate = vi.hoisted(() => vi.fn())
 
 vi.mock('@camstack/ui-library', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@camstack/ui-library')>()),
+  useIntegrationInstancesTestInstance: (opts: {
+    onSuccess?: (r: { success: boolean; status: string }) => void
+  }) => ({
+    mutate: (input: { addonId: string; id: null; values: Record<string, unknown> }) => {
+      testMutate(input)
+      opts.onSuccess?.(testVerdict.current)
+    },
+    isPending: false,
+  }),
   useAddonsCustom: () => ({
     mutateAsync: customMutate,
   }),
@@ -29,18 +40,10 @@ function hostInput(): HTMLElement {
   return host
 }
 
-const HOST_SCHEMA = {
-  sections: [
-    {
-      id: 'c',
-      title: 'C',
-      fields: [{ type: 'text' as const, key: 'host', label: 'Host', required: true }],
-    },
-  ],
-}
-
 describe('ProviderConfigForm Next gate', () => {
   beforeEach(() => {
+    testMutate.mockClear()
+    testVerdict.current = { success: true, status: 'validated' }
     customMutate.mockReset()
     customMutate.mockResolvedValue({
       sslCertificate: 'CERT',
@@ -50,27 +53,105 @@ describe('ProviderConfigForm Next gate', () => {
     })
   })
 
-  it('has no Test button: the connection is tested by integrations.create, and Next waits only for the name', () => {
+  it('keeps Next disabled until the connection test validates when canTest', () => {
     renderForm(
       <ProviderConfigForm
         addonId="bosch-shc"
-        configSchema={HOST_SCHEMA}
+        canTest
+        configSchema={{
+          sections: [
+            {
+              id: 'c',
+              title: 'C',
+              fields: [{ type: 'text', key: 'host', label: 'Host', required: true }],
+            },
+          ],
+        }}
         onSave={vi.fn()}
         onBack={() => {}}
       />,
     )
-    expect(screen.queryByRole('button', { name: 'Test connection' })).toBeNull()
+    fireEvent.change(nameInput(), { target: { value: 'Home' } })
     const next = screen.getByRole('button', { name: 'Next' })
     expect(next).toBeDisabled()
-    fireEvent.change(nameInput(), { target: { value: 'Home' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Test connection' }))
     expect(next).not.toBeDisabled()
   })
 
-  it('keeps the credentials a registerClient action returned, and hands them to onSave', async () => {
-    const onSave = vi.fn()
+  it('tests the draft through testInstance with a null id', () => {
     renderForm(
       <ProviderConfigForm
         addonId="bosch-shc"
+        canTest
+        configSchema={{
+          sections: [
+            { id: 'c', title: 'C', fields: [{ type: 'text', key: 'host', label: 'Host' }] },
+          ],
+        }}
+        onSave={vi.fn()}
+        onBack={() => {}}
+      />,
+    )
+    fireEvent.change(hostInput(), { target: { value: '10.0.0.5' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Test connection' }))
+    expect(testMutate).toHaveBeenCalledWith({
+      addonId: 'bosch-shc',
+      id: null,
+      values: expect.objectContaining({ host: '10.0.0.5' }),
+    })
+  })
+
+  it('keeps Next disabled and shows the verdict when the test is rejected', () => {
+    testVerdict.current = { success: false, status: 'rejected' }
+    renderForm(
+      <ProviderConfigForm
+        addonId="bosch-shc"
+        canTest
+        configSchema={{
+          sections: [
+            { id: 'c', title: 'C', fields: [{ type: 'text', key: 'host', label: 'Host' }] },
+          ],
+        }}
+        onSave={vi.fn()}
+        onBack={() => {}}
+      />,
+    )
+    fireEvent.change(nameInput(), { target: { value: 'Home' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Test connection' }))
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
+  })
+
+  it('re-disables Next when the form changes after a validated test', () => {
+    renderForm(
+      <ProviderConfigForm
+        addonId="bosch-shc"
+        canTest
+        configSchema={{
+          sections: [
+            {
+              id: 'c',
+              title: 'C',
+              fields: [{ type: 'text', key: 'host', label: 'Host', required: true }],
+            },
+          ],
+        }}
+        onSave={vi.fn()}
+        onBack={() => {}}
+      />,
+    )
+    fireEvent.change(nameInput(), { target: { value: 'Home' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Test connection' }))
+    const next = screen.getByRole('button', { name: 'Next' })
+    expect(next).not.toBeDisabled()
+    fireEvent.change(hostInput(), { target: { value: '192.168.1.1' } })
+    expect(next).toBeDisabled()
+  })
+
+  it('auto-runs the connection test after a successful registerClient', async () => {
+    renderForm(
+      <ProviderConfigForm
+        addonId="bosch-shc"
+        canTest
         configSchema={{
           sections: [
             {
@@ -96,19 +177,26 @@ describe('ProviderConfigForm Next gate', () => {
             },
           ],
         }}
-        onSave={onSave}
+        onSave={vi.fn()}
         onBack={() => {}}
       />,
     )
-    fireEvent.change(nameInput(), { target: { value: 'Home' } })
     fireEvent.change(hostInput(), { target: { value: '192.168.1.59' } })
     fireEvent.click(screen.getByRole('button', { name: 'Register on controller' }))
     await waitFor(() => expect(customMutate).toHaveBeenCalled())
-    fireEvent.click(screen.getByRole('button', { name: 'Next' }))
-    await waitFor(() => expect(onSave).toHaveBeenCalled())
-    expect(onSave.mock.calls[0]?.[0]).toMatchObject({
-      name: 'Home',
-      config: expect.objectContaining({ host: '192.168.1.59', token: 'tok' }),
-    })
+    await waitFor(() =>
+      expect(testMutate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          addonId: 'bosch-shc',
+          id: null,
+          values: expect.objectContaining({
+            host: '192.168.1.59',
+            sslCertificate: 'CERT',
+            sslKey: 'KEY',
+            token: 'tok',
+          }),
+        }),
+      ),
+    )
   })
 })
