@@ -5,6 +5,7 @@ import { describe, it, expect } from 'vitest'
 import { EventCategory, type PackageRequires } from '@camstack/types'
 import { UnsupportedAddonTracker } from '@camstack/server/system'
 import {
+  groupCandidatesForSpawn,
   judgeSupport,
   isUnreadableRequires,
   readPackageRequires,
@@ -134,7 +135,6 @@ describe('reportSupport on an agent (D1017)', () => {
           installedVersions: { '@camstack/addon-ml': installed },
         }),
         tracker,
-        () => undefined,
       )
     run('1.0.0')
     run('1.0.0')
@@ -148,6 +148,42 @@ describe('reportSupport on an agent (D1017)', () => {
       installedVersion: '1.0.0',
       requiredMinimum: '2.0.0',
     })
+  })
+})
+
+describe('the agent spawn set (D1017)', () => {
+  const trackerOf = () => {
+    const events: Array<{ category: string; data: Record<string, unknown> }> = []
+    const tracker = new UnsupportedAddonTracker({
+      eventBus: { emit: (e) => void events.push({ category: e.category, data: e.data }) },
+      nodeId: 'agent-1',
+      log: () => undefined,
+      settleMs: 0,
+    })
+    return { tracker, events }
+  }
+  const ml = candidate('ml', '@camstack/addon-ml', '1.0.0')
+  const ok = { ...candidate('ok', '@camstack/addon-ok', '3.0.0'), groupId: 'ml' }
+  const stale = context({
+    serverRequiresAddons: { '@camstack/addon-ml': '>=2.0.0' },
+    installedVersions: { '@camstack/addon-ml': '1.0.0', '@camstack/addon-ok': '3.0.0' },
+  })
+
+  it('spawns an unsupported addon in its group, next to the supported one', () => {
+    const { tracker, events } = trackerOf()
+    const grouped = groupCandidatesForSpawn([ml, ok], stale, tracker)
+    expect(grouped.get('ml')?.map((c) => c.addonId)).toEqual(['ml', 'ok'])
+    expect(events.map((e) => e.category)).toEqual([EventCategory.AddonUnsupportedVersion])
+  })
+
+  it('clears the alert of a package that is no longer installed on the node', () => {
+    const { tracker, events } = trackerOf()
+    groupCandidatesForSpawn([ml], stale, tracker, ['@camstack/addon-ml'])
+    groupCandidatesForSpawn([ok], stale, tracker, ['@camstack/addon-ok'])
+    expect(events.map((e) => e.category)).toEqual([
+      EventCategory.AddonUnsupportedVersion,
+      EventCategory.AddonUnsupportedResolved,
+    ])
   })
 })
 

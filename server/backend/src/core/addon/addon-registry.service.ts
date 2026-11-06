@@ -1453,6 +1453,7 @@ export class AddonRegistryService {
   async onModuleDestroy(): Promise<void> {
     this.logger.info('Shutting down all addons…')
     this.healthMonitor.stop()
+    this.unsupportedAddons.stop()
     await this.shutdownAll()
     this.logger.info('All addons shut down')
   }
@@ -2315,10 +2316,9 @@ export class AddonRegistryService {
     const suppressed = new Set<string>([addonId])
     if (this.isForkedAddonEntry(entry)) {
       const runnerId = resolveRunnerId(entry.declaration, addonId)
-      for (const { addonId: siblingId } of this.buildSpawnPlan(
-        [...this.addonEntries.keys()],
-        () => undefined,
-      ).get(runnerId) ?? []) {
+      for (const { addonId: siblingId } of this.buildSpawnPlan([...this.addonEntries.keys()]).get(
+        runnerId,
+      ) ?? []) {
         suppressed.add(siblingId)
       }
     }
@@ -3899,16 +3899,13 @@ export class AddonRegistryService {
    * the tracker raises (once) or clears the operator alert with both versions
    * (D1017). The post-swap required-addon update brings the package current.
    */
-  buildSpawnPlan(
-    addonIds: readonly string[],
-    log: (line: string) => void = (line) => this.logger.warn(line),
-  ): RunnerPlan {
+  buildSpawnPlan(addonIds: readonly string[]): RunnerPlan {
     reportHubAddonSupport({
       addonIds,
       candidateOf: (id) => this.staleCandidateOf(id),
       context: readHubStaleGateContext(),
       tracker: this.unsupportedAddons,
-      log,
+      installedPackages: [...this.addonEntries.values()].map((e) => e.packageName),
     })
     return this.buildAddonGroupPlan(addonIds)
   }
@@ -4134,9 +4131,9 @@ export class AddonRegistryService {
       throw new Error(`ensureForkedRunner("${addonId}") requires an on-disk forked addon`)
     }
     const runnerId = resolveRunnerId(entry.declaration, addonId)
-    const roster = this.buildSpawnPlan([...this.addonEntries.keys()], () => undefined).get(
-      runnerId,
-    ) ?? [{ addonId, addonDir: entry.addonDir }]
+    const roster = this.buildSpawnPlan([...this.addonEntries.keys()]).get(runnerId) ?? [
+      { addonId, addonDir: entry.addonDir },
+    ]
 
     // Claim before the queue so a member that arrives while this one is
     // waiting is visible to the fork that has not started yet. Solo runners

@@ -139,22 +139,44 @@ export function supportFactsOf(
 }
 
 /**
- * Judge `candidates`, log what could not be judged and what runs unsupported, and
- * hand the verdict to the tracker. EVERY candidate is spawned by the caller.
+ * Judge `candidates` and hand the verdict to the tracker, which logs each
+ * unsupported streak and each unjudged line once. EVERY candidate is spawned by
+ * the caller. `installed` is the node's full package set when the caller has it
+ * (it lets the tracker clear the alert of an uninstalled package).
  */
 export function reportSupport(
   candidates: readonly GroupCandidate[],
   context: StaleGateContext,
   tracker: UnsupportedAddonTracker,
-  log: (line: string) => void,
+  installed?: readonly string[],
 ): void {
   const { unsupported, unjudged } = judgeSupport(candidates, context)
-  for (const line of unjudged) log(line)
-  for (const entry of unsupported) log(entry.reason)
+  for (const line of unjudged) tracker.logOnce(line)
   tracker.observe(
     candidates.map((c) => c.packageName),
     unsupported.map((entry) => supportFactsOf(entry, context.serverVersion)),
+    installed,
   )
+}
+
+/**
+ * The agent's spawn set: EVERY candidate, grouped by runner, after the support
+ * judgement (D1017). An unsupported addon is in its group like any other.
+ */
+export function groupCandidatesForSpawn(
+  candidates: readonly GroupCandidate[],
+  context: StaleGateContext,
+  tracker: UnsupportedAddonTracker,
+  installed?: readonly string[],
+): ReadonlyMap<string, readonly GroupCandidate[]> {
+  reportSupport(candidates, context, tracker, installed)
+  const grouped = new Map<string, GroupCandidate[]>()
+  for (const c of candidates) {
+    const arr = grouped.get(c.groupId) ?? []
+    arr.push(c)
+    grouped.set(c.groupId, arr)
+  }
+  return grouped
 }
 
 /**

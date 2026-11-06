@@ -16,10 +16,12 @@ import { EventCategory } from '@camstack/types'
  *     version, same unmet facts), after a short settle window so the alert
  *     centre is subscribed even when the verdict comes from the first boot plan;
  *   - `AddonUnsupportedResolved` when a later judgement finds the package
- *     supported (or the package is gone), which dismisses the alert.
+ *     supported, or the node's installed set no longer holds it, which dismisses
+ *     the alert.
  *
  * One tracker per process; the verdict is re-judged on every spawn path, and
- * `observe` is idempotent. State is in memory: a restart raises a still-
+ * `observe` is idempotent; given the node's full installed set, a streak whose
+ * package is no longer installed is resolved too. State is in memory: a restart raises a still-
  * unsupported addon once more, and AlertCenter upserts it under the same id.
  */
 export const UNSUPPORTED_ADDON_SETTLE_MS = 60_000
@@ -59,6 +61,7 @@ export class UnsupportedAddonTracker {
   private readonly now: () => number
   private readonly startedAt: number
   private timer: NodeJS.Timeout | null = null
+  private readonly logged = new Set<string>()
 
   constructor(private readonly options: UnsupportedAddonTrackerOptions) {
     this.settleMs = options.settleMs ?? UNSUPPORTED_ADDON_SETTLE_MS
@@ -70,14 +73,33 @@ export class UnsupportedAddonTracker {
    * One gate run. `judged` is every package the run looked at, `unsupported` the
    * subset below its minimum. A judged package with a streak that is not in
    * `unsupported` any more is resolved; a package this run did not judge is left alone.
+   * `installed`, when the run saw the node's FULL package set, also resolves every
+   * streak whose package is not in it (uninstalled).
    */
-  observe(judged: readonly string[], unsupported: readonly UnsupportedAddonFacts[]): void {
+  observe(
+    judged: readonly string[],
+    unsupported: readonly UnsupportedAddonFacts[],
+    installed?: readonly string[],
+  ): void {
+    if (installed !== undefined) {
+      const present = new Set(installed)
+      for (const packageName of [...this.streaks.keys()]) {
+        if (!present.has(packageName)) this.resolve(packageName)
+      }
+    }
     const unsupportedNames = new Set(unsupported.map((f) => f.packageName))
     for (const packageName of judged) {
       if (!unsupportedNames.has(packageName)) this.resolve(packageName)
     }
     for (const facts of unsupported) this.raise(facts)
     this.flush()
+  }
+
+  /** Log a line the first time only (an unjudged addon is reported once, not on every judgement). */
+  logOnce(line: string): void {
+    if (this.logged.has(line)) return
+    this.logged.add(line)
+    this.options.log(line)
   }
 
   /** Stop the settle timer (shutdown). */

@@ -23,7 +23,8 @@ export interface HubSupportInput {
   readonly candidateOf: (addonId: string) => GroupCandidate | undefined
   readonly context: StaleGateContext
   readonly tracker: UnsupportedAddonTracker
-  readonly log: (line: string) => void
+  /** Every package the registry holds: a streak outside it is cleared. */
+  readonly installedPackages: readonly string[]
 }
 
 /** Judge the addons of `addonIds` the registry holds and report the verdict; nothing is held back. */
@@ -33,7 +34,7 @@ export function reportHubAddonSupport(input: HubSupportInput): void {
     const candidate = input.candidateOf(id)
     if (candidate !== undefined) candidates.push(candidate)
   }
-  reportSupport(candidates, input.context, input.tracker, input.log)
+  reportSupport(candidates, input.context, input.tracker, input.installedPackages)
 }
 
 /** The judgement's facts for THIS hub, read from disk: the running server and the addons dir. */

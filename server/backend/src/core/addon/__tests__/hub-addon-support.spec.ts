@@ -38,7 +38,6 @@ function contextOf(installed: Record<string, string>): StaleGateContext {
 
 function harness() {
   const events: Array<{ category: string; data: Record<string, unknown> }> = []
-  const lines: string[] = []
   const tracker = new UnsupportedAddonTracker({
     eventBus: { emit: (e) => void events.push({ category: e.category, data: e.data }) },
     nodeId: 'hub',
@@ -51,9 +50,9 @@ function harness() {
       candidateOf: (id) => byId[id],
       context: contextOf(installed),
       tracker,
-      log: (l) => lines.push(l),
+      installedPackages: Object.values(byId).map((c) => c.packageName),
     })
-  return { events, lines, run }
+  return { events, run }
 }
 
 const INSTALLED = {
@@ -64,7 +63,7 @@ const INSTALLED = {
 
 describe('reportHubAddonSupport (D1017)', () => {
   it('alerts for an addon below the server minimum and one needing a newer server, and for infrastructure alike', () => {
-    const { events, lines, run } = harness()
+    const { events, run } = harness()
     run(INSTALLED, ['ml', 'ok', 'newer', 'store', 'ghost'])
     const raised = events.filter((e) => e.category === EventCategory.AddonUnsupportedVersion)
     expect(raised.map((e) => e.data['addonId']).sort()).toEqual(['ml', 'newer', 'store'])
@@ -74,9 +73,6 @@ describe('reportHubAddonSupport (D1017)', () => {
       requiredMinimum: '2.0.0',
       serverVersion: '1.2.721',
     })
-    expect(lines.some((l) => l.includes('ml') && l.includes('1.0.0') && l.includes('2.0.0'))).toBe(
-      true,
-    )
   })
 
   it('does not re-raise on the next judgement of the same installed version', () => {

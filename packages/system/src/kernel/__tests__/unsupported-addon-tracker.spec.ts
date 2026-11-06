@@ -67,6 +67,32 @@ describe('UnsupportedAddonTracker', () => {
     expect(events[1]?.data).toMatchObject({ packageName: '@camstack/addon-ml', nodeId: 'hub' })
   })
 
+  it('resolves a package that is absent from the full installed set, and only then', () => {
+    const { tracker, events } = harness()
+    tracker.observe([OLD.packageName], [OLD], [OLD.packageName])
+    tracker.observe([], [], [OLD.packageName, '@camstack/addon-other'])
+    expect(events).toHaveLength(1)
+    tracker.observe([], [], ['@camstack/addon-other'])
+    tracker.observe([], [], ['@camstack/addon-other'])
+    expect(events.map((e) => e.category)).toEqual([
+      EventCategory.AddonUnsupportedVersion,
+      EventCategory.AddonUnsupportedResolved,
+    ])
+  })
+
+  it('logs an unjudged line once', () => {
+    const lines: string[] = []
+    const tracker = new UnsupportedAddonTracker({
+      eventBus: { emit: () => undefined },
+      nodeId: 'hub',
+      log: (l) => void lines.push(l),
+      settleMs: 0,
+    })
+    tracker.logOnce('x unjudged')
+    tracker.logOnce('x unjudged')
+    expect(lines).toEqual(['x unjudged'])
+  })
+
   it('a package this run did not judge keeps its streak', () => {
     const { tracker, events } = harness()
     tracker.observe([OLD.packageName], [OLD])

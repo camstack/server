@@ -133,7 +133,7 @@ export enum EventCategory {
   AddonUnsupportedVersion = 'addon.unsupported-version',
   /**
    * The package of an {@link AddonUnsupportedVersion} alert reached a supported
-   * version (or was removed). AlertCenter dismisses the matching alert.
+   * version, or is no longer installed on the node. AlertCenter dismisses the matching alert.
    *
    * Payload: `{ packageName, addonId, nodeId }`.
    */

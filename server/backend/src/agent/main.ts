@@ -114,7 +114,7 @@ import {
   readPackageManifestAddons,
   registerGroupRunnerProviders,
 } from './agent-group-runner.js'
-import { readPackageRequires, reportSupport } from './stale-addon-gate.js'
+import { groupCandidatesForSpawn, readPackageRequires } from './stale-addon-gate.js'
 import {
   readRunningServerAddonMinimums,
   readRunningServerVersion,
@@ -1270,6 +1270,7 @@ async function startAgent(configPath?: string): Promise<void> {
         run: async () => {
           // Abort any in-flight upward hub registration retry loop.
           registerAbortController.abort()
+          unsupportedAddonTracker?.stop()
           // Dispose the UDS event bridge to remove the parent-bus subscriber and
           // clear the child-event handler, preventing subscriber leaks on shutdown.
           udsEventBridgeDispose?.()
@@ -1549,19 +1550,18 @@ async function bootCoreAddons(
  */
 let unsupportedAddonTracker: UnsupportedAddonTracker | null = null
 
-function reportCandidateSupport(
+function groupForSpawn(
   broker: ServiceBroker,
   candidates: readonly GroupCandidate[],
   addonsDir: string,
-  log: (line: string) => void,
-): void {
-  if (candidates.length === 0) return
+  installed?: readonly string[],
+): ReadonlyMap<string, readonly GroupCandidate[]> {
   unsupportedAddonTracker ??= new UnsupportedAddonTracker({
     eventBus: getBrokerEventBus(broker),
     nodeId: broker.nodeID,
-    log,
+    log: (line) => console.warn(`[Agent] ${line}`),
   })
-  reportSupport(
+  return groupCandidatesForSpawn(
     candidates,
     {
       serverVersion: readRunningServerVersion(),
@@ -1570,7 +1570,7 @@ function reportCandidateSupport(
       requiresOfDir: readPackageRequires,
     },
     unsupportedAddonTracker,
-    (line) => log(`[Agent] ${line}`),
+    installed,
   )
 }
 
@@ -1630,14 +1630,13 @@ async function loadClusterCapableAddons(
     }
   }
 
-  reportCandidateSupport(broker, allGroupCandidates, config.addonsDir, (l) => console.warn(l))
+  const grouped = groupForSpawn(
+    broker,
+    allGroupCandidates,
+    config.addonsDir,
+    allGroupCandidates.map((c) => c.packageName),
+  )
   if (allGroupCandidates.length > 0) {
-    const grouped = new Map<string, GroupCandidate[]>()
-    for (const c of allGroupCandidates) {
-      const arr = grouped.get(c.groupId) ?? []
-      arr.push(c)
-      grouped.set(c.groupId, arr)
-    }
     for (const [groupId, addons] of grouped) {
       try {
         await broker.call('$process.spawnRunner', {
@@ -1757,13 +1756,7 @@ async function loadDeployedAddons(
     )
     return
   }
-  const grouped = new Map<string, GroupCandidate[]>()
-  reportCandidateSupport(broker, groupCandidates, addonsDir, (l) => console.warn(l))
-  for (const c of groupCandidates) {
-    const arr = grouped.get(c.groupId) ?? []
-    arr.push(c)
-    grouped.set(c.groupId, arr)
-  }
+  const grouped = groupForSpawn(broker, groupCandidates, addonsDir)
   const deployLogger = loggerFactory('agent-group-runner')
   for (const [groupId, addons] of grouped) {
     await ensureGroupRunner(

@@ -39,7 +39,8 @@ The `UnsupportedAddonTracker` turns the verdict into the usual AlertCenter path:
 `AddonUnsupportedVersion` (`addon.unsupported-version`) once per streak - the same
 package, installed version and unmet facts - naming addon, installed version,
 required minimum and server version, and `AddonUnsupportedResolved`
-(`addon.unsupported-resolved`) when a later judgement finds the package supported.
+(`addon.unsupported-resolved`) when a later judgement finds the package supported or
+the node no longer has it installed.
 AlertCenter keys one card per node and package and dismisses it on the resolve
 edge. A package whose requirements cannot be read, or a server whose version
 cannot be read, is unknown: the addon runs and no alert is raised. Auto-update
