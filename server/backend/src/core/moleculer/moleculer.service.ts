@@ -67,6 +67,7 @@ import { LoggingService } from '../logging/logging.service'
 import { StreamProbeService } from '../streaming/stream-probe.service'
 import { filterAgentAuthoritativeRecords } from './agent-readiness-pull.js'
 import { requestAgentRegistration } from './agent-registration-request.js'
+import { registeredProviderFor } from '../addon/instance-links.service.js'
 import { HubMeshGuard } from './hub-mesh-guard.js'
 import { readHubServerVersion } from './hub-server-version.js'
 import { buildCapCallFn } from './cap-call-fn.js'
@@ -1304,7 +1305,13 @@ export class MoleculerService {
       for (const methodName of Object.keys(expandCapMethods(capDef))) {
         proxy[methodName] = (methodParams: unknown) => callFn(methodName, methodParams)
       }
-      registry.registerProvider(capName, registryKey, proxy, owner)
+      // A forked holder of `integration-instances` is guarded like an in-process one (D1013).
+      registry.registerProvider(
+        capName,
+        registryKey,
+        registeredProviderFor(capName, proxy, registry),
+        owner,
+      )
 
       // Local-first singleton preference (UDS regression fix). A
       // `placement: 'any-node'` singleton (e.g. `pipeline-executor`) can

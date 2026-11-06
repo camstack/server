@@ -137,6 +137,7 @@ import {
 import { createRunnerSerializer, type RunnerSerializer } from './runner-serialization'
 import { spawnPlanConcurrently } from './runner-spawn-fanout.js'
 import { findInstancesProvider } from './integration-instances-provider.js'
+import { registeredProviderFor } from './instance-links.service.js'
 import { wireSettingsDoor } from './settings-door-wiring.js'
 
 type AddonSource = 'core' | 'installed'
@@ -3532,7 +3533,12 @@ export class AddonRegistryService {
     const nodeDataDir = path.resolve(process.env.CAMSTACK_DATA ?? 'camstack-data')
 
     const registerProvider = (capabilityName: string, provider: unknown): void => {
-      this.capabilityRegistry.registerProvider(capabilityName, addonId, provider)
+      // An `integration-instances` holder is registered with its delete guarded by the link index (D1013).
+      this.capabilityRegistry.registerProvider(
+        capabilityName,
+        addonId,
+        registeredProviderFor(capabilityName, provider, this.capabilityRegistry),
+      )
       logger.info('Registered provider via context.registerProvider()', {
         meta: { capabilityName },
       })
