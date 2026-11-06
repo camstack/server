@@ -57,6 +57,7 @@ fixed on its own evidence:
 | the Moleculer transport link | `trpc-links.ts` (`narrowToPinnedProvider`) | D593 |
 | the parent's UDS route | `cap-router-runtime.ts` (`devicePinOf`) | D594 |
 | the sibling short-circuit, which runs BEFORE that route | `cap-routing-hints.ts` (`liftRoutingHints`) | D595 |
+| the in-process short-circuit of a runner that co-hosts a collection provider (`{ addonId }` of a global collection cap) | `trpc-links.ts` (`localProviderLink`, resolver `getByAddonId`) | D595 |
 
 The last row is the one that keeps being missed: the short-circuit is handed
 the lifted ENVELOPE, not the args, so a pin the envelope does not carry is a

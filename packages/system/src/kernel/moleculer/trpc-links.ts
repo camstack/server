@@ -25,9 +25,11 @@
 
 import {
   CALLER_STAMPED_CAPABILITIES,
+  COLLECTION_ARRAY_METHODS,
   readNodePin,
   withCapInputDefaults,
 } from '@camstack/types/addon'
+import { liftRoutingHints } from '../transport/cap-routing-hints.js'
 import { stampCallerAddonId } from '../transport/cap-route-resolver.js'
 import { TRPCClientError, type TRPCLink } from '@trpc/client'
 import type { AnyRouter } from '@trpc/server'
@@ -72,6 +74,14 @@ export interface LocalProviderResolver {
    * never pin a cap they themselves host.
    */
   localNodeId?: string
+  /**
+   * The provider of `capabilityName` that THIS process registered for `addonId`,
+   * or `null` when that addon has none here. Lets {@link localProviderLink}
+   * honour the `{ addonId }` pin of a global collection cap: a runner that
+   * co-hosts its own provider must not answer a call pinned to another addon.
+   * Omit for resolvers that never host a collection provider (pin ignored).
+   */
+  getByAddonId?(capabilityName: string, addonId: string): unknown | null
 }
 
 // ── Cap-usage observer ─────────────────────────────────────────────
@@ -221,7 +231,22 @@ export function localProviderLink<TRouter extends AnyRouter>(
         }
       }
 
-      const provider = resolver.getByName(parsed.capName)
+      // Honor the `{ addonId }` pin of a global collection cap the same way:
+      // a co-hosted provider of ANOTHER addon must not answer it. Only collection
+      // caps — on any other cap `addonId` is provider data (`addons.getLogs`).
+      // A pinned addon that IS local is answered by its own provider.
+      let provider: unknown
+      const pinnedAddonId = liftRoutingHints(op.input).addonId
+      if (
+        pinnedAddonId !== undefined &&
+        resolver.getByAddonId !== undefined &&
+        Object.hasOwn(COLLECTION_ARRAY_METHODS, parsed.capName)
+      ) {
+        provider = resolver.getByAddonId(parsed.capName, pinnedAddonId)
+        if (!provider) return next(opWithDefaults)
+      } else {
+        provider = resolver.getByName(parsed.capName)
+      }
       if (!provider || typeof provider !== 'object') return next(opWithDefaults)
 
       const fn: unknown = Reflect.get(provider, parsed.method)

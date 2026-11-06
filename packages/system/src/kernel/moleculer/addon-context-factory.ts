@@ -388,6 +388,9 @@ async function buildAddonContext(
     // (e.g. a hub orchestrator pinning `model-convert` to an agent while the
     // hub also hosts that any-node cap).
     localNodeId: nodeId,
+    getByAddonId(capabilityName: string, pinnedAddonId: string): unknown | null {
+      return regs.byAddonId.get(capabilityName)?.get(pinnedAddonId) ?? null
+    },
     getByName(capabilityName: string): unknown | null {
       const preferred = regs.preferred.get(capabilityName)
       if (preferred) {

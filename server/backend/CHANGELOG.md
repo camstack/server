@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A runner that hosts its own provider of a collection capability no longer answers a call pinned to another addon, which left the Home Assistant export target Unconfigured
+
 ## [1.2.780] - 2026-11-06
 
 ### Changed
