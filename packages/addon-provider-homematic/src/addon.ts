@@ -108,6 +108,7 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
     await records.declare(homematicRecordKinds)
     const instances = buildHomematicInstances(records, {
       onChanged: () => this.reconcileIntegrations(),
+      tester: this.buildConnectionTestProvider(),
     })
     this.instances = instances
     // The rows move BEFORE the instances provider registers (below): while it is registered the

@@ -7,6 +7,9 @@
 import {
   defineEntryKind,
   entryBody,
+  type IConnectionTestProvider,
+  type IntegrationTestConnectionResult,
+  REDACTED_SECRET,
   type RecordsAccess,
   RecordIntegrationInstances,
   type ResolvedInstance,
@@ -72,12 +75,15 @@ export function settingsReadOf(
 export interface HomematicInstancesDeps {
   /** Bring the live CCU sessions in line with the records after a change. */
   readonly onChanged: () => Promise<void>
+  /** The CCU probe the Test action runs. */
+  readonly tester: Pick<IConnectionTestProvider, 'testSettings'>
 }
 
 export function buildHomematicInstances(
   records: Pick<RecordsAccess, 'kind' | 'owner'>,
   deps: HomematicInstancesDeps,
 ): RecordIntegrationInstances<HomematicConnectionBody> {
+  const handle = records.kind(homematicConnectionsEntryKind)
   return new RecordIntegrationInstances<HomematicConnectionBody>(
     records,
     homematicConnectionsEntryKind,
@@ -87,12 +93,38 @@ export function buildHomematicInstances(
         discovery: { mode: 'lan', scopedToInstance: false },
         instanceMode: 'multiple',
         kind: 'connection',
-        canTest: false,
+        canTest: true,
       },
       formSchema: () => buildConnectionFormSchema(),
       initialBody: (name): HomematicConnectionBody => ({ name }),
       configured: (body) => (body.host ?? '').trim().length > 0,
       onChanged: () => deps.onChanged(),
+      test: async ({ id, values }): Promise<IntegrationTestConnectionResult> => {
+        // The stored CCU under the edited form; a saved WebUI password is never retyped, the
+        // form hands back its redacted view, so the keychain value stands in.
+        const stored = id === null ? null : ((await handle.getResolved(id))?.data ?? null)
+        const typed = values['password']
+        const password =
+          typeof typed === 'string' && typed !== '' && typed !== REDACTED_SECRET
+            ? typed
+            : (stored?.password ?? '')
+        const outcome = await deps.tester.testSettings({
+          settings: {
+            ...(stored === null ? {} : connectionSettingsOf(stored)),
+            ...values,
+            password,
+          },
+        })
+        if (outcome.outcome === 'validated') {
+          return {
+            success: true,
+            status: 'validated',
+            ...(outcome.latencyMs !== undefined ? { latencyMs: outcome.latencyMs } : {}),
+            ...(outcome.detail !== undefined ? { detail: outcome.detail } : {}),
+          }
+        }
+        return { success: false, status: outcome.outcome, error: outcome.error }
+      },
     },
   )
 }

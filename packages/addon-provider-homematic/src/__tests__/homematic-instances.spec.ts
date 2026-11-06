@@ -2,9 +2,14 @@
  * Homematic CCUs as typed records (planning#416, D1007): the rows-to-record migration moves each
  * integration's OWN connection and WebUI password into its record, and the reconciler reads the record.
  */
-import { makeInMemoryRecords } from '@camstack/types'
-import { describe, expect, it } from 'vitest'
+import { makeInMemoryRecords, REDACTED_SECRET } from '@camstack/types'
+import { describe, expect, it, vi } from 'vitest'
 import { connectionFromSettings } from '../config.js'
+import {
+  buildHomematicConnectionTestProvider,
+  CcuProbeError,
+  type CcuProbeInput,
+} from '../homematic-connection-test.js'
 import {
   buildHomematicInstances,
   homematicConnectionsEntryKind,
@@ -184,7 +189,10 @@ describe('homematic readers go through the record', () => {
   async function engineWith(boards: Record<string, Record<string, unknown>>) {
     const engine = makeInMemoryRecords(ADDON)
     await engine.records.declare(homematicRecordKinds)
-    const instances = buildHomematicInstances(engine.records, { onChanged: async () => undefined })
+    const instances = buildHomematicInstances(engine.records, {
+      onChanged: async () => undefined,
+      tester: { testSettings: async () => ({ outcome: 'inconclusive', error: 'unused' }) },
+    })
     const handle = engine.records.kind(homematicConnectionsEntryKind)
     for (const [id, body] of Object.entries(boards)) {
       await handle.put({ id, data: homematicConnectionsEntryKind.schema.parse(body) }, { ifRev: 0 })
@@ -227,5 +235,65 @@ describe('homematic readers go through the record', () => {
     })
     expect(hosts).toEqual(['10.0.21.1', '10.0.22.1'])
     expect(unreadable).toEqual(['int_0023'])
+  })
+})
+
+describe('homematic testInstance', () => {
+  async function testWorld() {
+    const engine = makeInMemoryRecords(ADDON)
+    await engine.records.declare(homematicRecordKinds)
+    // A CCU whose WebUI accepts exactly one password; records every probe.
+    const seen: CcuProbeInput[] = []
+    const probe = async (input: CcuProbeInput) => {
+      seen.push(input)
+      if (input.password !== 'pw-ok') throw new CcuProbeError('bad-credentials', 'refused')
+      return { interfaces: ['HmIP-RF'], namesUnlocked: true }
+    }
+    const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
+    const tester = buildHomematicConnectionTestProvider({ logger: logger as never, probe })
+    const instances = buildHomematicInstances(engine.records, {
+      onChanged: async () => undefined,
+      tester,
+    })
+    await engine.records
+      .kind(homematicConnectionsEntryKind)
+      .put(
+        {
+          id: 'int_0031',
+          data: homematicConnectionsEntryKind.schema.parse({
+            name: 'House',
+            host: '10.0.31.1',
+            username: 'u31',
+            password: 'pw-ok',
+          }),
+        },
+        { ifRev: 0 },
+      )
+    return { instances, seen }
+  }
+
+  it('offers the Test action', async () => {
+    const w = await testWorld()
+    expect((await w.instances.describe()).canTest).toBe(true)
+  })
+
+  it('a stored CCU is tested with its keychain password when the form does not retype it', async () => {
+    const w = await testWorld()
+    const result = await w.instances.testInstance({
+      id: 'int_0031',
+      values: { host: '10.0.31.1', username: 'u31', password: REDACTED_SECRET },
+    })
+    expect(result).toMatchObject({ success: true, status: 'validated' })
+    expect(w.seen.at(-1)).toMatchObject({ host: '10.0.31.1', username: 'u31', password: 'pw-ok' })
+  })
+
+  it('a draft with a wrong WebUI password is rejected', async () => {
+    const w = await testWorld()
+    const result = await w.instances.testInstance({
+      id: null,
+      values: { host: '10.0.31.1', username: 'u31', password: 'wrong' },
+    })
+    expect(result).toMatchObject({ success: false, status: 'rejected' })
+    expect(w.seen.at(-1)?.password).toBe('wrong')
   })
 })
