@@ -16,6 +16,7 @@ import {
   ADDON_SETTINGS_TABLE,
   type CalendarIdsPorts,
   GOOGLE_ADDON_ID,
+  SHARED_CALENDAR_IDS_KEY,
 } from './calendar-ids-to-brokers.js'
 
 export const BROKERS_KEY = 'brokers'
@@ -65,6 +66,20 @@ export async function planDropConfigBrokersAndLegacyOauth(
   for (const key of FLAT_KEYS) {
     const flat = present(await ports.readStored(key), key)
     if (flat !== null && (await ports.listBrokers()).length > 0) take(key, flat.value)
+  }
+
+  // The shared calendar set the calendar migrations could not place (no broker existed then) goes
+  // once every broker shows it as its own or has already turned it into calendar records. A broker
+  // holding a DIFFERENT set parks it, as the calendar migration decides.
+  const shared = present(await ports.readStored(SHARED_CALENDAR_IDS_KEY), SHARED_CALENDAR_IDS_KEY)
+  if (shared !== null && Array.isArray(shared.value)) {
+    const brokers = await ports.listBrokers()
+    const same = (ids: readonly string[] | undefined): boolean =>
+      ids === undefined ||
+      (ids.length === shared.value.length && ids.every((id) => shared.value.includes(id)))
+    if (brokers.length > 0 && brokers.every((b) => same(b.calendarIds))) {
+      take(SHARED_CALENDAR_IDS_KEY, shared.value)
+    }
   }
 
   const oauth = present(await ports.readStored(LEGACY_OAUTH_KEY), LEGACY_OAUTH_KEY)

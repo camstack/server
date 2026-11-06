@@ -219,9 +219,8 @@ describe('hub migration: drop the legacy integrations and storage_locations tabl
     expect(row?.error).toContain('3 row(s) without a record: int_0001, int_0002, int_0003')
     expect(row?.error).toContain('storage_locations')
     expect(row?.error).toContain('2 row(s) without a record')
-    expect(row?.error).toContain(
-      "'storage_drain_state' (1 row(s) without a record: recordings:old)",
-    )
+    // the drain row's location has no record either: an orphan, so it is not what blocks the drop
+    expect(row?.error).not.toContain('storage_drain_state')
     expect(legacyCount('storage_drain_state')).toBe(1)
     expect(legacyCount('integrations')).toBe(3)
     expect(legacyCount('storage_locations')).toBe(2)
@@ -257,6 +256,88 @@ describe('hub migration: drop the legacy integrations and storage_locations tabl
     )
     expect(legacyCount('integrations')).toBe(5)
     expect(declared('integrations')).toBe(true)
+  }, 60_000)
+
+  it('refuses a SAME-COUNT partial copy: legacy {A,B} vs records {A,C} names B', async () => {
+    seed({ records: false, legacyRows: false })
+    const db = new Database(h.pathOf('settings'))
+    try {
+      const ins = db.prepare('INSERT INTO integrations (id, addon_id, name) VALUES (?, ?, ?)')
+      ins.run('int_A', 'provider-x', 'A')
+      ins.run('int_B', 'provider-x', 'B')
+      const rec = db.prepare(
+        'INSERT INTO records (kind_id, id, updated_at, data) VALUES (1, ?, 1, ?)',
+      )
+      rec.run('int_A', JSON.stringify({ addonId: 'provider-x', name: 'A' }))
+      rec.run('int_C', JSON.stringify({ addonId: 'provider-x', name: 'C' }))
+    } finally {
+      db.close()
+    }
+    await runPass('boot-1')
+    expect(ledger()?.status).toBe('failed')
+    expect(ledger()?.error).toContain('1 row(s) without a record: int_B')
+    expect(legacyCount('integrations')).toBe(2)
+  }, 60_000)
+
+  it('settles drain rows: a live location is copied, an orphan dropped and logged, a recorded one untouched', async () => {
+    seed({ records: true, legacyRows: true })
+    const db = new Database(h.pathOf('settings'))
+    try {
+      const ins = db.prepare(
+        'INSERT INTO storage_drain_state (location_id, started_at_ms) VALUES (?, ?)',
+      )
+      ins.run('recordings:default', 500)
+      ins.run('ghost:gone', 600)
+      db.prepare('UPDATE storage_drain_state SET started_at_ms = 999 WHERE location_id = ?').run(
+        'recordings:old',
+      )
+    } finally {
+      db.close()
+    }
+    await runPass('boot-1')
+    expect(ledger()?.status).toBe('applied')
+    expect(tableExists('storage_drain_state')).toBe(false)
+    const copied = JSON.parse(
+      open((d) => {
+        const row = d
+          .prepare('SELECT json(data) AS data FROM records WHERE kind_id = 3 AND id = ?')
+          .get('recordings:default')
+        return typeof row === 'object' &&
+          row !== null &&
+          'data' in row &&
+          typeof row.data === 'string'
+          ? row.data
+          : 'null'
+      }),
+    )
+    expect(copied).toEqual({
+      locationId: 'recordings:default',
+      startedAtMs: 500,
+      startBytes: 0,
+      capBytes: 0,
+      lastPeerBytes: null,
+      lastSweepMs: 0,
+      observedGrowthBytes: 0,
+      observedElapsedMs: 0,
+    })
+    expect(recordData('ghost:gone')).toBeNull()
+    expect(
+      open((d) =>
+        d
+          .prepare(
+            "SELECT 1 FROM records WHERE kind_id = 3 AND id = 'recordings:old' AND json(data) LIKE '%\"startedAtMs\":77%'",
+          )
+          .get(),
+      ),
+    ).toBeDefined()
+    expect(
+      h.lines.some(
+        (l) =>
+          l.level === 'info' &&
+          l.message === 'migration applied' &&
+          JSON.stringify(l.extras).includes('ghost:gone'),
+      ),
+    ).toBe(true)
   }, 60_000)
 
   it('a second pass after the drop is a no-op, and an empty legacy table with empty kinds drops', async () => {

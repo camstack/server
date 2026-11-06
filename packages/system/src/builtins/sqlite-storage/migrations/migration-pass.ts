@@ -41,6 +41,7 @@ import {
   type MigrateInput,
   type MigrateOp,
   type MigrateOutput,
+  type MigrationNote,
   type PassOutcome,
   type PassStatus,
   type PreparedPass,
@@ -181,12 +182,12 @@ function totalChanges(db: Database.Database): number {
 }
 
 /** Run a hub migration's body: `sql` writes itself, `plan` returns edits the engine applies. */
-function executeBody(db: Database.Database, m: HubMigration): void {
+function executeBody(db: Database.Database, m: HubMigration): MigrationNote | undefined {
   if ('plan' in m) {
     applyEdits(db, m.plan(db))
-    return
+    return undefined
   }
-  m.run(db)
+  return m.run(db)
 }
 
 /** The catalogue entries this file serves. */
@@ -296,9 +297,18 @@ export function applyFile(
       reason: string | null,
       error: string | null,
       rowsChanged = 0,
+      note?: MigrationNote,
     ): void => {
       known.set(meta.id, status)
-      outcomes.push({ id: meta.id, owner: meta.owner, outcome, rowsChanged, error, reason })
+      outcomes.push({
+        id: meta.id,
+        owner: meta.owner,
+        outcome,
+        rowsChanged,
+        error,
+        reason,
+        ...(note === undefined ? {} : { note }),
+      })
     }
     if (input.held.includes(meta.id)) {
       writeRow(db, meta, {
@@ -341,22 +351,23 @@ export function applyFile(
       continue
     }
     try {
+      let note: MigrationNote | undefined
       const rowsChanged = db.transaction((): number => {
         const before = totalChanges(db)
-        executeBody(db, m)
+        note = executeBody(db, m)
         const changed = totalChanges(db) - before
         writeRow(db, meta, {
           ...common,
           status: 'applied',
           attempts: previousAttempts + 1,
           appliedAt: now,
-          planSummary: { rowsChanged: changed },
+          planSummary: { rowsChanged: changed, ...note },
           error: null,
           reason: null,
         })
         return changed
       })()
-      outcomeOf('applied', 'applied', null, null, rowsChanged)
+      outcomeOf('applied', 'applied', null, null, rowsChanged, note)
     } catch (err) {
       const error = errMsg(err)
       try {

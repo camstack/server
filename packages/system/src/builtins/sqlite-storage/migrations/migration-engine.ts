@@ -224,7 +224,10 @@ export class MigrationEngine {
   private logOutcome(outcome: PassOutcome, log: IScopedLogger): void {
     const tags = { migrationId: outcome.id, owner: outcome.owner }
     if (outcome.outcome === 'applied') {
-      log.info('migration applied', { tags, meta: { rowsChanged: outcome.rowsChanged } })
+      log.info('migration applied', {
+        tags,
+        meta: { rowsChanged: outcome.rowsChanged, ...outcome.note },
+      })
     } else if (outcome.outcome === 'failed') {
       log.error('migration failed', { tags, meta: { error: outcome.error } })
     } else {

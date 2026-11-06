@@ -34,8 +34,12 @@ export const HUB_OWNER = 'hub'
 /** A hub-store `sql` migration: its identity plus the synchronous body that runs in its transaction. */
 export interface HubSqlMigration {
   readonly meta: MigrationMeta
-  run(db: MigrationDatabase): void
+  /** May answer a note (what it dropped or copied by name): kept in the ledger and logged at info. */
+  run(db: MigrationDatabase): MigrationNote | undefined
 }
+
+/** A `sql` body's account of what it did beyond a row count. */
+export type MigrationNote = Readonly<Record<string, unknown>>
 
 /**
  * A hub-store `plan` migration: the body READS through the connection and returns the
@@ -62,6 +66,8 @@ export interface PassOutcome {
   readonly rowsChanged: number
   readonly error: string | null
   readonly reason: string | null
+  /** The `sql` body's own note, when it left one. */
+  readonly note?: MigrationNote
 }
 
 export interface PreparedPass {

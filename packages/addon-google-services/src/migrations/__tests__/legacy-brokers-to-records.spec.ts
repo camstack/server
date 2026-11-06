@@ -71,7 +71,7 @@ async function start(stored: Record<string, unknown>, existing: readonly string[
     stored,
     'keep-me',
   )
-  return { fixture, store, accounts, ports }
+  return { fixture, store, accounts, ports, raw }
 }
 
 const OAUTH = {
@@ -106,6 +106,21 @@ describe('google-services: legacy accounts move into records before the drop', (
       expect(fixture.rows()[`google-services.${key}`]).toBeUndefined()
     }
     expect(fixture.rows()['google-services.other']?.['value']).toEqual({ mark: 'survive' })
+  })
+
+  it('carries the shared calendarIds onto the created broker, then the drop deletes the shared key', async () => {
+    const shared = ['google_001:primary', 'google_001:team@group.calendar.google.com']
+    const { fixture, store, raw } = await start({
+      clientId: 'cid',
+      clientSecret: 'csecret',
+      calendarIds: shared,
+    })
+    await fixture.boot()
+    expect((await store.listResolved()).map((b) => b.id)).toEqual(['google_001'])
+    const row = await raw.get('google_001')
+    expect(row?.data['calendarIds']).toEqual(shared)
+    // The drop migration removes the shared key only after the broker shows the set as its own.
+    expect(fixture.rows()['google-services.calendarIds']).toBeUndefined()
   })
 
   it('a brokers-setting hub copies every entry, and gives the legacy token to the first', async () => {

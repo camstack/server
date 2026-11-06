@@ -12,7 +12,9 @@
  * Reads come RESOLVED (the settings view answers values, not keychain markers); a value the
  * keychain could not serve is not a string and REFUSES the step, so nothing is written from a
  * guess. Each record is read back with its secret before the step reports done, and an account
- * that already has a record is never overwritten. The legacy keys stay where they are: the drop
+ * that already has a record is never overwritten. The shared `calendarIds` set goes onto every
+ * broker this step creates (the calendar migrations before it found no broker to give it to),
+ * then becomes calendar records, so the selection is not lost whichever order the steps ran in. The legacy keys stay where they are: the drop
  * migration deletes them only after this one landed.
  */
 import {
@@ -20,7 +22,13 @@ import {
   type GoogleBrokerEntry,
   type GoogleOauthAccount,
 } from '../google-types.js'
-import type { MigrationProcedureResult, StoredKeyRead } from '@camstack/types'
+import {
+  type CalendarRecordPorts,
+  type MigrationProcedureResult,
+  moveCalendarIdsToRecords,
+  type StoredKeyRead,
+} from '@camstack/types'
+import { parseStampedCalendarId } from '../google-broker-registry.js'
 import type { CalendarIdsPorts } from './calendar-ids-to-brokers.js'
 
 export const LEGACY_BROKER_ID = 'google_001'
@@ -37,7 +45,7 @@ export interface LegacyBrokerPorts {
   readOauthAccount(id: string): Promise<Pick<GoogleOauthAccount, 'refreshToken'> | null>
 }
 
-export type LegacyBrokersPorts = CalendarIdsPorts & LegacyBrokerPorts
+export type LegacyBrokersPorts = CalendarIdsPorts & CalendarRecordPorts & LegacyBrokerPorts
 
 function present(answer: StoredKeyRead, key: string): unknown {
   if (answer.kind === 'unreadable') {
@@ -106,6 +114,15 @@ async function legacyEntries(
   ]
 }
 
+async function sharedCalendarIds(ports: CalendarIdsPorts): Promise<readonly string[] | null> {
+  const value = present(await ports.readStored('calendarIds'), 'calendarIds')
+  if (value === undefined) return null
+  if (!Array.isArray(value) || !value.every((item): item is string => typeof item === 'string')) {
+    throw new Error('google-services: the shared calendarIds is not a list of ids — nothing copied')
+  }
+  return value
+}
+
 /** The keys a legacy install left that no record holds yet, for the init warning. */
 export async function leftoverLegacyKeys(ports: CalendarIdsPorts): Promise<readonly string[]> {
   const left: string[] = []
@@ -137,7 +154,9 @@ export async function copyLegacyBrokersToRecords(
     return { outcome: 'already-done', summary: { reason: 'no-legacy-data' } }
 
   const have = new Set((await ports.listBrokers()).map((b) => b.id))
+  const shared = await sharedCalendarIds(ports)
   let created = 0
+  let selections = 0
   for (const entry of entries) {
     if (have.has(entry.id)) continue
     await ports.putBroker(entry)
@@ -150,6 +169,15 @@ export async function copyLegacyBrokersToRecords(
       throw new Error(`google-services: broker '${entry.id}' did not read back as written`)
     }
     created += 1
+    if (shared !== null && (await ports.setBrokerCalendarIds(entry.id, shared))) selections += 1
+  }
+  if (selections > 0) {
+    await moveCalendarIdsToRecords(ports, {
+      calendarIdOf: (accountId, stamped) => {
+        const parsed = parseStampedCalendarId(stamped)
+        return parsed?.brokerId === accountId ? parsed.googleCalendarId : null
+      },
+    })
   }
 
   let account = 0
