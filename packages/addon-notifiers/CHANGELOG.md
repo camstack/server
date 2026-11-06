@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The email target's relay picker words its empty choice "Default relay" again
+
 ## [1.2.629] - 2026-11-06
 
 ### Changed
 
 - The email target's relay pin is an instance picker over the email providers' relays
-- The email target's relay picker words its empty choice "Default relay" again
 
 ## [1.2.628] - 2026-11-02
 
