@@ -147,6 +147,39 @@ describe('readNcTargets', () => {
     expect(read.unreadable).toEqual([{ addonId: 'import-alexa', error: 'holder down' }])
   })
 
+  it('reports a notification provider that serves no integration-instances as unreadable, never drops it', async () => {
+    const fake = await api()
+    const older: NcInstanceApi = {
+      ...fake,
+      capabilities: {
+        getCapability: {
+          query: async ({ name }) => ({
+            providers:
+              name === 'notification-output'
+                ? ['notifiers', 'import-alexa']
+                : name === 'integration-instances'
+                  ? ['notifiers']
+                  : [],
+          }),
+        },
+      },
+      integrationInstances: {
+        describe: {
+          query: (input) =>
+            input.addonId === 'import-alexa'
+              ? Promise.reject(new Error('no integration-instances provider'))
+              : fake.integrationInstances.describe.query(input),
+        },
+        listInstances: fake.integrationInstances.listInstances,
+      },
+    }
+    const read = await readNcTargets(instanceSourceOverApi(older), [TELEGRAM])
+    expect(read.targets.map((t) => t.id)).toEqual(['tg-1'])
+    expect(read.unreadable).toEqual([
+      { addonId: 'import-alexa', error: 'no integration-instances provider' },
+    ])
+  })
+
   it('throws only when NOTHING was readable', async () => {
     const api = {
       capabilities: {

@@ -9,16 +9,15 @@
  * partial answer is transient (retried), never "deleted". Nothing readable at all is an error.
  */
 import {
+  type InstanceSource,
   type IntegrationInstance,
   type IntegrationInstanceDescription,
-  type InstanceSource,
   instancesOfCap,
   type TargetKind,
 } from '@camstack/types'
 import type { NcTargetRef, NcUnreadableHolder } from '../../notification-center/dispatcher.js'
 
 const NOTIFICATION_OUTPUT = 'notification-output'
-const INTEGRATION_INSTANCES = 'integration-instances'
 
 /** What the dispatcher takes from a KIND: the budgets its caps and delivery parameters declare. */
 export type NcKindBudgets = Pick<TargetKind, 'kind' | 'caps' | 'deliveryParams'>
@@ -46,13 +45,15 @@ async function providersOf(api: NcInstanceApi, name: string): Promise<readonly s
   return info.providers
 }
 
-/** The source over `ctx.api`: the same rule the hub resolver binds to its registry. */
+/**
+ * The source over `ctx.api`. Every provider of the cap is a holder, not only those that also
+ * serve `integration-instances`: a provider that does not (an addon older than the hub during an
+ * update) then fails `describe` and is reported unreadable, so its targets are retried as
+ * transient instead of vanishing from the catalogue and failing for good.
+ */
 export function instanceSourceOverApi(api: NcInstanceApi): InstanceSource {
   return {
-    holders: async (cap) => {
-      const providing = new Set(await providersOf(api, cap))
-      return (await providersOf(api, INTEGRATION_INSTANCES)).filter((id) => providing.has(id))
-    },
+    holders: (cap) => providersOf(api, cap),
     describe: (addonId) => api.integrationInstances.describe.query({ addonId }),
     listInstances: (addonId) => api.integrationInstances.listInstances.query({ addonId }),
   }
