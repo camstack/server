@@ -32,13 +32,17 @@ export interface ExportableAction {
 /** The slice of `ctx.api` the exporters use for non-device entities. */
 export interface ExportEntityApi {
   readonly actions: {
-    readonly list: { query(input?: Record<string, never>): Promise<readonly ExportableAction[]> }
+    readonly list: {
+      query(input?: Record<string, never>): Promise<readonly ExportableAction[]>
+    }
     readonly run: {
       mutate(input: { readonly actionId: string }): Promise<ActionRunResult>
     }
   }
   readonly notificationOutput: {
-    readonly listTargets: { query(input?: Record<string, never>): Promise<readonly Target[]> }
+    readonly listTargets: {
+      query(input?: Record<string, never>): Promise<readonly Target[]>
+    }
     readonly send: {
       mutate(input: {
         readonly targetId: string
@@ -91,7 +95,11 @@ export async function runExportedAction(
     const result = await api.actions.run.mutate({ actionId })
     if (result.outcome === 'skipped-overlap') return refuse('already-running', result.message)
     if (result.outcome === 'skipped-cooldown') return refuse('cooldown', result.message)
-    if (result.outcome === 'failed' || result.outcome === 'aborted') {
+    if (
+      result.outcome === 'failed' ||
+      result.outcome === 'aborted' ||
+      result.outcome === 'timed-out'
+    ) {
       const message = result.message ?? result.outcome
       log.warn(`${exporter}: exported action failed`, {
         tags,
@@ -99,13 +107,19 @@ export async function runExportedAction(
       })
       return { status: 'failed', message }
     }
-    log.info(`${exporter}: exported action ran`, { tags, meta: { outcome: result.outcome } })
+    log.info(`${exporter}: exported action ran`, {
+      tags,
+      meta: { outcome: result.outcome },
+    })
     return { status: 'started' }
   } catch (err) {
     const message = errorText(err)
     const reason = refusalFromThrown(message)
     if (reason !== null) return refuse(reason, message)
-    log.warn(`${exporter}: exported action failed`, { tags, meta: { message } })
+    log.warn(`${exporter}: exported action failed`, {
+      tags,
+      meta: { message },
+    })
     return { status: 'failed', message }
   }
 }
@@ -155,13 +169,19 @@ export async function sendToExportedTarget(
     })
     if (!result.success) {
       const message = result.error ?? 'send failed'
-      log.warn(`${exporter}: exported notifier send failed`, { tags, meta: { message } })
+      log.warn(`${exporter}: exported notifier send failed`, {
+        tags,
+        meta: { message },
+      })
       return { status: 'failed', message }
     }
     return { status: 'sent' }
   } catch (err) {
     const message = errorText(err)
-    log.warn(`${exporter}: exported notifier send failed`, { tags, meta: { message } })
+    log.warn(`${exporter}: exported notifier send failed`, {
+      tags,
+      meta: { message },
+    })
     return { status: 'failed', message }
   }
 }

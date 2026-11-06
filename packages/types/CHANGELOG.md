@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An instance's on/off switch is written only by setInstanceEnabled: saving an instance form can no longer flip it, and addons read it through one helper (isInstanceEnabled)
 - An integration is switched on or off in one place, its record, for every kind of integration; a switch that was off in the old registry is carried over
 - An integration whose switch could not be carried into its record now keeps its addon from starting (retry the migration, then restart) instead of coming up switched on
+- An action run now has a 60-minute ceiling: a longer run is stopped and reported timed-out, and an action whose waits add up to more is refused when saved.
 
 ## [1.2.511] - 2026-11-06
 
@@ -24,7 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Notification templates: the {{graceMin}} variable is gone (a planned-update offline is now worded without a grace)
 - addon-crash-loop notification templates can use {{cause}}
 - A running-state power threshold now needs a second power sample above the threshold (dwell's new optional 4th argument minSamples), so one isolated standby reading no longer starts a run when the timer fires over the held value.
-- An action run now has a 60-minute ceiling: a longer run is stopped and reported timed-out, and an action whose waits add up to more is refused when saved.
 
 ## [1.2.510] - 2026-11-06
 

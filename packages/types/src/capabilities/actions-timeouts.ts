@@ -23,7 +23,11 @@ export const ACTION_RUN_TRANSPORT_MARGIN_MS = 30_000
 /** `timeoutMs` of `actions.run`: a waited call outlives any legal run. */
 export const ACTION_RUN_TIMEOUT_MS = ACTION_RUN_MAX_MS + ACTION_RUN_TRANSPORT_MARGIN_MS
 
-/** The time an action's `wait` steps add up to, in ms (cap steps take extra, never less). */
+/**
+ * The time an action's `wait` steps add up to, in ms (cap steps take extra, never less).
+ * An action step is `cap` or `wait` only (`ActionStepSchema`): steps cannot nest, so the
+ * top-level sum is the whole sum.
+ */
 export function actionWaitTotalMs(steps: readonly ActionStep[]): number {
   let total = 0
   for (const step of steps) if (step.kind === 'wait') total += step.seconds * 1000

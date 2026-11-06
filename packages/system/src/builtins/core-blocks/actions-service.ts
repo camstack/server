@@ -172,7 +172,9 @@ export class ActionsService implements IActionsProvider {
   async migrateTargets(): Promise<number> {
     const moved = await this.store.migrateLegacyTargets()
     if (moved > 0) {
-      this.logger.info('internal actions rewritten to the target shape', { meta: { moved } })
+      this.logger.info('internal actions rewritten to the target shape', {
+        meta: { moved },
+      })
     }
     return moved
   }
@@ -376,7 +378,12 @@ export class ActionsService implements IActionsProvider {
         onFailure: (failure) => {
           this.logger.warn('action step failed — stopping the sequence', {
             ...(failure.deviceId === undefined ? {} : { tags: { deviceId: failure.deviceId } }),
-            meta: { actionId: entry.id, runId, step: failure.index, error: failure.message },
+            meta: {
+              actionId: entry.id,
+              runId,
+              step: failure.index,
+              error: failure.message,
+            },
           })
         },
       })
@@ -395,8 +402,9 @@ export class ActionsService implements IActionsProvider {
       this.logger.error('action run crashed', {
         meta: { actionId: entry.id, runId, error: message },
       })
+    } finally {
+      deadline.disarm()
     }
-    deadline.disarm()
     const endedAt = this.now()
     const trace: AutomationRunTrace = {
       runId,
@@ -489,7 +497,11 @@ export class ActionsService implements IActionsProvider {
       {
         meta: { kind: 'addon' },
         run: () =>
-          this.sources.run({ addonId: entry.addonId, actionId: entry.id, variables: values }),
+          this.sources.run({
+            addonId: entry.addonId,
+            actionId: entry.id,
+            variables: values,
+          }),
       },
     ]
   }
@@ -523,7 +535,10 @@ export class ActionsService implements IActionsProvider {
     }
     run.token.abort()
     if (run.addonId !== null) {
-      await this.sources.stop({ addonId: run.addonId, actionId: input.actionId })
+      await this.sources.stop({
+        addonId: run.addonId,
+        actionId: input.actionId,
+      })
     }
   }
 
@@ -550,7 +565,9 @@ export class ActionsService implements IActionsProvider {
     const existing = await this.store.get(input.actionId)
     if (existing === null) throw new ActionError('not-found', `no action "${input.actionId}"`)
     const patch = input.action
-    this.requireWithinCeiling(patch.steps ?? existing.steps ?? [], patch.name ?? existing.name)
+    // Only a save that WRITES steps is held to the ceiling; renaming an action stored over it must still work.
+    if (patch.steps !== undefined)
+      this.requireWithinCeiling(patch.steps, patch.name ?? existing.name)
     const { steps, warnings } = this.normalizeSteps(
       patch.steps ?? existing.steps ?? [],
       patch.name ?? existing.name,
@@ -562,7 +579,9 @@ export class ActionsService implements IActionsProvider {
         ? {}
         : { variables: patch.variables ?? existing.variables }),
     })
-    this.logger.info('internal action updated', { meta: { actionId: action.id } })
+    this.logger.info('internal action updated', {
+      meta: { actionId: action.id },
+    })
     return { action, ...(warnings.length > 0 ? { warnings } : {}) }
   }
 
@@ -572,7 +591,11 @@ export class ActionsService implements IActionsProvider {
     if (total <= this.maxRunMs) return
     const message = `the wait steps add up to ${spanLabel(total)}; an action may run at most ${spanLabel(this.maxRunMs)}`
     this.logger.warn('action save refused — it could never finish within the run limit', {
-      meta: { action: actionName, waitTotalMs: total, maxRunMs: this.maxRunMs },
+      meta: {
+        action: actionName,
+        waitTotalMs: total,
+        maxRunMs: this.maxRunMs,
+      },
     })
     throw new ActionError('invalid-steps', message)
   }
@@ -640,7 +663,10 @@ export class ActionsService implements IActionsProvider {
   // ── camera links ────────────────────────────────────────────────────────
 
   async getLinks(input: { deviceId: number }): Promise<ActionLinks> {
-    return { deviceId: input.deviceId, actionIds: [...(await this.store.linksOf(input.deviceId))] }
+    return {
+      deviceId: input.deviceId,
+      actionIds: [...(await this.store.linksOf(input.deviceId))],
+    }
   }
 
   async setLinks(input: ActionLinks): Promise<ActionLinks> {

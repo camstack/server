@@ -77,8 +77,17 @@ async function world(options?: {
     logger: log.logger,
     now: () => clock,
   })
-  const calls: Array<{ deviceId: number; cap: string; method: string; args: unknown }> = []
-  const sourceRuns: Array<{ addonId: string; actionId: string; variables: unknown }> = []
+  const calls: Array<{
+    deviceId: number
+    cap: string
+    method: string
+    args: unknown
+  }> = []
+  const sourceRuns: Array<{
+    addonId: string
+    actionId: string
+    variables: unknown
+  }> = []
   const events: ActionRunChanged[] = []
   const sources: ActionSources = {
     list: async () => [...(options?.addonActions ?? [])],
@@ -151,7 +160,11 @@ describe('actions — internal actions', () => {
     const { action } = await w.service.create({
       action: { name: 'Two', steps: [STEP(1), STEP(2), STEP(3)] },
     })
-    const result = await w.service.run({ actionId: action.id, wait: true, caller: ADMIN })
+    const result = await w.service.run({
+      actionId: action.id,
+      wait: true,
+      caller: ADMIN,
+    })
     expect(result.outcome).toBe('failed')
     expect(w.calls.map((c) => c.deviceId)).toEqual([1, 2])
     const { traces } = await w.service.getTraces({ actionId: action.id })
@@ -162,9 +175,16 @@ describe('actions — internal actions', () => {
 
   it('refuses a variable the action did not declare, before anything runs', async () => {
     const w = await world()
-    const { action } = await w.service.create({ action: { name: 'One', steps: [STEP(1)] } })
+    const { action } = await w.service.create({
+      action: { name: 'One', steps: [STEP(1)] },
+    })
     await expect(
-      w.service.run({ actionId: action.id, variables: { typo: 1 }, wait: true, caller: ADMIN }),
+      w.service.run({
+        actionId: action.id,
+        variables: { typo: 1 },
+        wait: true,
+        caller: ADMIN,
+      }),
     ).rejects.toThrow(/\[invalid-variables\]/)
     expect(w.calls).toEqual([])
   })
@@ -175,10 +195,16 @@ describe('actions — internal actions', () => {
       release = resolve
     })
     const w = await world({ invoke: () => gate })
-    const { action } = await w.service.create({ action: { name: 'Slow', steps: [STEP(1)] } })
+    const { action } = await w.service.create({
+      action: { name: 'Slow', steps: [STEP(1)] },
+    })
     const first = await w.service.run({ actionId: action.id, caller: ADMIN })
     expect(first.outcome).toBe('started')
-    const second = await w.service.run({ actionId: action.id, wait: true, caller: ADMIN })
+    const second = await w.service.run({
+      actionId: action.id,
+      wait: true,
+      caller: ADMIN,
+    })
     expect(second.outcome).toBe('skipped-overlap')
     expect(w.calls).toHaveLength(1)
     expect(
@@ -194,7 +220,9 @@ describe('actions — internal actions', () => {
 
   it('emits onRunChanged when a run starts and when it ends', async () => {
     const w = await world()
-    const { action } = await w.service.create({ action: { name: 'One', steps: [STEP(1)] } })
+    const { action } = await w.service.create({
+      action: { name: 'One', steps: [STEP(1)] },
+    })
     await w.service.run({ actionId: action.id, wait: true, caller: ADMIN })
     expect(w.events.map((e) => [e.isRunning, e.outcome])).toEqual([
       [true, undefined],
@@ -215,7 +243,10 @@ describe('actions — a number tied to a quantity (D972)', () => {
   it('converts a step arg entered in kilograms to the grams the method takes, keeping the picked unit', async () => {
     const w = await world()
     const { action, warnings } = await w.service.create({
-      action: { name: 'Meal', steps: [FEED({ grams: { value: 0.1, unit: 'kg' } })] },
+      action: {
+        name: 'Meal',
+        steps: [FEED({ grams: { value: 0.1, unit: 'kg' } })],
+      },
     })
     expect(action.steps).toEqual([{ ...FEED({ grams: 100 }), argUnits: { grams: 'kg' } }])
     expect(warnings ?? []).toEqual([])
@@ -251,7 +282,10 @@ describe('actions — a number tied to a quantity (D972)', () => {
     const w = await world()
     await expect(
       w.service.create({
-        action: { name: 'Meal', steps: [FEED({ grams: { value: 1, unit: 'L' } })] },
+        action: {
+          name: 'Meal',
+          steps: [FEED({ grams: { value: 1, unit: 'L' } })],
+        },
       }),
     ).rejects.toThrow(/\[invalid-steps\].*cross-dimension/)
     expect(await w.store.list()).toEqual([])
@@ -272,7 +306,11 @@ describe('actions — a number tied to a quantity (D972)', () => {
     })
     const logged = w.log.lines.find((l) => l.level === 'warn' && l.message.includes('bare number'))
     expect(logged?.extras?.tags).toEqual({ deviceId: 41 })
-    expect(logged?.extras?.meta).toMatchObject({ field: 'grams', value: 50, assumedUnit: 'g' })
+    expect(logged?.extras?.meta).toMatchObject({
+      field: 'grams',
+      value: 50,
+      assumedUnit: 'g',
+    })
   })
 })
 
@@ -303,13 +341,17 @@ describe('actions — addon entries are read-only here', () => {
     expect(w.sourceRuns).toEqual([
       { addonId: 'ha', actionId: 'ha:script.night', variables: { mode: 'b' } },
     ])
-    const { traces } = await w.service.getTraces({ actionId: 'ha:script.night' })
+    const { traces } = await w.service.getTraces({
+      actionId: 'ha:script.night',
+    })
     expect(traces).toHaveLength(1)
   })
 
   it('lists internal and addon entries together, with the run status', async () => {
     const w = await world({ addonActions: [addonEntry('ha:script.night')] })
-    const { action } = await w.service.create({ action: { name: 'One', steps: [STEP(1)] } })
+    const { action } = await w.service.create({
+      action: { name: 'One', steps: [STEP(1)] },
+    })
     await w.service.run({ actionId: action.id, wait: true, caller: ADMIN })
     const list = await w.service.list()
     expect(list.map((e) => e.id).toSorted()).toEqual([action.id, 'ha:script.night'].toSorted())
@@ -322,8 +364,12 @@ describe('actions — addon entries are read-only here', () => {
 describe('actions — camera links and who may run what', () => {
   async function linked() {
     const w = await world({ addonActions: [addonEntry('ha:script.night')] })
-    const a = await w.service.create({ action: { name: 'Porch', steps: [STEP(1)] } })
-    const b = await w.service.create({ action: { name: 'Garage', steps: [STEP(2)] } })
+    const a = await w.service.create({
+      action: { name: 'Porch', steps: [STEP(1)] },
+    })
+    const b = await w.service.create({
+      action: { name: 'Garage', steps: [STEP(2)] },
+    })
     await w.service.setLinks({ deviceId: 616, actionIds: [a.action.id] })
     return { w, porch: a.action, garage: b.action }
   }
@@ -343,7 +389,12 @@ describe('actions — camera links and who may run what', () => {
   it('the same user is refused an action that is not linked to that camera, and it is logged', async () => {
     const { w, garage } = await linked()
     await expect(
-      w.service.run({ actionId: garage.id, deviceId: 616, wait: true, caller: VIEWER }),
+      w.service.run({
+        actionId: garage.id,
+        deviceId: 616,
+        wait: true,
+        caller: VIEWER,
+      }),
     ).rejects.toThrow(/\[not-linked\]/)
     expect(w.calls).toEqual([])
     const refusal = w.log.lines.find((l) => l.message.includes('refused'))
@@ -365,14 +416,26 @@ describe('actions — camera links and who may run what', () => {
       'ran',
     )
     expect(
-      (await w.service.run({ actionId: 'ha:script.night', wait: true, caller: ADMIN })).outcome,
+      (
+        await w.service.run({
+          actionId: 'ha:script.night',
+          wait: true,
+          caller: ADMIN,
+        })
+      ).outcome,
     ).toBe('ran')
   })
 
   it('get follows the same rule', async () => {
     const { w, porch, garage } = await linked()
     expect(
-      (await w.service.get({ actionId: porch.id, deviceId: 616, caller: VIEWER })).action?.id,
+      (
+        await w.service.get({
+          actionId: porch.id,
+          deviceId: 616,
+          caller: VIEWER,
+        })
+      ).action?.id,
     ).toBe(porch.id)
     await expect(
       w.service.get({ actionId: garage.id, deviceId: 616, caller: VIEWER }),
@@ -387,7 +450,13 @@ describe('actions — camera links and who may run what', () => {
         name: 'Porch',
         steps: [STEP(1)],
         variables: [
-          { name: 'mode', type: 'select', label: 'Mode', options: ['on', 'off'], default: 'on' },
+          {
+            name: 'mode',
+            type: 'select',
+            label: 'Mode',
+            options: ['on', 'off'],
+            default: 'on',
+          },
         ],
       },
     })
@@ -396,16 +465,28 @@ describe('actions — camera links and who may run what', () => {
     const list = await w.service.listForCamera({ deviceId: 616 })
     expect(list.map((e) => e.name)).toEqual(['Porch'])
     expect(list[0]?.variables).toEqual([
-      { name: 'mode', type: 'select', label: 'Mode', options: ['on', 'off'], default: 'on' },
+      {
+        name: 'mode',
+        type: 'select',
+        label: 'Mode',
+        options: ['on', 'off'],
+        default: 'on',
+      },
     ])
     expect(await w.service.listForCamera({ deviceId: 999 })).toEqual([])
   })
 
   it('deleting an action removes every camera link that names it, and keeps the others', async () => {
     const { w, porch, garage } = await linked()
-    await w.service.setLinks({ deviceId: 617, actionIds: [porch.id, garage.id] })
+    await w.service.setLinks({
+      deviceId: 617,
+      actionIds: [porch.id, garage.id],
+    })
     await w.service.delete({ actionId: porch.id })
-    expect(await w.service.getLinks({ deviceId: 616 })).toEqual({ deviceId: 616, actionIds: [] })
+    expect(await w.service.getLinks({ deviceId: 616 })).toEqual({
+      deviceId: 616,
+      actionIds: [],
+    })
     expect(await w.service.getLinks({ deviceId: 617 })).toEqual({
       deviceId: 617,
       actionIds: [garage.id],
@@ -423,7 +504,10 @@ describe('actions — camera links and who may run what', () => {
   it('a camera removed takes its links with it', async () => {
     const { w, porch } = await linked()
     await w.records.deleteDevice(616)
-    expect(await w.service.getLinks({ deviceId: 616 })).toEqual({ deviceId: 616, actionIds: [] })
+    expect(await w.service.getLinks({ deviceId: 616 })).toEqual({
+      deviceId: 616,
+      actionIds: [],
+    })
     expect(porch.id).toBeDefined()
   })
 })
@@ -431,7 +515,9 @@ describe('actions — camera links and who may run what', () => {
 describe('runs ledger', () => {
   it('a delete removes the action and its ledger row', async () => {
     const w = await world()
-    const { action } = await w.service.create({ action: { name: 'One', steps: [STEP(1)] } })
+    const { action } = await w.service.create({
+      action: { name: 'One', steps: [STEP(1)] },
+    })
     await w.service.run({ actionId: action.id, wait: true, caller: ADMIN })
     expect((await w.ledger.get(actionOwner(action.id))).traces).toHaveLength(1)
     await w.service.delete({ actionId: action.id })
@@ -477,7 +563,9 @@ describe('actions — D983 targets', () => {
       { id: 2, location: 'Garage' },
     ])
     const w = await world({ directory: reg.directory })
-    const { action } = await w.service.create({ action: { name: 'Open', steps: [DOMAIN_STEP] } })
+    const { action } = await w.service.create({
+      action: { name: 'Open', steps: [DOMAIN_STEP] },
+    })
     await w.service.run({ actionId: action.id, wait: true, caller: ADMIN })
     expect(w.calls.map((c) => c.deviceId)).toEqual([1])
 
@@ -489,12 +577,19 @@ describe('actions — D983 targets', () => {
   })
 
   it('an empty domain is logged with the action id and traced as empty, never silent', async () => {
-    const w = await world({ directory: coverRegistry([{ id: 2, location: 'Garage' }]).directory })
-    const { action } = await w.service.create({ action: { name: 'Open', steps: [DOMAIN_STEP] } })
+    const w = await world({
+      directory: coverRegistry([{ id: 2, location: 'Garage' }]).directory,
+    })
+    const { action } = await w.service.create({
+      action: { name: 'Open', steps: [DOMAIN_STEP] },
+    })
     await w.service.run({ actionId: action.id, wait: true, caller: ADMIN })
     expect(w.calls).toEqual([])
     const line = w.log.lines.find((l) => l.message.includes('resolved to no devices'))
-    expect(line?.extras?.meta).toMatchObject({ actionId: 'cover.open', owner: action.id })
+    expect(line?.extras?.meta).toMatchObject({
+      actionId: 'cover.open',
+      owner: action.id,
+    })
     const { traces } = await w.service.getTraces({ actionId: action.id })
     expect(traces[0]?.steps[0]?.outcome).toBe('empty')
   })
@@ -507,7 +602,13 @@ describe('actions — D983 targets', () => {
       data: {
         name: 'Legacy',
         steps: [
-          { kind: 'cap', deviceId: [7, 9], cap: 'siren', method: 'on', args: { code: 'MARK-42' } },
+          {
+            kind: 'cap',
+            deviceId: [7, 9],
+            cap: 'siren',
+            method: 'on',
+            args: { code: 'MARK-42' },
+          },
         ],
         createdAt: 1,
         updatedAt: 1,
@@ -541,7 +642,11 @@ describe('actions — the run ceiling', () => {
       const { action } = await w.service.create({
         action: { name: 'Long', steps: [...WAIT_STEPS(120), STEP(1)] },
       })
-      const run = w.service.run({ actionId: action.id, wait: true, caller: ADMIN })
+      const run = w.service.run({
+        actionId: action.id,
+        wait: true,
+        caller: ADMIN,
+      })
       await vi.advanceTimersByTimeAsync(121_000)
       await expect(run).resolves.toMatchObject({ outcome: 'ran' })
       expect(w.calls.map((c) => c.deviceId)).toEqual([1])
@@ -557,7 +662,11 @@ describe('actions — the run ceiling', () => {
       name: 'Endless',
       steps: [STEP(1), ...WAIT_STEPS(30), STEP(2)],
     })
-    const result = await w.service.run({ actionId: action.id, wait: true, caller: ADMIN })
+    const result = await w.service.run({
+      actionId: action.id,
+      wait: true,
+      caller: ADMIN,
+    })
     expect(result.outcome).toBe('timed-out')
     expect(result.message).toMatch(/limit/)
     expect(w.calls.map((c) => c.deviceId)).toEqual([1])
@@ -577,7 +686,11 @@ describe('actions — the run ceiling', () => {
       stopGraceMs: 30,
       sourceRun: () => new Promise<void>(() => undefined),
     })
-    const result = await w.service.run({ actionId: 'ha:script', wait: true, caller: ADMIN })
+    const result = await w.service.run({
+      actionId: 'ha:script',
+      wait: true,
+      caller: ADMIN,
+    })
     expect(result.outcome).toBe('timed-out')
   })
 
@@ -585,7 +698,10 @@ describe('actions — the run ceiling', () => {
     const w = await world({ maxRunMs: 500_000 })
     await expect(
       w.service.create({
-        action: { name: 'Too long', steps: [...WAIT_STEPS(300), ...WAIT_STEPS(300)] },
+        action: {
+          name: 'Too long',
+          steps: [...WAIT_STEPS(300), ...WAIT_STEPS(300)],
+        },
       }),
     ).rejects.toThrow(/\[invalid-steps\].*limit|\[invalid-steps\].*at most/)
     await expect(
@@ -593,9 +709,24 @@ describe('actions — the run ceiling', () => {
     ).resolves.toBeDefined()
   })
 
+  it('an action stored over the ceiling can still be renamed', async () => {
+    const w = await world({ maxRunMs: 500_000 })
+    const stored = await w.store.create({
+      name: 'Old',
+      steps: [...WAIT_STEPS(300), ...WAIT_STEPS(300)],
+    })
+    const { action } = await w.service.update({
+      actionId: stored.id,
+      action: { name: 'Renamed' },
+    })
+    expect(action.name).toBe('Renamed')
+  })
+
   it('update refuses it too, and keeps the stored action', async () => {
     const w = await world({ maxRunMs: 500_000 })
-    const { action } = await w.service.create({ action: { name: 'Fits', steps: WAIT_STEPS(300) } })
+    const { action } = await w.service.create({
+      action: { name: 'Fits', steps: WAIT_STEPS(300) },
+    })
     await expect(
       w.service.update({
         actionId: action.id,
