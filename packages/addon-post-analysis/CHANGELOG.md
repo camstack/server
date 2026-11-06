@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.672] - 2026-11-06
+
 ### Changed
 
 - The crash-loop notification names the core block or addon and the real cause.

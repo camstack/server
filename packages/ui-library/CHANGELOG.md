@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.390] - 2026-11-06
+
 ### Changed
 
 - The instance picker shows the field's own wording for its empty choice (noneLabel)
