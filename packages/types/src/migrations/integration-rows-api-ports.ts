@@ -36,6 +36,8 @@ export interface IntegrationRowsApi {
       readonly id: string
       readonly addonId: string
       readonly name: string
+      /** The stored registry switch, read by the one-switch migration only. */
+      readonly enabled?: boolean | undefined
       readonly info?: Readonly<Record<string, unknown>> | null | undefined
     }[]
   >

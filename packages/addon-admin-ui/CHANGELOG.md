@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The exported-devices list opens full page and a row click no longer leaves for the device; Add device rows lose the leading dash and name the container they sit in.
+- The integration on/off toggle switches the instance through integration-instances
 
 ## [1.2.597] - 2026-11-06
 

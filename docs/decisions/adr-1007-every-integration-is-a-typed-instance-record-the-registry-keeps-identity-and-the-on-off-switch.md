@@ -2,6 +2,7 @@
 id: D1007
 title: Every integration is a typed instance record; the registry keeps identity and the on/off switch of a device integration
 status: proposed
+superseded-in-part-by: D1015
 date: 2026-11-04
 supersedes: the "legacy integration_settings rows stay for addons that bring devices" part of D996, and the integrationSettingSections / per-integration settings rows part of D986
 applies-to:
@@ -38,7 +39,7 @@ registry stays what it is for the hub: id, addon, name, `enabled`, discovery and
   (`none | lan | account`, `scopedToInstance`). The hub decides the Integrations page, the wizard
   discovery word and the test button from it; the manifest's `integrationRole` stays as an override
   and is the only reader of capabilities for an addon still on rows.
-- The registry owns `enabled` for `role: devices`: the body must not declare it, the instance view
+- (Superseded by [D1015](adr-1015-one-switch-one-store-an-instance-is-on-or-off-in-its-record-body.md): the body owns `enabled` for every role.) The registry owns `enabled` for `role: devices`: the body must not declare it, the instance view
   carries none, and `setInstanceEnabled` refuses, naming `integrations.update`. `services` and
   `both` keep the switch in the body (D996) until their own move.
 - A record secret path may sit in a MAP of the body (`applianceSecrets{}`: one level, each value its

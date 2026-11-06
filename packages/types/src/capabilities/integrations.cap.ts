@@ -24,6 +24,7 @@ const IntegrationWithStateSchema = z.object({
   id: z.string(),
   addonId: z.string(),
   name: z.string(),
+  /** A projection of the instance body's switch (`setInstanceEnabled` is the only writer). */
   enabled: z.boolean(),
   info: z.record(z.string(), z.unknown()).readonly(),
   /** The discovery candidate this integration was set up from (D984). */
@@ -37,6 +38,7 @@ const IntegrationLiteSchema = z.object({
   id: z.string(),
   addonId: z.string(),
   name: z.string(),
+  /** A projection of the instance body's switch (`setInstanceEnabled` is the only writer). */
   enabled: z.boolean(),
   info: z.record(z.string(), z.unknown()).readonly(),
   /** The discovery candidate this integration was set up from (D984). */
@@ -130,7 +132,6 @@ const TestConnectionResultSchema = z.object({
 const CreateIntegrationInputSchema = z.object({
   addonId: z.string(),
   name: z.string(),
-  enabled: z.boolean().optional(),
   info: z.record(z.string(), z.unknown()).optional(),
   /** `stableId` of the discovery candidate the form was seeded from (D984). */
   originStableId: z.string().optional(),
@@ -140,6 +141,11 @@ const CreateIntegrationInputSchema = z.object({
 const UpdateIntegrationInputSchema = z.object({
   id: z.string(),
   name: z.string().optional(),
+  /**
+   * Accepted for a FIXED builtin only (`info.fixed`: alarm panel, camera grid, core blocks,
+   * terminal), which keeps no instance record: the registry flag is its one store. Any other
+   * integration is switched through `integration-instances.setInstanceEnabled`.
+   */
   enabled: z.boolean().optional(),
   info: z.record(z.string(), z.unknown()).optional(),
 })

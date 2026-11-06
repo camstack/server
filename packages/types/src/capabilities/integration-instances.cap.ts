@@ -37,7 +37,7 @@ export type IntegrationInstanceMode = z.infer<typeof IntegrationInstanceModeSche
 
 /**
  * What the addon's instances ARE for the Integrations page (planning#416). `devices`: each
- * instance is an integration that brings devices (the registry owns its on/off switch);
+ * instance is an integration that brings devices (its record body owns the on/off switch);
  * `services`: a connection configured from the addon's own function page, never listed on
  * Integrations.
  * It is the same vocabulary as the manifest's `integrationRole`, which stays as an override.
@@ -155,8 +155,8 @@ export const IntegrationInstanceSchema = z.object({
   configured: z.boolean(),
   /**
    * The instance's own on/off switch (D996), derived from the record body (`enabled !== false`,
-   * so a row written before the field existed is on). Absent when the `integrations` registry
-   * owns the switch (`describe().role` is `devices`): read it from the registry row.
+   * so a row written before the field existed is on). The same for every role, `devices` included:
+   * the body is the one store, `setInstanceEnabled` the one writer (epic #440, step 3).
    */
   enabled: z.boolean().optional(),
   /** The kind of this instance (one of `describe().kinds[].id`), when the provider has kinds. */
@@ -221,7 +221,8 @@ export const integrationInstancesCapability = {
       auth: 'admin',
     }),
     /**
-     * Switch ONE instance on or off. A row control, not a form field: `updateInstance.values` is the
+     * Switch ONE instance on or off, for every role; a missing record is created from the addon's
+     * initial body. A row control, not a form field: `updateInstance.values` is the
      * form patch (D62, D996). An off instance keeps its record and secrets and does no work.
      */
     setInstanceEnabled: method(

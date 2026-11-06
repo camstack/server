@@ -223,6 +223,7 @@ export * from './migrations/integration-rows-migration.js'
 export * from './migrations/integration-rows-api-ports.js'
 export * from './migrations/claim-devices-to-default-integration.js'
 export * from './migrations/default-integration-migrations.js'
+export * from './migrations/registry-switch-to-body.js'
 export * from './training/index.js'
 export * from './retrain-review.js'
 export {

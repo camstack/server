@@ -11,6 +11,7 @@ import type { KeychainResolveResult } from '../../capabilities/keychain.cap.js'
 import type { DefaultIntegrationApi } from '../default-integration-migrations.js'
 import type { IntegrationRowsApi, RowsRecordsDoor } from '../integration-rows-api-ports.js'
 import type { MigrationApiV1 } from './migration-api.v1.js'
+import type { SwitchRecordsDoor } from '../registry-switch-to-body.js'
 
 /** The keychain handle of the migration API: resolve and delete, owner-scoped by the transport. */
 export interface MigrationSecretsDoor {
@@ -38,6 +39,21 @@ export function secretsOverMigrationApi(api: MigrationApiV1): MigrationSecretsDo
   }
 }
 
+/** The record calls the one-switch migration makes, over the migration API. */
+export function switchRecordsOverMigrationApi(api: MigrationApiV1): SwitchRecordsDoor {
+  return {
+    kind: (definition) => {
+      const handle = api.records.kind(definition)
+      return {
+        get: (id) => handle.get({ id }),
+        put: (input, opts) =>
+          handle.put({ ...input, ...(opts?.ifRev === undefined ? {} : { ifRev: opts.ifRev }) }),
+        patch: (id, partial) => handle.patch({ id, partial }),
+      }
+    },
+  }
+}
+
 /** `ctx.records` as the migration API offers it: bind a kind, read and write by id. */
 export function recordsOverMigrationApi(api: MigrationApiV1): RowsRecordsDoor {
   return {
@@ -54,7 +70,7 @@ export function recordsOverMigrationApi(api: MigrationApiV1): RowsRecordsDoor {
   }
 }
 
-function integrationRowsApiOver(api: MigrationApiV1): IntegrationRowsApi {
+export function integrationRowsApiOver(api: MigrationApiV1): IntegrationRowsApi {
   return {
     list: async () => (await api.integrations.list({})).integrations,
     readLegacyIntegrationRows: (input) => api.legacyRows.read(input),

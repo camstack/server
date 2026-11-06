@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - addon-crash-loop notification templates can use {{cause}}
 - A running-state power threshold now needs a second power sample above the threshold (dwell's new optional 4th argument minSamples), so one isolated standby reading no longer starts a run when the timer fires over the held value.
 - An instance's on/off switch is written only by setInstanceEnabled: saving an instance form can no longer flip it, and addons read it through one helper (isInstanceEnabled)
+- An integration is switched on or off in one place, its record, for every kind of integration; a switch that was off in the old registry is carried over
 
 ## [1.2.510] - 2026-11-06
 

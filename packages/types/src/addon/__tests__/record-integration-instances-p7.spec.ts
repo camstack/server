@@ -30,7 +30,12 @@ async function setupAccounts(role: 'devices' | 'services') {
   await world.records.declare({ 'spec-accounts': accountKind })
   const changes: Array<readonly [string, InstanceChange]> = []
   const instances = new RecordIntegrationInstances<Account>(world.records, accountKind, {
-    description: { role, instanceMode: 'multiple', kind: 'account', canTest: false },
+    description: {
+      role,
+      instanceMode: 'multiple',
+      kind: 'account',
+      canTest: false,
+    },
     formSchema: () => EMPTY_FORM,
     initialBody: (name) => ({ name }),
     configured: () => true,
@@ -81,35 +86,24 @@ describe('onChanged says what happened', () => {
   })
 })
 
-describe('the registry owns the switch of a role "devices" addon', () => {
-  it('serves no enabled flag and refuses setInstanceEnabled, naming the owner', async () => {
-    const { instances, changes } = await setupAccounts('devices')
-    await instances.createInstance({ id: 'int_1', name: 'A' })
-    const view = await instances.getInstance({ id: 'int_1' })
-    expect(view).not.toBeNull()
-    expect(view).not.toHaveProperty('enabled')
-    await expect(instances.setInstanceEnabled({ id: 'int_1', enabled: false })).rejects.toThrow(
-      /integrations\.update/,
-    )
-    expect(changes).toEqual([['int_1', 'created']])
-  })
-
-  it('refuses a body that declares its own enabled', () => {
-    const withEnabled = defineEntryKind('spec-with-enabled', {
-      title: 'x',
-      nameField: 'name',
-      schema: z.object({ name: z.string(), enabled: z.boolean().optional() }),
+describe('one switch for a role "devices" addon too', () => {
+  it('serves enabled, creates a missing record on the switch and tells onSwitched', async () => {
+    const { instances } = await setupAccounts('devices')
+    const switched: Array<readonly [string, boolean]> = []
+    instances.onSwitched((id, enabled) => {
+      switched.push([id, enabled])
     })
-    const world = makeInMemoryRecords('spec-addon')
-    expect(
-      () =>
-        new RecordIntegrationInstances(world.records, withEnabled, {
-          description: { role: 'devices', instanceMode: 'multiple', kind: 'a', canTest: false },
-          formSchema: () => EMPTY_FORM,
-          initialBody: (name) => ({ name }),
-          configured: () => true,
-        }),
-    ).toThrow(/registry owns/)
+    await instances.createInstance({ id: 'int_1', name: 'A' })
+    expect((await instances.getInstance({ id: 'int_1' }))?.enabled).toBe(true)
+    await instances.setInstanceEnabled({ id: 'int_1', enabled: false })
+    expect((await instances.getInstance({ id: 'int_1' }))?.enabled).toBe(false)
+    // no record yet: the switch creates it from initialBody
+    await instances.setInstanceEnabled({ id: 'int_2', enabled: false })
+    expect((await instances.getInstance({ id: 'int_2' }))?.enabled).toBe(false)
+    expect(switched).toEqual([
+      ['int_1', false],
+      ['int_2', false],
+    ])
   })
 })
 
@@ -137,7 +131,9 @@ describe('a map of secrets through the instance patch', () => {
       id: 'int_1',
       values: { applianceSecrets: { fridge: { $secretClear: true } } },
     })
-    expect((await instances.getResolved('int_1'))?.applianceSecrets).toEqual({ oven: 'k2b' })
+    expect((await instances.getResolved('int_1'))?.applianceSecrets).toEqual({
+      oven: 'k2b',
+    })
     const view = await instances.getInstance({ id: 'int_1' })
     expect(JSON.stringify(view?.formValues['applianceSecrets'])).not.toContain('k2b')
   })

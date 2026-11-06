@@ -38,6 +38,8 @@ export interface MigrationIntegrationRow {
   readonly addonId: string
   readonly name: string
   readonly info: Readonly<Record<string, unknown>>
+  /** The registry's stored switch, for the one-switch migration only (epic #440, step 3). */
+  readonly enabled?: boolean | undefined
   readonly originStableId?: string | undefined
 }
 
@@ -220,6 +222,7 @@ function toIntegration(row: MigrationIntegrationRow): {
   addonId: string
   name: string
   info: Record<string, unknown>
+  enabled?: boolean
   originStableId?: string
 } {
   return {
@@ -227,6 +230,7 @@ function toIntegration(row: MigrationIntegrationRow): {
     addonId: row.addonId,
     name: row.name,
     info: { ...row.info },
+    ...(row.enabled === undefined ? {} : { enabled: row.enabled }),
     ...(row.originStableId === undefined ? {} : { originStableId: row.originStableId }),
   }
 }

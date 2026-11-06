@@ -31,12 +31,13 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ConfirmDialogProvider } from '@camstack/ui-library'
-import { render } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 
 const fleetReads = vi.hoisted(() => ({ calls: [] as unknown[][] }))
+const switches = vi.hoisted(() => ({ instance: vi.fn(), update: vi.fn() }))
 
 const INTEGRATION = {
   id: 'int_reolink',
@@ -93,7 +94,11 @@ vi.mock('@camstack/ui-library', async () => {
     useAddonSettingsGetIntegrationFormSchema: emptyQuery,
     useAddonSettingsGetIntegrationSettings: emptyQuery,
     useDeviceManagerDiscoveryProviders: emptyQuery,
-    useIntegrationsUpdate: mutationStub,
+    useIntegrationsUpdate: () => ({ mutate: switches.update, isPending: false }),
+    useIntegrationInstancesSetInstanceEnabled: () => ({
+      mutate: switches.instance,
+      isPending: false,
+    }),
     useIntegrationsDelete: mutationStub,
     useAddonsRestartAddon: mutationStub,
     useDeviceManagerRemove: mutationStub,
@@ -157,5 +162,22 @@ describe('IntegrationDetailPage — fleet read shape', () => {
     expect(options).toMatchObject({ refetchInterval: 30_000 })
     expect(options).not.toHaveProperty('staleTime')
     expect(options).not.toHaveProperty('gcTime')
+  })
+})
+
+describe('IntegrationDetailPage - the one switch', () => {
+  it('toggles an integration through setInstanceEnabled with its addon, never integrations.update', () => {
+    switches.instance.mockReset()
+    switches.update.mockReset()
+    render(renderPage())
+
+    fireEvent.click(screen.getByRole('switch', { name: 'Disable integration' }))
+
+    expect(switches.instance).toHaveBeenCalledWith({
+      id: 'int_reolink',
+      addonId: 'provider-reolink',
+      enabled: false,
+    })
+    expect(switches.update).not.toHaveBeenCalled()
   })
 })

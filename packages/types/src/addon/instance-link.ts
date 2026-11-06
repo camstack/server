@@ -81,18 +81,22 @@ type LinkShape<Links extends Readonly<Record<string, LinkTarget>>> = {
  * `{ name, ...links, ...fields }`; the links are recorded in the kind (read back by
  * {@link linksOfKind}) so the hub can index who points at what.
  */
+/** The static shape of a link kind's body: the entry's name and switch, its links and its fields. */
+export type LinkKindShape<
+  Links extends Readonly<Record<string, LinkTarget>>,
+  Fields extends z.ZodRawShape,
+> = { name: z.ZodString; enabled: z.ZodOptional<z.ZodBoolean> } & LinkShape<Links> & Fields
+
 export function declareLinkKind<
   Links extends Readonly<Record<string, LinkTarget>>,
   Fields extends z.ZodRawShape = Record<never, never>,
->(
-  spec: LinkKindSpec<Links, Fields>,
-): DefinedRecordKind<z.ZodObject<{ name: z.ZodString } & LinkShape<Links> & Fields>> {
+>(spec: LinkKindSpec<Links, Fields>): DefinedRecordKind<z.ZodObject<LinkKindShape<Links, Fields>>> {
   const linkShape: Record<string, z.ZodString> = {}
   for (const [field, target] of Object.entries(spec.links)) linkShape[field] = linkField(target)
   const schema = entryBody({ ...linkShape, ...spec.fields })
   // `entryBody` took a runtime-built shape; its static shape is exactly `LinkShape<Links> & Fields`.
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- documented type boundary: the shape was built from `spec.links` and `spec.fields` one line above
-  const typed = schema as z.ZodObject<{ name: z.ZodString } & LinkShape<Links> & Fields>
+  const typed = schema as z.ZodObject<LinkKindShape<Links, Fields>>
   return defineEntryKind(spec.name, {
     title: spec.title,
     schema: typed,

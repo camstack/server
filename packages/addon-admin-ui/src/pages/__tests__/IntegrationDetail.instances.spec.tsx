@@ -100,6 +100,7 @@ vi.mock('@camstack/ui-library', async () => {
     useAddonSettingsGetIntegrationSettings: emptyQuery,
     useDeviceManagerDiscoveryProviders: emptyQuery,
     useIntegrationsUpdate: mutationStub,
+    useIntegrationInstancesSetInstanceEnabled: mutationStub,
     useIntegrationsDelete: mutationStub,
     useAddonsRestartAddon: mutationStub,
     useDeviceManagerRemove: mutationStub,

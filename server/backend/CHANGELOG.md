@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Rebuilt against updated dependencies.
+- The integrations list shows the on/off state of the instance itself; integrations.update no longer switches ordinary integrations
 
 ## [1.2.784] - 2026-11-06
 

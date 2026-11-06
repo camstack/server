@@ -1372,7 +1372,6 @@ Enum: `"open" \| "opening" \| "closing" \| "closed" \| "stopped"`
 
 - `addonId`: `string`
 - `name`: `string`
-- `enabled?`: `boolean`
 - `info?`: `Record<string, unknown>`
 - `originStableId?`: `string`
 - `settings?`: `Record<string, unknown>`

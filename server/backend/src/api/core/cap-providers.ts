@@ -1266,6 +1266,38 @@ function getInstancesProvider(
   return findInstancesProvider(ar.getCapabilityRegistry(), addonId)
 }
 
+/**
+ * An integration's `enabled` is a projection of its instance body (epic #440, step 3): the one
+ * switch is `setInstanceEnabled`, stored in the addon's record. One `listInstances` call per
+ * addon answers every row of it. An addon whose provider is not up, that keeps no instance for the
+ * row, or that fails to answer keeps the registry's stored flag for that row, and a failure is
+ * logged: a listing never fails because one addon did not answer.
+ */
+async function projectSwitches(
+  ar: AddonRegistryService,
+  logger: IScopedLogger,
+  integrations: readonly Integration[],
+): Promise<readonly Integration[]> {
+  const byAddon = new Map<string, ReadonlyMap<string, boolean>>()
+  for (const addonId of new Set(integrations.map((i) => i.addonId))) {
+    const provider = getInstancesProvider(ar, addonId)
+    if (provider === null) continue
+    try {
+      const instances = await provider.listInstances()
+      byAddon.set(addonId, new Map(instances.map((i) => [i.id, i.enabled !== false])))
+    } catch (err) {
+      logger.warn('integration switch not projected: the addon did not answer', {
+        tags: { addonId },
+        meta: { error: errMsg(err) },
+      })
+    }
+  }
+  return integrations.map((i) => {
+    const enabled = byAddon.get(i.addonId)?.get(i.id)
+    return enabled === undefined ? i : { ...i, enabled }
+  })
+}
+
 export function buildIntegrationsProvider(
   ar: AddonRegistryService,
   eb: EventBusService,
@@ -1286,15 +1318,23 @@ export function buildIntegrationsProvider(
       for (const addonId of new Set(integrations.map((i) => i.addonId))) {
         hidden.set(addonId, await hidesFromIntegrations(ar, addonId))
       }
-      return integrations.filter((i) => hidden.get(i.addonId) !== true).map(withProcessState)
+      const visible = integrations.filter((i) => hidden.get(i.addonId) !== true)
+      return (await projectSwitches(ar, logger, visible)).map(withProcessState)
     },
     get: async (input) => {
       const integration = await requireIntegrationRegistry(ar).getIntegration(input.id)
       if (!integration) throw new Error(`Integration "${input.id}" not found`)
-      return withProcessState(integration)
+      const [projected] = await projectSwitches(ar, logger, [integration])
+      return withProcessState(projected ?? integration)
     },
-    getByAddonId: async (input) =>
-      requireIntegrationRegistry(ar).getIntegrationByAddonId(input.addonId),
+    getByAddonId: async (input) => {
+      const integration = await requireIntegrationRegistry(ar).getIntegrationByAddonId(
+        input.addonId,
+      )
+      if (!integration) return integration
+      const [projected] = await projectSwitches(ar, logger, [integration])
+      return projected ?? integration
+    },
     create: async (input) => {
       const { settings, ...rest } = input
       const payload = rest
@@ -1433,6 +1473,11 @@ export function buildIntegrationsProvider(
         })
         throw new Error(`Integration "${input.id}" not found`)
       }
+      if (input.enabled !== undefined && previous.info['fixed'] !== true) {
+        throw new Error(
+          `Integration "${input.id}" is switched through integration-instances.setInstanceEnabled, not integrations.update`,
+        )
+      }
       const { id, ...updates } = input
       const changedFields = Object.keys(updates).filter(
         (k) => (updates as Record<string, unknown>)[k] !== undefined,
@@ -1457,10 +1502,7 @@ export function buildIntegrationsProvider(
           timestamp: new Date(),
           source: { type: 'integration', id: result.id },
           category,
-          data: {
-            integrationId: result.id,
-            addonId: result.addonId,
-          },
+          data: { integrationId: result.id, addonId: result.addonId },
         })
       }
 

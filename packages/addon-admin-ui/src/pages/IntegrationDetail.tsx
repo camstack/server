@@ -24,6 +24,7 @@ import {
   useIntegrationsGet,
   useIntegrationsGetAvailableTypes,
   useIntegrationsList,
+  useIntegrationInstancesSetInstanceEnabled,
   useIntegrationsUpdate,
   useSystem,
   Button,
@@ -295,8 +296,10 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
     ['integrations', 'get'],
     { input: { id: integrationId }, type: 'query' },
   ] as const
-  const toggleMutation = useIntegrationsUpdate({
-    onMutate: async (vars) => {
+  // The ONE switch is `setInstanceEnabled` (the instance body). A fixed builtin keeps no instance
+  // record, so its registry flag is switched through `integrations.update`.
+  const switchHandlers = {
+    onMutate: async (vars: { readonly enabled?: boolean }) => {
       await queryClient.cancelQueries({ queryKey: integrationKey })
       const previous = queryClient.getQueryData(integrationKey)
       if (previous != null) {
@@ -307,7 +310,7 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
       }
       return { previous }
     },
-    onError: (_err, _next, context) => {
+    onError: (_err: unknown, _next: unknown, context: unknown) => {
       const ctx = context as { previous?: unknown } | undefined
       if (ctx?.previous != null) {
         queryClient.setQueryData(integrationKey, ctx.previous)
@@ -317,7 +320,16 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
       queryClient.invalidateQueries({ queryKey: [['integrations']] })
       queryClient.invalidateQueries({ queryKey: [['deviceManager']] })
     },
-  })
+  }
+  const fixedToggle = useIntegrationsUpdate(switchHandlers)
+  const instanceToggle = useIntegrationInstancesSetInstanceEnabled(switchHandlers)
+  const toggleMutation = {
+    isPending: fixedToggle.isPending || instanceToggle.isPending,
+    mutate: (vars: { readonly id: string; readonly enabled: boolean }) =>
+      isFixed
+        ? fixedToggle.mutate(vars)
+        : instanceToggle.mutate({ ...vars, addonId: integration?.addonId }),
+  }
 
   const deleteMutation = useIntegrationsDelete({
     onSuccess: () => {

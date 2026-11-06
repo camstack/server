@@ -61,6 +61,8 @@ const MigrationIntegrationSchema = z.object({
   addonId: z.string(),
   name: z.string(),
   info: Rows,
+  /** The registry's stored switch: read by the one-switch migration, nothing else. */
+  enabled: z.boolean().optional(),
   originStableId: z.string().optional(),
 })
 

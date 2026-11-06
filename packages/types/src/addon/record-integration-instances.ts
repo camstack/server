@@ -45,7 +45,7 @@ export function isInstanceEnabled(body: { readonly enabled?: boolean | undefined
 }
 
 /** The body key of the switch; only {@link RecordIntegrationInstances.setInstanceEnabled} writes it. */
-const SWITCH_KEY = 'enabled'
+export const SWITCH_KEY = 'enabled'
 
 /** What the instance went through when `onChanged` runs. */
 export type InstanceChange = 'created' | 'updated' | 'enabled' | 'deleted'
@@ -131,19 +131,9 @@ export type ResolvedSecretsState = 'resolved' | 'unavailable'
 export interface ResolvedInstance<TBody extends InstanceBody> {
   readonly id: string
   readonly body: TBody
-  /** The instance's own switch; an absent value in the body reads as on. Always true for role "devices": the registry gates the addon. */
+  /** The instance's own switch; an absent value in the body reads as on. */
   readonly enabled: boolean
   readonly secrets: ResolvedSecretsState
-}
-
-/** Does the kind's body schema carry an `enabled` field? */
-function declaresEnabled(kind: DefinedRecordKind<z.ZodType>): boolean {
-  const json = z.toJSONSchema(kind.schema, {
-    unrepresentable: 'any',
-    io: 'input',
-  })
-  const properties = Reflect.get(json, 'properties')
-  return typeof properties === 'object' && properties !== null && 'enabled' in properties
 }
 
 export class RecordIntegrationInstances<TBody extends InstanceBody> {
@@ -151,8 +141,9 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
   private readonly secretKeys: ReadonlySet<string>
   private readonly secretMaps: ReadonlySet<string>
   private readonly nameField: string
-  /** The `integrations` registry owns the on/off switch (`role: devices`); the body has none. */
-  private readonly registryOwnsEnabled: boolean
+  private readonly switchListeners = new Set<
+    (id: string, enabled: boolean) => void | Promise<void>
+  >()
 
   constructor(
     private readonly records: Pick<RecordsAccess, 'kind' | 'owner'>,
@@ -163,12 +154,6 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
     this.secretKeys = topLevelSecretKeys(kind.declaration.secretPaths)
     this.secretMaps = secretMapKeys(kind.declaration.secretPaths)
     this.nameField = kind.declaration.entry?.nameField ?? 'name'
-    this.registryOwnsEnabled = hooks.description.role === 'devices'
-    if (this.registryOwnsEnabled && declaresEnabled(kind)) {
-      throw new Error(
-        `kind "${kind.name}": the integrations registry owns the on/off switch of a role "devices" addon, so the body must not declare "enabled"`,
-      )
-    }
   }
 
   /**
@@ -236,7 +221,7 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
       id: record.id,
       name: typeof rawName === 'string' ? rawName : record.id,
       configured: this.hooks.configured(record.data),
-      ...(this.registryOwnsEnabled ? {} : { enabled: isInstanceEnabled(record.data) }),
+      enabled: isInstanceEnabled(record.data),
       formValues: shown,
       ...(kind !== undefined ? { kind } : {}),
       ...(health?.status !== undefined ? { status: health.status } : {}),
@@ -336,18 +321,30 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
     return patch
   }
 
-  /** The switch lives in the record body; the addon is told so it applies it (D996). */
+  /**
+   * Listen to the switch of ANY instance of this helper (in the process that serves it). The
+   * durable replacement of the `integration.enabled` / `integration.disabled` events (D8): the
+   * addon reconciles from the record, whichever way it flipped.
+   */
+  onSwitched(listener: (id: string, enabled: boolean) => void | Promise<void>): void {
+    this.switchListeners.add(listener)
+  }
+
+  /**
+   * The ONE writer of the switch (D996, D1014): the record body's `enabled`, for every role. A
+   * configured thing is an instance, so an id with no record yet (a default integration that was
+   * never configured) gets its record from `initialBody` before the switch is written.
+   */
   setInstanceEnabled: IIntegrationInstancesProvider['setInstanceEnabled'] = async ({
     id,
     enabled,
   }) => {
-    if (this.registryOwnsEnabled) {
-      throw new Error(
-        `instance "${id}": the integrations registry owns the on/off switch of this addon; set it with integrations.update`,
-      )
+    if ((await this.handle.get(id)) === null) {
+      await this.handle.put({ id, data: this.hooks.initialBody(id) }, { ifRev: 0 })
     }
     await this.handle.patch(id, { [SWITCH_KEY]: enabled })
     await this.hooks.onChanged?.(id, 'enabled')
+    for (const listener of this.switchListeners) await listener(id, enabled)
     return { ok: true as const }
   }
 

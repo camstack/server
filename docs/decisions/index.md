@@ -4,7 +4,7 @@
 
 # Decisions
 
-977 architecture decision records. One file per decision, never
+978 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -992,6 +992,7 @@ that rots.
 | D1012 | [A broker is referenced by id and owns nothing of its users](adr-1012-a-broker-is-referenced-by-id-and-owns-nothing-of-its-users.md) | ✅ accepted (supersedes D950 (the integrationId foreign key on a broker), D1007 (the registry id as a broker key)) | 2026-11-05 |
 | D1013 | [One instance model — every configured thing is a record kind served by integration-instances; function caps are runtime-only](adr-1013-one-instance-model.md) | ✅ accepted (supersedes D996 (the "not on Integrations" clause and body `enabled` as a second switch; "the instance id IS the registry id"), D1007 (the registry as a second on/off switch), D1009 (the `role 'services'` exemption from the one list), D1012 (the broker-specific `declareBrokerLinkKind` / `BrokerInUseError`, "edited only on the Brokers page"), D950 (a broker dialog and picker of its own; sign-in declared on `broker.listProviders`), D978 (superseded by D1011 for add-device; its board list stays)) | 2026-11-05 |
 | D1014 | [The migration API is append-only - a migration reaches the world through MigrationApiV1 and nothing else](adr-1014-the-migration-api-is-append-only.md) | ✅ accepted | 2026-11-05 |
+| D1015 | [One switch, one store - an instance is on or off in its record body, for every role](adr-1015-one-switch-one-store-an-instance-is-on-or-off-in-its-record-body.md) | 💭 proposed (supersedes D1007 (the clause "the registry owns `enabled` for `role: devices`", and `setInstanceEnabled` refusing a devices addon)) | 2026-11-06 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

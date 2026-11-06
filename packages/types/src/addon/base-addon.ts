@@ -26,6 +26,15 @@ import {
   runAddonMigrations,
 } from '../migrations/addon-migration.js'
 import type { MigrationApiV1 } from '../migrations/api/migration-api.v1.js'
+import {
+  integrationRowsApiOver,
+  switchRecordsOverMigrationApi,
+} from '../migrations/api/migration-api-ports.js'
+import {
+  registrySwitchPortsOver,
+  registrySwitchToBodyMigration,
+} from '../migrations/registry-switch-to-body.js'
+import type { DefinedRecordKind } from '../records/record-kind.js'
 import { createDurableState, type DurableState } from './durable-state.js'
 import type { IntegrationInstanceRef } from './integration-instance-ref.js'
 import { AddonMigrationsBlockedError } from './migrations-blocked-error.js'
@@ -395,10 +404,64 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     )
   }
 
+  /**
+   * A device addon states its instance kind once, before its migrations run, and the one-switch
+   * migration (registry `enabled` to the instance body, epic #440 step 3) joins whatever
+   * catalogue the addon runs, in the SAME declaration (the engine replaces an owner's catalogue
+   * on every declare).
+   */
+  protected declareRegistrySwitch(spec: {
+    readonly kind: DefinedRecordKind
+    readonly initialBody: (name: string) => Readonly<Record<string, unknown>>
+  }): void {
+    this.registrySwitchSpec = spec
+  }
+
+  private registrySwitchSpec: {
+    readonly kind: DefinedRecordKind
+    readonly initialBody: (name: string) => Readonly<Record<string, unknown>>
+  } | null = null
+
+  private registrySwitchBound(): readonly BoundAddonMigration[] {
+    const spec = this.registrySwitchSpec
+    if (spec === null) return []
+    const api = this.ctx.migrationApi
+    if (api === undefined) {
+      // A context without the migration API cannot move the flag; the run goes on without it.
+      this.ctx.logger.warn(
+        'the registry switch migration is skipped: the migration API is not available on this context',
+      )
+      return []
+    }
+    return migrationSet(
+      [
+        registrySwitchToBodyMigration({
+          addonId: this.ctx.id,
+          date: '2026-11-06',
+          seq: 1000,
+          initialBody: spec.initialBody,
+        }),
+      ],
+      (a) =>
+        registrySwitchPortsOver({
+          api: integrationRowsApiOver(a),
+          records: switchRecordsOverMigrationApi(a),
+          kind: spec.kind,
+        }),
+    ).bind(api)
+  }
+
   private async runBound(
-    migrations: readonly BoundAddonMigration[],
+    declared: readonly BoundAddonMigration[],
     options?: AddonMigrationRunOptions,
   ): Promise<AddonMigrationRunReport> {
+    const added = this.registrySwitchBound()
+    const migrations = [...declared, ...added]
+    // A phased run (`only`) always carries the switch: it follows the rows-to-record move.
+    const phased =
+      options?.only === undefined || added.length === 0
+        ? options
+        : { ...options, only: [...options.only, ...added.map((m) => m.meta.id)] }
     const api = this.ctx.api.migrations
     const report = await runAddonMigrations(
       {
@@ -408,7 +471,7 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
       },
       migrations,
       this.ctx.logger,
-      options,
+      phased,
     )
     if (report.blockOwner.length > 0) {
       throw new AddonMigrationsBlockedError(report.blockOwner)

@@ -51,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Crash and refusal alerts name the core block or addon, and the crash-loop alert includes the last error.
 - A composed pet fountain serves its tank as a Water consumable even without a maintenance entity
 - A stored pet-fountain composition loses the drink counters and the Clear daily count forward on the next start
+- The migration API reports each integration's stored switch so a disabled integration stays disabled
 
 ### Removed
 

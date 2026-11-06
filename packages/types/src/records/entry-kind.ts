@@ -29,7 +29,12 @@ export interface EntryKindSpec<S extends z.ZodType> {
 
 /** The body of a plain entry: a name and the fields the kind adds. */
 export function entryBody<Shape extends z.ZodRawShape>(shape: Shape) {
-  return z.object({ name: z.string().min(1), ...shape })
+  // `enabled` is the instance's switch (D1014): absent means on, written only by setInstanceEnabled.
+  return z.object({
+    name: z.string().min(1),
+    enabled: z.boolean().optional(),
+    ...shape,
+  })
 }
 
 /**
