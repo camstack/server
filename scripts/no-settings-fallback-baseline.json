@@ -2,25 +2,13 @@
   "_why": "Every site today that keeps a settings-store / legacy path beside a record kind (planning#440 step 5). A family is a contiguous block that its packet deletes with the site; `permanent` is not an instance family and stays. The list only shrinks.",
   "families": {
     "registry": {
-      "packages/system/src/builtins/sqlite-storage/integration-record-kinds.ts:INTEGRATIONS_LEGACY": "the legacy `integrations` table beside the integration records; P5 deletes the dual storage (recordStores === undefined branches, INTEGRATIONS_LEGACY)",
-      "packages/system/src/builtins/sqlite-storage/integration-registry.ts:INTEGRATIONS_LEGACY": "the legacy `integrations` table beside the integration records; P5 deletes the dual storage (recordStores === undefined branches, INTEGRATIONS_LEGACY)",
-      "packages/system/src/builtins/sqlite-storage/integration-registry.ts:declareCollection": "the legacy `integrations` table beside the integration records; P5 deletes the dual storage (recordStores === undefined branches, INTEGRATIONS_LEGACY)",
-      "packages/system/src/index.ts:INTEGRATIONS_LEGACY": "the legacy `integrations` table beside the integration records; P5 deletes the dual storage (recordStores === undefined branches, INTEGRATIONS_LEGACY)"
     },
     "storage": {
-      "packages/system/src/builtins/storage-orchestrator/drain-state-store.ts:declareCollection": "the legacy storage_locations / drain-state collection beside the location records; P5 deletes the collection path, P6d moves the locations",
       "packages/system/src/builtins/storage-orchestrator/location-store.ts:LegacyStorageLocationDefaultSchema": "the legacy storage_locations / drain-state collection beside the location records; P5 deletes the collection path, P6d moves the locations",
-      "packages/system/src/builtins/storage-orchestrator/location-store.ts:declareCollection": "the legacy storage_locations / drain-state collection beside the location records; P5 deletes the collection path, P6d moves the locations",
-      "packages/system/src/builtins/storage-orchestrator/record-kinds.ts:STORAGE_DRAIN_STATE_LEGACY": "the legacy storage_locations / drain-state collection beside the location records; P5 deletes the collection path, P6d moves the locations",
-      "packages/system/src/index.ts:STORAGE_DRAIN_STATE_LEGACY": "the legacy storage_locations / drain-state collection beside the location records; P5 deletes the collection path, P6d moves the locations",
       "packages/types/src/index.ts:LegacyStorageLocationDefaultSchema": "the legacy storage_locations / drain-state collection beside the location records; P5 deletes the collection path, P6d moves the locations",
       "packages/types/src/interfaces/storage-location.ts:LegacyStorageLocationDefaultSchema": "the legacy storage_locations / drain-state collection beside the location records; P5 deletes the collection path, P6d moves the locations"
     },
     "google": {
-      "packages/addon-google-services/src/google-broker-registry.ts:LegacyGoogleFlatConfigSchema": "legacy flat-config / oauth state and config.brokers seeding beside the broker records; P5 deletes them after the google-services migration",
-      "packages/addon-google-services/src/google-services.addon.ts:LegacyOauthStateSchema": "legacy flat-config / oauth state and config.brokers seeding beside the broker records; P5 deletes them after the google-services migration",
-      "packages/addon-google-services/src/google-services.addon.ts:replaceAll-config": "legacy flat-config / oauth state and config.brokers seeding beside the broker records; P5 deletes them after the google-services migration",
-      "packages/addon-google-services/src/google-types.ts:LegacyGoogleFlatConfigSchema": "legacy flat-config / oauth state and config.brokers seeding beside the broker records; P5 deletes them after the google-services migration"
     },
     "waste": {
       "packages/addon-waste-collections/src/waste-collections.addon.ts:replaceAll-config": "seeds the source store from config.sources on boot beside the source records; P6e folds it into a migration"
@@ -37,10 +25,6 @@
       "packages/addon-provider-homeassistant/src/ha-notification-output.ts:HA_TARGETS_COLLECTION": "legacy settings-store collection of notification targets, kept for the adoption mapper; P6a drops it with the targets migration"
     },
     "recorder": {
-      "packages/addon-pipeline/src/recorder/addon/export-store.ts:RECORDING_EXPORTS_LEGACY_COLLECTION": "legacy recorder collection name kept beside the record kind; P5 deletes it",
-      "packages/addon-pipeline/src/recorder/addon/ops-log-store.ts:RECORDING_OPS_LOG_LEGACY_COLLECTION": "legacy recorder collection name kept beside the record kind; P5 deletes it",
-      "packages/addon-pipeline/src/recorder/addon/record-kinds.ts:RECORDING_EXPORTS_LEGACY_COLLECTION": "legacy recorder collection name kept beside the record kind; P5 deletes it",
-      "packages/addon-pipeline/src/recorder/addon/record-kinds.ts:RECORDING_OPS_LOG_LEGACY_COLLECTION": "legacy recorder collection name kept beside the record kind; P5 deletes it"
     },
     "mqtt": {
       "packages/addon-mqtt-broker/src/mqtt-broker.addon.ts:replaceAll-config": "seeds the embedded clients / acl store from config on boot when it is empty; not an instance family yet, folds in with the mqtt broker instances"

@@ -39,7 +39,13 @@ function meta(id: string, seq: number): MigrationMeta {
 }
 
 function migration(id: string, seq: number, run: (db: MigrationDatabase) => void): HubMigration {
-  return { meta: meta(id, seq), run }
+  return {
+    meta: meta(id, seq),
+    run: (db) => {
+      run(db)
+      return undefined
+    },
+  }
 }
 
 const createTable =

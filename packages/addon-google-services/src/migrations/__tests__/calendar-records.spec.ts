@@ -19,6 +19,7 @@ import {
   type GoogleMigrationPorts,
 } from '../index.js'
 import { calendarIdsPortsOver, calendarRecordPortsOver } from '../ports.js'
+import { NO_LEGACY_PORTS } from './inert-ports.js'
 
 type Body = Record<string, unknown>
 const stringsOf = (value: unknown): readonly string[] | undefined =>
@@ -58,6 +59,7 @@ async function start(
     ADDON_MIGRATIONS,
     (readStored): GoogleMigrationPorts => ({
       ...calendarIdsPortsOver(raw, readStored),
+      ...NO_LEGACY_PORTS,
       ...wrap(
         calendarRecordPortsOver({
           brokers: raw,

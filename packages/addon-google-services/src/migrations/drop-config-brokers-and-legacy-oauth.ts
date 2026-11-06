@@ -41,6 +41,16 @@ function isBlank(value: unknown): boolean {
   return value === undefined || value === null || value === ''
 }
 
+function stringList(value: unknown): readonly string[] | null {
+  if (!Array.isArray(value)) return null
+  const out: string[] = []
+  for (const item of value) {
+    if (typeof item !== 'string') return null
+    out.push(item)
+  }
+  return out
+}
+
 function holdsAccounts(value: unknown): boolean {
   const accounts = field(value, 'accounts')
   return Array.isArray(accounts) && accounts.length > 0
@@ -72,13 +82,21 @@ export async function planDropConfigBrokersAndLegacyOauth(
   // once every broker shows it as its own or has already turned it into calendar records. A broker
   // holding a DIFFERENT set parks it, as the calendar migration decides.
   const shared = present(await ports.readStored(SHARED_CALENDAR_IDS_KEY), SHARED_CALENDAR_IDS_KEY)
-  if (shared !== null && Array.isArray(shared.value)) {
-    const brokers = await ports.listBrokers()
-    const same = (ids: readonly string[] | undefined): boolean =>
-      ids === undefined ||
-      (ids.length === shared.value.length && ids.every((id) => shared.value.includes(id)))
-    if (brokers.length > 0 && brokers.every((b) => same(b.calendarIds))) {
-      take(SHARED_CALENDAR_IDS_KEY, shared.value)
+  if (shared !== null) {
+    const sharedIds = stringList(shared.value)
+    if (sharedIds === null) {
+      // The plan has no log channel: a failing plan is how a migration reports, and the ledger keeps it.
+      throw new Error(
+        `google-services: the stored '${SHARED_CALENDAR_IDS_KEY}' is not a list of ids — nothing dropped`,
+      )
+    } else {
+      const brokers = await ports.listBrokers()
+      const same = (ids: readonly string[] | undefined): boolean =>
+        ids === undefined ||
+        (ids.length === sharedIds.length && ids.every((id) => sharedIds.includes(id)))
+      if (brokers.length > 0 && brokers.every((b) => same(b.calendarIds))) {
+        take(SHARED_CALENDAR_IDS_KEY, shared.value)
+      }
     }
   }
 

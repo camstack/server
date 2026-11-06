@@ -4,27 +4,17 @@
  * `brokers` record kind (in-memory records engine) for the broker rows, through the production
  * port binding.
  */
-import {
-  type CalendarRecordPorts,
-  makeInMemoryRecords,
-  type RecordKindHandle,
-} from '@camstack/types'
+import { makeInMemoryRecords, type RecordKindHandle } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { googleBrokersEntryKind } from '../../broker-record-kinds.js'
 import { settingsFixture } from '../../__tests__/settings-fixture.js'
 import { ADDON_MIGRATIONS, type GoogleMigrationPorts } from '../index.js'
 import { calendarIdsPortsOver } from '../ports.js'
+import { NO_LEGACY_PORTS, NO_RECORD_PORTS } from './inert-ports.js'
 
 const COPY = 'google-services/2026-11-03-calendar-ids-to-brokers'
 const DROP = 'google-services/2026-11-03-drop-shared-calendar-ids'
-const NO_RECORD_PORTS: CalendarRecordPorts = {
-  warn: () => undefined,
-  listAccounts: async () => [],
-  readCalendar: async () => null,
-  putCalendar: async () => undefined,
-  clearCalendarIds: async () => undefined,
-}
 const SHARED = ['google_001:work@g', 'google_002:home@g']
 type Body = Record<string, unknown>
 const body = (name: string, extra: Body = {}): Body => ({
@@ -64,6 +54,7 @@ async function start(
     (readStored): GoogleMigrationPorts => ({
       ...calendarIdsPortsOver(kind, readStored),
       ...NO_RECORD_PORTS,
+      ...NO_LEGACY_PORTS,
     }),
     stored,
     'keep-me',
