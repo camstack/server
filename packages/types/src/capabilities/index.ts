@@ -1251,6 +1251,8 @@ export {
   IntegrationInstanceDiscoverySchema,
   IntegrationInstanceIdSchema,
   type IntegrationInstanceKind,
+  type IntegrationInstanceLink,
+  IntegrationInstanceLinkSchema,
   IntegrationInstanceKindSchema,
   type IntegrationInstanceMode,
   IntegrationInstanceModeSchema,

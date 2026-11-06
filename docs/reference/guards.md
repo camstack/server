@@ -4,12 +4,12 @@
 
 # Guards
 
-223 repository guards: 218 in `scripts/`,
+224 repository guards: 219 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (213)
+## Enforced by CI checks (214)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -97,6 +97,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-hub-settings-ready-before-forks.ts` | Forked addons may `resolveConfig()` only after the isolated sqlite engine is in the parent's collection AND the in-process settings-store door has booted. The sequence lives in `runHubAddonBoot` — this guard fails if the hub registry sto… |
 | `scripts/check-icon-catalog.ts` | The icon catalog is ONE list, and it is still drawable (D854). |
 | `scripts/check-inlined-sources-known.ts` | Every workspace package whose BUILT artifact carries a copy of another workspace package's source is known to the publish-scope resolver (`scripts/ci/publish-scope.mjs` → `inlinedSources`), as an authoritative copy (republished with its … |
+| `scripts/check-instance-refs-use-link-primitive.ts` | An instance that points at another instance does it through the ONE link primitive (D1013 rule 5): `linkField` in a kind declared with `declareLinkKind`, drawn by `instance-select`, REQUIRED id. |
 | `scripts/check-instances-kinds-declared.ts` | An addon that configures more than one thing declares which function each kind serves (D1013). |
 | `scripts/check-integration-hub-links.ts` | Integration-hub link guard — **`lib/integration-hub-url.ts` is the only place a link into an integration page is spelled.** ## The failure this catches Every page built on `<IntegrationHub>` reads `?integration=<addonId>` and `?section=<… |
 | `scripts/check-integration-instances-declared.ts` | Every integration that brings devices keeps its configuration as a typed instance record (planning#416, "one store"). Two rules, one list. |

@@ -6708,6 +6708,13 @@
       "summary": "Text field with insertable placeholder chips — the same interaction model as Notification Center's TemplateField, without the NC variable catalog."
     },
     {
+      "name": "InstancePickerSlotProvider",
+      "kind": "function",
+      "area": "contexts",
+      "file": "packages/ui-library/src/contexts/instance-picker-slot.ts",
+      "summary": "The instance picker a host mounts for `instance-select` fields (D1013 rule 5)."
+    },
+    {
       "name": "isAbsentProvider",
       "kind": "function",
       "area": "lib",
@@ -13062,6 +13069,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/icon-glyphs.ts",
       "summary": "Subscribe a component to the lazy glyph table. Call it in any component that draws the result of `resolveDisplayIcon` (directly or through a helper such as `deviceLeadIcon`): it re-renders once when the table arrives,…"
+    },
+    {
+      "name": "useInstancePickerSlot",
+      "kind": "hook",
+      "area": "contexts",
+      "file": "packages/ui-library/src/contexts/instance-picker-slot.ts",
+      "summary": "The instance picker a host mounts for `instance-select` fields (D1013 rule 5)."
     },
     {
       "name": "useIsMidWidth",

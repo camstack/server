@@ -216,6 +216,7 @@ export type ConfigField =
   | ConfigNotificationTargetSelectField
   | ConfigNotificationTargetMultiSelectField
   | ConfigBrokerSelectField
+  | ConfigInstanceSelectField
   | ConfigWidgetField
   | ConfigAddonActionSelectField
   | ConfigAddonActionButtonField
@@ -725,6 +726,19 @@ export interface ConfigBrokerSelectField extends ConfigFieldBase {
   type: 'broker-select'
   /** The broker kind to list and to create. */
   brokerKind: string
+}
+
+/**
+ * Pick an existing instance of one function cap (D1013 rule 5): the instances of every provider of
+ * `functionCap` that holds `integration-instances`, narrowed to `kind` when set. Stored value is
+ * the instance id string. The host mounts the picker (it owns the create dialogs).
+ */
+export interface ConfigInstanceSelectField extends ConfigFieldBase {
+  type: 'instance-select'
+  /** The function cap whose instances are listed (`broker`, `smtp-provider`, ...). */
+  functionCap: string
+  /** One kind of that cap (`mqtt`, `home-assistant`); absent lists every kind. */
+  kind?: string
 }
 
 /**
@@ -1391,6 +1405,7 @@ export type ConfigFieldWithValue =
   | (ConfigNotificationTargetSelectField & { readonly value: unknown })
   | (ConfigNotificationTargetMultiSelectField & { readonly value: unknown })
   | (ConfigBrokerSelectField & { readonly value: unknown })
+  | (ConfigInstanceSelectField & { readonly value: unknown })
   | ConfigWidgetField // widgets manage their own state; no form value
   | (ConfigAddonActionSelectField & { readonly value: unknown })
   | ConfigAddonActionButtonField // buttons are actions, not values

@@ -98,6 +98,18 @@ export const IntegrationInstanceDiscoverySchema = z.object({
 })
 export type IntegrationInstanceDiscovery = z.infer<typeof IntegrationInstanceDiscoverySchema>
 
+/**
+ * One link a kind of this provider declares (D1013 rule 5): the body `field` of an instance of
+ * `kind` holds the id of an instance of the function cap `to.cap` (of kind `to.kind`, when set).
+ * The hub indexes these so the target's delete is refused while a link names it.
+ */
+export const IntegrationInstanceLinkSchema = z.object({
+  kind: z.string().min(1),
+  field: z.string().min(1),
+  to: z.object({ cap: z.string().min(1), kind: z.string().min(1).optional() }),
+})
+export type IntegrationInstanceLink = z.infer<typeof IntegrationInstanceLinkSchema>
+
 export const IntegrationInstanceDescriptionSchema = z.object({
   /** What the instances are for the Integrations page; see {@link IntegrationInstanceRoleSchema}. */
   role: IntegrationInstanceRoleSchema,
@@ -124,6 +136,8 @@ export const IntegrationInstanceDescriptionSchema = z.object({
    * send an id (the UI then mints an opaque one).
    */
   mintsId: z.boolean().optional(),
+  /** The links to other instances the provider's kinds declare; absent means none. */
+  links: z.array(IntegrationInstanceLinkSchema).optional(),
 })
 export type IntegrationInstanceDescription = z.infer<typeof IntegrationInstanceDescriptionSchema>
 

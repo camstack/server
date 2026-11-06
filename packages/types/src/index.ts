@@ -2423,6 +2423,27 @@ export {
 export * from './ir/index.js'
 
 export * from './time/index.js'
+export type { InstanceUser, InstanceUserFinder } from './addon/instance-in-use.js'
+export {
+  assertInstanceUnused,
+  guardInstanceDelete,
+  InstanceInUseError,
+} from './addon/instance-in-use.js'
+export type {
+  KindLink,
+  LinkKindSpec,
+  LinkLabels,
+  LinkTarget,
+  LinkedInstancesSpec,
+} from './addon/instance-link.js'
+export {
+  buildLinkedInstances,
+  declareLinkKind,
+  linkField,
+  linkFieldDescriptor,
+  linksOfKind,
+  linkUserFinder,
+} from './addon/instance-link.js'
 export type { BrokerUser, BrokerUserFinder } from './addon/broker-in-use.js'
 export {
   assertBrokerUnused,
@@ -2430,7 +2451,7 @@ export {
   fieldUserFinder,
   guardBrokerDelete,
 } from './addon/broker-in-use.js'
-export type { ListedFieldRow } from './addon/broker-in-use.js'
+export type { ListedFieldRow } from './addon/instance-in-use.js'
 export type {
   BrokerLinkBody,
   BrokerLinkFormSpec,

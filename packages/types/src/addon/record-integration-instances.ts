@@ -23,6 +23,7 @@ import type { ConfigUISchema } from '../interfaces/config-ui.js'
 import { REDACTED_SECRET } from '../interfaces/config-ui-secrets.js'
 import { isSecretClear, isSecretFieldView } from '../keychain/secret-marker.js'
 import { RecordSecretUnavailableError } from '../records/errors.js'
+import { linksOfKind } from './instance-link-meta.js'
 import type { DefinedRecordKind } from '../records/record-kind.js'
 import type { RecordKindHandle, RecordRow, RecordsAccess } from '../records/records-access.js'
 import { secretViewsOf } from '../records/secret-views.js'
@@ -232,10 +233,24 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
     }
   }
 
-  describe: IIntegrationInstancesProvider['describe'] = async () =>
-    this.hooks.mintId === undefined
-      ? this.hooks.description
-      : { ...this.hooks.description, mintsId: true }
+  describe: IIntegrationInstancesProvider['describe'] = async () => {
+    const declared = linksOfKind(this.kind)
+    const links =
+      this.hooks.description.links !== undefined || declared.length === 0
+        ? {}
+        : {
+            links: declared.map((link) => ({
+              kind: this.kind.name,
+              field: link.field,
+              to: link.to,
+            })),
+          }
+    return {
+      ...this.hooks.description,
+      ...links,
+      ...(this.hooks.mintId === undefined ? {} : { mintsId: true }),
+    }
+  }
 
   instanceFormSchema: IIntegrationInstancesProvider['instanceFormSchema'] = async ({ id }) =>
     this.hooks.formSchema(id)
