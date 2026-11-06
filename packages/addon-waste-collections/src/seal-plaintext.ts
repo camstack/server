@@ -12,9 +12,10 @@
  * which is the expected no-op.
  */
 import {
+  asRecordsError,
+  DeclarationRefusedError,
   makeSecretMarker,
   type RecordsAccess,
-  RecordsError,
   recordSecretRef,
   type SecretsAccess,
 } from '@camstack/types'
@@ -57,7 +58,9 @@ export async function sealPlaintextCredentials(
   try {
     await records.declare({ 'waste-source': plainWasteSourceKind })
   } catch (err: unknown) {
-    if (err instanceof RecordsError && err.code === 'declaration-refused') {
+    // Judged by its code, not its class: in a grouped runner the records door is the host's, and
+    // its error class is not the one bundled here.
+    if (asRecordsError(err) instanceof DeclarationRefusedError) {
       log.info(
         'waste-collections: the secret kind is already declared; no plain-text credential can remain',
       )

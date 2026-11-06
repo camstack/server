@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A boot after the credentials moved to the keychain no longer crash-loops the integrations runner
+
 ## [0.1.34] - 2026-11-06
 
 ### Changed

@@ -112,4 +112,15 @@ describe('sealing plain-text credentials before the secret kind', () => {
       state: 'already-secret',
     })
   })
+
+  it('a refusal thrown by a records door of another copy of the types is still a no-op', async () => {
+    const { world } = await seeded({})
+    const refused = new Error(
+      'records/declaration-refused: kind "waste-source" of "waste-collections": secret path "args.password" cannot stop being secret',
+    )
+    const foreignDoor = { ...world.records, declare: () => Promise.reject(refused) }
+    expect(await sealPlaintextCredentials(foreignDoor, world.secrets, quiet())).toEqual({
+      state: 'already-secret',
+    })
+  })
 })
