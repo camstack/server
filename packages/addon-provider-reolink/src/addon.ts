@@ -74,6 +74,7 @@ import {
 } from './baichuan-webhook-shared.js'
 import { buildCreationFormSchema, buildDiscoveryParamsFormSchema } from './creation-schema.js'
 import { createBrokerPort, EmailPushBridge } from './email-push-bridge.js'
+import { mailboxLinkStoreOver } from './mailbox-link-store.js'
 import { createEmailPushRemovalHook } from './email-push-removal-hook.js'
 import { type LegacyWebhookIntake, startLegacyWebhookIntake } from './legacy-webhook-intake.js'
 import {
@@ -493,10 +494,19 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     await this.mailboxPendingPasswordState.set('')
   }
 
+  private requireRecords(): NonNullable<AddonContext['records']> {
+    const records = this.ctx.records
+    if (records === undefined) {
+      throw new Error('provider-reolink: ctx.records is required (hub-only addon)')
+    }
+    return records
+  }
+
   /** The camera mailbox bridge, built once. */
   private ensureEmailBridge(): EmailPushBridge {
     this.emailBridge ??= new EmailPushBridge({
       port: createBrokerPort(this.ctx.api),
+      links: mailboxLinkStoreOver(this.requireRecords()),
       listCameras: () => this.listReolinkCameras(),
       logger: this.ctx.logger.child('email-push'),
       pending: {

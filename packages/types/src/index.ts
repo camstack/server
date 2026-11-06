@@ -2443,6 +2443,7 @@ export {
   linkFieldDescriptor,
   linksOfKind,
   linkUserFinder,
+  optionalLinkField,
 } from './addon/instance-link.js'
 export type { BrokerUser, BrokerUserFinder } from './addon/broker-in-use.js'
 export {

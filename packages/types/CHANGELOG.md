@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - addon-crash-loop notification templates can use {{cause}}
 - A running-state power threshold now needs a second power sample above the threshold (dwell's new optional 4th argument minSamples), so one isolated standby reading no longer starts a run when the timer fires over the held value.
 - Pet fountain: the tank is also a Water consumable derived from its level; the drink counters and Clear daily count are removed
+- optionalLinkField declares an instance link that may stay empty
 
 ## [1.2.510] - 2026-11-06
 

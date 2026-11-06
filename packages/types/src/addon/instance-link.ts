@@ -12,14 +12,20 @@ import { defineEntryKind, entryBody } from '../records/entry-kind.js'
 import type { DefinedRecordKind } from '../records/record-kind.js'
 import type { RecordsAccess } from '../records/records-access.js'
 import type { InstanceUser, InstanceUserFinder } from './instance-in-use.js'
-import { linkField, linksOfKind, type KindLink, type LinkTarget } from './instance-link-meta.js'
+import {
+  linkField,
+  linksOfKind,
+  optionalLinkField,
+  type KindLink,
+  type LinkTarget,
+} from './instance-link-meta.js'
 import {
   type InstanceBody,
   type InstanceChange,
   RecordIntegrationInstances,
 } from './record-integration-instances.js'
 
-export { linkField, linksOfKind }
+export { linkField, linksOfKind, optionalLinkField }
 export type { KindLink, LinkTarget }
 
 type FormSections = ConfigUISchema['sections']

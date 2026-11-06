@@ -23,6 +23,14 @@ export function linkField(target: LinkTarget): z.ZodString {
   return z.string().meta({ link: target })
 }
 
+/**
+ * A link that may stay empty (absent): for a link the addon fills itself, or one an instance does not
+ * always need. The meta rides on the optional wrapper, where {@link linksOfKind} reads it.
+ */
+export function optionalLinkField(target: LinkTarget): z.ZodOptional<z.ZodString> {
+  return z.string().optional().meta({ link: target })
+}
+
 function linkTargetOf(meta: unknown): LinkTarget | undefined {
   if (typeof meta !== 'object' || meta === null) return undefined
   const link: unknown = Reflect.get(meta, 'link')

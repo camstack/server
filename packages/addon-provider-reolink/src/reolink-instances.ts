@@ -19,6 +19,7 @@ import {
   readHubConnection,
 } from './hub-connection.js'
 import type { HubIntegrationConnection } from './reolink-hub-manager.js'
+import { mailboxLinkField } from './email-push-bridge.js'
 import { ReolinkSocketDebugFlagSchema } from './schema.js'
 
 export const ReolinkConnectionBodySchema = entryBody({
@@ -31,6 +32,9 @@ export const ReolinkConnectionBodySchema = entryBody({
   uid: z.string().nullish(),
   debugGeneral: z.boolean().nullish(),
   debugSocketLogs: z.array(ReolinkSocketDebugFlagSchema).nullish(),
+  // The camera mailbox this integration's standalone cameras mail (a link, D1013). The bridge
+  // fills it; empty or absent while none of them uses a mailbox.
+  mailboxId: mailboxLinkField(),
 })
 export type ReolinkConnectionBody = z.infer<typeof ReolinkConnectionBodySchema>
 

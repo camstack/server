@@ -8,7 +8,9 @@ import {
   linkFieldDescriptor,
   linksOfKind,
   linkUserFinder,
+  optionalLinkField,
 } from '../instance-link.js'
+import { defineEntryKind, entryBody } from '../../records/entry-kind.js'
 
 const kind = declareLinkKind({
   name: 'connections',
@@ -100,5 +102,20 @@ describe('the instance link primitive', () => {
       functionCap: 'broker',
       kind: 'mqtt',
     })
+  })
+})
+
+describe('optionalLinkField', () => {
+  it('is declared as a link and accepts an absent value', () => {
+    const optional = defineEntryKind('connections', {
+      title: 'Things',
+      writeTrigger: 'test',
+      schema: entryBody({ mailboxId: optionalLinkField({ cap: 'broker', kind: 'smtp-inbound' }) }),
+    })
+    expect(linksOfKind(optional)).toEqual([
+      { field: 'mailboxId', to: { cap: 'broker', kind: 'smtp-inbound' } },
+    ])
+    expect(optional.schema.safeParse({ name: 'x' }).success).toBe(true)
+    expect(optional.schema.safeParse({ name: 'x', mailboxId: 'm' }).success).toBe(true)
   })
 })

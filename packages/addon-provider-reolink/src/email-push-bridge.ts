@@ -14,6 +14,8 @@ import { classifyEmailPushMessage } from '@apocaliss92/nodelink-js'
 import {
   type AddonContext,
   type IScopedLogger,
+  type LinkTarget,
+  optionalLinkField,
   SMTP_INBOUND_DEFAULT_ID,
   SMTP_INBOUND_KIND,
   SmtpInboundConfigSchema,
@@ -35,12 +37,25 @@ export const SMTP_BROKER_ADDON_ID = 'smtp-nodemailer'
 /** Who this addon is, among the subscribers of a mailbox. */
 export const REOLINK_SUBSCRIBER_ID = 'provider-reolink'
 const MAILBOX_NAME = 'Camera mailbox'
+/** What an integration's `mailboxId` points at: an `smtp-inbound` instance of the `broker` cap (D1013). */
+export const SMTP_MAILBOX_LINK: LinkTarget = { cap: 'broker', kind: SMTP_INBOUND_KIND }
+/** The body field of an integration record that names its camera mailbox; empty or absent when none. */
+export const MAILBOX_LINK_FIELD = 'mailboxId'
+/**
+ * The link field of the integration record. The bridge fills it (an integration whose standalone
+ * cameras mail the mailbox links to it), so the hub refuses to delete a mailbox that is in use.
+ */
+export function mailboxLinkField(): ReturnType<typeof optionalLinkField> {
+  return optionalLinkField(SMTP_MAILBOX_LINK)
+}
 const RECIPIENT_PREFIX = 'cam-'
 
 /** What the bridge needs of a camera. */
 export interface BridgeCamera {
   readonly id: number
   readonly stableId: string
+  /** The integration the camera belongs to; `null` when it names none. */
+  readonly integrationId: string | null
   readonly isEmailPushEligible: boolean
   readonly emailPushChannel: number
   handleSimpleEvent(event: {
@@ -110,8 +125,17 @@ export function createBrokerPort(api: AddonContext['api']): BrokerPort {
   }
 }
 
+/** The `mailboxId` link of the Reolink integrations, as the bridge reads and writes it. */
+export interface MailboxLinkStore {
+  /** Every integration record with the mailbox it links to (`''` while it links to none). */
+  list(): Promise<readonly { readonly id: string; readonly mailboxId: string }[]>
+  /** Point an integration at a mailbox, or at none (`''`). */
+  set(integrationId: string, mailboxId: string): Promise<void>
+}
+
 export interface EmailPushBridgeDeps {
   readonly port: BrokerPort
+  readonly links: MailboxLinkStore
   readonly listCameras: () => readonly BridgeCamera[]
   readonly logger: IScopedLogger
   /**
@@ -256,19 +280,64 @@ export class EmailPushBridge {
       if (this.brokerId !== null && this.subscriptionId !== null) {
         await this.deps.port.unsubscribe(this.brokerId, this.subscriptionId)
       }
+      // The mailbox is no longer in use: release the links so the operator can delete it. Only
+      // once this process held it, so a boot before the cameras registered never clears one.
+      if (this.brokerId !== null) await this.syncLinks(this.brokerId, new Set())
       this.subscriptionId = null
       this.declared = null
       return
     }
-    const key = recipients.join(',')
+    const owners = this.linkOwners()
+    const key = `${recipients.join(',')}|${[...owners].sort().join(',')}`
     if (!force && this.declared === key && this.subscriptionId !== null) return
     const brokerId = await this.ensureMailbox()
     await this.seedBaseline(brokerId)
     const { subscriptionId } = await this.deps.port.subscribe(brokerId, recipients)
     this.brokerId = brokerId
     this.subscriptionId = subscriptionId
-    this.declared = key
+    this.declared = (await this.syncLinks(brokerId, owners)) ? key : null
     await this.reconcile()
+  }
+
+  /** The integrations whose standalone cameras mail the mailbox: they link to it. */
+  private linkOwners(): ReadonlySet<string> {
+    const owners = new Set<string>()
+    for (const cam of this.deps.listCameras()) {
+      if (cam.isEmailPushEligible && cam.integrationId !== null) owners.add(cam.integrationId)
+    }
+    return owners
+  }
+
+  /**
+   * Make the `mailboxId` links say who uses the mailbox: `owners` link to it, no other
+   * integration does. Idempotent, so an install whose mailbox already exists is filled from it
+   * (the mailbox is re-adopted by `ensureMailbox`) with nothing stored beforehand. False when the
+   * links could not be written: the caller retries at the next sync.
+   */
+  private async syncLinks(brokerId: string, owners: ReadonlySet<string>): Promise<boolean> {
+    try {
+      const rows = await this.deps.links.list()
+      for (const row of rows) {
+        const wanted = owners.has(row.id) ? brokerId : ''
+        if (row.mailboxId !== wanted) await this.deps.links.set(row.id, wanted)
+      }
+      for (const owner of owners) {
+        if (!rows.some((row) => row.id === owner)) {
+          this.deps.logger.warn(
+            'email-push: an integration with email-push cameras has no record to link the mailbox from',
+            {
+              meta: { integrationId: owner, brokerId },
+            },
+          )
+        }
+      }
+      return true
+    } catch (err: unknown) {
+      this.deps.logger.warn('email-push: the camera mailbox links could not be written', {
+        meta: { brokerId, error: errMsg(err) },
+      })
+      return false
+    }
   }
 
   /**

@@ -1035,6 +1035,11 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     return typeof host === 'string' && host.length > 0 ? host : null
   }
 
+  /** The integration this camera belongs to, or `null` when it names none. */
+  get integrationId(): string | null {
+    return this.hubIntegrationId()
+  }
+
   /** The integration (one NVR / Home Hub, D985) this camera was adopted from, or `null`. */
   private hubIntegrationId(): string | null {
     const id = this.config.get('integrationId')

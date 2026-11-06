@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A Reolink integration whose cameras mail the camera mailbox now links to it, so deleting the mailbox while it is in use is refused and the link shows in the instance model
+
 ## [1.2.230] - 2026-11-06
 
 ### Changed

@@ -56,10 +56,6 @@ export const NOT_AN_INSTANCE_REF_SITES: ReadonlyMap<string, string> = new Map([
     'the terminal session instance a terminal camera device attaches to, not an integration instance',
   ],
   [
-    'addon-provider-reolink:email-push-bridge.ts:brokerId',
-    'an event-schema field and private plumbing of the single default mailbox, not a stored link',
-  ],
-  [
     'addon-import-alexa:alexa-login-routes.ts:brokerId',
     'a route body parameter and the id the commit returns, not a stored link',
   ],
@@ -76,7 +72,7 @@ const REF_DECL_RE = new RegExp(
 /** Device classes and custom actions hold an owner id or an action input, not a link. */
 const NOT_A_LINK_PATH_RE = /(?:^|\/)devices\/|(?:^|\/)custom-actions\.ts$/
 const PRIMITIVE_IMPORT_RE =
-  /import\s*(?:type\s*)?\{[^}]*\b(?:declareLinkKind|linkField|linkFieldDescriptor)\b[^}]*\}\s*from\s*['"]@camstack\/types['"]/
+  /import\s*(?:type\s*)?\{[^}]*\b(?:declareLinkKind|linkField|linkFieldDescriptor|optionalLinkField)\b[^}]*\}\s*from\s*['"]@camstack\/types['"]/
 const DECLARE_LINK_KIND_RE = /\bdeclareLinkKind\s*[(<]/g
 const CAP_LITERAL_RE = /\bcap:\s*['"]([^'"]+)['"]/g
 

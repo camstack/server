@@ -20,10 +20,17 @@ interface Event {
   readonly timestamp: number
 }
 
-function camera(id: number, stableId: string, events: Event[], eligible = true): BridgeCamera {
+function camera(
+  id: number,
+  stableId: string,
+  events: Event[],
+  eligible = true,
+  integrationId: string | null = 'int-default',
+): BridgeCamera {
   return {
     id,
     stableId,
+    integrationId,
     isEmailPushEligible: eligible,
     emailPushChannel: 0,
     handleSimpleEvent: (e) => {
@@ -144,7 +151,22 @@ interface FakePending {
   cleared: number
 }
 
-function build(cameras: BridgeCamera[], broker: FakeBroker, pending?: FakePending) {
+interface FakeLinks {
+  readonly rows: Map<string, string>
+  readonly sets: { id: string; mailboxId: string }[]
+  failSets: number
+}
+
+function fakeLinks(rows: Record<string, string> = { 'int-default': '', 'int-hub': '' }): FakeLinks {
+  return { rows: new Map(Object.entries(rows)), sets: [], failSets: 0 }
+}
+
+function build(
+  cameras: BridgeCamera[],
+  broker: FakeBroker,
+  pending?: FakePending,
+  links: FakeLinks = fakeLinks(),
+) {
   const logger = {
     debug: vi.fn(),
     info: vi.fn(),
@@ -155,6 +177,17 @@ function build(cameras: BridgeCamera[], broker: FakeBroker, pending?: FakePendin
   }
   const bridge = new EmailPushBridge({
     port: broker.port,
+    links: {
+      list: async () => [...links.rows].map(([id, mailboxId]) => ({ id, mailboxId })),
+      set: async (id, mailboxId) => {
+        if (links.failSets > 0) {
+          links.failSets -= 1
+          throw new Error('record store unavailable')
+        }
+        links.sets.push({ id, mailboxId })
+        links.rows.set(id, mailboxId)
+      },
+    },
     listCameras: () => cameras,
     logger,
     ...(pending === undefined
@@ -514,5 +547,74 @@ describe('the email-push bridge: what a camera is told', () => {
     const { bridge } = build([cam], broker)
     expect(await bridge.buildCameraSetupParams(cam)).toBeNull()
     expect(broker.adds).toEqual([])
+  })
+})
+
+describe('the email-push bridge: the mailbox link (D1013)', () => {
+  it('links the integration of an eligible camera to the mailbox, and no other integration', async () => {
+    const broker = fakeBroker()
+    const links = fakeLinks()
+    const { bridge } = build(
+      [camera(1, 'A', []), camera(2, 'H', [], false, 'int-hub')],
+      broker,
+      undefined,
+      links,
+    )
+    await bridge.sync()
+    expect(Object.fromEntries(links.rows)).toEqual({
+      'int-default': SMTP_INBOUND_DEFAULT_ID,
+      'int-hub': '',
+    })
+  })
+
+  it('an existing install: the mailbox already exists, the record holds no link, and it is filled from the adopted mailbox', async () => {
+    const broker = fakeBroker()
+    broker.exists = true
+    const links = fakeLinks({ 'int-default': '' })
+    const { bridge } = build([camera(1, 'A', [])], broker, undefined, links)
+    await bridge.sync()
+    expect(broker.adds).toEqual([])
+    expect(links.rows.get('int-default')).toBe(SMTP_INBOUND_DEFAULT_ID)
+  })
+
+  it('a link that is already right is not written again', async () => {
+    const broker = fakeBroker()
+    const links = fakeLinks({ 'int-default': SMTP_INBOUND_DEFAULT_ID })
+    const { bridge } = build([camera(1, 'A', [])], broker, undefined, links)
+    await bridge.sync()
+    await bridge.sync({ force: true })
+    expect(links.sets).toEqual([])
+  })
+
+  it('releases the link when the last eligible camera goes, so the mailbox can be deleted', async () => {
+    const broker = fakeBroker()
+    const links = fakeLinks()
+    const cams = [camera(1, 'A', [])]
+    const { bridge } = build(cams, broker, undefined, links)
+    await bridge.sync()
+    cams.length = 0
+    await bridge.sync()
+    expect(links.rows.get('int-default')).toBe('')
+  })
+
+  it('a boot before any camera registered clears nothing', async () => {
+    const broker = fakeBroker()
+    const links = fakeLinks({ 'int-default': SMTP_INBOUND_DEFAULT_ID })
+    const { bridge } = build([], broker, undefined, links)
+    await bridge.sync()
+    expect(links.sets).toEqual([])
+  })
+
+  it('a link that could not be written is retried at the next sync, and the subscription stays', async () => {
+    const broker = fakeBroker()
+    const links = fakeLinks()
+    links.failSets = 1
+    const { bridge, logger } = build([camera(1, 'A', [])], broker, undefined, links)
+    await bridge.sync()
+    expect(links.rows.get('int-default')).toBe('')
+    expect(broker.subscribes).toHaveLength(1)
+    expect(logger.warn).toHaveBeenCalled()
+    await bridge.sync()
+    expect(links.rows.get('int-default')).toBe(SMTP_INBOUND_DEFAULT_ID)
   })
 })
