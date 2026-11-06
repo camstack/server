@@ -71,6 +71,7 @@ import { registeredProviderFor } from '../addon/instance-links.service.js'
 import { HubMeshGuard } from './hub-mesh-guard.js'
 import { readHubServerVersion } from './hub-server-version.js'
 import { buildCapCallFn } from './cap-call-fn.js'
+import { isRunnerHostedByNode } from './runner-hosted-on-node.js'
 import {
   createHubResidentProviderLookup,
   createInProcessProviderLookup,
@@ -221,17 +222,12 @@ export class MoleculerService {
    * registered hosts nothing.
    */
   private isRunnerOnNode(nodeId: string, runnerId: string): boolean {
-    const nodes = this.nodeRegistry
-      .listNodeIds()
-      .filter((id) => id === nodeId || id.startsWith(`${nodeId}/`))
-    if (nodes.includes(`${nodeId}/${runnerId}`)) return true
-    for (const id of nodes) {
-      for (const entry of this.nodeRegistry.getNodeManifest(id) ?? []) {
-        const runner = this.runnerIdResolver?.(entry.addonId) ?? entry.addonId
-        if (entry.addonId === runnerId || runner === runnerId) return true
-      }
-    }
-    return false
+    return isRunnerHostedByNode(
+      this.nodeRegistry,
+      (addonId) => this.runnerIdResolver?.(addonId) ?? addonId,
+      nodeId,
+      runnerId,
+    )
   }
 
   get childRegistry(): LocalChildRegistry | null {

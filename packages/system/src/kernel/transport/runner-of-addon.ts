@@ -12,5 +12,12 @@ export class RunnerOfAddon {
     return runnerId
   }
 
+  /** The addons the spawn plan put in `runnerId` (a solo runner: none recorded, the runner is the addon). */
+  addonsOf(runnerId: string): readonly string[] {
+    const out: string[] = []
+    for (const [addonId, runner] of this.byAddon) if (runner === runnerId) out.push(addonId)
+    return out
+  }
+
   resolve = (addonId: string): string => this.byAddon.get(addonId) ?? addonId
 }

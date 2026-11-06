@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Settings rows stored as a bare value (such as an empty brokers list) are rewritten into the standard form at boot, so the Google services cleanup migration can finally apply
+- A grouped addon on an agent (for example the pipeline runner) is now recognised by the hub from its first call, so its migrations are no longer refused with "no caller identity" at boot.
 
 ## [1.2.788] - 2026-11-06
 

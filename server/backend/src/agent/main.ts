@@ -6,7 +6,6 @@ import {
 import * as path from 'node:path'
 import type {
   AddonContextOptions,
-  ChildCapDescriptor,
   InProcessProviderLookup,
   InProcessProviderRef,
   PendingTransporter,
@@ -159,6 +158,7 @@ import { registerAgentCapDispatch } from './register-agent-cap-dispatch.js'
 // entries flow through it (console output + hub forwarding).
 // ---------------------------------------------------------------------------
 import { LogManager, systemHostFacts } from '@camstack/server/system'
+import { buildAgentChildUdsManifest } from './agent-child-manifest.js'
 import { startAgentHeapWatch } from './agent-heap-watch.js'
 
 /** A reconnect (stop + rebuild + start) that takes longer than this is abandoned. */
@@ -821,8 +821,11 @@ async function startAgent(configPath?: string): Promise<void> {
       // makes an agent's forked addon reach a hub-hosted cap (`stream-broker`,
       // `settings-store`, …) instead of 30s-deadlining on raw `${cap}.*`
       // discovery (hub-local addon runners expose no Moleculer service).
-      forwardToHub: (input) =>
-        broker.call(
+      forwardToHub: async (input) => {
+        // A stamped call is believed only against the manifest the hub holds for this node:
+        // send it after the registration in flight (the child's own, a member addon's) landed.
+        if (input.callerAddonId !== undefined) await registration.settled()
+        return broker.call(
           HUB_CAP_FWD_ACTION,
           {
             capName: input.capName,
@@ -842,7 +845,8 @@ async function startAgent(configPath?: string): Promise<void> {
             ...(input.callerAddonId !== undefined ? { callerAddonId: input.callerAddonId } : {}),
           },
           { timeout: 60_000 },
-        ),
+        )
+      },
       logger: { warn: (msg) => consoleLogger.warn(`[uds-fallback] ${msg}`) },
     })
     agentUdsRegistry = new LocalChildRegistry({
@@ -890,7 +894,12 @@ async function startAgent(configPath?: string): Promise<void> {
     // fires first, the subtree's atomic-replace handles the re-registration safely.
     agentUdsRegistry.onChildRegistered((child) => {
       const childNodeId = `${agentNodeId}/${child.childId}`
-      const childParams = buildAgentChildUdsManifest(childNodeId, child.childId, child.caps)
+      const childParams = buildAgentChildUdsManifest(
+        childNodeId,
+        child.childId,
+        child.caps,
+        agentRunnerOfAddon.addonsOf(child.childId),
+      )
       subtree.registerNode(childParams)
       registration.trigger(`child ${childNodeId} connected`)
       consoleLogger.info(`UDS child registered — subtree updated: ${childNodeId}`)
@@ -1880,48 +1889,6 @@ function readAgentVersion(): string {
  */
 function systemSkipList(): readonly string[] {
   return resolveBuiltinsDir() === null ? [] : [BUILTINS_PACKAGE]
-}
-
-// ---------------------------------------------------------------------------
-// E1 helper — agent-local UDS child manifest adaptation
-// ---------------------------------------------------------------------------
-
-/**
- * Adapt a child's UDS `ChildCapDescriptor[]` into a `RegisterNodeParams`
- * for the agent's subtree HubNodeRegistry.
- *
- * Multi-addon manifest support (co-location): descriptors are grouped by the
- * `addonId` each one carries, producing one manifest entry per hosted addon —
- * a GROUPED runner (`execution.group`) registers each addon's caps under its
- * REAL addon id instead of collapsing them under a synthetic
- * `addonId = childId` (the group name). A legacy child that omits `addonId`
- * falls back to `childId` — identical to the historical single-addon
- * behaviour (childId = runnerId = addonId when no group is declared).
- * Mirrors the hub's `buildChildUdsManifest`.
- *
- * Only system (non-device-scoped) caps go into `addons`; device-scoped native
- * caps arrive on a later re-handshake via the Moleculer path.
- */
-function buildAgentChildUdsManifest(
-  nodeId: string,
-  childId: string,
-  caps: readonly ChildCapDescriptor[],
-): RegisterNodeParams {
-  const capsByAddon = new Map<string, Set<string>>()
-  for (const cap of caps) {
-    if (cap.deviceId !== undefined) continue
-    const addonId = cap.addonId ?? childId
-    const set = capsByAddon.get(addonId) ?? new Set<string>()
-    set.add(cap.capName)
-    capsByAddon.set(addonId, set)
-  }
-  if (capsByAddon.size === 0) {
-    capsByAddon.set(childId, new Set<string>())
-  }
-  const addons: readonly RegisteredAddonManifest[] = [...capsByAddon.entries()].map(
-    ([addonId, capNames]) => ({ addonId, capabilities: [...capNames] }),
-  )
-  return { nodeId, addons }
 }
 
 export { startAgent }

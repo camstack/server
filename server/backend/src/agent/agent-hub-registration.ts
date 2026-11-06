@@ -50,6 +50,11 @@ export interface AgentHubRegistrationOptions {
 export interface AgentHubRegistration {
   /** Send the complete manifest (coalesced). */
   trigger(reason: string): void
+  /**
+   * Resolves once no registration is in flight or queued, i.e. the hub holds the manifest as of
+   * the last trigger. Event-driven: no timer, it is the ack that resolves it.
+   */
+  settled(): Promise<void>
   /** The hub node connected: its view of this agent was reset, so the full set goes again. */
   onHubConnected(): void
 }
@@ -59,6 +64,7 @@ export function createAgentHubRegistration(
 ): AgentHubRegistration {
   let sending = false
   let queuedReason: string | null = null
+  let waiters: Array<() => void> = []
 
   const send = (reason: string): void => {
     sending = true
@@ -90,7 +96,13 @@ export function createAgentHubRegistration(
         sending = false
         const next = queuedReason
         queuedReason = null
-        if (next !== null) trigger(next)
+        if (next !== null) {
+          trigger(next)
+          return
+        }
+        const done = waiters
+        waiters = []
+        for (const resolve of done) resolve()
       })
   }
 
@@ -104,6 +116,10 @@ export function createAgentHubRegistration(
 
   return {
     trigger,
+    settled: () =>
+      sending || queuedReason !== null
+        ? new Promise<void>((resolve) => waiters.push(resolve))
+        : Promise.resolve(),
     onHubConnected() {
       trigger('hub connected')
     },
