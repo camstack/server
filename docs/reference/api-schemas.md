@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1042 shared schemas.**
+**1039 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -1218,20 +1218,6 @@ Enum: `"authorised"`
 - `label`: `string`
 - `icon`: `string`
 - `order?`: `number`
-
-### `ConnectionTestDescriptorSchema`
-
-- `label`: `string`
-
-### `ConnectionTestInputSchema`
-
-- `settings`: `Record<string, unknown>`
-
-### `ConnectionTestOutcomeSchema`
-
-- `{ outcome: "validated"; latencyMs?: number; detail?: string }`
-- `{ outcome: "rejected"; error: string }`
-- `{ outcome: "inconclusive"; error: string }`
 
 ### `ConnectivityStatusSchema`
 

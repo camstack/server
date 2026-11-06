@@ -4,12 +4,12 @@
 
 # Guards
 
-225 repository guards: 220 in `scripts/`,
+226 repository guards: 221 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (215)
+## Enforced by CI checks (216)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -158,6 +158,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-object-media-scope-required.ts` | an `object` media read MUST require NcEventMediaScope. |
 | `scripts/check-onboard-motion-emitters.ts` | GUARD: only the camera-sensors bridge, the device-activity source and the runner's analyzer emit `MotionOnMotionChanged` (D673), and only the orchestrator writes a camera's `motion` runtime slice (D696). The rules live in `onboard-motion… |
 | `scripts/check-one-row-switch.ts` | One switch per instance (planning#440 step 3, D996, D1007). |
+| `scripts/check-one-test-method.ts` | One connection test (planning#440 step 4, D1016). |
 | `scripts/check-orphan-reclaimers.ts` | Orphan-reclaimer guard — **every collection the audit WALKS declares how its rows are deleted.** ## The failure this catches The audit's reclaim was one `if` for media and a raw `settingsStore.delete` for everything else. The raw delete … |
 | `scripts/check-owner-only-events.ts` | GUARD: an owner-only event category never reaches a consumer surface (D224, D663). |
 | `scripts/check-package-promotion-satisfiable.ts` | A promotion criterion fed by the motion-settle governor must be SATISFIABLE at the governor's cadence. |

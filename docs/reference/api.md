@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**203 capabilities · 1496 methods.**
+**202 capabilities · 1492 methods.**
 
 ## Method index
 
@@ -192,8 +192,6 @@
 | `color.setColor` | mutation | protected | color |
 | `composer.applyBlocks` | mutation | admin | composer |
 | `composer.getStates` | query | admin | composer |
-| `connectionTest.testSettings` | mutation | admin | connection-test |
-| `connectionTest.describeTest` | query | admin | connection-test |
 | `connectivity.getStatus` | query | protected | connectivity (auto) |
 | `consumables.getStatus` | query | protected | consumables (auto) |
 | `consumables.reset` | mutation | admin | consumables |
@@ -533,7 +531,6 @@
 | `integrations.update` | mutation | admin | integrations |
 | `integrations.delete` | mutation | admin | integrations |
 | `integrations.getAvailableTypes` | query | admin | integrations |
-| `integrations.testConnection` | mutation | admin | integrations |
 | `intercom.getStatus` | query | protected | intercom (auto) |
 | `intercom.startSession` | mutation | protected | intercom |
 | `intercom.handleAnswer` | mutation | protected | intercom |
@@ -707,7 +704,6 @@
 | `mqttBroker.getBrokerConfig` | query | admin | mqtt-broker |
 | `mqttBroker.addBroker` | mutation | admin | mqtt-broker |
 | `mqttBroker.removeBroker` | mutation | admin | mqtt-broker |
-| `mqttBroker.testConnection` | mutation | admin | mqtt-broker |
 | `mqttBroker.startEmbeddedBroker` | mutation | admin | mqtt-broker |
 | `mqttBroker.stopEmbeddedBroker` | mutation | admin | mqtt-broker |
 | `nativeObjectDetection.getStatus` | query | protected | native-object-detection (auto) |
@@ -2092,18 +2088,6 @@
 | applyBlocks | `composer.applyBlocks` | mutation | admin | `ComposerApplyInputSchema` | `ComposerApplyResultSchema` |
 | getStates | `composer.getStates` | query | admin | `{ blockIds: string[] }` | `{ states: ({ blockId: string; deviceId: number \| null; status: "stopped" \| "starting" \| "running" \| "degraded" \| "incomplete" \| "failed"; reason?: string; fields: ({ cap: string; path: string; item?: { arrayPath: string; key: string; label: string; resettable?: boolean }; state: "fresh" \| "stale" \| "unavailable"; value: string \| number \| boolean \| null; reason?: string })[] })[] }` |
 
-### `connection-test` → `connectionTest.*`
-
-- **Source:** `packages/types/src/capabilities/connection-test.cap.ts:93`
-- **Meta:** scope: `system` · mode: `collection` · mount: `collection`
-- **Archetypes:** —
-- **Provider interface:** `IConnectionTestProvider`
-
-| Method | tRPC path | Kind | Auth | Input | Output |
-|---|---|---|---|---|---|
-| testSettings | `connectionTest.testSettings` | mutation | admin | `ConnectionTestInputSchema` | `ConnectionTestOutcomeSchema` |
-| describeTest | `connectionTest.describeTest` | query | admin | `void` | `ConnectionTestDescriptorSchema` |
-
 ### `connectivity` → `connectivity.*`
 
 - **Source:** `packages/types/src/capabilities/connectivity.cap.ts:22`
@@ -2968,7 +2952,7 @@
 
 ### `integrations` → `integrations.*`
 
-- **Source:** `packages/types/src/capabilities/integrations.cap.ts:158`
+- **Source:** `packages/types/src/capabilities/integrations.cap.ts:157`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `server-provided`
 - **Archetypes:** —
 - **Provider interface:** `IIntegrationsProvider`
@@ -2982,7 +2966,6 @@
 | update | `integrations.update` | mutation | admin | `UpdateIntegrationInputSchema` | `IntegrationLiteSchema` |
 | delete | `integrations.delete` | mutation | admin | `{ id: string }` | `DeleteIntegrationResultSchema` |
 | getAvailableTypes | `integrations.getAvailableTypes` | query | admin | `void` | `AvailableIntegrationTypeSchema[]` |
-| testConnection | `integrations.testConnection` | mutation | admin | `{ addonId: string; settings: Record<string, unknown> }` | `TestConnectionResultSchema` |
 
 ### `intercom` → `intercom.*`
 
@@ -3406,7 +3389,7 @@
 
 ### `mqtt-broker` → `mqttBroker.*`
 
-- **Source:** `packages/types/src/capabilities/mqtt-broker.cap.ts:124`
+- **Source:** `packages/types/src/capabilities/mqtt-broker.cap.ts:119`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection` · providerKind: `broker`
 - **Archetypes:** status(poll)
 - **Provider interface:** `IMqttBrokerProvider`
@@ -3418,7 +3401,6 @@
 | getBrokerConfig | `mqttBroker.getBrokerConfig` | query | admin | `{ id: string }` | `BrokerConnectionDetailsSchema` |
 | addBroker | `mqttBroker.addBroker` | mutation | admin | `AddBrokerInputSchema` | `{ id: string }` |
 | removeBroker | `mqttBroker.removeBroker` | mutation | admin | `{ id: string }` | `void` |
-| testConnection | `mqttBroker.testConnection` | mutation | admin | `{ id: string }` | `{ ok: true; latencyMs: number } \| { ok: false; error: string }` |
 | startEmbeddedBroker | `mqttBroker.startEmbeddedBroker` | mutation | admin | `StartEmbeddedInputSchema` | `{ id: string; url: string }` |
 | stopEmbeddedBroker | `mqttBroker.stopEmbeddedBroker` | mutation | admin | `{ id: string }` | `void` |
 

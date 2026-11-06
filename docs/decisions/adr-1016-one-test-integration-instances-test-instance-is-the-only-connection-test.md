@@ -1,12 +1,12 @@
 ---
 id: D1016
 title: One test - integration-instances.testInstance is the only way to test a connection or credentials
-status: proposed
+status: accepted
 date: 2026-11-06
 supersedes: D0100 (the `connection-test` cap), D886 (the test clause of the adoption wizard)
 applies-to:
   - packages/types/src/capabilities/integration-instances.cap.ts
-  - packages/types/src/capabilities/connection-test.cap.ts
+  - packages/types/src/addon/connection-probe.ts
   - server/backend/src/api/core/cap-providers.ts
   - scripts/check-one-test-method.ts
 ---
@@ -45,12 +45,24 @@ that step.
 
 ## Consequences
 
-Step 4 is staged, not one commit. (a) Convert the five legacy integration addons to instance providers, then
-delete `connection-test`, `integrations.testConnection`, `runConnectionTest` and `ProviderConfigForm`'s test button.
-(b) Delete `mqtt-broker.testConnection` (broker already answers through `testInstance`). (c) `storage.testLocation`,
-`llm.testProfile`, mesh/tailscale and `training-provider.validateCredentials` fold in when their kinds exist.
+Landed in step 4a. The `connection-test` cap, `integrations.testConnection`, `runConnectionTest` and the
+`ProviderConfigForm` Test button are deleted. homematic, rtsp, tuya, velux and wyze are instance providers
+(rows migrated once through `integrationRowsMigration`, D987; device ids and stableIds unchanged); each
+`test` hook reuses the addon's existing probe and maps its outcome to `validated | rejected | inconclusive`
+(rtsp is a name-only instance: `canTest` false, `unsupported`). The probe stays as a plain `IConnectionProbe`
+object (`packages/types/src/addon/connection-probe.ts`), no longer a capability or a registration, and the
+`build*ConnectionTestProvider` files are kept as that probe's implementation behind the `test` hook.
+`integrations.create` still refuses a draft that does not validate: `testBeforeCreate` goes through
+`testInstance` when `canTest`, then the `brokerId` branch, else `unsupported`. `getAvailableTypes().canTest`
+is the instance description's `canTest`, per kind. `mqtt-broker.testConnection` was deleted earlier.
+Still to come: `storage.testLocation`/`testConfig`, `storage-provider.testLocation`, `llm.testProfile`,
+mesh/tailscale `testConnection` and `training-provider.validateCredentials` fold in when their kinds exist
+(steps 5 and 6); they are the guard's pending list.
 
 ## Enforcement
 
-`scripts/check-one-test-method.ts` (planned): refuses a `test*` / `validate*Credentials` method in a `*.cap.ts`
-other than `testInstance`, with an allow-list for `testTarget`, `testRule`, and the user sign-in checks, each with its reason.
+`scripts/check-one-test-method.ts` (in `checks.yml`) refuses a `test*` / `validate*Credentials` method in a
+`*.cap.ts` other than `testInstance`. Permanent allow-list, each with its reason: `testTarget`, `testRule`,
+the user and auth-provider sign-in checks, and the single-field creation probes `testCreationField` /
+`testField`. Pending list, each marked "folds in at step 5/6". A listed method that no longer exists fails
+the guard, so the lists only shrink.

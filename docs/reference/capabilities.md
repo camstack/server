@@ -4,7 +4,7 @@
 
 # Capabilities
 
-203 capability definitions in `packages/types/src/capabilities/`.
+202 capability definitions in `packages/types/src/capabilities/`.
 The `.cap.ts` file is the single source of truth: codegen derives the tRPC
 routers, the status-type map and the `DeviceProxy` facade from it. Touching a
 cap without `npm run codegen` = silent drift.
@@ -126,7 +126,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `zone-rules` | 2 | — | ✓ | none | — | `pipeline-orchestrator` |
 | `zones` | 4 | — | ✓ | none | — | `pipeline-orchestrator` |
 
-## System-scoped (101)
+## System-scoped (100)
 
 Singleton or collection providers, addressed without a device.
 
@@ -152,7 +152,6 @@ Singleton or collection providers, addressed without a device.
 | `calendar-source` | 2 | — | — | — | ✓ | `google-services` `provider-homeassistant` `waste-collections` |
 | `calendars` | 4 | — | — | — | — | `calendars` |
 | `composer` | 2 | — | — | — | ✓ | `composer` |
-| `connection-test` | 2 | — | — | — | — | `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-homematic` `provider-petkit` `provider-rademacher` `provider-rtsp` `provider-tuya` `provider-velux` `provider-wyze` |
 | `core-blocks` | 23 | — | — | — | — | `core-blocks` |
 | `custom-model-registry` | 2 | — | — | — | ✓ | `model-studio` |
 | `data-store-provider` | 18 | — | — | — | ✓ | `sqlite-settings` |
@@ -173,7 +172,7 @@ Singleton or collection providers, addressed without a device.
 | `fan-presets` | 4 | — | — | — | — | `core-blocks` |
 | `filesystem-browse` | 3 | — | — | — | ✓ | `filesystem-storage` |
 | `integration-instances` | 9 | — | — | — | — | `cloudflare-tunnel` `cloudflare-turn` `export-alexa` `export-google` `export-hap` `google-services` `import-alexa` `matter-broker` `mqtt-broker` `provider-amcrest` `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-ecowitt` `provider-enpal` `provider-esphome` `provider-gree` `provider-hikvision` `provider-homeassistant` `homeassistant-export` `provider-homematic` `provider-mqtt-ha` `provider-onvif` `provider-petkit` `provider-rademacher` `provider-reolink` `provider-rtsp` `provider-tuya` `provider-unifi` `provider-unraid` `provider-velux` `provider-vesync` `provider-wyze` `smtp-nodemailer` `static-turn` `training-modal` `loki-logging` |
-| `integrations` | 8 | — | — | — | — | — |
+| `integrations` | 7 | — | — | — | — | — |
 | `keychain` | 7 | — | — | — | ✓ | `keychain` |
 | `keychain-admin` | 13 | — | — | — | — | `keychain` |
 | `llm` | 22 | — | — | — | — | `ai` |
@@ -188,7 +187,7 @@ Singleton or collection providers, addressed without a device.
 | `migrations` | 13 | — | — | — | ✓ | `sqlite-settings` |
 | `model-convert` | 1 | — | — | — | ✓ | `model-studio` |
 | `model-distributor` | 1 | — | — | — | ✓ | — |
-| `mqtt-broker` | 8 | ✓ | — | — | — | `mqtt-broker` |
+| `mqtt-broker` | 7 | ✓ | — | — | — | `mqtt-broker` |
 | `network-access` | 5 | — | — | — | — | `cloudflare-tunnel` `tailscale-client` `tailscale-ingress` |
 | `network-quality` | 3 | — | — | — | — | — |
 | `node-certificates` | 8 | — | — | — | ✓ | — |

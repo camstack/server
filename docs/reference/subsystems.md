@@ -23,11 +23,11 @@ commits. A generated page may not.
 
 | Subsystem | Files | Documents | Freshest | State |
 | --- | --- | --- | --- | --- |
-| Kernel, addon lifecycle and boot | 118 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `architecture/overview.md` _(covers)_, +90 more, 13 ADRs | 2026-11-02 | ✅ |
+| Kernel, addon lifecycle and boot | 119 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `architecture/overview.md` _(covers)_, +91 more, 14 ADRs | 2026-11-02 | ✅ |
 | Transport and cross-node routing | 110 | `architecture/transport.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/overview.md` _(covers)_, +57 more, 12 ADRs | 2026-10-22 | ✅ |
-| Capability system and codegen | 332 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/capabilities.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +245 more, 51 ADRs | 2026-11-02 | ✅ |
+| Capability system and codegen | 331 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/capabilities.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +246 more, 51 ADRs | 2026-11-02 | ✅ |
 | Device model and the provider contract | 112 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/device-model.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +60 more, 6 ADRs | 2026-11-02 | ✅ |
-| Device providers (per vendor) | 820 | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `addons/addon-provider-homeassistant.md` _(covers)_, +88 more, 14 ADRs | 2026-10-26 | ✅ |
+| Device providers (per vendor) | 819 | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `addons/addon-provider-homeassistant.md` _(covers)_, +88 more, 14 ADRs | 2026-10-26 | ✅ |
 | Decode and the data planes | 81 | `decisions/adr-1013-one-instance-model.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-28-faces-plates-frame-locality.md` _(covers)_, +29 more, 7 ADRs | 2026-10-13 | ⚠️ |
 | Detection execution and inference | 143 | `decisions/adr-1013-one-instance-model.md`, `architecture/detection-execution.md`, `architecture/data-planes.md` _(covers)_, +63 more, 5 ADRs | 2026-10-24 | ✅ |
 | Pipeline orchestration and placement | 202 | `decisions/adr-1013-one-instance-model.md`, `architecture/detection-execution.md` _(covers)_, `architecture/data-planes.md`, +105 more, 27 ADRs | 2026-11-02 | ✅ |
@@ -41,7 +41,7 @@ commits. A generated page may not.
 | Storage, retention and backup | 135 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0328-the-live-sqlite-file-is-the-bind-the-container-has-open.md`, +65 more, 11 ADRs | 2026-11-02 | ⚠️ |
 | Secrets and the keychain | 29 | `architecture/secrets-keychain.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0787-a-secret-field-stores-a-keychain-marker-and-the-value-lives-in-the-keychain.md`, +25 more, 5 ADRs | 2026-11-02 | ✅ |
 | Auth, scopes and method tiers | 98 | `architecture/authentication.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +32 more, 3 ADRs | 2026-10-21 | ⚠️ |
-| The hub API surface | 171 | `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/authentication.md`, +111 more, 18 ADRs | 2026-11-02 | ⚠️ |
+| The hub API surface | 171 | `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/authentication.md`, +112 more, 18 ADRs | 2026-11-02 | ⚠️ |
 | Shared types, schemas and enums | 104 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0972-a-number-tied-to-a-quantity-is-entered-in-a-unit-the-person-picks.md`, `architecture/windows-agent.md`, +34 more, 5 ADRs | 2026-11-02 | ⚠️ |
 | Update, release, OTA and agent delivery | 71 | `architecture/update-and-release.md`, `decisions/adr-0175-an-update-notification-is-polled-on-its-own-clock-and-remembered-across-restarts.md`, `decisions/adr-0857-an-agents-identity-is-its-mesh-certificate-there-is-no-cluster-secret-and-a-pairing-is-confirmed-on-both-screens.md`, +35 more, 10 ADRs | 2026-10-27 | ✅ |
 | Ecosystem exports — HomeKit, Home Assistant, Alexa, Google Home, Matter, MQTT | 387 | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/ecosystem-export-plan.md` _(covers)_, +54 more, 20 ADRs | 2026-10-26 | ⚠️ |
@@ -53,7 +53,7 @@ commits. A generated page may not.
 | Admin UI and the shared component library | 1436 | `architecture/ui.md`, `ui/conventions.md`, `decisions/adr-1013-one-instance-model.md`, +165 more, 15 ADRs | 2026-11-02 | ✅ |
 | Device-facing surfaces — snapshots, OSD, terminal, camera grids, autotrack | 111 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-1013-one-instance-model.md`, +19 more, 7 ADRs | 2026-10-04 | ⚠️ |
 | Cloud training | 159 | `architecture/cloud-training.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0790-a-machine-proposed-retrain-box-is-a-draft-until-the-operator-confirms-it.md`, +17 more, 2 ADRs | 2026-10-14 | ✅ |
-| Benchmarks, model studio and developer tooling | 774 | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, +174 more, 14 ADRs | 2026-11-04 | ⚠️ |
+| Benchmarks, model studio and developer tooling | 775 | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, +175 more, 14 ADRs | 2026-11-04 | ⚠️ |
 
 ## What each subsystem is, and what is uncovered inside it
 
@@ -63,7 +63,7 @@ Owns processes: loads addon manifests, forks runners, supervises crashes and dec
 
 - **Owner doc**: `docs/architecture/addon-lifecycle.md`
 - **Code**: `packages/system/src/kernel/*.ts`, `packages/system/src/kernel/lifecycle/**`, `packages/system/src/kernel/deps/**`, `packages/system/src/kernel/utils/**`, `packages/system/src/addon/**`, `packages/system/src/addon-routes/**`, `packages/system/src/lifecycle/**`, `packages/system/src/process/**`, `packages/system/src/feature/**`, `packages/system/src/*.ts`, `packages/types/src/addon/**`, `packages/types/src/lifecycle/**`, `packages/types/src/readiness/**`, `server/backend/src/boot/**`, `packages/node-root/**`
-- **Files**: 118 (115 claimed by some document)
+- **Files**: 119 (116 claimed by some document)
 - **Uncovered**: `server/backend/src/boot` (3)
 
 ### ✅ Transport and cross-node routing
@@ -81,7 +81,7 @@ Declares what a node can do — every `*.cap.ts`, the routers generated from the
 
 - **Owner doc**: `docs/architecture/capabilities.md`
 - **Code**: `packages/types/src/capabilities/**`, `packages/types/src/generated/**`, `packages/types/src/interfaces/**`, `packages/types/src/cap-call-context.ts`, `packages/system/src/kernel/capability-registry.ts`, `packages/system/src/kernel/capability-handle.ts`, `packages/system/src/kernel/cap-router-builder.ts`, `packages/system/src/kernel/infra-capabilities.ts`, `server/backend/src/core/capability/**`
-- **Files**: 332 (331 claimed by some document)
+- **Files**: 331 (330 claimed by some document)
 - **Uncovered**: `server/backend/src/core/capability` (1)
 
 ### ✅ Device model and the provider contract
@@ -99,7 +99,7 @@ Twenty vendor integrations that turn a camera, a plug or a robot vacuum into dev
 
 - **Owner doc**: `docs/architecture/device-model.md`
 - **Code**: `packages/addon-provider-*/**`
-- **Files**: 820 (820 claimed by some document)
+- **Files**: 819 (819 claimed by some document)
 - **Uncovered**: —
 
 ### ⚠️ Decode and the data planes
@@ -333,7 +333,7 @@ Everything that measures or builds CamStack rather than running it — the bench
 
 - **Owner doc**: `docs/reference/guards.md`
 - **Code**: `packages/addon-benchmark/**`, `packages/addon-model-studio/**`, `packages/cli/**`, `packages/sdk/**`, `packages/desktop/**`, `packages/nx-plugin/**`, `scripts/**`, `e2e/**`, `packages/addon-pipeline/scripts/**`
-- **Files**: 774 (432 claimed by some document)
+- **Files**: 775 (433 claimed by some document)
 - **Uncovered**: `scripts` (175), `scripts/ui/shots/fixtures` (79), `scripts/lib` (17), `packages/cli/src/commands` (13), `e2e/fixtures` (9), `scripts/ui/shots/harness/stubs` (8), +17 more directories
 
 ## Claimed by no subsystem
