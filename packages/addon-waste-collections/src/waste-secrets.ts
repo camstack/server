@@ -86,9 +86,15 @@ export function restoreRedactedArgs(
   return out
 }
 
-/** Does this argument bag hold a credential that is a MARKER the keychain did not resolve? */
+/**
+ * Does this argument bag hold a credential that is NOT a usable value: a MARKER the keychain did
+ * not resolve, or the redaction token (a row read without its credential)? Either would reach a
+ * fetch as the literal password.
+ */
 export function hasUnresolvedCredential(args: Readonly<Record<string, unknown>>): boolean {
-  return Object.entries(args).some(([key, value]) => isSecretArg(key) && isSecretMarker(value))
+  return Object.entries(args).some(
+    ([key, value]) => isSecretArg(key) && (isSecretMarker(value) || value === REDACTED_SECRET),
+  )
 }
 
 /** Does it hold a non-empty credential (any form)? */

@@ -6,9 +6,9 @@ import { spawn } from 'node:child_process'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
-  WasteFetchResultSchema,
   type WasteCollectionEntry,
   type WasteFetchResult,
+  WasteFetchResultSchema,
 } from './waste-types.js'
 
 /** The fetch did not finish in time: nothing is known about the source. */

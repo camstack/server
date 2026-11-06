@@ -17,10 +17,10 @@ import {
   isInstanceEnabled,
   isSecretClear,
   isSecretFieldView,
+  REDACTED_SECRET,
   type RecordKindHandle,
   type RecordRow,
   type RecordsAccess,
-  REDACTED_SECRET,
   secretViewsOf,
 } from '@camstack/types'
 import {
@@ -40,9 +40,9 @@ import {
   serviceDisplayLabel,
   serviceFormSchema,
 } from './waste-catalog.js'
-import { wasteSourceEntryKind, type WasteSourceBody } from './waste-source-record-kinds.js'
-import { WasteSourceStore } from './waste-source-store.js'
 import { hasUnresolvedCredential, isSecretArg } from './waste-secrets.js'
+import { type WasteSourceBody, wasteSourceEntryKind } from './waste-source-record-kinds.js'
+import { WasteSourceStore } from './waste-source-store.js'
 import type { WasteCollectionEntry } from './waste-types.js'
 
 export const WASTE_INSTANCE_KIND = 'waste-source'
@@ -351,6 +351,14 @@ export class WasteSourceInstances {
   }) => {
     const target = await this.probeTarget(id, values)
     if ('result' in target) return target.result
+    const missing = missingRequiredArgs(target)
+    if (missing.length > 0) {
+      return {
+        success: false,
+        status: 'inconclusive',
+        error: `Configure the source first: ${missing.join(', ')} ${missing.length === 1 ? 'is' : 'are'} required before it can be tested`,
+      }
+    }
     const fetchDeps = this.deps.fetchDeps()
     if (fetchDeps === null) {
       return {
@@ -442,6 +450,19 @@ export class WasteSourceInstances {
 interface ProbeTarget {
   readonly module: string
   readonly args: Record<string, unknown>
+}
+
+/** The labels of the catalog's required arguments the probe would send empty. */
+function missingRequiredArgs(target: ProbeTarget): readonly string[] {
+  const service = matchCatalogService(target.module, target.args)
+  if (service === undefined) return []
+  return service.fields
+    .filter((f) => {
+      if (!f.required) return false
+      const value = target.args[f.key]
+      return value === undefined || value === null || value === ''
+    })
+    .map((f) => f.label)
 }
 
 function refusal(

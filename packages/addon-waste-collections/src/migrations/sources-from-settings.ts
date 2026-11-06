@@ -28,6 +28,8 @@ export interface WasteSourcePorts {
   putSource(source: WasteSourceConfig): Promise<void>
   /** The record as stored, credentials resolved; `null` when there is none. */
   readSource(id: string): Promise<WasteSourceConfig | null>
+  /** A row that was not copied, by id and reason (never a value). */
+  warn(message: string): void
 }
 
 type PlainArgs = Record<string, string | number | boolean>
@@ -111,6 +113,11 @@ function sameArgs(back: Readonly<Record<string, unknown>>, expected: PlainArgs):
   return entries(back) === entries(expected)
 }
 
+function rowName(raw: unknown): string {
+  if (raw === null || typeof raw !== 'object') return '(not an object)'
+  return `'${textOf(raw, 'id') ?? textOf(raw, 'label') ?? '(no id)'}'`
+}
+
 async function legacyRows(ports: WasteSourcePorts): Promise<readonly unknown[]> {
   const answer = await ports.readStored(LEGACY_SOURCES_KEY)
   if (answer.kind === 'unreadable') {
@@ -135,6 +142,9 @@ export async function copySourcesToRecords(
     } catch (err: unknown) {
       if (!(err instanceof UnconvertibleRow)) throw err
       unconverted += 1
+      ports.warn(
+        `waste-collections: source ${rowName(raw)} was not copied into records (${err.message}); it stays served from the legacy setting and the migration is not done`,
+      )
     }
   }
 
@@ -160,8 +170,14 @@ export async function copySourcesToRecords(
     have.add(source.id)
     created += 1
   }
+  if (unconverted > 0) {
+    // Not done: the rows stay served from the legacy setting and the step is tried again.
+    throw new Error(
+      `waste-collections: ${unconverted} legacy source(s) could not be copied into records and stay served from the legacy setting (${created} created, ${kept} kept)`,
+    )
+  }
   return {
     outcome: created === 0 ? 'already-done' : 'done',
-    summary: { created, kept, unconverted },
+    summary: { created, kept },
   }
 }

@@ -1,11 +1,15 @@
 import {
   type RecordKindHandle,
-  type RecordsAccess,
   RecordSecretUnavailableError,
+  type RecordsAccess,
 } from '@camstack/types'
-import { wasteSourceEntryKind, type WasteSourceBody } from './waste-source-record-kinds.js'
 import { hasUnresolvedCredential } from './waste-secrets.js'
-import { WasteSourceConfigSchema, type WasteSourceConfig } from './waste-types.js'
+import {
+  type plainWasteSourceKind,
+  type WasteSourceBody,
+  wasteSourceEntryKind,
+} from './waste-source-record-kinds.js'
+import { type WasteSourceConfig, WasteSourceConfigSchema } from './waste-types.js'
 
 /**
  * A stored body as a source. A row read while the keychain is locked still carries its markers
@@ -30,6 +34,19 @@ function bodyOf(source: WasteSourceConfig): WasteSourceBody {
   return parsed.data
 }
 
+/**
+ * While the sources migration has not landed: every record, plus the legacy rows that have no
+ * record yet (a read-only view of those). A legacy row leaves the view as soon as a record has
+ * its id, so the two never diverge; writes go to the records.
+ */
+export function withUnmigratedLegacyRows(
+  records: readonly WasteSourceConfig[],
+  legacy: readonly WasteSourceConfig[],
+): readonly WasteSourceConfig[] {
+  const have = new Set(records.map((r) => r.id))
+  return [...records, ...legacy.filter((r) => !have.has(r.id))]
+}
+
 export class WasteSourceStore {
   private readonly kind: RecordKindHandle<WasteSourceBody>
 
@@ -37,8 +54,11 @@ export class WasteSourceStore {
     this.kind = kind
   }
 
-  static of(records: Pick<RecordsAccess, 'kind'>): WasteSourceStore {
-    return new WasteSourceStore(records.kind(wasteSourceEntryKind))
+  static of(
+    records: Pick<RecordsAccess, 'kind'>,
+    kind: typeof wasteSourceEntryKind | typeof plainWasteSourceKind = wasteSourceEntryKind,
+  ): WasteSourceStore {
+    return new WasteSourceStore(records.kind(kind))
   }
 
   /** The record ids, whatever their content. */

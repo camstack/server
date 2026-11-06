@@ -12,6 +12,7 @@ import { ADDON_MIGRATIONS, SOURCES_FROM_SETTINGS_ID, type WasteSourcePorts } fro
 import { copySourcesToRecords } from '../sources-from-settings.js'
 
 async function start(stored: Record<string, unknown>) {
+  const warnings: string[] = []
   const world = makeInMemoryRecords('waste-collections')
   await world.records.declare({ 'waste-source': wasteSourceEntryKind })
   const store = WasteSourceStore.of(world.records)
@@ -23,9 +24,12 @@ async function start(stored: Record<string, unknown>) {
       await store.putIfAbsent(source)
     },
     readSource: (id) => store.readResolved(id),
+    warn: (message) => {
+      warnings.push(message)
+    },
   })
   const fixture = settingsFixture('waste-collections', ADDON_MIGRATIONS, ports, stored, 'keep-me')
-  return { fixture, store, raw, ports }
+  return { fixture, store, raw, ports, warnings }
 }
 
 const LEGACY_ROWS = [
@@ -119,7 +123,7 @@ describe('waste-collections: legacy sources move into records', () => {
   })
 
   it('leaves a row it cannot convert, converts the others', async () => {
-    const { fixture, store } = await start({
+    const { fixture, store, warnings } = await start({
       sources: [
         {
           id: 'bad',
@@ -130,11 +134,16 @@ describe('waste-collections: legacy sources move into records', () => {
         ...LEGACY_ROWS,
       ],
     })
-    expect(await fixture.boot()).toEqual({
-      failed: [],
-      applied: [SOURCES_FROM_SETTINGS_ID],
-    })
+    // Not done while a row is unconverted: the step fails (tolerated) and is tried again.
+    const report = await fixture.boot()
+    expect(report.applied).toEqual([])
+    expect(report.failed).toEqual([SOURCES_FROM_SETTINGS_ID])
     expect((await store.listResolved()).map((r) => r.id).toSorted()).toEqual(['cabin', 'home'])
+    // The row is named with its reason, never a value.
+    expect(warnings).toHaveLength(1)
+    expect(warnings[0]).toContain("'bad'")
+    expect(warnings[0]).toContain('argsJson is not valid JSON')
+    expect(warnings[0]).not.toContain('password')
   })
 
   it('writes nothing when a stored credential is a marker the keychain did not serve', async () => {

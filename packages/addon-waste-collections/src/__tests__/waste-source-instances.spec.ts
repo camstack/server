@@ -1,17 +1,17 @@
 import { makeInMemoryRecords, REDACTED_SECRET } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
+import catalogJson from '../catalog.json'
 import { WasteFetchTimeoutError, WasteProviderRejectedError } from '../fetch-source.js'
 import { listCatalogCountries } from '../waste-catalog.js'
-import { SECRET_ARG_KEYS, isSecretArg } from '../waste-secrets.js'
-import { wasteSourceEntryKind } from '../waste-source-record-kinds.js'
+import { isSecretArg, SECRET_ARG_KEYS } from '../waste-secrets.js'
 import {
   COUNTRY_FIELD,
   serviceFieldKey,
   WASTE_TEST_TIMEOUT_MS,
-  WasteSourceInstances,
   type WasteFetcher,
+  WasteSourceInstances,
 } from '../waste-source-instances.js'
-import catalogJson from '../catalog.json'
+import { wasteSourceEntryKind } from '../waste-source-record-kinds.js'
 
 const SERVICE = 'recyclesmart_com--recyclesmart'
 const COUNTRY = 'australia'
@@ -249,6 +249,39 @@ describe('waste-source testInstance', () => {
       status: 'inconclusive',
     })
     expect(noPython.calls).toEqual([])
+  })
+})
+
+describe('waste-source testInstance without its required arguments', () => {
+  const REQUIRED_SERVICE = 'app_my_local_services_au--adelaide-hills-council'
+
+  it('answers inconclusive with a configure-first reason and never probes', async () => {
+    const { instances, calls } = await start()
+    const result = await instances.testInstance({
+      id: null,
+      values: {
+        [COUNTRY_FIELD]: COUNTRY,
+        [serviceFieldKey(COUNTRY)]: REQUIRED_SERVICE,
+      },
+    })
+    expect(result.status).toBe('inconclusive')
+    expect(result.success).toBe(false)
+    expect(result.error).toMatch(/^Configure the source first/)
+    expect(calls).toEqual([])
+  })
+
+  it('probes once the required argument is there', async () => {
+    const { instances, calls } = await start()
+    const result = await instances.testInstance({
+      id: null,
+      values: {
+        [COUNTRY_FIELD]: COUNTRY,
+        [serviceFieldKey(COUNTRY)]: REQUIRED_SERVICE,
+        lat: '-34.9',
+      },
+    })
+    expect(result.status).toBe('validated')
+    expect(calls).toHaveLength(1)
   })
 })
 
