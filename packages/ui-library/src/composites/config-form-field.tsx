@@ -27,6 +27,7 @@ import type {
   ConfigBooleanField,
   ConfigSelectField,
   ConfigBrokerSelectField,
+  ConfigInstanceSelectField,
   ConfigTimezoneField,
   ConfigDateTimeField,
   ConfigColorField,
@@ -77,6 +78,7 @@ import { QrCode } from './qr-code'
 import { TimezoneSelector } from './timezone-selector'
 import { OptionSelect, type OptionSelectOption } from './option-select'
 import { ConfigBrokerSelectControl } from './config-broker-select-field'
+import { ConfigInstanceSelectControl } from './config-instance-select-field'
 import { ConfigDiscoveredSelectControl } from './config-discovered-select-field'
 
 /** Probe state for a single field — exported for callers that need to track probe lifecycle externally. */
@@ -531,6 +533,38 @@ function BrokerSelectField({
         onChange={onChange}
         disabled={disabled}
         controlId={`config-broker-select-${field.key}`}
+      />
+    </FieldWrapper>
+  )
+}
+
+function InstanceSelectField({
+  field,
+  value,
+  onChange,
+  disabled,
+  translationFn,
+}: {
+  field: ConfigInstanceSelectField
+  value: unknown
+  onChange: (v: unknown) => void
+  disabled?: boolean
+  translationFn?: TranslationFn
+}) {
+  return (
+    <FieldWrapper
+      label={field.label}
+      description={field.description}
+      required={field.required}
+      span={field.span}
+      translationFn={translationFn}
+    >
+      <ConfigInstanceSelectControl
+        field={field}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        controlId={`config-instance-select-${field.key}`}
       />
     </FieldWrapper>
   )
@@ -2917,6 +2951,16 @@ export function FormField({
     case 'broker-select':
       return (
         <BrokerSelectField
+          field={field}
+          value={value}
+          onChange={handleChange}
+          disabled={disabled}
+          translationFn={translationFn}
+        />
+      )
+    case 'instance-select':
+      return (
+        <InstanceSelectField
           field={field}
           value={value}
           onChange={handleChange}
