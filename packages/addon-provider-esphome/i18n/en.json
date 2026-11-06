@@ -1,22 +1,10 @@
 {
-  "creation": {
-    "title": "Board",
-    "host": {
-      "label": "Host / IP"
-    },
-    "port": {
-      "label": "API port"
-    },
-    "name": {
-      "label": "Name"
-    },
-    "encryptionKey": {
-      "label": "Encryption key",
-      "description": "Needed only when the board is encrypted, that is when its YAML has api: encryption: key:. Copy the base64 value from there. Leave it empty for an unencrypted board; CamStack then tries to read the key from the ESPHome Builder in Home Assistant."
-    },
-    "password": {
-      "label": "Legacy API password",
-      "description": "Only for a board that predates encryption and has api: password:."
-    }
-  }
+  "creation.title": "Board",
+  "creation.host.label": "Host / IP",
+  "creation.port.label": "API port",
+  "creation.name.label": "Name",
+  "creation.encryptionKey.label": "Encryption key",
+  "creation.encryptionKey.description": "Needed only when the board is encrypted, that is when its YAML has api: encryption: key:. Copy the base64 value from there. Leave it empty for an unencrypted board; CamStack then tries to read the key from the ESPHome Builder in Home Assistant.",
+  "creation.password.label": "Legacy API password",
+  "creation.password.description": "Only for a board that predates encryption and has api: password:."
 }

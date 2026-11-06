@@ -17,21 +17,11 @@
   "haConfig.s_connection.service.description": "Loaded from the broker once it is picked. If the list does not load, type the part after `notify.`.",
   "haConfig.s_connection.brokerId.label": "Broker",
   "haConfig.s_connection.brokerId.description": "The Home Assistant connection the notification goes through.",
-  "globalSettings": {
-    "s_ha-export-target": {
-      "title": "Home Assistant target",
-      "description": "Which Home Assistant connection this export feeds, and how it links to images.",
-      "name": {
-        "label": "Name"
-      },
-      "connectionId": {
-        "label": "Home Assistant connection",
-        "description": "The Home Assistant broker this target pushes to. Several targets may share one."
-      },
-      "mediaRole": {
-        "label": "Image links",
-        "description": "Which address Home Assistant uses to fetch images."
-      }
-    }
-  }
+  "globalSettings.s_ha-export-target.title": "Home Assistant target",
+  "globalSettings.s_ha-export-target.description": "Which Home Assistant connection this export feeds, and how it links to images.",
+  "globalSettings.s_ha-export-target.name.label": "Name",
+  "globalSettings.s_ha-export-target.connectionId.label": "Home Assistant connection",
+  "globalSettings.s_ha-export-target.connectionId.description": "The Home Assistant broker this target pushes to. Several targets may share one.",
+  "globalSettings.s_ha-export-target.mediaRole.label": "Image links",
+  "globalSettings.s_ha-export-target.mediaRole.description": "Which address Home Assistant uses to fetch images."
 }

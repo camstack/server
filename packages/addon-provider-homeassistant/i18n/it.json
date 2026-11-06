@@ -17,21 +17,11 @@
   "haConfig.s_connection.service.description": "Caricato dal broker una volta scelto. Se l'elenco non si carica, scrivi la parte dopo `notify.`.",
   "haConfig.s_connection.brokerId.label": "Broker",
   "haConfig.s_connection.brokerId.description": "La connessione Home Assistant attraverso cui passa la notifica.",
-  "globalSettings": {
-    "s_ha-export-target": {
-      "title": "Destinazione Home Assistant",
-      "description": "Quale connessione Home Assistant alimenta questo export e come collega le immagini.",
-      "name": {
-        "label": "Nome"
-      },
-      "connectionId": {
-        "label": "Connessione Home Assistant",
-        "description": "Il broker Home Assistant a cui questa destinazione invia. Più destinazioni possono condividerne uno."
-      },
-      "mediaRole": {
-        "label": "Link alle immagini",
-        "description": "Quale indirizzo usa Home Assistant per scaricare le immagini."
-      }
-    }
-  }
+  "globalSettings.s_ha-export-target.title": "Destinazione Home Assistant",
+  "globalSettings.s_ha-export-target.description": "Quale connessione Home Assistant alimenta questo export e come collega le immagini.",
+  "globalSettings.s_ha-export-target.name.label": "Nome",
+  "globalSettings.s_ha-export-target.connectionId.label": "Connessione Home Assistant",
+  "globalSettings.s_ha-export-target.connectionId.description": "Il broker Home Assistant a cui questa destinazione invia. Più destinazioni possono condividerne uno.",
+  "globalSettings.s_ha-export-target.mediaRole.label": "Link alle immagini",
+  "globalSettings.s_ha-export-target.mediaRole.description": "Quale indirizzo usa Home Assistant per scaricare le immagini."
 }

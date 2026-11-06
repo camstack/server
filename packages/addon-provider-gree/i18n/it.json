@@ -14,14 +14,8 @@
   "fields.exposeVerticalSwing.label": "Oscillazione verticale",
   "settingsUI.exposeHorizontalSwing.label": "Oscillazione orizzontale",
   "schema.s_exposure.title": "Comandi esposti",
-  "container": {
-    "s_connection": {
-      "title": "Connessione"
-    },
-    "host": {
-      "description": "Dove risponde il condizionatore. Cambiarlo riconnette; il dispositivo e il suo storico restano."
-    }
-  },
+  "container.s_connection.title": "Connessione",
+  "container.host.description": "Dove risponde il condizionatore. Cambiarlo riconnette; il dispositivo e il suo storico restano.",
   "instance.s_discovery.title": "Rilevamento",
   "instance.s_discovery.sweepSubnets.label": "Sottoreti aggiuntive da scansionare",
   "instance.s_discovery.sweepSubnets.description": "Sottoreti /24 aggiuntive in cui cercare i condizionatori, una per voce in formato CIDR (ad esempio 192.168.20.0/24). Le sottoreti di questo hub e dei condizionatori noti vengono sempre cercate."

@@ -1,22 +1,10 @@
 {
-  "creation": {
-    "title": "Scheda",
-    "host": {
-      "label": "Host / IP"
-    },
-    "port": {
-      "label": "Porta API"
-    },
-    "name": {
-      "label": "Nome"
-    },
-    "encryptionKey": {
-      "label": "Chiave di cifratura",
-      "description": "Serve solo se la scheda è cifrata, cioè se il suo YAML ha api: encryption: key:. Copia da lì il valore base64. Lasciala vuota per una scheda non cifrata; CamStack prova poi a leggere la chiave dall'ESPHome Builder in Home Assistant."
-    },
-    "password": {
-      "label": "Password API legacy",
-      "description": "Solo per una scheda precedente alla cifratura, con api: password:."
-    }
-  }
+  "creation.title": "Scheda",
+  "creation.host.label": "Host / IP",
+  "creation.port.label": "Porta API",
+  "creation.name.label": "Nome",
+  "creation.encryptionKey.label": "Chiave di cifratura",
+  "creation.encryptionKey.description": "Serve solo se la scheda è cifrata, cioè se il suo YAML ha api: encryption: key:. Copia da lì il valore base64. Lasciala vuota per una scheda non cifrata; CamStack prova poi a leggere la chiave dall'ESPHome Builder in Home Assistant.",
+  "creation.password.label": "Password API legacy",
+  "creation.password.description": "Solo per una scheda precedente alla cifratura, con api: password:."
 }

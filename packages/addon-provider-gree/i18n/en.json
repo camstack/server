@@ -14,14 +14,8 @@
   "fields.exposeVerticalSwing.label": "Vertical swing",
   "settingsUI.exposeHorizontalSwing.label": "Horizontal swing",
   "schema.s_exposure.title": "Exposed controls",
-  "container": {
-    "s_connection": {
-      "title": "Connection"
-    },
-    "host": {
-      "description": "Where the air conditioner answers. Changing it reconnects; the device and its history stay."
-    }
-  },
+  "container.s_connection.title": "Connection",
+  "container.host.description": "Where the air conditioner answers. Changing it reconnects; the device and its history stay.",
   "instance.s_discovery.title": "Discovery",
   "instance.s_discovery.sweepSubnets.label": "Extra subnets to sweep",
   "instance.s_discovery.sweepSubnets.description": "Additional /24 subnets searched for air conditioners, one CIDR each (for example 192.168.20.0/24). The subnets of this hub and of the known air conditioners are always searched."

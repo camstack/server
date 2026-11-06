@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Translations that were silently ignored because the catalog nested its keys are now loaded.
+
 ## [1.2.631] - 2026-11-06
 
 ### Changed
