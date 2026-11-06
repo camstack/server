@@ -1594,6 +1594,9 @@ export class NotificationCenter implements NcEventConsumer {
       get stateSummary() {
         return self.stateSummary
       },
+      get verdicts() {
+        return self.verdicts
+      },
       get stills() {
         return self.stills
       },
@@ -2065,8 +2068,14 @@ export class NotificationCenter implements NcEventConsumer {
    * What the operator answered to the "was this detection right?" buttons, for
    * the retrain page: by track, the latest answer wins. A track nobody answered
    * is absent.
+   *
+   * THROWS until the ledger has read its store: an empty answer then would read
+   * as "nobody answered" (D315). The retrain service logs the refusal.
    */
   detectionVerdictsOf(trackIds: readonly string[]): ReadonlyMap<string, RetrainVerdict> {
+    if (!this.verdicts.hasAnswered()) {
+      throw new Error('detection verdicts are not loaded yet')
+    }
     const out = new Map<string, RetrainVerdict>()
     for (const [trackId, row] of this.verdicts.forTracks(trackIds)) {
       out.set(

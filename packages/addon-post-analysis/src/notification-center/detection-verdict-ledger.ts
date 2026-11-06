@@ -79,6 +79,22 @@ export class NcDetectionVerdictLedger {
     })
   }
 
+  /**
+   * Boot reseed. The mirror is RAM, so without this a respawned runner answers
+   * "no verdict" for every row written before it started. A failed read keeps
+   * what is mirrored, logs it (the `DurableLedger` contract) and leaves
+   * {@link hasAnswered} false.
+   */
+  async load(): Promise<void> {
+    await this.ledger.load()
+  }
+
+  /** Whether the store has answered a load. Before it, an empty mirror is
+   *  "not read yet", never "nobody answered" (D315). */
+  hasAnswered(): boolean {
+    return this.ledger.hasAnswered()
+  }
+
   /** The answers recorded for these tracks (a track nobody answered is absent).
    *  Reads the in-memory mirror: no I/O, so a listing never waits on it. */
   forTracks(trackIds: readonly string[]): ReadonlyMap<string, NcDetectionVerdictRecord> {

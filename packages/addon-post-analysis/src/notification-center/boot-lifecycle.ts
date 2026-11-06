@@ -17,6 +17,7 @@ import { NcOutbox } from './outbox.js'
 import { NcRuleAiStore } from './rule-ai-store.js'
 import { NC_SYSTEM_DEVICE_ID } from './rule-engine.js'
 import { NcRuleStore } from './rule-store.js'
+import { NcDetectionVerdictLedger } from './detection-verdict-ledger.js'
 import { NcSceneStateCache } from './scene-state-cache.js'
 import { NcSequenceStore } from './sequence-store.js'
 import { NcSnoozeStore } from './snooze-store.js'
@@ -86,6 +87,7 @@ export interface BootLifecycleHost {
   readonly summaryProducer: NcSummaryProducer | null
   readonly summaryRules: NcSummaryStore
   readonly timelapseRules: TimelapseStore
+  readonly verdicts: NcDetectionVerdictLedger
   readonly timelapseScheduler: TimelapseScheduler | null
   readonly zoneOwners: NcZoneOwnershipCache
 }
@@ -163,6 +165,7 @@ export async function start(
     timed('texts', () => host.reloadTexts()),
     timed('rules', () => host.rules.load()),
     timed('snoozes', () => host.snoozes.load()),
+    timed('detectionVerdicts', () => host.verdicts.load()),
     timed('deviceMutes', () => host.deviceMutes.load()),
     timed('timelapseRules', () => host.timelapseRules.load()),
     timed('summaryRules', () => host.summaryRules.load()),

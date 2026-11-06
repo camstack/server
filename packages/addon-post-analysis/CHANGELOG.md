@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A supply that reports only a fill level now raises low at 10% or less and empty at 0
+- Detection verdicts sent from notification buttons are shown again in the retrain view after the analytics runner restarts
 
 ## [1.2.673] - 2026-11-06
 
