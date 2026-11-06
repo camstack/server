@@ -356,9 +356,10 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
    * (`defineAddonMigrations(ADDON_MIGRATIONS, ports)`).
    *
    * An engine that cannot be reached or refuses the catalogue is logged and runs
-   * nothing; the boot continues. A migration that FAILED (or was blocked by one)
-   * and declares `onFailure: 'block-owner'` makes this throw, so the addon does not
-   * serve data whose shape it cannot trust; `tolerate` migrations never do.
+   * nothing. The boot continues only when every migration is `tolerate`: a
+   * `block-owner` migration the engine never judged, or one that FAILED (or was
+   * blocked by one), makes this throw, so the addon does not serve data whose
+   * shape it cannot trust.
    *
    * ALWAYS pass the whole catalogue; a phase that must run only some of it passes
    * `{ only: [ids] }` — never a filtered catalogue (the engine would judge the
