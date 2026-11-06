@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.514] - 2026-11-06
+
 ### Changed
 
 - Records errors are now recognised across copies of the types package, so an addon in a grouped runner can catch a conflict or refusal thrown by the host's records door.
