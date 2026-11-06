@@ -218,6 +218,10 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
       formSchema: () => this.tailnetForm(),
       initialBody: (name) => ({ ...TAILNET_DEFAULT_BODY, name }),
       mintId: () => TAILNET_RECORD_ID,
+      // A saved key or hostname reaches the daemon's prefs, whichever door wrote it.
+      onChanged: async () => {
+        await this.onConfigChanged()
+      },
       configured: () => true,
       test: (input) => this.probeInstance(input.id, input.values),
     })
@@ -1029,6 +1033,26 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
     if (report.applied.length > 0) await this.resolveConfig()
   }
 
+  /**
+   * The old node form still shows and saves `authKey` and `hostname`, but they live on the tailnet
+   * instance now (a record, once it exists, is the only source). The save goes THROUGH to the
+   * record under its secret rules (kept, cleared or replaced) and never lands in the node rows; a
+   * failed write fails the save with its reason. Everything else saves as it always did.
+   */
+  override async updateGlobalSettingsAsOperator(
+    patch: Record<string, unknown>,
+    nodeId?: string,
+  ): Promise<void> {
+    const moved: Record<string, unknown> = {}
+    const rest: Record<string, unknown> = {}
+    for (const [key, value] of Object.entries(patch)) {
+      if (key === 'authKey' || key === 'hostname') moved[key] = value
+      else rest[key] = value
+    }
+    if (Object.keys(moved).length > 0) await this.saveTailnet(moved)
+    if (Object.keys(rest).length > 0) await super.updateGlobalSettingsAsOperator(rest, nodeId)
+  }
+
   /** The ports of the catalogue: the settings in, the `tailnet` record out. */
   private migrationPorts(): ClientCataloguePorts {
     const records = this.ctx.records
@@ -1096,7 +1120,7 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
   }
 
   /** Write the fields that changed onto the instance, creating it on first use. */
-  private async saveTailnet(values: { authKey?: string; hostname?: string }): Promise<void> {
+  private async saveTailnet(values: Readonly<Record<string, unknown>>): Promise<void> {
     if (this.instances === null) return
     if ((await this.readTailnet()) === null) {
       await this.instances.createInstance({
@@ -1143,14 +1167,18 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
    * and the pre-auth key. They persist as `<key>@<nodeId>` rows; nothing is cluster-wide.
    */
   protected async nodeSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
-    return cap === 'mesh-network' ? this.nodeSchema() : null
+    if (cap !== 'mesh-network') return null
+    // The key and hostname fields are windows onto the tailnet instance: the hostname shows its
+    // value, the key shows only whether one is set (a secret is never rendered back as text).
+    const tailnet = await this.readTailnet()
+    return this.nodeSchema(tailnet?.body ?? null)
   }
 
   protected override scopedSettingsCapabilities(): readonly string[] {
     return ['mesh-network']
   }
 
-  private nodeSchema(): ConfigUISchema {
+  private nodeSchema(tailnet: TailnetBody | null): ConfigUISchema {
     return this.schema({
       // Tab strip mirrors the canonical Tailscale CLI taxonomy:
       //   • General   — identity (hostname) + connect hints
@@ -1229,6 +1257,7 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
                 'Override the hostname advertised in the tailnet. Empty = use the OS hostname.',
               descriptionKey: 'tailscale:globalSettings.s_identity.hostname.description',
               placeholder: 'camstack-hub',
+              ...(tailnet === null ? {} : { default: tailnet.hostname }),
             }),
           ],
         },

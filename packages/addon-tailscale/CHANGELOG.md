@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The Tailscale pre-auth key and hostname are now a Tailnet instance (migrated from the node settings on first boot); testing a tailnet reports validated, rejected or inconclusive.
+- The old Tailscale node form now saves the pre-auth key and hostname onto the Tailnet instance.
 
 ## [1.2.150] - 2026-11-05
 

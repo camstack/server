@@ -4,6 +4,9 @@
  * first (`moveAuthKeyToRecord`), the old keys are deleted by `planDropMovedKeys` only after the
  * record is confirmed to hold what they carried.
  *
+ * An existing record is never overwritten: its hostname wins, and the legacy hostname row is
+ * dropped with the rest once the record holds a hostname.
+ *
  * Idempotent and ordered so a crash is safe: nothing is written before the old settings are read
  * in full (a key that cannot be resolved aborts the pass); an existing record is never overwritten;
  * the old key is cleared only once the record verifiably holds one.
