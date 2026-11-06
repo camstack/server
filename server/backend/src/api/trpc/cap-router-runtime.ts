@@ -274,8 +274,8 @@ export async function pinnedDeviceCollectionCall(
  * for a pinned array call, so a forked export asking
  * `integrationInstances.listInstances({ addonId })` got every integration's
  * instances back and took another integration's `account` row for its broker.
- * Not a non-collection cap
- * (there `addonId` is provider DATA: `addons.getLogs({addonId})` names the addon
+ *
+ * Never a non-collection cap (there `addonId` is provider DATA: `addons.getLogs({addonId})` names the addon
  * whose logs you want, it does not name a provider).
  */
 export function addonPinOf(
@@ -317,10 +317,11 @@ export function addonPinOf(
  * rows.
  *
  * Mirrors the tRPC branch exactly, including what it does NOT do:
- *   - ARRAY methods are never rerouted — their contract is the fan-out union
- *     ({@link aggregateCollectionCall}), and a pin that turns a provider's
- *     absence into a throw is what took `broker.list` from "fewer rows" to
- *     `BAD_REQUEST` and the operator from "one instance" to "no instance".
+ *   - An ARRAY method with no selector is the fan-out union
+ *     ({@link aggregateCollectionCall}); WITH a selector it is that provider's
+ *     own rows, and a selector naming no registered provider is refused, as on
+ *     the tRPC mount. A caller that may ask before the provider registers treats
+ *     the refusal as "not known yet" (D49), never as "no instance".
  *   - Only the EXPLICIT top-level selector routes. No nested recovery here:
  *     that heuristic reads a domain payload, and this path has no schema.
  *
