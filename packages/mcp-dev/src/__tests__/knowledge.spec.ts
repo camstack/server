@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import { requireWorkspaceRoot } from '@camstack/develop'
 import { readSection } from '../knowledge/read.js'
 import {
@@ -12,6 +12,14 @@ import {
 
 describe('knowledge index', () => {
   const root = requireWorkspaceRoot()
+  let index: ReturnType<typeof getKnowledgeIndex>
+
+  // The index walks and tokenizes every doc (~1 s idle, 10 s+ under machine load).
+  // Build it once for the file instead of once per test; no test mutates it.
+  beforeAll(() => {
+    clearKnowledgeCache()
+    index = getKnowledgeIndex(root, { memoryRoots: [], skillRoots: [] })
+  }, 60_000)
 
   it('normalizes ADR ids', () => {
     expect(normalizeAdrId('9')).toBe('D9')
@@ -20,8 +28,6 @@ describe('knowledge index', () => {
   })
 
   it('indexes ADRs and resolves get_decision', () => {
-    clearKnowledgeCache()
-    const index = getKnowledgeIndex(root, { memoryRoots: [], skillRoots: [] })
     expect(index.docs.some((d) => d.kind === 'adr')).toBe(true)
     const d2 = getDecision(index, 'D2')
     expect(d2).toBeTruthy()
@@ -30,23 +36,17 @@ describe('knowledge index', () => {
   })
 
   it('searches architecture docs', () => {
-    clearKnowledgeCache()
-    const index = getKnowledgeIndex(root, { memoryRoots: [], skillRoots: [] })
     const hits = index.search('capability mount collection', { kinds: ['architecture'], limit: 5 })
     expect(hits.length).toBeGreaterThan(0)
     expect(hits[0]!.snippet.length).toBeGreaterThan(0)
   })
 
   it('decisions_for_path matches applies-to', () => {
-    clearKnowledgeCache()
-    const index = getKnowledgeIndex(root, { memoryRoots: [], skillRoots: [] })
     const hits = decisionsForPath(index, 'packages/types/src/interfaces/addon.ts')
     expect(hits.some((h) => h.id === 'D2')).toBe(true)
   })
 
   it('traps_for surfaces the integration traps and read_section returns them whole', () => {
-    clearKnowledgeCache()
-    const index = getKnowledgeIndex(root, { memoryRoots: [], skillRoots: [] })
     const { skills } = trapsFor(
       index,
       'integration globalSettingsSchema integration_settings gateway sibling',

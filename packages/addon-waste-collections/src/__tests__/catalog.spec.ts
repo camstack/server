@@ -6,7 +6,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import { buildCatalog, listVendorModules } from '../../scripts/gen-catalog.js'
 import type { WasteCatalog } from '../../scripts/gen-catalog.js'
 
@@ -14,6 +14,14 @@ const PKG_ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..')
 const CATALOG_PATH = join(PKG_ROOT, 'src/catalog.json')
 
 describe('waste catalog coverage', () => {
+  let rebuilt: WasteCatalog
+
+  // buildCatalog parses every vendored module (~150 ms idle, 6 s+ under machine
+  // load). Do that one-time heavy I/O in beforeAll, outside the per-test timeout.
+  beforeAll(() => {
+    rebuilt = buildCatalog()
+  }, 60_000)
+
   it('catalog.json exists and matches every vendored source module', () => {
     expect(existsSync(CATALOG_PATH), 'src/catalog.json missing — run gen-catalog').toBe(true)
     const onDisk = JSON.parse(readFileSync(CATALOG_PATH, 'utf8')) as WasteCatalog
@@ -21,7 +29,6 @@ describe('waste catalog coverage', () => {
     expect(vendor.length).toBeGreaterThan(100)
     expect(onDisk.entries.map((e) => e.module).sort()).toEqual([...vendor])
 
-    const rebuilt = buildCatalog()
     expect(onDisk.sourceHash).toBe(rebuilt.sourceHash)
     expect(onDisk.entries.length).toBe(rebuilt.entries.length)
     expect(onDisk.services.length).toBe(rebuilt.services.length)
