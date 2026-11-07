@@ -303,14 +303,14 @@ interface AddonPaneEntry {
   /** Flat key→value map of the server-authoritative values. */
   readonly serverValues: Record<string, unknown>
   /** Field key → the (cap, scope) that stores it; empty for the integration surface. */
-  readonly keyTargets: Readonly<Record<string, ScopedTarget>>
+  readonly keyTargets: Readonly<Record<string, readonly ScopedTarget[]>>
 }
 
 /** What one addon's query answers. `result === null`: the addon could not be asked. */
 interface AddonSettingsAnswer {
   readonly addonId: string
   readonly result: ConfigUISchemaWithValues | null
-  readonly keyTargets: Readonly<Record<string, ScopedTarget>>
+  readonly keyTargets: Readonly<Record<string, readonly ScopedTarget[]>>
 }
 
 // ---------------------------------------------------------------------------
@@ -681,7 +681,7 @@ export function NodeAddonsSettingsPanel({
       string,
       {
         readonly result: ConfigUISchemaWithValues
-        readonly keyTargets: Readonly<Record<string, ScopedTarget>>
+        readonly keyTargets: Readonly<Record<string, readonly ScopedTarget[]>>
       }
     >(),
   )
@@ -809,7 +809,7 @@ export function NodeAddonsSettingsPanel({
       if (unowned.length > 0) {
         throw new Error(`${addonId}: no scoped setting declares ${unowned.join(', ')}`)
       }
-      await Promise.all(
+      const settled = await Promise.allSettled(
         groups.map((group) =>
           updateScopedMutation.mutateAsync({
             addonId,
@@ -820,6 +820,18 @@ export function NodeAddonsSettingsPanel({
           }),
         ),
       )
+      const failed = settled.flatMap((outcome, index) => {
+        const group = groups[index]
+        if (outcome.status !== 'rejected' || group === undefined) return []
+        const reason =
+          outcome.reason instanceof Error ? outcome.reason.message : String(outcome.reason)
+        return [`${group.cap}/${group.scope}: ${reason}`]
+      })
+      if (failed.length > 0) {
+        // The targets that landed are stored: refetch so the pane shows them.
+        void queryClient.invalidateQueries({ queryKey: [['addonSettings']] })
+        throw new Error(`${addonId}: not saved to ${failed.join('; ')}`)
+      }
     },
     [
       level,
@@ -828,6 +840,7 @@ export function NodeAddonsSettingsPanel({
       updateGlobalMutation,
       updateScopedMutation,
       updateDeviceMutation,
+      queryClient,
       effectiveNodeId,
       deviceId,
     ],

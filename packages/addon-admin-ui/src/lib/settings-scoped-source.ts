@@ -28,7 +28,7 @@ export interface SelectedDeclaration extends ScopedTarget {
 
 export interface SelectDeclarationsInput {
   readonly declarations: readonly ScopedSettingsDeclaration[]
-  /** `perNode` -> the `node` scope; `cluster` -> the `cluster` scope; absent -> every scope. */
+  /** `perNode` -> the `node` scope; `cluster` -> every scope but `node` (cluster + device-defaults); absent -> every scope. */
   readonly fieldScope?: SettingsFieldScope
   /** Only this capability's declarations. */
   readonly capability?: string
@@ -38,7 +38,9 @@ export interface SelectDeclarationsInput {
 
 function scopeMatches(scope: ScopedSettingsScope, fieldScope: SettingsFieldScope | undefined) {
   if (fieldScope === undefined) return true
-  return fieldScope === 'perNode' ? scope === 'node' : scope === 'cluster'
+  // `cluster` is every scope the node page does not own: the device-defaults forms are edited
+  // nowhere else, so they stay reachable from the cluster surfaces.
+  return fieldScope === 'perNode' ? scope === 'node' : scope !== 'node'
 }
 
 /**
@@ -73,22 +75,24 @@ export interface FetchedDeclaration {
 
 export interface MergedScopedForm {
   readonly form: ConfigUISchemaWithValues
-  /** Field key -> the (cap, scope) that stores it. */
-  readonly keyTargets: Readonly<Record<string, ScopedTarget>>
+  /** Field key -> every (cap, scope) that stores it (usually one; a key two caps declare is written to both). */
+  readonly keyTargets: Readonly<Record<string, readonly ScopedTarget[]>>
 }
 
 /** One form out of the fetched declarations, in declaration order, owned sections only. */
 export function mergeFetched(fetched: readonly FetchedDeclaration[]): MergedScopedForm {
   const sections: ConfigUISchemaWithValues['sections'] = []
   const tabs = new Map<string, ConfigTabDeclaration>()
-  const keyTargets: Record<string, ScopedTarget> = {}
+  const keyTargets: Record<string, ScopedTarget[]> = {}
   for (const { declaration, form } of fetched) {
     const owned = new Set(declaration.sectionIds)
     const kept = form.sections.filter((section) => owned.has(section.id))
     sections.push(...kept)
     for (const tab of form.tabs ?? []) if (!tabs.has(tab.id)) tabs.set(tab.id, tab)
     for (const key of collectHydratedFieldEntries({ sections: kept }).keys()) {
-      if (!(key in keyTargets)) keyTargets[key] = { cap: declaration.cap, scope: declaration.scope }
+      const owners = keyTargets[key] ?? []
+      owners.push({ cap: declaration.cap, scope: declaration.scope })
+      keyTargets[key] = owners
     }
   }
   return {
@@ -105,20 +109,22 @@ export interface ScopedPatchGroup extends ScopedTarget {
 /** Group a patch by owning target. A key nothing owns is returned apart, never dropped. */
 export function groupPatchByTarget(
   patch: Readonly<Record<string, unknown>>,
-  keyTargets: Readonly<Record<string, ScopedTarget>>,
+  keyTargets: Readonly<Record<string, readonly ScopedTarget[]>>,
 ): { readonly groups: readonly ScopedPatchGroup[]; readonly unowned: readonly string[] } {
   const groups = new Map<string, { target: ScopedTarget; patch: Record<string, unknown> }>()
   const unowned: string[] = []
   for (const [key, value] of Object.entries(patch)) {
-    const target = keyTargets[key]
-    if (target === undefined) {
+    const owners = keyTargets[key]
+    if (owners === undefined || owners.length === 0) {
       unowned.push(key)
       continue
     }
-    const id = `${target.cap}\u0000${target.scope}`
-    const group = groups.get(id) ?? { target, patch: {} }
-    group.patch[key] = value
-    groups.set(id, group)
+    for (const target of owners) {
+      const id = `${target.cap}\u0000${target.scope}`
+      const group = groups.get(id) ?? { target, patch: {} }
+      group.patch[key] = value
+      groups.set(id, group)
+    }
   }
   return {
     groups: [...groups.values()].map((g) => ({ ...g.target, patch: g.patch })),

@@ -35,6 +35,9 @@ const FORMS: Readonly<Record<string, ConfigUISchemaWithValues>> = {
     ],
   },
   'cap-b:node': { sections: [form('node-b', 'nodeKey', 'Node B', 'n1')] },
+  'cap-c:device-defaults': { sections: [form('defaults-c', 'clipDays', 'Clip days', '7')] },
+  'cap-d:cluster': { sections: [form('dup-d', 'dupKey', 'Dup from D', 'd1')] },
+  'cap-e:cluster': { sections: [form('dup-e', 'dupKey', 'Dup from E', 'd1')] },
 }
 
 const TWO_CAP_ADDON = [
@@ -185,5 +188,68 @@ describe('the Save bar', () => {
       nodeId: 'agent-a',
       patch: { nodeKey: 'n2' },
     })
+  })
+})
+
+describe('fieldScope cluster', () => {
+  it('shows the cluster AND the device-defaults scopes, never the node scope', async () => {
+    listed = [
+      { cap: 'cap-a', scope: 'cluster' as const, sectionIds: ['shared', 'only-a'] },
+      { cap: 'cap-c', scope: 'device-defaults' as const, sectionIds: ['defaults-c'] },
+      { cap: 'cap-b', scope: 'node' as const, sectionIds: ['node-b'] },
+    ]
+    renderPanel({ fieldScope: 'cluster' })
+    expect(await screen.findByText('Clip days')).toBeTruthy()
+    expect(screen.getByText('Only A')).toBeTruthy()
+    expect(screen.queryByText('Node B')).toBeNull()
+    fireEvent.change(screen.getByDisplayValue('7'), { target: { value: '30' } })
+    fireEvent.click(await screen.findByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(updateScopedSettings).toHaveBeenCalledTimes(1))
+    expect(updateScopedSettings).toHaveBeenCalledWith({
+      addonId: 'multi',
+      cap: 'cap-c',
+      scope: 'device-defaults',
+      patch: { clipDays: '30' },
+    })
+  })
+})
+
+describe('a Save that lands on one target and fails on another', () => {
+  it('names the failed target and refetches so the landed one is read back', async () => {
+    updateScopedSettings.mockImplementation(async (input: unknown) => {
+      if (
+        typeof input === 'object' &&
+        input !== null &&
+        'scope' in input &&
+        input.scope === 'node'
+      ) {
+        throw new Error('node refused')
+      }
+      return { success: true }
+    })
+    renderPanel({ nodeId: 'agent-a' })
+    fireEvent.change(await screen.findByDisplayValue('a-value'), { target: { value: 'a2' } })
+    fireEvent.change(screen.getByDisplayValue('n1'), { target: { value: 'n2' } })
+    const readsBefore = getScopedSettings.mock.calls.length
+    fireEvent.click(await screen.findByRole('button', { name: 'Save' }))
+    expect(await screen.findByText(/cap-b\/node: node refused/)).toBeTruthy()
+    expect(screen.queryByText(/cap-a\/cluster/)).toBeNull()
+    expect(updateScopedSettings).toHaveBeenCalledTimes(2)
+    await waitFor(() => expect(getScopedSettings.mock.calls.length).toBeGreaterThan(readsBefore))
+  })
+})
+
+describe('a key two capabilities declare', () => {
+  it('is written to every owner, not just the first', async () => {
+    listed = [
+      { cap: 'cap-d', scope: 'cluster' as const, sectionIds: ['dup-d'] },
+      { cap: 'cap-e', scope: 'cluster' as const, sectionIds: ['dup-e'] },
+    ]
+    renderPanel()
+    fireEvent.change((await screen.findAllByDisplayValue('d1'))[0]!, { target: { value: 'd2' } })
+    fireEvent.click(await screen.findByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(updateScopedSettings).toHaveBeenCalledTimes(2))
+    const caps = updateScopedSettings.mock.calls.map(([i]) => (i as { cap: string }).cap).sort()
+    expect(caps).toEqual(['cap-d', 'cap-e'])
   })
 })

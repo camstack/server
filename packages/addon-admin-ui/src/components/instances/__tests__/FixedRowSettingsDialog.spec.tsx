@@ -26,10 +26,20 @@ const NODE_FORM: ConfigUISchemaWithValues = {
     },
   ],
 }
+const DEFAULTS_FORM: ConfigUISchemaWithValues = {
+  sections: [
+    {
+      id: 'defaults',
+      title: 'Defaults',
+      fields: [{ type: 'text', key: 'clipDays', label: 'Clip days', value: '7' }],
+    },
+  ],
+}
 /** The provider serves a cluster form and a node form of one capability. */
 const DECLARATIONS = [
   { cap: 'log-destination', scope: 'cluster' as const, sectionIds: ['main'] },
   { cap: 'log-destination', scope: 'node' as const, sectionIds: ['node'] },
+  { cap: 'log-destination', scope: 'device-defaults' as const, sectionIds: ['defaults'] },
 ]
 
 const h = vi.hoisted(() => ({ update: vi.fn() }))
@@ -46,7 +56,11 @@ vi.mock('@camstack/ui-library', async () => {
           listScopedSettings: { query: async () => DECLARATIONS },
           getScopedSettings: {
             query: async (input: { scope: string }) =>
-              input.scope === 'node' ? NODE_FORM : CLUSTER_FORM,
+              input.scope === 'node'
+                ? NODE_FORM
+                : input.scope === 'device-defaults'
+                  ? DEFAULTS_FORM
+                  : CLUSTER_FORM,
           },
         },
         addons: { custom: { mutate: vi.fn() } },
@@ -91,6 +105,18 @@ describe('FixedRowSettingsDialog', () => {
     renderDialog()
     expect(await screen.findByDisplayValue('http://loki')).toBeTruthy()
     expect(screen.queryByDisplayValue('/usr/bin/btm')).toBeNull()
+  })
+
+  it('keeps the device-defaults form editable, nothing else edits it', async () => {
+    renderDialog()
+    fireEvent.change(await screen.findByDisplayValue('7'), { target: { value: '30' } })
+    fireEvent.click(await screen.findByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(h.update).toHaveBeenCalledTimes(1))
+    expect(h.update.mock.calls[0]?.[0]).toMatchObject({
+      cap: 'log-destination',
+      scope: 'device-defaults',
+      patch: { clipDays: '30' },
+    })
   })
 
   it('writes nothing while typing, and exactly once on Save', async () => {
