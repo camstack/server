@@ -6513,7 +6513,8 @@
         "loadingHubTopology": "Caricamento topologia dell'hub…",
         "noOnlineHubNodeFound": "Nessun nodo hub online trovato.",
         "settingsWillAppearOnceThe": "Le impostazioni compariranno quando l'hub sarà raggiungibile.",
-        "noAddonsInstalledOnThe": "Ancora nessun addon installato sull'hub."
+        "noAddonsInstalledOnThe": "Ancora nessun addon installato sull'hub.",
+        "bootstrapUnavailable": "Non disponibile — l'addon che gestisce le impostazioni del server non ha risposto."
       },
       "users": {
         "deleteUser": "Elimina utente",

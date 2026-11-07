@@ -6438,7 +6438,8 @@
         "loadingHubTopology": "Loading hub topology…",
         "noOnlineHubNodeFound": "No online hub node found.",
         "settingsWillAppearOnceThe": "Settings will appear once the hub is reachable.",
-        "noAddonsInstalledOnThe": "No addons installed on the hub yet."
+        "noAddonsInstalledOnThe": "No addons installed on the hub yet.",
+        "bootstrapUnavailable": "Not available — the addon that owns the server settings did not answer."
       },
       "users": {
         "deleteUser": "Delete user",

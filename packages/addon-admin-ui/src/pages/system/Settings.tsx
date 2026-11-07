@@ -74,7 +74,7 @@ export function SettingsPage() {
           <BootstrapSettingsForm
             omitSectionIds={[AUTH_POLICY_SECTION_ID]}
             emptyMessage={t(
-              'system.settings.bootstrapUnavailable',
+              'admin.system.settings.bootstrapUnavailable',
               'Not available — the addon that owns the server settings did not answer.',
             )}
           />
