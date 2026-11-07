@@ -7,13 +7,10 @@
  *   `user_totp`        secret       -> secret://system/row/user_totp/<userId>/secret
  *   core-block settings (password fields a user script declares), and the
  *   redundant `core-blocks:settings` copy of them is deleted (D880)
- *   waste-collections `sources[].argsJson` credentials, rewritten as typed
- *   `args` with the credential as a marker (D880)
  *
  * Each OWNER does its own move through its own write path: this script only
  * calls `llm.migrateRawSecrets`, `userManagement.migrateRawSecrets`,
- * `coreBlocks.migrateRawSecrets` and the waste-collections `migrateSources`
- * action (through `addons.custom`). Per row
+ * `coreBlocks.migrateRawSecrets`. Per row
  * the owner puts the value in the keychain, reads it back, and only then
  * rewrites the row with the marker - the plaintext is cleared by the verified
  * move and nowhere else. Nothing runs at boot (no boot purge).
@@ -29,7 +26,7 @@
  * script never picks a hub for you. Through the hub's admin API
  * (`scripts/hub/hub.mjs`); no SQLite file is opened (D679).
  *
- * REMOVE THIS SCRIPT (and the `migrateRawSecrets` / `migrateSources` methods) once every
+ * REMOVE THIS SCRIPT (and the `migrateRawSecrets` methods) once every
  * hub ran `--apply` and verified.
  */
 import { spawn } from 'node:child_process'
@@ -53,15 +50,6 @@ export const OWNER_ROUTES: readonly OwnerRoute[] = [
   { label: 'llm profile apiKey', route: 'llm.migrateRawSecrets', input: applyOnly },
   { label: 'totp seed', route: 'userManagement.migrateRawSecrets', input: applyOnly },
   { label: 'core block password', route: 'coreBlocks.migrateRawSecrets', input: applyOnly },
-  {
-    label: 'waste source credential',
-    route: 'addons.custom',
-    input: (apply) => ({
-      addonId: 'waste-collections',
-      action: 'migrateSources',
-      input: { apply },
-    }),
-  },
 ]
 
 export interface OwnerResult {

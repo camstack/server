@@ -12,6 +12,7 @@ import { z } from 'zod'
 import { HOLDER_QUERY_KEY } from '../instances/use-instances-data'
 import type { InstanceRow } from '../instances/instances-model'
 
+/** Fixed: no descriptor says which provider owns a per-row fetch action; only this addon has one. */
 const WASTE_ADDON_ID = 'waste-collections'
 
 const FetchNowResultSchema = z.object({

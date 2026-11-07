@@ -48,16 +48,6 @@ describe('migrate-raw-secrets', () => {
       'llm.migrateRawSecrets',
       'userManagement.migrateRawSecrets',
       'coreBlocks.migrateRawSecrets',
-      'addons.custom',
-    ])
-  })
-
-  it('reaches the waste migration through the addon custom action', async () => {
-    const h = hub(REPORT)
-    await runMigration(h.hub, true)
-    expect(h.calls.at(-1)).toEqual([
-      'addons.custom',
-      { addonId: 'waste-collections', action: 'migrateSources', input: { apply: true } },
     ])
   })
 
