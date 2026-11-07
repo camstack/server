@@ -349,7 +349,7 @@ export class NcLinkedStillShelf {
       judged = await this.repollStale(
         ctx,
         atMs,
-        await this.judgeFreshness(stills.sensorId, results, atMs),
+        await this.wakeStaleBattery(ctx, await this.judgeFreshness(stills.sensorId, results, atMs)),
       )
     } finally {
       this.pendingWakes.delete(setId)
@@ -424,17 +424,26 @@ export class NcLinkedStillShelf {
     // D49: a state that could not be read must not destroy the wake. A sleeping
     // battery camera answers an unforced capture with nothing, and the wrapper
     // that would have said `sleeping` is the very read that failed.
-    if (
-      verdict.unknown !== null &&
-      capture.outcome === 'empty' &&
-      ctx.options.wakeSleeping &&
-      (await this.isBatteryCamera(cameraId))
-    ) {
+    //
+    // The same holds when the read ANSWERED awake: the state is the fallible
+    // side (a hub-summary sleep flip refused inside its grace left a sleeping
+    // camera reading awake while the provider served `cached-snapshot,
+    // sleeping`). So on a battery camera an unforced capture that came back
+    // nothing — `timeout` or `empty` — is followed by ONE forced wake whatever
+    // the verdict said. A mains camera has nothing to wake: it keeps its tile.
+    const brought = capture.outcome === 'timeout' || capture.outcome === 'empty'
+    if (brought && ctx.options.wakeSleeping && (await this.isBatteryCamera(cameraId))) {
       this.deps.logger.info(
-        'linked camera state unknown and capture empty — waking as a battery camera',
+        verdict.unknown !== null
+          ? 'linked camera state unknown and capture empty — waking as a battery camera'
+          : 'linked battery camera answered awake with no picture — waking it',
         {
           tags: { deviceId: cameraId },
-          meta: { sensorId: ctx.sensorId, stateUnknown: verdict.unknown },
+          meta: {
+            sensorId: ctx.sensorId,
+            capture: capture.outcome,
+            ...(verdict.unknown !== null ? { stateUnknown: verdict.unknown } : {}),
+          },
         },
       )
       return this.wakeOne(cameraId, ctx)
@@ -498,6 +507,30 @@ export class NcLinkedStillShelf {
       woken: true,
       tookMs: took(),
     }
+  }
+
+  /**
+   * A battery camera whose unforced frame came back OLD is asleep behind a
+   * cached picture: ask it once, forced, instead of re-polling a camera that
+   * will not freshen on its own. One wake per camera per set — a tile already
+   * woken is never woken again — and a mains camera keeps the D60 re-poll.
+   */
+  private async wakeStaleBattery(
+    ctx: SetContext,
+    judged: readonly TileResult[],
+  ): Promise<readonly TileResult[]> {
+    if (!ctx.options.wakeSleeping) return judged
+    return Promise.all(
+      judged.map(async (r): Promise<TileResult> => {
+        if (r.outcome !== 'stale' || r.woken === true) return r
+        if (!(await this.isBatteryCamera(r.cameraId))) return r
+        this.deps.logger.info('linked battery camera frame is stale — waking it', {
+          tags: { deviceId: r.cameraId },
+          meta: { sensorId: ctx.sensorId, capture: 'stale', reason: r.reason ?? null },
+        })
+        return this.wakeOne(r.cameraId, ctx)
+      }),
+    )
   }
 
   /** A camera another wake already started: never forced, re-polled within the bound. */
@@ -705,6 +738,7 @@ export class NcLinkedStillShelf {
         cameraId: r.cameraId,
         outcome: 'stale',
         reason: `frame ${String(atMs - at)} ms older than the event`,
+        ...(r.woken === true ? { woken: true as const } : {}),
         tookMs: r.tookMs,
       }
     })
