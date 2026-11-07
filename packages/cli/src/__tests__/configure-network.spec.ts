@@ -1,5 +1,12 @@
-import { describe, expect, it } from 'vitest'
-import { readRemoteAccess, remoteAccessSet } from '../mcp/configure-network.js'
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { describe, expect, it, vi } from 'vitest'
+import {
+  SettableRemoteAddonSchema,
+  TUNNEL_INSTANCE_NOTE,
+  readRemoteAccess,
+  registerNetworkTools,
+  remoteAccessSet,
+} from '../mcp/configure-network.js'
 import { withWrites } from './configure-gate-ctx.js'
 import { fakeHub } from './ops-fake-hub.js'
 
@@ -121,5 +128,45 @@ describe('configure_remote_access_set', () => {
       JSON.stringify(await remoteAccessSet(w, { addonId: 'cloudflare-tunnel', patch }, undefined))
     expect(await text({ nope: 'x' })).toMatch(/no such setting/)
     expect(await text({ localPort: 'high' })).toMatch(/a number is expected/)
+  })
+})
+
+describe('configure_remote_access_set scope', () => {
+  it('accepts only the tunnel, and names the TURN admin page for the others', () => {
+    expect(SettableRemoteAddonSchema.safeParse('cloudflare-tunnel').success).toBe(true)
+    for (const id of ['cloudflare-turn', 'static-turn']) {
+      const r = SettableRemoteAddonSchema.safeParse(id)
+      expect(r.success).toBe(false)
+      expect(JSON.stringify(r.error?.issues)).toContain('/system/turn')
+      expect(JSON.stringify(r.error?.issues)).toContain('integration-instance')
+    }
+  })
+
+  it('points a tunnel instance key at the admin UI, in the problem and in the preview', async () => {
+    const { ctx } = fakeHub(reads)
+    const w = withWrites(ctx)
+    const bad = await remoteAccessSet(
+      w,
+      { addonId: 'cloudflare-tunnel', patch: { customHostname: 'x.example.test' } },
+      undefined,
+    )
+    expect(JSON.stringify(bad)).toContain('/system/remote-access')
+    const ok = await remoteAccessSet(
+      w,
+      { addonId: 'cloudflare-tunnel', patch: { localPort: 8443 } },
+      undefined,
+    )
+    expect(JSON.stringify(ok)).toContain(TUNNEL_INSTANCE_NOTE.slice(0, 40))
+  })
+
+  it('describes only what can be set', () => {
+    const server = new McpServer({ name: 'probe', version: '0.0.0' })
+    const spy = vi.spyOn(server, 'tool')
+    registerNetworkTools(server, fakeHub(reads).ctx)
+    const described = spy.mock.calls.map((c) => String(c[1]))
+    const all = described.join('\n')
+    expect(all).not.toMatch(/account id|mode, host, port/)
+    expect(all).toContain('localPortMode')
+    expect(all).toContain('/system/remote-access')
   })
 })

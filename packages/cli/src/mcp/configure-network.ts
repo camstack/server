@@ -32,6 +32,18 @@ export const REMOTE_ACCESS_SET_TOOL = 'configure_remote_access_set'
 export const RemoteAddonSchema = z.enum(['cloudflare-tunnel', 'cloudflare-turn', 'static-turn'])
 export type RemoteAddon = z.infer<typeof RemoteAddonSchema>
 
+/** Where the tunnel's mode, hostname and API token live now: its integration-instance record. */
+export const TUNNEL_INSTANCE_NOTE =
+  'the tunnel mode, custom hostname and API token live on the tunnel integration instance: edit them in the admin UI under /system/remote-access (no tool sets them)'
+
+/** Only the tunnel has scoped settings to set; the TURN addons keep their servers as instance records. */
+export const SETTABLE_REMOTE_ADDON_ERROR =
+  'only cloudflare-tunnel has settings to set; cloudflare-turn and static-turn keep their servers as integration-instance records, edited in the admin UI under /system/turn'
+export const SettableRemoteAddonSchema = z.enum(['cloudflare-tunnel'], {
+  error: SETTABLE_REMOTE_ADDON_ERROR,
+})
+export type SettableRemoteAddon = z.infer<typeof SettableRemoteAddonSchema>
+
 const ADDON_PAGE: Readonly<Record<RemoteAddon, string>> = {
   'cloudflare-tunnel': '/system/remote-access',
   'cloudflare-turn': '/system/turn',
@@ -48,6 +60,8 @@ const REMOTE_SCOPE: Readonly<Record<RemoteAddon, RemoteScope | null>> = {
   'cloudflare-turn': null,
   'static-turn': null,
 }
+
+const INSTANCE_KEYS: readonly string[] = ['mode', 'customHostname', 'customApiToken']
 
 const FieldSchema = z.looseObject({
   type: z.string(),
@@ -179,7 +193,7 @@ export async function readRemoteAccess(
 }
 
 export interface RemoteAccessSetArgs {
-  readonly addonId: RemoteAddon
+  readonly addonId: SettableRemoteAddon
   readonly patch: Readonly<Record<string, string | number | boolean>>
 }
 
@@ -228,7 +242,9 @@ export function remoteAccessSetSpec(client: HubClient): GatedToolSpec<RemoteAcce
       for (const [key, after] of Object.entries(args.patch)) {
         const field = fields.find((f) => f.key === key)
         if (field === undefined) {
-          problems.push(`${key}: no such setting on ${args.addonId}`)
+          problems.push(
+            `${key}: no such setting on ${args.addonId}${INSTANCE_KEYS.includes(key) ? ` — ${TUNNEL_INSTANCE_NOTE}` : ''}`,
+          )
           continue
         }
         const expected =
@@ -248,6 +264,7 @@ export function remoteAccessSetSpec(client: HubClient): GatedToolSpec<RemoteAcce
           addonId: args.addonId,
           changes,
           effect: 'the addon applies it on its next reconcile; a tunnel may reconnect briefly',
+          note: TUNNEL_INSTANCE_NOTE,
         },
       }
     },
@@ -276,15 +293,15 @@ export async function remoteAccessSet(
 export function registerNetworkTools(server: McpServer, ctx: McpContext): void {
   server.tool(
     'configure_remote_access',
-    'Read how the hub is reachable from outside: the access status and public endpoint, and the settings of the tunnel and TURN addons. Secret fields are reported as configured true/false, never their value. Writes nothing.',
+    'Read how the hub is reachable from outside: the access status and public endpoint, and the local-origin settings of the tunnel (the TURN addons keep integration instances and report no settings). Secret fields are reported as configured true/false, never their value. Writes nothing.',
     {},
     async (): Promise<ToolTextResult> => text(await readRemoteAccess(ctx)),
   )
   server.tool(
     REMOTE_ACCESS_SET_TOOL,
-    'Change NON-secret settings of the tunnel or TURN addon (mode, host, port, hostname, account id…). A secret (API token, credentials) is refused with secret-required and the admin-UI page to enter it. Two steps: call without confirm_token for a preview and a one-shot token, then call again with the SAME arguments and that token. Needs an admin `camstack login` session.',
+    'Change the cloudflare-tunnel local-origin node form (localHost, localPortMode, localPort). The tunnel mode, custom hostname and API token live on the tunnel integration instance (admin UI, /system/remote-access) and cannot be set here; the TURN addons keep their servers as integration instances (admin UI, /system/turn) and are not accepted. A secret is refused with secret-required and the admin-UI page to enter it. Two steps: call without confirm_token for a preview and a one-shot token, then call again with the SAME arguments and that token. Needs an admin `camstack login` session.',
     {
-      addonId: RemoteAddonSchema,
+      addonId: SettableRemoteAddonSchema,
       patch: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])),
       confirm_token: ConfirmTokenSchema,
     },
