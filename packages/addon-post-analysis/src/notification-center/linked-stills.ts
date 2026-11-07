@@ -528,7 +528,10 @@ export class NcLinkedStillShelf {
           tags: { deviceId: r.cameraId },
           meta: { sensorId: ctx.sensorId, capture: 'stale', reason: r.reason ?? null },
         })
-        return this.wakeOne(r.cameraId, ctx)
+        const woken = await this.wakeOne(r.cameraId, ctx)
+        // A wake that was never taken (inside the min gap, policy…) leaves the
+        // stale tile to the D60 re-poll; only a wake that RAN replaces it.
+        return woken.outcome === 'excluded' ? r : woken
       }),
     )
   }

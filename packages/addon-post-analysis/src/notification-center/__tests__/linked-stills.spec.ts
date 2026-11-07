@@ -867,6 +867,35 @@ describe('NcLinkedStillShelf — a battery camera that answered awake with no us
     expect(calls).toEqual([false])
   })
 
+  it('a wake refused inside the min gap leaves the stale tile to the D60 re-poll', async () => {
+    let t = 1_000
+    let asleep = true
+    let reads = 0
+    const forced: number[] = []
+    const shelf = shelfWith({
+      now: () => t,
+      isBatteryCamera: async () => true,
+      getSnapshotState: async () => ({ reason: asleep ? 'sleeping' : null }),
+      getSnapshot: async (id, opts) => {
+        if (opts?.force === true) forced.push(id)
+        return jpeg()
+      },
+      getFrameCapturedAt: async () => {
+        reads += 1
+        return new Map([[101, reads === 1 ? t - 60_000 : t]])
+      },
+    })
+    const first = shelf.captureSet(3243, [101], t, { wakeSleeping: true })
+    await until(() => shelf.get(first.mosaicOwnerId))
+    t += 30_000
+    asleep = false
+    reads = 0
+    const second = shelf.captureSet(3243, [101], t, { wakeSleeping: true })
+    const mosaic = await until(() => shelf.get(second.mosaicOwnerId))
+    expect(await widthOf(mosaic[0]!.base64)).toBe(64)
+    expect(forced).toEqual([101])
+  })
+
   it('a wake that brings nothing names its reason on the tile (D400)', async () => {
     const lines: MetaLine[] = []
     const shelf = shelfWith({

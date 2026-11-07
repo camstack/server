@@ -331,7 +331,10 @@ AWAKE verdict is not trusted on a battery camera (the state read is the fallible
 side, as in D49: a hub-summary sleep flip refused inside its grace leaves a
 sleeping camera reading awake while the provider serves its cached picture): an
 unforced capture that came back `timeout` or `empty`, or a frame older than the
-bound, is followed by ONE forced wake, logged with the triggering outcome. A
+bound, is followed by ONE forced wake, logged with the triggering outcome — even
+when the camera was merely slow rather than asleep (the wake is bounded by the
+60 s min gap per camera; a wake refused inside it leaves a stale tile to the
+D60 re-poll). A
 mains camera never wakes — its stale tile keeps the unforced re-poll (D60).
 
 The default TITLE of a sensor row is the sensor's name (`sensor.title` =

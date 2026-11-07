@@ -63,6 +63,15 @@ describe('sensor row title', () => {
     const e = sensorRow({ title: 'Aperta: {{sensor}}' })
     expect(renderRowTitle(texts, e, vars(e))).toBe('Aperta: Porta ingresso')
   })
+  it('an alarm intrusion title (D706) beats the sensor name', () => {
+    const base = sensorRow()
+    const e: NcOutboxEntry = {
+      ...base,
+      payload: { ...base.payload, alarmIntrusion: { locations: ['Hall'] } },
+    }
+    expect(renderRowTitle(texts, e, vars(e))).not.toBe('Porta ingresso')
+    expect(renderRowTitle(texts, e, vars(e))).toContain('Hall')
+  })
   it('a detection row is still titled with the rule', () => {
     const e = sensorRow({ sensor: null })
     expect(renderRowTitle(texts, e, vars(e))).toBe('Apertura porte — mosaico camere')
