@@ -62,25 +62,6 @@ function props(over: Partial<DeviceValueFieldProps> = {}): DeviceValueFieldProps
   }
 }
 
-function Stateful({ extra }: { readonly extra: Partial<DeviceValueFieldProps> }) {
-  const [deviceId, setDeviceId] = useState<number | null>(null)
-  const [value, setValue] = useState<DeviceValueFieldProps['value']>(null)
-  return (
-    <DeviceValueField
-      {...props({
-        ...extra,
-        deviceId,
-        onDeviceChange: setDeviceId,
-        value,
-        onValueChange: (pick) => {
-          setValue(pick)
-          extra.onValueChange?.(pick)
-        },
-      })}
-    />
-  )
-}
-
 const PICK = { cap: 'power-meter', path: 'power' }
 const TWO_GROUPS = [
   ...GROUPS,
