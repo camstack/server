@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Alexa account, integration and Echo-target migrations now read and write only through the migration API; the retired addon-level Echo setting is no longer written by the addon
+
 ## [0.2.196] - 2026-11-07
 
 ### Fixed

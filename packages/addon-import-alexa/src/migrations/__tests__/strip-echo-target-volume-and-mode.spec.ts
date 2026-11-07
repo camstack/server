@@ -88,7 +88,7 @@ function storeWith(initial: readonly unknown[]) {
   return {
     state,
     ports: {
-      readRows: () => state.rows,
+      readRows: async () => state.rows,
       writeRows: async (rows: readonly unknown[]) => {
         state.rows = rows
         state.writes += 1

@@ -15,6 +15,7 @@ import {
 } from '@camstack/types'
 import { type AlexaEchoTarget, alexaEchoTargetSchema, readEchoTargets } from '../config.js'
 import type { EchoRecordPorts, EchoSettingPorts } from '../migrations/echo-targets-to-records.js'
+import type { PositionalRecordsDoor } from '../migrations/records-door.js'
 import { alexaTargetKind, type SpeakBrokerView, validateEchoTarget } from './provider.js'
 import { ALEXA_SPEAK_ADDON_ID } from './constants.js'
 
@@ -41,7 +42,7 @@ export function legacyEchoTargetsOver(
 ): LegacyTargets {
   return {
     list: async () =>
-      readEchoTargets({ echoTargets: setting.readRows() }).map((row) => ({
+      readEchoTargets({ echoTargets: await setting.readRows() }).map((row) => ({
         id: row.id,
         name: row.name,
         kind: alexaTargetKind().kind,
@@ -53,11 +54,12 @@ export function legacyEchoTargetsOver(
         },
       })),
     delete: async (id) => {
-      const rest = setting.readRows().filter((row) => {
+      const rows = await setting.readRows()
+      const rest = rows.filter((row) => {
         const parsed = alexaEchoTargetSchema.safeParse(row)
         return !(parsed.success && parsed.data.id === id)
       })
-      if (rest.length !== setting.readRows().length) await setting.writeRows(rest)
+      if (rest.length !== rows.length) await setting.writeRows(rest)
     },
   }
 }
@@ -76,12 +78,13 @@ export function echoRowOf(target: Target): AlexaEchoTarget {
 
 /** The migration's ports over the `notify-alexa-echo` record kind. */
 export function echoRecordPortsOver(
-  records: Pick<RecordsAccess, 'kind'>,
-  logger: IScopedLogger,
+  records: PositionalRecordsDoor,
+  logger: Pick<IScopedLogger, 'warn'>,
 ): EchoRecordPorts {
-  const handle = echoTargetStoreOver(records).handlesByKind().get(alexaTargetKind().kind)
-  if (handle === undefined)
+  const [kind] = Object.values(alexaNotifyRecordKinds)
+  if (kind === undefined)
     throw new Error('import-alexa: the Echo target record kind is not declared')
+  const handle = records.kind(kind)
   return {
     readEchoRecord: async (id) => (await handle.getResolved(id))?.data ?? null,
     writeEchoRecord: async (id, body) => {

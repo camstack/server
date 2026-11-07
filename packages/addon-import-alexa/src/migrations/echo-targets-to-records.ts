@@ -29,14 +29,14 @@ export interface EchoRecordPorts {
 
 export interface EchoSettingPorts {
   /** The stored `echoTargets` value as written, one entry per row, unparsed. */
-  readRows(): readonly unknown[]
+  readRows(): Promise<readonly unknown[]>
   writeRows(rows: readonly unknown[]): Promise<void>
 }
 
 export async function moveEchoTargetsToRecords(
   ports: EchoRecordPorts & EchoSettingPorts,
 ): Promise<MigrationProcedureResult> {
-  const rows = ports.readRows()
+  const rows = await ports.readRows()
   if (rows.length === 0) return { outcome: 'already-done', summary: { converted: 0 } }
   let converted = 0
   let kept = 0

@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**240 units · 8203 source files · 234 units claimed by at least one document (8173 files).**
+**240 units · 8206 source files · 234 units claimed by at least one document (8176 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -138,6 +138,7 @@ it never describes how the thing works, and it is never re-verified.
 | `e2e` | 9 | `tooling` | — | — |
 | `packages/addon-decoder-nodeav` | 9 | `audio`, `decode-and-data-planes` | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0281-a-talk-frame-at-the-wrong-rate-is-converted-by-the-codec-cap-or-refused-loudly.md`, `decisions/adr-0763-the-decoder-cap-is-a-hwaccel-answer-and-shm-ring-and-decoder-ffmpeg-are-deleted.md` | — |
 | `packages/addon-import-alexa/src/amazon-auth` | 9 | `ecosystem-exports` | `addons/addon-import-alexa.md` _(covers)_, `decisions/adr-0955-vendor-sign-in-through-a-hub-login-proxy-the-vendor-page-opens-under-the-hub-and-the-addon-says-when-it-is-done.md`, `decisions/adr-1010-the-amazon-sign-in-and-renewal-are-in-house-the-alexa-addon-has-no-sign-in-library.md`, +2 more | — |
+| `packages/addon-import-alexa/src/migrations` | 9 | `ecosystem-exports` | `addons/addon-import-alexa.md` _(covers)_, `decisions/adr-1012-a-broker-is-referenced-by-id-and-owns-nothing-of-its-users.md`, `decisions/adr-1013-one-instance-model.md` | — |
 | `packages/addon-pipeline/src/shared` | 9 | `decode-and-data-planes` | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0177-a-python-pool-is-bounded-by-its-own-watchdog-not-the-kernel.md`, `decisions/adr-0199-a-model-choice-has-a-scope-and-a-scope-change-has-a-workflow.md`, +3 more | — |
 | `packages/addon-provider-onvif` | 9 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0522-home-is-a-stored-choice-not-a-vendor-convention.md`, +1 more | 2026-10-26 |
 | `packages/nx-plugin` | 9 | `tooling` | — | — |
@@ -154,7 +155,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/types/src/ir` | 7 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0963-infrared-control-is-two-caps-a-transport-on-the-board-and-a-remote-on-the-appliance-and-its-state-is-assumed-never-reported.md` | — |
 | `server/backend/src/boot` | 7 | `kernel`, `secrets` | `decisions/adr-0171-the-hub-core-api-is-on-the-mesh-before-the-first-addon-boots.md`, `decisions/adr-0707-a-browser-origin-reads-the-hub-only-from-an-allowlist-and-never-with-the-session-cookie.md`, `decisions/adr-0726-a-nodes-certificate-is-set-only-in-the-admin-ui-and-what-the-ui-shows-is-what-the-listener-serves.md`, +4 more | — |
 | `packages/addon-admin-ui/src/layouts` | 6 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-11-02 |
-| `packages/addon-import-alexa/src/migrations` | 6 | `ecosystem-exports` | `addons/addon-import-alexa.md` _(covers)_, `decisions/adr-1012-a-broker-is-referenced-by-id-and-owns-nothing-of-its-users.md`, `decisions/adr-1013-one-instance-model.md` | — |
 | `packages/addon-model-studio/src/ui` | 6 | `tooling` | `decisions/adr-1013-one-instance-model.md`, `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, +1 more | — |
 | `packages/addon-pipeline-orchestrator/src/node-benchmark` | 6 | — | `architecture/benchmark.md`, `decisions/adr-0791-the-node-benchmark-is-one-node-at-a-time-in-an-orchestrator-benchmark-mode-and-measured-on-the-node-beats-the-table.md`, `decisions/adr-1013-one-instance-model.md`, +1 more, 1 ADR | 2026-10-23 |
 | `packages/addon-post-analysis` | 6 | `post-analysis` | — | — |

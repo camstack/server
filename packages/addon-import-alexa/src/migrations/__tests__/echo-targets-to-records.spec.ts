@@ -70,7 +70,7 @@ async function world(initialRows: readonly unknown[]) {
   const setting = { rows: initialRows }
   const echo = echoRecordPortsOver(memory.records, silentLogger)
   const ports: Pick<AlexaMigrationPorts, 'readRows' | 'writeRows'> & typeof echo = {
-    readRows: () => setting.rows,
+    readRows: async () => setting.rows,
     writeRows: async (rows) => {
       setting.rows = rows
     },
@@ -112,9 +112,7 @@ describe('echo-targets-to-records', () => {
       echoId: 'echo-k',
       respectDnd: false,
     })
-    expect(await w.echo.readEchoRecord('echo-hall')).toMatchObject({
-      enabled: true,
-    })
+    expect(await w.echo.readEchoRecord('echo-hall')).toMatchObject({ enabled: true })
     expect(w.setting.rows).toEqual([])
     expect(outcomes.get(ECHO_TARGETS_TO_RECORDS_ID)).toMatchObject({
       result: { outcome: 'done', summary: { converted: 2 } },
@@ -171,7 +169,7 @@ describe('echo-targets-to-records', () => {
     expect(w.setting.rows).toEqual([OFF_ECHO])
     const store = echoTargetStoreOver(w.memory.records, {
       legacy: legacyEchoTargetsOver({
-        readRows: () => w.setting.rows,
+        readRows: async () => w.setting.rows,
         writeRows: w.ports.writeRows,
       }),
     })

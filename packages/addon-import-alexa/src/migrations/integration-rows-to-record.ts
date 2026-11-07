@@ -12,12 +12,12 @@ import {
   type IntegrationRowsApi,
   type IntegrationRowsPorts,
   type MigrationProcedureResult,
-  type RecordsAccess,
   type RowsMigrationLog,
   type SecretsAccess,
 } from '@camstack/types'
 import { z } from 'zod'
 import { alexaBrokersEntryKind } from '../broker-record-kinds.js'
+import type { PositionalRecordsDoor } from './records-door.js'
 
 export const INTEGRATION_ROWS_TO_RECORD_ID = 'import-alexa/2026-11-05-integration-rows-to-record'
 
@@ -90,8 +90,8 @@ export async function moveAlexaIntegrationRows(
 /** The hub side (the registry list, the migration-only door) and the broker records side. */
 export function alexaIntegrationRowsPorts(deps: {
   readonly api: IntegrationRowsApi
-  readonly records: Pick<RecordsAccess, 'kind'>
-  readonly secrets: SecretsAccess | null
+  readonly records: PositionalRecordsDoor
+  readonly secrets: Pick<SecretsAccess, 'resolve' | 'delete'> | null
   readonly warn: (message: string) => void
 }): AlexaIntegrationRowsPorts {
   const brokers = deps.records.kind(alexaBrokersEntryKind)

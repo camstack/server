@@ -11,7 +11,7 @@ import type { MigrationProcedureResult } from '@camstack/types'
 
 export interface EchoTargetMigrationPorts {
   /** The stored `echoTargets` value as written, one entry per row, unparsed. */
-  readRows(): readonly unknown[]
+  readRows(): Promise<readonly unknown[]>
   writeRows(rows: readonly unknown[]): Promise<void>
 }
 
@@ -33,7 +33,7 @@ function strippedRow(row: unknown): unknown {
 export async function stripEchoTargetVolumeAndMode(
   ports: EchoTargetMigrationPorts,
 ): Promise<MigrationProcedureResult> {
-  const rows = ports.readRows()
+  const rows = await ports.readRows()
   const stripped = rows.filter(carriesRetiredKey).length
   if (stripped === 0)
     return {

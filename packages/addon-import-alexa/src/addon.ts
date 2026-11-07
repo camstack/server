@@ -1,11 +1,11 @@
 import { randomUUID } from 'node:crypto'
+import { z } from 'zod'
 import {
   addonRoutesCapability,
   BaseDeviceProvider,
   brokerCapability,
   buildAddonRouteProvider,
   createEvent,
-  defineAddonMigrations,
   deviceAdoptionCapability,
   DeviceType,
   errMsg,
@@ -14,8 +14,6 @@ import {
   linkUserFinder,
   guardInstanceDelete,
   type InstanceUserFinder,
-  defaultIntegrationApiOver,
-  flattenPortsOver,
   composeInstanceKinds,
   notificationTargetParts,
   type IIntegrationInstancesProvider,
@@ -29,7 +27,6 @@ import {
   type IDevice,
   type IDeviceAdoptionProvider,
   type IntegrationInstanceRef,
-  type RecordsAccess,
   type RecordIntegrationInstances,
   notificationOutputCapability,
   VENDOR_LOGIN_PROXY_PREFIX,
@@ -62,7 +59,6 @@ import { alexaEchoSessions } from './alexa-echo-sessions.js'
 import {
   type AlexaBrokerBody,
   type AlexaConnectionBody,
-  alexaBrokersEntryKind,
   alexaRecordKinds,
 } from './broker-record-kinds.js'
 import { ALEXA_SIGN_IN_PATH, buildAlexaAccountInstances } from './alexa-account-instances.js'
@@ -73,7 +69,6 @@ import type { EchoSettingPorts } from './migrations/echo-targets-to-records.js'
 import { readBrokerSeed } from './speak/broker-seed.js'
 import {
   alexaNotifyRecordKinds,
-  echoRecordPortsOver,
   echoTargetProbe,
   echoTargetValidator,
   echoRowOf,
@@ -83,13 +78,8 @@ import {
 } from './speak/echo-store.js'
 import { alexaTargetKind } from './speak/provider.js'
 import { AlexaSpeakController } from './speak/controller.js'
-import {
-  ADDON_MIGRATIONS,
-  BROKER_RECORD_MIGRATION_IDS,
-  type AlexaMigrationPorts,
-  alexaIntegrationRowsPorts,
-  alexaBrokerLinkPorts,
-} from './migrations/index.js'
+import { ADDON_MIGRATIONS, BROKER_RECORD_MIGRATION_IDS } from './migrations/index.js'
+import { alexaPortsOver } from './migrations/ports.js'
 import { ALEXA_BROKER_KIND } from './speak/constants.js'
 import { speakIconRoutes } from './speak/icon-routes.js'
 import { RecordsSpeakSessionStore } from './speak/session-store.js'
@@ -173,10 +163,9 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
     })
     // The stored broker records move to the flat shape, and the integration link off them, BEFORE
     // anything reads or rewrites them (a rewrite would drop the retired link).
-    await this.runMigrations(
-      defineAddonMigrations(ADDON_MIGRATIONS, this.migrationPorts(records)),
-      { only: BROKER_RECORD_MIGRATION_IDS },
-    )
+    await this.runMigrations(ADDON_MIGRATIONS, (api) => alexaPortsOver(api), {
+      only: BROKER_RECORD_MIGRATION_IDS,
+    })
     this.activeBrokers = await this.loadPersistedBrokers()
     await this.adoptSessionFiles()
 
@@ -235,14 +224,11 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
       ...speakIconRoutes(),
     ]
 
-    await this.runMigrations(
-      defineAddonMigrations(ADDON_MIGRATIONS, this.migrationPorts(records)),
-      {
-        only: ADDON_MIGRATIONS.map((m) => m.meta.id).filter(
-          (id) => !BROKER_RECORD_MIGRATION_IDS.includes(id),
-        ),
-      },
-    )
+    await this.runMigrations(ADDON_MIGRATIONS, (api) => alexaPortsOver(api), {
+      only: ADDON_MIGRATIONS.map((m) => m.meta.id).filter(
+        (id) => !BROKER_RECORD_MIGRATION_IDS.includes(id),
+      ),
+    })
 
     // An Echo the migration could not move stays in the setting, and the store keeps serving it.
     const echoStore = echoTargetStoreOver(records, {
@@ -294,32 +280,15 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
     }
   }
 
-  /** The `echoTargets` setting, read and written as the migration and the legacy store see it. */
+  /**
+   * The `echoTargets` setting the legacy Echo store still serves: the addon's own durable state
+   * under the key it was always stored at, so a row an older release left there is still read.
+   */
   private echoSettingPorts(): EchoSettingPorts {
+    const rows = this.state<readonly unknown[]>('echoTargets', z.array(z.unknown()), [])
     return {
-      readRows: () => (Array.isArray(this.config.echoTargets) ? this.config.echoTargets : []),
-      writeRows: async (rows) => {
-        await this.updateGlobalSettings({
-          echoTargets: [...readEchoTargets({ echoTargets: rows })],
-        })
-      },
-    }
-  }
-
-  private migrationPorts(records: RecordsAccess): AlexaMigrationPorts {
-    const secrets = this.ctx.secrets
-    if (secrets === undefined) throw new Error('import-alexa: ctx.secrets is required')
-    return {
-      ...this.echoSettingPorts(),
-      ...flattenPortsOver(records.kind(alexaBrokersEntryKind)),
-      ...alexaBrokerLinkPorts(records, (message) => this.ctx.logger.warn(message)),
-      ...echoRecordPortsOver(records, this.ctx.logger),
-      ...alexaIntegrationRowsPorts({
-        api: defaultIntegrationApiOver(this.ctx.api),
-        records,
-        secrets,
-        warn: (message) => this.ctx.logger.warn(message),
-      }),
+      readRows: () => rows.get(),
+      writeRows: (next) => rows.set([...readEchoTargets({ echoTargets: next })]),
     }
   }
 
@@ -337,7 +306,10 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
             functionCap: 'broker',
             brokerKind: ALEXA_BROKER_KIND,
             role: 'services',
-            signIn: { basePath: ALEXA_SIGN_IN_PATH, methods: ['device-code', 'proxy'] },
+            signIn: {
+              basePath: ALEXA_SIGN_IN_PATH,
+              methods: ['device-code', 'proxy'],
+            },
           },
           provider: guardInstanceDelete(this.accountInstances.toProvider(), () =>
             this.brokerUsers(),
@@ -558,7 +530,9 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
       await this.proxyLogin?.dispose()
       await this.deviceCodeLogin?.dispose()
     } catch (err) {
-      this.ctx.logger.warn('Alexa: proxy-login dispose error', { meta: { error: errMsg(err) } })
+      this.ctx.logger.warn('Alexa: proxy-login dispose error', {
+        meta: { error: errMsg(err) },
+      })
     }
     this.proxyLogin = null
     this.deviceCodeLogin = null
@@ -568,7 +542,9 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
     try {
       await this.registry?.shutdown()
     } catch (err) {
-      this.ctx.logger.warn('Alexa: addon shutdown error', { meta: { error: errMsg(err) } })
+      this.ctx.logger.warn('Alexa: addon shutdown error', {
+        meta: { error: errMsg(err) },
+      })
     }
     alexaAccounts.clear()
     this.registry = null
@@ -613,7 +589,9 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
         const current = Array.isArray(cfg['capabilities']) ? cfg['capabilities'] : []
         if (capsEqual(current, nextCaps)) continue
 
-        await devices.applyDerivedSpec(d.id, { config: { capabilities: [...nextCaps] } })
+        await devices.applyDerivedSpec(d.id, {
+          config: { capabilities: [...nextCaps] },
+        })
         this.ctx.logger.info('Alexa: device capabilities reconciled', {
           meta: { brokerId, deviceId: d.id, capCount: nextCaps.length },
         })
