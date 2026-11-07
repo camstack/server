@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
 - Terminals are now instances: the Terminal cap's instance methods are retired in favour of the shared instance records
 
 ## [1.2.792] - 2026-11-07
