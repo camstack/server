@@ -388,6 +388,13 @@ retired the two sections: the Extensions widget is the only editor.
   are its bindings. `listSlots` fans out and an owner that throws is an
   `unreachable` row, never an absence. `listCandidates` / `setSlot` route by the
   `slotRef` prefix (`<source>:<slotId>`).
+- **The slot is editable from the other side, with no second store.** A device
+  a camera can link (any source but a container, read off the slot descriptor's
+  `sourceCaps` and `hostDeviceTypes`) shows the same Customize table over the
+  cameras only. A tick is a read-modify-write of THAT camera's slot through
+  `setSlot`, from the slot just read: the camera's other ids and its opt-in are
+  carried untouched, and a camera whose read is pending or failed is disabled
+  with the reason, never shown unlinked.
 - **Each owner serves its slot over the store it already has**, through the
   owner's one write path (`applyLinkedDevicesPatch`).
   Nothing is migrated. The `linked-devices` value also carries the

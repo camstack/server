@@ -4,7 +4,7 @@
  * dialog. Tracked = on camera timeline only — notification stills follow the
  * link alone.
  */
-import { type DeviceInfo, EXTENSION_HOST_DEVICE_TYPES } from '@camstack/types'
+import type { DeviceInfo } from '@camstack/types'
 import {
   DeviceList,
   type DeviceListColumn,
@@ -33,6 +33,8 @@ import { useRoomSuggestions } from '../assignments/use-room-suggestions'
 import { useCandidateDevices } from '../assignments/use-source-candidates'
 import type { Known } from '../known'
 import { useConfirmRemove } from '../use-confirm-remove'
+import { LinkedNameCell } from './LinkedNameCell'
+import { LinkedToCamerasTable } from './LinkedToCamerasTable'
 import {
   type LinkedRow,
   type LinkedSlotValue,
@@ -40,6 +42,7 @@ import {
   linkedRows,
   linkedSlotOf,
   orphanTrackedIds,
+  slotRelationOf,
   withLinked,
   withoutLinked,
   withTracked,
@@ -60,16 +63,27 @@ function errorMessage(error: { readonly message: string } | null | undefined): s
   return error === null || error === undefined ? null : error.message
 }
 
+/**
+ * One table, two directions: a camera lists the devices it links (the slot it
+ * hosts); a device a camera can link lists the cameras, a tick being its own
+ * membership in each camera's list. A container is never a pick: no table.
+ */
 export function LinkedDevicesTable({ device }: LinkedDevicesTableProps): ReactNode {
+  const relation = slotRelationOf('linked-devices', device.type)
+  if (relation === 'host') return <HostLinkedDevicesTable device={device} />
+  if (relation === 'guest') return <LinkedToCamerasTable device={device} />
+  return null
+}
+
+function HostLinkedDevicesTable({ device }: LinkedDevicesTableProps): ReactNode {
   const uiText = useUiText()
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const confirmRemove = useConfirmRemove()
-  const isHost = EXTENSION_HOST_DEVICE_TYPES.includes(device.type)
   const [picking, setPicking] = useState(false)
   const [busy, setBusy] = useState(false)
   const [refusal, setRefusal] = useState<string | null>(null)
-  const slots = useDeviceExtensionListSlots({ deviceId: device.id }, { enabled: isHost })
+  const slots = useDeviceExtensionListSlots({ deviceId: device.id }, { enabled: true })
   const read = linkedSlotOf({
     status: slots.status,
     data: slots.data,
@@ -84,16 +98,14 @@ export function LinkedDevicesTable({ device }: LinkedDevicesTableProps): ReactNo
         ]
       : []
   const setSlot = useDeviceExtensionSetSlot()
-  const fleet = useCandidateDevices(
-    isHost && read.kind === 'present' && (picking || shownIds.length > 0),
-  )
+  const fleet = useCandidateDevices(read.kind === 'present' && (picking || shownIds.length > 0))
   // The room's suggestions are counted on the header, so the owner's candidates are read while it can add.
-  const room = useRoomSuggestions(device.location, isHost && read.kind === 'present')
+  const room = useRoomSuggestions(device.location, read.kind === 'present')
   const offered = useDeviceExtensionListCandidates(
     { deviceId: device.id, slotRef },
     { enabled: (picking || room !== null) && read.kind === 'present' },
   )
-  if (!isHost || read.kind === 'absent') return null
+  if (read.kind === 'absent') return null
 
   if (read.kind !== 'present') {
     return (
@@ -189,11 +201,7 @@ export function LinkedDevicesTable({ device }: LinkedDevicesTableProps): ReactNo
       key: 'device',
       header: t('customize.linked.device'),
       cell: (r) => (
-        <div className="flex flex-col min-w-0">
-          <span className="truncate text-xs text-foreground">{r.name ?? `#${r.deviceId}`}</span>
-          {r.detail !== null && (
-            <span className="truncate text-[11px] text-foreground-subtle">{r.detail}</span>
-          )}
+        <LinkedNameCell name={r.name} deviceId={r.deviceId} detail={r.detail}>
           {r.orphan && (
             <span className="text-[11px] text-foreground-subtle">
               {t('customize.linked.notLinked')}
@@ -204,7 +212,7 @@ export function LinkedDevicesTable({ device }: LinkedDevicesTableProps): ReactNo
               {t(`customize.linked.health.${r.health}`)}
             </span>
           )}
-        </div>
+        </LinkedNameCell>
       ),
     },
     {

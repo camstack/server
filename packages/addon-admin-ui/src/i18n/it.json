@@ -2634,7 +2634,14 @@
         "unavailable": "non è un collegamento valido ora"
       },
       "removeWhat": "Il collegamento a {{name}}",
-      "notLinked": "non più collegato — ancora in timeline"
+      "notLinked": "non più collegato — ancora in timeline",
+      "reverseTitle": "Collegato alle telecamere",
+      "camera": "Telecamera",
+      "linkedColumn": "Collegato",
+      "linkTo": "Collegato a {{name}}",
+      "impliedByStructure": "Collegato tramite il suo dispositivo padre",
+      "noCameras": "Nessuna telecamera a cui collegarlo.",
+      "reverseHint": "Una spunta aggiunge questo dispositivo ai dispositivi collegati della telecamera; i suoi controlli compaiono con la telecamera."
     },
     "advancedLink": "Avanzate — editor delle espressioni",
     "suggest": {

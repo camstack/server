@@ -14,8 +14,8 @@ const cameraHandler = (path: string): ((i: unknown) => unknown) | undefined => {
   return typeof h === 'function' ? (i: unknown) => (h as (x: unknown) => unknown)(i) : undefined
 }
 
-/** The metered-plug pages the Power and energy shots open (410 to 414). */
-const PLUG_IDS: readonly number[] = [410, 411, 412, 413, 414]
+/** The metered-plug pages the Power and energy shots open (410 to 414), and the Porch light (303), a device a camera links to. */
+const PLUG_IDS: readonly number[] = [303, 410, 411, 412, 413, 414]
 
 const device = (id: number, name: string, location: string, type: string, isCamera = false) => ({
   id,

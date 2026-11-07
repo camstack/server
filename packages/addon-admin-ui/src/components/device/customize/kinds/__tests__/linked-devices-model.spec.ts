@@ -5,7 +5,10 @@ import {
   linkedRows,
   type LinkedSlotValue,
   linkedSlotOf,
+  linksDevice,
   orphanTrackedIds,
+  slotRelationOf,
+  withLinkToggled,
   withLinked,
   withoutLinked,
   withTracked,
@@ -121,5 +124,26 @@ describe('linked rows and writes', () => {
   it('a stored opt-in outside the linked set is an orphan to show — picks and implied devices are not (review M2)', () => {
     expect(orphanTrackedIds(SLOT, { ...VALUE, trackedDeviceIds: [702, 710, 703] })).toEqual([703])
     expect(orphanTrackedIds(SLOT, { slot: 'linked-devices', deviceIds: [701, 702] })).toEqual([])
+  })
+})
+
+describe("the slot from the device's side", () => {
+  it('a camera hosts it; any other device but a container is a guest; a container is neither', () => {
+    expect(slotRelationOf('linked-devices', 'camera')).toBe('host')
+    expect(slotRelationOf('linked-devices', 'light')).toBe('guest')
+    expect(slotRelationOf('linked-devices', 'container')).toBeNull()
+  })
+  it("a tick keeps the camera's other ids and opt-in; an untick drops only this device", () => {
+    expect(withLinkToggled(VALUE, 703, true)).toEqual({ ...VALUE, deviceIds: [701, 702, 703] })
+    expect(withLinkToggled(VALUE, 701, false)).toEqual({
+      ...VALUE,
+      deviceIds: [702],
+      trackedDeviceIds: [702],
+    })
+  })
+  it('linked by the pick or by structure, and the structural one is flagged', () => {
+    expect(linksDevice(SLOT, VALUE, 701)).toEqual({ linked: true, implied: false })
+    expect(linksDevice(SLOT, VALUE, 710)).toEqual({ linked: true, implied: true })
+    expect(linksDevice(SLOT, VALUE, 999)).toEqual({ linked: false, implied: false })
   })
 })

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Local access, the Terminal configuration and the passkey relying-party card read their own scoped settings form instead of the retired addon-level one
+- A device that a camera can link (a light, a sensor, a switch) now shows the cameras on its Customize tab, so you can tick which cameras link it without leaving the device.
 
 ## [1.2.610] - 2026-11-07
 

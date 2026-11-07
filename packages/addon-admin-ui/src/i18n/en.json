@@ -2559,7 +2559,14 @@
         "unavailable": "not a valid link now"
       },
       "removeWhat": "The link to {{name}}",
-      "notLinked": "no longer linked — still on timeline"
+      "notLinked": "no longer linked — still on timeline",
+      "reverseTitle": "Linked to cameras",
+      "camera": "Camera",
+      "linkedColumn": "Linked",
+      "linkTo": "Linked to {{name}}",
+      "impliedByStructure": "Linked through its parent",
+      "noCameras": "No cameras to link yet.",
+      "reverseHint": "A tick adds this device to that camera's linked devices; its controls then show with the camera."
     },
     "advancedLink": "Advanced — expression editor",
     "suggest": {

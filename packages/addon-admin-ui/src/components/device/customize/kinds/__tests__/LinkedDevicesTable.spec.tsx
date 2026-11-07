@@ -158,9 +158,9 @@ beforeEach(() => {
 })
 
 describe('LinkedDevicesTable (spec U7)', () => {
-  it('only on an extension host', () => {
+  it('only on an extension host (a container is never a pick)', () => {
     const { container } = render(
-      wrap(<LinkedDevicesTable device={{ ...CAMERA, type: DeviceType.PetFeeder }} />),
+      wrap(<LinkedDevicesTable device={{ ...CAMERA, type: DeviceType.Container }} />),
     )
     expect(container.textContent).toBe('')
   })

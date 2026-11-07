@@ -4,12 +4,15 @@
  * unknown id — D648 rule 4; tracked outside the linked set — D655); this file
  * only builds values the owner would accept from what it READ (D49).
  */
-import type {
-  ExtensionCandidate,
-  ExtensionSlotRow,
-  ExtensionSlotState,
-  ExtensionSlotValue,
-  ExtensionSourceHealth,
+import {
+  DeviceType,
+  EXTENSION_SLOTS,
+  type ExtensionCandidate,
+  type ExtensionSlotId,
+  type ExtensionSlotRow,
+  type ExtensionSlotState,
+  type ExtensionSlotValue,
+  type ExtensionSourceHealth,
 } from '@camstack/types'
 import {
   type AssignmentCandidate,
@@ -19,13 +22,33 @@ import {
 import type { QueryLike } from '../known'
 import i18n from '../../../../i18n/index'
 
+/**
+ * Which side of the `linked-devices` slot a device is on. The slot is hosted by
+ * a camera; the owner accepts any other device as a source except a container
+ * (its children are picked in its place). So a hosting type edits its own list
+ * (`host`) and a linkable one is edited from the cameras that list it
+ * (`guest`) — read off the slot's descriptor, never off a device type named here.
+ */
+export type SlotRelation = 'host' | 'guest'
+
+export function slotRelationOf(slotId: ExtensionSlotId, deviceType: string): SlotRelation | null {
+  const slot = EXTENSION_SLOTS[slotId]
+  if (slot.hostDeviceTypes.some((t) => t === deviceType)) return 'host'
+  const acceptsAnySource = slot.descriptor.sourceCaps === 'any'
+  return acceptsAnySource && deviceType !== DeviceType.Container ? 'guest' : null
+}
+
 export type LinkedSlotValue = Extract<ExtensionSlotValue, { readonly slot: 'linked-devices' }>
 
 export type LinkedSlotRead =
   | { readonly kind: 'pending' }
   | { readonly kind: 'unknown'; readonly reason: string }
   | { readonly kind: 'absent' }
-  | { readonly kind: 'present'; readonly slot: ExtensionSlotState; readonly value: LinkedSlotValue }
+  | {
+      readonly kind: 'present'
+      readonly slot: ExtensionSlotState
+      readonly value: LinkedSlotValue
+    }
 
 function isLinkedValue(value: ExtensionSlotValue): value is LinkedSlotValue {
   return value.slot === 'linked-devices'
@@ -128,4 +151,29 @@ export function linkedCandidates(
       },
     ]
   })
+}
+
+/**
+ * The camera's list with one device ticked or unticked — read-modify-write from
+ * the slot AS READ (D49). Everything else the camera stores, its other ids and
+ * its tracked opt-in, is carried untouched; only an untick drops this device's
+ * own opt-in (the owner would refuse one outside the linked set).
+ */
+export function withLinkToggled(
+  value: LinkedSlotValue,
+  deviceId: number,
+  linked: boolean,
+): LinkedSlotValue {
+  return linked ? withLinked(value, [deviceId]) : withoutLinked(value, deviceId)
+}
+
+/** Is `deviceId` in the camera's linked set, by the pick or by structure (a tree child, a container pick's child)? */
+export function linksDevice(
+  slot: ExtensionSlotState,
+  value: LinkedSlotValue,
+  deviceId: number,
+): { readonly linked: boolean; readonly implied: boolean } {
+  if (value.deviceIds.includes(deviceId)) return { linked: true, implied: false }
+  const implied = (slot.impliedSources ?? []).some((s) => s.deviceId === deviceId)
+  return { linked: implied, implied }
 }
