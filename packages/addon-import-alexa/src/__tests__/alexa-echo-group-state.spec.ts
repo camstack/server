@@ -51,16 +51,18 @@ function session(players: Record<string, PlayerInfo>, devices: readonly EchoDevi
   return { fake, playerState }
 }
 
-async function build(serial: string): Promise<{ device: AlexaEchoDevice; logs: LogLine[] }> {
+async function build(
+  serial: string,
+): Promise<{ device: AlexaEchoDevice; logs: LogLine[]; providers: Map<string, unknown> }> {
   const logs: LogLine[] = []
-  const { ctx } = makeCtx(
+  const { ctx, providers } = makeCtx(
     { brokerId: 'b', serial, deviceType: 'T1', system: 'alexa' },
     { type: DeviceType.MediaPlayer, logs },
   )
   const device = new AlexaEchoDevice(ctx)
   await device.onActivate()
   await vi.advanceTimersByTimeAsync(0)
-  return { device, logs }
+  return { device, logs, providers }
 }
 
 function media(device: AlexaEchoDevice): Record<string, unknown> | undefined {
@@ -140,5 +142,59 @@ describe('AlexaEchoDevice in a speaker group', () => {
     expect(playerState.mock.calls.filter((c) => c[0] === 'G1')).toHaveLength(1)
     await a.device.removeDevice()
     await b.device.removeDevice()
+  })
+})
+
+describe('AlexaEchoDevice group player cache', () => {
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => {
+    vi.useRealTimers()
+    alexaEchoSessions.clear()
+  })
+
+  it('a command invalidates the cached group answer so the re-read sees the new state', async () => {
+    const players: Record<string, PlayerInfo> = { G1: GROUP_PLAYING }
+    const { fake, playerState } = session(players, [echo('S1', ['G1']), GROUP])
+    alexaEchoSessions.setResolver(() => fake)
+    const { device, providers } = await build('S1')
+    expect(media(device)).toMatchObject({ state: 'playing' })
+    players.G1 = { state: 'PAUSED', infoText: { title: 'Song' } }
+    const player = providers.get('media-player') as {
+      pause(input: { deviceId: number }): Promise<void>
+    }
+    await player.pause({ deviceId: 7 })
+    await vi.advanceTimersByTimeAsync(2_000)
+    expect(media(device)).toMatchObject({ state: 'paused' })
+    expect(playerState.mock.calls.filter((c) => c[0] === 'G1')).toHaveLength(2)
+    await device.removeDevice()
+  })
+
+  it('a failed group read leaves the own answer and is not cached', async () => {
+    const { fake, playerState } = session({ G1: GROUP_PLAYING }, [echo('S1', ['G1']), GROUP])
+    let fail = true
+    playerState.mockImplementation(async (serial: string): Promise<PlayerInfo> => {
+      if (serial === 'G1') {
+        if (fail) throw new Error('boom')
+        return GROUP_PLAYING
+      }
+      return {}
+    })
+    alexaEchoSessions.setResolver(() => fake)
+    const { device } = await build('S1')
+    expect(media(device)).toMatchObject({ state: 'idle', currentMedia: null })
+    fail = false
+    const b = await build('S1')
+    expect(media(b.device)).toMatchObject({ state: 'playing' })
+    await device.removeDevice()
+    await b.device.removeDevice()
+  })
+
+  it('the cache expires after 25 seconds', async () => {
+    const { fake, playerState } = session({ G1: GROUP_PLAYING }, [echo('S1', ['G1']), GROUP])
+    alexaEchoSessions.setResolver(() => fake)
+    const { device } = await build('S1')
+    await vi.advanceTimersByTimeAsync(30_000)
+    expect(playerState.mock.calls.filter((c) => c[0] === 'G1')).toHaveLength(2)
+    await device.removeDevice()
   })
 })

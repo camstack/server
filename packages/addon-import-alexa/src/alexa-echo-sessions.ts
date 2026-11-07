@@ -123,7 +123,14 @@ export class EchoSessionRegistry implements EchoPushSink {
   /** Forget the shared volume list: a list fetched before a set must not answer a poll after it. */
   invalidateVolumes(brokerId: string): void {
     this.#volumes.delete(brokerId)
-    this.#groupPlayers.clear()
+  }
+
+  /** Forget the shared group players: a transport command or a push makes a cached group answer stale. */
+  invalidateGroupPlayers(brokerId: string): void {
+    const prefix = `${brokerId}\u0000`
+    for (const key of [...this.#groupPlayers.keys()]) {
+      if (key.startsWith(prefix)) this.#groupPlayers.delete(key)
+    }
   }
 
   /** Forget the shared Do Not Disturb list, for the same reason. */
@@ -145,6 +152,7 @@ export class EchoSessionRegistry implements EchoPushSink {
   event(brokerId: string, serial: string): void {
     // The push read must not be served from the shared lists a poll fetched moments ago.
     this.invalidateVolumes(brokerId)
+    this.invalidateGroupPlayers(brokerId)
     this.invalidateDnd(brokerId)
     for (const listener of [...(this.#pushListeners.get(`${brokerId}\u0000${serial}`) ?? [])])
       listener()

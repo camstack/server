@@ -381,6 +381,8 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
 
   private async command(command: NpCommand): Promise<void> {
     await this.session().npCommand(this.serial, command, this.id)
+    // The re-read must not be answered by a group state fetched before the command.
+    alexaEchoSessions.invalidateGroupPlayers(this.brokerId)
     this.rereadSoon()
   }
 
