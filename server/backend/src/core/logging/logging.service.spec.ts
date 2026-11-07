@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import * as os from 'node:os'
-import * as yaml from 'js-yaml'
 import { LogRingBuffer } from './log-ring-buffer'
 import { ScopedLogger } from './scoped-logger'
 import { LoggingService } from './logging.service'
@@ -12,9 +11,8 @@ import type { LogEntry, ILogDestination } from '@camstack/types'
 
 /**
  * In-memory settings store used by the test to drive `ConfigService.get`
- * for the `eventBus.ringBufferSize` key. The bootstrap YAML schema does not
- * declare `eventBus`, so writing it to the YAML file would be discarded by
- * `bootstrapSchema.parse`. Wiring an ISettingsStore is the clean path to
+ * for the `eventBus.ringBufferSize` key. The bootstrap schema does not
+ * declare `eventBus`, so it could not be set there (`bootstrapSchema.parse` strips it). Wiring an ISettingsStore is the clean path to
  * feed runtime values into `ConfigService` without casts.
  */
 class InMemorySettingsStore implements ISettingsStore {
@@ -206,16 +204,7 @@ describe('LoggingService', () => {
   })
 
   const createService = (bufferSize = 100): LoggingService => {
-    const configPath = path.join(tmpDir, 'config.yaml')
-    fs.writeFileSync(
-      configPath,
-      yaml.dump({
-        server: { port: 4443 },
-        auth: { adminPassword: 'secret123' },
-      }),
-      'utf-8',
-    )
-    const configService = new ConfigService(configPath)
+    const configService = new ConfigService()
     configService.setSettingsStore(
       new InMemorySettingsStore({
         'eventBus.ringBufferSize': bufferSize,

@@ -7,7 +7,6 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import * as yaml from 'js-yaml'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { ILogDestination, LogReadQuery, LogReadResult } from '@camstack/types'
 import { ConfigService } from '../../../core/config/config.service.js'
@@ -86,9 +85,7 @@ let tmp: string
 let logging: LoggingService
 beforeEach(() => {
   tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'camstack-logs-router-'))
-  const configPath = path.join(tmp, 'config.yaml')
-  fs.writeFileSync(configPath, yaml.dump({ server: { port: 4443 } }), 'utf-8')
-  logging = new LoggingService(new ConfigService(configPath))
+  logging = new LoggingService(new ConfigService())
 })
 afterEach(() => {
   fs.rmSync(tmp, { recursive: true, force: true })

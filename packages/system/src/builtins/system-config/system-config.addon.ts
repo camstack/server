@@ -56,7 +56,7 @@ import { systemConfigRecordKinds } from './record-kinds.js'
  * state of their own (the session token lifetime).
  *
  * Sections exposed — this list is the whole of it:
- *   - server     (port, host, dataPath — READ-ONLY, loaded from config.yaml at bootstrap;
+ *   - server     (port, host, dataPath — READ-ONLY, set by CAMSTACK_PORT / CAMSTACK_HOST / CAMSTACK_DATA;
  *                 name = the hub's human name, `server.name`, editable — D861)
  *   - auth       (tokenExpiry = session lifetime, accessTokenExpiry, trustedProxies,
  *                 trustedNetworks, corsOrigins)
@@ -421,7 +421,7 @@ export class SystemConfigAddon extends BaseAddon {
           id: 'system-config-server',
           title: SECTION_TITLES['server']!,
           description:
-            'The name of this server, and its connection settings (read-only, loaded from config.yaml at bootstrap).',
+            'The name of this server, and its connection settings (read-only, set by the environment).',
           descriptionKey: 'server:global.s_system-config-server.description',
           columns: 2,
           fields: [
@@ -441,7 +441,7 @@ export class SystemConfigAddon extends BaseAddon {
               label: 'Restart required',
               labelKey: 'server:global.s_system-config-server.server-restart-note.label',
               content:
-                'Port, host and data path are read-only. Change them in config.yaml and restart.',
+                'Port, host and data path are read-only: set the environment variables CAMSTACK_PORT, CAMSTACK_HOST and CAMSTACK_DATA, then restart.',
               variant: 'warning',
             },
             {
@@ -449,7 +449,7 @@ export class SystemConfigAddon extends BaseAddon {
               key: 'port',
               label: 'Port',
               labelKey: 'server:global.s_system-config-server.port.label',
-              description: 'Listening port',
+              description: 'Listening port (CAMSTACK_PORT)',
               descriptionKey: 'server:global.s_system-config-server.port.description',
               disabled: true,
             },
@@ -458,7 +458,7 @@ export class SystemConfigAddon extends BaseAddon {
               key: 'host',
               label: 'Host',
               labelKey: 'server:global.s_system-config-server.host.label',
-              description: 'Bind address',
+              description: 'Bind address (CAMSTACK_HOST)',
               descriptionKey: 'server:global.s_system-config-server.host.description',
               disabled: true,
             },
@@ -467,7 +467,7 @@ export class SystemConfigAddon extends BaseAddon {
               key: 'dataPath',
               label: 'Data Path',
               labelKey: 'server:global.s_system-config-server.dataPath.label',
-              description: 'Root data directory',
+              description: 'Root data directory (CAMSTACK_DATA)',
               descriptionKey: 'server:global.s_system-config-server.dataPath.description',
               disabled: true,
               span: 2,

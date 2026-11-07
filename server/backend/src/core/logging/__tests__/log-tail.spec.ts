@@ -8,7 +8,6 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import * as yaml from 'js-yaml'
 import type { ILogDestination, LogEntry } from '@camstack/types'
 import { ConfigService } from '../../config/config.service'
 import {
@@ -39,9 +38,7 @@ describe('LoggingService — the in-memory tail (D898)', () => {
   })
 
   const createService = (): LoggingService => {
-    const configPath = path.join(tmpDir, 'config.yaml')
-    fs.writeFileSync(configPath, yaml.dump({ server: { port: 4443 } }), 'utf-8')
-    return new LoggingService(new ConfigService(configPath))
+    return new LoggingService(new ConfigService())
   }
 
   it('replays every boot line to the history destination, then shrinks to the tail', () => {

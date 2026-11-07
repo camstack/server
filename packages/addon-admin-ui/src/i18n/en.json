@@ -4783,7 +4783,7 @@
       "offBackupsAreNotEncrypted": "Off — backups are not encrypted",
       "replaceKey": "Replace key",
       "enableEncryption": "Enable encryption",
-      "archivesAreEncryptedOnThis": "Archives are encrypted on this server before they reach any destination. The server keeps only a public key, so it can encrypt scheduled backups but cannot decrypt them — only your backup key can. Covers the database snapshot, config.yaml, addon data (HomeKit pairing, Matter fabric, Tailscale state) and TLS.",
+      "archivesAreEncryptedOnThis": "Archives are encrypted on this server before they reach any destination. The server keeps only a public key, so it can encrypt scheduled backups but cannot decrypt them — only your backup key can. Covers the database snapshot, addon data (HomeKit pairing, Matter fabric, Tailscale state) and TLS.",
       "olderKeysBackupsMadeWith": "Older keys (backups made with them still need them):"
     },
     "backupEntriesTable": {
@@ -5680,7 +5680,7 @@
       "noValueCanBeRead": "No value can be read or stored. If the master key is lost for good, Reset archives every stored value and starts a new keychain; every secret field then reads “not set”.",
       "withoutACopyOfThe": "Without a copy of the master key, the stored values cannot be recovered.",
       "theKeychainUnlockedWithA": "The keychain unlocked with a previous key. Rotate to move onto the configured one.",
-      "backupKeyFile": "CamStack’s own backups leave the key out, but a backup of the whole data directory (an appdata tar) carries both. Point <code>keychain.keyFile</code> in config.yaml at a file outside the data volume, keep the old one as <code>keychain.previousKeyFile</code>, restart, then rotate.",
+      "backupKeyFile": "CamStack’s own backups leave the key out, but a backup of the whole data directory (an appdata tar) carries both. Mount the key file at <code>/run/secrets/camstack-master-key</code>, outside the data volume, keep the old one at <code>/run/secrets/camstack-master-key.previous</code>, restart, then rotate.",
       "resetByTrigger": "the RESET_KEYCHAIN trigger file",
       "resetByAdmin": "an admin ({{actor}})",
       "resetDetail": "Reset on {{when}} by {{by}}. {{archived}} stored value(s) were archived — unreadable without the lost master key. Everyone was signed out once."

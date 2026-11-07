@@ -7,8 +7,8 @@ import { loadBootstrapConfig } from '../boot-config'
 
 /**
  * #342: there is ONE bootstrap loader (the kernel's). The hub's `main.ts` and
- * `ConfigManager` come through it, so a yaml key or env override applies in
- * both — `CAMSTACK_PORT` and a dead yaml key used to behave differently per loader.
+ * `ConfigManager` come through it, so an env override applies in both.
+ * A leftover config.yaml is read only by the one-release transition module (D1018).
  */
 describe('one bootstrap loader', () => {
   let dir: string
@@ -26,7 +26,7 @@ describe('one bootstrap loader', () => {
     vi.restoreAllMocks()
   })
 
-  it('a yaml carrying every dead key boots with them ignored, in both views', () => {
+  it('a leftover yaml carrying every dead key boots with them ignored, in both views', () => {
     fs.writeFileSync(
       configPath,
       [
@@ -41,9 +41,10 @@ describe('one bootstrap loader', () => {
         '',
       ].join('\n'),
     )
+    vi.stubEnv('CONFIG_PATH', configPath)
+    vi.stubEnv('CAMSTACK_PORT', '')
     const warn = vi.spyOn(console, 'warn')
-    const config = loadBootstrapConfig(configPath)
-    const manager = new ConfigManager(configPath)
+    const config = loadBootstrapConfig()
 
     const installSourceWarns = warn.mock.calls.filter((c) =>
       String(c[0]).includes('bootstrap.installSource'),
@@ -53,6 +54,7 @@ describe('one bootstrap loader', () => {
       String(c[0]).includes('bootstrap.requiredAddons'),
     )
     expect(requiredAddonsWarns).toHaveLength(1)
+    const manager = new ConfigManager()
     expect('requiredAddons' in config.bootstrap).toBe(false)
     expect('installSource' in config.bootstrap).toBe(false)
     expect(Object.keys(config).sort()).toEqual(['bootstrap', 'server'])
@@ -78,7 +80,7 @@ describe('one bootstrap loader', () => {
       vi.stubEnv(name, 'set-in-the-container')
     }
     const warn = vi.spyOn(console, 'warn')
-    loadBootstrapConfig(configPath)
+    loadBootstrapConfig()
     const warned = warn.mock.calls.map((c) => c.map(String).join(' ')).join('\n')
     expect(warned).not.toMatch(/CAMSTACK_JWT_SECRET|CAMSTACK_CORS_ORIGINS|HF_TOKEN|ignored/)
   })
@@ -91,8 +93,8 @@ describe('one bootstrap loader', () => {
 
   it('an env override reaches both views', () => {
     vi.stubEnv('CAMSTACK_PORT', '6262')
-    expect(loadBootstrapConfig(configPath).server.port).toBe(6262)
-    expect(new ConfigManager(configPath).getBootstrap<number>('server.port')).toBe(6262)
+    expect(loadBootstrapConfig().server.port).toBe(6262)
+    expect(new ConfigManager().getBootstrap<number>('server.port')).toBe(6262)
   })
 
   it('no second loader exists in the hub backend or the system package', () => {

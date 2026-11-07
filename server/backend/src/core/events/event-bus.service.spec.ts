@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import * as os from 'node:os'
-import * as yaml from 'js-yaml'
 import { ServiceBroker } from 'moleculer'
 import { EventBusService } from './event-bus.service'
 import { ConfigService } from '../config/config.service'
@@ -23,9 +22,8 @@ const makeEvent = (category: string, overrides: Partial<SystemEvent> = {}): Syst
 
 /**
  * In-memory settings store used by the test to drive `ConfigService.get`
- * for the `eventBus.ringBufferSize` key. The bootstrap YAML schema does not
- * declare `eventBus`, so writing it to the YAML file would be discarded by
- * `bootstrapSchema.parse`. Wiring an ISettingsStore is the clean path to
+ * for the `eventBus.ringBufferSize` key. The bootstrap schema does not
+ * declare `eventBus`, so it could not be set there (`bootstrapSchema.parse` strips it). Wiring an ISettingsStore is the clean path to
  * feed runtime values into `ConfigService` without casts.
  */
 class InMemorySettingsStore implements ISettingsStore {
@@ -82,16 +80,7 @@ describe('EventBusService', () => {
   })
 
   const createService = async (bufferSize = 100): Promise<EventBusService> => {
-    const configPath = path.join(tmpDir, 'config.yaml')
-    fs.writeFileSync(
-      configPath,
-      yaml.dump({
-        server: { port: 4443 },
-        auth: { adminPassword: 'secret123' },
-      }),
-      'utf-8',
-    )
-    const configService = new ConfigService(configPath)
+    const configService = new ConfigService()
     configService.setSettingsStore(
       new InMemorySettingsStore({
         'eventBus.ringBufferSize': bufferSize,

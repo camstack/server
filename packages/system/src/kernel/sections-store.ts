@@ -6,7 +6,7 @@
  *
  * A section a bootstrap file owns (`auth`, `server`, ...) is answered only for
  * the keys the store may answer ({@link storeMayAnswer}); the rest of such a
- * section is env + config.yaml and lives in the hub process alone.
+ * section is the environment and built-in defaults and lives in the hub process alone.
  */
 import type { ISettingsStoreProvider } from '@camstack/types'
 import { storeMayAnswer } from './system-settings-policy.js'

@@ -24,8 +24,6 @@ import { CapabilityRegistry } from '../capability-registry.js'
 import { ConfigManager } from '../config-manager.js'
 import { isSettingsReadUnavailable, type SettingsReadRefusal } from '../settings-read-error.js'
 
-const NO_CONFIG_FILE = path.join(__dirname, 'no-such-config.yaml')
-
 const tmpDirs: string[] = []
 const backends: SqliteSettingsBackend[] = []
 
@@ -89,7 +87,7 @@ async function expectRefusalAsync(p: Promise<unknown>, reason: SettingsReadRefus
 /** A ConfigManager wired exactly as the hub wires it: door only. */
 async function doorOnly(): Promise<{ cm: ConfigManager; door: ISettingsStoreProvider }> {
   const door = await realDoor()
-  const cm = new ConfigManager(NO_CONFIG_FILE)
+  const cm = new ConfigManager()
   cm.setSettingsDoor(door)
   await cm.whenSystemSettingsPreloaded()
   return { cm, door }
@@ -103,7 +101,7 @@ describe('addon-scoped sync readers refuse on an isolated engine', () => {
   })
 
   it('getAddonConfig THROWS (not-wired) before any backend exists', () => {
-    const cm = new ConfigManager(NO_CONFIG_FILE)
+    const cm = new ConfigManager()
     expectRefusal(() => cm.getAddonConfig('device-manager'), 'not-wired')
   })
 })
@@ -128,13 +126,13 @@ describe('readAddonGlobalStrict — the three-way read behind addonSettingsRaw.g
 
   it('THROWS (read-failed) when the door cannot be read — never `{}`', async () => {
     const door = await realDoor()
-    const cm = new ConfigManager(NO_CONFIG_FILE)
+    const cm = new ConfigManager()
     cm.setSettingsDoor(failingReads(door))
     await expectRefusalAsync(cm.readAddonGlobalStrict('device-manager'), 'read-failed')
   })
 
   it('THROWS (not-wired) before any backend exists', async () => {
-    const cm = new ConfigManager(NO_CONFIG_FILE)
+    const cm = new ConfigManager()
     await expectRefusalAsync(cm.readAddonGlobalStrict('device-manager'), 'not-wired')
   })
 
@@ -170,7 +168,7 @@ describe('system-settings readers on an isolated engine', () => {
 
   it('the view getSection THROWS when the door cannot be read — the form must not show defaults as saved', async () => {
     const door = await realDoor()
-    const cm = new ConfigManager(NO_CONFIG_FILE)
+    const cm = new ConfigManager()
     cm.setSettingsDoor(failingReads(door))
     await expect(cm.createSettingsView('system-config').getSection('auth')).rejects.toThrow(
       'settings door timed out',
@@ -187,7 +185,7 @@ describe('capability preferences are loaded from the door at boot (D675)', () =>
   it('a preference saved before a reboot is what get() reports after it', async () => {
     const door = await realDoor()
     // Life 1: the operator's choice, persisted the way `setPreference` does.
-    const first = new ConfigManager(NO_CONFIG_FILE)
+    const first = new ConfigManager()
     first.setSettingsDoor(door)
     await first.whenSystemSettingsPreloaded()
     await first.set('capabilities.singleton.decoder', 'decoder-gpu')
@@ -196,7 +194,7 @@ describe('capability preferences are loaded from the door at boot (D675)', () =>
     ).toBe('decoder-gpu')
 
     // Life 2: a fresh process over the same store.
-    const second = new ConfigManager(NO_CONFIG_FILE)
+    const second = new ConfigManager()
     second.setSettingsDoor(door)
     const preload = second.whenSystemSettingsPreloaded()
     expectRefusal(() => second.get('capabilities.singleton.decoder'), 'preload-pending')
@@ -208,7 +206,7 @@ describe('capability preferences are loaded from the door at boot (D675)', () =>
 
   it('an unreadable boot read leaves the preference UNKNOWN, not unset', async () => {
     const door = await realDoor()
-    const cm = new ConfigManager(NO_CONFIG_FILE)
+    const cm = new ConfigManager()
     cm.setSettingsDoor(failingReads(door))
     expect(await cm.whenSystemSettingsPreloaded()).toMatchObject({ kind: 'failed' })
     expectRefusal(() => cm.get('capabilities.singleton.decoder'), 'preload-failed')
@@ -221,7 +219,7 @@ describe('capability preferences are loaded from the door at boot (D675)', () =>
       key: 'capabilities.singleton.test-decoder',
       value: 'decoder-gpu',
     })
-    const cm = new ConfigManager(NO_CONFIG_FILE)
+    const cm = new ConfigManager()
     const registry = new CapabilityRegistry(silentLogger())
     // Wired exactly as addon-registry.service wires it: a read that cannot
     // answer is "no preference" until the replay.
@@ -266,7 +264,7 @@ function silentLogger() {
 describe('ConfigManager.set reports a failed write honestly (L3)', () => {
   it('a door write that fails REJECTS and is not reported back as the value', async () => {
     const door = await realDoor()
-    const cm = new ConfigManager(NO_CONFIG_FILE)
+    const cm = new ConfigManager()
     cm.setSettingsDoor({
       ...door,
       set: async () => {
@@ -281,14 +279,14 @@ describe('ConfigManager.set reports a failed write honestly (L3)', () => {
   })
 
   it('rejects with no backend wired', async () => {
-    const cm = new ConfigManager(NO_CONFIG_FILE)
+    const cm = new ConfigManager()
     await expect(cm.set('capabilities.singleton.decoder', 'x')).rejects.toThrow('not-wired')
   })
 })
 
 describe('getDeviceRuntimeState before any backend (D677 alignment)', () => {
   it('throws the typed refusal rather than answering an empty row', () => {
-    const cm = new ConfigManager(NO_CONFIG_FILE)
+    const cm = new ConfigManager()
     expectRefusal(() => cm.getDeviceRuntimeState('101'), 'not-wired')
   })
 })

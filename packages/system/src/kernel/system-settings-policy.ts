@@ -11,14 +11,14 @@
  * the stale rows must still never answer: merging them back in would let a
  * stale DB copy stand in for a credential. The one-off ops script deletes them.
  *
- * So a bootstrap-owned section is answered from env + config.yaml ONLY, and
+ * So a bootstrap-owned section is answered from the environment and built-in defaults ONLY, and
  * the store may add exactly the keys in {@link STORE_READABLE_BOOTSTRAP_KEYS}:
  * the values the operator edits on System → Authentication (`auth.tokenExpiry`,
  * `auth.accessTokenExpiry`, `auth.trustedProxies`). Widening this list is a security decision, not a
  * convenience.
  */
 
-/** Top-level sections whose authority is env + config.yaml (`bootstrapSchema`). */
+/** Top-level sections whose authority is the environment and built-in defaults (`bootstrapSchema`). */
 const BOOTSTRAP_OWNED_SECTIONS: ReadonlySet<string> = new Set(['server', 'auth', 'bootstrap'])
 
 /** The only keys under a bootstrap-owned section the store may answer. */
@@ -37,7 +37,7 @@ export const STORE_READABLE_BOOTSTRAP_KEYS: ReadonlySet<string> = new Set([
   'server.name',
 ])
 
-/** May the settings store answer `key`, or is it env + config.yaml only? */
+/** May the settings store answer `key`, or is it environment and defaults only? */
 export function storeMayAnswer(key: string): boolean {
   const dot = key.indexOf('.')
   const section = dot === -1 ? key : key.slice(0, dot)

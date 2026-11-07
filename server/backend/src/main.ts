@@ -434,16 +434,10 @@ async function bootstrap() {
   let spaIndexHtml: string | null = null
 
   // --- Phase 1 + 2: Load config, setup storage locations, TLS ---
-  // Resolution order: explicit CONFIG_PATH wins (lets operators put the
-  // bootstrap config on its own mount, e.g. a /config volume). Otherwise
-  // default it UNDER the data root (CAMSTACK_DATA) so a plain data-dir mount
-  // also persists config.yaml. Falls back to the historical cwd-relative
-  // path for local/dev runs where neither env var is set.
-  const configPath =
-    process.env.CONFIG_PATH ??
-    path.join(process.env.CAMSTACK_DATA ?? path.join(process.cwd(), 'camstack-data'), 'config.yaml')
-  const bootstrapConfig = loadBootstrapConfig(configPath)
-  const infra = await setupInfra(configPath, bootstrapConfig)
+  // The bootstrap config is the environment (CAMSTACK_PORT / HOST / DATA) over
+  // built-in defaults; there is no config.yaml (D1018).
+  const bootstrapConfig = loadBootstrapConfig()
+  const infra = await setupInfra(bootstrapConfig)
 
   const { dataPath, tlsOptions, tlsCert } = infra
   const port = infra.bootstrapConfig.server.port
@@ -451,7 +445,7 @@ async function bootstrap() {
 
   // --- Phase 3: Create app + tRPC register + listen ---
   const fastifyOpts: Record<string, unknown> = tlsOptions ? { https: tlsOptions } : {}
-  const app = await bootManual({ infra, fastifyOpts })
+  const app = await bootManual({ fastifyOpts })
   app.enableShutdownHooks()
 
   const fastify = app.getHttpAdapter().getInstance()
@@ -1849,7 +1843,7 @@ async function bootstrap() {
       listenErr.code === 'EADDRINUSE'
     ) {
       console.error(
-        `[bootstrap] FATAL: Port ${port} is already in use. Stop the other process or change server.port in config.yaml.`,
+        `[bootstrap] FATAL: Port ${port} is already in use. Stop the other process or set CAMSTACK_PORT to a free port.`,
       )
       process.exit(1)
     }

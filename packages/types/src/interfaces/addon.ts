@@ -702,11 +702,11 @@ export interface AddonContext<TConfig = Record<string, unknown>> {
     clearDeviceRuntimeState(deviceId: number): Promise<void>
 
     /**
-     * Read a cluster-wide yml-backed section (server, auth, ffmpeg,
+     * Read a cluster-wide bootstrap or runtime section (server, auth, ffmpeg,
      * logging, recording, retention — whatever
      * `ConfigManager.getSection` recognises). Returns the raw section
      * record with no schema merging. Used by the built-in
-     * `system-config` addon to surface the legacy `config.yaml`
+     * `system-config` addon to surface the bootstrap
      * sections through its `getGlobalSettings()` method.
      */
     getSection(section: string): Promise<Record<string, unknown>>

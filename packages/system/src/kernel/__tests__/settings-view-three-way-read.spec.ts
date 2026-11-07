@@ -6,12 +6,9 @@
  * round 4): before `setSettingsStore`/`setSettingsDoor` the sync backend
  * reads the bootstrap file, which holds no addon key, and answered `missing`.
  */
-import * as path from 'node:path'
 import type { ISettingsStoreProvider } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { ConfigManager } from '../config-manager.js'
-
-const NO_CONFIG_FILE = path.join(__dirname, 'no-such-config.yaml')
 
 /** A settings-store door whose only working method is `query`; everything else is not part of this test. */
 function doorOver(query: ISettingsStoreProvider['query']): ISettingsStoreProvider {
@@ -40,7 +37,7 @@ function doorOver(query: ISettingsStoreProvider['query']): ISettingsStoreProvide
 }
 
 function viewOver(query: ISettingsStoreProvider['query']) {
-  const config = new ConfigManager(NO_CONFIG_FILE)
+  const config = new ConfigManager()
   const view = config.createSettingsView('pipeline-orchestrator')
   config.setSettingsDoor(doorOver(query))
   return view
@@ -83,7 +80,7 @@ describe('AddonSettingsView.readAddonStoreResult (door-backed)', () => {
 
 describe('AddonSettingsView.readAddonStoreResult (no backend wired yet)', () => {
   it('is FAILED, never missing — the bootstrap fallback holds no addon key and must not read as "never written"', async () => {
-    const config = new ConfigManager(NO_CONFIG_FILE)
+    const config = new ConfigManager()
     const view = config.createSettingsView('pipeline-orchestrator')
     expect(await view.readAddonStoreResult?.()).toEqual({
       kind: 'failed',
@@ -92,7 +89,7 @@ describe('AddonSettingsView.readAddonStoreResult (no backend wired yet)', () => 
   })
 
   it('answers from the door once it is wired — the backend is chosen per call', async () => {
-    const config = new ConfigManager(NO_CONFIG_FILE)
+    const config = new ConfigManager()
     const view = config.createSettingsView('pipeline-orchestrator')
     expect((await view.readAddonStoreResult?.())?.kind).toBe('failed')
     config.setSettingsDoor(doorOver(async () => []))

@@ -82,7 +82,7 @@ const Q_ACCEL: Question = {
 const Q_PATHS: Question = {
   id: 'paths',
   question:
-    'Host paths as {data, recordings} (optionally config, backups). Recordings is the one that grows: put it on a roomy disk.',
+    'Host paths as {data, recordings} (optionally backups). Recordings is the one that grows: put it on a roomy disk.',
   options: [],
 }
 

@@ -17,7 +17,6 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import type { SystemEvent } from '@camstack/types'
-import * as yaml from 'js-yaml'
 import { ServiceBroker } from 'moleculer'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { ConfigService } from '../../../core/config/config.service.js'
@@ -64,13 +63,7 @@ describe('systemEvents.getRecent — per-device ring', () => {
   })
 
   const createBus = async (): Promise<EventBusService> => {
-    const configPath = path.join(tmpDir, 'config.yaml')
-    fs.writeFileSync(
-      configPath,
-      yaml.dump({ server: { port: 4443 }, auth: { adminPassword: 'secret123' } }),
-      'utf-8',
-    )
-    const service = new EventBusService(new ConfigService(configPath))
+    const service = new EventBusService(new ConfigService())
     const broker = new ServiceBroker({
       nodeID: `devring-test-${brokers.length}`,
       transporter: 'Fake',

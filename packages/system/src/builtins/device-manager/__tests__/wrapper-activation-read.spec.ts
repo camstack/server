@@ -22,7 +22,6 @@ import { readWrapperActivation, setWrapperActive } from '../device-source-activa
 import { createWriteLock } from '../write-lock.js'
 import { makeAddonContext } from './typed-addon-context.js'
 
-const NO_CONFIG_FILE = path.join(__dirname, 'no-such-config.yaml')
 const CAMERA = 101
 const tmpDirs: string[] = []
 const backends: SqliteSettingsBackend[] = []
@@ -61,7 +60,7 @@ function ctxOver(settings: NonNullable<AddonContext['settings']>): AddonContext 
 }
 
 async function deviceManagerOver(door: ISettingsStoreProvider) {
-  const cm = new ConfigManager(NO_CONFIG_FILE)
+  const cm = new ConfigManager()
   cm.setSettingsDoor(door)
   // The boot read of the preloaded system keys runs in the background; let it
   // settle so its door reads never land inside a spied window.
@@ -198,7 +197,7 @@ describe('getWrapperActivation — value / missing / failed', () => {
   })
 
   it('failed: no backend wired yet (the D294 window) is never `missing`', async () => {
-    const cm = new ConfigManager(NO_CONFIG_FILE)
+    const cm = new ConfigManager()
     const deps = { ctx: ctxOver(cm.createSettingsView('device-manager')) }
     const read = await readWrapperActivation(deps, { deviceId: CAMERA, capName: 'ptz-autotrack' })
     expect(read.kind).toBe('failed')

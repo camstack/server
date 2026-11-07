@@ -1,0 +1,64 @@
+---
+id: D1018
+title: The bootstrap config is the environment; there is no config.yaml
+status: accepted
+date: 2026-11-07
+supersedes:
+applies-to:
+  - packages/system/src/kernel/bootstrap-config.ts
+  - packages/system/src/kernel/legacy-config-yaml.ts
+  - packages/system/src/kernel/config-schema.ts
+  - server/backend/src/main.ts
+  - Dockerfile
+---
+
+## Context
+
+The bootstrap schema had shrunk, release after release, to three keys:
+`server.port`, `server.host` and `server.dataPath`, each already settable from
+`CAMSTACK_PORT`, `CAMSTACK_HOST` and `CAMSTACK_DATA`. Everything else a yaml
+could carry (auth, tls, keychain file locations, addon sets) had moved to the
+keychain, the settings store or the admin UI, and was stripped when read. Agents
+already run in production with no file at all. What remained was a second
+source for three values, a `/config` volume that held nothing else, a
+`CONFIG_PATH` variable, and a settings page that told the operator to edit a
+file the container cannot easily reach.
+
+## Decision
+
+The bootstrap config is built-in defaults plus the environment, and nothing
+else. `loadBootstrapConfig` takes no path and reads no file. The Settings
+server section shows port, host and data path read-only and says they are set
+by `CAMSTACK_PORT`, `CAMSTACK_HOST` and `CAMSTACK_DATA`. Backups no longer
+archive `config.yaml`, and a restore skips that entry when an older archive
+carries it.
+
+For ONE release, `legacy-config-yaml.ts` still looks for a leftover file
+(`CONFIG_PATH`, the former image path `/config/config.yaml`, then
+`<CAMSTACK_DATA>/config.yaml`), parses it only to compare, and, for each of the
+three keys whose legacy value differs from the effective value and whose
+environment variable is not set, still applies it so an update never moves a
+node silently. Each such key logs a WARN naming the variable to set. A file that
+matches the defaults earns one INFO line saying it can be deleted; an unparsable
+file is ignored with a WARN. That module, its spec and the `js-yaml` dependency
+are deleted one release later.
+
+## Consequences
+
+The container contract changes (D717, D822): the image no longer sets
+`CONFIG_PATH`, no longer declares `/config` as a `VOLUME`, and the entrypoint no
+longer creates or chowns it. The generated compose and install rules of the CLI
+(`setup-compose.ts`, `setup-install-rules.ts`) no longer map or mention
+`/config`. The Unraid templates, the Proxmox script and the Compose example live
+outside this repository and are aligned by hand: drop the `/config` mapping, and
+set `CAMSTACK_PORT` / `CAMSTACK_HOST` / `CAMSTACK_DATA` where a non-default is
+wanted. The external keychain master key is unaffected: it is the fixed path
+`/run/secrets/camstack-master-key` (D991). A node with a non-default value in a
+leftover file keeps working for one release, then must have set the variable.
+
+## Enforcement
+
+`legacy-config-yaml.spec.ts` (no file, defaults-equal file, differing port with
+and without the variable, unparsable file), `boot-config-one-loader.spec.ts`
+(one loader), `pending-restore-sqlite.spec.ts` (an old archive's `config.yaml`
+is not restored) and `mcp-setup.spec.ts` (no `/config` in generated compose).

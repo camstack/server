@@ -160,9 +160,9 @@ describe('SystemBackupService', () => {
     it('uses default location set when none provided', async () => {
       const archivePath = path.join(tmpRoot, 'snap.tar.gz')
       const result = await service.createArchive({ archivePath })
-      // Defaults: config.yaml, db, addons, addons-data, tls, auto-update.json
-      // Only the present ones get included.
-      expect(result.includedLocations).toContain('config.yaml')
+      // Defaults: addons, addons-data, tls, auto-update.json (D1018: a leftover
+      // config.yaml in the fixture is not archived). Only the present ones get included.
+      expect(result.includedLocations).not.toContain('config.yaml')
       expect(result.includedLocations).toContain('addons')
       expect(result.includedLocations).not.toContain('tls')
     })

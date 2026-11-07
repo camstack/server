@@ -10,7 +10,6 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import * as yaml from 'js-yaml'
 import type { ILogDestination, LogEntry } from '@camstack/types'
 import { ConfigService } from '../../config/config.service'
 import { LoggingService } from '../logging.service'
@@ -25,9 +24,7 @@ describe('LoggingService.writeFromWorker — tag precedence', () => {
   })
 
   function capture(): { service: LoggingService; lines: LogEntry[] } {
-    const configPath = path.join(tmpDir, 'config.yaml')
-    fs.writeFileSync(configPath, yaml.dump({ server: { port: 4443 } }), 'utf-8')
-    const service = new LoggingService(new ConfigService(configPath))
+    const service = new LoggingService(new ConfigService())
     const lines: LogEntry[] = []
     const dest: ILogDestination = {
       initialize: async () => undefined,

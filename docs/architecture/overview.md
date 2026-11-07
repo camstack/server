@@ -157,10 +157,10 @@ ring buffer owned by `LogManager`, partitioned per `addonId` so a chatty addon
 evicts only its own lines. It lives in the kernel because it must exist before any
 addon loads (boot lines) and because it backs `logs.query`/`subscribe` — so turning
 it off also empties the log viewer, which is what the operator asking for it means.
-Its *size* is configured in `config.yaml`, not in addon settings, and only on the
+Its *size* is a system-settings key (there is no `config.yaml`, D1018), not an addon setting, and only on the
 hub — an agent hardcodes 5000 (`server/backend/src/agent/main.ts`).
 
-| `config.yaml` key | Default | |
+| System-settings key | Default | |
 | --- | --- | --- |
 | `eventBus.perAddonLogBufferSize` | `5000` | **Hard** ring size per addon bucket |
 | `eventBus.maxTotalLogBufferSize` | unset → `DEFAULT_MAX_TOTAL_LOG_ENTRIES` (50 000) | Ceiling across all buckets. An explicit `null` opts out — the per-addon rings are then the only bound |

@@ -1021,7 +1021,7 @@ no-op when the server step re-aligned it.
   orchestrator that does not subscribe it loses all of its cameras' onboard
   motion for every consumer, with no log line. **The closure does not guarantee
   it.** The re-alignment acts only on a package in the node's bootstrap roster
-  (a `config.yaml` override wins), already installed, whose closure copy is
+  already installed, whose closure copy is
   strictly newer AND whose installed directory is older than the closure's; a
   failed re-alignment is a WARN and the boot goes on (`launcher.ts`). So the
   provider step waits for a version READ LIVE:

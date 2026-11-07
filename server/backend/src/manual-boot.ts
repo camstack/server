@@ -22,7 +22,6 @@ import Fastify from 'fastify'
 import { buildHubHttpSource } from './api/addon-upload'
 import { createNodeRootPackageLookup } from './api/core/cap-providers'
 import { clusterBaseUrlResolver } from './api/hub-cluster-url'
-import type { InfraContext } from './boot/boot-config'
 import { type InitStep, runBootInitSequence } from './boot/init-sequence'
 import { PostBootService } from './boot/post-boot.service'
 import { AddonPackageService } from './core/addon/addon-package.service'
@@ -115,7 +114,6 @@ export interface BootedApp {
 }
 
 interface BootOptions {
-  infra: InfraContext
   fastifyOpts: Record<string, unknown>
 }
 
@@ -147,12 +145,9 @@ class ServiceContainer {
 // ---------------------------------------------------------------------------
 
 export async function bootManual(opts: BootOptions): Promise<BootedApp> {
-  const { infra, fastifyOpts } = opts
-  // The same config.yaml main.ts loaded — one path, not a second default.
-  const configPath = infra.configPath
-
+  const { fastifyOpts } = opts
   // ---- Layer 0: services with no service deps -----------------------------
-  const configService = new ConfigService(configPath)
+  const configService = new ConfigService()
   const storageService = new StorageService()
   const capabilityService = new CapabilityService()
   const networkQualityService = new NetworkQualityService()

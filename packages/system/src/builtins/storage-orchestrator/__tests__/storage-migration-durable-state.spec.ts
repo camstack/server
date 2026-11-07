@@ -24,7 +24,6 @@
  * SQLite engine behind the door and the mover participants are fakes.
  */
 
-import * as path from 'node:path'
 import type {
   IScopedLogger,
   ISettingsStoreProvider,
@@ -53,8 +52,6 @@ const logger = {
 
 /** A path that deliberately does not exist — `ConfigManager` falls back to
  *  bootstrap defaults, which is what a test wants and what a fresh install is. */
-const NO_CONFIG_FILE = path.join(__dirname, 'no-such-config.yaml')
-
 interface StoredRow {
   readonly id: string
   readonly data: Record<string, unknown>
@@ -195,7 +192,7 @@ const MIGRATION_ROW_ID = 'storage-orchestrator.storage-migration'
  */
 function viewThenDoor(): { view: AddonSettingsView; door: InMemoryDataDoor } {
   const door = new InMemoryDataDoor()
-  const config = new ConfigManager(NO_CONFIG_FILE)
+  const config = new ConfigManager()
   const view = config.createSettingsView('storage-orchestrator')
   config.setSettingsDoor(door)
   return { view, door }

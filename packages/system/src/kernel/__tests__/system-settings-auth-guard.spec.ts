@@ -38,7 +38,6 @@ const STALE_ROWS: Readonly<Record<string, string>> = {
   'server.port': '9999',
 }
 
-const NO_CONFIG_FILE = path.join(__dirname, 'no-such-config.yaml')
 const tmpDirs: string[] = []
 const backends: SqliteSettingsBackend[] = []
 const savedEnv = new Map<string, string | undefined>()
@@ -85,7 +84,7 @@ function expectNoCredentials(section: Record<string, unknown>): void {
 describe('auth answers no credential; only the allow-listed auth keys may come from the store', () => {
   it('door (production): the section local-auth reads carries no credential', async () => {
     const backend = await seededBackend()
-    const cm = new ConfigManager(NO_CONFIG_FILE)
+    const cm = new ConfigManager()
     cm.setSettingsDoor(createDataStoreDispatch(() => [backend]))
     await cm.whenSystemSettingsPreloaded()
 
@@ -99,7 +98,7 @@ describe('auth answers no credential; only the allow-listed auth keys may come f
 
   it('door (production): get() — the hub AuthService — answers no credential, reads the expiry', async () => {
     const backend = await seededBackend()
-    const cm = new ConfigManager(NO_CONFIG_FILE)
+    const cm = new ConfigManager()
     cm.setSettingsDoor(createDataStoreDispatch(() => [backend]))
     await cm.whenSystemSettingsPreloaded()
 
@@ -111,7 +110,7 @@ describe('auth answers no credential; only the allow-listed auth keys may come f
 
   it('sync store: a stored secret or password never answers either', async () => {
     const backend = await seededBackend()
-    const cm = new ConfigManager(NO_CONFIG_FILE)
+    const cm = new ConfigManager()
     cm.setSettingsStore(backend)
 
     const auth = cm.getSection('auth')
@@ -129,7 +128,7 @@ describe('auth answers no credential; only the allow-listed auth keys may come f
     const backend = await seededBackend()
     await backend.set({ collection: 'system-settings', key: 'auth.oidcClientSecret', value: 'x' })
 
-    const sync = new ConfigManager(NO_CONFIG_FILE)
+    const sync = new ConfigManager()
     sync.setSettingsStore(backend)
     expectNoCredentials(sync.getSection('auth'))
     // A bootstrap-section key the schema does not know reaches the store layer
@@ -137,7 +136,7 @@ describe('auth answers no credential; only the allow-listed auth keys may come f
     expect(sync.get('auth.oidcClientSecret')).toBeUndefined()
     expect(sync.get('auth.jwtSecret')).toBeUndefined()
 
-    const viaDoor = new ConfigManager(NO_CONFIG_FILE)
+    const viaDoor = new ConfigManager()
     viaDoor.setSettingsDoor(createDataStoreDispatch(() => [backend]))
     await viaDoor.whenSystemSettingsPreloaded()
     const auth = await viaDoor.createSettingsView('local-auth').getSection('auth')
@@ -157,7 +156,7 @@ describe('auth answers no credential; only the allow-listed auth keys may come f
         return door.get(input)
       },
     }
-    const cm = new ConfigManager(NO_CONFIG_FILE)
+    const cm = new ConfigManager()
     cm.setSettingsDoor(spied)
     await cm.whenSystemSettingsPreloaded()
     await cm.createSettingsView('local-auth').getSection('auth')

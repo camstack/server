@@ -26,7 +26,6 @@ export type Accelerator = z.infer<typeof AcceleratorSchema>
 export const InstallPathsSchema = z.object({
   data: z.string().min(1),
   recordings: z.string().min(1),
-  config: z.string().min(1).optional(),
   backups: z.string().min(1).optional(),
 })
 export type InstallPaths = z.infer<typeof InstallPathsSchema>
@@ -81,7 +80,6 @@ export const NO_BARE_LATEST =
 export const MUST_NOT_OMIT: readonly string[] = [
   '--pids-limit=8192 (pids_limit: 8192): the default 2048 counts threads and silently stops media on a busy hub.',
   'CAMSTACK_MEDIA_ROOT=/recordings: without it recordings land in /data and fill the cache drive.',
-  '/config mapped: it is a VOLUME, so an unmapped path mints an anonymous volume on every re-create.',
   '--restart unless-stopped: the NVR must come back after a host reboot.',
   'CAMSTACK_MOLECULER_USE_HOSTNAME=false: otherwise a multi-machine cluster never forms.',
   'Coral USB: /dev/bus/usb AND the device-cgroup rule c 189:* rmw.',

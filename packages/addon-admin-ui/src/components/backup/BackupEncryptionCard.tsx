@@ -242,7 +242,7 @@ export function BackupEncryptionCard() {
       <p className="text-xs text-foreground-subtle">
         {t(
           'backup.backupEncryptionCard.archivesAreEncryptedOnThis',
-          'Archives are encrypted on this server before they reach any destination. The server keeps only a public key, so it can encrypt scheduled backups but cannot decrypt them — only your backup key can. Covers the database snapshot, config.yaml, addon data (HomeKit pairing, Matter fabric, Tailscale state) and TLS.',
+          'Archives are encrypted on this server before they reach any destination. The server keeps only a public key, so it can encrypt scheduled backups but cannot decrypt them — only your backup key can. Covers the database snapshot, addon data (HomeKit pairing, Matter fabric, Tailscale state) and TLS.',
         )}
       </p>
       {retired.length > 0 && (

@@ -53,10 +53,10 @@ docker compose --profile agent up -d                  # a worker, on another mac
 Read the example before running it — it documents every setting inline, and three
 things want your attention:
 
-- **The bind paths are relative** (`./camstack-data`, `./camstack-config`,
+- **The bind paths are relative** (`./camstack-data`,
   `./camstack-backups`, `./camstack-recordings`). Point the recordings bind at a
   disk with room; it is the one that grows. `/backups` is a declared `VOLUME`
-  like `/data` and `/config`, so leaving it unmapped mints an anonymous volume.
+  like `/data`, so leaving it unmapped mints an anonymous volume.
 - **Optional hardware ships commented out.** `/dev/dri` and `/dev/accel` are
   listed but disabled, because Docker refuses to start a container whose declared
   device is absent. Uncomment the `devices:` key *and* the entries this machine
@@ -199,6 +199,10 @@ All optional, all `advanced` in the Unraid template:
 | Variable | Default | What it does |
 | --- | --- | --- |
 | `CAMSTACK_PORT` | `4443` | The hub's HTTPS port. With bridge networking change the published mapping instead. |
+| `CAMSTACK_HOST` | `0.0.0.0` | The address the hub binds. |
+| `CAMSTACK_DATA` | `camstack-data` (`/data` in the image) | The data directory. |
+
+These three are the whole bootstrap config: there is no `config.yaml` ([D1018](../decisions/adr-1018-the-bootstrap-config-is-the-environment-there-is-no-config-yaml.md)). For one release, a leftover file whose port, host or data path differs is still applied, with a WARN naming the variable to set; delete the file once you have set it.
 
 The image's healthcheck follows `CAMSTACK_PORT` and tries HTTPS, then plain HTTP,
 so a hub moved off 4443 or onto plain HTTP does not report itself unhealthy.
@@ -215,8 +219,8 @@ local CA ([D227](../decisions/adr-0227-the-hub-reissues-its-certificate-only-whe
 to use your own, upload the PEM chain and key in **Network → Local access**,
 which is also where you revert to the generated one and download the local CA
 ([D726](../decisions/adr-0726-a-nodes-certificate-is-set-only-in-the-admin-ui-and-what-the-ui-shows-is-what-the-listener-serves.md)).
-`CAMSTACK_TLS_CERT` / `CAMSTACK_TLS_KEY` and the `tls.certPath` / `tls.keyPath`
-keys of `config.yaml` are ignored; a node that still sets one logs a WARN at boot.
+`CAMSTACK_TLS_CERT` / `CAMSTACK_TLS_KEY` are ignored; a node that still sets one
+logs a WARN at boot.
 
 The generated CA is name-constrained: critical `nameConstraints` limit it to the
 private address ranges and local-only names, so a device that trusts it does not
@@ -247,7 +251,7 @@ used — the request's `Host`), the hosted viewer at
 `https://camstack.zentik.app` and the native app's embed (`null`). To add another, for example a self-hosted viewer or
 Expo web on `http://localhost:8081`, add it under Identity → Authentication →
 Sign-in policy → Allowed browser origins. It applies to the next request, with
-no restart. There is no environment variable and no `config.yaml` key for it:
+no restart. There is no environment variable for it:
 the retired `server.corsOrigins` and `CAMSTACK_CORS_ORIGINS` are ignored
 (silently: the boot no longer names them).
 

@@ -53,7 +53,7 @@ function serverSection(stored: string) {
     id: 'system-config-server',
     title: 'Server',
     description:
-      'The name of this server, and its connection settings (read-only, loaded from config.yaml at bootstrap).',
+      'The name of this server, and its connection settings (read-only, set by the environment).',
     columns: 2,
     fields: [
       {
@@ -70,7 +70,8 @@ function serverSection(stored: string) {
         type: 'info',
         key: 'server-restart-note',
         label: 'Restart required',
-        content: 'Port, host and data path are read-only. Change them in config.yaml and restart.',
+        content:
+          'Port, host and data path are read-only: set the environment variables CAMSTACK_PORT, CAMSTACK_HOST and CAMSTACK_DATA, then restart.',
         variant: 'warning',
       },
       {

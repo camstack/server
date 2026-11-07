@@ -37,13 +37,13 @@ const quiet: IScopedLogger = {
 }
 
 const FILES: Record<string, string> = {
-  'config.yaml': 'keychain:\n  keyFile: /keys/keychain.key\n',
+  'auto-update.json': '{"channel":"stable"}',
   'addons-data/export-hap/persist/AccessoryInfo.0E1F.json': '{"LTSK":"hap-pairing-secret"}',
   'addons-data/matter-broker/fabric.json': '{"operationalKey":"matter-fabric-secret"}',
   'addons-data/tailscale/tailscaled.state': 'tailscaled-node-key-secret',
   'tls/key.pem': 'tls-private-key-secret',
 }
-const LOCATIONS = ['config.yaml', 'addons-data', 'tls']
+const LOCATIONS = ['auto-update.json', 'addons-data', 'tls']
 
 let root = ''
 let dataDir = ''
@@ -60,7 +60,7 @@ function writeTree(): void {
 /** What a disaster leaves: the pairing state gone, the config rewritten. */
 function damageTree(): void {
   fs.rmSync(path.join(dataDir, 'addons-data'), { recursive: true, force: true })
-  fs.writeFileSync(path.join(dataDir, 'config.yaml'), 'fresh: true\n')
+  fs.writeFileSync(path.join(dataDir, 'auto-update.json'), '{"fresh":true}')
   fs.rmSync(path.join(dataDir, 'tls'), { recursive: true, force: true })
 }
 
@@ -135,7 +135,7 @@ describe('encrypted backup → boot-time restore', () => {
       prepareRestoreArchive({ downloaded, target: path.join(staging, 'restore-b.tar.gz') }),
     ).rejects.toBeInstanceOf(BackupKeyRequiredError)
     await applyPendingRestore(dataDir, () => undefined)
-    expect(fs.readFileSync(path.join(dataDir, 'config.yaml'), 'utf8')).toBe('fresh: true\n')
+    expect(fs.readFileSync(path.join(dataDir, 'auto-update.json'), 'utf8')).toBe('{"fresh":true}')
   })
 
   it('an unencrypted archive (made before encryption) still restores without a key', async () => {
@@ -192,7 +192,7 @@ describe('scripts/ops/backup-decrypt.mjs — restore with no hub', () => {
     const built = path.join(share, 'e.tar.gz.csbk')
     await service.createArchive({
       archivePath: built,
-      locations: ['config.yaml'],
+      locations: ['auto-update.json'],
       encryptTo: keys.publicKey,
     })
     const keyFile = path.join(root, 'other.key')

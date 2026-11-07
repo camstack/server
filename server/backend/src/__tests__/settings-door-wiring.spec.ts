@@ -5,14 +5,12 @@
  * won then, because the preference was unknown) ends active on the stored
  * choice. Remove the replay from the wiring and this goes red.
  */
-import * as path from 'node:path'
 import { CapabilityRegistry, SqliteSettingsBackend } from '@camstack/server/system'
 import type { IScopedLogger, ISettingsStoreProvider } from '@camstack/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ConfigService } from '../core/config/config.service.js'
 import { wireSettingsDoor } from '../core/addon/settings-door-wiring.js'
 
-const NO_CONFIG_FILE = path.join(__dirname, 'no-such-config.yaml')
 const engines: SqliteSettingsBackend[] = []
 
 beforeEach(() => {
@@ -75,7 +73,7 @@ describe('wireSettingsDoor replays the persisted capability preferences', () => 
       value: JSON.stringify({ disabled: ['relay-cloud'] }),
     })
 
-    const configService = new ConfigService(NO_CONFIG_FILE)
+    const configService = new ConfigService()
     const registry = new CapabilityRegistry(silent)
     // The same readers addon-registry.service installs: unreadable → no preference.
     registry.setConfigReader((cap) => {

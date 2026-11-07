@@ -56,6 +56,5 @@
 
   <!-- Storage -->
   <Config Name="Data" Target="/data" Default="/mnt/user/appdata/camstack-agent" Mode="rw" Description="Installed addons, ML models, native dependencies, logs and this agent&apos;s identity. Use a different folder from the hub. Safe to wipe — it re-seeds from the hub on the next boot." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/camstack-agent</Config>
-  <Config Name="Config" Target="/config" Default="/mnt/user/appdata/camstack-agent-config" Mode="rw" Description="config.yaml. The image declares /config as a volume, so leaving it unmapped makes Docker create a fresh anonymous volume on every re-create. Map it even though an agent keeps little here." Type="Path" Display="advanced" Required="true" Mask="false">/mnt/user/appdata/camstack-agent-config</Config>
   <Config Name="Backups" Target="/backups" Default="/mnt/user/appdata/camstack-agent-backups" Mode="rw" Description="The image declares /backups as a volume. An agent rarely runs backup destinations, but map it (or Docker makes a fresh anonymous volume on every re-create). Paired with CAMSTACK_BACKUP_ROOT." Type="Path" Display="advanced" Required="false" Mask="false">/mnt/user/appdata/camstack-agent-backups</Config>
 </Container>

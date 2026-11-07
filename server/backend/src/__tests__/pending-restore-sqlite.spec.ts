@@ -149,7 +149,8 @@ describe('applyPendingRestore — SQLite databases', () => {
     expect(walLeft).toBe(false)
     expect(shmLeft).toBe(false)
     expect(fs.existsSync(live + DATABASE_SNAPSHOT_SUFFIX)).toBe(false)
-    expect(fs.readFileSync(path.join(dataDir, 'config.yaml'), 'utf-8')).toBe('cluster: restored\n')
+    // An archive from before D1018 carries config.yaml: it is not restored.
+    expect(fs.existsSync(path.join(dataDir, 'config.yaml'))).toBe(false)
     expect(fs.existsSync(path.join(dataDir, '.pending-restore.json'))).toBe(false)
   })
 

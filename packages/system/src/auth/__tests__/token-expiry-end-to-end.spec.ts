@@ -1,6 +1,3 @@
-import * as fs from 'node:fs'
-import * as os from 'node:os'
-import * as path from 'node:path'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import * as jwt from 'jsonwebtoken'
 import type { TokenPayload } from '@camstack/types'
@@ -70,25 +67,12 @@ function makeStore(seed: Record<string, unknown> = {}): ISettingsStore {
   }
 }
 
-/**
- * A real ConfigManager over a throwaway config.yaml. The yaml has to carry
- * `auth.jwtSecret` because bootstrap beats the store and AuthManager persists
- * a generated secret back to the file when it finds none.
- */
+/** A real ConfigManager (bootstrap = environment + defaults) over a stubbed settings store. */
 function makeConfigManager(seed: Record<string, unknown> = {}): ConfigManager {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'camstack-token-expiry-'))
-  tempDirs.push(dir)
-  const configPath = path.join(dir, 'config.yaml')
-  fs.writeFileSync(
-    configPath,
-    `server:\n  dataPath: ${dir}\nauth:\n  jwtSecret: ${SECRET}\n  adminUsername: admin\n  adminPassword: not-changeme\n`,
-  )
-  const cm = new ConfigManager(configPath)
+  const cm = new ConfigManager()
   cm.setSettingsStore(makeStore(seed))
   return cm
 }
-
-const tempDirs: string[] = []
 
 describe('A — system-config Save reaches the production signer', () => {
   beforeEach(() => {
@@ -99,9 +83,6 @@ describe('A — system-config Save reaches the production signer', () => {
   })
   afterEach(() => {
     vi.restoreAllMocks()
-    while (tempDirs.length > 0) {
-      fs.rmSync(tempDirs.pop()!, { recursive: true, force: true })
-    }
   })
 
   it('an operator saving 1h gets a 1h token, not the default', () => {

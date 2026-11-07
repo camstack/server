@@ -31,7 +31,7 @@ const archives = [
     createdAt: NOW - 6 * H,
     sizeBytes: 1_310_000_000,
     label: 'Nightly',
-    locations: ['config.yaml', 'addons', 'addons-data', 'tls'],
+    locations: ['addons', 'addons-data', 'tls'],
     databases: ['settings'],
   },
   {
@@ -49,7 +49,7 @@ const archives = [
     createdAt: NOW - 1 * D - 6 * H,
     sizeBytes: 1_290_000_000,
     label: 'Nightly',
-    locations: ['config.yaml', 'addons', 'addons-data', 'tls'],
+    locations: ['addons', 'addons-data', 'tls'],
   },
 ]
 

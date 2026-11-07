@@ -14,10 +14,9 @@ export type BootstrapServerConfig = {
 export type BootstrapAddonsConfig = Record<never, never>
 
 /**
- * Bootstrap config — loaded from config.yaml (plus the three env overrides) ONLY
- * at startup, by `loadBootstrapConfig`, the one loader. A key not named here is
- * not read: an older yaml that still carries `mode`, `hub`, `agent`, `auth`,
- * `tls`, `keychain.keyFile` / `previousKeyFile` or `bootstrap.settingsStoreAddon` / `forceDisable` / `installSource` / `requiredAddons` boots with them ignored.
+ * Bootstrap config — the three env overrides over built-in defaults, ONLY, at
+ * startup, by `loadBootstrapConfig`, the one loader (D1018: there is no
+ * config.yaml). A key not named here is not read.
  */
 export type BootstrapConfig = {
   server: BootstrapServerConfig

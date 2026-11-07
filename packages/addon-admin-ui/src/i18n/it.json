@@ -4858,7 +4858,7 @@
       "offBackupsAreNotEncrypted": "Disattivata — i backup non sono cifrati",
       "replaceKey": "Sostituisci chiave",
       "enableEncryption": "Attiva la cifratura",
-      "archivesAreEncryptedOnThis": "Gli archivi vengono cifrati su questo server prima di raggiungere qualsiasi destinazione. Il server conserva solo una chiave pubblica, quindi può cifrare i backup pianificati ma non decifrarli — solo la tua chiave di backup può farlo. Copre lo snapshot del database, config.yaml, i dati degli addon (abbinamento HomeKit, fabric Matter, stato Tailscale) e TLS.",
+      "archivesAreEncryptedOnThis": "Gli archivi vengono cifrati su questo server prima di raggiungere qualsiasi destinazione. Il server conserva solo una chiave pubblica, quindi può cifrare i backup pianificati ma non decifrarli — solo la tua chiave di backup può farlo. Copre lo snapshot del database, i dati degli addon (abbinamento HomeKit, fabric Matter, stato Tailscale) e TLS.",
       "olderKeysBackupsMadeWith": "Chiavi precedenti (i backup creati con esse le richiedono ancora):"
     },
     "backupEntriesTable": {
@@ -5755,7 +5755,7 @@
       "noValueCanBeRead": "Nessun valore può essere letto o memorizzato. Se la chiave master è persa per sempre, Reimposta archivia tutti i valori memorizzati e avvia una nuova keychain; ogni campo segreto risulterà quindi “non impostato”.",
       "withoutACopyOfThe": "Senza una copia della chiave master, i valori memorizzati non possono essere recuperati.",
       "theKeychainUnlockedWithA": "La keychain è stata sbloccata con una chiave precedente. Ruota per passare a quella configurata.",
-      "backupKeyFile": "I backup di CamStack lasciano fuori la chiave, ma un backup dell'intera directory dati (un tar di appdata) porta con sé entrambe. Punta <code>keychain.keyFile</code> in config.yaml a un file fuori dal volume dati, conserva la vecchia come <code>keychain.previousKeyFile</code>, riavvia, poi ruota.",
+      "backupKeyFile": "I backup di CamStack lasciano fuori la chiave, ma un backup dell'intera directory dati (un tar di appdata) porta con sé entrambe. Monta il file della chiave in <code>/run/secrets/camstack-master-key</code>, fuori dal volume dati, conserva la vecchia in <code>/run/secrets/camstack-master-key.previous</code>, riavvia, poi ruota.",
       "resetByTrigger": "il file trigger RESET_KEYCHAIN",
       "resetByAdmin": "un admin ({{actor}})",
       "resetDetail": "Reimpostato il {{when}} da {{by}}. {{archived}} valore/i memorizzato/i sono stati archiviati — illeggibili senza la chiave principale persa. Tutti sono stati disconnessi una volta."

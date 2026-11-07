@@ -141,7 +141,6 @@ function throwIfCancelled(signal: AbortSignal | undefined): void {
 // keeps the Create Backup modal honest (operators were seeing
 // "0 B · 0 files" on a row that captures nothing).
 export const DEFAULT_BACKUP_LOCATIONS = [
-  'config.yaml',
   'addons',
   'addons-data',
   'tls',

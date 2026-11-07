@@ -27,7 +27,7 @@ describe('cross-origin auth.login keeps its rate limit', () => {
   beforeAll(async () => {
     dir = mkdtempSync(path.join(tmpdir(), 'cors-login-'))
     const auth = new AuthService(
-      new ConfigService(path.join(dir, 'config.yaml')),
+      new ConfigService(),
       undefined,
       staticJwtSigningKey('unit-test-secret'),
     )

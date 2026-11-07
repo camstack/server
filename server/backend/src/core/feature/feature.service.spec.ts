@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import * as os from 'node:os'
-import * as yaml from 'js-yaml'
 import { FeatureService } from './feature.service'
 import { ConfigService } from '../config/config.service'
 import type { FeatureManifest } from '@camstack/types'
@@ -10,15 +9,11 @@ import type { FeatureManifest } from '@camstack/types'
 /**
  * Test-only ConfigService subclass that overrides the `features` getter
  * to return a fixed manifest. Avoids wiring a full settings-store just to
- * drive a FeatureService. The bootstrap YAML still has to be real so the
- * ConfigManager constructor succeeds.
+ * drive a FeatureService.
  */
 class StaticFeatureConfigService extends ConfigService {
-  constructor(
-    configPath: string,
-    private readonly staticFeatures: FeatureManifest,
-  ) {
-    super(configPath)
+  constructor(private readonly staticFeatures: FeatureManifest) {
+    super()
   }
 
   override get features(): FeatureManifest {
@@ -51,16 +46,7 @@ describe('FeatureService', () => {
       ...features,
     }
 
-    const configPath = path.join(tmpDir, 'config.yaml')
-    fs.writeFileSync(
-      configPath,
-      yaml.dump({
-        server: { port: 4443 },
-        auth: { adminPassword: 'secret123' },
-      }),
-      'utf-8',
-    )
-    const configService = new StaticFeatureConfigService(configPath, fullFeatures)
+    const configService = new StaticFeatureConfigService(fullFeatures)
     return new FeatureService(configService)
   }
 

@@ -1,13 +1,11 @@
 /**
- * config.yaml + env: loading —
+ * Environment + defaults: loading —
  * `ConfigManager`'s bootstrap layer, split out of `config-manager.ts` (D675)
  * so that file stays one class. The `console.*` calls are the documented
  * residuals described on `ConfigManager` (no logger exists yet at boot).
  */
-import * as fs from 'node:fs'
-import { asJsonObject } from '@camstack/types/addon'
-import * as yaml from 'js-yaml'
 import { type BootstrapConfig, bootstrapSchema } from './config-schema.js'
+import { logLegacyNotes, reconcileLegacyConfigYaml } from './legacy-config-yaml.js'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -28,47 +26,20 @@ const ENV_VAR_MAP: Record<string, string> = {
 }
 
 /**
- * config.yaml, env overrides applied, parsed — THE bootstrap loader: the hub's
- * `main.ts` and `ConfigManager` come through here, so a key is
- * read in one place. Keys the schema does not name are stripped, not read.
+ * Built-in defaults with the environment applied — THE bootstrap loader: the
+ * hub's `main.ts` and `ConfigManager` come through here, so a key is read in one
+ * place. There is no config.yaml (D1018); the one release of transition for a
+ * node that still has one lives in `legacy-config-yaml.ts`.
  */
 export function loadBootstrapConfig(
-  configPath: string,
-  options: { readonly warnRetiredKeys?: boolean } = {},
+  env: Readonly<Record<string, string | undefined>> = process.env,
 ): BootstrapConfig {
-  const raw = asJsonObject(loadYaml(configPath)) ?? {}
-  if (options.warnRetiredKeys === true) warnRetiredYamlKeys(raw)
-  return bootstrapSchema.parse(applyEnvOverrides(raw))
-}
-
-/**
- * A yaml key that no longer exists is stripped by the schema; this names it
- * once so an operator who still carries it is told. Addons always come from
- * npm — a workspace build reaches a node through `camstack deploy`.
- */
-function warnRetiredYamlKeys(raw: Record<string, unknown>): void {
-  const section = raw['bootstrap']
-  if (isRecord(section) && 'installSource' in section) {
-    console.warn(
-      '[Phase1] WARN bootstrap.installSource ignored — addons always install from npm; ' +
-        'a workspace build reaches a node through `camstack deploy`. Remove the key.',
-    )
-  }
-  if (isRecord(section) && 'requiredAddons' in section) {
-    console.warn(
-      '[Phase1] WARN bootstrap.requiredAddons ignored — the first-boot addon set always comes ' +
-        'from the server package. Remove the key.',
-    )
-  }
-  const keychain = raw['keychain']
-  if (isRecord(keychain) && ('keyFile' in keychain || 'previousKeyFile' in keychain)) {
-    console.warn(
-      '[Phase1] WARN keychain.keyFile / keychain.previousKeyFile ignored — the external ' +
-        'master key is a fixed mounted path: mount the file at /run/secrets/camstack-master-key ' +
-        '(the key being rotated away from at /run/secrets/camstack-master-key.previous). ' +
-        'Remove the keys.',
-    )
-  }
+  const fromEnv = applyEnvOverrides({}, env)
+  const envServer = isRecord(fromEnv['server']) ? fromEnv['server'] : {}
+  const legacy = reconcileLegacyConfigYaml(env, bootstrapSchema.parse(fromEnv).server)
+  logLegacyNotes(legacy.notes)
+  // The overrides are only for keys whose env var is unset, so the order is moot.
+  return bootstrapSchema.parse({ server: { ...envServer, ...legacy.overrides } })
 }
 
 /**
@@ -91,14 +62,17 @@ function setNested(
 }
 
 /**
- * Apply env var overrides onto the raw YAML object.
+ * Apply env var overrides onto the raw object.
  * Only bootstrap-level env vars are applied.
  */
-function applyEnvOverrides(raw: Record<string, unknown>): Record<string, unknown> {
+function applyEnvOverrides(
+  raw: Record<string, unknown>,
+  env: Readonly<Record<string, string | undefined>>,
+): Record<string, unknown> {
   let result = { ...raw }
 
   for (const [envKey, configPath] of Object.entries(ENV_VAR_MAP)) {
-    const envValue = process.env[envKey]
+    const envValue = env[envKey]
     if (envValue === undefined || envValue === '') continue
 
     // Coerce to number for known numeric fields
@@ -108,20 +82,4 @@ function applyEnvOverrides(raw: Record<string, unknown>): Record<string, unknown
   }
 
   return result
-}
-
-function loadYaml(configPath: string): unknown {
-  if (!fs.existsSync(configPath)) {
-    console.warn(
-      `[ConfigManager] Config file not found at: ${configPath}\n` +
-        `  → Using built-in defaults. Set CONFIG_PATH env var or create the file.\n` +
-        `  → Example path from project root: ./server/backend/data/config.yaml`,
-    )
-    return {}
-  }
-
-  const content = fs.readFileSync(configPath, 'utf-8')
-  const parsed = yaml.load(content) ?? {}
-  console.log(`[ConfigManager] Loaded config from: ${configPath}`)
-  return parsed
 }

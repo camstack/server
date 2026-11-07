@@ -41,8 +41,8 @@ function errorText(err: unknown): string {
 }
 
 export class ConfigManager {
-  // NOTE: the `console.*` calls in `bootstrap-config.ts` (`loadYaml` /
-  // `applyEnvOverrides`) are deliberate, documented
+  // NOTE: the `console.*` calls in `bootstrap-config.ts` (`applyEnvOverrides`)
+  // and `legacy-config-yaml.ts` are deliberate, documented
   // residuals. `ConfigManager` is a pure bootstrap component constructed at
   // the very start of hub boot (NestJS DI, before `LogManager` and the
   // Moleculer broker exist), so there is no `IScopedLogger` or `$hub.log`
@@ -56,8 +56,8 @@ export class ConfigManager {
   /** Boot-time mirror of the preloaded `system-settings` keys (door mode, D675). */
   private readonly systemMirror = new SystemSettingsMirror()
 
-  constructor(configPath: string) {
-    this.bootstrapConfig = loadBootstrapConfig(configPath)
+  constructor() {
+    this.bootstrapConfig = loadBootstrapConfig()
   }
 
   /**
@@ -211,12 +211,12 @@ export class ConfigManager {
    *
    * Sources are merged in priority order (lowest → highest):
    *   1. RUNTIME_DEFAULTS — kernel constants.
-   *   2. Bootstrap config  — values loaded from config.yaml at boot.
+   *   2. Bootstrap config  — values from the environment and built-in defaults at boot.
    *   3. Settings-store    — runtime writes via the `settings-store` capability.
    *
    * Higher layers override earlier ones. Merging (instead of short-circuiting
    * on the first non-null source) prevents a single store-seeded key from
-   * shadowing the rest of the section that only lives in config.yaml.
+   * shadowing the rest of the section that only lives in the bootstrap config.
    * The kernel is agnostic about the store backend — any `ISettingsStore`
    * implementation (sqlite, redis, in-memory, …) behaves identically here.
    *
@@ -243,7 +243,7 @@ export class ConfigManager {
     return merged
   }
 
-  /** Runtime defaults, then config.yaml + env — the layers under the store. */
+  /** Runtime defaults, then environment + defaults — the layers under the store. */
   private sectionBase(section: string): Record<string, unknown> {
     const merged: Record<string, unknown> = {}
     // 1. Runtime defaults (kernel constants)
@@ -491,7 +491,7 @@ export class ConfigManager {
 
   /** Get a value from the parsed bootstrap config.
    *  Generic overload is a documented type-level bridge — callers are responsible
-   *  for passing a T that matches the config.yaml shape. */
+   *  for passing a T that matches the bootstrap config shape. */
   getBootstrap(configPath: string): unknown
   getBootstrap<T>(configPath: string): T | undefined
   getBootstrap<T>(configPath: string): T | undefined {

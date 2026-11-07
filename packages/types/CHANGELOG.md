@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Doc comment on ConfigManager.getSection no longer refers to config.yaml
+
 ## [1.2.517] - 2026-11-07
 
 ### Changed

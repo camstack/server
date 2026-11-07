@@ -12,9 +12,8 @@
   the hub (UDP 5353 multicast) does not reach the LAN from Docker bridge mode;
   the hub then simply is not announced and clients must be given its address.
 
-  Two host paths MUST be mapped or a container re-create loses state:
+  The host path MUST be mapped or a container re-create loses state:
     /data    installed addons, ML models, TLS, logs and the SQLite database
-    /config  config.yaml — bootstrap server/tls settings and the keychain key location
 
   Image: ghcr.io/camstack/camstack:intel-latest
 

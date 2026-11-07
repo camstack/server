@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- The bootstrap config is the environment (CAMSTACK_PORT, CAMSTACK_HOST, CAMSTACK_DATA); config.yaml is no longer read, a leftover file with different values is still applied for this release with a warning naming the variable to set
 ## [1.2.798] - 2026-11-07
 
 ### Changed

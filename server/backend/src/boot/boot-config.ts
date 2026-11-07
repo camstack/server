@@ -22,8 +22,6 @@ import { StorageLocationManager } from '../core/storage/storage-location-manager
 export type { BootstrapConfig }
 
 export interface InfraContext {
-  /** The config.yaml this boot read — `ConfigService` loads the same file. */
-  readonly configPath: string
   readonly bootstrapConfig: BootstrapConfig
   readonly dataPath: string
   readonly locationManager: StorageLocationManager
@@ -89,12 +87,12 @@ export function ignoredTlsCertSources(
 // ---------------------------------------------------------------------------
 
 /**
- * The kernel's bootstrap loader (config.yaml + `CAMSTACK_PORT` / `HOST` /
- * `DATA`) — the ONE loader — plus a boot warning for the retired HTTPS
+ * The kernel's bootstrap loader (`CAMSTACK_PORT` / `HOST` /
+ * `DATA` over built-in defaults) — the ONE loader — plus a boot warning for the retired HTTPS
  * variables still set, so a container template that carries one is told.
  */
-export function loadBootstrapConfig(configPath: string): BootstrapConfig {
-  const config = loadKernelBootstrapConfig(configPath, { warnRetiredKeys: true })
+export function loadBootstrapConfig(): BootstrapConfig {
+  const config = loadKernelBootstrapConfig()
   const env = process.env
 
   const retiredTls = retiredTlsEnabledSources(env)
@@ -124,10 +122,7 @@ export function loadBootstrapConfig(configPath: string): BootstrapConfig {
  * Phase 2: Create StorageLocationManager, ensure directories, configure TLS.
  * Returns the full InfraContext needed by subsequent boot phases.
  */
-export async function setupInfra(
-  configPath: string,
-  bootstrapConfig: BootstrapConfig,
-): Promise<InfraContext> {
+export async function setupInfra(bootstrapConfig: BootstrapConfig): Promise<InfraContext> {
   // No secret is generated here: the session signing key is the keychain's
   // (local-auth loads or creates it once the keychain is up — D797).
   const config = bootstrapConfig
@@ -193,7 +188,6 @@ export async function setupInfra(
   }
 
   return {
-    configPath,
     bootstrapConfig: config,
     dataPath,
     locationManager,

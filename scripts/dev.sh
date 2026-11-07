@@ -21,7 +21,7 @@ set -e
 #                         re-links from the workspace. Use to test the
 #                         install-from-clean-slate path. Persists DB/logs/tls.
 #   --clean             : wipe the entire camstack-data dir for hub AND each
-#                         agent (DB, logs, TLS, config.yaml, everything).
+#                         agent (DB, logs, TLS, everything).
 #                         Equivalent to "fresh install".
 #   --no-clean          : alias for the new default — kept for muscle-memory.
 #

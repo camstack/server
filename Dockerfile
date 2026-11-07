@@ -158,7 +158,7 @@ COPY licenses/models/ /usr/share/doc/camstack/licenses/models/
 RUN groupadd -g 1001 camstack && \
     useradd -u 1001 -g camstack -m -s /usr/sbin/nologin camstack && \
     chown -R camstack:camstack /opt/camstack-hub && \
-    mkdir -p /data /config /backups && chown -R camstack:camstack /data /config /backups
+    mkdir -p /data /backups && chown -R camstack:camstack /data /backups
 
 # Seed VERSION fingerprint (content hash of every baked @camstack/* JS) — the
 # entrypoint re-seeds /data on an image upgrade when this differs.
@@ -180,7 +180,6 @@ ARG PRODUCT_VERSION=
 ENV CAMSTACK_PRODUCT_VERSION=${PRODUCT_VERSION}
 ENV NODE_ENV=production
 ENV CAMSTACK_DATA=/data
-ENV CONFIG_PATH=/config/config.yaml
 ENV CAMSTACK_ADDONS_DIR=/data/addons
 # NO static CAMSTACK_FRAMEWORK_DIR / NODE_PATH. A tree that sits on NODE_PATH is
 # a live resolution path the single-copy sweep must refuse to remove — so baking
@@ -234,20 +233,19 @@ EOF
 RUN chmod +x /usr/local/bin/camstack-healthcheck.sh
 HEALTHCHECK --interval=30s --timeout=25s --start-period=180s --retries=5 \
     CMD /usr/local/bin/camstack-healthcheck.sh
-VOLUME ["/data", "/config", "/backups"]
+VOLUME ["/data", "/backups"]
 
 COPY <<'EOF' /usr/local/bin/docker-entrypoint.sh
 #!/bin/sh
 set -e
 DATA_DIR="${CAMSTACK_DATA:-/data}"
-CONFIG_DIR="$(dirname "${CONFIG_PATH:-/config/config.yaml}")"
 FRAMEWORK_DIR="${CAMSTACK_FRAMEWORK_DIR:-$DATA_DIR/framework}"
 ADDONS_DIR="${CAMSTACK_ADDONS_DIR:-$DATA_DIR/addons}"
 # NOTE: `$FRAMEWORK_DIR/node_modules` is deliberately NOT created here. An empty
 # directory is harmless, but re-creating it every restart is what made the
 # legacy tree impossible to retire; the fallback block below creates it on the
 # one path that needs it.
-mkdir -p "$DATA_DIR" "$CONFIG_DIR" "$ADDONS_DIR/@camstack"
+mkdir -p "$DATA_DIR" "$ADDONS_DIR/@camstack"
 
 # WHICH BACKEND IS ABOUT TO RUN — and does that copy carry the post-boot sweep?
 #
@@ -337,7 +335,7 @@ fi
 # and the `camstack` process then cannot seed AGENT_PACKAGES into it (fresh
 # AMD Proxmox agent 2026-10-10: empty /data/addons/@camstack, pipeline page
 # blank). Own the scope dir explicitly — still O(1), not a media-tree walk.
-for owned_path in "$DATA_DIR" "$CONFIG_DIR" "$FRAMEWORK_DIR" "$ADDONS_DIR" "$ADDONS_DIR/@camstack" "${CONFIG_PATH:-/config/config.yaml}"; do
+for owned_path in "$DATA_DIR" "$FRAMEWORK_DIR" "$ADDONS_DIR" "$ADDONS_DIR/@camstack"; do
   [ -e "$owned_path" ] && chown camstack:camstack "$owned_path" 2>/dev/null || true
 done
 [ "$NEED_FRAMEWORK" = 1 ] && chown -R camstack:camstack "$FRAMEWORK_DIR" 2>/dev/null || true
@@ -359,8 +357,8 @@ done
 # Explicit recovery escape hatch for a volume imported with foreign ownership.
 # This is intentionally opt-in because it traverses the complete media tree.
 if [ "${CAMSTACK_REPAIR_PERMISSIONS:-0}" = "1" ]; then
-  echo "[entrypoint] Repairing data/config ownership recursively"
-  chown -R camstack:camstack "$DATA_DIR" "$CONFIG_DIR" 2>/dev/null || true
+  echo "[entrypoint] Repairing data ownership recursively"
+  chown -R camstack:camstack "$DATA_DIR" 2>/dev/null || true
 fi
 # Accelerator device nodes must be OPENABLE by `camstack`, and `gosu` below
 # drops every supplementary group — a compose `group_add: [render, video]`

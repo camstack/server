@@ -9,7 +9,6 @@
  * engine, written through the production writer, and a door that cannot read
  * is a door that throws — exactly what production does.
  */
-import * as path from 'node:path'
 import { SqliteSettingsBackend } from '@camstack/server/system'
 import type { ISettingsStoreProvider } from '@camstack/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -17,7 +16,6 @@ import { createAddonSettingsRouter } from '../api/core/addon-settings.router.js'
 import { ConfigService } from '../core/config/config.service.js'
 import { makeCtx } from './cap-routers/harness.js'
 
-const NO_CONFIG_FILE = path.join(__dirname, 'no-such-config.yaml')
 const engines: SqliteSettingsBackend[] = []
 
 beforeEach(() => {
@@ -72,14 +70,14 @@ function doorOver(engine: SqliteSettingsBackend, failReads = false): ISettingsSt
 /** A hub-shaped ConfigService: door only, rows written by the production writer. */
 async function hubConfig(failReads = false): Promise<ConfigService> {
   const engine = await realEngine()
-  const writer = new ConfigService(NO_CONFIG_FILE)
+  const writer = new ConfigService()
   writer.setSettingsDoor(doorOver(engine))
   await writer.createSettingsView('device-manager').writeAddonStore({
     nextDeviceId: 4605,
     deviceBindings: { '101': { doorbell: { wrapperAddonId: null } } },
   })
   await writer.createSettingsView('recorder').writeDeviceStore(101, { enabled: true })
-  const cfg = new ConfigService(NO_CONFIG_FILE)
+  const cfg = new ConfigService()
   cfg.setSettingsDoor(doorOver(engine, failReads))
   return cfg
 }
@@ -106,7 +104,7 @@ describe('addon-settings router — reads through the door, three-way (D675)', (
   })
 
   it('getGlobal THROWS before any backend is wired', async () => {
-    const cfg = new ConfigService(NO_CONFIG_FILE)
+    const cfg = new ConfigService()
     const caller = createAddonSettingsRouter(cfg).createCaller(makeCtx('admin'))
     await expect(caller.getGlobal({ addonId: 'device-manager' })).rejects.toMatchObject({
       code: 'SERVICE_UNAVAILABLE',

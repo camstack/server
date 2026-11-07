@@ -8,11 +8,7 @@
  *
  * Spec: docs/superpowers/specs/2026-05-15-yaml-bootstrap-expansion.md
  */
-import * as fs from 'node:fs'
-import * as os from 'node:os'
-import * as path from 'node:path'
-import { describe, it, expect, vi } from 'vitest'
-import { loadBootstrapConfig } from '../bootstrap-config.js'
+import { describe, it, expect } from 'vitest'
 import { bootstrapSchema } from '../config-schema.js'
 
 describe('bootstrapSchema — bootstrap.* defaults', () => {
@@ -77,27 +73,5 @@ describe('bootstrapSchema — retired server.corsOrigins (D707)', () => {
   it('no longer carries the key: a stale yaml value is stripped', () => {
     const parsed = bootstrapSchema.parse({ server: { corsOrigins: ['https://a.example'] } })
     expect(parsed.server).not.toHaveProperty('corsOrigins')
-  })
-})
-
-describe('retired keychain.keyFile / keychain.previousKeyFile (D991)', () => {
-  it('warns once, naming the mounted path, and boots with the section stripped', () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'bootstrap-keychain-'))
-    const file = path.join(dir, 'config.yaml')
-    fs.writeFileSync(file, 'keychain:\n  keyFile: /k\n  previousKeyFile: /p\n')
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-    try {
-      const parsed = loadBootstrapConfig(file, { warnRetiredKeys: true })
-      expect('keychain' in parsed).toBe(false)
-      const lines = warn.mock.calls
-        .map((c) => String(c[0]))
-        .filter((m) => m.includes('keychain.keyFile'))
-      expect(lines).toHaveLength(1)
-      expect(lines[0]).toContain('[Phase1] WARN')
-      expect(lines[0]).toContain('/run/secrets/camstack-master-key')
-    } finally {
-      warn.mockRestore()
-      fs.rmSync(dir, { recursive: true, force: true })
-    }
   })
 })

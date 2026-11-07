@@ -14,15 +14,12 @@ import {
  * D726: the admin UI is the only way to set a node's certificate; the env path
  * is ignored, loudly. #342: whether the hub serves HTTPS at all is the
  * "Serve HTTPS" setting in Network → Local access, read at boot from the
- * `tls/enabled` marker — never `CAMSTACK_TLS_ENABLED` and never a yaml key.
+ * `tls/enabled` marker — never `CAMSTACK_TLS_ENABLED`.
  */
 describe('boot config — certificate env is ignored (D726)', () => {
   let dir: string
-  let configPath: string
-
   beforeEach(() => {
     dir = fs.mkdtempSync(path.join(os.tmpdir(), 'boot-config-tls-'))
-    configPath = path.join(dir, 'config.yaml')
   })
 
   afterEach(() => {
@@ -51,7 +48,7 @@ describe('boot config — certificate env is ignored (D726)', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     vi.spyOn(console, 'log').mockImplementation(() => undefined)
 
-    loadBootstrapConfig(configPath)
+    loadBootstrapConfig()
 
     const ignored = warn.mock.calls
       .map((call) => String(call[0]))
@@ -65,11 +62,10 @@ describe('boot config — certificate env is ignored (D726)', () => {
       'CAMSTACK_TLS_ENABLED',
     ])
     vi.stubEnv('CAMSTACK_TLS_ENABLED', 'false')
-    fs.writeFileSync(configPath, 'tls:\n  enabled: false\n')
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     vi.spyOn(console, 'log').mockImplementation(() => undefined)
 
-    const config = loadBootstrapConfig(configPath)
+    const config = loadBootstrapConfig()
 
     expect(config).not.toHaveProperty('tls')
     expect(warn.mock.calls.map((c) => String(c[0])).join('\n')).toContain('CAMSTACK_TLS_ENABLED')
@@ -78,12 +74,9 @@ describe('boot config — certificate env is ignored (D726)', () => {
 
 describe('setupInfra — HTTPS is the stored setting, with a floor of on', () => {
   let dir: string
-  let configPath: string
-
   beforeEach(() => {
     dir = fs.mkdtempSync(path.join(os.tmpdir(), 'boot-config-tls-infra-'))
-    configPath = path.join(dir, 'config.yaml')
-    // The bootstrap loader lets CAMSTACK_DATA/PORT/HOST override config.yaml, and a
+    // The bootstrap loader reads CAMSTACK_DATA/PORT/HOST, and a
     // developer shell or an nx-loaded .env sets them: pin them so the data path is
     // this spec's temp dir whatever the host environment says.
     vi.stubEnv('CAMSTACK_DATA', dir)
@@ -100,8 +93,7 @@ describe('setupInfra — HTTPS is the stored setting, with a floor of on', () =>
   })
 
   function boot() {
-    fs.writeFileSync(configPath, `server:\n  dataPath: ${dir}\n`)
-    return setupInfra(configPath, loadBootstrapConfig(configPath))
+    return setupInfra(loadBootstrapConfig())
   }
 
   it('first boot, no stored value: HTTPS on', async () => {
@@ -118,12 +110,6 @@ describe('setupInfra — HTTPS is the stored setting, with a floor of on', () =>
   it('the env variable changes nothing: still HTTPS with no stored value', async () => {
     vi.stubEnv('CAMSTACK_TLS_ENABLED', 'false')
     const infra = await boot()
-    expect(infra.tlsOptions).toBeDefined()
-  })
-
-  it('a yaml tls.enabled changes nothing either', async () => {
-    fs.writeFileSync(configPath, `server:\n  dataPath: ${dir}\ntls:\n  enabled: false\n`)
-    const infra = await setupInfra(configPath, loadBootstrapConfig(configPath))
     expect(infra.tlsOptions).toBeDefined()
   })
 })

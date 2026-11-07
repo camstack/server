@@ -32,6 +32,9 @@ const ARCHIVE_MANIFEST_NAME = '.camstack-backup-manifest.json'
 
 const RESTORE_MARKER_FILE = '.pending-restore.json'
 
+/** The bootstrap file older archives still carry (D1018): skipped on restore. */
+const RETIRED_CONFIG_FILE = 'config.yaml'
+
 /**
  * Apply a pending system-restore archive over `dataDir` if a marker is
  * present. Runs BEFORE the addon installer so the restored snapshot's
@@ -100,6 +103,9 @@ export async function applyPendingRestore(
     filter: (p) => {
       if (p === ARCHIVE_MANIFEST_NAME || p === `./${ARCHIVE_MANIFEST_NAME}`) return false
       const normalized = p.replace(/^\.\//, '').replace(/\/+$/, '')
+      // An archive from before D1018 carries the retired bootstrap file: it is
+      // not restored, or it would resurrect a port the environment now owns.
+      if (normalized === RETIRED_CONFIG_FILE) return false
       const keep = inScope(normalized)
       if (keep) extracted.push(normalized)
       return keep

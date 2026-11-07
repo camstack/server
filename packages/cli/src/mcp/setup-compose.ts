@@ -12,7 +12,6 @@ const VOLUME_HOST_PATHS: ReadonlyArray<{
 }> = [
   { container: '/data', key: 'data' },
   { container: '/recordings', key: 'recordings' },
-  { container: '/config', key: 'config' },
   { container: '/backups', key: 'backups' },
 ]
 

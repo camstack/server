@@ -26,7 +26,7 @@ every `backups` storage location a schedule (or a manual run) targets.
 
 ## What an archive holds
 
-`DEFAULT_BACKUP_LOCATIONS`: `config.yaml`, `addons`, `addons-data`, `tls`,
+`DEFAULT_BACKUP_LOCATIONS`: `addons`, `addons-data`, `tls`,
 `auto-update.json`. The settings database enters only as its owner's verified
 snapshot, never as a copy of its live files (D693). `addons-data` carries the
 library-owned state the keychain cannot hold — HAP pairing, the Matter fabric,
