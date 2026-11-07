@@ -7,13 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Loki logging retires its old enabled flag through a one-time ledger migration; local-network keeps its allowlist and address book through durable state handles.
+
 ## [1.2.791] - 2026-11-07
 
 ### Changed
 
 - The addon-settings capability answers scoped settings reads and writes for in-process and forked addons.
 - A non-admin cannot read secrets through the scoped settings read, and its schema text is localized like the global one
-- Loki logging retires its old enabled flag through a one-time ledger migration; local-network keeps its allowlist and address book through durable state handles.
 
 ## [1.2.790] - 2026-11-07
 
