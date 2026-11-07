@@ -93,7 +93,46 @@ function quietLogger(): IScopedLogger {
   return logger
 }
 
-function readString(config: Record<string, unknown>, key: string): string {
+/**
+ * The account a target speaks through: the one it names; else the only one there is; else the one
+ * whose Echoes include the target's Echo.
+ */
+export function pickBroker(
+  brokers: readonly SpeakBrokerView[],
+  config: Readonly<Record<string, unknown>>,
+): SpeakBrokerView | undefined {
+  const named = readString(config, 'brokerId')
+  if (named.length > 0) return brokers.find((broker) => broker.id === named)
+  if (brokers.length === 1) return brokers[0]
+  const echoId = readString(config, 'echoId')
+  const owners = brokers.filter((broker) => broker.devices.some((device) => device.id === echoId))
+  return owners.length === 1 ? owners[0] : undefined
+}
+
+/**
+ * The save-time rule of an Echo target: an Echo and an account must be picked, and the account is
+ * pinned the moment it is known, so a second account added later cannot silently change where an
+ * existing target speaks. Throws the reason; returns the keys to keep with the write.
+ */
+export function validateEchoTarget(
+  brokers: readonly SpeakBrokerView[],
+  config: Readonly<Record<string, unknown>>,
+): Readonly<Record<string, unknown>> {
+  if (readString(config, 'echoId').length === 0) throw new Error('Pick the Echo that should speak')
+  const owner = pickBroker(brokers, config)
+  if (owner === undefined) {
+    const named = readString(config, 'brokerId')
+    if (named.length > 0) throw new Error(`The Amazon account ${named} is not available`)
+    throw new Error(
+      brokers.length === 0
+        ? 'Add an Amazon account first: an Echo speaks through one'
+        : 'Pick the Amazon account this Echo belongs to',
+    )
+  }
+  return readString(config, 'brokerId').length === 0 ? { brokerId: owner.id } : {}
+}
+
+function readString(config: Readonly<Record<string, unknown>>, key: string): string {
   const value = config[key]
   return typeof value === 'string' ? value : ''
 }
@@ -131,7 +170,7 @@ export function echoOptionLabel(device: EchoDevice): string {
 /**
  * The two pickers are not `required`: a required select shows its first option
  * while the form still holds no value, so a save would drop the choice. Left
- * optional they open on "Select", and the instance form refuses an empty pick.
+ * optional they open on "Select", and `validateEchoTarget` refuses an empty pick on save.
  *
  * The account is a broker pick (existing, or created in place); the Echo list
  * is fetched from that account, so a new Echo shows up without a deploy.
@@ -235,18 +274,8 @@ export function createAlexaNotificationProvider(ports: AlexaSpeakPorts): AlexaNo
     deliveries = [...deliveries, row]
   }
 
-  /**
-   * The account a target speaks through: the one it names; else the only one
-   * there is; else the one whose Echoes include the target's Echo.
-   */
   function brokerFor(config: Record<string, unknown>): SpeakBrokerView | undefined {
-    const all = ports.brokers()
-    const named = readString(config, 'brokerId')
-    if (named.length > 0) return all.find((broker) => broker.id === named)
-    if (all.length === 1) return all[0]
-    const echoId = readString(config, 'echoId')
-    const owners = all.filter((broker) => broker.devices.some((device) => device.id === echoId))
-    return owners.length === 1 ? owners[0] : undefined
+    return pickBroker(ports.brokers(), config)
   }
 
   async function deliver(target: Target, notification: Notification): Promise<SendResult> {

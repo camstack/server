@@ -15,7 +15,7 @@ import {
 } from '@camstack/types'
 import { type AlexaEchoTarget, alexaEchoTargetSchema, readEchoTargets } from '../config.js'
 import type { EchoRecordPorts, EchoSettingPorts } from '../migrations/echo-targets-to-records.js'
-import { alexaTargetKind } from './provider.js'
+import { alexaTargetKind, type SpeakBrokerView, validateEchoTarget } from './provider.js'
 import { ALEXA_SPEAK_ADDON_ID } from './constants.js'
 
 export const alexaNotifyRecordKinds = notificationTargetKinds([alexaTargetKind()])
@@ -123,4 +123,15 @@ export function echoTargetProbe(
     }
     return source.provider.probeTargetConfig({ kind: input.kind, config: input.config })
   }
+}
+
+/**
+ * The Echo instance's save-time rule over the accounts now (D1013): the check the removed
+ * `upsertTarget` made, on the instance door. Speech not started yet has no account to name, so the
+ * write is refused with the reason, never accepted blind.
+ */
+export function echoTargetValidator(
+  brokers: () => readonly SpeakBrokerView[] | null,
+): NonNullable<NotificationTargetInstancesSpec['validate']> {
+  return ({ config }) => validateEchoTarget(brokers() ?? [], config)
 }

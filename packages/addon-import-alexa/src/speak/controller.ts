@@ -92,7 +92,8 @@ export class AlexaSpeakController {
     return this.echoes.get(brokerId) ?? null
   }
 
-  private brokerViews(): readonly SpeakBrokerView[] {
+  /** The accounts right now, as the provider and the save-time rule see them. */
+  brokerViews(): readonly SpeakBrokerView[] {
     return this.host.listBrokers().map((ref) => {
       const echo = this.echoes.get(ref.id)
       return {

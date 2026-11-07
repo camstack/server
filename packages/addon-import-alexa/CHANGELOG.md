@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Alexa speak targets are created and edited through the instance form only
+- An Echo notification target refuses a blank Echo, a blank or ambiguous Amazon account and pins the account when saved
 
 ## [0.2.194] - 2026-11-06
 

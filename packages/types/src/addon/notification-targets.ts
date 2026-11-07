@@ -347,6 +347,15 @@ export interface NotificationTargetInstancesSpec {
   }) => Promise<ProbeTargetConfigResult>
   /** Which kinds have a probe (the others are `canTest: false`). */
   readonly canProbe: (kind: string) => boolean
+  /**
+   * The save-time rule of a kind, on the body a save would leave (the form's values flat, secrets
+   * left out): throws a reason an operator can read to refuse the write, or returns keys the record
+   * keeps with it. Absent: the kind accepts what its form accepts.
+   */
+  readonly validate?: (input: {
+    readonly kind: string
+    readonly config: Readonly<Record<string, unknown>>
+  }) => Readonly<Record<string, unknown>> | undefined
 }
 
 /**
@@ -397,6 +406,7 @@ export function notificationTargetParts(
       initialBody: (name): InstanceBody => ({ name }),
       mintId: () => spec.mintId(),
       configured: () => true,
+      validateWrite: ({ body }) => spec.validate?.({ kind: descriptor.kind, config: body }),
       test: async ({ id, values }) => {
         if (spec.probe === undefined || !canTest) {
           return {

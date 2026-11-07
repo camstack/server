@@ -2625,8 +2625,13 @@ where they were typed:
   `notification-output` (D1013): it is listed, created, edited, switched and deleted through
   `integrationInstances` (every method `auth: 'admin'`), by the admin page's `InstancesTable`
   (`NotificationTargetsPanel.tsx`) and the pickers (`useInstancesOfCap('notification-output')`,
-  `use-notification-targets.ts`). The cap itself keeps only `listTargetKinds`, `discoverTargets`,
-  `probeTargetConfig`, `send` and `testTarget`. The targets live in one record kind per adapter
+  `use-notification-targets.ts`). The cap's target CRUD methods are gone: it keeps `send`, `testTarget`,
+  `discoverTargets` and `probeTargetConfig`, plus `listTargetKinds`, which stays only as a baseline
+  note (follow-up: fold the kind descriptors, `destinationKeys` included, into the instance kinds).
+  The notifiers addon and Home Assistant providers still carry an INTERNAL `listTargets` /
+  `upsertTarget` on the provider object, not on the cap: the `nc.*` custom actions use it for the
+  viewer bridge. A save-time rule that a kind needs (the Echo kind refuses a blank or ambiguous
+  Echo/account and pins the account) rides on the instance write, through `validateWrite`. The targets live in one record kind per adapter
   (`notify-<kind>`), written by the facade `NotificationTargetStore`, and every `settingsStore`
   method is admin-only too. A non-admin manages ITS OWN targets through the owner-checked `nc.*`
   bridge (`nc-target-actions.ts`), which keeps the D634 secret-merge guard

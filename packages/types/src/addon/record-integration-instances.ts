@@ -82,6 +82,20 @@ export interface RecordIntegrationInstancesHooks<TBody extends InstanceBody> {
    * (`check-integration-instances-declared`).
    */
   onChanged?(id: string, change: InstanceChange): void | Promise<void>
+  /**
+   * A save-time rule of the addon, run on the body a form save would leave (the stored body with the
+   * patch laid over it). It throws a reason an operator can read to REFUSE the write, or returns extra
+   * keys the record keeps with the patch (a value the rule pins). It runs for an update that carries
+   * values and for a create that carries values; a bare create (a name only, the form follows as an
+   * update) and a rename are not form saves, so they pass.
+   */
+  validateWrite?(input: {
+    readonly kind: string | undefined
+    readonly body: Readonly<Record<string, unknown>>
+  }):
+    | Readonly<Record<string, unknown>>
+    | undefined
+    | Promise<Readonly<Record<string, unknown>> | undefined>
   /** Probe the remote with the (possibly unsaved) values. */
   test?(input: {
     readonly id: string | null
@@ -272,10 +286,18 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
     if (minted === undefined) {
       throw new Error('createInstance needs an id: this provider does not mint one')
     }
-    await this.handle.put({ id: minted, data: this.hooks.initialBody(name, kind) }, { ifRev: 0 })
+    const initial = this.hooks.initialBody(name, kind)
+    const patch = this.patchOf(values ?? {})
+    // A refusal comes BEFORE the row exists: a rejected create leaves nothing behind.
+    if (Object.keys(patch).length > 0) {
+      Object.assign(
+        patch,
+        await this.hooks.validateWrite?.({ kind, body: { ...initial, ...patch } }),
+      )
+    }
+    await this.handle.put({ id: minted, data: initial }, { ifRev: 0 })
     // Form values sent with the create (a link picked in the dialog, settings a migration carries)
     // are written under the same secret rules as an update, before the addon is told.
-    const patch = this.patchOf(values ?? {})
     if (Object.keys(patch).length > 0) await this.handle.patch(minted, patch)
     await this.hooks.onChanged?.(minted, 'created')
     return { id: minted }
@@ -287,6 +309,15 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
     values,
   }) => {
     const patch = this.patchOf(values)
+    if (this.hooks.validateWrite !== undefined && Object.keys(patch).length > 0) {
+      const stored = await this.handle.get(id)
+      if (stored !== null) {
+        Object.assign(
+          patch,
+          await this.hooks.validateWrite({ kind: undefined, body: { ...stored.data, ...patch } }),
+        )
+      }
+    }
     if (name !== undefined) patch[this.nameField] = name
     await this.handle.patch(id, patch)
     await this.hooks.onChanged?.(id, 'updated')
