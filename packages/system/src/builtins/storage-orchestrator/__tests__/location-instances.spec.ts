@@ -270,23 +270,46 @@ describe('storage location instances', () => {
     })
   })
 
-  it('maps the row switch to the one typed state and leaves drain and disabled alone', async () => {
+  it('maps the row switch to the one typed state', async () => {
     const { instances, saves } = harness([
       location({ id: 'recordings:a', mode: 'active' }),
       location({ id: 'recordings:b', mode: 'drain' }),
       location({ id: 'recordings:c', mode: 'disabled' }),
+      location({ id: 'recordings:d', mode: 'readonly' }),
     ])
     await instances.setInstanceEnabled({ id: 'recordings:a', enabled: false })
     await instances.setInstanceEnabled({ id: 'recordings:b', enabled: false })
     await instances.setInstanceEnabled({ id: 'recordings:c', enabled: false })
     expect(saves.map((s) => [s.input.id, s.input.mode])).toEqual([['recordings:a', 'readonly']])
-    await instances.setInstanceEnabled({ id: 'recordings:b', enabled: true })
-    expect(saves.at(-1)?.input).toMatchObject({
-      id: 'recordings:b',
-      mode: 'active',
-    })
-    const view = await instances.getInstance({ id: 'recordings:c' })
+    await instances.setInstanceEnabled({ id: 'recordings:c', enabled: true })
+    await instances.setInstanceEnabled({ id: 'recordings:d', enabled: true })
+    expect(saves.map((s) => [s.input.id, s.input.mode])).toEqual([
+      ['recordings:a', 'readonly'],
+      ['recordings:c', 'active'],
+      ['recordings:d', 'active'],
+    ])
+    const view = await instances.getInstance({ id: 'recordings:b' })
     expect(view?.enabled).toBe(false)
+  })
+
+  it('refuses to cancel a drain through the switch', async () => {
+    const { instances, saves } = harness([location({ id: 'recordings:b', mode: 'drain' })])
+    await expect(
+      instances.setInstanceEnabled({ id: 'recordings:b', enabled: true }),
+    ).rejects.toThrow(/draining/)
+    expect(saves).toEqual([])
+  })
+
+  it('round-trips minFreePercent through an update: changed when sent, kept when not', async () => {
+    const { instances, saves } = harness([
+      location({ id: 'recordings:a', config: { basePath: '/x', minFreePercent: 10 } }),
+    ])
+    await instances.updateInstance({ id: 'recordings:a', values: { minFreePercent: 25 } })
+    expect(saves[0]?.input.config).toMatchObject({ basePath: '/x', minFreePercent: 25 })
+    await instances.updateInstance({ id: 'recordings:a', values: {} })
+    expect(saves[1]?.input.config).toMatchObject({ basePath: '/x', minFreePercent: 25 })
+    await instances.updateInstance({ id: 'recordings:a', values: { minFreePercent: null } })
+    expect(saves[2]?.input.config).toEqual({ basePath: '/x' })
   })
 
   it('deletes through the refusing path, never forced', async () => {

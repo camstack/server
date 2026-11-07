@@ -190,3 +190,36 @@ export function withLocationMode<T extends StorageLocationStateSource>(
     config: strippedOfLegacyReadOnly(location.config),
   }
 }
+
+/** Is the row switch of a location ON? Only a location that is written to reads as on. */
+export function switchStateOfMode(mode: StorageLocationMode): boolean {
+  return modeMayWrite(mode)
+}
+
+/** What the row switch does to a location in `current`. */
+export type SwitchMove =
+  | { readonly kind: 'keep' }
+  | { readonly kind: 'set'; readonly mode: StorageLocationMode }
+  | { readonly kind: 'refuse'; readonly reason: string }
+
+/**
+ * The move a row switch makes. The switch is a two-state view of a four-state mode, so it only
+ * crosses the active/not-active line and never cancels a retirement:
+ *
+ *   - on:  `readonly` and `disabled` become `active`; `active` stays; a `drain` is REFUSED
+ *          (turning it on would silently cancel the drain; the mode select ends it on purpose).
+ *   - off: `active` becomes `readonly`; `readonly`, `disabled` and `drain` already are not
+ *          written to and stay as they are.
+ */
+export function modeForSwitch(on: boolean, current: StorageLocationMode): SwitchMove {
+  if (on) {
+    if (current === 'active') return { kind: 'keep' }
+    if (current === 'drain')
+      return {
+        kind: 'refuse',
+        reason: 'the location is draining; end the drain by changing its mode, not with the switch',
+      }
+    return { kind: 'set', mode: 'active' }
+  }
+  return current === 'active' ? { kind: 'set', mode: 'readonly' } : { kind: 'keep' }
+}

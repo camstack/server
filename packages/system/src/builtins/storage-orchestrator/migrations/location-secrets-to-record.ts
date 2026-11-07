@@ -10,15 +10,23 @@
  * A row is moved with ONE patch that sets `secrets` and removes the marker keys from `config`;
  * nothing else of the row (its id, its mode, `minFreePercent`, `maxUsedGb`) is part of the patch.
  * The moved credential is read back RESOLVED and must equal what was resolved; only then are the
- * legacy keychain values released. A row with no legacy marker is not touched, so a second run
- * finds nothing and the step reports `already-done`.
+ * legacy keychain values released. A row with no legacy marker is not touched.
+ *
+ * The release is its own idempotent SWEEP, run before anything else: a hub that died between a
+ * row's patch and its release leaves a row with no legacy marker and a legacy value still in the
+ * keychain. For every row whose record carries credential K, a legacy value of K that still
+ * exists is released, once the record's own credential has been confirmed to resolve. Only when
+ * the sweep found nothing either does the step report `already-done`.
  */
 import type { MigrationProcedureResult, SecretMarker } from '@camstack/types'
+import { legacyLocationSecretRef } from '../location-secret-refs.js'
 
 /** One location row's legacy credentials: config key to the marker that names the old ref. */
 export interface LegacyLocationRow {
   readonly id: string
   readonly legacy: Readonly<Record<string, SecretMarker>>
+  /** The credential keys the record already carries (`secrets`), whatever their value. */
+  readonly recorded: readonly string[]
 }
 
 /** What the keychain said about one ref. */
@@ -58,15 +66,49 @@ function sameSecrets(
   return entries(back) === entries(expected)
 }
 
+/**
+ * Release the legacy values a row already moved off of. Fail-safe in both directions: a keychain
+ * that cannot answer, or a record credential that does not resolve, releases nothing here (the
+ * next boot looks again); nothing is ever released on a guess.
+ */
+async function sweepStrandedLegacy(
+  ports: LocationSecretPorts,
+  all: readonly LegacyLocationRow[],
+): Promise<number> {
+  const candidates = all.filter(
+    (row) => Object.keys(row.legacy).length === 0 && row.recorded.length > 0,
+  )
+  if (candidates.length === 0) return 0
+  const refOf = (row: LegacyLocationRow, key: string): string =>
+    legacyLocationSecretRef(row.id, key)
+  const answers = await ports.resolveLegacy(
+    candidates.flatMap((row) => row.recorded.map((key) => refOf(row, key))),
+  )
+  const stranded: string[] = []
+  for (const row of candidates) {
+    const present = row.recorded.filter((key) => answers.get(refOf(row, key))?.kind === 'value')
+    if (present.length === 0) continue
+    // A record credential that cannot be read back is not a reason to fail the boot, and it is
+    // never a reason to release: the legacy value may be the only copy left.
+    const moved = await ports.readMoved(row.id).catch(() => null)
+    for (const key of present) {
+      if ((moved?.secrets[key] ?? '') !== '') stranded.push(refOf(row, key))
+    }
+  }
+  if (stranded.length > 0) await ports.releaseLegacy(stranded)
+  return stranded.length
+}
+
 export async function moveLocationSecretsToRecords(
   ports: LocationSecretPorts,
 ): Promise<MigrationProcedureResult> {
-  const rows = (await ports.readLegacy()).filter((row) => Object.keys(row.legacy).length > 0)
+  const all = await ports.readLegacy()
+  const released = await sweepStrandedLegacy(ports, all)
+  const rows = all.filter((row) => Object.keys(row.legacy).length > 0)
   if (rows.length === 0)
-    return {
-      outcome: 'already-done',
-      summary: { reason: 'no-legacy-secrets' },
-    }
+    return released > 0
+      ? { outcome: 'done', summary: { locations: 0, credentials: 0, released } }
+      : { outcome: 'already-done', summary: { reason: 'no-legacy-secrets' } }
 
   const refs = [...new Set(rows.flatMap((row) => Object.values(row.legacy).map((m) => m.$secret)))]
   const answers = await ports.resolveLegacy(refs)

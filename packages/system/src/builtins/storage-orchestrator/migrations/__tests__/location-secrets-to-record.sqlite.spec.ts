@@ -81,7 +81,7 @@ async function boot() {
     }
     await locations.put({ id, data: body({ ...over, config }) })
   }
-  return { locations, kc, run, seedLegacy, refreshes: () => refreshes }
+  return { locations, kc, run, seedLegacy, ports, refreshes: () => refreshes }
 }
 
 describe('location-secrets-to-record (real SQLite)', () => {
@@ -145,6 +145,54 @@ describe('location-secrets-to-record (real SQLite)', () => {
     expect(again.outcome).toBe('already-done')
     expect(kc.puts.length).toBe(puts)
     expect(refreshes()).toBe(refreshed)
+  })
+
+  it('releases the legacy refs a crash left behind (patch applied, release never ran)', async () => {
+    const { kc, run, seedLegacy, ports, locations } = await boot()
+    await seedLegacy('sftp-1', { password: 'p1' }, { config: { host: 'h' } })
+    await seedLegacy('sftp-2', { password: 'p2' }, { config: { host: 'h2' } })
+    const entry = LOCATION_SECRETS_TO_RECORD_MIGRATION
+    if (!('procedure' in entry)) throw new Error('procedure entry missing')
+    // The hub dies after the patch of the first row, before its legacy value is released.
+    await expect(
+      entry.procedure({
+        ...ports,
+        releaseLegacy: async () => {
+          throw new Error('hub restarted')
+        },
+      }),
+    ).rejects.toThrow('hub restarted')
+    expect(kc.values.has(legacyLocationSecretRef('sftp-1', 'password'))).toBe(true)
+    expect((await locations.getResolved('sftp-1'))?.data.secrets).toEqual({ password: 'p1' })
+
+    const again = await run()
+
+    expect(again.outcome).toBe('done')
+    expect(kc.values.has(legacyLocationSecretRef('sftp-1', 'password'))).toBe(false)
+    expect(kc.values.has(legacyLocationSecretRef('sftp-2', 'password'))).toBe(false)
+    expect(kc.values.get(locationSecretRef('sftp-1', 'password'))).toBe('p1')
+    expect(kc.values.get(locationSecretRef('sftp-2', 'password'))).toBe('p2')
+    expect((await run()).outcome).toBe('already-done')
+  })
+
+  it('does not release a legacy ref whose record credential cannot be read back', async () => {
+    const { kc, seedLegacy, ports } = await boot()
+    await seedLegacy('sftp-1', { password: 'p1' }, { config: { host: 'h' } })
+    const entry = LOCATION_SECRETS_TO_RECORD_MIGRATION
+    if (!('procedure' in entry)) throw new Error('procedure entry missing')
+    await entry.procedure(ports)
+    // A stray legacy value reappears while the record's own credential no longer resolves.
+    kc.values.set(legacyLocationSecretRef('sftp-1', 'password'), 'p1')
+
+    const again = await entry.procedure({
+      ...ports,
+      readMoved: async () => {
+        throw new Error('the secret cannot be served (missing)')
+      },
+    })
+
+    expect(again.outcome).toBe('already-done')
+    expect(kc.values.has(legacyLocationSecretRef('sftp-1', 'password'))).toBe(true)
   })
 
   it('writes nothing when a read fails (a locked keychain)', async () => {

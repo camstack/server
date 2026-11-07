@@ -352,6 +352,7 @@ export type {
   StorageLocationMode,
   StorageLocationModePatch,
   StorageLocationStateSource,
+  SwitchMove,
 } from './interfaces/storage-location-mode.js'
 // The ONE interpreter of a storage location's state (D385). Everything that
 // asks "may I write / read / evict here" asks these; nothing else in the repo
@@ -365,6 +366,7 @@ export {
   legacyModeOf,
   mayReadLocation,
   mayWriteToLocation,
+  modeForSwitch,
   modeMayRead,
   modeMayWrite,
   resolveLocationMode,
@@ -372,6 +374,7 @@ export {
   StorageEvictionPolicySchema,
   StorageLocationModeSchema,
   strippedOfLegacyReadOnly,
+  switchStateOfMode,
   withLocationMode,
 } from './interfaces/storage-location-mode.js'
 export * from './interfaces/stream-broker.js'

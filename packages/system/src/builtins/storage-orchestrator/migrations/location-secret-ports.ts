@@ -30,7 +30,7 @@ export function locationSecretPortsOver(deps: LocationSecretPortsDeps): Location
         for (const [key, value] of Object.entries(row.data.config)) {
           if (isLegacyLocationMarker(row.id, value)) legacy[key] = value
         }
-        return { id: row.id, legacy }
+        return { id: row.id, legacy, recorded: Object.keys(row.data.secrets ?? {}) }
       })
     },
     async resolveLegacy(refs): Promise<ReadonlyMap<string, LegacySecretRead>> {

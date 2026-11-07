@@ -103,10 +103,7 @@ export function findViolations(
 }
 
 function main(): number {
-  const files = execFileSync('git', ['ls-files', '*.cap.ts'], {
-    cwd: ROOT,
-    encoding: 'utf8',
-  })
+  const files = execFileSync('git', ['ls-files', '*.cap.ts'], { cwd: ROOT, encoding: 'utf8' })
     .split('\n')
     .filter((f) => f !== '')
   const caps: SourceFile[] = files.map((f) => ({

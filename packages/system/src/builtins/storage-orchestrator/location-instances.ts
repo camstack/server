@@ -29,12 +29,14 @@ import {
   isSecretClear,
   isSecretFieldView,
   isSecretMarker,
+  modeForSwitch,
   REDACTED_SECRET,
   resolveLocationMode,
   STORAGE_LOCATION_MODES,
   type StorageLocation,
   type StorageLocationDeclaration,
   type StorageLocationMode,
+  switchStateOfMode,
   toSecretFieldView,
 } from '@camstack/types'
 import type { StorageProviderListEntry } from './provider-discovery.js'
@@ -281,10 +283,10 @@ export class StorageLocationInstances {
       id: location.id,
       name: location.displayName,
       configured: true,
-      enabled: mode === 'active',
+      enabled: switchStateOfMode(mode),
       kind: location.type,
       formValues,
-      status: { state: mode === 'active' ? 'ok' : 'off', label: mode },
+      status: { state: switchStateOfMode(mode) ? 'ok' : 'off', label: mode },
     }
   }
 
@@ -502,12 +504,9 @@ export class StorageLocationInstances {
     const stored = this.deps.locations().find((l) => l.id === id)
     if (stored === undefined) throw new Error(`storage location '${id}' not found`)
     const current = stateOf(stored)
-    const target: StorageLocationMode = enabled
-      ? 'active'
-      : current === 'active'
-        ? 'readonly'
-        : current
-    if (target !== current) await this.deps.save(this.rebuilt(stored, { mode: target }), [])
+    const move = modeForSwitch(enabled, current)
+    if (move.kind === 'refuse') throw new Error(`storage location '${id}': ${move.reason}`)
+    if (move.kind === 'set') await this.deps.save(this.rebuilt(stored, { mode: move.mode }), [])
     return { ok: true as const }
   }
 

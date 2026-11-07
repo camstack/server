@@ -303,10 +303,7 @@ export class StorageOrchestratorService {
     seeded.add(type)
     void store.markTypeSeeded(type).catch((err) => {
       this.logger.error('storage-orchestrator: persisting the seed memory failed', {
-        meta: {
-          type,
-          error: err instanceof Error ? err.message : String(err),
-        },
+        meta: { type, error: err instanceof Error ? err.message : String(err) },
       })
     })
   }
@@ -317,10 +314,7 @@ export class StorageOrchestratorService {
     if (seeded === null || !seeded.delete(type) || !store?.unmarkTypeSeeded) return
     void store.unmarkTypeSeeded(type).catch((err) => {
       this.logger.error('storage-orchestrator: forgetting the seed memory failed', {
-        meta: {
-          type,
-          error: err instanceof Error ? err.message : String(err),
-        },
+        meta: { type, error: err instanceof Error ? err.message : String(err) },
       })
     })
   }
@@ -475,10 +469,7 @@ export class StorageOrchestratorService {
     if (!store) return
     void store.upsert(withStamp).catch((err) => {
       this.logger.error('storage-orchestrator: state-model migration persist failed', {
-        meta: {
-          id: withStamp.id,
-          error: err instanceof Error ? err.message : String(err),
-        },
+        meta: { id: withStamp.id, error: err instanceof Error ? err.message : String(err) },
       })
     })
   }
@@ -724,13 +715,7 @@ export class StorageOrchestratorService {
     if (registry === null) {
       this.logger.debug(
         'storage-orchestrator: no location declarations loaded — access constraint not evaluated',
-        {
-          meta: {
-            id: input.id,
-            type: input.type,
-            providerId: input.providerId,
-          },
-        },
+        { meta: { id: input.id, type: input.type, providerId: input.providerId } },
       )
       return
     }
@@ -742,25 +727,13 @@ export class StorageOrchestratorService {
     if (nodeLocal === undefined) {
       this.logger.debug(
         'storage-orchestrator: provider not yet classified — allowing a local-path upsert',
-        {
-          meta: {
-            id: input.id,
-            type: input.type,
-            providerId: input.providerId,
-            access,
-          },
-        },
+        { meta: { id: input.id, type: input.type, providerId: input.providerId, access } },
       )
       return
     }
 
     this.logger.warn('storage-orchestrator: REFUSED a remote provider for a local-path kind', {
-      meta: {
-        id: input.id,
-        type: input.type,
-        providerId: input.providerId,
-        access,
-      },
+      meta: { id: input.id, type: input.type, providerId: input.providerId, access },
     })
     throw new Error(
       `Storage kind "${input.type}" is declared access "local-path": the service that owns it ` +
@@ -938,10 +911,7 @@ export class StorageOrchestratorService {
       return await probe(location)
     } catch (err) {
       this.logger.warn('storage-orchestrator: occupancy probe failed', {
-        meta: {
-          id: location.id,
-          error: err instanceof Error ? err.message : String(err),
-        },
+        meta: { id: location.id, error: err instanceof Error ? err.message : String(err) },
       })
       return 'unknown'
     }
@@ -1018,19 +988,12 @@ export class StorageOrchestratorService {
         const store = this.locationStore
         void store.delete(id).catch((err) => {
           this.logger.error('storage-orchestrator: prune persistence failed', {
-            meta: {
-              id,
-              error: err instanceof Error ? err.message : String(err),
-            },
+            meta: { id, error: err instanceof Error ? err.message : String(err) },
           })
         })
       }
       this.logger.info('storage-orchestrator: pruned stale seeded location', {
-        meta: {
-          id,
-          type: loc.type,
-          reason: 'no-installed-package-declares-type',
-        },
+        meta: { id, type: loc.type, reason: 'no-installed-package-declares-type' },
       })
     }
   }

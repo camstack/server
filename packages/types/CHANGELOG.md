@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - New addon.unsupported-version and addon.unsupported-resolved event categories for an addon running below the server's minimum.
+- Storage location row switch: a draining location is never switched back to active by the switch.
 
 ## [1.2.514] - 2026-11-06
 
