@@ -52,6 +52,14 @@ describe('the analytics scoped settings', () => {
     expect(await addon.getScopedSettingsSchema('node', 'pipeline-analytics')).toBeNull()
   })
 
+  it('trackingTape is per-camera only: the fleet-default form never carries it (a click there would arm every camera)', async () => {
+    const defaults = keysOf(
+      await addon.getScopedSettingsSchema('device-defaults', 'pipeline-analytics'),
+    )
+    expect(defaults).not.toContain('trackingTape')
+    expect(defaults).toContain('stationarySuppressionEnabled')
+  })
+
   it('declares every field of the legacy form once, in one scope, and nothing else', async () => {
     const declared = [
       ...keysOf(await addon.getScopedSettingsSchema('cluster', 'face-gallery')),
@@ -59,7 +67,9 @@ describe('the analytics scoped settings', () => {
       ...keysOf(await addon.getScopedSettingsSchema('device-defaults', 'pipeline-analytics')),
     ].sort()
     expect(new Set(declared).size).toBe(declared.length)
-    expect(declared).toEqual(keysOf(buildGlobalSettingsSchema()))
+    expect(declared).toEqual(
+      keysOf(buildGlobalSettingsSchema()).filter((key) => key !== 'trackingTape'),
+    )
   })
 
   it('declares nothing for a capability it does not provide', async () => {

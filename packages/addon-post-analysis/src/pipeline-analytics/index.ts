@@ -4014,15 +4014,18 @@ export default class PipelineAnalyticsAddon
       },
       // Read only by the retrain backfill, which runs after the stores exist.
       verdicts,
-      resolveTrackAlias: (trackId) => this.trackAliasStore?.resolve(trackId) ?? Promise.resolve(null),
+      resolveTrackAlias: (trackId) =>
+        this.trackAliasStore?.resolve(trackId) ?? Promise.resolve(null),
       listStagedTracks: async () =>
         boundStagedTracks(
           // One past the bound, so a truncation is seen rather than silent.
-          (await this.listRetrainStaging({ limit: RETRAIN_BACKFILL_STAGING_LIMIT + 1 })).map((t) => ({
-            deviceId: t.deviceId,
-            trackId: t.trackId,
-            frameCount: t.frameCount,
-          })),
+          (await this.listRetrainStaging({ limit: RETRAIN_BACKFILL_STAGING_LIMIT + 1 })).map(
+            (t) => ({
+              deviceId: t.deviceId,
+              trackId: t.trackId,
+              frameCount: t.frameCount,
+            }),
+          ),
           RETRAIN_BACKFILL_STAGING_LIMIT,
           this.ctx.logger,
         ),
@@ -15848,7 +15851,7 @@ export default class PipelineAnalyticsAddon
   // ── Global + per-device settings (P8) ─────────────────────────────
   //
   // Cascade: global defaults live on this addon's global settings
-  // (getGlobalSettings); per-device overrides live on the device
+  // (the scoped forms below); per-device overrides live on the device
   // settings aggregator (getDeviceSettingsContribution → BindingsTab's
   // device panel). A missing device override falls back to the global
   // default — same pattern pipeline-orchestrator uses.
@@ -15862,7 +15865,7 @@ export default class PipelineAnalyticsAddon
    * (post-processing node, index maintenance, device alerts, prune windows) are the cluster form
    * of `pipeline-analytics`. A page asks for ONE capability's form, and System → Settings asks for
    * all of them. The schemas are static; the only live value (the derived suggestion floor) is
-   * injected into the hydrate blob by `getGlobalSettings`.
+   * overlaid by `scopedSettingsOverlay`.
    */
   protected override async clusterSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
     if (cap === 'face-gallery') return this.schema(buildFaceClusterSchema())
@@ -15870,10 +15873,14 @@ export default class PipelineAnalyticsAddon
     return null
   }
 
-  /** The knobs a camera can override: stored as the fleet default, resolved per camera. */
+  /** The knobs a camera can override: stored as the fleet default, resolved per camera, minus the device-only ones. */
   protected override async deviceDefaultsSchema(cap: string): Promise<ConfigUISchema | null> {
     if (cap === 'pipeline-analytics') {
-      return this.schema(buildAnalyticsDeviceDefaultsSchema())
+      // `trackingTape` arms continuous recording on ONE camera: it lives on the per-device form
+      // only (which builds from `buildGlobalSettingsSchema()` untouched), never on the fleet
+      // default, where one click would arm every camera (D681 review L3).
+      const defaults = buildAnalyticsDeviceDefaultsSchema()
+      return this.schema({ ...defaults, sections: stripDeviceOnlyFields(defaults.sections) })
     }
     return null
   }
@@ -15890,41 +15897,6 @@ export default class PipelineAnalyticsAddon
   ): Promise<Record<string, unknown> | null> {
     if (scope !== 'cluster' || cap !== 'face-gallery') return null
     return faceSuggestionReadoutOverlay(await this.resolveGlobalStore(nodeId, cap))
-  }
-
-  /**
-   * The only reason this is overridden: the face suggestion floor is DERIVED
-   * (D222), so the form has to be able to SHOW it without storing it.
-   *
-   * The schema is a static declaration and cannot interpolate a live value, so
-   * the readout's value is injected into the hydrate blob here — the same
-   * mechanism `detection-pipeline` uses for its model-substitution readout.
-   * It is a `readonlyField`, so it renders display-only, never enters a patch,
-   * and never reaches the store: the operator sees what their threshold
-   * implies and has nothing to contradict it with. Everything else about this
-   * call is `BaseAddon`'s.
-   *
-   * (Fix round, L3.) `buildGlobalSettingsSchema()` is reused, untouched, by
-   * `getDeviceSettingsContribution` below to build the PER-DEVICE form —
-   * `trackingTape` must stay there. So the strip happens here, on the result
-   * THIS method actually hands to the global settings page, never inside
-   * `buildGlobalSettingsSchema()` itself, which would also remove it from the
-   * per-device form that shares the same base sections.
-   */
-  override async getGlobalSettings(
-    overlay?: Record<string, unknown>,
-    cap?: string,
-    nodeId?: string,
-  ): Promise<ConfigUISchemaWithValues | null> {
-    const stored = await this.resolveGlobalStore(nodeId, cap)
-    const merged = overlay ? { ...stored, ...overlay } : stored
-    const schema = await super.getGlobalSettings(
-      { ...merged, ...faceSuggestionReadoutOverlay(merged) },
-      cap,
-      nodeId,
-    )
-    if (schema === null) return null
-    return { ...schema, sections: stripDeviceOnlyFields(schema.sections) }
   }
 
   async getDeviceSettingsContribution(input: {

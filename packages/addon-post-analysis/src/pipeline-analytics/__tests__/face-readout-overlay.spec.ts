@@ -1,6 +1,6 @@
 /**
  * The face matching form's derived suggestion floor is served by ONE helper, on the scoped
- * overlay hook and on the legacy `getGlobalSettings` override alike. The threshold the operator
+ * overlay hook. The threshold the operator
  * STORED moves the sentence beside it; nothing is written, and an unsaved edit of the field is not
  * previewed (the hook is handed no draft).
  *

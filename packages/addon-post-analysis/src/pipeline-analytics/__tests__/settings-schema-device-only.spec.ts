@@ -10,7 +10,7 @@
  * per-device).
  *
  * `stripDeviceOnlyFields` is the mirror: it drops `trackingTape` from the
- * sections `getGlobalSettings` hands to the GLOBAL page, so one global click
+ * sections the fleet-default form hands out, so one global click
  * can never arm every camera on the cluster. `getDeviceSettingsContribution`
  * never calls it, so the per-device form keeps the field.
  *
