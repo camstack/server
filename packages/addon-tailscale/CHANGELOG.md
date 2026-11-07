@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.154] - 2026-11-07
+
 ### Changed
 
 - Saving the Tailscale node form now reaches the tailnet record for the auth key and hostname through the scoped settings entry too.

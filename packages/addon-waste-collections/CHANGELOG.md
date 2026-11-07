@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.38] - 2026-11-07
+
 ### Changed
 
 - The waste sources migration now reaches its data only through the migration API, so it keeps working across version jumps

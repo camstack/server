@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.159] - 2026-11-07
+
 ### Changed
 
 - The Cloudflare tunnel writes its local origin through the node settings of network-access, to the same stored keys.

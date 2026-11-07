@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.792] - 2026-11-07
+
 ### Changed
 
 - Loki logging retires its old enabled flag through a one-time ledger migration; local-network keeps its allowlist and address book through durable state handles.

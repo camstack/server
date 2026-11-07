@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.134] - 2026-11-07
+
 ### Changed
 
 - The Modal account migrations now reach their data only through the migration API, so they keep working across version jumps

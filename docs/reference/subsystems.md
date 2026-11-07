@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 8188 source files · 1284 file(s) in no subsystem.**
+**31 subsystems · 8192 source files · 1286 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -52,7 +52,7 @@ commits. A generated page may not.
 | LLM runtimes and AI actions | 54 | `addons/addon-ai.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-28-tts-stt-capabilities.md` _(covers)_, +9 more, 1 ADR | 2026-10-18 | ⚠️ |
 | Admin UI and the shared component library | 1447 | `architecture/ui.md`, `ui/conventions.md`, `decisions/adr-1013-one-instance-model.md`, +163 more, 15 ADRs | 2026-11-02 | ✅ |
 | Device-facing surfaces — snapshots, OSD, terminal, camera grids, autotrack | 111 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-1013-one-instance-model.md`, +19 more, 7 ADRs | 2026-10-04 | ⚠️ |
-| Cloud training | 159 | `architecture/cloud-training.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0790-a-machine-proposed-retrain-box-is-a-draft-until-the-operator-confirms-it.md`, +17 more, 2 ADRs | 2026-10-14 | ✅ |
+| Cloud training | 161 | `architecture/cloud-training.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0790-a-machine-proposed-retrain-box-is-a-draft-until-the-operator-confirms-it.md`, +17 more, 2 ADRs | 2026-10-14 | ✅ |
 | Benchmarks, model studio and developer tooling | 785 | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, +175 more, 14 ADRs | 2026-11-04 | ⚠️ |
 
 ## What each subsystem is, and what is uncovered inside it
@@ -324,7 +324,7 @@ Fine-tunes the root detector on the operator's annotated frames in a GPU cloud o
 
 - **Owner doc**: `docs/architecture/cloud-training.md`
 - **Code**: `packages/addon-training/**`, `packages/types/src/capabilities/training.cap.ts`, `packages/types/src/capabilities/training-provider.cap.ts`, `packages/types/src/training/**`, `packages/addon-model-studio/src/bundle/**`, `hf/camstack-trainer/**`
-- **Files**: 159 (98 claimed by some document)
+- **Files**: 161 (100 claimed by some document)
 - **Uncovered**: `hf/camstack-trainer/camstack_train` (16), `hf/camstack-trainer/camstack_train/_vendor/pipeline_python/postprocessors` (16), `hf/camstack-trainer/tests` (15), `hf/camstack-trainer/camstack_train/_vendor/camstack_eval` (9), `hf/camstack-trainer/camstack_train/_vendor/pipeline_python` (3), `hf/camstack-trainer/camstack_train/_vendor` (1), +1 more directories
 
 ### ⚠️ Benchmarks, model studio and developer tooling
@@ -341,4 +341,4 @@ Everything that measures or builds CamStack rather than running it — the bench
 The taxonomy has a hole here. This list is the `--max-orphans` ratchet in
 `.github/workflows/ci.yml`; it only ever goes down.
 
-`packages/addon-waste-collections/python/vendor/waste_collection_schedule/source` (978), `packages/addon-waste-collections/python/vendor/waste_collection_schedule/service` (30), `packages/addon-google-services/src` (15), `packages/addon-waste-collections/src` (15), `packages/types/src/records` (13), `packages/types/src/migrations` (12), +68 more directories
+`packages/addon-waste-collections/python/vendor/waste_collection_schedule/source` (978), `packages/addon-waste-collections/python/vendor/waste_collection_schedule/service` (30), `packages/addon-google-services/src` (15), `packages/addon-waste-collections/src` (15), `packages/types/src/records` (13), `packages/types/src/migrations` (12), +69 more directories

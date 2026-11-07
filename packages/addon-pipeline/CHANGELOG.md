@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.646] - 2026-11-07
+
 ### Changed
 
 - The pipeline runner reads the crop convention, native-lease knobs and cluster step models from the orchestrator's scoped cluster values (same keys, same refresh)
