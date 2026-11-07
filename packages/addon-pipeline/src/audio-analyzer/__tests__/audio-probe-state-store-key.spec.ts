@@ -66,8 +66,12 @@ describe('probedBestAudioBackend node-state key', () => {
 
   it('the admin form reads the re-probed value live (no AddonUpdated event is needed to refresh it)', async () => {
     const addon = await boot({ 'probedBestAudioBackend@hub': 'stale' })
-    expect(fieldValue(await addon.getGlobalSettings(), 'probedBestAudioBackend')).toBe('stale')
+    expect(
+      fieldValue(await addon.getScopedSettings('node', 'audio-analyzer'), 'probedBestAudioBackend'),
+    ).toBe('stale')
     const { backend } = await addon.reprobeAudioEngine()
-    expect(fieldValue(await addon.getGlobalSettings(), 'probedBestAudioBackend')).toBe(backend)
+    expect(
+      fieldValue(await addon.getScopedSettings('node', 'audio-analyzer'), 'probedBestAudioBackend'),
+    ).toBe(backend)
   })
 })

@@ -1,5 +1,5 @@
 /**
- * AudioAnalyzerAddon — `getGlobalSettings` per-platform engine gating.
+ * AudioAnalyzerAddon — `getScopedSettings` per-platform engine gating.
  *
  * Apple SoundAnalysis is a macOS built-in; YAMNet (ONNX) is cross-platform.
  * The audio-analyzer is an `any-node` addon — a remote node's settings form is
@@ -12,7 +12,7 @@
  */
 import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest'
 
-// Stub the pipeline factory so getGlobalSettings can be exercised without a real
+// Stub the pipeline factory so getScopedSettings can be exercised without a real
 // model load — the yamnet (linux) path would otherwise spawn Python + load a
 // model during initialize. Real exports (types, AudioBackend) pass through.
 vi.mock('../audio-pipeline.js', async (importOriginal) => {
@@ -113,7 +113,7 @@ function backendOptionValues(schema: ConfigUISchemaWithValues): string[] {
   return []
 }
 
-describe('AudioAnalyzerAddon — getGlobalSettings platform gating', () => {
+describe('AudioAnalyzerAddon — getScopedSettings platform gating', () => {
   const originalPlatform = process.platform
   let addon: AudioAnalyzerAddon | null = null
 
@@ -135,7 +135,7 @@ describe('AudioAnalyzerAddon — getGlobalSettings platform gating', () => {
     setPlatform('darwin')
     const { ctx } = makeFakeContext()
     await addon!.initialize(ctx)
-    const schema = await addon!.getGlobalSettings()
+    const schema = await addon!.getScopedSettings('node', 'audio-analyzer')
     const values = backendOptionValues(schema)
     expect(values).toContain('apple-soundanalysis')
     expect(values).toContain('yamnet-onnx')
@@ -146,7 +146,7 @@ describe('AudioAnalyzerAddon — getGlobalSettings platform gating', () => {
     setPlatform('linux')
     const { ctx } = makeFakeContext()
     await addon!.initialize(ctx)
-    const schema = await addon!.getGlobalSettings()
+    const schema = await addon!.getScopedSettings('node', 'audio-analyzer')
     const values = backendOptionValues(schema)
     expect(values).not.toContain('apple-soundanalysis')
     expect(values).toContain('yamnet-onnx')
@@ -163,7 +163,7 @@ describe('AudioAnalyzerAddon — getGlobalSettings platform gating', () => {
       { id: 'macmini', platform: 'darwin' },
     ])
     await addon!.initialize(ctx)
-    const schema = await addon!.getGlobalSettings(undefined, undefined, 'macmini')
+    const schema = await addon!.getScopedSettings('node', 'audio-analyzer', 'macmini')
     const values = backendOptionValues(schema)
     expect(values).toContain('apple-soundanalysis')
     expect(values).toContain('yamnet-onnx')
@@ -177,7 +177,7 @@ describe('AudioAnalyzerAddon — getGlobalSettings platform gating', () => {
       { id: 'agent-a', platform: 'linux' },
     ])
     await addon!.initialize(ctx)
-    const schema = await addon!.getGlobalSettings(undefined, undefined, 'agent-a')
+    const schema = await addon!.getScopedSettings('node', 'audio-analyzer', 'agent-a')
     const values = backendOptionValues(schema)
     expect(values).not.toContain('apple-soundanalysis')
     expect(values).toContain('yamnet-onnx')

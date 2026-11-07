@@ -175,7 +175,7 @@ describe('AudioAnalyzerAddon — probedBestAudioBackend per-node', () => {
     expect(Object.prototype.hasOwnProperty.call(store, 'probedBestAudioBackend')).toBe(false)
   })
 
-  it('getGlobalSettings shows each node its OWN probed value; absent scoped key ⇒ schema default, never a bare legacy value', async () => {
+  it('getScopedSettings shows each node its OWN probed value; absent scoped key ⇒ schema default, never a bare legacy value', async () => {
     setPlatform('linux')
     const { ctx } = makeFakeContext({
       localNodeId: 'hub',
@@ -194,14 +194,14 @@ describe('AudioAnalyzerAddon — probedBestAudioBackend per-node', () => {
     })
     await addon!.initialize(ctx)
 
-    const hub = await addon!.getGlobalSettings(undefined, undefined, 'hub')
+    const hub = await addon!.getScopedSettings('node', 'audio-analyzer', 'hub')
     expect(fieldValue(hub, 'probedBestAudioBackend')).toBe('yamnet-onnx')
 
-    const macmini = await addon!.getGlobalSettings(undefined, undefined, 'macmini')
+    const macmini = await addon!.getScopedSettings('node', 'audio-analyzer', 'macmini')
     expect(fieldValue(macmini, 'probedBestAudioBackend')).toBe('apple-soundanalysis')
 
     // Node with NO scoped key: schema default (''), never the stale bare key.
-    const agent99 = await addon!.getGlobalSettings(undefined, undefined, 'agent-99')
+    const agent99 = await addon!.getScopedSettings('node', 'audio-analyzer', 'agent-99')
     expect(fieldValue(agent99, 'probedBestAudioBackend')).toBe('')
 
     // `audioBackend` is a node setting too (planning#327): each node its own row, and a node
@@ -211,7 +211,28 @@ describe('AudioAnalyzerAddon — probedBestAudioBackend per-node', () => {
     expect(fieldValue(agent99, 'audioBackend')).toBe('auto')
   })
 
-  it('node-blind getGlobalSettings resolves the LOCAL node scoped value', async () => {
+  it('a stored Apple choice collapses to auto on a node that is not macOS, and stays on one that is', async () => {
+    setPlatform('linux')
+    const { ctx } = makeFakeContext({
+      localNodeId: 'hub',
+      seed: {
+        'audioBackend@agent-a': 'apple-soundanalysis',
+        'audioBackend@macmini': 'apple-soundanalysis',
+      },
+      topology: [
+        { id: 'hub', platform: 'linux' },
+        { id: 'agent-a', platform: 'linux' },
+        { id: 'macmini', platform: 'darwin' },
+      ],
+    })
+    await addon!.initialize(ctx)
+    const linux = await addon!.getScopedSettings('node', 'audio-analyzer', 'agent-a')
+    const mac = await addon!.getScopedSettings('node', 'audio-analyzer', 'macmini')
+    expect(fieldValue(linux, 'audioBackend')).toBe('auto')
+    expect(fieldValue(mac, 'audioBackend')).toBe('apple-soundanalysis')
+  })
+
+  it('node-blind getScopedSettings resolves the LOCAL node scoped value', async () => {
     setPlatform('linux')
     const { ctx } = makeFakeContext({
       localNodeId: 'hub',
@@ -221,7 +242,7 @@ describe('AudioAnalyzerAddon — probedBestAudioBackend per-node', () => {
       },
     })
     await addon!.initialize(ctx)
-    const view = await addon!.getGlobalSettings()
+    const view = await addon!.getScopedSettings('node', 'audio-analyzer')
     expect(fieldValue(view, 'probedBestAudioBackend')).toBe('yamnet-onnx')
   })
 })

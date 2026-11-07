@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The Inference executor form of another node now shows the suggested defaults of that node's own hardware, served through the scoped settings overlay
+- The audio engine form of a node offers only the backends that node can run, served through the scoped settings API
 
 ## [1.2.646] - 2026-11-07
 

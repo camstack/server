@@ -7,6 +7,7 @@ import type {
   IAudioAnalyzer,
   ConfigUISchema,
   ConfigUISchemaWithValues,
+  ScopedSettingsScope,
   ProviderRegistration,
 } from '@camstack/types'
 import {
@@ -979,29 +980,21 @@ export class AudioAnalyzerAddon extends BaseAddon<AudioAnalyzerGlobalConfig> {
   }
 
   /**
-   * Platform override — narrow the `audioBackend` options to the subset
-   * that can actually run on the TARGET node.
+   * Platform narrowing — the `audioBackend` options that can actually run on the TARGET node.
    *
-   * The base schema ships every backend (Auto + YAMNet + Apple SA); this
-   * override drops Apple SoundAnalysis on a node that is not macOS, and
-   * collapses a stored choice that is no longer runnable there back to
-   * `auto` — so the form never offers, nor displays, an impossible
-   * selection.
-   *
-   * `overlay` carries the operator's tentative choices for benchmark/
-   *  preview mode (operator typed but didn't save yet) — same
-   *  semantics detection-pipeline relies on.
+   * The declared schema ships every backend (Auto + YAMNet + Apple SA) and is built without a node
+   * (an overlay can only change VALUES), so the form of one node is narrowed here, after the base
+   * has hydrated it: Apple SoundAnalysis is dropped on a node that is not macOS, and a stored choice
+   * that is no longer runnable there collapses to `auto` — the form never offers, nor displays, an
+   * impossible selection.
    */
-  override async getGlobalSettings(
-    overlay?: Record<string, unknown>,
-    _cap?: string,
+  override async getScopedSettings(
+    scope: ScopedSettingsScope,
+    cap: string,
     nodeId?: string,
-  ): Promise<ConfigUISchemaWithValues> {
-    // Per-node projected store (base seam): `probedBestAudioBackend` carries
-    // the TARGET node's scoped value on the bare key; the cluster-shared
-    // fields pass through untouched. Never read the raw store here.
-    const stored = await this.resolveGlobalStore(nodeId)
-    const merged = overlay ? { ...stored, ...overlay } : stored
+  ): Promise<ConfigUISchemaWithValues | null> {
+    const view = await super.getScopedSettings(scope, cap, nodeId)
+    if (view === null || scope !== 'node' || cap !== 'audio-analyzer') return view
 
     // Apple SoundAnalysis is a macOS built-in — it does NOT exist on Linux/Intel
     // nodes. Gate it on the TARGET node's OS, resolved deterministically WITHOUT
@@ -1014,43 +1007,24 @@ export class AudioAnalyzerAddon extends BaseAddon<AudioAnalyzerGlobalConfig> {
     // (`nodes.topology`) — a hub-LOCAL read (no remote round-trip, no probe).
     // YAMNet (ONNX) is cross-platform and is therefore ALWAYS offered.
     const isDarwin = (await this.resolveNodePlatform(nodeId)) === 'darwin'
-
-    // Offered backends: drop Apple SoundAnalysis on non-darwin nodes.
-    const backendOptions = AUDIO_BACKEND_CHOICES.filter(
+    const runnable = AUDIO_BACKEND_CHOICES.filter(
       (o) => o.value !== 'apple-soundanalysis' || isDarwin,
     )
-
-    // An operator choice that's no longer valid for this node (e.g. a stored
-    // 'apple-soundanalysis' on a node that's now Linux) collapses back to
-    // 'auto' so the form never shows an impossible selection; 'auto' then
-    // resolves to YAMNet at runtime on that node.
-    const operatorChoiceRaw =
-      typeof merged.audioBackend === 'string'
-        ? merged.audioBackend
-        : DEFAULT_AUDIO_ANALYZER_CONFIG.audioBackend
-    const operatorChoice = backendOptions.some((o) => o.value === operatorChoiceRaw)
-      ? operatorChoiceRaw
-      : DEFAULT_AUDIO_ANALYZER_CONFIG.audioBackend
-
-    const raw = { ...merged, audioBackend: operatorChoice }
-
-    const schema = this.nodeSchema()
-    const patched: ConfigUISchema = {
-      ...schema,
-      sections: schema.sections.map((section) => ({
+    return {
+      ...view,
+      sections: view.sections.map((section) => ({
         ...section,
         fields: section.fields.map((field) => {
-          if (field.type === 'select' && field.key === 'audioBackend') {
-            return {
-              ...field,
-              options: backendOptions.map((o) => ({ value: o.value, label: o.label })),
-            }
+          if (field.type !== 'select' || field.key !== 'audioBackend') return field
+          const stillRunnable = runnable.some((o) => o.value === field.value)
+          return {
+            ...field,
+            options: runnable.map((o) => ({ value: o.value, label: o.label })),
+            value: stillRunnable ? field.value : DEFAULT_AUDIO_ANALYZER_CONFIG.audioBackend,
           }
-          return field
         }),
       })),
     }
-    return hydrateSchema(patched, raw)
   }
 
   /**
