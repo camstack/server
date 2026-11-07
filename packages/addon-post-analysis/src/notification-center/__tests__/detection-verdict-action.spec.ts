@@ -47,7 +47,7 @@ interface HarnessOptions {
   /** The frame the notification's picture was built from, as the dispatcher freezes it. */
   readonly sourceMedia?: NcVerdictSourceMedia
   /** What the training-frame copy answers (default: it lands); `'throw'` makes the port throw. */
-  readonly copy?: NcVerdictCopyOutcome | 'throw'
+  readonly copy?: NcVerdictCopyOutcome | 'throw' | 'hang'
   /** Fused-away ids and the survivor each lives on (L2, D683). */
   readonly aliases?: Readonly<Record<string, string>>
   /** Leave the copy port unwired (a node without the corpus). */
@@ -134,6 +134,7 @@ async function makeHarness(options: HarnessOptions = {}) {
             sourceMedia?: NcVerdictSourceMedia
           }) => {
             copied.push(input)
+            if (options.copy === 'hang') return new Promise<never>(() => undefined)
             if (options.copy === 'throw') throw new Error('corpus unavailable')
             return options.copy ?? { ok: true as const }
           },
@@ -526,6 +527,14 @@ describe('a tap lands the training frame, not only the mark', () => {
       expect(verdictRows(h)).toHaveLength(1)
       expect(h.copied).toHaveLength(1)
     }
+  })
+
+  it('a copy that never resolves delays neither the ledger row nor the tap response', async () => {
+    const h = await makeHarness({ sourceMedia: SHOWN, copy: 'hang' })
+    await h.fire('trk-1')
+    expect(await tap(h, button(h, 'detection-verdict-correct')!.url!)).toContain('Done')
+    expect(h.copied).toHaveLength(1)
+    expect(verdictRows(h)).toHaveLength(1)
   })
 
   it('a node with no copy port still marks and records', async () => {

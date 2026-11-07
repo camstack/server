@@ -61,13 +61,24 @@ export async function copyVerdictFrame(
   }
   try {
     const frozen = input.sourceMedia
-    if (frozen !== undefined && !isRetrainFrameKind(frozen.kind)) {
+    // The listing is the track's own media: a frozen id absent from it is
+    // another track's (or a stale grant's) and is never copied under this
+    // track — the copy service would file an unknown id as a keyFrame.
+    const listing = await api.listRetrainFrames({ trackId: input.trackId })
+    const ownsFrozen =
+      frozen !== undefined && listing.candidates.some((c) => c.mediaId === frozen.mediaId)
+    if (frozen !== undefined && !ownsFrozen) {
+      logger.info('verdict frame — the frozen frame is not on this track, using the best one', {
+        tags,
+        meta: { trackId: input.trackId, mediaId: frozen.mediaId, kind: frozen.kind },
+      })
+    } else if (frozen !== undefined && !isRetrainFrameKind(frozen.kind)) {
       logger.info('verdict frame — the frozen frame is not a clean whole frame, using the best one', {
         tags,
         meta: { trackId: input.trackId, mediaId: frozen.mediaId, kind: frozen.kind },
       })
     }
-    if (frozen !== undefined && isRetrainFrameKind(frozen.kind)) {
+    if (frozen !== undefined && ownsFrozen && isRetrainFrameKind(frozen.kind)) {
       const picked = await api.selectRetrainFrames({
         deviceId: input.deviceId,
         trackId: input.trackId,
@@ -89,7 +100,6 @@ export async function copyVerdictFrame(
         },
       })
     }
-    const listing = await api.listRetrainFrames({ trackId: input.trackId })
     const best = autoPickRetrainFrame(
       listing.candidates.filter((c) => c.mediaId !== frozen?.mediaId),
     )

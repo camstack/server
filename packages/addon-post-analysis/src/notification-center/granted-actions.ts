@@ -386,8 +386,6 @@ export async function applyGrantedDetectionVerdict(
       meta: { trackId, reason: outcome.reason, verdict: grant.verdict },
     })
     throw new NcActionRefusedError(VERDICT_REFUSAL_COPY[outcome.reason])
-  } else {
-    await copyTrainingFrame(host, grant, trackId)
   }
   await host.verdicts.record({
     trackId,
@@ -399,6 +397,10 @@ export async function applyGrantedDetectionVerdict(
     ruleName: grant.ruleName,
     at: host.now(),
   })
+  // After the answer is on the record, and detached: the tap's response never
+  // waits on a corpus read/copy (it has no bound of its own). The copy logs
+  // its own failures and cannot reject.
+  if (outcome.ok) void copyTrainingFrame(host, grant, trackId)
 }
 
 /** The track the grant's id lives on now: its L2 survivor, or itself. A failed lookup is the id as asked. */

@@ -77,8 +77,8 @@ function world(list: RetrainFrameList, refuse: readonly number[] = []): World {
 }
 
 describe('copyVerdictFrame', () => {
-  it('copies the frozen frame and reads no listing', async () => {
-    const w = world(listing(candidate(1, 'keyFrame')))
+  it('copies the frozen frame when the track owns it', async () => {
+    const w = world(listing(candidate(1, 'keyFrame'), candidate(42, 'sceneFrame')))
     const { logger } = recordingLogger()
     const out = await copyVerdictFrame(w.api, logger, {
       deviceId: 101,
@@ -87,6 +87,19 @@ describe('copyVerdictFrame', () => {
     })
     expect(out).toEqual({ ok: true, via: 'frozen', mediaId: 42 })
     expect(w.selected).toEqual([[42]])
+  })
+
+  it('refuses a frozen media id that is not on the track, and auto-picks instead', async () => {
+    const w = world(listing(candidate(3, 'keyFrame')))
+    const { logger, lines } = recordingLogger()
+    const out = await copyVerdictFrame(w.api, logger, {
+      deviceId: 101,
+      trackId: 't1',
+      sourceMedia: { mediaId: 999, kind: 'keyFrame' },
+    })
+    expect(out).toEqual({ ok: true, via: 'auto-pick', mediaId: 3 })
+    expect(w.selected).toEqual([[3]])
+    expect(lines.some((l) => l.message.includes('not on this track'))).toBe(true)
   })
 
   it('an old token (no frozen frame) copies the best frame of the track', async () => {

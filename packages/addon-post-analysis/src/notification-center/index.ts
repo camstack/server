@@ -2064,6 +2064,11 @@ export class NotificationCenter implements NcEventConsumer {
     }
   }
 
+  /** Re-read the verdict ledger from its store (the retrain backfill wrote rows behind its back). */
+  async reloadVerdicts(): Promise<void> {
+    await this.verdicts.load()
+  }
+
   /**
    * What the operator answered to the "was this detection right?" buttons, for
    * the retrain page: by track, the latest answer wins. A track nobody answered
@@ -2077,7 +2082,23 @@ export class NotificationCenter implements NcEventConsumer {
       throw new Error('detection verdicts are not loaded yet')
     }
     const out = new Map<string, RetrainVerdict>()
-    for (const [trackId, row] of this.verdicts.forTracks(trackIds)) {
+    // A tap on a fused-away id writes the SURVIVOR's row (D683); asking by the
+    // id the notification carried must still find it, or the tapped notification
+    // stops reading as answered. The answer is keyed on the id that was asked.
+    const direct = this.verdicts.forTracks(trackIds)
+    const survivorOf = new Map<string, string>()
+    for (const id of trackIds) {
+      if (direct.has(id)) continue
+      const survivor = this.deps.resolveTrackAliasSync?.(id)
+      if (survivor !== undefined && survivor !== id) survivorOf.set(id, survivor)
+    }
+    const viaSurvivor = this.verdicts.forTracks([...survivorOf.values()])
+    const found = new Map(direct)
+    for (const [id, survivor] of survivorOf) {
+      const row = viaSurvivor.get(survivor)
+      if (row !== undefined) found.set(id, row)
+    }
+    for (const [trackId, row] of found) {
       out.set(
         trackId,
         toRetrainVerdict({

@@ -814,6 +814,7 @@ import {
 import { NcDetectionVerdictLedger } from '../notification-center/detection-verdict-ledger.js'
 import { copyVerdictFrame } from './boot/verdict-frame-copy.js'
 import { readRawKeys } from '../migrations/split-enabled-key.js'
+import { boundStagedTracks, runBackfillDetached } from '../migrations/retrain-verdict-frames.js'
 import { BUILTIN_CLIP_MODELS } from '../shared/clip/clip-model-registry.js'
 import { encodeClipQuery, pinClipRebuild, resolveClipSearchPlan } from './clip-space-plan.js'
 import {
@@ -3385,12 +3386,6 @@ export default class PipelineAnalyticsAddon
     const storage = await step('resolveMediaStorage', () => this.resolveMediaStorage(logger))
     // Stores + detectors + sensor plumbing — constructed in the pre-S7 order.
     const stores = await step('buildStores', () => this.buildStores(api, logger, storage))
-    // The corpus and the alias store exist now: the verdict-marked tracks that
-    // hold no frame get one, BEFORE the centre loads its verdict ledger.
-    if (this.localOwnNodeId() === 'hub') {
-      await step('retrainBackfill', () => this.runRetrainBackfillMigration())
-    }
-
     // Frame-based event/track media: resolve the detection frame the detector
     // ran on (over tRPC via the runner's `getNativeCrop`, routed by
     // `handle.nodeId`) and write a crop + boxed full-frame. The runner method is
@@ -3581,6 +3576,9 @@ export default class PipelineAnalyticsAddon
     // designated post-processing node — the same gate as the event
     // subscriptions, so hooks and drain can never run twice cluster-wide.
     await step('buildNotificationCenter', () => this.buildNotificationCenter(api, logger, stores))
+    // The verdict-marked tracks that hold no frame get one. OFF the boot path:
+    // it reads the corpus and copies frame files, work with no bound of its own.
+    if (this.localOwnNodeId() === 'hub') void this.backfillRetrainFramesAfterBoot()
 
     // Event-media data-plane: serve thumbnail JPEGs through the hub's port.
     await step('serveEventMediaDataPlane', () => this.serveEventMediaDataPlane())
@@ -3976,11 +3974,20 @@ export default class PipelineAnalyticsAddon
     })
   }
 
-  /** The retrain backfill: verdict-marked tracks without a frame get one (D987). */
-  private async runRetrainBackfillMigration(): Promise<void> {
-    await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, this.migrationPorts()), {
-      only: [RETRAIN_VERDICT_FRAMES_MIGRATION_ID],
-    })
+  /**
+   * The retrain backfill: verdict-marked tracks without a frame get one (D987).
+   * Detached from boot and never throws — a port that cannot be built or a
+   * migration that fails is one warn, and the next boot tries again (it is
+   * idempotent). When it re-keyed verdict rows the centre's RAM mirror is
+   * reseeded, so the retrain view sees them without a respawn.
+   */
+  private async backfillRetrainFramesAfterBoot(): Promise<void> {
+    await runBackfillDetached(async () => {
+      await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, this.migrationPorts()), {
+        only: [RETRAIN_VERDICT_FRAMES_MIGRATION_ID],
+      })
+      await this.notificationCenter?.reloadVerdicts()
+    }, this.ctx.logger)
   }
 
   private migrationPorts(): PipelineAnalyticsMigrationPorts {
@@ -4009,11 +4016,16 @@ export default class PipelineAnalyticsAddon
       verdicts,
       resolveTrackAlias: (trackId) => this.trackAliasStore?.resolve(trackId) ?? Promise.resolve(null),
       listStagedTracks: async () =>
-        (await this.listRetrainStaging({ limit: RETRAIN_BACKFILL_STAGING_LIMIT })).map((t) => ({
-          deviceId: t.deviceId,
-          trackId: t.trackId,
-          frameCount: t.frameCount,
-        })),
+        boundStagedTracks(
+          // One past the bound, so a truncation is seen rather than silent.
+          (await this.listRetrainStaging({ limit: RETRAIN_BACKFILL_STAGING_LIMIT + 1 })).map((t) => ({
+            deviceId: t.deviceId,
+            trackId: t.trackId,
+            frameCount: t.frameCount,
+          })),
+          RETRAIN_BACKFILL_STAGING_LIMIT,
+          this.ctx.logger,
+        ),
       copyBestFrame: (input) =>
         copyVerdictFrame(
           {

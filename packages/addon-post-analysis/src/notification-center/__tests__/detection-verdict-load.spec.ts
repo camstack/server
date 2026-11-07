@@ -30,7 +30,10 @@ function makeLedger(world: ReturnType<typeof makeNcRecords>): NcDetectionVerdict
 
 const centers: NotificationCenter[] = []
 
-function makeCenter(world: ReturnType<typeof makeNcRecords>): NotificationCenter {
+function makeCenter(
+  world: ReturnType<typeof makeNcRecords>,
+  aliases: Readonly<Record<string, string>> = {},
+): NotificationCenter {
   const center = new NotificationCenter({
     deviceSettings: makeFakeDeviceSettings(),
     records: world.records,
@@ -46,6 +49,7 @@ function makeCenter(world: ReturnType<typeof makeNcRecords>): NotificationCenter
     },
     listObjectEventsSince: async () => [],
     listRecentTracks: async () => [],
+    resolveTrackAliasSync: (id: string) => aliases[id],
     now: () => ROW.at,
     drainIntervalMs: 3_600_000,
     ruleReloadIntervalMs: 3_600_000,
@@ -79,6 +83,16 @@ describe('NotificationCenter and the verdict ledger across a respawn', () => {
     const center = makeCenter(world)
     await center.start({ evaluation: false })
     expect(center.detectionVerdictsOf(['trk-1']).get('trk-1')?.verdict).toBe('wrong')
+  })
+
+  it('an id fused away still reads the answer recorded on its survivor', async () => {
+    const world = makeNcRecords()
+    await makeLedger(world).record({ ...ROW, trackId: 'trk-survivor' })
+    const center = makeCenter(world, { 'trk-1': 'trk-survivor' })
+    await center.start({ evaluation: false })
+    const read = center.detectionVerdictsOf(['trk-1', 'trk-other'])
+    expect(read.get('trk-1')?.verdict).toBe('wrong')
+    expect(read.has('trk-other')).toBe(false)
   })
 
   it('refuses a read before the load instead of answering "no verdict"', async () => {

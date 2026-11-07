@@ -18,6 +18,7 @@
  * line and stays staged, as it was.
  */
 import type { IScopedLogger, MigrationProcedureResult } from '@camstack/types'
+import { errMsg } from '@camstack/types'
 import type { NcDetectionVerdictRecord } from '../notification-center/detection-verdict-ledger.js'
 
 /** A staged retrain track, as far as this migration needs to know it. */
@@ -76,5 +77,40 @@ export async function backfillRetrainVerdictFrames(
   return {
     outcome: rekeyed + copied === 0 ? 'already-done' : 'done',
     summary: { rekeyed, copied, skipped },
+  }
+}
+
+/**
+ * The most a run reads of the staging list. The caller asks for ONE MORE than
+ * this; the extra row is how a truncation is seen, and it is logged — the rest
+ * waits for the next boot (the migration is idempotent).
+ */
+export function boundStagedTracks(
+  staged: readonly StagedRetrainTrack[],
+  limit: number,
+  logger: IScopedLogger,
+): readonly StagedRetrainTrack[] {
+  if (staged.length <= limit) return staged
+  logger.warn(
+    'retrain verdict backfill — more staged tracks than one run handles, the rest wait for the next boot',
+    { meta: { limit } },
+  )
+  return staged.slice(0, limit)
+}
+
+/**
+ * Run the backfill off the boot path: whatever it throws — a port that cannot
+ * be built included — is one warn, never a failed boot.
+ */
+export async function runBackfillDetached(
+  run: () => Promise<void>,
+  logger: IScopedLogger,
+): Promise<void> {
+  try {
+    await run()
+  } catch (err: unknown) {
+    logger.warn('retrain verdict backfill did not run — boot goes on, the next boot retries', {
+      meta: { error: errMsg(err) },
+    })
   }
 }
