@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.517] - 2026-11-07
+
 ### Changed
 
 - Terminals are now instances on the Terminal page: the list is kept as records, migrated in place with the same ids and cameras
