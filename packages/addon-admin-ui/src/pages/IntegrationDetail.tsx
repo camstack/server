@@ -14,7 +14,6 @@ import {
   LogStream,
   OptionSelect,
   Switch,
-  useAddonSettingsGetIntegrationSettings,
   useAddonsRestartAddon,
   useDeviceManagerDisable,
   useDeviceManagerDiscoveryProviders,
@@ -48,7 +47,6 @@ import { useAdminDeviceRemoval } from '../hooks/useAdminDeviceRemoval'
 import { MatterPairingPanel } from '../components/integrations/MatterPairingPanel'
 import { IntegrationConfigModal } from '../components/integrations/IntegrationConfigModal'
 import type { IntegrationFormSeed } from '../components/integrations/integration-setup-seed'
-import { NodeAddonsSettingsPanel } from '../components/settings/NodeAddonsSettingsPanel'
 import { deviceIntegrationIcon } from '../components/shared/device-integration-icon'
 import { useAddonIconUrl } from '../contexts/addon-icons-context'
 import {
@@ -56,7 +54,6 @@ import {
   integrationDetailUrl,
   resolveSelectedInstanceId,
 } from '../lib/integration-instance-selection'
-import { hasIntegrationSettings } from '../lib/settings-forwarding'
 
 /**
  * `/integrations/:addonId` — one providing addon's integration page. The
@@ -247,35 +244,6 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
     configSchema != null &&
     Array.isArray(configSchema.sections) &&
     configSchema.sections.some((s) => s.fields.length > 0)
-
-  /**
-   * Does this addon declare INTEGRATION-LEVEL SETTINGS? Core answers — the
-   * addon named the sections in `BaseAddon.integrationSettingSections()` and
-   * `getIntegrationSettings` returns `null` when it named none. There is no
-   * allow-list of provider names in the admin UI: the provider declares, the
-   * page obeys.
-   *
-   * `mode === 'account'` is refused. An account integration's configuration is
-   * the instance record, edited from the Config button. Rendering the addon's
-   * cluster sections beside that form would put two controls with one label.
-   */
-  const { data: integrationSettings } = useAddonSettingsGetIntegrationSettings(
-    { addonId: integration?.addonId ?? '', nodeId: 'hub' },
-    { enabled: !!integration?.addonId && integrationMode !== 'account' },
-  )
-  const hasIntegrationLevelSettings =
-    integrationMode !== null &&
-    integrationMode !== 'account' &&
-    hasIntegrationSettings(integrationSettings)
-
-  /**
-   * Literal-stable id list for the panel. A fresh array on every render would
-   * re-key the panel's `useQueries` each pass.
-   */
-  const integrationAddonIds = useMemo<readonly string[]>(
-    () => (integration?.addonId ? [integration.addonId] : []),
-    [integration?.addonId],
-  )
 
   // Same "whole fleet, slim" shape as Devices.tsx / GlobalSearch /
   // Integrations.tsx, so this page shares that cache entry rather than
@@ -621,29 +589,6 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
             optionTestIdPrefix="integration-instance"
           />
         </div>
-      )}
-
-      {/* INTEGRATION-LEVEL SETTINGS — the sections this addon declared as its
-          integration's configuration. Rendered inline rather than behind the
-          Config button because "easy accessibility" was the whole request: the
-          operator looking for the Reolink SMTP port is already on this page.
-
-          The panel supplies the scope statement itself and core supplies the
-          selection; this call site cannot weaken either. `nodeId={null}` is not
-          a stylistic choice — the panel THROWS on any node id, because a node
-          heading over an addon-wide value is the `btmPath@hub` defect.
-
-          An addon that declares nothing renders nothing here: core answers
-          `null`, this block is absent, and the Config button below stays as it
-          was. It is opt-in. */}
-      {hasIntegrationLevelSettings && (
-        <NodeAddonsSettingsPanel
-          nodeId={null}
-          addonIds={integrationAddonIds}
-          level="global"
-          surface="integration"
-          title={t('integrations.settings', { defaultValue: 'Settings' })}
-        />
       )}
 
       {/* Device list — shared composite, integration pre-applied via

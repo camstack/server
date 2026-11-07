@@ -47,7 +47,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { AdminPage } from '../../components/AdminPage'
-import { NodeAddonsSettingsPanel } from '../../components/settings/NodeAddonsSettingsPanel'
+import { TERMINAL_ADDON_ID, TerminalNodeSettings } from './terminal/TerminalNodeSettings'
 import { TerminalPanel } from '../../components/TerminalPanel'
 import { InstancesTable } from '../../components/instances/InstancesTable'
 import type { InstanceRow, PanelRow } from '../../components/instances/instances-model'
@@ -59,7 +59,6 @@ import { useTerminalNodePresence } from './terminal/terminal-node-presence'
  * is the addon's own `globalSettingsSchema()` — this page declares no fields of
  * its own, so there is exactly one authority for "what a Terminal profile is".
  */
-const TERMINAL_ADDON_ID = 'terminal'
 
 // The terminal reflows to its actual pane size the moment `<TerminalPanel>`
 // mounts (its FitAddon issues a `resize`), so these are only the initial grid
@@ -572,11 +571,7 @@ export function TerminalPage() {
                     )}
                   </p>
                 )}
-                <NodeAddonsSettingsPanel
-                  nodeId={sessionNodeId}
-                  addonIds={[TERMINAL_ADDON_ID]}
-                  level="global"
-                />
+                <TerminalNodeSettings nodeId={sessionNodeId} />
               </div>
             )}
           </div>

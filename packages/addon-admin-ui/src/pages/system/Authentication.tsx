@@ -20,13 +20,14 @@ import { Link } from 'react-router-dom'
 import { ShieldCheck, KeySquare, Globe, Smartphone, Info, BookOpen } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import {
+  AddonScopedSettingsForm,
   Badge,
   SECTION_BODY,
   SectionCard,
   useAddonsList,
   useAddonsListCapabilityProviders,
+  useSystem,
 } from '@camstack/ui-library'
-import { NodeAddonsSettingsPanel } from '../../components/settings/NodeAddonsSettingsPanel'
 import { BootstrapSettingsForm } from '../../components/system/BootstrapSettingsForm'
 import { AddonIntegrationBody } from '../../components/integration-hub/AddonIntegrationBody'
 import { STATUS_BADGE_CLASS } from '../../components/integration-hub/addon-controls'
@@ -334,6 +335,7 @@ export const WEBAUTHN_SECTION_ID = 'webauthn'
 
 export function PasskeyRelyingPartyCard(): React.ReactElement {
   const { t } = useTranslation()
+  const system = useSystem()
   return (
     <SectionCard
       headingId="authentication-passkey-rp"
@@ -341,16 +343,13 @@ export function PasskeyRelyingPartyCard(): React.ReactElement {
       icon={Smartphone}
     >
       <div className={SECTION_BODY}>
-        <NodeAddonsSettingsPanel
-          nodeId="hub"
-          addonIds={['auth-webauthn']}
-          level="global"
+        <AddonScopedSettingsForm
+          trpc={system.trpcClient}
+          addonId="auth-webauthn"
+          cap="login-method"
+          scope="cluster"
           sectionIds={[WEBAUTHN_SECTION_ID]}
-          hideSectionChrome
-          emptyMessage={t(
-            'system.authentication.passkeyRpUnavailable',
-            'Not available — the addon that owns these settings did not answer.',
-          )}
+          bare
         />
       </div>
     </SectionCard>

@@ -61,6 +61,11 @@ const DEVICES = [
   },
 ]
 
+/** Stands where the retired integration-level read was: nothing may call it. */
+const integrationSettingsRead = vi.hoisted(() =>
+  vi.fn(() => ({ data: undefined, isLoading: false, isError: false, refetch: vi.fn() })),
+)
+
 vi.mock('@camstack/ui-library', async () => {
   const actual =
     await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
@@ -92,7 +97,7 @@ vi.mock('@camstack/ui-library', async () => {
     }),
     useIntegrationsGetAvailableTypes: emptyQuery,
     useAddonSettingsGetIntegrationFormSchema: emptyQuery,
-    useAddonSettingsGetIntegrationSettings: emptyQuery,
+    useAddonSettingsGetIntegrationSettings: integrationSettingsRead,
     useDeviceManagerDiscoveryProviders: emptyQuery,
     useIntegrationsUpdate: () => ({ mutate: switches.update, isPending: false }),
     useIntegrationInstancesSetInstanceEnabled: () => ({
@@ -162,6 +167,14 @@ describe('IntegrationDetailPage — fleet read shape', () => {
     expect(options).toMatchObject({ refetchInterval: 30_000 })
     expect(options).not.toHaveProperty('staleTime')
     expect(options).not.toHaveProperty('gcTime')
+  })
+})
+
+describe('IntegrationDetailPage - no addon-level settings read', () => {
+  it('never reads the integration-level settings of its addon (D986)', () => {
+    integrationSettingsRead.mockClear()
+    render(renderPage())
+    expect(integrationSettingsRead).not.toHaveBeenCalled()
   })
 })
 

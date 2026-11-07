@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Customize threshold overrides gain a Samples field: consecutive readings needed before the state changes
+- Local access, the Terminal configuration and the passkey relying-party card read their own scoped settings form instead of the retired addon-level one
 
 ## [1.2.608] - 2026-11-07
 

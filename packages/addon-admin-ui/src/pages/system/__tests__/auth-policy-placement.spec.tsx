@@ -69,7 +69,7 @@ vi.mock('../../../components/settings/HotkeysCard', () => ({
   HotkeysCard: () => <div data-testid="hotkeys" />,
 }))
 
-import { AuthenticationPolicyCard, PasskeyRelyingPartyCard } from '../Authentication'
+import { AuthenticationPolicyCard } from '../Authentication'
 import { SettingsPage } from '../Settings'
 
 afterEach(cleanup)
@@ -96,17 +96,6 @@ describe('system-config auth section placement', () => {
       'system-config-auth',
     )
     expect(screen.getByTestId('panel').dataset.addons).not.toContain('system-config')
-  })
-
-  it('Identity -> Authentication draws the webauthn section of auth-webauthn', () => {
-    render(
-      <MemoryRouter>
-        <PasskeyRelyingPartyCard />
-      </MemoryRouter>,
-    )
-    const panel = screen.getByTestId('panel')
-    expect(panel.dataset.addons).toBe('auth-webauthn')
-    expect(panel.dataset.sections).toBe('webauthn')
   })
 
   it('System -> Settings omits webauthn and shows Units and Hotkeys', () => {

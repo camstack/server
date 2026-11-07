@@ -89,7 +89,6 @@ vi.mock('@camstack/ui-library', async () => {
     }),
     useIntegrationsGetAvailableTypes: emptyQuery,
     useAddonSettingsGetIntegrationFormSchema: emptyQuery,
-    useAddonSettingsGetIntegrationSettings: emptyQuery,
     useDeviceManagerDiscoveryProviders: emptyQuery,
     useIntegrationsUpdate: mutationStub,
     useIntegrationInstancesSetInstanceEnabled: mutationStub,
