@@ -61,6 +61,15 @@ async function boot(seed: readonly { id: string; body: TrainingAccountBody }[]) 
     },
     eventBus: { emit: vi.fn(), subscribe: vi.fn(() => () => undefined) },
     kernel: { localNodeId: 'hub' },
+    // The migration ports come from the migration API only: an empty settings store, the records.
+    migrationApi: {
+      settings: { read: vi.fn(async () => ({ store: {} })) },
+      secrets: { resolve: vi.fn(async () => ({ values: {} })) },
+      log: { warn: vi.fn(async () => ({})) },
+      records: {
+        kind: () => ({ get: vi.fn(async () => null), getResolved: vi.fn(async () => null) }),
+      },
+    },
     api: {
       migrations: {
         declareOwner: { mutate: vi.fn(async () => ({ bootId: 'b', snapshot: 'none', steps: [] })) },

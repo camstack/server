@@ -25,7 +25,6 @@
   "packages/addon-static-turn/src/static-turn.addon.ts",
   "packages/addon-tailscale/src/client/tailscale.addon.ts",
   "packages/addon-tailscale/src/ingress/tailscale-ingress.addon.ts",
-  "packages/addon-training/src/providers/modal/training-modal.addon.ts",
   "packages/system/src/builtins/core-blocks/core-blocks.addon.ts",
   "packages/system/src/builtins/local-network/local-network.addon.ts",
   "packages/system/src/builtins/loki-logging/loki-logging.addon.ts",

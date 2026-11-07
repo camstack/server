@@ -18,12 +18,8 @@ import {
   type ProviderRegistration,
   REDACTED_SECRET,
   RecordIntegrationInstances,
-  RevConflictError,
-  SECRET_CLEAR,
-  defineAddonMigrations,
   integrationInstancesCapability,
   isSecretFieldView,
-  isSecretMarker,
   trainingProviderCapability,
   type SecretFieldView,
 } from '@camstack/types'
@@ -44,12 +40,8 @@ import {
 import { MODAL_DEFAULT_GPU } from './modal-pricing.js'
 import { ModalAuthError } from './modal-gateway.js'
 import { ModalSdkGateway } from './modal-sdk-gateway.js'
-import {
-  ADDON_MIGRATIONS,
-  FLAT_ACCOUNT_ID,
-  type ModalCataloguePorts,
-  type ModalRecordState,
-} from './migrations/index.js'
+import { ADDON_MIGRATIONS } from './migrations/index.js'
+import { modalPortsOver } from './migrations/ports.js'
 import {
   type TrainingAccountBody,
   trainingAccountEntryKind,
@@ -162,7 +154,7 @@ export class TrainingModalAddon extends BaseAddon<TrainingModalConfig> {
     })
     this.instances = instances
 
-    await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, this.migrationPorts()))
+    await this.runMigrations(ADDON_MIGRATIONS, (api) => modalPortsOver(api))
     await this.refreshAll()
 
     this.ledgerState = this.state<Record<string, ModalJobRecord>>(LEDGER_KEY, LedgerSchema, {})
@@ -351,66 +343,6 @@ export class TrainingModalAddon extends BaseAddon<TrainingModalConfig> {
       return { success: false, status: 'inconclusive', error: message }
     } finally {
       gateway.close()
-    }
-  }
-
-  /** The ports of the account migrations: the old settings in, the records out. */
-  private migrationPorts(): ModalCataloguePorts {
-    const records = this.ctx.records
-    if (records === undefined) throw new Error('records are not available')
-    const handle = records.kind(trainingAccountEntryKind)
-    return {
-      readStored: async (): Promise<Readonly<Record<string, unknown>>> => {
-        const stored = await this.resolveGlobalStore()
-        // A secret that is still a marker was not resolved: abort before anything is written.
-        if (isSecretMarker(stored['tokenSecret'])) {
-          throw new Error('the old flat Modal token secret could not be resolved')
-        }
-        const list = stored['entries']
-        if (Array.isArray(list)) {
-          for (const row of list) {
-            if (
-              typeof row === 'object' &&
-              row !== null &&
-              isSecretMarker(Reflect.get(row, 'tokenSecret'))
-            ) {
-              throw new Error('an old Modal token secret could not be resolved')
-            }
-          }
-        }
-        return stored
-      },
-      readRawStored: async () => this.resolveGlobalStore(),
-      warn: (message: string) => {
-        this.ctx.logger.warn(message)
-      },
-      readRecord: async (id: string): Promise<ModalRecordState | null> => {
-        const row = await handle.getResolved(id)
-        if (row === null) return null
-        return { tokenId: row.data.tokenId, hasSecret: (row.data.tokenSecret ?? '').length > 0 }
-      },
-      putRecord: async (id: string, body: TrainingAccountBody): Promise<'created' | 'exists'> => {
-        if ((await handle.get(id)) !== null) return 'exists'
-        try {
-          await handle.put({ id, data: body }, { ifRev: 0 })
-        } catch (err: unknown) {
-          if (err instanceof RevConflictError) return 'exists'
-          throw err
-        }
-        return 'created'
-      },
-      clearOldSecrets: async (ids: readonly string[]) => {
-        // The clear instruction on a row's secret removes its keychain value and its marker.
-        if (ids.includes(FLAT_ACCOUNT_ID)) await this.clearSecrets(['tokenSecret'])
-        const rows = this.config.entries
-        if (!rows.some((row) => ids.includes(row.id))) return
-        await this.updateGlobalSettings({
-          ...this.config,
-          entries: rows.map((row) =>
-            ids.includes(row.id) ? { ...row, tokenSecret: SECRET_CLEAR } : row,
-          ),
-        })
-      },
     }
   }
 

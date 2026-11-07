@@ -1,11 +1,8 @@
 {
-  "_why": "Every file that names an addon-level settings hook today (planning#440 step 8, D986). P8 (M5) empties it; the google, waste, tailscale and training blocks go with their own packets. The list only shrinks.",
+  "_why": "Every file that names an addon-level settings hook today (planning#440 step 8, D986). P8 (M5) empties it; the google, waste and tailscale blocks go with their own packets. The list only shrinks.",
   "families": {
     "waste": {
       "packages/addon-waste-collections/src/waste-collections.addon.ts:addon-level-settings": "pruneLegacyRows still writes the addon blob through updateGlobalSettings (a raw store write would put plaintext secrets back); the settings button is now a page action [updateGlobalSettings]"
-    },
-    "training": {
-      "packages/addon-training/src/providers/modal/training-modal.addon.ts:addon-level-settings": "writes the addon blob; P6g/P8 move the credentials to the instance and the rest to cluster scope [updateGlobalSettings]"
     },
     "m5-declarers": {
       "packages/system/src/builtins/camera-grid/addon.ts:addon-level-settings": "the grid list is an editable-array COLLECTION kept in the addon blob (cameraGrids); moving it is an instances-kind decision (D985), not a scope move, so it stays until the operator decides"
