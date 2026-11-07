@@ -38,7 +38,11 @@ import {
   type IScopedLogger,
   type VacuumState,
 } from '@camstack/types'
-import { buildVacuumConsumableItems, VACUUM_TANK_PROPS } from '../dreame-vacuum-decode.js'
+import {
+  buildVacuumConsumableItems,
+  VACUUM_TANK_PROPS,
+  type VacuumTankProps,
+} from '../dreame-vacuum-decode.js'
 import {
   CONSUMABLES_CAP_NAME,
   type ConsumablesRefreshReason,
@@ -82,6 +86,15 @@ export interface VacuumConsumablesDeps {
 
 const SUBJECT = 'dreame vacuum'
 
+/** Where a tank-prop value came from: a live robot read, the cloud shadow, or a plain push. */
+export type TankReadSource = 'live' | 'shadow' | 'push'
+
+/** The raw tank props and robot error behind one decoded tank write, for the debug trail. */
+export interface TankReadout {
+  readonly props: VacuumTankProps
+  readonly errorCode: number | null
+}
+
 /** The states a run ends from. `drying` is already on the dock. */
 const DOCK_EDGE_FROM: ReadonlySet<VacuumState> = new Set<VacuumState>([
   'cleaning',
@@ -99,6 +112,9 @@ export class DreameVacuumConsumables {
   #tankTimer: ReturnType<typeof setInterval> | null = null
   #tankRead: Promise<void> | null = null
   #lastTankReadAt = 0
+  /** Label of the tank read in flight, so the pushes it provokes are attributed to it. */
+  #tankSource: TankReadSource | null = null
+  #lastReadoutKey: string | null = null
 
   constructor(deps: VacuumConsumablesDeps) {
     this.#deps = deps
@@ -133,8 +149,9 @@ export class DreameVacuumConsumables {
    * reads — and neither is a hop between station routines (`drying` →
    * `docked`): only the end of a RUN is.
    */
-  onPush(state: VacuumState, tanks: readonly ConsumableItem[]): void {
+  onPush(state: VacuumState, tanks: readonly ConsumableItem[], readout?: TankReadout): void {
     this.#tanks = tanks
+    if (readout !== undefined) this.#logReadout(readout)
     this.#apply(false)
     const enteredDock =
       this.#prevState !== null && DOCK_EDGE_FROM.has(this.#prevState) && state === 'docked'
@@ -179,30 +196,58 @@ export class DreameVacuumConsumables {
       })
       return
     }
-    const props = Object.values(VACUUM_TANK_PROPS).map((p) => ({ ...p }))
     this.#lastTankReadAt = Date.now()
-    this.#tankRead = (async () => {
-      try {
-        await vacuum.refreshProperties(props)
-      } catch (liveErr) {
-        logger.debug(`${SUBJECT}: tank-status live read failed — trying the cloud shadow`, {
-          tags: { deviceId },
-          meta: { reason, error: errMsg(liveErr) },
-        })
-        try {
-          await vacuum.refreshCachedProperties(props)
-        } catch (err) {
-          if (!this.#refresher.live()) return
-          logger.warn(`${SUBJECT}: tank-status re-read failed — keeping the last values`, {
-            tags: { deviceId },
-            meta: { reason, error: errMsg(err) },
-          })
-        }
-      }
-    })().finally(() => {
+    this.#tankRead = this.#readTankProps(vacuum, reason).finally(() => {
       this.#tankRead = null
     })
     await this.#tankRead
+  }
+
+  /** Live first, the cloud shadow as fallback; the answer reaches the slice through {@link onPush}. */
+  async #readTankProps(vacuum: VacuumConsumablesHandle, reason: string): Promise<void> {
+    const { deviceId, logger } = this.#deps
+    const props = Object.values(VACUUM_TANK_PROPS).map((p) => ({ ...p }))
+    try {
+      this.#tankSource = 'live'
+      await vacuum.refreshProperties(props)
+    } catch (liveErr) {
+      logger.debug(`${SUBJECT}: tank-status live read failed — trying the cloud shadow`, {
+        tags: { deviceId },
+        meta: { reason, error: errMsg(liveErr) },
+      })
+      try {
+        this.#tankSource = 'shadow'
+        await vacuum.refreshCachedProperties(props)
+      } catch (err) {
+        if (!this.#refresher.live()) return
+        logger.warn(`${SUBJECT}: tank-status re-read failed — keeping the last values`, {
+          tags: { deviceId },
+          meta: { reason, error: errMsg(err) },
+        })
+      }
+    } finally {
+      this.#tankSource = null
+    }
+  }
+
+  /** One debug line per CHANGED raw tank readout: values, robot error and where they came from. */
+  #logReadout(readout: TankReadout): void {
+    const key = JSON.stringify(readout)
+    if (key === this.#lastReadoutKey) return
+    this.#lastReadoutKey = key
+    this.#deps.logger.debug(`${SUBJECT}: tank props written`, {
+      tags: { deviceId: this.#deps.deviceId },
+      meta: {
+        source: this.#tankSource ?? 'push',
+        errorCode: readout.errorCode,
+        cleanWaterTankStatus: readout.props.cleanWaterTankStatus,
+        waterTank: readout.props.waterTank,
+        detergentStatus: readout.props.detergentStatus,
+        dustCollection: readout.props.dustCollection,
+        dirtyWaterTankStatus: readout.props.dirtyWaterTankStatus,
+        dustBagStatus: readout.props.dustBagStatus,
+      },
+    })
   }
 
   async reset(key: string): Promise<void> {
@@ -231,7 +276,7 @@ export class DreameVacuumConsumables {
   }
 
   async #read(reason: ConsumablesRefreshReason, live: () => boolean): Promise<void> {
-    const { deviceId, logger, resolveVacuum } = this.#deps
+    const { resolveVacuum } = this.#deps
     const vacuum = resolveVacuum()
     if (vacuum === null) throw new Error('vacuum handle unavailable')
     await vacuum.refreshConsumables()
@@ -241,15 +286,17 @@ export class DreameVacuumConsumables {
     }
     this.#apply(true)
     // Tanks ride the same cadence; a failure there costs the tanks, not the consumables.
-    try {
-      await vacuum.refreshCachedProperties(Object.values(VACUUM_TANK_PROPS).map((p) => ({ ...p })))
-    } catch (err) {
-      if (!live()) return
-      logger.warn(`${SUBJECT}: tank-status refresh failed — keeping the last values`, {
-        tags: { deviceId },
-        meta: { reason, error: errMsg(err) },
-      })
+    // Live first, like the periodic read: a stale shadow value must not overwrite a live LOW.
+    if (!live()) return
+    if (this.#tankRead !== null) {
+      await this.#tankRead
+      return
     }
+    this.#lastTankReadAt = Date.now()
+    this.#tankRead = this.#readTankProps(vacuum, reason).finally(() => {
+      this.#tankRead = null
+    })
+    await this.#tankRead
   }
 
   #apply(landed: boolean): void {

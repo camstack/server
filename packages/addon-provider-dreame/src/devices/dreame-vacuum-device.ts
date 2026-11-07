@@ -227,8 +227,9 @@ export class DreameVacuumDevice extends DreameChildDevice {
     if (vacuum === null) return
 
     // The error code feeds the dirty-water tank: MiotError.DirtyWaterTankFull is its "full".
+    const tankProps = this.readTankProps()
     const tanks = vacuumTankItems(
-      decodeVacuumTanks(vacuum.vacuumCapabilities, this.readTankProps(), vacuum.errorCode),
+      decodeVacuumTanks(vacuum.vacuumCapabilities, tankProps, vacuum.errorCode),
     )
     const miotStatus = vacuum.status
     const controlSlice: VacuumControlStatus = {
@@ -249,7 +250,10 @@ export class DreameVacuumDevice extends DreameChildDevice {
     this.publishRunningSlice(miotStatus, Date.now(), controlSlice.lastChangedAt)
     // Replays the cache and the tanks into the consumables slice (only on a
     // change, never an empty list) and refreshes on the edge into docked.
-    this.consumables.onPush(controlSlice.state, tanks)
+    this.consumables.onPush(controlSlice.state, tanks, {
+      props: tankProps,
+      errorCode: vacuum.errorCode,
+    })
   }
 
   /**

@@ -202,6 +202,27 @@ describe('decodeVacuumTanks', () => {
     ).toEqual({ level: null, status: null })
   })
 
+  describe('clean water from the robot error (MiotError.CleanWaterTankEmpty)', () => {
+    const stale = {
+      cleanWaterTankStatus: 0,
+      waterTank: 1,
+      detergentStatus: null,
+      dustCollection: null,
+      dirtyWaterTankStatus: null,
+      dustBagStatus: null,
+    }
+
+    it('error 107 is low even when the props still say installed', () => {
+      expect(
+        decodeVacuumTanks(caps(allCaps), stale, MiotError.CleanWaterTankEmpty).cleanWater,
+      ).toEqual({ level: null, status: 'low' })
+    })
+
+    it('the error cleared lets the props decide again', () => {
+      expect(decodeVacuumTanks(caps(allCaps), stale, null).cleanWater?.status).toBe('ok')
+    })
+  })
+
   // The unambiguous "full": the robot's own error DirtyWaterTankFull (MiotError 86,
   // siid 2 piid 2 via the library's `errorCode`) — unlike 27/2's NOT_INSTALLED_OR_FULL.
   describe('dirty water from the robot error (MiotError.DirtyWaterTankFull)', () => {

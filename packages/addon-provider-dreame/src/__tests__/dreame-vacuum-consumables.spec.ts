@@ -122,7 +122,7 @@ describe('DreameVacuumConsumables', () => {
     const { vacuum, consumables } = setup()
     consumables.start()
     await vi.advanceTimersByTimeAsync(0)
-    const props = vacuum.refreshCachedProperties.mock.calls[0]?.[0] ?? []
+    const props = vacuum.refreshProperties.mock.calls[0]?.[0] ?? []
     expect(props).toEqual(
       expect.arrayContaining([
         { siid: 27, piid: 2 },
@@ -370,11 +370,11 @@ describe('DreameVacuumConsumables', () => {
       const { vacuum, consumables } = setup()
       consumables.start()
       await vi.advanceTimersByTimeAsync(0)
-      expect(vacuum.refreshProperties).not.toHaveBeenCalled()
+      expect(vacuum.refreshProperties).toHaveBeenCalledTimes(1) // the activation read
 
       await vi.advanceTimersByTimeAsync(TANK_REREAD_MS)
-      expect(vacuum.refreshProperties).toHaveBeenCalledTimes(1)
-      const props = vacuum.refreshProperties.mock.calls[0]?.[0] ?? []
+      expect(vacuum.refreshProperties).toHaveBeenCalledTimes(2)
+      const props = vacuum.refreshProperties.mock.calls[1]?.[0] ?? []
       expect(props).toHaveLength(Object.keys(VACUUM_TANK_PROPS).length)
       expect(props).toContainEqual({ siid: 27, piid: 1 })
       // the consumables shadow read is still the hourly one
@@ -398,21 +398,66 @@ describe('DreameVacuumConsumables', () => {
       await vi.advanceTimersByTimeAsync(0)
       consumables.onPush('cleaning', [])
       await vi.advanceTimersByTimeAsync(0)
-      expect(vacuum.refreshProperties).not.toHaveBeenCalled()
+      expect(vacuum.refreshProperties).toHaveBeenCalledTimes(1) // the activation read
 
       consumables.onPush('docked', [])
       await vi.advanceTimersByTimeAsync(0)
-      expect(vacuum.refreshProperties).toHaveBeenCalledTimes(1)
+      expect(vacuum.refreshProperties).toHaveBeenCalledTimes(2)
 
       consumables.onPush('drying', [])
       await vi.advanceTimersByTimeAsync(0)
-      expect(vacuum.refreshProperties).toHaveBeenCalledTimes(1)
+      expect(vacuum.refreshProperties).toHaveBeenCalledTimes(2)
 
       await vi.advanceTimersByTimeAsync(TANK_TRANSITION_MIN_GAP_MS)
       consumables.onPush('docked', [])
       await vi.advanceTimersByTimeAsync(0)
-      expect(vacuum.refreshProperties).toHaveBeenCalledTimes(2)
+      expect(vacuum.refreshProperties).toHaveBeenCalledTimes(3)
       consumables.stop()
+    })
+
+    it('the dock-edge refresh reads the tanks LIVE first — a stale shadow never answers while the robot does', async () => {
+      const { vacuum, consumables } = setup()
+      consumables.onPush('cleaning', [])
+      consumables.onPush('docked', [])
+      await vi.advanceTimersByTimeAsync(0)
+      expect(vacuum.refreshConsumables).toHaveBeenCalledTimes(1)
+      expect(vacuum.refreshProperties).toHaveBeenCalled()
+      expect(vacuum.refreshCachedProperties).not.toHaveBeenCalled()
+    })
+
+    it('the dock-edge refresh falls back to the shadow only when the live read fails', async () => {
+      const { vacuum, consumables } = setup()
+      vacuum.tankLiveFails = true
+      consumables.onPush('cleaning', [])
+      consumables.onPush('docked', [])
+      await vi.advanceTimersByTimeAsync(0)
+      expect(vacuum.refreshCachedProperties).toHaveBeenCalled()
+    })
+
+    it('logs a changed raw tank readout with its source and the device tag', async () => {
+      const { vacuum, logger, consumables } = setup()
+      const props = {
+        cleanWaterTankStatus: 2,
+        waterTank: 1,
+        detergentStatus: null,
+        dustCollection: null,
+        dirtyWaterTankStatus: 0,
+        dustBagStatus: null,
+      }
+      vacuum.refreshProperties.mockImplementationOnce(async () => {
+        consumables.onPush('docked', [], { props, errorCode: 107 })
+        return []
+      })
+      consumables.onPush('cleaning', [])
+      consumables.onPush('docked', [])
+      await vi.advanceTimersByTimeAsync(0)
+      consumables.onPush('docked', [], { props, errorCode: 107 }) // unchanged: no second line
+      const lines = logger.debug.mock.calls.filter(([m]) => m.includes('tank props written'))
+      expect(lines).toHaveLength(1)
+      expect(lines[0]?.[1]).toMatchObject({
+        tags: { deviceId: 4385 },
+        meta: { source: 'live', errorCode: 107, cleanWaterTankStatus: 2, waterTank: 1 },
+      })
     })
 
     it('stops re-reading when the device is gone', async () => {

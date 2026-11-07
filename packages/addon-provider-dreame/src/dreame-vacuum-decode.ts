@@ -211,9 +211,12 @@ type TankStatusFlag = VacuumTank['status']
 /**
  * Clean-water tank `status`: prefer the richer clean-water-tank-status (27/1),
  * fall back to the coarser water-tank presence (4/6). `null` when neither maps
- * to a known good/low reading (NOT_INSTALLED / CHECKING / unknown). Pure.
+ * to a known good/low reading (NOT_INSTALLED / CHECKING / unknown). The robot's own
+ * error `MiotError.CleanWaterTankEmpty` (107) forces `low` while it is raised, whatever
+ * the props say (a stale value 0 would otherwise read `ok`). Pure.
  */
-function cleanWaterTankStatus(props: VacuumTankProps): TankStatusFlag {
+function cleanWaterTankStatus(props: VacuumTankProps, errorCode: number | null): TankStatusFlag {
+  if (errorCode === MiotError.CleanWaterTankEmpty) return 'low' // the robot's own error
   if (props.cleanWaterTankStatus !== null) {
     if (props.cleanWaterTankStatus === 0) return 'ok' // INSTALLED
     if (props.cleanWaterTankStatus === 2) return 'low' // LOW_WATER
@@ -288,7 +291,7 @@ export function decodeVacuumTanks(
   const tank = (present: boolean, status: TankStatusFlag): VacuumTank | null =>
     present ? { level: null, status } : null
   return {
-    cleanWater: tank(Boolean(caps?.canMop), props ? cleanWaterTankStatus(props) : null),
+    cleanWater: tank(Boolean(caps?.canMop), props ? cleanWaterTankStatus(props, errorCode) : null),
     dirtyWater: tank(
       Boolean(caps?.canMopWash),
       dirtyWaterTankStatus(props?.dirtyWaterTankStatus ?? null, errorCode),
