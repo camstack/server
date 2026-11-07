@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A system-event notification rule now picks any combination of when it starts, when it clears and on a schedule on one screen, with one switch for a notification per category and a Send the summary now test
+
 ## [1.2.609] - 2026-11-07
 
 ### Changed
 
 - Customize threshold overrides gain a Samples field: consecutive readings needed before the state changes
-- A system-event notification rule now picks any combination of when it starts, when it clears and on a schedule on one screen, with one switch for a notification per category and a Send the summary now test
 
 ## [1.2.608] - 2026-11-07
 

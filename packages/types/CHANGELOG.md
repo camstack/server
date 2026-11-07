@@ -7,11 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A system-event notification rule can speak when a condition starts, when it clears and on a schedule, in any combination
+
 ## [1.2.519] - 2026-11-07
 
 ### Changed
 
-- A system-event notification rule can speak when a condition starts, when it clears and on a schedule, in any combination
 - Scalar overrides expose the dwell sample count (the 4th dwell argument) as an editable default
 
 ## [1.2.518] - 2026-11-07
