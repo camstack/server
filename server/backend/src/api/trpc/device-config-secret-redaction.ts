@@ -461,6 +461,19 @@ export function maskUrlCredentialsDeep(data: unknown): unknown {
 export type ConfigRedactor = (data: unknown) => unknown
 
 /**
+ * Non-admin reads that return settings VALUES yet are deliberately NOT in
+ * {@link NON_ADMIN_CONFIG_REDACTED_METHODS}: their payload is secret-free by contract, so a
+ * redactor would only guess at it.
+ *
+ * `addonSettings.readScopedValues` answers a flat `key -> effective value` map built with
+ * `inlineSecretsAsViews`: a secret field is its `set` view (`{ set: boolean }`), never the value
+ * (`base-addon-scoped-value-api.spec.ts` pins it). Adding a method here needs the same proof.
+ */
+export const NON_ADMIN_SECRET_FREE_BY_CONTRACT: ReadonlySet<string> = new Set([
+  'addonSettings.readScopedValues',
+])
+
+/**
  * Every device-manager read whose response carries a device `config` blob, and
  * the projection that cuts it.
  *

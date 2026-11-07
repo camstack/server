@@ -186,6 +186,29 @@ const FAILOVER_SECTION = {
   ],
 }
 
+const CLUSTER_NODE_KEYS: Readonly<Record<string, string>> = {
+  recorder: 'recordingNodeId',
+  'pipeline-analytics': 'postProcessingNodeId',
+}
+
+function clusterSettingsAnswer(input: { addonId?: string }) {
+  if (input.addonId === 'pipeline-orchestrator')
+    return { tabs: null, sections: [LOAD_SECTION, FAILOVER_SECTION] }
+  const key = input.addonId === undefined ? undefined : CLUSTER_NODE_KEYS[input.addonId]
+  if (key === undefined) return null
+  return {
+    tabs: null,
+    sections: [
+      {
+        id: 'cluster',
+        title: 'Cluster',
+        columns: 1,
+        fields: [{ type: 'text', key, label: key, value: 'garage-nuc' }],
+      },
+    ],
+  }
+}
+
 export default defineFixtures({
   area: 'pipeline-cluster',
   description: 'Pipeline → Cluster: Load balancing and Settings tabs, two idle nodes',
@@ -269,34 +292,11 @@ export default defineFixtures({
       })),
       stalePins: [],
     },
-    'addonSettings.getGlobalSettings': (input: { addonId?: string }) =>
-      input.addonId === 'pipeline-orchestrator'
-        ? { tabs: null, sections: [LOAD_SECTION, FAILOVER_SECTION] }
-        : null,
-    // The Roles & nodes pickers read the cluster form of the recorder and the analytics
-    // capability (D986); the orchestrator keeps its own form.
-    'addonSettings.getScopedSettings': (input: { addonId?: string }) => {
-      if (input.addonId === 'pipeline-orchestrator')
-        return { tabs: null, sections: [LOAD_SECTION, FAILOVER_SECTION] }
-      const key =
-        input.addonId === 'recorder'
-          ? 'recordingNodeId'
-          : input.addonId === 'pipeline-analytics'
-            ? 'postProcessingNodeId'
-            : null
-      if (key === null) return null
-      return {
-        tabs: null,
-        sections: [
-          {
-            id: 'cluster',
-            title: 'Cluster',
-            columns: 1,
-            fields: [{ type: 'text', key, label: key, value: 'garage-nuc' }],
-          },
-        ],
-      }
-    },
+    // One answer for the old and the scoped read, so a before/after shot of the Roles & nodes
+    // pickers compares like with like (D986): the orchestrator form, and the recorder and
+    // analytics cluster keys.
+    'addonSettings.getGlobalSettings': clusterSettingsAnswer,
+    'addonSettings.getScopedSettings': clusterSettingsAnswer,
     // Auto tune (D745): one node change and one kept custom pin. A model and its
     // thresholds live on the accelerator only (D927) — no camera rows.
     'pipelineOrchestrator.planAutoTune': {

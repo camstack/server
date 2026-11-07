@@ -14,7 +14,7 @@ import { useEffect, useMemo, useRef, useState, type JSX } from 'react'
 import {
   type ConfigUISchemaWithValues,
   type ConfigUISchema,
-  type ConfigField,
+  type ConfigFieldWithValue,
   type ScopedSettingsScope,
   dehydrateSchema,
 } from '@camstack/types'
@@ -90,8 +90,21 @@ interface AddonScopedSettingsFormProps {
   readonly defaultOpen?: boolean
 }
 
-function isValueBearingField(f: ConfigField): boolean {
-  return f.type !== 'separator' && f.type !== 'info' && f.type !== 'button' && f.type !== 'group'
+type ValueBearingField = Extract<ConfigFieldWithValue, { readonly value: unknown }>
+
+/** Layout-only field types: they carry no value of their own. */
+const VALUELESS_TYPES: ReadonlySet<string> = new Set([
+  'separator',
+  'info',
+  'button',
+  'group',
+  'sub-tabs',
+  'qr-code',
+  'widget',
+])
+
+function isValueBearingField(f: ConfigFieldWithValue): f is ValueBearingField {
+  return !VALUELESS_TYPES.has(f.type)
 }
 
 function extractValues(schema: ConfigUISchemaWithValues | null): Record<string, unknown> {
@@ -100,30 +113,10 @@ function extractValues(schema: ConfigUISchemaWithValues | null): Record<string, 
   for (const s of schema.sections) {
     for (const f of s.fields) {
       if (!isValueBearingField(f)) continue
-      const key = (f as { readonly key: string }).key
-      out[key] = (f as { readonly value?: unknown }).value
+      out[f.key] = f.value
     }
   }
   return out
-}
-
-/** Paint operator edits into the hydrated schema so controlled inputs keep focus. */
-function applyValuesToSchema(
-  schema: ConfigUISchemaWithValues,
-  nextValues: Record<string, unknown>,
-): ConfigUISchemaWithValues {
-  return {
-    ...schema,
-    sections: schema.sections.map((s) => ({
-      ...s,
-      fields: s.fields.map((f) => {
-        if (!isValueBearingField(f)) return f
-        const key = (f as { readonly key: string }).key
-        if (!(key in nextValues)) return f
-        return { ...f, value: nextValues[key] } as typeof f
-      }),
-    })),
-  }
 }
 
 function stripValues(schema: ConfigUISchemaWithValues): ConfigUISchema {
@@ -147,6 +140,8 @@ export function AddonScopedSettingsForm({
 }: AddonScopedSettingsFormProps): JSX.Element | null {
   const t = useUiText()
   const [hydrated, setHydrated] = useState<ConfigUISchemaWithValues | null>(null)
+  /** Operator edits not yet replaced by a server snapshot, so controlled inputs keep focus. */
+  const [edits, setEdits] = useState<Record<string, unknown>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -169,6 +164,7 @@ export function AddonScopedSettingsForm({
         // with a transient null. Initial load with no prior view stays null
         // (renders "not available") until the addon is ready.
         setHydrated((prev) => res ?? prev)
+        if (res) setEdits({})
         setLoading(false)
       })
       .catch((err: unknown) => {
@@ -181,7 +177,12 @@ export function AddonScopedSettingsForm({
     }
   }, [trpc, addonId, cap, scope, nodeId, refreshToken])
 
-  const values = useMemo(() => extractValues(hydrated), [hydrated])
+  const values = useMemo(() => {
+    const served = extractValues(hydrated)
+    const painted: Record<string, unknown> = { ...served }
+    for (const key of Object.keys(edits)) if (key in served) painted[key] = edits[key]
+    return painted
+  }, [hydrated, edits])
   const sectionKey = sectionIds?.join('\u0000')
   const schemaNoValues = useMemo(() => {
     if (!hydrated) return null
@@ -206,7 +207,7 @@ export function AddonScopedSettingsForm({
     // Paint locally first and keep inputs enabled — disabling on save blurs
     // the focused field (mobile keyboard closes) on every keystroke.
     const seq = ++persistSeq.current
-    setHydrated((prev) => (prev === null ? prev : applyValuesToSchema(prev, nextValues)))
+    setEdits((prev) => ({ ...prev, ...nextValues }))
     setSaving(true)
     setError(null)
     try {
@@ -221,7 +222,10 @@ export function AddonScopedSettingsForm({
       // A newer keystroke bumps `persistSeq` — discard this refetch so it
       // cannot rewind the optimistic paint mid-edit.
       const next = await trpc.addonSettings.getScopedSettings.query(target)
-      if (next && seq === persistSeq.current) setHydrated(next)
+      if (next && seq === persistSeq.current) {
+        setHydrated(next)
+        setEdits({})
+      }
       if (seq === persistSeq.current) onAfterChange?.()
     } catch (err: unknown) {
       if (seq === persistSeq.current) {
@@ -249,9 +253,8 @@ export function AddonScopedSettingsForm({
   if (!hydrated || !schemaNoValues)
     return (
       <div className="text-xs text-foreground-subtle">
-        {t('uiLibrary.addonGlobalSettings.unavailable', '{{name}} not available on {{node}}.', {
+        {t('uiLibrary.addonGlobalSettings.unavailable', '{{name}} not available.', {
           name: title ?? addonId,
-          node: nodeId ?? 'hub',
         })}
       </div>
     )

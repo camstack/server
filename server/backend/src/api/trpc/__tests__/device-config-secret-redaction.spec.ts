@@ -14,6 +14,7 @@ import { z } from 'zod'
 import {
   isSecretConfigKey,
   NON_ADMIN_CONFIG_REDACTED_METHODS,
+  NON_ADMIN_SECRET_FREE_BY_CONTRACT,
   REDACTED_SECRET,
   redactConfigEntries,
   redactDeviceInfoRecordSecrets,
@@ -224,6 +225,15 @@ describe('every enumerated path is wired to a redactor that fits ITS shape', () 
       unknown
     >
     expect(config['password']).toBe(REDACTED_SECRET)
+  })
+})
+
+describe('a settings read exempt from redaction is exempt on purpose', () => {
+  it('readScopedValues is secret-free by contract, not by omission', () => {
+    expect([...NON_ADMIN_SECRET_FREE_BY_CONTRACT]).toEqual(['addonSettings.readScopedValues'])
+    for (const path of NON_ADMIN_SECRET_FREE_BY_CONTRACT) {
+      expect(NON_ADMIN_CONFIG_REDACTED_METHODS.has(path)).toBe(false)
+    }
   })
 })
 
