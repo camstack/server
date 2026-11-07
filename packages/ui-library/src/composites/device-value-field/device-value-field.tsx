@@ -90,7 +90,9 @@ function stepClass(step: DeviceValueStep, own: DeviceValueStep): string | undefi
  */
 export function DeviceValueField(props: DeviceValueFieldProps): ReactNode {
   const t = useUiText()
-  const [requested, setStep] = useState<DeviceValueStep>(initialStep(props.deviceId !== null))
+  // null until the operator navigates: until then the step follows the props, so a device or
+  // value that resolves after mount (a change dialog waiting on the fleet) is still reached.
+  const [navigated, setStep] = useState<DeviceValueStep | null>(null)
   const testId = props.testId ?? 'device-value-field'
   const pickDevice = (ids: readonly number[]): void => {
     const id = ids[0] ?? null
@@ -106,6 +108,9 @@ export function DeviceValueField(props: DeviceValueFieldProps): ReactNode {
     hasPreviewContent && (props.value !== null || props.alwaysShowPreview === true)
   // The preview step exists only once there is something to preview: the transform and the
   // "would read" line appear with the pick, so the step is judged at render, not at click.
+  const requested: DeviceValueStep =
+    navigated ??
+    (showPreview && props.deviceId !== null ? 'preview' : initialStep(props.deviceId !== null))
   const step: DeviceValueStep = requested === 'preview' && !showPreview ? 'values' : requested
   return (
     <div
@@ -184,7 +189,9 @@ export function DeviceValueField(props: DeviceValueFieldProps): ReactNode {
 }
 
 function ValuesBody(
-  props: DeviceValueFieldProps & { readonly onPick: (pick: DeviceValuePick) => void },
+  props: DeviceValueFieldProps & {
+    readonly onPick: (pick: DeviceValuePick) => void
+  },
 ): ReactNode {
   const t = useUiText()
   if (props.valuesOverride !== undefined && props.deviceId !== null) return props.valuesOverride

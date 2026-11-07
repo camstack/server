@@ -96,7 +96,11 @@ describe('DeviceValueField', () => {
   it('does not open the preview step while the pick has not been taken as the value', () => {
     render(
       <DeviceValueField
-        {...props({ deviceId: 1, transform: <i>t</i>, onValueChange: () => undefined })}
+        {...props({
+          deviceId: 1,
+          transform: <i>t</i>,
+          onValueChange: () => undefined,
+        })}
       />,
     )
     fireEvent.click(screen.getByTestId('device-value-power-meter.power'))
@@ -107,5 +111,43 @@ describe('DeviceValueField', () => {
     render(<DeviceValueField {...props({ deviceId: 1, valuesState: 'loading', groups: [] })} />)
     expect(screen.getByRole('status')).toBeTruthy()
     expect(screen.queryByText('No fitting value')).toBeNull()
+  })
+
+  describe('a device that resolves after mount (change dialog waiting on the fleet)', () => {
+    const PICK = { cap: 'power-meter', path: 'power' }
+    const withDevice = (over: Partial<DeviceValueFieldProps> = {}) =>
+      props({
+        deviceId: 1,
+        value: PICK,
+        transform: <i data-testid="tf">t</i>,
+        ...over,
+      })
+
+    it('moves to preview once the device is known, so the transform is reachable', () => {
+      const { rerender } = render(
+        <DeviceValueField {...withDevice({ deviceId: null, value: PICK })} />,
+      )
+      const root = screen.getByTestId('device-value-field')
+      expect(root.getAttribute('data-step')).toBe('devices')
+      rerender(<DeviceValueField {...withDevice()} />)
+      expect(root.getAttribute('data-step')).toBe('preview')
+      expect(screen.getByTestId('tf')).toBeTruthy()
+      expect(screen.getByTestId('device-value-field-preview').className).not.toContain('hidden')
+    })
+
+    it('does not override the operator once they navigated', () => {
+      const { rerender } = render(<DeviceValueField {...withDevice({ deviceId: null })} />)
+      rerender(<DeviceValueField {...withDevice()} />)
+      fireEvent.click(screen.getByTestId('device-value-field-back'))
+      const root = screen.getByTestId('device-value-field')
+      expect(root.getAttribute('data-step')).toBe('values')
+      rerender(<DeviceValueField {...withDevice({ valuesState: 'loading' })} />)
+      expect(root.getAttribute('data-step')).toBe('values')
+    })
+
+    it('a new source (no device, no value) still starts at devices', () => {
+      render(<DeviceValueField {...props()} />)
+      expect(screen.getByTestId('device-value-field').getAttribute('data-step')).toBe('devices')
+    })
   })
 })
