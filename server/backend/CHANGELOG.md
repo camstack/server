@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.802] - 2026-11-07
+
 ### Changed
 
 - addonSettings.listScopedSettings lists the scoped settings an addon serves, in process and for forked addons.

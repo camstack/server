@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.611] - 2026-11-07
+
 ### Changed
 
 - Local access, the Terminal configuration and the passkey relying-party card read their own scoped settings form instead of the retired addon-level one

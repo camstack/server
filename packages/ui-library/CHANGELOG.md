@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.399] - 2026-11-07
+
 ### Changed
 
 - The scoped settings form no longer shows the previous target's values after its node, scope or addon changes: it starts empty and says "not available" when the new target answers nothing
