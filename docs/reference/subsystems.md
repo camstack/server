@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 8181 source files · 1283 file(s) in no subsystem.**
+**31 subsystems · 8182 source files · 1283 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -38,7 +38,7 @@ commits. A generated page may not.
 | Stream broker, WebRTC and live delivery | 170 | `decisions/adr-1013-one-instance-model.md`, `architecture/data-planes.md`, `design/2026-08-29-media-plane-memory-comparison.md` _(covers)_, +44 more, 16 ADRs | 2026-10-21 | ✅ |
 | Audio analysis and audio delivery | 18 | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0660-an-audio-window-waits-for-the-classifier-it-is-never-dropped-for-contention.md`, `decisions/adr-0450-the-audio-plane-carries-the-source-rate-and-the-one-consumer-that-needs-more-resamples-next-to-itself.md`, +10 more | 2026-10-08 | ⚠️ |
 | Zones and zone rules | 5 | `decisions/adr-1013-one-instance-model.md`, `architecture/data-planes.md` _(covers)_, `architecture/detection-execution.md` _(covers)_, +3 more, 4 ADRs | 2026-10-24 | ⚠️ |
-| Storage, retention and backup | 140 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0328-the-live-sqlite-file-is-the-bind-the-container-has-open.md`, +65 more, 11 ADRs | 2026-11-02 | ⚠️ |
+| Storage, retention and backup | 141 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0328-the-live-sqlite-file-is-the-bind-the-container-has-open.md`, +65 more, 11 ADRs | 2026-11-02 | ⚠️ |
 | Secrets and the keychain | 29 | `architecture/secrets-keychain.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0787-a-secret-field-stores-a-keychain-marker-and-the-value-lives-in-the-keychain.md`, +25 more, 5 ADRs | 2026-11-02 | ✅ |
 | Auth, scopes and method tiers | 98 | `architecture/authentication.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +32 more, 3 ADRs | 2026-10-21 | ⚠️ |
 | The hub API surface | 173 | `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/authentication.md`, +113 more, 18 ADRs | 2026-11-02 | ⚠️ |
@@ -198,7 +198,7 @@ Every durable byte — the SQLite collections, where media lives, what prunes it
 
 - **Owner doc**: — none
 - **Code**: `packages/system/src/builtins/sqlite-storage/**`, `packages/system/src/builtins/storage-orchestrator/**`, `packages/system/src/builtins/backup-orchestrator/**`, `packages/system/src/builtins/system-backup/**`, `packages/system/src/storage/**`, `packages/system/src/kernel/storage-location-registry.ts`, `packages/types/src/storage/**`, `packages/addon-remote-storage/**`, `packages/addon-pipeline/src/durable/**`, `server/backend/src/core/storage/**`
-- **Files**: 140 (137 claimed by some document)
+- **Files**: 141 (138 claimed by some document)
 - **Uncovered**: `server/backend/src/core/storage` (3)
 
 ### ✅ Secrets and the keychain

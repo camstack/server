@@ -5,7 +5,7 @@
  */
 import type { RecordKindHandle, SecretsAccess, SecretMarker } from '@camstack/types'
 import { readAllRows } from '../../../records/read-all-rows.js'
-import { isLegacyLocationMarker } from '../location-secret-refs.js'
+import { isLegacyLocationMarker } from './legacy-location-secret-refs.js'
 import type { StorageLocationBody } from '../record-kinds.js'
 import type {
   LegacyLocationRow,

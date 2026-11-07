@@ -19,7 +19,7 @@
  * the sweep found nothing either does the step report `already-done`.
  */
 import type { MigrationProcedureResult, SecretMarker } from '@camstack/types'
-import { legacyLocationSecretRef } from '../location-secret-refs.js'
+import { legacyLocationSecretRef } from './legacy-location-secret-refs.js'
 
 /** One location row's legacy credentials: config key to the marker that names the old ref. */
 export interface LegacyLocationRow {

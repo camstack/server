@@ -25,7 +25,8 @@ import {
   makeFakeKeychain,
   makeRecordsWorld,
 } from '../../sqlite-storage/__tests__/support/records-world.js'
-import { locationSecretRef, legacyLocationSecretRef } from '../location-secret-refs.js'
+import { locationSecretRef } from '../location-secret-refs.js'
+import { legacyLocationSecretRef } from '../migrations/legacy-location-secret-refs.js'
 import { storageOrchestratorRecordKinds } from '../record-kinds.js'
 import { StorageOrchestratorAddon } from '../storage-orchestrator.addon.js'
 import { SqliteLocationStore } from '../location-store.js'

@@ -13,11 +13,8 @@ import {
   makeFakeKeychain,
   makeRecordsWorld,
 } from '../../../sqlite-storage/__tests__/support/records-world.js'
-import {
-  isOwnLocationMarker,
-  legacyLocationSecretRef,
-  locationSecretRef,
-} from '../../location-secret-refs.js'
+import { isOwnLocationMarker, locationSecretRef } from '../../location-secret-refs.js'
+import { legacyLocationSecretRef } from '../legacy-location-secret-refs.js'
 import { SqliteLocationStore } from '../../location-store.js'
 import { type StorageLocationBody, storageOrchestratorRecordKinds } from '../../record-kinds.js'
 import { LOCATION_SECRETS_TO_RECORD_MIGRATION } from '../index.js'
