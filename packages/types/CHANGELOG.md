@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- A system-event notification rule can speak when a condition starts, when it clears and on a schedule, in any combination
 - Scalar overrides expose the dwell sample count (the 4th dwell argument) as an editable default
 
 ## [1.2.518] - 2026-11-07
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Doc comment on ConfigManager.getSection no longer refers to config.yaml
-- A system-event notification rule can speak when a condition starts, when it clears and on a schedule, in any combination
 
 ## [1.2.517] - 2026-11-07
 
@@ -128,7 +128,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Vendor login proxy: drop Subresource Integrity pins from proxied pages so rewritten scripts and styles are not refused
-
 
 ## [1.2.505] - 2026-11-05
 
