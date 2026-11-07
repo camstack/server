@@ -37,7 +37,6 @@ import {
   type PoolBatchMode,
   type ProbedHardware,
   type RuntimeEnv,
-  type RuntimeId,
   shouldInstallOpenvino,
   shouldInstallWebgpu,
 } from './runtimes.js'

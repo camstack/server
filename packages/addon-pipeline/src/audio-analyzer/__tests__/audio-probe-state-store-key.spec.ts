@@ -17,8 +17,8 @@ class ProbeAddon extends AudioAnalyzerAddon {
   }
 }
 
-function fieldValue(schema: ConfigUISchemaWithValues, key: string): unknown {
-  for (const section of schema.sections) {
+function fieldValue(schema: ConfigUISchemaWithValues | null, key: string): unknown {
+  for (const section of schema?.sections ?? []) {
     for (const field of section.fields as readonly ConfigFieldWithValue[]) {
       if ('key' in field && field.key === key && 'value' in field) return field.value
     }

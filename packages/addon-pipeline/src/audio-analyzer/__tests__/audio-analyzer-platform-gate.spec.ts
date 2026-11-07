@@ -102,8 +102,8 @@ function makeFakeContext(topology: { id: string; platform: string }[] = []): {
   return { ctx }
 }
 
-function backendOptionValues(schema: ConfigUISchemaWithValues): string[] {
-  for (const section of schema.sections) {
+function backendOptionValues(schema: ConfigUISchemaWithValues | null): string[] {
+  for (const section of schema?.sections ?? []) {
     for (const field of section.fields) {
       if (field.type === 'select' && field.key === 'audioBackend') {
         return field.options.map((o) => o.value)
