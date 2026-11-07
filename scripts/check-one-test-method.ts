@@ -46,8 +46,6 @@ export const PERMANENT: Readonly<Record<string, string>> = {
 
 /** Folds into `testInstance` at step 5/6 of planning#440; delete the entry then. */
 export const PENDING: Readonly<Record<string, string>> = {
-  'storage.cap.ts:testLocation': 'folds in at step 5/6 (storage locations become instances)',
-  'storage.cap.ts:testConfig': 'folds in at step 5/6 (storage wizard preflight)',
 }
 
 export interface SourceFile {

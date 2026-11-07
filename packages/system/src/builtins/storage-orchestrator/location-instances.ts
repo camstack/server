@@ -177,20 +177,12 @@ function createProviderSections(providers: readonly StorageProviderListEntry[]):
   )
 }
 
+/**
+ * Where the location lives. Its state (`mode`) is not a form field: the admin page changes it
+ * through its own control, which knows the last-writable guard and confirms `disabled`.
+ */
 function stateSection(nodeLocalIds: readonly string[] | null): ConfigSection {
-  const fields: ConfigField[] = [
-    {
-      type: 'select',
-      key: MODE_FIELD,
-      label: 'State',
-      description:
-        'Active takes writes; read-only is still read and played back; drain empties at a bounded pace; disabled is not touched.',
-      options: STORAGE_LOCATION_MODES.map((mode) => ({
-        value: mode,
-        label: mode,
-      })),
-    },
-  ]
+  const fields: ConfigField[] = []
   if (nodeLocalIds === null || nodeLocalIds.length > 0) {
     fields.push({
       type: 'text',
@@ -202,7 +194,7 @@ function stateSection(nodeLocalIds: readonly string[] | null): ConfigSection {
         : { showWhen: { field: PROVIDER_FIELD, in: [...nodeLocalIds] } }),
     })
   }
-  return { id: 'state', title: 'State', columns: 1, fields }
+  return { id: 'state', title: 'Node', columns: 1, fields }
 }
 
 function protectionSection(): ConfigSection {
@@ -326,10 +318,7 @@ export class StorageLocationInstances {
             ],
           },
           ...createProviderSections(providers),
-          {
-            ...stateSection(nodeLocal),
-            fields: stateSection(nodeLocal).fields.filter((f) => f.key !== MODE_FIELD),
-          },
+          stateSection(nodeLocal),
           protectionSection(),
         ],
       }

@@ -214,7 +214,7 @@ Singleton or collection providers, addressed without a device.
 | `settings-store` | 17 | — | — | — | — | `storage-orchestrator` |
 | `smtp-provider` | 3 | — | — | — | ✓ | `google-services` `smtp-nodemailer` |
 | `sso-bridge` | 2 | — | — | — | ✓ | — |
-| `storage` | 22 | — | — | — | — | `storage-orchestrator` |
+| `storage` | 17 | — | — | — | — | `storage-orchestrator` |
 | `storage-admin` | 7 | — | — | — | ✓ | `sqlite-settings` |
 | `storage-evictable` | 2 | — | — | — | ✓ | `recorder` |
 | `storage-migration` | 12 | — | — | — | — | `storage-orchestrator` |

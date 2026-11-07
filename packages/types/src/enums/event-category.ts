@@ -261,7 +261,7 @@ export enum EventCategory {
   // Storage
   /**
    * The SET of storage locations changed — one was created, edited, enabled,
-   * disabled or deleted through `storage.upsertLocation` / `deleteLocation`.
+   * disabled or deleted through the location instances or the forced-delete action.
    *
    * Telemetry, not a transaction (D8/D11): every consumer that re-resolves on
    * it must also converge on its own periodic path, because a dropped event

@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Notifications > Targets is the shared instances table (with the owner column and a test-send action); the bespoke target page and its dialog are gone, and Duplicate with them
 - AI profiles use the shared instances table, with the model and provider parts in the edit dialog; the other AI pages read profiles from the instance model.
 - Network → Mesh Networks is the shared instances list; the join, leave and log-in controls and the live status sit in the tailnet's editor
+- The Storage page is the instance table: each location is a row with its capacity and state, edited in one dialog, with the forced delete as its own confirmed action
 
 ## [1.2.601] - 2026-11-06
 

@@ -258,20 +258,4 @@ describe('a location credential kept in its own record', () => {
     await settle()
     expect(w.kc.values.has(locationSecretRef(id, 'password'))).toBe(false)
   })
-
-  it('the legacy cap upsert stores it the same way', async () => {
-    const w = await world()
-    const b = await boot(w)
-    const saved = await b.storage.upsertLocation({
-      id: 'backups:old-door',
-      type: 'backups',
-      displayName: 'Old door',
-      providerId: PROVIDER_ID,
-      config: { host: 'h', password: PASSWORD },
-      isSystem: false,
-    })
-    await settle()
-    expect(JSON.stringify(saved)).not.toContain(PASSWORD)
-    expect(w.kc.values.get(locationSecretRef('backups:old-door', 'password'))).toBe(PASSWORD)
-  })
 })

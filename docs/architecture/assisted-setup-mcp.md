@@ -65,7 +65,7 @@ record nothing?", "Put the main stream on the high slot of camera 12". The
 assistant reads first, shows the proposal, and only applies after you said yes.
 
 Capabilities used: `storage.listLocations`, `listLocationDeclarations`,
-`listDrainProgress`, `upsertLocation`; `recordingArchive.getDeviceConfig` /
+`listDrainProgress`, and `integrationInstances.updateInstance` for the state of a location; `recordingArchive.getDeviceConfig` /
 `setDeviceConfig`; `pipelineOrchestrator.getCameraStatuses`;
 `streamBroker.listAllCameraStreams`, `listAllProfileSlots`, `getBrokerStats`,
 `assignProfile`, `unassignProfile`; `pipelineOrchestrator.getNodeBenchmarkStatus`,

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The MCP notification tools list and write targets through integration instances
+- The setup-locations tool changes a location's state through its instance instead of the retired storage upsert
 
 ## [1.2.225] - 2026-11-06
 

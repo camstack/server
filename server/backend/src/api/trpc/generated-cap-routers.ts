@@ -17517,24 +17517,6 @@ export function createCapRouter_storage(
         )
         return p.listLocationDeclarations()
       }),
-    upsertLocation: adminProcedure
-      .input(storageCapability.methods.upsertLocation.input.loose())
-      .output(storageCapability.methods.upsertLocation.output)
-      .mutation(async ({ input, ctx }) => {
-        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider('storage', nodeId, () => getProvider(ctx), createRemoteProxy)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.upsertLocation(methodInput as any)
-      }),
-    deleteLocation: adminProcedure
-      .input(storageCapability.methods.deleteLocation.input.loose())
-      .output(storageCapability.methods.deleteLocation.output)
-      .mutation(async ({ input, ctx }) => {
-        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider('storage', nodeId, () => getProvider(ctx), createRemoteProxy)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.deleteLocation(methodInput as any)
-      }),
     listDrainProgress: protectedProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(storageCapability.methods.listDrainProgress.output)
@@ -17546,36 +17528,6 @@ export function createCapRouter_storage(
           createRemoteProxy,
         )
         return p.listDrainProgress()
-      }),
-    testLocation: adminProcedure
-      .input(storageCapability.methods.testLocation.input.loose())
-      .output(storageCapability.methods.testLocation.output)
-      .query(async ({ input, ctx }) => {
-        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider('storage', nodeId, () => getProvider(ctx), createRemoteProxy)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.testLocation(methodInput as any)
-      }),
-    listProviders: protectedProcedure
-      .input(z.object({ nodeId: z.string().optional() }).optional())
-      .output(storageCapability.methods.listProviders.output)
-      .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'storage',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
-        return p.listProviders()
-      }),
-    testConfig: adminProcedure
-      .input(storageCapability.methods.testConfig.input.loose())
-      .output(storageCapability.methods.testConfig.output)
-      .query(async ({ input, ctx }) => {
-        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider('storage', nodeId, () => getProvider(ctx), createRemoteProxy)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.testConfig(methodInput as any)
       }),
   })
 }

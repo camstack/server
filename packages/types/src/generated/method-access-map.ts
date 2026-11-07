@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1476 method paths across 202 capabilities.
+ * Coverage: 1471 method paths across 202 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -1235,7 +1235,6 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'storage.beginDownload': { capName: "storage", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'storage.beginUpload': { capName: "storage", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'storage.delete': { capName: "storage", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
-  'storage.deleteLocation': { capName: "storage", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'storage.endDownload': { capName: "storage", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'storage.exists': { capName: "storage", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'storage.finalizeUpload': { capName: "storage", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
@@ -1244,13 +1243,9 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'storage.listDrainProgress': { capName: "storage", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'storage.listLocationDeclarations': { capName: "storage", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'storage.listLocations': { capName: "storage", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
-  'storage.listProviders': { capName: "storage", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'storage.read': { capName: "storage", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'storage.readChunk': { capName: "storage", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'storage.resolve': { capName: "storage", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
-  'storage.testConfig': { capName: "storage", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
-  'storage.testLocation': { capName: "storage", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
-  'storage.upsertLocation': { capName: "storage", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'storage.write': { capName: "storage", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'storage.writeChunk': { capName: "storage", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'storageAdmin.dropOrphanedKind': { capName: "storage-admin", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,

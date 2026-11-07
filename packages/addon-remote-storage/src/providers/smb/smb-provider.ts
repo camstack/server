@@ -154,7 +154,7 @@ function normalizedBasePathPreservingCase(basePath: string): string {
  * The raw text is never forwarded. `samba-client` puts `--password` on the
  * argv, and although `maskCmd` replaces the message with captured output, that
  * output still names accounts and domains on an NTLM failure — and
- * `storage.testConfig` returns this string verbatim to the caller.
+ * `testInstance` returns this string verbatim to the caller.
  */
 export function mapSmbError(err: unknown): string {
   const raw = err instanceof Error ? err.message : String(err)
@@ -241,7 +241,7 @@ export class SmbStorageProvider implements IStorageProviderImpl {
    * Validate config + probe connectivity.
    *
    * Three rules, all of them about what this string may contain: it goes
-   * straight back on the wire through `storage.testConfig`.
+   * straight back on the wire through `testInstance`.
    *  1. Validation errors name the FIELD, never the value — and a username is
    *     half a credential, so it is not interpolated either.
    *  2. Library errors are MAPPED, never forwarded. The raw text is logged.
@@ -295,8 +295,8 @@ export class SmbStorageProvider implements IStorageProviderImpl {
    *
    * **NOT WIRED YET — say so rather than let the docblock imply otherwise.**
    * Nothing calls this in production. The two surfaces that could are
-   * `storage.testConfig` (which passes only `{ providerId, config }`, so it
-   * cannot see siblings) and the orchestrator's `upsertLocation` (which can,
+   * `testInstance` (which passes only the form values, so it
+   * cannot see siblings) and the orchestrator's `saveLocation` (which can,
    * but reaching a provider-specific method from generic dispatch means either
    * a cast or a new method on the `storage-provider` cap — a cap change, and
    * therefore codegen and a framework release).

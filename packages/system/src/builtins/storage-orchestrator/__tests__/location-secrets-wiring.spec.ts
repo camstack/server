@@ -25,6 +25,7 @@
  * location yet, which is the whole reason this lands first.
  */
 import type {
+  IIntegrationInstancesProvider,
   AddonContext,
   RecordsAccess,
   IScopedLogger,
@@ -34,7 +35,7 @@ import type {
   SettingsRecord,
   StorageLocationDeclaration,
 } from '@camstack/types'
-import { REDACTED_SECRET, storageCapability } from '@camstack/types'
+import { integrationInstancesCapability, REDACTED_SECRET, storageCapability } from '@camstack/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { StorageOrchestratorAddon } from '../storage-orchestrator.addon.js'
 import { seededLocationRecords } from './support/seeded-location-records.js'
@@ -135,6 +136,7 @@ function makeEngine(seed: readonly SettingsRecord[]): ISettingsStoreProvider {
 interface Harness {
   readonly addon: StorageOrchestratorAddon
   readonly storage: IStorageCapProvider
+  readonly instances: IIntegrationInstancesProvider
   readonly provider: FakeProvider
   readonly records: RecordsAccess
 }
@@ -180,8 +182,18 @@ async function boot(options: {
     result && 'providers' in result && result.providers ? result.providers : undefined
   const entry = registrations?.find((r) => r.capability.name === storageCapability.name)
   if (!entry) throw new Error('storage capability was not registered')
+  const instancesEntry = registrations?.find(
+    (r) => r.capability.name === integrationInstancesCapability.name,
+  )
+  if (!instancesEntry) throw new Error('integration-instances capability was not registered')
   // Documented type boundary: the registration erases the provider type.
-  return { addon, storage: entry.provider as IStorageCapProvider, provider, records }
+  return {
+    addon,
+    storage: entry.provider as IStorageCapProvider,
+    instances: instancesEntry.provider as IIntegrationInstancesProvider,
+    provider,
+    records,
+  }
 }
 
 /** The row a previous boot persisted, in the shape the seed helper turns into a location body. */
@@ -246,20 +258,6 @@ describe('the storage cap surface never hands a credential to a caller', () => {
   // flag; there is no per-type single-location read left on the cap surface.
   // `listLocations({ type })` is the replacement read path and it goes
   // through the SAME `this.redacted(...)` call, covered above.
-
-  it('redacts the password on the record upsertLocation echoes back', async () => {
-    harness = await boot({ seedRows: [storedRow(STORED_CONFIG)], providerRegistered: true })
-    const saved = await harness.storage.upsertLocation({
-      id: LOCATION_ID,
-      type: 'backups',
-      displayName: 'Unraid backup share',
-      providerId: PROVIDER_ID,
-      config: { ...STORED_CONFIG, password: REDACTED_SECRET },
-      isSystem: false,
-    })
-    expect(saved.config['password']).toBe(REDACTED_SECRET)
-    expect(JSON.stringify(saved)).not.toContain(REAL_PASSWORD)
-  })
 })
 
 describe('the operator edit round trip', () => {
@@ -290,7 +288,7 @@ describe('the operator edit round trip', () => {
     if (!before) throw new Error('unreachable')
 
     // 2. change ONE unrelated field, exactly as the modal does
-    await harness.storage.upsertLocation({
+    await harness.addon.saveLocation({
       id: before.id,
       type: before.type,
       displayName: 'Unraid — nightly',
@@ -306,8 +304,8 @@ describe('the operator edit round trip', () => {
 
     // 4. and the secret STILL WORKS — asserted at the provider, because the
     //    only question that matters is whether the share authenticates.
-    const result = await harness.storage.testLocation({ id: LOCATION_ID })
-    expect(result).toEqual({ ok: true })
+    const result = await harness.instances.testInstance?.({ id: LOCATION_ID, values: {} })
+    expect(result).toMatchObject({ success: true, status: 'validated' })
     expect(harness.provider.seenConfigs.at(-1)?.['password']).toBe(REAL_PASSWORD)
   })
 
@@ -316,7 +314,7 @@ describe('the operator edit round trip', () => {
     const before = (await harness.storage.listLocations({})).find((l) => l.id === LOCATION_ID)
     if (!before) throw new Error('unreachable')
 
-    await harness.storage.upsertLocation({
+    await harness.addon.saveLocation({
       id: before.id,
       type: before.type,
       displayName: before.displayName,
@@ -325,7 +323,7 @@ describe('the operator edit round trip', () => {
       isSystem: before.isSystem,
     })
 
-    await harness.storage.testLocation({ id: LOCATION_ID })
+    await harness.instances.testInstance?.({ id: LOCATION_ID, values: {} })
     expect(harness.provider.seenConfigs.at(-1)?.['password']).toBe('')
   })
 
@@ -334,7 +332,7 @@ describe('the operator edit round trip', () => {
     const before = (await harness.storage.listLocations({})).find((l) => l.id === LOCATION_ID)
     if (!before) throw new Error('unreachable')
 
-    await harness.storage.upsertLocation({
+    await harness.addon.saveLocation({
       id: before.id,
       type: before.type,
       displayName: before.displayName,
@@ -343,7 +341,7 @@ describe('the operator edit round trip', () => {
       isSystem: before.isSystem,
     })
 
-    await harness.storage.testLocation({ id: LOCATION_ID })
+    await harness.instances.testInstance?.({ id: LOCATION_ID, values: {} })
     expect(harness.provider.seenConfigs.at(-1)?.['password']).toBe('a-new-fixture-password')
   })
 })
@@ -375,55 +373,15 @@ describe('the Test button on an existing location', () => {
     const before = (await harness.storage.listLocations({})).find((l) => l.id === LOCATION_ID)
     if (!before) throw new Error('unreachable')
 
-    const result = await harness.storage.testConfig({
-      providerId: PROVIDER_ID,
-      locationId: LOCATION_ID,
-      config: { ...before.config, basePath: 'camstack/nightly' },
+    const result = await harness.instances.testInstance?.({
+      id: LOCATION_ID,
+      values: { ...before.config, basePath: 'camstack/nightly' },
     })
-    expect(result).toEqual({ ok: true })
+    expect(result).toMatchObject({ success: true, status: 'validated' })
     expect(harness.provider.seenConfigs.at(-1)?.['password']).toBe(REAL_PASSWORD)
     // The edited field still reaches the provider — this is a preflight of the
     // UNSAVED form, not a re-run of `testLocation`.
     expect(harness.provider.seenConfigs.at(-1)?.['basePath']).toBe('camstack/nightly')
-  })
-
-  /**
-   * `testConfig` is `auth: 'admin'`, but "resolve this sentinel from whichever
-   * row I name" would still be a credential-borrowing primitive: point it at
-   * another location and choose a provider that reports what it was given.
-   * The stored config is consulted only when the named row belongs to the
-   * SAME provider.
-   */
-  it('refuses to resolve a sentinel against a location of a different provider', async () => {
-    harness = await boot({
-      seedRows: [
-        storedRow(STORED_CONFIG),
-        storedRow(
-          { host: 'other.local', password: 'a-different-fixture-secret' },
-          { id: 'backups:sftp', providerId: 'sftp-storage' },
-        ),
-      ],
-      providerRegistered: true,
-    })
-
-    const result = await harness.storage.testConfig({
-      providerId: PROVIDER_ID,
-      locationId: 'backups:sftp',
-      config: { host: 'nas.local', password: REDACTED_SECRET },
-    })
-    expect(result.ok).toBe(false)
-    const seen = harness.provider.seenConfigs.at(-1)
-    expect(seen?.['password']).toBeUndefined()
-    expect(JSON.stringify(seen)).not.toContain('a-different-fixture-secret')
-  })
-
-  it('leaves a wizard call with no locationId exactly as the operator typed it', async () => {
-    harness = await boot({ seedRows: [], providerRegistered: true })
-    const result = await harness.storage.testConfig({
-      providerId: PROVIDER_ID,
-      config: { host: 'nas.local', share: 'backup', password: REAL_PASSWORD },
-    })
-    expect(result).toEqual({ ok: true })
   })
 })
 
@@ -472,7 +430,7 @@ describe('a location whose provider has not registered', () => {
     const before = (await harness.storage.listLocations({})).find((l) => l.id === LOCATION_ID)
     if (!before) throw new Error('unreachable')
 
-    const saved = await harness.storage.upsertLocation({
+    const saved = await harness.addon.saveLocation({
       id: before.id,
       type: before.type,
       displayName: 'Renamed while the provider was down',
@@ -490,8 +448,8 @@ describe('a location whose provider has not registered', () => {
     harness = await boot({ records, providerRegistered: true })
     const revived = (await harness.storage.listLocations({})).find((l) => l.id === LOCATION_ID)
     expect(revived?.displayName).toBe('Renamed while the provider was down')
-    const result = await harness.storage.testLocation({ id: LOCATION_ID })
-    expect(result).toEqual({ ok: true })
+    const result = await harness.instances.testInstance?.({ id: LOCATION_ID, values: {} })
+    expect(result).toMatchObject({ success: true, status: 'validated' })
     expect(harness.provider.seenConfigs.at(-1)?.['password']).toBe(REAL_PASSWORD)
   })
 })

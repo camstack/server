@@ -399,13 +399,15 @@ describe('storage location instances', () => {
       expect(byKey.has('mode')).toBe(false)
     })
 
-    it('edit: the provider schema as it is, plus the state', async () => {
+    it('edit: the provider schema as it is, plus the node and the protection', async () => {
       const { instances } = harness([location({ id: 'backups:nas' })])
       const form = await instances.instanceFormSchema({ id: 'backups:nas' })
       const keys = form.sections.flatMap((s) => s.fields.map((f) => f.key))
       expect(keys).toEqual(
-        expect.arrayContaining(['mode', 'host', 'authMethod', 'password', 'minFreePercent']),
+        expect.arrayContaining(['host', 'authMethod', 'password', 'minFreePercent']),
       )
+      // The state is the page's own control, never a field of the form.
+      expect(keys).not.toContain('mode')
       expect(keys).not.toContain('sftp-storage.host')
     })
 

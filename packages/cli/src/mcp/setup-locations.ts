@@ -205,10 +205,8 @@ export interface SetupLocationsArgs {
 }
 
 /** The whole persisted row, minus what the hub computes, rebuilt from the row read. */
-function upsertInputOf(row: StorageLocation, mode: StorageLocationMode): Record<string, unknown> {
-  const { createdAt: _c, updatedAt: _u, capacity: _cap, owned: _o, ...rest } = row
-  return { ...withLocationMode(rest, mode) }
-}
+/** The storage-orchestrator owns the location instances; the mode is the one value the call patches. */
+const STORAGE_ORCHESTRATOR_ADDON_ID = 'storage-orchestrator'
 
 async function readRows(client: HubClient): Promise<Read<readonly StorageLocation[]>> {
   return readQuery(client, 'storage.listLocations', {}, LocationListSchema)
@@ -265,7 +263,11 @@ export function setupLocationsSpec(client: HubClient): GatedToolSpec<SetupLocati
       for (const change of args.changes) {
         const row = read.value.find((r) => r.id === change.locationId)
         if (!row) throw new Error(`${change.locationId}: not found`)
-        await client.call('POST', 'storage.upsertLocation', upsertInputOf(row, change.mode))
+        await client.call('POST', 'integrationInstances.updateInstance', {
+          addonId: STORAGE_ORCHESTRATOR_ADDON_ID,
+          id: row.id,
+          values: { mode: change.mode },
+        })
         done.push(change.locationId)
       }
       return { changed: done }

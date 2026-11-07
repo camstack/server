@@ -1,16 +1,10 @@
 /**
- * Storage components — barrel re-export.
- *
- * Phase 4 (Backup admin UI multi-destination) will reuse the same
- * card/group primitives to surface backup destinations as a sub-view
- * of the backup-orchestrator's view of "where backups can land". When
- * Phase 4 lands, importers should consume from this barrel rather
- * than the individual files so a future move/rename doesn't ripple
- * through call sites.
+ * Storage components — barrel re-export. The table of locations is `StorageLocationsTable`; the
+ * rest are the pieces its columns and edit-dialog block are made of.
  */
 
-export { AddLocationWizard, type AddLocationWizardProps } from './AddLocationWizard'
 export { DrainProgressLine } from './DrainProgressLine'
+export { StorageLocationsTable, type StorageLocationsTableProps } from './StorageLocationsTable'
 export {
   type DrainDisplay,
   type DrainProgressRow,
@@ -20,10 +14,7 @@ export {
   toDrainProgressById,
   toDrainProgressRow,
 } from './drain-progress'
-export { EditLocationModal, type EditLocationModalProps } from './EditLocationModal'
 export { LocationCapacityBar, type LocationCapacityBarProps } from './LocationCapacityBar'
-export { LocationCard, type LocationCardProps } from './LocationCard'
-export { LocationGroup, type LocationGroupProps } from './LocationGroup'
 export {
   LocationModeChoices,
   type LocationModeChoicesProps,
@@ -37,7 +28,6 @@ export {
   type LocationCapacityFacts,
   resolveCapacityBar,
 } from './location-capacity-bar'
-export { buildLocationId, slugifyDisplayName } from './location-id'
 export {
   LOCATION_MODE_CHOICES,
   type LocationMode,
@@ -67,4 +57,3 @@ export {
   type SystemCap,
   writeProtectionPolicy,
 } from './location-protection'
-export { ProtectionPolicyField, type ProtectionPolicyFieldProps } from './ProtectionPolicyField'

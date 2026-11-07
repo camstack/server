@@ -3341,23 +3341,8 @@ export const useStorageListLocations: typeof trpc.storage.listLocations.useQuery
 /** Generated alias around `trpc.storage.listLocationDeclarations.useQuery`. */
 export const useStorageListLocationDeclarations: typeof trpc.storage.listLocationDeclarations.useQuery = /*#__PURE__*/ alias(() => trpc.storage.listLocationDeclarations.useQuery)
 
-/** Generated alias around `trpc.storage.upsertLocation.useMutation`. */
-export const useStorageUpsertLocation: typeof trpc.storage.upsertLocation.useMutation = /*#__PURE__*/ alias(() => trpc.storage.upsertLocation.useMutation)
-
-/** Generated alias around `trpc.storage.deleteLocation.useMutation`. */
-export const useStorageDeleteLocation: typeof trpc.storage.deleteLocation.useMutation = /*#__PURE__*/ alias(() => trpc.storage.deleteLocation.useMutation)
-
 /** Generated alias around `trpc.storage.listDrainProgress.useQuery`. */
 export const useStorageListDrainProgress: typeof trpc.storage.listDrainProgress.useQuery = /*#__PURE__*/ alias(() => trpc.storage.listDrainProgress.useQuery)
-
-/** Generated alias around `trpc.storage.testLocation.useQuery`. */
-export const useStorageTestLocation: typeof trpc.storage.testLocation.useQuery = /*#__PURE__*/ alias(() => trpc.storage.testLocation.useQuery)
-
-/** Generated alias around `trpc.storage.listProviders.useQuery`. */
-export const useStorageListProviders: typeof trpc.storage.listProviders.useQuery = /*#__PURE__*/ alias(() => trpc.storage.listProviders.useQuery)
-
-/** Generated alias around `trpc.storage.testConfig.useQuery`. */
-export const useStorageTestConfig: typeof trpc.storage.testConfig.useQuery = /*#__PURE__*/ alias(() => trpc.storage.testConfig.useQuery)
 
 /** Generated alias around `trpc.storageMigration.plan.useQuery`. */
 export const useStorageMigrationPlan: typeof trpc.storageMigration.plan.useQuery = /*#__PURE__*/ alias(() => trpc.storageMigration.plan.useQuery)

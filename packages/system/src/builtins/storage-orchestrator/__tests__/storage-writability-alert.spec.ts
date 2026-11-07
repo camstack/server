@@ -22,13 +22,12 @@ import type {
   IEventBus,
   IScopedLogger,
   ISettingsStoreProvider,
-  IStorageCapProvider,
   IStorageProviderImpl,
   StorageLocationDeclaration,
   StorageLocationDeclarer,
   SystemEvent,
 } from '@camstack/types'
-import { EventCategory, storageCapability } from '@camstack/types'
+import { EventCategory } from '@camstack/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { StorageOrchestratorAddon } from '../storage-orchestrator.addon.js'
 import { seededLocationRecords, type SeedLocationRow } from './support/seeded-location-records.js'
@@ -89,7 +88,6 @@ function makeEngine(): ISettingsStoreProvider {
 
 interface Harness {
   readonly addon: StorageOrchestratorAddon
-  readonly storage: IStorageCapProvider
   readonly emitted: SystemEvent[]
   readonly logger: IScopedLogger
 }
@@ -133,13 +131,8 @@ async function boot(withBus: boolean, preloaded: readonly SeedLocationRow[]): Pr
   const addon = new StorageOrchestratorAddon()
   // Documented type boundary: `AddonContext` is the kernel's full injection
   // surface; the orchestrator reads the handful of fields assembled above.
-  const result = await addon.initialize(ctx as unknown as AddonContext)
-  const registrations =
-    result && 'providers' in result && result.providers ? result.providers : undefined
-  const entry = registrations?.find((r) => r.capability.name === storageCapability.name)
-  if (!entry) throw new Error('storage capability was not registered')
-  // Documented type boundary: the registration erases the provider type.
-  return { addon, storage: entry.provider as IStorageCapProvider, emitted, logger }
+  await addon.initialize(ctx as unknown as AddonContext)
+  return { addon, emitted, logger }
 }
 
 const FINDING = 'storage:no-writable-location:recordings'
@@ -188,7 +181,7 @@ describe('the orchestrator alerts when a declared type has no writable location'
     const raised = harness.emitted.find((e) => e.data['findingId'] === FINDING)
     expect(raised?.data['href']).toBe('/system/storage')
 
-    await harness.storage.upsertLocation({
+    await harness.addon.saveLocation({
       id: 'recordings:main',
       type: 'recordings',
       displayName: 'Main',

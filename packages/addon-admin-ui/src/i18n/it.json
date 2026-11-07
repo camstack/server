@@ -984,14 +984,18 @@
     "storage": {
       "disable": "Disabilitare \"{{displayName}}\"?",
       "nothingIsDeletedSetThe": "{{consequence}} Nulla viene eliminato — riporta la posizione a Sola lettura o Attiva per recuperarne i filmati.",
-      "deleteLocation": "Eliminare la posizione \"{{displayName}}\"?",
-      "thisRemovesTheLocationRecord": "Rimuove il record della posizione. I file su disco non vengono eliminati; la directory o il percorso remoto sottostante resta intatto.",
-      "deleteAnyway": "Eliminare comunque?",
       "forceDelete": "Forza eliminazione",
-      "loadingLocations": "Caricamento posizioni…",
-      "failedToLoadStorageLocations": "Impossibile caricare le posizioni di archiviazione.",
       "noStorageLocationsDeclaredBy": "Nessuna posizione di archiviazione dichiarata da alcun addon installato.",
-      "forcingNote": "{{error}}\n\nForzare l'eliminazione rimuove solo il record. Tutto ciò che è ancora su quella posizione diventa irraggiungibile — le righe di indice che la nominano smettono di risolversi e la riproduzione di quei segmenti diventa silenziosamente nera invece di dare errore."
+      "title": "Posizioni di archiviazione",
+      "subtitle": "Dove sono conservati registrazioni, media degli eventi, artefatti e backup. Ogni posizione è di un tipo su un provider; lo stato decide se accetta scritture, è solo letta, si svuota o viene lasciata stare.",
+      "emptyTitle": "Ancora nessuna posizione di archiviazione",
+      "addLocation": "Aggiungi posizione",
+      "colCapacity": "Capacità",
+      "colMode": "Stato",
+      "modeFailed": "Impossibile cambiare lo stato",
+      "forceDeleteTitle": "Forzare l’eliminazione di \"{{name}}\"?",
+      "forceDeleteNote": "Rimuove solo il record, senza controllare cosa c’è sulla posizione. Tutto ciò che vi resta diventa irraggiungibile: le righe dell’indice che la nominano non si risolvono più e la riproduzione di quei segmenti diventa nera senza errori.",
+      "forceDeleteRow": "Forza eliminazione di {{name}}"
     },
     "system": {
       "settings": "Impostazioni",
@@ -3248,24 +3252,7 @@
   },
   "storage": {
     "addLocationWizard": {
-      "type": "Tipo:",
-      "loadingProviders": "Caricamento dei provider…",
-      "node": "Nodo",
-      "path": "Percorso",
-      "connectionOk": "Connessione riuscita.",
-      "testFailed": "Test fallito: {{value1}}",
-      "testing": "Test in corso…",
-      "testConnection": "Test connessione",
-      "displayName": "Nome visualizzato",
-      "on": "{{type}} su {{displayName}}",
-      "autoDerivedOverrideIfNeeded": "— derivato automaticamente; modificalo se serve",
-      "format": "Formato:",
-      "typeSlug": "<type>:<slug>",
-      "enableImmediately": "Abilita subito",
-      "aDisabledLocationReceivesNo": "Una posizione disabilitata non riceve scritture finché non viene abilitata: le letture e la retention per età continuano a funzionare, ma nulla di nuovo viene salvato qui. Lascia disattivato per registrare il disco ora e iniziare a usarlo più tardi.",
-      "saving": "Salvataggio…",
-      "noProvider": "Nessun provider di archiviazione supporta il tipo \"{{type}}\". Installa un addon compatibile (es. <code>remote-storage</code>) per abilitarlo.",
-      "idLabel": "Id"
+      "noProvider": "Nessun provider di archiviazione supporta il tipo \"{{type}}\". Installa un addon compatibile (es. <code>remote-storage</code>) per abilitarlo."
     },
     "drainProgressLine": {
       "thisLocationIsDrainingThe": "Questa posizione si sta svuotando. L'hub non ha ancora indicato quanto resta: lo svuotamento è appena stato impostato, oppure questo hub è precedente al report di avanzamento.",
@@ -3280,35 +3267,11 @@
       "empty": "vuoto {{when}}"
     },
     "editLocationModal": {
-      "displayName": "Nome visualizzato",
-      "node": "Nodo",
-      "path": "Percorso",
-      "connectionOk": "Connessione riuscita.",
-      "testFailed": "Test fallito: {{value1}}",
-      "testing": "Test in corso…",
-      "testConnection": "Test connessione",
-      "saving": "Salvataggio…",
-      "title": "Modifica {{name}}",
       "providerGone": "Il provider <code>{{id}}</code> non è più registrato. Schema dei campi non disponibile; la configurazione grezza viene mantenuta al salvataggio."
-    },
-    "pathBrowser": {
-      "newFolder": "nuova cartella",
-      "create": "Crea",
-      "free": "{{free}} liberi / {{total}}"
-    },
-    "protectionPolicyField": {
-      "protectedFreeSpace": "Spazio libero protetto",
-      "protectionUnit": "Unità di protezione",
-      "ofTheVolume": "% del volume",
-      "gbOfFreeSpace": "GB di spazio libero",
-      "legacyMax": "Questa posizione memorizza anche una dimensione massima utilizzata di {{gb}} GB. Quel limite è ora gestito dal sistema e non è più modificabile qui; viene mantenuto così com'è."
     },
     "locationCapacityBar": {
       "capacityUnknown": "Capacità sconosciuta",
       "capacityUnknownCamstackHolds": "Capacità sconosciuta · CamStack occupa {{owned}}"
-    },
-    "locationCard": {
-      "deleteLocation": "Elimina posizione"
     },
     "locationDiscardControl": {
       "discardLeftoversOn": "Scartare gli avanzi su \"{{displayName}}\"?",
@@ -3318,11 +3281,6 @@
       "camsProgress": "{{done}}/{{total}} cam",
       "rowsDeleted_one": "{{count}} riga",
       "rowsDeleted_other": "{{count}} righe"
-    },
-    "locationGroup": {
-      "singleOneLocationPerType": "Singola: una posizione per tipo. Modifica quella esistente; non si può dividere.",
-      "noLocationRegisteredClickAdd": "Nessuna posizione registrata. Fai clic su \"Aggiungi\" per registrarne una.",
-      "noLocationRegisteredYetShould": "Nessuna posizione registrata: dovrebbe essere creata automaticamente al prossimo avvio."
     },
     "locationModeSelector": {
       "locationState": "Stato della posizione",

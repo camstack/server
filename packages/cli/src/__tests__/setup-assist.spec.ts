@@ -78,13 +78,13 @@ describe('setup_locations', () => {
     ])
   })
 
-  it('apply: dry run writes nothing; the token applies the whole row minus computed fields', async () => {
+  it('apply: dry run writes nothing; the token patches the mode of the instance', async () => {
     const { ctx, calls } = gatedHub({
       ...storageAnswers([
         row('recordings:a', { mode: 'readonly', enabled: false }),
         row('recordings:b'),
       ]),
-      'storage.upsertLocation': {},
+      'integrationInstances.updateInstance': {},
     })
     const args = { changes: [{ locationId: 'recordings:a', mode: 'active' as const }] }
     const dry = dryRunOf(await setupLocationsApply(ctx, args, undefined))
@@ -93,13 +93,19 @@ describe('setup_locations', () => {
     await setupLocationsApply(ctx, args, dry.token)
     const w = writes(calls)
     expect(w).toHaveLength(1)
-    expect(w[0]?.path).toBe('storage.upsertLocation')
-    expect(JSON.stringify(w[0]?.input)).not.toContain('createdAt')
-    expect(JSON.stringify(w[0]?.input)).toContain('recordings:a')
+    expect(w[0]?.path).toBe('integrationInstances.updateInstance')
+    expect(w[0]?.input).toEqual({
+      addonId: 'storage-orchestrator',
+      id: 'recordings:a',
+      values: { mode: 'active' },
+    })
   })
 
   it('apply: refuses a change that leaves a class with no writer, and a protected credential', async () => {
-    const answers = { ...storageAnswers([row('recordings:a')]), 'storage.upsertLocation': {} }
+    const answers = {
+      ...storageAnswers([row('recordings:a')]),
+      'integrationInstances.updateInstance': {},
+    }
     const { ctx, calls } = gatedHub(answers)
     const dry = await setupLocationsApply(
       ctx,

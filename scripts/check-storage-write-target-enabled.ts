@@ -100,10 +100,6 @@ const READ_ONLY_LISTERS: ReadonlyArray<{ readonly file: string; readonly why: st
     why: 'the cap READ surface plus the pressure/eviction inputs (minFreePercent, maxUsedGb, basePath) — a disabled location must keep being evicted and swept, so filtering here would be the bug, not the fix',
   },
   {
-    file: 'packages/addon-admin-ui/src/components/storage/EditLocationModal.tsx',
-    why: 'the edit form lists siblings to render the picker; it writes no bytes',
-  },
-  {
     file: 'packages/system/src/builtins/liveness-monitor/liveness-monitor.addon.ts',
     why: 'probes whether this process can write each storage ROOT and reports it; it writes no bytes and picks no target. Which roots it judges is decided in `storage-root-access.ts` (`storageRootTargets`, through `mayWriteToLocation`)',
   },

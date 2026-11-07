@@ -13,11 +13,6 @@
       "oidc-connections.cap.ts:updateConnection": "connection update; folds into upsertInstance (P6c)",
       "oidc-connections.cap.ts:deleteConnection": "connection delete; folds into deleteInstance (P6c)"
     },
-    "storage": {
-      "storage.cap.ts:upsertLocation": "location write; folds into integration-instances upsertInstance (P6d)",
-      "storage.cap.ts:deleteLocation": "location delete; folds into deleteInstance, occupancy refusal kept (P6d)",
-      "storage.cap.ts:listProviders": "provider catalogue for the location form; becomes the instance kinds (P6d)"
-    },
     "training": {
       "training-provider.cap.ts:describeTypes": "type catalogue of training provider entries; kinds of integration-instances (P6g)",
       "training-provider.cap.ts:listEntries": "entry list; still read by the training orchestrator (api-ports addonForEntry), not by any page (P6g)"

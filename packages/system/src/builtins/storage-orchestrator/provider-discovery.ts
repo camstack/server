@@ -1,23 +1,18 @@
 /**
- * Provider discovery — the pure mapping behind the orchestrator's
- * `storage.listProviders` cap handler.
+ * Provider discovery — the pure collection behind the storage location instances' provider select
+ * and form.
  *
- * Walks every registered `storage-provider`, collects each one's
- * `getProviderInfo()` blob, and projects it into the `storage` cap's
- * `listProviders` output shape (including the intrinsic disk-space
- * policy fields `shouldSaveDiskSpace` + `minFreePercent`). Errors from
- * individual providers are isolated via `onError` — a single misbehaving
- * driver never denies the whole list.
+ * Walks every registered `storage-provider` and collects each one's `getProviderInfo()` blob (its
+ * config schema and the intrinsic disk-space policy fields `shouldSaveDiskSpace` +
+ * `minFreePercent`). Errors from individual providers are isolated via `onError` — a single
+ * misbehaving driver never denies the whole list.
  *
- * Extracted from the addon handler so the projection is unit-testable
- * without booting a `BaseAddon`.
+ * Extracted from the addon so the collection is unit-testable without booting a `BaseAddon`.
  */
-import type { IStorageCapProvider, IStorageProviderImpl } from '@camstack/types'
+import type { IStorageProviderImpl } from '@camstack/types'
 
-/** One entry of the `storage.listProviders` output array. */
-export type StorageProviderListEntry = Awaited<
-  ReturnType<IStorageCapProvider['listProviders']>
->[number]
+/** One provider's `getProviderInfo()` answer. */
+export type StorageProviderListEntry = Awaited<ReturnType<IStorageProviderImpl['getProviderInfo']>>
 
 /**
  * Callback invoked when a provider's `getProviderInfo()` throws. The array

@@ -145,7 +145,7 @@ import { InstancesTable, type InstancesTableProps } from '../InstancesTable'
 function renderPanel(
   search = '',
   extra: Partial<
-    Pick<InstancesTableProps, 'extraColumns' | 'lead' | 'rowActions' | 'typedId'>
+    Pick<InstancesTableProps, 'extraColumns' | 'lead' | 'rowActions' | 'rowFilter' | 'typedId'>
   > = {},
 ) {
   // The open dialog lives in the real URL (`useUrlQueryParam` reads `window.location`).
@@ -736,6 +736,18 @@ describe('InstancesTable slots', () => {
     expect(join.compareDocumentPosition(edit) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     // The fixed Loki row gets none.
     expect(screen.getAllByRole('button', { name: /^join / })).toHaveLength(1)
+  })
+
+  it('narrows the rows to those the page keeps, and leaves the rest out', async () => {
+    h.records = {
+      'smtp-nodemailer': [
+        { id: 'a', name: 'Relay A', configured: true, enabled: true, formValues: {} },
+        { id: 'b', name: 'Relay B', configured: true, enabled: true, formValues: {} },
+      ],
+    }
+    renderPanel('', { rowFilter: (row) => row.kind === 'fixed' || row.id !== 'b' })
+    expect(await screen.findByText('Relay A')).toBeTruthy()
+    expect(screen.queryByText('Relay B')).toBeNull()
   })
 
   it('draws no rowActions control when the prop is absent', async () => {

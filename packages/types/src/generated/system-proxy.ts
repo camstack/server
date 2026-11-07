@@ -131,7 +131,7 @@ export interface SystemProxy {
   readonly schedulers: Pick<InferProvider<typeof schedulersCapability>, 'list' | 'get' | 'create' | 'update' | 'delete' | 'setEnabled' | 'preview' | 'conflicts' | 'getStatus' | 'getTraces'>
   readonly serverManagement: Pick<InferProvider<typeof serverManagementCapability>, 'getServerPackageStatus' | 'checkServerUpdate' | 'applyServerUpdate' | 'installDesktopUpdate' | 'rollbackServerUpdate' | 'restartServer' | 'getLaunchOverrides' | 'setLaunchOverrides'>
   readonly settingsStore: Pick<InferProvider<typeof settingsStoreCapability>, 'get' | 'set' | 'query' | 'upsert' | 'upsertMany' | 'insert' | 'insertMany' | 'transact' | 'update' | 'delete' | 'deleteWhere' | 'updateWhere' | 'count' | 'aggregate' | 'histogram' | 'isEmpty' | 'declareCollection'>
-  readonly storage: Pick<InferProvider<typeof storageCapability>, 'resolve' | 'write' | 'read' | 'exists' | 'list' | 'delete' | 'getAvailableSpace' | 'beginUpload' | 'writeChunk' | 'finalizeUpload' | 'abortUpload' | 'beginDownload' | 'readChunk' | 'endDownload' | 'listLocations' | 'listLocationDeclarations' | 'upsertLocation' | 'deleteLocation' | 'listDrainProgress' | 'testLocation' | 'listProviders' | 'testConfig'>
+  readonly storage: Pick<InferProvider<typeof storageCapability>, 'resolve' | 'write' | 'read' | 'exists' | 'list' | 'delete' | 'getAvailableSpace' | 'beginUpload' | 'writeChunk' | 'finalizeUpload' | 'abortUpload' | 'beginDownload' | 'readChunk' | 'endDownload' | 'listLocations' | 'listLocationDeclarations' | 'listDrainProgress'>
   readonly storageMigration: Pick<InferProvider<typeof storageMigrationCapability>, 'plan' | 'start' | 'status' | 'cancel' | 'movers' | 'moverClearance' | 'residue' | 'drain' | 'cleanupStart' | 'cleanupStatus' | 'cleanupCancel' | 'history'>
   readonly streamBroker: Pick<InferProvider<typeof streamBrokerCapability>, 'fetchEventMedia' | 'listAllCameraStreams' | 'listAllProfileSlots' | 'getBrokerStats' | 'probeStream' | 'listClients' | 'getLiveViewerCounts' | 'killClient' | 'getStreamUrl' | 'getStreamWithCodec' | 'releaseStreamWithCodec' | 'acquireEgressTranscode' | 'releaseEgressTranscode' | 'subscribeAudioChunks' | 'pullAudioChunks' | 'unsubscribeAudioChunks' | 'setPreBufferDuration' | 'getPreBufferInfo' | 'getRtspPort' | 'getAllRtspEntries' | 'getRtspEntry' | 'regenerateRtspToken' | 'setRtspEnabled' | 'isRtspEnabled'>
   readonly system: Pick<InferProvider<typeof systemCapability>, 'info' | 'health' | 'featureFlags' | 'networkAddresses' | 'getRetentionConfig' | 'setRetentionConfig' | 'forceRetentionCleanup' | 'getSiteLocation' | 'setSiteLocation' | 'detectSiteLocation' | 'getRequestCensus' | 'getLoadContributions' | 'getFailureContributions' | 'getLoggingSettings' | 'setLoggingSettings' | 'debugWatch'>
@@ -928,12 +928,7 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     endDownload: (input?: unknown) => dispatch('storage', 'endDownload', 'mutation', input),
     listLocations: (input?: unknown) => dispatch('storage', 'listLocations', 'query', input),
     listLocationDeclarations: (input?: unknown) => dispatch('storage', 'listLocationDeclarations', 'query', input),
-    upsertLocation: (input?: unknown) => dispatch('storage', 'upsertLocation', 'mutation', input),
-    deleteLocation: (input?: unknown) => dispatch('storage', 'deleteLocation', 'mutation', input),
     listDrainProgress: (input?: unknown) => dispatch('storage', 'listDrainProgress', 'query', input),
-    testLocation: (input?: unknown) => dispatch('storage', 'testLocation', 'query', input),
-    listProviders: (input?: unknown) => dispatch('storage', 'listProviders', 'query', input),
-    testConfig: (input?: unknown) => dispatch('storage', 'testConfig', 'query', input),
   }
 
   const storageMigrationInterface = {

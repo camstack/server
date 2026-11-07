@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**202 capabilities · 1476 methods.**
+**202 capabilities · 1471 methods.**
 
 ## Method index
 
@@ -1238,12 +1238,7 @@
 | `storage.endDownload` | mutation | admin | storage |
 | `storage.listLocations` | query | protected | storage |
 | `storage.listLocationDeclarations` | query | protected | storage |
-| `storage.upsertLocation` | mutation | admin | storage |
-| `storage.deleteLocation` | mutation | admin | storage |
 | `storage.listDrainProgress` | query | protected | storage |
-| `storage.testLocation` | query | admin | storage |
-| `storage.listProviders` | query | protected | storage |
-| `storage.testConfig` | query | admin | storage |
 | `storageAdmin.listTables` | query | admin | storage-admin |
 | `storageAdmin.listKinds` | query | admin | storage-admin |
 | `storageAdmin.readRecords` | query | admin | storage-admin |
@@ -4453,7 +4448,7 @@
 
 ### `storage` → `storage.*`
 
-- **Source:** `packages/types/src/capabilities/storage.cap.ts:51`
+- **Source:** `packages/types/src/capabilities/storage.cap.ts:29`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IStorageCapProvider`
@@ -4476,12 +4471,7 @@
 | endDownload | `storage.endDownload` | mutation | admin | `{ downloadId: string }` | `void` |
 | listLocations | `storage.listLocations` | query | protected | `{ type?: string }` | `({ id: string; type: string; displayName: string; providerId: string; config: Record<string, unknown>; nodeId?: string; isSystem?: boolean = false; enabled?: boolean; mode?: "active" \| "readonly" \| "drain" \| "disabled"; capacity?: { totalBytes: number; availableBytes: number } \| null; owned?: { bytes: number; measuredAtMs: number }; createdAt: number; updatedAt: number })[]` |
 | listLocationDeclarations | `storage.listLocationDeclarations` | query | protected | `void` | `({ id: string; displayName: string; description?: string; cardinality: "single" \| "multi"; access?: "local-path" \| "cap-mediated"; defaultsTo?: string; defaultRoot?: "data" \| "media" \| "backup" })[]` |
-| upsertLocation | `storage.upsertLocation` | mutation | admin | `{ id: string; type: string; displayName: string; providerId: string; config: Record<string, unknown>; nodeId?: string; isSystem?: boolean = false; enabled?: boolean; mode?: "active" \| "readonly" \| "drain" \| "disabled"; capacity?: { totalBytes: number; availableBytes: number } \| null; owned?: { bytes: number; measuredAtMs: number } }` | `{ id: string; type: string; displayName: string; providerId: string; config: Record<string, unknown>; nodeId?: string; isSystem?: boolean = false; enabled?: boolean; mode?: "active" \| "readonly" \| "drain" \| "disabled"; capacity?: { totalBytes: number; availableBytes: number } \| null; owned?: { bytes: number; measuredAtMs: number }; createdAt: number; updatedAt: number }` |
-| deleteLocation | `storage.deleteLocation` | mutation | admin | `{ id: string; force?: boolean }` | `void` |
 | listDrainProgress | `storage.listDrainProgress` | query | protected | `void` | `({ locationId: string; startedAtMs: number; startBytes: number; bytesRemaining: number; drained: boolean; estimatedEmptyAtMs: number \| null })[]` |
-| testLocation | `storage.testLocation` | query | admin | `{ id: string }` | `{ ok: boolean; error?: string }` |
-| listProviders | `storage.listProviders` | query | protected | `void` | `({ providerId: string; displayName: string; configSchema: unknown; nodeLocal: boolean; shouldSaveDiskSpace: true; minFreePercent: number } \| { providerId: string; displayName: string; configSchema: unknown; nodeLocal: boolean; shouldSaveDiskSpace: false; minFreePercent: null })[]` |
-| testConfig | `storage.testConfig` | query | admin | `{ providerId: string; locationId?: string; config: Record<string, unknown> }` | `{ ok: boolean; error?: string }` |
 
 ### `storage-admin` → `storageAdmin.*`
 

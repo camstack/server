@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Integration instances can refuse a write with a readable reason (validateWrite)
 - The llm capability drops listProfileKinds, listProfiles, upsertProfile, deleteProfile, testProfile and migrateRawSecrets; instance kinds may name provider widgets.
 - mesh-network.testConnection is removed; the tailnet instance's Test is the connection check
+- The storage capability drops upsertLocation, deleteLocation, testLocation, testConfig and listProviders; the location instances replace them
 
 ## [1.2.514] - 2026-11-06
 

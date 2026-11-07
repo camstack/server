@@ -984,14 +984,18 @@
     "storage": {
       "disable": "Disable \"{{displayName}}\"?",
       "nothingIsDeletedSetThe": "{{consequence}} Nothing is deleted — set the location back to Read-only or Active to bring its footage back.",
-      "deleteLocation": "Delete location \"{{displayName}}\"?",
-      "thisRemovesTheLocationRecord": "This removes the location record. Files on disk are not deleted; the underlying directory or remote path stays untouched.",
-      "deleteAnyway": "Delete anyway?",
       "forceDelete": "Force delete",
-      "loadingLocations": "Loading locations…",
-      "failedToLoadStorageLocations": "Failed to load storage locations.",
       "noStorageLocationsDeclaredBy": "No storage locations declared by any installed addon.",
-      "forcingNote": "{{error}}\n\nForcing the delete removes the record only. Anything still on that location becomes unreachable — index rows naming it stop resolving, and playback of those segments goes silently black rather than erroring."
+      "title": "Storage locations",
+      "subtitle": "Where recordings, event media, artifacts and backups are kept. Each location is one kind on one provider; the state decides whether it takes writes, is only read, drains or is left alone.",
+      "emptyTitle": "No storage locations yet",
+      "addLocation": "Add location",
+      "colCapacity": "Capacity",
+      "colMode": "State",
+      "modeFailed": "Could not change the state",
+      "forceDeleteTitle": "Force delete \"{{name}}\"?",
+      "forceDeleteNote": "Removes the record only, without checking what is on the location. Anything still stored there becomes unreachable — index rows naming it stop resolving, and playback of those segments goes silently black rather than erroring.",
+      "forceDeleteRow": "Force delete {{name}}"
     },
     "system": {
       "settings": "Settings",
@@ -3173,24 +3177,7 @@
   },
   "storage": {
     "addLocationWizard": {
-      "type": "Type:",
-      "loadingProviders": "Loading providers…",
-      "node": "Node",
-      "path": "Path",
-      "connectionOk": "Connection OK.",
-      "testFailed": "Test failed: {{value1}}",
-      "testing": "Testing…",
-      "testConnection": "Test connection",
-      "displayName": "Display name",
-      "on": "{{type}} on {{displayName}}",
-      "autoDerivedOverrideIfNeeded": "— auto-derived; override if needed",
-      "format": "Format:",
-      "typeSlug": "<type>:<slug>",
-      "enableImmediately": "Enable immediately",
-      "aDisabledLocationReceivesNo": "A disabled location receives no writes until enabled — reads and age-based retention still work, nothing new lands here. Leave this off to register the disk now and start using it later.",
-      "saving": "Saving…",
-      "noProvider": "No storage-provider supports type \"{{type}}\". Install a compatible addon (e.g. <code>remote-storage</code>) to enable it.",
-      "idLabel": "Id"
+      "noProvider": "No storage-provider supports type \"{{type}}\". Install a compatible addon (e.g. <code>remote-storage</code>) to enable it."
     },
     "drainProgressLine": {
       "thisLocationIsDrainingThe": "This location is draining. The hub has not reported how much is left yet — either the drain has just been set, or this hub predates the drain-progress report.",
@@ -3205,35 +3192,11 @@
       "empty": "empty {{when}}"
     },
     "editLocationModal": {
-      "displayName": "Display name",
-      "node": "Node",
-      "path": "Path",
-      "connectionOk": "Connection OK.",
-      "testFailed": "Test failed: {{value1}}",
-      "testing": "Testing…",
-      "testConnection": "Test connection",
-      "saving": "Saving…",
-      "title": "Edit {{name}}",
       "providerGone": "Provider <code>{{id}}</code> is no longer registered. Field schema unavailable; raw config is preserved on save."
-    },
-    "pathBrowser": {
-      "newFolder": "new folder",
-      "create": "Create",
-      "free": "{{free}} free / {{total}}"
-    },
-    "protectionPolicyField": {
-      "protectedFreeSpace": "Protected free space",
-      "protectionUnit": "Protection unit",
-      "ofTheVolume": "% of the volume",
-      "gbOfFreeSpace": "GB of free space",
-      "legacyMax": "This location also stores a maximum used size of {{gb}} GB. That limit is managed by the system now and is no longer editable here; it is kept as it is."
     },
     "locationCapacityBar": {
       "capacityUnknown": "Capacity unknown",
       "capacityUnknownCamstackHolds": "Capacity unknown · CamStack holds {{owned}}"
-    },
-    "locationCard": {
-      "deleteLocation": "Delete location"
     },
     "locationDiscardControl": {
       "discardLeftoversOn": "Discard leftovers on \"{{displayName}}\"?",
@@ -3243,11 +3206,6 @@
       "camsProgress": "{{done}}/{{total}} cam",
       "rowsDeleted_one": "{{count}} row",
       "rowsDeleted_other": "{{count}} rows"
-    },
-    "locationGroup": {
-      "singleOneLocationPerType": "Single — one location per type. Edit the existing entry; it can't be split.",
-      "noLocationRegisteredClickAdd": "No location registered. Click \"Add\" to register one.",
-      "noLocationRegisteredYetShould": "No location registered yet — should be auto-seeded at next boot."
     },
     "locationModeSelector": {
       "locationState": "Location state",

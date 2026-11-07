@@ -83,14 +83,7 @@ function storageProvider(): IStorageCapProvider {
     endDownload: async () => undefined,
     listLocations: async () => [],
     listLocationDeclarations: async () => [],
-    upsertLocation: async () => {
-      throw new Error('not used')
-    },
-    deleteLocation: async () => undefined,
     listDrainProgress: async () => [],
-    testLocation: async () => ({ ok: true }),
-    listProviders: async () => [],
-    testConfig: async () => ({ ok: true }),
   }
 }
 

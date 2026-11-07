@@ -3,12 +3,6 @@
   "families": {
     "oidc": {
       "packages/addon-admin-ui/src/pages/system/OidcSettingsConnections.tsx": "bespoke connection list over oidc-connections CRUD; P6c (U) moves it to InstancesTable and deletes the page"
-    },
-    "storage": {
-      "packages/addon-admin-ui/src/pages/system/Storage.tsx": "bespoke location list over storage.upsertLocation / deleteLocation; P6d (U) moves it to InstancesTable",
-      "packages/addon-admin-ui/src/components/storage/AddLocationWizard.tsx": "bespoke create wizard over storage.upsertLocation; P6d (U) moves it to InstanceCreateDialog",
-      "packages/addon-admin-ui/src/components/storage/EditLocationModal.tsx": "bespoke editor over storage.upsertLocation; P6d (U) moves it to InstanceEditorDialog",
-      "packages/addon-admin-ui/src/components/pipeline/tabs/StorageLocationsPanel.tsx": "second location list (mode, discard) over storage upsert / delete; P6d (U) folds it into the instances lead slot"
     }
   }
 }

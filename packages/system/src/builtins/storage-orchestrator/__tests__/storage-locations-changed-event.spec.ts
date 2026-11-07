@@ -17,12 +17,11 @@ import type {
   IEventBus,
   IScopedLogger,
   ISettingsStoreProvider,
-  IStorageCapProvider,
   IStorageProviderImpl,
   StorageLocationDeclaration,
   SystemEvent,
 } from '@camstack/types'
-import { EventCategory, storageCapability } from '@camstack/types'
+import { EventCategory } from '@camstack/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { StorageOrchestratorAddon } from '../storage-orchestrator.addon.js'
 
@@ -82,7 +81,7 @@ function makeEngine(): ISettingsStoreProvider {
 
 interface Harness {
   readonly addon: StorageOrchestratorAddon
-  readonly storage: IStorageCapProvider
+  readonly forceDelete: (id: string) => Promise<unknown>
   readonly emitted: SystemEvent[]
   readonly logger: IScopedLogger
 }
@@ -121,12 +120,12 @@ async function boot(withBus: boolean): Promise<Harness> {
   // Documented type boundary: `AddonContext` is the kernel's full injection
   // surface; the orchestrator reads the handful of fields assembled above.
   const result = await addon.initialize(ctx as unknown as AddonContext)
-  const registrations =
-    result && 'providers' in result && result.providers ? result.providers : undefined
-  const entry = registrations?.find((r) => r.capability.name === storageCapability.name)
-  if (!entry) throw new Error('storage capability was not registered')
-  // Documented type boundary: the registration erases the provider type.
-  return { addon, storage: entry.provider as IStorageCapProvider, emitted, logger }
+  const forceDelete =
+    result && 'actionHandlers' in result
+      ? result.actionHandlers?.['forceDeleteLocation']
+      : undefined
+  if (!forceDelete) throw new Error('forceDeleteLocation handler was not registered')
+  return { addon, forceDelete: (id: string) => forceDelete({ id }), emitted, logger }
 }
 
 const NEW_DISK = {
@@ -152,7 +151,7 @@ describe('the storage cap announces a change to the location SET (D387)', () => 
 
   it('rings the doorbell when a location is created', async () => {
     harness = await boot(true)
-    await harness.storage.upsertLocation(NEW_DISK)
+    await harness.addon.saveLocation(NEW_DISK)
 
     const rung = locationEvents(harness.emitted)
     expect(rung).toHaveLength(1)
@@ -165,16 +164,16 @@ describe('the storage cap announces a change to the location SET (D387)', () => 
 
   it('rings it again when the same location is EDITED — enabled, drained, renamed', async () => {
     harness = await boot(true)
-    await harness.storage.upsertLocation(NEW_DISK)
-    await harness.storage.upsertLocation({ ...NEW_DISK, enabled: true })
+    await harness.addon.saveLocation(NEW_DISK)
+    await harness.addon.saveLocation({ ...NEW_DISK, enabled: true })
 
     expect(locationEvents(harness.emitted)).toHaveLength(2)
   })
 
   it('rings it when a location is deleted, and names the type it had', async () => {
     harness = await boot(true)
-    await harness.storage.upsertLocation(NEW_DISK)
-    await harness.storage.deleteLocation({ id: NEW_DISK.id, force: true })
+    await harness.addon.saveLocation(NEW_DISK)
+    await harness.forceDelete(NEW_DISK.id)
 
     const rung = locationEvents(harness.emitted)
     expect(rung).toHaveLength(2)
@@ -188,7 +187,7 @@ describe('the storage cap announces a change to the location SET (D387)', () => 
   it('a bus that will not take the event never fails the upsert — the row IS saved', async () => {
     harness = await boot(false)
 
-    const saved = await harness.storage.upsertLocation(NEW_DISK)
+    const saved = await harness.addon.saveLocation(NEW_DISK)
 
     expect(saved.id).toBe(NEW_DISK.id)
     // And it says so: a silent swallow reads as "the doorbell rang".

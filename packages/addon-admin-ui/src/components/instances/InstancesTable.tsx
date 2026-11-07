@@ -94,6 +94,11 @@ export interface InstancesTableProps {
   readonly rowActions?: (row: InstanceRow) => ReactNode
   /** The kinds whose new record is named by the operator, not minted (an immutable typed id). */
   readonly typedId?: TypedIdRuleFor
+  /**
+   * Narrows the rows an embedding page shows (a tab that manages only some kinds). The provider
+   * pills and Add stay those of the whole function.
+   */
+  readonly rowFilter?: (row: PanelRow) => boolean
 }
 
 /** The badge tooltip: the provider's detail and, when known, when the remote was last probed. */
@@ -216,6 +221,7 @@ export function InstancesTable({
   lead,
   rowActions,
   typedId,
+  rowFilter,
 }: InstancesTableProps): ReactElement {
   const { t } = useTranslation()
   const system = useSystem()
@@ -245,7 +251,10 @@ export function InstancesTable({
   )
   // A filter whose provider left the list falls back to nothing selected (every provider).
   const activeFilter = pills.some((p) => p.addonId === providerFilter) ? providerFilter : null
-  const visibleRows = useMemo(() => filterRows(data.rows, activeFilter), [data.rows, activeFilter])
+  const visibleRows = useMemo(() => {
+    const byProvider = filterRows(data.rows, activeFilter)
+    return rowFilter === undefined ? byProvider : byProvider.filter(rowFilter)
+  }, [data.rows, activeFilter, rowFilter])
   const nameOf = useCallback(
     (addonId: string): string => data.displayNames.get(addonId) ?? addonId,
     [data.displayNames],
