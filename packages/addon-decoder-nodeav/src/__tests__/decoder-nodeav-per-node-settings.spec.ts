@@ -163,6 +163,17 @@ describe('decoder-nodeav — probe stored by an old build', () => {
     expect(store['probedBestHwaccel@agent-1']).toBe('qsv')
     expect((await addon.getInfo()).probedBestHwaccel).toBe('videotoolbox')
   })
+
+  it('the admin form reads the re-probed value live (no AddonUpdated event is needed to refresh it)', async () => {
+    const { addon } = await makeAddon({
+      localNodeId: 'hub',
+      seed: { 'probedBestHwaccel@hub': 'vaapi' },
+      hwaccel: { resolve: async () => ({ preferred: ['videotoolbox'], rationale: 'test' }) },
+    })
+    expect(fieldValue(await addon.getGlobalSettings(), 'probedBestHwaccel')).toBe('vaapi')
+    await addon.reprobeHwaccel()
+    expect(fieldValue(await addon.getGlobalSettings(), 'probedBestHwaccel')).toBe('videotoolbox')
+  })
 })
 
 // ── getGlobalSettings is per-node independent ────────────────────────────

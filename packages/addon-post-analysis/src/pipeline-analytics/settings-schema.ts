@@ -147,7 +147,7 @@ export function formatSuggestionThresholdReadout(similarityThreshold: number): s
 
 /**
  * The live value the face matching form shows beside the similarity threshold, derived from the
- * stored (and previewed) values. One helper for the scoped overlay hook and the legacy
+ * values handed in (the stored ones; the legacy override adds the operator's unsaved draft). One helper for the scoped overlay hook and the legacy
  * `getGlobalSettings` override, so both surfaces show the same sentence.
  */
 export function faceSuggestionReadoutOverlay(

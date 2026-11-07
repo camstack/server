@@ -15792,6 +15792,20 @@ export default class PipelineAnalyticsAddon
   }
 
   /**
+   * D986 M4. The live value of the face matching form: the derived suggestion floor beside the
+   * similarity threshold (D222). Only the `face-gallery` cluster form carries it; every other form
+   * of this addon is static. Nothing is stored: the readout is overlaid on the hydrated form.
+   */
+  protected override async scopedSettingsOverlay(
+    scope: ScopedSettingsScope,
+    cap: string,
+    nodeId?: string,
+  ): Promise<Record<string, unknown> | null> {
+    if (scope !== 'cluster' || cap !== 'face-gallery') return null
+    return faceSuggestionReadoutOverlay(await this.resolveGlobalStore(nodeId, cap))
+  }
+
+  /**
    * The only reason this is overridden: the face suggestion floor is DERIVED
    * (D222), so the form has to be able to SHOW it without storing it.
    *
@@ -15810,15 +15824,6 @@ export default class PipelineAnalyticsAddon
    * `buildGlobalSettingsSchema()` itself, which would also remove it from the
    * per-device form that shares the same base sections.
    */
-  protected override async scopedSettingsOverlay(
-    scope: ScopedSettingsScope,
-    cap: string,
-    nodeId?: string,
-  ): Promise<Record<string, unknown> | null> {
-    if (scope !== 'cluster' || cap !== 'face-gallery') return null
-    return faceSuggestionReadoutOverlay(await this.resolveGlobalStore(nodeId, cap))
-  }
-
   override async getGlobalSettings(
     overlay?: Record<string, unknown>,
     cap?: string,

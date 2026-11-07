@@ -6,7 +6,7 @@
 import { fakeAddonContext } from '@camstack/types/testing'
 import { describe, expect, it } from 'vitest'
 import { BridgeInstance } from '../bridge-instance.js'
-import type { BridgeHost } from '../bridge-host.js'
+import { BridgeHost } from '../bridge-host.js'
 import { ExportHapAddon } from '../hap-export.addon.js'
 import { HAP_DEFAULT_INSTANCE_ID } from '../hap-instance-kinds.js'
 
@@ -22,12 +22,15 @@ class StoreAddon extends ExportHapAddon {
   }
 }
 
+/** An uninitialised host: these specs only read and write the reconcile cache, never the host. */
+const NO_HOST: BridgeHost = Object.create(BridgeHost.prototype)
+
 function defaultBridge(): BridgeInstance {
   return new BridgeInstance(
     HAP_DEFAULT_INSTANCE_ID,
     'Test bridge',
     { username: 'AA:BB:CC:DD:EE:FF', uuid: 'u', pincode: '031-45-154' },
-    {} as unknown as BridgeHost,
+    NO_HOST,
     { name: 'HomeKit exposure', devices: [], actions: [] },
   )
 }
@@ -68,6 +71,17 @@ describe('exportSyncState store key', () => {
     expect(store['exportSyncState']).toMatchObject({
       '7': { fingerprint: 'old-fp', externalIds: ['uuid-7'] },
       '9': { fingerprint: 'new-fp' },
+    })
+  })
+
+  it('two concurrent attaches both survive (the cache is written read-modify-write, per bridge)', async () => {
+    const store: Record<string, unknown> = {}
+    const addon = await boot(store)
+    const bridge = defaultBridge()
+    await Promise.all([addon.persist(bridge, 1, 'fp-1'), addon.persist(bridge, 2, 'fp-2')])
+    expect(store['exportSyncState']).toMatchObject({
+      '1': { fingerprint: 'fp-1' },
+      '2': { fingerprint: 'fp-2' },
     })
   })
 })

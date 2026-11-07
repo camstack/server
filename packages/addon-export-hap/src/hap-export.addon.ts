@@ -1467,31 +1467,50 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     }
   }
 
+  /** Tail of the pending cache writes of each bridge: a read-modify-write of one bridge never overlaps another. */
+  private readonly syncWrites = new Map<string, Promise<void>>()
+
+  /** Run one read-modify-write of a bridge's reconcile cache after the previous one finished. */
+  private serialisedSyncWrite(inst: BridgeInstance, write: () => Promise<void>): Promise<void> {
+    const tail = this.syncWrites.get(inst.id) ?? Promise.resolve()
+    const next = tail.then(write)
+    this.syncWrites.set(
+      inst.id,
+      next.catch(() => undefined),
+    )
+    return next
+  }
+
   /** Persist a device's current export fingerprint into `exportSyncState`
-   *  (best-effort; called after a successful attach). */
-  protected async persistFingerprint(
+   *  (best-effort; called after a successful attach). Serialised per bridge, so two attaches
+   *  finishing together cannot each write back a cache that lacks the other's entry. */
+  protected persistFingerprint(
     inst: BridgeInstance,
     deviceId: number,
     fingerprint: string,
   ): Promise<void> {
-    const state = await this.syncStateOf(inst)
-    state.set(deviceId, {
-      fingerprint,
-      externalIds: [this.hapAccessoryUuid(inst, deviceId)],
+    return this.serialisedSyncWrite(inst, async () => {
+      const state = await this.syncStateOf(inst)
+      state.set(deviceId, {
+        fingerprint,
+        externalIds: [this.hapAccessoryUuid(inst, deviceId)],
+      })
+      if (inst.id === HAP_DEFAULT_INSTANCE_ID) {
+        await this.exportSyncState.set(syncStateToJson(state))
+      }
     })
-    if (inst.id === HAP_DEFAULT_INSTANCE_ID) {
-      await this.exportSyncState.set(syncStateToJson(state))
-    }
   }
 
-  /** Drop a device's `exportSyncState` entry (on unexpose). */
-  private async forgetFingerprint(inst: BridgeInstance, deviceId: number): Promise<void> {
-    const state = await this.syncStateOf(inst)
-    if (!state.has(deviceId)) return
-    state.delete(deviceId)
-    if (inst.id === HAP_DEFAULT_INSTANCE_ID) {
-      await this.exportSyncState.set(syncStateToJson(state))
-    }
+  /** Drop a device's `exportSyncState` entry (on unexpose). Serialised with the writes above. */
+  private forgetFingerprint(inst: BridgeInstance, deviceId: number): Promise<void> {
+    return this.serialisedSyncWrite(inst, async () => {
+      const state = await this.syncStateOf(inst)
+      if (!state.has(deviceId)) return
+      state.delete(deviceId)
+      if (inst.id === HAP_DEFAULT_INSTANCE_ID) {
+        await this.exportSyncState.set(syncStateToJson(state))
+      }
+    })
   }
 
   /**

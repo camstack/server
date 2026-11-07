@@ -3,17 +3,27 @@
  * earlier build wrote through `updateGlobalSettings`. A probe an old build stored is read by the new
  * code (boot does not re-probe), and a re-probe overwrites only this node's key.
  */
+import type { ConfigFieldWithValue, ConfigUISchemaWithValues } from '@camstack/types'
 import { fakeAddonContext } from '@camstack/types/testing'
 import { describe, expect, it } from 'vitest'
 import { AudioAnalyzerAddon } from '../addons/analyzer/index.js'
 
 class ProbeAddon extends AudioAnalyzerAddon {
   protected override async onInitialize(): ReturnType<AudioAnalyzerAddon['onInitialize']> {
-    return { providers: [] }
+    return []
   }
   stored() {
     return this.probedBestAudioBackend().get()
   }
+}
+
+function fieldValue(schema: ConfigUISchemaWithValues, key: string): unknown {
+  for (const section of schema.sections) {
+    for (const field of section.fields as readonly ConfigFieldWithValue[]) {
+      if ('key' in field && field.key === key && 'value' in field) return field.value
+    }
+  }
+  return undefined
 }
 
 async function boot(store: Record<string, unknown>): Promise<ProbeAddon> {
@@ -52,5 +62,12 @@ describe('probedBestAudioBackend node-state key', () => {
     expect(store['probedBestAudioBackend@hub']).toBe(backend)
     expect(store['probedBestAudioBackend@agent-1']).toBe('apple-soundanalysis')
     expect(store).not.toHaveProperty('probedBestAudioBackend')
+  })
+
+  it('the admin form reads the re-probed value live (no AddonUpdated event is needed to refresh it)', async () => {
+    const addon = await boot({ 'probedBestAudioBackend@hub': 'stale' })
+    expect(fieldValue(await addon.getGlobalSettings(), 'probedBestAudioBackend')).toBe('stale')
+    const { backend } = await addon.reprobeAudioEngine()
+    expect(fieldValue(await addon.getGlobalSettings(), 'probedBestAudioBackend')).toBe(backend)
   })
 })
