@@ -13,7 +13,7 @@ covers:
   - packages/addon-pipeline/src/recorder/addon/placement-planner.ts
   - packages/addon-pipeline/src/recorder/storage-evictable-provider.ts
   - packages/addon-post-analysis/src/pipeline-analytics/media-locations.ts
-  - packages/addon-admin-ui/src/components/storage/location-enabled.ts
+  - packages/system/src/builtins/storage-orchestrator/location-instances.ts
 ---
 
 # Enabled locations are the write set

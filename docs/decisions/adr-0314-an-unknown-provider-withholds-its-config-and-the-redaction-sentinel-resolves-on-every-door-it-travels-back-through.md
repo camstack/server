@@ -7,7 +7,6 @@ supersedes:
 applies-to:
   - packages/system/src/builtins/storage-orchestrator/location-secrets.ts
   - packages/system/src/builtins/storage-orchestrator/storage-orchestrator.addon.ts
-  - packages/addon-admin-ui/src/components/storage/EditLocationModal.tsx
 ---
 
 ## Context
