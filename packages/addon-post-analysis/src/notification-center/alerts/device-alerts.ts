@@ -15,8 +15,12 @@
  * It does NOT own device liveness. `device-offline` already has a producer, a
  * 5-minute trailing hold-off and a durable ledger of its own
  * (`liveness-holdoff.ts`, `liveness-ledger.ts`), and a second authority over
- * the same fact is the shape D62 forbids. What this class adds to liveness is
- * the REMINDER, through the same row type — see {@link observeLiveness}.
+ * the same fact is the shape D62 forbids. The reminder tick restates only the
+ * battery and consumable episodes (`restatementOf`); an offline device is not
+ * re-said here. Whether a RECOVERY is said is the cluster setting
+ * `alertNotifyRecovery`, not a rule's "when it clears" mode (D1019): with it
+ * off, a rule asking for deactivation still hears no battery / consumable
+ * recovery.
  *
  * ## Everything goes through `emit`, and `emit` is `consumeEvent`
  *

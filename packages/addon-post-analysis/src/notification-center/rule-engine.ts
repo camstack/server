@@ -1063,6 +1063,13 @@ export interface NcEvaluation {
    */
   readonly excludedBySystemEventFilter?: NcSystemEventExcludingFilter
   /**
+   * On a system-event non-match the rule MATCHED but its delivery modes do not
+   * speak for this kind (D1019): activation without the recovery edge,
+   * deactivation without the bad edge. A separate field — not a filter, so the
+   * filter-scope probe keeps probing only filters.
+   */
+  readonly excludedByDeliveryMode?: true
+  /**
    * On a RELAXED evaluation that passed everything EXCEPT these recognition conditions
    * (D692 §3.2). `matched` is false and `failedCondition` names the first of them, so every
    * existing reader keeps reading a non-match. Absent on every un-relaxed evaluation.

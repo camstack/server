@@ -69,6 +69,7 @@ import {
   NcTemplatePreviewSchema,
   NcTemplateDefaultSchema,
   NcTemplateVarDescriptorSchema,
+  isScheduleOnlySystemRule,
   isSystemEventSummaryRule,
   type RecordingConfig,
   type TimelapseRule,
@@ -522,6 +523,12 @@ export const ncActions = defineCustomActions({
       ruleId: z.string(),
       /** The camera to attribute the event to when the rule scopes none. */
       deviceId: z.number().int().optional(),
+      /**
+       * Send the rule's scheduled STATE SUMMARY now (D1019). A schedule-only
+       * rule always tests its summary; a rule that also speaks at once tests
+       * the event unless this is true.
+       */
+      summary: z.boolean().optional(),
     }),
     NcTestEventResultSchema.extend({
       /** The subject kind the rule was tested with — the answer to "why was my
@@ -1755,7 +1762,13 @@ export function makeNcActionHandlers(deps: NcActionDeps): NcActionHandlers {
         throw new Error('this node does not host the notification centre — test on the hub')
       }
       const rule = assertRuleVisible(input.ruleId, c)
-      if (isSystemEventSummaryRule(rule)) return testSummaryRule(rule, c.userId)
+      if (isScheduleOnlySystemRule(rule)) return testSummaryRule(rule, c.userId)
+      if (input.summary === true) {
+        if (!isSystemEventSummaryRule(rule)) {
+          throw new Error('this rule has no scheduled summary to send — turn on "On a schedule"')
+        }
+        return testSummaryRule(rule, c.userId)
+      }
       const plan = planRuleTest({
         rule,
         now: Date.now(),

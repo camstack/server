@@ -140,7 +140,12 @@ describe('a state summary split per section, through the centre (D698)', () => {
     centers.push(center)
     const provider = center.buildProvider()
     const created = await provider.createRule({ caller: ADMIN, rule: summaryRule('section') })
-    expect(created.rule.systemEventDelivery).toMatchObject({ mode: 'summary', split: 'section' })
+    expect(created.rule.systemEventDelivery).toMatchObject({
+      mode: 'modes',
+      onActivation: false,
+      onDeactivation: false,
+      onSchedule: { grouping: 'section' },
+    })
     openStates(center, clock.now)
 
     const preview = await provider.previewStateSummary({ rule: created.rule })

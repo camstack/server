@@ -88,7 +88,7 @@ export function renamedTexts(data: TextsBody): TextsBody | null {
 const PAGE = 500
 
 /** Every row of a kind, page by page. */
-async function allRows<T>(kind: RecordKindHandle<T>): Promise<readonly RecordRow<T>[]> {
+export async function allRows<T>(kind: RecordKindHandle<T>): Promise<readonly RecordRow<T>[]> {
   const rows: RecordRow<T>[] = []
   let cursor: string | undefined
   do {
@@ -103,7 +103,7 @@ async function allRows<T>(kind: RecordKindHandle<T>): Promise<readonly RecordRow
 }
 
 /** Rewrite the rows of one kind that carry the old name; returns how many were written. */
-async function rewriteKind<T>(
+export async function rewriteKind<T>(
   kind: RecordKindHandle<T>,
   rewrite: (data: T) => T | null,
 ): Promise<number> {

@@ -45,8 +45,10 @@ import type {
 import {
   isRetiredClearKey,
   NcRuleSchema,
+  NcSystemEventDeliverySchema,
   normalizeNcMediaPolicy,
   withSystemEventClasses,
+  withSystemEventModes,
 } from '@camstack/types'
 import { warnLegacyAudioClassRules } from './detection-audio-guard.js'
 import { type NcRereadResult, rereadRecordRow } from './durable-reread.js'
@@ -114,9 +116,9 @@ function parseStoredRule(
   if (projection.kind === 'projected') onProjection?.(id, projection)
   if (groupingRepair.kind === 'repaired') onGroupingRepair?.(id, groupingRepair)
   const media = withNormalizedMedia(parsed.data)
-  const rule = withSystemEventClasses(media)
-  if (rule !== media) onClassWidening?.(id, media, rule)
-  return { ok: true, rule }
+  const widened = withSystemEventClasses(media)
+  if (widened !== media) onClassWidening?.(id, media, widened)
+  return { ok: true, rule: withSystemEventModes(widened) }
 }
 
 /**
@@ -126,7 +128,7 @@ function parseStoredRule(
  * {@link parseStoredRule}, which also says once that it widened a rule.
  */
 function normalizeStoredRule(rule: NcRule): NcRule {
-  return withSystemEventClasses(withNormalizedMedia(rule))
+  return withSystemEventModes(withSystemEventClasses(withNormalizedMedia(rule)))
 }
 
 /** A stored row the load could not parse: which rule, and the first reason. */
@@ -243,6 +245,7 @@ export class NcRuleStore {
   private readonly groupingRepairLogged = new Set<string>()
   /** Rules whose class widening (D906) was already logged — once each. */
   private readonly classWideningLogged = new Set<string>()
+  private readonly deliveryNormalisedLogged = new Set<string>()
 
   constructor(deps: NcRuleStoreDeps) {
     this.logger = deps.logger
@@ -297,6 +300,8 @@ export class NcRuleStore {
           (ruleId, repair) => this.logGroupingRepair(ruleId, repair),
           (ruleId, before, after) => this.logClassWidening(ruleId, before, after),
         )
+        if (parsed.ok)
+          this.logDeliveryNormalised(row.id, row.data['systemEventDelivery'], parsed.rule)
         if (!parsed.ok) {
           const name = row.data['name']
           skippedRows.push({
@@ -350,6 +355,18 @@ export class NcRuleStore {
         rule: after.name,
         added: (after.conditions.systemEvent?.kinds ?? []).filter((kind) => !had.has(kind)),
       },
+    })
+  }
+
+  /** Say, once per process per rule, that a legacy delivery was read in the `modes` shape (D1019). */
+  private logDeliveryNormalised(ruleId: string, stored: unknown, rule: NcRule): void {
+    if (rule.systemEventDelivery?.mode !== 'modes' || this.deliveryNormalisedLogged.has(ruleId))
+      return
+    const storedMode = NcSystemEventDeliverySchema.safeParse(stored)
+    if (storedMode.success && storedMode.data.mode === 'modes') return
+    this.deliveryNormalisedLogged.add(ruleId)
+    this.logger.info('system rule delivery read in the modes shape', {
+      meta: { ruleId, rule: rule.name, delivery: rule.systemEventDelivery },
     })
   }
 

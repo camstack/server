@@ -562,6 +562,17 @@ export function reportRuleNonMatch(
   if (evaluation.excludedBySystemEventFilter !== undefined) {
     host.reportSystemFilterExclusion(rule, subject, evaluation.excludedBySystemEventFilter)
   }
+  if (evaluation.excludedByDeliveryMode === true) {
+    host.logger.debug('rule matched but its delivery modes do not speak for this kind', {
+      tags: { deviceId: subject.deviceId },
+      meta: {
+        ruleId: rule.id,
+        rule: rule.name,
+        kind: subject.systemEvent?.kind,
+        eventId: subject.recordId,
+      },
+    })
+  }
   rejections.push(`${rule.name}:${evaluation.failedCondition ?? 'unknown'}`)
   outcomes.push({
     ruleId: rule.id,

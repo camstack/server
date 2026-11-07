@@ -6,6 +6,7 @@ import {
   type IScopedLogger,
   NcRuleSchema,
   scheduleForSendTimes,
+  systemEventDeliveryAsModes,
   type NcRule,
 } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
@@ -249,6 +250,32 @@ describe('the next close is cached per arm or stamp (review I4)', () => {
     expect(report.decisions).toBe(1)
     expect(report.sent).toBe(1)
     expect(deliver).toHaveBeenCalledTimes(1)
+  })
+
+  it('a legacy summary normalised to the modes shape is NOT re-armed and sends its window once (D1019)', async () => {
+    const stamps = stampPort()
+    const clock = { now: AT_0800 - 3 * 60 * MIN }
+    const legacy = summaryRule('r1')
+    const rules: NcRule[] = [legacy]
+    const log = logger()
+    const { s, deliver } = scheduler({ rules, stamps, clock, log })
+    await s.tick() // arms at 05:00 on the LEGACY shape
+    const armedAt = stamps.rows.get('r1')?.armedAt
+    // The store reads the same rule in the modes shape after the upgrade.
+    rules[0] = NcRuleSchema.parse({
+      ...legacy,
+      systemEventDelivery: systemEventDeliveryAsModes(legacy),
+    })
+    expect(rules[0].systemEventDelivery?.mode).toBe('modes')
+    clock.now = AT_0800 + 20_000
+    expect((await s.tick()).sent).toBe(1)
+    await s.tick()
+    expect(deliver).toHaveBeenCalledTimes(1)
+    expect(stamps.rows.get('r1')?.armedAt).toBe(armedAt)
+    expect(log.info).not.toHaveBeenCalledWith(
+      'state summary rule armed — windows closing from now on are sent',
+      expect.objectContaining({ meta: expect.objectContaining({ rearmed: true }) }),
+    )
   })
 
   it('a rule armed in the MIDDLE of a window is sent at its close — not skipped (review M1)', async () => {

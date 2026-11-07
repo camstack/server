@@ -40,7 +40,12 @@ import { NcSequenceStore } from './sequence-store.js'
 import { NcStillShelf } from './still-shelf.js'
 import { NcZoneOwnershipCache } from './zone-owner-cache.js'
 import type { IScopedLogger, NcRule, NcRuleTarget } from '@camstack/types'
-import { isSystemEventSummaryRule, ruleGroupingApplies } from '@camstack/types'
+import {
+  instantKindsOf,
+  isSystemDelivery,
+  isSystemEventSummaryRule,
+  ruleGroupingApplies,
+} from '@camstack/types'
 
 /**
  * What a GROUPED close (D692) adds to `buildEntries`, as ONE options object rather than
@@ -284,7 +289,32 @@ export async function evaluateAndEnqueue(
     // reports the state at the end of its window. The match still COUNTS
     // (`matched: true`), so a battery raise it covers is heard and not kept
     // pending, and every other rule on the same kinds is untouched.
-    if (isSystemEventSummaryRule(rule)) {
+    //
+    // D1019: a rule may speak at once on only SOME of the kinds it matched
+    // (activation without the recovery edge, deactivation without the bad
+    // edge). A match outside `instantKindsOf` is held for the summary when the
+    // rule has one, and otherwise dropped — said, never silent.
+    const systemKind = subject.systemEvent?.kind
+    const heldForSummary =
+      isSystemEventSummaryRule(rule) &&
+      (systemKind === undefined || !instantKindsOf(rule).has(systemKind))
+    if (
+      !heldForSummary &&
+      systemKind !== undefined &&
+      isSystemDelivery(rule.delivery) &&
+      !instantKindsOf(rule).has(systemKind)
+    ) {
+      host.reportRuleNonMatch(
+        rule,
+        subject,
+        kind,
+        { matched: false, failedCondition: 'systemEvent', excludedByDeliveryMode: true },
+        outcomes,
+        rejections,
+      )
+      continue
+    }
+    if (heldForSummary) {
       host.logger.debug('rule matched — held for its scheduled state summary', {
         tags: { deviceId: subject.deviceId },
         meta: {
