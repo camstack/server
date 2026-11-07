@@ -15,6 +15,7 @@ import {
   type IScopedLogger,
   type RecordsAccess,
   type SiteReading,
+  stableIdMapOf,
 } from '@camstack/types'
 import { directoryOver, invokeCapOver } from '../actions-wiring.js'
 import { coreBlocksRecordKinds } from '../record-kinds.js'
@@ -60,9 +61,7 @@ export function hostOver(api: () => AddonApi | undefined): SchedulerHost {
       const all = await need().deviceManager.listAll.query({
         projection: 'slim',
       })
-      return new Map(
-        all.flatMap((d) => (d.stableId === undefined ? [] : [[d.stableId, d.id] as const])),
-      )
+      return stableIdMapOf(all)
     },
     invokeCap: invokeCapOver(api),
   }

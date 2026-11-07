@@ -14845,9 +14845,9 @@
         },
         {
           "name": "onPress",
-          "type": "() => void",
+          "type": "(event: GestureResponderEvent) => void",
           "optional": true,
-          "doc": ""
+          "doc": "Receives the press event, so a button nested in a pressable card can stop it bubbling."
         },
         {
           "name": "active",

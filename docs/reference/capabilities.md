@@ -161,7 +161,7 @@ Singleton or collection providers, addressed without a device.
 | `device-credentials` | 8 | — | — | — | — | `local-auth` |
 | `device-export` | 13 | ✓ | — | — | — | `export-alexa` `export-google` `export-hap` `homeassistant-export` |
 | `device-history` | 13 | — | — | — | — | `device-history` |
-| `device-manager` | 96 | — | — | — | — | `device-manager` |
+| `device-manager` | 97 | — | — | — | — | `device-manager` |
 | `device-provider` | 16 | — | — | — | — | `import-alexa` `matter-broker` `provider-amcrest` `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-ecowitt` `provider-enpal` `provider-esphome` `provider-gree` `provider-hikvision` `provider-homematic` `provider-mqtt-ha` `provider-onvif` `provider-petkit` `provider-rademacher` `provider-reolink` `provider-rtsp` `provider-tuya` `provider-unifi` `provider-unraid` `provider-velux` `provider-vesync` `provider-wyze` |
 | `device-removal-hook` | 2 | — | — | — | ✓ | `stream-broker` `recorder` `pipeline-analytics` `provider-reolink` `device-history` |
 | `device-state` | 9 | — | — | — | — | `device-manager` |

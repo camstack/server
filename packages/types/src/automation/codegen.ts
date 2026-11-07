@@ -373,6 +373,7 @@ import {
   isSkippedTrace,
   mergeSkipTraces,
   nextOccurrence,
+  stableIdMapOf,
   resolveStepArgs,
   runForDevices,
   runSteps,
@@ -573,8 +574,7 @@ export default function block(ctx: AddonContext) {
       fetchSlice: (deviceId, cap) => ctx.api.deviceState.getCapSlice.query({ deviceId, capName: cap }),
       fetchStableIds: async () => {
         const all = await ctx.api.deviceManager.listAll.query({})
-        return new Map(all.devices.flatMap((d: { stableId?: string; id: number }) =>
-          d.stableId === undefined ? [] : [[d.stableId, d.id] as [string, number]]))
+        return stableIdMapOf(all.devices)
       },
     })
     if (report.kept > 0) {

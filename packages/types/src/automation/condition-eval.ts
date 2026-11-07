@@ -31,7 +31,48 @@ import type { AutomationConditionTraceNode, TraceValue } from './trace.js'
 /** One device cap whose slice the mirror must hold. */
 export type MirrorSource =
   | { readonly kind: 'device'; readonly deviceId: number; readonly cap: string }
-  | { readonly kind: 'stable'; readonly stableId: string; readonly cap: string }
+  | {
+      readonly kind: 'stable'
+      readonly stableId: string
+      readonly cap: string
+      /** The owning addon — a stableId alone is only unique per addon. */
+      readonly addonId?: string
+    }
+
+/**
+ * The key a `stableId → device id` map answers on. A pair (`addonId`, `stableId`)
+ * is a device; a bare stableId is only a device while no other addon shares it,
+ * so the map's producer puts the bare key in ONLY when it is unique.
+ */
+export function stableIdKey(stableId: string, addonId?: string): string {
+  return addonId === undefined ? stableId : `${addonId}\u0000${stableId}`
+}
+
+export interface StableIdDevice {
+  readonly id: number
+  readonly stableId?: string
+  readonly addonId?: string
+}
+
+/**
+ * The `stableIdKey → device id` map a mirror refresh hands back, from a device
+ * listing. Every device is reachable by its (addonId, stableId) pair; the bare
+ * stableId is offered only while NO other device shares it, so a legacy binding
+ * that names no addon reads nothing rather than the wrong device.
+ */
+export function stableIdMapOf(devices: readonly StableIdDevice[]): Map<string, number> {
+  const out = new Map<string, number>()
+  const bare = new Map<string, number | null>()
+  for (const d of devices) {
+    if (d.stableId === undefined) continue
+    if (d.addonId !== undefined) out.set(stableIdKey(d.stableId, d.addonId), d.id)
+    bare.set(d.stableId, bare.has(d.stableId) ? null : d.id)
+  }
+  for (const [stableId, id] of bare) {
+    if (id !== null) out.set(stableId, id)
+  }
+  return out
+}
 
 /** The cap whose runtime-state slice IS the occupancy snapshot, parked objects included. */
 const ZONE_ANALYTICS_CAP = 'zone-analytics'
@@ -54,7 +95,12 @@ function collectInto(cond: AutomationWhen, out: MirrorSource[]): void {
     case 'expression':
       for (const binding of Object.values(cond.bindings)) {
         if (binding.kind === 'global') {
-          out.push({ kind: 'stable', stableId: binding.sourceStableId, cap: binding.cap })
+          out.push({
+            kind: 'stable',
+            stableId: binding.sourceStableId,
+            cap: binding.cap,
+            ...(binding.addonId !== undefined ? { addonId: binding.addonId } : {}),
+          })
         }
       }
       return
@@ -71,7 +117,10 @@ export function collectWhenMirrorSources(cond: AutomationWhen | undefined): Mirr
   collectInto(cond, all)
   const seen = new Set<string>()
   return all.filter((s) => {
-    const key = s.kind === 'device' ? `d|${s.deviceId}|${s.cap}` : `s|${s.stableId}|${s.cap}`
+    const key =
+      s.kind === 'device'
+        ? `d|${s.deviceId}|${s.cap}`
+        : `s|${stableIdKey(s.stableId, s.addonId)}|${s.cap}`
     if (seen.has(key)) return false
     seen.add(key)
     return true
@@ -86,7 +135,7 @@ export function collectMirrorSources(cond: LegacyCondition | undefined): MirrorS
 export interface ConditionReader {
   /** `undefined` = unknown. */
   read(deviceId: number, cap: string, fieldPath: string): unknown
-  readStable(stableId: string, cap: string, fieldPath: string): unknown
+  readStable(stableId: string, cap: string, fieldPath: string, addonId?: string): unknown
 }
 
 export interface MirrorRefreshReport {
@@ -97,7 +146,8 @@ export interface MirrorRefreshReport {
 
 export interface MirrorRefreshFetchers {
   readonly fetchSlice: (deviceId: number, cap: string) => Promise<unknown>
-  /** stableId → device id. A rejection leaves the previous map. */
+  /** `stableIdKey(stableId, addonId)` → device id (the bare stableId only when unique). A
+   *  rejection leaves the previous map. */
   readonly fetchStableIds: () => Promise<ReadonlyMap<string, number>>
 }
 
@@ -139,7 +189,11 @@ export class ConditionMirror implements ConditionReader {
 
   private isStableTarget(deviceId: number, cap: string): boolean {
     for (const s of this.sources) {
-      if (s.kind === 'stable' && s.cap === cap && this.stableIds.get(s.stableId) === deviceId) {
+      if (
+        s.kind === 'stable' &&
+        s.cap === cap &&
+        this.stableIds.get(stableIdKey(s.stableId, s.addonId)) === deviceId
+      ) {
         return true
       }
     }
@@ -151,8 +205,13 @@ export class ConditionMirror implements ConditionReader {
     return slice === undefined ? undefined : pick(slice, fieldPath)
   }
 
-  readStable(stableId: string, cap: string, fieldPath: string): unknown {
-    const deviceId = this.stableIds.get(stableId)
+  /** The whole slice the mirror holds for a device cap — `undefined` when it holds none. */
+  sliceOf(deviceId: number, cap: string): unknown {
+    return this.slices.get(sliceKey(deviceId, cap))
+  }
+
+  readStable(stableId: string, cap: string, fieldPath: string, addonId?: string): unknown {
+    const deviceId = this.stableIds.get(stableIdKey(stableId, addonId))
     return deviceId === undefined ? undefined : this.read(deviceId, cap, fieldPath)
   }
 
@@ -169,7 +228,8 @@ export class ConditionMirror implements ConditionReader {
     }
     const targets = new Map<string, { deviceId: number; cap: string }>()
     for (const s of this.sources) {
-      const deviceId = s.kind === 'device' ? s.deviceId : this.stableIds.get(s.stableId)
+      const deviceId =
+        s.kind === 'device' ? s.deviceId : this.stableIds.get(stableIdKey(s.stableId, s.addonId))
       if (deviceId === undefined) {
         kept += 1
         continue
@@ -453,7 +513,12 @@ function evalNode(
         }
         const raw =
           binding.kind === 'global'
-            ? reader.readStable(binding.sourceStableId, binding.cap, binding.fieldPath)
+            ? reader.readStable(
+                binding.sourceStableId,
+                binding.cap,
+                binding.fieldPath,
+                binding.addonId,
+              )
             : undefined
         if (raw === undefined) {
           out.push({

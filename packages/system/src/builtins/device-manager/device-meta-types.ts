@@ -108,6 +108,9 @@ export interface PersistedDeviceMeta {
    *  legacy rows — the reconcile treats a non-placeholder name as user-named for
    *  safety and stamps the resolved decision forward. */
   userNamed?: boolean
+  /** The template alias (D1021) — see `DeviceInfo.alias`. Absent until the first
+   *  registration stamps it (or the boot backfill does, for an older row). */
+  alias?: string
   /**
    * Operator-organisational label (room / area / zone). `null` when
    * unset. Mutable through `setLocation` action; surfaced on

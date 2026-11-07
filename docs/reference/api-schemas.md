@@ -1606,6 +1606,7 @@ Enum: `"raw" \| "5m" \| "1h" \| "1d"`
 - `addonId`: `string`
 - `type`: `"camera" \| "hub" \| "light" \| "siren" \| "switch" \| "sensor" \| "thermostat" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "pet-fountain" \| "dishwasher" \| "washer" \| "heater" \| "dryer" \| "gateway"`
 - `name`: `string`
+- `alias?`: `string`
 - `location`: `string \| null`
 - `disabled`: `boolean`
 - `parentDeviceId`: `number \| null`

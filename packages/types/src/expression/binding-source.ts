@@ -37,10 +37,15 @@ export const ExpressionLiteralBindingSchema = z.object({
 })
 
 /** Read ANY device's status field, addressed by its re-sync-stable `stableId` —
- *  never by numeric id, which a re-adoption reissues. */
+ *  never by numeric id, which a re-adoption reissues. A stableId is unique per
+ *  ADDON, not per cluster, so the owning `addonId` completes the address.
+ *  Optional for wire compatibility: a binding without it still resolves while
+ *  its stableId is unique, and reads nothing (never the wrong device) once two
+ *  addons share it. */
 export const ExpressionGlobalBindingSchema = z.object({
   kind: z.literal('global'),
   sourceStableId: z.string(),
+  addonId: z.string().optional(),
   cap: z.string(),
   fieldPath: z.string(),
 })

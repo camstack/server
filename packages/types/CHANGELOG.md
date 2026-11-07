@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The addon-level settings API is deleted: addons keep their values in cluster, node, device and instance scopes only (D986). getGlobalSettings, updateGlobalSettings, getIntegrationSettings, globalSettingsSchema and integrationSettingSections are removed.
+- A device has an editable alias; device value templates (nunjucks) gain their vocabulary, and a stable id now resolves per addon
 
 ## [1.2.523] - 2026-11-08
 

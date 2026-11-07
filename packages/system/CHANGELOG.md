@@ -65,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The addon-call plane carries listScopedSettings to forked addons.
 - The quick-run length of a timed-run device (heater, pet fountain) is a per-device setting instead of a fixed 30 minutes
 - A forked addon call for the deleted global settings methods is refused by name, and the addon service no longer exposes them.
+- Device aliases (generated once, editable, unique) and a sandboxed device value-template renderer (nunjucks in a budgeted worker thread); the state mirror no longer mixes two addons that share a stable id
 
 ### Removed
 

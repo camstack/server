@@ -4,12 +4,12 @@
 
 # Guards
 
-229 repository guards: 224 in `scripts/`,
+230 repository guards: 225 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (219)
+## Enforced by CI checks (220)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -76,6 +76,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-device-selection-authority.ts` | An operator-facing activation verb must not write a store nothing reads. |
 | `scripts/check-device-selection-in-sync.ts` | The device-picker selection helper has TWO copies that cannot import each other. This makes "they are the same" checkable instead of promised. |
 | `scripts/check-device-settings-standard.ts` | Device-settings standard guard (D865) — per-device CONFIGURATION has one home. |
+| `scripts/check-device-template-grammar.ts` | Guard (D1021): the template engine is reachable through ONE module. |
 | `scripts/check-docs-drift.ts` | Docs drift guard — the half of the sync story that `docs-generate.ts` cannot cover. |
 | `scripts/check-docs-english.ts` | Docs-language guard — documentation under docs/ is written in English. |
 | `scripts/check-drain-listener-rearmed.ts` | Drain-listener guard (D618) — a one-shot drain listener may only be registered from the path that was REFUSED, never once at setup. |

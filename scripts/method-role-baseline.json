@@ -369,6 +369,7 @@
   "deviceManager.reportDiscoveryObservations": "admin",
   "deviceManager.runDeviceAction": "admin",
   "deviceManager.runDiscoverySweep": "admin",
+  "deviceManager.setAlias": "admin",
   "deviceManager.setChildLayout": "admin",
   "deviceManager.setDisabled": "admin",
   "deviceManager.setDisplay": "admin",

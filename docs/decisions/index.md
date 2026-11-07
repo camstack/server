@@ -4,7 +4,7 @@
 
 # Decisions
 
-983 architecture decision records. One file per decision, never
+984 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -998,6 +998,7 @@ that rots.
 | D1018 | [The bootstrap config is the environment; there is no config.yaml](adr-1018-the-bootstrap-config-is-the-environment-there-is-no-config-yaml.md) | ✅ accepted | 2026-11-07 |
 | D1019 | [A system rule speaks at up to three moments — activation, deactivation, schedule](adr-1019-a-system-rule-speaks-at-up-to-three-moments-activation-deactivation-schedule.md) | ✅ accepted | 2026-11-07 |
 | D1020 | [An actuated device runs while its own switch is on; the default is derived, never written](adr-1020-an-actuated-device-runs-while-its-own-switch-is-on.md) | ✅ accepted | 2026-11-07 |
+| D1021 | [Device value templates are nunjucks over device aliases, rendered only in a budgeted worker thread](adr-1021-device-value-templates-nunjucks-and-device-aliases.md) | ✅ accepted | 2026-11-08 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

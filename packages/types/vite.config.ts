@@ -20,6 +20,8 @@ export default buildLibPreset({
     enums: 'src/enums/index.ts',
     // Node palette ids + assignNodeColorId — small entry for store schemas and UI.
     'node-color': 'src/node-color.ts',
+    // Table + conversion only (no zod) — the device-template render worker's unit filter.
+    'units-lean': 'src/units-lean.ts',
     // Test doubles for addon authors (fakeAddonContext) — bundles the tRPC
     // client, so it stays off the root entry.
     testing: 'src/testing.ts',

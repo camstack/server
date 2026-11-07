@@ -117,6 +117,8 @@ export const DEVICE_ROWS_COLUMNS: readonly CollectionColumn[] = [
   { name: 'stableId', type: 'TEXT', notNull: true },
   { name: 'type', type: 'TEXT', notNull: true },
   { name: 'name', type: 'TEXT', notNull: true },
+  // The template alias (D1021): entity_id style, unique cluster-wide, generated once.
+  { name: 'alias', type: 'TEXT' },
   { name: 'userNamed', type: 'BOOLEAN' },
   { name: 'location', type: 'TEXT' },
   { name: 'disabled', type: 'BOOLEAN', notNull: true, defaultValue: false },
@@ -170,6 +172,7 @@ export const DEVICE_ROWS_INDEXES: readonly CollectionIndex[] = [
   { name: 'idx_dm_devices_addon_stable', columns: ['addonId', 'stableId'] },
   { name: 'idx_dm_devices_parent', columns: ['parentDeviceId'] },
   { name: 'idx_dm_devices_integration', columns: ['integrationId'] },
+  { name: 'idx_dm_devices_alias', columns: ['alias'] },
 ]
 
 /**
@@ -233,6 +236,8 @@ export function deviceRowBackendOf(client: SettingsStoreClient): DeviceRowBacken
 export interface DeviceRowPatch {
   readonly type?: string
   readonly name?: string
+  /** The template alias (D1021) — written by the first-registration stamp, `setAlias` and the backfill. */
+  readonly alias?: string
   readonly userNamed?: boolean
   readonly location?: string | null
   readonly disabled?: boolean
@@ -360,6 +365,7 @@ export function decodeDeviceRow(data: Record<string, unknown>): DeviceRow | null
   const linkDeviceId = readNumber(data['linkDeviceId'])
   const primaryChildEntityId = readString(data['primaryChildEntityId'])
   const role = readString(data['role'])
+  const alias = readString(data['alias'])
   const rawChildLayout = data['childLayout']
   const rawDisplay = data['display']
   const rawMetadata = data['metadata']
@@ -378,6 +384,7 @@ export function decodeDeviceRow(data: Record<string, unknown>): DeviceRow | null
     location: location ?? null,
     disabled: readBoolean(data['disabled']) ?? false,
     parentDeviceId: parentDeviceId ?? null,
+    ...(alias !== undefined ? { alias } : {}),
     ...(userNamed !== undefined ? { userNamed } : {}),
     ...(features !== undefined ? { features } : {}),
     ...(exportFingerprint !== undefined ? { exportFingerprint } : {}),
@@ -426,6 +433,7 @@ export function encodeDeviceRow(
     stableId: meta.stableId,
     type: meta.type,
     name: meta.name,
+    alias: meta.alias ?? null,
     userNamed: meta.userNamed ?? null,
     location: meta.location,
     disabled: meta.disabled,
@@ -636,6 +644,28 @@ export class DeviceRowStore {
       this.logger.warn('duplicate device rows for one (addonId, stableId) — using the lowest id', {
         tags: { deviceId: first.meta.id },
         meta: { addonId, stableId, ids: rows.map((r) => r.meta.id) },
+      })
+    }
+    return first
+  }
+
+  /**
+   * The device that owns a template alias, or `null`. Aliases are unique, so a
+   * second row for one alias would be a corruption: the LOWEST id is answered and
+   * the duplicate is said on the record.
+   */
+  async findByAlias(alias: string): Promise<DeviceRow | null> {
+    const rows = await this.list({
+      where: { alias },
+      orderBy: { field: 'deviceId', direction: 'asc' },
+      limit: 2,
+    })
+    const first = rows[0]
+    if (first === undefined) return null
+    if (rows.length > 1) {
+      this.logger.warn('duplicate device rows for one alias — using the lowest id', {
+        tags: { deviceId: first.meta.id },
+        meta: { alias, ids: rows.map((r) => r.meta.id) },
       })
     }
     return first

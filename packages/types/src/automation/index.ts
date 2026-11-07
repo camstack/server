@@ -21,6 +21,8 @@ export {
   collectMirrorSources,
   collectWhenMirrorSources,
   ConditionMirror,
+  stableIdKey,
+  stableIdMapOf,
   evaluateConditionTree,
   evaluateWhenTree,
 } from './condition-eval.js'

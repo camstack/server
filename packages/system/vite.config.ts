@@ -103,6 +103,13 @@ const base = buildLibPreset({
     // `<package root>/dist/log-file-read-worker.js`. It imports the index, the
     // reader and the shared line filter, nothing from the kernel.
     'log-file-read-worker': 'src/builtins/winston-logging/log-file-read-worker.ts',
+    // Worker-thread entry of the device value-template renderer (D1021).
+    // nunjucks does not sandbox, so a template only runs in this thread, under
+    // a wall-time budget. Top-level for the same reason as the others;
+    // `device-template/template-renderer.ts` resolves it as
+    // `<package root>/dist/device-template-worker.js`. It imports nunjucks,
+    // `@camstack/types/units-lean` and its own protocol, nothing from the kernel.
+    'device-template-worker': 'src/builtins/device-manager/device-template/template-worker.ts',
   },
   externals: 'framework',
   // Bundle the BARE `@camstack/types` entry into system's dist (subpaths stay

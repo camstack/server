@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The addon-settings routes for the global and integration settings reads and the global write are removed; a forked call naming them is refused.
+- The device-manager router exposes setAlias for device aliases
 
 ## [1.2.804] - 2026-11-08
 

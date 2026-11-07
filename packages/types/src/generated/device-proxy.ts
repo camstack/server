@@ -347,7 +347,7 @@ export interface DeviceProxy {
   readonly deviceAdoption: Pick<InferDeviceProxyCap<typeof deviceAdoptionCapability>, 'getStatus'>
   readonly deviceExport: Pick<InferDeviceProxyCap<typeof deviceExportCapability>, 'getDeviceSettingsContribution' | 'getDeviceLiveContribution' | 'applyDeviceSettingsPatch'>
   readonly deviceHistory: Pick<InferDeviceProxyCap<typeof deviceHistoryCapability>, 'listSeries' | 'query' | 'getDeviceEnabled' | 'setDeviceEnabled'>
-  readonly deviceManager: Pick<InferDeviceProxyCap<typeof deviceManagerCapability>, 'loadConfig' | 'loadRuntimeState' | 'loadMeta' | 'setName' | 'setLocation' | 'setType' | 'setIntegrationId' | 'setLinkDeviceId' | 'setPrimaryChildEntityId' | 'setChildLayout' | 'setDisplay' | 'getWireableFields' | 'setRole' | 'applyInitialMeta' | 'setMetadata' | 'setDisabled' | 'getDevice' | 'getLinkedDevices' | 'getStreamSources' | 'getConfigSchema' | 'getSettingsSchema' | 'updateConfig' | 'enable' | 'disable' | 'remove' | 'getStreamProfileMap' | 'setStreamProfileMap' | 'probeStreams' | 'getBindings' | 'setWrapperActive' | 'getWrapperActivation' | 'getDeviceSettingsAggregate' | 'getDeviceLiveInfoAggregate' | 'getDeviceAggregate' | 'runDeviceAction' | 'updateDeviceField' | 'updateDeviceFieldsBatch' | 'testField' | 'getDeviceStatusAggregate'>
+  readonly deviceManager: Pick<InferDeviceProxyCap<typeof deviceManagerCapability>, 'loadConfig' | 'loadRuntimeState' | 'loadMeta' | 'setName' | 'setAlias' | 'setLocation' | 'setType' | 'setIntegrationId' | 'setLinkDeviceId' | 'setPrimaryChildEntityId' | 'setChildLayout' | 'setDisplay' | 'getWireableFields' | 'setRole' | 'applyInitialMeta' | 'setMetadata' | 'setDisabled' | 'getDevice' | 'getLinkedDevices' | 'getStreamSources' | 'getConfigSchema' | 'getSettingsSchema' | 'updateConfig' | 'enable' | 'disable' | 'remove' | 'getStreamProfileMap' | 'setStreamProfileMap' | 'probeStreams' | 'getBindings' | 'setWrapperActive' | 'getWrapperActivation' | 'getDeviceSettingsAggregate' | 'getDeviceLiveInfoAggregate' | 'getDeviceAggregate' | 'runDeviceAction' | 'updateDeviceField' | 'updateDeviceFieldsBatch' | 'testField' | 'getDeviceStatusAggregate'>
   readonly deviceState: Pick<InferDeviceProxyCap<typeof deviceStateCapability>, 'getSnapshot' | 'getCapSlice' | 'setCapSlice' | 'claimFields' | 'patchOwnedFields' | 'releaseClaim' | 'getNativeCapSlice'>
   readonly faceGallery: Pick<InferDeviceProxyCap<typeof faceGalleryCapability>, 'listRecentFaces' | 'getFaceByTrack'>
   readonly networkQuality: Pick<InferDeviceProxyCap<typeof networkQualityCapability>, 'getDeviceStats' | 'reportClientStats'>
@@ -1225,6 +1225,7 @@ export function createDeviceProxy(
     loadRuntimeState: (input?: unknown) => dispatchSystem('deviceManager', 'loadRuntimeState', 'query', input),
     loadMeta: (input?: unknown) => dispatchSystem('deviceManager', 'loadMeta', 'query', input),
     setName: (input?: unknown) => dispatchSystem('deviceManager', 'setName', 'mutation', input),
+    setAlias: (input?: unknown) => dispatchSystem('deviceManager', 'setAlias', 'mutation', input),
     setLocation: (input?: unknown) => dispatchSystem('deviceManager', 'setLocation', 'mutation', input),
     setType: (input?: unknown) => dispatchSystem('deviceManager', 'setType', 'mutation', input),
     setIntegrationId: (input?: unknown) => dispatchSystem('deviceManager', 'setIntegrationId', 'mutation', input),

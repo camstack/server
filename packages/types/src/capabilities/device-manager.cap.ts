@@ -20,6 +20,7 @@ import { z } from 'zod'
 import { CameraSwitchIdSchema } from '../interfaces/camera-switches.js'
 import { DEVICE_CHILDREN_BATCH_MAX } from '../device/children-batch-max.js'
 import { DeviceType } from '../device/device-type.js'
+import { DeviceAliasSchema } from '../device/device-alias.js'
 import { IconKeySchema } from '../device/icon-catalog.js'
 import {
   LOCATION_DESCRIPTION_MAX,
@@ -124,6 +125,12 @@ export const DeviceInfoSchema = z.object({
   addonId: z.string(),
   type: z.enum(DeviceType),
   name: z.string(),
+  /** The name a value template uses for this device (`{{ stufa_veranda.temperature }}`),
+   *  entity_id style. Generated once from the name at first registration, unique
+   *  cluster-wide, editable through `setAlias`, NOT changed by a rename (D1021).
+   *  Optional: a record produced by an older build omits it until the boot
+   *  backfill has run. */
+  alias: DeviceAliasSchema.optional(),
   /** Operator-organisational location label. `null` when unset. */
   location: z.string().nullable(),
   /** Soft-disabled flag. */
@@ -621,6 +628,23 @@ export const deviceManagerCapability = {
       kind: 'mutation',
       auth: 'admin',
     }),
+
+    /** Set the device's template alias (D1021). The refusal is a typed reason in
+     *  the answer, never a thrown string: `empty | too-long | grammar | reserved |
+     *  taken` (`takenBy` names the device that owns it). Idempotent for the
+     *  device's own current alias. */
+    setAlias: method(
+      z.object({ deviceId: z.number(), alias: z.string() }),
+      z.discriminatedUnion('ok', [
+        z.object({ ok: z.literal(true), alias: DeviceAliasSchema }),
+        z.object({
+          ok: z.literal(false),
+          reason: z.enum(['empty', 'too-long', 'grammar', 'reserved', 'taken']),
+          takenBy: z.number().optional(),
+        }),
+      ]),
+      { kind: 'mutation', auth: 'admin' },
+    ),
 
     /** Update the operator-organisational location label. `null`
      *  clears it. */

@@ -240,6 +240,7 @@ export function toDeviceInfo(
     // D783 — a live device answers from its own schema declaration.
     ...liveSecretConfigPaths(device),
     metadata,
+    ...(metaRow?.alias !== undefined ? { alias: metaRow.alias } : {}),
     ...(metaRow?.integrationId !== undefined ? { integrationId: metaRow.integrationId } : {}),
     ...(metaRow?.linkDeviceId !== undefined ? { linkDeviceId: metaRow.linkDeviceId } : {}),
     ...(metaRow?.primaryChildEntityId !== undefined

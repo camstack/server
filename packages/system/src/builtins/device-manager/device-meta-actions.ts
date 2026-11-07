@@ -47,6 +47,7 @@ import {
   siteZoneKey,
 } from '@camstack/types'
 import { canonicalDeviceFingerprint } from '@camstack/types/node'
+import { freeAliasFor } from './device-alias-actions.js'
 import { readBindingsStore, writeBindingsStore } from './device-bindings-store.js'
 import {
   loadDeviceConfigWithSecrets,
@@ -536,6 +537,14 @@ export async function registerDevice(
       features: featuresArr,
       exportFingerprint: fingerprint,
     })
+    // The template alias (D1021) is stamped ONCE, from the name known at the
+    // first registration, and never follows a rename. A row that already carries
+    // one (operator-set, backfilled) is left exactly as it is.
+    if (existingMeta?.alias === undefined) {
+      await pctx.metaStore.rows.patch(id, {
+        alias: await freeAliasFor(pctx.metaStore.rows, resolvedName, id),
+      })
+    }
     // Out-of-order adoption registers children before their parents: this
     // device's own already-registered descendants missed the location it
     // just inherited. Pull it down onto their null `location` columns now,

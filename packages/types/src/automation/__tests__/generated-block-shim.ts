@@ -8,6 +8,7 @@ export {
   collectWhenMirrorSources,
   ConditionMirror,
   evaluateWhenTree,
+  stableIdMapOf,
 } from '../condition-eval.js'
 export {
   ACTION_TARGET_INVALIDATION_EVENTS,

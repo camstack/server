@@ -205,6 +205,7 @@ jobs:
             scripts/check-recorded-still-off-delivery-path.ts \
             scripts/check-pull-demuxer-open.ts \
             scripts/check-decode-worker-child-lean.ts \
+            scripts/check-device-template-grammar.ts \
             scripts/check-no-detached-child-spawn.ts \
             scripts/check-replay-isolation.ts \
             scripts/check-age-keyed-retention.ts \

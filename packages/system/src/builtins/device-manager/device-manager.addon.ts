@@ -81,6 +81,7 @@ import { getLinkedDevices, getLinkedDevicesBatch } from './device-linked-devices
 import * as metaActions from './device-meta-actions.js'
 import { runLocationBackfillAtBoot } from './location-alignment.js'
 import { runLinkedDevicesManualBackfillAtBoot } from './linked-devices-manual-backfill.js'
+import * as aliasActions from './device-alias-actions.js'
 import { DeviceMetaStore } from './device-meta-store.js'
 import type { ContributionShape } from './device-meta-types.js'
 import type { ProviderContext, ProviderHost } from './device-provider-context.js'
@@ -789,6 +790,16 @@ export class DeviceManagerAddon extends BaseAddon {
       })
     }
     try {
+      await aliasActions.runDeviceAliasBackfillAtBoot(pctx)
+    } catch (err) {
+      this.ctx.logger.warn(
+        'device alias backfill failed — rows without an alias wait for their next registration',
+        {
+          meta: { error: errMsg(err) },
+        },
+      )
+    }
+    try {
       await runLinkedDevicesManualBackfillAtBoot(pctx)
     } catch (err) {
       this.ctx.logger.warn(
@@ -844,6 +855,7 @@ export class DeviceManagerAddon extends BaseAddon {
       loadConfig: (input) => metaActions.loadConfig(pctx, input),
       loadMeta: (input) => metaActions.loadMeta(pctx, input),
       setName: (input) => metaActions.setName(pctx, input),
+      setAlias: (input) => aliasActions.setAlias(pctx, input),
       setLocation: (input) => metaActions.setLocation(pctx, input),
       setType: (input) => metaActions.setType(pctx, input),
       setIntegrationId: (input) => metaActions.setIntegrationId(pctx, input),

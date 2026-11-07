@@ -49,6 +49,11 @@
       "import": "./dist/node-color.mjs",
       "require": "./dist/node-color.js"
     },
+    "./units-lean": {
+      "types": "./dist/units-lean.d.ts",
+      "import": "./dist/units-lean.mjs",
+      "require": "./dist/units-lean.js"
+    },
     "./client": {
       "types": "./dist/client.d.ts",
       "import": "./dist/client.mjs",

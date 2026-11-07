@@ -821,6 +821,8 @@ export {
   buildTriggerTrace,
   collectMirrorSources,
   ConditionMirror,
+  stableIdKey,
+  stableIdMapOf,
   DEFAULT_TRACE_KEEP,
   DetectionTriggerFilter,
   detectionClassMatches,
@@ -1349,6 +1351,16 @@ export {
   enumerateSchemaFields,
   unwrapSchema,
 } from './device/schema-fields.js'
+export {
+  DEVICE_ALIAS_MAX_LENGTH,
+  DEVICE_ALIAS_PATTERN,
+  DeviceAliasSchema,
+  checkDeviceAlias,
+  generateDeviceAlias,
+  isReservedDeviceAlias,
+  slugifyDeviceAlias,
+} from './device/device-alias.js'
+export type { DeviceAliasCheck, DeviceAliasRefusal } from './device/device-alias.js'
 export type { SourceInfo } from './device/source-info.js'
 // SourceInfo (upstream-system identity + rendering hints)
 export {
@@ -1411,6 +1423,27 @@ export type {
   Punctuator,
   Token,
 } from './expression/index.js'
+export {
+  DEVICE_TEMPLATE_BUDGET_MS,
+  DEVICE_TEMPLATE_FILTERS,
+  DEVICE_TEMPLATE_MAX_LENGTH,
+  DEVICE_TEMPLATE_MAX_OUTPUT,
+  DEVICE_TEMPLATE_UNAVAILABLE,
+  DeviceTemplateSchema,
+  resolveTemplateRef,
+  templateCapKey,
+} from './expression/device-template.js'
+export type {
+  DeviceTemplateFilter,
+  DeviceTemplateRef,
+  DeviceTemplateRefusal,
+  DeviceTemplateRefusalReason,
+  DeviceTemplateRender,
+  DeviceTemplateTraceEntry,
+  DeviceTemplateTraceReason,
+  DeviceTemplateView,
+  ResolvedTemplateRef,
+} from './expression/device-template.js'
 // ── Safe expression engine — the derivation language of a composed device
 // and the escape-hatch leaf of an automation's condition tree ───────
 export {
