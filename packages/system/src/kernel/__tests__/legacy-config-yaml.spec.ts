@@ -87,6 +87,15 @@ describe('legacy config.yaml transition', () => {
     expect(warnings()).toContain('could not be parsed')
   })
 
+  it('a second load in the same process logs nothing new', () => {
+    fs.writeFileSync(file, 'server:\n  port: 8443\n')
+    load(envFor())
+    const first = warn.mock.calls.length
+    expect(first).toBeGreaterThan(0)
+    load(envFor())
+    expect(warn.mock.calls.length).toBe(first)
+  })
+
   it('CONFIG_PATH is searched first', () => {
     const other = path.join(dir, 'elsewhere.yaml')
     fs.writeFileSync(other, 'server:\n  port: 7000\n')

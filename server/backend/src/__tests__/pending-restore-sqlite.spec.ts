@@ -136,7 +136,8 @@ describe('applyPendingRestore — SQLite databases', () => {
     fs.writeFileSync(path.join(stage, 'config.yaml'), 'cluster: restored\n')
     scheduleRestore(await archiveOf(['config.yaml', LIVE_REL + DATABASE_SNAPSHOT_SUFFIX]))
 
-    await applyPendingRestore(dataDir, quiet)
+    const lines: string[] = []
+    await applyPendingRestore(dataDir, (l) => lines.push(l))
 
     // Sampled BEFORE the first open, which would checkpoint and delete them.
     const walLeft = fs.existsSync(`${live}-wal`)
@@ -151,6 +152,7 @@ describe('applyPendingRestore — SQLite databases', () => {
     expect(fs.existsSync(live + DATABASE_SNAPSHOT_SUFFIX)).toBe(false)
     // An archive from before D1018 carries config.yaml: it is not restored.
     expect(fs.existsSync(path.join(dataDir, 'config.yaml'))).toBe(false)
+    expect(lines.filter((l) => l.includes('skipping retired config.yaml'))).toHaveLength(1)
     expect(fs.existsSync(path.join(dataDir, '.pending-restore.json'))).toBe(false)
   })
 

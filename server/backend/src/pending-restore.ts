@@ -105,7 +105,12 @@ export async function applyPendingRestore(
       const normalized = p.replace(/^\.\//, '').replace(/\/+$/, '')
       // An archive from before D1018 carries the retired bootstrap file: it is
       // not restored, or it would resurrect a port the environment now owns.
-      if (normalized === RETIRED_CONFIG_FILE) return false
+      if (normalized === RETIRED_CONFIG_FILE) {
+        log(
+          `[launcher] Restore: skipping retired ${RETIRED_CONFIG_FILE} (the environment owns the bootstrap config, D1018)`,
+        )
+        return false
+      }
       const keep = inScope(normalized)
       if (keep) extracted.push(normalized)
       return keep

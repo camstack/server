@@ -174,9 +174,15 @@ export function reconcileLegacyConfigYaml(
   return { overrides, notes }
 }
 
-/** Print the notes the way the bootstrap prints everything else. */
+/** Notes already printed by this process: the loader runs twice per boot (main.ts and ConfigManager). */
+const printedNotes = new Set<string>()
+
+/** Print each note once per process, the way the bootstrap prints everything else. */
 export function logLegacyNotes(notes: readonly LegacyNote[]): void {
   for (const note of notes) {
+    const id = `${note.level}:${note.message}`
+    if (printedNotes.has(id)) continue
+    printedNotes.add(id)
     if (note.level === 'warn') console.warn(`[Phase1] WARN ${note.message}`)
     else console.log(`[Phase1] ${note.message}`)
   }
