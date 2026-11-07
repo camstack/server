@@ -89,7 +89,10 @@ describe('schema localization middleware', () => {
     ],
   }
   const router = trpcRouter({
-    addonSettings: trpcRouter({ getGlobalSettings: protectedProcedure.query(() => schema) }),
+    addonSettings: trpcRouter({
+      getGlobalSettings: protectedProcedure.query(() => schema),
+      getScopedSettings: protectedProcedure.query(() => schema),
+    }),
     other: trpcRouter({ getThing: protectedProcedure.query(() => schema) }),
   })
   const caller = createCallerFactory(router)
@@ -115,6 +118,11 @@ describe('schema localization middleware', () => {
     expect(en).toEqual(schema)
     const none = await caller(ctxFor()).addonSettings.getGlobalSettings()
     expect(none).toEqual(schema)
+  })
+
+  it('localizes the scoped settings form the same way', async () => {
+    const italian = await caller(ctxFor('it')).addonSettings.getScopedSettings()
+    expect(italian.sections[0]?.title).toBe('Connessione')
   })
 
   it('only touches the methods that serve a schema', async () => {

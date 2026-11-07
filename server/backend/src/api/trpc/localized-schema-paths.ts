@@ -10,6 +10,7 @@
  */
 export const LOCALIZED_SCHEMA_PATHS: ReadonlySet<string> = new Set([
   'addonSettings.getGlobalSettings',
+  'addonSettings.getScopedSettings',
   'addonSettings.getIntegrationSettings',
   'addonSettings.getIntegrationFormSchema',
   'addonSettings.getDeviceSettings',

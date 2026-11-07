@@ -483,6 +483,7 @@ export const NON_ADMIN_CONFIG_REDACTED_METHODS: ReadonlyMap<string, ConfigRedact
 >([
   // ── Addon settings forms (D634) — hydrated with the STORED secret ──
   ['addonSettings.getGlobalSettings', redactSettingsForm],
+  ['addonSettings.getScopedSettings', redactSettingsForm],
   ['addonSettings.getIntegrationSettings', redactSettingsForm],
   ['addonSettings.getIntegrationFormSchema', redactSettingsForm],
   ['addonSettings.getDeviceSettings', redactSettingsForm],

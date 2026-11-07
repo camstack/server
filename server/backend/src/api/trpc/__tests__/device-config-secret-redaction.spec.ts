@@ -234,6 +234,7 @@ describe('the enumeration covers every non-admin read that can leak a secret', (
       'addonSettings.getGlobalSettings',
       'addonSettings.getIntegrationFormSchema',
       'addonSettings.getIntegrationSettings',
+      'addonSettings.getScopedSettings',
       'cameraStreams.getCameraStreams',
       'cameraStreams.getProfileRtspEntries',
       'cameraStreams.getRtspEntries',
@@ -353,5 +354,6 @@ describe('addon settings forms are redacted for a non-admin (D634)', () => {
     expect(NON_ADMIN_CONFIG_REDACTED_METHODS.get('addonSettings.getIntegrationSettings')).toBe(
       global,
     )
+    expect(NON_ADMIN_CONFIG_REDACTED_METHODS.get('addonSettings.getScopedSettings')).toBe(global)
   })
 })
