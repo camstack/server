@@ -234,6 +234,8 @@ function doorbellPressEntry(): NcOutboxEntry {
         zones: [],
         timestamp: 1_753_000_300_000,
         eventType: 'press',
+        // Frozen at enqueue by `sensorOf` (build-entries.ts), as production does.
+        sensor: { deviceId: 593, name: 'Front door' },
       },
     },
   }
