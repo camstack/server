@@ -17,9 +17,6 @@
       "packages/addon-admin-ui/src/components/storage/EditLocationModal.tsx": "bespoke editor over storage.upsertLocation; P6d (U) moves it to InstanceEditorDialog",
       "packages/addon-admin-ui/src/components/pipeline/tabs/StorageLocationsPanel.tsx": "second location list (mode, discard) over storage upsert / delete; P6d (U) folds it into the instances lead slot"
     },
-    "waste": {
-      "packages/addon-admin-ui/src/pages/system/WasteSettingsSources.tsx": "bespoke source list over the waste custom actions createSource / deleteSource; P6e moves it to InstancesTable functionCap=calendar-source"
-    },
     "tailscale": {
       "packages/addon-admin-ui/src/pages/system/MeshNetworks.tsx": "bespoke mesh-network list with join / leave / log in; P6f (U) moves it to InstancesTable with a lead card"
     }

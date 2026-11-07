@@ -31,9 +31,11 @@ source becomes one `calendar-source` calendar (all-day events). See [D827](../de
    `token`, …) is a keychain marker bound to the row (D880). **Test** runs one
    fetch: `validated` with collections, `rejected` when the provider refuses
    the arguments, `inconclusive` for a timeout, a missing Python or an empty
-   answer. The old custom actions (`listSources` / `createSource` / …) still
-   answer until the admin page moves to the instances table.
-3. **Fetch now** (same Settings Refresh section) or wait for the daily refresh.
+   answer. The custom actions that served the old page are gone; `fetchNow`,
+   `listCountries` and `listServices` remain (the last two feed the form's
+   Country → Service pickers).
+3. **Fetch now** is a button on the source's row in System → Calendars (the
+   `fetchNow` action for that source), or wait for the daily refresh.
 4. Open System → Calendars — events appear under
    `waste-collections:<id>`.
 

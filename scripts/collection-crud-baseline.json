@@ -32,13 +32,6 @@
       "training-provider.cap.ts:describeTypes": "type catalogue of training provider entries; kinds of integration-instances (P6g)",
       "training-provider.cap.ts:listEntries": "entry list; still read by the training orchestrator (api-ports addonForEntry), not by any page (P6g)"
     },
-    "waste": {
-      "packages/addon-waste-collections/src/custom-actions.ts:listSources": "custom-action source list; becomes the instances of function cap calendar-source (P6e)",
-      "packages/addon-waste-collections/src/custom-actions.ts:serviceFormSchema": "country/service form; becomes instanceFormSchema with optionsFrom (P6e)",
-      "packages/addon-waste-collections/src/custom-actions.ts:createSource": "custom-action source create; folds into upsertInstance (P6e)",
-      "packages/addon-waste-collections/src/custom-actions.ts:updateSource": "custom-action source update; folds into upsertInstance (P6e)",
-      "packages/addon-waste-collections/src/custom-actions.ts:deleteSource": "custom-action source delete; folds into deleteInstance (P6e)"
-    },
     "addon-settings": {
       "addon-settings.cap.ts:getIntegrationFormSchema": "form of the addon-level integration settings; retired with the addon-level settings (M5, D986, P8)"
     },

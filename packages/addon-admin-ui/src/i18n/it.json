@@ -1003,32 +1003,6 @@
       "combinedIceServerListAll": "Elenco combinato dei server ICE — tutti i provider abilitati",
       "noServersFromEnabledProviders": "Nessun server dai provider abilitati."
     },
-    "wasteSettingsSources": {
-      "countryService": "Paese e servizio",
-      "country": "Paese",
-      "selectCountry": "Seleziona paese…",
-      "service": "Servizio",
-      "pickACountryFirst": "Scegli prima un paese",
-      "selectService": "Seleziona servizio…",
-      "newSource": "Nuova sorgente",
-      "deleteWasteSource": "Eliminare la sorgente rifiuti?",
-      "removeItsCalendarUnderSystem": "Rimuovi “{{label}}” ({{id}}). Il suo calendario in Sistema → Calendari viene eliminato.",
-      "label": "Etichetta",
-      "module": "Modulo",
-      "enabled": "Abilitata",
-      "on": "Attiva",
-      "off": "Disattiva",
-      "delete": "Elimina {{label}}",
-      "pickACountryAndA": "Scegli un paese e un servizio — i campi di configurazione provengono da quella sorgente HACS.",
-      "addSource": "Aggiungi sorgente",
-      "couldNotLoadSources": "Impossibile caricare le sorgenti.",
-      "noWasteSourcesYetAdd": "Ancora nessuna sorgente rifiuti. Aggiungine una per registrare un servizio comunale.",
-      "addWasteSource": "Aggiungi sorgente rifiuti",
-      "edit": "Modifica {{value1}}",
-      "saving": "Salvataggio…",
-      "loadingFields": "Caricamento campi…",
-      "chooseACountryAndService": "Scegli un paese e un servizio per vedere i campi richiesti."
-    },
     "alarmLiveCard": {
       "panel": "Pannello",
       "thisHubDoesNotReport": "Questo hub non riporta ancora lo stato live del pannello — aggiornalo per armare da qui.",
@@ -11756,5 +11730,13 @@
     "active": "Attivo",
     "addBlocked": "{{names}}: è consentita una sola istanza e esiste già.",
     "addNone": "Nessun provider qui può contenere istanze."
+  },
+  "wasteFetchNow": {
+    "label": "Aggiorna {{name}} ora",
+    "nothingFetched": "Niente da aggiornare",
+    "sourceIsOff": "{{name}} è disattivata, quindi non è stata aggiornata.",
+    "fetched": "{{name}} aggiornata",
+    "failed": "Impossibile aggiornare {{name}}",
+    "collections": "{{count}} raccolte lette."
   }
 }

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Waste sources use the shared Calendars list, with a Fetch now button on each source row
+
 ## [1.2.601] - 2026-11-06
 
 ### Changed

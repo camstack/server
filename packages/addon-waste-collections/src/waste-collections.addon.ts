@@ -14,37 +14,21 @@ import {
   type InstanceChange,
   integrationInstancesCapability,
   type ProviderRegistration,
-  type RawSecretMigrationReport,
 } from '@camstack/types'
 import { wasteCollectionsActions } from './custom-actions.js'
 import { fetchWasteSource } from './fetch-source.js'
 import { ADDON_MIGRATIONS, SOURCES_FROM_SETTINGS_ID } from './migrations/index.js'
 import { resolveFetchScript } from './python-paths.js'
 import { sealPlaintextCredentials } from './seal-plaintext.js'
-import { allocateSourceId, SOURCE_ID_PATTERN } from './source-id.js'
 import { createWasteCalendarSource } from './waste-calendar-source.js'
-import {
-  findCatalogService,
-  listCatalogCountries,
-  listCatalogServices,
-  matchCatalogService,
-  mergeServiceArgs,
-  serviceDisplayLabel,
-  serviceFormSchema,
-} from './waste-catalog.js'
-import {
-  hasCredential,
-  redactArgs,
-  restoreRedactedArgs,
-  WASTE_SECRET_STATE_PATHS,
-} from './waste-secrets.js'
+import { listCatalogCountries, listCatalogServices, serviceDisplayLabel } from './waste-catalog.js'
+import { WASTE_SECRET_STATE_PATHS } from './waste-secrets.js'
 import { WasteSourceInstances } from './waste-source-instances.js'
 import { plainWasteSourceKind, wasteSourceEntryKind } from './waste-source-record-kinds.js'
 import { WasteSourceStore, withUnmigratedLegacyRows } from './waste-source-store.js'
 import {
   DEFAULT_WASTE_CONFIG,
   sourceArgs,
-  WasteArgValueSchema,
   type WasteCollectionEntry,
   type WasteConfig,
   WasteConfigSchema,
@@ -160,7 +144,6 @@ export class WasteCollectionsAddon extends BaseAddon<WasteConfig> {
       customActions: wasteCollectionsActions,
       actionHandlers: {
         fetchNow: async (input) => this.fetchNow(input),
-        listSources: async () => this.listSources(),
         listCountries: async () => listCatalogCountries(),
         listServices: async (input) =>
           listCatalogServices(input.countryId).map((s) => ({
@@ -169,15 +152,6 @@ export class WasteCollectionsAddon extends BaseAddon<WasteConfig> {
             title: s.label,
             module: s.module,
           })),
-        serviceFormSchema: async (input) => {
-          const service = findCatalogService(input.serviceId)
-          if (!service) throw new Error(`unknown service '${input.serviceId}'`)
-          return serviceFormSchema(service)
-        },
-        createSource: async (input) => this.createSource(input),
-        updateSource: async (input) => this.updateSource(input),
-        deleteSource: async (input) => this.deleteSource(input),
-        migrateSources: async (input) => this.migrateSources(input.apply),
       },
     }
   }
@@ -279,18 +253,6 @@ export class WasteCollectionsAddon extends BaseAddon<WasteConfig> {
     return withUnmigratedLegacyRows(records, this.parseConfigSources(this.config.sources))
   }
 
-  private async persistSources(sources: readonly WasteSourceConfig[]): Promise<void> {
-    this.activeSources = [...sources]
-    const store = this.sourceStore
-    if (store !== null) {
-      await store.replaceAll(sources)
-      const kept = new Set(sources.map((s) => s.id))
-      await this.pruneLegacyRows((legacyId) => kept.has(legacyId))
-      return
-    }
-    await this.updateGlobalSettings({ sources: [...sources] })
-  }
-
   /**
    * A source deleted at the records leaves the legacy setting too, or it would reappear beside the
    * records (while the migration is pending) or be copied back by it.
@@ -305,252 +267,6 @@ export class WasteCollectionsAddon extends BaseAddon<WasteConfig> {
   configuredSources(): readonly WasteSourceConfig[] {
     if (this.activeSources.length > 0 || this.sourceStore !== null) return this.activeSources
     return this.parseConfigSources(this.config.sources)
-  }
-
-  listSources(): readonly {
-    id: string
-    label: string
-    module: string
-    enabled: boolean
-    formValues: Record<string, unknown>
-    serviceId?: string
-    countryId?: string
-  }[] {
-    return this.configuredSources().map((s) => {
-      let args: Record<string, unknown> = {}
-      try {
-        args = sourceArgs(s)
-      } catch {
-        // A locked credential must not hide the source: show it, redacted.
-        args = { ...s.args }
-      }
-      const matched = matchCatalogService(s.module, args)
-      const formValues: Record<string, unknown> = {
-        label: s.label,
-        enabled: s.enabled,
-        ...redactArgs(args),
-      }
-      // Prefer operator-facing fields; drop defaults already fixed on the service.
-      if (matched) {
-        for (const key of Object.keys(matched.defaultArgs)) {
-          delete formValues[key]
-        }
-      }
-      return {
-        id: s.id,
-        label: s.label,
-        module: s.module,
-        enabled: s.enabled,
-        formValues,
-        serviceId: matched?.id,
-        countryId: matched?.countryId,
-      }
-    })
-  }
-
-  async createSource(input: {
-    id?: string
-    label: string
-    serviceId: string
-    args: Record<string, unknown>
-    enabled?: boolean
-  }): Promise<{ id: string }> {
-    const existing = this.configuredSources().map((s) => s.id)
-    let id: string
-    if (input.id !== undefined) {
-      if (!SOURCE_ID_PATTERN.test(input.id)) {
-        throw new Error('id must be a lowercase slug (e.g. ics-home, junker)')
-      }
-      if (existing.includes(input.id)) {
-        throw new Error(`source '${input.id}' already exists`)
-      }
-      id = input.id
-    } else {
-      id = allocateSourceId(input.label, existing)
-    }
-    const service = findCatalogService(input.serviceId)
-    if (!service) throw new Error(`unknown service '${input.serviceId}'`)
-    const row = WasteSourceConfigSchema.parse({
-      id,
-      label: input.label,
-      module: service.module,
-      args: this.typedArgs(mergeServiceArgs(service, restoreRedactedArgs(input.args, {}))),
-      enabled: input.enabled ?? true,
-    })
-    await this.persistSources([...this.configuredSources(), row])
-    return { id }
-  }
-
-  async updateSource(input: {
-    id: string
-    label: string
-    serviceId?: string
-    args?: Record<string, unknown>
-    enabled?: boolean
-  }): Promise<{ ok: true }> {
-    const sources = this.configuredSources()
-    const idx = sources.findIndex((s) => s.id === input.id)
-    if (idx < 0) throw new Error(`source '${input.id}' not found`)
-    const prev = sources[idx]!
-    let prevArgs: Record<string, unknown> = {}
-    try {
-      prevArgs = sourceArgs(prev)
-    } catch {
-      prevArgs = { ...prev.args }
-    }
-
-    let module = prev.module
-    let args: Record<string, unknown> = prevArgs
-    if (input.serviceId !== undefined) {
-      const service = findCatalogService(input.serviceId)
-      if (!service) throw new Error(`unknown service '${input.serviceId}'`)
-      module = service.module
-      args = mergeServiceArgs(service, restoreRedactedArgs(input.args ?? {}, prevArgs))
-    } else if (input.args !== undefined) {
-      const sent = restoreRedactedArgs(input.args, prevArgs)
-      const matched = matchCatalogService(prev.module, prevArgs)
-      args = matched ? mergeServiceArgs(matched, sent) : { ...prevArgs, ...sent }
-    }
-
-    // No `argsJson`: the rewritten row is the typed shape, which also retires a legacy one.
-    const next = WasteSourceConfigSchema.parse({
-      id: prev.id,
-      label: input.label,
-      module,
-      args: this.typedArgs(args),
-      enabled: input.enabled ?? prev.enabled,
-    })
-    await this.persistSources(sources.map((s, i) => (i === idx ? next : s)))
-    return { ok: true }
-  }
-
-  /** Validate an argument bag against the typed value schema (a nested object is refused). */
-  private typedArgs(
-    args: Record<string, unknown>,
-  ): Record<string, WasteSourceConfig['args'][string]> {
-    const out: Record<string, WasteSourceConfig['args'][string]> = {}
-    for (const [key, value] of Object.entries(args)) out[key] = WasteArgValueSchema.parse(value)
-    return out
-  }
-
-  /**
-   * D880: rewrite every legacy source (free `argsJson`) as typed `args`; its
-   * credentials go to the keychain through the normal save path. Then every
-   * credential is read back and compared with what the legacy row held; on any
-   * difference the legacy rows are written back, so nothing is lost. Dry run
-   * unless `apply`. Idempotent. Counts only - never an argument, a ref or an id.
-   */
-  async migrateSources(apply: boolean): Promise<RawSecretMigrationReport> {
-    const sources = this.configuredSources()
-    const legacy = sources.filter((s) => s.argsJson !== undefined)
-    const rawRows = legacy.filter((s) => {
-      try {
-        return hasCredential(sourceArgs(s))
-      } catch {
-        return false
-      }
-    })
-    const markerRows = sources.filter(
-      (s) => s.argsJson === undefined && hasCredential(s.args),
-    ).length
-    const report = (over: Partial<RawSecretMigrationReport>): RawSecretMigrationReport => ({
-      apply,
-      rows: sources.length,
-      raw: rawRows.length,
-      markers: markerRows,
-      migrated: 0,
-      failed: 0,
-      remainingRaw: rawRows.length,
-      unresolvedMarkers: this.unresolvedSecrets.length,
-      redundantCopies: legacy.length,
-      verified: rawRows.length === 0 && this.unresolvedSecrets.length === 0,
-      ...over,
-    })
-    if (!apply || legacy.length === 0) return report({})
-
-    // Per row: a row that cannot be converted (malformed JSON, a nested value) stays
-    // exactly as it is and is counted failed - it never stops the others.
-    const expected = new Map<string, Record<string, unknown>>()
-    const unconverted = new Set<string>()
-    const migrated = sources.map((s): WasteSourceConfig => {
-      if (s.argsJson === undefined) return s
-      try {
-        const args = sourceArgs(s)
-        const row = WasteSourceConfigSchema.parse({
-          id: s.id,
-          label: s.label,
-          module: s.module,
-          args: this.typedArgs(args),
-          enabled: s.enabled,
-        })
-        expected.set(s.id, args)
-        return row
-      } catch {
-        // Not the error: its text could quote the row.
-        unconverted.add(s.id)
-        return s
-      }
-    })
-    const failedRows = unconverted.size
-    if (expected.size === 0) {
-      return report({ failed: failedRows, remainingRaw: legacy.length })
-    }
-    try {
-      await this.persistSources(migrated)
-    } catch {
-      return report({ failed: legacy.length })
-    }
-    const back = new Map(this.configuredSources().map((s) => [s.id, s]))
-    const intact = [...expected].every(([id, args]) => {
-      const row = back.get(id)
-      return (
-        row !== undefined &&
-        row.argsJson === undefined &&
-        JSON.stringify(sortedEntries(row.args)) === JSON.stringify(sortedEntries(args))
-      )
-    })
-    if (!intact || this.unresolvedSecrets.length > 0) {
-      await this.rollbackMigration(sources, expected)
-      return report({ failed: legacy.length })
-    }
-    return report({
-      migrated: expected.size,
-      failed: failedRows,
-      remainingRaw: failedRows,
-      unresolvedMarkers: 0,
-      redundantCopies: legacy.length,
-      verified: failedRows === 0,
-    })
-  }
-
-  /**
-   * Put the legacy rows back. A converted row's `args` is written as `null`, which
-   * the save path reads as "this object is gone": it deletes the keychain refs the
-   * migration created (a plain `{}` would keep them). Never throws - the report
-   * says failed either way, and the legacy JSON stays authoritative.
-   */
-  private async rollbackMigration(
-    sources: readonly WasteSourceConfig[],
-    converted: ReadonlyMap<string, unknown>,
-  ): Promise<void> {
-    try {
-      await this.updateGlobalSettingsAsOperator({
-        sources: sources.map((s) => (converted.has(s.id) ? { ...s, args: null } : s)),
-      })
-    } catch {
-      this.ctx.logger.error(
-        'waste-collections: the migration rollback failed - keychain refs may be orphaned (System -> Secrets)',
-      )
-    }
-  }
-
-  async deleteSource(input: { id: string }): Promise<{ ok: true }> {
-    const sources = this.configuredSources()
-    if (!sources.some((s) => s.id === input.id)) {
-      throw new Error(`source '${input.id}' not found`)
-    }
-    await this.persistSources(sources.filter((s) => s.id !== input.id))
-    return { ok: true }
   }
 
   async fetchNow(input?: { sourceId?: string }): Promise<{
@@ -710,7 +426,3 @@ export function parseWasteConfig(raw: unknown): WasteConfig {
 
 /** Type-only re-export so the entry module types stay discoverable. */
 export type { ProviderRegistration }
-
-function sortedEntries(args: Readonly<Record<string, unknown>>): [string, unknown][] {
-  return Object.entries(args).toSorted(([a], [b]) => (a < b ? -1 : 1))
-}

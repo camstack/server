@@ -1003,32 +1003,6 @@
       "combinedIceServerListAll": "Combined ICE server list — all enabled providers",
       "noServersFromEnabledProviders": "No servers from enabled providers."
     },
-    "wasteSettingsSources": {
-      "countryService": "Country & service",
-      "country": "Country",
-      "selectCountry": "Select country…",
-      "service": "Service",
-      "pickACountryFirst": "Pick a country first",
-      "selectService": "Select service…",
-      "newSource": "New source",
-      "deleteWasteSource": "Delete waste source?",
-      "removeItsCalendarUnderSystem": "Remove “{{label}}” ({{id}}). Its calendar under System → Calendars is dropped.",
-      "label": "Label",
-      "module": "Module",
-      "enabled": "Enabled",
-      "on": "On",
-      "off": "Off",
-      "delete": "Delete {{label}}",
-      "pickACountryAndA": "Pick a country and a service — configuration fields come from that HACS source.",
-      "addSource": "Add source",
-      "couldNotLoadSources": "Could not load sources.",
-      "noWasteSourcesYetAdd": "No waste sources yet. Add one to register a municipal service.",
-      "addWasteSource": "Add waste source",
-      "edit": "Edit {{value1}}",
-      "saving": "Saving…",
-      "loadingFields": "Loading fields…",
-      "chooseACountryAndService": "Choose a country and service to see the required fields."
-    },
     "alarmLiveCard": {
       "panel": "Panel",
       "thisHubDoesNotReport": "This hub does not report the panel's live state yet — update it to arm from here.",
@@ -11734,5 +11708,13 @@
     "active": "Active",
     "addBlocked": "{{names}}: only one instance is allowed and it already exists.",
     "addNone": "No provider here can hold instances."
+  },
+  "wasteFetchNow": {
+    "label": "Fetch {{name}} now",
+    "nothingFetched": "Nothing to fetch",
+    "sourceIsOff": "{{name}} is switched off, so it was not fetched.",
+    "fetched": "{{name}} fetched",
+    "failed": "{{name}} could not be fetched",
+    "collections": "{{count}} collections read."
   }
 }

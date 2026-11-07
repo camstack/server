@@ -1,5 +1,5 @@
 /**
- * Waste source custom-action CRUD catalog + no editable-array settings.
+ * Waste source custom-action catalog + no editable-array settings.
  */
 import { describe, expect, it } from 'vitest'
 import { wasteCollectionsActions } from '../custom-actions.js'
@@ -7,19 +7,9 @@ import { WasteCollectionsAddon } from '../waste-collections.addon.js'
 import { findCatalogService, serviceDisplayLabel, serviceFormSchema } from '../waste-catalog.js'
 
 describe('wasteCollectionsActions catalog', () => {
-  it('declares country/service picker actions + CRUD', () => {
+  it('keeps only the fetch action and the two lists that feed the instance form', () => {
     expect(Object.keys(wasteCollectionsActions).sort()).toEqual(
-      [
-        'createSource',
-        'deleteSource',
-        'fetchNow',
-        'listCountries',
-        'listServices',
-        'listSources',
-        'migrateSources',
-        'serviceFormSchema',
-        'updateSource',
-      ].sort(),
+      ['fetchNow', 'listCountries', 'listServices'].sort(),
     )
   })
 })

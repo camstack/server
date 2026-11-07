@@ -48,7 +48,7 @@ import {
   ExportSetupLead,
   exportedDevicesColumn,
 } from '../../components/integrations/exported-devices'
-import { WasteSettingsSources } from './WasteSettingsSources'
+import { wasteFetchNowAction } from '../../components/integrations/waste-fetch-now'
 import type { TFunction } from 'i18next'
 
 const POLL_INTERVAL_MS = 10_000
@@ -76,13 +76,15 @@ interface InstancesDescriptor {
   readonly addLabelDefault: string
   /**
    * Providers of the kind that keep no instance records stay reachable as the pills they always
-   * were, beside the list (a source with its own settings panel, such as waste collections).
+   * were, beside the list (a calendar provider that keeps its sources elsewhere).
    */
   readonly keepProviderPills?: boolean
   /** Columns the kind adds to the shared table (after On). */
   readonly extraColumns?: (t: TFunction) => readonly DataColumn<PanelRow>[]
   /** A block at the top of an instance's edit dialog. */
   readonly lead?: (row: InstanceRow) => ReactElement
+  /** Controls the kind adds to an instance row's action cell, before Edit. */
+  readonly rowActions?: (row: InstanceRow) => ReactElement | null
 }
 
 /**
@@ -167,6 +169,7 @@ const KINDS: readonly KindDescriptor[] = [
       addLabelKey: 'system.connectivity.calendarsAdd',
       addLabelDefault: 'Add calendar',
       keepProviderPills: true,
+      rowActions: wasteFetchNowAction,
     },
   },
 ]
@@ -198,11 +201,6 @@ function buildGroup(
               <>
                 <ProcessBadge processState={row.processState} />
               </>
-            }
-            settingsContent={
-              row.addonId === 'waste-collections' ? (
-                <WasteSettingsSources addonId={row.addonId} capName={capName} />
-              ) : undefined
             }
           />
         ),
@@ -339,6 +337,7 @@ export function IntegrationsPage(): ReactElement {
               addLabel={t(spec.addLabelKey, spec.addLabelDefault)}
               {...(spec.extraColumns !== undefined ? { extraColumns: spec.extraColumns(t) } : {})}
               {...(spec.lead !== undefined ? { lead: spec.lead } : {})}
+              {...(spec.rowActions !== undefined ? { rowActions: spec.rowActions } : {})}
             />
           )
         const hub = (

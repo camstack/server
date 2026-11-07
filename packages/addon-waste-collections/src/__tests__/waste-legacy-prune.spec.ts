@@ -2,7 +2,12 @@
  * Deleting a source that also sits in the legacy `sources` setting removes that row too, or it
  * would reappear beside the records (migration pending) or be copied back by the migration.
  */
-import { type AddonContext, makeInMemoryRecords, type SecretsAccess } from '@camstack/types'
+import {
+  type AddonContext,
+  integrationInstancesCapability,
+  makeInMemoryRecords,
+  type SecretsAccess,
+} from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { WasteCollectionsAddon } from '../waste-collections.addon.js'
 import { plainWasteSourceKind } from '../waste-source-record-kinds.js'
@@ -77,20 +82,29 @@ async function boot(
     },
   }
   const addon = new WasteCollectionsAddon()
-  await addon.initialize(context as unknown as AddonContext)
-  return { addon, settings }
+  const result = await addon.initialize(context as unknown as AddonContext)
+  const holder =
+    result === undefined
+      ? undefined
+      : result.providers?.find((p) => p.capability.name === integrationInstancesCapability.name)
+  return { addon, settings, holder }
 }
 
 describe('a delete also removes the legacy row', () => {
-  it('deleteSource drops the legacy row, so it neither returns nor is copied back', async () => {
-    const { addon, settings } = await boot()
+  it('deleting the instance drops the legacy row, so it neither returns nor is copied back', async () => {
+    const { addon, settings, holder } = await boot()
     expect(
       addon
         .configuredSources()
         .map((s) => s.id)
         .toSorted(),
     ).toEqual(['cabin', 'home'])
-    await addon.deleteSource({ id: 'cabin' })
+    const provider = holder?.provider
+    if (typeof provider !== 'object' || provider === null || !('deleteInstance' in provider)) {
+      throw new Error('the addon registered no integration-instances provider')
+    }
+    if (typeof provider.deleteInstance !== 'function') throw new Error('no deleteInstance')
+    await provider.deleteInstance({ id: 'cabin' })
     const legacy = settings.store['sources'] as { id: string }[]
     expect(legacy.map((r) => r.id)).toEqual(['home'])
     expect(addon.configuredSources().map((s) => s.id)).toEqual(['home'])
