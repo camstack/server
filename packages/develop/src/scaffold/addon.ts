@@ -26,12 +26,12 @@ const KIND_EXAMPLE: Record<NonNullable<ScaffoldAddonOptions['kind']>, string | n
   exporter: 'ha-export',
 }
 
-const INTEGRATION_NOTES: readonly string[] = [
+export const INTEGRATION_NOTES: readonly string[] = [
   'Public examples: `camstack/addon-examples` (`example-device-integration`, `example-service-integration`, `example-exporter`).',
   '',
   'Integration rules (D1007, D996, D1009):',
   '- The integration is a typed instance record served through `integration-instances`; a secret is a `password` field (`.meta({ secret: true })` on the kind).',
-  '- No `globalSettingsSchema()`, no `integration_settings`, no `integrations.getSettings` / `setSettings` (retired).',
+  '- Addon-wide settings are scoped (D986): declare `scopedSettingsCapabilities()` plus `clusterSettingsSchema(cap)` / `nodeSettingsSchema(cap)` / `deviceDefaultsSchema(cap)`, and read or write them through `this.clusterSettings(cap, schema)` / `this.nodeSettings(cap, schema)` / `this.deviceDefaults(cap, schema)`. Callers go through `addonSettings.getScopedSettings` / `updateScopedSettings` / `readScopedValues`. No `integration_settings`, no `integrations.getSettings` / `setSettings` (retired).',
   '- Data changes go through a D987 migration with read-back, never a dual read path.',
   '- The Gateway is a SIBLING of the devices it brings, never their parent.',
   '- An exporter provides `integration-instances` and is multi-instance: minted ids, exposure keyed by instance id.',
@@ -366,8 +366,12 @@ import { BaseAddon, type ProviderRegistration } from '@camstack/types'
 // An addon has no settings page of its own (D1007). What an operator
 // configures is an integration INSTANCE (scaffold kind device-integration,
 // service-integration or exporter); a per-device setting lives in
-// ctx.settings.*DeviceStore. No on/off switch: the capability toggle is an
-// addon's ONE enable (D777).
+// ctx.settings.*DeviceStore. A setting that belongs to a capability this
+// addon provides is SCOPED (D986): list the capability in
+// scopedSettingsCapabilities(), return its form from clusterSettingsSchema(cap)
+// or nodeSettingsSchema(cap), and read/write it through this.clusterSettings(cap,
+// schema) / this.nodeSettings(cap, schema). No on/off switch: the capability
+// toggle is an addon's ONE enable (D777).
 type <%= className %>Config = Readonly<Record<string, never>>
 
 const DEFAULTS: <%= className %>Config = {}

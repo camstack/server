@@ -40,9 +40,18 @@ const reads = {
       appConnections: { resolved: ['http://192.168.1.9:4443'] },
     },
   },
-  'addonSettings.getGlobalSettings': (i: { addonId: string }): unknown =>
-    i.addonId === 'cloudflare-tunnel' ? tunnel : null,
-  'addonSettings.updateGlobalSettings': { success: true },
+  // Only the tunnel's `network-access` per-node form answers; a call for any other
+  // (addon, cap, scope) is a wrong call and fails the read.
+  'addonSettings.getScopedSettings': (i: {
+    addonId: string
+    cap: string
+    scope: string
+  }): unknown => {
+    if (i.addonId === 'cloudflare-tunnel' && i.cap === 'network-access' && i.scope === 'node')
+      return tunnel
+    throw new Error(`no scoped form for ${i.addonId}/${i.cap}/${i.scope}`)
+  },
+  'addonSettings.updateScopedSettings': { success: true },
 }
 
 describe('configure_remote_access', () => {
@@ -55,6 +64,16 @@ describe('configure_remote_access', () => {
     expect(out).toMatchObject({ publicEndpoint: 'https://cam.example.test' })
     expect(body).toContain('cam.example.test')
     expect(calls.some((c) => c.path.startsWith('turnProvider'))).toBe(false)
+    expect(calls.some((c) => c.path === 'addonSettings.getGlobalSettings')).toBe(false)
+    // the TURN addons keep instances, not settings: no scoped read is made for them
+    expect(calls.filter((c) => c.path === 'addonSettings.getScopedSettings')).toHaveLength(1)
+    expect(out).toMatchObject({
+      addons: [
+        { addonId: 'cloudflare-tunnel', state: 'read' },
+        { addonId: 'cloudflare-turn', state: 'no-settings' },
+        { addonId: 'static-turn', state: 'no-settings' },
+      ],
+    })
   })
 })
 
@@ -68,10 +87,12 @@ describe('configure_remote_access_set', () => {
     }
     const preview = await remoteAccessSet(w, args, undefined)
     if (preview.status !== 'dry-run') throw new Error(JSON.stringify(preview))
-    expect(calls.some((c) => c.path === 'addonSettings.updateGlobalSettings')).toBe(false)
+    expect(calls.some((c) => c.path === 'addonSettings.updateScopedSettings')).toBe(false)
     await remoteAccessSet(w, args, preview.confirm_token)
-    expect(calls.find((c) => c.path === 'addonSettings.updateGlobalSettings')?.input).toEqual({
+    expect(calls.find((c) => c.path === 'addonSettings.updateScopedSettings')?.input).toEqual({
       addonId: 'cloudflare-tunnel',
+      cap: 'network-access',
+      scope: 'node',
       patch: { localPort: 8443 },
     })
   })
@@ -90,7 +111,7 @@ describe('configure_remote_access_set', () => {
     expect(body).toMatch(/secret-required/)
     expect(body).toContain('http://192.168.1.9:4443/system/remote-access')
     expect(body).not.toContain('hunter2')
-    expect(calls.some((c) => c.path === 'addonSettings.updateGlobalSettings')).toBe(false)
+    expect(calls.some((c) => c.path === 'addonSettings.updateScopedSettings')).toBe(false)
   })
 
   it('refuses an unknown key and a wrong type', async () => {

@@ -24,7 +24,12 @@ const ClusterFieldsSchema = z
       .array(
         z.looseObject({
           fields: z
-            .array(z.looseObject({ key: z.string().optional(), value: z.unknown().optional() }))
+            .array(
+              z.looseObject({
+                key: z.string().optional(),
+                value: z.unknown().optional(),
+              }),
+            )
             .optional(),
         }),
       )
@@ -84,8 +89,12 @@ export async function modelPinCensus(hub: OpsHub, modelIds: readonly string[]): 
   )
   const orchestrator = parseWire(
     ClusterFieldsSchema,
-    await hub.query('addonSettings.getGlobalSettings', { addonId: 'pipeline-orchestrator' }),
-    'addonSettings.getGlobalSettings',
+    await hub.query('addonSettings.getScopedSettings', {
+      addonId: 'pipeline-orchestrator',
+      cap: 'pipeline-orchestrator',
+      scope: 'cluster',
+    }),
+    'addonSettings.getScopedSettings',
   )
   let clusterRows = 0
   for (const section of orchestrator?.sections ?? []) {
@@ -149,7 +158,9 @@ export interface RetrainCensusArgs {
 export async function retrainCensus(hub: OpsHub, args: RetrainCensusArgs = {}): Promise<unknown> {
   const staging = parseWire(
     z.array(StagingTrackSchema),
-    await hub.query('pipelineAnalytics.listRetrainStaging', { limit: STAGING_LIMIT }),
+    await hub.query('pipelineAnalytics.listRetrainStaging', {
+      limit: STAGING_LIMIT,
+    }),
     'pipelineAnalytics.listRetrainStaging',
   )
   const budget = args.maxFrameReads ?? 100
@@ -159,7 +170,9 @@ export async function retrainCensus(hub: OpsHub, args: RetrainCensusArgs = {}): 
   for (const track of sampled) {
     const frames = parseWire(
       RetrainFramesSchema,
-      await hub.query('pipelineAnalytics.listRetrainFrames', { trackId: track.trackId }),
+      await hub.query('pipelineAnalytics.listRetrainFrames', {
+        trackId: track.trackId,
+      }),
       'pipelineAnalytics.listRetrainFrames',
     )
     copies += frames.copies.length

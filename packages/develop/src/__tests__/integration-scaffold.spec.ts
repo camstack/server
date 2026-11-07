@@ -2,7 +2,7 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { scaffoldAddon } from '../scaffold/addon.js'
+import { INTEGRATION_NOTES, scaffoldAddon } from '../scaffold/addon.js'
 import { SCAFFOLD_KINDS, isScaffoldKind, type ScaffoldKind } from '../types.js'
 import { validateAddon } from '../validate/addon.js'
 
@@ -89,6 +89,23 @@ describe('scaffold kinds', () => {
       expect(text, kind).not.toContain('integration_settings')
       expect(text, kind).not.toMatch(/integrations\.(get|set)Settings/)
     }
+  })
+})
+
+describe('scaffold teaches the scoped settings API (D986)', () => {
+  it('the empty addon source names the scoped declaration', () => {
+    const { sources } = scaffold('empty')
+    const text = allText(sources)
+    expect(text).toContain('scopedSettingsCapabilities()')
+    expect(text).toContain('this.clusterSettings(cap')
+  })
+
+  it('the integration notes written into DEVELOP.md name the scoped API, not the retired hook', () => {
+    const notes = INTEGRATION_NOTES.join('\n')
+    expect(notes).toContain('clusterSettingsSchema(cap)')
+    expect(notes).toContain('addonSettings.getScopedSettings')
+    expect(notes).not.toContain('globalSettingsSchema')
+    expect(notes).not.toContain('getGlobalSettings')
   })
 })
 

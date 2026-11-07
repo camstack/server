@@ -55,7 +55,10 @@ describe('selectLogSource — the provider is chosen, never assumed', () => {
   })
   it('offers only the ring plus what is configured: no Loki on a hub without it', () => {
     const only = selectLogSource([{ addonId: 'winston-logging', isActive: true }], undefined)
-    expect(only).toEqual({ kind: 'choose', options: ['ring', 'winston-logging'] })
+    expect(only).toEqual({
+      kind: 'choose',
+      options: ['ring', 'winston-logging'],
+    })
   })
 })
 
@@ -72,13 +75,23 @@ describe('hub_logs', () => {
   it('reads the ring and a provider through logs.query with its source (D898)', async () => {
     const hub = fakeHub({
       'addons.listCapabilityProviders': providers,
-      'logs.query': { entries: [{ message: 'a line' }], nextBefore: null, done: true },
+      'logs.query': {
+        entries: [{ message: 'a line' }],
+        nextBefore: null,
+        done: true,
+      },
     })
     await hubLogs(hub, { provider: 'ring', deviceId: 102 }, 1_000_000)
     await hubLogs(hub, { provider: 'winston-logging', level: 'error' }, 1_000_000)
     const [ring, dest] = hub.calls.filter((c) => c.path === 'logs.query')
-    expect(ring?.input).toMatchObject({ source: 'ring', tags: { deviceId: '102' } })
-    expect(dest?.input).toMatchObject({ source: 'winston-logging', level: 'error' })
+    expect(ring?.input).toMatchObject({
+      source: 'ring',
+      tags: { deviceId: '102' },
+    })
+    expect(dest?.input).toMatchObject({
+      source: 'winston-logging',
+      level: 'error',
+    })
     expect(dest?.input).toHaveProperty('since')
   })
 
@@ -110,7 +123,9 @@ describe('loki_query — the connection is the integration-instances record', ()
         status: 200,
         text: async () =>
           JSON.stringify({
-            data: { result: [{ stream: { job: 'camstack' }, values: [['1', 'a line']] }] },
+            data: {
+              result: [{ stream: { job: 'camstack' }, values: [['1', 'a line']] }],
+            },
           }),
       }
     },
@@ -122,7 +137,9 @@ describe('loki_query — the connection is the integration-instances record', ()
   })
 
   it('says so when the hub has no Loki provider (no Grafana assumed)', async () => {
-    const hub = fakeHub({ 'addons.listCapabilityProviders': [{ addonId: 'winston-logging' }] })
+    const hub = fakeHub({
+      'addons.listCapabilityProviders': [{ addonId: 'winston-logging' }],
+    })
     const out = await lokiQuery(hub, { logql: '{job="camstack"}' }, okFetch)
     expect(JSON.stringify(out)).toMatch(/no Loki log-destination provider/)
     expect(okFetch.urls).toHaveLength(0)
@@ -153,7 +170,11 @@ describe('loki_query — the connection is the integration-instances record', ()
       instance({
         url: 'https://loki.example.test',
         username: 'ops',
-        password: { $secret: 'secret://loki-logging/x/password', v: 1, set: true },
+        password: {
+          $secret: 'secret://loki-logging/x/password',
+          v: 1,
+          set: true,
+        },
       }),
     ])
     const out = JSON.stringify(await lokiQuery(hub, { logql: '{}' }, okFetch))
@@ -233,7 +254,11 @@ const media = (kind: string, timestamp: number, sizeBytes = 100): MediaInfo => (
 const codes = (input: Parameters<typeof analyzeTrack>[0]): string[] =>
   analyzeTrack(input).map((f) => f.code)
 
-const base = { siblings: [] as Track[], ffEqualsLf: null, enrichment: { face: null, plate: null } }
+const base = {
+  siblings: [] as Track[],
+  ffEqualsLf: null,
+  enrichment: { face: null, plate: null },
+}
 
 describe('analyzeTrack — the audit rules', () => {
   it('flags a track with no media at all', () => {
@@ -321,11 +346,14 @@ describe('censuses — a failed read is never "nothing found"', () => {
     sections: [{ fields: [{ key: 'clusterModel:detector', value: 'pinned-model' }] }],
   }
   const happy = {
-    'nodes.directory': { complete: true, nodes: [{ id: 'hub', isOnline: true }] },
+    'nodes.directory': {
+      complete: true,
+      nodes: [{ id: 'hub', isOnline: true }],
+    },
     'pipelineOrchestrator.getNodeInferenceDevices': { devices: [] },
     'pipelineOrchestrator.listAgentSettings': [],
     'customModelRegistry.listModels': [],
-    'addonSettings.getGlobalSettings': orchestrator,
+    'addonSettings.getScopedSettings': orchestrator,
   }
 
   it('reports the pin and where it was found', async () => {
@@ -338,8 +366,21 @@ describe('censuses — a failed read is never "nothing found"', () => {
     await modelPinCensus(hub, ['m'])
     expect(hub.calls.map((c) => c.path)).not.toContain('pipelineExecutor.getGlobalSteps')
   })
+  it('reads the orchestrator cluster form through the scoped API, never the global hook', async () => {
+    const hub = fakeHub(happy)
+    await modelPinCensus(hub, ['m'])
+    expect(hub.calls.map((c) => c.path)).not.toContain('addonSettings.getGlobalSettings')
+    expect(hub.calls.find((c) => c.path === 'addonSettings.getScopedSettings')?.input).toEqual({
+      addonId: 'pipeline-orchestrator',
+      cap: 'pipeline-orchestrator',
+      scope: 'cluster',
+    })
+  })
   it('throws when the node list is incomplete', async () => {
-    const hub = fakeHub({ ...happy, 'nodes.directory': { complete: false, nodes: [] } })
+    const hub = fakeHub({
+      ...happy,
+      'nodes.directory': { complete: false, nodes: [] },
+    })
     await expect(modelPinCensus(hub, ['m'])).rejects.toThrow(/proves nothing/)
   })
   it('throws when a read fails, instead of answering "not pinned"', async () => {
@@ -352,7 +393,10 @@ describe('censuses — a failed read is never "nothing found"', () => {
     await expect(modelPinCensus(hub, ['m'])).rejects.toThrow(/hub busy/)
   })
   it('throws when the cluster rows vanished (shape change)', async () => {
-    const hub = fakeHub({ ...happy, 'addonSettings.getGlobalSettings': { sections: [] } })
+    const hub = fakeHub({
+      ...happy,
+      'addonSettings.getScopedSettings': { sections: [] },
+    })
     await expect(modelPinCensus(hub, ['m'])).rejects.toThrow(/shape changed/)
   })
   it('retrain census marks a partial frame read', async () => {
@@ -361,7 +405,10 @@ describe('censuses — a failed read is never "nothing found"', () => {
         { trackId: 'a', className: 'person', deviceId: 1, annotationCount: 2 },
         { trackId: 'b', className: 'dog', deviceId: 1, annotationCount: 1 },
       ],
-      'pipelineAnalytics.listRetrainFrames': { copies: [1], candidates: [1, 2] },
+      'pipelineAnalytics.listRetrainFrames': {
+        copies: [1],
+        candidates: [1, 2],
+      },
       'pipelineAnalytics.countUnstampedEventMedia': null,
       'customModelRegistry.listModels': [],
     })

@@ -113,20 +113,47 @@ export const safeWord = (value: string | null | undefined): string => {
 }
 
 const NodeAddonsSchema = z.array(
-  z.looseObject({ id: z.string(), status: z.string(), version: z.string().optional() }),
+  z.looseObject({
+    id: z.string(),
+    status: z.string(),
+    version: z.string().optional(),
+  }),
 )
 
-const SettingsSchema = z
-  .looseObject({
-    sections: z.array(
-      z.looseObject({
-        fields: z.array(
-          z.looseObject({ type: z.string().optional(), value: z.unknown().optional() }),
-        ),
-      }),
-    ),
-  })
-  .nullable()
+const ScopedValuesSchema = z.record(z.string(), z.unknown()).nullable()
+
+type ScopeName = 'cluster' | 'node'
+
+interface ScopedForm {
+  readonly cap: string
+  readonly scope: ScopeName
+}
+
+/**
+ * The scoped forms each critical addon declares (`clusterSettingsSchema` /
+ * `nodeSettingsSchema`). An addon absent here declares none, so it has no stored
+ * settings to be "configured" by. A node form is read on the hub's own node.
+ */
+export const SCOPED_FORMS: Readonly<Record<string, readonly ScopedForm[]>> = {
+  'cloudflare-tunnel': [{ cap: 'network-access', scope: 'node' }],
+  'tailscale-ingress': [{ cap: 'network-access', scope: 'node' }],
+  'tailscale-client': [{ cap: 'mesh-network', scope: 'node' }],
+  'pipeline-orchestrator': [{ cap: 'pipeline-orchestrator', scope: 'cluster' }],
+  'pipeline-runner': [{ cap: 'pipeline-runner', scope: 'node' }],
+  'detection-pipeline': [
+    { cap: 'detection-pipeline', scope: 'cluster' },
+    { cap: 'pipeline-executor', scope: 'node' },
+  ],
+  'pipeline-analytics': [
+    { cap: 'pipeline-analytics', scope: 'cluster' },
+    { cap: 'face-gallery', scope: 'cluster' },
+  ],
+  'stream-broker': [
+    { cap: 'stream-broker', scope: 'cluster' },
+    { cap: 'stream-broker', scope: 'node' },
+  ],
+  recorder: [{ cap: 'recording', scope: 'cluster' }],
+}
 
 const DeviceRowSchema = z.looseObject({
   id: z.number(),
@@ -134,12 +161,10 @@ const DeviceRowSchema = z.looseObject({
   type: z.string().optional(),
 })
 
-/** Whether an addon holds ANY saved value. The values themselves are dropped here. */
-export function hasSavedSettings(settings: z.infer<typeof SettingsSchema>): boolean {
-  if (settings === null) return false
-  return settings.sections.some((s) =>
-    s.fields.some((f) => f.value !== undefined && f.value !== null && f.value !== ''),
-  )
+/** Whether the stored values hold ANY saved value. The values themselves are dropped here. */
+export function hasSavedValues(values: z.infer<typeof ScopedValuesSchema>): boolean {
+  if (values === null) return false
+  return Object.values(values).some((v) => v !== undefined && v !== null && v !== '')
 }
 
 function stateOf(status: string, configured: boolean | null): AddonState {
@@ -149,13 +174,19 @@ function stateOf(status: string, configured: boolean | null): AddonState {
 }
 
 async function readConfigured(client: HubClient, addonId: string): Promise<boolean | null> {
-  const read = await readQuery(
-    client,
-    'addonSettings.getGlobalSettings',
-    { addonId },
-    SettingsSchema,
+  const forms = SCOPED_FORMS[addonId] ?? []
+  const reads = await Promise.all(
+    forms.map((form) =>
+      readQuery(
+        client,
+        'addonSettings.readScopedValues',
+        { addonId, cap: form.cap, scope: form.scope },
+        ScopedValuesSchema,
+      ),
+    ),
   )
-  return read.ok ? hasSavedSettings(read.value) : null
+  if (reads.length > 0 && reads.every((r) => !r.ok)) return null
+  return reads.some((r) => r.ok && hasSavedValues(r.value))
 }
 
 async function nodeFacts(
@@ -182,7 +213,10 @@ async function nodeFacts(
 export async function collectEnvironment(
   ctx: McpContext,
   client: HubClient,
-  args: { readonly deviceId?: number; readonly viewerAppVersion?: string | null },
+  args: {
+    readonly deviceId?: number
+    readonly viewerAppVersion?: string | null
+  },
 ): Promise<EnvironmentFacts> {
   const unavailable: { [part: string]: string } = {}
   const status = await opsStatus(ctx)
@@ -201,9 +235,10 @@ export async function collectEnvironment(
 
   const criticalIds = new Set(CRITICAL_ADDONS.map((a) => a.id))
   const perNode = await mapLimit(
-    summaries
-      .slice(0, NODE_CAP)
-      .map((n, i) => ({ n, label: nodes[i]?.label ?? `node#${String(i + 1)}` })),
+    summaries.slice(0, NODE_CAP).map((n, i) => ({
+      n,
+      label: nodes[i]?.label ?? `node#${String(i + 1)}`,
+    })),
     READ_CONCURRENCY,
     async ({ n, label }) => {
       if (!n.online) return { label, rows: [] as z.infer<typeof NodeAddonsSchema> }

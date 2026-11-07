@@ -25,12 +25,6 @@
       "server/backend/src/api/trpc/device-config-secret-redaction.ts:addon-level-settings": "the carrier of the addon-level hooks (base class, cap, router, forwarding, UI form); P8 deletes it (D986) [getGlobalSettings, getIntegrationSettings]",
       "server/backend/src/api/trpc/localized-schema-paths.ts:addon-level-settings": "the carrier of the addon-level hooks (base class, cap, router, forwarding, UI form); P8 deletes it (D986) [getGlobalSettings, getIntegrationSettings]",
       "server/backend/src/core/addon/addon-settings-provider.ts:addon-level-settings": "the carrier of the addon-level hooks (base class, cap, router, forwarding, UI form); P8 deletes it (D986) [getGlobalSettings, updateGlobalSettings, getIntegrationSettings]"
-    },
-    "m5-tooling": {
-      "packages/cli/src/mcp/configure-network.ts:addon-level-settings": "a scaffold, plan or tool that still teaches or reads the addon-level hooks; P8 rewrites it for the scoped schemas (D986) [getGlobalSettings, updateGlobalSettings]",
-      "packages/cli/src/mcp/report-environment.ts:addon-level-settings": "a scaffold, plan or tool that still teaches or reads the addon-level hooks; P8 rewrites it for the scoped schemas (D986) [getGlobalSettings]",
-      "packages/mcp-dev/src/ops/censuses.ts:addon-level-settings": "a scaffold, plan or tool that still teaches or reads the addon-level hooks; P8 rewrites it for the scoped schemas (D986) [getGlobalSettings]",
-      "packages/develop/src/scaffold/addon.ts:addon-level-settings": "the scaffold's rule text says the hook is retired and so names it; it goes when the hook is deleted [globalSettingsSchema]"
     }
   }
 }

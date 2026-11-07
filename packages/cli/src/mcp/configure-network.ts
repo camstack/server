@@ -3,7 +3,10 @@
  *
  * `configure_remote_access` reads the live state and each addon's settings;
  * `configure_remote_access_set` changes the NON-secret ones through
- * `addonSettings.updateGlobalSettings`.
+ * `addonSettings.updateScopedSettings`. The tunnel's settings are the
+ * `network-access` per-node form (the local origin, on the hub's own node); the
+ * two TURN addons keep their servers as integration instances, not settings, so
+ * they report `no-settings` here and are changed in the admin UI.
  *
  * A secret never crosses a tool call, in either direction. A `password` field
  * is reported as `configured: true|false` and never with its value; asking to
@@ -22,7 +25,7 @@ import {
   type AdminGatedResult,
 } from './configure-common.js'
 import type { McpContext, ToolTextResult } from './context.js'
-import { readQuery, withHub, type NoSessionResult } from './ops-hub.js'
+import { readQuery, withHub, type NoSessionResult, type Read } from './ops-hub.js'
 
 export const REMOTE_ACCESS_SET_TOOL = 'configure_remote_access_set'
 
@@ -33,6 +36,17 @@ const ADDON_PAGE: Readonly<Record<RemoteAddon, string>> = {
   'cloudflare-tunnel': '/system/remote-access',
   'cloudflare-turn': '/system/turn',
   'static-turn': '/system/turn',
+}
+
+/** The scoped form an addon declares for its own settings; absent when it declares none. */
+interface RemoteScope {
+  readonly cap: string
+  readonly scope: 'node'
+}
+const REMOTE_SCOPE: Readonly<Record<RemoteAddon, RemoteScope | null>> = {
+  'cloudflare-tunnel': { cap: 'network-access', scope: 'node' },
+  'cloudflare-turn': null,
+  'static-turn': null,
 }
 
 const FieldSchema = z.looseObject({
@@ -107,6 +121,20 @@ const AddressesSchema = z.looseObject({
     .optional(),
 })
 
+async function readAddonForm(
+  client: HubClient,
+  addonId: RemoteAddon,
+): Promise<Read<z.infer<typeof GlobalSettingsSchema>>> {
+  const target = REMOTE_SCOPE[addonId]
+  if (target === null) return { ok: true, value: null }
+  return readQuery(
+    client,
+    'addonSettings.getScopedSettings',
+    { addonId, cap: target.cap, scope: target.scope },
+    GlobalSettingsSchema,
+  )
+}
+
 export async function readRemoteAccess(
   ctx: McpContext,
 ): Promise<Record<string, unknown> | NoSessionResult> {
@@ -115,9 +143,7 @@ export async function readRemoteAccess(
     const [status, addresses, ...addons] = await Promise.all([
       readQuery(client, 'networkAccess.getStatus', {}, AccessStatusSchema.nullable()),
       readQuery(client, 'localNetwork.getAddresses', {}, AddressesSchema),
-      ...RemoteAddonSchema.options.map((addonId) =>
-        readQuery(client, 'addonSettings.getGlobalSettings', { addonId }, GlobalSettingsSchema),
-      ),
+      ...RemoteAddonSchema.options.map((addonId) => readAddonForm(client, addonId)),
     ])
     if (!status.ok) unavailable['access'] = status.reason
     if (!addresses.ok) unavailable['publicEndpoint'] = addresses.reason
@@ -166,12 +192,7 @@ export function remoteAccessSetSpec(client: HubClient): GatedToolSpec<RemoteAcce
           confirmable: false,
           describe: { problem: 'the patch is empty' },
         }
-      const read = await readQuery(
-        client,
-        'addonSettings.getGlobalSettings',
-        { addonId: args.addonId },
-        GlobalSettingsSchema,
-      )
+      const read = await readAddonForm(client, args.addonId)
       if (!read.ok) return { confirmable: false, describe: { problem: read.reason } }
       if (read.value === null) {
         return {
@@ -231,8 +252,12 @@ export function remoteAccessSetSpec(client: HubClient): GatedToolSpec<RemoteAcce
       }
     },
     async execute(args) {
-      await client.call('POST', 'addonSettings.updateGlobalSettings', {
+      const target = REMOTE_SCOPE[args.addonId]
+      if (target === null) throw new Error(`${args.addonId} has no settings to change`)
+      await client.call('POST', 'addonSettings.updateScopedSettings', {
         addonId: args.addonId,
+        cap: target.cap,
+        scope: target.scope,
         patch: args.patch,
       })
       return { addonId: args.addonId, applied: Object.keys(args.patch) }

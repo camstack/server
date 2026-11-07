@@ -47,7 +47,9 @@ const hardware = {
   npu: null,
 }
 
-function answers(extra: { [path: string]: unknown } = {}): { [path: string]: unknown } {
+function answers(extra: { [path: string]: unknown } = {}): {
+  [path: string]: unknown
+} {
   return {
     'nodes.topology': [
       {
@@ -73,15 +75,9 @@ function answers(extra: { [path: string]: unknown } = {}): { [path: string]: unk
       { id: 'stream-broker', status: 'failed', version: '2.1.0' },
       { id: 'some-private-addon', status: 'running', version: '9.9.9' },
     ],
-    'addonSettings.getGlobalSettings': {
-      sections: [
-        {
-          fields: [
-            { type: 'password', value: SECRET_ENV_TOKEN },
-            { type: 'text', value: HOSTNAME },
-          ],
-        },
-      ],
+    'addonSettings.readScopedValues': {
+      token: SECRET_ENV_TOKEN,
+      host: HOSTNAME,
     },
     'deviceManager.listAll': [{ id: 7, name: 'Front Door', type: 'camera' }],
     'logs.query': { entries: [POISONED], done: true, source: 'ring' },
@@ -106,7 +102,11 @@ function fakeGh(authCode = 0, createCode = 0) {
       calls.push(call)
       expect(command).toBe('gh')
       if (args[0] === 'auth')
-        return { code: authCode, stdout: '', stderr: authCode === 0 ? '' : 'not logged in' }
+        return {
+          code: authCode,
+          stdout: '',
+          stderr: authCode === 0 ? '' : 'not logged in',
+        }
       const at = args.indexOf('--body-file')
       const file = at >= 0 ? args[at + 1] : undefined
       if (file !== undefined && existsSync(file)) {
@@ -114,7 +114,11 @@ function fakeGh(authCode = 0, createCode = 0) {
         call.body = readFileSync(file, 'utf8')
       }
       return createCode === 0
-        ? { code: 0, stdout: 'https://github.com/camstack/server/issues/901\n', stderr: '' }
+        ? {
+            code: 0,
+            stdout: 'https://github.com/camstack/server/issues/901\n',
+            stderr: '',
+          }
         : { code: createCode, stdout: '', stderr: 'boom' }
     },
   }
@@ -148,7 +152,11 @@ function dry(result: unknown): {
   }
   const md = 'markdown' in describe ? describe.markdown : undefined
   if (typeof md !== 'string') throw new Error('no markdown')
-  return { token: view.token, markdown: md, describe: Object.fromEntries(Object.entries(describe)) }
+  return {
+    token: view.token,
+    markdown: md,
+    describe: Object.fromEntries(Object.entries(describe)),
+  }
 }
 
 const ok = (r: ReportResult | { status: string }): void => {
@@ -181,6 +189,40 @@ describe('report_issue: the draft', () => {
     expect(gh.calls).toEqual([])
   })
 
+  it('reads "configured" from the scoped forms an addon declares, not from a global form', async () => {
+    const { ctx, calls } = ctxOf({
+      'nodes.getNodeAddons': [
+        { id: 'cloudflare-tunnel', status: 'stopped', version: '1.0.7' },
+        { id: 'stream-broker', status: 'stopped', version: '2.1.0' },
+        { id: 'recorder', status: 'stopped', version: '3.0.0' },
+      ],
+      'addonSettings.readScopedValues': (i: { addonId: string; cap: string; scope: string }) =>
+        i.addonId === 'cloudflare-tunnel' && i.cap === 'network-access' && i.scope === 'node'
+          ? { localPort: 4443 }
+          : i.addonId === 'stream-broker'
+            ? { a: '', b: null }
+            : null,
+    })
+    const d = dry(await reportIssue(ctx, fakeGh().deps, ARGS, undefined, NOW))
+    expect(d.markdown).toContain(
+      '| cloudflare-tunnel | cloudflare tunnel | node#1 | 1.0.7 | configured | stopped |',
+    )
+    expect(d.markdown).toContain(
+      '| stream-broker | stream broker | node#1 | 2.1.0 | installed | stopped |',
+    )
+    expect(d.markdown).toContain(
+      '| recorder | recording / storage | node#1 | 3.0.0 | installed | stopped |',
+    )
+    expect(calls.some((c) => c.path === 'addonSettings.getGlobalSettings')).toBe(false)
+    expect(
+      calls.filter((c) => c.path === 'addonSettings.readScopedValues').map((c) => c.input),
+    ).toContainEqual({
+      addonId: 'recorder',
+      cap: 'recording',
+      scope: 'cluster',
+    })
+  })
+
   it('builds the environment from allow-listed fields only', async () => {
     const { ctx } = ctxOf()
     const d = dry(await reportIssue(ctx, fakeGh().deps, ARGS, undefined, NOW))
@@ -209,7 +251,10 @@ describe('report_issue: the draft', () => {
     const rows = Array.isArray(redactions) ? redactions : []
     expect(rows.length).toBeGreaterThan(5)
     for (const row of rows)
-      expect(row).toEqual({ kind: expect.any(String), count: expect.any(Number) })
+      expect(row).toEqual({
+        kind: expect.any(String),
+        count: expect.any(Number),
+      })
     expect(rows).toContainEqual({ kind: 'ipv4', count: expect.any(Number) })
     const tokens = rows.find((r) => r.kind === 'tokens')
     expect(tokens?.count).toBeGreaterThan(0)
@@ -223,7 +268,14 @@ describe('report_issue: the draft', () => {
     expect(d.markdown).not.toContain('node#1 (node#1)')
     const hubNamed = ctxOf({
       'nodes.topology': [
-        { id: 'hub', name: 'hub', isHub: true, isOnline: true, platform: 'linux', addons: [] },
+        {
+          id: 'hub',
+          name: 'hub',
+          isHub: true,
+          isOnline: true,
+          platform: 'linux',
+          addons: [],
+        },
       ],
     })
     const d2 = dry(await reportIssue(hubNamed.ctx, fakeGh().deps, ARGS, undefined, NOW))
@@ -234,7 +286,13 @@ describe('report_issue: the draft', () => {
     const two = ctxOf({
       'nodes.topology': [
         { id: 'a', isHub: true, isOnline: true, platform: 'linux', addons: [] },
-        { id: 'b', isHub: false, isOnline: true, platform: 'linux', addons: [] },
+        {
+          id: 'b',
+          isHub: false,
+          isOnline: true,
+          platform: 'linux',
+          addons: [],
+        },
       ],
     })
     const d = dry(await reportIssue(two.ctx, fakeGh().deps, ARGS, undefined, NOW))
@@ -372,7 +430,9 @@ describe('report_issue: the recipe per kind', () => {
     const many = Array.from({ length: 80 }, (_, i) =>
       logLine(`distinct failure number ${String(i)} word${String(i)}x`),
     )
-    const { ctx } = ctxOf({ 'logs.query': { entries: many, done: true, source: 'ring' } })
+    const { ctx } = ctxOf({
+      'logs.query': { entries: many, done: true, source: 'ring' },
+    })
     const d = dry(await reportIssue(ctx, fakeGh().deps, ARGS, undefined, NOW))
     expect(d.markdown).toMatch(/… \d+ more not shown/)
   })
@@ -450,7 +510,10 @@ describe('report_issue: the review gate', () => {
 
   it('is refused when mutations are disabled', async () => {
     const { ctx } = ctxOf()
-    const off: McpContext = { ...ctx, gate: new MutationGate({ allowMutations: false }) }
+    const off: McpContext = {
+      ...ctx,
+      gate: new MutationGate({ allowMutations: false }),
+    }
     expect((await reportIssue(off, fakeGh().deps, ARGS, undefined, NOW)).status).toBe('refused')
   })
 })
@@ -461,7 +524,10 @@ describe('report_issue: without gh', () => {
     const gh = fakeGh(1)
     const d = dry(await reportIssue(ctx, gh.deps, ARGS, undefined, NOW))
     const r = await reportIssue(ctx, gh.deps, ARGS, d.token, NOW)
-    expect(r).toMatchObject({ status: 'executed', result: { outcome: 'link', truncated: false } })
+    expect(r).toMatchObject({
+      status: 'executed',
+      result: { outcome: 'link', truncated: false },
+    })
     const url = r.status === 'executed' && r.result.outcome === 'link' ? r.result.url : ''
     expect(url.startsWith('https://github.com/camstack/server/issues/new?title=')).toBe(true)
     expect(gh.calls.some((c) => c.args[0] === 'issue')).toBe(false)
@@ -472,12 +538,19 @@ describe('report_issue: without gh', () => {
     const gh = fakeGh(0, 1)
     const d = dry(await reportIssue(ctx, gh.deps, ARGS, undefined, NOW))
     const r = await reportIssue(ctx, gh.deps, ARGS, d.token, NOW)
-    expect(r).toMatchObject({ status: 'executed', result: { outcome: 'link' } })
+    expect(r).toMatchObject({
+      status: 'executed',
+      result: { outcome: 'link' },
+    })
   })
 
   it('cuts a long body to a safe link length, on whole escapes, and says so', () => {
     const body = Array.from({ length: 400 }, (_, i) => `line ${String(i)} é ✓ & more`).join('\n')
-    const { url, truncated } = prefilledIssueUrl({ repo: 'camstack/server', title: 'T', body })
+    const { url, truncated } = prefilledIssueUrl({
+      repo: 'camstack/server',
+      title: 'T',
+      body,
+    })
     expect(truncated).toBe(true)
     expect(url.length).toBeLessThanOrEqual(URL_MAX_CHARS)
     const decoded = decodeURIComponent(url.split('&body=')[1] ?? '')

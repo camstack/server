@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- MCP remote-access and environment tools read the addons' scoped settings; the TURN addons report no settings (their servers are integration instances)
+
 ## [1.2.226] - 2026-11-07
 
 ### Changed
