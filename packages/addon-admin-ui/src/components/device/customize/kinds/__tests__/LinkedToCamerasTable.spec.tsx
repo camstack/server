@@ -42,6 +42,7 @@ const slotOf = (deviceIds: readonly number[], trackedDeviceIds?: readonly number
 
 interface SlotsAnswer {
   readonly status: string
+  readonly isFetching?: boolean
   readonly data?: readonly unknown[]
   readonly error?: { readonly message: string }
 }
@@ -163,6 +164,17 @@ describe('LinkedDevicesTable on a device a camera can link (reverse direction)',
     expect(
       screen.getByRole('switch', { name: 'Linked to Camera shed' }).hasAttribute('disabled'),
     ).toBe(true)
+  })
+  it('a camera whose slot is refreshing is disabled, so a stale read is never written back (D49)', () => {
+    slotsByCamera.current = {
+      ...slotsByCamera.current,
+      103: { status: 'success', isFetching: true, data: [slotOf([701, 702], [702])] },
+    }
+    render(wrap(<LinkedDevicesTable device={GATE} />))
+    const refreshing = screen.getByRole('switch', { name: 'Linked to Camera porch' })
+    expect(refreshing.hasAttribute('disabled')).toBe(true)
+    fireEvent.click(refreshing)
+    expect(setSlot).not.toHaveBeenCalled()
   })
   it('a container is never a pick, so it has no table', () => {
     const { container } = render(

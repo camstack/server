@@ -50,8 +50,11 @@ function CameraLinkSwitch({ camera, deviceId }: CameraLinkSwitchProps): ReactNod
       slots.error === null || slots.error === undefined ? null : { message: slots.error.message },
   })
   const state = read.kind === 'present' ? linksDevice(read.slot, read.value, deviceId) : null
+  // D49: the write is built from this read, so a read still refreshing (another
+  // tab or admin may have changed the camera's list) must not be written back.
+  const refreshing = slots.isFetching
   const toggle = async (next: boolean): Promise<void> => {
-    if (read.kind !== 'present' || busy) return
+    if (read.kind !== 'present' || busy || refreshing) return
     setBusy(true)
     setRefusal(null)
     try {
@@ -72,7 +75,7 @@ function CameraLinkSwitch({ camera, deviceId }: CameraLinkSwitchProps): ReactNod
     <div className="flex flex-col items-end gap-0.5">
       <Switch
         checked={state?.linked ?? false}
-        disabled={read.kind !== 'present' || busy || state?.implied === true}
+        disabled={read.kind !== 'present' || busy || refreshing || state?.implied === true}
         aria-label={t('customize.linked.linkTo', { name: camera.name })}
         onCheckedChange={(next) => void toggle(next)}
       />
