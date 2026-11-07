@@ -1,153 +1,218 @@
 /**
- * The DELIVERY of a device-events / system rule (D647): a notification per
- * event, or a STATE SUMMARY at set times.
+ * The DELIVERY of a device-events / system rule (D1019): a rule speaks at any
+ * combination of three moments — when the condition STARTS, when it CLEARS,
+ * and on a SCHEDULE (a state summary of what is still true).
  *
- * "Send at 08:00 on Mon–Fri" is authored here and stored as the ordinary
- * `NcSchedule`: each send time is a one-minute window that ENDS at that minute
- * (`scheduleForSendTimes`), because a summary is sent when a window ends — the
- * same machinery as the fixed-time digest. A stored schedule that is not a
- * list of send times (longer or inverted windows, authored elsewhere) is shown
- * as its raw windows, with the rule it follows said out loud.
+ * The schedule is authored as "send at HH:MM on days …" and stored as the
+ * ordinary `NcSchedule`: each send time is a one-minute window that ENDS at
+ * that minute (`scheduleForSendTimes`), because a summary is sent when a window
+ * ends. A stored schedule that is not a list of send times is shown as its
+ * window ends. Every write is the `modes` shape; a legacy stored value is read
+ * through `deliveryModesOf`.
  *
  * The alarm has no summary (it stays instant) and a `mixed` rule is read-only:
  * for either this control renders nothing.
  */
 import {
-  NC_SYSTEM_EVENT_SUMMARY_FAMILIES,
   type NcRuleInput,
   type NcStateSummaryPreview,
   type NcStateSummarySplit,
   type NcSystemEventDelivery,
   type NcSystemEventFamily,
-  scheduleForSendTimes,
-  systemEventSummarySplitOf,
+  type NcSystemEventKind,
+  systemEventDeliveryProblems,
+  describeSystemEventDeliveryProblem,
 } from '@camstack/types'
-import { Button, useSystem, Radio } from '@camstack/ui-library'
+import {
+  Button,
+  CHIP_ACTIVE,
+  CHIP_BASE,
+  CHIP_INACTIVE,
+  Checkbox,
+  Switch,
+  cn,
+  useSystem,
+} from '@camstack/ui-library'
 import { useMutation } from '@tanstack/react-query'
 
 import { HINT_CLASS } from './notification-condition-widgets'
 import { ScheduleField } from './notification-schedule-field'
 import {
-  DEFAULT_SEND_TIME,
+  type DeliveryToggle,
+  type SystemEventModesDelivery,
+  clearingHintOf,
+  deliveryFamilyApplies,
+  deliveryModesOf,
   previewVerdictOf,
+  withModeToggle,
+  withSummaryGrouping,
   withSummarySchedule,
-  withSummarySplit,
 } from './notification-system-event-delivery'
 import { useTranslation } from 'react-i18next'
 
 interface Props {
   readonly value: NcSystemEventDelivery | undefined
   readonly family: NcSystemEventFamily | undefined
+  /** The kinds the rule selected — what "when it clears" is judged on. */
+  readonly kinds: readonly NcSystemEventKind[]
   readonly onChange: (next: NcSystemEventDelivery) => void
   /** The rule as it would be saved now — what the preview asks about. */
   readonly draft: () => NcRuleInput
 }
 
-export function SystemEventDeliveryField({ value, family, onChange, draft }: Props) {
+export function SystemEventDeliveryField({ value, family, kinds, onChange, draft }: Props) {
   const { t } = useTranslation()
-  if (family === undefined || !NC_SYSTEM_EVENT_SUMMARY_FAMILIES.includes(family)) return null
-  const summary = value?.mode === 'summary' ? value : null
+  if (!deliveryFamilyApplies(family)) return null
+  const modes = deliveryModesOf(value, kinds)
+  const toggles: readonly {
+    readonly id: DeliveryToggle
+    readonly on: boolean
+    readonly label: string
+  }[] = [
+    {
+      id: 'activation',
+      on: modes.onActivation,
+      label: t('system.notificationSystemEventDelivery.whenItStarts', 'When it starts'),
+    },
+    {
+      id: 'deactivation',
+      on: modes.onDeactivation,
+      label: t('system.notificationSystemEventDelivery.whenItClears', 'When it clears'),
+    },
+    {
+      id: 'schedule',
+      on: modes.onSchedule !== undefined,
+      label: t('system.notificationSystemEventDelivery.onASchedule', 'On a schedule'),
+    },
+  ]
+  const problems = systemEventDeliveryProblems({
+    delivery: 'system-event',
+    conditions: kinds.length > 0 ? { systemEvent: { kinds: [...kinds] } } : {},
+    systemEventDelivery: modes,
+  })
+    .filter((problem) => problem.code === 'no-mode' || problem.code === 'no-instant-kind')
+    .map(describeSystemEventDeliveryProblem)
   return (
     <div className="rounded-md border border-border px-3 py-3" data-testid="rule-delivery">
       <div className="mb-2 text-[11px] font-semibold text-foreground">
         {t('system.notificationSystemEventDelivery.delivery', 'Delivery')}
       </div>
-      <div className="flex flex-wrap gap-3 text-xs">
-        <label className="flex items-center gap-1.5">
-          <Radio
-            name="system-event-delivery"
-            checked={summary === null}
-            onChange={() => onChange({ mode: 'instant' })}
-            data-testid="rule-delivery-instant"
-          />
-          {t(
-            'system.notificationSystemEventDelivery.instantANotificationPerEvent',
-            'Instant — a notification per event',
-          )}
-        </label>
-        <label className="flex items-center gap-1.5">
-          <Radio
-            name="system-event-delivery"
-            checked={summary !== null}
-            onChange={() =>
-              onChange({ mode: 'summary', schedule: scheduleForSendTimes([DEFAULT_SEND_TIME]) })
-            }
-            data-testid="rule-delivery-summary"
-          />
-          {t(
-            'system.notificationSystemEventDelivery.summaryOnScheduleTheCurrent',
-            'Summary on schedule — the current state, at set times',
-          )}
-        </label>
+      <div className="flex flex-wrap gap-1.5" role="group">
+        {toggles.map((toggle) => (
+          <label
+            key={toggle.id}
+            className={cn(CHIP_BASE, 'cursor-pointer', toggle.on ? CHIP_ACTIVE : CHIP_INACTIVE)}
+          >
+            <Checkbox
+              checked={toggle.on}
+              onChange={(event) => onChange(withModeToggle(modes, toggle.id, event.target.checked))}
+              data-testid={`rule-delivery-${toggle.id}`}
+            />
+            {toggle.label}
+          </label>
+        ))}
       </div>
-      {summary !== null && <SummarySchedule value={summary} onChange={onChange} draft={draft} />}
+      <DeliveryHints modes={modes} kinds={kinds} />
+      {problems.map((problem) => (
+        <p
+          key={problem}
+          className="mt-2 text-[11px] text-danger"
+          data-testid="rule-delivery-problem"
+        >
+          {problem}
+        </p>
+      ))}
+      {modes.onSchedule !== undefined && (
+        <SummarySchedule value={modes} onChange={onChange} draft={draft} />
+      )}
+    </div>
+  )
+}
+
+interface HintsProps {
+  readonly modes: SystemEventModesDelivery
+  readonly kinds: readonly NcSystemEventKind[]
+}
+
+function DeliveryHints({ modes, kinds }: HintsProps) {
+  const { t } = useTranslation()
+  const clearing = clearingHintOf(kinds)
+  const scheduleOnly = !modes.onActivation && !modes.onDeactivation
+  return (
+    <div className="mt-2 space-y-1" data-testid="rule-delivery-hints">
+      {modes.onDeactivation && clearing.adds.length > 0 && (
+        <p className={HINT_CLASS} data-testid="rule-delivery-clears-hint">
+          {t(
+            'system.notificationSystemEventDelivery.clearsAdds',
+            'When it clears also reports the recovery of: {{what}}.',
+            { what: clearing.adds.join(' · ') },
+          )}
+        </p>
+      )}
+      {modes.onDeactivation && clearing.without > 0 && (
+        <p className={HINT_CLASS} data-testid="rule-delivery-no-clearing-hint">
+          {t('system.notificationSystemEventDelivery.noClearingEvent', { count: clearing.without })}
+        </p>
+      )}
+      {modes.onSchedule !== undefined && (
+        <p className={HINT_CLASS} data-testid="rule-delivery-schedule-hint">
+          {scheduleOnly
+            ? t(
+                'system.notificationSystemEventDelivery.scheduleOnlyHint',
+                'Only on a schedule: nothing is sent per event, and the active hours and actions of this rule do not apply.',
+              )
+            : t(
+                'system.notificationSystemEventDelivery.scheduleBesideHint',
+                'The summary is sent at the times below whatever the active hours of this rule say, and runs no actions.',
+              )}
+        </p>
+      )}
     </div>
   )
 }
 
 interface SummaryScheduleProps {
-  readonly value: Extract<NcSystemEventDelivery, { readonly mode: 'summary' }>
+  readonly value: SystemEventModesDelivery
   readonly onChange: (next: NcSystemEventDelivery) => void
   readonly draft: () => NcRuleInput
 }
 
 function SummarySchedule({ value, onChange, draft }: SummaryScheduleProps) {
   const { t } = useTranslation()
-  const timezone = value.schedule.timezone
-  const split = systemEventSummarySplitOf({ systemEventDelivery: value })
+  const scheduled = value.onSchedule
+  if (scheduled === undefined) return null
+  const timezone =
+    scheduled.schedule.timezone ?? t('system.notificationSystemEventDelivery.theHubS', 'the hub’s')
   return (
     <div className="mt-2 space-y-2">
       <p className={HINT_CLASS}>
         {t(
-          'system.notificationSystemEventDelivery.nothingIsSentPerEvent',
-          'Nothing is sent per event. At each time below, one notification lists what is still true for the kinds and filters of this rule — low batteries, consumables, devices or streams offline, updates available — or one notification per category, if you choose so below. Nothing to report sends nothing. Time zone:',
-        )}{' '}
-        {timezone ?? t('system.notificationSystemEventDelivery.theHubS', 'the hub’s')}.
+          'system.notificationSystemEventDelivery.summaryExplain',
+          'At each time below, one notification lists what is still true for the kinds and filters of this rule — low batteries, consumables, devices or streams offline, updates available. Nothing to report sends nothing. Time zone: {{timezone}}.',
+          { timezone },
+        )}
       </p>
       {/* Same punctual ScheduleField as ConfigUI `type: 'schedule', mode: 'times'`
-          (TV schedule, etc.) — one HH:MM per row, stored as one-minute windows. */}
+          — one HH:MM per row, stored as one-minute windows. */}
       <ScheduleField
         mode="times"
-        value={value.schedule}
+        value={scheduled.schedule}
         onChange={(next) => {
           // A summary needs at least one send time — refuse clearing the last row.
           if (next === undefined) return
           onChange(withSummarySchedule(value, next))
         }}
       />
-      <fieldset className="flex flex-wrap gap-3 text-xs" data-testid="rule-delivery-split">
-        <legend className="sr-only">
-          {t(
-            'system.notificationSystemEventDelivery.howTheSummaryIsSent',
-            'How the summary is sent',
-          )}
-        </legend>
-        <label className="flex items-center gap-1.5">
-          <Radio
-            name="system-event-summary-split"
-            checked={split === 'rule'}
-            onChange={() => onChange(withSummarySplit(value, 'rule'))}
-            data-testid="rule-delivery-split-rule"
-          />
-          {t(
-            'system.notificationSystemEventDelivery.oneMessageWithEveryCategory',
-            'One message with every category',
-          )}
-        </label>
-        <label className="flex items-center gap-1.5">
-          <Radio
-            name="system-event-summary-split"
-            checked={split === 'section'}
-            onChange={() => onChange(withSummarySplit(value, 'section'))}
-            data-testid="rule-delivery-split-section"
-          />
-          {t(
-            'system.notificationSystemEventDelivery.oneNotificationPerCategoryBatteries',
-            'One notification per category (batteries, consumables, devices…)',
-          )}
-        </label>
-      </fieldset>
-      <SummaryPreview draft={draft} split={split} />
+      <Switch
+        checked={scheduled.grouping === 'section'}
+        onCheckedChange={(on) => onChange(withSummaryGrouping(value, on ? 'section' : 'rule'))}
+        label={t(
+          'system.notificationSystemEventDelivery.onePerCategory',
+          'One notification per category',
+        )}
+        data-testid="rule-delivery-grouping"
+      />
+      <SummaryPreview draft={draft} split={scheduled.grouping} />
     </div>
   )
 }

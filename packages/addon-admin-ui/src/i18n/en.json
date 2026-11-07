@@ -434,7 +434,10 @@
     "notificationRuleTestButton": {
       "testNowFiresThisRule": "Test now — fires this rule and really sends the notification",
       "testNow": "test {{ruleName}} now",
-      "testNow2": "Test now"
+      "testNow2": "Test now",
+      "sendSummaryTitle": "Sends this rule’s state summary now, to every target",
+      "sendSummaryAria": "send the summary of {{ruleName}} now",
+      "sendSummaryNow": "Send the summary now"
     },
     "notificationRules": {
       "newRule": "New rule",
@@ -522,7 +525,8 @@
         "useDefault": "Use the target setting"
       },
       "wakeSleepingCamera": "Wake a sleeping battery camera for the picture",
-      "wakeSleepingCameraHelp": "Costs battery and waits up to 15 s before the notification is sent."
+      "wakeSleepingCameraHelp": "Costs battery and waits up to 15 s before the notification is sent.",
+      "sendSummaryHint": "The scheduled summary is sent on its own: to every target, now."
     },
     "notificationSequences": {
       "name": "Name",
@@ -782,7 +786,17 @@
       "oneMessageWithEveryCategory": "One message with every category",
       "oneNotificationPerCategoryBatteries": "One notification per category (batteries, consumables, devices…)",
       "readingTheState": "Reading the state…",
-      "previewTheSummaryNow": "Preview the summary now"
+      "previewTheSummaryNow": "Preview the summary now",
+      "whenItStarts": "When it starts",
+      "whenItClears": "When it clears",
+      "onASchedule": "On a schedule",
+      "clearsAdds": "When it clears also reports the recovery of: {{what}}.",
+      "noClearingEvent_one": "{{count}} selected event has no clearing event — it is reported only when it starts.",
+      "noClearingEvent_other": "{{count}} selected events have no clearing event — they are reported only when they start.",
+      "scheduleOnlyHint": "Only on a schedule: nothing is sent per event, and the active hours and actions of this rule do not apply.",
+      "scheduleBesideHint": "The summary is sent at the times below whatever the active hours of this rule say, and runs no actions.",
+      "summaryExplain": "At each time below, one notification lists what is still true for the kinds and filters of this rule — low batteries, consumables, devices or streams offline, updates available. Nothing to report sends nothing. Time zone: {{timezone}}.",
+      "onePerCategory": "One notification per category"
     },
     "notificationTargets": {
       "target": "Target",

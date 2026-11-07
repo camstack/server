@@ -43,6 +43,8 @@ export interface NotificationRuleTestButtonProps {
   /** Render the verdict under the button. Off in a table row, where there is no
    *  room for a paragraph — the row shows a one-line title instead. */
   readonly showResult?: boolean
+  /** Send the rule's scheduled summary now instead of its event (`nc.testRule` `summary: true`). */
+  readonly summary?: boolean
 }
 
 export function NotificationRuleTestButton({
@@ -51,6 +53,7 @@ export function NotificationRuleTestButton({
   fallbackDeviceId,
   variant = 'icon',
   showResult = false,
+  summary = false,
 }: NotificationRuleTestButtonProps) {
   const { t } = useTranslation()
   const system = useSystem()
@@ -64,6 +67,7 @@ export function NotificationRuleTestButton({
         action: NC_TEST_RULE_ACTION,
         input: {
           ruleId,
+          ...(summary ? { summary: true } : {}),
           ...(fallbackDeviceId !== undefined ? { deviceId: fallbackDeviceId } : {}),
         },
       })
@@ -92,22 +96,36 @@ export function NotificationRuleTestButton({
         // for the paragraph — hovering is how the operator reads it.
         title={
           title ??
-          t(
-            'system.notificationRuleTestButton.testNowFiresThisRule',
-            'Test now — fires this rule and really sends the notification',
-          )
+          (summary
+            ? t(
+                'system.notificationRuleTestButton.sendSummaryTitle',
+                'Sends this rule’s state summary now, to every target',
+              )
+            : t(
+                'system.notificationRuleTestButton.testNowFiresThisRule',
+                'Test now — fires this rule and really sends the notification',
+              ))
         }
-        aria-label={t('system.notificationRuleTestButton.testNow', 'test {{ruleName}} now', {
-          ruleName,
-        })}
-        data-testid="nc-rule-test-now"
+        aria-label={
+          summary
+            ? t(
+                'system.notificationRuleTestButton.sendSummaryAria',
+                'send the summary of {{ruleName}} now',
+                { ruleName },
+              )
+            : t('system.notificationRuleTestButton.testNow', 'test {{ruleName}} now', { ruleName })
+        }
+        data-testid={summary ? 'nc-rule-test-summary' : 'nc-rule-test-now'}
       >
         {run.isPending ? (
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
         ) : (
           <Send className="h-3.5 w-3.5" />
         )}
-        {variant === 'full' && t('system.notificationRuleTestButton.testNow2', 'Test now')}
+        {variant === 'full' &&
+          (summary
+            ? t('system.notificationRuleTestButton.sendSummaryNow', 'Send the summary now')
+            : t('system.notificationRuleTestButton.testNow2', 'Test now'))}
       </Button>
 
       {showResult && error !== null && (

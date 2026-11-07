@@ -1,5 +1,5 @@
 /**
- * D698 — the admin's per-section split of a state summary: the control, the
+ * D698 / D1019 — the admin's grouping of a state summary: the switch, the
  * preview that shows the split, the body warning on a split rule, and the
  * TEST answer of a summary rule.
  */
@@ -52,34 +52,64 @@ function form() {
 
 const draft = (): NcRuleInput => buildRuleInput(form())
 
-describe('the split control (D698)', () => {
-  it('offers one message or one per category, absent = one message', () => {
+const MODES_SPLIT: NcSystemEventDelivery = {
+  mode: 'modes',
+  onActivation: false,
+  onDeactivation: false,
+  onSchedule: { schedule: EIGHT, grouping: 'section' },
+}
+
+describe('the grouping switch (D698, D1019)', () => {
+  it('one notification per category is a switch; off stores the one-message grouping', () => {
+    const onChange = vi.fn()
+    wrap(
+      <SystemEventDeliveryField
+        value={MODES_SPLIT}
+        family="system"
+        kinds={['device-battery-low']}
+        onChange={onChange}
+        draft={draft}
+      />,
+    )
+    const toggle = screen.getByTestId('rule-delivery-grouping')
+    expect(toggle).toHaveAttribute('aria-checked', 'true')
+    fireEvent.click(toggle)
+    expect(onChange).toHaveBeenLastCalledWith({
+      ...MODES_SPLIT,
+      onSchedule: { schedule: EIGHT, grouping: 'rule' },
+    })
+  })
+
+  it('a migrated summary rule keeps its stored grouping, and editing a send time KEEPS it', () => {
     const onChange = vi.fn()
     wrap(
       <SystemEventDeliveryField
         value={SUMMARY}
         family="system"
+        kinds={['device-battery-low']}
         onChange={onChange}
         draft={draft}
       />,
     )
-    expect(screen.getByRole('group', { name: 'How the summary is sent' })).toBeTruthy()
-    expect(screen.getByTestId('rule-delivery-split-rule')).toBeChecked()
-    fireEvent.click(screen.getByTestId('rule-delivery-split-section'))
-    expect(onChange).toHaveBeenLastCalledWith(SPLIT)
-  })
-
-  it('editing a send time KEEPS the split', () => {
-    const onChange = vi.fn()
-    wrap(
-      <SystemEventDeliveryField value={SPLIT} family="system" onChange={onChange} draft={draft} />,
-    )
-    expect(screen.getByTestId('rule-delivery-split-section')).toBeChecked()
+    expect(screen.getByTestId('rule-delivery-grouping')).toHaveAttribute('aria-checked', 'false')
+    fireEvent.click(screen.getByTestId('rule-delivery-grouping'))
+    expect(onChange).toHaveBeenLastCalledWith({
+      mode: 'modes',
+      onActivation: false,
+      onDeactivation: false,
+      onSchedule: { schedule: EIGHT, grouping: 'section' },
+    })
     fireEvent.change(screen.getByTestId('schedule-field-time-0'), { target: { value: '21:30' } })
     expect(onChange).toHaveBeenLastCalledWith({
-      mode: 'summary',
-      schedule: { windows: [{ days: [1, 2, 3, 4, 5], startMinute: 1289, endMinute: 1290 }] },
-      split: 'section',
+      mode: 'modes',
+      onActivation: false,
+      onDeactivation: false,
+      onSchedule: {
+        schedule: {
+          windows: [{ days: [1, 2, 3, 4, 5], startMinute: 1289, endMinute: 1290 }],
+        },
+        grouping: 'rule',
+      },
     })
   })
 
@@ -87,6 +117,9 @@ describe('the split control (D698)', () => {
     expect(buildRuleInput({ ...form(), systemEventDelivery: SPLIT }).systemEventDelivery).toEqual(
       SPLIT,
     )
+    expect(
+      buildRuleInput({ ...form(), systemEventDelivery: MODES_SPLIT }).systemEventDelivery,
+    ).toEqual(MODES_SPLIT)
   })
 })
 
@@ -142,6 +175,9 @@ describe('the body warning on a split rule (D698 review M3)', () => {
     expect(summaryTemplateWarning(split)).toMatch(/other categor/)
     expect(summaryTemplateWarning({ ...split, templateBody: '{{summaryText}}' })).toBeNull()
     expect(summaryTemplateWarning({ ...split, systemEventDelivery: SUMMARY })).toBeNull()
+    expect(summaryTemplateWarning({ ...split, systemEventDelivery: MODES_SPLIT })).toMatch(
+      /other categor/,
+    )
   })
 })
 

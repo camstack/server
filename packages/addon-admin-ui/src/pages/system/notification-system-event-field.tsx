@@ -87,10 +87,10 @@ export interface SystemEventFieldProps {
   readonly savedHadDevices: boolean
   readonly onChange: (next: NcSystemEventCondition | undefined) => void
   /**
-   * The rule is a scheduled STATE SUMMARY (D647): a paired class then means
+   * The rule speaks ONLY on a schedule (D647, D1019): a paired class then means
    * the bad state at the scheduled time, not each change (D906).
    */
-  readonly summary?: boolean
+  readonly scheduleOnly?: boolean
 }
 
 /** Write the active scope mode onto `deviceIds` / `excludeDeviceIds`. */
@@ -113,7 +113,7 @@ export function SystemEventField({
   fleet,
   savedHadDevices,
   onChange,
-  summary = false,
+  scheduleOnly = false,
 }: SystemEventFieldProps) {
   const { t } = useTranslation()
   const kinds = useMemo(() => value?.kinds ?? [], [value])
@@ -155,7 +155,7 @@ export function SystemEventField({
   return (
     <div className="mt-1 space-y-3" data-testid="system-event-field">
       <p className={HINT_CLASS} data-testid="system-event-class-hint">
-        {summary
+        {scheduleOnly
           ? t(
               'system.notificationSystemEventField.summaryClassHint',
               'At the scheduled time you get the list of what is in the bad state, not each change.',
@@ -171,7 +171,7 @@ export function SystemEventField({
             {group.label}
           </div>
           <div className="mt-1 flex flex-wrap gap-1.5">
-            {systemEventGroupOptions(group, summary).map((option) => {
+            {systemEventGroupOptions(group, scheduleOnly).map((option) => {
               const selected = systemEventOptionSelected(kinds, option)
               const label =
                 option.noSnapshot === true

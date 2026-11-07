@@ -2,12 +2,18 @@
  * Pure logic behind the Delivery control of a device-events / system rule
  * (D647) — see `NotificationSystemEventDelivery.tsx`.
  */
-import type {
-  NcSchedule,
-  NcStateSummaryPreview,
-  NcStateSummarySplit,
-  NcSummarySendTime,
-  NcSystemEventDelivery,
+import {
+  NC_SYSTEM_EVENT_SUMMARY_FAMILIES,
+  scheduleForSendTimes,
+  systemEventClassOf,
+  systemEventDeliveryAsModes,
+  type NcSchedule,
+  type NcStateSummaryPreview,
+  type NcStateSummarySplit,
+  type NcSummarySendTime,
+  type NcSystemEventDelivery,
+  type NcSystemEventFamily,
+  type NcSystemEventKind,
 } from '@camstack/types'
 import i18n from '../../i18n/index'
 
@@ -74,6 +80,101 @@ export function minuteOfHhmm(value: string): number {
   const [h, m] = value.split(':')
   const minute = Number(h) * 60 + Number(m)
   return Number.isFinite(minute) ? Math.max(0, Math.min(1439, minute)) : 0
+}
+
+/** The stored shape every editor write produces (D1019). */
+export type SystemEventModesDelivery = Extract<NcSystemEventDelivery, { readonly mode: 'modes' }>
+
+/** The delivery a NEW system rule starts with: it speaks when the condition starts, nothing else. */
+export const NEW_SYSTEM_EVENT_DELIVERY: SystemEventModesDelivery = {
+  mode: 'modes',
+  onActivation: true,
+  onDeactivation: false,
+}
+
+/** The three moments a system rule may speak at, as the editor's toggles. */
+export type DeliveryToggle = 'activation' | 'deactivation' | 'schedule'
+
+/** Does the editor offer the delivery control for this family (the alarm stays instant)? */
+export function deliveryFamilyApplies(family: NcSystemEventFamily | undefined): boolean {
+  return family !== undefined && NC_SYSTEM_EVENT_SUMMARY_FAMILIES.includes(family)
+}
+
+/**
+ * What the stored delivery stands for, in the `modes` shape — a legacy
+ * (absent / instant / summary) value is read, never refused, and a `modes`
+ * value is returned as is (the same schedule object, so nothing re-arms).
+ */
+export function deliveryModesOf(
+  value: NcSystemEventDelivery | undefined,
+  kinds: readonly NcSystemEventKind[],
+): SystemEventModesDelivery {
+  return systemEventDeliveryAsModes({
+    conditions: kinds.length > 0 ? { systemEvent: { kinds: [...kinds] } } : {},
+    ...(value !== undefined ? { systemEventDelivery: value } : {}),
+  })
+}
+
+function withoutSchedule(value: SystemEventModesDelivery): SystemEventModesDelivery {
+  return { mode: 'modes', onActivation: value.onActivation, onDeactivation: value.onDeactivation }
+}
+
+/**
+ * One toggle flipped. Enabling the schedule starts at "every day at 08:00",
+ * one notification per category; disabling it drops the schedule.
+ */
+export function withModeToggle(
+  value: SystemEventModesDelivery,
+  toggle: DeliveryToggle,
+  on: boolean,
+): SystemEventModesDelivery {
+  if (toggle === 'activation') return { ...value, onActivation: on }
+  if (toggle === 'deactivation') return { ...value, onDeactivation: on }
+  if (!on) return withoutSchedule(value)
+  if (value.onSchedule !== undefined) return value
+  return {
+    ...value,
+    onSchedule: { schedule: scheduleForSendTimes([DEFAULT_SEND_TIME]), grouping: 'section' },
+  }
+}
+
+/** The delivery with a new schedule — its grouping KEPT. */
+export function withSummarySchedule(
+  value: SystemEventModesDelivery,
+  schedule: NcSchedule,
+): SystemEventModesDelivery {
+  return {
+    ...value,
+    onSchedule: { schedule, grouping: value.onSchedule?.grouping ?? 'section' },
+  }
+}
+
+/** The delivery with a grouping. */
+export function withSummaryGrouping(
+  value: SystemEventModesDelivery,
+  grouping: NcStateSummarySplit,
+): SystemEventModesDelivery {
+  if (value.onSchedule === undefined) return value
+  return { ...value, onSchedule: { ...value.onSchedule, grouping } }
+}
+
+export interface ClearingHint {
+  /** Labels of the classes whose recovery a "when it clears" adds. */
+  readonly adds: readonly string[]
+  /** How many selected kinds have no clearing event at all. */
+  readonly without: number
+}
+
+/** What "when it clears" means for the selected kinds. */
+export function clearingHintOf(kinds: readonly NcSystemEventKind[]): ClearingHint {
+  const adds = new Set<string>()
+  let without = 0
+  for (const kind of kinds) {
+    const spec = systemEventClassOf(kind)
+    if (spec === undefined) without += 1
+    else adds.add(spec.label)
+  }
+  return { adds: [...adds], without }
 }
 
 /** What the preview says, as lines. `null` = nothing to show yet. */
@@ -149,21 +250,4 @@ export function previewVerdictOf(
     lines.push('Backups and exports are completed jobs, not a state — they are not in a summary.')
   }
   return { lines }
-}
-
-/** The summary delivery with a new schedule — its split KEPT (D698). */
-export function withSummarySchedule(
-  value: Extract<NcSystemEventDelivery, { readonly mode: 'summary' }>,
-  schedule: NcSchedule,
-): NcSystemEventDelivery {
-  return { ...value, schedule }
-}
-
-/** The summary delivery with a split; `rule` is stored as ABSENT, the default every rule had. */
-export function withSummarySplit(
-  value: Extract<NcSystemEventDelivery, { readonly mode: 'summary' }>,
-  split: NcStateSummarySplit,
-): NcSystemEventDelivery {
-  const { split: _previous, ...rest } = value
-  return split === 'section' ? { ...rest, split } : rest
 }

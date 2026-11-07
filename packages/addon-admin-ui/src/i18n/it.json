@@ -434,7 +434,10 @@
     "notificationRuleTestButton": {
       "testNowFiresThisRule": "Testa ora — attiva questa regola e invia davvero la notifica",
       "testNow": "testa {{ruleName}} ora",
-      "testNow2": "Testa ora"
+      "testNow2": "Testa ora",
+      "sendSummaryTitle": "Invia ora il riepilogo di stato di questa regola a tutti i destinatari",
+      "sendSummaryAria": "invia ora il riepilogo di {{ruleName}}",
+      "sendSummaryNow": "Invia il riepilogo ora"
     },
     "notificationRules": {
       "newRule": "Nuova regola",
@@ -522,7 +525,8 @@
         "useDefault": "Usa l'impostazione del target"
       },
       "wakeSleepingCamera": "Sveglia una telecamera a batteria in sospensione per la foto",
-      "wakeSleepingCameraHelp": "Consuma batteria e attende fino a 15 s prima di inviare la notifica."
+      "wakeSleepingCameraHelp": "Consuma batteria e attende fino a 15 s prima di inviare la notifica.",
+      "sendSummaryHint": "Il riepilogo programmato viene inviato a parte: a tutti i destinatari, ora."
     },
     "notificationSequences": {
       "name": "Nome",
@@ -782,7 +786,17 @@
       "oneMessageWithEveryCategory": "Un messaggio con tutte le categorie",
       "oneNotificationPerCategoryBatteries": "Una notifica per categoria (batterie, materiali di consumo, dispositivi…)",
       "readingTheState": "Lettura dello stato…",
-      "previewTheSummaryNow": "Anteprima del riepilogo ora"
+      "previewTheSummaryNow": "Anteprima del riepilogo ora",
+      "whenItStarts": "Quando inizia",
+      "whenItClears": "Quando rientra",
+      "onASchedule": "Su programma",
+      "clearsAdds": "Quando rientra segnala anche il ritorno alla normalità di: {{what}}.",
+      "noClearingEvent_one": "{{count}} evento selezionato non ha un evento di rientro — viene segnalato solo quando inizia.",
+      "noClearingEvent_other": "{{count}} eventi selezionati non hanno un evento di rientro — vengono segnalati solo quando iniziano.",
+      "scheduleOnlyHint": "Solo su programma: non viene inviato nulla per ogni evento e gli orari attivi e le azioni di questa regola non si applicano.",
+      "scheduleBesideHint": "Il riepilogo viene inviato agli orari qui sotto a prescindere dagli orari attivi della regola e non esegue azioni.",
+      "summaryExplain": "A ogni orario qui sotto una notifica elenca ciò che è ancora vero per i tipi e i filtri di questa regola — batterie scariche, consumabili, dispositivi o stream offline, aggiornamenti disponibili. Se non c'è nulla da segnalare non viene inviato nulla. Fuso orario: {{timezone}}.",
+      "onePerCategory": "Una notifica per categoria"
     },
     "notificationTargets": {
       "target": "Target",

@@ -24,6 +24,7 @@ import type {
 import {
   audioIsFailClosed,
   conditionVisibleForKind,
+  isScheduleOnlySystemRule,
   isSystemDelivery,
   NC_GROUPING_DEFAULT_SEC,
   NC_GROUPING_MAX_SEC,
@@ -32,13 +33,18 @@ import {
   ruleGroupingApplies,
   ruleKindOf,
   describeSystemEventDeliveryProblem,
+  NC_SYSTEM_EVENT_SUMMARY_FAMILIES,
   scheduleForSendTimes,
   sendTimesForEditor,
   sendTimesOfSchedule,
+  systemEventDeliveryModesOf,
   systemEventDeliveryProblems,
+  systemEventFamilyOf,
+  systemEventSummarySplitOf,
   templateCarriesSummary,
   systemRuleKindOf,
 } from '@camstack/types'
+import { NEW_SYSTEM_EVENT_DELIVERY } from './notification-system-event-delivery'
 import { seedSystemEventForFamily } from './notification-system-events'
 import { projectRuleScope, type RuleScopeDraft, ruleScopeDraftOf } from './rule-scope-model'
 import {
@@ -402,7 +408,8 @@ export function emptyRuleForm(
     templateBody: '',
     ...splitRuleScopes(conditions),
     schedule: undefined,
-    systemEventDelivery: undefined,
+    // A NEW system rule WRITES the key (D1019): absent keeps the legacy meaning.
+    systemEventDelivery: delivery === 'system-event' ? NEW_SYSTEM_EVENT_DELIVERY : undefined,
     // Default OFF: silencing a rule for everyone must be deliberate.
     snoozeAllowGlobal: false,
     // Plain Immediate: grouping is a deliberate choice on the trigger.
@@ -528,7 +535,7 @@ export function ruleFormProblems(
   }
   // The hub's own D647 verdict on the delivery — the schedule is left out on
   // purpose: `buildRuleInput` drops it from a summary rule.
-  if (isStateSummaryForm(form)) {
+  if (isSystemDelivery(form.delivery)) {
     for (const problem of systemEventDeliveryProblems({
       delivery: form.delivery,
       conditions: form.conditions,
@@ -557,18 +564,26 @@ export function systemEventDeliveryForSave(form: NcRuleFormState): {
   const delivery = form.systemEventDelivery
   if (delivery === undefined) return {}
   if (!isSystemDelivery(form.delivery)) {
-    return delivery.mode === 'summary' ? { systemEventDelivery: { mode: 'instant' } } : {}
+    return delivery.mode !== 'instant' ? { systemEventDelivery: { mode: 'instant' } } : {}
   }
+  // The alarm stays instant and a `mixed` rule is read-only: neither carries a
+  // `modes` key (the form may hold the seed of the family it came from).
+  const verdict = systemEventFamilyOf(form.conditions.systemEvent?.kinds ?? [])
+  const summarisable =
+    verdict.kind === 'family' && NC_SYSTEM_EVENT_SUMMARY_FAMILIES.includes(verdict.family)
+  if (!summarisable) return delivery.mode === 'modes' ? {} : { systemEventDelivery: delivery }
+  const scheduled = systemEventDeliveryModesOf({ systemEventDelivery: delivery }).schedule
   // Punctual wire shape: rewrite legacy range bands (e.g. 17:00→18:00) to
   // one-minute windows at each END so the next open shows one clock, not two.
-  if (delivery.mode === 'summary' && sendTimesOfSchedule(delivery.schedule) === null) {
-    const parsed = sendTimesForEditor(delivery.schedule)
+  if (scheduled !== null && sendTimesOfSchedule(scheduled.schedule) === null) {
+    const parsed = sendTimesForEditor(scheduled.schedule)
     if (parsed !== null && parsed.times.length > 0) {
-      return {
-        systemEventDelivery: {
-          ...delivery,
-          schedule: scheduleForSendTimes(parsed.times, delivery.schedule.timezone),
-        },
+      const schedule = scheduleForSendTimes(parsed.times, scheduled.schedule.timezone)
+      if (delivery.mode === 'modes') {
+        return { systemEventDelivery: { ...delivery, onSchedule: { ...scheduled, schedule } } }
+      }
+      if (delivery.mode === 'summary') {
+        return { systemEventDelivery: { ...delivery, schedule } }
       }
     }
   }
@@ -588,17 +603,28 @@ export function summaryTemplateWarning(form: NcRuleFormState): string | null {
   // variable but not {{summaryText}} would be empty on every OTHER category's
   // notification, so the hub completes those.
   const body = form.templateBody
-  const split =
-    form.systemEventDelivery?.mode === 'summary' ? form.systemEventDelivery.split : undefined
+  const split = systemEventSummarySplitOf({
+    ...(form.systemEventDelivery !== undefined
+      ? { systemEventDelivery: form.systemEventDelivery }
+      : {}),
+  })
   if (split === 'section' && body.trim().length > 0 && !/\{\{\s*summaryText\s*\}\}/.test(body)) {
     return i18n.t('helpers.ruleFormState.summaryWarnSplit', { token: '{{summaryText}}' })
   }
   return null
 }
 
-/** Is this form a scheduled STATE SUMMARY (D647)? */
+/**
+ * Does this form speak ONLY on its schedule (D647, D1019)? Such a rule has no
+ * active-hours gate and no actions. A rule that also speaks per event is not.
+ */
 export function isStateSummaryForm(form: NcRuleFormState): boolean {
-  return isSystemDelivery(form.delivery) && form.systemEventDelivery?.mode === 'summary'
+  return isScheduleOnlySystemRule({
+    delivery: form.delivery,
+    ...(form.systemEventDelivery !== undefined
+      ? { systemEventDelivery: form.systemEventDelivery }
+      : {}),
+  })
 }
 
 /** True when the form can be saved (name present, at least one target OR user). */
@@ -645,10 +671,15 @@ export function isRuleFormValid(
 export function changeRuleDelivery(form: NcRuleFormState, delivery: NcDelivery): NcRuleFormState {
   const conditions = withoutPipelineSourceOff(form.conditions, delivery)
   const needsSeed = isSystemDelivery(delivery) && (conditions.systemEvent?.kinds.length ?? 0) === 0
-  if (!needsSeed) return { ...form, delivery, conditions }
+  const systemEventDelivery =
+    isSystemDelivery(delivery) && form.systemEventDelivery === undefined
+      ? NEW_SYSTEM_EVENT_DELIVERY
+      : form.systemEventDelivery
+  if (!needsSeed) return { ...form, delivery, conditions, systemEventDelivery }
   return {
     ...form,
     delivery,
+    systemEventDelivery,
     conditions: { ...conditions, systemEvent: seedSystemEventForFamily('device-events') },
   }
 }

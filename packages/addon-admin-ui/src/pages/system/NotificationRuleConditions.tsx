@@ -193,8 +193,8 @@ interface RuleConditionsEditorProps {
   readonly gateableScenes: readonly GateableScene[]
   readonly onConditionsChange: (next: NcConditions) => void
   readonly onScheduleChange: (next: NcSchedule | undefined) => void
-  /** A scheduled STATE SUMMARY system rule (D647, D906). */
-  readonly summary?: boolean
+  /** A system rule that speaks ONLY on its schedule (D647, D906, D1019). */
+  readonly scheduleOnly?: boolean
 }
 
 export function RuleConditionsEditor({
@@ -217,7 +217,7 @@ export function RuleConditionsEditor({
   gateableScenes,
   onConditionsChange,
   onScheduleChange,
-  summary,
+  scheduleOnly,
 }: RuleConditionsEditorProps) {
   const { t } = useTranslation()
   const setField: ConditionFieldSetter = (key, value) => {
@@ -301,7 +301,7 @@ export function RuleConditionsEditor({
                   <ConditionWidget
                     descriptor={descriptor}
                     kind={kind}
-                    summary={summary === true}
+                    scheduleOnly={scheduleOnly === true}
                     taxonomy={taxonomy}
                     conditions={conditions}
                     actions={actions}
@@ -458,8 +458,8 @@ interface ConditionWidgetProps {
   readonly onScheduleChange: (next: NcSchedule | undefined) => void
   /** The rule's kind — a system rule's family picks the system-event field. */
   readonly kind: NcRuleKind
-  /** A scheduled STATE SUMMARY system rule (D647, D906). */
-  readonly summary?: boolean
+  /** A system rule that speaks ONLY on its schedule (D647, D906, D1019). */
+  readonly scheduleOnly?: boolean
 }
 
 /**
@@ -486,7 +486,7 @@ function ConditionWidget({
   gateableScenes,
   onFieldChange,
   onScheduleChange,
-  summary,
+  scheduleOnly,
 }: ConditionWidgetProps) {
   const { t } = useTranslation()
   switch (descriptor.valueType) {
@@ -587,7 +587,7 @@ function ConditionWidget({
           {...(allDevices !== undefined ? { allDevices } : {})}
           savedHadDevices={(savedConditions?.[key]?.deviceIds?.length ?? 0) > 0}
           onChange={(v) => onFieldChange(key, v)}
-          summary={summary === true}
+          scheduleOnly={scheduleOnly === true}
         />
       )
     }

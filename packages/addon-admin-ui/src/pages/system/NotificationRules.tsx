@@ -44,6 +44,7 @@ import {
   ruleTriggerZoneIds,
   subjectHasPath,
   stateVocabularyFor,
+  systemEventDeliveryModesOf,
   systemFamilyOfKind,
 } from '@camstack/types'
 import {
@@ -965,6 +966,14 @@ function RuleFormDialog({
   // the Save button (`isRuleFormValid`), rendered so the operator can read it.
   const problems = ruleFormProblems(form, preserve)
   const systemRule = isSystemDelivery(form.delivery)
+  // A rule that speaks per event AND on a schedule has two tests: the event
+  // ("Test now") and the summary. A schedule-only rule's one test IS the summary.
+  const deliveryModes = systemEventDeliveryModesOf({
+    ...(form.systemEventDelivery !== undefined
+      ? { systemEventDelivery: form.systemEventDelivery }
+      : {}),
+  })
+  const showSummaryTest = systemRule && deliveryModes.schedule !== null && !isStateSummaryForm(form)
   // WHICH KIND of rule this is — the trigger AND its discriminating condition.
   // Everything per-kind on this dialog (the tab label, which media controls
   // exist, which conditions are offered) reads from here rather than from a
@@ -1961,7 +1970,7 @@ function RuleFormDialog({
                 gateableScenes={gateableScenes}
                 onConditionsChange={(next) => patch({ conditions: next })}
                 onScheduleChange={(next) => patch({ schedule: next })}
-                summary={isStateSummaryForm(form)}
+                scheduleOnly={isStateSummaryForm(form)}
               />
             )}
           </div>
@@ -1970,6 +1979,7 @@ function RuleFormDialog({
             <SystemEventDeliveryField
               value={form.systemEventDelivery}
               family={systemFamily}
+              kinds={form.conditions.systemEvent?.kinds ?? []}
               onChange={(next) => patch({ systemEventDelivery: next })}
               draft={() => buildRuleInput(form, preserve, catalog)}
             />
@@ -1998,6 +2008,23 @@ function RuleFormDialog({
                     : {})}
                 />
               </div>
+              {showSummaryTest && (
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <span className="text-[10px] text-foreground-subtle">
+                    {t(
+                      'system.notificationRules.sendSummaryHint',
+                      'The scheduled summary is sent on its own: to every target, now.',
+                    )}
+                  </span>
+                  <NotificationRuleTestButton
+                    ruleId={rule.id}
+                    ruleName={rule.name}
+                    variant="full"
+                    showResult
+                    summary
+                  />
+                </div>
+              )}
               <p className="mt-1 text-[10px] text-foreground-subtle">
                 {t(
                   'system.notificationRules.buildsTheEventThisRule',

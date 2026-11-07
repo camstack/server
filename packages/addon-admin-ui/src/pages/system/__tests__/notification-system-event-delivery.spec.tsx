@@ -1,12 +1,13 @@
 /**
- * D647 — the admin's Delivery control on device-events / system rules:
- * Instant | Summary on schedule, "send at HH:MM on days …" stored as a window
+ * D647 / D1019 — the admin's Delivery control on device-events / system rules:
+ * starts / clears / schedule, "send at HH:MM on days …" stored as a window
  * that ENDS at that minute, and the form that saves it.
  */
 import {
   type NcRuleInput,
   type NcStateSummaryPreview,
   type NcSystemEventDelivery,
+  type NcSystemEventKind,
   scheduleForSendTimes,
 } from '@camstack/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -41,10 +42,11 @@ import {
   buildRuleInput,
   emptyRuleForm,
   isRuleFormValid,
+  isStateSummaryForm,
   ruleFormProblems,
   summaryTemplateWarning,
 } from '../notification-rules.helpers'
-import { previewVerdictOf } from '../notification-system-event-delivery'
+import { NEW_SYSTEM_EVENT_DELIVERY, previewVerdictOf } from '../notification-system-event-delivery'
 
 const EIGHT = scheduleForSendTimes([{ days: [1, 2, 3, 4, 5], minute: 480 }])
 const SUMMARY: NcSystemEventDelivery = { mode: 'summary', schedule: EIGHT }
@@ -64,83 +66,141 @@ function batteryForm() {
   }
 }
 
-describe('SystemEventDeliveryField', () => {
-  const draft = (): NcRuleInput => buildRuleInput(batteryForm())
+const MODES_SCHEDULE_ONLY: NcSystemEventDelivery = {
+  mode: 'modes',
+  onActivation: false,
+  onDeactivation: false,
+  onSchedule: { schedule: EIGHT, grouping: 'rule' },
+}
 
+function field(
+  value: NcSystemEventDelivery | undefined,
+  onChange: (next: NcSystemEventDelivery) => void = () => {},
+  kinds: readonly NcSystemEventKind[] = ['device-battery-low'],
+  family: 'device-events' | 'system' | 'alarm' = 'device-events',
+) {
+  return wrap(
+    <SystemEventDeliveryField
+      value={value}
+      family={family}
+      kinds={kinds}
+      onChange={onChange}
+      draft={() => buildRuleInput(batteryForm())}
+    />,
+  )
+}
+
+describe('SystemEventDeliveryField', () => {
   it('is not offered on an alarm rule — the alarm stays instant', () => {
-    const { container } = wrap(
-      <SystemEventDeliveryField
-        value={undefined}
-        family="alarm"
-        onChange={() => {}}
-        draft={draft}
-      />,
-    )
+    const { container } = field(undefined, () => {}, ['alarm-armed'], 'alarm')
     expect(container.innerHTML).toBe('')
   })
 
-  it('switching to Summary on schedule starts at "every day at 08:00" — a window ending at 08:00', () => {
+  it('a new rule starts on "when it starts" alone; each toggle writes the modes shape', () => {
     const onChange = vi.fn()
-    wrap(
-      <SystemEventDeliveryField
-        value={undefined}
-        family="device-events"
-        onChange={onChange}
-        draft={draft}
-      />,
-    )
-    expect(screen.getByTestId('rule-delivery-instant')).toBeChecked()
-    fireEvent.click(screen.getByTestId('rule-delivery-summary'))
-    expect(onChange).toHaveBeenCalledWith({
-      mode: 'summary',
-      schedule: { windows: [{ days: [0, 1, 2, 3, 4, 5, 6], startMinute: 479, endMinute: 480 }] },
+    field(NEW_SYSTEM_EVENT_DELIVERY, onChange)
+    expect(screen.getByTestId('rule-delivery-activation')).toBeChecked()
+    expect(screen.getByTestId('rule-delivery-deactivation')).not.toBeChecked()
+    expect(screen.getByTestId('rule-delivery-schedule')).not.toBeChecked()
+    fireEvent.click(screen.getByTestId('rule-delivery-deactivation'))
+    expect(onChange).toHaveBeenLastCalledWith({
+      mode: 'modes',
+      onActivation: true,
+      onDeactivation: true,
+    })
+    fireEvent.click(screen.getByTestId('rule-delivery-schedule'))
+    expect(onChange).toHaveBeenLastCalledWith({
+      mode: 'modes',
+      onActivation: true,
+      onDeactivation: false,
+      // Newly enabled: every day at 08:00, one notification per category.
+      onSchedule: {
+        schedule: { windows: [{ days: [0, 1, 2, 3, 4, 5, 6], startMinute: 479, endMinute: 480 }] },
+        grouping: 'section',
+      },
     })
   })
 
-  it('"send at" edits the END of the window, and Instant goes back explicitly', () => {
+  it('a legacy instant rule opens with both edges where its kinds have a recovery', () => {
+    field({ mode: 'instant' }, () => {}, ['device-offline'])
+    expect(screen.getByTestId('rule-delivery-activation')).toBeChecked()
+    expect(screen.getByTestId('rule-delivery-deactivation')).toBeChecked()
+  })
+
+  it('"send at" edits the END of the window and the toggle off drops the schedule', () => {
     const onChange = vi.fn()
-    wrap(
-      <SystemEventDeliveryField
-        value={SUMMARY}
-        family="system"
-        onChange={onChange}
-        draft={draft}
-      />,
-    )
+    field(MODES_SCHEDULE_ONLY, onChange)
     fireEvent.change(screen.getByTestId('schedule-field-time-0'), { target: { value: '21:30' } })
     expect(onChange).toHaveBeenLastCalledWith({
-      mode: 'summary',
-      schedule: { windows: [{ days: [1, 2, 3, 4, 5], startMinute: 1289, endMinute: 1290 }] },
+      ...MODES_SCHEDULE_ONLY,
+      onSchedule: {
+        schedule: { windows: [{ days: [1, 2, 3, 4, 5], startMinute: 1289, endMinute: 1290 }] },
+        grouping: 'rule',
+      },
     })
-    fireEvent.click(screen.getByTestId('rule-delivery-instant'))
-    expect(onChange).toHaveBeenLastCalledWith({ mode: 'instant' })
+    fireEvent.click(screen.getByTestId('rule-delivery-schedule'))
+    expect(onChange).toHaveBeenLastCalledWith({
+      mode: 'modes',
+      onActivation: false,
+      onDeactivation: false,
+    })
   })
 
   it('a longer window is shown as a punctual send-at (window END), not two clocks', () => {
-    const custom: NcSystemEventDelivery = {
-      mode: 'summary',
-      schedule: { windows: [{ days: [1], startMinute: 0, endMinute: 480 }] },
-    }
-    wrap(
-      <SystemEventDeliveryField value={custom} family="system" onChange={() => {}} draft={draft} />,
-    )
-    expect(screen.getByTestId('schedule-field-times')).toBeTruthy()
+    field({
+      mode: 'modes',
+      onActivation: false,
+      onDeactivation: false,
+      onSchedule: {
+        schedule: { windows: [{ days: [1], startMinute: 0, endMinute: 480 }] },
+        grouping: 'rule',
+      },
+    })
     expect(screen.getByTestId('schedule-field-times-approximated')).toHaveTextContent(
       "window's end",
     )
-    // 480 = 08:00 — one clock, not a start→end pair.
     expect((screen.getByTestId('schedule-field-time-0') as HTMLInputElement).value).toBe('08:00')
   })
 
-  it('previews the draft as the hub would send it now', async () => {
-    wrap(
-      <SystemEventDeliveryField
-        value={SUMMARY}
-        family="device-events"
-        onChange={() => {}}
-        draft={draft}
-      />,
+  it('says what "when it clears" adds and which kinds have no clearing event', () => {
+    field(
+      { mode: 'modes', onActivation: true, onDeactivation: true },
+      () => {},
+      ['device-offline', 'backup-completed'],
+      'device-events',
     )
+    expect(screen.getByTestId('rule-delivery-clears-hint')).toHaveTextContent('Device connectivity')
+    expect(screen.getByTestId('rule-delivery-no-clearing-hint')).toHaveTextContent(
+      '1 selected event has no clearing event',
+    )
+  })
+
+  it('says active hours and actions do not apply when the schedule is the only mode', () => {
+    field(MODES_SCHEDULE_ONLY)
+    expect(screen.getByTestId('rule-delivery-schedule-hint')).toHaveTextContent(
+      'active hours and actions of this rule do not apply',
+    )
+  })
+
+  it('shows what the validator refuses, inline', () => {
+    field({ mode: 'modes', onActivation: false, onDeactivation: false })
+    expect(screen.getByTestId('rule-delivery-problem')).toHaveTextContent(
+      'choose when the rule speaks',
+    )
+  })
+
+  it('refuses deactivation alone when no selected kind ever clears', () => {
+    field(
+      { mode: 'modes', onActivation: false, onDeactivation: true },
+      () => {},
+      ['backup-completed'],
+      'system',
+    )
+    expect(screen.getByTestId('rule-delivery-problem')).toHaveTextContent('ever clears')
+  })
+
+  it('previews the draft as the hub would send it now', async () => {
+    field(MODES_SCHEDULE_ONLY)
     fireEvent.click(screen.getByTestId('rule-delivery-preview'))
     await waitFor(() =>
       expect(screen.getByTestId('rule-delivery-preview-result')).toHaveTextContent('Termometro'),
@@ -178,32 +238,71 @@ describe('previewVerdictOf — a failed preview is never "nothing to report" (D3
   })
 })
 
-describe('the rule form saves a summary', () => {
-  it('emits the delivery, drops the active-hours schedule, and CLEARS a stored one', () => {
+describe('the rule form saves the delivery (D1019)', () => {
+  it('a NEW system rule WRITES the key: starts on, clears off, no schedule', () => {
     const form = {
-      ...batteryForm(),
-      systemEventDelivery: SUMMARY,
-      schedule: { windows: [{ days: [1], startMinute: 0, endMinute: 600 }] },
+      ...emptyRuleForm('system-event'),
+      name: 'Stato',
+      targetIds: ['t1'],
+      conditions: { systemEvent: { kinds: ['device-offline' as const] } },
     }
-    const input = buildRuleInput(form)
-    expect(input.systemEventDelivery).toEqual(SUMMARY)
-    expect(input.schedule).toBeUndefined()
+    expect(buildRuleInput(form).systemEventDelivery).toEqual({
+      mode: 'modes',
+      onActivation: true,
+      onDeactivation: false,
+    })
+  })
+
+  it('a new ALARM rule never carries the key', () => {
+    const form = {
+      ...emptyRuleForm('system-event'),
+      name: 'Allarme',
+      targetIds: ['t1'],
+      conditions: { systemEvent: { kinds: ['alarm-armed' as const] } },
+    }
+    expect(buildRuleInput(form)).not.toHaveProperty('systemEventDelivery')
+  })
+
+  it('a rule loaded as schedule-only modes opens with the schedule on and saves the SAME object back', () => {
+    const form = { ...batteryForm(), systemEventDelivery: MODES_SCHEDULE_ONLY }
+    field(MODES_SCHEDULE_ONLY)
+    expect(screen.getByTestId('rule-delivery-schedule')).toBeChecked()
+    expect(screen.getByTestId('rule-delivery-activation')).not.toBeChecked()
+    expect(isStateSummaryForm(form)).toBe(true)
+    expect(buildRuleInput(form).systemEventDelivery).toBe(MODES_SCHEDULE_ONLY)
+    expect(buildRuleInput(form).schedule).toBeUndefined()
     expect(buildRuleClears(form, [])).toContain('schedule')
     expect(isRuleFormValid(form)).toBe(true)
   })
 
-  it('an instant rule never writes the field — unless it is going back from a summary', () => {
-    expect(buildRuleInput(batteryForm())).not.toHaveProperty('systemEventDelivery')
-    expect(
-      buildRuleInput({ ...batteryForm(), systemEventDelivery: { mode: 'instant' } })
-        .systemEventDelivery,
-    ).toEqual({ mode: 'instant' })
+  it('a rule that also speaks per event keeps its active-hours schedule', () => {
+    const mixed: NcSystemEventDelivery = { ...MODES_SCHEDULE_ONLY, onActivation: true }
+    const hours = { windows: [{ days: [1], startMinute: 0, endMinute: 600 }] }
+    const form = { ...batteryForm(), systemEventDelivery: mixed, schedule: hours }
+    expect(isStateSummaryForm(form)).toBe(false)
+    expect(buildRuleInput(form).schedule).toEqual(hours)
+    expect(buildRuleInput(form).systemEventDelivery).toBe(mixed)
   })
 
-  it('a summary with actions is a blocker, in words', () => {
+  it('a legacy summary value still saves as stored', () => {
+    const form = { ...batteryForm(), systemEventDelivery: SUMMARY }
+    expect(buildRuleInput(form).systemEventDelivery).toEqual(SUMMARY)
+    expect(isStateSummaryForm(form)).toBe(true)
+  })
+
+  it('an all-off delivery is a blocker, in words', () => {
     const form = {
       ...batteryForm(),
-      systemEventDelivery: SUMMARY,
+      systemEventDelivery: { mode: 'modes' as const, onActivation: false, onDeactivation: false },
+    }
+    expect(ruleFormProblems(form).join(' ')).toMatch(/choose when the rule speaks/)
+    expect(isRuleFormValid(form)).toBe(false)
+  })
+
+  it('a schedule-only rule with actions is a blocker, in words', () => {
+    const form = {
+      ...batteryForm(),
+      systemEventDelivery: MODES_SCHEDULE_ONLY,
       actions: {
         onActivation: [],
         onDeactivation: [],

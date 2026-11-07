@@ -87,7 +87,7 @@ function renderField(
   family: 'device-events' | 'system' | 'alarm',
   value: NcSystemEventCondition,
   onChange = vi.fn(),
-  summary = false,
+  scheduleOnly = false,
 ) {
   wrap(
     <SystemEventField
@@ -98,7 +98,7 @@ function renderField(
       fleet={{ state: 'answered', devices: FLEET }}
       savedHadDevices={false}
       onChange={onChange}
-      summary={summary}
+      scheduleOnly={scheduleOnly}
     />,
   )
   return onChange
