@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Wyze addon no longer exposes an addon-level settings form; the account form is the integration instance form
+
 ## [0.2.168] - 2026-11-06
 
 ### Changed

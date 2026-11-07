@@ -142,42 +142,34 @@ describe('SmtpNodemailerAddon — relays are integration instances (D996)', () =
     })
   })
 
-  it('the settings page reads and writes the default relay, layout unchanged', async () => {
+  it('the addon has no settings form of its own: the relay form is the instance form', async () => {
     const w = await boot()
     addons.push(w.addon)
-    await w.addon.updateGlobalSettingsAsOperator({ username: 'u', password: 'pw-PAGE', port: 465 })
-    const form = await w.addon.getGlobalSettings()
-    const fields = form?.sections.flatMap((section) => section.fields) ?? []
-    const valueOf = (key: string): unknown => {
-      const field = fields.find((candidate) => 'key' in candidate && candidate.key === key)
-      return field !== undefined && 'value' in field ? field.value : undefined
-    }
-    expect(fields.map((field) => ('key' in field ? field.key : ''))).toEqual([
-      'host',
-      'port',
-      'secure',
-      'username',
-      'password',
-      'fromAddress',
-      'fromName',
-    ])
-    expect(valueOf('host')).toBe('smtp.a.test')
-    expect(valueOf('port')).toBe(465)
-    expect(JSON.stringify(form)).not.toContain('pw-PAGE')
+    expect(Reflect.get(w.addon, 'getGlobalSettings')).toBe(
+      Reflect.get(Object.getPrototypeOf(SmtpNodemailerAddon.prototype), 'getGlobalSettings'),
+    )
+    await w.instances.updateInstance({
+      id: 'int_0001',
+      values: { username: 'u', password: 'pw-PAGE', port: 465 },
+    })
+    const view = await w.instances.getInstance({ id: 'int_0001' })
+    expect(view?.formValues).toMatchObject({ host: 'smtp.a.test', port: 465, username: 'u' })
+    expect(JSON.stringify(view)).not.toContain('pw-PAGE')
     // The second relay is untouched.
     expect((await w.instances.getInstance({ id: 'int_0002' }))?.formValues).toMatchObject({
       host: 'smtp.b.test',
     })
   })
 
-  it('the first save of the settings page creates the relay and serves it', async () => {
+  it('a fresh install has no relay until one is created through the instance cap, then it serves', async () => {
     const w = await boot(false)
     addons.push(w.addon)
     expect(await w.instances.listInstances()).toEqual([])
-    await w.addon.updateGlobalSettings({ host: 'smtp.new.test', fromAddress: 'n@example.com' })
-    const listed = await w.instances.listInstances()
-    expect(listed).toHaveLength(1)
-    expect(listed[0]?.id).toMatch(/^relay-[0-9a-f]{8}$/)
+    await w.instances.createInstance({ id: 'relay-new', name: 'New', kind: 'relays' })
+    await w.instances.updateInstance({
+      id: 'relay-new',
+      values: { host: 'smtp.new.test', fromAddress: 'n@example.com' },
+    })
     await w.smtp.sendEmail({ to: 'ops@example.com', subject: 's', text: 't' })
     expect(w.built.find((t) => t.options.host === 'smtp.new.test')?.sent).toHaveLength(1)
   })

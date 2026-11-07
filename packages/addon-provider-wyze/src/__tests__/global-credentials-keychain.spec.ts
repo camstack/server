@@ -1,6 +1,6 @@
 /**
  * Wyze account credentials have ONE home: the integration settings. The
- * addon's global store is only the wizard's schema carrier.
+ * addon has no global settings form of its own.
  *
  * Regression (D787 migration, 2026-10-08): `getGlobalSettings()` was
  * overridden to expose the credential form, but `globalSettingsSchema()`
@@ -159,15 +159,15 @@ describe('Wyze global store: credentials never stored as plaintext', () => {
     expect(w.store).toEqual({})
   })
 
-  it('the wizard form is served empty — the global store never surfaces values', async () => {
+  it('the addon has no global settings form of its own: the account form is the instance form', async () => {
     const w: World = { store: {}, kc: new Map() }
     const addon = await boot(w)
+    expect(Reflect.get(addon, 'getGlobalSettings')).toBe(
+      Reflect.get(Object.getPrototypeOf(WyzeProviderAddon.prototype), 'getGlobalSettings'),
+    )
     await addon.updateGlobalSettingsAsOperator({ password: PLAIN_PASSWORD })
-
     const view = await addon.getGlobalSettings()
-
     expect(JSON.stringify(view)).not.toContain(PLAIN_PASSWORD)
-    const keys = view?.sections.flatMap((s) => s.fields.map((f) => ('key' in f ? f.key : '')))
-    expect(keys).toEqual(expect.arrayContaining(['email', 'password', 'apiKey', 'apiId']))
+    expect(view).toEqual({ sections: [] })
   })
 })

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Email (SMTP) addon no longer has an addon-level settings form that wrote the first relay; relays are created and edited as integration instances
+
 ## [1.2.151] - 2026-11-06
 
 ### Changed

@@ -8,14 +8,12 @@ import {
   EventCategory,
   deviceAdoptionCapability,
   errMsg,
-  hydrateSchema,
   isSecretMarker,
   memoizePinnedFfmpeg,
 } from '@camstack/types'
 import type {
   AddonInitResult,
   ConfigUISchema,
-  ConfigUISchemaWithValues,
   CreateDeviceSpec,
   DeviceConstructor,
   IConnectionProbe,
@@ -338,12 +336,6 @@ export class WyzeProviderAddon extends BaseDeviceProvider {
     _instance: IntegrationInstanceRef,
   ): Promise<ConfigUISchema | null> {
     return buildSettingsSchema()
-  }
-
-  override async getGlobalSettings(): Promise<ConfigUISchemaWithValues> {
-    // Deliberately empty values: credentials live per integration, and the
-    // global store must never surface (or pre-fill) one.
-    return hydrateSchema(buildSettingsSchema(), {})
   }
 
   /**

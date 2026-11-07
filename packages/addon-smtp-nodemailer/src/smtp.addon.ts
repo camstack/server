@@ -21,7 +21,6 @@ import { randomUUID } from 'node:crypto'
 import {
   BaseAddon,
   type ConfigUISchema,
-  type ConfigUISchemaWithValues,
   type IntegrationTestConnectionResult,
   type IntegrationInstanceRef,
   type ISmtpProvider,
@@ -35,7 +34,6 @@ import {
   brokerCapability,
   createEvent,
   defineAddonMigrations,
-  hydrateSchema,
   composeInstanceKinds,
   integrationInstancesCapability,
   isSecretFieldView,
@@ -82,18 +80,6 @@ function mintRelayId(): string {
   return `relay-${randomUUID().slice(0, 8)}`
 }
 
-/** The keys the settings page edits: the relay's connection fields. */
-const RELAY_FORM_KEYS: ReadonlySet<string> = new Set([
-  'host',
-  'port',
-  'secure',
-  'username',
-  'password',
-  'fromAddress',
-  'fromName',
-])
-
-const DEFAULT_RELAY_NAME = 'Email (SMTP)'
 const RELAY_LIST_MAX = 200
 
 function hasText(value: unknown): value is string {
@@ -351,49 +337,13 @@ export class SmtpNodemailerAddon extends BaseAddon<SmtpAddonConfig> {
     return (rows.find((row) => row.data.host.length > 0) ?? rows[0])?.id
   }
 
-  // ── The settings page (Connectivity → Email): the default relay ───────
+  // ── The relay form: its values live on the relay record, never in `addon-settings` ───
 
-  /** The relay form. Its values live on the relay record, never in `addon-settings`. */
+  /** The relay form. */
   protected override async integrationFormSchema(
     _instance: IntegrationInstanceRef,
   ): Promise<ConfigUISchema | null> {
     return this.relayForm()
-  }
-
-  override async getGlobalSettings(): Promise<ConfigUISchemaWithValues | null> {
-    const schema = this.relayForm()
-    if (this.instances === null) return hydrateSchema(schema, {}, { inlineSecretsAsViews: true })
-    const id = await this.firstRelayId()
-    const row = id === undefined ? null : await this.instances.readResolved(id)
-    // A locked keychain serves the row without its password: the form shows it unset, and an
-    // untouched save sends the view back, which keeps the stored one.
-    return hydrateSchema(schema, row?.body ?? {}, {
-      inlineSecretsAsViews: true,
-    })
-  }
-
-  override async updateGlobalSettingsAsOperator(patch: Record<string, unknown>): Promise<void> {
-    await this.writeDefaultRelay(patch)
-  }
-
-  override async updateGlobalSettings(patch: Partial<SmtpAddonConfig>): Promise<void> {
-    await this.writeDefaultRelay(patch)
-  }
-
-  /** Write the form's values onto the default relay, creating it on the first save. */
-  private async writeDefaultRelay(patch: Readonly<Record<string, unknown>>): Promise<void> {
-    if (this.instances === null) throw new Error('smtp-nodemailer is not initialised')
-    const values = Object.fromEntries(
-      Object.entries(patch).filter(([key]) => RELAY_FORM_KEYS.has(key)),
-    )
-    const existing = await this.firstRelayId()
-    if (existing !== undefined) {
-      await this.instances.updateInstance({ id: existing, values })
-      return
-    }
-    const id = mintRelayId()
-    await this.instances.createInstance({ id, name: DEFAULT_RELAY_NAME })
-    await this.instances.updateInstance({ id, values })
   }
 
   /** Probe a relay (EHLO + AUTH) with the form's values, falling back to the stored ones. */
