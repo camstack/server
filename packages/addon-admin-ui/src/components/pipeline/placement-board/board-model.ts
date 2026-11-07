@@ -173,6 +173,5 @@ export function mutationErrorMessage(error: unknown): string {
 export function invalidatePlacementQueries(queryClient: QueryClient): void {
   void queryClient.invalidateQueries({ queryKey: [['pipelineOrchestrator', 'listAgentSettings']] })
   void queryClient.invalidateQueries({ queryKey: [['pipelineOrchestrator', 'getAgentSettings']] })
-  void queryClient.invalidateQueries({ queryKey: [['addonSettings', 'getGlobalSettings']] })
   void queryClient.invalidateQueries({ queryKey: [['addonSettings', 'getScopedSettings']] })
 }

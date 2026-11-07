@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The placement board refreshes the scoped settings it reads after a save, no longer the retired addon-level query
+
 ## [1.2.605] - 2026-11-07
 
 ### Changed
