@@ -3198,7 +3198,8 @@
     "pathBrowser": {
       "newFolder": "new folder",
       "create": "Create",
-      "free": "{{free}} free / {{total}}"
+      "free": "{{free}} free / {{total}}",
+      "label": "Folder on the node"
     }
   },
   "pipeline": {

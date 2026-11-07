@@ -3273,7 +3273,8 @@
     "pathBrowser": {
       "newFolder": "nuova cartella",
       "create": "Crea",
-      "free": "{{free}} liberi / {{total}}"
+      "free": "{{free}} liberi / {{total}}",
+      "label": "Cartella sul nodo"
     }
   },
   "pipeline": {
