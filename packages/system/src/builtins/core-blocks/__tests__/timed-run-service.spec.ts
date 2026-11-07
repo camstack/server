@@ -53,6 +53,7 @@ function harness(
   const service = new TimedRunService({
     rows: store.api,
     deviceTypeOf: async (deviceId) => types.get(deviceId) ?? null,
+    timedRunDeviceIds: async () => [HEATER, FOUNTAIN],
     actuation,
     quickRuns: {
       read: async (deviceId) => quickRuns.get(deviceId) ?? null,
@@ -235,6 +236,22 @@ describe('TimedRunService', () => {
   })
 
   describe('the one-tap run of a device', () => {
+    it('boot publishes the status of every timed-run device, even with no run row', async () => {
+      const h = harness()
+      await h.service.reconcile()
+      expect(h.published.map((p) => p.deviceId).toSorted()).toEqual([HEATER, FOUNTAIN])
+      expect(h.published.find((p) => p.deviceId === HEATER)?.status.quickRun).toEqual({
+        duration: 30,
+        unit: 'min',
+      })
+    })
+
+    it('a device that is gone or has no timed run still answers, with no one-tap run', async () => {
+      const h = harness()
+      expect((await h.service.getStatus({ deviceId: 9 }))?.quickRun).toBeNull()
+      expect((await h.service.getStatus({ deviceId: 404 }))?.quickRun).toBeNull()
+    })
+
     it('is the type default until the operator sets one, and the status carries it', async () => {
       const h = harness()
       expect((await h.service.getStatus({ deviceId: HEATER }))?.quickRun).toEqual({

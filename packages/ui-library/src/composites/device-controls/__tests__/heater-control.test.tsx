@@ -67,9 +67,10 @@ describe('HeaterInlineControl quick run', () => {
     expect(runFor).toHaveBeenCalledWith({ duration: 45, unit: 'min' })
   })
 
-  it('offers no run button until the hub has said what the run is', () => {
+  it('falls back to the type default when the hub has not said (an older provider)', () => {
     results.timer = timer(undefined)
     render(<HeaterInlineControl trpc={trpc} deviceId={5} features={undefined} />)
-    expect(screen.queryByRole('button')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: /30/ }))
+    expect(runFor).toHaveBeenCalledWith({ duration: 30, unit: 'min' })
   })
 })

@@ -117,8 +117,12 @@ export const TimedRunStatusSchema = z.object({
   activeUntil: z.number().nullable(),
   /** Who asked for the run (a user id or an addon id); `null` when nothing is armed or it did not say. */
   requestedBy: z.string().nullable(),
-  /** The one-tap run of THIS device: what a "Run" button on any surface starts. */
-  quickRun: TimedRunQuickRunSchema,
+  /**
+   * The one-tap run of THIS device: what a "Run" button on any surface starts. `null` when
+   * the device is gone or its type has no timed run; a status from before this field
+   * existed has none, and a surface falls back to the type's default.
+   */
+  quickRun: TimedRunQuickRunSchema.nullable(),
   lastFetchedAt: z.number(),
 })
 export type TimedRunStatus = z.infer<typeof TimedRunStatusSchema>

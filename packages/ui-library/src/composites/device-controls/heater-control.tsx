@@ -66,8 +66,13 @@ export function HeaterInlineControl(props: DeviceControlProps): ReactNode {
   const { cap, display, available, applyOptimisticAction, timer } = useHeater(props)
   if (cap === undefined || display === undefined) return null
   const on = display.on === true
-  // The one-tap run is the hub's word for THIS device (the timed-run status), never a constant.
-  const quickRun = timer.slice?.quickRun
+  // The one-tap run is the hub's word for THIS device (the timed-run status). A status from
+  // an older provider carries none: the type's default stands in, as the timed-run control does.
+  const quickRun =
+    timer.slice?.quickRun ??
+    (HEATER_LIMIT === undefined
+      ? null
+      : { duration: HEATER_LIMIT.quickRunDefault, unit: HEATER_LIMIT.unit })
   return (
     <div className="inline-flex items-center gap-2">
       {/* The row is clickable: a toggle must not also open the device. */}
@@ -81,7 +86,7 @@ export function HeaterInlineControl(props: DeviceControlProps): ReactNode {
           }}
         />
       </span>
-      {timer.cap !== undefined && quickRun !== undefined && (
+      {timer.cap !== undefined && quickRun !== null && (
         <span onClick={(e) => e.stopPropagation()}>
           <Button
             size="sm"

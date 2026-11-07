@@ -6900,7 +6900,7 @@ Enum: `"unsupported-device" \| "over-max" \| "command-failed"`
 
 - `activeUntil`: `number \| null`
 - `requestedBy`: `string \| null`
-- `quickRun`: `TimedRunQuickRunSchema`
+- `quickRun`: `TimedRunQuickRunSchema \| null`
 - `lastFetchedAt`: `number`
 
 ### `TimedRunUnitSchema`

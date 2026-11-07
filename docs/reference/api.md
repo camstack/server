@@ -4733,7 +4733,7 @@
 
 ### `timed-run` → `timedRun.*`
 
-- **Source:** `packages/types/src/capabilities/timed-run.cap.ts:141`
+- **Source:** `packages/types/src/capabilities/timed-run.cap.ts:145`
 - **Meta:** scope: `device` · mode: `singleton` · mount: `device-scoped` · deviceTypes: `heater, pet-fountain`
 - **Archetypes:** status(push) · runtimeState · deviceConfig(derived-form) · wrapper(defaultActive)
 - **Provider interface:** `ITimedRunProvider`

@@ -54,6 +54,8 @@ export interface TimedRunQuickRuns {
 export interface TimedRunServiceDeps {
   readonly rows: TimedRunRows
   readonly deviceTypeOf: (deviceId: number) => Promise<DeviceType | null>
+  /** Every device whose type offers a timed run: boot publishes each one's status. */
+  readonly timedRunDeviceIds: () => Promise<readonly number[]>
   readonly actuation: TimedRunActuation
   readonly quickRuns: TimedRunQuickRuns
   /** Mirror the slice into the device state; failures are logged by the service. */
@@ -98,7 +100,12 @@ export class TimedRunService implements ITimedRunProvider {
     }
   }
 
-  /** The one-tap run of a device. Above the type's maximum it is REFUSED, like `runFor`. */
+  /**
+   * The one-tap run of a device. Above the type's maximum it is REFUSED, like `runFor`. It
+   * THROWS rather than returning a typed result: `setSettings` returns void on every
+   * derived-form cap (day-night, image-settings), and the form's save path shows a thrown
+   * message to the operator; a void return would let a refused value look saved.
+   */
   setSettings: ITimedRunProvider['setSettings'] = async ({ deviceId, settings }) => {
     const limit = await this.limitOf(deviceId)
     if (limit === null) throw new Error(`timed-run: device ${deviceId} has no timed run`)
@@ -197,7 +204,13 @@ export class TimedRunService implements ITimedRunProvider {
       else this.pending.set(deviceId, body)
     }
     this.rearm()
-    for (const { deviceId } of rows) await this.publishStatus(deviceId)
+    // Every timed-run device, not only the armed ones: a slice published before quickRun
+    // existed has none, and a surface hides the one-tap button until the status carries it.
+    const ids = new Set([
+      ...rows.map((row) => row.deviceId),
+      ...(await this.deps.timedRunDeviceIds()),
+    ])
+    for (const deviceId of ids) await this.publishStatus(deviceId)
   }
 
   /** Resolves when every deadline that already fired has been carried out. */
@@ -228,11 +241,12 @@ export class TimedRunService implements ITimedRunProvider {
   private async statusOf(deviceId: number): Promise<TimedRunStatus> {
     const row = this.pending.get(deviceId)
     const limit = await this.limitOf(deviceId)
-    if (limit === null) throw new Error(`timed-run: device ${deviceId} has no timed run`)
     return {
       activeUntil: row?.activeUntil ?? null,
       requestedBy: row?.requestedBy ?? null,
-      quickRun: timedRunQuickRun(limit, await this.deps.quickRuns.read(deviceId)),
+      // A removed device or a type without a timed run still answers: no one-tap run to offer.
+      quickRun:
+        limit === null ? null : timedRunQuickRun(limit, await this.deps.quickRuns.read(deviceId)),
       lastFetchedAt: this.deps.now(),
     }
   }

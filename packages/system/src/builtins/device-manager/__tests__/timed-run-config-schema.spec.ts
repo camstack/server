@@ -40,6 +40,22 @@ describe('timed-run derived form', () => {
       },
     )
     expect(parseTimedRunFormPatch({})).toEqual({})
-    expect(parseTimedRunFormPatch({ [TIMED_RUN_QUICK_RUN_KEY]: 'abc' })).toEqual({})
+  })
+
+  it('a cleared field resets to the default', () => {
+    expect(parseTimedRunFormPatch({ [TIMED_RUN_QUICK_RUN_KEY]: '' })).toEqual({
+      quickRunDuration: null,
+    })
+    expect(parseTimedRunFormPatch({ [TIMED_RUN_QUICK_RUN_KEY]: null })).toEqual({
+      quickRunDuration: null,
+    })
+  })
+
+  it('refuses a value that is not a positive number, by name', () => {
+    for (const bad of [0, -5, 'abc', Number.NaN]) {
+      expect(() => parseTimedRunFormPatch({ [TIMED_RUN_QUICK_RUN_KEY]: bad })).toThrow(
+        /positive number/,
+      )
+    }
   })
 })

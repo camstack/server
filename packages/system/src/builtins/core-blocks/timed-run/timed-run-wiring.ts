@@ -7,6 +7,7 @@ import {
   type AddonApi,
   type IScopedLogger,
   type RecordsAccess,
+  timedRunLimitOf,
   type TimedRunActuator,
 } from '@camstack/types'
 import { invokeCapOver } from '../actions-wiring.js'
@@ -99,6 +100,10 @@ export function buildTimedRunService(deps: TimedRunWiringDeps): TimedRunService 
     deviceTypeOf: async (deviceId) => {
       const found = await need().deviceManager.getDevice.query({ deviceId })
       return found === null || found === undefined ? null : found.type
+    },
+    timedRunDeviceIds: async () => {
+      const devices = await need().deviceManager.listAll.query({ projection: 'slim' })
+      return devices.filter((d) => timedRunLimitOf(d.type) !== null).map((d) => d.id)
     },
     actuation: actuationOver(deps.api),
     quickRuns: quickRunsOver(deps.settings),

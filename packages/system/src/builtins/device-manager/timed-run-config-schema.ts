@@ -40,16 +40,27 @@ export function buildTimedRunConfigSchema(
         min: 1,
         max: options.maxDuration,
         step: 1,
-        default: status?.quickRun.duration ?? options.defaultDuration,
+        default: status?.quickRun?.duration ?? options.defaultDuration,
       },
     ],
   }
   return { sections: [section] }
 }
 
-/** Re-parse a flat form patch into a `TimedRunSettingsPatch`; empty when the field did not change. */
+/**
+ * Re-parse a flat form patch into a `TimedRunSettingsPatch`. Empty when the field did not
+ * change; a cleared field is `null` (back to the type's default); a value that is not a
+ * positive number is REFUSED by name, never dropped to an empty patch that looks saved.
+ */
 export function parseTimedRunFormPatch(patch: Record<string, unknown>): TimedRunSettingsPatch {
   if (!(TIMED_RUN_QUICK_RUN_KEY in patch)) return {}
-  const value = Number(patch[TIMED_RUN_QUICK_RUN_KEY])
-  return Number.isFinite(value) && value > 0 ? { quickRunDuration: value } : {}
+  const raw = patch[TIMED_RUN_QUICK_RUN_KEY]
+  if (raw === null || raw === undefined || (typeof raw === 'string' && raw.trim() === '')) {
+    return { quickRunDuration: null }
+  }
+  const value = typeof raw === 'number' ? raw : Number(raw)
+  if (!Number.isFinite(value) || value <= 0) {
+    throw new Error(`timed-run: the one-tap run must be a positive number, got ${String(raw)}`)
+  }
+  return { quickRunDuration: value }
 }
