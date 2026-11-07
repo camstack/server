@@ -83,14 +83,21 @@ export async function readRawKeys(
 
 /**
  * Every node the hub knows (online or not) plus this one. A node the directory does not list
- * yet is this one while it boots. Throws when the directory cannot be read: a copy that missed
+ * yet is this one while it boots. Throws when the directory cannot be read or is `complete: false`: a copy that missed
  * a node must fail, not report done.
  */
 export async function clusterNodeIds(
-  directory: () => Promise<{ readonly nodes: readonly { readonly id: string }[] }>,
+  directory: () => Promise<{
+    readonly nodes: readonly { readonly id: string }[]
+    readonly complete: boolean
+  }>,
   localNodeId: string | undefined,
 ): Promise<readonly string[]> {
-  const listed = (await directory()).nodes.map((node) => node.id)
+  const answer = await directory()
+  if (!answer.complete) {
+    throw new Error('the node directory is incomplete (no history read answered): not copying')
+  }
+  const listed = answer.nodes.map((node) => node.id)
   const self = (localNodeId ?? 'hub').split('/')[0] ?? 'hub'
   return [...new Set([self === '' ? 'hub' : self, ...listed])]
 }

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - OpenID Connect connections are instances of the sign-in function: an operator-chosen id, a per-connection On/Off switch, and the client secret stays in the keychain
 - Passkey relying-party settings are cluster settings of the login-method capability
+- The passkey settings page no longer shows the live address hint; a static note says an empty relying-party ID is derived from the Network page
 
 ## [1.2.177] - 2026-11-06
 
