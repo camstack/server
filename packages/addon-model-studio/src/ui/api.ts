@@ -28,10 +28,10 @@ import {
   ConvertArtifactSchema,
   CustomModelDescriptorSchema,
   ModelCatalogEntrySchema,
-  pickClusterStepModels,
+  DEFAULT_CLUSTER_STEP_MODELS,
+  readClusterStepModels,
   pipelineExecutorCapability,
   type ClusterStepModels,
-  type HydratedClusterView,
 } from '@camstack/types'
 import { normalizePluginCatalogDrift } from '../plugin-catalog/plugin-catalog-tree-drift.js'
 import {
@@ -73,8 +73,12 @@ interface AddonSettingsUpdateCaller {
   mutate(input: { addonId: string; patch: Record<string, unknown> }): Promise<unknown>
 }
 
-interface AddonSettingsGetCaller {
-  query(input: { addonId: string }): Promise<unknown>
+interface ScopedValuesCaller {
+  query(input: {
+    addonId: string
+    cap: string
+    scope: 'cluster'
+  }): Promise<Record<string, unknown> | null>
 }
 
 interface PipelineDownloadCaller {
@@ -114,7 +118,7 @@ interface StructuralTrpcSurface {
   addons: { custom: CustomActionCaller }
   addonSettings: {
     updateGlobalSettings: AddonSettingsUpdateCaller
-    getGlobalSettings: AddonSettingsGetCaller
+    readScopedValues: ScopedValuesCaller
   }
   pipelineExecutor: {
     getSchema: PipelineSchemaCaller
@@ -133,7 +137,7 @@ interface StructuralTrpcSurface {
 export const MODEL_STUDIO_TRPC_CONTRACT = [
   'addons.custom.mutate',
   'addonSettings.updateGlobalSettings.mutate',
-  'addonSettings.getGlobalSettings.query',
+  'addonSettings.readScopedValues.query',
   'pipelineExecutor.getSchema.query',
   'pipelineExecutor.downloadModel.mutate',
   'pipelineExecutor.listLoadedEngines.query',
@@ -880,11 +884,13 @@ export async function setAgentInferenceDevices(
 export async function listClusterStepModels(trpc: Trpc): Promise<ClusterStepModels> {
   const raw = await requireTrpcMember(
     trpc,
-    'addonSettings.getGlobalSettings.query',
-  ).addonSettings.getGlobalSettings.query({
+    'addonSettings.readScopedValues.query',
+  ).addonSettings.readScopedValues.query({
     addonId: 'pipeline-orchestrator',
+    cap: 'pipeline-orchestrator',
+    scope: 'cluster',
   })
-  return pickClusterStepModels(raw as HydratedClusterView | null)
+  return raw === null ? DEFAULT_CLUSTER_STEP_MODELS : readClusterStepModels(raw)
 }
 
 export async function setClusterStepModel(

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Pipeline analytics retires its stale face-threshold keys through a one-time ledger migration.
+- Face rescore interval and cluster model pin are read from the orchestrator's scoped cluster values (same keys, same refresh)
 
 ## [1.2.678] - 2026-11-07
 

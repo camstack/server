@@ -32,12 +32,15 @@ import {
   ClusterModelChoiceSchema,
   type IScopedLogger,
   type ClusterStepModels,
-  type HydratedClusterView,
-  pickClusterStepModels,
+  readClusterStepModels,
+  DEFAULT_CLUSTER_STEP_MODELS,
 } from '@camstack/types'
 
 /** The addon whose GLOBAL settings hold the cluster row. */
 export const CLUSTER_MODEL_OWNER_ADDON_ID = 'pipeline-orchestrator'
+
+/** The capability the owner declares the cluster form under (scope `cluster`, D986 §7). */
+export const CLUSTER_MODEL_OWNER_CAP = 'pipeline-orchestrator'
 
 /** The step ids this module can pin — the same two the catalog declares. */
 export const FACE_EMBEDDING_STEP_ID = 'face-embedding'
@@ -46,8 +49,12 @@ export const CLIP_EMBEDDING_STEP_ID = 'clip-embedding'
 /** The hub-routed global-settings read, structurally typed so tests can fake it. */
 export interface ClusterModelPinApi {
   readonly addonSettings: {
-    readonly getGlobalSettings: {
-      query(input: { addonId: string }): Promise<HydratedClusterView | null>
+    readonly readScopedValues: {
+      query(input: {
+        addonId: string
+        cap: string
+        scope: 'cluster'
+      }): Promise<Record<string, unknown> | null>
     }
   }
 }
@@ -70,15 +77,17 @@ export async function readClusterModelRow(
   logger: ClusterModelPinLogger,
 ): Promise<ClusterStepModels | null> {
   try {
-    const view = await api.addonSettings.getGlobalSettings.query({
+    const values = await api.addonSettings.readScopedValues.query({
       addonId: CLUSTER_MODEL_OWNER_ADDON_ID,
+      cap: CLUSTER_MODEL_OWNER_CAP,
+      scope: 'cluster',
     })
-    // A `null` VIEW reads as the registry defaults. Acceptable ONLY for the
+    // A `null` answer reads as the registry defaults. Acceptable ONLY for the
     // read-only surfaces that still call this (search gate, rescore, audit):
     // a pass that REWRITES an index must use `readClusterModelPinStrict`,
-    // because a hydrated view cannot tell a default nobody chose from a choice
+    // because a scoped-values read cannot tell a default nobody chose from a choice
     // (D651). A read that THROWS is handled below and is not an answer at all.
-    return pickClusterStepModels(view)
+    return values === null ? DEFAULT_CLUSTER_STEP_MODELS : readClusterStepModels(values)
   } catch (err: unknown) {
     logger.warn(
       'cluster model row unreadable — a re-embed pass must not guess which encoder the operator chose',

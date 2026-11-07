@@ -52,7 +52,7 @@ async function boot(localNodeId: string): Promise<{
     kernel: { localNodeId },
     api: {
       addonSettings: {
-        getGlobalSettings: {
+        readScopedValues: {
           query: async () => {
             throw new Error('cluster row unreadable in this test')
           },

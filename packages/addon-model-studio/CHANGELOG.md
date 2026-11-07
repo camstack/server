@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Model Studio reads the cluster step models from the orchestrator's scoped cluster values
+
 ## [1.1.343] - 2026-11-06
 
 ### Changed

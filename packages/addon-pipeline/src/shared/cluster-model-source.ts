@@ -33,9 +33,8 @@ import {
   type ClusterStepModels,
   type ClusterStepSettings,
   DEFAULT_CLUSTER_STEP_SETTINGS,
-  type HydratedClusterView,
   type IScopedLogger,
-  pickClusterStepSettings,
+  readClusterStepSettings,
 } from '@camstack/types'
 
 /**
@@ -45,6 +44,9 @@ import {
  * enforces it live — neither should own a value the other depends on).
  */
 export const CLUSTER_MODEL_OWNER_ADDON_ID = 'pipeline-orchestrator'
+
+/** The capability the owner declares the cluster form under (scope `cluster`, D986 §7). */
+export const CLUSTER_MODEL_OWNER_CAP = 'pipeline-orchestrator'
 
 /**
  * How long a read is trusted.
@@ -74,13 +76,17 @@ export const CLUSTER_MODEL_UNKNOWN_RETRY_MS = 5_000
  * hydrates an unread or restarting store as `{}`, i.e. as "the defaults" — and
  * that is how a runner that booted while the owner restarted ran the registry
  * default for its whole life (D658). The step KNOBS still come from the
- * hydrated view: a knob falling back to its default changes an admission floor,
+ * scoped values: a knob falling back to its default changes an admission floor,
  * not a feature space.
  */
 export interface ClusterModelSettingsApi {
   readonly addonSettings: {
-    readonly getGlobalSettings: {
-      query(input: { addonId: string }): Promise<HydratedClusterView | null>
+    readonly readScopedValues: {
+      query(input: {
+        addonId: string
+        cap: string
+        scope: 'cluster'
+      }): Promise<Record<string, unknown> | null>
     }
   }
   readonly pipelineOrchestrator: {
@@ -245,10 +251,12 @@ export class ClusterModelSource {
   }
 
   private async readSettings(api: ClusterModelSettingsApi): Promise<void> {
-    let view: HydratedClusterView | null
+    let values: Record<string, unknown> | null
     try {
-      view = await api.addonSettings.getGlobalSettings.query({
+      values = await api.addonSettings.readScopedValues.query({
         addonId: CLUSTER_MODEL_OWNER_ADDON_ID,
+        cap: CLUSTER_MODEL_OWNER_CAP,
+        scope: 'cluster',
       })
     } catch (err: unknown) {
       this.logger.warn('cluster step settings read failed — keeping the last known knobs', {
@@ -259,9 +267,9 @@ export class ClusterModelSource {
       })
       return
     }
-    // A null view is the owner mid-boot: no answer, so nothing changes (D49).
-    if (view === null) return
-    const nextSettings = pickClusterStepSettings(view)
+    // A null answer is the owner mid-boot: no answer, so nothing changes (D49).
+    if (values === null) return
+    const nextSettings = readClusterStepSettings(values)
     const settingsChanged = Object.keys(nextSettings).some((stepId) => {
       const from = this.settings[stepId] ?? {}
       const to = nextSettings[stepId] ?? {}

@@ -150,7 +150,7 @@ function harness(): Harness {
   Reflect.set(provider, 'clusterModels', rows)
   const ownerNotReady = async (): Promise<void> => {
     await rows.refresh({
-      addonSettings: { getGlobalSettings: { query: async () => null } },
+      addonSettings: { readScopedValues: { query: async () => null } },
       pipelineOrchestrator: {
         getClusterModelChoice: {
           query: async () => ({ kind: 'unreadable', reason: 'owner-not-ready' }),
@@ -160,7 +160,7 @@ function harness(): Harness {
   }
   const flip = async (modelId: string): Promise<void> => {
     await rows.refresh({
-      addonSettings: { getGlobalSettings: { query: async () => null } },
+      addonSettings: { readScopedValues: { query: async () => null } },
       pipelineOrchestrator: {
         getClusterModelChoice: {
           query: async ({ stepId }) =>

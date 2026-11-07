@@ -30,10 +30,9 @@
  * with it the env-var escape hatch.
  */
 import {
-  type HydratedSettingsView,
   type IScopedLogger,
   type NativeLeaseSettingsOverride,
-  pickNativeLeaseOverride,
+  readNativeLeaseOverride,
 } from '@camstack/types'
 
 /**
@@ -42,6 +41,9 @@ import {
  * the per-node decoder-backend selector.
  */
 export const NATIVE_LEASE_OWNER_ADDON_ID = 'pipeline-orchestrator'
+
+/** The capability the owner declares the cluster form under (scope `cluster`, D986 §7). */
+export const NATIVE_LEASE_OWNER_CAP = 'pipeline-orchestrator'
 
 /**
  * How long a read is trusted. Shorter than the crop convention's 60 s because
@@ -52,11 +54,15 @@ export const NATIVE_LEASE_OWNER_ADDON_ID = 'pipeline-orchestrator'
  */
 export const NATIVE_LEASE_TTL_MS = 30_000
 
-/** The hub-routed global-settings read, structurally typed so tests can fake it. */
+/** The hub-routed scoped-values read, structurally typed so tests can fake it. */
 export interface NativeLeaseSettingsApi {
   readonly addonSettings: {
-    readonly getGlobalSettings: {
-      query(input: { addonId: string }): Promise<HydratedSettingsView | null>
+    readonly readScopedValues: {
+      query(input: {
+        addonId: string
+        cap: string
+        scope: 'cluster'
+      }): Promise<Record<string, unknown> | null>
     }
   }
 }
@@ -133,10 +139,13 @@ export class NativeLeaseSettingsSource {
 
   private async read(api: NativeLeaseSettingsApi): Promise<void> {
     try {
-      const view = await api.addonSettings.getGlobalSettings.query({
+      const values = await api.addonSettings.readScopedValues.query({
         addonId: NATIVE_LEASE_OWNER_ADDON_ID,
+        cap: NATIVE_LEASE_OWNER_CAP,
+        scope: 'cluster',
       })
-      const next = pickNativeLeaseOverride(view)
+      // `null` = owner declares nothing / mid-boot: "operator set nothing", as a null view was.
+      const next = readNativeLeaseOverride(values ?? {})
       this.lastReadAtMs = this.now()
       if (sameOverride(next, this.override)) return
       // The one line that explains a step-change in worker RSS or in native-crop

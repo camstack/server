@@ -14,7 +14,6 @@ import {
   DEFAULT_DETAIL_CROP_CONVENTION,
   DETAIL_CROP_PADDING_KEY,
   DETAIL_CROP_SQUARE_KEY,
-  type HydratedSettingsView,
 } from '@camstack/types'
 import {
   CropConventionSource,
@@ -29,23 +28,14 @@ const silentLogger = {
   error: () => undefined,
 }
 
-function viewWith(padding: unknown, square: unknown): HydratedSettingsView {
-  return {
-    sections: [
-      {
-        fields: [
-          { key: DETAIL_CROP_PADDING_KEY, value: padding },
-          { key: DETAIL_CROP_SQUARE_KEY, value: square },
-        ],
-      },
-    ],
-  }
+function viewWith(padding: unknown, square: unknown): Record<string, unknown> {
+  return { [DETAIL_CROP_PADDING_KEY]: padding, [DETAIL_CROP_SQUARE_KEY]: square }
 }
 
-function apiReturning(view: HydratedSettingsView, calls: unknown[]): CropConventionSettingsApi {
+function apiReturning(view: Record<string, unknown>, calls: unknown[]): CropConventionSettingsApi {
   return {
     addonSettings: {
-      getGlobalSettings: {
+      readScopedValues: {
         query: async (input: { addonId: string }) => {
           calls.push(input)
           return view
@@ -61,12 +51,16 @@ describe('CropConventionSource', () => {
     expect(source.current()).toEqual(DEFAULT_DETAIL_CROP_CONVENTION)
   })
 
-  it('reads the convention from the ORCHESTRATOR global settings', async () => {
+  it('reads the convention from the ORCHESTRATOR cluster scoped values', async () => {
     const calls: unknown[] = []
     const source = new CropConventionSource({ logger: silentLogger })
     await source.refresh(apiReturning(viewWith(0.5, true), calls))
 
-    expect(calls).toEqual([{ addonId: CROP_CONVENTION_OWNER_ADDON_ID }])
+    // The key read is the orchestrator's CLUSTER form (`detailCropPaddingRatio` / `detailCropSquare`),
+    // the same keys the old getGlobalSettings walk picked.
+    expect(calls).toEqual([
+      { addonId: CROP_CONVENTION_OWNER_ADDON_ID, cap: 'pipeline-orchestrator', scope: 'cluster' },
+    ])
     expect(CROP_CONVENTION_OWNER_ADDON_ID).toBe('pipeline-orchestrator')
     expect(source.current()).toEqual({ paddingRatio: 0.5, square: true })
   })
@@ -82,7 +76,7 @@ describe('CropConventionSource', () => {
 
   it('caches within the TTL and re-reads after it', async () => {
     const query = vi.fn(async () => viewWith(0.2, false))
-    const api = { addonSettings: { getGlobalSettings: { query } } }
+    const api = { addonSettings: { readScopedValues: { query } } }
     let now = 1_000
     const source = new CropConventionSource({ logger: silentLogger, now: () => now, ttlMs: 10_000 })
 
@@ -104,7 +98,7 @@ describe('CropConventionSource', () => {
 
     await source.refresh({
       addonSettings: {
-        getGlobalSettings: {
+        readScopedValues: {
           query: async () => {
             throw new Error('transport-failed (addon not loaded)')
           },
@@ -122,7 +116,7 @@ describe('CropConventionSource', () => {
     })
     await source.refresh({
       addonSettings: {
-        getGlobalSettings: {
+        readScopedValues: {
           query: async () => {
             throw new Error('boom')
           },

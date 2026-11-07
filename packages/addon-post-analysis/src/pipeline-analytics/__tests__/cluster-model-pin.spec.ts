@@ -17,12 +17,12 @@ import {
 
 const silent = { warn: () => undefined }
 
-const apiReturning = (view: unknown, calls: unknown[] = []) => ({
+const apiReturning = (view: Record<string, unknown> | null, calls: unknown[] = []) => ({
   addonSettings: {
-    getGlobalSettings: {
-      query: async (input: { addonId: string }) => {
+    readScopedValues: {
+      query: async (input: { addonId: string; cap: string; scope: 'cluster' }) => {
         calls.push(input)
-        return view as never
+        return view
       },
     },
   },
@@ -30,7 +30,7 @@ const apiReturning = (view: unknown, calls: unknown[] = []) => ({
 
 const apiThrowing = () => ({
   addonSettings: {
-    getGlobalSettings: {
+    readScopedValues: {
       query: async () => {
         throw new Error('hub unreachable')
       },
@@ -39,20 +39,15 @@ const apiThrowing = () => ({
 })
 
 describe('readClusterModelRow', () => {
-  it('reads the ORCHESTRATOR global settings, with no nodeId', async () => {
+  it('reads the ORCHESTRATOR cluster scoped values, with no nodeId', async () => {
     const calls: Array<Record<string, unknown>> = []
     await readClusterModelRow(
-      apiReturning(
-        {
-          sections: [
-            { fields: [{ key: clusterModelSettingKey('clip-embedding'), value: 'mobileclip-s2' }] },
-          ],
-        },
-        calls,
-      ),
+      apiReturning({ [clusterModelSettingKey('clip-embedding')]: 'mobileclip-s2' }, calls),
       silent,
     )
-    expect(calls).toEqual([{ addonId: CLUSTER_MODEL_OWNER_ADDON_ID }])
+    expect(calls).toEqual([
+      { addonId: CLUSTER_MODEL_OWNER_ADDON_ID, cap: 'pipeline-orchestrator', scope: 'cluster' },
+    ])
     expect(calls[0]).not.toHaveProperty('nodeId')
   })
 
@@ -75,11 +70,7 @@ describe('readClusterModelRow', () => {
 
 describe('resolveClusterModelPin', () => {
   it('pins the chosen model for a cluster-scoped step', async () => {
-    const view = {
-      sections: [
-        { fields: [{ key: clusterModelSettingKey('face-embedding'), value: 'auraface-r100' }] },
-      ],
-    }
+    const view = { [clusterModelSettingKey('face-embedding')]: 'auraface-r100' }
     expect(await resolveClusterModelPin(apiReturning(view), 'face-embedding', silent)).toBe(
       'auraface-r100',
     )
@@ -103,7 +94,7 @@ describe('resolveClusterModelPin', () => {
  * D651 fix round 3: the pin a pass that REWRITES an index runs under is the
  * OWNER's answer — `pipelineOrchestrator.getClusterModelChoice`, a three-way
  * read of the orchestrator's own store once its boot has settled. Not the
- * hydrated view (which answers `value ?? default`), and not the owner's
+ * scoped-values read (which answers `value ?? default`), and not the owner's
  * private store layout.
  */
 describe('readClusterModelPinStrict — the owner answers', () => {

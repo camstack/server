@@ -7,7 +7,7 @@
  * answered for it; before that it is refused by name, never defaulted (D658) —
  * a default run during the owner's boot window made that default the pool's
  * active variant for the runner's whole life. Once known, no answer keeps the
- * last known model. The step KNOBS still come from the hydrated global view.
+ * last known model. The step KNOBS come from the owner's cluster scoped values.
  */
 import { describe, expect, it, vi } from 'vitest'
 import { type ClusterModelChoice, clusterStepSettingKey } from '@camstack/types'
@@ -33,14 +33,14 @@ const notReady: ClusterModelChoice = { kind: 'unreadable', reason: 'owner-not-re
 interface FakeOwner {
   readonly api: ClusterModelSettingsApi
   readonly calls: Array<{ stepId: string }>
-  readonly viewCalls: Array<{ addonId: string }>
+  readonly viewCalls: Array<{ addonId: string; cap: string; scope: 'cluster' }>
   answer(next: Answers): void
 }
 
-function owner(initial: Answers, view: unknown = null): FakeOwner {
+function owner(initial: Answers, values: Record<string, unknown> | null = null): FakeOwner {
   let answers = initial
   const calls: Array<{ stepId: string }> = []
-  const viewCalls: Array<{ addonId: string }> = []
+  const viewCalls: Array<{ addonId: string; cap: string; scope: 'cluster' }> = []
   return {
     calls,
     viewCalls,
@@ -49,10 +49,10 @@ function owner(initial: Answers, view: unknown = null): FakeOwner {
     },
     api: {
       addonSettings: {
-        getGlobalSettings: {
+        readScopedValues: {
           query: async (input) => {
             viewCalls.push(input)
-            return view as null
+            return values
           },
         },
       },
@@ -122,7 +122,9 @@ describe('ClusterModelSource — known only when the owner answers (D658)', () =
     await new ClusterModelSource({ logger: silentLogger }).refresh(o.api)
     expect(o.calls.map((c) => c.stepId).toSorted()).toEqual(['clip-embedding', 'face-embedding'])
     expect(o.calls.every((c) => !('nodeId' in c))).toBe(true)
-    expect(o.viewCalls).toEqual([{ addonId: CLUSTER_MODEL_OWNER_ADDON_ID }])
+    expect(o.viewCalls).toEqual([
+      { addonId: CLUSTER_MODEL_OWNER_ADDON_ID, cap: 'pipeline-orchestrator', scope: 'cluster' },
+    ])
     expect(CLUSTER_MODEL_OWNER_ADDON_ID).toBe('pipeline-orchestrator')
   })
 
@@ -190,16 +192,8 @@ describe('ClusterModelSource — known only when the owner answers (D658)', () =
     ])
   })
 
-  it('reads the step knobs from the owner global view; a null view changes nothing', async () => {
-    const view = {
-      sections: [
-        {
-          fields: [
-            { key: clusterStepSettingKey('face-embedding', 'minLandmarkFaceSize'), value: 32 },
-          ],
-        },
-      ],
-    }
+  it('reads the step knobs from the owner cluster values; a null answer changes nothing', async () => {
+    const view = { [clusterStepSettingKey('face-embedding', 'minLandmarkFaceSize')]: 32 }
     let clock = 0
     const source = new ClusterModelSource({ logger: silentLogger, now: () => clock, ttlMs: 10 })
     expect(source.currentSettings()['face-embedding']?.['minLandmarkFaceSize']).toBe(24)

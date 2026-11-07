@@ -34,9 +34,8 @@
 import {
   DEFAULT_DETAIL_CROP_CONVENTION,
   type DetailCropConvention,
-  type HydratedSettingsView,
   type IScopedLogger,
-  pickDetailCropConvention,
+  readDetailCropConvention,
 } from '@camstack/types'
 
 /**
@@ -47,14 +46,21 @@ import {
  */
 export const CROP_CONVENTION_OWNER_ADDON_ID = 'pipeline-orchestrator'
 
+/** The capability the owner declares the cluster form under (scope `cluster`, D986 §7). */
+export const CROP_CONVENTION_OWNER_CAP = 'pipeline-orchestrator'
+
 /** How long a read is trusted. A detail dispatch is per-track, not per-frame. */
 export const CROP_CONVENTION_TTL_MS = 60_000
 
-/** The hub-routed global-settings read, structurally typed so tests can fake it. */
+/** The hub-routed scoped-values read, structurally typed so tests can fake it. */
 export interface CropConventionSettingsApi {
   readonly addonSettings: {
-    readonly getGlobalSettings: {
-      query(input: { addonId: string }): Promise<HydratedSettingsView | null>
+    readonly readScopedValues: {
+      query(input: {
+        addonId: string
+        cap: string
+        scope: 'cluster'
+      }): Promise<Record<string, unknown> | null>
     }
   }
 }
@@ -111,10 +117,13 @@ export class CropConventionSource {
 
   private async read(api: CropConventionSettingsApi): Promise<void> {
     try {
-      const view = await api.addonSettings.getGlobalSettings.query({
+      const values = await api.addonSettings.readScopedValues.query({
         addonId: CROP_CONVENTION_OWNER_ADDON_ID,
+        cap: CROP_CONVENTION_OWNER_CAP,
+        scope: 'cluster',
       })
-      const next = pickDetailCropConvention(view)
+      // `null` = the owner declares nothing / is mid-boot: the default convention, as a null view was.
+      const next = readDetailCropConvention(values ?? {})
       this.lastReadAtMs = this.now()
       if (
         next.paddingRatio !== this.convention.paddingRatio ||

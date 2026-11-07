@@ -27,14 +27,12 @@ function logger(): {
 }
 
 function apiReturning(query: ReturnType<typeof vi.fn>): {
-  addonSettings: { getGlobalSettings: { query: typeof query } }
+  addonSettings: { readScopedValues: { query: typeof query } }
 } {
-  return { addonSettings: { getGlobalSettings: { query } } }
+  return { addonSettings: { readScopedValues: { query } } }
 }
 
-const VIEW_HOLD = {
-  sections: [{ fields: [{ key: NATIVE_LEASE_HOLD_KEY, value: 16 }] }],
-}
+const VIEW_HOLD = { [NATIVE_LEASE_HOLD_KEY]: 16 }
 
 /**
  * The one admission value that is NOT the shipped default — derived, because a
@@ -46,14 +44,8 @@ const NON_DEFAULT_ADMISSION =
 
 /** The same cluster, after the operator ALSO chose a non-default admission. */
 const VIEW_HOLD_ADMISSION = {
-  sections: [
-    {
-      fields: [
-        { key: NATIVE_LEASE_HOLD_KEY, value: 16 },
-        { key: NATIVE_LEASE_ADMISSION_KEY, value: NON_DEFAULT_ADMISSION },
-      ],
-    },
-  ],
+  [NATIVE_LEASE_HOLD_KEY]: 16,
+  [NATIVE_LEASE_ADMISSION_KEY]: NON_DEFAULT_ADMISSION,
 }
 
 describe('NativeLeaseSettingsSource', () => {
@@ -78,12 +70,14 @@ describe('NativeLeaseSettingsSource', () => {
     expect(new NativeLeaseSettingsSource({ logger: logger() }).current()).toEqual({})
   })
 
-  it('reads the owner addon global settings, unscoped by node', async () => {
+  it('reads the owner cluster scoped values, unscoped by node', async () => {
     const query = vi.fn().mockResolvedValue(VIEW_HOLD)
     const source = new NativeLeaseSettingsSource({ logger: logger() })
     await source.refresh(apiReturning(query))
     expect(query).toHaveBeenCalledWith({
       addonId: NATIVE_LEASE_OWNER_ADDON_ID,
+      cap: 'pipeline-orchestrator',
+      scope: 'cluster',
     })
     expect(query.mock.calls[0]?.[0]).not.toHaveProperty('nodeId')
     expect(source.current()).toEqual({ holdFrames: 16 })

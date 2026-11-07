@@ -6,9 +6,14 @@
  * and forwards three things to it — the two actions, the timer tick, stop.
  */
 import { randomUUID } from 'node:crypto'
-import { type IScopedLogger, pickFaceRescoreIntervalMinutes } from '@camstack/types'
+import {
+  FACE_RESCORE_INTERVAL_KEY,
+  type IScopedLogger,
+  readFaceRescoreIntervalMinutes,
+} from '@camstack/types'
 import {
   CLUSTER_MODEL_OWNER_ADDON_ID,
+  CLUSTER_MODEL_OWNER_CAP,
   FACE_EMBEDDING_STEP_ID,
   resolveClusterModelPin,
   type ClusterModelPinApi,
@@ -73,12 +78,14 @@ export function buildFaceRescoreRuntime(
 
   const scheduler = new FaceRescoreScheduler(
     {
-      readIntervalMinutes: async () =>
-        pickFaceRescoreIntervalMinutes(
-          await deps.api.addonSettings.getGlobalSettings.query({
-            addonId: CLUSTER_MODEL_OWNER_ADDON_ID,
-          }),
-        ),
+      readIntervalMinutes: async () => {
+        const values = await deps.api.addonSettings.readScopedValues.query({
+          addonId: CLUSTER_MODEL_OWNER_ADDON_ID,
+          cap: CLUSTER_MODEL_OWNER_CAP,
+          scope: 'cluster',
+        })
+        return readFaceRescoreIntervalMinutes(values?.[FACE_RESCORE_INTERVAL_KEY])
+      },
       job,
       fingerprintPorts: { resolveClusterModelId, galleryManifest, pendingMarker },
       state: deps.state,

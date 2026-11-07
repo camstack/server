@@ -36,11 +36,7 @@ const ABSENT: OwnerAnswer = { kind: 'absent', defaultModelId: 'auraface-r100' }
 const NOT_READY: OwnerAnswer = { kind: 'unreadable', reason: 'owner-not-ready' }
 const INVALID: OwnerAnswer = { kind: 'unreadable', reason: 'invalid-stored' }
 /** The HYDRATED view a defaults-only store produces — what the first read trusted. */
-const hydratedDefaults = {
-  sections: [
-    { fields: [{ key: clusterModelSettingKey('face-embedding'), value: 'auraface-r100' }] },
-  ],
-}
+const hydratedDefaults = { [clusterModelSettingKey('face-embedding')]: 'auraface-r100' }
 
 interface LogLine {
   readonly message: string
@@ -133,7 +129,7 @@ async function boot(answers: readonly OwnerAnswer[], options: BootOptions = {}):
   }
   const withOrchestrator: AddonApi = {
     ...api,
-    addonSettings: { getGlobalSettings: { query: async () => hydratedDefaults } },
+    addonSettings: { readScopedValues: { query: async () => hydratedDefaults } },
     pipelineOrchestrator: options.withoutMethod ? {} : { getClusterModelChoice },
   } as unknown as AddonApi
   const records = await makePipelineBootRecords()
