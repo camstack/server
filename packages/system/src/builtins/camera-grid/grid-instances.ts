@@ -37,7 +37,7 @@ export type GridCellConfig = {
  * on the composite's canvas. Both rectangles are NORMALIZED so a source that
  * changes resolution does not silently start cutting the wrong region.
  */
-const GridCellSchema: z.ZodType<GridCellConfig> = z.object({
+export const GridCellSchema: z.ZodType<GridCellConfig> = z.object({
   deviceId: z.number().int().positive(),
   source: NormalizedRectSchema,
   cell: NormalizedRectSchema,

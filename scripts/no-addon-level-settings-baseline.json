@@ -5,7 +5,6 @@
       "packages/addon-waste-collections/src/waste-collections.addon.ts:addon-level-settings": "pruneLegacyRows still writes the addon blob through updateGlobalSettings (a raw store write would put plaintext secrets back); the settings button is now a page action [updateGlobalSettings]"
     },
     "m5-declarers": {
-      "packages/system/src/builtins/camera-grid/addon.ts:addon-level-settings": "the grid list is an editable-array COLLECTION kept in the addon blob (cameraGrids); moving it is an instances-kind decision (D985), not a scope move, so it stays until the operator decides"
     },
     "m5-addon-blobs": {
       "packages/addon-admin-ui/src/components/pipeline/placement-board/board-model.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings]",

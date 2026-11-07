@@ -1260,7 +1260,8 @@
       "noProviders": "Nessun provider di training installato",
       "noProvidersDescription": "Installa un addon provider di training (ad esempio @camstack/addon-training) per addestrare sul tuo account GPU-cloud.",
       "addAccount": "Aggiungi account"
-    }
+    },
+    "cameraGrids": "Griglie di camere"
   },
   "common": {
     "save": "Salva",
@@ -11700,5 +11701,12 @@
     "allFailed": "{{count}} calendari non aggiornati",
     "allCollections": "{{count}} sorgenti aggiornate.",
     "allNotFetched": "Non è stato possibile aggiornare i calendari"
+  },
+  "cameraGrids": {
+    "title": "Griglie di camere",
+    "subtitle": "Una griglia e una camera composita: piu camere riunite in un'unica immagine, registrata e riprodotta come ogni altra. Creala con un nome, poi apri la sua camera per disporla.",
+    "empty": "Nessuna griglia di camere",
+    "emptyHint": "Aggiungi una griglia per riunire piu camere in una.",
+    "add": "Aggiungi griglia"
   }
 }

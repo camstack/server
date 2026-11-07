@@ -143,6 +143,9 @@ const SystemPage = lazy(() =>
 const ClusterPage = lazy(() =>
   import('./pages/system/Cluster').then((m) => ({ default: m.ClusterPage })),
 )
+const CameraGridsPage = lazy(() =>
+  import('./pages/system/CameraGrids').then((m) => ({ default: m.CameraGridsPage })),
+)
 const TerminalPage = lazy(() =>
   import('./pages/system/Terminal').then((m) => ({ default: m.TerminalPage })),
 )
@@ -574,6 +577,14 @@ export function App() {
                                 <Route
                                   path="/system"
                                   element={<Navigate to={SYSTEM_PAGE_PATH} replace />}
+                                />
+                                <Route
+                                  path="/system/camera-grids"
+                                  element={
+                                    <ProtectedRoute requireAdmin>
+                                      <CameraGridsPage />
+                                    </ProtectedRoute>
+                                  }
                                 />
                                 <Route
                                   path="/system/terminal"

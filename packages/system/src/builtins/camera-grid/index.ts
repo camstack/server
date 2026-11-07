@@ -32,8 +32,14 @@ export { readGridInstances } from './grid-instances.js'
 export type { GridCellConfig, GridInstance } from './grid-instances.js'
 export { gridPlanFor } from './grid-plan.js'
 export type { GridPlanEncodeContext } from './grid-plan.js'
-export { normalizeGridRows } from './grid-row-normalization.js'
-export type { NormalizedGridRows } from './grid-row-normalization.js'
+export {
+  CAMERA_GRID_KIND_NAME,
+  cameraGridKind,
+  GridBodySchema,
+  initialGridBody,
+  rawGridOfRecord,
+} from './grid-record-kinds.js'
+export type { GridBody } from './grid-record-kinds.js'
 export { gridStreamDescriptor } from './grid-stream-descriptor.js'
 export {
   GRID_CAM_STREAM_ID,

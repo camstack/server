@@ -34,7 +34,7 @@ this column exists to stop.
 | `bosch-homecom` | `@camstack/addon-provider-bosch` | providers | own runner | `hub-only` | — | multiple | `climate-control` `device-adoption` `device-provider` `integration-instances` `water-heater` |
 | `bosch-shc` | `@camstack/addon-provider-bosch` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
 | `calendars` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `calendars` |
-| `camera-grid` | `@camstack/server-framework` | system | own runner | `any-node` | — | unique | `camera-grid-layout` `motion` |
+| `camera-grid` | `@camstack/server-framework` | system | own runner | `any-node` | — | unique | `camera-grid-layout` `integration-instances` `motion` |
 | `cloudflare-tunnel` | `@camstack/addon-cloudflare` | networking | own runner | `hub-only` | `net-access` | — | `integration-instances` `network-access` |
 | `cloudflare-turn` | `@camstack/addon-cloudflare` | networking | own runner | `hub-only` | `net-access` | — | `integration-instances` `turn-provider` |
 | `composer` | `@camstack/server-framework` | system | own runner | `hub-only` | `composer` | — | `composer` |

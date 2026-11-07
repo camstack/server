@@ -31,6 +31,7 @@ import type {
   GridLayoutPatch,
   GridLayoutView,
   ProfileSlot,
+  ProviderRegistration,
 } from '@camstack/types'
 import {
   BaseAddon,
@@ -43,7 +44,10 @@ import {
   type CamProfile,
   declarationOwnerNodeId,
   errMsg,
+  integrationInstancesCapability,
+  type InstanceChange,
   memoizePinnedFfmpeg,
+  RecordIntegrationInstances,
   type DetectionResultPayload,
   type MotionOnMotionChangedPayload,
   type PipelineAudioInferenceResultPayload,
@@ -58,7 +62,14 @@ import { acquireWithRetry } from './acquire-retry.js'
 import { readGridInstances, type GridInstance } from './grid-instances.js'
 import { buildGridLayoutNativeProvider } from './grid-layout-native-provider.js'
 import { gridPlanFor } from './grid-plan.js'
-import { normalizeGridRows } from './grid-row-normalization.js'
+import {
+  CAMERA_GRID_KIND_NAME,
+  cameraGridKind,
+  type GridBody,
+  initialGridBody,
+  rawGridOfRecord,
+} from './grid-record-kinds.js'
+import { ADDON_MIGRATIONS, GRIDS_TO_RECORDS_ID, gridPortsOver } from './migrations/index.js'
 import { GridActivityForwarder, type GridActivityTarget } from './grid-activity.js'
 import { GridFrameSampler } from './grid-frame-sample.js'
 import { GridLastFrameFileStore } from './grid-last-frame-store.js'
@@ -87,17 +98,10 @@ const RECONCILE_MS = 60_000
 const SOURCE_ACQUIRE_BUDGET_MS = 8_000
 const SOURCE_ACQUIRE_PAUSE_MS = 700
 
-interface CameraGridAddonConfig {
-  /** Operator-written rows. Name only on creation; geometry is added later. */
-  readonly cameraGrids: readonly Record<string, unknown>[]
-  /** Durable deletion intent, so a removed grid is not re-adopted by a sweep. */
-  readonly cameraGridTombstones: readonly string[]
-}
+/** The grids are records (D1013); the addon keeps no settings of its own. */
+type CameraGridAddonConfig = Record<string, never>
 
-const DEFAULTS: CameraGridAddonConfig = {
-  cameraGrids: [],
-  cameraGridTombstones: [],
-}
+const DEFAULTS: CameraGridAddonConfig = {}
 
 /** One composition per (grid, profile) — a grid composes each separately. */
 function sessionKey(instanceId: string, profile: CamProfile): string {
@@ -131,7 +135,15 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
   /** Keyed by instance id — ONE composition per grid. */
   private readonly sessions = new Map<string, GridSessionEntry>()
   private readonly deviceIdByInstanceId = new Map<string, number>()
-  private readonly tombstones = new Set<string>()
+  private instances: RecordIntegrationInstances<GridBody> | null = null
+  /** The grids, as the last read of the records saw them. */
+  private instanceRows: readonly GridInstance[] = []
+  /**
+   * False until the records are readable and the grids migration landed: a camera is never
+   * withdrawn on a list that may be incomplete (D49).
+   */
+  private instancesTrusted = false
+  private migrationLanded = false
   /**
    * What each grid can honestly publish, per profile.
    *
@@ -160,10 +172,8 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
   }
 
   protected async onInitialize(): Promise<AddonInitResult> {
-    this.replaceTombstones(this.config.cameraGridTombstones)
-    await this.normalizeRows()
-
     if (declarationOwnerNodeId(this.ctx.kernel.localNodeId) === 'hub') {
+      await this.initInstanceRecords()
       // A boot-time miss is logged and ASKED AGAIN by the next pass that wants
       // a composition (`ensureSessions`) — never fatal to the addon, never a
       // `null` kept for good, never PATH (D540).
@@ -250,22 +260,16 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
       getLayout: (deviceId) => this.gridViewFor(deviceId),
       saveLayout: (patch) => this.saveGridLayout(patch),
     })
-    return {
-      providers: [{ capability: cameraGridLayoutCapability, provider: layoutProvider }],
-    }
-  }
-
-  protected async onConfigChanged(): Promise<void> {
-    this.replaceTombstones(this.config.cameraGridTombstones)
-    await this.normalizeRows()
-    await this.applyLayoutChanges()
-    if (this.relay) {
-      void this.reconcile().catch((error: unknown) => {
-        this.ctx.logger.warn('camera grid: reconciliation after a config change failed', {
-          meta: { error: errMsg(error) },
-        })
+    const providers: ProviderRegistration[] = [
+      { capability: cameraGridLayoutCapability, provider: layoutProvider },
+    ]
+    if (this.instances !== null) {
+      providers.push({
+        capability: integrationInstancesCapability,
+        provider: this.instances.toProvider(),
       })
     }
+    return { providers }
   }
 
   protected async onShutdown(): Promise<void> {
@@ -282,43 +286,133 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
 
   // ── Rows ────────────────────────────────────────────────────────────────
 
-  private instances(): readonly GridInstance[] {
-    return readGridInstances(this.config.cameraGrids, (message) => {
-      this.ctx.logger.warn(message)
-    })
+  private instanceList(): readonly GridInstance[] {
+    return this.instanceRows
   }
 
   private instanceById(instanceId: string): GridInstance | undefined {
-    return this.instances().find((instance) => instance.id === instanceId)
+    return this.instanceRows.find((instance) => instance.id === instanceId)
   }
 
   /**
-   * Fill in everything a name-only row is missing, and persist if it changed.
-   *
-   * Without this a freshly typed row is unparseable, and `readGridInstances`
-   * IGNORES what it cannot parse — so creation would silently do nothing.
+   * Hub only: declare the `camera-grid` kind, serve it through `integration-instances`, move the
+   * old settings list into records (D987), then read the rows. A migration that did not land
+   * leaves the declared cameras exactly as they are (`instancesTrusted` stays false).
    */
-  private async normalizeRows(): Promise<void> {
-    const normalized = normalizeGridRows(this.config.cameraGrids, () => crypto.randomUUID())
-    if (!normalized.changed) return
-    this.ctx.logger.info('camera grid: completing operator-created rows', {
-      meta: { rows: normalized.rows.length, wasRows: this.config.cameraGrids.length },
+  private async initInstanceRecords(): Promise<void> {
+    const records = this.ctx.records
+    if (records === undefined) {
+      throw new Error('camera-grid: ctx.records is not available on the hub')
+    }
+    await records.declare({ [CAMERA_GRID_KIND_NAME]: cameraGridKind })
+    this.instances = new RecordIntegrationInstances(records, cameraGridKind, {
+      description: {
+        role: 'services',
+        instanceMode: 'multiple',
+        kind: CAMERA_GRID_KIND_NAME,
+        canTest: false,
+        kinds: [
+          {
+            id: CAMERA_GRID_KIND_NAME,
+            label: 'Camera grid',
+            functionCap: 'camera-grid-layout',
+            canTest: false,
+          },
+        ],
+      },
+      kindOf: () => CAMERA_GRID_KIND_NAME,
+      formSchema: () => this.instanceForm(),
+      initialBody: (name) => initialGridBody(name),
+      mintId: () => crypto.randomUUID(),
+      configured: () => true,
+      onChanged: (id, change) => this.onInstanceChanged(id, change),
     })
-    await this.updateGlobalSettings({ cameraGrids: [...normalized.rows] })
+    const report = await this.runMigrations(ADDON_MIGRATIONS, gridPortsOver)
+    this.migrationLanded =
+      report.declared &&
+      !report.failed.includes(GRIDS_TO_RECORDS_ID) &&
+      !report.blocked.includes(GRIDS_TO_RECORDS_ID)
+    if (!this.migrationLanded) {
+      this.ctx.logger.error(
+        'camera grid: the grids migration has not landed - the declared cameras are left as they are until it does',
+        { meta: { declared: report.declared, failed: report.failed, blocked: report.blocked } },
+      )
+    }
+    await this.refreshInstanceRows()
   }
 
-  private replaceTombstones(stableIds: readonly string[]): void {
-    this.tombstones.clear()
-    for (const stableId of stableIds) {
-      if (typeof stableId === 'string' && stableId.length > 0) this.tombstones.add(stableId)
+  /** Re-read every grid record. A failed read changes nothing (D49). */
+  private async refreshInstanceRows(): Promise<void> {
+    const handle = this.ctx.records?.kind(cameraGridKind)
+    if (handle === undefined || !this.migrationLanded) {
+      this.instancesTrusted = false
+      return
     }
+    try {
+      const raw: Record<string, unknown>[] = []
+      let cursor: string | undefined
+      do {
+        const page = await handle.query({
+          limit: 500,
+          ...(cursor === undefined ? {} : { cursor }),
+        })
+        for (const row of page.records) raw.push(rawGridOfRecord(row.id, row.data))
+        cursor = page.nextCursor ?? undefined
+      } while (cursor !== undefined)
+      this.instanceRows = readGridInstances(raw, (message) => {
+        this.ctx.logger.warn(message)
+      })
+      this.instancesTrusted = true
+    } catch (error: unknown) {
+      this.instancesTrusted = false
+      this.ctx.logger.warn(
+        'camera grid: the grid records could not be read - keeping the last list',
+        {
+          meta: { error: errMsg(error) },
+        },
+      )
+    }
+  }
+
+  /**
+   * A grid is created with a name only; its layout is authored afterwards in the camera's own
+   * device details (a generated form for the geometry would render "cell 1 source = 592" and be
+   * unusable), so the form carries no field of its own.
+   */
+  private instanceForm(): ConfigUISchema {
+    return {
+      sections: [
+        {
+          id: 'camera-grid',
+          title: 'Camera grid',
+          description:
+            'A grid is a composite camera: several cameras composed into one picture, recorded and played back like any other camera. Create one with a name; open its camera to lay it out. Object detection is switched OFF on a new grid - the cameras it is composed from are already analysed.',
+          fields: [],
+        },
+      ],
+    }
+  }
+
+  /** Runs after every create / edit / switch / delete of a grid record, on the hub. */
+  private async onInstanceChanged(_id: string, _change: InstanceChange): Promise<void> {
+    await this.refreshInstanceRows()
+    if (this.relay === null) return
+    await this.applyLayoutChanges()
+    await this.reconcile().catch((error: unknown) => {
+      this.ctx.logger.warn('camera grid: reconciliation after an instance change failed', {
+        meta: { error: errMsg(error) },
+      })
+    })
   }
 
   // ── Declaration ─────────────────────────────────────────────────────────
 
   private async reconcile(): Promise<void> {
     if (!this.relay) return
-    const instances = this.instances()
+    await this.refreshInstanceRows()
+    // A list that may be incomplete never decides a withdrawal (D49).
+    if (!this.instancesTrusted) return
+    const instances = this.instanceList()
     const declarations = buildGridCameraDeclarations(instances)
     await this.refreshSourcePlans(instances)
     await this.retireWithdrawnSessions(instances)
@@ -347,12 +441,7 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
         const rows = await this.ctx.api.deviceManager.listAll.query({
           addonId: bareAddonId(this.ctx.id),
         })
-        return gridCameraReconciliationIndex(
-          rows,
-          this.integrationId,
-          declarations,
-          this.tombstones,
-        )
+        return gridCameraReconciliationIndex(rows, this.integrationId, declarations)
       },
     })
 
@@ -957,15 +1046,21 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
         fps: updated.fps,
       },
     })
-    await this.updateGlobalSettings({
-      cameraGrids: this.config.cameraGrids.map((row) =>
-        row['id'] === instance.id ? { ...row, ...updated } : row,
-      ),
+    const handle = this.ctx.records?.kind(cameraGridKind)
+    if (handle === undefined) throw new Error('camera-grid: the grid records are not available')
+    // An RFC 7396 merge: the cell list is replaced whole, the rest of the record is kept.
+    await handle.patch(instance.id, {
+      name: updated.name,
+      fps: updated.fps,
+      publishedProfiles: updated.publishedProfiles,
+      cells: updated.cells,
     })
+    await this.refreshInstanceRows()
+    await this.applyLayoutChanges()
     // A new cell list is a new set of sources, so what is on offer may have
     // changed. Asked NOW rather than at the next reconcile: the editor shows
     // the answer, and a report a minute out of date is a report that lies.
-    await this.refreshSourcePlans(this.instances())
+    await this.refreshSourcePlans(this.instanceList())
     this.ensureSessions(instance.id, input.deviceId)
     const view = this.gridViewFor(input.deviceId)
     if (!view) throw new Error('camera-grid: the grid vanished while it was being saved')
@@ -1002,74 +1097,6 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
       })
     this.ffmpegResolving = attempt
     return attempt
-  }
-
-  // ── Settings UI ─────────────────────────────────────────────────────────
-
-  /**
-   * The integration page: a list of grids, with a NAME.
-   *
-   * Deliberately nothing else. A generated form for the geometry would render
-   * "cell 1 source = 592, cell 1 crop x = 0.25" and be unusable, so the
-   * geometry lives in a WIDGET on the camera's own device details, declared by
-   * the `camera-grid-layout` CAPABILITY (`camera-grid-layout.cap.ts`). It used
-   * to be a `type:'widget'` field in this addon's own `deviceSettingsSchema()`
-   * and it rendered NOWHERE: that section is only fetched for the four addons
-   * hand-listed in `PIPELINE_CLUSTER_DEVICE_ADDONS`, and an addon not on the
-   * list falls off silently. A cap-declared widget is placed by the framework,
-   * on the camera, beside PTZ and motion zones.
-   */
-  protected override globalSettingsSchema(): ConfigUISchema {
-    return this.schema({
-      sections: [
-        {
-          id: 'camera-grids',
-          title: 'Camera grids',
-          titleKey: 'server:globalSettings.s_camera-grids.title',
-          description:
-            'A grid is a composite camera: several cameras composed into one picture, recorded and played back like any other camera. Create one here with a name; open its camera to lay it out. Object detection is switched OFF on a new grid — the cameras it is composed from are already analysed.',
-          descriptionKey: 'server:globalSettings.s_camera-grids.description',
-          columns: 1,
-          fields: [
-            this.field({
-              type: 'editable-array',
-              key: 'cameraGrids',
-              label: 'Grids',
-              labelKey: 'server:globalSettings.s_camera-grids.cameraGrids.label',
-              default: [],
-              maxRows: 16,
-              addLabel: 'Add grid',
-              emptyMessage: 'No camera grids yet.',
-              rowTitleTemplate: '{name}',
-              defaultItem: { name: '', enabled: true },
-              itemFields: [
-                {
-                  type: 'text',
-                  key: 'name',
-                  label: 'Name',
-                  labelKey: 'server:globalSettings.s_camera-grids.cameraGrids.name.label',
-                  required: true,
-                },
-                {
-                  type: 'boolean',
-                  key: 'enabled',
-                  label: 'Enabled',
-                  labelKey: 'server:globalSettings.s_camera-grids.cameraGrids.enabled.label',
-                  description: 'A disabled grid withdraws its camera.',
-                  descriptionKey:
-                    'server:globalSettings.s_camera-grids.cameraGrids.enabled.description',
-                  default: true,
-                },
-              ],
-            }),
-          ],
-        },
-      ],
-    })
-  }
-
-  protected override integrationSettingSections(): readonly string[] {
-    return ['camera-grids']
   }
 }
 

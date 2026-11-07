@@ -7,13 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- A Camera grids page lists, adds, switches and deletes grids
+- The node roles tab saves through the scoped settings API; the placement board reads the same values.
+- Terminals are now instances on the Terminal page: the list is kept as records, migrated in place with the same ids and cameras
+
 ## [1.2.604] - 2026-11-07
 
 ### Changed
 
 - The cluster roles tab reads and writes the orchestrator cluster settings through the scoped settings API.
-- The node roles tab saves through the scoped settings API; the placement board reads the same values.
-- Terminals are now instances on the Terminal page: the list is kept as records, migrated in place with the same ids and cameras
 
 ## [1.2.603] - 2026-11-07
 

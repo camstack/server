@@ -1260,7 +1260,8 @@
       "noProviders": "No training providers installed",
       "noProvidersDescription": "Install a training provider addon (for example @camstack/addon-training) to train on your own GPU-cloud account.",
       "addAccount": "Add account"
-    }
+    },
+    "cameraGrids": "Camera grids"
   },
   "common": {
     "save": "Save",
@@ -11678,5 +11679,12 @@
     "allFailed": "{{count}} calendars could not be fetched",
     "allCollections": "{{count}} sources refreshed.",
     "allNotFetched": "The calendars could not be fetched"
+  },
+  "cameraGrids": {
+    "title": "Camera grids",
+    "subtitle": "A grid is a composite camera: several cameras composed into one picture, recorded and played back like any other. Create one with a name, then open its camera to lay it out.",
+    "empty": "No camera grids yet",
+    "emptyHint": "Add a grid to compose several cameras into one.",
+    "add": "Add grid"
   }
 }

@@ -546,6 +546,9 @@
             "name": "camera-grid-layout"
           },
           {
+            "name": "integration-instances"
+          },
+          {
             "name": "motion"
           }
         ]
