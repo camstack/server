@@ -129,6 +129,7 @@ function profile(over: Partial<LinkableInstance> & { formValues?: Record<string,
     enabled: true,
     formValues: { model: 'qwen/qwen3-vl-8b', supportsVision: true, ...formValues },
     ...rest,
+    recordKind: rest.recordKind ?? 'openai-compatible',
   } satisfies LinkableInstance
 }
 

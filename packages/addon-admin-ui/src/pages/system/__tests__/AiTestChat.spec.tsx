@@ -68,6 +68,7 @@ const VISION_PROFILE = {
   id: 'p-vision',
   name: 'Mac LM Studio',
   kind: 'openai-compatible',
+  recordKind: 'openai-compatible',
   addonId: 'ai',
   state: 'ok',
   stateLabel: null,

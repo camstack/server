@@ -162,6 +162,15 @@ vi.mock('@camstack/ui-library', async () => {
     useDeviceManagerListAll: (input?: FleetListInput, options?: FleetListOptions) =>
       listAllHook(input, options),
     // Every condition is on screen now (D690) — the face and plate pickers too.
+    // The summary editor's vision-profile picker (`useInstancesOfCap('llm')`) reads a
+    // tRPC React hook this page never mounts in; no profiles is its valid answer.
+    useInstancesOfCap: () => ({
+      data: [],
+      isLoading: false,
+      isError: false,
+      isSuccess: true,
+      error: null,
+    }),
     useFaceGalleryListIdentities: () => ({ data: [], isLoading: false, isError: false }),
     usePlateGalleryListPlates: () => ({ data: [], isLoading: false }),
     usePlateGalleryListVehicles: () => ({ data: [], isLoading: false }),
