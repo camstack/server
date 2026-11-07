@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.515] - 2026-11-07
+
 ### Changed
 
 - New addon.unsupported-version and addon.unsupported-resolved event categories for an addon running below the server's minimum.

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.395] - 2026-11-07
+
 ### Changed
 
 - Target pickers and the device export panel read notification targets from the instances of notification-output; useInstancesOfCap is exported

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.37] - 2026-11-07
+
 ### Changed
 
 - Waste sources are managed in the Calendars list with a per-row Fetch now; the old source-list actions are removed

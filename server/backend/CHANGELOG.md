@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.790] - 2026-11-07
+
 ### Changed
 
 - A grouped addon on an agent (for example the pipeline runner) is now recognised by the hub from its first call, so its migrations are no longer refused with "no caller identity" at boot.

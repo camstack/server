@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.146] - 2026-11-07
+
 ### Changed
 
 - Provider error text now refers to the instance test instead of the retired storage test call
