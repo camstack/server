@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.170] - 2026-11-07
+
 ### Changed
 
 - A Dreame vacuum no longer reports its clean-water tank as OK after docking while the tank is still low: the dock refresh reads the robot first, and a clean-water-empty error now forces the tank to low.

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.681] - 2026-11-07
+
 ### Changed
 
 - Fleet-default analytics settings no longer offer the per-camera tracking-tape switch, so one click cannot arm continuous recording on every camera.
