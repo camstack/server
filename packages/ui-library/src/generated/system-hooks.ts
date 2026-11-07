@@ -2057,21 +2057,6 @@ export const useNotifierGetStatus: typeof trpc.notifier.getStatus.useQuery = /*#
 /** Generated alias around `trpc.numericSensor.getStatus.useQuery`. */
 export const useNumericSensorGetStatus: typeof trpc.numericSensor.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.numericSensor.getStatus.useQuery)
 
-/** Generated alias around `trpc.oidcConnections.connectionFormSchema.useQuery`. */
-export const useOidcConnectionsConnectionFormSchema: typeof trpc.oidcConnections.connectionFormSchema.useQuery = /*#__PURE__*/ alias(() => trpc.oidcConnections.connectionFormSchema.useQuery)
-
-/** Generated alias around `trpc.oidcConnections.listConnections.useQuery`. */
-export const useOidcConnectionsListConnections: typeof trpc.oidcConnections.listConnections.useQuery = /*#__PURE__*/ alias(() => trpc.oidcConnections.listConnections.useQuery)
-
-/** Generated alias around `trpc.oidcConnections.createConnection.useMutation`. */
-export const useOidcConnectionsCreateConnection: typeof trpc.oidcConnections.createConnection.useMutation = /*#__PURE__*/ alias(() => trpc.oidcConnections.createConnection.useMutation)
-
-/** Generated alias around `trpc.oidcConnections.updateConnection.useMutation`. */
-export const useOidcConnectionsUpdateConnection: typeof trpc.oidcConnections.updateConnection.useMutation = /*#__PURE__*/ alias(() => trpc.oidcConnections.updateConnection.useMutation)
-
-/** Generated alias around `trpc.oidcConnections.deleteConnection.useMutation`. */
-export const useOidcConnectionsDeleteConnection: typeof trpc.oidcConnections.deleteConnection.useMutation = /*#__PURE__*/ alias(() => trpc.oidcConnections.deleteConnection.useMutation)
-
 /** Generated alias around `trpc.osd.setOverlay.useMutation`. */
 export const useOsdSetOverlay: typeof trpc.osd.setOverlay.useMutation = /*#__PURE__*/ alias(() => trpc.osd.setOverlay.useMutation)
 

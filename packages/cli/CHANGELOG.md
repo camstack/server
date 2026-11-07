@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The MCP notification tools list and write targets through integration instances
 - The setup-locations tool changes a location's state through its instance instead of the retired storage upsert
+- configure_oidc creates and updates connections through integration-instances
 
 ## [1.2.225] - 2026-11-06
 

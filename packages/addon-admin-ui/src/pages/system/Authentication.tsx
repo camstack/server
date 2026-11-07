@@ -32,7 +32,8 @@ import { STATUS_BADGE_CLASS } from '../../components/integration-hub/addon-contr
 import { IntegrationHub } from '../../components/integration-hub/IntegrationHub'
 import { providerPillState, type IntegrationGroup } from '../../components/integration-hub/types'
 import { buildAddonDisplayNameMap } from '../../lib/addon-display-names'
-import { OidcSettingsConnections } from './OidcSettingsConnections'
+import { InstancesTable } from '../../components/instances/InstancesTable'
+import { INSTANCE_ID_PATTERN } from '../../components/instances/instances-model'
 import { Trans, useTranslation } from 'react-i18next'
 
 const PROVIDERS_POLL_INTERVAL_MS = 30_000
@@ -132,7 +133,7 @@ function hintFor(addonId: string): ProviderHint {
       setupSteps: [
         'Register a web app at your IdP and copy the client_id + client_secret.',
         'Choose a stable instance id (slug). Set the IdP redirect URI to `https://<this-hub>/addon/auth-oidc/<id>/callback`.',
-        'In Settings below, Add connection — enter the id, issuer, and credentials; Save.',
+        'In Sign-in connections below, Add connection — enter the id, issuer, and credentials; Save.',
         'Each user then links their IdP account from My access → Linked sign-in accounts.',
       ],
     }
@@ -240,11 +241,6 @@ export function AuthenticationPage() {
                 </Badge>
               ) : null
             }
-            settingsContent={
-              p.addonId.startsWith('auth-oidc') ? (
-                <OidcSettingsConnections addonId={p.addonId} />
-              ) : undefined
-            }
             panels={[
               {
                 id: 'about',
@@ -270,6 +266,22 @@ export function AuthenticationPage() {
         isLoading={loginQuery.isLoading || passkeyQuery.isLoading}
         emptyTitle={t(AUTH_SECTION.emptyTitleKey)}
         emptyDescription={t(AUTH_SECTION.emptyDescriptionKey)}
+      />
+      <InstancesTable
+        functionCap="login-method"
+        icon={Globe}
+        title={t('system.authentication.connectionsTitle', 'Sign-in connections')}
+        subtitle={t(
+          'system.authentication.connectionsSubtitle',
+          'Identity providers that sign users in. Each connection has its own id, which cannot be changed later.',
+        )}
+        emptyTitle={t('system.authentication.connectionsEmptyTitle', 'No sign-in connections')}
+        emptyDescription={t(
+          'system.authentication.connectionsEmptyDescription',
+          'Add a connection to let users sign in through an identity provider.',
+        )}
+        addLabel={t('system.authentication.addConnection', 'Add connection')}
+        typedId={() => ({ pattern: INSTANCE_ID_PATTERN })}
       />
       <AuthenticationPolicyCard />
       <PasskeyRelyingPartyCard />

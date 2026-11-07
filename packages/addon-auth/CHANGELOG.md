@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- OpenID Connect connections are instances of the sign-in function: an operator-chosen id, a per-connection On/Off switch, and the client secret stays in the keychain
+
 ## [1.2.177] - 2026-11-06
 
 ### Changed

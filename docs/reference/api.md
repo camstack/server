@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**202 capabilities · 1471 methods.**
+**201 capabilities · 1466 methods.**
 
 ## Method index
 
@@ -788,11 +788,6 @@
 | `notifier.cancel` | mutation | admin | notifier |
 | `numericSensor.getStatus` | query | protected | numeric-sensor (auto) |
 | `oauthIntegration.getDescriptor` | query | admin | oauth-integration |
-| `oidcConnections.connectionFormSchema` | query | admin | oidc-connections |
-| `oidcConnections.listConnections` | query | admin | oidc-connections |
-| `oidcConnections.createConnection` | mutation | admin | oidc-connections |
-| `oidcConnections.updateConnection` | mutation | admin | oidc-connections |
-| `oidcConnections.deleteConnection` | mutation | admin | oidc-connections |
 | `osd.getStatus` | query | protected | osd (auto) |
 | `osd.setOverlay` | mutation | admin | osd |
 | `osdManager.getDeviceOsd` | query | admin | osd-manager |
@@ -3603,21 +3598,6 @@
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | getDescriptor | `oauthIntegration.getDescriptor` | query | admin | `void` | `OauthIntegrationDescriptorSchema` |
-
-### `oidc-connections` → `oidcConnections.*`
-
-- **Source:** `packages/types/src/capabilities/oidc-connections.cap.ts:49`
-- **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
-- **Archetypes:** —
-- **Provider interface:** `IOidcConnectionsProvider`
-
-| Method | tRPC path | Kind | Auth | Input | Output |
-|---|---|---|---|---|---|
-| connectionFormSchema | `oidcConnections.connectionFormSchema` | query | admin | `{}` | `unknown` |
-| listConnections | `oidcConnections.listConnections` | query | admin | `{}` | `OidcConnectionSchema[]` |
-| createConnection | `oidcConnections.createConnection` | mutation | admin | `{ id: string; displayName: string }` | `{ id: string }` |
-| updateConnection | `oidcConnections.updateConnection` | mutation | admin | `OidcConnectionUpdateInputSchema` | `{ ok: true }` |
-| deleteConnection | `oidcConnections.deleteConnection` | mutation | admin | `{ id: string }` | `{ ok: true }` |
 
 ### `osd` → `osd.*`
 

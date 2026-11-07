@@ -14,8 +14,10 @@
  *     `/<providerId>/callback` per configured provider. The handler
  *     reads `:providerId` from the route params, picks the matching
  *     config entry, and runs the OIDC flow against THAT IdP.
- *   - `oidc-connections` (singleton) — list / create / update / delete for
- *     IdP rows; Settings UI is DataTable + dialog (no editable-array).
+ *   - `integration-instances` (collection, kind `oidc-provider`, function cap
+ *     `login-method`) — the IdP rows as typed records; the Authentication page
+ *     lists them with the shared instances table. The operator-chosen id is the
+ *     URL slug and immutable. An instance switched off serves no button and no route.
  *
  * Each provider entry independently performs:
  *   - PKCE S256 + nonce
@@ -51,17 +53,19 @@ import {
   appFlowLocation,
   authProviderCapability,
   BaseAddon,
+  integrationInstancesCapability,
+  RecordIntegrationInstances,
   buildAddonRouteProvider,
   errMsg,
   type HubAddressBook,
-  type IOidcConnectionsProvider,
   resolveIconKey,
+  type AddonContext,
   type IAddonHttpRoute,
+  type IIntegrationInstancesProvider,
   type IAuthProvider,
   type ILoginMethodProvider,
   type LoginMethodContribution,
   loginMethodCapability,
-  oidcConnectionsCapability,
   parseAppFlowRequest,
   parseAppPageLang,
   type ProviderRegistration,
@@ -69,21 +73,19 @@ import {
   SSO_STATE_COOKIE_MAX_AGE_SEC,
 } from '@camstack/types'
 import * as jose from 'jose'
-import { DEFAULT_OIDC_ICON, OIDC_CONNECTION_FORM_SCHEMA } from './oidc-connection-schema.js'
+import { OIDC_CONNECTION_FORM_SCHEMA } from './oidc-connection-schema.js'
 import {
-  clientSecretPatchOf,
-  clientSecretView,
   connectionConfigured,
-  createOidcConnection,
   DEFAULT_OIDC_PROVIDER,
-  findOidcProvider,
   INSTANCE_ID_PATTERN,
   type OidcProviderRow,
   type OidcProvidersConfig,
-  updateOidcConnection,
 } from './oidc-connections.js'
-import { oidcProviderEntryKind } from './oidc-provider-record-kinds.js'
-import { OidcProviderStore } from './oidc-provider-store.js'
+import {
+  OIDC_PROVIDER_KIND,
+  type OidcProviderBody,
+  oidcProviderEntryKind,
+} from './oidc-provider-record-kinds.js'
 import {
   advertisedHubOrigins,
   claimedRequestOrigins,
@@ -218,22 +220,15 @@ function returnBaseOf(redirectUri: string, callbackPath: string): string {
 export class AuthOidcAddon extends BaseAddon<OidcConfig> {
   /** Per-provider runtime state, keyed by `provider.id`. */
   private instances = new Map<string, InstanceRuntime>()
-  private providerStore: OidcProviderStore | null = null
+  private idps: RecordIntegrationInstances<OidcProviderBody> | null = null
+  /** The ENABLED providers, resolved: what the sign-in flow serves. */
   private activeProviders: readonly OidcProviderRow[] = []
   /** Pending OAuth states across ALL providers. The pending entry
    *  carries `providerId` so the /callback handler picks the right config. */
   private readonly pendingStates = new Map<string, PendingState>()
 
-  /** Keychain path for each IdP's client secret (D787 / D828 sibling). */
-  protected override readonly secretStatePaths = ['providers[id].clientSecret'] as const
-
   constructor() {
     super({ ...DEFAULT_CONFIG })
-  }
-
-  protected async onConfigChanged(): Promise<void> {
-    if (this.providerStore !== null) this.activeProviders = await this.providerStore.listResolved()
-    this.rebuildInstances()
   }
 
   protected async onInitialize(): Promise<ProviderRegistration[]> {
@@ -241,10 +236,9 @@ export class AuthOidcAddon extends BaseAddon<OidcConfig> {
     if (records === undefined) {
       throw new Error('auth-oidc: ctx.records is required (hub-only addon)')
     }
-    await records.declare({ 'oidc-provider': oidcProviderEntryKind })
-    this.providerStore = OidcProviderStore.of(records)
-    this.activeProviders = await this.providerStore.listResolved()
-    this.rebuildInstances()
+    await records.declare({ [OIDC_PROVIDER_KIND]: oidcProviderEntryKind })
+    this.idps = this.buildInstances(records)
+    await this.reloadProviders()
 
     const authProvider: IAuthProvider = {
       validateCredentials: async () => null, // OIDC has no credential flow
@@ -304,90 +298,48 @@ export class AuthOidcAddon extends BaseAddon<OidcConfig> {
       { capability: authProviderCapability, provider: authProvider as never },
       { capability: addonRoutesCapability, provider: routeProvider },
       { capability: loginMethodCapability, provider: loginMethodProvider },
-      { capability: oidcConnectionsCapability, provider: this.connectionsProvider() },
+      { capability: integrationInstancesCapability, provider: this.instancesProvider() },
     ]
   }
 
-  private connectionsProvider(): IOidcConnectionsProvider {
+  /**
+   * The IdP rows as `integration-instances`: the id is the operator's URL slug, chosen once on
+   * create (a malformed or taken one is refused before a record exists) and never renamed.
+   */
+  private buildInstances(
+    records: NonNullable<AddonContext['records']>,
+  ): RecordIntegrationInstances<OidcProviderBody> {
+    return new RecordIntegrationInstances(records, oidcProviderEntryKind, {
+      description: {
+        role: 'services',
+        instanceMode: 'multiple',
+        kind: 'login-method',
+        canTest: false,
+        kinds: [{ id: OIDC_PROVIDER_KIND, label: 'OpenID Connect', functionCap: 'login-method' }],
+      },
+      formSchema: () => OIDC_CONNECTION_FORM_SCHEMA,
+      initialBody: (name) => {
+        const { id: _id, clientSecret: _none, ...body } = DEFAULT_OIDC_PROVIDER
+        return { ...body, displayName: name.trim() || DEFAULT_OIDC_PROVIDER.displayName }
+      },
+      kindOf: () => OIDC_PROVIDER_KIND,
+      configured: (body) => connectionConfigured(body),
+      onChanged: async () => {
+        await this.reloadProviders()
+      },
+    })
+  }
+
+  private instancesProvider(): IIntegrationInstancesProvider {
+    const helper = this.requireInstances().toProvider()
     return {
-      connectionFormSchema: async () => OIDC_CONNECTION_FORM_SCHEMA,
-      listConnections: async () => {
-        const secrets = this.ctx.secrets
-        return this.activeProviders.map((row) => {
-          const merged = { ...DEFAULT_PROVIDER, ...row }
-          return {
-            id: merged.id,
-            displayName: merged.displayName,
-            icon: resolveIconKey(merged.icon, DEFAULT_OIDC_ICON),
-            issuerUrl: merged.issuerUrl,
-            clientId: merged.clientId,
-            configured: connectionConfigured(merged),
-            formValues: {
-              displayName: merged.displayName,
-              icon: merged.icon,
-              issuerUrl: merged.issuerUrl,
-              clientId: merged.clientId,
-              clientSecret: clientSecretView(merged.clientSecret, secrets, merged.id) ?? '',
-              redirectUri: merged.redirectUri,
-              scopes: merged.scopes,
-              usernameClaim: merged.usernameClaim,
-            },
-          }
-        })
-      },
-      createConnection: async (input) => {
-        const result = createOidcConnection(this.providersConfig(), input)
-        if (!result.ok) {
-          throw new Error(
-            result.reason === 'duplicate-id'
-              ? `An OIDC connection with id "${input.id}" already exists`
-              : `Invalid connection id "${input.id}" — use a lowercase slug`,
-          )
+      ...helper,
+      createInstance: async (input) => {
+        const id = input.id?.trim() ?? ''
+        if (!INSTANCE_ID_PATTERN.test(id)) {
+          throw new Error(`Invalid connection id "${id}" — use a lowercase slug`)
         }
-        const row = result.config.providers.find((p) => p.id === result.id)
-        if (row === undefined) throw new Error(`Invalid connection id "${input.id}"`)
-        // Persist FIRST: memory only follows a write the records engine accepted.
-        const stored = await this.requireStore().create(row)
-        this.activeProviders = [...this.activeProviders, stored]
-        this.rebuildInstances()
-        return { id: result.id }
-      },
-      updateConnection: async (input) => {
-        const secretPatch = clientSecretPatchOf(input.clientSecret)
-        const result = updateOidcConnection(this.providersConfig(), input.id, {
-          displayName: input.displayName,
-          ...(input.icon !== undefined ? { icon: input.icon } : {}),
-          ...(input.issuerUrl !== undefined ? { issuerUrl: input.issuerUrl } : {}),
-          ...(input.clientId !== undefined ? { clientId: input.clientId } : {}),
-          ...secretPatch,
-          ...(input.redirectUri !== undefined ? { redirectUri: input.redirectUri } : {}),
-          ...(input.scopes !== undefined ? { scopes: input.scopes } : {}),
-          ...(input.usernameClaim !== undefined ? { usernameClaim: input.usernameClaim } : {}),
-        })
-        if (!result.ok) throw new Error(`Unknown OIDC connection "${input.id}"`)
-        const next = result.config.providers.find((p) => p.id === input.id)
-        if (next === undefined) throw new Error(`Unknown OIDC connection "${input.id}"`)
-        const { id: _id, clientSecret: _carried, ...fields } = next
-        const stored = await this.requireStore().update(input.id, {
-          ...fields,
-          ...(result.clearClientSecret
-            ? { clientSecret: null }
-            : secretPatch.clientSecret !== undefined
-              ? { clientSecret: secretPatch.clientSecret }
-              : {}),
-        })
-        this.activeProviders = this.activeProviders.map((p) => (p.id === input.id ? stored : p))
-        this.rebuildInstances()
-        return { ok: true as const }
-      },
-      deleteConnection: async (input) => {
-        if (findOidcProvider(this.providersConfig(), input.id) === null) {
-          throw new Error(`Unknown OIDC connection "${input.id}"`)
-        }
-        await this.requireStore().remove(input.id)
-        this.activeProviders = this.activeProviders.filter((p) => p.id !== input.id)
-        this.rebuildInstances()
-        return { ok: true as const }
+        return helper.createInstance({ ...input, id })
       },
     }
   }
@@ -420,13 +372,34 @@ export class AuthOidcAddon extends BaseAddon<OidcConfig> {
 
   // ── Instance management ──────────────────────────────────────────
 
-  private providersConfig(): OidcProvidersConfig {
-    return { providers: this.activeProviders }
+  private requireInstances(): RecordIntegrationInstances<OidcProviderBody> {
+    if (this.idps === null) throw new Error('auth-oidc: the records store is not ready')
+    return this.idps
   }
 
-  private requireStore(): OidcProviderStore {
-    if (this.providerStore === null) throw new Error('auth-oidc: the records store is not ready')
-    return this.providerStore
+  /**
+   * Re-read the provider records and serve exactly the ENABLED ones. A failed read changes
+   * nothing: the providers already served keep serving (D49). A locked keychain serves the row
+   * without its secret, never the marker.
+   */
+  private async reloadProviders(): Promise<void> {
+    let all: Awaited<ReturnType<RecordIntegrationInstances<OidcProviderBody>['listResolved']>>
+    try {
+      all = await this.requireInstances().listResolved()
+    } catch (err: unknown) {
+      this.ctx.logger.warn(
+        'OIDC: the provider records could not be read; keeping the current ones',
+        {
+          meta: { error: errMsg(err) },
+          tags: { topic: 'auth-oidc', phase: 'records-read-failed' },
+        },
+      )
+      return
+    }
+    this.activeProviders = all
+      .filter((row) => row.enabled)
+      .map((row) => ({ ...DEFAULT_PROVIDER, ...row.body, id: row.id }))
+    this.rebuildInstances()
   }
 
   private rebuildInstances(): void {

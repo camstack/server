@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1031 shared schemas.**
+**1029 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -4680,28 +4680,6 @@ Enum: `"unknown-camera" \| "out-of-range" \| "no-burst-producer" \| "already-loo
 - `deviceId`: `number`
 - `afterMs`: `number`
 - `reason`: `string`
-
-### `OidcConnectionSchema`
-
-- `id`: `string`
-- `displayName`: `string`
-- `icon`: `string`
-- `issuerUrl`: `string`
-- `clientId`: `string`
-- `configured`: `boolean`
-- `formValues?`: `Record<string, unknown>`
-
-### `OidcConnectionUpdateInputSchema`
-
-- `id`: `string`
-- `displayName`: `string`
-- `icon?`: `string`
-- `issuerUrl?`: `string`
-- `clientId?`: `string`
-- `clientSecret?`: `string \| { $secretClear: true }`
-- `redirectUri?`: `string`
-- `scopes?`: `string`
-- `usernameClaim?`: `"preferred_username" \| "email" \| "sub"`
 
 ### `OnboardFieldSupportSchema`
 

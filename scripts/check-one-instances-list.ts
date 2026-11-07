@@ -11,7 +11,7 @@
  * when it
  * - makes a CRUD call of a configured thing of a family that moves to instances: a generated hook or a
  *   `trpcClient.<cap>.<upsert|create|update|delete|remove...>.mutate` of one of those caps
- *   (notification-output, llm, oidc-connections, storage, mesh-network, training-provider), a
+ *   (notification-output, llm, storage, mesh-network, training-provider), a
  *   CRUD-named hook (`useStorageUpsertLocation`) or a custom action named like one (`deleteSource`);
  *   or
  * - draws a list or form surface (it names `ItemFormDialog` or `DataTable`) AND runs any other
@@ -46,8 +46,8 @@ const ADMIN_UI_SRC = 'packages/addon-admin-ui/src/'
 const INSTANCES_DIR = 'packages/addon-admin-ui/src/components/instances/'
 
 const SURFACE_RE = /\b(?:ItemFormDialog|DataTable)\b/
-const FAMILY_CAPS = 'NotificationOutput|Llm|OidcConnections|Storage|MeshNetwork|TrainingProvider'
-const FAMILY_TRPC = 'notificationOutput|llm|oidcConnections|storage|meshNetwork|trainingProvider'
+const FAMILY_CAPS = 'NotificationOutput|Llm|Storage|MeshNetwork|TrainingProvider'
+const FAMILY_TRPC = 'notificationOutput|llm|storage|meshNetwork|trainingProvider'
 const CRUD_NOUN = 'Target|Profile|Connection|Source|Entry'
 /** A CRUD call of a configured thing: the editor of a family, whatever surface draws it. */
 const CRUD_RES: readonly RegExp[] = [

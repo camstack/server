@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - useInstancesOfCap and LinkableInstance are exported, and a linkable instance carries its switch and form values.
 - The mesh connection-test hook is removed with the capability method
 - The generated storage hooks drop the retired location write and test calls
+- The generated system hooks drop the removed oidc-connections capability
 
 ## [1.2.394] - 2026-11-06
 

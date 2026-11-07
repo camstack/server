@@ -1,8 +1,5 @@
 {
   "_why": "Pages that draw their own list or editor for a family of configured things (planning#440 step 6, D1013). A family is a contiguous block that its U packet deletes with the page. The list only shrinks.",
   "families": {
-    "oidc": {
-      "packages/addon-admin-ui/src/pages/system/OidcSettingsConnections.tsx": "bespoke connection list over oidc-connections CRUD; P6c (U) moves it to InstancesTable and deletes the page"
-    }
   }
 }

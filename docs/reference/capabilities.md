@@ -4,7 +4,7 @@
 
 # Capabilities
 
-202 capability definitions in `packages/types/src/capabilities/`.
+201 capability definitions in `packages/types/src/capabilities/`.
 The `.cap.ts` file is the single source of truth: codegen derives the tRPC
 routers, the status-type map and the `DeviceProxy` facade from it. Touching a
 cap without `npm run codegen` = silent drift.
@@ -126,7 +126,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `zone-rules` | 2 | — | ✓ | none | — | `pipeline-orchestrator` |
 | `zones` | 4 | — | ✓ | none | — | `pipeline-orchestrator` |
 
-## System-scoped (100)
+## System-scoped (99)
 
 Singleton or collection providers, addressed without a device.
 
@@ -171,7 +171,7 @@ Singleton or collection providers, addressed without a device.
 | `failure-contribution` | 1 | — | — | — | ✓ | `pipeline-runner` `pipeline-analytics` `provider-hikvision` `provider-reolink` |
 | `fan-presets` | 4 | — | — | — | — | `core-blocks` |
 | `filesystem-browse` | 3 | — | — | — | ✓ | `filesystem-storage` |
-| `integration-instances` | 9 | — | — | — | — | `ai` `cloudflare-tunnel` `cloudflare-turn` `export-alexa` `export-google` `export-hap` `google-services` `import-alexa` `matter-broker` `mqtt-broker` `notifiers` `provider-amcrest` `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-ecowitt` `provider-enpal` `provider-esphome` `provider-gree` `provider-hikvision` `provider-homeassistant` `homeassistant-export` `provider-homematic` `provider-mqtt-ha` `provider-onvif` `provider-petkit` `provider-rademacher` `provider-reolink` `provider-rtsp` `provider-tuya` `provider-unifi` `provider-unraid` `provider-velux` `provider-vesync` `provider-wyze` `smtp-nodemailer` `static-turn` `tailscale-client` `training-modal` `waste-collections` `loki-logging` `storage-orchestrator` |
+| `integration-instances` | 9 | — | — | — | — | `ai` `auth-oidc` `cloudflare-tunnel` `cloudflare-turn` `export-alexa` `export-google` `export-hap` `google-services` `import-alexa` `matter-broker` `mqtt-broker` `notifiers` `provider-amcrest` `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-ecowitt` `provider-enpal` `provider-esphome` `provider-gree` `provider-hikvision` `provider-homeassistant` `homeassistant-export` `provider-homematic` `provider-mqtt-ha` `provider-onvif` `provider-petkit` `provider-rademacher` `provider-reolink` `provider-rtsp` `provider-tuya` `provider-unifi` `provider-unraid` `provider-velux` `provider-vesync` `provider-wyze` `smtp-nodemailer` `static-turn` `tailscale-client` `training-modal` `waste-collections` `loki-logging` `storage-orchestrator` |
 | `integrations` | 7 | — | — | — | — | — |
 | `keychain` | 7 | — | — | — | ✓ | `keychain` |
 | `keychain-admin` | 13 | — | — | — | — | `keychain` |
@@ -196,7 +196,6 @@ Singleton or collection providers, addressed without a device.
 | `notification-output` | 5 | — | — | — | — | `import-alexa` `notifiers` `provider-homeassistant` |
 | `notification-rules` | 32 | — | — | — | — | `pipeline-analytics` |
 | `oauth-integration` | 1 | — | — | — | ✓ | `export-alexa` `export-google` `homeassistant-export` |
-| `oidc-connections` | 5 | — | — | — | — | `auth-oidc` |
 | `osd-manager` | 12 | — | — | — | — | `osd-manager` |
 | `pipeline-executor` | 30 | — | — | — | — | `detection-pipeline` |
 | `pipeline-orchestrator` | 64 | — | — | — | — | `pipeline-orchestrator` |

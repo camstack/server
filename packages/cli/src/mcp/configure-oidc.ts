@@ -5,7 +5,7 @@
  * URI to paste into the provider, and the provider-side steps. With a client id
  * and an issuer it previews the planned connection (after a discovery check run
  * from this machine) and, with the one-shot `confirm_token`, creates or updates
- * it through the `oidc-connections` cap.
+ * it through the `integration-instances` cap of `auth-oidc` (kind `oidc-provider`).
  *
  * A client secret never crosses a tool call, in either direction: there is no
  * argument for it, and a confidential client is finished in the admin UI, whose
@@ -34,6 +34,8 @@ import type { FetchFn, McpContext, ToolTextResult } from './context.js'
 import { readQuery, reasonOf, withHub } from './ops-hub.js'
 
 export const OIDC_TOOL = 'configure_oidc'
+const OIDC_ADDON_ID = 'auth-oidc'
+const OIDC_INSTANCE_KIND = 'oidc-provider'
 export const OIDC_ADMIN_ROUTE = '/system/identity?tab=authentication'
 const DISCOVERY_TIMEOUT_MS = 5000
 
@@ -193,9 +195,7 @@ export async function checkDiscovery(
 // ---------------------------------------------------------------------------
 // questionnaire
 
-const ConnectionListSchema = z.array(
-  z.looseObject({ id: z.string(), displayName: z.string().optional() }),
-)
+const ConnectionListSchema = z.array(z.looseObject({ id: z.string(), name: z.string().optional() }))
 
 function connectionIdOf(args: OidcArgs): string {
   return args.connection_id ?? args.provider
@@ -264,8 +264,8 @@ export function oidcSpec(client: HubClient, fetchFn: FetchFn): GatedToolSpec<Oid
       const id = connectionIdOf(args)
       const list = await readQuery(
         client,
-        'oidcConnections.listConnections',
-        {},
+        'integrationInstances.listInstances',
+        { addonId: OIDC_ADDON_ID },
         ConnectionListSchema,
       )
       if (!list.ok) return { confirmable: false, describe: { problem: list.reason } }
@@ -312,22 +312,30 @@ export function oidcSpec(client: HubClient, fetchFn: FetchFn): GatedToolSpec<Oid
       const displayName = args.display_name ?? spec.label
       const list = await readQuery(
         client,
-        'oidcConnections.listConnections',
-        {},
+        'integrationInstances.listInstances',
+        { addonId: OIDC_ADDON_ID },
         ConnectionListSchema,
       )
       const exists = list.ok && list.value.some((c) => c.id === id)
       if (!exists) {
-        await client.call('POST', 'oidcConnections.createConnection', { id, displayName })
+        await client.call('POST', 'integrationInstances.createInstance', {
+          addonId: OIDC_ADDON_ID,
+          id,
+          name: displayName,
+          kind: OIDC_INSTANCE_KIND,
+        })
       }
-      await client.call('POST', 'oidcConnections.updateConnection', {
+      await client.call('POST', 'integrationInstances.updateInstance', {
+        addonId: OIDC_ADDON_ID,
         id,
-        displayName,
-        issuerUrl: resolved.issuer ?? '',
-        clientId: (args.client_id ?? '').trim(),
-        scopes: spec.scopes,
-        usernameClaim: spec.usernameClaim,
-        ...(exists && clientType === 'public' ? { clientSecret: { $secretClear: true } } : {}),
+        name: displayName,
+        values: {
+          issuerUrl: resolved.issuer ?? '',
+          clientId: (args.client_id ?? '').trim(),
+          scopes: spec.scopes,
+          usernameClaim: spec.usernameClaim,
+          ...(exists && clientType === 'public' ? { clientSecret: { $secretClear: true } } : {}),
+        },
       })
       const link = await adminLink(client, OIDC_ADMIN_ROUTE)
       return {

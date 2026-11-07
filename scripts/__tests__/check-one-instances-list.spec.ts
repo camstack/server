@@ -87,8 +87,8 @@ describe('check-one-instances-list', () => {
 
   it('is red on a new bespoke page', () => {
     const fresh = file(
-      'pages/system/OidcThing.tsx',
-      'trpcClient.oidcConnections.createConnection.mutate({})',
+      'pages/system/StorageThing.tsx',
+      'trpcClient.storage.upsertLocation.mutate({})',
     )
     const found = findViolations([STORAGE_PAGE, LLM_EDITOR, MESH_PAGE, fresh], BASELINE)
     expect(found).toHaveLength(1)

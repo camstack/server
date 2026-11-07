@@ -1,22 +1,15 @@
 /**
- * OIDC client secret after D830: the addon declares no Settings form at all
- * (D986 M4 dropped the blurb-only one); rows live in `oidc-connections` with `formValues.clientSecret` as a keychain
- * view. The value stays on the hub — never in the global settings form, never
- * as plaintext on the connection list.
+ * OIDC client secret on the instance model (D1013): the addon declares no Settings form, and the
+ * rows are `integration-instances` records whose `formValues.clientSecret` is a keychain view.
+ * The value stays on the hub — never in the global settings form, never plaintext on the list.
  *
- * Driven through the REAL auth-oidc addon, the REAL connection form schema +
- * `clientSecretView` (same path `listConnections` uses).
+ * Driven through the REAL auth-oidc addon and the REAL connection form schema; the listed-view
+ * behaviour itself (view, locked keychain) is pinned in the addon's own spec.
  */
 import { AuthOidcAddon } from '@camstack/addon-auth/oidc'
-import {
-  type ConfigUISchema,
-  makeSecretMarker,
-  type SecretsAccess,
-  toSecretFieldView,
-} from '@camstack/types'
+import { type ConfigUISchema, makeSecretMarker, toSecretFieldView } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { OIDC_CONNECTION_FORM_SCHEMA } from '../../../../../../packages/addon-auth/src/oidc/oidc-connection-schema.js'
-import { clientSecretView } from '../../../../../../packages/addon-auth/src/oidc/oidc-connections.js'
 
 class OidcSchemaProbe extends AuthOidcAddon {
   settingsSchema(): ConfigUISchema | null {
@@ -24,12 +17,12 @@ class OidcSchemaProbe extends AuthOidcAddon {
   }
 }
 
-const REF = 'secret://auth-oidc/global/providers[authentik].clientSecret'
+const REF = 'secret://auth/oidc-provider/authentik/clientSecret'
 
-/** A pre-keychain blob, before the operator's one-off migration. */
 // Assembled at runtime so check-no-client-secrets never sees a literal (D753).
 const INLINE_SECRET = ['real', 'authentik', 'client', 'secret'].join('-')
-describe('auth-oidc client secret (DataTable + connection form)', () => {
+
+describe('auth-oidc client secret (instances table + connection form)', () => {
   const probe = new OidcSchemaProbe()
 
   it('declares no Settings form — the client secret has no global field to land in', () => {
@@ -43,29 +36,13 @@ describe('auth-oidc client secret (DataTable + connection form)', () => {
     expect(password).toMatchObject({ type: 'password', key: 'clientSecret' })
   })
 
-  it('listConnections formValues carry the marker view, which round-trips as KEEP', () => {
-    expect(clientSecretView(makeSecretMarker(REF), undefined, 'authentik')).toEqual({
-      $secret: REF,
-      v: 1,
-      set: true,
-    })
-    // Same shape hydrateSchema used to put on editable-array rows (D789).
+  it('a stored marker is shown as a view that round-trips as KEEP', () => {
     expect(toSecretFieldView(makeSecretMarker(REF))).toEqual({ $secret: REF, v: 1, set: true })
   })
 
-  it('a pre-keychain inline value shows as set, and the value never reaches the form', () => {
-    const secrets = {
-      ref: () => REF,
-    } as unknown as SecretsAccess
-    const view = clientSecretView(INLINE_SECRET, secrets, 'authentik')
+  it('an inline value shows as set, and the value never reaches the form', () => {
+    const view = toSecretFieldView(INLINE_SECRET)
     expect(JSON.stringify(view)).not.toContain(INLINE_SECRET)
-    expect(view).toEqual({ $secret: REF, v: 1, set: true })
-    // Without a secrets handle, the view is still redacted (inline flag only).
-    expect(toSecretFieldView(INLINE_SECRET)).toEqual({
-      $secret: null,
-      v: 1,
-      set: true,
-      inline: true,
-    })
+    expect(view).toEqual({ $secret: null, v: 1, set: true, inline: true })
   })
 })

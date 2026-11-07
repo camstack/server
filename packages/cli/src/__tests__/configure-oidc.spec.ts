@@ -13,9 +13,9 @@ const PALETTE = {
 
 const answers = (extra: { [path: string]: unknown } = {}): { [path: string]: unknown } => ({
   'localNetwork.getAddresses': PALETTE,
-  'oidcConnections.listConnections': [],
-  'oidcConnections.createConnection': { id: 'x' },
-  'oidcConnections.updateConnection': { ok: true },
+  'integrationInstances.listInstances': [],
+  'integrationInstances.createInstance': { id: 'x' },
+  'integrationInstances.updateInstance': { ok: true },
   ...extra,
 })
 
@@ -55,13 +55,18 @@ describe('configure_oidc', () => {
     await configureOidc(ctx, args, preview.token)
     const posted = writes(calls)
     expect(posted.map((c) => c.path)).toEqual([
-      'oidcConnections.createConnection',
-      'oidcConnections.updateConnection',
+      'integrationInstances.createInstance',
+      'integrationInstances.updateInstance',
     ])
-    expect(posted[1]?.input).toMatchObject({
+    expect(posted[0]?.input).toMatchObject({
+      addonId: 'auth-oidc',
       id: 'pocket-id',
-      issuerUrl: 'https://id.example.test',
-      clientId: 'abc',
+      kind: 'oidc-provider',
+    })
+    expect(posted[1]?.input).toMatchObject({
+      addonId: 'auth-oidc',
+      id: 'pocket-id',
+      values: { issuerUrl: 'https://id.example.test', clientId: 'abc' },
     })
     expect(JSON.stringify(posted)).not.toContain('clientSecret')
   })

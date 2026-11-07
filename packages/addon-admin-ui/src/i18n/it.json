@@ -106,7 +106,12 @@
       "policyTitle": "Criteri di accesso",
       "policyUnavailable": "Non disponibile: l'addon che gestisce queste impostazioni non ha risposto.",
       "passkeyRpTitle": "Relying party delle passkey",
-      "passkeyRpUnavailable": "Non disponibile — l'addon che possiede queste impostazioni non ha risposto."
+      "passkeyRpUnavailable": "Non disponibile — l'addon che possiede queste impostazioni non ha risposto.",
+      "connectionsTitle": "Connessioni di accesso",
+      "connectionsSubtitle": "Provider di identità con cui gli utenti accedono. Ogni connessione ha un proprio id, che non si può cambiare in seguito.",
+      "connectionsEmptyTitle": "Nessuna connessione di accesso",
+      "connectionsEmptyDescription": "Aggiungi una connessione per far accedere gli utenti tramite un provider di identità.",
+      "addConnection": "Aggiungi connessione"
     },
     "backup": {
       "restartServerNow": "Riavviare il server ora?",
@@ -942,28 +947,6 @@
       "ruleSummary": "{{cadence}}s · {{fps}}fps · denso {{dense}}s",
       "ruleSummaryAuto": "{{cadence}}s · {{fps}}fps · denso {{dense}}s (auto)",
       "ruleDwell": "≥{{sec}}s/rilevamento"
-    },
-    "oidcSettingsConnections": {
-      "deleteOidcConnection": "Eliminare la connessione OIDC?",
-      "removeTheLoginButtonAnd": "Rimuovi “{{displayName}}” ({{id}}). Il pulsante di login e le credenziali IdP per questo id vengono eliminati.",
-      "id": "Id",
-      "name": "Nome",
-      "issuer": "Emittente",
-      "status": "Stato",
-      "configured": "Configurata",
-      "notConfigured": "Non configurata",
-      "delete": "Elimina {{displayName}}",
-      "eachRowIsOneIdp": "Ogni riga è un IdP. URI di reindirizzamento:",
-      "addConnection": "Aggiungi connessione",
-      "couldNotLoadConnections": "Impossibile caricare le connessioni.",
-      "noOidcConnectionsYetAdd": "Ancora nessuna connessione OIDC. Aggiungine una per registrare un IdP.",
-      "addOidcConnection": "Aggiungi connessione OIDC",
-      "edit": "Modifica {{value1}}",
-      "saving": "Salvataggio…",
-      "instanceId": "Id istanza",
-      "urlSlugAppearsInAddon": "Slug URL — compare in /addon/{{addonId}}/<id>/callback. Stabile; dopo il salvataggio non può essere rinominato.",
-      "instanceId2": "Id istanza:",
-      "loadingForm": "Caricamento modulo…"
     },
     "pemField": {
       "chooseFile": "Scegli file"

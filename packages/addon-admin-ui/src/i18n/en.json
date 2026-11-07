@@ -106,7 +106,12 @@
       "policyTitle": "Sign-in policy",
       "policyUnavailable": "Not available — the addon that owns these settings did not answer.",
       "passkeyRpTitle": "Passkey relying party",
-      "passkeyRpUnavailable": "Not available — the addon that owns these settings did not answer."
+      "passkeyRpUnavailable": "Not available — the addon that owns these settings did not answer.",
+      "connectionsTitle": "Sign-in connections",
+      "connectionsSubtitle": "Identity providers that sign users in. Each connection has its own id, which cannot be changed later.",
+      "connectionsEmptyTitle": "No sign-in connections",
+      "connectionsEmptyDescription": "Add a connection to let users sign in through an identity provider.",
+      "addConnection": "Add connection"
     },
     "backup": {
       "restartServerNow": "Restart server now?",
@@ -942,28 +947,6 @@
       "ruleSummary": "{{cadence}}s · {{fps}}fps · dense {{dense}}s",
       "ruleSummaryAuto": "{{cadence}}s · {{fps}}fps · dense {{dense}}s (auto)",
       "ruleDwell": "≥{{sec}}s/detection"
-    },
-    "oidcSettingsConnections": {
-      "deleteOidcConnection": "Delete OIDC connection?",
-      "removeTheLoginButtonAnd": "Remove “{{displayName}}” ({{id}}). The login button and IdP credentials for this id are dropped.",
-      "id": "Id",
-      "name": "Name",
-      "issuer": "Issuer",
-      "status": "Status",
-      "configured": "Configured",
-      "notConfigured": "Not configured",
-      "delete": "Delete {{displayName}}",
-      "eachRowIsOneIdp": "Each row is one IdP. Redirect URI:",
-      "addConnection": "Add connection",
-      "couldNotLoadConnections": "Could not load connections.",
-      "noOidcConnectionsYetAdd": "No OIDC connections yet. Add one to register an IdP.",
-      "addOidcConnection": "Add OIDC connection",
-      "edit": "Edit {{value1}}",
-      "saving": "Saving…",
-      "instanceId": "Instance id",
-      "urlSlugAppearsInAddon": "URL slug — appears in /addon/{{addonId}}/<id>/callback. Stable; renaming is not supported after save.",
-      "instanceId2": "Instance id:",
-      "loadingForm": "Loading form…"
     },
     "pemField": {
       "chooseFile": "Choose file"

@@ -21,10 +21,8 @@ applies-to:
   - server/backend/src/core/auth/cli-approval.service.ts
   - packages/cli/src/commands/login-approval.ts
   - packages/addon-admin-ui/src/pages/system/Authentication.tsx
-  - packages/addon-admin-ui/src/pages/system/OidcSettingsConnections.tsx
   - packages/addon-admin-ui/src/lib/sso-popup.ts
   - packages/addon-admin-ui/src/pages/SsoComplete.tsx
-  - packages/types/src/capabilities/oidc-connections.cap.ts
   - packages/system/src/auth/device-credential-manager.ts
   - server/backend/src/api/core/auth-device-cert.procedures.ts
 ---
@@ -70,7 +68,7 @@ How a browser becomes a session, and what decides each step. Decisions:
 | Piece | Where | Role |
 |---|---|---|
 | `local-auth` | `packages/system/src/builtins/local-auth/` | Users, passwords, TOTP, linked external identities, login sessions, the auth audit (tokens are the hub's `core-auth` `credential-tokens`). Owns `user-management`; the operations no wire may reach are its hub-internal surface (`UserManagementInternal`, D811). |
-| `auth-oidc` | `packages/addon-auth/src/oidc/` | One OIDC flow per IdP connection (`/<id>/start`, `/<id>/callback`). Connections are managed in Settings as a DataTable + dialog via `oidc-connections` (D830) — not an editable-array. |
+| `auth-oidc` | `packages/addon-auth/src/oidc/` | One OIDC flow per IdP connection (`/<id>/start`, `/<id>/callback`). Connections are `oidc-provider` records of the addon, exposed as `integration-instances` of the `login-method` function (D1013) and listed by the shared instances table on Identity → Authentication. The operator types the id once (immutable); a switched-off connection offers no login button; the client secret is a keychain view. |
 | `auth-webauthn` | `packages/addon-auth/src/webauthn/` | Passkeys: passkey-first sign-in, or an opted-in second factor. |
 | Session mint | `server/backend/src/auth/session-mint.ts` | The only place a session JWT is signed — always from the user record as it is now, always for a login session (`sid`). |
 | Session check | `server/backend/src/auth/hub-sessions.ts`, `core/auth/auth.service.ts` | `AuthService.verifyToken` asks the login session behind every session-grade token. |

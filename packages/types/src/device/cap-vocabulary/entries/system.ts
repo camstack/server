@@ -96,7 +96,6 @@ export const SYSTEM_CAP_VOCABULARY: CapVocabularySlice<SystemVocabCapName> = {
   ),
   'notification-rules': system('notification rules — authored on their own page'),
   'oauth-integration': system(IDENTITY),
-  'oidc-connections': system(IDENTITY),
   'osd-manager': system(PIPELINE),
   'pipeline-executor': system(PIPELINE),
   'pipeline-orchestrator': system(PIPELINE),

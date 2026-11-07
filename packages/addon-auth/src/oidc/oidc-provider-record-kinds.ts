@@ -16,6 +16,8 @@ export const OidcProviderBodySchema = z.object({
   redirectUri: z.string(),
   scopes: z.string(),
   usernameClaim: usernameClaimSchema,
+  // The row's own switch (D996); a row written before it existed is on.
+  enabled: z.boolean().optional(),
 })
 export type OidcProviderBody = z.infer<typeof OidcProviderBodySchema>
 

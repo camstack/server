@@ -23,6 +23,7 @@ import {
   type ConnectionEndpoint,
   type IScopedLogger,
   resolveHubAddressRoles,
+  RecordSecretUnavailableError,
   recordSecretRef,
   type SecretsAccess,
 } from '@camstack/types'
@@ -289,10 +290,15 @@ afterEach(() => {
 // ---------------------------------------------------------------------------
 
 describe('AuthOidcAddon — initialization', () => {
-  it('registers auth-provider, addon-routes, login-method, and oidc-connections', async () => {
+  it('registers auth-provider, addon-routes, login-method, and integration-instances', async () => {
     const { registrations } = await bootAddon({ config: VIEWER_CONFIG })
     const names = registrations.map((r) => r.capability.name).toSorted()
-    expect(names).toEqual(['addon-routes', 'auth-provider', 'login-method', 'oidc-connections'])
+    expect(names).toEqual([
+      'addon-routes',
+      'auth-provider',
+      'integration-instances',
+      'login-method',
+    ])
   })
 
   it('login-method exposes a redirect contribution per configured provider', async () => {
@@ -336,13 +342,13 @@ describe('AuthOidcAddon — initialization', () => {
 
   it('the connection form declares an icon picker and a masked client secret (D780/D830)', async () => {
     const { registrations } = await bootAddon({ config: VIEWER_CONFIG })
-    const connections = registrations.find((r) => r.capability.name === 'oidc-connections')
+    const connections = registrations.find((r) => r.capability.name === 'integration-instances')
       ?.provider as {
-      connectionFormSchema: () => Promise<{
+      instanceFormSchema: (i: { id: string | null }) => Promise<{
         sections: readonly { fields: readonly { key: string; type: string; default?: unknown }[] }[]
       }>
     }
-    const schema = await connections.connectionFormSchema()
+    const schema = await connections.instanceFormSchema({ id: null })
     const byKey = new Map(schema.sections.flatMap((s) => s.fields).map((f) => [f.key, f]))
     expect(byKey.get('icon')).toMatchObject({ type: 'icon', default: 'shield-check' })
     expect(byKey.get('clientSecret')?.type).toBe('password')
@@ -2043,89 +2049,191 @@ describe('AuthOidcAddon — step-up freshness and bounded pending states (D858)'
 })
 
 // ---------------------------------------------------------------------------
-// A connection whose secret marker is bound to the settings path (issue #4)
+// The IdP rows as integration-instances (epic 440, D1013)
 // ---------------------------------------------------------------------------
 
-describe('auth-oidc connection writes touch only their own row', () => {
-  interface ConnectionsApi {
-    listConnections(): Promise<ReadonlyArray<{ id: string }>>
-    createConnection(i: { id: string; displayName: string }): Promise<{ id: string }>
-    updateConnection(i: {
+describe('auth-oidc instances', () => {
+  interface InstanceView {
+    readonly id: string
+    readonly name: string
+    readonly configured: boolean
+    readonly enabled?: boolean
+    readonly kind?: string
+    readonly formValues: Record<string, unknown>
+  }
+  interface InstancesApi {
+    describe(): Promise<{ kinds?: readonly { id: string; functionCap: string }[] }>
+    listInstances(): Promise<readonly InstanceView[]>
+    createInstance(i: {
+      id?: string
+      name: string
+      kind?: string
+      values?: Record<string, unknown>
+    }): Promise<{ id: string }>
+    updateInstance(i: {
       id: string
-      displayName: string
-      clientId?: string
-      clientSecret?: string
+      name?: string
+      values: Record<string, unknown>
     }): Promise<unknown>
-    deleteConnection(i: { id: string }): Promise<unknown>
+    setInstanceEnabled(i: { id: string; enabled: boolean }): Promise<unknown>
+    deleteInstance(i: { id: string }): Promise<unknown>
   }
 
-  async function bootWithRow() {
-    const recordsWorld = makeInMemoryRecords('auth')
-    const { registrations } = await bootAddon({
-      config: { providers: [{ ...VIEWER_PROVIDER, id: 'prod01', clientSecret: 'real-secret' }] },
+  const SECRET = 'real-secret'
+
+  async function bootWithRow(opts: TestCtxOptions = {}) {
+    const recordsWorld = opts.recordsWorld ?? makeInMemoryRecords('auth')
+    const { registrations, addon } = await bootAddon({
+      config: { providers: [{ ...VIEWER_PROVIDER, id: 'prod01', clientSecret: SECRET }] },
       recordsWorld,
+      ...opts,
     })
-    const api = registrations.find((r) => r.capability.name === 'oidc-connections')!
-      .provider as ConnectionsApi
-    return { api, kind: recordsWorld.records.kind(oidcProviderEntryKind), recordsWorld }
+    const api = registrations.find((r) => r.capability.name === 'integration-instances')!
+      .provider as InstancesApi
+    const loginMethods = registrations.find((r) => r.capability.name === 'login-method')!
+      .provider as { getLoginMethods(): Promise<readonly { id: string }[]> }
+    return {
+      api,
+      addon,
+      loginMethods,
+      kind: recordsWorld.records.kind(oidcProviderEntryKind),
+      recordsWorld,
+    }
   }
 
-  it('creates a connection with a secret next to an existing one', async () => {
-    const { api, kind, recordsWorld } = await bootWithRow()
-    await api.createConnection({ id: 'zztest', displayName: 'Zz' })
-    await api.updateConnection({ id: 'zztest', displayName: 'Zz', clientSecret: 'zz-secret' })
-    expect((await api.listConnections()).map((c) => c.id).sort()).toEqual(['prod01', 'zztest'])
-    expect((await kind.getResolved('zztest'))?.data.clientSecret).toBe('zz-secret')
-    expect((await kind.getResolved('prod01'))?.data.clientSecret).toBe('real-secret')
-    const own = recordSecretRef('auth', 'oidc-provider', 'zztest', 'clientSecret')
-    expect(JSON.stringify(recordsWorld.tables.get('oidc-provider')?.get('zztest')?.data)).toContain(
-      own,
-    )
+  it('describes one kind of the function cap login-method', async () => {
+    const { api } = await bootWithRow()
+    expect((await api.describe()).kinds).toEqual([
+      { id: 'oidc-provider', label: 'OpenID Connect', functionCap: 'login-method' },
+    ])
   })
 
-  it('an edit without a secret keeps the stored secret', async () => {
+  it('lists a stored row with its client secret as a SecretFieldView, never the value', async () => {
+    const { api } = await bootWithRow()
+    const [row] = await api.listInstances()
+    expect(row).toMatchObject({
+      id: 'prod01',
+      kind: 'oidc-provider',
+      configured: true,
+      enabled: true,
+    })
+    expect(row?.formValues['clientSecret']).toEqual({
+      $secret: recordSecretRef('auth', 'oidc-provider', 'prod01', 'clientSecret'),
+      v: 1,
+      set: true,
+    })
+    expect(JSON.stringify(row)).not.toContain(SECRET)
+  })
+
+  it('a locked keychain still lists the secret as set, and the row still signs in without it', async () => {
+    const world = makeInMemoryRecords('auth')
+    const { api, loginMethods } = await bootWithRow({
+      recordsWorld: {
+        ...world,
+        records: {
+          ...world.records,
+          kind: (declared) => {
+            const real = world.records.kind(declared)
+            return Object.create(real, {
+              getResolved: {
+                value: async () => {
+                  throw new RecordSecretUnavailableError('locked')
+                },
+              },
+            })
+          },
+        },
+      },
+    })
+    const [row] = await api.listInstances()
+    expect(row?.formValues['clientSecret']).toMatchObject({ set: true })
+    expect(JSON.stringify(row)).not.toContain(SECRET)
+    expect((await loginMethods.getLoginMethods()).map((m) => m.id)).toEqual(['auth-oidc/prod01'])
+  })
+
+  it('creates under the typed id next to an existing row; the form values follow as an update', async () => {
     const { api, kind } = await bootWithRow()
-    await api.updateConnection({ id: 'prod01', displayName: 'Renamed', clientId: 'new-id' })
+    const created = await api.createInstance({ id: 'zztest', name: 'Zz', kind: 'oidc-provider' })
+    expect(created).toEqual({ id: 'zztest' })
+    await api.updateInstance({ id: 'zztest', values: { clientSecret: 'zz-secret' } })
+    expect((await api.listInstances()).map((c) => c.id).toSorted()).toEqual(['prod01', 'zztest'])
+    expect((await kind.getResolved('zztest'))?.data.clientSecret).toBe('zz-secret')
+    expect((await kind.getResolved('prod01'))?.data.clientSecret).toBe(SECRET)
+  })
+
+  it('refuses a malformed or taken id before a record exists', async () => {
+    const { api, recordsWorld } = await bootWithRow()
+    await expect(api.createInstance({ id: 'Bad Id', name: 'X' })).rejects.toThrow(/slug/)
+    await expect(api.createInstance({ name: 'No id' })).rejects.toThrow()
+    await expect(api.createInstance({ id: 'prod01', name: 'Again' })).rejects.toThrow()
+    expect([...(recordsWorld.tables.get('oidc-provider')?.keys() ?? [])]).toEqual(['prod01'])
+  })
+
+  it('the id is immutable: an update never renames, whatever the form sends', async () => {
+    const { api, recordsWorld } = await bootWithRow()
+    await api.updateInstance({ id: 'prod01', name: 'Renamed', values: { id: 'other' } })
+    expect([...(recordsWorld.tables.get('oidc-provider')?.keys() ?? [])]).toEqual(['prod01'])
+    expect((await api.listInstances())[0]?.name).toBe('Renamed')
+  })
+
+  it('an edit without a secret keeps the stored secret; the clear instruction removes it', async () => {
+    const { api, kind } = await bootWithRow()
+    await api.updateInstance({ id: 'prod01', name: 'Renamed', values: { clientId: 'new-id' } })
     const row = await kind.getResolved('prod01')
     expect(row?.data.displayName).toBe('Renamed')
-    expect(row?.data.clientSecret).toBe('real-secret')
+    expect(row?.data.clientId).toBe('new-id')
+    expect(row?.data.clientSecret).toBe(SECRET)
+    await api.updateInstance({ id: 'prod01', values: { clientSecret: { $secretClear: true } } })
+    expect((await kind.getResolved('prod01'))?.data.clientSecret).toBeUndefined()
   })
 
   it('a write never re-puts a sibling row', async () => {
     const { api, recordsWorld } = await bootWithRow()
     const before = recordsWorld.tables.get('oidc-provider')?.get('prod01')?.rev
-    await api.createConnection({ id: 'second', displayName: 'Second' })
-    await api.deleteConnection({ id: 'second' })
+    await api.createInstance({ id: 'second', name: 'Second' })
+    await api.deleteInstance({ id: 'second' })
     expect(recordsWorld.tables.get('oidc-provider')?.get('prod01')?.rev).toBe(before)
   })
 
-  it('deletes only the named row', async () => {
-    const { api, kind } = await bootWithRow()
-    await api.deleteConnection({ id: 'prod01' })
-    expect(await api.listConnections()).toEqual([])
-    expect((await kind.query({ limit: 10 })).records).toHaveLength(0)
-  })
-
-  it('a refused write leaves the listed connections unchanged', async () => {
-    const { api, recordsWorld } = await bootWithRow()
-    const before = await api.listConnections()
-    recordsWorld.failWrites(true)
-    await expect(api.createConnection({ id: 'zztest', displayName: 'Zz' })).rejects.toThrow()
-    await expect(api.updateConnection({ id: 'prod01', displayName: 'Renamed' })).rejects.toThrow()
-    await expect(api.deleteConnection({ id: 'prod01' })).rejects.toThrow()
-    recordsWorld.failWrites(false)
-    expect(await api.listConnections()).toEqual(before)
-  })
-
-  it('a public client (no secret) is a valid connection', async () => {
+  it('a public client (no secret) is a configured instance', async () => {
     const { api } = await bootWithRow()
-    await api.createConnection({ id: 'pub', displayName: 'Public' })
-    await api.updateConnection({ id: 'pub', displayName: 'Public', clientId: 'pub-client' })
-    const listed = await (
-      api as unknown as {
-        listConnections(): Promise<ReadonlyArray<{ id: string; configured: boolean }>>
-      }
-    ).listConnections()
-    expect(listed.find((c) => c.id === 'pub')?.configured).toBe(true)
+    await api.createInstance({ id: 'pub', name: 'Public' })
+    expect((await api.listInstances()).find((c) => c.id === 'pub')?.configured).toBe(false)
+    await api.updateInstance({ id: 'pub', values: { clientId: 'pub-client' } })
+    expect((await api.listInstances()).find((c) => c.id === 'pub')?.configured).toBe(true)
+  })
+
+  it('a created or edited instance is served by the sign-in flow at once; a delete drops it', async () => {
+    const { api, loginMethods } = await bootWithRow()
+    await api.createInstance({ id: 'second', name: 'Second' })
+    expect((await loginMethods.getLoginMethods()).map((m) => m.id)).toEqual([
+      'auth-oidc/prod01',
+      'auth-oidc/second',
+    ])
+    await api.deleteInstance({ id: 'second' })
+    expect((await loginMethods.getLoginMethods()).map((m) => m.id)).toEqual(['auth-oidc/prod01'])
+  })
+
+  it('a switched-off instance keeps its record and offers no login button; on brings it back', async () => {
+    const { api, loginMethods, kind } = await bootWithRow()
+    await api.setInstanceEnabled({ id: 'prod01', enabled: false })
+    expect((await api.listInstances())[0]?.enabled).toBe(false)
+    expect(await loginMethods.getLoginMethods()).toEqual([])
+    expect((await kind.getResolved('prod01'))?.data.clientSecret).toBe(SECRET)
+    await api.setInstanceEnabled({ id: 'prod01', enabled: true })
+    expect((await loginMethods.getLoginMethods()).map((m) => m.id)).toEqual(['auth-oidc/prod01'])
+  })
+
+  it('a refused write leaves the listed instances unchanged', async () => {
+    const { api, recordsWorld } = await bootWithRow()
+    const before = await api.listInstances()
+    recordsWorld.failWrites(true)
+    await expect(api.createInstance({ id: 'zztest', name: 'Zz' })).rejects.toThrow()
+    await expect(
+      api.updateInstance({ id: 'prod01', name: 'Renamed', values: {} }),
+    ).rejects.toThrow()
+    await expect(api.deleteInstance({ id: 'prod01' })).rejects.toThrow()
+    recordsWorld.failWrites(false)
+    expect(await api.listInstances()).toEqual(before)
   })
 })

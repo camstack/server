@@ -69,7 +69,7 @@
             "name": "login-method"
           },
           {
-            "name": "oidc-connections"
+            "name": "integration-instances"
           }
         ],
         "protected": true

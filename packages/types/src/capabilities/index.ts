@@ -1265,14 +1265,6 @@ export {
   IntegrationInstanceStatusSchema,
   integrationInstancesCapability,
 } from './integration-instances.cap.js'
-export {
-  type IOidcConnectionsProvider,
-  type OidcConnection,
-  OidcConnectionSchema,
-  type OidcConnectionUpdateInput,
-  OidcConnectionUpdateInputSchema,
-  oidcConnectionsCapability,
-} from './oidc-connections.cap.js'
 // analysis-pipeline + analysis-data-persistence caps removed in P12b —
 // addon-pipeline-analytics owns post-detection refinement end-to-end
 // (Track + per-kind events + media) via its own single cap. See
@@ -3506,7 +3498,6 @@ import type { notifierCapability } from './notifier.cap.js'
 import type { numericSensorCapability } from './numeric-sensor.cap.js'
 import type { oauthIntegrationCapability } from './oauth-integration.cap.js'
 import type { integrationInstancesCapability } from './integration-instances.cap.js'
-import type { oidcConnectionsCapability } from './oidc-connections.cap.js'
 import type { osdCapability } from './osd.cap.js'
 import type { osdManagerCapability } from './osd-manager.cap.js'
 import type { petFeederCapability } from './pet-feeder.cap.js'
@@ -3741,7 +3732,6 @@ type AnyCapability =
   | typeof integrationInstancesCapability
   | typeof addonsCapability
   | typeof oauthIntegrationCapability
-  | typeof oidcConnectionsCapability
   | typeof streamParamsCapability
   | typeof streamCatalogCapability
   | typeof motionZonesCapability

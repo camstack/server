@@ -150,7 +150,6 @@ export const CAP_NAMES: readonly string[] = Object.freeze([
   "notifier",
   "numeric-sensor",
   "oauth-integration",
-  "oidc-connections",
   "osd",
   "osd-manager",
   "pet-feeder",

@@ -43,7 +43,6 @@ import type { networkQualityCapability } from '../capabilities/network-quality.c
 import type { nodesCapability } from '../capabilities/nodes.cap.js'
 import type { notificationOutputCapability } from '../capabilities/notification-output.cap.js'
 import type { notificationRulesCapability } from '../capabilities/notification-rules.cap.js'
-import type { oidcConnectionsCapability } from '../capabilities/oidc-connections.cap.js'
 import type { osdManagerCapability } from '../capabilities/osd-manager.cap.js'
 import type { pipelineExecutorCapability } from '../capabilities/pipeline-executor.cap.js'
 import type { pipelineOrchestratorCapability } from '../capabilities/pipeline-orchestrator.cap.js'
@@ -116,7 +115,6 @@ export interface SystemProxy {
   readonly nodes: Pick<InferProvider<typeof nodesCapability>, 'topology' | 'directory' | 'deployAddon' | 'undeployAddon' | 'restartAddon' | 'restartProcess' | 'restartNode' | 'shutdownNode' | 'renameNode' | 'clusterAddonStatus' | 'getCapUsageGraph' | 'getNodeAddons' | 'setProcessLogLevel' | 'executeQuery'>
   readonly notificationOutput: Pick<InferProvider<typeof notificationOutputCapability>, 'listTargetKinds' | 'discoverTargets' | 'probeTargetConfig' | 'send' | 'testTarget'>
   readonly notificationRules: Pick<InferProvider<typeof notificationRulesCapability>, 'listRules' | 'getRule' | 'createRule' | 'updateRule' | 'deleteRule' | 'setRuleEnabled' | 'listSequences' | 'getSequence' | 'createSequence' | 'updateSequence' | 'deleteSequence' | 'getClipRetentionAsks' | 'listDeviceMutes' | 'testRule' | 'previewStateSummary' | 'getConditionCatalog' | 'getTemplateCatalog' | 'previewTemplate' | 'getHistory' | 'getRuleLastRuns' | 'resolveArtifactUrl' | 'listSnoozes' | 'createSnooze' | 'cancelSnooze' | 'getAlarmConfig' | 'setAlarmConfig' | 'createAlarmProfile' | 'renameAlarmProfile' | 'deleteAlarmProfile' | 'activateAlarmProfile' | 'getAlarmSensors'>
-  readonly oidcConnections: Pick<InferProvider<typeof oidcConnectionsCapability>, 'connectionFormSchema' | 'listConnections' | 'createConnection' | 'updateConnection' | 'deleteConnection'>
   readonly osdManager: Pick<InferProvider<typeof osdManagerCapability>, 'getConditionSupport' | 'copyDeviceConfiguration' | 'listTemplates' | 'upsertTemplate' | 'deleteTemplate'>
   readonly pipelineExecutor: Pick<InferProvider<typeof pipelineExecutorCapability>, 'getAvailableEngines' | 'getSelectedEngine' | 'getEngineProvisioning' | 'getVideoPipelineSteps' | 'setVideoPipelineSteps' | 'getInferenceDeviceHealth' | 'rearmInferenceDevice' | 'getSchema' | 'getOrchestratorConfigSchema' | 'validatePipeline' | 'getCapabilities' | 'getAddonModels' | 'downloadModel' | 'deleteModel' | 'cacheFrameInPool' | 'inferCached' | 'uncacheFrame' | 'getEffectiveTuning' | 'listLoadedEngines' | 'spinEngine' | 'killEngine' | 'listReferenceImages' | 'getReferenceImage' | 'getReferenceAudioFiles' | 'getReferenceAudio' | 'getAudioCapabilities' | 'runAudioTest' | 'getDetectionConfigSchema'>
   readonly pipelineOrchestrator: Pick<InferProvider<typeof pipelineOrchestratorCapability>, 'requestOccupancyLook' | 'pauseForStorageMigration' | 'resumeForStorageMigration' | 'rebalance' | 'getPipelineAssignments' | 'getAgentLoad' | 'getClusterModelChoice' | 'getGlobalMetrics' | 'getCapabilityBindings' | 'setCapabilityBinding' | 'getIngestOwner' | 'getAudioNodeLoad' | 'getAudioAssignments' | 'getAgentSettings' | 'listAgentSettings' | 'removeAgentSettings' | 'setAgentMaxCameras' | 'setAgentCapabilities' | 'setAgentDecodeLimits' | 'setAgentReachableHost' | 'setAgentInferenceDevices' | 'setNodeStepSettings' | 'getNodeInferenceDevices' | 'forgetInferenceDevice' | 'resetNodePipelineDefaults' | 'planAutoTune' | 'applyAutoTune' | 'setLoadBalancingShares' | 'getPlacementStats' | 'suggestShares' | 'getEffectiveShares' | 'setShareSource' | 'getNodeBenchmarkPreflight' | 'startNodeBenchmark' | 'getNodeBenchmarkStatus' | 'abortNodeBenchmark' | 'getNodeBenchmarkCandidates' | 'listNodeBenchmarkResults' | 'deleteNodeBenchmarkResult' | 'getCameraStatuses' | 'setCameraSensors' | 'reconcileFromDisk' | 'getReconcileFromDiskStatus'>
@@ -683,14 +681,6 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     getAlarmSensors: (input?: unknown) => dispatch('notificationRules', 'getAlarmSensors', 'query', input),
   }
 
-  const oidcConnectionsInterface = {
-    connectionFormSchema: (input?: unknown) => dispatch('oidcConnections', 'connectionFormSchema', 'query', input),
-    listConnections: (input?: unknown) => dispatch('oidcConnections', 'listConnections', 'query', input),
-    createConnection: (input?: unknown) => dispatch('oidcConnections', 'createConnection', 'mutation', input),
-    updateConnection: (input?: unknown) => dispatch('oidcConnections', 'updateConnection', 'mutation', input),
-    deleteConnection: (input?: unknown) => dispatch('oidcConnections', 'deleteConnection', 'mutation', input),
-  }
-
   const osdManagerInterface = {
     getConditionSupport: (input?: unknown) => dispatch('osdManager', 'getConditionSupport', 'query', input),
     copyDeviceConfiguration: (input?: unknown) => dispatch('osdManager', 'copyDeviceConfiguration', 'mutation', input),
@@ -1106,7 +1096,6 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     nodes: nodesInterface,
     notificationOutput: notificationOutputInterface,
     notificationRules: notificationRulesInterface,
-    oidcConnections: oidcConnectionsInterface,
     osdManager: osdManagerInterface,
     pipelineExecutor: pipelineExecutorInterface,
     pipelineOrchestrator: pipelineOrchestratorInterface,

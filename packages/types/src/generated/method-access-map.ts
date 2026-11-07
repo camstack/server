@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1471 method paths across 202 capabilities.
+ * Coverage: 1466 method paths across 201 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -797,11 +797,6 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'notifier.send': { capName: "notifier", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
   'numericSensor.getStatus': { capName: "numeric-sensor", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'oauthIntegration.getDescriptor': { capName: "oauth-integration", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
-  'oidcConnections.connectionFormSchema': { capName: "oidc-connections", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
-  'oidcConnections.createConnection': { capName: "oidc-connections", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
-  'oidcConnections.deleteConnection': { capName: "oidc-connections", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
-  'oidcConnections.listConnections': { capName: "oidc-connections", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
-  'oidcConnections.updateConnection': { capName: "oidc-connections", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'osd.getStatus': { capName: "osd", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'osd.setOverlay': { capName: "osd", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
   'osdManager.clearSlotBinding': { capName: "osd-manager", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
@@ -1624,7 +1619,6 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "notifier",
   "numeric-sensor",
   "oauth-integration",
-  "oidc-connections",
   "osd",
   "osd-manager",
   "pet-feeder",
@@ -1873,7 +1867,6 @@ export const SYSTEM_CAP_NAMES: readonly string[] = [
   "notification-output",
   "notification-rules",
   "oauth-integration",
-  "oidc-connections",
   "osd-manager",
   "pipeline-executor",
   "pipeline-orchestrator",

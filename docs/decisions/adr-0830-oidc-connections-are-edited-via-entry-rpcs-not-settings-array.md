@@ -4,9 +4,7 @@ title: OIDC connections are edited via entry RPCs, not a settings array
 status: accepted
 date: 2026-10-12
 applies-to:
-  - packages/types/src/capabilities/oidc-connections.cap.ts
   - packages/addon-auth/src/oidc/**
-  - packages/addon-admin-ui/src/pages/system/OidcSettingsConnections.tsx
   - packages/addon-admin-ui/src/pages/system/Authentication.tsx
 ---
 

@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The llm capability drops listProfileKinds, listProfiles, upsertProfile, deleteProfile, testProfile and migrateRawSecrets; instance kinds may name provider widgets.
 - mesh-network.testConnection is removed; the tailnet instance's Test is the connection check
 - The storage capability drops upsertLocation, deleteLocation, testLocation, testConfig and listProviders; the location instances replace them
+- The oidc-connections capability is removed; OpenID Connect providers are integration-instances of the login-method function
 
 ## [1.2.514] - 2026-11-06
 
