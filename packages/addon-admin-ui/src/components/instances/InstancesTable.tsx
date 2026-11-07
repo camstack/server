@@ -92,6 +92,8 @@ export interface InstancesTableProps {
    * re-pair). Called per instance row; a fixed row has none.
    */
   readonly rowActions?: (row: InstanceRow) => ReactNode
+  /** An instance row whose delete the page knows the hub would refuse shows no Delete. Absent keeps it. */
+  readonly canDelete?: (row: InstanceRow) => boolean
   /** The kinds whose new record is named by the operator, not minted (an immutable typed id). */
   readonly typedId?: TypedIdRuleFor
   /**
@@ -220,6 +222,7 @@ export function InstancesTable({
   extraColumns,
   lead,
   rowActions,
+  canDelete,
   typedId,
   rowFilter,
 }: InstancesTableProps): ReactElement {
@@ -485,7 +488,7 @@ export function InstancesTable({
                 'Restarts the addon on the hub. If it shares a runner group, every addon in that group restarts with it.',
               )}
             />
-            {row.kind === 'instance' && (
+            {row.kind === 'instance' && (canDelete?.(row) ?? true) && (
               <IconButton
                 icon={Trash2}
                 variant="ghost"
@@ -504,6 +507,7 @@ export function InstancesTable({
       functionCap,
       pinningCount,
       rowActions,
+      canDelete,
       runDelete,
       runLink,
       runTest,

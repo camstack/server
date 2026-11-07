@@ -71,7 +71,7 @@ import type { IScopedLogger } from '@camstack/types'
  * the recorder's export MP4s (operator 2026-09-04: one generic class, not
  * one per producer). SINGLETON by declaration (`cardinality: 'single'` in
  * the manifest, declared identically by BOTH consuming addons — the registry
- * throws at kernel boot on a cardinality conflict): `upsertLocation` refuses
+ * throws at kernel boot on a cardinality conflict): creating a location refuses
  * a second location of this type and the admin UI offers no "Add" — so there
  * is exactly one root, and the "which location do I write to" question does
  * not exist for this class. If that one location cannot be resolved, the

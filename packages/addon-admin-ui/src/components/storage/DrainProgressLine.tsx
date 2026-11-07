@@ -92,7 +92,11 @@ export function DrainProgressLine({ drain }: { readonly drain: DrainDisplay }) {
           aria-valuemin={0}
           aria-valuemax={100}
         >
-          <span className="block h-full bg-warning" style={{ width: `${percent}%` }} />
+          <span
+            className="block h-full bg-warning"
+            // ui-check-ok: computed progress width % (geometry only)
+            style={{ width: `${percent}%` }}
+          />
         </span>
       )}
       <span>

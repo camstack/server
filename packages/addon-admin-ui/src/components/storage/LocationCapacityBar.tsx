@@ -27,7 +27,7 @@ import { useTranslation } from 'react-i18next'
 /** The same three tokens the Recordings page paints its volumes with. */
 const FILL_BAR_CLASS: Readonly<Record<VolumeFillSeverity, string>> = {
   ok: 'bg-primary',
-  warn: 'bg-amber-500',
+  warn: 'bg-warning',
   critical: 'bg-danger',
 }
 
@@ -91,21 +91,25 @@ export function LocationCapacityBar({ location, ownedBytes }: LocationCapacityBa
         {bar.segments.reservePercent > 0 && (
           <div
             className={SEGMENT_CLASS.reserve}
+            // ui-check-ok: computed bar width % (geometry only)
             style={{ width: `${String(bar.segments.reservePercent)}%` }}
           />
         )}
         {bar.segments.ownedPercent !== null && (
           <div
             className={SEGMENT_CLASS.owned}
+            // ui-check-ok: computed bar width % (geometry only)
             style={{ width: `${String(bar.segments.ownedPercent)}%` }}
           />
         )}
         <div
           className={FILL_BAR_CLASS[bar.severity]}
+          // ui-check-ok: computed bar width % (geometry only)
           style={{ width: `${String(bar.segments.usedPercent)}%` }}
         />
         <div
           className={SEGMENT_CLASS.free}
+          // ui-check-ok: computed bar width % (geometry only)
           style={{ width: `${String(bar.segments.freePercent)}%` }}
         />
         {bar.segments.capPercent !== null && (
@@ -113,6 +117,7 @@ export function LocationCapacityBar({ location, ownedBytes }: LocationCapacityBa
           // reach, never a handle.
           <div
             className={`absolute inset-y-0 w-px ${bar.capBelowOwned ? 'bg-danger' : SEGMENT_CLASS.cap}`}
+            // ui-check-ok: computed bar width % (geometry only)
             style={{ left: `${String(bar.segments.capPercent)}%` }}
           />
         )}

@@ -46,6 +46,56 @@ const DECLARATIONS = [
   { id: 'backups', displayName: 'Backups', cardinality: 'multi', defaultRoot: 'backup' },
 ]
 
+const CREATE_FORM = {
+  sections: [
+    {
+      id: 'provider',
+      title: 'Provider',
+      columns: 2,
+      fields: [
+        {
+          type: 'select',
+          key: 'providerId',
+          label: 'Provider',
+          default: 'filesystem',
+          options: [{ value: 'filesystem', label: 'Filesystem' }],
+        },
+        {
+          type: 'select',
+          key: 'mode',
+          label: 'State',
+          default: 'active',
+          options: [
+            { value: 'active', label: 'Active' },
+            { value: 'readonly', label: 'Read-only' },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'connection',
+      title: 'Filesystem',
+      columns: 2,
+      fields: [
+        {
+          type: 'text',
+          key: 'filesystem.basePath',
+          label: 'Base path',
+          default: '',
+          showWhen: { field: 'providerId', equals: 'filesystem' },
+        },
+        {
+          type: 'text',
+          key: 'nodeId',
+          label: 'Node',
+          default: 'hub',
+          showWhen: { field: 'providerId', in: ['filesystem'] },
+        },
+      ],
+    },
+  ],
+}
+
 const FORM = {
   sections: [
     {
@@ -113,9 +163,11 @@ export default defineFixtures({
         id: d.id,
         label: d.displayName,
         functionCap: 'storage',
+        widgets: [{ id: 'storage/path-browser', placement: 'connection' }],
       })),
     }),
-    'integrationInstances.instanceFormSchema': () => FORM,
+    'integrationInstances.instanceFormSchema': (i: { id?: string }) =>
+      i.id === undefined || i.id === '' ? CREATE_FORM : FORM,
     'integrationInstances.listInstances': (i: { addonId: string }) =>
       i.addonId === 'storage-orchestrator'
         ? LOCATIONS.map((l) => ({

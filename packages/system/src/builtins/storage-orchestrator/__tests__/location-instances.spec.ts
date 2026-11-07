@@ -155,6 +155,24 @@ describe('storage location instances', () => {
       ['backups', 'storage'],
     ])
     expect(description.mintsId).toBe(true)
+    // Every kind names the path browser, which the admin UI maps to a widget.
+    expect(description.kinds?.every((k) => k.widgets?.[0]?.id === 'storage/path-browser')).toBe(
+      true,
+    )
+  })
+
+  it('create asks for the state (active or read-only, active by default); edit never does', async () => {
+    const { instances } = harness([location({ id: 'backups:nas' })])
+    const fieldsOf = (schema: { sections: readonly { fields: readonly { key: string }[] }[] }) =>
+      schema.sections.flatMap((s) => s.fields)
+    const created = fieldsOf(await instances.instanceFormSchema({ id: null }))
+    expect(created.find((f) => f.key === 'mode')).toMatchObject({
+      type: 'select',
+      default: 'active',
+      options: [{ value: 'active' }, { value: 'readonly' }],
+    })
+    const edited = fieldsOf(await instances.instanceFormSchema({ id: 'backups:nas' }))
+    expect(edited.map((f) => f.key)).not.toContain('mode')
   })
 
   it('creates under a minted <kind>:<slug> id and keeps only the chosen provider fields', async () => {
@@ -396,7 +414,7 @@ describe('storage location instances', () => {
       expect(byKey.get('nodeId')).toMatchObject({
         showWhen: { field: 'providerId', in: ['filesystem-storage'] },
       })
-      expect(byKey.has('mode')).toBe(false)
+      expect(byKey.get('mode')).toMatchObject({ default: 'active' })
     })
 
     it('edit: the provider schema as it is, plus the node and the protection', async () => {

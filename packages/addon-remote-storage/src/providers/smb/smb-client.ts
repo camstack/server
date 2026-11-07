@@ -74,7 +74,7 @@ export interface SmbClientOptions {
    * ALWAYS true here. `samba-client` puts the password on the argv of
    * `smbclient`, and without this flag `execa` embeds the full command line —
    * password included — in the error message it throws. Those messages travel
-   * to the operator through `testConfig`'s free-text `error` field.
+   * to the operator through the connection test's free-text `error` field.
    */
   readonly maskCmd?: boolean
 }

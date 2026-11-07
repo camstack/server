@@ -3211,6 +3211,11 @@
       "locationState": "Location state",
       "locationStateChoices": "Location state choices",
       "closeLocationStateChoices": "Close location state choices"
+    },
+    "pathBrowser": {
+      "newFolder": "new folder",
+      "create": "Create",
+      "free": "{{free}} free / {{total}}"
     }
   },
   "pipeline": {

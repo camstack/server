@@ -221,7 +221,7 @@ export class StorageMigrationCoordinator {
       if (!MOVER_CLASSES.includes(storageClass)) {
         throw new Error(
           `No mover owns "${storageClass}" — the migration can move its write set but cannot move its bytes. ` +
-            `Move it by hand, then enable the destination (and disable the source) with upsertLocation.`,
+            `Move it by hand, then enable the destination (and disable the source) from the Storage page.`,
         )
       }
       moves.push({

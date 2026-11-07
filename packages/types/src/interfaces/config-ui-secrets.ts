@@ -27,7 +27,7 @@ import type { ConfigField } from './config-ui.js'
 /**
  * The value a redacted secret is replaced with on every read surface.
  *
- * It is also the WRITE-BACK token: an `upsertLocation` that sends this value
+ * It is also the WRITE-BACK token: a save that sends this value
  * back for a key means "keep what is stored", which is what lets an operator
  * rename a location without retyping its password. A literal an operator could
  * plausibly choose as a real password would turn that convenience into a way

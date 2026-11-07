@@ -160,6 +160,7 @@ function ArmedDiscard({ location }: { readonly location: StorageLocation }) {
           <div className="h-1 rounded bg-border overflow-hidden">
             <div
               className="h-full bg-primary transition-[width] duration-300"
+              // ui-check-ok: computed bar width % (geometry only)
               style={{ width: `${discardProgressPct(status)}%` }}
             />
           </div>

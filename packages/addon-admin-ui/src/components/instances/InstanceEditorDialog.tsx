@@ -32,6 +32,7 @@ import {
   type TestVerdict,
 } from '../integrations/connection-test-verdict'
 import { pushToast } from '../ui/toast-bus'
+import { kindWidget, withoutFields } from './kind-widgets'
 import { HOLDER_QUERY_KEY } from './use-instances-data'
 import {
   checkTypedId,
@@ -205,6 +206,17 @@ export function InstanceEditorDialog({
     [schemaQuery.data, stored],
   )
 
+  // Connection widgets of the kind draw some fields themselves (a path browser); the plain form
+  // then leaves those out. An id this build does not know draws nothing.
+  const connectionWidgets = (kind?.widgets ?? []).flatMap((w) => {
+    const widget = w.placement === 'connection' ? kindWidget(w.id) : null
+    return widget === null ? [] : [{ id: w.id, widget }]
+  })
+  const widgetOwnedKeys =
+    hydrated === null
+      ? []
+      : connectionWidgets.flatMap(({ widget }) => widget.ownedKeys(hydrated, values))
+
   const save = useMutation({
     mutationFn: async (): Promise<string> => {
       const client = system.trpcClient.integrationInstances
@@ -370,7 +382,16 @@ export function InstanceEditorDialog({
             </div>
           )
         ) : (
-          <ConfigFormBuilder schema={hydrated} values={values} onChange={setValues} />
+          <>
+            <ConfigFormBuilder
+              schema={withoutFields(hydrated, widgetOwnedKeys)}
+              values={values}
+              onChange={setValues}
+            />
+            {connectionWidgets.map(({ id, widget: { Component } }) => (
+              <Component key={id} schema={hydrated} values={values} onValuesChange={setValues} />
+            ))}
+          </>
         )}
         {verdict !== null && <TestVerdictBanner verdict={verdict} />}
       </div>

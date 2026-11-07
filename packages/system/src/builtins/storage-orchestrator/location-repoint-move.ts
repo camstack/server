@@ -5,7 +5,7 @@
  *
  * A `multi` location moves the sanctioned way: register a second instance,
  * drain the first, watch it empty (D386). A **singleton** cannot — the
- * cardinality guard in `upsertLocation` refuses the second instance by
+ * cardinality guard on location create refuses the second instance by
  * declaration, so there is no destination to drain into. For those, editing
  * the `basePath` IS the migration, and either it carries the data or the data
  * is stranded.

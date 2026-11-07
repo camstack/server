@@ -4,7 +4,7 @@
  * up an addon.
  *
  * They are the second and third locks of D296. The first is
- * `upsertLocation`'s refusal, which stops the configuration from existing.
+ * the create-time refusal, which stops the configuration from existing.
  * These two hold for a row that predates the guard, for one written by a
  * future code path, and for a provider that changes its own `nodeLocal`
  * answer after a location was made.

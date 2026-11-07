@@ -3286,6 +3286,11 @@
       "locationState": "Stato della posizione",
       "locationStateChoices": "Scelte dello stato della posizione",
       "closeLocationStateChoices": "Chiudi le scelte dello stato della posizione"
+    },
+    "pathBrowser": {
+      "newFolder": "nuova cartella",
+      "create": "Crea",
+      "free": "{{free}} liberi / {{total}}"
     }
   },
   "pipeline": {

@@ -43,6 +43,8 @@ import type { StorageProviderListEntry } from './provider-discovery.js'
 
 export const STORAGE_INSTANCE_KIND = 'storage-location'
 export const STORAGE_FUNCTION_CAP = 'storage'
+/** The generic widget id the admin UI maps to its path browser. */
+export const STORAGE_PATH_WIDGET = 'storage/path-browser'
 /** A probe of a remote provider waits this long; a hung host must not hang the form. */
 export const LOCATION_TEST_TIMEOUT_MS = 20_000
 
@@ -178,11 +180,24 @@ function createProviderSections(providers: readonly StorageProviderListEntry[]):
 }
 
 /**
- * Where the location lives. Its state (`mode`) is not a form field: the admin page changes it
- * through its own control, which knows the last-writable guard and confirms `disabled`.
+ * Where the location lives. On an existing location its state (`mode`) is not a form field: the
+ * admin page changes it through its own control, which knows the last-writable guard and confirms
+ * `disabled`. A new location asks only whether it takes writes or is only read (`withState`).
  */
-function stateSection(nodeLocalIds: readonly string[] | null): ConfigSection {
+function stateSection(nodeLocalIds: readonly string[] | null, withState = false): ConfigSection {
   const fields: ConfigField[] = []
+  if (withState) {
+    fields.push({
+      type: 'select',
+      key: MODE_FIELD,
+      label: 'State',
+      default: 'active',
+      options: [
+        { value: 'active', label: 'Active' },
+        { value: 'readonly', label: 'Read-only' },
+      ],
+    })
+  }
   if (nodeLocalIds === null || nodeLocalIds.length > 0) {
     fields.push({
       type: 'text',
@@ -194,7 +209,7 @@ function stateSection(nodeLocalIds: readonly string[] | null): ConfigSection {
         : { showWhen: { field: PROVIDER_FIELD, in: [...nodeLocalIds] } }),
     })
   }
-  return { id: 'state', title: 'Node', columns: 1, fields }
+  return { id: 'state', title: withState ? 'Placement' : 'Node', columns: 1, fields }
 }
 
 function protectionSection(): ConfigSection {
@@ -251,6 +266,8 @@ export class StorageLocationInstances {
       functionCap: STORAGE_FUNCTION_CAP,
       role: 'services' as const,
       canTest: true,
+      // The folder of a node-local provider is picked by browsing that node's disk.
+      widgets: [{ id: STORAGE_PATH_WIDGET, placement: 'connection' as const }],
     }))
   }
 
@@ -318,7 +335,7 @@ export class StorageLocationInstances {
             ],
           },
           ...createProviderSections(providers),
-          stateSection(nodeLocal),
+          stateSection(nodeLocal, true),
           protectionSection(),
         ],
       }
