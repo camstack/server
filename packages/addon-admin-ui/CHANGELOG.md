@@ -10,13 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Customize change dialog: the source, the threshold fields and the proposal with Apply sit in one compact card, so editing an existing source works on a phone
+- Backup texts no longer mention config.yaml; the key rotation hint names the mounted master key path
 
 ## [1.2.607] - 2026-11-07
 
 ### Changed
 
 - Authentication, Settings and the first-login server name read and save the server name and sign-in policy through the system-config bootstrap form actions
-- Backup texts no longer mention config.yaml; the key rotation hint names the mounted master key path
 
 ## [1.2.606] - 2026-11-07
 
