@@ -308,7 +308,7 @@ export function withSystemEventModes<T extends NcSystemEventClassSubject>(rule: 
 }
 
 /**
- * An INSTANT system rule with each class it touches completed with both edges;
+ * A system rule that hears deactivation (or a legacy instant rule) with each class it touches completed with both edges;
  * the rule itself (same object) when there is nothing to add, a summary rule,
  * or a rule spanning families (`mixed` stays read-only, D637). A copy, never a
  * mutation.
@@ -316,6 +316,9 @@ export function withSystemEventModes<T extends NcSystemEventClassSubject>(rule: 
 export function withSystemEventClasses<T extends NcSystemEventClassSubject>(rule: T): T {
   const condition = rule.conditions.systemEvent
   if (condition === undefined || !isInstantSystemRule(rule)) return rule
+  // Widen only a rule that listens for the clearing edge (D1019): an
+  // activation-only rule keeps the kinds the operator picked.
+  if (!systemEventDeliveryModesOf(rule).deactivation) return rule
   const families = new Set(condition.kinds.map((kind) => NC_SYSTEM_EVENT_FAMILY[kind]))
   if (families.size !== 1 || families.has(null)) return rule
   const kinds = expandSystemEventClasses(condition.kinds)

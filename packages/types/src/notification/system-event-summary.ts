@@ -179,9 +179,9 @@ export function describeSystemEventDeliveryProblem(problem: NcSystemEventDeliver
     case 'empty-schedule':
       return 'a summary rule needs at least one send time — its schedule has no window'
     case 'schedule-beside-summary':
-      return 'a summary rule is sent on its summary schedule — remove the active-hours schedule'
+      return 'a schedule-only rule is sent on its summary schedule — remove the active-hours schedule'
     case 'actions-beside-summary':
-      return 'a summary rule never matches an event, so its actions would never run — remove them'
+      return 'a schedule-only rule never matches an event, so its actions would never run — remove them'
     case 'no-mode':
       return 'choose when the rule speaks: when it starts, when it clears, or on a schedule'
     case 'no-instant-kind':

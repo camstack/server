@@ -191,6 +191,26 @@ describe('planRuleTest — the planned event fires its own rule', () => {
     expect(planAndEvaluate(r)).toEqual({ matched: true })
   })
 
+  it('a deactivation-only system rule is tested with its recovery edge (D1019)', () => {
+    const r = rule(
+      'system-event',
+      { systemEvent: { kinds: ['device-offline', 'device-online'] } },
+      { systemEventDelivery: { mode: 'modes', onActivation: false, onDeactivation: true } },
+    )
+    const plan = planRuleTest({ rule: r, now: NOW, fallbackDeviceId: CAM })
+    expect(plan.input.systemEvent?.kind).toBe('device-online')
+  })
+
+  it('an activation-only rule with a recovery kind listed first is tested with its bad edge', () => {
+    const r = rule(
+      'system-event',
+      { systemEvent: { kinds: ['device-online', 'device-offline'] } },
+      { systemEventDelivery: { mode: 'modes', onActivation: true, onDeactivation: false } },
+    )
+    const plan = planRuleTest({ rule: r, now: NOW, fallbackDeviceId: CAM })
+    expect(plan.input.systemEvent?.kind).toBe('device-offline')
+  })
+
   it('fires a rule whose customZones polygon sits in a corner of the frame', () => {
     // The failure this pins: a centred half-frame box (what the admin
     // simulator seeds) does not overlap a corner polygon, so a working rule

@@ -43,7 +43,12 @@ import type {
   NcSchedule,
   NcSystemEventKind,
 } from '@camstack/types'
-import { isScheduleActive, NC_SENSOR_TRANSITION_KINDS, ruleGroupingApplies } from '@camstack/types'
+import {
+  instantKindsOf,
+  isScheduleActive,
+  NC_SENSOR_TRANSITION_KINDS,
+  ruleGroupingApplies,
+} from '@camstack/types'
 import { audioSpecFromCondition } from './audio-rule-matcher.js'
 import type { NcTestEventInput } from './test-event.js'
 
@@ -488,7 +493,12 @@ export function planRuleTest(input: NcRuleTestPlanInput): NcRuleTestPlan {
           ? []
           : classNamesFor(c)
 
-  const systemEventKind = c.systemEvent?.kinds[0]
+  // The first kind the rule speaks for AT ONCE (D1019): the first listed kind
+  // may be an edge the rule's delivery modes drop.
+  const systemEventKind =
+    c.systemEvent === undefined
+      ? undefined
+      : ([...instantKindsOf(rule)][0] ?? c.systemEvent.kinds[0])
   if (trigger === 'system-event' && systemEventKind === undefined) {
     notes.push({
       conditionId: 'systemEvent',

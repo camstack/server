@@ -4,7 +4,11 @@ import {
   NcSystemEventDeliverySchema,
   type NcSchedule,
 } from '../../capabilities/notification-rules.cap.js'
-import { instantKindsOf, systemEventDeliveryAsModes } from '../system-event-classes.js'
+import {
+  instantKindsOf,
+  systemEventDeliveryAsModes,
+  withSystemEventClasses,
+} from '../system-event-classes.js'
 import { systemEventDeliveryModesOf } from '../system-event-delivery-modes.js'
 import {
   isScheduleOnlySystemRule,
@@ -184,5 +188,22 @@ describe('systemEventDeliveryProblems for modes', () => {
       rule(['device-battery-low'], { ...modes(false, false, true), schedule: EIGHT_AM }),
     )
     expect(only).toEqual([{ code: 'schedule-beside-summary' }])
+  })
+})
+
+describe('withSystemEventClasses honours the modes (D1019)', () => {
+  it('a new activation-only rule keeps the kinds it was given', () => {
+    const r = rule(['device-offline'], modes(true, false))
+    expect(withSystemEventClasses(r).conditions.systemEvent?.kinds).toEqual(['device-offline'])
+  })
+
+  it('deactivation on widens to the whole class, as D906 did', () => {
+    const widened = withSystemEventClasses(rule(['device-offline'], modes(true, true)))
+    expect(widened.conditions.systemEvent?.kinds).toEqual(['device-offline', 'device-online'])
+  })
+
+  it('a legacy instant rule is still widened', () => {
+    const widened = withSystemEventClasses(rule(['device-offline']))
+    expect(widened.conditions.systemEvent?.kinds).toEqual(['device-offline', 'device-online'])
   })
 })

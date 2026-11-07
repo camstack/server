@@ -1,7 +1,7 @@
 /**
- * The hub's half of D647: `systemEventDelivery: { mode: 'summary' }` belongs to
- * a `device-events` or `system` rule, and nowhere else — the alarm stays
- * instant. Refused, loudly, on both save routes (the cap provider and the
+ * The hub's half of D647/D1019: a scheduled summary (`onSchedule`, or the legacy
+ * `mode: 'summary'`) belongs to a `device-events` or `system` rule, and nowhere
+ * else — the alarm stays instant; a rule with every mode off is refused too. Refused, loudly, on both save routes (the cap provider and the
  * `nc.*Rule` bridge), beside the D637 family guard.
  *
  * The rule is judged by `systemEventDeliveryProblems` (`@camstack/types`), the
