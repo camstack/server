@@ -31,12 +31,13 @@
  */
 import {
   type IScopedLogger,
+  type NativeLeaseKnob,
   type NativeLeaseSettingsOverride,
   readNativeLeaseOverride,
 } from '@camstack/types'
 
 /**
- * The addon whose GLOBAL settings own the knobs. `pipeline-orchestrator` is
+ * The addon whose cluster-scoped settings own the knobs. `pipeline-orchestrator` is
  * hub-resident and neutral — the same owner as the detail-crop convention and
  * the per-node decoder-backend selector.
  */
@@ -83,16 +84,20 @@ export interface NativeLeaseSettingsSourceOptions {
  * reaches a decode worker and nothing anywhere says so. `admission` shipped
  * missing from this list and did exactly that — the setting was stored, the
  * hub served it, the runner fetched it, and every worker kept spawning with the
- * old value.
+ * old value; `sceneBudgetMb` did the same after it. The map below is keyed by every knob, so a
+ * knob added to `NativeLeaseSettings` without a line here does not compile.
  */
+const COMPARED_KNOBS: { readonly [K in NativeLeaseKnob]: K } = {
+  holdFrames: 'holdFrames',
+  budgetMb: 'budgetMb',
+  activityMs: 'activityMs',
+  admission: 'admission',
+  tileBudgetMb: 'tileBudgetMb',
+  sceneBudgetMb: 'sceneBudgetMb',
+}
+
 function sameOverride(a: NativeLeaseSettingsOverride, b: NativeLeaseSettingsOverride): boolean {
-  return (
-    a.holdFrames === b.holdFrames &&
-    a.budgetMb === b.budgetMb &&
-    a.activityMs === b.activityMs &&
-    a.admission === b.admission &&
-    a.tileBudgetMb === b.tileBudgetMb
-  )
+  return Object.values(COMPARED_KNOBS).every((knob) => a[knob] === b[knob])
 }
 
 /**

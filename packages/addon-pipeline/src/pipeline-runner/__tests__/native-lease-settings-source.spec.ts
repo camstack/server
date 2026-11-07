@@ -12,6 +12,7 @@ import {
   DEFAULT_NATIVE_LEASE_SETTINGS,
   NATIVE_LEASE_ADMISSION_KEY,
   NATIVE_LEASE_HOLD_KEY,
+  NATIVE_LEASE_SCENE_BUDGET_KEY,
 } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
@@ -64,6 +65,21 @@ describe('NativeLeaseSettingsSource', () => {
     await source.refresh(apiReturning(vi.fn().mockResolvedValue(VIEW_HOLD_ADMISSION)))
     expect(source.current()).toEqual({ holdFrames: 16, admission: NON_DEFAULT_ADMISSION })
     expect(log.info).toHaveBeenCalledTimes(2)
+  })
+
+  it('adopts a change to the scene tile budget alone', async () => {
+    const log = logger()
+    let now = 0
+    const source = new NativeLeaseSettingsSource({ logger: log, now: () => now, ttlMs: 10 })
+    await source.refresh(apiReturning(vi.fn().mockResolvedValue(VIEW_HOLD)))
+    now += 100
+    const sceneBudgetMb = DEFAULT_NATIVE_LEASE_SETTINGS.sceneBudgetMb + 16
+    await source.refresh(
+      apiReturning(
+        vi.fn().mockResolvedValue({ ...VIEW_HOLD, [NATIVE_LEASE_SCENE_BUDGET_KEY]: sceneBudgetMb }),
+      ),
+    )
+    expect(source.current()).toEqual({ holdFrames: 16, sceneBudgetMb })
   })
 
   it('starts with no override — the worker then resolves env/default', () => {

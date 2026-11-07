@@ -36,7 +36,7 @@ import {
   DEFAULT_CLUSTER_STEP_MODELS,
 } from '@camstack/types'
 
-/** The addon whose GLOBAL settings hold the cluster row. */
+/** The addon whose cluster-scoped settings hold the cluster row (D986 §7). */
 export const CLUSTER_MODEL_OWNER_ADDON_ID = 'pipeline-orchestrator'
 
 /** The capability the owner declares the cluster form under (scope `cluster`, D986 §7). */
@@ -46,7 +46,7 @@ export const CLUSTER_MODEL_OWNER_CAP = 'pipeline-orchestrator'
 export const FACE_EMBEDDING_STEP_ID = 'face-embedding'
 export const CLIP_EMBEDDING_STEP_ID = 'clip-embedding'
 
-/** The hub-routed global-settings read, structurally typed so tests can fake it. */
+/** The hub-routed scoped-values read of that cluster row, structurally typed so tests can fake it. */
 export interface ClusterModelPinApi {
   readonly addonSettings: {
     readonly readScopedValues: {
