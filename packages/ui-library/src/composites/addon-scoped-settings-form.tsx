@@ -148,10 +148,20 @@ export function AddonScopedSettingsForm({
   const [open, setOpen] = useState<boolean>(defaultOpen ?? false)
   /** Bumps on every persist edit; a stale refetch must not clobber a newer local paint. */
   const persistSeq = useRef(0)
+  /** The target the hydrated view belongs to: another target must not inherit it. */
+  const targetKey = `${addonId}\u0000${cap}\u0000${scope}\u0000${nodeId ?? ''}`
+  const viewTargetKey = useRef(targetKey)
   const target = { addonId, cap, scope, ...(nodeId ? { nodeId } : {}) }
 
   useEffect(() => {
     let cancelled = false
+    // A refetch of the SAME target keeps its last-known view (below); another target starts empty.
+    if (viewTargetKey.current !== targetKey) {
+      viewTargetKey.current = targetKey
+      persistSeq.current++
+      setHydrated(null)
+      setEdits({})
+    }
     setLoading(true)
     setError(null)
     trpc.addonSettings.getScopedSettings
@@ -175,7 +185,7 @@ export function AddonScopedSettingsForm({
     return () => {
       cancelled = true
     }
-  }, [trpc, addonId, cap, scope, nodeId, refreshToken])
+  }, [trpc, addonId, cap, scope, nodeId, refreshToken, targetKey])
 
   const values = useMemo(() => {
     const served = extractValues(hydrated)
@@ -189,7 +199,10 @@ export function AddonScopedSettingsForm({
     const stripped = stripValues(hydrated)
     if (sectionIds === undefined) return stripped
     const wanted = new Set(sectionIds)
-    return { ...stripped, sections: stripped.sections.filter((s) => wanted.has(s.id)) }
+    return {
+      ...stripped,
+      sections: stripped.sections.filter((s) => wanted.has(s.id)),
+    }
     // `sectionKey` is the stable form of `sectionIds`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated, sectionKey])
@@ -211,7 +224,10 @@ export function AddonScopedSettingsForm({
     setSaving(true)
     setError(null)
     try {
-      await trpc.addonSettings.updateScopedSettings.mutate({ ...target, patch })
+      await trpc.addonSettings.updateScopedSettings.mutate({
+        ...target,
+        patch,
+      })
       // Re-fetch so derived fields (e.g. `probedBest*` hints refreshed
       // by a sibling action) stay in sync. A change that restarts the addon
       // (engine cascade) makes this refetch race the restart window, where

@@ -28,6 +28,7 @@ import {
   useAddonsListCapabilityProviders,
   useSystem,
 } from '@camstack/ui-library'
+import { useInvalidateAddonSettings } from '../../hooks/useInvalidateAddonSettings'
 import { BootstrapSettingsForm } from '../../components/system/BootstrapSettingsForm'
 import { AddonIntegrationBody } from '../../components/integration-hub/AddonIntegrationBody'
 import { STATUS_BADGE_CLASS } from '../../components/integration-hub/addon-controls'
@@ -336,6 +337,7 @@ export const WEBAUTHN_SECTION_ID = 'webauthn'
 export function PasskeyRelyingPartyCard(): React.ReactElement {
   const { t } = useTranslation()
   const system = useSystem()
+  const invalidate = useInvalidateAddonSettings()
   return (
     <SectionCard
       headingId="authentication-passkey-rp"
@@ -349,6 +351,7 @@ export function PasskeyRelyingPartyCard(): React.ReactElement {
           cap="login-method"
           scope="cluster"
           sectionIds={[WEBAUTHN_SECTION_ID]}
+          onAfterChange={invalidate}
           bare
         />
       </div>

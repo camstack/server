@@ -54,12 +54,6 @@ import type { InstanceRow, PanelRow } from '../../components/instances/instances
 import { TerminalProfileSettingsLead } from './terminal/TerminalProfileSettingsLead'
 import { useTerminalNodePresence } from './terminal/terminal-node-presence'
 
-/**
- * Manifest id of `@camstack/addon-terminal`. The configuration rendered below
- * is the addon's own `globalSettingsSchema()` — this page declares no fields of
- * its own, so there is exactly one authority for "what a Terminal profile is".
- */
-
 // The terminal reflows to its actual pane size the moment `<TerminalPanel>`
 // mounts (its FitAddon issues a `resize`), so these are only the initial grid
 // the pty spawns with.
@@ -487,7 +481,10 @@ export function TerminalPage() {
                   aria-label={t('terminalPage.sessionsNode', 'Node')}
                   value={sessionNodeId}
                   onChange={(event) => setSessionNodeId(event.target.value)}
-                  options={providerNodes.map((node) => ({ value: node.id, label: node.label }))}
+                  options={providerNodes.map((node) => ({
+                    value: node.id,
+                    label: node.label,
+                  }))}
                 />
               </div>
             ) : undefined
@@ -526,7 +523,10 @@ export function TerminalPage() {
                           size="sm"
                           variant="outline"
                           onClick={() =>
-                            setAttached({ nodeId: sessionNodeId, sessionId: session.sessionId })
+                            setAttached({
+                              nodeId: sessionNodeId,
+                              sessionId: session.sessionId,
+                            })
                           }
                         >
                           {t('systemPage.terminal.attach', 'Attach')}

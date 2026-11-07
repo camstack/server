@@ -6,8 +6,10 @@
  */
 import * as jestDomMatchers from '@testing-library/jest-dom/matchers'
 import type { ConfigUISchemaWithValues } from '@camstack/types'
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
+import type { ReactElement } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 expect.extend(jestDomMatchers)
@@ -17,7 +19,14 @@ const formOf = (sectionId: string, label: string): ConfigUISchemaWithValues => (
     {
       id: sectionId,
       title: sectionId,
-      fields: [{ type: 'text', key: `k-${sectionId}`, label, value: `value of ${label}` }],
+      fields: [
+        {
+          type: 'text',
+          key: `k-${sectionId}`,
+          label,
+          value: `value of ${label}`,
+        },
+      ],
     },
   ],
 })
@@ -40,7 +49,10 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     ...actual,
     useSystem: () => ({
       trpcClient: {
-        addonSettings: { getScopedSettings: { query }, updateScopedSettings: { mutate } },
+        addonSettings: {
+          getScopedSettings: { query },
+          updateScopedSettings: { mutate },
+        },
       },
     }),
   }
@@ -55,14 +67,21 @@ afterEach(() => {
   query.mockClear()
 })
 
+const withClient = (node: ReactElement) => (
+  <QueryClientProvider client={new QueryClient()}>{node}</QueryClientProvider>
+)
+
 describe('fixed scoped settings mounts', () => {
   it('Local access: local-network, node scope, the hub node', async () => {
     render(
-      <MemoryRouter>
-        <LocalAccessPage />
-      </MemoryRouter>,
+      withClient(
+        <MemoryRouter>
+          <LocalAccessPage />
+        </MemoryRouter>,
+      ),
     )
     expect(await screen.findByDisplayValue('value of LAN field')).toBeInTheDocument()
+    expect(screen.getByText(/Native apps on this Wi-Fi use http:\/\//)).toBeInTheDocument()
     await waitFor(() =>
       expect(query).toHaveBeenCalledWith({
         addonId: 'local-network',
@@ -74,7 +93,7 @@ describe('fixed scoped settings mounts', () => {
   })
 
   it('Terminal configuration: terminal-session, node scope, the selected node', async () => {
-    render(<TerminalNodeSettings nodeId="edge-1" />)
+    render(withClient(<TerminalNodeSettings nodeId="edge-1" />))
     expect(await screen.findByDisplayValue('value of Terminal field')).toBeInTheDocument()
     await waitFor(() =>
       expect(query).toHaveBeenCalledWith({
@@ -87,7 +106,7 @@ describe('fixed scoped settings mounts', () => {
   })
 
   it('Passkey relying party: auth-webauthn login-method, cluster scope, the webauthn section only', async () => {
-    render(<PasskeyRelyingPartyCard />)
+    render(withClient(<PasskeyRelyingPartyCard />))
     expect(await screen.findByDisplayValue('value of Passkey field')).toBeInTheDocument()
     expect(screen.queryByDisplayValue('value of Other section field')).toBeNull()
     await waitFor(() =>
@@ -95,6 +114,25 @@ describe('fixed scoped settings mounts', () => {
         addonId: 'auth-webauthn',
         cap: 'login-method',
         scope: 'cluster',
+      }),
+    )
+  })
+
+  it('a save drops the cached addon-settings reads other surfaces hold', async () => {
+    const client = new QueryClient()
+    const invalidate = vi.spyOn(client, 'invalidateQueries')
+    render(
+      <QueryClientProvider client={client}>
+        <TerminalNodeSettings nodeId="edge-1" />
+      </QueryClientProvider>,
+    )
+    fireEvent.change(await screen.findByDisplayValue('value of Terminal field'), {
+      target: { value: 'changed' },
+    })
+    await waitFor(() => expect(mutate).toHaveBeenCalled())
+    await waitFor(() =>
+      expect(invalidate).toHaveBeenCalledWith({
+        queryKey: [['addonSettings']],
       }),
     )
   })

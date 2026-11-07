@@ -100,3 +100,33 @@ describe('AddonScopedSettingsForm persist edits', () => {
     expect((screen.getByDisplayValue('Staging') as HTMLInputElement).disabled).toBe(false)
   })
 })
+
+describe('AddonScopedSettingsForm target change', () => {
+  it('does not show the previous node values under a node that answers nothing', async () => {
+    const query = vi.fn(async (input: { nodeId?: string }) =>
+      input.nodeId === 'node-a' ? SCHEMA : null,
+    )
+    const trpc = {
+      addonSettings: {
+        getScopedSettings: { query },
+        updateScopedSettings: { mutate: vi.fn(async () => ({})) },
+      },
+    }
+    const form = (nodeId: string) => (
+      <AddonScopedSettingsForm
+        trpc={trpc}
+        addonId="terminal"
+        cap="terminal-session"
+        scope="node"
+        nodeId={nodeId}
+        bare
+      />
+    )
+    const view = render(form('node-a'))
+    expect(await screen.findByDisplayValue('Default')).toBeTruthy()
+
+    view.rerender(form('node-b'))
+    await waitFor(() => expect(screen.getByText(/not available/)).toBeTruthy())
+    expect(screen.queryByDisplayValue('Default')).toBeNull()
+  })
+})

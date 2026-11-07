@@ -12,13 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A system-event notification rule now picks any combination of when it starts, when it clears and on a schedule on one screen, with one switch for a notification per category and a Send the summary now test
+- Local access, the Terminal configuration and the passkey relying-party card read their own scoped settings form instead of the retired addon-level one
 
 ## [1.2.609] - 2026-11-07
 
 ### Changed
 
 - Customize threshold overrides gain a Samples field: consecutive readings needed before the state changes
-- Local access, the Terminal configuration and the passkey relying-party card read their own scoped settings form instead of the retired addon-level one
 
 ## [1.2.608] - 2026-11-07
 
