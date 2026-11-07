@@ -8,6 +8,7 @@ export {
   LEGACY_TERMINAL_INSTANCES_KEY,
   terminalPortsOver,
   type TerminalMigrationPorts,
+  type TerminalPortsApi,
 } from './terminal-instances-to-records.js'
 
 export const INSTANCES_TO_RECORDS_ID = 'terminal/2026-11-07-instances-to-records'

@@ -1,67 +1,110 @@
 /**
- * The Terminal list moves from the addon settings (`terminalInstances`) into `terminals` records
- * on REAL SQLite, through the real migration API, ledger and records engine. A field the old row
- * carried that a re-built row would lose (`profileSettings.mark`) is the discriminator: it must be
- * on the record, under the SAME id, so `terminal-camera-instance-<id>` stays the camera's stable id.
+ * The Terminal list moves from the addon settings (`terminalInstances`) into `terminals` records,
+ * bound through the migration API only: the legacy list is read from a hand-seeded SQLite
+ * `addon-settings` table over `api.settings`, the records live in the in-memory records engine. A
+ * field the old row carried that a re-built row would lose (`profileSettings.mark`) is the
+ * discriminator: it must be on the record, under the SAME id, so `terminal-camera-instance-<id>`
+ * stays the camera's stable id.
  */
-import { defineAddonMigrations, runAddonMigrations } from '@camstack/types'
-import { afterEach, describe, expect, it } from 'vitest'
-import {
-  type MigrationWorld,
-  makeMigrationWorld,
-} from '../../../../system/src/builtins/sqlite-storage/__tests__/support/migration-world.js'
-import { recordingLogger } from '../../../../system/src/builtins/sqlite-storage/__tests__/support/owned-files-harness.js'
+import { makeInMemoryRecords } from '@camstack/types'
+import Database from 'better-sqlite3'
+import { describe, expect, it } from 'vitest'
 import { newTerminalCameraStableId, terminalInstancesKind } from '../../terminal-record-kinds.js'
 import {
   ADDON_MIGRATIONS,
-  INSTANCES_TO_RECORDS_ID,
+  LEGACY_TERMINAL_INSTANCES_KEY,
   type TerminalMigrationPorts,
+  type TerminalPortsApi,
   terminalPortsOver,
 } from '../index.js'
+import { copyTerminalsToRecords } from '../terminal-instances-to-records.js'
 import {
   TERMINAL_SEED_ADDON,
   TERMINAL_SEED_ROWS,
   seedTerminalLegacySettings,
 } from '../__fixtures__/seed.js'
 
-const worlds: MigrationWorld[] = []
-afterEach(async () => {
-  await Promise.all(worlds.splice(0).map((w) => w.cleanup()))
-})
+const LEGACY_ID = `${TERMINAL_SEED_ADDON}.${LEGACY_TERMINAL_INSTANCES_KEY}`
 
 async function boot() {
-  const world = await makeMigrationWorld()
-  worlds.push(world)
-  world.db.exec(
-    'CREATE TABLE IF NOT EXISTS "addon-settings" (id TEXT PRIMARY KEY, data TEXT NOT NULL)',
-  )
-  const records = world.recordsFor(TERMINAL_SEED_ADDON)
-  await records.declare({ terminals: terminalInstancesKind })
-  const handle = records.kind(terminalInstancesKind)
-  const portsOver = (): TerminalMigrationPorts =>
-    terminalPortsOver(world.apiFor(TERMINAL_SEED_ADDON))
-  const run = (ports: TerminalMigrationPorts = portsOver()) =>
-    runAddonMigrations(
-      world.hostFor(TERMINAL_SEED_ADDON),
-      defineAddonMigrations(ADDON_MIGRATIONS, ports),
-      recordingLogger(world.lines, 'Addon'),
-    )
+  const db = new Database(':memory:')
+  db.exec('CREATE TABLE IF NOT EXISTS "addon-settings" (id TEXT PRIMARY KEY, data TEXT NOT NULL)')
+  const records = makeInMemoryRecords(TERMINAL_SEED_ADDON)
+  await records.records.declare({ terminals: terminalInstancesKind })
+  const handle = records.records.kind(terminalInstancesKind)
+  const warnings: string[] = []
+  const store = (): Record<string, unknown> => {
+    const out: Record<string, unknown> = {}
+    const rows = db
+      .prepare<[string], { data: string }>('SELECT data FROM "addon-settings" WHERE id LIKE ?')
+      .all(`${TERMINAL_SEED_ADDON}.%`)
+    for (const row of rows) {
+      const parsed: { key: string; value: unknown } = JSON.parse(row.data)
+      out[parsed.key] = parsed.value
+    }
+    return out
+  }
+  const api: TerminalPortsApi = {
+    settings: {
+      read: async () => ({ store: store() }),
+      write: async ({ patch }) => {
+        for (const [key, value] of Object.entries(patch)) {
+          db.prepare('INSERT OR REPLACE INTO "addon-settings" (id, data) VALUES (?, ?)').run(
+            `${TERMINAL_SEED_ADDON}.${key}`,
+            JSON.stringify({ addonId: TERMINAL_SEED_ADDON, key, value }),
+          )
+        }
+        return {}
+      },
+      deleteKeys: async ({ keys }) => {
+        for (const key of keys) {
+          db.prepare('DELETE FROM "addon-settings" WHERE id = ?').run(
+            `${TERMINAL_SEED_ADDON}.${key}`,
+          )
+        }
+        return { removed: keys }
+      },
+    },
+    log: {
+      info: async () => ({}),
+      warn: async ({ message }) => {
+        warnings.push(message)
+        return {}
+      },
+    },
+    records: {
+      kind: (definition) => {
+        const h = records.records.kind(definition)
+        return {
+          get: ({ id }) => h.get(id),
+          getResolved: ({ id }) => h.getResolved(id),
+          put: ({ ifRev, ...row }) => h.put(row, ifRev === undefined ? undefined : { ifRev }),
+          putMany: ({ records: rows }) => h.putMany(rows),
+          patch: ({ id, partial, ifRev }) =>
+            h.patch(id, partial, ifRev === undefined ? undefined : { ifRev }),
+          delete: async ({ id }) => ({ deleted: await h.delete(id) }),
+          query: ({ limit, resolveSecrets, ...rest }) =>
+            h.query(
+              { ...rest, limit: limit ?? 100 },
+              resolveSecrets === undefined ? undefined : { resolveSecrets },
+            ),
+          deleteWhere: async () => ({ count: 0 }),
+        }
+      },
+    },
+  }
+  const portsOver = (): TerminalMigrationPorts => terminalPortsOver(api)
+  const run = (ports: TerminalMigrationPorts = portsOver()) => copyTerminalsToRecords(ports)
   const settingsRow = () =>
-    world.db
-      .prepare('SELECT id FROM "addon-settings" WHERE id = ?')
-      .get(`${TERMINAL_SEED_ADDON}.terminalInstances`)
-  const ledger = () =>
-    world.db.prepare('SELECT id, status FROM _migrations WHERE id = ?').get(INSTANCES_TO_RECORDS_ID)
-  return { world, handle, run, portsOver, settingsRow, ledger }
+    db.prepare<[string], { id: string }>('SELECT id FROM "addon-settings" WHERE id = ?').get(LEGACY_ID)
+  return { db, handle, run, portsOver, settingsRow, warnings }
 }
 
-describe('Terminal instances settings to records, on real SQLite', () => {
+describe('Terminal instances settings to records, over the migration API', () => {
   it('copies every row under its own id, keeps the marked field, then drops the old key', async () => {
     const w = await boot()
-    seedTerminalLegacySettings(w.world.db)
-    const report = await w.run()
-    expect(report.failed).toEqual([])
-    expect(w.ledger()).toMatchObject({ status: 'applied' })
+    seedTerminalLegacySettings(w.db)
+    expect(await w.run()).toMatchObject({ outcome: 'done' })
 
     const page = await w.handle.query({ limit: 10 })
     expect(page.records.map((r) => r.id).sort()).toEqual(TERMINAL_SEED_ROWS.map((r) => r.id).sort())
@@ -84,7 +127,7 @@ describe('Terminal instances settings to records, on real SQLite', () => {
 
   it('the camera each record yields is the camera the old row named (device ids stay)', async () => {
     const w = await boot()
-    seedTerminalLegacySettings(w.world.db)
+    seedTerminalLegacySettings(w.db)
     await w.run()
     for (const seed of TERMINAL_SEED_ROWS) {
       const row = await w.handle.get(seed.id)
@@ -96,7 +139,7 @@ describe('Terminal instances settings to records, on real SQLite', () => {
 
   it('a second run is already-done and writes nothing', async () => {
     const w = await boot()
-    seedTerminalLegacySettings(w.world.db)
+    seedTerminalLegacySettings(w.db)
     await w.run()
     const first = JSON.stringify((await w.handle.query({ limit: 10 })).records)
     const migration = ADDON_MIGRATIONS[0]
@@ -110,7 +153,7 @@ describe('Terminal instances settings to records, on real SQLite', () => {
 
   it('never overwrites a record that already exists, and still drops the key once it is there', async () => {
     const w = await boot()
-    seedTerminalLegacySettings(w.world.db)
+    seedTerminalLegacySettings(w.db)
     const seed = TERMINAL_SEED_ROWS[0]
     if (seed === undefined) throw new Error('seed is empty')
     await w.handle.put(
@@ -137,23 +180,23 @@ describe('Terminal instances settings to records, on real SQLite', () => {
   })
 
   const replaceLegacy = (w: Awaited<ReturnType<typeof boot>>, value: unknown) =>
-    w.world.db
+    w.db
       .prepare('UPDATE "addon-settings" SET data = ? WHERE id = ?')
       .run(
         JSON.stringify({ addonId: TERMINAL_SEED_ADDON, key: 'terminalInstances', value }),
         `${TERMINAL_SEED_ADDON}.terminalInstances`,
       )
   const legacyValue = (w: Awaited<ReturnType<typeof boot>>): unknown => {
-    const row = w.world.db
-      .prepare('SELECT data FROM "addon-settings" WHERE id = ?')
+    const row = w.db
+      .prepare<[string], { data: string }>('SELECT data FROM "addon-settings" WHERE id = ?')
       .get(`${TERMINAL_SEED_ADDON}.terminalInstances`)
-    if (row === undefined || typeof row.data !== 'string') return undefined
+    if (row === undefined) return undefined
     return JSON.parse(row.data).value
   }
 
   it('bad rows never block the good ones: they are converted, the key keeps only the bad rows, and it lands done', async () => {
     const w = await boot()
-    seedTerminalLegacySettings(w.world.db)
+    seedTerminalLegacySettings(w.db)
     const nameless = { id: 'not-a-uuid', name: '' }
     const malformed = {
       ...TERMINAL_SEED_ROWS[0],
@@ -161,16 +204,14 @@ describe('Terminal instances settings to records, on real SQLite', () => {
       args: 'x',
     }
     replaceLegacy(w, [...TERMINAL_SEED_ROWS, nameless, malformed])
-    const report = await w.run()
-    expect(report.failed).toEqual([])
-    expect(w.ledger()).toMatchObject({ status: 'applied' })
+    expect(await w.run()).toMatchObject({ outcome: 'done' })
     expect((await w.handle.query({ limit: 10 })).records).toHaveLength(TERMINAL_SEED_ROWS.length)
     expect(legacyValue(w)).toEqual([nameless, malformed])
   })
 
   it('a rerun with only bad rows left is already-done, rewrites nothing', async () => {
     const w = await boot()
-    seedTerminalLegacySettings(w.world.db)
+    seedTerminalLegacySettings(w.db)
     const nameless = { id: 'not-a-uuid', name: '' }
     replaceLegacy(w, [nameless])
     const migration = ADDON_MIGRATIONS[0]
@@ -184,12 +225,11 @@ describe('Terminal instances settings to records, on real SQLite', () => {
 
   it('a duplicate id is skipped after the first, which stays', async () => {
     const w = await boot()
-    seedTerminalLegacySettings(w.world.db)
+    seedTerminalLegacySettings(w.db)
     const first = TERMINAL_SEED_ROWS[0]
     const dup = { ...first, name: 'Second with the same id' }
     replaceLegacy(w, [first, dup])
-    const report = await w.run()
-    expect(report.failed).toEqual([])
+    expect(await w.run()).toMatchObject({ outcome: 'done' })
     const records = (await w.handle.query({ limit: 10 })).records
     expect(records).toHaveLength(1)
     expect(records[0]?.data.name).toBe(first?.name)
@@ -198,7 +238,7 @@ describe('Terminal instances settings to records, on real SQLite', () => {
 
   it('a disabled row survives disabled and an adopted legacy camera id survives', async () => {
     const w = await boot()
-    seedTerminalLegacySettings(w.world.db)
+    seedTerminalLegacySettings(w.db)
     await w.run()
     const adopted = TERMINAL_SEED_ROWS[1]
     const record = await w.handle.get(adopted?.id ?? '')
@@ -208,7 +248,7 @@ describe('Terminal instances settings to records, on real SQLite', () => {
 
   it('keeps the old key when a written record does not read back equal', async () => {
     const w = await boot()
-    seedTerminalLegacySettings(w.world.db)
+    seedTerminalLegacySettings(w.db)
     const real = w.portsOver()
     const lying: TerminalMigrationPorts = {
       ...real,
@@ -217,16 +257,13 @@ describe('Terminal instances settings to records, on real SQLite', () => {
         return body === null ? null : { ...body, name: `${body.name} (drifted)` }
       },
     }
-    const report = await w.run(lying)
-    expect(report.failed.length).toBeGreaterThan(0)
+    await expect(w.run(lying)).rejects.toThrow(/did not read back as written/)
     expect(w.settingsRow()).toBeDefined()
   })
 
   it('an install with no legacy key is already-done', async () => {
     const w = await boot()
-    const report = await w.run()
-    expect(report.failed).toEqual([])
-    expect(w.ledger()).toMatchObject({ status: 'applied' })
+    expect(await w.run()).toMatchObject({ outcome: 'already-done' })
     expect((await w.handle.query({ limit: 10 })).records).toEqual([])
   })
 })

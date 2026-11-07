@@ -174,7 +174,10 @@ export async function copyTerminalsToRecords(
   return { outcome: 'done', summary: { created, kept, skipped: skipped.length } }
 }
 
-export function terminalPortsOver(api: MigrationApiV1): TerminalMigrationPorts {
+/** The slice of the migration API these ports use. */
+export type TerminalPortsApi = Pick<MigrationApiV1, 'settings' | 'log' | 'records'>
+
+export function terminalPortsOver(api: TerminalPortsApi): TerminalMigrationPorts {
   const records: MigrationRecordsKindV1<TerminalBody> = api.records.kind(terminalInstancesKind)
   return {
     readLegacy: async () => {

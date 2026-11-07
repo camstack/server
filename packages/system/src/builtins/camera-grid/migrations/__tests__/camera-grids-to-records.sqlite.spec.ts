@@ -128,9 +128,9 @@ describe('camera grids settings to records, on real SQLite', () => {
 
   const legacyValue = (w: Awaited<ReturnType<typeof boot>>): unknown => {
     const row = w.world.db
-      .prepare('SELECT data FROM "addon-settings" WHERE id = ?')
+      .prepare<[string], { data: string }>('SELECT data FROM "addon-settings" WHERE id = ?')
       .get(`${GRID_SEED_ADDON}.cameraGrids`)
-    if (row === undefined || typeof row.data !== 'string') return undefined
+    if (row === undefined) return undefined
     return JSON.parse(row.data).value
   }
 
