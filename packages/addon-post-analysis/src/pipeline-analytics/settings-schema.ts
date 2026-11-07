@@ -119,9 +119,8 @@ export function retagRetentionSection<T extends { readonly id?: string; readonly
  * It is `readonlyField: true`, so the form renders it display-only with no
  * mutation handler and it can never enter a settings patch — it carries a
  * derived value and must not become the second stored authority it replaced.
- * Its value is injected at hydrate time by the addon's `getGlobalSettings`
- * override, the same mechanism `detection-pipeline` uses for its live
- * model-substitution readout.
+ * Its value is injected at hydrate time by the addon's `scopedSettingsOverlay`
+ * (cluster scope, `face-gallery` cap), from the stored values.
  */
 export const SUGGESTION_THRESHOLD_READOUT_KEY = 'suggestionThresholdReadout'
 
@@ -147,8 +146,7 @@ export function formatSuggestionThresholdReadout(similarityThreshold: number): s
 
 /**
  * The live value the face matching form shows beside the similarity threshold, derived from the
- * values handed in (the stored ones; the legacy override adds the operator's unsaved draft). One helper for the scoped overlay hook and the legacy
- * `getGlobalSettings` override, so both surfaces show the same sentence.
+ * stored values handed in by the addon's `scopedSettingsOverlay`.
  */
 export function faceSuggestionReadoutOverlay(
   values: Record<string, unknown>,
