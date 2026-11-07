@@ -36,7 +36,9 @@ const STOVE = CompositionSchema.parse({
       items: {
         filter: {
           label: 'Filter',
-          fields: { status: { kind: 'expression', expr: '"ok"', bindings: {} } },
+          fields: {
+            status: { kind: 'expression', expr: '"ok"', bindings: {} },
+          },
         },
       },
     },
@@ -72,7 +74,9 @@ function makeApi(): AddonApi {
         ? undefined
         : new Proxy(
             {},
-            { get: (_u, method) => (typeof method === 'string' ? leaf(ns, method) : undefined) },
+            {
+              get: (_u, method) => (typeof method === 'string' ? leaf(ns, method) : undefined),
+            },
           ),
   }
   // Documented type boundary: a test double at the AddonApi boundary, as forward-device.e2e.spec.ts.
@@ -93,7 +97,15 @@ function applyInput(): ComposerApplyInput {
   return {
     integrationId: INTEGRATION_ID,
     storeLoaded: true,
-    blocks: [{ id: BLOCK_ID, name: 'Stove', enabled: true, updatedAt: 1, composition: STOVE }],
+    blocks: [
+      {
+        id: BLOCK_ID,
+        name: 'Stove',
+        enabled: true,
+        updatedAt: 1,
+        composition: STOVE,
+      },
+    ],
     restartBlockIds: [],
     unreadableBlocks: [],
   }
@@ -138,9 +150,11 @@ beforeEach(async () => {
   })
   const hub = new FakeHub()
   const listOwnDevices = async () =>
-    registry
-      .getAllForAddon(COMPOSER_ADDON_ID)
-      .map((d) => ({ id: d.id, stableId: d.stableId, integrationId: INTEGRATION_ID }))
+    registry.getAllForAddon(COMPOSER_ADDON_ID).map((d) => ({
+      id: d.id,
+      stableId: d.stableId,
+      integrationId: INTEGRATION_ID,
+    }))
   const declared = new DeclaredDevices({
     logger: log.logger,
     addonId: COMPOSER_ADDON_ID,
@@ -200,13 +214,23 @@ describe('the features of a composed device', () => {
   it('carry timed-run once the wrapper binds it, and lose it when it is unbound', async () => {
     boundCaps = ['switch', 'running-state', 'timed-run']
     await drive(
-      composer.onBindingsChanged({ deviceId: stove().id, capName: 'timed-run', reason: 'bound' }),
+      composer.onBindingsChanged({
+        deviceId: stove().id,
+        capName: 'timed-run',
+        addonId: 'core-blocks',
+        reason: 'wrapper-activated',
+      }),
     )
     expect(stove().features).toEqual(['timed-run'])
 
     boundCaps = ['switch', 'running-state']
     await drive(
-      composer.onBindingsChanged({ deviceId: stove().id, capName: 'timed-run', reason: 'unbound' }),
+      composer.onBindingsChanged({
+        deviceId: stove().id,
+        capName: 'timed-run',
+        addonId: 'core-blocks',
+        reason: 'wrapper-deactivated',
+      }),
     )
     expect(stove().features).toEqual([])
   })
@@ -219,7 +243,14 @@ describe('the features of a composed device', () => {
 
   it('ignore a bindings change of another device', async () => {
     boundCaps = ['timed-run']
-    await drive(composer.onBindingsChanged({ deviceId: 1, capName: 'timed-run', reason: 'bound' }))
+    await drive(
+      composer.onBindingsChanged({
+        deviceId: 1,
+        capName: 'timed-run',
+        addonId: 'core-blocks',
+        reason: 'wrapper-activated',
+      }),
+    )
     expect(stove().features).toEqual([])
   })
 })
