@@ -135,4 +135,57 @@ describe('Modal account migrations over the migration API', () => {
     await expect(moveEntriesToRecords(modalPortsOver(api))).rejects.toThrow(/could not be resolved/)
     expect(await handle.get('acc-home')).toBeNull()
   })
+
+  describe('a crash while the old secret is released', () => {
+    const oldMarkers = (store: Record<string, unknown>): unknown[] => {
+      const rows = store['entries']
+      return Array.isArray(rows) ? rows.map((row) => Reflect.get(row, 'tokenSecret')) : []
+    }
+
+    it('a failed settings write after the release leaves nothing orphaned once the pass is re-run', async () => {
+      const { api, keychain, store, handle } = await world()
+      const failing: ModalPortsApi = {
+        ...api,
+        settings: {
+          ...api.settings,
+          write: async () => {
+            throw new Error('settings write failed')
+          },
+        },
+      }
+      await expect(moveEntriesToRecords(modalPortsOver(failing))).rejects.toThrow(
+        /settings write failed/,
+      )
+      // the old refs were released before the markers were touched
+      expect(keychain.size).toBe(0)
+
+      await moveEntriesToRecords(modalPortsOver(api))
+      expect(keychain.size).toBe(0)
+      expect(oldMarkers(store())).toEqual([undefined, undefined])
+      expect((await handle.getResolved('acc-home'))?.data.tokenSecret).toBeTruthy()
+      expect((await handle.getResolved('acc-lab'))?.data.tokenSecret).toBeTruthy()
+    })
+
+    it('a crash after the settings write leaves no ref and no marker, and a re-run changes nothing', async () => {
+      const { api, keychain, store } = await world()
+      const failing: ModalPortsApi = {
+        ...api,
+        settings: {
+          ...api.settings,
+          write: async (input) => {
+            await api.settings.write(input)
+            throw new Error('crash after the write')
+          },
+        },
+      }
+      await expect(moveEntriesToRecords(modalPortsOver(failing))).rejects.toThrow(
+        /crash after the write/,
+      )
+      expect(keychain.size).toBe(0)
+      expect(oldMarkers(store())).toEqual([undefined, undefined])
+      expect(await moveEntriesToRecords(modalPortsOver(api))).toMatchObject({
+        outcome: 'already-done',
+      })
+    })
+  })
 })

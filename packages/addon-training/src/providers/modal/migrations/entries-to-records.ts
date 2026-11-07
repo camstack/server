@@ -92,9 +92,12 @@ export function oldAccountsOf(stored: Readonly<Record<string, unknown>>): readon
     const flat = accountOf(FLAT_ACCOUNT_ID, stored, 'Default')
     return flat.body.tokenId.trim() !== '' || flat.body.tokenSecret !== undefined ? [flat] : []
   }
-  return rows.map((row, index) =>
-    accountOf(text(row, 'id', '').trim() || `modal-account-${index}`, row, 'Default'),
-  )
+  return rows.map((row, index) => accountOf(accountIdOf(row, index), row, 'Default'))
+}
+
+/** The id an old `entries` row keeps; a row without one gets a stable id from its position. */
+export function accountIdOf(row: Readonly<Record<string, unknown>>, index: number): string {
+  return text(row, 'id', '').trim() || `modal-account-${index}`
 }
 
 function accountOf(

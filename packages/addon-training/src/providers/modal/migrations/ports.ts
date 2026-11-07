@@ -5,7 +5,7 @@ import {
   RevConflictError,
 } from '@camstack/types'
 import { trainingAccountEntryKind } from '../training-account-record-kinds.js'
-import { FLAT_ACCOUNT_ID } from './entries-to-records.js'
+import { accountIdOf, FLAT_ACCOUNT_ID } from './entries-to-records.js'
 import type { ModalCataloguePorts } from './index.js'
 
 /** The slice of the migration API these ports use. */
@@ -43,11 +43,41 @@ export function modalPortsOver(api: ModalPortsApi): ModalCataloguePorts {
     },
   }
   const readRaw = async () => (await api.settings.read({})).store
+  /**
+   * The secret a record already holds for an account whose old marker the keychain no longer
+   * serves: a pass that released the old ref and crashed before it dropped the marker is finished
+   * by the next one, which then sees the record's own copy and clears the dangling marker.
+   */
+  const heldSecret = async (id: string): Promise<string | undefined> => {
+    const secret = (await handle.getResolved({ id }))?.data.tokenSecret
+    return secret !== undefined && secret.length > 0 ? secret : undefined
+  }
+  const withHeldSecrets = async (
+    store: Readonly<Record<string, unknown>>,
+  ): Promise<Readonly<Record<string, unknown>>> => {
+    const patch: Record<string, unknown> = {}
+    if (isSecretMarker(store['tokenSecret'])) {
+      const held = await heldSecret(FLAT_ACCOUNT_ID)
+      if (held !== undefined) patch['tokenSecret'] = held
+    }
+    const list = store['entries']
+    if (Array.isArray(list)) {
+      patch['entries'] = await Promise.all(
+        list.map(async (row, index) => {
+          if (!isRecord(row) || !isSecretMarker(row['tokenSecret'])) return row
+          const held = await heldSecret(accountIdOf(row, index))
+          return held === undefined ? row : { ...row, tokenSecret: held }
+        }),
+      )
+    }
+    return { ...store, ...patch }
+  }
   return {
     readStored: async () => {
-      const { value } = await resolveSecretMarkers(await readRaw(), secrets, {
+      const resolved = await resolveSecretMarkers(await readRaw(), secrets, {
         unresolved: 'keep-marker',
       })
+      const value = await withHeldSecrets(resolved.value)
       // A secret that is still a marker was not resolved: abort before anything is written.
       if (isSecretMarker(value['tokenSecret'])) {
         throw new Error('the old flat Modal token secret could not be resolved')
@@ -81,27 +111,33 @@ export function modalPortsOver(api: ModalPortsApi): ModalCataloguePorts {
       return 'created'
     },
     clearOldSecrets: async (ids) => {
-      // The old token secret leaves the settings AND the keychain: the record holds the copy.
+      // The old token secret leaves the keychain AND the settings: the record holds the copy. The
+      // refs go first, so a crash or a failed write afterwards leaves a dangling marker (the next
+      // pass finishes it) and never a live keychain entry no marker names. Deleting an unknown ref
+      // is not an error, so a re-run is harmless.
       const store = await readRaw()
       const refs: string[] = []
-      if (ids.includes(FLAT_ACCOUNT_ID)) {
-        refs.push(...refOf(store['tokenSecret']))
-        await api.settings.deleteKeys({ keys: ['tokenSecret'] })
-      }
+      const flat = ids.includes(FLAT_ACCOUNT_ID)
+      if (flat) refs.push(...refOf(store['tokenSecret']))
       const rows = store['entries']
-      if (
-        Array.isArray(rows) &&
-        rows.some((row) => isRecord(row) && ids.includes(String(row['id'])))
-      ) {
+      const touched =
+        Array.isArray(rows) && rows.some((row) => isRecord(row) && ids.includes(String(row['id'])))
+      if (touched) {
+        for (const row of rows) {
+          if (isRecord(row) && ids.includes(String(row['id'])))
+            refs.push(...refOf(row['tokenSecret']))
+        }
+      }
+      if (refs.length > 0) await api.secrets.delete({ refs })
+      if (flat) await api.settings.deleteKeys({ keys: ['tokenSecret'] })
+      if (touched) {
         const kept = rows.map((row) => {
           if (!isRecord(row) || !ids.includes(String(row['id']))) return row
-          refs.push(...refOf(row['tokenSecret']))
           const { tokenSecret: _cleared, ...rest } = row
           return rest
         })
         await api.settings.write({ patch: { entries: kept } })
       }
-      if (refs.length > 0) await api.secrets.delete({ refs })
     },
   }
 }

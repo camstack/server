@@ -119,4 +119,22 @@ describe('waste sources migration over the migration API', () => {
     ).rejects.toThrow(/credential is unavailable/)
     expect(await store.listIds()).toEqual([])
   })
+
+  it('lets an I/O error from the credential read through instead of reporting it as an unserved credential', async () => {
+    const { api } = await world()
+    const failing: WastePortsApi = {
+      ...api,
+      records: {
+        kind: (definition) => ({
+          ...api.records.kind(definition),
+          getResolved: async () => {
+            throw new Error('SQLITE_IOERR: disk I/O error')
+          },
+        }),
+      },
+    }
+    await expect(
+      copySourcesToRecords(wasteSourcePortsOver(failing, wasteSourceEntryKind)),
+    ).rejects.toThrow(/SQLITE_IOERR/)
+  })
 })

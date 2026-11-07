@@ -1,6 +1,7 @@
 import {
   type MigrationApiV1,
   type MigrationRecordRowV1,
+  RecordSecretUnavailableError,
   resolveSecretMarkers,
   type StoredKeyRead,
 } from '@camstack/types'
@@ -71,8 +72,10 @@ export function wasteSourcePortsOver(
       try {
         const resolved = await handle.getResolved({ id })
         return asRow(resolved ?? stored)
-      } catch {
-        // The keychain could not serve a credential: the markers come back and the step refuses.
+      } catch (err: unknown) {
+        // Only an unserved credential degrades to the markers (the step refuses it by name);
+        // any other failure is the migration's failure and the next boot retries.
+        if (!(err instanceof RecordSecretUnavailableError)) throw err
         return asRow(stored)
       }
     },
