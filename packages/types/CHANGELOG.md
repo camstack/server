@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.522] - 2026-11-07
+
 ### Changed
 
 - A heater or fan composed on a plug now counts as running while its own switch is on, and a timed-run device reports a configurable quick-run duration

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.400] - 2026-11-07
+
 ### Changed
 
 - The heater row's quick-run button shows the device's configured duration
