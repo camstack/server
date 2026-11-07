@@ -73,22 +73,14 @@ describe("the node card's Settings tab renders only what is true of that node", 
   })
 })
 
-describe('the integration page renders integration settings without claiming a node', () => {
+describe('the integration page carries no addon-level settings surface (D986)', () => {
   const source = read('pages/IntegrationDetail.tsx')
 
-  it('mounts the integration surface with no node id', () => {
-    const usage = panelUsage(code(source))
-    expect(usage).toContain('nodeId={null}')
-    expect(usage).toContain('surface="integration"')
-  })
-
-  it('passes no hardcoded node id anywhere on the page', () => {
-    // The page's OTHER settings read (`useAddonSettingsGetGlobalSettings` for
-    // the forwarding decision) may address the hub — that is a read of a
-    // cluster value, not an edit under a node's heading. What must never
-    // appear is a hub pin on the panel itself, which is where the write is.
-    const usage = panelUsage(code(source))
-    expect(usage).not.toMatch(/nodeId="[^"]+"/)
+  it('mounts no settings panel and reads no integration-level settings', () => {
+    // No addon declares integration sections any more, so the read always answered `null` and the
+    // panel never mounted. An integration's own configuration is its instance record.
+    expect(code(source)).not.toContain('NodeAddonsSettingsPanel')
+    expect(code(source)).not.toContain('IntegrationSettings')
   })
 
   it('carries no "Integration-wide settings" paragraph, anywhere', () => {
@@ -110,15 +102,6 @@ describe('the integration page renders integration settings without claiming a n
         'Integration-wide settings',
       )
     }
-  })
-
-  it('asks CORE which sections are integration-level, and keeps no list of its own', () => {
-    // The admin UI must never carry an allow-list of provider names or section
-    // ids: the addon declares, core selects, the page renders what it is
-    // given. A literal section id here would be a second opinion that drifts
-    // the moment a provider renames one.
-    expect(code(source)).toContain('useAddonSettingsGetIntegrationSettings')
-    expect(code(source)).not.toMatch(/email-push/)
   })
 })
 

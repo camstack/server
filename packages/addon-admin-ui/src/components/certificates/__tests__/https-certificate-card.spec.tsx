@@ -19,6 +19,8 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   const mutation = () => ({ mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false })
   return {
     ...actual,
+    useSystem: () => ({ trpcClient: {} }),
+    AddonScopedSettingsForm: () => <div data-testid="lan-http-panel" />,
     useLocalNetworkGetTlsStatus: () => ({ data: h.tls.current, isError: false }),
     useLocalNetworkRegenerateCertificate: mutation,
     useLocalNetworkRevertToGeneratedCertificate: mutation,
@@ -26,9 +28,6 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     useLocalNetworkUploadCertificate: mutation,
   }
 })
-vi.mock('../../settings/NodeAddonsSettingsPanel', () => ({
-  NodeAddonsSettingsPanel: () => <div data-testid="lan-http-panel" />,
-}))
 
 import { LocalAccessPage } from '../../../pages/system/LocalAccess'
 import { NetworkPage } from '../../../pages/system/Network'
