@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Doc comment on ConfigManager.getSection no longer refers to config.yaml
+- A system-event notification rule can speak when a condition starts, when it clears and on a schedule, in any combination
 
 ## [1.2.517] - 2026-11-07
 

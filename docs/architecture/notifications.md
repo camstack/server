@@ -2354,6 +2354,23 @@ A `device-events` or `system` rule chooses its DELIVERY
 | `{ mode: 'summary', schedule }` | nothing per event; at the END of each window of `schedule`, one notification with the CURRENT state of its kinds |
 | `{ mode: 'summary', schedule, split: 'section' }` ([D698](../decisions/adr-0698-a-state-summary-may-send-one-notification-per-section-and-a-restart-never-moves-since.md)) | the same, but ONE NOTIFICATION PER SECTION with something to say; `split` absent (or `'rule'`) is the one combined message |
 
+**Modes ([D1019](../decisions/adr-1019-a-system-rule-speaks-at-up-to-three-moments-activation-deactivation-schedule.md)).**
+The table above is what is stored on a rule nobody saved since; every
+`device-events` / `system` rule is READ (store load and every write) as
+`{ mode: 'modes', onActivation, onDeactivation, onSchedule?: { schedule,
+grouping } }` — any combination of: the bad edge and every single-edge kind
+(activation), the recovery edges of the selected classes (deactivation), and the
+state summary (schedule). `systemEventDeliveryModesOf` is the one reader and
+`instantKindsOf` the set the engine speaks for at once: a match outside it is
+held for the summary when the rule has one (`heldForSummary`), and otherwise
+dropped with a debug line (`excludedByDeliveryMode`). A new rule is activation
+only; an existing one keeps its old behaviour (migration
+`system-event-delivery-modes`). Cluster `alertNotifyRecovery` OFF still silences
+battery and consumable recoveries (D934's episodes), whatever a rule asks. The
+rule's active-hours `schedule` and `actions` apply to the instant sends; they are
+refused only on a schedule-only rule. Test: `nc.testRule` tests the event, or the
+summary on a schedule-only rule, or on `summary: true`.
+
 The alarm stays instant. `systemEventDeliveryProblems`
 (`packages/types/src/notification/system-event-summary.ts`) is the one verdict,
 read by the save guard (`rule-summary-guard.ts`, both save routes) and by the

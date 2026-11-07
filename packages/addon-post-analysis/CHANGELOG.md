@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- System-event rules send per delivery mode (start, clear, schedule); existing rules keep their behaviour and a migration rewrites them
+
 ## [1.2.682] - 2026-11-07
 
 ### Changed
