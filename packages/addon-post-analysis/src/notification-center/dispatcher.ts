@@ -25,6 +25,7 @@
  * transport/backend errors ⇒ transient (retried with backoff).
  */
 
+import type { NcVerdictSourceMedia } from './action-token.js'
 import { isVerdictAction, verdictLinkLines } from './detection-verdict-buttons.js'
 import type { BboxRect } from '../pipeline-analytics/pipeline/zones/geometry.js'
 import {
@@ -330,12 +331,21 @@ export interface NcResolvedAttachment {
   readonly bytes: Uint8Array<ArrayBuffer>
   readonly mime: string
   readonly name: string
+  /**
+   * The stored row the still was rendered from. Bookkeeping for the verdict
+   * buttons only: `resolveAttachments` lifts it onto
+   * {@link NcResolvedAttachments.stillSource} and it never leaves with the
+   * attachment.
+   */
+  readonly sourceMedia?: NcVerdictSourceMedia
 }
 
 /** Everything `resolveAttachments` produced: what ships, and a grouped row's tiles. */
 interface NcResolvedAttachments {
   readonly attachments: readonly NcResolvedAttachment[]
   readonly grouped: NcGroupedTileSet | null
+  /** The stored row the SHIPPED still was built from; absent for a mosaic or no still. */
+  readonly stillSource?: NcVerdictSourceMedia
 }
 
 /** A grouped row's picture (null: nothing landed) and the stills it was composed from. */
@@ -810,6 +820,8 @@ export interface NcMintButtonsInput {
   readonly bbox?: BboxRect
   /** The instant the notification reports (`subject.timestamp`). */
   readonly eventAtMs?: number
+  /** The stored frame this notification's picture was built from (verdict buttons freeze it). */
+  readonly sourceMedia?: NcVerdictSourceMedia
   /**
    * How many buttons this target's KIND can carry (`TargetKindCaps.actions`).
    * `0` = none: the verdict choices travel as links in the body instead.
@@ -1979,6 +1991,7 @@ export class NcDispatcher {
   private async mintActions(
     entry: NcOutboxEntry,
     target: NcTargetRef,
+    sourceMedia?: NcVerdictSourceMedia,
   ): Promise<readonly NotificationAction[]> {
     if (this.deps.buildActions === undefined) return []
     try {
@@ -1999,6 +2012,7 @@ export class NcDispatcher {
           : {}),
         ...(entry.payload.subject.bbox !== undefined ? { bbox: entry.payload.subject.bbox } : {}),
         eventAtMs: entry.payload.subject.timestamp,
+        ...(sourceMedia !== undefined ? { sourceMedia } : {}),
         ...(target.maxActions !== undefined ? { maxActions: target.maxActions } : {}),
         ...(entry.payload.subject.systemEvent !== undefined
           ? { systemEvent: entry.payload.subject.systemEvent }
@@ -2235,7 +2249,7 @@ export class NcDispatcher {
     // one person tapping cannot leave another person's button already spent.
     // Best-effort — a mint that fails costs the buttons, never the
     // notification about the event.
-    const minted = await this.mintActions(entry, target)
+    const minted = await this.mintActions(entry, target, resolved.stillSource)
     // A kind with NO button budget cannot show the verdict choices as buttons
     // (the degrade engine would drop them whole), so they travel as links in
     // the body instead. Every other button on such a kind is dropped as before.
@@ -2504,8 +2518,14 @@ export class NcDispatcher {
     const extras = await this.linkedExtraStills(entry)
     if (still !== null) {
       // Rendered by the image stage already (D897) — a mosaic is composed of
-      // stage-rendered tiles.
-      out.push(still)
+      // stage-rendered tiles. The source row is bookkeeping for the verdict
+      // buttons: it is lifted off, never shipped.
+      out.push({
+        mediaType: still.mediaType,
+        bytes: still.bytes,
+        mime: still.mime,
+        name: still.name,
+      })
     } else if (entry.payload.media !== 'none' && extras.length > 0) {
       // `each`: the primary's still is missing but other cameras' landed —
       // not text-only, and not the same question for the operator.
@@ -2560,7 +2580,11 @@ export class NcDispatcher {
     // left (the degrade engine drops by position).
     out.push(...footage.attachments)
     out.push(...extras)
-    return { attachments: out, grouped }
+    return {
+      attachments: out,
+      grouped,
+      ...(still?.sourceMedia !== undefined ? { stillSource: still.sourceMedia } : {}),
+    }
   }
 
   /**
@@ -3543,6 +3567,7 @@ export class NcDispatcher {
     bytes: Uint8Array<ArrayBuffer>
     mime: string
     name: string
+    sourceMedia: NcVerdictSourceMedia
   } | null> {
     if (entry.payload.media === 'none') return null
     const subject = entry.payload.subject
@@ -3589,7 +3614,13 @@ export class NcDispatcher {
             locale: this.texts.language,
           })
           if (image === null) return null
-          return { mediaType: 'image', bytes: image.bytes, mime: 'image/jpeg', name: image.name }
+          return {
+            mediaType: 'image',
+            bytes: image.bytes,
+            mime: 'image/jpeg',
+            name: image.name,
+            sourceMedia: { mediaId: file.mediaId, kind: file.kind },
+          }
         }
       } catch (err) {
         this.deps.logger.debug('attachment media read failed', {

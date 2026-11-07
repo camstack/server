@@ -77,3 +77,21 @@ need) and writes the ledger row as for a live track. A refused recording
 (`still-unavailable`, `still-busy`, other) is logged with the device tag, named
 to the tapper, and writes no ledger row. Follow-up, not built: the notification's
 stored still as a second fallback (needs `ctx.peerBytes`, D613).
+
+## Amendment 2026-11-07 — a tap lands a corpus frame, on the survivor
+
+The mark put the track in retrain staging, but the Training page and the viewer
+read only the copied-frames corpus, so a tapped track showed nothing (101 staged
+tracks against 37 frame copies on the live hub). After a successful mark the tap
+now copies a frame (`selectRetrainFrames`): the grant freezes `sourceMedia` (the
+id and kind of the stored row the notification's picture was built from) and
+that exact frame is copied; a token without it, or a refused copy, falls back to
+the track's best whole frame. A copy failure is logged with `tags: { deviceId }`
+and the reason and never fails the tap. An id an L2 fusion absorbed (D683) is
+resolved to its survivor first: mark, copy and ledger row all use the survivor
+(the ledger row had been keyed on the absorbed id, so the survivor's staging row
+showed no verdict). The `retrain-verdict-frames` procedure migration
+(`seq` 4, `tolerate`) backfills staged tracks with a verdict and no frame, and
+writes a verdict given on an absorbed id under its survivor; it runs as a second
+phase after the stores exist.
+

@@ -29,7 +29,7 @@
  */
 
 import { createHmac, timingSafeEqual } from 'node:crypto'
-import type { AlarmArmMode } from '@camstack/types'
+import type { AlarmArmMode, MediaFileKind } from '@camstack/types'
 import type { BboxRect } from '../pipeline-analytics/pipeline/zones/geometry.js'
 import { ARM_ANYWAY_TTL_MS } from './alarm/alarm-arm-guard.js'
 
@@ -214,6 +214,15 @@ export interface NcDetectionVerdictGrant extends NcActionGrantBase {
    *  recording fallback looks once the track itself is gone. */
   readonly eventAtMs?: number
   /**
+   * The stored frame the notification's picture was built from, FROZEN at mint
+   * (the row `getMediaForOwner` handed the image stage). A tap copies exactly
+   * that frame into the retrain corpus, so what the operator judged on screen
+   * is what the corpus holds. Optional: a token minted before this field
+   * existed, or a notification without a still, falls back to the track's best
+   * frame at tap time.
+   */
+  readonly sourceMedia?: NcVerdictSourceMedia
+  /**
    * The subject the notification reported, FROZEN at mint from the row that
    * triggered it. The track may be gone by the time of the tap (a short-lived
    * moving track is deleted within seconds); the recording still the verdict
@@ -223,6 +232,12 @@ export interface NcDetectionVerdictGrant extends NcActionGrantBase {
    */
   readonly subject?: NcVerdictSubject
   readonly viaLink?: boolean
+}
+
+/** The stored media row a notification's picture came from: its id and kind. */
+export interface NcVerdictSourceMedia {
+  readonly mediaId: number
+  readonly kind: MediaFileKind
 }
 
 /** The verdict a button records. */

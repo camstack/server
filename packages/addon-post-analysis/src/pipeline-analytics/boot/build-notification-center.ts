@@ -36,6 +36,7 @@ import { makeNcOwnerMediaReader } from '../nc-owner-media-reader.js'
 import { buildOccupancyDepartureDeps } from '../occupancy-departure-deps.js'
 import { FACE_SETTLE_HOLD_MS } from '../pipeline/tracker-v2/constants.js'
 import { retrainRefusalReason } from '../pipeline/track-flags.js'
+import { copyVerdictFrame } from './verdict-frame-copy.js'
 import { addVerdictFrameFromRecording } from './verdict-recording-frame.js'
 import { recognitionOutlook } from '../recognition-outlook.js'
 import { buildLinkedSnapshotReads } from '../runtime/linked-snapshot-reads.js'
@@ -468,6 +469,19 @@ export class BuildNotificationCenter extends BuildNotificationCenterBase {
           if (reason === null) throw err
           return { ok: false as const, reason }
         }
+      },
+      // After the mark: the frame the operator judged becomes a corpus copy
+      // (the staging screens read only copies). Through the cap, like the mark.
+      copyVerdictFrame: async (input) => {
+        const pa = this.ctx.api.pipelineAnalytics
+        return copyVerdictFrame(
+          {
+            listRetrainFrames: (ask) => pa.listRetrainFrames.query(ask),
+            selectRetrainFrames: (ask) => pa.selectRetrainFrames.mutate(ask),
+          },
+          this.ctx.logger,
+          input,
+        )
       },
       // The fallback when the track is gone: the camera's recording at the
       // notification's instant, into the "Notification verdicts" collection.

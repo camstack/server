@@ -3,6 +3,10 @@ import {
   migrateDeviceTemplateVariable,
   type NcTemplateMigrationPorts,
 } from './device-template-var.js'
+import {
+  backfillRetrainVerdictFrames,
+  type RetrainVerdictFramePorts,
+} from './retrain-verdict-frames.js'
 import { planRetireFaceKeys, type RetiredFaceKeysPorts } from './retired-face-keys.js'
 import {
   type EnabledSplitPorts,
@@ -13,14 +17,18 @@ import {
 export type { NcTemplateMigrationPorts } from './device-template-var.js'
 export type { EnabledSplitPorts } from './split-enabled-key.js'
 export type { RetiredFaceKeysPorts } from './retired-face-keys.js'
+export type { RetrainVerdictFramePorts, StagedRetrainTrack } from './retrain-verdict-frames.js'
 
 /** Everything the `pipeline-analytics` catalogue reads and writes. */
 export type PipelineAnalyticsMigrationPorts = NcTemplateMigrationPorts &
   EnabledSplitPorts &
-  RetiredFaceKeysPorts
+  RetiredFaceKeysPorts &
+  RetrainVerdictFramePorts
 
 export const SPLIT_ENABLED_KEY_MIGRATION_ID = 'pipeline-analytics/2026-11-05-split-enabled-key'
 export const RETIRE_FACE_KEYS_MIGRATION_ID = 'pipeline-analytics/2026-11-07-retire-face-keys'
+export const RETRAIN_VERDICT_FRAMES_MIGRATION_ID =
+  'pipeline-analytics/2026-11-07-retrain-verdict-frames'
 
 /** The `pipeline-analytics` catalogue (D987): offered to the engine at the hub's boot. */
 export const ADDON_MIGRATIONS: readonly AddonMigration<PipelineAnalyticsMigrationPorts>[] = [
@@ -77,5 +85,24 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<PipelineAnalyticsMigratio
       fixtureMark: 'a setting the migration does not know',
     },
     plan: planRetireFaceKeys,
+  },
+  {
+    meta: {
+      id: RETRAIN_VERDICT_FRAMES_MIGRATION_ID,
+      owner: PIPELINE_ANALYTICS_ID,
+      level: 'addon-state',
+      seq: 4,
+      dependsOn: [],
+      // Runs AFTER the retrain corpus is built (a second phase of the boot), not with the settings phase.
+      store: 'settings',
+      scope: 'cluster',
+      // A track left without its frame is where it was before this migration.
+      onFailure: 'tolerate',
+      bodyKind: 'procedure',
+      description:
+        'Copy the best frame of every retrain track an operator answered about on a notification and that holds none, and write a verdict given on a fused-away id under its survivor',
+      fixtureMark: 'the rule name and the user the verdict row carries',
+    },
+    procedure: backfillRetrainVerdictFrames,
   },
 ]

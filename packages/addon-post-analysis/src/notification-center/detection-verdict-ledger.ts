@@ -89,6 +89,11 @@ export class NcDetectionVerdictLedger {
     await this.ledger.load()
   }
 
+  /** Every stored answer, read from the store (the retrain backfill's one pass). */
+  async all(): Promise<readonly NcDetectionVerdictRecord[]> {
+    return this.ledger.load()
+  }
+
   /** Whether the store has answered a load. Before it, an empty mirror is
    *  "not read yet", never "nobody answered" (D315). */
   hasAnswered(): boolean {

@@ -8,7 +8,9 @@ import { createRecordsAccess, type RecordsAccess, type RecordsTransport } from '
 import Database from 'better-sqlite3'
 import { ncRecordKinds } from '../../../notification-center/record-kinds.js'
 import { makeSilentLogger } from '../../../pipeline-analytics/__tests__/test-helpers.js'
-import type { NcTemplateMigrationPorts } from '../../index.js'
+import { NcDetectionVerdictLedger } from '../../../notification-center/detection-verdict-ledger.js'
+import { ncDurableRecordKinds } from '../../../notification-center/nc-durable-record-kinds.js'
+import type { NcTemplateMigrationPorts, RetrainVerdictFramePorts } from '../../index.js'
 
 const OWNER = 'pipeline-analytics'
 
@@ -38,7 +40,8 @@ function engineTransport(engine: RecordsEngine): RecordsTransport {
 
 export interface NcWorld {
   readonly records: RecordsAccess
-  readonly ncPorts: NcTemplateMigrationPorts
+  /** The template kinds, plus a real verdict ledger and retrain ports that find nothing to do. */
+  readonly ncPorts: NcTemplateMigrationPorts & RetrainVerdictFramePorts
 }
 
 export async function makeNcWorld(): Promise<NcWorld> {
@@ -52,12 +55,18 @@ export async function makeNcWorld(): Promise<NcWorld> {
     secrets: null,
   })
   await records.declare(ncRecordKinds)
+  await records.declare({ 'detection-verdicts': ncDurableRecordKinds['detection-verdicts'] })
   return {
     records,
     ncPorts: {
       rules: records.kind(ncRecordKinds['rules']),
       timelapseRules: records.kind(ncRecordKinds['timelapse-rules']),
       texts: records.kind(ncRecordKinds.texts),
+      verdicts: new NcDetectionVerdictLedger({ records, logger: makeSilentLogger() }),
+      resolveTrackAlias: async () => null,
+      listStagedTracks: async () => [],
+      copyBestFrame: async () => ({ ok: false as const, reason: 'not-wired' }),
+      logger: makeSilentLogger(),
     },
   }
 }

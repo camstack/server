@@ -13,9 +13,14 @@ import { NcRuleInputSchema, type ObjectEvent, type RetrainVerdictSubject } from 
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeTestObjectEvent } from '../../__tests__/support/events.js'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
-import type { NcVerdictFrameOutcome } from '../center-deps.js'
+import type { NcVerdictCopyOutcome, NcVerdictFrameOutcome } from '../center-deps.js'
 import { NcActionPlane } from '../action-plane.js'
-import { NcActionTokenRegistry, buildActionUrl, type NcActionGrant } from '../action-token.js'
+import {
+  NcActionTokenRegistry,
+  buildActionUrl,
+  type NcActionGrant,
+  type NcVerdictSourceMedia,
+} from '../action-token.js'
 import type { NcSendInput, NcTargetRef } from '../dispatcher.js'
 import { NotificationCenter } from '../index.js'
 import { makeFakeDeviceSettings } from './fake-device-settings.js'
@@ -39,6 +44,14 @@ interface HarnessOptions {
   readonly mark?: MarkOutcome
   /** The recording fallback's answer; absent = no fallback wired. */
   readonly frame?: NcVerdictFrameOutcome
+  /** The frame the notification's picture was built from, as the dispatcher freezes it. */
+  readonly sourceMedia?: NcVerdictSourceMedia
+  /** What the training-frame copy answers (default: it lands); `'throw'` makes the port throw. */
+  readonly copy?: NcVerdictCopyOutcome | 'throw'
+  /** Fused-away ids and the survivor each lives on (L2, D683). */
+  readonly aliases?: Readonly<Record<string, string>>
+  /** Leave the copy port unwired (a node without the corpus). */
+  readonly noCopyPort?: boolean
 }
 
 const centers: NotificationCenter[] = []
@@ -70,6 +83,7 @@ async function makeHarness(options: HarnessOptions = {}) {
   ]
   const sends: NcSendInput[] = []
   const marked: { deviceId: number; trackId: string }[] = []
+  const copied: { deviceId: number; trackId: string; sourceMedia?: NcVerdictSourceMedia }[] = []
   const framed: {
     deviceId: number
     epochMs: number
@@ -91,7 +105,11 @@ async function makeHarness(options: HarnessOptions = {}) {
       },
       getMediaForOwner: async () => [],
       getDeviceName: async () => null,
-      buildActions: (input) => built?.mintButtons(input) ?? Promise.resolve([]),
+      buildActions: (input) =>
+        built?.mintButtons({
+          ...input,
+          ...(options.sourceMedia !== undefined ? { sourceMedia: options.sourceMedia } : {}),
+        }) ?? Promise.resolve([]),
       publicUrlBase: async () => BASE,
     },
     listObjectEventsSince: async (since) => events.filter((e) => e.timestamp >= since),
@@ -106,6 +124,20 @@ async function makeHarness(options: HarnessOptions = {}) {
       if (outcome.ok) marked.push(input)
       return outcome
     },
+    resolveTrackAlias: async (id) => options.aliases?.[id] ?? null,
+    ...(options.noCopyPort === true
+      ? {}
+      : {
+          copyVerdictFrame: async (input: {
+            deviceId: number
+            trackId: string
+            sourceMedia?: NcVerdictSourceMedia
+          }) => {
+            copied.push(input)
+            if (options.copy === 'throw') throw new Error('corpus unavailable')
+            return options.copy ?? { ok: true as const }
+          },
+        }),
     ...(options.frame === undefined
       ? {}
       : {
@@ -147,6 +179,7 @@ async function makeHarness(options: HarnessOptions = {}) {
     world,
     sends,
     marked,
+    copied,
     framed,
     plane,
     fire: async (trackId: string, overrides: Partial<ObjectEvent> = {}) => {
@@ -463,5 +496,61 @@ describe('"Wrong label, class OK" — only when the subject has a label', () => 
     const h = await makeHarness({ maxActions: 0 })
     await h.fire('trk-1', { label: 'Rex' })
     expect(h.sends.at(-1)!.notification.body).toContain('Wrong label, class OK')
+  })
+})
+
+describe('a tap lands the training frame, not only the mark', () => {
+  const SHOWN: NcVerdictSourceMedia = { mediaId: 4242, kind: 'keyFrame' }
+
+  it('copies exactly the frame the notification was built from', async () => {
+    const h = await makeHarness({ sourceMedia: SHOWN })
+    await h.fire('trk-1')
+    expect(await tap(h, button(h, 'detection-verdict-correct')!.url!)).toContain('Done')
+    expect(h.marked).toEqual([{ deviceId: 101, trackId: 'trk-1' }])
+    expect(h.copied).toEqual([{ deviceId: 101, trackId: 'trk-1', sourceMedia: SHOWN }])
+  })
+
+  it('an older token with no frozen frame still copies, leaving the choice to the port', async () => {
+    const h = await makeHarness()
+    await h.fire('trk-1')
+    expect(await tap(h, button(h, 'detection-verdict-wrong')!.url!)).toContain('Done')
+    expect(h.copied).toEqual([{ deviceId: 101, trackId: 'trk-1' }])
+  })
+
+  it('a refused or throwing copy never fails the tap: the mark and the verdict stand', async () => {
+    for (const copy of [{ ok: false as const, reason: 'source-missing' }, 'throw' as const]) {
+      const h = await makeHarness({ sourceMedia: SHOWN, copy })
+      await h.fire('trk-1')
+      expect(await tap(h, button(h, 'detection-verdict-correct')!.url!)).toContain('Done')
+      expect(h.marked).toHaveLength(1)
+      expect(verdictRows(h)).toHaveLength(1)
+      expect(h.copied).toHaveLength(1)
+    }
+  })
+
+  it('a node with no copy port still marks and records', async () => {
+    const h = await makeHarness({ noCopyPort: true })
+    await h.fire('trk-1')
+    expect(await tap(h, button(h, 'detection-verdict-correct')!.url!)).toContain('Done')
+    expect(h.marked).toHaveLength(1)
+    expect(verdictRows(h)).toHaveLength(1)
+  })
+
+  it('a refused mark copies nothing', async () => {
+    const h = await makeHarness({ sourceMedia: SHOWN, mark: { ok: false, reason: 'trained' } })
+    await h.fire('trk-1')
+    await tap(h, button(h, 'detection-verdict-correct')!.url!)
+    expect(h.copied).toEqual([])
+    expect(verdictRows(h)).toHaveLength(0)
+  })
+
+  it('a fused-away track marks, copies and records on its survivor', async () => {
+    const h = await makeHarness({ sourceMedia: SHOWN, aliases: { 'trk-1': 'trk-survivor' } })
+    await h.fire('trk-1')
+    expect(await tap(h, button(h, 'detection-verdict-correct')!.url!)).toContain('Done')
+    expect(h.marked).toEqual([{ deviceId: 101, trackId: 'trk-survivor' }])
+    expect(h.copied.map((c) => c.trackId)).toEqual(['trk-survivor'])
+    expect(JSON.stringify(verdictRows(h)[0])).toContain('"trackId":"trk-survivor"')
+    expect([...ncTable(h.world, 'detection-verdicts').keys()]).toEqual(['trk-survivor'])
   })
 })

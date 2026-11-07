@@ -191,6 +191,7 @@ export async function mintButtons(
               // where a preview bot will open them: confirm before claiming.
               ...(input.maxActions === 0 ? { viaLink: true } : {}),
               ...(input.eventAtMs !== undefined ? { eventAtMs: input.eventAtMs } : {}),
+              ...(input.sourceMedia !== undefined ? { sourceMedia: input.sourceMedia } : {}),
               // Frozen from the row that triggered the notification: the
               // track may be gone at tap time, the recording still is then
               // annotated with THIS subject, not its neighbours.

@@ -27,6 +27,7 @@ import type { NcDispatcherDeps } from './dispatcher.js'
 import type { NcRecognitionOutlook, NcRecognitionOutlookQuery } from './grouped/grouped-inputs.js'
 import type { NcLinkedSnapshotState } from './linked-stills.js'
 import type { PruneWindows } from './prune-windows.js'
+import type { NcVerdictSourceMedia } from './action-token.js'
 import type { NcRuleFireRef } from './rule-engine.js'
 import type { NcSceneObservation } from './scene-state-cache.js'
 import type { NcRunnerStateReads } from './state-summary/runner-recovery.js'
@@ -68,6 +69,11 @@ export type NcVerdictFrameOutcome =
       readonly reason: 'still-unavailable' | 'still-busy' | 'failed'
       readonly detail?: string
     }
+
+/** What copying a verdict's training frame came to: it landed, or a NAMED reason it did not. */
+export type NcVerdictCopyOutcome =
+  | { readonly ok: true }
+  | { readonly ok: false; readonly reason: string }
 
 export interface NotificationCenterDeps {
   /**
@@ -381,6 +387,20 @@ export interface NotificationCenterDeps {
     readonly deviceId: number
     readonly trackId: string
   }) => Promise<NcMarkForRetrainOutcome>
+  /**
+   * After a successful mark: copy the frame the operator judged into the retrain
+   * corpus (`selectRetrainFrames`), so the track shows up where retraining is
+   * done. `sourceMedia` is the row the notification's picture was built from,
+   * frozen on the grant; absent (an older token), the track's best frame is
+   * copied. Never throws and never fails the tap: a refusal is a value and a
+   * log line, the mark and the verdict already stand. Optional: absent = the
+   * mark alone, as before.
+   */
+  readonly copyVerdictFrame?: (input: {
+    readonly deviceId: number
+    readonly trackId: string
+    readonly sourceMedia?: NcVerdictSourceMedia
+  }) => Promise<NcVerdictCopyOutcome>
   /**
    * The fallback when {@link markTrackForRetrain} says `unknown-track`: add the
    * frame the camera's RECORDING holds at `epochMs` to the "Notification

@@ -3435,6 +3435,16 @@ the optional class named, WHO WAS ASKED (the token's frozen addressee, never the
 tapper) and when (`detection-verdicts` ledger). A retrain refusal (`trained`,
 `budget`, `unknown-track`) is shown by name and records nothing.
 
+The mark alone leaves the track invisible: both retrain screens read the
+copied-frames corpus. So after the mark the tap copies a frame
+(`selectRetrainFrames`): the stored row the notification's picture was built
+from (the grant freezes its `sourceMedia` at mint, taken from the row the
+dispatcher handed the image stage), else the track's best whole frame. A copy
+that cannot be taken is logged with the camera and never fails the tap. A track
+an L2 fusion absorbed is resolved to its survivor first, and the mark, the copy
+and the ledger row all land on the survivor. The `retrain-verdict-frames`
+migration backfills the staged tracks that carry a verdict and no frame.
+
 A subject that carries a label (a dog, a postman) also gets **Wrong label, class
 OK** (`detection-verdict-wrong-label`, verdict `wrong-label`), third after Correct
 and Wrong. The grant freezes the subject at mint time (class, label, and its box

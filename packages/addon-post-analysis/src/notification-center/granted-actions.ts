@@ -373,18 +373,24 @@ export async function applyGrantedDetectionVerdict(
 ): Promise<void> {
   const mark = host.deps.markTrackForRetrain
   if (mark === undefined) throw new Error('no retrain mark is wired on this node')
-  const outcome = await mark({ deviceId: grant.deviceId, trackId: grant.trackId })
+  // L2 fusion (D683) may have absorbed the notified id into a survivor: the
+  // mark, the copied frame and the ledger row are all keyed on the survivor,
+  // or the staging row shows a track nobody answered about.
+  const trackId = await survivorOf(host, grant)
+  const outcome = await mark({ deviceId: grant.deviceId, trackId })
   if (!outcome.ok && outcome.reason === 'unknown-track') {
     await landFrameFromRecording(host, grant)
   } else if (!outcome.ok) {
     host.logger.info('detection verdict changed nothing — the retrain flow refused the mark', {
       tags: { deviceId: grant.deviceId },
-      meta: { trackId: grant.trackId, reason: outcome.reason, verdict: grant.verdict },
+      meta: { trackId, reason: outcome.reason, verdict: grant.verdict },
     })
     throw new NcActionRefusedError(VERDICT_REFUSAL_COPY[outcome.reason])
+  } else {
+    await copyTrainingFrame(host, grant, trackId)
   }
   await host.verdicts.record({
-    trackId: grant.trackId,
+    trackId,
     deviceId: grant.deviceId,
     verdict: grant.verdict,
     ...(grant.suggestedClass !== undefined ? { suggestedClass: grant.suggestedClass } : {}),
@@ -393,6 +399,49 @@ export async function applyGrantedDetectionVerdict(
     ruleName: grant.ruleName,
     at: host.now(),
   })
+}
+
+/** The track the grant's id lives on now: its L2 survivor, or itself. A failed lookup is the id as asked. */
+async function survivorOf(host: GrantedActionsHost, grant: NcDetectionVerdictGrant): Promise<string> {
+  const resolve = host.deps.resolveTrackAlias
+  if (resolve === undefined) return grant.trackId
+  try {
+    return (await resolve(grant.trackId)) ?? grant.trackId
+  } catch (err: unknown) {
+    host.logger.warn('detection verdict — the fusion lookup failed, using the id as notified', {
+      tags: { deviceId: grant.deviceId },
+      meta: { trackId: grant.trackId, error: err instanceof Error ? err.message : String(err) },
+    })
+    return grant.trackId
+  }
+}
+
+/** Copy the judged frame; a failure is logged by the port and never fails the tap. */
+async function copyTrainingFrame(
+  host: GrantedActionsHost,
+  grant: NcDetectionVerdictGrant,
+  trackId: string,
+): Promise<void> {
+  const copy = host.deps.copyVerdictFrame
+  if (copy === undefined) {
+    host.logger.info('detection verdict marked the track but copied no frame — no copy is wired', {
+      tags: { deviceId: grant.deviceId },
+      meta: { trackId, verdict: grant.verdict },
+    })
+    return
+  }
+  try {
+    await copy({
+      deviceId: grant.deviceId,
+      trackId,
+      ...(grant.sourceMedia !== undefined ? { sourceMedia: grant.sourceMedia } : {}),
+    })
+  } catch (err: unknown) {
+    host.logger.warn('detection verdict marked the track but its frame copy threw', {
+      tags: { deviceId: grant.deviceId },
+      meta: { trackId, error: err instanceof Error ? err.message : String(err) },
+    })
+  }
 }
 /**
  * Apply the addon updates one notification was about.

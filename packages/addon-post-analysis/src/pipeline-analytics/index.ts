@@ -190,6 +190,8 @@ const ENCODER_INFO_TTL_MS = 60_000
  * The pass enumerates through `vectorStore.scan` instead, which has no `k`
  * ceiling because it computes no distance. See `embedding-orphan-scan.ts`.
  */
+/** Staged tracks per camera the retrain backfill reads: far above any staging budget. */
+const RETRAIN_BACKFILL_STAGING_LIMIT = 5_000
 const EMBEDDING_ORPHAN_SCAN_LIMIT = 20_000
 
 /**
@@ -804,7 +806,13 @@ const RETRAIN_EXPORT_MAX = 20_000
 
 import { AnalyticsLtsSeriesSchema, defineAddonMigrations } from '@camstack/types'
 import { ncRecordKinds } from '../notification-center/record-kinds.js'
-import { ADDON_MIGRATIONS, type PipelineAnalyticsMigrationPorts } from '../migrations/index.js'
+import {
+  ADDON_MIGRATIONS,
+  type PipelineAnalyticsMigrationPorts,
+  RETRAIN_VERDICT_FRAMES_MIGRATION_ID,
+} from '../migrations/index.js'
+import { NcDetectionVerdictLedger } from '../notification-center/detection-verdict-ledger.js'
+import { copyVerdictFrame } from './boot/verdict-frame-copy.js'
 import { readRawKeys } from '../migrations/split-enabled-key.js'
 import { BUILTIN_CLIP_MODELS } from '../shared/clip/clip-model-registry.js'
 import { encodeClipQuery, pinClipRebuild, resolveClipSearchPlan } from './clip-space-plan.js'
@@ -3377,6 +3385,11 @@ export default class PipelineAnalyticsAddon
     const storage = await step('resolveMediaStorage', () => this.resolveMediaStorage(logger))
     // Stores + detectors + sensor plumbing — constructed in the pre-S7 order.
     const stores = await step('buildStores', () => this.buildStores(api, logger, storage))
+    // The corpus and the alias store exist now: the verdict-marked tracks that
+    // hold no frame get one, BEFORE the centre loads its verdict ledger.
+    if (this.localOwnNodeId() === 'hub') {
+      await step('retrainBackfill', () => this.runRetrainBackfillMigration())
+    }
 
     // Frame-based event/track media: resolve the detection frame the detector
     // ran on (over tRPC via the runner's `getNativeCrop`, routed by
@@ -3947,12 +3960,38 @@ export default class PipelineAnalyticsAddon
     return this.collectionsBootInstance
   }
 
-  /** The addon's migration catalogue (D987), bound to the notification kinds. */
+  /**
+   * The addon's migration catalogue (D987), bound to the notification kinds.
+   *
+   * Two phases of ONE catalogue, because the engine replaces an owner's
+   * catalogue on every declare: the settings-backed migrations run before the
+   * stores exist; the retrain backfill needs the corpus and the alias store, so
+   * it runs once `buildStores` has built them.
+   */
   private async runTemplateMigrations(): Promise<void> {
+    await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, this.migrationPorts()), {
+      only: ADDON_MIGRATIONS.map((m) => m.meta.id).filter(
+        (id) => id !== RETRAIN_VERDICT_FRAMES_MIGRATION_ID,
+      ),
+    })
+  }
+
+  /** The retrain backfill: verdict-marked tracks without a frame get one (D987). */
+  private async runRetrainBackfillMigration(): Promise<void> {
+    await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, this.migrationPorts()), {
+      only: [RETRAIN_VERDICT_FRAMES_MIGRATION_ID],
+    })
+  }
+
+  private migrationPorts(): PipelineAnalyticsMigrationPorts {
     const records = this.requireRecords()
     const settings = this.ctx.settings
     if (settings === undefined) throw new Error('the per-device settings store is unavailable')
-    const ports: PipelineAnalyticsMigrationPorts = {
+    const verdicts = new NcDetectionVerdictLedger({
+      records,
+      logger: this.ctx.logger.child('detection-verdicts'),
+    })
+    return {
       rules: records.kind(ncRecordKinds['rules']),
       timelapseRules: records.kind(ncRecordKinds['timelapse-rules']),
       texts: records.kind(ncRecordKinds.texts),
@@ -3966,8 +4005,26 @@ export default class PipelineAnalyticsAddon
         }
         return found
       },
+      // Read only by the retrain backfill, which runs after the stores exist.
+      verdicts,
+      resolveTrackAlias: (trackId) => this.trackAliasStore?.resolve(trackId) ?? Promise.resolve(null),
+      listStagedTracks: async () =>
+        (await this.listRetrainStaging({ limit: RETRAIN_BACKFILL_STAGING_LIMIT })).map((t) => ({
+          deviceId: t.deviceId,
+          trackId: t.trackId,
+          frameCount: t.frameCount,
+        })),
+      copyBestFrame: (input) =>
+        copyVerdictFrame(
+          {
+            listRetrainFrames: (ask) => this.listRetrainFrames(ask),
+            selectRetrainFrames: (ask) => this.selectRetrainFrames(ask),
+          },
+          this.ctx.logger,
+          input,
+        ),
+      logger: this.ctx.logger,
     }
-    await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, ports))
   }
 
   /** The warn a retired cluster face key gets as the migration deletes it (D222, D662). */
