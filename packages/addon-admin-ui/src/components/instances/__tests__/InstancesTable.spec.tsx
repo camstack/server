@@ -688,6 +688,24 @@ describe('InstancesTable extensions', () => {
     expect(await screen.findByText('lead for a')).toBeTruthy()
   })
 
+  it("opens the new record's editor after a create, so its lead shows there and not before", async () => {
+    h.create.mockImplementationOnce(async () => {
+      h.records['smtp-nodemailer'] = [
+        ...(h.records['smtp-nodemailer'] ?? []),
+        { id: 'x', name: 'New relay', configured: false, enabled: true, formValues: {} },
+      ]
+      return { id: 'x' }
+    })
+    renderPanel('?instance=smtp-nodemailer:%2B', {
+      lead: (row) => <p>{`lead for ${row.id}`}</p>,
+    })
+    expect(await screen.findByText('Add SMTP')).toBeTruthy()
+    expect(screen.queryByText(/lead for/)).toBeNull()
+    fireEvent.click(await screen.findByRole('button', { name: 'Create' }))
+    expect(await screen.findByText('lead for x')).toBeTruthy()
+    expect(window.location.search).toContain('instance=smtp-nodemailer%3Ax')
+  })
+
   it('shows no lead when the prop is absent', async () => {
     renderPanel('?instance=smtp-nodemailer:a')
     expect(await screen.findByText('Edit Relay A')).toBeTruthy()

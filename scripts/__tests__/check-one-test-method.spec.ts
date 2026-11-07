@@ -20,11 +20,11 @@ const LOGIN = `
 
 describe('check-one-test-method', () => {
   it('reads test and validate…Credentials methods, nothing else', () => {
-    expect(testMethodsOf(INSTANCES + SECOND + LOGIN + '    getFoo: method(\n    runAudioTest: method(\n')).toEqual([
-      'testInstance',
-      'testConnection',
-      'validateCredentials',
-    ])
+    expect(
+      testMethodsOf(
+        INSTANCES + SECOND + LOGIN + '    getFoo: method(\n    runAudioTest: method(\n',
+      ),
+    ).toEqual(['testInstance', 'testConnection', 'validateCredentials'])
   })
 
   it('accepts testInstance, a permanent and a pending entry', () => {
@@ -32,10 +32,10 @@ describe('check-one-test-method', () => {
       [
         cap('integration-instances.cap.ts', INSTANCES),
         cap('user-management.cap.ts', LOGIN),
-        cap('mesh-network.cap.ts', SECOND),
+        cap('legacy-probe.cap.ts', SECOND),
       ],
       { 'user-management.cap.ts:validateCredentials': 'login' },
-      { 'mesh-network.cap.ts:testConnection': 'folds in at step 5/6' },
+      { 'legacy-probe.cap.ts:testConnection': 'a pending fixture entry' },
     )
     expect(found).toEqual([])
   })

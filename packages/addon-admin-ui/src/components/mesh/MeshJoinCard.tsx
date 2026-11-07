@@ -3,7 +3,6 @@ import { useCallback, useState, type ReactElement } from 'react'
 import { LogIn, LogOut, Loader2, X, ShieldOff } from 'lucide-react'
 import {
   Button,
-  Badge,
   useMeshNetworkStartLogin,
   useMeshNetworkLeave,
   useMeshNetworkLogout,
@@ -12,36 +11,15 @@ import {
 import { useQueryClient } from '@tanstack/react-query'
 import { MeshStatusSchema } from '@camstack/types'
 import { useTranslation } from 'react-i18next'
-import { STATUS_BADGE_CLASS } from '../integration-hub/addon-controls'
+import { MeshStatusBadges } from './MeshStatusBadges'
 import { useMeshStatus } from './use-mesh-status'
 
 export function MeshJoinCard({ addonId }: { readonly addonId: string }): ReactElement {
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <ProviderStatusBadges addonId={addonId} />
+      <MeshStatusBadges addonId={addonId} />
       <ProviderPrimaryAction addonId={addonId} />
     </div>
-  )
-}
-
-// ── Status badges (Joined / peer count) ─────────────────────────────
-
-function ProviderStatusBadges({ addonId }: { readonly addonId: string }): ReactElement {
-  const { t } = useTranslation()
-  const { status } = useMeshStatus(addonId)
-  return (
-    <>
-      <Badge variant={status.joined ? 'success' : 'default'} className={STATUS_BADGE_CLASS}>
-        {status.joined
-          ? t('system.meshNetworks.joined', 'Joined')
-          : t('system.meshNetworks.notJoined', 'Not joined')}
-      </Badge>
-      {status.joined && (
-        <Badge className={STATUS_BADGE_CLASS}>
-          {t('common.peers', { count: status.peerCount })}
-        </Badge>
-      )}
-    </>
   )
 }
 

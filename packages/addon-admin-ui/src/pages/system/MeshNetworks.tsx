@@ -13,6 +13,7 @@ import { Network as NetworkIcon } from 'lucide-react'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import { InstancesTable } from '../../components/instances/InstancesTable'
+import { MeshStatusBadges } from '../../components/mesh/MeshStatusBadges'
 import { MeshJoinCard } from '../../components/mesh/MeshJoinCard'
 import { MeshStatusPanel } from '../../components/mesh/MeshStatusPanel'
 
@@ -39,6 +40,17 @@ export function MeshNetworksPage(): ReactElement {
       )}
       addLabel={t('system.meshNetworks.addMesh', 'Add mesh')}
       install={{ capability: CAPABILITY, label: t('system.meshNetworks.addMesh', 'Add mesh') }}
+      extraColumns={[
+        {
+          key: 'mesh-state',
+          header: t('system.meshNetworks.connectionState', 'Mesh'),
+          notSortableReason: t(
+            'system.meshNetworks.connectionStateNotSortable',
+            'Live state of the tailnet, not a stored value.',
+          ),
+          render: (row) => <MeshStatusBadges addonId={row.addonId} />,
+        },
+      ]}
       lead={(row) => (
         <div className="flex flex-col gap-3">
           <MeshJoinCard addonId={row.addonId} />

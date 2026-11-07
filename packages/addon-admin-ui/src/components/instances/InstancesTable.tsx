@@ -27,7 +27,15 @@ import {
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link2, Link2Off, Loader2, Pencil, Play, Plus, Trash2, type LucideIcon } from 'lucide-react'
-import { useCallback, useMemo, useState, type ReactElement, type ReactNode } from 'react'
+import {
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentProps,
+  type ReactElement,
+  type ReactNode,
+} from 'react'
 import { useTranslation } from 'react-i18next'
 import { fillBrokerConnectPath, startServerNavigation } from '../../lib/broker-oauth-popup'
 import {
@@ -609,6 +617,7 @@ export function InstancesTable({
           data={data}
           nameOf={nameOf}
           onClose={form.close}
+          onOpen={(addonId, id) => form.openEdit(formatEditRef(addonId, id))}
           {...(lead !== undefined ? { lead } : {})}
           {...(typedId !== undefined ? { typedId } : {})}
         />
@@ -672,6 +681,7 @@ function EditDialog({
   data,
   nameOf,
   onClose,
+  onOpen,
   lead,
   typedId,
 }: {
@@ -679,6 +689,8 @@ function EditDialog({
   readonly data: InstancesData
   readonly nameOf: (addonId: string) => string
   readonly onClose: () => void
+  /** Opens a record's editor; a create hands over to it so the record's lead (setup, pairing) shows. */
+  readonly onOpen: (addonId: string, id: string) => void
   readonly lead?: (row: InstanceRow) => ReactNode
   readonly typedId?: TypedIdRuleFor
 }): ReactElement | null {
@@ -699,14 +711,43 @@ function EditDialog({
       row.kind === 'instance' && row.addonId === ref.addonId && row.id === instance?.id,
   )
   return (
-    <InstanceEditorDialog
+    <EditorForRecord
       addonId={ref.addonId}
       {...(lead !== undefined && leadRow !== undefined ? { lead: lead(leadRow) } : {})}
       providerName={nameOf(ref.addonId)}
       description={holder.description}
       instance={instance}
       onClose={onClose}
+      onOpen={onOpen}
       {...(typedId !== undefined ? { typedId } : {})}
+    />
+  )
+}
+
+/**
+ * The editor of one record, or of a record being created: a create that succeeds closes itself
+ * and opens the new record's editor, because the lead (a Connect, a pairing) only exists for a
+ * record and a first-time operator would not find it otherwise.
+ */
+function EditorForRecord(
+  props: ComponentProps<typeof InstanceEditorDialog> & {
+    readonly onOpen: (addonId: string, id: string) => void
+  },
+): ReactElement {
+  const { onOpen, onClose, onSaved, ...rest } = props
+  const created = useRef<string | null>(null)
+  const creating = props.instance === null
+  return (
+    <InstanceEditorDialog
+      {...rest}
+      onSaved={(id) => {
+        if (creating) created.current = id
+        onSaved?.(id)
+      }}
+      onClose={() => {
+        if (created.current !== null) onOpen(props.addonId, created.current)
+        else onClose()
+      }}
     />
   )
 }

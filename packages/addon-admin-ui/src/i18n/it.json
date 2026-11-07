@@ -232,7 +232,10 @@
       "justNow": "proprio ora",
       "agoMin": "{{count}}m fa",
       "agoHour": "{{count}}h fa",
-      "agoDay": "{{count}}g fa"
+      "agoDay": "{{count}}g fa",
+      "error": "Errore",
+      "connectionState": "Mesh",
+      "connectionStateNotSortable": "Stato in tempo reale della tailnet, non un valore salvato."
     },
     "networkAddresses": {
       "pinWhichHostInterfacesExist": "Fissa quali interfacce dell'host esistono, poi spunta a cosa serve ciascun indirizzo. Aggiungi un indirizzo personalizzato quando questo hub è raggiungibile a uno che non riesce a rilevare.",

@@ -232,7 +232,10 @@
       "justNow": "just now",
       "agoMin": "{{count}}m ago",
       "agoHour": "{{count}}h ago",
-      "agoDay": "{{count}}d ago"
+      "agoDay": "{{count}}d ago",
+      "error": "Error",
+      "connectionState": "Mesh",
+      "connectionStateNotSortable": "Live state of the tailnet, not a stored value."
     },
     "networkAddresses": {
       "pinWhichHostInterfacesExist": "Pin which host interfaces exist, then tick what each address is used for. Add a custom address when this hub is reached at one it cannot detect.",
