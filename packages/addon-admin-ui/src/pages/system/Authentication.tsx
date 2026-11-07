@@ -27,6 +27,7 @@ import {
   useAddonsListCapabilityProviders,
 } from '@camstack/ui-library'
 import { NodeAddonsSettingsPanel } from '../../components/settings/NodeAddonsSettingsPanel'
+import { BootstrapSettingsForm } from '../../components/system/BootstrapSettingsForm'
 import { AddonIntegrationBody } from '../../components/integration-hub/AddonIntegrationBody'
 import { STATUS_BADGE_CLASS } from '../../components/integration-hub/addon-controls'
 import { IntegrationHub } from '../../components/integration-hub/IntegrationHub'
@@ -194,7 +195,9 @@ export function AuthenticationPage() {
     { capName: AUTH_CAPS[1].capName },
     { refetchInterval: PROVIDERS_POLL_INTERVAL_MS },
   )
-  const addonsQuery = useAddonsList(undefined, { refetchInterval: PROVIDERS_POLL_INTERVAL_MS })
+  const addonsQuery = useAddonsList(undefined, {
+    refetchInterval: PROVIDERS_POLL_INTERVAL_MS,
+  })
 
   const displayNames = useMemo(
     () => buildAddonDisplayNameMap(addonsQuery.data ?? []),
@@ -222,7 +225,10 @@ export function AuthenticationPage() {
     {
       id: 'authentication',
       label: t('system.authentication.authenticationProviders', 'Authentication providers'),
-      install: { capability: AUTH_CAPS[0].capName, label: t(AUTH_SECTION.installLabelKey) },
+      install: {
+        capability: AUTH_CAPS[0].capName,
+        label: t(AUTH_SECTION.installLabelKey),
+      },
       entries: providers.map((p) => ({
         id: p.addonId,
         name: p.displayName,
@@ -292,8 +298,8 @@ export function AuthenticationPage() {
 /**
  * The hub-wide sign-in policy: token lifetimes, trusted proxies, trusted
  * networks and the allowed browser origins. They are the `system-config`
- * addon's `system-config-auth` section, written to its own store; this is the
- * only place the section is drawn (System → Settings omits it).
+ * addon's `system-config-auth` section, served by its bootstrap-form actions;
+ * this is the only place the section is drawn (System → Settings omits it).
  */
 export const AUTH_POLICY_SECTION_ID = 'system-config-auth'
 
@@ -306,10 +312,7 @@ export function AuthenticationPolicyCard(): React.ReactElement {
       icon={ShieldCheck}
     >
       <div className={SECTION_BODY}>
-        <NodeAddonsSettingsPanel
-          nodeId="hub"
-          addonIds={['system-config']}
-          level="global"
+        <BootstrapSettingsForm
           sectionIds={[AUTH_POLICY_SECTION_ID]}
           hideSectionChrome
           emptyMessage={t(

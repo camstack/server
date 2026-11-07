@@ -1,7 +1,7 @@
 /**
  * System -> Settings, the Authentication section of the `system-config`
  * addon (token lifetimes, trusted proxies/networks, allowed browser origins
- * - D707). The section is the one the addon's `getGlobalSettings` draws;
+ * - D707). The section is the one the addon's `getBootstrapForm` action returns;
  * invented values only. `withCors: false` leaves out the CORS fields, for the
  * "before" shot (`auth-settings-before.ts`).
  */
@@ -165,8 +165,10 @@ export function authSettingsHandlers(withCors: boolean) {
 
   return {
     'nodes.topology': [hub],
+    // system-config serves its form through the bootstrap action pair; the passkey section
+    // still comes from the addon-level settings read (auth-webauthn).
+    'mut:addons.custom': { sections: [section] },
     'addonSettings.getGlobalSettings': (input: { addonId?: string }) => {
-      if (input.addonId === 'system-config') return { sections: [section] }
       if (input.addonId === 'auth-webauthn') return { sections: [WEBAUTHN_SECTION] }
       return null
     },

@@ -7,7 +7,6 @@
     "m5-declarers": {
     },
     "m5-addon-blobs": {
-      "packages/system/src/builtins/system-config/system-config.addon.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings, updateGlobalSettings]"
     },
     "m5-framework": {
       "packages/addon-admin-ui/src/components/settings/NodeAddonsSettingsPanel.tsx:addon-level-settings": "the carrier of the addon-level hooks (base class, cap, router, forwarding, UI form); P8 deletes it (D986) [getIntegrationSettings, getGlobalSettings]",

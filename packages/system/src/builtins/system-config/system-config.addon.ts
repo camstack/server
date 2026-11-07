@@ -42,6 +42,7 @@ import {
 } from '../../kernel/moleculer/mesh-mtls/index.js'
 /** How often superseded and expired mesh certificate rows are reaped. */
 const MESH_REAP_MS = 24 * 3_600_000
+import { bootstrapFormActions, BootstrapFormSaveInputSchema } from './bootstrap-form-actions.js'
 import { systemConfigMeshActions } from './mesh-actions.js'
 import { systemConfigRecordKinds } from './record-kinds.js'
 
@@ -101,7 +102,7 @@ const SYSTEM_SECRET_OWNER = 'system'
 /** The form key (and the `server` section key) of the hub's human name (D861). */
 const SERVER_NAME_FIELD = 'name'
 
-/** Keys that map 1:1 to a given yml section — used by `updateGlobalSettings`
+/** Keys that map 1:1 to a given yml section — used by `saveBootstrapForm`
  *  to figure out which section owns each key in the incoming patch. */
 const KEY_TO_SECTION: Readonly<Record<string, string>> = {
   // server (read-only)
@@ -159,17 +160,26 @@ export class SystemConfigAddon extends BaseAddon {
       secrets: this.systemSecrets(),
       readClusterSection: async () => (await this.ctx.settings?.getSection('cluster')) ?? {},
       writeMeshCaCert: async (certPem) => {
-        await this.ctx.settings!.setSection('cluster', { [MESH_CA_FIELD]: certPem })
+        await this.ctx.settings!.setSection('cluster', {
+          [MESH_CA_FIELD]: certPem,
+        })
       },
       logger: this.ctx.logger,
       onReady: (ca) => this.onMeshCaReady(ca),
     })
     await this.meshCaKeeper.start()
 
-    this.ctx.logger.info('Initialized — exposes yml-backed sections via getGlobalSettings')
+    this.ctx.logger.info(
+      'Initialized — exposes the yml-backed bootstrap form via getBootstrapForm / saveBootstrapForm',
+    )
     return {
-      customActions: systemConfigMeshActions,
+      customActions: { ...systemConfigMeshActions, ...bootstrapFormActions },
       actionHandlers: {
+        getBootstrapForm: async (): Promise<ConfigUISchemaWithValues> => this.getBootstrapForm(),
+        saveBootstrapForm: async (input: unknown): Promise<{ readonly success: true }> => {
+          await this.saveBootstrapForm(BootstrapFormSaveInputSchema.parse(input).patch)
+          return { success: true as const }
+        },
         mintAgentUiUnlockTicket: async (
           input: unknown,
         ): ReturnType<SystemConfigAddon['mintAgentUiUnlock']> =>
@@ -241,7 +251,9 @@ export class SystemConfigAddon extends BaseAddon {
       }
       setProcessMeshCertificateRegistry(registry)
       if (restored > 0) {
-        this.ctx.logger.info('Mesh revocations restored into the CRL', { meta: { restored } })
+        this.ctx.logger.info('Mesh revocations restored into the CRL', {
+          meta: { restored },
+        })
       }
       return registry
     } catch (err: unknown) {
@@ -363,7 +375,10 @@ export class SystemConfigAddon extends BaseAddon {
       }
     }
     // ES256 by the mesh CA key (D857): the agent verifies it with the CA it pinned at pairing.
-    const ticket = mintAgentUiUnlockTicket({ caKeyPem: ca.keyPem, nodeId: input.nodeId })
+    const ticket = mintAgentUiUnlockTicket({
+      caKeyPem: ca.keyPem,
+      nodeId: input.nodeId,
+    })
     const payloadJson = Buffer.from(ticket.split('.')[1] ?? '', 'base64url').toString('utf8')
     const exp = (JSON.parse(payloadJson) as { exp?: number }).exp ?? 0
     const dashboardUrl =
@@ -397,9 +412,9 @@ export class SystemConfigAddon extends BaseAddon {
     return forOwner === null ? null : forOwner(SYSTEM_SECRET_OWNER)
   }
 
-  // ── Three-level settings API (only `getGlobalSettings` is implemented) ──
+  // ── The bootstrap form (served by the getBootstrapForm / saveBootstrapForm actions) ──
 
-  private buildGlobalSchema(): ConfigUISchema {
+  private buildBootstrapSchema(): ConfigUISchema {
     return {
       sections: [
         {
@@ -582,8 +597,9 @@ export class SystemConfigAddon extends BaseAddon {
     }
   }
 
-  async getGlobalSettings(): Promise<ConfigUISchemaWithValues> {
-    const schema = this.buildGlobalSchema()
+  /** The hydrated bootstrap form (`getBootstrapForm`). A section that cannot be read fails the call. */
+  async getBootstrapForm(): Promise<ConfigUISchemaWithValues> {
+    const schema = this.buildBootstrapSchema()
     if (!this.ctx.settings) {
       return hydrateSchema(schema, {})
     }
@@ -613,19 +629,6 @@ export class SystemConfigAddon extends BaseAddon {
   }
 
   /**
-   * The admin UI / `addonSettings` cap prefer {@link BaseAddon.updateGlobalSettingsAsOperator}.
-   * That BaseAddon path writes the generic addon store and never reaches the
-   * yml sections. Route the operator write through the same section-aware path
-   * as {@link updateGlobalSettings}.
-   */
-  override async updateGlobalSettingsAsOperator(
-    patch: Record<string, unknown>,
-    _nodeId?: string,
-  ): Promise<void> {
-    await this.updateGlobalSettings(patch)
-  }
-
-  /**
    * The value to store for a `name` in a save, or `undefined` for "leave the row
    * alone". The whole form posts every field, so an empty box on a hub that was
    * never named is the NORMAL case and must write nothing (D861: a seed never
@@ -647,7 +650,8 @@ export class SystemConfigAddon extends BaseAddon {
     return parsed.data
   }
 
-  async updateGlobalSettings(patch: Record<string, unknown>): Promise<void> {
+  /** Validate and write the patch (`saveBootstrapForm`, admin-only). A refused patch writes nothing. */
+  async saveBootstrapForm(patch: Record<string, unknown>): Promise<void> {
     if (!this.ctx.settings) {
       throw new Error('system-config: ctx.settings not available — cannot write sections')
     }
@@ -692,7 +696,9 @@ export class SystemConfigAddon extends BaseAddon {
         continue
       }
       if (section === 'server') {
-        this.ctx.logger.warn('update ignored read-only server-section key', { meta: { key } })
+        this.ctx.logger.warn('update ignored read-only server-section key', {
+          meta: { key },
+        })
         continue
       }
       if (CIDR_LIST_KEYS.has(key)) {

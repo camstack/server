@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Authentication, Settings and the first-login server name read and save the server name and sign-in policy through the system-config bootstrap form actions
+
 ## [1.2.606] - 2026-11-07
 
 ### Changed

@@ -1089,13 +1089,12 @@ export function NodeAddonsSettingsPanel({
 /**
  * Render one tab per addon contributing settings. Previously the panel
  * stacked every addon's FormBuilder vertically in a single page; with
- * 8-10 addons (system-config + every installed feature) the page grew
+ * 8-10 addons (every installed feature) the page grew
  * unwieldy and operators had to scroll past every section just to reach
  * the one they wanted. A tab bar — same shape as the device-details
  * aggregate — scopes the form to one addon at a time.
  *
- * Sort order: `system-config` first (cluster-wide yml sections most
- * operators check first), then alphabetical by displayName.
+ * Sort order: alphabetical by displayName.
  *
  * Pending state preservation: every pane is mounted unconditionally;
  * the inactive ones are hidden via `display: none`. AddonFormPane's
@@ -1142,8 +1141,6 @@ function TabbedAddonPanes({
 }: TabbedAddonPanesProps) {
   const sorted = useMemo(() => {
     return [...entries].toSorted((a, b) => {
-      if (a.addonId === 'system-config') return -1
-      if (b.addonId === 'system-config') return 1
       const an = displayNames.get(a.addonId) ?? a.addonId
       const bn = displayNames.get(b.addonId) ?? b.addonId
       return an.localeCompare(bn)

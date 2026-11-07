@@ -25,6 +25,21 @@ vi.mock('../../../components/settings/NodeAddonsSettingsPanel', () => ({
   ),
 }))
 
+interface FormProps {
+  readonly sectionIds?: readonly string[]
+  readonly omitSectionIds?: readonly string[]
+}
+
+vi.mock('../../../components/system/BootstrapSettingsForm', () => ({
+  BootstrapSettingsForm: (props: FormProps) => (
+    <div
+      data-testid="bootstrap-form"
+      data-sections={(props.sectionIds ?? []).join(',')}
+      data-omit={(props.omitSectionIds ?? []).join(',')}
+    />
+  ),
+}))
+
 vi.mock('../../../components/settings/SiteLocationCard', () => ({
   SiteLocationCard: () => null,
 }))
@@ -35,7 +50,14 @@ vi.mock('@camstack/ui-library', async () => {
     ...real,
     useClusterNodes: () => ({
       isLoading: false,
-      nodes: [{ id: 'hub', isHub: true, isOnline: true, addons: [{ addonId: 'system-config' }] }],
+      nodes: [
+        {
+          id: 'hub',
+          isHub: true,
+          isOnline: true,
+          addons: [{ addonId: 'system-config' }, { addonId: 'auth-webauthn' }],
+        },
+      ],
     }),
   }
 })
@@ -53,25 +75,27 @@ import { SettingsPage } from '../Settings'
 afterEach(cleanup)
 
 describe('system-config auth section placement', () => {
-  it('Identity -> Authentication draws the system-config-auth section', () => {
+  it('Identity -> Authentication draws the system-config-auth section from the bootstrap form', () => {
     render(
       <MemoryRouter>
         <AuthenticationPolicyCard />
       </MemoryRouter>,
     )
-    const panel = screen.getByTestId('panel')
-    expect(panel.dataset.addons).toBe('system-config')
-    expect(panel.dataset.sections).toBe('system-config-auth')
+    expect(screen.getByTestId('bootstrap-form').dataset.sections).toBe('system-config-auth')
+    // system-config has no addon-level settings pane any more
+    expect(screen.queryByTestId('panel')).toBeNull()
   })
 
-  it('System -> Settings omits the section', () => {
+  it('System -> Settings draws the bootstrap form without the auth section, and no system-config pane', () => {
     render(
       <MemoryRouter>
         <SettingsPage />
       </MemoryRouter>,
     )
-    const panel = screen.getByTestId('panel')
-    expect(panel.dataset.omit?.split(',')).toContain('system-config-auth')
+    expect(screen.getByTestId('bootstrap-form').dataset.omit?.split(',')).toContain(
+      'system-config-auth',
+    )
+    expect(screen.getByTestId('panel').dataset.addons).not.toContain('system-config')
   })
 
   it('Identity -> Authentication draws the webauthn section of auth-webauthn', () => {

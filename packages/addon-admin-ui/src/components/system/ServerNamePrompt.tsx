@@ -5,8 +5,8 @@
  * one by itself. After an ADMIN signs in and the name is still unset, this
  * asks once, prefilled with the machine hostname the hub falls back to:
  *
- *   - Save writes `server.name` through the same `system-config` settings
- *     write the System -> Settings form uses (one writer, one validation);
+ *   - Save writes `server.name` through the same `saveBootstrapForm`
+ *     action the System -> Settings form uses (one writer, one validation);
  *   - Later closes it for this browser session only (sessionStorage), so the
  *     next session asks again until a name exists.
  *
@@ -25,7 +25,6 @@ import {
   DialogTitle,
   FormField,
   Input,
-  useAddonSettingsUpdateGlobalSettings,
 } from '@camstack/ui-library'
 import { SERVER_NAME_MAX_LENGTH, type ServerNameInfo, ServerNameSchema } from '@camstack/types'
 import { useQueryClient } from '@tanstack/react-query'
@@ -33,11 +32,9 @@ import { Loader2 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../contexts/auth-context'
+import { useSaveBootstrapForm } from '../../hooks/use-bootstrap-form'
 import { useServerName } from '../../hooks/use-server-name'
 
-/** The settings addon that owns `server.name`, and its hub node. */
-const SYSTEM_CONFIG_ADDON_ID = 'system-config'
-const HUB_NODE_ID = 'hub'
 const DISMISS_KEY = 'camstack_server_name_prompt_dismissed'
 
 export function isServerNamePromptDismissed(): boolean {
@@ -70,7 +67,13 @@ export function ServerNamePrompt() {
   const { info } = useServerName()
   const [dismissed, setDismissed] = useState(isServerNamePromptDismissed)
 
-  if (!shouldPromptForServerName({ isAdmin: user?.isAdmin === true, info, dismissed })) {
+  if (
+    !shouldPromptForServerName({
+      isAdmin: user?.isAdmin === true,
+      info,
+      dismissed,
+    })
+  ) {
     return null
   }
   return (
@@ -93,7 +96,7 @@ function ServerNameDialog({
 }) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
-  const save = useAddonSettingsUpdateGlobalSettings()
+  const save = useSaveBootstrapForm()
   const [value, setValue] = useState(suggestion)
   const [error, setError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -109,13 +112,8 @@ function ServerNameDialog({
     }
     setError(null)
     try {
-      await save.mutateAsync({
-        addonId: SYSTEM_CONFIG_ADDON_ID,
-        nodeId: HUB_NODE_ID,
-        patch: { name: parsed.data },
-      })
+      await save.mutateAsync({ patch: { name: parsed.data } })
       await queryClient.invalidateQueries({ queryKey: [['system', 'info']] })
-      await queryClient.invalidateQueries({ queryKey: [['addonSettings']] })
     } catch (err: unknown) {
       setError(err instanceof Error && err.message.length > 0 ? err.message : 'Could not save')
     }

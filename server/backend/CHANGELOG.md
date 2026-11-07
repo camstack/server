@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- System config: the server name and sign-in policy forms are served by a hub-only action pair instead of the addon-level settings hooks; nothing changes for the operator
 ## [1.2.796] - 2026-11-07
 
 ### Changed

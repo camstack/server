@@ -27,10 +27,14 @@ import { Settings as SettingsIcon } from 'lucide-react'
 import { AdminPage } from '../../components/AdminPage'
 import { AUTH_POLICY_SECTION_ID, WEBAUTHN_SECTION_ID } from './Authentication'
 import { NodeAddonsSettingsPanel } from '../../components/settings/NodeAddonsSettingsPanel'
+import { BootstrapSettingsForm } from '../../components/system/BootstrapSettingsForm'
 import { HotkeysCard } from '../../components/settings/HotkeysCard'
 import { SiteLocationCard } from '../../components/settings/SiteLocationCard'
 import { UnitsSection } from '../../components/settings/UnitsSection'
 import { useTranslation } from 'react-i18next'
+
+/** The hub addon whose form is the bootstrap form, not an addon-settings pane. */
+const SYSTEM_CONFIG_ADDON_ID = 'system-config'
 
 export function SettingsPage() {
   const { t } = useTranslation()
@@ -38,7 +42,10 @@ export function SettingsPage() {
   const { nodes: clusterNodes, isLoading } = useClusterNodes()
 
   const hub = clusterNodes.find((n) => n.isHub && n.isOnline)
-  const addonIds = hub?.addons.map((a) => a.addonId) ?? []
+  // `system-config` is not an addon-settings addon: its form is the bootstrap form below.
+  const addonIds = (hub?.addons.map((a) => a.addonId) ?? []).filter(
+    (id) => id !== SYSTEM_CONFIG_ADDON_ID,
+  )
 
   return (
     <AdminPage embedded>
@@ -63,12 +70,21 @@ export function SettingsPage() {
           {t('admin.system.settings.noAddonsInstalledOnThe', 'No addons installed on the hub yet.')}
         </div>
       ) : (
-        <NodeAddonsSettingsPanel
-          nodeId={hub.id}
-          addonIds={addonIds}
-          level="global"
-          omitSectionIds={[AUTH_POLICY_SECTION_ID, WEBAUTHN_SECTION_ID]}
-        />
+        <>
+          <BootstrapSettingsForm
+            omitSectionIds={[AUTH_POLICY_SECTION_ID]}
+            emptyMessage={t(
+              'system.settings.bootstrapUnavailable',
+              'Not available — the addon that owns the server settings did not answer.',
+            )}
+          />
+          <NodeAddonsSettingsPanel
+            nodeId={hub.id}
+            addonIds={addonIds}
+            level="global"
+            omitSectionIds={[AUTH_POLICY_SECTION_ID, WEBAUTHN_SECTION_ID]}
+          />
+        </>
       )}
       <section aria-labelledby="settings-per-user" className="mt-3 sm:mt-4 space-y-3 sm:space-y-4">
         <h2

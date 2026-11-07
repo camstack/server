@@ -1261,7 +1261,10 @@
       "noProvidersDescription": "Installa un addon provider di training (ad esempio @camstack/addon-training) per addestrare sul tuo account GPU-cloud.",
       "addAccount": "Aggiungi account"
     },
-    "cameraGrids": "Griglie di camere"
+    "cameraGrids": "Griglie di camere",
+    "bootstrapForm": {
+      "saveFailed": "Impossibile salvare"
+    }
   },
   "common": {
     "save": "Salva",
@@ -6774,7 +6777,8 @@
         "description": "Le scorciatoie attive in questa pagina. Non si possono modificare.",
         "empty": "Nessuna scorciatoia attiva in questa pagina.",
         "unnamed": "Scorciatoia"
-      }
+      },
+      "bootstrapUnavailable": "Non disponibile: l'addon che gestisce le impostazioni del server non ha risposto."
     }
   },
   "certificates": {

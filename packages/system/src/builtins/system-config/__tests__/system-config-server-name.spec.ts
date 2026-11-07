@@ -67,14 +67,14 @@ function fieldValue(form: unknown, key: string): unknown {
 describe('System -> Settings: server name', () => {
   it('is never written by the addon itself (a seed never overwrites)', async () => {
     const { addon, setSection } = await started()
-    await addon.getGlobalSettings()
+    await addon.getBootstrapForm()
     expect(setSection).not.toHaveBeenCalled()
     await addon.shutdown()
   })
 
   it('is drawn on the form as an editable field', async () => {
     const { addon } = await started()
-    const form = JSON.stringify(await addon.getGlobalSettings())
+    const form = JSON.stringify(await addon.getBootstrapForm())
     expect(form).toContain('"key":"name"')
     expect(form).toContain('Server name')
     await addon.shutdown()
@@ -82,19 +82,19 @@ describe('System -> Settings: server name', () => {
 
   it('saves a trimmed name into the server section and reads it back', async () => {
     const { addon, sections } = await started()
-    await addon.updateGlobalSettings({ name: '  Casa Napoli  ' })
+    await addon.saveBootstrapForm({ name: '  Casa Napoli  ' })
     expect(sections.get('server')).toEqual({ name: 'Casa Napoli' })
-    expect(fieldValue(await addon.getGlobalSettings(), 'name')).toBe('Casa Napoli')
+    expect(fieldValue(await addon.getBootstrapForm(), 'name')).toBe('Casa Napoli')
     await addon.shutdown()
   })
 
   it('refuses a name that is too long, with control characters, or blank-by-spaces on a set name', async () => {
     const { addon, sections } = await started()
     await expect(
-      addon.updateGlobalSettings({ name: 'x'.repeat(SERVER_NAME_MAX_LENGTH + 1) }),
+      addon.saveBootstrapForm({ name: 'x'.repeat(SERVER_NAME_MAX_LENGTH + 1) }),
     ).rejects.toThrow(/at most 48/)
-    await expect(addon.updateGlobalSettings({ name: 'Casa\u0007' })).rejects.toThrow(/control/)
-    await expect(addon.updateGlobalSettings({ name: 'Casa\nNapoli' })).rejects.toThrow(/control/)
+    await expect(addon.saveBootstrapForm({ name: 'Casa\u0007' })).rejects.toThrow(/control/)
+    await expect(addon.saveBootstrapForm({ name: 'Casa\nNapoli' })).rejects.toThrow(/control/)
     expect(sections.get('server')).toBeUndefined()
     await addon.shutdown()
   })
@@ -102,28 +102,33 @@ describe('System -> Settings: server name', () => {
   it('accepts exactly the longest name', async () => {
     const { addon, sections } = await started()
     const longest = 'y'.repeat(SERVER_NAME_MAX_LENGTH)
-    await addon.updateGlobalSettings({ name: longest })
+    await addon.saveBootstrapForm({ name: longest })
     expect(sections.get('server')).toEqual({ name: longest })
     await addon.shutdown()
   })
 
   it('an untouched empty field on an unnamed hub writes nothing', async () => {
     const { addon, setSection } = await started()
-    await addon.updateGlobalSettings({ name: '', trustedProxies: [] })
+    await addon.saveBootstrapForm({ name: '', trustedProxies: [] })
     expect(setSection).not.toHaveBeenCalledWith('server', expect.anything())
     await addon.shutdown()
   })
 
   it('clearing a set name stores an empty value, which readers treat as unset', async () => {
     const { addon, sections } = await started({ server: { name: 'Casa' } })
-    await addon.updateGlobalSettings({ name: '   ' })
+    await addon.saveBootstrapForm({ name: '   ' })
     expect(sections.get('server')).toEqual({ name: '' })
     await addon.shutdown()
   })
 
   it('still ignores the read-only connection keys of the server section', async () => {
     const { addon, sections } = await started()
-    await addon.updateGlobalSettings({ port: 1234, host: 'x', dataPath: '/y', name: 'Casa' })
+    await addon.saveBootstrapForm({
+      port: 1234,
+      host: 'x',
+      dataPath: '/y',
+      name: 'Casa',
+    })
     expect(sections.get('server')).toEqual({ name: 'Casa' })
     await addon.shutdown()
   })

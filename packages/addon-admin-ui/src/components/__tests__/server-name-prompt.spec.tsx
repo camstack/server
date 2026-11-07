@@ -9,7 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
  *     hostname default (`isDefault: true`), prefilled with that hostname;
  *   - never for a non-admin, never once a name is set, never while the hub has
  *     not answered;
- *   - Save writes `{ name }` to the system-config settings, trimmed;
+ *   - Save writes `{ name }` through the bootstrap-form save, trimmed;
  *   - Later closes it for this browser session only (sessionStorage).
  */
 
@@ -17,14 +17,9 @@ const mutateAsync = vi.fn<(input: unknown) => Promise<unknown>>()
 let authUser: { id: string; username: string; isAdmin: boolean } | null = null
 let info: { name: string; isDefault: boolean } | null = null
 
-vi.mock('@camstack/ui-library', async () => {
-  const actual =
-    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
-  return {
-    ...actual,
-    useAddonSettingsUpdateGlobalSettings: () => ({ mutateAsync, isPending: false }),
-  }
-})
+vi.mock('../../hooks/use-bootstrap-form', () => ({
+  useSaveBootstrapForm: () => ({ mutateAsync, isPending: false }),
+}))
 
 vi.mock('../../hooks/use-server-name', () => ({
   useServerName: () => ({ info, isLoading: false }),
@@ -115,16 +110,12 @@ describe('ServerNamePrompt', () => {
     expect(screen.queryByText(TITLE)).toBeNull()
   })
 
-  it('Save writes the trimmed name to the system-config settings', async () => {
+  it('Save writes the trimmed name through the bootstrap-form save', async () => {
     renderPrompt()
     fireEvent.change(screen.getByLabelText('Server name'), { target: { value: '  Casa Napoli  ' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(mutateAsync).toHaveBeenCalledTimes(1))
-    expect(mutateAsync).toHaveBeenCalledWith({
-      addonId: 'system-config',
-      nodeId: 'hub',
-      patch: { name: 'Casa Napoli' },
-    })
+    expect(mutateAsync).toHaveBeenCalledWith({ patch: { name: 'Casa Napoli' } })
   })
 
   it('refuses a name with control characters and writes nothing', async () => {

@@ -1261,7 +1261,10 @@
       "noProvidersDescription": "Install a training provider addon (for example @camstack/addon-training) to train on your own GPU-cloud account.",
       "addAccount": "Add account"
     },
-    "cameraGrids": "Camera grids"
+    "cameraGrids": "Camera grids",
+    "bootstrapForm": {
+      "saveFailed": "Could not save"
+    }
   },
   "common": {
     "save": "Save",
@@ -6699,7 +6702,8 @@
         "description": "The shortcuts active on this page. They cannot be changed.",
         "empty": "No shortcuts are active on this page.",
         "unnamed": "Shortcut"
-      }
+      },
+      "bootstrapUnavailable": "Not available — the addon that owns the server settings did not answer."
     }
   },
   "certificates": {

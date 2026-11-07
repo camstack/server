@@ -84,7 +84,7 @@ describe('system-config — TLS-only mesh (D826)', () => {
     const h = harness()
     const addon = new SystemConfigAddon()
     await addon.initialize(h.ctx)
-    const form = await addon.getGlobalSettings()
+    const form = await addon.getBootstrapForm()
     const cluster = form.sections.find((s) => s.id === SYSTEM_CONFIG_CLUSTER_SECTION_ID)
     expect(cluster).toBeDefined()
     const keys = cluster!.fields.map((f) => f.key)
@@ -98,7 +98,7 @@ describe('system-config — TLS-only mesh (D826)', () => {
     const h = harness()
     const addon = new SystemConfigAddon()
     await addon.initialize(h.ctx)
-    await addon.updateGlobalSettings({ meshClearPort: 'off' })
+    await addon.saveBootstrapForm({ meshClearPort: 'off' })
     expect(h.sections.get('cluster')?.['meshClearPort']).toBeUndefined()
     expect(h.logger.warn).toHaveBeenCalledWith(expect.stringMatching(/meshClearPort is retired/))
   })
@@ -119,7 +119,7 @@ describe('system-config — TLS-only mesh (D826)', () => {
     const cluster = h.sections.get('cluster') ?? {}
     expect(cluster['clusterSecret']).toBeUndefined()
     expect(cluster['meshAuth']).toBeUndefined()
-    const form = await addon.getGlobalSettings()
+    const form = await addon.getBootstrapForm()
     const clusterForm = form.sections.find((s) => s.id === SYSTEM_CONFIG_CLUSTER_SECTION_ID)
     expect(clusterForm?.fields.map((f) => f.key)).not.toContain('clusterSecret')
   })
@@ -128,7 +128,10 @@ describe('system-config — TLS-only mesh (D826)', () => {
     const h = harness()
     const addon = new SystemConfigAddon()
     await addon.initialize(h.ctx)
-    await addon.updateGlobalSettings({ clusterSecret: 'x', meshAuth: 'transition' })
+    await addon.saveBootstrapForm({
+      clusterSecret: 'x',
+      meshAuth: 'transition',
+    })
     expect(h.sections.get('cluster')?.['clusterSecret']).toBeUndefined()
     expect(h.sections.get('cluster')?.['meshAuth']).toBeUndefined()
     expect(h.logger.warn).toHaveBeenCalledWith(expect.stringMatching(/clusterSecret is retired/))
@@ -150,7 +153,9 @@ describe('system-config — TLS-only mesh (D826)', () => {
     ).not.toBeNull()
     const other = await generateMeshCa()
     expect(
-      verifyAgentUiUnlockTicket(other.certPem, minted.ticket, { expectedNodeId: 'agent-a' }),
+      verifyAgentUiUnlockTicket(other.certPem, minted.ticket, {
+        expectedNodeId: 'agent-a',
+      }),
     ).toBeNull()
   })
 })
