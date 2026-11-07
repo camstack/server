@@ -1,6 +1,5 @@
 /**
- * The connection check of a tailnet instance (`testInstance`) and of the older
- * `mesh-network.testConnection`: both feed the same function. It never joins anything: it asks
+ * The connection check of a tailnet instance (`testInstance`). It never joins anything: it asks
  * the local daemon whether it answers and whether the key LOOKS like a Tailscale key, so a
  * `validated` is "the daemon is reachable and the key is well-formed", never "the control plane
  * accepted it". The key is read, never echoed: no result field carries it.

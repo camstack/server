@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**202 capabilities · 1477 methods.**
+**202 capabilities · 1476 methods.**
 
 ## Method index
 
@@ -652,7 +652,6 @@
 | `meshNetwork.leave` | mutation | protected | mesh-network |
 | `meshNetwork.logout` | mutation | protected | mesh-network |
 | `meshNetwork.listPeers` | query | protected | mesh-network |
-| `meshNetwork.testConnection` | mutation | protected | mesh-network |
 | `meter.getStatus` | query | protected | meter (auto) |
 | `metricsProvider.collectSnapshot` | query | protected | metrics-provider |
 | `metricsProvider.getCached` | query | protected | metrics-provider |
@@ -3227,7 +3226,6 @@
 | leave | `meshNetwork.leave` | mutation | protected | `void` | `{ left: true }` |
 | logout | `meshNetwork.logout` | mutation | protected | `void` | `{ loggedOut: true }` |
 | listPeers | `meshNetwork.listPeers` | query | protected | `void` | `{ peers: MeshPeerSchema[] }` |
-| testConnection | `meshNetwork.testConnection` | mutation | protected | `{ authKey?: string }` | `{ ok: boolean; tenant?: string; daemonVersion?: string; error?: string }` |
 
 ### `meter` → `meter.*`
 

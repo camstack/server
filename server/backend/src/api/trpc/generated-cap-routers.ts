@@ -9755,23 +9755,6 @@ export function createCapRouter_meshNetwork(
         )
         return p.listPeers()
       }),
-    testConnection: protectedProcedure
-      .input(meshNetworkCapability.methods.testConnection.input.loose())
-      .output(meshNetworkCapability.methods.testConnection.output)
-      .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'mesh-network',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.testConnection(methodInput as any)
-      }),
   })
 }
 

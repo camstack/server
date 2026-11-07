@@ -108,7 +108,7 @@ export interface SystemProxy {
   readonly keychainAdmin: Pick<InferProvider<typeof keychainAdminCapability>, 'status' | 'listSecrets' | 'listAudit' | 'reveal' | 'setSystemSecret' | 'importSecret' | 'deleteOrphans' | 'rotateMasterKey' | 'purgeRetiredKeys' | 'downloadRecoveryKey' | 'resetKeychain' | 'resetReport' | 'acknowledgeReset'>
   readonly llm: Pick<InferProvider<typeof llmCapability>, 'generate' | 'generateVision' | 'cancel' | 'listModels' | 'getDefaults' | 'setDefault' | 'getUsage' | 'listModelCatalog' | 'listRuntimeNodes' | 'listNodeModels' | 'resolveModelRef' | 'installModel' | 'deleteModel' | 'getRuntimeStatus' | 'startRuntime' | 'stopRuntime'>
   readonly localNetwork: Pick<InferProvider<typeof localNetworkCapability>, 'list' | 'getPreferred' | 'getConnectionEndpoints' | 'getNotificationEndpoint' | 'setNotificationEndpoint' | 'getViewerEndpoints' | 'setViewerEndpoints' | 'getAddresses' | 'addCustomAddress' | 'removeCustomAddress' | 'setAddressRole' | 'getHubAddresses' | 'getAllowedAddresses' | 'setAllowedAddresses' | 'resetAllowlistToBestMatch' | 'getTlsStatus' | 'regenerateCertificate' | 'uploadCertificate' | 'downloadCa' | 'useStoredUploadedCertificate' | 'scanNetwork' | 'getScanSubnets' | 'setScanSubnets' | 'revertToGeneratedCertificate'>
-  readonly meshNetwork: Pick<InferProvider<typeof meshNetworkCapability>, 'getStatus' | 'join' | 'startLogin' | 'leave' | 'logout' | 'listPeers' | 'testConnection'>
+  readonly meshNetwork: Pick<InferProvider<typeof meshNetworkCapability>, 'getStatus' | 'join' | 'startLogin' | 'leave' | 'logout' | 'listPeers'>
   readonly metricsProvider: Pick<InferProvider<typeof metricsProviderCapability>, 'collectSnapshot' | 'getCached' | 'getCurrent' | 'getDiskSpace' | 'getGpuInfo' | 'getCpuTemperature' | 'getProcessStats' | 'listAddonInstances' | 'getAddonStats' | 'listNodeProcesses' | 'getLoadSeries'>
   readonly mqttBroker: Pick<InferProvider<typeof mqttBrokerCapability>, 'listBrokers' | 'getBrokerConfig' | 'addBroker' | 'removeBroker' | 'startEmbeddedBroker' | 'stopEmbeddedBroker' | 'getStatus'>
   readonly networkAccess: Pick<InferProvider<typeof networkAccessCapability>, 'start' | 'stop' | 'getEndpoint' | 'getStatus' | 'listEndpoints'>
@@ -586,7 +586,6 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     leave: (input?: unknown) => dispatch('meshNetwork', 'leave', 'mutation', input),
     logout: (input?: unknown) => dispatch('meshNetwork', 'logout', 'mutation', input),
     listPeers: (input?: unknown) => dispatch('meshNetwork', 'listPeers', 'query', input),
-    testConnection: (input?: unknown) => dispatch('meshNetwork', 'testConnection', 'mutation', input),
   }
 
   const metricsProviderInterface = {

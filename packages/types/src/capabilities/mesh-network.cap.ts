@@ -248,36 +248,6 @@ export const meshNetworkCapability = {
       }),
     ),
 
-    /**
-     * Probe the mesh daemon / API for a sanity check WITHOUT joining.
-     * Operator-facing "test connection" button: validates the auth key
-     * + reaches the control plane and reports back what would happen
-     * on join.
-     *
-     * Tailscale: dry-runs `tailscale up --auth-key=… --reset` against
-     * an idempotency probe; for an already-joined node it just returns
-     * the current status.
-     */
-    testConnection: method(
-      z.object({
-        /** Optional auth key — when provided, probes the key validity
-         *  against the provider's API. Omit when already joined to
-         *  just ping the daemon. */
-        authKey: z.string().optional(),
-      }),
-      z.object({
-        ok: z.boolean(),
-        /** Provider-side identifier resolved by the probe (tailnet
-         *  name for Tailscale, network id for ZeroTier, etc.). */
-        tenant: z.string().optional(),
-        /** Daemon binary version, when reachable. */
-        daemonVersion: z.string().optional(),
-        /** Human-readable error when `ok: false`. */
-        error: z.string().optional(),
-      }),
-      { kind: 'mutation' },
-    ),
-
     // Provider-specific runtime knobs (accept-routes / advertise-routes /
     // shields-up / ssh / exit-node, …) live on the addon's own
     // `getSettingsUISchema` (form-builder), NOT here. Different mesh

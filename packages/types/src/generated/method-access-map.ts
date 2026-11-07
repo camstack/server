@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1477 method paths across 202 capabilities.
+ * Coverage: 1476 method paths across 202 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -661,7 +661,6 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'meshNetwork.listPeers': { capName: "mesh-network", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'meshNetwork.logout': { capName: "mesh-network", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'meshNetwork.startLogin': { capName: "mesh-network", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
-  'meshNetwork.testConnection': { capName: "mesh-network", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'meter.getStatus': { capName: "meter", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'metricsProvider.collectSnapshot': { capName: "metrics-provider", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'metricsProvider.getAddonStats': { capName: "metrics-provider", capScope: "system", addonId: null, access: "view", role: "admin" } as const,

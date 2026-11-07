@@ -581,7 +581,6 @@
   "meshNetwork.listPeers": "protected",
   "meshNetwork.logout": "protected",
   "meshNetwork.startLogin": "protected",
-  "meshNetwork.testConnection": "protected",
   "metricsProvider.collectSnapshot": "protected",
   "metricsProvider.getAddonStats": "protected",
   "metricsProvider.getCached": "protected",

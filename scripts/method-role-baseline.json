@@ -638,7 +638,6 @@
   "meshNetwork.listPeers": "admin",
   "meshNetwork.logout": "admin",
   "meshNetwork.startLogin": "admin",
-  "meshNetwork.testConnection": "admin",
   "meter.getStatus": "viewer",
   "metricsProvider.collectSnapshot": "admin",
   "metricsProvider.getAddonStats": "admin",

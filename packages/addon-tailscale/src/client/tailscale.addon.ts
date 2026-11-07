@@ -4,7 +4,7 @@
  *
  * Capabilities registered:
  *   • `mesh-network` — `getStatus` / `join` / `leave` / `logout` /
- *     `listPeers` / `startLogin` / `testConnection`.
+ *     `listPeers` / `startLogin`.
  *     Mesh endpoint reporting goes through `getStatus().endpoints`.
  *
  * No custom admin page — the operator-facing UI is the generic
@@ -343,7 +343,6 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
       leave: () => this.leave(),
       logout: () => this.logout(),
       listPeers: () => this.listPeers(),
-      testConnection: ({ authKey } = {}) => this.testConnection(authKey),
     }
 
     const networkAccessProvider = this.buildNetworkAccessProvider()
@@ -755,24 +754,6 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
       })
     }
     return { loggedOut: true as const }
-  }
-
-  /**
-   * Test the daemon + auth key WITHOUT committing to a join.
-   */
-  private async testConnection(authKey?: string): Promise<{
-    ok: boolean
-    tenant?: string
-    daemonVersion?: string
-    error?: string
-  }> {
-    const probe = await probeTailnet(this.probeCli(), authKey)
-    return {
-      ok: probe.ok,
-      ...(probe.tenant ? { tenant: probe.tenant } : {}),
-      ...(probe.daemonVersion ? { daemonVersion: probe.daemonVersion } : {}),
-      ...(probe.error ? { error: probe.error } : {}),
-    }
   }
 
   /** The CLI as the probe sees it; a degraded addon reads as an unreachable CLI. */

@@ -1724,9 +1724,6 @@ export const useMeshNetworkLogout: typeof trpc.meshNetwork.logout.useMutation = 
 /** Generated alias around `trpc.meshNetwork.listPeers.useQuery`. */
 export const useMeshNetworkListPeers: typeof trpc.meshNetwork.listPeers.useQuery = /*#__PURE__*/ alias(() => trpc.meshNetwork.listPeers.useQuery)
 
-/** Generated alias around `trpc.meshNetwork.testConnection.useMutation`. */
-export const useMeshNetworkTestConnection: typeof trpc.meshNetwork.testConnection.useMutation = /*#__PURE__*/ alias(() => trpc.meshNetwork.testConnection.useMutation)
-
 /** Generated alias around `trpc.meter.getStatus.useQuery`. */
 export const useMeterGetStatus: typeof trpc.meter.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.meter.getStatus.useQuery)
 

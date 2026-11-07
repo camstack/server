@@ -48,7 +48,6 @@ export const PERMANENT: Readonly<Record<string, string>> = {
 export const PENDING: Readonly<Record<string, string>> = {
   'storage.cap.ts:testLocation': 'folds in at step 5/6 (storage locations become instances)',
   'storage.cap.ts:testConfig': 'folds in at step 5/6 (storage wizard preflight)',
-  'mesh-network.cap.ts:testConnection': 'folds in at step 5/6 (tailscale becomes an instance)',
 }
 
 export interface SourceFile {

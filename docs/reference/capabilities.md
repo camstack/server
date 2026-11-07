@@ -182,7 +182,7 @@ Singleton or collection providers, addressed without a device.
 | `log-channels` | 2 | — | — | — | ✓ | `stream-broker` `provider-reolink` |
 | `log-destination` | 4 | — | — | — | ✓ | `winston-logging` `console-logging` `loki-logging` `hub-forwarder` |
 | `login-method` | 1 | — | — | — | ✓ | `auth-oidc` `auth-webauthn` |
-| `mesh-network` | 7 | — | — | — | — | `tailscale-client` |
+| `mesh-network` | 6 | — | — | — | — | `tailscale-client` |
 | `metrics-provider` | 11 | — | — | — | — | `metrics-native` |
 | `migrations` | 13 | — | — | — | ✓ | `sqlite-settings` |
 | `model-convert` | 1 | — | — | — | ✓ | `model-studio` |
