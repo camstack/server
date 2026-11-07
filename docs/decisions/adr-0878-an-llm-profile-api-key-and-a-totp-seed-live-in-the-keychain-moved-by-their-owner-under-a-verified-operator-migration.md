@@ -44,15 +44,16 @@ and the row keeps only the marker.
   `confirm` THROW `TotpSecretUnavailableError` when the seed cannot be read - no code
   is accepted and the user does not read as "not enrolled" (`getStatus` needs no seed).
   Setup without a keychain door is refused, never stored inline.
-- **Migration is the owner's, run by the operator, never at boot.** Each owner exposes
-  `migrateRawSecrets({ apply })` (`llm.`, `userManagement.`; admin). Per row it puts
-  the value, reads it back, compares, and only then rewrites the row with the marker;
-  a row that fails stays raw. It reports counts only. `scripts/hub/migrate-raw-secrets.ts
-  --server <host> [--apply]` calls both (dry run by default, exit 1 unless every row is a
-  marker and every marker resolves). Until it runs, a pre-D878 row keeps working inline
-  (an enrolled user still verifies; a profile still authenticates) - nothing migrates on
-  its own, and a save through the normal path migrates only that row.
-- **Both migrate methods are admin-only and idempotent; they carry no rate limiter.** A
+- **Migration is the owner's, run by the operator, never at boot.** The TOTP owner exposes
+  `userManagement.migrateRawSecrets({ apply })` (admin). A pre-record raw `ai:llm-profiles`
+  key is moved by the `ai` addon's records migration, not by a cap method (the `llm` cap has no
+  `migrateRawSecrets`). Per row it puts the value, reads it back, compares, and only then rewrites
+  the row with the marker; a row that fails stays raw. It reports counts only.
+  `scripts/hub/migrate-raw-secrets.ts --server <host> [--apply]` calls the operator-run owners
+  (dry run by default, exit 1 unless every row is a marker and every marker resolves). Until it
+  runs, a pre-D878 TOTP row keeps working inline (an enrolled user still verifies) - nothing
+  migrates on its own, and a save through the normal path migrates only that row.
+- **The operator-run migrate methods are admin-only and idempotent; they carry no rate limiter.** A
   repeat run finds nothing raw and changes nothing.
 - **A marker is honoured only for its own row.** The profile store accepts a marker only when
   it equals that profile's ref, and TOTP only when it equals that user's ref, so a forged row

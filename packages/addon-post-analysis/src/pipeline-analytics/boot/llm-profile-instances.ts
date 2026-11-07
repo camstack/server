@@ -3,7 +3,7 @@
  * `integration-instances` of the `ai` provider (functionCap `llm`), and the flat form values
  * carry the facts a picker or a vision gate needs. The `llm` cap keeps no profile read.
  */
-import type { AnalyticsApi } from './boot-types.js'
+import type { IntegrationInstance } from '@camstack/types'
 
 const AI_ADDON_ID = 'ai'
 
@@ -22,7 +22,16 @@ function text(value: unknown): string {
   return typeof value === 'string' ? value : ''
 }
 
-export async function listLlmProfileFacts(api: AnalyticsApi): Promise<readonly LlmProfileFacts[]> {
+/** The slice of `ctx.api` the read needs. */
+export interface LlmProfileApi {
+  readonly integrationInstances: {
+    readonly listInstances: {
+      query(input: { addonId: string }): Promise<readonly IntegrationInstance[]>
+    }
+  }
+}
+
+export async function listLlmProfileFacts(api: LlmProfileApi): Promise<readonly LlmProfileFacts[]> {
   const instances = await api.integrationInstances.listInstances.query({ addonId: AI_ADDON_ID })
   return instances.map((instance) => {
     const values = instance.formValues

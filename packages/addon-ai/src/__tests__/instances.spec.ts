@@ -143,6 +143,18 @@ describe('llm profiles as integration-instances', () => {
     expect(JSON.stringify(listed)).not.toContain(KEY)
   })
 
+  it('lists a stored key as set, never its value, while the keychain is locked', async () => {
+    const { w, instances } = await world()
+    await createKeyed(instances)
+    w.keychain.setLocked(true)
+    const [listed] = await instances.listInstances()
+    const view = listed?.formValues.apiKey
+    expect(isSecretFieldView(view)).toBe(true)
+    expect(view).toMatchObject({ set: true })
+    expect(JSON.stringify(listed)).not.toContain(KEY)
+    w.keychain.setLocked(false)
+  })
+
   it('keeps the key when the patch omits it, sends the view back, or the redaction token', async () => {
     const { w, instances } = await world()
     await createKeyed(instances)
