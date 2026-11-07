@@ -9,9 +9,9 @@
  *    'notifiers:notification-targets' })` and read every bot token, API key and
  *    webhook header of every user in plaintext (and every other addon's
  *    collection with it); an `operator` could write any of them.
- *  - `notificationOutput` target CRUD / test / send — an `operator` could point
- *    ANY target (another user's included) at a host of their choosing and let
- *    `testTarget` deliver the stored secret there.
+ *  - `notificationOutput` discover / probe / test / send — an `operator` could
+ *    point ANY target (another user's included) at a host of their choosing and
+ *    let `testTarget` deliver the stored secret there.
  *
  * Both are now `auth: 'admin'`. Non-admins keep the owner-checked `nc.*`
  * bridge; addons keep `ctx.api`, whose cap calls never enter this router.
@@ -35,7 +35,6 @@ import {
   notificationOutputCapability,
   resolveMethodAuth,
   settingsStoreCapability,
-  type Target,
   type TokenScope,
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
@@ -70,15 +69,6 @@ function methodsOf(def: CapabilityDefinition): Readonly<Record<string, Capabilit
   return def.methods
 }
 
-const TARGET: Target = {
-  id: 'household',
-  name: 'Household',
-  kind: 'ntfy',
-  addonId: 'notifiers',
-  enabled: true,
-  config: { serverUrl: 'https://ntfy.example', token: '__redacted__' },
-}
-
 function settingsStoreProvider(): ISettingsStoreProvider {
   return {
     get: async () => null,
@@ -104,15 +94,10 @@ function settingsStoreProvider(): ISettingsStoreProvider {
 function notificationOutputProvider(): INotificationOutputProvider {
   return {
     listTargetKinds: async () => [],
-    listTargets: async () => [TARGET],
-    getTarget: async () => TARGET,
     discoverTargets: async () => [],
     probeTargetConfig: async () => ({ ok: true, resolvedUrl: '' }),
     send: async () => ({ success: true }),
     testTarget: async () => ({ success: true }),
-    upsertTarget: async ({ target }) => target,
-    deleteTarget: async () => undefined,
-    setTargetEnabled: async () => undefined,
   }
 }
 
@@ -186,7 +171,8 @@ describe('router: every non-admin role is refused, an admin is served', () => {
       for (const method of NOTIFICATION_OUTPUT_ADMIN) {
         const result = await invokeProcedure(router, method, ctx, {
           targetId: 'household',
-          target: TARGET,
+          kind: 'ntfy',
+          config: {},
         })
         expect(result.ok, `${roleId} reached notificationOutput.${method}`).toBe(false)
         if (!result.ok) {
@@ -212,12 +198,15 @@ describe('router: every non-admin role is refused, an admin is served', () => {
     expect(read.ok).toBe(true)
 
     const outputs = buildCapRouterForTest('notification-output', () => notificationOutputProvider())
-    const list = await invokeProcedure(outputs, 'listTargets', makeCtx('admin'), {})
-    expect(list.ok).toBe(true)
-    const upsert = await invokeProcedure(outputs, 'upsertTarget', makeCtx('admin'), {
-      target: TARGET,
+    const discover = await invokeProcedure(outputs, 'discoverTargets', makeCtx('admin'), {
+      kind: 'ntfy',
     })
-    expect(upsert.ok).toBe(true)
+    expect(discover.ok).toBe(true)
+    const probe = await invokeProcedure(outputs, 'probeTargetConfig', makeCtx('admin'), {
+      kind: 'ntfy',
+      config: {},
+    })
+    expect(probe.ok).toBe(true)
     const test = await invokeProcedure(outputs, 'testTarget', makeCtx('admin'), {
       targetId: 'household',
       addonId: 'notifiers',

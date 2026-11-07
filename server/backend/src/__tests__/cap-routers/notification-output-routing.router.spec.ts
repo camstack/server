@@ -1,25 +1,24 @@
 /**
  * Routing regression spec for the `notification-output` system-collection cap.
  *
- * The bug (confirmed live): `notification-output` is
- * `scope:'system', mode:'collection'`. Multiple addons register a provider —
- * `notifiers` (full CRUD), `provider-homeassistant` (full CRUD), and
- * `advanced-notifier` (a PARTIAL `ConsoleOutput` that implements only `send`,
- * NOT the target CRUD). The generated collection mount fans out only the
- * ARRAY-output methods (`listTargetKinds` / `listTargets` / `discoverTargets`);
- * every single-object mutation (`upsertTarget` / `deleteTarget` / …) fell
- * through to `providers[0]`. When the first-registered provider is the partial
- * `ConsoleOutput`, `upsertTarget` hits a provider that doesn't implement it →
- * `child-cap-dispatch: method 'upsertTarget' not found on provider
+ * `notification-output` is `scope:'system', mode:'collection'`. Several addons
+ * register a provider — `notifiers`, `provider-homeassistant`, and
+ * `advanced-notifier` (a PARTIAL `ConsoleOutput` that implements only `send`).
+ * The generated collection mount fans out only the ARRAY-output methods
+ * (`listTargetKinds` / `discoverTargets`); every single-object method
+ * (`testTarget` / `probeTargetConfig` / `send`) fell through to `providers[0]`.
+ * When the first-registered provider is the partial `ConsoleOutput`,
+ * `testTarget` hits a provider that doesn't implement it →
+ * `child-cap-dispatch: method 'testTarget' not found on provider
  * 'notification-output'`. Even against a COMPLETE first provider it would
- * misroute (a HA target upserted into the notifiers store).
+ * misroute (a HA target tested against the notifiers store).
  *
- * The fix: single-object collection mutations route to their OWNING provider
- * via an addonId. The router prefers the explicit top-level `{ addonId }`
- * selector (the `broker`-cap precedent), and — when the caller omits it —
- * recovers the routing addonId the mutation payload ALREADY carries
- * (`Target.addonId`, stamped by each provider) via `extractNestedAddonId`.
- * ARRAY methods keep their union fan-out and are NEVER rerouted.
+ * The fix: single-object collection calls route to their OWNING provider via
+ * an addonId. The router prefers the explicit top-level `{ addonId }` selector
+ * (the `broker`-cap precedent), and — when the caller omits it — recovers the
+ * routing addonId the payload ALREADY carries one level down
+ * (`config.addonId`) via `extractNestedAddonId`. ARRAY methods keep their union
+ * fan-out and are NEVER rerouted.
  *
  * This spec drives the LIVE runtime router (`buildCapRouterForTest`) with a
  * selector that mirrors the real registry resolution (addonId → provider, else
@@ -27,21 +26,28 @@
  * provider is the partial one, reproducing the exact live topology.
  */
 import { describe, it, expect } from 'vitest'
-import type { Target, TargetKind, SendResult } from '@camstack/types'
+import type {
+  DiscoveredTarget,
+  ProbeTargetConfigResult,
+  SendResult,
+  TargetKind,
+} from '@camstack/types'
 import { concatCollection } from '../../api/trpc/cap-mount-helpers.js'
 import { makeCtx, invokeProcedure, buildCapRouterForTest } from './harness.js'
 
 /** The array-output surface every provider shares (fanned into the catalog). */
 interface NotifCatalogProvider {
   listTargetKinds: (input: unknown) => Promise<readonly TargetKind[]>
-  listTargets: (input: unknown) => Promise<readonly Target[]>
+  discoverTargets: (input: unknown) => Promise<readonly DiscoveredTarget[]>
 }
 
-/** A full provider — catalog surface + single-object CRUD. */
+/** A full provider — catalog surface + the single-object methods. */
 interface FullNotifProvider extends NotifCatalogProvider {
-  upsertTarget: (input: { target: Target }) => Promise<Target>
-  deleteTarget: (input: { targetId: string }) => Promise<void>
-  send: (input: { targetId: string }) => Promise<SendResult>
+  testTarget: (input: { targetId: string }) => Promise<SendResult>
+  probeTargetConfig: (input: {
+    kind: string
+    config: Record<string, unknown>
+  }) => Promise<ProbeTargetConfigResult>
 }
 
 function makeKind(addonId: string, kind: string): TargetKind {
@@ -67,40 +73,39 @@ function makeKind(addonId: string, kind: string): TargetKind {
 
 /**
  * A COMPLETE `notification-output` provider owning one addonId. Records every
- * upsert/delete so a test can prove which provider actually served the call.
+ * test / probe so a test can prove which provider actually served the call.
  */
 function makeFullProvider(
   addonId: string,
   kind: string,
 ): {
   provider: FullNotifProvider
-  upserts: Target[]
-  deletes: string[]
+  tests: string[]
+  probes: string[]
 } {
-  const upserts: Target[] = []
-  const deletes: string[] = []
+  const tests: string[] = []
+  const probes: string[] = []
   const provider: FullNotifProvider = {
     listTargetKinds: async () => [makeKind(addonId, kind)],
-    listTargets: async () => [],
-    upsertTarget: async ({ target }) => {
-      const stored: Target = { ...target, addonId }
-      upserts.push(stored)
-      return stored
+    discoverTargets: async () => [{ kind, suggestedName: addonId, config: {} }],
+    testTarget: async ({ targetId }) => {
+      tests.push(targetId)
+      return { success: true }
     },
-    deleteTarget: async ({ targetId }) => {
-      deletes.push(targetId)
+    probeTargetConfig: async ({ kind: probedKind }) => {
+      probes.push(probedKind)
+      return { ok: true, resolvedUrl: '' }
     },
-    send: async () => ({ success: true }),
   }
-  return { provider, upserts, deletes }
+  return { provider, tests, probes }
 }
 
 /**
  * The PARTIAL `advanced-notifier` provider — the legacy `ConsoleOutput`. It
- * implements ONLY `send`; it has NO `upsertTarget` / `deleteTarget` and no
+ * implements ONLY `send`; it has NO `testTarget` / `probeTargetConfig` and no
  * catalog methods (a missing array method contributes `[]` to the fan-out).
- * Any CRUD call that reaches it throws — asserting the router NEVER routes a
- * mutation here.
+ * Any single-object call that reaches it throws — asserting the router NEVER
+ * routes one here.
  */
 function makePartialProvider(): { send: (input: { targetId: string }) => Promise<SendResult> } {
   return {
@@ -118,13 +123,19 @@ function makePartialProvider(): { send: (input: { targetId: string }) => Promise
 function makeSelector(): {
   select: (addonId?: string) => object | null
   notifiers: ReturnType<typeof makeFullProvider>
+  homeAssistant: ReturnType<typeof makeFullProvider>
 } {
   const partial = makePartialProvider()
   const notifiers = makeFullProvider('notifiers', 'webhook')
-  const byAddonId: Record<string, object> = { notifiers: notifiers.provider }
+  const homeAssistant = makeFullProvider('provider-homeassistant', 'ha-notify')
+  const byAddonId: Record<string, object> = {
+    notifiers: notifiers.provider,
+    'provider-homeassistant': homeAssistant.provider,
+  }
   const providers: readonly NotifCatalogProvider[] = [
     partial as unknown as NotifCatalogProvider,
     notifiers.provider,
+    homeAssistant.provider,
   ]
   const select = (addonId?: string): object | null => {
     if (addonId !== undefined) return byAddonId[addonId] ?? null
@@ -132,63 +143,56 @@ function makeSelector(): {
     return {
       ...first,
       listTargetKinds: concatCollection(providers, 'listTargetKinds'),
-      listTargets: concatCollection(providers, 'listTargets'),
+      discoverTargets: concatCollection(providers, 'discoverTargets'),
     }
   }
-  return { select, notifiers }
+  return { select, notifiers, homeAssistant }
 }
 
-const sampleTarget: Target = {
-  id: 'wh_1',
-  name: 'My Webhook',
-  kind: 'webhook',
-  addonId: 'notifiers',
-  enabled: true,
-  config: { url: 'http://example.com/hook' },
-}
-
-describe('notification-output cap — single-object mutation routing', () => {
-  it('upsertTarget WITHOUT a top-level addonId routes to the OWNING provider via the payload addonId (not the partial first provider)', async () => {
-    const { select, notifiers } = makeSelector()
+describe('notification-output cap — single-object call routing', () => {
+  it('testTarget WITH a top-level addonId selector routes to the owner, not the partial first provider', async () => {
+    const { select, notifiers, homeAssistant } = makeSelector()
     const router = buildCapRouterForTest('notification-output', (_ctx, addonId) => select(addonId))
 
-    const outcome = await invokeProcedure(router, 'upsertTarget', makeCtx('admin'), {
-      target: sampleTarget,
-    })
-
-    expect(outcome.ok).toBe(true)
-    if (!outcome.ok) return
-    // Served by the notifiers provider — proven by its recorded upsert.
-    expect(notifiers.upserts.map((t) => t.id)).toEqual(['wh_1'])
-    expect((outcome.value as Target).addonId).toBe('notifiers')
-  })
-
-  it('upsertTarget WITH an explicit top-level addonId selector routes to the owner', async () => {
-    const { select, notifiers } = makeSelector()
-    const router = buildCapRouterForTest('notification-output', (_ctx, addonId) => select(addonId))
-
-    const outcome = await invokeProcedure(router, 'upsertTarget', makeCtx('admin'), {
-      addonId: 'notifiers',
-      target: sampleTarget,
-    })
-
-    expect(outcome.ok).toBe(true)
-    if (!outcome.ok) return
-    expect(notifiers.upserts.map((t) => t.id)).toEqual(['wh_1'])
-  })
-
-  it('deleteTarget (id-only payload) routes to the owner via the top-level addonId selector', async () => {
-    const { select, notifiers } = makeSelector()
-    const router = buildCapRouterForTest('notification-output', (_ctx, addonId) => select(addonId))
-
-    const outcome = await invokeProcedure(router, 'deleteTarget', makeCtx('admin'), {
+    const outcome = await invokeProcedure(router, 'testTarget', makeCtx('admin'), {
       addonId: 'notifiers',
       targetId: 'wh_1',
     })
 
     expect(outcome.ok).toBe(true)
     if (!outcome.ok) return
-    expect(notifiers.deletes).toEqual(['wh_1'])
+    expect(notifiers.tests).toEqual(['wh_1'])
+    expect(homeAssistant.tests).toEqual([])
+  })
+
+  it('testTarget names the OTHER owner and only that owner serves it', async () => {
+    const { select, notifiers, homeAssistant } = makeSelector()
+    const router = buildCapRouterForTest('notification-output', (_ctx, addonId) => select(addonId))
+
+    const outcome = await invokeProcedure(router, 'testTarget', makeCtx('admin'), {
+      addonId: 'provider-homeassistant',
+      targetId: 'ha_1',
+    })
+
+    expect(outcome.ok).toBe(true)
+    if (!outcome.ok) return
+    expect(homeAssistant.tests).toEqual(['ha_1'])
+    expect(notifiers.tests).toEqual([])
+  })
+
+  it('probeTargetConfig WITHOUT a top-level addonId recovers the owner from the payload one level down', async () => {
+    const { select, notifiers, homeAssistant } = makeSelector()
+    const router = buildCapRouterForTest('notification-output', (_ctx, addonId) => select(addonId))
+
+    const outcome = await invokeProcedure(router, 'probeTargetConfig', makeCtx('admin'), {
+      kind: 'webhook',
+      config: { addonId: 'notifiers', url: 'http://example.com/hook' },
+    })
+
+    expect(outcome.ok).toBe(true)
+    if (!outcome.ok) return
+    expect(notifiers.probes).toEqual(['webhook'])
+    expect(homeAssistant.probes).toEqual([])
   })
 
   it('listTargetKinds fans out (UNION across providers) and is never rerouted', async () => {
@@ -200,8 +204,8 @@ describe('notification-output cap — single-object mutation routing', () => {
     expect(outcome.ok).toBe(true)
     if (!outcome.ok) return
     const kinds = outcome.value as TargetKind[]
-    // Only the full provider contributes a kind; the partial one contributes [].
-    expect(kinds.map((k) => k.addonId)).toEqual(['notifiers'])
+    // Only the full providers contribute a kind; the partial one contributes [].
+    expect(kinds.map((k) => k.addonId)).toEqual(['notifiers', 'provider-homeassistant'])
   })
 
   it('an ARRAY method carrying a stray nested addonId still fans out (array fan-out is not rerouted)', async () => {
@@ -210,12 +214,14 @@ describe('notification-output cap — single-object mutation routing', () => {
 
     // A nested `{ addonId }` in a list input must NOT collapse the union onto
     // one provider — the isArrayOutputSchema gate keeps addonId undefined here.
-    const outcome = await invokeProcedure(router, 'listTargets', makeCtx('admin'), {
-      bogus: { addonId: 'notifiers' },
+    const outcome = await invokeProcedure(router, 'discoverTargets', makeCtx('admin'), {
+      kind: 'webhook',
+      config: { addonId: 'notifiers' },
     })
 
     expect(outcome.ok).toBe(true)
     if (!outcome.ok) return
-    expect(Array.isArray(outcome.value)).toBe(true)
+    const found = outcome.value as DiscoveredTarget[]
+    expect(found.map((d) => d.suggestedName)).toEqual(['notifiers', 'provider-homeassistant'])
   })
 })
