@@ -4263,6 +4263,12 @@
           "doc": "Content drawn right under a SELECTED row (a single-selection list that opens the picked device's details inline, one at a time)."
         },
         {
+          "name": "onReselect",
+          "type": "(id: Id) => void",
+          "optional": true,
+          "doc": "A single-selection row that is already selected was tapped again (to fold its details)."
+        },
+        {
           "name": "lockedIds",
           "type": "readonly Id[]",
           "optional": true,
@@ -4649,12 +4655,6 @@
         },
         {
           "name": "heading",
-          "type": "string",
-          "optional": false,
-          "doc": ""
-        },
-        {
-          "name": "backLabel",
           "type": "string",
           "optional": false,
           "doc": ""

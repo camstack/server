@@ -150,7 +150,6 @@ export function FillFromDeviceDialog(props: FillFromDeviceDialogProps): ReactNod
               </ul>
             }
             heading={t('customize.table.fillHeading')}
-            backLabel={t('customize.table.fillBack')}
             noDeviceText={t('customize.table.fillNoDevice')}
             noValuesText={t('customize.table.fillNothing')}
           />

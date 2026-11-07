@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 import { useUiText } from '../../contexts/ui-text'
 import { useIsPhone } from '../../hooks/use-is-mobile'
 import { Button } from '../../primitives/button'
@@ -60,7 +60,6 @@ export interface DeviceValueFieldProps {
   /** Show the transform/preview region before a value is chosen (a declared value is never chosen). */
   readonly alwaysShowPreview?: boolean
   readonly heading: string
-  readonly backLabel: string
   readonly noDeviceText: string
   readonly noValuesText: string
   readonly rowTestId?: (row: DeviceValueRow) => string
@@ -82,6 +81,10 @@ export function DeviceValueField(props: DeviceValueFieldProps): ReactNode {
   const t = useUiText()
   const phone = useIsPhone()
   const [changing, setChanging] = useState(false)
+  // Phone accordion: the open device's values can be folded; `rowDrawn` is whether the picker
+  // draws the device's row at all (a device that no longer fits, or a search, can hide it).
+  const [folded, setFolded] = useState(false)
+  const [rowDrawn, setRowDrawn] = useState(false)
   const testId = props.testId ?? 'device-value-field'
   const chosenRow = props.groups
     .flatMap((group) => group.rows)
@@ -90,6 +93,7 @@ export function DeviceValueField(props: DeviceValueFieldProps): ReactNode {
     props.deviceId !== null && props.value !== null && props.valuesOverride === undefined
   const pickDevice = (ids: readonly number[]): void => {
     const id = ids[0] ?? null
+    setFolded(false)
     if (id !== props.deviceId) props.onDeviceChange(id)
   }
   const pickValue = (pick: DeviceValuePick): void => {
@@ -116,7 +120,10 @@ export function DeviceValueField(props: DeviceValueFieldProps): ReactNode {
             variant="outline"
             size="sm"
             data-testid={`${testId}-change`}
-            onClick={() => setChanging(true)}
+            onClick={() => {
+              setFolded(false)
+              setChanging(true)
+            }}
           >
             {t('uiLibrary.deviceValueField.change', 'Change')}
           </Button>
@@ -167,14 +174,24 @@ export function DeviceValueField(props: DeviceValueFieldProps): ReactNode {
           testId={props.deviceListTestId ?? `${testId}-device-picker`}
           {...(phone
             ? {
+                onReselect: () => setFolded((current) => !current),
                 renderExpanded: () => (
-                  <div data-testid={`${testId}-values`} className="flex flex-col gap-2">
-                    {values}
-                  </div>
+                  <DrawnMarker onDrawn={setRowDrawn}>
+                    {folded ? null : (
+                      <div data-testid={`${testId}-values`} className="flex flex-col gap-2">
+                        {values}
+                      </div>
+                    )}
+                  </DrawnMarker>
                 ),
               }
             : {})}
         />
+        {phone && props.deviceId !== null && !rowDrawn && (
+          <div data-testid={`${testId}-values`} className="flex flex-col gap-2">
+            {values}
+          </div>
+        )}
         {cardMode && (
           <Button
             variant="ghost"
@@ -200,6 +217,19 @@ export function DeviceValueField(props: DeviceValueFieldProps): ReactNode {
       )}
     </div>
   )
+}
+
+/** Tells its parent while the picked device's row is on screen. */
+function DrawnMarker(props: {
+  readonly onDrawn: (drawn: boolean) => void
+  readonly children: ReactNode
+}): ReactNode {
+  const { onDrawn } = props
+  useEffect(() => {
+    onDrawn(true)
+    return () => onDrawn(false)
+  }, [onDrawn])
+  return props.children
 }
 
 function ValuesBody(

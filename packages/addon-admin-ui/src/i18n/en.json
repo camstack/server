@@ -2736,7 +2736,6 @@
       "backToDevices": "Back to devices",
       "noDevice": "Pick a device on the left.",
       "noStateField": "This device has no on/off reading this extension can use.",
-      "backToDevice": "Back to {{name}}",
       "done": "Done",
       "pickedCount_one": "{{count}} selected",
       "pickedCount_other": "{{count}} selected",
@@ -2833,7 +2832,6 @@
       },
       "fillTitle": "Fill {{cap}} from a device",
       "fillHeading": "Device the values come from",
-      "fillBack": "Back to the devices",
       "fillNoDevice": "Pick a device to see what it can fill.",
       "fillNothing": "Nothing on this device fits.",
       "fillSkip": "Leave empty",
@@ -9450,12 +9448,10 @@
       "energy": "Energy"
     },
     "deviceValueField": {
-      "preview": "Preview",
       "loading": "Reading the values…",
       "failed": "The values could not be read.",
       "tokenTitle": "Insert a device value",
       "pickDevice": "Pick a device",
-      "back": "Back",
       "noDevice": "Pick a device to see its values.",
       "noValues": "This device has no value that fits.",
       "cancel": "Cancel",

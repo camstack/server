@@ -145,6 +145,8 @@ export interface DevicePickerProps<Id extends PickerId = number> {
    * picked device's details inline, one at a time).
    */
   readonly renderExpanded?: (id: Id) => ReactNode
+  /** A single-selection row that is already selected was tapped again (to fold its details). */
+  readonly onReselect?: (id: Id) => void
   /**
    * Devices that are ALREADY part of the thing being edited (linked to the
    * camera, assigned to the room): drawn checked and disabled with
@@ -293,6 +295,7 @@ export function DevicePicker<Id extends PickerId = number>({
   showAll = false,
   fillHeight = false,
   renderExpanded,
+  onReselect,
   lockedIds,
   lockedNote: lockedNoteProp,
 }: DevicePickerProps<Id>): JSX.Element {
@@ -430,6 +433,7 @@ export function DevicePicker<Id extends PickerId = number>({
             fillHeight={fillHeight}
             selection={selection}
             {...(renderExpanded !== undefined ? { renderExpanded } : {})}
+            {...(onReselect !== undefined ? { onReselect } : {})}
             {...(pinnedGroupBy !== undefined ? { pinnedGroupBy } : {})}
           />
         ) : (
@@ -447,6 +451,7 @@ export function DevicePicker<Id extends PickerId = number>({
             fillHeight={fillHeight}
             selection={selection}
             {...(renderExpanded !== undefined ? { renderExpanded } : {})}
+            {...(onReselect !== undefined ? { onReselect } : {})}
           />
         ))}
       {widening && <DevicesWidenWarning noun={noun} />}
@@ -469,6 +474,7 @@ interface PickerPanelProps<Id extends PickerId> {
   readonly fillHeight: boolean
   readonly selection: DevicePickerSelection
   readonly renderExpanded?: (id: Id) => ReactNode
+  readonly onReselect?: (id: Id) => void
   /** This instance's group-by. Absent: the remembered choice. */
   readonly pinnedGroupBy?: PickerGroupBy
   /** "Group by" — the device picker only; absent keeps the (type, room) groups. */
@@ -536,6 +542,7 @@ function PickerPanel<Id extends PickerId>({
   fillHeight,
   selection,
   renderExpanded,
+  onReselect,
   grouping,
   providers = NO_PROVIDERS,
 }: PickerPanelProps<Id>) {
@@ -679,6 +686,7 @@ function PickerPanel<Id extends PickerId>({
               lockedNote={lockedNote}
               selection={selection}
               renderExpanded={renderExpanded}
+              onReselect={onReselect}
               radioName={radioName}
               providers={providers}
             />
@@ -722,6 +730,7 @@ interface PickerRowViewProps<Id extends PickerId> {
   readonly lockedNote: string
   readonly selection: DevicePickerSelection
   readonly renderExpanded: ((id: Id) => ReactNode) | undefined
+  readonly onReselect: ((id: Id) => void) | undefined
   readonly radioName: string
   /** Who offers each device: "{addon} ({integration})". */
   readonly providers: ReadonlyMap<number, string>
@@ -755,6 +764,7 @@ function PickerRowView<Id extends PickerId>({
   lockedNote,
   selection,
   renderExpanded,
+  onReselect,
   radioName,
   providers,
 }: PickerRowViewProps<Id>) {
@@ -819,6 +829,9 @@ function PickerRowView<Id extends PickerId>({
         {...(single ? { name: radioName } : {})}
         checked={row.selected || isLocked}
         disabled={disabled || isLocked}
+        onClick={() => {
+          if (single && row.selected) onReselect?.(row.device.id)
+        }}
         onChange={() =>
           onChange(single ? [row.device.id] : togglePickerDevice(value, row.device.id))
         }

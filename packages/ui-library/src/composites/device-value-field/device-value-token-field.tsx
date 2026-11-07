@@ -88,7 +88,6 @@ export function DeviceValueTokenField(props: DeviceValueTokenFieldProps): ReactN
               value={pick}
               onValueChange={setPick}
               heading={t('uiLibrary.deviceValueField.pickDevice', 'Pick a device')}
-              backLabel={t('uiLibrary.deviceValueField.back', 'Back')}
               noDeviceText={t(
                 'uiLibrary.deviceValueField.noDevice',
                 'Pick a device to see its values.',

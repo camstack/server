@@ -399,11 +399,6 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
       deviceLabel={
         props.device === null ? null : <DeviceName device={props.device} form="compact" />
       }
-      backLabel={
-        props.device === null
-          ? ''
-          : t('customize.sourceSelector.backToDevice', { name: props.device.name })
-      }
       valuesState={valuesStateOf(wireable.status, snapshot.status)}
       groups={groups.map((group) => ({
         cap: group.cap,

@@ -48,13 +48,19 @@ const GARAGE = {
   location: 'Garage',
 }
 
-const proposalResult = vi.hoisted(() => ({
-  current: { status: 'pending' } as { status: string; data?: unknown },
-}))
+const proposalResult = vi.hoisted(() => {
+  const current: { current: { status: string; data?: unknown } } = {
+    current: { status: 'pending' },
+  }
+  return current
+})
 
-const fleet = vi.hoisted(() => ({
-  current: { status: 'pending' } as { status: string; data?: unknown[] },
-}))
+const fleet = vi.hoisted(() => {
+  const holder: { current: { status: string; data?: unknown[] } } = {
+    current: { status: 'pending' },
+  }
+  return holder
+})
 
 vi.mock('../../assignments/use-cap-index', () => ({
   useCapIndex: () => ({
@@ -146,12 +152,12 @@ function dialog(seeded = true) {
 }
 
 function renderPhone(ui: ReactElement) {
-  window.matchMedia = ((query: string) => ({
+  vi.stubGlobal('matchMedia', (query: string) => ({
     matches: query === '(max-width: 639px)',
     media: query,
     addEventListener: () => undefined,
     removeEventListener: () => undefined,
-  })) as unknown as typeof window.matchMedia
+  }))
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const wrap = (node: ReactElement) => (
     <QueryClientProvider client={client}>{node}</QueryClientProvider>

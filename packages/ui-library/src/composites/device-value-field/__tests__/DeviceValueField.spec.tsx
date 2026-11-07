@@ -16,12 +16,12 @@ vi.mock('../../../contexts/system-context.js', () => ({
 
 /** The REAL picker runs; only the viewport is faked (phone = below `sm`). */
 function setPhone(phone: boolean): void {
-  window.matchMedia = ((query: string) => ({
+  vi.stubGlobal('matchMedia', (query: string) => ({
     matches: phone && query === '(max-width: 639px)',
     media: query,
     addEventListener: () => undefined,
     removeEventListener: () => undefined,
-  })) as unknown as typeof window.matchMedia
+  }))
 }
 
 function renderField(ui: ReactElement) {
@@ -56,7 +56,6 @@ function props(over: Partial<DeviceValueFieldProps> = {}): DeviceValueFieldProps
     value: null,
     onValueChange: () => undefined,
     heading: 'Source',
-    backLabel: 'Back',
     noDeviceText: 'Pick a device',
     noValuesText: 'No fitting value',
     ...over,
@@ -237,5 +236,32 @@ describe('DeviceValueField phone accordion', () => {
     fireEvent.click(screen.getByTestId('device-value-power-meter.power'))
     expect(onValue).toHaveBeenCalledWith(PICK)
     expect(mode()).toBe('card')
+  })
+
+  it('folds the open device when it is tapped again, and opens it on the next tap', () => {
+    function Host() {
+      const [deviceId, setDeviceId] = useState<number | null>(null)
+      return <DeviceValueField {...props({ deviceId, onDeviceChange: setDeviceId })} />
+    }
+    renderField(<Host />)
+    const radio = () => screen.getByRole('radio', { name: /Porch meter/ })
+    fireEvent.click(radio())
+    expect(screen.queryByTestId('device-value-power-meter.power')).toBeTruthy()
+    fireEvent.click(radio())
+    expect(screen.queryByTestId('device-value-power-meter.power')).toBeNull()
+    fireEvent.click(radio())
+    expect(screen.queryByTestId('device-value-power-meter.power')).toBeTruthy()
+  })
+
+  it('still shows the values below the list when the stored device has no row', () => {
+    renderField(
+      <DeviceValueField
+        {...props({ devices: [{ id: 2, name: 'Garage lamp' }], deviceId: 1, value: PICK })}
+      />,
+    )
+    fireEvent.click(screen.getByTestId('device-value-field-change'))
+    expect(screen.queryByRole('radio', { name: /Porch meter/ })).toBeNull()
+    expect(screen.getAllByTestId('device-value-field-values')).toHaveLength(1)
+    expect(screen.getByTestId('device-value-power-meter.power')).toBeTruthy()
   })
 })
