@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**201 capabilities · 1465 methods.**
+**201 capabilities · 1467 methods.**
 
 ## Method index
 
@@ -1355,6 +1355,8 @@
 | `terminalSession.writeInput` | mutation | admin | terminal-session |
 | `terminalSession.close` | mutation | admin | terminal-session |
 | `timedRun.getStatus` | query | protected | timed-run (auto) |
+| `timedRun.getOptions` | query | protected | timed-run |
+| `timedRun.setSettings` | mutation | admin | timed-run |
 | `timedRun.runFor` | mutation | protected | timed-run |
 | `timedRun.cancel` | mutation | protected | timed-run |
 | `toast.onToast` | subscription | protected | toast |
@@ -4731,15 +4733,17 @@
 
 ### `timed-run` → `timedRun.*`
 
-- **Source:** `packages/types/src/capabilities/timed-run.cap.ts:89`
+- **Source:** `packages/types/src/capabilities/timed-run.cap.ts:141`
 - **Meta:** scope: `device` · mode: `singleton` · mount: `device-scoped` · deviceTypes: `heater, pet-fountain`
-- **Archetypes:** status(push) · runtimeState · wrapper(defaultActive)
+- **Archetypes:** status(push) · runtimeState · deviceConfig(derived-form) · wrapper(defaultActive)
 - **Provider interface:** `ITimedRunProvider`
 - **runtimeState:** `TimedRunStatusSchema`
 
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | getStatus _(auto)_ | `timedRun.getStatus` | query | protected | `{ deviceId: number }` | `TimedRunStatusSchema` |
+| getOptions | `timedRun.getOptions` | query | protected | `{ deviceId: number }` | `TimedRunOptionsSchema` |
+| setSettings | `timedRun.setSettings` | mutation | admin | `{ deviceId: number; settings: TimedRunSettingsPatchSchema }` | `void` |
 | runFor | `timedRun.runFor` | mutation | protected | `{ deviceId: number; duration: number; unit: TimedRunUnitSchema }` | `TimedRunResultSchema` |
 | cancel | `timedRun.cancel` | mutation | protected | `{ deviceId: number }` | `void` |
 

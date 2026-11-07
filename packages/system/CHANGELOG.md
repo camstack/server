@@ -63,6 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Internal: autotrack and remote-access state is read and written through the typed state API under the same storage key; nothing changes for the operator.
 - Camera grids are now instances on a Camera grids page: the list is kept as records, migrated in place with the same ids and cameras
 - The addon-call plane carries listScopedSettings to forked addons.
+- The quick-run length of a timed-run device (heater, pet fountain) is a per-device setting instead of a fixed 30 minutes
 
 ### Removed
 

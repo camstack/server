@@ -36,6 +36,8 @@ import type {
   RecordingOnboardOptions,
   RecordingOnboardStatus,
   StreamProfile,
+  TimedRunOptions,
+  TimedRunStatus,
   StreamProfilePatch,
 } from '@camstack/types'
 import { buildDayNightConfigSchema, parseDayNightFormPatch } from './day-night-config-schema.js'
@@ -43,6 +45,7 @@ import {
   buildImageSettingsConfigSchema,
   parseImageSettingsFormPatch,
 } from './image-settings-config-schema.js'
+import { buildTimedRunConfigSchema, parseTimedRunFormPatch } from './timed-run-config-schema.js'
 import {
   buildRecordingOnboardConfigSchema,
   parseRecordingOnboardFormPatch,
@@ -70,6 +73,7 @@ export const STREAM_PARAMS_BUILDER_ID = 'stream-params' as const
 export const DAY_NIGHT_BUILDER_ID = 'day-night' as const
 export const IMAGE_SETTINGS_BUILDER_ID = 'image-settings' as const
 export const RECORDING_ONBOARD_BUILDER_ID = 'recording-onboard' as const
+export const TIMED_RUN_BUILDER_ID = 'timed-run' as const
 
 /** Reducer for a profile-based derived-form cap (`stream-params`). */
 interface ProfileFormReducer {
@@ -138,11 +142,22 @@ const RECORDING_ONBOARD_REDUCER: SettingsFormReducer = {
   parsePatch: (patch) => parseRecordingOnboardFormPatch(patch),
 }
 
+const TIMED_RUN_REDUCER: SettingsFormReducer = {
+  kind: 'settings',
+  buildSchema: (options, status) =>
+    buildTimedRunConfigSchema(
+      options as TimedRunOptions,
+      (status as TimedRunStatus | null) ?? null,
+    ),
+  parsePatch: (patch) => parseTimedRunFormPatch(patch),
+}
+
 const BUILDER_REDUCERS: Readonly<Record<string, DerivedFormReducer>> = {
   [STREAM_PARAMS_BUILDER_ID]: STREAM_PARAMS_REDUCER,
   [DAY_NIGHT_BUILDER_ID]: DAY_NIGHT_REDUCER,
   [IMAGE_SETTINGS_BUILDER_ID]: IMAGE_SETTINGS_REDUCER,
   [RECORDING_ONBOARD_BUILDER_ID]: RECORDING_ONBOARD_REDUCER,
+  [TIMED_RUN_BUILDER_ID]: TIMED_RUN_REDUCER,
 }
 
 function resolveReducer(builderId: string): DerivedFormReducer {

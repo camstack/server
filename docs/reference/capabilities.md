@@ -113,7 +113,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `switch` | 2 | ✓ | ✓ | 1 series | — | — |
 | `tamper` | 1 | ✓ | ✓ | 1 series | — | — |
 | `temperature-sensor` | 1 | ✓ | ✓ | 1 series | — | — |
-| `timed-run` | 3 | ✓ | ✓ | none | — | `core-blocks` |
+| `timed-run` | 5 | ✓ | ✓ | none | — | `core-blocks` |
 | `update` | 2 | ✓ | ✓ | none | — | `provider-homeassistant` |
 | `vacuum-control` | 7 | ✓ | ✓ | 1 series | — | `provider-homeassistant` |
 | `valve` | 5 | ✓ | ✓ | 1 series | — | `provider-homeassistant` |

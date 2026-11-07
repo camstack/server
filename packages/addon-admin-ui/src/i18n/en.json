@@ -9453,8 +9453,7 @@
     "heater": {
       "heating": "Heating",
       "off": "Off",
-      "power": "Heater",
-      "quickRun": "Run {{minutes}} min"
+      "power": "Heater"
     },
     "timedRun": {
       "cancel": "Cancel the timer",
@@ -9466,7 +9465,8 @@
       "range": "Enter 1 to {{max}} {{unit}}",
       "remaining": "{{time}} left",
       "run": "Run",
-      "unsupported": "This device cannot run on a timer."
+      "unsupported": "This device cannot run on a timer.",
+      "quickRun": "Run {{duration}} {{unit}}"
     },
     "powerMeterLine": {
       "energy": "Energy"

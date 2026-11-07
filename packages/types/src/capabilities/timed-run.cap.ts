@@ -33,12 +33,24 @@ export interface TimedRunLimit {
   readonly maxSeconds: number
   /** The unit an operator thinks of this device's run in. */
   readonly unit: TimedRunUnit
+  /** The one-tap run, in `unit`, until the operator sets this device's own. */
+  readonly quickRunDefault: number
 }
 
 /** The longest run, per device type. Only these types are offered `timed-run`. */
 export const TIMED_RUN_LIMITS: Readonly<Partial<Record<DeviceType, TimedRunLimit>>> = {
-  [DeviceType.Heater]: { actuator: 'switch', maxSeconds: 180 * 60, unit: 'min' },
-  [DeviceType.PetFountain]: { actuator: 'pet-fountain', maxSeconds: 300, unit: 's' },
+  [DeviceType.Heater]: {
+    actuator: 'switch',
+    maxSeconds: 180 * 60,
+    unit: 'min',
+    quickRunDefault: 30,
+  },
+  [DeviceType.PetFountain]: {
+    actuator: 'pet-fountain',
+    maxSeconds: 300,
+    unit: 's',
+    quickRunDefault: 60,
+  },
 }
 
 export const TIMED_RUN_DEVICE_TYPES: readonly DeviceType[] = [
@@ -53,6 +65,29 @@ export function timedRunLimitOf(deviceType: DeviceType): TimedRunLimit | null {
 /** Seconds in a duration of `duration` `unit`. */
 export function timedRunSeconds(duration: number, unit: TimedRunUnit): number {
   return unit === 'min' ? duration * 60 : duration
+}
+
+/** The longest run of a limit, in the unit the operator thinks of it in. */
+export function timedRunMaxIn(limit: TimedRunLimit): number {
+  return limit.unit === 'min' ? Math.floor(limit.maxSeconds / 60) : limit.maxSeconds
+}
+
+/** One duration, as the one-tap run asks for it. */
+export const TimedRunQuickRunSchema = z.object({
+  duration: z.number().positive().finite(),
+  unit: TimedRunUnitSchema,
+})
+export type TimedRunQuickRun = z.infer<typeof TimedRunQuickRunSchema>
+
+/**
+ * The one-tap run of a device: the duration the operator stored for it, else the
+ * type's default, never above the type's maximum. A stored value that is not a
+ * usable number is the default (a hand-edited row never breaks the button).
+ */
+export function timedRunQuickRun(limit: TimedRunLimit, stored: number | null): TimedRunQuickRun {
+  const max = timedRunMaxIn(limit)
+  const usable = stored !== null && Number.isFinite(stored) && stored > 0 ? stored : null
+  return { duration: Math.min(usable ?? limit.quickRunDefault, max), unit: limit.unit }
 }
 
 /** Why a request was not carried out. Typed, so a caller can say it in words. */
@@ -82,9 +117,26 @@ export const TimedRunStatusSchema = z.object({
   activeUntil: z.number().nullable(),
   /** Who asked for the run (a user id or an addon id); `null` when nothing is armed or it did not say. */
   requestedBy: z.string().nullable(),
+  /** The one-tap run of THIS device: what a "Run" button on any surface starts. */
+  quickRun: TimedRunQuickRunSchema,
   lastFetchedAt: z.number(),
 })
 export type TimedRunStatus = z.infer<typeof TimedRunStatusSchema>
+
+/** What the settings form needs: the unit, the bounds and the type's default. */
+export const TimedRunOptionsSchema = z.object({
+  unit: TimedRunUnitSchema,
+  /** The longest run, in `unit`. */
+  maxDuration: z.number(),
+  defaultDuration: z.number(),
+})
+export type TimedRunOptions = z.infer<typeof TimedRunOptionsSchema>
+
+/** The one-tap run duration, in the type's unit; `null` returns to the type's default. */
+export const TimedRunSettingsPatchSchema = z.object({
+  quickRunDuration: z.number().positive().finite().nullable().optional(),
+})
+export type TimedRunSettingsPatch = z.infer<typeof TimedRunSettingsPatchSchema>
 
 export const timedRunCapability = {
   name: 'timed-run',
@@ -93,7 +145,20 @@ export const timedRunCapability = {
   kind: 'wrapper',
   defaultActive: true,
   deviceTypes: TIMED_RUN_DEVICE_TYPES,
+  deviceConfig: {
+    ui: { kind: 'derived-form', builderId: 'timed-run', tab: 'general' },
+  },
   methods: {
+    getOptions: method(z.object({ deviceId: z.number().int() }), TimedRunOptionsSchema),
+    /**
+     * The one-tap run of this device. A duration above the type's maximum is
+     * REFUSED (thrown), like `runFor`: the maximum is a safety bound.
+     */
+    setSettings: method(
+      z.object({ deviceId: z.number().int(), settings: TimedRunSettingsPatchSchema }),
+      z.void(),
+      { kind: 'mutation', auth: 'admin' },
+    ),
     /**
      * Turn the device on and arm its off. A run already armed is replaced (the
      * new deadline wins). Refuses with a typed reason above the type's maximum.

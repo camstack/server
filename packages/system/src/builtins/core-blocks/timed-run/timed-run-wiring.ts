@@ -16,11 +16,19 @@ import {
   TIMED_RUN_SETTLE_MS,
   type TimedRunActuation,
   type TimedRunRows,
+  type TimedRunQuickRuns,
   TimedRunService,
 } from './timed-run-service.js'
 
+/** The addon's per-device settings (D865), the one home of the one-tap run. */
+export interface TimedRunSettingsAccess {
+  readonly readDeviceStore: (deviceId: number) => Promise<Record<string, unknown>>
+  readonly writeDeviceStore: (deviceId: number, patch: Record<string, unknown>) => Promise<void>
+}
+
 export interface TimedRunWiringDeps {
   readonly records: RecordsAccess
+  readonly settings: () => TimedRunSettingsAccess | undefined
   readonly api: () => AddonApi | undefined
   readonly logger: IScopedLogger
 }
@@ -53,6 +61,23 @@ function rowsOver(records: RecordsAccess): TimedRunRows {
   }
 }
 
+const QUICK_RUN_KEY = 'quickRunDuration'
+
+function quickRunsOver(settings: () => TimedRunSettingsAccess | undefined): TimedRunQuickRuns {
+  const need = (): TimedRunSettingsAccess => {
+    const current = settings()
+    if (current === undefined) throw new Error('core-blocks: no ctx.settings on this node')
+    return current
+  }
+  return {
+    read: async (deviceId) => {
+      const stored = (await need().readDeviceStore(deviceId))[QUICK_RUN_KEY]
+      return typeof stored === 'number' ? stored : null
+    },
+    write: (deviceId, duration) => need().writeDeviceStore(deviceId, { [QUICK_RUN_KEY]: duration }),
+  }
+}
+
 function actuationOver(api: () => AddonApi | undefined): TimedRunActuation {
   const invoke = invokeCapOver(api)
   return {
@@ -76,6 +101,7 @@ export function buildTimedRunService(deps: TimedRunWiringDeps): TimedRunService 
       return found === null || found === undefined ? null : found.type
     },
     actuation: actuationOver(deps.api),
+    quickRuns: quickRunsOver(deps.settings),
     publish: async (deviceId, status) => {
       await need().deviceState.setCapSlice.mutate({
         deviceId,

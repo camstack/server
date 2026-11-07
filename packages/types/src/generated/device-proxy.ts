@@ -1094,6 +1094,8 @@ export function createDeviceProxy(
   }
 
   const timedRunInterface = {
+    getOptions: (input?: unknown) => dispatch('timed-run', 'timedRun', 'getOptions', 'query', input),
+    setSettings: (input?: unknown) => dispatch('timed-run', 'timedRun', 'setSettings', 'mutation', input),
     runFor: (input?: unknown) => dispatch('timed-run', 'timedRun', 'runFor', 'mutation', input),
     cancel: (input?: unknown) => dispatch('timed-run', 'timedRun', 'cancel', 'mutation', input),
     getStatus: (input?: unknown) => dispatch('timed-run', 'timedRun', 'getStatus', 'query', input),

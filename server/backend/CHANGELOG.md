@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - addonSettings.listScopedSettings lists the scoped settings an addon serves, in process and for forked addons.
+- A timed-run device exposes its quick-run duration and lets an admin set it
 
 ## [1.2.801] - 2026-11-07
 

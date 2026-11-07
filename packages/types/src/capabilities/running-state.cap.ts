@@ -39,7 +39,7 @@ const RUNNING_DEVICE_TYPES: readonly DeviceType[] = Object.values(DeviceType)
  * The cap itself stays on every type — a camera can still report running
  * natively; it just has no card.
  */
-const RUNNING_CUSTOMIZE_DEVICE_TYPES = [
+export const RUNNING_CUSTOMIZE_DEVICE_TYPES = [
   DeviceType.Washer,
   DeviceType.Dryer,
   DeviceType.Dishwasher,

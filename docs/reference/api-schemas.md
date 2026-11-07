@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1029 shared schemas.**
+**1032 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -6872,6 +6872,17 @@ Enum: `"jwt-signing-key"`
 
 Enum: `"validated" \| "rejected" \| "inconclusive" \| "unsupported"`
 
+### `TimedRunOptionsSchema`
+
+- `unit`: `TimedRunUnitSchema`
+- `maxDuration`: `number`
+- `defaultDuration`: `number`
+
+### `TimedRunQuickRunSchema`
+
+- `duration`: `number`
+- `unit`: `TimedRunUnitSchema`
+
 ### `TimedRunRefusalSchema`
 
 Enum: `"unsupported-device" \| "over-max" \| "command-failed"`
@@ -6881,10 +6892,15 @@ Enum: `"unsupported-device" \| "over-max" \| "command-failed"`
 - `{ ok: true; activeUntil: number }`
 - `{ ok: false; reason: TimedRunRefusalSchema; maxSeconds: number \| null }`
 
+### `TimedRunSettingsPatchSchema`
+
+- `quickRunDuration?`: `number \| null`
+
 ### `TimedRunStatusSchema`
 
 - `activeUntil`: `number \| null`
 - `requestedBy`: `string \| null`
+- `quickRun`: `TimedRunQuickRunSchema`
 - `lastFetchedAt`: `number`
 
 ### `TimedRunUnitSchema`

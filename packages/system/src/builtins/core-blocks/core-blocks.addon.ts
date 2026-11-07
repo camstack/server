@@ -195,6 +195,7 @@ export class CoreBlocksAddon extends BaseAddon {
     this.installDeviceCallRedirect()
     const timedRun = buildTimedRunService({
       records,
+      settings: () => this.ctx.settings,
       api: () => this.ctx.api,
       logger: this.ctx.logger.child('timed-run'),
     })

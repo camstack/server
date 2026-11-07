@@ -19288,6 +19288,24 @@ export function createCapRouter_timedRun(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
+    getOptions: protectedProcedure
+      .input(timedRunCapability.methods.getOptions.input.loose())
+      .output(timedRunCapability.methods.getOptions.output)
+      .query(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('timed-run', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.getOptions(methodInput as any)
+      }),
+    setSettings: adminProcedure
+      .input(timedRunCapability.methods.setSettings.input.loose())
+      .output(timedRunCapability.methods.setSettings.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('timed-run', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.setSettings(methodInput as any)
+      }),
     runFor: protectedProcedure
       .input(timedRunCapability.methods.runFor.input.loose())
       .output(timedRunCapability.methods.runFor.output)

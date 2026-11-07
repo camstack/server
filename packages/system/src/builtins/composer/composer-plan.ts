@@ -33,6 +33,7 @@ import {
   type IScopedLogger,
   type LogTags,
   planComposition,
+  withDefaultRunning,
 } from '@camstack/types'
 import { declarationFor, placeholderDeclaration, shapeOf } from './composition-declarations.js'
 import type { TargetDescriptions } from './existing-target.js'
@@ -127,7 +128,10 @@ export function planNew(
   lookupCap: CapabilityLookup,
   rows: ReadonlySet<string>,
 ): PlannedBlock {
-  const plan = planComposition(block.composition, lookupCap)
+  // The stored composition is never rewritten: a device whose actuator switch
+  // drives it runs from that switch unless the operator authored a rule (D933).
+  const composition = withDefaultRunning(block.composition, block.id)
+  const plan = planComposition(composition, lookupCap)
   const planned: PlannedNewTarget = { kind: 'new' }
   if (plan.problems.length > 0) {
     // A composition that stopped planning (a cap renamed by a release) must
@@ -144,7 +148,7 @@ export function planNew(
       target: planned,
     }
   }
-  const caps = block.composition.features.flatMap((f): readonly CapabilityDefinition[] => {
+  const caps = composition.features.flatMap((f): readonly CapabilityDefinition[] => {
     if (!compositionFeatureEnabled(f)) return []
     const def = lookupCap(f.cap)
     return def === null ? [] : [def]

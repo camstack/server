@@ -5,7 +5,7 @@
  * `ALL_CAPABILITY_DEFINITIONS` (the whole Zod schema graph, ~+100 MB heap per
  * runner). See docs/decisions/adr-0028.md.
  *
- * Coverage: 1 advance-derived caps, 82 caps with 374 state leaves, 15 caps with a declared method timeout.
+ * Coverage: 1 advance-derived caps, 82 caps with 376 state leaves, 15 caps with a declared method timeout.
  */
 
 /** A bindable scalar in a capability's runtime state. */
@@ -302,7 +302,7 @@ export const CAP_STATE_LEAVES: Readonly<Record<string, readonly CapStateLeaf[]>>
   "switch": [{"path":"on","valueType":"boolean"}],
   "tamper": [{"path":"tampered","valueType":"boolean"}],
   "temperature-sensor": [{"path":"temperature","valueType":"number"}],
-  "timed-run": [{"path":"activeUntil","valueType":"number"}, {"path":"requestedBy","valueType":"string"}],
+  "timed-run": [{"path":"activeUntil","valueType":"number"}, {"path":"requestedBy","valueType":"string"}, {"path":"quickRun.duration","valueType":"number"}, {"path":"quickRun.unit","valueType":"enum","enumValues":["s","min"]}],
   "update": [{"path":"currentVersion","valueType":"string"}, {"path":"availableVersion","valueType":"string"}, {"path":"updatable","valueType":"boolean"}, {"path":"state","valueType":"string"}, {"path":"inProgress","valueType":"boolean"}],
   "vacuum-control": [{"path":"state","valueType":"enum","enumValues":["idle","cleaning","paused","returning","docked","drying","error"]}, {"path":"batteryLevel","valueType":"number"}, {"path":"fanSpeed","valueType":"string"}, {"path":"progress","valueType":"number"}, {"path":"errorCode","valueType":"number"}, {"path":"errorLabel","valueType":"string"}],
   "valve": [{"path":"state","valueType":"enum","enumValues":["open","opening","closing","closed","stopped"]}, {"path":"position","valueType":"number"}],

@@ -43,6 +43,7 @@ function harness(
     [FOUNTAIN, DeviceType.PetFountain],
     [9, DeviceType.Camera],
   ])
+  const quickRuns = new Map<number, number>()
   const actuation: TimedRunActuation = {
     set: async (deviceId, actuator, on) => {
       commands.push({ deviceId, actuator, on })
@@ -53,6 +54,13 @@ function harness(
     rows: store.api,
     deviceTypeOf: async (deviceId) => types.get(deviceId) ?? null,
     actuation,
+    quickRuns: {
+      read: async (deviceId) => quickRuns.get(deviceId) ?? null,
+      write: async (deviceId, duration) => {
+        if (duration === null) quickRuns.delete(deviceId)
+        else quickRuns.set(deviceId, duration)
+      },
+    },
     publish: async (deviceId, status) => {
       published.push({ deviceId, status })
     },
@@ -72,7 +80,7 @@ function harness(
     logger,
   })
   const live = () => timers.filter((t) => !t.cancelled)
-  return { service, clock, store, commands, timers, live, published, lines }
+  return { service, clock, store, commands, timers, live, published, lines, quickRuns }
 }
 
 describe('TimedRunService', () => {
@@ -224,5 +232,68 @@ describe('TimedRunService', () => {
     await h.service.runFor({ deviceId: HEATER, duration: 10, unit: 'min' })
     h.service.stop()
     expect(h.live()).toHaveLength(0)
+  })
+
+  describe('the one-tap run of a device', () => {
+    it('is the type default until the operator sets one, and the status carries it', async () => {
+      const h = harness()
+      expect((await h.service.getStatus({ deviceId: HEATER })).quickRun).toEqual({
+        duration: 30,
+        unit: 'min',
+      })
+      expect((await h.service.getStatus({ deviceId: FOUNTAIN })).quickRun).toEqual({
+        duration: 30,
+        unit: 's',
+      })
+      await h.service.runFor({ deviceId: HEATER, duration: 10, unit: 'min' })
+      expect(h.published.at(-1)?.status.quickRun).toEqual({ duration: 30, unit: 'min' })
+    })
+
+    it('a stored duration is what the status says, and is published at once', async () => {
+      const h = harness()
+      await h.service.setSettings({ deviceId: HEATER, settings: { quickRunDuration: 45 } })
+      expect(h.quickRuns.get(HEATER)).toBe(45)
+      expect((await h.service.getStatus({ deviceId: HEATER })).quickRun).toEqual({
+        duration: 45,
+        unit: 'min',
+      })
+      expect(h.published.at(-1)).toMatchObject({
+        deviceId: HEATER,
+        status: { quickRun: { duration: 45, unit: 'min' } },
+      })
+    })
+
+    it('REFUSES a duration above the type maximum and keeps what was stored', async () => {
+      const h = harness()
+      await h.service.setSettings({ deviceId: HEATER, settings: { quickRunDuration: 45 } })
+      await expect(
+        h.service.setSettings({ deviceId: HEATER, settings: { quickRunDuration: 181 } }),
+      ).rejects.toThrow(/maximum/)
+      expect(h.quickRuns.get(HEATER)).toBe(45)
+    })
+
+    it('null returns to the type default', async () => {
+      const h = harness()
+      await h.service.setSettings({ deviceId: HEATER, settings: { quickRunDuration: 45 } })
+      await h.service.setSettings({ deviceId: HEATER, settings: { quickRunDuration: null } })
+      expect(h.quickRuns.has(HEATER)).toBe(false)
+      expect((await h.service.getStatus({ deviceId: HEATER })).quickRun.duration).toBe(30)
+    })
+
+    it('a type without a timed run has no settings to change', async () => {
+      const h = harness()
+      await expect(
+        h.service.setSettings({ deviceId: 9, settings: { quickRunDuration: 5 } }),
+      ).rejects.toThrow(/no timed run/)
+    })
+
+    it('getOptions names the unit, the maximum and the default', async () => {
+      const h = harness()
+      expect(await h.service.getOptions({ deviceId: HEATER })).toEqual({
+        unit: 'min',
+        maxDuration: 180,
+        defaultDuration: 30,
+      })
+    })
   })
 })

@@ -23,6 +23,8 @@ import {
   type TimedRunActuator,
   type TimedRunStatus,
   timedRunLimitOf,
+  timedRunMaxIn,
+  timedRunQuickRun,
   timedRunSeconds,
 } from '@camstack/types'
 import type { PowerSourceScheduler, PowerSourceTimer } from '../power-source-service.js'
@@ -43,10 +45,17 @@ export interface TimedRunActuation {
   readonly set: (deviceId: number, actuator: TimedRunActuator, on: boolean) => Promise<void>
 }
 
+/** The one-tap run duration an operator stored per device, in the type's unit. */
+export interface TimedRunQuickRuns {
+  readonly read: (deviceId: number) => Promise<number | null>
+  readonly write: (deviceId: number, duration: number | null) => Promise<void>
+}
+
 export interface TimedRunServiceDeps {
   readonly rows: TimedRunRows
   readonly deviceTypeOf: (deviceId: number) => Promise<DeviceType | null>
   readonly actuation: TimedRunActuation
+  readonly quickRuns: TimedRunQuickRuns
   /** Mirror the slice into the device state; failures are logged by the service. */
   readonly publish: (deviceId: number, status: TimedRunStatus) => Promise<void>
   readonly scheduler: PowerSourceScheduler
@@ -78,6 +87,39 @@ export class TimedRunService implements ITimedRunProvider {
   constructor(private readonly deps: TimedRunServiceDeps) {}
 
   getStatus: ITimedRunProvider['getStatus'] = async ({ deviceId }) => this.statusOf(deviceId)
+
+  getOptions: ITimedRunProvider['getOptions'] = async ({ deviceId }) => {
+    const limit = await this.limitOf(deviceId)
+    if (limit === null) throw new Error(`timed-run: device ${deviceId} has no timed run`)
+    return {
+      unit: limit.unit,
+      maxDuration: timedRunMaxIn(limit),
+      defaultDuration: limit.quickRunDefault,
+    }
+  }
+
+  /** The one-tap run of a device. Above the type's maximum it is REFUSED, like `runFor`. */
+  setSettings: ITimedRunProvider['setSettings'] = async ({ deviceId, settings }) => {
+    const limit = await this.limitOf(deviceId)
+    if (limit === null) throw new Error(`timed-run: device ${deviceId} has no timed run`)
+    const duration = settings.quickRunDuration
+    if (duration === undefined) return
+    if (duration !== null && duration > timedRunMaxIn(limit)) {
+      this.deps.logger.warn('timed-run refused: the one-tap run is over the maximum', {
+        tags: { deviceId },
+      })
+      throw new Error(
+        `timed-run: a one-tap run of ${duration} ${limit.unit} is over the maximum of ${timedRunMaxIn(limit)} ${limit.unit}`,
+      )
+    }
+    await this.deps.quickRuns.write(deviceId, duration)
+    await this.publishStatus(deviceId)
+  }
+
+  private async limitOf(deviceId: number): Promise<ReturnType<typeof timedRunLimitOf>> {
+    const type = await this.deps.deviceTypeOf(deviceId)
+    return type === null ? null : timedRunLimitOf(type)
+  }
 
   runFor: ITimedRunProvider['runFor'] = async (input) => {
     const { deviceId } = input
@@ -183,18 +225,21 @@ export class TimedRunService implements ITimedRunProvider {
     await this.publishStatus(deviceId)
   }
 
-  private statusOf(deviceId: number): TimedRunStatus {
+  private async statusOf(deviceId: number): Promise<TimedRunStatus> {
     const row = this.pending.get(deviceId)
+    const limit = await this.limitOf(deviceId)
+    if (limit === null) throw new Error(`timed-run: device ${deviceId} has no timed run`)
     return {
       activeUntil: row?.activeUntil ?? null,
       requestedBy: row?.requestedBy ?? null,
+      quickRun: timedRunQuickRun(limit, await this.deps.quickRuns.read(deviceId)),
       lastFetchedAt: this.deps.now(),
     }
   }
 
   private async publishStatus(deviceId: number): Promise<void> {
     try {
-      await this.deps.publish(deviceId, this.statusOf(deviceId))
+      await this.deps.publish(deviceId, await this.statusOf(deviceId))
     } catch (error) {
       this.deps.logger.warn('timed-run could not publish its state', {
         tags: { deviceId },

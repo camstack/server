@@ -23,10 +23,9 @@ import { Button } from '../../primitives/button'
 import { Switch } from '../../primitives/switch'
 import { AirflowViz, KEYFRAMES } from './ac-panel'
 import type { DeviceControlProps } from './control-registry'
-import { TimedRunControl, maxInUnit } from './timed-run-control'
+import { TimedRunControl } from './timed-run-control'
 
 const HEATER_LIMIT = TIMED_RUN_LIMITS[DeviceType.Heater]
-const QUICK_RUN_MINUTES = 30
 const HEAT_ACCENT = 'var(--color-warning)'
 const HEAT_PERIOD_SEC = 1.8
 
@@ -67,10 +66,8 @@ export function HeaterInlineControl(props: DeviceControlProps): ReactNode {
   const { cap, display, available, applyOptimisticAction, timer } = useHeater(props)
   if (cap === undefined || display === undefined) return null
   const on = display.on === true
-  const quickMinutes =
-    HEATER_LIMIT === undefined
-      ? QUICK_RUN_MINUTES
-      : Math.min(QUICK_RUN_MINUTES, maxInUnit(HEATER_LIMIT))
+  // The one-tap run is the hub's word for THIS device (the timed-run status), never a constant.
+  const quickRun = timer.slice?.quickRun
   return (
     <div className="inline-flex items-center gap-2">
       {/* The row is clickable: a toggle must not also open the device. */}
@@ -84,16 +81,24 @@ export function HeaterInlineControl(props: DeviceControlProps): ReactNode {
           }}
         />
       </span>
-      {timer.cap !== undefined && (
+      {timer.cap !== undefined && quickRun !== undefined && (
         <span onClick={(e) => e.stopPropagation()}>
           <Button
             size="sm"
             variant="outline"
             disabled={!timer.online}
-            onClick={() => void timer.cap?.runFor({ duration: quickMinutes, unit: 'min' })}
+            onClick={() =>
+              void timer.cap?.runFor({ duration: quickRun.duration, unit: quickRun.unit })
+            }
           >
             <Timer className="h-3.5 w-3.5" aria-hidden />
-            {t('uiLibrary.heater.quickRun', 'Run {{minutes}} min', { minutes: quickMinutes })}
+            {t('uiLibrary.timedRun.quickRun', 'Run {{duration}} {{unit}}', {
+              duration: quickRun.duration,
+              unit:
+                quickRun.unit === 'min'
+                  ? t('uiLibrary.timedRun.minutes', 'min')
+                  : t('uiLibrary.timedRun.seconds', 's'),
+            })}
           </Button>
         </span>
       )}

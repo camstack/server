@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - New {{sensor}} template variable for sensor rules: the name of the sensor the notification is about
 - A settings surface can ask an addon which scoped settings it serves (addonSettings.listScopedSettings), so a generic mount no longer needs the global-settings form.
+- A heater or fan composed on a plug now counts as running while its own switch is on, and a timed-run device reports a configurable quick-run duration
 
 ## [1.2.520] - 2026-11-07
 

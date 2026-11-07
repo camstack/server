@@ -3611,6 +3611,12 @@ export const useTerminalSessionWriteInput: typeof trpc.terminalSession.writeInpu
 /** Generated alias around `trpc.terminalSession.close.useMutation`. */
 export const useTerminalSessionClose: typeof trpc.terminalSession.close.useMutation = /*#__PURE__*/ alias(() => trpc.terminalSession.close.useMutation)
 
+/** Generated alias around `trpc.timedRun.getOptions.useQuery`. */
+export const useTimedRunGetOptions: typeof trpc.timedRun.getOptions.useQuery = /*#__PURE__*/ alias(() => trpc.timedRun.getOptions.useQuery)
+
+/** Generated alias around `trpc.timedRun.setSettings.useMutation`. */
+export const useTimedRunSetSettings: typeof trpc.timedRun.setSettings.useMutation = /*#__PURE__*/ alias(() => trpc.timedRun.setSettings.useMutation)
+
 /** Generated alias around `trpc.timedRun.runFor.useMutation`. */
 export const useTimedRunRunFor: typeof trpc.timedRun.runFor.useMutation = /*#__PURE__*/ alias(() => trpc.timedRun.runFor.useMutation)
 

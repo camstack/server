@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1465 method paths across 201 capabilities.
+ * Coverage: 1467 method paths across 201 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -1364,8 +1364,10 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'terminalSession.resize': { capName: "terminal-session", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'terminalSession.writeInput': { capName: "terminal-session", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'timedRun.cancel': { capName: "timed-run", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'timedRun.getOptions': { capName: "timed-run", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'timedRun.getStatus': { capName: "timed-run", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'timedRun.runFor': { capName: "timed-run", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'timedRun.setSettings': { capName: "timed-run", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
   'toast.onToast': { capName: "toast", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'training.canaryResult': { capName: "training", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'training.cancelJob': { capName: "training", capScope: "system", addonId: null, access: "create", role: "admin" } as const,

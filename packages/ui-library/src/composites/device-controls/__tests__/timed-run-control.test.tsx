@@ -61,7 +61,12 @@ describe('TimedRunControl', () => {
     cleanup()
     mockResult = {
       cap: { runFor, cancel },
-      slice: { activeUntil: Date.now() + 90_000, requestedBy: null, lastFetchedAt: 1 },
+      slice: {
+        activeUntil: Date.now() + 90_000,
+        requestedBy: null,
+        quickRun: { duration: 30, unit: 'min' },
+        lastFetchedAt: 1,
+      },
       online: true,
     }
     render(<TimedRunControl trpc={trpc} deviceId={5} limit={HEATER} />)
@@ -89,5 +94,21 @@ describe('helpers', () => {
     expect(formatCountdown(65_000)).toBe('1:05')
     expect(maxInUnit(HEATER)).toBe(180)
     expect(maxInUnit(FOUNTAIN)).toBe(300)
+  })
+
+  it("starts from this device's own one-tap run, not a constant", () => {
+    mockResult = {
+      cap: { runFor, cancel },
+      slice: {
+        activeUntil: null,
+        requestedBy: null,
+        quickRun: { duration: 45, unit: 'min' },
+        lastFetchedAt: 1,
+      },
+      online: true,
+    }
+    render(<TimedRunControl trpc={trpc} deviceId={5} limit={HEATER} />)
+    fireEvent.click(screen.getByRole('button', { name: /run/i }))
+    expect(runFor).toHaveBeenCalledWith({ duration: 45, unit: 'min' })
   })
 })

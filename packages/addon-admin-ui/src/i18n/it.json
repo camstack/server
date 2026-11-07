@@ -9475,8 +9475,7 @@
     "heater": {
       "heating": "In riscaldamento",
       "off": "Spenta",
-      "power": "Stufa",
-      "quickRun": "Accendi per {{minutes}} min"
+      "power": "Stufa"
     },
     "timedRun": {
       "cancel": "Annulla il timer",
@@ -9488,7 +9487,8 @@
       "range": "Inserisci da 1 a {{max}} {{unit}}",
       "remaining": "{{time}} rimasti",
       "run": "Avvia",
-      "unsupported": "Questo dispositivo non supporta il timer."
+      "unsupported": "Questo dispositivo non supporta il timer.",
+      "quickRun": "Accendi per {{duration}} {{unit}}"
     },
     "powerMeterLine": {
       "energy": "Energia"

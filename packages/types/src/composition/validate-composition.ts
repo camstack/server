@@ -555,9 +555,18 @@ export function planComposition(
       return nativeReplaceOrBlock(featureTarget, probed)
     }
     const result = planFeature(feature, index, featureTarget, lookupCap, servedCommands)
-    return compositionFeatureEnabled(feature)
-      ? result
-      : { problems: result.problems, fields: [], features: [], events: [] }
+    if (compositionFeatureEnabled(feature)) return result
+    // A disabled feature with no field at all is a marker (the running opt-out),
+    // not a half-written cap: it owes no required field. Anything else stays checked.
+    const marker = Object.keys(feature.fields).length === 0
+    return {
+      problems: marker
+        ? result.problems.filter((p) => p.code !== 'missing-field')
+        : result.problems,
+      fields: [],
+      features: [],
+      events: [],
+    }
   })
   return {
     problems: results.flatMap((r) => r.problems),

@@ -22,8 +22,6 @@ import type { UseDeviceProxyTrpc } from '../../hooks/use-device-proxy'
 const TICK_MS = 1000
 const SECONDS_PER_MINUTE = 60
 const MS_PER_SECOND = 1000
-const DEFAULT_MINUTES = 30
-const DEFAULT_SECONDS = 60
 
 export interface TimedRunControlProps {
   readonly trpc: UseDeviceProxyTrpc
@@ -64,9 +62,9 @@ export function TimedRunControl({ trpc, deviceId, limit }: TimedRunControlProps)
     slice: (d) => d.state.timedRun,
   })
   const max = maxInUnit(limit)
-  const [draft, setDraft] = useState<number>(
-    Math.min(max, limit.unit === 'min' ? DEFAULT_MINUTES : DEFAULT_SECONDS),
-  )
+  // What the operator typed, else this device's own one-tap run (the status), else the type's.
+  const [edited, setEdited] = useState<number | null>(null)
+  const draft = edited ?? Math.min(max, slice?.quickRun.duration ?? limit.quickRunDefault)
   const [refusal, setRefusal] = useState<TimedRunRefusal | null>(null)
   const activeUntil = slice?.activeUntil ?? null
   const now = useNow(activeUntil !== null)
@@ -101,7 +99,7 @@ export function TimedRunControl({ trpc, deviceId, limit }: TimedRunControlProps)
           disabled={!online}
           aria-label={t('uiLibrary.timedRun.duration', 'Run for')}
           className="w-20 tabular-nums"
-          onChange={(event) => setDraft(event.target.valueAsNumber)}
+          onChange={(event) => setEdited(event.target.valueAsNumber)}
         />
         <span className="text-xs text-foreground-muted">{unitLabel}</span>
         <Button size="sm" disabled={!online || !valid} onClick={run}>
