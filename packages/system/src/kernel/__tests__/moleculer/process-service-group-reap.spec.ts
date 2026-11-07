@@ -136,6 +136,8 @@ describe('process-service D668: a runner owns a process group', { timeout: 20_00
     fs.rmSync(tmpDir, { recursive: true, force: true })
   })
 
+  let harnessCount = 0
+
   function harness(
     nodeId: string,
     groups: ProcessGroupOps,
@@ -143,7 +145,10 @@ describe('process-service D668: a runner owns a process group', { timeout: 20_00
     log: string[] = [],
   ) {
     const spawned: { child: FakeChild; opts: cp.SpawnOptions }[] = []
-    let pid = 91_000 + Math.floor(Math.random() * 1000) * 10
+    // Every harness its own pid range: the owned-group registry is process-wide, and two
+    // harnesses of one test drawing the same random base made a Windows child look owned.
+    harnessCount += 1
+    let pid = 91_000 + harnessCount * 1_000
     const spawnFn = (_c: string, _a: readonly string[], opts: cp.SpawnOptions): cp.ChildProcess => {
       const child = makeFakeChild(++pid)
       spawned.push({ child, opts })
