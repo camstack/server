@@ -1909,6 +1909,13 @@
       ]
     },
     {
+      "name": "CAP_INSTANCES_QUERY_KEY",
+      "kind": "constant",
+      "area": "hooks",
+      "file": "packages/ui-library/src/hooks/use-instances-of-cap.ts",
+      "summary": "The instances an operator can link to, read from the ONE instance model (D1013 rule 5): every provider of `integration-instances` that also serves the function cap describes its kinds, and the instances of a kind whos…"
+    },
+    {
       "name": "Card",
       "kind": "component",
       "area": "primitives",

@@ -1937,7 +1937,10 @@
     "stateStarting": "Starting",
     "stateStopped": "Stopped",
     "stateCrashed": "Crashed",
-    "stateFailed": "Failed"
+    "stateFailed": "Failed",
+    "loadModels": "Load models",
+    "profilesTableSubtitle": "Each profile is one model endpoint; switch one off to keep it without using it.",
+    "noProfilesDescription": "Add a profile to give features a model to talk to."
   },
   "logging": {
     "levels": {

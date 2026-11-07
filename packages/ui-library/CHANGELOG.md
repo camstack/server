@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Target pickers and the device export panel read notification targets from the instances of notification-output; useInstancesOfCap is exported
+- useInstancesOfCap and LinkableInstance are exported, and a linkable instance carries its switch and form values.
 
 ## [1.2.394] - 2026-11-06
 

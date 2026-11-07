@@ -505,7 +505,7 @@ export function createLlmClient(deps: LlmClientDeps = {}): LlmClient {
         //
         // The sentence names the cold load on purpose. This is the ONE bound a
         // unary call has, so it covers the model loading as well as the
-        // generation — and `testProfile`, the other surface an operator probes
+        // generation — and the profile test, the other surface an operator probes
         // a new profile with, lands here. `timed out after 60000ms` sent the
         // reader looking at the network; the fault is almost always a model
         // that has not finished loading.

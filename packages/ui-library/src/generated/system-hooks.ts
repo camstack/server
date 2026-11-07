@@ -1526,24 +1526,6 @@ export const useLlmGenerateVision: typeof trpc.llm.generateVision.useMutation = 
 /** Generated alias around `trpc.llm.cancel.useMutation`. */
 export const useLlmCancel: typeof trpc.llm.cancel.useMutation = /*#__PURE__*/ alias(() => trpc.llm.cancel.useMutation)
 
-/** Generated alias around `trpc.llm.listProfileKinds.useQuery`. */
-export const useLlmListProfileKinds: typeof trpc.llm.listProfileKinds.useQuery = /*#__PURE__*/ alias(() => trpc.llm.listProfileKinds.useQuery)
-
-/** Generated alias around `trpc.llm.listProfiles.useQuery`. */
-export const useLlmListProfiles: typeof trpc.llm.listProfiles.useQuery = /*#__PURE__*/ alias(() => trpc.llm.listProfiles.useQuery)
-
-/** Generated alias around `trpc.llm.upsertProfile.useMutation`. */
-export const useLlmUpsertProfile: typeof trpc.llm.upsertProfile.useMutation = /*#__PURE__*/ alias(() => trpc.llm.upsertProfile.useMutation)
-
-/** Generated alias around `trpc.llm.migrateRawSecrets.useMutation`. */
-export const useLlmMigrateRawSecrets: typeof trpc.llm.migrateRawSecrets.useMutation = /*#__PURE__*/ alias(() => trpc.llm.migrateRawSecrets.useMutation)
-
-/** Generated alias around `trpc.llm.deleteProfile.useMutation`. */
-export const useLlmDeleteProfile: typeof trpc.llm.deleteProfile.useMutation = /*#__PURE__*/ alias(() => trpc.llm.deleteProfile.useMutation)
-
-/** Generated alias around `trpc.llm.testProfile.useMutation`. */
-export const useLlmTestProfile: typeof trpc.llm.testProfile.useMutation = /*#__PURE__*/ alias(() => trpc.llm.testProfile.useMutation)
-
 /** Generated alias around `trpc.llm.listModels.useMutation`. */
 export const useLlmListModels: typeof trpc.llm.listModels.useMutation = /*#__PURE__*/ alias(() => trpc.llm.listModels.useMutation)
 

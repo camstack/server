@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Storage location row switch: a draining location is never switched back to active by the switch.
 - Notification targets are only the instances of notification-output: the target list/get/upsert/delete/enable methods are removed from the notification-output capability
 - Integration instances can refuse a write with a readable reason (validateWrite)
+- The llm capability drops listProfileKinds, listProfiles, upsertProfile, deleteProfile, testProfile and migrateRawSecrets; instance kinds may name provider widgets.
 
 ## [1.2.514] - 2026-11-06
 

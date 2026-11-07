@@ -83,6 +83,14 @@ export const IntegrationInstanceKindSchema = z.object({
   connectPath: z.string().min(1).optional(),
   /** Relative hub path to disconnect that account. */
   disconnectPath: z.string().min(1).optional(),
+  /**
+   * Parts of the edit dialog the flat form cannot draw (a node picker, a model source), named by a
+   * GENERIC widget id the client maps to a component; a client that knows none of them shows none.
+   * `connection` widgets write connection values, `model` widgets own the model choice.
+   */
+  widgets: z
+    .array(z.object({ id: z.string().min(1), placement: z.enum(['connection', 'model']) }))
+    .optional(),
 })
 export type IntegrationInstanceKind = z.infer<typeof IntegrationInstanceKindSchema>
 

@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1483 method paths across 202 capabilities.
+ * Coverage: 1477 method paths across 202 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -575,7 +575,6 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'lawnMowerControl.startMowing': { capName: "lawn-mower-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'llm.cancel': { capName: "llm", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'llm.deleteModel': { capName: "llm", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
-  'llm.deleteProfile': { capName: "llm", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'llm.generate': { capName: "llm", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'llm.generateVision': { capName: "llm", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'llm.getDefaults': { capName: "llm", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
@@ -585,16 +584,11 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'llm.listModelCatalog': { capName: "llm", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'llm.listModels': { capName: "llm", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'llm.listNodeModels': { capName: "llm", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
-  'llm.listProfileKinds': { capName: "llm", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
-  'llm.listProfiles': { capName: "llm", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'llm.listRuntimeNodes': { capName: "llm", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
-  'llm.migrateRawSecrets': { capName: "llm", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'llm.resolveModelRef': { capName: "llm", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'llm.setDefault': { capName: "llm", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'llm.startRuntime': { capName: "llm", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'llm.stopRuntime': { capName: "llm", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
-  'llm.testProfile': { capName: "llm", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
-  'llm.upsertProfile': { capName: "llm", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'llmRuntime.appleAvailability': { capName: "llm-runtime", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'llmRuntime.cancel': { capName: "llm-runtime", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'llmRuntime.complete': { capName: "llm-runtime", capScope: "system", addonId: null, access: "create", role: "admin" } as const,

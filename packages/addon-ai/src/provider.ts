@@ -37,7 +37,7 @@ import { listHttpModels } from './client/list-models.js'
 import type { LlmClient } from './client/llm-client.js'
 import { resolveRetryPolicy } from './client/retry-policy.js'
 import { DefaultsStore } from './defaults-store.js'
-import { AI_KIND_DESCRIPTORS, descriptorOf } from './kinds/descriptors.js'
+import { descriptorOf } from './kinds/descriptors.js'
 import { httpConnectionFrom, isHttpKind } from './kinds/http-connection.js'
 import {
   appleNodeIdOf,
@@ -135,13 +135,6 @@ function requireRuntime(runtime: RuntimeClient | undefined): RuntimeClient {
   return runtime
 }
 
-/** The wire view of a profile: a stored key (even an unreadable one) shows as set. */
-function redactForWire(store: ProfileStore, profile: LlmProfile): LlmProfile {
-  return store.lockedReason(profile.id) !== null
-    ? markSecretSet(profile)
-    : redactProfileForRead(profile)
-}
-
 /**
  * The connection `listModels` dials: the draft (or the stored bag), with an
  * untouched secret (absent or the redaction marker) resolved from the STORED
@@ -165,7 +158,28 @@ function connectionForListing(
   return secret !== undefined ? { ...rest, [field]: secret } : rest
 }
 
+/**
+ * The profile writes and the probe that are NOT capability methods any more: the `ai` instances
+ * provider (`integration-instances`) is their only caller, so the cap carries none of them.
+ */
+export interface ProfileOps {
+  /** Validate and persist one profile (the provider owns `providerConfig`); answers it redacted. */
+  readonly save: (profile: LlmProfile) => Promise<LlmProfile>
+  /** One tiny REAL generation against a stored profile. */
+  readonly test: (profileId: string) => Promise<LlmGenerateResult>
+}
+
+export interface LlmProviderParts {
+  readonly provider: ILlmProvider
+  readonly profiles: ProfileOps
+}
+
+/** The capability provider alone, for a caller that never saves or probes a profile. */
 export function createLlmProvider(deps: LlmProviderDeps): ILlmProvider {
+  return buildLlmProvider(deps).provider
+}
+
+export function buildLlmProvider(deps: LlmProviderDeps): LlmProviderParts {
   const addonId = deps.addonId ?? AI_ADDON_ID
   const budget = deps.budget ?? allowAllBudgetGate
 
@@ -435,18 +449,8 @@ export function createLlmProvider(deps: LlmProviderDeps): ILlmProvider {
     }
   }
 
-  return {
-    generate: (input) => dispatch(input, undefined),
-    generateVision: ({ images, ...input }) => dispatch(input, images),
-
-    listProfileKinds: async () => AI_KIND_DESCRIPTORS.map((d) => ({ ...d, addonId })),
-
-    listProfiles: async () =>
-      withAppleVision(await deps.store.list(), deps.appleNodes).map((p) =>
-        redactForWire(deps.store, { ...p, addonId }),
-      ),
-
-    upsertProfile: async ({ profile }) => {
+  const profileOps: ProfileOps = {
+    save: async (profile) => {
       if (descriptorOf(profile.kind) === null) {
         throw new Error(`this provider serves no kind "${profile.kind}"`)
       }
@@ -466,13 +470,7 @@ export function createLlmProvider(deps: LlmProviderDeps): ILlmProvider {
       return keepStoredKey ? markSecretSet(validated) : redactProfileForRead(validated)
     },
 
-    migrateRawSecrets: async ({ apply }) => deps.store.migrateRawKeys(apply),
-
-    deleteProfile: async ({ profileId }) => {
-      await deps.store.delete(profileId)
-    },
-
-    testProfile: async ({ profileId }) => {
+    test: async (profileId) => {
       const profile = await resolveById(profileId)
       if (profile === null || !profile.enabled) {
         return {
@@ -491,6 +489,11 @@ export function createLlmProvider(deps: LlmProviderDeps): ILlmProvider {
         undefined,
       )
     },
+  }
+
+  const provider: ILlmProvider = {
+    generate: (input) => dispatch(input, undefined),
+    generateVision: ({ images, ...input }) => dispatch(input, images),
 
     /**
      * A saved profile or an unsaved draft. The answer is models or a typed
@@ -719,4 +722,6 @@ export function createLlmProvider(deps: LlmProviderDeps): ILlmProvider {
       await requireRuntime(deps.runtime).stopRuntime(runtime.nodeId)
     },
   }
+
+  return { provider, profiles: profileOps }
 }

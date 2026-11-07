@@ -4,7 +4,7 @@
  * Everything here is a function over data — no React, no tRPC — so what gets
  * DRAWN (the kind icon, the kind groups, a node's Apple state) is
  * unit-testable without mounting a page. The profile form model lives in
- * `ai-profile-form.ts`.
+ * the profile record's own form (`integration-instances`).
  *
  * ## The icon rule
  *
@@ -36,8 +36,6 @@ export const REDACTED_MARKER = '__redacted__'
 /** The MANIFEST addon id — never the npm package name. */
 export const AI_ADDON_ID = 'ai'
 
-export const PROFILES_KEY = ['llm', 'listProfiles'] as const
-export const KINDS_KEY = ['llm', 'listProfileKinds'] as const
 export const DEFAULTS_KEY = ['llm', 'getDefaults'] as const
 export const RUNTIME_NODES_KEY = ['llm', 'listRuntimeNodes'] as const
 export const CATALOG_KEY = ['llm', 'listModelCatalog'] as const
@@ -275,4 +273,31 @@ export function runtimeNodeFeatures(node: LlmRuntimeNode): readonly RuntimeFeatu
     })
   }
   return badges
+}
+
+/** The slice of a profile instance the AI page reads: its flat form values. */
+interface ProfileFacts {
+  readonly formValues: Readonly<Record<string, unknown>>
+}
+
+/** The model id a profile runs ('' = none chosen yet). */
+export function profileModel(p: ProfileFacts): string {
+  const model = p.formValues.model
+  return typeof model === 'string' ? model : ''
+}
+
+export function profileSupportsVision(p: ProfileFacts): boolean {
+  return p.formValues.supportsVision === true
+}
+
+/** The node a profile runs on ('' = none). */
+export function profileNode(p: ProfileFacts): string {
+  const node = p.formValues.nodeId
+  return typeof node === 'string' ? node : ''
+}
+
+/** The profile's own bounds, as the test chat seeds them (a missing or non-numeric one is absent). */
+export function profileTimeouts(p: ProfileFacts): { readonly firstTokenTimeoutMs?: number } {
+  const first = p.formValues.firstTokenTimeoutMs
+  return typeof first === 'number' ? { firstTokenTimeoutMs: first } : {}
 }

@@ -1131,6 +1131,7 @@ import { BuildRecognizers } from './boot/build-recognizers.js'
 import { BuildStores } from './boot/build-stores-events.js'
 import { BuildNotificationPorts } from './boot/build-timelapse-ports.js'
 import { DeclareCollections } from './boot/declare-collections.js'
+import { listLlmProfileFacts } from './boot/llm-profile-instances.js'
 import { ResolveMediaStorage } from './boot/resolve-media-storage.js'
 import { DetailRoute } from './frame/detail-route.js'
 import { EnrichmentFanout } from './frame/enrichment-fanout.js'
@@ -3699,7 +3700,7 @@ export default class PipelineAnalyticsAddon
       // profile: a text-only profile would be REFUSED by the provider on a
       // vision call, so offering one is offering the fail-open path.
       listAiProfiles: async () => {
-        const profiles = await api.llm.listProfiles.query({})
+        const profiles = await listLlmProfileFacts(api)
         return profiles
           .filter((profile) => profile.enabled && profile.supportsVision)
           .map((profile) => ({

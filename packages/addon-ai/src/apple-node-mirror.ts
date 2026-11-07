@@ -2,7 +2,7 @@
  * The hub's mirror of every node's Apple Foundation Models availability.
  *
  * Why it exists: the first version asked each Apple node LIVE, over nodePin,
- * inside every vision dispatch and every `listProfiles`. A nodePin to a node
+ * inside every vision dispatch and every instance listing. A nodePin to a node
  * that is offline waits for discovery (up to 30 s) before it rejects — so with
  * the Mac mid-upgrade every notification gate, summary and rule editor on the
  * hub stalled, including calls routed to a CLOUD profile. A gate must read a

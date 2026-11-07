@@ -7,7 +7,7 @@
  * key in the row's keychain slot). The FORM is flat, because `ConfigFormBuilder` addresses a field
  * by one key: `providerConfig` is spread into it, `retry` becomes `retryEnabled` /
  * `retryMaxAttempts`, and the key is the kind's one secret field, shown as a `SecretFieldView`.
- * `updateInstance` folds the flat values back through the SAME save the old `upsertProfile` ran
+ * `updateInstance` folds the flat values back through the SAME save the removed `upsertProfile` ran
  * (`validateProviderConfig`, the secret merge), so a malformed profile is refused here too.
  *
  * Secrets: a value omitted, `''`, the redaction token or the view the form was given KEEPS the
@@ -18,7 +18,6 @@ import {
   type ConfigField,
   type ConfigUISchema,
   type IIntegrationInstancesProvider,
-  type ILlmProvider,
   type IntegrationInstance,
   type IntegrationInstanceDescription,
   type IntegrationTestConnectionResult,
@@ -37,7 +36,9 @@ import {
 } from '@camstack/types'
 import { AI_KIND_DESCRIPTORS, descriptorOf, type KindDescriptor } from './kinds/descriptors.js'
 import { secretFieldOf, validateProviderConfig } from './kinds/provider-config.js'
+import { type AppleNodeView, withAppleVision } from './apple-profile.js'
 import { ProfileStore } from './profile-store.js'
+import type { ProfileOps } from './provider.js'
 import { aiRecordKinds, type LlmProfileBody } from './record-kinds.js'
 import { REDACTED_MARKER } from './secrets.js'
 
@@ -54,7 +55,10 @@ const TEST_BUDGET_MS = 50_000
 
 export interface LlmInstancesDeps {
   readonly store: ProfileStore
-  readonly llm: Pick<ILlmProvider, 'upsertProfile' | 'testProfile'>
+  /** The profile save and the probe: what the removed `upsertProfile` / `testProfile` ran. */
+  readonly profiles: ProfileOps
+  /** The hub's mirror of each node's Apple state: an Apple row's vision flag follows the node NOW. */
+  readonly appleNodes?: AppleNodeView
   /** The hub's records door: its owner binds the keychain refs of the profile secrets; its `llm-profiles` kind carries the switch. */
   readonly records: Pick<RecordsAccess, 'kind' | 'owner'>
   readonly testBudgetMs?: number
@@ -81,6 +85,7 @@ const COMMON_KEYS: ReadonlySet<string> = new Set([
   'retryEnabled',
   'retryMaxAttempts',
   'toolsEnabled',
+  'modelRef',
 ])
 
 const NUMBER_FIELDS = [
@@ -261,9 +266,14 @@ function valuesOfRow(owner: string, row: RecordRow<LlmProfileBody>): Record<stri
   const kind = typeof common.kind === 'string' ? common.kind : ''
   const field = secretFieldOf(kind)
   const retryBody = isRecord(retry) ? retry : {}
+  // A managed kind's `providerConfig.model` is a pinned model REFERENCE; the flat form keeps
+  // `model` for the display id, so the reference travels as `modelRef`.
+  const config = isRecord(providerConfig) ? providerConfig : {}
+  const { model: reference, ...connection } = config
   return {
     ...common,
-    ...(isRecord(providerConfig) ? providerConfig : {}),
+    ...(isRecord(reference) ? connection : config),
+    ...(isRecord(reference) ? { modelRef: reference } : {}),
     retryEnabled: retryBody.enabled === true,
     retryMaxAttempts: typeof retryBody.maxAttempts === 'number' ? retryBody.maxAttempts : 1,
     ...(field !== null && apiKey !== undefined ? { [field]: apiKey } : {}),
@@ -339,6 +349,7 @@ export function profileFromValues(
     }
   }
   const config: Record<string, unknown> = { ...base.providerConfig }
+  if (isRecord(values.modelRef)) config.model = values.modelRef
   for (const [key, sent] of Object.entries(values)) {
     if (COMMON_KEYS.has(key) || sent === undefined || key === secretFieldOf(descriptor.kind))
       continue
@@ -391,11 +402,21 @@ const LLM_DESCRIPTION: IntegrationInstanceDescription = {
     label: d.label,
     functionCap: LLM_FUNCTION_CAP,
     canTest: true,
+    ...(d.providerWidgets !== undefined && d.providerWidgets.length > 0
+      ? { widgets: d.providerWidgets.map(({ id, placement }) => ({ id, placement })) }
+      : {}),
   })),
 }
 
 export function createLlmInstances(deps: LlmInstancesDeps): IIntegrationInstancesProvider {
-  const { store, llm } = deps
+  const { store, profiles } = deps
+  /** `supportsVision` of an Apple row is the node's last report, never the value stored at save. */
+  const seenNow = (row: RecordRow<LlmProfileBody>): RecordRow<LlmProfileBody> => {
+    const [live] = withAppleVision([{ ...row.data, id: row.id }], deps.appleNodes)
+    return live === undefined
+      ? row
+      : { ...row, data: { ...row.data, supportsVision: live.supportsVision } }
+  }
   const owner = deps.records.owner
   const budgetMs = deps.testBudgetMs ?? TEST_BUDGET_MS
 
@@ -429,11 +450,11 @@ export function createLlmInstances(deps: LlmInstancesDeps): IIntegrationInstance
       return formSchemaOf(requireDescriptor(wanted))
     },
 
-    listInstances: async () => (await store.rows()).map((row) => viewOf(owner, row)),
+    listInstances: async () => (await store.rows()).map((row) => viewOf(owner, seenNow(row))),
 
     getInstance: async ({ id }) => {
       const row = (await store.rows()).find((r) => r.id === id)
-      return row === undefined ? null : viewOf(owner, row)
+      return row === undefined ? null : viewOf(owner, seenNow(row))
     },
 
     createInstance: async ({ id, name, kind, values }) => {
@@ -453,14 +474,14 @@ export function createLlmInstances(deps: LlmInstancesDeps): IIntegrationInstance
         values,
         name,
       )
-      await llm.upsertProfile({ profile })
+      await profiles.save(profile)
       return { id: minted }
     },
 
     updateInstance: async ({ id, name, values }) => {
       const existing = await requireProfile(id)
       const profile = profileFromValues(existing, requireDescriptor(existing.kind), values, name)
-      await llm.upsertProfile({ profile })
+      await profiles.save(profile)
       return { ok: true as const }
     },
 
@@ -494,9 +515,7 @@ export function createLlmInstances(deps: LlmInstancesDeps): IIntegrationInstance
         }, budgetMs)
       })
       try {
-        const ran = llm
-          .testProfile({ addonId: ADDON_ID, profileId: id })
-          .then((result) => testOutcome(result))
+        const ran = profiles.test(id).then((result) => testOutcome(result))
         return await Promise.race([ran, gaveUp])
       } finally {
         if (timer !== undefined) clearTimeout(timer)

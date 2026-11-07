@@ -32,17 +32,29 @@ interface CustomCall {
 
 const calls: CustomCall[] = []
 let listAnswer: () => Promise<unknown> = () => Promise.resolve({ rules: [] })
-let listProfilesAnswer: () => Promise<unknown> = () =>
-  Promise.resolve([
+/** What `useInstancesOfCap('llm')` answers: the profile instances, or an error. */
+interface ProfilesAnswer {
+  readonly data: readonly unknown[] | undefined
+  readonly isError: boolean
+}
+const TWO_PROFILES: ProfilesAnswer = {
+  isError: false,
+  data: [
     {
       id: 'mac-lmstudio-qwen3vl',
       name: 'LM Studio',
-      model: 'qwen3-vl',
-      supportsVision: true,
       enabled: true,
+      formValues: { model: 'qwen3-vl', supportsVision: true },
     },
-    { id: 'text-only', name: 'Text', model: 'gpt', supportsVision: false, enabled: true },
-  ])
+    {
+      id: 'text-only',
+      name: 'Text',
+      enabled: true,
+      formValues: { model: 'gpt', supportsVision: false },
+    },
+  ],
+}
+let profilesAnswer: ProfilesAnswer = TWO_PROFILES
 
 const mockCustom = vi.fn((call: CustomCall) => {
   calls.push(call)
@@ -92,6 +104,12 @@ vi.mock('@camstack/ui-library', async () => {
     NotificationTargetsField: () => null,
     useDeviceManagerListAll: (input?: FleetListInput, options?: FleetListOptions) =>
       listAllHook(input, options),
+    useInstancesOfCap: () => ({
+      ...profilesAnswer,
+      isLoading: false,
+      isSuccess: !profilesAnswer.isError,
+      error: profilesAnswer.isError ? { message: 'no such router' } : null,
+    }),
     useSystem: () => ({
       trpcClient: {
         addons: { custom: { mutate: mockCustom } },
@@ -101,7 +119,6 @@ vi.mock('@camstack/ui-library', async () => {
           getTemplateCatalog: { query: () => Promise.resolve(templateCatalogAnswer()) },
           previewTemplate: { mutate: () => Promise.resolve({ title: null, body: null }) },
         },
-        llm: { listProfiles: { query: () => listProfilesAnswer() } },
       },
     }),
   }
@@ -163,17 +180,7 @@ describe('NotificationSummaries page', () => {
     calls.length = 0
     mockCustom.mockClear()
     listAnswer = () => Promise.resolve({ rules: [] })
-    listProfilesAnswer = () =>
-      Promise.resolve([
-        {
-          id: 'mac-lmstudio-qwen3vl',
-          name: 'LM Studio',
-          model: 'qwen3-vl',
-          supportsVision: true,
-          enabled: true,
-        },
-        { id: 'text-only', name: 'Text', model: 'gpt', supportsVision: false, enabled: true },
-      ])
+    profilesAnswer = TWO_PROFILES
   })
 
   it('says summaries are UNAVAILABLE when the hub has no such action', async () => {
@@ -355,7 +362,7 @@ describe('the digest EDITOR', () => {
   it('a hub that cannot list profiles still opens the editor and SAYS why', async () => {
     // The AI addon not deployed. A dialog that will not open over a feature the
     // operator did not ask for is the worse failure.
-    listProfilesAnswer = () => Promise.reject(new Error('no such router'))
+    profilesAnswer = { data: undefined, isError: true }
     await openEditor()
     fireEvent.click(screen.getByRole('tab', { name: 'AI' }))
     await waitFor(() => expect(screen.getByTestId('summary-ai-enabled')).toBeTruthy())

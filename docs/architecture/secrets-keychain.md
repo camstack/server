@@ -241,7 +241,7 @@ npx tsx scripts/hub/migrate-raw-secrets.ts --server <host>           # dry run
 npx tsx scripts/hub/migrate-raw-secrets.ts --server <host> --apply
 ```
 
-It calls `llm.migrateRawSecrets`, `userManagement.migrateRawSecrets`,
+It calls `userManagement.migrateRawSecrets`,
 `coreBlocks.migrateRawSecrets` and the waste-collections `migrateSources` action (D880, below);
 each owner puts the value, reads it back, and only then rewrites the row. Counts only,
 idempotent, exit 1 unless every row is a marker and every marker resolves. There is no

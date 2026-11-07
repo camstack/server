@@ -49,7 +49,7 @@
  * this surface does not reintroduce it: the camera picker's own thumbnails come
  * off the snapshot data plane as ordinary browser-cached `<img>` requests.
  */
-import type { DeviceInfo, LlmProfile, RecentTracksPage, Track } from '@camstack/types'
+import type { DeviceInfo, RecentTracksPage, Track } from '@camstack/types'
 import {
   Badge,
   Button,
@@ -66,6 +66,7 @@ import {
   useDeviceLabel,
   useDeviceManagerListAll,
   useDeviceSnapshotImage,
+  useInstancesOfCap,
   useSystem,
 } from '@camstack/ui-library'
 import { useQuery } from '@tanstack/react-query'
@@ -82,7 +83,7 @@ import {
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { PROFILES_KEY } from './ai-page.helpers'
+import { profileModel, profileSupportsVision, profileTimeouts } from './ai-page.helpers'
 import {
   type ChatTurn,
   describeAttachment,
@@ -171,10 +172,7 @@ export function AiTestChatPage() {
     if (chatMode === 'persistent') void refreshChats()
   }, [chatMode, refreshChats])
 
-  const profilesQuery = useQuery({
-    queryKey: PROFILES_KEY,
-    queryFn: (): Promise<readonly LlmProfile[]> => system.trpcClient.llm.listProfiles.query({}),
-  })
+  const profilesQuery = useInstancesOfCap({ functionCap: 'llm' })
   const profiles = useMemo(
     () => (profilesQuery.data ?? []).filter((p) => p.enabled),
     [profilesQuery.data],
@@ -204,7 +202,9 @@ export function AiTestChatPage() {
       // `first-token-wait` as soon as the SOCKET is up — before `meta`, and on
       // a cold box minutes before it — so the status line has to know the bound
       // it is counting against from the very first frame.
-      const firstTokenTimeoutMs = firstTokenBudgetFor(profile ?? {})
+      const firstTokenTimeoutMs = firstTokenBudgetFor(
+        profile === null ? {} : profileTimeouts(profile),
+      )
       setLive({ ...INITIAL_LIVE, firstTokenTimeoutMs: firstTokenTimeoutMs ?? 0 })
 
       let text = ''
@@ -379,7 +379,7 @@ export function AiTestChatPage() {
                   { value: '', label: t('ai.selectProfile', 'Select a profile…') },
                   ...profiles.map((p) => ({
                     value: p.id,
-                    label: `${p.name} · ${p.model}${p.supportsVision ? ' · vision' : ''}`,
+                    label: `${p.name} · ${profileModel(p)}${profileSupportsVision(p) ? ' · vision' : ''}`,
                   })),
                 ]}
               />
@@ -453,7 +453,7 @@ export function AiTestChatPage() {
             )}
           </p>
 
-          {profile !== null && !profile.supportsVision && (
+          {profile !== null && !profileSupportsVision(profile) && (
             <p className="text-xs text-warning">
               {t(
                 'ai.notVision',

@@ -68,6 +68,7 @@ import { TrackStore } from '../store/track-store.js'
 import { VehicleStore } from '../store/vehicle-store.js'
 import type { AnalyticsApi, AnalyticsStores } from './boot-types.js'
 import { BuildStoresBase } from './build-stores.js'
+import { listLlmProfileFacts } from './llm-profile-instances.js'
 
 export class BuildStores extends BuildStoresBase {
   protected async buildStoresRemainder(
@@ -192,19 +193,7 @@ export class BuildStores extends BuildStoresBase {
     this.retrainLlmAssist = new RetrainLlmAssistService({
       frames: retrainFrames,
       llm: {
-        listProfiles: async () =>
-          (await api.llm.listProfiles.query({})).map((p) => ({
-            id: p.id,
-            name: p.name,
-            model: p.model,
-            kind: p.kind,
-            // D895: the endpoint lives in the provider's `providerConfig`.
-            ...(typeof p.providerConfig.baseUrl === 'string'
-              ? { baseUrl: p.providerConfig.baseUrl }
-              : {}),
-            enabled: p.enabled,
-            supportsVision: p.supportsVision,
-          })),
+        listProfiles: () => listLlmProfileFacts(api),
         generateVision: async (request) => {
           const result = await api.llm.generateVision.mutate({
             profileId: request.profileId,

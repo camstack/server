@@ -21,7 +21,6 @@
 import {
   type LlmProfile,
   LlmProfileSchema,
-  type RawSecretMigrationReport,
   type RecordKindHandle,
   type RecordRow,
   type RecordsAccess,
@@ -225,29 +224,6 @@ export class ProfileStore {
   async delete(id: string): Promise<void> {
     await this.profiles.delete(id)
     this.locked.delete(id)
-  }
-
-  /**
-   * D878 operator migration, kept for the cap method. A record never holds a
-   * plaintext key (the engine refuses one), so there is nothing to move: the
-   * report only says how many rows carry a key and whether each can be served.
-   * Counts only.
-   */
-  async migrateRawKeys(apply: boolean): Promise<RawSecretMigrationReport> {
-    const reads = await this.readAll()
-    const markers = reads.filter((r) => r.hasKey).length
-    const unresolvedMarkers = reads.filter((r) => r.lock !== undefined).length
-    return {
-      apply,
-      rows: reads.length,
-      raw: 0,
-      markers,
-      migrated: 0,
-      failed: 0,
-      remainingRaw: 0,
-      unresolvedMarkers,
-      verified: unresolvedMarkers === 0,
-    }
   }
 
   /** Idempotent template seed (spec §2): one DISABLED LAN-Ollama example,

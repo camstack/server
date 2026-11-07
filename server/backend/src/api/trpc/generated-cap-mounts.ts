@@ -1238,12 +1238,6 @@ export function mountAllCaps(services: MountAllCapsServices) {
       const first = providers[0]!
       return {
         ...first,
-        listProfileKinds: concatCollection(providers, 'listProfileKinds') as InferProvider<
-          typeof llmCapability
-        >['listProfileKinds'],
-        listProfiles: concatCollection(providers, 'listProfiles') as InferProvider<
-          typeof llmCapability
-        >['listProfiles'],
         getDefaults: concatCollection(providers, 'getDefaults') as InferProvider<
           typeof llmCapability
         >['getDefaults'],

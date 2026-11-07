@@ -8,7 +8,7 @@ applies-to:
   - packages/types/src/capabilities/llm.cap.ts
   - packages/addon-ai/src/kinds/**
   - packages/addon-ai/src/profile-migration.ts
-  - packages/addon-admin-ui/src/pages/system/AiProfileEditor.tsx
+  - packages/addon-admin-ui/src/pages/system/AiProfileLead.tsx
 ---
 
 ## Context

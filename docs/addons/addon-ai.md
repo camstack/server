@@ -94,6 +94,17 @@ Consequences to keep in mind:
   keeps in `providerConfig` and the save-time validator are
   `src/kinds/provider-config.ts`. Read the two together: a field in one and not
   the other is invisible or unsaveable. The admin editor has no kind branch.
+- **A profile is an `integration-instances` record** (`src/instances.ts`, kind =
+  the profile kind, `functionCap: 'llm'`): the cap carries NO profile CRUD or
+  test method any more (`llm` keeps `getDefaults`, `setDefault`, `listModels`
+  and the runtime methods). The admin page is `<InstancesTable functionCap="llm">`;
+  a kind names the parts a form cannot draw as `widgets` (`ai/managed-model`,
+  `ai/apple-node`, drawn by `AiProfileLead` from the generic id), and a managed
+  kind's model reference is the flat form key `modelRef`. Readers of the profile
+  list (the defaults card, the test chat, usage, the summary rule picker, the
+  post-analysis `listLlmProfileFacts`) go through `useInstancesOfCap('llm')` or
+  `integrationInstances.listInstances`. The writes and the probe stay in
+  `ProfileOps` (`provider.ts`), whose only caller is that provider.
 - HTTP kinds read their endpoint through `httpConnectionOf(profile)`
   (`src/kinds/http-connection.ts`), never off the bag. `managed-local` keeps a
   whole `ManagedRuntimeConfig` (`managedRuntimeOf`); `apple-foundation` a
@@ -155,7 +166,7 @@ contract and change together.
   is complete (16 s measured); the helper streams and checks per snapshot.
 - **A guardrail refusal is `refusalSource: 'guardrail'`**, logged on the node
   and on the hub. The hub falls back to the caller's next profile ONLY when the
-  caller named none — an explicit `profileId` (and `testProfile`) gets the
+  caller named none — an explicit `profileId` (and the instance Test) gets the
   refusal, never a silent re-send to a cloud default. Apple refuses
   surveillance-framed prompts in 0.1 s; describe events, not cameras.
 - **Text only.** Images are refused (`unavailable`) until a helper built with a

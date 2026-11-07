@@ -419,7 +419,7 @@ export const ncActions = defineCustomActions({
   /**
    * The profiles a rule's AI section may be PINNED to — the picker's options.
    *
-   * A bridge action and not `llm.listProfiles` straight from the client, for
+   * A bridge action and not the `ai` profile instances straight from the client, for
    * the reason this whole module exists: the viewer never adds a cap method,
    * and a phone that had to speak the `llm` cap would need an SDK train to
    * learn a field this addon already owns.

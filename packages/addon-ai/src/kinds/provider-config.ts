@@ -2,7 +2,7 @@
  * What each kind keeps in `providerConfig`, and the one validator the provider
  * runs on save (D893). The cap types the bag as `Record<string, unknown>`; this
  * file is where an addon-ai kind says what it accepts, so a malformed profile is
- * refused at `upsertProfile` instead of failing at call time.
+ * refused at save instead of failing at call time.
  */
 import {
   collectSecretConfigKeys,

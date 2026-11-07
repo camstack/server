@@ -16,7 +16,8 @@
  *  5. **Nothing is persisted.**
  */
 
-import type { DeviceInfo, LlmProfile } from '@camstack/types'
+import type { DeviceInfo } from '@camstack/types'
+import type { LinkableInstance } from '@camstack/ui-library'
 import { DeviceType } from '@camstack/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
@@ -63,22 +64,17 @@ function makeStream(): {
 
 let nextResponse: () => Response | Promise<Response> = () => new Response('', { status: 200 })
 
-const VISION_PROFILE: LlmProfile = {
+const VISION_PROFILE = {
   id: 'p-vision',
   name: 'Mac LM Studio',
   kind: 'openai-compatible',
   addonId: 'ai',
+  state: 'ok',
+  stateLabel: null,
+  usable: true,
   enabled: true,
-  model: 'qwen/qwen3-vl-8b',
-  supportsVision: true,
-  timeoutMs: 60_000,
-  connectTimeoutMs: 10_000,
-  firstTokenTimeoutMs: 120_000,
-  idleTimeoutMs: 60_000,
-  retry: { enabled: false, maxAttempts: 1 },
-  toolsEnabled: false,
-  providerConfig: {},
-}
+  formValues: { model: 'qwen/qwen3-vl-8b', supportsVision: true, firstTokenTimeoutMs: 120_000 },
+} satisfies LinkableInstance
 
 const CAMERA: DeviceInfo = {
   id: 102,
@@ -130,9 +126,15 @@ vi.mock('@camstack/ui-library', async () => {
     ...real,
     useDeviceManagerListAll: (input?: FleetListInput, options?: FleetListOptions) =>
       listAllHook(input, options),
+    useInstancesOfCap: () => ({
+      data: [VISION_PROFILE],
+      isLoading: false,
+      isError: false,
+      isSuccess: true,
+      error: null,
+    }),
     useSystem: () => ({
       trpcClient: {
-        llm: { listProfiles: { query: () => Promise.resolve([VISION_PROFILE]) } },
         deviceManager: { listAll: { query: mockListAllRaw } },
         pipelineAnalytics: {
           listRecentTracks: { query: () => Promise.resolve({ tracks: [], nextCursor: null }) },

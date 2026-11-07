@@ -106,7 +106,7 @@ export interface SystemProxy {
   readonly integrationInstances: Pick<InferProvider<typeof integrationInstancesCapability>, 'describe' | 'instanceFormSchema' | 'listInstances' | 'getInstance' | 'createInstance' | 'updateInstance' | 'setInstanceEnabled' | 'deleteInstance' | 'testInstance'>
   readonly integrations: Pick<InferProvider<typeof integrationsCapability>, 'list' | 'get' | 'getByAddonId' | 'create' | 'update' | 'delete' | 'getAvailableTypes'>
   readonly keychainAdmin: Pick<InferProvider<typeof keychainAdminCapability>, 'status' | 'listSecrets' | 'listAudit' | 'reveal' | 'setSystemSecret' | 'importSecret' | 'deleteOrphans' | 'rotateMasterKey' | 'purgeRetiredKeys' | 'downloadRecoveryKey' | 'resetKeychain' | 'resetReport' | 'acknowledgeReset'>
-  readonly llm: Pick<InferProvider<typeof llmCapability>, 'generate' | 'generateVision' | 'cancel' | 'listProfileKinds' | 'listProfiles' | 'upsertProfile' | 'migrateRawSecrets' | 'deleteProfile' | 'testProfile' | 'listModels' | 'getDefaults' | 'setDefault' | 'getUsage' | 'listModelCatalog' | 'listRuntimeNodes' | 'listNodeModels' | 'resolveModelRef' | 'installModel' | 'deleteModel' | 'getRuntimeStatus' | 'startRuntime' | 'stopRuntime'>
+  readonly llm: Pick<InferProvider<typeof llmCapability>, 'generate' | 'generateVision' | 'cancel' | 'listModels' | 'getDefaults' | 'setDefault' | 'getUsage' | 'listModelCatalog' | 'listRuntimeNodes' | 'listNodeModels' | 'resolveModelRef' | 'installModel' | 'deleteModel' | 'getRuntimeStatus' | 'startRuntime' | 'stopRuntime'>
   readonly localNetwork: Pick<InferProvider<typeof localNetworkCapability>, 'list' | 'getPreferred' | 'getConnectionEndpoints' | 'getNotificationEndpoint' | 'setNotificationEndpoint' | 'getViewerEndpoints' | 'setViewerEndpoints' | 'getAddresses' | 'addCustomAddress' | 'removeCustomAddress' | 'setAddressRole' | 'getHubAddresses' | 'getAllowedAddresses' | 'setAllowedAddresses' | 'resetAllowlistToBestMatch' | 'getTlsStatus' | 'regenerateCertificate' | 'uploadCertificate' | 'downloadCa' | 'useStoredUploadedCertificate' | 'scanNetwork' | 'getScanSubnets' | 'setScanSubnets' | 'revertToGeneratedCertificate'>
   readonly meshNetwork: Pick<InferProvider<typeof meshNetworkCapability>, 'getStatus' | 'join' | 'startLogin' | 'leave' | 'logout' | 'listPeers' | 'testConnection'>
   readonly metricsProvider: Pick<InferProvider<typeof metricsProviderCapability>, 'collectSnapshot' | 'getCached' | 'getCurrent' | 'getDiskSpace' | 'getGpuInfo' | 'getCpuTemperature' | 'getProcessStats' | 'listAddonInstances' | 'getAddonStats' | 'listNodeProcesses' | 'getLoadSeries'>
@@ -537,12 +537,6 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     generate: (input?: unknown) => dispatch('llm', 'generate', 'mutation', input),
     generateVision: (input?: unknown) => dispatch('llm', 'generateVision', 'mutation', input),
     cancel: (input?: unknown) => dispatch('llm', 'cancel', 'mutation', input),
-    listProfileKinds: (input?: unknown) => dispatch('llm', 'listProfileKinds', 'query', input),
-    listProfiles: (input?: unknown) => dispatch('llm', 'listProfiles', 'query', input),
-    upsertProfile: (input?: unknown) => dispatch('llm', 'upsertProfile', 'mutation', input),
-    migrateRawSecrets: (input?: unknown) => dispatch('llm', 'migrateRawSecrets', 'mutation', input),
-    deleteProfile: (input?: unknown) => dispatch('llm', 'deleteProfile', 'mutation', input),
-    testProfile: (input?: unknown) => dispatch('llm', 'testProfile', 'mutation', input),
     listModels: (input?: unknown) => dispatch('llm', 'listModels', 'mutation', input),
     getDefaults: (input?: unknown) => dispatch('llm', 'getDefaults', 'query', input),
     setDefault: (input?: unknown) => dispatch('llm', 'setDefault', 'mutation', input),

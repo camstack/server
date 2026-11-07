@@ -45,7 +45,6 @@ describe('migrate-raw-secrets', () => {
     await runMigration(h.hub, false)
     expect(h.calls).toEqual(OWNER_ROUTES.map((o) => [o.route, o.input(false)]))
     expect(h.calls.map(([route]) => route)).toEqual([
-      'llm.migrateRawSecrets',
       'userManagement.migrateRawSecrets',
       'coreBlocks.migrateRawSecrets',
     ])

@@ -104,6 +104,7 @@ export type {
   UseInstancesOfCapResult,
 } from './use-instances-of-cap'
 export {
+  CAP_INSTANCES_QUERY_KEY,
   instancesOfHolder,
   selectableInstances,
   useInstancesOfCap,

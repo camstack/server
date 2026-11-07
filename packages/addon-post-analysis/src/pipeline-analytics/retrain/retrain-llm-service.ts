@@ -31,7 +31,7 @@ import {
   parseLlmAssistAnswer,
 } from './retrain-llm-assist.js'
 
-/** The profile facts this service reads from `llm.listProfiles`. */
+/** The profile facts this service reads from the `llm` profile instances (`listLlmProfileFacts`). */
 export interface LlmProfileView {
   readonly id: string
   readonly name: string

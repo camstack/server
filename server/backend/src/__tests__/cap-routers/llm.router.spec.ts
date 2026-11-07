@@ -10,7 +10,7 @@
  * `_meta.spec.ts` "every cap has a router spec" gate.
  */
 import { describe, it, expect } from 'vitest'
-import { LlmProfileSchema, type ILlmProvider, type LlmProfile } from '@camstack/types'
+import type { ILlmProvider } from '@camstack/types'
 import { buildCapRouterForTest, invokeProcedure, makeCtx } from './harness.js'
 
 function llmRouterAvailable(): boolean {
@@ -22,29 +22,11 @@ function llmRouterAvailable(): boolean {
   }
 }
 
-// Parsed, so every defaulted field is the schema's own default.
-const PROFILE: LlmProfile = LlmProfileSchema.parse({
-  id: 'p1',
-  name: 'Test',
-  kind: 'openai-compatible',
-  addonId: 'ai',
-  enabled: true,
-  model: 'llama3.2:3b',
-  providerConfig: { baseUrl: 'http://ollama.lan:11434/v1' },
-  supportsVision: false,
-  timeoutMs: 60_000,
-})
-
 /** The methods this spec's routes reach; the harness takes any provider object. */
 function makeMockProvider(overrides: Partial<ILlmProvider> = {}): Partial<ILlmProvider> {
   return {
     generate: async () => ({ ok: false, code: 'no-profile', message: 'none' }),
     generateVision: async () => ({ ok: false, code: 'no-profile', message: 'none' }),
-    listProfileKinds: async () => [],
-    listProfiles: async () => [PROFILE],
-    upsertProfile: async ({ profile }) => profile,
-    deleteProfile: async () => undefined,
-    testProfile: async () => ({ ok: false, code: 'no-profile', message: 'none' }),
     listModels: async () => ({ ok: true, models: [{ id: 'llama3.2:3b' }] }),
     getDefaults: async () => [],
     setDefault: async () => undefined,
@@ -62,17 +44,18 @@ function makeMockProvider(overrides: Partial<ILlmProvider> = {}): Partial<ILlmPr
 }
 
 describe.skipIf(!llmRouterAvailable())('llm router', () => {
-  it('dispatches listProfiles to the provider', async () => {
+  it('dispatches getDefaults to the provider', async () => {
     const router = buildCapRouterForTest('llm', () => makeMockProvider())
-    const outcome = await invokeProcedure(router, 'listProfiles', makeCtx('user'), {})
+    const outcome = await invokeProcedure(router, 'getDefaults', makeCtx('user'), {})
     expect(outcome.ok).toBe(true)
-    if (outcome.ok) expect(outcome.value).toEqual([PROFILE])
+    if (outcome.ok) expect(outcome.value).toEqual([])
   })
 
-  it('gates upsertProfile behind admin', async () => {
+  it('gates setDefault behind admin', async () => {
     const router = buildCapRouterForTest('llm', () => makeMockProvider())
-    const outcome = await invokeProcedure(router, 'upsertProfile', makeCtx('user'), {
-      profile: PROFILE,
+    const outcome = await invokeProcedure(router, 'setDefault', makeCtx('user'), {
+      selector: { purpose: 'text' },
+      profileId: 'p1',
     })
     expect(outcome.ok).toBe(false)
   })
@@ -108,7 +91,7 @@ describe.skipIf(!llmRouterAvailable())('llm router', () => {
 
   it('missing provider → PRECONDITION_FAILED naming the cap', async () => {
     const router = buildCapRouterForTest('llm', () => null)
-    const outcome = await invokeProcedure(router, 'listProfiles', makeCtx('user'), {})
+    const outcome = await invokeProcedure(router, 'getDefaults', makeCtx('user'), {})
     expect(outcome.ok).toBe(false)
     if (!outcome.ok) expect(outcome.message).toContain('llm')
   })

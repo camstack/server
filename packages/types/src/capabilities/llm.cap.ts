@@ -24,10 +24,6 @@ import {
   ManagedModelRefSchema,
 } from './llm-runtime.cap.js'
 import {
-  RawSecretMigrationInputSchema,
-  RawSecretMigrationReportSchema,
-} from './raw-secret-migration.js'
-import {
   LlmGenerateBaseInputSchema,
   LlmGenerateResultSchema,
   LlmImageSchema,
@@ -36,7 +32,7 @@ import {
 
 /**
  * A profile kind is an OPEN id, declared by the provider that serves it
- * (`listProfileKinds`). The cap names no kind: a new provider ships a new kind
+ * (`integration-instances.describe().kinds`). The cap names no kind: a new provider ships a new kind
  * without a framework change. Lower-case, digits and dashes, so it stays safe
  * as a URL segment, a record field and a CSS hook.
  */
@@ -68,7 +64,7 @@ export type LlmModelInfo = z.infer<typeof LlmModelInfoSchema>
 
 /**
  * The provider-specific part of a profile, validated by the provider that owns
- * the kind (`upsertProfile` refuses what it does not accept). A field its
+ * the kind (saving an instance refuses what it does not accept). A field its
  * `connectionSchema` declares `type: 'password'` is a secret: it is held in the
  * keychain, never in the row, and reads back as the redaction marker.
  */
@@ -369,32 +365,8 @@ export const llmCapability = {
       { kind: 'mutation' },
     ),
     // NOTE: embedText is OUT of v1 (operator decision #6).
-    listProfileKinds: method(z.object({}), z.array(LlmProfileKindDescriptorSchema)),
-    listProfiles: method(z.object({}), z.array(LlmProfileSchema)),
-    upsertProfile: method(z.object({ profile: LlmProfileSchema }), LlmProfileSchema, {
-      kind: 'mutation',
-      auth: 'admin',
-    }),
-    /**
-     * D878: move every profile's plaintext `apiKey` into the keychain (owner
-     * `ai`), leaving a marker in the row. Dry run unless `apply`; idempotent;
-     * counts only. The plaintext is cleared only after the keychain read-back
-     * matched.
-     */
-    migrateRawSecrets: method(RawSecretMigrationInputSchema, RawSecretMigrationReportSchema, {
-      kind: 'mutation',
-      auth: 'admin',
-    }),
-    deleteProfile: method(ProfileRefInputSchema, z.void(), {
-      kind: 'mutation',
-      auth: 'admin',
-    }),
-    testProfile: method(ProfileRefInputSchema, LlmGenerateResultSchema, {
-      kind: 'mutation',
-      auth: 'admin',
-      // Runs a REAL generation, so it is as slow as the thing it is testing.
-      timeoutMs: AI_CAP_TRANSPORT_TIMEOUT_MS,
-    }),
+    // Profiles are `integration-instances` of the `ai` provider (functionCap `llm`): the cap keeps
+    // no profile CRUD, no kind list and no connection test.
     /**
      * The models a kind offers, for a SAVED profile or an unsaved draft
      * (`connection`). A mutation, not a query: a draft may carry a key, and a

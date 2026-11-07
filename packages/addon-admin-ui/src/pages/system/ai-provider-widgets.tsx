@@ -1,10 +1,10 @@
 /**
- * Provider-drawn parts of the profile editor, by GENERIC widget id (D893).
+ * Provider-drawn parts of the profile dialog's lead, by GENERIC widget id (D893).
  *
- * A kind descriptor names a widget (`providerWidgets: [{ id, placement }]`)
+ * A kind names a widget (`widgets: [{ id, placement }]`)
  * when a field cannot be a `ConfigUISchema` field — a node picker that reads
  * each node's Apple state, a model source that resolves and installs a
- * Hugging Face file. The editor looks the id up HERE and never branches on a
+ * Hugging Face file. The lead looks the id up HERE and never branches on a
  * kind: a descriptor naming an id this build does not know renders a notice,
  * not a guess.
  *
@@ -12,7 +12,6 @@
  * replace) and the model selection (read and replace — a `model` placement
  * owns the model choice).
  */
-import type { LlmProfileKindDescriptor } from '@camstack/types'
 import { ManagedModelRefSchema } from '@camstack/types'
 import type { ComponentType } from 'react'
 import { AiModelPicker, type ModelChoice } from './AiModelPicker'
@@ -24,7 +23,6 @@ export interface ModelSelection {
 }
 
 export interface ProviderWidgetProps {
-  readonly descriptor: LlmProfileKindDescriptor
   readonly providerConfig: Record<string, unknown>
   readonly onProviderConfigChange: (next: Record<string, unknown>) => void
   readonly model: ModelSelection

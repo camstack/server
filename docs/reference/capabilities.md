@@ -175,7 +175,7 @@ Singleton or collection providers, addressed without a device.
 | `integrations` | 7 | — | — | — | — | — |
 | `keychain` | 7 | — | — | — | ✓ | `keychain` |
 | `keychain-admin` | 13 | — | — | — | — | `keychain` |
-| `llm` | 22 | — | — | — | — | `ai` |
+| `llm` | 16 | — | — | — | — | `ai` |
 | `llm-runtime` | 11 | — | — | — | ✓ | `ai` |
 | `load-contribution` | 1 | — | — | — | ✓ | `pipeline-runner` `detection-pipeline` `stream-broker` `recorder` |
 | `local-network` | 24 | — | — | — | — | `local-network` |

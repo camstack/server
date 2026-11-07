@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**202 capabilities · 1483 methods.**
+**202 capabilities · 1477 methods.**
 
 ## Method index
 
@@ -567,12 +567,6 @@
 | `llm.generate` | mutation | protected | llm |
 | `llm.generateVision` | mutation | protected | llm |
 | `llm.cancel` | mutation | protected | llm |
-| `llm.listProfileKinds` | query | protected | llm |
-| `llm.listProfiles` | query | protected | llm |
-| `llm.upsertProfile` | mutation | admin | llm |
-| `llm.migrateRawSecrets` | mutation | admin | llm |
-| `llm.deleteProfile` | mutation | admin | llm |
-| `llm.testProfile` | mutation | admin | llm |
 | `llm.listModels` | mutation | admin | llm |
 | `llm.getDefaults` | query | protected | llm |
 | `llm.setDefault` | mutation | admin | llm |
@@ -2924,7 +2918,7 @@
 
 ### `integration-instances` → `integrationInstances.*`
 
-- **Source:** `packages/types/src/capabilities/integration-instances.cap.ts:180`
+- **Source:** `packages/types/src/capabilities/integration-instances.cap.ts:188`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection`
 - **Archetypes:** —
 - **Provider interface:** `IIntegrationInstancesProvider`
@@ -3046,7 +3040,7 @@
 
 ### `llm` → `llm.*`
 
-- **Source:** `packages/types/src/capabilities/llm.cap.ts:340`
+- **Source:** `packages/types/src/capabilities/llm.cap.ts:336`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection` · nodeIdMode: `data` · providerKind: `ai`
 - **Archetypes:** —
 - **Provider interface:** `ILlmProvider`
@@ -3056,12 +3050,6 @@
 | generate | `llm.generate` | mutation | protected | `LlmGenerateBaseInputSchema` | `LlmGenerateResultSchema` |
 | generateVision | `llm.generateVision` | mutation | protected | `{ addonId?: string; profileId?: string; consumer: string; system?: string; prompt: string; jsonSchema?: Record<string, unknown>; maxTokens?: number; temperature?: number; topP?: number; topK?: number; reasoningEffort?: "off" \| "low" \| "medium" \| "high"; timeoutMs?: number; retry?: LlmRetryPolicySchema; requestId?: string; images: LlmImageSchema[] }` | `LlmGenerateResultSchema` |
 | cancel | `llm.cancel` | mutation | protected | `{ addonId?: string; requestId: string }` | `void` |
-| listProfileKinds | `llm.listProfileKinds` | query | protected | `{}` | `LlmProfileKindDescriptorSchema[]` |
-| listProfiles | `llm.listProfiles` | query | protected | `{}` | `LlmProfileSchema[]` |
-| upsertProfile | `llm.upsertProfile` | mutation | admin | `{ profile: LlmProfileSchema }` | `LlmProfileSchema` |
-| migrateRawSecrets | `llm.migrateRawSecrets` | mutation | admin | `RawSecretMigrationInputSchema` | `RawSecretMigrationReportSchema` |
-| deleteProfile | `llm.deleteProfile` | mutation | admin | `{ addonId: string; profileId: string }` | `void` |
-| testProfile | `llm.testProfile` | mutation | admin | `{ addonId: string; profileId: string }` | `LlmGenerateResultSchema` |
 | listModels | `llm.listModels` | mutation | admin | `LlmListModelsInputSchema` | `LlmListModelsResultSchema` |
 | getDefaults | `llm.getDefaults` | query | protected | `{}` | `LlmDefaultSchema[]` |
 | setDefault | `llm.setDefault` | mutation | admin | `{ selector: LlmDefaultSelectorSchema; profileId: string \| null }` | `void` |

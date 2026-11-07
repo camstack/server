@@ -8708,54 +8708,6 @@ export function createCapRouter_llm(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.cancel(input as any)
       }),
-    listProfileKinds: protectedProcedure
-      .input(llmCapability.methods.listProfileKinds.input.loose())
-      .output(llmCapability.methods.listProfileKinds.output)
-      .query(async ({ input, ctx }) => {
-        const p = requireCapProvider('llm', () => getProvider(ctx))
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.listProfileKinds(input as any)
-      }),
-    listProfiles: protectedProcedure
-      .input(llmCapability.methods.listProfiles.input.loose())
-      .output(llmCapability.methods.listProfiles.output)
-      .query(async ({ input, ctx }) => {
-        const p = requireCapProvider('llm', () => getProvider(ctx))
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.listProfiles(input as any)
-      }),
-    upsertProfile: adminProcedure
-      .input(llmCapability.methods.upsertProfile.input.loose())
-      .output(llmCapability.methods.upsertProfile.output)
-      .mutation(async ({ input, ctx }) => {
-        const p = requireCapProvider('llm', () => getProvider(ctx))
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.upsertProfile(input as any)
-      }),
-    migrateRawSecrets: adminProcedure
-      .input(llmCapability.methods.migrateRawSecrets.input.loose())
-      .output(llmCapability.methods.migrateRawSecrets.output)
-      .mutation(async ({ input, ctx }) => {
-        const p = requireCapProvider('llm', () => getProvider(ctx))
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.migrateRawSecrets(input as any)
-      }),
-    deleteProfile: adminProcedure
-      .input(llmCapability.methods.deleteProfile.input.loose())
-      .output(llmCapability.methods.deleteProfile.output)
-      .mutation(async ({ input, ctx }) => {
-        const p = requireCapProvider('llm', () => getProvider(ctx))
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.deleteProfile(input as any)
-      }),
-    testProfile: adminProcedure
-      .input(llmCapability.methods.testProfile.input.loose())
-      .output(llmCapability.methods.testProfile.output)
-      .mutation(async ({ input, ctx }) => {
-        const p = requireCapProvider('llm', () => getProvider(ctx))
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.testProfile(input as any)
-      }),
     listModels: adminProcedure
       .input(llmCapability.methods.listModels.input.loose())
       .output(llmCapability.methods.listModels.output)

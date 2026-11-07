@@ -251,8 +251,8 @@ export class AiAddon extends BaseAddon<AiConfig> {
    * and the api keys exist only here, and the facility binds `127.0.0.1`, which
    * the hub could not reach on an agent anyway.
    *
-   * `getProfile` reads the store DIRECTLY rather than through `listProfiles`,
-   * which redacts the api key — the streamed call needs the real one, and it
+   * `getProfile` reads the store DIRECTLY rather than through the instances view,
+   * which shows the api key as a secret view — the streamed call needs the real one, and it
    * never leaves this process either way.
    *
    * `getSnapshot` deliberately omits `force`. That flag is an OPERATOR signal

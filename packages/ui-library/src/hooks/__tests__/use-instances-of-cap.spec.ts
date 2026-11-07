@@ -42,6 +42,19 @@ describe('instancesOfHolder', () => {
     expect(instancesOfHolder(holder, 'broker', 'mqtt')).toHaveLength(0)
     expect(instancesOfHolder(holder, 'smtp-provider', 'mail')).toHaveLength(1)
   })
+  it('carries the record switch and its form values, so a page can draw columns from them', () => {
+    const [row] = instancesOfHolder(
+      {
+        ...holder,
+        instances: [
+          instance('m', 'mail', { enabled: false, formValues: { host: 'smtp.example.com' } }),
+        ],
+      },
+      'smtp-provider',
+    )
+    expect(row?.enabled).toBe(false)
+    expect(row?.formValues).toEqual({ host: 'smtp.example.com' })
+  })
   it('a holder without kinds holds none', () => {
     const bare: InstanceHolderData = {
       ...holder,

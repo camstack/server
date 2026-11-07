@@ -323,7 +323,7 @@ export const CAP_METHOD_TIMEOUTS_MS: Readonly<
   "database-snapshot": { "writeSnapshot": 1800000 },
   "device-manager": { "migrateDevice": 720000, "runDiscoverySweep": 120000 },
   "device-provider": { "reloadDevice": 180000 },
-  "llm": { "generate": 600000, "generateVision": 600000, "testProfile": 600000 },
+  "llm": { "generate": 600000, "generateVision": 600000 },
   "llm-runtime": { "complete": 600000, "completeApple": 600000, "ensureStarted": 600000, "installModel": 3600000 },
   "local-network": { "scanNetwork": 90000 },
   "model-convert": { "convert": 600000 },

@@ -6,7 +6,7 @@
  * header, no internal scroll, no mobile rule. It is a `DataTable` now, so a
  * 90-day rollup scrolls its own rows with the column header pinned.
  */
-import type { LlmProfile, LlmUsageRollup } from '@camstack/types'
+import type { LlmUsageRollup } from '@camstack/types'
 import {
   DataTable,
   EmptyState,
@@ -16,6 +16,7 @@ import {
   Select,
   Skeleton,
   TABLE_SCROLL_MAX_H,
+  useInstancesOfCap,
   useSystem,
 } from '@camstack/ui-library'
 import type { DataColumn } from '@camstack/ui-library'
@@ -23,7 +24,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Gauge } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { PROFILES_KEY, USAGE_KEY } from './ai-page.helpers'
+import { USAGE_KEY } from './ai-page.helpers'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 const WINDOW_DAYS = [1, 7, 30, 90] as const
@@ -44,10 +45,7 @@ export function AiUsagePage() {
     return midnight.getTime() - (days - 1) * DAY_MS
   }, [days])
 
-  const profilesQuery = useQuery({
-    queryKey: PROFILES_KEY,
-    queryFn: (): Promise<readonly LlmProfile[]> => system.trpcClient.llm.listProfiles.query({}),
-  })
+  const profilesQuery = useInstancesOfCap({ functionCap: 'llm' })
   const usageQuery = useQuery({
     queryKey: [...USAGE_KEY, days],
     queryFn: (): Promise<readonly LlmUsageRollup[]> =>

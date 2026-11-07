@@ -14,7 +14,7 @@ import type { LlmClient } from '../client/llm-client.js'
 import { DefaultsStore } from '../defaults-store.js'
 import { ApiKeyStorageUnavailableError, ProfileStore } from '../profile-store.js'
 import { aiRecordKinds } from '../record-kinds.js'
-import { createLlmProvider } from '../provider.js'
+import { buildLlmProvider } from '../provider.js'
 import { REDACTED_MARKER } from '../secrets.js'
 import type { UsageFilter, UsageRecorder, UsageRowInput } from '../usage/usage-port.js'
 import { makeAiRecords, type FakeRecords } from './support/fake-records.js'
@@ -168,40 +168,6 @@ describe('adopted rows (the adoption wrote the marker, the operator imported the
   }
 })
 
-describe('migrateRawKeys (the D878 cap method over records)', () => {
-  it('a record never holds plaintext: it reports markers and moves nothing', async () => {
-    const { store } = await setup()
-    await store.upsert(profile('keyed', { apiKey: KEY }))
-    await store.upsert(profile('plain'))
-    const report = await store.migrateRawKeys(true)
-    expect(report).toMatchObject({
-      apply: true,
-      rows: 2,
-      raw: 0,
-      markers: 1,
-      migrated: 0,
-      failed: 0,
-      remainingRaw: 0,
-      unresolvedMarkers: 0,
-      verified: true,
-    })
-  })
-
-  it('a locked keychain is reported as unresolved, not verified', async () => {
-    const { keychain, store } = await setup()
-    await store.upsert(profile('keyed', { apiKey: KEY }))
-    keychain.setLocked(true)
-    const report = await store.migrateRawKeys(false)
-    expect(report).toMatchObject({ unresolvedMarkers: 1, verified: false })
-  })
-
-  it('never puts a value in its report', async () => {
-    const { store } = await setup()
-    await store.upsert(profile('keyed', { apiKey: KEY }))
-    expect(JSON.stringify(await store.migrateRawKeys(true))).not.toContain('fake-key')
-  })
-})
-
 class NoUsage implements UsageRecorder {
   async record(_row: UsageRowInput): Promise<void> {}
   async rollup(_filter: UsageFilter): Promise<never[]> {
@@ -227,13 +193,13 @@ function providerOver(store: ProfileStore, world: FakeRecords) {
     },
     openStream: async () => ({ kind: 'unsupported' }),
   }
-  const provider = createLlmProvider({
+  const { provider, profiles } = buildLlmProvider({
     store,
     defaults: DefaultsStore.of(world.records),
     client,
     usage: new NoUsage(),
   })
-  return { provider, calls }
+  return { provider, profiles, calls }
 }
 
 describe('the provider over a keychain-backed store', () => {
@@ -257,39 +223,22 @@ describe('the provider over a keychain-backed store', () => {
     expect(JSON.stringify(result)).not.toContain(KEY)
   })
 
-  it('the wire shows a stored key as set, even while unreadable, and never the value', async () => {
-    const { world, keychain, store } = await setup()
-    const { provider } = providerOver(store, world)
-    await provider.upsertProfile({ profile: profile('a', { apiKey: KEY }) })
-    keychain.setLocked(true)
-    const listed = await provider.listProfiles({})
-    expect(listed[0]?.providerConfig.apiKey).toBe(REDACTED_MARKER)
-    expect(JSON.stringify(listed)).not.toContain(KEY)
-  })
-
   it('a redacted save over an unreadable key keeps the stored key', async () => {
     const { world, keychain, store } = await setup()
-    const { provider } = providerOver(store, world)
-    await provider.upsertProfile({ profile: profile('a', { apiKey: KEY }) })
+    const { profiles } = providerOver(store, world)
+    await profiles.save(profile('a', { apiKey: KEY }))
     keychain.setLocked(true)
-    await provider.listProfiles({})
-    await provider.upsertProfile({ profile: profile('a', { name: 'x', apiKey: REDACTED_MARKER }) })
+    await store.list()
+    await profiles.save(profile('a', { name: 'x', apiKey: REDACTED_MARKER }))
     keychain.setLocked(false)
     expect((await store.getById('a'))?.providerConfig.apiKey).toBe(KEY)
   })
 
   it('a REDACTED value on write keeps the existing secret (readable keychain)', async () => {
     const { world, store } = await setup()
-    const { provider } = providerOver(store, world)
-    await provider.upsertProfile({ profile: profile('a', { apiKey: KEY }) })
-    await provider.upsertProfile({ profile: profile('a', { name: 'y', apiKey: REDACTED_MARKER }) })
+    const { profiles } = providerOver(store, world)
+    await profiles.save(profile('a', { apiKey: KEY }))
+    await profiles.save(profile('a', { name: 'y', apiKey: REDACTED_MARKER }))
     expect((await store.getById('a'))?.providerConfig.apiKey).toBe(KEY)
-  })
-
-  it('migrateRawSecrets is served by the provider', async () => {
-    const { world, store } = await setup()
-    const { provider } = providerOver(store, world)
-    const report = await provider.migrateRawSecrets({ apply: false })
-    expect(report).toMatchObject({ apply: false, verified: true })
   })
 })

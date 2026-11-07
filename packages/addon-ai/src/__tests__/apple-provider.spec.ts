@@ -13,7 +13,8 @@ import type { LlmClient } from '../client/llm-client.js'
 import { DefaultsStore } from '../defaults-store.js'
 import { ProfileStore } from '../profile-store.js'
 import { AppleNodeMirror } from '../apple-node-mirror.js'
-import { createLlmProvider } from '../provider.js'
+import { withAppleVision } from '../apple-profile.js'
+import { buildLlmProvider } from '../provider.js'
 import { makeAiRecords } from './support/fake-records.js'
 import type { UsageFilter, UsageRecorder, UsageRowInput } from '../usage/usage-port.js'
 import { fakeRuntimeClient, OK_RESULT } from './support/fake-runtime.js'
@@ -94,7 +95,7 @@ async function setup(opts: {
   const appleNodes = new AppleNodeMirror({ source: runtime.runtime, logger: makeTestLogger() })
   // What the background refresh would have produced by now.
   if (opts.prime !== false) await appleNodes.refresh()
-  const provider = createLlmProvider({
+  const { provider, profiles } = buildLlmProvider({
     store,
     defaults,
     client: cloud.client,
@@ -103,7 +104,7 @@ async function setup(opts: {
     appleNodes,
     logger: opts.logger?.logger ?? makeTestLogger(),
   })
-  return { provider, usage, cloud, runtime, store, appleNodes }
+  return { provider, profiles, usage, cloud, runtime, store, appleNodes }
 }
 
 describe('apple-foundation dispatch', () => {
@@ -192,14 +193,14 @@ describe('apple-foundation dispatch', () => {
     expect(handle.entries.some((e) => e.message.includes('explicitly chosen'))).toBe(true)
   })
 
-  it('testProfile on the Apple profile reports ITS refusal, never another profile passing', async () => {
+  it('the profile test on the Apple profile reports ITS refusal, never another profile passing', async () => {
     const runtime = fakeRuntimeClient({ completeApple: async () => GUARDRAIL })
-    const { provider, cloud } = await setup({
+    const { cloud, profiles } = await setup({
       profiles: [afmProfile(), makeProfile({ id: 'cloud', name: 'cloud' })],
       textDefault: 'cloud',
       runtime,
     })
-    const result = await provider.testProfile({ addonId: 'ai', profileId: 'afm' })
+    const result = await profiles.test('afm')
     expect(result).toMatchObject({ ok: false, refusalSource: 'guardrail' })
     expect(cloud.calls).toHaveLength(0)
   })
@@ -290,10 +291,8 @@ describe('apple-foundation dispatch', () => {
 
 describe('apple-foundation profile rows', () => {
   it('upsert stamps the model and takes supportsVision from the NODE, not the form', async () => {
-    const { provider } = await setup({ profiles: [] })
-    const saved = await provider.upsertProfile({
-      profile: afmProfile({ model: 'whatever', supportsVision: true }),
-    })
+    const { profiles } = await setup({ profiles: [] })
+    const saved = await profiles.save(afmProfile({ model: 'whatever', supportsVision: true }))
     expect(saved).toMatchObject({ model: 'apple-system', supportsVision: false })
   })
 
@@ -307,8 +306,8 @@ describe('apple-foundation profile rows', () => {
         imageInput: true,
       }),
     })
-    const { provider } = await setup({ profiles: [], runtime })
-    expect(await provider.upsertProfile({ profile: afmProfile() })).toMatchObject({
+    const { profiles } = await setup({ profiles: [], runtime })
+    expect(await profiles.save(afmProfile())).toMatchObject({
       supportsVision: true,
     })
   })
@@ -319,10 +318,10 @@ describe('apple-foundation profile rows', () => {
         throw new Error('offline')
       },
     })
-    const { provider } = await setup({ profiles: [], runtime })
-    expect(
-      await provider.upsertProfile({ profile: afmProfile({ supportsVision: true }) }),
-    ).toMatchObject({ supportsVision: false })
+    const { profiles } = await setup({ profiles: [], runtime })
+    expect(await profiles.save(afmProfile({ supportsVision: true }))).toMatchObject({
+      supportsVision: false,
+    })
   })
 
   it('supportsVision follows the node NOW, not the value stored at save', async () => {
@@ -336,12 +335,12 @@ describe('apple-foundation profile rows', () => {
         imageInput,
       }),
     })
-    const { provider, appleNodes } = await setup({ profiles: [], runtime })
-    await provider.upsertProfile({ profile: afmProfile() })
-    expect((await provider.listProfiles({}))[0]?.supportsVision).toBe(false)
+    const { provider, appleNodes, profiles, store } = await setup({ profiles: [], runtime })
+    await profiles.save(afmProfile())
+    expect(withAppleVision(await store.list(), appleNodes)[0]?.supportsVision).toBe(false)
     imageInput = true // the node was upgraded; nobody re-saved the profile
     await appleNodes.refresh() // the mirror's background refresh
-    expect((await provider.listProfiles({}))[0]?.supportsVision).toBe(true)
+    expect(withAppleVision(await store.list(), appleNodes)[0]?.supportsVision).toBe(true)
     const vision = await provider.generateVision({
       consumer: 'notifier-narration',
       profileId: 'afm',
@@ -356,15 +355,13 @@ describe('apple-foundation profile rows', () => {
     const runtime = fakeRuntimeClient({
       appleAvailability: async () => ({ state: 'unsupported-platform', platform: 'linux' }),
     })
-    const { provider } = await setup({ profiles: [], runtime })
-    await expect(provider.upsertProfile({ profile: afmProfile() })).rejects.toThrow(/cannot run/)
+    const { profiles } = await setup({ profiles: [], runtime })
+    await expect(profiles.save(afmProfile())).rejects.toThrow(/cannot run/)
   })
 
   it('an apple-foundation row with no node is refused', async () => {
-    const { provider } = await setup({ profiles: [] })
-    await expect(
-      provider.upsertProfile({ profile: afmProfile({ appleFoundation: undefined }) }),
-    ).rejects.toThrow(/node/)
+    const { profiles } = await setup({ profiles: [] })
+    await expect(profiles.save(afmProfile({ appleFoundation: undefined }))).rejects.toThrow(/node/)
   })
 
   it('the kind is offered, lists its one model, and every runtime node reports its Apple state', async () => {
@@ -381,8 +378,6 @@ describe('apple-foundation profile rows', () => {
       },
     })
     const { provider } = await setup({ profiles: [afmProfile()], runtime })
-    const kinds = await provider.listProfileKinds({})
-    expect(kinds.map((k) => k.kind)).toContain('apple-foundation')
     expect(
       await provider.listModels({ addonId: 'ai', kind: 'apple-foundation', profileId: 'afm' }),
     ).toEqual({ ok: true, models: [{ id: 'apple-system', label: 'Apple on-device model' }] })
@@ -420,11 +415,11 @@ describe('an Apple node that never answers blocks nothing (N1)', () => {
     ])
   }
 
-  it('a vision call to a cloud profile and listProfiles answer at once', async () => {
+  it('a vision call to a cloud profile and reading the profiles answer at once', async () => {
     const runtime = fakeRuntimeClient({
       appleAvailability: () => new Promise(() => {}),
     })
-    const { provider, cloud } = await setup({
+    const { provider, cloud, store, appleNodes } = await setup({
       profiles: [afmProfile(), makeProfile({ id: 'cloud', name: 'cloud', supportsVision: true })],
       runtime,
       prime: false,
@@ -440,15 +435,18 @@ describe('an Apple node that never answers blocks nothing (N1)', () => {
     )
     expect(vision).toEqual(CLOUD_ANSWER)
     expect(cloud.calls).toHaveLength(1)
-    const rows = await within(200, provider.listProfiles({}))
+    const rows = await within(
+      200,
+      store.list().then((all) => withAppleVision(all, appleNodes)),
+    )
     // Unknown is not yes.
     expect(rows.find((r) => r.id === 'afm')?.supportsVision).toBe(false)
   })
 
   it('saving an Apple profile never waits on its node either', async () => {
     const runtime = fakeRuntimeClient({ appleAvailability: () => new Promise(() => {}) })
-    const { provider } = await setup({ profiles: [], runtime, prime: false })
-    expect(await within(200, provider.upsertProfile({ profile: afmProfile() }))).toMatchObject({
+    const { profiles } = await setup({ profiles: [], runtime, prime: false })
+    expect(await within(200, profiles.save(afmProfile()))).toMatchObject({
       supportsVision: false,
     })
   })

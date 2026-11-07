@@ -3,13 +3,12 @@
  * One-shot operator script (D878, D880): move the secrets that sat in plain text
  * in SQLite into the keychain.
  *
- *   `ai:llm-profiles`  apiKey       -> secret://ai/row/ai:llm-profiles/<profileId>/apiKey
  *   `user_totp`        secret       -> secret://system/row/user_totp/<userId>/secret
  *   core-block settings (password fields a user script declares), and the
  *   redundant `core-blocks:settings` copy of them is deleted (D880)
  *
  * Each OWNER does its own move through its own write path: this script only
- * calls `llm.migrateRawSecrets`, `userManagement.migrateRawSecrets`,
+ * calls `userManagement.migrateRawSecrets` and
  * `coreBlocks.migrateRawSecrets`. Per row
  * the owner puts the value in the keychain, reads it back, and only then
  * rewrites the row with the marker - the plaintext is cleared by the verified
@@ -47,7 +46,6 @@ const applyOnly = (apply: boolean): { readonly apply: boolean } => ({ apply })
 
 /** The routes of the owners, in the order they run. */
 export const OWNER_ROUTES: readonly OwnerRoute[] = [
-  { label: 'llm profile apiKey', route: 'llm.migrateRawSecrets', input: applyOnly },
   { label: 'totp seed', route: 'userManagement.migrateRawSecrets', input: applyOnly },
   { label: 'core block password', route: 'coreBlocks.migrateRawSecrets', input: applyOnly },
 ]

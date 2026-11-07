@@ -23,7 +23,7 @@ import { DefaultsStore } from './defaults-store.js'
 import { createLlmInstances } from './instances.js'
 import { createNodeRemovalHook } from './node-removal.js'
 import { ProfileStore } from './profile-store.js'
-import { createLlmProvider } from './provider.js'
+import { buildLlmProvider } from './provider.js'
 import type { AppleFmBackend } from './runtime/apple/afm-backend.js'
 import type { LlamaSupervisor } from './runtime/llama-supervisor.js'
 import { LLM_MODEL_CATALOG } from './runtime/llm-model-catalog.js'
@@ -106,7 +106,7 @@ export async function assembleAi(deps: AiAssemblyDeps): Promise<AiAssembly> {
           logger: deps.logger.child('apple-nodes'),
         })
       : undefined
-  const llmProvider = createLlmProvider({
+  const { provider: llmProvider, profiles: profileOps } = buildLlmProvider({
     store,
     defaults,
     usage,
@@ -122,7 +122,8 @@ export async function assembleAi(deps: AiAssemblyDeps): Promise<AiAssembly> {
     capability: integrationInstancesCapability,
     provider: createLlmInstances({
       store,
-      llm: llmProvider,
+      profiles: profileOps,
+      ...(appleNodes !== undefined ? { appleNodes } : {}),
       records,
     }),
   })

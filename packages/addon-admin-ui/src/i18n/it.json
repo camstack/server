@@ -2012,7 +2012,10 @@
     "stateStarting": "Avvio",
     "stateStopped": "Fermo",
     "stateCrashed": "Andato in crash",
-    "stateFailed": "Fallito"
+    "stateFailed": "Fallito",
+    "loadModels": "Carica modelli",
+    "profilesTableSubtitle": "Ogni profilo è un endpoint di modello; spegnine uno per tenerlo senza usarlo.",
+    "noProfilesDescription": "Aggiungi un profilo per dare alle funzioni un modello con cui parlare."
   },
   "logging": {
     "levels": {

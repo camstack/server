@@ -1,6 +1,6 @@
 /**
- * System → AI (`/system/ai?tab=profiles|runtimes|usage|test`): four profiles
- * of four kinds (one disabled, one vision-capable, one on a managed runtime),
+ * System → AI (`/system/ai?tab=profiles|runtimes|usage|test`): four profile
+ * instances of four kinds (one disabled, one vision-capable, one on a managed runtime),
  * the two purpose defaults, four runtime nodes (one ready, one downloading on
  * a Mac with Apple on-device, one stopped, one unreachable) and a week of usage
  * rollups. Invented data only.
@@ -9,73 +9,67 @@ import { AI_KIND_DESCRIPTORS } from '../../../../packages/addon-ai/src/kinds/des
 import { defineFixtures } from './_define'
 import { D, NOW } from './_time'
 
-const TIMEOUTS = {
-  timeoutMs: 60_000,
-  connectTimeoutMs: 10_000,
-  firstTokenTimeoutMs: 120_000,
-  idleTimeoutMs: 60_000,
-  retry: { enabled: false, maxAttempts: 1 },
-  toolsEnabled: false,
-}
+const SET = { $secret: 'ref', v: 1, set: true }
 
-const PROFILES = [
+/** The `ai` provider's kinds as it declares them to `integration-instances` (one function cap). */
+const KINDS = AI_KIND_DESCRIPTORS.map((d) => ({
+  id: d.kind,
+  label: d.label,
+  functionCap: 'llm',
+  canTest: true,
+  ...(d.providerWidgets !== undefined && d.providerWidgets.length > 0
+    ? { widgets: d.providerWidgets.map(({ id, placement }) => ({ id, placement })) }
+    : {}),
+}))
+
+const INSTANCES = [
   {
     id: 'p-local-vision',
     name: 'Local vision',
     kind: 'managed-local',
-    addonId: 'ai',
+    configured: true,
     enabled: true,
-    model: 'qwen2.5-vl-7b-instruct-q4_k_m',
-    supportsVision: true,
-    providerConfig: {
+    status: { state: 'ok', label: 'Ready' },
+    formValues: {
+      model: 'qwen2.5-vl-7b-instruct-q4_k_m',
+      supportsVision: true,
       nodeId: 'hub',
-      engine: 'llama-cpp',
-      model: { kind: 'catalog', catalogId: 'qwen2.5-vl-7b' },
-      extraArgs: ['--jinja'],
-      contextSize: 4096,
-      gpuLayers: 0,
-      parallel: 1,
-      idleStopMinutes: 30,
+      modelRef: { kind: 'catalog', catalogId: 'qwen2.5-vl-7b' },
+      contextLength: 4096,
     },
-    ...TIMEOUTS,
   },
   {
     id: 'p-cloud-text',
     name: 'Cloud text',
     kind: 'openai',
-    addonId: 'ai',
+    configured: true,
     enabled: true,
-    model: 'example-chat-large',
-    providerConfig: { apiKey: '__redacted__' },
-    supportsVision: false,
-    ...TIMEOUTS,
+    status: { state: 'ok', label: 'Reachable' },
+    formValues: { model: 'example-chat-large', supportsVision: false, apiKey: SET },
   },
   {
     id: 'p-lan-server',
     name: 'LAN inference server',
     kind: 'openai-compatible',
-    addonId: 'ai',
+    configured: true,
     enabled: false,
-    model: 'llama-3.1-8b-instruct',
-    providerConfig: { baseUrl: 'http://192.0.2.40:11434/v1' },
-    supportsVision: false,
-    ...TIMEOUTS,
+    status: { state: 'off' },
+    formValues: {
+      model: 'llama-3.1-8b-instruct',
+      supportsVision: false,
+      baseUrl: 'http://192.0.2.40:11434/v1',
+    },
   },
   {
     id: 'p-mac-on-device',
     name: 'Mac on-device',
     kind: 'apple-foundation',
-    addonId: 'ai',
+    configured: true,
     enabled: true,
-    model: 'apple-system',
-    supportsVision: false,
-    providerConfig: { nodeId: 'mac-agent' },
-    ...TIMEOUTS,
+    status: { state: 'ok', label: 'Available' },
+    formValues: { model: 'apple-system', supportsVision: false, nodeId: 'mac-agent' },
   },
 ]
-
-// The kinds exactly as addon-ai declares them (D893) — the editor is drawn from these.
-const KINDS = AI_KIND_DESCRIPTORS.map((d) => ({ ...d, addonId: 'ai' }))
 
 const RUNTIME_NODES = [
   {
@@ -165,8 +159,23 @@ export default defineFixtures({
       activeProvider: null,
       disabledProviders: [],
     }),
-    'llm.listProfiles': PROFILES,
-    'llm.listProfileKinds': KINDS,
+    'addons.listCapabilityProviders': (i: { capName: string }) =>
+      i.capName === 'llm' || i.capName === 'integration-instances'
+        ? [{ addonId: 'ai', capName: i.capName, isActive: true }]
+        : [],
+    'integrationInstances.describe': {
+      instanceMode: 'multiple',
+      kind: 'profile',
+      canTest: true,
+      mintsId: true,
+      kinds: KINDS,
+    },
+    'integrationInstances.listInstances': INSTANCES,
+    'integrationInstances.getInstance': (i: { id: string }) =>
+      INSTANCES.find((p) => p.id === i.id) ?? null,
+    'mut:integrationInstances.updateInstance': { ok: true },
+    'mut:integrationInstances.setInstanceEnabled': { ok: true },
+    'mut:integrationInstances.testInstance': { success: true, status: 'validated' },
     'llm.getDefaults': [
       { selector: { purpose: 'text' }, profileId: 'p-cloud-text' },
       { selector: { purpose: 'vision' }, profileId: 'p-local-vision' },

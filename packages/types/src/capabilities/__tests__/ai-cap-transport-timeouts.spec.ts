@@ -32,11 +32,7 @@ function timeoutOf(cap: { readonly methods: Record<string, unknown> }, name: str
 }
 
 describe('AI capabilities declare a transport timeout the AI layer cannot outlive', () => {
-  it.each([
-    'generate',
-    'generateVision',
-    'testProfile',
-  ])('llm.%s outlives the AI layer’s own maximum', (name) => {
+  it.each(['generate', 'generateVision'])('llm.%s outlives the AI layer’s own maximum', (name) => {
     expect(timeoutOf(llmCapability, name)).toBeGreaterThanOrEqual(AI_LAYER_MAX_TIMEOUT_MS)
   })
 
@@ -50,7 +46,7 @@ describe('AI capabilities declare a transport timeout the AI layer cannot outliv
   })
 
   it('leaves the CHEAP methods on the default — patience is for work, not for lookups', () => {
-    expect(timeoutOf(llmCapability, 'listProfiles')).toBe(0)
+    expect(timeoutOf(llmCapability, 'getDefaults')).toBe(0)
     expect(timeoutOf(llmRuntimeCapability, 'status')).toBe(0)
     expect(timeoutOf(llmRuntimeCapability, 'appleAvailability')).toBe(0)
     expect(timeoutOf(llmRuntimeCapability, 'cancel')).toBe(0)

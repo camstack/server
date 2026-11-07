@@ -36,7 +36,7 @@
  * here would be a field the next save deletes.
  */
 
-import type { LlmProfile, NcTaxonomy } from '@camstack/types'
+import type { NcTaxonomy } from '@camstack/types'
 import { pickerForCondition } from '@camstack/types'
 import {
   Button,
@@ -49,10 +49,11 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
+  useInstancesOfCap,
   useSystem,
   Textarea,
 } from '@camstack/ui-library'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import { Images, Loader2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
@@ -73,6 +74,7 @@ import {
   DigestTemplateFields,
   DigestWarnings,
 } from './notification-digest-fields'
+import { profileModel, profileSupportsVision } from './ai-page.helpers'
 import type { DeviceFleetView } from './device-fleet-view'
 import { OptionListField, useZoneOptions } from './notification-rule-pickers'
 import { NotificationPruneBanner } from './NotificationPruneBanner'
@@ -204,12 +206,8 @@ export function NotificationSummaryEditor({
    * than a dialog that will not open. `enabled` only once the AI tab is
    * reachable, so a rule with no AI never pays for the round-trip.
    */
-  const profilesQuery = useQuery({
-    queryKey: ['llm', 'listProfiles', 'summary-editor'],
-    queryFn: (): Promise<readonly LlmProfile[]> => system.trpcClient.llm.listProfiles.query({}),
-    retry: false,
-  })
-  const visionProfiles = (profilesQuery.data ?? []).filter((p) => p.supportsVision)
+  const profilesQuery = useInstancesOfCap({ functionCap: 'llm' })
+  const visionProfiles = (profilesQuery.data ?? []).filter(profileSupportsVision)
 
   const save = useMutation({
     mutationFn: async (): Promise<void> => {
@@ -727,7 +725,7 @@ export function NotificationSummaryEditor({
                         },
                         ...visionProfiles.map((p) => ({
                           value: p.id,
-                          label: `${p.name} · ${p.model}${p.enabled ? '' : ' · disabled'}`,
+                          label: `${p.name} · ${profileModel(p)}${p.enabled ? '' : ' · disabled'}`,
                         })),
                       ]}
                       onChange={(e) => patch({ aiProfileId: e.target.value })}

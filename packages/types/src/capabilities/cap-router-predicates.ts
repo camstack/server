@@ -154,12 +154,12 @@ export function extractNestedAddonId(input: unknown): string | undefined {
  * True when an OBJECT input schema declares a top-level `addonId` field.
  *
  * Such a cap method routes explicitly via the top-level `{ addonId }` selector
- * (the `llm.generate` / `deleteProfile` posture). The runtime router therefore
+ * (the `llm.generate` / `deleteModel` posture). The runtime router therefore
  * MUST NOT also fall back to {@link extractNestedAddonId} for it — that would
  * let an incidental nested `addonId` (e.g. a key inside a free-form `jsonSchema`
  * record) hijack routing. Nested recovery is reserved for methods whose input
  * carries NO top-level selector but embeds the owning `addonId` inside a domain
- * entity (`upsertTarget({ target: { addonId } })`, `upsertProfile({ profile })`).
+ * entity (`upsertTarget({ target: { addonId } })`).
  *
  * Accepts both Zod 4 (`.shape` / `_def.shape`) and legacy shapes; returns false
  * for non-object schemas.

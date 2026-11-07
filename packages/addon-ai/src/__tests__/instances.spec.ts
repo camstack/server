@@ -15,7 +15,7 @@ import { DefaultsStore } from '../defaults-store.js'
 import { createLlmInstances } from '../instances.js'
 import { AI_KIND_DESCRIPTORS } from '../kinds/descriptors.js'
 import { ProfileStore } from '../profile-store.js'
-import { createLlmProvider } from '../provider.js'
+import { buildLlmProvider } from '../provider.js'
 import { resolveProfile } from '../resolve-profile.js'
 import { REDACTED_MARKER } from '../secrets.js'
 import type { UsageRecorder } from '../usage/usage-port.js'
@@ -50,7 +50,7 @@ async function world(
     generate: async () => answer(),
     openStream: async () => ({ kind: 'unsupported' }),
   }
-  const llm = createLlmProvider({
+  const { profiles } = buildLlmProvider({
     store,
     defaults: DefaultsStore.of(w.records),
     client,
@@ -58,7 +58,7 @@ async function world(
   })
   const instances = createLlmInstances({
     store,
-    llm,
+    profiles,
     records: w.records,
     ...(testBudgetMs !== undefined ? { testBudgetMs } : {}),
   })
@@ -93,6 +93,34 @@ describe('llm profiles as integration-instances', () => {
       instanceMode: 'multiple',
       mintsId: true,
     })
+  })
+
+  it('names the widgets a kind draws itself, and only on the kinds that have one', async () => {
+    const { instances } = await world()
+    const described = await instances.describe()
+    const widgetsOf = (id: string) => described.kinds?.find((k) => k.id === id)?.widgets
+    expect(widgetsOf('managed-local')).toEqual([{ id: 'ai/managed-model', placement: 'model' }])
+    expect(widgetsOf('apple-foundation')).toEqual([
+      { id: 'ai/apple-node', placement: 'connection' },
+    ])
+    expect(widgetsOf('openai')).toBeUndefined()
+  })
+
+  it('carries a managed model reference as modelRef, apart from the display model id', async () => {
+    const { instances } = await world()
+    const modelRef = { kind: 'catalog', catalogId: 'llm-qwen2.5-1.5b-instruct-q4' }
+    await instances.createInstance({
+      id: 'm',
+      name: 'Local',
+      kind: 'managed-local',
+      values: { nodeId: 'hub', model: 'Qwen 1.5B', modelRef },
+    })
+    const [listed] = await instances.listInstances()
+    expect(listed?.formValues.model).toBe('Qwen 1.5B')
+    expect(listed?.formValues.modelRef).toEqual(modelRef)
+    await instances.updateInstance({ id: 'm', values: { model: 'Qwen renamed' } })
+    const [kept] = await instances.listInstances()
+    expect(kept?.formValues.modelRef).toEqual(modelRef)
   })
 
   it('stores the key in the keychain and lists it as a view, flat beside the provider fields', async () => {

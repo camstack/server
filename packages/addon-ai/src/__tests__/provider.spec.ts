@@ -1,5 +1,4 @@
 import type {
-  ConfigUISchema,
   LlmGenerateResult,
   LlmProfile,
   LlmRuntimeCompleteInput,
@@ -9,7 +8,8 @@ import { describe, expect, it, vi } from 'vitest'
 import type { LlmCallRequest, LlmClient } from '../client/llm-client.js'
 import { DefaultsStore } from '../defaults-store.js'
 import { ProfileStore } from '../profile-store.js'
-import { createLlmProvider, type RuntimeClient } from '../provider.js'
+import { AI_KIND_DESCRIPTORS } from '../kinds/descriptors.js'
+import { buildLlmProvider, createLlmProvider, type RuntimeClient } from '../provider.js'
 import { REDACTED_MARKER } from '../secrets.js'
 import { makeAiRecords } from './support/fake-records.js'
 import type { UsageFilter, UsageRecorder, UsageRowInput } from '../usage/usage-port.js'
@@ -231,37 +231,21 @@ describe('createLlmProvider.generateVision', () => {
   })
 })
 
-describe('createLlmProvider CRUD', () => {
-  it('listProfiles returns REDACTED rows with addonId stamped', async () => {
-    const { store, defaults } = await seededStores([
-      profile('a', { apiKey: 'sk-secret', kind: 'openai' }),
-    ])
-    const { client } = fakeClient()
-    const provider = createLlmProvider({
-      store,
-      defaults,
-      client,
-      usage: new FakeUsage(),
-    })
-    const rows = await provider.listProfiles({})
-    expect(rows[0]?.providerConfig.apiKey).toBe(REDACTED_MARKER)
-    expect(rows[0]?.addonId).toBe('ai')
-  })
-
-  it('upsertProfile merges secrets (untouched marker keeps stored key) + returns redacted', async () => {
+describe('profile save and the kind descriptors', () => {
+  it('save merges secrets (untouched marker keeps stored key) + returns redacted', async () => {
     const { store, defaults } = await seededStores([
       profile('a', { apiKey: 'sk-old', kind: 'openai' }),
     ])
     const { client } = fakeClient()
-    const provider = createLlmProvider({
+    const { profiles } = buildLlmProvider({
       store,
       defaults,
       client,
       usage: new FakeUsage(),
     })
-    const returned = await provider.upsertProfile({
-      profile: profile('a', { name: 'renamed', apiKey: REDACTED_MARKER, kind: 'openai' }),
-    })
+    const returned = await profiles.save(
+      profile('a', { name: 'renamed', apiKey: REDACTED_MARKER, kind: 'openai' }),
+    )
     expect(returned.providerConfig.apiKey).toBe(REDACTED_MARKER)
     expect(returned.name).toBe('renamed')
     const raw = await store.getById('a')
@@ -283,16 +267,8 @@ describe('createLlmProvider CRUD', () => {
       retry: { enabled: true, maxAttempts: 4 },
       toolsEnabled: true,
     })
-    const { store, defaults } = await seededStores([rich])
-    const { client } = fakeClient()
-    const provider = createLlmProvider({
-      store,
-      defaults,
-      client,
-      usage: new FakeUsage(),
-    })
-    const rows = await provider.listProfiles({})
-    expect(rows[0]).toMatchObject({
+    const { store } = await seededStores([rich])
+    expect(await store.getById('rich')).toMatchObject({
       temperature: 0.4,
       topP: 0.9,
       topK: 40,
@@ -308,17 +284,8 @@ describe('createLlmProvider CRUD', () => {
     })
   })
 
-  it('listProfileKinds covers every kind, all addonId-stamped', async () => {
-    const { store, defaults } = await seededStores([])
-    const { client } = fakeClient()
-    const provider = createLlmProvider({
-      store,
-      defaults,
-      client,
-      usage: new FakeUsage(),
-    })
-    const kinds = await provider.listProfileKinds({})
-    expect(kinds.map((k) => k.kind).toSorted()).toEqual([
+  it('the descriptors cover every kind', () => {
+    expect(AI_KIND_DESCRIPTORS.map((k) => k.kind).toSorted()).toEqual([
       'anthropic',
       'apple-foundation',
       'google',
@@ -326,26 +293,15 @@ describe('createLlmProvider CRUD', () => {
       'openai',
       'openai-compatible',
     ])
-    expect(kinds.every((k) => k.addonId === 'ai')).toBe(true)
   })
 
-  it('every client-served kind exposes the full tuning surface to the editor', async () => {
-    const { store, defaults } = await seededStores([])
-    const { client } = fakeClient()
-    const provider = createLlmProvider({
-      store,
-      defaults,
-      client,
-      usage: new FakeUsage(),
-    })
-    const kinds = await provider.listProfileKinds({})
+  it('every client-served kind exposes the full tuning surface to the editor', () => {
+    const kinds = AI_KIND_DESCRIPTORS
     const connectionKeys = (kind: string): string[] => {
       const descriptor = kinds.find((k) => k.kind === kind)
-      // Documented type boundary: `connectionSchema` crosses the cap as
-      // `unknown` (the ConfigSchemaPassthrough precedent) and is re-tightened
-      // on read — the admin page does the same at AiProfilesTab.
-      const schema = descriptor?.connectionSchema as ConfigUISchema | undefined
-      return (schema?.sections ?? []).flatMap((s) => s.fields.map((f) => f.key))
+      return (descriptor?.connectionSchema.sections ?? []).flatMap((s) =>
+        s.fields.map((f) => f.key),
+      )
     }
     const fieldsFor = (kind: string): readonly string[] =>
       kinds.find((k) => k.kind === kind)?.profileFields ?? []

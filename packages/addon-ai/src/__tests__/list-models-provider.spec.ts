@@ -12,7 +12,7 @@ import { describe, expect, it } from 'vitest'
 import { DefaultsStore } from '../defaults-store.js'
 import { secretFieldOfDescriptor } from '../kinds/provider-config.js'
 import { ProfileStore } from '../profile-store.js'
-import { createLlmProvider } from '../provider.js'
+import { buildLlmProvider } from '../provider.js'
 import { REDACTED_MARKER } from '../secrets.js'
 import type { UsageFilter, UsageRecorder, UsageRowInput } from '../usage/usage-port.js'
 import { makeAiRecords } from './support/fake-records.js'
@@ -72,7 +72,7 @@ async function setup(rows: readonly LlmProfile[] = []) {
     })
   }
   const { runtime } = fakeRuntimeClient()
-  const provider = createLlmProvider({
+  const { provider, profiles } = buildLlmProvider({
     store,
     defaults: DefaultsStore.of(world.records),
     client,
@@ -81,7 +81,7 @@ async function setup(rows: readonly LlmProfile[] = []) {
     runtime,
     catalog: CATALOG,
   })
-  return { world, store, provider, auths, urls }
+  return { world, store, provider, profiles, auths, urls }
 }
 
 const stored = makeProfile({
@@ -187,40 +187,38 @@ describe('listModels — draft vs saved secret', () => {
   })
 })
 
-describe('upsertProfile — the provider owns providerConfig', () => {
+describe('saving a profile — the provider owns providerConfig', () => {
   it('refuses a custom endpoint without a base URL', async () => {
-    const { provider } = await setup()
+    const { profiles } = await setup()
     await expect(
-      provider.upsertProfile({
-        profile: makeProfile({
+      profiles.save(
+        makeProfile({
           id: 'x',
           kind: 'openai-compatible',
           baseUrl: undefined,
         }),
-      }),
+      ),
     ).rejects.toThrow(/base URL/)
   })
 
   it('refuses a kind it does not serve', async () => {
-    const { provider } = await setup()
-    await expect(
-      provider.upsertProfile({
-        profile: makeProfile({ id: 'x', kind: 'not-ours' }),
-      }),
-    ).rejects.toThrow(/serves no kind/)
+    const { profiles } = await setup()
+    await expect(profiles.save(makeProfile({ id: 'x', kind: 'not-ours' }))).rejects.toThrow(
+      /serves no kind/,
+    )
   })
 
   it('refuses a managed-local profile with no model reference', async () => {
-    const { provider } = await setup()
+    const { profiles } = await setup()
     await expect(
-      provider.upsertProfile({
-        profile: makeProfile({
+      profiles.save(
+        makeProfile({
           id: 'x',
           kind: 'managed-local',
           baseUrl: undefined,
           providerConfig: { nodeId: 'hub' },
         }),
-      }),
+      ),
     ).rejects.toThrow(/model/)
   })
 })

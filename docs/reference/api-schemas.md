@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1036 shared schemas.**
+**1031 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -2752,6 +2752,7 @@ Enum: `"not-electron" \| "no-app-state" \| "app-state-stale" \| "not-downloaded"
 - `signIn?`: `{ basePath: string; methods?: ("device-code" \| "proxy")[] }`
 - `connectPath?`: `string`
 - `disconnectPath?`: `string`
+- `widgets?`: `({ id: string; placement: "connection" \| "model" })[]`
 
 ### `IntegrationInstanceLinkSchema`
 
@@ -3081,13 +3082,6 @@ Enum: `"auth" \| "network" \| "unsupported" \| "invalid"`
 - `{ ok: true; models: LlmModelInfoSchema[] }`
 - `{ ok: false; code: LlmListModelsErrorCodeSchema; message: string }`
 
-### `LlmModelFeaturesSchema`
-
-- `vision`: `boolean`
-- `tools`: `boolean`
-- `streaming`: `boolean`
-- `reasoning?`: `boolean \| null`
-
 ### `LlmModelInfoSchema`
 
 - `id`: `string`
@@ -3103,58 +3097,9 @@ Enum: `"auth" \| "network" \| "unsupported" \| "invalid"`
 - `installedAt?`: `number`
 - `path?`: `string`
 
-### `LlmProfileFieldSchema`
-
-Enum: `"temperature" \| "topP" \| "topK" \| "maxTokens" \| "reasoningEffort" \| "contextLength" \| "systemPrompt" \| "timeoutMs" \| "connectTimeoutMs" \| "firstTokenTimeoutMs" \| "idleTimeoutMs" \| "retry" \| "toolsEnabled"`
-
-### `LlmProfileKindDescriptorSchema`
-
-- `kind`: `string`
-- `label`: `string`
-- `icon`: `string`
-- `addonId`: `string`
-- `connectionSchema`: `unknown`
-- `advancedSchema?`: `unknown`
-- `features`: `LlmModelFeaturesSchema`
-- `visionEditable`: `boolean`
-- `modelCatalog`: `"fetch" \| "static" \| "none"`
-- `staticModels?`: `LlmModelInfoSchema[]`
-- `profileFields`: `LlmProfileFieldSchema[]`
-- `providerWidgets?`: `LlmProviderWidgetSchema[]`
-
-### `LlmProfileSchema`
-
-- `id`: `string`
-- `name`: `string`
-- `kind`: `string`
-- `addonId`: `string`
-- `enabled`: `boolean`
-- `model`: `string`
-- `supportsVision`: `boolean`
-- `temperature?`: `number`
-- `topP?`: `number`
-- `topK?`: `number`
-- `maxTokens?`: `number`
-- `reasoningEffort?`: `"off" \| "low" \| "medium" \| "high"`
-- `contextLength?`: `number`
-- `systemPrompt?`: `string`
-- `timeoutMs?`: `number = 60000`
-- `connectTimeoutMs?`: `number = 10000`
-- `firstTokenTimeoutMs?`: `number = 120000`
-- `idleTimeoutMs?`: `number = 60000`
-- `retry?`: `LlmRetryPolicySchema = {"enabled":false,"maxAttempts":1}`
-- `toolsEnabled?`: `boolean = false`
-- `providerConfig?`: `LlmProviderConfigSchema = {}`
-
 ### `LlmProviderConfigSchema`
 
 `Record<string, unknown>`
-
-### `LlmProviderWidgetSchema`
-
-- `id`: `string`
-- `placement`: `"connection" \| "model"`
-- `requires?`: `string[]`
 
 ### `LlmRefusalSourceSchema`
 
