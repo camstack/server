@@ -463,6 +463,17 @@ export const NC_TEMPLATE_VARS: readonly NcTemplateVarDescriptor[] = [
     kinds: ['sensor'],
   },
   {
+    name: 'sensor',
+    label: 'Sensor',
+    description:
+      'The name of the sensor the event is about (the contact, the doorbell); empty when the event is not a sensor event.',
+    example: 'Porta ingresso',
+    group: 'sensor',
+    families: ['rule'],
+    fields: [...RULE_TEXT],
+    kinds: ['sensor'],
+  },
+  {
     name: 'duration',
     label: 'Cycle duration',
     description:

@@ -1,5 +1,6 @@
 {
   "detection.title": "{{rule}}",
+  "sensor.title": "{{sensor}}",
   "detection.body": "{{subject}} on {{device}}{{inZones}}",
   "detection.body.trackEnd": "{{subject}} on {{device}}{{inZones}} — visit ended",
   "detection.subject": "{{classNoun}}",

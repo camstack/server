@@ -3833,6 +3833,8 @@ export function buildTemplateVars(
     db: subject.audio?.peakDbfs !== undefined ? `${Math.round(subject.audio.peakDbfs)}` : '',
     // DEVICE-EVENT — the device's own token for what happened.
     eventType: subject.eventType ?? '',
+    // DEVICE-EVENT — the sensor's own name, frozen at enqueue.
+    sensor: subject.sensor?.name ?? '',
     // A FINISHED appliance cycle: duration / energy and their sentence
     // fragments; empty on every other row, per the missing-var rule.
     ...(cycle !== undefined ? ncApplianceCycleVars(texts, cycle) : NC_EMPTY_CYCLE_VARS),
@@ -4026,6 +4028,8 @@ function titleKeyFor(entry: NcOutboxEntry): string {
     return 'package.delivered.possible.title'
   }
   if (packagePhase !== undefined) return `package.${packagePhase}.title`
+  // A sensor row is titled with the SENSOR, not the rule (nor its camera).
+  if (entry.payload.subject.sensor !== undefined) return 'sensor.title'
   return 'detection.title'
 }
 

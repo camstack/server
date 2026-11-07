@@ -130,3 +130,28 @@ export function applianceCycleOf(subject: {
     },
   }
 }
+
+/**
+ * The frozen sensor of a SENSOR row (`{}` for every other row, and for a
+ * finished appliance cycle, which keeps its own sentence). The sensor is the
+ * linked sensor, else the source device, else the subject device itself (an
+ * unlinked sensor, D630 §6). `{}` when the directory cannot name it: a
+ * nameless sensor never invents a title.
+ */
+export function sensorOf(
+  subject: {
+    readonly deviceId: number
+    readonly sourceDeviceId?: number
+    readonly linkedSensorId?: number
+    readonly source?: string
+    readonly sensorKind?: string
+    readonly sensorRaised?: boolean
+  },
+  nameOf: (deviceId: number) => string | undefined,
+): { readonly sensor?: { readonly deviceId: number; readonly name: string } } {
+  if (subject.source !== 'sensor') return {}
+  if (applianceCycleOf(subject).applianceCycle !== undefined) return {}
+  const deviceId = subject.linkedSensorId ?? subject.sourceDeviceId ?? subject.deviceId
+  const name = nameOf(deviceId)?.trim()
+  return name === undefined || name === '' ? {} : { sensor: { deviceId, name } }
+}

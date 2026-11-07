@@ -574,8 +574,9 @@ describe('each behaviour of the policy (D706)', () => {
     await h.at(0)
     door(h, true)
     await h.settle()
-    // The door rule's own push goes out — the only one anybody would get.
-    expect(h.pushes.map((p) => p.title)).toEqual(['Porta front door aperta'])
+    // The door rule's own push goes out — the only one anybody would get. Its
+    // default title is the SENSOR's name, not the rule's.
+    expect(h.pushes.map((p) => p.title)).toEqual(['Porta front door'])
     const warn = h.lines.find(
       (l) => l.msg === 'alarm rule push kept — no enabled rule delivers the alarm notification',
     )

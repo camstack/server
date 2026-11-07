@@ -325,8 +325,19 @@ dispatcher holds the row for that wake (up to 15 s, instead of the 3 s still
 wait) — nothing is attached after the push. Every exclusion and every wake is
 logged per camera, with its reason (`wake-skipped:policy`,
 `wake-skipped:recent-wake`, `wake-skipped:unreachable`, `wake-timeout`,
-`wake-refused`). `force` is never set for an awake, unreachable, disabled or
-offline camera, nor for the still shelf of a sound or an occupancy edge.
+`wake-refused`). `force` is never set for an unreachable, disabled or
+offline camera, nor for the still shelf of a sound or an occupancy edge. An
+AWAKE verdict is not trusted on a battery camera (the state read is the fallible
+side, as in D49: a hub-summary sleep flip refused inside its grace leaves a
+sleeping camera reading awake while the provider serves its cached picture): an
+unforced capture that came back `timeout` or `empty`, or a frame older than the
+bound, is followed by ONE forced wake, logged with the triggering outcome. A
+mains camera never wakes — its stale tile keeps the unforced re-poll (D60).
+
+The default TITLE of a sensor row is the sensor's name (`sensor.title` =
+`{{sensor}}`), not the rule's and not the linked camera's (`{{device}}`). The
+name is frozen on the row at enqueue (`subject.sensor`); an authored title, an
+alarm intrusion title (D706) and a finished appliance cycle keep theirs.
 
 - **Which rules fire is exactly what the per-camera rows fired.** A rule scoped
   to devices matches the SENSOR or a camera that took a timeline row for the

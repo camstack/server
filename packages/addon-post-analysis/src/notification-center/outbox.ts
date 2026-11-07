@@ -572,6 +572,11 @@ export interface NcOutboxPayload {
      *  camera linked to it) whose duration and energy the default sentence
      *  reads. Absent on every other row. */
     readonly applianceCycle?: { readonly deviceId: number }
+    /** SENSOR rows only (a device event whose source is a sensor): the sensor
+     *  and its display name, frozen at enqueue — `{{sensor}}` and the default
+     *  title. Absent on a row written before this field, which keeps the
+     *  rule's name as its title. */
+    readonly sensor?: { readonly deviceId: number; readonly name: string }
     /** Infrastructure/liveness/update event normalized at intake. */
     readonly systemEvent?: {
       readonly kind: NcSystemEventKind

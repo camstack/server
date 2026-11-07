@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A sensor notification without a custom title is now titled with the sensor's name instead of the rule's, and a battery camera that answers awake with no or an old picture is woken once for the linked still
+
 ## [1.2.683] - 2026-11-07
 
 ### Changed
