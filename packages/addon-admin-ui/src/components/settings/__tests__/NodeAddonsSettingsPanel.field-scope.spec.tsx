@@ -21,42 +21,46 @@ const PER_NODE_LABEL = 'btm binary path'
 const CLUSTER_LABEL = 'Loki URL'
 const CLUSTER_LABEL_2 = 'Join burst span'
 
-const MIXED_SCHEMA: ConfigUISchemaWithValues = {
+const NODE_FORM: ConfigUISchemaWithValues = {
   sections: [
     {
       id: 'node-things',
       title: 'Node things',
-      fields: [
-        {
-          type: 'text',
-          key: 'btmPath',
-          label: PER_NODE_LABEL,
-          perNode: true,
-          value: '/usr/bin/btm',
-        },
-        { type: 'number', key: 'joinBurstMaxSpanMs', label: CLUSTER_LABEL_2, value: 250 },
-      ],
-    },
-    {
-      id: 'cluster-things',
-      title: 'Cluster things',
-      fields: [{ type: 'text', key: 'lokiUrl', label: CLUSTER_LABEL, value: 'http://loki' }],
+      fields: [{ type: 'text', key: 'btmPath', label: PER_NODE_LABEL, value: '/usr/bin/btm' }],
     },
   ],
 }
 
-const CLUSTER_ONLY_SCHEMA: ConfigUISchemaWithValues = {
+const CLUSTER_FORM: ConfigUISchemaWithValues = {
   sections: [
     {
       id: 'cluster-things',
       title: 'Cluster things',
-      fields: [{ type: 'text', key: 'lokiUrl', label: CLUSTER_LABEL, value: 'http://loki' }],
+      fields: [
+        { type: 'text', key: 'lokiUrl', label: CLUSTER_LABEL, value: 'http://loki' },
+        { type: 'number', key: 'joinBurstMaxSpanMs', label: CLUSTER_LABEL_2, value: 250 },
+      ],
     },
   ],
 }
 
-let served: ConfigUISchemaWithValues = MIXED_SCHEMA
-const getGlobalSettings = vi.fn(async () => served)
+const NODE_DECLARATION = {
+  cap: 'terminal-session',
+  scope: 'node' as const,
+  sectionIds: ['node-things'],
+}
+const CLUSTER_DECLARATION = {
+  cap: 'terminal-session',
+  scope: 'cluster' as const,
+  sectionIds: ['cluster-things'],
+}
+
+/** What the addon serves: a node form and a cluster form of one capability. */
+let declared = [CLUSTER_DECLARATION, NODE_DECLARATION]
+const listScopedSettings = vi.fn(async () => declared)
+const getScopedSettings = vi.fn(async (input: { scope: string }) =>
+  input.scope === 'node' ? NODE_FORM : CLUSTER_FORM,
+)
 
 vi.mock('@camstack/ui-library', async () => {
   const actual =
@@ -66,12 +70,16 @@ vi.mock('@camstack/ui-library', async () => {
     ...actual,
     useSystem: () => ({
       trpcClient: {
-        addonSettings: { getGlobalSettings: { query: getGlobalSettings } },
+        addonSettings: {
+          listScopedSettings: { query: listScopedSettings },
+          getScopedSettings: { query: getScopedSettings },
+        },
         addons: { custom: { mutate: vi.fn() } },
       },
     }),
     useAddonsList: () => ({ data: [{ manifest: { id: 'terminal', name: 'Terminal' } }] }),
     useAddonSettingsUpdateGlobalSettings: noopMutation,
+    useAddonSettingsUpdateScopedSettings: noopMutation,
     useAddonSettingsUpdateDeviceSettings: noopMutation,
     useDecoderReprobeHwaccel: noopMutation,
     useAudioAnalyzerReprobeAudioEngine: noopMutation,
@@ -88,7 +96,7 @@ function renderTree(node: React.ReactNode) {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  served = MIXED_SCHEMA
+  declared = [CLUSTER_DECLARATION, NODE_DECLARATION]
 })
 
 describe("a node's Settings tab", () => {
@@ -96,7 +104,7 @@ describe("a node's Settings tab", () => {
     renderTree(<NodeDetailSettingsTab nodeId="agent-a" addonIds={['terminal']} />)
 
     expect(await screen.findByText(PER_NODE_LABEL)).toBeTruthy()
-    await waitFor(() => expect(getGlobalSettings).toHaveBeenCalled())
+    await waitFor(() => expect(getScopedSettings).toHaveBeenCalled())
     expect(screen.queryByText(CLUSTER_LABEL)).toBeNull()
     expect(screen.queryByText(CLUSTER_LABEL_2)).toBeNull()
   })
@@ -110,13 +118,20 @@ describe("a node's Settings tab", () => {
   it('asks the addon for THAT node, not for the hub', async () => {
     renderTree(<NodeDetailSettingsTab nodeId="agent-a" addonIds={['terminal']} />)
     await screen.findByText(PER_NODE_LABEL)
-    expect(getGlobalSettings).toHaveBeenCalledWith(
+    expect(listScopedSettings).toHaveBeenCalledWith(
       expect.objectContaining({ addonId: 'terminal', nodeId: 'agent-a' }),
+    )
+    expect(getScopedSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ addonId: 'terminal', scope: 'node', nodeId: 'agent-a' }),
+    )
+    // The cluster form is not even fetched under a node's name.
+    expect(getScopedSettings).not.toHaveBeenCalledWith(
+      expect.objectContaining({ scope: 'cluster' }),
     )
   })
 
   it('SAYS why it is empty when the node has no per-node settings', async () => {
-    served = CLUSTER_ONLY_SCHEMA
+    declared = [CLUSTER_DECLARATION]
     renderTree(<NodeDetailSettingsTab nodeId="agent-a" addonIds={['terminal']} />)
 
     expect(await screen.findByText(/No per-node settings on this node/)).toBeTruthy()
@@ -143,17 +158,7 @@ describe("the addon card's Settings dialog", () => {
   })
 
   it('says so when an addon is entirely per-node', async () => {
-    served = {
-      sections: [
-        {
-          id: 'node-things',
-          title: 'Node things',
-          fields: [
-            { type: 'text', key: 'btmPath', label: PER_NODE_LABEL, perNode: true, value: '/x' },
-          ],
-        },
-      ],
-    }
+    declared = [NODE_DECLARATION]
     renderTree(
       <NodeAddonsSettingsPanel
         nodeId={null}

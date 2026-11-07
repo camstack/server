@@ -8,18 +8,29 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { ConfigUISchemaWithValues } from '@camstack/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const SCHEMA: ConfigUISchemaWithValues = {
+const CLUSTER_FORM: ConfigUISchemaWithValues = {
   sections: [
     {
       id: 'main',
       title: 'Main',
-      fields: [
-        { type: 'text', key: 'lokiUrl', label: 'Loki URL', value: 'http://loki' },
-        { type: 'text', key: 'btmPath', label: 'btm path', perNode: true, value: '/usr/bin/btm' },
-      ],
+      fields: [{ type: 'text', key: 'lokiUrl', label: 'Loki URL', value: 'http://loki' }],
     },
   ],
 }
+const NODE_FORM: ConfigUISchemaWithValues = {
+  sections: [
+    {
+      id: 'node',
+      title: 'Node',
+      fields: [{ type: 'text', key: 'btmPath', label: 'btm path', value: '/usr/bin/btm' }],
+    },
+  ],
+}
+/** The provider serves a cluster form and a node form of one capability. */
+const DECLARATIONS = [
+  { cap: 'log-destination', scope: 'cluster' as const, sectionIds: ['main'] },
+  { cap: 'log-destination', scope: 'node' as const, sectionIds: ['node'] },
+]
 
 const h = vi.hoisted(() => ({ update: vi.fn() }))
 
@@ -31,12 +42,19 @@ vi.mock('@camstack/ui-library', async () => {
     ...actual,
     useSystem: () => ({
       trpcClient: {
-        addonSettings: { getGlobalSettings: { query: async () => SCHEMA } },
+        addonSettings: {
+          listScopedSettings: { query: async () => DECLARATIONS },
+          getScopedSettings: {
+            query: async (input: { scope: string }) =>
+              input.scope === 'node' ? NODE_FORM : CLUSTER_FORM,
+          },
+        },
         addons: { custom: { mutate: vi.fn() } },
       },
     }),
     useAddonsList: () => ({ data: [{ manifest: { id: 'loki-logging', name: 'Loki' } }] }),
-    useAddonSettingsUpdateGlobalSettings: () => ({
+    useAddonSettingsUpdateGlobalSettings: noop,
+    useAddonSettingsUpdateScopedSettings: () => ({
       mutateAsync: h.update,
       mutate: h.update,
       isPending: false,
@@ -85,6 +103,8 @@ describe('FixedRowSettingsDialog', () => {
     await waitFor(() => expect(h.update).toHaveBeenCalledTimes(1))
     expect(h.update.mock.calls[0]?.[0]).toMatchObject({
       addonId: 'loki-logging',
+      cap: 'log-destination',
+      scope: 'cluster',
       patch: { lokiUrl: 'http://loki:3100' },
     })
   })

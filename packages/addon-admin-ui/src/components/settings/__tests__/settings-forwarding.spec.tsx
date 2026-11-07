@@ -83,6 +83,25 @@ interface UpdateGlobalSettingsInput {
 
 const getIntegrationSettings = vi.fn(async () => servedIntegration)
 const getGlobalSettings = vi.fn(async () => FULL_SCHEMA)
+/** The addon's own page reads the scoped forms: Reolink serves its whole form on the cluster scope. */
+const listScopedSettings = vi.fn(async () => [
+  {
+    cap: 'camera-provider',
+    scope: 'cluster' as const,
+    sectionIds: FULL_SCHEMA.sections.map((section) => section.id),
+  },
+])
+const getScopedSettings = vi.fn(async () => FULL_SCHEMA)
+interface UpdateScopedSettingsInput {
+  readonly addonId: string
+  readonly cap: string
+  readonly scope: string
+  readonly nodeId?: string
+  readonly patch: Record<string, unknown>
+}
+const updateScopedSettings = vi.fn(async (_input: UpdateScopedSettingsInput) => ({
+  success: true,
+}))
 const updateGlobalSettings = vi.fn(async (_input: UpdateGlobalSettingsInput) => ({
   success: true,
 }))
@@ -97,6 +116,8 @@ vi.mock('@camstack/ui-library', async () => {
       trpcClient: {
         addonSettings: {
           getGlobalSettings: { query: getGlobalSettings },
+          listScopedSettings: { query: listScopedSettings },
+          getScopedSettings: { query: getScopedSettings },
           getIntegrationSettings: { query: getIntegrationSettings },
         },
         addons: { custom: { mutate: vi.fn() } },
@@ -106,6 +127,11 @@ vi.mock('@camstack/ui-library', async () => {
     useAddonSettingsUpdateGlobalSettings: () => ({
       mutateAsync: updateGlobalSettings,
       mutate: updateGlobalSettings,
+      isPending: false,
+    }),
+    useAddonSettingsUpdateScopedSettings: () => ({
+      mutateAsync: updateScopedSettings,
+      mutate: updateScopedSettings,
       isPending: false,
     }),
     useAddonSettingsUpdateDeviceSettings: noopMutation,
@@ -150,10 +176,11 @@ function addonPageSurface() {
  * Edit the one number input on screen and click Save. Returns what the save
  * mutation was called with — the store-facing truth, not a rendered string.
  */
-async function editPortAndSave(
+async function editPortAndSave<T>(
   container: HTMLElement,
   next: string,
-): Promise<UpdateGlobalSettingsInput | undefined> {
+  write: { readonly mock: { readonly calls: readonly (readonly [T])[] } },
+): Promise<T | undefined> {
   const input = await waitFor(() => {
     const found = container.querySelector('input[type="number"]')
     // `instanceof` rather than a cast: the narrowing is the assertion, so a
@@ -164,8 +191,8 @@ async function editPortAndSave(
   fireEvent.change(input, { target: { value: next } })
   const save = await screen.findByRole('button', { name: 'Save' })
   fireEvent.click(save)
-  await waitFor(() => expect(updateGlobalSettings).toHaveBeenCalled())
-  return updateGlobalSettings.mock.calls[0]?.[0]
+  await waitFor(() => expect(write.mock.calls.length).toBeGreaterThan(0))
+  return write.mock.calls[0]?.[0]
 }
 
 beforeEach(() => {
@@ -250,21 +277,31 @@ describe('a provider that declared NOTHING', () => {
 describe('a control here writes where the addon page writes', () => {
   it('sends the SAME bare key at the SAME target as the addon page — no second copy', async () => {
     const integration = renderTree(integrationSurface())
-    const fromIntegration = await editPortAndSave(integration.container, '2600')
+    const fromIntegration = await editPortAndSave(
+      integration.container,
+      '2600',
+      updateGlobalSettings,
+    )
     integration.unmount()
 
     vi.clearAllMocks()
 
     const addonPage = renderTree(addonPageSurface())
-    const fromAddonPage = await editPortAndSave(addonPage.container, '2600')
+    const fromAddonPage = await editPortAndSave(addonPage.container, '2600', updateScopedSettings)
 
-    // Not "both look plausible" — byte-identical mutation input. A scoped key
-    // (`emailPushPort@hub`), a different nodeId, or an integration-specific
-    // writer would all fail here.
-    expect(fromIntegration).toEqual(fromAddonPage)
+    // Not "both look plausible" — the store-facing input. The integration surface keeps the
+    // addon-wide write, the addon's page writes the cluster scope of its capability; both
+    // carry the SAME bare key (a scoped key such as `emailPushPort@hub` would fail here), and
+    // the cluster write names no node.
     expect(fromIntegration).toEqual({
       addonId: 'provider-reolink',
       nodeId: 'hub',
+      patch: { emailPushPort: 2600 },
+    })
+    expect(fromAddonPage).toEqual({
+      addonId: 'provider-reolink',
+      cap: 'camera-provider',
+      scope: 'cluster',
       patch: { emailPushPort: 2600 },
     })
   })

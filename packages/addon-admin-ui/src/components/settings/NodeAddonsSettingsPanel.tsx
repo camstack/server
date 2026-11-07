@@ -2,10 +2,14 @@
  * NodeAddonsSettingsPanel — settings-redesign Phase 8 successor to
  * `MultiAddonSettingsEditor` + `SingleAddonSettingsPanel`.
  *
- * Fetches the new three-level settings endpoints
- * (`addons.getAddonSettings / getGlobalSettings / getDeviceSettings`)
- * in parallel for a caller-provided list of addon ids and renders one
+ * Reads each addon of a caller-provided list in parallel and renders one
  * `FormBuilder` per addon stacked under a shared Save / Reset control.
+ *
+ * Global level reads the addon's SCOPED schemas (D986 §7):
+ * `addonSettings.listScopedSettings` names the (capability, scope) pairs it serves,
+ * `getScopedSettings` reads each, and a Save writes every key to the pair that declared it
+ * (`updateScopedSettings`). `null` from the listing is "not available", never "no settings".
+ * The integration surface and the device level keep their own endpoints.
  *
  * Consumers pass:
  *   - `nodeId`: which node to target. `null` means hub.
@@ -60,12 +64,20 @@ import {
   type AddonFormPaneState,
 } from '../form-builder/AddonFormPane'
 import { filterSchemaByFieldScope, type SettingsFieldScope } from '../../lib/settings-field-scope'
+import {
+  groupPatchByTarget,
+  mergeFetched,
+  selectDeclarations,
+  type FetchedDeclaration,
+  type ScopedTarget,
+} from '../../lib/settings-scoped-source'
 import { shapeSections, shownTab, type SectionShape } from '../../lib/settings-section-shape'
 import { type SettingsSurface } from '../../lib/settings-forwarding'
 
 import {
   useAddonSettingsUpdateDeviceSettings,
   useAddonSettingsUpdateGlobalSettings,
+  useAddonSettingsUpdateScopedSettings,
   useAddonsList,
   useAudioAnalyzerReprobeAudioEngine,
   useDecoderReprobeHwaccel,
@@ -86,11 +98,10 @@ interface NodeAddonsSettingsPanelProps {
   readonly deviceId?: number
   /**
    * Optional capability scope for global-level settings. When provided,
-   * the `cap` parameter is forwarded to `getGlobalSettings` so addons
-   * can return only the settings relevant to that capability (e.g.
-   * `network-access` page passes `'network-access'` so tailscale-client
-   * returns `null` for unrelated caps and only exposes mesh settings on
-   * the Mesh Networks page). Omit to receive the full schema.
+   * only the scoped schemas that capability declares are read (e.g. the
+   * `network-access` page passes `'network-access'`, so a tailscale-client
+   * shows only its mesh settings). Omit to read every capability the
+   * addon serves.
    */
   readonly capability?: string
   /**
@@ -143,7 +154,7 @@ interface NodeAddonsSettingsPanelProps {
    * sections already stripped of `perNode` fields. What this prop adds is a
    * REFUSAL of every mount that would imply a narrower scope than the payload
    * has (a device level, a `deviceId`, a node id, or a `fieldScope`). Saves
-   * still go through `updateGlobalSettings`, which is why the store key is the
+   * still go through the addon-wide write, which is why the store key is the
    * same one the addon's own page writes. See `lib/settings-forwarding.ts`.
    */
   readonly surface?: SettingsSurface
@@ -291,6 +302,15 @@ interface AddonPaneEntry {
   readonly schema: ConfigUISchema
   /** Flat key→value map of the server-authoritative values. */
   readonly serverValues: Record<string, unknown>
+  /** Field key → the (cap, scope) that stores it; empty for the integration surface. */
+  readonly keyTargets: Readonly<Record<string, ScopedTarget>>
+}
+
+/** What one addon's query answers. `result === null`: the addon could not be asked. */
+interface AddonSettingsAnswer {
+  readonly addonId: string
+  readonly result: ConfigUISchemaWithValues | null
+  readonly keyTargets: Readonly<Record<string, ScopedTarget>>
 }
 
 // ---------------------------------------------------------------------------
@@ -325,6 +345,7 @@ export function NodeAddonsSettingsPanel({
   const queryClient = useQueryClient()
   const trpcClient = useSystem().trpcClient
   const updateGlobalMutation = useAddonSettingsUpdateGlobalSettings()
+  const updateScopedMutation = useAddonSettingsUpdateScopedSettings()
   const updateDeviceMutation = useAddonSettingsUpdateDeviceSettings()
   const reprobeHwaccelMutation = useDecoderReprobeHwaccel()
   const reprobeAudioEngineMutation = useAudioAnalyzerReprobeAudioEngine()
@@ -388,7 +409,7 @@ export function NodeAddonsSettingsPanel({
           surface !== undefined
             ? 'getIntegrationSettings'
             : level === 'global'
-              ? 'getGlobalSettings'
+              ? 'listScopedSettings'
               : 'getDeviceSettings',
         ],
         {
@@ -397,18 +418,14 @@ export function NodeAddonsSettingsPanel({
           deviceId: deviceId ?? null,
           cap: capability ?? null,
           // Two surfaces over the same addon can want different populations
-          // (a node card wants `perNode`, an addon card wants `cluster`), and
-          // the scoped payloads must not share a cache entry.
+          // (a node card wants the `node` scope, an addon card the `cluster`
+          // one), and the payloads must not share a cache entry.
           scope: fieldScope ?? null,
+          // The selection is part of what was fetched.
+          sections: [sectionIds ?? null, omitSectionIds ?? null],
         },
       ],
-      queryFn: async (): Promise<{ addonId: string; result: ConfigUISchemaWithValues | null }> => {
-        // Scoping is applied HERE, at the edge, so every derived thing below
-        // — the tab bar, the fingerprint, the panes, the dirty set — sees one
-        // consistent schema. Filtering later would leave a tab bar advertising
-        // tabs whose fields had already been dropped.
-        const scoped = (raw: ConfigUISchemaWithValues | null): ConfigUISchemaWithValues | null =>
-          raw !== null && fieldScope !== undefined ? filterSchemaByFieldScope(raw, fieldScope) : raw
+      queryFn: async (): Promise<AddonSettingsAnswer> => {
         // An integration surface asks CORE for the addon's declared sections.
         // The narrowing is not repeated here on purpose: a client-side filter
         // beside the server-side one is a second opinion about which settings
@@ -418,25 +435,58 @@ export function NodeAddonsSettingsPanel({
             addonId,
             nodeId: effectiveNodeId,
           })
-          return { addonId, result: result as ConfigUISchemaWithValues | null }
+          return { addonId, result: result as ConfigUISchemaWithValues | null, keyTargets: {} }
         }
         if (level === 'global') {
-          const result = await trpcClient.addonSettings.getGlobalSettings.query({
+          // The addon's scoped schemas: what it serves, per (cap, scope). `null` is
+          // "could not be asked" — never "serves nothing" (that is `[]`).
+          const declarations = await trpcClient.addonSettings.listScopedSettings.query({
             addonId,
             nodeId: effectiveNodeId,
-            ...(capability ? { cap: capability } : {}),
           })
-          return { addonId, result: scoped(result as ConfigUISchemaWithValues | null) }
+          if (declarations === null) return { addonId, result: null, keyTargets: {} }
+          const selected = selectDeclarations({
+            declarations,
+            ...(fieldScope !== undefined ? { fieldScope } : {}),
+            ...(capability !== undefined ? { capability } : {}),
+            ...(sectionIds !== undefined ? { allowSectionIds: sectionIds } : {}),
+            ...(omitSectionIds !== undefined ? { omitSectionIds } : {}),
+          })
+          const forms = await Promise.all(
+            selected.map(async (declaration): Promise<FetchedDeclaration | null> => {
+              const form = await trpcClient.addonSettings.getScopedSettings.query({
+                addonId,
+                cap: declaration.cap,
+                scope: declaration.scope,
+                ...(declaration.scope === 'node' ? { nodeId: effectiveNodeId } : {}),
+              })
+              return form === null ? null : { declaration, form }
+            }),
+          )
+          const fetched = forms.filter((entry): entry is FetchedDeclaration => entry !== null)
+          // One declaration unanswered (mid-restart): the addon is unavailable as a whole.
+          if (fetched.length !== forms.length) return { addonId, result: null, keyTargets: {} }
+          const merged = mergeFetched(fetched)
+          return { addonId, result: merged.form, keyTargets: merged.keyTargets }
         }
-        const result = await trpcClient.addonSettings.getDeviceSettings.query({
+        // Per-device settings are not a scoped carrier. Scoping is applied HERE, at
+        // the edge, so the tab bar, the fingerprint and the panes see one schema.
+        const raw = (await trpcClient.addonSettings.getDeviceSettings.query({
           addonId,
           deviceId: deviceId!,
           nodeId: effectiveNodeId,
-        })
-        return { addonId, result: scoped(result as ConfigUISchemaWithValues | null) }
+        })) as ConfigUISchemaWithValues | null
+        return {
+          addonId,
+          result:
+            raw !== null && fieldScope !== undefined
+              ? filterSchemaByFieldScope(raw, fieldScope)
+              : raw,
+          keyTargets: {},
+        }
       },
       // An engine-cascade save restarts the addon; the invalidation refetch
-      // races that restart window where getGlobalSettings returns null. Keep
+      // races that restart window where the addon answers null. Keep
       // the previous data on screen while refetching so the pane never flashes
       // empty mid-restart. A resolved null is additionally absorbed by the
       // last-good fallback in `paneEntries`.
@@ -623,10 +673,18 @@ export function NodeAddonsSettingsPanel({
   // pendingKeys via the onStateChange callback.
   //
   // Last good (non-null) schema per addonId. Lets a pane survive the ~1s
-  // restart window after an engine-cascade save, where getGlobalSettings
+  // restart window after an engine-cascade save, where the settings read
   // returns null ("unavailable"), without dropping the pane or collapsing
   // its option lists.
-  const lastGoodResultRef = useRef(new Map<string, ConfigUISchemaWithValues>())
+  const lastGoodResultRef = useRef(
+    new Map<
+      string,
+      {
+        readonly result: ConfigUISchemaWithValues
+        readonly keyTargets: Readonly<Record<string, ScopedTarget>>
+      }
+    >(),
+  )
   const paneEntries = useMemo<readonly AddonPaneEntry[]>(() => {
     const allow = sectionIds ? new Set(sectionIds) : null
     const omit = omitSectionIds ? new Set(omitSectionIds) : null
@@ -643,11 +701,15 @@ export function NodeAddonsSettingsPanel({
       // good schema for this addon so the pane keeps its values + options +
       // probe instead of vanishing/collapsing for the ~1s restart window.
       // Update the cache only on a real (non-null) payload.
-      const result = q.data.result ?? lastGoodResultRef.current.get(q.data.addonId) ?? null
       if (q.data.result !== null) {
-        lastGoodResultRef.current.set(q.data.addonId, q.data.result)
+        lastGoodResultRef.current.set(q.data.addonId, {
+          result: q.data.result,
+          keyTargets: q.data.keyTargets,
+        })
       }
-      if (result === null) continue
+      const good = lastGoodResultRef.current.get(q.data.addonId) ?? null
+      if (good === null) continue
+      const { result, keyTargets } = good
       const { schema, values } = splitSchemaWithValues(result)
       const shape: SectionShape = {
         ...(fieldKeys !== undefined ? { fieldKeys } : {}),
@@ -676,10 +738,28 @@ export function NodeAddonsSettingsPanel({
         schemaWithValues: filteredWithValues,
         schema: filteredSchema,
         serverValues: values,
+        keyTargets,
       })
     }
     return out
   }, [queriesDataHash, sectionIds, omitSectionIds, fieldKeys, hideSectionChrome, tabAliases])
+
+  // An addon that could not be asked and has no last-good view: UNKNOWN, not "nothing to
+  // configure" (D315). The hash carries the `:n` marker of an unanswered query.
+  const unavailableAddonIds = useMemo<readonly string[]>(
+    () =>
+      queries.flatMap((q) =>
+        surface === undefined &&
+        level === 'global' &&
+        q.data !== undefined &&
+        q.data.result === null &&
+        !lastGoodResultRef.current.has(q.data.addonId)
+          ? [q.data.addonId]
+          : [],
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [queriesDataHash, surface, level],
+  )
 
   // Pending state by addonId, fed by AddonFormPane.onStateChange.
   // Cleared lazily — entries for unmounted panes can stay until the
@@ -705,26 +785,61 @@ export function NodeAddonsSettingsPanel({
     [],
   )
 
-  /** Fire an immediate save for a single addon with the given values. */
-  const immediateAddonSave = useCallback(
-    async (addonId: string, patch: Record<string, unknown>) => {
-      if (level === 'global') {
-        await updateGlobalMutation.mutateAsync({
-          addonId,
-          nodeId: effectiveNodeId,
-          patch,
-        })
-      } else {
+  /**
+   * Write one addon's patch. Global level: each key goes to the (cap, scope) that declared it,
+   * one `updateScopedSettings` per target; the integration surface keeps the addon-wide write.
+   */
+  const writeAddonPatch = useCallback(
+    async (addonId: string, patch: Record<string, unknown>): Promise<void> => {
+      if (level !== 'global') {
         await updateDeviceMutation.mutateAsync({
           addonId,
           deviceId: deviceId!,
           nodeId: effectiveNodeId,
           patch,
         })
+        return
       }
+      if (surface !== undefined) {
+        await updateGlobalMutation.mutateAsync({ addonId, nodeId: effectiveNodeId, patch })
+        return
+      }
+      const keyTargets = paneEntries.find((entry) => entry.addonId === addonId)?.keyTargets ?? {}
+      const { groups, unowned } = groupPatchByTarget(patch, keyTargets)
+      if (unowned.length > 0) {
+        throw new Error(`${addonId}: no scoped setting declares ${unowned.join(', ')}`)
+      }
+      await Promise.all(
+        groups.map((group) =>
+          updateScopedMutation.mutateAsync({
+            addonId,
+            cap: group.cap,
+            scope: group.scope,
+            ...(group.scope === 'node' ? { nodeId: effectiveNodeId } : {}),
+            patch: group.patch,
+          }),
+        ),
+      )
+    },
+    [
+      level,
+      surface,
+      paneEntries,
+      updateGlobalMutation,
+      updateScopedMutation,
+      updateDeviceMutation,
+      effectiveNodeId,
+      deviceId,
+    ],
+  )
+
+  /** Fire an immediate save for a single addon with the given values. */
+  const immediateAddonSave = useCallback(
+    async (addonId: string, patch: Record<string, unknown>) => {
+      await writeAddonPatch(addonId, patch)
       void queryClient.invalidateQueries({ queryKey: [['addonSettings']] })
     },
-    [updateGlobalMutation, updateDeviceMutation, effectiveNodeId, level, deviceId, queryClient],
+    [writeAddonPatch, queryClient],
   )
 
   /**
@@ -798,20 +913,7 @@ export function NodeAddonsSettingsPanel({
       if (patches.length === 0) return { saved: [] as string[] }
       const saved = await Promise.all(
         patches.map(async ({ addonId, patch }) => {
-          if (level === 'global') {
-            await updateGlobalMutation.mutateAsync({
-              addonId,
-              nodeId: effectiveNodeId,
-              patch,
-            })
-          } else {
-            await updateDeviceMutation.mutateAsync({
-              addonId,
-              deviceId: deviceId!,
-              nodeId: effectiveNodeId,
-              patch,
-            })
-          }
+          await writeAddonPatch(addonId, patch)
           return addonId
         }),
       )
@@ -886,7 +988,22 @@ export function NodeAddonsSettingsPanel({
   // (whose content we still want to render) or a schema tab that
   // simply has no sections on this node (show placeholder inside the
   // tab body instead of the whole component collapsing).
+  const unavailableNotice =
+    unavailableAddonIds.length > 0 ? (
+      <div className="space-y-1 text-[11px] text-foreground-subtle" role="status">
+        {unavailableAddonIds.map((addonId) => (
+          <div key={addonId}>
+            {t('settings.nodeAddonsSettingsPanel.addonUnavailable', '{{name}} not available.', {
+              name: addonDisplayNames.get(addonId) ?? addonId,
+            })}
+          </div>
+        ))}
+      </div>
+    ) : null
+
   if (!selfTabbed && paneEntries.length === 0) {
+    // Not asked is not "nothing to configure": say the addon did not answer.
+    if (unavailableNotice !== null) return unavailableNotice
     return (
       <div className="text-[11px] text-foreground-subtle italic">
         {emptyMessage ??
@@ -925,6 +1042,8 @@ export function NodeAddonsSettingsPanel({
           extra tabs. Active state lives inside the panel. Rendering
           delegated to the shared SchemaTabBar (same component Device
           Details uses) so styling stays uniform. */}
+      {paneEntries.length > 0 || selfTabbed ? unavailableNotice : null}
+
       {selfTabbed && (
         <SchemaTabBar
           tabs={orderedTabIds.map((id) => ({ id, label: tabLabels.get(id) ?? id }))}

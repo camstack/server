@@ -5669,7 +5669,8 @@
       "theCurrentSelection": "the current selection",
       "saveFailed": "Save failed:",
       "nothingToConfigureHereFor": "Nothing to configure here for this node.",
-      "noAddonsIn": "No addons in {{scope}} expose {{level}}-level settings on this node."
+      "noAddonsIn": "No addons in {{scope}} expose {{level}}-level settings on this node.",
+      "addonUnavailable": "{{name}} not available."
     },
     "siteLocationCard": {
       "siteLocation": "Site location",

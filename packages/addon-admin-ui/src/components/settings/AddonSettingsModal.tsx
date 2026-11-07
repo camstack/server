@@ -1,7 +1,7 @@
 /**
  * AddonSettingsModal — modal-shell host for the existing
  * `NodeAddonsSettingsPanel`. Lets a page (e.g. Backup) open a
- * specific addon's `globalSettingsSchema` in a focused dialog
+ * specific addon's scoped settings in a focused dialog
  * without navigating away to /system/settings.
  *
  * Single-addon scope by design — the panel can render multiple but

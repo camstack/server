@@ -38,7 +38,11 @@ function alexaForm(stored: Record<string, unknown>): ConfigUISchemaWithValues {
 }
 
 let served: ConfigUISchemaWithValues = alexaForm({})
-const getGlobalSettings = vi.fn(async () => served)
+/** Alexa declares its whole form on the cluster scope of the `device-export` capability. */
+const listScopedSettings = vi.fn(async () => [
+  { cap: 'device-export', scope: 'cluster' as const, sectionIds: served.sections.map((s) => s.id) },
+])
+const getScopedSettings = vi.fn(async () => served)
 const customMutate = vi.fn(async (_input: unknown) => ({
   endpointCount: 3,
   deviceCount: 2,
@@ -60,7 +64,10 @@ vi.mock('@camstack/ui-library', async () => {
     ...actual,
     useSystem: () => ({
       trpcClient: {
-        addonSettings: { getGlobalSettings: { query: getGlobalSettings } },
+        addonSettings: {
+          listScopedSettings: { query: listScopedSettings },
+          getScopedSettings: { query: getScopedSettings },
+        },
         addons: { custom: { mutate: customMutate } },
       },
     }),
@@ -68,6 +75,7 @@ vi.mock('@camstack/ui-library', async () => {
       data: [{ manifest: { id: 'export-alexa', name: 'Alexa' } }],
     }),
     useAddonSettingsUpdateGlobalSettings: noopMutation,
+    useAddonSettingsUpdateScopedSettings: noopMutation,
     useAddonSettingsUpdateDeviceSettings: noopMutation,
     useDecoderReprobeHwaccel: noopMutation,
     useAudioAnalyzerReprobeAudioEngine: noopMutation,
