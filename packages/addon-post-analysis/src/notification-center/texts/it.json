@@ -7,7 +7,7 @@
   "detection.subject.identity": "{{label}}",
   "detection.subject.plate": "{{classNoun}} {{label}}",
   "detection.inZones": " in {{zones}}",
-  "appliance.finished.title": "{{device}} ha terminato",
+  "appliance.finished.title": "{{device}} ha finito",
   "appliance.finished.body": "{{device}} ha terminato{{afterDuration}}{{usedEnergy}}",
   "appliance.finished.duration": " dopo {{duration}}",
   "appliance.finished.energy": " e ha consumato {{energy}}",

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The default Italian title of an appliance finished notification reads "<name> ha finito"
+
 ## [1.2.681] - 2026-11-07
 
 ### Changed

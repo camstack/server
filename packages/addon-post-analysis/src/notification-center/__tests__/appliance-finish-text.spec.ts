@@ -88,7 +88,7 @@ const it_ = (): NcTextCatalog => new NcTextCatalog({ language: 'it' })
 describe('appliance finish text', () => {
   it('names the duration and the energy, capitalised, in Italian', async () => {
     const out = await render(it_(), facts({ durationMs: 52 * 60_000, energyKwh: 0.84 }))
-    expect(out.title).toBe('Lavatrice ha terminato')
+    expect(out.title).toBe('Lavatrice ha finito')
     expect(out.body).toBe('Lavatrice ha terminato dopo 52 minuti e ha consumato 0,84 kWh')
   })
 
