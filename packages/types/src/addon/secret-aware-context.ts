@@ -32,6 +32,7 @@ import type { SecretScope } from '../keychain/secret-ref.js'
 import type { SecretsAccess } from '../keychain/secrets-access.js'
 import type { SecretTree } from './secret-paths.js'
 import {
+  collectSecretMarkerRefs,
   resolveSecretMarkers,
   transformSecretWrite,
   type UnresolvedSecret,
@@ -74,6 +75,12 @@ export interface SecretAwareSettingsHandle {
   readonly raw: Pick<SettingsView, 'readAddonStore' | 'readDeviceStore'>
   /** `settings.writeAddonStore`, also saying whether anything changed. */
   writeAddonStore(patch: Record<string, unknown>): Promise<SecretAwareWriteOutcome>
+  /**
+   * Remove top-level keys whose stored value no longer holds a keychain marker — a secret
+   * already cleared (`SECRET_CLEAR`) leaves `null` behind, and a patch cannot remove it. A key
+   * that still holds a marker is left alone, so this can never drop a credential or orphan a ref.
+   */
+  removeClearedKeys(keys: readonly string[]): Promise<void>
 }
 
 /** The blob as stored now; a failed read REFUSES the write instead of guessing. */
@@ -297,6 +304,16 @@ function createHandle(
       },
     },
     writeAddonStore: writeAddon,
+    removeClearedKeys: (keys) =>
+      serialize('addon', async () => {
+        const stored = await readStoredAddonBlob(raw)
+        index.seen('addon', stored)
+        const removable = keys.filter((key) => collectSecretMarkerRefs(stored[key]).length === 0)
+        if (removable.length === 0) return
+        const patch = Object.fromEntries(removable.map((key) => [key, undefined]))
+        await raw.writeAddonStore(patch)
+        index.wrote('addon', patch)
+      }),
   }
 }
 

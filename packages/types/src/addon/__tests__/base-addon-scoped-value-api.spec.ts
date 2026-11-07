@@ -196,6 +196,20 @@ describe('secrets', () => {
     expect(token?.value).toMatchObject({ set: true })
   })
 
+  it('unset of a secret releases its keychain ref and removes the row; a plain unset is unchanged', async () => {
+    const world = newWorld()
+    const addon = await boot(world)
+    await addon.cluster().patch({ token: 'hunter2', host: 'cam.lan' })
+    expect(world.kc.size).toBe(1)
+    await addon.cluster().unset(['token'])
+    expect(world.kc.size).toBe(0)
+    expect(world.store['token']).toBeUndefined()
+    expect((await addon.cluster().get()).token).toBe('')
+    expect(world.store['host']).toBe('cam.lan')
+    await addon.cluster().unset(['host'])
+    expect(world.store['host']).toBeUndefined()
+  })
+
   it('readScopedValues never carries the secret value', async () => {
     const addon = await boot(newWorld())
     await addon.cluster().patch({ token: 'hunter2', host: 'cam.lan' })
@@ -275,5 +289,59 @@ describe('nodeState', () => {
     expect(await addon.lastSeen('agent-2').get()).toEqual({ n: 0 })
     await addon.lastSeen().set({ n: 1 })
     expect(world.store['last@hub']).toEqual({ n: 1 })
+  })
+})
+
+// ── One key, two capabilities ───────────────────────────────────────────
+
+const CAP_A = 'cap-a'
+const CAP_B = 'cap-b'
+const XSchema: ConfigUISchema = {
+  sections: [
+    { id: 'x', title: 'X', fields: [{ type: 'text', key: 'x', label: 'X', default: 'dx' }] },
+  ],
+}
+const XZ = z.object({ x: z.string().default('dx') })
+
+class TwoCapAddon extends BaseAddon<{ host: string }> {
+  constructor() {
+    super({ host: '' })
+  }
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return [CAP_A, CAP_B]
+  }
+  protected override async clusterSettingsSchema(cap: string) {
+    return cap === CAP_A ? XSchema : null
+  }
+  protected override async nodeSettingsSchema(cap: string) {
+    return cap === CAP_B ? XSchema : null
+  }
+  protected async onInitialize() {
+    return []
+  }
+  a() {
+    return this.clusterSettings(CAP_A, XZ)
+  }
+  b(nodeId?: string) {
+    return this.nodeSettings(CAP_B, XZ, nodeId)
+  }
+}
+
+describe('a key that is cluster in one cap and per node in another', () => {
+  it('each cap writes and reads its own row', async () => {
+    const world = newWorld()
+    const addon = new TwoCapAddon()
+    const ctx = worldContext(world, 'two')
+    await addon.initialize({ ...ctx, kernel: { ...ctx.kernel, localNodeId: 'hub' } })
+    await addon.a().patch({ x: 'cluster-x' })
+    await addon.b('agent-1').patch({ x: 'node-x' })
+    expect(world.store['x']).toBe('cluster-x')
+    expect(world.store['x@agent-1']).toBe('node-x')
+    expect('x@hub' in world.store).toBe(false)
+    expect(await addon.a().get()).toEqual({ x: 'cluster-x' })
+    expect(await addon.b('agent-1').get()).toEqual({ x: 'node-x' })
+    await addon.a().unset(['x'])
+    expect(world.store['x']).toBeUndefined()
+    expect(world.store['x@agent-1']).toBe('node-x')
   })
 })

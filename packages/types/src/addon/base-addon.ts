@@ -50,7 +50,7 @@ import {
   type ScopedSettings,
   type ScopedSettingsScope,
 } from './scoped-settings.js'
-import { createScopedSettings } from './scoped-settings-handle.js'
+import { assertDeclaredKeys, createScopedSettings } from './scoped-settings-handle.js'
 import { createSecretAwareContext, type SecretAwareSettingsHandle } from './secret-aware-context.js'
 import { mergeSecretStatePaths, type SecretTree, secretTreeFromSchema } from './secret-paths.js'
 import {
@@ -874,7 +874,6 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
   ): ScopedSettings<T> {
     return createScopedSettings<T>({
       schema,
-      declaredKeys: async () => this.scopedKeys(await this.requireScopedSchema(scope, cap)),
       read: async () => {
         const declared = await this.requireScopedSchema(scope, cap)
         const stored = this.narrowToScope(await this.resolveGlobalStore(nodeId, cap), declared)
@@ -886,6 +885,7 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
         }
       },
       write: (patch) => this.writeScoped(scope, cap, patch, nodeId),
+      unset: (keys) => this.unsetScoped(scope, cap, keys, nodeId),
     })
   }
 
@@ -896,16 +896,48 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     patch: Record<string, unknown>,
     nodeId?: string,
   ): Promise<void> {
-    const declared = this.scopedKeys(await this.requireScopedSchema(scope, cap))
-    const undeclared = Object.keys(patch).filter((key) => !declared.has(key))
-    if (undeclared.length > 0) {
-      throw new Error(
-        `scoped settings: [${undeclared.join(', ')}] not declared for this scope ` +
-          `(declared: [${[...declared].join(', ')}])`,
-      )
-    }
-    const changed = await this.applyGlobalPatch(patch, scope === 'node' ? nodeId : undefined)
+    assertDeclaredKeys(
+      Object.keys(patch),
+      this.scopedKeys(await this.requireScopedSchema(scope, cap)),
+    )
+    const changed = await this.applyGlobalPatch(patch, scope === 'node' ? nodeId : undefined, cap)
     if (changed) await this.onScopedSettingsChanged(scope, cap, Object.keys(patch))
+  }
+
+  /**
+   * Remove declared keys of one scope. A secret goes through {@link clearSecrets} — its keychain
+   * value is released exactly as there — and the emptied row is then removed; every other key is
+   * removed by an `undefined` patch (which a secret transform would read as "keep").
+   */
+  private async unsetScoped(
+    scope: ScopedSettingsScope,
+    cap: string,
+    keys: readonly string[],
+    nodeId?: string,
+  ): Promise<void> {
+    assertDeclaredKeys(keys, this.scopedKeys(await this.requireScopedSchema(scope, cap)))
+    const target = scope === 'node' ? nodeId : undefined
+    const tree = this.addonSecretTree()
+    const secretKeys = keys.filter((key) => tree.has(key))
+    const plainKeys = keys.filter((key) => !tree.has(key))
+    let changed = false
+    if (plainKeys.length > 0) {
+      const patch = Object.fromEntries(plainKeys.map((key) => [key, undefined]))
+      changed = (await this.applyGlobalPatch(patch, target, cap)) || changed
+    }
+    if (secretKeys.length > 0) {
+      await this.clearSecretKeys(secretKeys, target, cap)
+      const node = normalizeNodeId(target ?? this._ctx?.kernel?.localNodeId)
+      const rows = secretKeys.map((key) => (scope === 'node' ? nodeScopedKey(key, node) : key))
+      if (this._secretSettings !== null) await this._secretSettings.removeClearedKeys(rows)
+      else {
+        await this._ctx?.settings?.writeAddonStore(
+          Object.fromEntries(rows.map((row) => [row, undefined])),
+        )
+      }
+      changed = true
+    }
+    if (changed) await this.onScopedSettingsChanged(scope, cap, [...keys])
   }
 
   /**
@@ -1144,6 +1176,14 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     keys: ReadonlyArray<keyof TConfig & string>,
     nodeId?: string,
   ): Promise<void> {
+    await this.clearSecretKeys(keys, nodeId)
+  }
+
+  private async clearSecretKeys(
+    keys: readonly string[],
+    nodeId?: string,
+    cap?: string,
+  ): Promise<void> {
     const tree = this.addonSecretTree()
     const keychain = this._ctx?.secrets !== undefined
     // A key whose stored value is a marker is keychain-stored even when no
@@ -1163,16 +1203,19 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
       const keychainStored = tree.has(key) || collectSecretMarkerRefs(stored[key]).length > 0
       patch[key] = keychain && keychainStored ? SECRET_CLEAR : ''
     }
-    await this.applyGlobalPatch(patch, nodeId)
+    await this.applyGlobalPatch(patch, nodeId, cap)
   }
 
   /** Resolves `true` when the write changed stored values. */
   private async applyGlobalPatch(
     barePatch: Record<string, unknown>,
     nodeId?: string,
+    cap?: string,
   ): Promise<boolean> {
-    await this.loadScopedSchemas()
-    const keys = this.perNodeKeys()
+    await this.loadScopedSchemas(cap)
+    // `cap` set: only THAT capability's node keys are per node — a key another capability of the
+    // addon keeps per node must not capture a write of this one.
+    const keys = this.perNodeKeys(cap)
     const localNode = normalizeNodeId(this._ctx?.kernel?.localNodeId)
     const target = normalizeNodeId(nodeId ?? this._ctx?.kernel?.localNodeId)
     const scoped = keys.size > 0 ? scopePatch(barePatch, keys, target) : barePatch

@@ -46,4 +46,49 @@ describe('scoped settings over the addon-call plane', () => {
       dispatch({ addonId: 'a', target: 'settings', method: 'readScopedValues', args: {} }),
     ).rejects.toThrow(/needs scope and cap/)
   })
+
+  it('an addon without the scoped methods answers null to the reads and refuses the write', async () => {
+    const dispatch = dispatchFor({})
+    const args = { scope: 'cluster', cap: 'c' }
+    expect(
+      await dispatch({ addonId: 'a', target: 'settings', method: 'getScopedSettings', args }),
+    ).toBeNull()
+    expect(
+      await dispatch({ addonId: 'a', target: 'settings', method: 'readScopedValues', args }),
+    ).toBeNull()
+    await expect(
+      dispatch({
+        addonId: 'a',
+        target: 'settings',
+        method: 'updateScopedSettings',
+        args: { ...args, patch: {} },
+      }),
+    ).rejects.toThrow(/does not implement updateScopedSettings/)
+  })
+
+  it('a null answer of the addon stays null', async () => {
+    const dispatch = dispatchFor({
+      getScopedSettings: async () => null,
+      readScopedValues: async () => null,
+    })
+    const args = { scope: 'device-defaults', cap: 'c' }
+    expect(
+      await dispatch({ addonId: 'a', target: 'settings', method: 'getScopedSettings', args }),
+    ).toBeNull()
+    expect(
+      await dispatch({ addonId: 'a', target: 'settings', method: 'readScopedValues', args }),
+    ).toBeNull()
+  })
+
+  it('the get and read calls refuse a missing scope as the write does', async () => {
+    const dispatch = dispatchFor({ getScopedSettings: async () => null })
+    await expect(
+      dispatch({
+        addonId: 'a',
+        target: 'settings',
+        method: 'getScopedSettings',
+        args: { cap: 'c' },
+      }),
+    ).rejects.toThrow(/needs scope and cap/)
+  })
 })

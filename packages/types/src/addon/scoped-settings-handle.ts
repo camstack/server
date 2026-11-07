@@ -6,17 +6,14 @@ export interface ScopedSettingsDeps<T> {
   readonly schema: ZodType<T>
   /** Stored values narrowed to the declared keys, secrets resolved, schema defaults underneath. */
   readonly read: () => Promise<Record<string, unknown>>
-  /** The keys the capability declared for this scope. */
-  readonly declaredKeys: () => Promise<ReadonlySet<string>>
-  /** Write `patch` (a value of `undefined` removes the key). */
+  /** Merge `patch`; the owner refuses keys the capability did not declare. */
   readonly write: (patch: Record<string, unknown>) => Promise<void>
+  /** Remove stored keys (a secret's keychain value is released); same refusal. */
+  readonly unset: (keys: readonly string[]) => Promise<void>
 }
 
-async function refuseUndeclared(
-  keys: readonly string[],
-  deps: Pick<ScopedSettingsDeps<unknown>, 'declaredKeys'>,
-): Promise<void> {
-  const declared = await deps.declaredKeys()
+/** The one refusal of a key a scope did not declare. */
+export function assertDeclaredKeys(keys: readonly string[], declared: ReadonlySet<string>): void {
   const undeclared = keys.filter((key) => !declared.has(key))
   if (undeclared.length > 0) {
     throw new Error(
@@ -26,23 +23,13 @@ async function refuseUndeclared(
   }
 }
 
-/** Build the handle over an addon's scoped read and write. */
+/** Build the handle over an addon's scoped read, write and unset. */
 export function createScopedSettings<T>(deps: ScopedSettingsDeps<T>): ScopedSettings<T> {
   return {
     async get() {
       return deps.schema.parse(await deps.read())
     },
-    async patch(patch) {
-      const entries = Object.entries(patch)
-      await refuseUndeclared(
-        entries.map(([key]) => key),
-        deps,
-      )
-      await deps.write(Object.fromEntries(entries))
-    },
-    async unset(keys) {
-      await refuseUndeclared(keys, deps)
-      await deps.write(Object.fromEntries(keys.map((key) => [key, undefined])))
-    },
+    patch: (patch) => deps.write(Object.fromEntries(Object.entries(patch))),
+    unset: (keys) => deps.unset(keys),
   }
 }
