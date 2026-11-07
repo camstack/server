@@ -45,6 +45,7 @@ export type {
   DeviceSettingsLayers,
   ResolvedSetting,
   ResolvedSettings,
+  ScopedSettings,
   ScopedSettingsScope,
   SettingSource,
 } from './addon/scoped-settings.js'

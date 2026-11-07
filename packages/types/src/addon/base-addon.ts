@@ -14,7 +14,7 @@ import type {
   ConfigUISchema,
   ConfigUISchemaWithValues,
 } from '../interfaces/config-ui.js'
-import { hydrateSchema } from '../interfaces/config-ui.js'
+import { collectHydratedFieldValues, hydrateSchema } from '../interfaces/config-ui.js'
 import { emitReadiness } from '../interfaces/event-bus.js'
 import { SECRET_CLEAR } from '../keychain/secret-marker.js'
 import {
@@ -38,8 +38,19 @@ import type { DefinedRecordKind } from '../records/record-kind.js'
 import { createDurableState, type DurableState } from './durable-state.js'
 import type { IntegrationInstanceRef } from './integration-instance-ref.js'
 import { AddonMigrationsBlockedError } from './migrations-blocked-error.js'
-import { normalizeNodeId, projectStore, readNodeValue, scopePatch } from './per-node-store.js'
-import { SCOPED_SETTINGS_SCOPES, type ScopedSettingsScope } from './scoped-settings.js'
+import {
+  nodeScopedKey,
+  normalizeNodeId,
+  projectStore,
+  readNodeValue,
+  scopePatch,
+} from './per-node-store.js'
+import {
+  SCOPED_SETTINGS_SCOPES,
+  type ScopedSettings,
+  type ScopedSettingsScope,
+} from './scoped-settings.js'
+import { createScopedSettings } from './scoped-settings-handle.js'
 import { createSecretAwareContext, type SecretAwareSettingsHandle } from './secret-aware-context.js'
 import { mergeSecretStatePaths, type SecretTree, secretTreeFromSchema } from './secret-paths.js'
 import {
@@ -751,6 +762,202 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     }
   }
 
+  // ── D986 scoped value API ─────────────────────────────────────────────
+
+  /**
+   * Hook: values layered over the stored ones when the FORM of one scope is served
+   * ({@link getScopedSettings}) — a preview that derives dependent options without writing.
+   * Never applied to {@link ScopedSettings.get} or to a write. `null` ⇒ no overlay.
+   */
+  protected async scopedSettingsOverlay(
+    _scope: ScopedSettingsScope,
+    _cap: string,
+    _nodeId?: string,
+  ): Promise<Record<string, unknown> | null> {
+    return null
+  }
+
+  /**
+   * Hook: a write of one scope changed stored values (not called when the store reports no change,
+   * e.g. the write-back of a stored secret). `keys` are the bare field keys of the write, node keys included.
+   */
+  protected async onScopedSettingsChanged(
+    _scope: ScopedSettingsScope,
+    _cap: string,
+    _keys: readonly string[],
+  ): Promise<void> {}
+
+  /** Typed handle over the CLUSTER settings `cap` declares (`clusterSettingsSchema`). */
+  protected clusterSettings<T>(cap: string, schema: ZodType<T>): ScopedSettings<T> {
+    return this.scopedHandle('cluster', cap, schema)
+  }
+
+  /** Typed handle over the fleet defaults of the per-device settings `cap` declares. */
+  protected deviceDefaults<T>(cap: string, schema: ZodType<T>): ScopedSettings<T> {
+    return this.scopedHandle('device-defaults', cap, schema)
+  }
+
+  /**
+   * Typed handle over the settings `cap` owns PER NODE. `nodeId` omitted ⇒ the local node. A node
+   * with no row yields the schema defaults — never a bare-key fallback.
+   */
+  protected nodeSettings<T>(cap: string, schema: ZodType<T>, nodeId?: string): ScopedSettings<T> {
+    return this.scopedHandle('node', cap, schema, nodeId)
+  }
+
+  /**
+   * {@link state} for a value that is kept per node: stored under `<key>@<nodeId>`, and the
+   * settings store carries `nodeId` in the row data (D986 §1), so a forgotten node's rows go in one
+   * central delete. `nodeId` omitted ⇒ the local node.
+   */
+  protected nodeState<T>(
+    key: string,
+    schema: ZodType<T>,
+    fallback: T,
+    nodeId?: string,
+  ): DurableState<T> {
+    this._declaredStateKeys.add(key)
+    return createDurableState<T>({
+      key: nodeScopedKey(key, nodeId ?? this._ctx?.kernel?.localNodeId ?? ''),
+      schema,
+      fallback,
+      read: async () => this.resolveStoredSecrets(await this.readAddonStoreWithRetry()),
+      write: async (patch) => {
+        await this._ctx?.settings?.writeAddonStore(patch)
+      },
+      onParseError: (k, e) =>
+        this._ctx?.logger?.warn?.(
+          `durable-state: stored "${k}" failed validation — using fallback`,
+          { meta: { addonId: this._ctx?.id, key: k, error: String(e) } },
+        ),
+    })
+  }
+
+  /** The loaded schema `cap` declares for `scope`, or `null`. */
+  private async declaredScopedSchema(
+    scope: ScopedSettingsScope,
+    cap: string,
+  ): Promise<ConfigUISchema | null> {
+    await this.loadScopedSchemas(cap)
+    return this.loadedScopedSchemas(cap).find((entry) => entry.scope === scope)?.schema ?? null
+  }
+
+  private async requireScopedSchema(
+    scope: ScopedSettingsScope,
+    cap: string,
+  ): Promise<ConfigUISchema> {
+    const schema = await this.declaredScopedSchema(scope, cap)
+    if (schema === null) {
+      throw new Error(`${this.constructor.name}: cap "${cap}" declares no ${scope} settings`)
+    }
+    return schema
+  }
+
+  private scopedKeys(schema: ConfigUISchema): ReadonlySet<string> {
+    return new Set(schema.sections.flatMap((section) => collectValueFieldKeys(section.fields)))
+  }
+
+  /** `store` narrowed to the keys `schema` declares. */
+  private narrowToScope(
+    store: Readonly<Record<string, unknown>>,
+    schema: ConfigUISchema,
+  ): Record<string, unknown> {
+    const keys = this.scopedKeys(schema)
+    return Object.fromEntries(Object.entries(store).filter(([key]) => keys.has(key)))
+  }
+
+  private scopedHandle<T>(
+    scope: ScopedSettingsScope,
+    cap: string,
+    schema: ZodType<T>,
+    nodeId?: string,
+  ): ScopedSettings<T> {
+    return createScopedSettings<T>({
+      schema,
+      declaredKeys: async () => this.scopedKeys(await this.requireScopedSchema(scope, cap)),
+      read: async () => {
+        const declared = await this.requireScopedSchema(scope, cap)
+        const stored = this.narrowToScope(await this.resolveGlobalStore(nodeId, cap), declared)
+        // Declared defaults sit under the stored values; the Zod schema fills what neither has.
+        const effective = collectHydratedFieldValues(hydrateSchema(declared, stored))
+        return {
+          ...Object.fromEntries([...effective].filter(([, value]) => value !== undefined)),
+          ...stored,
+        }
+      },
+      write: (patch) => this.writeScoped(scope, cap, patch, nodeId),
+    })
+  }
+
+  /** The one write path of the scoped API: declared keys only, then the global patch. */
+  private async writeScoped(
+    scope: ScopedSettingsScope,
+    cap: string,
+    patch: Record<string, unknown>,
+    nodeId?: string,
+  ): Promise<void> {
+    const declared = this.scopedKeys(await this.requireScopedSchema(scope, cap))
+    const undeclared = Object.keys(patch).filter((key) => !declared.has(key))
+    if (undeclared.length > 0) {
+      throw new Error(
+        `scoped settings: [${undeclared.join(', ')}] not declared for this scope ` +
+          `(declared: [${[...declared].join(', ')}])`,
+      )
+    }
+    const changed = await this.applyGlobalPatch(patch, scope === 'node' ? nodeId : undefined)
+    if (changed) await this.onScopedSettingsChanged(scope, cap, Object.keys(patch))
+  }
+
+  /**
+   * The hydrated form of one scope of one capability's settings (any
+   * {@link scopedSettingsOverlay} applied), or `null` when the capability declares nothing there.
+   */
+  async getScopedSettings(
+    scope: ScopedSettingsScope,
+    cap: string,
+    nodeId?: string,
+  ): Promise<ConfigUISchemaWithValues | null> {
+    const schema = await this.declaredScopedSchema(scope, cap)
+    if (schema === null) return null
+    const stored = this.narrowToScope(await this.readRawProjectedStore(nodeId, cap), schema)
+    const overlay = await this.scopedSettingsOverlay(scope, cap, nodeId)
+    const values = overlay ? await this.overlayKeepingMarkers(stored, overlay) : stored
+    return hydrateSchema(schema, values, { inlineSecretsAsViews: true })
+  }
+
+  /** The OPERATOR's write of declared keys of one scope (D787 secret semantics). */
+  async updateScopedSettings(
+    scope: ScopedSettingsScope,
+    cap: string,
+    patch: Record<string, unknown>,
+    nodeId?: string,
+  ): Promise<void> {
+    this._operatorWriteDepth++
+    try {
+      await this.writeScoped(scope, cap, patch, nodeId)
+    } finally {
+      this._operatorWriteDepth--
+    }
+  }
+
+  /**
+   * The effective values (`stored ?? default`) of one scope, a secret as its `set` view — never
+   * its value. `null` when the capability declares nothing for the scope.
+   */
+  async readScopedValues(
+    scope: ScopedSettingsScope,
+    cap: string,
+    nodeId?: string,
+  ): Promise<Record<string, unknown> | null> {
+    const schema = await this.declaredScopedSchema(scope, cap)
+    if (schema === null) return null
+    const stored = this.narrowToScope(await this.readRawProjectedStore(nodeId, cap), schema)
+    const form = hydrateSchema(schema, stored, { inlineSecretsAsViews: true })
+    return Object.fromEntries(
+      [...collectHydratedFieldValues(form)].filter(([, value]) => value !== undefined),
+    )
+  }
+
   /**
    * What the create wizard and the integration edit page render for one instance: the addon's
    * per-instance schema when it declares one, else its global schema (what they always showed).
@@ -959,10 +1166,11 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     await this.applyGlobalPatch(patch, nodeId)
   }
 
+  /** Resolves `true` when the write changed stored values. */
   private async applyGlobalPatch(
     barePatch: Record<string, unknown>,
     nodeId?: string,
-  ): Promise<void> {
+  ): Promise<boolean> {
     await this.loadScopedSchemas()
     const keys = this.perNodeKeys()
     const localNode = normalizeNodeId(this._ctx?.kernel?.localNodeId)
@@ -975,13 +1183,13 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
       // AddonUpdated, no restart. That loop is what rotated Reolink's SMTP
       // password (D798).
       const { changed } = await handle.writeAddonStore(scoped)
-      if (!changed) return
+      if (!changed) return false
     } else {
       await this._ctx?.settings?.writeAddonStore(scoped)
     }
     // Sibling-node write: persist only — the target node picks the value up
     // through its own projected reads; no local apply on THIS node.
-    if (target !== localNode) return
+    if (target !== localNode) return true
     await this.resolveConfig()
     await this.onConfigChanged()
     this.emitLifecycle(EventCategory.AddonUpdated, { level: 'global' })
@@ -990,6 +1198,7 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
       ...(legacy === null ? [] : [legacy]),
       ...this.loadedScopedSchemas().map((entry) => entry.schema),
     ])
+    return true
   }
 
   /**

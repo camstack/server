@@ -1076,6 +1076,30 @@ export interface ICamstackAddon {
   getScopedSettingsSchema?(scope: ScopedSettingsScope, cap: string): Promise<ConfigUISchema | null>
 
   /**
+   * D986 scoped value API: the hydrated form of ONE scope of one capability's settings, any
+   * `scopedSettingsOverlay` applied; `null` when the capability declares nothing for the scope.
+   * `nodeId` matters for the `node` scope only (absent: the local node).
+   */
+  getScopedSettings?(
+    scope: ScopedSettingsScope,
+    cap: string,
+    nodeId?: string,
+  ): Promise<ConfigUISchemaWithValues | null>
+  /** The OPERATOR's write of declared keys of one scope (D787 secret semantics). */
+  updateScopedSettings?(
+    scope: ScopedSettingsScope,
+    cap: string,
+    patch: Record<string, unknown>,
+    nodeId?: string,
+  ): Promise<void>
+  /** The effective values of one scope, secrets redacted to their `set` view; `null` when undeclared. */
+  readScopedValues?(
+    scope: ScopedSettingsScope,
+    cap: string,
+    nodeId?: string,
+  ): Promise<Record<string, unknown> | null>
+
+  /**
    * Stale-data audit: the global-settings keys this addon still declares,
    * answered in its own process. See `BaseAddon.getDeclaredSettingsKeys`.
    */

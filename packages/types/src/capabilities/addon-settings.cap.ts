@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { IntegrationInstanceRefSchema } from '../addon/integration-instance-ref.js'
+import { SCOPED_SETTINGS_SCOPES } from '../addon/scoped-settings.js'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 
 // ── Zod schemas for ConfigUISchemaWithValues ─────────────────────────
@@ -41,6 +42,9 @@ const SettingsSchemaWithValuesSchema = z.object({
 
 /** Patch object — keys are field names, values are the new field values. */
 const SettingsPatchSchema = z.record(z.string(), z.unknown())
+
+/** The scope of a scoped-settings call (D986): where the capability declared the values. */
+const ScopedSettingsScopeSchema = z.enum(SCOPED_SETTINGS_SCOPES)
 
 /** Standard success response for update operations. */
 const SettingsUpdateResultSchema = z.object({
@@ -101,6 +105,45 @@ export const addonSettingsCapability = {
       z.object({ addonId: z.string(), nodeId: z.string().optional(), patch: SettingsPatchSchema }),
       SettingsUpdateResultSchema,
       { kind: 'mutation', auth: 'admin' },
+    ),
+
+    // ── Scoped settings (D986 §7) ─────────────────────────────────────
+    //
+    // One scope of one capability's settings, addressed by `(addonId, cap, scope)`; `nodeId`
+    // matters for the `node` scope only (absent: the addon's own node). They replace
+    // `getGlobalSettings` / `updateGlobalSettings`, which stay as shims until every caller moved.
+    //
+    // `getScopedSettings` — the hydrated form, the addon's overlay applied; `null` when the
+    // capability declares nothing for the scope. `readScopedValues` — the effective values for
+    // another addon or tool, a secret as its `set` view, never its value.
+    getScopedSettings: method(
+      z.object({
+        addonId: z.string(),
+        cap: z.string(),
+        scope: ScopedSettingsScopeSchema,
+        nodeId: z.string().optional(),
+      }),
+      SettingsSchemaWithValuesSchema.nullable(),
+    ),
+    updateScopedSettings: method(
+      z.object({
+        addonId: z.string(),
+        cap: z.string(),
+        scope: ScopedSettingsScopeSchema,
+        nodeId: z.string().optional(),
+        patch: SettingsPatchSchema,
+      }),
+      SettingsUpdateResultSchema,
+      { kind: 'mutation', auth: 'admin' },
+    ),
+    readScopedValues: method(
+      z.object({
+        addonId: z.string(),
+        cap: z.string(),
+        scope: ScopedSettingsScopeSchema,
+        nodeId: z.string().optional(),
+      }),
+      z.record(z.string(), z.unknown()).nullable(),
     ),
 
     // ── Integration-level settings ────────────────────────────────────

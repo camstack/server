@@ -14,6 +14,7 @@ import type {
   ConfigUISchema,
   ConfigUISchemaWithValues,
   IntegrationInstanceRef,
+  ScopedSettingsScope,
 } from '@camstack/types'
 import type { IAddonSettingsProvider, IIntegrationInstancesProvider } from '@camstack/types'
 import type { AddonSettingsMethod } from '@camstack/server/system'
@@ -32,6 +33,19 @@ interface AddonIdInput {
   readonly overlay?: Record<string, unknown>
   readonly cap?: string
 }
+
+interface ScopedGetInput {
+  readonly addonId: string
+  readonly cap: string
+  readonly scope: ScopedSettingsScope
+  readonly nodeId?: string
+}
+
+interface ScopedPatchInput extends ScopedGetInput {
+  readonly patch: Record<string, unknown>
+}
+
+const ScopedValuesAnswer = z.record(z.string(), z.unknown())
 
 interface IntegrationFormInput {
   readonly addonId: string
@@ -219,6 +233,75 @@ function createAddonSettingsProvider(deps: AddonSettingsProviderDeps): IAddonSet
         { patch: input.patch, ...(input.nodeId ? { nodeId: input.nodeId } : {}) },
         input.nodeId,
       )
+    },
+
+    async getScopedSettings(input: ScopedGetInput) {
+      if (gateway.isInProcess(input.addonId, input.nodeId)) {
+        const addon = getAddon(input.addonId)
+        if (!addon || typeof addon.getScopedSettings !== 'function') return null
+        const result = await addon.getScopedSettings(input.scope, input.cap, input.nodeId)
+        return result ? reshapeForOutput(result) : null
+      }
+      return forkedGet(
+        input.addonId,
+        'getScopedSettings',
+        {
+          scope: input.scope,
+          cap: input.cap,
+          ...(input.nodeId ? { nodeId: input.nodeId } : {}),
+        },
+        input.nodeId,
+      )
+    },
+
+    async updateScopedSettings(input: ScopedPatchInput) {
+      if (gateway.isInProcess(input.addonId, input.nodeId)) {
+        const addon = getAddon(input.addonId)
+        if (!addon || typeof addon.updateScopedSettings !== 'function') {
+          throw new Error(`Addon "${input.addonId}" does not implement updateScopedSettings`)
+        }
+        await addon.updateScopedSettings(input.scope, input.cap, input.patch, input.nodeId)
+        return { success: true as const }
+      }
+      return forkedUpdate(
+        input.addonId,
+        'updateScopedSettings',
+        {
+          scope: input.scope,
+          cap: input.cap,
+          patch: input.patch,
+          ...(input.nodeId ? { nodeId: input.nodeId } : {}),
+        },
+        input.nodeId,
+      )
+    },
+
+    async readScopedValues(input: ScopedGetInput) {
+      try {
+        if (gateway.isInProcess(input.addonId, input.nodeId)) {
+          const addon = getAddon(input.addonId)
+          if (!addon || typeof addon.readScopedValues !== 'function') return null
+          return (await addon.readScopedValues(input.scope, input.cap, input.nodeId)) ?? null
+        }
+        const raw = await gateway.callForked(
+          input.addonId,
+          {
+            target: 'settings',
+            method: 'readScopedValues',
+            args: {
+              scope: input.scope,
+              cap: input.cap,
+              ...(input.nodeId ? { nodeId: input.nodeId } : {}),
+            },
+          },
+          input.nodeId,
+        )
+        const parsed = ScopedValuesAnswer.safeParse(raw)
+        return parsed.success ? parsed.data : null
+      } catch (err) {
+        if (isServiceNotFoundError(err)) return null
+        throw err
+      }
     },
 
     async getIntegrationSettings(input: AddonIdInput) {

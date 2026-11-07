@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The addon-settings capability answers scoped settings reads and writes for in-process and forked addons.
+
 ## [1.2.790] - 2026-11-07
 
 ### Changed

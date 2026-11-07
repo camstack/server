@@ -611,6 +611,30 @@ export function createCapRouter_addonSettings(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.updateGlobalSettings(input as any)
       }),
+    getScopedSettings: protectedProcedure
+      .input(addonSettingsCapability.methods.getScopedSettings.input.loose())
+      .output(addonSettingsCapability.methods.getScopedSettings.output)
+      .query(async ({ input, ctx }) => {
+        const p = requireCapProvider('addon-settings', () => getProvider(ctx))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.getScopedSettings(input as any)
+      }),
+    updateScopedSettings: adminProcedure
+      .input(addonSettingsCapability.methods.updateScopedSettings.input.loose())
+      .output(addonSettingsCapability.methods.updateScopedSettings.output)
+      .mutation(async ({ input, ctx }) => {
+        const p = requireCapProvider('addon-settings', () => getProvider(ctx))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.updateScopedSettings(input as any)
+      }),
+    readScopedValues: protectedProcedure
+      .input(addonSettingsCapability.methods.readScopedValues.input.loose())
+      .output(addonSettingsCapability.methods.readScopedValues.output)
+      .query(async ({ input, ctx }) => {
+        const p = requireCapProvider('addon-settings', () => getProvider(ctx))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.readScopedValues(input as any)
+      }),
     getIntegrationSettings: protectedProcedure
       .input(addonSettingsCapability.methods.getIntegrationSettings.input.loose())
       .output(addonSettingsCapability.methods.getIntegrationSettings.output)

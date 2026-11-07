@@ -88,3 +88,18 @@ export function resolvedValues(resolved: ResolvedSettings): Record<string, unkno
   for (const [key, setting] of Object.entries(resolved)) out[key] = setting.value
   return out
 }
+
+/**
+ * The typed handle an addon reads and writes ONE scope of one capability through
+ * (`clusterSettings`, `deviceDefaults`, `nodeSettings`). `T` is the value shape the addon
+ * parses; the keys of a read, a patch and an unset are the ones the capability DECLARED for that
+ * scope — anything else is refused, never stored.
+ */
+export interface ScopedSettings<T> {
+  /** The stored values over the schema defaults, secrets resolved, parsed as `T`. */
+  get(): Promise<T>
+  /** Merge `patch` into the stored values (a secret is written as an ADDON write, D787). */
+  patch(patch: Partial<T>): Promise<void>
+  /** Remove stored keys, so the schema default applies again. */
+  unset(keys: readonly (keyof T & string)[]): Promise<void>
+}

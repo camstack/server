@@ -54,6 +54,17 @@ describe('node rows of addon-settings', () => {
     expect(await rowData('detector.threads@agent-2')).toMatchObject({ nodeId: 'agent-2' })
   })
 
+  it('an object value written the way nodeState writes it (`<key>@<node>`) carries nodeId', async () => {
+    const store = createAddonSettingsStore(door, 'hap')
+    await store.merge({ 'pairing@agent-1': { paired: true, n: 3 } })
+    expect(await rowData('hap.pairing@agent-1')).toEqual({
+      addonId: 'hap',
+      key: 'pairing@agent-1',
+      value: { paired: true, n: 3 },
+      nodeId: 'agent-1',
+    })
+  })
+
   it('the backend legacy writer stamps nodeId too', async () => {
     backend.setAllAddon('legacy', { a: 1, 'b@agent-1': 2 })
     expect(await rowData('legacy.b@agent-1')).toMatchObject({ nodeId: 'agent-1', value: 2 })

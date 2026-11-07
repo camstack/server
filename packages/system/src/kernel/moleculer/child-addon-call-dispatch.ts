@@ -4,6 +4,7 @@ import type {
   ICamstackAddon,
   AddonDataPlaneEndpoint,
   IntegrationInstanceRef,
+  ScopedSettingsScope,
 } from '@camstack/types'
 
 /**
@@ -82,6 +83,8 @@ function toSerializableRoute(route: unknown): SerializableRouteDescriptor {
 interface SettingsArgs {
   readonly overlay?: Record<string, unknown>
   readonly cap?: string
+  /** The scope of a scoped-settings call (D986). */
+  readonly scope?: ScopedSettingsScope
   readonly patch?: Record<string, unknown>
   readonly deviceId?: number
   readonly keys?: readonly string[]
@@ -90,6 +93,18 @@ interface SettingsArgs {
   readonly nodeId?: string
   /** Which integration instance a form is for (`getIntegrationFormSchema`). */
   readonly instance?: IntegrationInstanceRef
+}
+
+/** A scoped-settings call names its scope and capability; a call without them is a bug. */
+function requireScopedTarget(
+  addonId: string,
+  method: AddonSettingsMethod,
+  args: SettingsArgs,
+): { readonly scope: ScopedSettingsScope; readonly cap: string } {
+  if (args.scope === undefined || args.cap === undefined) {
+    throw new Error(`child-addon-call: addon "${addonId}" ${method} needs scope and cap`)
+  }
+  return { scope: args.scope, cap: args.cap }
 }
 
 /**
@@ -123,6 +138,28 @@ async function dispatchSettings(
         await addon.updateGlobalSettings(args.patch ?? {}, args.nodeId)
       }
       return { success: true as const }
+    case 'getScopedSettings': {
+      const { scope, cap } = requireScopedTarget(addonId, method, args)
+      return typeof addon.getScopedSettings === 'function'
+        ? ((await addon.getScopedSettings(scope, cap, args.nodeId)) ?? null)
+        : null
+    }
+    case 'updateScopedSettings': {
+      const { scope, cap } = requireScopedTarget(addonId, method, args)
+      if (typeof addon.updateScopedSettings !== 'function') {
+        throw new Error(
+          `child-addon-call: addon "${addonId}" does not implement updateScopedSettings`,
+        )
+      }
+      await addon.updateScopedSettings(scope, cap, args.patch ?? {}, args.nodeId)
+      return { success: true as const }
+    }
+    case 'readScopedValues': {
+      const { scope, cap } = requireScopedTarget(addonId, method, args)
+      return typeof addon.readScopedValues === 'function'
+        ? ((await addon.readScopedValues(scope, cap, args.nodeId)) ?? null)
+        : null
+    }
     case 'getIntegrationSettings':
       // No update twin: the writer is `updateGlobalSettings` (same store, same
       // bare key). See `addon-settings.cap.ts`.
