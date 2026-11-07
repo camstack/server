@@ -117,6 +117,8 @@ export interface ComposedDeviceHandle extends ComposedWriteTarget {
   readonly name: string
   /** Copies a source reading's quantity onto this device (D944). Optional so test doubles stay small. */
   adoptQuantity?(quantity: ReadingQuantity): Promise<void>
+  /** Publishes the features the device's bound caps stand for (`featuresOfBoundCaps`). Optional so test doubles stay small. */
+  syncBoundFeatures?(features: readonly DeviceFeature[]): void
 }
 
 export class ComposedDevice
@@ -124,6 +126,8 @@ export class ComposedDevice
   implements ComposedDeviceHandle
 {
   private sharedFeatures: readonly DeviceFeature[] = []
+  /** Features of caps bound on the device by others (a wrapper): derived from its bindings, never listed here. */
+  private boundFeatures: readonly DeviceFeature[] = []
   private extraCaps: ReadonlySet<string> = new Set()
   /** Whether this device's tank is also a `water` consumable (derived, never bound). */
   private readonly derivesWater: boolean
@@ -131,7 +135,16 @@ export class ComposedDevice
   private composedItems: readonly ConsumableItem[] = []
 
   get features(): readonly DeviceFeature[] {
-    return this.sharedFeatures
+    return [...new Set([...this.sharedFeatures, ...this.boundFeatures])]
+  }
+
+  syncBoundFeatures(features: readonly DeviceFeature[]): void {
+    const same =
+      features.length === this.boundFeatures.length &&
+      features.every((feature) => this.boundFeatures.includes(feature))
+    if (same) return
+    this.boundFeatures = [...features]
+    void this.refreshFeatures()
   }
 
   constructor(ctx: DeviceContext, type: DeviceType, caps: readonly CapabilityDefinition[]) {

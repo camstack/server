@@ -250,6 +250,18 @@ export class ComposerAddon extends BaseAddon<Record<string, never>> {
         }
         await mutate({ deviceId, ...args })
       },
+      boundCapNames: async (deviceId) => {
+        try {
+          const bindings = await api.deviceManager.getBindings.query({ deviceId })
+          return bindings.entries.map((entry) => entry.capName)
+        } catch (err: unknown) {
+          this.ctx.logger.warn('composer: the bindings of a composed device could not be read', {
+            tags: { deviceId },
+            meta: { error: errMsg(err) },
+          })
+          return null
+        }
+      },
       extensionFeatures: async (deviceId) => {
         try {
           const list = await api.remote.listCommands.query({ deviceId })

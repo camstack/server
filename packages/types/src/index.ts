@@ -1257,7 +1257,13 @@ export {
 } from './device/device-state-handle.js'
 // ── Device architecture ──────────────────────────────────────────────
 // DeviceType (enum), DeviceFeature, ChargingStatus, DeviceRole
-export { ChargingStatus, DeviceFeature, DeviceRole, DeviceType } from './device/device-type.js'
+export {
+  ChargingStatus,
+  DeviceFeature,
+  DeviceRole,
+  DeviceType,
+  featuresOfBoundCaps,
+} from './device/device-type.js'
 export {
   APPLIANCE_EXPORT,
   type ApplianceExportDecision,

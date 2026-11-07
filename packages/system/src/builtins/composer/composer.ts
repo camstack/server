@@ -61,6 +61,7 @@ import {
   compositionFeatureEnabled,
   type DeviceDeclaration,
   type DeviceFeature,
+  featuresOfBoundCaps,
   type DeviceHistoryQueryResult,
   type HistoryRetention,
   type ReadingQuantity,
@@ -218,6 +219,13 @@ export interface ComposerDeps {
    * Absent in tests that predate the `extension` command.
    */
   readonly extensionFeatures?: (deviceId: number) => Promise<readonly DeviceFeature[] | null>
+  /**
+   * Every cap bound on a device, whoever serves it (a wrapper included), or null
+   * when it could not be read (the device keeps its features, D49). A composed
+   * device's features are the ones these caps stand for (`featuresOfBoundCaps`).
+   * Absent in tests that predate it.
+   */
+  readonly boundCapNames?: (deviceId: number) => Promise<readonly string[] | null>
 }
 
 interface RuntimeRebuild {
@@ -349,6 +357,27 @@ export class Composer {
       await this.deps.tracker.onBindingsChanged(data.deviceId, data.capName, data.reason),
     )
     await this.chained(() => this.actuators?.onMemberBindings(data.deviceId))
+    await this.syncBoundFeatures(
+      [...this.live.keys()].filter(
+        (blockId) => this.composed.idOf(composedDeviceStableId(blockId)) === data.deviceId,
+      ),
+    )
+  }
+
+  /**
+   * A composed device carries the features its BOUND caps stand for — the same
+   * flags a driver sets on a regular device. A cap bound later by a wrapper
+   * (`timed-run`) reaches it here; a read that fails changes nothing (D49).
+   */
+  private async syncBoundFeatures(blockIds: readonly string[]): Promise<void> {
+    const read = this.deps.boundCapNames
+    if (read === undefined) return
+    for (const blockId of blockIds) {
+      const device = this.composed.get(composedDeviceStableId(blockId))
+      if (device === null || device.syncBoundFeatures === undefined) continue
+      const caps = await read(device.id)
+      if (caps !== null) device.syncBoundFeatures(featuresOfBoundCaps(caps))
+    }
   }
 
   shutdown(): void {
@@ -518,6 +547,7 @@ export class Composer {
     await this.syncSources(rebuilt)
     this.forwards?.sync(forwardBlocksOf(input.blocks))
     await this.syncExtensionFeatures(forwardBlocksOf(input.blocks))
+    await this.syncBoundFeatures(input.blocks.map((block) => block.id))
     await this.actuators?.sync(
       input.blocks.flatMap((block) => {
         const helper = block.composition.helper

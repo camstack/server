@@ -93,7 +93,13 @@ export type {
   IDeviceRuntimeState,
   Snapshot as RuntimeStateSnapshot,
 } from './device-runtime-state.js'
-export { ChargingStatus, DeviceFeature, DeviceRole, DeviceType } from './device-type.js'
+export {
+  ChargingStatus,
+  DeviceFeature,
+  DeviceRole,
+  DeviceType,
+  featuresOfBoundCaps,
+} from './device-type.js'
 export type {
   IBatteryOperated,
   IDoorbellButton,

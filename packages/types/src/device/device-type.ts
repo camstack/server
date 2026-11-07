@@ -151,6 +151,13 @@ export enum DeviceFeature {
    * filters that want "all devices with on-motion behaviour".
    */
   MotionTrigger = 'motion-trigger',
+  /**
+   * Device can be run for a chosen time and then stopped. Mirrors the
+   * `timed-run` wrapper cap — the cap is bound by the core-blocks addon, not by
+   * a driver, so the flag is derived from the device's bindings
+   * (`featuresOfBoundCaps`). Gates the quick-run control in the viewer.
+   */
+  TimedRun = 'timed-run',
 
   // ── HA-targeted actuator sub-features (Phase C1 retroactive) ────────
   // Granular color-mode support — paired with `colorCapability`. A
@@ -287,6 +294,16 @@ export enum DeviceFeature {
   /** Robot mower exposes targeted mowing (all-area / zones / edges /
    *  spots) — gates the Mow action + map selectors. */
   MowerHasTargetedMowing = 'mower-has-targeted-mowing',
+}
+
+/**
+ * The features a device carries because a capability is bound on it: a bound cap
+ * whose name IS a `DeviceFeature` value. One rule for a device whose cap set
+ * is not decided by one driver (a composed device, a wrapper cap) — a feature
+ * is never listed twice, once as a cap and once as a table of names.
+ */
+export function featuresOfBoundCaps(capNames: readonly string[]): DeviceFeature[] {
+  return Object.values(DeviceFeature).filter((feature) => capNames.includes(feature))
 }
 
 export enum ChargingStatus {
