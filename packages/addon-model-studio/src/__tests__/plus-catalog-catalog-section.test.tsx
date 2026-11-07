@@ -25,7 +25,7 @@ function fakeTrpc(tfliteNodes: readonly string[] = ['hub']): AddonPageProps['trp
         },
       },
     },
-    addonSettings: { updateGlobalSettings: { mutate: async () => ({ ok: true }) } },
+    addonSettings: { updateScopedSettings: { mutate: async () => ({ ok: true }) } },
   }
   return surface as unknown as AddonPageProps['trpc']
 }

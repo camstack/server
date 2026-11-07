@@ -58,7 +58,7 @@ function fakeTrpc(
       onEvent: { subscribe: () => ({ unsubscribe: () => {} }) },
     },
     addonSettings: {
-      updateGlobalSettings: {
+      updateScopedSettings: {
         mutate: async (input: unknown) => {
           state.updateCalls.push(input)
           state.configured = true
@@ -113,7 +113,7 @@ describe('PlusCatalogSection — plus catalog key inline in Catalog', () => {
     expect(state.updateCalls).toEqual([])
   })
 
-  it('saves a valid key through addonSettings.updateGlobalSettings (the ONE authority)', async () => {
+  it('saves a valid key through addonSettings.updateScopedSettings (the ONE authority)', async () => {
     const state: FakeTrpcState = { configured: false, updateCalls: [], actionCalls: [] }
     render(
       <PlusCatalogSection
@@ -130,7 +130,12 @@ describe('PlusCatalogSection — plus catalog key inline in Catalog', () => {
 
     await waitFor(() => {
       expect(state.updateCalls).toEqual([
-        { addonId: 'model-studio', patch: { plusCatalogPlusApiKey: VALID_KEY } },
+        {
+          addonId: 'model-studio',
+          cap: 'custom-model-registry',
+          scope: 'cluster',
+          patch: { plusCatalogPlusApiKey: VALID_KEY },
+        },
       ])
     })
     await waitFor(() => {

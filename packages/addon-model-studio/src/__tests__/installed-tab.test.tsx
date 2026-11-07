@@ -221,7 +221,7 @@ function hubTrpc(opts?: {
     },
     addonSettings: {
       readScopedValues: { query: async () => ({}) },
-      updateGlobalSettings: { mutate: async () => ({}) },
+      updateScopedSettings: { mutate: async () => ({}) },
     },
     addons: {
       custom: {

@@ -69,8 +69,13 @@ interface CustomActionCaller {
  * surface back. tRPC proxies are callable at every level — see
  * `hasCallableMember` for why the check walks `typeof 'function'` levels.
  */
-interface AddonSettingsUpdateCaller {
-  mutate(input: { addonId: string; patch: Record<string, unknown> }): Promise<unknown>
+interface ScopedSettingsUpdateCaller {
+  mutate(input: {
+    addonId: string
+    cap: string
+    scope: 'cluster'
+    patch: Record<string, unknown>
+  }): Promise<unknown>
 }
 
 interface ScopedValuesCaller {
@@ -117,7 +122,7 @@ interface PipelineOrchestratorSurface {
 interface StructuralTrpcSurface {
   addons: { custom: CustomActionCaller }
   addonSettings: {
-    updateGlobalSettings: AddonSettingsUpdateCaller
+    updateScopedSettings: ScopedSettingsUpdateCaller
     readScopedValues: ScopedValuesCaller
   }
   pipelineExecutor: {
@@ -136,7 +141,7 @@ interface StructuralTrpcSurface {
  */
 export const MODEL_STUDIO_TRPC_CONTRACT = [
   'addons.custom.mutate',
-  'addonSettings.updateGlobalSettings.mutate',
+  'addonSettings.updateScopedSettings.mutate',
   'addonSettings.readScopedValues.query',
   'pipelineExecutor.getSchema.query',
   'pipelineExecutor.downloadModel.mutate',
@@ -797,15 +802,17 @@ export { plusCatalogPlusRegistryId } from '../model-studio-actions.js'
 /**
  * Save the plus catalog API key INLINE from the Register form — through the SAME
  * authority the addon Settings panel writes (D62: one authority):
- * `addonSettings.updateGlobalSettings` on addonId `model-studio`, key
- * `plusCatalogPlusApiKey`. Write-only: nothing here ever reads the key back.
+ * `addonSettings.updateScopedSettings` on addonId `model-studio`, cluster scope of the
+ * `custom-model-registry` cap, key `plusCatalogPlusApiKey`. Write-only: nothing here ever reads the key back.
  */
 export async function savePlusCatalogApiKey(trpc: Trpc, apiKey: string): Promise<void> {
   await requireTrpcMember(
     trpc,
-    'addonSettings.updateGlobalSettings.mutate',
-  ).addonSettings.updateGlobalSettings.mutate({
+    'addonSettings.updateScopedSettings.mutate',
+  ).addonSettings.updateScopedSettings.mutate({
     addonId: ADDON_ID,
+    cap: 'custom-model-registry',
+    scope: 'cluster',
     patch: { plusCatalogPlusApiKey: apiKey },
   })
 }
@@ -899,9 +906,11 @@ export async function setClusterStepModel(
 ): Promise<void> {
   await requireTrpcMember(
     trpc,
-    'addonSettings.updateGlobalSettings.mutate',
-  ).addonSettings.updateGlobalSettings.mutate({
+    'addonSettings.updateScopedSettings.mutate',
+  ).addonSettings.updateScopedSettings.mutate({
     addonId: 'pipeline-orchestrator',
+    cap: 'pipeline-orchestrator',
+    scope: 'cluster',
     patch,
   })
 }

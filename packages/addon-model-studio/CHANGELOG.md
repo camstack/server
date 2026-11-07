@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The plus catalog API key and the cluster model picks are saved through the scoped settings API
+
 ## [1.1.344] - 2026-11-07
 
 ### Changed
