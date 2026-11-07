@@ -61,7 +61,7 @@ afterEach(cleanup)
 describe('HeaterInlineControl quick run', () => {
   it('runs for the duration the hub reports for THIS device, and says it', () => {
     results.timer = timer({ duration: 45, unit: 'min' })
-    render(<HeaterInlineControl trpc={trpc} deviceId={5} />)
+    render(<HeaterInlineControl trpc={trpc} deviceId={5} features={undefined} />)
     const button = screen.getByRole('button', { name: /45/ })
     fireEvent.click(button)
     expect(runFor).toHaveBeenCalledWith({ duration: 45, unit: 'min' })
@@ -69,7 +69,7 @@ describe('HeaterInlineControl quick run', () => {
 
   it('offers no run button until the hub has said what the run is', () => {
     results.timer = timer(undefined)
-    render(<HeaterInlineControl trpc={trpc} deviceId={5} />)
+    render(<HeaterInlineControl trpc={trpc} deviceId={5} features={undefined} />)
     expect(screen.queryByRole('button')).toBeNull()
   })
 })

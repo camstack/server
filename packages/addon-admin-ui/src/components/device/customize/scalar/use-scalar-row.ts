@@ -12,6 +12,7 @@ import {
   projectScalarAssignment,
   type ScalarRead,
   type ScalarSourcePresence,
+  isRunningOptOut,
   targetFeature,
   scalarTargetCount,
 } from '@camstack/types'
@@ -76,7 +77,10 @@ export function storedScalarFeature(
   cap: string,
   targetId: string,
 ): CompositionFieldsFeature | null {
-  return targetFeature(featureOf(currentComposition(handle.state), cap), cap, targetId)
+  const stored = featureOf(currentComposition(handle.state), cap)
+  // The running opt-out is the toggle's word, not a source link the row shows.
+  if (isRunningOptOut(stored)) return null
+  return targetFeature(stored, cap, targetId)
 }
 
 function sourcePresence(

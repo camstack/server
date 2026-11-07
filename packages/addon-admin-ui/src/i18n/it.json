@@ -2934,6 +2934,13 @@
       "fillNothing": "Nulla su questo dispositivo è adatto.",
       "fillSkip": "Lascia vuoto",
       "fillApply": "Applica"
+    },
+    "followSwitch": {
+      "label": "Segui lo switch del dispositivo",
+      "discardTitle": "Seguire lo switch?",
+      "discardMessage": "La regola di funzionamento che hai scritto per questo dispositivo sarà rimossa e il dispositivo risulterà in funzione finché il suo switch è acceso.",
+      "discardConfirm": "Segui lo switch",
+      "default": "Predefinito: in funzione finché lo switch del dispositivo è acceso"
     }
   },
   "compositionEditor": {

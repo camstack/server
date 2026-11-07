@@ -11,6 +11,9 @@ import { useTranslation } from 'react-i18next'
 import { LiveValueText } from '../assignments/LiveValueText'
 import { FormulaEntryButton } from '../formula/FormulaEntryButton'
 import type { CustomizationHandle } from '../use-customization'
+import { FollowSwitchToggle } from '../scalar/FollowSwitchToggle'
+import { currentComposition } from '../customization-read'
+import { isFollowSwitchRow, readFollowSwitch } from '../scalar/follow-switch'
 import { ScalarOverrideDialog } from '../scalar/ScalarOverrideDialog'
 import { type ScalarRowModel, useScalarRow } from '../scalar/use-scalar-row'
 
@@ -37,6 +40,17 @@ function badgeText(
 
 /** Where the value comes from: the linked device and field, or the authority that owns it. */
 export function ScalarSourceCell(props: ScalarRowProps): ReactNode {
+  const source = <ScalarSource {...props} />
+  if (!isFollowSwitchRow(props.cap, props.target.id)) return source
+  return (
+    <span className="flex flex-col gap-1">
+      {source}
+      <FollowSwitchToggle handle={props.handle} />
+    </span>
+  )
+}
+
+function ScalarSource(props: ScalarRowProps): ReactNode {
   const { t } = useTranslation()
   const row = useScalarRow(props.device, props.handle, props.cap, props.target)
   if (row.recognized && !row.released) {
@@ -67,6 +81,14 @@ export function ScalarSourceCell(props: ScalarRowProps): ReactNode {
       </span>
     )
   }
+  if (
+    isFollowSwitchRow(props.cap, props.target.id) &&
+    readFollowSwitch(currentComposition(props.handle.state)).offered &&
+    row.stored.kind === 'known' &&
+    row.stored.value === null
+  ) {
+    return <span className="text-xs text-foreground">{t('customize.followSwitch.default')}</span>
+  }
   return <Badge>{badgeText(t, row)}</Badge>
 }
 
@@ -79,9 +101,13 @@ export function ScalarActionsCell(props: ScalarActionsProps): ReactNode {
   const { t } = useTranslation()
   const row = useScalarRow(props.device, props.handle, props.cap, props.target)
   const rowKey = `${props.cap}.${props.target.id}`
+  // The running row that follows the switch can still be pointed at another source.
+  const followOffered =
+    isFollowSwitchRow(props.cap, props.target.id) &&
+    readFollowSwitch(currentComposition(props.handle.state)).offered
   return (
     <span className="flex items-center justify-end gap-1">
-      {row.recognized && (
+      {(row.recognized || followOffered) && (
         <IconButton
           variant="ghost"
           size="sm"

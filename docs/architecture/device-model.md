@@ -719,6 +719,17 @@ left out. **Unlocking a lock group is refused unless the call says
 sent or recorded without it, and the device page asks first. Locking needs no
 confirmation. The per-member outcome of every fan-out is on `group-commands`.
 
+### Running from the device's own switch
+
+A composed device of a type that offers "running", with an actuator switch (its own
+`switch`) and no supply relation (`power-source.switchOn`), is running while that switch
+is on. The default is computed at plan time and never stored; an authored running rule
+wins, and the Customize running row has a "Follow the device's switch" toggle (OFF stores
+a disabled, empty `running-state` feature as the opt-out). A supply switch is never a
+running source: an appliance on a plug keeps its power while idle. The quick-run length of
+a timed-run device is per device (`timed-run` status `quickRun`, edited through the derived
+form), bounded by the type's maximum. See D1020.
+
 ### Math (D944)
 
 Five templates build a number or a yes/no from readings. A **threshold** turns

@@ -4,7 +4,7 @@
 
 # Decisions
 
-982 architecture decision records. One file per decision, never
+983 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -997,6 +997,7 @@ that rots.
 | D1017 | [An addon below the server's minimum runs, and the operator is alerted](adr-1017-an-addon-below-the-servers-minimum-runs-and-the-operator-is-alerted.md) | ✅ accepted (supersedes D989 (its spawn hold-back only; the single framework package and the delivery requirements stand)) | 2026-11-07 |
 | D1018 | [The bootstrap config is the environment; there is no config.yaml](adr-1018-the-bootstrap-config-is-the-environment-there-is-no-config-yaml.md) | ✅ accepted | 2026-11-07 |
 | D1019 | [A system rule speaks at up to three moments — activation, deactivation, schedule](adr-1019-a-system-rule-speaks-at-up-to-three-moments-activation-deactivation-schedule.md) | ✅ accepted | 2026-11-07 |
+| D1020 | [An actuated device runs while its own switch is on; the default is derived, never written](adr-1020-an-actuated-device-runs-while-its-own-switch-is-on.md) | ✅ accepted | 2026-11-07 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

@@ -64,7 +64,7 @@ export function TimedRunControl({ trpc, deviceId, limit }: TimedRunControlProps)
   const max = maxInUnit(limit)
   // What the operator typed, else this device's own one-tap run (the status), else the type's.
   const [edited, setEdited] = useState<number | null>(null)
-  const draft = edited ?? Math.min(max, slice?.quickRun.duration ?? limit.quickRunDefault)
+  const draft = edited ?? Math.min(max, slice?.quickRun?.duration ?? limit.quickRunDefault)
   const [refusal, setRefusal] = useState<TimedRunRefusal | null>(null)
   const activeUntil = slice?.activeUntil ?? null
   const now = useNow(activeUntil !== null)

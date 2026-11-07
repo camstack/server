@@ -2859,6 +2859,13 @@
       "fillNothing": "Nothing on this device fits.",
       "fillSkip": "Leave empty",
       "fillApply": "Apply"
+    },
+    "followSwitch": {
+      "label": "Follow the device's switch",
+      "discardTitle": "Follow the switch?",
+      "discardMessage": "The running rule you wrote for this device will be removed and the device will count as running while its switch is on.",
+      "discardConfirm": "Follow the switch",
+      "default": "Default: running while the device's switch is on"
     }
   },
   "compositionEditor": {

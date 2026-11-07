@@ -237,12 +237,12 @@ describe('TimedRunService', () => {
   describe('the one-tap run of a device', () => {
     it('is the type default until the operator sets one, and the status carries it', async () => {
       const h = harness()
-      expect((await h.service.getStatus({ deviceId: HEATER })).quickRun).toEqual({
+      expect((await h.service.getStatus({ deviceId: HEATER }))?.quickRun).toEqual({
         duration: 30,
         unit: 'min',
       })
-      expect((await h.service.getStatus({ deviceId: FOUNTAIN })).quickRun).toEqual({
-        duration: 30,
+      expect((await h.service.getStatus({ deviceId: FOUNTAIN }))?.quickRun).toEqual({
+        duration: 60,
         unit: 's',
       })
       await h.service.runFor({ deviceId: HEATER, duration: 10, unit: 'min' })
@@ -253,7 +253,7 @@ describe('TimedRunService', () => {
       const h = harness()
       await h.service.setSettings({ deviceId: HEATER, settings: { quickRunDuration: 45 } })
       expect(h.quickRuns.get(HEATER)).toBe(45)
-      expect((await h.service.getStatus({ deviceId: HEATER })).quickRun).toEqual({
+      expect((await h.service.getStatus({ deviceId: HEATER }))?.quickRun).toEqual({
         duration: 45,
         unit: 'min',
       })
@@ -277,7 +277,7 @@ describe('TimedRunService', () => {
       await h.service.setSettings({ deviceId: HEATER, settings: { quickRunDuration: 45 } })
       await h.service.setSettings({ deviceId: HEATER, settings: { quickRunDuration: null } })
       expect(h.quickRuns.has(HEATER)).toBe(false)
-      expect((await h.service.getStatus({ deviceId: HEATER })).quickRun.duration).toBe(30)
+      expect((await h.service.getStatus({ deviceId: HEATER }))?.quickRun?.duration).toBe(30)
     })
 
     it('a type without a timed run has no settings to change', async () => {

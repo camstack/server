@@ -27,6 +27,7 @@ import { currentComposition } from '../customization-read'
 import { featureOf } from '../customization-save'
 import type { DefaultConsumable } from '../default-consumables'
 import type { Known } from '../known'
+import { followSwitchRowListed } from '../scalar/follow-switch'
 import { storedScalarFeature, scalarRowTitle } from '../scalar/use-scalar-row'
 import type { CameraSensorsRead } from '../use-camera-sensors-presence'
 import type { CustomizationHandle } from '../use-customization'
@@ -188,7 +189,11 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
   const isLinked = (spec: CustomizeRowSpec): boolean => {
     switch (spec.kind) {
       case 'scalar':
-        return storedScalarFeature(handle, spec.cap, spec.target.id) !== null
+        // A running row that follows the device's switch is listed with nothing stored: it is the default.
+        return (
+          storedScalarFeature(handle, spec.cap, spec.target.id) !== null ||
+          followSwitchRowListed(spec.cap, spec.target.id, current)
+        )
       case 'keyed':
         return featureOf(current, spec.cap) !== null || defaultsListed
       case 'event':
