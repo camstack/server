@@ -1937,6 +1937,7 @@ export {
   instantKindsOf,
   isSystemEventRecoveryKind,
   systemEventDeliveryAsModes,
+  withSystemEventModes,
   NC_SYSTEM_EVENT_CLASS_SPECS,
   type NcSystemEventClassSpec,
   type NcSystemEventClassSubject,

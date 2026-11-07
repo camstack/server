@@ -290,6 +290,24 @@ export function systemEventDeliveryAsModes(rule: {
 }
 
 /**
+ * The rule with its delivery in the `modes` shape (D1019) when it is a
+ * `device-events` / `system` rule (the alarm and a `mixed` rule keep their
+ * key as it is); the rule itself (same object) when it already is, or is not
+ * one. Applied AFTER {@link withSystemEventClasses}, so a legacy instant rule's
+ * deactivation reads the widened kinds. A copy, never a mutation.
+ */
+export function withSystemEventModes<T extends NcSystemEventClassSubject>(rule: T): T {
+  const condition = rule.conditions.systemEvent
+  if (rule.delivery !== 'system-event' || condition === undefined) return rule
+  if (rule.systemEventDelivery?.mode === 'modes') return rule
+  const families = new Set(condition.kinds.map((kind) => NC_SYSTEM_EVENT_FAMILY[kind]))
+  if (families.size !== 1) return rule
+  const [family] = [...families]
+  if (family !== 'device-events' && family !== 'system') return rule
+  return { ...rule, systemEventDelivery: systemEventDeliveryAsModes(rule) }
+}
+
+/**
  * An INSTANT system rule with each class it touches completed with both edges;
  * the rule itself (same object) when there is nothing to add, a summary rule,
  * or a rule spanning families (`mixed` stays read-only, D637). A copy, never a
