@@ -145,7 +145,10 @@ import { InstancesTable, type InstancesTableProps } from '../InstancesTable'
 function renderPanel(
   search = '',
   extra: Partial<
-    Pick<InstancesTableProps, 'extraColumns' | 'lead' | 'rowActions' | 'rowFilter' | 'typedId'>
+    Pick<
+      InstancesTableProps,
+      'extraColumns' | 'lead' | 'rowActions' | 'pageActions' | 'rowFilter' | 'typedId'
+    >
   > = {},
 ) {
   // The open dialog lives in the real URL (`useUrlQueryParam` reads `window.location`).
@@ -748,6 +751,39 @@ describe('InstancesTable slots', () => {
     renderPanel('', { rowFilter: (row) => row.kind === 'fixed' || row.id !== 'b' })
     expect(await screen.findByText('Relay A')).toBeTruthy()
     expect(screen.queryByText('Relay B')).toBeNull()
+  })
+
+  it('draws pageActions in the page header with the instance rows only, beside Add', async () => {
+    const seen: string[][] = []
+    window.history.replaceState(null, '', '/')
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={client}>
+        <MemoryRouter>
+          <ConfirmDialogProvider>
+            <PageShell title="Connectivity">
+              <InstancesTable
+                functionCap="log-destination"
+                icon={Mail}
+                title="Destinations"
+                subtitle="Every destination."
+                emptyTitle="Nothing configured"
+                emptyDescription="Add one."
+                addLabel="Add destination"
+                pageActions={(rows) => {
+                  seen.push(rows.map((row) => row.id))
+                  return <button type="button">refresh all</button>
+                }}
+              />
+            </PageShell>
+          </ConfirmDialogProvider>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+    const refresh = await screen.findByRole('button', { name: 'refresh all' })
+    const add = screen.getByRole('button', { name: /Add destination/ })
+    expect(refresh.parentElement).toBe(add.parentElement)
+    expect(seen.at(-1)).toEqual(['a'])
   })
 
   it('draws no rowActions control when the prop is absent', async () => {

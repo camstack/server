@@ -48,7 +48,10 @@ import {
   ExportSetupLead,
   exportedDevicesColumn,
 } from '../../components/integrations/exported-devices'
-import { wasteFetchNowAction } from '../../components/integrations/waste-fetch-now'
+import {
+  wasteFetchAllAction,
+  wasteFetchNowAction,
+} from '../../components/integrations/waste-fetch-now'
 import type { TFunction } from 'i18next'
 
 const POLL_INTERVAL_MS = 10_000
@@ -85,6 +88,8 @@ interface InstancesDescriptor {
   readonly lead?: (row: InstanceRow) => ReactElement
   /** Controls the kind adds to an instance row's action cell, before Edit. */
   readonly rowActions?: (row: InstanceRow) => ReactElement | null
+  /** Controls the kind adds to the page header beside Add. */
+  readonly pageActions?: (rows: readonly InstanceRow[]) => ReactElement | null
 }
 
 /**
@@ -170,6 +175,7 @@ const KINDS: readonly KindDescriptor[] = [
       addLabelDefault: 'Add calendar',
       keepProviderPills: true,
       rowActions: wasteFetchNowAction,
+      pageActions: wasteFetchAllAction,
     },
   },
 ]
@@ -338,6 +344,7 @@ export function IntegrationsPage(): ReactElement {
               {...(spec.extraColumns !== undefined ? { extraColumns: spec.extraColumns(t) } : {})}
               {...(spec.lead !== undefined ? { lead: spec.lead } : {})}
               {...(spec.rowActions !== undefined ? { rowActions: spec.rowActions } : {})}
+              {...(spec.pageActions !== undefined ? { pageActions: spec.pageActions } : {})}
             />
           )
         const hub = (

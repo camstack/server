@@ -14,19 +14,10 @@ describe('wasteCollectionsActions catalog', () => {
   })
 })
 
-describe('WasteCollectionsAddon globalSettingsSchema', () => {
-  it('has no editable-array providers/sources field', () => {
-    const addon = new WasteCollectionsAddon()
-    const schema = (
-      addon as unknown as {
-        globalSettingsSchema: () => {
-          sections: { fields: { type: string; key?: string }[] }[]
-        }
-      }
-    ).globalSettingsSchema()
-    const fields = schema.sections.flatMap((s) => s.fields)
-    expect(fields.some((f) => f.type === 'editable-array')).toBe(false)
-    expect(fields.some((f) => f.key === 'fetchHour')).toBe(false)
+describe('WasteCollectionsAddon settings', () => {
+  it('has no settings form of its own: sources are instances, the refresh is a page action (D986)', async () => {
+    const view = await new WasteCollectionsAddon().getGlobalSettings()
+    expect(view).toEqual({ sections: [] })
   })
 })
 

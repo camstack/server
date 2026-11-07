@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Waste sources are managed in the Calendars list with a per-row Fetch now; the old source-list actions are removed
+- The addon no longer declares an addon-level settings form; fetching all calendars is a Calendars page action
 
 ## [0.1.36] - 2026-11-06
 

@@ -385,36 +385,6 @@ export class WasteCollectionsAddon extends BaseAddon<WasteConfig> {
       })
     }
   }
-
-  // ── Settings ──────────────────────────────────────────────────────
-
-  protected globalSettingsSchema() {
-    return this.schema({
-      sections: [
-        {
-          id: 'refresh',
-          title: 'Refresh',
-          description:
-            'Sources are managed in the table above (Add / Edit): pick a country and a service, then fill only that service’s fields. Each source becomes one calendar under System → Calendars.',
-          columns: 2,
-          fields: [
-            {
-              type: 'addon-action-button',
-              key: '_fetchNow',
-              label: 'Refresh',
-              buttonLabel: 'Fetch now',
-              description:
-                'Sources refresh once at boot and then every 24 hours; this refreshes every enabled source immediately.',
-              addonId: 'waste-collections',
-              action: 'fetchNow',
-              variant: 'primary',
-              paramsStatic: {},
-            },
-          ],
-        },
-      ],
-    })
-  }
 }
 
 export default WasteCollectionsAddon

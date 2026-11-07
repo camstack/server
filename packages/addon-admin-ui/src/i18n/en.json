@@ -11670,6 +11670,11 @@
     "sourceIsOff": "{{name}} is switched off, so it was not fetched.",
     "fetched": "{{name}} fetched",
     "failed": "{{name}} could not be fetched",
-    "collections": "{{count}} collections read."
+    "collections": "{{count}} collections read.",
+    "all": "Fetch all now",
+    "allFetched": "Calendars fetched",
+    "allFailed": "{{count}} calendars could not be fetched",
+    "allCollections": "{{count}} sources refreshed.",
+    "allNotFetched": "The calendars could not be fetched"
   }
 }

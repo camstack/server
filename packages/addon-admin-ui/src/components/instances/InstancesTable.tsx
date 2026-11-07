@@ -94,6 +94,11 @@ export interface InstancesTableProps {
   readonly rowActions?: (row: InstanceRow) => ReactNode
   /** An instance row whose delete the page knows the hub would refuse shows no Delete. Absent keeps it. */
   readonly canDelete?: (row: InstanceRow) => boolean
+  /**
+   * Controls a page adds to the page header beside Add (refresh every source at once). Called
+   * with the instance rows the table lists; it returns nothing when the kind has no such action.
+   */
+  readonly pageActions?: (rows: readonly InstanceRow[]) => ReactNode
   /** The kinds whose new record is named by the operator, not minted (an immutable typed id). */
   readonly typedId?: TypedIdRuleFor
   /**
@@ -223,6 +228,7 @@ export function InstancesTable({
   lead,
   rowActions,
   canDelete,
+  pageActions,
   typedId,
   rowFilter,
 }: InstancesTableProps): ReactElement {
@@ -581,6 +587,7 @@ export function InstancesTable({
       {data.state === 'ready' && (
         <>
           <PageHeaderActions>
+            {pageActions?.(data.rows.filter((row): row is InstanceRow => row.kind === 'instance'))}
             <Button
               size="sm"
               variant="primary"

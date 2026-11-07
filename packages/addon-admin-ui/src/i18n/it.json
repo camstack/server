@@ -11692,6 +11692,11 @@
     "sourceIsOff": "{{name}} è disattivata, quindi non è stata aggiornata.",
     "fetched": "{{name}} aggiornata",
     "failed": "Impossibile aggiornare {{name}}",
-    "collections": "{{count}} raccolte lette."
+    "collections": "{{count}} raccolte lette.",
+    "all": "Aggiorna tutti ora",
+    "allFetched": "Calendari aggiornati",
+    "allFailed": "{{count}} calendari non aggiornati",
+    "allCollections": "{{count}} sorgenti aggiornate.",
+    "allNotFetched": "Non è stato possibile aggiornare i calendari"
   }
 }

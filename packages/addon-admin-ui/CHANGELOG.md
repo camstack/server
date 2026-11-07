@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Network → Mesh Networks is the shared instances list; the join, leave and log-in controls and the live status sit in the tailnet's editor
 - The Storage page is the instance table: each location is a row with its capacity and state, edited in one dialog, with the forced delete as its own confirmed action
 - Identity → Authentication lists the sign-in connections in the shared instances table
+- The Calendars page gets a Fetch all now action in its header; the per-addon settings button is gone
 
 ## [1.2.601] - 2026-11-06
 
