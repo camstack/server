@@ -22,7 +22,8 @@ import {
   mapAudioLabelToMacro,
 } from '@camstack/types'
 import type { AudioClassificationResult, AudioClassifyOutcome } from '@camstack/types'
-import type { IScopedLogger } from '@camstack/types'
+import type { DurableState, IScopedLogger } from '@camstack/types'
+import { z } from 'zod'
 import type {
   AudioBackend,
   AudioClassificationResult as AudioPipelineResult,
@@ -1075,6 +1076,15 @@ export class AudioAnalyzerAddon extends BaseAddon<AudioAnalyzerGlobalConfig> {
   }
 
   /**
+   * This node's probed backend: the node-state key `probedBestAudioBackend@<localNode>` (the key the
+   * addon always wrote), never the bare key. Built per call — the local node id is known only once
+   * the addon is initialised.
+   */
+  protected probedBestAudioBackend(): DurableState<string> {
+    return this.nodeState('probedBestAudioBackend', z.string(), '')
+  }
+
+  /**
    * Re-run the platform probe and persist the detected backend into
    * `probedBestAudioBackend`. Operator `audioBackend` setting is not
    * touched — only the hint.
@@ -1082,10 +1092,7 @@ export class AudioAnalyzerAddon extends BaseAddon<AudioAnalyzerGlobalConfig> {
   async reprobeAudioEngine(): Promise<{ backend: string }> {
     const backend: AudioBackend =
       process.platform === 'darwin' ? 'apple-soundanalysis' : 'yamnet-onnx'
-    // Node-blind per-node write: the base scopes the perNode field to
-    // `probedBestAudioBackend@<localNode>` (never the bare key) and
-    // refreshes `this.config` from the scoped value.
-    await this.updateGlobalSettings({ probedBestAudioBackend: backend })
+    await this.probedBestAudioBackend().set(backend)
     this.ctx.logger.info('reprobeAudioEngine: wrote probedBestAudioBackend', { meta: { backend } })
     return { backend }
   }
@@ -1117,7 +1124,7 @@ export class AudioAnalyzerAddon extends BaseAddon<AudioAnalyzerGlobalConfig> {
 
     // Auto-seed probedBestAudioBackend so the UI shows the effective
     // platform default on first boot (matches what we just booted).
-    if (!this.config.probedBestAudioBackend) {
+    if (!(await this.probedBestAudioBackend().get())) {
       this.reprobeAudioEngine().catch((err: unknown) => {
         logger.warn('audio: auto-reprobe failed', {
           meta: { error: err instanceof Error ? err.message : String(err) },

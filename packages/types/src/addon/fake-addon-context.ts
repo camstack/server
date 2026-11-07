@@ -16,6 +16,7 @@ type SettingsView = NonNullable<AddonContext['settings']>
 /** The settings members a test usually wires; the rest throw by name. */
 export interface FakeSettings {
   readonly readAddonStore?: SettingsView['readAddonStore']
+  readonly writeAddonStore?: SettingsView['writeAddonStore']
   readonly listDeviceStoreIds?: SettingsView['listDeviceStoreIds']
   readonly readAddonStoreResult?: NonNullable<SettingsView['readAddonStoreResult']>
 }
@@ -78,7 +79,7 @@ function fakeSettings(overrides: FakeSettings): SettingsView {
     // Left out entirely when not wired: the optional member's ABSENCE is what
     // `readStoredGlobalKey` reads as `three-way-read-unavailable`.
     ...(readAddonStoreResult !== undefined ? { readAddonStoreResult } : {}),
-    writeAddonStore: unused('settings.writeAddonStore'),
+    writeAddonStore: overrides.writeAddonStore ?? unused('settings.writeAddonStore'),
     readDeviceStoreBatch: unused('settings.readDeviceStoreBatch'),
     listDeviceStoreIds: overrides.listDeviceStoreIds ?? unused('settings.listDeviceStoreIds'),
     readDeviceStore: unused('settings.readDeviceStore'),

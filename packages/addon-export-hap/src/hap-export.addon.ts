@@ -69,7 +69,7 @@ import {
   resolveExportFingerprint,
 } from '@camstack/types/node'
 import { uuid as HapUuid } from '@homebridge/hap-nodejs'
-import type { z } from 'zod'
+import { z } from 'zod'
 import {
   accessoryPaired,
   clearPairingFiles,
@@ -287,12 +287,13 @@ const HAP_STREAM_PREFERENCE_OPTIONS: readonly ConfigOption[] = [
 
 /** One device's advertised HAP state, persisted in the addon store. JSON-plain
  *  mirror of `ExportTargetEntry` from `@camstack/types/node`. Keyed by
- *  `String(deviceId)` in `ExportHapConfig.exportSyncState`. `externalIds` holds
+ *  `String(deviceId)` in the `exportSyncState` store key. `externalIds` holds
  *  the deterministic accessory UUID (diagnostic; rebuild uses the live mapper). */
-export interface ExportTargetEntryJson {
-  readonly fingerprint: string
-  readonly externalIds: readonly string[]
-}
+const ExportTargetEntrySchema = z.object({
+  fingerprint: z.string(),
+  externalIds: z.array(z.string()),
+})
+export type ExportTargetEntryJson = z.infer<typeof ExportTargetEntrySchema>
 
 interface ExportHapConfig {
   readonly interfaceName: string
@@ -301,12 +302,14 @@ interface ExportHapConfig {
    * overridable; see {@link resolveClipRetentionDays}.
    */
   readonly clipRetentionDays: number
-  /** Durable per-device export sync state — the Phase-C reconciler cache.
-   *  Key = `String(deviceId)`, value = the device's export fingerprint at last
-   *  attach. Drives `diffExportTargets`: an unchanged restart hashes to the same
-   *  fingerprint → no rebuild. Replaces the old in-memory binding-shape guard. */
-  readonly exportSyncState: Readonly<Record<string, ExportTargetEntryJson>>
 }
+
+/** Durable per-device export sync state — the Phase-C reconciler cache, kept under the
+ *  addon-store key `exportSyncState` (the key the addon always used).
+ *  Key = `String(deviceId)`, value = the device's export fingerprint at last
+ *  attach. Drives `diffExportTargets`: an unchanged restart hashes to the same
+ *  fingerprint → no rebuild. */
+export const ExportSyncStateSchema = z.record(z.string(), ExportTargetEntrySchema)
 
 /** Generic `device-export` setup block — pairing QR + copyable rows + note. */
 type ExportSetup = z.infer<typeof ExportSetupSchema>
@@ -314,7 +317,6 @@ type ExportSetup = z.infer<typeof ExportSetupSchema>
 const DEFAULT_CONFIG: ExportHapConfig = {
   interfaceName: '',
   clipRetentionDays: DEFAULT_CLIP_RETENTION_DAYS,
-  exportSyncState: {},
 }
 
 interface DeviceManagerApi {
@@ -813,7 +815,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     await this.stopInstance(id)
     for (const uuid of uuids) clearPairingFiles(uuid, this.ctx.logger)
     await this.exposureHandle().delete(id)
-    if (id === HAP_DEFAULT_INSTANCE_ID) await this.updateGlobalSettings({ exportSyncState: {} })
+    if (id === HAP_DEFAULT_INSTANCE_ID) await this.exportSyncState.set({})
     this.ctx.logger.info('export-hap: bridge removed', {
       meta: { instanceId: id },
     })
@@ -1377,11 +1379,14 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
   }
 
   /** The reconcile cache of a bridge: the default one is persisted, the others live in memory (boot re-attach seeds them). */
-  private syncStateOf(inst: BridgeInstance): Map<number, ExportTargetEntry> {
+  protected async syncStateOf(inst: BridgeInstance): Promise<Map<number, ExportTargetEntry>> {
     return inst.id === HAP_DEFAULT_INSTANCE_ID
-      ? syncStateFromJson(this.config.exportSyncState)
+      ? syncStateFromJson(await this.exportSyncState.get())
       : inst.syncState
   }
+
+  /** The persisted reconcile cache of the default bridge (store key `exportSyncState`). */
+  protected readonly exportSyncState = this.state('exportSyncState', ExportSyncStateSchema, {})
 
   /**
    * Export fingerprint of a device from its PERSISTED features + type
@@ -1413,7 +1418,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
         deviceType: device.type,
         features: device.features,
       })
-      const persisted = this.syncStateOf(inst).get(deviceId)?.fingerprint
+      const persisted = (await this.syncStateOf(inst)).get(deviceId)?.fingerprint
       // Whether the camera can be RECORDED is part of what the accessory
       // advertises, so it belongs in the fingerprint: a camera whose RTSP
       // profiles were unreadable when the accessory was built was refused HKSV
@@ -1464,32 +1469,28 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
 
   /** Persist a device's current export fingerprint into `exportSyncState`
    *  (best-effort; called after a successful attach). */
-  private async persistFingerprint(
+  protected async persistFingerprint(
     inst: BridgeInstance,
     deviceId: number,
     fingerprint: string,
   ): Promise<void> {
-    const state = this.syncStateOf(inst)
+    const state = await this.syncStateOf(inst)
     state.set(deviceId, {
       fingerprint,
       externalIds: [this.hapAccessoryUuid(inst, deviceId)],
     })
     if (inst.id === HAP_DEFAULT_INSTANCE_ID) {
-      await this.updateGlobalSettings({
-        exportSyncState: syncStateToJson(state),
-      })
+      await this.exportSyncState.set(syncStateToJson(state))
     }
   }
 
   /** Drop a device's `exportSyncState` entry (on unexpose). */
   private async forgetFingerprint(inst: BridgeInstance, deviceId: number): Promise<void> {
-    const state = this.syncStateOf(inst)
+    const state = await this.syncStateOf(inst)
     if (!state.has(deviceId)) return
     state.delete(deviceId)
     if (inst.id === HAP_DEFAULT_INSTANCE_ID) {
-      await this.updateGlobalSettings({
-        exportSyncState: syncStateToJson(state),
-      })
+      await this.exportSyncState.set(syncStateToJson(state))
     }
   }
 
@@ -1589,7 +1590,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       log.debug('export-hap: reconcile skipped — fingerprint unavailable (transient)')
       return
     }
-    const last = this.syncStateOf(inst).get(numericId)
+    const last = (await this.syncStateOf(inst)).get(numericId)
 
     if (last?.fingerprint === current) {
       if (!inst.exposed.has(deviceId)) {

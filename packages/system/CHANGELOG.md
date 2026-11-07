@@ -60,6 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Storage locations are managed only as instances: the storage upsert, delete, test and provider-list calls are gone; the instance form no longer carries the state, which the Storage page owns
 - Log destination settings are per-node (existing values copied to every node on first boot); core-blocks settings are cluster scope
 - Log level and retention are per-node settings: existing values are copied to every node known at upgrade, and a node that joins later starts at the default level and retention, not the old cluster-wide value
+- Internal: autotrack and remote-access state is read and written through the typed state API under the same storage key; nothing changes for the operator.
 
 ### Removed
 

@@ -29,6 +29,8 @@ import {
   sendToExportedTarget,
 } from '@camstack/types'
 
+import { z } from 'zod'
+
 import type { PlatformSupport } from './component-support.js'
 import { commandTopic, syntheticDeviceKeyFor, toComponentKey, toSlug } from './topics.js'
 import type { HaComponent, HaDevicePlan } from './types.js'
@@ -38,23 +40,26 @@ export const EXPORTED_ENTITIES_STABLE_ID = 'synthetic-exported-entities'
 
 const EXPORTER = 'homeassistant-export'
 
-export interface ExportedActionEntry {
-  readonly actionId: string
-  readonly displayName: string
-  readonly addedAt: number
-}
+const ExportedActionEntrySchema = z.object({
+  actionId: z.string(),
+  displayName: z.string(),
+  addedAt: z.number(),
+})
+export type ExportedActionEntry = Readonly<z.infer<typeof ExportedActionEntrySchema>>
 
-export interface ExportedTargetEntry {
-  readonly targetId: string
-  readonly displayName: string
-  readonly addedAt: number
-}
+const ExportedTargetEntrySchema = z.object({
+  targetId: z.string(),
+  displayName: z.string(),
+  addedAt: z.number(),
+})
+export type ExportedTargetEntry = Readonly<z.infer<typeof ExportedTargetEntrySchema>>
 
-/** The persisted selection. */
-export interface ExportedEntitiesState {
-  readonly actions: readonly ExportedActionEntry[]
-  readonly targets: readonly ExportedTargetEntry[]
-}
+/** The persisted selection, kept under the addon-store key `exportedEntities` (D968). */
+export const ExportedEntitiesStateSchema = z.object({
+  actions: z.array(ExportedActionEntrySchema).readonly(),
+  targets: z.array(ExportedTargetEntrySchema).readonly(),
+})
+export type ExportedEntitiesState = z.infer<typeof ExportedEntitiesStateSchema>
 
 export interface ExportedEntitiesPorts {
   readonly api: ExportEntityApi

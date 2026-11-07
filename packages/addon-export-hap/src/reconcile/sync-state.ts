@@ -1,6 +1,6 @@
 /**
  * Pure (de)serialization between the persisted JSON sync state
- * (`ExportHapConfig.exportSyncState`) and the runtime
+ * (store key `exportSyncState`) and the runtime
  * `Map<number, ExportTargetEntry>` the reconciler works on. The store persists
  * a JSON blob (string keys); the reconciler keys on numeric device ids. Arrays
  * are copied so neither side aliases the other's storage.
@@ -23,7 +23,9 @@ export function syncStateFromJson(json: ExportSyncStateJson): Map<number, Export
   return map
 }
 
-export function syncStateToJson(map: ReadonlyMap<number, ExportTargetEntry>): ExportSyncStateJson {
+export function syncStateToJson(
+  map: ReadonlyMap<number, ExportTargetEntry>,
+): Record<string, ExportTargetEntryJson> {
   const out: Record<string, ExportTargetEntryJson> = {}
   for (const [deviceId, entry] of map) {
     out[String(deviceId)] = { fingerprint: entry.fingerprint, externalIds: [...entry.externalIds] }

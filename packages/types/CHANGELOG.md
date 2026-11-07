@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Addons get a typed scoped settings API (cluster, per-node, device defaults, per-node state) beside the old global settings calls, which keep working.
+- The addon test context accepts a writeAddonStore override.
 
 ## [1.2.515] - 2026-11-07
 

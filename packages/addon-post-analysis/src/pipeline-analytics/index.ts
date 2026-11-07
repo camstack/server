@@ -59,6 +59,7 @@ import type {
   ProviderRegistration,
   RecentTracksPage,
   RecordsAccess,
+  ScopedSettingsScope,
   RetrainAnnotation,
   RetrainAnnotationDraft,
   RetrainArchiveResult,
@@ -1080,11 +1081,10 @@ import {
   buildFaceClusterSchema,
   buildGlobalSettingsSchema,
   EMBEDDING_ENABLED_DEFAULT,
-  formatSuggestionThresholdReadout,
+  faceSuggestionReadoutOverlay,
   POST_PROCESSING_NODE_DEFAULT,
   retagDetectionSections,
   retagRetentionSection,
-  SUGGESTION_THRESHOLD_READOUT_KEY,
   stripDeviceOnlyFields,
   stripGlobalOnlyFields,
   toAnalyticsDeviceSections,
@@ -15810,6 +15810,15 @@ export default class PipelineAnalyticsAddon
    * `buildGlobalSettingsSchema()` itself, which would also remove it from the
    * per-device form that shares the same base sections.
    */
+  protected override async scopedSettingsOverlay(
+    scope: ScopedSettingsScope,
+    cap: string,
+    nodeId?: string,
+  ): Promise<Record<string, unknown> | null> {
+    if (scope !== 'cluster' || cap !== 'face-gallery') return null
+    return faceSuggestionReadoutOverlay(await this.resolveGlobalStore(nodeId, cap))
+  }
+
   override async getGlobalSettings(
     overlay?: Record<string, unknown>,
     cap?: string,
@@ -15817,11 +15826,8 @@ export default class PipelineAnalyticsAddon
   ): Promise<ConfigUISchemaWithValues | null> {
     const stored = await this.resolveGlobalStore(nodeId, cap)
     const merged = overlay ? { ...stored, ...overlay } : stored
-    const readout = formatSuggestionThresholdReadout(
-      resolveFaceSettings(merged).similarityThreshold,
-    )
     const schema = await super.getGlobalSettings(
-      { ...merged, [SUGGESTION_THRESHOLD_READOUT_KEY]: readout },
+      { ...merged, ...faceSuggestionReadoutOverlay(merged) },
       cap,
       nodeId,
     )

@@ -21,7 +21,9 @@ import type { SystemEvent } from '@camstack/types'
 import { canonicalDeviceFingerprint } from '@camstack/types/node'
 import { BridgeInstance } from '../bridge-instance.js'
 import type { BridgeHost } from '../bridge-host.js'
-import { ExportHapAddon } from '../hap-export.addon.js'
+import type { DurableState } from '@camstack/types'
+import type { z } from 'zod'
+import { ExportHapAddon, type ExportSyncStateSchema } from '../hap-export.addon.js'
 import { HAP_DEFAULT_INSTANCE_ID } from '../hap-instance-kinds.js'
 
 type LifecycleHandler = (event: SystemEvent) => void
@@ -32,13 +34,15 @@ interface FakeDevice {
   probed: boolean
 }
 
+type ExportSyncState = z.infer<typeof ExportSyncStateSchema>
+
 interface FakeConfig {
   exposed: ReadonlyArray<{
     deviceId: string
     displayName: string
     mapperKind: 'camera'
   }>
-  exportSyncState: Record<string, { fingerprint: string; externalIds: readonly string[] }>
+  exportSyncState: ExportSyncState
 }
 
 class TestAddon extends ExportHapAddon {
@@ -101,8 +105,15 @@ class TestAddon extends ExportHapAddon {
     } as unknown as ExportHapAddon['ctx']
   }
 
-  override get config() {
-    return this.fake as unknown as ExportHapAddon['config']
+  /** The persisted reconcile cache: a fake handle over `fakeConfig.exportSyncState`. */
+  protected override readonly exportSyncState: DurableState<ExportSyncState> = {
+    get: async () => this.fake.exportSyncState,
+    set: async (next) => {
+      this.fake = { ...this.fake, exportSyncState: next }
+    },
+    update: async (fn) => {
+      this.fake = { ...this.fake, exportSyncState: fn(this.fake.exportSyncState) }
+    },
   }
 
   protected override async reconcileDevice(_inst: BridgeInstance, deviceId: string): Promise<void> {

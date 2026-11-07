@@ -9,7 +9,7 @@
  * What it still owns — the load-bearing logic:
  *   The orchestrator owns the "operator wants this provider running"
  *   intent — an `enabledProviders: string[]` slice in its addon-store
- *   blob (BaseAddon.config). On boot we iterate the list and call
+ *   blob (`state('enabledProviders')`). On boot we iterate the list and call
  *   `provider.start()` for each enabled entry, so a tunnel set up once
  *   stays up across hub restarts.
  *
@@ -30,6 +30,7 @@
  *        it can only add already-connected providers, never evict.
  */
 import { BaseAddon, EventCategory, type ProviderRegistration } from '@camstack/types'
+import { z } from 'zod'
 import {
   reconcileEnabledProviders,
   type ProviderProbeResult,
@@ -44,22 +45,22 @@ interface NetworkAccessLike {
   }>
 }
 
-interface RemoteAccessOrchestratorConfig {
-  /**
-   * addonIds the operator has explicitly Started. Auto-respawned on
-   * boot so a tunnel set up once stays up across hub restarts.
-   */
-  readonly enabledProviders: readonly string[]
-}
+/**
+ * addonIds the operator has explicitly Started (store key `enabledProviders`). Auto-respawned on
+ * boot so a tunnel set up once stays up across hub restarts.
+ */
+const EnabledProvidersSchema = z.array(z.string())
 
-export class RemoteAccessOrchestratorAddon extends BaseAddon<RemoteAccessOrchestratorConfig> {
+export class RemoteAccessOrchestratorAddon extends BaseAddon<Record<string, never>> {
+  private readonly enabledProviders = this.state('enabledProviders', EnabledProvidersSchema, [])
+
   constructor() {
-    super({ enabledProviders: [] })
+    super({})
   }
 
   protected async onInitialize(): Promise<ProviderRegistration[]> {
     this.ctx.logger.info('Remote-access orchestrator initialized (backend-only)', {
-      meta: { enabledCount: this.config.enabledProviders.length },
+      meta: { enabledCount: (await this.enabledProviders.get()).length },
     })
 
     // Lifecycle events give the persisted set a PROMPT update — but
@@ -175,13 +176,13 @@ export class RemoteAccessOrchestratorAddon extends BaseAddon<RemoteAccessOrchest
       }),
     )
 
-    const result = reconcileEnabledProviders(this.config.enabledProviders, probes)
+    const result = reconcileEnabledProviders(await this.enabledProviders.get(), probes)
     if (!result.changed) return
 
     this.ctx.logger.info('reconcile: corrected enabledProviders from RPC-pulled state', {
       meta: { added: result.added, removed: result.removed },
     })
-    await this.updateGlobalSettings({ enabledProviders: result.nextEnabled })
+    await this.enabledProviders.set([...result.nextEnabled])
   }
 
   private async autoStartEnabledProviders(): Promise<void> {
@@ -190,7 +191,7 @@ export class RemoteAccessOrchestratorAddon extends BaseAddon<RemoteAccessOrchest
     // connected. Cannot evict — safe to run before start() calls.
     await this.reconcileAndPersist()
 
-    const ids = this.config.enabledProviders
+    const ids = await this.enabledProviders.get()
     if (ids.length === 0) return
     this.ctx.logger.info('Auto-starting enabled remote-access providers', {
       meta: { addonIds: [...ids] },
@@ -235,8 +236,8 @@ export class RemoteAccessOrchestratorAddon extends BaseAddon<RemoteAccessOrchest
     }
   }
 
-  private async markEnabled(addonId: string, enabled: boolean): Promise<void> {
-    const current = new Set(this.config.enabledProviders)
+  protected async markEnabled(addonId: string, enabled: boolean): Promise<void> {
+    const current = new Set(await this.enabledProviders.get())
     const wasEnabled = current.has(addonId)
     if (enabled) current.add(addonId)
     else current.delete(addonId)
@@ -244,7 +245,7 @@ export class RemoteAccessOrchestratorAddon extends BaseAddon<RemoteAccessOrchest
     this.ctx.logger.info('remote-access intent updated', {
       meta: { addonId, enabled },
     })
-    await this.updateGlobalSettings({ enabledProviders: [...current] })
+    await this.enabledProviders.set([...current])
   }
 
   private resolveImpl(addonId: string): NetworkAccessLike | null {

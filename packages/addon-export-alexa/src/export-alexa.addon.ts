@@ -77,6 +77,8 @@ import {
   alexaSkillLinksKind,
   alexaSkillsKind,
   alexaSkillStateKind,
+  LinkedAccountSchema,
+  LwaTokenEntrySchema,
 } from './skill-records.js'
 import {
   type LegacyLedgerPort,
@@ -140,6 +142,16 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     'tokens[userId].brokerCredential',
   ]
 
+  /** The hidden HMAC key of snapshot URLs (store key `snapshotSigningKey`, a keychain secret). */
+  private readonly snapshotSigningKeyState = this.state('snapshotSigningKey', z.string(), '')
+  /** The legacy ledger keys, until the migrations have moved them to the `skill-links` record. */
+  private readonly legacyLinkedAccounts = this.state(
+    'linkedAccounts',
+    z.array(LinkedAccountSchema),
+    [],
+  )
+  private readonly legacyTokens = this.state('tokens', z.array(LwaTokenEntrySchema), [])
+
   private readonly snapshotStore = new SnapshotStore(() => this.config.snapshotSigningKey)
   private readonly publicEndpoint: PublicEndpointReader = createPublicEndpointReader(() =>
     this.ctx.api.localNetwork.getAddresses.query(),
@@ -194,22 +206,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       settings: () => this.config,
       handles: this.requireHandles(),
       legacyLedger: (instanceId): LegacyLedgerPort | null =>
-        instanceId === ALEXA_INSTANCE_ID
-          ? {
-              read: () => ({
-                linkedAccounts: this.config.linkedAccounts,
-                tokens: this.config.tokens,
-              }),
-              write: async (patch) => {
-                await this.updateGlobalSettings({
-                  ...(patch.linkedAccounts === undefined
-                    ? {}
-                    : { linkedAccounts: patch.linkedAccounts }),
-                  ...(patch.tokens === undefined ? {} : { tokens: patch.tokens }),
-                })
-              },
-            }
-          : null,
+        instanceId === ALEXA_INSTANCE_ID ? this.legacyLedgerPort() : null,
       linkedUserIdsElsewhere: async (instanceId) => {
         const users = new Set<string>()
         for (const [id, runtime] of this.runtimes) {
@@ -225,6 +222,31 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
         return users
       },
     }
+  }
+
+  /** The legacy ledger keys of the addon store, read from `config` and written through `state()`. */
+  protected legacyLedgerPort(): LegacyLedgerPort {
+    return {
+      read: () => ({
+        linkedAccounts: this.config.linkedAccounts,
+        tokens: this.config.tokens,
+      }),
+      write: async (patch) => {
+        if (patch.linkedAccounts !== undefined) {
+          await this.legacyLinkedAccounts.set([...patch.linkedAccounts])
+        }
+        if (patch.tokens !== undefined) await this.legacyTokens.set([...patch.tokens])
+        // The ledger is read back from `this.config`: refresh it from the store.
+        await this.resolveConfig()
+      },
+    }
+  }
+
+  /** The snapshot URL signing key (R2): generated once, hidden, rotated by nothing. */
+  protected async ensureSnapshotSigningKey(): Promise<void> {
+    if (this.config.snapshotSigningKey) return
+    await this.snapshotSigningKeyState.set(generateIngressToken())
+    await this.resolveConfig()
   }
 
   protected async onInitialize(): Promise<AddonInitResult<ExportAlexaActions>> {
@@ -276,11 +298,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
 
     // The snapshot URL signing key (R2). Generated once, hidden, rotated by
     // nothing: a minted URL lives ten minutes. Shared by every skill.
-    if (!this.config.snapshotSigningKey) {
-      await this.updateGlobalSettings({
-        snapshotSigningKey: generateIngressToken(),
-      })
-    }
+    await this.ensureSnapshotSigningKey()
 
     // D753: the hub never holds the skill's LWA client secret. A custom-skill
     // hub configured before D753 may still have one stored — remove it.

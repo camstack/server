@@ -16,6 +16,7 @@ import { DEVICE_ALERT_DEFAULTS } from './device-alert-settings.js'
 import {
   deriveSuggestionMinCosine,
   FACE_DEFAULTS,
+  resolveFaceSettings,
   SUGGESTION_BAND_FACTOR,
 } from './face-settings.js'
 import { PACKAGE_DROP_DEFAULTS } from './package-settings.js'
@@ -142,6 +143,21 @@ export function formatSuggestionThresholdReadout(similarityThreshold: number): s
   return `${asPercent(floor)} — ${asPercent(SUGGESTION_BAND_FACTOR)} of the ${asPercent(
     similarityThreshold,
   )} match threshold`
+}
+
+/**
+ * The live value the face matching form shows beside the similarity threshold, derived from the
+ * stored (and previewed) values. One helper for the scoped overlay hook and the legacy
+ * `getGlobalSettings` override, so both surfaces show the same sentence.
+ */
+export function faceSuggestionReadoutOverlay(
+  values: Record<string, unknown>,
+): Record<string, unknown> {
+  return {
+    [SUGGESTION_THRESHOLD_READOUT_KEY]: formatSuggestionThresholdReadout(
+      resolveFaceSettings(values).similarityThreshold,
+    ),
+  }
 }
 
 /**

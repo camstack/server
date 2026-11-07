@@ -164,6 +164,7 @@ import {
   EXPORTED_ENTITIES_STABLE_ID,
   ExportedEntities,
   type ExportedEntitiesState,
+  ExportedEntitiesStateSchema,
 } from './exported-entities.js'
 import { parseCommandTopic, stateTopic, syntheticDeviceKeyFor } from './topics.js'
 import { SUPPORTED_DEVICE_KINDS } from './supported-device-kinds.js'
@@ -204,17 +205,9 @@ const PTZ_MOVE_BY_DIRECTION: Readonly<
   zoom_out: { zoom: -0.1 },
 }
 
-interface HaExportConfig {
-  /**
-   * The actions and notification targets exported beside the devices (D968).
-   * Hidden state, written through `exposeEntity` / `unexposeEntity` only.
-   */
-  readonly exportedEntities: ExportedEntitiesState
-}
-
-const DEFAULT_CONFIG: HaExportConfig = {
-  exportedEntities: { actions: [], targets: [] },
-}
+/** The actions and notification targets exported beside the devices (D968): hidden state,
+ *  written through `exposeEntity` / `unexposeEntity` only, under the store key `exportedEntities`. */
+const EMPTY_EXPORTED_ENTITIES: ExportedEntitiesState = { actions: [], targets: [] }
 
 /**
  * Resolved connection of one export target to its Home Assistant instance. `brokerId` is the
@@ -263,7 +256,7 @@ interface ExportedDevice {
   readonly cameraFunctions: readonly CameraFunction[] | null
 }
 
-export class HaExportAddon extends BaseAddon<HaExportConfig> {
+export class HaExportAddon extends BaseAddon<Record<string, never>> {
   private links = new Map<string, BrokerLink>()
   private instances: RecordIntegrationInstances<HaExportTargetBody> | null = null
   /** The Home Assistant connections (broker ids) the last read of the account instances answered. */
@@ -341,6 +334,11 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
   private syntheticRules: readonly SyntheticRule[] = []
   /** D968: the actions and notification targets exported beside the devices. */
   private exportedEntities: ExportedEntities | null = null
+  private readonly exportedEntitiesStore = this.state(
+    'exportedEntities',
+    ExportedEntitiesStateSchema,
+    EMPTY_EXPORTED_ENTITIES,
+  )
   /**
    * `pipelineOrchestrator.getCameraStatuses`, keyed by deviceId — ONE call
    * per reconcile pass for every exported camera (Task C3), never per
@@ -377,7 +375,20 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
   })
 
   constructor() {
-    super({ ...DEFAULT_CONFIG })
+    super({})
+  }
+
+  /** The exported actions and targets, from the selection the store holds; a change is written back to it. */
+  protected async openExportedEntities(reconcile: () => Promise<void>): Promise<ExportedEntities> {
+    return new ExportedEntities(
+      {
+        api: this.ctx.api,
+        logger: this.ctx.logger,
+        persist: (next) => this.exportedEntitiesStore.set(next),
+        reconcile,
+      },
+      await this.exportedEntitiesStore.get(),
+    )
   }
 
   protected async onInitialize(): Promise<ProviderRegistration[]> {
@@ -460,14 +471,8 @@ export class HaExportAddon extends BaseAddon<HaExportConfig> {
       this.links.clear()
     })
 
-    const exportedEntities = new ExportedEntities(
-      {
-        api: this.ctx.api,
-        logger: this.ctx.logger,
-        persist: (next) => this.updateGlobalSettings({ exportedEntities: next }),
-        reconcile: () => this.reconcile('exported-entities-changed'),
-      },
-      this.config.exportedEntities ?? DEFAULT_CONFIG.exportedEntities,
+    const exportedEntities = await this.openExportedEntities(() =>
+      this.reconcile('exported-entities-changed'),
     )
     this.exportedEntities = exportedEntities
 

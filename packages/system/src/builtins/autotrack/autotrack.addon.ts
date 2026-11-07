@@ -44,6 +44,7 @@ import {
   ptzAutotrackCapability,
   type IPtzAutotrackProvider,
 } from '@camstack/types'
+import { z } from 'zod'
 import { DEFAULT_AUTOTRACK_LOOP_CONFIG } from './autotrack-config.js'
 import {
   DEFAULT_CAMERA_RECORD,
@@ -59,10 +60,8 @@ import {
 import type { NativeAutotrackState } from './autotrack-decision.js'
 import { AutotrackLoop, type PulseCommand } from './autotrack-loop.js'
 
-/** Persisted shape: one entry per camera the operator has touched. */
-export interface AutotrackConfig {
-  readonly cameras: Record<string, unknown>
-}
+/** Persisted shape (store key `cameras`): one entry per camera the operator has touched. */
+const CamerasStateSchema = z.record(z.string(), z.unknown())
 
 /** How often the silence watchdog runs. Small relative to the disappear delay
  *  it enforces — the delay is the budget, this is only the resolution. */
@@ -74,7 +73,8 @@ interface AutotrackSession {
   readonly deviceId: number
 }
 
-export class AutotrackAddon extends BaseAddon<AutotrackConfig> {
+export class AutotrackAddon extends BaseAddon<Record<string, never>> {
+  private readonly camerasState = this.state('cameras', CamerasStateSchema, {})
   private records: AutotrackCameraRecords = {}
   private readonly sessions = new Map<number, AutotrackSession>()
   /** Cameras whose `ptz-autotrack` binding names THIS addon, last time we read. */
@@ -97,11 +97,20 @@ export class AutotrackAddon extends BaseAddon<AutotrackConfig> {
   private watchdogTimer: ReturnType<typeof setInterval> | null = null
 
   constructor() {
-    super({ cameras: {} })
+    super({})
+  }
+
+  /** Load the per-camera records the store holds. */
+  protected async loadRecords(): Promise<void> {
+    this.records = parseCameraRecords(await this.camerasState.get())
+  }
+
+  protected async persistRecords(): Promise<void> {
+    await this.camerasState.set(this.serialiseRecords())
   }
 
   protected async onInitialize(): Promise<AddonInitResult> {
-    this.records = parseCameraRecords(this.config.cameras)
+    await this.loadRecords()
 
     this.unsubscribeFrames = this.ctx.eventBus.subscribe(
       { category: EventCategory.PipelineAnalyticsFrameTracked },
@@ -190,12 +199,7 @@ export class AutotrackAddon extends BaseAddon<AutotrackConfig> {
     this.sessions.clear()
   }
 
-  protected async onConfigChanged(): Promise<void> {
-    this.records = parseCameraRecords(this.config.cameras)
-    await this.reconcileSessions()
-  }
-
-  private recordOf(deviceId: number): AutotrackCameraRecord {
+  protected recordOf(deviceId: number): AutotrackCameraRecord {
     return this.records[deviceId] ?? DEFAULT_CAMERA_RECORD
   }
 
@@ -214,7 +218,7 @@ export class AutotrackAddon extends BaseAddon<AutotrackConfig> {
     // The addon's own settings are the record for the emulation — the cap's
     // slice is `durability: 'session'` and mirrors a CAMERA, which this
     // implementation does not have (`autotrack-cameras.ts`).
-    await this.updateGlobalSettings({ cameras: this.serialiseRecords() })
+    await this.persistRecords()
     // Bindings FIRST, and this ordering is not decoration. `refreshBindings`
     // only asks about cameras it has a record for, so the camera being switched
     // on right now was not in the last answer: reconciling on the stale set

@@ -88,13 +88,13 @@ export type SkillLinksBody = {
   readonly tokens: readonly LwaTokenEntry[]
 }
 
-const LinkedAccountSchema: z.ZodType<LinkedAccount> = z.object({
+export const LinkedAccountSchema: z.ZodType<LinkedAccount> = z.object({
   userId: z.string(),
   username: z.string(),
   linkedAt: z.number(),
 })
 
-const LwaTokenEntrySchema: z.ZodType<LwaTokenEntry> = z.object({
+export const LwaTokenEntrySchema: z.ZodType<LwaTokenEntry> = z.object({
   userId: z.string(),
   accessToken: z.string().meta({ secret: true }),
   expiresAt: z.number(),

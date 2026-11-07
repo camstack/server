@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The face matching form's derived suggestion floor is also served through the scoped settings overlay; the readout is unchanged.
+
 ## [1.2.677] - 2026-11-07
 
 ### Changed

@@ -1,6 +1,7 @@
 import type {
   ConfigUISchema,
   DecoderHwAccelConfig,
+  DurableState,
   IDecoderCapProvider,
   ProviderRegistration,
 } from '@camstack/types'
@@ -11,6 +12,7 @@ import {
   decoderCapability,
   HWACCEL_OPTIONS,
 } from '@camstack/types'
+import { z } from 'zod'
 import { rankDecodeHwAccels } from '../decode-hwaccel-rank.js'
 import { NodeAvAudioCodecProvider } from '../audio-codec/provider.js'
 import { loadNodeAvRuntime, type NodeAvRuntime } from '../audio-codec/nodeav-runtime-loader.js'
@@ -118,7 +120,7 @@ export default class DecoderNodeAvAddon
     this.ctx.logger.info('node-av decoder addon initialized')
     // Auto-seed probedBestHwaccel on first boot so the UI can show
     // the node's best backend without waiting for an operator click.
-    if (!this.config.probedBestHwaccel) {
+    if (!(await this.probedBestHwaccel().get())) {
       this.reprobeHwaccel().catch((err: unknown) => {
         this.ctx.logger.warn('nodeav: auto-reprobe hwaccel failed', {
           meta: { error: err instanceof Error ? err.message : String(err) },
@@ -130,6 +132,15 @@ export default class DecoderNodeAvAddon
   }
 
   /**
+   * This node's probed best backend: the node-state key `probedBestHwaccel@<localNode>` (the key the
+   * addon always wrote), never the bare key. Built per call — the local node id is known only once
+   * the addon is initialised.
+   */
+  private probedBestHwaccel(): DurableState<string> {
+    return this.nodeState('probedBestHwaccel', z.string(), '')
+  }
+
+  /**
    * Re-run the platform probe on this host and persist the detected
    * backend as `probedBestHwaccel`. The operator's `hwaccel` setting
    * is intentionally left alone — the probe only updates the hint.
@@ -138,7 +149,7 @@ export default class DecoderNodeAvAddon
     const resolver = this.ctx.kernel.hwaccel
     if (!resolver) {
       this.ctx.logger.warn('reprobeHwaccel: no kernel hwaccel resolver — returning none')
-      await this.updateGlobalSettings({ probedBestHwaccel: 'none' })
+      await this.probedBestHwaccel().set('none')
       return { backend: 'none' }
     }
     try {
@@ -147,10 +158,7 @@ export default class DecoderNodeAvAddon
       // `preferred[0]` — so the per-node `probedBestHwaccel` the UI shows matches
       // the backend sessions run on.
       const backend = rankDecodeHwAccels(res.preferred, [])[0] ?? 'none'
-      // `probedBestHwaccel` is `perNode: true` — the base scopes this write to
-      // `probedBestHwaccel@<localNode>` (node-blind), never the bare key, and
-      // refreshes `this.config` + emits the addon-updated event.
-      await this.updateGlobalSettings({ probedBestHwaccel: backend })
+      await this.probedBestHwaccel().set(backend)
       this.ctx.logger.info('reprobeHwaccel: wrote probedBestHwaccel', {
         meta: { backend, rationale: res.rationale, preferred: res.preferred },
       })
@@ -159,7 +167,7 @@ export default class DecoderNodeAvAddon
       this.ctx.logger.warn('reprobeHwaccel failed', {
         meta: { error: err instanceof Error ? err.message : String(err) },
       })
-      await this.updateGlobalSettings({ probedBestHwaccel: 'none' })
+      await this.probedBestHwaccel().set('none')
       return { backend: 'none' }
     }
   }
@@ -176,7 +184,7 @@ export default class DecoderNodeAvAddon
       // Active decode hwaccel state (per-node projected) — the orchestrator
       // reads this via the `decoder` cap (nodePin), not an addon-id lookup.
       hwaccel: this.config.hwaccel,
-      probedBestHwaccel: this.config.probedBestHwaccel || undefined,
+      probedBestHwaccel: (await this.probedBestHwaccel().get()) || undefined,
     }
   }
 

@@ -137,6 +137,34 @@ describe('decoder-nodeav — reprobeHwaccel per-node persistence', () => {
   })
 })
 
+// ── a probe an old build stored is read by the node-state handle ─────────
+
+describe('decoder-nodeav — probe stored by an old build', () => {
+  it('getInfo reports the value at probedBestHwaccel@<node> and boot does not re-probe', async () => {
+    const resolve = vi.fn(async () => ({ preferred: ['qsv'], rationale: 'test' }))
+    const { addon, store } = await makeAddon({
+      localNodeId: 'hub',
+      seed: { 'probedBestHwaccel@hub': 'vaapi', 'probedBestHwaccel@agent-1': 'qsv' },
+      hwaccel: { resolve },
+    })
+    expect((await addon.getInfo()).probedBestHwaccel).toBe('vaapi')
+    expect(resolve).not.toHaveBeenCalled()
+    expect(store['probedBestHwaccel@hub']).toBe('vaapi')
+  })
+
+  it("a re-probe overwrites only this node's key and getInfo reads the new value", async () => {
+    const { addon, store } = await makeAddon({
+      localNodeId: 'hub',
+      seed: { 'probedBestHwaccel@hub': 'vaapi', 'probedBestHwaccel@agent-1': 'qsv' },
+      hwaccel: { resolve: async () => ({ preferred: ['videotoolbox'], rationale: 'test' }) },
+    })
+    await addon.reprobeHwaccel()
+    expect(store['probedBestHwaccel@hub']).toBe('videotoolbox')
+    expect(store['probedBestHwaccel@agent-1']).toBe('qsv')
+    expect((await addon.getInfo()).probedBestHwaccel).toBe('videotoolbox')
+  })
+})
+
 // ── getGlobalSettings is per-node independent ────────────────────────────
 
 describe('decoder-nodeav — getGlobalSettings per-node projection', () => {
