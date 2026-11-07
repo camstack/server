@@ -157,4 +157,31 @@ describe('a delete also removes the legacy row', () => {
     expect(second.addon.configuredSources().map((s) => s.args['password'])).toEqual(['hunter2'])
     expect(JSON.stringify([...world.tables.values()])).not.toContain('hunter2')
   })
+
+  it('the prune leaves a sealed credential a keychain marker in the legacy setting and keeps the served source in step', async () => {
+    const withPassword = (id: string) => ({
+      id,
+      label: id,
+      module: 'junker_app',
+      args: { city: 'Torino', password: `hunter2-${id}` },
+      enabled: true,
+    })
+    const world = makeInMemoryRecords('waste-collections')
+    const { addon, settings, holder } = await boot(world, world.secrets, [])
+    // The operator saved two sources with a credential: the keychain holds the values, the row a marker.
+    await addon.updateGlobalSettingsAsOperator({
+      sources: [withPassword('home'), withPassword('cabin')],
+    })
+    expect(JSON.stringify(settings.store)).not.toContain('hunter2')
+    const provider = holder?.provider
+    if (typeof provider !== 'object' || provider === null || !('deleteInstance' in provider)) {
+      throw new Error('the addon registered no integration-instances provider')
+    }
+    if (typeof provider.deleteInstance !== 'function') throw new Error('no deleteInstance')
+    await provider.deleteInstance({ id: 'cabin' })
+    const legacy = settings.store['sources'] as { id: string }[]
+    expect(legacy.map((r) => r.id)).toEqual(['home'])
+    expect(JSON.stringify(settings.store)).not.toContain('hunter2')
+    expect(addon.configuredSources().map((s) => s.args['password'])).toEqual(['hunter2-home'])
+  })
 })
