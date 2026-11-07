@@ -9,7 +9,6 @@ import {
   type AddonInitResult,
   BaseAddon,
   calendarSourceCapability,
-  defineAddonMigrations,
   type ICalendarSourceProvider,
   type InstanceChange,
   integrationInstancesCapability,
@@ -17,7 +16,12 @@ import {
 } from '@camstack/types'
 import { wasteCollectionsActions } from './custom-actions.js'
 import { fetchWasteSource } from './fetch-source.js'
-import { ADDON_MIGRATIONS, SOURCES_FROM_SETTINGS_ID } from './migrations/index.js'
+import {
+  ADDON_MIGRATIONS,
+  SOURCES_FROM_SETTINGS_ID,
+  type WasteSourceKindDefinition,
+  wasteSourcePortsOver,
+} from './migrations/index.js'
 import { resolveFetchScript } from './python-paths.js'
 import { sealPlaintextCredentials } from './seal-plaintext.js'
 import { createWasteCalendarSource } from './waste-calendar-source.js'
@@ -81,7 +85,7 @@ export class WasteCollectionsAddon extends BaseAddon<WasteConfig> {
       plainBoot ? plainWasteSourceKind : wasteSourceEntryKind,
     )
     this.sourceStore = store
-    await this.migrateLegacySources(store)
+    await this.migrateLegacySources(plainBoot ? plainWasteSourceKind : wasteSourceEntryKind)
     this.activeSources = await this.loadPersistedSources()
     const instances = plainBoot
       ? null
@@ -185,17 +189,9 @@ export class WasteCollectionsAddon extends BaseAddon<WasteConfig> {
    * fails leaves the settings where they are and is logged by id: the sources stay unavailable
    * until it lands, never half-copied.
    */
-  private async migrateLegacySources(store: WasteSourceStore): Promise<void> {
-    const report = await this.runMigrations(
-      defineAddonMigrations(ADDON_MIGRATIONS, {
-        readStored: (key) => this.readStoredGlobalKey(key),
-        listSourceIds: () => store.listIds(),
-        putSource: async (source) => {
-          await store.putIfAbsent(source)
-        },
-        readSource: (id) => store.readResolved(id),
-        warn: (message) => this.ctx.logger.warn(message),
-      }),
+  private async migrateLegacySources(kind: WasteSourceKindDefinition): Promise<void> {
+    const report = await this.runMigrations(ADDON_MIGRATIONS, (api) =>
+      wasteSourcePortsOver(api, kind),
     )
     this.legacyServed =
       !report.declared ||

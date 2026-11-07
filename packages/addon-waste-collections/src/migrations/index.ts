@@ -1,6 +1,7 @@
 import type { AddonMigration } from '@camstack/types'
 import { copySourcesToRecords, type WasteSourcePorts } from './sources-from-settings.js'
 
+export { type WasteSourceKindDefinition, wasteSourcePortsOver } from './ports.js'
 export type { WasteSourcePorts } from './sources-from-settings.js'
 
 export const SOURCES_FROM_SETTINGS_ID =

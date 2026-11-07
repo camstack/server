@@ -73,6 +73,33 @@ async function boot(
         finishMigration: { mutate: async () => undefined },
       },
     },
+    // The ports are built from the migration API only (planning#447): the addon's own settings
+    // store, its records and its keychain, over the same doubles the context carries.
+    migrationApi: {
+      settings: {
+        read: async () => ({ store: structuredClone(settings.store) }),
+        write: async () => ({}),
+        deleteKeys: async () => ({ removed: [] }),
+      },
+      secrets: {
+        resolve: async ({ refs }: { refs: string[] }) => ({
+          values: Object.fromEntries(refs.map((ref) => [ref, null])),
+        }),
+      },
+      log: { info: async () => ({}), warn: async () => ({}) },
+      records: {
+        kind: (definition: Parameters<typeof world.records.kind>[0]) => {
+          const h = world.records.kind(definition)
+          return {
+            get: ({ id }: { id: string }) => h.get(id),
+            getResolved: ({ id }: { id: string }) => h.getResolved(id),
+            put: ({ ifRev, ...row }: { ifRev?: number; id: string; data: never }) =>
+              h.put(row, ifRev === undefined ? undefined : { ifRev }),
+            query: (q: { limit?: number }) => h.query({ limit: q.limit ?? 100 }),
+          }
+        },
+      },
+    },
     records: world.records,
     secrets,
     deps: {

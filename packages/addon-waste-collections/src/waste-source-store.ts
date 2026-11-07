@@ -15,7 +15,7 @@ import { type WasteSourceConfig, WasteSourceConfigSchema } from './waste-types.j
  * A stored body as a source. A row read while the keychain is locked still carries its markers
  * in `args`; the config schema keeps them, so the source lists and its fetch refuses by name.
  */
-function rowToSource(id: string, data: WasteSourceBody): WasteSourceConfig | null {
+export function rowToSource(id: string, data: WasteSourceBody): WasteSourceConfig | null {
   const parsed = WasteSourceConfigSchema.safeParse({
     id,
     label: data.name,
@@ -26,7 +26,7 @@ function rowToSource(id: string, data: WasteSourceBody): WasteSourceConfig | nul
   return parsed.success ? parsed.data : null
 }
 
-function bodyOf(source: WasteSourceConfig): WasteSourceBody {
+export function bodyOf(source: WasteSourceConfig): WasteSourceBody {
   const { id, label, module, args, enabled } = source
   const body = { name: label, module, args, enabled }
   const parsed = wasteSourceEntryKind.schema.safeParse(body)
